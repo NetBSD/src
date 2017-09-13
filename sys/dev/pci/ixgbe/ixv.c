@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.62 2017/09/13 04:48:40 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.63 2017/09/13 04:50:50 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -291,6 +291,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	ixgbe_vendor_info_t *ent;
 	const struct pci_attach_args *pa = aux;
 	const char *apivstr;
+	char buf[256];
+
 	INIT_DEBUGOUT("ixv_attach: begin");
 
 	/*
@@ -408,7 +410,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		error = EIO;
 		goto err_out;
 	}
-	
+
 	/* Negotiate mailbox API version */
 	error = ixv_negotiate_api(adapter);
 	if (error)
@@ -480,7 +482,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = ixv_rxd;
 
 	/* Setup MSI-X */
-	error = ixv_configure_interrupts(adapter); 
+	error = ixv_configure_interrupts(adapter);
 	if (error)
 		goto err_out;
 
@@ -510,6 +512,11 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	if (adapter->feat_en & IXGBE_FEATURE_NETMAP)
 		ixgbe_netmap_attach(adapter);
+
+	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, adapter->feat_cap);
+	aprint_verbose_dev(dev, "feature cap %s\n", buf);
+	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, adapter->feat_en);
+	aprint_verbose_dev(dev, "feature ena %s\n", buf);
 
 	INIT_DEBUGOUT("ixv_attach: end");
 	adapter->osdep.attached = true;
@@ -673,7 +680,7 @@ ixv_init_locked(struct adapter *adapter)
 	KASSERT(mutex_owned(&adapter->core_mtx));
 	hw->adapter_stopped = FALSE;
 	hw->mac.ops.stop_adapter(hw);
-        callout_stop(&adapter->timer);
+	callout_stop(&adapter->timer);
 
 	/* reprogram the RAR[0] in case user changed it. */
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
@@ -838,7 +845,7 @@ ixv_msix_que(void *arg)
 	 *  - Calculate based on average size over
 	 *    the last interval.
 	 */
-        if (que->eitr_setting)
+	if (que->eitr_setting)
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix),
 		    que->eitr_setting);
 
@@ -916,7 +923,7 @@ ixv_msix_mbx(void *arg)
  *   the interface using ifconfig.
  ************************************************************************/
 static void
-ixv_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
+ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct adapter *adapter = ifp->if_softc;
 
@@ -1190,7 +1197,7 @@ ixv_update_link_status(struct adapter *adapter)
 					bpsmsg = "unknown speed";
 					break;
 				}
-				device_printf(dev,"Link is up %s %s \n",
+				device_printf(dev, "Link is up %s %s \n",
 				    bpsmsg, "Full Duplex");
 			}
 			adapter->link_active = TRUE;
@@ -1199,7 +1206,7 @@ ixv_update_link_status(struct adapter *adapter)
 	} else { /* Link down */
 		if (adapter->link_active == TRUE) {
 			if (bootverbose)
-				device_printf(dev,"Link is Down\n");
+				device_printf(dev, "Link is Down\n");
 			if_link_state_change(ifp, LINK_STATE_DOWN);
 			adapter->link_active = FALSE;
 		}
@@ -1897,7 +1904,7 @@ ixv_configure_ivars(struct adapter *adapter)
 		/* ... and the TX */
 		ixv_set_ivar(adapter, i, que->msix, 1);
 		/* Set an initial value in EITR */
-                IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix),
+		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix),
 		    IXGBE_EITR_DEFAULT);
 	}
 
@@ -1932,7 +1939,7 @@ ixv_save_stats(struct adapter *adapter)
 		    stats->vfmprc.ev_count - stats->base_vfmprc;
 	}
 } /* ixv_save_stats */
- 
+
 /************************************************************************
  * ixv_init_stats
  ************************************************************************/
@@ -1988,7 +1995,7 @@ ixv_init_stats(struct adapter *adapter)
 void
 ixv_update_stats(struct adapter *adapter)
 {
-        struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
 
         UPDATE_STAT_32(IXGBE_VFGPRC, stats->last_vfgprc, stats->vfgprc);
@@ -2273,7 +2280,7 @@ ixv_print_debug_info(struct adapter *adapter)
         struct lro_ctrl *lro;
 #endif /* LRO */
 
-	device_printf(dev,"Error Byte Count = %u \n",
+	device_printf(dev, "Error Byte Count = %u \n",
 	    IXGBE_READ_REG(hw, IXGBE_ERRBC));
 
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
@@ -2282,21 +2289,21 @@ ixv_print_debug_info(struct adapter *adapter)
 #ifdef LRO
 		lro = &rxr->lro;
 #endif /* LRO */
-		device_printf(dev,"QUE(%d) IRQs Handled: %lu\n",
+		device_printf(dev, "QUE(%d) IRQs Handled: %lu\n",
 		    que->msix, (long)que->irqs.ev_count);
-		device_printf(dev,"RX(%d) Packets Received: %lld\n",
+		device_printf(dev, "RX(%d) Packets Received: %lld\n",
 		    rxr->me, (long long)rxr->rx_packets.ev_count);
-		device_printf(dev,"RX(%d) Bytes Received: %lu\n",
+		device_printf(dev, "RX(%d) Bytes Received: %lu\n",
 		    rxr->me, (long)rxr->rx_bytes.ev_count);
 #ifdef LRO
-		device_printf(dev,"RX(%d) LRO Queued= %lld\n",
+		device_printf(dev, "RX(%d) LRO Queued= %lld\n",
 		    rxr->me, (long long)lro->lro_queued);
-		device_printf(dev,"RX(%d) LRO Flushed= %lld\n",
+		device_printf(dev, "RX(%d) LRO Flushed= %lld\n",
 		    rxr->me, (long long)lro->lro_flushed);
 #endif /* LRO */
-		device_printf(dev,"TX(%d) Packets Sent: %lu\n",
+		device_printf(dev, "TX(%d) Packets Sent: %lu\n",
 		    txr->me, (long)txr->total_packets.ev_count);
-		device_printf(dev,"TX(%d) NO Desc Avail: %lu\n",
+		device_printf(dev, "TX(%d) NO Desc Avail: %lu\n",
 		    txr->me, (long)txr->no_desc_avail.ev_count);
 	}
 
@@ -2700,7 +2707,7 @@ ixv_configure_interrupts(struct adapter *adapter)
 	/* Must have at least 2 MSI-X vectors */
 	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
 	if (msgs < 2) {
-		aprint_error_dev(dev,"MSIX config error\n");
+		aprint_error_dev(dev, "MSIX config error\n");
 		return (ENXIO);
 	}
 	msgs = MIN(msgs, IXG_MAX_NINTR);
