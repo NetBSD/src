@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.33 2017/07/29 18:08:57 maxv Exp $
+#	$NetBSD: HPT5325,v 1.34 2017/09/13 22:24:43 sevan Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -518,12 +518,9 @@ pseudo-device	wsfont
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options 	VERIFIED_EXEC_FP_RMD160
 #options 	VERIFIED_EXEC_FP_SHA256
 #options 	VERIFIED_EXEC_FP_SHA384
 #options 	VERIFIED_EXEC_FP_SHA512
-#options 	VERIFIED_EXEC_FP_SHA1
-#options 	VERIFIED_EXEC_FP_MD5
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

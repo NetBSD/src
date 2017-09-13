@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83 2017/07/29 18:08:56 maxv Exp $
+# $NetBSD: GENERIC,v 1.84 2017/09/13 22:24:42 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -272,9 +272,6 @@ pseudo-device	putter		# for puffs and pud
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

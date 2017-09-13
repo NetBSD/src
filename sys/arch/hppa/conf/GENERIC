@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 2017/07/29 18:08:58 maxv Exp $
+# $NetBSD: GENERIC,v 1.14 2017/09/13 22:24:44 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -787,9 +787,6 @@ pseudo-device	drvctl
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
