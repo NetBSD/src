@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.21 2017/07/29 18:08:58 maxv Exp $
+# $NetBSD: MMEYE_WLF,v 1.22 2017/09/13 22:24:44 sevan Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	16		# estimated number of users
 
@@ -285,9 +285,6 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2017/07/29 18:08:58 maxv Exp $
+# $NetBSD: GENERIC,v 1.123 2017/09/13 22:24:44 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.123 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -227,9 +227,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexsor
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

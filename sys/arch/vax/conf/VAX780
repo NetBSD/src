@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.22 2017/08/04 09:33:03 maxv Exp $
+# $NetBSD: VAX780,v 1.23 2017/09/13 22:24:46 sevan Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -330,9 +330,6 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

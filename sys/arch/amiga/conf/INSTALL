@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.126 2015/08/21 01:52:07 uebayasi Exp $
+# $NetBSD: INSTALL,v 1.127 2017/09/13 22:24:42 sevan Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.126 $"
+#ident 		"GENERIC-$Revision: 1.127 $"
 
 makeoptions	COPTS="-Os"
 
@@ -554,11 +554,8 @@ pseudo-device   btuart                  # Bluetooth HCI UART (H4)
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 config	netbsd root on ? type ?

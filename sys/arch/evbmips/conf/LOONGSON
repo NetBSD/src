@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.33 2017/08/20 09:00:15 maya Exp $
+# $NetBSD: LOONGSON,v 1.34 2017/09/13 22:24:43 sevan Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.33 $"
+#ident 		"LOONGSON-$Revision: 1.34 $"
 
 maxusers	16
 
@@ -372,9 +372,6 @@ pseudo-device	drvctl			# driver control
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

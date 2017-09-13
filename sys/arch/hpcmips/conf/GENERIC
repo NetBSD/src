@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.233 2016/12/13 20:42:18 christos Exp $
+# $NetBSD: GENERIC,v 1.234 2017/09/13 22:24:43 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.233 $"
+#ident 		"GENERIC-$Revision: 1.234 $"
 
 maxusers	16
 
@@ -719,9 +719,6 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.50 2017/02/19 07:47:01 rin Exp $
+#	$NetBSD: GENERIC,v 1.51 2017/09/13 22:24:44 sevan Exp $
 #
 #
 
@@ -307,9 +307,6 @@ pseudo-device	clockctl
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

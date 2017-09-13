@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.109 2017/07/28 19:26:16 maxv Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.110 2017/09/13 22:24:45 sevan Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.109 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.110 $"
 
 maxusers	32
 
@@ -337,9 +337,6 @@ pseudo-device	vcoda			# coda minicache <-> venus comm.
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

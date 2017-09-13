@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.16 2017/08/31 08:47:19 pgoyette Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.17 2017/09/13 22:24:46 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.16 2017/08/31 08:47:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.17 2017/09/13 22:24:46 sevan Exp $");
 
 #include "opt_veriexec.h"
 
@@ -354,11 +354,6 @@ veriexec_init(void)
 	veriexec_fpops_add(a, b, c, (veriexec_fpop_init_t)d, \
 	 (veriexec_fpop_update_t)e, (veriexec_fpop_final_t)f)
 
-#ifdef VERIFIED_EXEC_FP_RMD160
-	FPOPS_ADD("RMD160", RMD160_DIGEST_LENGTH, sizeof(RMD160_CTX),
-	    RMD160Init, RMD160Update, RMD160Final);
-#endif /* VERIFIED_EXEC_FP_RMD160 */
-
 #ifdef VERIFIED_EXEC_FP_SHA256
 	FPOPS_ADD("SHA256", SHA256_DIGEST_LENGTH, sizeof(SHA256_CTX),
 	    SHA256_Init, SHA256_Update, SHA256_Final);
@@ -373,16 +368,6 @@ veriexec_init(void)
 	FPOPS_ADD("SHA512", SHA512_DIGEST_LENGTH, sizeof(SHA512_CTX),
 	    SHA512_Init, SHA512_Update, SHA512_Final);
 #endif /* VERIFIED_EXEC_FP_SHA512 */
-
-#ifdef VERIFIED_EXEC_FP_SHA1
-	FPOPS_ADD("SHA1", SHA1_DIGEST_LENGTH, sizeof(SHA1_CTX),
-	    SHA1Init, SHA1Update, SHA1Final);
-#endif /* VERIFIED_EXEC_FP_SHA1 */
-
-#ifdef VERIFIED_EXEC_FP_MD5
-	FPOPS_ADD("MD5", MD5_DIGEST_LENGTH, sizeof(MD5_CTX),
-	    MD5Init, MD5Update, MD5Final);
-#endif /* VERIFIED_EXEC_FP_MD5 */
 
 #undef FPOPS_ADD
 }
