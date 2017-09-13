@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.11 2017/07/29 18:08:57 maxv Exp $
+# $NetBSD: NITROGEN6X,v 1.12 2017/09/13 22:24:43 sevan Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -420,12 +420,9 @@ pseudo-device	veriexec
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-options VERIFIED_EXEC_FP_RMD160
 options VERIFIED_EXEC_FP_SHA256
 options VERIFIED_EXEC_FP_SHA384
 options VERIFIED_EXEC_FP_SHA512
-options VERIFIED_EXEC_FP_SHA1
-options VERIFIED_EXEC_FP_MD5
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

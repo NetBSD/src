@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.52 2017/08/09 19:18:59 maxv Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.53 2017/09/13 22:24:43 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	32		# estimated number of users
 
@@ -691,11 +691,8 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

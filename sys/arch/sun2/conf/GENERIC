@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96 2017/07/29 18:08:59 maxv Exp $
+# $NetBSD: GENERIC,v 1.97 2017/09/13 22:24:46 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -306,9 +306,6 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
