@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2017/07/29 18:08:58 maxv Exp $
+# $NetBSD: GENERIC,v 1.132 2017/09/13 22:24:45 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -320,9 +320,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

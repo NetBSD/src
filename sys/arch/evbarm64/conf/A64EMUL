@@ -1,4 +1,4 @@
-# $NetBSD: A64EMUL,v 1.8 2017/07/29 18:08:57 maxv Exp $
+# $NetBSD: A64EMUL,v 1.9 2017/09/13 22:24:43 sevan Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/evbarm64/conf/std.a64emul"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"A64EMUL-$Revision: 1.8 $"
+ident		"A64EMUL-$Revision: 1.9 $"
 
 maxusers 32
 
@@ -260,12 +260,9 @@ pseudo-device	putter			# for puffs and pud
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options 	VERIFIED_EXEC_FP_RMD160
 #options 	VERIFIED_EXEC_FP_SHA256
 #options 	VERIFIED_EXEC_FP_SHA384
 #options 	VERIFIED_EXEC_FP_SHA512
-#options 	VERIFIED_EXEC_FP_SHA1
-#options 	VERIFIED_EXEC_FP_MD5
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 #options PAX_ASLR=0			# PaX Address Space Layout Randomization
