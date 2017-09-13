@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.8,v 1.6 2017/09/13 22:15:25 sevan Exp $
+.\" $NetBSD: veriexec.8,v 1.7 2017/09/13 22:24:42 sevan Exp $
 .\"
 .\" Copyright (c) 2008 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -165,7 +165,7 @@ exports runtime information that may be useful for various purposes.
 It reports the currently supported fingerprinting algorithms, for example:
 .Bd -literal -offset indent
 # /sbin/sysctl kern.veriexec.algorithms
-kern.veriexec.algorithms = RMD160 SHA256 SHA384 SHA512 SHA1 MD5
+kern.veriexec.algorithms = SHA256 SHA384 SHA512
 .Ed
 .Pp
 It reports the current verbosity and strict levels, for example:
