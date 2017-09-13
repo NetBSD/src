@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.470 2017/08/12 08:03:57 maxv Exp $
+.\"	$NetBSD: options.4,v 1.471 2017/09/13 00:34:48 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 12, 2017
+.Dd September 12, 2017
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -173,6 +173,19 @@ Some pseudo-devices can have multiple or
 instances.
 .El
 .Ss Compatibility Options
+Note that compatibility options for older
+.Nx
+releases includes on the support for newer releases as well.
+This means that typically only one of these is necessary, with the
+.Cd COMPAT_09
+option enabling all
+.Nx
+compatibility.
+This does not include the
+.Cd COMPAT_43
+or
+.Cd COMPAT_44
+options.
 .Bl -ohang
 .It Cd options COMPAT_09
 Enable binary compatibility with
@@ -323,6 +336,13 @@ release.
 .It Cd options COMPAT_40
 Enable binary compatibility with
 .Nx 4.0 .
+This allows the use of old
+.Xr ptrace 2
+calls for the SH3 platform.
+It also enables old
+.Xr mount 2
+system call that did not include the data length parameter.
+The power_event_t structure's pev_switch is filled in.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
@@ -354,12 +374,32 @@ socket calls.
 .It Cd options COMPAT_50
 Enable binary compatibility with
 .Nx 5.0 .
+This enables support for the old
+.Ft time_t
+and
+.Ft dev_t
+types as 32 bit, and all the associated kernel interface changes.
+It also enables old
+.Xr gpio 4
+and 
+.Xr rnd 4
+interfaces.
 .It Cd options COMPAT_60
 Enable binary compatibility with
 .Nx 6.0 .
+This provides old
+.Xr ccd 4
+interfaces, enables support for old
+.Xr cpuctl 8
+microcode interfaces, and support for the old
+.Ft ptmget
+structure.
 .It Cd options COMPAT_70
 Enable binary compatibility with
 .Nx 7.0 .
+This provides support for old
+.Xr route 4
+interfaces.
 .It Cd options COMPAT_BSDPTY
 This option is currently on by default and enables the pty multiplexer
 .Xr ptm 4
