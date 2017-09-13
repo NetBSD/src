@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.61 2017/09/12 05:28:31 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.62 2017/09/13 04:48:40 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -750,6 +750,7 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_init_stats(adapter);
 
 	/* Config/Enable Link */
+	hw->mac.get_link_status = TRUE;
 	hw->mac.ops.check_link(hw, &adapter->link_speed, &adapter->link_up,
 	    FALSE);
 
