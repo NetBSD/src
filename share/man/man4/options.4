@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.472 2017/09/13 08:24:23 wiz Exp $
+.\"	$NetBSD: options.4,v 1.473 2017/09/13 08:26:38 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -175,7 +175,7 @@ instances.
 .Ss Compatibility Options
 Note that compatibility options for older
 .Nx
-releases includes on the support for newer releases as well.
+releases includes support for newer releases as well.
 This means that typically only one of these is necessary, with the
 .Cd COMPAT_09
 option enabling all
@@ -337,7 +337,7 @@ Enable binary compatibility with
 This allows the use of old
 .Xr ptrace 2
 calls for the SH3 platform.
-It also enables old
+It also enables the old
 .Xr mount 2
 system call that did not include the data length parameter.
 The power_event_t structure's pev_switch is filled in.
