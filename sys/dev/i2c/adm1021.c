@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.13 2017/09/01 20:11:59 macallan Exp $ */
+/*	$NetBSD: adm1021.c,v 1.14 2017/09/13 21:15:11 macallan Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *   company/revision reg  X        X       X       X         X        X
  *   no negative temps     X        X       X       X 
  *   11-bit remote temp             X       X       X                  X
- *   no low limits                                       X
+ *   no low limits                                       X             X
  *   therm (high) limits                    X       X                  X
  *
  * Registers 0x00 to 0x0f have separate read/write addresses, but
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.13 2017/09/01 20:11:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.14 2017/09/13 21:15:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,7 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 		}
 		if (strcmp("max6642", ia->ia_compat[i]) == 0) {
 			sc->sc_noneg = 0;
+			sc->sc_nolow = 1;
 			strlcpy(name, "MAX6642", ADMTEMP_NAMELEN);
 			return;
 		}
@@ -263,7 +264,7 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 		 */
 		if (*comp == *rev) {		
 			sc->sc_therm = 0;	/* */
-			sc->sc_ext11 = 1;
+			sc->sc_nolow = 1;
 			strlcpy(name, "MAX6642", ADMTEMP_NAMELEN);
 		} else {
 			strlcpy(name, "MAX1617A", ADMTEMP_NAMELEN);
