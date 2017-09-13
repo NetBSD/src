@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36 2017/07/29 18:08:59 maxv Exp $
+# $NetBSD: GENERIC,v 1.37 2017/09/13 22:24:45 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.36 $"
+#ident		"GENERIC-$Revision: 1.37 $"
 
 maxusers	32
 
@@ -278,9 +278,6 @@ pseudo-device	wsfont
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
