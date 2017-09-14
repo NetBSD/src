@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2314 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2315 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -24,15 +24,15 @@
 # ----------------------------------------------------------------------------
 
 Changes from NetBSD 8.0 to NetBSD 9.0:
- 	byacc: update to 20170430 [christos 20170605]
+ 	byacc: Update to 20170430. [christos 20170605]
  	vax: Add support for VAXstation 4000 TURBOchannel. [flxd 20170609]
- 	wsbell(4): added console bell support for all speaker devices, not
- 		only those attached at pcppi [nat 20170612]
+ 	wsbell(4): Added console bell support for all speaker devices, not
+ 		only those attached at pcppi. [nat 20170612]
  	bind: Import version 9.10.5-P1. [christos 20170615]
 	dts: Import dts files from Linux 4.11.5. [jmcneill 20170615]
 	amd64: Support 16TB of PA, and 32TB of kernel VA on the architecture
 		side. [maxv 20170617]
-	expat: Import 2.2.1 (security fixes) [christos 20170617]
+	expat: Import 2.2.1 (security fixes). [christos 20170617]
 	arm: Add support for Allwinner H3 SoC. [jmcneill 20170628]
 	bind: Import version 9.10.5-P2. [christos 20170630]
 	sunxiemac(4): Add support for Allwinner Gigabit Ethernet (EMAC).
@@ -50,13 +50,13 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	itesio(4): Add support IT8628E. [hauke 20170814]
 	ichsmb(4): Add support for Intel C3000. [msaitoh 20170817]
 	ismt(4): Add support for Intel C3000. [msaitoh 20170817]
-	powerpc: Bump MAXTSIZ to 128MB for OEA based systems [sevan 20170818]
+	powerpc: Bump MAXTSIZ to 128MB for OEA based systems. [sevan 20170818]
 	GMP/MPFR/MPC: Update to 6.1.2, 3.1.5 and 1.0.3. [mrg 20170821]
-	ixg(4), ixv(4): Add C3000 support. Add bypass function 	support for
+	ixg(4), ixv(4): Add C3000 support. Add bypass function support for
 		bypass adapters. [msaitoh 20170830]
 	file(1): Upgraded to 5.32. [christos 20170908]
 	tcpdump(8): Import 4.9.2. [christos 20170908]
-	veriexecgen(8): drop support for MD5, SHA1, RMD160. [sevan 20170909]
+	veriexecgen(8): Drop support for MD5, SHA1, RMD160. [sevan 20170909]
 	itesio(4): Add support IT8728GF and IT877[12]E [hauke 20170814]
-	veriexec(4): drop support for VERIFIED_EXEC_FP_MD5, VERIFIED_EXEC_FP_SHA1,
+	veriexec(4): Drop support for VERIFIED_EXEC_FP_MD5, VERIFIED_EXEC_FP_SHA1,
 		and VERIFIED_EXEC_FP_RMD160 options. [sevan 20170913]
