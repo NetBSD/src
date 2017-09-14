@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.54 2017/07/29 18:08:57 maxv Exp $
+#	$NetBSD: ARMADILLO9,v 1.55 2017/09/14 07:58:40 mrg Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -6,7 +6,7 @@
 include	"arch/evbarm/conf/std.armadillo9"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-options		MSGBUFSIZE=65536
+options 	MSGBUFSIZE=65536
 #options 	KSTACK_CHECK_MAGIC
 
 # estimated number of users
@@ -72,18 +72,11 @@ options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options 	COMPAT_43	# 4.3BSD compatibility.
-options		COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+include 	"conf/compat_netbsd20.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 options 	SYSVMSG		# System V-like message queues

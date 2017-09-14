@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.20 2016/09/20 20:54:22 christos Exp $
+# 	$NetBSD: RAMDISK,v 1.21 2017/09/14 07:58:40 mrg Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -34,6 +34,9 @@ no options	COMPAT_15
 no options	COMPAT_16
 no options	COMPAT_20
 no options	COMPAT_30
+no options	COMPAT_40
+no options	COMPAT_50
+no options	COMPAT_60
 no options	COMPAT_43
 
 no file-system	EXT2FS

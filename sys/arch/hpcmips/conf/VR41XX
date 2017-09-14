@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.68 2016/12/13 20:42:18 christos Exp $
+# $NetBSD: VR41XX,v 1.69 2017/09/14 07:58:41 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -109,12 +109,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43	# 4.3BSD binary compatibility.
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0, and
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd16.config"
 
 options 	NFS_BOOT_DHCP
 
