@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.h,v 1.9 2017/08/30 08:49:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.h,v 1.10 2017/09/14 09:25:58 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -93,6 +93,11 @@
 
 struct ixgbevf_hw_stats {
 	char namebuf[32];
+	struct evcnt ipcs;
+	struct evcnt ipcs_bad;
+	struct evcnt l4cs;
+	struct evcnt l4cs_bad;
+
 	u64 base_vfgprc;
 	u64 base_vfgptc;
 	u64 base_vfgorc;
@@ -116,11 +121,6 @@ struct ixgbevf_hw_stats {
 	u64 saved_reset_vfgorc;
 	u64 saved_reset_vfgotc;
 	u64 saved_reset_vfmprc;
-
-	struct evcnt ipcs;
-	struct evcnt ipcs_bad;
-	struct evcnt l4cs;
-	struct evcnt l4cs_bad;
 };
 
 s32 ixgbe_init_ops_vf(struct ixgbe_hw *hw);
