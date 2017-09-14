@@ -1,10 +1,10 @@
 #
-#	$NetBSD: ARMADAXP,v 1.20 2017/07/29 18:08:57 maxv Exp $
+#	$NetBSD: ARMADAXP,v 1.21 2017/09/14 07:58:40 mrg Exp $
 #
 #	ARMADA XP DEV BOARD
 #
 
-include		"arch/evbarm/conf/std.armadaxp"
+include 	"arch/evbarm/conf/std.armadaxp"
 
 # estimated number of users
 
@@ -83,21 +83,8 @@ options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2,
-#options 	COMPAT_13	# NetBSD 1.3,
-#options 	COMPAT_14	# NetBSD 1.4,
-#options 	COMPAT_15	# NetBSD 1.5,
-#options 	COMPAT_16	# NetBSD 1.6,
-#options 	COMPAT_20	# NetBSD 2.0,
-#options 	COMPAT_30	# NetBSD 3.0,
-#options 	COMPAT_40	# NetBSD 4.0, and
-options 	COMPAT_50	# NetBSD 5.0 binary compatibility.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd50.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Shared memory options
 options 	SYSVMSG		# System V-like message queues

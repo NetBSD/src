@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6 2017/02/26 12:21:15 maya Exp $
+# $NetBSD: GENERIC,v 1.7 2017/09/14 07:58:43 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -71,15 +71,13 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options 	COMPAT_43	# and 4.3BSD
+include 	"conf/compat_netbsd70.config"
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
 #options 	COMPAT_LINUX
 #options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 #options 	EXEC_ELF32
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
@@ -89,7 +87,7 @@ options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 #options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
-include		"conf/filesystems.config"
+include 	"conf/filesystems.config"
 
 # File system options
 options 	QUOTA		# legacy UFS quotas

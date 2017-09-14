@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.234 2017/09/13 22:24:43 sevan Exp $
+# $NetBSD: GENERIC,v 1.235 2017/09/14 07:58:41 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -18,13 +18,13 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/hpcmips/conf/std.hpcmips"
-include		"arch/hpcmips/conf/std.hpcmips.vr41"
-include		"arch/hpcmips/conf/std.hpcmips.tx39"
+include 	"arch/hpcmips/conf/std.hpcmips"
+include 	"arch/hpcmips/conf/std.hpcmips.vr41"
+include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.234 $"
+#ident 		"GENERIC-$Revision: 1.235 $"
 
 maxusers	16
 
@@ -129,16 +129,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43	# 4.3BSD binary compatibility.
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-
+include 	"conf/compat_netbsd16.config"
 
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.128 2017/09/13 22:24:43 sevan Exp $
+# $NetBSD: GENERIC,v 1.129 2017/09/14 07:58:39 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -57,15 +57,7 @@ makeoptions	COPY_SYMTAB=1
 #options 	UVMHIST_PRINT
 
 # Compatibility options
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options 	COMPAT_43	# and 4.3BSD
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd16.config"
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables

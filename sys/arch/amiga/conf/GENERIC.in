@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.135 2017/09/13 22:24:42 sevan Exp $
+# $NetBSD: GENERIC.in,v 1.136 2017/09/14 07:58:39 mrg Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135 $"
+#ident 		"GENERIC-$Revision: 1.136 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -180,20 +180,9 @@ options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
-options 	COMPAT_43	# compatibility with 4.3BSD interfaces
-options 	COMPAT_09	# NetBSD 0.9,
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_12	# NetBSD 1.2,
-options 	COMPAT_13	# NetBSD 1.3,
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+
+include 	"conf/compat_netbsd09.config"
+
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 #options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -202,7 +191,6 @@ options 	COMPAT_NOMID	# allow nonvalid machine id executables
 
 options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 options 	COMPAT_AOUT_M68K # actually make some system calls work.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 #

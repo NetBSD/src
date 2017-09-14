@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96 2017/09/13 22:24:44 sevan Exp $
+# $NetBSD: GENERIC,v 1.97 2017/09/14 07:58:42 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/mvme68k/conf/std.mvme68k"
+include 	"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -47,7 +47,6 @@ options 	M060SP
 
 #options 	SYSVSHM
 options 	KTRACE
-options 	COMPAT_43
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -98,24 +97,10 @@ options 	INET6		# IPV6
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-options 	COMPAT_09	# NetBSD 0.9,
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_12	# NetBSD 1.2,
-options 	COMPAT_13	# NetBSD 1.3,
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs

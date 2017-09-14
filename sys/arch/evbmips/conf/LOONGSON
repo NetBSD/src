@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.34 2017/09/13 22:24:43 sevan Exp $
+# $NetBSD: LOONGSON,v 1.35 2017/09/14 07:58:40 mrg Exp $
 #
 # LOONGSON machine description file
 # 
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/evbmips/conf/std.loongson"
+include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.34 $"
+#ident 		"LOONGSON-$Revision: 1.35 $"
 
 maxusers	16
 
@@ -131,16 +131,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43	# 4.3BSD binary compatibility.
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-
+include 	"conf/compat_netbsd16.config"
 
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP

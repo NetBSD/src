@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL,v 1.45 2017/07/22 20:21:09 christos Exp $
+# 	$NetBSD: INSTALL,v 1.46 2017/09/14 07:58:42 mrg Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
-include		"arch/newsmips/conf/std.newsmips"
+include 	"arch/newsmips/conf/std.newsmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -28,15 +28,7 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Compatibility options
-#options 	COMPAT_43		# compatibility with 4.3BSD binaries
-#options 	COMPAT_13		# NetBSD 1.3,
-options 	COMPAT_14		# NetBSD 1.4,
-options 	COMPAT_15		# NetBSD 1.5,
-options 	COMPAT_16		# NetBSD 1.6,
-options 	COMPAT_20		# NetBSD 2.0,
-options 	COMPAT_30		# NetBSD 3.0, and
-options 	COMPAT_40		# NetBSD 4.0 binary compatibility
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd14.config"
 
 # Filesystems
 file-system	FFS		# Berkeley Fast Filesystem

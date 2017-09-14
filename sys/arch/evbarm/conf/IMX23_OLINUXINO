@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.16 2017/02/19 07:47:00 rin Exp $
+# $Id: IMX23_OLINUXINO,v 1.17 2017/09/14 07:58:40 mrg Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -91,26 +91,26 @@ midi*		at midibus?
 
 ukphy*		at mii? phy ?
 
-options		MEMSIZE=64
-options		DDB
-options		HZ=100
+options 	MEMSIZE=64
+options 	DDB
+options 	HZ=100
 pseudo-device	ksyms
-options		INET		# IP + ICMP + TCP + UDP
-options		INET6		# IPv6
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-options		COMPAT_60	# NetBSD 6.0, and
-options		COMPAT_70	# NetBSD 7.0 binary compatibility.
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPv6
+
+include 	"conf/compat_netbsd60.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 makeoptions     DEBUG="-g"      # compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
-options		SYSVMSG		# System V-like message queues
-options		SYSVSEM		# System V-like semaphores
-options		SYSVSHM		# System V-like memory sharing
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 #options		MODULAR
 #options		MODULAR_DEFAULT_AUTOLOAD
-options		KTRACE
+options 	KTRACE
 #options		DEBUG
 #options		DIAGNOSTIC
 
@@ -125,7 +125,7 @@ file-system	NFS
 
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
-options		WAPBL
+options 	WAPBL
 
 pseudo-device	pty		# pseudo-terminals
 pseudo-device	loop		# network loopback

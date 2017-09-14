@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.40 2015/08/21 01:52:07 uebayasi Exp $
+# $NetBSD: RAWHIDE,v 1.41 2017/09/14 07:58:38 mrg Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -38,16 +38,8 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
-options 	COMPAT_43	# 4.3BSD binary compatibility.
-options 	COMPAT_12	# NetBSD 1.2,
-options 	COMPAT_13	# NetBSD 1.3,
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0, and
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+include 	"conf/compat_netbsd12.config"
 
 options 	SYSVMSG
 options 	SYSVSEM

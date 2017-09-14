@@ -1,6 +1,6 @@
-#	$NetBSD: VME147,v 1.60 2017/07/29 12:28:28 maxv Exp $
+#	$NetBSD: VME147,v 1.61 2017/09/14 07:58:42 mrg Exp $
 
-include		"arch/mvme68k/conf/std.mvme68k"
+include 	"arch/mvme68k/conf/std.mvme68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -16,7 +16,6 @@ maxusers	4
 
 #options 	SYSVSHM
 options 	KTRACE
-options 	COMPAT_43
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -40,21 +39,10 @@ options 	INET
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-options 	COMPAT_09	# NetBSD 0.9,
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_12	# NetBSD 1.2,
-options 	COMPAT_13	# NetBSD 1.3,
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0, and
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
+include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs

@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: LROUTER,v 1.55 2015/08/21 01:52:08 uebayasi Exp $
+# 	$NetBSD: LROUTER,v 1.56 2017/09/14 07:58:41 mrg Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
 #
 
-include		"arch/hpcmips/conf/std.hpcmips"
+include 	"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -98,12 +98,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43	# 4.3BSD binary compatibility.
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0, and
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd16.config"
 
 options 	NFS_BOOT_DHCP
 

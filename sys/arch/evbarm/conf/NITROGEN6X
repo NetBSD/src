@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.12 2017/09/13 22:24:43 sevan Exp $
+# $NetBSD: NITROGEN6X,v 1.13 2017/09/14 07:58:40 mrg Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -75,26 +75,12 @@ makeoptions	COPY_SYMTAB=1
 
 
 # Compatibility options
-options 	COMPAT_NETBSD32 # allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2,
-#options 	COMPAT_13	# NetBSD 1.3,
-#options 	COMPAT_14	# NetBSD 1.4,
-#options 	COMPAT_15	# NetBSD 1.5,
-#options 	COMPAT_16	# NetBSD 1.6,
-#options 	COMPAT_20	# NetBSD 2.0,
-#options 	COMPAT_30	# NetBSD 3.0,
-#options 	COMPAT_40	# NetBSD 4.0,
-#options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+
+include 	"conf/compat_netbsd60.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 #options 	COMPAT_NDIS	# NDIS network driver
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
@@ -219,7 +205,7 @@ imxgpio4	at axi? addr 0x020ac000 irqbase 384 irq 106
 imxgpio5	at axi? addr 0x020b0000 irqbase 416 irq 108
 imxgpio6	at axi? addr 0x020b4000 irqbase 448 irq 110
 gpio*		at imxgpio?
-options		IMX_GPIO_INTR_SPLIT
+options 	IMX_GPIO_INTR_SPLIT
 
 # Clock Control
 imxccm0		at axi? addr 0x020c4000
@@ -243,7 +229,7 @@ imxuart1	at axi? addr 0x021e8000 irq 59		# UART2
 #imxuart2	at axi? addr 0x021ec000 irq 60		# UART3
 #imxuart3	at axi? addr 0x021f0000 irq 61		# UART4
 #imxuart4	at axi? addr 0x021f4000 irq 62		# UART5
-options		IMXUARTCONSOLE
+options 	IMXUARTCONSOLE
 
 # SATA
 ahcisata*	at axi? addr 0x02200000 irq 71
