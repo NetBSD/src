@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2315 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2316 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -27,7 +27,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
  	byacc: Update to 20170430. [christos 20170605]
  	vax: Add support for VAXstation 4000 TURBOchannel. [flxd 20170609]
  	wsbell(4): Added console bell support for all speaker devices, not
- 		only those attached at pcppi. [nat 20170612]
+		only those attached at pcppi. [nat 20170612]
  	bind: Import version 9.10.5-P1. [christos 20170615]
 	dts: Import dts files from Linux 4.11.5. [jmcneill 20170615]
 	amd64: Support 16TB of PA, and 32TB of kernel VA on the architecture
