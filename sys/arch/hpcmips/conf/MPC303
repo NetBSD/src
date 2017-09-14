@@ -1,15 +1,15 @@
 #
-# 	$NetBSD: MPC303,v 1.68 2015/08/21 01:52:08 uebayasi Exp $
+# 	$NetBSD: MPC303,v 1.69 2017/09/14 07:58:41 mrg Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
 #
 
-include		"arch/hpcmips/conf/std.hpcmips"
+include 	"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 maxusers	16
 
@@ -92,12 +92,7 @@ options 	INET6		# IPV6
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43	# 4.3BSD binary compatibility.
-options 	COMPAT_16	# NetBSD 1.6, 
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0, and
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd16.config"
 
 #options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTP
