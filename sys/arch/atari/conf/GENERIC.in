@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.113 2017/07/29 18:08:56 maxv Exp $
+#	$NetBSD: GENERIC.in,v 1.114 2017/09/14 07:58:39 mrg Exp $
 #
 # Generic atari
 #
@@ -154,31 +154,23 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #
 # Compatibility options for various existing systems
 #
-#if !defined(SMALL030_KERNEL)
-options 	COMPAT_43	# 4.3 BSD compatible system calls
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_12	# NetBSD 1.2,
-options 	COMPAT_13	# NetBSD 1.3,
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
+include 	"conf/compat_netbsd10.config"
+#if defined(SMALL030_KERNEL)
+no options 	COMPAT_43	# 4.3 BSD compatible system calls
+no options 	COMPAT_10	# NetBSD 1.0,
+no options 	COMPAT_11	# NetBSD 1.1,
+no options 	COMPAT_12	# NetBSD 1.2,
+no options 	COMPAT_13	# NetBSD 1.3,
+no options 	COMPAT_14	# NetBSD 1.4,
+no options 	COMPAT_15	# NetBSD 1.5,
 #endif /* !SMALL030_KERNEL */
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #if !defined(SMALL030_KERNEL)
-#options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
 options 	EXEC_AOUT	# a.out format executables
 #endif /* !SMALL030_KERNEL */
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #if !defined(SMALL030_KERNEL)
 #
