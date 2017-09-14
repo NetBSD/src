@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.26 2017/08/30 08:49:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.27 2017/09/14 09:25:58 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3799,6 +3799,11 @@ struct ixgbe_fc_info {
 /* Statistics counters collected by the MAC */
 struct ixgbe_hw_stats {
 	char namebuf[32];
+	struct evcnt ipcs;
+	struct evcnt ipcs_bad;
+	struct evcnt l4cs;
+	struct evcnt l4cs_bad;
+
 	struct evcnt crcerrs;
 	struct evcnt illerrc;
 	struct evcnt errbc;
@@ -3878,10 +3883,6 @@ struct ixgbe_hw_stats {
 	struct evcnt o2bspc;
 	struct evcnt legint;	/* legacy interrupts */
 	struct evcnt intzero;	/* no legacy interrupt conditions */
-	struct evcnt ipcs;
-	struct evcnt ipcs_bad;
-	struct evcnt l4cs;
-	struct evcnt l4cs_bad;
 };
 
 /* forward declaration */
