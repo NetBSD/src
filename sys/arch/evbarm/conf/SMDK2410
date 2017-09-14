@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.64 2017/07/29 18:08:57 maxv Exp $
+#	$NetBSD: SMDK2410,v 1.65 2017/09/14 07:58:40 mrg Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -93,23 +93,8 @@ options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2,
-#options 	COMPAT_13	# NetBSD 1.3,
-#options 	COMPAT_14	# NetBSD 1.4,
-#options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd16.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Shared memory options
 
@@ -219,7 +204,7 @@ spkr*	at audio?		# PC speaker (synthesized)
 # on-board CS8900A Ethernet
 cs*	at ssextio? intr 9 addr 0x18000000
 # set MAC address to on-board CS8900A.
-options	SMDK24X0_ETHER_ADDR_FIXED="0,0x0a,0xb1,0,1,0xff"
+options SMDK24X0_ETHER_ADDR_FIXED="0,0x0a,0xb1,0,1,0xff"
 
 # built-in OHCI USB controller
 ohci0	at ssio? addr 0x49000000 intr 26

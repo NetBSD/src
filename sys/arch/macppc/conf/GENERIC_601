@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.14 2017/09/13 22:24:44 sevan Exp $
+# $NetBSD: GENERIC_601,v 1.15 2017/09/14 07:58:42 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,11 +24,11 @@
 #
 # this config more or less matches a Power Macintosh 7200 with a USB card
 
-include		"arch/macppc/conf/std.macppc.601"
+include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.14 $"
+ident 		"GENERIC-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -68,12 +68,10 @@ options		DDB_COMMANDONENTER="bt"
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+include 	"conf/compat_netbsd50.config"
+
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
 options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances

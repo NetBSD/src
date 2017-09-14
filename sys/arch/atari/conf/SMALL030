@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.20 2014/11/24 08:29:26 tsutsui Exp $
+# $NetBSD: SMALL030,v 1.21 2017/09/14 07:58:39 mrg Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.109 2014/11/24 08:23:48 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.113 2017/07/29 18:08:56 maxv Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os" # optimize for space
 maxusers 16
@@ -21,14 +21,14 @@ file-system CD9660 # ISO 9660 filesystem with Rock Ridge
 options WAPBL # File system journaling support
 options FFS_NO_SNAPSHOT # No FFS snapshot support
 options PANICWAIT # Require keystroke to dump/reboot
-options COMPAT_16 # NetBSD 1.6,
-options COMPAT_20 # NetBSD 2.0,
-options COMPAT_30 # NetBSD 3.0,
-options COMPAT_40 # NetBSD 4.0,
-options COMPAT_50 # NetBSD 5.0,
-options COMPAT_60 # NetBSD 6.0, and
-options COMPAT_70 # NetBSD 7.0 binary compatibility.
-options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
+include "conf/compat_netbsd10.config"
+no options COMPAT_43 # 4.3 BSD compatible system calls
+no options COMPAT_10 # NetBSD 1.0,
+no options COMPAT_11 # NetBSD 1.1,
+no options COMPAT_12 # NetBSD 1.2,
+no options COMPAT_13 # NetBSD 1.3,
+no options COMPAT_14 # NetBSD 1.4,
+no options COMPAT_15 # NetBSD 1.5,
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options TT_SCSI # SCSI-support for TT

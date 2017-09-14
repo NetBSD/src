@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.36 2017/07/29 18:08:57 maxv Exp $
+#	$NetBSD: TISDP2420,v 1.37 2017/09/14 07:58:40 mrg Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -76,27 +76,12 @@ options 	NFS_BOOT_DHCP
 #options		NFS_BOOTSTATIC_SERVADDR="\"192.168.1.1\""
 #options		NFS_BOOTSTATIC_SERVER="\"192.168.1.1:/nfs/sdp2430\""
 
-options		NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2,
-#options 	COMPAT_13	# NetBSD 1.3,
-#options 	COMPAT_14	# NetBSD 1.4,
-#options 	COMPAT_15	# NetBSD 1.5,
-#options 	COMPAT_16	# NetBSD 1.6,
-#options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0, and
-options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd30.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Shared memory options
 
@@ -129,7 +114,7 @@ options 	DIAGNOSTIC	# internal consistency checks
 #options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
-options		DDB_ONPANIC=1
+options 	DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -149,7 +134,7 @@ makeoptions	COPY_SYMTAB=1
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
-options		BOOT_ARGS="\"\""
+options 	BOOT_ARGS="\"\""
 
 #options	SPL_STATS	# SPL time stats
 #options	DISINT_STATS	# Interrupt disable stats
@@ -164,7 +149,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=64
+options 	MEMSIZE=64
 
 # L3 Interconnect
 L3i0		at mainbus?
