@@ -13,7 +13,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filesubr.c,v 1.5 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: filesubr.c,v 1.6 2017/09/15 21:03:26 christos Exp $");
 
 /* These functions were moved out of subr.c because they need different
    definitions under operating systems (like, say, Windows NT) with different
@@ -25,6 +25,13 @@ __RCSID("$NetBSD: filesubr.c,v 1.5 2016/05/17 14:00:09 christos Exp $");
 #include "xsize.h"
 
 static int deep_remove_dir (const char *path);
+#ifndef S_ISBLK
+#define S_ISBLK(a) 0
+#endif
+#ifndef S_ISCHR
+#define S_ISCHR(a) 0
+#endif
+#define IS_DEVICE(sbp) (S_ISBLK((sbp)->st_mode) || S_ISCHR((sbp)->st_mode))
 
 /*
  * Copies "from" to "to".
@@ -44,7 +51,7 @@ copy_file (const char *from, const char *to)
 
     /* If the file to be copied is a link or a device, then just create
        the new link or device appropriately. */
-    if ((rsize = islink (from)) > 0)
+    if ((rsize = islink (from, &sb)) > 0)
     {
 	char *source = Xreadlink (from, rsize);
 	if (symlink (source, to) == -1)
@@ -53,11 +60,9 @@ copy_file (const char *from, const char *to)
 	return;
     }
 
-    if (isdevice (from))
+    if (sb.st_ino != -1 && IS_DEVICE (&sb))
     {
 #if defined(HAVE_MKNOD) && defined(HAVE_STRUCT_STAT_ST_RDEV)
-	if (stat (from, &sb) < 0)
-	    error (1, errno, "cannot stat %s", from);
 	mknod (to, sb.st_mode, sb.st_rdev);
 #else
 	error (1, 0, "cannot copy device files on this system (%s)", from);
@@ -136,14 +141,22 @@ isdir (const char *file)
  * Returns size of the link if it is a symbolic link.
  */
 ssize_t
-islink (const char *file)
+islink (const char *file, struct stat *sbp)
 {
     ssize_t retsize = 0;
 #ifdef S_ISLNK
     struct stat sb;
+    if (sbp == NULL)
+	sbp = &sb;
 
-    if ((lstat (file, &sb) >= 0) && S_ISLNK (sb.st_mode))
-	retsize = sb.st_size;
+    if (lstat (file, sbp) < 0) {
+	sbp->st_ino = -1;
+	return 0;
+    }
+    if (S_ISLNK (sbp->st_mode))
+	retsize = sbp->st_size;
+#else
+    sbp->st_ino = -1;
 #endif
     return retsize;
 }
@@ -161,15 +174,7 @@ isdevice (const char *file)
 
     if (lstat (file, &sb) < 0)
 	return false;
-#ifdef S_ISBLK
-    if (S_ISBLK (sb.st_mode))
-	return true;
-#endif
-#ifdef S_ISCHR
-    if (S_ISCHR (sb.st_mode))
-	return true;
-#endif
-    return false;
+    return IS_DEVICE(&sb);
 }
 
 
