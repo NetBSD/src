@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.257 2017/08/22 02:36:48 pgoyette Exp $
+$NetBSD: acronyms,v 1.258 2017/09/15 23:08:11 ginsbach Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -107,6 +107,8 @@ DIAFYO	did I ask for your opinion?
 DIY	do it yourself
 DKDC	don't know, don't care
 DM	dungeon master
+DME	durable medical equipment
+DMEPOS	durable medical equipment, prosthetics, orthotics and supplies
 DMZ	demilitarized zone
 DND	do not disturb
 DNF	did not finish
@@ -203,6 +205,7 @@ HF	have fun
 HHIS	hanging head in shame
 HHOS	ha ha, only serious
 HICA	here it comes again
+HME	home medical equipment
 HNY	happy new year
 HOAS	hold on a second
 HOPS	half-operator status
