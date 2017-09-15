@@ -11,7 +11,7 @@
  * specified in the README file that comes with the CVS source distribution.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vers_ts.c,v 1.2 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: vers_ts.c,v 1.3 2017/09/15 21:03:26 christos Exp $");
 
 #include "cvs.h"
 #include "lstat.h"
@@ -401,19 +401,19 @@ time_t
 unix_time_stamp (const char *file)
 {
     struct stat sb;
-    time_t mtime = 0L;
+    time_t mtime;
+    bool lnk;
 
-    if (!lstat (file, &sb))
-    {
-	mtime = sb.st_mtime;
-    }
+    if (!(lnk = islink (file, &sb)) && sb.st_ino == -1)
+	return 0;
+    mtime = sb.st_mtime;
 
     /* If it's a symlink, return whichever is the newest mtime of
        the link and its target, for safety.
     */
-    if (!stat (file, &sb))
+    if (lnk && stat (file, &sb) != -1)
     {
-        if (mtime < sb.st_mtime)
+	if (mtime < sb.st_mtime)
 	    mtime = sb.st_mtime;
     }
 
