@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.212 2017/09/11 19:25:07 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.213 2017/09/15 13:27:53 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.212 2017/09/11 19:25:07 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.213 2017/09/15 13:27:53 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -855,6 +855,136 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 		}
 	}
 }
+ 
+ /*
+ * Recursively check for a child node.
+ */
+static bool
+has_child_node(int parent, int search)
+{
+	int child;
+
+	for (child = prom_firstchild(parent); child != 0;
+	    child = prom_nextsibling(child)) {
+		if (child == search)
+			return true;
+		if (has_child_node(child, search))
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * The interposed pseudo-parent node in OpenBIOS has a
+ * device_type = "ide" and no "vendor-id".
+ * It is the secondary bus if the name is "ide1".
+ */
+static bool
+openbios_secondary_ata_heuristic(int parent)
+{
+	char tmp[OFPATHLEN];
+
+	if (OF_getprop(parent, "device_type", tmp, sizeof(tmp)) <= 0)
+		return false;
+	if (strcmp(tmp, "ide") != 0)
+		return false;
+	DPRINTF(ACDB_BOOTDEV, ("parent device_type is ide\n"));
+
+	if (OF_getprop(parent, "vendor-id", tmp, sizeof(tmp)) > 0)
+		return false;
+	DPRINTF(ACDB_BOOTDEV, ("parent has no vendor-id\n"));
+
+	if (OF_getprop(parent, "name", tmp, sizeof(tmp)) <= 0)
+		return false;
+	if (strcmp(tmp, "ide1") != 0)
+		return false;
+	DPRINTF(ACDB_BOOTDEV, ("parent seems to be an OpenBIOS"
+	   " secondary ATA bus, applying workaround target+2\n"));
+
+	return true;
+}
+
+/*
+ * Match a device_t against the controller/target/lun/wwn
+ * info passed in from the bootloader (if available),
+ * otherwise fall back to old style string matching
+ * heuristics.
+ */
+static void
+dev_bi_unit_drive_match(device_t dev, int ctrlnode, int target,
+    uint64_t wwn, int lun)
+{
+	static struct btinfo_bootdev_unit *bi_unit = NULL;
+	uint32_t off = 0;
+	static bool passed = false;
+#ifdef DEBUG
+	char ctrl_path[OFPATHLEN], parent_path[OFPATHLEN], dev_path[OFPATHLEN];
+#endif
+
+	if (!passed) {
+		bi_unit = lookup_bootinfo(BTINFO_BOOTDEV_UNIT);
+		passed = true;
+	}
+
+	if (bi_unit == NULL) {
+		dev_path_drive_match(dev, ctrlnode, target, wwn, lun);
+		return;
+	}
+
+#ifdef DEBUG
+	DPRINTF(ACDB_BOOTDEV, ("dev_bi_unit_drive_match: %s, controller %x, "
+	    "target %d wwn %016" PRIx64 " lun %d\n", device_xname(dev),
+	    ctrlnode, target, wwn, lun));
+
+	OF_package_to_path(ctrlnode, ctrl_path, sizeof(ctrl_path));
+	OF_package_to_path(bi_unit->phandle, dev_path, sizeof(dev_path));
+	OF_package_to_path(bi_unit->parent, parent_path, sizeof(parent_path));
+	DPRINTF(ACDB_BOOTDEV, ("controller %x : %s\n", ctrlnode, ctrl_path));
+	DPRINTF(ACDB_BOOTDEV, ("phandle %x : %s\n", bi_unit->phandle, dev_path));
+	DPRINTF(ACDB_BOOTDEV, ("parent %x : %s\n", bi_unit->parent, parent_path));
+#endif
+	if (ctrlnode != bi_unit->parent
+	    && !has_child_node(ctrlnode, bi_unit->phandle)) {
+		DPRINTF(ACDB_BOOTDEV, ("controller %x : %s does not match "
+		    "bootinfo: %x : %s\n",
+		    ctrlnode, ctrl_path, bi_unit->parent, parent_path));
+		return;
+	}
+	if (ctrlnode == bi_unit->parent) {
+		DPRINTF(ACDB_BOOTDEV, ("controller %x : %s is bootinfo"
+		    " parent\n", ctrlnode, ctrl_path));
+	} else {
+		DPRINTF(ACDB_BOOTDEV, ("controller %x : %s is parent of"
+		    " %x : %s\n", ctrlnode, ctrl_path, bi_unit->parent,
+		    parent_path));
+
+		/*
+		 * Our kernel and "real" OpenFirmware use a 0 .. 3 numbering
+		 * scheme for IDE devices, but OpenBIOS splits it into
+		 * two "buses" and numbers each 0..1.
+		 * Check if we are on the secondary "bus" and adjust
+		 * if needed...
+		 */
+		if (openbios_secondary_ata_heuristic(bi_unit->parent))
+			off = 2;
+	}
+
+	if (bi_unit->wwn != wwn || (bi_unit->target+off) != target
+	    || bi_unit->lun != lun) {
+		DPRINTF(ACDB_BOOTDEV, ("mismatch: wwn %016" PRIx64 " - %016" PRIx64
+		    ", target %d - %d, lun %d - %d\n",
+		    bi_unit->wwn, wwn, bi_unit->target, target, bi_unit->lun, lun));
+		return;
+	}
+
+	booted_device = dev;
+	if (ofbootpartition)
+		booted_partition = *ofbootpartition - 'a';
+	DPRINTF(ACDB_BOOTDEV, ("found boot device: %s"
+	    ", partition %d\n", device_xname(dev),
+	    booted_partition));
+}
 
 /*
  * Get the firmware package handle from a device_t.
@@ -971,14 +1101,14 @@ device_register(device_t dev, void *aux)
 				off = 2;
 		}
 		ofnode = device_ofnode(device_parent(busdev));
-		dev_path_drive_match(dev, ofnode, periph->periph_target + off,
+		dev_bi_unit_drive_match(dev, ofnode, periph->periph_target + off,
 		    0, periph->periph_lun);
 		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
 		ofnode = device_ofnode(device_parent(busdev));
-		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
+		dev_bi_unit_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0, 0);
 		return;
 	} else if (device_is_a(dev, "ld")) {
@@ -1319,7 +1449,7 @@ device_register_post_config(device_t dev, void *aux)
 			for (ofnode = OF_child(ofnode);
 			    ofnode != 0 && booted_device == NULL;
 			    ofnode = OF_peer(ofnode)) {
-				dev_path_drive_match(dev, ofnode,
+				dev_bi_unit_drive_match(dev, ofnode,
 				    periph->periph_target,
 				    wwn, periph->periph_lun);
 			}
@@ -1379,7 +1509,7 @@ copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 	uint32_t temp, fboffset;
 	uint32_t fbaddr = 0;
 	int options;
-	char output_device[256];
+	char output_device[OFPATHLEN];
 	char *pos;
 
 	cntrlr = device_parent(busdev);
@@ -1445,7 +1575,7 @@ copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 	options = OF_finddevice("/options");
 	if ((options == 0) || (options == -1))
 		return;
-	if (OF_getprop(options, "output-device", output_device, 256) == 0)
+	if (OF_getprop(options, "output-device", output_device, OFPATHLEN) == 0)
 		return;
 	/* find the mode string if there is one */
 	pos = strstr(output_device, ":r");
