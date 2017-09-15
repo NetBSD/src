@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2017/04/14 10:00:06 roy Exp $
+# $NetBSD: Makefile,v 1.41 2017/09/15 12:02:00 roy Exp $
 #
 
 WARNS?=		6
@@ -33,7 +33,7 @@ SRCS+=		auth.c hmac_md5.c
 CPPFLAGS+=	-DARP -DINET
 SRCS+=		arp.c bpf.c dhcp.c ipv4.c
 .if !defined(SMALLPROG)
-CPPFLAGS+=	-DIPV4LL
+CPPFLAGS+=	-DIPV4LL -DARPING
 SRCS+=		ipv4ll.c
 .endif
 .endif
