@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.15 2015/10/10 06:50:25 martin Exp $	*/
+/*	$NetBSD: Locore.c,v 1.16 2017/09/15 13:25:34 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include "openfirm.h"
 
 #include <machine/cpu.h>
+#include <machine/vmparam.h>
 
 /*
  * We are trying to boot a sparc v9 cpu, so openfirmware has to be 64bit,
@@ -154,6 +155,26 @@ OF_instance_to_path(int ihandle, char *buf, int buflen)
 }
 
 int
+OF_parent(int phandle)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t parent;
+	} args;
+
+	args.name = ADR2CELL("parent");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.parent;
+}
+
+int
 OF_getprop(int handle, const char *prop, void *buf, int buflen)
 {
 	struct {
@@ -206,6 +227,66 @@ OF_setprop(u_int handle, char *prop, void *buf, int len)
 	return args.size;
 }
 #endif
+
+int
+OF_interpret(const char *cmd, int nargs, int nreturns, ...)
+{
+	va_list ap;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t slot[16];
+	} args;
+	cell_t status;
+	int i = 0;
+
+	args.name = ADR2CELL("interpret");
+	args.nargs = ++nargs;
+	args.nreturns = ++nreturns;
+	args.slot[i++] = ADR2CELL(cmd);
+	va_start(ap, nreturns);
+	while (i < nargs) {
+		args.slot[i++] = va_arg(ap, cell_t);
+	}
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
+		return (-1);
+	}
+	status = args.slot[i++];
+	while (i < nargs+nreturns) {
+		*va_arg(ap, cell_t *) = args.slot[i++];
+	}
+	va_end(ap);
+
+	return status;
+}
+
+int
+OF_package_to_path(int phandle, char *buf, int buflen)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t buf;
+		cell_t buflen;
+		cell_t length;
+	} args;
+
+	if (buflen > PAGE_SIZE)
+		return -1;
+	args.name = ADR2CELL("package-to-path");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	args.buf = ADR2CELL(buf);
+	args.buflen = buflen;
+	if (openfirmware(&args) < 0)
+		return -1;
+	return args.length;
+}
 
 int
 OF_open(const char *dname)

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.34 2016/08/31 16:24:34 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.35 2017/09/15 13:25:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -284,6 +284,9 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw,
 	bi_add(&bi_kend, BTINFO_KERNEND, sizeof(bi_kend));
 	bi_howto.boothowto = boothowto;
 	bi_add(&bi_howto, BTINFO_BOOTHOWTO, sizeof(bi_howto));
+	if (bootinfo_pass_bootunit)
+		bi_add(&bi_unit, BTINFO_BOOTDEV_UNIT,
+		    sizeof(bi_unit));
 	if (bootinfo_pass_bootdev) {
 		struct {
 			struct btinfo_common common;

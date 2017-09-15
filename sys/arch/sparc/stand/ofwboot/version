@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.22 2017/03/25 09:22:02 martin Exp $
+$NetBSD: version,v 1.23 2017/09/15 13:25:34 martin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -23,3 +23,4 @@ is taken as the current.
 1.17:	Add support for sun4v architecture
 1.18:	Fix loading of kernels with huge .bss
 1.19:	Support booting from virtio devices
+1.20:	Provide more boot device details
