@@ -14,7 +14,7 @@
  * manipulation
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rcs.c,v 1.6 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: rcs.c,v 1.7 2017/09/15 21:03:26 christos Exp $");
 
 #include "cvs.h"
 #include "edit.h"
@@ -4549,7 +4549,7 @@ workfile);
 	    {
 		/* Symbolic links should be removed before replacement, so that
 		   `fopen' doesn't follow the link and open the wrong file. */
-		if (islink (sout))
+		if (islink (sout, NULL))
 		    if (unlink_file (sout) < 0)
 			error (1, errno, "cannot remove %s", sout);
 		ofp = CVS_FOPEN (sout, expand == KFLAG_B ? "wb" : "w");
@@ -4561,7 +4561,7 @@ workfile);
 	{
 	    /* Output is supposed to go to WORKFILE, so we should open that
 	       file.  Symbolic links should be removed first (see above). */
-	    if (islink (workfile))
+	    if (islink (workfile, NULL))
 		if (unlink_file (workfile) < 0)
 		    error (1, errno, "cannot remove %s", workfile);
 

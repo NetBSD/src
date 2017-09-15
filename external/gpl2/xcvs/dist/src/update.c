@@ -38,7 +38,7 @@
  * as well.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: update.c,v 1.11 2017/01/04 16:11:20 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.12 2017/09/15 21:03:26 christos Exp $");
 
 #include "cvs.h"
 #include <assert.h>
@@ -2678,12 +2678,12 @@ special_file_mismatch (struct file_info *finfo, char *rev1, char *rev2)
     {
 	ssize_t rsize;
 
-	if ((rsize = islink (finfo->file)) > 0)
+	if ((rsize = islink (finfo->file, &sb)) > 0)
 	    rev1_symlink = Xreadlink (finfo->file, rsize);
 	else
 	{
 # ifdef HAVE_STRUCT_STAT_ST_RDEV
-	    if (lstat (finfo->file, &sb) < 0)
+	    if (sb.st_ino == -1)
 		error (1, errno, "could not get file information for %s",
 		       finfo->file);
 	    rev1_uid = sb.st_uid;
@@ -2758,12 +2758,12 @@ special_file_mismatch (struct file_info *finfo, char *rev1, char *rev2)
     {
 	ssize_t rsize;
 
-	if ((rsize = islink (finfo->file)) > 0)
+	if ((rsize = islink (finfo->file, &sb)) > 0)
 	    rev2_symlink = Xreadlink (finfo->file, rsize);
 	else
 	{
 # ifdef HAVE_STRUCT_STAT_ST_RDEV
-	    if (lstat (finfo->file, &sb) < 0)
+	    if (sb.st_ino == -1)
 		error (1, errno, "could not get file information for %s",
 		       finfo->file);
 	    rev2_uid = sb.st_uid;

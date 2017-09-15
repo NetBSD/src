@@ -21,7 +21,7 @@
  * Additional arguments specify more Vendor Release Tags.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: import.c,v 1.7 2016/05/30 17:49:51 christos Exp $");
+__RCSID("$NetBSD: import.c,v 1.8 2017/09/15 21:03:26 christos Exp $");
 
 #include "cvs.h"
 #include "lstat.h"
@@ -520,9 +520,9 @@ import_descend (char *message, char *vtag, int targc, char **targv)
 	    else if (
 #ifdef DT_DIR
 		     dp->d_type == DT_LNK
-		     || (dp->d_type == DT_UNKNOWN && islink (dp->d_name))
+		     || (dp->d_type == DT_UNKNOWN && islink (dp->d_name, NULL))
 #else
-		     islink (dp->d_name)
+		     islink (dp->d_name, NULL)
 #endif
 		     )
 	    {
@@ -1722,7 +1722,7 @@ import_descend_dir (char *message, char *dir, char *vtag, int targc,
     int ierrno, err;
     char *rcs = NULL;
 
-    if (islink (dir))
+    if (islink (dir, NULL))
 	return 0;
     if (save_cwd (&cwd))
     {

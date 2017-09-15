@@ -21,7 +21,7 @@
  * repository (and optionally the attic)
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: find_names.c,v 1.3 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: find_names.c,v 1.4 2017/09/15 21:03:26 christos Exp $");
 
 #include "cvs.h"
 #include <glob.h>
@@ -494,7 +494,7 @@ find_dirs (char *dir, List *list, int checkadm, List *entries)
 #endif
 		/* Note that we only get here if we already set tmp
 		   above.  */
-		if (islink (tmp))
+		if (islink (tmp, NULL))
 		    goto do_it_again;
 #ifdef DT_DIR
 	    }

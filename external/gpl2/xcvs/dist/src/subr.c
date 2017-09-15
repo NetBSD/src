@@ -13,7 +13,7 @@
  * Various useful functions for the CVS support code.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: subr.c,v 1.4 2016/05/30 17:49:51 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.5 2017/09/15 21:03:26 christos Exp $");
 
 #include "cvs.h"
 
@@ -719,7 +719,7 @@ resolve_symlink (char **filename)
     if (filename == NULL || *filename == NULL)
 	return;
 
-    while ((rsize = islink (*filename)) > 0)
+    while ((rsize = islink (*filename, NULL)) > 0)
     {
 #ifdef HAVE_READLINK
 	/* The clean thing to do is probably to have each filesubr.c

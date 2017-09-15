@@ -516,7 +516,7 @@ typedef	RETSIGTYPE (*SIGCLEANUPPROC)	(int);
 int SIG_register (int sig, SIGCLEANUPPROC sigcleanup);
 bool isdir (const char *file);
 bool isfile (const char *file);
-ssize_t islink (const char *file);
+ssize_t islink (const char *file, struct stat *stp);
 bool isdevice (const char *file);
 bool isreadable (const char *file);
 bool iswritable (const char *file);
