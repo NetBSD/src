@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.10 2014/02/20 14:50:39 joerg Exp $	*/
+/*	$NetBSD: boot.h,v 1.11 2017/09/15 13:25:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@ void	loadfile_set_allocator(int);
 void	freeall(void);
 
 /* ofdev.c */
+extern struct btinfo_bootdev_unit bi_unit;
+extern bool bootinfo_pass_bootunit;
+
 char *filename(char *, char *);
 
 /* boot.c */
