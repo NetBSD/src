@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_ki2c.c,v 1.8 2011/12/13 08:16:40 riastradh Exp $ */
+/*	$NetBSD: dbcool_ki2c.c,v 1.9 2017/09/15 21:31:25 macallan Exp $ */
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.8 2011/12/13 08:16:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.9 2017/09/15 21:31:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ dbcool_ki2c_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	sc->sc_dc.dc_tag = ka->ka_tag;
-	sc->sc_dc.dc_addr = ka->ka_addr & 0xfe;
+	sc->sc_dc.dc_addr = ka->ka_addr & 0x7f;
 	sc->sc_dc.dc_readreg = dbcool_ki2c_readreg;
 	sc->sc_dc.dc_writereg = dbcool_ki2c_writereg;
 
