@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.5 2011/05/21 15:50:42 tsutsui Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.6 2017/09/15 13:25:34 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,4 +70,5 @@ vaddr_t	OF_map_phys(paddr_t, off_t, vaddr_t, int);
 paddr_t	OF_alloc_phys(int, int);
 paddr_t	OF_claim_phys(paddr_t, int);
 int	OF_free_phys(paddr_t, int);
+int	OF_interpret(const char *, int, int, ...);
 void	OF_initialize(void);
