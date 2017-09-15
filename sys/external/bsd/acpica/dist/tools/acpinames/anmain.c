@@ -301,5 +301,6 @@ AnDumpEntireNamespace (
     Status = AcpiGetHandle (NULL, "\\_GPE", &Handle);
     ACPI_CHECK_OK (AcpiGetHandle, Status);
 
+    AcDeleteTableList (ListHead);
     return (0);
 }

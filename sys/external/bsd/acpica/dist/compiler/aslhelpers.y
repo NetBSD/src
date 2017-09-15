@@ -52,11 +52,11 @@ NoEcho('
  ******************************************************************************/
 
 OptionalBusMasterKeyword
-    : ','                                   {$$ = TrCreateLeafNode (
+    : ','                                   {$$ = TrCreateLeafOp (
                                                 PARSEOP_BUSMASTERTYPE_MASTER);}
-    | ',' PARSEOP_BUSMASTERTYPE_MASTER      {$$ = TrCreateLeafNode (
+    | ',' PARSEOP_BUSMASTERTYPE_MASTER      {$$ = TrCreateLeafOp (
                                                 PARSEOP_BUSMASTERTYPE_MASTER);}
-    | ',' PARSEOP_BUSMASTERTYPE_NOTMASTER   {$$ = TrCreateLeafNode (
+    | ',' PARSEOP_BUSMASTERTYPE_NOTMASTER   {$$ = TrCreateLeafOp (
                                                 PARSEOP_BUSMASTERTYPE_NOTMASTER);}
     ;
 
@@ -68,9 +68,9 @@ OptionalAccessAttribTerm
     ;
 
 OptionalAccessSize
-    :                               {$$ = TrCreateValuedLeafNode (
+    :                               {$$ = TrCreateValuedLeafOp (
                                         PARSEOP_BYTECONST, 0);}
-    | ','                           {$$ = TrCreateValuedLeafNode (
+    | ','                           {$$ = TrCreateValuedLeafOp (
                                         PARSEOP_BYTECONST, 0);}
     | ',' ByteConstExpr             {$$ = $2;}
     ;
@@ -135,10 +135,10 @@ OptionalIoRestriction
     ;
 
 OptionalListString
-    :                               {$$ = TrCreateValuedLeafNode (
+    :                               {$$ = TrCreateValuedLeafOp (
                                         PARSEOP_STRING_LITERAL,
                                         ACPI_TO_INTEGER (""));}   /* Placeholder is a NULL string */
-    | ','                           {$$ = TrCreateValuedLeafNode (
+    | ','                           {$$ = TrCreateValuedLeafOp (
                                         PARSEOP_STRING_LITERAL,
                                         ACPI_TO_INTEGER (""));}   /* Placeholder is a NULL string */
     | ',' TermArg                   {$$ = $2;}
@@ -172,13 +172,13 @@ OptionalNameString_Last
     ;
 
 OptionalNameString_First
-    :                               {$$ = TrCreateLeafNode (
+    :                               {$$ = TrCreateLeafOp (
                                         PARSEOP_ZERO);}
     | NameString                    {$$ = $1;}
     ;
 
 OptionalObjectTypeKeyword
-    :                               {$$ = TrCreateLeafNode (
+    :                               {$$ = TrCreateLeafOp (
                                         PARSEOP_OBJECTTYPE_UNK);}
     | ',' ObjectTypeKeyword         {$$ = $2;}
     ;
@@ -200,25 +200,34 @@ OptionalRangeType
     ;
 
 OptionalReadWriteKeyword
-    :                                   {$$ = TrCreateLeafNode (
+    :                                   {$$ = TrCreateLeafOp (
                                             PARSEOP_READWRITETYPE_BOTH);}
-    | PARSEOP_READWRITETYPE_BOTH        {$$ = TrCreateLeafNode (
+    | PARSEOP_READWRITETYPE_BOTH        {$$ = TrCreateLeafOp (
                                             PARSEOP_READWRITETYPE_BOTH);}
-    | PARSEOP_READWRITETYPE_READONLY    {$$ = TrCreateLeafNode (
+    | PARSEOP_READWRITETYPE_READONLY    {$$ = TrCreateLeafOp (
                                             PARSEOP_READWRITETYPE_READONLY);}
     ;
 
 OptionalResourceType_First
-    :                               {$$ = TrCreateLeafNode (
+    :                               {$$ = TrCreateLeafOp (
                                         PARSEOP_RESOURCETYPE_CONSUMER);}
     | ResourceTypeKeyword           {$$ = $1;}
     ;
 
 OptionalResourceType
-    :                               {$$ = TrCreateLeafNode (
+    :                               {$$ = TrCreateLeafOp (
                                         PARSEOP_RESOURCETYPE_CONSUMER);}
-    | ','                           {$$ = TrCreateLeafNode (
+    | ','                           {$$ = TrCreateLeafOp (
                                         PARSEOP_RESOURCETYPE_CONSUMER);}
+    | ',' ResourceTypeKeyword       {$$ = $2;}
+    ;
+
+/* Same as above except default is producer */
+OptionalProducerResourceType
+    :                               {$$ = TrCreateLeafOp (
+                                        PARSEOP_RESOURCETYPE_PRODUCER);}
+    | ','                           {$$ = TrCreateLeafOp (
+                                        PARSEOP_RESOURCETYPE_PRODUCER);}
     | ',' ResourceTypeKeyword       {$$ = $2;}
     ;
 
@@ -278,9 +287,9 @@ OptionalWordConstExpr
     ;
 
 OptionalXferSize
-    :                               {$$ = TrCreateValuedLeafNode (
+    :                               {$$ = TrCreateValuedLeafOp (
                                         PARSEOP_XFERSIZE_32, 2);}
-    | ','                           {$$ = TrCreateValuedLeafNode (
+    | ','                           {$$ = TrCreateValuedLeafOp (
                                         PARSEOP_XFERSIZE_32, 2);}
     | ',' XferSizeKeyword           {$$ = $2;}
     ;

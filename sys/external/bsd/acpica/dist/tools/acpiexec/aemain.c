@@ -467,7 +467,9 @@ main (
 
 
     ACPI_DEBUG_INITIALIZE (); /* For debug version only */
-    signal (SIGINT, AeCtrlCHandler);
+
+    signal (SIGINT, AeSignalHandler);
+    signal (SIGSEGV, AeSignalHandler);
 
     /* Init debug globals */
 
@@ -487,11 +489,6 @@ main (
     {
         goto ErrorExit;
     }
-
-    /* ACPICA runtime configuration */
-
-    AcpiGbl_MaxLoopIterations = 400;
-
 
     /* Initialize the AML debugger */
 
@@ -682,5 +679,6 @@ NormalExit:
 
 ErrorExit:
     (void) AcpiOsTerminate ();
+    AcDeleteTableList (ListHead);
     return (ExitCode);
 }

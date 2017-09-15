@@ -100,11 +100,16 @@ AcpiDmInspectPossibleArgs (
     ACPI_PARSE_OBJECT       *Op);
 
 static ACPI_STATUS
-AcpiDmResourceDescendingOp (
+AcpiDmCommonDescendingOp (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Level,
     void                    *Context);
 
+static ACPI_STATUS
+AcpiDmProcessResourceDescriptors (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  Level,
+    void                    *Context);
 
 /*******************************************************************************
  *
@@ -287,21 +292,21 @@ AcpiDmCrossReferenceNamespace (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiDmConvertResourceIndexes
+ * FUNCTION:    AcpiDmConvertParseObjects
  *
  * PARAMETERS:  ParseTreeRoot       - Root of the parse tree
  *              NamespaceRoot       - Root of the internal namespace
  *
  * RETURN:      None
  *
- * DESCRIPTION: Convert fixed-offset references to resource descriptors to
- *              symbolic references. Should only be called after namespace has
- *              been cross referenced.
+ * DESCRIPTION: Begin parse tree walk to perform conversions needed for
+ *              disassembly. These include resource descriptors and switch/case
+ *              operations.
  *
  ******************************************************************************/
 
 void
-AcpiDmConvertResourceIndexes (
+AcpiDmConvertParseObjects (
     ACPI_PARSE_OBJECT       *ParseTreeRoot,
     ACPI_NAMESPACE_NODE     *NamespaceRoot)
 {
@@ -335,9 +340,14 @@ AcpiDmConvertResourceIndexes (
     Info.Level = 0;
     Info.WalkState = WalkState;
 
-    AcpiDmWalkParseTree (ParseTreeRoot, AcpiDmResourceDescendingOp,
+    AcpiDmWalkParseTree (ParseTreeRoot, AcpiDmCommonDescendingOp,
         AcpiDmCommonAscendingOp, &Info);
     ACPI_FREE (WalkState);
+
+    if (AcpiGbl_TempListHead) {
+        AcpiDmClearTempList();
+    }
+
     return;
 }
 
@@ -418,10 +428,19 @@ AcpiDmDumpDescending (
     case AML_NAME_OP:
     case AML_METHOD_OP:
     case AML_DEVICE_OP:
+
+        AcpiOsPrintf ("%4.4s",
+            ACPI_CAST_PTR (char, &Op->Named.Name));
+        break;
+
     case AML_INT_NAMEDFIELD_OP:
 
-        AcpiOsPrintf ("%4.4s", ACPI_CAST_PTR (char, &Op->Named.Name));
+        AcpiOsPrintf ("%4.4s Length: (bits) %8.8X%8.8X (bytes) %8.8X%8.8X",
+            ACPI_CAST_PTR (char, &Op->Named.Name),
+            ACPI_FORMAT_UINT64 (Op->Common.Value.Integer),
+            ACPI_FORMAT_UINT64 (Op->Common.Value.Integer / 8));
         break;
+
 
     default:
 
@@ -629,7 +648,6 @@ AcpiDmLoadDescendingOp (
 
     WalkState = Info->WalkState;
     OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
-    ObjectType = OpInfo->ObjectType;
     ObjectType = AslMapNamedOpcodeToDataType (Op->Asl.AmlOpcode);
 
     /* Only interested in operators that create new names */
@@ -646,7 +664,7 @@ AcpiDmLoadDescendingOp (
     {
         /* For all named operators, get the new name */
 
-        Path = (char *) Op->Named.Path;
+        Path = Op->Named.Path;
 
         if (!Path && Op->Common.AmlOpcode == AML_INT_NAMEDFIELD_OP)
         {
@@ -767,7 +785,6 @@ AcpiDmXrefDescendingOp (
 
     WalkState = Info->WalkState;
     OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
-    ObjectType = OpInfo->ObjectType;
     ObjectType = AslMapNamedOpcodeToDataType (Op->Asl.AmlOpcode);
 
     if ((!(OpInfo->Flags & AML_NAMED)) &&
@@ -775,25 +792,6 @@ AcpiDmXrefDescendingOp (
         (Op->Common.AmlOpcode != AML_INT_NAMEPATH_OP) &&
         (Op->Common.AmlOpcode != AML_NOTIFY_OP))
     {
-        goto Exit;
-    }
-    else if (Op->Common.Parent &&
-             Op->Common.Parent->Common.AmlOpcode == AML_EXTERNAL_OP)
-    {
-        /* External() NamePath */
-
-        Path = Op->Common.Value.String;
-        ObjectType = (ACPI_OBJECT_TYPE) Op->Common.Next->Common.Value.Integer;
-        if (ObjectType == ACPI_TYPE_METHOD)
-        {
-            ParamCount = (UINT32)
-                Op->Common.Next->Common.Next->Common.Value.Integer;
-        }
-
-        Flags |= ACPI_EXT_RESOLVED_REFERENCE | ACPI_EXT_ORIGIN_FROM_OPCODE;
-        AcpiDmAddOpToExternalList (Op, Path,
-            (UINT8) ObjectType, ParamCount, Flags);
-
         goto Exit;
     }
 
@@ -816,9 +814,10 @@ AcpiDmXrefDescendingOp (
                 Path = NextOp->Common.Value.String;
             }
         }
-        else if (Op->Common.AmlOpcode == AML_SCOPE_OP)
+        else if (Op->Common.AmlOpcode == AML_SCOPE_OP ||
+                 Op->Common.AmlOpcode == AML_EXTERNAL_OP)
         {
-            Path = (char *) Op->Named.Path;
+            Path = Op->Named.Path;
         }
     }
     else if (OpInfo->Flags & AML_CREATE)
@@ -952,21 +951,58 @@ Exit:
     return (AE_OK);
 }
 
-
 /*******************************************************************************
  *
- * FUNCTION:    AcpiDmResourceDescendingOp
+ * FUNCTION:    AcpiDmCommonDescendingOp
  *
  * PARAMETERS:  ASL_WALK_CALLBACK
  *
- * RETURN:      None
+ * RETURN:      ACPI_STATUS
  *
- * DESCRIPTION: Process one parse op during symbolic resource index conversion.
+ * DESCRIPTION: Perform parse tree preprocessing before main disassembly walk.
  *
  ******************************************************************************/
 
 static ACPI_STATUS
-AcpiDmResourceDescendingOp (
+AcpiDmCommonDescendingOp (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  Level,
+    void                    *Context)
+{
+    ACPI_STATUS             Status;
+
+
+    /* Resource descriptor conversion */
+
+    Status = AcpiDmProcessResourceDescriptors (Op, Level, Context);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    /* Switch/Case conversion */
+
+    Status = AcpiDmProcessSwitch (Op);
+    return (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmProcessResourceDescriptors
+ *
+ * PARAMETERS:  ASL_WALK_CALLBACK
+ *
+ * RETURN:      ACPI_STATUS
+ *
+ * DESCRIPTION: Convert fixed-offset references to resource descriptors to
+ *              symbolic references. Should only be called after namespace has
+ *              been cross referenced.
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AcpiDmProcessResourceDescriptors (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Level,
     void                    *Context)
@@ -1006,7 +1042,6 @@ AcpiDmResourceDescendingOp (
     return (AE_OK);
 }
 
-
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDmCommonAscendingOp
@@ -1027,14 +1062,11 @@ AcpiDmCommonAscendingOp (
     void                    *Context)
 {
     ACPI_OP_WALK_INFO       *Info = Context;
-    const ACPI_OPCODE_INFO  *OpInfo;
     ACPI_OBJECT_TYPE        ObjectType;
 
 
     /* Close scope if necessary */
 
-    OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
-    ObjectType = OpInfo->ObjectType;
     ObjectType = AslMapNamedOpcodeToDataType (Op->Asl.AmlOpcode);
 
     if (AcpiNsOpensScope (ObjectType))
@@ -1044,7 +1076,6 @@ AcpiDmCommonAscendingOp (
 
     return (AE_OK);
 }
-
 
 /*******************************************************************************
  *

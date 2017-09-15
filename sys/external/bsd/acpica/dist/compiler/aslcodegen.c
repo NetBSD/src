@@ -183,6 +183,8 @@ CgAmlWriteWalk (
         /* 19 */ Op->Asl.LogicalLineNumber,
         /* 20 */ Op->Asl.EndLogicalLine);
 
+    TrPrintOpFlags (Op->Asl.CompileFlags, ASL_TREE_OUTPUT);
+    DbgPrint (ASL_TREE_OUTPUT, "\n");
     return (AE_OK);
 }
 
@@ -330,7 +332,7 @@ CgWriteAmlOpcode (
 
     /* Does this opcode have an associated "PackageLength" field? */
 
-    if (Op->Asl.CompileFlags & NODE_AML_PACKAGE)
+    if (Op->Asl.CompileFlags & OP_AML_PACKAGE)
     {
         if (Op->Asl.AmlPkgLenBytes == 1)
         {

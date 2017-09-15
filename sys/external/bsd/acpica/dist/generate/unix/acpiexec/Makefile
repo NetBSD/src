@@ -42,6 +42,7 @@ OBJECTS = \
 	$(OBJDIR)/acgetline.o\
 	$(OBJDIR)/acfileio.o\
 	$(OBJDIR)/aeexec.o\
+	$(OBJDIR)/aeexception.o\
 	$(OBJDIR)/aehandlers.o\
 	$(OBJDIR)/aeinitfile.o\
 	$(OBJDIR)/aemain.o\
@@ -84,6 +85,7 @@ OBJECTS = \
 	$(OBJDIR)/dsmthdat.o\
 	$(OBJDIR)/dsobject.o\
 	$(OBJDIR)/dsopcode.o\
+	$(OBJDIR)/dspkginit.o\
 	$(OBJDIR)/dsutils.o\
 	$(OBJDIR)/dswexec.o\
 	$(OBJDIR)/dswload.o\
@@ -224,9 +226,11 @@ OBJECTS = \
 	$(OBJDIR)/utownerid.o\
 	$(OBJDIR)/utnonansi.o\
 	$(OBJDIR)/utpredef.o\
+	$(OBJDIR)/utresdecode.o\
 	$(OBJDIR)/utresrc.o\
 	$(OBJDIR)/utstate.o\
 	$(OBJDIR)/utstring.o\
+	$(OBJDIR)/utstrsuppt.o\
 	$(OBJDIR)/utstrtoul64.o\
 	$(OBJDIR)/uttrack.o\
 	$(OBJDIR)/utuuid.o\
