@@ -82,7 +82,7 @@ DtError (
 
     /* Check if user wants to ignore this exception */
 
-    if (AslIsExceptionDisabled (Level, MessageId))
+    if (AslIsExceptionIgnored (Level, MessageId))
     {
         return;
     }
@@ -195,6 +195,38 @@ DtFatal (
 }
 
 
+/*******************************************************************************
+ *
+ * FUNCTION:    DtDoConstant
+ *
+ * PARAMETERS:  String              - Only hex constants are supported,
+ *                                    regardless of whether the 0x prefix
+ *                                    is used
+ *
+ * RETURN:      Converted Integer
+ *
+ * DESCRIPTION: Convert a string to an integer, with overflow/error checking.
+ *
+ ******************************************************************************/
+
+UINT64
+DtDoConstant (
+    char                    *String)
+{
+    UINT64                  ConvertedInteger;
+
+
+    /*
+     * TBD: The ImplicitStrtoul64 function does not report overflow
+     * conditions. The input string is simply truncated. If it is
+     * desired to report overflow to the table compiler, this should
+     * somehow be added here. Note: integers that are prefixed with 0x
+     * or not are both hex integers.
+     */
+    ConvertedInteger = AcpiUtImplicitStrtoul64 (String);
+    return (ConvertedInteger);
+}
+
 /******************************************************************************
  *
  * FUNCTION:    DtGetFieldValue
@@ -263,6 +295,11 @@ DtGetFieldType (
     case ACPI_DMT_FLAGS1:
     case ACPI_DMT_FLAGS2:
     case ACPI_DMT_FLAGS4:
+    case ACPI_DMT_FLAGS4_0:
+    case ACPI_DMT_FLAGS4_4:
+    case ACPI_DMT_FLAGS4_8:
+    case ACPI_DMT_FLAGS4_12:
+    case ACPI_DMT_FLAGS16_16:
 
         Type = DT_FIELD_TYPE_FLAG;
         break;
@@ -404,6 +441,11 @@ DtGetFieldLength (
     case ACPI_DMT_FLAGS1:
     case ACPI_DMT_FLAGS2:
     case ACPI_DMT_FLAGS4:
+    case ACPI_DMT_FLAGS4_0:
+    case ACPI_DMT_FLAGS4_4:
+    case ACPI_DMT_FLAGS4_8:
+    case ACPI_DMT_FLAGS4_12:
+    case ACPI_DMT_FLAGS16_16:
     case ACPI_DMT_LABEL:
     case ACPI_DMT_EXTRA_TEXT:
 
@@ -419,6 +461,7 @@ DtGetFieldLength (
     case ACPI_DMT_MADT:
     case ACPI_DMT_PCCT:
     case ACPI_DMT_PMTT:
+    case ACPI_DMT_PPTT:
     case ACPI_DMT_SRAT:
     case ACPI_DMT_ASF:
     case ACPI_DMT_HESTNTYP:
@@ -435,6 +478,7 @@ DtGetFieldLength (
     case ACPI_DMT_UINT16:
     case ACPI_DMT_DMAR:
     case ACPI_DMT_HEST:
+    case ACPI_DMT_HMAT:
     case ACPI_DMT_NFIT:
     case ACPI_DMT_PCI_PATH:
 

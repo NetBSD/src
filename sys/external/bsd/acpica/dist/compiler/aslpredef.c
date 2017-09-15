@@ -558,7 +558,7 @@ ApCheckForSpecialName (
     {
         /* Ignore if actually emitted by the compiler */
 
-        if (Op->Asl.CompileFlags & NODE_COMPILER_EMITTED)
+        if (Op->Asl.CompileFlags & OP_COMPILER_EMITTED)
         {
             return (ACPI_NOT_RESERVED_NAME);
         }

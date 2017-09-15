@@ -80,6 +80,7 @@ struct stat             Gbl_StatBuf;
 char                    *Gbl_FileBuffer;
 UINT32                  Gbl_FileSize;
 UINT32                  Gbl_FileType;
+BOOLEAN                 Gbl_CheckAscii = FALSE;
 BOOLEAN                 Gbl_VerboseMode = FALSE;
 BOOLEAN                 Gbl_QuietMode = FALSE;
 BOOLEAN                 Gbl_BatchMode = FALSE;
@@ -93,7 +94,7 @@ BOOLEAN                 Gbl_Cleanup = FALSE;
 BOOLEAN                 Gbl_IgnoreTranslationEscapes = FALSE;
 
 #define AS_UTILITY_NAME             "ACPI Source Code Conversion Utility"
-#define AS_SUPPORTED_OPTIONS        "cdhilqsuv^y"
+#define AS_SUPPORTED_OPTIONS        "acdhilqsuv^y"
 
 
 /******************************************************************************
@@ -253,6 +254,7 @@ AsDisplayUsage (
 
     ACPI_USAGE_HEADER ("acpisrc [-c|l|u] [-dsvy] <SourceDir> <DestinationDir>");
 
+    ACPI_OPTION ("-a <file>",   "Check entire file for non-printable characters");
     ACPI_OPTION ("-c",          "Generate cleaned version of the source");
     ACPI_OPTION ("-h",          "Insert dual-license header into all modules");
     ACPI_OPTION ("-i",          "Cleanup macro indentation");
@@ -397,6 +399,11 @@ main (
         Gbl_QuietMode = TRUE;
         break;
 
+    case 'a':
+
+        Gbl_CheckAscii = TRUE;
+        break;
+
     default:
 
         AsDisplayUsage ();
@@ -410,6 +417,14 @@ main (
         printf ("Missing source path\n");
         AsDisplayUsage ();
         return (-1);
+    }
+
+    /* This option checks the entire file for printable ascii chars */
+
+    if (Gbl_CheckAscii)
+    {
+        AsProcessOneFile (NULL, NULL, NULL, 0, SourcePath, FILE_TYPE_SOURCE);
+        return (0);
     }
 
     TargetPath = argv[AcpiGbl_Optind+1];
@@ -450,6 +465,13 @@ main (
     }
     else
     {
+        if (Gbl_CheckAscii)
+        {
+            AsProcessOneFile (NULL, NULL, NULL, 0,
+                SourcePath, FILE_TYPE_SOURCE);
+            return (0);
+        }
+
         /* Process a single file */
 
         /* Differentiate between source and header files */
