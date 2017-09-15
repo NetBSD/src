@@ -87,7 +87,7 @@ AslDoError (
     void)
 {
 
-    return (TrCreateLeafNode (PARSEOP_ERRORNODE));
+    return (TrCreateLeafOp (PARSEOP_ERRORNODE));
 }
 
 

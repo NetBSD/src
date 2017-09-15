@@ -99,6 +99,9 @@ main (
     int                     ReturnStatus = 0;
 
 
+    signal (SIGINT, AslSignalHandler);
+    signal (SIGSEGV, AslSignalHandler);
+
     /*
      * Big-endian machines are not currently supported. ACPI tables must
      * be little-endian, and support for big-endian machines needs to
@@ -116,7 +119,6 @@ main (
 
     /* Initialize preprocessor and compiler before command line processing */
 
-    signal (SIGINT, AslSignalHandler);
     AcpiGbl_ExternalFileList = NULL;
     AcpiDbgLevel = 0;
     PrInitializePreprocessor ();
@@ -145,6 +147,7 @@ main (
             Index1++;
         }
     }
+
 
     /* Process each pathname/filename in the list, with possible wildcards */
 
@@ -193,8 +196,10 @@ CleanupAndExit:
  *
  * RETURN:      None
  *
- * DESCRIPTION: Control-C handler. Delete any intermediate files and any
- *              output files that may be left in an indeterminate state.
+ * DESCRIPTION: Signal interrupt handler. Delete any intermediate files and
+ *              any output files that may be left in an indeterminate state.
+ *              Currently handles SIGINT (control-c) and SIGSEGV (segmentation
+ *              fault).
  *
  *****************************************************************************/
 
@@ -206,11 +211,34 @@ AslSignalHandler (
 
 
     signal (Sig, SIG_IGN);
-    printf ("Aborting\n\n");
+    fflush (stdout);
+    fflush (stderr);
 
-    /* Close all open files */
+    switch (Sig)
+    {
+    case SIGINT:
 
-    Gbl_Files[ASL_FILE_PREPROCESSOR].Handle = NULL; /* the .pre file is same as source file */
+        printf ("\n" ASL_PREFIX "<Control-C>\n");
+        break;
+
+    case SIGSEGV:
+
+        /* Even on a seg fault, we will try to delete any partial files */
+
+        printf (ASL_PREFIX "Segmentation Fault\n");
+        break;
+
+    default:
+
+        printf (ASL_PREFIX "Unknown interrupt signal (%u), ignoring\n", Sig);
+        return;
+    }
+
+    /*
+     * Close all open files
+     * Note: the .pre file is the same as the input source file
+     */
+    Gbl_Files[ASL_FILE_PREPROCESSOR].Handle = NULL;
 
     for (i = ASL_FILE_INPUT; i < ASL_MAX_FILE_TYPE; i++)
     {
@@ -224,6 +252,7 @@ AslSignalHandler (
         FlDeleteFile (i);
     }
 
+    printf (ASL_PREFIX "Terminating\n");
     exit (0);
 }
 
@@ -249,11 +278,11 @@ AslInitialize (
 
     AcpiGbl_DmOpt_Verbose = FALSE;
 
-    /* Default integer width is 64 bits */
+    /* Default integer width is 32 bits */
 
-    AcpiGbl_IntegerBitWidth = 64;
-    AcpiGbl_IntegerNybbleWidth = 16;
-    AcpiGbl_IntegerByteWidth = 8;
+    AcpiGbl_IntegerBitWidth = 32;
+    AcpiGbl_IntegerNybbleWidth = 8;
+    AcpiGbl_IntegerByteWidth = 4;
 
     for (i = 0; i < ASL_NUM_FILES; i++)
     {

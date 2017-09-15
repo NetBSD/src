@@ -94,7 +94,7 @@ ExDoExternal (
 
     /* Create new list node of arbitrary type */
 
-    ListOp = TrAllocateNode (PARSEOP_DEFAULT_ARG);
+    ListOp = TrAllocateOp (PARSEOP_DEFAULT_ARG);
 
     /* Store External node as child */
 
@@ -158,7 +158,7 @@ ExInsertArgCount (
 
         /* Skip if External node already handled */
 
-        if (Next->Asl.Child->Asl.CompileFlags & NODE_VISITED)
+        if (Next->Asl.Child->Asl.CompileFlags & OP_VISITED)
         {
             Next = Next->Asl.Next;
             continue;
@@ -174,7 +174,7 @@ ExInsertArgCount (
             continue;
         }
 
-        Next->Asl.Child->Asl.CompileFlags |= NODE_VISITED;
+        Next->Asl.Child->Asl.CompileFlags |= OP_VISITED;
 
         /*
          * Since we will reposition Externals to the Root, set Namepath
@@ -327,6 +327,7 @@ ExMoveExternals (
     ACPI_PARSE_OBJECT       *Next;
     char                    *ExternalName;
     ACPI_OBJECT_TYPE        ObjType;
+    ACPI_STATUS             Status;
     UINT32                  i;
 
 
@@ -365,8 +366,16 @@ ExMoveExternals (
         {
             Next->Asl.ParseOpcode = PARSEOP_NAMESTRING;
         }
+
         Next->Asl.ExternalName = ExternalName;
-        UtInternalizeName (ExternalName, &Next->Asl.Value.String);
+        Status = UtInternalizeName (ExternalName, &Next->Asl.Value.String);
+        if (ACPI_FAILURE (Status))
+        {
+            AslError (ASL_ERROR, ASL_MSG_COMPILER_INTERNAL,
+                Next, "Could not internalize namestring");
+            return;
+        }
+
         Next->Asl.AmlLength = strlen (Next->Asl.Value.String);
 
         Next = Next->Asl.Next;
@@ -427,7 +436,7 @@ ExMoveExternals (
             Next->Asl.Child->Asl.Next->Asl.Value.Integer;
 
         if (ObjType == ACPI_TYPE_METHOD &&
-            !(Next->Asl.CompileFlags & NODE_VISITED))
+            !(Next->Asl.CompileFlags & OP_VISITED))
         {
             if (Next == Prev)
             {
@@ -461,12 +470,12 @@ ExMoveExternals (
 
     Gbl_ExternalsListHead->Asl.ParseOpcode = PARSEOP_IF;
     Gbl_ExternalsListHead->Asl.AmlOpcode = AML_IF_OP;
-    Gbl_ExternalsListHead->Asl.CompileFlags = NODE_AML_PACKAGE;
+    Gbl_ExternalsListHead->Asl.CompileFlags = OP_AML_PACKAGE;
     UtSetParseOpName (Gbl_ExternalsListHead);
 
     /* Create a Zero op for the If predicate */
 
-    PredicateOp = TrAllocateNode (PARSEOP_ZERO);
+    PredicateOp = TrAllocateOp (PARSEOP_ZERO);
     PredicateOp->Asl.AmlOpcode = AML_ZERO_OP;
 
     PredicateOp->Asl.Parent = Gbl_ExternalsListHead;
