@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1297 2017/08/17 01:05:22 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1298 2017/09/15 14:24:32 hikaru Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3264,6 +3264,7 @@ product INTEL C3K_SMBUS_LEGACY	0x19df	C3000 Legacy SMBus
 product INTEL C3K_SPI		0x19e0	C3000 SPI
 product INTEL C3K_TRACE		0x19e1	C3000 Trace Hub
 product INTEL C3K_QAT		0x19e2	C3000 QAT
+product INTEL C3K_QAT_VF	0x19e3	C3000 QAT Virtual Function
 product INTEL C3K_IE_HECI_1	0x19e5	C3000 IE HECI 1
 product INTEL C3K_IE_HECI_2	0x19e6	C3000 IE HECI 2
 product INTEL C3K_IE_KT		0x19e8	C3000 IE KT
@@ -4087,6 +4088,8 @@ product INTEL E7520_PCIE_B1	0x3598	E7520 PCI Express Port B1
 product INTEL E7520_PCIE_C	0x3599	E7520 PCI Express Port C
 product INTEL E7520_PCIE_C1	0x359a	E7520 PCI Express Port C1
 product INTEL E7520_CFG		0x359b	E7520 Extended Configuration
+product INTEL C620_QAT		0x37c8	C620 QAT
+product INTEL C620_QAT_VF	0x37c9	C620 QAT Virtual Function
 product INTEL 82801JD_SATA_IDE	0x3a00	82801JD SATA Controller (IDE mode)
 product INTEL 82801JD_SATA_AHCI	0x3a02	82801JD SATA Controller (AHCI mode)
 product INTEL 82801JD_SATA_RAID	0x3a05	82801JD SATA Controller (RAID mode)
@@ -4341,6 +4344,8 @@ product INTEL XEOND_QD_1	0x6f50	Xeon-D QuickData DMA Channel 0
 product INTEL XEOND_QD_2	0x6f51	Xeon-D QuickData DMA Channel 1
 product INTEL XEOND_QD_3	0x6f52	Xeon-D QuickData DMA Channel 2
 product INTEL XEOND_QD_4	0x6f53	Xeon-D QuickData DMA Channel 3
+product INTEL XEOND_QAT		0x6f54	Xeon-D QAT
+product INTEL XEOND_QAT_VF	0x6f55	Xeon-D QAT Virtual Function
 product INTEL COREI76K_IMC_0	0x6f68	Core i7-6xxxK IMC
 product INTEL XEOND_HA0_DEBUG	0x6f70	Xeon-D Home Agent 0 Debug
 product INTEL XEOND_MEM_0_TTR_0	0x6f71	Core i7-6xxxK/Xeon-D Memory Controller (Target Address, Thermal, RAS)
