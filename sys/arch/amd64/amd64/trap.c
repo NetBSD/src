@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2017/09/03 09:19:51 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 2017/09/15 17:22:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2017/09/03 09:19:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2017/09/15 17:22:09 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -230,7 +230,7 @@ nmitrap(struct trapframe *frame)
  * Such traps can be triggered when the kernel fails to return to userland,
  * because of incorrect segment registers.
  */
-#ifndef Xen
+#ifndef XEN
 static void trap_user_kernelmode(struct trapframe *, int, lwp_t *, proc_t *);
 
 static void
