@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.39 2016/12/22 14:47:58 cherry Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.40 2017/09/15 21:27:46 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.39 2016/12/22 14:47:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.40 2017/09/15 21:27:46 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -551,7 +551,13 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 		goto rec;
 	if (type == RANGE_TYPE_ISA && strcmp("isa", tmp) != 0)
 		goto rec;
-	len = OF_getprop(node, "ranges", map, sizeof(map));
+	if (type == RANGE_TYPE_MACIO && strcmp("memory-controller", tmp) == 0) {
+		len = OF_getprop(node, "reg", map, sizeof(map));
+		acells = 1;
+		scells = 1;
+	} else {
+		len = OF_getprop(node, "ranges", map, sizeof(map));
+	}
 	if (len == -1)
 		goto rec;
 	if (OF_getprop(OF_parent(node), "#address-cells", &parent_acells,
@@ -612,6 +618,12 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 				    map[i*reclen + acells + scells];
 				(*cur)++;
 			}
+			break;
+		case RANGE_TYPE_MACIO:
+			regions[*cur].type = RANGE_MEM;
+			regions[*cur].size = map[1];
+			regions[*cur].addr = map[0];
+			(*cur)++;		
 			break;
 	}
 	DPRINTF("returning with CUR=%d\n", *cur);
@@ -764,7 +776,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		    holes[i].size, holes[i].type);
 	/* AT THIS POINT WE MAP IT */
 
-	if (rangetype == RANGE_TYPE_PCI) {
+	if ((rangetype == RANGE_TYPE_PCI) || (rangetype == RANGE_TYPE_MACIO)) {
 		if (exmap == EXSTORAGE_MAX)
 			panic("Not enough ex_storage space. "
 			    "Increase EXSTORAGE_MAX");
