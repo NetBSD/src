@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.64 2017/09/15 04:52:32 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.65 2017/09/15 08:31:32 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -203,13 +203,6 @@ TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 /* Legacy Transmit (single queue) */
 static int ixv_enable_legacy_tx = 0;
 TUNABLE_INT("hw.ixv.enable_legacy_tx", &ixv_enable_legacy_tx);
-
-/*
- * Shadow VFTA table, this is needed because
- * the real filter table gets cleared during
- * a soft reset and we need to repopulate it.
- */
-static u32 ixv_shadow_vfta[IXGBE_VFTA_SIZE];
 
 #ifdef NET_MPSAFE
 #define IXGBE_MPSAFE		1
@@ -1713,7 +1706,9 @@ ixv_initialize_receive_units(struct adapter *adapter)
 static void
 ixv_setup_vlan_support(struct adapter *adapter)
 {
+	struct ethercom *ec = &adapter->osdep.ec;
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct rx_ring  *rxr;
 	u32		ctrl, vid, vfta, retry;
 
 	/*
@@ -1722,29 +1717,35 @@ ixv_setup_vlan_support(struct adapter *adapter)
 	 * the VFTA and other state, so if there
 	 * have been no vlan's registered do nothing.
 	 */
-	if (!VLAN_ATTACHED(&adapter->osdep.ec))
+	if (!VLAN_ATTACHED(ec))
 		return;
 
 	/* Enable the queues */
 	for (int i = 0; i < adapter->num_queues; i++) {
-		ctrl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i));
+		rxr = &adapter->rx_rings[i];
+		ctrl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(rxr->me));
 		ctrl |= IXGBE_RXDCTL_VME;
-		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), ctrl);
+		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(rxr->me), ctrl);
 		/*
 		 * Let Rx path know that it needs to store VLAN tag
 		 * as part of extra mbuf info.
 		 */
-		adapter->rx_rings[i].vtag_strip = TRUE;
+		rxr->vtag_strip = TRUE;
 	}
 
+#if 1
+	/* XXX dirty hack. Enable all VIDs */
+	for (int i = 0; i < IXGBE_VFTA_SIZE; i++)
+	  adapter->shadow_vfta[i] = 0xffffffff;
+#endif
 	/*
 	 * A soft reset zero's out the VFTA, so
 	 * we need to repopulate it now.
 	 */
 	for (int i = 0; i < IXGBE_VFTA_SIZE; i++) {
-		if (ixv_shadow_vfta[i] == 0)
+		if (adapter->shadow_vfta[i] == 0)
 			continue;
-		vfta = ixv_shadow_vfta[i];
+		vfta = adapter->shadow_vfta[i];
 		/*
 		 * Reconstruct the vlan id's
 		 * based on the bits set in each
@@ -1788,7 +1789,7 @@ ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	ixv_shadow_vfta[index] |= (1 << bit);
+	adapter->shadow_vfta[index] |= (1 << bit);
 	/* Re-init to load the changes */
 	ixv_init_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
@@ -1815,7 +1816,7 @@ ixv_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	ixv_shadow_vfta[index] &= ~(1 << bit);
+	adapter->shadow_vfta[index] &= ~(1 << bit);
 	/* Re-init to load the changes */
 	ixv_init_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
@@ -2413,6 +2414,9 @@ ixv_ifflags_cb(struct ethercom *ec)
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		rc = ENETRESET;
+
+	/* Set up VLAN support and filter */
+	ixv_setup_vlan_support(adapter);
 
 	IXGBE_CORE_UNLOCK(adapter);
 
