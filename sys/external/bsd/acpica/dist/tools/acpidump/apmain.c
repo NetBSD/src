@@ -123,8 +123,7 @@ ApDisplayUsage (
     ACPI_OPTION ("-c <on|off>",             "Turning on/off customized table dumping");
     ACPI_OPTION ("-f <BinaryFile>",         "Get table via a binary file");
     ACPI_OPTION ("-n <Signature>",          "Get table via a name/signature");
-    ACPI_OPTION ("-x",                      "Do not use but dump XSDT");
-    ACPI_OPTION ("-x -x",                   "Do not use or dump XSDT");
+    ACPI_OPTION ("-x",                      "Use RSDT instead of XSDT");
 
     ACPI_USAGE_TEXT (
         "\n"
@@ -236,8 +235,7 @@ ApDoOptions (
 
     case 'r':   /* Dump tables from specified RSDP */
 
-        Status = AcpiUtStrtoul64 (AcpiGbl_Optarg, ACPI_STRTOUL_64BIT,
-            &Gbl_RsdpBase);
+        Status = AcpiUtStrtoul64 (AcpiGbl_Optarg, &Gbl_RsdpBase);
         if (ACPI_FAILURE (Status))
         {
             fprintf (stderr, "%s: Could not convert to a physical address\n",
@@ -333,7 +331,7 @@ ApDoOptions (
  *
  ******************************************************************************/
 
-#ifndef _GNU_EFI
+#if !defined(_GNU_EFI) && !defined(_EDK2_EFI)
 int ACPI_SYSTEM_XFACE
 main (
     int                     argc,
