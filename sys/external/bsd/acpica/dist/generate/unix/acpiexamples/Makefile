@@ -47,6 +47,7 @@ OBJECTS = \
 	$(OBJDIR)/dsmthdat.o\
 	$(OBJDIR)/dsobject.o\
 	$(OBJDIR)/dsopcode.o\
+	$(OBJDIR)/dspkginit.o\
 	$(OBJDIR)/dsutils.o\
 	$(OBJDIR)/dswexec.o\
 	$(OBJDIR)/dswload.o\
@@ -156,6 +157,7 @@ OBJECTS = \
 	$(OBJDIR)/utresrc.o\
 	$(OBJDIR)/utstate.o\
 	$(OBJDIR)/utstring.o\
+	$(OBJDIR)/utstrsuppt.o\
 	$(OBJDIR)/utstrtoul64.o\
 	$(OBJDIR)/utxface.o\
 	$(OBJDIR)/utxferror.o\
