@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.63 2017/09/13 04:50:50 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.64 2017/09/15 04:52:32 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -193,11 +193,11 @@ TUNABLE_INT("hw.ixv.tx_process_limit", &ixv_tx_process_limit);
  * setting higher than RX as this seems
  * the better performing choice.
  */
-static int ixv_txd = DEFAULT_TXD;
+static int ixv_txd = PERFORM_TXD;
 TUNABLE_INT("hw.ixv.txd", &ixv_txd);
 
 /* Number of RX descriptors per ring */
-static int ixv_rxd = DEFAULT_RXD;
+static int ixv_rxd = PERFORM_RXD;
 TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 
 /* Legacy Transmit (single queue) */
