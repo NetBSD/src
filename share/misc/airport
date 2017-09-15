@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.66 2017/06/04 10:58:28 mbalmer Exp $
+#	$NetBSD: airport,v 1.67 2017/09/15 19:20:11 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -1424,7 +1424,7 @@ CNY:Moab (Canyonlands Field), UT, USA
 CNZ:Cangamba, Angola
 COA:Columbia Airport, CA, USA
 COB:Coolibah, Northern Territory, Australia
-COC:Concordia (Comodoro Pierres), Argentina
+COC:Concordia (Comodoro Pierrestegui), Entre Rios, Argentina
 COD:Cody (Yellowstone Regional Airport), WY, USA
 COE:Coeur d'Alene Terminal, ID, USA
 COF:Cocoa Beach (Patrick Air Force), FL, USA
