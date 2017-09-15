@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.20 2017/09/05 17:21:09 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.21 2017/09/15 21:34:42 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -45,8 +45,8 @@
 
 int ki2c_match(device_t, cfdata_t, void *);
 void ki2c_attach(device_t, device_t, void *);
-inline u_int ki2c_readreg(struct ki2c_softc *, int);
-inline void ki2c_writereg(struct ki2c_softc *, int, u_int);
+inline uint8_t ki2c_readreg(struct ki2c_softc *, int);
+inline void ki2c_writereg(struct ki2c_softc *, int, uint8_t);
 u_int ki2c_getmode(struct ki2c_softc *);
 void ki2c_setmode(struct ki2c_softc *, u_int);
 u_int ki2c_getspeed(struct ki2c_softc *);
@@ -95,6 +95,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	u_int reg[20];
 
 	sc->sc_dev = self;
+	sc->sc_tag = ca->ca_tag;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
 	if (OF_getprop(node, "AAPL,i2c-rate", &rate, 4) != 4) {
@@ -105,7 +106,11 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": unable to find i2c address\n");
 		return;
 	}
-	sc->sc_reg = mapiodev(addr, PAGE_SIZE, false);
+	if (bus_space_map(sc->sc_tag, addr, PAGE_SIZE, 0, &sc->sc_bh) != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to map registers\n");
+		return;
+	}
+
 	if (OF_getprop(node, "AAPL,address-step", &sc->sc_regstep, 4) != 4) {
 		aprint_error(": unable to find i2c address step\n");
 		return;
@@ -200,21 +205,18 @@ ki2c_print(void *aux, const char *ki2c)
 	return UNCONF;
 }
 
-u_int
+uint8_t
 ki2c_readreg(struct ki2c_softc *sc, int reg)
 {
-	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
-	return *addr;
+	return bus_space_read_1(sc->sc_tag, sc->sc_bh, sc->sc_regstep * reg);
 }
 
 void
-ki2c_writereg(struct ki2c_softc *sc, int reg, u_int val)
+ki2c_writereg(struct ki2c_softc *sc, int reg, uint8_t val)
 {
-	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
-
-	*addr = val;
-	__asm volatile ("eieio");
+	
+	bus_space_write_1(sc->sc_tag, sc->sc_bh, reg * sc->sc_regstep, val);
 	delay(10);
 }
 
