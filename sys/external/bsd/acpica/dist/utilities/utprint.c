@@ -222,7 +222,7 @@ AcpiUtScanNumber (
 
     while (isdigit ((int) *String))
     {
-        Number *= 10;
+        AcpiUtShortMultiply (Number, 10, &Number);
         Number += *(String++) - '0';
     }
 
@@ -354,7 +354,7 @@ AcpiUtFormatNumber (
     /* Generate full string in reverse order */
 
     Pos = AcpiUtPutNumber (ReversedString, Number, Base, Upper);
-    i = ACPI_PTR_DIFF (Pos, ReversedString);
+    i = (INT32) ACPI_PTR_DIFF (Pos, ReversedString);
 
     /* Printing 100 using %2d gives "100", not "00" */
 
@@ -588,7 +588,7 @@ vsnprintf (
             {
                 s = "<NULL>";
             }
-            Length = AcpiUtBoundStringLength (s, Precision);
+            Length = (INT32) AcpiUtBoundStringLength (s, Precision);
             if (!(Type & ACPI_FORMAT_LEFT))
             {
                 while (Length < Width--)
@@ -708,7 +708,7 @@ vsnprintf (
         }
     }
 
-    return (ACPI_PTR_DIFF (Pos, String));
+    return ((int) ACPI_PTR_DIFF (Pos, String));
 }
 
 
