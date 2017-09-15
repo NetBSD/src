@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.15 $
+ *       $Revision: 1.16 $
  *
  *****************************************************************************/
 
@@ -70,6 +70,7 @@
 #define asm         __asm
 
 #define ACPI_USE_NATIVE_DIVIDE
+#define ACPI_USE_NATIVE_MATH64
 
 #define ACPI_ASM_MACROS         /* tell acenv.h */
 
@@ -132,5 +133,6 @@
 /* Always use NetBSD code over our local versions */
 #define ACPI_USE_SYSTEM_CLIBRARY
 #define ACPI_USE_NATIVE_DIVIDE
+#define ACPI_USE_NATIVE_MATH64
 
 #endif /* __ACNETBSD_H__ */
