@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2017/04/30 23:18:07 christos Exp $
+# $NetBSD: Makefile,v 1.15 2017/09/15 17:17:25 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -58,6 +58,7 @@ SRCS+= \
 	asloperands.c \
 	aslopt.c \
 	asloptions.c \
+	aslparseop.c \
 	aslpld.c \
 	aslpredef.c \
 	aslprepkg.c \
@@ -115,6 +116,7 @@ SRCS+= \
 	cmfsize.c \
 	dmextern.c \
 	dmrestag.c \
+	dmswitch.c \
 	dmtable.c \
 	dmtables.c \
 	dmtbdump.c \
@@ -145,6 +147,7 @@ SRCS+= \
 	dsfield.c \
 	dsobject.c \
 	dsopcode.c \
+	dspkginit.c \
 	dsutils.c \
 	dswexec.c \
 	dswload.c \
@@ -237,9 +240,11 @@ SRCS+= \
 	utosi.c \
 	utownerid.c \
 	utpredef.c \
+	utresdecode.c \
 	utresrc.c \
 	utstate.c \
 	utstring.c \
+	utstrsuppt.c \
 	utstrtoul64.c \
 	utuuid.c \
 	utxface.c \
