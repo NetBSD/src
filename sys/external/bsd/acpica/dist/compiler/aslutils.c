@@ -66,6 +66,12 @@ UtAttachNameseg (
     ACPI_PARSE_OBJECT       *Op,
     char                    *Name);
 
+static void
+UtReallocLineBuffers (
+    char                    **Buffer,
+    UINT32                  OldSize,
+    UINT32                  NewSize);
+
 
 /*******************************************************************************
  *
@@ -547,7 +553,7 @@ UtCheckIntegerRange (
  *
  * PARAMETERS:  Length              - Size of buffer requested
  *
- * RETURN:      Pointer to the buffer. Aborts on allocation failure
+ * RETURN:      Pointer to the buffer. Aborts compiler on allocation failure
  *
  * DESCRIPTION: Allocate a string buffer. Bypass the local
  *              dynamic memory manager for performance reasons (This has a
@@ -645,43 +651,48 @@ UtExpandLineBuffers (
             Gbl_LineBufferSize, NewSize);
     }
 
-    Gbl_CurrentLineBuffer = realloc (Gbl_CurrentLineBuffer, NewSize);
+    UtReallocLineBuffers (&Gbl_CurrentLineBuffer, Gbl_LineBufferSize, NewSize);
+    UtReallocLineBuffers (&Gbl_MainTokenBuffer, Gbl_LineBufferSize, NewSize);
+    UtReallocLineBuffers (&Gbl_MacroTokenBuffer, Gbl_LineBufferSize, NewSize);
+    UtReallocLineBuffers (&Gbl_ExpressionTokenBuffer, Gbl_LineBufferSize, NewSize);
+
     Gbl_LineBufPtr = Gbl_CurrentLineBuffer;
-    if (!Gbl_CurrentLineBuffer)
-    {
-        goto ErrorExit;
-    }
-
-    Gbl_MainTokenBuffer = realloc (Gbl_MainTokenBuffer, NewSize);
-    if (!Gbl_MainTokenBuffer)
-    {
-        goto ErrorExit;
-    }
-
-    Gbl_MacroTokenBuffer = realloc (Gbl_MacroTokenBuffer, NewSize);
-    if (!Gbl_MacroTokenBuffer)
-    {
-        goto ErrorExit;
-    }
-
-    Gbl_ExpressionTokenBuffer = realloc (Gbl_ExpressionTokenBuffer, NewSize);
-    if (!Gbl_ExpressionTokenBuffer)
-    {
-        goto ErrorExit;
-    }
-
     Gbl_LineBufferSize = NewSize;
-    return;
+}
 
 
-    /* On error above, simply issue error messages and abort, cannot continue */
+/******************************************************************************
+ *
+ * FUNCTION:    UtReallocLineBuffers
+ *
+ * PARAMETERS:  Buffer              - Buffer to realloc
+ *              OldSize             - Old size of Buffer
+ *              NewSize             - New size of Buffer
+ *
+ * RETURN:      none
+ *
+ * DESCRIPTION: Reallocate and initialize Buffer
+ *
+ *****************************************************************************/
 
-ErrorExit:
+static void
+UtReallocLineBuffers (
+    char                    **Buffer,
+    UINT32                  OldSize,
+    UINT32                  NewSize)
+{
+
+    *Buffer = realloc (*Buffer, NewSize);
+    if (*Buffer)
+    {
+        memset (*Buffer + OldSize, 0, NewSize - OldSize);
+        return;
+    }
+
     printf ("Could not increase line buffer size from %u to %u\n",
-        Gbl_LineBufferSize, Gbl_LineBufferSize * 2);
+        OldSize, NewSize);
 
-    AslError (ASL_ERROR, ASL_MSG_BUFFER_ALLOCATION,
-        NULL, NULL);
+    AslError (ASL_ERROR, ASL_MSG_BUFFER_ALLOCATION, NULL, NULL);
     AslAbort ();
 }
 
@@ -745,10 +756,6 @@ UtInternalizeName (
     /* We need a segment to store the internal name */
 
     Info.InternalName = UtStringCacheCalloc (Info.Length);
-    if (!Info.InternalName)
-    {
-        return (AE_NO_MEMORY);
-    }
 
     /* Build the name */
 
@@ -909,11 +916,11 @@ UtAttachNamepathToOwner (
  *
  * FUNCTION:    UtDoConstant
  *
- * PARAMETERS:  String              - Hexadecimal or decimal string
+ * PARAMETERS:  String              - Hex/Decimal/Octal
  *
  * RETURN:      Converted Integer
  *
- * DESCRIPTION: Convert a string to an integer, with error checking.
+ * DESCRIPTION: Convert a string to an integer, with overflow/error checking.
  *
  ******************************************************************************/
 
@@ -922,17 +929,20 @@ UtDoConstant (
     char                    *String)
 {
     ACPI_STATUS             Status;
-    UINT64                  Converted;
+    UINT64                  ConvertedInteger;
     char                    ErrBuf[64];
 
 
-    Status = AcpiUtStrtoul64 (String, ACPI_STRTOUL_64BIT, &Converted);
+    Status = AcpiUtStrtoul64 (String, &ConvertedInteger);
     if (ACPI_FAILURE (Status))
     {
-        snprintf (ErrBuf, sizeof(ErrBuf), "%s %s\n", "Conversion error:",
+        snprintf (ErrBuf, sizeof(ErrBuf), "While creating 64-bit constant: %s\n",
             AcpiFormatException (Status));
-        AslCompilererror (ErrBuf);
+
+        AslCommonError (ASL_ERROR, ASL_MSG_SYNTAX, Gbl_CurrentLineNumber,
+            Gbl_LogicalLineNumber, Gbl_CurrentLineOffset,
+            Gbl_CurrentColumn, Gbl_Files[ASL_FILE_INPUT].Filename, ErrBuf);
     }
 
-    return (Converted);
+    return (ConvertedInteger);
 }
