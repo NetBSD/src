@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.10 2017/09/03 08:52:18 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.11 2017/09/15 17:32:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.10 2017/09/03 08:52:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.11 2017/09/15 17:32:12 maxv Exp $");
 #endif
 
 /*
@@ -385,9 +385,9 @@ NENTRY(check_swapgs)
 	je	1b
 
 	/* Case 2: fault on iretq? */
-	movq	TF_RIP(%rsp),%rax
-	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
-	jne	5f			/* Jump if not */
+	leaq	do_iret(%rip),%rdi
+	cmpq	%rdi,TF_RIP(%rsp)
+	jne	5f
 	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
 	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
 	je	2b			/* jump if iret was to kernel  */
@@ -395,6 +395,7 @@ NENTRY(check_swapgs)
 5:
 
 	/* Case 3: move to %gs? */
+	movq	TF_RIP(%rsp),%rax
 	movw	(%rax),%ax
 	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
 	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
