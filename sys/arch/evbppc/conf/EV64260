@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.69 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: EV64260,v 1.70 2017/09/15 03:07:55 christos Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -63,7 +63,7 @@ makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 makeoptions	DEBUG="-g"
 
 # Compatibility options
-include 	"arch/evbppc/conf/compat_netbsd16.config"
+include 	"conf/compat_netbsd16.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # File systems
