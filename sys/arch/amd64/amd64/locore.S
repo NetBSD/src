@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.128 2017/08/31 10:30:58 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.129 2017/09/15 17:32:12 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -329,6 +329,7 @@
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
 	.globl	do_sysret
+	.globl	do_iret
 
 	.type	_C_LABEL(tablesize), @object
 _C_LABEL(tablesize):	.long	TABLESIZE
@@ -1304,12 +1305,19 @@ do_syscall:
 	jne	spl_error
 #endif
 
+	/*
+	 * If the syscall might have modified some registers, or we are a 32bit
+	 * process we must return to user with an 'iret' instruction.
+	 * If the iret faults in kernel (assumed due to illegal register values)
+	 * then a SIGSEGV will be signalled.
+	 */
 	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
 	INTR_RESTORE_GPRS
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
 	SWAPGS
-	jnz	2f
+	jnz	.Lkexit
+
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
@@ -1321,16 +1329,6 @@ do_sysret:
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
 #endif
-
-/*
- * If the syscall might have modified some registers, or we are a 32bit
- * process we must return to user with an 'iret' instruction.
- * If the iret faults in kernel (assumed due to illegal register values)
- * then a SIGSEGV will be signalled.
- */
-2:
-	addq	$TF_RIP,%rsp
-	iretq
 
 #ifdef DIAGNOSTIC
 	/* Report SPL error */
@@ -1441,7 +1439,6 @@ END(sse2_idlezero_page)
  *
  * Zero a page without polluting the cache.
  */
-
 ENTRY(pagezero)
 	movq	$-PAGE_SIZE,%rdx
 	subq	%rdx,%rdi
@@ -1460,3 +1457,21 @@ ENTRY(pagezero)
 	sfence
 	ret
 END(pagezero)
+
+ENTRY(intrfastexit)
+	INTR_RESTORE_GPRS
+	testq	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
+	jz	.Lkexit
+
+	/* Disable interrupts until the 'iret', user registers loaded. */
+	NOT_XEN(cli;)
+	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
+	SWAPGS
+
+.Lkexit:
+	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */
+do_iret:
+	iretq
+END(intrfastexit)
+
