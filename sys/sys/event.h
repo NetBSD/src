@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.30 2017/07/01 20:08:56 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.31 2017/09/16 23:54:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -203,6 +203,15 @@ struct knote {
 #define	KN_MARKER	0x10U			/* is a marker */
 #define	KN_BUSY		0x20U			/* is being scanned */
 /* Toggling KN_BUSY also requires kn_kq->kq_fdp->fd_lock. */
+#define __KN_FLAG_BITS \
+    "\20" \
+    "\1ACTIVE" \
+    "\2QUEUED" \
+    "\3DISABLED" \
+    "\4DETACHED" \
+    "\5MARKER" \
+    "\6BUSY"
+
 
 #define	kn_id		kn_kevent.ident
 #define	kn_filter	kn_kevent.filter
