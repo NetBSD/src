@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.15 2017/01/26 04:11:56 christos Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.16 2017/09/16 23:54:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,14 +47,14 @@
 typedef	struct lockops {
 	const char	*lo_name;
 	int		lo_type;
-	void		(*lo_dump)(volatile void *);
+	void		(*lo_dump)(const volatile void *);
 } lockops_t;
 
 #define	LOCKDEBUG_ABORT(f, ln, l, o, m) \
     lockdebug_abort(f, ln, l, o, m)
 
-void	lockdebug_abort(const char *, size_t, volatile void *, lockops_t *,
-    const char *);
+void	lockdebug_abort(const char *, size_t, const volatile void *,
+    lockops_t *, const char *);
 
 void	lockdebug_lock_print(void *, void (*)(const char *, ...)
     __printflike(1, 2));
@@ -64,8 +64,8 @@ void	lockdebug_lock_print(void *, void (*)(const char *, ...)
 bool	lockdebug_alloc(const char *, size_t, volatile void *, lockops_t *,
     uintptr_t);
 void	lockdebug_free(const char *, size_t, volatile void *);
-void	lockdebug_wantlock(const char *, size_t, volatile void *, uintptr_t,
-    int);
+void	lockdebug_wantlock(const char *, size_t, const volatile void *,
+    uintptr_t, int);
 void	lockdebug_locked(const char *, size_t, volatile void *, void *,
     uintptr_t, int);
 void	lockdebug_unlocked(const char *, size_t, volatile void *,
