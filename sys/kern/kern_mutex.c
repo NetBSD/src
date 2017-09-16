@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.65 2017/05/01 21:35:25 pgoyette Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.66 2017/09/16 23:25:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.65 2017/05/01 21:35:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.66 2017/09/16 23:25:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -805,7 +805,7 @@ mutex_wakeup(kmutex_t *mtx)
  *	holds the mutex.
  */
 int
-mutex_owned(kmutex_t *mtx)
+mutex_owned(const kmutex_t *mtx)
 {
 
 	if (mtx == NULL)
@@ -826,7 +826,7 @@ mutex_owned(kmutex_t *mtx)
  *	priority inheritance.
  */
 lwp_t *
-mutex_owner(kmutex_t *mtx)
+mutex_owner(const kmutex_t *mtx)
 {
 
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
@@ -841,7 +841,7 @@ mutex_owner(kmutex_t *mtx)
  *	that won't work correctly for spin mutexes.
  */
 int
-mutex_ownable(kmutex_t *mtx)
+mutex_ownable(const kmutex_t *mtx)
 {
 
 #ifdef LOCKDEBUG
