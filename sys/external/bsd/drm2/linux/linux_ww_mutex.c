@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.3 2017/08/25 14:14:44 riastradh Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.4 2017/09/16 23:56:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.3 2017/08/25 14:14:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.4 2017/09/16 23:56:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -122,9 +122,9 @@ ww_acquire_fini(struct ww_acquire_ctx *ctx)
 
 #ifdef LOCKDEBUG
 static void
-ww_dump(volatile void *cookie)
+ww_dump(const volatile void *cookie)
 {
-	volatile struct ww_mutex *mutex = cookie;
+	const volatile struct ww_mutex *mutex = cookie;
 
 	printf_nolog("%-13s: ", "state");
 	switch (mutex->wwm_state) {
@@ -135,7 +135,7 @@ ww_dump(volatile void *cookie)
 		printf_nolog("owned by lwp\n");
 		printf_nolog("%-13s: %p\n", "owner", mutex->wwm_u.owner);
 		printf_nolog("%-13s: %s\n", "waiters",
-		    cv_has_waiters(__UNVOLATILE(&mutex->wwm_cv))
+		    cv_has_waiters((void *)(intptr_t)&mutex->wwm_cv)
 			? "yes" : "no");
 		break;
 	case WW_CTX:
@@ -144,7 +144,7 @@ ww_dump(volatile void *cookie)
 		printf_nolog("%-13s: %p\n", "lwp",
 		    mutex->wwm_u.ctx->wwx_owner);
 		printf_nolog("%-13s: %s\n", "waiters",
-		    cv_has_waiters(__UNVOLATILE(&mutex->wwm_cv))
+		    cv_has_waiters((void *)(intptr_t)&mutex->wwm_cv)
 			? "yes" : "no");
 		break;
 	case WW_WANTOWN:

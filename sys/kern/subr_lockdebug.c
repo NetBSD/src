@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.57 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.58 2017/09/16 23:55:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.57 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.58 2017/09/16 23:55:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -145,14 +145,14 @@ static const rb_tree_ops_t ld_rb_tree_ops = {
 };
 
 static inline lockdebug_t *
-lockdebug_lookup1(volatile void *lock)
+lockdebug_lookup1(const volatile void *lock)
 {
 	lockdebug_t *ld;
 	struct cpu_info *ci;
 
 	ci = curcpu();
 	__cpu_simple_lock(&ci->ci_data.cpu_ld_lock);
-	ld = (lockdebug_t *)rb_tree_find_node(&ld_rb_tree, __UNVOLATILE(lock));
+	ld = rb_tree_find_node(&ld_rb_tree, (void *)(intptr_t)lock);
 	__cpu_simple_unlock(&ci->ci_data.cpu_ld_lock);
 	if (ld == NULL) {
 		return NULL;
@@ -190,7 +190,7 @@ lockdebug_unlock_cpus(void)
  *	Find a lockdebug structure by a pointer to a lock and return it locked.
  */
 static inline lockdebug_t *
-lockdebug_lookup(const char *func, size_t line, volatile void *lock,
+lockdebug_lookup(const char *func, size_t line, const volatile void *lock,
     uintptr_t where)
 {
 	lockdebug_t *ld;
@@ -420,7 +420,7 @@ lockdebug_more(int s)
  */
 void
 lockdebug_wantlock(const char *func, size_t line,
-    volatile void *lock, uintptr_t where, int shared)
+    const volatile void *lock, uintptr_t where, int shared)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -842,7 +842,7 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
  *	An error has been trapped - dump lock info and call panic().
  */
 void
-lockdebug_abort(const char *func, size_t line, volatile void *lock,
+lockdebug_abort(const char *func, size_t line, const volatile void *lock,
     lockops_t *ops, const char *msg)
 {
 #ifdef LOCKDEBUG

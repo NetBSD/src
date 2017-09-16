@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.46 2017/01/26 04:11:56 christos Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.47 2017/09/16 23:55:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.46 2017/01/26 04:11:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.47 2017/09/16 23:55:33 christos Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -112,7 +112,7 @@ do {									\
 #endif /* defined(LOCKDEBUG) */
 
 static void	rw_abort(const char *, size_t, krwlock_t *, const char *);
-static void	rw_dump(volatile void *);
+static void	rw_dump(const volatile void *);
 static lwp_t	*rw_owner(wchan_t);
 
 static inline uintptr_t
@@ -167,9 +167,9 @@ syncobj_t rw_syncobj = {
  *	Dump the contents of a rwlock structure.
  */
 static void
-rw_dump(volatile void *cookie)
+rw_dump(const volatile void *cookie)
 {
-	volatile krwlock_t *rw = cookie;
+	const volatile krwlock_t *rw = cookie;
 
 	printf_nolog("owner/count  : %#018lx flags    : %#018x\n",
 	    (long)RW_OWNER(rw), (int)RW_FLAGS(rw));
