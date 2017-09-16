@@ -1,4 +1,4 @@
-/* $NetBSD: common_lock.h,v 1.1 2015/06/26 14:27:35 matt Exp $ */
+/* $NetBSD: common_lock.h,v 1.2 2017/09/16 23:30:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,13 +38,13 @@
 #define	_SYS_COMMON_LOCK_H_
 
 static __inline int
-__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__ptr != __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline int
-__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_UNLOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__ptr == __SIMPLELOCK_UNLOCKED;
 }
