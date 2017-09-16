@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.158 2017/01/26 04:11:56 christos Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.159 2017/09/16 23:55:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.158 2017/01/26 04:11:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.159 2017/09/16 23:55:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -113,7 +113,7 @@ do {									\
 #define	_KERNEL_LOCK_ASSERT(cond)	/* nothing */
 #endif
 
-void	_kernel_lock_dump(volatile void *);
+void	_kernel_lock_dump(const volatile void *);
 
 lockops_t _kernel_lock_ops = {
 	"Kernel lock",
@@ -138,7 +138,7 @@ CTASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
  * Print debugging information about the kernel lock.
  */
 void
-_kernel_lock_dump(volatile void *junk)
+_kernel_lock_dump(const volatile void *junk)
 {
 	struct cpu_info *ci = curcpu();
 
