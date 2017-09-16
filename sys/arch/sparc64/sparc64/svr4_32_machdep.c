@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.40 2017/09/15 18:28:53 martin Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.41 2017/09/16 08:46:06 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.40 2017/09/15 18:28:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.41 2017/09/16 08:46:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -503,9 +503,9 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	NETBSD32PTR32(frame.sf_ucp, &fp->sf_uc);
 	frame.sf_handler = catcher;
 
-	DPRINTF(("svr4_32_sendsig signum=%d si = %x uc = %x handler = %p\n",
-	         frame.sf_signum, frame.sf_sip.i32,
-		 frame.sf_ucp.i32, frame.sf_handler));
+	DPRINTF(("svr4_32_sendsig signum=%d si = %p uc = %p handler = %p\n",
+	         frame.sf_signum, NETBSD32PTR64(frame.sf_sip),
+		 NETBSD32PTR64(frame.sf_ucp), frame.sf_handler));
 	/*
 	 * Modify the signal context to be used by sigreturn.
 	 */
