@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.93 2017/07/03 00:53:33 riastradh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.94 2017/09/16 23:55:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.93 2017/07/03 00:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.94 2017/09/16 23:55:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1089,12 +1089,16 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 }
 
 #if defined(DEBUG)
+#define KN_FMT(buf, kn) \
+    (snprintb((buf), sizeof(buf), __KN_FLAG_BITS, (kn)->kn_status), buf)
+
 static void
-kq_check(struct kqueue *kq)
+kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 {
 	const struct knote *kn;
 	int count;
 	int nmarker;
+	char buf[128];
 
 	KASSERT(mutex_owned(&kq->kq_lock));
 	KASSERT(kq->kq_count >= 0);
@@ -1103,16 +1107,18 @@ kq_check(struct kqueue *kq)
 	nmarker = 0;
 	TAILQ_FOREACH(kn, &kq->kq_head, kn_tqe) {
 		if ((kn->kn_status & (KN_MARKER | KN_QUEUED)) == 0) {
-			panic("%s: kq=%p kn=%p inconsist 1", __func__, kq, kn);
+			panic("%s,%zu: kq=%p kn=%p !(MARKER|QUEUED) %s",
+			    func, line, kq, kn, KN_FMT(buf, kn));
 		}
 		if ((kn->kn_status & KN_MARKER) == 0) {
 			if (kn->kn_kq != kq) {
-				panic("%s: kq=%p kn=%p inconsist 2",
-				    __func__, kq, kn);
+				panic("%s,%zu: kq=%p kn(%p) != kn->kq(%p): %s",
+				    func, line, kq, kn, kn->kn_kq,
+				    KN_FMT(buf, kn));
 			}
 			if ((kn->kn_status & KN_ACTIVE) == 0) {
-				panic("%s: kq=%p kn=%p: not active",
-				    __func__, kq, kn);
+				panic("%s,%zu: kq=%p kn=%p: !ACTIVE %s",
+				    func, line, kq, kn, KN_FMT(buf, kn));
 			}
 			count++;
 			if (count > kq->kq_count) {
@@ -1122,19 +1128,21 @@ kq_check(struct kqueue *kq)
 			nmarker++;
 #if 0
 			if (nmarker > 10000) {
-				panic("%s: kq=%p too many markers: %d != %d, "
-				    "nmarker=%d",
-				    __func__, kq, kq->kq_count, count, nmarker);
+				panic("%s,%zu: kq=%p too many markers: "
+				    "%d != %d, nmarker=%d",
+				    func, line, kq, kq->kq_count, count,
+				    nmarker);
 			}
 #endif
 		}
 	}
 	if (kq->kq_count != count) {
 bad:
-		panic("%s: kq=%p inconsist 3: %d != %d, nmarker=%d",
-		    __func__, kq, kq->kq_count, count, nmarker);
+		panic("%s,%zu: kq=%p kq->kq_count(%d) != count(%d), nmarker=%d",
+		    func, line, kq, kq->kq_count, count, nmarker);
 	}
 }
+#define kq_check(a) kqueue_check(__func__, __LINE__, (a))
 #else /* defined(DEBUG) */
 #define	kq_check(a)	/* nothing */
 #endif /* defined(DEBUG) */
