@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.78 2017/07/28 15:34:07 riastradh Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.79 2017/09/16 09:04:50 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.78 2017/07/28 15:34:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.79 2017/09/16 09:04:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1012,7 +1012,8 @@ svr4_32_setinfo(int pid, struct rusage *ru, int st, svr4_32_siginfo_tp si)
 	}
 
 	DPRINTF(("siginfo [pid %ld signo %d code %d errno %d status %d]\n",
-		 i.si_pid, i.si_signo, i.si_code, i.si_errno, i.si_status));
+		 (long)i.si_pid, i.si_signo, i.si_code, i.si_errno,
+		 i.si_status));
 
 	return copyout(&i, s, sizeof(i));
 }
@@ -1043,7 +1044,7 @@ svr4_32_sys_waitsys(struct lwp *l, const struct svr4_32_sys_waitsys_args *uap, r
 
 	DPRINTF(("waitsys(%d, %d, %p, %x)\n",
 	         SCARG(uap, grp), id,
-		 SCARG(uap, info), SCARG(uap, options)));
+		 NETBSD32PTR64(SCARG(uap, info)), SCARG(uap, options)));
 
 	/* Translate options */
 	options = 0;

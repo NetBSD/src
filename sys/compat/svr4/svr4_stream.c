@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.91 2017/07/28 17:52:47 riastradh Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.92 2017/09/16 09:05:29 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.91 2017/07/28 17:52:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.92 2017/09/16 09:05:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -201,9 +201,10 @@ show_ioc(const char *str, struct svr4_strioctl *ioc)
 
 	ptr = (u_char *) malloc(len, M_TEMP, M_WAITOK);
 	uprintf("%s cmd = %ld, timeout = %d, len = %d, buf = %p { ",
-	    str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
+	    str, (long)ioc->cmd, ioc->timeout, ioc->len,
+	    NETBSD32PTR(ioc->buf));
 
-	if ((error = copyin(ioc->buf, ptr, len)) != 0) {
+	if ((error = copyin(NETBSD32PTR(ioc->buf), ptr, len)) != 0) {
 		free((char *) ptr, M_TEMP);
 		return error;
 	}
@@ -237,13 +238,14 @@ show_strbuf(struct svr4_strbuf *str)
 	if (len > 0) {
 	    ptr = (u_char *) malloc(len, M_TEMP, M_WAITOK);
 
-	    if ((error = copyin(str->buf, ptr, len)) != 0) {
+	    if ((error = copyin(NETBSD32PTR(str->buf), ptr, len)) != 0) {
 		    free((char *) ptr, M_TEMP);
 		    return error;
 	    }
 	}
 
-	uprintf(", { %d, %d, %p=[ ", str->maxlen, str->len, str->buf);
+	uprintf(", { %d, %d, %p=[ ", str->maxlen, str->len,
+	    NETBSD32PTR(str->buf));
 
 	if (ptr)
 		bufprint(ptr, len);
@@ -353,7 +355,7 @@ sockaddr_to_netaddr_in(struct svr4_strmcmd *sc, const struct sockaddr_in *sain)
 	na->port = sain->sin_port;
 	na->addr = sain->sin_addr.s_addr;
 	DPRINTF(("sockaddr_in -> netaddr %d %d %lx\n", na->family, na->port,
-		 na->addr));
+		 (unsigned long)na->addr));
 }
 
 
@@ -540,7 +542,7 @@ si_listen(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		return EINVAL;
 
 	if (lst.cmd != SVR4_TI_OLD_BIND_REQUEST) {
-		DPRINTF(("si_listen: bad request %ld\n", lst.cmd));
+		DPRINTF(("si_listen: bad request %ld\n", (long)lst.cmd));
 		return EINVAL;
 	}
 
@@ -707,7 +709,8 @@ sockmod(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		return si_getudata(fp, fd, ioc, l);
 
 	default:
-		DPRINTF(("Unknown sockmod ioctl %lx\n", ioc->cmd));
+		DPRINTF(("Unknown sockmod ioctl %lx\n",
+		    (unsigned long)ioc->cmd));
 		return 0;
 
 	}
@@ -779,7 +782,7 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		return error;
 
 	if (bnd.cmd != SVR4_TI_OLD_BIND_REQUEST) {
-		DPRINTF(("ti_bind: bad request %ld\n", bnd.cmd));
+		DPRINTF(("ti_bind: bad request %ld\n", (long)bnd.cmd));
 		return EINVAL;
 	}
 	if (bnd.offs < 0 ||
@@ -880,7 +883,7 @@ timod(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		return 0;
 
 	default:
-		DPRINTF(("Unknown timod ioctl %lx\n", ioc->cmd));
+		DPRINTF(("Unknown timod ioctl %lx\n", (unsigned long)ioc->cmd));
 		return 0;
 	}
 }
@@ -1400,8 +1403,8 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 
 
 #ifdef DEBUG_SVR4
-	show_msg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
-		 SCARG(uap, dat), SCARG(uap, flags));
+	show_msg(">putmsg", SCARG(uap, fd), NETBSD32PTR(SCARG(uap, ctl)),
+		 NETBSD32PTR(SCARG(uap, dat)), SCARG(uap, flags));
 #endif /* DEBUG_SVR4 */
 
 	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
@@ -1476,7 +1479,8 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 				goto out;
 			}
 #endif
-	                DPRINTF(("putmsg: Invalid inet length %ld\n", sc.len));
+	                DPRINTF(("putmsg: Invalid inet length %ld\n",
+			    (long)sc.len));
 			error = EINVAL;
 			goto out;
 		}
@@ -1541,7 +1545,8 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 		*retval = 0;
 		return error;
 	default:
-		DPRINTF(("putmsg: Unimplemented command %lx\n", sc.cmd));
+		DPRINTF(("putmsg: Unimplemented command %lx\n",
+		    (unsigned long)sc.cmd));
 		error = ENOSYS;
 		goto out;
 	}
@@ -1571,8 +1576,8 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 	memset(&sc, 0, sizeof(sc));
 
 #ifdef DEBUG_SVR4
-	show_msg(">getmsg", SCARG(uap, fd), SCARG(uap, ctl),
-		 SCARG(uap, dat), 0);
+	show_msg(">getmsg", SCARG(uap, fd), NETBSD32PTR(SCARG(uap, ctl)),
+		 NETBSD32PTR(SCARG(uap, dat)), 0);
 #endif /* DEBUG_SVR4 */
 
 	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
@@ -1869,8 +1874,8 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 	*retval = 0;
 
 #ifdef DEBUG_SVR4
-	show_msg("<getmsg", SCARG(uap, fd), SCARG(uap, ctl),
-		 SCARG(uap, dat), fl);
+	show_msg("<getmsg", SCARG(uap, fd), NETBSD32PTR(SCARG(uap, ctl)),
+		 NETBSD32PTR(SCARG(uap, dat)), fl);
 #endif /* DEBUG_SVR4 */
 
  out:

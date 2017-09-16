@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.30 2017/07/30 12:31:46 christos Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.31 2017/09/16 09:04:50 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.30 2017/07/30 12:31:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.31 2017/09/16 09:04:50 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -651,12 +651,12 @@ svr4_32_sys_context(struct lwp *l, const struct svr4_32_sys_context_args *uap, r
 
 	switch (SCARG(uap, func)) {
 	case SVR4_GETCONTEXT:
-		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
+		DPRINTF(("getcontext(%p)\n", NETBSD32PTR64(SCARG(uap, uc))));
 		svr4_32_getcontext(l, &uc, &l->l_sigmask);
 		return copyout(&uc, SCARG_P32(uap, uc), sizeof(uc));
 
 	case SVR4_SETCONTEXT:
-		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
+		DPRINTF(("setcontext(%p)\n", NETBSD32PTR64(SCARG(uap, uc))));
 		if (!SCARG_P32(uap, uc))
 			exit1(l, 0, 0);
 		else if ((error = copyin(SCARG_P32(uap, uc),
@@ -667,7 +667,7 @@ svr4_32_sys_context(struct lwp *l, const struct svr4_32_sys_context_args *uap, r
 
 	default:
 		DPRINTF(("context(%d, %p)\n", SCARG(uap, func),
-		    SCARG(uap, uc)));
+		    NETBSD32PTR64(SCARG(uap, uc))));
 		return ENOSYS;
 	}
 	return 0;
