@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.21 2017/05/01 21:35:26 pgoyette Exp $	*/
+/*	$NetBSD: mutex.h,v 1.22 2017/09/16 23:25:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -203,9 +203,9 @@ void	mutex_spin_exit(kmutex_t *);
 
 int	mutex_tryenter(kmutex_t *);
 
-int	mutex_owned(kmutex_t *);
-int	mutex_ownable(kmutex_t *);
-lwp_t	*mutex_owner(kmutex_t *);
+int	mutex_owned(const kmutex_t *);
+int	mutex_ownable(const kmutex_t *);
+lwp_t	*mutex_owner(const kmutex_t *);
 
 void	mutex_obj_init(void);
 kmutex_t *mutex_obj_alloc(kmutex_type_t, int);
