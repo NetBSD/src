@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.73 2017/03/18 13:35:57 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.74 2017/09/16 09:28:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.73 2017/03/18 13:35:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.74 2017/09/16 09:28:38 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -134,7 +134,6 @@ pt_entry_t xpmap_pg_nx __read_mostly;
 
 #define XPQUEUE_SIZE 2048
 static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
-static int xpq_idx_array[MAXCPUS];
 
 void xen_failsafe_handler(void);
 
@@ -196,16 +195,17 @@ void
 xpq_flush_queue(void)
 {
 	mmu_update_t *xpq_queue;
-	int done = 0, ret, xpq_idx;
+	int done = 0, ret;
+	size_t xpq_idx;
 
-	xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
+	xpq_idx = curcpu()->ci_xpq_idx;
 	xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
 
 retry:
 	ret = HYPERVISOR_mmu_update(xpq_queue, xpq_idx, &done, DOMID_SELF);
 
 	if (ret < 0 && xpq_idx != 0) {
-		printf("xpq_flush_queue: %d entries (%d successful) on "
+		printf("xpq_flush_queue: %zu entries (%d successful) on "
 		    "cpu%d (%ld)\n",
 		    xpq_idx, done, curcpu()->ci_index, curcpu()->ci_cpuid);
 
@@ -218,14 +218,14 @@ retry:
 
 		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
-	xpq_idx_array[curcpu()->ci_cpuid] = 0;
+	curcpu()->ci_xpq_idx = 0;
 }
 
 static inline void
 xpq_increment_idx(void)
 {
 
-	if (__predict_false(++xpq_idx_array[curcpu()->ci_cpuid] == XPQUEUE_SIZE))
+	if (__predict_false(++curcpu()->ci_xpq_idx == XPQUEUE_SIZE))
 		xpq_flush_queue();
 }
 
@@ -233,7 +233,7 @@ void
 xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 {
 	mmu_update_t *xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
-	int xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
+	size_t xpq_idx = curcpu()->ci_xpq_idx;
 
 	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
 	xpq_queue[xpq_idx].val = pa >> PAGE_SHIFT;
@@ -244,7 +244,7 @@ void
 xpq_queue_pte_update(paddr_t ptr, pt_entry_t val)
 {
 	mmu_update_t *xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
-	int xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
+	size_t xpq_idx = curcpu()->ci_xpq_idx;
 
 	xpq_queue[xpq_idx].ptr = ptr | MMU_NORMAL_PT_UPDATE;
 	xpq_queue[xpq_idx].val = val;
@@ -489,8 +489,6 @@ xen_locore(void)
 	u_int descs[4];
 
 	xen_init_features();
-
-	memset(xpq_idx_array, 0, sizeof(xpq_idx_array));
 
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
