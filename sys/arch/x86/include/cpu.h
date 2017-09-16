@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2017/08/27 09:32:13 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79 2017/09/16 09:28:38 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -204,6 +204,10 @@ struct cpu_info {
 	paddr_t		ci_xen_current_user_pgd;
 #endif /* __x86_64__ */
 #endif /* XEN et.al */
+
+#ifdef XEN
+	size_t		ci_xpq_idx;
+#endif
 
 #ifndef XEN
 	struct evcnt ci_ipi_events[X86_NIPI];
