@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.11 2017/08/13 19:18:08 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.12 2017/09/16 21:47:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.11 2017/08/13 19:18:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.12 2017/09/16 21:47:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.11 2017/08/13 19:18:08 jmcneill E
 #define	BUS_CLK_GATING_REG0	0x060
 #define	BUS_CLK_GATING_REG2	0x068
 #define	BUS_CLK_GATING_REG3	0x06c
+#define	BUS_CLK_GATING_REG4	0x070
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
 #define	SDMMC2_CLK_REG		0x090
@@ -358,6 +359,9 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    BUS_CLK_GATING_REG3, 18),
 	SUNXI_CCU_GATE(H3_CLK_BUS_UART3, "bus-uart3", "apb2",
 	    BUS_CLK_GATING_REG3, 19),
+
+	SUNXI_CCU_GATE(H3_CLK_BUS_EPHY, "bus-ephy", "ahb1",
+	    BUS_CLK_GATING_REG4, 0),
 
 	SUNXI_CCU_GATE(H3_CLK_USBPHY0, "usb-phy0", "hosc",
 	    USBPHY_CFG_REG, 8),
