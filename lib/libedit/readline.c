@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.143 2017/09/05 18:07:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.144 2017/09/17 08:10:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.143 2017/09/05 18:07:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.144 2017/09/17 08:10:08 kre Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1355,8 +1355,14 @@ read_history(const char *filename)
 		rl_initialize();
 	if (filename == NULL && (filename = _default_history_file()) == NULL)
 		return errno;
-	return history(h, &ev, H_LOAD, filename) == -1 ?
-	    (errno ? errno : EINVAL) : 0;
+	errno = 0;
+	if (history(h, &ev, H_LOAD, filename) == -1)
+	    return errno ? errno : EINVAL;
+	if (history(h, &ev, H_GETSIZE) == 0)
+		history_length = ev.num;
+	if (history_length < 0)
+		return EINVAL;
+	return 0;
 }
 
 
