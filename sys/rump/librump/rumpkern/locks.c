@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.74 2017/05/01 21:35:26 pgoyette Exp $	*/
+/*	$NetBSD: locks.c,v 1.75 2017/09/17 05:47:19 kre Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.74 2017/05/01 21:35:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.75 2017/09/17 05:47:19 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -98,7 +98,7 @@ static lockops_t rw_lockops = {
  * penalty.
  */
 
-#define RUMPMTX(mtx) (*(struct rumpuser_mtx **)(mtx))
+#define RUMPMTX(mtx) (*(struct rumpuser_mtx *const*)(mtx))
 
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
@@ -183,7 +183,7 @@ mutex_exit(kmutex_t *mtx)
 __strong_alias(mutex_spin_exit,mutex_exit);
 
 int
-mutex_ownable(kmutex_t *mtx)
+mutex_ownable(const kmutex_t *mtx)
 {
 
 #ifdef LOCKDEBUG
@@ -193,14 +193,14 @@ mutex_ownable(kmutex_t *mtx)
 }
 
 int
-mutex_owned(kmutex_t *mtx)
+mutex_owned(const kmutex_t *mtx)
 {
 
 	return mutex_owner(mtx) == curlwp;
 }
 
-struct lwp *
-mutex_owner(kmutex_t *mtx)
+lwp_t *
+mutex_owner(const kmutex_t *mtx)
 {
 	struct lwp *l;
 
