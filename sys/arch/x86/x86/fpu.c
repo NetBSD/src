@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12 2016/09/29 17:01:43 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.13 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2016/09/29 17:01:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2017/09/17 09:41:35 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -273,7 +273,7 @@ fputrap(struct trapframe *frame)
 	uint32_t statbits;
 	ksiginfo_t ksi;
 
-	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
+	if (!USERMODE(frame->tf_cs))
 		panic("fpu trap from kernel, trapframe %p\n", frame);
 
 	if (i386_fpu_present == 0) {
@@ -339,7 +339,7 @@ fpudna(struct trapframe *frame)
 	struct pcb *pcb;
 	int s;
 
-	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
+	if (!USERMODE(frame->tf_cs))
 		panic("fpudna from kernel, ip %p, trapframe %p\n",
 		    (void *)X86_TF_RIP(frame), frame);
 

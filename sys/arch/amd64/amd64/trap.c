@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2017/09/15 17:22:09 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.101 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2017/09/15 17:22:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2017/09/17 09:41:35 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -290,7 +290,7 @@ trap_user_kernelmode(struct trapframe *frame, int type, lwp_t *l, proc_t *p)
 		 * The stack frame containing the user registers is
 		 * still valid and pointed to by tf_rsp.
 		 */
-		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+		if (KERNELMODE(vframe->tf_cs))
 			return;
 		/* There is no valid address for the fault */
 		break;
@@ -354,7 +354,7 @@ trap(struct trapframe *frame)
 	}
 	type = frame->tf_trapno;
 
-	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
+	if (!KERNELMODE(frame->tf_cs)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		LWP_CACHE_CREDS(l, p);
