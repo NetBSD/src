@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.90 2017/08/12 07:07:53 maxv Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.91 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.90 2017/08/12 07:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.91 2017/09/17 09:41:35 maxv Exp $");
 
 #include "opt_ptrace.h"
 
@@ -157,7 +157,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	 * Check for security violations.
 	 */
 	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(regs->r_cs, regs->r_eflags))
+	    !USERMODE(regs->r_cs))
 		return (EINVAL);
 
 	tf->tf_gs = regs->r_gs;

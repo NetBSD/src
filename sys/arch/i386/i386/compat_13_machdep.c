@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.26 2017/08/12 07:07:53 maxv Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.27 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.26 2017/08/12 07:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.27 2017/09/17 09:41:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	 * the trap, rather than doing all of the checking here.
 	 */
 	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_cs, context.sc_eflags))
+	    !USERMODE(context.sc_cs))
 		return (EINVAL);
 
 	tf->tf_gs = context.sc_gs;

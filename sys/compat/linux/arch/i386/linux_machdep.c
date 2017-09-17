@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.164 2017/08/12 07:07:53 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.165 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.164 2017/08/12 07:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.165 2017/09/17 09:41:35 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
@@ -437,7 +437,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	 * the trap, rather than doing all of the checking here.
 	 */
 	if (((scp->sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(scp->sc_cs, scp->sc_eflags))
+	    !USERMODE(scp->sc_cs))
 		return EINVAL;
 
 	tf->tf_gs = scp->sc_gs;

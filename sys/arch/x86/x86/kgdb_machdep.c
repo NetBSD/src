@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 2017/08/15 08:57:19 maxv Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 2017 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.2 2017/08/15 08:57:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.3 2017/09/17 09:41:35 maxv Exp $");
 
 #include "opt_ddb.h"
 
@@ -198,7 +198,7 @@ kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	gdb_regs[14] = regs->tf_fs;
 	gdb_regs[15] = regs->tf_gs;
 
-	if (KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+	if (KERNELMODE(regs->tf_cs)) {
 		/*
 		 * Kernel mode - esp and ss not saved.
 		 */
@@ -250,7 +250,7 @@ kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	regs->tf_ds     = gdb_regs[12];
 	regs->tf_es     = gdb_regs[13];
 
-	if (KERNELMODE(regs->tf_cs, regs->tf_eflags) == 0) {
+	if (KERNELMODE(regs->tf_cs) == 0) {
 		/*
 		 * Trapped in user mode - restore esp and ss.
 		 */
