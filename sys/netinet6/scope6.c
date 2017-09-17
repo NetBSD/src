@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.17 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: scope6.c,v 1.18 2017/09/17 17:36:06 christos Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.17 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.18 2017/09/17 17:36:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.17 2017/01/16 15:44:47 christos Exp $")
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/net_osdep.h>
 
 #include <netinet/in.h>
 
@@ -347,7 +348,7 @@ sa6_recoverscope(struct sockaddr_in6 *sin6)
 
 	if (sin6->sin6_scope_id != 0) {
 		log(LOG_NOTICE,
-		    "sa6_recoverscope: assumption failure (non 0 ID): %s%%%d\n",
+		    "%s: assumption failure (non 0 ID): %s%%%d\n", __func__,
 		    IN6_PRINT(ip6buf, &sin6->sin6_addr), sin6->sin6_scope_id);
 		/* XXX: proceed anyway... */
 	}
@@ -393,20 +394,27 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 	uint32_t zoneid = 0;
 	const struct scope6_id *sid = SID(ifp);
 
-	if (sid == NULL)
+	if (sid == NULL) {
+		log(LOG_NOTICE, "%s: no scope id for %s\n", __func__,
+		    if_name(ifp));
 		return EINVAL;
+	}
 
 	/*
 	 * special case: the loopback address can only belong to a loopback
 	 * interface.
 	 */
 	if (IN6_IS_ADDR_LOOPBACK(in6)) {
-		if (!(ifp->if_flags & IFF_LOOPBACK))
-			return (EINVAL);
-		else {
+		if (!(ifp->if_flags & IFF_LOOPBACK)) {
+			char ip6buf[INET6_ADDRSTRLEN];
+			log(LOG_NOTICE, "%s: can't set scope for not loopback "
+			    "interface %s and loopback address %s\n",
+			    __func__, if_name(ifp), IN6_PRINT(ip6buf, in6));
+			return EINVAL;
+		} else {
 			if (ret_id != NULL)
 				*ret_id = 0; /* there's no ambiguity */
-			return (0);
+			return 0;
 		}
 	}
 
