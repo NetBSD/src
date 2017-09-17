@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.19 2017/01/15 18:03:12 christos Exp $	*/
+/* 	$NetBSD: lock.h,v 1.20 2017/09/17 00:01:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -49,13 +49,13 @@
 #define __SIMPLELOCK_RAW_UNLOCKED	1UL
 
 static __inline int
-__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__SIMPLELOCK_ALIGN(__ptr) == __SIMPLELOCK_RAW_LOCKED;
 }
 
 static __inline int
-__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_UNLOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__SIMPLELOCK_ALIGN(__ptr) == __SIMPLELOCK_RAW_UNLOCKED;
 }
