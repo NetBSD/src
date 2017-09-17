@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.792 2017/08/27 09:32:12 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.793 2017/09/17 09:04:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.792 2017/08/27 09:32:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.793 2017/09/17 09:04:51 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -436,13 +436,6 @@ cpu_startup(void)
 
 #ifdef MULTIBOOT
 	multiboot_print_info();
-#endif
-
-#ifdef TRAPLOG
-	/*
-	 * Enable recording of branch from/to in MSR's
-	 */
-	wrmsr(MSR_DEBUGCTLMSR, 0x1);
 #endif
 
 #if NCARDBUS > 0
