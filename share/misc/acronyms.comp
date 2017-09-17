@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.184 2017/08/11 16:03:14 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.185 2017/09/17 21:55:07 rtr Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -522,6 +522,7 @@ GRE	generic routing encapsulation
 GSI	global system interrupt
 GUI	graphical user interface
 GUID	globally unique identifier
+GVFS    git virtual file system
 HA	high availability
 HAL	hardware abstraction layer
 HAT	hashed array tree
