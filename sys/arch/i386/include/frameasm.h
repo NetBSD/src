@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.16 2017/06/14 17:09:00 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.17 2017/09/17 09:04:51 maxv Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -27,40 +27,6 @@
 			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
 
-#ifndef TRAPLOG
-#define TLOG		/**/
-#else
-/*
- * Fill in trap record
- */
-#define TLOG						\
-9:							\
-	movl	%fs:CPU_TLOG_OFFSET, %eax;		\
-	movl	%fs:CPU_TLOG_BASE, %ebx;		\
-	addl	$SIZEOF_TREC,%eax;			\
-	andl	$SIZEOF_TLOG-1,%eax;			\
-	addl	%eax,%ebx;				\
-	movl	%eax,%fs:CPU_TLOG_OFFSET;		\
-	movl	%esp,TREC_SP(%ebx);			\
-	movl	$9b,TREC_HPC(%ebx);			\
-	movl	TF_EIP(%esp),%eax;			\
-	movl	%eax,TREC_IPC(%ebx);			\
-	rdtsc			;			\
-	movl	%eax,TREC_TSC(%ebx);			\
-	movl	$MSR_LASTBRANCHFROMIP,%ecx;		\
-	rdmsr			;			\
-	movl	%eax,TREC_LBF(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_LBT(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_IBF(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_IBT(%ebx)
-#endif
-
 /*
  * These are used on interrupt or trap entry or exit.
  */
@@ -83,8 +49,7 @@
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%ecx,TF_ECX(%esp)	; \
 	movl	%eax,%fs	; \
-	cld			; \
-	TLOG
+	cld
 
 /*
  * INTRFASTEXIT should be in sync with trap(), resume_iret and friends.

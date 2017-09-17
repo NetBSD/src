@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.134 2017/08/27 09:32:12 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.135 2017/09/17 09:04:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134 2017/08/27 09:32:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.135 2017/09/17 09:04:51 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -104,10 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134 2017/08/27 09:32:12 maxv Exp $");
 #include <machine/cpu_counter.h>
 
 #include <x86/fpu.h>
-
-#ifdef i386
-#include <machine/tlog.h>
-#endif
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -153,18 +149,12 @@ CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-#ifdef TRAPLOG
-struct tlog tlog_primary;
-#endif
 struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
-#ifdef TRAPLOG
-	.ci_tlog_base = &tlog_primary,
-#endif
 };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -327,9 +317,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		ci->ci_curldt = -1;
-#ifdef TRAPLOG
-		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
-#endif
 	} else {
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.103 2017/08/12 13:16:14 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.104 2017/09/17 09:04:51 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -127,9 +127,6 @@ endif
 if NISA > 0
 include <machine/isa_machdep.h>
 endif
-
-include <machine/tlog.h>
-
 
 include <sys/bus.h>
 
@@ -268,9 +265,6 @@ define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 
-define	CPU_TLOG_OFFSET		offsetof(struct cpu_info, ci_tlog_offset)
-define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)
-
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
@@ -320,18 +314,6 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
-
-define	TREC_SP			offsetof(struct trec, tr_sp)
-define	TREC_HPC		offsetof(struct trec, tr_hpc)
-define	TREC_IPC		offsetof(struct trec, tr_ipc)
-define	TREC_TSC		offsetof(struct trec, tr_tsc)
-define	TREC_LBF		offsetof(struct trec, tr_lbf)
-define	TREC_LBT		offsetof(struct trec, tr_lbt)
-define	TREC_IBF		offsetof(struct trec, tr_ibf)
-define	TREC_IBT		offsetof(struct trec, tr_ibt)
-
-define	SIZEOF_TREC		sizeof(struct trec)
-define	SIZEOF_TLOG		sizeof(struct tlog)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT

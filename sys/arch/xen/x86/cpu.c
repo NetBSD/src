@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111 2017/07/06 20:26:05 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.112 2017/09/17 09:04:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111 2017/07/06 20:26:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.112 2017/09/17 09:04:51 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -148,20 +148,12 @@ CFATTACH_DECL_NEW(vcpu, sizeof(struct cpu_softc),
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-#ifdef TRAPLOG
-#include <machine/tlog.h>
-struct tlog tlog_primary;
-#endif
 struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
-#ifdef TRAPLOG
-	.ci_tlog = &tlog_primary,
-#endif
-
 };
 struct cpu_info phycpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
@@ -386,9 +378,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		memset(ci, 0, sizeof(*ci));
-#ifdef TRAPLOG
-		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
-#endif
 	} else {
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
