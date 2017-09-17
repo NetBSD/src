@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.158 2016/10/02 14:17:07 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.159 2017/09/17 20:39:04 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.158 2016/10/02 14:17:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.159 2017/09/17 20:39:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -801,6 +801,8 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 #endif
 		default:
+			printf("%s: af%d not supported\n", ifp->if_xname,
+			    ifa->ifa_addr->sa_family);
 			error = EAFNOSUPPORT;
 			break;
 		}
