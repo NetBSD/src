@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2016/08/06 06:06:54 christos Exp $
+# $NetBSD: Makefile,v 1.2 2017/09/17 20:37:17 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -8,7 +8,7 @@ KMOD=		if_ppp
 IOCONF=		ppp.ioconf
 SRCS=		if_ppp.c ppp_tty.c
 
-CPPFLAGS+=	-DINET
+CPPFLAGS+=	-DINET -DINET6
 CPPFLAGS+=	-DPPP_FILTER
 CPPFLAGS+=	-DPPP_DEFLATE
 CPPFLAGS+=	-DPPP_BSDCOMP
