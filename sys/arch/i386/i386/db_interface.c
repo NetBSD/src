@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.75 2017/09/17 09:04:51 maxv Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.76 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2017/09/17 09:04:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.76 2017/09/17 09:41:35 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -228,7 +228,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 #endif
 	/* XXX Should switch to kdb's own stack here. */
 	ddb_regs = *regs;
-	if (!(flags & TC_TSS) && KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+	if (!(flags & TC_TSS) && KERNELMODE(regs->tf_cs)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
@@ -270,7 +270,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	regs->tf_eip    = ddb_regs.tf_eip;
 	regs->tf_cs     = ddb_regs.tf_cs;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	if (!(flags & TC_TSS) && !KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+	if (!(flags & TC_TSS) && !KERNELMODE(regs->tf_cs)) {
 		/* ring transit - saved esp and ss valid */
 		regs->tf_esp    = ddb_regs.tf_esp;
 		regs->tf_ss     = ddb_regs.tf_ss;
@@ -338,7 +338,7 @@ ddb_suspend(struct trapframe *frame)
 	regs = *frame;
 	flags = regs.tf_err & TC_FLAGMASK;
 	regs.tf_err &= ~TC_FLAGMASK;
-	if (!(flags & TC_TSS) && KERNELMODE(regs.tf_cs, regs.tf_eflags)) {
+	if (!(flags & TC_TSS) && KERNELMODE(regs.tf_cs)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
