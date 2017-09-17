@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.17 2017/09/17 09:04:51 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.18 2017/09/17 09:59:23 maxv Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -51,23 +51,8 @@
 	movl	%eax,%fs	; \
 	cld
 
-/*
- * INTRFASTEXIT should be in sync with trap(), resume_iret and friends.
- */
 #define	INTRFASTEXIT \
-	movw	TF_GS(%esp),%gs	; \
-	movw	TF_FS(%esp),%fs	; \
-	movw	TF_ES(%esp),%es	; \
-	movw	TF_DS(%esp),%ds	; \
-	movl	TF_EDI(%esp),%edi	; \
-	movl	TF_ESI(%esp),%esi	; \
-	movl	TF_EBP(%esp),%ebp	; \
-	movl	TF_EBX(%esp),%ebx	; \
-	movl	TF_EDX(%esp),%edx	; \
-	movl	TF_ECX(%esp),%ecx	; \
-	movl	TF_EAX(%esp),%eax	; \
-	addl	$(TF_PUSHSIZE+8),%esp	; \
-	iret
+	jmp	intrfastexit
 
 #define	DO_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)		; \
