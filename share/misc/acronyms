@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.258 2017/09/15 23:08:11 ginsbach Exp $
+$NetBSD: acronyms,v 1.259 2017/09/17 00:54:16 ginsbach Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -232,6 +232,8 @@ IDK	I don't know
 IDRC	I don't really care
 IDTS	I don't think so
 IDTT	I drink to that
+IFF	if and only if
+IFTTT	if this then that
 IHBW	I have been wrong
 IIANM	if I am not mistaken
 IIRC	if I {recall,remember} correctly
