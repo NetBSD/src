@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.29 2017/02/05 08:58:39 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.30 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,15 +129,15 @@
 
 #define LSEL(s,r)	((s) | r | SEL_LDT)
 
-#define USERMODE(c, f)		(ISPL(c) == SEL_UPL)
+#define USERMODE(c)		(ISPL(c) == SEL_UPL)
 #ifdef XEN
 /*
  * As KPL == UPL, Xen emulate interrupt in kernel context by pushing
  * a fake CS with XPL privilege
  */
-#define KERNELMODE(c, f)	(ISPL(c) == SEL_XPL)
+#define KERNELMODE(c)		(ISPL(c) == SEL_XPL)
 #else
-#define KERNELMODE(c, f)	(ISPL(c) == SEL_KPL)
+#define KERNELMODE(c)		(ISPL(c) == SEL_KPL)
 #endif
 
 #ifndef _LOCORE

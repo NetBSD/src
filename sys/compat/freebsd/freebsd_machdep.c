@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.3 2017/08/12 07:07:53 maxv Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.4 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.3 2017/08/12 07:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.4 2017/09/17 09:41:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ freebsd_sys_sigreturn(struct lwp *l, const struct freebsd_sys_sigreturn_args *ua
 	 * the trap, rather than doing all of the checking here.
 	 */
 	if (((context.sc_efl ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_cs, context.sc_efl))
+	    !USERMODE(context.sc_cs))
 		return (EINVAL);
 
 	tf->tf_gs = context.sc_gs;
