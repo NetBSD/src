@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.74 2017/08/15 09:16:59 maxv Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.75 2017/09/17 09:04:51 maxv Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2017/08/15 09:16:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2017/09/17 09:04:51 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -275,10 +275,6 @@ kdb_trap(int type, int code, db_regs_t *regs)
 		regs->tf_esp    = ddb_regs.tf_esp;
 		regs->tf_ss     = ddb_regs.tf_ss;
 	}
-
-#ifdef TRAPLOG
-	wrmsr(MSR_DEBUGCTLMSR, 0x1);
-#endif
 
 	return (1);
 }
