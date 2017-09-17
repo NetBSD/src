@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.151 2017/08/12 07:21:57 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.152 2017/09/17 09:59:23 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.151 2017/08/12 07:21:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.152 2017/09/17 09:59:23 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1367,3 +1367,20 @@ ENTRY(sse2_idlezero_page)
 	popl	%ebp
 	ret
 END(sse2_idlezero_page)
+
+ENTRY(intrfastexit)
+	movw	TF_GS(%esp),%gs
+	movw	TF_FS(%esp),%fs
+	movw	TF_ES(%esp),%es
+	movw	TF_DS(%esp),%ds
+	movl	TF_EDI(%esp),%edi
+	movl	TF_ESI(%esp),%esi
+	movl	TF_EBP(%esp),%ebp
+	movl	TF_EBX(%esp),%ebx
+	movl	TF_EDX(%esp),%edx
+	movl	TF_ECX(%esp),%ecx
+	movl	TF_EAX(%esp),%eax
+	addl	$(TF_PUSHSIZE+8),%esp
+	iret
+END(intrfastexit)
+
