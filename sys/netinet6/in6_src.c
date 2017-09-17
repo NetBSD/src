@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.80 2017/08/27 12:34:21 christos Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.81 2017/09/17 17:35:10 christos Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.80 2017/08/27 12:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.81 2017/09/17 17:35:10 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -204,6 +204,12 @@ in6_select_best_ia(struct sockaddr_in6 *dstsock, struct in6_addr *dst,
 			continue;
 		}
 		src = ia->ia_addr.sin6_addr;
+
+		/* Skip the scope test in impossible cases */
+		if (!(ifp->if_flags & IFF_LOOPBACK) &&
+		    IN6_IS_ADDR_LOOPBACK(&src))
+			continue;
+
 		if (in6_setscope(&src, ifp, &osrczone) ||
 		    in6_setscope(&src, ifp1, &srczone) ||
 		    osrczone != srczone) {
@@ -614,11 +620,11 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	    dstsock->sin6_addr.s6_addr32[1] == 0 &&
 	    !IN6_IS_ADDR_LOOPBACK(&dstsock->sin6_addr)) {
 		char ip6buf[INET6_ADDRSTRLEN];
-		printf("in6_selectroute: strange destination %s\n",
+		printf("%s: strange destination %s\n", __func__,
 		       IN6_PRINT(ip6buf, &dstsock->sin6_addr));
 	} else {
 		char ip6buf[INET6_ADDRSTRLEN];
-		printf("in6_selectroute: destination = %s%%%d\n",
+		printf("%s: destination = %s%%%d\n", __func__,
 		       IN6_PRINT(ip6buf, &dstsock->sin6_addr),
 		       dstsock->sin6_scope_id); /* for debug */
 	}
