@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.290 2017/09/12 14:10:49 gson Exp $	*/
+/*	$NetBSD: trap.c,v 1.291 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.290 2017/09/12 14:10:49 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.291 2017/09/17 09:41:35 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,7 +275,7 @@ trap(struct trapframe *frame)
 		trap_print(frame, l);
 	}
 #endif
-	if (type != T_NMI && !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
+	if (type != T_NMI && !KERNELMODE(frame->tf_cs)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;
@@ -370,7 +370,7 @@ kernelfault:
 			 * (eg for sending a SIGSEGV).
 			 */
 			vframe = (void *)((int *)frame + 3);
-			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+			if (KERNELMODE(vframe->tf_cs))
 				goto we_re_toast;
 			memmove(vframe, frame,
 			    offsetof(struct trapframe, tf_eip));
@@ -394,7 +394,7 @@ kernelfault:
 			 * the kernel fault frame.
 			 */
 			vframe = (void *)(&frame->tf_eflags + 1);
-			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+			if (KERNELMODE(vframe->tf_cs))
 				goto we_re_toast;
 			/* There is no valid address for the fault */
 			break;

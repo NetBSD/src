@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.108 2017/08/31 15:41:14 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.109 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.108 2017/08/31 15:41:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.109 2017/09/17 09:41:35 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1061,7 +1061,7 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 
 	if (__predict_false(pmap->pm_ldt != NULL)) {
 		/* Only when the LDT is user-set (with USER_LDT) */
-		if (!USERMODE(scp->sc_cs, scp->sc_eflags))
+		if (!USERMODE(scp->sc_cs))
 			return EINVAL;
 	} else {
 		if (!VALID_USER_CSEL32(scp->sc_cs))
@@ -1098,7 +1098,7 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 
 #ifdef USER_LDT
 	/* Userland is allowed to have unfamiliar segment register values */
-	if (!USERMODE(gr[_REG32_CS], gr[_REG32_EFL]))
+	if (!USERMODE(gr[_REG32_CS]))
 		return EINVAL;
 #else
 	struct pcb *pcb = lwp_getpcb(l);

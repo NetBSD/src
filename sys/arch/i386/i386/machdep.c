@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.793 2017/09/17 09:04:51 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.794 2017/09/17 09:41:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.793 2017/09/17 09:04:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.794 2017/09/17 09:41:35 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1571,7 +1571,7 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 	 * all of the checking here.
 	 */
 	if (((gr[_REG_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) ||
-	    !USERMODE(gr[_REG_CS], gr[_REG_EFL]))
+	    !USERMODE(gr[_REG_CS]))
 		return EINVAL;
 
 	return 0;
