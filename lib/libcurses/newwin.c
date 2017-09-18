@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.50 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: newwin.c,v 1.51 2017/09/18 10:18:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.50 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.51 2017/09/18 10:18:13 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -190,7 +190,7 @@ __subwin(WINDOW *orig, int nlines, int ncols, int by, int bx, int ispad)
 	__CTRACE(__CTRACE_WINDOW, "subwin: (%p, %d, %d, %d, %d, %d)\n",
 	    orig, nlines, ncols, by, bx, ispad);
 #endif
-	if (orig == NULL || orig->orig != NULL)
+	if (orig == NULL)
 		return NULL;
 
 	/* Make sure window fits inside the original one. */
