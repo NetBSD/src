@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.84 2017/08/24 17:18:55 kre Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.85 2017/09/18 13:22:56 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.84 2017/08/24 17:18:55 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.85 2017/09/18 13:22:56 jakllsch Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -295,8 +295,10 @@ extent_create(const char *name, u_long start, u_long end,
 	}
 
 	/* Fill in the extent descriptor and return it to the caller. */
-	mutex_init(&ex->ex_lock, MUTEX_DEFAULT, IPL_VM);
-	cv_init(&ex->ex_cv, "extent");
+	if ((flags & EX_EARLY) == 0) {
+		mutex_init(&ex->ex_lock, MUTEX_DEFAULT, IPL_VM);
+		cv_init(&ex->ex_cv, "extent");
+	}
 	LIST_INIT(&ex->ex_regions);
 	ex->ex_name = name;
 	ex->ex_start = start;
