@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.2 2017/06/18 23:20:20 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.3 2017/09/18 16:58:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.2 2017/06/18 23:20:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.3 2017/09/18 16:58:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,9 +42,33 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.2 2017/06/18 23:20:20 jmcneill Exp $")
 static int	cpu_fdt_match(device_t, cfdata_t, void *);
 static void	cpu_fdt_attach(device_t, device_t, void *);
 
+enum cpu_fdt_type {
+	ARM_CPU_UP = 1,
+	ARM_CPU_ARMV7,
+	ARM_CPU_ARMV8,
+};
+
 struct cpu_fdt_softc {
 	device_t		sc_dev;
 	int			sc_phandle;
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "arm,arm1176jzf-s",		ARM_CPU_UP },
+
+	{ "arm,cortex-a5",		ARM_CPU_ARMV7 },
+	{ "arm,cortex-a7",		ARM_CPU_ARMV7 },
+	{ "arm,cortex-a8",		ARM_CPU_ARMV7 },
+	{ "arm,cortex-a9",		ARM_CPU_ARMV7 },
+	{ "arm,cortex-a12",		ARM_CPU_ARMV7 },
+	{ "arm,cortex-a15",		ARM_CPU_ARMV7 },
+	{ "arm,cortex-a17",		ARM_CPU_ARMV7 },
+
+	{ "arm,cortex-a53",		ARM_CPU_ARMV8 },
+	{ "arm,cortex-a57",		ARM_CPU_ARMV8 },
+	{ "arm,cortex-a72",		ARM_CPU_ARMV8 },
+	{ "arm,cortex-a73",		ARM_CPU_ARMV8 },
+	{ NULL }
 };
 
 CFATTACH_DECL_NEW(cpu_fdt, sizeof(struct cpu_fdt_softc),
@@ -53,36 +77,32 @@ CFATTACH_DECL_NEW(cpu_fdt, sizeof(struct cpu_fdt_softc),
 static int
 cpu_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = {
-		"arm,cortex-a5",
-		"arm,cortex-a7",
-		"arm,cortex-a8",
-		"arm,cortex-a9",
-		"arm,cortex-a12",
-		"arm,cortex-a15",
-		"arm,cortex-a17",
-		"arm,cortex-a53",
-		"arm,cortex-a57",
-		"arm,cortex-a72",
-		"arm,cortex-a73",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	enum cpu_fdt_type type;
 	int is_compatible;
 	bus_addr_t mpidr;
 
-	is_compatible = of_match_compatible(faa->faa_phandle, compatible);
+	is_compatible = of_match_compat_data(phandle, compat_data);
 	if (!is_compatible)
 		return 0;
 
-	/* XXX NetBSD requires all CPUs to be in the same cluster */
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &mpidr, NULL) != 0)
-		return 0;
-	const uint32_t bp_mpidr = armreg_mpidr_read();
-	const u_int bp_clid = __SHIFTOUT(bp_mpidr, CORTEXA9_MPIDR_CLID);
-	const u_int clid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CLID);
-	if (bp_clid != clid)
-		return 0;
+	type = of_search_compatible(phandle, compat_data)->data;
+	switch (type) {
+	case ARM_CPU_ARMV7:
+	case ARM_CPU_ARMV8:
+		/* XXX NetBSD requires all CPUs to be in the same cluster */
+		if (fdtbus_get_reg(phandle, 0, &mpidr, NULL) != 0)
+			return 0;
+		const uint32_t bp_mpidr = armreg_mpidr_read();
+		const u_int bp_clid = __SHIFTOUT(bp_mpidr, CORTEXA9_MPIDR_CLID);
+		const u_int clid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CLID);
+		if (bp_clid != clid)
+			return 0;
+		break;
+	default:
+		break;
+	}
 
 	return is_compatible;
 }
@@ -92,16 +112,30 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	enum cpu_fdt_type type;
 	bus_addr_t mpidr;
+	cpuid_t cpuid;
 
 	sc->sc_dev = self;
-	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_phandle = phandle;
 
-	if (fdtbus_get_reg(sc->sc_phandle, 0, &mpidr, NULL) != 0) {
-		aprint_error(": missing 'reg' property\n");
-		return;
+	type = of_search_compatible(phandle, compat_data)->data;
+
+	switch (type) {
+	case ARM_CPU_ARMV7:
+	case ARM_CPU_ARMV8:
+		if (fdtbus_get_reg(phandle, 0, &mpidr, NULL) != 0) {
+			aprint_error(": missing 'reg' property\n");
+			return;
+		}
+		cpuid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CPUID);
+		break;
+	default:
+		cpuid = 0;
+		break;
 	}
 
 	/* Attach the CPU */
-	cpu_attach(self, __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CPUID));
+	cpu_attach(self, cpuid);
 }
