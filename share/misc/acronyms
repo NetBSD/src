@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.259 2017/09/17 00:54:16 ginsbach Exp $
+$NetBSD: acronyms,v 1.260 2017/09/18 03:14:02 riastradh Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -106,6 +106,7 @@ DBEYR	don't believe everything you read
 DIAFYO	did I ask for your opinion?
 DIY	do it yourself
 DKDC	don't know, don't care
+DM	direct message
 DM	dungeon master
 DME	durable medical equipment
 DMEPOS	durable medical equipment, prosthetics, orthotics and supplies
