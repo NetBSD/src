@@ -368,7 +368,9 @@ dhcpcd_drop(struct interface *ifp, int stop)
 	ipv6_drop(ifp);
 	ipv4ll_drop(ifp);
 	dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
+#ifdef ARP
 	arp_drop(ifp);
+#endif
 }
 
 static void
@@ -532,8 +534,10 @@ configure_interface1(struct interface *ifp)
 			ifo->ia->ia_type = D6_OPTION_IA_NA;
 			memcpy(ifo->ia->iaid, ifo->iaid, sizeof(ifo->iaid));
 			memset(&ifo->ia->addr, 0, sizeof(ifo->ia->addr));
+#ifndef SMALL
 			ifo->ia->sla = NULL;
 			ifo->ia->sla_len = 0;
+#endif
 		}
 	} else {
 		size_t i;
@@ -647,10 +651,12 @@ dhcpcd_initstate2(struct interface *ifp, unsigned long long options)
 	} else
 		ifo = ifp->options;
 
+#ifdef INET6
 	if (ifo->options & DHCPCD_IPV6 && ipv6_init(ifp->ctx) == -1) {
 		logerr(__func__);
 		ifo->options &= ~DHCPCD_IPV6;
 	}
+#endif
 }
 
 static void
@@ -715,10 +721,10 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			ifp->carrier = LINK_DOWN;
 			script_runreason(ifp, "NOCARRIER");
 #ifdef NOCARRIER_PRESERVE_IP
+#ifdef ARP
 			arp_drop(ifp);
+#endif
 			dhcp_abort(ifp);
-			if_sortinterfaces(ctx);
-			ipv4_preferanother(ifp);
 			ipv6nd_expire(ifp, 0);
 #else
 			dhcpcd_drop(ifp, 0);
@@ -858,16 +864,19 @@ dhcpcd_startinterface(void *arg)
 		ifo->options &= ~DHCPCD_IPV6;
 	}
 	if (ifo->options & DHCPCD_IPV6) {
-		ipv6_startstatic(ifp);
+		if (ifp->active == IF_ACTIVE_USER) {
+			ipv6_startstatic(ifp);
 
-		if (ifo->options & DHCPCD_IPV6RS)
-			ipv6nd_startrs(ifp);
+			if (ifo->options & DHCPCD_IPV6RS)
+				ipv6nd_startrs(ifp);
+		}
 
 		if (ifo->options & DHCPCD_DHCP6)
 			dhcp6_find_delegates(ifp);
 
-		if (!(ifo->options & DHCPCD_IPV6RS) ||
-		    ifo->options & (DHCPCD_IA_FORCED | DHCPCD_INFORM6))
+		if ((!(ifo->options & DHCPCD_IPV6RS) ||
+		    ifo->options & (DHCPCD_IA_FORCED | DHCPCD_INFORM6)) &&
+		    ifp->active == IF_ACTIVE_USER)
 		{
 			ssize_t nolease;
 
@@ -897,7 +906,7 @@ dhcpcd_startinterface(void *arg)
 	}
 
 #ifdef INET
-	if (ifo->options & DHCPCD_IPV4) {
+	if (ifo->options & DHCPCD_IPV4 && ifp->active == IF_ACTIVE_USER) {
 		/* Ensure we have an IPv4 state before starting DHCP */
 		if (ipv4_getstate(ifp) != NULL)
 			dhcp_start(ifp);
@@ -1072,6 +1081,9 @@ dhcpcd_handlehwaddr(struct dhcpcd_ctx *ctx, const char *ifname,
 	if (ifp == NULL)
 		return;
 
+	if (!if_valid_hwaddr(hwaddr, hwlen))
+		hwlen = 0;
+
 	if (hwlen > sizeof(ifp->hwaddr)) {
 		errno = ENOBUFS;
 		logerr("%s: %s", __func__, ifp->name);
@@ -1131,7 +1143,7 @@ reconf_reboot(struct dhcpcd_ctx *ctx, int action, int argc, char **argv, int oi)
 		}
 		if (oi != argc && i == argc)
 			continue;
-		if (ifp->active) {
+		if (ifp->active == IF_ACTIVE_USER) {
 			if (action)
 				if_reboot(ifp, argc, argv);
 			else
@@ -1836,7 +1848,7 @@ printpidfile:
 	if (ctx.ifc == 1 && !(ctx.options & DHCPCD_BACKGROUND))
 		ctx.options |= DHCPCD_WAITIP;
 
-	/* Start handling kernel messages for interfaces, addreses and
+	/* Start handling kernel messages for interfaces, addresses and
 	 * routes. */
 	eloop_event_add(ctx.eloop, ctx.link_fd, dhcpcd_handlelink, &ctx);
 

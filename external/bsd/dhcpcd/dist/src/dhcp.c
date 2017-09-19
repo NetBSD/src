@@ -118,10 +118,13 @@ static const char * const dhcp_params[] = {
 	NULL
 };
 
-static int dhcp_open(struct interface *);
+static int dhcp_openbpf(struct interface *);
 #ifdef ARP
 static void dhcp_arp_conflicted(struct arp_state *, const struct arp_msg *);
 #endif
+static void dhcp_handledhcp(struct interface *, struct bootp *, size_t,
+    const struct in_addr *);
+static int dhcp_initstate(struct interface *);
 
 void
 dhcp_printoptions(const struct dhcpcd_ctx *ctx,
@@ -483,7 +486,7 @@ decode_rfc3361(const uint8_t *data, size_t dl)
 	switch (enc) {
 	case 0:
 		if ((r = decode_rfc1035(NULL, 0, data, dl)) > 0) {
-			l = (size_t)r;
+			l = (size_t)r + 1;
 			sip = malloc(l);
 			if (sip == NULL)
 				return 0;
@@ -697,7 +700,7 @@ dhcp_get_routes(struct rt_head *routes, struct interface *ifp)
 {
 	const struct dhcp_state *state;
 
-	if ((state = D_CSTATE(ifp)) == NULL || state->state != DHS_BOUND)
+	if ((state = D_CSTATE(ifp)) == NULL || !(state->added & STATE_ADDED))
 		return 0;
 	return get_option_routes(routes, ifp, state->new, state->new_len);
 }
@@ -1527,11 +1530,14 @@ dhcp_new_xid(struct interface *ifp)
 	else
 		state->xid = arc4random();
 
+	/* We can't do this when sharing leases across interfaes */
+#if 0
 	/* As the XID changes, re-apply the filter. */
 	if (state->bpf_fd != -1) {
 		if (bpf_bootp(ifp, state->bpf_fd) == -1)
 			logerr(__func__); /* try to continue */
 	}
+#endif
 }
 
 void
@@ -1672,17 +1678,11 @@ send_message(struct interface *ifp, uint8_t type,
 	struct if_options *ifo = ifp->options;
 	struct bootp *bootp;
 	struct bootp_pkt *udp;
-	size_t len;
+	size_t len, ulen;
 	ssize_t r;
 	struct in_addr from, to;
-	struct ipv4_addr *iap;
 	struct timespec tv;
-	int s;
-#ifdef IN_IFF_NOTUSEABLE
-	struct ipv4_addr *ia;
-#endif
 
-	s = -1;
 	if (!callback) {
 		/* No carrier? Don't bother sending the packet. */
 		if (ifp->carrier == LINK_DOWN)
@@ -1714,91 +1714,51 @@ send_message(struct interface *ifp, uint8_t type,
 		    timespec_to_double(&tv));
 	}
 
-	if (dhcp_open(ifp) == -1)
+	if (dhcp_openbpf(ifp) == -1)
 		return;
 
-	iap = state->addr;
-	if (state->added && !(state->added & STATE_FAKE) &&
-	    state->addr != NULL && state->new != NULL &&
-#ifdef IN_IFF_NOTUSEABLE
-	    ((ia = ipv4_iffindaddr(ifp, &state->addr->addr, NULL)) &&
-	    !(ia->addr_flags & IN_IFF_NOTUSEABLE)) &&
-#endif
-	    (state->lease.server.s_addr ||
-	    ifp->options->options & DHCPCD_INFORM) &&
-	    IS_DHCP(state->new))
-	{
-		s = dhcp_openudp(ifp);
-		if (s == -1) {
-			if (errno != EADDRINUSE)
-				logerr("%s: dhcp_openudp", ifp->name);
-			/* We cannot renew */
-			state->addr = NULL;
-		}
-	}
-
 	r = make_message(&bootp, ifp, type);
-	state->addr = iap;
 	if (r == -1)
 		goto fail;
 	len = (size_t)r;
 	from.s_addr = bootp->ciaddr;
-	if (s != -1 && from.s_addr != INADDR_ANY)
+	if (from.s_addr != INADDR_ANY)
 		to.s_addr = state->lease.server.s_addr;
 	else
 		to.s_addr = INADDR_ANY;
-	if (to.s_addr && to.s_addr != INADDR_BROADCAST) {
-		struct sockaddr_in sin;
-
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET;
-		sin.sin_addr.s_addr = to.s_addr;
-		sin.sin_port = htons(BOOTPS);
-		r = sendto(s, (uint8_t *)bootp, len, 0,
-		    (struct sockaddr *)&sin, sizeof(sin));
-		if (r == -1)
-			logerr("%s: dhcp_sendpacket", ifp->name);
+	udp = dhcp_makeudppacket(&ulen, (uint8_t *)bootp, len, from, to);
+	if (udp == NULL) {
+		logerr("%s: dhcp_makeudppacket", ifp->name);
+		r = 0;
 	} else {
-		size_t ulen;
-
-		udp = dhcp_makeudppacket(&ulen, (uint8_t *)bootp, len, from,to);
-		if (udp == NULL) {
-			logerr("%s: dhcp_makeudppacket", ifp->name);
-			r = 0;
-		} else {
-			r = bpf_send(ifp, state->bpf_fd,
-			    ETHERTYPE_IP, (uint8_t *)udp, ulen);
-			free(udp);
-		}
-		/* If we failed to send a raw packet this normally means
-		 * we don't have the ability to work beneath the IP layer
-		 * for this interface.
-		 * As such we remove it from consideration without actually
-		 * stopping the interface. */
-		if (r == -1) {
-			logerr("%s: if_sendraw", ifp->name);
-			switch(errno) {
-			case ENETDOWN:
-			case ENETRESET:
-			case ENETUNREACH:
-			case ENOBUFS:
-				break;
-			default:
-				if (!(ifp->ctx->options & DHCPCD_TEST))
-					dhcp_drop(ifp, "FAIL");
-				dhcp_free(ifp);
-				eloop_timeout_delete(ifp->ctx->eloop,
-				    NULL, ifp);
-				callback = NULL;
-			}
+		r = bpf_send(ifp, state->bpf_fd,
+		    ETHERTYPE_IP, (uint8_t *)udp, ulen);
+		free(udp);
+	}
+	/* If we failed to send a raw packet this normally means
+	 * we don't have the ability to work beneath the IP layer
+	 * for this interface.
+	 * As such we remove it from consideration without actually
+	 * stopping the interface. */
+	if (r == -1) {
+		logerr("%s: if_sendraw", ifp->name);
+		switch(errno) {
+		case ENETDOWN:
+		case ENETRESET:
+		case ENETUNREACH:
+		case ENOBUFS:
+			break;
+		default:
+			if (!(ifp->ctx->options & DHCPCD_TEST))
+				dhcp_drop(ifp, "FAIL");
+			eloop_timeout_delete(ifp->ctx->eloop,
+			    NULL, ifp);
+			callback = NULL;
 		}
 	}
 	free(bootp);
 
 fail:
-	if (s != -1)
-		close(s);
-
 	/* Even if we fail to send a packet we should continue as we are
 	 * as our failure timeouts will change out codepath when needed. */
 	if (callback)
@@ -1915,9 +1875,10 @@ dhcp_expire1(struct interface *ifp)
 	dhcp_drop(ifp, "EXPIRE");
 	unlink(state->leasefile);
 	state->interval = 0;
-	dhcp_discover(ifp);
-
+	if (!(ifp->options->options & DHCPCD_LINK) || ifp->carrier != LINK_DOWN)
+		dhcp_discover(ifp);
 }
+
 static void
 dhcp_expire(void *arg)
 {
@@ -1932,7 +1893,7 @@ dhcp_expire(void *arg)
 	dhcp_expire1(ifp);
 }
 
-#ifdef ARP
+#if defined(ARP) || defined(IN_IFF_DUPLICATED)
 static void
 dhcp_decline(struct interface *ifp)
 {
@@ -2096,7 +2057,6 @@ dhcp_arp_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 			dhcp_arp_probed(astate);
 			return;
 		}
-		dhcp_close(ifp);
 		arp_free(astate);
 #ifdef KERNEL_RFC5227
 		/* As arping is finished, close the ARP socket.
@@ -2126,9 +2086,11 @@ dhcp_arp_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 			astate->failed = astate->addr;
 		arp_report_conflicted(astate, amsg);
 		unlink(state->leasefile);
+#ifdef ARP
 		if (!(ifp->options->options & DHCPCD_STATIC) &&
 		    !state->lease.frominfo)
 			dhcp_decline(ifp);
+#endif
 #ifdef IN_IFF_DUPLICATED
 		if ((ia = ipv4_iffindaddr(ifp, &astate->addr, NULL)) != NULL)
 			ipv4_deladdr(ia, 1);
@@ -2346,7 +2308,7 @@ dhcp_arp_address(struct interface *ifp)
 	    state->offer->ciaddr : state->offer->yiaddr;
 	/* If the interface already has the address configured
 	 * then we can't ARP for duplicate detection. */
-	ia = ipv4_findaddr(ifp->ctx, &addr);
+	ia = ipv4_iffindaddr(ifp, &addr, NULL);
 	if ((astate = arp_new(ifp, &addr)) == NULL)
 		return -1;
 	astate->probed_cb = dhcp_arp_probed;
@@ -2489,7 +2451,7 @@ dhcp_reboot_newopts(struct interface *ifp, unsigned long long oldopts)
 	struct if_options *ifo;
 	struct dhcp_state *state = D_STATE(ifp);
 
-	if (state == NULL)
+	if (state == NULL || state->state == DHS_NONE)
 		return;
 	ifo = ifp->options;
 	if ((ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC) &&
@@ -2508,7 +2470,7 @@ dhcp_reboot(struct interface *ifp)
 	struct if_options *ifo;
 	struct dhcp_state *state = D_STATE(ifp);
 
-	if (state == NULL)
+	if (state == NULL || state->state == DHS_NONE)
 		return;
 	ifo = ifp->options;
 	state->state = DHS_REBOOT;
@@ -2571,7 +2533,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 	state = D_STATE(ifp);
 	/* dhcp_start may just have been called and we don't yet have a state
 	 * but we do have a timeout, so punt it. */
-	if (state == NULL) {
+	if (state == NULL || state->state == DHS_NONE) {
 		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 		return;
 	}
@@ -2610,9 +2572,8 @@ dhcp_drop(struct interface *ifp, const char *reason)
 #ifdef AUTH
 	dhcp_auth_reset(&state->auth);
 #endif
-	dhcp_close(ifp);
 
-	state->state = DHS_INIT;
+	state->state = DHS_NONE;
 	free(state->offer);
 	state->offer = NULL;
 	state->offer_len = 0;
@@ -2642,17 +2603,20 @@ blacklisted_ip(const struct if_options *ifo, in_addr_t addr)
 	return 0;
 }
 
-static int
+#define	WHTLST_NONE	0
+#define	WHTLST_MATCH	1
+#define WHTLST_NOMATCH	2
+static unsigned int
 whitelisted_ip(const struct if_options *ifo, in_addr_t addr)
 {
 	size_t i;
 
 	if (ifo->whitelist_len == 0)
-		return -1;
+		return WHTLST_NONE;
 	for (i = 0; i < ifo->whitelist_len; i += 2)
 		if (ifo->whitelist[i] == (addr & ifo->whitelist[i + 1]))
-			return 1;
-	return 0;
+			return WHTLST_MATCH;
+	return WHTLST_NOMATCH;
 }
 
 static void
@@ -2723,6 +2687,33 @@ log_dhcp(logfunc_t *logfunc, const char *msg,
 	free(a);
 }
 
+/* If we're sharing the same IP address with another interface on the
+ * same network, we may receive the DHCP reply on the wrong interface.
+ * Try and re-direct it here. */
+static void
+dhcp_redirect_dhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
+    const struct in_addr *from)
+{
+	struct interface *ifn;
+	const struct dhcp_state *state;
+	uint32_t xid;
+
+	xid = ntohl(bootp->xid);
+	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
+		state = D_CSTATE(ifn);
+		if (state == NULL || state->state == DHS_NONE)
+			continue;
+		if (state->xid != xid)
+			continue;
+		if (ifn->hwlen <= sizeof(bootp->chaddr) &&
+		    memcmp(bootp->chaddr, ifn->hwaddr, ifn->hwlen))
+			continue;
+		logdebugx("%s: redirecting DHCP message to %s",
+		    ifp->name, ifn->name);
+		dhcp_handledhcp(ifn, bootp, bootp_len, from);
+	}
+}
+
 static void
 dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
     const struct in_addr *from)
@@ -2755,6 +2746,16 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		    ifp->name, bootp->op);
 		return;
 	}
+#endif
+
+	if (state->xid != ntohl(bootp->xid)) {
+		if (state->state != DHS_BOUND && state->state != DHS_NONE)
+			logdebugx("%s: wrong xid 0x%x (expecting 0x%x) from %s",
+			    ifp->name, ntohl(bootp->xid), state->xid,
+			    inet_ntoa(*from));
+		dhcp_redirect_dhcp(ifp, bootp, bootp_len, from);
+		return;
+	}
 
 	if (ifp->hwlen <= sizeof(bootp->chaddr) &&
 	    memcmp(bootp->chaddr, ifp->hwaddr, ifp->hwlen))
@@ -2765,9 +2766,28 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		    ifp->name, ntohl(bootp->xid),
 		    hwaddr_ntoa(bootp->chaddr, sizeof(bootp->chaddr),
 		    buf, sizeof(buf)));
+		dhcp_redirect_dhcp(ifp, bootp, bootp_len, from);
 		return;
 	}
-#endif
+
+	if (!ifp->active)
+		return;
+
+	i = whitelisted_ip(ifp->options, from->s_addr);
+	switch (i) {
+	case WHTLST_NOMATCH:
+		logwarnx("%s: non whitelisted DHCP packet from %s",
+		    ifp->name, inet_ntoa(*from));
+		return;
+	case WHTLST_MATCH:
+		break;
+	case WHTLST_NONE:
+		if (blacklisted_ip(ifp->options, from->s_addr) == 1) {
+			logwarnx("%s: blacklisted DHCP packet from %s",
+			    ifp->name, inet_ntoa(*from));
+			return;
+		}
+	}
 
 	/* We may have found a BOOTP server */
 	if (get_option_uint8(ifp->ctx, &type,
@@ -2846,17 +2866,6 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		//LOGDHCP(logdebugx, "bound, ignoring");
 		return;
 	}
-
-	/* Handled in our BPF filter. */
-#if 0
-	/* Ensure it's the right transaction */
-	if (state->xid != ntohl(bootp->xid)) {
-		logdebugx("%s: wrong xid 0x%x (expecting 0x%x) from %s",
-		    ifp->name, ntohl(bootp->xid), state->xid,
-		    inet_ntoa(*from));
-		return;
-	}
-#endif
 
 	if (state->state == DHS_PROBE) {
 		/* Ignore any DHCP messages whilst probing a lease to bind. */
@@ -2952,7 +2961,9 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			case 0:
 				LOGDHCP(logwarnx, "IPv4LL disabled from");
 				ipv4ll_drop(ifp);
+#ifdef ARP
 				arp_drop(ifp);
+#endif
 				break;
 			case 1:
 				LOGDHCP(logwarnx, "IPv4LL enabled from");
@@ -3184,23 +3195,12 @@ dhcp_handlepacket(struct interface *ifp, uint8_t *data, size_t len, int flags)
 {
 	struct bootp *bootp;
 	struct in_addr from;
-	int i;
 	size_t udp_len;
 	const struct dhcp_state *state = D_CSTATE(ifp);
 
 	if (valid_udp_packet(data, len, &from, flags & RAW_PARTIALCSUM) == -1)
 	{
 		logerrx("%s: invalid UDP packet from %s",
-		    ifp->name, inet_ntoa(from));
-		return;
-	}
-	i = whitelisted_ip(ifp->options, from.s_addr);
-	if (i == 0) {
-		logwarnx("%s: non whitelisted DHCP packet from %s",
-		    ifp->name, inet_ntoa(from));
-		return;
-	} else if (i != 1 && blacklisted_ip(ifp->options, from.s_addr) == 1) {
-		logwarnx("%s: blacklisted DHCP packet from %s",
 		    ifp->name, inet_ntoa(from));
 		return;
 	}
@@ -3253,8 +3253,10 @@ dhcp_readpacket(void *arg)
 	while (!(flags & BPF_EOF)) {
 		bytes = bpf_read(ifp, state->bpf_fd, buf, sizeof(buf), &flags);
 		if (bytes == -1) {
-			logerr(__func__);
-			dhcp_close(ifp);
+			if (state->state != DHS_NONE) {
+				logerr("%s: %s", __func__, ifp->name);
+				dhcp_close(ifp);
+			}
 			return;
 		}
 		dhcp_handlepacket(ifp, buf, (size_t)bytes, flags);
@@ -3284,7 +3286,7 @@ dhcp_handleudp(void *arg)
 
 
 static int
-dhcp_open(struct interface *ifp)
+dhcp_openbpf1(struct interface *ifp, bool logerror)
 {
 	struct dhcp_state *state;
 
@@ -3297,14 +3299,36 @@ dhcp_open(struct interface *ifp)
 				/* May as well disable IPv4 entirely at
 				 * this point as we really need it. */
 				ifp->options->options &= ~DHCPCD_IPV4;
-			} else
-				logerr(__func__);
+			} else if (logerror)
+				logerr("%s: %s", __func__, ifp->name);
 			return -1;
 		}
 		eloop_event_add(ifp->ctx->eloop,
 		    state->bpf_fd, dhcp_readpacket, ifp);
 	}
 	return 0;
+}
+
+/* This blows chunks.
+ * Because we may (although unlikely) get the same IP address
+ * across different interfaces we need to open a BPF socket
+ * on ALL interfaces as thanks to ARP magic we might get the
+ * DHCP reply on a different interface. */
+static int
+dhcp_openbpf(struct interface *ifp)
+{
+	struct interface *ifn;
+	int r, o;
+
+	r = -1;
+	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
+		if (dhcp_initstate(ifn) == -1)
+			continue;
+		o = dhcp_openbpf1(ifn, ifn == ifp);
+		if (ifn == ifp)
+			r = o;
+	}
+	return r;
 }
 
 int
@@ -3339,14 +3363,16 @@ dhcp_free(struct interface *ifp)
 	struct dhcpcd_ctx *ctx;
 
 	dhcp_close(ifp);
+#ifdef ARP
 	arp_drop(ifp);
+#endif
 	if (state) {
+		state->state = DHS_NONE;
 		free(state->old);
 		free(state->new);
 		free(state->offer);
 		free(state->clientid);
 		free(state);
-		ifp->if_data[IF_DATA_DHCP] = NULL;
 	}
 
 	ctx = ifp->ctx;
@@ -3354,7 +3380,8 @@ dhcp_free(struct interface *ifp)
 	 * close the global socket and release resources */
 	if (ctx->ifaces) {
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-			if (D_STATE(ifp))
+			state = D_STATE(ifp);
+			if (state != NULL && state->state != DHS_NONE)
 				break;
 		}
 	}
@@ -3371,29 +3398,46 @@ dhcp_free(struct interface *ifp)
 }
 
 static int
+dhcp_initstate(struct interface *ifp)
+{
+	struct dhcp_state *state;
+
+	state = D_STATE(ifp);
+	if (state != NULL)
+		return 0;
+
+	ifp->if_data[IF_DATA_DHCP] = calloc(1, sizeof(*state));
+	state = D_STATE(ifp);
+	if (state == NULL)
+		return -1;
+
+	state->state = DHS_NONE;
+	/* 0 is a valid fd, so init to -1 */
+	state->bpf_fd = -1;
+#ifdef ARPING
+	state->arping_index = -1;
+#endif
+	return 1;
+}
+
+static int
 dhcp_init(struct interface *ifp)
 {
 	struct dhcp_state *state;
 	const struct if_options *ifo;
 	uint8_t len;
 	char buf[(sizeof(ifo->clientid) - 1) * 3];
+	int r;
 
-	state = D_STATE(ifp);
-	if (state == NULL) {
-		ifp->if_data[IF_DATA_DHCP] = calloc(1, sizeof(*state));
-		state = D_STATE(ifp);
-		if (state == NULL)
-			return -1;
-		/* 0 is a valid fd, so init to -1 */
-		state->bpf_fd = -1;
-
-#ifdef ARPING
-		state->arping_index = -1;
-#endif
+	r = dhcp_initstate(ifp);
+	if (r == -1)
+		return -1;
+	else if (r == 1) {
 		/* Now is a good time to find IPv4 routes */
 		if_initrt(ifp->ctx, AF_INET);
 	}
 
+	state = D_STATE(ifp);
 	state->state = DHS_INIT;
 	state->reason = "PREINIT";
 	state->nakoff = 0;
@@ -3513,7 +3557,7 @@ dhcp_start1(void *arg)
 		return;
 	}
 
-	if (ifo->options & DHCPCD_DHCP && dhcp_open(ifp) == -1)
+	if (ifo->options & DHCPCD_DHCP && dhcp_openbpf(ifp) == -1)
 		return;
 
 	if (ifo->options & DHCPCD_INFORM) {
@@ -3709,15 +3753,22 @@ dhcp_start(struct interface *ifp)
 void
 dhcp_abort(struct interface *ifp)
 {
-#ifdef ARPING
 	struct dhcp_state *state;
 
 	state = D_STATE(ifp);
+#ifdef ARPING
 	if (state != NULL)
 		state->arping_index = -1;
 #endif
 
 	eloop_timeout_delete(ifp->ctx->eloop, dhcp_start1, ifp);
+
+	if (state != NULL && state->added) {
+		rt_build(ifp->ctx, AF_INET);
+#ifdef ARP
+		arp_announceaddr(ifp->ctx, &state->addr->addr);
+#endif
+	}
 }
 
 void
@@ -3730,7 +3781,7 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia)
 
 	ifp = ia->iface;
 	state = D_STATE(ifp);
-	if (state == NULL)
+	if (state == NULL || state->state == DHS_NONE)
 		return;
 
 	if (cmd == RTM_DELADDR) {
