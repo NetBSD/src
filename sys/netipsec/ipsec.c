@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.118 2017/08/10 06:11:24 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.119 2017/09/19 02:44:14 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.118 2017/08/10 06:11:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.119 2017/09/19 02:44:14 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -138,6 +138,12 @@ int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 int ip4_esp_randpad = -1;
 
 u_int ipsec_spdgen = 1;		/* SPD generation # */
+
+static struct secpolicy ipsec_dummy_sp __read_mostly = {
+	.state		= IPSEC_SPSTATE_ALIVE,
+	/* If ENTRUST, the dummy SP never be used. See ipsec_getpolicybysock. */
+	.policy		= IPSEC_POLICY_ENTRUST,
+};
 
 static struct secpolicy *ipsec_checkpcbcache (struct mbuf *,
 	struct inpcbpolicy *, int);
@@ -1247,27 +1253,10 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 		new->priv = 0;
 
 	/*
-	 * These SPs are dummy. Never be used because the policy
-	 * is ENTRUST. See ipsec_getpolicybysock.
+	 * Set dummy SPs. Actual SPs will be allocated later if needed.
 	 */
-	new->sp_in = kmem_intr_zalloc(sizeof(struct secpolicy), KM_NOSLEEP);
-	if (new->sp_in == NULL) {
-		ipsec_delpcbpolicy(new);
-		return ENOBUFS;
-	}
-	new->sp_in->state = IPSEC_SPSTATE_ALIVE;
-	new->sp_in->policy = IPSEC_POLICY_ENTRUST;
-	new->sp_in->created = 0; /* Indicates dummy */
-
-	new->sp_out = kmem_intr_zalloc(sizeof(struct secpolicy), KM_NOSLEEP);
-	if (new->sp_out == NULL) {
-		kmem_intr_free(new->sp_in, sizeof(struct secpolicy));
-		ipsec_delpcbpolicy(new);
-		return ENOBUFS;
-	}
-	new->sp_out->state = IPSEC_SPSTATE_ALIVE;
-	new->sp_out->policy = IPSEC_POLICY_ENTRUST;
-	new->sp_out->created = 0; /* Indicates dummy */
+	new->sp_in = &ipsec_dummy_sp;
+	new->sp_out = &ipsec_dummy_sp;
 
 	*policy = new;
 
@@ -1350,9 +1339,8 @@ static void
 ipsec_destroy_policy(struct secpolicy *sp)
 {
 
-	if (sp->created == 0)
-		/* It's dummy. We can simply free it */
-		kmem_intr_free(sp, sizeof(*sp));
+	if (sp == &ipsec_dummy_sp)
+		; /* It's dummy. No need to free it. */
 	else {
 		/*
 		 * We cannot destroy here because it can be called in
