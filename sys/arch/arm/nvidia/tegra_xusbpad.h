@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusbpad.c,v 1.6 2017/09/19 20:46:12 jmcneill Exp $ */
+/* $NetBSD: tegra_xusbpad.h,v 1.1 2017/09/19 20:46:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,48 +26,17 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.6 2017/09/19 20:46:12 jmcneill Exp $");
+#ifndef _ARM_TEGRA_XUSBPAD_H
+#define _ARM_TEGRA_XUSBPAD_H
 
-#include <sys/param.h>
-#include <sys/bus.h>
-#include <sys/cpu.h>
-#include <sys/device.h>
+struct tegra_xusbpad_ops {
+	void	(*sata_enable)(device_t);
+	void	(*xhci_enable)(device_t);
+};
 
-#include <dev/fdt/fdtvar.h>
+void	tegra_xusbpad_register(device_t, const struct tegra_xusbpad_ops *);
 
-#include <arm/nvidia/tegra_xusbpad.h>
+void	tegra_xusbpad_sata_enable(void);
+void	tegra_xusbpad_xhci_enable(void);
 
-static const struct tegra_xusbpad_ops *xusbpad_ops = NULL;
-static device_t xusbpad_device = NULL;
-
-void
-tegra_xusbpad_register(device_t dev, const struct tegra_xusbpad_ops *ops)
-{
-	KASSERT(dev != NULL && ops != NULL);
-	KASSERT(xusbpad_ops == NULL);
-	KASSERT(xusbpad_device == NULL);
-
-	xusbpad_ops = ops;
-	xusbpad_device = dev;
-}
-
-void
-tegra_xusbpad_sata_enable(void)
-{
-	if (xusbpad_ops == NULL || xusbpad_ops->sata_enable == NULL) {
-		aprint_error("%s: could not enable SATA\n", __func__);
-		return;
-	}
-	xusbpad_ops->sata_enable(xusbpad_device);
-}
-
-void
-tegra_xusbpad_xhci_enable(void)
-{
-	if (xusbpad_ops == NULL || xusbpad_ops->xhci_enable == NULL) {
-		aprint_error("%s: could not enable XHCI\n", __func__);
-		return;
-	}
-	xusbpad_ops->xhci_enable(xusbpad_device);
-}
+#endif /* _ARM_TEGRA_XUSBPAD_H */
