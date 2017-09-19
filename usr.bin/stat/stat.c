@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.38 2013/01/03 13:28:41 dsl Exp $ */
+/*	$NetBSD: stat.c,v 1.39 2017/09/19 21:45:28 christos Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.38 2013/01/03 13:28:41 dsl Exp $");
+__RCSID("$NetBSD: stat.c,v 1.39 2017/09/19 21:45:28 christos Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -105,12 +105,13 @@ __RCSID("$NetBSD: stat.c,v 1.38 2013/01/03 13:28:41 dsl Exp $");
 	"st_blksize=%k st_blocks=%b" SHELL_F
 #define LINUX_FORMAT \
 	"  File: \"%N\"%n" \
-	"  Size: %-11z  FileType: %HT%n" \
-	"  Mode: (%04OLp/%.10Sp)         Uid: (%5u/%8Su)  Gid: (%5g/%8Sg)%n" \
+	"  Size: %-11z  Blocks: %-11b  IO Block: %-11k  %HT%n" \
 	"Device: %Hd,%Ld   Inode: %i    Links: %l%n" \
+	"  Mode: (%04OLp/%.10Sp)         Uid: (%5u/%8Su)  Gid: (%5g/%8Sg)%n" \
 	"Access: %Sa%n" \
 	"Modify: %Sm%n" \
-	"Change: %Sc"
+	"Change: %Sc%n" \
+	" Birth: %SB"
 
 #define TIME_FORMAT	"%b %e %T %Y"
 
@@ -262,6 +263,7 @@ main(int argc, char *argv[])
 				errx(1, "can't use format '%c' with '%c'",
 				    fmtchar, ch);
 			fmtchar = ch;
+			timefmt = "%Y-%m-%d %H:%M:%S.%f %z";
 			break;
 		case 't':
 			timefmt = optarg;
@@ -561,6 +563,34 @@ output(const struct stat *st, const char *file,
 	(void)fflush(stdout);
 }
 
+static const char *
+fmttime(char *buf, size_t len, const char *fmt, time_t secs, long nsecs)
+{
+	struct tm tm;
+	char *fmt2;
+	if (localtime_r(&secs, &tm) == NULL) {
+		secs = 0;
+		(void)localtime_r(&secs, &tm);
+	}
+	if ((fmt2 = strstr(fmt, "%f")) != NULL) {
+		size_t flen = strlen(fmt) + 1024;
+		size_t o = (size_t)(fmt2 - fmt);
+		fmt2 = calloc(flen, 1);
+		if (fmt2 != NULL) {
+			memcpy(fmt2, fmt, o);
+			int sl = snprintf(fmt2 + o, flen - o, "%.9ld", nsecs);
+			if (sl == -1)
+				sl = 0;
+			strcpy(fmt2 + sl + o, fmt + o + 2);
+			fmt = fmt2;
+		}
+	}
+
+	(void)strftime(buf, len, fmt, &tm);
+	free(fmt2);
+	return buf;
+}
+
 /*
  * Arranges output according to a single parsed format substring.
  */
@@ -572,13 +602,12 @@ format1(const struct stat *st,
     int flags, int size, int prec, int ofmt,
     int hilo, int what, int quiet)
 {
-	u_int64_t data;
+	uint64_t data;
 	char *stmp, lfmt[24], tmp[20];
 	const char *sdata;
 	char smode[12], sid[12], path[PATH_MAX + 4], visbuf[PATH_MAX * 4 + 4];
 	struct passwd *pw;
 	struct group *gr;
-	struct tm *tm;
 	time_t secs;
 	long nsecs;
 	int l;
@@ -629,8 +658,12 @@ format1(const struct stat *st,
 #else /* HAVE_DEVNAME */
 		    0;
 #endif /* HAVE_DEVNAME */
-		if (ofmt == 0)
-			ofmt = FMTF_UNSIGNED;
+		if (ofmt == 0) {
+			if (data == (uint64_t)-1)
+				ofmt = FMTF_DECIMAL;
+			else
+				ofmt = FMTF_UNSIGNED;
+		}
 		break;
 	case SHOW_st_ino:
 		small = (sizeof(st->st_ino) == 4);
@@ -745,12 +778,8 @@ format1(const struct stat *st,
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 		small = (sizeof(secs) == 4);
 		data = secs;
-		tm = localtime(&secs);
-		if (tm == NULL) {
-			secs = 0;
-			tm = localtime(&secs);
-		}
-		(void)strftime(path, sizeof(path), timefmt, tm);
+		sdata = fmttime(path, sizeof(path), timefmt, secs, nsecs);
+
 		sdata = path;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
 		    FMTF_FLOAT | FMTF_STRING;
@@ -1124,7 +1153,7 @@ format1(const struct stat *st,
 	 * for some forms.
 	 */
 	if (small && ofmt != FMTF_DECIMAL)
-		data = (u_int32_t)data;
+		data = (uint32_t)data;
 
 	/*
 	 * The four "numeric" output forms.
