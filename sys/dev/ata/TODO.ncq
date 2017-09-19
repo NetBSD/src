@@ -4,10 +4,6 @@ test wd* at umass?, confirm the ata_channel kludge works
 
 mvsata - resest MVSATA_WITHOUTDMA
 
-the changes to lock channel lock cause now mi_switch() with spinlock held
-when invoking ata_delay() (which calls kpause()) or on tsleep, need
-to refactor
-
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
 do biodone() in wddone() starting the dump to not leak bufs when dumping from

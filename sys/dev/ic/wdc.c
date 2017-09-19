@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.15 2017/09/11 22:19:23 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.16 2017/09/19 21:06:25 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.15 2017/09/11 22:19:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.16 2017/09/19 21:06:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.15 2017/09/11 22:19:23 jdolecek Exp 
 #define WDCNDELAY_DEBUG	50
 #endif
 
-/* When polling wait that much and then tsleep for 1/hz seconds */
+/* When polling wait that much and then kpause for 1/hz seconds */
 #define WDCDELAY_POLL 1 /* ms */
 
 /* timeout for the control commands */
@@ -140,7 +140,7 @@ const struct ata_bustype wdc_ata_bustype = {
 
 /* Flags to wdcreset(). */
 #define	RESET_POLL	1
-#define	RESET_SLEEP	0	/* wdcreset() will use tsleep() */
+#define	RESET_SLEEP	0	/* wdcreset() will use kpause() */
 
 static int	wdcprobe1(struct ata_channel *, int);
 static int	wdcreset(struct ata_channel *, int);
@@ -206,9 +206,13 @@ wdc_sataprobe(struct ata_channel *chp)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint8_t st = 0, sc __unused, sn __unused, cl, ch;
-	int i, s;
+	int i;
 
 	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
+
+	/* do this before we take lock */
+
+	ata_channel_lock(chp);
 
 	/* reset the PHY and bring online */
 	switch (sata_reset_interface(chp, wdr->sata_iot, wdr->sata_control,
@@ -223,7 +227,7 @@ wdc_sataprobe(struct ata_channel *chp)
 			    wdr->cmd_iohs[wd_status], 0);
 			if ((st & WDCS_BSY) == 0)
 				break;
-			tsleep(&chp, PRIBIO, "sataprb", 1);
+			ata_delay(chp, 1, "sataprb", AT_WAIT);
 		}
 		if (i == WDC_PROBE_WAIT * hz)
 			aprint_error_dev(chp->ch_atac->atac_dev,
@@ -246,12 +250,10 @@ wdc_sataprobe(struct ata_channel *chp)
 		 * sc and sn are supposed to be 0x1 for ATAPI, but in some
 		 * cases we get wrong values here, so ignore it.
 		 */
-		s = splbio();
 		if (cl == 0x14 && ch == 0xeb)
 			chp->ch_drive[0].drive_type = ATA_DRIVET_ATAPI;
 		else
 			chp->ch_drive[0].drive_type = ATA_DRIVET_ATA;
-		splx(s);
 
 		/*
 		 * issue a reset in case only the interface part of the drive
@@ -264,6 +266,8 @@ wdc_sataprobe(struct ata_channel *chp)
 	default:
 		break;
 	}
+
+	ata_channel_unlock(chp);
 }
 #endif /* NSATA > 0 */
 
@@ -290,7 +294,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	u_int8_t st0 = 0, st1 = 0;
-	int i, j, error, s, tfd;
+	int i, j, error, tfd;
 
 	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0)
 		return;
@@ -300,7 +304,7 @@ wdc_drvprobe(struct ata_channel *chp)
 		return;
 	}
 
-	s = splbio();
+	ata_channel_lock(chp);
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
 	for (i = 0; i < mstohz(3000); i++) {
 		/*
@@ -335,12 +339,12 @@ wdc_drvprobe(struct ata_channel *chp)
 		     (st1 & WDCS_DRDY)))
 			break;
 #ifdef WDC_NO_IDS
-		/* cannot tsleep here (can't enable IPL_BIO interrups),
+		/* cannot kpause here (can't enable IPL_BIO interrups),
 		 * delay instead
 		 */
 		delay(1000000 / hz);
 #else
-		tsleep(&params, PRIBIO, "atadrdy", 1);
+		ata_delay(chp, 1, "atadrdy", AT_WAIT);
 #endif
 	}
 	if ((st0 & WDCS_DRDY) == 0 &&
@@ -349,7 +353,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	if (chp->ch_ndrives > 1 && (st1 & WDCS_DRDY) == 0 &&
 	    chp->ch_drive[1].drive_type != ATA_DRIVET_ATAPI)
 		chp->ch_drive[1].drive_type = ATA_DRIVET_NONE;
-	splx(s);
+	ata_channel_unlock(chp);
 
 	ATADEBUG_PRINT(("%s:%d: wait DRDY st0 0x%x st1 0x%x\n",
 	    device_xname(atac->atac_dev),
@@ -370,9 +374,9 @@ wdc_drvprobe(struct ata_channel *chp)
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((atac->atac_cap &
 		    (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) == ATAC_CAP_DATA32) {
-			s = splbio();
+			ata_channel_lock(chp);
 			chp->ch_drive[i].drive_flags |= ATA_DRIVE_CAP32;
-			splx(s);
+			ata_channel_unlock(chp);
 		}
 		if (chp->ch_drive[i].drive_type == ATA_DRIVET_NONE)
 			continue;
@@ -390,7 +394,9 @@ wdc_drvprobe(struct ata_channel *chp)
 		error = ata_get_params(&chp->ch_drive[i],
 		    AT_WAIT | AT_POLL, &params);
 		if (error != CMD_OK) {
-			tsleep(&params, PRIBIO, "atacnf", mstohz(1000));
+			ata_channel_lock(chp);
+			ata_delay(chp, 1000, "atacnf", AT_WAIT);
+			ata_channel_unlock(chp);
 
 			/* Shortcut in case we've been shutdown */
 			if (chp->ch_flags & ATACH_SHUTDOWN)
@@ -403,14 +409,13 @@ wdc_drvprobe(struct ata_channel *chp)
 			ATADEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
 			    device_xname(atac->atac_dev),
 			    chp->ch_channel, i, error), DEBUG_PROBE);
-			s = splbio();
+			ata_channel_lock(chp);
 			if (chp->ch_drive[i].drive_type != ATA_DRIVET_ATA ||
 			    (wdc->cap & WDC_CAPABILITY_PREATA) == 0) {
 				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
-				splx(s);
+				ata_channel_unlock(chp);
 				continue;
 			}
-			splx(s);
 			/*
 			 * Pre-ATA drive ?
 			 * Test registers writability (Error register not
@@ -433,9 +438,8 @@ wdc_drvprobe(struct ata_channel *chp)
 				    "writability failed\n",
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel, i), DEBUG_PROBE);
-				    s = splbio();
 				    chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
-				    splx(s);
+				    ata_channel_unlock(chp);
 				    continue;
 			}
 			if (wdc_wait_for_ready(chp, 10000, 0, &tfd) ==
@@ -443,9 +447,8 @@ wdc_drvprobe(struct ata_channel *chp)
 				ATADEBUG_PRINT(("%s:%d:%d: not ready\n",
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel, i), DEBUG_PROBE);
-				s = splbio();
 				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
-				splx(s);
+				ata_channel_unlock(chp);
 				continue;
 			}
 			bus_space_write_1(wdr->cmd_iot,
@@ -456,11 +459,9 @@ wdc_drvprobe(struct ata_channel *chp)
 				ATADEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel, i), DEBUG_PROBE);
-				s = splbio();
 				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
-				splx(s);
+				ata_channel_unlock(chp);
 			} else {
-				s = splbio();
 				for (j = 0; j < chp->ch_ndrives; j++) {
 					if (chp->ch_drive[i].drive_type !=
 					    ATA_DRIVET_NONE) {
@@ -468,7 +469,7 @@ wdc_drvprobe(struct ata_channel *chp)
 						    ATA_DRIVET_OLD;
 					}
 				}
-				splx(s);
+				ata_channel_unlock(chp);
 			}
 		}
 	}
@@ -493,7 +494,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	u_int8_t st0 = 0, st1 = 0, sc __unused, sn __unused, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
-	int s;
 	/* XXX if poll, wdc_probe_count is 0. */
 	int wdc_probe_count =
 	    poll ? (WDC_PROBE_WAIT / WDCDELAY)
@@ -503,7 +503,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
 
-	s = splbio();
+	ata_channel_lock(chp);
 	if ((wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
 		while (wdc_probe_count-- > 0) {
 			if (wdc->select)
@@ -656,7 +656,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		}
 
 		if (ret_value == 0) {
-			splx(s);
+			ata_channel_unlock(chp);
 			return 0;
 		}
 	}
@@ -697,16 +697,14 @@ wdcprobe1(struct ata_channel *chp, int poll)
 #ifdef WDC_NO_IDS
 	ret_value = __wdcwait_reset(chp, ret_value, RESET_POLL);
 #else
-	splx(s);
 	ret_value = __wdcwait_reset(chp, ret_value, poll);
-	s = splbio();
 #endif
 	ATADEBUG_PRINT(("%s:%d: after reset, ret_value=%#x\n",
 	    __func__, chp->ch_channel, ret_value), DEBUG_PROBE);
 
 	/* if reset failed, there's nothing here */
 	if (ret_value == 0) {
-		splx(s);
+		ata_channel_unlock(chp);
 		return 0;
 	}
 
@@ -759,7 +757,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		(void)bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_status], 0);
 	}
-	splx(s);
+	ata_channel_unlock(chp);
 	return (ret_value);
 }
 
@@ -925,12 +923,12 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * ATAPI_SOFT_RESET
 	 */
 	xfer = ata_queue_get_active_xfer(chp);
+
+	ata_channel_lock(chp);
+
 	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
 		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
-		if (flags & AT_WAIT)
-			tsleep(&flags, PRIBIO, "atardl", mstohz(1) + 1);
-		else
-			delay(1000);
+		ata_delay(chp, 1000, "atardl", flags);
 	}
 
 	/* reset the channel */
@@ -943,10 +941,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * wait a bit after reset; in case the DMA engines needs some time
 	 * to recover.
 	 */
-	if (flags & AT_WAIT)
-		tsleep(&flags, PRIBIO, "atardl", mstohz(1) + 1);
-	else
-		delay(1000);
+	ata_delay(chp, 1000, "atardl", flags);
 
 	/*
 	 * Look for pending xfers. If we have a shared queue, we'll also reset
@@ -955,9 +950,11 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * it is queued for retry immediatelly without waiting for I/O timeout.
 	 */
 	if (xfer) {
-		if (xfer->c_chp != chp)
+		if (xfer->c_chp != chp) {
+			ata_channel_unlock(chp);
 			ata_reset_channel(xfer->c_chp, flags);
-		else {
+			ata_channel_lock(chp);
+		} else {
 #if NATA_DMA || NATA_PIOBM
 			/*
 			 * If we're waiting for DMA, stop the
@@ -974,6 +971,8 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	}
 
 	ata_kill_active(chp, KILL_RESET, flags);
+
+	ata_channel_unlock(chp);
 }
 
 static int
@@ -983,6 +982,8 @@ wdcreset(struct ata_channel *chp, int poll)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	int drv_mask1, drv_mask2;
+
+	ata_channel_lock_owned(chp);
 
 #ifdef WDC_NO_IDS
 	poll = RESET_POLL;
@@ -1051,6 +1052,7 @@ __wdcwait_reset(struct ata_channel *chp, int drv_mask, int poll)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	int timeout, nloop;
+	int wflags = poll ? AT_POLL : AT_WAIT;
 	u_int8_t st0 = 0, st1 = 0;
 #ifdef ATADEBUG
 	u_int8_t sc0 = 0, sn0 = 0, cl0 = 0, ch0 = 0;
@@ -1123,10 +1125,7 @@ __wdcwait_reset(struct ata_channel *chp, int drv_mask, int poll)
 				goto end;
 			}
 		}
-		if (poll)
-			delay(WDCDELAY);
-		else
-			tsleep(&nloop, PRIBIO, "atarst", 1);
+		ata_delay(chp, WDCDELAY, "atarst", wflags);
 	}
 	/* Reset timed out. Maybe it's because drv_mask was not right */
 	if (st0 & WDCS_BSY)
@@ -1219,7 +1218,7 @@ out:
 }
 
 /*
- * Call __wdcwait(), polling using tsleep() or waking up the kernel
+ * Call __wdcwait(), polling using kpause() or waking up the kernel
  * thread if possible
  */
 int
@@ -1376,9 +1375,12 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 		ret = ATACMD_COMPLETE;
 	} else {
 		if (ata_c->flags & AT_WAIT) {
-			while ((ata_c->flags & AT_DONE) == 0) {
-				tsleep(ata_c, PRIBIO, "wdccmd", 0);
+			ata_channel_lock(chp);
+			if ((ata_c->flags & AT_DONE) == 0) {
+				ata_wait_xfer(chp, xfer);
+				KASSERT((ata_c->flags & AT_DONE) != 0);
 			}
+			ata_channel_unlock(chp);
 			ret = ATACMD_COMPLETE;
 		} else {
 			ret = ATACMD_QUEUED;
@@ -1490,7 +1492,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	wflags = AT_POLL;
 #else
 	if ((ata_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
-		/* both wait and poll, we can tsleep here */
+		/* both wait and poll, we can kpause here */
 		wflags = AT_WAIT | AT_POLL;
 	} else {
 		wflags = AT_POLL;
@@ -1676,10 +1678,11 @@ __wdccommand_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 
+	ata_channel_lock(chp);
 	ata_c->flags |= AT_DONE;
 	if (ata_c->flags & AT_WAIT)
-		wakeup(ata_c);
-	return;
+		ata_wake_xfer(chp, xfer);
+	ata_channel_unlock(chp);
 }
 
 static void
