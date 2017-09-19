@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.46 2017/08/10 13:13:03 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.47 2017/09/19 01:22:14 maya Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.46 2017/08/10 13:13:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.47 2017/09/19 01:22:14 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,12 +137,6 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 	*addr = val;						\
 } while (0)
 
-#define WAKECODE_BCOPY(offset, type, val) do	{		\
-	void	**addr;						\
-	addr = (void **)(acpi_wakeup_vaddr + offset);		\
-	memcpy(addr, &(val), sizeof(type));			\
-} while (0)
-
 	paddr_t				tmp_pdir;
 
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
@@ -172,7 +166,6 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 #endif
 	WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_md_sleep_exit);
 #undef WAKECODE_FIXUP
-#undef WAKECODE_BCOPY
 }
 
 static int
