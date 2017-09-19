@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.6 2017/09/07 21:36:19 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.7 2017/09/19 17:26:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.6 2017/09/07 21:36:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.7 2017/09/19 17:26:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,6 +188,8 @@ struct sunxi_emac_softc {
 	struct fdtbus_reset	*rst_ephy;
 	struct fdtbus_regulator	*reg_phy;
 	struct fdtbus_gpio_pin	*pin_reset;
+
+	int			phy_id;
 
 	kmutex_t		mtx;
 	struct ethercom		ec;
@@ -1298,6 +1300,21 @@ sunxi_emac_get_resources(struct sunxi_emac_softc *sc)
 }
 
 static int
+sunxi_emac_get_phyid(struct sunxi_emac_softc *sc)
+{
+	bus_addr_t addr;
+
+	const int phy_phandle = fdtbus_get_phandle(sc->phandle, "phy");
+	if (phy_phandle == -1)
+		return MII_PHY_ANY;
+
+	if (fdtbus_get_reg(phy_phandle, 0, &addr, NULL) != 0)
+		return MII_PHY_ANY;
+
+	return (int)addr;
+}
+
+static int
 sunxi_emac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
@@ -1321,6 +1338,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	sc->bst = faa->faa_bst;
 	sc->dmat = faa->faa_dmat;
 	sc->type = of_search_compatible(phandle, compat_data)->data;
+	sc->phy_id = sunxi_emac_get_phyid(sc);
 
 	if (sunxi_emac_get_resources(sc) != 0) {
 		aprint_error(": cannot allocate resources for device\n");
@@ -1395,7 +1413,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	mii->mii_readreg = sunxi_emac_mii_readreg;
 	mii->mii_writereg = sunxi_emac_mii_writereg;
 	mii->mii_statchg = sunxi_emac_mii_statchg;
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	mii_attach(self, mii, 0xffffffff, sc->phy_id, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
 
 	if (LIST_EMPTY(&mii->mii_phys)) {
