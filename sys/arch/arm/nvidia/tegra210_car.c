@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.1 2017/07/21 01:01:22 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.2 2017/09/19 20:45:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.1 2017/07/21 01:01:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.2 2017/09/19 20:45:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -424,6 +424,18 @@ static const char *mux_i2c_p[] =
 	{ "PLL_P", "PLL_C2_OUT0", "PLL_C", "PLL_C4_OUT0",
 	  NULL, "PLL_C4_OUT1", "CLK_M", "PLL_C4_OUT2" };
 
+static const char *mux_xusb_host_p[] =
+	{ "CLK_M", "PLL_P", NULL, NULL,
+	  NULL, "PLL_REF", NULL, NULL };
+
+static const char *mux_xusb_fs_p[] =
+	{ "CLK_M", NULL, "PLL_U_48M", NULL,
+	  "PLL_P", NULL, "PLL_U_480M", NULL };
+
+static const char *mux_xusb_ss_p[] =
+	{ "CLK_M", "PLL_REF", "CLK_32K", "PLL_U_480M",
+	  NULL, NULL, NULL, NULL };
+
 static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_FIXED("CLK_M", TEGRA210_REF_FREQ),
 
@@ -443,6 +455,9 @@ static struct tegra_clk tegra210_car_clocks[] = {
 		CAR_PLLD2_BASE_DIVM, CAR_PLLD2_BASE_DIVN, CAR_PLLD2_BASE_DIVP),
 	CLK_PLL("PLL_REF", "CLK_M", CAR_PLLREFE_BASE_REG,
 		CAR_PLLREFE_BASE_DIVM, CAR_PLLREFE_BASE_DIVN, CAR_PLLREFE_BASE_DIVP),
+
+	CLK_FIXED_DIV("PLL_U_480M", "PLL_U", 1),
+	CLK_FIXED_DIV("PLL_U_48M", "PLL_U", 10),
 
 	CLK_MUX("MUX_UARTA", CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_SRC,
 		mux_uart_p),
@@ -468,6 +483,19 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_MUX("MUX_I2C4", CAR_CLKSRC_I2C4_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
 	CLK_MUX("MUX_I2C5", CAR_CLKSRC_I2C5_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
 	CLK_MUX("MUX_I2C6", CAR_CLKSRC_I2C6_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
+
+	CLK_MUX("MUX_XUSB_HOST",
+		CAR_CLKSRC_XUSB_HOST_REG, CAR_CLKSRC_XUSB_HOST_SRC,
+		mux_xusb_host_p),
+	CLK_MUX("MUX_XUSB_FALCON",
+		CAR_CLKSRC_XUSB_FALCON_REG, CAR_CLKSRC_XUSB_FALCON_SRC,
+		mux_xusb_host_p),
+	CLK_MUX("MUX_XUSB_SS",
+		CAR_CLKSRC_XUSB_SS_REG, CAR_CLKSRC_XUSB_SS_SRC,
+		mux_xusb_ss_p),
+	CLK_MUX("MUX_XUSB_FS",
+		CAR_CLKSRC_XUSB_FS_REG, CAR_CLKSRC_XUSB_FS_SRC,
+		mux_xusb_fs_p),
 
 	CLK_DIV("DIV_UARTA", "MUX_UARTA",
 		CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_DIV),
@@ -500,6 +528,15 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_DIV("DIV_I2C6", "MUX_I2C6", 
 		CAR_CLKSRC_I2C6_REG, CAR_CLKSRC_I2C_DIV),
 
+	CLK_DIV("XUSB_HOST_SRC", "MUX_XUSB_HOST",
+		CAR_CLKSRC_XUSB_HOST_REG, CAR_CLKSRC_XUSB_HOST_DIV),
+	CLK_DIV("XUSB_SS_SRC", "MUX_XUSB_SS",
+		CAR_CLKSRC_XUSB_SS_REG, CAR_CLKSRC_XUSB_SS_DIV),
+	CLK_DIV("XUSB_FS_SRC", "MUX_XUSB_FS",
+		CAR_CLKSRC_XUSB_FS_REG, CAR_CLKSRC_XUSB_FS_DIV),
+	CLK_DIV("XUSB_FALCON_SRC", "MUX_XUSB_FALCON",
+		CAR_CLKSRC_XUSB_FALCON_REG, CAR_CLKSRC_XUSB_FALCON_DIV),
+
 	CLK_GATE_L("UARTA", "DIV_UARTA", CAR_DEV_L_UARTA),
 	CLK_GATE_L("UARTB", "DIV_UARTB", CAR_DEV_L_UARTB),
 	CLK_GATE_H("UARTC", "DIV_UARTC", CAR_DEV_H_UARTC),
@@ -514,16 +551,23 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_GATE_V("I2C4", "DIV_I2C4", CAR_DEV_V_I2C4),
 	CLK_GATE_H("I2C5", "DIV_I2C5", CAR_DEV_H_I2C5),
 	CLK_GATE_X("I2C6", "DIV_I2C6", CAR_DEV_X_I2C6),
+	CLK_GATE_U("XUSB_HOST", "XUSB_HOST_SRC", CAR_DEV_U_XUSB_HOST),
+	CLK_GATE_W("XUSB_SS", "XUSB_SS_SRC", CAR_DEV_W_XUSB_SS),
+	CLK_GATE_H("FUSE", "CLK_M", CAR_DEV_H_FUSE),
 };
 
 struct tegra210_init_parent {
 	const char *clock;
 	const char *parent;
 } tegra210_init_parents[] = {
-	{ "SDMMC1", 	"PLL_P" },
-	{ "SDMMC2",	"PLL_P" },
-	{ "SDMMC3",	"PLL_P" },
-	{ "SDMMC4",	"PLL_P" },
+	{ "SDMMC1", 		"PLL_P" },
+	{ "SDMMC2",		"PLL_P" },
+	{ "SDMMC3",		"PLL_P" },
+	{ "SDMMC4",		"PLL_P" },
+	{ "XUSB_HOST_SRC",	"PLL_P" },
+	{ "XUSB_FALCON_SRC",	"PLL_P" },
+	{ "XUSB_SS_SRC",	"PLL_U_480M" },
+	{ "XUSB_FS_SRC",	"PLL_U_48M" },
 };
 
 struct tegra210_car_rst {
@@ -572,8 +616,11 @@ struct tegra210_car_softc {
 };
 
 static void	tegra210_car_init(struct tegra210_car_softc *);
+static void	tegra210_car_utmip_init(struct tegra210_car_softc *);
+static void	tegra210_car_xusb_init(struct tegra210_car_softc *);
 static void	tegra210_car_watchdog_init(struct tegra210_car_softc *);
 static void	tegra210_car_parent_init(struct tegra210_car_softc *);
+
 
 CFATTACH_DECL_NEW(tegra210_car, sizeof(struct tegra210_car_softc),
 	tegra210_car_match, tegra210_car_attach, NULL, NULL);
@@ -651,10 +698,8 @@ static void
 tegra210_car_init(struct tegra210_car_softc *sc)
 {
 	tegra210_car_parent_init(sc);
-#if notyet
 	tegra210_car_utmip_init(sc);
 	tegra210_car_xusb_init(sc);
-#endif
 	tegra210_car_watchdog_init(sc);
 }
 
@@ -683,7 +728,6 @@ tegra210_car_parent_init(struct tegra210_car_softc *sc)
 	}
 }
 
-#if notyet
 static void
 tegra210_car_utmip_init(struct tegra210_car_softc *sc)
 {
@@ -761,7 +805,6 @@ tegra210_car_xusb_init(struct tegra210_car_softc *sc)
 	tegra_reg_set_clear(bst, bsh, CAR_CLKSRC_XUSB_SS_REG,
 	    CAR_CLKSRC_XUSB_SS_HS_CLK_BYPASS, 0);
 }
-#endif
 
 static void
 tegra210_car_watchdog_init(struct tegra210_car_softc *sc)
