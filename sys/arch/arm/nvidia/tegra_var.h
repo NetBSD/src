@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.39 2017/07/20 01:46:15 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.40 2017/09/19 20:46:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,9 +77,6 @@ void	tegra_pmc_hdmi_enable(void);
 uint32_t tegra_fuse_read(u_int);
 
 void	tegra_timer_delay(u_int);
-
-void	tegra_xusbpad_sata_enable(void);
-void	tegra_xusbpad_xhci_enable(void);
 
 struct videomode;
 int	tegra_dc_port(device_t);

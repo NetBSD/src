@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.10 2017/04/16 12:28:21 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.11 2017/09/19 20:46:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.10 2017/04/16 12:28:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.11 2017/09/19 20:46:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.10 2017/04/16 12:28:21 jmcneill
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_ahcisatareg.h>
+#include <arm/nvidia/tegra_xusbpad.h>
 
 #include <dev/fdt/fdtvar.h>
 

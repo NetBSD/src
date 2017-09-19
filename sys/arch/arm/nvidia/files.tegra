@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.41 2017/07/21 01:01:22 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.42 2017/09/19 20:46:12 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -77,11 +77,19 @@ device	tegraapbdma
 attach	tegraapbdma at fdt with tegra_apbdma
 file	arch/arm/nvidia/tegra_apbdma.c		tegra_apbdma
 
-# XUSB PADCTL
-device	tegraxusbpad
-attach	tegraxusbpad at fdt with tegra_xusbpad
+# XUSB PADCTL (common)
 file	arch/arm/nvidia/tegra_xusbpad.c		tegra_xusbpad
 defflag	opt_tegra.h				TEGRA_XUSBPAD_DEBUG
+
+# XUSB PADCTL (Tegra124)
+device	tegra124xusbpad: tegra_xusbpad
+attach	tegra124xusbpad at fdt with tegra124_xusbpad
+file	arch/arm/nvidia/tegra124_xusbpad.c	tegra124_xusbpad
+
+# XUSB PADCTL (Tegra210)
+device	tegra210xusbpad: tegra_xusbpad
+attach	tegra210xusbpad at fdt with tegra210_xusbpad
+file	arch/arm/nvidia/tegra210_xusbpad.c	tegra210_xusbpad
 
 # UART
 attach	com at fdt with tegra_com

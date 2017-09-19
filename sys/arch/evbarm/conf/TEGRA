@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.27 2017/09/08 10:17:18 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.28 2017/09/19 20:46:12 jmcneill Exp $
 #
 #	NVIDIA Tegra family SoCs
 #
@@ -93,7 +93,7 @@ gpio*		at gpiobus?
 tegrampio*	at fdt?			# MPIO
 
 # XUSB PADCTL
-tegraxusbpad*	at fdt?			# XUSB PADCTL
+tegra124xusbpad*	at fdt?			# XUSB PADCTL
 
 # PCIE
 tegrapcie0	at fdt?			# PCIE
