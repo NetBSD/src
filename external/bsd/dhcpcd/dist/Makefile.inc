@@ -9,6 +9,7 @@ CONFMODE?=	0644
 
 CC?=		cc
 INSTALL?=	install
+LINT?=		lint
 SED?=		sed
 HOST_SH?=	/bin/sh
 

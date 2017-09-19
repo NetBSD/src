@@ -183,6 +183,7 @@ struct dhcp_lease {
 };
 
 enum DHS {
+	DHS_NONE,
 	DHS_INIT,
 	DHS_DISCOVER,
 	DHS_REQUEST,

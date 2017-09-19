@@ -50,7 +50,7 @@
 #ifndef htonll
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define	htonll(x)	((uint64_t)htonl((uint32_t)((x) >> 32)) | \
-			 (uint64_t)htonl((uint32_t)((x) & 0xffffffff)) << 32)
+			 (uint64_t)htonl((uint32_t)((x) & 0x00000000ffffffffULL)) << 32)
 #else	/* (BYTE_ORDER == LITTLE_ENDIAN) */
 #define	htonll(x)	(x)
 #endif
@@ -59,7 +59,7 @@
 #ifndef ntohll
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define	ntohll(x)	((uint64_t)ntohl((uint32_t)((x) >> 32)) | \
-			 (uint64_t)ntohl((uint32_t)((x) & 0xffffffff)) << 32)
+			 (uint64_t)ntohl((uint32_t)((x) & 0x00000000ffffffffULL)) << 32)
 #else	/* (BYTE_ORDER == LITTLE_ENDIAN) */
 #define	ntohll(x)	(x)
 #endif

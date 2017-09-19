@@ -264,6 +264,24 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 	}
 }
 
+bool
+if_valid_hwaddr(const uint8_t *hwaddr, size_t hwlen)
+{
+	size_t i;
+	bool all_zeros, all_ones;
+
+	all_zeros = all_ones = true;
+	for (i = 0; i < hwlen; i++) {
+		if (hwaddr[i] != 0x00)
+			all_zeros = false;
+		if (hwaddr[i] != 0xff)
+			all_ones = false;
+		if (!all_zeros && !all_ones)
+			return true;
+	}
+	return false;
+}
+
 struct if_head *
 if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 {
@@ -468,6 +486,10 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		else
 			ifp->index = if_nametoindex(ifp->name);
 #endif
+
+		/* Ensure hardware address is valid. */
+		if (!if_valid_hwaddr(ifp->hwaddr, ifp->hwlen))
+			ifp->hwlen = 0;
 
 		/* We only work on ethernet by default */
 		if (ifp->family != ARPHRD_ETHER) {
