@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.27 2017/09/10 19:31:15 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.28 2017/09/19 17:52:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.27 2017/09/10 19:31:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.28 2017/09/19 17:52:52 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -568,7 +568,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	uint32_t is, tfd, sact;
 	struct ata_channel *chp = &achp->ata_channel;
 	struct ata_xfer *xfer;
-	int slot;
+	int slot = -1;
 	bool recover = false;
 
 	is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
@@ -585,12 +585,9 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	if ((chp->ch_flags & ATACH_NCQ) == 0) {
 		/* Non-NCQ operation */
 		sact = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel));
-		slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
-			& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
 	} else {
 		/* NCQ operation */
 		sact = AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
-		slot = -1;
 	}
 
 	/* Handle errors */
@@ -599,6 +596,14 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		/* Fatal errors */
 		if (is & AHCI_P_IX_TFES) {
 			tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
+
+			if ((chp->ch_flags & ATACH_NCQ) == 0) {
+				/* Slot valid only for Non-NCQ operation */
+				slot = (AHCI_READ(sc,
+				    AHCI_P_CMD(chp->ch_channel))
+				    & AHCI_P_CMD_CCS_MASK)
+				    >> AHCI_P_CMD_CCS_SHIFT;
+			}
 
 			aprint_error("%s port %d: active %x is 0x%x tfd 0x%x\n",
 			    AHCINAME(sc), chp->ch_channel, sact, is, tfd);
@@ -657,7 +662,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			if ((aslots & __BIT(slot)) != 0 &&
 			    (sact & __BIT(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				xfer->c_intr(chp, xfer, 0);
+				xfer->c_intr(chp, xfer, tfd);
 			}
 		}
 	}
