@@ -1310,7 +1310,7 @@ const char *bpf_name = "Packet Socket";
 int
 bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 {
-	struct ipv4_state *state = IPV4_STATE(ifp);
+	struct ipv4_state *state;
 /* Linux is a special snowflake for opening BPF. */
 	int s;
 	union sockunion {
@@ -1328,6 +1328,9 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 #undef SF
 
 	/* Allocate a suitably large buffer for a single packet. */
+	state = ipv4_getstate(ifp);
+	if (state == NULL)
+		goto eexit;
 	if (state->buffer_size < ETH_DATA_LEN) {
 		void *nb;
 
