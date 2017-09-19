@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.25 2017/09/10 19:31:15 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.26 2017/09/19 21:06:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -134,6 +134,7 @@ struct ata_xfer {
 	struct callout c_timo_callout;	/* timeout callout handle */
 	struct callout c_retry_callout;	/* retry callout handle */
 	kcondvar_t c_active;		/* somebody actively waiting for xfer */
+	kcondvar_t c_finish;		/* somebody waiting for xfer finish */
 	int8_t c_slot;			/* queue slot # */
 
 #define c_startzero	c_chp
@@ -182,7 +183,7 @@ struct ata_xfer {
 #define	C_TIMEOU	0x0002		/* xfer processing timed out */
 #define	C_POLL		0x0004		/* command is polled */
 #define	C_DMA		0x0008		/* command uses DMA */
-#define C_WAIT		0x0010		/* can use tsleep */
+#define C_WAIT		0x0010		/* can use kpause */
 #define C_WAITACT	0x0020		/* wakeup when active */
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
 #define C_PIOBM		0x0080		/* command uses busmastering PIO */
@@ -220,6 +221,7 @@ struct ata_queue {
 	int queue_freeze; 			/* freeze count for the queue */
 	kcondvar_t queue_busy;			/* c: waiting of xfer */
 	kcondvar_t queue_drain;			/* c: waiting of queue drain */
+	kcondvar_t queue_idle;			/* c: waiting of queue idle */
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
 	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
@@ -515,6 +517,8 @@ void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 int	ata_xfer_start(struct ata_xfer *xfer);
+void	ata_wait_xfer(struct ata_channel *, struct ata_xfer *xfer);
+void	ata_wake_xfer(struct ata_channel *, struct ata_xfer *xfer);
 
 void	ata_timeout(void *);
 bool	ata_timo_xfer_check(struct ata_xfer *);
@@ -550,7 +554,7 @@ struct ata_xfer *
 struct ata_xfer *
 	ata_queue_drive_active_xfer(struct ata_channel *, int);
 
-void	ata_delay(int, const char *, int);
+void	ata_delay(struct ata_channel *, int, const char *, int);
 
 bool	ata_waitdrain_xfer_check(struct ata_channel *, struct ata_xfer *);
 

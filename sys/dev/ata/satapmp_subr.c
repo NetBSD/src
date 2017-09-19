@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.12.24.5 2017/07/26 18:12:12 jdolecek Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.12.24.6 2017/09/19 21:06:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.5 2017/07/26 18:12:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.6 2017/09/19 21:06:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.5 2017/07/26 18:12:12 jdole
 #include <dev/ata/satareg.h>
 
 static int
-satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
+satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value,
+    struct ata_xfer *xfer)
 {
-	struct ata_xfer *xfer;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
 	int error = 0;
@@ -60,10 +60,7 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	KASSERT(chp->ch_ndrives >= PMP_MAX_DRIVES);
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
-
-	xfer = ata_get_xfer(chp);
-	if (xfer == NULL)
-		return EINTR;
+	ata_channel_lock_owned(chp);
 
 	xfer->c_ata_c.r_command = PMPC_READ_PORT;
 	xfer->c_ata_c.r_features = reg;
@@ -73,6 +70,7 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
 	xfer->c_ata_c.flags = AT_LBA48 | AT_READREG | AT_WAIT;
 
+	ata_channel_unlock(chp);
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 	    xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
@@ -101,17 +99,18 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 		((uint64_t)((xfer->c_ata_c.r_count >> 0) & 0xff) << 0);
 
 out:
-	ata_free_xfer(chp, xfer);
+	ata_channel_lock(chp);
 	return error;
 }
 
 static inline int
-satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
+satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value,
+    struct ata_xfer *xfer)
 {
 	uint64_t value64;
 	int ret;
 
-	ret = satapmp_read_8(chp, port, reg, &value64);
+	ret = satapmp_read_8(chp, port, reg, &value64, xfer);
 	if (ret)
 		return ret;
 
@@ -120,9 +119,9 @@ satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
 }
 
 static int
-satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
+satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value,
+    struct ata_xfer *xfer)
 {
-	struct ata_xfer *xfer;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
 	int error = 0;
@@ -132,10 +131,7 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	KASSERT(chp->ch_ndrives >= PMP_MAX_DRIVES);
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
-
-	xfer = ata_get_xfer(chp);
-	if (xfer == NULL)
-		return EINTR;
+	ata_channel_lock_owned(chp);
 
 	xfer->c_ata_c.r_command = PMPC_WRITE_PORT;
 	xfer->c_ata_c.r_features = reg;
@@ -149,6 +145,7 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
 	xfer->c_ata_c.flags = AT_LBA48 | AT_WAIT;
 
+	ata_channel_unlock(chp);
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 	    xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
@@ -172,14 +169,15 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	}
 
 out:
-	ata_free_xfer(chp, xfer);
+	ata_channel_lock(chp);
 	return error;
 }
 
 static inline int
-satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
+satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value,
+    struct ata_xfer *xfer)
 {
-	return satapmp_write_8(chp, port, reg, value);
+	return satapmp_write_8(chp, port, reg, value, xfer);
 }
 
 /*
@@ -187,30 +185,34 @@ satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
  * XXX duplicate of sata_reset_interface()
  */
 static uint32_t
-satapmp_reset_device_port(struct ata_channel *chp, int port)
+satapmp_reset_device_port(struct ata_channel *chp, int port,
+    struct ata_xfer *xfer)
 {
 	uint32_t scontrol, sstatus;
 	int i;
 
+	ata_channel_lock_owned(chp);
+
 	/* bring the PHY online */
 	scontrol = SControl_IPM_NONE | SControl_SPD_ANY | SControl_DET_INIT;
-	if (satapmp_write(chp, port, PMP_PSCR_SControl, scontrol) != 0)
+	if (satapmp_write(chp, port, PMP_PSCR_SControl, scontrol, xfer) != 0)
 		return 0;
 
-	tsleep(chp, PRIBIO, "sataup", mstohz(50));
+	ata_delay(chp, 50, "sataup", AT_WAIT);
 	scontrol &= ~SControl_DET_INIT;
-	if (satapmp_write(chp, port, PMP_PSCR_SControl, scontrol) != 0)
+	if (satapmp_write(chp, port, PMP_PSCR_SControl, scontrol, xfer) != 0)
 		return 0;
-	tsleep(chp, PRIBIO, "sataup", mstohz(50));
+	ata_delay(chp, 50, "sataup", AT_WAIT);
 
 	/* wait up to 1s for device to come up */
 	for (i = 0; i < 100; i++) {
 		
-		if (satapmp_read(chp, port, PMP_PSCR_SStatus, &sstatus) != 0)
+		if (satapmp_read(chp, port, PMP_PSCR_SStatus, &sstatus,
+		    xfer) != 0)
 			return 0;
 		if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
 			break;
-		tsleep(chp, PRIBIO, "sataup", mstohz(10));
+		ata_delay(chp, 10, "sataup", AT_WAIT);
 	}
 
 	switch (sstatus & SStatus_DET_mask) {
@@ -238,25 +240,31 @@ satapmp_reset_device_port(struct ata_channel *chp, int port)
 }
 
 void
-satapmp_rescan(struct ata_channel *chp) {
+satapmp_rescan(struct ata_channel *chp, struct ata_xfer *xfer)
+{
 	int i;
 	uint32_t sig;
 
 	KASSERT(chp->ch_satapmp_nports <= PMP_PORT_CTL);
 	KASSERT(chp->ch_satapmp_nports <= chp->ch_ndrives);
+	ata_channel_lock_owned(chp);
 
 	for (i = 0; i < chp->ch_satapmp_nports; i++) {
 		if (chp->ch_drive[i].drive_type != ATA_DRIVET_NONE ||
-		    satapmp_reset_device_port(chp, i) != SStatus_DET_DEV) {
+		    satapmp_reset_device_port(chp, i, xfer)
+		    != SStatus_DET_DEV) {
 			continue;
 		}
-		if (satapmp_write(chp, i, PMP_PSCR_SError, 0xffffffff) != 0) {
+		if (satapmp_write(chp, i, PMP_PSCR_SError, 0xffffffff, xfer)
+		    != 0) {
 			aprint_error("%s PMP port %d: can't write SError\n",
 			    device_xname(chp->atabus), i);
 			continue;
 		}
+		ata_channel_unlock(chp);
 		chp->ch_atac->atac_bustype_ata->ata_reset_drive(
 		    &chp->ch_drive[i], AT_WAIT, &sig);
+		ata_channel_lock(chp);
 
 		sata_interpret_sig(chp, i, sig);
 	}
@@ -266,12 +274,21 @@ void
 satapmp_attach(struct ata_channel *chp)
 {
 	uint32_t id, rev, inf;
+	struct ata_xfer *xfer;
 
-	if (satapmp_read(chp, PMP_PORT_CTL, PMP_GSCR_ID, &id) != 0 ||
-	    satapmp_read(chp, PMP_PORT_CTL, PMP_GSCR_REV, &rev) != 0 ||
-	    satapmp_read(chp, PMP_PORT_CTL, PMP_GSCR_INF, &inf) != 0) {
-		aprint_normal_dev(chp->atabus, "can't read PMP registers\n");
+	xfer = ata_get_xfer(chp);
+	if (xfer == NULL) {
+		aprint_normal_dev(chp->atabus, "no available xfer\n");
 		return;
+	}
+
+	ata_channel_lock(chp);
+
+	if (satapmp_read(chp, PMP_PORT_CTL, PMP_GSCR_ID, &id, xfer) != 0 ||
+	    satapmp_read(chp, PMP_PORT_CTL, PMP_GSCR_REV, &rev, xfer) != 0 ||
+	    satapmp_read(chp, PMP_PORT_CTL, PMP_GSCR_INF, &inf, xfer) != 0) {
+		aprint_normal_dev(chp->atabus, "can't read PMP registers\n");
+		goto out;
 	}
 
 	aprint_normal("%s at %s channel %d: SATA port multiplier, %d ports\n",
@@ -293,5 +310,9 @@ satapmp_attach(struct ata_channel *chp)
 	chp->ch_satapmp_nports = PMP_INF_NPORTS(inf);
 
 	/* reset and bring up PHYs */
-	satapmp_rescan(chp);
+	satapmp_rescan(chp, xfer);
+
+out:
+	ata_channel_unlock(chp);
+	ata_free_xfer(chp, xfer);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.32 2017/09/11 22:16:18 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.33 2017/09/19 21:06:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.32 2017/09/11 22:16:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.33 2017/09/19 21:06:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -279,6 +279,7 @@ ata_xfer_init(struct ata_xfer *xfer, uint8_t slot)
 	xfer->c_slot = slot;
 
 	cv_init(&xfer->c_active, "ataact");
+	cv_init(&xfer->c_finish, "atafin");
 	callout_init(&xfer->c_timo_callout, 0); 	/* XXX MPSAFE */
 	callout_init(&xfer->c_retry_callout, 0); 	/* XXX MPSAFE */
 }
@@ -291,6 +292,7 @@ ata_xfer_destroy(struct ata_xfer *xfer)
 	callout_halt(&xfer->c_retry_callout, NULL);	/* XXX MPSAFE */
 	callout_destroy(&xfer->c_retry_callout);
 	cv_destroy(&xfer->c_active);
+	cv_destroy(&xfer->c_finish);
 }
 
 struct ata_queue *
@@ -310,6 +312,7 @@ ata_queue_alloc(uint8_t openings)
 
 	cv_init(&chq->queue_busy, "ataqbusy");
 	cv_init(&chq->queue_drain, "atdrn");
+	cv_init(&chq->queue_idle, "qidl");
 
 	for (uint8_t i = 0; i < openings; i++)
 		ata_xfer_init(&chq->queue_xfers[i], i);
@@ -1194,13 +1197,13 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 static void
 ata_channel_idle(struct ata_channel *chp)
 {
-	int s = splbio();
-	ata_channel_freeze(chp);
+	ata_channel_lock(chp);
+	ata_channel_freeze_locked(chp);
 	while (chp->ch_queue->queue_active > 0) {
 		chp->ch_queue->queue_flags |= QF_IDLE_WAIT;
-		tsleep(&chp->ch_queue->queue_flags, PRIBIO, "qidl", 0);
+		cv_timedwait(&chp->ch_queue->queue_idle, &chp->ch_lock, 1);
 	}
-	splx(s);
+	ata_channel_unlock(chp);
 }
 
 /*
@@ -1246,6 +1249,8 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 			 * while we were waiting.
 			 */
 			if ((xfer->c_flags & (C_FREE|C_WAITTIMO)) == C_FREE) {
+				ata_channel_unlock(chp);
+
 				ata_free_xfer(chp, xfer);
 				return;
 			}
@@ -1305,7 +1310,7 @@ again:
 	if (__predict_false(!recovery && chq->queue_freeze > 0)) {
 		if (chq->queue_flags & QF_IDLE_WAIT) {
 			chq->queue_flags &= ~QF_IDLE_WAIT;
-			wakeup(&chq->queue_flags);
+			cv_signal(&chp->ch_queue->queue_idle);
 		}
 		goto out; /* queue frozen */
 	}
@@ -1673,13 +1678,15 @@ out:
 /*
  * Kill off all active xfers for a ata_channel.
  *
- * Must be called at splbio().
+ * Must be called with channel lock held.
  */
 void
 ata_kill_active(struct ata_channel *chp, int reason, int flags)
 {
 	struct ata_queue * const chq = chp->ch_queue;
 	struct ata_xfer *xfer, *xfernext;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
 
 	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, xfernext) {
 		(*xfer->c_kill_xfer)(xfer->c_chp, xfer, reason);
@@ -2000,7 +2007,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	device_t drv_dev = drvp->drv_softc;
-	int i, printed = 0, s;
+	int i, printed = 0;
 	const char *sep = "";
 	int cf_flags;
 
@@ -2015,15 +2022,15 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		 * Re-do an IDENTIFY with 32-bit transfers,
 		 * and compare results.
 		 */
-		s = splbio();
+		ata_channel_lock(chp);
 		drvp->drive_flags |= ATA_DRIVE_CAP32;
-		splx(s);
+		ata_channel_unlock(chp);
 		ata_get_params(drvp, AT_WAIT, &params2);
 		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
-			s = splbio();
+			ata_channel_lock(chp);
 			drvp->drive_flags &= ~ATA_DRIVE_CAP32;
-			splx(s);
+			ata_channel_unlock(chp);
 		} else {
 			aprint_verbose_dev(drv_dev, "32-bit data port\n");
 		}
@@ -2101,9 +2108,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			 */
 			return;
 		}
-		s = splbio();
+		ata_channel_lock(chp);
 		drvp->drive_flags |= ATA_DRIVE_MODE;
-		splx(s);
+		ata_channel_unlock(chp);
 		printed = 0;
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
@@ -2127,9 +2134,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					continue;
 				drvp->DMA_mode = i;
 				drvp->DMA_cap = i;
-				s = splbio();
+				ata_channel_lock(chp);
 				drvp->drive_flags |= ATA_DRIVE_DMA;
-				splx(s);
+				ata_channel_unlock(chp);
 			}
 #endif
 			break;
@@ -2168,9 +2175,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 						continue;
 					drvp->UDMA_mode = i;
 					drvp->UDMA_cap = i;
-					s = splbio();
+					ata_channel_lock(chp);
 					drvp->drive_flags |= ATA_DRIVE_UDMA;
-					splx(s);
+					ata_channel_unlock(chp);
 				}
 #endif
 				break;
@@ -2178,7 +2185,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 	}
 
-	s = splbio();
+	ata_channel_lock(chp);
 	drvp->drive_flags &= ~ATA_DRIVE_NOSTREAM;
 	if (drvp->drive_type == ATA_DRIVET_ATAPI) {
 		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)
@@ -2187,7 +2194,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)
 			drvp->drive_flags |= ATA_DRIVE_NOSTREAM;
 	}
-	splx(s);
+	ata_channel_unlock(chp);
 
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
@@ -2201,11 +2208,11 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	}
 	cf_flags = device_cfdata(drv_dev)->cf_flags;
 	if (cf_flags & ATA_CONFIG_PIO_SET) {
-		s = splbio();
+		ata_channel_lock(chp);
 		drvp->PIO_mode =
 		    (cf_flags & ATA_CONFIG_PIO_MODES) >> ATA_CONFIG_PIO_OFF;
 		drvp->drive_flags |= ATA_DRIVE_MODE;
-		splx(s);
+		ata_channel_unlock(chp);
 	}
 #if NATA_DMA
 	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
@@ -2213,7 +2220,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		return;
 	}
 	if (cf_flags & ATA_CONFIG_DMA_SET) {
-		s = splbio();
+		ata_channel_lock(chp);
 		if ((cf_flags & ATA_CONFIG_DMA_MODES) ==
 		    ATA_CONFIG_DMA_DISABLE) {
 			drvp->drive_flags &= ~ATA_DRIVE_DMA;
@@ -2222,7 +2229,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			    ATA_CONFIG_DMA_OFF;
 			drvp->drive_flags |= ATA_DRIVE_DMA | ATA_DRIVE_MODE;
 		}
-		splx(s);
+		ata_channel_unlock(chp);
 	}
 
 	/*
@@ -2239,7 +2246,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	}
 
 	/* Probe NCQ support - READ/WRITE FPDMA QUEUED command support */
-	s = splbio();
+	ata_channel_lock(chp);
 	drvp->drv_openings = 1;
 	if (params.atap_sata_caps & SATA_NATIVE_CMDQ) {
 		if (atac->atac_cap & ATAC_CAP_NCQ)
@@ -2254,7 +2261,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			aprint_verbose(" w/PRIO");
 		}
 	}
-	splx(s);
+	ata_channel_unlock(chp);
 
 	if (printed)
 		aprint_verbose("\n");
@@ -2265,7 +2272,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		return;
 	}
 	if (cf_flags & ATA_CONFIG_UDMA_SET) {
-		s = splbio();
+		ata_channel_lock(chp);
 		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
 		    ATA_CONFIG_UDMA_DISABLE) {
 			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
@@ -2274,7 +2281,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			    ATA_CONFIG_UDMA_OFF;
 			drvp->drive_flags |= ATA_DRIVE_UDMA | ATA_DRIVE_MODE;
 		}
-		splx(s);
+		ata_channel_unlock(chp);
 	}
 #endif	/* NATA_UDMA */
 #endif	/* NATA_DMA */
@@ -2472,8 +2479,10 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 }
 
 void
-ata_delay(int ms, const char *msg, int flags)
+ata_delay(struct ata_channel *chp, int ms, const char *msg, int flags)
 {
+	KASSERT(mutex_owned(&chp->ch_lock));
+
 	if ((flags & (AT_WAIT | AT_POLL)) == AT_POLL) {
 		/*
 		 * can't use kpause(), we may be in interrupt context
@@ -2482,7 +2491,7 @@ ata_delay(int ms, const char *msg, int flags)
 		delay(ms * 1000);
 	} else {
 		int pause = mstohz(ms);
-		kpause(msg, false, pause > 0 ? pause : 1, NULL);
+		kpause(msg, false, pause > 0 ? pause : 1, &chp->ch_lock);
 	}
 }
 
@@ -2579,4 +2588,20 @@ void
 ata_channel_lock_owned(struct ata_channel *chp)
 {
 	KASSERT(mutex_owned(&chp->ch_lock));
+}
+
+void
+ata_wait_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	cv_wait(&xfer->c_finish, &chp->ch_lock);
+}
+
+void
+ata_wake_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	cv_signal(&xfer->c_finish);
 }
