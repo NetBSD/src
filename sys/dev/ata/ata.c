@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.33 2017/09/19 21:06:25 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.34 2017/09/20 19:39:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.33 2017/09/19 21:06:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.34 2017/09/20 19:39:36 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -328,6 +328,7 @@ ata_queue_free(struct ata_queue *chq)
 
 	cv_destroy(&chq->queue_busy);
 	cv_destroy(&chq->queue_drain);
+	cv_destroy(&chq->queue_idle);
 
 	free(chq, M_DEVBUF);
 }
