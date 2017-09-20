@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.59.28.2 2017/09/20 19:44:38 jdolecek Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.59.28.3 2017/09/20 19:59:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59.28.2 2017/09/20 19:44:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59.28.3 2017/09/20 19:59:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,9 +143,9 @@ wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 	bus_space_unmap(wdr.ctl_iot, wdr.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
 outunmap:
 	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_ISA_REG_NPORTS);
+out:
 	ata_queue_free(ch.ch_queue);
 	ata_channel_destroy(&ch);
-out:
 	return (result);
 }
 
