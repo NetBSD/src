@@ -32,6 +32,9 @@ SECTIONS
     *(.rodata.*)
     *(.rodata1)
     *(.got1)
+  }
+  .eh_frame  :
+  {
     *(.eh_frame_hdr)
     *(.eh_frame)
   }
