@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.39 2017/09/19 21:45:28 christos Exp $
+.\"	$NetBSD: stat.1,v 1.40 2017/09/20 08:57:02 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,7 +183,7 @@ output remains valid.
 Display timestamps using the specified format.
 This format is
 passed directly to
-.Xr strftime 3 
+.Xr strftime 3
 with the extension that %f prints nanoseconds if available.
 .It Fl v
 Turn off quiet mode.
@@ -275,8 +275,9 @@ applicable, should be in string format.
 May be used in combination with
 .Bl -tag -width Ds
 .It Cm amc
-Display date in strftime(3) format
-with the extension that %f prints nanoseconds if available.
+Display date in
+.Xr strftime 3
+format with the extension that %f prints nanoseconds if available.
 .It Cm dr
 Display actual device name.
 .It Cm gu
@@ -412,7 +413,7 @@ The time
 .Ar file
 was last accessed or modified, or when the inode was last changed, or
 the birth time of the inode
-.Pq Fa st_atime , st_mtime , st_ctime, st_birthtime .
+.Pq Fa st_atime , st_mtime , st_ctime , st_birthtime .
 .It Cm z
 The size of
 .Ar file
