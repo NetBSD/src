@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.40 2017/09/20 01:23:37 christos Exp $ */
+/*	$NetBSD: stat.c,v 1.41 2017/09/20 17:45:25 kre Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.40 2017/09/20 01:23:37 christos Exp $");
+__RCSID("$NetBSD: stat.c,v 1.41 2017/09/20 17:45:25 kre Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -265,7 +265,6 @@ main(int argc, char *argv[])
 				errx(1, "can't use format '%c' with '%c'",
 				    fmtchar, ch);
 			fmtchar = ch;
-			timefmt = "%Y-%m-%d %H:%M:%S.%f %z";
 			break;
 		case 't':
 			timefmt = optarg;
@@ -311,7 +310,7 @@ main(int argc, char *argv[])
 	case 'x':
 		statfmt = LINUX_FORMAT;
 		if (timefmt == NULL)
-			timefmt = "%c";
+			timefmt = "%Y-%m-%d %H:%M:%S.%f %z";
 		break;
 	default:
 		usage(synopsis);
