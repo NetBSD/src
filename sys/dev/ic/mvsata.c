@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.26 2017/09/19 21:06:25 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.27 2017/09/20 18:35:37 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.26 2017/09/19 21:06:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.27 2017/09/20 18:35:37 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -107,10 +107,11 @@ int	mvsata_debug = 0;
 
 
 static void mvsata_probe_drive(struct ata_channel *);
+static void mvsata_reset_channel(struct ata_channel *, int);
+
 #ifndef MVSATA_WITHOUTDMA
 static int mvsata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static void mvsata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
-static void mvsata_reset_channel(struct ata_channel *, int);
 static int mvsata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 static int mvsata_addref(struct ata_drive_datas *);
 static void mvsata_delref(struct ata_drive_datas *);
@@ -731,6 +732,7 @@ mvsata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 
 	return;
 }
+#endif /* MVSATA_WITHOUTDMA */
 
 static void
 mvsata_reset_channel(struct ata_channel *chp, int flags)
@@ -768,16 +770,18 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 
 	ata_kill_active(chp, KILL_RESET, flags);
 
+#ifndef MVSATA_WITHOUTDMA
 	mvsata_edma_config(mvport, mvport->port_edmamode_curr);
 	mvsata_edma_reset_qptr(mvport);
 	mvsata_edma_enable(mvport);
+#endif
 
 	ata_channel_unlock(chp);
 
 	return;
 }
 
-
+#ifndef MVSATA_WITHOUTDMA
 static int
 mvsata_addref(struct ata_drive_datas *drvp)
 {
