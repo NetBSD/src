@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_xusbpad.c,v 1.1 2017/09/19 23:18:01 jmcneill Exp $ */
+/* $NetBSD: tegra210_xusbpad.c,v 1.2 2017/09/20 21:59:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.1 2017/09/19 23:18:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.2 2017/09/20 21:59:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,6 +97,40 @@ static const struct tegra210_xusbpad_lane {
 	XUSBPAD_LANE("sata-0", 0x28, __BITS(31,30), tegra210_xusbpad_pcie_func),
 };
 
+#define	XUSBPAD_PORT(n, r, m, im)		\
+	{					\
+		.name = (n),			\
+		.reg = (r),			\
+		.mask = (m),			\
+		.internal_mask = (im)		\
+	}
+
+struct tegra210_xusbpad_port {
+	const char		*name;
+	bus_size_t		reg;
+	uint32_t		mask;
+	uint32_t		internal_mask;
+};
+
+static const struct tegra210_xusbpad_port tegra210_xusbpad_usb2_ports[] = {
+	XUSBPAD_PORT("usb2-0", 0x08, __BITS(1,0), __BIT(2)),
+	XUSBPAD_PORT("usb2-1", 0x08, __BITS(5,4), __BIT(6)),
+	XUSBPAD_PORT("usb2-2", 0x08, __BITS(9,8), __BIT(10)),
+	XUSBPAD_PORT("usb2-3", 0x08, __BITS(13,12), __BIT(14)),
+};
+
+static const struct tegra210_xusbpad_port tegra210_xusbpad_usb3_ports[] = {
+	XUSBPAD_PORT("usb3-0", 0x14, __BITS(3,0), __BIT(4)),
+	XUSBPAD_PORT("usb3-1", 0x14, __BITS(8,5), __BIT(9)),
+	XUSBPAD_PORT("usb3-2", 0x14, __BITS(13,10), __BIT(14)),
+	XUSBPAD_PORT("usb3-3", 0x14, __BITS(18,15), __BIT(19)),
+}; 
+
+static const struct tegra210_xusbpad_port tegra210_xusbpad_hsic_ports[] = {
+	XUSBPAD_PORT("hsic-0", 0, 0, 0),
+	XUSBPAD_PORT("hsic-1", 0, 0, 0),
+};
+
 static int
 tegra210_xusbpad_find_func(const struct tegra210_xusbpad_lane *lane,
     const char *func)
@@ -146,7 +180,7 @@ tegra210_xusbpad_configure_lane(struct tegra210_xusbpad_softc *sc,
 		return;
 	}
 
-	aprint_debug_dev(sc->sc_dev, "[%s] set func %s\n", name, function);
+	aprint_normal_dev(sc->sc_dev, "lane %s: set func %s\n", name, function);
 	SETCLR4(sc, lane->reg, __SHIFTIN(func, lane->mask), lane->mask);
 }
 
@@ -195,6 +229,143 @@ tegra210_xusbpad_configure_pads(struct tegra210_xusbpad_softc *sc,
 		if (!fdtbus_status_okay(child))
 			continue;
 		tegra210_xusbpad_configure_lane(sc, child);
+	}
+}
+
+static const struct tegra210_xusbpad_port *
+tegra210_xusbpad_find_port(const char *name, const struct tegra210_xusbpad_port *ports,
+    int nports)
+{
+	for (int n = 0; n < nports; n++)
+		if (strcmp(name, ports[n].name) == 0)
+			return &ports[n];
+	return NULL;
+}
+
+static const struct tegra210_xusbpad_port *
+tegra210_xusbpad_find_usb2_port(const char *name)
+{
+	return tegra210_xusbpad_find_port(name, tegra210_xusbpad_usb2_ports,
+	    __arraycount(tegra210_xusbpad_usb2_ports));
+}
+
+static const struct tegra210_xusbpad_port *
+tegra210_xusbpad_find_usb3_port(const char *name)
+{
+	return tegra210_xusbpad_find_port(name, tegra210_xusbpad_usb3_ports,
+	    __arraycount(tegra210_xusbpad_usb3_ports));
+}
+
+static const struct tegra210_xusbpad_port *
+tegra210_xusbpad_find_hsic_port(const char *name)
+{
+	return tegra210_xusbpad_find_port(name, tegra210_xusbpad_hsic_ports,
+	    __arraycount(tegra210_xusbpad_hsic_ports));
+}
+
+static void
+tegra210_xusbpad_configure_usb2_port(struct tegra210_xusbpad_softc *sc,
+    int phandle, const struct tegra210_xusbpad_port *port)
+{
+	struct fdtbus_regulator *vbus_reg;
+	const char *mode;
+	u_int modeval, internal;
+
+	mode = fdtbus_get_string(phandle, "mode");
+	if (mode == NULL) {
+		aprint_error_dev(sc->sc_dev, "no 'mode' property on port %s\n", port->name);
+		return;
+	}
+	if (strcmp(mode, "host") == 0)
+		modeval = 1;
+	else if (strcmp(mode, "device") == 0)
+		modeval = 2;
+	else if (strcmp(mode, "otg") == 0)
+		modeval = 3;
+	else {
+		aprint_error_dev(sc->sc_dev, "unsupported mode '%s' on port %s\n", mode, port->name);
+		return;
+	}
+
+	internal = of_hasprop(phandle, "nvidia,internal");
+
+	vbus_reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
+	if (vbus_reg && fdtbus_regulator_enable(vbus_reg) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't enable vbus regulator for port %s\n",
+		    port->name);
+	}
+
+	aprint_normal_dev(sc->sc_dev, "port %s: set mode %s, %s\n", port->name, mode,
+	    internal ? "internal" : "external");
+	SETCLR4(sc, port->reg, __SHIFTIN(internal, port->internal_mask), port->internal_mask);
+	SETCLR4(sc, port->reg, __SHIFTIN(modeval, port->mask), port->mask);
+}
+
+static void
+tegra210_xusbpad_configure_usb3_port(struct tegra210_xusbpad_softc *sc,
+    int phandle, const struct tegra210_xusbpad_port *port)
+{
+	struct fdtbus_regulator *vbus_reg;
+	u_int companion, internal;
+
+	if (of_getprop_uint32(phandle, "nvidia,usb2-companion", &companion)) {
+		aprint_error_dev(sc->sc_dev, "no 'nvidia,usb2-companion' property on port %s\n", port->name);
+		return;
+	}
+	internal = of_hasprop(phandle, "nvidia,internal");
+
+	vbus_reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
+	if (vbus_reg && fdtbus_regulator_enable(vbus_reg) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't enable vbus regulator for port %s\n",
+		    port->name);
+	}
+
+	aprint_normal_dev(sc->sc_dev, "port %s: set companion usb2-%d, %s\n", port->name,
+	    companion, internal ? "internal" : "external");
+	SETCLR4(sc, port->reg, __SHIFTIN(internal, port->internal_mask), port->internal_mask);
+	SETCLR4(sc, port->reg, __SHIFTIN(companion, port->mask), port->mask);
+}
+
+static void
+tegra210_xusbpad_configure_hsic_port(struct tegra210_xusbpad_softc *sc,
+    int phandle, const struct tegra210_xusbpad_port *port)
+{
+	struct fdtbus_regulator *vbus_reg;
+
+	vbus_reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
+	if (vbus_reg && fdtbus_regulator_enable(vbus_reg) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't enable vbus regulator for port %s\n",
+		    port->name);
+	}
+}
+
+static void
+tegra210_xusbpad_configure_ports(struct tegra210_xusbpad_softc *sc)
+{
+	const struct tegra210_xusbpad_port *port;
+	const char *port_name;
+	int phandle, child;
+
+	/* Search for the ports node */
+	phandle = of_find_firstchild_byname(sc->sc_phandle, "ports");
+
+	/* Configure ports */
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!fdtbus_status_okay(child))
+			continue;
+		port_name = fdtbus_get_string(child, "name");
+
+		if ((port = tegra210_xusbpad_find_usb2_port(port_name)) != NULL)
+			tegra210_xusbpad_configure_usb2_port(sc, child, port);
+		else if ((port = tegra210_xusbpad_find_usb3_port(port_name)) != NULL)
+			tegra210_xusbpad_configure_usb3_port(sc, child, port);
+		else if ((port = tegra210_xusbpad_find_hsic_port(port_name)) != NULL)
+			tegra210_xusbpad_configure_hsic_port(sc, child, port);
+		else
+			aprint_error_dev(sc->sc_dev, "unsupported port '%s'\n", port_name);
 	}
 }
 
@@ -264,6 +435,8 @@ tegra210_xusbpad_attach(device_t parent, device_t self, void *aux)
 	tegra210_xusbpad_configure_pads(sc, "hsic");
 	tegra210_xusbpad_configure_pads(sc, "pcie");
 	tegra210_xusbpad_configure_pads(sc, "sata");
+
+	tegra210_xusbpad_configure_ports(sc);
 }
 
 CFATTACH_DECL_NEW(tegra210_xusbpad, sizeof(struct tegra210_xusbpad_softc),
