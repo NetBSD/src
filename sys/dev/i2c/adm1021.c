@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.14 2017/09/13 21:15:11 macallan Exp $ */
+/*	$NetBSD: adm1021.c,v 1.15 2017/09/20 22:44:28 macallan Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.14 2017/09/13 21:15:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.15 2017/09/20 22:44:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,7 @@ CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
 static const char * admtemp_compats[] = {
 	"i2c-max1617",
 	"max6642",
+	"max6690",
 	NULL
 };
 
@@ -240,6 +241,12 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 			strlcpy(name, "MAX6642", ADMTEMP_NAMELEN);
 			return;
 		}
+		if (strcmp("max6690", ia->ia_compat[i]) == 0) {
+			sc->sc_noneg = 0;
+			sc->sc_ext11 = 1;
+			strlcpy(name, "MAX6690", ADMTEMP_NAMELEN);
+			return;
+		}
 	}
 
 	/* Indirect config */
@@ -266,6 +273,9 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 			sc->sc_therm = 0;	/* */
 			sc->sc_nolow = 1;
 			strlcpy(name, "MAX6642", ADMTEMP_NAMELEN);
+		} else if (*rev == 0) {
+			strlcpy(name, "MAX6690", ADMTEMP_NAMELEN);
+			sc->sc_ext11 = 1;
 		} else {
 			strlcpy(name, "MAX1617A", ADMTEMP_NAMELEN);
 		}
