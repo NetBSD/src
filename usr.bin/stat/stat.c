@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.39 2017/09/19 21:45:28 christos Exp $ */
+/*	$NetBSD: stat.c,v 1.40 2017/09/20 01:23:37 christos Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.39 2017/09/19 21:45:28 christos Exp $");
+__RCSID("$NetBSD: stat.c,v 1.40 2017/09/20 01:23:37 christos Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -79,10 +79,12 @@ __RCSID("$NetBSD: stat.c,v 1.39 2017/09/19 21:45:28 christos Exp $");
 #define DEF_B "\"%SB\" "
 #define RAW_B "%B "
 #define SHELL_B "st_birthtime=%SB "
+#define LINUX_B	"%n Birth: %SB"
 #else /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 #define DEF_B
 #define RAW_B
 #define SHELL_B
+#define LINUX_B
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 
 #if HAVE_STRUCT_STAT_ST_ATIM
@@ -107,11 +109,11 @@ __RCSID("$NetBSD: stat.c,v 1.39 2017/09/19 21:45:28 christos Exp $");
 	"  File: \"%N\"%n" \
 	"  Size: %-11z  Blocks: %-11b  IO Block: %-11k  %HT%n" \
 	"Device: %Hd,%Ld   Inode: %i    Links: %l%n" \
-	"  Mode: (%04OLp/%.10Sp)         Uid: (%5u/%8Su)  Gid: (%5g/%8Sg)%n" \
+	"  Mode: (%Mp%03OLp/%.10Sp)         Uid: (%5u/%8Su)  Gid: (%5g/%8Sg)%n" \
 	"Access: %Sa%n" \
 	"Modify: %Sm%n" \
-	"Change: %Sc%n" \
-	" Birth: %SB"
+	"Change: %Sc" \
+	LINUX_B
 
 #define TIME_FORMAT	"%b %e %T %Y"
 
