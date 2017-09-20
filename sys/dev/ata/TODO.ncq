@@ -2,8 +2,6 @@ Bugs
 ----
 test wd* at umass?, confirm the ata_channel kludge works
 
-mvsata - resest MVSATA_WITHOUTDMA
-
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
 do biodone() in wddone() starting the dump to not leak bufs when dumping from
