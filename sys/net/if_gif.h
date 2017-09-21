@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.25 2016/12/14 11:19:15 knakahara Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.26 2017/09/21 09:42:03 knakahara Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -49,11 +49,16 @@
 
 struct encaptab;
 
+struct gif_ro {
+	struct route gr_ro;
+	kmutex_t gr_lock;
+};
+
 struct gif_softc {
 	struct ifnet	gif_if;	   /* common area - must be at the top */
 	struct sockaddr	*gif_psrc; /* Physical src addr */
 	struct sockaddr	*gif_pdst; /* Physical dst addr */
-	percpu_t *gif_ro_percpu;
+	percpu_t *gif_ro_percpu;   /* struct gif_ro */
 	int		gif_flags;
 	const struct encaptab *encap_cookie4;
 	const struct encaptab *encap_cookie6;
