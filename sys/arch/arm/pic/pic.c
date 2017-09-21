@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.39 2017/08/29 22:57:05 nisimura Exp $	*/
+/*	$NetBSD: pic.c,v 1.40 2017/09/21 19:29:14 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.39 2017/08/29 22:57:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.40 2017/09/21 19:29:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -287,7 +287,7 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	(*pic->pic_ops->pic_block_irqs)(pic, irq_base, pending);
 
 	atomic_or_32(ipending, pending);
-        while (pending != 0) {
+	while (pending != 0) {
 		int n = ffs(pending);
 		if (n-- == 0)
 			break;
