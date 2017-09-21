@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.7 2017/01/12 05:35:45 skrll Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.8 2017/09/21 19:29:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.7 2017/01/12 05:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.8 2017/09/21 19:29:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ vchiq_match(device_t parent, cfdata_t match, void *aux)
 static void
 vchiq_attach(device_t parent, device_t self, void *aux)
 {
-        struct vchiq_softc *sc = device_private(self);
+	struct vchiq_softc *sc = device_private(self);
 	struct amba_attach_args *aaa = aux;
 
 	aprint_naive("\n");
@@ -181,8 +181,8 @@ remote_event_signal(REMOTE_EVENT_T *event)
 	if (event->armed) {
 		bus_space_write_4(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
 		    VCHIQ_DOORBELL2, 0);
-                bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
-                    VCHIQ_DOORBELL2, 4, BUS_SPACE_BARRIER_WRITE);
+		bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
+		    VCHIQ_DOORBELL2, 4, BUS_SPACE_BARRIER_WRITE);
 	}
 }
 
