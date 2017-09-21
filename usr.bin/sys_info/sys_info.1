@@ -1,4 +1,4 @@
-.\" $NetBSD: sys_info.1,v 1.7 2017/09/21 01:15:45 agc Exp $
+.\" $NetBSD: sys_info.1,v 1.8 2017/09/21 07:07:28 wiz Exp $
 .\"
 .\" Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -31,10 +31,10 @@
 .Nd script to show system version information
 .Sh SYNOPSIS
 .Nm
+.Op Fl v
+.Op Fl d Ar destination-dir
 .Op Fl L Ar lib-path
 .Op Fl P Ar path
-.Op Fl d Ar destination-dir
-.Op Fl v
 .Op Ar component No ...
 .Sh DESCRIPTION
 The
@@ -49,6 +49,15 @@ information from the installed utilities.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width inits
+.It Fl d
+This option provides a destination directory, used
+as the root directory of an alternative set of programs
+and libraries.
+This can be useful for finding versions of utilities
+and libraries rooted in the file system directory,
+such as the destination directory from a
+.Dv build.sh
+run.
 .It Fl L
 Give a list of directories
 .Pq "colon separated"
@@ -67,15 +76,6 @@ via
 is used.
 To use the current value of $PATH from the caller, use:
 .Dl -P \*q$PATH\*q
-.It Fl d
-This option provides a destination directory, used
-as the root directory of an alternative set of programs
-and libraries.
-This can be useful for finding versions of utilities
-and libraries rooted in the file system directory,
-such as the destination directory from a
-.Dv build.sh
-run.
 .It Fl v
 Show the commands used to obtain the version information
 for each component
