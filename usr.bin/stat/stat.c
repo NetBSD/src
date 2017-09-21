@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.41 2017/09/20 17:45:25 kre Exp $ */
+/*	$NetBSD: stat.c,v 1.42 2017/09/21 18:50:08 kre Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.41 2017/09/20 17:45:25 kre Exp $");
+__RCSID("$NetBSD: stat.c,v 1.42 2017/09/21 18:50:08 kre Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -569,6 +569,7 @@ fmttime(char *buf, size_t len, const char *fmt, time_t secs, long nsecs)
 {
 	struct tm tm;
 	char *fmt2;
+
 	if (localtime_r(&secs, &tm) == NULL) {
 		secs = 0;
 		(void)localtime_r(&secs, &tm);
@@ -576,10 +577,13 @@ fmttime(char *buf, size_t len, const char *fmt, time_t secs, long nsecs)
 	if ((fmt2 = strstr(fmt, "%f")) != NULL) {
 		size_t flen = strlen(fmt) + 1024;
 		size_t o = (size_t)(fmt2 - fmt);
+
 		fmt2 = calloc(flen, 1);
 		if (fmt2 != NULL) {
+			int sl;
+
 			memcpy(fmt2, fmt, o);
-			int sl = snprintf(fmt2 + o, flen - o, "%.9ld", nsecs);
+			sl = snprintf(fmt2 + o, flen - o, "%.9ld", nsecs);
 			if (sl == -1)
 				sl = 0;
 			strcpy(fmt2 + sl + o, fmt + o + 2);
