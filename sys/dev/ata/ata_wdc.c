@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.105.6.9 2017/09/10 19:31:15 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.105.6.10 2017/09/21 18:47:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.9 2017/09/10 19:31:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.10 2017/09/21 18:47:21 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -662,8 +662,10 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 
 	/* Ack interrupt done by wdc_wait_for_unbusy */
 	if (wdc_wait_for_unbusy(chp, poll ? ATA_DELAY : 0, AT_POLL, &tfd) < 0) {
-		if (!poll && (xfer->c_flags & C_TIMEOU) == 0)
+		if (!poll && (xfer->c_flags & C_TIMEOU) == 0) {
+			ata_channel_unlock(chp);
 			return 0; /* IRQ was not for us */
+		}
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 		    xfer->c_bcount, xfer->c_skip);
