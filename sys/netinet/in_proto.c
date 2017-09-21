@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.123 2017/04/14 02:43:27 ozaki-r Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.124 2017/09/21 07:15:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.123 2017/04/14 02:43:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.124 2017/09/21 07:15:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -489,7 +489,6 @@ struct domain inetdomain = {
 	.dom_sa_any = (const struct sockaddr *)&in_any,
 	.dom_sockaddr_const_addr = sockaddr_in_const_addr,
 	.dom_sockaddr_addr = sockaddr_in_addr,
-	.dom_rtcache = LIST_HEAD_INITIALIZER(inetdomain.dom_rtcache)
 };
 
 u_char	ip_protox[IPPROTO_MAX];
