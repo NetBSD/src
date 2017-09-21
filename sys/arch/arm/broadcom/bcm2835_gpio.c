@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.3 2016/02/02 13:55:50 skrll Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.4 2017/09/21 19:28:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.3 2016/02/02 13:55:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.4 2017/09/21 19:28:14 skrll Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -154,12 +154,12 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			sc->sc_gpio_pins[epin].pin_state =
 				bcm2835gpio_gpio_pin_read(sc, epin);
 			DPRINTF(1, ("%s: attach pin %d\n", device_xname(sc->sc_dev), pin));
-                } else {
+		} else {
 	                sc->sc_gpio_pins[epin].pin_caps = 0;
 			sc->sc_gpio_pins[epin].pin_state = 0;
   			DPRINTF(1, ("%s: skip pin %d - func = 0x%x\n", device_xname(sc->sc_dev), pin, func));
-                }
-        }
+		}
+	}
 	
 	/* create controller tag */
 	sc->sc_gpio_gc.gp_cookie = sc;
@@ -241,7 +241,7 @@ bcm2835gpio_gpio_pin_ctl(void *arg, int pin, int flags)
 		if ((flags & GPIO_PIN_INPUT) || !(flags & GPIO_PIN_OUTPUT)) {
 			/* for safety INPUT will overide output */
 	                bcm2835gpio_function_select(epin, BCM2835_GPIO_IN);
-                } else {
+		} else {
 	                bcm2835gpio_function_select(epin, BCM2835_GPIO_OUT);
 		}
 	}
