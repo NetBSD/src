@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.2 2017/09/19 20:45:09 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.3 2017/09/21 22:54:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.2 2017/09/19 20:45:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.3 2017/09/21 22:54:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -734,10 +734,10 @@ tegra210_car_utmip_init(struct tegra210_car_softc *sc)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
-	const u_int enable_dly_count = 0x02;
-	const u_int stable_count = 0x2f;
-	const u_int active_dly_count = 0x04;
-	const u_int xtal_freq_count = 0x76;
+	const u_int enable_dly_count = 5;
+	const u_int stable_count = 150;
+	const u_int active_dly_count = 24;
+	const u_int xtal_freq_count = 385;
 
 	tegra_reg_set_clear(bst, bsh, CAR_UTMIP_PLL_CFG2_REG,
 	    __SHIFTIN(stable_count, CAR_UTMIP_PLL_CFG2_STABLE_COUNT) |
@@ -998,6 +998,8 @@ tegra210_car_clock_set_rate_pll(struct tegra210_car_softc *sc,
 
 		return 0;
 	} else {
+		aprint_error_dev(sc->sc_dev, "failed to set %s rate to %u\n",
+		    tclk->base.name, rate);
 		/* TODO */
 		return EOPNOTSUPP;
 	}
@@ -1158,7 +1160,9 @@ tegra210_car_clock_set_rate_div(struct tegra210_car_softc *sc,
 			v &= ~CAR_CLKSRC_UART_DIV_ENB;
 		} else if (rate) {
 			v |= CAR_CLKSRC_UART_DIV_ENB;
-			raw_div = (parent_rate / rate) * 2 - 1;
+			raw_div = (parent_rate / rate) * 2;
+			if (raw_div >= 2)
+				raw_div -= 2;
 		}
 		break;
 	case CAR_CLKSRC_I2C1_REG:
@@ -1186,8 +1190,11 @@ tegra210_car_clock_set_rate_div(struct tegra210_car_softc *sc,
 		}
 		break;
 	default:
-		if (rate)
-			raw_div = (parent_rate / rate) * 2 - 1;
+		if (rate) {
+			raw_div = (parent_rate / rate) * 2;
+			if (raw_div >= 2)
+				raw_div -= 2;
+		}
 		break;
 	}
 
