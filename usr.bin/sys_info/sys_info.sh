@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.15 2017/09/21 01:15:45 agc Exp $
+# $NetBSD: sys_info.sh,v 1.16 2017/09/21 07:07:28 wiz Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -251,7 +251,7 @@ while getopts "L:P:d:v" a; do
 		destdir=${OPTARG};;
 	v)	verbose=true;;
 	\?)	printf >&2 '%s\n' \
-		    "Usage: $0 [-P path] [-L libdirs] [-d destdir] [-v] [system...]"
+		    "Usage: $0 [-v] [-d destdir] [-L libdirs] [-P path] [system...]"
 		exit 2
 	esac
 done
