@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.197 2017/06/28 04:10:47 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.198 2017/09/21 04:44:32 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.197 2017/06/28 04:10:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.198 2017/09/21 04:44:32 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -2029,7 +2029,7 @@ retry:
 	}
 
 	RT_RLOCK();
-	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0 && rt->rt_ifp != NULL) {
+	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0) {
 #ifdef NET_MPSAFE
 		if (ISSET(rt->rt_flags, RTF_UPDATING)) {
 			if (rt_wait_ok()) {
