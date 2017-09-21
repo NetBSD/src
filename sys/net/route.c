@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.198 2017/09/21 04:44:32 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.199 2017/09/21 07:15:34 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.198 2017/09/21 04:44:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.199 2017/09/21 07:15:34 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -203,6 +203,13 @@ static void	rt_timer_timer(void *);
  *     - if the caller runs in softint, the caller fails to fetch
  *     - otherwise, the caller waits for the update completed and retries
  *       to fetch (probably succeed to fetch for the second time)
+ * - rtcache invalidation
+ *   - There is a global generation counter that is incremented when
+ *     any routes have been added or deleted
+ *   - When a rtcache caches a rtentry into itself, it also stores
+ *     a snapshot of the generation counter
+ *   - If the snapshot equals to the global counter, the cache is valid,
+ *     otherwise the cache is invalidated
  */
 
 /*
@@ -239,6 +246,8 @@ static krwlock_t		rtcache_lock __cacheline_aligned;
 #define	RTCACHE_WLOCKED()	false
 #endif
 
+static uint64_t rtcache_generation;
+
 /*
  * mutex and cv that are used to wait for references to a rtentry left
  * before updating the rtentry.
@@ -271,14 +280,11 @@ static int _rtcache_debug = 0;
 static kauth_listener_t route_listener;
 
 static int rtdeletemsg(struct rtentry *);
-static void rtflushall(int);
 
 static void rt_maskedcopy(const struct sockaddr *,
     struct sockaddr *, const struct sockaddr *);
 
-static void rtcache_clear(struct route *);
-static void rtcache_clear_rtentry(int, struct rtentry *);
-static void rtcache_invalidate(struct dom_rtlist *);
+static void rtcache_invalidate(void);
 
 static void rt_ref(struct rtentry *);
 
@@ -491,38 +497,15 @@ rt_init(void)
 }
 
 static void
-rtflushall(int family)
+rtcache_invalidate(void)
 {
-	struct domain *dom;
 
 	if (rtcache_debug())
 		printf("%s: enter\n", __func__);
 
-	if ((dom = pffinddomain(family)) == NULL)
-		return;
-
 	RTCACHE_WLOCK();
-	rtcache_invalidate(&dom->dom_rtcache);
+	rtcache_generation++;
 	RTCACHE_UNLOCK();
-}
-
-static void
-rtcache(struct route *ro)
-{
-	struct domain *dom;
-
-	RTCACHE_ASSERT_WLOCK();
-
-	rtcache_invariants(ro);
-	KASSERT(ro->_ro_rt != NULL);
-	KASSERT(ro->ro_invalid == false);
-	KASSERT(rtcache_getdst(ro) != NULL);
-
-	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) == NULL)
-		return;
-
-	LIST_INSERT_HEAD(&dom->dom_rtcache, ro, ro_rtcache_next);
-	rtcache_invariants(ro);
 }
 
 #ifdef RT_DEBUG
@@ -1251,7 +1234,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		RT_UNLOCK();
 		need_unlock = false;
 		rt_timer_remove_all(rt);
-		rtcache_clear_rtentry(dst->sa_family, rt);
+		rtcache_invalidate();
 #if defined(INET) || defined(INET6)
 		if (netmask != NULL)
 			lltable_prefix_free(dst->sa_family, dst, netmask, 0);
@@ -1346,7 +1329,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		}
 		RT_UNLOCK();
 		need_unlock = false;
-		rtflushall(dst->sa_family);
+		rtcache_invalidate();
 		break;
 	case RTM_GET:
 		if (netmask != NULL) {
@@ -1893,14 +1876,13 @@ _rtcache_init(struct route *ro, int flag)
 
 	if (rtcache_getdst(ro) == NULL)
 		return NULL;
-	ro->ro_invalid = false;
 	rt = rtalloc1(rtcache_getdst(ro), flag);
 	if (rt != NULL && ISSET(rt->rt_flags, RTF_UP)) {
 		ro->_ro_rt = rt;
+		ro->ro_rtcache_generation = rtcache_generation;
 		KASSERT(!ISSET(rt->rt_flags, RTF_UPDATING));
 		rtcache_ref(rt, ro);
 		rt_unref(rt);
-		rtcache(ro);
 	} else if (rt != NULL)
 		rt_unref(rt);
 
@@ -1933,7 +1915,7 @@ rtcache_update(struct route *ro, int clone)
 {
 	struct rtentry *rt;
 	RTCACHE_WLOCK();
-	rtcache_clear(ro);
+	ro->_ro_rt = NULL;
 	rt = _rtcache_init(ro, clone);
 	RTCACHE_UNLOCK();
 	return rt;
@@ -1958,17 +1940,14 @@ rtcache_copy(struct route *new_ro, struct route *old_ro)
 		goto out;
 
 	RTCACHE_WLOCK();
-	new_ro->ro_invalid = false;
-	if ((new_ro->_ro_rt = rt) != NULL)
-		rtcache(new_ro);
+	new_ro->_ro_rt = rt;
+	new_ro->ro_rtcache_generation = rtcache_generation;
 	rtcache_invariants(new_ro);
 	RTCACHE_UNLOCK();
 out:
 	rtcache_unref(rt, old_ro);
 	return;
 }
-
-static struct dom_rtlist invalid_routes = LIST_HEAD_INITIALIZER(dom_rtlist);
 
 #if defined(RT_DEBUG) && defined(NET_MPSAFE)
 static void
@@ -2023,7 +2002,8 @@ retry:
 	rt = ro->_ro_rt;
 	rtcache_invariants(ro);
 
-	if (ro->ro_invalid) {
+	if (ro->ro_rtcache_generation != rtcache_generation) {
+		/* The cache is invalidated */
 		rt = NULL;
 		goto out;
 	}
@@ -2063,57 +2043,6 @@ rtcache_validate(struct route *ro)
 	return rt;
 }
 
-static void
-rtcache_invalidate(struct dom_rtlist *rtlist)
-{
-	struct route *ro;
-
-	RTCACHE_ASSERT_WLOCK();
-
-	while ((ro = LIST_FIRST(rtlist)) != NULL) {
-		rtcache_invariants(ro);
-		KASSERT(ro->_ro_rt != NULL);
-		ro->ro_invalid = true;
-		LIST_REMOVE(ro, ro_rtcache_next);
-		LIST_INSERT_HEAD(&invalid_routes, ro, ro_rtcache_next);
-		rtcache_invariants(ro);
-	}
-}
-
-static void
-rtcache_clear_rtentry(int family, struct rtentry *rt)
-{
-	struct domain *dom;
-	struct route *ro, *nro;
-
-	if ((dom = pffinddomain(family)) == NULL)
-		return;
-
-	RTCACHE_WLOCK();
-	LIST_FOREACH_SAFE(ro, &dom->dom_rtcache, ro_rtcache_next, nro) {
-		if (ro->_ro_rt == rt)
-			rtcache_clear(ro);
-	}
-	RTCACHE_UNLOCK();
-}
-
-static void
-rtcache_clear(struct route *ro)
-{
-
-	RTCACHE_ASSERT_WLOCK();
-
-	rtcache_invariants(ro);
-	if (ro->_ro_rt == NULL)
-		return;
-
-	LIST_REMOVE(ro, ro_rtcache_next);
-
-	ro->_ro_rt = NULL;
-	ro->ro_invalid = false;
-	rtcache_invariants(ro);
-}
-
 struct rtentry *
 rtcache_lookup2(struct route *ro, const struct sockaddr *dst,
     int clone, int *hitp)
@@ -2140,7 +2069,7 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst,
 	if (rt == NULL) {
 		RTCACHE_UNLOCK();
 		RTCACHE_WLOCK();
-		rtcache_clear(ro);
+		ro->_ro_rt = NULL;
 		goto miss;
 	}
 
@@ -2167,7 +2096,8 @@ rtcache_free_locked(struct route *ro)
 {
 
 	RTCACHE_ASSERT_WLOCK();
-	rtcache_clear(ro);
+
+	ro->_ro_rt = NULL;
 	if (ro->ro_sa != NULL) {
 		sockaddr_free(ro->ro_sa);
 		ro->ro_sa = NULL;
@@ -2194,7 +2124,7 @@ rtcache_setdst_locked(struct route *ro, const struct sockaddr *sa)
 	rtcache_invariants(ro);
 	if (ro->ro_sa != NULL) {
 		if (ro->ro_sa->sa_family == sa->sa_family) {
-			rtcache_clear(ro);
+			ro->_ro_rt = NULL;
 			sockaddr_copy(ro->ro_sa, ro->ro_sa->sa_len, sa);
 			rtcache_invariants(ro);
 			return 0;
