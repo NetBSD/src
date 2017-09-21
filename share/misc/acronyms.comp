@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.185 2017/09/17 21:55:07 rtr Exp $
+$NetBSD: acronyms.comp,v 1.186 2017/09/21 00:40:10 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1157,6 +1157,7 @@ SDI	symbol deinterleave
 SDK	software development kit
 SDL	Simple Declarative Language
 SDL	Simple Direct-media Layer 
+SDLC	{software,system,systems} development life cycle
 SDRAM	synchronous dynamic random access memory
 SDT	syntax-directed translation
 SEGV	segmentation violation
