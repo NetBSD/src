@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.129 2017/09/21 09:42:03 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.130 2017/09/21 09:46:14 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.129 2017/09/21 09:42:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.130 2017/09/21 09:46:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -96,7 +96,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.129 2017/09/21 09:42:03 knakahara Exp $
 /*
  * gif global variable definitions
  */
-static LIST_HEAD(, gif_softc) gif_softc_list;
+LIST_HEAD(gif_sclist, gif_softc);
+static struct {
+	struct gif_sclist list;
+	kmutex_t lock;
+} gif_softcs __cacheline_aligned;
 
 static void	gif_ro_init_pc(void *, void *, struct cpu_info *);
 static void	gif_ro_fini_pc(void *, void *, struct cpu_info *);
@@ -208,7 +212,8 @@ static void
 gifinit(void)
 {
 
-	LIST_INIT(&gif_softc_list);
+	mutex_init(&gif_softcs.lock, MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&gif_softcs.list);
 	if_clone_attach(&gif_cloner);
 
 	gif_sysctl_setup();
@@ -219,8 +224,11 @@ gifdetach(void)
 {
 	int error = 0;
 
-	if (!LIST_EMPTY(&gif_softc_list))
+	mutex_enter(&gif_softcs.lock);
+	if (!LIST_EMPTY(&gif_softcs.list)) {
+		mutex_exit(&gif_softcs.lock);
 		error = EBUSY;
+	}
 
 	if (error == 0) {
 		if_clone_detach(&gif_cloner);
@@ -244,7 +252,9 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	sc->gif_ro_percpu = percpu_alloc(sizeof(struct gif_ro));
 	percpu_foreach(sc->gif_ro_percpu, gif_ro_init_pc, NULL);
 
-	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);
+	mutex_enter(&gif_softcs.lock);
+	LIST_INSERT_HEAD(&gif_softcs.list, sc, gif_list);
+	mutex_exit(&gif_softcs.lock);
 	return (0);
 }
 
@@ -994,7 +1004,8 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		return error;
 	}
 
-	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
+	mutex_enter(&gif_softcs.lock);
+	LIST_FOREACH(sc2, &gif_softcs.list, gif_list) {
 		if (sc2 == sc)
 			continue;
 		if (!sc2->gif_pdst || !sc2->gif_psrc)
@@ -1003,12 +1014,14 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
 		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
 			/* continue to use the old configureation. */
+			mutex_exit(&gif_softcs.lock);
 			error =  EADDRNOTAVAIL;
 			goto out;
 		}
 
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
+	mutex_exit(&gif_softcs.lock);
 
 	nsrc = sockaddr_dup(src, M_WAITOK);
 	ndst = sockaddr_dup(dst, M_WAITOK);
