@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.128 2017/08/08 03:14:50 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.129 2017/09/21 09:42:03 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.128 2017/08/08 03:14:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.129 2017/09/21 09:42:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -97,6 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.128 2017/08/08 03:14:50 knakahara Exp $
  * gif global variable definitions
  */
 static LIST_HEAD(, gif_softc) gif_softc_list;
+
+static void	gif_ro_init_pc(void *, void *, struct cpu_info *);
+static void	gif_ro_fini_pc(void *, void *, struct cpu_info *);
 
 static void	gifattach0(struct gif_softc *);
 static int	gif_output(struct ifnet *, struct mbuf *,
@@ -238,7 +241,9 @@ gif_clone_create(struct if_clone *ifc, int unit)
 
 	gifattach0(sc);
 
-	sc->gif_ro_percpu = percpu_alloc(sizeof(struct route));
+	sc->gif_ro_percpu = percpu_alloc(sizeof(struct gif_ro));
+	percpu_foreach(sc->gif_ro_percpu, gif_ro_init_pc, NULL);
+
 	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);
 	return (0);
 }
@@ -270,12 +275,30 @@ gifattach0(struct gif_softc *sc)
 	bpf_attach(&sc->gif_if, DLT_NULL, sizeof(u_int));
 }
 
+static void
+gif_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct gif_ro *gro = p;
+
+	mutex_init(&gro->gr_lock, MUTEX_DEFAULT, IPL_NONE);
+}
+
+static void
+gif_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct gif_ro *gro = p;
+
+	rtcache_free(&gro->gr_ro);
+
+	mutex_destroy(&gro->gr_lock);
+}
+
 void
 gif_rtcache_free_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
-	struct route *ro = p;
+	struct gif_ro *gro = p;
 
-	rtcache_free(ro);
+	rtcache_free(&gro->gr_ro);
 }
 
 static int
@@ -288,8 +311,10 @@ gif_clone_destroy(struct ifnet *ifp)
 	gif_delete_tunnel(&sc->gif_if);
 	bpf_detach(ifp);
 	if_detach(ifp);
-	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
-	percpu_free(sc->gif_ro_percpu, sizeof(struct route));
+
+	percpu_foreach(sc->gif_ro_percpu, gif_ro_fini_pc, NULL);
+	percpu_free(sc->gif_ro_percpu, sizeof(struct gif_ro));
+
 	kmem_free(sc, sizeof(struct gif_softc));
 
 	return (0);
