@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_carreg.h,v 1.1 2017/07/21 01:01:22 jmcneill Exp $ */
+/* $NetBSD: tegra210_carreg.h,v 1.2 2017/09/21 23:44:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -96,6 +96,25 @@
 #define CAR_PLLU_BASE_DIVP		__BITS(20,16)
 #define CAR_PLLU_BASE_DIVN		__BITS(15,8)
 #define CAR_PLLU_BASE_DIVM		__BITS(4,0)
+
+#define	CAR_PLLU_OUTA_REG	0xc4
+#define	CAR_PLLU_OUTA_OUT2_RATIO	__BITS(31,24)
+#define	CAR_PLLU_OUTA_OUT2_OVRRIDE	__BIT(18)
+#define	CAR_PLLU_OUTA_OUT2_CLKEN	__BIT(17)
+#define	CAR_PLLU_OUTA_OUT2_RSTN		__BIT(16)
+#define	CAR_PLLU_OUTA_OUT1_RATIO	__BITS(15,8)
+#define	CAR_PLLU_OUTA_OUT1_OVRRIDE	__BIT(2)
+#define	CAR_PLLU_OUTA_OUT1_CLKEN	__BIT(1)
+#define	CAR_PLLU_OUTA_OUT1_RSTN		__BIT(0)
+
+#define	CAR_PLLU_MISC_REG	0xcc
+#define	CAR_PLLU_MISC_IDDQ		__BIT(31)
+#define	CAR_PLLU_MISC_FREQLOCK		__BIT(30)
+#define	CAR_PLLU_MISC_EN_LCKDET		__BIT(29)
+#define	CAR_PLLU_MISC_PTS		__BITS(28,27)
+#define	CAR_PLLU_MISC_KCP		__BITS(26,25)
+#define	CAR_PLLU_MISC_KVCO		__BIT(24)
+#define	CAR_PLLU_MISC_SETUP		__BITS(23,0)
 
 #define CAR_PLLD_BASE_REG	0xd0
 #define CAR_PLLD_BASE_BYPASS		__BIT(31)

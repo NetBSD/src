@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.3 2017/09/21 22:54:39 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.4 2017/09/21 23:44:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.3 2017/09/21 22:54:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.4 2017/09/21 23:44:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -768,7 +768,26 @@ tegra210_car_xusb_init(struct tegra210_car_softc *sc)
 	const bus_space_handle_t bsh = sc->sc_bsh;
 	uint32_t val;
 
-	/* XXX do this all better */
+	/*
+	 * Set up the PLLU (enable in software).
+	 */
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_BASE_REG, CAR_PLLU_BASE_OVERRIDE, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_MISC_REG, CAR_PLLU_MISC_IDDQ, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_MISC_REG, 0, CAR_PLLU_MISC_IDDQ);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_OUTA_REG, 0, CAR_PLLU_OUTA_OUT1_RSTN);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_OUTA_REG, 0, CAR_PLLU_OUTA_OUT2_RSTN);
+	delay(5);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_BASE_REG, CAR_PLLU_BASE_ENABLE, 0);
+	do {
+		delay(2);
+		val = bus_space_read_4(bst, bsh, CAR_PLLU_BASE_REG);
+	} while ((val & CAR_PLLU_BASE_LOCK) == 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_BASE_REG, CAR_PLLU_BASE_CLKENABLE_ICUSB, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_BASE_REG, CAR_PLLU_BASE_CLKENABLE_HSIC, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_BASE_REG, CAR_PLLU_BASE_CLKENABLE_USB, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT1_RSTN, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT2_RSTN, 0);
+	delay(2);
 
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG, CAR_DEV_W_XUSB);
 
