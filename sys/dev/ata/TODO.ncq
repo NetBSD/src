@@ -32,8 +32,6 @@ add nibble to control number of tags (1==disable NCQ)?
 
 add support for the NCQ TRIM if supported by device?
 
-protect more of wddone() with mutex?
-
 implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
 
 MSI/MSI-X support for AHCI and mvsata(4)
