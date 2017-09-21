@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.14 2017/09/09 14:12:09 jmcneill Exp $
+# $NetBSD: sys_info.sh,v 1.15 2017/09/21 01:15:45 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=20170909
+SYS_INFO_VERSION=20170920
 
 PATH=$(sysctl -n user.cs_path)
 export PATH
@@ -110,10 +110,10 @@ getversion() {
 		run "named -v | awk '{ gsub(\"-\", \"\", \$2); gsub(\"P\", \"pl\", \$2); print tolower(\$1) \"-\" \$2 }'"
 		$all || return 0 ;&
 	bozohttpd|httpd)
-		v=$(run "/usr/libexec/httpd -G" 2>/dev/null)
+		v=$(run "${destdir}/usr/libexec/httpd -G" 2>/dev/null)
 		case "${v}" in
 		"")
-			run  "strings -a /usr/libexec/httpd | awk -F/ '\$1 == \"bozohttpd\" && NF == 2 { print \$1 \"-\" \$2; exit }'"
+			run  "strings -a ${destdir}/usr/libexec/httpd | awk -F/ '\$1 == \"bozohttpd\" && NF == 2 { print \$1 \"-\" \$2; exit }'"
 			;;
 		*)
 			printf '%s\n' "bozohttpd-${v##*/}"
@@ -207,8 +207,8 @@ getversion() {
 		fi
 		$all || return 0 ;&
 	tzdata)
-		if [ -f /usr/share/zoneinfo/TZDATA_VERSION ]; then
-			run "cat /usr/share/zoneinfo/TZDATA_VERSION"
+		if [ -f ${destdir}/usr/share/zoneinfo/TZDATA_VERSION ]; then
+			run "cat ${destdir}/usr/share/zoneinfo/TZDATA_VERSION"
 		else
 			run "printf '%s\n' tzdata-too-old-to-matter"
 		fi
@@ -221,7 +221,7 @@ getversion() {
 		fi
 		$all || return 0 ;&
 	[uU]ser[lL]and|release)
-		run "sed </etc/release -e 's/ /-/g' -e 's/^/userland-/' -e 1q"
+		run "sed <${destdir}/etc/release -e 's/ /-/g' -e 's/^/userland-/' -e 1q"
 		$all || return 0 ;&
 	xz)
 		run "xz --version | awk '{ print \$1 \"-\" \$4; exit }'"
@@ -240,14 +240,18 @@ getversion() {
 }
 
 verbose=false
+destdir=""
 # check if we have our only option
-while getopts "L:P:v" a; do
+while getopts "L:P:d:v" a; do
 	case "$a" in
-	v)	verbose=true;;
 	L)	LIBRARY_PATH=${OPTARG};;
 	P)	PATH=${OPTARG};;
+	d)	PATH=${OPTARG}/bin:${OPTARG}/sbin:${OPTARG}/usr/bin:${OPTARG}/usr/sbin
+		LIBRARY_PATH=${OPTARG}/usr/lib:${OPTARG}/usr.X11R7/lib
+		destdir=${OPTARG};;
+	v)	verbose=true;;
 	\?)	printf >&2 '%s\n' \
-		    "Usage: $0 [-v] [-L lib-path] [-P path] [component ...]"
+		    "Usage: $0 [-P path] [-L libdirs] [-d destdir] [-v] [system...]"
 		exit 2
 	esac
 done
