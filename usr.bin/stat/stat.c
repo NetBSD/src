@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.42 2017/09/21 18:50:08 kre Exp $ */
+/*	$NetBSD: stat.c,v 1.43 2017/09/21 22:53:19 kre Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.42 2017/09/21 18:50:08 kre Exp $");
+__RCSID("$NetBSD: stat.c,v 1.43 2017/09/21 22:53:19 kre Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -568,26 +568,62 @@ static const char *
 fmttime(char *buf, size_t len, const char *fmt, time_t secs, long nsecs)
 {
 	struct tm tm;
-	char *fmt2;
+	const char *fpb, *fp1, *fp2;	/* pointers into fmt */
+	char *fmt2 = NULL;		/* replacement fmt (if not NULL) */
+				/* XXX init of next twp for stupid gcc only */
+	char *f2p = NULL;		/* ptr into fmt2 - last added */
+	size_t flen = 0;
+	size_t o;
+	int sl;
 
 	if (localtime_r(&secs, &tm) == NULL) {
 		secs = 0;
 		(void)localtime_r(&secs, &tm);
 	}
-	if ((fmt2 = strstr(fmt, "%f")) != NULL) {
-		size_t flen = strlen(fmt) + 1024;
-		size_t o = (size_t)(fmt2 - fmt);
+	for (fp1 = fpb = fmt; (fp2 = strchr(fp1, '%')) != NULL; ) {
+		if (fp2[1] != 'f') {
+			/* make sure we don't find the 2nd '%' in "%%" */
+			fp1 = fp2 + 1 + (fp2[1] != '\0');
+			continue;
+		}
+		if (fmt2 == NULL) {
+			/* allow for ~100 %f's in the format ... */
+			flen = strlen(fmt) + 1024;
 
-		fmt2 = calloc(flen, 1);
-		if (fmt2 != NULL) {
-			int sl;
+			if ((fmt2 = calloc(flen, 1)) == NULL) {
+				fp1 = fp2 + 2;
+				continue;
+			}
+			f2p = fmt2;
 
-			memcpy(fmt2, fmt, o);
-			sl = snprintf(fmt2 + o, flen - o, "%.9ld", nsecs);
-			if (sl == -1)
-				sl = 0;
-			strcpy(fmt2 + sl + o, fmt + o + 2);
+			o = (size_t)(fp2 - fpb);
+			memcpy(f2p, fpb, o);	/* must fit */
 			fmt = fmt2;
+		} else {
+			o = (size_t)(fp2 - fpb);
+			if (flen > o)
+				memcpy(f2p, fpb, o);
+		}
+		if (flen < o + 10) {	/* 9 digits + \0 == 10 */
+			*f2p = '\0';
+			break;
+		}
+		f2p += o;
+		flen -= o;
+		sl = snprintf(f2p, flen, "%.9ld", nsecs);
+		if (sl == -1)
+			sl = 0;
+		f2p += sl;
+		*f2p = '\0';
+		flen -= sl;
+		fp1 = fp2 + 2;
+		fpb = fp1;
+	}
+	if (fmt2 != NULL) {
+		o = strlen(fpb);
+		if (flen > o) {
+			memcpy(f2p, fpb, o);
+			f2p[o] = '\0';
 		}
 	}
 
@@ -785,7 +821,6 @@ format1(const struct stat *st,
 		data = secs;
 		sdata = fmttime(path, sizeof(path), timefmt, secs, nsecs);
 
-		sdata = path;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
 		    FMTF_FLOAT | FMTF_STRING;
 		if (ofmt == 0)
