@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.7 2015/07/29 14:22:49 skrll Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.8 2017/09/21 19:28:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.7 2015/07/29 14:22:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.8 2017/09/21 19:28:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ bcmtmr_match(device_t parent, cfdata_t match, void *aux)
 static void
 bcmtmr_attach(device_t parent, device_t self, void *aux)
 {
-        struct bcm2835tmr_softc *sc = device_private(self);
+	struct bcm2835tmr_softc *sc = device_private(self);
  	struct amba_attach_args *aaa = aux;
 
 	aprint_naive("\n");
