@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.7 2017/09/19 20:46:12 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.8 2017/09/21 23:44:48 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.7 2017/09/19 20:46:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.8 2017/09/21 23:44:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,9 +89,7 @@ enum xusb_type {
 
 static const struct of_compat_data compat_data[] = {
 	{ "nvidia,tegra124-xusb",		XUSB_T124 },
-#if notyet
 	{ "nvidia,tegra210-xusb",		XUSB_T210 },
-#endif
 	{ NULL }
 };
 
