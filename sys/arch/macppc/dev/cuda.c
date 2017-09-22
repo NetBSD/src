@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.21 2016/02/14 19:54:20 chs Exp $ */
+/*	$NetBSD: cuda.c,v 1.22 2017/09/22 04:00:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.21 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.22 2017/09/22 04:00:58 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,9 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	struct cuda_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 	static struct cuda_attach_args caa;
+	prop_dictionary_t dict = device_properties(self);
+	prop_dictionary_t dev;
+	prop_array_t cfg;
 	int irq = ca->ca_intr[0];
 	int node, i, child;
 	char name[32];
@@ -250,6 +253,30 @@ cuda_attach(device_t parent, device_t self, void *aux)
 #if notyet
 	config_found(self, &caa, cuda_print);
 #endif
+	cfg = prop_array_create();
+	prop_dictionary_set(dict, "i2c-child-devices", cfg);
+	prop_object_release(cfg);
+
+	/* we don't have OF nodes for i2c devices so we have to make our own */
+
+	node = OF_finddevice("/valkyrie");
+	if (node != -1) {
+		dev = prop_dictionary_create();
+		prop_dictionary_set_cstring(dev, "name", "videopll");
+		prop_dictionary_set_uint32(dev, "addr", 0x50);
+		prop_array_add(cfg, dev);
+		prop_object_release(dev);
+	}
+
+	node = OF_finddevice("/perch");
+	if (node != -1) {
+		dev = prop_dictionary_create();
+		prop_dictionary_set_cstring(dev, "name", "sgsmix");
+		prop_dictionary_set_uint32(dev, "addr", 0x8a);
+		prop_array_add(cfg, dev);
+		prop_object_release(dev);
+	}
+
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
