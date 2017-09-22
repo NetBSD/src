@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_xusbpad.c,v 1.2 2017/09/20 21:59:23 jmcneill Exp $ */
+/* $NetBSD: tegra210_xusbpad.c,v 1.3 2017/09/22 01:24:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.2 2017/09/20 21:59:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.3 2017/09/22 01:24:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,31 @@ __KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.2 2017/09/20 21:59:23 jmcneil
 
 #include <dev/fdt/fdtvar.h>
 
+#define	XUSB_PADCTL_USB2_PAD_MUX_REG		0x04
+#define	 XUSB_PADCTL_USB2_PAD_MUX_USB2_BIAS_PAD			__BITS(19,18)
+#define	  XUSB_PADCTL_USB2_PAD_MUX_USB2_BIAS_PAD_XUSB		1
+
+#define	XUSB_PADCTL_ELPG_PROGRAM_1_REG		0x24
+#define	 XUSB_PADCTL_ELPG_PROGRAM_1_AUX_MUX_LP0_VCORE_DOWN	__BIT(31)
+#define	 XUSB_PADCTL_ELPG_PROGRAM_1_AUX_MUX_LP0_CLAMP_EN_EARLY	__BIT(30)
+#define	 XUSB_PADCTL_ELPG_PROGRAM_1_AUX_MUX_LP0_CLAMP_EN	__BIT(29)
+#define	 XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_VCORE_DOWN(n)	__BIT((n) * 3 + 2)
+#define	 XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_CLAMP_EN_EARLY(n)	__BIT((n) * 3 + 1)
+#define	 XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_CLAMP_EN(n)	__BIT((n) * 3 + 0)
+
+#define	XUSB_PADCTL_UPHY_USB3_PADn_ECTL_1_REG(n)	(0xa60 + (n) * 0x40)
+#define	 XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_TX_TERM_CTRL		__BITS(19,18)
+
+#define	XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_REG(n)	(0xa64 + (n) * 0x40)
+#define	 XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_RX_CTLE		__BITS(15,0)
+
+#define	XUSB_PADCTL_UPHY_USB3_PADn_ECTL_3_REG(n)	(0xa68 + (n) * 0x40)
+
+#define	XUSB_PADCTL_UPHY_USB3_PADn_ECTL_4_REG(n)	(0xa6c + (n) * 0x40)
+#define	 XUSB_PADCTL_UPHY_USB3_PADn_ECTL_4_RX_CDR_CTRL		__BITS(31,16)
+
+#define	XUSB_PADCTL_UPHY_USB3_PADn_ECTL_6_REG(n)	(0xa74 + (n) * 0x40)
+
 struct tegra210_xusbpad_softc {
 	device_t		sc_dev;
 	int			sc_phandle;
@@ -49,6 +74,8 @@ struct tegra210_xusbpad_softc {
 	bus_space_handle_t	sc_bsh;
 
 	struct fdtbus_reset	*sc_rst;
+
+	bool			sc_enabled;
 };
 
 #define	RD4(sc, reg)					\
@@ -97,9 +124,10 @@ static const struct tegra210_xusbpad_lane {
 	XUSBPAD_LANE("sata-0", 0x28, __BITS(31,30), tegra210_xusbpad_pcie_func),
 };
 
-#define	XUSBPAD_PORT(n, r, m, im)		\
+#define	XUSBPAD_PORT(n, i, r, m, im)		\
 	{					\
 		.name = (n),			\
+		.index = (i),			\
 		.reg = (r),			\
 		.mask = (m),			\
 		.internal_mask = (im)		\
@@ -107,28 +135,29 @@ static const struct tegra210_xusbpad_lane {
 
 struct tegra210_xusbpad_port {
 	const char		*name;
+	int			index;
 	bus_size_t		reg;
 	uint32_t		mask;
 	uint32_t		internal_mask;
 };
 
 static const struct tegra210_xusbpad_port tegra210_xusbpad_usb2_ports[] = {
-	XUSBPAD_PORT("usb2-0", 0x08, __BITS(1,0), __BIT(2)),
-	XUSBPAD_PORT("usb2-1", 0x08, __BITS(5,4), __BIT(6)),
-	XUSBPAD_PORT("usb2-2", 0x08, __BITS(9,8), __BIT(10)),
-	XUSBPAD_PORT("usb2-3", 0x08, __BITS(13,12), __BIT(14)),
+	XUSBPAD_PORT("usb2-0", 0, 0x08, __BITS(1,0), __BIT(2)),
+	XUSBPAD_PORT("usb2-1", 1, 0x08, __BITS(5,4), __BIT(6)),
+	XUSBPAD_PORT("usb2-2", 2, 0x08, __BITS(9,8), __BIT(10)),
+	XUSBPAD_PORT("usb2-3", 3, 0x08, __BITS(13,12), __BIT(14)),
 };
 
 static const struct tegra210_xusbpad_port tegra210_xusbpad_usb3_ports[] = {
-	XUSBPAD_PORT("usb3-0", 0x14, __BITS(3,0), __BIT(4)),
-	XUSBPAD_PORT("usb3-1", 0x14, __BITS(8,5), __BIT(9)),
-	XUSBPAD_PORT("usb3-2", 0x14, __BITS(13,10), __BIT(14)),
-	XUSBPAD_PORT("usb3-3", 0x14, __BITS(18,15), __BIT(19)),
+	XUSBPAD_PORT("usb3-0", 0, 0x14, __BITS(3,0), __BIT(4)),
+	XUSBPAD_PORT("usb3-1", 1, 0x14, __BITS(8,5), __BIT(9)),
+	XUSBPAD_PORT("usb3-2", 2, 0x14, __BITS(13,10), __BIT(14)),
+	XUSBPAD_PORT("usb3-3", 3, 0x14, __BITS(18,15), __BIT(19)),
 }; 
 
 static const struct tegra210_xusbpad_port tegra210_xusbpad_hsic_ports[] = {
-	XUSBPAD_PORT("hsic-0", 0, 0, 0),
-	XUSBPAD_PORT("hsic-1", 0, 0, 0),
+	XUSBPAD_PORT("hsic-0", 0, 0, 0, 0),
+	XUSBPAD_PORT("hsic-1", 1, 0, 0, 0),
 };
 
 static int
@@ -326,6 +355,27 @@ tegra210_xusbpad_configure_usb3_port(struct tegra210_xusbpad_softc *sc,
 	    companion, internal ? "internal" : "external");
 	SETCLR4(sc, port->reg, __SHIFTIN(internal, port->internal_mask), port->internal_mask);
 	SETCLR4(sc, port->reg, __SHIFTIN(companion, port->mask), port->mask);
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_1_REG(port->index),
+	    __SHIFTIN(2, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_TX_TERM_CTRL),
+	    XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_TX_TERM_CTRL);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_REG(port->index),
+	    __SHIFTIN(0xfc, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_RX_CTLE),
+	    XUSB_PADCTL_UPHY_USB3_PADn_ECTL_2_RX_CTLE);
+	WR4(sc, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_3_REG(port->index), 0xc0077f1f);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_4_REG(port->index),
+	    __SHIFTIN(0x01c7, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_4_RX_CDR_CTRL),
+	    XUSB_PADCTL_UPHY_USB3_PADn_ECTL_4_RX_CDR_CTRL);
+	WR4(sc, XUSB_PADCTL_UPHY_USB3_PADn_ECTL_6_REG(port->index), 0xfcf01368);
+
+	SETCLR4(sc, XUSB_PADCTL_ELPG_PROGRAM_1_REG,
+	    0, XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_CLAMP_EN(port->index));
+	delay(200);
+	SETCLR4(sc, XUSB_PADCTL_ELPG_PROGRAM_1_REG,
+	    0, XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_CLAMP_EN_EARLY(port->index));
+	delay(200);
+	SETCLR4(sc, XUSB_PADCTL_ELPG_PROGRAM_1_REG,
+	    0, XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_VCORE_DOWN(port->index));
 }
 
 static void
@@ -370,13 +420,39 @@ tegra210_xusbpad_configure_ports(struct tegra210_xusbpad_softc *sc)
 }
 
 static void
+tegra210_xusbpad_enable(struct tegra210_xusbpad_softc *sc)
+{
+	if (sc->sc_enabled)
+		return;
+
+	SETCLR4(sc, XUSB_PADCTL_ELPG_PROGRAM_1_REG, 0, XUSB_PADCTL_ELPG_PROGRAM_1_AUX_MUX_LP0_CLAMP_EN);
+	delay(200);
+	SETCLR4(sc, XUSB_PADCTL_ELPG_PROGRAM_1_REG, 0, XUSB_PADCTL_ELPG_PROGRAM_1_AUX_MUX_LP0_CLAMP_EN_EARLY);
+	delay(200);
+	SETCLR4(sc, XUSB_PADCTL_ELPG_PROGRAM_1_REG, 0, XUSB_PADCTL_ELPG_PROGRAM_1_AUX_MUX_LP0_VCORE_DOWN);
+
+	sc->sc_enabled = true;
+}
+
+static void
 tegra210_xusbpad_sata_enable(device_t dev)
 {
+	struct tegra210_xusbpad_softc * const sc = device_private(dev);
+
+	tegra210_xusbpad_enable(sc);
 }
 
 static void
 tegra210_xusbpad_xhci_enable(device_t dev)
 {
+	struct tegra210_xusbpad_softc * const sc = device_private(dev);
+
+	SETCLR4(sc, XUSB_PADCTL_USB2_PAD_MUX_REG,
+	    __SHIFTIN(XUSB_PADCTL_USB2_PAD_MUX_USB2_BIAS_PAD_XUSB,
+		      XUSB_PADCTL_USB2_PAD_MUX_USB2_BIAS_PAD),
+	    XUSB_PADCTL_USB2_PAD_MUX_USB2_BIAS_PAD);
+
+	tegra210_xusbpad_enable(sc);
 }
 
 static const struct tegra_xusbpad_ops tegra210_xusbpad_ops = {
