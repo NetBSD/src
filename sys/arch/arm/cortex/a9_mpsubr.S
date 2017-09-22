@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.50 2017/09/06 18:08:35 jmcneill Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.51 2017/09/22 06:31:02 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 //#define MPDEBUG
 
-// Marco to call routines in .text
+// Macro to call routines in .text
 #if defined(KERNEL_BASES_EQUAL)
 #define CALL(f)		bl	_C_LABEL(f)
 #else
