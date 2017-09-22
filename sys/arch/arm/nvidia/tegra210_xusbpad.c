@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_xusbpad.c,v 1.3 2017/09/22 01:24:31 jmcneill Exp $ */
+/* $NetBSD: tegra210_xusbpad.c,v 1.4 2017/09/22 11:01:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.3 2017/09/22 01:24:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.4 2017/09/22 11:01:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -237,15 +237,19 @@ tegra210_xusbpad_configure_pads(struct tegra210_xusbpad_softc *sc,
 		return;		/* pad is disabled */
 
 	/* Enable the pad's resources */
-	clk = fdtbus_clock_get_index(phandle, 0);
-	if (clk && clk_enable(clk) != 0) {
-		aprint_error_dev(sc->sc_dev, "couldn't enable %s's clock\n", name);
-		return;
+	if (of_hasprop(phandle, "clocks")) {
+		clk = fdtbus_clock_get_index(phandle, 0);
+		if (clk == NULL || clk_enable(clk) != 0) {
+			aprint_error_dev(sc->sc_dev, "couldn't enable %s's clock\n", name);
+			return;
+		}
 	}
-	rst = fdtbus_reset_get_index(phandle, 0);
-	if (rst && fdtbus_reset_deassert(rst) != 0) {
-		aprint_error_dev(sc->sc_dev, "couldn't de-assert %s's reset\n", name);
-		return;
+	if (of_hasprop(phandle, "resets")) {
+		rst = fdtbus_reset_get_index(phandle, 0);
+		if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
+			aprint_error_dev(sc->sc_dev, "couldn't de-assert %s's reset\n", name);
+			return;
+		}
 	}
 
 	/* Configure lanes */
