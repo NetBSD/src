@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.99 2017/09/21 18:19:44 joerg Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.100 2017/09/22 06:05:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.99 2017/09/21 18:19:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.100 2017/09/22 06:05:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -346,7 +346,8 @@ vstate_assert_change(vnode_t *vp, enum vnode_state from, enum vnode_state to,
 #define VSTATE_WAIT_STABLE(vp) \
 	vstate_wait_stable((vp))
 void
-_vstate_assert(vnode_t *vp, enum vnode_state state, const char *func, int line)
+_vstate_assert(vnode_t *vp, enum vnode_state state, const char *func, int line,
+    bool has_lock)
 {
 
 }
