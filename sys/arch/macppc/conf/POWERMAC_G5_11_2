@@ -55,8 +55,8 @@ file-system 	PROCFS		# /proc
 file-system 	NFS		# Network File System client
 
 # File system options
-options 	QUOTA		# legacy UFS quotas
-options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
@@ -110,6 +110,19 @@ mainbus* at root
 cpu*	at mainbus?
 ibmcpc* at mainbus?
 uninorth*	at mainbus?
+memory* at mainbus?
+spdmem* at memory? addr ?
+
+uni_n*	at mainbus?
+ki2c*	at uni_n?			# Keywest I2C
+iic*	at ki2c?
+admtemp* 	at iic?
+
+smu* 		at mainbus?
+#options 	SMU_DEBUG
+smuiic* 	at smu?
+#iic* 		at smuiic?
+smusat* 	at smuiic?
 
 pci*	at ibmcpc? bus ?
 pci*	at uninorth? bus ?
@@ -119,6 +132,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 bge*	at pci? dev ? function ?	# gmac ethernet
+brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
@@ -136,7 +150,21 @@ ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
 genfb*	at pci? dev ? function ?
-wsdisplay*	at genfb? console ?
+wdc* 	at pci? dev ? function ?		# Kauai ATA
+#svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
+obio*	at pci? dev ? function ?
+zsc*	at obio?
+zstty*	at zsc? channel ?
+
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
+
+atabus* at ata?
+wd*	at atabus? drive ? flags 0x0000
+atapibus* at atapi?
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 #pseudo-device 	crypto			# opencrypto framework
 					# (disabled, requires generic softints)
@@ -157,8 +185,8 @@ options		OFWOEA_WSCONS_NO_ROM_FONT
 options		EXSTORAGE_MAX=24
 
 # Enable the hooks used for initializing the ram-disk.
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=5000	# 25000 KiB
-options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
-options		MEMORY_DISK_SERVER=1
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
+#options 	MEMORY_DISK_ROOT_SIZE=5000	# 25000 KiB
+#options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+#options		MEMORY_DISK_SERVER=1
