@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.8 2017/09/21 23:44:48 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.9 2017/09/22 18:13:36 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.8 2017/09/21 23:44:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.9 2017/09/22 18:13:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,6 +122,7 @@ static void	tegra_xusb_init(struct tegra_xusb_softc * const);
 static int	tegra_xusb_open_fw(struct tegra_xusb_softc * const);
 static int	tegra_xusb_load_fw(struct tegra_xusb_softc * const, void *,
     size_t);
+static void	tegra_xusb_init_regulators(struct tegra_xusb_softc * const);
 
 static int	xusb_mailbox_send(struct tegra_xusb_softc * const, uint32_t);
 
@@ -320,6 +321,8 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 
 	DELAY(1);
 
+	tegra_xusb_init_regulators(psc);
+
 	tegra_xusb_init(psc);
 
 #if defined(TEGRA124_XUSB_BIN_STATIC)
@@ -484,6 +487,39 @@ clk_fail:
 		    MAILBOX_OWNER_NONE);
 
 	return irv;
+}
+
+static void
+tegra_xusb_init_regulators(struct tegra_xusb_softc * const psc)
+{
+	const char * supply_names[] = {
+		"dvddio-pex-supply",
+		"hvddio-pex-supply",
+		"avdd-usb-supply",
+		"avdd-pll-utmip-supply",
+		"avdd-pll-uerefe-supply",
+		"dvdd-usb-ss-pll-supply",
+		"hvdd-usb-ss-pll-e-supply"
+	};
+	device_t dev = psc->sc_xhci.sc_dev;
+	const int phandle = psc->sc_phandle;
+	struct fdtbus_regulator *reg;
+	int n, error;
+
+	for (n = 0; n < __arraycount(supply_names); n++) {
+		if (!of_hasprop(phandle, supply_names[n]))
+			continue;
+		reg = fdtbus_regulator_acquire(phandle, supply_names[n]);
+		if (reg == NULL) {
+			aprint_error_dev(dev, "couldn't acquire supply '%s'\n",
+			    supply_names[n]);
+			continue;
+		}
+		error = fdtbus_regulator_enable(reg);
+		if (error != 0)
+			aprint_error_dev(dev, "couldn't enable supply '%s': %d\n",
+			    supply_names[n], error);
+	}
 }
 
 static void
