@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.4 2017/09/21 23:44:26 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.5 2017/09/22 01:24:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.4 2017/09/21 23:44:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.5 2017/09/22 01:24:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -769,7 +769,7 @@ tegra210_car_xusb_init(struct tegra210_car_softc *sc)
 	uint32_t val;
 
 	/*
-	 * Set up the PLLU (enable in software).
+	 * Set up the PLLU.
 	 */
 	tegra_reg_set_clear(bst, bsh, CAR_PLLU_BASE_REG, CAR_PLLU_BASE_OVERRIDE, 0);
 	tegra_reg_set_clear(bst, bsh, CAR_PLLU_MISC_REG, CAR_PLLU_MISC_IDDQ, 0);
@@ -788,6 +788,31 @@ tegra210_car_xusb_init(struct tegra210_car_softc *sc)
 	tegra_reg_set_clear(bst, bsh, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT1_RSTN, 0);
 	tegra_reg_set_clear(bst, bsh, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT2_RSTN, 0);
 	delay(2);
+
+	/*
+	 * Set up the PLLE.
+	 */
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG, 0, CAR_PLLE_AUX_REF_SEL_PLLREFE);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG, 0, CAR_PLLE_AUX_REF_SRC);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_MISC_REG, 0, CAR_PLLE_MISC_IDDQ_OVERRIDE);
+	delay(5);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_MISC_REG, CAR_PLLE_MISC_PTS, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_BASE_REG, CAR_PLLE_BASE_ENABLE, 0);
+	do {
+		delay(2);
+		val = bus_space_read_4(bst, bsh, CAR_PLLE_MISC_REG);
+	} while ((val & CAR_PLLE_MISC_LOCK) == 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_SS_CNTL_REG, 0, CAR_PLLE_SS_CNTL_BYPASS_SS);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_SS_CNTL_REG, 0, CAR_PLLE_SS_CNTL_SSCBYP);
+	delay(1);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_SS_CNTL_REG, 0, CAR_PLLE_SS_CNTL_INTERP_RESET);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_MISC_REG, 0, CAR_PLLE_MISC_IDDQ_SWCTL);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG, 0, CAR_PLLE_AUX_SS_SWCTL);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG, 0, CAR_PLLE_AUX_ENABLE_SWCTL);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG, CAR_PLLE_AUX_SS_SEQ_INCLUDE, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG, CAR_PLLE_AUX_USE_LOCKDET, 0);
+	delay(1);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG, CAR_PLLE_AUX_SEQ_ENABLE, 0);
 
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG, CAR_DEV_W_XUSB);
 
