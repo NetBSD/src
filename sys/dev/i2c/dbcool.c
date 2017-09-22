@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.46 2016/07/11 14:44:49 msaitoh Exp $ */
+/*	$NetBSD: dbcool.c,v 1.47 2017/09/22 03:04:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.46 2016/07/11 14:44:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.47 2017/09/22 03:04:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,6 +733,9 @@ CFATTACH_DECL_NEW(dbcool, sizeof(struct dbcool_softc),
 
 static const char * dbcool_compats[] = {
 	"i2c-adm1031",
+	"adt7467",
+	"adt7460",
+	"adm1030",
 	NULL
 };
 int
