@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.67 2017/09/14 07:58:42 mrg Exp $
+#	$NetBSD: POWERMAC,v 1.68 2017/09/22 17:56:07 macallan Exp $
 #
 # POWERMAC config file
 #
@@ -69,11 +69,11 @@ config	netbsd	root on ? type ?
 
 mainbus* at root
 
-cpu*	at mainbus?
-bandit*	at mainbus?
-
-pci*	at bandit? bus ?
-pci*	at ppb? bus ?
+cpu* 		at mainbus?
+bandit* 	at mainbus?
+valkyriefb* 	at mainbus?	# Performa 63XX onboard video
+pci* 		at bandit? bus ?
+pci* 		at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -103,13 +103,13 @@ zstty*	at zsc? channel ?
 
 cuda*	at obio?			# Apple CUDA
 #options	CUDA_DEBUG
-iic0	at cuda0
-sgsmix0 at iic0	addr 0x8a		# additional mixer found in beige G3
-#options	SGSMIX_DEBUG
+iic*	at cuda0
+videopll* 	at iic?			# pixel clock for valkyriefb
+
 nadb*	at cuda?			# new ADB Bus abstraction
 adbkbd* at nadb?			# ADB keyboard
-#options	ADB_DEBUG
-#options ADBKBD_DEBUG
+#options 	ADB_DEBUG
+#options 	ADBKBD_DEBUG
 adbms*	at nadb?
 
 wskbd*	at wskbddev? console ?
