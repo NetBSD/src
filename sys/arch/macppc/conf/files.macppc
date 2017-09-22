@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.104 2017/06/06 15:58:59 macallan Exp $
+#	$NetBSD: files.macppc,v 1.105 2017/09/22 03:11:43 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -306,12 +306,9 @@ file arch/macppc/dev/snapper.c			snapper
 
 include "arch/powerpc/conf/majors.powerpc"
 
-attach dbcool at ki2c with dbcool_ki2c
-file arch/macppc/dev/dbcool_ki2c.c		dbcool
-
 define deq {}
 device deq
-attach deq at ki2c
+attach deq at iic
 file arch/macppc/dev/deq.c				deq
 
 device videopll
