@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_xusbpadreg.h,v 1.1 2017/09/19 20:46:12 jmcneill Exp $ */
+/* $NetBSD: tegra124_xusbpadreg.h,v 1.2 2017/09/22 19:11:47 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_TEGRA_XUSBPADCTLREG_H
-#define _ARM_TEGRA_XUSBPADCTLREG_H
+#ifndef _ARM_TEGRA_TEGRA124_XUSBPADREG_H
+#define _ARM_TEGRA_TEGRA124_XUSBPADREG_H
 
 #define XUSB_PADCTL_BOOT_MEDIA_REG			0x000
 #define XUSB_PADCTL_USB2_PAD_MUX_REG			0x004
@@ -158,4 +158,4 @@
 #define XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ_OVRD	__BIT(1)
 #define XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ		__BIT(0)
 
-#endif /* _ARM_TEGRA_XUSBPADCTLREG_H */
+#endif /* _ARM_TEGRA_TEGRA124_XUSBPADREG_H */
