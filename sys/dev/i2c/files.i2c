@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.75 2017/08/31 19:55:43 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.76 2017/09/22 18:12:31 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -267,3 +267,13 @@ file	dev/i2c/as3722.c			as3722pmic	needs-flag
 device	tcakp: wskbddev, linux_keymap
 attach	tcakp at iic
 file	dev/i2c/tcakp.c				tcakp
+
+# MAXIM MAX77620 Power Management IC
+device	max77620pmic
+attach	max77620pmic at iic
+file	dev/i2c/max77620.c			max77620pmic
+
+# Texas Instruments TCA9539 I/O Expander
+device	tcagpio
+attach	tcagpio at iic
+file	dev/i2c/tcagpio.c			tcagpio
