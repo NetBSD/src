@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_regulator.c,v 1.3 2017/04/22 21:47:41 jmcneill Exp $ */
+/* $NetBSD: fdt_regulator.c,v 1.4 2017/09/22 15:33:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.3 2017/04/22 21:47:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.4 2017/09/22 15:33:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,6 +97,7 @@ fdtbus_regulator_acquire(int phandle, const char *prop)
 
 	error = rc->rc_funcs->acquire(rc->rc_dev);
 	if (error) {
+		aprint_error_dev(rc->rc_dev, "failed to acquire regulator: %d\n", error);
 		return NULL;
 	}
 
