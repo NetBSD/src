@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.43 2017/09/19 23:18:01 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.44 2017/09/22 14:36:22 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -68,9 +68,10 @@ attach	tegratimer at fdt with tegra_timer
 file	arch/arm/nvidia/tegra_timer.c		tegra_timer
 
 # MPIO / Pinmux
-device	tegrampio
-attach	tegrampio at fdt with tegra_mpio
-file	arch/arm/nvidia/tegra_mpio.c		tegra_mpio
+device	tegrapinmux
+attach	tegrapinmux at fdt with tegra_pinmux
+file	arch/arm/nvidia/tegra_pinmux.c		tegra_pinmux
+file	arch/arm/nvidia/tegra210_pinmux.c	tegra_pinmux & soc_tegra210
 
 # APB DMA
 device	tegraapbdma
