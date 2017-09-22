@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.27 2017/09/20 18:35:37 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.28 2017/09/22 20:19:08 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.27 2017/09/20 18:35:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.28 2017/09/22 20:19:08 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1529,7 +1529,7 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
-	bool iserror = (ata_bio->error == NOERROR);
+	bool iserror = (ata_bio->error != NOERROR);
 
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS,
 	    ("%s:%d: mvsata_bio_done: drive=%d, flags=0x%x\n",
@@ -2689,7 +2689,7 @@ mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
-	bool iserror = (sc_xfer->error == XS_NOERROR);
+	bool iserror = (sc_xfer->error != XS_NOERROR);
 
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS,
 	    ("%s:%d:%d: mvsata_atapi_done: flags 0x%x\n",
