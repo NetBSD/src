@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.335 2017/09/22 03:15:08 macallan Exp $
+# $NetBSD: GENERIC,v 1.336 2017/09/22 04:09:06 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.335 $"
+#ident 		"GENERIC-$Revision: 1.336 $"
 
 maxusers	32
 
@@ -371,26 +371,23 @@ nvram*	at obio?			# nvram
 
 # the new, improved ADB subsystem
 
-cuda*	at obio?			# CUDA, for Old World PowerMacs
-pmu*	at obio?			# PMU, *Books and newer PowerMacs
-nadb*	at adb_bus?			# ADB bus enumerator, at cuda or pmu
-adbkbd* at nadb?			# ADB keyboard
-adbms*	at nadb?			# ADB mice and touchpads
-adbbt*	at nadb?			# button device found on *Books
+cuda*	at obio?		# CUDA, for Old World PowerMacs
+iic* 		at cuda?	# CUDA's IIC bus
+
+pmu*	at obio?		# PMU, *Books and newer PowerMacs
+nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
+adbkbd* at nadb?		# ADB keyboard
+adbms*	at nadb?		# ADB mice and touchpads
+adbbt*	at nadb?		# button device found on *Books
 
 wskbd*		at wskbddev? console ?
 wsmouse*	at wsmousedev?
 
-battery* at pmu?		# legacy battery, for ohare-based PowerBooks
-smartbat* at pmu?		# Smart battery, found in newer *Books
+battery* 	at pmu?		# legacy battery, for ohare-based PowerBooks
+smartbat* 	at pmu?		# Smart battery, found in newer *Books
 
 iic* 		at pmu?		# some PMUs have IIC
 
-iic0 		at cuda0		# CUDA's IIC bus
-# these are hardwired because there are no OF nodes for them:
-videopll0	at iic0 addr 0x50	# for valkyriefb
-sgsmix0 	at iic0 addr 0x8a	# Additional mixer found in beige G3
-					# use with awacs.
 zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
@@ -404,13 +401,16 @@ ki2c*	at obio?			# Keywest I2C
 ki2c*	at uni_n?			# Keywest I2C
 iic*	at ki2c?
 
-# I2C devices configured per OF
+# I2C devices
 dbcool* 	at iic?		# dbCool thermal monitor & fan control
 deq* 		at iic?		# mixer/equalizer, used by snapper
 admtemp* 	at iic?		# temperature sensor found in Mini, G5
+videopll*	at iic?		# for valkyriefb
+sgsmix* 	at iic?		# Additional mixer found in beige G3
+				# use with awacs.
 
-wi*	at obio?			# AirMac
-snapper* at obio?			# Snapper audio device
+wi* 		at obio?	# AirMac
+snapper* 	at obio?	# Snapper audio device
 
 cardslot* at cbb?
 cardbus* at cardslot?
