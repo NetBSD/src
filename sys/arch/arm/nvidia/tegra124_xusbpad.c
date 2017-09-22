@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_xusbpad.c,v 1.1 2017/09/19 20:46:12 jmcneill Exp $ */
+/* $NetBSD: tegra124_xusbpad.c,v 1.2 2017/09/22 20:25:51 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_xusbpad.c,v 1.1 2017/09/19 20:46:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_xusbpad.c,v 1.2 2017/09/22 20:25:51 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -318,17 +318,28 @@ tegra124_xusbpad_xhci_enable(device_t dev)
 	    0, XUSB_PADCTL_ELPG_PROGRAM_SSP0_ELPG_VCORE_DOWN);
 
 	DELAY(200);
-	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0, __BIT(26));
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0,
+	    XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_VCORE_DOWN);
 	DELAY(200);
-	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0, __BIT(25));
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0,
+	    XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN_EARLY);
 	DELAY(200);
-	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0, __BIT(24));
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0,
+	    XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN);
 	DELAY(200);
 
-	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, 0, __BITS(22,16));
-	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(4), 0);
-	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(8), 0);
-	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(9), 0);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, 0,
+	    XUSB_PADCTL_OC_DET_OC_DETECTED_VBUS_PAD2 |
+	    XUSB_PADCTL_OC_DET_OC_DETECTED_VBUS_PAD1 |
+	    XUSB_PADCTL_OC_DET_OC_DETECTED_VBUS_PAD0 |
+	    XUSB_PADCTL_OC_DET_OC_DETECTED3 |
+	    XUSB_PADCTL_OC_DET_OC_DETECTED2 |
+	    XUSB_PADCTL_OC_DET_OC_DETECTED1 |
+	    XUSB_PADCTL_OC_DET_OC_DETECTED0);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG,
+	    XUSB_PADCTL_OC_DET_VBUS_ENABLE2 | 
+	    XUSB_PADCTL_OC_DET_VBUS_ENABLE1 |
+	    XUSB_PADCTL_OC_DET_VBUS_ENABLE0, 0);
 
 #ifdef TEGRA_XUSBPAD_DEBUG
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PAD_MUX_REG);
