@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.3 2012/04/15 10:19:47 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.4 2017/09/22 15:37:13 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ netwalker_usb_init(struct imxehci_softc *sc)
 		init_h1(sc);
 		break;
 	default:
-		aprint_error_dev(sc->sc_hsc.sc_dev, "unit %d not supprted\n",
+		aprint_error_dev(sc->sc_hsc.sc_dev, "unit %d not supported\n",
 		    sc->sc_unit);
 	}
 }
