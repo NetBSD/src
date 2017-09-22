@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_carreg.h,v 1.3 2017/09/22 01:24:31 jmcneill Exp $ */
+/* $NetBSD: tegra210_carreg.h,v 1.4 2017/09/22 10:54:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -438,6 +438,38 @@
 #define CAR_DEV_X_ETR			__BIT(3)
 #define CAR_DEV_X_SPARE			__BIT(0)
 
+#define	CAR_DEV_Y_PLLP_OUT_CPU		__BIT(31)
+#define	CAR_DEV_Y_SOR_SAFE		__BIT(30)
+#define	CAR_DEV_Y_IQC1			__BIT(29)
+#define	CAR_DEV_Y_IQC2			__BIT(28)
+#define	CAR_DEV_Y_NVENC			__BIT(27)
+#define	CAR_DEV_Y_ADSPNEON		__BIT(26)
+#define	CAR_DEV_Y_ADSPSCU		__BIT(25)
+#define	CAR_DEV_Y_ADSPWDT		__BIT(24)
+#define	CAR_DEV_Y_ADSPDBG		__BIT(23)
+#define	CAR_DEV_Y_ADSPPERIPH		__BIT(22)
+#define	CAR_DEV_Y_ADSPINTF		__BIT(21)
+#define	CAR_DEV_Y_UARTAPE		__BIT(20)
+#define	CAR_DEV_Y_QSPI			__BIT(19)
+#define	CAR_DEV_Y_USB2_TRK		__BIT(18)
+#define	CAR_DEV_Y_HSIC_TRK		__BIT(17)
+#define	CAR_DEV_Y_VI_I2C		__BIT(16)
+#define	CAR_DEV_Y_DPAUX			__BIT(15)
+#define	CAR_DEV_Y_TSECB			__BIT(14)
+#define	CAR_DEV_Y_PEX_USB_UPHY		__BIT(13)
+#define	CAR_DEV_Y_SATA_USB_UPHY		__BIT(12)
+#define	CAR_DEV_Y_MAUD			__BIT(10)
+#define	CAR_DEV_Y_MC_CCPA		__BIT(9)
+#define	CAR_DEV_Y_MC_CDPA		__BIT(8)
+#define	CAR_DEV_Y_ADSP			__BIT(7)
+#define	CAR_DEV_Y_APE			__BIT(6)
+#define	CAR_DEV_Y_DMIC3			__BIT(5)
+#define	CAR_DEV_Y_AXIAP			__BIT(4)
+#define	CAR_DEV_Y_NVJPG			__BIT(3)
+#define	CAR_DEV_Y_NVDEC			__BIT(2)
+#define	CAR_DEV_Y_SDMMC_LEGACY_TM	__BIT(1)
+#define	CAR_DEV_Y_SPARE1		__BIT(0)
+
 #define CAR_CCLKG_BURST_POLICY_REG	0x368
 #define CAR_CCLKG_BURST_POLICY_CPU_STATE	__BITS(31,28)
 #define CAR_CCLKG_BURST_POLICY_CPU_STATE_IDLE			1
@@ -577,5 +609,8 @@
 #define CAR_CLKSRC_SOC_THERM_SRC_PLLP_OUT0	2
 #define CAR_CLKSRC_SOC_THERM_DDLL_SEL	__BITS(11,10)
 #define CAR_CLKSRC_SOC_THERM_DIV	__BITS(7,0)
+
+#define	CAR_CLKSRC_USB2_HSIC_TRK_REG	0x6cc
+#define	CAR_CLKSRC_USB2_HSIC_TRK_DIV	__BITS(7,0)
 
 #endif /* _ARM_TEGRA210_CARREG_H */
