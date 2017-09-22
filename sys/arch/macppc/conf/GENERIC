@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.334 2017/09/14 07:58:42 mrg Exp $
+# $NetBSD: GENERIC,v 1.335 2017/09/22 03:15:08 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.334 $"
+#ident 		"GENERIC-$Revision: 1.335 $"
 
 maxusers	32
 
@@ -204,6 +204,8 @@ uni_n*	at mainbus?
 memory*	at mainbus?
 spdmem*	at memory? addr ?
 
+valkyriefb0	at mainbus0	# Performa 6360 onboard video
+
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
 pci*	at uninorth? bus ?
@@ -383,13 +385,12 @@ battery* at pmu?		# legacy battery, for ohare-based PowerBooks
 smartbat* at pmu?		# Smart battery, found in newer *Books
 
 iic* 		at pmu?		# some PMUs have IIC
-admtemp* 	at iic?		# found on Mini
 
-iic0	at cuda0		# CUDA's IIC bus
-sgsmix0 at iic0 addr 0x8a	# Additional mixer found in beige G3
-				# use with awacs. Hardwired because there is
-				# no OF node for it.
-
+iic0 		at cuda0		# CUDA's IIC bus
+# these are hardwired because there are no OF nodes for them:
+videopll0	at iic0 addr 0x50	# for valkyriefb
+sgsmix0 	at iic0 addr 0x8a	# Additional mixer found in beige G3
+					# use with awacs.
 zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
@@ -402,8 +403,11 @@ wdc*	at mediabay? flags 0
 ki2c*	at obio?			# Keywest I2C
 ki2c*	at uni_n?			# Keywest I2C
 iic*	at ki2c?
-dbcool*	at ki2c?			# dbCool thermal monitor & fan control
-deq*	at ki2c?			# mixer/equalizer, needed by snapper
+
+# I2C devices configured per OF
+dbcool* 	at iic?		# dbCool thermal monitor & fan control
+deq* 		at iic?		# mixer/equalizer, used by snapper
+admtemp* 	at iic?		# temperature sensor found in Mini, G5
 
 wi*	at obio?			# AirMac
 snapper* at obio?			# Snapper audio device
