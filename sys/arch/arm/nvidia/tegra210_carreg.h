@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_carreg.h,v 1.2 2017/09/21 23:44:26 jmcneill Exp $ */
+/* $NetBSD: tegra210_carreg.h,v 1.3 2017/09/22 01:24:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -41,6 +41,18 @@
 #define CAR_CLK_OUT_ENB_L_REG	0x10
 #define CAR_CLK_OUT_ENB_H_REG	0x14
 #define CAR_CLK_OUT_ENB_U_REG	0x18
+
+#define	CAR_PLLE_SS_CNTL_REG	0x68
+#define	CAR_PLLE_SS_CNTL_INTEGOFFSET	__BITS(31,30)
+#define	CAR_PLLE_SS_CNTL_SSCINCINTRV	__BITS(29,24)
+#define	CAR_PLLE_SS_CNTL_SSCINC		__BITS(23,16)
+#define	CAR_PLLE_SS_CNTL_SSCINVERT	__BIT(15)
+#define	CAR_PLLE_SS_CNTL_SSCCENTER	__BIT(14)
+#define	CAR_PLLE_SS_CNTL_SSCPDMBYP	__BIT(13)
+#define	CAR_PLLE_SS_CNTL_SSCBYP		__BIT(12)
+#define	CAR_PLLE_SS_CNTL_INTERP_RESET	__BIT(11)
+#define	CAR_PLLE_SS_CNTL_BYPASS_SS	__BIT(10)
+#define	CAR_PLLE_SS_CNTL_SSCMAX		__BITS(8,0)
 
 #define CAR_PLLP_BASE_REG	0xa0
 #define CAR_PLLP_BASE_BYPASS		__BIT(31)
@@ -159,6 +171,7 @@
 #define CAR_PLLE_MISC_IDDQ_OVERRIDE	__BIT(13)
 #define CAR_PLLE_MISC_LOCK		__BIT(11)
 #define CAR_PLLE_MISC_LOCK_ENABLE	__BIT(9)
+#define	CAR_PLLE_MISC_PTS		__BIT(8)
 
 #define CAR_PLLD2_BASE_REG	0x4b8
 #define CAR_PLLD2_BASE_BYPASS		__BIT(31)
