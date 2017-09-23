@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.123 2016/06/11 16:55:10 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.123.8.1 2017/09/23 17:20:13 snj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.123 2016/06/11 16:55:10 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.123.8.1 2017/09/23 17:20:13 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -1277,7 +1277,7 @@ printline_bsdsyslog(const char *hname, char *msg,
 		} else if (*p == '[' || (*p == ':'
 			&& (*(p+1) == ' ' || *(p+1) == '\0'))) {
 			/* no host in message */
-			buffer->host = LocalFQDN;
+			buffer->host = strdup(hname);
 			buffer->prog = strndup(start, p - start);
 			break;
 		} else {
