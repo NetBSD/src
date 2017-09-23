@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.93 2017/06/14 12:27:24 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.94 2017/09/23 11:01:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.93 2017/06/14 12:27:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.94 2017/09/23 11:01:32 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1039,9 +1039,7 @@ x86_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case KAUTH_MACHDEP_IOPERM_GET:
 	case KAUTH_MACHDEP_LDT_GET:
 	case KAUTH_MACHDEP_LDT_SET:
-	case KAUTH_MACHDEP_MTRR_GET:
 		result = KAUTH_RESULT_ALLOW;
-
 		break;
 
 	default:
