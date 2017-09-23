@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_apbdma.c,v 1.3 2017/05/03 13:13:12 jakllsch Exp $ */
+/* $NetBSD: tegra_apbdma.c,v 1.4 2017/09/23 23:58:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.3 2017/05/03 13:13:12 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.4 2017/09/23 23:58:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,7 +94,11 @@ CFATTACH_DECL_NEW(tegra_apbdma, sizeof(struct tegra_apbdma_softc),
 static int
 tegra_apbdma_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-apbdma", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-apbdma",
+		"nvidia,tegra124-apbdma",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
