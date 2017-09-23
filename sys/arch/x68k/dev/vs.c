@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.37 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: vs.c,v 1.37.2.1 2017/09/23 17:55:13 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.37 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.37.2.1 2017/09/23 17:55:13 snj Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -243,7 +243,9 @@ vs_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ia->ia_dmat;
 	sc->sc_dma_ch = dmac_alloc_channel(parent, ia->ia_dma, "vs",
 		ia->ia_dmaintr,   vs_dmaintr, sc,
-		ia->ia_dmaintr+1, vs_dmaerrintr, sc);
+		ia->ia_dmaintr+1, vs_dmaerrintr, sc,
+		(DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC | DMAC_DCR_OPS_8BIT),
+		(DMAC_OCR_SIZE_BYTE | DMAC_OCR_REQG_EXTERNAL));
 
 	aprint_normal_dev(self, "MSM6258V ADPCM voice synthesizer\n");
 
@@ -504,7 +506,6 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 {
 	struct vs_softc *sc;
 	struct vs_dma *vd;
-	struct dmac_dma_xfer *xf;
 	struct dmac_channel_stat *chan;
 
 	DPRINTF(2, ("vs_trigger_output: start=%p, bsize=%d, intr=%p, arg=%p\n",
@@ -530,17 +531,13 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 	vs_set_sr(sc, sc->sc_current.prate);
 	vs_set_po(sc, VS_PANOUT_LR);
 
-	xf = dmac_alloc_xfer(chan, sc->sc_dmat, vd->vd_map);
-	sc->sc_current.xfer = xf;
-	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
-			DMAC_DCR_OPS_8BIT);
-	chan->ch_ocr = DMAC_OCR_REQG_EXTERNAL;
-	xf->dx_ocr = DMAC_OCR_DIR_MTD;
-	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
-	xf->dx_device = sc->sc_addr + MSM6258_DATA*2 + 1;
+	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
+	    DMAC_OCR_DIR_MTD,
+	    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
+	    sc->sc_addr + MSM6258_DATA * 2 + 1);
 
-	dmac_load_xfer(chan->ch_softc, xf);
-	dmac_start_xfer_offset(chan->ch_softc, xf, 0, sc->sc_current.blksize);
+	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer, 0,
+	    sc->sc_current.blksize);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
 
 	return 0;
@@ -553,7 +550,6 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 {
 	struct vs_softc *sc;
 	struct vs_dma *vd;
-	struct dmac_dma_xfer *xf;
 	struct dmac_channel_stat *chan;
 
 	DPRINTF(2, ("vs_trigger_input: start=%p, bsize=%d, intr=%p, arg=%p\n",
@@ -577,17 +573,14 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 	}
 
 	vs_set_sr(sc, sc->sc_current.rrate);
-	xf = dmac_alloc_xfer(chan, sc->sc_dmat, vd->vd_map);
-	sc->sc_current.xfer = xf;
-	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
-			DMAC_DCR_OPS_8BIT);
-	chan->ch_ocr = DMAC_OCR_REQG_EXTERNAL;
-	xf->dx_ocr = DMAC_OCR_DIR_DTM;
-	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
-	xf->dx_device = sc->sc_addr + MSM6258_DATA*2 + 1;
 
-	dmac_load_xfer(chan->ch_softc, xf);
-	dmac_start_xfer_offset(chan->ch_softc, xf, 0, sc->sc_current.blksize);
+	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
+	    DMAC_OCR_DIR_DTM,
+	    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
+	    sc->sc_addr + MSM6258_DATA * 2 + 1);
+
+	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer, 0,
+	    sc->sc_current.blksize);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
 
 	return 0;
