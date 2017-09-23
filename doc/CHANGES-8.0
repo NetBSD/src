@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.58 2017/09/11 05:45:46 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.59 2017/09/23 18:27:21 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5902,4 +5902,151 @@ sys/dev/audio.c					1.379, 1.380, 1.385, 1.398
 	  and then cast to int64_t for assignment.
 	- bigger_type is sufficient for product and result.
 	[isaki, ticket #274]
+
+distrib/amiga/miniroot/install.md		1.28
+distrib/miniroot/install.sub			1.46
+distrib/notes/amiga/install			1.36
+sys/arch/amiga/amiga/disksubr.c			1.68
+
+	amiga:
+	- Support installing from a CD9660 formatted disk partition
+	- Fix check of AmigaDOS environment vector for nonstandard
+	  disklabel values.  Don't set a default fsize for CD9660
+	  partitions, the CD9660 filesystem interprets it as a
+	  session offset
+	- Ask for the boot command
+	- Mention the installer question for the boot command
+	[mlelstv, ticket #275]
+
+external/bsd/nvi/dist/cl/cl_main.c		1.6
+external/bsd/nvi/dist/cl/cl_screen.c		1.6
+
+	nvi: Fix an issue where resizing caused a corrupted display.
+	[mlelstv, ticket #276]
+
+sys/dev/audio.c					1.381, 1.390, 1.391, 1.393
+sys/dev/audio.c					1.394 via patch
+sys/dev/audiovar.h				1.61-1.62
+sys/dev/audiovar.h				1.63 via patch
+
+	audio(4):
+	- Use do .. while (0) for macros.
+	- Introduce audio_destroy_pfilters()/audio_destroy_rfilters()
+	  and use it.
+	- Remove dead code.
+	- Move defines to the appropriate place.
+	- Remove mixer chan from sc_audiochan.
+	- Mixer chan's list is not necessary.
+	- Split the first special element from sc_audiochan list.
+	[isaki, ticket #278]
+
+share/man/man8/afterboot.8			1.59-1.60
+
+	Update packages link. suggest https. bump date
+	Update wifi guide to reflect dhcpcd no longer invoking
+	wpa_supplicant
+	[maya, ticket #279]
+
+usr.sbin/syslogd/syslogd.c			1.124
+
+	Use looked up remote host for remote message without a hostname
+	[ginsbach, ticket #280]
+
+sys/dev/sysmon/sysmon_envsys.c			1.140-1.141
+sys/dev/sysmon/sysmon_envsys_events.c		1.120-1.121
+sys/dev/sysmon/sysmonvar.h			1.50
+
+	- Fix a problem that some drivers (e.g. acpitz(4) or
+	  coretemp(5)) which use sysmon_envsys sleep waiting at "rndsrc"
+	  when "drvctl -d".
+	- Improve tracking of the state of an event's callout, and protect
+	  all queries or modifications of the state with the sme_mtx mutex.
+	- Detach the rndsrc before re-attaching it
+	- Clean up some lock-ordering issues.
+	- KNF
+	PR kern/52533
+	[pgoyette, ticket #281]
+
+regress/sys/arch/i386/ldt/testldt.c		1.17
+
+	Don't test call gates, they are not supported anymore.
+	[maxv, ticket #282]
+
+sys/external/bsd/ipf/netinet/fil.c		1.21
+
+	Revert changing the byte order of fi->fi_addr.  It's already correct.
+	[christos, ticket #283]
+
+external/gpl3/gcc/usr.bin/backend/Makefile	1.38
+
+	Replicate fix from the old gcc.old: alpha.d needs pass-instances.def.
+	[he, ticket #284]
+
+sys/dev/audio.c					1.399-1.402, 1.404-1.405
+sys/dev/audio.c					1.406 via patch
+sys/dev/audiovar.h				1.64
+
+	Make MI audio to be able to support devices which has different
+	precision than MI intermediate buffer's precision like vs(4)
+	(4bit ADPCM).
+	[isaki, ticket #285]
+
+sys/arch/m68k/include/fenv.h			1.7
+
+	The __fgetenv() macro operates on a fenv_t, not on a fenv_t *.
+	Fixes a segfault in fegetenv() and feholdexcept().
+	[phx, ticket #286]
+
+share/man/man8/veriexec.8			1.5-1.6
+
+	The bogus number police.
+	Add missing VERIFIED_EXEC_FP_SHA384 option.
+	[sevan, ticket #287]
+
+sys/dev/pci/ixgbe/ixv.c				1.59 and 1.62 via patch
+
+	- Use cprng_strong64() instead of cprng_fast64() to prevent panic.
+	- Set get_link_status to true before calling ixv_config_link() in
+	  ixv_init_locked() to get the first link status correctly.
+	[msaitoh, ticket #288]
+
+distrib/sets/lists/base/mi			1.1161
+external/cddl/Makefile				1.4
+external/cddl/dtracetoolkit/Makefile		1.1
+external/cddl/dtracetoolkit/dist/Makefile	1.1
+
+	Include scripts from the DTrace Toolkit if DTrace support
+	is enabled.  The following scripts are installed:
+	dtruss    - a DTrace version of truss.
+	execsnoop - snoop process execution as it occurs.
+	opensnoop - snoop file opens as they occur.
+	procsystime - print process system call time details.
+	[sevan, ticket #289]
+
+sys/arch/x68k/dev/dmacvar.h			1.11-1.12
+sys/arch/x68k/dev/fd.c				1.120
+sys/arch/x68k/dev/intio_dmac.c			1.36-1.37
+sys/arch/x68k/dev/vs.c				1.45-1.46
+
+	x68k DMA fixes.
+	[isaki, ticket #290]
+
+sys/arch/powerpc/include/fenv.h			1.4
+
+	Fixed feholdexcept() by copying the actual contents of FPSCR
+	to the fenv_t instead of a double precision floating point
+	representation of it.
+	[phx, ticket #291]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.128
+
+	Add more sanity checks for BPB parameters. Handle FAT12 format
+	for media with sectors >= 32kByte.  PR 52485.
+	[mlelstv, ticket #292]
+
+sys/arch/x68k/dev/vs.c				1.38-1.39, 1.41-1.44, 1.47-1.48 via patch
+sys/arch/x68k/dev/vsvar.h			1.12-1.15 via patch
+
+	Make vs(4) work again.
+	[isaki, ticket #172]
 
