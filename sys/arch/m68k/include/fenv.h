@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.6 2017/03/22 23:11:09 chs Exp $	*/
+/*	$NetBSD: fenv.h,v 1.6.6.1 2017/09/23 17:43:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ fesetround(int __round)
 __fenv_static inline int
 fegetenv(fenv_t *__envp)
 {
-	__fgetenv(__envp);
+	__fgetenv(*__envp);
 
 	return 0;
 }
@@ -220,7 +220,7 @@ feholdexcept(fenv_t *__envp)
 {
 	fexcept_t __fpcr, __fpsr;
 
-	__fgetenv(__envp);
+	__fgetenv(*__envp);
 	__fpsr = __envp->fpsr & ~FE_ALL_EXCEPT;
 	__set_fpsr(__fpsr);	/* clear all */
 	__fpcr = __envp->fpcr & ~(FE_ALL_EXCEPT << 6);
