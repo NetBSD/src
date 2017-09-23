@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.3 2017/03/22 23:11:09 chs Exp $	*/
+/*	$NetBSD: fenv.h,v 1.3.6.1 2017/09/23 17:56:31 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -242,7 +242,7 @@ feholdexcept(fenv_t *__envp)
 	uint32_t msr;
 
 	__mffs(&__r.__d);
-	*__envp = __r.__d;
+	*__envp = __r.__bits.__reg;
 	__r.__bits.__reg &= ~(FE_ALL_EXCEPT | _ENABLE_MASK);
 	__mtfsf(__r.__d);
 	__updatemsr(__r.__bits.__reg);
