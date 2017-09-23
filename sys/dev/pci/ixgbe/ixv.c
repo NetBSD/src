@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.56 2017/05/26 09:17:32 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.1 2017/09/23 17:47:34 snj Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -430,7 +430,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* If no mac address was assigned, make a random one */
 	if (!ixv_check_ether_addr(hw->mac.addr)) {
 		u8 addr[ETHER_ADDR_LEN];
-		uint64_t rndval = cprng_fast64();
+		uint64_t rndval = cprng_strong64();
 
 		memcpy(addr, &rndval, sizeof(addr));
 		addr[0] &= 0xFE;
@@ -820,8 +820,8 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_init_stats(adapter);
 
 	/* Config/Enable Link */
-	ixv_config_link(adapter);
 	hw->mac.get_link_status = TRUE;
+	ixv_config_link(adapter);
 
 	/* Start watchdog */
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
