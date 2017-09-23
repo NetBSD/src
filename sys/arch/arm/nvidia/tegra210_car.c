@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.7 2017/09/23 23:21:35 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.8 2017/09/23 23:58:04 jmcneill Exp $ */
 #define TEGRA210_CAR_DEBUG
 
 /*-
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.7 2017/09/23 23:21:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.8 2017/09/23 23:58:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -559,6 +559,7 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_GATE_H("FUSE", "CLK_M", CAR_DEV_H_FUSE),
 	CLK_GATE_Y("USB2_TRK", "UBS2_HSIC_TRK", CAR_DEV_Y_USB2_TRK),
 	CLK_GATE_Y("HSIC_TRK", "USB2_HSIC_TRK", CAR_DEV_Y_HSIC_TRK),
+	CLK_GATE_H("APBDMA", "CLK_M", CAR_DEV_H_APBDMA),
 };
 
 struct tegra210_init_parent {
