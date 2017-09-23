@@ -1,6 +1,6 @@
-/*	$NetBSD: testldt.c,v 1.16 2016/09/03 08:47:38 maxv Exp $	*/
+/*	$NetBSD: testldt.c,v 1.16.6.1 2017/09/23 17:27:02 snj Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -53,30 +53,12 @@ get_fs_byte(const char *addr)
 	return _v;
 }
 
-static unsigned short
-get_cs(void)
-{
-	unsigned short _v;
-
-	__asm ("movw %%cs,%0": "=r" (_v));
-	return _v;
-}
-
 static int
 check_desc(int desc)
 {
 	unsigned int sel = LSEL(desc, SEL_UPL);
 	set_fs(sel);
 	return get_fs_byte((char *)0);
-}
-
-static void
-gated_call(void)
-{
-	printf("Called from call gate...");
-	__asm volatile("movl %ebp,%esp");
-	__asm volatile("popl %ebp");
-	__asm volatile(".byte 0xcb");
 }
 
 static union descriptor *
@@ -95,23 +77,6 @@ make_sd(void *basep, unsigned limit, int type, int dpl, int seg32, int inpgs)
 	d.sd.sd_def32   = seg32?1:0;
 	d.sd.sd_gran    = inpgs?1:0;
 	d.sd.sd_hibase  = (base & 0xff000000) >> 24;
-
-	return &d;
-}
-
-static union descriptor *
-make_gd(void *func, unsigned int sel, unsigned stkcpy, int type, int dpl)
-{
-	static union descriptor d;
-	unsigned long offset = (unsigned long)func;
-
-	d.gd.gd_looffset = offset & 0x0000ffff;
-	d.gd.gd_selector = sel & 0xffff;
-	d.gd.gd_stkcpy   = stkcpy & 0x1ff;
-	d.gd.gd_type     = type & 0x1ff;
-	d.gd.gd_dpl      = dpl & 0x3;
-	d.gd.gd_p        = 1;
-	d.gd.gd_hioffset = (offset & 0xffff0000) >> 16;
 
 	return &d;
 }
@@ -206,9 +171,8 @@ main(int argc, char *argv[])
 	union descriptor ldt[MAX_USER_LDT];
 	int n, ch;
 	int num;
-	unsigned int cs = get_cs();
 	unsigned char *data;
-	union descriptor *sd, *gd;
+	union descriptor *sd;
 	unsigned char one = 1, two = 2, val;
 	struct sigaction segv_act;
 	int verbose = 0;
@@ -229,10 +193,8 @@ main(int argc, char *argv[])
 	}
 
 	printf("Testing i386_get_ldt\n");
-	if ((num = i386_get_ldt(0, ldt, MAX_USER_LDT)) < 0)
-		err(2, "get_ldt");
-	if (num == 0)
-		errx(1, "i386_get_ldt() returned empty initial LDT");
+	if ((num = i386_get_ldt(0, ldt, MAX_USER_LDT)) >= 0)
+		err(2, "get_ldt succeeded");
 
 	if (verbose) {
 		printf("Got %d (initial) LDT entries\n", num);
@@ -273,39 +235,6 @@ main(int argc, char *argv[])
 	if (check_desc(num) != 0x97)
 		errx(1, "ERROR: descriptor check failed; "
 		    "expected 0x97, got 0x%x", check_desc(num));
-
-	/*
-	 * Test a Call Gate
-	 */
-	printf("Making call gate\n");
-	fflush(stdout);
-
-	gd = make_gd((void *)gated_call, cs, 0, SDT_SYS386CGT, SEL_UPL);
-	if ((num = i386_set_ldt(4095, gd, 1)) < 0)
-		err(1, "set_ldt: call gate");
-
-	if (verbose) {
-		printf("setldt returned: %d\n", num);
-		printf("Call gate sel = 0x%x\n", LSEL(num, SEL_UPL));
-	}
-
-	if ((n = i386_get_ldt(num, ldt, 1)) < 0)
-		err(1, "get_ldt");
-
-	if (verbose) {
-		printf("Entry %d: ", num);
-		print_ldt(&ldt[0]);
-	}
-
-	printf("Testing call gate...");
-	fflush(stdout);
-	/*
-	 * Long call to call gate.
-	 * Only the selector matters; offset is irrelevant.
-	 */
-	__asm volatile("lcall $0x7fff,$0x0");
-
-	printf("Gated call returned\n");
 
 	/*
 	 * Test multiple sets.
