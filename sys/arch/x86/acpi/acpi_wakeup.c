@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.47 2017/09/19 01:22:14 maya Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.48 2017/09/23 10:00:00 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.47 2017/09/19 01:22:14 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.48 2017/09/23 10:00:00 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,6 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
-	/* Execute Sleep */
 	memcpy((void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
 
 	if (CPU_IS_PRIMARY(ci)) {
@@ -260,15 +259,21 @@ acpi_cpu_sleep(struct cpu_info *ci)
 	if (rcr4() & CR4_OSXSAVE)
 		xcr0 = rdxcr(0);
 
+	/* Go get some sleep */
 	if (acpi_md_sleep_prepare(-1))
 		goto out;
 
-	/* Execute Wakeup */
+	/*
+	 * Sleeping and having bad nightmares about what could go wrong
+	 * when waking up.
+	 */
+
+	/* We just woke up (cpuN), execution is resumed here */
 	cpu_init_msrs(ci, false);
 	fpuinit(ci);
 	if (rcr4() & CR4_OSXSAVE)
 		wrxcr(0, xcr0);
-
+	pat_init(ci);
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();
@@ -326,14 +331,21 @@ acpi_md_sleep(int state)
 	if (rcr4() & CR4_OSXSAVE)
 		xcr0 = rdxcr(0);
 
+	/* Go get some sleep */
 	if (acpi_md_sleep_prepare(state))
 		goto out;
 
-	/* Execute Wakeup */
+	/*
+	 * Sleeping and having bad nightmares about what could go wrong
+	 * when waking up.
+	 */
+
+	/* We just woke up (cpu0), execution is resumed here */
 	cpu_init_msrs(&cpu_info_primary, false);
 	fpuinit(&cpu_info_primary);
 	if (rcr4() & CR4_OSXSAVE)
 		wrxcr(0, xcr0);
+	pat_init(&cpu_info_primary);
 	i8259_reinit();
 #if NLAPIC > 0
 	lapic_enable();
@@ -373,6 +385,7 @@ acpi_md_sleep(int state)
 out:
 
 #ifdef MULTIPROCESSOR
+	/* Wake up the secondary CPUs */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
 			continue;
