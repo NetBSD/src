@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.35 2009/04/23 01:56:48 snj Exp $
+.\"	$NetBSD: install,v 1.35.40.1 2017/09/23 17:01:59 snj Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -290,7 +290,7 @@ kern.tgz distribution set, this is an old kernel, and you should answer
 If you did install the kern.tgz kernel, you normally should answer "n".
 .Pp
 Finally, the installer asks you if you want to install the bootblock
-code on your root disk.
+code on your root disk and, if yes, what boot command it should execute.
 This is a matter of personal choice and can also be done from a running
 .Nx
 system.

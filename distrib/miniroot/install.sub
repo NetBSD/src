@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.45 2008/04/30 13:10:48 martin Exp $
+#	$NetBSD: install.sub,v 1.45.56.1 2017/09/23 17:01:59 snj Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1045,11 +1045,12 @@ mount_a_disk() {
 
 The following filesystem types are supported:
 	1) ffs
+	2) cd9660
 __mount_a_disk_2
 	_md_fstype=`md_native_fstype`
 	_md_fsopts=`md_native_fsopts`
 	if [ ! -z "$_md_fstype" ]; then
-		echo "	2) $_md_fstype"
+		echo "	3) $_md_fstype"
 	else
 		_md_fstype="_undefined_"
 	fi
@@ -1058,7 +1059,7 @@ __mount_a_disk_2
 		echo -n "Which filesystem type? [ffs] "
 		getresp "ffs"
 		case "$resp" in
-			ffs)
+			ffs|cd9660)
 				_fstype=$resp
 				_fsopts="ro"
 				;;

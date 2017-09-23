@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.27 2009/05/24 22:59:18 mlelstv Exp $
+#	$NetBSD: install.md,v 1.27.40.1 2017/09/23 17:01:59 snj Exp $
 #
 #
 # Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -90,8 +90,10 @@ md_installboot() {
 		getresp "y"
 		case "$resp" in
 			y*|Y*)
+				echo -n "Boot command? [netbsd -ASn2] "
+				getresp "netbsd -ASn2"
 				echo "Installing boot block..."
-				chroot /mnt /usr/sbin/installboot /dev/r${1}a /usr/mdec/bootxx_ffs
+				chroot /mnt /usr/sbin/installboot -o command="$resp" /dev/r${1}a /usr/mdec/bootxx_ffs
 				cp -p /mnt/usr/mdec/boot.amiga /mnt/
 				;;
 			*)

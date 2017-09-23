@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.67 2017/03/12 21:02:47 mlelstv Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.67.6.1 2017/09/23 17:02:00 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.67 2017/03/12 21:02:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.67.6.1 2017/09/23 17:02:00 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,10 +464,14 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 				adt.archtype = ADT_UNKNOWN;
 				adt.fstype = FS_UNUSED;
 			}
-		} else if (pbp->e.tabsize > 22 && ISFSARCH_NETBSD(adt)) {
+		} else if (pbp->e.tabsize >= 22 && ISFSARCH_NETBSD(adt)) {
 			pp->p_fsize = pbp->e.fsize;
 			pp->p_frag = pbp->e.frag;
 			pp->p_cpg = pbp->e.cpg;
+		} else if (adt.fstype == FS_ISO9660) {
+			pp->p_fsize = 0;
+			pp->p_frag = 0;
+			pp->p_cpg = 0;
 		} else {
 			pp->p_fsize = 1024;
 			pp->p_frag = 8;
