@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.11 2011/11/23 23:07:30 jmcneill Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.11.42.1 2017/09/23 18:16:20 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -72,6 +72,7 @@ struct vs_dma {
 	struct vs_dma		*vd_next;
 };
 #define KVADDR(dma)	((void *)(dma)->vd_addr)
+#define KVADDR_END(dma) ((void *)((size_t)KVADDR(dma) + (dma)->vd_size)))
 #define DMAADDR(dma)	((dma)->vd_map->dm_segs[0].ds_addr)
 
 struct vs_softc {
@@ -87,13 +88,13 @@ struct vs_softc {
 	bus_dma_tag_t sc_dmat;
 	struct dmac_channel_stat *sc_dma_ch;
 	struct vs_dma *sc_dmas;
+	struct vs_dma *sc_prev_vd;
 
 	struct {
 		struct dmac_dma_xfer *xfer;
-		int prate, rrate;
-		int bufsize, blksize;
-		int dmap;
+		int rate;
 	} sc_current;
+	int sc_active;
 
 	const struct audio_hw_if *sc_hw_if;
 
