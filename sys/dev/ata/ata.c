@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.34 2017/09/20 19:39:36 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.35 2017/09/23 13:13:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.34 2017/09/20 19:39:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.35 2017/09/23 13:13:19 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -244,10 +244,7 @@ ata_queue_get_active_xfer(struct ata_channel *chp)
 	struct ata_xfer *xfer = NULL;
 
 	ata_channel_lock(chp);
-
-	KASSERT(chp->ch_queue->queue_active <= 1);
 	xfer = ata_queue_get_active_xfer_locked(chp);
-
 	ata_channel_unlock(chp);
 
 	return xfer;
