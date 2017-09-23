@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.5 2016/07/24 13:04:58 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.6 2017/09/23 10:18:49 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -52,6 +52,7 @@ acpi_md_sleep_exit:
 
 	movl	$MSR_EFER,%ecx
 	movl	ACPI_SUSPEND_EFER(%r8),%eax
+	movl	$0,%edx
 	wrmsr
 
 	movl	$MSR_FSBASE,%ecx
