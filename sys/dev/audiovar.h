@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.55.2.3 2017/09/23 17:13:10 snj Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.55.2.4 2017/09/23 17:39:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -124,8 +124,6 @@ struct virtual_channel {
 #define AUOPEN_READ	0x01
 #define AUOPEN_WRITE	0x02
 	u_char			sc_mode;	/* bitmask for RECORD/PLAY */
-
-	bool			sc_blkset;	/* Blocksize has been set */
 
 	uint8_t			*sc_sil_start;	/* start of silence in buffer */
 	int			sc_sil_count;	/* # of silence bytes */
