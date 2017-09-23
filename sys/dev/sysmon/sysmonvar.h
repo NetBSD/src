@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.49 2015/04/23 23:22:03 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.49.10.1 2017/09/23 17:22:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -163,7 +163,6 @@ struct sysmon_envsys {
 	int sme_flags;			/* additional flags */
 #define SME_FLAG_BUSY 		0x00000001 	/* device busy */
 #define SME_DISABLE_REFRESH	0x00000002	/* disable sme_refresh */
-#define SME_CALLOUT_INITIALIZED	0x00000004	/* callout was initialized */
 #define SME_INIT_REFRESH        0x00000008      /* call sme_refresh() after
 						   interrupts are enabled in
 						   the autoconf(9) process. */
@@ -187,6 +186,12 @@ struct sysmon_envsys {
 
 	struct workqueue *sme_wq;	/* the workqueue for the events */
 	struct callout sme_callout;	/* for the events */
+	int sme_callout_state;		/* state of the event's callout */
+
+#define	SME_CALLOUT_INVALID	0x0	/* callout is not initialized */
+#define	SME_CALLOUT_READY	0x1	/* callout is ready for use */
+#define	SME_CALLOUT_HALTED	0x2	/* callout can be destroyed */
+
 	uint64_t sme_events_timeout;	/* the timeout used in the callout */
 
 	/* 
