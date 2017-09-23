@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.119 2017/01/12 14:24:53 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.119.8.1 2017/09/23 17:55:13 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.119 2017/01/12 14:24:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.119.8.1 2017/09/23 17:55:13 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -487,7 +487,10 @@ fdcattach(device_t parent, device_t self, void *aux)
 	/* Initialize DMAC channel */
 	fdc->sc_dmachan = dmac_alloc_channel(parent, ia->ia_dma, "fdc",
 	    ia->ia_dmaintr, fdcdmaintr, fdc,
-	    ia->ia_dmaintr + 1, fdcdmaerrintr, fdc);
+	    ia->ia_dmaintr + 1, fdcdmaerrintr, fdc,
+	    (DMAC_DCR_XRM_CSWH | DMAC_DCR_OTYP_EASYNC | DMAC_DCR_OPS_8BIT),
+	    (DMAC_OCR_SIZE_BYTE | DMAC_OCR_REQG_EXTERNAL));
+
 	if (bus_dmamap_create(fdc->sc_dmat, FDC_MAXIOSIZE, 1, DMAC_MAXSEGSZ,
 	    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &fdc->sc_dmamap)) {
 		aprint_error_dev(self, "can't set up intio DMA map\n");
