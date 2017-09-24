@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.9 2017/09/22 18:13:36 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.10 2017/09/24 20:09:22 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.9 2017/09/22 18:13:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.10 2017/09/24 20:09:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,8 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.9 2017/09/22 18:13:36 jmcneill Exp 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_xusbpad.h>
-
 #include <arm/nvidia/tegra_xusbreg.h>
+#include <arm/nvidia/tegra_pmcreg.h>
+
 #include <dev/pci/pcireg.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -230,6 +231,13 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	/* Enable XUSB power rails */
+
+	tegra_pmc_power(PMC_PARTID_XUSBC, true);	/* Host/USB2.0 */
+	tegra_pmc_power(PMC_PARTID_XUSBA, true);	/* SuperSpeed */
+
+	/* Enable XUSB clocks */
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "pll_e");
 	rate = clk_get_rate(clk);
