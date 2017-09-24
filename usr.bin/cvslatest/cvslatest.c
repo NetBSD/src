@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.5 2017/01/12 14:27:14 christos Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.6 2017/09/24 09:43:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,12 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __linux__
+#define _GNU_SOURCE
+#endif
+
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.5 2017/01/12 14:27:14 christos Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.6 2017/09/24 09:43:27 joerg Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
