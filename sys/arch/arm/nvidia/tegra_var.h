@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.41 2017/09/22 14:36:22 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.42 2017/09/24 20:09:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,6 +52,9 @@ void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);
 void	tegra_pmc_remove_clamping(u_int);
 void	tegra_pmc_hdmi_enable(void);
+
+void	tegra210_car_xusbio_enable_hw_control(void);
+void	tegra210_car_xusbio_enable_hw_seq(void);
 
 uint32_t tegra_fuse_read(u_int);
 
