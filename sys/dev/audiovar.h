@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.64 2017/08/20 03:13:04 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.65 2017/09/24 23:40:41 nat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -182,6 +182,7 @@ struct audio_softc {
 	device_t	sc_dev;		/* Hardware device struct */
 	struct chan_queue sc_audiochan; /* queue of open audio chans */
 	struct virtual_channel *sc_hwvc;
+	struct virtual_channel	sc_mixring;	/* Play/rec ring to mix into */
 
 	struct audio_encoding_set *sc_encodings;
 	struct	selinfo sc_wsel; /* write selector */
@@ -221,7 +222,7 @@ struct audio_softc {
 	 * (vchans mixed into sc_pr)
 	 *
 	 * play_thread
-	 *    sc_pr
+	 *    sc_mixring.sc_mpr
 	 *      |
 	 *  sc_hwvc->sc_pustream
 	 *      |
@@ -229,8 +230,6 @@ struct audio_softc {
 	 *      |
 	 *  hardware
 	 */
-
-	struct audio_ringbuffer	sc_pr;	/* Play ring to mix into */
 
 	/**
 	 *  hardware
@@ -240,7 +239,7 @@ struct audio_softc {
 	 *      :		 vc to IF
 	 * sc_hwvc->sc_rustream	Audio now in intermediate format (IF)
 	 *      |	mix_read();
-	 *    sc_rr
+	 *    sc_mixring.sc_mrr
 	 *      |	audio_upmix	vc = sc->sc_vchan[n]
 	 * vc->sc_mrr		<list_t::filters[0].param>
 	 *      |  vc->sc_rfilters[0]
@@ -253,7 +252,6 @@ struct audio_softc {
 	 *      |  uiomove(9) & read(2)
 	 *  userland
 	 */
-	struct audio_ringbuffer	sc_rr;		/* Record ring */
 	ulong		sc_last_drops;		/* Drops from mix ring */
 
 	int		sc_eof;		/* EOF, i.e. zero sized write, counter */
