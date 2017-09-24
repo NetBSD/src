@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_xusbpad.c,v 1.5 2017/09/23 23:21:35 jmcneill Exp $ */
+/* $NetBSD: tegra210_xusbpad.c,v 1.6 2017/09/24 20:09:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.5 2017/09/23 23:21:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.6 2017/09/24 20:09:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.5 2017/09/23 23:21:35 jmcneil
 #define	 XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_VCORE_DOWN(n)	__BIT((n) * 3 + 2)
 #define	 XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_CLAMP_EN_EARLY(n)	__BIT((n) * 3 + 1)
 #define	 XUSB_PADCTL_ELPG_PROGRAM_1_SSPn_ELPG_CLAMP_EN(n)	__BIT((n) * 3 + 0)
+
+#define	XUSB_PADCTL_USB3_PAD_MUX_REG		0x28
+#define	 XUSB_PADCTL_USB3_PAD_MUX_FORCE_SATA_PAD_IDDQ_DISABLE		__BIT(8)
+#define	 XUSB_PADCTL_USB3_PAD_MUX_FORCE_PCIE_PAD_IDDQ_DISABLE(n)	__BIT(1 + (n))
 
 #define	XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG		0x360
 #define	 XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_PSDIV	__BITS(29,28)
@@ -130,39 +134,201 @@ static const char * tegra210_xusbpad_usb2_func[] = { "snps", "xusb", "uart" };
 static const char * tegra210_xusbpad_hsic_func[] = { "snps", "xusb" };
 static const char * tegra210_xusbpad_pcie_func[] = { "pcie-x1", "usb3-ss", "sata", "pcie-x4" };
 
-#define	XUSBPAD_LANE(n, r, m, f)		\
+static void
+tegra210_xusbpad_uphy_enable_pcie(struct tegra210_xusbpad_softc *sc)
+{
+	uint32_t val;
+	int retry;
+
+	/* UPHY PLLs */
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
+	    __SHIFTIN(0x136, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_CTRL),
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_CTRL);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_5_REG,
+	    __SHIFTIN(0x2a, XUSB_PADCTL_UPHY_PLL_P0_CTL_5_DCO_CTRL),
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_5_DCO_CTRL);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_PWR_OVRD, 0);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_OVRD, 0);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_OVRD, 0);
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
+	    __SHIFTIN(0, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REFCLK_SEL),
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REFCLK_SEL);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
+	    __SHIFTIN(2, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_TXCLKREF_SEL),
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_TXCLKREF_SEL);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_TXCLKREF_EN, 0);
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    __SHIFTIN(0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_MDIV),
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_MDIV);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    __SHIFTIN(0x19, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_NDIV),
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_NDIV);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    __SHIFTIN(0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_PSDIV),
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_PSDIV);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_IDDQ);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_SLEEP);
+
+	delay(20);
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REFCLKBUF_EN, 0);
+
+	/* Calibration */
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_EN, 0);
+	for (retry = 10000; retry > 0; retry--) {
+		delay(2);
+		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG);
+		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_DONE) != 0)
+			break;
+	}
+	if (retry == 0) {
+		aprint_error_dev(sc->sc_dev, "timeout calibrating UPHY PLL (1)\n");
+		return;
+	}
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_EN);
+	for (retry = 10000; retry > 0; retry--) {
+		delay(2);
+		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG);
+		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_DONE) == 0)
+			break;
+	}
+	if (retry == 0) {
+		aprint_error_dev(sc->sc_dev, "timeout calibrating UPHY PLL (2)\n");
+		return;
+	}
+
+	/* Enable the PLL */
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_ENABLE, 0);
+	for (retry = 10000; retry > 0; retry--) {
+		delay(2);
+		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG);
+		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_1_LOCKDET_STATUS) != 0)
+			break;
+	}
+	if (retry == 0) {
+		aprint_error_dev(sc->sc_dev, "timeout enabling UPHY PLL\n");
+		return;
+	}
+
+	/* RCAL */
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_EN, 0);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
+	    XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_CLK_EN, 0);
+	for (retry = 10000; retry > 0; retry--) {
+		delay(2);
+		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG);
+		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_DONE) != 0)
+			break;
+	}
+	if (retry == 0) {
+		aprint_error_dev(sc->sc_dev, "timeout calibrating UPHY PLL (3)\n");
+		return;
+	}
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_EN);
+	for (retry = 10000; retry > 0; retry--) {
+		delay(2);
+		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG);
+		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_DONE) == 0)
+			break;
+	}
+	if (retry == 0) {
+		aprint_error_dev(sc->sc_dev, "timeout calibrating UPHY PLL (4)\n");
+		return;
+	}
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_CLK_EN);
+
+	tegra210_car_xusbio_enable_hw_control();
+
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_PWR_OVRD);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_OVRD);
+	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
+	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_OVRD);
+
+	delay(1);
+
+	tegra210_car_xusbio_enable_hw_seq();
+}
+
+static void
+tegra210_xusbpad_lane_enable_pcie(struct tegra210_xusbpad_softc *sc, int index)
+{
+	tegra210_xusbpad_uphy_enable_pcie(sc);
+
+	SETCLR4(sc, XUSB_PADCTL_USB3_PAD_MUX_REG,
+	    XUSB_PADCTL_USB3_PAD_MUX_FORCE_PCIE_PAD_IDDQ_DISABLE(index), 0);
+}
+
+#define	XUSBPAD_LANE(n, i, r, m, f, ef)		\
 	{					\
 		.name = (n),			\
+		.index = (i),			\
 		.reg = (r),			\
 		.mask = (m),			\
 		.funcs = (f),			\
-		.nfuncs = __arraycount(f)	\
+		.nfuncs = __arraycount(f),	\
+		.enable = (ef)			\
 	}
 
 static const struct tegra210_xusbpad_lane {
 	const char		*name;
+	int			index;
 	bus_size_t		reg;
 	uint32_t		mask;
 	const char		**funcs;
 	int			nfuncs;
+	void			(*enable)(struct tegra210_xusbpad_softc *, int);
 } tegra210_xusbpad_lanes[] = {
-	XUSBPAD_LANE("usb2-0", 0x04, __BITS(1,0), tegra210_xusbpad_usb2_func),
-	XUSBPAD_LANE("usb2-1", 0x04, __BITS(3,2), tegra210_xusbpad_usb2_func),
-	XUSBPAD_LANE("usb2-2", 0x04, __BITS(5,4), tegra210_xusbpad_usb2_func),
-	XUSBPAD_LANE("usb2-3", 0x04, __BITS(7,6), tegra210_xusbpad_usb2_func),
+	XUSBPAD_LANE("usb2-0", 0, 0x04, __BITS(1,0), tegra210_xusbpad_usb2_func,
+		     NULL),
+	XUSBPAD_LANE("usb2-1", 1, 0x04, __BITS(3,2), tegra210_xusbpad_usb2_func,
+		     NULL),
+	XUSBPAD_LANE("usb2-2", 2, 0x04, __BITS(5,4), tegra210_xusbpad_usb2_func,
+		     NULL),
+	XUSBPAD_LANE("usb2-3", 3, 0x04, __BITS(7,6), tegra210_xusbpad_usb2_func,
+		     NULL),
 
-	XUSBPAD_LANE("hsic-0", 0x04, __BIT(14), tegra210_xusbpad_hsic_func),
-	XUSBPAD_LANE("hsic-1", 0x04, __BIT(15), tegra210_xusbpad_hsic_func),
+	XUSBPAD_LANE("hsic-0", 0, 0x04, __BIT(14), tegra210_xusbpad_hsic_func,
+		     NULL),
+	XUSBPAD_LANE("hsic-1", 1, 0x04, __BIT(15), tegra210_xusbpad_hsic_func,
+		     NULL),
 
-	XUSBPAD_LANE("pcie-0", 0x28, __BITS(13,12), tegra210_xusbpad_pcie_func),
-	XUSBPAD_LANE("pcie-1", 0x28, __BITS(15,14), tegra210_xusbpad_pcie_func),
-	XUSBPAD_LANE("pcie-2", 0x28, __BITS(17,16), tegra210_xusbpad_pcie_func),
-	XUSBPAD_LANE("pcie-3", 0x28, __BITS(19,18), tegra210_xusbpad_pcie_func),
-	XUSBPAD_LANE("pcie-4", 0x28, __BITS(21,20), tegra210_xusbpad_pcie_func),
-	XUSBPAD_LANE("pcie-5", 0x28, __BITS(23,22), tegra210_xusbpad_pcie_func),
-	XUSBPAD_LANE("pcie-6", 0x28, __BITS(25,24), tegra210_xusbpad_pcie_func),
+	XUSBPAD_LANE("pcie-0", 0, 0x28, __BITS(13,12), tegra210_xusbpad_pcie_func,
+		     tegra210_xusbpad_lane_enable_pcie),
+	XUSBPAD_LANE("pcie-1", 1, 0x28, __BITS(15,14), tegra210_xusbpad_pcie_func,
+		     tegra210_xusbpad_lane_enable_pcie),
+	XUSBPAD_LANE("pcie-2", 2, 0x28, __BITS(17,16), tegra210_xusbpad_pcie_func,
+		     tegra210_xusbpad_lane_enable_pcie),
+	XUSBPAD_LANE("pcie-3", 3, 0x28, __BITS(19,18), tegra210_xusbpad_pcie_func,
+		     tegra210_xusbpad_lane_enable_pcie),
+	XUSBPAD_LANE("pcie-4", 4, 0x28, __BITS(21,20), tegra210_xusbpad_pcie_func,
+		     tegra210_xusbpad_lane_enable_pcie),
+	XUSBPAD_LANE("pcie-5", 5, 0x28, __BITS(23,22), tegra210_xusbpad_pcie_func,
+		     tegra210_xusbpad_lane_enable_pcie),
+	XUSBPAD_LANE("pcie-6", 6, 0x28, __BITS(25,24), tegra210_xusbpad_pcie_func,
+		     tegra210_xusbpad_lane_enable_pcie),
 
-	XUSBPAD_LANE("sata-0", 0x28, __BITS(31,30), tegra210_xusbpad_pcie_func),
+	XUSBPAD_LANE("sata-0", 0, 0x28, __BITS(31,30), tegra210_xusbpad_pcie_func,
+		     NULL),
 };
 
 #define	XUSBPAD_PORT(n, i, r, m, im)		\
@@ -252,6 +418,9 @@ tegra210_xusbpad_configure_lane(struct tegra210_xusbpad_softc *sc,
 
 	aprint_normal_dev(sc->sc_dev, "lane %s: set func %s\n", name, function);
 	SETCLR4(sc, lane->reg, __SHIFTIN(func, lane->mask), lane->mask);
+
+	if (lane->enable)
+		lane->enable(sc, lane->index);
 }
 
 static void
@@ -338,12 +507,28 @@ tegra210_xusbpad_find_hsic_port(const char *name)
 }
 
 static void
+tegra210_xusbpad_enable_vbus(struct tegra210_xusbpad_softc *sc,
+    const struct tegra210_xusbpad_port *port, int phandle)
+{
+	struct fdtbus_regulator *vbus_reg;
+
+	if (!of_hasprop(phandle, "vbus-supply"))
+		return;
+
+	vbus_reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
+	if (vbus_reg == NULL || fdtbus_regulator_enable(vbus_reg) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't enable vbus regulator for port %s\n",
+		    port->name);
+	}
+}
+
+static void
 tegra210_xusbpad_configure_usb2_port(struct tegra210_xusbpad_softc *sc,
     int phandle, const struct tegra210_xusbpad_port *port)
 {
-	struct fdtbus_regulator *vbus_reg;
-	const char *mode;
 	u_int modeval, internal;
+	const char *mode;
 
 	mode = fdtbus_get_string(phandle, "mode");
 	if (mode == NULL) {
@@ -363,12 +548,7 @@ tegra210_xusbpad_configure_usb2_port(struct tegra210_xusbpad_softc *sc,
 
 	internal = of_hasprop(phandle, "nvidia,internal");
 
-	vbus_reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
-	if (vbus_reg && fdtbus_regulator_enable(vbus_reg) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable vbus regulator for port %s\n",
-		    port->name);
-	}
+	tegra210_xusbpad_enable_vbus(sc, port, phandle);
 
 	aprint_normal_dev(sc->sc_dev, "port %s: set mode %s, %s\n", port->name, mode,
 	    internal ? "internal" : "external");
@@ -380,7 +560,6 @@ static void
 tegra210_xusbpad_configure_usb3_port(struct tegra210_xusbpad_softc *sc,
     int phandle, const struct tegra210_xusbpad_port *port)
 {
-	struct fdtbus_regulator *vbus_reg;
 	u_int companion, internal;
 
 	if (of_getprop_uint32(phandle, "nvidia,usb2-companion", &companion)) {
@@ -389,12 +568,7 @@ tegra210_xusbpad_configure_usb3_port(struct tegra210_xusbpad_softc *sc,
 	}
 	internal = of_hasprop(phandle, "nvidia,internal");
 
-	vbus_reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
-	if (vbus_reg && fdtbus_regulator_enable(vbus_reg) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable vbus regulator for port %s\n",
-		    port->name);
-	}
+	tegra210_xusbpad_enable_vbus(sc, port, phandle);
 
 	aprint_normal_dev(sc->sc_dev, "port %s: set companion usb2-%d, %s\n", port->name,
 	    companion, internal ? "internal" : "external");
@@ -430,14 +604,7 @@ static void
 tegra210_xusbpad_configure_hsic_port(struct tegra210_xusbpad_softc *sc,
     int phandle, const struct tegra210_xusbpad_port *port)
 {
-	struct fdtbus_regulator *vbus_reg;
-
-	vbus_reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
-	if (vbus_reg && fdtbus_regulator_enable(vbus_reg) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable vbus regulator for port %s\n",
-		    port->name);
-	}
+	tegra210_xusbpad_enable_vbus(sc, port, phandle);
 }
 
 static void
@@ -494,8 +661,6 @@ static void
 tegra210_xusbpad_xhci_enable(device_t dev)
 {
 	struct tegra210_xusbpad_softc * const sc = device_private(dev);
-	uint32_t val;
-	int retry;
 
 	SETCLR4(sc, XUSB_PADCTL_USB2_PAD_MUX_REG,
 	    __SHIFTIN(XUSB_PADCTL_USB2_PAD_MUX_USB2_BIAS_PAD_XUSB,
@@ -503,121 +668,6 @@ tegra210_xusbpad_xhci_enable(device_t dev)
 	    XUSB_PADCTL_USB2_PAD_MUX_USB2_BIAS_PAD);
 
 	tegra210_xusbpad_enable(sc);
-
-	/* UPHY PLLs */
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
-	    __SHIFTIN(0x136, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_CTRL),
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_CTRL);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_5_REG,
-	    __SHIFTIN(0x2a, XUSB_PADCTL_UPHY_PLL_P0_CTL_5_DCO_CTRL),
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_5_DCO_CTRL);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_PWR_OVRD, 0);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_OVRD, 0);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_OVRD, 0);
-
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
-	    __SHIFTIN(0, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REFCLK_SEL),
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REFCLK_SEL);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
-	    __SHIFTIN(2, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_TXCLKREF_SEL),
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_TXCLKREF_SEL);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_TXCLKREF_EN, 0);
-
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
-	    __SHIFTIN(0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_MDIV),
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_MDIV);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
-	    __SHIFTIN(0x19, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_NDIV),
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_NDIV);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
-	    __SHIFTIN(0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_PSDIV),
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_FREQ_PSDIV);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
-	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_IDDQ);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
-	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_SLEEP);
-
-	delay(20);
-
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_4_REFCLKBUF_EN, 0);
-
-	/* Calibration */
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_EN, 0);
-	for (retry = 10000; retry > 0; retry--) {
-		delay(2);
-		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG);
-		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_DONE) != 0)
-			break;
-	}
-	if (retry == 0) {
-		aprint_error_dev(dev, "timeout calibrating UPHY PLL (1)\n");
-		return;
-	}
-
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG,
-	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_EN);
-	for (retry = 10000; retry > 0; retry--) {
-		delay(2);
-		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_2_REG);
-		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_2_CAL_DONE) == 0)
-			break;
-	}
-	if (retry == 0) {
-		aprint_error_dev(dev, "timeout calibrating UPHY PLL (2)\n");
-		return;
-	}
-
-	/* Enable the PLL */
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_1_ENABLE, 0);
-	for (retry = 10000; retry > 0; retry--) {
-		delay(2);
-		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_1_REG);
-		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_1_LOCKDET_STATUS) != 0)
-			break;
-	}
-	if (retry == 0) {
-		aprint_error_dev(dev, "timeout enabling UPHY PLL\n");
-		return;
-	}
-
-	/* RCAL */
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_EN, 0);
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
-	    XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_CLK_EN, 0);
-	for (retry = 10000; retry > 0; retry--) {
-		delay(2);
-		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG);
-		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_DONE) != 0)
-			break;
-	}
-	if (retry == 0) {
-		aprint_error_dev(dev, "timeout calibrating UPHY PLL (3)\n");
-		return;
-	}
-
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
-	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_EN);
-	for (retry = 10000; retry > 0; retry--) {
-		delay(2);
-		val = RD4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG);
-		if ((val & XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_DONE) == 0)
-			break;
-	}
-	if (retry == 0) {
-		aprint_error_dev(dev, "timeout calibrating UPHY PLL (4)\n");
-		return;
-	}
-
-	SETCLR4(sc, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_REG,
-	    0, XUSB_PADCTL_UPHY_PLL_P0_CTL_8_RCAL_CLK_EN);
 }
 
 static const struct tegra_xusbpad_ops tegra210_xusbpad_ops = {
