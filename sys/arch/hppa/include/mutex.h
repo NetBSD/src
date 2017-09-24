@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.11 2010/11/16 09:35:14 uebayasi Exp $	*/
+/*	$NetBSD: mutex.h,v 1.12 2017/09/24 07:39:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ MUTEX_SET_WAITERS(struct kmutex *mtx, uintptr_t owner)
 }
 
 static inline int
-MUTEX_HAS_WAITERS(volatile struct kmutex *mtx)
+MUTEX_HAS_WAITERS(const volatile struct kmutex *mtx)
 {
 	return mtx->mtx_waiters != 0;
 }
@@ -135,7 +135,7 @@ MUTEX_DESTROY(struct kmutex *mtx)
 }
 
 static inline bool
-MUTEX_DEBUG_P(struct kmutex *mtx)
+MUTEX_DEBUG_P(const volatile struct kmutex *mtx)
 {
 	return mtx->mtx_dodebug != 0;
 }
