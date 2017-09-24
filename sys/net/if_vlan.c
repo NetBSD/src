@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.70.2.4 2016/12/03 12:34:23 martin Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.70.2.5 2017/09/24 20:05:03 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.70.2.4 2016/12/03 12:34:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.70.2.5 2017/09/24 20:05:03 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.70.2.4 2016/12/03 12:34:23 martin Exp 
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -180,6 +181,8 @@ void		vlanattach(int);
 /* XXX This should be a hash table with the tag as the basis of the key. */
 static LIST_HEAD(, ifvlan) ifv_list;
 
+static kmutex_t ifv_mtx __cacheline_aligned;
+
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
 
@@ -191,6 +194,7 @@ vlanattach(int n)
 {
 
 	LIST_INIT(&ifv_list);
+	mutex_init(&ifv_mtx, MUTEX_DEFAULT, IPL_NONE);
 	if_clone_attach(&vlan_cloner);
 }
 
@@ -277,36 +281,23 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		ifv->ifv_encaplen = ETHER_VLAN_ENCAP_LEN;
 		ifv->ifv_mintu = ETHERMIN;
 
-		/*
-		 * If the parent supports the VLAN_MTU capability,
-		 * i.e. can Tx/Rx larger than ETHER_MAX_LEN frames,
-		 * enable it.
-		 */
-		if (ec->ec_nvlans++ == 0 &&
-		    (ec->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
-			/*
-			 * Enable Tx/Rx of VLAN-sized frames.
-			 */
-			ec->ec_capenable |= ETHERCAP_VLAN_MTU;
-			if (p->if_flags & IFF_UP) {
-				error = if_flags_set(p, p->if_flags);
+		if (ec->ec_nvlans++ == 0) {
+			if ((error = ether_enable_vlan_mtu(p)) >= 0) {
 				if (error) {
-					if (ec->ec_nvlans-- == 1)
-						ec->ec_capenable &=
-						    ~ETHERCAP_VLAN_MTU;
-					return (error);
+					ec->ec_nvlans--;
+					return error;
 				}
+				ifv->ifv_mtufudge = 0;
+			} else {
+				/*
+				 * Fudge the MTU by the encapsulation size. This
+				 * makes us incompatible with strictly compliant
+				 * 802.1Q implementations, but allows us to use
+				 * the feature with other NetBSD
+				 * implementations, which might still be useful.
+				 */
+				ifv->ifv_mtufudge = ifv->ifv_encaplen;
 			}
-			ifv->ifv_mtufudge = 0;
-		} else if ((ec->ec_capabilities & ETHERCAP_VLAN_MTU) == 0) {
-			/*
-			 * Fudge the MTU by the encapsulation size.  This
-			 * makes us incompatible with strictly compliant
-			 * 802.1Q implementations, but allows us to use
-			 * the feature with other NetBSD implementations,
-			 * which might still be useful.
-			 */
-			ifv->ifv_mtufudge = ifv->ifv_encaplen;
 		}
 
 		/*
@@ -358,9 +349,15 @@ static void
 vlan_unconfig(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
+	struct ifnet *p;
 
-	if (ifv->ifv_p == NULL)
+	mutex_enter(&ifv_mtx);
+	p = ifv->ifv_p;
+
+	if (p == NULL) {
+		mutex_exit(&ifv_mtx);
 		return;
+	}
 
 	/*
  	 * Since the interface is being unconfigured, we need to empty the
@@ -370,21 +367,12 @@ vlan_unconfig(struct ifnet *ifp)
 	(*ifv->ifv_msw->vmsw_purgemulti)(ifv);
 
 	/* Disconnect from parent. */
-	switch (ifv->ifv_p->if_type) {
+	switch (p->if_type) {
 	case IFT_ETHER:
 	    {
-		struct ethercom *ec = (void *) ifv->ifv_p;
-
-		if (ec->ec_nvlans-- == 1) {
-			/*
-			 * Disable Tx/Rx of VLAN-sized frames.
-			 */
-			ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
-			if (ifv->ifv_p->if_flags & IFF_UP) {
-				(void)if_flags_set(ifv->ifv_p,
-				    ifv->ifv_p->if_flags);
-			}
-		}
+		struct ethercom *ec = (void *)p;
+		if (--ec->ec_nvlans == 0)
+			(void)ether_disable_vlan_mtu(p);
 
 		ether_ifdetach(ifp);
 		/* Restore vlan_ioctl overwritten by ether_ifdetach */
@@ -412,6 +400,8 @@ vlan_unconfig(struct ifnet *ifp)
 	if_down(ifp);
 	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
 	ifp->if_capabilities = 0;
+
+	mutex_exit(&ifv_mtx);
 }
 
 /*

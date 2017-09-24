@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.63.2.2 2017/03/26 16:08:12 snj Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.63.2.3 2017/09/24 20:05:03 snj Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.2.2 2017/03/26 16:08:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.2.3 2017/09/24 20:05:03 snj Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -362,6 +362,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	    ether_sprintf(sc->sc_enaddr));
 	/* Initialize ifnet structure and attach interface */
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	ifp->if_softc = sc;
 	ifp->if_start = xennet_start;
 	ifp->if_ioctl = xennet_ioctl;

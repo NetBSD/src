@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.204.2.1 2017/02/05 19:14:17 snj Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.204.2.2 2017/09/24 20:05:03 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.204.2.1 2017/02/05 19:14:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.204.2.2 2017/09/24 20:05:03 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1475,6 +1475,71 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return ifioctl_common(ifp, cmd, data);
 	}
 	return 0;
+}
+
+/*
+ * Enable/disable passing VLAN packets if the parent interface supports it.
+ * Return:
+ * 	 0: Ok
+ *	-1: Parent interface does not support vlans
+ *	>0: Error
+ */
+int
+ether_enable_vlan_mtu(struct ifnet *ifp)
+{
+	int error;
+	struct ethercom *ec = (void *)ifp;
+
+	/* Parent does not support VLAN's */
+	if ((ec->ec_capabilities & ETHERCAP_VLAN_MTU) == 0)
+		return -1;
+
+	/*
+	 * Parent supports the VLAN_MTU capability,
+	 * i.e. can Tx/Rx larger than ETHER_MAX_LEN frames;
+	 * enable it.
+	 */
+	ec->ec_capenable |= ETHERCAP_VLAN_MTU;
+
+	/* Interface is down, defer for later */
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+
+	if ((error = if_flags_set(ifp, ifp->if_flags)) == 0)
+		return 0;
+
+	ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+	return error;
+}
+
+int
+ether_disable_vlan_mtu(struct ifnet *ifp)
+{
+	int error;
+	struct ethercom *ec = (void *)ifp;
+
+	/* We still have VLAN's, defer for later */
+	if (ec->ec_nvlans != 0)
+		return 0;
+
+	/* Parent does not support VLAB's, nothing to do. */
+	if ((ec->ec_capenable & ETHERCAP_VLAN_MTU) == 0)
+		return -1;
+
+	/*
+	 * Disable Tx/Rx of VLAN-sized frames.
+	 */
+	ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+	
+	/* Interface is down, defer for later */
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+
+	if ((error = if_flags_set(ifp, ifp->if_flags)) == 0)
+		return 0;
+
+	ec->ec_capenable |= ETHERCAP_VLAN_MTU;
+	return error;
 }
 
 static int
