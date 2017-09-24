@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.47 2017/09/11 05:59:06 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.48 2017/09/24 20:13:48 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4669,4 +4669,24 @@ sys/arch/x86/x86/procfs_machdep.c		1.15-1.16
   	- Check buffer length correctly to not to print a garbage
 	  character.  Fixes PR#52352.
 	[msaitoh, ticket #1505]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.65
+sys/arch/xen/xen/xennetback_xenbus.c		1.53, 1.56 via patch
+sys/net/if_bridge.c				1.105
+sys/net/if_ether.h				1.65
+sys/net/if_ethersubr.c				1.215, 1.235
+sys/net/if_vlan.c				1.76, 1.77, 1.83, 1.88, 1.94
+
+	Add handling of VLAN packets in if_bridge where the parent
+	interface supports them  Factor out the vlan_mtu enabling
+	and disabling code.
+	[manu, ticket #1409]
+
+sys/arch/evbmips/conf/MALTA			1.88
+sys/arch/evbmips/conf/MALTA32			1.4
+sys/arch/evbmips/conf/MALTA64			1.8
+sys/arch/mips/mips/bds_emul.S			1.9
+
+	Make Malta work on real hardware again.
+	[mrg, ticket #1500]
 
