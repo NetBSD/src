@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.19 2017/07/20 01:45:38 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.20 2017/09/25 08:55:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.19 2017/07/20 01:45:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.20 2017/09/25 08:55:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,6 +92,7 @@ struct tegra_pcie_softc {
 static int	tegra_pcie_intr(void *);
 static void	tegra_pcie_init(pci_chipset_tag_t, void *);
 static void	tegra_pcie_enable(struct tegra_pcie_softc *);
+static void	tegra_pcie_enable_clocks(struct tegra_pcie_softc *);
 static void	tegra_pcie_setup(struct tegra_pcie_softc * const);
 static void	tegra_pcie_conf_frag_map(struct tegra_pcie_softc * const,
 					 uint, uint);
@@ -126,9 +127,7 @@ static int
 tegra_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
-#if notyet
 		"nvidia,tegra210-pcie",
-#endif
 		"nvidia,tegra124-pcie",
 		NULL
 	};
@@ -187,6 +186,8 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": PCIE\n");
+
+	tegra_pcie_enable_clocks(sc);
 
 	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
@@ -310,6 +311,30 @@ tegra_pcie_intr(void *priv)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_INTR_CODE_REG, 0);
 
 	return rv;
+}
+
+static void
+tegra_pcie_enable_clocks(struct tegra_pcie_softc * const sc)
+{
+	const char *clock_names[] = { "pex", "afi", "pll_e", "cml" };
+	const char *reset_names[] = { "pex", "afi", "pcie_x" };
+	struct fdtbus_reset *rst;
+	struct clk *clk;
+	int n;
+
+	for (n = 0; n < __arraycount(clock_names); n++) {
+		clk = fdtbus_clock_get(sc->sc_phandle, clock_names[n]);
+		if (clk == NULL || clk_enable(clk) != 0)
+			aprint_error_dev(sc->sc_dev, "couldn't enable clock %s\n",
+			    clock_names[n]);
+	}
+
+	for (n = 0; n < __arraycount(reset_names); n++) {
+		rst = fdtbus_reset_get(sc->sc_phandle, reset_names[n]);
+		if (rst == NULL || fdtbus_reset_deassert(rst) != 0)
+			aprint_error_dev(sc->sc_dev, "couldn't de-assert reset %s\n",
+			    reset_names[n]);
+	}
 }
 
 static void
