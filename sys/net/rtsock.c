@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.227 2017/07/01 16:59:12 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.228 2017/09/25 01:56:22 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.227 2017/07/01 16:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.228 2017/09/25 01:56:22 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -239,6 +239,13 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 	return 0;
 }
 
+static void
+rt_pr_init(void)
+{
+
+	LIST_INIT(&rt_rawcb);
+}
+
 static int
 COMPATNAME(route_attach)(struct socket *so, int proto)
 {
@@ -253,7 +260,7 @@ COMPATNAME(route_attach)(struct socket *so, int proto)
 	so->so_pcb = rp;
 
 	s = splsoftnet();
-	if ((error = raw_attach(so, proto)) == 0) {
+	if ((error = raw_attach(so, proto, &rt_rawcb)) == 0) {
 		rt_adjustcount(rp->rcb_proto.sp_protocol, 1);
 		rp->rcb_laddr = &COMPATNAME(route_info).ri_src;
 		rp->rcb_faddr = &COMPATNAME(route_info).ri_dst;
@@ -1045,7 +1052,7 @@ flush:
 		proto.sp_protocol = family;
 	if (m)
 		raw_input(m, &proto, &COMPATNAME(route_info).ri_src,
-		    &COMPATNAME(route_info).ri_dst);
+		    &COMPATNAME(route_info).ri_dst, &rt_rawcb);
 	if (rp)
 		rp->rcb_proto.sp_family = PF_XROUTE;
     }
@@ -2027,7 +2034,7 @@ COMPATNAME(route_intr)(void *cookie)
 		if (m == NULL)
 			break;
 		proto.sp_protocol = M_GETCTX(m, uintptr_t);
-		raw_input(m, &proto, &ri->ri_src, &ri->ri_dst);
+		raw_input(m, &proto, &ri->ri_src, &ri->ri_dst, &rt_rawcb);
 	}
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
@@ -2116,7 +2123,7 @@ static const struct protosw COMPATNAME(route_protosw)[] = {
 		.pr_ctlinput = raw_ctlinput,
 		.pr_ctloutput = route_ctloutput,
 		.pr_usrreqs = &route_usrreqs,
-		.pr_init = raw_init,
+		.pr_init = rt_pr_init,
 	},
 };
 
