@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.12 2017/09/25 00:12:21 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.13 2017/09/25 08:55:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.12 2017/09/25 00:12:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.13 2017/09/25 08:55:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -436,6 +436,10 @@ static const char *mux_xusb_ss_p[] =
 	{ "CLK_M", "PLL_REF", "CLK_32K", "PLL_U_480M",
 	  NULL, NULL, NULL, NULL };
 
+static const char *mux_mselect_p[] =
+	{ "PLL_P", "PLL_C2", "PLL_C", "PLL_C4_OUT2",
+	  "PLL_C4_OUT1", "CLK_S", "CLK_M", "PLL_C4_OUT0" };
+
 static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_FIXED("CLK_M", TEGRA210_REF_FREQ),
 
@@ -497,6 +501,10 @@ static struct tegra_clk tegra210_car_clocks[] = {
 		CAR_CLKSRC_XUSB_FS_REG, CAR_CLKSRC_XUSB_FS_SRC,
 		mux_xusb_fs_p),
 
+	CLK_MUX("MUX_MSELECT",
+		CAR_CLKSRC_MSELECT_REG, CAR_CLKSRC_MSELECT_SRC,
+		mux_mselect_p),
+
 	CLK_DIV("DIV_UARTA", "MUX_UARTA",
 		CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_DIV),
 	CLK_DIV("DIV_UARTB", "MUX_UARTB",
@@ -543,10 +551,18 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_DIV("DIV_PLL_U_OUT2", "PLL_U",
 		CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT2_RATIO),
 
+	CLK_DIV("DIV_MSELECT", "MUX_MSELECT",
+		CAR_CLKSRC_MSELECT_REG, CAR_CLKSRC_MSELECT_DIV),
+
 	CLK_GATE("PLL_U_OUT1", "DIV_PLL_U_OUT1",
 		 CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT1_CLKEN),
 	CLK_GATE("PLL_U_OUT2", "DIV_PLL_U_OUT2",
 		 CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT2_CLKEN),
+
+	CLK_GATE("CML0", "PLL_E",
+		 CAR_PLLE_AUX_REG, CAR_PLLE_AUX_REG, CAR_PLLE_AUX_CML0_OEN),
+	CLK_GATE("CML1", "PLL_E",
+		 CAR_PLLE_AUX_REG, CAR_PLLE_AUX_REG, CAR_PLLE_AUX_CML1_OEN),
 
 	CLK_GATE_L("UARTA", "DIV_UARTA", CAR_DEV_L_UARTA),
 	CLK_GATE_L("UARTB", "DIV_UARTB", CAR_DEV_L_UARTB),
@@ -571,6 +587,9 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_GATE_H("APBDMA", "CLK_M", CAR_DEV_H_APBDMA),
 	CLK_GATE_L("USBD", "PLL_U_480M", CAR_DEV_L_USBD),
 	CLK_GATE_H("USB2", "PLL_U_480M", CAR_DEV_H_USB2),
+	CLK_GATE_V("MSELECT", "DIV_MSELECT", CAR_DEV_V_MSELECT),
+	CLK_GATE_U("PCIE", "CLK_M", CAR_DEV_U_PCIE),
+	CLK_GATE_U("AFI", "MSELECT", CAR_DEV_U_AFI),
 };
 
 struct tegra210_init_parent {
