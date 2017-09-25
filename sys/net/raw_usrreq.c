@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.57 2017/09/25 01:56:22 ozaki-r Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.58 2017/09/25 01:57:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.57 2017/09/25 01:56:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.58 2017/09/25 01:57:54 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -74,8 +74,6 @@ raw_input(struct mbuf *m0, ...)
 	struct sockproto *proto;
 	struct sockaddr *src, *dst;
 	struct rawcbhead *rawcbhead;
-
-	KASSERT(mutex_owned(softnet_lock));
 
 	va_start(ap, m0);
 	proto = va_arg(ap, struct sockproto *);
