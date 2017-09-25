@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.27 2017/04/11 13:55:54 roy Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.28 2017/09/25 01:56:22 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -60,13 +60,11 @@ struct rawcb {
 #define	RAWRCVQ		8192
 
 LIST_HEAD(rawcbhead, rawcb);
-extern	struct	rawcbhead rawcb;		/* head of list */
 
-int	raw_attach(struct socket *, int);
+int	raw_attach(struct socket *, int, struct rawcbhead *);
 void	*raw_ctlinput(int, const struct sockaddr *, void *);
 void	raw_detach(struct socket *);
 void	raw_disconnect(struct rawcb *);
-void	raw_init(void);
 void	raw_input(struct mbuf *, ...);
 int	raw_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);

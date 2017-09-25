@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.23 2017/07/27 09:53:57 ozaki-r Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.24 2017/09/25 01:56:22 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.23 2017/07/27 09:53:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.24 2017/09/25 01:56:22 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.23 2017/07/27 09:53:57 ozaki-r Exp $");
  *	redo address binding to allow wildcards
  */
 
-struct rawcbhead	rawcb = LIST_HEAD_INITIALIZER(rawcb);
-
 static u_long		raw_sendspace = RAWSNDQ;
 static u_long		raw_recvspace = RAWRCVQ;
 
@@ -66,7 +64,7 @@ static u_long		raw_recvspace = RAWRCVQ;
  * Allocate a nominal amount of buffer space for the socket.
  */
 int
-raw_attach(struct socket *so, int proto)
+raw_attach(struct socket *so, int proto, struct rawcbhead *rawcbhead)
 {
 	struct rawcb *rp;
 	int error;
@@ -87,7 +85,7 @@ raw_attach(struct socket *so, int proto)
 	rp->rcb_socket = so;
 	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
 	rp->rcb_proto.sp_protocol = proto;
-	LIST_INSERT_HEAD(&rawcb, rp, rcb_list);
+	LIST_INSERT_HEAD(rawcbhead, rp, rcb_list);
 	KASSERT(solocked(so));
 
 	return 0;
