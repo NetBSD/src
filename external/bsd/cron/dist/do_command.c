@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.9 2017/08/17 08:53:00 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.10 2017/09/25 08:30:46 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.9 2017/08/17 08:53:00 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.10 2017/09/25 08:30:46 christos Exp $");
 #endif
 #endif
 
@@ -85,6 +85,190 @@ sigchld_handler(int signo) {
 			break;
 		}
 	}
+}
+
+static void
+write_data(char *volatile input_data, int *stdin_pipe, int *stdout_pipe)
+{
+	FILE *out = fdopen(stdin_pipe[WRITE_PIPE], "w");
+	int need_newline = FALSE;
+	int escaped = FALSE;
+	int ch;
+
+	Debug(DPROC, ("[%ld] child2 sending data to grandchild\n",
+		      (long)getpid()));
+
+#ifdef USE_PAM
+	cron_pam_child_close();
+#else
+	log_close();
+#endif
+
+	/* close the pipe we don't use, since we inherited it and
+	 * are part of its reference count now.
+	 */
+	(void)close(stdout_pipe[READ_PIPE]);
+
+	/* translation:
+	 *	\% -> %
+	 *	%  -> \n
+	 *	\x -> \x	for all x != %
+	 */
+	while ((ch = *input_data++) != '\0') {
+		if (escaped) {
+			if (ch != '%')
+				(void)putc('\\', out);
+		} else {
+			if (ch == '%')
+				ch = '\n';
+		}
+
+		if (!(escaped = (ch == '\\'))) {
+			(void)putc(ch, out);
+			need_newline = (ch != '\n');
+		}
+	}
+	if (escaped)
+		(void)putc('\\', out);
+	if (need_newline)
+		(void)putc('\n', out);
+
+	/* close the pipe, causing an EOF condition.  fclose causes
+	 * stdin_pipe[WRITE_PIPE] to be closed, too.
+	 */
+	(void)fclose(out);
+
+	Debug(DPROC, ("[%ld] child2 done sending to grandchild\n",
+		      (long)getpid()));
+}
+
+static int
+read_data(entry *e, const char *mailto, const char *usernm, char **envp,
+    int *stdout_pipe)
+{
+	FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
+	FILE	*mail = NULL;
+	int	bytes = 1;
+	int	status = 0;
+	int	ch = getc(in);
+	int	retval = 0;
+	sig_t	oldchld = NULL;
+
+	if (ch == EOF)
+		goto out;
+
+	Debug(DPROC|DEXT, ("[%ld] got data (%x:%c) from grandchild\n",
+	    (long)getpid(), ch, ch));
+
+	/* get name of recipient.  this is MAILTO if set to a
+	 * valid local username; USER otherwise.
+	 */
+	if (mailto) {
+		/* MAILTO was present in the environment
+		 */
+		if (!*mailto) {
+			/* ... but it's empty. set to NULL
+			 */
+			mailto = NULL;
+		}
+	} else {
+		/* MAILTO not present, set to USER.
+		 */
+		mailto = usernm;
+	}
+
+	/*
+	 * Unsafe, disable mailing.
+	 */
+	if (!safe_p(usernm, mailto))
+		mailto = NULL;
+
+	/* if we are supposed to be mailing, MAILTO will
+	 * be non-NULL.  only in this case should we set
+	 * up the mail command and subjects and stuff...
+	 */
+
+	if (mailto) {
+		char	**env;
+		char	mailcmd[MAX_COMMAND];
+		char	hostname[MAXHOSTNAMELEN + 1];
+
+		(void)gethostname(hostname, MAXHOSTNAMELEN);
+		if (strlens(MAILFMT, MAILARG, NULL) + 1 >= sizeof mailcmd) {
+			log_it(usernm, getpid(), "MAIL", "mailcmd too long");
+			retval = ERROR_EXIT;
+			goto out;
+		}
+		(void)snprintf(mailcmd, sizeof(mailcmd), MAILFMT, MAILARG);
+		oldchld = signal(SIGCHLD, SIG_DFL);
+		if (!(mail = cron_popen(mailcmd, "w", e->pwd))) {
+			log_itx(usernm, getpid(), "MAIL",
+			    "cannot run `%s'", mailcmd);
+			(void) signal(SIGCHLD, oldchld);
+			retval = ERROR_EXIT;
+			goto out;
+		}
+		log_itx(usernm, getpid(), "MAIL", "opened pipe `%s'", mailcmd);
+		(void)fprintf(mail, "From: root (Cron Daemon)\n");
+		(void)fprintf(mail, "To: %s\n", mailto);
+		(void)fprintf(mail, "Subject: Cron <%s@%s> %s\n",
+		    usernm, hostname, e->cmd);
+		(void)fprintf(mail, "Auto-Submitted: auto-generated\n");
+#ifdef MAIL_DATE
+		(void)fprintf(mail, "Date: %s\n", arpadate(&StartTime));
+#endif /*MAIL_DATE*/
+		for (env = envp;  *env;  env++)
+			(void)fprintf(mail, "X-Cron-Env: <%s>\n", *env);
+		(void)fprintf(mail, "\n");
+
+		/* this was the first char from the pipe
+		 */
+		(void)putc(ch, mail);
+	}
+
+	/* we have to read the input pipe no matter whether
+	 * we mail or not, but obviously we only write to
+	 * mail pipe if we ARE mailing.
+	 */
+
+	while (EOF != (ch = getc(in))) {
+		bytes++;
+		if (mailto)
+			(void)putc(ch, mail);
+	}
+
+	/* only close pipe if we opened it -- i.e., we're
+	 * mailing...
+	 */
+
+	if (mailto) {
+		Debug(DPROC, ("[%ld] closing pipe to mail\n", (long)getpid()));
+		/* Note: the pclose will probably see
+		 * the termination of the grandchild
+		 * in addition to the mail process, since
+		 * it (the grandchild) is likely to exit
+		 * after closing its stdout.
+		 */
+		status = cron_pclose(mail);
+		(void) signal(SIGCHLD, oldchld);
+	}
+
+	/* if there was output and we could not mail it,
+	 * log the facts so the poor user can figure out
+	 * what's going on.
+	 */
+	if (mailto && status) {
+		log_itx(usernm, getpid(), "MAIL",
+		    "mailed %d byte%s of output to `%s' but"
+		    " got status %#04x", bytes,
+		    bytes == 1 ? "" : "s", mailto, status);
+	}
+
+out:
+	Debug(DPROC, ("[%ld] got EOF from grandchild\n", (long)getpid()));
+
+	(void)fclose(in);	/* also closes stdout_pipe[READ_PIPE] */
+	return retval;
 }
 
 extern char **environ;
@@ -372,58 +556,17 @@ child_process(entry *e) {
 	 * we would block here.  thus we must fork again.
 	 */
 
-	if (*input_data && fork() == 0) {
-		FILE *out = fdopen(stdin_pipe[WRITE_PIPE], "w");
-		int need_newline = FALSE;
-		int escaped = FALSE;
-		int ch;
-
-		Debug(DPROC, ("[%ld] child2 sending data to grandchild\n",
-			      (long)getpid()));
-
-#ifdef USE_PAM
-		cron_pam_child_close();
-#else
-		log_close();
-#endif
-
-		/* close the pipe we don't use, since we inherited it and
-		 * are part of its reference count now.
-		 */
-		(void)close(stdout_pipe[READ_PIPE]);
-
-		/* translation:
-		 *	\% -> %
-		 *	%  -> \n
-		 *	\x -> \x	for all x != %
-		 */
-		while ((ch = *input_data++) != '\0') {
-			if (escaped) {
-				if (ch != '%')
-					(void)putc('\\', out);
-			} else {
-				if (ch == '%')
-					ch = '\n';
-			}
-
-			if (!(escaped = (ch == '\\'))) {
-				(void)putc(ch, out);
-				need_newline = (ch != '\n');
-			}
+	if (*input_data) {
+		switch (fork()) {
+		case 0:
+			write_data(input_data, stdin_pipe, stdout_pipe);
+			exit(EXIT_SUCCESS);
+		case -1:
+			retval = ERROR_EXIT;
+			goto child_process_end;
+		default:
+			break;
 		}
-		if (escaped)
-			(void)putc('\\', out);
-		if (need_newline)
-			(void)putc('\n', out);
-
-		/* close the pipe, causing an EOF condition.  fclose causes
-		 * stdin_pipe[WRITE_PIPE] to be closed, too.
-		 */
-		(void)fclose(out);
-
-		Debug(DPROC, ("[%ld] child2 done sending to grandchild\n",
-			      (long)getpid()));
-		exit(0);
 	}
 
 	/* close the pipe to the grandkiddie's stdin, since its wicked uncle
@@ -441,129 +584,10 @@ child_process(entry *e) {
 	Debug(DPROC, ("[%ld] child reading output from grandchild\n",
 		      (long)getpid()));
 
-	/*local*/{
-		FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
-		int	ch = getc(in);
+	retval = read_data(e, mailto, usernm, envp, stdout_pipe);
+	if (retval)
+		goto child_process_end;
 
-		if (ch != EOF) {
-			FILE	*mail = NULL;
-			int	bytes = 1;
-			int	status = 0;
-
-			Debug(DPROC|DEXT,
-			      ("[%ld] got data (%x:%c) from grandchild\n",
-			       (long)getpid(), ch, ch));
-
-			/* get name of recipient.  this is MAILTO if set to a
-			 * valid local username; USER otherwise.
-			 */
-			if (mailto) {
-				/* MAILTO was present in the environment
-				 */
-				if (!*mailto) {
-					/* ... but it's empty. set to NULL
-					 */
-					mailto = NULL;
-				}
-			} else {
-				/* MAILTO not present, set to USER.
-				 */
-				mailto = usernm;
-			}
-		
-			/* if we are supposed to be mailing, MAILTO will
-			 * be non-NULL.  only in this case should we set
-			 * up the mail command and subjects and stuff...
-			 */
-
-			if (mailto && safe_p(usernm, mailto)) {
-				char	**env;
-				char	mailcmd[MAX_COMMAND];
-				char	hostname[MAXHOSTNAMELEN + 1];
-
-				(void)gethostname(hostname, MAXHOSTNAMELEN);
-				if (strlens(MAILFMT, MAILARG, NULL) + 1
-				    >= sizeof mailcmd) {
-					log_it(usernm, getpid(), "MAIL",
-					    "mailcmd too long");
-					retval = ERROR_EXIT;
-					goto child_process_end;
-				}
-				(void)snprintf(mailcmd, sizeof(mailcmd), 
-				    MAILFMT, MAILARG);
-				if (!(mail = cron_popen(mailcmd, "w", e->pwd))) {
-					log_itx(usernm, getpid(), "MAIL",
-					    "cannot run `%s'", mailcmd);
-					retval = ERROR_EXIT;
-					goto child_process_end;
-				}
-				(void)fprintf(mail,
-				    "From: root (Cron Daemon)\n");
-				(void)fprintf(mail, "To: %s\n", mailto);
-				(void)fprintf(mail,
-				    "Subject: Cron <%s@%s> %s\n",
-				    usernm, hostname, e->cmd);
-				(void)fprintf(mail,
-				    "Auto-Submitted: auto-generated\n");
-#ifdef MAIL_DATE
-				(void)fprintf(mail, "Date: %s\n",
-					arpadate(&StartTime));
-#endif /*MAIL_DATE*/
-				for (env = envp;  *env;  env++)
-					(void)fprintf(mail,
-					    "X-Cron-Env: <%s>\n", *env);
-				(void)fprintf(mail, "\n");
-
-				/* this was the first char from the pipe
-				 */
-				(void)putc(ch, mail);
-			}
-
-			/* we have to read the input pipe no matter whether
-			 * we mail or not, but obviously we only write to
-			 * mail pipe if we ARE mailing.
-			 */
-
-			while (EOF != (ch = getc(in))) {
-				bytes++;
-				if (mailto)
-					(void)putc(ch, mail);
-			}
-
-			/* only close pipe if we opened it -- i.e., we're
-			 * mailing...
-			 */
-
-			if (mailto) {
-				Debug(DPROC, ("[%ld] closing pipe to mail\n",
-					      (long)getpid()));
-				/* Note: the pclose will probably see
-				 * the termination of the grandchild
-				 * in addition to the mail process, since
-				 * it (the grandchild) is likely to exit
-				 * after closing its stdout.
-				 */
-				status = cron_pclose(mail);
-			}
-
-			/* if there was output and we could not mail it,
-			 * log the facts so the poor user can figure out
-			 * what's going on.
-			 */
-			if (mailto && status) {
-				log_itx(usernm, getpid(), "MAIL",
-				    "mailed %d byte%s of output but got status"
-				    " %#04x", bytes, bytes == 1 ? "" : "s",
-				    status);
-			}
-
-		} /*if data from grandchild*/
-
-		Debug(DPROC, ("[%ld] got EOF from grandchild\n",
-			      (long)getpid()));
-
-		(void)fclose(in);	/* also closes stdout_pipe[READ_PIPE] */
-	}
 
 	/* wait for children to die.
 	 */
