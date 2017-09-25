@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.36 2017/09/23 14:53:26 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.37 2017/09/25 22:43:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.36 2017/09/23 14:53:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.37 2017/09/25 22:43:46 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -208,7 +208,8 @@ ata_queue_hwslot_to_xfer(struct ata_channel *chp, int hwslot)
 
 	KASSERTMSG(hwslot < chq->queue_openings, "hwslot %d > openings %d",
 	    hwslot, chq->queue_openings);
-	KASSERT((chq->active_xfers_used & __BIT(hwslot)) != 0);
+	KASSERTMSG((chq->active_xfers_used & __BIT(hwslot)) != 0,
+	    "hwslot %d not active", hwslot);
 
 	/* Usually the first entry will be the one */
 	TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
@@ -228,8 +229,17 @@ ata_queue_hwslot_to_xfer(struct ata_channel *chp, int hwslot)
 static struct ata_xfer *
 ata_queue_get_active_xfer_locked(struct ata_channel *chp)
 {
+	struct ata_xfer *xfer;
+
 	KASSERT(mutex_owned(&chp->ch_lock));
-	return TAILQ_FIRST(&chp->ch_queue->active_xfers);
+	xfer = TAILQ_FIRST(&chp->ch_queue->active_xfers);
+
+	if (xfer && ISSET(xfer->c_flags, C_NCQ)) {
+		/* Spurious call, never return NCQ xfer from this interface */
+		xfer = NULL;
+	}
+
+	return xfer;
 }
 
 /*
@@ -1543,7 +1553,16 @@ ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 
 	TAILQ_REMOVE(&chq->queue_xfer, xfer, c_xferchain);
-	TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
+	if ((xfer->c_flags & C_RECOVERY) == 0)
+		TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
+	else {
+		/*
+		 * Must go to head, so that ata_queue_get_active_xfer()
+		 * returns the recovery command, and not some other
+		 * random active transfer.
+		 */
+		TAILQ_INSERT_HEAD(&chq->active_xfers, xfer, c_activechain);
+	}
 	chq->active_xfers_used |= __BIT(xfer->c_slot);
 	chq->queue_active++;
 }
@@ -1632,15 +1651,13 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 			return true;
 		}
 
-		/* Handle race vs. callout_stop() in ata_deactivate_xfer() */
-		if (!callout_expired(&xfer->c_timo_callout)) {
-			ata_channel_unlock(chp);
+		/* Race vs. callout_stop() in ata_deactivate_xfer() */
+		ata_channel_unlock(chp);
 
-	    		aprint_normal_dev(drvp->drv_softc,
-			    "xfer %d deactivated while invoking timeout\n",
-			    xfer->c_slot); 
-			return true;
-		}
+	    	aprint_normal_dev(drvp->drv_softc,
+		    "xfer %d deactivated while invoking timeout\n",
+		    xfer->c_slot); 
+		return true;
 	}
 
 	ata_channel_unlock(chp);
