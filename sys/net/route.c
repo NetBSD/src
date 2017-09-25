@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.200 2017/09/22 05:05:32 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.201 2017/09/25 04:15:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.200 2017/09/22 05:05:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.201 2017/09/25 04:15:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -483,6 +483,8 @@ rt_init(void)
 static void
 rtcache_invalidate(void)
 {
+
+	RT_ASSERT_WLOCK();
 
 	if (rtcache_debug())
 		printf("%s: enter\n", __func__);
@@ -1199,10 +1201,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt_ref(rt);
 			RT_REFCNT_TRACE(rt);
 		}
+		rtcache_invalidate();
 		RT_UNLOCK();
 		need_unlock = false;
 		rt_timer_remove_all(rt);
-		rtcache_invalidate();
 #if defined(INET) || defined(INET6)
 		if (netmask != NULL)
 			lltable_prefix_free(dst->sa_family, dst, netmask, 0);
@@ -1295,9 +1297,9 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt_ref(rt);
 			RT_REFCNT_TRACE(rt);
 		}
+		rtcache_invalidate();
 		RT_UNLOCK();
 		need_unlock = false;
-		rtcache_invalidate();
 		break;
 	case RTM_GET:
 		if (netmask != NULL) {
@@ -1898,8 +1900,10 @@ rtcache_copy(struct route *new_ro, struct route *old_ro)
 	if (ret != 0)
 		goto out;
 
+	RT_RLOCK();
 	new_ro->_ro_rt = rt;
 	new_ro->ro_rtcache_generation = rtcache_generation;
+	RT_UNLOCK();
 	rtcache_invariants(new_ro);
 out:
 	rtcache_unref(rt, old_ro);
@@ -1957,16 +1961,17 @@ rtcache_validate(struct route *ro)
 retry:
 #endif
 	rtcache_invariants(ro);
+	RT_RLOCK();
 	if (ro->ro_rtcache_generation != rtcache_generation) {
 		/* The cache is invalidated */
-		return NULL;
+		rt = NULL;
+		goto out;
 	}
 
 	rt = ro->_ro_rt;
 	if (rt == NULL)
-		return NULL;
+		goto out;
 
-	RT_RLOCK();
 	if ((rt->rt_flags & RTF_UP) == 0) {
 		rt = NULL;
 		goto out;
