@@ -1,12 +1,12 @@
-/* $NetBSD: loadfile_elf32.c,v 1.40 2017/04/18 07:44:20 uwe Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.41 2017/09/25 20:39:21 maxv Exp $ */
 
 /*
- * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center and by Christos Zoulas.
+ * NASA Ames Research Center, by Christos Zoulas, and by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -259,8 +259,220 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 #define IS_DATA(p)	(p.p_flags & PF_W)
 #define IS_BSS(p)	(p.p_filesz < p.p_memsz)
 
+#ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
+#define MD_LOADSEG(a) /*CONSTCOND*/0
+#endif
+
+/* -------------------------------------------------------------------------- */
+
 /*
- * Load the ELF binary into memory. Layout of the memory:
+ * See comment below. This function is in charge of loading the SECTION HEADERS.
+ */
+static int
+ELFNAMEEND(loadsym)(int fd, Elf_Ehdr *elf, Elf_Addr maxp, Elf_Addr elfp,
+    u_long *marks, int flags, Elf_Addr *nmaxp)
+{
+	int boot_load_ctf = 1;
+	Elf_Shdr *shp;
+	Elf_Addr shpp;
+	char *shstr = NULL;
+	ssize_t nr, sz;
+	size_t i, j, shstrsz = 0;
+	u_long offset = marks[MARK_START];
+	struct __packed {
+		Elf_Nhdr nh;
+		uint8_t name[ELF_NOTE_NETBSD_NAMESZ + 1];
+		uint8_t desc[ELF_NOTE_NETBSD_DESCSZ];
+	} note;
+	int first;
+
+	/* some ports dont use the offset */
+	(void)&offset;
+
+	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
+		WARN(("lseek section headers"));
+		return -1;
+	}
+	sz = elf->e_shnum * sizeof(Elf_Shdr);
+	shp = ALLOC(sz);
+
+	nr = read(fd, shp, sz);
+	if (nr == -1) {
+		WARN(("read section headers"));
+		goto out;
+	}
+	if (nr != sz) {
+		errno = EIO;
+		WARN(("read section headers"));
+		goto out;
+	}
+
+	shpp = maxp;
+	maxp += roundup(sz, ELFROUND);
+
+#ifndef _STANDALONE
+	for (i = 0; i < elf->e_shnum; i++)
+		internalize_shdr(elf->e_ident[EI_DATA], &shp[i]);
+#endif
+
+	/*
+	 * First load the section names section. Only useful for CTF.
+	 */
+	if (boot_load_ctf && (elf->e_shstrndx != SHN_UNDEF)) {
+		Elf_Off shstroff = shp[elf->e_shstrndx].sh_offset;
+		shstrsz = shp[elf->e_shstrndx].sh_size;
+		if (flags & LOAD_SYM) {
+			if (lseek(fd, shstroff, SEEK_SET) == -1) {
+				WARN(("lseek symbols"));
+				goto out;
+			}
+			nr = READ(fd, maxp, shstrsz);
+			if (nr == -1) {
+				WARN(("read symbols"));
+				goto out;
+			}
+			if (nr != (ssize_t)shstrsz) {
+				errno = EIO;
+				WARN(("read symbols"));
+				goto out;
+			}
+		}
+
+		/* Create a local copy */
+		shstr = ALLOC(shstrsz);
+		if (lseek(fd, shstroff, SEEK_SET) == -1) {
+			WARN(("lseek symbols"));
+			goto out;
+		}
+		nr = read(fd, shstr, shstrsz);
+		if (nr == -1) {
+			WARN(("read symbols"));
+			goto out;
+		}
+		shp[elf->e_shstrndx].sh_offset = maxp - elfp;
+		maxp += roundup(shstrsz, ELFROUND);
+	}
+
+	/*
+	 * Now load the symbol sections themselves. Make sure the sections are
+	 * ELFROUND-aligned. Update sh_offset to be relative to elfp. Set it to
+	 * zero when we don't want the sections to be taken care of, the kernel
+	 * will properly skip them.
+	 */
+	first = 1;
+	for (i = 1; i < elf->e_shnum; i++) {
+		if (i == elf->e_shstrndx) {
+			/* already loaded this section */
+			continue;
+		}
+
+		switch (shp[i].sh_type) {
+		case SHT_PROGBITS:
+			if (boot_load_ctf && shstr) {
+				/* got a CTF section? */
+				if (strncmp(&shstr[shp[i].sh_name],
+					    ".SUNW_ctf", 10) == 0) {
+					goto havesym;
+				}
+			}
+
+			shp[i].sh_offset = 0;
+			break;
+		case SHT_STRTAB:
+			for (j = 1; j < elf->e_shnum; j++)
+				if (shp[j].sh_type == SHT_SYMTAB &&
+				    shp[j].sh_link == (unsigned int)i)
+					goto havesym;
+			/*
+			 * Don't bother with any string table that isn't
+			 * referenced by a symbol table.
+			 */
+			shp[i].sh_offset = 0;
+			break;
+havesym:
+		case SHT_SYMTAB:
+			if (flags & LOAD_SYM) {
+				PROGRESS(("%s%ld", first ? " [" : "+",
+				    (u_long)shp[i].sh_size));
+				if (lseek(fd, shp[i].sh_offset,
+				    SEEK_SET) == -1) {
+					WARN(("lseek symbols"));
+					goto out;
+				}
+				nr = READ(fd, maxp, shp[i].sh_size);
+				if (nr == -1) {
+					WARN(("read symbols"));
+					goto out;
+				}
+				if (nr != (ssize_t)shp[i].sh_size) {
+					errno = EIO;
+					WARN(("read symbols"));
+					goto out;
+				}
+			}
+			shp[i].sh_offset = maxp - elfp;
+			maxp += roundup(shp[i].sh_size, ELFROUND);
+			first = 0;
+			break;
+		case SHT_NOTE:
+			if ((flags & LOAD_NOTE) == 0)
+				break;
+			if (shp[i].sh_size < sizeof(note)) {
+				shp[i].sh_offset = 0;
+				break;
+			}
+			if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1) {
+				WARN(("lseek note"));
+				goto out;
+			}
+			nr = read(fd, &note, sizeof(note));
+			if (nr == -1) {
+				WARN(("read note"));
+				goto out;
+			}
+			if (note.nh.n_namesz == ELF_NOTE_NETBSD_NAMESZ &&
+			    note.nh.n_descsz == ELF_NOTE_NETBSD_DESCSZ &&
+			    note.nh.n_type == ELF_NOTE_TYPE_NETBSD_TAG &&
+			    memcmp(note.name, ELF_NOTE_NETBSD_NAME,
+			    sizeof(note.name)) == 0) {
+				memcpy(&netbsd_version, &note.desc,
+				    sizeof(netbsd_version));
+			}
+			shp[i].sh_offset = 0;
+			break;
+		default:
+			shp[i].sh_offset = 0;
+			break;
+		}
+	}
+	if (flags & LOAD_SYM) {
+#ifndef _STANDALONE
+		for (i = 0; i < elf->e_shnum; i++)
+			externalize_shdr(elf->e_ident[EI_DATA], &shp[i]);
+#endif
+		BCOPY(shp, shpp, sz);
+
+		if (first == 0)
+			PROGRESS(("]"));
+	}
+
+	*nmaxp = maxp;
+	DEALLOC(shp, sz);
+	if (shstr != NULL)
+		DEALLOC(shstr, shstrsz);
+	return 0;
+
+out:
+	DEALLOC(shp, sz);
+	if (shstr != NULL)
+		DEALLOC(shstr, shstrsz);
+	return -1;
+}
+
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Load a static ELF binary into memory. Layout of the memory:
  * +-----------------+------------+-----------------+-----------------+
  * | KERNEL SEGMENTS | ELF HEADER | SECTION HEADERS | SYMBOL SECTIONS |
  * +-----------------+------------+-----------------+-----------------+
@@ -273,27 +485,15 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
  * We just give the kernel a pointer to the ELF HEADER, which is enough for it
  * to find the location and number of symbols by itself later.
  */
-
 int
 ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
-	Elf_Shdr *shp;
 	Elf_Phdr *phdr;
-	int i, j;
+	int i, first;
 	ssize_t sz;
-	int first;
-	Elf_Addr shpp;
 	Elf_Addr minp = ~0, maxp = 0, pos = 0, elfp = 0;
 	u_long offset = marks[MARK_START];
 	ssize_t nr;
-	struct __packed {
-		Elf_Nhdr nh;
-		uint8_t name[ELF_NOTE_NETBSD_NAMESZ + 1];
-		uint8_t desc[ELF_NOTE_NETBSD_DESCSZ];
-	} note;
-	char *shstr = NULL;
-	size_t shstrsz = 0;
-	int boot_load_ctf = 1;
 
 	/* some ports dont use the offset */
 	(void)&offset;
@@ -325,9 +525,6 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	for (i = 0; i < elf->e_phnum; i++) {
 		internalize_phdr(elf->e_ident[EI_DATA], &phdr[i]);
 
-#ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
-#define MD_LOADSEG(a) /*CONSTCOND*/0
-#endif
 		if (MD_LOADSEG(&phdr[i]))
 			goto loadseg;
 
@@ -390,194 +587,25 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 	}
 	DEALLOC(phdr, sz);
+	maxp = roundup(maxp, ELFROUND);
 
 	/*
-	 * Copy the ELF and section headers.
+	 * Load the ELF HEADER, SECTION HEADERS and possibly the SYMBOL
+	 * SECTIONS.
 	 */
-	maxp = roundup(maxp, ELFROUND);
 	if (flags & (LOAD_HDR|COUNT_HDR)) {
 		elfp = maxp;
 		maxp += sizeof(Elf_Ehdr);
 	}
-
 	if (flags & (LOAD_SYM|COUNT_SYM)) {
-		if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
-			WARN(("lseek section headers"));
-			return 1;
+		if (ELFNAMEEND(loadsym)(fd, elf, maxp, elfp, marks, flags,
+		    &maxp) == -1) {
+ 			return 1;
 		}
-		sz = elf->e_shnum * sizeof(Elf_Shdr);
-
-		shp = ALLOC(sz);
-
-		nr = read(fd, shp, sz);
-		if (nr == -1) {
-			WARN(("read section headers"));
-			goto freeshp;
-		}
-		if (nr != sz) {
-			errno = EIO;
-			WARN(("read section headers"));
-			goto freeshp;
-		}
-
-		shpp = maxp;
-		maxp += roundup(sz, ELFROUND);
-
-#ifndef _STANDALONE
-		/* Internalize the section headers. */
-		for (i = 0; i < elf->e_shnum; i++)
-			internalize_shdr(elf->e_ident[EI_DATA], &shp[i]);
-#endif
-
-		/*
-		 * First load the section names section.
-		 */
-		if (boot_load_ctf && (elf->e_shstrndx != SHN_UNDEF)) {
-			Elf_Off shstroff = shp[elf->e_shstrndx].sh_offset;
-			shstrsz = shp[elf->e_shstrndx].sh_size;
-			if (flags & LOAD_SYM) {
-				if (lseek(fd, shstroff, SEEK_SET) == -1) {
-					WARN(("lseek symbols"));
-					goto freeshp;
-				}
-				nr = READ(fd, maxp, shstrsz);
-				if (nr == -1) {
-					WARN(("read symbols"));
-					goto freeshp;
-				}
-				if (nr != (ssize_t)shstrsz) {
-					errno = EIO;
-					WARN(("read symbols"));
-					goto freeshp;
-				}
-			}
-
-			shstr = ALLOC(shstrsz);
-			if (lseek(fd, shstroff, SEEK_SET) == -1) {
-				WARN(("lseek symbols"));
-				goto freeshp;
-			}
-			nr = read(fd, shstr, shstrsz);
-			if (nr == -1) {
-				WARN(("read symbols"));
-				goto freeshp;
-			}
-			shp[elf->e_shstrndx].sh_offset = maxp - elfp;
-			maxp += roundup(shstrsz, ELFROUND);
-		}
-
-		/*
-		 * Now load the symbol sections themselves.  Make sure
-		 * the sections are aligned. Don't bother with any
-		 * string table that isn't referenced by a symbol
-		 * table.
-		 */
-		first = 1;
-		for (i = 1; i < elf->e_shnum; i++) {
-			if (i == elf->e_shstrndx) {
-				/* already loaded this section */
-				continue;
-			}
-			switch (shp[i].sh_type) {
-			case SHT_PROGBITS:
-				if (boot_load_ctf && shstr) {
-					/* got a CTF section? */
-					if (strncmp(&shstr[shp[i].sh_name],
-						    ".SUNW_ctf", 10) == 0) {
-						goto havesym;
-					}
-				}
-
-				/* Not loading this, so zero out the offset. */
-				shp[i].sh_offset = 0;
-				break;
-			case SHT_STRTAB:
-				for (j = 1; j < elf->e_shnum; j++)
-					if (shp[j].sh_type == SHT_SYMTAB &&
-					    shp[j].sh_link == (unsigned int)i)
-						goto havesym;
-				/* FALLTHROUGH */
-			default:
-				/* Not loading this, so zero out the offset. */
-				shp[i].sh_offset = 0;
-				break;
-			havesym:
-			case SHT_SYMTAB:
-				if (flags & LOAD_SYM) {
-					PROGRESS(("%s%ld", first ? " [" : "+",
-					    (u_long)shp[i].sh_size));
-					if (lseek(fd, shp[i].sh_offset,
-					    SEEK_SET) == -1) {
-						WARN(("lseek symbols"));
-						goto freeshp;
-					}
-					nr = READ(fd, maxp, shp[i].sh_size);
-					if (nr == -1) {
-						WARN(("read symbols"));
-						goto freeshp;
-					}
-					if (nr != (ssize_t)shp[i].sh_size) {
-						errno = EIO;
-						WARN(("read symbols"));
-						goto freeshp;
-					}
-				}
-				shp[i].sh_offset = maxp - elfp;
-				maxp += roundup(shp[i].sh_size, ELFROUND);
-				first = 0;
-				break;
-			case SHT_NOTE:
-				if ((flags & LOAD_NOTE) == 0)
-					break;
-				if (shp[i].sh_size < sizeof(note)) {
-					shp[i].sh_offset = 0;
-					break;
-				}
-				if (lseek(fd, shp[i].sh_offset, SEEK_SET)
-				    == -1) {
-					WARN(("lseek note"));
-					goto freeshp;
-				}
-				nr = read(fd, &note, sizeof(note));
-				if (nr == -1) {
-					WARN(("read note"));
-					goto freeshp;
-				}
-				if (note.nh.n_namesz ==
-				    ELF_NOTE_NETBSD_NAMESZ &&
-				    note.nh.n_descsz ==
-				    ELF_NOTE_NETBSD_DESCSZ &&
-				    note.nh.n_type ==
-				    ELF_NOTE_TYPE_NETBSD_TAG &&
-				    memcmp(note.name, ELF_NOTE_NETBSD_NAME,
-				    sizeof(note.name)) == 0) {
-					memcpy(&netbsd_version, &note.desc,
-					    sizeof(netbsd_version));
-				}
-				shp[i].sh_offset = 0;
-				break;
-			}
-		}
-		if (flags & LOAD_SYM) {
-#ifndef _STANDALONE
-			/* Externalize the section headers. */
-			for (i = 0; i < elf->e_shnum; i++)
-				externalize_shdr(elf->e_ident[EI_DATA],
-				    &shp[i]);
-#endif
-			BCOPY(shp, shpp, sz);
-
-			if (first == 0)
-				PROGRESS(("]"));
-		}
-		DEALLOC(shp, sz);
-		if (shstr)
-			DEALLOC(shstr, shstrsz);
 	}
 
 	/*
-	 * Frob the copied ELF header to give information relative
-	 * to elfp.
+	 * Update the ELF HEADER to give information relative to elfp.
 	 */
 	if (flags & LOAD_HDR) {
 		elf->e_phoff = 0;
@@ -591,13 +619,6 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 
 	marks[MARK_START] = LOADADDR(minp);
 	marks[MARK_ENTRY] = LOADADDR(elf->e_entry);
-	/*
-	 * Since there can be more than one symbol section in the code
-	 * and we need to find strtab too in order to do anything
-	 * useful with the symbols, we just pass the whole elf
-	 * header back and we let the kernel debugger find the
-	 * location and number of symbols by itself.
-	 */
 	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
 	marks[MARK_SYM] = LOADADDR(elfp);
 	marks[MARK_END] = LOADADDR(maxp);
@@ -606,38 +627,6 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 freephdr:
 	DEALLOC(phdr, sz);
 	return 1;
-
-freeshp:
-	DEALLOC(shp, sz);
-	return 1;
 }
-
-#ifdef TEST
-#include <stdlib.h>
-#include <fcntl.h>
-#include <err.h>
-#include <stdio.h>
-u_int32_t netbsd_version;
-int
-main(int argc, char *argv[])
-{
-	int fd;
-	u_long marks[MARK_MAX];
-	Elf_Ehdr elf;
-	if (argc != 2) {
-		(void)fprintf(stderr, "Usage: %s <file>\n", getprogname());
-		return 1;
-	}
-	if ((fd = open(argv[1], O_RDONLY)) == -1)
-		err(1, "Can't open `%s'", argv[1]);
-	if (read(fd, &elf, sizeof(elf)) != sizeof(elf))
-		err(1, "Can't read `%s'", argv[1]);
-	memset(marks, 0, sizeof(marks));
-	marks[MARK_START] = (u_long)malloc(2LL * 1024 * 2024 * 1024);
-	ELFNAMEEND(loadfile)(fd, &elf, marks, LOAD_ALL);
-	printf("%d\n", netbsd_version);
-	return 0;
-}
-#endif
 
 #endif /* (ELFSIZE == 32 && BOOT_ELF32) || (ELFSIZE == 64 && BOOT_ELF64) */
