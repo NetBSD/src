@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.10 2017/09/24 20:09:22 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.11 2017/09/25 00:03:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.10 2017/09/24 20:09:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.11 2017/09/25 00:03:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,6 +113,8 @@ struct tegra_xusb_softc {
 	struct fw_dma		sc_fw_dma;
 	struct clk		*sc_clk_ss_src;
 	enum xusb_type		sc_type;
+
+	bool			sc_scale_ss_clock;
 };
 
 static uint32_t	csb_read_4(struct tegra_xusb_softc * const, bus_size_t);
@@ -168,10 +170,20 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = faa->faa_bst;
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_dmatag = faa->faa_dmat;
+	sc->sc_quirks = XHCI_DEFERRED_START;
 	psc->sc_phandle = faa->faa_phandle;
 	psc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	switch (psc->sc_type) {
+	case XUSB_T124:
+		psc->sc_scale_ss_clock = true;
+		break;
+	default:
+		psc->sc_scale_ss_clock = false;
+		break;
+	}
+
+	if (fdtbus_get_reg_byname(faa->faa_phandle, "hcd", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
@@ -182,7 +194,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	DPRINTF(sc->sc_dev, "mapped %#llx\n", (uint64_t)addr);
 
-	if (fdtbus_get_reg(faa->faa_phandle, 1, &addr, &size) != 0) {
+	if (fdtbus_get_reg_byname(faa->faa_phandle, "fpci", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
@@ -193,7 +205,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	DPRINTF(sc->sc_dev, "mapped %#llx\n", (uint64_t)addr);
 
-	if (fdtbus_get_reg(faa->faa_phandle, 2, &addr, &size) != 0) {
+	if (fdtbus_get_reg_byname(faa->faa_phandle, "ipfs", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
@@ -210,7 +222,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	psc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_USB,
-	    0, xhci_intr, sc);
+	    FDT_INTR_MPSAFE, xhci_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -224,7 +236,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	psc->sc_ih_mbox = fdtbus_intr_establish(faa->faa_phandle, 1, IPL_VM,
-	    0, tegra_xusb_intr_mbox, psc);
+	    FDT_INTR_MPSAFE, tegra_xusb_intr_mbox, psc);
 	if (psc->sc_ih_mbox == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -282,7 +294,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	tegra_xusb_attach_check(sc, psc->sc_clk_ss_src == NULL,
 		"failed to get xusb_ss_src clock");
 
-	if (psc->sc_type == XUSB_T124) {
+	if (psc->sc_scale_ss_clock) {
 		rate = clk_get_rate(psc->sc_clk_ss_src);
 		DPRINTF(sc->sc_dev, "xusb_ss_src rate %u\n", rate);
 		error = clk_set_rate(psc->sc_clk_ss_src, 2000000);
@@ -397,7 +409,6 @@ tegra_xusb_mountroot(device_t self)
 	val = csb_read_4(psc, XUSB_CSB_FALCON_CPUCTL_REG);
 	DPRINTF(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n", val);
 
-
 	error = xhci_init(sc);
 	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
@@ -407,6 +418,8 @@ tegra_xusb_mountroot(device_t self)
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 
 	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint);
+
+	xhci_start(sc);
 
 	error = xusb_mailbox_send(psc, 0x01000000);
 	if (error) {
@@ -456,23 +469,28 @@ tegra_xusb_intr_mbox(void *v)
 		break;
 	case 4:
 	case 5:
-		DPRINTF(sc->sc_dev, "SSPI_CLOCK %u\n", data * 1000);
-		rate = clk_get_rate(psc->sc_clk_ss_src);
-		DPRINTF(sc->sc_dev, "rate of psc->sc_clk_ss_src %u\n",
-		    rate);
-		error = clk_set_rate(psc->sc_clk_ss_src, data * 1000);
-		if (error != 0)
-			goto clk_fail;
-		rate = clk_get_rate(psc->sc_clk_ss_src);
-		DPRINTF(sc->sc_dev,
-		    "rate of psc->sc_clk_ss_src %u after\n", rate);
-		if (data == (rate / 1000)) {
+		if (psc->sc_scale_ss_clock) {
+			DPRINTF(sc->sc_dev, "SSPI_CLOCK %u\n", data * 1000);
+			rate = clk_get_rate(psc->sc_clk_ss_src);
+			DPRINTF(sc->sc_dev, "rate of psc->sc_clk_ss_src %u\n",
+			    rate);
+			error = clk_set_rate(psc->sc_clk_ss_src, data * 1000);
+			if (error != 0)
+				goto clk_fail;
+			rate = clk_get_rate(psc->sc_clk_ss_src);
+			DPRINTF(sc->sc_dev,
+			    "rate of psc->sc_clk_ss_src %u after\n", rate);
+			if (data == (rate / 1000)) {
+				msg = __SHIFTIN(128, MAILBOX_DATA_TYPE) |
+				      __SHIFTIN(rate / 1000, MAILBOX_DATA_DATA);
+			} else
+clk_fail:	
+				msg = __SHIFTIN(129, MAILBOX_DATA_TYPE) |
+				      __SHIFTIN(rate / 1000, MAILBOX_DATA_DATA);
+		} else {
 			msg = __SHIFTIN(128, MAILBOX_DATA_TYPE) |
-			      __SHIFTIN(rate / 1000, MAILBOX_DATA_DATA);
-		} else
-clk_fail:
-			msg = __SHIFTIN(129, MAILBOX_DATA_TYPE) |
-			      __SHIFTIN(rate / 1000, MAILBOX_DATA_DATA);
+			      __SHIFTIN(data, MAILBOX_DATA_DATA);
+		}
 		xusb_mailbox_send(psc, msg);
 		break;
 	case 9:
