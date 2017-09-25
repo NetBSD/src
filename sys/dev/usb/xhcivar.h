@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.7 2017/01/19 16:05:00 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.8 2017/09/25 00:03:11 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -135,9 +135,11 @@ struct xhci_softc {
 
 	int sc_quirks;
 #define XHCI_QUIRK_INTEL	__BIT(0) /* Intel xhci chip */
+#define XHCI_DEFERRED_START	__BIT(1)
 };
 
 int	xhci_init(struct xhci_softc *);
+void	xhci_start(struct xhci_softc *);
 int	xhci_intr(void *);
 int	xhci_detach(struct xhci_softc *, int);
 int	xhci_activate(device_t, enum devact);

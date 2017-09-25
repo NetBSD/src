@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.73 2017/08/22 16:57:00 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.74 2017/09/25 00:03:10 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.73 2017/08/22 16:57:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.74 2017/09/25 00:03:10 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -891,6 +891,23 @@ xhci_ecp(struct xhci_softc *sc, uint32_t hcc)
 	"b\0AC64\0"						\
 	"\0"
 
+void
+xhci_start(struct xhci_softc *sc)
+{
+	xhci_rt_write_4(sc, XHCI_IMAN(0), XHCI_IMAN_INTR_ENA);
+	if ((sc->sc_quirks & XHCI_QUIRK_INTEL) != 0)
+		/* Intel xhci needs interrupt rate moderated. */
+		xhci_rt_write_4(sc, XHCI_IMOD(0), XHCI_IMOD_DEFAULT_LP);
+	else
+		xhci_rt_write_4(sc, XHCI_IMOD(0), 0);
+	aprint_debug_dev(sc->sc_dev, "current IMOD %u\n",
+	    xhci_rt_read_4(sc, XHCI_IMOD(0)));
+
+	xhci_op_write_4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS); /* Go! */
+	aprint_debug_dev(sc->sc_dev, "USBCMD %08"PRIx32"\n",
+	    xhci_op_read_4(sc, XHCI_USBCMD));
+}
+
 int
 xhci_init(struct xhci_softc *sc)
 {
@@ -1168,18 +1185,8 @@ xhci_init(struct xhci_softc *sc)
 	    XHCI_ERSTE_SIZE * XHCI_EVENT_RING_SEGMENTS);
 #endif
 
-	xhci_rt_write_4(sc, XHCI_IMAN(0), XHCI_IMAN_INTR_ENA);
-	if ((sc->sc_quirks & XHCI_QUIRK_INTEL) != 0)
-		/* Intel xhci needs interrupt rate moderated. */
-		xhci_rt_write_4(sc, XHCI_IMOD(0), XHCI_IMOD_DEFAULT_LP);
-	else
-		xhci_rt_write_4(sc, XHCI_IMOD(0), 0);
-	aprint_debug_dev(sc->sc_dev, "current IMOD %u\n",
-	    xhci_rt_read_4(sc, XHCI_IMOD(0)));
-
-	xhci_op_write_4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS); /* Go! */
-	aprint_debug_dev(sc->sc_dev, "USBCMD %08"PRIx32"\n",
-	    xhci_op_read_4(sc, XHCI_USBCMD));
+	if ((sc->sc_quirks & XHCI_DEFERRED_START) == 0)
+		xhci_start(sc);
 
 	return 0;
 
