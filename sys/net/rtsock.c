@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.228 2017/09/25 01:56:22 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.229 2017/09/25 01:57:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.228 2017/09/25 01:56:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.229 2017/09/25 01:57:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -184,6 +184,11 @@ struct routecb {
 };
 #define sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
 
+static struct rawcbhead rt_rawcb;
+#ifdef NET_MPSAFE
+static kmutex_t *rt_so_mtx;
+#endif
+
 static void
 rt_adjustcount(int af, int cnt)
 {
@@ -260,6 +265,14 @@ COMPATNAME(route_attach)(struct socket *so, int proto)
 	so->so_pcb = rp;
 
 	s = splsoftnet();
+
+#ifdef NET_MPSAFE
+	KASSERT(so->so_lock == NULL);
+	mutex_obj_hold(rt_so_mtx);
+	so->so_lock = rt_so_mtx;
+	solock(so);
+#endif
+
 	if ((error = raw_attach(so, proto, &rt_rawcb)) == 0) {
 		rt_adjustcount(rp->rcb_proto.sp_protocol, 1);
 		rp->rcb_laddr = &COMPATNAME(route_info).ri_src;
@@ -2025,8 +2038,10 @@ COMPATNAME(route_intr)(void *cookie)
 	struct route_info * const ri = &COMPATNAME(route_info);
 	struct mbuf *m;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 	for (;;) {
 		IFQ_LOCK(&ri->ri_intrq);
 		IF_DEQUEUE(&ri->ri_intrq, m);
@@ -2034,10 +2049,18 @@ COMPATNAME(route_intr)(void *cookie)
 		if (m == NULL)
 			break;
 		proto.sp_protocol = M_GETCTX(m, uintptr_t);
+#ifdef NET_MPSAFE
+		mutex_enter(rt_so_mtx);
+#endif
 		raw_input(m, &proto, &ri->ri_src, &ri->ri_dst, &rt_rawcb);
+#ifdef NET_MPSAFE
+		mutex_exit(rt_so_mtx);
+#endif
 	}
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -2074,6 +2097,9 @@ COMPATNAME(route_init)(void)
 
 #ifndef COMPAT_RTSOCK
 	rt_init();
+#endif
+#ifdef NET_MPSAFE
+	rt_so_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 #endif
 
 	sysctl_net_route_setup(NULL);
