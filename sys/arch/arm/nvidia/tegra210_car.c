@@ -1,4 +1,5 @@
-/* $NetBSD: tegra210_car.c,v 1.10 2017/09/24 20:09:53 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.11 2017/09/25 00:03:34 jmcneill Exp $ */
+#define TEGRA210_CAR_DEBUG
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.10 2017/09/24 20:09:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.11 2017/09/25 00:03:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -538,6 +539,15 @@ static struct tegra_clk tegra210_car_clocks[] = {
 		CAR_CLKSRC_XUSB_FALCON_REG, CAR_CLKSRC_XUSB_FALCON_DIV),
 	CLK_DIV("USB2_HSIC_TRK", "CLK_M",
 		CAR_CLKSRC_USB2_HSIC_TRK_REG, CAR_CLKSRC_USB2_HSIC_TRK_DIV),
+	CLK_DIV("DIV_PLL_U_OUT1", "PLL_U",
+		CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT1_RATIO),
+	CLK_DIV("DIV_PLL_U_OUT2", "PLL_U",
+		CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT2_RATIO),
+
+	CLK_GATE("PLL_U_OUT1", "DIV_PLL_U_OUT1",
+		 CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT1_CLKEN),
+	CLK_GATE("PLL_U_OUT2", "DIV_PLL_U_OUT2",
+		 CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT2_CLKEN),
 
 	CLK_GATE_L("UARTA", "DIV_UARTA", CAR_DEV_L_UARTA),
 	CLK_GATE_L("UARTB", "DIV_UARTB", CAR_DEV_L_UARTB),
@@ -553,10 +563,11 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_GATE_V("I2C4", "DIV_I2C4", CAR_DEV_V_I2C4),
 	CLK_GATE_H("I2C5", "DIV_I2C5", CAR_DEV_H_I2C5),
 	CLK_GATE_X("I2C6", "DIV_I2C6", CAR_DEV_X_I2C6),
+	CLK_GATE_W("XUSB_GATE", "CLK_M", CAR_DEV_W_XUSB),
 	CLK_GATE_U("XUSB_HOST", "XUSB_HOST_SRC", CAR_DEV_U_XUSB_HOST),
 	CLK_GATE_W("XUSB_SS", "XUSB_SS_SRC", CAR_DEV_W_XUSB_SS),
 	CLK_GATE_H("FUSE", "CLK_M", CAR_DEV_H_FUSE),
-	CLK_GATE_Y("USB2_TRK", "UBS2_HSIC_TRK", CAR_DEV_Y_USB2_TRK),
+	CLK_GATE_Y("USB2_TRK", "USB2_HSIC_TRK", CAR_DEV_Y_USB2_TRK),
 	CLK_GATE_Y("HSIC_TRK", "USB2_HSIC_TRK", CAR_DEV_Y_HSIC_TRK),
 	CLK_GATE_H("APBDMA", "CLK_M", CAR_DEV_H_APBDMA),
 	CLK_GATE_L("USBD", "PLL_U_480M", CAR_DEV_L_USBD),
@@ -566,15 +577,20 @@ static struct tegra_clk tegra210_car_clocks[] = {
 struct tegra210_init_parent {
 	const char *clock;
 	const char *parent;
+	u_int rate;
+	u_int enable;
 } tegra210_init_parents[] = {
-	{ "SDMMC1", 		"PLL_P" },
-	{ "SDMMC2",		"PLL_P" },
-	{ "SDMMC3",		"PLL_P" },
-	{ "SDMMC4",		"PLL_P" },
-	{ "XUSB_HOST_SRC",	"PLL_P" },
-	{ "XUSB_FALCON_SRC",	"PLL_P" },
-	{ "XUSB_SS_SRC",	"PLL_U_480M" },
-	{ "XUSB_FS_SRC",	"PLL_U_48M" },
+	{ "SDMMC1", 		"PLL_P", 0, 0 },
+	{ "SDMMC2",		"PLL_P", 0, 0 },
+	{ "SDMMC3",		"PLL_P", 0, 0 },
+	{ "SDMMC4",		"PLL_P", 0, 0 },
+	{ "XUSB_GATE",		NULL, 0, 1 },
+	{ "XUSB_HOST_SRC",	"PLL_P", 102000000, 0 },
+	{ "XUSB_FALCON_SRC",	"PLL_P", 204000000, 0 },
+	{ "XUSB_SS_SRC",	"PLL_U_480M", 120000000, 0 },
+	{ "XUSB_FS_SRC",	"PLL_U_48M", 48000000, 0 },
+	{ "PLL_U_OUT1",		NULL, 48000000, 1 },
+	{ "PLL_U_OUT2",		NULL, 60000000, 1 },
 };
 
 struct tegra210_car_rst {
@@ -719,18 +735,38 @@ tegra210_car_parent_init(struct tegra210_car_softc *sc)
 
 	for (n = 0; n < __arraycount(tegra210_init_parents); n++) {
 		clk = clk_get(&sc->sc_clkdom, tegra210_init_parents[n].clock);
-		KASSERT(clk != NULL);
-		clk_parent = clk_get(&sc->sc_clkdom,
-		    tegra210_init_parents[n].parent);
-		KASSERT(clk_parent != NULL);
+		KASSERTMSG(clk != NULL, "tegra210 clock %s not found", tegra210_init_parents[n].clock);
 
-		error = clk_set_parent(clk, clk_parent);
-		if (error) {
-			aprint_error_dev(sc->sc_dev,
-			    "couldn't set '%s' parent to '%s': %d\n",
-			    clk->name, clk_parent->name, error);
+		if (tegra210_init_parents[n].parent != NULL) {
+			clk_parent = clk_get(&sc->sc_clkdom,
+			    tegra210_init_parents[n].parent);
+			KASSERT(clk_parent != NULL);
+
+			error = clk_set_parent(clk, clk_parent);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "couldn't set '%s' parent to '%s': %d\n",
+				    clk->name, clk_parent->name, error);
+			}
+			clk_put(clk_parent);
 		}
-		clk_put(clk_parent);
+		if (tegra210_init_parents[n].rate != 0) {
+			error = clk_set_rate(clk, tegra210_init_parents[n].rate);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "couldn't set '%s' rate to %u Hz: %d\n",
+				    clk->name, tegra210_init_parents[n].rate,
+				    error);
+			}
+		}
+		if (tegra210_init_parents[n].enable) {
+			error = clk_enable(clk);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "couldn't enable '%s': %d\n", clk->name,
+				    error);
+			}
+		}
 		clk_put(clk);
 	}
 }
