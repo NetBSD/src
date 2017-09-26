@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_xusbpad.c,v 1.7 2017/09/25 00:03:34 jmcneill Exp $ */
+/* $NetBSD: tegra210_xusbpad.c,v 1.8 2017/09/26 16:12:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.7 2017/09/25 00:03:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.8 2017/09/26 16:12:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,6 +156,17 @@ struct tegra210_xusbpad_softc {
 	struct fdtbus_reset	*sc_rst;
 
 	bool			sc_enabled;
+};
+
+struct tegra210_xusbpad_phy_softc {
+	device_t		sc_dev;
+	int			sc_phandle;
+	struct tegra210_xusbpad_softc *sc_xusbpad;
+};
+
+struct tegra210_xusbpad_phy_attach_args {
+	struct tegra210_xusbpad_softc	*paa_xusbpad;
+	int			paa_phandle;
 };
 
 #define	RD4(sc, reg)					\
@@ -550,16 +561,18 @@ tegra210_xusbpad_configure_pads(struct tegra210_xusbpad_softc *sc,
 		}
 	}
 
-	/* Configure lanes */
+	/* Attach PHYs */
 	phandle = of_find_firstchild_byname(phandle, "lanes");
 	if (phandle == -1) {
 		aprint_error_dev(sc->sc_dev, "no 'pads/%s/lanes' node\n", name);
 		return;
 	}
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
-			continue;
-		tegra210_xusbpad_configure_lane(sc, child);
+		struct tegra210_xusbpad_phy_attach_args paa = {
+			.paa_xusbpad = sc,
+			.paa_phandle = child
+		};
+		config_found(sc->sc_dev, &paa, NULL);
 	}
 }
 
@@ -813,5 +826,70 @@ tegra210_xusbpad_attach(device_t parent, device_t self, void *aux)
 	tegra210_xusbpad_configure_ports(sc);
 }
 
+static void *
+tegra210_xusbpad_phy_acquire(device_t dev, const void *data, size_t len)
+{
+	struct tegra210_xusbpad_phy_softc * const sc = device_private(dev);
+
+	if (len != 0)
+		return NULL;
+
+	return sc;
+}
+
+static void
+tegra210_xusbpad_phy_release(device_t dev, void *priv)
+{
+};
+
+static int
+tegra210_xusbpad_phy_enable(device_t dev, void *priv, bool enable)
+{
+	struct tegra210_xusbpad_phy_softc * const sc = device_private(dev);
+	
+	if (enable == false)
+		return ENXIO;	/* not implemented */
+
+	tegra210_xusbpad_configure_lane(sc->sc_xusbpad, sc->sc_phandle);
+
+	return 0;
+}
+
+static const struct fdtbus_phy_controller_func tegra210_xusbpad_phy_funcs = {
+	.acquire = tegra210_xusbpad_phy_acquire,
+	.release = tegra210_xusbpad_phy_release,
+	.enable = tegra210_xusbpad_phy_enable,
+};
+
 CFATTACH_DECL_NEW(tegra210_xusbpad, sizeof(struct tegra210_xusbpad_softc),
 	tegra210_xusbpad_match, tegra210_xusbpad_attach, NULL, NULL);
+
+static int
+tegra210_xusbpad_phy_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct tegra210_xusbpad_phy_attach_args * const paa = aux;
+
+	if (!fdtbus_status_okay(paa->paa_phandle))
+		return 0;
+
+	return 1;
+}
+
+static void
+tegra210_xusbpad_phy_attach(device_t parent, device_t self, void *aux)
+{
+	struct tegra210_xusbpad_phy_softc * const sc = device_private(self);
+	struct tegra210_xusbpad_phy_attach_args * const paa = aux;
+
+	sc->sc_dev = self;
+	sc->sc_phandle = paa->paa_phandle;
+	sc->sc_xusbpad = paa->paa_xusbpad;
+
+	aprint_naive("\n");
+	aprint_normal(": %s\n", fdtbus_get_string(sc->sc_phandle, "name"));
+
+	fdtbus_register_phy_controller(self, sc->sc_phandle, &tegra210_xusbpad_phy_funcs);
+}
+
+CFATTACH_DECL_NEW(tegra210xphy, sizeof(struct tegra210_xusbpad_phy_softc),
+	tegra210_xusbpad_phy_match, tegra210_xusbpad_phy_attach, NULL, NULL);
