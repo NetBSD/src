@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.101 2016/12/15 09:28:05 ozaki-r Exp $ */
+/* $NetBSD: if_ti.c,v 1.102 2017/09/26 07:42:06 knakahara Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.101 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.102 2017/09/26 07:42:06 knakahara Exp $");
 
 #include "opt_inet.h"
 
@@ -2018,10 +2018,8 @@ ti_rxeof(struct ti_softc *sc)
 		}
 
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
-			VLAN_INPUT_TAG(ifp, m,
-			    /* ti_vlan_tag also has the priority, trim it */
-			    cur_rx->ti_vlan_tag & 4095,
-			    continue);
+			/* ti_vlan_tag also has the priority, trim it */
+			vlan_set_tag(m, cur_rx->ti_vlan_tag & 0x0fff);
 		}
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -2209,7 +2207,6 @@ ti_encap_tigon1(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
-	struct m_tag *mtag;
 	u_int16_t csum_flags = 0;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
@@ -2265,9 +2262,9 @@ ti_encap_tigon1(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
+		if (vlan_has_tag(m_head)) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
+			f->ti_vlan_tag = vlan_get_tag(m_head);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
@@ -2313,7 +2310,6 @@ ti_encap_tigon2(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
-	struct m_tag *mtag;
 	u_int16_t csum_flags = 0;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
@@ -2357,9 +2353,9 @@ ti_encap_tigon2(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
+		if (vlan_has_tag(m_head)) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
+			f->ti_vlan_tag = vlan_get_tag(m_head);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
