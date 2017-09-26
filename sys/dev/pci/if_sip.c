@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.166 2017/05/10 02:46:33 msaitoh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.167 2017/09/26 07:42:06 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.166 2017/05/10 02:46:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.167 2017/09/26 07:42:06 knakahara Exp $");
 
 
 
@@ -1376,7 +1376,6 @@ static inline void
 sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
     uint64_t capenable)
 {
-	struct m_tag *mtag;
 	u_int32_t extsts;
 #ifdef DEBUG
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1397,10 +1396,10 @@ sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
 	 * htole32(). That's why there must be an
 	 * unconditional swap instead of htons() inside.
 	 */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
+	if (vlan_has_tag(m0)) {
 		sc->sc_txdescs[lasttx].sipd_extsts |=
 		    htole32(EXTSTS_VPKT |
-				(bswap16(VLAN_TAG_VALUE(mtag)) &
+				(bswap16(vlan_get_tag(m0)) &
 				 EXTSTS_VTCI));
 	}
 
@@ -2206,8 +2205,7 @@ gsip_rxintr(struct sip_softc *sc)
 		 * of htons() is used.
 		 */
 		if ((extsts & EXTSTS_VPKT) != 0) {
-			VLAN_INPUT_TAG(ifp, m, bswap16(extsts & EXTSTS_VTCI),
-			    continue);
+			vlan_set_tag(m, bswap16(extsts & EXTSTS_VTCI));
 		}
 
 		/*

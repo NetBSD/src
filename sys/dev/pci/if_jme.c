@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.31 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.32 2017/09/26 07:42:06 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.31 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.32 2017/09/26 07:42:06 knakahara Exp $");
 
 
 #include <sys/param.h>
@@ -1208,8 +1208,7 @@ jme_intr_rx(jme_softc_t *sc) {
 		}
 		if (flags & JME_RD_VLAN_TAG) {
 			/* pass to vlan_input() */
-			VLAN_INPUT_TAG(ifp, mhead,
-			    (flags & JME_RD_VLAN_MASK), continue);
+			vlan_set_tag(mhead, (flags & JME_RD_VLAN_MASK));
 		}
 		if_percpuq_enqueue(ifp->if_percpuq, mhead);
 	}
@@ -1347,7 +1346,6 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 {
 	struct jme_desc *desc;
 	struct mbuf *m;
-	struct m_tag *mtag;
 	int error, i, prod, headdsc, nsegs;
 	uint32_t cflags, tso_segsz;
 
@@ -1490,8 +1488,8 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 			cflags |= JME_TD_UDPCSUM;
 	}
 	/* Configure VLAN. */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->jme_ec, m)) != NULL) {
-		cflags |= (VLAN_TAG_VALUE(mtag) & JME_TD_VLAN_MASK);
+	if (vlan_has_tag(m)) {
+		cflags |= (vlan_get_tag(m) & JME_TD_VLAN_MASK);
 		cflags |= JME_TD_VLAN_TAG;
 	}
 
