@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.11 2017/09/25 00:03:34 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.12 2017/09/26 16:12:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.11 2017/09/25 00:03:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.12 2017/09/26 16:12:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,9 +159,10 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	struct fdtbus_reset *rst;
+	struct fdtbus_phy *phy;
 	struct clk *clk;
 	uint32_t rate;
-	int error;
+	int error, n;
 
 	aprint_naive("\n");
 	aprint_normal(": XUSB\n");
@@ -244,10 +245,17 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
+	/* Enable PHYs */
+	for (n = 0; (phy = fdtbus_phy_get_index(faa->faa_phandle, n)) != NULL; n++)
+		if (fdtbus_phy_enable(phy, true) != 0)
+			aprint_error_dev(self, "failed to enable PHY #%d\n", n);
+
 	/* Enable XUSB power rails */
 
 	tegra_pmc_power(PMC_PARTID_XUSBC, true);	/* Host/USB2.0 */
+	tegra_pmc_remove_clamping(PMC_PARTID_XUSBC);
 	tegra_pmc_power(PMC_PARTID_XUSBA, true);	/* SuperSpeed */
+	tegra_pmc_remove_clamping(PMC_PARTID_XUSBA);
 
 	/* Enable XUSB clocks */
 

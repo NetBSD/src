@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.13 2017/09/25 08:55:07 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.14 2017/09/26 16:12:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.13 2017/09/25 08:55:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.14 2017/09/26 16:12:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -609,6 +609,9 @@ struct tegra210_init_parent {
 	{ "XUSB_FS_SRC",	"PLL_U_48M", 48000000, 0 },
 	{ "PLL_U_OUT1",		NULL, 48000000, 1 },
 	{ "PLL_U_OUT2",		NULL, 60000000, 1 },
+	{ "CML0",		NULL, 0, 1 },
+	{ "AFI",		NULL, 0, 1 },
+	{ "PCIE",		NULL, 0, 1 },
 };
 
 struct tegra210_car_rst {
@@ -817,9 +820,15 @@ tegra210_car_utmip_init(struct tegra210_car_softc *sc)
 	tegra_reg_set_clear(bst, bsh, CAR_UTMIP_PLL_CFG1_REG,
 	    0x3, CAR_UTMIP_PLL_CFG1_XTAL_FREQ_COUNT);
 
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_U_SET_REG, CAR_DEV_U_AFI);
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_U_SET_REG, CAR_DEV_U_PCIE);
+
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_L_CLR_REG, CAR_DEV_L_USBD);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_H_CLR_REG, CAR_DEV_H_USB2);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG, CAR_DEV_W_XUSB);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_U_CLR_REG, CAR_DEV_U_AFI);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_U_CLR_REG, CAR_DEV_U_PCIE);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_U_CLR_REG, CAR_DEV_U_PCIEXCLK);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_Y_CLR_REG, CAR_DEV_Y_PEX_USB_UPHY);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_Y_CLR_REG, CAR_DEV_Y_SATA_USB_UPHY);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pciereg.h,v 1.3 2015/11/14 01:38:58 jakllsch Exp $ */
+/* $NetBSD: tegra_pciereg.h,v 1.4 2017/09/26 16:12:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,9 @@
 #ifndef _ARM_TEGRA_PCIEREG_H
 #define _ARM_TEGRA_PCIEREG_H
 
+/* PADS */
+#define PADS_REFCLK_CFG0_REG	0xc8
+
 /* AFI */
 #define AFI_AXI_NBAR		9
 
@@ -52,6 +55,11 @@
 #define AFI_INTR_SIGNATURE_REG	0xbc
 #define AFI_SM_INTR_ENABLE_REG	0xc4
 #define AFI_AFI_INTR_ENABLE_REG	0xc8
+#define AFI_PCIE_CONFIG_REG	0xf8
+#define AFI_PEXn_CTRL_REG(n)	(0x110 + (n) * 8)
+#define AFI_PEXn_STATUS_REG(n)	(0x114 + (n) * 8)
+#define AFI_PLLE_CONTROL_REG	0x160
+#define AFI_PEXBIAS_CTRL_REG	0x168
 #define AFI_MSG_REG		0x190
 
 #define AFI_INTR_MASK_MSI	__BIT(8)
@@ -59,6 +67,21 @@
 
 #define AFI_INTR_CODE_INT_CODE	__BITS(4,0)
 #define AFI_INTR_CODE_SM_MSG	6
+
+#define AFI_PCIE_CONFIG_SM2TMS0_XBAR_CONFIG		__BITS(23,20)
+#define  AFI_PCIE_CONFIG_SM2TMS0_XBAR_CONFIG_2_1	0
+#define  AFI_PCIE_CONFIG_SM2TMS0_XBAR_CONFIG_4_1	1
+#define  AFI_PCIE_CONFIG_PCIECn_DISABLE_DEVICE(n)	__BIT(1 + (n))
+
+#define AFI_PEXn_CTRL_REFCLK_OVERRIDE_EN		__BIT(4)
+#define AFI_PEXn_CTRL_REFCLK_EN				__BIT(3)
+#define AFI_PEXn_CTRL_CLKREQ_EN				__BIT(1)
+#define AFI_PEXn_CTRL_RST_L				__BIT(0)
+
+#define AFI_PLLE_CONTROL_BYPASS_PADS2PLLE_CONTROL	__BIT(9)
+#define AFI_PLLE_CONTROL_PADS2PLLE_CONTROL_EN		__BIT(1)
+
+#define AFI_PEXBIAS_CTRL_PWRD	__BIT(0)
 
 #define AFI_MSG_INT1		__BITS(27,24)
 #define AFI_MSG_PM_PME1		__BIT(20)
