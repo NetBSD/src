@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg_dd.c,v 1.2 2017/08/04 00:25:23 mrg Exp $ */
+/* $NetBSD: hdafg_dd.c,v 1.3 2017/09/26 09:24:22 kre Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg_dd.c,v 1.2 2017/08/04 00:25:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg_dd.c,v 1.3 2017/09/26 09:24:22 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ hdafg_dd_parse_info(uint8_t *data, size_t datalen, struct hdafg_dd_info *hdi)
 	data += ELD_MNL(block);
 	datalen -= ELD_MNL(block);
 
-	if (datalen != ELD_SAD_COUNT(block) * sizeof(hdi->sad[0])) {
+	if (datalen < ELD_SAD_COUNT(block) * sizeof(hdi->sad[0])) {
 #ifdef HDAFG_HDMI_DEBUG
 		printf(" datalen %u sadcount %u sizeof sad %u\n",
 		    (unsigned int)datalen,
@@ -109,10 +109,8 @@ hdafg_dd_parse_info(uint8_t *data, size_t datalen, struct hdafg_dd_info *hdi)
 	}
 
 #ifdef HDAFG_HDMI_DEBUG
-	printf("datalen = %u\n", (unsigned int)datalen);
+	printf("hdafg eld padding ignored = %u\n", (unsigned int)datalen);
 #endif
-	KASSERT(datalen == 0);
-
 	return 0;
 }
 
