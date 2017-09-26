@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.22 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.23 2017/09/26 07:42:06 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.22 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.23 2017/09/26 07:42:06 knakahara Exp $");
 
 #include "vlan.h"
 
@@ -910,9 +910,6 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, nsegs, prod;
-#if NVLAN > 0
-	struct m_tag *mtag;
-#endif
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -997,8 +994,8 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 
 #if NVLAN > 0
 	/* Configure VLAN hardware tag insertion. */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ec, m))) {
-		vtag = ALE_TX_VLAN_TAG(htons(VLAN_TAG_VALUE(mtag)));
+	if (vlan_has_tag(m)) {
+		vtag = ALE_TX_VLAN_TAG(htons(vlan_get_tag(m)));
 		vtag = ((vtag << ALE_TD_VLAN_SHIFT) & ALE_TD_VLAN_MASK);
 		cflags |= ALE_TD_INSERT_VLAN_TAG;
 	}
@@ -1540,7 +1537,7 @@ ale_rxeof(struct ale_softc *sc)
 #if NVLAN > 0
 		if (status & ALE_RD_VLAN) {
 			uint32_t vtags = ALE_RX_VLAN(le32toh(rs->vtags));
-			VLAN_INPUT_TAG(ifp, m, ALE_RX_VLAN_TAG(vtags), );
+			vlan_set_tag(m, ALE_RX_VLAN_TAG(vtags));
 		}
 #endif
 

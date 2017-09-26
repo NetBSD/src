@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $ */
+/* $NetBSD: if_txp.c,v 1.48 2017/09/26 07:42:06 knakahara Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.48 2017/09/26 07:42:06 knakahara Exp $");
 
 #include "opt_inet.h"
 
@@ -749,8 +749,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		m->m_pkthdr.csum_flags = sumflags;
 
 		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
-			VLAN_INPUT_TAG(ifp, m, htons(rxd->rx_vlan >> 16),
-			    continue);
+			vlan_set_tag(m, htons(rxd->rx_vlan >> 16));
 		}
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -1397,7 +1396,6 @@ txp_start(struct ifnet *ifp)
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
 	u_int32_t firstprod, firstcnt, prod, cnt, i;
-	struct m_tag *mtag;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1458,9 +1456,9 @@ txp_start(struct ifnet *ifp)
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
 
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_arpcom, m)))
+		if (vlan_has_tag(m))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
-			  (htons(VLAN_TAG_VALUE(mtag)) << TX_PFLAGS_VLANTAG_S);
+			  (htons(vlan_get_tag(m)) << TX_PFLAGS_VLANTAG_S);
 
 		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;

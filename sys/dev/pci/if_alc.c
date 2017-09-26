@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.24 2016/12/21 11:56:55 maya Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.25 2017/09/26 07:42:06 knakahara Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1853,9 +1853,6 @@ alc_encap(struct alc_softc *sc, struct mbuf **m_head)
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, idx, nsegs, prod;
-#if NVLAN > 0
-	struct m_tag *mtag;
-#endif
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -1914,8 +1911,8 @@ alc_encap(struct alc_softc *sc, struct mbuf **m_head)
 	idx = 0;
 #if NVLAN > 0
 	/* Configure VLAN hardware tag insertion. */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ec, m))) {
-		vtag = htons(VLAN_TAG_VALUE(mtag));
+	if (vlan_has_tag(m)) {
+		vtag = htons(vlan_get_tag(m));
 		vtag = (vtag << TD_VLAN_SHIFT) & TD_VLAN_MASK;
 		cflags |= TD_INS_VLAN_TAG;
 	}
@@ -2582,7 +2579,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 			 */
 			if (status & RRD_VLAN_TAG) {
 				u_int32_t vtag = RRD_VLAN(le32toh(rrd->vtag));
-				VLAN_INPUT_TAG(ifp, m, ntohs(vtag), );
+				vlan_set_tag(m, ntohs(vtag));
 			}
 #endif
 
