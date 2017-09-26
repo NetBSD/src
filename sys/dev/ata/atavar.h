@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.26 2017/09/19 21:06:25 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.27 2017/09/26 20:15:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -304,9 +304,9 @@ struct ata_drive_datas {
 #define RESET          0
 #define READY          1
 
-#if NATA_DMA
 	uint8_t drv_openings;		/* # of command tags */
 
+#if NATA_DMA
 	/* numbers of xfers and DMA errs. Used by ata_dmaerr() */
 	uint8_t n_dmaerrs;
 	uint32_t n_xfers;
