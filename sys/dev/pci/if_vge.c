@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.60 2016/12/15 09:28:05 ozaki-r Exp $ */
+/* $NetBSD: if_vge.c,v 1.61 2017/09/26 07:42:06 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.60 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.61 2017/09/26 07:42:06 knakahara Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1364,8 +1364,7 @@ vge_rxeof(struct vge_softc *sc)
 			 * On BE machines, tag is stored in BE as stream data
 			 *  but it was already swapped by le32toh() above.
 			 */
-			VLAN_INPUT_TAG(ifp, m,
-			    bswap16(rxctl & VGE_RDCTL_VLANID), continue);
+			vlan_set_tag(m, bswap16(rxctl & VGE_RDCTL_VLANID));
 		}
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -1539,7 +1538,6 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	struct mbuf *m_new;
 	bus_dmamap_t map;
 	int m_csumflags, seg, error, flags;
-	struct m_tag *mtag;
 	size_t sz;
 	uint32_t td_sts, td_ctl;
 
@@ -1630,14 +1628,13 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	/*
 	 * Set up hardware VLAN tagging.
 	 */
-	mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m_head);
-	if (mtag != NULL) {
+	if (vlan_has_tag(m_head)) {
 		/*
 		 * No need htons() here since vge(4) chip assumes
 		 * that tags are written in little endian and
 		 * we already use htole32() here.
 		 */
-		td_ctl |= VLAN_TAG_VALUE(mtag) | VGE_TDCTL_VTAG;
+		td_ctl |= vlan_get_tag(m_head) | VGE_TDCTL_VTAG;
 	}
 	txd->td_ctl = htole32(td_ctl);
 	txd->td_sts = htole32(td_sts);
