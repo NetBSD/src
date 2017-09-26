@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.407 2017/09/24 23:40:41 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.408 2017/09/26 04:34:59 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.407 2017/09/24 23:40:41 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.408 2017/09/26 04:34:59 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3464,6 +3464,7 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 	
 	vc->sc_pbus = true;
 	if (sc->sc_trigger_started == false) {
+		audio_mix(sc);
 		audio_mix(sc);
 		audio_mix(sc);
 		mutex_enter(sc->sc_intr_lock);
