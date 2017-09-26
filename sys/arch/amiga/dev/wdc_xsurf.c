@@ -1,4 +1,4 @@
-/*      $NetBSD: wdc_xsurf.c,v 1.2.30.1 2017/04/24 08:48:45 jdolecek Exp $ */
+/*      $NetBSD: wdc_xsurf.c,v 1.2.30.2 2017/09/26 21:06:24 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 
 #include <sys/systm.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
