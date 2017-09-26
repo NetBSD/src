@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.19 2017/02/20 09:02:01 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.20 2017/09/26 07:42:05 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.19 2017/02/20 09:02:01 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.20 2017/09/26 07:42:05 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1979,12 +1979,8 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 
 	if (!rxcd->no_csum)
 		vmxnet3_rx_csum(rxcd, m);
-	if (rxcd->vlan) {
-		VLAN_INPUT_TAG(ifp, m, rxcd->vtag,
-		    rxq->vxrxq_stats.vmrxs_ierrors++;
-		    m_freem(m);
-		    return);
-	}
+	if (rxcd->vlan)
+		vlan_set_tag(m, rxcd->vtag);
 
 	rxq->vxrxq_stats.vmrxs_ipackets++;
 	rxq->vxrxq_stats.vmrxs_ibytes += m->m_pkthdr.len;
@@ -2638,7 +2634,6 @@ vmxnet3_txq_encap(struct vmxnet3_txqueue *txq, struct mbuf **m0)
 	struct mbuf *m;
 	bus_dmamap_t dmap;
 	bus_dma_segment_t *segs;
-	struct m_tag *mtag;
 	int i, gen, start, csum_start, nsegs, error;
 
 	sc = txq->vxtxq_sc;
@@ -2701,9 +2696,9 @@ vmxnet3_txq_encap(struct vmxnet3_txqueue *txq, struct mbuf **m0)
 	txd->eop = 1;
 	txd->compreq = 1;
 
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->vmx_ethercom, m)) != NULL) {
+	if (vlan_has_tag(m)) {
 		sop->vtag_mode = 1;
-		sop->vtag = VLAN_TAG_VALUE(mtag);
+		sop->vtag = vlan_get_tag(m);
 	}
 
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {

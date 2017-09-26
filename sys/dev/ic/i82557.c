@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.147 2017/02/20 07:43:29 ozaki-r Exp $	*/
+/*	$NetBSD: i82557.c,v 1.148 2017/09/26 07:42:06 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.147 2017/02/20 07:43:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.148 2017/09/26 07:42:06 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -944,7 +944,6 @@ fxp_start(struct ifnet *ifp)
 
 		KASSERT((csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0);
 		if (sc->sc_flags & FXPF_EXT_RFA) {
-			struct m_tag *vtag;
 			struct fxp_ipcb *ipcb;
 			/*
 			 * Deal with TCP/IP checksum offload. Note that
@@ -979,10 +978,8 @@ fxp_start(struct ifnet *ifp)
 			/*
 			 * request VLAN tag insertion if needed.
 			 */
-			vtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
-			if (vtag) {
-				ipcb->ipcb_vlan_id =
-				    htobe16(*(u_int *)(vtag + 1));
+			if (vlan_has_tag(m0)) {
+				ipcb->ipcb_vlan_id = htobe16(vlan_get_tag(m0));
 				ipcb->ipcb_ip_activation_high |=
 				    FXP_IPCB_INSERTVLAN_ENABLE;
 			}
@@ -1403,16 +1400,8 @@ fxp_rxintr(struct fxp_softc *sc)
 		 * check VLAN tag stripping.
 		 */
 		if ((sc->sc_flags & FXPF_EXT_RFA) != 0 &&
-		    (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) != 0) {
-			struct m_tag *vtag;
-
-			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (vtag == NULL)
-				goto dropit;
-			*(u_int *)(vtag + 1) = be16toh(rfa->vlan_id);
-			m_tag_prepend(m, vtag);
-		}
+		    (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) != 0)
+			vlan_set_tag(m, be16toh(rfa->vlan_id));
 
 		/* Do checksum checking. */
 		if ((ifp->if_csum_flags_rx & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0)

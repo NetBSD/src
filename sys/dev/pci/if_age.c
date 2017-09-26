@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $ */
+/*	$NetBSD: if_age.c,v 1.51 2017/09/26 07:42:06 knakahara Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.51 2017/09/26 07:42:06 knakahara Exp $");
 
 #include "vlan.h"
 
@@ -1190,9 +1190,6 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, nsegs, prod;
-#if NVLAN > 0
-	struct m_tag *mtag;
-#endif
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -1260,8 +1257,8 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 
 #if NVLAN > 0
 	/* Configure VLAN hardware tag insertion. */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ec, m))) {
-		vtag = AGE_TX_VLAN_TAG(htons(VLAN_TAG_VALUE(mtag)));
+	if (vlan_has_tag(m)) {
+		vtag = AGE_TX_VLAN_TAG(htons(vlan_get_tag(m)));
 		vtag = ((vtag << AGE_TD_VLAN_SHIFT) & AGE_TD_VLAN_MASK);
 		cflags |= AGE_TD_INSERT_VLAN_TAG;
 	}
@@ -1499,8 +1496,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			/* Check for VLAN tagged frames. */
 			if (status & AGE_RRD_VLAN) {
 				uint32_t vtag = AGE_RX_VLAN(le32toh(rxrd->vtags));
-				VLAN_INPUT_TAG(ifp, m, AGE_RX_VLAN_TAG(vtag),
-					continue);
+				vlan_set_tag(m, AGE_RX_VLAN_TAG(vtag));
 			}
 #endif
 

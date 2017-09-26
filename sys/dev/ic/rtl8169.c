@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.151 2017/05/16 06:16:35 snj Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.152 2017/09/26 07:42:06 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.151 2017/05/16 06:16:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.152 2017/09/26 07:42:06 knakahara Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1345,9 +1345,8 @@ re_rxeof(struct rtk_softc *sc)
 		}
 
 		if (rxvlan & RE_RDESC_VLANCTL_TAG) {
-			VLAN_INPUT_TAG(ifp, m,
-			     bswap16(rxvlan & RE_RDESC_VLANCTL_DATA),
-			     continue);
+			vlan_set_tag(m,
+			     bswap16(rxvlan & RE_RDESC_VLANCTL_DATA));
 		}
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
@@ -1515,7 +1514,6 @@ re_start(struct ifnet *ifp)
 	bus_dmamap_t map;
 	struct re_txq *txq;
 	struct re_desc *d;
-	struct m_tag *mtag;
 	uint32_t cmdstat, re_flags, vlanctl;
 	int ofree, idx, error, nsegs, seg;
 	int startdesc, curdesc, lastdesc;
@@ -1640,8 +1638,8 @@ re_start(struct ifnet *ifp)
 		 * appear in all descriptors of a multi-descriptor
 		 * transmission attempt.
 		 */
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL)
-			vlanctl |= bswap16(VLAN_TAG_VALUE(mtag)) |
+		if (vlan_has_tag(m))
+			vlanctl |= bswap16(vlan_get_tag(m)) |
 			    RE_TDESC_VLANCTL_TAG;
 
 		/*

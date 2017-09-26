@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.61 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.62 2017/09/26 07:42:06 knakahara Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.61 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.62 2017/09/26 07:42:06 knakahara Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4633,9 +4633,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 */
 			if ((status & L2_FHDR_STATUS_L2_VLAN_TAG) &&
 			    !(sc->rx_mode & BNX_EMAC_RX_MODE_KEEP_VLAN_TAG)) {
-				VLAN_INPUT_TAG(ifp, m,
-				    l2fhdr->l2_fhdr_vlan_tag,
-				    continue);
+				vlan_set_tag(m, l2fhdr->l2_fhdr_vlan_tag);
 			}
 
 			/* Pass the mbuf off to the upper layers. */
@@ -4947,7 +4945,6 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 #endif
 	uint32_t		addr, prod_bseq;
 	int			i, error;
-	struct m_tag		*mtag;
 	static struct work	bnx_wk; /* Dummy work. Statically allocated. */
 
 	mutex_enter(&sc->tx_pkt_mtx);
@@ -4980,10 +4977,9 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	}
 
 	/* Transfer any VLAN tags to the bd. */
-	mtag = VLAN_OUTPUT_TAG(&sc->bnx_ec, m);
-	if (mtag != NULL) {
+	if (vlan_has_tag(m)) {
 		flags |= TX_BD_FLAGS_VLAN_TAG;
-		vlan_tag = VLAN_TAG_VALUE(mtag);
+		vlan_tag = vlan_get_tag(m);
 	}
 
 	/* Map the mbuf into DMAable memory. */
