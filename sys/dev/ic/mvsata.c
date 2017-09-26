@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.29 2017/09/25 22:50:20 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.30 2017/09/26 17:05:37 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.29 2017/09/25 22:50:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.30 2017/09/26 17:05:37 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1673,7 +1673,6 @@ static int
 mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
-	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	int rv, s;
 
@@ -1681,7 +1680,8 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	    ("%s:%d: mvsata_exec_command: drive=%d, bcount=%d,"
 	    " r_lba=0x%012"PRIx64", r_count=0x%04x, r_features=0x%04x,"
 	    " r_device=0x%02x, r_command=0x%02x\n",
-	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel,
+	    device_xname(MVSATA_DEV2((struct mvsata_port *)chp)),
+	    chp->ch_channel,
 	    drvp->drive, ata_c->bcount, ata_c->r_lba, ata_c->r_count,
 	    ata_c->r_features, ata_c->r_device, ata_c->r_command));
 
