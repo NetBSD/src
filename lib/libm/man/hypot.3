@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
-.\"	$NetBSD: hypot.3,v 1.17 2007/02/22 22:08:20 drochner Exp $
+.\"	$NetBSD: hypot.3,v 1.18 2017/09/26 15:42:54 maya Exp $
 .\"
-.Dd February 12, 2007
+.Dd September 26, 2017
 .Dt HYPOT 3
 .Os
 .Sh NAME
 .Nm hypot ,
-.Nm hypotf
+.Nm hypotf ,
+.Nm hypotl
 .Nd Euclidean distance and complex absolute value functions
 .Sh LIBRARY
 .Lb libm
@@ -43,6 +44,11 @@
 .Fn hypot "double x" "double y"
 .Ft float
 .Fn hypotf "float x" "float y"
+.Ft long double
+.Fn hypotl "long double x" "long double y"
+.In tgmath.h
+.Ft real-floating
+.Fn hypot "real-floating" "real-floating"
 .Sh DESCRIPTION
 The
 .Fn hypot
@@ -111,14 +117,7 @@ disappear when it turns out to be irrelevant, as it does in
 .Xr math 3 ,
 .Xr sqrt 3
 .Sh HISTORY
-Both a
+The
 .Fn hypot
-function and a
-.Fn cabs
-function
 appeared in
 .At v7 .
-.Fn cabs
-was removed from public namespace in
-.Nx 5.0
-to avoid conflicts with the complex function in C99.
