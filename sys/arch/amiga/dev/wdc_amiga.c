@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.38 2015/04/18 14:21:41 mlelstv Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.38.6.1 2017/09/26 22:13:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.38 2015/04/18 14:21:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.38.6.1 2017/09/26 22:13:08 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,6 @@ struct wdc_amiga_softc {
 	struct wdc_softc sc_wdcdev;
 	struct	ata_channel *sc_chanlist[1];
 	struct  ata_channel sc_channel;
-	struct	ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
 	struct isr sc_isr;
 	struct bus_space_tag cmd_iot;
@@ -136,7 +135,7 @@ wdc_amiga_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_channel.ch_queue = &sc->sc_chqueue;
+	sc->sc_channel.ch_queue = ata_queue_alloc(1);
 
 	wdc_init_shadow_regs(&sc->sc_channel);
 
