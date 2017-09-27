@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.124 2017/09/21 07:15:34 ozaki-r Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.125 2017/09/27 10:05:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.124 2017/09/21 07:15:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.125 2017/09/27 10:05:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.124 2017/09/21 07:15:34 ozaki-r Exp $
 #include "opt_dccp.h"
 #include "opt_sctp.h"
 #include "opt_compat_netbsd.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -183,6 +184,38 @@ PR_WRAP_CTLOUTPUT(sctp_ctloutput)
 
 #define sctp_ctlinput	sctp_ctlinput_wrapper
 #define sctp_ctloutput	sctp_ctloutput_wrapper
+#endif
+
+#ifdef NET_MPSAFE
+PR_WRAP_INPUT(udp_input)
+PR_WRAP_INPUT(tcp_input)
+#ifdef DCCP
+PR_WRAP_INPUT(dccp_input)
+#endif
+#ifdef SCTP
+PR_WRAP_INPUT(sctp_input)
+#endif
+PR_WRAP_INPUT(rip_input)
+#if NETHERIP > 0
+PR_WRAP_INPUT(ip_etherip_input)
+#endif
+#if NPFSYNC > 0
+PR_WRAP_INPUT(pfsync_input)
+#endif
+PR_WRAP_INPUT(igmp_input)
+#ifdef PIM
+PR_WRAP_INPUT(pim_input)
+#endif
+
+#define	udp_input		udp_input_wrapper
+#define	tcp_input		tcp_input_wrapper
+#define	dccp_input		dccp_input_wrapper
+#define	sctp_input		sctp_input_wrapper
+#define	rip_input		rip_input_wrapper
+#define	ip_etherip_input	ip_etherip_input_wrapper
+#define	pfsync_input		pfsync_input_wrapper
+#define	igmp_input		igmp_input_wrapper
+#define	pim_input		pim_input_wrapper
 #endif
 
 #if defined(IPSEC)
