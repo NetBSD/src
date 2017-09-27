@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.27.20.1 2017/04/24 08:48:46 jdolecek Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.27.20.2 2017/09/27 07:19:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.27.20.1 2017/04/24 08:48:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.27.20.2 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ extern struct cfdriver wdc_cd;
 
 STATIC void __wdc_spd_enable(void);
 STATIC void __wdc_spd_disable(void) __attribute__((__unused__));
-STATIC void __wdc_spd_bus_space(struct ata_channel *);
+STATIC void __wdc_spd_bus_space(struct wdc_regs *);
 
 /*
  * wdc register is 16 bit wide.
@@ -165,24 +165,17 @@ int
 wdc_spd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spd_attach_args *spa = aux;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int i, result;
 
 	if (spa->spa_slot != SPD_HDD)
 		return (0);
 
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
-
-	__wdc_spd_bus_space(&ch);
+	__wdc_spd_bus_space(&wdr);
 
 	for (i = 0, result = 0; i < 8; i++) { /* 8 sec */
 		if (result == 0)
-			result = wdcprobe(&ch);
+			result = wdcprobe(&wdr);
 		delay(1000000);
 	}
 	
@@ -211,9 +204,9 @@ wdc_spd_attach(device_t parent, device_t self, void *aux)
 	ch->ch_channel = 0;
 	ch->ch_atac = &sc->sc_wdcdev.sc_atac;
 	ch->ch_queue = ata_queue_alloc(1);
-	ch->ch_ndrive = 2;
+	ch->ch_ndrives = 2;
 
-	__wdc_spd_bus_space(ch);
+	__wdc_spd_bus_space(CHAN_TO_WDC_REGS(ch));
 
 	spd_intr_establish(SPD_HDD, wdcintr, &sc->sc_channel);
 
@@ -223,15 +216,14 @@ wdc_spd_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-__wdc_spd_bus_space(struct ata_channel *ch)
+__wdc_spd_bus_space(struct wdc_regs *wdr)
 {
-	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(ch);
 	int i;
 
 	wdr->cmd_iot = &_wdc_spd_space;
 	for (i = 0; i < 8; i++)
 		wdr->cmd_iohs[i] = SPD_HDD_IO_BASE + i * 2; /*  wdc register is 16 bit wide. */
-	wdc_init_shadow_regs(ch);
+	wdc_init_shadow_regs(wdr);
 	wdr->ctl_iot = &_wdc_spd_space;
 	wdr->ctl_ioh = SPD_HDD_IO_BASE + WDC_SPD_HDD_AUXREG_OFFSET;
 	wdr->data32iot = wdr->cmd_iot;

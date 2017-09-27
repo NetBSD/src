@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.30.28.1 2017/04/24 08:48:45 jdolecek Exp $	*/
+/*	$NetBSD: rapide.c,v 1.30.28.2 2017/09/27 07:19:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.30.28.1 2017/04/24 08:48:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.30.28.2 2017/09/27 07:19:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ rapide_attach(device_t parent, device_t self, void *aux)
 				continue;
 			}
 		}
-		wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(wdr);
 		if (bus_space_map(iot, iobase +
 		    rapide_info[channel].aux_register, 4, 0, &wdr->ctl_ioh)) {
 			bus_space_unmap(iot, wdr->cmd_baseioh,

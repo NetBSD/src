@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.36.4.1 2017/04/24 08:48:46 jdolecek Exp $	*/
+/*	$NetBSD: kauai.c,v 1.36.4.2 2017/09/27 07:19:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.36.4.1 2017/04/24 08:48:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.36.4.2 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ kauai_attach(device_t parent, device_t self, void *aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = ata_queue_alloc(1);
-	wdc_init_shadow_regs(chp);
+	wdc_init_shadow_regs(wdr);
 
 	wdcattach(chp);
 }

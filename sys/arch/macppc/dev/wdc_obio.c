@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.59.4.1 2017/04/24 08:48:46 jdolecek Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.59.4.2 2017/09/27 07:19:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.59.4.1 2017/04/24 08:48:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.59.4.2 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = ata_queue_alloc(1);
 
-	wdc_init_shadow_regs(chp);
+	wdc_init_shadow_regs(wdr);
 
 #define OHARE_FEATURE_REG	0xf3000038
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.12.18.1 2017/04/24 08:48:45 jdolecek Exp $ */
+/*	$NetBSD: efa.c,v 1.12.18.2 2017/09/27 07:19:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ efa_attach_channel(struct efa_softc *sc, int chnum)
 	else
 		efa_select_regset(sc, chnum, 3); 
 
-	wdc_init_shadow_regs(&sc->sc_ports[chnum].chan);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_ports[chnum].chan));
 
 	wdcattach(&sc->sc_ports[chnum].chan);	
 
@@ -502,7 +502,7 @@ efa_setup_channel(struct ata_channel *chp)
 	/* Change FastATA register set. */
 	efa_select_regset(sc, chnum, mode);
 	/* re-init shadow regs */
-	wdc_init_shadow_regs(&sc->sc_ports[chnum].chan);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_ports[chnum].chan));
 
 	splx(ipl);
 }

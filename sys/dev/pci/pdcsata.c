@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.27.18.1 2017/04/10 22:57:03 jdolecek Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.27.18.2 2017/09/27 07:19:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.27.18.1 2017/04/10 22:57:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.27.18.2 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -404,7 +404,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 				goto next_channel;
 			}
 		}
-		wdc_init_shadow_regs(wdc_cp);
+		wdc_init_shadow_regs(wdr);
 
 		/*
 		 * subregion de busmaster registers. They're spread all over

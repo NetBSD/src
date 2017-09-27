@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_acafh.c,v 1.3.24.1 2017/04/24 08:48:45 jdolecek Exp $ */
+/*	$NetBSD: wdc_acafh.c,v 1.3.24.2 2017/09/27 07:19:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003, 2013 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.3.24.1 2017/04/24 08:48:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.3.24.2 2017/09/27 07:19:33 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,7 +155,7 @@ wdc_acafh_attach_channel(struct wdc_acafh_softc *sc, int chnum)
 
 	wdc_acafh_map_channel(sc, chnum);
 
-	wdc_init_shadow_regs(&sc->sc_slots[chnum].channel);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_slots[chnum].channel));
 	wdcattach(&sc->sc_slots[chnum].channel);
 
 #ifdef WDC_ACAFH_DEBUG

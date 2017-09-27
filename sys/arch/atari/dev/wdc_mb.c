@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.38.28.1 2017/04/24 08:48:45 jdolecek Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.38.28.2 2017/09/27 07:19:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38.28.1 2017/04/24 08:48:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38.28.2 2017/09/27 07:19:33 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,8 +86,6 @@ int
 wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	static int wdc_matched = 0;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0, i;
 	uint8_t sv_ierb;
@@ -116,7 +114,7 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 		    i * 4, 4, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh, FALCON_WD_AUX, 4,
 	    &wdr.ctl_ioh))
@@ -134,7 +132,7 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 	if (machineid & ATARI_FALCON)
 		ym2149_ser2(0);
 
-	result = wdcprobe(&ch);
+	result = wdcprobe(&wdr);
 
 	MFP->mf_ierb = sv_ierb;
 
@@ -207,7 +205,7 @@ wdc_mb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = ata_queue_alloc(1);
-	wdc_init_shadow_regs(&sc->sc_channel);
+	wdc_init_shadow_regs(wdr);
 
 	/*
 	 * Setup & enable disk related interrupts.

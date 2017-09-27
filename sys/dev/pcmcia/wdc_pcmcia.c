@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.124.18.1 2017/06/21 19:21:25 jdolecek Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.124.18.2 2017/09/27 07:19:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.124.18.1 2017/06/21 19:21:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.124.18.2 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -299,7 +299,7 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	wdcp = pcmcia_product_lookup(pa, wdc_pcmcia_products,
 	    wdc_pcmcia_nproducts, sizeof(wdc_pcmcia_products[0]), NULL);
 	sc->sc_wdcdev.wdc_maxdrives = wdcp ? wdcp->wdc_ndrive : 2;
-	wdc_init_shadow_regs(&sc->ata_channel);
+	wdc_init_shadow_regs(wdr);
 
 	error = wdc_pcmcia_enable(self, 1);
 	if (error)
