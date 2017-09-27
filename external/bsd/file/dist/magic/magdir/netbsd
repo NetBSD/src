@@ -285,7 +285,7 @@
 >0	belong&0xfc000000 0x10000000	\b, STACK
 >4	leshort	x			\b, (headersize = %d
 >6	leshort	x			\b, segmentsize = %d
->6	lelong	x			\b, segments = %d)
+>8	lelong	x			\b, segments = %d)
 
 # little endian only for now.
 0	name		ktrace
