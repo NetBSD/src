@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.360 2017/07/27 06:59:28 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.361 2017/09/27 10:05:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.360 2017/07/27 06:59:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.361 2017/09/27 10:05:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -826,9 +826,7 @@ ours:
 
 	const int off = hlen, nh = ip->ip_p;
 
-	SOFTNET_LOCK();
 	(*inetsw[ip_protox[nh]].pr_input)(m, off, nh);
-	SOFTNET_UNLOCK();
 	return;
 
 out:
