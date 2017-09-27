@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.100 2017/08/31 02:48:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.101 2017/09/27 10:31:29 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -823,14 +823,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	case ixgbe_mac_82599EB:
 		str = "82599EB";
 		break;
-	case ixgbe_mac_82599_vf:
-		str = "82599 VF";
-		break;
 	case ixgbe_mac_X540:
 		str = "X540";
-		break;
-	case ixgbe_mac_X540_vf:
-		str = "X540 VF";
 		break;
 	case ixgbe_mac_X550:
 		str = "X550";
@@ -840,15 +834,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		break;
 	case ixgbe_mac_X550EM_a:
 		str = "X550EM A";
-		break;
-	case ixgbe_mac_X550_vf:
-		str = "X550 VF";
-		break;
-	case ixgbe_mac_X550EM_x_vf:
-		str = "X550EM X VF";
-		break;
-	case ixgbe_mac_X550EM_a_vf:
-		str = "X550EM A VF";
 		break;
 	default:
 		str = "Unknown";

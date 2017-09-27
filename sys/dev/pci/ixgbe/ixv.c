@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.65 2017/09/15 08:31:32 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.66 2017/09/27 10:31:29 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -284,6 +284,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	ixgbe_vendor_info_t *ent;
 	const struct pci_attach_args *pa = aux;
 	const char *apivstr;
+	const char *str;
 	char buf[256];
 
 	INIT_DEBUGOUT("ixv_attach: begin");
@@ -348,18 +349,23 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	switch (hw->device_id) {
 	case IXGBE_DEV_ID_82599_VF:
 		hw->mac.type = ixgbe_mac_82599_vf;
+		str = "82599 VF";
 		break;
 	case IXGBE_DEV_ID_X540_VF:
 		hw->mac.type = ixgbe_mac_X540_vf;
+		str = "X540 VF";
 		break;
 	case IXGBE_DEV_ID_X550_VF:
 		hw->mac.type = ixgbe_mac_X550_vf;
+		str = "X550 VF";
 		break;
 	case IXGBE_DEV_ID_X550EM_X_VF:
 		hw->mac.type = ixgbe_mac_X550EM_x_vf;
+		str = "X550EM X VF";
 		break;
 	case IXGBE_DEV_ID_X550EM_A_VF:
 		hw->mac.type = ixgbe_mac_X550EM_a_vf;
+		str = "X550EM A VF";
 		break;
 	default:
 		/* Shouldn't get here since probe succeeded */
@@ -368,6 +374,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		goto err_out;
 		break;
 	}
+	aprint_normal_dev(dev, "device %s\n", str);
 
 	ixv_init_device_features(adapter);
 
