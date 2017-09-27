@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdaudio.c,v 1.8 2017/04/16 12:28:21 jmcneill Exp $ */
+/* $NetBSD: tegra_hdaudio.c,v 1.9 2017/09/27 10:50:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.8 2017/04/16 12:28:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.9 2017/09/27 10:50:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,7 +85,11 @@ CFATTACH_DECL2_NEW(tegra_hdaudio, sizeof(struct tegra_hdaudio_softc),
 static int
 tegra_hdaudio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-hda", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-hda",
+		"nvidia,tegra124-hda",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
