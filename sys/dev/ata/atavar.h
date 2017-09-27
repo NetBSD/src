@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.27 2017/09/26 20:15:36 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.28 2017/09/27 19:05:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -481,6 +481,13 @@ struct atac_softc {
 
 	/* Driver callback to probe for drives. */
 	void (*atac_probe)(struct ata_channel *);
+
+	/*
+	 * Optional callbacks to lock/unlock hardware.
+	 * Called with channel mutex held.
+	 */
+	int  (*atac_claim_hw)(struct ata_channel *, int);
+	void (*atac_free_hw)(struct ata_channel *);
 
 	/*
 	 * Optional callbacks to set drive mode.  Required for anything
