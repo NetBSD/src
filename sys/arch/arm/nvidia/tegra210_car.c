@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.14 2017/09/26 16:12:45 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.15 2017/09/27 10:19:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.14 2017/09/26 16:12:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.15 2017/09/27 10:19:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -440,6 +440,14 @@ static const char *mux_mselect_p[] =
 	{ "PLL_P", "PLL_C2", "PLL_C", "PLL_C4_OUT2",
 	  "PLL_C4_OUT1", "CLK_S", "CLK_M", "PLL_C4_OUT0" };
 
+static const char *mux_tsensor_p[] =
+	{ "PLL_P", "PLL_C2", "PLL_C", "PLL_C4_OUT0",
+	  "CLK_M", "PLL_C4_OUT1", "CLK_S", "PLL_C4_OUT2" };
+
+static const char *mux_soc_therm_p[] =
+	{ "CLK_M", "PLL_C", "PLL_P", "PLL_A",
+	  "PLL_C2", "PLL_C4_OUT0", "PLL_C4_OUT1", "PLL_C4_OUT2" };
+
 static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_FIXED("CLK_M", TEGRA210_REF_FREQ),
 
@@ -505,6 +513,13 @@ static struct tegra_clk tegra210_car_clocks[] = {
 		CAR_CLKSRC_MSELECT_REG, CAR_CLKSRC_MSELECT_SRC,
 		mux_mselect_p),
 
+	CLK_MUX("MUX_TSENSOR",
+		CAR_CLKSRC_TSENSOR_REG, CAR_CLKSRC_TSENSOR_SRC,
+		mux_tsensor_p),
+	CLK_MUX("MUX_SOC_THERM",
+		CAR_CLKSRC_SOC_THERM_REG, CAR_CLKSRC_SOC_THERM_SRC,
+		mux_soc_therm_p),
+
 	CLK_DIV("DIV_UARTA", "MUX_UARTA",
 		CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_DIV),
 	CLK_DIV("DIV_UARTB", "MUX_UARTB",
@@ -554,6 +569,11 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_DIV("DIV_MSELECT", "MUX_MSELECT",
 		CAR_CLKSRC_MSELECT_REG, CAR_CLKSRC_MSELECT_DIV),
 
+        CLK_DIV("DIV_TSENSOR", "MUX_TSENSOR",
+                CAR_CLKSRC_TSENSOR_REG, CAR_CLKSRC_TSENSOR_DIV),
+	CLK_DIV("DIV_SOC_THERM", "MUX_SOC_THERM",
+		CAR_CLKSRC_SOC_THERM_REG, CAR_CLKSRC_SOC_THERM_DIV),
+
 	CLK_GATE("PLL_U_OUT1", "DIV_PLL_U_OUT1",
 		 CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT1_CLKEN),
 	CLK_GATE("PLL_U_OUT2", "DIV_PLL_U_OUT2",
@@ -590,6 +610,8 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_GATE_V("MSELECT", "DIV_MSELECT", CAR_DEV_V_MSELECT),
 	CLK_GATE_U("PCIE", "CLK_M", CAR_DEV_U_PCIE),
 	CLK_GATE_U("AFI", "MSELECT", CAR_DEV_U_AFI),
+	CLK_GATE_V("TSENSOR", "DIV_TSENSOR", CAR_DEV_V_TSENSOR),
+	CLK_GATE_U("SOC_THERM", "DIV_SOC_THERM", CAR_DEV_U_SOC_THERM),
 };
 
 struct tegra210_init_parent {
@@ -602,6 +624,8 @@ struct tegra210_init_parent {
 	{ "SDMMC2",		"PLL_P", 0, 0 },
 	{ "SDMMC3",		"PLL_P", 0, 0 },
 	{ "SDMMC4",		"PLL_P", 0, 0 },
+	{ "SOC_THERM",		"PLL_P", 0, 0 },
+	{ "TSENSOR",		"CLK_M", 0, 0 },
 	{ "XUSB_GATE",		NULL, 0, 1 },
 	{ "XUSB_HOST_SRC",	"PLL_P", 102000000, 0 },
 	{ "XUSB_FALCON_SRC",	"PLL_P", 204000000, 0 },
