@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.27 2017/09/27 05:43:55 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.28 2017/09/27 08:14:18 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.27 2017/09/27 05:43:55 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.28 2017/09/27 08:14:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1253,8 +1253,9 @@ acpi_handle_dbgp(ACPI_TABLE_HEADER *sdp)
 		break;
 	}
 	printf("}\n");
-	printf("DebugPort=");
+	printf("\tDebugPort=");
 	acpi_print_gas(&dbgp->DebugPort);
+	printf("\n");
 	printf(END_COMMENT);
 }
 
