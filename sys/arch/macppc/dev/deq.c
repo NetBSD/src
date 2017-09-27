@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.11 2017/09/27 22:11:31 macallan Exp $	*/
+/*	$NetBSD: deq.c,v 1.12 2017/09/27 22:31:53 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.11 2017/09/27 22:11:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.12 2017/09/27 22:31:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,14 @@ deq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_address = (ia->ia_addr & 0x7f);
 	sc->sc_i2c = ia->ia_tag;
 	if (OF_getprop(sc->sc_node, "compatible", name, 256) <= 0) {
-		strcpy(name, "unknown");
+		/* deq has no 'compatible' on my iBook G4 */
+		switch (sc->sc_address) {
+			case 0x35:
+				strcpy(name, "tas3004");
+				break;
+			default:
+				strcpy(name, "unknown");
+		}
 	}
 	aprint_normal(" Audio Codec (%s)\n", name);
 }
