@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.16 2017/09/19 21:06:25 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.17 2017/09/27 07:19:34 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.16 2017/09/19 21:06:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.17 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -176,10 +176,8 @@ int wdc_nxfer = 0;
  * Initialize the "shadow register" handles for a standard wdc controller.
  */
 void
-wdc_init_shadow_regs(struct ata_channel *chp)
+wdc_init_shadow_regs(struct wdc_regs *wdr)
 {
-	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
-
 	wdr->cmd_iohs[wd_status] = wdr->cmd_iohs[wd_command];
 	wdr->cmd_iohs[wd_features] = wdr->cmd_iohs[wd_error];
 }
@@ -476,14 +474,29 @@ wdc_drvprobe(struct ata_channel *chp)
 }
 
 int
-wdcprobe(struct ata_channel *chp)
+wdcprobe(struct wdc_regs *wdr)
 {
-	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	/* default reset method */
-	if (wdc->reset == NULL)
-		wdc->reset = wdc_do_reset;
+	struct wdc_softc wdc;
+	struct ata_channel ch;
+	int rv;
 
-	return (wdcprobe1(chp, 1));
+	memset(&wdc, 0, sizeof(wdc));
+	memset(&ch, 0, sizeof(ch));
+	ata_channel_init(&ch);
+	ch.ch_atac = &wdc.sc_atac;
+	ch.ch_queue = ata_queue_alloc(1);
+	wdc.regs = wdr;
+
+	/* default reset method */
+	if (wdc.reset == NULL)
+		wdc.reset = wdc_do_reset;
+
+	rv = wdcprobe1(&ch, 1);
+
+	ata_queue_free(ch.ch_queue);
+	ata_channel_destroy(&ch);
+
+	return rv;
 }
 
 static int

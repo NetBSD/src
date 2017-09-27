@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.97.26.2 2017/08/12 09:52:28 jdolecek Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.97.26.3 2017/09/27 07:19:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -142,9 +142,9 @@ struct wdc_softc {
  */
 
 void	wdc_allocate_regs(struct wdc_softc *);
-void	wdc_init_shadow_regs(struct ata_channel *);
+void	wdc_init_shadow_regs(struct wdc_regs *);
 
-int	wdcprobe(struct ata_channel *);
+int	wdcprobe(struct wdc_regs *);
 void	wdcattach(struct ata_channel *);
 int	wdcdetach(device_t, int);
 void	wdc_childdetached(device_t, device_t);

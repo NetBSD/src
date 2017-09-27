@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.28.28.1 2017/09/26 22:13:08 jdolecek Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.28.28.2 2017/09/27 07:19:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.28.28.1 2017/09/26 22:13:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.28.28.2 2017/09/27 07:19:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,6 @@ static int
 wdc_pioc_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pioc_attach_args *pa = aux;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int res, i;
 	u_int iobase;
@@ -95,11 +93,6 @@ wdc_pioc_probe(device_t parent, cfdata_t cf, void *aux)
 	/* We need an offset */
 	if (pa->pa_offset == PIOCCF_OFFSET_DEFAULT)
 		return(0);
-
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
 
 	iobase = pa->pa_iobase + pa->pa_offset;
 	wdr.cmd_iot = pa->pa_iot;
@@ -116,7 +109,7 @@ wdc_pioc_probe(device_t parent, cfdata_t cf, void *aux)
 			return 0;
 		}
 	}
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	if (bus_space_map(wdr.ctl_iot, iobase + WDC_PIOC_AUXREG_OFFSET,
 	    WDC_PIOC_AUXREG_NPORTS, 0, &wdr.ctl_ioh)) {
@@ -125,7 +118,7 @@ wdc_pioc_probe(device_t parent, cfdata_t cf, void *aux)
 		return(0);
 	}
 
-	res = wdcprobe(&ch);
+	res = wdcprobe(&wdr);
 
 	bus_space_unmap(wdr.ctl_iot, wdr.ctl_ioh, WDC_PIOC_AUXREG_NPORTS);
 	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_PIOC_REG_NPORTS);
@@ -188,7 +181,7 @@ wdc_pioc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_queue = ata_queue_alloc(1);
 
-	wdc_init_shadow_regs(&sc->sc_channel);
+	wdc_init_shadow_regs(wdr);
 
 	wdcattach(&sc->sc_channel);
 }

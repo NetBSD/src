@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_buddha.c,v 1.8.28.1 2017/04/24 08:48:45 jdolecek Exp $	*/
+/*	$NetBSD: wdc_buddha.c,v 1.8.28.2 2017/09/27 07:19:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ wdc_buddha_attach(device_t parent, device_t self, void *aux)
 			}
 		}
 
-		wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(wdr);
 		wdcattach(cp);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.53.4.1 2017/04/10 22:57:03 jdolecek Exp $	*/
+/*	$NetBSD: satalink.c,v 1.53.4.2 2017/09/27 07:19:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.53.4.1 2017/04/10 22:57:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.53.4.2 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -650,7 +650,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 			goto bad;
 		}
 	}
-	wdc_init_shadow_regs(wdc_cp);
+	wdc_init_shadow_regs(wdr);
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
 	wdcattach(wdc_cp);

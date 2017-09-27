@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.18.28.1 2017/04/24 08:29:33 jdolecek Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.18.28.2 2017/09/27 07:19:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.18.28.1 2017/04/24 08:29:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.18.28.2 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -204,7 +204,7 @@ njata32_attach(struct njata32_softc *sc)
 			goto fail4;
 		}
 	}
-	wdc_init_shadow_regs(&sc->sc_ch[0].ch_ata_channel);
+	wdc_init_shadow_regs(wdr);
 	wdr->data32iot = NJATA32_REGT(sc);
 	wdr->data32ioh = wdr->cmd_iohs[wd_data];
 

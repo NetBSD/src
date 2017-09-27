@@ -1,4 +1,4 @@
-/*      $NetBSD: wdc_xsurf.c,v 1.2.30.2 2017/09/26 21:06:24 jdolecek Exp $ */
+/*      $NetBSD: wdc_xsurf.c,v 1.2.30.3 2017/09/27 07:19:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ wdc_xsurf_attach_channel(struct wdc_xsurf_softc *sc, int chnum)
 
 	wdc_xsurf_map_channel(sc, chnum);	
 
-	wdc_init_shadow_regs(&sc->sc_ports[chnum].channel);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_ports[chnum].channel));
 	wdcattach(&sc->sc_ports[chnum].channel);
 
 #ifdef WDC_XSURF_DEBUG

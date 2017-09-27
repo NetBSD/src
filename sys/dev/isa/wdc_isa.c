@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.59.28.3 2017/09/20 19:59:22 jdolecek Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.59.28.4 2017/09/27 07:19:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59.28.3 2017/09/20 19:59:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59.28.4 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,7 @@ static int	wdc_isa_dma_finish(void*, int, int, int);
 static int
 wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
-	struct ata_channel ch;
 	struct isa_attach_args *ia = aux;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0, i;
 
@@ -105,13 +103,6 @@ wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		ia->ia_ndrq = 0;
 
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ata_channel_init(&ch);
-	ch.ch_atac = &wdc.sc_atac;
-	ch.ch_queue = ata_queue_alloc(1);
-	wdc.regs = &wdr;
-
 	wdr.cmd_iot = ia->ia_iot;
 
 	if (bus_space_map(wdr.cmd_iot, ia->ia_io[0].ir_addr,
@@ -123,14 +114,14 @@ wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 		    i == 0 ? 4 : 1, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	wdr.ctl_iot = ia->ia_iot;
 	if (bus_space_map(wdr.ctl_iot, ia->ia_io[0].ir_addr +
 	    WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS, 0, &wdr.ctl_ioh))
 		goto outunmap;
 
-	result = wdcprobe(&ch);
+	result = wdcprobe(&wdr);
 	if (result) {
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = WDC_ISA_REG_NPORTS;
@@ -144,8 +135,6 @@ wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 outunmap:
 	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_ISA_REG_NPORTS);
 out:
-	ata_queue_free(ch.ch_queue);
-	ata_channel_destroy(&ch);
 	return (result);
 }
 
@@ -231,7 +220,7 @@ wdc_isa_attach(device_t parent, device_t self, void *aux)
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = ata_queue_alloc(1);
-	wdc_init_shadow_regs(&sc->ata_channel);
+	wdc_init_shadow_regs(wdr);
 
 	aprint_normal("\n");
 

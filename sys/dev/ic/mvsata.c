@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.30 2017/09/26 17:05:37 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.31 2017/09/27 07:19:34 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.30 2017/09/26 17:05:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.31 2017/09/27 07:19:34 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -3286,7 +3286,7 @@ mvsata_wdc_reg_init(struct mvsata_port *mvport, struct wdc_regs *wdr)
 	}
 	wdr->ctl_iot = mvport->port_iot;
 
-	wdc_init_shadow_regs(&mvport->port_ata_channel);
+	wdc_init_shadow_regs(wdr);
 
 	rv = bus_space_subregion(mvport->port_iot, mvport->port_ioh,
 	    SATA_SS, sizeof(uint32_t) * 3, &wdr->sata_baseioh);
