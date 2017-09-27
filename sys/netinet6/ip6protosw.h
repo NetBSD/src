@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.25 2016/01/21 15:41:30 riastradh Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.26 2017/09/27 10:05:05 ozaki-r Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -139,6 +139,19 @@ struct ip6protosw {
 	void	(*pr_drain)		/* flush any excess space possible */
 			(void);
 };
+
+#ifdef _KERNEL
+#define	PR_WRAP_INPUT6(name)				\
+static int						\
+name##_wrapper(struct mbuf **mp, int *offp, int proto)	\
+{							\
+	int rv;						\
+	mutex_enter(softnet_lock);			\
+	rv = name(mp, offp, proto);			\
+	mutex_exit(softnet_lock);			\
+	return rv;					\
+}
+#endif
 
 extern const struct ip6protosw inet6sw[];
 
