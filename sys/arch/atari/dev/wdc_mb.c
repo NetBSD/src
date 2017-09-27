@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.38.28.2 2017/09/27 07:19:33 jdolecek Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.38.28.3 2017/09/27 19:04:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38.28.2 2017/09/27 07:19:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38.28.3 2017/09/27 19:04:05 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,11 +94,6 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 		return 0;
 	if (!atari_realconfig)
 		return 0;
-
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
 
 	wdr.cmd_iot = wdr.ctl_iot = mb_alloc_bus_space_tag();
 	if (wdr.cmd_iot == NULL)
