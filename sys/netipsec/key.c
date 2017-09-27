@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.225 2017/08/21 07:38:42 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.226 2017/09/27 07:27:29 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.225 2017/08/21 07:38:42 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.226 2017/09/27 07:27:29 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -237,26 +237,31 @@ static u_int32_t acq_seq = 0;
  *   - key_misc.lock must be held even for read accesses
  */
 
-static pserialize_t key_spd_psz __read_mostly;
-static pserialize_t key_sad_psz __read_mostly;
-
 /* SPD */
 static struct {
 	kmutex_t lock;
-	kcondvar_t cv;
+	kcondvar_t cv_lc;
 	struct pslist_head splist[IPSEC_DIR_MAX];
 	/*
 	 * The list has SPs that are set to a socket via
 	 * setsockopt(IP_IPSEC_POLICY) from userland. See ipsec_set_policy.
 	 */
 	struct pslist_head socksplist;
+
+	pserialize_t psz;
+	kcondvar_t cv_psz;
+	bool psz_performing;
 } key_spd __cacheline_aligned;
 
 /* SAD */
 static struct {
 	kmutex_t lock;
-	kcondvar_t cv;
+	kcondvar_t cv_lc;
 	struct pslist_head sahlist;
+
+	pserialize_t psz;
+	kcondvar_t cv_psz;
+	bool psz_performing;
 } key_sad __cacheline_aligned;
 
 /* Misc data */
@@ -799,6 +804,24 @@ key_sp_refcnt(const struct secpolicy *sp)
 	return 0;
 }
 
+static void
+key_spd_pserialize_perform(void)
+{
+
+	KASSERT(mutex_owned(&key_spd.lock));
+
+	while (key_spd.psz_performing)
+		cv_wait(&key_spd.cv_psz, &key_spd.lock);
+	key_spd.psz_performing = true;
+	mutex_exit(&key_spd.lock);
+
+	pserialize_perform(key_spd.psz);
+
+	mutex_enter(&key_spd.lock);
+	key_spd.psz_performing = false;
+	cv_broadcast(&key_spd.cv_psz);
+}
+
 /*
  * Remove the sp from the key_spd.splist and wait for references to the sp
  * to be released. key_spd.lock must be held.
@@ -817,10 +840,10 @@ key_unlink_sp(struct secpolicy *sp)
 
 #ifdef NET_MPSAFE
 	KASSERT(mutex_ownable(softnet_lock));
-	pserialize_perform(key_spd_psz);
+	key_spd_pserialize_perform();
 #endif
 
-	localcount_drain(&sp->localcount, &key_spd.cv, &key_spd.lock);
+	localcount_drain(&sp->localcount, &key_spd.cv_lc, &key_spd.lock);
 }
 
 /*
@@ -1354,7 +1377,7 @@ key_sp_unref(struct secpolicy *sp, const char* where, int tag)
 	    "DP SP:%p (ID=%u) from %s:%u; refcnt-- now %u\n",
 	    sp, sp->id, where, tag, key_sp_refcnt(sp));
 
-	localcount_release(&sp->localcount, &key_spd.cv, &key_spd.lock);
+	localcount_release(&sp->localcount, &key_spd.cv_lc, &key_spd.lock);
 }
 
 static void
@@ -1396,7 +1419,7 @@ key_sa_unref(struct secasvar *sav, const char* where, int tag)
 	    "DP cause refcnt--: SA:%p from %s:%u\n",
 	    sav, where, tag);
 
-	localcount_release(&sav->localcount, &key_sad.cv, &key_sad.lock);
+	localcount_release(&sav->localcount, &key_sad.cv_lc, &key_sad.lock);
 }
 
 #if 0
@@ -1474,6 +1497,24 @@ key_freesp_so(struct secpolicy **sp)
 }
 #endif
 
+static void
+key_sad_pserialize_perform(void)
+{
+
+	KASSERT(mutex_owned(&key_sad.lock));
+
+	while (key_sad.psz_performing)
+		cv_wait(&key_sad.cv_psz, &key_sad.lock);
+	key_sad.psz_performing = true;
+	mutex_exit(&key_sad.lock);
+
+	pserialize_perform(key_sad.psz);
+
+	mutex_enter(&key_sad.lock);
+	key_sad.psz_performing = false;
+	cv_broadcast(&key_sad.cv_psz);
+}
+
 /*
  * Remove the sav from the savlist of its sah and wait for references to the sav
  * to be released. key_sad.lock must be held.
@@ -1488,10 +1529,10 @@ key_unlink_sav(struct secasvar *sav)
 
 #ifdef NET_MPSAFE
 	KASSERT(mutex_ownable(softnet_lock));
-	pserialize_perform(key_sad_psz);
+	key_sad_pserialize_perform();
 #endif
 
-	localcount_drain(&sav->localcount, &key_sad.cv, &key_sad.lock);
+	localcount_drain(&sav->localcount, &key_sad.cv_lc, &key_sad.lock);
 }
 
 /*
@@ -1530,9 +1571,9 @@ key_destroy_sav_with_ref(struct secasvar *sav)
 	mutex_enter(&key_sad.lock);
 #ifdef NET_MPSAFE
 	KASSERT(mutex_ownable(softnet_lock));
-	pserialize_perform(key_sad_psz);
+	key_sad_pserialize_perform();
 #endif
-	localcount_drain(&sav->localcount, &key_sad.cv, &key_sad.lock);
+	localcount_drain(&sav->localcount, &key_sad.cv_lc, &key_sad.lock);
 	mutex_exit(&key_sad.lock);
 
 	key_destroy_sav(sav);
@@ -3079,10 +3120,10 @@ key_unlink_sah(struct secashead *sah)
 
 #ifdef NET_MPSAFE
 	KASSERT(mutex_ownable(softnet_lock));
-	pserialize_perform(key_sad_psz);
+	key_sad_pserialize_perform();
 #endif
 
-	localcount_drain(&sah->localcount, &key_sad.cv, &key_sad.lock);
+	localcount_drain(&sah->localcount, &key_sad.cv_lc, &key_sad.lock);
 }
 
 static void
@@ -3241,7 +3282,7 @@ key_sah_unref(struct secashead *sah)
 
 	KDASSERT(mutex_ownable(&key_sad.lock));
 
-	localcount_release(&sah->localcount, &key_sad.cv, &key_sad.lock);
+	localcount_release(&sah->localcount, &key_sad.cv_lc, &key_sad.lock);
 }
 
 /*
@@ -8055,12 +8096,18 @@ key_do_init(void)
 	int i, error;
 
 	mutex_init(&key_misc.lock, MUTEX_DEFAULT, IPL_NONE);
-	key_spd_psz = pserialize_create();
+
 	mutex_init(&key_spd.lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&key_spd.cv, "key_sp");
-	key_sad_psz = pserialize_create();
+	cv_init(&key_spd.cv_lc, "key_sp_lc");
+	key_spd.psz = pserialize_create();
+	cv_init(&key_spd.cv_psz, "key_sp_psz");
+	key_spd.psz_performing = false;
+
 	mutex_init(&key_sad.lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&key_sad.cv, "key_sa");
+	cv_init(&key_sad.cv_lc, "key_sa_lc");
+	key_sad.psz = pserialize_create();
+	cv_init(&key_sad.cv_psz, "key_sa_psz");
+	key_sad.psz_performing = false;
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
