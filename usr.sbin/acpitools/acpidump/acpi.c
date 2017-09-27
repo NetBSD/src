@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.26 2017/09/07 04:40:56 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.27 2017/09/27 05:43:55 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.26 2017/09/07 04:40:56 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.27 2017/09/27 05:43:55 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -95,9 +95,9 @@ static void	acpi_handle_sbst(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_slit(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_spcr(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_spmi(ACPI_TABLE_HEADER *sdp);
-static void	acpi_print_srat_cpu(uint32_t apic_id,
+static void	acpi_print_srat_cpu(uint8_t type, uint32_t apic_id,
 		    uint32_t proximity_domain,
-		    uint32_t flags, uint32_t clockdomain);
+		    uint32_t flags, uint32_t clockdomain, uint8_t sapic_eid);
 static void	acpi_print_srat_memory(ACPI_SRAT_MEM_AFFINITY *mp);
 static void	acpi_print_srat(ACPI_SUBTABLE_HEADER *srat);
 static void	acpi_handle_srat(ACPI_TABLE_HEADER *sdp);
@@ -210,7 +210,7 @@ acpi_print_string(char *s, size_t length)
 static void
 acpi_print_gas(ACPI_GENERIC_ADDRESS *gas)
 {
-	switch(gas->SpaceId) {
+	switch (gas->SpaceId) {
 	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 		if (gas->BitWidth <= 32)
 			printf("0x%08x:%u[%u] (Memory)",
@@ -1984,8 +1984,8 @@ acpi_handle_spmi(ACPI_TABLE_HEADER *sdp)
 }
 
 static void
-acpi_print_srat_cpu(uint32_t apic_id, uint32_t proximity_domain,
-    uint32_t flags, uint32_t clockdomain)
+acpi_print_srat_cpu(uint8_t type, uint32_t apic_id, uint32_t proximity_domain,
+    uint32_t flags, uint32_t clockdomain, uint8_t sapic_eid)
 {
 
 	printf("\tFlags={");
@@ -1994,9 +1994,14 @@ acpi_print_srat_cpu(uint32_t apic_id, uint32_t proximity_domain,
 	else
 		printf("DISABLED");
 	printf("}\n");
-	printf("\tAPIC ID=%d\n", apic_id);
+	printf("\t%s ID=%d\n",
+	    (type == ACPI_SRAT_TYPE_GIC_ITS_AFFINITY) ? "ITS" : "APIC",
+	    apic_id);
+	if (type == ACPI_SRAT_TYPE_CPU_AFFINITY)
+		printf("\tSAPIC EID=%d\n", sapic_eid);
 	printf("\tProximity Domain=%d\n", proximity_domain);
-	printf("\tClock Domain=%d\n", clockdomain);
+	if (type != ACPI_SRAT_TYPE_GIC_ITS_AFFINITY)
+		printf("\tClock Domain=%d\n", clockdomain);
 }
 
 static void
@@ -2023,6 +2028,7 @@ static const char *srat_types[] = {
     [ACPI_SRAT_TYPE_MEMORY_AFFINITY] = "Memory",
     [ACPI_SRAT_TYPE_X2APIC_CPU_AFFINITY] = "X2APIC",
     [ACPI_SRAT_TYPE_GICC_AFFINITY] = "GICC",
+    [ACPI_SRAT_TYPE_GIC_ITS_AFFINITY] = "GIC ITS",
 };
 
 static void
@@ -2030,7 +2036,8 @@ acpi_print_srat(ACPI_SUBTABLE_HEADER *srat)
 {
 	ACPI_SRAT_CPU_AFFINITY *cpu;
 	ACPI_SRAT_X2APIC_CPU_AFFINITY *x2apic;
-	ACPI_SRAT_GICC_AFFINITY *gic;
+	ACPI_SRAT_GICC_AFFINITY *gicc;
+	ACPI_SRAT_GIC_ITS_AFFINITY *gici;
 
 	if (srat->Type < __arraycount(srat_types))
 		printf("\tType=%s\n", srat_types[srat->Type]);
@@ -2039,25 +2046,33 @@ acpi_print_srat(ACPI_SUBTABLE_HEADER *srat)
 	switch (srat->Type) {
 	case ACPI_SRAT_TYPE_CPU_AFFINITY:
 		cpu = (ACPI_SRAT_CPU_AFFINITY *)srat;
-		acpi_print_srat_cpu(cpu->ApicId,
+		acpi_print_srat_cpu(srat->Type, cpu->ApicId,
 		    cpu->ProximityDomainHi[2] << 24 |
 		    cpu->ProximityDomainHi[1] << 16 |
 		    cpu->ProximityDomainHi[0] << 0 |
 		    cpu->ProximityDomainLo,
-		    cpu->Flags, cpu->ClockDomain);
+		    cpu->Flags, cpu->ClockDomain, cpu->LocalSapicEid);
 		break;
 	case ACPI_SRAT_TYPE_MEMORY_AFFINITY:
 		acpi_print_srat_memory((ACPI_SRAT_MEM_AFFINITY *)srat);
 		break;
 	case ACPI_SRAT_TYPE_X2APIC_CPU_AFFINITY:
 		x2apic = (ACPI_SRAT_X2APIC_CPU_AFFINITY *)srat;
-		acpi_print_srat_cpu(x2apic->ApicId, x2apic->ProximityDomain,
-		    x2apic->Flags, x2apic->ClockDomain);
+		acpi_print_srat_cpu(srat->Type, x2apic->ApicId,
+		    x2apic->ProximityDomain,
+		    x2apic->Flags, x2apic->ClockDomain, 0 /* dummy */);
 		break;
 	case ACPI_SRAT_TYPE_GICC_AFFINITY:
-		gic = (ACPI_SRAT_GICC_AFFINITY *)srat;
-		acpi_print_srat_cpu(gic->AcpiProcessorUid, gic->ProximityDomain,
-		    gic->Flags, gic->ClockDomain);
+		gicc = (ACPI_SRAT_GICC_AFFINITY *)srat;
+		acpi_print_srat_cpu(srat->Type, gicc->AcpiProcessorUid,
+		    gicc->ProximityDomain,
+		    gicc->Flags, gicc->ClockDomain, 0 /* dummy */);
+		break;
+	case ACPI_SRAT_TYPE_GIC_ITS_AFFINITY:
+		gici = (ACPI_SRAT_GIC_ITS_AFFINITY *)srat;
+		acpi_print_srat_cpu(srat->Type, gici->ItsId,
+		    gici->ProximityDomain,
+		    0 /* dummy */, 0 /* dummy */, 0 /* dummy */);
 		break;
 	}
 }
@@ -2252,7 +2267,7 @@ acpi_tcpa_evname(struct TCPAevent *event)
 
 	pc_event = (struct TCPApc_event *)(event + 1);
 
-	switch(event->event_type) {
+	switch (event->event_type) {
 	case PREBOOT:
 	case POST_CODE:
 	case UNUSED:
@@ -2365,7 +2380,7 @@ acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp)
 		printf(END_COMMENT);
 		return;
 	}
-	if(sdp->Revision == 1) {
+	if (sdp->Revision == 1) {
 		printf("\tOLD TCPA spec log found. Dumping not supported.\n");
 		printf(END_COMMENT);
 		return;
@@ -2802,7 +2817,7 @@ acpi_handle_wdat(ACPI_TABLE_HEADER *sdp)
 	    wdat->PciFunction);
 	printf("\n\tTimer Counter Period=%d msec\n", wdat->TimerPeriod);
 	printf("\tTimer Maximum Counter Value=%d\n", wdat->MaxCount);
-	printf("\tTimer Minimum Counter Value=%d\n", wdat->MinCount); 
+	printf("\tTimer Minimum Counter Value=%d\n", wdat->MinCount);
 
 	printf("\tFlags={");
 	if (wdat->Flags & ACPI_WDAT_ENABLED)
@@ -2838,7 +2853,7 @@ acpi_handle_wddt(ACPI_TABLE_HEADER *sdp)
 	printf("\tAddress=");
 	acpi_print_gas(&wddt->Address);
 	printf("\n\tTimer Maximum Counter Value=%d\n", wddt->MaxCount);
-	printf("\tTimer Minimum Counter Value=%d\n", wddt->MinCount); 
+	printf("\tTimer Minimum Counter Value=%d\n", wddt->MinCount);
 	printf("\tTimer Counter Period=%d\n", wddt->Period);
 
 #define PRINTFLAG(var, flag)	printflag((var), ACPI_WDDT_## flag, #flag)
