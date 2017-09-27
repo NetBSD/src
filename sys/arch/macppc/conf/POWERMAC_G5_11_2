@@ -115,8 +115,6 @@ spdmem* at memory? addr ?
 
 uni_n*	at mainbus?
 ki2c*	at uni_n?			# Keywest I2C
-iic*	at ki2c?
-admtemp* 	at iic?
 
 smu* 		at mainbus?
 #options 	SMU_DEBUG
@@ -130,6 +128,22 @@ pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+
+obio0		at pci? dev ? function ?
+zsc*		at obio?
+zstty*		at zsc? channel ?
+#snapper* 	at obio?
+ki2c*		at obio?	# Keywest I2C
+iic*		at ki2c?
+
+admtemp* 	at iic?
+deq* 		at iic?
+
+# Audio support
+#audio*	at audiobus?
+
+#spkr*	at audio?		# PC speaker (synthesized)
+#wsbell* at spkr?
 
 bge*	at pci? dev ? function ?	# gmac ethernet
 brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
