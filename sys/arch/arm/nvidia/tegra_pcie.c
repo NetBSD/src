@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.21 2017/09/26 16:12:45 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.22 2017/09/27 10:19:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.21 2017/09/26 16:12:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.22 2017/09/27 10:19:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -374,13 +374,21 @@ tegra_pcie_reset_port(struct tegra_pcie_softc * const sc, int index)
 static void
 tegra_pcie_enable_ports(struct tegra_pcie_softc * const sc)
 {
+	struct fdtbus_phy *phy;
 	const u_int *data;
-	int child, len;
+	int child, len, n;
 	uint32_t val;
 
 	for (child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
+
+		/* Enable PHYs */
+		for (n = 0; (phy = fdtbus_phy_get_index(child, n)) != NULL; n++)
+			if (fdtbus_phy_enable(phy, true) != 0)
+				aprint_error_dev(sc->sc_dev, "couldn't enable %s phy #%d\n",
+				    fdtbus_get_string(child, "name"), n);
+
 		data = fdtbus_get_prop(child, "reg", &len);
 		if (data == NULL || len < 4)
 			continue;
@@ -393,6 +401,7 @@ tegra_pcie_enable_ports(struct tegra_pcie_softc * const sc)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_PEXn_CTRL_REG(index), val);
 
 		tegra_pcie_reset_port(sc, index);
+
 	}
 }
 
