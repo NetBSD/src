@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.118 2017/09/21 07:15:35 ozaki-r Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.119 2017/09/27 10:05:05 ozaki-r Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.118 2017/09/21 07:15:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.119 2017/09/27 10:05:05 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.118 2017/09/21 07:15:35 ozaki-r Exp 
 #include "opt_ipsec.h"
 #include "opt_dccp.h"
 #include "opt_sctp.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -182,6 +183,39 @@ PR_WRAP_CTLOUTPUT(sctp_ctloutput)
 
 #define sctp6_ctlinput	sctp6_ctlinput_wrapper
 #define sctp_ctloutput	sctp_ctloutput_wrapper
+#endif
+
+#ifdef NET_MPSAFE
+PR_WRAP_INPUT6(udp6_input)
+PR_WRAP_INPUT6(tcp6_input)
+#ifdef DCCP
+PR_WRAP_INPUT6(dccp6_input)
+#endif
+#ifdef SCTP
+PR_WRAP_INPUT6(sctp6_input)
+#endif
+PR_WRAP_INPUT6(rip6_input)
+PR_WRAP_INPUT6(dest6_input)
+PR_WRAP_INPUT6(route6_input)
+PR_WRAP_INPUT6(frag6_input)
+#if NETHERIP > 0
+PR_WRAP_INPUT6(ip6_etherip_input)
+#endif
+#if NPFSYNC > 0
+PR_WRAP_INPUT6(pfsync_input)
+#endif
+PR_WRAP_INPUT6(pim6_input)
+
+#define	udp6_input		udp6_input_wrapper
+#define	tcp6_input		tcp6_input_wrapper
+#define	dccp6_input		dccp6_input_wrapper
+#define	sctp6_input		sctp6_input_wrapper
+#define	rip6_input		rip6_input_wrapper
+#define	dest6_input		dest6_input_wrapper
+#define	route6_input		route6_input_wrapper
+#define	frag6_input		frag6_input_wrapper
+#define	ip6_etherip_input	ip6_etherip_input_wrapper
+#define	pim6_input		pim6_input_wrapper
 #endif
 
 #if defined(IPSEC)
