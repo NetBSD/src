@@ -1,6 +1,6 @@
-.\" $NetBSD: creal.3,v 1.4 2012/12/27 21:34:10 wiz Exp $
+.\" $NetBSD: creal.3,v 1.5 2017/09/27 09:20:27 maya Exp $
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
-.Dd December 27, 2012
+.Dd September 27, 2017
 .Dt CREAL 3
 .Os
 .Sh NAME
@@ -16,6 +16,9 @@
 .Fn crealf "float complex z"
 .Ft long double
 .Fn creall "long double complex z"
+.In tgmath.h
+.Ft complex-float
+.Fn creal "complex-float z"
 .Sh DESCRIPTION
 These functions compute the real part of
 .Ar z .
