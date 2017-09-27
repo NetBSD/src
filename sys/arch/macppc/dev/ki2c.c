@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.22 2017/09/22 03:09:51 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.23 2017/09/27 22:10:19 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -169,7 +169,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		prop_dictionary_set(dev, "compatible", data);
 		prop_object_release(data);
 		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", node);
+		prop_dictionary_set_uint64(dev, "cookie", devs);
 		prop_array_add(cfg, dev);
 		prop_object_release(dev);
 	skip:
