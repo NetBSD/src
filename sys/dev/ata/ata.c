@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.37 2017/09/25 22:43:46 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.38 2017/09/27 19:05:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.37 2017/09/25 22:43:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.38 2017/09/27 19:05:57 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1355,6 +1355,10 @@ again:
 		goto out;
 	}
 
+	if (atac->atac_claim_hw)
+		if (!atac->atac_claim_hw(chp, 0))
+			goto out;
+
 	ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
 	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
 	if (drvp->drive_flags & ATA_DRIVE_RESET) {
@@ -1529,6 +1533,9 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 #endif
 
+	if (chp->ch_atac->atac_free_hw)
+		chp->ch_atac->atac_free_hw(chp);
+ 
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
 	chq->queue_xfers_avail |= __BIT(xfer->c_slot);
