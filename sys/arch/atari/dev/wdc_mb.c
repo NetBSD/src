@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.38.28.3 2017/09/27 19:04:05 jdolecek Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.38.28.4 2017/09/27 19:11:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38.28.3 2017/09/27 19:04:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38.28.4 2017/09/27 19:11:35 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,6 +220,7 @@ static int	wd_lock;
 static int
 claim_hw(struct ata_channel *chp, int maysleep)
 {
+	ata_channel_lock_owned(chp);
 
 	if (wd_lock != DMA_LOCK_GRANT) {
 		if (wd_lock == DMA_LOCK_REQ) {
@@ -230,7 +231,7 @@ claim_hw(struct ata_channel *chp, int maysleep)
 		}
 		if (!st_dmagrab((dma_farg)wdcintr,
 		    (dma_farg)(maysleep ? NULL : wdcrestart), chp,
-		    &wd_lock, 1))
+		    &wd_lock, 1, &chp->ch_lock))
 			return 0;
 	}
 	return 1;	
@@ -239,6 +240,7 @@ claim_hw(struct ata_channel *chp, int maysleep)
 static void
 free_hw(struct ata_channel *chp)
 {
+	ata_channel_lock_owned(chp);
 
 	/*
 	 * Flush pending interrupts before giving-up lock
