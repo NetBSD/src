@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.129 2017/09/15 17:32:12 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.130 2017/09/28 17:35:08 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -328,6 +328,7 @@
 	.globl	_C_LABEL(bootinfo)
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
+	.globl	_C_LABEL(lwp0uarea)
 	.globl	do_sysret
 	.globl	do_iret
 
@@ -369,6 +370,9 @@ LABEL(biosextmem)	.long	0	/* extended memory reported by BIOS */
 LABEL(biosextmem)	.long	REALEXTMEM
 #endif
 END(biosextmem)
+	.type	_C_LABEL(lwp0uarea), @object
+LABEL(lwp0uarea)	.quad	0
+END(lwp0uarea)
 
 #ifndef XEN
 	.globl	gdt64_lo
@@ -872,9 +876,8 @@ longmode_hi:
 	/* Set up bootstrap stack. */
 	leaq	(PROC0_STK_OFF)(%rsi),%rax
 	addq	%r8,%rax
-	movq	%rax,(_C_LABEL(lwp0)+L_PCB)(%rip) /* XXX L_PCB != uarea */
+	movq	%rax,_C_LABEL(lwp0uarea)(%rip)
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
-	movq	%rsi,PCB_CR3(%rax)		/* pcb->pcb_cr3 */
 	xorq	%rbp,%rbp			/* mark end of frames */
 
 	xorw	%ax,%ax
@@ -954,7 +957,7 @@ longmode_hi:
 	 * use it as the UAREA, and set up the stack here.
 	 */
 	movq	%rax,%rsi
-	movq	%rsi,(_C_LABEL(lwp0)+L_PCB)	/* XXX L_PCB != uarea */
+	movq	%rsi,_C_LABEL(lwp0uarea)(%rip)
 	leaq	(USPACE-FRAMESIZE)(%rsi),%rsp
 	xorq	%rbp,%rbp
 
