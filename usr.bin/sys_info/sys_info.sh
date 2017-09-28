@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.16 2017/09/21 07:07:28 wiz Exp $
+# $NetBSD: sys_info.sh,v 1.17 2017/09/28 18:08:04 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=20170920
+SYS_INFO_VERSION=20170928
 
 PATH=$(sysctl -n user.cs_path)
 export PATH
@@ -187,6 +187,11 @@ getversion() {
 	openssl)
 		run "openssl version 2>/dev/null | awk '{ print tolower(\$1) \"-\" \$2 }'"
 		$all || return 0 ;&
+	pcap)
+		if which_prog tcpdumppath tcpdump; then
+			run "${tcpdumppath} -h 2>&1 | awk '\$1 == \"libpcap\" { sub(\" version \", \"-\"); print }'"
+		fi
+		$all || return 0 ;&
 	pkg_info|pkg_install)
 		if which_prog infopath pkg_info; then
 			run "printf 'pkg_install-%s\n' \$(${infopath} -V)"
@@ -200,6 +205,11 @@ getversion() {
 		$all || return 0 ;&
 	sys_info)
 		run "printf '%s\n' sys_info-${SYS_INFO_VERSION}"
+		$all || return 0 ;&
+	tcpdump)
+		if which_prog tcpdumppath tcpdump; then
+			run "${tcpdumppath} -h 2>&1 | awk '\$1 == \"tcpdump\" { sub(\" version \", \"-\"); print }'"
+		fi
 		$all || return 0 ;&
 	tcsh)
 		if which_prog tcshpath tcsh; then
@@ -222,6 +232,11 @@ getversion() {
 		$all || return 0 ;&
 	[uU]ser[lL]and|release)
 		run "sed <${destdir}/etc/release -e 's/ /-/g' -e 's/^/userland-/' -e 1q"
+		$all || return 0 ;&
+	wpa_supplicant)
+		if which_prog wpapath wpa_supplicant; then
+			run "${wpapath} -v | awk 'NF == 2 { sub(\" v\", \"-\"); print }'"
+		fi
 		$all || return 0 ;&
 	xz)
 		run "xz --version | awk '{ print \$1 \"-\" \$4; exit }'"
