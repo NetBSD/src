@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.135 2017/09/17 09:04:51 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.136 2017/09/28 17:48:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.135 2017/09/17 09:04:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.136 2017/09/28 17:48:20 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -190,7 +190,7 @@ static void    	cpu_boot_secondary(struct cpu_info *ci);
 static void    	cpu_start_secondary(struct cpu_info *ci);
 #endif
 #if NLAPIC > 0
-static void	cpu_copy_trampoline(void);
+static void	cpu_copy_trampoline(paddr_t);
 #endif
 
 /*
@@ -205,7 +205,6 @@ cpu_init_first(void)
 {
 
 	cpu_info_primary.ci_cpuid = lapic_cpu_number();
-	cpu_copy_trampoline();
 
 	cmos_data_mapping = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
 	if (cmos_data_mapping == 0)
@@ -692,11 +691,13 @@ cpu_init_idle_lwps(void)
 void
 cpu_start_secondary(struct cpu_info *ci)
 {
-	extern paddr_t mp_pdirpa;
+	paddr_t mp_pdirpa;
 	u_long psl;
 	int i;
 
 	mp_pdirpa = pmap_init_tmp_pgtbl(mp_trampoline_paddr);
+	cpu_copy_trampoline(mp_pdirpa);
+
 	atomic_or_32(&ci->ci_flags, CPUF_AP);
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0) {
@@ -903,25 +904,38 @@ cpu_debug_dump(void)
 
 #if NLAPIC > 0
 static void
-cpu_copy_trampoline(void)
+cpu_copy_trampoline(paddr_t pdir_pa)
 {
-	/*
-	 * Copy boot code.
-	 */
+	extern uint32_t nox_flag;
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
-
 	vaddr_t mp_trampoline_vaddr;
+	struct {
+		uint32_t large;
+		uint32_t nox;
+		uint32_t pdir;
+	} smp_data;
+	CTASSERT(sizeof(smp_data) == 3 * 4);
 
+	smp_data.large = (pmap_largepages != 0);
+	smp_data.nox = nox_flag;
+	smp_data.pdir = (uint32_t)(pdir_pa & 0xFFFFFFFF);
+
+	/* Enter the physical address */
 	mp_trampoline_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY);
-
 	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
 	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
+
+	/* Copy boot code */
 	memcpy((void *)mp_trampoline_vaddr,
 	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end - cpu_spinup_trampoline);
+
+	/* Copy smp_data at the end */
+	memcpy((void *)(mp_trampoline_vaddr + PAGE_SIZE - sizeof(smp_data)),
+	    &smp_data, sizeof(smp_data));
 
 	pmap_kremove(mp_trampoline_vaddr, PAGE_SIZE);
 	pmap_update(pmap_kernel());
