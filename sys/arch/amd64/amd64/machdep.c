@@ -1,6 +1,6 @@
-/*	$NetBSD: machdep.c,v 1.260 2017/07/25 17:43:44 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.261 2017/09/28 17:35:08 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,10 +73,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/*-
+/*
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -111,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2017/07/25 17:43:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2017/09/28 17:35:08 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1439,7 +1438,7 @@ cpu_init_idt(void)
 	struct region_descriptor region;
 
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-	lidt(&region); 
+	lidt(&region);
 #else
 	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table() failed");
@@ -1495,6 +1494,7 @@ init_x86_64(paddr_t first_avail)
 	struct mem_segment_descriptor *ldt_segp;
 	int x;
 	struct pcb *pcb;
+	extern vaddr_t lwp0uarea;
 #ifndef XEN
 	extern paddr_t local_apic_pa;
 	int ist;
@@ -1505,9 +1505,9 @@ init_x86_64(paddr_t first_avail)
 #ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
+#endif
 
-	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
-#endif /* XEN */
+	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
 	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
@@ -1518,7 +1518,8 @@ init_x86_64(paddr_t first_avail)
 #ifdef XEN
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
-	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
+#else
+	pcb->pcb_cr3 = PDPpaddr;
 #endif
 
 #if NISA > 0 || NPCI > 0
@@ -1790,7 +1791,7 @@ cpu_reset(void)
 	 * invalid and causing a fault.
 	 */
 	kpreempt_disable();
-	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);           
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	kpreempt_enable();
 	breakpoint();
@@ -1801,7 +1802,7 @@ cpu_reset(void)
 	 * entire address space and doing a TLB flush.
 	 */
 	memset((void *)PTD, 0, PAGE_SIZE);
-	tlbflush(); 
+	tlbflush();
 #endif
 #endif	/* XEN */
 
@@ -2040,7 +2041,6 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	tf->tf_gs = gssel;
 	kpreempt_enable();
 }
-
 
 #ifdef __HAVE_DIRECT_MAP
 bool
