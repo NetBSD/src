@@ -32,8 +32,6 @@ set
   is too much for emergency crash dump code path
 - old bug - kern/16789
 
-add nibble to control number of tags (1==disable NCQ)?
-
 add support for the NCQ TRIM if supported by device?
 
 implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd

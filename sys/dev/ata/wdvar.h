@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43.4.8 2017/09/02 12:01:25 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.9 2017/09/28 20:34:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,6 +32,7 @@
 #endif
 
 #include <sys/rndsource.h>
+#include <sys/sysctl.h>
 
 struct wd_softc {
 	/* General disk infos */
@@ -68,6 +69,19 @@ struct wd_softc {
 	u_int sc_bscount;
 #endif
 	krndsource_t	rnd_source;
+
+	/* Sysctl nodes specific for the disk */
+	struct sysctllog *nodelog;
+	int drv_max_tags;
+#define WD_MAX_OPENINGS(wd)	\
+	(MAX(1, MIN((wd)->drvp->drv_openings, (wd)->drv_max_tags)))
+	bool drv_ncq;
+#define WD_USE_NCQ(wd)	\
+	((wd)->drv_ncq && ((wd)->drvp->drive_flags & ATA_DRIVE_NCQ))
+#ifdef WD_CHAOS_MONKEY
+	int drv_chaos_freq;		/* frequency of simulated bio errors */
+	int drv_chaos_cnt;		/* count of processed bio read xfers */
+#endif
 };
 
 #endif /* _DEV_ATA_WDVAR_H_ */
