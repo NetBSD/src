@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.311 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.312 2017/09/28 16:24:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.311 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.312 2017/09/28 16:24:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4607,7 +4607,7 @@ bge_rxeof(struct bge_softc *sc)
 		 * to vlan_input() instead of ether_input().
 		 */
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
-			vlan_set_tag(m, cur_rx->bge_vlan_tag);
+			vlan_set_tag(m, cur_rx->bge_vlan_tag & ETHER_VLAN_MASK);
 		}
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -5332,7 +5332,8 @@ doit:
 	}
 
 	have_vtag = vlan_has_tag(m_head);
-	vtag = vlan_get_tag(m_head);
+	if (have_vtag)
+		vtag = vlan_get_tag(m_head);
 
 	/* Iterate over dmap-map fragments. */
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
