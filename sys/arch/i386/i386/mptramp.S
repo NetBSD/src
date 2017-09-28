@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.31 2017/07/22 08:01:35 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.32 2017/09/28 17:48:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.31 2017/07/22 08:01:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.32 2017/09/28 17:48:20 maxv Exp $");
 
 #include "assym.h"
 #include <machine/specialreg.h>
@@ -85,14 +85,21 @@ __KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.31 2017/07/22 08:01:35 maxv Exp $");
 #include <machine/gdt.h>
 
 #define GDTE(a,b)	.byte   0xff,0xff,0x0,0x0,0x0,a,b,0x0
-#define _RELOC(x)	((x) - KERNBASE)
-#define RELOC(x)	_RELOC(_C_LABEL(x))
 
 #define _TRMP_LABEL(a)	a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 
+/*
+ * A smp_data structure is packed at the end of the trampoline page. The stack
+ * is right below this structure.
+ */
+#define SMP_DATA	(MP_TRAMPOLINE + PAGE_SIZE - 3 * 4)
+#define SMP_DATA_STACK	(SMP_DATA + 0 * 4)
+#define SMP_DATA_LARGE	(SMP_DATA + 0 * 4)
+#define SMP_DATA_NOX	(SMP_DATA + 1 * 4)
+#define SMP_DATA_PDIR	(SMP_DATA + 2 * 4)
+
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
-	.global _C_LABEL(mp_pdirpa)
 
 	.text
 	.align 4,0x0
@@ -128,15 +135,16 @@ _TRMP_LABEL(mp_startup)
 	movw	%ax,%fs
 	movw	%ax,%gs
 
-	/* bootstrap stack end, with scratch space.. */
-	movl	$(MP_TRAMPOLINE+PAGE_SIZE-16),%esp
+	/* bootstrap stack end */
+	movl	$SMP_DATA_STACK,%esp
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
 
 	/* Enable PSE if available */
-	movl	RELOC(pmap_largepages),%eax
+	movl	$SMP_DATA_LARGE,%eax
+	movl	(%eax),%eax
 	orl	%eax,%eax
 	jz	no_PSE
 	movl	%cr4,%eax
@@ -154,7 +162,8 @@ no_PSE:
 	/*
 	 * Set NOX in EFER, if available.
 	 */
-	movl	RELOC(nox_flag),%ebx
+	movl	$SMP_DATA_NOX,%ebx
+	movl	(%ebx),%ebx
 	cmpl	$0,%ebx
 	je 	no_NOX
 	movl	$MSR_EFER,%ecx
@@ -165,7 +174,8 @@ no_PSE:
 no_NOX:
 
 	/* Load %cr3. */
-	movl	RELOC(mp_pdirpa),%ecx
+	movl	$SMP_DATA_PDIR,%ecx
+	movl	(%ecx),%ecx
 	movl	%ecx,%cr3		/* load PTD addr into MMU */
 
 	/* Enable paging and the rest of it. */
@@ -229,9 +239,4 @@ mp_cont:
 
 	call	_C_LABEL(cpu_hatch)
 END(cpu_spinup_trampoline)
-
-	.data
-LABEL(mp_pdirpa)
-	.long	0
-END(mp_pdirpa)
 
