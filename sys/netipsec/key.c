@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.227 2017/09/27 09:55:52 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.228 2017/09/28 17:21:42 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.227 2017/09/27 09:55:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.228 2017/09/28 17:21:42 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -881,15 +881,13 @@ key_lookup_sp_byspidx(const struct secpolicyindex *spidx,
 
 	/* get a SP entry */
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
-		printf("*** objects\n");
-		kdebug_secpolicyindex(spidx);
+		kdebug_secpolicyindex("objects", spidx);
 	}
 
 	s = pserialize_read_enter();
 	SPLIST_READER_FOREACH(sp, dir) {
 		if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
-			printf("*** in SPD\n");
-			kdebug_secpolicyindex(&sp->spidx);
+			kdebug_secpolicyindex("in SPD", &sp->spidx);
 		}
 
 		if (sp->state == IPSEC_SPSTATE_DEAD)
@@ -7680,8 +7678,7 @@ key_parse(struct mbuf *m, struct socket *so)
 
 #if 0	/*kdebug_sadb assumes msg in linear buffer*/
 	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
-		IPSECLOG(LOG_DEBUG, "passed sadb_msg\n");
-		kdebug_sadb(msg);
+		kdebug_sadb("passed sadb_msg", msg);
 	}
 #endif
 
