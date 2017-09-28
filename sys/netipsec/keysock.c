@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.61 2017/09/25 01:56:22 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.62 2017/09/28 17:21:42 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.61 2017/09/25 01:56:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.62 2017/09/28 17:21:42 christos Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -137,7 +137,7 @@ key_output(struct mbuf *m, struct socket *so)
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP))
-		kdebug_mbuf(m);
+		kdebug_mbuf(__func__, m);
 
 	msg = mtod(m, struct sadb_msg *);
 	PFKEY_STATINC(PFKEY_STAT_OUT_MSGTYPE + msg->sadb_msg_type);

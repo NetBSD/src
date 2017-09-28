@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.119 2017/09/19 02:44:14 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.120 2017/09/28 17:21:42 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.119 2017/09/19 02:44:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.120 2017/09/28 17:21:42 christos Exp $");
 
 /*
  * IPsec controller part.
@@ -1132,8 +1132,7 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx,
 	KASSERT(m != NULL);
 
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
-		printf("%s:\n", __func__);
-		kdebug_mbuf(m);
+		kdebug_mbuf(__func__, m);
 	}
 
 	/* set default */
@@ -1375,8 +1374,7 @@ ipsec_set_policy(
 	xpl = (const struct sadb_x_policy *)request;
 
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
-		printf("%s: passed policy\n", __func__);
-		kdebug_sadb_x_policy((const struct sadb_ext *)xpl);
+		kdebug_sadb_xpolicy("set passed policy", request);
 	}
 
 	/* check policy type */
@@ -1431,8 +1429,7 @@ ipsec_get_policy(struct secpolicy *policy, struct mbuf **mp)
 
 	(*mp)->m_type = MT_DATA;
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
-		printf("%s:\n", __func__);
-		kdebug_mbuf(*mp);
+		kdebug_mbuf(__func__, *mp);
 	}
 
 	return 0;
