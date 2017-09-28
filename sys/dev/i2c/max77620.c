@@ -1,4 +1,4 @@
-/* $NetBSD: max77620.c,v 1.1 2017/09/22 18:12:31 jmcneill Exp $ */
+/* $NetBSD: max77620.c,v 1.2 2017/09/28 13:08:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.1 2017/09/22 18:12:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.2 2017/09/28 13:08:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ max77620_write(struct max77620_softc *sc, uint8_t reg, uint8_t val, int flags)
 }
 
 #define	I2C_READ(sc, reg)	max77620_read((sc), (reg), I2C_F_POLL)
-#define	I2C_WRITE(sc, reg, val)	max77620_write((sc), (reg) << 1, (val), I2C_F_POLL)
+#define	I2C_WRITE(sc, reg, val)	max77620_write((sc), (reg), (val), I2C_F_POLL)
 #define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, I2C_F_POLL)
 #define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, I2C_F_POLL)
 
