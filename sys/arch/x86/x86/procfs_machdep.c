@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.16 2017/08/28 07:03:47 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.17 2017/09/28 10:59:38 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.16 2017/08/28 07:03:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.17 2017/09/28 10:59:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,11 +106,11 @@ static const char * const x86_features[][32] = {
 	"fma4", "tce", NULL, "nodeid_msr",
 	NULL, "tbm", "topoext", "perfctr_core",
 	"perfctr_nb", NULL, "bpext", "ptsc",
-	"perfctr_l2", "mwaitx", NULL, NULL},
+	"perfctr_llc", "mwaitx", NULL, NULL},
 
 	{ /* (7) Linux mapping */
 	NULL, NULL, "cpb", "ebp", NULL, "pln", "pts", "dtherm",
-	"hw_pstate", "proc_feedback", NULL, NULL,
+	"hw_pstate", "proc_feedback", "sme", NULL,
 	NULL, NULL, NULL, "intel_pt",
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
@@ -131,7 +131,7 @@ static const char * const x86_features[][32] = {
 	"clwb", NULL, "avx512pf", "avx512er",
 	"avx512cd", "sha_ni", "avx512bw", "avx512vl"},
 
-	{ /* (10) 0x0000000d eax */
+	{ /* (10) 0x0000000d:1 eax */
 	"xsaveopt", "xsavec", "xgetbv1", "xsaves", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -165,8 +165,9 @@ static const char * const x86_features[][32] = {
 	{ /* (15) 0x8000000a edx */
 	"npt", "lbrv", "svm_lock", "nrip_save",
 	"tsc_scale", "vmcb_clean", "flushbyasid", "decodeassists",
-	NULL, NULL, "pausefilter", NULL, "pfthreshold", "avic", NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, "pausefilter", NULL, "pfthreshold", "avic", NULL,
+	"v_vmsave_vmload",
+	"vgif", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (16) 0x00000007:0 ecx */
@@ -248,6 +249,7 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 {
 	size_t last = *left;
 	size_t diff;
+	u_int descs[4];
 
 	procfs_getonefeatreg(ci->ci_feat_val[0], x86_features[0], p, left);
 	diff = last - *left;
@@ -278,11 +280,34 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 	    left);
 	diff = last - *left;
 
-	/* (10) 0x0000000d eax */
-	/* (11) 0x0000000f(ecx=0) edx */
-	/* (12) 0x0000000f(ecx=1) edx */
+	if (cpuid_level >= 0x0d) {
+		x86_cpuid2(0x0d, 1, descs);
+		procfs_getonefeatreg(descs[0], x86_features[10], p + diff,
+		    left);
+		diff = last - *left;
+	}
+
+	if (cpuid_level >= 0x0f) {
+		x86_cpuid2(0x0f, 0, descs);
+		procfs_getonefeatreg(descs[3], x86_features[11], p + diff,
+		    left);
+		diff = last - *left;
+
+		x86_cpuid2(0x0f, 1, descs);
+		procfs_getonefeatreg(descs[3], x86_features[12], p + diff,
+		    left);
+		diff = last - *left;
+	}
+
 	/* (13) 0x80000008 ebx */
-	/* (14) 0x00000006 eax */
+
+	if (cpuid_level >= 0x06) {
+		x86_cpuid(0x06, descs);
+		procfs_getonefeatreg(descs[0], x86_features[14], p + diff,
+		    left);
+		diff = last - *left;
+	}
+
 	/* (15) 0x8000000a edx */
 
 	procfs_getonefeatreg(ci->ci_feat_val[6], x86_features[16], p + diff,
