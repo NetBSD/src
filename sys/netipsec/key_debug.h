@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.h,v 1.8 2017/04/19 03:42:11 ozaki-r Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.9 2017/09/28 17:21:42 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.h,v 1.10 2001/08/05 08:37:52 itojun Exp $	*/
 
@@ -69,8 +69,8 @@ extern u_int32_t key_debug_level;
 
 struct sadb_msg;
 struct sadb_ext;
-void kdebug_sadb (const struct sadb_msg *);
-void kdebug_sadb_x_policy (const struct sadb_ext *);
+void kdebug_sadb(const struct sadb_msg *);
+void kdebug_sadb_xpolicy(const char *, const struct sadb_ext *);
 
 #ifdef _KERNEL
 struct secpolicy;
@@ -79,18 +79,9 @@ struct secasindex;
 struct secasvar;
 struct secreplay;
 struct mbuf;
-void kdebug_secpolicy (const struct secpolicy *);
-void kdebug_secpolicyindex (const struct secpolicyindex *);
-void kdebug_secasindex (const struct secasindex *);
-void kdebug_secasv (const struct secasvar *);
-void kdebug_mbufhdr (const struct mbuf *);
-void kdebug_mbuf (const struct mbuf *);
+void kdebug_secpolicy(const struct secpolicy *);
+void kdebug_secpolicyindex(const char *, const struct secpolicyindex *);
+void kdebug_mbuf(const char *, const struct mbuf *);
 #endif /*_KERNEL*/
-
-struct sockaddr;
-void kdebug_sockaddr (const struct sockaddr *);
-
-void ipsec_hexdump (const char *, int);
-void ipsec_bindump (const char *, int);
 
 #endif /* !_NETIPSEC_KEY_DEBUG_H_ */
