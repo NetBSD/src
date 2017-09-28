@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.10 2017/09/25 08:30:46 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.11 2017/09/28 02:32:51 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.10 2017/09/25 08:30:46 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.11 2017/09/28 02:32:51 christos Exp $");
 #endif
 #endif
 
@@ -208,7 +208,6 @@ read_data(entry *e, const char *mailto, const char *usernm, char **envp,
 			retval = ERROR_EXIT;
 			goto out;
 		}
-		log_itx(usernm, getpid(), "MAIL", "opened pipe `%s'", mailcmd);
 		(void)fprintf(mail, "From: root (Cron Daemon)\n");
 		(void)fprintf(mail, "To: %s\n", mailto);
 		(void)fprintf(mail, "Subject: Cron <%s@%s> %s\n",
