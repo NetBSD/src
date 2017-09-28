@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.34 2017/08/13 15:12:04 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.35 2017/09/28 20:34:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.34 2017/08/13 15:12:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.35 2017/09/28 20:34:23 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -114,11 +114,6 @@ int wdcdebug_wd_mask = 0x0;
 		printf args
 #else
 #define ATADEBUG_PRINT(args, level)
-#endif
-
-#ifdef WD_CHAOS_MONKEY
-int wdcdebug_wd_cnt = 0;
-int wdcdebug_wd_chaos = 0;
 #endif
 
 int	wdprobe(device_t, cfdata_t, void *);
@@ -210,6 +205,9 @@ bool  wd_shutdown(device_t, int);
 
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
+
+static void wd_sysctl_attach(struct wd_softc *);
+static void wd_sysctl_detach(struct wd_softc *);
 
 struct dkdriver wddkdriver = {
 	.d_strategy = wdstrategy,
@@ -450,6 +448,8 @@ out:
 
 	if (!pmf_device_register1(self, wd_suspend, NULL, wd_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	wd_sysctl_attach(wd);
 }
 
 static bool
@@ -519,6 +519,8 @@ wddetach(device_t self, int flags)
 #endif
 
 	pmf_device_deregister(self);
+
+	wd_sysctl_detach(sc);
 
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
@@ -663,8 +665,7 @@ wdstart(device_t self)
 	while (bufq_peek(wd->sc_q) != NULL) {
 		/* First try to get xfer. Limit to drive openings iff NCQ. */
 		xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0,
-		    ISSET(wd->drvp->drive_flags, ATA_DRIVE_NCQ)
-		        ? wd->drvp->drv_openings : 0);
+		    WD_USE_NCQ(wd) ? WD_MAX_OPENINGS(wd) : 0);
 		if (xfer == NULL)
 			break;
 
@@ -708,8 +709,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 * the command be clipped, or otherwise misinterpreted, by the
 	 * driver or controller.
 	 */
-	if (BUF_ISREAD(bp) && xfer->c_retries == 0 && wdcdebug_wd_cnt > 0 &&
-	    (++wdcdebug_wd_chaos % wdcdebug_wd_cnt) == 0) {
+	if (BUF_ISREAD(bp) && xfer->c_retries == 0 && wd->drv_chaos_freq > 0 &&
+	    (++wd->drv_chaos_cnt % wd->drv_chaos_freq) == 0) {
 		aprint_normal_dev(wd->sc_dev, "%s: chaos xfer %d\n",
 		    __func__, xfer->c_slot);
 		xfer->c_bio.blkno = 7777777 + wd->sc_capacity;
@@ -745,8 +746,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 * the semantics - FUA would not be honored. In that case, continue
 	 * retrying with NCQ.
 	 */
-	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ &&
-	    (xfer->c_retries < WDIORETRIES_SINGLE ||
+	if (WD_USE_NCQ(wd) && (xfer->c_retries < WDIORETRIES_SINGLE ||
 	    (bp->b_flags & B_MEDIA_FUA) != 0)) {
 		xfer->c_bio.flags |= ATA_LBA48;
 		xfer->c_flags |= C_NCQ;
@@ -1856,7 +1856,7 @@ wd_getcache(struct wd_softc *wd, int *bitsp)
 	if (params.atap_cmd1_en & WDC_CMD1_CACHE)
 		*bitsp |= DKCACHE_WRITE;
 
-	if (wd->drvp->drive_flags & (ATA_DRIVE_NCQ|ATA_DRIVE_WFUA))
+	if (WD_USE_NCQ(wd) || (wd->drvp->drive_flags & ATA_DRIVE_WFUA))
 		*bitsp |= DKCACHE_FUA;
 
 	return 0;
@@ -2315,3 +2315,84 @@ out2:
 		bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
+
+static void
+wd_sysctl_attach(struct wd_softc *wd)
+{
+	const struct sysctlnode *node;
+	int error;
+
+	/* sysctl set-up */
+	if (sysctl_createv(&wd->nodelog, 0, NULL, &node,
+				0, CTLTYPE_NODE, device_xname(wd->sc_dev),
+				SYSCTL_DESCR("wd driver settings"),
+				NULL, 0, NULL, 0,
+				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
+		aprint_error_dev(wd->sc_dev,
+		    "could not create %s.%s sysctl node\n",
+		    "hw", device_xname(wd->sc_dev));
+		return;
+	}
+
+	wd->drv_max_tags = ATA_MAX_OPENINGS;
+	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
+				CTLFLAG_READWRITE, CTLTYPE_INT, "max_tags",
+				SYSCTL_DESCR("max number of NCQ tags to use"),
+				NULL, 0, &wd->drv_max_tags, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+		aprint_error_dev(wd->sc_dev,
+		    "could not create %s.%s.max_tags sysctl - error %d\n",
+		    "hw", device_xname(wd->sc_dev), error);
+		return;
+	}
+
+	wd->drv_ncq = true;
+	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
+				CTLFLAG_READWRITE, CTLTYPE_BOOL, "use_ncq",
+				SYSCTL_DESCR("use NCQ if supported"),
+				NULL, 0, &wd->drv_ncq, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+		aprint_error_dev(wd->sc_dev,
+		    "could not create %s.%s.use_ncq sysctl - error %d\n",
+		    "hw", device_xname(wd->sc_dev), error);
+		return;
+	}
+
+#ifdef WD_CHAOS_MONKEY
+	wd->drv_chaos_freq = 0;
+	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
+				CTLFLAG_READWRITE, CTLTYPE_INT, "chaos_freq",
+				SYSCTL_DESCR("simulated bio read error rate"),
+				NULL, 0, &wd->drv_chaos_freq, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+		aprint_error_dev(wd->sc_dev,
+		    "could not create %s.%s.chaos_freq sysctl - error %d\n",
+		    "hw", device_xname(wd->sc_dev), error);
+		return;
+	}
+
+	wd->drv_chaos_cnt = 0;
+	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
+				CTLFLAG_READONLY, CTLTYPE_INT, "chaos_cnt",
+				SYSCTL_DESCR("number of processed bio reads"),
+				NULL, 0, &wd->drv_chaos_cnt, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+		aprint_error_dev(wd->sc_dev,
+		    "could not create %s.%s.chaos_cnt sysctl - error %d\n",
+		    "hw", device_xname(wd->sc_dev), error);
+		return;
+	}
+#endif
+
+}
+
+static void
+wd_sysctl_detach(struct wd_softc *wd)
+{
+	sysctl_teardown(&wd->nodelog);
+}
+
