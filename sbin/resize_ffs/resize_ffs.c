@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.47 2016/08/24 07:44:05 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.48 2017/09/28 17:07:20 sborrill Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.47 2016/08/24 07:44:05 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.48 2017/09/28 17:07:20 sborrill Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -462,10 +462,10 @@ static void
 initcg(int cgn)
 {
 	struct cg *cg;		/* The in-core cg, of course */
-	int base;		/* Disk address of cg base */
-	int dlow;		/* Size of pre-cg data area */
-	int dhigh;		/* Offset of post-inode data area, from base */
-	int dmax;		/* Offset of end of post-inode data area */
+	int64_t base;		/* Disk address of cg base */
+	int64_t dlow;		/* Size of pre-cg data area */
+	int64_t dhigh;		/* Offset of post-inode data area, from base */
+	int64_t dmax;		/* Offset of end of post-inode data area */
 	int i;			/* Generic loop index */
 	int n;			/* Generic count */
 	int start;		/* start of cg maps */
@@ -896,10 +896,10 @@ recompute_fs_dsize(void)
 
 	newsb->fs_dsize = 0;
 	for (i = 0; i < newsb->fs_ncg; i++) {
-		int dlow;	/* size of before-sb data area */
-		int dhigh;	/* offset of post-inode data area */
-		int dmax;	/* total size of cg */
-		int base;	/* base of cg, since cgsblock() etc add it in */
+		int64_t dlow;	/* size of before-sb data area */
+		int64_t dhigh;	/* offset of post-inode data area */
+		int64_t dmax;	/* total size of cg */
+		int64_t base;	/* base of cg, since cgsblock() etc add it in */
 		base = cgbase(newsb, i);
 		dlow = cgsblock(newsb, i) - base;
 		dhigh = cgdmin(newsb, i) - base;
@@ -1365,7 +1365,7 @@ fragmove(struct cg * cg, int base, unsigned int start, unsigned int n)
 static void
 evict_data(struct cg * cg, unsigned int minfrag, int nfrag)
 {
-	int base;	/* base of cg (in frags from beginning of fs) */
+	int64_t base;	/* base of cg (in frags from beginning of fs) */
 
 	base = cgbase(oldsb, cg->cg_cgx);
 	/* Does the boundary fall in the middle of a block?  To avoid
@@ -1781,10 +1781,10 @@ shrink(void)
 	csum_fixup();
 	/* Evict data from any cgs being wholly eliminated */
 	for (i = newsb->fs_ncg; i < oldsb->fs_ncg; i++) {
-		int base;
-		int dlow;
-		int dhigh;
-		int dmax;
+		int64_t base;
+		int64_t dlow;
+		int64_t dhigh;
+		int64_t dmax;
 		base = cgbase(oldsb, i);
 		dlow = cgsblock(oldsb, i) - base;
 		dhigh = cgdmin(oldsb, i) - base;
