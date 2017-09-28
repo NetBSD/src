@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.28 2017/09/27 08:14:18 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.29 2017/09/28 06:55:08 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.28 2017/09/27 08:14:18 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.29 2017/09/28 06:55:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -390,12 +390,17 @@ acpi_print_hest_header(ACPI_HEST_HEADER *hest)
 static void
 acpi_print_hest_aer_common(ACPI_HEST_AER_COMMON *data)
 {
-	printf("\tFlags={ ");
-	if (data->Flags & ACPI_HEST_FIRMWARE_FIRST)
-		printf("FIRMWARE_FIRST");
-	if (data->Flags & ACPI_HEST_GLOBAL)
-		printf("GLOBAL");
-	printf(" }\n");
+
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_HEST_## flag, #flag)
+
+	printf("\tFlags=");
+	PRINTFLAG(data->Flags, FIRMWARE_FIRST);
+	PRINTFLAG(data->Flags, GLOBAL);
+	PRINTFLAG(data->Flags, GHES_ASSIST);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
+
 	printf("\tEnabled={ %s ", data->Flags ? "YES" : "NO");
 	if (data->Flags & ACPI_HEST_FIRMWARE_FIRST)
 		printf("(ignored) ");
