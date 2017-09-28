@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.59 2017/09/23 18:27:21 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.60 2017/09/28 01:19:22 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6049,4 +6049,13 @@ sys/arch/x68k/dev/vsvar.h			1.12-1.15 via patch
 
 	Make vs(4) work again.
 	[isaki, ticket #172]
+
+sys/dev/usb/if_athn_usb.c			1.23
+
+	PR/52553 Panic on "ifconfig athn0 up"
+
+	Don't race for a transfer in athn_usb_init on the free list
+	for beacons.  Instead pre-assign a transfer to beacons in
+	athn_usb_alloc_tx_list
+	[skrll, ticket #293]
 
