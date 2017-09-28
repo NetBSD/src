@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.27 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: math.3,v 1.28 2017/09/28 11:18:41 maya Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)math.3	6.10 (Berkeley) 5/6/91
 .\"
-.Dd February 23, 2007
+.Dd September 28, 2017
 .Dt MATH 3
 .Os
 .Sh NAME
@@ -62,11 +62,16 @@ Declarations for these functions may be obtained from the include file
 .It cosh Ta Xr cosh 3 Ta hyperbolic function Ta 3
 .It erf Ta Xr erf 3 Ta error function Ta ???
 .It erfc Ta Xr erf 3 Ta complementary error function Ta ???
-.It exp Ta Xr exp 3 Ta exponential Ta 1
-.It expm1 Ta Xr exp 3 Ta exp(x)\-1 Ta 1
+.It exp Ta Xr exp 3 Ta base e exponential Ta 1
+.It exp2 Ta Xr exp2 3 Ta base 2 exponential Ta ???
+.It expm1 Ta Xr expm1 3 Ta exp(x)\-1 Ta 1
 .It fabs Ta Xr fabs 3 Ta absolute value Ta 0
+.It fdim Ta Xr erf 3 Ta positive difference Ta ???
 .It finite Ta Xr finite 3 Ta test for finity Ta 0
 .It floor Ta Xr floor 3 Ta integer no greater than Ta 0
+.It fma Ta Xr fmod 3 Ta fused multiply-add Ta ???
+.It fmax Ta Xr fmax 3 Ta maximum Ta 0
+.It fmin Ta Xr fmin 3 Ta minimum Ta 0
 .It fmod Ta Xr fmod 3 Ta remainder Ta ???
 .It hypot Ta Xr hypot 3 Ta Euclidean distance Ta 1
 .It ilogb Ta Xr ilogb 3 Ta exponent extraction Ta 0
