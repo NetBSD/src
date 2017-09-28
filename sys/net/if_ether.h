@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.67 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.68 2017/09/28 16:26:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -60,6 +60,7 @@
  * Some Ethernet extensions.
  */
 #define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
+#define	ETHER_VLAN_MASK	0xFFF	/* bits in a vlan tag */
 #define	ETHER_PPPOE_ENCAP_LEN 8	/* length of PPPoE encapsulation */
 
 /*
@@ -299,7 +300,7 @@ static inline void
 vlan_set_tag(struct mbuf *m, u_int16_t vlanid)
 {
 
-	KASSERT((vlanid & ~0x0FFF) == 0);
+	KASSERT((vlanid & ~ETHER_VLAN_MASK) == 0);
 
 	m->m_pkthdr.ether_vtag = vlanid;
 	m->m_flags |= M_VLANTAG;
@@ -316,6 +317,7 @@ vlan_has_tag(struct mbuf *m)
 static inline uint16_t
 vlan_get_tag(struct mbuf *m)
 {
+	KASSERT(m->m_flags & M_VLANTAG);
 	return m->m_pkthdr.ether_vtag;
 }
 
