@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.63 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.64 2017/09/28 16:23:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.63 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.64 2017/09/28 16:23:57 christos Exp $");
 
 
 #include <sys/param.h>
@@ -829,7 +829,8 @@ stge_start(struct ifnet *ifp)
 		 * See if we have any VLAN stuff.
 		 */
 		have_vtag = vlan_has_tag(m0);
-		vtag = vlan_get_tag(m0);
+		if (have_vtag)
+			vtag = vlan_get_tag(m0);
 
 		/*
 		 * Get the last and next available transmit descriptor.
