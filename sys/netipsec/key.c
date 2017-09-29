@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.228 2017/09/28 17:21:42 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.229 2017/09/29 14:59:43 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.228 2017/09/28 17:21:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.229 2017/09/29 14:59:43 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4633,6 +4633,7 @@ key_sockaddr_match(
 {
 	const struct sockaddr_in *sin1, *sin2;
 	const struct sockaddr_in6 *sin61, *sin62;
+	char s1[IPSEC_ADDRSTRLEN], s2[IPSEC_ADDRSTRLEN];
 
 	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len) {
 		KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
@@ -4654,17 +4655,20 @@ key_sockaddr_match(
 		sin2 = (const struct sockaddr_in *)sa2;
 		if (sin1->sin_addr.s_addr != sin2->sin_addr.s_addr) {
 			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-			    "addr fail %#x != %#x\n",
-			    sin1->sin_addr.s_addr, sin2->sin_addr.s_addr);
+			    "addr fail %s != %s\n",
+			    (in_print(s1, sizeof(s1), &sin1->sin_addr), s1),
+			    (in_print(s2, sizeof(s2), &sin2->sin_addr), s2));
 			return 0;
 		}
 		if (key_portcomp(sin1->sin_port, sin2->sin_port, howport)) {
 			return 0;
 		}
 		KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-		    "addr success %#x[%d] == %#x[%d]\n",
-		    sin1->sin_addr.s_addr, sin1->sin_port,
-		    sin2->sin_addr.s_addr, sin2->sin_port);
+		    "addr success %s[%d] == %s[%d]\n",
+		    (in_print(s1, sizeof(s1), &sin1->sin_addr), s1),
+		    sin1->sin_port,
+		    (in_print(s2, sizeof(s2), &sin2->sin_addr), s2),
+		    sin2->sin_port);
 		break;
 	case AF_INET6:
 		sin61 = (const struct sockaddr_in6 *)sa1;
