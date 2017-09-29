@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.739 2017/08/29 18:31:19 ryoon Exp $
+$NetBSD: usbdevs,v 1.740 2017/09/29 22:05:54 scole Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1474,6 +1474,9 @@ product EICON DIVA852		0x4905	Diva 852 ISDN TA
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
+
+/* ELAN Products */
+product ELAN ACTIVEJET		0x0103	ActiveJet K-2024 Multimedia Keyboard
 
 /* ELCON Systemtechnik products */
 product ELCON PLAN		0x0002	Goldpfeil P-LAN
