@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threads.c,v 1.2 2017/01/13 21:30:43 christos Exp $	*/
+/*	$NetBSD: t_threads.c,v 1.3 2017/09/29 10:22:36 maya Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ ATF_TC_BODY(kthread, tc)
 	rump_init();
 
 	rump_schedule();
-	rumptest_threadjoin(); /* panics if fails */
+	rumptest_thread(); /* panics if fails */
 	rump_unschedule();
 }
 
