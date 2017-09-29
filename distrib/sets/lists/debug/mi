@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.224 2017/08/16 13:53:19 joerg Exp $
+# $NetBSD: mi,v 1.225 2017/09/29 12:42:36 maya Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2306,6 +2306,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_signals.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_threads.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_tsleep.debug		tests-syscall-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_workqueue.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_vm.debug			tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_basic.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf,rump
