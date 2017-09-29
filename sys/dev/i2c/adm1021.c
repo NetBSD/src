@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.15 2017/09/20 22:44:28 macallan Exp $ */
+/*	$NetBSD: adm1021.c,v 1.16 2017/09/29 14:17:47 macallan Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.15 2017/09/20 22:44:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.16 2017/09/29 14:17:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.15 2017/09/20 22:44:28 macallan Exp $"
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#ifdef macppc
+#define HAVE_OF 1
+#endif
+
+#ifdef HAVE_OF
+#include <dev/ofw/openfirm.h>
+#endif
 
 /* Registers */
 #define ADM1021_INT_TEMP	0x00	/* Internal temperature value */
@@ -322,7 +330,10 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	uint8_t cmd, data, stat, comp, rev;
 	char name[ADMTEMP_NAMELEN];
-
+#ifdef HAVE_OF
+	char ename[64], iname[64];
+	int ch;
+#endif
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
@@ -384,10 +395,27 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor[ADMTEMP_EXT].units = ENVSYS_STEMP;
 	sc->sc_sensor[ADMTEMP_INT].flags = ENVSYS_FMONLIMITS;
 	sc->sc_sensor[ADMTEMP_EXT].flags = ENVSYS_FMONLIMITS;
+#ifdef HAVE_OF
+	strcpy(iname, "internal");
+	strcpy(ename, "external");
+	ch = OF_child(ia->ia_cookie);
+	if (ch != 0) {
+		OF_getprop(ch, "location", iname, 64);
+		ch = OF_peer(ch);
+		if (ch != 0) {
+			OF_getprop(ch, "location", ename, 64);
+		}
+	}	
+	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, iname,
+	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
+	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, ename,
+	    sizeof(sc->sc_sensor[ADMTEMP_EXT].desc));
+#else
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "internal",
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
 	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "external",
 	    sizeof(sc->sc_sensor[ADMTEMP_EXT].desc));
+#endif
 	sc->sc_sme = sysmon_envsys_create();
 	if (sysmon_envsys_sensor_attach(
 	    sc->sc_sme, &sc->sc_sensor[ADMTEMP_INT])) {
