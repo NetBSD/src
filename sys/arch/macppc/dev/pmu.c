@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.28 2017/09/01 20:10:08 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.29 2017/09/29 14:15:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.28 2017/09/01 20:10:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.29 2017/09/29 14:15:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +373,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 				prop_dictionary_set(dev, "compatible", data);
 				prop_object_release(data);
 				prop_dictionary_set_uint32(dev, "addr", addr);
-				prop_dictionary_set_uint64(dev, "cookie", node);
+				prop_dictionary_set_uint64(dev, "cookie", devs);
 				prop_array_add(cfg, dev);
 				prop_object_release(dev);
 			skip:
