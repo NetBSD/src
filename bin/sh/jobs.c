@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.88 2017/07/24 14:17:11 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.89 2017/09/29 17:53:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.88 2017/07/24 14:17:11 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.89 2017/09/29 17:53:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -913,7 +913,7 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 		if (/* iflag && rootshell && */ n)
 			commandtext(ps, n);
 	}
-	CTRACE(DBG_JOBS, ("In parent shell:  child = %d\n", pid));
+	CTRACE(DBG_JOBS, ("In parent shell: child = %d (mode %d)\n",pid,mode));
 	return pid;
 }
 
@@ -926,7 +926,7 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
 	const char *nullerr = "Can't open %s";
 
 	wasroot = rootshell;
-	CTRACE(DBG_JOBS, ("Child shell %d\n", getpid()));
+	CTRACE(DBG_JOBS, ("Child shell %d%s\n",getpid(),vforked?" vforked":""));
 	if (!vforked)
 		rootshell = 0;
 
