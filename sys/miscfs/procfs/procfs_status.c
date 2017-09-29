@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.38 2017/09/29 12:57:05 christos Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.39 2017/09/29 17:27:26 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.38 2017/09/29 12:57:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.39 2017/09/29 17:27:26 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,11 +129,11 @@ procfs_status_netbsd(struct lwp *l, struct uio *uio)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "\n");
 
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf),
-		    "VmPeak:\t%8lu kB\n", p->p_rlimit[RLIMIT_DATA].rlim_cur / 1024);
+		    "VmPeak:\t%8ju kB\n", (intmax_t)p->p_rlimit[RLIMIT_DATA].rlim_cur / 1024);
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf),
-		    "VmSize:\t%8lu kB\n", p->p_rlimit[RLIMIT_DATA].rlim_cur / 1024);
+		    "VmSize:\t%8ju kB\n", (intmax_t)p->p_rlimit[RLIMIT_DATA].rlim_cur / 1024);
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf),
-		    "VmRSS:\t%8lu kB\n", p->p_rlimit[RLIMIT_RSS].rlim_cur / 1024);
+		    "VmRSS:\t%8ju kB\n", (intmax_t)p->p_rlimit[RLIMIT_RSS].rlim_cur / 1024);
 
 	} else {
 /* comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid gid groups ... */
