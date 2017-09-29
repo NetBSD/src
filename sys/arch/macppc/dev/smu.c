@@ -34,6 +34,7 @@
 #include <sys/time.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/kthread.h>
 
 #include <machine/autoconf.h>
 
@@ -81,12 +82,29 @@ struct smu_iicbus {
 #define SMU_MAX_IICBUS		3
 #define SMU_MAX_SME_SENSORS	SMU_MAX_FANS
 
+struct smu_zone {
+	bool (*filter)(const envsys_data_t *);
+	int nfans;
+	int fans[SMU_MAX_FANS];
+	int threshold, step;
+	int duty;
+};
+
+
+#define SMU_ZONE_CPUS	0
+#define SMU_ZONE_DRIVES	1
+#define SMU_ZONE_SLOTS	2
+#define SMU_ZONES	3
+
+#define C_TO_uK(n) (n * 1000000 + 273150000)
+
 struct smu_softc {
 	device_t sc_dev;
 	int sc_node;
 	struct sysctlnode *sc_sysctl_me;
 
 	kmutex_t sc_cmd_lock;
+	kmutex_t sc_msg_lock;
 	struct smu_cmd *sc_cmd;
 	paddr_t sc_cmd_paddr;
 	int sc_dbell_mbox;
@@ -103,6 +121,10 @@ struct smu_softc {
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sme_sensors[SMU_MAX_SME_SENSORS];
+
+	struct smu_zone sc_zones[SMU_ZONES];
+	lwp_t *sc_thread;
+	bool sc_dying;
 };
 
 #define SMU_CMD_FAN	0x4a
@@ -136,6 +158,13 @@ static void smu_iicbus_release_bus(void *, int);
 static int smu_iicbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
     size_t, void *, size_t, int);
 static int smu_sysctl_fan_rpm(SYSCTLFN_ARGS);
+
+static void smu_setup_zones(struct smu_softc *);
+static void smu_adjust_zone(struct smu_softc *, int);
+static void smu_adjust(void *);
+static bool is_cpu_sensor(const envsys_data_t *);
+static bool is_drive_sensor(const envsys_data_t *);
+static bool is_slots_sensor(const envsys_data_t *);
 
 CFATTACH_DECL_NEW(smu, sizeof(struct smu_softc),
     smu_match, smu_attach, NULL, NULL);
@@ -187,6 +216,7 @@ smu_attach(device_t parent, device_t self, void *aux)
 		smu0 = sc;
 
 	printf("\n");
+	smu_setup_zones(sc);
 }
 
 static int
@@ -498,7 +528,7 @@ smu_sme_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static int
 smu_do_cmd(struct smu_softc *sc, struct smu_cmd *cmd, int timo)
 {
-	int gpio, ret;
+	int gpio, ret, bail;
 	u_char ack;
 
 	mutex_enter(&sc->sc_cmd_lock);
@@ -517,15 +547,23 @@ smu_do_cmd(struct smu_softc *sc, struct smu_cmd *cmd, int timo)
 	obio_write_4(sc->sc_dbell_mbox, sc->sc_cmd_paddr);
 	obio_write_1(sc->sc_dbell_gpio, 0x04);
 
-	do {
-		ret = tsleep(sc->sc_cmd, PWAIT, "smu_cmd", (timo * hz) / 1000);
+	bail = 0;
+
+	gpio = obio_read_1(sc->sc_dbell_gpio);
+
+	while (((gpio & 0x07) != 0x07) && (bail < timo)) {
+		ret = tsleep(sc->sc_cmd, PWAIT, "smu_cmd", mstohz(10));
 		if (ret != 0) {
-			mutex_exit(&sc->sc_cmd_lock);
-			return (ret);
+			bail++;
 		}
 		gpio = obio_read_1(sc->sc_dbell_gpio);
-	} while ((gpio & 0x07) != 0x07);
+	}
 
+	if ((gpio & 0x07) != 0x07) {
+		mutex_exit(&sc->sc_cmd_lock);
+		return EWOULDBLOCK;
+	}
+		
 	__asm volatile ("dcbf 0,%0; sync" :: "r"(sc->sc_cmd) : "memory");
 
 	ack = (~cmd->cmd) & 0xff;
@@ -824,4 +862,150 @@ SYSCTL_SETUP(smu_sysctl_setup, "SMU sysctl subtree setup")
 	sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+}
+
+static void
+smu_setup_zones(struct smu_softc *sc)
+{
+	struct smu_zone *z;
+	struct smu_fan *f;
+	int i;
+
+	/* find CPU fans */
+	z = &sc->sc_zones[SMU_ZONE_CPUS];
+	z->nfans = 0;
+	for (i = 0; i < SMU_MAX_FANS; i++) {
+		f = &sc->sc_fans[i];
+		if (strstr(f->location, "CPU") != NULL) {
+			z->fans[z->nfans] = i;
+			z->nfans++;
+		}
+	}
+	printf("using %d fans for CPU zone\n", z->nfans);
+	z->threshold = C_TO_uK(45);
+	z->duty = 150;
+	z->step = 3;	
+	z->filter = is_cpu_sensor;
+
+	z = &sc->sc_zones[SMU_ZONE_DRIVES];
+	z->nfans = 0;
+	for (i = 0; i < SMU_MAX_FANS; i++) {
+		f = &sc->sc_fans[i];
+		if (strstr(f->location, "DRIVE") != NULL) {
+			z->fans[z->nfans] = i;
+			z->nfans++;
+		}
+	}
+	printf("using %d fans for drive bay zone\n", z->nfans);
+	z->threshold = C_TO_uK(40);
+	z->duty = 150;
+	z->step = 2;
+	z->filter = is_drive_sensor;
+
+	z = &sc->sc_zones[SMU_ZONE_SLOTS];
+	z->nfans = 0;
+	for (i = 0; i < SMU_MAX_FANS; i++) {
+		f = &sc->sc_fans[i];
+		if ((strstr(f->location, "BACKSIDE") != NULL) ||
+		    (strstr(f->location, "SLOTS") != NULL)) {
+			z->fans[z->nfans] = i;
+			z->nfans++;
+		}
+	}
+	printf("using %d fans for expansion slots zone\n", z->nfans);
+	z->threshold = C_TO_uK(40);
+	z->duty = 150;
+	z->step = 2;
+	z->filter = is_slots_sensor;
+
+	sc->sc_dying = false;
+	kthread_create(PRI_NONE, 0, curcpu(), smu_adjust, sc, &sc->sc_thread,
+	    "fan control"); 
+}
+
+static void
+smu_adjust_zone(struct smu_softc *sc, int which)
+{
+	struct smu_zone *z = &sc->sc_zones[which];
+	struct smu_fan *f;
+	long temp, newduty, i, speed, diff;
+
+	DPRINTF("%s %d\n", __func__, which);
+
+	temp = sysmon_envsys_get_max_value(z->filter, true);
+	if (temp == 0) {
+		/* no sensor data - leave fan alone */
+		DPRINTF("nodata\n");
+		return;
+	}
+	DPRINTF("temp %ld ", (temp - 273150000) / 1000000);
+	diff = ((temp - z->threshold) / 1000000) * z->step;
+
+	if (diff < 0) newduty = 0;
+	else if (diff > 100) newduty = 100;
+	else newduty = diff;
+
+	DPRINTF("newduty %ld diff %ld \n", newduty, diff);
+	if (newduty == z->duty) {
+		DPRINTF("no change\n");
+		return;
+	}
+	z->duty = newduty;
+	/* now adjust each fan to the new duty cycle */
+	for (i = 0; i < z->nfans; i++) {
+		f = &sc->sc_fans[z->fans[i]];
+		speed = f->min_rpm + ((f->max_rpm - f->min_rpm) * newduty) / 100;
+		DPRINTF("fan %d speed %ld ", z->fans[i], speed);
+		smu_fan_set_rpm(f, speed);
+	}
+	DPRINTF("\n");
+}
+
+static void
+smu_adjust(void *cookie)
+{
+	struct smu_softc *sc = cookie;
+	int i;
+
+	while (!sc->sc_dying) {
+		for (i = 0; i < SMU_ZONES; i++)
+			smu_adjust_zone(sc, i);
+		kpause("fanctrl", true, mstohz(30000), NULL);
+	}
+	kthread_exit(0);
+}
+
+static bool is_cpu_sensor(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_STEMP)
+		return false;
+	if ((strstr(edata->desc, "CPU") != NULL) &&
+	    (strstr(edata->desc, "DIODE") != NULL))
+		return TRUE;
+	if (strstr(edata->desc, "TUNNEL") != NULL)
+		return TRUE;
+	return false;
+}
+
+static bool is_drive_sensor(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_STEMP)
+		return false;
+	if (strstr(edata->desc, "DRIVE BAY") != NULL)
+		return TRUE;
+	/* XXX until we support the actual drive bay sensor */
+	if (strstr(edata->desc, "BACKSIDE") != NULL)
+		return TRUE;
+	return false;
+}
+
+static bool is_slots_sensor(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_STEMP)
+		return false;
+	if (strstr(edata->desc, "BACKSIDE") != NULL)
+		return TRUE;
+	if (strstr(edata->desc, "INLET") != NULL)
+		return TRUE;
+	return false;
 }
