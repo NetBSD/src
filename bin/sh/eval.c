@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.151 2017/06/30 23:01:21 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.152 2017/09/29 17:53:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.151 2017/06/30 23:01:21 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.152 2017/09/29 17:53:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1056,7 +1056,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	/* Execute the command. */
 	switch (cmdentry.cmdtype) {
 	case CMDFUNCTION:
-		VXTRACE(DBG_EVAL, ("Shell function:  "), trargs(argv));
+		VXTRACE(DBG_EVAL, ("Shell function%s:  ",vforked?" VF":""),
+		    trargs(argv));
 		redirect(cmd->ncmd.redirect, flags & EV_MORE ? REDIR_PUSH : 0);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
@@ -1126,7 +1127,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 	case CMDBUILTIN:
 	case CMDSPLBLTIN:
-		VXTRACE(DBG_EVAL, ("builtin command:  "), trargs(argv));
+		VXTRACE(DBG_EVAL, ("builtin command%s:  ",vforked?" VF":""), trargs(argv));
 		mode = (cmdentry.u.bltin == execcmd) ? 0 : REDIR_PUSH;
 		if (flags == EV_BACKCMD) {
 			memout.nleft = 0;
@@ -1204,7 +1205,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		break;
 
 	default:
-		VXTRACE(DBG_EVAL, ("normal command:  "), trargs(argv));
+		VXTRACE(DBG_EVAL, ("normal command%s:  ", vforked?" VF":""),
+		    trargs(argv));
 		redirect(cmd->ncmd.redirect, 
 		    (vforked ? REDIR_VFORK : 0) | REDIR_KEEP);
 		if (!vforked)
