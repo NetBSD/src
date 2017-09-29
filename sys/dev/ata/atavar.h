@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.28 2017/09/27 19:05:57 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.29 2017/09/29 20:05:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -207,6 +207,8 @@ struct ata_xfer {
 #define ATA_MAX_OPENINGS	32
 #define ATA_REAL_OPENINGS(op)	((op) > 1 ? (op) - 1 : 1)
 
+#define ATA_BSIZE		512	/* Standard ATA block size (bytes) */
+
 /* Per-channel queue of ata_xfers */
 #ifndef ATABUS_PRIVATE
 struct ata_queue;
@@ -329,7 +331,7 @@ struct ata_drive_datas {
 	daddr_t	badsect[127];	/* 126 plus trailing -1 marker */
 
 	/* Recovery buffer */
-	uint8_t recovery_blk[DEV_BSIZE];
+	uint8_t recovery_blk[ATA_BSIZE];
 };
 
 /* User config flags that force (or disable) the use of a mode */
