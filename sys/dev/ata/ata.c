@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.38 2017/09/27 19:05:57 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.39 2017/09/29 20:05:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.38 2017/09/27 19:05:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.39 2017/09/29 20:05:07 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -961,7 +961,7 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 		return CMD_AGAIN;
 	}
 
-	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
+	tb = kmem_zalloc(ATA_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
 
 	if (drvp->drive_type == ATA_DRIVET_ATA) {
@@ -982,7 +982,7 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	}
 	xfer->c_ata_c.flags = AT_READ | flags;
 	xfer->c_ata_c.data = tb;
-	xfer->c_ata_c.bcount = DEV_BSIZE;
+	xfer->c_ata_c.bcount = ATA_BSIZE;
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 						xfer) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
@@ -1044,7 +1044,7 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 
 	rv = CMD_OK;
  out:
-	kmem_free(tb, DEV_BSIZE);
+	kmem_free(tb, ATA_BSIZE);
 	ata_free_xfer(chp, xfer);
 	return rv;
 }
@@ -1110,7 +1110,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer = ata_get_xfer_ext(chp, C_RECOVERY, 0);
 
 	tb = drvp->recovery_blk;
-	memset(tb, 0, DEV_BSIZE);
+	memset(tb, 0, sizeof(drvp->recovery_blk));
 
 	/*
 	 * We could use READ LOG DMA EXT if drive supports it (i.e.
@@ -1128,7 +1128,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.flags = AT_READ | AT_LBA | AT_LBA48 | flags;
 	xfer->c_ata_c.timeout = 1000; /* 1s */
 	xfer->c_ata_c.data = tb;
-	xfer->c_ata_c.bcount = DEV_BSIZE;
+	xfer->c_ata_c.bcount = sizeof(drvp->recovery_blk);
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 						xfer) != ATACMD_COMPLETE) {
@@ -1141,7 +1141,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	}
 
 	cksum = 0;
-	for (int i = 0; i < DEV_BSIZE; i++)
+	for (int i = 0; i < sizeof(drvp->recovery_blk); i++)
 		cksum += tb[i];
 	if (cksum != 0) {
 		aprint_error_dev(drvp->drv_softc,
