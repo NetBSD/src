@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.67 2017/06/17 08:07:03 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.68 2017/09/29 03:17:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -200,6 +200,7 @@ extern u_long PDPpaddr;
 
 extern pd_entry_t pmap_pg_g;			/* do we support PG_G? */
 extern pd_entry_t pmap_pg_nx;			/* do we support PG_NX? */
+extern int pmap_largepages;
 extern long nkptp[PTP_LEVELS];
 
 /*
