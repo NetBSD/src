@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.130 2017/09/28 17:35:08 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.131 2017/09/30 11:43:57 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -972,6 +972,9 @@ longmode_hi:
 	subq	$KERNBASE,%rdi	/* init_x86_64 wants a physical address */
 #endif	/* XEN */
 
+	pushq	%rdi
+	call	_C_LABEL(init_bootspace)
+	popq	%rdi
 	call	_C_LABEL(init_x86_64)
 	call 	_C_LABEL(main)
 END(start)
@@ -1477,4 +1480,3 @@ ENTRY(intrfastexit)
 do_iret:
 	iretq
 END(intrfastexit)
-
