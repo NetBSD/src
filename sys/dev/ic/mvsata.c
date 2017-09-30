@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.31 2017/09/27 07:19:34 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.32 2017/09/30 21:32:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.31 2017/09/27 07:19:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.32 2017/09/30 21:32:31 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1426,14 +1426,18 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	if (xfer->c_flags & C_DMA) {
 		if (ata_bio->error == NOERROR)
 			goto end;
-		if (ata_bio->error == ERR_DMA)
+		if (ata_bio->error == ERR_DMA) {
+			ata_channel_unlock(chp);
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			goto err;
+		}
 	}
 
 	/* if we had an error, end */
 	if (ata_bio->error != NOERROR) {
 		ata_channel_unlock(chp);
+err:
 		mvsata_bio_done(chp, xfer);
 		return 1;
 	}
@@ -2349,10 +2353,10 @@ mvsata_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		aprint_error_dev(atac->atac_dev,
 		    "channel %d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    chp->ch_channel, xfer->c_bcount, xfer->c_skip);
+		ata_channel_unlock(chp);
 		if (xfer->c_flags & C_DMA)
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
-		ata_channel_unlock(chp);
 		sc_xfer->error = XS_TIMEOUT;
 		mvsata_atapi_reset(chp, xfer);
 		return 1;
@@ -2363,8 +2367,8 @@ mvsata_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	 * and reset device.
 	 */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA)) {
-		ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 		ata_channel_unlock(chp);
+		ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 		sc_xfer->error = XS_RESET;
 		mvsata_atapi_reset(chp, xfer);
 		return (1);
@@ -2425,10 +2429,10 @@ again:
 			aprint_error_dev(atac->atac_dev,
 			    "channel %d drive %d: bad data phase DATAOUT\n",
 			    chp->ch_channel, xfer->c_drive);
+			ata_channel_unlock(chp);
 			if (xfer->c_flags & C_DMA)
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_TIMEOUT;
 			mvsata_atapi_reset(chp, xfer);
 			return 1;
@@ -2461,10 +2465,10 @@ again:
 			aprint_error_dev(atac->atac_dev,
 			    "channel %d drive %d: bad data phase DATAIN\n",
 			    chp->ch_channel, xfer->c_drive);
+			ata_channel_unlock(chp);
 			if (xfer->c_flags & C_DMA)
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_TIMEOUT;
 			mvsata_atapi_reset(chp, xfer);
 			return 1;
@@ -2515,10 +2519,10 @@ again:
 			sc_xfer->error = XS_SHORTSENSE;
 			sc_xfer->sense.atapi_sense = ATACH_ERR(tfd);
 		} else {
+			ata_channel_unlock(chp);
 			if (xfer->c_flags & C_DMA)
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_RESET;
 			mvsata_atapi_reset(chp, xfer);
 			return (1);
@@ -2655,9 +2659,9 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 			sc_xfer->status = SCSI_CHECK;
 		} else
 		    if (wdc->dma_status & (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
+			ata_channel_unlock(chp);
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_RESET;
 			mvsata_atapi_reset(chp, xfer);
 			return;
