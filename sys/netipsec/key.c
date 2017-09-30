@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.229 2017/09/29 14:59:43 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.230 2017/09/30 21:47:12 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.229 2017/09/29 14:59:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.230 2017/09/30 21:47:12 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -586,7 +586,7 @@ struct _keystat {
 
 struct sadb_msghdr {
 	struct sadb_msg *msg;
-	struct sadb_ext *ext[SADB_EXT_MAX + 1];
+	void *ext[SADB_EXT_MAX + 1];
 	int extoff[SADB_EXT_MAX + 1];
 	int extlen[SADB_EXT_MAX + 1];
 };
@@ -598,7 +598,7 @@ static const struct sockaddr *
 key_msghdr_get_sockaddr(const struct sadb_msghdr *mhp, int idx)
 {
 
-	return PFKEY_ADDR_SADDR((struct sadb_address *)mhp->ext[idx]);
+	return PFKEY_ADDR_SADDR(mhp->ext[idx]);
 }
 
 static struct mbuf *
@@ -2150,10 +2150,10 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 			IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 			return key_senderror(so, m, EINVAL);
 		}
-		lft = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
+		lft = mhp->ext[SADB_EXT_LIFETIME_HARD];
 	}
 
-	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
+	xpl0 = mhp->ext[SADB_X_EXT_POLICY];
 
 	/* checking the direciton. */
 	switch (xpl0->sadb_x_policy_dir) {
@@ -2370,9 +2370,9 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
+	xpl0 = mhp->ext[SADB_X_EXT_POLICY];
 
-	/* checking the direciton. */
+	/* checking the directon. */
 	switch (xpl0->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
 	case IPSEC_DIR_OUTBOUND:
@@ -2435,6 +2435,7 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 {
 	u_int32_t id;
 	struct secpolicy *sp;
+	const struct sadb_x_policy *xpl;
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
@@ -2442,7 +2443,8 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
+	xpl = mhp->ext[SADB_X_EXT_POLICY];
+	id = xpl->sadb_x_policy_id;
 
 	/* Is there SP in SPD ? */
 	sp = key_lookupbyid_and_remove_sp(id);
@@ -2523,6 +2525,7 @@ key_api_spdget(struct socket *so, struct mbuf *m,
 	u_int32_t id;
 	struct secpolicy *sp;
 	struct mbuf *n;
+	const struct sadb_x_policy *xpl;
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
@@ -2530,7 +2533,8 @@ key_api_spdget(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
+	xpl = mhp->ext[SADB_X_EXT_POLICY];
+	id = xpl->sadb_x_policy_id;
 
 	/* Is there SP in SPD ? */
 	sp = key_getspbyid(id);
@@ -2853,12 +2857,12 @@ key_api_nat_map(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	type = (struct sadb_x_nat_t_type *)mhp->ext[SADB_X_EXT_NAT_T_TYPE];
-	sport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_SPORT];
-	dport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_DPORT];
-	iaddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAI];
-	raddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAR];
-	frag = (struct sadb_x_nat_t_frag *) mhp->ext[SADB_X_EXT_NAT_T_FRAG];
+	type = mhp->ext[SADB_X_EXT_NAT_T_TYPE];
+	sport = mhp->ext[SADB_X_EXT_NAT_T_SPORT];
+	dport = mhp->ext[SADB_X_EXT_NAT_T_DPORT];
+	iaddr = mhp->ext[SADB_X_EXT_NAT_T_OAI];
+	raddr = mhp->ext[SADB_X_EXT_NAT_T_OAR];
+	frag = mhp->ext[SADB_X_EXT_NAT_T_FRAG];
 
 	/*
 	 * XXX handle that, it should also contain a SA, or anything
@@ -3193,7 +3197,7 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 			*errp = EINVAL;
 			goto error;
 		}
-		xsa = (const struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+		xsa = mhp->ext[SADB_EXT_SA];
 		newsav->spi = xsa->sadb_sa_spi;
 		newsav->seq = mhp->msg->sadb_msg_seq;
 		break;
@@ -3455,7 +3459,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
 		const struct sadb_sa *sa0;
 
-		sa0 = (const struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+		sa0 = mhp->ext[SADB_EXT_SA];
 		if (mhp->extlen[SADB_EXT_SA] < sizeof(*sa0)) {
 			error = EINVAL;
 			goto fail;
@@ -3482,7 +3486,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 		const struct sadb_key *key0;
 		int len;
 
-		key0 = (const struct sadb_key *)mhp->ext[SADB_EXT_KEY_AUTH];
+		key0 = mhp->ext[SADB_EXT_KEY_AUTH];
 		len = mhp->extlen[SADB_EXT_KEY_AUTH];
 
 		error = 0;
@@ -3517,7 +3521,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 		const struct sadb_key *key0;
 		int len;
 
-		key0 = (const struct sadb_key *)mhp->ext[SADB_EXT_KEY_ENCRYPT];
+		key0 = mhp->ext[SADB_EXT_KEY_ENCRYPT];
 		len = mhp->extlen[SADB_EXT_KEY_ENCRYPT];
 
 		error = 0;
@@ -3593,7 +3597,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
     {
 	const struct sadb_lifetime *lft0;
 
-	lft0 = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
+	lft0 = mhp->ext[SADB_EXT_LIFETIME_HARD];
 	if (lft0 != NULL) {
 		if (mhp->extlen[SADB_EXT_LIFETIME_HARD] < sizeof(*lft0)) {
 			error = EINVAL;
@@ -3602,7 +3606,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 		sav->lft_h = key_newbuf(lft0, sizeof(*lft0));
 	}
 
-	lft0 = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_SOFT];
+	lft0 = mhp->ext[SADB_EXT_LIFETIME_SOFT];
 	if (lft0 != NULL) {
 		if (mhp->extlen[SADB_EXT_LIFETIME_SOFT] < sizeof(*lft0)) {
 			error = EINVAL;
@@ -5107,11 +5111,11 @@ key_init_spidx_bymsghdr(struct secpolicyindex *spidx,
 	const struct sockaddr *src, *dst;
 	const struct sadb_x_policy *xpl0;
 
-	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	src0 = mhp->ext[SADB_EXT_ADDRESS_SRC];
+	dst0 = mhp->ext[SADB_EXT_ADDRESS_DST];
 	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
 	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
-	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
+	xpl0 = mhp->ext[SADB_X_EXT_POLICY];
 
 	memset(spidx, 0, sizeof(*spidx));
 	spidx->dir = xpl0->sadb_x_policy_dir;
@@ -5161,8 +5165,9 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
-		mode = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_mode;
-		reqid = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_reqid;
+		const struct sadb_x_sa2 *sa2 = mhp->ext[SADB_X_EXT_SA2];
+		mode = sa2->sadb_x_sa2_mode;
+		reqid = sa2->sadb_x_sa2_reqid;
 	} else {
 		mode = IPSEC_MODE_ANY;
 		reqid = 0;
@@ -5188,8 +5193,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* SPI allocation */
-	spi = key_do_getnewspi((struct sadb_spirange *)mhp->ext[SADB_EXT_SPIRANGE],
-	    &saidx);
+	spi = key_do_getnewspi(mhp->ext[SADB_EXT_SPIRANGE], &saidx);
 	if (spi == 0)
 		return key_senderror(so, m, EINVAL);
 
@@ -5428,12 +5432,12 @@ key_handle_natt_info(struct secasvar *sav,
 	    }
 	}
 
-	type = (struct sadb_x_nat_t_type *)mhp->ext[SADB_X_EXT_NAT_T_TYPE];
-	sport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_SPORT];
-	dport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_DPORT];
-	iaddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAI];
-	raddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAR];
-	frag = (struct sadb_x_nat_t_frag *)mhp->ext[SADB_X_EXT_NAT_T_FRAG];
+	type = mhp->ext[SADB_X_EXT_NAT_T_TYPE];
+	sport = mhp->ext[SADB_X_EXT_NAT_T_SPORT];
+	dport = mhp->ext[SADB_X_EXT_NAT_T_DPORT];
+	iaddr = mhp->ext[SADB_X_EXT_NAT_T_OAI];
+	raddr = mhp->ext[SADB_X_EXT_NAT_T_OAR];
+	frag = mhp->ext[SADB_X_EXT_NAT_T_FRAG];
 
 	IPSECLOG(LOG_DEBUG, "type %d, sport = %d, dport = %d\n",
 	    type->sadb_x_nat_t_type_type,
@@ -5479,12 +5483,9 @@ key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
 			return -1;
 		}
 
-		type = (struct sadb_x_nat_t_type *)
-		    mhp->ext[SADB_X_EXT_NAT_T_TYPE];
-		sport = (struct sadb_x_nat_t_port *)
-		    mhp->ext[SADB_X_EXT_NAT_T_SPORT];
-		dport = (struct sadb_x_nat_t_port *)
-		    mhp->ext[SADB_X_EXT_NAT_T_DPORT];
+		type = mhp->ext[SADB_X_EXT_NAT_T_TYPE];
+		sport = mhp->ext[SADB_X_EXT_NAT_T_SPORT];
+		dport = mhp->ext[SADB_X_EXT_NAT_T_DPORT];
 
 		key_porttosaddr(src, sport->sadb_x_nat_t_port_port);
 		key_porttosaddr(dst, dport->sadb_x_nat_t_port_port);
@@ -5553,15 +5554,16 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
-		mode = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_mode;
-		reqid = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_reqid;
+		const struct sadb_x_sa2 *sa2 = mhp->ext[SADB_X_EXT_SA2];
+		mode = sa2->sadb_x_sa2_mode;
+		reqid = sa2->sadb_x_sa2_reqid;
 	} else {
 		mode = IPSEC_MODE_ANY;
 		reqid = 0;
 	}
 	/* XXX boundary checking for other extensions */
 
-	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	sa0 = mhp->ext[SADB_EXT_SA];
 	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
 	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
@@ -5790,14 +5792,15 @@ key_api_add(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
-		mode = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_mode;
-		reqid = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_reqid;
+		const struct sadb_x_sa2 *sa2 = mhp->ext[SADB_X_EXT_SA2];
+		mode = sa2->sadb_x_sa2_mode;
+		reqid = sa2->sadb_x_sa2_reqid;
 	} else {
 		mode = IPSEC_MODE_ANY;
 		reqid = 0;
 	}
 
-	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	sa0 = mhp->ext[SADB_EXT_SA];
 	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
 	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
@@ -5934,8 +5937,8 @@ key_setident(struct secashead *sah, struct mbuf *m,
 		return EINVAL;
 	}
 
-	idsrc = (const struct sadb_ident *)mhp->ext[SADB_EXT_IDENTITY_SRC];
-	iddst = (const struct sadb_ident *)mhp->ext[SADB_EXT_IDENTITY_DST];
+	idsrc = mhp->ext[SADB_EXT_IDENTITY_SRC];
+	iddst = mhp->ext[SADB_EXT_IDENTITY_DST];
 	idsrclen = mhp->extlen[SADB_EXT_IDENTITY_SRC];
 	iddstlen = mhp->extlen[SADB_EXT_IDENTITY_DST];
 
@@ -6062,7 +6065,7 @@ key_api_delete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	sa0 = mhp->ext[SADB_EXT_SA];
 	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
 	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
@@ -6212,7 +6215,7 @@ key_api_get(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	sa0 = mhp->ext[SADB_EXT_SA];
 	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
 	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
@@ -7820,62 +7823,49 @@ key_parse(struct mbuf *m, struct socket *so)
 	/* check field of upper layer protocol and address family */
 	if (mh.ext[SADB_EXT_ADDRESS_SRC] != NULL &&
 	    mh.ext[SADB_EXT_ADDRESS_DST] != NULL) {
-		struct sadb_address *src0, *dst0;
+		const struct sadb_address *src0, *dst0;
+		const struct sockaddr *sa0, *da0;
 		u_int plen;
 
-		src0 = (struct sadb_address *)(mh.ext[SADB_EXT_ADDRESS_SRC]);
-		dst0 = (struct sadb_address *)(mh.ext[SADB_EXT_ADDRESS_DST]);
+		src0 = mh.ext[SADB_EXT_ADDRESS_SRC];
+		dst0 = mh.ext[SADB_EXT_ADDRESS_DST];
+		sa0 = key_msghdr_get_sockaddr(&mh, SADB_EXT_ADDRESS_SRC);
+		da0 = key_msghdr_get_sockaddr(&mh, SADB_EXT_ADDRESS_DST);
 
 		/* check upper layer protocol */
 		if (src0->sadb_address_proto != dst0->sadb_address_proto) {
-			IPSECLOG(LOG_DEBUG, "upper layer protocol mismatched.\n");
-			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
-			error = EINVAL;
-			goto senderror;
+			IPSECLOG(LOG_DEBUG,
+			    "upper layer protocol mismatched.\n");
+			goto invaddr;
 		}
 
 		/* check family */
-		if (PFKEY_ADDR_SADDR(src0)->sa_family !=
-		    PFKEY_ADDR_SADDR(dst0)->sa_family) {
+		if (sa0->sa_family != da0->sa_family) {
 			IPSECLOG(LOG_DEBUG, "address family mismatched.\n");
-			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
-			error = EINVAL;
-			goto senderror;
+			goto invaddr;
 		}
-		if (PFKEY_ADDR_SADDR(src0)->sa_len !=
-		    PFKEY_ADDR_SADDR(dst0)->sa_len) {
+		if (sa0->sa_len != da0->sa_len) {
 			IPSECLOG(LOG_DEBUG,
 			    "address struct size mismatched.\n");
-			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
-			error = EINVAL;
-			goto senderror;
+			goto invaddr;
 		}
 
-		switch (PFKEY_ADDR_SADDR(src0)->sa_family) {
+		switch (sa0->sa_family) {
 		case AF_INET:
-			if (PFKEY_ADDR_SADDR(src0)->sa_len !=
-			    sizeof(struct sockaddr_in)) {
-				PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
-				error = EINVAL;
-				goto senderror;
-			}
+			if (sa0->sa_len != sizeof(struct sockaddr_in))
+				goto invaddr;
 			break;
 		case AF_INET6:
-			if (PFKEY_ADDR_SADDR(src0)->sa_len !=
-			    sizeof(struct sockaddr_in6)) {
-				PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
-				error = EINVAL;
-				goto senderror;
-			}
+			if (sa0->sa_len != sizeof(struct sockaddr_in6))
+				goto invaddr;
 			break;
 		default:
 			IPSECLOG(LOG_DEBUG, "unsupported address family.\n");
-			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EAFNOSUPPORT;
 			goto senderror;
 		}
 
-		switch (PFKEY_ADDR_SADDR(src0)->sa_family) {
+		switch (sa0->sa_family) {
 		case AF_INET:
 			plen = sizeof(struct in_addr) << 3;
 			break;
@@ -7891,9 +7881,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		if (src0->sadb_address_prefixlen > plen ||
 		    dst0->sadb_address_prefixlen > plen) {
 			IPSECLOG(LOG_DEBUG, "illegal prefixlen.\n");
-			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
-			error = EINVAL;
-			goto senderror;
+			goto invaddr;
 		}
 
 		/*
@@ -7911,7 +7899,10 @@ key_parse(struct mbuf *m, struct socket *so)
 
 	return (*key_api_typesw[msg->sadb_msg_type])(so, m, &mh);
 
+invaddr:
+	error = EINVAL;
 senderror:
+	PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 	return key_senderror(so, m, error);
 }
 
@@ -7949,7 +7940,7 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 	memset(mhp, 0, sizeof(*mhp));
 
 	mhp->msg = mtod(m, struct sadb_msg *);
-	mhp->ext[0] = (struct sadb_ext *)mhp->msg;	/*XXX backward compat */
+	mhp->ext[0] = mhp->msg;	/*XXX backward compat */
 
 	end = PFKEY_UNUNIT64(mhp->msg->sadb_msg_len);
 	extlen = end;	/*just in case extlen is not updated*/
