@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.408 2017/09/26 04:34:59 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.409 2017/09/30 05:37:55 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.408 2017/09/26 04:34:59 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.409 2017/09/30 05:37:55 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2027,12 +2027,14 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		((vc->sc_open & AUOPEN_READ) || vc == sc->sc_hwvc)) {
 		audio_init_ringbuffer(sc, &vc->sc_mrr,
 		    AUMODE_RECORD);
-		if (sc->sc_opens == 0 && hw->init_input &&
-		    (vc->sc_mode & AUMODE_RECORD)) {
-			error = hw->init_input(sc->hw_hdl, vc->sc_mrr.s.start,
-				       vc->sc_mrr.s.end - vc->sc_mrr.s.start);
-			if (error)
-				return error;
+		if (sc->sc_opens == 0 && (vc->sc_mode & AUMODE_RECORD)) {
+			if (hw->init_input) {
+				error = hw->init_input(sc->hw_hdl,
+				    vc->sc_mrr.s.start,
+				    vc->sc_mrr.s.end - vc->sc_mrr.s.start);
+				if (error)
+					return error;
+			}
 		}
 	}
 
@@ -2041,12 +2043,14 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		audio_init_ringbuffer(sc, &vc->sc_mpr,
 		    AUMODE_PLAY);
 		vc->sc_sil_count = 0;
-		if (sc->sc_opens == 0 && hw->init_output &&
-		    (vc->sc_mode & AUMODE_PLAY)) {
-			error = hw->init_output(sc->hw_hdl, vc->sc_mpr.s.start,
-					vc->sc_mpr.s.end - vc->sc_mpr.s.start);
-			if (error)
-				return error;
+		if (sc->sc_opens == 0 && (vc->sc_mode & AUMODE_PLAY)) {
+			if (hw->init_output) {
+				error = hw->init_output(sc->hw_hdl,
+				    vc->sc_mpr.s.start,
+				    vc->sc_mpr.s.end - vc->sc_mpr.s.start);
+				if (error)
+					return error;
+			}
 		}
 	}
 
