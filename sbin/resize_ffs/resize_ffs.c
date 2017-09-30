@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.49 2017/09/30 15:25:16 riastradh Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.50 2017/09/30 18:32:52 kre Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.49 2017/09/30 15:25:16 riastradh Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.50 2017/09/30 18:32:52 kre Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -564,14 +564,16 @@ initcg(int cgn)
 	 * below for the post-inode data area, is that the pre-sb data
 	 * area always starts at 0, and thus is block-aligned, and
 	 * always ends at the sb, which is block-aligned.) */
-	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
+	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
 		int64_t di;
+
 		for (di = 0; di < dlow; di += newsb->fs_frag) {
 			old_cg_blktot(cg, 0)[old_cbtocylno(newsb, di)]++;
 			old_cg_blks(newsb, cg,
 			    old_cbtocylno(newsb, di),
 			    0)[old_cbtorpos(newsb, di)]++;
 		}
+	}
 
 	/* Deal with a partial block at the beginning of the post-inode area.
 	 * I'm not convinced this can happen - I think the inodes are always
