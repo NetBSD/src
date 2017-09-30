@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.68 2017/09/29 03:17:18 ozaki-r Exp $	*/
+/*	$NetBSD: pmap.h,v 1.69 2017/09/30 11:43:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -110,6 +110,45 @@
 #if defined(_KERNEL)
 #include <sys/kcpuset.h>
 #include <uvm/pmap/pmap_pvt.h>
+
+struct bootspace {
+	/* Kernel segments. */
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} text;
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} rodata;
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} data;
+
+	/*
+	 * The area used by the early kernel bootstrap. It contains the kernel
+	 * symbols, the preloaded modules, the bootstrap tables, and the ISA I/O
+	 * mem.
+	 */
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} boot;
+
+	/* A magic VA usable by the bootstrap code. */
+	vaddr_t spareva;
+
+	/* Virtual address of the page directory. */
+	vaddr_t pdir;
+
+	/* End of the area dedicated to kernel modules (amd64 only). */
+	vaddr_t emodule;
+};
 
 /*
  * pmap data structures: see pmap.c for details of locking.
