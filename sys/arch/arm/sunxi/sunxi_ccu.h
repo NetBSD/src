@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.10 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.11 2017/09/30 12:48:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -62,6 +62,7 @@ enum sunxi_ccu_clktype {
 	SUNXI_CCU_PREDIV,
 	SUNXI_CCU_DIV,
 	SUNXI_CCU_PHASE,
+	SUNXI_CCU_FIXED_FACTOR,
 };
 
 struct sunxi_ccu_gate {
@@ -305,6 +306,28 @@ const char *sunxi_ccu_phase_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_phase_get_parent,	\
 	}
 
+struct sunxi_ccu_fixed_factor {
+	const char	*parent;
+	u_int		div;
+	u_int		mult;
+};
+
+u_int	sunxi_ccu_fixed_factor_get_rate(struct sunxi_ccu_softc *,
+					struct sunxi_ccu_clk *);
+const char *sunxi_ccu_fixed_factor_get_parent(struct sunxi_ccu_softc *,
+					      struct sunxi_ccu_clk *);
+
+#define	SUNXI_CCU_FIXED_FACTOR(_id, _name, _parent, _div, _mult)	\
+	[_id] = {							\
+		.type = SUNXI_CCU_FIXED_FACTOR,				\
+		.base.name = (_name),					\
+		.u.fixed_factor.parent = (_parent),			\
+		.u.fixed_factor.div = (_div),				\
+		.u.fixed_factor.mult = (_mult),				\
+		.get_rate = sunxi_ccu_fixed_factor_get_rate,		\
+		.get_parent = sunxi_ccu_fixed_factor_get_parent,	\
+	}
+
 struct sunxi_ccu_clk {
 	struct clk	base;
 	enum sunxi_ccu_clktype type;
@@ -315,6 +338,7 @@ struct sunxi_ccu_clk {
 		struct sunxi_ccu_prediv prediv;
 		struct sunxi_ccu_div div;
 		struct sunxi_ccu_phase phase;
+		struct sunxi_ccu_fixed_factor fixed_factor;
 	} u;
 
 	int		(*enable)(struct sunxi_ccu_softc *,
