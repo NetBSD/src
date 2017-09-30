@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.23 2017/09/09 12:01:04 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.24 2017/09/30 12:48:58 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -21,6 +21,7 @@ file	arch/arm/sunxi/sunxi_platform.c		soc_sunxi
 define	sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_div.c		sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu_fixed_factor.c	sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_gate.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nm.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nkmp.c		sunxi_ccu
@@ -46,6 +47,11 @@ file	arch/arm/sunxi/sun8i_a83t_ccu.c		sunxi_a83t_ccu
 device	sun8ih3ccu: sunxi_ccu
 attach	sun8ih3ccu at fdt with sunxi_h3_ccu
 file	arch/arm/sunxi/sun8i_h3_ccu.c		sunxi_h3_ccu
+
+# CCU (H3 PRCM)
+device	sun8ih3rccu: sunxi_ccu
+attach	sun8ih3rccu at fdt with sunxi_h3_r_ccu
+file	arch/arm/sunxi/sun8i_h3_r_ccu.c		sunxi_h3_r_ccu
 
 # CCU (A64)
 device	sun50ia64ccu: sunxi_ccu
