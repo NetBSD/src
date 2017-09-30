@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.108 2017/09/30 13:14:06 sevan Exp $
+.\" $NetBSD: usb.4,v 1.109 2017/09/30 13:39:41 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,9 +57,7 @@
 .In dev/usb/usbhid.h
 .Sh DESCRIPTION
 .Nx
-provides machine-independent bus support and drivers for
-.Tn USB
-devices.
+provides machine-independent bus support and drivers for USB devices.
 .Pp
 The
 .Nx
@@ -71,26 +69,18 @@ and
 the controller, the bus, and the device layer.
 The controller attaches to a physical bus (like
 .Xr pci 4 ) .
-The
-.Tn USB
-bus attaches to the controller and the root hub attaches
+The USB bus attaches to the controller and the root hub attaches
 to the bus.
 Further devices, which may include further hubs,
 attach to other hubs.
 The attachment forms the same tree structure as the physical
-.Tn USB
-device tree.
-For each
-.Tn USB
-device there may be additional drivers attached to it.
+USB device tree.
+For each USB device there may be additional drivers attached to it.
 .Pp
 The
 .Cm uhub
-device controls
-.Tn USB
-hubs and must always be present since there is at least a root hub in any
-.Tn USB
-system.
+device controls USB hubs and must always be present since there is
+at least a root hub in any USB system.
 .Pp
 The
 .Va flags
@@ -113,14 +103,11 @@ To achieve this use a
 value of 1.
 .Pp
 .Nx
-supports the following machine-independent
-.Tn USB
-drivers:
+supports the following machine-independent USB drivers:
 .Ss Storage devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr umass 4
-.Tn USB
-Mass Storage Devices, e.g., external disk drives
+USB Mass Storage Devices, e.g., external disk drives
 .El
 .Ss Wired network interfaces
 .Bl -tag -width 12n -offset ind -compact
@@ -218,11 +205,9 @@ Generic driver for Human Interface Devices
 .It Xr uhidev 4
 Base driver for all Human Interface Devices
 .It Xr ukbd 4
-.Tn USB
-keyboards that follow the boot protocol
+USB keyboards that follow the boot protocol
 .It Xr ums 4
-.Tn USB
-mouse devices
+USB mouse devices
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
@@ -230,8 +215,8 @@ mouse devices
 Sigmaltel 4116/4220 USB-IrDA bridge
 .It Xr uberry 4
 Battery charging RIM BlackBerry phones via USB
-.It Xr udsir 4
-KingSun/DonShine USB IrDA bridge
+.\" .It Xr udsir 4
+.\" KingSun/DonShine USB IrDA bridge
 .It Xr uep 4
 USB eGalax touch-panel
 .It Xr ugen 4
@@ -254,14 +239,9 @@ Topfield TF5000PVR range of digital video recorders
 USB YAP phone firmware loader
 .El
 .Sh INTRODUCTION TO USB
-The
-.Tn USB
-1.x is a 12 Mb/s serial bus with 1.5 Mb/s for low speed devices.
-.Tn USB
-2.x handles 480 Mb/s.
-Each
-.Tn USB
-has a host controller that is the master of the bus;
+The USB 1.x is a 12 Mb/s serial bus with 1.5 Mb/s for low speed devices.
+USB 2.x handles 480 Mb/s.
+Each USB has a host controller that is the master of the bus;
 all other devices on the bus only speak when spoken to.
 .Pp
 There can be up to 127 devices (apart from the host controller)
@@ -319,9 +299,7 @@ according to its physical position in the device tree.
 The last three locators can be used to pin down a particular
 device according to what device it actually is.
 .Pp
-The bus enumeration of the
-.Tn USB
-bus proceeds in several steps:
+The bus enumeration of the USB bus proceeds in several steps:
 .Bl -enum
 .It
 Any device specific driver can attach to the device.
@@ -334,14 +312,10 @@ drivers can attach.
 If any interface driver attached in a certain
 configuration the iteration over configurations is stopped.
 .It
-If still no drivers have been found, the generic
-.Tn USB
-driver can attach.
+If still no drivers have been found, the generic USB driver can attach.
 .El
 .Sh USB CONTROLLER INTERFACE
-Use the following to get access to the
-.Tn USB
-specific structures and defines.
+Use the following to get access to the USB specific structures and defines.
 .Bd -literal
 #include <dev/usb/usb.h>
 .Ed
@@ -352,8 +326,7 @@ can be opened and a few operations can be performed on it.
 The
 .Xr poll 2
 system call will say that I/O is possible on the controller device when a
-.Tn USB
-device has been connected or disconnected to the bus.
+USB device has been connected or disconnected to the bus.
 .Pp
 The following
 .Xr ioctl 2
@@ -422,9 +395,7 @@ field shows the current configuration of the device.
 The
 .Va lowspeed
 field
-is set if the device is a
-.Tn USB
-low speed device.
+is set if the device is a USB low speed device.
 .Pp
 The
 .Va power
@@ -466,11 +437,8 @@ The include file
 contains definitions for the types used by the various
 .Xr ioctl 2
 calls.
-The naming convention of the fields for the various
-.Tn USB
-descriptors exactly follows the naming in the
-.Tn USB
-specification.
+The naming convention of the fields for the various USB
+descriptors exactly follows the naming in the USB specification.
 Byte sized fields can be accessed directly, but word (16 bit)
 sized fields must be access by the
 .Fn UGETW field
@@ -481,12 +449,9 @@ macros to handle byte order and alignment properly.
 The include file
 .In dev/usb/usbhid.h
 similarly contains the definitions for
-Human Interface Devices
-.Pq Tn HID .
+Human Interface Devices (HID).
 .Sh USB EVENT INTERFACE
-All
-.Tn USB
-events are reported via the
+All USB events are reported via the
 .Pa /dev/usb
 device.
 This devices can be opened for reading and each
@@ -531,9 +496,7 @@ pertinent to the different types of events.
 .Pp
 The
 .Va ue_bus
-contains the number of the
-.Tn USB
-bus for host controller events.
+contains the number of the USB bus for host controller events.
 .Pp
 The
 .Va ue_device
