@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.258 2017/09/30 11:43:57 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.259 2017/09/30 12:29:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258 2017/09/30 11:43:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2017/09/30 12:29:58 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -549,6 +549,7 @@ static void pmap_init_directmap(struct pmap *);
 #endif
 #ifndef XEN
 static void pmap_init_lapic(void);
+static void pmap_remap_global(void);
 static void pmap_remap_largepages(void);
 #endif
 
@@ -1210,10 +1211,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	struct pmap *kpm;
 	int i;
 	vaddr_t kva;
-#ifndef XEN
-	unsigned long p1i;
-	vaddr_t kva_end;
-#endif
 
 	pmap_pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
@@ -1287,21 +1284,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		pmap_pg_g = PG_G;		/* enable software */
 
 		/* add PG_G attribute to already mapped kernel pages */
-
-		if (KERNBASE == VM_MIN_KERNEL_ADDRESS) {
-			/* i386 only */
-			kva_end = virtual_avail;
-		} else {
-			/* amd64 only */
-			extern vaddr_t kern_end;
-			kva_end = kern_end;
-		}
-
-		for (kva = bootspace.text.va; kva < kva_end; kva += PAGE_SIZE) {
-			p1i = pl1_i(kva);
-			if (pmap_valid_entry(PTE_BASE[p1i]))
-				PTE_BASE[p1i] |= PG_G;
-		}
+		pmap_remap_global();
 	}
 
 	/*
@@ -1565,6 +1548,52 @@ pmap_init_directmap(struct pmap *kpm)
 #endif /* __HAVE_DIRECT_MAP */
 
 #ifndef XEN
+/*
+ * Remap all of the virtual pages created so far with the PG_G bit.
+ */
+static void
+pmap_remap_global(void)
+{
+	vaddr_t kva, kva_end;
+	unsigned long p1i;
+
+	/* kernel text */
+	kva = bootspace.text.va;
+	kva_end = kva + bootspace.text.sz;
+	for ( ; kva < kva_end; kva += PAGE_SIZE) {
+		p1i = pl1_i(kva);
+		if (pmap_valid_entry(PTE_BASE[p1i]))
+			PTE_BASE[p1i] |= PG_G;
+	}
+
+	/* kernel rodata */
+	kva = bootspace.rodata.va;
+	kva_end = kva + bootspace.rodata.sz;
+	for ( ; kva < kva_end; kva += PAGE_SIZE) {
+		p1i = pl1_i(kva);
+		if (pmap_valid_entry(PTE_BASE[p1i]))
+			PTE_BASE[p1i] |= PG_G;
+	}
+
+	/* kernel data */
+	kva = bootspace.data.va;
+	kva_end = kva + bootspace.data.sz;
+	for ( ; kva < kva_end; kva += PAGE_SIZE) {
+		p1i = pl1_i(kva);
+		if (pmap_valid_entry(PTE_BASE[p1i]))
+			PTE_BASE[p1i] |= PG_G;
+	}
+
+	/* boot space */
+	kva = bootspace.boot.va;
+	kva_end = kva + bootspace.boot.sz;
+	for ( ; kva < kva_end; kva += PAGE_SIZE) {
+		p1i = pl1_i(kva);
+		if (pmap_valid_entry(PTE_BASE[p1i]))
+			PTE_BASE[p1i] |= PG_G;
+	}
+}
+
 /*
  * Remap several kernel segments with large pages. We cover as many pages as we
  * can. Called only once at boot time, if the CPU supports large pages.
