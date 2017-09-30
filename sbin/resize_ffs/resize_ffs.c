@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.48 2017/09/28 17:07:20 sborrill Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.49 2017/09/30 15:25:16 riastradh Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.48 2017/09/28 17:07:20 sborrill Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.49 2017/09/30 15:25:16 riastradh Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -565,11 +565,12 @@ initcg(int cgn)
 	 * area always starts at 0, and thus is block-aligned, and
 	 * always ends at the sb, which is block-aligned.) */
 	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
-		for (i = 0; i < dlow; i += newsb->fs_frag) {
-			old_cg_blktot(cg, 0)[old_cbtocylno(newsb, i)]++;
+		int64_t di;
+		for (di = 0; di < dlow; di += newsb->fs_frag) {
+			old_cg_blktot(cg, 0)[old_cbtocylno(newsb, di)]++;
 			old_cg_blks(newsb, cg,
-			    old_cbtocylno(newsb, i),
-			    0)[old_cbtorpos(newsb, i)]++;
+			    old_cbtocylno(newsb, di),
+			    0)[old_cbtorpos(newsb, di)]++;
 		}
 
 	/* Deal with a partial block at the beginning of the post-inode area.
