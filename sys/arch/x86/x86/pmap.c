@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.259 2017/09/30 12:29:58 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.260 2017/09/30 12:35:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2017/09/30 12:29:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.260 2017/09/30 12:35:48 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1326,7 +1326,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #ifdef XEN
 		/* early_zerop initialized in xen_locore() */
 #else
-		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+		early_zerop = (void *)bootspace.spareva;
 #endif
 		early_zero_pte = PTE_BASE + pl1_i((vaddr_t)early_zerop);
 	}
