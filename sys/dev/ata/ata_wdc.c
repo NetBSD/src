@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.105.6.11 2017/09/26 20:15:36 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.105.6.12 2017/09/30 21:32:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.11 2017/09/26 20:15:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.12 2017/09/30 21:32:31 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -718,14 +718,18 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 		}
 		if (drv_err != WDC_ATA_ERR)
 			goto end;
-		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA)
+		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA) {
+			ata_channel_unlock(chp);
 			ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			goto err;
+		}
 	}
 #endif	/* NATA_DMA */
 
 	/* if we had an error, end */
 	if (drv_err == WDC_ATA_ERR) {
 		ata_channel_unlock(chp);
+err:
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
 	}

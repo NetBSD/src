@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.13 2017/09/10 19:31:15 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.14 2017/09/30 21:32:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.13 2017/09/10 19:31:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.14 2017/09/30 21:32:32 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -800,13 +800,13 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    device_xname(atac->atac_dev), chp->ch_channel,
 		    xfer->c_drive, xfer->c_bcount, xfer->c_skip);
+		ata_channel_unlock(chp);
 #if NATA_DMA
 		if (xfer->c_flags & C_DMA) {
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 		}
 #endif
-		ata_channel_unlock(chp);
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
@@ -820,8 +820,8 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	 * and reset device.
 	 */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA)) {
-		ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 		ata_channel_unlock(chp);
+		ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 		sc_xfer->error = XS_RESET;
 		wdc_atapi_reset(chp, xfer);
 		return (1);
@@ -895,11 +895,11 @@ again:
 		if ((sc_xfer->xs_control & XS_CTL_DATA_OUT) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
+			ata_channel_unlock(chp);
 			if (xfer->c_flags & C_DMA) {
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 			}
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
 			return 1;
@@ -945,11 +945,11 @@ again:
 		if ((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
+			ata_channel_unlock(chp);
 			if (xfer->c_flags & C_DMA) {
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 			}
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
 			return 1;
@@ -1016,13 +1016,13 @@ again:
 			sc_xfer->error = XS_SHORTSENSE;
 			sc_xfer->sense.atapi_sense = ATACH_ERR(tfd);
 		} else {
+			ata_channel_unlock(chp);
 #if NATA_DMA
 			if (xfer->c_flags & C_DMA) {
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 			}
 #endif
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
 			return (1);
@@ -1102,11 +1102,11 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 #if NATA_DMA || NATA_PIOBM
 		else if (wdc->dma_status &
 		    (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
+			ata_channel_unlock(chp);
 #if NATA_DMA
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 #endif
-			ata_channel_unlock(chp);
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
 			return;
