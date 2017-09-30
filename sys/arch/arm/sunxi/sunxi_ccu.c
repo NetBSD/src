@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.c,v 1.6 2017/07/17 23:26:17 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.c,v 1.7 2017/09/30 12:48:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.6 2017/07/17 23:26:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.7 2017/09/30 12:48:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -324,13 +324,14 @@ sunxi_ccu_print(struct sunxi_ccu_softc *sc)
 		clkp_parent = clk_get_parent(&clk->base);
 
 		switch (clk->type) {
-		case SUNXI_CCU_GATE:	type = "gate"; break;
-		case SUNXI_CCU_NM:	type = "nm"; break;
-		case SUNXI_CCU_NKMP:	type = "nkmp"; break;
-		case SUNXI_CCU_PREDIV:	type = "prediv"; break;
-		case SUNXI_CCU_DIV:	type = "div"; break;
-		case SUNXI_CCU_PHASE:	type = "phase"; break;
-		default:		type = "???"; break;
+		case SUNXI_CCU_GATE:		type = "gate"; break;
+		case SUNXI_CCU_NM:		type = "nm"; break;
+		case SUNXI_CCU_NKMP:		type = "nkmp"; break;
+		case SUNXI_CCU_PREDIV:		type = "prediv"; break;
+		case SUNXI_CCU_DIV:		type = "div"; break;
+		case SUNXI_CCU_PHASE:		type = "phase"; break;
+		case SUNXI_CCU_FIXED_FACTOR:	type = "fixed-factor"; break;
+		default:			type = "???"; break;
 		}
 
         	aprint_debug_dev(sc->sc_dev,
