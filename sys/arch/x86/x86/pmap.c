@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.257 2017/09/12 01:01:25 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.258 2017/09/30 11:43:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.257 2017/09/12 01:01:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258 2017/09/30 11:43:57 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -368,6 +368,8 @@ static bool cpu_pat_enabled __read_mostly = false;
 
 static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
+
+struct bootspace bootspace __read_mostly;
 
 /*
  * pmap_pg_nx: if our processor supports PG_NX in the PTE then we
@@ -1255,7 +1257,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 
-	kpm->pm_pdir = (pd_entry_t *)(PDPpaddr + KERNBASE);
+	kpm->pm_pdir = (pd_entry_t *)bootspace.pdir;
 	for (i = 0; i < PDP_SIZE; i++)
 		kpm->pm_pdirpa[i] = PDPpaddr + PAGE_SIZE * i;
 
@@ -1295,7 +1297,7 @@ pmap_bootstrap(vaddr_t kva_start)
 			kva_end = kern_end;
 		}
 
-		for (kva = KERNBASE; kva < kva_end; kva += PAGE_SIZE) {
+		for (kva = bootspace.text.va; kva < kva_end; kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);
 			if (pmap_valid_entry(PTE_BASE[p1i]))
 				PTE_BASE[p1i] |= PG_G;
@@ -1470,8 +1472,8 @@ pmap_init_directmap(struct pmap *kpm)
 		panic("pmap_init_directmap: lastpa incorrect");
 	}
 
-	/* In locore.S, we allocated a tmp va. We will use it now. */
-	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+	/* We will use this temporary va. */
+	tmpva = bootspace.spareva;
 	pte = PTE_BASE + pl1_i(tmpva);
 
 	/* Number of L4 entries. */
@@ -1570,33 +1572,26 @@ pmap_init_directmap(struct pmap *kpm)
 static void
 pmap_remap_largepages(void)
 {
-	extern char __rodata_start;
-	extern char __data_start;
-	extern char __kernel_end;
 	pd_entry_t *pde;
 	vaddr_t kva, kva_end;
 	paddr_t pa;
 
 	/* Remap the kernel text using large pages. */
-	kva = rounddown((vaddr_t)KERNTEXTOFF, NBPD_L2);
-	kva_end = rounddown((vaddr_t)&__rodata_start, NBPD_L1);
-	pa = kva - KERNBASE;
+	kva = rounddown(bootspace.text.va, NBPD_L2);
+	kva_end = rounddown(bootspace.text.va +
+	    bootspace.text.sz, NBPD_L1);
+	pa = rounddown(bootspace.text.pa, NBPD_L2);
 	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 		pde = &L2_BASE[pl2_i(kva)];
 		*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
 		tlbflushg();
 	}
-#if defined(DEBUG)
-	aprint_normal("kernel text is mapped with %" PRIuPSIZE " large "
-	    "pages and %" PRIuPSIZE " normal pages\n",
-	    howmany(kva - KERNBASE, NBPD_L2),
-	    howmany((vaddr_t)&__rodata_start - kva, NBPD_L1));
-#endif /* defined(DEBUG) */
 
 	/* Remap the kernel rodata using large pages. */
-	kva = roundup((vaddr_t)&__rodata_start, NBPD_L2);
-	kva_end = rounddown((vaddr_t)&__data_start, NBPD_L1);
-	pa = kva - KERNBASE;
+	kva = roundup(bootspace.rodata.va, NBPD_L2);
+	kva_end = rounddown(bootspace.rodata.va +
+	    bootspace.rodata.sz, NBPD_L1);
+	pa = roundup(bootspace.rodata.pa, NBPD_L2);
 	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 		pde = &L2_BASE[pl2_i(kva)];
 		*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KR | PG_V;
@@ -1604,9 +1599,10 @@ pmap_remap_largepages(void)
 	}
 
 	/* Remap the kernel data+bss using large pages. */
-	kva = roundup((vaddr_t)&__data_start, NBPD_L2);
-	kva_end = rounddown((vaddr_t)&__kernel_end, NBPD_L1);
-	pa = kva - KERNBASE;
+	kva = roundup(bootspace.data.va, NBPD_L2);
+	kva_end = rounddown(bootspace.data.va +
+	    bootspace.data.sz, NBPD_L1);
+	pa = roundup(bootspace.data.pa, NBPD_L2);
 	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 		pde = &L2_BASE[pl2_i(kva)];
 		*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KW | PG_V;

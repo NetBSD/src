@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.261 2017/09/28 17:35:08 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262 2017/09/30 11:43:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2017/09/28 17:35:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2017/09/30 11:43:57 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -264,6 +264,7 @@ paddr_t ldt_paddr;
 vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
 extern struct vm_map *module_map;
+extern struct bootspace bootspace;
 vaddr_t kern_end;
 
 struct vm_map *phys_map = NULL;
@@ -321,6 +322,7 @@ int dump_header_finish(void);
 int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
+void init_bootspace(void);
 void init_x86_64(paddr_t);
 
 /*
@@ -1487,6 +1489,41 @@ init_x86_64_ksyms(void)
 }
 
 void
+init_bootspace(void)
+{
+	extern char __rodata_start;
+	extern char __data_start;
+	extern char __kernel_end;
+
+	memset(&bootspace, 0, sizeof(bootspace));
+
+	bootspace.text.va = KERNTEXTOFF;
+	bootspace.text.pa = KERNTEXTOFF - KERNBASE;
+	bootspace.text.sz = (size_t)&__rodata_start - KERNTEXTOFF;
+
+	bootspace.rodata.va = (vaddr_t)&__rodata_start;
+	bootspace.rodata.pa = (paddr_t)&__rodata_start - KERNBASE;
+	bootspace.rodata.sz = (size_t)&__data_start - (size_t)&__rodata_start;
+
+	bootspace.data.va = (vaddr_t)&__data_start;
+	bootspace.data.pa = (paddr_t)&__data_start - KERNBASE;
+	bootspace.data.sz = (size_t)&__kernel_end - (size_t)&__data_start;
+
+	bootspace.boot.va = (vaddr_t)&__kernel_end;
+	bootspace.boot.pa = (paddr_t)&__kernel_end - KERNBASE;
+	bootspace.boot.sz = (size_t)(atdevbase + IOM_SIZE) -
+	    (size_t)&__kernel_end;
+
+	/* In locore.S, we allocated a tmp va. We will use it now. */
+	bootspace.spareva = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+
+	/* Virtual address of the L4 page */
+	bootspace.pdir = (vaddr_t)(PDPpaddr + KERNBASE);
+
+	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+}
+
+void
 init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
@@ -1567,7 +1604,7 @@ init_x86_64(paddr_t first_avail)
 
 	/* The area for the module map. */
 	module_start = kern_end;
-	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+	module_end = bootspace.emodule;
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -1951,7 +1988,7 @@ cpu_initclocks(void)
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
-	extern int start, __data_start;
+	extern char start, __data_start;
 	const vaddr_t v = (vaddr_t)ptr;
 
 	if (v >= (vaddr_t)&start && v < (vaddr_t)kern_end) {
