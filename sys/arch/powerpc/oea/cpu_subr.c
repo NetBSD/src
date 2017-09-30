@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.85 2017/07/11 03:07:22 maya Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.86 2017/09/30 03:34:04 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.85 2017/07/11 03:07:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.86 2017/09/30 03:34:04 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -652,6 +652,8 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case MPC601:
 		bitmask = HID0_601_BITMASK;
 		break;
+	case MPC7447A:
+	case MPC7448:
 	case MPC7450:
 	case MPC7455:
 	case MPC7457:
