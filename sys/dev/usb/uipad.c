@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.5 2017/04/21 15:06:37 christos Exp $	*/
+/*	$NetBSD: uipad.c,v 1.6 2017/09/30 13:01:50 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.5 2017/04/21 15:06:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.6 2017/09/30 13:01:50 sevan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -77,10 +77,6 @@ struct uipad_softc {
 	struct usbd_device *	sc_udev;
 };
 
-/*
- * Note that we do not attach to USB_PRODUCT_RIM_BLACKBERRY_PEARL_DUAL
- * as we let umass claim the device instead.
- */
 static const struct usb_devno uipad_devs[] = {
 	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD },
 	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD_2 },
