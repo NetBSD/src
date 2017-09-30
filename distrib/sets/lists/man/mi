@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1560 2017/09/12 14:52:02 wiz Exp $
+# $NetBSD: mi,v 1.1561 2017/09/30 12:27:26 sevan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1840,6 +1840,7 @@
 ./usr/share/man/cat4/uhmodem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uhso.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uhub.0			man-sys-catman		.cat
+./usr/share/man/cat4/uipad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uipaq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uirda.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uk.0			man-sys-catman		.cat
@@ -4881,6 +4882,7 @@
 ./usr/share/man/html4/uhmodem.html		man-sys-htmlman		html
 ./usr/share/man/html4/uhso.html			man-sys-htmlman		html
 ./usr/share/man/html4/uhub.html			man-sys-htmlman		html
+./usr/share/man/html4/uipad.html		man-sys-htmlman		html
 ./usr/share/man/html4/uipaq.html		man-sys-htmlman		html
 ./usr/share/man/html4/uirda.html		man-sys-htmlman		html
 ./usr/share/man/html4/uk.html			man-sys-htmlman		html
@@ -7846,6 +7848,7 @@
 ./usr/share/man/man4/uhmodem.4			man-sys-man		.man
 ./usr/share/man/man4/uhso.4			man-sys-man		.man
 ./usr/share/man/man4/uhub.4			man-sys-man		.man
+./usr/share/man/man4/uipad.4			man-sys-man		.man
 ./usr/share/man/man4/uipaq.4			man-sys-man		.man
 ./usr/share/man/man4/uirda.4			man-sys-man		.man
 ./usr/share/man/man4/uk.4			man-sys-man		.man
