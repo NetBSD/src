@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.94 2017/09/23 11:01:32 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.95 2017/09/30 12:01:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.94 2017/09/23 11:01:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.95 2017/09/30 12:01:56 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -862,7 +862,8 @@ init_x86_clusters(void)
 int
 init_x86_vm(paddr_t pa_kend)
 {
-	paddr_t pa_kstart = (KERNTEXTOFF - KERNBASE);
+	extern struct bootspace bootspace;
+	paddr_t pa_kstart = bootspace.text.pa;
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
 	int x;
