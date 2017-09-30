@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.15 2017/09/02 12:52:55 isaki Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.16 2017/09/30 04:07:04 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -59,8 +59,12 @@
 #define VS_MAX_BUFSIZE	(65536*4) /* XXX: enough? */
 
 /* XXX: msm6258vreg.h */
-#define MSM6258_STAT	0
-#define MSM6258_DATA	1
+#define MSM6258_CMD 	0		/* W */
+#define MSM6258_CMD_STOP	(0x01)
+#define MSM6258_CMD_PLAY_START	(0x02)
+#define MSM6258_CMD_REC_START	(0x04)
+#define MSM6258_STAT	0		/* R */
+#define MSM6258_DATA	1		/* R/W */
 
 struct vs_dma {
 	bus_dma_tag_t		vd_dmat;

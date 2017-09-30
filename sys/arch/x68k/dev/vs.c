@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.48 2017/09/02 15:40:31 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.49 2017/09/30 04:07:04 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.48 2017/09/02 15:40:31 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.49 2017/09/30 04:07:04 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -510,7 +510,8 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	    (int)block - (int)KVADDR(vd), blksize);
 
 	if (sc->sc_active == 0) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			MSM6258_CMD, MSM6258_CMD_PLAY_START);
 		sc->sc_active = 1;
 	}
 
@@ -555,7 +556,8 @@ vs_start_input(void *hdl, void *block, int blksize, void (*intr)(void *),
 	    (int)block - (int)KVADDR(vd), blksize);
 
 	if (sc->sc_active == 0) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			MSM6258_CMD, MSM6258_CMD_REC_START);
 		sc->sc_active = 1;
 	}
 
@@ -572,7 +574,8 @@ vs_halt_output(void *hdl)
 	if (sc->sc_active) {
 		/* stop ADPCM play */
 		dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			MSM6258_CMD, MSM6258_CMD_STOP);
 		sc->sc_active = 0;
 	}
 
@@ -589,7 +592,8 @@ vs_halt_input(void *hdl)
 	if (sc->sc_active) {
 		/* stop ADPCM recoding */
 		dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			MSM6258_CMD, MSM6258_CMD_STOP);
 		sc->sc_active = 0;
 	}
 
