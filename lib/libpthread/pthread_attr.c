@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.16.24.1 2017/08/31 08:32:39 bouyer Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.16.24.2 2017/10/01 16:37:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.16.24.1 2017/08/31 08:32:39 bouyer Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.16.24.2 2017/10/01 16:37:57 snj Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -58,11 +58,12 @@ pthread__attr_init_private(pthread_attr_t *attr)
 	if ((p = attr->pta_private) != NULL)
 		return p;
 
-	p = malloc(sizeof(*p));
+	p = calloc(1, sizeof(*p));
 	if (p != NULL) {
-		memset(p, 0, sizeof(*p));
 		attr->pta_private = p;
 		p->ptap_policy = SCHED_OTHER;
+		p->ptap_stacksize = pthread__stacksize;
+		p->ptap_guardsize = pthread__guardsize;
 	}
 	return p;
 }
