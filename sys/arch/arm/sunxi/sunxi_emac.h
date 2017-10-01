@@ -47,24 +47,39 @@
 #define	 BASIC_CTL_RX_TX_PRI	(1 << 1)
 #define	 BASIC_CTL_SOFT_RST	(1 << 0)
 #define	EMAC_INT_STA		0x08
-#define	 RX_BUF_UA_INT		(1 << 10)
+#define	 RGMII_LINK_STA_INT	(1 << 16)
+#define	 RX_EARLY_INT		(1 << 13)
+#define	 RX_OVERFLOW_INT	(1 << 12)
+#define	 RX_TIMEOUT_INT		(1 << 11)
+#define	 RX_DMA_STOPPED_INT	(1 << 10)
+#define	 RX_BUF_UA_INT		(1 << 9)
 #define	 RX_INT			(1 << 8)
+#define	 TX_EARLY_INT		(1 << 5)
 #define	 TX_UNDERFLOW_INT	(1 << 4)
+#define	 TX_TIMEOUT_INT		(1 << 3)
 #define	 TX_BUF_UA_INT		(1 << 2)
 #define	 TX_DMA_STOPPED_INT	(1 << 1)
 #define	 TX_INT			(1 << 0)
 #define	EMAC_INT_EN		0x0c
-#define	 RX_BUF_UA_INT_EN	(1 << 10)
+#define	 RX_EARLY_INT_EN	(1 << 13)
+#define	 RX_OVERFLOW_INT_EN	(1 << 12)
+#define	 RX_TIMEOUT_INT_EN	(1 << 11)
+#define	 RX_DMA_STOPPED_INT_EN	(1 << 10)
+#define	 RX_BUF_UA_INT_EN	(1 << 9)
 #define	 RX_INT_EN		(1 << 8)
+#define	 TX_EARLY_INT_EN	(1 << 5)
 #define	 TX_UNDERFLOW_INT_EN	(1 << 4)
+#define	 TX_TIMEOUT_INT_EN	(1 << 3)
 #define	 TX_BUF_UA_INT_EN	(1 << 2)
 #define	 TX_DMA_STOPPED_INT_EN	(1 << 1)
 #define	 TX_INT_EN		(1 << 0)
 #define	EMAC_TX_CTL_0		0x10
 #define	 TX_EN			(1 << 31)
+#define	 TX_FRM_LEN_CTL		(1 << 30)
 #define	EMAC_TX_CTL_1		0x14
 #define	 TX_DMA_START		(1 << 31)
 #define	 TX_DMA_EN		(1 << 30)
+#define	 TX_TH			(0x7 << 8)
 #define	 TX_NEXT_FRAME		(1 << 2)
 #define	 TX_MD			(1 << 1)
 #define	 FLUSH_TX_FIFO		(1 << 0)
@@ -75,14 +90,23 @@
 #define	EMAC_TX_DMA_LIST	0x20
 #define	EMAC_RX_CTL_0		0x24
 #define	 RX_EN			(1 << 31)
+#define	 RX_FRM_LEN_CTL		(1 << 30)
 #define	 JUMBO_FRM_EN		(1 << 29)
 #define	 STRIP_FCS		(1 << 28)
 #define	 CHECK_CRC		(1 << 27)
+#define	 RX_PAUSE_FRM_MD	(1 << 17)
 #define	 RX_FLOW_CTL_EN		(1 << 16)
 #define	EMAC_RX_CTL_1		0x28
 #define	 RX_DMA_START		(1 << 31)
 #define	 RX_DMA_EN		(1 << 30)
+#define	 RX_FIFO_FLOW_CTL	(1 << 24)
+#define	 RX_FLOW_CTL_TH_DEACT	(0x3 << 22)
+#define	 RX_FLOW_CTL_TH_ACT	(0x3 << 20)
+#define	 RX_TH			(0x3 << 4)
+#define	 RX_ERR_FRM		(1 << 3)
+#define	 RX_RUNT_FRM		(1 << 2)
 #define	 RX_MD			(1 << 1)
+#define	 FLUSH_RX_FRM		(1 << 0)
 #define	EMAC_RX_DMA_LIST	0x34
 #define	EMAC_RX_FRM_FLT		0x38
 #define	 DIS_ADDR_FILTER	(1 << 31)
@@ -167,11 +191,13 @@ struct sunxi_emac_desc {
 #define	TX_CHECKSUM_CTL_FULL	3
 #define	TX_CHECKSUM_CTL_SHIFT	27
 #define	TX_CRC_CTL		(1 << 26)
-#define	TX_BUF_SIZE		(0xfff << 0)
+#define	TX_CHAIN_DESC		(1 << 24)
+#define	TX_BUF_SIZE		(0x7ff << 0)
 #define	TX_BUF_SIZE_SHIFT	0
 /* Receive */
 #define	RX_INT_CTL		(1 << 31)
-#define	RX_BUF_SIZE		(0xfff << 0)
+#define	RX_CHAIN_DESC		(1 << 24)
+#define	RX_BUF_SIZE		(0x7ff << 0)
 #define	RX_BUF_SIZE_SHIFT	0
 
 	uint32_t	addr;
