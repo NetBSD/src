@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.7 2017/09/19 17:26:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.8 2017/10/01 15:05:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.7 2017/09/19 17:26:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.8 2017/10/01 15:05:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.7 2017/09/19 17:26:45 jmcneill Exp 
 #define	BURST_LEN_DEFAULT	8
 #define	RX_TX_PRI_DEFAULT	0
 #define	PAUSE_TIME_DEFAULT	0x400
-#define	TX_INTERVAL_DEFAULT	64
 
 /* syscon EMAC clock register */
 #define	EMAC_CLK_EPHY_ADDR	(0x1f << 20)	/* H3 */
@@ -124,9 +123,6 @@ static int sunxi_emac_rx_tx_pri = RX_TX_PRI_DEFAULT;
 
 /* Pause time field in the transmitted control frame */
 static int sunxi_emac_pause_time = PAUSE_TIME_DEFAULT;
-
-/* Request a TX interrupt every <n> descriptors */
-static int sunxi_emac_tx_interval = TX_INTERVAL_DEFAULT;
 
 enum sunxi_emac_type {
 	EMAC_A83T = 1,
@@ -337,8 +333,6 @@ sunxi_emac_setup_txdesc(struct sunxi_emac_softc *sc, int index, int flags,
 	} else {
 		status = TX_DESC_CTL;
 		size = flags | len;
-		if ((index & (sunxi_emac_tx_interval - 1)) == 0)
-			size |= TX_INT_CTL;
 		++sc->tx.queued;
 	}
 
@@ -380,7 +374,7 @@ sunxi_emac_setup_txbuf(struct sunxi_emac_softc *sc, int index, struct mbuf *m)
 	for (cur = index, i = 0; i < nsegs; i++) {
 		sc->tx.buf_map[cur].mbuf = (i == 0 ? m : NULL);
 		if (i == nsegs - 1)
-			flags |= TX_LAST_DESC;
+			flags |= TX_LAST_DESC | TX_INT_CTL;
 
 		sunxi_emac_setup_txdesc(sc, cur, flags, segs[i].ds_addr,
 		    segs[i].ds_len);
@@ -740,15 +734,14 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 
 			if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) != 0 &&
 			    (status & RX_FRM_TYPE) != 0) {
-				m->m_pkthdr.csum_flags = M_CSUM_IPv4;
+				m->m_pkthdr.csum_flags = M_CSUM_IPv4 |
+				    M_CSUM_TCPv4 | M_CSUM_UDPv4;
 				if ((status & RX_HEADER_ERR) != 0)
 					m->m_pkthdr.csum_flags |=
 					    M_CSUM_IPv4_BAD;
-				if ((status & RX_PAYLOAD_ERR) == 0) {
+				if ((status & RX_PAYLOAD_ERR) != 0)
 					m->m_pkthdr.csum_flags |=
-					    M_CSUM_DATA;
-					m->m_pkthdr.csum_data = 0xffff;
-				}
+					    M_CSUM_TCP_UDP_BAD;
 			}
 
 			++npkt;
