@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.50 2017/09/30 18:32:52 kre Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.51 2017/10/01 07:18:39 mlelstv Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.50 2017/09/30 18:32:52 kre Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.51 2017/10/01 07:18:39 mlelstv Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -478,7 +478,7 @@ initcg(int cgn)
 	dmax = newsb->fs_size - base;
 	if (dmax > newsb->fs_fpg)
 		dmax = newsb->fs_fpg;
-	start = &cg->cg_space[0] - (unsigned char *) cg;
+	start = (unsigned char *)&cg->cg_space[0] - (unsigned char *) cg;
 	/*
          * Clear out the cg - assumes all-0-bytes is the correct way
          * to initialize fields we don't otherwise touch, which is
@@ -606,13 +606,11 @@ initcg(int cgn)
 				dhigh += newsb->fs_frag;
 			}
 	}
-	if (is_ufs2 == 0) {
-		/* Deal with any leftover frag at the end of the cg. */
-		i = dmax - dhigh;
-		if (i) {
-			cg->cg_frsum[i]++;
-			cg->cg_cs.cs_nffree += i;
-		}
+	/* Deal with any leftover frag at the end of the cg. */
+	i = dmax - dhigh;
+	if (i) {
+		cg->cg_frsum[i]++;
+		cg->cg_cs.cs_nffree += i;
 	}
 	/* Update the csum info. */
 	csums[cgn] = cg->cg_cs;
@@ -1049,9 +1047,9 @@ grow(void)
 	 * last cg (though possibly not to a full cg!). */
 	if (oldsb->fs_size % oldsb->fs_fpg) {
 		struct cg *cg;
-		int newcgsize;
-		int prevcgtop;
-		int oldcgsize;
+		int64_t newcgsize;
+		int64_t prevcgtop;
+		int64_t oldcgsize;
 		cg = cgs[oldsb->fs_ncg - 1];
 		cgflags[oldsb->fs_ncg - 1] |= CGF_DIRTY | CGF_BLKMAPS;
 		prevcgtop = oldsb->fs_fpg * (oldsb->fs_ncg - 1);
@@ -1124,13 +1122,12 @@ markblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o)
  * Returns the number of bytes occupied in file, as does markblk().
  * For the sake of update_for_data_move(), we read the indirect block
  * _after_ making the _PRE callback.  The name is historical.  */
-static int
+static off_t
 markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 {
 	int i;
-	int j;
 	unsigned k;
-	int tot;
+	off_t j, tot;
 	static int32_t indirblk1[howmany(MAXBSIZE, sizeof(int32_t))];
 	static int32_t indirblk2[howmany(MAXBSIZE, sizeof(int32_t))];
 	static int32_t indirblk3[howmany(MAXBSIZE, sizeof(int32_t))];
@@ -1141,10 +1138,10 @@ markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 	if (lev < 0)
 		return (markblk(fn, di, bn, o));
 	if (bn == 0) {
-		for (i = newsb->fs_bsize;
+		for (j = newsb->fs_bsize;
 		    lev >= 0;
-		    i *= FFS_NINDIR(newsb), lev--);
-		return (i);
+		    j *= FFS_NINDIR(newsb), lev--);
+		return (j);
 	}
 	(*fn) (bn, newsb->fs_frag, newsb->fs_bsize, MDB_INDIR_PRE);
 	readat(FFS_FSBTODB(newsb, bn), indirblks[lev], newsb->fs_bsize);
@@ -1180,7 +1177,7 @@ static void
 map_inode_data_blocks(union dinode * di, mark_callback_t fn)
 {
 	off_t o;		/* offset within  inode */
-	int inc;		/* increment for o - maybe should be off_t? */
+	off_t inc;		/* increment for o */
 	int b;			/* index within di_db[] and di_ib[] arrays */
 
 	/* Scan the direct blocks... */
@@ -1329,7 +1326,7 @@ mark_move(unsigned int from, unsigned int to, unsigned int n)
  * each block of consecutive allocated frags is moved as a unit.
  */
 static void
-fragmove(struct cg * cg, int base, unsigned int start, unsigned int n)
+fragmove(struct cg * cg, int64_t base, unsigned int start, unsigned int n)
 {
 	unsigned int i;
 	int run;
