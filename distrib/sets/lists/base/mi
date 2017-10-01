@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1161 2017/09/17 00:00:39 sevan Exp $
+# $NetBSD: mi,v 1.1162 2017/10/01 20:49:25 maya Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -940,6 +940,7 @@
 ./usr/bin/sysstat				base-util-bin
 ./usr/bin/systat				base-util-bin
 ./usr/bin/tabs					base-util-bin
+./usr/bin/tac					base-util-bin
 ./usr/bin/tail					base-util-bin
 ./usr/bin/talk					base-netutil-bin
 ./usr/bin/tar					base-util-bin
