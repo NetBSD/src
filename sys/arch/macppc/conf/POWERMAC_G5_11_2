@@ -137,6 +137,7 @@ ki2c*		at obio?	# Keywest I2C
 iic*		at ki2c?
 
 admtemp* 	at iic?
+lmtemp* 	at iic?
 deq* 		at iic?
 
 # Audio support
