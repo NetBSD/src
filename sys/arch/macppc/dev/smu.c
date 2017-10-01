@@ -993,9 +993,6 @@ static bool is_drive_sensor(const envsys_data_t *edata)
 		return false;
 	if (strstr(edata->desc, "DRIVE BAY") != NULL)
 		return TRUE;
-	/* XXX until we support the actual drive bay sensor */
-	if (strstr(edata->desc, "BACKSIDE") != NULL)
-		return TRUE;
 	return false;
 }
 
