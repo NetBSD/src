@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.65 2017/09/24 20:13:59 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.66 2017/10/01 17:14:14 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -4974,4 +4974,9 @@ sys/arch/mips/mips/bds_emul.S			1.9
 
 	Make Malta work on real hardware again.
 	[mrg, ticket #1500]
+
+sys/arch/i386/i386/i386_trap.S			1.12
+
+	use %ss instead of %ds in trap06
+	[maxv, ticket #1512]
 
