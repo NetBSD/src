@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.29 2016/01/11 18:23:11 jdc Exp $	*/
+/*	$NetBSD: lm75.c,v 1.30 2017/10/01 05:12:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.29 2016/01/11 18:23:11 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.30 2017/10/01 05:12:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.29 2016/01/11 18:23:11 jdc Exp $");
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/lm75reg.h>
+
+#ifdef macppc
+#define HAVE_OF 1
+#endif
+
+#ifdef HAVE_OF
+#include <dev/ofw/openfirm.h>
+#endif
 
 struct lmtemp_softc {
 	device_t sc_dev;
@@ -95,6 +103,7 @@ static int	sysctl_lm75_temp(SYSCTLFN_ARGS);
 
 static const char * lmtemp_compats[] = {
 	"i2c-lm75",
+	"ds1775",
 	/*
 	 * see XXX in _attach() below: add code once non-lm75 matches are
 	 * added here!
@@ -175,6 +184,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	char name[64];
 	int i;
 
 	sc->sc_dev = self;
@@ -184,8 +194,12 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 			    device_cfdata(self)->cf_flags)
 				break;
 	} else {
-		/* XXX - add code when adding other direct matches! */
-		i = 0;
+		if (strcmp(ia->ia_name, "ds1775") == 0) {
+			i = 1;	/* LMTYPE_DS75 */
+		} else {
+			/* XXX - add code when adding other direct matches! */
+			i = 0;
+		}
 	}
 
 	sc->sc_tag = ia->ia_tag;
@@ -254,8 +268,18 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor.units =  ENVSYS_STEMP;
 	sc->sc_sensor.state =  ENVSYS_SINVALID;
 	sc->sc_sensor.flags =  ENVSYS_FMONLIMITS;
-	(void)strlcpy(sc->sc_sensor.desc,
+
+	(void)strlcpy(name,
 	    ia->ia_name? ia->ia_name : device_xname(self),
+	    sizeof(sc->sc_sensor.desc));
+#ifdef HAVE_OF
+	int ch;
+	ch = OF_child(ia->ia_cookie);
+	if (ch != 0) {
+		OF_getprop(ch, "location", name, 64);
+	}
+#endif
+	(void)strlcpy(sc->sc_sensor.desc, name,
 	    sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
