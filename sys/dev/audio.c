@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.409 2017/09/30 05:37:55 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.410 2017/10/01 21:49:20 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.409 2017/09/30 05:37:55 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.410 2017/10/01 21:49:20 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2027,7 +2027,7 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		((vc->sc_open & AUOPEN_READ) || vc == sc->sc_hwvc)) {
 		audio_init_ringbuffer(sc, &vc->sc_mrr,
 		    AUMODE_RECORD);
-		if (sc->sc_opens == 0 && (vc->sc_mode & AUMODE_RECORD)) {
+		if (sc->sc_recopens == 0 && (vc->sc_open & AUOPEN_READ)) {
 			if (hw->init_input) {
 				error = hw->init_input(sc->hw_hdl,
 				    vc->sc_mrr.s.start,
@@ -2043,7 +2043,7 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		audio_init_ringbuffer(sc, &vc->sc_mpr,
 		    AUMODE_PLAY);
 		vc->sc_sil_count = 0;
-		if (sc->sc_opens == 0 && (vc->sc_mode & AUMODE_PLAY)) {
+		if (sc->sc_opens == 0 && (vc->sc_open & AUOPEN_WRITE)) {
 			if (hw->init_output) {
 				error = hw->init_output(sc->hw_hdl,
 				    vc->sc_mpr.s.start,
@@ -2157,7 +2157,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if (error)
 		goto bad;
 
-	if (sc->sc_opens == 0) {
+	if (sc->sc_opens + sc->sc_recopens == 0) {
 		sc->sc_credentials = kauth_cred_get();
 		kauth_cred_hold(sc->sc_credentials);
 		if (hw->open != NULL) {
@@ -2216,13 +2216,13 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	 * The /dev/audio is always (re)set to 8-bit MU-Law mono
 	 * For the other devices, you get what they were last set to.
 	 */
-	error = audio_set_defaults(sc, mode, vc);
-	if (!error && ISDEVSOUND(dev) && sc->sc_aivalid == true) {
+	if (ISDEVSOUND(dev) && sc->sc_aivalid == true) {
 		sc->sc_ai.mode = mode;
 		sc->sc_ai.play.port = ~0;
 		sc->sc_ai.record.port = ~0;
 		error = audiosetinfo(sc, &sc->sc_ai, true, vc);
-	}
+	} else
+		error = audio_set_defaults(sc, mode, vc);
 	if (error)
 		goto bad;
 
@@ -2250,7 +2250,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	grow_mixer_states(sc, 2);
 	if (flags & FREAD)
 		sc->sc_recopens++;
-	sc->sc_opens++;
+	if (flags & FWRITE)
+		sc->sc_opens++;
 	chan->dev = dev;
 	chan->chan = n;
 	chan->deschan = n;
@@ -2265,7 +2266,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 bad:
 	audio_destroy_pfilters(vc);
 	audio_destroy_rfilters(vc);
-	if (hw->close != NULL && sc->sc_opens == 0)
+	if (hw->close != NULL && sc->sc_opens == 0 && sc->sc_recopens == 0)
 		hw->close(sc->hw_hdl);
 	mutex_exit(sc->sc_lock);
 	audio_free_ring(sc, &vc->sc_mpr);
@@ -2285,7 +2286,7 @@ audio_init_record(struct audio_softc *sc, struct virtual_channel *vc)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	
-	if (sc->sc_opens != 0)
+	if (sc->sc_recopens != 0)
 		return;
 
 	mutex_enter(sc->sc_intr_lock);
@@ -2416,7 +2417,7 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	
-	if (sc->sc_opens == 0)
+	if (sc->sc_opens == 0 && sc->sc_recopens == 0)
 		return ENXIO;
 
 	vc = chan->vc;
@@ -2450,7 +2451,7 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 			audio_drain(sc, chan->vc);
 		vc->sc_pbus = false;
 	}
-	if (sc->sc_opens == 1) {
+	if ((flags & FWRITE) && (sc->sc_opens == 1)) {
 		if (vc->sc_mpr.mmapped == false)
 			audio_drain(sc, sc->sc_hwvc);
 		if (hw->drain)
@@ -2461,11 +2462,11 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 	if ((flags & FREAD) && (sc->sc_recopens == 1))
 		sc->sc_rec_started = false;
 
-	if (sc->sc_opens == 1 && hw->close != NULL)
+	if (sc->sc_opens + sc->sc_recopens == 1 && hw->close != NULL)
 		hw->close(sc->hw_hdl);
 	mutex_exit(sc->sc_intr_lock);
 
-	if (sc->sc_opens == 1) {
+	if (sc->sc_opens + sc->sc_recopens == 1) {
 		sc->sc_async_audio = 0;
 		kauth_cred_free(sc->sc_credentials);
 	}
@@ -2479,7 +2480,8 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	if (flags & FREAD)
 		sc->sc_recopens--;
-	sc->sc_opens--;
+	if (flags & FWRITE)
+		sc->sc_opens--;
 	shrink_mixer_states(sc, 2);
 	SIMPLEQ_REMOVE(&sc->sc_audiochan, chan, audio_chan, entries);
 	mutex_exit(sc->sc_lock);
@@ -4710,7 +4712,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 		}
 	}
 
-	if (hw->commit_settings && sc->sc_opens == 0) {
+	if (hw->commit_settings && sc->sc_opens + sc->sc_recopens == 0) {
 		error = hw->commit_settings(sc->hw_hdl);
 		if (error)
 			goto cleanup;
@@ -5830,7 +5832,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	mutex_enter(sc->sc_lock);
 
 	/* This may not change when a virtual channel is open */
-	if (sc->sc_opens) {
+	if (sc->sc_opens || sc->sc_recopens) {
 		mutex_exit(sc->sc_lock);
 		return EBUSY;
 	}
@@ -5871,7 +5873,7 @@ audio_sysctl_precision(SYSCTLFN_ARGS)
 	mutex_enter(sc->sc_lock);
 
 	/* This may not change when a virtual channel is open */
-	if (sc->sc_opens) {
+	if (sc->sc_opens || sc->sc_recopens) {
 		mutex_exit(sc->sc_lock);
 		return EBUSY;
 	}
@@ -5923,7 +5925,7 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 	mutex_enter(sc->sc_lock);
 
 	/* This may not change when a virtual channel is open */
-	if (sc->sc_opens) {
+	if (sc->sc_opens || sc->sc_recopens) {
 		mutex_exit(sc->sc_lock);
 		return EBUSY;
 	}
