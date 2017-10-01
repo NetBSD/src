@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.48 2017/09/24 20:13:48 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.49 2017/10/01 17:14:39 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4689,4 +4689,19 @@ sys/arch/mips/mips/bds_emul.S			1.9
 
 	Make Malta work on real hardware again.
 	[mrg, ticket #1500]
+
+sys/arch/i386/i386/i386_trap.S			1.12
+
+	use %ss instead of %ds in trap06
+	[maxv, ticket #1512]
+
+etc/MAKEDEV.tmpl				1.186 via patch
+
+	Create a device node for veriexec by default.
+	[sevan, ticket #1501]
+
+sys/dev/usb/usb.c				1.166
+
+	Add a missing break that should've been included in 1.163.
+	[skrll, ticket #1502]
 
