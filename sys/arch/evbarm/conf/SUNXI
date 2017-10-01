@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.31 2017/09/30 12:49:21 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.32 2017/10/01 10:45:49 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -95,12 +95,12 @@ cpu*		at cpus?
 psci*		at fdt?
 
 # Clock and reset controllers
-sun5ia13ccu*	at fdt? pass 4		# A13 CCU
-sun6ia31ccu*	at fdt? pass 4		# A31 CCU
-sun8ia83tccu*	at fdt? pass 4		# A83T CCU
-sun8ih3ccu*	at fdt? pass 4		# H3 CCU
-sun8ih3rccu*	at fdt? pass 4		# H3 CCU (PRCM)
-sun50ia64ccu*	at fdt? pass 4		# A64 CCU
+sun5ia13ccu*	at fdt? pass 2		# A13 CCU
+sun6ia31ccu*	at fdt? pass 2		# A31 CCU
+sun8ia83tccu*	at fdt? pass 2		# A83T CCU
+sun8ih3ccu*	at fdt? pass 2		# H3 CCU
+sun8ih3rccu*	at fdt? pass 2		# H3 CCU (PRCM)
+sun50ia64ccu*	at fdt? pass 2		# A64 CCU
 sunxiresets*	at fdt? pass 1		# Misc. clock resets
 sunxigates*	at fdt? pass 1		# Misc. clock gates
 
@@ -133,7 +133,7 @@ sun6idma*	at fdt?			# DMA controller (sun6i)
 # Clock and Reset controller
 
 # GPIO controller
-sunxigpio*	at fdt? pass 2		# GPIO
+sunxigpio*	at fdt? pass 3		# GPIO
 gpio*		at gpiobus?
 
 # Ethernet
