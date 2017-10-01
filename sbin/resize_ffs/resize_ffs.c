@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.51 2017/10/01 07:18:39 mlelstv Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.52 2017/10/01 22:59:19 christos Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.51 2017/10/01 07:18:39 mlelstv Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.52 2017/10/01 22:59:19 christos Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -2304,7 +2304,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-cvy] [-s size] special\n",
+	(void)fprintf(stderr, "usage: %s [-cpvy] [-s size] special\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
