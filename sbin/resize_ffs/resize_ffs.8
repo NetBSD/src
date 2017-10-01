@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.17 2016/09/12 05:47:21 sevan Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.18 2017/10/01 22:59:19 christos Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -9,7 +9,7 @@
 .\"  X  Against HTML               mouse@rodents.montreal.qc.ca
 .\" / \ Email!           7D C8 61 52 5D E7 2D 39  4E F1 31 3E E8 B3 27 4B
 .\"
-.Dd April 6, 2015
+.Dd October 1, 2017
 .Dt RESIZE_FFS 8
 .Os
 .Sh NAME
@@ -128,10 +128,8 @@ command first appeared in
 .Aq riz@NetBSD.org
 (Byteswapped file system and UFS2 support)
 .Pp
-A big bug-finding kudos goes to John Kohl for finding the rotational
-layout bug referred to in the
-.Sx WARNING
-section above.
+A big bug-finding kudos goes to John Kohl for finding a significant
+rotational layout bug.
 .Sh BUGS
 Can fail to shrink a file system when there actually is enough space,
 because it does not distinguish between a block allocated as a block
