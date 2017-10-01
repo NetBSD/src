@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.351 2017/05/30 17:09:17 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.351.2.1 2017/10/01 10:20:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.351 2017/05/30 17:09:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.351.2.1 2017/10/01 10:20:03 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4991,7 +4991,7 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 		vme = kmem_alloc(vmesize, KM_SLEEP);
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
-		if (oldp && (dp - (char *)oldp) < *oldlenp) {
+		if (oldp && (dp - (char *)oldp) < vmesize) {
 			error = fill_vmentry(l, p, &vme[count], map, entry);
 			if (error)
 				goto out;
@@ -5009,7 +5009,7 @@ out:
 		const u_int esize = min(sizeof(*vme), elem_size);
 		dp = oldp;
 		for (size_t i = 0; i < count; i++) {
-			if (oldp && (dp - (char *)oldp) < *oldlenp) {
+			if (oldp && (dp - (char *)oldp) < vmesize) {
 				error = sysctl_copyout(l, &vme[i], dp, esize);
 				if (error)
 					break;
