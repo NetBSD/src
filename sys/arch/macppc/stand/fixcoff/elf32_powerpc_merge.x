@@ -1,3 +1,4 @@
+/*	$NetBSD: elf32_powerpc_merge.x,v 1.7 2017/10/02 01:03:31 uwe Exp $ */
 OUTPUT_ARCH(powerpc)
 SECTIONS
 {
