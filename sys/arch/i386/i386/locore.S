@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.153 2017/09/30 11:43:57 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.154 2017/10/02 17:48:01 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.153 2017/09/30 11:43:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.154 2017/10/02 17:48:01 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -910,6 +910,7 @@ begin:
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
 #endif
 	pushl	%esi
+	call	_C_LABEL(init_bootspace)
 	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	call 	_C_LABEL(main)
