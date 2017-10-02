@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.134 2017/03/07 01:53:53 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.134.6.1 2017/10/02 13:33:41 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134 2017/03/07 01:53:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.1 2017/10/02 13:33:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1792,6 +1792,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_iflist *bif;
 	struct ether_header *eh;
 	struct psref psref;
+	int bound;
 	DECLARE_LOCK_VARIABLE;
 
 	KASSERT(!cpu_intr_p());
@@ -1804,8 +1805,10 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
+	bound = curlwp_bind();
 	bif = bridge_lookup_member_if(sc, ifp, &psref);
 	if (bif == NULL) {
+		curlwp_bindx(bound);
 		ACQUIRE_GLOBAL_LOCKS();
 		ether_input(ifp, m);
 		RELEASE_GLOBAL_LOCKS();
@@ -1857,6 +1860,7 @@ out:
 
 		if (_bif != NULL) {
 			bridge_release_member(sc, bif, &psref);
+			curlwp_bindx(bound);
 			if (_ifp != NULL) {
 				m->m_flags &= ~M_PROMISC;
 				ACQUIRE_GLOBAL_LOCKS();
@@ -1873,6 +1877,7 @@ out:
 	    memcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN) == 0) {
 		bstp_input(sc, bif, m);
 		bridge_release_member(sc, bif, &psref);
+		curlwp_bindx(bound);
 		return;
 	}
 
@@ -1882,6 +1887,7 @@ out:
 	 */
 	if (bstp_state_before_learning(bif)) {
 		bridge_release_member(sc, bif, &psref);
+		curlwp_bindx(bound);
 		ACQUIRE_GLOBAL_LOCKS();
 		ether_input(ifp, m);
 		RELEASE_GLOBAL_LOCKS();
@@ -1891,6 +1897,8 @@ out:
 	bridge_release_member(sc, bif, &psref);
 
 	bridge_forward(sc, m);
+
+	curlwp_bindx(bound);
 }
 
 /*
