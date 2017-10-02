@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.153 2015/11/22 15:53:10 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.154 2017/10/02 22:02:05 joerg Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.153 2015/11/22 15:53:10 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.154 2017/10/02 22:02:05 joerg Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.153 2015/11/22 15:53:10 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
+#include <zlib.h>
 
 #if !HAVE_NBTOOL_CONFIG_H
 #include <sys/disklabel.h>
@@ -67,7 +68,6 @@ __RCSID("$NetBSD: fdisk.c,v 1.153 2015/11/22 15:53:10 christos Exp $");
 #include <sys/sysctl.h>
 #include <disktab.h>
 #include <util.h>
-#include <zlib.h>
 #else
 #include <nbinclude/sys/disklabel.h>
 #include <nbinclude/sys/disklabel_gpt.h>
@@ -75,15 +75,6 @@ __RCSID("$NetBSD: fdisk.c,v 1.153 2015/11/22 15:53:10 christos Exp $");
 #include "../../include/disktab.h"
 /* We enforce -F, so none of these possibly undefined items can be needed */
 #define opendisk(path, fl, buf, buflen, cooked) (-1)
-#ifndef DIOCGDEFLABEL
-#define DIOCGDEFLABEL 0
-#endif
-#ifndef DIOCGDINFO
-#define DIOCGDINFO 0
-#endif
-#ifndef DIOCWLABEL
-#define DIOCWLABEL 0
-#endif
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 #ifndef	DEFAULT_BOOTDIR
@@ -2650,13 +2641,16 @@ get_params(void)
 		disklabel.d_ntracks = dos_heads;
 		disklabel.d_secsize = 512;
 		disklabel.d_nsectors = dos_sectors;
-	} else if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
+	}
+#if !HAVE_NBTOOL_CONFIG_H
+	else if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
 		warn("DIOCGDEFLABEL");
 		if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 			warn("DIOCGDINFO");
 			return (-1);
 		}
 	}
+#endif
 
 	disksectors = disklabel.d_secperunit;
 	cylinders = disklabel.d_ncylinders;
@@ -2813,8 +2807,10 @@ write_mbr(void)
 	 * sector 0. (e.g. empty disk)
 	 */
 	flag = 1;
+#if !HAVE_NBTOOL_CONFIG_H
 	if (wfd == fd && F_flag == 0 && ioctl(wfd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
+#endif
 	if (write_disk(0, &mboot) == -1) {
 		warn("Can't write fdisk partition table");
 		goto protect_label;
@@ -2835,8 +2831,10 @@ write_mbr(void)
 	rval = 0;
     protect_label:
 	flag = 0;
+#if !HAVE_NBTOOL_CONFIG_H
 	if (wfd == fd && F_flag == 0 && ioctl(wfd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
+#endif
 	return rval;
 }
 
