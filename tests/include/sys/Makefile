@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2016/08/08 14:11:08 pgoyette Exp $
+# $NetBSD: Makefile,v 1.13 2017/10/02 04:15:56 pgoyette Exp $
 
 NOMAN=		# defined
 
@@ -9,6 +9,7 @@ TESTSDIR=		${TESTSBASE}/include/sys
 TESTS_C+=		t_bitops
 TESTS_C+=		t_bootblock
 TESTS_C+=		t_cdefs
+TESTS_C+=		t_list
 TESTS_C+=		t_pslist
 TESTS_C+=		t_tree
 TESTS_C+=		t_types
