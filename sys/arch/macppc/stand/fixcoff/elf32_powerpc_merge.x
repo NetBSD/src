@@ -32,9 +32,6 @@ SECTIONS
     *(.rodata.*)
     *(.rodata1)
     *(.got1)
-  }
-  .eh_frame  :
-  {
     *(.eh_frame_hdr)
     *(.eh_frame)
   }
@@ -43,6 +40,7 @@ SECTIONS
   .dtors     : { *(.dtors)   }
   _etext = .;
   PROVIDE (etext = .);
+  .pad       : { LONG(0) }
   /* Read-write section, merged into data segment: */
   . = (. + 0x0FFF) & 0xFFFFF000;
   .data    :
