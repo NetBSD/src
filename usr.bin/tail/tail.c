@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.18 2017/10/01 20:49:24 maya Exp $");
+__RCSID("$NetBSD: tail.c,v 1.19 2017/10/02 08:23:23 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -317,7 +317,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-f | -F | -rqv] [-b # | -c # | -n #] [file ...]\n",
+	    "Usage: %s [-qv] [-f | -F | -r] [-b # | -c # | -n #] [file ...]\n",
 	    getprogname());
 	exit(1);
 }
