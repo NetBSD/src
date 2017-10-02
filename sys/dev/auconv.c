@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.32 2017/10/02 06:06:43 nat Exp $	*/
+/*	$NetBSD: auconv.c,v 1.33 2017/10/02 07:06:15 nat Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.32 2017/10/02 06:06:43 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.33 2017/10/02 07:06:15 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -512,7 +512,7 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 	valid = n_validbits / NBBY;					\
 	target = t_prec / NBBY;						\
 	this = (stream_filter_t *)self;					\
-	max_used = ((max_used / hw) * hw) & ~1;				\
+	max_used = ((max_used / hw) * hw);				\
 									\
 	if ((err = this->prev->fetch_to(sc, this->prev, this->src,	\
 			max_used)))					\
