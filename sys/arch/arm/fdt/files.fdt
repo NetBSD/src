@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.13 2017/08/26 15:05:48 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.14 2017/10/02 22:49:38 jmcneill Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -8,6 +8,10 @@ file	arch/arm/fdt/arm_fdt.c			arm_fdt
 
 attach	cpu at cpus with cpu_fdt
 file	arch/arm/fdt/cpu_fdt.c			cpu_fdt
+
+device	cpufreqdt
+attach	cpufreqdt at cpu with cpufreq_dt
+file	dev/fdt/cpufreq_dt.c			cpufreq_dt
 
 device	gtmr: mpcorebus
 attach	gtmr at fdt with gtmr_fdt
