@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.39 2017/09/29 21:48:17 wiz Exp $
+.\"	$NetBSD: compat_linux.8,v 1.40 2017/10/02 12:55:10 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -538,9 +538,9 @@ some point.
 .Sh CAVEATS
 When using a modular kernel (see
 .Xr module 7 ) ,
-the linux and linux32 emulations are not loaded automatically (for
+the linux and linux32 emulations are not activated automatically (for
 security reasons).
-To enable autoloading, set the appropriate
+To activate the emulation, set the appropriate
 .Xr sysctl 8 Ap s :
 .Bd -literal
 sysctl -w emul.linux.enabled=1
