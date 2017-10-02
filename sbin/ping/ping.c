@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.116 2017/03/17 06:52:59 ryo Exp $	*/
+/*	$NetBSD: ping.c,v 1.117 2017/10/02 10:08:11 maya Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.116 2017/03/17 06:52:59 ryo Exp $");
+__RCSID("$NetBSD: ping.c,v 1.117 2017/10/02 10:08:11 maya Exp $");
 #endif
 
 #include <stdio.h>
@@ -451,7 +451,6 @@ main(int argc, char *argv[])
 
 	if (interval == 0)
 		interval = (pingflags & F_FLOOD) ? FLOOD_INTVL : 1.0;
-#ifndef sgi
 	if (pingflags & F_FLOOD && prog_getuid())
 		errx(EXIT_FAILURE, "Must be superuser to use -f");
 	if (interval < 1.0 && prog_getuid())
@@ -459,7 +458,7 @@ main(int argc, char *argv[])
 		    "ping interval");
 	if (preload > 0 && prog_getuid())
 		errx(EXIT_FAILURE, "Must be superuser to use -l");
-#endif
+
 	sec_to_timespec(interval, &interval_tv);
 	if (interval_tv.tv_sec == 0 && interval_tv.tv_nsec == 0) {
 		errx(EXIT_FAILURE, "Packet interval must be at least 1 ns");
@@ -1292,22 +1291,6 @@ pr_pack(u_char *buf,
 			PR_PACK_SUB();
 			(void)printf("\nNOP");
 			break;
-#ifdef sgi
-		case IPOPT_SECURITY:	/* RFC 1108 RIPSO BSO */
-		case IPOPT_ESO:		/* RFC 1108 RIPSO ESO */
-		case IPOPT_CIPSO:	/* Commercial IPSO */
-			if ((sysconf(_SC_IP_SECOPTS)) > 0) {
-				i = (unsigned)cp[1];
-				hlen -= i - 1;
-				PR_PACK_SUB();
-				(void)printf("\nSEC:");
-				while (i--) {
-					(void)printf(" %02x", *cp++);
-				}
-				cp--;
-				break;
-			}
-#endif
 		default:
 			PR_PACK_SUB();
 			(void)printf("\nunknown option 0x%x", *cp);
