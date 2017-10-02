@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.30 2017/05/05 12:21:28 christos Exp $ */
+/* $NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.30 2017/05/05 12:21:28 christos Exp $");
+__RCSID("$NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: tic.c,v 1.30 2017/05/05 12:21:28 christos Exp $");
 #include <string.h>
 #include <term_private.h>
 #include <term.h>
+#include <unistd.h>
 #include <util.h>
 
 #define	HASH_SIZE	16384	/* 2012-06-01: 3600 entries */
