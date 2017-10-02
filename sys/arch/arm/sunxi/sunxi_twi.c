@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.3 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.4 2017/10/02 22:41:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.3 2017/08/25 00:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.4 2017/10/02 22:41:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,10 +45,22 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.3 2017/08/25 00:07:03 jmcneill Exp $
 static int sunxi_twi_match(device_t, cfdata_t, void *);
 static void sunxi_twi_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"allwinner,sun4i-a10-i2c",
-	"allwinner,sun6i-a31-i2c",
-	NULL
+struct sunxi_twi_config {
+	bool		iflg_rwc;
+};
+
+static const struct sunxi_twi_config sun4i_a10_i2c_config = {
+	.iflg_rwc = false,
+};
+
+static const struct sunxi_twi_config sun6i_a31_i2c_config = {
+	.iflg_rwc = true,
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "allwinner,sun4i-a10-i2c",	(uintptr_t)&sun4i_a10_i2c_config },
+	{ "allwinner,sun6i-a31-i2c",	(uintptr_t)&sun6i_a31_i2c_config },
+	{ NULL }
 };
 
 CFATTACH_DECL_NEW(sunxi_twi, sizeof(struct gttwsi_softc),
@@ -71,7 +83,7 @@ sunxi_twi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -79,6 +91,7 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 {
 	struct gttwsi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const struct sunxi_twi_config *conf;
 	struct i2cbus_attach_args iba;
 	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_bst;
@@ -117,6 +130,10 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": couldn't de-assert reset\n");
 			return;
 		}
+
+	conf = (void *)of_search_compatible(phandle, compat_data)->data;
+	prop_dictionary_set_bool(device_properties(self), "iflg-rwc",
+	    conf->iflg_rwc);
 
 	gttwsi_attach_subr(self, bst, bsh);
 
