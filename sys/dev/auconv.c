@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.31 2017/07/30 00:47:48 nat Exp $	*/
+/*	$NetBSD: auconv.c,v 1.32 2017/10/02 06:06:43 nat Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.31 2017/07/30 00:47:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.32 2017/10/02 06:06:43 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -542,6 +542,30 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 					d[--j] = 0;			\
 			}						\
 		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE		\
+	     && enc_dst == AUDIO_ENCODING_SLINEAR_BE)			\
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_BE			\
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {		\
+		/*							\
+		 * slinearNbe -> slinearNbe				\
+		 * ulinearNbe -> ulinearNbe				\
+		 */							\
+		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
+			i = valid;					\
+			j = target;					\
+			if (j < i) {					\
+				j = 0;					\
+				while (j < target)			\
+					d[j++] = s[i++];		\
+			} else {					\
+				j = 0;					\
+				i = 0;					\
+				while (i < valid)			\
+					d[j++] = s[i++];		\
+				while (j < target)			\
+					d[j++] = 0;			\
+			}						\
+		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
 	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE		\
 		    && enc_dst == AUDIO_ENCODING_SLINEAR_BE)		\
 		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE		\
@@ -555,15 +579,15 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 			j = target;					\
 			if (j < i) {					\
 				while (j > 0) {				\
-					d[--j] = s[target - i];		\
-					i--;				\
+					d[target - j] = s[--i];		\
+					j--;				\
 				}					\
 			} else {					\
 				while (j > i)				\
 					d[--j] = 0;			\
-				while (j > 0) {				\
-					d[--j] = s[target - i];		\
-					i--;				\
+				j = 0;					\
+				while (i > 0) {				\
+					d[j++] = s[--i];		\
 				}					\
 			}						\
 		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
@@ -576,18 +600,14 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 		 * slinearNbe -> ulinearNle				\
 		 */							\
 		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
+			i = 0;						\
 			j = target;					\
-			if (j < i) {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
+			if (target < valid) {				\
+				while (j > 0)				\
+					d[--j] = s[i++];		\
 			} else {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
+				while (i < valid)			\
+					d[--j] = s[i++];		\
 				while (j > 0)				\
 					d[--j] = 0;			\
 			}						\
@@ -602,21 +622,42 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 		 * ulinearNbe -> ulinearNle				\
 		 */							\
 		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
+			i = 0;						\
 			j = target;					\
-			if (j < i) {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
+			if (target < valid) {				\
+				while (j > 0)				\
+					d[--j] = s[i++];		\
 			} else {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
+				while (i < valid)			\
+					d[--j] = s[i++];		\
 				while (j > 0)				\
 					d[--j] = 0;			\
 			}						\
+		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE		\
+		    && enc_dst == AUDIO_ENCODING_ULINEAR_BE)		\
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE		\
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {	\
+		/*							\
+		 * slinearNle -> ulinearNbe				\
+		 * ulinearNle -> slinearNbe				\
+		 */							\
+		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
+			i = valid;					\
+			j = target;					\
+			if (j < i) {					\
+				j = 0;					\
+				while (j < target) {			\
+					d[j++] = s[i--];		\
+				}					\
+			} else {					\
+				j = 0;					\
+				while (i > 0)				\
+					d[j++] = s[--i];		\
+				while (j < target)			\
+					d[j++] = 0;			\
+			}						\
+			d[0] ^= 0x80;					\
 		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
 	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE		\
 		    && enc_dst == AUDIO_ENCODING_ULINEAR_BE)		\
@@ -627,21 +668,16 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 		 * ulinearNbe -> slinearNbe				\
 		 */							\
 		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
-			j = target;					\
-			if (j < i) {					\
-				while (j > 0) {				\
-					d[target - j] = s[target - j];	\
-					j--;				\
-				}					\
+			i = 0;						\
+			j = 0;						\
+			if (target < valid) {				\
+				while (j < target)			\
+					d[j++] = s[i++];		\
 			} else {					\
-				while (i > 0) {				\
-					d[target - j] = s[target - j];	\
-					j--;				\
-					i--;				\
-				}					\
-				while (j > 0)				\
-					d[target - j] = 0;		\
+				while (i < valid)			\
+					d[j++] = s[i++];		\
+				while (j < target)			\
+					d[j++] = 0;			\
 			}						\
 			d[0] ^= 0x80;					\
 		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
