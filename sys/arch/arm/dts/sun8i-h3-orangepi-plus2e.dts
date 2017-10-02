@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.1 2017/07/13 01:17:58 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.2 2017/10/02 22:51:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -41,6 +41,20 @@
 		enable-active-high;
 		gpio = <&pio 3 6 GPIO_ACTIVE_HIGH>;
 	};
+
+	cpus {
+		cpu@0 {
+			cpu-supply = <&vdd_cpu>;
+			operating-points = <
+				/* kHz	  uV */
+				1296000	1340000
+				1200000	1320000
+				1008000	1200000
+				816000	1100000
+				648000	1040000
+				>;
+		};
+	};
 };
 
 &emac {
@@ -55,5 +69,21 @@
 
 	phy1: ethernet-phy@1 {
 		reg = <1>;
+	};
+};
+
+&r_i2c {
+	status = "okay";
+
+	vdd_cpu: regulator@65 {
+		compatible = "silergy,sy8106a";
+		reg = <0x65>;
+
+		regulator-name = "vdd-cpu";
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1400000>;
+		regulator-ramp-delay = <200>;
+		regulator-boot-on;
+		regulator-always-on;
 	};
 };
