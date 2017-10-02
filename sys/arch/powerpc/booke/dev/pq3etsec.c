@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.30 2017/09/26 07:42:05 knakahara Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.31 2017/10/02 01:55:40 knakahara Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.30 2017/09/26 07:42:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.31 2017/10/02 01:55:40 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1996,7 +1996,7 @@ pq3etsec_tx_offload(
 	KASSERT(m->m_flags & M_PKTHDR);
 
 	have_vtag = vlan_has_tag(m);
-	vtag = vlan_get_tag(m);
+	vtag = (have_vtag) ? vlan_get_tag(m) : 0;
 
 	/*
 	 * Let see if we are doing any offload first.
@@ -2031,7 +2031,7 @@ pq3etsec_tx_offload(
 		fcb.txfcb_l4os = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
 	fcb.txfcb_l3os = ETHER_HDR_LEN;
 	fcb.txfcb_phcs = 0;
-	fcb.txfcb_vlctl = have_vtag ? vtag : 0;
+	fcb.txfcb_vlctl = vtag;
 
 #if 0
 	printf("%s: csum_flags=%#x: txfcb flags=%#x lsos=%u l4os=%u phcs=%u vlctl=%#x\n",
