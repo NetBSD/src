@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.62 2017/10/01 16:45:00 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.63 2017/10/02 13:37:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6072,4 +6072,23 @@ lib/libpthread/pthread_attr.c			1.18
 	defaults.
 	This fixes the "rustc panic" discussed on pkgsrc-users.
 	[martin, ticket #295]
+
+distrib/sets/lists/debug/mi			1.226
+distrib/sets/lists/tests/mi			1.764
+share/man/man3/queue.3				1.59
+sys/sys/queue.h					1.71
+tests/include/sys/Makefile			1.13
+tests/include/sys/t_list.c			1.1-1.2
+
+	Fix the LIST_MOVE macro to properly update the back-pointer of the
+	first entry in the list.
+	Add a new minimalistic test for LIST_MOVE to verify that the list's
+	first entry's prev pointer correctly points to the listhead.
+	[pgoyette, ticket #296]
+
+sys/net/if_bridge.c				1.135
+
+	Add curlwp_bind to bridge_input for psref.
+	It can be called in a thread context via tap (tap_dev_write).
+	[ozaki-r, ticket #297]
 
