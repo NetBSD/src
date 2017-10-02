@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.9 2015/09/06 06:01:02 dholland Exp $ */
+/* $NetBSD: videoio.h,v 1.10 2017/10/02 13:47:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -115,6 +115,12 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_TYPE_BOOLEAN,
 	V4L2_CTRL_TYPE_MENU,
 	V4L2_CTRL_TYPE_BUTTON
+};
+
+enum v4l2_frmsizetypes {
+	V4L2_FRMSIZE_TYPE_DISCRETE = 1,
+	V4L2_FRMSIZE_TYPE_CONTINUOUS,
+	V4L2_FRMSIZE_TYPE_STEPWISE
 };
 
 struct v4l2_timecode {
@@ -431,6 +437,50 @@ struct v4l2_requestbuffers {
 	uint32_t	reserved[2];
 };
 
+struct v4l2_frmsize_discrete {
+	uint32_t	width;
+	uint32_t	height;
+};
+
+struct v4l2_frmsize_stepwise {
+	uint32_t	min_width;
+	uint32_t	max_width;
+	uint32_t	step_width;
+	uint32_t	min_height;
+	uint32_t	max_height;
+	uint32_t	step_height;
+};
+
+struct v4l2_frmsizeenum {
+	uint32_t	index;
+	uint32_t	pixel_format;
+	uint32_t	type;
+	union {
+		struct v4l2_frmsize_discrete discrete;
+		struct v4l2_frmsize_stepwise stepwise;
+	};
+	uint32_t	reserved[2];
+};
+
+struct v4l2_frmival_stepwise {
+	struct v4l2_fract	min;
+	struct v4l2_fract	max;
+	struct v4l2_fract	step;
+};
+
+struct v4l2_frmivalenum {
+	uint32_t	index;
+	uint32_t	pixel_format;
+	uint32_t	width;
+	uint32_t	height;
+	uint32_t	type;
+	union {
+		struct v4l2_fract		discrete;
+		struct v4l2_frmival_stepwise	stepwise;
+	};
+	uint32_t	reserved[2];
+};
+
 /* Timecode types */
 #define V4L2_TC_TYPE_24FPS		1
 #define V4L2_TC_TYPE_25FPS		2
@@ -741,6 +791,8 @@ struct v4l2_requestbuffers {
 #define VIDIOC_ENUMAUDOUT	_IOWR('V', 66, struct v4l2_audioout)
 #define VIDIOC_G_PRIORITY	_IOR('V', 67, enum v4l2_priority)
 #define VIDIOC_S_PRIORITY	_IOW('V', 68, enum v4l2_priority)
+#define VIDIOC_ENUM_FRAMESIZES	_IOWR('V', 74, struct v4l2_frmsizeenum)
+#define VIDIOC_ENUM_FRAMEINTERVALS	_IOWR('V', 75, struct v4l2_frmivalenum)
 
 #ifdef _KERNEL
 #define VIDIOC_QUERYBUF50	_IOWR('V', 9, struct v4l2_buffer50)
