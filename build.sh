@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.316 2017/04/08 18:22:35 christos Exp $
+#	$NetBSD: build.sh,v 1.317 2017/10/02 15:40:00 maya Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1441,7 +1441,12 @@ sanitycheck()
 		fi
 		;;
 	esac
+
+	if [ ${MKX11-no} = "yes" ]; then
+		test -d ${X11SRCDIR-/usr/xsrc} || bomb "Asked to build X11 but no xsrc"
+	fi
 }
+
 # print_tooldir_make --
 # Try to find and print a path to an existing
 # ${TOOLDIR}/bin/${toolprefix}program
@@ -1893,7 +1898,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.316 2017/04/08 18:22:35 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.317 2017/10/02 15:40:00 maya Exp $
 # with these arguments: ${_args}
 #
 
