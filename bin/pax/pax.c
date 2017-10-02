@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.47 2011/08/29 14:47:48 joerg Exp $	*/
+/*	$NetBSD: pax.c,v 1.48 2017/10/02 21:55:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,23 +44,23 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.47 2011/08/29 14:47:48 joerg Exp $");
+__RCSID("$NetBSD: pax.c,v 1.48 2017/10/02 21:55:35 joerg Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/resource.h>
-#include <stdio.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <signal.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <paths.h>
+#include <time.h>
+#include <unistd.h>
 #include <util.h>
 #include "pax.h"
 #include "extern.h"
