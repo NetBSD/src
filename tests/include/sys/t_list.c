@@ -1,4 +1,4 @@
-/*	$NetBSD: t_list.c,v 1.1 2017/10/02 04:15:56 pgoyette Exp $	*/
+/*	$NetBSD: t_list.c,v 1.2 2017/10/02 05:14:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ ATF_TC_BODY(list_move, tc)
 	n2->value = 2;
 	LIST_INSERT_HEAD(&old_head, n2, entries);
 
-	LIST_MOVE(&old_head, &new_head);
+	LIST_MOVE(&old_head, &new_head, entries);
 
 	memcpy(&old_copy, &old_head, sizeof(old_head));
 
