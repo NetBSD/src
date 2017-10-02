@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.58 2017/08/08 03:58:43 isaki Exp $
+.\"	$NetBSD: queue.3,v 1.59 2017/10/02 05:16:41 pgoyette Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd October 15, 2016
+.Dd October 1, 2017
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -177,7 +177,7 @@
 .Fn LIST_INSERT_HEAD "LIST_HEAD *head" "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_REMOVE "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_REPLACE "TYPE *elm" "TYPE *new" "LIST_ENTRY NAME"
-.Fn LIST_MOVE "LIST_HEAD *head1" "LIST_HEAD *head2"
+.Fn LIST_MOVE "LIST_HEAD *head1" "LIST_HEAD *head2" "LIST_ENTRY NAME"
 .Pp
 .Fn SIMPLEQ_HEAD "HEADNAME" "TYPE"
 .Fn SIMPLEQ_HEAD_INITIALIZER "head"
