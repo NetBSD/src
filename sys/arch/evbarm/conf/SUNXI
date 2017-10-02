@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.32 2017/10/01 10:45:49 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.33 2017/10/02 22:50:29 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -90,6 +90,7 @@ fdt*		at fdtbus?
 # CPUs
 cpus*		at fdt? pass 0
 cpu*		at cpus?
+cpufreqdt*	at cpu?
 
 # Power state coordination interface
 psci*		at fdt?
@@ -153,6 +154,7 @@ iic*		at i2cbus?
 tcakp*		at iic?			# TI TCA8418 Keypad Scan IC
 wskbd*		at tcakp? console ?
 axp20x*		at iic?			# AXP209 Power Management IC
+sy8106a*	at iic?			# Silergy SY81061 regulator
 
 # RTC
 sunxirtc*	at fdt?			# RTC
