@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.71 2017/10/02 05:13:44 pgoyette Exp $	*/
+/*	$NetBSD: queue.h,v 1.72 2017/10/02 06:37:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -211,7 +211,7 @@ struct {								\
 	    ((tvar) = LIST_NEXT((var), field), 1);			\
 	    (var) = (tvar))
 
-#define	LIST_MOVE(head1, head2, field) do {					\
+#define	LIST_MOVE(head1, head2, field) do {				\
 	LIST_INIT((head2));						\
 	if (!LIST_EMPTY((head1))) {					\
 		(head2)->lh_first = (head1)->lh_first;			\
