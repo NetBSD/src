@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.1 2009/06/16 22:35:34 christos Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.2 2017/10/02 22:19:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
 #include "nbtool_config.h"
 
 #if !HAVE_FPURGE
+#if HAVE_STDIO_EXT_H
+#include <stdio_ext.h>
+#endif
 #include <stdio.h>
 #include <fcntl.h>
 
