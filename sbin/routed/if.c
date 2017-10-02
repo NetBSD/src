@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.30 2012/06/24 16:24:34 kardel Exp $	*/
+/*	$NetBSD: if.c,v 1.31 2017/10/02 11:02:19 maya Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.30 2012/06/24 16:24:34 kardel Exp $");
+__RCSID("$NetBSD: if.c,v 1.31 2017/10/02 11:02:19 maya Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -770,9 +770,7 @@ ifinit(void)
 			ifs0.int_data.ierrors = ifm.ifm_data.ifi_ierrors;
 			ifs0.int_data.opackets = ifm.ifm_data.ifi_opackets;
 			ifs0.int_data.oerrors = ifm.ifm_data.ifi_oerrors;
-#ifdef sgi
-			ifs0.int_data.odrops = ifm.ifm_data.ifi_odrops;
-#endif
+
 			sdl = (const struct sockaddr_dl *)
 				((struct if_msghdr *)ifam + 1);
 			/* NUL-termination by memset, above. */
@@ -1011,16 +1009,7 @@ ifinit(void)
 			ierr = ifs.int_data.ierrors - ifp->int_data.ierrors;
 			out = ifs.int_data.opackets - ifp->int_data.opackets;
 			oerr = ifs.int_data.oerrors - ifp->int_data.oerrors;
-#ifdef sgi
-			/* Through at least IRIX 6.2, PPP and SLIP
-			 * count packets dropped by the filters.
-			 * But FDDI rings stuck non-operational count
-			 * dropped packets as they wait for improvement.
-			 */
-			if (!(ifp->int_if_flags & IFF_POINTOPOINT))
-				oerr += (ifs.int_data.odrops
-					 - ifp->int_data.odrops);
-#endif
+
 			/* If the interface just awoke, restart the counters.
 			 */
 			if (ifp->int_data.ts == 0) {
