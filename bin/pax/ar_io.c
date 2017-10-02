@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.57 2016/05/31 03:32:36 dholland Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.58 2017/10/02 21:57:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,27 +42,27 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.57 2016/05/31 03:32:36 dholland Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.58 2017/10/02 21:57:59 joerg Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
-#include <signal.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 #ifdef SUPPORT_RMT
 #define __RMTLIB_PRIVATE
 #include <rmt.h>
