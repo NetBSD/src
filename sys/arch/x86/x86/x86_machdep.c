@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.95 2017/09/30 12:01:56 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.96 2017/10/02 19:23:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.95 2017/09/30 12:01:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.96 2017/10/02 19:23:16 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.95 2017/09/30 12:01:56 maxv Exp $"
 #include <machine/pmc.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "tsc.h"
 
 #include "acpica.h"
 #if NACPICA > 0
@@ -1109,6 +1111,38 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
+#ifndef XEN
+static int
+sysctl_machdep_tsc_enable(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, val;
+
+	val = *(int *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == 1) {
+		tsc_user_enable();
+	} else if (val == 0) {
+		tsc_user_disable();
+	} else {
+		error = EINVAL;
+	}
+	if (error)
+		return error;
+
+	*(int *)rnode->sysctl_data = val;
+
+	return 0;
+}
+#endif
+
 static void
 const_sysctl(struct sysctllog **clog, const char *name, int type,
     u_quad_t value, int tag)
@@ -1122,6 +1156,9 @@ const_sysctl(struct sysctllog **clog, const char *name, int type,
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 	extern uint64_t tsc_freq;
+#ifndef XEN
+	extern int tsc_user_enabled;
+#endif
 	extern int sparse_dump;
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -1167,6 +1204,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
 		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+#ifndef XEN
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "tsc_user_enable",
+		       SYSCTL_DESCR("RDTSC instruction enabled in usermode"),
+		       sysctl_machdep_tsc_enable, 0, &tsc_user_enabled, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+#endif
 
 	/* None of these can ever change once the system has booted */
 	const_sysctl(clog, "fpu_present", CTLTYPE_INT, i386_fpu_present,
