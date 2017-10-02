@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.36 2013/12/18 03:20:19 msaitoh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.37 2017/10/02 19:23:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.36 2013/12/18 03:20:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.37 2017/10/02 19:23:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.36 2013/12/18 03:20:19 msaitoh Exp $");
 #include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
+#include <sys/xcall.h>
 
 #include <machine/cpu_counter.h>
 #include <machine/cpuvar.h>
@@ -52,6 +53,8 @@ uint64_t	tsc_freq; /* exported for sysctl */
 static int64_t	tsc_drift_max = 250;	/* max cycles */
 static int64_t	tsc_drift_observed;
 static bool	tsc_good;
+
+int tsc_user_enabled = 1;
 
 static volatile int64_t	tsc_sync_val;
 static volatile struct cpu_info	*tsc_sync_cpu;
@@ -263,6 +266,35 @@ tsc_sync_ap(struct cpu_info *ci)
 
 	tsc_post_ap(ci);
 	tsc_post_ap(ci);
+}
+
+static void
+tsc_apply_cpu(void *arg1, void *arg2)
+{
+	bool enable = (bool)arg1;
+	if (enable) {
+		lcr4(rcr4() & ~CR4_TSD);
+	} else {
+		lcr4(rcr4() | CR4_TSD);
+	}
+}
+
+void
+tsc_user_enable(void)
+{
+	uint64_t xc;
+
+	xc = xc_broadcast(0, tsc_apply_cpu, (void *)true, NULL);
+	xc_wait(xc);
+}
+
+void
+tsc_user_disable(void)
+{
+	uint64_t xc;
+
+	xc = xc_broadcast(0, tsc_apply_cpu, (void *)false, NULL);
+	xc_wait(xc);
 }
 
 uint64_t
