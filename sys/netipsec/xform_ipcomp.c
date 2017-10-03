@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.52 2017/08/10 06:33:51 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.53 2017/10/03 08:56:52 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.52 2017/08/10 06:33:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.53 2017/10/03 08:56:52 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -386,7 +386,7 @@ bad:
 static int
 ipcomp_output(
     struct mbuf *m,
-    struct ipsecrequest *isr,
+    const struct ipsecrequest *isr,
     struct secasvar *sav,
     struct mbuf **mp,
     int skip,
@@ -547,7 +547,7 @@ ipcomp_output_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	struct tdb_crypto *tc;
-	struct ipsecrequest *isr;
+	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m, *mo;
 	int error, skip, rlen, roff;

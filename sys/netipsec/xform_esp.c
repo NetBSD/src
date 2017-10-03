@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.71 2017/08/10 06:33:51 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.72 2017/10/03 08:56:52 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.71 2017/08/10 06:33:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.72 2017/10/03 08:56:52 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -711,7 +711,7 @@ bad:
 static int
 esp_output(
     struct mbuf *m,
-    struct ipsecrequest *isr,
+    const struct ipsecrequest *isr,
     struct secasvar *sav,
     struct mbuf **mp,
     int skip,
@@ -984,7 +984,7 @@ static int
 esp_output_cb(struct cryptop *crp)
 {
 	struct tdb_crypto *tc;
-	struct ipsecrequest *isr;
+	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m;
 	int err, error;
