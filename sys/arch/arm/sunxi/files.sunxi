@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.24 2017/09/30 12:48:58 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.25 2017/10/03 23:42:17 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -168,6 +168,11 @@ file	arch/arm/sunxi/sunxi_ts.c		sunxi_ts
 # USB OTG
 attach	motg at fdt with sunxi_musb
 file	arch/arm/sunxi/sunxi_musb.c		sunxi_musb
+
+# Security ID EFUSE
+device	sunxisid
+attach	sunxisid at fdt with sunxi_sid
+file	arch/arm/sunxi/sunxi_sid.c		sunxi_sid
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
