@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.108 2017/10/02 22:19:45 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.109 2017/10/03 01:43:03 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -253,7 +253,7 @@ char *dirname(char *);
 #endif
 
 #if !HAVE_DECL_FPURGE
-void fpurge(FILE *);
+int fpurge(FILE *);
 #endif
 
 #if !HAVE_DIRFD
