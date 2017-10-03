@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.66 2017/09/27 10:31:29 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.67 2017/10/03 02:55:37 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -547,6 +547,7 @@ static int
 ixv_detach(device_t dev, int flags)
 {
 	struct adapter  *adapter = device_private(dev);
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = adapter->queues;
 	struct tx_ring *txr = adapter->tx_rings;
 	struct rx_ring *rxr = adapter->rx_rings;
@@ -648,6 +649,13 @@ ixv_detach(device_t dev, int flags)
 	/* Packet Transmission Stats */
 	evcnt_detach(&stats->vfgotc);
 	evcnt_detach(&stats->vfgptc);
+
+	/* Mailbox Stats */
+	evcnt_detach(&hw->mbx.stats.msgs_tx);
+	evcnt_detach(&hw->mbx.stats.msgs_rx);
+	evcnt_detach(&hw->mbx.stats.acks);
+	evcnt_detach(&hw->mbx.stats.reqs);
+	evcnt_detach(&hw->mbx.stats.rsts);
 
 	ixgbe_free_transmit_structures(adapter);
 	ixgbe_free_receive_structures(adapter);
@@ -2083,6 +2091,7 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	struct tx_ring          *txr = adapter->tx_rings;
 	struct rx_ring          *rxr = adapter->rx_rings;
 	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
+	struct ixgbe_hw *hw = &adapter->hw;
 	const struct sysctlnode *rnode;
 	struct sysctllog **log = &adapter->sysctllog;
 	const char *xname = device_xname(dev);
@@ -2243,6 +2252,19 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    xname, "Good Packets Transmitted");
 	evcnt_attach_dynamic(&stats->vfgotc, EVCNT_TYPE_MISC, NULL,
 	    xname, "Good Octets Transmitted");
+
+	/* Mailbox Stats */
+	evcnt_attach_dynamic(&hw->mbx.stats.msgs_tx, EVCNT_TYPE_MISC, NULL,
+	    xname, "message TXs");
+	evcnt_attach_dynamic(&hw->mbx.stats.msgs_rx, EVCNT_TYPE_MISC, NULL,
+	    xname, "message RXs");
+	evcnt_attach_dynamic(&hw->mbx.stats.acks, EVCNT_TYPE_MISC, NULL,
+	    xname, "ACKs");
+	evcnt_attach_dynamic(&hw->mbx.stats.reqs, EVCNT_TYPE_MISC, NULL,
+	    xname, "REQs");
+	evcnt_attach_dynamic(&hw->mbx.stats.rsts, EVCNT_TYPE_MISC, NULL,
+	    xname, "RSTs");
+
 } /* ixv_add_stats_sysctls */
 
 /************************************************************************
