@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.62 2017/10/03 08:25:21 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.63 2017/10/03 08:34:28 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.62 2017/10/03 08:25:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.63 2017/10/03 08:34:28 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -386,7 +386,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 	struct secasvar *sav = NULL;
-	struct secasindex *saidx;
+	struct secasindex saidx;
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_nextisr");
 	KASSERTMSG(af == AF_INET || af == AF_INET6,
@@ -397,16 +397,16 @@ again:
 	 * we only fillin unspecified SA peers for transport
 	 * mode; for tunnel mode they must already be filled in.
 	 */
-	saidx = &isr->saidx;
+	saidx = isr->saidx;
 	if (isr->saidx.mode == IPSEC_MODE_TRANSPORT) {
 		/* Fillin unspecified SA peers only for transport mode */
-		ipsec_fill_saidx_bymbuf(saidx, m, af);
+		ipsec_fill_saidx_bymbuf(&saidx, m, af);
 	}
 
 	/*
 	 * Lookup SA and validate it.
 	 */
-	*error = key_checkrequest(isr, &sav);
+	*error = key_checkrequest(isr, &saidx, &sav);
 	if (*error != 0) {
 		/*
 		 * IPsec processing is required, but no SA found.
