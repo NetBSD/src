@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.2 2017/10/02 22:19:45 christos Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.3 2017/10/03 10:28:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -42,11 +42,12 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-void
+int
 fpurge(FILE *fp)
 {
 #if HAVE___FPURGE
 	__fpurge(fp);
 #endif
+	return 0;
 }
 #endif
