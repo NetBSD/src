@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.231 2017/10/01 09:45:16 ryoon Exp $	*/
+/*	$NetBSD: key.c,v 1.232 2017/10/03 08:25:21 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.231 2017/10/01 09:45:16 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.232 2017/10/03 08:25:21 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -620,7 +620,6 @@ key_fill_replymsg(struct mbuf *m, int seq)
 	return m;
 }
 
-static struct secasvar *key_lookup_sa_bysaidx(const struct secasindex *);
 #if 0
 static void key_freeso(struct socket *);
 static void key_freesp_so(struct secpolicy **);
@@ -1049,7 +1048,7 @@ key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
  * OUT:	NULL:	not found.
  *	others:	found and return the pointer.
  */
-static struct secasvar *
+struct secasvar *
 key_lookup_sa_bysaidx(const struct secasindex *saidx)
 {
 	struct secashead *sah;
