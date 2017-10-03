@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.318 2017/10/03 10:59:04 maya Exp $
+#	$NetBSD: build.sh,v 1.319 2017/10/03 11:02:36 maya Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1443,8 +1443,9 @@ sanitycheck()
 	esac
 
 	if [ ${MKX11-no} = "yes" ]; then
-		test -d ${X11SRCDIR-../xsrc} || \
-		test -d ${X11SRCDIR-/usr/xsrc} || \
+		test -d ../xsrc || \
+		test -d /usr/xsrc || \
+		test -d "${X11SRCDIR}" || \
 		bomb "Asked to build X11 but no xsrc"
 	fi
 }
@@ -1900,7 +1901,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.318 2017/10/03 10:59:04 maya Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.319 2017/10/03 11:02:36 maya Exp $
 # with these arguments: ${_args}
 #
 
