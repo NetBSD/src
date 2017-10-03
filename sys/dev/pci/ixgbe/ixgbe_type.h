@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.27 2017/09/14 09:25:58 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.28 2017/10/03 02:55:37 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4137,12 +4137,12 @@ struct ixgbe_mbx_operations {
 };
 
 struct ixgbe_mbx_stats {
-	u32 msgs_tx;
-	u32 msgs_rx;
+	struct evcnt msgs_tx;
+	struct evcnt msgs_rx;
 
-	u32 acks;
-	u32 reqs;
-	u32 rsts;
+	struct evcnt acks;
+	struct evcnt reqs;
+	struct evcnt rsts;
 };
 
 struct ixgbe_mbx_info {
