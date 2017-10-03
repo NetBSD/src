@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.120 2017/09/28 17:21:42 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.121 2017/10/03 08:25:21 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.120 2017/09/28 17:21:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.121 2017/10/03 08:25:21 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -212,7 +212,7 @@ static int ipsec_set_policy (struct secpolicy **, int, const void *, size_t,
 static int ipsec_get_policy (struct secpolicy *, struct mbuf **);
 static void ipsec_destroy_policy(struct secpolicy *);
 static void vshiftl (unsigned char *, int, int);
-static size_t ipsec_hdrsiz (const struct secpolicy *);
+static size_t ipsec_hdrsiz(const struct secpolicy *, const struct mbuf *);
 
 /*
  * Try to validate and use cached policy on a PCB.
@@ -801,22 +801,23 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	 * Find the correct route for outer IPv4 header, compute tunnel MTU.
 	 */
 	if (sp->req) {
-		struct route *ro;
-		struct rtentry *rt;
-		struct secasvar *sav = NULL;
+		struct secasvar *sav;
 
-		error = key_checkrequest(sp->req, &sav);
-		if (error != 0)
-			return error;
-		ro = &sav->sah->sa_route;
-		rt = rtcache_validate(ro);
-		if (rt && rt->rt_ifp) {
-			*destmtu = rt->rt_rmx.rmx_mtu ?
-			    rt->rt_rmx.rmx_mtu : rt->rt_ifp->if_mtu;
-			*destmtu -= ipsechdr;
+		sav = ipsec_lookup_sa(sp->req, m);
+		if (sav != NULL) {
+			struct route *ro;
+			struct rtentry *rt;
+
+			ro = &sav->sah->sa_route;
+			rt = rtcache_validate(ro);
+			if (rt && rt->rt_ifp) {
+				*destmtu = rt->rt_rmx.rmx_mtu ?
+				    rt->rt_rmx.rmx_mtu : rt->rt_ifp->if_mtu;
+				*destmtu -= ipsechdr;
+			}
+			rtcache_unref(rt, ro);
+			KEY_SA_UNREF(&sav);
 		}
-		rtcache_unref(rt, ro);
-		KEY_SA_UNREF(&sav);
 	}
 	KEY_SP_UNREF(&sp);
 	return 0;
@@ -1860,7 +1861,7 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
  * NOTE: SP passed is free in this function.
  */
 static size_t
-ipsec_hdrsiz(const struct secpolicy *sp)
+ipsec_hdrsiz(const struct secpolicy *sp, const struct mbuf *m)
 {
 	struct ipsecrequest *isr;
 	size_t siz;
@@ -1883,21 +1884,20 @@ ipsec_hdrsiz(const struct secpolicy *sp)
 	siz = 0;
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
 		size_t clen = 0;
-		struct secasvar *sav = NULL;
-		int error;
+		struct secasvar *sav;
 
 		switch (isr->saidx.proto) {
 		case IPPROTO_ESP:
-			error = key_checkrequest(isr, &sav);
-			if (error == 0) {
+			sav = ipsec_lookup_sa(isr, m);
+			if (sav != NULL) {
 				clen = esp_hdrsiz(sav);
 				KEY_SA_UNREF(&sav);
 			} else
 				clen = esp_hdrsiz(NULL);
 			break;
 		case IPPROTO_AH:
-			error = key_checkrequest(isr, &sav);
-			if (error == 0) {
+			sav = ipsec_lookup_sa(isr, m);
+			if (sav != NULL) {
 				clen = ah_hdrsiz(sav);
 				KEY_SA_UNREF(&sav);
 			} else
@@ -1954,7 +1954,7 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 					   (struct inpcb_hdr *)inp, &error);
 
 	if (sp != NULL) {
-		size = ipsec_hdrsiz(sp);
+		size = ipsec_hdrsiz(sp, m);
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%lu.\n",
 		    (unsigned long)size);
 
@@ -1991,7 +1991,7 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 
 	if (sp == NULL)
 		return 0;
-	size = ipsec_hdrsiz(sp);
+	size = ipsec_hdrsiz(sp, m);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
 	KEY_SP_UNREF(&sp);
 

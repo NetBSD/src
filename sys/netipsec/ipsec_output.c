@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.61 2017/10/03 07:32:53 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.62 2017/10/03 08:25:21 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.61 2017/10/03 07:32:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.62 2017/10/03 08:25:21 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -337,6 +337,20 @@ ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
 			}
 		}
 	}
+}
+
+struct secasvar *
+ipsec_lookup_sa(const struct ipsecrequest *isr, const struct mbuf *m)
+{
+	struct secasindex saidx;
+
+	saidx = isr->saidx;
+	if (isr->saidx.mode == IPSEC_MODE_TRANSPORT) {
+		/* Fillin unspecified SA peers only for transport mode */
+		ipsec_fill_saidx_bymbuf(&saidx, m, isr->saidx.dst.sa.sa_family);
+	}
+
+	return key_lookup_sa_bysaidx(&saidx);
 }
 
 /*
