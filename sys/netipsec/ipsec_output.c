@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.63 2017/10/03 08:34:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.64 2017/10/03 08:56:52 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.63 2017/10/03 08:34:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.64 2017/10/03 08:56:52 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -147,7 +147,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 }
 
 int
-ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr,
+ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
     struct secasvar *sav)
 {
 	struct secasindex *saidx;
@@ -361,10 +361,10 @@ ipsec_lookup_sa(const struct ipsecrequest *isr, const struct mbuf *m)
  *   is done, reinject it in ip stack
  * - isr != NULL (error == 0) => we need to apply one rule to the packet
  */
-static struct ipsecrequest *
+static const struct ipsecrequest *
 ipsec_nextisr(
 	struct mbuf *m,
-	struct ipsecrequest *isr,
+	const struct ipsecrequest *isr,
 	int af,
 	int *error,
 	struct secasvar **ret
@@ -468,7 +468,7 @@ bad:
  * IPsec output logic for IPv4.
  */
 int
-ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr,
+ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
     u_long *mtu)
 {
 	struct secasvar *sav = NULL;
@@ -720,7 +720,7 @@ in6_sa_equal_addrwithscope(const struct sockaddr_in6 *sa, const struct in6_addr 
 int
 ipsec6_process_packet(
 	struct mbuf *m,
- 	struct ipsecrequest *isr
+ 	const struct ipsecrequest *isr
     )
 {
 	struct secasvar *sav = NULL;

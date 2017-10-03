@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.53 2017/07/14 12:26:26 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.54 2017/10/03 08:56:52 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.53 2017/07/14 12:26:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.54 2017/10/03 08:56:52 ozaki-r Exp $");
 
 /*
  * IP-inside-IP processing
@@ -396,7 +396,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 int
 ipip_output(
     struct mbuf *m,
-    struct ipsecrequest *isr,
+    const struct ipsecrequest *isr,
     struct secasvar *sav,
     struct mbuf **mp,
     int skip,
