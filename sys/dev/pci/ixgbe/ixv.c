@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.67 2017/10/03 02:55:37 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.68 2017/10/03 03:12:29 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -682,7 +682,10 @@ ixv_init_locked(struct adapter *adapter)
 	struct ifnet	*ifp = adapter->ifp;
 	device_t 	dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue	*que = adapter->queues;
 	int             error = 0;
+	uint32_t mask;
+	int i;
 
 	INIT_DEBUGOUT("ixv_init_locked: begin");
 	KASSERT(mutex_owned(&adapter->core_mtx));
@@ -756,7 +759,10 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_configure_ivars(adapter);
 
 	/* Set up auto-mask */
-	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, IXGBE_EICS_RTX_QUEUE);
+	mask = (1 << adapter->vector);
+	for (i = 0; i < adapter->num_queues; i++, que++)
+		mask |= (1 << que->msix);
+	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, mask);
 
 	/* Set moderation on the Link interrupt */
 	IXGBE_WRITE_REG(hw, IXGBE_VTEITR(adapter->vector), IXGBE_LINK_ITR);
@@ -911,15 +917,17 @@ ixv_msix_mbx(void *arg)
 	++adapter->link_irq.ev_count;
 
 	/* First get the cause */
-	reg = IXGBE_READ_REG(hw, IXGBE_VTEICS);
+	reg = IXGBE_READ_REG(hw, IXGBE_VTEICR);
+#if 0	/* NetBSD: We use auto-clear, so it's not required to write VTEICR */
 	/* Clear interrupt with write */
-	IXGBE_WRITE_REG(hw, IXGBE_VTEICR, reg);
+	IXGBE_WRITE_REG(hw, IXGBE_VTEICR, (1 << adapter->vector));
+#endif
 
 	/* Link status change */
-	if (reg & IXGBE_EICR_LSC)
+	if (reg & (1 << adapter->vector))
 		softint_schedule(adapter->link_si);
 
-	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, IXGBE_EIMS_OTHER);
+	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, (1 << adapter->vector));
 
 	return 1;
 } /* ixv_msix_mbx */
@@ -1846,16 +1854,18 @@ ixv_enable_intr(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = adapter->queues;
-	u32             mask = (IXGBE_EIMS_ENABLE_MASK & ~IXGBE_EIMS_RTX_QUEUE);
+	u32             mask;
+	int i;
 
-
-	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, mask);
-
-	mask = IXGBE_EIMS_ENABLE_MASK;
-	mask &= ~(IXGBE_EIMS_OTHER | IXGBE_EIMS_LSC);
+	/* For VTEIAC */
+	mask = (1 << adapter->vector);
+	for (i = 0; i < adapter->num_queues; i++, que++)
+		mask |= (1 << que->msix);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAC, mask);
 
-	for (int i = 0; i < adapter->num_queues; i++, que++)
+	/* For VTEIMS */
+	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, (1 << adapter->vector));
+	for (i = 0; i < adapter->num_queues; i++, que++)
 		ixv_enable_queue(adapter, que->msix);
 
 	IXGBE_WRITE_FLUSH(hw);
