@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.c,v 1.7 2017/08/30 08:49:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_mbx.c,v 1.8 2017/10/03 02:55:37 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -231,7 +231,7 @@ static s32 ixgbe_check_for_msg_vf(struct ixgbe_hw *hw, u16 mbx_id)
 
 	if (!ixgbe_check_for_bit_vf(hw, IXGBE_VFMAILBOX_PFSTS)) {
 		ret_val = IXGBE_SUCCESS;
-		hw->mbx.stats.reqs++;
+		hw->mbx.stats.reqs.ev_count++;
 	}
 
 	return ret_val;
@@ -253,7 +253,7 @@ static s32 ixgbe_check_for_ack_vf(struct ixgbe_hw *hw, u16 mbx_id)
 
 	if (!ixgbe_check_for_bit_vf(hw, IXGBE_VFMAILBOX_PFACK)) {
 		ret_val = IXGBE_SUCCESS;
-		hw->mbx.stats.acks++;
+		hw->mbx.stats.acks.ev_count++;
 	}
 
 	return ret_val;
@@ -276,7 +276,7 @@ static s32 ixgbe_check_for_rst_vf(struct ixgbe_hw *hw, u16 mbx_id)
 	if (!ixgbe_check_for_bit_vf(hw, (IXGBE_VFMAILBOX_RSTD |
 	    IXGBE_VFMAILBOX_RSTI))) {
 		ret_val = IXGBE_SUCCESS;
-		hw->mbx.stats.rsts++;
+		hw->mbx.stats.rsts.ev_count++;
 	}
 
 	return ret_val;
@@ -337,7 +337,7 @@ static s32 ixgbe_write_mbx_vf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 		IXGBE_WRITE_REG_ARRAY(hw, IXGBE_VFMBMEM, i, msg[i]);
 
 	/* update stats */
-	hw->mbx.stats.msgs_tx++;
+	hw->mbx.stats.msgs_tx.ev_count++;
 
 	/* Drop VFU and interrupt the PF to tell it a message has been sent */
 	IXGBE_WRITE_REG(hw, IXGBE_VFMAILBOX, IXGBE_VFMAILBOX_REQ);
@@ -377,7 +377,7 @@ static s32 ixgbe_read_mbx_vf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_VFMAILBOX, IXGBE_VFMAILBOX_ACK);
 
 	/* update stats */
-	hw->mbx.stats.msgs_rx++;
+	hw->mbx.stats.msgs_rx.ev_count++;
 
 out_no_read:
 	return ret_val;
@@ -408,11 +408,11 @@ void ixgbe_init_mbx_params_vf(struct ixgbe_hw *hw)
 	mbx->ops.check_for_ack = ixgbe_check_for_ack_vf;
 	mbx->ops.check_for_rst = ixgbe_check_for_rst_vf;
 
-	mbx->stats.msgs_tx = 0;
-	mbx->stats.msgs_rx = 0;
-	mbx->stats.reqs = 0;
-	mbx->stats.acks = 0;
-	mbx->stats.rsts = 0;
+	mbx->stats.msgs_tx.ev_count = 0;
+	mbx->stats.msgs_rx.ev_count = 0;
+	mbx->stats.reqs.ev_count = 0;
+	mbx->stats.acks.ev_count = 0;
+	mbx->stats.rsts.ev_count = 0;
 }
 
 static s32 ixgbe_check_for_bit_pf(struct ixgbe_hw *hw, u32 mask, s32 index)
@@ -446,7 +446,7 @@ static s32 ixgbe_check_for_msg_pf(struct ixgbe_hw *hw, u16 vf_number)
 	if (!ixgbe_check_for_bit_pf(hw, IXGBE_MBVFICR_VFREQ_VF1 << vf_bit,
 				    index)) {
 		ret_val = IXGBE_SUCCESS;
-		hw->mbx.stats.reqs++;
+		hw->mbx.stats.reqs.ev_count++;
 	}
 
 	return ret_val;
@@ -470,7 +470,7 @@ static s32 ixgbe_check_for_ack_pf(struct ixgbe_hw *hw, u16 vf_number)
 	if (!ixgbe_check_for_bit_pf(hw, IXGBE_MBVFICR_VFACK_VF1 << vf_bit,
 				    index)) {
 		ret_val = IXGBE_SUCCESS;
-		hw->mbx.stats.acks++;
+		hw->mbx.stats.acks.ev_count++;
 	}
 
 	return ret_val;
@@ -509,7 +509,7 @@ static s32 ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, u16 vf_number)
 	if (vflre & (1 << vf_shift)) {
 		ret_val = IXGBE_SUCCESS;
 		IXGBE_WRITE_REG(hw, IXGBE_VFLREC(reg_offset), (1 << vf_shift));
-		hw->mbx.stats.rsts++;
+		hw->mbx.stats.rsts.ev_count++;
 	}
 
 	return ret_val;
@@ -578,7 +578,7 @@ static s32 ixgbe_write_mbx_pf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_PFMAILBOX(vf_number), IXGBE_PFMAILBOX_STS);
 
 	/* update stats */
-	hw->mbx.stats.msgs_tx++;
+	hw->mbx.stats.msgs_tx.ev_count++;
 
 out_no_write:
 	return ret_val;
@@ -617,7 +617,7 @@ static s32 ixgbe_read_mbx_pf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_PFMAILBOX(vf_number), IXGBE_PFMAILBOX_ACK);
 
 	/* update stats */
-	hw->mbx.stats.msgs_rx++;
+	hw->mbx.stats.msgs_rx.ev_count++;
 
 out_no_read:
 	return ret_val;
@@ -653,9 +653,9 @@ void ixgbe_init_mbx_params_pf(struct ixgbe_hw *hw)
 	mbx->ops.check_for_ack = ixgbe_check_for_ack_pf;
 	mbx->ops.check_for_rst = ixgbe_check_for_rst_pf;
 
-	mbx->stats.msgs_tx = 0;
-	mbx->stats.msgs_rx = 0;
-	mbx->stats.reqs = 0;
-	mbx->stats.acks = 0;
-	mbx->stats.rsts = 0;
+	mbx->stats.msgs_tx.ev_count = 0;
+	mbx->stats.msgs_rx.ev_count = 0;
+	mbx->stats.reqs.ev_count = 0;
+	mbx->stats.acks.ev_count = 0;
+	mbx->stats.rsts.ev_count = 0;
 }
