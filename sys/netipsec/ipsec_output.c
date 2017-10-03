@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.60 2017/08/10 06:11:24 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.61 2017/10/03 07:32:53 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.60 2017/08/10 06:11:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.61 2017/10/03 07:32:53 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -283,6 +283,62 @@ bad:
 	return (error);
 }
 
+static void
+ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
+    const int af)
+{
+
+	if (af == AF_INET) {
+		struct sockaddr_in *sin;
+		struct ip *ip = mtod(m, struct ip *);
+
+		if (saidx->src.sa.sa_len == 0) {
+			sin = &saidx->src.sin;
+			sin->sin_len = sizeof(*sin);
+			sin->sin_family = AF_INET;
+			sin->sin_port = IPSEC_PORT_ANY;
+			sin->sin_addr = ip->ip_src;
+		}
+		if (saidx->dst.sa.sa_len == 0) {
+			sin = &saidx->dst.sin;
+			sin->sin_len = sizeof(*sin);
+			sin->sin_family = AF_INET;
+			sin->sin_port = IPSEC_PORT_ANY;
+			sin->sin_addr = ip->ip_dst;
+		}
+	} else {
+		struct sockaddr_in6 *sin6;
+		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+
+		if (saidx->src.sin6.sin6_len == 0) {
+			sin6 = (struct sockaddr_in6 *)&saidx->src;
+			sin6->sin6_len = sizeof(*sin6);
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_port = IPSEC_PORT_ANY;
+			sin6->sin6_addr = ip6->ip6_src;
+			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
+				/* fix scope id for comparing SPD */
+				sin6->sin6_addr.s6_addr16[1] = 0;
+				sin6->sin6_scope_id =
+				    ntohs(ip6->ip6_src.s6_addr16[1]);
+			}
+		}
+		if (saidx->dst.sin6.sin6_len == 0) {
+			sin6 = (struct sockaddr_in6 *)&saidx->dst;
+			sin6->sin6_len = sizeof(*sin6);
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_port = IPSEC_PORT_ANY;
+			sin6->sin6_addr = ip6->ip6_dst;
+			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
+				/* fix scope id for comparing SPD */
+				sin6->sin6_addr.s6_addr16[1] = 0;
+				sin6->sin6_scope_id =
+				    ntohs(ip6->ip6_dst.s6_addr16[1]);
+			}
+		}
+	}
+}
+
 /*
  * ipsec_nextisr can return :
  * - isr == NULL and error != 0 => something is bad : the packet must be
@@ -330,55 +386,7 @@ again:
 	saidx = &isr->saidx;
 	if (isr->saidx.mode == IPSEC_MODE_TRANSPORT) {
 		/* Fillin unspecified SA peers only for transport mode */
-		if (af == AF_INET) {
-			struct sockaddr_in *sin;
-			struct ip *ip = mtod(m, struct ip *);
-
-			if (saidx->src.sa.sa_len == 0) {
-				sin = &saidx->src.sin;
-				sin->sin_len = sizeof(*sin);
-				sin->sin_family = AF_INET;
-				sin->sin_port = IPSEC_PORT_ANY;
-				sin->sin_addr = ip->ip_src;
-			}
-			if (saidx->dst.sa.sa_len == 0) {
-				sin = &saidx->dst.sin;
-				sin->sin_len = sizeof(*sin);
-				sin->sin_family = AF_INET;
-				sin->sin_port = IPSEC_PORT_ANY;
-				sin->sin_addr = ip->ip_dst;
-			}
-		} else {
-			struct sockaddr_in6 *sin6;
-			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-
-			if (saidx->src.sin6.sin6_len == 0) {
-				sin6 = (struct sockaddr_in6 *)&saidx->src;
-				sin6->sin6_len = sizeof(*sin6);
-				sin6->sin6_family = AF_INET6;
-				sin6->sin6_port = IPSEC_PORT_ANY;
-				sin6->sin6_addr = ip6->ip6_src;
-				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
-					/* fix scope id for comparing SPD */
-					sin6->sin6_addr.s6_addr16[1] = 0;
-					sin6->sin6_scope_id =
-					    ntohs(ip6->ip6_src.s6_addr16[1]);
-				}
-			}
-			if (saidx->dst.sin6.sin6_len == 0) {
-				sin6 = (struct sockaddr_in6 *)&saidx->dst;
-				sin6->sin6_len = sizeof(*sin6);
-				sin6->sin6_family = AF_INET6;
-				sin6->sin6_port = IPSEC_PORT_ANY;
-				sin6->sin6_addr = ip6->ip6_dst;
-				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-					/* fix scope id for comparing SPD */
-					sin6->sin6_addr.s6_addr16[1] = 0;
-					sin6->sin6_scope_id =
-					    ntohs(ip6->ip6_dst.s6_addr16[1]);
-				}
-			}
-		}
+		ipsec_fill_saidx_bymbuf(saidx, m, af);
 	}
 
 	/*
