@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.233 2017/10/03 08:34:28 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.234 2017/10/03 08:56:52 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.233 2017/10/03 08:34:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.234 2017/10/03 08:56:52 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -753,7 +753,7 @@ static struct mbuf *key_getcomb_ah (void);
 static struct mbuf *key_getcomb_ipcomp (void);
 static struct mbuf *key_getprop (const struct secasindex *);
 
-static int key_acquire (const struct secasindex *, struct secpolicy *);
+static int key_acquire(const struct secasindex *, const struct secpolicy *);
 static int key_acquire_sendup_mbuf_later(struct mbuf *);
 static void key_acquire_sendup_pending_mbuf(void);
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -995,7 +995,7 @@ done:
  *	ENOENT: policy may be valid, but SA with REQUIRE is on acquiring.
  */
 int
-key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx,
+key_checkrequest(const struct ipsecrequest *isr, const struct secasindex *saidx,
     struct secasvar **ret)
 {
 	u_int level;
@@ -4252,7 +4252,7 @@ key_setsadbxsa2(u_int8_t mode, u_int32_t seq, u_int16_t reqid)
  * set data into sadb_x_policy
  */
 static struct mbuf *
-key_setsadbxpolicy(u_int16_t type, u_int8_t dir, u_int32_t id)
+key_setsadbxpolicy(const u_int16_t type, const u_int8_t dir, const u_int32_t id)
 {
 	struct mbuf *m;
 	struct sadb_x_policy *p;
@@ -6560,7 +6560,7 @@ key_getprop(const struct secasindex *saidx)
  *    others: error number
  */
 static int
-key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
+key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 {
 	struct mbuf *result = NULL, *m;
 #ifndef IPSEC_NONBLOCK_ACQUIRE
