@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.232 2017/10/03 08:25:21 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.233 2017/10/03 08:34:28 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.232 2017/10/03 08:25:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.233 2017/10/03 08:34:28 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -995,11 +995,11 @@ done:
  *	ENOENT: policy may be valid, but SA with REQUIRE is on acquiring.
  */
 int
-key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
+key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx,
+    struct secasvar **ret)
 {
 	u_int level;
 	int error;
-	const struct secasindex *saidx = &isr->saidx;
 	struct secasvar *sav;
 
 	KASSERT(isr != NULL);
