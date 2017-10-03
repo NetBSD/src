@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.59 2017/08/10 06:11:24 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.60 2017/10/03 08:25:21 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -314,6 +314,8 @@ int ipsec4_get_policy (struct inpcb *, const void *, size_t, struct mbuf **);
 int ipsec4_delete_pcbpolicy (struct inpcb *);
 int ipsec4_in_reject (struct mbuf *, struct inpcb *);
 
+struct secasvar *
+	ipsec_lookup_sa(const struct ipsecrequest *, const struct mbuf *);
 
 struct secas;
 struct tcpcb;
