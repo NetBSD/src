@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2017/08/22 09:17:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.83 2017/10/04 21:29:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ MODULE=			gcc4
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
 
-.if ${HAVE_GCC} == 48
+.if ${HAVE_GCC} == 53
 MKNATIVE=		${.CURDIR}/mknative-gcc.old
 .endif
 
@@ -35,6 +35,7 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
+			--disable-libstdcxx-dual-abi \
 			--enable-__cxa_atexit \
 			--enable-libstdcxx-time=rt \
 			--enable-libstdcxx-threads
@@ -190,6 +191,7 @@ NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \
 			--disable-libstdcxx-pch \
+			--disable-libstdcxx-dual-abi \
 			--build=`${GCCDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--with-sysroot=${DESTDIR}
