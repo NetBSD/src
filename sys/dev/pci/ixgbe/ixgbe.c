@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.101 2017/09/27 10:31:29 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.102 2017/10/04 06:19:47 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2691,7 +2691,7 @@ ixgbe_media_change(struct ifnet *ifp)
 		if ((speed & IXGBE_LINK_SPEED_100_FULL) != 0)
 			adapter->advertise |= 1 << 0;
 		if ((speed & IXGBE_LINK_SPEED_10_FULL) != 0)
-			adapter->advertise |= 1 << 4;
+			adapter->advertise |= 1 << 3;
 	}
 
 	return (0);
