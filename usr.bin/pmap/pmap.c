@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2015/12/14 03:15:10 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.53 2017/10/04 11:33:01 kamil Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.52 2015/12/14 03:15:10 christos Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.53 2017/10/04 11:33:01 kamil Exp $");
 #endif
 
 #include <string.h>
@@ -127,8 +127,10 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		printf(" vm_daddr = %p,\n", D(vmspace, vmspace)->vm_daddr);
 		printf("    vm_maxsaddr = %p,",
 		       D(vmspace, vmspace)->vm_maxsaddr);
-		printf(" vm_minsaddr = %p }\n",
+		printf(" vm_minsaddr = %p,\n",
 		       D(vmspace, vmspace)->vm_minsaddr);
+		printf("    vm_aslr_delta_mmap = %#zx }\n",
+		       D(vmspace, vmspace)->vm_aslr_delta_mmap);
 	}
 
 	if (debug & PRINT_VM_MAP) {
@@ -144,7 +146,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		       D(vm_map, vm_map)->hint);
 		printf("%*s    first_free = %p,", indent(2), "",
 		       D(vm_map, vm_map)->first_free);
-		printf(" flags = %x <%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
+		printf(" flags = %#x <%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
 		       D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
 #ifdef VM_MAP_DYING
@@ -153,6 +155,10 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		       "",
 #ifdef VM_MAP_TOPDOWN
 		       D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
+#endif
+		       "",
+#ifdef VM_MAP_WANTVA
+		       D(vm_map, vm_map)->flags & VM_MAP_WANTVA ? " WANTVA" :
 #endif
 		       "");
 		printf("%*s    timestamp = %u }\n", indent(2), "",
@@ -165,7 +171,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		       recurse < 2 ? "MAP" : "SUBMAP", P(vm_map),
 		       vm_map_min(D(vm_map, vm_map)),
 		       vm_map_max(D(vm_map, vm_map)));
-		printf("\t%*s#ent=%d, sz=%"PRIxVSIZE", ref=%d, version=%d, flags=0x%x\n",
+		printf("\t%*s#ent=%d, sz=%"PRIxVSIZE", ref=%d, version=%d, flags=%#x\n",
 		       indent(2), "", D(vm_map, vm_map)->nentries,
 		       D(vm_map, vm_map)->size, D(vm_map, vm_map)->ref_count,
 		       D(vm_map, vm_map)->timestamp, D(vm_map, vm_map)->flags);
@@ -289,20 +295,20 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
 		printf("%*s    offset = %" PRIx64 ",", indent(2), "",
 		       vme->offset);
-		printf(" etype = %x <%s%s%s%s >,", vme->etype,
+		printf(" etype = %#x <%s%s%s%s >,", vme->etype,
 		       UVM_ET_ISOBJ(vme) ? " OBJ" : "",
 		       UVM_ET_ISSUBMAP(vme) ? " SUBMAP" : "",
 		       UVM_ET_ISCOPYONWRITE(vme) ? " COW" : "",
 		       UVM_ET_ISNEEDSCOPY(vme) ? " NEEDSCOPY" : "");
-		printf(" protection = %x,\n", vme->protection);
-		printf("%*s    max_protection = %x,", indent(2), "",
+		printf(" protection = %#x,\n", vme->protection);
+		printf("%*s    max_protection = %#x,", indent(2), "",
 		       vme->max_protection);
 		printf(" inheritance = %d,", vme->inheritance);
 		printf(" wired_count = %d,\n", vme->wired_count);
-		printf("%*s    aref = { ar_pageoff = %x, ar_amap = %p },",
+		printf("%*s    aref = { ar_pageoff = %#x, ar_amap = %p },",
 		       indent(2), "", vme->aref.ar_pageoff, vme->aref.ar_amap);
 		printf(" advice = %d,\n", vme->advice);
-		printf("%*s    flags = %x <%s%s%s > }\n", indent(2), "",
+		printf("%*s    flags = %#x <%s%s%s > }\n", indent(2), "",
 		       vme->flags,
 		       vme->flags & UVM_MAP_KERNEL ? " KERNEL" : "",
 		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
@@ -425,7 +431,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	}
 
 	if (print_ddb) {
-		printf("%*s - %p: %#"PRIxVADDR"->%#"PRIxVADDR": obj=%p/0x%" PRIx64 ", amap=%p/%d\n",
+		printf("%*s - %p: %#"PRIxVADDR"->%#"PRIxVADDR": obj=%p/%#" PRIx64 ", amap=%p/%d\n",
 		       indent(2), "",
 		       P(vm_map_entry), vme->start, vme->end,
 		       vme->object.uvm_obj, vme->offset,
@@ -541,7 +547,7 @@ dump_amap(kvm_t *kd, struct kbit *amap)
 	}
 
 	printf("%*s  amap %p = { am_ref = %d, "
-	       "am_flags = %x,\n"
+	       "am_flags = %#x,\n"
 	       "%*s      am_maxslot = %d, am_nslot = %d, am_nused = %d, "
 	       "am_slots = %p,\n"
 	       "%*s      am_bckptr = %p, am_anon = %p, am_ppref = %p }\n",
