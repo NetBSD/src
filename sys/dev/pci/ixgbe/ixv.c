@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.68 2017/10/03 03:12:29 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.69 2017/10/04 11:03:20 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -912,20 +912,13 @@ ixv_msix_mbx(void *arg)
 {
 	struct adapter	*adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
-	u32		reg;
 
 	++adapter->link_irq.ev_count;
-
-	/* First get the cause */
-	reg = IXGBE_READ_REG(hw, IXGBE_VTEICR);
-#if 0	/* NetBSD: We use auto-clear, so it's not required to write VTEICR */
-	/* Clear interrupt with write */
-	IXGBE_WRITE_REG(hw, IXGBE_VTEICR, (1 << adapter->vector));
-#endif
+	/* NetBSD: We use auto-clear, so it's not required to write VTEICR */
 
 	/* Link status change */
-	if (reg & (1 << adapter->vector))
-		softint_schedule(adapter->link_si);
+	hw->mac.get_link_status = TRUE;
+	softint_schedule(adapter->link_si);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, (1 << adapter->vector));
 
@@ -1865,6 +1858,7 @@ ixv_enable_intr(struct adapter *adapter)
 
 	/* For VTEIMS */
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, (1 << adapter->vector));
+	que = adapter->queues;
 	for (i = 0; i < adapter->num_queues; i++, que++)
 		ixv_enable_queue(adapter, que->msix);
 
