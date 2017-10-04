@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.102 2017/10/04 06:19:47 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.103 2017/10/04 07:13:00 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1303,7 +1303,6 @@ ixgbe_add_media_types(struct adapter *adapter)
 
 	/* Media types with matching NetBSD media defines */
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T) {
-		ADD(IFM_10G_T, 0);
 		ADD(IFM_10G_T | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_T) {
@@ -1321,54 +1320,43 @@ ixgbe_add_media_types(struct adapter *adapter)
 
 	if (layer & IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU ||
 	    layer & IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA) {
-		ADD(IFM_10G_TWINAX, 0);
 		ADD(IFM_10G_TWINAX | IFM_FDX, 0);
 	}
 
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_LR) {
-		ADD(IFM_10G_LR, 0);
 		ADD(IFM_10G_LR | IFM_FDX, 0);
 		if (hw->phy.multispeed_fiber) {
-			ADD(IFM_1000_LX, 0);
 			ADD(IFM_1000_LX | IFM_FDX, 0);
 		}
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_SR) {
-		ADD(IFM_10G_SR, 0);
 		ADD(IFM_10G_SR | IFM_FDX, 0);
 		if (hw->phy.multispeed_fiber) {
-			ADD(IFM_1000_SX, 0);
 			ADD(IFM_1000_SX | IFM_FDX, 0);
 		}
 	} else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_SX) {
-		ADD(IFM_1000_SX, 0);
 		ADD(IFM_1000_SX | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_CX4) {
-		ADD(IFM_10G_CX4, 0);
 		ADD(IFM_10G_CX4 | IFM_FDX, 0);
 	}
 
 #ifdef IFM_ETH_XTYPE
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
-		ADD(IFM_10G_KR, 0);
 		ADD(IFM_10G_KR | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
-		ADD(AIFM_10G_KX4, 0);
 		ADD(AIFM_10G_KX4 | IFM_FDX, 0);
 	}
 #else
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
 		device_printf(dev, "Media supported: 10GbaseKR\n");
 		device_printf(dev, "10GbaseKR mapped to 10GbaseSR\n");
-		ADD(IFM_10G_SR, 0);
 		ADD(IFM_10G_SR | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
 		device_printf(dev, "Media supported: 10GbaseKX4\n");
 		device_printf(dev, "10GbaseKX4 mapped to 10GbaseCX4\n");
-		ADD(IFM_10G_CX4, 0);
 		ADD(IFM_10G_CX4 | IFM_FDX, 0);
 	}
 #endif
@@ -1377,8 +1365,13 @@ ixgbe_add_media_types(struct adapter *adapter)
 		ADD(IFM_1000_KX | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_2500BASE_KX) {
-		ADD(IFM_2500_KX, 0);
 		ADD(IFM_2500_KX | IFM_FDX, 0);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_2500BASE_T) {
+		ADD(IFM_2500_T | IFM_FDX, 0);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_5GBASE_T) {
+		ADD(IFM_5000_T | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_BX)
 		device_printf(dev, "Media supported: 1000baseBX\n");
@@ -2490,12 +2483,20 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	layer = adapter->phy_layer;
 
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T ||
+	    layer & IXGBE_PHYSICAL_LAYER_5GBASE_T ||
+	    layer & IXGBE_PHYSICAL_LAYER_2500BASE_T ||
 	    layer & IXGBE_PHYSICAL_LAYER_1000BASE_T ||
 	    layer & IXGBE_PHYSICAL_LAYER_100BASE_TX ||
 	    layer & IXGBE_PHYSICAL_LAYER_10BASE_T)
 		switch (adapter->link_speed) {
 		case IXGBE_LINK_SPEED_10GB_FULL:
 			ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
+			break;
+		case IXGBE_LINK_SPEED_5GB_FULL:
+			ifmr->ifm_active |= IFM_5000_T | IFM_FDX;
+			break;
+		case IXGBE_LINK_SPEED_2_5GB_FULL:
+			ifmr->ifm_active |= IFM_2500_T | IFM_FDX;
 			break;
 		case IXGBE_LINK_SPEED_1GB_FULL:
 			ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
@@ -2660,6 +2661,10 @@ ixgbe_media_change(struct ifnet *ifp)
 #endif
 		speed |= IXGBE_LINK_SPEED_10GB_FULL;
 		break;
+	case IFM_5000_T:
+		speed |= IXGBE_LINK_SPEED_5GB_FULL;
+		break;
+	case IFM_2500_T:
 	case IFM_2500_KX:
 		speed |= IXGBE_LINK_SPEED_2_5GB_FULL;
 		break;
@@ -2692,6 +2697,10 @@ ixgbe_media_change(struct ifnet *ifp)
 			adapter->advertise |= 1 << 0;
 		if ((speed & IXGBE_LINK_SPEED_10_FULL) != 0)
 			adapter->advertise |= 1 << 3;
+		if ((speed & IXGBE_LINK_SPEED_2_5GB_FULL) != 0)
+			adapter->advertise |= 1 << 4;
+		if ((speed & IXGBE_LINK_SPEED_5GB_FULL) != 0)
+			adapter->advertise |= 1 << 5;
 	}
 
 	return (0);
@@ -4728,11 +4737,13 @@ ixgbe_sysctl_advertise(SYSCTLFN_ARGS)
  * ixgbe_set_advertise - Control advertised link speed
  *
  *   Flags:
- *     0x0 - Default (all capable link speed)
- *     0x1 - advertise 100 Mb
- *     0x2 - advertise 1G
- *     0x4 - advertise 10G
- *     0x8 - advertise 10 Mb (yes, Mb)
+ *     0x00 - Default (all capable link speed)
+ *     0x01 - advertise 100 Mb
+ *     0x02 - advertise 1G
+ *     0x04 - advertise 10G
+ *     0x08 - advertise 10 Mb
+ *     0x10 - advertise 2.5G
+ *     0x20 - advertise 5G
  ************************************************************************/
 static int
 ixgbe_set_advertise(struct adapter *adapter, int advertise)
@@ -4807,6 +4818,20 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 		}
 		speed |= IXGBE_LINK_SPEED_10_FULL;
 	}
+	if (advertise & 0x10) {
+		if (!(link_caps & IXGBE_LINK_SPEED_2_5GB_FULL)) {
+			device_printf(dev, "Interface does not support 2.5Gb advertised speed\n");
+			return (EINVAL);
+		}
+		speed |= IXGBE_LINK_SPEED_2_5GB_FULL;
+	}
+	if (advertise & 0x20) {
+		if (!(link_caps & IXGBE_LINK_SPEED_5GB_FULL)) {
+			device_printf(dev, "Interface does not support 5Gb advertised speed\n");
+			return (EINVAL);
+		}
+		speed |= IXGBE_LINK_SPEED_5GB_FULL;
+	}
 	if (advertise == 0)
 		speed = link_caps; /* All capable link speed */
 
@@ -4822,10 +4847,12 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
  *
  *   Formatted for sysctl usage.
  *   Flags:
- *     0x1 - advertise 100 Mb
- *     0x2 - advertise 1G
- *     0x4 - advertise 10G
- *     0x8 - advertise 10 Mb (yes, Mb)
+ *     0x01 - advertise 100 Mb
+ *     0x02 - advertise 1G
+ *     0x04 - advertise 10G
+ *     0x08 - advertise 10 Mb (yes, Mb)
+ *     0x10 - advertise 2.5G
+ *     0x20 - advertise 5G
  ************************************************************************/
 static int
 ixgbe_get_advertise(struct adapter *adapter)
@@ -4849,10 +4876,12 @@ ixgbe_get_advertise(struct adapter *adapter)
 		return (0);
 
 	speed =
-	    ((link_caps & IXGBE_LINK_SPEED_10GB_FULL) ? 4 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_1GB_FULL)  ? 2 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_100_FULL)  ? 1 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_10_FULL)   ? 8 : 0);
+	    ((link_caps & IXGBE_LINK_SPEED_10GB_FULL)  ? 0x04 : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_1GB_FULL)   ? 0x02 : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_100_FULL)   ? 0x01 : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_10_FULL)    ? 0x08 : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_2_5GB_FULL) ? 0x10 : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_5GB_FULL)   ? 0x20 : 0);
 
 	return speed;
 } /* ixgbe_get_advertise */
