@@ -1,4 +1,4 @@
-/*  $NetBSD: mntvavar.h,v 1.1 2016/10/03 14:26:02 rkujawa Exp $ */
+/*  $NetBSD: mntvavar.h,v 1.2 2017/10/04 09:44:09 rkujawa Exp $ */
 
 /*
  * Copyright (c) 2012, 2016 The NetBSD Foundation, Inc. 
