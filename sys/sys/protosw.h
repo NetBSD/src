@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.67 2017/09/27 10:05:05 ozaki-r Exp $	*/
+/*	$NetBSD: protosw.h,v 1.68 2017/10/04 02:25:07 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -493,6 +493,8 @@ name##_wrapper(int a, const struct sockaddr *b, void *c)\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }
+
+#include <sys/socketvar.h> /* for softnet_lock */
 
 #define	PR_WRAP_INPUT(name)				\
 static void						\
