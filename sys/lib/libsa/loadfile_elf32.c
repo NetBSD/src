@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.41 2017/09/25 20:39:21 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.42 2017/10/04 22:00:40 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -489,7 +489,7 @@ int
 ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf_Phdr *phdr;
-	int i, first;
+	int i, first __used;
 	ssize_t sz;
 	Elf_Addr minp = ~0, maxp = 0, pos = 0, elfp = 0;
 	u_long offset = marks[MARK_START];
