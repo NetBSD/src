@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.28 2017/10/03 02:55:37 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.29 2017/10/04 08:47:26 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3424,6 +3424,8 @@ typedef u64 ixgbe_physical_layer;
 #define IXGBE_PHYSICAL_LAYER_1000BASE_SX	0x04000
 #define IXGBE_PHYSICAL_LAYER_10BASE_T		0x08000
 #define IXGBE_PHYSICAL_LAYER_2500BASE_KX	0x10000
+#define IXGBE_PHYSICAL_LAYER_2500BASE_T		0x20000
+#define IXGBE_PHYSICAL_LAYER_5GBASE_T		0x40000
 
 /* Flow Control Data Sheet defined values
  * Calculation and defines taken from 802.1bb Annex O
