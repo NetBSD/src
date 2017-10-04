@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.60 2017/10/04 07:07:16 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.61 2017/10/04 07:08:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -224,6 +224,8 @@
 #define	IFM_10G_T	26		/* 10GBase-T - RJ45 */
 #define	IFM_1000_KX	27		/* 1000base-KX backplane */
 #define	IFM_2500_KX	28		/* 2500base-KX backplane */
+#define	IFM_2500_T	29		/* 2500base-T - RJ45 */
+#define	IFM_5000_T	30		/* 5Gbase-T - RJ45 */
 /* IFM_OMASK bits */
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -394,6 +396,10 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_HPNA_1,	"HPNA1" },			\
 	{ IFM_ETHER | IFM_2500_KX | IFM_FDX,	"2500BASE-KX" },	\
 	{ IFM_ETHER | IFM_2500_KX | IFM_FDX,	"2500baseKX" },		\
+	{ IFM_ETHER | IFM_2500_T | IFM_FDX,	"2.5GBASE-T" },		\
+	{ IFM_ETHER | IFM_2500_T | IFM_FDX,	"2500baseT" },		\
+	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GBASE-T" },		\
+	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GbaseT" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GbaseLR" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GLR" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GBASE-LR" },		\
@@ -549,6 +555,8 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_10G_T,	IF_Gbps(10) },			\
 	{ IFM_ETHER | IFM_1000_KX,	IF_Mbps(1000ULL) },		\
 	{ IFM_ETHER | IFM_2500_KX,	IF_Mbps(2500ULL) },		\
+	{ IFM_ETHER | IFM_2500_T,	IF_Mbps(2500ULL) },		\
+	{ IFM_ETHER | IFM_5000_T,	IF_Mbps(5000ULL) },		\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN | IFM_TOK_STP16,	IF_Mbps(16) },			\
