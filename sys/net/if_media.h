@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.59 2017/06/08 02:27:30 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.60 2017/10/04 07:07:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -392,23 +392,23 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_1000_T,	"1000BASE-T" },			\
 	{ IFM_ETHER | IFM_HPNA_1,	"HomePNA1" },			\
 	{ IFM_ETHER | IFM_HPNA_1,	"HPNA1" },			\
-	{ IFM_ETHER | IFM_2500_KX,	"2500BASE-KX" },		\
-	{ IFM_ETHER | IFM_2500_KX,	"2500baseKX" },			\
-	{ IFM_ETHER | IFM_10G_LR,	"10GbaseLR" },			\
-	{ IFM_ETHER | IFM_10G_LR,	"10GLR" },			\
-	{ IFM_ETHER | IFM_10G_LR,	"10GBASE-LR" },			\
-	{ IFM_ETHER | IFM_10G_SR,	"10GbaseSR" },			\
-	{ IFM_ETHER | IFM_10G_SR,	"10GSR" },			\
-	{ IFM_ETHER | IFM_10G_SR,	"10GBASE-SR" },			\
-	{ IFM_ETHER | IFM_10G_LRM,	"10Gbase-LRM" },		\
-	{ IFM_ETHER | IFM_10G_TWINAX,	"10Gbase-Twinax" },		\
-	{ IFM_ETHER | IFM_10G_TWINAX_LONG,	"10Gbase-Twinax-Long" },\
-	{ IFM_ETHER | IFM_10G_T,	"10Gbase-T" },			\
-	{ IFM_ETHER | IFM_10G_CX4,	"10GbaseCX4" },			\
-	{ IFM_ETHER | IFM_10G_CX4,	"10GCX4" },			\
-	{ IFM_ETHER | IFM_10G_CX4,	"10GBASE-CX4" },		\
-	{ IFM_ETHER | IFM_2500_SX,	"2500baseSX" },			\
-	{ IFM_ETHER | IFM_2500_SX,	"2500SX" },			\
+	{ IFM_ETHER | IFM_2500_KX | IFM_FDX,	"2500BASE-KX" },	\
+	{ IFM_ETHER | IFM_2500_KX | IFM_FDX,	"2500baseKX" },		\
+	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GbaseLR" },		\
+	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GLR" },		\
+	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GBASE-LR" },		\
+	{ IFM_ETHER | IFM_10G_SR | IFM_FDX,	"10GbaseSR" },		\
+	{ IFM_ETHER | IFM_10G_SR | IFM_FDX,	"10GSR" },		\
+	{ IFM_ETHER | IFM_10G_SR | IFM_FDX,	"10GBASE-SR" },		\
+	{ IFM_ETHER | IFM_10G_LRM | IFM_FDX,	"10Gbase-LRM" },	\
+	{ IFM_ETHER | IFM_10G_TWINAX | IFM_FDX,	"10Gbase-Twinax" }, 	\
+	{ IFM_ETHER | IFM_10G_TWINAX_LONG | IFM_FDX, "10Gbase-Twinax-Long" },\
+	{ IFM_ETHER | IFM_10G_T | IFM_FDX,	"10Gbase-T" },		\
+	{ IFM_ETHER | IFM_10G_CX4 | IFM_FDX,	"10GbaseCX4" },		\
+	{ IFM_ETHER | IFM_10G_CX4 | IFM_FDX,	"10GCX4" },		\
+	{ IFM_ETHER | IFM_10G_CX4 | IFM_FDX,	"10GBASE-CX4" }, 	\
+	{ IFM_ETHER | IFM_2500_SX | IFM_FDX,	"2500baseSX" },		\
+	{ IFM_ETHER | IFM_2500_SX | IFM_FDX,	"2500SX" },		\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"4STP" },			\
