@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.89 2016/10/05 19:25:49 christos Exp $
+#	$NetBSD: mknative-gcc,v 1.90 2017/10/04 21:42:20 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -380,7 +380,7 @@ __EOF__
 
 	# special transforms
 	for f in gtyp-input.list; do
-		sed -e 's/^.*external\/gpl3\/gcc\/dist/SRCDIR/' < $_TMPDIR/gcc/$f > $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f
+		sed -e "s@^.*$_OUTDIRBASE/dist@SRCDIR@" < $_TMPDIR/gcc/$f > $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f
 	done
 
 	# special platforms
