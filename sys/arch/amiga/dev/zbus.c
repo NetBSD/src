@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.74 2016/10/03 14:26:02 rkujawa Exp $ */
+/*	$NetBSD: zbus.c,v 1.75 2017/10/04 09:44:09 rkujawa Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.74 2016/10/03 14:26:02 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.75 2017/10/04 09:44:09 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -193,8 +193,8 @@ static const struct aconfdata aconftab[] = {
 	{ "hyper3+",	5001,	7},	/* Hypercom3+ */
 	/* Matay Grzegorz Kraszewski */
 	{ "mppb",	44359,	1},	/* Prometheus PCI bridge */
-	/* MNTMN */
-	{ "mntva",	28014,	1}	/* MNTMN VA2000 */
+	/* MNT */
+	{ "mntva",	28014,	1}	/* MNT VA2000 */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
