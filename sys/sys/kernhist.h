@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.19 2017/10/04 09:10:37 skrll Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.20 2017/10/04 09:59:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -148,8 +148,10 @@ extern	struct kern_history_head kern_histories;
 #define KERNHIST_DEFINE(NAME) struct kern_history NAME
 
 #define KERNHIST_LINK_STATIC(NAME) \
+do { \
 	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
-	sysctl_kernhist_new(&(NAME));
+	sysctl_kernhist_new(&(NAME)); \
+} while (/*CONSTCOND*/ 0)
 
 #define KERNHIST_INIT(NAME,N) \
 do { \
@@ -160,7 +162,7 @@ do { \
 	(NAME).e = (struct kern_history_ent *) \
 		kmem_zalloc(sizeof(struct kern_history_ent) * (N), KM_SLEEP); \
 	(NAME).s = 0; \
-	KERNHIST_LINK_STATIC(NAME) \
+	KERNHIST_LINK_STATIC(NAME); \
 } while (/*CONSTCOND*/ 0)
 
 #define KERNHIST_INITIALIZER(NAME,BUF) \
@@ -183,7 +185,7 @@ do { \
 	(NAME).e = (struct kern_history_ent *) (BUF); \
 	(NAME).s = 0; \
 	memset((NAME).e, 0, sizeof(struct kern_history_ent) * (NAME).n); \
-	KERNHIST_LINK_STATIC(NAME) \
+	KERNHIST_LINK_STATIC(NAME); \
 } while (/*CONSTCOND*/ 0)
 
 #ifndef KERNHIST_DELAY
