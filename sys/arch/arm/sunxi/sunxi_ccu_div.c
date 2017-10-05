@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_div.c,v 1.2 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_div.c,v 1.3 2017/10/05 01:28:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.2 2017/08/25 00:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.3 2017/10/05 01:28:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,28 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.2 2017/08/25 00:07:03 jmcneill E
 #include <dev/clk/clk_backend.h>
 
 #include <arm/sunxi/sunxi_ccu.h>
+
+int
+sunxi_ccu_div_enable(struct sunxi_ccu_softc *sc, struct sunxi_ccu_clk *clk,
+    int enable)
+{
+	struct sunxi_ccu_div *div = &clk->u.div;
+	uint32_t val;
+
+	KASSERT(clk->type == SUNXI_CCU_DIV);
+
+	if (!div->enable)
+		return enable ? 0 : EINVAL;
+
+	val = CCU_READ(sc, div->reg);
+	if (enable)
+		val |= div->enable;
+	else
+		val &= ~div->enable;
+	CCU_WRITE(sc, div->reg, val);
+
+	return 0;
+}
 
 u_int
 sunxi_ccu_div_get_rate(struct sunxi_ccu_softc *sc,
@@ -66,7 +88,11 @@ sunxi_ccu_div_get_rate(struct sunxi_ccu_softc *sc,
 		ratio = 1;
 	if (div->flags & SUNXI_CCU_DIV_POWER_OF_TWO)
 		ratio = 1 << ratio;
-	else
+	else if (div->flags & SUNXI_CCU_DIV_TIMES_TWO) {
+		ratio = ratio << 1;
+		if (ratio == 0)
+			ratio = 1;
+	} else
 		ratio++;
 
 	return rate / ratio;
@@ -76,7 +102,39 @@ int
 sunxi_ccu_div_set_rate(struct sunxi_ccu_softc *sc,
     struct sunxi_ccu_clk *clk, u_int new_rate)
 {
-	return EINVAL;
+	struct sunxi_ccu_div *div = &clk->u.div;
+	struct clk *clkp, *clkp_parent;
+	uint32_t val, raw_div;
+	int ratio;
+
+	KASSERT(clk->type == SUNXI_CCU_DIV);
+
+	clkp = &clk->base;
+	clkp_parent = clk_get_parent(clkp);
+	if (clkp_parent == NULL)
+		return ENXIO;
+
+	if (div->div == 0)
+		return ENXIO;
+
+	val = CCU_READ(sc, div->reg);
+
+	if ((div->flags & SUNXI_CCU_DIV_TIMES_TWO) != 0) {
+		ratio = howmany(clk_get_rate(clkp_parent), new_rate);
+		if (ratio > 1 && (ratio & 1) != 0)
+			ratio++;
+		raw_div = ratio >> 1;
+		if (raw_div > __SHIFTOUT_MASK(div->div))
+			return ERANGE;
+	} else {
+		return EINVAL;
+	}
+
+	val &= ~div->div;
+	val |= __SHIFTIN(raw_div, div->div);
+	CCU_WRITE(sc, div->reg, val);
+
+	return 0;
 }
 
 int
