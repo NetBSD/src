@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.181 2017/08/16 21:32:22 joerg Exp $
+# $NetBSD: shl.mi,v 1.182 2017/10/05 23:47:11 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -271,7 +271,7 @@
 ./usr/libdata/debug/usr/lib/libssh.so.30.0.debug		comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc=48,cxx,libstdcxx
-./usr/libdata/debug/usr/lib/libstdc++.so.7.4.debug		comp-sys-debug	debug,compatfile,gcc=53,cxx,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.8.0.debug		comp-sys-debug	debug,compatfile,gcc=53,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug			comp-sys-debug	debug,compatfile
