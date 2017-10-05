@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.21 2013/08/06 06:10:57 matt Exp $ */
+/* $NetBSD: pmf.h,v 1.22 2017/10/05 01:26:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,9 @@ typedef enum {
 	PMFE_RADIO_OFF,
 	PMFE_RADIO_TOGGLE,
 	PMFE_POWER_CHANGED,
-	PMFE_SPEED_CHANGED
+	PMFE_SPEED_CHANGED,
+	PMFE_THROTTLE_ENABLE,
+	PMFE_THROTTLE_DISABLE
 } pmf_generic_event_t;
 
 struct pmf_qual {
