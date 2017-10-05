@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-nanopi-neo.dts,v 1.1 2017/07/13 01:17:58 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-nanopi-neo.dts,v 1.2 2017/10/05 13:25:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,35 @@
 
 #include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun8i-h3-nanopi-neo.dts"
 #include "sun8i-h3.dtsi"
+
+/ {
+	cpus {
+		cpu@0 {
+			cpu-supply = <&vdd_cpu>;
+			operating-points = <
+				/* kHz	  uV */
+				1008000	1300000
+				816000	1100000
+				480000	1100000
+				>;
+		};
+	};
+
+	vdd_cpu: reg_cpux_vset {
+		compatible = "regulator-gpio";
+
+		regulator-name = "cpux-supply";
+		regulator-min-microvolt = <1100000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-boot-on;
+
+		gpios = <&r_pio 0 6 GPIO_ACTIVE_HIGH>;	/* GPIOL6 */
+		states = <1300000 0x1
+			  1100000 0x0>;
+
+		enable-active-high;
+	};
+};
 
 &emac {
 	phy-mode = "mii";
