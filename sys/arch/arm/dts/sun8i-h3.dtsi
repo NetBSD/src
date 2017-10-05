@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3.dtsi,v 1.4 2017/10/03 23:42:35 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3.dtsi,v 1.5 2017/10/05 01:32:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -74,6 +74,16 @@
 		sid: eeprom@1c14000 {
 			compatible = "allwinner,sun8i-h3-sid";
 			reg = <0x01c14000 0x400>;
+		};
+
+		rtp: rtp@1c25000 {
+			compatible = "allwinner,sun8i-h3-ts";
+			reg = <0x01c25000 0x400>;
+			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_THS>, <&ccu CLK_THS>;
+			clock-names = "ahb", "ths";
+			resets = <&ccu RST_BUS_THS>;
+			#thermal-sensor-cells = <0>;
 		};
 	};
 };
