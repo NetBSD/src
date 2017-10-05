@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.235 2017/06/22 09:24:02 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.236 2017/10/05 03:42:14 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.235 2017/06/22 09:24:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.236 2017/10/05 03:42:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2319,6 +2319,11 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		rt_clonedmsg(sin6tosa(&sin6), ifp, rt);
 
 		created = true;
+	}
+
+	if (ln == NULL) {
+		m_freem(m);
+		return ENETDOWN; /* better error? */
 	}
 
 	LLE_WLOCK_ASSERT(ln);
