@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/10/04 23:43:23 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2017/10/05 06:30:19 wiz Exp $
 
 .include "../Makefile.inc"
 
@@ -8,7 +8,7 @@
 
 INCS= ${G_EXTRA_HEADERS:T}
 
-# Part of the standard headers, the rest of wich we replace.
+# Part of the standard headers, the rest of which we replace.
 INCS+=	stdatomic.h
 
 # XXX missed some how
