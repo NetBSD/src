@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.132 2017/07/13 08:41:19 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.133 2017/10/05 06:14:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -484,6 +484,20 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_IO_SIZE(mr)						\
 	    (PCI_MAPREG_IO_ADDR(mr) & -PCI_MAPREG_IO_ADDR(mr))
 #define	PCI_MAPREG_IO_ADDR_MASK		0xfffffffc
+
+#define	PCI_MAPREG_ROM_ADDR(mr)						\
+	    ((mr) & PCI_MAPREG_ROM_ADDR_MASK)
+#define	PCI_MAPREG_ROM_VALID_STAT   __BITS(3, 1) /* Validation Status */
+#define	PCI_MAPREG_ROM_VSTAT_NOTSUPP	0x0 /* Validation not supported */
+#define	PCI_MAPREG_ROM_VSTAT_INPROG	0x1 /* Validation in Progress */
+#define	PCI_MAPREG_ROM_VSTAT_VPASS	0x2 /* Valid contnt, trust test nperf*/
+#define	PCI_MAPREG_ROM_VSTAT_VPASSTRUST	0x3 /* Valid and trusted contents */
+#define	PCI_MAPREG_ROM_VSTAT_VFAIL	0x4 /* Invaild contents */
+#define	PCI_MAPREG_ROM_VSTAT_VFAILUNTRUST 0x5 /* Vaild but untrusted contents*/
+#define	PCI_MAPREG_ROM_VSTAT_WPASS	0x6 /* VPASS + warning */
+#define	PCI_MAPREG_ROM_VSTAT_WPASSTRUST	0x7 /* VPASSTRUST + warning */
+#define	PCI_MAPREG_ROM_VALID_DETAIL __BITS(7, 4) /* Validation Details */
+#define	PCI_MAPREG_ROM_ADDR_MASK	__BITS(31, 11)
 
 #define PCI_MAPREG_SIZE_TO_MASK(size)					\
 	    (-(size))
@@ -1443,6 +1457,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
 #define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
 #define	PCI_EXTCAP_HIERARCHYID	0x0028	/* Hierarchy ID */
+#define	PCI_EXTCAP_NPEM		0x0029	/* Native PCIe Enclosure Management */
 
 /*
  * Extended capability ID: 0x0001
@@ -2040,6 +2055,16 @@ struct pci_rom {
 /*
  * Extended capability ID: 0x0024
  * VF Resizable BAR
+ */
+
+/*
+ * Extended capability ID: 0x0028
+ * Hierarchy ID
+ */
+
+/*
+ * Extended capability ID: 0x0029
+ * Native PCIe Enclosure Management
  */
 
 #endif /* _DEV_PCI_PCIREG_H_ */
