@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.33 2017/10/02 22:50:29 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.34 2017/10/05 01:30:45 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -158,6 +158,12 @@ sy8106a*	at iic?			# Silergy SY81061 regulator
 
 # RTC
 sunxirtc*	at fdt?			# RTC
+
+# Security ID EFUSE
+sunxisid*	at fdt?	pass 4		# SID
+
+# Thermal sensor
+sunxithermal*	at fdt?			# Thermal sensor controller
 
 # Audio
 sunxicodec*	at fdt?			# Audio codec
