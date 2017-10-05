@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_pci.c,v 1.1 2010/11/09 12:24:48 skrll Exp $	*/
+/*	$NetBSD: sti_pci.c,v 1.2 2017/10/05 06:37:45 msaitoh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -71,12 +71,8 @@ void	sti_pci_disable_rom_internal(struct sti_pci_softc *);
 
 int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
 
-#define PCI_ROM_ENABLE                  0x00000001
-#define PCI_ROM_ADDR_MASK               0xfffff800
-#define PCI_ROM_ADDR(mr)                                                \
-            ((mr) & PCI_ROM_ADDR_MASK)
 #define PCI_ROM_SIZE(mr)                                                \
-            (PCI_ROM_ADDR(mr) & -PCI_ROM_ADDR(mr))
+            (PCI_MAPREG_ROM_ADDR(mr) & -PCI_MAPREG_ROM_ADDR(mr))
 
 int
 sti_pci_match(device_t parent, cfdata_t cf, void *aux)
@@ -154,9 +150,10 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 
 	/* sort of inline sti_pci_enable_rom(sc) */
 	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, ~PCI_ROM_ENABLE);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
+	    ~PCI_MAPREG_ROM_ENABLE);
 	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	address |= PCI_ROM_ENABLE;
+	address |= PCI_MAPREG_ROM_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, address);
 	sc->sc_flags |= STI_ROM_ENABLED;
 	/*
@@ -165,9 +162,9 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 
 	romsize = PCI_ROM_SIZE(mask);
 	DPRINTF(("%s: mapping rom @ %lx for %lx\n", __func__,
-	    (long)PCI_ROM_ADDR(address), (long)romsize));
+	    (long)PCI_MAPREG_ROM_ADDR(address), (long)romsize));
 
-	rc = bus_space_map(pa->pa_memt, PCI_ROM_ADDR(address), romsize,
+	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address), romsize,
 	    0, &romh);
 	if (rc != 0) {
 		aprint_error_dev(sc->sc_dev, "can't map PCI ROM (%d)\n", rc);
@@ -313,9 +310,9 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	 */
 
 	DPRINTF(("remapping rom @ %lx for %lx\n",
-	    (long)(PCI_ROM_ADDR(address) + offs), (long)stiromsize));
+	    (long)(PCI_MAPREG_ROM_ADDR(address) + offs), (long)stiromsize));
 	bus_space_unmap(pa->pa_memt, romh, romsize);
-	rc = bus_space_map(pa->pa_memt, PCI_ROM_ADDR(address) + offs,
+	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address) + offs,
 	    stiromsize, 0, &spc->sc_romh);
 	if (rc != 0) {
 		aprint_error_dev(sc->sc_dev, "can't map STI ROM (%d)\n",
@@ -389,7 +386,7 @@ sti_pci_enable_rom_internal(struct sti_pci_softc *spc)
 	KASSERT(spc != NULL);
 
 	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address |= PCI_ROM_ENABLE;
+	address |= PCI_MAPREG_ROM_ENABLE;
 	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 }
 
@@ -415,7 +412,7 @@ sti_pci_disable_rom_internal(struct sti_pci_softc *spc)
 	KASSERT(spc != NULL);
 
 	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address &= ~PCI_ROM_ENABLE;
+	address &= ~PCI_MAPREG_ROM_ENABLE;
 	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 }
 
