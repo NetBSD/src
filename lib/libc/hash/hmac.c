@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.c,v 1.4 2017/01/10 17:46:26 christos Exp $	*/
+/*	$NetBSD: hmac.c,v 1.5 2017/10/05 09:59:04 roy Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hmac.c,v 1.4 2017/01/10 17:46:26 christos Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.5 2017/10/05 09:59:04 roy Exp $");
 
 #include <string.h>
 #include <stdlib.h>
@@ -113,7 +113,7 @@ hmac_find(const char *name)
 }
 
 ssize_t
-hmac(const char *name, 
+hmac(const char *name,
     const void *key, size_t klen,
     const void *text, size_t tlen,
     void *digest, size_t dlen)
@@ -148,7 +148,7 @@ hmac(const char *name,
 		memset((char *)p + dlen, 0, h->digsize - dlen);
 	}
 	(*h->init)(c);
-	(*h->update)(c, ipad, h->blocksize);
+	(*h->update)(c, ipad, (unsigned int)h->blocksize);
 	(*h->update)(c, text, (unsigned int)tlen);
 	(*h->final)(p, c);
 
@@ -160,5 +160,5 @@ hmac(const char *name,
 	if (p != digest)
 		memcpy(digest, p, dlen);
 
-	return h->digsize;
+	return (ssize_t)h->digsize;
 }
