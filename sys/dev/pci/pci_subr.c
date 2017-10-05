@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.190 2017/07/13 08:41:19 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.191 2017/10/05 06:14:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.190 2017/07/13 08:41:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.191 2017/10/05 06:14:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3873,6 +3873,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_desigvndsp_cap */
 /* XXX pci_conf_print_vf_resizbar_cap */
 /* XXX pci_conf_print_hierarchyid_cap */
+/* XXX pci_conf_print_npem_cap */
 
 #undef	MS
 #undef	SM
@@ -3958,6 +3959,8 @@ static struct {
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
+	  NULL },
+	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
 	  NULL },
 };
 
@@ -4099,6 +4102,7 @@ pci_conf_print_type0(
 {
 	int off, width;
 	pcireg_t rval;
+	const char *str;
 
 	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width) {
 #ifdef _KERNEL
@@ -4115,9 +4119,43 @@ pci_conf_print_type0(
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
-	/* XXX */
-	printf("    Expansion ROM Base Address: 0x%08x\n",
-	    regs[o2i(PCI_MAPREG_ROM)]);
+	rval = regs[o2i(PCI_MAPREG_ROM)];
+	printf("    Expansion ROM Base Address Register: 0x%08x\n", rval);
+	printf("      base: 0x%08x\n", (uint32_t)PCI_MAPREG_ROM_ADDR(rval));
+	onoff("Expansion ROM Enable", rval, PCI_MAPREG_ROM_ENABLE);
+	printf("      Validation Status: ");
+	switch (__SHIFTOUT(rval, PCI_MAPREG_ROM_VALID_STAT)) {
+	case PCI_MAPREG_ROM_VSTAT_NOTSUPP:
+		str = "Validation not supported";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_INPROG:
+		str = "Validation in Progress";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VPASS:
+		str = "Validation Pass. "
+		    "Valid contents, trust test was not performed";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VPASSTRUST:
+		str = "Validation Pass. Valid and trusted contents";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VFAIL:
+		str = "Validation Fail. Invalid contents";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VFAILUNTRUST:
+		str = "Validation Fail. Valid but untrusted contents";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_WPASS:
+		str = "Warning Pass. Validation passed with warning. "
+		    "Valid contents, trust test was not performed";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_WPASSTRUST:
+		str = "Warning Pass. Validation passed with warning. "
+		    "Valid and trusted contents";
+		break;
+	}
+	printf("%s\n", str);
+	printf("      Validation Details: 0x%x\n",
+	    (uint32_t)__SHIFTOUT(rval, PCI_MAPREG_ROM_VALID_DETAIL));
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
