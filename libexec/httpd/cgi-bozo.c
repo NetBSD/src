@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.37 2017/01/31 14:36:09 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.38 2017/10/05 04:22:41 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -517,8 +517,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		strcpy(t, "HTTP_");
 		t += strlen(t);
 		for (s2 = headp->h_header; *s2; t++, s2++)
-			if (islower((u_int)*s2))
-				*t = toupper((u_int)*s2);
+			if (islower((unsigned)*s2))
+				*t = toupper((unsigned)*s2);
 			else if (*s2 == '-')
 				*t = '_';
 			else
