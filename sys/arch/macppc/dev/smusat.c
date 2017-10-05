@@ -45,6 +45,8 @@
 
 #include "opt_smusat.h"
 
+extern int smu_get_datablock(int, uint8_t *, size_t);
+
 enum {
 	SMUSAT_SENSOR_TEMP,
 	SMUSAT_SENSOR_CURRENT,
@@ -62,8 +64,9 @@ struct smusat_sensor {
 	int reg;
 	int zone;
 	int shift;
+	int offset;
+	int scale;
 	int current_value;
-	time_t last_update;
 };
 
 #define SMUSAT_MAX_SENSORS	16
@@ -73,6 +76,8 @@ struct smusat_softc {
 	device_t sc_dev;
 	int sc_node;
 	i2c_addr_t sc_addr;
+	uint8_t sc_cache[16];
+	time_t sc_last_update;
 	struct i2c_controller *sc_i2c;
 	struct sysctlnode *sc_sysctl_me;
 
@@ -93,7 +98,7 @@ static int smusat_match(device_t, struct cfdata *, void *);
 static void smusat_attach(device_t, device_t, void *);
 static void smusat_setup_sme(struct smusat_softc *);
 static void smusat_sme_refresh(struct sysmon_envsys *, envsys_data_t *);
-static int smusat_sensor_update(struct smusat_sensor *);
+static int smusat_sensors_update(struct smusat_softc *);
 static int smusat_sensor_read(struct smusat_sensor *, int *);
 static int smusat_sysctl_sensor_value(SYSCTLFN_ARGS);
 
@@ -149,6 +154,10 @@ smusat_attach(device_t parent, device_t self, void *aux)
 		if (OF_getprop(node, "reg", &sensor->reg,
 		        sizeof(sensor->reg)) <= 0)
 			continue;
+
+		if ((sensor->reg < 0x30) || (sensor->reg > 0x37))
+			continue;
+		sensor->reg -= 0x30; 
 
 		if (OF_getprop(node, "zone", &sensor->zone,
 		        sizeof(sensor->zone)) <= 0)
@@ -296,7 +305,7 @@ smusat_sme_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (which < sc->sc_num_sensors) {
 		sensor = &sc->sc_sensors[which];
 
-		ret = smusat_sensor_update(sensor);
+		ret = smusat_sensor_read(sensor, NULL);
 		if (ret == 0) {
 			switch (sensor->type) {
 			case SMUSAT_SENSOR_TEMP:
@@ -304,13 +313,13 @@ smusat_sme_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 				    1000000 + 273150000;
 			break;
 			case SMUSAT_SENSOR_CURRENT:
-				edata->value_cur = sensor->current_value * 1000;
+				edata->value_cur = sensor->current_value * 1000000;
 			break;
 			case SMUSAT_SENSOR_VOLTAGE:
-				edata->value_cur = sensor->current_value * 1000;
+				edata->value_cur = sensor->current_value * 1000000;
 			break;
 			case SMUSAT_SENSOR_POWER:
-				edata->value_cur = sensor->current_value * 1000;
+				edata->value_cur = sensor->current_value * 1000000;
 			break;
 			default:
 				edata->value_cur = sensor->current_value;
@@ -322,26 +331,19 @@ smusat_sme_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 static int
-smusat_sensor_update(struct smusat_sensor *sensor)
+smusat_sensors_update(struct smusat_softc *sc)
 {
-	struct smusat_softc *sc = sensor->sc;
-	u_char reg = sensor->reg;
-	u_char value[2];
+	u_char reg = 0x3f;
 	int ret;
 
 	iic_acquire_bus(sc->sc_i2c, 0);
-	ret = iic_exec(sc->sc_i2c, I2C_OP_READ, sc->sc_addr, &reg, 1, &value, 2, 0);
+	ret = iic_exec(sc->sc_i2c, I2C_OP_READ, sc->sc_addr, &reg, 1, sc->sc_cache, 16, 0);
 	iic_release_bus(sc->sc_i2c, 0);
 
 	if (ret != 0)
 		return (ret);
 
-	sensor->last_update = time_uptime;
-	/* 16.16 */
-	sensor->current_value = (value[0] << 8) + value[1];
-	sensor->current_value <<= sensor->shift;
-	/* Discard the .16 */ 
-	sensor->current_value >>= 16;
+	sc->sc_last_update = time_uptime;
 
 	return 0;
 }
@@ -349,15 +351,23 @@ smusat_sensor_update(struct smusat_sensor *sensor)
 static int
 smusat_sensor_read(struct smusat_sensor *sensor, int *value)
 {
-	int ret;
+	struct smusat_softc *sc = sensor->sc;
+	int ret, reg;
 
-	if (time_uptime - sensor->last_update > 1) {
-		ret = smusat_sensor_update(sensor);
+	if (time_uptime - sc->sc_last_update > 1) {
+		ret = smusat_sensors_update(sc);
 		if (ret != 0)
 			return ret;
 	}
 
-	*value = sensor->current_value;
+	reg = sensor->reg << 1;
+	sensor->current_value = (sc->sc_cache[reg] << 8) + sc->sc_cache[reg + 1];
+	sensor->current_value <<= sensor->shift;
+	/* Discard the .16 */ 
+	sensor->current_value >>= 16;
+
+	if (value != NULL)
+		*value = sensor->current_value;
 
 	return 0;
 }
