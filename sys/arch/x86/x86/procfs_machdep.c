@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.17 2017/09/28 10:59:38 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.18 2017/10/05 03:24:40 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.17 2017/09/28 10:59:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.18 2017/10/05 03:24:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.17 2017/09/28 10:59:38 msaitoh 
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#include <x86/cputypes.h>
+#include <x86/cpuvar.h>
 
 /*
  *  The feature table. The order is the same as Linux's
@@ -280,14 +282,14 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 	    left);
 	diff = last - *left;
 
-	if (cpuid_level >= 0x0d) {
+	if (ci->ci_max_cpuid >= 0x0d) {
 		x86_cpuid2(0x0d, 1, descs);
 		procfs_getonefeatreg(descs[0], x86_features[10], p + diff,
 		    left);
 		diff = last - *left;
 	}
 
-	if (cpuid_level >= 0x0f) {
+	if (ci->ci_max_cpuid >= 0x0f) {
 		x86_cpuid2(0x0f, 0, descs);
 		procfs_getonefeatreg(descs[3], x86_features[11], p + diff,
 		    left);
@@ -299,22 +301,40 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 		diff = last - *left;
 	}
 
-	/* (13) 0x80000008 ebx */
+	if ((cpu_vendor == CPUVENDOR_AMD)
+	    && (ci->ci_max_ext_cpuid >= 0x80000008)) {
+		x86_cpuid(0x80000008, descs);
+		procfs_getonefeatreg(descs[1], x86_features[13], p + diff,
+		    left);
+		diff = last - *left;
+	}
 
-	if (cpuid_level >= 0x06) {
+	if (ci->ci_max_cpuid >= 0x06) {
 		x86_cpuid(0x06, descs);
 		procfs_getonefeatreg(descs[0], x86_features[14], p + diff,
 		    left);
 		diff = last - *left;
 	}
 
-	/* (15) 0x8000000a edx */
+	if ((cpu_vendor == CPUVENDOR_AMD)
+	    && (ci->ci_max_ext_cpuid >= 0x8000000a)) {
+		x86_cpuid(0x8000000a, descs);
+		procfs_getonefeatreg(descs[3], x86_features[15], p + diff,
+		    left);
+		diff = last - *left;
+	}
 
 	procfs_getonefeatreg(ci->ci_feat_val[6], x86_features[16], p + diff,
 	    left);
 	diff = last - *left;
 
-	/* (17) 0x80000007 ebx */
+	if ((cpu_vendor == CPUVENDOR_AMD)
+	    && (ci->ci_max_ext_cpuid >= 0x80000007)) {
+		x86_cpuid(0x80000007, descs);
+		procfs_getonefeatreg(descs[1], x86_features[17], p + diff,
+		    left);
+		diff = last - *left;
+	}
 
 	return 0; /* XXX */
 }
@@ -410,7 +430,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 	    i386_fpu_fdivbug ? "yes" : "no",	/* an old pentium */
 #endif
 	    i386_fpu_present ? "yes" : "no",	/* not a 486SX */
-	    cpuid_level,
+	    ci->ci_max_cpuid,
 	    (rcr0() & CR0_WP) ? "yes" : "no",
 	    featurebuf,
 	    ci->ci_cflush_lsize
