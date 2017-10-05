@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.42 2017/10/04 22:00:40 christos Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.43 2017/10/05 02:59:21 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -489,7 +489,7 @@ int
 ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf_Phdr *phdr;
-	int i, first __used;
+	int i, first;
 	ssize_t sz;
 	Elf_Addr minp = ~0, maxp = 0, pos = 0, elfp = 0;
 	u_long offset = marks[MARK_START];
@@ -497,6 +497,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 
 	/* some ports dont use the offset */
 	(void)&offset;
+	/* for ports that define progress to nothing */
+	(void)&first;
 
 	/* have not seen a data segment so far */
 	marks[MARK_DATA] = 0;
