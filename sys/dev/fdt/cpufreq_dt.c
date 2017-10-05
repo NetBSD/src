@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.1 2017/10/02 22:49:38 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.2 2017/10/05 01:28:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.1 2017/10/02 22:49:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.2 2017/10/05 01:28:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ struct cpufreq_dt_softc {
 	ssize_t			sc_nopp;
 	int			sc_latency;
 
+	u_int			sc_freq_target;
+	bool			sc_freq_throttle;
+
 	u_int			sc_busy;
 
 	char			*sc_freq_available;
@@ -77,6 +80,7 @@ cpufreq_dt_set_rate(struct cpufreq_dt_softc *sc, u_int freq_khz)
 {
 	struct cpufreq_dt_opp *opp = NULL;
 	u_int old_rate, new_rate, old_uv, new_uv;
+	uint64_t xc;
 	int error;
 	ssize_t n;
 
@@ -117,7 +121,60 @@ cpufreq_dt_set_rate(struct cpufreq_dt_softc *sc, u_int freq_khz)
 			return error;
 	}
 
+	if (error == 0) {
+		xc = xc_broadcast(0, cpufreq_dt_change_cb, sc, NULL);
+		xc_wait(xc);
+
+		pmf_event_inject(NULL, PMFE_SPEED_CHANGED);
+	}
+
 	return 0;
+}
+
+static void
+cpufreq_dt_throttle_enable(device_t dev)
+{
+	struct cpufreq_dt_softc * const sc = device_private(dev);
+
+	if (sc->sc_freq_throttle)
+		return;
+
+	const u_int freq_khz = sc->sc_opp[sc->sc_nopp - 1].freq_khz;
+
+	while (atomic_cas_uint(&sc->sc_busy, 0, 1) != 0)
+		kpause("throttle", false, 1, NULL);
+
+	if (cpufreq_dt_set_rate(sc, freq_khz) == 0) {
+		aprint_debug_dev(sc->sc_dev, "throttle enabled (%u.%03u MHz)\n",
+		    freq_khz / 1000, freq_khz % 1000);
+		sc->sc_freq_throttle = true;
+		if (sc->sc_freq_target == 0)
+			sc->sc_freq_target = clk_get_rate(sc->sc_clk) / 1000000;
+	}
+
+	atomic_dec_uint(&sc->sc_busy);
+}
+
+static void
+cpufreq_dt_throttle_disable(device_t dev)
+{
+	struct cpufreq_dt_softc * const sc = device_private(dev);
+
+	if (!sc->sc_freq_throttle)
+		return;
+
+	while (atomic_cas_uint(&sc->sc_busy, 0, 1) != 0)
+		kpause("throttle", false, 1, NULL);
+
+	const u_int freq_khz = sc->sc_freq_target * 1000;
+
+	if (cpufreq_dt_set_rate(sc, freq_khz) == 0) {
+		aprint_debug_dev(sc->sc_dev, "throttle disabled (%u.%03u MHz)\n",
+		    freq_khz / 1000, freq_khz % 1000);
+		sc->sc_freq_throttle = false;
+	}
+
+	atomic_dec_uint(&sc->sc_busy);
 }
 
 static int
@@ -126,15 +183,23 @@ cpufreq_dt_sysctl_helper(SYSCTLFN_ARGS)
 	struct cpufreq_dt_softc * const sc = rnode->sysctl_data;
 	struct sysctlnode node;
 	u_int fq, oldfq = 0;
-	uint64_t xc;
-	int error;
+	int error, n;
 
 	node = *rnode;
 	node.sysctl_data = &fq;
 
-	fq = clk_get_rate(sc->sc_clk) / 1000000;
+	if (rnode->sysctl_num == sc->sc_node_target) {
+		if (sc->sc_freq_target == 0)
+			sc->sc_freq_target = clk_get_rate(sc->sc_clk) / 1000000;
+		fq = sc->sc_freq_target;
+	} else
+		fq = clk_get_rate(sc->sc_clk) / 1000000;
+
 	if (rnode->sysctl_num == sc->sc_node_target)
 		oldfq = fq;
+
+	if (sc->sc_freq_target == 0)
+		sc->sc_freq_target = fq;
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -143,16 +208,21 @@ cpufreq_dt_sysctl_helper(SYSCTLFN_ARGS)
 	if (fq == oldfq || rnode->sysctl_num != sc->sc_node_target)
 		return 0;
 
+	for (n = 0; n < sc->sc_nopp; n++)
+		if (sc->sc_opp[n].freq_khz / 1000 == fq)
+			break;
+	if (n == sc->sc_nopp)
+		return EINVAL;
+
 	if (atomic_cas_uint(&sc->sc_busy, 0, 1) != 0)
 		return EBUSY;
 
-	error = cpufreq_dt_set_rate(sc, fq * 1000);
-	if (error == 0) {
-		xc = xc_broadcast(0, cpufreq_dt_change_cb, sc, NULL);
-		xc_wait(xc);
+	sc->sc_freq_target = fq;
 
-		pmf_event_inject(NULL, PMFE_SPEED_CHANGED);
-	}
+	if (sc->sc_freq_throttle)
+		error = 0;
+	else
+		error = cpufreq_dt_set_rate(sc, fq * 1000);
 
 	atomic_dec_uint(&sc->sc_busy);
 
@@ -307,6 +377,9 @@ cpufreq_dt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	pmf_event_register(self, PMFE_THROTTLE_ENABLE, cpufreq_dt_throttle_enable, true);
+	pmf_event_register(self, PMFE_THROTTLE_DISABLE, cpufreq_dt_throttle_disable, true);
 
 	config_interrupts(self, cpufreq_dt_init);
 }
