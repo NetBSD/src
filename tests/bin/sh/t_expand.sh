@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.17 2017/06/03 14:45:59 kre Exp $
+# $NetBSD: t_expand.sh,v 1.18 2017/10/06 17:05:05 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -198,6 +198,66 @@ ne%\
 		atf_check -o inline:":$stripped:\n" -e empty ${TEST_SH} -c \
 			"line='${line}'; echo :${exp}:"
 	done
+}
+
+atf_test_case tilde
+tilde_head() {
+	atf_set "descr" "Checks that the ~ expansions work"
+}
+tilde_body() {
+	for HOME in '' / /home/foo \
+/a/very/long/home/directory/path/that/might/push/the/tilde/expansion/code/beyond/what/it/would/normally/ever/see/on/any/sane/system/and/perhaps/expose/some/bugs
+	do
+		export HOME
+
+		atf_check -s exit:0 -e empty \
+			-o inline:'HOME\t'"${HOME}"'
+~\t'"${HOME}"'
+~/foobar\t'"${HOME}"'/foobar
+"$V"\t'"${HOME}"'
+"$X"\t~
+"$Y"\t'"${HOME}"':'"${HOME}"'
+"$YY"\t'"${HOME}"'/foo:'"${HOME}"'/bar
+"$Z"\t'"${HOME}"'/~
+${U:-~}\t'"${HOME}"'
+$V\t'"${HOME}"'
+$X\t~
+$Y\t'"${HOME}"':'"${HOME}"'
+$YY\t'"${HOME}"'/foo:'"${HOME}"'/bar
+$Z\t'"${HOME}"'/~
+${U:=~}\t'"${HOME}"'
+${UU:=~:~}\t'"${HOME}"':'"${HOME}"'
+${UUU:=~/:~}\t'"${HOME}"'/:'"${HOME}"'
+${U4:=~/:~/}\t'"${HOME}"'/:'"${HOME}"'/\n' \
+			${TEST_SH} -s <<- \EOF
+				unset -v U UU UUU U4
+				V=~
+				X="~"
+				Y=~:~ YY=~/foo:~/bar
+				Z=~/~
+				printf '%s\t%s\n' \
+					'HOME' "${HOME}" \
+					'~' ~ \
+					'~/foobar' ~/foobar \
+					'"$V"' "$V" \
+					'"$X"' "$X" \
+					'"$Y"' "$Y" \
+					'"$YY"' "$YY" \
+					'"$Z"' "$Z" \
+					'${U:-~}' ''${U:-~} \
+					'$V' ''$V \
+					'$X' ''$X \
+					'$Y' ''$Y \
+					'$YY' ''$YY \
+					'$Z' ''$Z \
+					'${U:=~}' ''${U:=~} \
+					'${UU:=~:~}' ''${UU:=~:~} \
+					'${UUU:=~/:~}' ''${UUU:=~/:~} \
+					'${U4:=~/:~/}' ''${U4:=~/:~/}
+			EOF
+	done
+
+	# Testing ~user is harder, so, perhaps later...
 }
 
 atf_test_case varpattern_backslashes
@@ -955,6 +1015,7 @@ atf_init_test_cases() {
 	atf_add_test_case iteration_on_null_or_missing_parameter
 	atf_add_test_case shell_params
 	atf_add_test_case strip
+	atf_add_test_case tilde
 	atf_add_test_case wrap_strip
 	atf_add_test_case var_with_embedded_cmdsub
 	atf_add_test_case varpattern_backslashes
