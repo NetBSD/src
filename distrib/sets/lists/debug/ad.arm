@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.74 2017/01/05 13:45:51 wiz Exp $
+# $NetBSD: ad.arm,v 1.75 2017/10/06 19:21:17 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib,compatfile
@@ -14,7 +14,7 @@
 ./usr/libdata/debug/usr/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic,softfloat
 ./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug	comp-sys-debug		debug,pic,compatfile
 ./usr/libdata/debug/usr/lib/oabi/libc_vfp.so.0.0.debug	comp-sys-debug		debug,compat,pic
-./usr/libdata/debug/usr/lib/oabi/libproc.so.0.0.debug	comp-sys-debug	debug,compat,dtrace
+./usr/libdata/debug/usr/lib/oabi/libproc.so.1.0.debug	comp-sys-debug	debug,compat,dtrace
 ./usr/libdata/debug/usr/lib/oabi/librtld_db.so.0.0.debug	comp-sys-debug	debug,compat,dtrace
 ./usr/libdata/debug/usr/libexec/ld.elf_so-oabi	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so-oabi.debug	comp-sys-debug		debug,compat
