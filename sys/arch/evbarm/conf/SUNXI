@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.34 2017/10/05 01:30:45 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.35 2017/10/06 21:21:22 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -61,8 +61,10 @@ options 	CPU_CORTEXA7
 options 	CPU_CORTEXA8
 options 	CPU_CORTEXA53
 
+options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
 options 	SOC_SUN6I_A31
+options 	SOC_SUN7I_A20
 options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
 options 	SOC_SUN50I_A64
@@ -96,6 +98,7 @@ cpufreqdt*	at cpu?
 psci*		at fdt?
 
 # Clock and reset controllers
+sun4ia10ccu*	at fdt? pass 2		# A10/A20 CCU
 sun5ia13ccu*	at fdt? pass 2		# A13 CCU
 sun6ia31ccu*	at fdt? pass 2		# A31 CCU
 sun8ia83tccu*	at fdt? pass 2		# A83T CCU
