@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1016 2017/08/22 11:14:28 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1017 2017/10/06 13:00:57 tsutsui Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1357,7 +1357,6 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "ews4800mips"	|| \
-    ${MACHINE} == "hp300"	|| \
     ${MACHINE} == "hpcarm"	|| \
     ${MACHINE} == "hpcmips"	|| \
     ${MACHINE} == "hpcsh"	|| \
