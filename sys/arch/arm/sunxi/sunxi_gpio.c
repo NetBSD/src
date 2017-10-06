@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.13 2017/09/12 10:46:33 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.14 2017/10/06 21:20:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.13 2017/09/12 10:46:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.14 2017/10/06 21:20:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,12 +71,18 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.13 2017/09/12 10:46:33 jmcneill Exp
 #define	SUNXI_GPIO_INT_STATUS		0x214
 
 static const struct of_compat_data compat_data[] = {
+#ifdef SOC_SUN4I_A10
+	{ "allwinner,sun4i-a10-pinctrl",	(uintptr_t)&sun4i_a10_padconf },
+#endif
 #ifdef SOC_SUN5I_A13
 	{ "allwinner,sun5i-a13-pinctrl",	(uintptr_t)&sun5i_a13_padconf },
 #endif
 #ifdef SOC_SUN6I_A31
 	{ "allwinner,sun6i-a31-pinctrl",	(uintptr_t)&sun6i_a31_padconf },
 	{ "allwinner,sun6i-a31-r-pinctrl",	(uintptr_t)&sun6i_a31_r_padconf },
+#endif
+#ifdef SOC_SUN7I_A20
+	{ "allwinner,sun7i-a20-pinctrl",	(uintptr_t)&sun7i_a20_padconf },
 #endif
 #ifdef SOC_SUN8I_A83T
 	{ "allwinner,sun8i-a83t-pinctrl",	(uintptr_t)&sun8i_a83t_padconf },
