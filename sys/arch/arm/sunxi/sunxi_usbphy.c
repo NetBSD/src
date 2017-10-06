@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.8 2017/09/09 11:58:34 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.9 2017/10/06 22:25:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.8 2017/09/09 11:58:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.9 2017/10/06 22:25:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,15 +74,19 @@ static int sunxi_usbphy_match(device_t, cfdata_t, void *);
 static void sunxi_usbphy_attach(device_t, device_t, void *);
 
 enum sunxi_usbphy_type {
+	USBPHY_A10 = 1,
 	USBPHY_A13,
+	USBPHY_A20,
 	USBPHY_A31,
 	USBPHY_H3,
 	USBPHY_A64,
 };
 
 static const struct of_compat_data compat_data[] = {
+	{ "allwinner,sun4i-a10-usb-phy",	USBPHY_A10 },
 	{ "allwinner,sun5i-a13-usb-phy",	USBPHY_A13 },
 	{ "allwinner,sun6i-a31-usb-phy",	USBPHY_A31 },
+	{ "allwinner,sun7i-a20-usb-phy",	USBPHY_A20 },
 	{ "allwinner,sun8i-h3-usb-phy",		USBPHY_H3 },
 	{ "allwinner,sun50i-a64-usb-phy",	USBPHY_A64 },
 	{ NULL }
@@ -135,7 +139,9 @@ sunxi_usbphy_write(struct sunxi_usbphy_softc *sc,
 	uint32_t val;
 
 	switch (sc->sc_type) {
+	case USBPHY_A10:
 	case USBPHY_A13:
+	case USBPHY_A20:
 	case USBPHY_A31:
 		reg = PHYCTL_A10;
 		break;
@@ -213,6 +219,8 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 		disc_thresh = 0x2;
 		phy0_reroute = false;
 		break;
+	case USBPHY_A10:
+	case USBPHY_A20:
 	case USBPHY_A31:
 		disc_thresh = 0x3;
 		phy0_reroute = false;
@@ -222,6 +230,9 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 		disc_thresh = 0x3;
 		phy0_reroute = true;
 		break;
+	default:
+		aprint_error_dev(dev, "unsupported board\n");
+		return ENXIO;
 	}
 
 	if (phy->phy_bsh) {
