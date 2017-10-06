@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgctl.c,v 1.5 2017/01/13 20:44:45 christos Exp $ */
+/* $NetBSD: t_msgctl.c,v 1.6 2017/10/06 17:00:28 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgctl.c,v 1.5 2017/01/13 20:44:45 christos Exp $");
+__RCSID("$NetBSD: t_msgctl.c,v 1.6 2017/10/06 17:00:28 kre Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_msgctl.c,v 1.5 2017/01/13 20:44:45 christos Exp $");
 #include <errno.h>
 #include <limits.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -346,14 +347,53 @@ ATF_TC_CLEANUP(msgctl_time, tc)
 	clean();
 }
 
+static volatile int sig_caught;
+
+static void
+sigsys_handler(int signum)
+{
+
+	sig_caught = signum;
+}
+
+static int
+no_kernel_sysvmsg(void)
+{
+	int id;
+
+	sig_caught = 0;
+	(void) signal(SIGSYS, sigsys_handler);
+	id = msgget(MSG_KEY, IPC_CREAT | 0600);
+	if (sig_caught || id == -1)
+		return 1;
+
+	(void)msgctl(id, IPC_RMID, 0);
+
+	return 0;
+}
+
+ATF_TC(msgctl_query);
+ATF_TC_HEAD(msgctl_query, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Skip msgctl_* tests - no SYSVMSG");
+}
+ATF_TC_BODY(msgctl_query, tc)
+{
+	atf_tc_skip("No SYSVMSG in kernel");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, msgctl_err);
-	ATF_TP_ADD_TC(tp, msgctl_perm);
-	ATF_TP_ADD_TC(tp, msgctl_pid);
-	ATF_TP_ADD_TC(tp, msgctl_set);
-	ATF_TP_ADD_TC(tp, msgctl_time);
+	if (no_kernel_sysvmsg()) {
+		ATF_TP_ADD_TC(tp, msgctl_query);
+	} else {
+		ATF_TP_ADD_TC(tp, msgctl_err);
+		ATF_TP_ADD_TC(tp, msgctl_perm);
+		ATF_TP_ADD_TC(tp, msgctl_pid);
+		ATF_TP_ADD_TC(tp, msgctl_set);
+		ATF_TP_ADD_TC(tp, msgctl_time);
+	}
 
 	return atf_no_error();
 }
