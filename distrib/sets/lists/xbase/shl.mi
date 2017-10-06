@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.77 2017/08/29 09:02:10 mrg Exp $
+# $NetBSD: shl.mi,v 1.78 2017/10/06 20:26:51 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -24,11 +24,11 @@
 ./usr/X11R7/lib/libFS.so.7			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libFS.so.7.0			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libGL.so			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libGL.so.2			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libGL.so.2.0			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libGL.so.3			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libGL.so.3.0			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libGLU.so			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libGLU.so.2			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libGLU.so.2.1			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libGLU.so.3			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libGLU.so.3.0			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libGLw.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libGLw.so.2			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libGLw.so.2.0			-unknown-		xorg,compatx11file
@@ -186,8 +186,8 @@
 ./usr/X11R7/lib/libgbm.so.1			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libgbm.so.1.0			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libglapi.so			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libglapi.so.0			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libglapi.so.0.0			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libglapi.so.1			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libglapi.so.1.0			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libglut.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libglut.so.4			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg,compatx11file
