@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.8 2017/09/03 13:59:17 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.9 2017/10/06 21:12:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.8 2017/09/03 13:59:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.9 2017/10/06 21:12:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -216,6 +216,19 @@ sun6i_platform_reset(void)
 	bus_space_write_4(bst, bsh, SUN6I_WDT_MODE, SUN6I_WDT_MODE_EN);
 }
 
+static const struct arm_platform sun4i_platform = {
+	.devmap = sunxi_platform_devmap,
+	.bootstrap = sunxi_platform_bootstrap,
+	.init_attach_args = sunxi_platform_init_attach_args,
+	.early_putchar = sunxi_platform_early_putchar,
+	.device_register = sunxi_platform_device_register,
+	.reset = sun4i_platform_reset,
+	.delay = sun4i_platform_delay,
+	.uart_freq = sunxi_platform_uart_freq,
+};
+
+ARM_PLATFORM(sun4i_a10, "allwinner,sun4i-a10", &sun4i_platform);
+
 static const struct arm_platform sun5i_platform = {
 	.devmap = sunxi_platform_devmap,
 	.bootstrap = sunxi_platform_bootstrap,
@@ -241,6 +254,19 @@ static const struct arm_platform sun6i_platform = {
 };
 
 ARM_PLATFORM(sun6i_a31, "allwinner,sun6i-a31", &sun6i_platform);
+
+static const struct arm_platform sun7i_platform = {
+	.devmap = sunxi_platform_devmap,
+	.bootstrap = sunxi_platform_psci_bootstrap,
+	.init_attach_args = sunxi_platform_init_attach_args,
+	.early_putchar = sunxi_platform_early_putchar,
+	.device_register = sunxi_platform_device_register,
+	.reset = sun4i_platform_reset,
+	.delay = sun4i_platform_delay,
+	.uart_freq = sunxi_platform_uart_freq,
+};
+
+ARM_PLATFORM(sun7i_a20, "allwinner,sun7i-a20", &sun7i_platform);
 
 static const struct arm_platform sun8i_platform = {
 	.devmap = sunxi_platform_devmap,
