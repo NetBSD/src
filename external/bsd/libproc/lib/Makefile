@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2016/03/15 03:17:59 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2017/10/06 19:18:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -43,7 +43,7 @@ LIBDPLIBS+=	elf ${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
 LIBDPLIBS+=	rtld_db ${NETBSDSRCDIR}/external/bsd/librtld_db/lib
 LIBDPLIBS+=	util ${NETBSDSRCDIR}/lib/libutil
 
-SHLIB_MAJOR=	0
+SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
 .include <bsd.lib.mk>
