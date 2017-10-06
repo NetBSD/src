@@ -1,0 +1,221 @@
+/* $NetBSD: sun4i_a10_ccu.h,v 1.1 2017/10/06 21:09:21 jmcneill Exp $ */
+
+/*-
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _SUN4I_A10_CCU_H
+#define _SUN4I_A10_CCU_H
+
+#define	A10_RST_USB_PHY0	1
+#define	A10_RST_USB_PHY1	2
+#define	A10_RST_USB_PHY2	3
+#define	A10_RST_GPS		4
+#define	A10_RST_DE_BE0		5
+#define	A10_RST_DE_BE1		6
+#define	A10_RST_DE_FE0		7
+#define	A10_RST_DE_FE1		8
+#define	A10_RST_DE_MP		9
+#define	A10_RST_TVE0		10
+#define	A10_RST_TCON0		11
+#define	A10_RST_TVE1		12
+#define	A10_RST_TCON1		13
+#define	A10_RST_CSI0		14
+#define	A10_RST_CSI1		15
+#define	A10_RST_VE		16
+#define	A10_RST_ACE		17
+#define	A10_RST_LVDS		18
+#define	A10_RST_GPU		19
+#define	A10_RST_HDMI_H		20
+#define	A10_RST_HDMI_SYS	21
+#define	A10_RST_HDMI_AUDIO_DM	22
+
+#define	A10_CLK_HOSC		1
+#define	A10_CLK_PLL_CORE	2
+#define	A10_CLK_PLL_AUDIO_BASE	3
+#define	A10_CLK_PLL_AUDIO	4
+#define	A10_CLK_PLL_AUDIO_2X	5
+#define	A10_CLK_PLL_AUDIO_4X	6
+#define	A10_CLK_PLL_AUDIO_8X	7
+#define	A10_CLK_PLL_VIDEO0	8
+#define	A10_CLK_PLL_VIDEO0_2X	9
+#define	A10_CLK_PLL_VE		10
+#define	A10_CLK_PLL_DDR_BASE	11
+#define	A10_CLK_PLL_DDR		12
+#define	A10_CLK_PLL_DDR_OTHER	13
+#define	A10_CLK_PLL_PERIPH_BASE	14
+#define	A10_CLK_PLL_PERIPH	15
+#define	A10_CLK_PLL_PERIPH_SATA	16
+#define	A10_CLK_PLL_VIDEO1	17
+#define	A10_CLK_PLL_VIDEO1_2X	18
+#define	A10_CLK_PLL_GPU		19
+#define	A10_CLK_CPU		20
+#define	A10_CLK_AXI		21
+#define	A10_CLK_AXI_DRAM	22
+#define	A10_CLK_AHB		23
+#define	A10_CLK_APB0		24
+#define	A10_CLK_APB1		25
+#define	A10_CLK_AHB_OTG		26
+#define	A10_CLK_AHB_EHCI0	27
+#define	A10_CLK_AHB_OHCI0	28
+#define	A10_CLK_AHB_EHCI1	29
+#define	A10_CLK_AHB_OHCI1	30
+#define	A10_CLK_AHB_SS		31
+#define	A10_CLK_AHB_DMA		32
+#define	A10_CLK_AHB_BIST	33
+#define	A10_CLK_AHB_MMC0	34
+#define	A10_CLK_AHB_MMC1	35
+#define	A10_CLK_AHB_MMC2	36
+#define	A10_CLK_AHB_MMC3	37
+#define	A10_CLK_AHB_MS		38
+#define	A10_CLK_AHB_NAND	39
+#define	A10_CLK_AHB_SDRAM	40
+#define	A10_CLK_AHB_ACE		41
+#define	A10_CLK_AHB_EMAC	42
+#define	A10_CLK_AHB_TS		43
+#define	A10_CLK_AHB_SPI0	44
+#define	A10_CLK_AHB_SPI1	45
+#define	A10_CLK_AHB_SPI2	46
+#define	A10_CLK_AHB_SPI3	47
+#define	A10_CLK_AHB_PATA	48
+#define	A10_CLK_AHB_SATA	49
+#define	A10_CLK_AHB_GPS		50
+#define	A10_CLK_AHB_HSTIMER	51
+#define	A10_CLK_AHB_VE		52
+#define	A10_CLK_AHB_TVD		53
+#define	A10_CLK_AHB_TVE0	54
+#define	A10_CLK_AHB_TVE1	55
+#define	A10_CLK_AHB_LCD0	56
+#define	A10_CLK_AHB_LCD1	57
+#define	A10_CLK_AHB_CSI0	58
+#define	A10_CLK_AHB_CSI1	59
+#define	A10_CLK_AHB_HDMI0	60
+#define	A10_CLK_AHB_HDMI1	61
+#define	A10_CLK_AHB_DE_BE0	62
+#define	A10_CLK_AHB_DE_BE1	63
+#define	A10_CLK_AHB_DE_FE0	64
+#define	A10_CLK_AHB_DE_FE1	65
+#define	A10_CLK_AHB_GMAC	66
+#define	A10_CLK_AHB_MP		67
+#define	A10_CLK_AHB_GPU		68
+#define	A10_CLK_APB0_CODEC	69
+#define	A10_CLK_APB0_SPDIF	70
+#define	A10_CLK_APB0_I2S0	71
+#define	A10_CLK_APB0_AC97	72
+#define	A10_CLK_APB0_I2S1	73
+#define	A10_CLK_APB0_PIO	74
+#define	A10_CLK_APB0_IR0	75
+#define	A10_CLK_APB0_IR1	76
+#define	A10_CLK_APB0_I2S2	77
+#define	A10_CLK_APB0_KEYPAD	78
+#define	A10_CLK_APB1_I2C0	79
+#define	A10_CLK_APB1_I2C1	80
+#define	A10_CLK_APB1_I2C2	81
+#define	A10_CLK_APB1_I2C3	82
+#define	A10_CLK_APB1_CAN	83
+#define	A10_CLK_APB1_SCR	84
+#define	A10_CLK_APB1_PS20	85
+#define	A10_CLK_APB1_PS21	86
+#define	A10_CLK_APB1_I2C4	87
+#define	A10_CLK_APB1_UART0	88
+#define	A10_CLK_APB1_UART1	89
+#define	A10_CLK_APB1_UART2	90
+#define	A10_CLK_APB1_UART3	91
+#define	A10_CLK_APB1_UART4	92
+#define	A10_CLK_APB1_UART5	93
+#define	A10_CLK_APB1_UART6	94
+#define	A10_CLK_APB1_UART7	95
+#define	A10_CLK_NAND		96
+#define	A10_CLK_MS		97
+#define	A10_CLK_MMC0		98
+#define	A10_CLK_MMC0_OUTPUT	99
+#define	A10_CLK_MMC0_SAMPLE	100
+#define	A10_CLK_MMC1		101
+#define	A10_CLK_MMC1_OUTPUT	102
+#define	A10_CLK_MMC1_SAMPLE	103
+#define	A10_CLK_MMC2		104
+#define	A10_CLK_MMC2_OUTPUT	105
+#define	A10_CLK_MMC2_SAMPLE	106
+#define	A10_CLK_MMC3		107
+#define	A10_CLK_MMC3_OUTPUT	108
+#define	A10_CLK_MMC3_SAMPLE	109
+#define	A10_CLK_TS		110
+#define	A10_CLK_SS		111
+#define	A10_CLK_SPI0		112
+#define	A10_CLK_SPI1		113
+#define	A10_CLK_SPI2		114
+#define	A10_CLK_PATA		115
+#define	A10_CLK_IR0		116
+#define	A10_CLK_IR1		117
+#define	A10_CLK_I2S0		118
+#define	A10_CLK_AC97		119
+#define	A10_CLK_SPDIF		120
+#define	A10_CLK_KEYPAD		121
+#define	A10_CLK_SATA		122
+#define	A10_CLK_USB_OHCI0	123
+#define	A10_CLK_USB_OHCI1	124
+#define	A10_CLK_USB_PHY		125
+#define	A10_CLK_GPS		126
+#define	A10_CLK_SPI3		127
+#define	A10_CLK_I2S1		128
+#define	A10_CLK_I2S2		129
+#define	A10_CLK_DRAM_VE		130
+#define	A10_CLK_DRAM_CSI0	131
+#define	A10_CLK_DRAM_CSI1	132
+#define	A10_CLK_DRAM_TS		133
+#define	A10_CLK_DRAM_TVD	134
+#define	A10_CLK_DRAM_TVE0	135
+#define	A10_CLK_DRAM_TVE1	136
+#define	A10_CLK_DRAM_OUT	137
+#define	A10_CLK_DRAM_DE_FE1	138
+#define	A10_CLK_DRAM_DE_FE0	139
+#define	A10_CLK_DRAM_DE_BE0	140
+#define	A10_CLK_DRAM_DE_BE1	141
+#define	A10_CLK_DRAM_MP		142
+#define	A10_CLK_DRAM_ACE	143
+#define	A10_CLK_DE_BE0		144
+#define	A10_CLK_DE_BE1		145
+#define	A10_CLK_DE_FE0		146
+#define	A10_CLK_DE_FE1		147
+#define	A10_CLK_DE_MP		148
+#define	A10_CLK_TCON0_CH0	149
+#define	A10_CLK_TCON1_CH0	150
+#define	A10_CLK_CSI_SCLK	151
+#define	A10_CLK_TVD_SCLK2	152
+#define	A10_CLK_TVD		153
+#define	A10_CLK_TCON0_CH1_SCLK2	154
+#define	A10_CLK_TCON0_CH1	155
+#define	A10_CLK_TCON1_CH1_SCLK2	156
+#define	A10_CLK_TCON1_CH1	157
+#define	A10_CLK_CSI0		158
+#define	A10_CLK_CSI1		159
+#define	A10_CLK_CODEC		160
+#define	A10_CLK_VE		161
+#define	A10_CLK_AVS		162
+#define	A10_CLK_ACE		163
+#define	A10_CLK_HDMI		164
+#define	A10_CLK_GPU		165
+
+#endif /* !_SUN4I_A10_CCU_H */
