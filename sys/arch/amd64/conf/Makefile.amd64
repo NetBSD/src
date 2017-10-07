@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.58 2017/08/09 19:11:13 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.59 2017/10/07 10:16:47 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -61,7 +61,11 @@ KERN_AS=	library
 ## (5) link settings
 ##
 TEXTADDR?=	0xffffffff80200000
+.if defined(KASLR)
+EXTRA_LINKFLAGS=	-z max-page-size=0x200000 -r -d
+.else
 EXTRA_LINKFLAGS=	-z max-page-size=0x200000
+.endif
 LINKFLAGS_NORMAL=	-X
 KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript
 
