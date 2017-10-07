@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.2 2017/08/27 16:05:26 jmcneill Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.3 2017/10/07 21:53:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.2 2017/08/27 16:05:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.3 2017/10/07 21:53:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.2 2017/08/27 16:05:26 jmcneill Exp
 
 static const struct of_compat_data compat_data[] = {
 	A10_CODEC_COMPATDATA,
+	A31_CODEC_COMPATDATA,
 	H3_CODEC_COMPATDATA,
 	{ NULL }
 };
