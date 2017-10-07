@@ -1,6 +1,5 @@
-/*	$NetBSD: sftp-server.c,v 1.16 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.110 2016/09/12 01:22:38 deraadt Exp $ */
-
+/*	$NetBSD: sftp-server.c,v 1.17 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.111 2017/04/04 00:24:56 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -18,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.16 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.17 2017/10/07 19:39:19 christos Exp $");
 
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
@@ -689,8 +688,8 @@ process_open(u_int32_t id)
 	logit("open \"%s\" flags %s mode 0%o",
 	    name, string_from_portable(pflags), mode);
 	if (readonly &&
-	    ((flags & O_ACCMODE) == O_WRONLY ||
-	    (flags & O_ACCMODE) == O_RDWR)) {
+	    ((flags & O_ACCMODE) != O_RDONLY ||
+	    (flags & (O_CREAT|O_TRUNC)) != 0)) {
 		verbose("Refusing open request in read-only mode");
 		status = SSH2_FX_PERMISSION_DENIED;
 	} else {

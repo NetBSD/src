@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-gss.h,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: ssh-gss.h,v 1.11 2014/02/26 20:28:44 djm Exp $ */
+/*	$NetBSD: ssh-gss.h,v 1.8 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: ssh-gss.h,v 1.12 2017/06/24 06:34:38 djm Exp $ */
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
  *
@@ -108,6 +108,7 @@ OM_uint32 ssh_gssapi_checkmic(Gssctxt *, gss_buffer_t, gss_buffer_t);
 void ssh_gssapi_do_child(char ***, u_int *);
 void ssh_gssapi_cleanup_creds(void);
 void ssh_gssapi_storecreds(void);
+const char *ssh_gssapi_displayname(void);
 
 #endif /* GSSAPI */
 

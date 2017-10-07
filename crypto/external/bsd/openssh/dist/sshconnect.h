@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: sshconnect.h,v 1.29 2015/11/15 22:26:49 jcs Exp $ */
+/*	$NetBSD: sshconnect.h,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: sshconnect.h,v 1.31 2017/09/12 06:32:07 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,14 +27,16 @@
 
 typedef struct Sensitive Sensitive;
 struct Sensitive {
-	Key	**keys;
-	int	nkeys;
-	int	external_keysign;
+	struct sshkey	**keys;
+	int		nkeys;
+	int		external_keysign;
 };
 
 struct addrinfo;
-int	 ssh_connect(const char *, struct addrinfo *, struct sockaddr_storage *,
-    u_short, int, int, int *, int, int);
+struct ssh;
+
+int	 ssh_connect(struct ssh *, const char *, struct addrinfo *,
+	    struct sockaddr_storage *, u_short, int, int, int *, int, int);
 void	 ssh_kill_proxy_command(void);
 
 void	 ssh_login(Sensitive *, const char *, struct sockaddr *, u_short,
@@ -42,7 +44,7 @@ void	 ssh_login(Sensitive *, const char *, struct sockaddr *, u_short,
 
 void	 ssh_exchange_identification(int);
 
-int	 verify_host_key(char *, struct sockaddr *, Key *);
+int	 verify_host_key(char *, struct sockaddr *, struct sshkey *);
 
 void	 get_hostfile_hostname_ipaddr(char *, struct sockaddr *, u_short,
     char **, char **);
@@ -56,7 +58,7 @@ void	 ssh_userauth2(const char *, const char *, char *, Sensitive *);
 void	 ssh_put_password(char *);
 int	 ssh_local_cmd(const char *);
 
-void	 maybe_add_key_to_agent(char *, Key *, char *, char *);
+void	 maybe_add_key_to_agent(char *, struct sshkey *, char *, char *);
 
 /*
  * Macros to raise/lower permissions.
