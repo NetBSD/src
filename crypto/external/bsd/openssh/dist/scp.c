@@ -1,4 +1,4 @@
-/* $OpenBSD: scp.c,v 1.187 2016/09/12 01:22:38 deraadt Exp $ */
+/* $OpenBSD: scp.c,v 1.192 2017/05/31 09:15:42 deraadt Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -86,6 +86,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -385,7 +386,11 @@ main(int argc, char **argv)
 		switch (ch) {
 		/* User-visible flags. */
 		case '1':
+			fatal("SSH protocol v.1 is no longer supported");
+			break;
 		case '2':
+			/* Ignored */
+			break;
 		case '4':
 		case '6':
 		case 'C':
@@ -894,6 +899,11 @@ rsource(char *name, struct stat *statp)
 	(void) response();
 }
 
+#define TYPE_OVERFLOW(type, val) \
+	((sizeof(type) == 4 && (val) > INT32_MAX) || \
+	 (sizeof(type) == 8 && (val) > INT64_MAX) || \
+	 (sizeof(type) != 4 && sizeof(type) != 8))
+
 void
 sink(int argc, char **argv)
 {
@@ -916,6 +926,9 @@ sink(int argc, char **argv)
 #define	atime	tv[0]
 #define	mtime	tv[1]
 #define	SCREWUP(str)	{ why = str; goto screwup; }
+
+	if (TYPE_OVERFLOW(time_t, 0) || TYPE_OVERFLOW(off_t, 0))
+		SCREWUP("Unexpected off_t/time_t size");
 
 	setimes = targisdir = 0;
 	mask = umask(0);
@@ -975,8 +988,7 @@ sink(int argc, char **argv)
 			ull = strtoull(cp, &cp, 10);
 			if (!cp || *cp++ != ' ')
 				SCREWUP("mtime.sec not delimited");
-			if ((time_t)ull < 0 ||
-			    (unsigned long long)(time_t)ull != ull)
+			if (TYPE_OVERFLOW(time_t, ull))
 				setimes = 0;	/* out of range */
 			mtime.tv_sec = ull;
 			mtime.tv_usec = strtol(cp, &cp, 10);
@@ -988,8 +1000,7 @@ sink(int argc, char **argv)
 			ull = strtoull(cp, &cp, 10);
 			if (!cp || *cp++ != ' ')
 				SCREWUP("atime.sec not delimited");
-			if ((time_t)ull < 0 ||
-			    (unsigned long long)(time_t)ull != ull)
+			if (TYPE_OVERFLOW(time_t, ull))
 				setimes = 0;	/* out of range */
 			atime.tv_sec = ull;
 			atime.tv_usec = strtol(cp, &cp, 10);
@@ -1022,10 +1033,15 @@ sink(int argc, char **argv)
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 
-		for (size = 0; isdigit((unsigned char)*cp);)
-			size = size * 10 + (*cp++ - '0');
-		if (*cp++ != ' ')
+		if (!isdigit((unsigned char)*cp))
+			SCREWUP("size not present");
+		ull = strtoull(cp, &cp, 10);
+		if (!cp || *cp++ != ' ')
 			SCREWUP("size not delimited");
+		if (TYPE_OVERFLOW(off_t, ull))
+			SCREWUP("size out of range");
+		size = (off_t)ull;
+
 		if ((strchr(cp, '/') != NULL) || (strcmp(cp, "..") == 0)) {
 			run_err("error: unexpected filename: %s", cp);
 			exit(1);
@@ -1227,7 +1243,7 @@ void
 usage(void)
 {
 	(void) fprintf(stderr,
-	    "usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]\n"
+	    "usage: scp [-346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]\n"
 	    "           [-l limit] [-o ssh_option] [-P port] [-S program]\n"
 	    "           [[user@]host1:]file1 ... [[user@]host2:]file2\n");
 	exit(1);
@@ -1317,11 +1333,7 @@ allocbuf(BUF *bp, int fd, int blksize)
 		size = blksize;
 	if (bp->cnt >= size)
 		return (bp);
-	if (bp->buf == NULL)
-		bp->buf = xmalloc(size);
-	else
-		bp->buf = xreallocarray(bp->buf, 1, size);
-	memset(bp->buf, 0, size);
+	bp->buf = xrecallocarray(bp->buf, bp->cnt, size, 1);
 	bp->cnt = size;
 	return (bp);
 }
