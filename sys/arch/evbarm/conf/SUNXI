@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.36 2017/10/07 13:29:28 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.37 2017/10/07 15:13:00 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -183,6 +183,11 @@ ld1		at sdmmc1
 ld2		at sdmmc2
 ld3		at sdmmc3
 ld*		at sdmmc?
+
+# SATA
+ahcisata*	at fdt?			# SATA
+atabus*		at ata?
+wd*		at atabus? drive ?
 
 # Display
 genfb*		at fdt?
