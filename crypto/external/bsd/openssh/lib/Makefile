@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2017/10/07 19:39:19 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2017/10/07 21:14:59 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -57,6 +57,7 @@ packet.c \
 poly1305.c \
 progressmeter.c \
 readpass.c \
+recallocarray.c \
 sc25519.c \
 smult_curve25519_ref.c \
 sshbuf-getput-basic.c \
