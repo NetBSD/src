@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.1 2017/10/07 13:28:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.2 2017/10/07 19:42:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.1 2017/10/07 13:28:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.2 2017/10/07 19:42:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
+#include <sys/gpio.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -54,6 +55,36 @@ static const char * compatible[] = {
 	"allwinner,sun7i-a20-gmac",
 	NULL
 };
+
+static int
+sunxi_gmac_reset(const int phandle)
+{
+	struct fdtbus_gpio_pin *pin_reset;
+	const u_int *reset_delay_us;
+	bool reset_active_low;
+	int len, val;
+
+	pin_reset = fdtbus_gpio_acquire(phandle, "snps,reset-gpio", GPIO_PIN_OUTPUT);
+	if (pin_reset == NULL)
+		return 0;
+
+	reset_delay_us = fdtbus_get_prop(phandle, "snps,reset-delays-us", &len);
+	if (reset_delay_us == NULL || len != 12)
+		return ENXIO;
+
+	reset_active_low = of_hasprop(phandle, "snps,reset-active-low");
+
+	val = reset_active_low ? 1 : 0;
+
+	fdtbus_gpio_write(pin_reset, val);
+	delay(be32toh(reset_delay_us[0]));
+	fdtbus_gpio_write(pin_reset, !val);
+	delay(be32toh(reset_delay_us[1]));
+	fdtbus_gpio_write(pin_reset, val);
+	delay(be32toh(reset_delay_us[2]));
+
+	return 0;
+}
 
 static int
 sunxi_gmac_intr(void *arg)
@@ -76,6 +107,7 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct clk *clk_gmac, *clk_gmac_tx;
+	struct fdtbus_reset *rst_gmac;
 	const char *phy_mode;
 	char intrstr[128];
 	bus_addr_t addr;
@@ -106,6 +138,8 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	rst_gmac = fdtbus_reset_get(phandle, "stmmaceth");
+
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL) {
 		aprint_error(": missing 'phy-mode' property\n");
@@ -131,6 +165,11 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (rst_gmac != NULL && fdtbus_reset_deassert(rst_gmac) != 0) {
+		aprint_error(": couldn't de-assert reset\n");
+		return;
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": GMAC\n");
 
@@ -139,6 +178,9 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	if (sunxi_gmac_reset(phandle) != 0)
+		aprint_error_dev(self, "PHY reset failed\n");
 
 	dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102);
 }
