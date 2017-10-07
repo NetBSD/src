@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.50 2012/07/14 15:06:26 darrenr Exp $	*/
+/*	$NetBSD: rshd.c,v 1.51 2017/10/07 19:23:02 ryo Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.50 2012/07/14 15:06:26 darrenr Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.51 2017/10/07 19:23:02 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,9 @@ __dead static void	 usage(void);
 #define	OPTIONS	"aLln"
 extern int __check_rhosts_file;
 extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
+#ifdef USE_PAM
 static const char incorrect[] = "Login incorrect.";
+#endif
 
 int
 main(int argc, char *argv[])
