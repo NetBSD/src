@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.68 2017/03/24 08:50:17 nonaka Exp $	 */
+/*	$NetBSD: exec.c,v 1.69 2017/10/07 10:26:38 maxv Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -266,6 +266,67 @@ userconf_add(char *cmd)
 	}
 }
 
+struct btinfo_prekern bi_prekern;
+int has_prekern = 0;
+
+static int
+common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
+    physaddr_t loadaddr, int floppy, u_long marks[MARK_MAX])
+{
+	paddr_t kernpa_start, kernpa_end;
+	char prekernpath[] = "/prekern";
+	int fd, flags;
+
+	*extmem = getextmem();
+	*basemem = getbasemem();
+
+	marks[MARK_START] = loadaddr;
+
+	/* Load the prekern (static) */
+	flags = LOAD_KERNEL & ~(LOAD_HDR|COUNT_HDR|LOAD_SYM|COUNT_SYM);
+	if ((fd = loadfile(prekernpath, marks, flags)) == -1)
+		return EIO;
+	close(fd);
+
+	marks[MARK_END] = (1UL << 21); /* the kernel starts at 2MB XXX */
+	kernpa_start = marks[MARK_END];
+
+	/* Load the kernel (dynamic) */
+	flags = (LOAD_KERNEL | LOAD_DYN) & ~(floppy ? LOAD_BACKWARDS : 0);
+	if ((fd = loadfile(file, marks, flags)) == -1)
+		return EIO;
+	close(fd);
+
+	kernpa_end = marks[MARK_END];
+
+	/* If the root fs type is unusual, load its module. */
+	if (fsmod != NULL)
+		module_add_common(fsmod, BM_TYPE_KMOD);
+
+	bi_prekern.kernpa_start = kernpa_start;
+	bi_prekern.kernpa_end = kernpa_end;
+	BI_ADD(&bi_prekern, BTINFO_PREKERN, sizeof(struct btinfo_prekern));
+
+	/*
+	 * Gather some information for the kernel. Do this after the
+	 * "point of no return" to avoid memory leaks.
+	 * (but before DOS might be trashed in the XMS case)
+	 */
+#ifdef PASS_BIOSGEOM
+	bi_getbiosgeom();
+#endif
+#ifdef PASS_MEMMAP
+	bi_getmemmap();
+#endif
+
+	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
+	    (-sizeof(int));
+	image_end = marks[MARK_END];
+	kernel_loaded = true;
+
+	return 0;
+}
+
 static int
 common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
     physaddr_t loadaddr, int floppy, u_long marks[MARK_MAX])
@@ -380,8 +441,13 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 	memset(marks, 0, sizeof(marks));
 
-	error = common_load_kernel(file, &basemem, &extmem, loadaddr, floppy,
-	    marks);
+	if (has_prekern) {
+		error = common_load_prekern(file, &basemem, &extmem, loadaddr,
+		    floppy, marks);
+	} else {
+		error = common_load_kernel(file, &basemem, &extmem, loadaddr,
+		    floppy, marks);
+	}
 	if (error) {
 		errno = error;
 		goto out;

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.43 2017/10/05 02:59:21 christos Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.44 2017/10/07 10:26:39 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -265,6 +265,196 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 
 /* -------------------------------------------------------------------------- */
 
+#define KERNALIGN 4096
+
+/*
+ * Load a dynamic ELF binary into memory. Layout of the memory:
+ * +------------+-----------------+-----------------+-----------------+
+ * | ELF HEADER | SECTION HEADERS | KERNEL SECTIONS | SYMBOL SECTIONS |
+ * +------------+-----------------+-----------------+-----------------+
+ * The ELF HEADER start address is marks[MARK_END]. We then map the rest
+ * by increasing maxp. An alignment is enforced between the code sections.
+ *
+ * The offsets of the SYMBOL SECTIONS are relative to the start address of the
+ * ELF HEADER. We just give the kernel a pointer to the ELF HEADER, and we let
+ * the kernel find the location and number of symbols by itself.
+ */
+static int
+ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
+{
+	Elf_Shdr *shdr;
+	Elf_Addr shpp, addr;
+	int i, j, loaded;
+	size_t size;
+	ssize_t sz, nr;
+	Elf_Addr maxp, elfp = 0;
+	u_long offset = 0;
+
+	/* some ports dont use the offset */
+	(void)&offset;
+
+	maxp = marks[MARK_END];
+
+	internalize_ehdr(elf->e_ident[EI_DATA], elf);
+
+	/* Create a local copy of the SECTION HEADERS. */
+	sz = elf->e_shnum * sizeof(Elf_Shdr);
+	shdr = ALLOC(sz);
+	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
+		WARN(("lseek section headers"));
+		goto out;
+	}
+	nr = read(fd, shdr, sz);
+	if (nr == -1) {
+		WARN(("read section headers"));
+		goto out;
+	}
+	if (nr != sz) {
+		errno = EIO;
+		WARN(("read section headers"));
+		goto out;
+	}
+
+	/*
+	 * Load the ELF HEADER. Update the section offset, to be relative to
+	 * elfp.
+	 */
+	elf->e_phoff = 0;
+	elf->e_shoff = sizeof(Elf_Ehdr);
+	elf->e_phentsize = 0;
+	elf->e_phnum = 0;
+	elfp = maxp;
+	externalize_ehdr(elf->e_ident[EI_DATA], elf);
+	BCOPY(elf, elfp, sizeof(*elf));
+	internalize_ehdr(elf->e_ident[EI_DATA], elf);
+	maxp += sizeof(Elf_Ehdr);
+
+#ifndef _STANDALONE
+	for (i = 0; i < elf->e_shnum; i++)
+		internalize_shdr(elf->e_ident[EI_DATA], &shdr[i]);
+#endif
+
+	/* Save location of the SECTION HEADERS. */
+	shpp = maxp;
+	maxp += roundup(sz, ELFROUND);
+
+	/*
+	 * Load the KERNEL SECTIONS.
+	 */
+	maxp = roundup(maxp, KERNALIGN);
+	for (i = 0; i < elf->e_shnum; i++) {
+		addr = maxp;
+		size = (size_t)shdr[i].sh_size;
+
+		loaded = 0;
+		switch (shdr[i].sh_type) {
+		case SHT_NOBITS:
+			/* Zero out bss. */
+			BZERO(addr, size);
+			loaded = 1;
+			break;
+		case SHT_PROGBITS:
+			if (lseek(fd, shdr[i].sh_offset, SEEK_SET) == -1) {
+				WARN(("lseek section"));
+				goto out;
+			}
+			nr = READ(fd, addr, size);
+			if (nr == -1) {
+				WARN(("read section"));
+				goto out;
+			}
+			if (nr != (ssize_t)size) {
+				errno = EIO;
+				WARN(("read section"));
+				goto out;
+			}
+
+			loaded = 1;
+			break;
+		default:
+			loaded = 0;
+			break;
+		}
+
+		if (loaded) {
+			shdr[i].sh_offset = maxp - elfp;
+			maxp = roundup(maxp + size, KERNALIGN);
+		}
+	}
+
+	/*
+	 * Load the SYMBOL SECTIONS.
+	 */
+	maxp = roundup(maxp, ELFROUND);
+	for (i = 0; i < elf->e_shnum; i++) {
+		addr = maxp;
+		size = (size_t)shdr[i].sh_size;
+
+		switch (shdr[i].sh_type) {
+		case SHT_STRTAB:
+			for (j = 0; j < elf->e_shnum; j++)
+				if (shdr[j].sh_type == SHT_SYMTAB &&
+				    shdr[j].sh_link == (unsigned int)i)
+					goto havesym;
+			if (elf->e_shstrndx == i)
+				goto havesym;
+			/*
+			 * Don't bother with any string table that isn't
+			 * referenced by a symbol table.
+			 */
+			shdr[i].sh_offset = 0;
+			break;
+	havesym:
+		case SHT_REL:
+		case SHT_RELA:
+		case SHT_SYMTAB:
+			if (lseek(fd, shdr[i].sh_offset, SEEK_SET) == -1) {
+				WARN(("lseek symbols"));
+				goto out;
+			}
+			nr = READ(fd, addr, size);
+			if (nr == -1) {
+				WARN(("read symbols"));
+				goto out;
+			}
+			if (nr != (ssize_t)size) {
+				errno = EIO;
+				WARN(("read symbols"));
+				goto out;
+			}
+
+			shdr[i].sh_offset = maxp - elfp;
+			maxp += roundup(size, ELFROUND);
+			break;
+		}
+	}
+	maxp = roundup(maxp, KERNALIGN);
+
+	/*
+	 * Finally, load the SECTION HEADERS.
+	 */
+#ifndef _STANDALONE
+	for (i = 0; i < elf->e_shnum; i++)
+		externalize_shdr(elf->e_ident[EI_DATA], &shdr[i]);
+#endif
+	BCOPY(shdr, shpp, sz);
+
+	DEALLOC(shdr, sz);
+
+	/*
+	 * Just update MARK_SYM and MARK_END without touching the rest.
+	 */
+	marks[MARK_SYM] = LOADADDR(elfp);
+	marks[MARK_END] = LOADADDR(maxp);
+	return 0;
+
+out:
+	DEALLOC(shdr, sz);
+	return 1;
+}
+
+/* -------------------------------------------------------------------------- */
+
 /*
  * See comment below. This function is in charge of loading the SECTION HEADERS.
  */
@@ -485,8 +675,8 @@ out:
  * We just give the kernel a pointer to the ELF HEADER, which is enough for it
  * to find the location and number of symbols by itself later.
  */
-int
-ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
+static int
+ELFNAMEEND(loadfile_static)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf_Phdr *phdr;
 	int i, first;
@@ -629,6 +819,18 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 freephdr:
 	DEALLOC(phdr, sz);
 	return 1;
+}
+
+/* -------------------------------------------------------------------------- */
+
+int
+ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
+{
+	if (flags & LOAD_DYN) {
+		return ELFNAMEEND(loadfile_dynamic)(fd, elf, marks, flags);
+	} else {
+		return ELFNAMEEND(loadfile_static)(fd, elf, marks, flags);
+	}
 }
 
 #endif /* (ELFSIZE == 32 && BOOT_ELF32) || (ELFSIZE == 64 && BOOT_ELF64) */

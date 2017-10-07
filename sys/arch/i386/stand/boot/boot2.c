@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.66 2016/02/03 05:27:53 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.67 2017/10/07 10:26:38 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ void	command_ls(char *);
 #endif
 void	command_quit(char *);
 void	command_boot(char *);
+void	command_pkboot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
 #ifndef SMALL
@@ -137,6 +138,7 @@ const struct bootblk_command commands[] = {
 #endif
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
+	{ "pkboot",	command_pkboot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
 #ifndef SMALL
@@ -467,6 +469,14 @@ command_boot(char *arg)
 			bootit(names[i][1], howto);
 		}
 	}
+}
+
+void
+command_pkboot(char *arg)
+{
+	extern int has_prekern;
+	has_prekern = 1;
+	command_boot(arg);
 }
 
 void

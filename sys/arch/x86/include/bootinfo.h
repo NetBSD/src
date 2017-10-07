@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.26 2017/02/14 13:25:22 nonaka Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.27 2017/10/07 10:26:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -40,6 +40,7 @@
 #define BTINFO_USERCONFCOMMANDS	13
 #define BTINFO_EFI		14
 #define BTINFO_EFIMEMMAP	15
+#define BTINFO_PREKERN		16
 
 #define BTINFO_STR "bootpath", "rootdevice", "bootdisk", "netif", \
     "console", "biosgeom", "symtab", "memmap", "bootwedge", "modulelist", \
@@ -230,6 +231,12 @@ struct btinfo_efi {
 	uint32_t flags;
 #define BI_EFI_32BIT	__BIT(0)	/* 32bit UEFI */
 	uint8_t reserved[12];
+};
+
+struct btinfo_prekern {
+	struct btinfo_common common;
+	uint32_t kernpa_start;
+	uint32_t kernpa_end;
 };
 
 struct btinfo_efimemmap {
