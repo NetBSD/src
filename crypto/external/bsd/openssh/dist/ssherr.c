@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssherr.c,v 1.5 2015/09/13 14:39:16 tim Exp $	*/
+/*	$OpenBSD: ssherr.c,v 1.7 2017/09/12 06:32:08 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssherr.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: ssherr.c,v 1.7 2017/10/07 19:39:19 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -138,6 +138,10 @@ ssh_err(int n)
 		return "Connection corrupted";
 	case SSH_ERR_PROTOCOL_ERROR:
 		return "Protocol error";
+	case SSH_ERR_KEY_LENGTH:
+		return "Invalid key length";
+	case SSH_ERR_NUMBER_TOO_LARGE:
+		return "number is too large";
 	default:
 		{
 			static char buf[1024];
