@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_acafh.c,v 1.4 2017/09/04 17:26:06 phx Exp $ */
+/*	$NetBSD: wdc_acafh.c,v 1.5 2017/10/07 16:05:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003, 2013 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.4 2017/09/04 17:26:06 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.5 2017/10/07 16:05:31 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.4 2017/09/04 17:26:06 phx Exp $");
 
 struct wdc_acafh_slot {
 	struct ata_channel	channel;
-	struct ata_queue	chqueue;
 	struct wdc_regs		wdr;
 };
 
@@ -154,11 +153,11 @@ wdc_acafh_attach_channel(struct wdc_acafh_softc *sc, int chnum)
 	memset(&sc->sc_slots[chnum],0,sizeof(struct wdc_acafh_slot));
 	sc->sc_slots[chnum].channel.ch_channel = chnum;
 	sc->sc_slots[chnum].channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_slots[chnum].channel.ch_queue = &sc->sc_slots[chnum].chqueue;
+	sc->sc_slots[chnum].channel.ch_queue = ata_queue_alloc(1);
 
 	wdc_acafh_map_channel(sc, chnum);
 
-	wdc_init_shadow_regs(&sc->sc_slots[chnum].channel);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_slots[chnum].channel));
 	wdcattach(&sc->sc_slots[chnum].channel);
 
 #ifdef WDC_ACAFH_DEBUG

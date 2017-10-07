@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.124 2013/10/12 16:49:01 christos Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.125 2017/10/07 16:05:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.124 2013/10/12 16:49:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.125 2017/10/07 16:05:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,6 @@ struct wdc_pcmcia_softc {
 	struct wdc_softc sc_wdcdev;
 	struct ata_channel *wdc_chanlist[1];
 	struct ata_channel ata_channel;
-	struct ata_queue wdc_chqueue;
 	struct wdc_regs wdc_regs;
 
 	struct pcmcia_function *sc_pf;
@@ -296,11 +295,11 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
+	sc->ata_channel.ch_queue = ata_queue_alloc(1);
 	wdcp = pcmcia_product_lookup(pa, wdc_pcmcia_products,
 	    wdc_pcmcia_nproducts, sizeof(wdc_pcmcia_products[0]), NULL);
 	sc->sc_wdcdev.wdc_maxdrives = wdcp ? wdcp->wdc_ndrive : 2;
-	wdc_init_shadow_regs(&sc->ata_channel);
+	wdc_init_shadow_regs(wdr);
 
 	error = wdc_pcmcia_enable(self, 1);
 	if (error)
