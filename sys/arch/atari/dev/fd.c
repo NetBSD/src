@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.84 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: fd.c,v 1.85 2017/10/07 16:05:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85 2017/10/07 16:05:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 		fdsoftc.unit  = i;
 		fdsoftc.flags = 0;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdtestdrv, &fdsoftc,
-		    &lock_stat, 0);
+		    &lock_stat, 0, NULL);
 		st_dmafree(&fdsoftc, &lock_stat);
 
 		if ((fdsoftc.flags & FLPF_NOTRESP) == 0) {
@@ -532,7 +532,7 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 		sc->flags |= FLPF_INOPEN|FLPF_GETSTAT;
 		s = splbio();
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstatus, sc,
-		    &lock_stat, 0);
+		    &lock_stat, 0, NULL);
 		while ((sc->flags & FLPF_GETSTAT) != 0)
 			tsleep((void *)sc, PRIBIO, "fdopen", 0);
 		splx(s);
@@ -638,7 +638,7 @@ fdstrategy(struct buf *bp)
 			callout_stop(&sc->sc_motor_ch);
 		fd_state = FLP_IDLE;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc,
-		    &lock_stat, 0);
+		    &lock_stat, 0, NULL);
 	}
 	splx(s);
 
@@ -769,7 +769,8 @@ fddone(register struct fd_softc *sc)
 #ifdef FLP_DEBUG
 	printf("fddone: Staring job on unit %d\n", sc1->unit);
 #endif
-	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0);
+	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0,
+	    NULL);
 }
 
 static int
@@ -1187,7 +1188,7 @@ fdmotoroff(struct fd_softc *sc)
 			int tmp;
 
 			st_dmagrab((dma_farg)fdcint, (dma_farg)fdmoff, sc,
-			    &tmp, 0);
+			    &tmp, 0, NULL);
 		} else
 			fd_state = FLP_IDLE;
 		break;
