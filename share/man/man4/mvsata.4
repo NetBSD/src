@@ -1,4 +1,4 @@
-.\" $NetBSD: mvsata.4,v 1.5 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: mvsata.4,v 1.6 2017/10/07 17:35:48 jdolecek Exp $
 .\"
 .\" Copyright (c) 2009 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 19, 2009
+.Dd October 7, 2017
 .Dt MVSATA 4
 .Os
 .Sh NAME
@@ -46,17 +46,47 @@ The following controllers are supported by the
 .Nm
 driver:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Adaptec RAID 1420SA
-.It Adaptec RAID 1430SA
-.It Marvell 88SX50xx Hercules-I
-.It Marvell 88SX60xx Hercules-II
-.It Marvell 88SX70xx Hercules-II
-.It Triones Technologies RocketRAID 2310 RAID card
+.Bl -tag -width "Gen IIe" -offset "xxxx" -compact
+.It Gen I
+.Bl -bullet -compact
+.It
+SATA 1.5Gbps; no support for NCQ, PMP, ATAPI
+.It
+Supported controllers:
+.Bl -bullet -compact
+.It
+Marvell 88SX50xx Hercules-I
 .El
-.Pp
-The 88SX60xx and later support Native Command Queuing.
-The 88SX70xx also supports ATAPI.
+.El
+.It Gen II
+.Bl -bullet -compact
+.It
+SATA 3Gbps, NCQ, and PMP support; no ATAPI support
+.It
+Supported controllers:
+.Bl -bullet -compact
+.It
+Adaptec RAID 1420SA
+.It
+Marvell 88SX60xx Hercules-II
+.El
+.El
+.It Gen IIe
+.Bl -bullet -compact
+.It
+SATA 3Gbps, NCQ, PMP, ATAPI support
+.It
+Supported controllers:
+.Bl -bullet -compact
+.It
+Adaptec RAID 1430SA
+.It
+Marvell 88SX70xx Hercules-II
+.It
+Triones Technologies RocketRAID 2310 RAID card
+.El
+.El
+.El
 .Sh SEE ALSO
 .Xr ata 4 ,
 .Xr atapi 4 ,
@@ -67,16 +97,20 @@ The
 .Nm
 driver first appeared in
 .Nx 6.0 .
+NCQ support was added, and ATAPI support enabled, in
+.Nx
+on October 7, 2017 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
 .An KIYOHARA Takashi Aq Mt kiyohara@kk.iij4u.or.jp .
+NCQ support was added by
+.An Jaromir Dolecek Aq Mt jdolecek@NetBSD.org .
 .Sh BUGS
 .Bl -tag -width Ds -compact
-.It SATA Native Command Queuing is not yet supported .
+.It NCQ is not enabled on Gen II controllers yet .
 .It Device hot swapping is not yet supported .
-.It ATAPI is not yet tested .
 .It Marvell's Software RAID is not yet supported by the
 .Xr ataraid 4
 driver.
