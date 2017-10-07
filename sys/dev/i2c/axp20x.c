@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.7 2017/08/29 10:10:54 jmcneill Exp $ */
+/* $NetBSD: axp20x.c,v 1.8 2017/10/07 18:22:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.7 2017/08/29 10:10:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.8 2017/10/07 18:22:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,6 +632,31 @@ axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
 	}
 }
 
+int
+axp20x_get_dcdc(device_t dev, int dcdc, int *pmvolt, bool poll)
+{
+	struct axp20x_softc *sc = device_private(dev);
+	uint8_t reg;
+	int error;
+
+	switch (dcdc) {
+	case AXP20X_DCDC2:
+		error = axp20x_read(sc, AXP_DCDC2, &reg, 1, poll ? I2C_F_POLL : 0);
+		if (error != 0)
+			return error;
+		*pmvolt = __SHIFTOUT(reg, AXP_DCDC2_VOLT_MASK) * 25 + 700;
+		return 0;
+	case AXP20X_DCDC3:
+		error = axp20x_read(sc, AXP_DCDC3, &reg, 1, poll ? I2C_F_POLL : 0);
+		if (error != 0)
+			return error;
+		*pmvolt = __SHIFTOUT(reg, AXP_DCDC3_VOLT_MASK) * 25 + 700;
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
 void
 axp20x_poweroff(device_t dev)
 {
@@ -643,6 +668,122 @@ axp20x_poweroff(device_t dev)
 }
 
 #ifdef FDT
+static const struct axp20xregdef {
+	const char *name;
+	int dcdc;
+} axp20x_regdefs[] = {
+	{ "dcdc2", AXP20X_DCDC2 },
+	{ "dcdc3", AXP20X_DCDC3 },
+};
+
+struct axp20xreg_softc {
+	device_t	sc_dev;
+	int		sc_phandle;
+	const struct axp20xregdef *sc_regdef;
+};
+
+struct axp20xreg_attach_args {
+	int		reg_phandle;
+};
+
+static int
+axp20xreg_acquire(device_t dev)
+{
+	return 0;
+}
+
+static void
+axp20xreg_release(device_t dev)
+{
+}
+
+static int
+axp20xreg_enable(device_t dev, bool enable)
+{
+	/* TODO */
+	return enable ? 0 : EINVAL;
+}
+
+static int
+axp20xreg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
+{
+	struct axp20xreg_softc * const sc = device_private(dev);
+	
+	return axp20x_set_dcdc(device_parent(dev), sc->sc_regdef->dcdc, min_uvol / 1000, true);
+}
+
+static int
+axp20xreg_get_voltage(device_t dev, u_int *puvol)
+{
+	struct axp20xreg_softc * const sc = device_private(dev);
+	int mvol, error;
+
+	error = axp20x_get_dcdc(device_parent(dev), sc->sc_regdef->dcdc, &mvol, true);
+	if (error != 0)
+		return error;
+
+	*puvol = mvol * 1000;
+	return 0;
+}
+
+static struct fdtbus_regulator_controller_func axp20xreg_funcs = {
+	.acquire = axp20xreg_acquire,
+	.release = axp20xreg_release,
+	.enable = axp20xreg_enable,
+	.set_voltage = axp20xreg_set_voltage,
+	.get_voltage = axp20xreg_get_voltage,
+};
+
+static const struct axp20xregdef *
+axp20xreg_lookup(int phandle)
+{
+	const char *name;
+	int n;
+
+	name = fdtbus_get_string(phandle, "name");
+	if (name == NULL)
+		return NULL;
+
+	for (n = 0; n < __arraycount(axp20x_regdefs); n++)
+		if (strcmp(name, axp20x_regdefs[n].name) == 0)
+			return &axp20x_regdefs[n];
+
+	return NULL;
+}
+
+static int
+axp20xreg_match(device_t parent, cfdata_t match, void *aux)
+{
+	const struct axp20xreg_attach_args *reg = aux;
+
+	return axp20xreg_lookup(reg->reg_phandle) != NULL;
+}
+
+static void
+axp20xreg_attach(device_t parent, device_t self, void *aux)
+{
+	struct axp20xreg_softc * const sc = device_private(self);
+	const struct axp20xreg_attach_args *reg = aux;
+	const char *regulator_name;
+
+	sc->sc_dev = self;
+	sc->sc_phandle = reg->reg_phandle;
+	sc->sc_regdef = axp20xreg_lookup(reg->reg_phandle);
+
+	regulator_name = fdtbus_get_string(reg->reg_phandle, "regulator-name");
+
+	aprint_naive("\n");
+	if (regulator_name)
+		aprint_normal(": %s (%s)\n", sc->sc_regdef->name, regulator_name);
+	else
+		aprint_normal(": %s\n", sc->sc_regdef->name);
+
+	fdtbus_register_regulator_controller(self, sc->sc_phandle, &axp20xreg_funcs);
+}
+
+CFATTACH_DECL_NEW(axp20xreg, sizeof(struct axp20xreg_softc),
+    axp20xreg_match, axp20xreg_attach, NULL, NULL);
+
 static void
 axp20x_fdt_poweroff(device_t dev)
 {
@@ -657,7 +798,18 @@ static struct fdtbus_power_controller_func axp20x_fdt_power_funcs = {
 static void
 axp20x_fdt_attach(struct axp20x_softc *sc)
 {
+	int regulators_phandle, child;
+
 	fdtbus_register_power_controller(sc->sc_dev, sc->sc_phandle,
 	    &axp20x_fdt_power_funcs);
+
+	regulators_phandle = of_find_firstchild_byname(sc->sc_phandle, "regulators");
+	if (regulators_phandle == -1)
+		return;
+
+	for (child = OF_child(regulators_phandle); child; child = OF_peer(child)) {
+		struct axp20xreg_attach_args reg = { .reg_phandle = child };
+		config_found(sc->sc_dev, &reg, NULL);
+	}
 }
 #endif /* FDT */
