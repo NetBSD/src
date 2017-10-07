@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh_api.c,v 1.6 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: ssh_api.c,v 1.7 2016/05/04 14:22:33 markus Exp $ */
+/*	$NetBSD: ssh_api.c,v 1.7 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: ssh_api.c,v 1.8 2017/04/30 23:13:25 djm Exp $ */
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
  *
@@ -17,9 +17,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh_api.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: ssh_api.c,v 1.7 2017/10/07 19:39:19 christos Exp $");
 
-#include "ssh1.h" /* For SSH_MSG_NONE */
 #include "ssh_api.h"
 #include "compat.h"
 #include "log.h"
@@ -368,7 +367,6 @@ _ssh_read_banner(struct ssh *ssh, char **bannerp)
 	}
 	if (remote_major != 2)
 		return SSH_ERR_PROTOCOL_MISMATCH;
-	enable_compat20();
 	chop(buf);
 	debug("Remote version string %.100s", buf);
 	if ((*bannerp = strdup(buf)) == NULL)

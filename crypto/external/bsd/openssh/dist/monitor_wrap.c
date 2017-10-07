@@ -1,6 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.17 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.89 2016/08/13 17:47:41 markus Exp $ */
-
+/*	$NetBSD: monitor_wrap.c,v 1.18 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.94 2017/10/02 19:33:20 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -28,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.17 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.18 2017/10/07 19:39:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -214,7 +213,7 @@ mm_choose_dh(int min, int nbits, int max)
 #endif
 
 int
-mm_key_sign(Key *key, u_char **sigp, u_int *lenp,
+mm_key_sign(struct sshkey *key, u_char **sigp, u_int *lenp,
     const u_char *data, u_int datalen, const char *hostkey_alg)
 {
 	struct kex *kex = *pmonitor->m_pkex;
@@ -240,6 +239,7 @@ mm_key_sign(Key *key, u_char **sigp, u_int *lenp,
 struct passwd *
 mm_getpwnamallow(const char *username)
 {
+	struct ssh *ssh = active_state;		/* XXX */
 	Buffer m;
 	struct passwd *pw;
 	u_int len, i;
@@ -283,12 +283,20 @@ out:
 		for (i = 0; i < newopts->nx; i++) \
 			newopts->x[i] = buffer_get_string(&m, NULL); \
 	} while (0)
+#define M_CP_STRARRAYOPT_ALLOC(x, nx) do { \
+		newopts->x = newopts->nx == 0 ? \
+		    NULL : xcalloc(newopts->nx, sizeof(*newopts->x)); \
+		M_CP_STRARRAYOPT(x, nx); \
+	} while (0)
 	/* See comment in servconf.h */
 	COPY_MATCH_STRING_OPTS();
 #undef M_CP_STROPT
 #undef M_CP_STRARRAYOPT
+#undef M_CP_STRARRAYOPT_ALLOC
 
 	copy_set_server_options(&options, newopts, 1);
+	log_change_level(options.log_level);
+	process_permitopen(ssh, &options);
 	free(newopts);
 
 	buffer_free(&m);
@@ -365,7 +373,8 @@ mm_auth_password(Authctxt *authctxt, const char *password)
 }
 
 int
-mm_user_key_allowed(struct passwd *pw, Key *key, int pubkey_auth_attempt)
+mm_user_key_allowed(struct passwd *pw, struct sshkey *key,
+    int pubkey_auth_attempt)
 {
 	return (mm_key_allowed(MM_USERKEY, NULL, NULL, key,
 	    pubkey_auth_attempt));
@@ -373,14 +382,14 @@ mm_user_key_allowed(struct passwd *pw, Key *key, int pubkey_auth_attempt)
 
 int
 mm_hostbased_key_allowed(struct passwd *pw, const char *user, const char *host,
-    Key *key)
+    struct sshkey *key)
 {
 	return (mm_key_allowed(MM_HOSTKEY, user, host, key, 0));
 }
 
 int
 mm_key_allowed(enum mm_keytype type, const char *user, const char *host,
-    Key *key, int pubkey_auth_attempt)
+    struct sshkey *key, int pubkey_auth_attempt)
 {
 	Buffer m;
 	u_char *blob;
@@ -425,12 +434,13 @@ mm_key_allowed(enum mm_keytype type, const char *user, const char *host,
  */
 
 int
-mm_key_verify(Key *key, u_char *sig, u_int siglen, u_char *data, u_int datalen)
+mm_sshkey_verify(const struct sshkey *key, const u_char *sig, size_t siglen,
+    const u_char *data, size_t datalen, u_int compat)
 {
 	Buffer m;
 	u_char *blob;
 	u_int len;
-	int verified = 0;
+	u_int encoded_ret = 0;
 
 	debug3("%s entering", __func__);
 
@@ -449,11 +459,13 @@ mm_key_verify(Key *key, u_char *sig, u_int siglen, u_char *data, u_int datalen)
 	debug3("%s: waiting for MONITOR_ANS_KEYVERIFY", __func__);
 	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_KEYVERIFY, &m);
 
-	verified = buffer_get_int(&m);
+	encoded_ret = buffer_get_int(&m);
 
 	buffer_free(&m);
 
-	return (verified);
+	if (encoded_ret != 0)
+		return SSH_ERR_SIGNATURE_INVALID;
+	return 0;
 }
 
 void

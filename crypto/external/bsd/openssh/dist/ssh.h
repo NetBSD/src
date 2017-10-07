@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: ssh.h,v 1.83 2015/12/11 03:19:09 djm Exp $ */
+/*	$NetBSD: ssh.h,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: ssh.h,v 1.87 2017/05/07 23:15:59 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -33,7 +33,7 @@
 
 /*
  * Maximum length of lines in authorized_keys file.
- * Current value permits 16kbit RSA and RSA1 keys and 8kbit DSA keys, with
+ * Current value permits 16kbit RSA keys and 8kbit DSA keys, with
  * some room for options and comments.
  */
 #define SSH_MAX_PUBKEY_BYTES		16384
@@ -48,7 +48,7 @@
 #define PROTOCOL_MAJOR_1	1
 #define PROTOCOL_MINOR_1	5
 
-/* We support both SSH1 and SSH2 */
+/* We support only SSH2 */
 #define PROTOCOL_MAJOR_2	2
 #define PROTOCOL_MINOR_2	0
 
@@ -99,9 +99,6 @@
  * primary group.
  */
 #define SSH_PRIVSEP_USER		"sshd"
-
-/* Minimum modulus size (n) for RSA keys. */
-#define SSH_RSA_MINIMUM_MODULUS_SIZE	768
 
 /* Listen backlog for sshd, ssh-agent and forwarding sockets */
 #define SSH_LISTEN_BACKLOG		128

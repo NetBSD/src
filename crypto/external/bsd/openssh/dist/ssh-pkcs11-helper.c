@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.12 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.12 2016/02/15 09:47:49 dtucker Exp $ */
-
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.13 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.13 2017/05/30 08:52:19 markus Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.12 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.13 2017/10/07 19:39:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -40,7 +39,7 @@ __RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.12 2017/04/18 18:41:46 christos Exp $"
 /* borrows code from sftp-server and ssh-agent */
 
 struct pkcs11_keyinfo {
-	Key		*key;
+	struct sshkey	*key;
 	char		*providername;
 	TAILQ_ENTRY(pkcs11_keyinfo) next;
 };
@@ -58,7 +57,7 @@ Buffer iqueue;
 Buffer oqueue;
 
 static void
-add_key(Key *k, char *name)
+add_key(struct sshkey *k, char *name)
 {
 	struct pkcs11_keyinfo *ki;
 
@@ -85,8 +84,8 @@ del_keys_by_name(char *name)
 }
 
 /* lookup matching 'private' key */
-static Key *
-lookup_key(Key *k)
+static struct sshkey *
+lookup_key(struct sshkey *k)
 {
 	struct pkcs11_keyinfo *ki;
 
@@ -112,7 +111,7 @@ static void
 process_add(void)
 {
 	char *name, *pin;
-	Key **keys;
+	struct sshkey **keys;
 	int i, nkeys;
 	u_char *blob;
 	u_int blen;
@@ -168,7 +167,7 @@ process_sign(void)
 	u_char *blob, *data, *signature = NULL;
 	u_int blen, dlen, slen = 0;
 	int ok = -1;
-	Key *key, *found;
+	struct sshkey *key, *found;
 	Buffer msg;
 
 	blob = get_string(&blen);

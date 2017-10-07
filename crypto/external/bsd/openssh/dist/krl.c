@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.10 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.11 2017/10/07 19:39:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.39 2017/03/10 07:18:32 dtucker Exp $ */
+/* $OpenBSD: krl.c,v 1.40 2017/05/31 09:15:42 deraadt Exp $ */
 
 #include "includes.h"
 #include <sys/param.h>	/* MIN */
@@ -1031,7 +1031,7 @@ ssh_krl_from_blob(struct sshbuf *buf, struct ssh_krl **krlp,
 			}
 		}
 		/* Record keys used to sign the KRL */
-		tmp_ca_used = reallocarray(ca_used, nca_used + 1,
+		tmp_ca_used = recallocarray(ca_used, nca_used, nca_used + 1,
 		    sizeof(*ca_used));
 		if (tmp_ca_used == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;

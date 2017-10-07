@@ -1,5 +1,5 @@
-/*	$NetBSD: serverloop.h,v 1.6 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: serverloop.h,v 1.7 2016/08/13 17:47:41 markus Exp $ */
+/*	$NetBSD: serverloop.h,v 1.7 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: serverloop.h,v 1.8 2017/09/12 06:32:07 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -22,6 +22,8 @@
 #ifndef SERVERLOOP_H
 #define SERVERLOOP_H
 
-void    server_loop2(Authctxt *);
+struct ssh;
+
+void    server_loop2(struct ssh *, Authctxt *);
 
 #endif

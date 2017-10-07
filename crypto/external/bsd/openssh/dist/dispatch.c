@@ -1,5 +1,5 @@
-/*	$NetBSD: dispatch.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: dispatch.c,v 1.27 2015/05/01 07:10:01 djm Exp $ */
+/*	$NetBSD: dispatch.c,v 1.9 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: dispatch.c,v 1.31 2017/05/31 07:00:13 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,13 +25,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dispatch.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.9 2017/10/07 19:39:19 christos Exp $");
 #include <sys/types.h>
 
 #include <signal.h>
 #include <stdarg.h>
 
-#include "ssh1.h"
 #include "ssh2.h"
 #include "log.h"
 #include "dispatch.h"
@@ -40,14 +39,11 @@ __RCSID("$NetBSD: dispatch.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
 #include "ssherr.h"
 
 int
-dispatch_protocol_error(int type, u_int32_t seq, void *ctx)
+dispatch_protocol_error(int type, u_int32_t seq, struct ssh *ssh)
 {
-	struct ssh *ssh = active_state; /* XXX */
 	int r;
 
 	logit("dispatch_protocol_error: type %d seq %u", type, seq);
-	if (!compat20)
-		fatal("protocol error");
 	if ((r = sshpkt_start(ssh, SSH2_MSG_UNIMPLEMENTED)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, seq)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0 ||
@@ -57,7 +53,7 @@ dispatch_protocol_error(int type, u_int32_t seq, void *ctx)
 }
 
 int
-dispatch_protocol_ignore(int type, u_int32_t seq, void *ssh)
+dispatch_protocol_ignore(int type, u_int32_t seq, struct ssh *ssh)
 {
 	logit("dispatch_protocol_ignore: type %d seq %u", type, seq);
 	return 0;
@@ -90,8 +86,7 @@ ssh_dispatch_set(struct ssh *ssh, int type, dispatch_fn *fn)
 }
 
 int
-ssh_dispatch_run(struct ssh *ssh, int mode, volatile sig_atomic_t *done,
-    void *ctxt)
+ssh_dispatch_run(struct ssh *ssh, int mode, volatile sig_atomic_t *done)
 {
 	int r;
 	u_char type;
@@ -116,8 +111,7 @@ ssh_dispatch_run(struct ssh *ssh, int mode, volatile sig_atomic_t *done,
 				ssh->dispatch_skip_packets--;
 				continue;
 			}
-			/* XXX 'ssh' will replace 'ctxt' later */
-			r = (*ssh->dispatch[type])(type, seqnr, ctxt);
+			r = (*ssh->dispatch[type])(type, seqnr, ssh);
 			if (r != 0)
 				return r;
 		} else {
@@ -133,11 +127,10 @@ ssh_dispatch_run(struct ssh *ssh, int mode, volatile sig_atomic_t *done,
 }
 
 void
-ssh_dispatch_run_fatal(struct ssh *ssh, int mode, volatile sig_atomic_t *done,
-    void *ctxt)
+ssh_dispatch_run_fatal(struct ssh *ssh, int mode, volatile sig_atomic_t *done)
 {
 	int r;
 
-	if ((r = ssh_dispatch_run(ssh, mode, done, ctxt)) != 0)
+	if ((r = ssh_dispatch_run(ssh, mode, done)) != 0)
 		sshpkt_fatal(ssh, __func__, r);
 }
