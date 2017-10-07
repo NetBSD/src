@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.13 2016/12/03 09:20:55 maxv Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.14 2017/10/07 10:26:39 maxv Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #define LOAD_ALL	0x007f
 #define LOAD_MINIMAL	0x002f
 #define LOAD_BACKWARDS	0x0050
+#define LOAD_DYN	0x4000
 
 #define COUNT_TEXT	0x0100
 #define COUNT_TEXTA	0x0200
