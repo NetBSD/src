@@ -1487,7 +1487,6 @@ get_lease(struct interface *ifp,
 	if (get_option_uint32(ctx, &lease->renewaltime,
 	    bootp, len, DHO_RENEWALTIME) != 0)
 		lease->renewaltime = 0;
-	lease->renewaltime = 30;
 	if (get_option_uint32(ctx, &lease->rebindtime,
 	    bootp, len, DHO_REBINDTIME) != 0)
 		lease->rebindtime = 0;
@@ -2750,18 +2749,10 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 #endif
 
 	if (state->xid != ntohl(bootp->xid)) {
-		if (state->state != DHS_BOUND && state->state != DHS_NONE) {
+		if (state->state != DHS_BOUND && state->state != DHS_NONE)
 			logdebugx("%s: wrong xid 0x%x (expecting 0x%x) from %s",
 			    ifp->name, ntohl(bootp->xid), state->xid,
 			    inet_ntoa(*from));
-		char old[sizeof(state->leasefile)];
-
-		memcpy(old, state->leasefile, sizeof(old));
-		snprintf(state->leasefile, sizeof(state->leasefile), "/tmp/dhcpcd-wrongxid-0x%x.%d", state->xid, rand());
-		if (write_lease(ifp, bootp, bootp_len) == -1)
-			logerr(__func__);
-		memcpy(state->leasefile, old, sizeof(old));
-		}
 		dhcp_redirect_dhcp(ifp, bootp, bootp_len, from);
 		return;
 	}
