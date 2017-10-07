@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.14 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: dns.c,v 1.35 2015/08/20 22:32:42 deraadt Exp $ */
+/*	$NetBSD: dns.c,v 1.15 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: dns.c,v 1.37 2017/09/14 04:32:21 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.14 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.15 2017/10/07 19:39:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 

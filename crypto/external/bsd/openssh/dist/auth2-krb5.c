@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-krb5.c,v 1.6 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: auth2-krb5.c,v 1.7 2017/10/07 19:39:19 christos Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-krb5.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth2-krb5.c,v 1.7 2017/10/07 19:39:19 christos Exp $");
 
 #include <krb5.h>
 #include <stdio.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: auth2-krb5.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
+#include "ssherr.h"
 #include "monitor_wrap.h"
 #include "misc.h"
 #include "servconf.h"
@@ -48,18 +49,21 @@ __RCSID("$NetBSD: auth2-krb5.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
 extern ServerOptions options;
 
 static int
-userauth_kerberos(Authctxt *authctxt)
+userauth_kerberos(struct ssh *ssh)
 {
 	krb5_data tkt, reply;
-	u_int dlen;
+	size_t dlen;
+	char *passwd;
 	char *client = NULL;
-	int authenticated = 0;
+	int authenticated = 0, r;
 
-	tkt.data = packet_get_string(&dlen);
+	if ((r = sshpkt_get_cstring(ssh, &passwd, &dlen)) != 0 ||
+	     (r = sshpkt_get_end(ssh)) != 0)
+		 fatal("%s: %s", __func__, ssh_err(r));
+
+	tkt.data = passwd;
 	tkt.length = dlen;
-	packet_check_eom();
-
-	if (PRIVSEP(auth_krb5(authctxt, &tkt, &client, &reply))) {
+	if (PRIVSEP(auth_krb5(ssh->authctxt, &tkt, &client, &reply))) {
 		authenticated = 1;
 		if (reply.length)
 			free(reply.data);

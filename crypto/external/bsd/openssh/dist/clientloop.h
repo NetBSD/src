@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.h,v 1.14 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: clientloop.h,v 1.33 2016/09/30 09:19:13 markus Exp $ */
+/*	$NetBSD: clientloop.h,v 1.15 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: clientloop.h,v 1.34 2017/09/12 06:32:07 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,28 +38,31 @@
 
 #include <termios.h>
 
+struct ssh;
+
 /* Client side main loop for the interactive session. */
-int	 client_loop(int, int, int);
-int	 client_x11_get_proto(const char *, const char *, u_int, u_int,
-	    char **, char **);
+int	 client_loop(struct ssh *, int, int, int);
+int	 client_x11_get_proto(struct ssh *, const char *, const char *,
+	    u_int, u_int, char **, char **);
 void	 client_global_request_reply_fwd(int, u_int32_t, void *);
-void	 client_session2_setup(int, int, int, const char *, struct termios *,
-	    int, Buffer *, char **);
-int	 client_request_tun_fwd(int, int, int);
+void	 client_session2_setup(struct ssh *, int, int, int,
+	    const char *, struct termios *, int, Buffer *, char **);
+int	 client_request_tun_fwd(struct ssh *, int, int, int);
 void	 client_stop_mux(void);
 
 /* Escape filter for protocol 2 sessions */
 void	*client_new_escape_filter_ctx(int);
-void	 client_filter_cleanup(int, void *);
-int	 client_simple_escape_filter(Channel *, const char *, int);
+void	 client_filter_cleanup(struct ssh *, int, void *);
+int	 client_simple_escape_filter(struct ssh *, Channel *, const char *, int);
 
 /* Global request confirmation callbacks */
-typedef void global_confirm_cb(int, u_int32_t seq, void *);
+typedef void global_confirm_cb(struct ssh *, int, u_int32_t, void *);
 void	 client_register_global_confirm(global_confirm_cb *, void *);
 
 /* Channel request confirmation callbacks */
 enum confirm_action { CONFIRM_WARN = 0, CONFIRM_CLOSE, CONFIRM_TTY };
-void client_expect_confirm(int, const char *, enum confirm_action);
+void client_expect_confirm(struct ssh *, int, const char *,
+    enum confirm_action);
 
 /* Multiplexing protocol version */
 #define SSHMUX_VER			4
@@ -74,8 +77,8 @@ void client_expect_confirm(int, const char *, enum confirm_action);
 #define SSHMUX_COMMAND_CANCEL_FWD	7	/* Cancel forwarding(s) */
 #define SSHMUX_COMMAND_PROXY		8	/* Open new connection */
 
-void	muxserver_listen(void);
+void	muxserver_listen(struct ssh *);
 int	muxclient(const char *);
-void	mux_exit_message(Channel *, int);
-void	mux_tty_alloc_failed(Channel *);
+void	mux_exit_message(struct ssh *, Channel *, int);
+void	mux_tty_alloc_failed(struct ssh *ssh, Channel *);
 

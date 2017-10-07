@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2017/02/14 09:59:16 rin Exp $
+#	$NetBSD: Makefile,v 1.22 2017/10/07 19:39:19 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,15 +20,12 @@ bufec.c \
 buffer.c \
 canohost.c \
 channels.c \
-cipher-3des1.c \
-cipher-bf1.c \
 cipher-chachapoly.c \
 cipher.c \
 chacha.c \
 cleanup.c \
 compat.c \
 crc32.c \
-deattack.c \
 dh.c \
 dispatch.c \
 dns.c \
@@ -60,7 +57,6 @@ packet.c \
 poly1305.c \
 progressmeter.c \
 readpass.c \
-rsa.c \
 sc25519.c \
 smult_curve25519_ref.c \
 sshbuf-getput-basic.c \
