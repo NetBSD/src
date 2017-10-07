@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.158 2017/04/25 05:36:03 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.159 2017/10/07 16:05:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.158 2017/04/25 05:36:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.159 2017/10/07 16:05:33 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -821,6 +821,21 @@ umass_detach(device_t self, int flags)
 	if (scbus != NULL) {
 		if (scbus->sc_child != NULL)
 			rv = config_detach(scbus->sc_child, flags);
+
+		switch (sc->sc_cmd) {
+		case UMASS_CPROTO_ISD_ATA:
+#if NWD > 0
+			umass_isdata_detach(sc);
+#else
+			aprint_error_dev(self, "isdata not configured\n");
+#endif
+			break;
+
+		default:
+			/* nothing to do */
+			break;
+		}
+
 		free(scbus, M_DEVBUF);
 		sc->bus = NULL;
 	}

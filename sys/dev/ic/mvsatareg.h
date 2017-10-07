@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatareg.h,v 1.3 2012/08/29 16:50:10 jakllsch Exp $	*/
+/*	$NetBSD: mvsatareg.h,v 1.4 2017/10/07 16:05:32 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -261,7 +261,7 @@ struct crqb_gen2e {
 	uint32_t cprdbh;	/* cPRD Desriptor Table Base High Address */
 	uint32_t ctrlflg;	/* Control Flags */
 	uint32_t drbc;		/* Data Region Byte Count */
-	uint32_t atacommand[4];
+	uint8_t atacommand[16];
 } __packed __aligned(8);
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.62 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.63 2017/10/07 16:05:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.62 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.63 2017/10/07 16:05:31 jdolecek Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -794,7 +794,7 @@ falcon_claimed_dma(void)
 			return 0;
 		}
 		if (st_dmagrab((dma_farg)ncr_ctrl_intr, (dma_farg)run_main,
-		    cur_softc, &falcon_lock, 1) == 0)
+		    cur_softc, &falcon_lock, 1, NULL) == 0)
 			return 0;
 	}
 	return 1;
@@ -819,7 +819,7 @@ falcon_reconsider_dma(void)
 		 * waiting in the issue queue.
 		 */
 		st_dmagrab((dma_farg)ncr_ctrl_intr, (dma_farg)run_main,
-		    cur_softc, &falcon_lock, 0);
+		    cur_softc, &falcon_lock, 0, NULL);
 	}
 }
 

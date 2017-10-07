@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.11 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: dma.h,v 1.12 2017/10/07 16:05:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -91,7 +91,7 @@ struct dma {
 #ifdef _KERNEL
 typedef void (*dma_farg)(void*);
 
-int	st_dmagrab(dma_farg, dma_farg, void *, int *, int);
+int	st_dmagrab(dma_farg, dma_farg, void *, int *, int, kmutex_t *);
 void	st_dmafree(void *, int *);
 int	st_dmawanted(void);
 void	st_dmaaddr_set(void *);

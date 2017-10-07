@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.43 2013/10/30 15:37:49 drochner Exp $	*/
+/*	$NetBSD: atareg.h,v 1.44 2017/10/07 16:05:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -94,9 +94,16 @@
 #define	WDCC_RECAL		0x10	/* disk restore code -- resets cntlr */
 
 #define	WDCC_READ		0x20	/* disk read code */
+
+#define	WDCC_READ_LOG_EXT	0x2f
+#define	 WDCC_LOG_PAGE_NCQ	0x10
+#define	 WDCC_LOG_NQ		__BIT(7)
+
 #define	WDCC_WRITE		0x30	/* disk write code */
 #define	 WDCC__LONG		 0x02	/* modifier -- access ecc bytes */
 #define	 WDCC__NORETRY		 0x01	/* modifier -- no retrys */
+
+#define	WDCC_READ_LOG_DMA_EXT	0x47	/* DMA variant of READ_LOG_EXT */
 
 #define	WDCC_FORMAT		0x50	/* disk format code */
 #define	WDCC_DIAGNOSE		0x90	/* controller diagnostic */
@@ -144,6 +151,7 @@
 
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
+#define	WDCC_WRITEDMA_FUA_EXT	0x3d	/* write 48-bit addr with DMA & FUA */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <dev/ata/ataconf.h>
@@ -244,10 +252,16 @@ atacmd_tostatq(int cmd32)
 
 #define WDSMART_CYL		0xc24f
 
+/* parameters uploaded to count register for NCQ */
+#define WDSC_PRIO_HIGH		__BIT(15)
+#define WDSC_PRIO_ISOCHRONOUS	__BIT(14)
+#define WDSC_PRIO_NORMAL	0x0000
+
 /* parameters uploaded to device/heads register */
 #define	WDSD_IBM		0xa0	/* forced to 512 byte sector, ecc */
 #define	WDSD_CHS		0x00	/* cylinder/head/sector addressing */
 #define	WDSD_LBA		0x40	/* logical block addressing */
+#define	WDSD_FUA		0x80	/* Forced Unit Access (FUA) */
 
 /* Commands for ATAPI devices */
 #define	ATAPI_CHECK_POWER_MODE	0xe5
@@ -375,9 +389,11 @@ struct ataparams {
 #define SATA_SIGNAL_GEN1	0x02
 #define SATA_SIGNAL_GEN2	0x04
 #define SATA_SIGNAL_GEN3	0x08
-#define SATA_NATIVE_CMDQ	0x0100
-#define SATA_HOST_PWR_MGMT	0x0200
-#define SATA_PHY_EVNT_CNT	0x0400
+#define SATA_NATIVE_CMDQ	0x0100	/* supp. NCQ feature set */
+#define SATA_HOST_PWR_MGMT	0x0200	/* supp. host-init. pwr mngmt reqs */
+#define SATA_PHY_EVNT_CNT	0x0400	/* supp. SATA Phy Event Counters log */
+#define SATA_UNLOAD_W_NCQ	0x0800	/* supp. unload w/ NCQ commands act */
+#define SATA_NCQ_PRIO		0x1000	/* supp. NCQ priority information */
     uint16_t	atap_sata_reserved;	/* 77: */
     uint16_t	atap_sata_features_supp; /* 78: */
 #define SATA_NONZERO_OFFSETS	0x02

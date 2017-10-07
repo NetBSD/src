@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.62 2016/10/13 17:11:09 jdolecek Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.63 2017/10/07 16:05:33 jdolecek Exp $	*/
 
 
 /*
@@ -70,10 +70,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.62 2016/10/13 17:11:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.63 2017/10/07 16:05:33 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -210,7 +209,7 @@ pciide_common_detach(struct pciide_softc *sc, int flags)
 #endif
 		}
 
-		free(cp->ata_channel.ch_queue, M_DEVBUF);
+		ata_queue_free(cp->ata_channel.ch_queue);
 		cp->ata_channel.atabus = NULL;
 	}
 
@@ -323,7 +322,7 @@ pciide_mapregs_compat(const struct pci_attach_args *pa,
 			goto bad;
 		}
 	}
-	wdc_init_shadow_regs(wdc_cp);
+	wdc_init_shadow_regs(wdr);
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
 	return;
@@ -410,7 +409,7 @@ pciide_mapregs_native(const struct pci_attach_args *pa,
 			goto bad;
 		}
 	}
-	wdc_init_shadow_regs(wdc_cp);
+	wdc_init_shadow_regs(wdr);
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
 	return;
@@ -552,9 +551,6 @@ pciide_pci_intr(void *arg)
 
 		/* If a compat channel skip. */
 		if (cp->compat)
-			continue;
-		/* if this channel not waiting for intr, skip */
-		if ((wdc_cp->ch_flags & ATACH_IRQ_WAIT) == 0)
 			continue;
 
 		crv = wdcintr(wdc_cp);
@@ -877,8 +873,7 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	cp->ata_channel.ch_queue =
-	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT|M_ZERO);
+	cp->ata_channel.ch_queue = ata_queue_alloc(1);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
@@ -1036,7 +1031,7 @@ default_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			wdcattach(&cp->ata_channel);
 			continue;
 		}
-		if (!wdcprobe(&cp->ata_channel)) {
+		if (!wdcprobe(CHAN_TO_WDC_REGS(&cp->ata_channel))) {
 			failreason = "not responding; disabled or no drives?";
 			goto next;
 		}
@@ -1051,7 +1046,7 @@ default_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    PCI_COMMAND_STATUS_REG);
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG,
 		    csr & ~PCI_COMMAND_IO_ENABLE);
-		if (wdcprobe(&cp->ata_channel))
+		if (wdcprobe(CHAN_TO_WDC_REGS(&cp->ata_channel)))
 			failreason = "other hardware responding at addresses";
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG, csr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_buddha.c,v 1.8 2012/07/31 15:50:31 bouyer Exp $	*/
+/*	$NetBSD: wdc_buddha.c,v 1.9 2017/10/07 16:05:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -128,8 +128,7 @@ wdc_buddha_attach(device_t parent, device_t self, void *aux)
 
 		cp->ch_channel = ch;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ch_queue =
-		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+		cp->ch_queue = ata_queue_alloc(1);
 		if (cp->ch_queue == NULL) {
 			aprint_error_dev(self,
 			    "can't allocate memory for command queue\n");
@@ -174,7 +173,7 @@ wdc_buddha_attach(device_t parent, device_t self, void *aux)
 			}
 		}
 
-		wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(wdr);
 		wdcattach(cp);
 	}
 
