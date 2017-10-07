@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.1 2017/10/06 21:09:21 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.2 2017/10/07 12:22:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.1 2017/10/06 21:09:21 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.2 2017/10/07 12:22:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -184,6 +184,10 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BITS(25,24),		/* sel */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO),
+	SUNXI_CCU_PHASE(A10_CLK_MMC0_SAMPLE, "mmc0_sample", "mmc0",
+	    SD0_SCLK_CFG_REG, __BITS(22,20)),
+	SUNXI_CCU_PHASE(A10_CLK_MMC0_OUTPUT, "mmc0_output", "mmc0",
+	    SD0_SCLK_CFG_REG, __BITS(10,8)),
 	SUNXI_CCU_NM(A10_CLK_MMC1, "mmc1", mod_parents,
 	    SD1_SCLK_CFG_REG,		/* reg */
 	    __BITS(17,16),		/* n */
@@ -191,6 +195,10 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BITS(25,24),		/* sel */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO),
+	SUNXI_CCU_PHASE(A10_CLK_MMC1_SAMPLE, "mmc1_sample", "mmc1",
+	    SD1_SCLK_CFG_REG, __BITS(22,20)),
+	SUNXI_CCU_PHASE(A10_CLK_MMC1_OUTPUT, "mmc1_output", "mmc1",
+	    SD1_SCLK_CFG_REG, __BITS(10,8)),
 	SUNXI_CCU_NM(A10_CLK_MMC2, "mmc2", mod_parents,
 	    SD2_SCLK_CFG_REG,		/* reg */
 	    __BITS(17,16),		/* n */
@@ -198,6 +206,10 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BITS(25,24),		/* sel */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO),
+	SUNXI_CCU_PHASE(A10_CLK_MMC2_SAMPLE, "mmc2_sample", "mmc2",
+	    SD2_SCLK_CFG_REG, __BITS(22,20)),
+	SUNXI_CCU_PHASE(A10_CLK_MMC2_OUTPUT, "mmc2_output", "mmc2",
+	    SD2_SCLK_CFG_REG, __BITS(10,8)),
 	SUNXI_CCU_NM(A10_CLK_MMC3, "mmc3", mod_parents,
 	    SD3_SCLK_CFG_REG,		/* reg */
 	    __BITS(17,16),		/* n */
@@ -205,6 +217,10 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BITS(25,24),		/* sel */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO),
+	SUNXI_CCU_PHASE(A10_CLK_MMC3_SAMPLE, "mmc3_sample", "mmc3",
+	    SD3_SCLK_CFG_REG, __BITS(22,20)),
+	SUNXI_CCU_PHASE(A10_CLK_MMC3_OUTPUT, "mmc3_output", "mmc3",
+	    SD3_SCLK_CFG_REG, __BITS(10,8)),
 
 	/* AHB_GATING_REG0 */
 	SUNXI_CCU_GATE(A10_CLK_AHB_OTG, "ahb-otg", "ahb",
