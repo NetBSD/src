@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_g1.c,v 1.1 2016/12/29 11:49:05 tsutsui Exp $ */
+/* $NetBSD: wdc_g1.c,v 1.2 2017/10/07 19:58:53 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ struct wdc_g1_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	ata_channel *wdc_chanlist[1];
 	struct	ata_channel ata_channel;
-	struct	ata_queue wdc_chqueue;
 	struct	wdc_regs wdc_regs;
 	void	*sc_ih;
 	int	sc_irq;
@@ -164,8 +163,8 @@ wdc_g1_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdcdev.reset = wdc_g1_do_reset;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
-	wdc_init_shadow_regs(&sc->ata_channel);
+	sc->ata_channel.ch_queue = ata_queue_alloc(1);
+	wdc_init_shadow_regs(wdr);
 
 	aprint_normal(": %s\n", sysasic_intr_string(SYSASIC_IRL9));
 
