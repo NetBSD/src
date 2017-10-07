@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.4 2017/10/02 22:41:25 jmcneill Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.5 2017/10/07 20:17:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.4 2017/10/02 22:41:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.5 2017/10/07 20:17:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.4 2017/10/02 22:41:25 jmcneill Exp $
 #include <dev/i2c/gttwsivar.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#define	TWI_CCR_REG	0x14
+#define	 TWI_CCR_CLK_M	__BITS(6,3)
+#define	 TWI_CCR_CLK_N	__BITS(2,0)
 
 static int sunxi_twi_match(device_t, cfdata_t, void *);
 static void sunxi_twi_attach(device_t, device_t, void *);
@@ -134,6 +138,16 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 	conf = (void *)of_search_compatible(phandle, compat_data)->data;
 	prop_dictionary_set_bool(device_properties(self), "iflg-rwc",
 	    conf->iflg_rwc);
+
+	/*
+	 * Set clock rate to 100kHz. From the datasheet:
+	 *   For 100Khz standard speed 2Wire, CLK_N=2, CLK_M=11
+	 *   F0=48M/2^2=12Mhz, F1=F0/(10*(11+1)) = 0.1Mhz
+	 */
+	const u_int m = 11, n = 2;
+	const uint32_t ccr = __SHIFTIN(n, TWI_CCR_CLK_N) |
+			     __SHIFTIN(m, TWI_CCR_CLK_M); 
+	bus_space_write_4(bst, bsh, TWI_CCR_REG, ccr);
 
 	gttwsi_attach_subr(self, bst, bsh);
 
