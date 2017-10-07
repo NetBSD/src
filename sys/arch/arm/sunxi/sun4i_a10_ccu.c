@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.2 2017/10/07 12:22:29 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.3 2017/10/07 15:12:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.2 2017/10/07 12:22:29 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.3 2017/10/07 15:12:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.2 2017/10/07 12:22:29 jmcneill E
 #define	SD1_SCLK_CFG_REG        0x08c
 #define	SD2_SCLK_CFG_REG        0x090
 #define	SD3_SCLK_CFG_REG	0x094
+#define	SATA_CFG_REG		0x0c8
 #define	USBPHY_CFG_REG		0x0cc
 #define	BE_CFG_REG		0x104
 #define	FE_CFG_REG		0x10c
@@ -93,6 +94,7 @@ static const char *ahb_parents[] = { "axi", "pll_periph", "pll_periph_base" };
 static const char *apb0_parents[] = { "ahb" };
 static const char *apb1_parents[] = { "osc24m", "pll_periph", "losc" };
 static const char *mod_parents[] = { "osc24m", "pll_periph", "pll_ddr" };
+static const char *sata_parents[] = { "pll6_periph_sata", "external" };
 
 static const struct sunxi_ccu_nkmp_tbl sun4i_a10_ac_dig_table[] = {
 	{ 24576000, 86, 0, 21, 3 },
@@ -143,6 +145,13 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BITS(1,0),		/* m */
 	    0,				/* p */
 	    __BIT(14),			/* enable */
+	    0),
+
+	SUNXI_CCU_DIV_GATE(A10_CLK_SATA, "sata", sata_parents,
+	    SATA_CFG_REG,		/* reg */
+	    0,				/* div */
+	    __BIT(24),			/* sel */
+	    __BIT(31),			/* enable */
 	    0),
 
 	SUNXI_CCU_DIV(A10_CLK_CPU, "cpu", cpu_parents,
