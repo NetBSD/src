@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.7 2017/09/11 22:00:05 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.8 2017/10/07 12:21:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.7 2017/09/11 22:00:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.8 2017/10/07 12:21:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -179,7 +179,7 @@ static const struct sunxi_mmc_config sun5i_a13_mmc_config = {
 };
 
 static const struct sunxi_mmc_config sun7i_a20_mmc_config = {
-	.idma_xferlen = 0x10000,
+	.idma_xferlen = 0x2000,
 	.dma_ftrglevel = 0x20070008,
 	.delays = sunxi_mmc_delays,
 	.flags = 0,
