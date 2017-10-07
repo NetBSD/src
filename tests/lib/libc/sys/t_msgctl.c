@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgctl.c,v 1.6 2017/10/06 17:00:28 kre Exp $ */
+/* $NetBSD: t_msgctl.c,v 1.7 2017/10/07 17:15:44 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgctl.c,v 1.6 2017/10/06 17:00:28 kre Exp $");
+__RCSID("$NetBSD: t_msgctl.c,v 1.7 2017/10/07 17:15:44 kre Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -360,14 +360,16 @@ static int
 no_kernel_sysvmsg(void)
 {
 	int id;
+	void (*osig)(int);
 
 	sig_caught = 0;
-	(void) signal(SIGSYS, sigsys_handler);
+	osig = signal(SIGSYS, sigsys_handler);
 	id = msgget(MSG_KEY, IPC_CREAT | 0600);
 	if (sig_caught || id == -1)
 		return 1;
 
 	(void)msgctl(id, IPC_RMID, 0);
+	(void)signal(SIGSYS, osig);
 
 	return 0;
 }
