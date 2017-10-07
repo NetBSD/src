@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.41 2017/09/15 12:02:00 roy Exp $
+# $NetBSD: Makefile,v 1.42 2017/10/07 14:11:07 roy Exp $
 #
 
 WARNS?=		6
@@ -26,7 +26,7 @@ DHCPCD_DEFS=	dhcpcd-definitions-small.conf
 .else
 DHCPCD_DEFS=	dhcpcd-definitions.conf
 CPPFLAGS+=	-DAUTH
-SRCS+=		auth.c hmac_md5.c
+SRCS+=		auth.c
 .endif
 
 .if (${USE_INET} != "no")
