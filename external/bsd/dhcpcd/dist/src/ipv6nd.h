@@ -93,9 +93,6 @@ const struct ipv6_addr *ipv6nd_iffindaddr(const struct interface *ifp,
     const struct in6_addr *addr, unsigned int flags);
 struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, unsigned int);
-void ipv6nd_freedrop_ra(struct ra *, int);
-#define ipv6nd_free_ra(ra) ipv6nd_freedrop_ra((ra),  0)
-#define ipv6nd_drop_ra(ra) ipv6nd_freedrop_ra((ra),  1)
 ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 int ipv6nd_hasra(const struct interface *);
