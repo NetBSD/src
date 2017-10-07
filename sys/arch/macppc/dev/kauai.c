@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.36 2016/07/15 22:10:47 macallan Exp $	*/
+/*	$NetBSD: kauai.c,v 1.37 2017/10/07 16:05:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.36 2016/07/15 22:10:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.37 2017/10/07 16:05:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ struct kauai_softc {
 	struct ata_channel *sc_chanptr;
 	struct ata_channel sc_channel;
 	struct wdc_regs sc_wdc_regs;
-	struct ata_queue sc_queue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_piotiming_r[2];
@@ -212,8 +211,8 @@ kauai_attach(device_t parent, device_t self, void *aux)
 
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = &sc->sc_queue;
-	wdc_init_shadow_regs(chp);
+	chp->ch_queue = ata_queue_alloc(1);
+	wdc_init_shadow_regs(wdr);
 
 	wdcattach(chp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmpvar.h,v 1.3 2012/08/01 09:02:03 bouyer Exp $	*/
+/*	$NetBSD: satapmpvar.h,v 1.4 2017/10/07 16:05:32 jdolecek Exp $	*/
 
 
 /*
@@ -29,7 +29,7 @@
 #define	_DEV_ATA_SATAPMPVAR_H_
 
 void satapmp_attach(struct ata_channel *);
-void satapmp_rescan(struct ata_channel *);
+void satapmp_rescan(struct ata_channel *, struct ata_xfer *);
 
 #endif	/* _DEV_ATA_SATAPMPVAR_H_ */
 

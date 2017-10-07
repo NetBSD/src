@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132 2014/09/10 07:04:48 matt Exp $	*/
+/*	$NetBSD: ata.c,v 1.133 2017/10/07 16:05:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132 2014/09/10 07:04:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.133 2017/10/07 16:05:32 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132 2014/09/10 07:04:48 matt Exp $");
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
-#include <sys/pool.h>
 #include <sys/kthread.h>
 #include <sys/errno.h>
 #include <sys/ataio.h>
@@ -45,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132 2014/09/10 07:04:48 matt Exp $");
 #include <sys/intr.h>
 #include <sys/bus.h>
 #include <sys/once.h>
+#include <sys/bitops.h>
+
+#define ATABUS_PRIVATE
 
 #include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>
@@ -82,7 +84,6 @@ int atadebug_mask = ATADEBUG_MASK;
 #endif
 
 static ONCE_DECL(ata_init_ctrl);
-static struct pool ata_xfer_pool;
 
 /*
  * A queue of atabus instances, used to ensure the same bus probe order
@@ -128,6 +129,13 @@ static bool atabus_resume(device_t, const pmf_qual_t *);
 static bool atabus_suspend(device_t, const pmf_qual_t *);
 static void atabusconfig_thread(void *);
 
+static void ata_channel_idle(struct ata_channel *);
+static void ata_channel_thaw_locked(struct ata_channel *);
+static void ata_activate_xfer_locked(struct ata_channel *, struct ata_xfer *);
+static void ata_channel_freeze_locked(struct ata_channel *);
+static struct ata_xfer *ata_queue_get_active_xfer_locked(struct ata_channel *);
+static void ata_thread_wake_locked(struct ata_channel *);
+
 /*
  * atabus_init:
  *
@@ -137,8 +145,6 @@ static int
 atabus_init(void)
 {
 
-	pool_init(&ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0,
-	    "ataspl", NULL, IPL_BIO);
 	TAILQ_INIT(&atabus_initq_head);
 	mutex_init(&atabus_qlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&atabus_qcv, "atainitq");
@@ -180,6 +186,167 @@ ataprint(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+static void
+ata_queue_reset(struct ata_queue *chq)
+{
+	/* make sure that we can use polled commands */
+	TAILQ_INIT(&chq->queue_xfer);
+	TAILQ_INIT(&chq->active_xfers);
+	chq->queue_freeze = 0;
+	chq->queue_active = 0;
+	chq->active_xfers_used = 0;
+	chq->queue_xfers_avail = __BIT(chq->queue_openings) - 1;
+}
+
+struct ata_xfer *
+ata_queue_hwslot_to_xfer(struct ata_channel *chp, int hwslot)
+{
+	struct ata_queue *chq = chp->ch_queue;
+	struct ata_xfer *xfer = NULL;
+
+	ata_channel_lock(chp);
+
+	KASSERTMSG(hwslot < chq->queue_openings, "hwslot %d > openings %d",
+	    hwslot, chq->queue_openings);
+	KASSERTMSG((chq->active_xfers_used & __BIT(hwslot)) != 0,
+	    "hwslot %d not active", hwslot);
+
+	/* Usually the first entry will be the one */
+	TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
+		if (xfer->c_slot == hwslot)
+			break;
+	}
+
+	ata_channel_unlock(chp);
+
+	KASSERTMSG((xfer != NULL),
+	    "%s: xfer with slot %d not found (active %x)", __func__,
+	    hwslot, chq->active_xfers_used);
+
+	return xfer;
+}
+
+static struct ata_xfer *
+ata_queue_get_active_xfer_locked(struct ata_channel *chp)
+{
+	struct ata_xfer *xfer;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
+	xfer = TAILQ_FIRST(&chp->ch_queue->active_xfers);
+
+	if (xfer && ISSET(xfer->c_flags, C_NCQ)) {
+		/* Spurious call, never return NCQ xfer from this interface */
+		xfer = NULL;
+	}
+
+	return xfer;
+}
+
+/*
+ * This interface is supposed only to be used when there is exactly
+ * one outstanding command, when there is no information about the slot,
+ * which triggered the command. ata_queue_hwslot_to_xfer() interface
+ * is preferred in all NCQ cases.
+ */
+struct ata_xfer *
+ata_queue_get_active_xfer(struct ata_channel *chp)
+{
+	struct ata_xfer *xfer = NULL;
+
+	ata_channel_lock(chp);
+	xfer = ata_queue_get_active_xfer_locked(chp);
+	ata_channel_unlock(chp);
+
+	return xfer;
+}
+
+struct ata_xfer *
+ata_queue_drive_active_xfer(struct ata_channel *chp, int drive)
+{
+	struct ata_xfer *xfer = NULL;
+
+	ata_channel_lock(chp);
+
+	TAILQ_FOREACH(xfer, &chp->ch_queue->active_xfers, c_activechain) {
+		if (xfer->c_drive == drive)
+			break;
+	}
+	KASSERT(xfer != NULL);
+
+	ata_channel_unlock(chp);
+
+	return xfer;
+}
+
+static void
+ata_xfer_init(struct ata_xfer *xfer, uint8_t slot)
+{
+	memset(xfer, 0, sizeof(*xfer));
+
+	xfer->c_slot = slot;
+
+	cv_init(&xfer->c_active, "ataact");
+	cv_init(&xfer->c_finish, "atafin");
+	callout_init(&xfer->c_timo_callout, 0); 	/* XXX MPSAFE */
+	callout_init(&xfer->c_retry_callout, 0); 	/* XXX MPSAFE */
+}
+
+static void
+ata_xfer_destroy(struct ata_xfer *xfer)
+{
+	callout_halt(&xfer->c_timo_callout, NULL);	/* XXX MPSAFE */
+	callout_destroy(&xfer->c_timo_callout);
+	callout_halt(&xfer->c_retry_callout, NULL);	/* XXX MPSAFE */
+	callout_destroy(&xfer->c_retry_callout);
+	cv_destroy(&xfer->c_active);
+	cv_destroy(&xfer->c_finish);
+}
+
+struct ata_queue *
+ata_queue_alloc(uint8_t openings)
+{
+	if (openings == 0)
+		openings = 1;
+
+	if (openings > ATA_MAX_OPENINGS)
+		openings = ATA_MAX_OPENINGS;
+
+	struct ata_queue *chq = malloc(offsetof(struct ata_queue, queue_xfers[openings]),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+
+	chq->queue_openings = openings;
+	ata_queue_reset(chq);
+
+	cv_init(&chq->queue_busy, "ataqbusy");
+	cv_init(&chq->queue_drain, "atdrn");
+	cv_init(&chq->queue_idle, "qidl");
+
+	for (uint8_t i = 0; i < openings; i++)
+		ata_xfer_init(&chq->queue_xfers[i], i);
+
+	return chq;
+}
+
+void
+ata_queue_free(struct ata_queue *chq)
+{
+	for (uint8_t i = 0; i < chq->queue_openings; i++)
+		ata_xfer_destroy(&chq->queue_xfers[i]);
+
+	cv_destroy(&chq->queue_busy);
+	cv_destroy(&chq->queue_drain);
+	cv_destroy(&chq->queue_idle);
+
+	free(chq, M_DEVBUF);
+}
+
+void
+ata_channel_init(struct ata_channel *chp)
+{
+	mutex_init(&chp->ch_lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&chp->ch_thr_idle, "atath");
+}
+
 /*
  * ata_channel_attach:
  *
@@ -188,20 +355,36 @@ ataprint(void *aux, const char *pnp)
 void
 ata_channel_attach(struct ata_channel *chp)
 {
-
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
 
-	/* XXX callout_destroy */
-	callout_init(&chp->ch_callout, 0);
+	KASSERT(chp->ch_queue != NULL);
 
-	TAILQ_INIT(&chp->ch_queue->queue_xfer);
-	chp->ch_queue->queue_freeze = 0;
-	chp->ch_queue->queue_flags = 0;
-	chp->ch_queue->active_xfer = NULL;
+	ata_channel_init(chp);
 
 	chp->atabus = config_found_ia(chp->ch_atac->atac_dev, "ata", chp,
 		atabusprint);
+}
+
+void
+ata_channel_destroy(struct ata_channel *chp)
+{
+	mutex_destroy(&chp->ch_lock);
+	cv_destroy(&chp->ch_thr_idle);
+}
+
+/*
+ * ata_channel_detach:
+ *
+ *	Common parts of detaching an atabus to an ATA controller channel.
+ */
+void
+ata_channel_detach(struct ata_channel *chp)
+{
+	if (chp->ch_flags & ATACH_DISABLED)
+		return;
+
+	ata_channel_destroy(chp);
 }
 
 static void
@@ -210,12 +393,12 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	struct ata_channel *chp = atabus_sc->sc_chan;
 	struct atac_softc *atac = chp->ch_atac;
 	struct atabus_initq *atabus_initq = NULL;
-	int i, s, error;
+	int i, error;
 
 	/* we are in the atabus's thread context */
-	s = splbio();
+	ata_channel_lock(chp);
 	chp->ch_flags |= ATACH_TH_RUN;
-	splx(s);
+	ata_channel_unlock(chp);
 
 	/*
 	 * Probe for the drives attached to controller, unless a PMP
@@ -232,9 +415,9 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	}
 
 	/* next operations will occurs in a separate thread */
-	s = splbio();
+	ata_channel_lock(chp);
 	chp->ch_flags &= ~ATACH_TH_RUN;
-	splx(s);
+	ata_channel_unlock(chp);
 
 	/* Make sure the devices probe in atabus order to avoid jitter. */
 	mutex_enter(&atabus_qlock);
@@ -245,6 +428,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		cv_wait(&atabus_qcv, &atabus_qlock);
 	}
 	mutex_exit(&atabus_qlock);
+
+	ata_channel_lock(chp);
 
 	/* If no drives, abort here */
 	if (chp->ch_drive == NULL)
@@ -260,6 +445,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	if (chp->ch_flags & ATACH_SHUTDOWN)
 		goto out;
 
+	ata_channel_unlock(chp);
+
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabusconfig_thread,
 	    atabus_sc, &atabus_cfg_lwp,
 	    "%scnf", device_xname(atac->atac_dev))) != 0)
@@ -268,6 +455,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	return;
 
  out:
+	ata_channel_unlock(chp);
+
 	mutex_enter(&atabus_qlock);
 	TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
 	cv_broadcast(&atabus_qcv);
@@ -350,7 +539,6 @@ atabusconfig_thread(void *arg)
 		memset(&adev, 0, sizeof(struct ata_device));
 		adev.adev_bustype = atac->atac_bustype_ata;
 		adev.adev_channel = chp->ch_channel;
-		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
 		chp->ch_drive[i].drv_softc = config_found_ia(atabus_sc->sc_dev,
 		    "ata_hl", &adev, ataprint);
@@ -418,10 +606,11 @@ atabus_thread(void *arg)
 {
 	struct atabus_softc *sc = arg;
 	struct ata_channel *chp = sc->sc_chan;
+	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer;
-	int i, s;
+	int i, rv, s;
 
-	s = splbio();
+	ata_channel_lock(chp);
 	chp->ch_flags |= ATACH_TH_RUN;
 
 	/*
@@ -435,49 +624,78 @@ atabus_thread(void *arg)
 		chp->ch_drive[i].drive_flags = 0;
 		chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
 	}
-	splx(s);
+	ata_channel_unlock(chp);
 
 	atabusconfig(sc);
 
-	s = splbio();
+	ata_channel_lock(chp);
 	for (;;) {
 		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
-		    (chp->ch_queue->active_xfer == NULL ||
-		     chp->ch_queue->queue_freeze == 0)) {
+		    (chq->queue_active == 0 || chq->queue_freeze == 0)) {
 			chp->ch_flags &= ~ATACH_TH_RUN;
-			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
+			cv_wait(&chp->ch_thr_idle, &chp->ch_lock);
 			chp->ch_flags |= ATACH_TH_RUN;
 		}
 		if (chp->ch_flags & ATACH_SHUTDOWN) {
 			break;
 		}
 		if (chp->ch_flags & ATACH_TH_RESCAN) {
-			atabusconfig(sc);
 			chp->ch_flags &= ~ATACH_TH_RESCAN;
+			ata_channel_unlock(chp);
+			atabusconfig(sc);
+			ata_channel_lock(chp);
 		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/*
 			 * ata_reset_channel() will freeze 2 times, so
 			 * unfreeze one time. Not a problem as we're at splbio
 			 */
-			chp->ch_queue->queue_freeze--;
+			ata_channel_thaw_locked(chp);
+			ata_channel_unlock(chp);
+			s = splbio();
 			ata_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
-		} else if (chp->ch_queue->active_xfer != NULL &&
-			   chp->ch_queue->queue_freeze == 1) {
+			splx(s);
+			ata_channel_lock(chp);
+		} else if (chq->queue_active > 0 && chq->queue_freeze == 1) {
 			/*
-			 * Caller has bumped queue_freeze, decrease it.
+			 * Caller has bumped queue_freeze, decrease it. This
+			 * flow shalt never be executed for NCQ commands.
 			 */
-			chp->ch_queue->queue_freeze--;
-			xfer = chp->ch_queue->active_xfer;
+			KASSERT((chp->ch_flags & ATACH_NCQ) == 0);
+			KASSERT(chq->queue_active == 1);
+
+			ata_channel_thaw_locked(chp);
+			xfer = ata_queue_get_active_xfer_locked(chp);
+
 			KASSERT(xfer != NULL);
-			(*xfer->c_start)(xfer->c_chp, xfer);
-		} else if (chp->ch_queue->queue_freeze > 1)
-			panic("ata_thread: queue_freeze");
+			KASSERT((xfer->c_flags & C_POLL) == 0);
+
+			switch ((rv = ata_xfer_start(xfer))) {
+			case ATASTART_STARTED:
+			case ATASTART_POLL:
+			case ATASTART_ABORT:
+				break;
+			case ATASTART_TH:
+			default:
+				panic("%s: ata_xfer_start() unexpected rv %d",
+				    __func__, rv);
+				/* NOTREACHED */
+			}
+		} else if (chq->queue_freeze > 1)
+			panic("%s: queue_freeze", __func__);
 	}
-	splx(s);
 	chp->ch_thread = NULL;
-	wakeup(&chp->ch_flags);
+	cv_signal(&chp->ch_thr_idle);
+	ata_channel_unlock(chp);
 	kthread_exit(0);
+}
+
+static void
+ata_thread_wake_locked(struct ata_channel *chp)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+	ata_channel_freeze_locked(chp);
+	cv_signal(&chp->ch_thr_idle);
 }
 
 /*
@@ -527,7 +745,9 @@ atabus_attach(device_t parent, device_t self, void *aux)
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
+	mutex_enter(&atabus_qlock);
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
+	mutex_exit(&atabus_qlock);
 	config_pending_incr(sc->sc_dev);
 
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
@@ -550,18 +770,16 @@ atabus_detach(device_t self, int flags)
 	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = sc->sc_chan;
 	device_t dev = NULL;
-	int s, i, error = 0;
+	int i, error = 0;
 
 	/* Shutdown the channel. */
-	s = splbio();		/* XXX ALSO NEED AN INTERLOCK HERE. */
+	ata_channel_lock(chp);
 	chp->ch_flags |= ATACH_SHUTDOWN;
-	splx(s);
-
-	wakeup(&chp->ch_thread);
-
-	while (chp->ch_thread != NULL)
-		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
-
+	while (chp->ch_thread != NULL) {
+		cv_signal(&chp->ch_thr_idle);
+		cv_wait(&chp->ch_thr_idle, &chp->ch_lock);
+	}
+	ata_channel_unlock(chp);
 
 	/*
 	 * Detach atapibus and its children.
@@ -727,7 +945,7 @@ int
 ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
     struct ataparams *prms)
 {
-	struct ata_command ata_c;
+	struct ata_xfer *xfer;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	char *tb;
@@ -736,44 +954,50 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 
 	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
-	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
+	xfer = ata_get_xfer(chp);
+	if (xfer == NULL) {
+		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
+		    DEBUG_FUNCS|DEBUG_PROBE);
+		return CMD_AGAIN;
+	}
+
+	tb = kmem_zalloc(ATA_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
-	memset(&ata_c, 0, sizeof(struct ata_command));
 
 	if (drvp->drive_type == ATA_DRIVET_ATA) {
-		ata_c.r_command = WDCC_IDENTIFY;
-		ata_c.r_st_bmask = WDCS_DRDY;
-		ata_c.r_st_pmask = WDCS_DRQ;
-		ata_c.timeout = 3000; /* 3s */
+		xfer->c_ata_c.r_command = WDCC_IDENTIFY;
+		xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
+		xfer->c_ata_c.r_st_pmask = WDCS_DRQ;
+		xfer->c_ata_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_type == ATA_DRIVET_ATAPI) {
-		ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
-		ata_c.r_st_bmask = 0;
-		ata_c.r_st_pmask = WDCS_DRQ;
-		ata_c.timeout = 10000; /* 10s */
+		xfer->c_ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
+		xfer->c_ata_c.r_st_bmask = 0;
+		xfer->c_ata_c.r_st_pmask = WDCS_DRQ;
+		xfer->c_ata_c.timeout = 10000; /* 10s */
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_ERR;
 		goto out;
 	}
-	ata_c.flags = AT_READ | flags;
-	ata_c.data = tb;
-	ata_c.bcount = DEV_BSIZE;
+	xfer->c_ata_c.flags = AT_READ | flags;
+	xfer->c_ata_c.data = tb;
+	xfer->c_ata_c.bcount = ATA_BSIZE;
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						&ata_c) != ATACMD_COMPLETE) {
+						xfer) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_AGAIN;
 		goto out;
 	}
-	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
-		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
+		    xfer->c_ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_ERR;
 		goto out;
 	}
 	/* if we didn't read any data something is wrong */
-	if ((ata_c.flags & AT_XFDONE) == 0) {
+	if ((xfer->c_ata_c.flags & AT_XFDONE) == 0) {
 		rv = CMD_ERR;
 		goto out;
 	}
@@ -820,34 +1044,133 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 
 	rv = CMD_OK;
  out:
-	kmem_free(tb, DEV_BSIZE);
+	kmem_free(tb, ATA_BSIZE);
+	ata_free_xfer(chp, xfer);
 	return rv;
 }
 
 int
 ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 {
-	struct ata_command ata_c;
+	struct ata_xfer *xfer;
+	int rv;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 
 	ATADEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
-	memset(&ata_c, 0, sizeof(struct ata_command));
 
-	ata_c.r_command = SET_FEATURES;
-	ata_c.r_st_bmask = 0;
-	ata_c.r_st_pmask = 0;
-	ata_c.r_features = WDSF_SET_MODE;
-	ata_c.r_count = mode;
-	ata_c.flags = flags;
-	ata_c.timeout = 1000; /* 1s */
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						&ata_c) != ATACMD_COMPLETE)
+	xfer = ata_get_xfer(chp);
+	if (xfer == NULL) {
+		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
-	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		return CMD_ERR;
 	}
-	return CMD_OK;
+
+	xfer->c_ata_c.r_command = SET_FEATURES;
+	xfer->c_ata_c.r_st_bmask = 0;
+	xfer->c_ata_c.r_st_pmask = 0;
+	xfer->c_ata_c.r_features = WDSF_SET_MODE;
+	xfer->c_ata_c.r_count = mode;
+	xfer->c_ata_c.flags = flags;
+	xfer->c_ata_c.timeout = 1000; /* 1s */
+	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
+						xfer) != ATACMD_COMPLETE) {
+		rv = CMD_AGAIN;
+		goto out;
+	}
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		rv = CMD_ERR;
+		goto out;
+	}
+
+	rv = CMD_OK;
+
+out:
+	ata_free_xfer(chp, xfer);
+	return rv;
+}
+
+int
+ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
+    uint8_t *slot, uint8_t *status, uint8_t *err)
+{
+	struct ata_xfer *xfer;
+	int rv;
+	struct ata_channel *chp = drvp->chnl_softc;
+	struct atac_softc *atac = chp->ch_atac;
+	uint8_t *tb, cksum, page;
+
+	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
+
+	/* Only NCQ ATA drives support/need this */
+	if (drvp->drive_type != ATA_DRIVET_ATA ||
+	    (drvp->drive_flags & ATA_DRIVE_NCQ) == 0)
+		return EOPNOTSUPP;
+
+	xfer = ata_get_xfer_ext(chp, C_RECOVERY, 0);
+
+	tb = drvp->recovery_blk;
+	memset(tb, 0, sizeof(drvp->recovery_blk));
+
+	/*
+	 * We could use READ LOG DMA EXT if drive supports it (i.e.
+	 * when it supports Streaming feature) to avoid PIO command,
+	 * and to make this a little faster. Realistically, it
+	 * should not matter.
+	 */
+	xfer->c_flags |= C_RECOVERY;
+	xfer->c_ata_c.r_command = WDCC_READ_LOG_EXT;
+	xfer->c_ata_c.r_lba = page = WDCC_LOG_PAGE_NCQ;
+	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
+	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
+	xfer->c_ata_c.r_count = 1;
+	xfer->c_ata_c.r_device = WDSD_LBA;
+	xfer->c_ata_c.flags = AT_READ | AT_LBA | AT_LBA48 | flags;
+	xfer->c_ata_c.timeout = 1000; /* 1s */
+	xfer->c_ata_c.data = tb;
+	xfer->c_ata_c.bcount = sizeof(drvp->recovery_blk);
+
+	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
+						xfer) != ATACMD_COMPLETE) {
+		rv = EAGAIN;
+		goto out;
+	}
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		rv = EINVAL;
+		goto out;
+	}
+
+	cksum = 0;
+	for (int i = 0; i < sizeof(drvp->recovery_blk); i++)
+		cksum += tb[i];
+	if (cksum != 0) {
+		aprint_error_dev(drvp->drv_softc,
+		    "invalid checksum %x for READ LOG EXT page %x\n",
+		    cksum, page);
+		rv = EINVAL;
+		goto out;
+	}
+
+	if (tb[0] & WDCC_LOG_NQ) {
+		/* not queued command */
+		rv = EOPNOTSUPP;
+		goto out;
+	}
+
+	*slot = tb[0] & 0x1f;
+	*status = tb[2];
+	*err = tb[3];
+
+	KASSERTMSG((*status & WDCS_ERR),
+	    "%s: non-error command slot %d reported by READ LOG EXT page %x: "
+	    "err %x status %x\n",
+	    device_xname(drvp->drv_softc), *slot, page, *err, *status);
+
+	rv = 0;
+
+out:
+	ata_free_xfer(chp, xfer);
+	return rv;
 }
 
 #if NATA_DMA
@@ -879,16 +1202,16 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
  * freeze the queue and wait for the controller to be idle. Caller has to
  * unfreeze/restart the queue
  */
-void
-ata_queue_idle(struct ata_queue *queue)
+static void
+ata_channel_idle(struct ata_channel *chp)
 {
-	int s = splbio();
-	queue->queue_freeze++;
-	while (queue->active_xfer != NULL) {
-		queue->queue_flags |= QF_IDLE_WAIT;
-		tsleep(&queue->queue_flags, PRIBIO, "qidl", 0);
+	ata_channel_lock(chp);
+	ata_channel_freeze_locked(chp);
+	while (chp->ch_queue->queue_active > 0) {
+		chp->ch_queue->queue_flags |= QF_IDLE_WAIT;
+		cv_timedwait(&chp->ch_queue->queue_idle, &chp->ch_lock, 1);
 	}
-	splx(s);
+	ata_channel_unlock(chp);
 }
 
 /*
@@ -906,25 +1229,46 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	/* complete xfer setup */
 	xfer->c_chp = chp;
 
-	/* insert at the end of command list */
-	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-	ATADEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
-	    chp->ch_flags), DEBUG_XFERS);
+	ata_channel_lock(chp);
+
+	/*
+	 * Standard commands are added to the end of command list, but
+	 * recovery commands must be run immediatelly.
+	 */
+	if ((xfer->c_flags & C_RECOVERY) == 0)
+		TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer,
+		    c_xferchain);
+	else
+		TAILQ_INSERT_HEAD(&chp->ch_queue->queue_xfer, xfer,
+		    c_xferchain);
+
 	/*
 	 * if polling and can sleep, wait for the xfer to be at head of queue
 	 */
 	if ((xfer->c_flags & (C_POLL | C_WAIT)) ==  (C_POLL | C_WAIT)) {
-		while (chp->ch_queue->active_xfer != NULL ||
+		while (chp->ch_queue->queue_active > 0 ||
 		    TAILQ_FIRST(&chp->ch_queue->queue_xfer) != xfer) {
 			xfer->c_flags |= C_WAITACT;
-			tsleep(xfer, PRIBIO, "ataact", 0);
+			cv_wait(&xfer->c_active, &chp->ch_lock);
 			xfer->c_flags &= ~C_WAITACT;
-			if (xfer->c_flags & C_FREE) {
+
+			/*
+			 * Free xfer now if it there was attempt to free it
+			 * while we were waiting.
+			 */
+			if ((xfer->c_flags & (C_FREE|C_WAITTIMO)) == C_FREE) {
+				ata_channel_unlock(chp);
+
 				ata_free_xfer(chp, xfer);
 				return;
 			}
 		}
 	}
+
+	ata_channel_unlock(chp);
+
+	ATADEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
+	    chp->ch_flags), DEBUG_XFERS);
 	atastart(chp);
 }
 
@@ -939,7 +1283,9 @@ void
 atastart(struct ata_channel *chp)
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_xfer *xfer;
+	struct ata_queue *chq = chp->ch_queue;
+	struct ata_xfer *xfer, *axfer;
+	bool recovery;
 
 #ifdef ATA_DEBUG
 	int spl1, spl2;
@@ -954,23 +1300,49 @@ atastart(struct ata_channel *chp)
 	splx(spl1);
 #endif /* ATA_DEBUG */
 
+	ata_channel_lock(chp);
+
+again:
+	KASSERT(chq->queue_active <= chq->queue_openings);
+	if (chq->queue_active == chq->queue_openings) {
+		goto out; /* channel completely busy */
+	}
+
 	/* is there a xfer ? */
 	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
-		return;
+		goto out;
 
-	/* adjust chp, in case we have a shared queue */
-	chp = xfer->c_chp;
+	recovery = ISSET(xfer->c_flags, C_RECOVERY);
 
-	if (chp->ch_queue->active_xfer != NULL) {
-		return; /* channel aleady active */
-	}
-	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
-		if (chp->ch_queue->queue_flags & QF_IDLE_WAIT) {
-			chp->ch_queue->queue_flags &= ~QF_IDLE_WAIT;
-			wakeup(&chp->ch_queue->queue_flags);
+	/* is the queue frozen? */
+	if (__predict_false(!recovery && chq->queue_freeze > 0)) {
+		if (chq->queue_flags & QF_IDLE_WAIT) {
+			chq->queue_flags &= ~QF_IDLE_WAIT;
+			cv_signal(&chp->ch_queue->queue_idle);
 		}
-		return; /* queue frozen */
+		goto out; /* queue frozen */
 	}
+
+	/* all xfers on same queue must belong to the same channel */
+	KASSERT(xfer->c_chp == chp);
+
+	/*
+	 * Can only take the command if there are no current active
+	 * commands, or if the command is NCQ and the active commands are also
+	 * NCQ. If PM is in use and HBA driver doesn't support/use FIS-based
+	 * switching, can only send commands to single drive.
+	 * Need only check first xfer.
+	 * XXX FIS-based switching - revisit
+	 */
+	if (!recovery && (axfer = TAILQ_FIRST(&chp->ch_queue->active_xfers))) {
+		if (!ISSET(xfer->c_flags, C_NCQ) ||
+		    !ISSET(axfer->c_flags, C_NCQ) ||
+		    xfer->c_drive != axfer->c_drive)
+			goto out;
+	}
+
+	struct ata_drive_datas * const drvp = &chp->ch_drive[xfer->c_drive];
+
 	/*
 	 * if someone is waiting for the command to be active, wake it up
 	 * and let it process the command
@@ -979,59 +1351,175 @@ atastart(struct ata_channel *chp)
 		ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d "
 		    "wait active\n", xfer, chp->ch_channel, xfer->c_drive),
 		    DEBUG_XFERS);
-		wakeup(xfer);
-		return;
+		cv_signal(&xfer->c_active);
+		goto out;
 	}
-#ifdef DIAGNOSTIC
-	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0)
-		panic("atastart: channel waiting for irq");
-#endif
+
 	if (atac->atac_claim_hw)
-		if (!(*atac->atac_claim_hw)(chp, 0))
-			return;
+		if (!atac->atac_claim_hw(chp, 0))
+			goto out;
 
 	ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
 	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_RESET) {
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_RESET;
-		chp->ch_drive[xfer->c_drive].state = 0;
+	if (drvp->drive_flags & ATA_DRIVE_RESET) {
+		drvp->drive_flags &= ~ATA_DRIVE_RESET;
+		drvp->state = 0;
 	}
-	chp->ch_queue->active_xfer = xfer;
-	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
+
+	if (ISSET(xfer->c_flags, C_NCQ))
+		SET(chp->ch_flags, ATACH_NCQ);
+	else
+		CLR(chp->ch_flags, ATACH_NCQ);
+
+	ata_activate_xfer_locked(chp, xfer);
 
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
 		KASSERT(xfer->c_flags & C_POLL);
 
-	xfer->c_start(chp, xfer);
+	switch (ata_xfer_start(xfer)) {
+	case ATASTART_TH:
+	case ATASTART_ABORT:
+		/* don't start any further commands in this case */
+		goto out;
+	default:
+		/* nothing to do */
+		break;
+	}
+
+	/* Queue more commands if possible, but not during recovery */
+	if (!recovery && chq->queue_active < chq->queue_openings)
+		goto again;
+
+out:
+	ata_channel_unlock(chp);
 }
 
-struct ata_xfer *
-ata_get_xfer(int flags)
+int
+ata_xfer_start(struct ata_xfer *xfer)
 {
-	struct ata_xfer *xfer;
-	int s;
+	struct ata_channel *chp = xfer->c_chp;
+	int rv;
 
-	s = splbio();
-	xfer = pool_get(&ata_xfer_pool,
-	    ((flags & ATAXF_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
-	splx(s);
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof(struct ata_xfer));
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	rv = xfer->c_start(chp, xfer);
+	switch (rv) {
+	case ATASTART_STARTED:
+		/* nothing to do */
+		break;
+	case ATASTART_TH:
+		/* postpone xfer to thread */
+		ata_thread_wake_locked(chp);
+		break;
+	case ATASTART_POLL:
+		/* can happen even in thread context for some ATAPI devices */
+		ata_channel_unlock(chp);
+		KASSERT(xfer->c_poll != NULL);
+		xfer->c_poll(chp, xfer);
+		ata_channel_lock(chp);
+		break;
+	case ATASTART_ABORT:
+		ata_channel_unlock(chp);
+		KASSERT(xfer->c_abort != NULL);
+		xfer->c_abort(chp, xfer);
+		ata_channel_lock(chp);
+		break;
 	}
+
+	return rv;
+}
+
+/*
+ * Does it's own locking, does not require splbio().
+ * flags - whether to block waiting for free xfer
+ * openings - limit of openings supported by device, <= 0 means tag not
+ *     relevant, and any available xfer can be returned
+ */
+struct ata_xfer *
+ata_get_xfer_ext(struct ata_channel *chp, int flags, uint8_t openings)
+{
+	struct ata_queue *chq = chp->ch_queue;
+	struct ata_xfer *xfer = NULL;
+	uint32_t avail, slot, mask;
+	int error;
+
+	ATADEBUG_PRINT(("%s: channel %d flags %x openings %d\n",
+	    __func__, chp->ch_channel, flags, openings),
+	    DEBUG_XFERS);
+
+	ata_channel_lock(chp);
+
+	/*
+	 * When openings is just 1, can't reserve anything for
+	 * recovery. KASSERT() here is to catch code which naively
+	 * relies on C_RECOVERY to work under this condition.
+	 */
+	KASSERT((flags & C_RECOVERY) == 0 || chq->queue_openings > 1);
+
+	if (flags & C_RECOVERY) {
+		mask = UINT32_MAX;
+	} else {
+		if (openings <= 0 || openings > chq->queue_openings)
+			openings = chq->queue_openings;
+
+		if (openings > 1) {
+			mask = __BIT(openings - 1) - 1;
+		} else {
+			mask = UINT32_MAX;
+		}
+	}
+
+retry:
+	avail = ffs32(chq->queue_xfers_avail & mask);
+	if (avail == 0) {
+		/*
+		 * Catch code which tries to get another recovery xfer while
+		 * already holding one (wrong recursion).
+		 */
+		KASSERTMSG((flags & C_RECOVERY) == 0,
+		    "recovery xfer busy openings %d mask %x avail %x",
+		    openings, mask, chq->queue_xfers_avail);
+
+		if (flags & C_WAIT) {
+			chq->queue_flags |= QF_NEED_XFER;
+			error = cv_wait_sig(&chq->queue_busy, &chp->ch_lock);
+			if (error == 0)
+				goto retry;
+		}
+
+		goto out;
+	}
+
+	slot = avail - 1;
+	xfer = &chq->queue_xfers[slot];
+	chq->queue_xfers_avail &= ~__BIT(slot);
+
+	KASSERT((chq->active_xfers_used & __BIT(slot)) == 0);
+
+	/* zero everything after the callout member */
+	memset(&xfer->c_startzero, 0,
+	    sizeof(struct ata_xfer) - offsetof(struct ata_xfer, c_startzero));
+
+out:
+	ata_channel_unlock(chp);
 	return xfer;
 }
 
+/*
+ * ata_deactivate_xfer() must be always called prior to ata_free_xfer()
+ */
 void
 ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct atac_softc *atac = chp->ch_atac;
-	int s;
+	struct ata_queue *chq = chp->ch_queue;
 
-	if (xfer->c_flags & C_WAITACT) {
+	ata_channel_lock(chp);
+
+	if (xfer->c_flags & (C_WAITACT|C_WAITTIMO)) {
 		/* Someone is waiting for this xfer, so we can't free now */
 		xfer->c_flags |= C_FREE;
-		wakeup(xfer);
-		return;
+		cv_signal(&xfer->c_active);
+		goto out;
 	}
 
 #if NATA_PIOBM		/* XXX wdc dependent code */
@@ -1041,49 +1529,278 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* finish the busmastering PIO */
 		(*wdc->piobm_done)(wdc->dma_arg,
 		    chp->ch_channel, xfer->c_drive);
-		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT);
+		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT);
 	}
 #endif
 
-	if (atac->atac_free_hw)
-		(*atac->atac_free_hw)(chp);
-	s = splbio();
-	pool_put(&ata_xfer_pool, xfer);
+	if (chp->ch_atac->atac_free_hw)
+		chp->ch_atac->atac_free_hw(chp);
+ 
+	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
+	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
+	chq->queue_xfers_avail |= __BIT(xfer->c_slot);
+
+out:
+	if (chq->queue_flags & QF_NEED_XFER) {
+		chq->queue_flags &= ~QF_NEED_XFER;
+		cv_broadcast(&chq->queue_busy);
+	}
+
+	ata_channel_unlock(chp);
+}
+
+static void
+ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct ata_queue * const chq = chp->ch_queue;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	KASSERT(chq->queue_active < chq->queue_openings);
+	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
+
+	TAILQ_REMOVE(&chq->queue_xfer, xfer, c_xferchain);
+	if ((xfer->c_flags & C_RECOVERY) == 0)
+		TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
+	else {
+		/*
+		 * Must go to head, so that ata_queue_get_active_xfer()
+		 * returns the recovery command, and not some other
+		 * random active transfer.
+		 */
+		TAILQ_INSERT_HEAD(&chq->active_xfers, xfer, c_activechain);
+	}
+	chq->active_xfers_used |= __BIT(xfer->c_slot);
+	chq->queue_active++;
+}
+
+void
+ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct ata_queue * const chq = chp->ch_queue;
+
+	ata_channel_lock(chp);
+
+	KASSERT(chq->queue_active > 0);
+	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) != 0);
+
+	callout_stop(&xfer->c_timo_callout);
+
+	if (callout_invoking(&xfer->c_timo_callout))
+		xfer->c_flags |= C_WAITTIMO;
+
+	TAILQ_REMOVE(&chq->active_xfers, xfer, c_activechain);
+	chq->active_xfers_used &= ~__BIT(xfer->c_slot);
+	chq->queue_active--;
+
+	ata_channel_unlock(chp);
+}
+
+/*
+ * Called in c_intr hook. Must be called before before any deactivations
+ * are done - if there is drain pending, it calls c_kill_xfer hook which
+ * deactivates the xfer.
+ * Calls c_kill_xfer with channel lock free.
+ * Returns true if caller should just exit without further processing.
+ * Caller must not further access any part of xfer or any related controller
+ * structures in that case, it should just return.
+ */
+bool
+ata_waitdrain_xfer_check(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	int drive = xfer->c_drive;
+	bool draining = false;
+
+	ata_channel_lock(chp);
+
+	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+		ata_channel_unlock(chp);
+
+		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
+
+		ata_channel_lock(chp);
+		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		cv_signal(&chp->ch_queue->queue_drain);
+		draining = true;
+	}
+
+	ata_channel_unlock(chp);
+
+	return draining;
+}
+
+/*
+ * Check for race of normal transfer handling vs. timeout.
+ */
+bool
+ata_timo_xfer_check(struct ata_xfer *xfer)
+{
+	struct ata_channel *chp = xfer->c_chp;
+	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
+
+	ata_channel_lock(chp);
+
+	callout_ack(&xfer->c_timo_callout);
+
+	if (xfer->c_flags & C_WAITTIMO) {
+		xfer->c_flags &= ~C_WAITTIMO;
+
+		/* Handle race vs. ata_free_xfer() */
+		if (xfer->c_flags & C_FREE) {
+			xfer->c_flags &= ~C_FREE;
+			ata_channel_unlock(chp);
+
+	    		aprint_normal_dev(drvp->drv_softc,
+			    "xfer %d freed while invoking timeout\n",
+			    xfer->c_slot); 
+
+			ata_free_xfer(chp, xfer);
+			return true;
+		}
+
+		/* Race vs. callout_stop() in ata_deactivate_xfer() */
+		ata_channel_unlock(chp);
+
+	    	aprint_normal_dev(drvp->drv_softc,
+		    "xfer %d deactivated while invoking timeout\n",
+		    xfer->c_slot); 
+		return true;
+	}
+
+	ata_channel_unlock(chp);
+
+	/* No race, proceed with timeout handling */
+	return false;
+}
+
+void
+ata_timeout(void *v)
+{
+	struct ata_xfer *xfer = v;
+	int s;
+
+	ATADEBUG_PRINT(("%s: slot %d\n", __func__, xfer->c_slot),
+	    DEBUG_FUNCS|DEBUG_XFERS);
+
+	s = splbio();				/* XXX MPSAFE */
+
+	if (ata_timo_xfer_check(xfer)) {
+		/* Already logged */
+		goto out;
+	}
+
+	/* Mark as timed out. Do not print anything, wd(4) will. */
+	xfer->c_flags |= C_TIMEOU;
+	xfer->c_intr(xfer->c_chp, xfer, 0);
+
+out:
 	splx(s);
 }
 
 /*
- * Kill off all pending xfers for a ata_channel.
+ * Kill off all active xfers for a ata_channel.
  *
- * Must be called at splbio().
+ * Must be called with channel lock held.
+ */
+void
+ata_kill_active(struct ata_channel *chp, int reason, int flags)
+{
+	struct ata_queue * const chq = chp->ch_queue;
+	struct ata_xfer *xfer, *xfernext;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, xfernext) {
+		(*xfer->c_kill_xfer)(xfer->c_chp, xfer, reason);
+	}
+
+	if (flags & AT_RST_EMERG)
+		ata_queue_reset(chq);
+}
+
+/*
+ * Kill off all pending xfers for a drive.
  */
 void
 ata_kill_pending(struct ata_drive_datas *drvp)
 {
-	struct ata_channel *chp = drvp->chnl_softc;
-	struct ata_xfer *xfer, *next_xfer;
-	int s = splbio();
+	struct ata_channel * const chp = drvp->chnl_softc;
+	struct ata_queue * const chq = chp->ch_queue;
+	struct ata_xfer *xfer, *xfernext;
 
-	for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
-	    xfer != NULL; xfer = next_xfer) {
-		next_xfer = TAILQ_NEXT(xfer, c_xferchain);
-		if (xfer->c_chp != chp || xfer->c_drive != drvp->drive)
+	ata_channel_lock(chp);
+
+	/* Kill all pending transfers */
+	TAILQ_FOREACH_SAFE(xfer, &chq->queue_xfer, c_xferchain, xfernext) {
+		KASSERT(xfer->c_chp == chp);
+
+		if (xfer->c_drive != drvp->drive)
 			continue;
+
 		TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
+
+		/*
+		 * Keep the lock, so that we get deadlock (and 'locking against
+		 * myself' with LOCKDEBUG), instead of silent
+		 * data corruption, if the hook tries to call back into
+		 * middle layer for inactive xfer.
+		 */
+		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE_INACTIVE);
 	}
 
-	while ((xfer = chp->ch_queue->active_xfer) != NULL) {
-		if (xfer->c_chp == chp && xfer->c_drive == drvp->drive) {
-			drvp->drive_flags |= ATA_DRIVE_WAITDRAIN;
-			(void) tsleep(&chp->ch_queue->active_xfer,
-			    PRIBIO, "atdrn", 0);
-		} else {
-			/* no more xfer for us */
+	/* Wait until all active transfers on the drive finish */
+	while (chq->queue_active > 0) {
+		bool drv_active = false;
+
+		TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
+			KASSERT(xfer->c_chp == chp);
+
+			if (xfer->c_drive == drvp->drive) {
+				drv_active = true;
+				break;
+			}
+		}
+		
+		if (!drv_active) {
+			/* all finished */
 			break;
 		}
+
+		drvp->drive_flags |= ATA_DRIVE_WAITDRAIN;
+		cv_wait(&chq->queue_drain, &chp->ch_lock);
 	}
-	splx(s);
+
+	ata_channel_unlock(chp);
+}
+
+static void
+ata_channel_freeze_locked(struct ata_channel *chp)
+{
+	chp->ch_queue->queue_freeze++;
+}
+
+void
+ata_channel_freeze(struct ata_channel *chp)
+{
+	ata_channel_lock(chp);
+	ata_channel_freeze_locked(chp);
+	ata_channel_unlock(chp);
+}
+
+static void
+ata_channel_thaw_locked(struct ata_channel *chp)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	chp->ch_queue->queue_freeze--;
+}
+
+void
+ata_channel_thaw(struct ata_channel *chp)
+{
+	ata_channel_lock(chp);
+	ata_channel_thaw_locked(chp);
+	ata_channel_unlock(chp);
 }
 
 /*
@@ -1112,7 +1829,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	splx(spl1);
 #endif /* ATA_DEBUG */
 
-	chp->ch_queue->queue_freeze++;
+	ata_channel_freeze(chp);
 
 	/*
 	 * If we can poll or wait it's OK, otherwise wake up the
@@ -1123,30 +1840,33 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/* No need to schedule a reset more than one time. */
-			chp->ch_queue->queue_freeze--;
+			ata_channel_thaw(chp);
 			return;
 		}
+		ata_channel_lock(chp);
 		chp->ch_flags |= ATACH_TH_RESET;
-		chp->ch_reset_flags = flags & (AT_RST_EMERG | AT_RST_NOCMD);
-		wakeup(&chp->ch_thread);
+		chp->ch_reset_flags = flags & AT_RST_EMERG;
+		cv_signal(&chp->ch_thr_idle);
+		ata_channel_unlock(chp);
 		return;
 	}
 
 	(*atac->atac_bustype_ata->ata_reset_channel)(chp, flags);
 
+	ata_channel_lock(chp);
 	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
 	for (drive = 0; drive < chp->ch_ndrives; drive++)
 		chp->ch_drive[drive].state = 0;
 
 	chp->ch_flags &= ~ATACH_TH_RESET;
-	if ((flags & AT_RST_EMERG) == 0)  {
-		chp->ch_queue->queue_freeze--;
-		atastart(chp);
-	} else {
+	ata_channel_unlock(chp);
+
+	if (flags & AT_RST_EMERG) {
 		/* make sure that we can use polled commands */
-		TAILQ_INIT(&chp->ch_queue->queue_xfer);
-		chp->ch_queue->queue_freeze = 0;
-		chp->ch_queue->active_xfer = NULL;
+		ata_queue_reset(chp->ch_queue);
+	} else {
+		ata_channel_thaw(chp);
+		atastart(chp);
 	}
 }
 
@@ -1227,6 +1947,15 @@ ata_print_modes(struct ata_channel *chp)
 #endif
 		    )
 			aprint_verbose(" (using DMA)");
+
+		if (drvp->drive_flags & ATA_DRIVE_NCQ) {
+			aprint_verbose(", NCQ (%d tags)%s",
+			    ATA_REAL_OPENINGS(chp->ch_queue->queue_openings),
+			    (drvp->drive_flags & ATA_DRIVE_NCQ_PRIO)
+			    ? " w/PRIO" : "");
+		} else if (drvp->drive_flags & ATA_DRIVE_WFUA)
+			aprint_verbose(", WRITE DMA FUA EXT");
+			
 #endif	/* NATA_DMA || NATA_PIOBM */
 		aprint_verbose("\n");
 	}
@@ -1284,7 +2013,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	(*atac->atac_set_modes)(chp);
 	ata_print_modes(chp);
 	/* reset the channel, which will schedule all drives for setup */
-	ata_reset_channel(chp, flags | AT_RST_NOCMD);
+	ata_reset_channel(chp, flags);
 	return 1;
 }
 #endif	/* NATA_DMA */
@@ -1300,7 +2029,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	device_t drv_dev = drvp->drv_softc;
-	int i, printed, s;
+	int i, printed = 0;
 	const char *sep = "";
 	int cf_flags;
 
@@ -1315,15 +2044,15 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		 * Re-do an IDENTIFY with 32-bit transfers,
 		 * and compare results.
 		 */
-		s = splbio();
+		ata_channel_lock(chp);
 		drvp->drive_flags |= ATA_DRIVE_CAP32;
-		splx(s);
+		ata_channel_unlock(chp);
 		ata_get_params(drvp, AT_WAIT, &params2);
 		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
-			s = splbio();
+			ata_channel_lock(chp);
 			drvp->drive_flags &= ~ATA_DRIVE_CAP32;
-			splx(s);
+			ata_channel_unlock(chp);
 		} else {
 			aprint_verbose_dev(drv_dev, "32-bit data port\n");
 		}
@@ -1352,7 +2081,6 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	 */
 	if (params.atap_extensions != 0xffff &&
 	    (params.atap_extensions & WDC_EXT_MODES)) {
-		printed = 0;
 		/*
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in
@@ -1402,9 +2130,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			 */
 			return;
 		}
-		s = splbio();
+		ata_channel_lock(chp);
 		drvp->drive_flags |= ATA_DRIVE_MODE;
-		splx(s);
+		ata_channel_unlock(chp);
 		printed = 0;
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
@@ -1428,9 +2156,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					continue;
 				drvp->DMA_mode = i;
 				drvp->DMA_cap = i;
-				s = splbio();
+				ata_channel_lock(chp);
 				drvp->drive_flags |= ATA_DRIVE_DMA;
-				splx(s);
+				ata_channel_unlock(chp);
 			}
 #endif
 			break;
@@ -1469,18 +2197,17 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 						continue;
 					drvp->UDMA_mode = i;
 					drvp->UDMA_cap = i;
-					s = splbio();
+					ata_channel_lock(chp);
 					drvp->drive_flags |= ATA_DRIVE_UDMA;
-					splx(s);
+					ata_channel_unlock(chp);
 				}
 #endif
 				break;
 			}
 		}
-		aprint_verbose("\n");
 	}
 
-	s = splbio();
+	ata_channel_lock(chp);
 	drvp->drive_flags &= ~ATA_DRIVE_NOSTREAM;
 	if (drvp->drive_type == ATA_DRIVET_ATAPI) {
 		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)
@@ -1489,7 +2216,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)
 			drvp->drive_flags |= ATA_DRIVE_NOSTREAM;
 	}
-	splx(s);
+	ata_channel_unlock(chp);
 
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
@@ -1503,11 +2230,11 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	}
 	cf_flags = device_cfdata(drv_dev)->cf_flags;
 	if (cf_flags & ATA_CONFIG_PIO_SET) {
-		s = splbio();
+		ata_channel_lock(chp);
 		drvp->PIO_mode =
 		    (cf_flags & ATA_CONFIG_PIO_MODES) >> ATA_CONFIG_PIO_OFF;
 		drvp->drive_flags |= ATA_DRIVE_MODE;
-		splx(s);
+		ata_channel_unlock(chp);
 	}
 #if NATA_DMA
 	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
@@ -1515,7 +2242,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		return;
 	}
 	if (cf_flags & ATA_CONFIG_DMA_SET) {
-		s = splbio();
+		ata_channel_lock(chp);
 		if ((cf_flags & ATA_CONFIG_DMA_MODES) ==
 		    ATA_CONFIG_DMA_DISABLE) {
 			drvp->drive_flags &= ~ATA_DRIVE_DMA;
@@ -1524,15 +2251,50 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			    ATA_CONFIG_DMA_OFF;
 			drvp->drive_flags |= ATA_DRIVE_DMA | ATA_DRIVE_MODE;
 		}
-		splx(s);
+		ata_channel_unlock(chp);
 	}
+
+	/*
+	 * Probe WRITE DMA FUA EXT. Support is mandatory for devices
+	 * supporting LBA48, but nevertheless confirm with the feature flag.
+	 */
+	if (drvp->drive_flags & ATA_DRIVE_DMA) {
+		if ((params.atap_cmd2_en & ATA_CMD2_LBA48) != 0
+		    && (params.atap_cmd_def & ATA_CMDE_WFE)) {
+			drvp->drive_flags |= ATA_DRIVE_WFUA;
+			aprint_verbose("%s WRITE DMA FUA", sep);
+			sep = ",";
+		}
+	}
+
+	/* Probe NCQ support - READ/WRITE FPDMA QUEUED command support */
+	ata_channel_lock(chp);
+	drvp->drv_openings = 1;
+	if (params.atap_sata_caps & SATA_NATIVE_CMDQ) {
+		if (atac->atac_cap & ATAC_CAP_NCQ)
+			drvp->drive_flags |= ATA_DRIVE_NCQ;
+		drvp->drv_openings =
+		    (params.atap_queuedepth & WDC_QUEUE_DEPTH_MASK) + 1;
+		aprint_verbose("%s NCQ (%d tags)", sep, drvp->drv_openings);
+		sep = ",";
+
+		if (params.atap_sata_caps & SATA_NCQ_PRIO) {
+			drvp->drive_flags |= ATA_DRIVE_NCQ_PRIO;
+			aprint_verbose(" w/PRIO");
+		}
+	}
+	ata_channel_unlock(chp);
+
+	if (printed)
+		aprint_verbose("\n");
+
 #if NATA_UDMA
 	if ((atac->atac_cap & ATAC_CAP_UDMA) == 0) {
 		/* don't care about UDMA modes */
 		return;
 	}
 	if (cf_flags & ATA_CONFIG_UDMA_SET) {
-		s = splbio();
+		ata_channel_lock(chp);
 		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
 		    ATA_CONFIG_UDMA_DISABLE) {
 			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
@@ -1541,7 +2303,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			    ATA_CONFIG_UDMA_OFF;
 			drvp->drive_flags |= ATA_DRIVE_UDMA | ATA_DRIVE_MODE;
 		}
-		splx(s);
+		ata_channel_unlock(chp);
 	}
 #endif	/* NATA_UDMA */
 #endif	/* NATA_DMA */
@@ -1664,7 +2426,7 @@ atabus_suspend(device_t dv, const pmf_qual_t *qual)
 	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
 
-	ata_queue_idle(chp->ch_queue);
+	ata_channel_idle(chp);
 
 	return true;
 }
@@ -1674,26 +2436,27 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
-	int s;
 
 	/*
 	 * XXX joerg: with wdc, the first channel unfreezes the controler.
 	 * Move this the reset and queue idling into wdc.
 	 */
-	s = splbio();
+	ata_channel_lock(chp);
 	if (chp->ch_queue->queue_freeze == 0) {
-		splx(s);
-		return true;
+		ata_channel_unlock(chp);
+		goto out;
 	}
 	KASSERT(chp->ch_queue->queue_freeze > 0);
+	ata_channel_unlock(chp);
+
 	/* unfreeze the queue and reset drives */
-	chp->ch_queue->queue_freeze--;
+	ata_channel_thaw(chp);
 
 	/* reset channel only if there are drives attached */
 	if (chp->ch_ndrives > 0)
 		ata_reset_channel(chp, AT_WAIT);
-	splx(s);
 
+out:
 	return true;
 }
 
@@ -1724,25 +2487,143 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
+	mutex_enter(&atabus_qlock);
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
+	mutex_exit(&atabus_qlock);
 	config_pending_incr(sc->sc_dev);
 
+	ata_channel_lock(chp);
 	chp->ch_flags |= ATACH_TH_RESCAN;
-	wakeup(&chp->ch_thread);
+	cv_signal(&chp->ch_thr_idle);
+	ata_channel_unlock(chp);
 
 	return 0;
 }
 
 void
-ata_delay(int ms, const char *msg, int flags)
+ata_delay(struct ata_channel *chp, int ms, const char *msg, int flags)
 {
+	KASSERT(mutex_owned(&chp->ch_lock));
+
 	if ((flags & (AT_WAIT | AT_POLL)) == AT_POLL) {
 		/*
-		 * can't use tsleep(), we may be in interrupt context
+		 * can't use kpause(), we may be in interrupt context
 		 * or taking a crash dump
 		 */
 		delay(ms * 1000);
 	} else {
-		kpause(msg, false, mstohz(ms), NULL);
+		int pause = mstohz(ms);
+		kpause(msg, false, pause > 0 ? pause : 1, &chp->ch_lock);
 	}
+}
+
+void
+atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
+    uint16_t *features, uint8_t *device)
+{
+	if ((xfer->c_flags & C_NCQ) == 0) {
+		/* FUA handling for non-NCQ drives */
+		if (xfer->c_bio.flags & ATA_FUA
+		    && *cmd == WDCC_WRITEDMA_EXT)
+			*cmd = WDCC_WRITEDMA_FUA_EXT;
+
+		return;
+	}
+
+	*cmd = (xfer->c_bio.flags & ATA_READ) ?
+	    WDCC_READ_FPDMA_QUEUED : WDCC_WRITE_FPDMA_QUEUED;
+
+	/* for FPDMA the block count is in features */
+	*features = *count;
+
+	/* NCQ tag */
+	*count = (xfer->c_slot << 3);
+
+	if (xfer->c_bio.flags & ATA_PRIO_HIGH)
+		*count |= WDSC_PRIO_HIGH;
+
+	/* other device flags */
+	if (xfer->c_bio.flags & ATA_FUA)
+		*device |= WDSD_FUA;
+}
+
+/*
+ * Must be called without any locks, i.e. with both drive and channel locks
+ * released.
+ */ 
+void
+ata_channel_start(struct ata_channel *chp, int drive)
+{
+	int i, s;
+	struct ata_drive_datas *drvp;
+
+	s = splbio();
+
+	KASSERT(chp->ch_ndrives > 0);
+
+#define ATA_DRIVE_START(chp, drive) \
+	do {							\
+		KASSERT(drive < chp->ch_ndrives);		\
+		drvp = &chp->ch_drive[drive];			\
+								\
+		if (drvp->drive_type != ATA_DRIVET_ATA &&	\
+		    drvp->drive_type != ATA_DRIVET_ATAPI &&	\
+		    drvp->drive_type != ATA_DRIVET_OLD)		\
+			continue;				\
+								\
+		if (drvp->drv_start != NULL)			\
+			(*drvp->drv_start)(drvp->drv_softc);	\
+	} while (0)
+
+	/*
+	 * Process drives in round robin fashion starting with next one after
+	 * the one which finished transfer. Thus no single drive would
+	 * completely starve other drives on same channel. 
+	 * This loop processes all but the current drive, so won't do anything
+	 * if there is only one drive in channel.
+	 */
+	for (i = (drive + 1) % chp->ch_ndrives; i != drive;
+	    i = (i + 1) % chp->ch_ndrives) {
+		ATA_DRIVE_START(chp, i);
+	}
+
+	/* Now try to kick off xfers on the current drive */
+	ATA_DRIVE_START(chp, drive);
+
+	splx(s);
+#undef ATA_DRIVE_START
+}
+
+void
+ata_channel_lock(struct ata_channel *chp)
+{
+	mutex_enter(&chp->ch_lock);
+}
+
+void
+ata_channel_unlock(struct ata_channel *chp)
+{
+	mutex_exit(&chp->ch_lock);
+}
+
+void
+ata_channel_lock_owned(struct ata_channel *chp)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+}
+
+void
+ata_wait_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	cv_wait(&xfer->c_finish, &chp->ch_lock);
+}
+
+void
+ata_wake_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	cv_signal(&xfer->c_finish);
 }

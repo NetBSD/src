@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.27 2010/04/12 12:43:39 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.28 2017/10/07 16:05:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.27 2010/04/12 12:43:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.28 2017/10/07 16:05:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ st_dma_init(void)
 
 int
 st_dmagrab(dma_farg int_func, dma_farg call_func, void *softc, int *lock_stat,
-    int rcaller)
+    int rcaller, kmutex_t *interlock)
 {
 	int s;
 	DMA_ENTRY *req;
@@ -131,7 +131,8 @@ st_dmagrab(dma_farg int_func, dma_farg call_func, void *softc, int *lock_stat,
 	if (TAILQ_FIRST(&dma_active) != req) {
 		if (call_func == NULL) {
 			do {
-				tsleep(&dma_active, PRIBIO, "dmalck", 0);
+				mtsleep(&dma_active, PRIBIO, "dmalck", 0,
+				    interlock);
 			} while (*req->lock_stat != DMA_LOCK_GRANT);
 			splx(s);
 			return 1;
