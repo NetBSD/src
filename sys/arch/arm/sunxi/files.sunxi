@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.28 2017/10/06 21:20:59 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.29 2017/10/07 13:28:59 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -73,6 +73,11 @@ device	sunxigates
 attach	sunxigates at fdt with sunxi_gates
 file	arch/arm/sunxi/sunxi_gates.c		sunxi_gates
 
+# GMAC MII/RGMII clock mux
+device	sunxigmacclk
+attach	sunxigmacclk at fdt with sunxi_gmacclk
+file	arch/arm/sunxi/sunxi_gmacclk.c		sunxi_gmacclk
+
 # Interrupt controller
 device	sunxiintc: pic, pic_splfuncs
 attach	sunxiintc at fdt with sunxi_intc
@@ -131,6 +136,10 @@ file	arch/arm/sunxi/sunxi_rtc.c		sunxi_rtc
 device	sunxiemac: arp, ether, ifnet, mii
 attach	sunxiemac at fdt with sunxi_emac
 file	arch/arm/sunxi/sunxi_emac.c		sunxi_emac
+
+# GMAC
+attach	awge at fdt with sunxi_gmac
+file	arch/arm/sunxi/sunxi_gmac.c		sunxi_gmac
 
 # Timer
 device	sunxitimer
