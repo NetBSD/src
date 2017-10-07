@@ -418,7 +418,7 @@ rt_cmp(const struct rt *r1, const struct rt *r2)
 #ifdef HAVE_ROUTE_METRIC
 	    r1->rt_metric == r2->rt_metric &&
 #endif
-	    sa_cmp(&r1->rt_gateway, &r1->rt_gateway) == 0);
+	    sa_cmp(&r1->rt_gateway, &r2->rt_gateway) == 0);
 }
 
 static bool
@@ -464,9 +464,6 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 	struct rt_head routes, added;
 	struct rt *rt, *rtn;
 	unsigned long long o;
-#ifdef INET6
-	bool have_default = false;
-#endif
 
 	/* We need to have the interfaces in the correct order to ensure
 	 * our routes are managed correctly. */
@@ -479,13 +476,13 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 #ifdef INET
 	case AF_INET:
 		if (!inet_getroutes(ctx, &routes))
-			return;
+			goto getfail;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		if (!inet6_getroutes(ctx, &routes))
-			return;
+			goto getfail;
 		break;
 #endif
 	}
@@ -500,17 +497,10 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 		if (rt_doroute(rt)) {
 			TAILQ_REMOVE(&routes, rt, rt_next);
 			TAILQ_INSERT_TAIL(&added, rt, rt_next);
-#ifdef INET6
-			if (sa_is_unspecified(&rt->rt_dest) &&
-			    sa_is_unspecified(&rt->rt_netmask))
-				have_default = true;
-#endif
 		}
 	}
 
-	/* Remove old routes we used to manage
-	 * If we own the default route, but not RA management itself
-	 * then we need to preserve the last best default route we had */
+	/* Remove old routes we used to manage. */
 	TAILQ_FOREACH_SAFE(rt, &ctx->routes, rt_next, rtn) {
 		if (rt->rt_dest.sa_family != af &&
 		    rt->rt_gateway.sa_family != af)
@@ -520,16 +510,6 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 			o = rt->rt_ifp->options ?
 			    rt->rt_ifp->options->options :
 			    ctx->options;
-#ifdef INET6
-			if (!have_default &&
-			    rt->rt_dest.sa_family == AF_INET6 &&
-			    sa_is_unspecified(&rt->rt_dest))
-				have_default = true;
-				/* no need to add it back to our routing table
-				 * as we delete an exiting route when we add
-				 * a new one */
-			else
-#endif
 			if ((o &
 				(DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 				(DHCPCD_EXITING | DHCPCD_PERSISTENT))
@@ -540,5 +520,7 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 
 	rt_headclear(&ctx->routes, af);
 	TAILQ_CONCAT(&ctx->routes, &added, rt_next);
+
+getfail:
 	rt_headclear(&routes, AF_UNSPEC);
 }

@@ -2941,24 +2941,26 @@ dhcp6_bind(struct interface *ifp, const char *op)
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	if (state->state == DH6S_TIMEDOUT || state->state == DH6S_ITIMEDOUT) {
 		struct timespec diff;
+		uint32_t diffsec;
 
 		/* Reduce timers */
 		timespecsub(&now, &state->acquired, &diff);
+		diffsec = (uint32_t)diff.tv_sec;
 		if (state->renew && state->renew != ND6_INFINITE_LIFETIME) {
-			if (state->renew > diff.tv_sec)
-				state->renew -= (uint32_t)diff.tv_sec;
+			if (state->renew > diffsec)
+				state->renew -= diffsec;
 			else
 				state->renew = 0;
 		}
 		if (state->rebind && state->rebind != ND6_INFINITE_LIFETIME) {
-			if (state->rebind > diff.tv_sec)
-				state->rebind -= (uint32_t)diff.tv_sec;
+			if (state->rebind > diffsec)
+				state->rebind -= diffsec;
 			else
 				state->rebind = 0;
 		}
 		if (state->expire && state->expire != ND6_INFINITE_LIFETIME) {
-			if (state->expire > diff.tv_sec)
-				state->expire -= (uint32_t)diff.tv_sec;
+			if (state->expire > diffsec)
+				state->expire -= diffsec;
 			else {
 				if (!(ifp->options->options &
 				    DHCPCD_LASTLEASE_EXTEND))

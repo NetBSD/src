@@ -9,9 +9,9 @@ CFLAGS?=	-O2
 CSTD?=		c99
 CFLAGS+=	-std=${CSTD}
 
-CPPFLAGS+=	-DNO_CONFIG_H
-CPPFLAGS+=	-DQUEUE_H=../compat/queue.h
-CPPFLAGS+=	-I${TOP}/src
+#CPPFLAGS+=	-DNO_CONFIG_H
+#CPPFLAGS+=	-DQUEUE_H=../compat/queue.h
+CPPFLAGS+=	-I${TOP} -I${TOP}/src
 
 # Default is to let eloop decide
 #CPPFLAGS+=	-DHAVE_KQUEUE
@@ -19,8 +19,10 @@ CPPFLAGS+=	-I${TOP}/src
 #CPPFLAGS+=	-DHAVE_PSELECT
 #CPPFLAGS+=	-DHAVE_EPOLL
 #CPPFLAGS+=	-DHAVE_PPOLL
+CPPFLAGS+=	-DWARN_SELECT
 
-OBJS+=          ${SRCS:.c=.o}
+PCOMPAT_SRCS=   ${COMPAT_SRCS:compat/%=${TOP}/compat/%}
+OBJS+=          ${SRCS:.c=.o} ${PCOMPAT_SRCS:.c=.o}
 
 .c.o: Makefile
 	${CC} ${CFLAGS} ${CPPFLAGS} -c $< -o $@
@@ -36,7 +38,7 @@ distclean: clean
 depend:
 
 ${PROG}: ${DEPEND} ${OBJS}
-	${CC} ${LDFLAGS} -o $@ ${OBJS} ${LDADD}
+	${CC} ${LDFLAGS} -o $@ ${OBJS}
 
 test: ${PROG}
 	./${PROG}

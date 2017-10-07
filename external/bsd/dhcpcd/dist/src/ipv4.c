@@ -338,13 +338,11 @@ inet_routerhostroute(struct rt_head *routes, struct interface *ifp)
 	struct if_options *ifo;
 	const struct dhcp_state *state;
 	struct in_addr in;
-	int n;
 
 	/* Don't add a host route for these interfaces. */
 	if (ifp->flags & (IFF_LOOPBACK | IFF_POINTOPOINT))
 		return 0;
 
-	n = 0;
 	TAILQ_FOREACH(rt, routes, rt_next) {
 		if (rt->rt_dest.sa_family != AF_INET)
 			continue;
@@ -414,9 +412,8 @@ inet_routerhostroute(struct rt_head *routes, struct interface *ifp)
 		rth->rt_mtu = dhcp_get_mtu(ifp);
 		sa_in_init(&rth->rt_ifa, &state->addr->addr);
 		TAILQ_INSERT_BEFORE(rt, rth, rt_next);
-		n++;
 	}
-	return n;
+	return 0;
 }
 
 bool

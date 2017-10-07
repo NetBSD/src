@@ -103,12 +103,17 @@ struct priv {
 	struct iovec sndrcv_iov[1];
 };
 
+/* We need this to send a broadcast for InfiniBand.
+ * Our old code used sendto, but our new code writes to a raw BPF socket.
+ * What header structure does IPoIB use? */
+#if 0
 /* Broadcast address for IPoIB */
 static const uint8_t ipv4_bcast_addr[] = {
 	0x00, 0xff, 0xff, 0xff,
 	0xff, 0x12, 0x40, 0x1b, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff
 };
+#endif
 
 #define PROC_INET6	"/proc/net/if_inet6"
 #define PROC_PROMOTE	"/proc/sys/net/ipv4/conf/%s/promote_secondaries"
