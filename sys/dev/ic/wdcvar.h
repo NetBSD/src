@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.97 2013/02/03 20:13:28 jakllsch Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.98 2017/10/07 16:05:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -142,9 +142,9 @@ struct wdc_softc {
  */
 
 void	wdc_allocate_regs(struct wdc_softc *);
-void	wdc_init_shadow_regs(struct ata_channel *);
+void	wdc_init_shadow_regs(struct wdc_regs *);
 
-int	wdcprobe(struct ata_channel *);
+int	wdcprobe(struct wdc_regs *);
 void	wdcattach(struct ata_channel *);
 int	wdcdetach(device_t, int);
 void	wdc_childdetached(device_t, device_t);
@@ -155,7 +155,7 @@ void	wdc_drvprobe(struct ata_channel *);
 
 void	wdcrestart(void*);
 
-int	wdcwait(struct ata_channel *, int, int, int, int);
+int	wdcwait(struct ata_channel *, int, int, int, int, int *);
 #define WDCWAIT_OK	0  /* we have what we asked */
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
@@ -173,18 +173,18 @@ void	wdc_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 void	wdc_reset_channel(struct ata_channel *, int);
 void	wdc_do_reset(struct ata_channel *, int);
 
-int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
+int	wdc_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 
 /*
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
  */
-#define wdc_wait_for_drq(chp, timeout, flags) \
-		wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout), (flags))
-#define wdc_wait_for_unbusy(chp, timeout, flags) \
-		wdcwait((chp), 0, 0, (timeout), (flags))
-#define wdc_wait_for_ready(chp, timeout, flags) \
-		wdcwait((chp), WDCS_DRDY, WDCS_DRDY, (timeout), (flags))
+#define wdc_wait_for_drq(chp, timeout, flags, tfd) \
+		wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout), (flags), (tfd))
+#define wdc_wait_for_unbusy(chp, timeout, flags, tfd) \
+		wdcwait((chp), 0, 0, (timeout), (flags), (tfd))
+#define wdc_wait_for_ready(chp, timeout, flags, tfd) \
+		wdcwait((chp), WDCS_DRDY, WDCS_DRDY, (timeout), (flags), (tfd))
 
 /* ATA/ATAPI specs says a device can take 31s to reset */
 #define WDC_RESET_WAIT 31000

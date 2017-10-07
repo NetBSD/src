@@ -1,4 +1,4 @@
-/*	$NetBSD: efavar.h,v 1.2 2017/09/04 17:26:06 phx Exp $ */
+/*	$NetBSD: efavar.h,v 1.3 2017/10/07 16:05:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 
 struct efa_port {
 	struct ata_channel	chan;
-	struct ata_queue	queue;
 
 	uint8_t			mode;		/* currently set mode */
 
