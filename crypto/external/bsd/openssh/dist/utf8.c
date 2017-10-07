@@ -1,4 +1,5 @@
-/*	$NetBSD: utf8.c,v 1.5 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: utf8.c,v 1.6 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: utf8.c,v 1.7 2017/05/31 09:15:42 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -16,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: utf8.c,v 1.5 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.6 2017/10/07 19:39:19 christos Exp $");
 /*
  * Utility functions for multibyte-character handling,
  * in particular to sanitize untrusted strings for terminal output.
@@ -55,7 +56,8 @@ dangerous_locale(void) {
 
 	loc = nl_langinfo(CODESET);
 	return strcmp(loc, "US-ASCII") != 0 && strcmp(loc, "UTF-8") != 0 &&
-	    strcmp(loc, "ANSI_X3.4-1968") != 0;
+	    strcmp(loc, "ANSI_X3.4-1968") != 0 && strcmp(loc, "646") != 0 &&
+	    strcmp(loc, "") != 0;
 }
 
 static int
@@ -69,7 +71,7 @@ grow_dst(char **dst, size_t *sz, size_t maxsz, char **dp, size_t need)
 	tsz = *sz + 128;
 	if (tsz > maxsz)
 		tsz = maxsz;
-	if ((tp = realloc(*dst, tsz)) == NULL)
+	if ((tp = recallocarray(*dst, *sz, tsz, 1)) == NULL)
 		return -1;
 	*dp = tp + (*dp - *dst);
 	*dst = tp;
