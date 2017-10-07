@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.35 2017/09/28 20:34:23 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.36 2017/10/07 15:24:36 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.35 2017/09/28 20:34:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.36 2017/10/07 15:24:36 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -751,7 +751,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 		xfer->c_bio.flags |= ATA_LBA48;
 		xfer->c_flags |= C_NCQ;
 
-		if ((wd->drvp->drive_flags & ATA_DRIVE_NCQ_PRIO) &&
+		if (WD_USE_NCQ_PRIO(wd) &&
 		    BIO_GETPRIO(bp) == BPRIO_TIMECRITICAL)
 			xfer->c_bio.flags |= ATA_PRIO_HIGH;
 	}
@@ -2356,6 +2356,19 @@ wd_sysctl_attach(struct wd_softc *wd)
 				!= 0) {
 		aprint_error_dev(wd->sc_dev,
 		    "could not create %s.%s.use_ncq sysctl - error %d\n",
+		    "hw", device_xname(wd->sc_dev), error);
+		return;
+	}
+
+	wd->drv_ncq_prio = true;
+	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
+				CTLFLAG_READWRITE, CTLTYPE_BOOL, "use_ncq_prio",
+				SYSCTL_DESCR("use NCQ PRIORITY if supported"),
+				NULL, 0, &wd->drv_ncq_prio, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+		aprint_error_dev(wd->sc_dev,
+		    "could not create %s.%s.use_ncq_prio sysctl - error %d\n",
 		    "hw", device_xname(wd->sc_dev), error);
 		return;
 	}
