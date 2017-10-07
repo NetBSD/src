@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.30 2017/10/07 15:12:35 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.31 2017/10/07 21:53:16 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -166,6 +166,7 @@ device	sunxicodec: audiobus, auconv, mulaw, aurateconv
 attach	sunxicodec at fdt with sunxi_codec
 file	arch/arm/sunxi/sunxi_codec.c		sunxi_codec
 file	arch/arm/sunxi/sun4i_a10_codec.c	sunxi_codec
+file	arch/arm/sunxi/sun6i_a31_codec.c	sunxi_codec
 
 # H3 Audio codec (analog part)
 device	h3codec
