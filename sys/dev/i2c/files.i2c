@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.77 2017/10/02 22:48:02 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.78 2017/10/07 18:22:06 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -222,8 +222,10 @@ attach  mpl115a at iic
 file    dev/i2c/mpl115a.c		mpl115a
 
 # AXP20x Power Management Unit
-device	axp20x: sysmon_envsys
+device	axp20x { }: sysmon_envsys
+device	axp20xreg: axp20x
 attach	axp20x at iic
+attach	axp20xreg at axp20x
 file	dev/i2c/axp20x.c			axp20x		needs-flag
 
 # AXP22x Power Management Unit
