@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43.4.9 2017/09/28 20:34:23 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.10 2017/10/07 15:24:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -78,6 +78,9 @@ struct wd_softc {
 	bool drv_ncq;
 #define WD_USE_NCQ(wd)	\
 	((wd)->drv_ncq && ((wd)->drvp->drive_flags & ATA_DRIVE_NCQ))
+	bool drv_ncq_prio;
+#define WD_USE_NCQ_PRIO(wd) \
+	((wd)->drv_ncq_prio && ((wd)->drvp->drive_flags & ATA_DRIVE_NCQ_PRIO))
 #ifdef WD_CHAOS_MONKEY
 	int drv_chaos_freq;		/* frequency of simulated bio errors */
 	int drv_chaos_cnt;		/* count of processed bio read xfers */
