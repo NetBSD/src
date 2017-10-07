@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.7 2015/04/11 20:05:44 joerg Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.8 2017/10/07 20:18:16 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -26,8 +26,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* XXX */
+#if defined(__arm__) || defined(__aarch64__)
+#include "opt_fdt.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.7 2015/04/11 20:05:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.8 2017/10/07 20:18:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.7 2015/04/11 20:05:44 joerg Exp $");
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8563reg.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
+
+static const char *compatible[] = {
+	"nxp,pcf8563",
+	"pcf8563rtc",
+	NULL
+};
 
 struct pcf8563rtc_softc {
 	device_t sc_dev;
@@ -64,8 +79,7 @@ pcf8563rtc_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (ia->ia_name) {
 		/* direct config - check name */
-		if (strcmp(ia->ia_name, "pcf8563rtc") == 0)
-			return 1;
+		return iic_compat_match(ia, compatible);
 	} else {
 		/* indirect config - check typical address */
 		if (ia->ia_addr == PCF8563_ADDR)
@@ -98,7 +112,11 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	    I2C_F_POLL);
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
+#ifdef FDT
+	fdtbus_todr_attach(self, ia->ia_cookie, &sc->sc_todr);
+#else
 	todr_attach(&sc->sc_todr);
+#endif
 }
 
 static int
