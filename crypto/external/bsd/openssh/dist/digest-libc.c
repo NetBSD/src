@@ -1,4 +1,4 @@
-/* $OpenBSD: digest-libc.c,v 1.5 2015/05/05 02:48:17 jsg Exp $ */
+/* $OpenBSD: digest-libc.c,v 1.6 2017/05/08 22:57:38 djm Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  * Copyright (c) 2014 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-libc.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: digest-libc.c,v 1.7 2017/10/07 19:39:19 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -63,16 +63,6 @@ const struct ssh_digest digests[SSH_DIGEST_MAX] = {
 		(md_init_fn *) MD5Init,
 		(md_update_fn *) MD5Update,
 		(md_final_fn *) MD5Final
-	},
-	{
-		SSH_DIGEST_RIPEMD160,
-		"RIPEMD160",
-		RMD160_BLOCK_LENGTH,
-		RMD160_DIGEST_LENGTH,
-		sizeof(RMD160_CTX),
-		(md_init_fn *) RMD160Init,
-		(md_update_fn *) RMD160Update,
-		(md_final_fn *) RMD160Final
 	},
 	{
 		SSH_DIGEST_SHA1,

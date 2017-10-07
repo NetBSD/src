@@ -1,5 +1,5 @@
-/*	$NetBSD: kexdhs.c,v 1.12 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: kexdhs.c,v 1.24 2016/05/02 10:26:04 djm Exp $ */
+/*	$NetBSD: kexdhs.c,v 1.13 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: kexdhs.c,v 1.25 2017/05/30 14:23:52 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhs.c,v 1.12 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: kexdhs.c,v 1.13 2017/10/07 19:39:19 christos Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: kexdhs.c,v 1.12 2017/04/18 18:41:46 christos Exp $");
 #include "ssherr.h"
 #include "sshbuf.h"
 
-static int input_kex_dh_init(int, u_int32_t, void *);
+static int input_kex_dh_init(int, u_int32_t, struct ssh *);
 
 int
 kexdh_server(struct ssh *ssh)
@@ -88,9 +88,8 @@ kexdh_server(struct ssh *ssh)
 }
 
 int
-input_kex_dh_init(int type, u_int32_t seq, void *ctxt)
+input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 {
-	struct ssh *ssh = ctxt;
 	struct kex *kex = ssh->kex;
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;
 	struct sshkey *server_host_public, *server_host_private;

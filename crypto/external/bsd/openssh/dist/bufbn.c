@@ -1,5 +1,5 @@
-/*	$NetBSD: bufbn.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: bufbn.c,v 1.12 2014/04/30 05:29:56 djm Exp $ */
+/*	$NetBSD: bufbn.c,v 1.9 2017/10/07 19:39:19 christos Exp $	*/
+/* $OpenBSD: bufbn.c,v 1.13 2017/04/30 23:23:54 djm Exp $ */
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -18,50 +18,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: bufbn.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: bufbn.c,v 1.9 2017/10/07 19:39:19 christos Exp $");
 #include <sys/types.h>
 
 #include "buffer.h"
 #include "log.h"
 #include "ssherr.h"
 
-int
-buffer_put_bignum_ret(Buffer *buffer, const BIGNUM *value)
-{
-	int ret;
-
-	if ((ret = sshbuf_put_bignum1(buffer, value)) != 0) {
-		error("%s: %s", __func__, ssh_err(ret));
-		return -1;
-	}
-	return 0;
-}
-
-void
-buffer_put_bignum(Buffer *buffer, const BIGNUM *value)
-{
-	if (buffer_put_bignum_ret(buffer, value) == -1)
-		fatal("%s: buffer error", __func__);
-}
-
-int
-buffer_get_bignum_ret(Buffer *buffer, BIGNUM *value)
-{
-	int ret;
-
-	if ((ret = sshbuf_get_bignum1(buffer, value)) != 0) {
-		error("%s: %s", __func__, ssh_err(ret));
-		return -1;
-	}
-	return 0;
-}
-
-void
-buffer_get_bignum(Buffer *buffer, BIGNUM *value)
-{
-	if (buffer_get_bignum_ret(buffer, value) == -1)
-		fatal("%s: buffer error", __func__);
-}
 
 int
 buffer_put_bignum2_ret(Buffer *buffer, const BIGNUM *value)
