@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.118 2017/10/07 19:38:09 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.119 2017/10/07 21:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -126,7 +126,6 @@ unsigned long
 #ifdef _OPENBSD_SOURCE
 long long strtonum(const char *, long long, long long, const char **);
 void	*reallocarray(void *, size_t, size_t);
-void	*recallocarray(void *, size_t, size_t, size_t);
 #endif
 int	 system(const char *);
 
