@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_wdt.c,v 1.1 2017/07/25 17:04:52 jmcneill Exp $ */
+/* $NetBSD: sunxi_wdt.c,v 1.2 2017/10/07 16:44:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.1 2017/07/25 17:04:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.2 2017/10/07 16:44:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,31 +43,46 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.1 2017/07/25 17:04:52 jmcneill Exp $
 
 #define	SUNXI_WDT_PERIOD_DEFAULT	16
 
-#define	WDT_IRQ_EN_REG		0x00
-#define	 WDT_IRQ_EN_EN		__BIT(0)
-#define	WDT_IRQ_STA_REG		0x04
-#define	 WDT_IRQ_STA_PEND	__BIT(0)
-#define	WDT_CTRL_REG		0x10
-#define	 WDT_CTRL_KEY_FIELD	__BITS(12,1)
-#define	  WDT_CTRL_KEY_FIELD_V	0xa57
-#define	 WDT_CTRL_RSTART	__BIT(0)
-#define	WDT_CFG_REG		0x14
-#define	 WDT_CFG_CONFIG		__BITS(1,0)
-#define	  WDT_CFG_CONFIG_SYS	1
-#define	  WDT_CFG_CONFIG_IRQ	2
-#define	WDT_MODE_REG		0x18
-#define	 WDT_MODE_INTV		__BITS(7,4)
-#define	 WDT_MODE_EN		__BIT(0)
+#define	SUN4I_WDT_CTRL_REG		0x00
+#define	 SUN4I_WDT_CTRL_KEY_FIELD	__BITS(12,1)
+#define	  SUN4I_WDT_CTRL_KEY_FIELD_V	0xa57
+#define	 SUN4I_WDT_CTRL_RSTART		__BIT(0)
+#define	SUN4I_WDT_MODE_REG		0x04
+#define	 SUN4I_WDT_MODE_INTV		__BITS(6,3)
+#define	 SUN4I_WDT_MODE_RST_EN		__BIT(1)
+#define	 SUN4I_WDT_MODE_EN		__BIT(0)
 
-static const int sun6i_periods[] = {
+#define	SUN6I_WDT_IRQ_EN_REG		0x00
+#define	 SUN6I_WDT_IRQ_EN_EN		__BIT(0)
+#define	SUN6I_WDT_IRQ_STA_REG		0x04
+#define	 SUN6I_WDT_IRQ_STA_PEND		__BIT(0)
+#define	SUN6I_WDT_CTRL_REG		0x10
+#define	 SUN6I_WDT_CTRL_KEY_FIELD	__BITS(12,1)
+#define	  SUN6I_WDT_CTRL_KEY_FIELD_V	0xa57
+#define	 SUN6I_WDT_CTRL_RSTART		__BIT(0)
+#define	SUN6I_WDT_CFG_REG		0x14
+#define	 SUN6I_WDT_CFG_CONFIG		__BITS(1,0)
+#define	  SUN6I_WDT_CFG_CONFIG_SYS	1
+#define	  SUN6I_WDT_CFG_CONFIG_IRQ	2
+#define	SUN6I_WDT_MODE_REG		0x18
+#define	 SUN6I_WDT_MODE_INTV		__BITS(7,4)
+#define	 SUN6I_WDT_MODE_EN		__BIT(0)
+
+static const int sunxi_periods[] = {
 	500, 1000, 2000, 3000,
 	4000, 5000, 6000, 8000,
 	10000, 12000, 14000, 16000,
 	-1
 };
 
+enum sunxi_wdt_type {
+	WDT_SUN4I = 1,
+	WDT_SUN6I,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun6i-a31-wdt",	(uintptr_t)&sun6i_periods },
+	{ "allwinner,sun4i-a10-wdt",	WDT_SUN4I },
+	{ "allwinner,sun6i-a31-wdt",	WDT_SUN6I },
 	{ NULL }
 };
 
@@ -106,14 +121,14 @@ sunxi_wdt_map_period(struct sunxi_wdt_softc *sc, u_int period,
 }
 
 static int
-sunxi_wdt_setmode(struct sysmon_wdog *smw)
+sun4i_wdt_setmode(struct sysmon_wdog *smw)
 {
 	struct sunxi_wdt_softc * const sc = smw->smw_cookie;
-	uint32_t cfg, mode;
+	uint32_t mode;
 	int intv;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		WDT_WRITE(sc, WDT_MODE_REG, 0);
+		WDT_WRITE(sc, SUN4I_WDT_MODE_REG, 0);
 	} else {
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
 			smw->smw_period = SUNXI_WDT_PERIOD_DEFAULT;
@@ -122,24 +137,62 @@ sunxi_wdt_setmode(struct sysmon_wdog *smw)
 		if (intv == -1)
 			return EINVAL;
 
-		cfg = __SHIFTIN(WDT_CFG_CONFIG_SYS, WDT_CFG_CONFIG);
-		mode = WDT_MODE_EN | __SHIFTIN(intv, WDT_MODE_INTV);
+		mode = SUN4I_WDT_MODE_EN | SUN4I_WDT_MODE_RST_EN |
+		    __SHIFTIN(intv, SUN4I_WDT_MODE_INTV);
 
-		WDT_WRITE(sc, WDT_CFG_REG, cfg);
-		WDT_WRITE(sc, WDT_MODE_REG, mode);
+		WDT_WRITE(sc, SUN4I_WDT_MODE_REG, mode);
 	}
 
 	return 0;
 }
 
 static int
-sunxi_wdt_tickle(struct sysmon_wdog *smw)
+sun4i_wdt_tickle(struct sysmon_wdog *smw)
 {
 	struct sunxi_wdt_softc * const sc = smw->smw_cookie;
-	const uint32_t ctrl = WDT_CTRL_RSTART |
-	    __SHIFTIN(WDT_CTRL_KEY_FIELD_V, WDT_CTRL_KEY_FIELD);
+	const uint32_t ctrl = SUN4I_WDT_CTRL_RSTART |
+	    __SHIFTIN(SUN4I_WDT_CTRL_KEY_FIELD_V, SUN4I_WDT_CTRL_KEY_FIELD);
 
-	WDT_WRITE(sc, WDT_CTRL_REG, ctrl);
+	WDT_WRITE(sc, SUN4I_WDT_CTRL_REG, ctrl);
+
+	return 0;
+}
+
+static int
+sun6i_wdt_setmode(struct sysmon_wdog *smw)
+{
+	struct sunxi_wdt_softc * const sc = smw->smw_cookie;
+	uint32_t cfg, mode;
+	int intv;
+
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		WDT_WRITE(sc, SUN6I_WDT_MODE_REG, 0);
+	} else {
+		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
+			smw->smw_period = SUNXI_WDT_PERIOD_DEFAULT;
+		intv = sunxi_wdt_map_period(sc, smw->smw_period,
+		    &sc->sc_smw.smw_period);
+		if (intv == -1)
+			return EINVAL;
+
+		cfg = __SHIFTIN(SUN6I_WDT_CFG_CONFIG_SYS, SUN6I_WDT_CFG_CONFIG);
+		mode = SUN6I_WDT_MODE_EN | __SHIFTIN(intv, SUN6I_WDT_MODE_INTV);
+
+		WDT_WRITE(sc, SUN6I_WDT_CFG_REG, cfg);
+		WDT_WRITE(sc, SUN6I_WDT_MODE_REG, mode);
+	}
+
+	return 0;
+}
+
+static int
+sun6i_wdt_tickle(struct sysmon_wdog *smw)
+{
+	struct sunxi_wdt_softc * const sc = smw->smw_cookie;
+	const uint32_t ctrl = SUN6I_WDT_CTRL_RSTART |
+	    __SHIFTIN(SUN6I_WDT_CTRL_KEY_FIELD_V, SUN6I_WDT_CTRL_KEY_FIELD);
+
+	WDT_WRITE(sc, SUN6I_WDT_CTRL_REG, ctrl);
 
 	return 0;
 }
@@ -158,6 +211,7 @@ sunxi_wdt_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_wdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	enum sunxi_wdt_type type;
 	bus_addr_t addr;
 	bus_size_t size;
 
@@ -172,18 +226,29 @@ sunxi_wdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_periods = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_periods = sunxi_periods;
 
 	aprint_naive("\n");
 	aprint_normal(": Watchdog\n");
 
-	WDT_WRITE(sc, WDT_IRQ_EN_REG, 0);
-
 	sc->sc_smw.smw_name = device_xname(self);
 	sc->sc_smw.smw_cookie = sc;
-	sc->sc_smw.smw_setmode = sunxi_wdt_setmode;
-	sc->sc_smw.smw_tickle = sunxi_wdt_tickle;
 	sc->sc_smw.smw_period = SUNXI_WDT_PERIOD_DEFAULT;
+
+	type = of_search_compatible(phandle, compat_data)->data;
+	switch (type) {
+	case WDT_SUN4I:
+		sc->sc_smw.smw_setmode = sun4i_wdt_setmode;
+		sc->sc_smw.smw_tickle = sun4i_wdt_tickle;
+		break;
+	case WDT_SUN6I:
+		sc->sc_smw.smw_setmode = sun6i_wdt_setmode;
+		sc->sc_smw.smw_tickle = sun6i_wdt_tickle;
+
+		/* Disable watchdog IRQs */
+		WDT_WRITE(sc, SUN6I_WDT_IRQ_EN_REG, 0);
+		break;
+	}
 
 	aprint_normal_dev(self,
 	    "default watchdog period is %u seconds\n",
