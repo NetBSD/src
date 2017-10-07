@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_a31_ccu.c,v 1.3 2017/10/07 19:41:51 jmcneill Exp $ */
+/* $NetBSD: sun6i_a31_ccu.c,v 1.4 2017/10/07 21:52:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun6i_a31_ccu.c,v 1.3 2017/10/07 19:41:51 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun6i_a31_ccu.c,v 1.4 2017/10/07 21:52:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun6i_a31_ccu.c,v 1.3 2017/10/07 19:41:51 jmcneill E
 #include <arm/sunxi/sunxi_ccu.h>
 #include <arm/sunxi/sun6i_a31_ccu.h>
 
+#define	PLL2_CFG_REG		0x008
 #define	PLL_PERIPH_CTRL_REG	0x028
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CLK_DIV_REG	0x058
@@ -53,6 +54,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun6i_a31_ccu.c,v 1.3 2017/10/07 19:41:51 jmcneill E
 #define	SD2_CLK_REG		0x090
 #define	SD3_CLK_REG		0x094
 #define	USBPHY_CFG_REG		0x0cc
+#define	AUDIO_CODEC_CLK_REG	0x140
 #define	BUS_SOFT_RST_REG0	0x2c0
 #define	BUS_SOFT_RST_REG1	0x2c4
 #define	BUS_SOFT_RST_REG2	0x2c8
@@ -140,7 +142,23 @@ static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph", "pll_periph" };
 static const char *mod_parents[] = { "hosc", "pll_periph" };
 
+static const struct sunxi_ccu_nkmp_tbl sun6i_a31_pll_audio_table[] = {
+	{ 24576000, 85, 0, 20, 3 },
+	{ 0 }
+};
+
 static struct sunxi_ccu_clk sun6i_a31_ccu_clks[] = {
+	SUNXI_CCU_NKMP_TABLE(A31_CLK_PLL_AUDIO_BASE, "pll_audio", "hosc",
+	    PLL2_CFG_REG,		/* reg */
+	    __BITS(14,8),		/* n */
+	    0,				/* k */
+	    __BITS(4,0),		/* m */
+	    __BITS(19,16),		/* p */
+	    __BIT(31),			/* enable */
+	    __BIT(28),			/* lock */
+	    sun6i_a31_pll_audio_table,	/* table */
+	    0),
+
 	SUNXI_CCU_NKMP(A31_CLK_PLL_PERIPH, "pll_periph", "hosc",
 	    PLL_PERIPH_CTRL_REG,	/* reg */
 	    __BITS(12,8),		/* n */
@@ -248,6 +266,9 @@ static struct sunxi_ccu_clk sun6i_a31_ccu_clks[] = {
 	    USBPHY_CFG_REG, 17),
 	SUNXI_CCU_GATE(A31_CLK_USB_OHCI2, "usb-ohci2", "hosc",
 	    USBPHY_CFG_REG, 18),
+
+	SUNXI_CCU_GATE(A31_CLK_CODEC, "codec", "pll_audio",
+	    AUDIO_CODEC_CLK_REG, 31),
 };
 
 static int
