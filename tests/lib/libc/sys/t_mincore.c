@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.13 2017/09/01 16:51:58 kre Exp $ */
+/* $NetBSD: t_mincore.c,v 1.14 2017/10/08 08:29:57 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.13 2017/09/01 16:51:58 kre Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.14 2017/10/08 08:29:57 kre Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: t_mincore.c,v 1.13 2017/09/01 16:51:58 kre Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <kvm.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -271,6 +272,33 @@ ATF_TC_CLEANUP(mincore_resid, tc)
 	(void)unlink(path);
 }
 
+static volatile int sig_caught;
+
+static void
+sigsys_handler(int signum)
+{
+
+	sig_caught = signum;
+}
+
+static int
+no_kernel_sysvmsg(void)
+{
+	int id;
+	void (*osig)(int);
+
+	sig_caught = 0;
+	osig = signal(SIGSYS, sigsys_handler);
+	id = shmget(IPC_PRIVATE, page, IPC_CREAT | S_IRUSR | S_IWUSR);
+	if (sig_caught || id == -1)
+		return 1;
+
+	(void)shmctl(id, IPC_RMID, 0);
+	(void)signal(SIGSYS, osig);
+
+	return 0;
+}
+
 ATF_TC(mincore_shmseg);
 ATF_TC_HEAD(mincore_shmseg, tc)
 {
@@ -282,6 +310,9 @@ ATF_TC_BODY(mincore_shmseg, tc)
 	size_t npgs = 128;
 	void *addr = NULL;
 	int shmid;
+
+	if (no_kernel_sysvmsg())
+		atf_tc_skip("No SYSVSHM in kernel");
 
 	shmid = shmget(IPC_PRIVATE, npgs * page,
 	    IPC_CREAT | S_IRUSR | S_IWUSR);
