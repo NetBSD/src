@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.124 2017/10/07 16:05:33 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.125 2017/10/08 21:18:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.124 2017/10/07 16:05:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.125 2017/10/08 21:18:14 joerg Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1046,7 +1046,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 #endif
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int tfd;
+	int tfd = 0;
 
 	ata_channel_lock_owned(chp);
 
