@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.320 2017/10/08 00:45:25 kre Exp $
+#	$NetBSD: build.sh,v 1.321 2017/10/08 01:05:13 kre Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -952,11 +952,34 @@ setmakeenv()
 	eval "$1='$2'; export $1"
 	makeenv="${makeenv} $1"
 }
+safe_setmakeenv()
+{
+	case "$1" in
+
+	#	Look for any vars we want to prohibit here, like:
+	# Bad | Dangerous)	usage "Cannot override $1 with -V";;
+
+	# That first char is OK has already been verified.
+	*[!A-Za-z0-9_]*)	usage "Bad variable name (-V): '$1'";;
+	esac
+	setmakeenv "$@"
+}
 
 unsetmakeenv()
 {
 	eval "unset $1"
 	makeenv="${makeenv} $1"
+}
+safe_unsetmakeenv()
+{
+	case "$1" in
+
+	#	Look for any vars user should not be able to unset
+	# Needed | Must_Have)	usage "Variable $1 cannot be unset";;
+
+	[!A-Za-z_]* | *[!A-Za-z0-9_]*)	usage "Bad variable name (-Z): '$1'";;
+	esac
+	unsetmakeenv "$1"
 }
 
 # Given a variable name in $1, modify the variable in place as follows:
@@ -1259,8 +1282,11 @@ parseoptions()
 			eval ${optargcmd}
 			case "${OPTARG}" in
 		    # XXX: consider restricting which variables can be changed?
-			[a-zA-Z_][a-zA-Z_0-9]*=*)
-				setmakeenv "${OPTARG%%=*}" "${OPTARG#*=}"
+			[a-zA-Z_]*=*)
+				safe_setmakeenv "${OPTARG%%=*}" "${OPTARG#*=}"
+				;;
+			[a-zA-Z_]*)
+				safe_setmakeenv "${OPTARG}" ""
 				;;
 			*)
 				usage "-V argument must be of the form 'var=[value]'"
@@ -1294,7 +1320,7 @@ parseoptions()
 		-Z)
 			eval ${optargcmd}
 		    # XXX: consider restricting which variables can be unset?
-			unsetmakeenv "${OPTARG}"
+			safe_unsetmakeenv "${OPTARG}"
 			;;
 
 		--)
@@ -1912,7 +1938,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.320 2017/10/08 00:45:25 kre Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.321 2017/10/08 01:05:13 kre Exp $
 # with these arguments: ${_args}
 #
 
