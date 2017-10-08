@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.134 2017/10/08 04:52:33 mlelstv Exp $	*/
+/*	$NetBSD: ata.c,v 1.135 2017/10/08 19:00:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.134 2017/10/08 04:52:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.135 2017/10/08 19:00:29 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -83,6 +83,7 @@ int atadebug_mask = ATADEBUG_MASK;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
+#if NATABUS
 static ONCE_DECL(ata_init_ctrl);
 
 /*
@@ -185,6 +186,7 @@ ataprint(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
+#endif /* NATABUS */
 
 static void
 ata_queue_reset(struct ata_queue *chq)
@@ -347,6 +349,14 @@ ata_channel_init(struct ata_channel *chp)
 	cv_init(&chp->ch_thr_idle, "atath");
 }
 
+void
+ata_channel_destroy(struct ata_channel *chp)
+{
+	mutex_destroy(&chp->ch_lock);
+	cv_destroy(&chp->ch_thr_idle);
+}
+
+#if NATABUS
 /*
  * ata_channel_attach:
  *
@@ -364,13 +374,6 @@ ata_channel_attach(struct ata_channel *chp)
 
 	chp->atabus = config_found_ia(chp->ch_atac->atac_dev, "ata", chp,
 		atabusprint);
-}
-
-void
-ata_channel_destroy(struct ata_channel *chp)
-{
-	mutex_destroy(&chp->ch_lock);
-	cv_destroy(&chp->ch_thr_idle);
 }
 
 /*
@@ -1428,6 +1431,7 @@ ata_xfer_start(struct ata_xfer *xfer)
 
 	return rv;
 }
+#endif /* NATABUS */
 
 /*
  * Does it's own locking, does not require splbio().
@@ -1549,6 +1553,7 @@ out:
 	ata_channel_unlock(chp);
 }
 
+#if NATABUS
 static void
 ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
 {
@@ -2547,6 +2552,7 @@ atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
 	if (xfer->c_bio.flags & ATA_FUA)
 		*device |= WDSD_FUA;
 }
+#endif /* NATABUS */
 
 /*
  * Must be called without any locks, i.e. with both drive and channel locks
@@ -2613,6 +2619,7 @@ ata_channel_lock_owned(struct ata_channel *chp)
 	KASSERT(mutex_owned(&chp->ch_lock));
 }
 
+#if NATABUS
 void
 ata_wait_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
@@ -2628,3 +2635,4 @@ ata_wake_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	cv_signal(&xfer->c_finish);
 }
+#endif /* NATABUS */
