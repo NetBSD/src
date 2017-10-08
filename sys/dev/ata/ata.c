@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.133 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.134 2017/10/08 04:52:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.133 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.134 2017/10/08 04:52:33 mlelstv Exp $");
 
 #include "opt_ata.h"
 
@@ -2503,7 +2503,6 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 void
 ata_delay(struct ata_channel *chp, int ms, const char *msg, int flags)
 {
-	KASSERT(mutex_owned(&chp->ch_lock));
 
 	if ((flags & (AT_WAIT | AT_POLL)) == AT_POLL) {
 		/*
@@ -2513,6 +2512,8 @@ ata_delay(struct ata_channel *chp, int ms, const char *msg, int flags)
 		delay(ms * 1000);
 	} else {
 		int pause = mstohz(ms);
+
+		KASSERT(mutex_owned(&chp->ch_lock));
 		kpause(msg, false, pause > 0 ? pause : 1, &chp->ch_lock);
 	}
 }
