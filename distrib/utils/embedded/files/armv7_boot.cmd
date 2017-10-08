@@ -23,7 +23,7 @@ if test "${kernel}" = "" ; then
 	exit
 fi
 
-if test "1" -eq ${use_fdt} ; then
+if test "${use_fdt}" = "1" ; then
 	fatload mmc ${mmcpart} ${kernel_addr_r} ${kernel}
 	fatload mmc ${mmcpart} ${fdt_addr_r} ${fdtfile}
 	fdt addr ${fdt_addr_r}
