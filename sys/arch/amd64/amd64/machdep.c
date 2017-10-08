@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262 2017/09/30 11:43:57 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.263 2017/10/08 09:06:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2017/09/30 11:43:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2017/10/08 09:06:50 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2017/09/30 11:43:57 maxv Exp $");
 #include "opt_mtrr.h"
 #include "opt_realmem.h"
 #include "opt_xen.h"
+#include "opt_kaslr.h"
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
@@ -1472,8 +1473,13 @@ init_x86_64_ksyms(void)
 #ifndef XEN
 	symtab = lookup_bootinfo(BTINFO_SYMTAB);
 	if (symtab) {
+#ifdef KASLR
+		tssym = PMAP_DIRECT_MAP((paddr_t)symtab->ssym);
+		tesym = PMAP_DIRECT_MAP((paddr_t)symtab->esym);
+#else
 		tssym = (vaddr_t)symtab->ssym + KERNBASE;
 		tesym = (vaddr_t)symtab->esym + KERNBASE;
+#endif
 		ksyms_addsyms_elf(symtab->nsym, (void *)tssym, (void *)tesym);
 	} else
 		ksyms_addsyms_elf(*(long *)(void *)&end,
