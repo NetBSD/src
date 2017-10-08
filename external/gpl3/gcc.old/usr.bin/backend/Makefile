@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 2017/07/27 16:05:15 he Exp $
+#	$NetBSD: Makefile,v 1.8 2017/10/08 11:08:55 joerg Exp $
 
 LIBISPRIVATE=	yes
 
 LIB=		backend
 
 SRCS=		${G_OBJS:.o=.c} ${G_out_file:T} regsub.c
+
+# Make sure we use the pre-generated C files
+.l.c:
+	@true
 
 BOTH_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
