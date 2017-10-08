@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.362 2017/05/21 15:28:42 riastradh Exp $
+#	$NetBSD: bsd.README,v 1.363 2017/10/08 15:03:50 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -401,6 +401,10 @@ MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 MKSTATICLIB	If "no", don't build or install the normal static (*.a)
 		libraries.
 		Default: yes
+
+MKSTATICPIE	Compile in support for static pie binaries. These binaries
+		use a special rcrt0.o/mcrt0.o that do the necessary relocations
+		Default: yes on platforms that support it.
 
 MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
 		the affect is equivalent to -x option of ld(1). If "no",
