@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.32 2017/06/05 23:44:27 christos Exp $
+# $NetBSD: mkvars.mk,v 1.33 2017/10/08 15:05:19 christos Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -26,6 +26,7 @@ MKEXTRAVARS= \
 	MKXORG \
 	MKXORG_SERVER \
 	MKRADEONFIRMWARE \
+	MKSTATICPIE \
 	USE_INET6 \
 	USE_KERBEROS \
 	USE_LDAP \
