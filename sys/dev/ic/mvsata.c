@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.36 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.37 2017/10/08 21:18:14 joerg Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.36 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.37 2017/10/08 21:18:14 joerg Exp $");
 
 #include "opt_mvsata.h"
 
@@ -2609,7 +2609,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int tfd;
+	int tfd = 0;
 
 	ata_channel_lock_owned(chp);
 
