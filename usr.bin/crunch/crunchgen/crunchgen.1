@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.32 2014/03/18 18:20:44 riastradh Exp $
+.\"	$NetBSD: crunchgen.1,v 1.33 2017/10/08 15:06:17 christos Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -24,7 +24,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd June 10, 2013
+.Dd May 31, 2017
 .Dt CRUNCHGEN 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm
-.Op Fl fOoq
+.Op Fl fOopq
 .Op Fl c Ar c-file-name
 .Op Fl D Ar src-root
 .Op Fl d Ar build-options
@@ -124,6 +124,8 @@ the program objects into a single relocatable.
 Use existing object files.
 Rather than rebuilding object files via reach-over
 makefiles, instead search for and use existing object files.
+.It Fl p
+Produce static pie (position independent executables).
 .It Fl q
 Quiet operation.
 Status messages are suppressed.
