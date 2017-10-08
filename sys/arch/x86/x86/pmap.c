@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.260 2017/09/30 12:35:48 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.261 2017/10/08 09:06:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 /*
@@ -171,12 +170,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.260 2017/09/30 12:35:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.261 2017/10/08 09:06:50 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
+#include "opt_kaslr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1604,6 +1604,11 @@ pmap_remap_largepages(void)
 	pd_entry_t *pde;
 	vaddr_t kva, kva_end;
 	paddr_t pa;
+
+#ifdef KASLR
+	/* XXX no large pages yet, soon */
+	return;
+#endif
 
 	/* Remap the kernel text using large pages. */
 	kva = rounddown(bootspace.text.va, NBPD_L2);

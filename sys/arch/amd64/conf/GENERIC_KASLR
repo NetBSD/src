@@ -1,5 +1,6 @@
-# $NetBSD: GENERIC_KASLR,v 1.1 2017/10/07 10:16:47 maxv Exp $
+# $NetBSD: GENERIC_KASLR,v 1.2 2017/10/08 09:06:50 maxv Exp $
 
 include "arch/amd64/conf/GENERIC"
 
 makeoptions 	KASLR=1		# Kernel ASLR
+options 	KASLR
