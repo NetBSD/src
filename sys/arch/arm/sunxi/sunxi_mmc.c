@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.9 2017/10/08 13:48:40 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.10 2017/10/08 18:00:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.9 2017/10/08 13:48:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.10 2017/10/08 18:00:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,12 +58,20 @@ struct sunxi_mmc_delay {
 	u_int	sample_phase;
 };
 
-static const struct sunxi_mmc_delay sunxi_mmc_delays[] = {
+static const struct sunxi_mmc_delay sun7i_mmc_delays[] = {
 	[SUNXI_MMC_TIMING_400K]		= { 180,	180 },
 	[SUNXI_MMC_TIMING_25M]		= { 180,	 75 },
 	[SUNXI_MMC_TIMING_50M]		= {  90,	120 },
 	[SUNXI_MMC_TIMING_50M_DDR]	= {  60,	120 },
 	[SUNXI_MMC_TIMING_50M_DDR_8BIT]	= {  90,	180 },
+};
+
+static const struct sunxi_mmc_delay sun9i_mmc_delays[] = {
+	[SUNXI_MMC_TIMING_400K]		= { 180,	180 },
+	[SUNXI_MMC_TIMING_25M]		= { 180,	 75 },
+	[SUNXI_MMC_TIMING_50M]		= { 150,	120 },
+	[SUNXI_MMC_TIMING_50M_DDR]	= {  54,	 36 },
+	[SUNXI_MMC_TIMING_50M_DDR_8BIT]	= {  72,	 72 },
 };
 
 #define SUNXI_MMC_NDESC		16
@@ -188,7 +196,14 @@ static const struct sunxi_mmc_config sun5i_a13_mmc_config = {
 static const struct sunxi_mmc_config sun7i_a20_mmc_config = {
 	.idma_xferlen = 0x2000,
 	.dma_ftrglevel = 0x20070008,
-	.delays = sunxi_mmc_delays,
+	.delays = sun7i_mmc_delays,
+	.flags = 0,
+};
+
+static const struct sunxi_mmc_config sun9i_a80_mmc_config = {
+	.idma_xferlen = 0x10000,
+	.dma_ftrglevel = 0x200f0010,
+	.delays = sun9i_mmc_delays,
 	.flags = 0,
 };
 
@@ -205,6 +220,7 @@ static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun4i-a10-mmc",	(uintptr_t)&sun4i_a10_mmc_config },
 	{ "allwinner,sun5i-a13-mmc",	(uintptr_t)&sun5i_a13_mmc_config },
 	{ "allwinner,sun7i-a20-mmc",	(uintptr_t)&sun7i_a20_mmc_config },
+	{ "allwinner,sun9i-a80-mmc",	(uintptr_t)&sun9i_a80_mmc_config },
 	{ "allwinner,sun50i-a64-mmc",	(uintptr_t)&sun50i_a64_mmc_config },
 	{ NULL }
 };
