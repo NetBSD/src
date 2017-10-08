@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.126 2017/10/08 21:29:34 christos Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.127 2017/10/08 21:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.126 2017/10/08 21:29:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.127 2017/10/08 21:33:38 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1079,8 +1079,8 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 			}
 			return;
 		}
-	} else
-		tfd = 0;
+	}
+
 
 	/*
 	 * Some drive occasionally set WDCS_ERR with
