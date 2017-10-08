@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.44 2017/10/07 10:26:39 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.45 2017/10/08 13:51:31 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -265,19 +265,20 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 
 /* -------------------------------------------------------------------------- */
 
-#define KERNALIGN 4096
+#define KERNALIGN 4096	/* XXX should depend on marks[] */
 
 /*
  * Load a dynamic ELF binary into memory. Layout of the memory:
- * +------------+-----------------+-----------------+-----------------+
- * | ELF HEADER | SECTION HEADERS | KERNEL SECTIONS | SYMBOL SECTIONS |
- * +------------+-----------------+-----------------+-----------------+
+ * +------------+-----------------+-----------------+------------------+
+ * | ELF HEADER | SECTION HEADERS | KERNEL SECTIONS | SYM+REL SECTIONS |
+ * +------------+-----------------+-----------------+------------------+
  * The ELF HEADER start address is marks[MARK_END]. We then map the rest
  * by increasing maxp. An alignment is enforced between the code sections.
  *
- * The offsets of the SYMBOL SECTIONS are relative to the start address of the
- * ELF HEADER. We just give the kernel a pointer to the ELF HEADER, and we let
- * the kernel find the location and number of symbols by itself.
+ * The offsets of the KERNEL and SYM+REL sections are relative to the start
+ * address of the ELF HEADER. We just give the kernel a pointer to the ELF
+ * HEADER, and we let the kernel find the location and number of symbols by
+ * itself.
  */
 static int
 ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
@@ -383,7 +384,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	}
 
 	/*
-	 * Load the SYMBOL SECTIONS.
+	 * Load the SYM+REL SECTIONS.
 	 */
 	maxp = roundup(maxp, ELFROUND);
 	for (i = 0; i < elf->e_shnum; i++) {
