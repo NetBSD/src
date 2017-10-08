@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2017/05/21 15:28:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.33 2017/10/08 15:02:33 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -10,6 +10,11 @@ DBG+=		-Os
 .endif
 
 CRUNCHGEN_FLAGS=-d "${DBG}"
+
+.if ${MKSTATICPIE:Uno} == "yes"
+CRUNCHGEN_FLAGS+=-p
+CFLAGS+=-fPIE
+.endif
 
 RESCUEDIR=	/rescue
 CRUNCHBIN=	rescue
