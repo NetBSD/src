@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.90 2017/04/21 13:17:42 kamil Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.91 2017/10/08 15:00:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.90 2017/04/21 13:17:42 kamil Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.91 2017/10/08 15:00:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -815,11 +815,12 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		interp = NULL;
 	} else {
 		epp->ep_entry = eh->e_entry;
-		if (epp->ep_flags & EXEC_FORCEAUX) {
-			ap = kmem_alloc(sizeof(*ap), KM_SLEEP);
-			ap->arg_interp = (vaddr_t)NULL;
-		} else
+		if (is_dyn || (epp->ep_flags & EXEC_FORCEAUX)) {
+			ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
+			ap->arg_interp = epp->ep_entryoffset;
+		} else {
 			ap = NULL;
+		}
 	}
 
 	if (ap) {
