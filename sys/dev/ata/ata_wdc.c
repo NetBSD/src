@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.106 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.107 2017/10/08 13:35:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.106 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.107 2017/10/08 13:35:03 christos Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -647,9 +647,7 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	 */
 	if ((xfer->c_flags & (C_TIMEOU | C_DMA)) == C_TIMEOU) {
 		ata_bio->error = TIMEOUT;
-		ata_channel_unlock(chp);
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
+		goto err;
 	}
 
 #if NATA_PIOBM
@@ -667,12 +665,10 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 			return 0; /* IRQ was not for us */
 		}
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
-		    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
-		    xfer->c_bcount, xfer->c_skip);
+		    device_xname(atac->atac_dev), chp->ch_channel,
+		    xfer->c_drive, xfer->c_bcount, xfer->c_skip);
 		ata_bio->error = TIMEOUT;
-		ata_channel_unlock(chp);
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
+		goto err;
 	}
 	if (wdc->irqack)
 		wdc->irqack(chp);
@@ -720,19 +716,17 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 			goto end;
 		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA) {
 			ata_channel_unlock(chp);
-			ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			ata_dmaerr(drvp,
+			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			ata_channel_lock(chp);
 			goto err;
 		}
 	}
 #endif	/* NATA_DMA */
 
 	/* if we had an error, end */
-	if (drv_err == WDC_ATA_ERR) {
-		ata_channel_unlock(chp);
-err:
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
-	}
+	if (drv_err == WDC_ATA_ERR)
+		goto err;
 
 	/* If this was a read and not using DMA, fetch the data. */
 	if ((ata_bio->flags & ATA_READ) != 0) {
@@ -741,9 +735,7 @@ err:
 			    device_xname(atac->atac_dev), chp->ch_channel,
 			    xfer->c_drive);
 			ata_bio->error = TIMEOUT;
-			ata_channel_unlock(chp);
-			wdc_ata_bio_done(chp, xfer);
-			return 1;
+			goto err;
 		}
 #if NATA_PIOBM
 		if (xfer->c_flags & C_PIOBM) {
@@ -755,7 +747,7 @@ err:
 			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT;
 			ata_channel_unlock(chp);
 			return 1;
-		} else
+		}
 #endif
 		wdc->datain_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
@@ -778,11 +770,13 @@ end:
 			/* Let _wdc_ata_bio_start do the loop */
 		}
 		ata_channel_unlock(chp);
-	} else { /* Done with this transfer */
-		ata_bio->error = NOERROR;
-		ata_channel_unlock(chp);
-		wdc_ata_bio_done(chp, xfer);
+		return 1;
 	}
+
+	/* Done with this transfer */
+	ata_bio->error = NOERROR;
+err:	ata_channel_unlock(chp);
+	wdc_ata_bio_done(chp, xfer);
 	return 1;
 }
 
