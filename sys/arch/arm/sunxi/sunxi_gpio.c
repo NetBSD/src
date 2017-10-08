@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.14 2017/10/06 21:20:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.15 2017/10/08 18:00:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.14 2017/10/06 21:20:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.15 2017/10/08 18:00:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.14 2017/10/06 21:20:59 jmcneill Exp
 
 #include <arm/sunxi/sunxi_gpio.h>
 
+#define	SUNXI_GPIO_MAX_EINT_BANK	5
 #define	SUNXI_GPIO_MAX_EINT		32
 
 #define	SUNXI_GPIO_PORT(port)		(0x24 * (port))
@@ -60,15 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.14 2017/10/06 21:20:59 jmcneill Exp
 #define	 SUNXI_GPIO_PULL_UP		1
 #define	 SUNXI_GPIO_PULL_DOWN		2
 #define  SUNXI_GPIO_PULL_PINMASK(pin)	(0x3 << (((pin) % 16) * 2))
-#define	SUNXI_GPIO_INT_CFG(eint)	(0x200 + (0x4 * ((eint) / 8)))
+#define	SUNXI_GPIO_INT_CFG(bank, eint)	(0x200 + (0x20 * (bank)) + (0x4 * ((eint) / 8)))
 #define	 SUNXI_GPIO_INT_MODEMASK(eint)	(0xf << (((eint) % 8) * 4))
 #define	  SUNXI_GPIO_INT_MODE_POS_EDGE		0x0
 #define	  SUNXI_GPIO_INT_MODE_NEG_EDGE		0x1
 #define	  SUNXI_GPIO_INT_MODE_HIGH_LEVEL	0x2
 #define	  SUNXI_GPIO_INT_MODE_LOW_LEVEL		0x3
 #define	  SUNXI_GPIO_INT_MODE_DOUBLE_EDGE	0x4
-#define	SUNXI_GPIO_INT_CTL		0x210
-#define	SUNXI_GPIO_INT_STATUS		0x214
+#define	SUNXI_GPIO_INT_CTL(bank)	(0x210 + 0x20 * (bank))
+#define	SUNXI_GPIO_INT_STATUS(bank)	(0x214 + 0x20 * (bank))
 
 static const struct of_compat_data compat_data[] = {
 #ifdef SOC_SUN4I_A10
@@ -92,6 +93,10 @@ static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun8i-h3-pinctrl",		(uintptr_t)&sun8i_h3_padconf },
 	{ "allwinner,sun8i-h3-r-pinctrl",	(uintptr_t)&sun8i_h3_r_padconf },
 #endif
+#ifdef SOC_SUN9I_A80
+	{ "allwinner,sun9i-a80-pinctrl",	(uintptr_t)&sun9i_a80_padconf },
+	{ "allwinner,sun9i-a80-r-pinctrl",	(uintptr_t)&sun9i_a80_r_padconf },
+#endif
 #ifdef SOC_SUN50I_A64
 	{ "allwinner,sun50i-a64-pinctrl",	(uintptr_t)&sun50i_a64_padconf },
 	{ "allwinner,sun50i-a64-r-pinctrl",	(uintptr_t)&sun50i_a64_r_padconf },
@@ -103,6 +108,7 @@ struct sunxi_gpio_eint {
 	int (*eint_func)(void *);
 	void *eint_arg;
 	int eint_flags;
+	int eint_bank;
 	int eint_num;
 };
 
@@ -117,8 +123,10 @@ struct sunxi_gpio_softc {
 	gpio_pin_t *sc_pins;
 	device_t sc_gpiodev;
 
+	u_int sc_eint_bank_max;
+
 	void *sc_ih;
-	struct sunxi_gpio_eint sc_eint[SUNXI_GPIO_MAX_EINT];
+	struct sunxi_gpio_eint sc_eint[SUNXI_GPIO_MAX_EINT_BANK][SUNXI_GPIO_MAX_EINT];
 };
 
 struct sunxi_gpio_pin {
@@ -388,22 +396,27 @@ sunxi_gpio_intr(void *priv)
 	struct sunxi_gpio_softc * const sc = priv;
 	struct sunxi_gpio_eint *eint;
 	uint32_t status, bit;
+	u_int bank;
 	int ret = 0;
 
-	status = GPIO_READ(sc, SUNXI_GPIO_INT_STATUS);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS, status);
-
-	while ((bit = ffs32(status)) != 0) {
-		status &= ~__BIT(bit - 1);
-		eint = &sc->sc_eint[bit - 1];
-		if (eint->eint_func == NULL)
+	for (bank = 0; bank <= sc->sc_eint_bank_max; bank++) {
+		status = GPIO_READ(sc, SUNXI_GPIO_INT_STATUS(bank));
+		if (status == 0)
 			continue;
-		const bool mpsafe = (eint->eint_flags & FDT_INTR_MPSAFE) != 0;
-		if (!mpsafe)
-			KERNEL_LOCK(1, curlwp);
-		ret |= eint->eint_func(eint->eint_arg);
-		if (!mpsafe)
-			KERNEL_UNLOCK_ONE(curlwp);
+		GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS(bank), status);
+
+		while ((bit = ffs32(status)) != 0) {
+			status &= ~__BIT(bit - 1);
+			eint = &sc->sc_eint[bank][bit - 1];
+			if (eint->eint_func == NULL)
+				continue;
+			const bool mpsafe = (eint->eint_flags & FDT_INTR_MPSAFE) != 0;
+			if (!mpsafe)
+				KERNEL_LOCK(1, curlwp);
+			ret |= eint->eint_func(eint->eint_arg);
+			if (!mpsafe)
+				KERNEL_UNLOCK_ONE(curlwp);
+		}
 	}
 
 	return ret;
@@ -465,7 +478,7 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	mutex_enter(&sc->sc_lock);
 
-	eint = &sc->sc_eint[pin_def->eint_num];
+	eint = &sc->sc_eint[pin_def->eint_bank][pin_def->eint_num];
 	if (eint->eint_func != NULL) {
 		mutex_exit(&sc->sc_lock);
 		return NULL;	/* in use */
@@ -480,18 +493,19 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	eint->eint_func = func;
 	eint->eint_arg = arg;
 	eint->eint_flags = flags;
+	eint->eint_bank = pin_def->eint_bank;
 	eint->eint_num = pin_def->eint_num;
 
 	/* Configure eint mode */
-	val = GPIO_READ(sc, SUNXI_GPIO_INT_CFG(eint->eint_num));
+	val = GPIO_READ(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num));
 	val &= ~SUNXI_GPIO_INT_MODEMASK(eint->eint_num);
 	val |= __SHIFTIN(mode, SUNXI_GPIO_INT_MODEMASK(eint->eint_num));
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_CFG(eint->eint_num), val);
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num), val);
 
 	/* Enable eint */
-	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL);
+	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
 	val |= __BIT(eint->eint_num);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL, val);
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank), val);
 
 	mutex_exit(&sc->sc_lock);
 
@@ -510,10 +524,10 @@ sunxi_gpio_disestablish(device_t dev, void *ih)
 	mutex_enter(&sc->sc_lock);
 
 	/* Disable eint */
-	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL);
+	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
 	val &= ~__BIT(eint->eint_num);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL, val);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS, __BIT(eint->eint_num));
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank), val);
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS(eint->eint_bank), __BIT(eint->eint_num));
 
 	eint->eint_func = NULL;
 	eint->eint_arg = NULL;
@@ -833,8 +847,17 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 	sunxi_gpio_attach_ports(sc);
 
 	/* Disable all external interrupts */
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL, 0);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS, GPIO_READ(sc, SUNXI_GPIO_INT_STATUS));
+	for (int i = 0; i < sc->sc_padconf->npins; i++) {
+		const struct sunxi_gpio_pins *pin_def = &sc->sc_padconf->pins[i];
+		if (pin_def->eint_func == 0)
+			continue;
+		GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL(pin_def->eint_bank), __BIT(pin_def->eint_num));
+		GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS(pin_def->eint_bank), __BIT(pin_def->eint_num));
+
+		if (sc->sc_eint_bank_max < pin_def->eint_bank)
+			sc->sc_eint_bank_max = pin_def->eint_bank;
+	}
+	KASSERT(sc->sc_eint_bank_max < SUNXI_GPIO_MAX_EINT_BANK);
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");

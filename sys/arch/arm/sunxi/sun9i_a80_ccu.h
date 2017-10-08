@@ -1,0 +1,215 @@
+/* $NetBSD: sun9i_a80_ccu.h,v 1.1 2017/10/08 18:00:36 jmcneill Exp $ */
+
+/*-
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _SUN9I_A80_CCU_H
+#define	_SUN9I_A80_CCU_H
+
+#define	A80_RST_BUS_FD		0
+#define	A80_RST_BUS_VE		1
+#define	A80_RST_BUS_GPU_CTRL	2
+#define	A80_RST_BUS_SS		3
+#define	A80_RST_BUS_MMC		4
+#define	A80_RST_BUS_NAND0	5
+#define	A80_RST_BUS_NAND1	6
+#define	A80_RST_BUS_SDRAM	7
+#define	A80_RST_BUS_SATA	8
+#define	A80_RST_BUS_TS		9
+#define	A80_RST_BUS_SPI0	10
+#define	A80_RST_BUS_SPI1	11
+#define	A80_RST_BUS_SPI2	12
+#define	A80_RST_BUS_SPI3	13
+#define	A80_RST_BUS_OTG		14
+#define	A80_RST_BUS_OTG_PHY	15
+#define	A80_RST_BUS_MIPI_HSI	16
+#define	A80_RST_BUS_GMAC	17
+#define	A80_RST_BUS_MSGBOX	18
+#define	A80_RST_BUS_SPINLOCK	19
+#define	A80_RST_BUS_HSTIMER	20
+#define	A80_RST_BUS_DMA		21
+#define	A80_RST_BUS_LCD0	22
+#define	A80_RST_BUS_LCD1	23
+#define	A80_RST_BUS_EDP		24
+#define	A80_RST_BUS_LVDS	25
+#define	A80_RST_BUS_CSI		26
+#define	A80_RST_BUS_HDMI0	27
+#define	A80_RST_BUS_HDMI1	28
+#define	A80_RST_BUS_DE		29
+#define	A80_RST_BUS_MP		30
+#define	A80_RST_BUS_GPU		31
+#define	A80_RST_BUS_MIPI_DSI	32
+#define	A80_RST_BUS_SPDIF	33
+#define	A80_RST_BUS_AC97	34
+#define	A80_RST_BUS_I2S0	35
+#define	A80_RST_BUS_I2S1	36
+#define	A80_RST_BUS_LRADC	37
+#define	A80_RST_BUS_GPADC	38
+#define	A80_RST_BUS_CIR_TX	39
+#define	A80_RST_BUS_I2C0	40
+#define	A80_RST_BUS_I2C1	41
+#define	A80_RST_BUS_I2C2	42
+#define	A80_RST_BUS_I2C3	43
+#define	A80_RST_BUS_I2C4	44
+#define	A80_RST_BUS_UART0	45
+#define	A80_RST_BUS_UART1	46
+#define	A80_RST_BUS_UART2	47
+#define	A80_RST_BUS_UART3	48
+#define	A80_RST_BUS_UART4	49
+#define	A80_RST_BUS_UART5	50
+
+#define	A80_CLK_PLL_C0CPUX	0
+#define	A80_CLK_PLL_C1CPUX	1
+#define	A80_CLK_PLL_AUDIO	2
+#define	A80_CLK_PLL_PERIPH0	3
+#define	A80_CLK_PLL_VE		4
+#define	A80_CLK_PLL_DDR		5
+#define	A80_CLK_PLL_VIDEO0	6
+#define	A80_CLK_PLL_VIDEO1	7
+#define	A80_CLK_PLL_GPU		8
+#define	A80_CLK_PLL_DE		9
+#define	A80_CLK_PLL_ISP		10
+#define	A80_CLK_PLL_PERIPH1	11
+#define	A80_CLK_C0CPUX		12
+#define	A80_CLK_C1CPUX		13
+#define	A80_CLK_ATB0		14
+#define	A80_CLK_AXI0		15
+#define	A80_CLK_ATB1		16
+#define	A80_CLK_AXI1		17
+#define	A80_CLK_GTBUS		18
+#define	A80_CLK_AHB0		19
+#define	A80_CLK_AHB1		20
+#define	A80_CLK_AHB2		21
+#define	A80_CLK_APB0		22
+#define	A80_CLK_APB1		23
+#define	A80_CLK_CCI400		24
+#define	A80_CLK_ATS		25
+#define	A80_CLK_TRACE		26
+#define	A80_CLK_OUT_A		27
+#define	A80_CLK_OUT_B		28
+#define	A80_CLK_NAND0_0		29
+#define	A80_CLK_NAND0_1		30
+#define	A80_CLK_NAND1_0		31
+#define	A80_CLK_NAND1_1		32
+#define	A80_CLK_MMC0		33
+#define	A80_CLK_MMC0_SAMPLE	34
+#define	A80_CLK_MMC0_OUTPUT	35
+#define	A80_CLK_MMC1		36
+#define	A80_CLK_MMC1_SAMPLE	37
+#define	A80_CLK_MMC1_OUTPUT	38
+#define	A80_CLK_MMC2		39
+#define	A80_CLK_MMC2_SAMPLE	40
+#define	A80_CLK_MMC2_OUTPUT	41
+#define	A80_CLK_MMC3		42
+#define	A80_CLK_MMC3_SAMPLE	43
+#define	A80_CLK_MMC3_OUTPUT	44
+#define	A80_CLK_TS		45
+#define	A80_CLK_SS		46
+#define	A80_CLK_SPI0		47
+#define	A80_CLK_SPI1		48
+#define	A80_CLK_SPI2		49
+#define	A80_CLK_SPI3		50
+#define	A80_CLK_I2S0		51
+#define	A80_CLK_I2S1		52
+#define	A80_CLK_SPDIF		53
+#define	A80_CLK_SDRAM		54
+#define	A80_CLK_DE		55
+#define	A80_CLK_EDP		56
+#define	A80_CLK_MP		57
+#define	A80_CLK_LCD0		58
+#define	A80_CLK_LCD1		59
+#define	A80_CLK_MIPI_DSI0	60
+#define	A80_CLK_MIPI_DSI1	61
+#define	A80_CLK_HDMI		62
+#define	A80_CLK_HDMI_SLOW	63
+#define	A80_CLK_MIPI_CSI	64
+#define	A80_CLK_CSI_ISP		65
+#define	A80_CLK_CSI_MISC	66
+#define	A80_CLK_CSI0_MCLK	67
+#define	A80_CLK_CSI1_MCLK	68
+#define	A80_CLK_FD		69
+#define	A80_CLK_VE		70
+#define	A80_CLK_AVS		71
+#define	A80_CLK_GPU_CORE	72
+#define	A80_CLK_GPU_MEMORY	73
+#define	A80_CLK_GPU_AXI		74
+#define	A80_CLK_SATA		75
+#define	A80_CLK_AC97		76
+#define	A80_CLK_MIPI_HSI	77
+#define	A80_CLK_GPADC		78
+#define	A80_CLK_CIR_TX		79
+#define	A80_CLK_BUS_FD		80
+#define	A80_CLK_BUS_VE		81
+#define	A80_CLK_BUS_GPU_CTRL	82
+#define	A80_CLK_BUS_SS		83
+#define	A80_CLK_BUS_MMC		84
+#define	A80_CLK_BUS_NAND0	85
+#define	A80_CLK_BUS_NAND1	86
+#define	A80_CLK_BUS_SDRAM	87
+#define	A80_CLK_BUS_MIPI_HSI	88
+#define	A80_CLK_BUS_SATA	89
+#define	A80_CLK_BUS_TS		90
+#define	A80_CLK_BUS_SPI0	91
+#define	A80_CLK_BUS_SPI1	92
+#define	A80_CLK_BUS_SPI2	93
+#define	A80_CLK_BUS_SPI3	94
+#define	A80_CLK_BUS_OTG		95
+#define	A80_CLK_BUS_USB		96
+#define	A80_CLK_BUS_GMAC	97
+#define	A80_CLK_BUS_MSGBOX	98
+#define	A80_CLK_BUS_SPINLOCK	99
+#define	A80_CLK_BUS_HSTIMER	100
+#define	A80_CLK_BUS_DMA		101
+#define	A80_CLK_BUS_LCD0	102
+#define	A80_CLK_BUS_LCD1	103
+#define	A80_CLK_BUS_EDP		104
+#define	A80_CLK_BUS_CSI		105
+#define	A80_CLK_BUS_HDMI	106
+#define	A80_CLK_BUS_DE		107
+#define	A80_CLK_BUS_MP		108
+#define	A80_CLK_BUS_MIPI_DSI	109
+#define	A80_CLK_BUS_SPDIF	110
+#define	A80_CLK_BUS_PIO		111
+#define	A80_CLK_BUS_AC97	112
+#define	A80_CLK_BUS_I2S0	113
+#define	A80_CLK_BUS_I2S1	114
+#define	A80_CLK_BUS_LRADC	115
+#define	A80_CLK_BUS_GPADC	116
+#define	A80_CLK_BUS_TWD		117
+#define	A80_CLK_BUS_CIR_TX	118
+#define	A80_CLK_BUS_I2C0	119
+#define	A80_CLK_BUS_I2C1	120
+#define	A80_CLK_BUS_I2C2	121
+#define	A80_CLK_BUS_I2C3	122
+#define	A80_CLK_BUS_I2C4	123
+#define	A80_CLK_BUS_UART0	124
+#define	A80_CLK_BUS_UART1	125
+#define	A80_CLK_BUS_UART2	126
+#define	A80_CLK_BUS_UART3	127
+#define	A80_CLK_BUS_UART4	128
+#define	A80_CLK_BUS_UART5	129
+
+#endif /* !_SUN9I_A80_CCU_H */
