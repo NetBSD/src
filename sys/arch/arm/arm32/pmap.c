@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.357 2017/09/06 11:51:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.358 2017/10/08 12:08:30 flxd Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.357 2017/09/06 11:51:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.358 2017/10/08 12:08:30 flxd Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3586,7 +3586,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	pmap_release_pmap_lock(pm);
 }
 
-#if !defined(ARM_MMU_EXTENDED)
+#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
 static struct pv_entry *
 pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 {
@@ -3594,9 +3594,7 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct pv_entry *pv;
 
-#ifdef PMAP_CACHE_VIPT
 	KASSERT(arm_cache_prefer_mask == 0 || md->pvh_attrs & (PVF_COLORED|PVF_NC));
-#endif
 	KASSERT((md->pvh_attrs & PVF_KMPAGE) == 0);
 	KASSERT(pmap_page_locked_p(md));
 
@@ -3614,18 +3612,16 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 		if (SLIST_EMPTY(&md->pvh_list)) {
 			md->pvh_attrs &= ~PVF_EXEC;
 			PMAPCOUNT(exec_discarded_kremove);
-#ifdef PMAP_CACHE_VIPT
 		} else {
 			pmap_syncicache_page(md, pa);
 			PMAPCOUNT(exec_synced_kremove);
-#endif
 		}
 	}
 	pmap_vac_me_harder(md, pa, pmap_kernel(), 0);
 
 	return pv;
 }
-#endif /* !ARM_MMU_EXTENDED */
+#endif /* PMAP_CACHE_VIPT && !ARM_MMU_EXTENDED */
 
 /*
  * pmap_kenter_pa: enter an unmanaged, wired kernel mapping
@@ -3637,10 +3633,15 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
+#ifdef PMAP_CACHE_VIVT
+	struct vm_page *pg = (flags & PMAP_KMPAGE) ? PHYS_TO_VM_PAGE(pa) : NULL;
+#endif
+#ifdef PMAP_CACHE_VIPT
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	struct vm_page *opg;
 #ifndef ARM_MMU_EXTENDED
 	struct pv_entry *pv = NULL;
+#endif
 #endif
 	struct vm_page_md *md = pg != NULL ? VM_PAGE_TO_MD(pg) : NULL;
 
@@ -3675,13 +3676,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		l2b->l2b_occupancy += PAGE_SIZE / L2_S_SIZE;
 	} else {
 		PMAPCOUNT(kenter_remappings);
-		opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
-		struct vm_page_md *omd __diagused = VM_PAGE_TO_MD(opg);
-		if (opg
 #ifdef PMAP_CACHE_VIPT
-		    && arm_cache_prefer_mask != 0
+		opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
+#if !defined(ARM_MMU_EXTENDED) || defined(DIAGNOSTIC)
+		struct vm_page_md *omd __diagused = VM_PAGE_TO_MD(opg);
 #endif
-		    && true) {
+		if (opg && arm_cache_prefer_mask != 0) {
 			KASSERT(opg != pg);
 			KASSERT((omd->pvh_attrs & PVF_KMPAGE) == 0);
 			KASSERT((flags & PMAP_KMPAGE) == 0);
@@ -3691,6 +3691,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pmap_release_page_lock(omd);
 #endif
 		}
+#endif
 		if (l2pte_valid_p(opte)) {
 			l2pte_reset(ptep);
 			PTE_SYNC(ptep);
@@ -3749,14 +3750,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			md->pvh_attrs |= PVF_KMPAGE;
 #endif
 			atomic_inc_32(&pmap_kmpages);
-		} else if (false
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
-		    || arm_cache_prefer_mask != 0
-#elif defined(PMAP_CACHE_VIVT)
- 		    || true
-#endif
-		    || false) {
-#if !defined(ARM_MMU_EXTENDED)
+		} else if (arm_cache_prefer_mask != 0) {
 			if (pv == NULL) {
 				pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 				KASSERT(pv != NULL);
@@ -3773,7 +3768,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pmap_release_page_lock(md);
 #endif
 		}
-#if !defined(ARM_MMU_EXTENDED)
+#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
 	} else {
 		if (pv != NULL)
 			pool_put(&pmap_pv_pool, pv);
@@ -3834,14 +3829,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 					}
 #endif
 					atomic_dec_32(&pmap_kmpages);
-				} else if (false
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
-				    || arm_cache_prefer_mask != 0
-#elif defined(PMAP_CACHE_VIVT)
-				    || true
-#endif
-				    || false) {
-#if !defined(ARM_MMU_EXTENDED)
+				} else if (arm_cache_prefer_mask != 0) {
 					pmap_acquire_page_lock(omd);
 					pool_put(&pmap_pv_pool,
 					    pmap_kremove_pg(opg, va));
