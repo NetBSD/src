@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.27 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.28 2017/10/08 20:19:05 joerg Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.307 2017/07/07 03:53:12 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.27 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.28 2017/10/08 20:19:05 joerg Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -1638,7 +1638,7 @@ agent_signer(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	    data, datalen, alg, compat);
 }
 
-static void
+__dead static void
 do_ca_sign(struct passwd *pw, int argc, char **argv)
 {
 	int r, i, fd, found, agent_fd = -1;
