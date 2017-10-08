@@ -1,9 +1,8 @@
-$NetBSD: README.evbarm,v 1.15 2017/07/02 22:41:30 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.16 2017/10/08 18:07:09 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
 ADI_BRH		2003/01/25	ADI Eng. Big Read Head i80200 eval board
-ALLWINNER_A80	2014/12/05	Cubietech Cubieboard 4
 ARMADILLO210	2006/02/06	Atmark Techno Armadillo-210
 ARMADILLO9	2005/11/13	Atmark Techno Armadillo-9
 BCM5301X	2012/08/31	Broadcom BCM95301X evaluation/reference board
