@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.84 2016/05/29 16:12:58 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.85 2017/10/08 15:06:17 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.84 2016/05/29 16:12:58 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.85 2017/10/08 15:06:17 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -102,7 +102,7 @@ static int goterror = 0;
 
 static const char *pname = "crunchgen";
 
-static int verbose, readcache, useobjs, oneobj;	/* options */
+static int verbose, readcache, useobjs, oneobj, pie;	/* options */
 static int reading_cache;
 static char *machine;
 static char *makeobjdirprefix;
@@ -151,14 +151,16 @@ main(int argc, char **argv)
     readcache = 1;
     useobjs = 0;
     oneobj = 1;
+    pie = 0;
     *outmkname = *outcfname = *execfname = '\0';
     
     if (argc > 0)
 	pname = argv[0];
 
-    while ((optc = getopt(argc, argv, "m:c:d:e:foqD:L:Ov:")) != -1) {
+    while ((optc = getopt(argc, argv, "m:c:d:e:fopqD:L:Ov:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
+	case 'p':	pie = 1; break;
 	case 'q':	verbose = 0; break;
 	case 'O':	oneobj = 0; break;
 	case 'o':       useobjs = 1, oneobj = 0; break;
@@ -918,7 +920,8 @@ top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
-    fprintf(outmk, "NOPIE=\n");
+    if (!pie)
+	    fprintf(outmk, "NOPIE=\n");
     fprintf(outmk, "NOMAN=\n\n");
 
     fprintf(outmk, "DBG=%s\n", dbg);
@@ -948,7 +951,7 @@ top_makefile_rules(FILE *outmk)
 	fprintf(outmk, " %s_make", p->ident);
     fprintf(outmk, "\n\n");
 
-    fprintf(outmk, "LDSTATIC=-static\n\n");
+    fprintf(outmk, "LDSTATIC=-static%s\n\n", pie ? " -pie" : "");
     fprintf(outmk, "PROG=%s\n\n", execfname);
     
     fprintf(outmk, "all: ${PROG}.crunched\n");
