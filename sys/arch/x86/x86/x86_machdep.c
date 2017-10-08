@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.96 2017/10/02 19:23:16 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.97 2017/10/08 09:06:50 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.96 2017/10/02 19:23:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.97 2017/10/08 09:06:50 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
 #include "opt_splash.h"
+#include "opt_kaslr.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -229,7 +230,11 @@ module_init_md(void)
 			    bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
 			module_prime(bi->path,
+#ifdef KASLR
+			    (void *)PMAP_DIRECT_MAP((uintptr_t)bi->base),
+#else
 			    (void *)((uintptr_t)bi->base + KERNBASE),
+#endif
 			    bi->len);
 			break;
 		case BI_MODULE_IMAGE:
@@ -238,7 +243,12 @@ module_init_md(void)
 			    bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
 			splash_setimage(
-			    (void *)((uintptr_t)bi->base + KERNBASE), bi->len);
+#ifdef KASLR
+			    (void *)PMAP_DIRECT_MAP((uintptr_t)bi->base),
+#else
+			    (void *)((uintptr_t)bi->base + KERNBASE),
+#endif
+			    bi->len);
 #endif
 			break;
 		case BI_MODULE_RND:
@@ -246,7 +256,11 @@ module_init_md(void)
 				     bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
 			rnd_seed(
+#ifdef KASLR
+			    (void *)PMAP_DIRECT_MAP((uintptr_t)bi->base),
+#else
 			    (void *)((uintptr_t)bi->base + KERNBASE),
+#endif
 			     bi->len);
 			break;
 		case BI_MODULE_FS:
@@ -254,7 +268,12 @@ module_init_md(void)
 			    bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
 #if defined(MEMORY_DISK_HOOKS) && defined(MEMORY_DISK_DYNAMIC)
-			md_root_setconf((void *)((uintptr_t)bi->base + KERNBASE),
+			md_root_setconf(
+#ifdef KASLR
+			    (void *)PMAP_DIRECT_MAP((uintptr_t)bi->base),
+#else
+			    (void *)((uintptr_t)bi->base + KERNBASE),
+#endif
 			    bi->len);
 #endif
 			break;	
