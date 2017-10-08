@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.h,v 1.6 2017/10/06 21:20:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.h,v 1.7 2017/10/08 18:00:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -43,6 +43,7 @@ struct sunxi_gpio_pins {
 	const char *functions[SUNXI_GPIO_MAXFUNC];
 	uint8_t eint_func;
 	uint8_t eint_num;
+	uint8_t eint_bank;
 };
 
 struct sunxi_gpio_padconf {
@@ -75,6 +76,11 @@ extern const struct sunxi_gpio_padconf sun8i_a83t_r_padconf;
 #ifdef SOC_SUN8I_H3
 extern const struct sunxi_gpio_padconf sun8i_h3_padconf;
 extern const struct sunxi_gpio_padconf sun8i_h3_r_padconf;
+#endif
+
+#ifdef SOC_SUN9I_A80
+extern const struct sunxi_gpio_padconf sun9i_a80_padconf;
+extern const struct sunxi_gpio_padconf sun9i_a80_r_padconf;
 #endif
 
 #ifdef SOC_SUN50I_A64
