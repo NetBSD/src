@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgget.c,v 1.2 2014/02/27 00:59:50 joerg Exp $ */
+/* $NetBSD: t_msgget.c,v 1.3 2017/10/08 08:31:05 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgget.c,v 1.2 2014/02/27 00:59:50 joerg Exp $");
+__RCSID("$NetBSD: t_msgget.c,v 1.3 2017/10/08 08:31:05 kre Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -278,15 +278,55 @@ ATF_TC_CLEANUP(msgget_mode, tc)
 	clean();
 }
 
+static volatile int sig_caught;
+
+static void
+sigsys_handler(int signum)
+{
+
+	sig_caught = signum;
+}
+
+static int
+no_kernel_sysvmsg(void)
+{
+	int id;
+	void (*osig)(int);
+
+	sig_caught = 0;
+	osig = signal(SIGSYS, sigsys_handler);
+	id = msgget(MSG_KEY, IPC_CREAT | 0600);
+	if (sig_caught || id == -1)
+		return 1;
+
+	(void)msgctl(id, IPC_RMID, 0);
+	(void)signal(SIGSYS, osig);
+
+	return 0;
+}
+
+ATF_TC(msgget_query);
+ATF_TC_HEAD(msgget_query, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Skip msgget_* tests - no SYSVMSG");
+}
+ATF_TC_BODY(msgget_query, tc)
+{
+	atf_tc_skip("No SYSVMSG in kernel");
+}
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, msgget_excl);
-	ATF_TP_ADD_TC(tp, msgget_exit);
-	ATF_TP_ADD_TC(tp, msgget_init);
-	ATF_TP_ADD_TC(tp, msgget_limit);
-	ATF_TP_ADD_TC(tp, msgget_mode);
+	if (no_kernel_sysvmsg()) {
+		ATF_TP_ADD_TC(tp, msgget_query);
+	} else {
+		ATF_TP_ADD_TC(tp, msgget_excl);
+		ATF_TP_ADD_TC(tp, msgget_exit);
+		ATF_TP_ADD_TC(tp, msgget_init);
+		ATF_TP_ADD_TC(tp, msgget_limit);
+		ATF_TP_ADD_TC(tp, msgget_mode);
+	}
 
 	return atf_no_error();
 }
