@@ -134,7 +134,17 @@ resize_ffs()
 	fi
 
 	# we're specifying relative paths, so rump_ffs warns - ignore.
-	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
+	if ! rump_ffs ${IMG} mnt >/dev/null 2>S.Err
+	then
+		if grep 'puffs_daemon: Operation not supported by device' S.Err >/dev/null
+		then
+			atf_skip 'No PUFFS available in kernel'
+		else
+			aft_fail "rump_ffs mount failed: $(tail -r S.Err |
+				sed -e '/^$/d' -e p -e q )"
+		fi
+	fi
+
 	copy_multiple ${numdata}
 
 	if [ ${nsize} -lt ${osize} ]; then
