@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.58 2017/10/09 17:39:33 maya Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.59 2017/10/09 17:41:18 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58 2017/10/09 17:39:33 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.59 2017/10/09 17:41:18 maya Exp $");
 
 #include "opt_xen.h"
 
@@ -705,19 +705,9 @@ static void
 cpu_probe_old_fpu(struct cpu_info *ci)
 {
 #if defined(__i386__) && !defined(XEN)
-	uint16_t control;
 
-	/* Check that there really is an fpu (496SX) */
 	clts();
 	fninit();
-	/* Read default control word */
-	fnstcw(&control);
-	if (control != __INITIAL_NPXCW__) {
-		/* Must be a 486SX, trap FP instructions */
-		lcr0((rcr0() & ~CR0_MP) | CR0_EM);
-		i386_fpu_present = 0;
-		return;
-	}
 
 	/* Check for 'FDIV' bug on the original Pentium */
 	if (npx586bug1(4195835, 3145727) != 0)
