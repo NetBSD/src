@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.59 2017/10/09 17:41:18 maya Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.60 2017/10/09 17:49:28 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.59 2017/10/09 17:41:18 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.60 2017/10/09 17:49:28 maya Exp $");
 
 #include "opt_xen.h"
 
@@ -971,9 +971,6 @@ cpu_identify(struct cpu_info *ci)
 #endif
 
 #ifdef i386
-	if (i386_fpu_present == 0)
-		aprint_normal_dev(ci->ci_dev, "no fpu\n");
-
 	if (i386_fpu_fdivbug == 1)
 		aprint_normal_dev(ci->ci_dev,
 		    "WARNING: Pentium FDIV bug detected!\n");
