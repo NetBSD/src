@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.33 2017/10/08 15:06:17 christos Exp $
+.\"	$NetBSD: crunchgen.1,v 1.34 2017/10/09 10:31:50 wiz Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -334,7 +334,6 @@ Here is an example
 .Em crunchgen
 input conf file, named
 .Dq Pa kcopy.conf :
-.Pp
 .Bd -literal -offset indent
 srcdirs /usr/src/bin /usr/src/sbin
 
@@ -358,7 +357,6 @@ line.
 The crunched binary
 .Dq kcopy
 can be built as follows:
-.Pp
 .Bd -literal -offset indent
 % crunchgen -m Makefile kcopy.conf    # gen Makefile and kcopy.c
 % make objs             # build the component programs' .o files
@@ -379,7 +377,8 @@ and hard-linked to the names of the component programs.
 was written by
 .An James da Silva Aq Mt jds@cs.umd.edu .
 .Pp
-Copyright (c) 1994 University of Maryland.  All Rights Reserved.
+Copyright (c) 1994 University of Maryland.
+All Rights Reserved.
 .Sh BUGS
 While
 .Nm
@@ -402,7 +401,6 @@ some other arrangements made.
 If a program directory being searched for is found, but contains
 no objects, other directories are not searched.
 This causes the following directive to fail:
-.Pp
 .Bd -literal -offset indent
 srcdirs /usr/src/usr.bin /usr/src/usr.bin/less
 progs less gzip
@@ -420,7 +418,6 @@ fails to find objects for the
 program.
 To avoid this problem, list specific srcdirs first, and
 the more general ones later, for e.g.:
-.Pp
 .Bd -literal -offset indent
 srcdirs /usr/src/usr.bin/less /usr/src/usr.bin
 progs less gzip
