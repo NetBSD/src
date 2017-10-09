@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.28 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.29 2017/10/09 12:07:03 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.264 2017/09/12 06:32:07 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.28 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.29 2017/10/09 12:07:03 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -1779,9 +1779,10 @@ ssh_packet_send_debug(struct ssh *ssh, const char *fmt,...)
 	    (r = sshpkt_put_u8(ssh, 0)) != 0 || /* always display */
 	    (r = sshpkt_put_cstring(ssh, buf)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, "")) != 0 ||
-	    (r = sshpkt_send(ssh)) != 0 ||
-	    (r = ssh_packet_write_wait(ssh)) != 0)
+	    (r = sshpkt_send(ssh)) != 0)
 		fatal("%s: %s", __func__, ssh_err(r));
+	if ((r = ssh_packet_write_wait(ssh)) < 0)
+		sshpkt_fatal(ssh, __func__, r);
 }
 
 static void
