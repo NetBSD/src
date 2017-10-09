@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.9 2017/06/25 15:56:32 christos Exp $ */
+/* $NetBSD: mpii.c,v 1.10 2017/10/09 23:24:22 maya Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.9 2017/06/25 15:56:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.10 2017/10/09 23:24:22 maya Exp $");
 
 #include "bio.h"
 
@@ -4108,10 +4108,12 @@ mpii_alloc_dev(struct mpii_softc *sc)
 static int
 mpii_insert_dev(struct mpii_softc *sc, struct mpii_device *dev)
 {
+
+	if (!dev || dev->slot < 0)
+		return (1);
+
 	int slot = dev->slot; 	/* initial hint */
 
-	if (!dev || slot < 0)
-		return (1);
 	while (slot < sc->sc_max_devices && sc->sc_devs[slot] != NULL)
 		slot++;
 	if (slot >= sc->sc_max_devices)
