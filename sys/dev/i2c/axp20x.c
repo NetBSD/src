@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.8 2017/10/07 18:22:06 jmcneill Exp $ */
+/* $NetBSD: axp20x.c,v 1.9 2017/10/09 14:52:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.8 2017/10/07 18:22:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.9 2017/10/09 14:52:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,15 +377,15 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	sysmon_envsys_register(sc->sc_sme);
 
 	if (axp20x_read(sc, AXP_DCDC2, &value, 1, I2C_F_POLL) == 0) {
-		aprint_verbose_dev(sc->sc_dev, ": DCDC2 %dmV\n",
+		aprint_verbose_dev(sc->sc_dev, "DCDC2 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC2_VOLT_MASK) * 25));
 	}
 	if (axp20x_read(sc, AXP_DCDC3, &value, 1, I2C_F_POLL) == 0) {
-		aprint_verbose_dev(sc->sc_dev, ": DCDC3 %dmV\n",
+		aprint_verbose_dev(sc->sc_dev, "DCDC3 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC3_VOLT_MASK) * 25));
 	}
 	if (axp20x_read(sc, AXP_LDO2_4, &value, 1, I2C_F_POLL) == 0) {
-		aprint_verbose_dev(sc->sc_dev, ": LDO2 %dmV, LDO4 %dmV\n",
+		aprint_verbose_dev(sc->sc_dev, "LDO2 %dmV, LDO4 %dmV\n",
 		    (int)(1800 +
 		    ((value & AXP_LDO2_VOLT_MASK) >> AXP_LDO2_VOLT_SHIFT) * 100
 		    ),
@@ -393,9 +393,9 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	}
 	if (axp20x_read(sc, AXP_LDO3, &value, 1, I2C_F_POLL) == 0) {
 		if (value & AXP_LDO3_TRACK) {
-			aprint_verbose_dev(sc->sc_dev, ": LDO3: tracking\n");
+			aprint_verbose_dev(sc->sc_dev, "LDO3: tracking\n");
 		} else {
-			aprint_verbose_dev(sc->sc_dev, ": LDO3 %dmV\n",
+			aprint_verbose_dev(sc->sc_dev, "LDO3 %dmV\n",
 			    (int)(700 + (value & AXP_LDO3_VOLT_MASK) * 25));
 		}
 	}
@@ -552,7 +552,7 @@ axp20x_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		}
 		return;
 	default:
-		aprint_error_dev(sc->sc_dev, ": invalid sensor %d\n",
+		aprint_error_dev(sc->sc_dev, "invalid sensor %d\n",
 		    edata->sensor);
 	}
 }
@@ -604,8 +604,8 @@ axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
 			return ret;
 		if (axp20x_read(sc, AXP_DCDC2, &reg, 1, poll ? I2C_F_POLL : 0)
 		  == 0) {
-			aprint_verbose_dev(sc->sc_dev,
-			    ": DCDC2 changed to %dmV\n",
+			aprint_debug_dev(sc->sc_dev,
+			    "DCDC2 changed to %dmV\n",
 			    (int)(700 + (reg & AXP_DCDC2_VOLT_MASK) * 25));
 		}
 		return 0;
@@ -621,8 +621,8 @@ axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
 			return ret;
 		if (axp20x_read(sc, AXP_DCDC3, &reg, 1, poll ? I2C_F_POLL : 0)
 		  == 0) {
-			aprint_verbose_dev(sc->sc_dev,
-			    ": DCDC3 changed to %dmV\n",
+			aprint_debug_dev(sc->sc_dev,
+			    "DCDC3 changed to %dmV\n",
 			    (int)(700 + (reg & AXP_DCDC3_VOLT_MASK) * 25));
 		}
 		return 0;
