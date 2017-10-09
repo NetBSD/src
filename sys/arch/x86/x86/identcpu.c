@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.57 2017/09/12 07:19:36 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.58 2017/10/09 17:39:33 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.57 2017/09/12 07:19:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58 2017/10/09 17:39:33 maya Exp $");
 
 #include "opt_xen.h"
 
@@ -701,12 +701,10 @@ cpu_probe_vortex86(struct cpu_info *ci)
 #undef PCI_MODE1_DATA_REG
 }
 
-#if !defined(__i386__) || defined(XEN)
-#define cpu_probe_old_fpu(ci)
-#else
 static void
 cpu_probe_old_fpu(struct cpu_info *ci)
 {
+#if defined(__i386__) && !defined(XEN)
 	uint16_t control;
 
 	/* Check that there really is an fpu (496SX) */
@@ -727,8 +725,8 @@ cpu_probe_old_fpu(struct cpu_info *ci)
 		i386_fpu_fdivbug = 1;
 
 	stts();
-}
 #endif
+}
 
 static void
 cpu_probe_fpu(struct cpu_info *ci)
