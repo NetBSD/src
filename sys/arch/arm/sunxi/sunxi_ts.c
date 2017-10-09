@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ts.c,v 1.1 2017/08/27 02:19:46 jmcneill Exp $ */
+/* $NetBSD: sunxi_ts.c,v 1.2 2017/10/09 14:28:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.1 2017/08/27 02:19:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.2 2017/10/09 14:28:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.1 2017/08/27 02:19:46 jmcneill Exp $"
 #include <sys/time.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -70,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.1 2017/08/27 02:19:46 jmcneill Exp $"
 #define	 TP_CTRL3_FILTER_EN		__BIT(2)
 #define	 TP_CTRL3_FILTER_TYPE		__BITS(1,0)
 #define	TP_INT			0x10
+#define	 TP_INT_TEMP_IRQ_EN	__BIT(18)
 #define	 TP_INT_OVERRUN_IRQ_EN	__BIT(17)
 #define	 TP_INT_DATA_IRQ_EN	__BIT(16)
 #define	 TP_INT_DATA_XY_CHANGE	__BIT(13)
@@ -79,26 +82,60 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.1 2017/08/27 02:19:46 jmcneill Exp $"
 #define	 TP_INT_UP_IRQ_EN	__BIT(1)
 #define	 TP_INT_DOWN_IRQ_EN	__BIT(0)
 #define	TP_FIFOCS		0x14
+#define	 TP_FIFOCS_TEMP_IRQ_PENDING __BIT(18)
 #define	 TP_FIFOCS_OVERRUN_PENDING __BIT(17)
 #define	 TP_FIFOCS_DATA_PENDING	__BIT(16)
 #define	 TP_FIFOCS_RXA_CNT	__BITS(12,8)
 #define	 TP_FIFOCS_IDLE_FLG	__BIT(2)
 #define	 TP_FIFOCS_UP_PENDING	__BIT(1)
 #define	 TP_FIFOCS_DOWN_PENDING	__BIT(0)
+#define	TP_TPR			0x18
+#define	 TP_TPR_TEMP_EN		__BIT(16)
+#define	 TP_TPR_TEMP_PER	__BITS(15,0)
 #define	TP_CDAT			0x1c
 #define	 TP_CDAT_MASK		__BITS(11,0)
+#define	TEMP_DATA		0x20
+#define	 TEMP_DATA_MASK		__BITS(11,0)
 #define	TP_DATA			0x24
 #define	 TP_DATA_MASK		__BITS(11,0)
 #define	TP_IO_CONFIG		0x28
 #define	TP_PORT_DATA		0x2c
 #define	 TP_PORT_DATA_MASK	__BITS(3,0)
 
+#define	TEMP_C_TO_K		273150000
+
 static int sunxi_ts_match(device_t, cfdata_t, void *);
 static void sunxi_ts_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"allwinner,sun5i-a13-ts",
-	NULL
+struct sunxi_ts_config {
+	int64_t	temp_offset;
+	int64_t	temp_step;
+	uint32_t tp_mode_en_mask;
+};
+
+static const struct sunxi_ts_config sun4i_a10_ts_config = {
+	.temp_offset = 257000000,
+	.temp_step = 133000,
+	.tp_mode_en_mask = TP_CTRL1_TP_MODE_EN,
+};
+
+static const struct sunxi_ts_config sun5i_a13_ts_config = {
+	.temp_offset = 144700000,
+	.temp_step = 100000,
+	.tp_mode_en_mask = TP_CTRL1_TP_MODE_EN,
+};
+
+static const struct sunxi_ts_config sun6i_a31_ts_config = {
+	.temp_offset = 271000000,
+	.temp_step = 167000,
+	.tp_mode_en_mask = TP_CTRL1_TP_DUAL_EN,
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "allwinner,sun4i-a10-ts",	(uintptr_t)&sun4i_a10_ts_config },
+	{ "allwinner,sun5i-a13-ts",	(uintptr_t)&sun5i_a13_ts_config },
+	{ "allwinner,sun6i-a31-ts",	(uintptr_t)&sun6i_a31_ts_config },
+	{ NULL }
 };
 
 static struct wsmouse_calibcoords sunxi_ts_default_calib = {
@@ -115,6 +152,8 @@ struct sunxi_ts_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 
+	const struct sunxi_ts_config *sc_conf;
+
 	bool			sc_ts_attached;
 	bool			sc_ts_inverted_x;
 	bool			sc_ts_inverted_y;
@@ -126,6 +165,9 @@ struct sunxi_ts_softc {
 	u_int			sc_tp_x;
 	u_int			sc_tp_y;
 	u_int			sc_tp_btns;
+
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		sc_temp_data;
 };
 
 CFATTACH_DECL_NEW(sunxi_ts, sizeof(struct sunxi_ts_softc),
@@ -140,6 +182,7 @@ static int
 sunxi_ts_enable(void *v)
 {
 	struct sunxi_ts_softc * const sc = v;
+	uint32_t val;
 
 	/* reset state */
 	sc->sc_ignoredata = true;
@@ -148,9 +191,11 @@ sunxi_ts_enable(void *v)
 	sc->sc_tp_btns = 0;
 
 	/* Enable touchpanel IRQs */
-	TS_WRITE(sc, TP_INT,
-	    TP_INT_DATA_IRQ_EN | TP_INT_FIFO_FLUSH | TP_INT_UP_IRQ_EN |
-	    __SHIFTIN(1, TP_INT_FIFO_TRIG_LEVEL));
+	val = TS_READ(sc, TP_INT);
+	val |= TP_INT_DATA_IRQ_EN | TP_INT_FIFO_FLUSH | TP_INT_UP_IRQ_EN;
+	val &= ~TP_INT_FIFO_TRIG_LEVEL;
+	val |= __SHIFTIN(1, TP_INT_FIFO_TRIG_LEVEL);
+	TS_WRITE(sc, TP_INT, val);
 
 	return 0;
 }
@@ -159,9 +204,12 @@ static void
 sunxi_ts_disable(void *v)
 {
 	struct sunxi_ts_softc * const sc = v;
+	uint32_t val;
 
 	/* Disable touchpanel IRQs */
-	TS_WRITE(sc, TP_INT, 0);
+	val = TS_READ(sc, TP_INT);
+	val &= ~(TP_INT_DATA_IRQ_EN | TP_INT_FIFO_FLUSH | TP_INT_UP_IRQ_EN);
+	TS_WRITE(sc, TP_INT, val);
 }
 
 static int
@@ -206,6 +254,13 @@ sunxi_ts_intr(void *priv)
 	int s;
 
 	fifocs = TS_READ(sc, TP_FIFOCS);
+
+	if (fifocs & TP_FIFOCS_TEMP_IRQ_PENDING) {
+		sc->sc_temp_data.value_cur = (TS_READ(sc, TEMP_DATA) *
+		    sc->sc_conf->temp_step - sc->sc_conf->temp_offset) +
+		    TEMP_C_TO_K;
+		sc->sc_temp_data.state = ENVSYS_SVALID;
+	}
 
 	if (fifocs & TP_FIFOCS_DATA_PENDING) {
 		x = TS_READ(sc, TP_DATA);
@@ -268,9 +323,19 @@ sunxi_ts_init(struct sunxi_ts_softc *sc)
 	    TP_CTRL3_FILTER_EN |
 	    __SHIFTIN(filter_type, TP_CTRL3_FILTER_TYPE));
 	TS_WRITE(sc, TP_CTRL1,
-	    TP_CTRL1_TP_MODE_EN |
+	    sc->sc_conf->tp_mode_en_mask |
 	    TP_CTRL1_STYLUS_UP_DEBOUNCE_EN |
 	    __SHIFTIN(5, TP_CTRL1_STYLUS_UP_DEBOUNCE));
+
+	/* Enable temperature sensor */
+	TS_WRITE(sc, TP_TPR,
+	    TP_TPR_TEMP_EN | __SHIFTIN(1953, TP_TPR_TEMP_PER));
+
+	/* Enable temperature sensor IRQ */
+	TS_WRITE(sc, TP_INT, TP_INT_TEMP_IRQ_EN);
+
+	/* Clear pending IRQs */
+	TS_WRITE(sc, TP_FIFOCS, TS_READ(sc, TP_FIFOCS));
 }
 
 static int
@@ -278,7 +343,7 @@ sunxi_ts_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -310,6 +375,8 @@ sunxi_ts_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
+
 	sc->sc_ts_attached = of_getprop_bool(phandle, "allwinner,ts-attached");
 	sc->sc_ts_inverted_x = of_getprop_bool(phandle,
 	    "touchscreen-inverted-x");
@@ -328,6 +395,19 @@ sunxi_ts_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	sc->sc_sme = sysmon_envsys_create();
+	sc->sc_sme->sme_name = device_xname(self);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+
+	sc->sc_temp_data.units = ENVSYS_STEMP;
+	sc->sc_temp_data.state = ENVSYS_SINVALID;
+	snprintf(sc->sc_temp_data.desc, sizeof(sc->sc_temp_data.desc),
+	    "temperature");
+	sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_temp_data);
+
+	sysmon_envsys_register(sc->sc_sme);
 
 	if (sc->sc_ts_attached) {
 		tpcalib_init(&sc->sc_tpcalib);
