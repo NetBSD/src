@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.33 2017/10/09 14:55:31 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.34 2017/10/09 15:53:28 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -210,6 +210,11 @@ file	arch/arm/sunxi/sunxi_thermal.c		sunxi_thermal
 # SATA
 attach	ahcisata at fdt with sunxi_sata
 file	arch/arm/sunxi/sunxi_sata.c		sunxi_sata
+
+# SRAM Controller
+device	sunxisramc
+attach	sunxisramc at fdt with sunxi_sramc
+file	arch/arm/sunxi/sunxi_sramc.c		sunxi_sramc
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
