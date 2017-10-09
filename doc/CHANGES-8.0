@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.63 2017/10/02 13:37:05 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.64 2017/10/09 18:09:09 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6091,4 +6091,16 @@ sys/net/if_bridge.c				1.135
 	Add curlwp_bind to bridge_input for psref.
 	It can be called in a thread context via tap (tap_dev_write).
 	[ozaki-r, ticket #297]
+
+tools/gcc/Makefile				patch
+tools/gcc/mknative-gcc 				patch
+
+	disable dual libstdc++ abi
+	[christos, ticket #312]
+
+distrib/sets/lists/comp/mi			1.2148
+external/gpl3/gcc/usr.bin/include/Makefile	patch
+
+	Add stdatomic.h
+	[christos, ticket #313]
 
