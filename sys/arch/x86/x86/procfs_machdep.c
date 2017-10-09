@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.18 2017/10/05 03:24:40 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.19 2017/10/09 17:49:28 maya Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.18 2017/10/05 03:24:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.19 2017/10/09 17:49:28 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 #ifdef __i386__
 	    "fdiv_bug\t: %s\n"
 #endif
-	    "fpu\t\t: %s\n"
+	    "fpu\t\t: yes\n"
 	    "fpu_exception\t: yes\n"
 	    "cpuid level\t: %d\n"
 	    "wp\t\t: %s\n"
@@ -429,7 +429,6 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 #ifdef __i386__
 	    i386_fpu_fdivbug ? "yes" : "no",	/* an old pentium */
 #endif
-	    i386_fpu_present ? "yes" : "no",	/* not a 486SX */
 	    ci->ci_max_cpuid,
 	    (rcr0() & CR0_WP) ? "yes" : "no",
 	    featurebuf,
