@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.52 2017/10/01 22:59:19 christos Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.53 2017/10/09 05:24:26 mlelstv Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.52 2017/10/01 22:59:19 christos Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.53 2017/10/09 05:24:26 mlelstv Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -595,16 +595,17 @@ initcg(int cgn)
 			cg_clustersum(cg, 0)[(n > newsb->fs_contigsumsize) ?
 			    newsb->fs_contigsumsize : n]++;
 		}
-		if (is_ufs2 == 0)
-			for (i = n; i > 0; i--) {
+		for (i = n; i > 0; i--) {
+			if (is_ufs2 == 0) {
 				old_cg_blktot(cg, 0)[old_cbtocylno(newsb,
 					    dhigh)]++;
 				old_cg_blks(newsb, cg,
 				    old_cbtocylno(newsb, dhigh),
 				    0)[old_cbtorpos(newsb,
 					    dhigh)]++;
-				dhigh += newsb->fs_frag;
 			}
+			dhigh += newsb->fs_frag;
+		}
 	}
 	/* Deal with any leftover frag at the end of the cg. */
 	i = dmax - dhigh;
