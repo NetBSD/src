@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.19 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: channels.c,v 1.20 2017/10/09 12:07:03 christos Exp $	*/
 /* $OpenBSD: channels.c,v 1.375 2017/09/24 13:45:34 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.19 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.20 2017/10/09 12:07:03 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -3733,10 +3733,11 @@ channel_request_remote_forwarding(struct ssh *ssh, struct Forward *fwd)
 		    "streamlocal-forward@openssh.com")) != 0 ||
 		    (r = sshpkt_put_u8(ssh, 1)) != 0 || /* want reply */
 		    (r = sshpkt_put_cstring(ssh, fwd->listen_path)) != 0 ||
-		    (r = sshpkt_send(ssh)) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = sshpkt_send(ssh)) != 0)
 			fatal("%s: request streamlocal: %s",
 			    __func__, ssh_err(r));
+		if ((r = ssh_packet_write_wait(ssh)) < 0)
+			sshpkt_fatal(ssh, __func__, r);
 	} else {
 		if ((r = sshpkt_start(ssh, SSH2_MSG_GLOBAL_REQUEST)) != 0 ||
 		    (r = sshpkt_put_cstring(ssh, "tcpip-forward")) != 0 ||
@@ -3744,10 +3745,11 @@ channel_request_remote_forwarding(struct ssh *ssh, struct Forward *fwd)
 		    (r = sshpkt_put_cstring(ssh,
 		    channel_rfwd_bind_host(fwd->listen_host))) != 0 ||
 		    (r = sshpkt_put_u32(ssh, fwd->listen_port)) != 0 ||
-		    (r = sshpkt_send(ssh)) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = sshpkt_send(ssh)) != 0)
 			fatal("%s: request tcpip-forward: %s",
 			    __func__, ssh_err(r));
+		if ((r = ssh_packet_write_wait(ssh)) < 0)
+			sshpkt_fatal(ssh, __func__, r);
 	}
 	/* Assume that server accepts the request */
 	success = 1;
@@ -4691,8 +4693,11 @@ x11_request_forwarding_with_spoofing(struct ssh *ssh, int client_session_id,
 	    (r = sshpkt_put_cstring(ssh, proto)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, new_data)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, screen_number)) != 0 ||
-	    (r = sshpkt_send(ssh)) != 0 ||
-	    (r = ssh_packet_write_wait(ssh)) != 0)
+	    (r = sshpkt_send(ssh)) != 0)
 		fatal("%s: send x11-req: %s", __func__, ssh_err(r));
+
+	if ((r = ssh_packet_write_wait(ssh)) < 0)
+		sshpkt_fatal(ssh, __func__, r);
+
 	free(new_data);
 }
