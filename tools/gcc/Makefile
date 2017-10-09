@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2017/03/22 23:11:10 chs Exp $
+#	$NetBSD: Makefile,v 1.81.4.1 2017/10/09 17:59:16 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
+			--disable-libstdcxx-dual-abi \
 			--enable-__cxa_atexit \
 			--enable-libstdcxx-time=rt \
 			--enable-libstdcxx-threads
@@ -190,6 +191,7 @@ NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \
 			--disable-libstdcxx-pch \
+			--disable-libstdcxx-dual-abi \
 			--build=`${GCCDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--with-sysroot=${DESTDIR}
