@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.13 2017/10/06 21:09:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.14 2017/10/09 14:01:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -206,6 +206,7 @@ struct sunxi_ccu_div {
 #define	SUNXI_CCU_DIV_POWER_OF_TWO	__BIT(0)
 #define	SUNXI_CCU_DIV_ZERO_IS_ONE	__BIT(1)
 #define	SUNXI_CCU_DIV_TIMES_TWO		__BIT(2)
+#define	SUNXI_CCU_DIV_SET_RATE_PARENT	__BIT(3)
 };
 
 int	sunxi_ccu_div_enable(struct sunxi_ccu_softc *,
