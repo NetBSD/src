@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.3 2017/10/07 15:12:35 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.4 2017/10/09 14:01:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.3 2017/10/07 15:12:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.4 2017/10/09 14:01:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,6 +96,18 @@ static const char *apb1_parents[] = { "osc24m", "pll_periph", "losc" };
 static const char *mod_parents[] = { "osc24m", "pll_periph", "pll_ddr" };
 static const char *sata_parents[] = { "pll6_periph_sata", "external" };
 
+static const struct sunxi_ccu_nkmp_tbl sun4i_a10_pll1_table[] = {
+	{ 1008000000, 21, 1, 0, 0 },
+	{  960000000, 20, 1, 0, 0 },
+	{  912000000, 19, 1, 0, 0 },
+	{  864000000, 18, 1, 0, 0 },
+	{  720000000, 30, 0, 0, 0 },
+	{  528000000, 22, 0, 0, 0 },
+	{  312000000, 13, 0, 0, 0 },
+	{  144000000, 12, 0, 0, 1 },
+	{          0 }
+};
+
 static const struct sunxi_ccu_nkmp_tbl sun4i_a10_ac_dig_table[] = {
 	{ 24576000, 86, 0, 21, 3 },
 	{ 0 }
@@ -105,15 +117,17 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	SUNXI_CCU_GATE(A10_CLK_HOSC, "osc24m", "hosc",
 	    OSC24M_CFG_REG, 0),
 
-	SUNXI_CCU_NKMP(A10_CLK_PLL_CORE, "pll_core", "osc24m",
+	SUNXI_CCU_NKMP_TABLE(A10_CLK_PLL_CORE, "pll_core", "osc24m",
 	    PLL1_CFG_REG,		/* reg */
 	    __BITS(12,8),		/* n */
 	    __BITS(5,4), 		/* k */
 	    __BITS(1,0),		/* m */
 	    __BITS(17,16),		/* p */
 	    __BIT(31),			/* enable */
+	    0,				/* lock */
+	    sun4i_a10_pll1_table,	/* table */
 	    SUNXI_CCU_NKMP_FACTOR_P_POW2 | SUNXI_CCU_NKMP_FACTOR_N_EXACT |
-	    SUNXI_CCU_NKMP_FACTOR_N_ZERO_IS_ONE),
+	    SUNXI_CCU_NKMP_FACTOR_N_ZERO_IS_ONE | SUNXI_CCU_NKMP_SCALE_CLOCK),
 
 	SUNXI_CCU_NKMP_TABLE(A10_CLK_PLL_AUDIO_BASE, "pll_audio", "osc24m",
 	    PLL2_CFG_REG,		/* reg */
@@ -158,7 +172,7 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    CPU_AHB_APB0_CFG_REG,	/* reg */
 	    0,				/* div */
 	    __BITS(17,16),		/* sel */
-	    0),
+	    SUNXI_CCU_DIV_SET_RATE_PARENT),
 
 	SUNXI_CCU_DIV(A10_CLK_AXI, "axi", axi_parents,
 	    CPU_AHB_APB0_CFG_REG,	/* reg */
