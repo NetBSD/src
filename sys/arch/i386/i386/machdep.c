@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.795 2017/09/30 11:43:57 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.796 2017/10/09 17:49:27 maya Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.795 2017/09/30 11:43:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.796 2017/10/09 17:49:27 maya Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -212,7 +212,6 @@ struct mtrr_funcs *mtrr_funcs;
 
 int cpu_class;
 int use_pae;
-int i386_fpu_present = 1;
 int i386_fpu_fdivbug;
 
 int i386_use_fxsave;

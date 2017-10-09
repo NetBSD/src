@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.14 2017/10/09 17:49:28 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14 2017/10/09 17:49:28 maya Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -219,26 +219,10 @@ static const uint8_t fpetable[128] = {
 void
 fpuinit(struct cpu_info *ci)
 {
-	if (!i386_fpu_present)
-		return;
 
 	clts();
 	fninit();
 	stts();
-}
-
-static void
-send_sigill(void *rip)
-{
-	/* No fpu (486SX) - send SIGILL */
-	ksiginfo_t ksi;
-
-	x86_enable_intr();
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGILL;
-	ksi.ksi_addr = rip;
-	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
-	return;
 }
 
 /*
@@ -275,11 +259,6 @@ fputrap(struct trapframe *frame)
 
 	if (!USERMODE(frame->tf_cs))
 		panic("fpu trap from kernel, trapframe %p\n", frame);
-
-	if (i386_fpu_present == 0) {
-		send_sigill((void *)X86_TF_RIP(frame));
-		return;
-	}
 
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
@@ -342,11 +321,6 @@ fpudna(struct trapframe *frame)
 	if (!USERMODE(frame->tf_cs))
 		panic("fpudna from kernel, ip %p, trapframe %p\n",
 		    (void *)X86_TF_RIP(frame), frame);
-
-	if (i386_fpu_present == 0) {
-		send_sigill((void *)X86_TF_RIP(frame));
-		return;
-	}
 
 	ci = curcpu();
 
