@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.32 2017/10/08 18:00:36 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.33 2017/10/09 14:55:31 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -189,7 +189,7 @@ attach	genfb at fdt with simplefb
 file	dev/fdt/simplefb.c			simplefb
 
 # Touch Screen controller
-device	sunxits: wsmousedev, tpcalib
+device	sunxits: wsmousedev, tpcalib, sysmon_envsys
 attach	sunxits at fdt with sunxi_ts
 file	arch/arm/sunxi/sunxi_ts.c		sunxi_ts
 
