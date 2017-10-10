@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2017/02/08 23:34:15 rin Exp $
+#	$NetBSD: Makefile,v 1.61 2017/10/10 19:30:06 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -22,10 +22,10 @@ SRCS+=		af_inet6.c
 
 .include "Makefile.common"
 
-.PATH:		${.CURDIR}/../../lib/libc/net
-RUMPSRCS=	getifaddrs.c getnameinfo.c if_indextoname.c
 .if (${MKRUMP} != "no")
 CPPFLAGS+=	-DRUMP_ACTION
+LDADD.rump +=	-lrumpres
+DPADD.rump +=	${LIBRUMPRES}
 .endif
 
 .include <bsd.prog.mk>
