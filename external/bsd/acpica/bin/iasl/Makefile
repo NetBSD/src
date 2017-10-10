@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2017/09/15 17:17:25 christos Exp $
+# $NetBSD: Makefile,v 1.16 2017/10/10 19:17:57 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -19,7 +19,7 @@ CPPFLAGS+=	-DACPI_REPRO
 LDADD+=		-ll -ly -lrt -lpthread
 DPADD+=		${LIBL} ${LIBY} ${LIBRT} ${LIBPTHREAD}
 
-DPSRCS= aslcompiler.y aslcompilerlex.c aslcompilerparse.c \
+DPSRCS= aslcompilerparse.y aslcompilerlex.c aslcompilerparse.c \
 	dtparserparse.c dtparserlex.c prparserparse.c prparserlex.c
 
 .PATH:	${TOPDIR}
@@ -255,45 +255,69 @@ SRCS+= \
 .PATH: ${TOPDIR}/../os_specific/service_layers
 SRCS+=	osunixxf.c
 
+YHEADER=	# Generate headers
+YFLAGS+=-v	# Require debugging
+FLAGS+=-i	# Case insensitivive parser
+
+
+# Prevent rules from firing.
+asltypes.h: asltypes.y
+	@true
+asltypes.c: asltypes.y
+	@true
 
 aslparser.y: asltokens.y asltypes.y aslrules.y aslsupport.y
 
-aslcompiler.y: aslparser.y
+YPREFIX.aslcompilerparse.y=AslCompiler
+aslcompilerparse.y: aslparser.y
 	${TOOL_M4} -P -I${TOPDIR} ${.ALLSRC} > ${.TARGET}
 
-aslcompiler.y.h aslcompilerparse.c: aslcompiler.y
-	${YACC} -v -d -o${.TARGET} -pAslCompiler ${.ALLSRC}
-	mv -f ${.PREFIX}.h aslcompiler.y.h
+aslcompiler.y.h: aslcompilerparse.h
+	ln -sf ${.ALLSRC} ${.TARGET}
 
-aslcompilerlex.c: ${TOPDIR}/aslcompiler.l
-	${LEX} -i -PAslCompiler -o${.TARGET} ${.ALLSRC}
+LPREFIX.aslcompilerlex.l=AslCompiler
+aslcompilerlex.l: ${TOPDIR}/aslcompiler.l
+	ln -sf ${.ALLSRC} ${.TARGET}
 
-aslcompilerlex.o: aslcompiler.y.h
 
-dtparser.y.h dtparserparse.c: ${TOPDIR}/dtparser.y
-	${YACC} -v -d -o${.TARGET} -pDtParser ${.ALLSRC}
-	mv -f ${.PREFIX}.h dtparser.y.h
+YPREFIX.dtparserparse.y=DtParser
+dtparserparse.y: ${TOPDIR}/dtparser.y
+	ln -sf ${.ALLSRC} ${.TARGET}
 
-dtparserlex.c: ${TOPDIR}/dtparser.l
-	${LEX} -i -PDtParser -o${.TARGET} ${.ALLSRC}
+dtparser.y.h: dtparserparse.h
+	ln -sf ${.ALLSRC} ${.TARGET}
 
-dtparserlex.o: dtparser.y.h
+LPREFIX.dtparserlex.l=DtParser
+dtparserlex.l: ${TOPDIR}/dtparser.l
+	ln -sf ${.ALLSRC} ${.TARGET}
 
-prparser.y.h prparserparse.c: ${TOPDIR}/prparser.y
-	${YACC} -v -d -o${.TARGET} -pPrParser ${.ALLSRC}
-	mv -f ${.PREFIX}.h prparser.y.h
 
-prparserlex.c: ${TOPDIR}/prparser.l
-	${LEX} -i -PPrParser -o${.TARGET} ${.ALLSRC}
+YPREFIX.prparserparse.y=PrParser
+prparserparse.y: ${TOPDIR}/prparser.y
+	ln -sf ${.ALLSRC} ${.TARGET}
 
-prparserlex.o: prparser.y.h
+prparser.y.h: prparserparse.h
+	ln -sf ${.ALLSRC} ${.TARGET}
 
-CLEANFILES+=	aslcompiler.y 				\
-		aslcompilerlex.c aslcompilerparse.c	\
+LPREFIX.prparserlex.l=PrParser
+prparserlex.l: ${TOPDIR}/prparser.l
+	ln -sf ${.ALLSRC} ${.TARGET}
+
+CLEANFILES+=	aslcompilerparse.y  aslcompilerparse.c	\
+		aslcompilerparse.h			\
 		aslcompiler.y.h aslcompilerparse.output \
-		dtparserlex.c dtparserparse.c		\
+		aslcompilerlex.l aslcompilerlex.c	\
+							\
+		dtparserparse.y dtparserparse.c		\
+		dtparserparse.h				\
+		dtparserlex.l dtparserlex.c		\
 		dtparser.y.h dtparserparse.output	\
-		prparserlex.c prparserparse.c		\
+							\
+		prparserparse.y prparserparse.c		\
+		prparserparse.h				\
+		prparserlex.l prparserlex.c		\
 		prparser.y.h prparserparse.output	\
 
 .include <bsd.prog.mk>
+
+${__DPSRCS.d} ${OBJS}: prparser.y.h dtparser.y.h aslcompiler.y.h
