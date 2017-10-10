@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.307 2017/10/06 19:21:17 christos Exp $
+# $NetBSD: shl.mi,v 1.308 2017/10/10 19:31:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -238,6 +238,7 @@
 ./usr/lib/librumpnet_tun_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_vlan_pic.a			comp-c-piclib		picinstall,rump
+./usr/lib/librumpres_pic.a			comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpuser_pic.a			comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpvfs_aio_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpvfs_fifofs_pic.a		comp-c-piclib		picinstall,rump

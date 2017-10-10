@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.822 2017/10/07 19:44:22 christos Exp $
+# $NetBSD: shl.mi,v 1.823 2017/10/10 19:31:56 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -73,6 +73,9 @@
 ./lib/librumpclient.so				base-sys-shlib		dynamicroot,rump
 ./lib/librumpclient.so.0			base-sys-shlib		dynamicroot,rump
 ./lib/librumpclient.so.0.0			base-sys-shlib		dynamicroot,rump
+./lib/librumpres.so				base-sys-shlib		dynamicroot,rump
+./lib/librumpres.so.0				base-sys-shlib		dynamicroot,rump
+./lib/librumpres.so.0.0				base-sys-shlib		dynamicroot,rump
 ./lib/libtermcap.so				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
@@ -757,6 +760,9 @@
 ./usr/lib/librumpnet_vlan.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_vlan.so.0			base-rump-shlib		rump
 ./usr/lib/librumpnet_vlan.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpres.so				base-rumpclient-shlib	compatfile,rump
+./usr/lib/librumpres.so.0			base-rumpclient-shlib	compatfile,rump
+./usr/lib/librumpres.so.0.0			base-rumpclient-shlib	compatfile,rump
 ./usr/lib/librumpuser.so			base-rump-shlib		compatfile,rump
 ./usr/lib/librumpuser.so.0			base-rump-shlib		compatfile,rump
 ./usr/lib/librumpuser.so.0.1			base-rump-shlib		compatfile,rump
