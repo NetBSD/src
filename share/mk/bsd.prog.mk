@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.307 2017/05/21 15:28:42 riastradh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.308 2017/10/10 19:29:44 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -348,8 +348,8 @@ SRCS.rump.${PROG}=	${PROG}.c ${PROG}_rumpops.c ${RUMPSRCS}
 .  endif
 .   if (${MKRUMP} != "no")
 DPSRCS+=		${PROG}_rumpops.c ${RUMPSRCS}
-LDADD.rump.${PROG}+=	-lrumpclient
-DPADD.rump.${PROG}+=	${LIBRUMPCLIENT}
+LDADD.rump.${PROG}+=	${LDADD.rump} -lrumpclient
+DPADD.rump.${PROG}+=	${DPADD.rump} ${LIBRUMPCLIENT}
 MAN.rump.${PROG}=	# defined but feeling empty
 _RUMPINSTALL.rump.${PROG}=# defined
 .   endif
