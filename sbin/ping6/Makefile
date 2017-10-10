@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2015/09/09 10:06:05 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.17 2017/10/10 19:30:06 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,11 +15,10 @@ CPPFLAGS+=	-DIPSEC
 LDADD+=		-lipsec -lm
 DPADD+=		${LIBIPSEC} ${LIBM}
 
-.PATH:		${.CURDIR}/../../lib/libc/net
-RUMPSRCS=	getaddrinfo.c getifaddrs.c getnameinfo.c
-RUMPSRCS+=	if_indextoname.c if_nametoindex.c
 .if (${MKRUMP} != "no")
 CPPFLAGS+= 	-DRUMP_ACTION
+LDADD.rump+=	-lrumpres
+DPADD.rump+=	${LIBRUMPRES}
 .endif
 
 .include <bsd.prog.mk>
