@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.77 2017/02/08 03:44:41 kamil Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.78 2017/10/10 19:29:22 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -55,6 +55,7 @@ LIBRPCSVC?=	/usr/lib/librpcsvc.a
 LIBRUMP?=	/usr/lib/librump.a
 LIBRUMPCLIENT?=	/usr/lib/librumpclient.a
 LIBRUMPNET?=	/usr/lib/librumpnet.a
+LIBRUMPRES?=	/usr/lib/librumpres.a
 LIBRUMPUSER?=	/usr/lib/librumpuser.a
 LIBRUMPVFS?=	/usr/lib/librumpvfs.a
 LIBSKEY?=	/usr/lib/libskey.a
