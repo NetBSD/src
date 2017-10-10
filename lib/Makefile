@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.252 2017/08/22 08:21:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.253 2017/10/10 19:28:33 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -124,8 +124,9 @@ SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
 SUBDIR+=	libisns 	# depends on libpthread
 .if (${MKRUMP} != "no")
-SUBDIR+=	librumpuser	# depends on libpthread
 SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
+SUBDIR+=	librumpres	# depends on librumpclient
+SUBDIR+=	librumpuser	# depends on libpthread
 .endif
 
 .if (${MKNPF} != "no")
