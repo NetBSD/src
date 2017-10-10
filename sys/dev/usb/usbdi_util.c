@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.66 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.67 2017/10/10 11:40:54 maya Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.66 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.67 2017/10/10 11:40:54 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -335,10 +335,11 @@ usbd_set_protocol(struct usbd_interface *iface, int report)
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-	DPRINTFN(4, "iface=%p, report=%d, endpt=%d", iface, report,
-	     id->bInterfaceNumber, 0);
 	if (id == NULL)
 		return USBD_IOERROR;
+	DPRINTFN(4, "iface=%p, report=%d, endpt=%d", iface, report,
+	     id->bInterfaceNumber, 0);
+
 	usbd_interface2device_handle(iface, &dev);
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UR_SET_PROTOCOL;
