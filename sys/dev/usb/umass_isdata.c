@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.34 2017/10/07 16:05:33 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.35 2017/10/10 16:44:24 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.34 2017/10/07 16:05:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.35 2017/10/10 16:44:24 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -373,7 +373,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 		 "count=%d multi=%d\n",
 		 __func__, ata_bio->blkno,
 		 (ata_bio->flags & ATA_LBA) != 0, cyl, head, sect,
-		 ata.ac_sector_count, ata_bio->multi));
+		 ata.ac_sector_count, drv->multi));
 	DPRINTF(("    data=%p bcount=%ld, drive=%d\n", ata_bio->databuf,
 		 ata_bio->bcount, drv->drive));
 	sc->sc_methods->wire_xfer(sc, drv->drive, &ata, sizeof(ata),
@@ -562,7 +562,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	}
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		DPRINTF(("uisdata_get_parms: ata_c.flags=0x%x\n",
-			 ata_c.flags));
+			 xfer->c_ata_c.flags));
 		rv = CMD_ERR;
 		goto out;
 	}
