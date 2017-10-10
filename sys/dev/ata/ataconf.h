@@ -1,4 +1,4 @@
-/*	$NetBSD: ataconf.h,v 1.4 2017/10/08 19:00:29 jdolecek Exp $	*/
+/*	$NetBSD: ataconf.h,v 1.5 2017/10/10 17:19:38 jdolecek Exp $	*/
 
 /*
  * Written in 2006 by ITOH Yasufumi.
@@ -18,7 +18,6 @@
 # define NATA_DMA	1
 # define NATA_UDMA	1
 # define NATA_PIOBM	1
-# define NATABUS	1
 
 #else
 
