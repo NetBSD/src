@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2017/01/11 12:19:44 joerg Exp $
+# $NetBSD: Makefile,v 1.21 2017/10/10 19:30:41 christos Exp $
 
 WARNS?=	4
 
@@ -19,10 +19,10 @@ FILESDIR=	/usr/share/examples/rtadvd
 FILES=	rtadvd.conf
 .endif
 
-.PATH:	${.CURDIR}/../../lib/libc/net
-RUMPSRCS=	getifaddrs.c getnameinfo.c if_indextoname.c if_nametoindex.c
 .if (${MKRUMP} != "no")
 CPPFLAGS+=	-DRUMP_ACTION
+LDADD.rump+=	-lrumpres
+DPADD.rump+=	${LIBRUMPRES}
 .endif
 
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
