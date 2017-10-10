@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.127 2017/10/08 21:33:38 christos Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.128 2017/10/10 21:37:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.127 2017/10/08 21:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.128 2017/10/10 21:37:49 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -727,7 +727,7 @@ wdc_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 }
 
 static int
-wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
+wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
@@ -736,7 +736,6 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int len, phase, i, retries=0;
 	int ire, tfd;
-	int poll = ((xfer->c_flags & C_POLL) != 0);
 #if NATA_DMA
 	int error;
 #endif
@@ -792,8 +791,8 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
 	if (wdc_wait_for_unbusy(chp,
-	    poll ? sc_xfer->timeout : 0, AT_POLL, &tfd) == WDCWAIT_TOUT) {
-		if (!poll && (xfer->c_flags & C_TIMEOU) == 0) {
+	    (irq == 0) ? sc_xfer->timeout : 0, AT_POLL, &tfd) == WDCWAIT_TOUT) {
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
 			ata_channel_unlock(chp);
 			return 0; /* IRQ was not for us */
 		}
