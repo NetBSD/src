@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.133 2017/10/05 06:14:30 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.134 2017/10/10 03:11:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -900,8 +900,43 @@ typedef u_int8_t pci_revision_t;
 
 /*
  * Capability ID: 0x0f
- * Secure
+ * Secure Device
+ *
+ * Reference: AMD I/O Virtualization Technology(IOMMU) Specification (#48882)
+ * Revision 3.00.
  */
+#define PCI_SECURE_CAP	       0x00 /* Capability Header */
+#define PCI_SECURE_CAP_TYPE	__BITS(18, 16)	/* Capability block type */
+#define PCI_SECURE_CAP_TYPE_IOMMU	0x3		/* IOMMU Cap */
+#define PCI_SECURE_CAP_REV	__BITS(23, 19)	/* Capability revision */
+#define PCI_SECURE_CAP_REV_IOMMU	0x01		/* IOMMU interface  */
+/* For IOMMU only */
+#define PCI_SECURE_CAP_IOTLBSUP	__BIT(24)	/* IOTLB */
+#define PCI_SECURE_CAP_HTTUNNEL	__BIT(25)	/* HT tunnel translation */
+#define PCI_SECURE_CAP_NPCACHE	__BIT(26) /* Not present table entries cahced*/
+#define PCI_SECURE_CAP_EFRSUP	__BIT(27)	/* IOMMU Ext-Feature Reg */
+#define PCI_SECURE_CAP_EXT	__BIT(28)	/* IOMMU Misc Info Reg 1 */
+#define PCI_SECURE_IOMMU_BAL   0x04 /* Base Address Low */
+#define PCI_SECURE_IOMMU_BAL_EN		__BIT(0)	/* Enable */
+#define PCI_SECURE_IOMMU_BAL_L		__BITS(18, 14)	/* Base Addr [18:14] */
+#define PCI_SECURE_IOMMU_BAL_H		__BITS(31, 19)	/* Base Addr [31:19] */
+#define PCI_SECURE_IOMMU_BAH   0x08 /* Base Address High */
+#define PCI_SECURE_IOMMU_RANGE 0x0c /* IOMMU Range */
+#define PCI_SECURE_IOMMU_RANGE_UNITID	__BITS(4, 0)	/* HT UnitID */
+#define PCI_SECURE_IOMMU_RANGE_RNGVALID	__BIT(7)	/* Range valid */
+#define PCI_SECURE_IOMMU_RANGE_BUSNUM	__BITS(15, 8)	/* bus number */
+#define PCI_SECURE_IOMMU_RANGE_FIRSTDEV	__BITS(23, 16)	/* First device */
+#define PCI_SECURE_IOMMU_RANGE_LASTDEV	__BITS(31, 24)	/* Last device */
+#define PCI_SECURE_IOMMU_MISC0 0x10 /* IOMMU Miscellaneous Information 0 */
+#define PCI_SECURE_IOMMU_MISC0_MSINUM  __BITS(4, 0)  /* MSI Message number */
+#define PCI_SECURE_IOMMU_MISC0_GVASIZE __BITS(7, 5) /* Guest Virtual Adr siz */
+#define PCI_SECURE_IOMMU_MISC0_GVASIZE_48B	0x2	/* 48bits */
+#define PCI_SECURE_IOMMU_MISC0_PASIZE  __BITS(14, 8) /* Physical Address siz */
+#define PCI_SECURE_IOMMU_MISC0_VASIZE  __BITS(21, 15)/* Virtual Address size */
+#define PCI_SECURE_IOMMU_MISC0_ATSRESV __BIT(22) /* ATS resp addr range rsvd */
+#define PCI_SECURE_IOMMU_MISC0_MISNPPR __BITS(31, 27)/* Periph Pg Rq MSI Msgn*/
+#define PCI_SECURE_IOMMU_MISC1 0x14 /* IOMMU Miscellaneous Information 1 */
+#define PCI_SECURE_IOMMU_MISC1_MSINUM __BITS(4, 0) /* MSI Messsage number(GA)*/
 
 /*
  * Capability ID: 0x10
