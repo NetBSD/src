@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.19 2017/10/09 17:49:28 maya Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.20 2017/10/10 03:05:29 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.19 2017/10/09 17:49:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.20 2017/10/10 03:05:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (17) 0x80000007 ebx */
-	"overflow_recov", "succor", "smca", NULL, NULL, NULL, NULL, NULL,
+	"overflow_recov", "succor", NULL, "smca", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
