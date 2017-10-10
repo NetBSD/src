@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.37 2017/10/08 21:18:14 joerg Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.38 2017/10/10 16:30:23 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.37 2017/10/08 21:18:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.38 2017/10/10 16:30:23 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -879,8 +879,8 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 	delay(5000);
 	if (ata_get_params(drvp, AT_WAIT, id) == 0) {
 #ifdef ATAPI_DEBUG_PROBE
-		log(LOG_DEBUG, "%s:%d: drive %d: cmdsz 0x%x drqtype 0x%x\n",
-		    device_xname(atac->atac_dev), chp->ch_channel, target,
+		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
+		    device_xname(sc->sc_dev), target,
 		    id->atap_config & ATAPI_CFG_CMD_MASK,
 		    id->atap_config & ATAPI_CFG_DRQ_MASK);
 #endif
