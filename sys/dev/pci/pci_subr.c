@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.191 2017/10/05 06:14:30 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.192 2017/10/10 03:11:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.191 2017/10/05 06:14:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.192 2017/10/10 03:11:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1530,7 +1530,90 @@ pci_conf_print_subsystem_cap(const pcireg_t *regs, int capoff)
 }
 
 /* XXX pci_conf_print_agp8_cap */
-/* XXX pci_conf_print_secure_cap */
+static void
+pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t reg, reg2, val;
+	bool havemisc1;
+
+	printf("\n  Secure Capability Register\n");
+	reg = regs[o2i(capoff + PCI_SECURE_CAP)];
+	val = __SHIFTOUT(reg, PCI_SECURE_CAP_TYPE);
+	printf("    Capability block type: ");
+	/* I know IOMMU Only */
+	if (val == PCI_SECURE_CAP_TYPE_IOMMU)
+		printf("IOMMU\n");
+	else {
+		printf("0x%x(unknown)\n", val);
+		return;
+	}
+
+	val = __SHIFTOUT(reg, PCI_SECURE_CAP_REV);
+	printf("    Capability revision: 0x%02x", val);
+	if (val == PCI_SECURE_CAP_REV_IOMMU)
+		printf("IOMMU\n");
+	else {
+		printf("(unknown)\n");
+		return;
+	}
+	onoff("IOTLB support", reg, PCI_SECURE_CAP_IOTLBSUP);
+	onoff("HyperTransport tunnel translation support", reg,
+	    PCI_SECURE_CAP_HTTUNNEL);
+	onoff("Not present table entries cahced", reg, PCI_SECURE_CAP_NPCACHE);
+	onoff("IOMMU Extended Feature Register support", reg,
+	    PCI_SECURE_CAP_EFRSUP);
+	onoff("IOMMU Miscellaneous Information Register 1", reg,
+	    PCI_SECURE_CAP_EXT);
+	havemisc1 = reg & PCI_SECURE_CAP_EXT;
+	
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_BAL)];
+	printf("    Base Address Low Register: 0x%08x\n", reg);
+	onoff("Enable", reg, PCI_SECURE_IOMMU_BAL_EN);
+	reg2 = regs[o2i(capoff + PCI_SECURE_IOMMU_BAH)];
+	printf("    Base Address High Register: 0x%08x\n", reg2);
+	printf("      Base Address : 0x%016" PRIx64 "\n",
+	    ((uint64_t)reg2 << 32)
+	    | (reg & (PCI_SECURE_IOMMU_BAL_H | PCI_SECURE_IOMMU_BAL_L)));
+	
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_RANGE)];
+	printf("    IOMMU Range Register: 0x%08x\n", reg);
+	printf("      HyperTransport UnitID: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_UNITID));
+	onoff("Range valid", reg, PCI_SECURE_IOMMU_RANGE_RNGVALID);
+	printf("      Device range bus number: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_BUSNUM));
+	printf("      First device: 0x%04x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_FIRSTDEV));
+	printf("      Last device: 0x%04x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_LASTDEV));
+
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_MISC0)];
+	printf("    Miscellaneous Information Register 0: 0x%08x\n", reg);
+	printf("      MSI Message number: 0x%04x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_MSINUM));
+	val = __SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_GVASIZE);
+	printf("      Guest Virtual Address size: ");
+	if (val == PCI_SECURE_IOMMU_MISC0_GVASIZE_48B)
+		printf("48bits\n");
+	else
+		printf("0x%x(unknown)\n", val);
+	val = __SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_PASIZE);
+	printf("      Physical Address size: %dbits\n", val);
+	val = __SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_VASIZE);
+	printf("      Virtual Address size: %dbits\n", val);
+	onoff("ATS response address range reserved", reg,
+	    PCI_SECURE_IOMMU_MISC0_ATSRESV);
+	printf("      Peripheral Page Request MSI Message number: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_MISNPPR));
+
+	if (!havemisc1)
+		return;
+	
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_MISC1)];
+	printf("    Miscellaneous Information Register 1: 0x%08x\n", reg);
+	printf("      MSI Message number (GA): 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC1_MSINUM));
+}
 
 static void
 pci_print_pcie_L0s_latency(uint32_t val)
@@ -2352,7 +2435,7 @@ static struct {
 	{ PCI_CAP_SUBVENDOR,	"Subsystem vendor ID",
 	  pci_conf_print_subsystem_cap },
 	{ PCI_CAP_AGP8,		"AGP 8x",	NULL },
-	{ PCI_CAP_SECURE,	"Secure Device", NULL },
+	{ PCI_CAP_SECURE,	"Secure Device", pci_conf_print_secure_cap },
 	{ PCI_CAP_PCIEXPRESS,	"PCI Express",	pci_conf_print_pcie_cap },
 	{ PCI_CAP_MSIX,		"MSI-X",	pci_conf_print_msix_cap },
 	{ PCI_CAP_SATA,		"SATA",		pci_conf_print_sata_cap },
