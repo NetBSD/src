@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.3 2014/03/31 20:51:20 christos Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.4 2017/10/10 13:47:27 maya Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.3 2014/03/31 20:51:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.4 2017/10/10 13:47:27 maya Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -325,11 +325,13 @@ mg_intr_disestablish(void *v, void *cookie)
 {
 	struct hppa_isa_iv *iv = cookie;
 	struct mongoose_softc *sc = v;
- 	int irq = iv - sc->sc_iv;
+ 	int irq;
  	volatile uint8_t *imr;
 
 	if (!sc || !cookie)
 		return;
+
+	irq = iv - sc->sc_iv;
 
 	if (irq < 8)
 		imr = &sc->sc_ctrl->imr0;
