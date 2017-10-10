@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2150 2017/10/10 16:04:59 christos Exp $
+#	$NetBSD: mi,v 1.2151 2017/10/10 19:31:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3598,6 +3598,8 @@
 ./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_vlan.a			comp-c-lib		rump
 ./usr/lib/librumpnet_vlan_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpres.a				comp-c-lib		compatfile,rump
+./usr/lib/librumpres_p.a			comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpuser.a				comp-c-lib		compatfile,rump
 ./usr/lib/librumpuser_p.a			comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpvfs.a				comp-c-lib		compatfile,rump
@@ -3780,6 +3782,7 @@
 ./usr/libdata/lint/llib-lrtld_db.ln		comp-c-lintlib		lint,dtrace
 ./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumphijack.ln		comp-c-lintlib		lint,rump
+./usr/libdata/lint/llib-lrumpres.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lsaslc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
