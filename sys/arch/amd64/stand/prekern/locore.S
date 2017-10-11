@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2017/10/11 16:18:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -366,21 +366,19 @@ no_NOX:
 	/* Find end of the prekern image; brings us on (1). */
 	movl	$_C_LABEL(__prekern_end),%edi
 
-	/* Find end of the kernel image; brind us on (2). */
+	/* Find end of the kernel image; brings us on (2). */
 	movl	_C_LABEL(kernpa_end),%eax
 	testl	%eax,%eax
 	jz	1f
 	movl	%eax,%edi
 1:
 
-	/* Find end of the kernel symbols; brinds us on (3). */
-#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB) /* XXX */
+	/* Find end of the kernel symbols; brings us on (3). */
 	movl	_C_LABEL(esym),%eax
 	testl	%eax,%eax
 	jz	1f
 	movl	%eax,%edi
 1:
-#endif
 
 	/* Find end of the kernel preloaded modules; brings us on (4). */
 	movl	_C_LABEL(eblob),%eax
