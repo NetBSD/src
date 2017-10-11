@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.3 2017/08/09 06:19:56 knakahara Exp $
+#	$NetBSD: t_vlan.sh,v 1.4 2017/10/11 08:10:53 msaitoh Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -450,6 +450,12 @@ vlan_configs_body_common()
 	atf_check -s exit:0 rump.ifconfig vlan0 mtu 42
 	atf_check -s exit:0 -e match:'Invalid argument' \
 	    rump.ifconfig vlan0 mtu 41
+	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+
+	atf_check -s exit:0 rump.ifconfig vlan1 create
+	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	atf_check -s not-exit:0 -e match:'File exists' \
+	    rump.ifconfig vlan1 vlan 10 vlanif shmif0
 	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
 }
 
