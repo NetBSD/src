@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.56 2016/05/22 19:44:26 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.57 2017/10/11 06:49:03 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.56 2016/05/22 19:44:26 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.57 2017/10/11 06:49:03 abhinav Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -591,7 +591,7 @@ ch_end(EditLine *el)
 
 
 /* el_insertstr():
- *	Insert string at cursorI
+ *	Insert string at cursor
  */
 int
 el_winsertstr(EditLine *el, const wchar_t *s)
