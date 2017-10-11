@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.64 2017/10/09 18:09:09 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.65 2017/10/11 22:55:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6092,15 +6092,148 @@ sys/net/if_bridge.c				1.135
 	It can be called in a thread context via tap (tap_dev_write).
 	[ozaki-r, ticket #297]
 
+external/gpl3/gcc/lib/libgcc/arch/m68000/defs.mk patch
+external/gpl3/gcc/lib/libiberty/defs.mk		patch
+external/gpl3/gcc/lib/libiberty/arch/ia64/config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/alpha/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/alpha/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/arm/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/arm/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/armeb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/armeb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earm/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earm/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmeb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmeb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhf/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhf/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhfeb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhfeb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4eb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4eb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6eb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6eb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hf/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hf/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hfeb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hfeb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7eb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7eb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hf/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hf/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hfeb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hfeb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/hppa/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/hppa/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/i386/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/i386/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/ia64/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/ia64/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68000/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68000/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68k/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68k/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64eb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64eb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64el/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64el/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipseb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipseb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipsel/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipsel/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc64/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc64/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3eb/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3eb/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3el/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3el/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc64/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc64/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/vax/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/vax/defs.mk patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/x86_64/c++config.h patch
+external/gpl3/gcc/lib/libstdc++-v3/arch/x86_64/defs.mk patch
+external/gpl3/gcc/usr.bin/gcc/arch/alpha/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/arm/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/armeb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earm/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmeb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmhf/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/hppa/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/i386/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/ia64/auto-host.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/ia64/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/m68k/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/mips64el/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/mipseb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/mipsel/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/sh3el/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/sparc/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/sparc64/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/vax/configargs.h patch
+external/gpl3/gcc/usr.bin/gcc/arch/x86_64/configargs.h patch
+external/gpl3/gcc/usr.bin/libcpp/arch/ia64/config.h patch
 tools/gcc/Makefile				patch
 tools/gcc/mknative-gcc 				patch
 
 	disable dual libstdc++ abi
-	[christos, ticket #312]
+	[christos/mrg, ticket #312]
 
 distrib/sets/lists/comp/mi			1.2148
 external/gpl3/gcc/usr.bin/include/Makefile	patch
 
 	Add stdatomic.h
 	[christos, ticket #313]
+
+distrib/sets/lists/base/md.amd64		1.271 via patch
+distrib/sets/lists/base/shl.mi			1.820, 1.821
+distrib/sets/lists/comp/shl.mi			1.307
+distrib/sets/lists/debug/ad.arm			1.75
+distrib/sets/lists/debug/md.amd64		1.99
+distrib/sets/lists/debug/shl.mi			1.182, 1.183
+distrib/sets/lists/xbase/shl.mi			1.78
+distrib/sets/lists/xdebug/shl.mi		1.41
+external/bsd/atf/lib/libatf-c++/shlib_version	1.3
+external/bsd/libproc/lib/Makefile		1.4
+external/gpl3/gcc/lib/libasan/shlib_version	1.3
+external/gpl3/gcc/lib/libstdc++-v3/Makefile	patch
+external/gpl3/gcc/lib/libubsan/shlib_version	1.2
+external/mit/xorg/lib/libGL/shlib_version	1.3
+external/mit/xorg/lib/libGLU/shlib_version	1.4
+external/mit/xorg/lib/libglapi/Makefile		1.2
+
+	Bump libstdc++ and libs that depend on it after disabling the
+	dual abi.
+	[christos, ticket #318]
+
+distrib/sets/lists/comp/mi			1.2149-1.2150
+
+	Don't install stdatomic.h if we don't have gcccmds.
+	[christos, ticket #319]
 
