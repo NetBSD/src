@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.817.2.1 2017/06/21 18:03:17 snj Exp $
+# $NetBSD: shl.mi,v 1.817.2.2 2017/10/11 22:49:48 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -176,14 +176,14 @@
 ./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc=53
 ./usr/lib/libasan.so.0				base-sys-shlib		compatfile,gcc=48
 ./usr/lib/libasan.so.0.0			base-sys-shlib		compatfile,gcc=48
-./usr/lib/libasan.so.1				base-sys-shlib		compatfile,gcc=53
-./usr/lib/libasan.so.1.0			base-sys-shlib		compatfile,gcc=53
+./usr/lib/libasan.so.2				base-sys-shlib		compatfile,gcc=53
+./usr/lib/libasan.so.2.0			base-sys-shlib		compatfile,gcc=53
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libatf-c++.so				base-atf-shlib		compatfile,atf
-./usr/lib/libatf-c++.so.1			base-atf-shlib		compatfile,atf
-./usr/lib/libatf-c++.so.1.0			base-atf-shlib		compatfile,atf
+./usr/lib/libatf-c++.so.2			base-atf-shlib		compatfile,atf
+./usr/lib/libatf-c++.so.2.0			base-atf-shlib		compatfile,atf
 ./usr/lib/libatf-c.so				base-atf-shlib		compatfile,atf
 ./usr/lib/libatf-c.so.0				base-atf-shlib		compatfile,atf
 ./usr/lib/libatf-c.so.0.0			base-atf-shlib		compatfile,atf
@@ -443,8 +443,8 @@
 ./usr/lib/libppath.so.0				base-sys-shlib		compatfile
 ./usr/lib/libppath.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/libproc.so				base-sys-shlib		compatfile,dtrace
-./usr/lib/libproc.so.0				base-sys-shlib		compatfile,dtrace
-./usr/lib/libproc.so.0.0			base-sys-shlib		compatfile,dtrace
+./usr/lib/libproc.so.1				base-sys-shlib		compatfile,dtrace
+./usr/lib/libproc.so.1.0			base-sys-shlib		compatfile,dtrace
 ./usr/lib/libprop.so				base-sys-shlib		compatfile
 ./usr/lib/libprop.so.1				base-sys-shlib		compatfile
 ./usr/lib/libprop.so.1.1			base-sys-shlib		compatfile
@@ -793,9 +793,9 @@
 ./usr/lib/libssl.so.12				base-crypto-shlib	compatfile
 ./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
-./usr/lib/libstdc++.so.7			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
+./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.3			base-sys-shlib		compatfile,gcc=48,cxx,libstdcxx
-./usr/lib/libstdc++.so.7.4			base-sys-shlib		compatfile,gcc=53,cxx,libstdcxx
+./usr/lib/libstdc++.so.8.0			base-sys-shlib		compatfile,gcc=53,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib		compatfile
 ./usr/lib/libtermcap.so.0			base-sys-shlib		compatfile
@@ -816,8 +816,8 @@
 ./usr/lib/libtspi.so.3				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		compatfile,tpm
 ./usr/lib/libubsan.so				base-sys-shlib		compatfile,gcc=53
-./usr/lib/libubsan.so.0				base-sys-shlib		compatfile,gcc=53
-./usr/lib/libubsan.so.0.0			base-sys-shlib		compatfile,gcc=53
+./usr/lib/libubsan.so.1				base-sys-shlib		compatfile,gcc=53
+./usr/lib/libubsan.so.1.0			base-sys-shlib		compatfile,gcc=53
 ./usr/lib/libukfs.so				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		compatfile,rump
