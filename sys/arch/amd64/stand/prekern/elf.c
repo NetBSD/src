@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.2 2017/10/11 16:21:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -86,7 +86,8 @@ static int
 elf_check_header()
 {
 	if (memcmp((char *)eif.ehdr->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    eif.ehdr->e_ident[EI_CLASS] != ELFCLASS) {
+	    eif.ehdr->e_ident[EI_CLASS] != ELFCLASS ||
+	    eif.ehdr->e_type != ET_REL) {
 		return -1;
 	}
 	return 0;
