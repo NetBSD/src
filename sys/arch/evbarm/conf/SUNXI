@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.41 2017/10/09 15:53:45 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.42 2017/10/11 10:53:25 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -72,6 +72,7 @@ options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
 options 	SOC_SUN9I_A80
 options 	SOC_SUN50I_A64
+options 	SOC_SUN50I_H5
 
 pseudo-device 	openfirm	# /dev/openfirm
 
