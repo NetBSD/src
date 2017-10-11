@@ -1,6 +1,6 @@
-.\" 	$NetBSD: rc.8,v 1.37 2016/12/17 07:37:24 maya Exp $
+.\" 	$NetBSD: rc.8,v 1.38 2017/10/11 23:42:33 lukem Exp $
 .\"
-.\" Copyright (c) 2000-2004 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 17, 2016
+.Dd October 12, 2017
 .Dt RC 8
 .Os
 .Sh NAME
@@ -237,7 +237,7 @@ have a
 .Sq Pa .sh
 suffix.
 Extreme care must be taken in using this, as the startup sequence will
-terminate if the script does.
+terminate if the script terminates.
 .Pa /etc/rc.d/bootconf.sh
 uses this behaviour to allow the user to select a different
 configuration (including
