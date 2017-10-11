@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.100 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.101 2017/10/11 08:10:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.100 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.101 2017/10/11 08:10:00 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -386,10 +386,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	struct ifnet *ifp = &ifv->ifv_if;
 	struct ifvlan_linkmib *nmib = NULL;
 	struct ifvlan_linkmib *omib = NULL;
+	struct ifvlan_linkmib *checkmib = NULL;
 	struct psref_target *nmib_psref = NULL;
 	int error = 0;
 	int idx;
 	bool omib_cleanup = false;
+	struct psref psref;
 
 	nmib = kmem_alloc(sizeof(*nmib), KM_SLEEP);
 
@@ -398,6 +400,14 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 
 	if (omib->ifvm_p != NULL) {
 		error = EBUSY;
+		goto done;
+	}
+
+	/* Duplicate check */
+	checkmib = vlan_lookup_tag_psref(p, tag, &psref);
+	if (checkmib != NULL) {
+		vlan_putref_linkmib(checkmib, &psref);
+		error = EEXIST;
 		goto done;
 	}
 
@@ -410,6 +420,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *) p;
+		struct vlanidlist *vidmem;
 		nmib->ifvm_msw = &vlan_ether_multisw;
 		nmib->ifvm_encaplen = ETHER_VLAN_ENCAP_LEN;
 		nmib->ifvm_mintu = ETHERMIN;
@@ -433,7 +444,14 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			}
 			error = 0;
 		}
-
+		vidmem = kmem_alloc(sizeof(struct vlanidlist), KM_SLEEP);
+		if (vidmem == NULL){
+			ec->ec_nvlans--;
+			error = ENOMEM;
+			goto done;
+		}
+		vidmem->vid = tag;
+		SLIST_INSERT_HEAD(&ec->ec_vids, vidmem, vid_list);
 		/*
 		 * If the parent interface can do hardware-assisted
 		 * VLAN encapsulation, then propagate its hardware-
@@ -555,6 +573,15 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *)p;
+		struct vlanidlist *vlanidp, *tmpp;
+
+		SLIST_FOREACH_SAFE(vlanidp, &ec->ec_vids, vid_list, tmpp) {
+			if (vlanidp->vid == nmib->ifvm_tag) {
+				SLIST_REMOVE(&ec->ec_vids, vlanidp, vlanidlist,
+				    vid_list);
+				kmem_free(vlanidp, sizeof(*vlanidp));
+			}
+		}
 		if (--ec->ec_nvlans == 0)
 			(void)ether_disable_vlan_mtu(p);
 
