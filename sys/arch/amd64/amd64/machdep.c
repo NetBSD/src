@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.263 2017/10/08 09:06:50 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.264 2017/10/11 16:56:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2017/10/08 09:06:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2017/10/11 16:56:26 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1994,16 +1994,44 @@ cpu_initclocks(void)
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
-	extern char start, __data_start;
 	const vaddr_t v = (vaddr_t)ptr;
+	vaddr_t kva, kva_end;
 
-	if (v >= (vaddr_t)&start && v < (vaddr_t)kern_end) {
+	kva = bootspace.text.va;
+	kva_end = kva + bootspace.text.sz;
+	if (v >= kva && v < kva_end) {
 		*handled = true;
-		/* Either the text or rodata segment */
-		if (v < (vaddr_t)&__data_start && (prot & VM_PROT_WRITE))
+		if (prot & VM_PROT_WRITE) {
 			return EFAULT;
+		}
+		return 0;
+	}
 
-	} else if (v >= module_start && v < module_end) {
+	kva = bootspace.rodata.va;
+	kva_end = kva + bootspace.rodata.sz;
+	if (v >= kva && v < kva_end) {
+		*handled = true;
+		if (prot & VM_PROT_WRITE) {
+			return EFAULT;
+		}
+		return 0;
+	}
+
+	kva = bootspace.data.va;
+	kva_end = kva + bootspace.data.sz;
+	if (v >= kva && v < kva_end) {
+		*handled = true;
+		return 0;
+	}
+
+	kva = bootspace.boot.va;
+	kva_end = kva + bootspace.boot.sz;
+	if (v >= kva && v < kva_end) {
+		*handled = true;
+		return 0;
+	}
+
+	if (v >= module_start && v < module_end) {
 		*handled = true;
 		if (!uvm_map_checkprot(module_map, v, v + 1, prot))
 			return EFAULT;
