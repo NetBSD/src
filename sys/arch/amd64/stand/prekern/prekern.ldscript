@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.ldscript,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: prekern.ldscript,v 1.2 2017/10/11 16:13:16 maxv Exp $	*/
 
 __PAGE_SIZE = 0x1000 ;
 
@@ -10,6 +10,7 @@ SECTIONS
 		*(.text)
 		*(.text.*)
 		*(.stub)
+		. = ALIGN(__PAGE_SIZE);
 	} =0xCC
 	_etext = . ;
 	PROVIDE (etext = .) ;
