@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.15 2017/10/08 18:00:36 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.16 2017/10/11 10:52:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.15 2017/10/08 18:00:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.16 2017/10/11 10:52:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,6 +100,10 @@ static const struct of_compat_data compat_data[] = {
 #ifdef SOC_SUN50I_A64
 	{ "allwinner,sun50i-a64-pinctrl",	(uintptr_t)&sun50i_a64_padconf },
 	{ "allwinner,sun50i-a64-r-pinctrl",	(uintptr_t)&sun50i_a64_r_padconf },
+#endif
+#ifdef SOC_SUN50I_H5
+	{ "allwinner,sun50i-h5-pinctrl",	(uintptr_t)&sun8i_h3_padconf },
+	{ "allwinner,sun50i-h5-r-pinctrl",	(uintptr_t)&sun8i_h3_r_padconf },
 #endif
 	{ NULL }
 };
