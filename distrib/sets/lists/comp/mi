@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2138.2.2 2017/10/09 18:05:11 snj Exp $
+#	$NetBSD: mi,v 1.2138.2.3 2017/10/11 22:54:09 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1989,7 +1989,7 @@
 ./usr/include/gcc-4.8/omp.h			comp-gcc-include	gcc=48
 ./usr/include/gcc-5/omp.h			comp-gcc-include	gcc=53
 ./usr/include/gcc-5/openacc.h			comp-gcc-include	gcc=53
-./usr/include/gcc-5/stdatomic.h			comp-gcc-include	gcc=53
+./usr/include/gcc-5/stdatomic.h			comp-gcc-include	gcc=53,gcccmds
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
