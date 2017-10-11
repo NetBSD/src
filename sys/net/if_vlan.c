@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.101 2017/10/11 08:10:00 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.102 2017/10/11 08:29:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.101 2017/10/11 08:10:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.102 2017/10/11 08:29:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -420,7 +420,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *) p;
-		struct vlanidlist *vidmem;
 		nmib->ifvm_msw = &vlan_ether_multisw;
 		nmib->ifvm_encaplen = ETHER_VLAN_ENCAP_LEN;
 		nmib->ifvm_mintu = ETHERMIN;
@@ -444,14 +443,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			}
 			error = 0;
 		}
-		vidmem = kmem_alloc(sizeof(struct vlanidlist), KM_SLEEP);
-		if (vidmem == NULL){
-			ec->ec_nvlans--;
-			error = ENOMEM;
-			goto done;
-		}
-		vidmem->vid = tag;
-		SLIST_INSERT_HEAD(&ec->ec_vids, vidmem, vid_list);
+
 		/*
 		 * If the parent interface can do hardware-assisted
 		 * VLAN encapsulation, then propagate its hardware-
@@ -573,15 +565,6 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *)p;
-		struct vlanidlist *vlanidp, *tmpp;
-
-		SLIST_FOREACH_SAFE(vlanidp, &ec->ec_vids, vid_list, tmpp) {
-			if (vlanidp->vid == nmib->ifvm_tag) {
-				SLIST_REMOVE(&ec->ec_vids, vlanidp, vlanidlist,
-				    vid_list);
-				kmem_free(vlanidp, sizeof(*vlanidp));
-			}
-		}
 		if (--ec->ec_nvlans == 0)
 			(void)ether_disable_vlan_mtu(p);
 
