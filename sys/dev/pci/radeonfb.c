@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.92 2017/08/25 22:45:33 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.93 2017/10/11 17:08:32 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.92 2017/08/25 22:45:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.93 2017/10/11 17:08:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -710,6 +710,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 				      RADEON_FP_SEL_CRTC1,
 				    ~RADEON_FP_SEL_MASK);
 			}
+			break;
 		case RADEON_TMDS_EXT:
 			/* point FP2 at the CRTC this port uses */
 			DPRINTF(("%s: plugging external TMDS into CRTC %d\n",
@@ -727,6 +728,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 				      RADEON_FP2_SRC_SEL_CRTC1,
 				    ~RADEON_FP2_SRC_SEL_CRTC2);
 			}
+			break;
 		}
 	}
 	PRINTREG(RADEON_DAC_CNTL2);
