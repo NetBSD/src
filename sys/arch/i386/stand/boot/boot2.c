@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.67 2017/10/07 10:26:38 maxv Exp $	*/
+/*	$NetBSD: boot2.c,v 1.68 2017/10/11 09:53:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -477,6 +477,7 @@ command_pkboot(char *arg)
 	extern int has_prekern;
 	has_prekern = 1;
 	command_boot(arg);
+	has_prekern = 0;
 }
 
 void
