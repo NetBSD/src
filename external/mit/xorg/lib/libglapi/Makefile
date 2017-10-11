@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2014/12/18 06:24:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2017/10/11 22:49:49 snj Exp $
 
 .include <bsd.own.mk>
 
 LIB=		glapi
 LIBISCXX=	yes
 
-SHLIB_MAJOR=    0
+SHLIB_MAJOR=    1
 SHLIB_MINOR=    0
 
 # util

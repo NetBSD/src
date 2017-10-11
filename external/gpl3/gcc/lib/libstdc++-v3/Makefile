@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2017/01/15 21:27:38 christos Exp $
+#	$NetBSD: Makefile,v 1.26.4.1 2017/10/11 22:49:49 snj Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -27,8 +27,8 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .if exists(${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
-SHLIB_MAJOR=	7
-SHLIB_MINOR=	4
+SHLIB_MAJOR=	8
+SHLIB_MINOR=	0
 
 SUBDIR=		include
 

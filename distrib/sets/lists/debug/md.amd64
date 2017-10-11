@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.96.2.1 2017/08/01 23:18:30 snj Exp $
+# $NetBSD: md.amd64,v 1.96.2.2 2017/10/11 22:49:48 snj Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
@@ -9,7 +9,7 @@
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/i386/libi386.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.1.debug	comp-compat-shlib	compat,pic,debug,pam
-./usr/libdata/debug/usr/lib/i386/libproc.so.0.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
+./usr/libdata/debug/usr/lib/i386/libproc.so.1.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
 ./usr/libdata/debug/usr/lib/i386/librtld_db.so.0.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
