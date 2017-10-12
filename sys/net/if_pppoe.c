@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.127 2017/10/12 09:47:21 knakahara Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.128 2017/10/12 09:49:43 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.127 2017/10/12 09:47:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.128 2017/10/12 09:49:43 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -813,9 +813,7 @@ breakbreak:;
 		sc->sc_state = PPPOE_STATE_SESSION;
 		PPPOE_UNLOCK(sc);
 
-		sppp_lock_enter(&sc->sc_sppp);
 		sc->sc_sppp.pp_up(&sc->sc_sppp);
-		sppp_lock_exit(&sc->sc_sppp);
 		break;
 	    }
 #else
@@ -899,9 +897,7 @@ breakbreak:;
 		sc->sc_state = PPPOE_STATE_SESSION;
 		PPPOE_UNLOCK(sc);
 
-		sppp_lock_enter(&sc->sc_sppp);
 		sc->sc_sppp.pp_up(&sc->sc_sppp);	/* notify upper layers */
-		sppp_lock_exit(&sc->sc_sppp);
 		break;
 	case PPPOE_CODE_PADT: {
 		struct ifnet *rcvif;
@@ -1495,9 +1491,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
 	PPPOE_UNLOCK(sc);
 
 	/* notify upper layer */
-	sppp_lock_enter(&sc->sc_sppp);
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
-	sppp_lock_exit(&sc->sc_sppp);
 
 	PPPOE_LOCK(sc, RW_WRITER);
 
@@ -1518,9 +1512,7 @@ pppoe_abort_connect(struct pppoe_softc *sc)
 	PPPOE_UNLOCK(sc);
 
 	/* notify upper layer */
-	sppp_lock_enter(&sc->sc_sppp);
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
-	sppp_lock_exit(&sc->sc_sppp);
 
 	PPPOE_LOCK(sc, RW_WRITER);
 
@@ -1849,13 +1841,11 @@ pppoe_ifattach_hook(void *arg, unsigned long cmd, void *arg2)
 			PPPOE_UNLOCK(sc);
 			continue;
 		}
-		sppp_lock_enter(&sc->sc_sppp);
 		if (sc->sc_sppp.pp_if.if_flags & IFF_UP) {
 			sc->sc_sppp.pp_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
 			printf("%s: ethernet interface detached, going down\n",
 			    sc->sc_sppp.pp_if.if_xname);
 		}
-		sppp_lock_exit(&sc->sc_sppp);
 		sc->sc_eth_if = NULL;
 		pppoe_clear_softc(sc, "ethernet interface detached");
 		PPPOE_UNLOCK(sc);
@@ -1881,9 +1871,7 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 	PPPOE_UNLOCK(sc);
 
 	/* signal upper layer */
-	sppp_lock_enter(&sc->sc_sppp);
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
-	sppp_lock_exit(&sc->sc_sppp);
 
 	PPPOE_LOCK(sc, RW_WRITER);
 
