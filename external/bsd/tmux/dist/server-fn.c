@@ -162,7 +162,7 @@ server_lock_client(struct client *c)
 		return;
 
 	cmd = options_get_string(c->session->options, "lock-command");
-	if (strlen(cmd) + 1 > MAX_IMSGSIZE - IMSG_HEADER_SIZE)
+	if (*cmd == '\0' || strlen(cmd) + 1 > MAX_IMSGSIZE - IMSG_HEADER_SIZE)
 		return;
 
 	tty_stop_tty(&c->tty);
@@ -171,7 +171,7 @@ server_lock_client(struct client *c)
 	tty_raw(&c->tty, tty_term_string(c->tty.term, TTYC_E3));
 
 	c->flags |= CLIENT_SUSPENDED;
-	proc_send_s(c->peer, MSG_LOCK, cmd);
+	proc_send(c->peer, MSG_LOCK, -1, cmd, strlen(cmd) + 1);
 }
 
 void
@@ -300,7 +300,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 		screen_write_start(&ctx, wp, &wp->base);
 		screen_write_scrollregion(&ctx, 0, screen_size_y(ctx.s) - 1);
 		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1);
-		screen_write_linefeed(&ctx, 1);
+		screen_write_linefeed(&ctx, 1, 8);
 		memcpy(&gc, &grid_default_cell, sizeof gc);
 		gc.attr |= GRID_ATTR_BRIGHT;
 		screen_write_puts(&ctx, &gc, "Pane is dead");
@@ -334,7 +334,7 @@ server_destroy_session_group(struct session *s)
 	else {
 		TAILQ_FOREACH_SAFE(s, &sg->sessions, gentry, s1) {
 			server_destroy_session(s);
-			session_destroy(s);
+			session_destroy(s, __func__);
 		}
 	}
 }
@@ -400,7 +400,7 @@ server_check_unattached(void)
 		if (!(s->flags & SESSION_UNATTACHED))
 			continue;
 		if (options_get_number (s->options, "destroy-unattached"))
-			session_destroy(s);
+			session_destroy(s, __func__);
 	}
 }
 
