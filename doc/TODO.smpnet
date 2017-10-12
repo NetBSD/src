@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.13 2017/08/10 09:26:55 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.14 2017/10/12 03:27:00 knakahara Exp $
 
 MP-safe components
 ==================
@@ -153,3 +153,5 @@ Scalability
    flows per CPU
  - ipsec(4) isn't scalable on the number of SA/SP; the cost of a look-up
    is O(n)
+ - opencrypto(9)'s crypto_newsession()/crypto_freesession() aren't scalable
+   as they are serialized by one mutex
