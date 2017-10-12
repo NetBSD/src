@@ -1,7 +1,6 @@
-/*	$OpenBSD: daemon.c,v 1.6 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: memmem.c,v 1.4 2015/08/31 02:53:57 guenther Exp $ */
 /*-
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2005 Pascal Gloor <pascal.gloor@spale.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,14 +10,14 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -28,48 +27,39 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <string.h>
 
 #include "compat.h"
 
-#ifdef __APPLE__
-extern void daemon_darwin(void);
-#endif
+/*
+ * Find the first occurrence of the byte string s in byte string l.
+ */
 
-int
-daemon(int nochdir, int noclose)
+void *
+memmem(const void *l, size_t l_len, const void *s, size_t s_len)
 {
-	int fd;
+	const char *cur, *last;
+	const char *cl = l;
+	const char *cs = s;
 
-	switch (fork()) {
-	case -1:
-		return (-1);
-	case 0:
-		break;
-	default:
-		_exit(0);
-	}
+	/* a zero length needle should just return the haystack */
+	if (s_len == 0)
+		return (void *)cl;
 
-	if (setsid() == -1)
-		return (-1);
+	/* "s" must be smaller or equal to "l" */
+	if (l_len < s_len)
+		return NULL;
 
-	if (!nochdir)
-		(void)chdir("/");
+	/* special case where s_len == 1 */
+	if (s_len == 1)
+		return memchr(l, *cs, l_len);
 
-	if (!noclose && (fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
-		(void)dup2(fd, STDIN_FILENO);
-		(void)dup2(fd, STDOUT_FILENO);
-		(void)dup2(fd, STDERR_FILENO);
-		if (fd > 2)
-			(void)close (fd);
-	}
+	/* the last position where its possible to find "s" in "l" */
+	last = cl + l_len - s_len;
 
-#ifdef __APPLE__
-	daemon_darwin();
-#endif
-	return (0);
+	for (cur = cl; cur <= last; cur++)
+		if (cur[0] == cs[0] && memcmp(cur, cs, s_len) == 0)
+			return (void *)cur;
+
+	return NULL;
 }
