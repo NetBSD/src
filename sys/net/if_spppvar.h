@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.21 2017/10/12 09:49:43 knakahara Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.22 2017/10/12 09:53:55 knakahara Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -182,4 +182,25 @@ struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
 #endif
+
+/*
+ * Locking notes:
+ * + spppq is protected by spppq_lock (an adaptive mutex)
+ *     spppq is a list of all struct sppps, and it is used for
+ *     sending keepalive packets.
+ * + struct sppp is protected by sppp->pp_lock (an rwlock)
+ *     sppp holds configuration parameters for line,
+ *     authentication and addresses. It also has pointers
+ *     of functions to notify events to lower layer.
+ *     When notify events, sppp->pp_lock must be released.
+ *     Because the event handler implemented in a lower
+ *     layer often call functions implemented in
+ *     if_spppsubr.c.
+ *
+ * Locking order:
+ *    - spppq_lock => struct sppp->pp_lock
+ *
+ * NOTICE
+ * - Lower layers must not acquire sppp->pp_lock
+ */
 #endif /* !_NET_IF_SPPPVAR_H_ */
