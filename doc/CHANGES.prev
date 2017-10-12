@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.135 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.136 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12166,6 +12166,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	bind: Import version 9.10.4-P6. [christos 20170208]
 	openldap: Import 2.4.44. [christos 20170208]
 	libc: Add accept4 function for compatibility [maya 20170208]
+	bpf(4): Make it MP-safe [ozaki-r 20170209]
 	file(1): Upgraded to 5.30. [christos 20170210]
 	byacc: update to 20170201 [christos 20170211]
 	ptrace(2): Add signal mask information accessors API:
@@ -12223,5 +12224,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	file(1): Upgraded to 5.31. [christos 20170524]
 	can(4): Added a socketcan implementation, a socket layer for
 		CAN busses. [bouyer 20170527]
+	vlan(4): Make it MP-safe from s-yamaguchi@IIJ [knakahara 20170607]
+	opencrypto(9): Complete MP-ification [knakahara 20170731]
+	ipsec(4): Make it MP-safe [ozaki-r 20170809]
 	evbmips: Merge sbmips port into evbmips. [mrg 20170815]
 
