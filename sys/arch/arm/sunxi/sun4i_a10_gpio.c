@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_gpio.c,v 1.1 2017/10/06 21:20:59 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_gpio.c,v 1.2 2017/10/12 20:17:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Emmanuel Vadot <manu@freebsd.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_a10_gpio.c,v 1.1 2017/10/06 21:20:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_a10_gpio.c,v 1.2 2017/10/12 20:17:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ static const struct sunxi_gpio_pins a10_pins[] = {
 	{"PA13", 0, 13, {"gpio_in", "gpio_out", "emac", "uart6", "uart1", NULL, NULL, NULL}},
 	{"PA14", 0, 14, {"gpio_in", "gpio_out", "emac", "uart7", "uart1", NULL, NULL, NULL}},
 	{"PA15", 0, 15, {"gpio_in", "gpio_out", "emac", "uart7", "uart1", NULL, NULL, NULL}},
-	{"PA16", 0, 16, {"gpio_in", "gpio_out", NULL, "can", "uart1", NULL, NULL, NULL}},
-	{"PA17", 0, 17, {"gpio_in", "gpio_out", NULL, "can", "uart1", NULL, NULL, NULL}},
+	{"PA16", 0, 16, {"gpio_in", "gpio_out", "emac", "can", "uart1", NULL, NULL, NULL}},
+	{"PA17", 0, 17, {"gpio_in", "gpio_out", "emac", "can", "uart1", NULL, NULL, NULL}},
 
 	{"PB0",  1, 0,  {"gpio_in", "gpio_out", "i2c0", NULL, NULL, NULL, NULL, NULL}},
 	{"PB1",  1, 1,  {"gpio_in", "gpio_out", "i2c0", NULL, NULL, NULL, NULL, NULL}},
