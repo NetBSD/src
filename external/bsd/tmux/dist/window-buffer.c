@@ -87,7 +87,7 @@ window_buffer_add_item(struct window_buffer_modedata *data)
 static void
 window_buffer_free_item(struct window_buffer_itemdata *item)
 {
-	free((void *)item->name);
+	free(__UNCONST(item->name));
 	free(item);
 }
 

@@ -84,7 +84,7 @@ key_bindings_unref_table(struct key_table *table)
 }
 
 void
-key_bindings_add(const char *name, key_code key, int can_repeat,
+key_bindings_add(const char *name, key_code key, int repeat,
     struct cmd_list *cmdlist)
 {
 	struct key_table	*table;
@@ -92,7 +92,7 @@ key_bindings_add(const char *name, key_code key, int can_repeat,
 
 	table = key_bindings_get_table(name, 1);
 
-	bd_find.key = key;
+	bd_find.key = (key & ~KEYC_XTERM);
 	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
 	if (bd != NULL) {
 		RB_REMOVE(key_bindings, &table->key_bindings, bd);
@@ -100,11 +100,12 @@ key_bindings_add(const char *name, key_code key, int can_repeat,
 		free(bd);
 	}
 
-	bd = xmalloc(sizeof *bd);
+	bd = xcalloc(1, sizeof *bd);
 	bd->key = key;
 	RB_INSERT(key_bindings, &table->key_bindings, bd);
 
-	bd->can_repeat = can_repeat;
+	if (repeat)
+		bd->flags |= KEY_BINDING_REPEAT;
 	bd->cmdlist = cmdlist;
 }
 
@@ -118,7 +119,7 @@ key_bindings_remove(const char *name, key_code key)
 	if (table == NULL)
 		return;
 
-	bd_find.key = key;
+	bd_find.key = (key & ~KEYC_XTERM);
 	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
 	if (bd == NULL)
 		return;
@@ -137,11 +138,16 @@ void
 key_bindings_remove_table(const char *name)
 {
 	struct key_table	*table;
+	struct client		*c;
 
 	table = key_bindings_get_table(name, 0);
 	if (table != NULL) {
 		RB_REMOVE(key_tables, &key_tables, table);
 		key_bindings_unref_table(table);
+	}
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->keytable == table)
+			server_client_set_key_table(c, NULL);
 	}
 }
 
@@ -195,9 +201,9 @@ key_bindings_init(void)
 		"bind p previous-window",
 		"bind q display-panes",
 		"bind r refresh-client",
-		"bind s choose-tree",
+		"bind s choose-tree -s",
 		"bind t clock-mode",
-		"bind w choose-window",
+		"bind w choose-tree -w",
 		"bind x confirm-before -p\"kill-pane #P? (y/n)\" kill-pane",
 		"bind z resize-pane -Z",
 		"bind { swap-pane -U",
@@ -243,23 +249,23 @@ key_bindings_init(void)
 		"bind -Tcopy-mode C-k send -X copy-end-of-line",
 		"bind -Tcopy-mode C-n send -X cursor-down",
 		"bind -Tcopy-mode C-p send -X cursor-up",
-		"bind -Tcopy-mode C-r command-prompt -ip'search up' 'send -X search-backward-incremental \"%%%\"'",
-		"bind -Tcopy-mode C-s command-prompt -ip'search down' 'send -X search-forward-incremental \"%%%\"'",
+		"bind -Tcopy-mode C-r command-prompt -ip'(search up)' -I'#{pane_search_string}' 'send -X search-backward-incremental \"%%%\"'",
+		"bind -Tcopy-mode C-s command-prompt -ip'(search down)' -I'#{pane_search_string}' 'send -X search-forward-incremental \"%%%\"'",
 		"bind -Tcopy-mode C-v send -X page-down",
 		"bind -Tcopy-mode C-w send -X copy-selection-and-cancel",
 		"bind -Tcopy-mode Escape send -X cancel",
 		"bind -Tcopy-mode Space send -X page-down",
 		"bind -Tcopy-mode , send -X jump-reverse",
 		"bind -Tcopy-mode \\; send -X jump-again",
-		"bind -Tcopy-mode F command-prompt -1p'jump backward' 'send -X jump-backward \"%%%\"'",
+		"bind -Tcopy-mode F command-prompt -1p'(jump backward)' 'send -X jump-backward \"%%%\"'",
 		"bind -Tcopy-mode N send -X search-reverse",
 		"bind -Tcopy-mode R send -X rectangle-toggle",
-		"bind -Tcopy-mode T command-prompt -1p'jump to backward' 'send -X jump-to-backward \"%%%\"'",
-		"bind -Tcopy-mode f command-prompt -1p'jump forward' 'send -X jump-forward \"%%%\"'",
-		"bind -Tcopy-mode g command-prompt -p'goto line' 'send -X goto-line \"%%%\"'",
+		"bind -Tcopy-mode T command-prompt -1p'(jump to backward)' 'send -X jump-to-backward \"%%%\"'",
+		"bind -Tcopy-mode f command-prompt -1p'(jump forward)' 'send -X jump-forward \"%%%\"'",
+		"bind -Tcopy-mode g command-prompt -p'(goto line)' 'send -X goto-line \"%%%\"'",
 		"bind -Tcopy-mode n send -X search-again",
 		"bind -Tcopy-mode q send -X cancel",
-		"bind -Tcopy-mode t command-prompt -1p'jump to forward' 'send -X jump-to-forward \"%%%\"'",
+		"bind -Tcopy-mode t command-prompt -1p'(jump to forward)' 'send -X jump-to-forward \"%%%\"'",
 		"bind -Tcopy-mode Home send -X start-of-line",
 		"bind -Tcopy-mode End send -X end-of-line",
 		"bind -Tcopy-mode MouseDown1Pane select-pane",
@@ -275,15 +281,15 @@ key_bindings_init(void)
 		"bind -Tcopy-mode Down send -X cursor-down",
 		"bind -Tcopy-mode Left send -X cursor-left",
 		"bind -Tcopy-mode Right send -X cursor-right",
-		"bind -Tcopy-mode M-1 command-prompt -Np'repeat' -I1 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-2 command-prompt -Np'repeat' -I2 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-3 command-prompt -Np'repeat' -I3 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-4 command-prompt -Np'repeat' -I4 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-5 command-prompt -Np'repeat' -I5 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-6 command-prompt -Np'repeat' -I6 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-7 command-prompt -Np'repeat' -I7 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-8 command-prompt -Np'repeat' -I8 'send -N \"%%%\"'",
-		"bind -Tcopy-mode M-9 command-prompt -Np'repeat' -I9 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-1 command-prompt -Np'(repeat)' -I1 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-2 command-prompt -Np'(repeat)' -I2 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-3 command-prompt -Np'(repeat)' -I3 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-4 command-prompt -Np'(repeat)' -I4 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-5 command-prompt -Np'(repeat)' -I5 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-6 command-prompt -Np'(repeat)' -I6 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-7 command-prompt -Np'(repeat)' -I7 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-8 command-prompt -Np'(repeat)' -I8 'send -N \"%%%\"'",
+		"bind -Tcopy-mode M-9 command-prompt -Np'(repeat)' -I9 'send -N \"%%%\"'",
 		"bind -Tcopy-mode M-< send -X history-top",
 		"bind -Tcopy-mode M-> send -X history-bottom",
 		"bind -Tcopy-mode M-R send -X top-line",
@@ -315,25 +321,25 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi Space send -X begin-selection",
 		"bind -Tcopy-mode-vi '$' send -X end-of-line",
 		"bind -Tcopy-mode-vi , send -X jump-reverse",
-		"bind -Tcopy-mode-vi / command-prompt -p'search down' 'send -X search-forward \"%%%\"'",
+		"bind -Tcopy-mode-vi / command-prompt -p'(search down)' 'send -X search-forward \"%%%\"'",
 		"bind -Tcopy-mode-vi 0 send -X start-of-line",
-		"bind -Tcopy-mode-vi 1 command-prompt -Np'repeat' -I1 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 2 command-prompt -Np'repeat' -I2 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 3 command-prompt -Np'repeat' -I3 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 4 command-prompt -Np'repeat' -I4 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 5 command-prompt -Np'repeat' -I5 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 6 command-prompt -Np'repeat' -I6 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 7 command-prompt -Np'repeat' -I7 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 8 command-prompt -Np'repeat' -I8 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi 9 command-prompt -Np'repeat' -I9 'send -N \"%%%\"'",
-		"bind -Tcopy-mode-vi : command-prompt -p'goto line' 'send -X goto-line \"%%%\"'",
+		"bind -Tcopy-mode-vi 1 command-prompt -Np'(repeat)' -I1 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 2 command-prompt -Np'(repeat)' -I2 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 3 command-prompt -Np'(repeat)' -I3 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 4 command-prompt -Np'(repeat)' -I4 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 5 command-prompt -Np'(repeat)' -I5 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 6 command-prompt -Np'(repeat)' -I6 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 7 command-prompt -Np'(repeat)' -I7 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 8 command-prompt -Np'(repeat)' -I8 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi 9 command-prompt -Np'(repeat)' -I9 'send -N \"%%%\"'",
+		"bind -Tcopy-mode-vi : command-prompt -p'(goto line)' 'send -X goto-line \"%%%\"'",
 		"bind -Tcopy-mode-vi \\; send -X jump-again",
-		"bind -Tcopy-mode-vi ? command-prompt -p'search up' 'send -X search-backward \"%%%\"'",
+		"bind -Tcopy-mode-vi ? command-prompt -p'(search up)' 'send -X search-backward \"%%%\"'",
 		"bind -Tcopy-mode-vi A send -X append-selection-and-cancel",
 		"bind -Tcopy-mode-vi B send -X previous-space",
 		"bind -Tcopy-mode-vi D send -X copy-end-of-line",
 		"bind -Tcopy-mode-vi E send -X next-space-end",
-		"bind -Tcopy-mode-vi F command-prompt -1p'jump backward' 'send -X jump-backward \"%%%\"'",
+		"bind -Tcopy-mode-vi F command-prompt -1p'(jump backward)' 'send -X jump-backward \"%%%\"'",
 		"bind -Tcopy-mode-vi G send -X history-bottom",
 		"bind -Tcopy-mode-vi H send -X top-line",
 		"bind -Tcopy-mode-vi J send -X scroll-down",
@@ -341,13 +347,13 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi L send -X bottom-line",
 		"bind -Tcopy-mode-vi M send -X middle-line",
 		"bind -Tcopy-mode-vi N send -X search-reverse",
-		"bind -Tcopy-mode-vi T command-prompt -1p'jump to backward' 'send -X jump-to-backward \"%%%\"'",
+		"bind -Tcopy-mode-vi T command-prompt -1p'(jump to backward)' 'send -X jump-to-backward \"%%%\"'",
 		"bind -Tcopy-mode-vi V send -X select-line",
 		"bind -Tcopy-mode-vi W send -X next-space",
 		"bind -Tcopy-mode-vi ^ send -X back-to-indentation",
 		"bind -Tcopy-mode-vi b send -X previous-word",
 		"bind -Tcopy-mode-vi e send -X next-word-end",
-		"bind -Tcopy-mode-vi f command-prompt -1p'jump forward' 'send -X jump-forward \"%%%\"'",
+		"bind -Tcopy-mode-vi f command-prompt -1p'(jump forward)' 'send -X jump-forward \"%%%\"'",
 		"bind -Tcopy-mode-vi g send -X history-top",
 		"bind -Tcopy-mode-vi h send -X cursor-left",
 		"bind -Tcopy-mode-vi j send -X cursor-down",
@@ -356,7 +362,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi n send -X search-again",
 		"bind -Tcopy-mode-vi o send -X other-end",
 		"bind -Tcopy-mode-vi q send -X cancel",
-		"bind -Tcopy-mode-vi t command-prompt -1p'jump to forward' 'send -X jump-to-forward \"%%%\"'",
+		"bind -Tcopy-mode-vi t command-prompt -1p'(jump to forward)' 'send -X jump-to-forward \"%%%\"'",
 		"bind -Tcopy-mode-vi v send -X rectangle-toggle",
 		"bind -Tcopy-mode-vi w send -X next-word",
 		"bind -Tcopy-mode-vi { send -X previous-paragraph",
@@ -399,11 +405,11 @@ key_bindings_read_only(struct cmdq_item *item, __unused void *data)
 }
 
 void
-key_bindings_dispatch(struct key_binding *bd, struct client *c,
-    struct mouse_event *m, struct cmd_find_state *fs)
+key_bindings_dispatch(struct key_binding *bd, struct cmdq_item *item,
+    struct client *c, struct mouse_event *m, struct cmd_find_state *fs)
 {
 	struct cmd		*cmd;
-	struct cmdq_item	*item;
+	struct cmdq_item	*new_item;
 	int			 readonly;
 
 	readonly = 1;
@@ -412,10 +418,14 @@ key_bindings_dispatch(struct key_binding *bd, struct client *c,
 			readonly = 0;
 	}
 	if (!readonly && (c->flags & CLIENT_READONLY))
-		cmdq_append(c, cmdq_get_callback(key_bindings_read_only, NULL));
+		new_item = cmdq_get_callback(key_bindings_read_only, NULL);
 	else {
-		item = cmdq_get_command(bd->cmdlist, fs, m, 0);
-		item->repeat = bd->can_repeat;
-		cmdq_append(c, item);
+		new_item = cmdq_get_command(bd->cmdlist, fs, m, 0);
+		if (bd->flags & KEY_BINDING_REPEAT)
+			new_item->shared->flags |= CMDQ_SHARED_REPEAT;
 	}
+	if (item != NULL)
+		cmdq_insert_after(item, new_item);
+	else
+		cmdq_append(c, new_item);
 }
