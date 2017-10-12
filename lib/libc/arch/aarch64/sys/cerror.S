@@ -1,4 +1,4 @@
-/* $NetBSD: cerror.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: cerror.S,v 1.2 2017/10/12 05:51:51 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ ENTRY_NP(__cerror)
 	bl	_C_LABEL(__errno)
 	str	w19, [x0]
 	ldp	x19, x30, [sp], #16
-	mvn	w0,wzr
+	mvn	x0, xzr
 	ret
 	.cfi_endproc
 END(__cerror)
