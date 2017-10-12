@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.31 2016/09/03 02:24:04 sevan Exp $	*/
+/*	$NetBSD: passwd.c,v 1.32 2017/10/12 05:00:23 ryo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.31 2016/09/03 02:24:04 sevan Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.32 2017/10/12 05:00:23 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,7 @@ static struct pw_module_s {
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
  
-static void
+static void __attribute__((__noreturn__))
 usage(void)
 {
 	int i;
