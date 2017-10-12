@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.16 2015/04/13 21:18:41 riastradh Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.17 2017/10/12 20:05:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -84,14 +84,6 @@ struct plcom_instance {
 	struct plcom_registers	*pi_regs;
 };
 
-struct plcomcons_info {
-	int	rate;
-	int	frequency;
-	int	type;
-
-	tcflag_t	cflag;
-};
-    
 struct plcom_softc {
 	device_t sc_dev;
 
