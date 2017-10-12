@@ -36,7 +36,7 @@ const struct cmd_entry cmd_kill_session_entry = {
 	.args = { "aCt:", 0, 0 },
 	.usage = "[-aC] " CMD_TARGET_SESSION_USAGE,
 
-	.tflag = CMD_SESSION,
+	.target = { 't', CMD_FIND_SESSION, 0 },
 
 	.flags = 0,
 	.exec = cmd_kill_session_exec
@@ -49,7 +49,7 @@ cmd_kill_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct session	*s, *sloop, *stmp;
 	struct winlink	*wl;
 
-	s = item->state.tflag.s;
+	s = item->target.s;
 
 	if (args_has(args, 'C')) {
 		RB_FOREACH(wl, winlinks, &s->windows) {
@@ -61,12 +61,12 @@ cmd_kill_session_exec(struct cmd *self, struct cmdq_item *item)
 		RB_FOREACH_SAFE(sloop, sessions, &sessions, stmp) {
 			if (sloop != s) {
 				server_destroy_session(sloop);
-				session_destroy(sloop);
+				session_destroy(sloop, __func__);
 			}
 		}
 	} else {
 		server_destroy_session(s);
-		session_destroy(s);
+		session_destroy(s, __func__);
 	}
 	return (CMD_RETURN_NORMAL);
 }

@@ -34,7 +34,6 @@ struct args_entry {
 	RB_ENTRY(args_entry)	 entry;
 };
 
-static void			 args_set(struct args *, u_char, const char *);
 static struct args_entry	*args_find(struct args *, u_char);
 
 static int	args_cmp(struct args_entry *, struct args_entry *);
@@ -191,11 +190,11 @@ args_print(struct args *args)
 int
 args_has(struct args *args, u_char ch)
 {
-	return (args_find(args, ch) == NULL ? 0 : 1);
+	return (args_find(args, ch) != NULL);
 }
 
 /* Set argument value in the arguments tree. */
-static void
+void
 args_set(struct args *args, u_char ch, const char *value)
 {
 	struct args_entry	*entry;
