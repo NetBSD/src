@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.14 2017/10/12 03:27:00 knakahara Exp $
+$NetBSD: TODO.smpnet,v 1.15 2017/10/12 03:31:39 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -83,6 +83,14 @@ Non MP-safe components and kernel options
 
 Know issues
 ===========
+
+NOMPSAFE
+--------
+
+We use "NOMPSAFE" as a mark that indicates that the code around it isn't MP-safe
+yet.  We use it in comments and also use as part of function names, for example
+m_get_rcvif_NOMPSAFE.  Let's use "NOMPSAFE" to make it easy to find non-MP-safe
+codes by grep.
 
 bpf
 ---
