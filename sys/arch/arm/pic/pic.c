@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.40 2017/09/21 19:29:14 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.41 2017/10/12 19:59:22 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.40 2017/09/21 19:29:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.41 2017/10/12 19:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -103,7 +103,7 @@ size_t pic_ipl_offset[NIPL+1];
 
 static kmutex_t pic_lock;
 size_t pic_sourcebase;
-static struct evcnt pic_deferral_ev = 
+static struct evcnt pic_deferral_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "deferred", "intr");
 EVCNT_ATTACH_STATIC(pic_deferral_ev);
 
@@ -215,7 +215,7 @@ int
 pic_handle_softint(void *arg)
 {
 	void softint_switch(lwp_t *, int);
-	struct cpu_info * const ci = curcpu(); 
+	struct cpu_info * const ci = curcpu();
 	const size_t softint = (size_t) arg;
 	int s = splhigh();
 	ci->ci_intr_depth--;	// don't count these as interrupts
@@ -283,7 +283,7 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 		return ipl_mask;
 
 	KASSERT((irq_base & 31) == 0);
-	
+
 	(*pic->pic_ops->pic_block_irqs)(pic, irq_base, pending);
 
 	atomic_or_32(ipending, pending);
@@ -697,7 +697,7 @@ pic_add(struct pic_softc *pic, int irqbase)
 	 * Allocate a pointer to each cpu's evcnts and then, for each cpu,
 	 * allocate its evcnts and then attach an evcnt for each pin.
 	 * We can't allocate the evcnt structures directly since
-	 * percpu will move the contents of percpu memory around and 
+	 * percpu will move the contents of percpu memory around and
 	 * corrupt the pointers in the evcnts themselves.  Remember, any
 	 * problem can be solved with sufficient indirection.
 	 */
@@ -822,7 +822,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 unblock:
 	(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
 	    __BIT(is->is_irq & 0x1f));
-	
+
 	/* We're done. */
 	return is;
 }
