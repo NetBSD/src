@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.192 2017/10/10 03:11:01 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.193 2017/10/12 02:40:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.192 2017/10/10 03:11:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.193 2017/10/12 02:40:34 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1538,8 +1538,9 @@ pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
 
 	printf("\n  Secure Capability Register\n");
 	reg = regs[o2i(capoff + PCI_SECURE_CAP)];
+	printf("    Capability Register: 0x%04x\n", reg >> 16);
 	val = __SHIFTOUT(reg, PCI_SECURE_CAP_TYPE);
-	printf("    Capability block type: ");
+	printf("      Capability block type: ");
 	/* I know IOMMU Only */
 	if (val == PCI_SECURE_CAP_TYPE_IOMMU)
 		printf("IOMMU\n");
@@ -1549,9 +1550,9 @@ pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
 	}
 
 	val = __SHIFTOUT(reg, PCI_SECURE_CAP_REV);
-	printf("    Capability revision: 0x%02x", val);
+	printf("      Capability revision: 0x%02x ", val);
 	if (val == PCI_SECURE_CAP_REV_IOMMU)
-		printf("IOMMU\n");
+		printf("(IOMMU)\n");
 	else {
 		printf("(unknown)\n");
 		return;
@@ -1559,7 +1560,7 @@ pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
 	onoff("IOTLB support", reg, PCI_SECURE_CAP_IOTLBSUP);
 	onoff("HyperTransport tunnel translation support", reg,
 	    PCI_SECURE_CAP_HTTUNNEL);
-	onoff("Not present table entries cahced", reg, PCI_SECURE_CAP_NPCACHE);
+	onoff("Not present table entries cached", reg, PCI_SECURE_CAP_NPCACHE);
 	onoff("IOMMU Extended Feature Register support", reg,
 	    PCI_SECURE_CAP_EFRSUP);
 	onoff("IOMMU Miscellaneous Information Register 1", reg,
@@ -1589,7 +1590,7 @@ pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
 
 	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_MISC0)];
 	printf("    Miscellaneous Information Register 0: 0x%08x\n", reg);
-	printf("      MSI Message number: 0x%04x\n",
+	printf("      MSI Message number: 0x%02x\n",
 	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_MSINUM));
 	val = __SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_GVASIZE);
 	printf("      Guest Virtual Address size: ");
