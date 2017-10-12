@@ -47,28 +47,43 @@ static void	server_client_dispatch_command(struct client *, struct imsg *);
 static void	server_client_dispatch_identify(struct client *, struct imsg *);
 static void	server_client_dispatch_shell(struct client *);
 
-/* Idenfity mode callback. */
+/* Number of attached clients. */
+u_int
+server_client_how_many(void)
+{
+	struct client  	*c;
+	u_int		 n;
+
+	n = 0;
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session != NULL && (~c->flags & CLIENT_DETACHING))
+			n++;
+	}
+	return (n);
+}
+
+/* Identify mode callback. */
 static void
-server_client_callback_identify(__unused int fd, __unused short events, void *data)
+server_client_callback_identify(__unused int fd, __unused short events,
+    void *data)
 {
 	server_client_clear_identify(data, NULL);
 }
 
 /* Set identify mode on client. */
 void
-server_client_set_identify(struct client *c)
+server_client_set_identify(struct client *c, u_int delay)
 {
 	struct timeval	tv;
-	int		delay;
 
-	delay = options_get_number(c->session->options, "display-panes-time");
 	tv.tv_sec = delay / 1000;
 	tv.tv_usec = (delay % 1000) * 1000L;
 
 	if (event_initialized(&c->identify_timer))
 		evtimer_del(&c->identify_timer);
 	evtimer_set(&c->identify_timer, server_client_callback_identify, c);
-	evtimer_add(&c->identify_timer, &tv);
+	if (delay != 0)
+		evtimer_add(&c->identify_timer, &tv);
 
 	c->flags |= CLIENT_IDENTIFY;
 	c->tty.flags |= (TTY_FREEZE|TTY_NOCURSOR);
@@ -136,11 +151,11 @@ server_client_get_key_table(struct client *c)
 	return (name);
 }
 
-/* Is this client using the default key table? */
-int
-server_client_is_default_key_table(struct client *c)
+/* Is this table the default key table? */
+static int
+server_client_is_default_key_table(struct client *c, struct key_table *table)
 {
-	return (strcmp(c->keytable->name, server_client_get_key_table(c)) == 0);
+	return (strcmp(table->name, server_client_get_key_table(c)) == 0);
 }
 
 /* Create a new client. */
@@ -257,6 +272,10 @@ server_client_lost(struct client *c)
 	if (event_initialized(&c->status_timer))
 		evtimer_del(&c->status_timer);
 	screen_free(&c->status);
+	if (c->old_status != NULL) {
+		screen_free(c->old_status);
+		free(c->old_status);
+	}
 
 	free(c->title);
 	free(__UNCONST(c->cwd));
@@ -281,6 +300,7 @@ server_client_lost(struct client *c)
 	free(c->prompt_string);
 	free(c->prompt_buffer);
 
+	format_lost_client(c);
 	environ_free(c->environ);
 
 	proc_remove_peer(c->peer);
@@ -323,17 +343,32 @@ server_client_free(__unused int fd, __unused short events, void *arg)
 	}
 }
 
+/* Suspend a client. */
+void
+server_client_suspend(struct client *c)
+{
+	struct session	*s = c->session;
+
+	if (s == NULL || (c->flags & CLIENT_DETACHING))
+		return;
+
+	tty_stop_tty(&c->tty);
+	c->flags |= CLIENT_SUSPENDED;
+	proc_send(c->peer, MSG_SUSPEND, -1, NULL, 0);
+}
+
 /* Detach a client. */
 void
 server_client_detach(struct client *c, enum msgtype msgtype)
 {
 	struct session	*s = c->session;
 
-	if (s == NULL)
+	if (s == NULL || (c->flags & CLIENT_DETACHING))
 		return;
 
+	c->flags |= CLIENT_DETACHING;
 	notify_client("client-detached", c);
-	proc_send_s(c->peer, msgtype, s->name);
+	proc_send(c->peer, msgtype, -1, s->name, strlen(s->name) + 1);
 }
 
 /* Execute command to replace a client. */
@@ -776,11 +811,11 @@ server_client_handle_key(struct client *c, key_code key)
 	struct window		*w;
 	struct window_pane	*wp;
 	struct timeval		 tv;
-	const char		*name;
-	struct key_table	*table;
+	struct key_table	*table, *first;
 	struct key_binding	 bd_find, *bd;
-	int			 xtimeout;
+	int			 xtimeout, flags;
 	struct cmd_find_state	 fs;
+	key_code		 key0;
 
 	/* Check the client is good to accept input. */
 	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
@@ -840,10 +875,9 @@ server_client_handle_key(struct client *c, key_code key)
 		m->valid = 0;
 
 	/* Find affected pane. */
-	if (KEYC_IS_MOUSE(key) && m->valid)
-		wp = cmd_mouse_pane(m, NULL, NULL);
-	else
-		wp = w->active;
+	if (!KEYC_IS_MOUSE(key) || cmd_find_from_mouse(&fs, m, 0) != 0)
+		cmd_find_from_session(&fs, s, 0);
+	wp = fs.wp;
 
 	/* Forward mouse keys if disabled. */
 	if (KEYC_IS_MOUSE(key) && !options_get_number(s->options, "mouse"))
@@ -853,37 +887,44 @@ server_client_handle_key(struct client *c, key_code key)
 	if (!KEYC_IS_MOUSE(key) && server_client_assume_paste(s))
 		goto forward;
 
-retry:
 	/*
 	 * Work out the current key table. If the pane is in a mode, use
 	 * the mode table instead of the default key table.
 	 */
-	name = NULL;
-	if (wp != NULL && wp->mode != NULL && wp->mode->key_table != NULL)
-		name = wp->mode->key_table(wp);
-	if (name == NULL || !server_client_is_default_key_table(c))
+	if (server_client_is_default_key_table(c, c->keytable) &&
+	    wp != NULL &&
+	    wp->mode != NULL &&
+	    wp->mode->key_table != NULL)
+		table = key_bindings_get_table(wp->mode->key_table(wp), 1);
+	else
 		table = c->keytable;
-	else
-		table = key_bindings_get_table(name, 1);
-	if (wp == NULL)
-		log_debug("key table %s (no pane)", table->name);
-	else
-		log_debug("key table %s (pane %%%u)", table->name, wp->id);
+	first = table;
 
 	/*
 	 * The prefix always takes precedence and forces a switch to the prefix
 	 * table, unless we are already there.
 	 */
-	if ((key == (key_code)options_get_number(s->options, "prefix") ||
-	    key == (key_code)options_get_number(s->options, "prefix2")) &&
+	key0 = (key & ~KEYC_XTERM);
+	if ((key0 == (key_code)options_get_number(s->options, "prefix") ||
+	    key0 == (key_code)options_get_number(s->options, "prefix2")) &&
 	    strcmp(table->name, "prefix") != 0) {
 		server_client_set_key_table(c, "prefix");
 		server_status_client(c);
 		return;
 	}
+	flags = c->flags;
+
+retry:
+	/* Log key table. */
+	if (wp == NULL)
+		log_debug("key table %s (no pane)", table->name);
+	else
+		log_debug("key table %s (pane %%%u)", table->name, wp->id);
+	if (c->flags & CLIENT_REPEAT)
+		log_debug("currently repeating");
 
 	/* Try to see if there is a key binding in the current table. */
-	bd_find.key = key;
+	bd_find.key = key0;
 	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
 	if (bd != NULL) {
 		/*
@@ -891,12 +932,15 @@ retry:
 		 * non-repeating binding was found, stop repeating and try
 		 * again in the root table.
 		 */
-		if ((c->flags & CLIENT_REPEAT) && !bd->can_repeat) {
+		if ((c->flags & CLIENT_REPEAT) &&
+		    (~bd->flags & KEY_BINDING_REPEAT)) {
 			server_client_set_key_table(c, NULL);
 			c->flags &= ~CLIENT_REPEAT;
 			server_status_client(c);
+			table = c->keytable;
 			goto retry;
 		}
+		log_debug("found in key table %s", table->name);
 
 		/*
 		 * Take a reference to this table to make sure the key binding
@@ -909,7 +953,7 @@ retry:
 		 * the client back to the root table.
 		 */
 		xtimeout = options_get_number(s->options, "repeat-time");
-		if (xtimeout != 0 && bd->can_repeat) {
+		if (xtimeout != 0 && (bd->flags & KEY_BINDING_REPEAT)) {
 			c->flags |= CLIENT_REPEAT;
 
 			tv.tv_sec = xtimeout / 1000;
@@ -922,39 +966,31 @@ retry:
 		}
 		server_status_client(c);
 
-		/* Find default state if the pane is known. */
-		cmd_find_clear_state(&fs, NULL, 0);
-		if (wp != NULL) {
-			fs.s = s;
-			fs.wl = fs.s->curw;
-			fs.w = fs.wl->window;
-			fs.wp = wp;
-			cmd_find_log_state(__func__, &fs);
-
-			if (!cmd_find_valid_state(&fs))
-				fatalx("invalid key state");
-		}
-
-		/* Dispatch the key binding. */
-		key_bindings_dispatch(bd, c, m, &fs);
+		/* Execute the key binding. */
+		key_bindings_dispatch(bd, NULL, c, m, &fs);
 		key_bindings_unref_table(table);
 		return;
 	}
 
 	/*
-	 * No match in this table. If repeating, switch the client back to the
-	 * root table and try again.
+	 * No match in this table. If not in the root table or if repeating,
+	 * switch the client back to the root table and try again.
 	 */
-	if (c->flags & CLIENT_REPEAT) {
+	log_debug("not found in key table %s", table->name);
+	if (!server_client_is_default_key_table(c, table) ||
+	    (c->flags & CLIENT_REPEAT)) {
 		server_client_set_key_table(c, NULL);
 		c->flags &= ~CLIENT_REPEAT;
 		server_status_client(c);
+		table = c->keytable;
 		goto retry;
 	}
 
-	/* If no match and we're not in the root table, that's it. */
-	if (name == NULL && !server_client_is_default_key_table(c)) {
-		log_debug("no key in key table %s", table->name);
+	/*
+	 * No match in the root table either. If this wasn't the first table
+	 * tried, don't pass the key to the pane.
+	 */
+	if (first != table && (~flags & CLIENT_REPEAT)) {
 		server_client_set_key_table(c, NULL);
 		server_status_client(c);
 		return;
@@ -1002,6 +1038,47 @@ server_client_loop(void)
 	}
 }
 
+/* Check if we need to force a resize. */
+static int
+server_client_resize_force(struct window_pane *wp)
+{
+	struct timeval	tv = { .tv_usec = 100000 };
+	struct winsize	ws;
+
+	/*
+	 * If we are resizing to the same size as when we entered the loop
+	 * (that is, to the same size the application currently thinks it is),
+	 * tmux may have gone through several resizes internally and thrown
+	 * away parts of the screen. So we need the application to actually
+	 * redraw even though its final size has not changed.
+	 */
+
+	if (wp->flags & PANE_RESIZEFORCE) {
+		wp->flags &= ~PANE_RESIZEFORCE;
+		return (0);
+	}
+
+	if (wp->sx != wp->osx ||
+	    wp->sy != wp->osy ||
+	    wp->sx <= 1 ||
+	    wp->sy <= 1)
+		return (0);
+
+	memset(&ws, 0, sizeof ws);
+	ws.ws_col = wp->sx;
+	ws.ws_row = wp->sy - 1;
+	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
+#ifdef __sun
+		if (errno != EINVAL && errno != ENXIO)
+#endif
+		fatal("ioctl failed");
+	log_debug("%s: %%%u forcing resize", __func__, wp->id);
+
+	evtimer_add(&wp->resize_timer, &tv);
+	wp->flags |= PANE_RESIZEFORCE;
+	return (1);
+}
+
 /* Resize timer event. */
 static void
 server_client_resize_event(__unused int fd, __unused short events, void *data)
@@ -1013,12 +1090,13 @@ server_client_resize_event(__unused int fd, __unused short events, void *data)
 
 	if (!(wp->flags & PANE_RESIZE))
 		return;
+	if (server_client_resize_force(wp))
+		return;
 
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = wp->sx;
 	ws.ws_row = wp->sy;
-
-	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1) {
+	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
 #ifdef __sun
 		/*
 		 * Some versions of Solaris apparently can return an error when
@@ -1029,9 +1107,12 @@ server_client_resize_event(__unused int fd, __unused short events, void *data)
 		if (errno != EINVAL && errno != ENXIO)
 #endif
 		fatal("ioctl failed");
-	}
+	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, wp->sy);
 
 	wp->flags &= ~PANE_RESIZE;
+
+	wp->osx = wp->sx;
+	wp->osy = wp->sy;
 }
 
 /* Check if pane should be resized. */
@@ -1042,6 +1123,7 @@ server_client_check_resize(struct window_pane *wp)
 
 	if (!(wp->flags & PANE_RESIZE))
 		return;
+	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, wp->sy);
 
 	if (!event_initialized(&wp->resize_timer))
 		evtimer_set(&wp->resize_timer, server_client_resize_event, wp);
@@ -1209,6 +1291,14 @@ server_client_check_exit(struct client *c)
 	c->flags &= ~CLIENT_EXIT;
 }
 
+/* Redraw timer callback. */
+static void
+server_client_redraw_timer(__unused int fd, __unused short events,
+    __unused void* data)
+{
+	log_debug("redraw timer fired");
+}
+
 /* Check for client redraws. */
 static void
 server_client_check_redraw(struct client *c)
@@ -1216,10 +1306,47 @@ server_client_check_redraw(struct client *c)
 	struct session		*s = c->session;
 	struct tty		*tty = &c->tty;
 	struct window_pane	*wp;
-	int		 	 flags, masked;
+	int			 needed, flags, masked;
+	struct timeval		 tv = { .tv_usec = 1000 };
+	static struct event	 ev;
+	size_t			 left;
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
 		return;
+
+	/*
+	 * If there is outstanding data, defer the redraw until it has been
+	 * consumed. We can just add a timer to get out of the event loop and
+	 * end up back here.
+	 */
+	needed = 0;
+	if (c->flags & CLIENT_REDRAW)
+		needed = 1;
+	else {
+		TAILQ_FOREACH(wp, &c->session->curw->window->panes, entry) {
+			if (wp->flags & PANE_REDRAW) {
+				needed = 1;
+				break;
+			}
+		}
+	}
+	if (needed && (left = EVBUFFER_LENGTH(tty->out)) != 0) {
+		log_debug("%s: redraw deferred (%zu left)", c->name, left);
+		if (!evtimer_initialized(&ev))
+			evtimer_set(&ev, server_client_redraw_timer, NULL);
+		if (!evtimer_pending(&ev, NULL)) {
+			log_debug("redraw timer started");
+			evtimer_add(&ev, &tv);
+		}
+
+		/*
+		 * We may have got here for a single pane redraw, but force a
+		 * full redraw next time in case other panes have been updated.
+		 */
+		c->flags |= CLIENT_REDRAW;
+		return;
+	} else if (needed)
+		log_debug("%s: redraw needed", c->name);
 
 	if (c->flags & (CLIENT_REDRAW|CLIENT_STATUS)) {
 		if (options_get_number(s->options, "set-titles"))
@@ -1227,8 +1354,8 @@ server_client_check_redraw(struct client *c)
 		screen_redraw_update(c); /* will adjust flags */
 	}
 
-	flags = tty->flags & (TTY_FREEZE|TTY_NOCURSOR);
-	tty->flags = (tty->flags & ~TTY_FREEZE) | TTY_NOCURSOR;
+	flags = tty->flags & (TTY_BLOCK|TTY_FREEZE|TTY_NOCURSOR);
+	tty->flags = (tty->flags & ~(TTY_BLOCK|TTY_FREEZE)) | TTY_NOCURSOR;
 
 	if (c->flags & CLIENT_REDRAW) {
 		tty_update_mode(tty, tty->mode, NULL);
@@ -1258,6 +1385,16 @@ server_client_check_redraw(struct client *c)
 
 	c->flags &= ~(CLIENT_REDRAW|CLIENT_BORDERS|CLIENT_STATUS|
 	    CLIENT_STATUSFORCE);
+
+	if (needed) {
+		/*
+		 * We would have deferred the redraw unless the output buffer
+		 * was empty, so we can record how many bytes the redraw
+		 * generated.
+		 */
+		c->redraw = EVBUFFER_LENGTH(tty->out);
+		log_debug("%s: redraw added %zu bytes", c->name, c->redraw);
+	}
 }
 
 /* Set client title. */
@@ -1271,7 +1408,7 @@ server_client_set_title(struct client *c)
 
 	template = options_get_string(s->options, "set-titles-string");
 
-	ft = format_create(NULL, FORMAT_NONE, 0);
+	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
 
 	title = format_expand_time(ft, template, time(NULL));
@@ -1342,10 +1479,9 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 
 		if (c->flags & CLIENT_CONTROL)
 			break;
-		if (tty_resize(&c->tty)) {
-			recalculate_sizes();
-			server_redraw_client(c);
-		}
+		tty_resize(&c->tty);
+		recalculate_sizes();
+		server_redraw_client(c);
 		if (c->session != NULL)
 			notify_client("client-resized", c);
 		break;
@@ -1469,7 +1605,7 @@ static void
 server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 {
 	const char	*data, *home;
-	size_t	 	 datalen;
+	size_t		 datalen;
 	int		 flags;
 	char		*name;
 
@@ -1593,7 +1729,7 @@ server_client_dispatch_shell(struct client *c)
 	shell = options_get_string(global_s_options, "default-shell");
 	if (*shell == '\0' || areshell(shell))
 		shell = _PATH_BSHELL;
-	proc_send_s(c->peer, MSG_SHELL, shell);
+	proc_send(c->peer, MSG_SHELL, -1, shell, strlen(shell) + 1);
 
 	proc_kill_peer(c->peer);
 }
@@ -1614,7 +1750,7 @@ void
 server_client_push_stdout(struct client *c)
 {
 	struct msg_stdout_data data;
-	size_t                 sent, left;
+	size_t		       sent, left;
 
 	left = EVBUFFER_LENGTH(c->stdout_data);
 	while (left != 0) {
@@ -1655,7 +1791,7 @@ void
 server_client_push_stderr(struct client *c)
 {
 	struct msg_stderr_data data;
-	size_t                 sent, left;
+	size_t		       sent, left;
 
 	if (c->stderr_data == c->stdout_data) {
 		server_client_push_stdout(c);

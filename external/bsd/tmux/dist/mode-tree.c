@@ -110,8 +110,8 @@ mode_tree_free_item(struct mode_tree_item *mti)
 {
 	mode_tree_free_items(&mti->children);
 
-	free((void *)mti->name);
-	free((void *)mti->text);
+	free(__UNCONST(mti->name));
+	free(__UNCONST(mti->text));
 
 	free(mti);
 }

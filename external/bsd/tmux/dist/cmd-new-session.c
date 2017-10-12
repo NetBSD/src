@@ -44,7 +44,7 @@ const struct cmd_entry cmd_new_session_entry = {
 		 "[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] "
 		 "[-y height] [command]",
 
-	.tflag = CMD_SESSION_CANFAIL,
+	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 
 	.flags = CMD_STARTSERVER,
 	.exec = cmd_new_session_exec
@@ -57,7 +57,7 @@ const struct cmd_entry cmd_has_session_entry = {
 	.args = { "t:", 0, 0 },
 	.usage = CMD_TARGET_SESSION_USAGE,
 
-	.tflag = CMD_SESSION,
+	.target = { 't', CMD_FIND_SESSION, 0 },
 
 	.flags = 0,
 	.exec = cmd_new_session_exec
@@ -74,17 +74,18 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct termios		 tio, *tiop;
 	struct session_group	*sg;
 	const char		*newname, *errstr, *template, *group, *prefix;
-	const char		*path, *cmd, *cwd, *to_free = NULL;
-	char		       **argv, *cause, *cp;
+	const char		*path, *cmd, *cwd;
+	char		       **argv, *cause, *cp, *to_free = NULL;
 	int			 detached, already_attached, idx, argc;
+	int			 is_control = 0;
 	u_int			 sx, sy;
 	struct environ_entry	*envent;
 	struct cmd_find_state	 fs;
 
 	if (self->entry == &cmd_has_session_entry) {
 		/*
-		 * cmd_prepare() will fail if the session cannot be found,
-		 * hence always return success here.
+		 * cmd_find_target() will fail if the session cannot be found,
+		 * so always return success here.
 		 */
 		return (CMD_RETURN_NORMAL);
 	}
@@ -102,16 +103,9 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		if ((as = session_find(newname)) != NULL) {
 			if (args_has(args, 'A')) {
-				/*
-				 * This item is now destined for
-				 * attach-session. Because attach-session will
-				 * have already been prepared, copy this
-				 * session into its tflag so it can be used.
-				 */
-				cmd_find_from_session(&item->state.tflag, as);
 				return (cmd_attach_session(item,
-				    args_has(args, 'D'), 0, NULL,
-				    args_has(args, 'E')));
+				    newname, args_has(args, 'D'),
+				    0, NULL, args_has(args, 'E')));
 			}
 			cmdq_error(item, "duplicate session: %s", newname);
 			return (CMD_RETURN_ERROR);
@@ -121,7 +115,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	/* Is this going to be part of a session group? */
 	group = args_get(args, 't');
 	if (group != NULL) {
-		groupwith = item->state.tflag.s;
+		groupwith = item->target.s;
 		if (groupwith == NULL) {
 			if (!session_check_name(group)) {
 				cmdq_error(item, "bad group name: %s", group);
@@ -146,6 +140,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	detached = args_has(args, 'd');
 	if (c == NULL)
 		detached = 1;
+	else if (c->flags & CLIENT_CONTROL)
+		is_control = 1;
 
 	/* Is this client already attached? */
 	already_attached = 0;
@@ -155,7 +151,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	/* Get the new session working directory. */
 	if (args_has(args, 'c')) {
 		cwd = args_get(args, 'c');
-		to_free = cwd = format_single(item, cwd, c, NULL, NULL, NULL);
+		to_free = format_single(item, cwd, c, NULL, NULL, NULL);
+		cwd = to_free;
 	} else if (c != NULL && c->session == NULL && c->cwd != NULL)
 		cwd = c->cwd;
 	else
@@ -192,29 +189,31 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	/* Find new session size. */
-	if (c != NULL) {
+	if (!detached) {
 		sx = c->tty.sx;
 		sy = c->tty.sy;
+		if (!is_control &&
+		    sy > 0 &&
+		    options_get_number(global_s_options, "status"))
+			sy--;
 	} else {
 		sx = 80;
 		sy = 24;
 	}
-	if (detached && args_has(args, 'x')) {
+	if ((is_control || detached) && args_has(args, 'x')) {
 		sx = strtonum(args_get(args, 'x'), 1, USHRT_MAX, &errstr);
 		if (errstr != NULL) {
 			cmdq_error(item, "width %s", errstr);
 			goto error;
 		}
 	}
-	if (detached && args_has(args, 'y')) {
+	if ((is_control || detached) && args_has(args, 'y')) {
 		sy = strtonum(args_get(args, 'y'), 1, USHRT_MAX, &errstr);
 		if (errstr != NULL) {
 			cmdq_error(item, "height %s", errstr);
 			goto error;
 		}
 	}
-	if (sy > 0 && options_get_number(global_s_options, "status"))
-		sy--;
 	if (sx == 0)
 		sx = 1;
 	if (sy == 0)
@@ -297,7 +296,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		} else if (c->session != NULL)
 			c->last_session = c->session;
 		c->session = s;
-		if (!item->repeat)
+		if (~item->shared->flags & CMDQ_SHARED_REPEAT)
 			server_client_set_key_table(c, NULL);
 		status_timer_start(c);
 		notify_client("client-session-changed", c);
@@ -324,19 +323,18 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		free(cp);
 	}
 
-	if (!detached)
+	if (!detached) {
 		c->flags |= CLIENT_ATTACHED;
+		cmd_find_from_session(&item->shared->current, s, 0);
+	}
 
-	if (to_free != NULL)
-		free(__UNCONST(to_free));
-
-	cmd_find_from_session(&fs, s);
+	cmd_find_from_session(&fs, s, 0);
 	hooks_insert(s->hooks, item, &fs, "after-new-session");
 
+	free(to_free);
 	return (CMD_RETURN_NORMAL);
 
 error:
-	if (to_free != NULL)
-		free(__UNCONST(to_free));
+	free(to_free);
 	return (CMD_RETURN_ERROR);
 }

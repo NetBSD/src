@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
-#include <getopt.h>
 #include <langinfo.h>
 #include <locale.h>
 #include <pwd.h>
@@ -42,6 +41,7 @@ struct hooks	*global_hooks;
 struct timeval	 start_time;
 const char	*socket_path;
 int		 ptm_fd = -1;
+const char	*shell_command;
 
 static __dead void	 usage(void);
 static char		*make_label(const char *);
@@ -118,7 +118,7 @@ make_label(const char *label)
 	uid = getuid();
 
 	if ((s = getenv("TMUX_TMPDIR")) != NULL && *s != '\0')
-		xasprintf(&base, "%s/tmux-%u", s, uid);
+		xasprintf(&base, "%s/tmux-%ld", s, (long)uid);
 	else
 		xasprintf(&base, "%s/tmux-%ld", _PATH_TMP, (long)uid);
 
@@ -188,13 +188,14 @@ find_home(void)
 int
 main(int argc, char **argv)
 {
-	char					*path, *label, tmp[PATH_MAX];
-	char					*shellcmd = NULL, **var;
+	char					*path, *label, **var;
+	char					 tmp[PATH_MAX];
 	const char				*s, *shell;
 	int					 opt, flags, keys;
 	const struct options_table_entry	*oe;
 
-	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL) {
+	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL &&
+	    setlocale(LC_CTYPE, "C.UTF-8") == NULL) {
 		if (setlocale(LC_CTYPE, "") == NULL)
 			errx(1, "invalid LC_ALL, LC_CTYPE or LANG");
 		s = nl_langinfo(CODESET);
@@ -217,8 +218,7 @@ main(int argc, char **argv)
 			flags |= CLIENT_256COLOURS;
 			break;
 		case 'c':
-			free(shellcmd);
-			shellcmd = xstrdup(optarg);
+			shell_command = optarg;
 			break;
 		case 'C':
 			if (flags & CLIENT_CONTROL)
@@ -258,11 +258,11 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (shellcmd != NULL && argc != 0)
+	if (shell_command != NULL && argc != 0)
 		usage();
 
-	if (pty_open(&ptm_fd) != 0)
-		errx(1, "open(\"/dev/ptm\"");
+	if ((ptm_fd = getptmfd()) == -1)
+		err(1, "getptmfd");
 	if (pledge("stdio rpath wpath cpath flock fattr unix getpw sendfd "
 	    "recvfd proc exec tty ps", NULL) != 0)
 		err(1, "pledge");
@@ -348,5 +348,5 @@ main(int argc, char **argv)
 	free(label);
 
 	/* Pass control to the client. */
-	exit(client_main(osdep_event_init(), argc, argv, flags, shellcmd));
+	exit(client_main(osdep_event_init(), argc, argv, flags));
 }
