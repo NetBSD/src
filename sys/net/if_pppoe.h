@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.14 2017/05/31 11:44:44 knakahara Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.15 2017/10/12 09:50:55 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,10 +70,15 @@ void pppoe_input(struct ifnet *, struct mbuf *);
 void pppoedisc_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
 /*
- * TODO: Locking notes
- * Currently, the if_pppoe.c and if_spppsubr.c locking is too complexity.
- * So, we will restructure locks, and then we describe the restructureed
- * locking note.
+ * Locking notes:
+ * + pppoe_softc_list is protected by pppoe_softc_list_lock (an rwlock)
+ *     pppoe_softc_list is a list of all pppoe_softc, and it is used to
+ *     find pppoe interface by session id or host unique tag.
+ * + pppoe_softc is protected by pppoe_softc->sc_lock (an rwlock)
+ *     pppoe_softc holds session id and parameters to establish the id
+ *
+ * Locking order:
+ *    - pppoe_softc_list_lock => pppoe_softc->sc_lock
  */
 #endif /* !_NET_IF_PPPOE_H_ */
 
