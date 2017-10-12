@@ -145,7 +145,6 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	attributes.$(OBJEXT) cfg.$(OBJEXT) client.$(OBJEXT) \
 	cmd-attach-session.$(OBJEXT) cmd-bind-key.$(OBJEXT) \
 	cmd-break-pane.$(OBJEXT) cmd-capture-pane.$(OBJEXT) \
-	cmd-choose-buffer.$(OBJEXT) cmd-choose-client.$(OBJEXT) \
 	cmd-choose-tree.$(OBJEXT) cmd-command-prompt.$(OBJEXT) \
 	cmd-confirm-before.$(OBJEXT) cmd-copy-mode.$(OBJEXT) \
 	cmd-detach-client.$(OBJEXT) cmd-display-message.$(OBJEXT) \
@@ -181,16 +180,17 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	input.$(OBJEXT) job.$(OBJEXT) key-bindings.$(OBJEXT) \
 	key-string.$(OBJEXT) layout-custom.$(OBJEXT) \
 	layout-set.$(OBJEXT) layout.$(OBJEXT) log.$(OBJEXT) \
-	names.$(OBJEXT) notify.$(OBJEXT) options-table.$(OBJEXT) \
-	options.$(OBJEXT) paste.$(OBJEXT) proc.$(OBJEXT) pty.$(OBJEXT) \
-	resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
+	mode-tree.$(OBJEXT) names.$(OBJEXT) notify.$(OBJEXT) \
+	options-table.$(OBJEXT) options.$(OBJEXT) paste.$(OBJEXT) \
+	proc.$(OBJEXT) resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
 	screen-write.$(OBJEXT) screen.$(OBJEXT) \
 	server-client.$(OBJEXT) server-fn.$(OBJEXT) server.$(OBJEXT) \
-	session.$(OBJEXT) signal.$(OBJEXT) status.$(OBJEXT) \
-	style.$(OBJEXT) tmux.$(OBJEXT) tty-acs.$(OBJEXT) \
-	tty-keys.$(OBJEXT) tty-term.$(OBJEXT) tty.$(OBJEXT) \
-	utf8.$(OBJEXT) window-choose.$(OBJEXT) window-clock.$(OBJEXT) \
-	window-copy.$(OBJEXT) window.$(OBJEXT) xmalloc.$(OBJEXT) \
+	session.$(OBJEXT) status.$(OBJEXT) style.$(OBJEXT) \
+	tmux.$(OBJEXT) tty-acs.$(OBJEXT) tty-keys.$(OBJEXT) \
+	tty-term.$(OBJEXT) tty.$(OBJEXT) utf8.$(OBJEXT) \
+	window-buffer.$(OBJEXT) window-client.$(OBJEXT) \
+	window-clock.$(OBJEXT) window-copy.$(OBJEXT) \
+	window-tree.$(OBJEXT) window.$(OBJEXT) xmalloc.$(OBJEXT) \
 	xterm-keys.$(OBJEXT)
 am__dirstamp = $(am__leading_dot)dirstamp
 @NEED_FORKPTY_TRUE@am__objects_1 =  \
@@ -260,15 +260,18 @@ AM_RECURSIVE_TARGETS = cscope
 am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/compat/asprintf.c $(top_srcdir)/compat/base64.c \
 	$(top_srcdir)/compat/cfmakeraw.c \
-	$(top_srcdir)/compat/closefrom.c $(top_srcdir)/compat/daemon.c \
-	$(top_srcdir)/compat/err.c \
+	$(top_srcdir)/compat/closefrom.c \
+	$(top_srcdir)/compat/daemon-darwin.c \
+	$(top_srcdir)/compat/daemon.c $(top_srcdir)/compat/err.c \
 	$(top_srcdir)/compat/explicit_bzero.c \
-	$(top_srcdir)/compat/fgetln.c $(top_srcdir)/compat/fparseln.c \
+	$(top_srcdir)/compat/fdforkpty.c $(top_srcdir)/compat/fgetln.c \
+	$(top_srcdir)/compat/fparseln.c \
 	$(top_srcdir)/compat/freezero.c \
 	$(top_srcdir)/compat/getdtablecount.c \
 	$(top_srcdir)/compat/getopt.c \
 	$(top_srcdir)/compat/getprogname.c \
 	$(top_srcdir)/compat/imsg-buffer.c $(top_srcdir)/compat/imsg.c \
+	$(top_srcdir)/compat/memmem.c \
 	$(top_srcdir)/compat/reallocarray.c \
 	$(top_srcdir)/compat/recallocarray.c \
 	$(top_srcdir)/compat/setenv.c \
@@ -408,6 +411,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -420,7 +424,7 @@ CLEANFILES = tmux.1.mdoc tmux.1.man
 
 # Distribution tarball options.
 EXTRA_DIST = \
-	CHANGES FAQ README TODO COPYING example_tmux.conf compat/*.[ch] \
+	CHANGES README COPYING example_tmux.conf compat/*.[ch] \
 	osdep-*.c mdoc2man.awk tmux.1
 
 
@@ -438,8 +442,6 @@ dist_tmux_SOURCES = \
 	cmd-bind-key.c \
 	cmd-break-pane.c \
 	cmd-capture-pane.c \
-	cmd-choose-buffer.c \
-	cmd-choose-client.c \
 	cmd-choose-tree.c \
 	cmd-command-prompt.c \
 	cmd-confirm-before.c \
@@ -517,13 +519,13 @@ dist_tmux_SOURCES = \
 	layout-set.c \
 	layout.c \
 	log.c \
+	mode-tree.c \
 	names.c \
 	notify.c \
 	options-table.c \
 	options.c \
 	paste.c \
 	proc.c \
-	pty.c \
 	resize.c \
 	screen-redraw.c \
 	screen-write.c \
@@ -532,7 +534,6 @@ dist_tmux_SOURCES = \
 	server-fn.c \
 	server.c \
 	session.c \
-	signal.c \
 	status.c \
 	style.c \
 	tmux.c \
@@ -542,9 +543,11 @@ dist_tmux_SOURCES = \
 	tty-term.c \
 	tty.c \
 	utf8.c \
-	window-choose.c \
+	window-buffer.c \
+	window-client.c \
 	window-clock.c \
 	window-copy.c \
+	window-tree.c \
 	window.c \
 	xmalloc.c \
 	xmalloc.h \
@@ -662,8 +665,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-bind-key.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-break-pane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-capture-pane.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-choose-buffer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-choose-client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-choose-tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-command-prompt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-confirm-before.Po@am__quote@
@@ -740,6 +741,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/layout-set.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/layout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mode-tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/names.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/notify.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options-table.Po@am__quote@
@@ -747,7 +749,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osdep-@PLATFORM@.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/paste.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pty.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-redraw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-write.Po@am__quote@
@@ -756,7 +757,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server-fn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/session.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/signal.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/style.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tmux.Po@am__quote@
@@ -765,9 +765,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tty-term.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tty.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utf8.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-choose.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-buffer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-copy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmalloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xterm-keys.Po@am__quote@
@@ -775,9 +777,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/base64.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/cfmakeraw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/closefrom.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/daemon-darwin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/daemon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/err.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/explicit_bzero.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/fdforkpty.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/fgetln.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/forkpty-@PLATFORM@.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/fparseln.Po@am__quote@
@@ -787,6 +791,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getprogname.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/imsg-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/imsg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/memmem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/reallocarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/recallocarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/setenv.Po@am__quote@

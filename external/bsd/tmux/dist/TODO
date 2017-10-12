@@ -1,7 +1,6 @@
 - command bits and pieces:
 	* allow multiple targets: fnmatch for -t/-c, for example detach all
 	  clients with -t*
-	* add -c for new-session like new-window
 	* ' and " should be parsed the same (eg "\e" vs '\e') in config
 	  and command prompt
 	* last-pane across sessions
@@ -22,14 +21,8 @@
 	* formats to show if a window is linked into multiple sessions, into
 	  multiple attached sessions, and is the active window in multiple
 	  attached sessions?
-
-- choose mode improvements:
-	* choose-pane command (augment choose-tree to do this?)
-	* flag to choose-* for sort order
-	* two choices (first one then second, for swap-pane and join-pane)
-	* choose modes should ditch the key bindings and just have fixed keys, and
-	  be more customized to their purpose (d to delete a buffer for choose-buffer,
-	  a preview of buffer contents, etc)
+	* comparison operators like < and > (for #{version}?)
+	* %else statement in config file
 
 - improve monitor-*:
 	* straighten out rules for multiple clients
@@ -53,8 +46,9 @@
 	  then it should be found even if it is now "foo\nbar" (if the WRAP flag
 	  is set on the line)
 	* capture-pane option to preserve spaces but not join lines
-	* improve word and line selection in copy mode (for example when dragging
-	  it should select by word. compare how xterm works. GitHub issue 682)
+	* improve word and line selection in copy mode (for example when
+	  dragging it should select by word. compare how xterm works. GitHub
+	  issue 682)
 
 - layout stuff
 	* way to tag a layout as a number/name
@@ -70,6 +64,8 @@
 	* a mode where one application can cross two panes (ie x|y, width =
 	  COLUMNS/2 but height = ROWS * 2)
 	* separate active panes for different clients
+	* way to choose where the freed space goes when a pane is killed:
+	  option to kill-pane? GitHub issue 918
 
 - code cleanup
 	* instead of separate window and session options, just one master
@@ -100,7 +96,6 @@
 	  client w/o a session else cmd_current_client
 
 - miscellaneous
-	* way to keep a job running just read its last line of output for #()
 	* link panes into multiple windows
 	* live update: server started with -U connects to server, requests
 	  sessions and windows, receives file descriptors
@@ -113,10 +108,23 @@
 	* marks in history, automatically add (move?) one when pane is changed
 	* this doesn't work, need pane reference count probably:
 	  bind -n DoubleClick3Status confirm-before -p "kill-window #I? (y/n)" kill-window
+	* respawn -c flag same as neww etc
+	* marker lines in history (GitHub issue 1042)
+	* tree mode stuff: predefined filters, tag-all key, ...
 
 - hooks
 	* more hooks for various things
-	* finish after hooks for special commands
+	* finish after hooks for special commands. these do not have a hook at
+          the moment:
+		 attach-session detach-client kill-server respawn-window
+		 swap-window break-pane find-window kill-session rotate-window
+		 switch-client choose-tree if-shell kill-window run-shell
+		 wait-for command-prompt join-pane move-window source-file
+		 confirm-before kill-pane respawn-pane swap-pane
+          at the moment AFTERHOOK uses current only if target is not valid,
+          but target is ALWAYS valid - it should use current if no -t flag?
+          then select-* could use AFTERHOOK
 	* multiple hooks with the same name?
 	* finish hooks for notifys
-	* for session_closed, if no sessions at all, perhaps fake up a temporary one
+	* for session_closed, if no sessions at all, perhaps fake up a
+          temporary one
