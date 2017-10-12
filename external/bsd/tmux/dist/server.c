@@ -62,7 +62,7 @@ static void	server_child_stopped(pid_t, int);
 void
 server_set_marked(struct session *s, struct winlink *wl, struct window_pane *wp)
 {
-	cmd_find_clear_state(&marked_pane, NULL, 0);
+	cmd_find_clear_state(&marked_pane, 0);
 	marked_pane.s = s;
 	marked_pane.wl = wl;
 	marked_pane.w = wl->window;
@@ -73,7 +73,7 @@ server_set_marked(struct session *s, struct winlink *wl, struct window_pane *wp)
 void
 server_clear_marked(void)
 {
-	cmd_find_clear_state(&marked_pane, NULL, 0);
+	cmd_find_clear_state(&marked_pane, 0);
 }
 
 /* Is this the marked pane? */
@@ -118,12 +118,16 @@ server_create_socket(void)
 		return (-1);
 
 	mask = umask(S_IXUSR|S_IXGRP|S_IRWXO);
-	if (bind(fd, (struct sockaddr *) &sa, sizeof(sa)) == -1)
+	if (bind(fd, (struct sockaddr *) &sa, sizeof(sa)) == -1) {
+		close(fd);
 		return (-1);
+	}
 	umask(mask);
 
-	if (listen(fd, 128) == -1)
+	if (listen(fd, 128) == -1) {
+		close(fd);
 		return (-1);
+	}
 	setblocking(fd, 0);
 
 	return (fd);
@@ -131,21 +135,39 @@ server_create_socket(void)
 
 /* Fork new server. */
 int
-server_start(struct event_base *base, int lockfd, char *lockfile)
+server_start(struct tmuxproc *client, struct event_base *base, int lockfd,
+    char *lockfile)
 {
-	int	pair[2];
+	int		 pair[2];
+	struct job	*job;
+	sigset_t	 set, oldset;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
 		fatal("socketpair failed");
 
-	server_proc = proc_start("server", base, 1, server_signal);
-	if (server_proc == NULL) {
+	sigfillset(&set);
+	sigprocmask(SIG_BLOCK, &set, &oldset);
+	switch (fork()) {
+	case -1:
+		fatal("fork failed");
+	case 0:
+		break;
+	default:
+		sigprocmask(SIG_SETMASK, &oldset, NULL);
 		close(pair[1]);
 		return (pair[0]);
 	}
 	close(pair[0]);
+	if (daemon(1, 0) != 0)
+		fatal("daemon failed");
+	proc_clear_signals(client, 0);
+	if (event_reinit(base) != 0)
+		fatalx("event_reinit failed");
+	server_proc = proc_start("server");
+	proc_set_signals(server_proc, server_signal);
+	sigprocmask(SIG_SETMASK, &oldset, NULL);
 
-	if (log_get_level() > 3)
+	if (log_get_level() > 1)
 		tty_create_log();
 	if (pledge("stdio rpath wpath cpath fattr unix getpw recvfd proc exec "
 	    "tty ps", NULL) != 0)
@@ -174,11 +196,15 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 
 	start_cfg();
 
-	status_prompt_load_history();
-
 	server_add_accept(0);
 
 	proc_loop(server_proc, server_loop);
+
+	LIST_FOREACH(job, &all_jobs, entry) {
+		if (job->pid != -1)
+			kill(job->pid, SIGTERM);
+	}
+
 	status_prompt_save_history();
 	exit(0);
 }
@@ -239,7 +265,7 @@ server_send_exit(void)
 	}
 
 	RB_FOREACH_SAFE(s, sessions, &sessions, s1)
-		session_destroy(s);
+		session_destroy(s, __func__);
 }
 
 /* Update socket execute permissions based on whether sessions are attached. */
@@ -337,6 +363,7 @@ server_signal(int sig)
 {
 	int	fd;
 
+	log_debug("%s: %s", __func__, strsignal(sig));
 	switch (sig) {
 	case SIGTERM:
 		server_exit = 1;
@@ -354,6 +381,9 @@ server_signal(int sig)
 			server_update_socket();
 		}
 		server_add_accept(0);
+		break;
+	case SIGUSR2:
+		proc_toggle_log(server_proc);
 		break;
 	}
 }
@@ -393,13 +423,18 @@ server_child_exited(pid_t pid, int status)
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->pid == pid) {
 				wp->status = status;
-				server_destroy_pane(wp, 1);
+
+				log_debug("%%%u exited", wp->id);
+				wp->flags |= PANE_EXITED;
+
+				if (window_pane_destroy_ready(wp))
+					server_destroy_pane(wp, 1);
 				break;
 			}
 		}
 	}
 
-	LIST_FOREACH(job, &all_jobs, lentry) {
+	LIST_FOREACH(job, &all_jobs, entry) {
 		if (pid == job->pid) {
 			job_died(job, status);	/* might free job */
 			break;

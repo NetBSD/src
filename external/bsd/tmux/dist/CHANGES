@@ -1,4 +1,200 @@
-CHANGES FROM 2.3 to 2.4 20 April 2017
+CHANGES FROM 2.5 TO 2.6, 05 October 2017
+
+* Add select-pane -T to set pane title.
+
+* Fix memory leak when lines with BCE are removed from history.
+
+* Fix (again) the "prefer unattached" behaviour of attach-session.
+
+* Reorder how keys are checked to allow keys to be specified that have a
+  leading escape. GitHub issue 1048.
+
+* Support REP escape sequence (\033[b).
+
+* Run alert hooks based on options rather than always, and allow further bells
+  even if there is an existing bell.
+
+* Add -d flag to display-panes to override display-panes-time.
+
+* Add selection_present format when in copy mode (allows key bindings that do
+  something different if there is a selection).
+
+* Add pane_at_left, pane_at_right, pane_at_top and pane_at_bottom formats.
+
+* Make bell, activity and silence alerting more consistent by: removing the
+  bell-on-alert option; adding activity-action and silence-action options with
+  the same possible values as the existing bell-action; adding a "both" value
+  for the visual-bell, visual-activity and visual-silence options to trigger
+  both a bell and a message.
+
+* Add a pane_pipe format to show if pipe-pane is active.
+
+* Block signals between forking and resetting signal handlers so that the
+  libevent signal handler doesn't get called in the child and incorrectly write
+  into the signal pipe that it still shares with the parent. GitHub issue 1001.
+
+* Allow punctuation in pane_current_command.
+
+* Add -c for respawn-pane and respawn-window.
+
+* Wait for any remaining data to flush when a pane is closed while pipe-pane is
+  in use.
+
+* Fix working out current client with no target. GitHub issue 995.
+
+* Try to fallback to C.UTF-8 as well as en_US.UTF-8 when looking for a UTF-8
+  locale.
+
+* Add user-keys option for user-defined key escape sequences (mapped to User0
+  to User999 keys).
+
+* Add pane-set-clipboard hook.
+
+* FAQ file has moved out of repository to online.
+
+* Fix problem with high CPU usage when a client dies unexpectedly. GitHub issue
+  941.
+
+* Do a dance on OS X 10.10 and above to return tmux to the user namespace,
+  allowing access to the clipboard.
+
+* Do not allow escape sequences which expect a specific terminator (APC, DSC,
+  OSC) to wait for forever - use a small timeout. This reduces the chance of
+  the pane locking up completely when sent garbage (cat /dev/random or
+  similar).
+
+* Support SIGUSR2 to toggle logging on a running server, also generate the
+  "out" log file with -vv not -vvvv.
+
+* Make set-clipboard a three state option: on (tmux both sends to outside
+  terminal and accepts from applications inside); external (tmux sends outside
+  but does not accept inside); and off.
+
+* Fix OSC 4 palette setting for bright foreground colours. GitHub issue 954.
+
+* Use setrgbf and setrgbb terminfo(5) capabilities to set RGB colours, if they
+  are available. (Tc is still supported as well.)
+
+* Fix redrawing panes when they are resized several times but end up with the
+  size unchanged (for example, splitw/resizep -Z/breakp).
+
+* Major rewrite of choose mode. Now includes preview, sorting, searching and
+  tagging; commands that can be executed directly from the mode (for example,
+  to delete one or more buffers); and filtering in tree mode.
+
+* choose-window and choose-session are now aliases of choose-tree (in the
+  command-alias option).
+
+* Support OSC 10 and OSC 11 to set foreground and background colours.
+
+* Check the U8 capability to determine whether to use UTF-8 line drawing
+  characters for ACS.
+
+* Some missing notifications for layout changes.
+
+* Control mode clients now do not affect session sizes until they issue
+  refresh-client -C. new-session -x and -y works with control clients even if
+  the session is not detached.
+
+* All new sessions that are unattached (whether with -d or started with no
+  terminal) are now created with size 80 x 24. Whether the status line is on or
+  off does not affect the size of new sessions until they are attached.
+
+* Expand formats in option names and add -F flag to expand them in option values.
+
+* Remember the search string for a pane even if copy mode is exited and entered
+  again.
+
+* Some further BCE fixes (scroll up, reverse index).
+
+* Improvements to how terminals are cleared (entirely or partially).
+
+CHANGES FROM 2.4 TO 2.5, 09 May 2017
+
+* Reset updated flag when restarting #() command so that new output is properly
+  recognised. GitHub issue 922.
+
+* Fix ECH with a background colour.
+
+* Do not rely on the terminal not moving the cursor after DL or EL.
+
+* Fix send-keys and send-prefix in copy-mode (so C-b C-b works). GitHub issue
+  905.
+
+* Set the current pane for rotate-window so it works in command sequences.
+
+* Add pane_mode format.
+
+* Differentiate M-Up from Escape+Up when possible (that is, in terminals with
+  xterm(1) style function keys). GitHub issue 907.
+
+* Add session_stack and window_stack_index formats.
+
+* Some new control mode notifications and corresponding hooks:
+  pane-mode-changed, window-pane-changed, client-session-changed,
+  session-window-changed.
+
+* Format pane_search_string for last search term while in copy mode (useful
+  with command-prompt -I).
+
+* Fix a problem with high CPU usage and multiple clients with #(). GitHub issue
+  889.
+
+* Fix UTF-8 combining characters in column 0.
+
+* Fix reference counting so that panes are properly destroyed and their
+  processes killed.
+
+* Clamp SU (CSI S) parameter to work around a bug in Konsole.
+
+* Tweak line wrapping in full width panes to play more nicely with terminal
+  copy and paste.
+
+* Fix when we emit SGR 0 in capture-pane -e.
+
+* Do not change TERM until after config file parsing has finished, so that
+  commands run inside the config file can use it to make decisions (typically
+  about default-terminal).
+
+* Make the initial client wait until config file parsing has finished to avoid
+  racing with commands.
+
+* Fix core when if-shell fails.
+
+* Only use ED to clear screen if the pane is at the bottom.
+
+* Fix multibyte UTF-8 output.
+
+* Code improvements around target (-t) resolution.
+
+* Change how the default target (for commands without -t) is managed across
+  command sequences: now it is set up at the start and commands are required
+  to update it if needed. Fixes binding command sequences to mouse keys.
+
+* Make if-shell from the config file work correctly.
+
+* Change to always check the root key table if no binding is found in the
+  current table (prefix table or copy-mode table or whatever). This means that
+  root key bindings will take effect even in copy mode, if not overridden by a
+  copy mode key binding.
+
+* Fix so that the history file works again.
+
+* Run config file without a client rather than using the first client, restores
+  previous behaviour.
+
+* If a #() command doesn't exit, continue to read from it and use its last full
+  line of output.
+
+* Handle slow terminals and fast output better: when the amount of data
+  outstanding gets too large, discard output until it is drained and we are
+  able to do a full redraw. Prevents tmux sitting on a huge buffer that the
+  terminal will take forever to consume.
+
+* Do not redraw a client unless we realistically think it can accept the data -
+  defer redraws until the client has nothing else waiting to write.
+ 
+CHANGES FROM 2.3 TO 2.4, 20 April 2017
 
 Incompatible Changes
 ====================
@@ -23,12 +219,12 @@ Incompatible Changes
     bind -Tcopy-mode C-Up send -X scroll-up
     bind -Tcopy-mode WheelUpPane send -N5 -X scroll-up
 
-  This changes allows the full command parser (including command sequences) and
+  These changes allows the full command parser (including command sequences) and
   command set to be used - for example, the normal command prompt with editing
   and history is now used for searching, jumping, and so on instead of a custom
   one. The default C-r binding is now:
 
-    bind -Tcopy-mode C-r command-prompt -p'search up' "send -X search-backward '%%'"
+    bind -Tcopy-mode C-r command-prompt -i -p'search up' "send -X search-backward-incremental '%%'"
 
   There are also some new commmands available with send -X, such as
   copy-pipe-and-cancel.
@@ -78,7 +274,7 @@ Normal Changes
   set -ag syntax should work without change).
 * There have been substantial performance improvements.
 
-CHANGES FROM 2.2 to 2.3 29 September 2016
+CHANGES FROM 2.2 TO 2.3, 29 September 2016
 
 Incompatible Changes
 ====================
@@ -99,7 +295,7 @@ Normal Changes
 * 'display-panes' can now accept a command to run, rather than always
   selecting the pane.
 
-CHANGES FROM 2.1 to 2.2 10 April 2016
+CHANGES FROM 2.1 TO 2.2, 10 April 2016
 
 Incompatible Changes
 ====================
@@ -164,8 +360,7 @@ Normal Changes
 * RGB (24bit) colour support.  The 'Tc' flag must be set in the external TERM
   entry (using terminal-overrides or a custom terminfo entry).
 
-
-CHANGES FROM 2.0 to 2.1 18 October 2015
+CHANGES FROM 2.0 TO 2.1, 18 October 2015
 
 Incompatible Changes
 ====================
@@ -216,7 +411,7 @@ Normal Changes
 * Copy mode is exited if the history is cleared whilst in copy-mode.
 * 'copy-mode' learned '-e' to exit copy-mode when scrolling to end.
 
-CHANGES FROM 1.9a to 2.0 6 March 2015
+CHANGES FROM 1.9a TO 2.0, 06 March 2015
 
 Incompatible Changes
 ====================
@@ -275,9 +470,9 @@ Normal Changes
 * 'split-window' and 'join-window' understand -b to create the pane to the left
   or above the target pane.
 
-CHANGES FROM 1.9 to 1.9a 22 February 2014
+CHANGES FROM 1.9 TO 1.9a, 22 February 2014
 
-NOTE:  This is a bug-fix release to address some important bugs which just
+NOTE: This is a bug-fix release to address some important bugs which just
 missed the 1.9 deadline, but were found afterwards.
 
 Normal Changes
@@ -286,7 +481,7 @@ Normal Changes
 * Fix crash due to uninitialized lastwp member of layout_cell
 * Fix -fg/-bg/-style with 256 colour terminals.  
 
-CHANGES FROM 1.8 to 1.9, 20 February 2014
+CHANGES FROM 1.8 TO 1.9, 20 February 2014
 
 NOTE:  This release has bumped the tmux protocol version.  It is therefore
 advised that the prior tmux server is restarted when this version of tmux is
@@ -341,7 +536,7 @@ Normal Changes
 * tmux now supports 256 colours running under fbterm.
 * Many bug fixes!
 
-CHANGES FROM 1.7 to 1.8, 26 March 2013
+CHANGES FROM 1.7 TO 1.8, 26 March 2013
 
 Incompatible Changes
 ====================
@@ -392,7 +587,7 @@ Normal Changes
 * Lots and lots of bug fixes, fixing memory-leaks, etc.
 * Various manpage improvements.
 
-CHANGES FROM 1.6 to 1.7, 13 October 2012
+CHANGES FROM 1.6 TO 1.7, 13 October 2012
 
 * tmux configuration files now support line-continuation with a "\" at the
   end of a line.
@@ -783,7 +978,7 @@ CHANGES FROM 1.0 TO 1.1, 05 November 2009
 * xterm-keys rewrite.
 * Additional code reduction, and bug fixes.
 
-CHANGES FROM 0.9 TO 1.0, 20 Sept 2009
+CHANGES FROM 0.9 TO 1.0, 20 September 2009
 
 * Option to alter the format of the window title set by tmux.
 * Backoff for a while after multiple incorrect password attempts.
