@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.32 2012/06/30 21:31:15 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.33 2017/10/13 00:11:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,10 +39,10 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.32 2012/06/30 21:31:15 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.33 2017/10/13 00:11:56 christos Exp $");
 #endif /* not lint */
 
-#include <ctype.h>
+#include <wctype.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: fmt.c,v 1.32 2012/06/30 21:31:15 christos Exp $");
 #include <err.h>
 #include <limits.h>
 #include <string.h>
+#include <locale.h>
 #include "buffer.h"
 
 /*
@@ -74,21 +75,21 @@ static int	mark;		/* Last place we saw a head line */
 static int	center;
 static struct buffer outbuf;
 
-static const char	*headnames[] = {"To", "Subject", "Cc", 0};
+static const wchar_t *headnames[] = { L"To", L"Subject", L"Cc", NULL };
 
 static void	usage(void) __dead;
 static int 	getnum(const char *, const char *, size_t *, int);
 static void	fmt(FILE *);
-static int	ispref(const char *, const char *);
+static int	ispref(const wchar_t *, const wchar_t *);
 static void	leadin(void);
 static void	oflush(void);
-static void	pack(const char *, size_t);
+static void	pack(const wchar_t *, size_t);
 static void	prefix(const struct buffer *, int);
-static void	split(const char *, int);
+static void	split(const wchar_t *, int);
 static void	tabulate(struct buffer *);
 
 
-int		ishead(const char *);
+int		ishead(const wchar_t *);
 
 /*
  * Drive the whole formatter by managing input files.  Also,
@@ -210,19 +211,20 @@ static void
 fmt(FILE *fi)
 {
 	struct buffer lbuf, cbuf;
-	char *cp, *cp2;
-	int c, add_space;
+	wchar_t *cp, *cp2;
+	wint_t c;
+	int add_space;
 	size_t len, col, i;
 
 	if (center) {
 		for (;;) {
-			cp = fgetln(fi, &len);
+			cp = fgetwln(fi, &len);
 			if (!cp)
 				return;
 
 			/* skip over leading space */
 			while (len > 0) {
-				if (!isspace((unsigned char)*cp))
+				if (!iswspace(*cp))
 					break;
 				cp++;
 				len--;
@@ -230,55 +232,55 @@ fmt(FILE *fi)
 
 			/* clear trailing space */
 			while (len > 0) {
-				if (!isspace((unsigned char)cp[len-1]))
+				if (!iswspace((unsigned char)cp[len-1]))
 					break;
 				len--;
 			}
 
 			if (len == 0) {
 				/* blank line */
-				(void)putchar('\n');
+				(void)putwchar(L'\n');
 				continue;
 			}
 
 			if (goal_length > len) {
 				for (i = 0; i < (goal_length - len) / 2; i++) {
-					(void)putchar(' ');
+					(void)putwchar(L' ');
 				}
 			}
 			for (i = 0; i < len; i++) {
-				(void)putchar(cp[i]);
+				(void)putwchar(cp[i]);
 			}
-			(void)putchar('\n');
+			(void)putwchar(L'\n');
 		}
 	}
 
 	buf_init(&lbuf);
 	buf_init(&cbuf);
-	c = getc(fi);
+	c = getwc(fi);
 
-	while (c != EOF) {
+	while (c != WEOF) {
 		/*
 		 * Collect a line, doing ^H processing.
 		 * Leave tabs for now.
 		 */
 		buf_reset(&lbuf);
-		while (c != '\n' && c != EOF) {
+		while (c != '\n' && c != WEOF) {
 			if (c == '\b') {
 				(void)buf_unputc(&lbuf);
-				c = getc(fi);
+				c = getwc(fi);
 				continue;
 			}
-			if(!(isprint(c) || c == '\t' || c >= 160)) {
-				c = getc(fi);
+			if(!(iswprint(c) || c == '\t' || c >= 160)) {
+				c = getwc(fi);
 				continue;
 			}
 			buf_putc(&lbuf, c);
-			c = getc(fi);
+			c = getwc(fi);
 		}
 		buf_putc(&lbuf, '\0');
 		(void)buf_unputc(&lbuf);
-		add_space = c != EOF;
+		add_space = c != WEOF;
 
 		/*
 		 * Expand tabs on the way.
@@ -307,8 +309,8 @@ fmt(FILE *fi)
 		buf_putc(&cbuf, '\0');
 		(void)buf_unputc(&cbuf);
 		prefix(&cbuf, add_space);
-		if (c != EOF)
-			c = getc(fi);
+		if (c != WEOF)
+			c = getwc(fi);
 	}
 	buf_end(&cbuf);
 	buf_end(&lbuf);
@@ -324,14 +326,14 @@ fmt(FILE *fi)
 static void
 prefix(const struct buffer *buf, int add_space)
 {
-	const char *cp;
-	const char **hp;
+	const wchar_t *cp;
+	const wchar_t **hp;
 	size_t np;
 	int h;
 
 	if (buf->ptr == buf->bptr) {
 		oflush();
-		(void)putchar('\n');
+		(void)putwchar(L'\n');
 		return;
 	}
 	for (cp = buf->bptr; *cp == ' '; cp++)
@@ -376,9 +378,9 @@ prefix(const struct buffer *buf, int add_space)
  * line packer.
  */
 static void
-split(const char line[], int add_space)
+split(const wchar_t line[], int add_space)
 {
-	const char *cp;
+	const wchar_t *cp;
 	struct buffer word;
 	size_t wlen;
 
@@ -393,7 +395,7 @@ split(const char line[], int add_space)
 		 * space. 
 		 */
 		while (*cp && *cp != ' ') {
-			if (*cp == '\\' && isspace((unsigned char)cp[1]))
+			if (*cp == '\\' && iswspace(cp[1]))
 				buf_putc(&word, *cp++);
 			buf_putc(&word, *cp++);
 			wlen++;
@@ -443,9 +445,9 @@ split(const char line[], int add_space)
  */
 
 static void
-pack(const char *word, size_t wlen)
+pack(const wchar_t *word, size_t wlen)
 {
-	const char *cp;
+	const wchar_t *cp;
 	size_t s, t;
 
 	if (outbuf.bptr == outbuf.ptr)
@@ -496,7 +498,7 @@ oflush(void)
 static void
 tabulate(struct buffer *buf)
 {
-	char *cp;
+	wchar_t *cp;
 	size_t b, t;
 
 	/*
@@ -516,15 +518,15 @@ tabulate(struct buffer *buf)
 	b = b % 8;
 	if (t > 0)
 		do
-			(void)putchar('\t');
+			(void)putwchar(L'\t');
 		while (--t);
 	if (b > 0)
 		do
-			(void)putchar(' ');
+			(void)putwchar(L' ');
 		while (--b);
 	while (*cp)
-		(void)putchar(*cp++);
-	(void)putchar('\n');
+		(void)putwchar(*cp++);
+	(void)putwchar(L'\n');
 }
 
 /*
@@ -546,7 +548,7 @@ leadin(void)
  * Is s1 a prefix of s2??
  */
 static int
-ispref(const char *s1, const char *s2)
+ispref(const wchar_t *s1, const wchar_t *s2)
 {
 
 	while (*s1++ == *s2)
