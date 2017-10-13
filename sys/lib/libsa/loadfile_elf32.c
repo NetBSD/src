@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.46 2017/10/13 10:04:27 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.47 2017/10/13 10:39:26 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -268,6 +268,62 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 #define KERNALIGN 4096	/* XXX should depend on marks[] */
 
 /*
+ * Read some data from a file, and put it in the bootloader memory (local).
+ */
+static int
+ELFNAMEEND(readfile_local)(int fd, Elf_Off elfoff, void *addr, size_t size)
+{
+	ssize_t nr;
+
+	if (lseek(fd, elfoff, SEEK_SET) == -1)  {
+		WARN(("lseek section headers"));
+		return -1;
+	}
+	nr = read(fd, addr, size);
+	if (nr == -1) {
+		WARN(("read section headers"));
+		return -1;
+	}
+	if (nr != (ssize_t)size) {
+		errno = EIO;
+		WARN(("read section headers"));
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Read some data from a file, and put it in wherever in memory (global).
+ */
+static int
+ELFNAMEEND(readfile_global)(int fd, u_long offset, Elf_Off elfoff,
+    Elf_Addr addr, size_t size)
+{
+	ssize_t nr;
+
+	/* some ports dont use the offset */
+	(void)&offset;
+
+	if (lseek(fd, elfoff, SEEK_SET) == -1) {
+		WARN(("lseek section"));
+		return -1;
+	}
+	nr = READ(fd, addr, size);
+	if (nr == -1) {
+		WARN(("read section"));
+		return -1;
+	}
+	if (nr != (ssize_t)size) {
+		errno = EIO;
+		WARN(("read section"));
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
  * Load a dynamic ELF binary into memory. Layout of the memory:
  * +------------+-----------------+-----------------+------------------+
  * | ELF HEADER | SECTION HEADERS | KERNEL SECTIONS | SYM+REL SECTIONS |
@@ -287,32 +343,19 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	Elf_Shdr *shdr;
 	Elf_Addr shpp, addr;
 	int i, j, loaded;
-	size_t size;
-	ssize_t sz, nr;
+	size_t size, shdrsz;
 	Elf_Addr maxp, elfp = 0;
-
-	/* some ports dont use the offset */
-	(void)&offset;
+	int ret;
 
 	maxp = marks[MARK_END];
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 
 	/* Create a local copy of the SECTION HEADERS. */
-	sz = elf->e_shnum * sizeof(Elf_Shdr);
-	shdr = ALLOC(sz);
-	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
-		WARN(("lseek section headers"));
-		goto out;
-	}
-	nr = read(fd, shdr, sz);
-	if (nr == -1) {
-		WARN(("read section headers"));
-		goto out;
-	}
-	if (nr != sz) {
-		errno = EIO;
-		WARN(("read section headers"));
+	shdrsz = elf->e_shnum * sizeof(Elf_Shdr);
+	shdr = ALLOC(shdrsz);
+	ret = ELFNAMEEND(readfile_local)(fd, elf->e_shoff, shdr, shdrsz);
+	if (ret == -1) {
 		goto out;
 	}
 
@@ -337,7 +380,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 
 	/* Save location of the SECTION HEADERS. */
 	shpp = maxp;
-	maxp += roundup(sz, ELFROUND);
+	maxp += roundup(shdrsz, ELFROUND);
 
 	/*
 	 * Load the KERNEL SECTIONS.
@@ -355,21 +398,11 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			loaded = 1;
 			break;
 		case SHT_PROGBITS:
-			if (lseek(fd, shdr[i].sh_offset, SEEK_SET) == -1) {
-				WARN(("lseek section"));
+			ret = ELFNAMEEND(readfile_global)(fd, offset,
+			    shdr[i].sh_offset, addr, size);
+			if (ret == -1) {
 				goto out;
 			}
-			nr = READ(fd, addr, size);
-			if (nr == -1) {
-				WARN(("read section"));
-				goto out;
-			}
-			if (nr != (ssize_t)size) {
-				errno = EIO;
-				WARN(("read section"));
-				goto out;
-			}
-
 			loaded = 1;
 			break;
 		default:
@@ -409,21 +442,11 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		case SHT_REL:
 		case SHT_RELA:
 		case SHT_SYMTAB:
-			if (lseek(fd, shdr[i].sh_offset, SEEK_SET) == -1) {
-				WARN(("lseek symbols"));
+			ret = ELFNAMEEND(readfile_global)(fd, offset,
+			    shdr[i].sh_offset, addr, size);
+			if (ret == -1) {
 				goto out;
 			}
-			nr = READ(fd, addr, size);
-			if (nr == -1) {
-				WARN(("read symbols"));
-				goto out;
-			}
-			if (nr != (ssize_t)size) {
-				errno = EIO;
-				WARN(("read symbols"));
-				goto out;
-			}
-
 			shdr[i].sh_offset = maxp - elfp;
 			maxp += roundup(size, ELFROUND);
 			break;
@@ -438,9 +461,9 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	for (i = 0; i < elf->e_shnum; i++)
 		externalize_shdr(elf->e_ident[EI_DATA], &shdr[i]);
 #endif
-	BCOPY(shdr, shpp, sz);
+	BCOPY(shdr, shpp, shdrsz);
 
-	DEALLOC(shdr, sz);
+	DEALLOC(shdr, shdrsz);
 
 	/*
 	 * Just update MARK_SYM and MARK_END without touching the rest.
@@ -450,7 +473,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	return 0;
 
 out:
-	DEALLOC(shdr, sz);
+	DEALLOC(shdr, shdrsz);
 	return 1;
 }
 
@@ -468,7 +491,7 @@ ELFNAMEEND(loadsym)(int fd, Elf_Ehdr *elf, Elf_Addr maxp, Elf_Addr elfp,
 	Elf_Shdr *shp;
 	Elf_Addr shpp;
 	char *shstr = NULL;
-	ssize_t nr, sz;
+	size_t sz;
 	size_t i, j, shstrsz = 0;
 	struct __packed {
 		Elf_Nhdr nh;
@@ -476,25 +499,12 @@ ELFNAMEEND(loadsym)(int fd, Elf_Ehdr *elf, Elf_Addr maxp, Elf_Addr elfp,
 		uint8_t desc[ELF_NOTE_NETBSD_DESCSZ];
 	} note;
 	int first;
+	int ret;
 
-	/* some ports dont use the offset */
-	(void)&offset;
-
-	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
-		WARN(("lseek section headers"));
-		return -1;
-	}
 	sz = elf->e_shnum * sizeof(Elf_Shdr);
 	shp = ALLOC(sz);
-
-	nr = read(fd, shp, sz);
-	if (nr == -1) {
-		WARN(("read section headers"));
-		goto out;
-	}
-	if (nr != sz) {
-		errno = EIO;
-		WARN(("read section headers"));
+	ret = ELFNAMEEND(readfile_local)(fd, elf->e_shoff, shp, sz);
+	if (ret == -1) {
 		goto out;
 	}
 
@@ -513,31 +523,17 @@ ELFNAMEEND(loadsym)(int fd, Elf_Ehdr *elf, Elf_Addr maxp, Elf_Addr elfp,
 		Elf_Off shstroff = shp[elf->e_shstrndx].sh_offset;
 		shstrsz = shp[elf->e_shstrndx].sh_size;
 		if (flags & LOAD_SYM) {
-			if (lseek(fd, shstroff, SEEK_SET) == -1) {
-				WARN(("lseek symbols"));
-				goto out;
-			}
-			nr = READ(fd, maxp, shstrsz);
-			if (nr == -1) {
-				WARN(("read symbols"));
-				goto out;
-			}
-			if (nr != (ssize_t)shstrsz) {
-				errno = EIO;
-				WARN(("read symbols"));
+			ret = ELFNAMEEND(readfile_global)(fd, offset,
+			    shstroff, maxp, shstrsz);
+			if (ret == -1) {
 				goto out;
 			}
 		}
 
 		/* Create a local copy */
 		shstr = ALLOC(shstrsz);
-		if (lseek(fd, shstroff, SEEK_SET) == -1) {
-			WARN(("lseek symbols"));
-			goto out;
-		}
-		nr = read(fd, shstr, shstrsz);
-		if (nr == -1) {
-			WARN(("read symbols"));
+		ret = ELFNAMEEND(readfile_local)(fd, shstroff, shstr, shstrsz);
+		if (ret == -1) {
 			goto out;
 		}
 		shp[elf->e_shstrndx].sh_offset = maxp - elfp;
@@ -585,19 +581,9 @@ havesym:
 			if (flags & LOAD_SYM) {
 				PROGRESS(("%s%ld", first ? " [" : "+",
 				    (u_long)shp[i].sh_size));
-				if (lseek(fd, shp[i].sh_offset,
-				    SEEK_SET) == -1) {
-					WARN(("lseek symbols"));
-					goto out;
-				}
-				nr = READ(fd, maxp, shp[i].sh_size);
-				if (nr == -1) {
-					WARN(("read symbols"));
-					goto out;
-				}
-				if (nr != (ssize_t)shp[i].sh_size) {
-					errno = EIO;
-					WARN(("read symbols"));
+				ret = ELFNAMEEND(readfile_global)(fd, offset,
+				    shp[i].sh_offset, maxp, shp[i].sh_size);
+				if (ret == -1) {
 					goto out;
 				}
 			}
@@ -612,15 +598,13 @@ havesym:
 				shp[i].sh_offset = 0;
 				break;
 			}
-			if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1) {
-				WARN(("lseek note"));
+
+			ret = ELFNAMEEND(readfile_local)(fd, shp[i].sh_offset,
+			    &note, sizeof(note));
+			if (ret == -1) {
 				goto out;
 			}
-			nr = read(fd, &note, sizeof(note));
-			if (nr == -1) {
-				WARN(("read note"));
-				goto out;
-			}
+
 			if (note.nh.n_namesz == ELF_NOTE_NETBSD_NAMESZ &&
 			    note.nh.n_descsz == ELF_NOTE_NETBSD_DESCSZ &&
 			    note.nh.n_type == ELF_NOTE_TYPE_NETBSD_TAG &&
@@ -682,12 +666,10 @@ ELFNAMEEND(loadfile_static)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	const u_long offset = marks[MARK_START];
 	Elf_Phdr *phdr;
 	int i, first;
-	ssize_t sz;
+	size_t sz;
 	Elf_Addr minp = ~0, maxp = 0, pos = 0, elfp = 0;
-	ssize_t nr;
+	int ret;
 
-	/* some ports dont use the offset */
-	(void)&offset;
 	/* for ports that define progress to nothing */
 	(void)&first;
 
@@ -698,19 +680,8 @@ ELFNAMEEND(loadfile_static)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 
 	sz = elf->e_phnum * sizeof(Elf_Phdr);
 	phdr = ALLOC(sz);
-
-	if (lseek(fd, elf->e_phoff, SEEK_SET) == -1)  {
-		WARN(("lseek phdr"));
-		goto freephdr;
-	}
-	nr = read(fd, phdr, sz);
-	if (nr == -1) {
-		WARN(("read program headers"));
-		goto freephdr;
-	}
-	if (nr != sz) {
-		errno = EIO;
-		WARN(("read program headers"));
+	ret = ELFNAMEEND(readfile_local)(fd, elf->e_phoff, phdr, sz);
+	if (ret == -1) {
 		goto freephdr;
 	}
 
@@ -736,20 +707,13 @@ ELFNAMEEND(loadfile_static)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			PROGRESS(("%s%lu", first ? "" : "+",
 			    (u_long)phdr[i].p_filesz));
 
-			if (lseek(fd, phdr[i].p_offset, SEEK_SET) == -1)  {
-				WARN(("lseek text"));
+			ret = ELFNAMEEND(readfile_global)(fd, offset,
+			    phdr[i].p_offset, phdr[i].p_vaddr,
+			    phdr[i].p_filesz);
+			if (ret == -1) {
 				goto freephdr;
 			}
-			nr = READ(fd, phdr[i].p_vaddr, phdr[i].p_filesz);
-			if (nr == -1) {
-				WARN(("read text error"));
-				goto freephdr;
-			}
-			if (nr != (ssize_t)phdr[i].p_filesz) {
-				errno = EIO;
-				WARN(("read text"));
-				goto freephdr;
-			}
+
 			first = 0;
 		}
 		if ((IS_TEXT(phdr[i]) && (flags & (LOAD_TEXT|COUNT_TEXT))) ||
