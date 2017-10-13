@@ -204,7 +204,7 @@ window_client_build(void *modedata, u_int sort_type, __unused uint64_t *tag,
 		}
 
 		text = format_single(NULL, data->format, c, NULL, NULL, NULL);
-		mode_tree_add(data->data, NULL, item, (uint64_t)c, c->name,
+		mode_tree_add(data->data, NULL, item, (uintptr_t)c, c->name,
 		    text, -1);
 		free(text);
 	}
