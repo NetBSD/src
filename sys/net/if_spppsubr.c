@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.170 2017/10/12 09:49:43 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.171 2017/10/13 03:11:50 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.170 2017/10/12 09:49:43 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.171 2017/10/13 03:11:50 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -416,7 +416,9 @@ static void sppp_notify_up(struct sppp *);
 static void sppp_notify_down(struct sppp *);
 static void sppp_notify_tls_wlocked(struct sppp *);
 static void sppp_notify_tlf_wlocked(struct sppp *);
+#ifdef INET6
 static void sppp_notify_con_wlocked(struct sppp *);
+#endif
 static void sppp_notify_con(struct sppp *);
 
 static void sppp_notify_chg_wlocked(struct sppp *);
@@ -4038,12 +4040,13 @@ static void
 sppp_ipv6cp_close(struct sppp *sp)
 {
 
-	KASSERT(SPPPP_WLOKED(sp));
+	KASSERT(SPPP_WLOCKED(sp));
 }
 
 static void
-sppp_ipv6cp_TO(void *sp)
+sppp_ipv6cp_TO(void *cookie)
 {
+	struct sppp *sp = cookie;
 
 	KASSERT(SPPP_WLOCKED(sp));
 }
@@ -6218,6 +6221,7 @@ sppp_notify_con(struct sppp *sp)
 	sp->pp_con(sp);
 }
 
+#ifdef INET6
 static void
 sppp_notify_con_wlocked(struct sppp *sp)
 {
@@ -6229,6 +6233,7 @@ sppp_notify_con_wlocked(struct sppp *sp)
 	SPPP_LOCK(sp, RW_WRITER);
 
 }
+#endif
 
 static void
 sppp_notify_chg_wlocked(struct sppp *sp)
