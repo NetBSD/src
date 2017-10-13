@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.2.3 2017/04/05 19:54:20 snj Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.2.4 2017/10/13 08:11:20 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.2.3 2017/04/05 19:54:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.2.4 2017/10/13 08:11:20 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -152,12 +152,9 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	(void)usbd_set_idle(iface, 0, 0);
-#if 0
 
-	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_SET_PROTO) == 0 &&
-	    id->bInterfaceSubClass != UISUBCLASS_BOOT)
+	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_SET_PROTO) == 0)
 		(void)usbd_set_protocol(iface, 1);
-#endif
 
 	maxinpktsize = 0;
 	sc->sc_iep_addr = sc->sc_oep_addr = -1;
