@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.18 2017/01/10 00:50:57 pgoyette Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.18.8.1 2017/10/13 08:14:51 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -147,6 +147,12 @@ extern	struct kern_history_head kern_histories;
 #define KERNHIST_DECL(NAME) extern struct kern_history NAME
 #define KERNHIST_DEFINE(NAME) struct kern_history NAME
 
+#define KERNHIST_LINK_STATIC(NAME) \
+do { \
+	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
+	sysctl_kernhist_new(&(NAME)); \
+} while (/*CONSTCOND*/ 0)
+
 #define KERNHIST_INIT(NAME,N) \
 do { \
 	(NAME).name = __STRING(NAME); \
@@ -156,8 +162,7 @@ do { \
 	(NAME).e = (struct kern_history_ent *) \
 		kmem_zalloc(sizeof(struct kern_history_ent) * (N), KM_SLEEP); \
 	(NAME).s = 0; \
-	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
-	sysctl_kernhist_new(&(NAME)); \
+	KERNHIST_LINK_STATIC(NAME); \
 } while (/*CONSTCOND*/ 0)
 
 #define KERNHIST_INITIALIZER(NAME,BUF) \
@@ -171,9 +176,6 @@ do { \
 	/* BUF will inititalized to zeroes by being in .bss */ \
 }
 
-#define KERNHIST_LINK_STATIC(NAME) \
-	LIST_INSERT_HEAD(&kern_histories, &(NAME), list)
-
 #define KERNHIST_INIT_STATIC(NAME,BUF) \
 do { \
 	(NAME).name = __STRING(NAME); \
@@ -184,7 +186,6 @@ do { \
 	(NAME).s = 0; \
 	memset((NAME).e, 0, sizeof(struct kern_history_ent) * (NAME).n); \
 	KERNHIST_LINK_STATIC(NAME); \
-	sysctl_kernhist_new(&(NAME)); \
 } while (/*CONSTCOND*/ 0)
 
 #ifndef KERNHIST_DELAY
