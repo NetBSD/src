@@ -235,7 +235,7 @@ window_tree_build_pane(struct session *s, struct winlink *wl,
 	text = format_single(NULL, data->format, NULL, s, wl, wp);
 	xasprintf(&name, "%u", idx);
 
-	mode_tree_add(data->data, parent, item, (uint64_t)wp, name, text, -1);
+	mode_tree_add(data->data, parent, item, (uintptr_t)wp, name, text, -1);
 	free(text);
 	free(name);
 }
@@ -283,7 +283,7 @@ window_tree_build_window(struct session *s, struct winlink *wl, void* modedata,
 		expanded = 0;
 	else
 		expanded = 1;
-	mti = mode_tree_add(data->data, parent, item, (uint64_t)wl, name, text,
+	mti = mode_tree_add(data->data, parent, item, (uintptr_t)wl, name, text,
 	    expanded);
 	free(text);
 	free(name);
@@ -354,7 +354,7 @@ window_tree_build_session(struct session *s, void* modedata,
 		expanded = 0;
 	else
 		expanded = 1;
-	mti = mode_tree_add(data->data, NULL, item, (uint64_t)s, s->name, text,
+	mti = mode_tree_add(data->data, NULL, item, (uintptr_t)s, s->name, text,
 	    expanded);
 	free(text);
 
@@ -428,13 +428,13 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 	case WINDOW_TREE_NONE:
 		break;
 	case WINDOW_TREE_SESSION:
-		*tag = (uint64_t)data->fs.s;
+		*tag = (uintptr_t)data->fs.s;
 		break;
 	case WINDOW_TREE_WINDOW:
-		*tag = (uint64_t)data->fs.wl;
+		*tag = (uintptr_t)data->fs.wl;
 		break;
 	case WINDOW_TREE_PANE:
-		*tag = (uint64_t)data->fs.wp;
+		*tag = (uintptr_t)data->fs.wp;
 		break;
 	}
 }
