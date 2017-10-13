@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.49 2017/10/01 17:14:39 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.50 2017/10/13 08:12:44 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4704,4 +4704,12 @@ sys/dev/usb/usb.c				1.166
 
 	Add a missing break that should've been included in 1.163.
 	[skrll, ticket #1502]
+
+sys/dev/usb/uhidev.c				1.71
+sys/dev/usb/ukbd.c				1.137-1.138
+
+	Fix memory leak in report parsing error paths.
+	Support more varieties of USB keyboard reports.
+	Always try to set USB HID devices into Report Protocol.
+	[jakllsch, ticket #1503]
 
