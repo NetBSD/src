@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.103 2017/10/04 07:13:00 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.104 2017/10/13 04:52:40 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2593,6 +2593,8 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	if (IFM_SUBTYPE(ifmr->ifm_active) == 0)
 		ifmr->ifm_active |= IFM_UNKNOWN;
 #endif
+
+	ifp->if_baudrate = ifmedia_baudrate(ifmr->ifm_active);
 
 	/* Display current flow control setting used on link */
 	if (hw->fc.current_mode == ixgbe_fc_rx_pause ||
