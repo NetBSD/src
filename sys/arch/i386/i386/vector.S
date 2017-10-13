@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.59 2011/06/12 03:35:42 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.59.8.1 2017/10/13 08:03:03 snj Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.59 2011/06/12 03:35:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.59.8.1 2017/10/13 08:03:03 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -773,7 +773,7 @@ IDTVEC(trap05)
 	SUPERALIGN_TEXT
 IDTVEC(trap06)
 	/* Check if there is no DTrace hook registered. */
-	cmpl	$0,dtrace_invop_jump_addr
+	cmpl	$0,%ss:dtrace_invop_jump_addr
 	je	norm_ill
 
 	/* Check if this is a user fault. */
