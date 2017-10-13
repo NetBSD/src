@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.45 2017/10/08 13:51:31 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.46 2017/10/13 10:04:27 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -283,13 +283,13 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 static int
 ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
+	const u_long offset = 0;
 	Elf_Shdr *shdr;
 	Elf_Addr shpp, addr;
 	int i, j, loaded;
 	size_t size;
 	ssize_t sz, nr;
 	Elf_Addr maxp, elfp = 0;
-	u_long offset = 0;
 
 	/* some ports dont use the offset */
 	(void)&offset;
@@ -463,13 +463,13 @@ static int
 ELFNAMEEND(loadsym)(int fd, Elf_Ehdr *elf, Elf_Addr maxp, Elf_Addr elfp,
     u_long *marks, int flags, Elf_Addr *nmaxp)
 {
+	const u_long offset = marks[MARK_START];
 	int boot_load_ctf = 1;
 	Elf_Shdr *shp;
 	Elf_Addr shpp;
 	char *shstr = NULL;
 	ssize_t nr, sz;
 	size_t i, j, shstrsz = 0;
-	u_long offset = marks[MARK_START];
 	struct __packed {
 		Elf_Nhdr nh;
 		uint8_t name[ELF_NOTE_NETBSD_NAMESZ + 1];
@@ -679,11 +679,11 @@ out:
 static int
 ELFNAMEEND(loadfile_static)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
+	const u_long offset = marks[MARK_START];
 	Elf_Phdr *phdr;
 	int i, first;
 	ssize_t sz;
 	Elf_Addr minp = ~0, maxp = 0, pos = 0, elfp = 0;
-	u_long offset = marks[MARK_START];
 	ssize_t nr;
 
 	/* some ports dont use the offset */
