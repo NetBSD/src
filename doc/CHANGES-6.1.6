@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.114 2017/09/11 04:46:35 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.115 2017/10/13 08:04:37 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14830,4 +14830,9 @@ crypto/external/bsd/heimdal/include/roken.h	1.8
 	- Use getpwuid_r instead of getpwuid, so that we don't trash
 	  getpw*() internal buffers.
 	[mlelstv, ticket #1503]
+
+sys/arch/i386/i386/i386_trap.S			1.12 via patch
+
+	use %ss instead of %ds in trap06
+	[maxv, ticket #1505]
 
