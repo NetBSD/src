@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.286 2017/08/22 10:04:44 mrg Exp $
+$NetBSD: UPDATING,v 1.287 2017/10/13 07:04:58 kre Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20171010:
+	a change to the build structure of external/bsd/acpica/bin/iasl
+	means that its objdir (or *.d and .depend at least) might need
+	to be manually removed - or a build done once without -u.
 
 20170822:
 	a new version of GMP has been imported and probably
