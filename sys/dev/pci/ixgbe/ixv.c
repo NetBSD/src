@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.70 2017/10/13 04:52:40 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.71 2017/10/13 08:17:44 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -954,6 +954,12 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	switch (adapter->link_speed) {
 		case IXGBE_LINK_SPEED_10GB_FULL:
 			ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
+			break;
+		case IXGBE_LINK_SPEED_5GB_FULL:
+			ifmr->ifm_active |= IFM_5000_T | IFM_FDX;
+			break;
+		case IXGBE_LINK_SPEED_2_5GB_FULL:
+			ifmr->ifm_active |= IFM_2500_T | IFM_FDX;
 			break;
 		case IXGBE_LINK_SPEED_1GB_FULL:
 			ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
