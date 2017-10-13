@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.69 2017/10/04 11:03:20 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.70 2017/10/13 04:52:40 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -965,6 +965,8 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_active |= IFM_10_T | IFM_FDX;
 			break;
 	}
+
+	ifp->if_baudrate = ifmedia_baudrate(ifmr->ifm_active);
 
 	IXGBE_CORE_UNLOCK(adapter);
 
