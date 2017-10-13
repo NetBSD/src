@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.4 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: buffer.h,v 1.5 2017/10/13 00:11:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -32,19 +32,20 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include <err.h>
 
 #define BUF_SIZE	BUFSIZ
 struct buffer {
-	char *ptr;
-	char *bptr;
-	char *eptr;
+	wchar_t *ptr;
+	wchar_t *bptr;
+	wchar_t *eptr;
 };
 
 static void
 buf_init(struct buffer *buf)
 {
-	buf->ptr = buf->bptr = malloc(BUF_SIZE);
+	buf->ptr = buf->bptr = calloc(BUF_SIZE, sizeof(*buf->ptr));
 	if (buf->ptr == NULL)
 		err(1, "Cannot allocate buffer");
 	buf->eptr = buf->ptr + BUF_SIZE;
@@ -62,7 +63,7 @@ buf_grow(struct buffer *buf, size_t minsize)
 	ptrdiff_t diff;
 	size_t len = (buf->eptr - buf->bptr) + 
 	    (minsize > BUF_SIZE ? minsize : BUF_SIZE);
-	char *nptr = realloc(buf->bptr, len);
+	wchar_t *nptr = realloc(buf->bptr, len * sizeof(*buf->ptr));
 
 	if (nptr == NULL)
 		err(1, "Cannot grow buffer");
@@ -79,7 +80,7 @@ buf_grow(struct buffer *buf, size_t minsize)
 }
 
 static inline void
-buf_putc(struct buffer *buf, char c)
+buf_putc(struct buffer *buf, wchar_t c)
 {
 	if (buf->ptr >= buf->eptr)
 		buf_grow(buf, 1);
@@ -92,7 +93,7 @@ buf_reset(struct buffer *buf)
 	buf->ptr = buf->bptr;
 }
 
-static inline char 
+static inline wchar_t 
 buf_unputc(struct buffer *buf)
 {
 	return buf->ptr > buf->bptr ? *--buf->ptr : '\0';
