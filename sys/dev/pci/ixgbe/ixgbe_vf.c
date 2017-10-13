@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.13 2017/08/30 08:49:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.14 2017/10/13 08:17:44 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -630,7 +630,7 @@ s32 ixgbe_check_mac_link_vf(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 		break;
 	case IXGBE_LINKS_SPEED_100_82599:
 		*speed = IXGBE_LINK_SPEED_100_FULL;
-		if (hw->mac.type == ixgbe_mac_X550) {
+		if (hw->mac.type >= ixgbe_mac_X550) {
 			if (links_reg & IXGBE_LINKS_SPEED_NON_STD)
 				*speed = IXGBE_LINK_SPEED_5GB_FULL;
 		}
