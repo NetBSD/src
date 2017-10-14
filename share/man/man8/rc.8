@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.38 2017/10/11 23:42:33 lukem Exp $
+.\" 	$NetBSD: rc.8,v 1.39 2017/10/14 21:21:51 lukem Exp $
 .\"
 .\" Copyright (c) 2000-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 12, 2017
+.Dd October 15, 2017
 .Dt RC 8
 .Os
 .Sh NAME
@@ -120,7 +120,7 @@ which sets
 .Dv $1
 to
 .Sq start ,
-and sources the script in a subshell.
+and sources the script in a sub-shell.
 If the script has a
 .Sq .sh
 suffix then it is sourced directly into the current shell.
@@ -175,7 +175,7 @@ which sets
 .Dv $1
 to
 .Sq stop ,
-and sources the script in a subshell.
+and sources the script in a sub-shell.
 If the script has a
 .Sq .sh
 suffix then it is sourced directly into the current shell.
@@ -231,20 +231,20 @@ as well as before services which might run commands as users
 and
 .Pa sendmail ) .
 .El
-.It Pa foo.sh
-Scripts that are to be sourced into the current shell rather than a subshell
+.It Pa inline.sh
+Scripts that are sourced into the current shell rather than a sub-shell
 have a
 .Sq Pa .sh
 suffix.
 Extreme care must be taken in using this, as the startup sequence will
-terminate if the script terminates.
+terminate if the script causes the current shell process to terminate.
 .Pa /etc/rc.d/bootconf.sh
 uses this behaviour to allow the user to select a different
 configuration (including
 .Pa /etc/rc.conf )
 early in the boot.
-.It Pa bar
-Scripts that are sourced in a subshell.
+.It Pa service
+Scripts that are sourced in a sub-shell.
 The boot does not stop if such a script terminates with a non-zero status,
 but a script can stop the boot if necessary by invoking the
 .Fn stop_boot
