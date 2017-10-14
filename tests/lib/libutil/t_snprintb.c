@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.4 2014/06/06 06:59:21 shm Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.5 2017/10/14 18:41:44 ryo Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.4 2014/06/06 06:59:21 shm Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.5 2017/10/14 18:41:44 ryo Exp $");
 
 #include <string.h>
 #include <util.h>
@@ -60,11 +60,21 @@ ATF_TC_BODY(snprintb, tc)
 {
 	h_snprintb("\10\2BITTWO\1BITONE", 3, "03<BITTWO,BITONE>");
 	h_snprintb("\177\20b\0A\0\0", 0, "0x0");
-   
+
 	h_snprintb("\177\20b\05NOTBOOT\0b\06FPP\0b\013SDVMA\0b\015VIDEO\0"
 		"b\020LORES\0b\021FPA\0b\022DIAG\0b\016CACHE\0"
 		"b\017IOCACHE\0b\022LOOPBACK\0b\04DBGCACHE\0",
 		0xe860, "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>");
+
+	h_snprintb("\177\20f\0\4FOO\0=\1ONE\0=\2TWO\0\0", 1,
+	    "0x1<FOO=0x1=ONE>");
+	h_snprintb("\177\20f\0\4X\0=\1ONE\0=\2TWO\0\0", 1,
+	    "0x1<X=0x1=ONE>");
+
+	h_snprintb("\177\020F\0\4FOO\0:\1ONE\0:\2TWO\0\0", 1,
+	    "0x1<ONE>");
+	h_snprintb("\177\020F\0\4X\0:\1ONE\0:\2TWO\0\0", 1,
+	    "0x1<ONE>");
 }
 
 static void
