@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.431 2017/10/14 13:15:14 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.432 2017/10/14 13:20:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.431 2017/10/14 13:15:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.432 2017/10/14 13:20:32 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -2362,7 +2362,7 @@ wd_sysctl_attach(struct wd_softc *wd)
 		return;
 	}
 
-	wd->drv_ncq_prio = true;
+	wd->drv_ncq_prio = false;
 	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
 				CTLFLAG_READWRITE, CTLTYPE_BOOL, "use_ncq_prio",
 				SYSCTL_DESCR("use NCQ PRIORITY if supported"),
