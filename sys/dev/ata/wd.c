@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.430 2017/10/07 16:05:32 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.431 2017/10/14 13:15:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.430 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.431 2017/10/14 13:15:14 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -829,8 +829,10 @@ wddone(device_t self, struct ata_xfer *xfer)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		if ((xfer->c_flags & C_RECOVERED) == 0)
-			(*wd->atabus->ata_reset_drive)(wd->drvp, AT_POLL, NULL);
+		if ((xfer->c_flags & C_RECOVERED) == 0) {
+			int wflags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
+			(*wd->atabus->ata_reset_drive)(wd->drvp, wflags, NULL);
+		}
 retry2:
 		mutex_enter(&wd->sc_lock);
 
