@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.40 2017/10/15 11:36:15 maxv Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.41 2017/10/15 12:49:53 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.40 2017/10/15 11:36:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.41 2017/10/15 12:49:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -311,7 +311,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	cpu_fsgs_zero(l);
+	cpu_segregs32_zero(l);
 	cpu_fsgs_reload(l, GSEL(GUDATA32_SEL, SEL_UPL), GSEL(GUDATA32_SEL, SEL_UPL));
 }
 
