@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.109 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.110 2017/10/15 11:36:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.109 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110 2017/10/15 11:36:15 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -132,7 +132,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	netbsd32_adjust_limits(p);
 
-	l->l_md.md_flags |= MDL_COMPAT32;	/* Force iret not sysret */
+	l->l_md.md_flags = MDL_COMPAT32;	/* Force iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
 
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
