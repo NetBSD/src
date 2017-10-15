@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.2 2017/10/15 06:37:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -41,32 +41,12 @@ extern paddr_t kernpa_start, kernpa_end;
 vaddr_t iom_base;
 
 paddr_t pa_avail = 0;
-static vaddr_t va_avail = (PREKERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
-static vaddr_t va_end = (PREKERNBASE + (NKL2_KIMG_ENTRIES + 1) * NBPD_L2);
+static const vaddr_t tmpva = (PREKERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 
 void
 mm_init(paddr_t first_pa)
 {
 	pa_avail = first_pa;
-}
-
-static paddr_t
-mm_palloc(size_t npages)
-{
-	paddr_t pa = pa_avail;
-	pa_avail += npages * PAGE_SIZE;
-	return pa;
-}
-
-static vaddr_t
-mm_valloc(size_t npages)
-{
-	vaddr_t va = va_avail;
-	va_avail += npages * PAGE_SIZE;
-	if (va_avail > va_end) {
-		fatal("mm_valloc: no VA left");
-	}
-	return va;
 }
 
 static void
@@ -79,6 +59,27 @@ static void
 mm_flush_va(vaddr_t va)
 {
 	asm volatile("invlpg (%0)" ::"r" (va) : "memory");
+}
+
+static paddr_t
+mm_palloc(size_t npages)
+{
+	paddr_t pa;
+	size_t i;
+
+	/* Allocate the physical pages */
+	pa = pa_avail;
+	pa_avail += npages * PAGE_SIZE;
+
+	/* Zero them out */
+	for (i = 0; i < npages; i++) {
+		mm_enter_pa(pa + i * PAGE_SIZE, tmpva,
+		    MM_PROT_READ|MM_PROT_WRITE);
+		mm_flush_va(tmpva);
+		memset((void *)tmpva, 0, PAGE_SIZE);
+	}
+
+	return pa;
 }
 
 paddr_t
@@ -106,13 +107,11 @@ mm_mprotect(vaddr_t startva, size_t size, int prot)
 }
 
 static void
-mm_map_va(vaddr_t startva, vaddr_t endva)
+mm_map_tree(vaddr_t startva, vaddr_t endva)
 {
-	size_t i, idx, size, nL4e, nL3e, nL2e;
+	size_t i, size, nL4e, nL3e, nL2e;
 	size_t L4e_idx, L3e_idx, L2e_idx;
-	vaddr_t L3page_va, L2page_va;
 	paddr_t L3page_pa, L2page_pa, L1page_pa;
-	pd_entry_t *pdir;
 
 	/*
 	 * Initialize constants.
@@ -122,48 +121,30 @@ mm_map_va(vaddr_t startva, vaddr_t endva)
 	nL3e = roundup(size, NBPD_L3) / NBPD_L3;
 	nL2e = roundup(size, NBPD_L2) / NBPD_L2;
 	L4e_idx = pl4_i(startva);
-	L3e_idx = pl3_i(startva % NBPD_L4);
-	L2e_idx = pl2_i(startva % NBPD_L3);
+	L3e_idx = pl3_i(startva);
+	L2e_idx = pl2_i(startva);
+
+	ASSERT(nL4e == 1);
+	ASSERT(L4e_idx == 511);
 
 	/*
-	 * Map the sub-tree itself.
+	 * Allocate the physical pages.
 	 */
-	L3page_va = mm_valloc(nL4e);
 	L3page_pa = mm_palloc(nL4e);
-	L2page_va = mm_valloc(nL3e);
 	L2page_pa = mm_palloc(nL3e);
-
 	L1page_pa = mm_palloc(nL2e);
 
-	for (i = 0; i < nL4e; i++) {
-		mm_enter_pa(L3page_pa + i * PAGE_SIZE,
-		    L3page_va + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
-		memset((void *)(L3page_va + i * PAGE_SIZE), 0, PAGE_SIZE);
-	}
-
-	for (i = 0; i < nL3e; i++) {
-		mm_enter_pa(L2page_pa + i * PAGE_SIZE,
-		    L2page_va + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
-		memset((void *)(L2page_va + i * PAGE_SIZE), 0, PAGE_SIZE);
-	}
-
 	/*
-	 * Now link the levels together.
-	 */
-	pdir = (pt_entry_t *)L3page_va;
-	for (i = 0, idx = L3e_idx; i < nL3e; i++, idx++) {
-		pdir[idx] = (L2page_pa + i * PAGE_SIZE) | PG_V | PG_RW;
-	}
-
-	pdir = (pt_entry_t *)L2page_va;
-	for (i = 0, idx = L2e_idx; i < nL2e; i++, idx++) {
-		pdir[idx] = (L1page_pa + i * PAGE_SIZE) | PG_V | PG_RW;
-	}
-
-	/*
-	 * Finally, link the sub-tree into the tree.
+	 * Build the branch in the page tree. We link the levels together,
+	 * from L4 to L1.
 	 */
 	L4_BASE[L4e_idx] = L3page_pa | PG_V | PG_RW;
+	for (i = 0; i < nL3e; i++) {
+		L3_BASE[L3e_idx+i] = (L2page_pa + i * PAGE_SIZE) | PG_V | PG_RW;
+	}
+	for (i = 0; i < nL2e; i++) {
+		L2_BASE[L2e_idx+i] = (L1page_pa + i * PAGE_SIZE) | PG_V | PG_RW;
+	}
 }
 
 /*
@@ -185,7 +166,7 @@ mm_rand_base()
 	randva = rounddown(KASLR_WINDOW_BASE + rnd % (KASLR_WINDOW_SIZE - size),
 	    PAGE_SIZE);
 
-	mm_map_va(randva, randva + size);
+	mm_map_tree(randva, randva + size);
 
 	return randva;
 }
