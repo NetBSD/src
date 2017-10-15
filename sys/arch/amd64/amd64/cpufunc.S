@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.27 2016/11/27 14:49:21 kamil Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.28 2017/10/15 10:58:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -641,6 +641,7 @@ ENTRY(setfs)
 	movw	%di, %fs
 	ret
 
+#ifndef XEN
 ENTRY(setusergs)
 	CLI(ax)
 	swapgs
@@ -648,3 +649,4 @@ ENTRY(setusergs)
 	swapgs
 	STI(ax)
 	ret
+#endif
