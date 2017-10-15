@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.16 2017/02/05 10:42:21 maxv Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.17 2017/10/15 10:58:32 maxv Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.16 2017/02/05 10:42:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17 2017/10/15 10:58:32 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -216,3 +216,11 @@ rcr2(void)
 {
 	return curcpu()->ci_vcpu->arch.cr2;
 }
+
+#ifdef __x86_64__
+void
+setusergs(int gssel)
+{
+	HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, gssel);
+}
+#endif
