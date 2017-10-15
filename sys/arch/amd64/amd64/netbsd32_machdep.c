@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.110 2017/10/15 11:36:15 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.111 2017/10/15 12:49:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110 2017/10/15 11:36:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.111 2017/10/15 12:49:53 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -148,7 +148,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
-	cpu_fsgs_zero(l);
+	cpu_segregs32_zero(l);
 	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_es);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
