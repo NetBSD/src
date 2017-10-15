@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265 2017/10/15 10:58:32 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.266 2017/10/15 12:49:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2017/10/15 10:58:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.266 2017/10/15 12:49:53 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1330,7 +1330,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	cpu_fsgs_zero(l);
+	cpu_segregs64_zero(l);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -2042,17 +2042,17 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 }
 
 /*
- * Zero out an LWP's TLS context (%fs and %gs and associated stuff).
- * Used when exec'ing a new program.
+ * Zero out a 64bit LWP's segments registers. Used when exec'ing a new
+ * 64bit program.
  */
-
 void
-cpu_fsgs_zero(struct lwp *l)
+cpu_segregs64_zero(struct lwp *l)
 {
 	struct trapframe * const tf = l->l_md.md_regs;
 	struct pcb *pcb;
 	uint64_t zero = 0;
 
+	KASSERT((l->l_proc->p_flag & PK_32) == 0);
 	KASSERT(l == curlwp);
 
 	pcb = lwp_getpcb(l);
@@ -2062,15 +2062,43 @@ cpu_fsgs_zero(struct lwp *l)
 	tf->tf_gs = 0;
 	setfs(0);
 	setusergs(0);
-	if ((l->l_proc->p_flag & PK_32) == 0) {
+
 #ifndef XEN
-		wrmsr(MSR_FSBASE, 0);
-		wrmsr(MSR_KERNELGSBASE, 0);
+	wrmsr(MSR_FSBASE, 0);
+	wrmsr(MSR_KERNELGSBASE, 0);
 #else
-		HYPERVISOR_set_segment_base(SEGBASE_FS, 0);
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, 0);
+	HYPERVISOR_set_segment_base(SEGBASE_FS, 0);
+	HYPERVISOR_set_segment_base(SEGBASE_GS_USER, 0);
 #endif
-	}
+
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
+	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
+	update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
+	kpreempt_enable();
+}
+
+/*
+ * Zero out a 32bit LWP's segments registers. Used when exec'ing a new
+ * 32bit program.
+ */
+void
+cpu_segregs32_zero(struct lwp *l)
+{
+	struct trapframe * const tf = l->l_md.md_regs;
+	struct pcb *pcb;
+	uint64_t zero = 0;
+
+	KASSERT(l->l_proc->p_flag & PK_32);
+	KASSERT(l == curlwp);
+
+	pcb = lwp_getpcb(l);
+
+	kpreempt_disable();
+	tf->tf_fs = 0;
+	tf->tf_gs = 0;
+	setfs(0);
+	setusergs(0);
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
 	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
@@ -2082,7 +2110,6 @@ cpu_fsgs_zero(struct lwp *l)
  * Load an LWP's TLS context, possibly changing the %fs and %gs selectors.
  * Used only for 32-bit processes.
  */
-
 void
 cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 {
