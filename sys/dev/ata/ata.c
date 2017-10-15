@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.136 2017/10/10 17:19:38 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.137 2017/10/15 14:41:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.136 2017/10/10 17:19:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.137 2017/10/15 14:41:06 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -477,11 +477,7 @@ atabus_thread(void *arg)
 			ata_channel_lock(chp);
 		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
-			/*
-			 * ata_reset_channel() will freeze 2 times, so
-			 * unfreeze one time. Not a problem as we're at splbio
-			 */
-			ata_channel_thaw_locked(chp);
+			/* ata_reset_channel() will unfreeze the channel */
 			ata_channel_unlock(chp);
 			s = splbio();
 			ata_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
@@ -1136,12 +1132,17 @@ atastart(struct ata_channel *chp)
 again:
 	KASSERT(chq->queue_active <= chq->queue_openings);
 	if (chq->queue_active == chq->queue_openings) {
-		goto out; /* channel completely busy */
+		ATADEBUG_PRINT(("%s: channel completely busy", __func__),
+		    DEBUG_XFERS);
+		goto out;
 	}
 
 	/* is there a xfer ? */
-	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
+	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL) {
+		ATADEBUG_PRINT(("%s: queue_xfer is empty", __func__),
+		    DEBUG_XFERS);
 		goto out;
+	}
 
 	recovery = ISSET(xfer->c_flags, C_RECOVERY);
 
@@ -1151,7 +1152,12 @@ again:
 			chq->queue_flags &= ~QF_IDLE_WAIT;
 			cv_signal(&chp->ch_queue->queue_idle);
 		}
-		goto out; /* queue frozen */
+		ATADEBUG_PRINT(("%s(chp=%p): channel %d drive %d "
+		    "queue frozen: %d (recovery: %d)\n",
+		    __func__, chp, chp->ch_channel, xfer->c_drive,
+		    chq->queue_freeze, recovery),
+		    DEBUG_XFERS);
+		goto out;
 	}
 
 	/* all xfers on same queue must belong to the same channel */
@@ -1190,8 +1196,8 @@ again:
 		if (!atac->atac_claim_hw(chp, 0))
 			goto out;
 
-	ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
-	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
+	ATADEBUG_PRINT(("%s(chp=%p): xfer %p channel %d drive %d\n",
+	    __func__, chp, xfer, chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
 	if (drvp->drive_flags & ATA_DRIVE_RESET) {
 		drvp->drive_flags &= ~ATA_DRIVE_RESET;
 		drvp->state = 0;
@@ -1488,6 +1494,9 @@ static void
 ata_channel_freeze_locked(struct ata_channel *chp)
 {
 	chp->ch_queue->queue_freeze++;
+
+	ATADEBUG_PRINT(("%s(chp=%p) -> %d\n", __func__, chp,
+	    chp->ch_queue->queue_freeze), DEBUG_FUNCS | DEBUG_XFERS);
 }
 
 void
@@ -1502,8 +1511,12 @@ static void
 ata_channel_thaw_locked(struct ata_channel *chp)
 {
 	KASSERT(mutex_owned(&chp->ch_lock));
+	KASSERT(chp->ch_queue->queue_freeze > 0);
 
 	chp->ch_queue->queue_freeze--;
+
+	ATADEBUG_PRINT(("%s(chp=%p) -> %d\n", __func__, chp,
+	    chp->ch_queue->queue_freeze), DEBUG_FUNCS | DEBUG_XFERS);
 }
 
 void
@@ -1526,6 +1539,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	int drive;
+	bool threset = false;
 
 #ifdef ATA_DEBUG
 	int spl1, spl2;
@@ -1540,7 +1554,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	splx(spl1);
 #endif /* ATA_DEBUG */
 
-	ata_channel_freeze(chp);
+	ata_channel_lock(chp);
 
 	/*
 	 * If we can poll or wait it's OK, otherwise wake up the
@@ -1551,16 +1565,36 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/* No need to schedule a reset more than one time. */
-			ata_channel_thaw(chp);
+			ata_channel_unlock(chp);
 			return;
 		}
-		ata_channel_lock(chp);
+
+		/*
+		 * Block execution of other commands while reset is scheduled
+		 * to a thread.
+		 */
+		ata_channel_freeze_locked(chp);
 		chp->ch_flags |= ATACH_TH_RESET;
 		chp->ch_reset_flags = flags & AT_RST_EMERG;
 		cv_signal(&chp->ch_thr_idle);
 		ata_channel_unlock(chp);
 		return;
 	}
+
+	/* Block execution of other commands during reset */
+	ata_channel_freeze_locked(chp);
+
+	/* 
+	 * If reset has been scheduled to a thread, then clear
+	 * the flag now so that the thread won't try to execute it if
+	 * we happen to sleep, and thaw one more time after the reset.
+	 */
+	if (chp->ch_flags & ATACH_TH_RESET) {
+		chp->ch_flags &= ~ATACH_TH_RESET;
+		threset = true;
+	}
+
+	ata_channel_unlock(chp);
 
 	(*atac->atac_bustype_ata->ata_reset_channel)(chp, flags);
 
@@ -1569,14 +1603,25 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	for (drive = 0; drive < chp->ch_ndrives; drive++)
 		chp->ch_drive[drive].state = 0;
 
-	chp->ch_flags &= ~ATACH_TH_RESET;
+	/*
+	 * Thaw one extra time to clear the freeze done when the reset has
+	 * been scheduled to the thread.
+	 */
+	if (threset)
+		ata_channel_thaw_locked(chp);
+
+	/* Allow commands to run again */
+	ata_channel_thaw_locked(chp);
+
+	/* Signal the thread in case there is an xfer to run */
+	cv_signal(&chp->ch_thr_idle);
+
 	ata_channel_unlock(chp);
 
 	if (flags & AT_RST_EMERG) {
 		/* make sure that we can use polled commands */
 		ata_queue_reset(chp->ch_queue);
 	} else {
-		ata_channel_thaw(chp);
 		atastart(chp);
 	}
 }
@@ -2157,11 +2202,11 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 		ata_channel_unlock(chp);
 		goto out;
 	}
-	KASSERT(chp->ch_queue->queue_freeze > 0);
-	ata_channel_unlock(chp);
 
 	/* unfreeze the queue and reset drives */
-	ata_channel_thaw(chp);
+	ata_channel_thaw_locked(chp);
+
+	ata_channel_unlock(chp);
 
 	/* reset channel only if there are drives attached */
 	if (chp->ch_ndrives > 0)
