@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.66 2017/10/13 08:17:26 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.67 2017/10/15 20:19:09 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6242,4 +6242,11 @@ sys/sys/kernhist.h				1.19-1.20
 	Call sysctl_kernhist_new for KERNHIST_LINK_STATIC.
 	Can get usbhist from vmstat(1) again.
 	[pgoyette, ticket #301]
+
+sys/dev/pci/if_wm.c				1.539
+
+	- Correct NVM word size check in wm_nvm_version() to prevent
+	   "EERD polling failed" error on attach.
+	- Print NVM offset and word count when EERD polling failed.
+	[msaitoh, ticket #306]
 
