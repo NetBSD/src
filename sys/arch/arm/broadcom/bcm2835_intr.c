@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.12 2017/07/30 16:54:36 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.13 2017/10/15 09:33:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.12 2017/07/30 16:54:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.13 2017/10/15 09:33:25 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -105,26 +105,11 @@ static struct pic_ops bcm2836mp_picops = {
 };
 
 struct pic_softc bcm2836mp_pic[BCM2836_NCPUS] = {
-	[0] = {
+	[0 ... BCM2836_NCPUS - 1] = {
 		.pic_ops = &bcm2836mp_picops,
 		.pic_maxsources = BCM2836_NIRQPERCPU,
 		.pic_name = "bcm2836 pic",
-	},
-	[1] = {
-		.pic_ops = &bcm2836mp_picops,
-		.pic_maxsources = BCM2836_NIRQPERCPU,
-		.pic_name = "bcm2836 pic",
-	},
-	[2] = {
-		.pic_ops = &bcm2836mp_picops,
-		.pic_maxsources = BCM2836_NIRQPERCPU,
-		.pic_name = "bcm2836 pic",
-	},
-	[3] = {
-		.pic_ops = &bcm2836mp_picops,
-		.pic_maxsources = BCM2836_NIRQPERCPU,
-		.pic_name = "bcm2836 pic",
-	},
+	}
 };
 #endif
 
@@ -293,7 +278,6 @@ bcm2835_pic_find_pending_irqs(struct pic_softc *pic)
 	if (armirq) {
 		ipl |= pic_mark_pending_sources(pic,
 		    BCM2835_INT_BASICBASE - BCM2835_INT_BASE, armirq);
-
 	}
 
 	if (gpu0irq || (bpending & BCM2835_INTBIT_PENDING1)) {
