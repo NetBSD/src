@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.30 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.31 2017/10/15 12:49:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -253,7 +253,8 @@ void idt_vec_free(int);
 #endif
 
 struct lwp;
-void cpu_fsgs_zero(struct lwp *);
+void cpu_segregs64_zero(struct lwp *);
+void cpu_segregs32_zero(struct lwp *);
 void cpu_fsgs_reload(struct lwp *, int, int);
 
 #endif /* _KERNEL */

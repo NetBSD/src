@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.52 2017/07/14 13:21:29 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.53 2017/10/15 12:49:53 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.52 2017/07/14 13:21:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.53 2017/10/15 12:49:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,7 +118,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = 0;
-	cpu_fsgs_zero(l);
+	cpu_segregs64_zero(l);
 
 	return;
 }
