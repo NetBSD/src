@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.28 2017/10/15 10:58:32 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.29 2017/10/15 11:31:00 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -635,6 +635,14 @@ ENTRY(outsl)
 	movl	%edi, %edx
 	rep
 	outsl
+	ret
+
+ENTRY(setds)
+	movw	%di, %ds
+	ret
+
+ENTRY(setes)
+	movw	%di, %es
 	ret
 
 ENTRY(setfs)
