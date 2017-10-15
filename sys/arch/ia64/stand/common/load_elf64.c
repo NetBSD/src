@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf64.c,v 1.3 2016/08/15 08:24:05 maxv Exp $	*/
+/*	$NetBSD: load_elf64.c,v 1.4 2017/10/15 01:28:32 maya Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -62,7 +62,6 @@ elf64_loadfile(char *filename, u_int64_t dest, struct preloaded_file **result)
 	return(EFTYPE);
 
     fp = file_alloc();
-    marks = fp->marks;
 
     if (fp == NULL) {
 	    printf("elf64_loadfile: cannot allocate module info\n");
@@ -70,6 +69,7 @@ elf64_loadfile(char *filename, u_int64_t dest, struct preloaded_file **result)
 	    goto out;
     }
 
+    marks = fp->marks;
     fp->f_name = strdup(filename);
     fp->f_type = strdup(ELF64_KERNELTYPE);
 
