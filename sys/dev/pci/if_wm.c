@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.2 2017/08/01 23:33:18 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.3 2017/10/15 20:18:17 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.2 2017/08/01 23:33:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.3 2017/10/15 20:18:17 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -11773,7 +11773,8 @@ wm_nvm_read_eerd(struct wm_softc *sc, int offset, int wordcnt,
 		CSR_WRITE(sc, WMREG_EERD, eerd);
 		rv = wm_poll_eerd_eewr_done(sc, WMREG_EERD);
 		if (rv != 0) {
-			aprint_error_dev(sc->sc_dev, "EERD polling failed\n");
+			aprint_error_dev(sc->sc_dev, "EERD polling failed: "
+			    "offset=%d. wordcnt=%d\n", offset, wordcnt);
 			break;
 		}
 		data[i] = (CSR_READ(sc, WMREG_EERD) >> EERD_DATA_SHIFT);
@@ -12554,7 +12555,7 @@ printver:
 	}
 
 	/* Assume the Option ROM area is at avove NVM_SIZE */
-	if ((sc->sc_nvm_wordsize >= NVM_SIZE) && check_optionrom
+	if ((sc->sc_nvm_wordsize > NVM_SIZE) && check_optionrom
 	    && (wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off) == 0)) {
 		/* Option ROM Version */
 		if ((off != 0x0000) && (off != 0xffff)) {
