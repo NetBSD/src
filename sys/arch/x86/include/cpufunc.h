@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.22 2016/12/13 10:54:27 kamil Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.23 2017/10/15 11:31:00 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -149,6 +149,8 @@ uint64_t	rdtsc(void);
 uint64_t	rdpmc(u_int);
 void		wrmsr(u_int, uint64_t);
 void		wrmsr_locked(u_int, uint64_t);
+void		setds(int);
+void		setes(int);
 void		setfs(int);
 void		setusergs(int);
 
