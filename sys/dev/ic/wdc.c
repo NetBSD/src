@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.284 2017/10/07 16:05:32 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.285 2017/10/15 18:02:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.284 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.285 2017/10/15 18:02:33 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -882,10 +882,22 @@ wdcintr(void *arg)
 	xfer = ata_queue_get_active_xfer(chp);
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
+ignore:
 		/* try to clear the pending interrupt anyway */
 		(void)bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_status], 0);
 		return (0);
+	}
+
+	/*
+	 * On some controllers (e.g. some PCI-IDE) setting the WDSD_IBM bit
+	 * actually has no effect, and interrupt is triggered regardless.
+	 * Ignore polled commands here, they are processed separately.
+	 */
+	if (ISSET(xfer->c_flags, C_POLL)) {
+		ATADEBUG_PRINT(("%s: polled xfer ignored\n", __func__),
+		    DEBUG_INTR);
+		goto ignore;
 	}
 
 	ATADEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
