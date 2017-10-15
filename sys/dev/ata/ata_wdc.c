@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.107 2017/10/08 13:35:03 christos Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.108 2017/10/15 11:27:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.107 2017/10/08 13:35:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.108 2017/10/15 11:27:14 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -618,14 +618,13 @@ wdc_ata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 }
 
 static int
-wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
+wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int drv_err, tfd;
-	bool poll = ((xfer->c_flags & C_POLL) != 0);
 
 	ATADEBUG_PRINT(("wdc_ata_bio_intr %s:%d:%d\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive),
@@ -659,8 +658,9 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 #endif
 
 	/* Ack interrupt done by wdc_wait_for_unbusy */
-	if (wdc_wait_for_unbusy(chp, poll ? ATA_DELAY : 0, AT_POLL, &tfd) < 0) {
-		if (!poll && (xfer->c_flags & C_TIMEOU) == 0) {
+	if (wdc_wait_for_unbusy(chp,
+	    (irq == 0) ? ATA_DELAY : 0, AT_POLL, &tfd) < 0) {
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
 			ata_channel_unlock(chp);
 			return 0; /* IRQ was not for us */
 		}
