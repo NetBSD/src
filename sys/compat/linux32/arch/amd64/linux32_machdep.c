@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.39 2017/09/02 12:57:03 maxv Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.40 2017/10/15 11:36:15 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.39 2017/09/02 12:57:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.40 2017/10/15 11:36:15 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -283,7 +283,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	fpu_save_area_clear(l, __Linux_NPXCW__);
 
-	l->l_md.md_flags |= MDL_COMPAT32;	/* Forces iret not sysret */
+	l->l_md.md_flags = MDL_COMPAT32;	/* Forces iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
 
 	p->p_flag |= PK_32;
