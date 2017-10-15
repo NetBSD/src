@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.10 2017/03/25 11:00:27 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.11 2017/10/15 15:26:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.10 2017/03/25 11:00:27 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.11 2017/10/15 15:26:10 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: npfd_log.c,v 1.10 2017/03/25 11:00:27 christos Exp $");
 #include <net/if.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <err.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -53,18 +54,23 @@ __RCSID("$NetBSD: npfd_log.c,v 1.10 2017/03/25 11:00:27 christos Exp $");
 struct npfd_log {
 	char ifname[IFNAMSIZ];
 	char path[MAXPATHLEN];
+	char *filter;
+	int snaplen;
 	pcap_t *pcap;
 	pcap_dumper_t *dumper;
 };
 
 static void
-npfd_log_setfilter(npfd_log_t *ctx, const char *filter)
+npfd_log_setfilter(npfd_log_t *ctx)
 {
 	struct bpf_program bprog;
 
-	if (pcap_compile(ctx->pcap, &bprog, filter, 1, 0) == -1)
-		errx(EXIT_FAILURE, "pcap_compile failed for `%s': %s", filter,
-		    pcap_geterr(ctx->pcap));
+	if (ctx->filter == NULL)
+		return;
+
+	if (pcap_compile(ctx->pcap, &bprog, ctx->filter, 1, 0) == -1)
+		errx(EXIT_FAILURE, "pcap_compile failed for `%s': %s",
+		    ctx->filter, pcap_geterr(ctx->pcap));
 	if (pcap_setfilter(ctx->pcap, &bprog) == -1)
 		errx(EXIT_FAILURE, "pcap_setfilter failed: %s",
 		    pcap_geterr(ctx->pcap));
@@ -206,15 +212,42 @@ npfd_log_create(const char *filename, const char *ifname, const char *filter,
     int snaplen)
 {
 	npfd_log_t *ctx;
-	char errbuf[PCAP_ERRBUF_SIZE];
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		err(EXIT_FAILURE, "malloc failed");
 
-	/*
-	 * Open a live capture handle in non-blocking mode.
-	 */
 	snprintf(ctx->ifname, sizeof(ctx->ifname), "%s", ifname);
+	if (filename == NULL)
+		snprintf(ctx->path, sizeof(ctx->path), NPFD_LOG_PATH "/%s.pcap",
+		    ctx->ifname);
+	else
+		snprintf(ctx->path, sizeof(ctx->path), "%s", filename);
+
+	if (filter != NULL) {
+		ctx->filter = strdup(filter);
+		if (ctx->filter == NULL)
+			err(EXIT_FAILURE, "malloc failed");
+	}
+	ctx->snaplen = snaplen;
+
+	/* Open a live capture handle in non-blocking mode.  */
+	npfd_log_pcap_reopen(ctx);
+
+	/* Open the log file */
+	npfd_log_file_reopen(ctx, false);
+	return ctx;
+}
+
+
+bool
+npfd_log_pcap_reopen(npfd_log_t *ctx)
+{
+	char errbuf[PCAP_ERRBUF_SIZE];
+	int snaplen = ctx->snaplen;
+
+	if (ctx->pcap != NULL)
+		pcap_close(ctx->pcap);
+
 	ctx->pcap = pcap_create(ctx->ifname, errbuf);
 	if (ctx->pcap == NULL)
 		errx(EXIT_FAILURE, "pcap_create failed: %s", errbuf);
@@ -222,19 +255,13 @@ npfd_log_create(const char *filename, const char *ifname, const char *filter,
 	if (pcap_setnonblock(ctx->pcap, 1, errbuf) == -1)
 		errx(EXIT_FAILURE, "pcap_setnonblock failed: %s", errbuf);
 
-	if (filename == NULL)
-		snprintf(ctx->path, sizeof(ctx->path), NPFD_LOG_PATH "/%s.pcap",
-		    ctx->ifname);
-	else
-		snprintf(ctx->path, sizeof(ctx->path), "%s", filename);
-
 	int sl = npfd_log_getsnaplen(ctx);
 	if (sl == -1)
 		errx(EXIT_FAILURE, "corrupt log file `%s'", ctx->path);
 
 	if (sl != 0 && sl != snaplen) {
 		warnx("Overriding snaplen from %d to %d from `%s'", snaplen,
-		    sl, filename);
+		    sl, ctx->path);
 		snaplen = sl;
 	}
 
@@ -250,16 +277,12 @@ npfd_log_create(const char *filename, const char *ifname, const char *filter,
 		errx(EXIT_FAILURE, "pcap_activate failed: %s",
 		    pcap_geterr(ctx->pcap));
 
-	if (filter)
-		npfd_log_setfilter(ctx, filter);
-
-
-	npfd_log_reopen(ctx, false);
-	return ctx;
+	npfd_log_setfilter(ctx);
+	return true;
 }
 
 bool
-npfd_log_reopen(npfd_log_t *ctx, bool die)
+npfd_log_file_reopen(npfd_log_t *ctx, bool die)
 {
 	mode_t omask = umask(077);
 
@@ -320,12 +343,13 @@ npfd_log_flush(npfd_log_t *ctx)
 }
 
 
-void
+int
 npfd_log(npfd_log_t *ctx)
 {
 	pcap_dumper_t *dumper = ctx->dumper;
 
-	pcap_dispatch(ctx->pcap, PCAP_NPACKETS, pcap_dump, (void *)dumper);
+	return pcap_dispatch(ctx->pcap, PCAP_NPACKETS, pcap_dump,
+	    (void *)dumper);
 }
 
 void

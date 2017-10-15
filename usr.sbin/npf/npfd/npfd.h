@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.h,v 1.4 2017/01/06 19:20:24 christos Exp $	*/
+/*	$NetBSD: npfd.h,v 1.5 2017/10/15 15:26:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -45,8 +45,9 @@ typedef struct npfd_log npfd_log_t;
 npfd_log_t *	npfd_log_create(const char *, const char *, const char *, int);
 void		npfd_log_destroy(npfd_log_t *);
 int		npfd_log_getsock(npfd_log_t *);
-bool		npfd_log_reopen(npfd_log_t *, bool);
-void		npfd_log(npfd_log_t *);
+bool		npfd_log_file_reopen(npfd_log_t *, bool);
+bool		npfd_log_pcap_reopen(npfd_log_t *);
+int		npfd_log(npfd_log_t *);
 void		npfd_log_stats(npfd_log_t *);
 void		npfd_log_flush(npfd_log_t *);
 
