@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.51 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.52 2017/10/15 04:30:05 pgoyette Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.51 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.52 2017/10/15 04:30:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.51 2015/08/20 14:40:18 christos Exp $
 #include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/cprng.h>
+#include <sys/device.h>
 #endif /* __NetBSD__ */
 
 #include <net/if.h>
@@ -165,6 +166,10 @@ void			 tag_unref(struct pf_tags *, u_int16_t);
 int			 pf_rtlabel_add(struct pf_addr_wrap *);
 void			 pf_rtlabel_remove(struct pf_addr_wrap *);
 void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
+
+#ifdef __NetBSD__
+void	pf_deferred_init(device_t);
+#endif
 
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
@@ -310,15 +315,19 @@ pfattach(int num)
 	bzero(&pf_status, sizeof(pf_status));
 	pf_status.debug = PF_DEBUG_URGENT;
 
+#ifdef __NetBSD__
+	/*
+	 * Defer rest of initialization until we can use cprng_fast32()
+	 * which requires per-CPU data to have been initialized which
+	 * in turn requires that all CPUs have been discovered and
+	 * attached!
+	 */
+	config_interrupts(NULL, pf_deferred_init);
+#else
 	/* XXX do our best to avoid a conflict */
 	pf_status.hostid = cprng_fast32();
 
 	/* require process context to purge states, so perform in a thread */
-#ifdef __NetBSD__
-	if (kthread_create(PRI_NONE, 0, NULL, pf_purge_thread, NULL, NULL,
-	    "pfpurge"))
-		panic("pfpurge thread");
-#else
 	kthread_create_deferred(pf_thread_create, NULL);
 #endif /* !__NetBSD__ */
 
@@ -327,6 +336,22 @@ pfattach(int num)
 	    pf_listener_cb, NULL);
 #endif /* __NetBSD__ */
 }
+
+#ifdef __NetBSD__
+/* ARGSUSED */
+void
+pf_deferred_init(device_t dev)
+{
+
+	/* XXX do our best to avoid a conflict */
+	pf_status.hostid = cprng_fast32();
+
+	/* require process context to purge states, so perform in a thread */
+	if (kthread_create(PRI_NONE, 0, NULL, pf_purge_thread, NULL, NULL,
+	    "pfpurge"))
+		panic("pfpurge thread");
+}
+#endif /* __NetBSD__ */
 
 #ifdef _MODULE
 void
