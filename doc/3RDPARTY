@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1477 2017/10/12 22:18:27 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1478 2017/10/15 06:15:37 abhinav Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -861,7 +861,7 @@ Notes:
 
 Package:	mandoc
 Version:	1.14.1
-Current Vers:	1.14.2
+Current Vers:	1.14.3
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
 Home Page:	http://mdocml.bsd.lv/
