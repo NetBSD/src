@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.75 2017/09/07 06:40:42 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.76 2017/10/16 10:10:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.75 2017/09/07 06:40:42 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.76 2017/10/16 10:10:48 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1892,7 +1892,12 @@ identifycpu(int fd, const char *cpuname)
 
 	print_bits(cpuname, "padloack features", CPUID_FLAGS_PADLOCK,
 	    ci->ci_feat_val[4]);
-
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+		print_bits(cpuname, "features5", CPUID_SEF_FLAGS,
+		    ci->ci_feat_val[5]);
+	if (cpu_vendor == CPUVENDOR_INTEL)
+		print_bits(cpuname, "features6", CPUID_SEF_FLAGS1,
+		    ci->ci_feat_val[6]);
 	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[7]);
 	print_bits(cpuname, "xsave instructions", CPUID_PES1_FLAGS,
 	    ci->ci_feat_val[8]);
@@ -1977,8 +1982,6 @@ identifycpu(int fd, const char *cpuname)
 			case 7:
 				aprint_verbose("%s: SEF highest subleaf %08x\n",
 				    cpuname, data[0]);
-				print_bits(cpuname, "SEF-main", CPUID_SEF_FLAGS,
-				    data[1]);
 				break;
 #if 0
 			default:
