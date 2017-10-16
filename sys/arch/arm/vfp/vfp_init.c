@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.54 2017/10/16 15:08:24 bouyer Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.55 2017/10/16 15:13:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -535,17 +535,8 @@ vfp_state_load(lwp_t *l, u_int flags)
 	/*
 	 * Load and Enable the VFP (so that we can write the registers).
 	 */
-	bool enabled = fregs->vfp_fpexc & VFP_FPEXC_EN;
 	fregs->vfp_fpexc |= VFP_FPEXC_EN;
 	armreg_fpexc_write(fregs->vfp_fpexc);
-	if (enabled) {
-		/*
-		 * If we think the VFP is enabled, it must have be
-		 * disabled by vfp_state_release for another LWP so
-		 * we can now just return.
-		 */
-		return;
-	}
 	KASSERT(curcpu()->ci_pcu_curlwp[PCU_FPU] == NULL);
 	KASSERT(l->l_pcu_cpu[PCU_FPU] == NULL);
 
