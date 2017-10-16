@@ -1,4 +1,4 @@
-.\"	$NetBSD: byteorder.9,v 1.9 2017/10/16 11:53:00 maya Exp $
+.\"	$NetBSD: byteorder.9,v 1.10 2017/10/16 12:50:43 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/byteorder.9,v 1.6 2003/05/21 17:32:55 ru Exp $
 .\"
-.Dd Oct 16, 2017
+.Dd October 16, 2017
 .Dt BYTEORDER 9
 .Os
 .Sh NAME
@@ -188,11 +188,9 @@ functions first appeared in
 .Nx 1.5 .
 These were later ported to
 .Fx 5.0 .
-These functions were originally introduced to handle
-.Tn PCI
-bus master devices that
-.Pq via Tn DMA
-transfer little endian data even on big endian systems.
+These functions were originally introduced to handle PCI bus master
+devices that (via DMA) transfer little endian data even on big
+endian systems.
 .Pp
 The encode/decode functions first appeared in
 .Fx 5.1 .
