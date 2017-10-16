@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.20 2017/03/16 16:13:21 chs Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.21 2017/10/16 15:03:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.20 2017/03/16 16:13:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.21 2017/10/16 15:03:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -110,7 +110,8 @@ pcu_switchpoint(lwp_t *l)
 			continue;
 		}
 		struct cpu_info * const pcu_ci = l->l_pcu_cpu[id];
-		if (pcu_ci == NULL || pcu_ci == l->l_cpu) {
+		if (pcu_ci == l->l_cpu) {
+			KASSERT(pcu_ci->ci_pcu_curlwp[id] == l);
 			continue;
 		}
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
