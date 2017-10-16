@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.285 2017/10/15 18:02:33 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.286 2017/10/16 05:52:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.285 2017/10/15 18:02:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.286 2017/10/16 05:52:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -890,7 +890,7 @@ ignore:
 	}
 
 	/*
-	 * On some controllers (e.g. some PCI-IDE) setting the WDSD_IBM bit
+	 * On some controllers (e.g. some PCI-IDE) setting the WDCTL_IDS bit
 	 * actually has no effect, and interrupt is triggered regardless.
 	 * Ignore polled commands here, they are processed separately.
 	 */
