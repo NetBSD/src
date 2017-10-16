@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.25 2017/10/16 08:33:48 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.26 2017/10/16 11:37:20 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.25 2017/10/16 08:33:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.26 2017/10/16 11:37:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -748,23 +748,30 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s)
 }
 
 static void
-decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
+print_part(const char *part, size_t pnsize)
 {
-	int dimm_size, cycle_time, bits;
-	unsigned char buf[sizeof(s->sm_ddr3.ddr3_part) + 1];
-	int i, pnsize;
+	char buf[64];	/* big enough */
 
-	pnsize = sizeof(s->sm_ddr3.ddr3_part);
-	memcpy(buf, s->sm_ddr3.ddr3_part, pnsize);
-	buf[pnsize] = 0; /* Terminate for full string */
-	for (i = pnsize - 1; i >= 0; i--) {
+	KASSERT(pnsize < sizeof(buf));
+
+	memcpy(buf, part, pnsize);
+	buf[pnsize] = '\0'; /* Terminate for full string */
+	for (size_t i = pnsize; i-- > 0;) {
 		if (buf[i] == 0x20) /* remove trailing spaces */
-			buf[i] = 0;
+			buf[i] = '\0';
 		else
 			break;
 	}
-	aprint_naive("\n");
 	aprint_normal(": %s\n", buf);
+}
+
+static void
+decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
+	int dimm_size, cycle_time, bits;
+
+	aprint_naive("\n");
+	print_part(s->sm_ddr3.ddr3_part, sizeof(s->sm_ddr3.ddr3_part));
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 
 	if (s->sm_ddr3.ddr3_mod_type ==
@@ -873,21 +880,10 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 {
 	int dimm_size, cycle_time;
 	int tAA_clocks, tRCD_clocks,tRP_clocks, tRAS_clocks;
-	unsigned char buf[sizeof(s->sm_ddr4.ddr4_part_number) + 1];
-	int i, pnsize;
-
-	pnsize = sizeof(s->sm_ddr4.ddr4_part_number);
-	memcpy(buf, s->sm_ddr4.ddr4_part_number, pnsize);
-	buf[pnsize] = 0; /* Terminate for full string */
-	for (i = pnsize - 1; i >= 0; i--) {
-		if (buf[i] == 0x20) /* remove trailing spaces */
-			buf[i] = 0;
-		else
-			break;
-	}
 
 	aprint_naive("\n");
-	aprint_normal(": %s\n", buf);
+	print_part(s->sm_ddr4.ddr4_part_number,
+	    sizeof(s->sm_ddr4.ddr4_part_number));
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 	if (s->sm_ddr4.ddr4_mod_type < __arraycount(spdmem_ddr4_module_types))
 		aprint_normal(" (%s)", 
