@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.c,v 1.8 2017/10/15 15:26:10 christos Exp $	*/
+/*	$NetBSD: npfd.c,v 1.9 2017/10/16 11:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd.c,v 1.8 2017/10/15 15:26:10 christos Exp $");
+__RCSID("$NetBSD: npfd.c,v 1.9 2017/10/16 11:18:43 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -110,7 +110,7 @@ npfd_event_loop(npfd_log_t *log, int delay)
 				npfd_log_flush(log);
 				count = 0;
 			}
-			if (npfd_log(log) < 0)
+			if (npfd_log(log) <= 0)
 				npfd_log_pcap_reopen(log);
 		}
 
