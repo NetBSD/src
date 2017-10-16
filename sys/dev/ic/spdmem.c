@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.26 2017/10/16 11:37:20 christos Exp $ */
+/* $NetBSD: spdmem.c,v 1.27 2017/10/16 17:52:10 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.26 2017/10/16 11:37:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.27 2017/10/16 17:52:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -750,19 +750,10 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s)
 static void
 print_part(const char *part, size_t pnsize)
 {
-	char buf[64];	/* big enough */
-
-	KASSERT(pnsize < sizeof(buf));
-
-	memcpy(buf, part, pnsize);
-	buf[pnsize] = '\0'; /* Terminate for full string */
-	for (size_t i = pnsize; i-- > 0;) {
-		if (buf[i] == 0x20) /* remove trailing spaces */
-			buf[i] = '\0';
-		else
-			break;
-	}
-	aprint_normal(": %s\n", buf);
+	const char *p = memchr(part, ' ', pnsize);
+	if (p == NULL)
+		p = part + pnsize;
+	aprint_normal(": %.*s\n", (int)(p - part), part);
 }
 
 static void
