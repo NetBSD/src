@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.11 2017/10/15 15:26:10 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.12 2017/10/16 11:17:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.11 2017/10/15 15:26:10 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.12 2017/10/16 11:17:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -247,6 +247,8 @@ npfd_log_pcap_reopen(npfd_log_t *ctx)
 
 	if (ctx->pcap != NULL)
 		pcap_close(ctx->pcap);
+	else
+		syslog(LOG_INFO, "reopening pcap socket");
 
 	ctx->pcap = pcap_create(ctx->ifname, errbuf);
 	if (ctx->pcap == NULL)
