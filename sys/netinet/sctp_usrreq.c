@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.7 2017/10/17 16:07:18 rjs Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.8 2017/10/17 19:23:42 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.7 2017/10/17 16:07:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.8 2017/10/17 19:23:42 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -528,6 +528,7 @@ sctp_attach(struct socket *so, int proto)
 	inp->sctp_flags &= ~SCTP_PCB_FLAGS_BOUND_V6;	/* I'm not v6! */
 #ifdef IPSEC
 	ip_inp = &inp->ip_inp.inp;
+	ip_inp->inp_af = proto;
 #endif
 	inp->inp_vflag |= INP_IPV4;
 	inp->inp_ip_ttl = ip_defttl;
