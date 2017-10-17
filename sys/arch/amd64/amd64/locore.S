@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.132 2017/10/17 07:33:44 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.133 2017/10/17 07:48:10 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1284,7 +1284,7 @@ IDTVEC(syscall)
 	movw	%es,TF_ES(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
-	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
+	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	STI(si)
 
 do_syscall:

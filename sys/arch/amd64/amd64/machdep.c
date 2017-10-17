@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.267 2017/10/15 13:34:24 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.268 2017/10/17 07:48:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2017/10/15 13:34:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2017/10/17 07:48:10 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1331,8 +1331,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	l->l_md.md_flags = MDL_IRET;
 
 	tf = l->l_md.md_regs;
-	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	cpu_segregs64_zero(l);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
