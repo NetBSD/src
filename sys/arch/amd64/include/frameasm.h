@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.21 2017/09/15 17:32:12 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.22 2017/10/17 06:58:15 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -56,7 +56,8 @@
 	movq	%rbp,TF_RBP(%rsp)	; \
 	movq	%rbx,TF_RBX(%rsp)	; \
 	movq	%rax,TF_RAX(%rsp)	; \
-	cld
+	cld				; \
+	callq	smap_enable
 
 #define	INTR_RESTORE_GPRS \
 	movq	TF_RDI(%rsp),%rdi	; \
