@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.108 2017/10/15 11:27:14 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.109 2017/10/17 18:52:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.108 2017/10/15 11:27:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109 2017/10/17 18:52:50 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -592,7 +592,12 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 intr:
 #endif
 	/* Wait for IRQ (either real or polled) */
-	return (ata_bio->flags & ATA_POLL) ? ATASTART_POLL : ATASTART_STARTED;
+	if ((ata_bio->flags & ATA_POLL) == 0) {
+		chp->ch_flags |= ATACH_IRQ_WAIT;
+		return ATASTART_STARTED;
+	} else {
+		return ATASTART_POLL;
+	}
 
 timeout:
 	printf("%s:%d:%d: not ready, st=0x%02x, err=0x%02x\n",

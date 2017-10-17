@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.63 2017/10/07 16:05:33 jdolecek Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.64 2017/10/17 18:52:50 jdolecek Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.63 2017/10/07 16:05:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.64 2017/10/17 18:52:50 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -551,6 +551,10 @@ pciide_pci_intr(void *arg)
 
 		/* If a compat channel skip. */
 		if (cp->compat)
+			continue;
+
+		/* if this channel not waiting for intr, skip */
+		if ((wdc_cp->ch_flags & ATACH_IRQ_WAIT) == 0)
 			continue;
 
 		crv = wdcintr(wdc_cp);
