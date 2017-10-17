@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.137 2017/10/17 06:58:15 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.138 2017/10/17 07:33:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.137 2017/10/17 06:58:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.138 2017/10/17 07:33:44 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1048,7 +1048,7 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 	    ((uint64_t)LSEL(LSYSRETBASE_SEL, SEL_UPL) << 48));
 	wrmsr(MSR_LSTAR, (uint64_t)Xsyscall);
 	wrmsr(MSR_CSTAR, (uint64_t)Xsyscall32);
-	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C|PSL_AC);
+	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C|PSL_D|PSL_AC);
 
 	if (full) {
 		wrmsr(MSR_FSBASE, 0);
