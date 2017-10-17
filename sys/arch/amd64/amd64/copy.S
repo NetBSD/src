@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.25 2017/10/17 06:58:15 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.26 2017/10/17 07:02:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -343,7 +343,7 @@ ENTRY(copyinstr)
 	xorq	%rax,%rax
 	jmp	copystr_return
 
-2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
+2:	/* rdx is zero -- return EFAULT or ENAMETOOLONG. */
 	callq	smap_enable
 	movq	$VM_MAXUSER_ADDRESS,%r11
 	cmpq	%r11,%rsi
@@ -384,7 +384,7 @@ ENTRY(copystr)
 	xorl	%eax,%eax
 	jmp	6f
 
-4:	/* edx is zero -- return ENAMETOOLONG. */
+4:	/* rdx is zero -- return ENAMETOOLONG. */
 	movl	$ENAMETOOLONG,%eax
 
 6:	/* Set *lencopied and return %eax. */
