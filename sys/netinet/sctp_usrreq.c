@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.6 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.7 2017/10/17 16:07:18 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.6 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.7 2017/10/17 16:07:18 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -571,6 +571,7 @@ static int
 sctp_detach(struct socket *so)
 {
 	struct sctp_inpcb *inp;
+
 	inp = (struct sctp_inpcb *)so->so_pcb;
 	if (inp == 0)
 		return EINVAL;
@@ -685,16 +686,19 @@ static int
 sctp_disconnect(struct socket *so)
 {
 	struct sctp_inpcb *inp;
+	int s;
 
 	inp = (struct sctp_inpcb *)so->so_pcb;
 	if (inp == NULL) {
 		return (ENOTCONN);
 	}
+	s = splsoftnet();
 	SCTP_INP_RLOCK(inp);
 	if (inp->sctp_flags & SCTP_PCB_FLAGS_TCPTYPE) {
 		if (LIST_EMPTY(&inp->sctp_asoc_list)) {
 			/* No connection */
 			SCTP_INP_RUNLOCK(inp);
+			splx(s);
 			return (0);
 		} else {
 			int some_on_streamwheel = 0;
@@ -704,6 +708,7 @@ sctp_disconnect(struct socket *so)
 			stcb = LIST_FIRST(&inp->sctp_asoc_list);
 			if (stcb == NULL) {
 				SCTP_INP_RUNLOCK(inp);
+				splx(s);
 				return (EINVAL);
 			}
 			asoc = &stcb->asoc;
@@ -730,6 +735,7 @@ sctp_disconnect(struct socket *so)
 				SCTP_INP_RUNLOCK(inp);
 				sctp_free_assoc(inp, stcb);
 				/* No unlock tcb assoc is gone */
+				splx(s);
 				return (0);
 			}
 			if (!TAILQ_EMPTY(&asoc->out_wheel)) {
@@ -787,12 +793,14 @@ sctp_disconnect(struct socket *so)
 			}
 			SCTP_TCB_UNLOCK(stcb);
 			SCTP_INP_RUNLOCK(inp);
+			splx(s);
 			return (0);
 		}
 		/* not reached */
 	} else {
 		/* UDP model does not support this */
 		SCTP_INP_RUNLOCK(inp);
+		splx(s);
 		return EOPNOTSUPP;
 	}
 }
