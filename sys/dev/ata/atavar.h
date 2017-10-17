@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.94 2017/10/10 17:19:38 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.95 2017/10/17 18:52:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -399,6 +399,7 @@ struct ata_channel {
 	/* Our state */
 	volatile int ch_flags;
 #define ATACH_SHUTDOWN 0x02	/* channel is shutting down */
+#define ATACH_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
 #define ATACH_PIOBM_WAIT 0x40	/* controller is waiting for busmastering PIO */
 #define	ATACH_DISABLED 0x80	/* channel is disabled */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.128 2017/10/10 21:37:49 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129 2017/10/17 18:52:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.128 2017/10/10 21:37:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129 2017/10/17 18:52:51 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -672,8 +672,10 @@ ready:
 	if ((sc_xfer->xs_periph->periph_cap & ATAPI_CFG_DRQ_MASK) !=
 	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->xs_control & XS_CTL_POLL))
 		return ATASTART_POLL;
-	else
+	else {
+		chp->ch_flags |= ATACH_IRQ_WAIT;
 		return ATASTART_STARTED;
+	}
 
 timeout:
 	printf("%s:%d:%d: %s timed out\n",
@@ -884,6 +886,11 @@ again:
 			chp->ch_flags |= ATACH_DMA_WAIT;
 		}
 #endif
+
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
+			chp->ch_flags |= ATACH_IRQ_WAIT;
+		}
+
 		ata_channel_unlock(chp);
 		return 1;
 
@@ -917,7 +924,8 @@ again:
 			(*wdc->piobm_start)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
 			    xfer->c_skip, len, WDC_PIOBM_XFER_IRQ);
-			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT;
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_IRQ_WAIT |
+			    ATACH_PIOBM_WAIT;
 			ata_channel_unlock(chp);
 			return 1;
 		}
@@ -934,6 +942,9 @@ again:
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
+			chp->ch_flags |= ATACH_IRQ_WAIT;
+		}
 		ata_channel_unlock(chp);
 		return 1;
 
@@ -967,7 +978,8 @@ again:
 			(*wdc->piobm_start)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
 			    xfer->c_skip, len, WDC_PIOBM_XFER_IRQ);
-			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT;
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_IRQ_WAIT |
+			    ATACH_PIOBM_WAIT;
 			ata_channel_unlock(chp);
 			return 1;
 		}
@@ -983,6 +995,9 @@ again:
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
+			chp->ch_flags |= ATACH_IRQ_WAIT;
+		}
 		ata_channel_unlock(chp);
 		return 1;
 
@@ -1079,7 +1094,6 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 			return;
 		}
 	}
-
 
 	/*
 	 * Some drive occasionally set WDCS_ERR with
