@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.131 2017/09/30 11:43:57 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.132 2017/10/17 07:33:44 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1278,6 +1278,7 @@ IDTVEC(syscall)
 	pushq	$2		/* error code */
 	pushq	$T_ASTFLT
 	subq	$TF_REGSIZE,%rsp
+	cld
 #endif
 	INTR_SAVE_GPRS
 	movw	%es,TF_ES(%rsp)
