@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.12 2017/10/17 15:49:00 rjs Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.13 2017/10/17 15:53:01 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.12 2017/10/17 15:49:00 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.13 2017/10/17 15:53:01 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1350,9 +1350,6 @@ sctp_inpcb_alloc(struct socket *so)
 
 	/* zap it */
 	memset(inp, 0, sizeof(*inp));
-
-	/* bump generations */
-	inp->ip_inp.inp.inp_socket = so;
 
 	/* setup socket pointers */
 	inp->sctp_socket = so;
