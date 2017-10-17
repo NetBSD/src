@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.14 2017/10/17 19:18:30 rjs Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.15 2017/10/17 19:23:42 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,10 +33,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.14 2017/10/17 19:18:30 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.15 2017/10/17 19:23:42 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #include "opt_sctp.h"
 #endif /* _KERNEL_OPT */
 
@@ -1302,6 +1303,9 @@ sctp_inpcb_alloc(struct socket *so)
 #ifdef DEBUG
 	struct sctp_inpcb *n_inp;
 #endif
+#ifdef IPSEC
+	struct inpcbpolicy *pcb_sp = NULL;
+#endif
 	struct sctp_pcb *m;
 	struct timeval time;
 
@@ -1358,22 +1362,16 @@ sctp_inpcb_alloc(struct socket *so)
 	inp->ip_inp.inp.inp_socket = so;
 	inp->sctp_frag_point = SCTP_DEFAULT_MAXSEGMENT;
 #ifdef IPSEC
-#if !(defined(__OpenBSD__) || defined(__APPLE__))
-	{
-		struct inpcbpolicy *pcb_sp = NULL;
+	if (ipsec_enabled) {
 		error = ipsec_init_pcbpolicy(so, &pcb_sp);
+		if (error != 0) {
+			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_ep, inp);
+			SCTP_INP_INFO_WUNLOCK();
+			return error;
+		}
 		/* Arrange to share the policy */
 		inp->ip_inp.inp.inp_sp = pcb_sp;
-		((struct in6pcb *)(&inp->ip_inp.inp))->in6p_sp = pcb_sp;
-	}
-#else
-	/* not sure what to do for openbsd here */
-	error = 0;
-#endif
-	if (error != 0) {
-		SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_ep, inp);
-		SCTP_INP_INFO_WUNLOCK();
-		return error;
+		pcb_sp->sp_inph = (struct inpcb_hdr *)inp;
 	}
 #endif /* IPSEC */
 	sctppcbinfo.ipi_count_ep++;
@@ -1682,6 +1680,9 @@ sctp_inpcb_bind(struct socket *so, struct sockaddr *addr, struct lwp *l)
 			if (sin->sin_addr.s_addr != INADDR_ANY) {
 				bindall = 0;
 			}
+#ifdef IPSEC
+			inp->ip_inp.inp.inp_af = AF_INET;
+#endif
 		} else if (addr->sa_family == AF_INET6) {
 			/* Only for pure IPv6 Address. (No IPv4 Mapped!) */
 			struct sockaddr_in6 *sin6;
@@ -1703,9 +1704,21 @@ sctp_inpcb_bind(struct socket *so, struct sockaddr *addr, struct lwp *l)
 			/* this must be cleared for ifa_ifwithaddr() */
 			sin6->sin6_scope_id = 0;
 #endif /* SCOPEDROUTING */
+#ifdef IPSEC
+			inp->ip_inp.inp.inp_af = AF_INET6;
+#endif
 		} else {
 			return (EAFNOSUPPORT);
 		}
+#ifdef IPSEC
+		if (ipsec_enabled) {
+			inp->ip_inp.inp.inp_socket = so;
+			error = ipsec_init_pcbpolicy(so, &inp->ip_inp.inp.inp_sp);
+			if (error != 0)
+				return (error);
+			inp->ip_inp.inp.inp_sp->sp_inph = (struct inpcb_hdr *)inp;
+		}
+#endif
 	}
 	SCTP_INP_INFO_WLOCK();
 #ifdef SCTP_DEBUG
@@ -2139,7 +2152,8 @@ sctp_inpcb_free(struct sctp_inpcb *inp, int immediate)
 	if (so) {
 	/* First take care of socket level things */
 #ifdef IPSEC
-		ipsec4_delete_pcbpolicy(ip_pcb);
+		if (ipsec_enabled)
+			ipsec4_delete_pcbpolicy(ip_pcb);
 #endif /*IPSEC*/
 		so->so_pcb = 0;
 	}
