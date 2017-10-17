@@ -1,4 +1,4 @@
-/* $NetBSD: vmtreg.h,v 1.1 2017/05/23 08:48:34 nonaka Exp $ */
+/* $NetBSD: vmtreg.h,v 1.2 2017/10/17 06:50:00 maya Exp $ */
 /* NetBSD: vmt.c,v 1.15 2016/11/10 03:32:04 ozaki-r Exp */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
@@ -17,11 +17,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * Protocol reverse engineered by Ken Kato:
- * http://chitchat.at.infoseek.co.jp/vmware/backdoor.html
  */
 
 /* OS name to report to host */

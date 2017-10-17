@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.18 2017/10/17 05:47:09 maya Exp $ */
+/* $NetBSD: vmt.c,v 1.19 2017/10/17 06:50:00 maya Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 
 /*
  * Protocol reverse engineered by Ken Kato:
- * http://chitchat.at.infoseek.co.jp/vmware/backdoor.html
+ * https://sites.google.com/site/chitchatvmback/backdoor
  */
 
 #include <sys/param.h>
