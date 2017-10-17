@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.93.6.4 2017/10/13 08:05:30 snj Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.93.6.5 2017/10/17 15:43:09 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.93.6.4 2017/10/13 08:05:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.93.6.5 2017/10/17 15:43:09 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -712,8 +712,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 	/* validate cluster count against FAT */
 	if ((pmp->pm_maxcluster & pmp->pm_fatmask) != pmp->pm_maxcluster) {
-		DPRINTF("maxcluster %lu outside of mask %#lx\n",
-			pmp->pm_maxcluster, pmp->pm_fatmask);
+		DPRINTF(("maxcluster %lu outside of mask %#lx\n",
+			pmp->pm_maxcluster, pmp->pm_fatmask));
 		error = EINVAL;
 		goto error_exit;
 	}
@@ -723,8 +723,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	fatblocksecs = howmany(fatbytes, pmp->pm_BytesPerSec);
 
 	if (pmp->pm_FATsecs != fatblocksecs) {
-		DPRINTF("FATsecs %lu != real %lu\n", pmp->pm_FATsecs,
-			fatblocksecs);
+		DPRINTF(("FATsecs %lu != real %lu\n", pmp->pm_FATsecs,
+			fatblocksecs));
 		error = EINVAL;
 		goto error_exit;
 	}
