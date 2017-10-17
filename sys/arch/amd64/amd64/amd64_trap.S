@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.11 2017/09/15 17:32:12 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.12 2017/10/17 07:33:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.11 2017/09/15 17:32:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.12 2017/10/17 07:33:44 maxv Exp $");
 #endif
 
 /*
@@ -122,6 +122,8 @@ IDTVEC(trap02)
 	pushq	$T_NMI
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+	cld
+	callq	smap_enable
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
