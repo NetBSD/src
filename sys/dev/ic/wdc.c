@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.286 2017/10/16 05:52:43 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.287 2017/10/17 18:52:50 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.286 2017/10/16 05:52:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.287 2017/10/17 18:52:50 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -879,6 +879,11 @@ wdcintr(void *arg)
 		return (0);
 	}
 
+	if ((chp->ch_flags & ATACH_IRQ_WAIT) == 0) {
+		ATADEBUG_PRINT(("wdcintr: irq not expected\n"), DEBUG_INTR);
+		goto ignore;
+	}
+
 	xfer = ata_queue_get_active_xfer(chp);
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
@@ -915,8 +920,11 @@ ignore:
 		chp->ch_flags &= ~ATACH_DMA_WAIT;
 	}
 #endif
+	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	KASSERT(xfer->c_intr != NULL);
 	ret = xfer->c_intr(chp, xfer, 1);
+	if (ret == 0) /* irq was not for us, still waiting for irq */
+		chp->ch_flags |= ATACH_IRQ_WAIT;
 	return (ret);
 }
 
@@ -942,6 +950,8 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
+
+	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 
 	/*
 	 * if the current command is on an ATAPI device, issue a
@@ -1465,6 +1475,7 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 
 	if ((ata_c->flags & AT_POLL) == 0) {
+		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
 		callout_reset(&xfer->c_timo_callout, ata_c->timeout / 1000 * hz,
 		    wdctimeout, xfer);
 		return ATASTART_STARTED;
@@ -1587,6 +1598,7 @@ again:
 		wdc->dataout_pio(chp, drive_flags, data, bcount);
 		ata_c->flags |= AT_XFDONE;
 		if ((ata_c->flags & AT_POLL) == 0) {
+			chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
 			callout_reset(&xfer->c_timo_callout,
 			    mstohz(ata_c->timeout), wdctimeout, xfer);
 			ata_channel_unlock(chp);

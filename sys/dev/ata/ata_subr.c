@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.1 2017/10/10 17:19:38 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.2 2017/10/17 18:52:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.1 2017/10/10 17:19:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.2 2017/10/17 18:52:50 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -334,7 +334,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* finish the busmastering PIO */
 		(*wdc->piobm_done)(wdc->dma_arg,
 		    chp->ch_channel, xfer->c_drive);
-		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT);
+		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT);
 	}
 #endif
 
