@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.10 2017/10/17 14:53:23 rjs Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.11 2017/10/17 15:02:31 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.10 2017/10/17 14:53:23 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.11 2017/10/17 15:02:31 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1306,7 +1306,10 @@ sctp_inpcb_alloc(struct socket *so)
 	 * the EP.
 	 */
 	int i, error;
-	struct sctp_inpcb *inp, *n_inp;
+	struct sctp_inpcb *inp;
+#ifdef DEBUG
+	struct sctp_inpcb *n_inp;
+#endif
 	struct sctp_pcb *m;
 	struct timeval time;
 
@@ -1326,7 +1329,7 @@ sctp_inpcb_alloc(struct socket *so)
 	 * Probably we should move this to the invariant
 	 * compile options
 	 */
-/* #ifdef INVARIANTS*/
+#ifdef DEBUG
 	SCTP_INP_INFO_RLOCK();
 	inp = LIST_FIRST(&sctppcbinfo.listhead);
 	while (inp) {
@@ -1343,7 +1346,7 @@ sctp_inpcb_alloc(struct socket *so)
 		inp = n_inp;
 	}
 	SCTP_INP_INFO_RUNLOCK();
-/* #endif INVARIANTS*/
+#endif /* DEBUG */
 
 	SCTP_INP_INFO_WLOCK();
 	inp = (struct sctp_inpcb *)SCTP_ZONE_GET(sctppcbinfo.ipi_zone_ep);
