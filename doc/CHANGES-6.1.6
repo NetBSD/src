@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.115 2017/10/13 08:04:37 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.116 2017/10/17 16:01:23 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14835,4 +14835,21 @@ sys/arch/i386/i386/i386_trap.S			1.12 via patch
 
 	use %ss instead of %ds in trap06
 	[maxv, ticket #1505]
+
+external/bsd/wpa/dist/src/ap/ieee802_11.c	1.2
+external/bsd/wpa/dist/src/ap/wpa_auth.c		1.10
+external/bsd/wpa/dist/src/ap/wpa_auth.h		1.2
+external/bsd/wpa/dist/src/ap/wpa_auth_ft.c	1.2
+external/bsd/wpa/dist/src/ap/wpa_auth_i.h	1.2
+external/bsd/wpa/dist/src/common/wpa_common.h	1.3
+external/bsd/wpa/dist/src/rsn_supp/tdls.c	1.2
+external/bsd/wpa/dist/src/rsn_supp/wpa.c	1.2
+external/bsd/wpa/dist/src/rsn_supp/wpa_ft.c	1.2
+external/bsd/wpa/dist/src/rsn_supp/wpa_i.h	1.2
+external/bsd/wpa/dist/wpa_supplicant/wnm_sta.c	1.4
+
+	Apply upstream patches for CVE-2017-13077 CVE-2017-13078
+	CVE-2017-13079 CVE-2017-13080 CVE-2017-13081 CVE-2017-13082
+	CVE-2017-13086 CVE-2017-13087 CVE-2017-13088
+	[spz, ticket #1507]
 
