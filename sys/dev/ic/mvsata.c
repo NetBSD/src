@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.38 2017/10/10 16:30:23 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.39 2017/10/17 16:24:14 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.38 2017/10/10 16:30:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.39 2017/10/17 16:24:14 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -2829,7 +2829,7 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 	struct ata_bio *ata_bio;
 	struct ata_xfer *xfer;
 	uint32_t reg;
-	int erqqip, erqqop, erpqip, erpqop, prev_erpqop, quetag, handled = 0, n;
+	int erqqop, erpqip, erpqop, prev_erpqop, quetag, handled = 0, n;
 	int st, dmaerr;
 
 	/* First, Sync for Request Queue buffer */
@@ -2920,12 +2920,6 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 
 		mvsata_dma_bufunload(mvport, quetag, ata_bio->flags);
 
-#if 1	/* XXXX: flags clears here, because necessary the atabus layer. */
-		erqqip = (MVSATA_EDMA_READ_4(mvport, EDMA_REQQIP) &
-		    EDMA_REQQP_ERQQP_MASK) >> EDMA_REQQP_ERQQP_SHIFT;
-		if (erpqop == erqqip)
-			chp->ch_flags &= ~(ATACH_DMA_WAIT);
-#endif
 		mvsata_bio_intr(chp, xfer, 1);
 		if (xfer1 == NULL)
 			handled++;
@@ -2951,13 +2945,6 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 	reg &= ~EDMA_RESQP_ERPQP_MASK;
 	reg |= (erpqop << EDMA_RESQP_ERPQP_SHIFT);
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_RESQOP, reg);
-
-#if 0	/* already cleared ago? */
-	erqqip = (MVSATA_EDMA_READ_4(mvport, EDMA_REQQIP) &
-	    EDMA_REQQP_ERQQP_MASK) >> EDMA_REQQP_ERQQP_SHIFT;
-	if (erpqop == erqqip)
-		chp->ch_flags &= ~(ATACH_DMA_WAIT);
-#endif
 
 	return handled;
 }
