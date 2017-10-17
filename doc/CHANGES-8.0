@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.67 2017/10/15 20:19:09 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.68 2017/10/17 12:44:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6249,4 +6249,21 @@ sys/dev/pci/if_wm.c				1.539
 	   "EERD polling failed" error on attach.
 	- Print NVM offset and word count when EERD polling failed.
 	[msaitoh, ticket #306]
+
+external/bsd/wpa/dist/src/ap/ieee802_11.c	1.2
+external/bsd/wpa/dist/src/ap/wpa_auth.c		1.10
+external/bsd/wpa/dist/src/ap/wpa_auth.h		1.2
+external/bsd/wpa/dist/src/ap/wpa_auth_ft.c	1.2
+external/bsd/wpa/dist/src/ap/wpa_auth_i.h	1.2
+external/bsd/wpa/dist/src/common/wpa_common.h	1.3
+external/bsd/wpa/dist/src/rsn_supp/tdls.c	1.2
+external/bsd/wpa/dist/src/rsn_supp/wpa.c	1.2
+external/bsd/wpa/dist/src/rsn_supp/wpa_ft.c	1.2
+external/bsd/wpa/dist/src/rsn_supp/wpa_i.h	1.2
+external/bsd/wpa/dist/wpa_supplicant/wnm_sta.c	1.4
+
+	Apply upstream patches for CVE-2017-13077 CVE-2017-13078
+	CVE-2017-13079 CVE-2017-13080 CVE-2017-13081 CVE-2017-13082
+	CVE-2017-13086 CVE-2017-13087 CVE-2017-13088
+	[spz, ticket #324]
 
