@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.22 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: patch.c,v 1.23 2017/10/17 06:58:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.22 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.23 2017/10/17 06:58:15 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -77,6 +77,8 @@ void	_atomic_cas_cx8(void);
 void	_atomic_cas_cx8_end(void);
 
 extern void	*x86_lockpatch[];
+extern void	*x86_clacpatch[];
+extern void	*x86_stacpatch[];
 extern void	*x86_retpatch[];
 extern void	*atomic_lockpatch[];
 
@@ -235,6 +237,29 @@ x86_patch(bool early)
 			patchbytes(x86_retpatch[i], 0x0f, 0xae, 0xe8);
 		}
 	}
+
+#ifdef amd64
+	/*
+	 * If SMAP is present then patch the prepared holes with clac/stac
+	 * instructions.
+	 *
+	 * clac = 0x0f, 0x01, 0xca
+	 * stac = 0x0f, 0x01, 0xcb
+	 */
+	if (!early && cpu_feature[5] & CPUID_SEF_SMAP) {
+		KASSERT(rcr4() & CR4_SMAP);
+		for (i = 0; x86_clacpatch[i] != NULL; i++) {
+			/* ret,int3,int3 -> clac */
+			patchbytes(x86_clacpatch[i],
+			    0x0f, 0x01, 0xca);
+		}
+		for (i = 0; x86_stacpatch[i] != NULL; i++) {
+			/* ret,int3,int3 -> stac */
+			patchbytes(x86_stacpatch[i],
+			    0x0f, 0x01, 0xcb);
+		}
+	}
+#endif
 
 	/* Write back and invalidate cache, flush pipelines. */
 	wbinvd();

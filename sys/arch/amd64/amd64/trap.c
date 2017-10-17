@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.102 2017/10/17 06:58:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2017/10/17 06:58:15 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -553,6 +553,13 @@ trap(struct trapframe *frame)
 			/* SMEP might have brought us here */
 			if (cr2 < VM_MAXUSER_ADDRESS)
 				panic("prevented execution of %p (SMEP)",
+				    (void *)cr2);
+		}
+
+		if (cr2 < VM_MAXUSER_ADDRESS) {
+			/* SMAP might have brought us here */
+			if (onfault_handler(pcb, frame) == NULL)
+				panic("prevented access to %p (SMAP)",
 				    (void *)cr2);
 		}
 
