@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.9 2017/06/28 13:22:28 rjs Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.10 2017/10/17 14:53:23 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.9 2017/06/28 13:22:28 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.10 2017/10/17 14:53:23 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1670,15 +1670,6 @@ sctp_isport_inuse(struct sctp_inpcb *inp, uint16_t lport)
 	}
 	return (0);
 }
-
-#if !(defined(__FreeBSD__) || defined(__APPLE__))
-/*
- * Don't know why, but without this there is an unknown reference when
- * compiling NetBSD... hmm
- */
-extern void in6_sin6_2_sin (struct sockaddr_in *, struct sockaddr_in6 *sin6);
-#endif
-
 
 int
 sctp_inpcb_bind(struct socket *so, struct sockaddr *addr, struct lwp *l)
