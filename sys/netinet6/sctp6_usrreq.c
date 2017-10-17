@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.13 2017/04/20 09:19:19 ozaki-r Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.14 2017/10/17 19:23:42 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.13 2017/04/20 09:19:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.14 2017/10/17 19:23:42 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -609,6 +609,9 @@ sctp6_attach(struct socket *so, int proto)
 	}
 	so->so_send = sctp_sosend;
 
+#ifdef IPSEC
+	inp6->in6p_af = proto;
+#endif
 	inp6->in6p_hops = -1;	        /* use kernel default */
 	inp6->in6p_cksum = -1;	/* just to be sure */
 #ifdef INET
