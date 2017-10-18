@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.2 2017/10/15 06:37:32 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.3 2017/10/18 17:12:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -82,6 +82,12 @@ mm_palloc(size_t npages)
 	return pa;
 }
 
+static bool
+mm_pte_is_valid(pt_entry_t pte)
+{
+	return ((pte & PG_V) != 0);
+}
+
 paddr_t
 mm_vatopa(vaddr_t va)
 {
@@ -111,39 +117,46 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 {
 	size_t i, size, nL4e, nL3e, nL2e;
 	size_t L4e_idx, L3e_idx, L2e_idx;
-	paddr_t L3page_pa, L2page_pa, L1page_pa;
+	paddr_t pa;
 
-	/*
-	 * Initialize constants.
-	 */
 	size = endva - startva;
-	nL4e = roundup(size, NBPD_L4) / NBPD_L4;
-	nL3e = roundup(size, NBPD_L3) / NBPD_L3;
-	nL2e = roundup(size, NBPD_L2) / NBPD_L2;
+
+	/*
+	 * Build L4.
+	 */
 	L4e_idx = pl4_i(startva);
-	L3e_idx = pl3_i(startva);
-	L2e_idx = pl2_i(startva);
-
-	ASSERT(nL4e == 1);
+	nL4e = roundup(size, NBPD_L4) / NBPD_L4;
 	ASSERT(L4e_idx == 511);
-
-	/*
-	 * Allocate the physical pages.
-	 */
-	L3page_pa = mm_palloc(nL4e);
-	L2page_pa = mm_palloc(nL3e);
-	L1page_pa = mm_palloc(nL2e);
-
-	/*
-	 * Build the branch in the page tree. We link the levels together,
-	 * from L4 to L1.
-	 */
-	L4_BASE[L4e_idx] = L3page_pa | PG_V | PG_RW;
-	for (i = 0; i < nL3e; i++) {
-		L3_BASE[L3e_idx+i] = (L2page_pa + i * PAGE_SIZE) | PG_V | PG_RW;
+	ASSERT(nL4e == 1);
+	if (!mm_pte_is_valid(L4_BASE[L4e_idx])) {
+		pa = mm_palloc(1);
+		L4_BASE[L4e_idx] = pa | PG_V | PG_RW;
 	}
+
+	/*
+	 * Build L3.
+	 */
+	L3e_idx = pl3_i(startva);
+	nL3e = roundup(size, NBPD_L3) / NBPD_L3;
+	for (i = 0; i < nL3e; i++) {
+		if (mm_pte_is_valid(L3_BASE[L3e_idx+i])) {
+			continue;
+		}
+		pa = mm_palloc(1);
+		L3_BASE[L3e_idx+i] = pa | PG_V | PG_RW;
+	}
+
+	/*
+	 * Build L2.
+	 */
+	L2e_idx = pl2_i(startva);
+	nL2e = roundup(size, NBPD_L2) / NBPD_L2;
 	for (i = 0; i < nL2e; i++) {
-		L2_BASE[L2e_idx+i] = (L1page_pa + i * PAGE_SIZE) | PG_V | PG_RW;
+		if (mm_pte_is_valid(L2_BASE[L2e_idx+i])) {
+			continue;
+		}
+		pa = mm_palloc(1);
+		L2_BASE[L2e_idx+i] = pa | PG_V | PG_RW;
 	}
 }
 
