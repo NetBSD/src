@@ -43,6 +43,12 @@
 #include <machine/autoconf.h>
 #include <arch/powerpc/pic/picvar.h>
 
+#ifdef U3_HT_PIC_DEPUG
+#define DPRINTF aprint_error
+#else
+#define DPRINTF if (0) printf
+#endif
+
 struct u3_ht_irqmap {
 	int im_index;
 	int im_level;
@@ -78,6 +84,7 @@ static void u3_ht_finish_setup(struct pic_ops *);
 static int u3_ht_is_ht_irq(struct u3_ht_ops *, int);
 static void u3_ht_establish_ht_irq(struct u3_ht_ops *, int, int);
 static void u3_ht_enable_ht_irq(struct u3_ht_ops *, int);
+static void u3_ht_disable_ht_irq(struct u3_ht_ops *, int);
 static void u3_ht_ack_ht_irq(struct u3_ht_ops *, int);
 
 static void u3_ht_set_priority(struct u3_ht_ops *, int, int);
@@ -206,11 +213,20 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 
 	u3_ht_set_priority(u3_ht, 0, 15);
 
-	for (irq = 0; irq < pic->pic_numintrs; irq++) {
+	for (irq = 0; irq < 4; irq++) {
 		x = irq;
 		x |= OPENPIC_IMASK;
 		x |= OPENPIC_POLARITY_NEGATIVE;
 		x |= OPENPIC_SENSE_LEVEL;
+		x |= 8 << OPENPIC_PRIORITY_SHIFT;
+		u3_ht_write(u3_ht, OPENPIC_SRC_VECTOR(irq), x);
+		u3_ht_write(u3_ht, OPENPIC_IDEST(irq), 1 << 0);
+	}
+	for (irq = 4; irq < pic->pic_numintrs; irq++) {
+		x = irq;
+		x |= OPENPIC_IMASK;
+		x |= OPENPIC_POLARITY_NEGATIVE;
+		x |= OPENPIC_SENSE_EDGE;
 		x |= 8 << OPENPIC_PRIORITY_SHIFT;
 		u3_ht_write(u3_ht, OPENPIC_SRC_VECTOR(irq), x);
 		u3_ht_write(u3_ht, OPENPIC_IDEST(irq), 1 << 0);
@@ -253,6 +269,8 @@ setup_u3_ht_workarounds(struct u3_ht_ops *u3_ht)
 	ht_reg = mapiodev(reg[1], reg[2], false);
 	KASSERT(ht_reg != NULL);
 
+	memset(irqmap, 0, sizeof(u3_ht->ht_irqmap));
+
 	for (child = OF_child(parent); child != 0; child = OF_peer(child)) {
 		if (OF_getprop(child, "reg", reg, 4) != 4) 
 			continue;
@@ -284,6 +302,8 @@ setup_u3_ht_workarounds(struct u3_ht_ops *u3_ht)
 		nirq = in32rb(base + 0x04);
 		nirq = (nirq >> 16) & 0xff;
 
+		DPRINTF("dev %08x nirq %d pos %08x\n", (uint32_t)base, nirq, (uint32_t)pos);
+		DPRINTF("devreg %08x\n", in32rb(dev_reg + PCI_ID_REG));
 		for (i = 0; i <= nirq; i++) {
 			out8rb(base + 0x02, 0x10 + (i << 1));
 			tmp = in32rb(base + 0x04);
@@ -333,6 +353,9 @@ u3_ht_disable_irq(struct pic_ops *pic, int irq)
  	x = u3_ht_read(u3_ht, OPENPIC_SRC_VECTOR(irq));
  	x |= OPENPIC_IMASK;
  	u3_ht_write(u3_ht, OPENPIC_SRC_VECTOR(irq), x);
+
+	if (u3_ht_is_ht_irq(u3_ht, irq))
+		u3_ht_disable_ht_irq(u3_ht, irq);
 }
 
 static int
@@ -385,8 +408,8 @@ u3_ht_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	if (u3_ht_is_ht_irq(u3_ht, irq))
 		u3_ht_establish_ht_irq(u3_ht, irq, type);
 
-	aprint_debug("%s: setting IRQ %d to priority %d\n", __func__, irq,
-	    realpri);
+	aprint_error("%s: setting IRQ %d %d to priority %d %x\n", __func__, irq,
+	    type, realpri, x);
 }
 
 static void
@@ -422,10 +445,15 @@ u3_ht_establish_ht_irq(struct u3_ht_ops *u3_ht, int irq, int type)
 	out8rb(irqmap->im_base + 0x02, 0x10 + (irqmap->im_index << 1));
 
 	x = in32rb(irqmap->im_base + 0x04);
-	x &= ~0x23;
+	/* mask interrupt */
+	out32rb(irqmap->im_base + 0x04, x | 1);
+
+	/* mask out EOI and LEVEL bits */
+	x &= ~0x22;
 
 	if (type == IST_LEVEL_HIGH || type == IST_LEVEL_LOW) {
 		irqmap->im_level = 1;
+		DPRINTF("level\n");
 		x |= 0x22;
 	} else {
 		irqmap->im_level = 0;
@@ -446,6 +474,18 @@ u3_ht_enable_ht_irq(struct u3_ht_ops *u3_ht, int irq)
 	out32rb(irqmap->im_base + 0x04, x);
 
 	u3_ht_ack_ht_irq(u3_ht, irq);
+}
+
+static void
+u3_ht_disable_ht_irq(struct u3_ht_ops *u3_ht, int irq)
+{
+	struct u3_ht_irqmap *irqmap = &u3_ht->ht_irqmap[irq];
+	u_int x;
+
+	out8rb(irqmap->im_base + 0x02, 0x10 + (irqmap->im_index << 1));
+	x = in32rb(irqmap->im_base + 0x04);
+	x |= 0x01;
+	out32rb(irqmap->im_base + 0x04, x);
 }
 
 static void
