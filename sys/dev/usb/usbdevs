@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.740 2017/09/29 22:05:54 scole Exp $
+$NetBSD: usbdevs,v 1.741 2017/10/18 16:00:53 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2172,6 +2172,7 @@ product MELCO RT2870_2		0x0150	RT2870
 product MELCO WLIUCGNHP		0x0158	WLI-UC-GNHP
 product MELCO WLIUCGN		0x015d	WLI-UC-GN
 product MELCO WLIUCG301N	0x016f	WLI-UC-G301N
+product MELCO CEWL_1		0x017f	Sony UWA-BR100 WLAN
 product MELCO WLIUCGNM		0x01a2	WLI-UC-GNM
 product MELCO WLIUCGNM2T	0x01ee	WLI-UC-GNM2T
 product MELCO WIU2300D		0x0241	WI-U2-300D
