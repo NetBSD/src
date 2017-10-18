@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.104 2017/10/13 04:52:40 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.105 2017/10/18 10:43:32 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2726,11 +2726,13 @@ ixgbe_set_promisc(struct adapter *adapter)
 	struct ether_multistep step;
 	struct ethercom *ec = &adapter->osdep.ec;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
 	rctl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
 	rctl &= (~IXGBE_FCTRL_UPE);
 	if (ifp->if_flags & IFF_ALLMULTI)
 		mcnt = MAX_NUM_MULTICAST_ADDRESSES;
 	else {
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
@@ -2738,6 +2740,7 @@ ixgbe_set_promisc(struct adapter *adapter)
 			mcnt++;
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 	}
 	if (mcnt < MAX_NUM_MULTICAST_ADDRESSES)
 		rctl &= (~IXGBE_FCTRL_MPE);
@@ -3906,12 +3909,14 @@ ixgbe_set_multi(struct adapter *adapter)
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
 	IOCTL_DEBUGOUT("ixgbe_set_multi: begin");
 
 	mta = adapter->mta;
 	bzero(mta, sizeof(*mta) * MAX_NUM_MULTICAST_ADDRESSES);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if ((mcnt == MAX_NUM_MULTICAST_ADDRESSES) ||
@@ -3926,6 +3931,7 @@ ixgbe_set_multi(struct adapter *adapter)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	fctrl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
 	fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
