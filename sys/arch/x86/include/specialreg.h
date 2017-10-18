@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.103 2017/10/13 13:53:54 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.104 2017/10/18 03:38:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -299,12 +299,13 @@
 #define CPUID_DSPM_HWP_EPP __BIT(10)	/* HWP Energy Performance Preference */
 #define CPUID_DSPM_HWP_PLR __BIT(11)	/* HWP Package Level Request */
 #define CPUID_DSPM_HDC	__BIT(13)	/* Hardware Duty Cycling */
+#define CPUID_DSPM_TBMT3 __BIT(14)	/* Turbo Boost Max Technology 3.0 */
 
 #define CPUID_DSPM_FLAGS	"\20" \
 	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			\
 	"\5" "PLN"	"\6" "ECMD"	"\7" "PTM"	"\10" "HWP"	\
 	"\11" "HWP_NOTIFY" "\12" "HWP_ACTWIN" "\13" "HWP_EPP" "\14" "HWP_PLR" \
-			"\16" "HDC"
+			"\16" "HDC"	"\17" "TBM3"
 
 /*
  * Intel Digital Thermal Sensor and
