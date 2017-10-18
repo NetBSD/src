@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.71 2017/10/13 08:17:44 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.72 2017/10/18 10:43:32 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1048,8 +1048,10 @@ ixv_set_multi(struct adapter *adapter)
 	u8                 *update_ptr;
 	int                mcnt = 0;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
 	IOCTL_DEBUGOUT("ixv_set_multi: begin");
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		bcopy(enm->enm_addrlo,
@@ -1061,6 +1063,7 @@ ixv_set_multi(struct adapter *adapter)
 			break;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	update_ptr = mta;
 
