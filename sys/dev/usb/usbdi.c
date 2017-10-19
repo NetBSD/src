@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.173 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.174 2017/10/19 05:39:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.173 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.174 2017/10/19 05:39:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -856,7 +856,7 @@ usbd_get_interface(struct usbd_interface *iface, uint8_t *aiface)
 
 /*** Internal routines ***/
 
-/* Dequeue all pipe operations, called at splusb(). */
+/* Dequeue all pipe operations, called with bus lock held. */
 Static usbd_status
 usbd_ar_pipe(struct usbd_pipe *pipe)
 {
@@ -999,7 +999,8 @@ usb_insert_transfer(struct usbd_xfer *xfer)
 	    xfer, pipe, pipe->up_running, xfer->ux_timeout);
 
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
-	KASSERT(xfer->ux_state == XFER_BUSY);
+	KASSERTMSG(xfer->ux_state == XFER_BUSY, "xfer %p state is %x", xfer,
+	    xfer->ux_state);
 
 #ifdef DIAGNOSTIC
 	xfer->ux_state = XFER_ONQU;
