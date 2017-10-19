@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.193 2017/10/12 02:40:34 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.194 2017/10/19 05:52:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.193 2017/10/12 02:40:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.194 2017/10/19 05:52:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3499,15 +3499,15 @@ pci_conf_print_dpa_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static const char *
-pci_conf_print_tph_req_cap_sttabloc(unsigned char val)
+pci_conf_print_tph_req_cap_sttabloc(uint8_t val)
 {
 
 	switch (val) {
-	case 0x0:
+	case PCI_TPH_REQ_STTBLLOC_NONE:
 		return "Not Present";
-	case 0x1:
+	case PCI_TPH_REQ_STTBLLOC_TPHREQ:
 		return "in the TPH Requester Capability Structure";
-	case 0x2:
+	case PCI_TPH_REQ_STTBLLOC_MSIX:
 		return "in the MSI-X Table";
 	default:
 		return "Unknown";
@@ -3519,6 +3519,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 {
 	pcireg_t reg;
 	int size, i, j;
+	uint8_t sttbloc;
 
 	printf("\n  TPH Requester Extended Capability\n");
 
@@ -3528,9 +3529,9 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("Interrupt Vector Mode Supported", reg, PCI_TPH_REQ_CAP_INTVEC);
 	onoff("Device Specific Mode Supported", reg, PCI_TPH_REQ_CAP_DEVSPEC);
 	onoff("Extend TPH Reqester Supported", reg, PCI_TPH_REQ_CAP_XTPHREQ);
+	sttbloc = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC);
 	printf("      ST Table Location: %s\n",
-	    pci_conf_print_tph_req_cap_sttabloc(
-		    (unsigned char)__SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC)));
+	    pci_conf_print_tph_req_cap_sttabloc(sttbloc));
 	size = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLSIZ) + 1;
 	printf("      ST Table Size: %d\n", size);
 
@@ -3566,7 +3567,10 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		printf("(reserved vaule)\n");
 		break;
 	}
-	
+
+	if (sttbloc != PCI_TPH_REQ_STTBLLOC_TPHREQ)
+		return;
+
 	for (i = 0; i < size ; i += 2) {
 		reg = regs[o2i(extcapoff + PCI_TPH_REQ_STTBL + i / 2)];
 		for (j = 0; j < 2 ; j++) {

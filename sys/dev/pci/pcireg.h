@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.134 2017/10/10 03:11:01 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.135 2017/10/19 05:52:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1904,6 +1904,9 @@ struct pci_rom {
 #define	PCI_TPH_REQ_CAP_DEVSPEC	__BIT(2)   /* Device Specific Mode Supported */
 #define	PCI_TPH_REQ_CAP_XTPHREQ	__BIT(8)    /* Extend TPH Reqester Supported */
 #define	PCI_TPH_REQ_CAP_STTBLLOC __BITS(10, 9)	/* ST Table Location */
+#define	PCI_TPH_REQ_STTBLLOC_NONE 	0	/* not present */
+#define	PCI_TPH_REQ_STTBLLOC_TPHREQ 	1	/* in the TPHREQ cap */
+#define	PCI_TPH_REQ_STTBLLOC_MSIX 	2	/* in the MSI-X table */
 #define	PCI_TPH_REQ_CAP_STTBLSIZ __BITS(26, 16)	/* ST Table Size */
 #define	PCI_TPH_REQ_CTL	0x08	/* TPH Requester Control */
 #define	PCI_TPH_REQ_CTL_STSEL	__BITS(2, 0)	/* ST Mode Select */
