@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.40 2017/10/15 11:39:42 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.41 2017/10/19 19:05:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.40 2017/10/15 11:39:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.41 2017/10/19 19:05:53 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_pmc.h"
@@ -601,9 +601,6 @@ x86_set_sdbase32(void *arg, char which, lwp_t *l, bool direct)
 		    sizeof(struct segment_descriptor));
 		if (l == curlwp) {
 			update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &usd);
-#ifdef __x86_64__
-			setfs(GSEL(GUFS_SEL, SEL_UPL));
-#endif
 		}
 		tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
 	} else /* which == 'g' */ {
