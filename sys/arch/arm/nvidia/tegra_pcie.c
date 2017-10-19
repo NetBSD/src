@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.22 2017/09/27 10:19:13 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.23 2017/10/19 16:01:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.22 2017/09/27 10:19:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.23 2017/10/19 16:01:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -355,6 +355,7 @@ tegra_pcie_enable_clocks(struct tegra_pcie_softc * const sc)
 	}
 }
 
+#if 0
 static void
 tegra_pcie_reset_port(struct tegra_pcie_softc * const sc, int index)
 {
@@ -370,6 +371,7 @@ tegra_pcie_reset_port(struct tegra_pcie_softc * const sc, int index)
 	val |= AFI_PEXn_CTRL_RST_L;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_PEXn_CTRL_REG(index), val);
 }
+#endif
 
 static void
 tegra_pcie_enable_ports(struct tegra_pcie_softc * const sc)
@@ -400,7 +402,9 @@ tegra_pcie_enable_ports(struct tegra_pcie_softc * const sc)
 		val |= AFI_PEXn_CTRL_REFCLK_OVERRIDE_EN;
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_PEXn_CTRL_REG(index), val);
 
+#if 0
 		tegra_pcie_reset_port(sc, index);
+#endif
 
 	}
 }
