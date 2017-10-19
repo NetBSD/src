@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1182 2017/10/09 10:28:33 kre Exp $
+#	$NetBSD: files,v 1.1183 2017/10/19 23:58:41 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -1414,6 +1414,10 @@ file	dev/ic/nvme.c			nvme
 
 attach	ld at nvme with ld_nvme
 file	dev/ic/ld_nvme.c		ld_nvme
+
+# Broadcom FullMAC 802.11 driver
+device	bwfm: arp, ifnet, wlan
+file	dev/ic/bwfm.c			bwfm
 
 # legitimate pseudo-devices
 #
