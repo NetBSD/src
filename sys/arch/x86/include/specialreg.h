@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.104 2017/10/18 03:38:32 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.105 2017/10/19 06:29:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -539,13 +539,18 @@
 #define CPUID_AMD_SVM_FlushByASID	0x00000040
 #define CPUID_AMD_SVM_DecodeAssist	0x00000080
 #define CPUID_AMD_SVM_PauseFilter	0x00000400
+#define CPUID_AMD_SVM_PFThreshold	0x0x001000 /* PAUSE filter threshold */
+#define CPUID_AMD_SVM_AVIC		0x00002000 /* AMD Virtual intr. ctrl */
+#define CPUID_AMD_SVM_V_VMSAVE_VMLOAD	0x00008000 /* Virtual VM{SAVE/LOAD} */
+#define CPUID_AMD_SVM_vGIF		0x00010000 /* Virtualized GIF */
 #define CPUID_AMD_SVM_FLAGS	 "\20" \
-	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS" \
-	"\5" "TSCRate"	"\6" "VMCBCleanBits" \
-		"\7" "FlushByASID"	"\10" "DecodeAssist" \
+	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
+	"\5" "TSCRate"	"\6" "VMCBCleanBits" 				\
+			        "\7" "FlushByASID" "\10" "DecodeAssist"	\
 	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11" \
-	"\15" "B12"	"\16" "B13"	"\17" "B17"	"\20" "B18" \
-	"\21" "B19"
+	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
+						"\20" "V_VMSAVE_VMLOAD"	\
+	"\21" "VGIF"
 
 /*
  * Centaur Extended Feature flags
