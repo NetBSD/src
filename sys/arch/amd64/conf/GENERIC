@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.466 2017/09/14 07:58:39 mrg Exp $
+# $NetBSD: GENERIC,v 1.467 2017/10/19 23:59:56 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.466 $"
+#ident		"GENERIC-$Revision: 1.467 $"
 
 maxusers	64		# estimated number of users
 
@@ -1025,6 +1025,7 @@ run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
 urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
 urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
 zyd*	at uhub? port ?		# Zydas ZD1211
+bwfm*	at uhub? port ?		# Broadcom FullMAC
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
