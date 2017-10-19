@@ -744,7 +744,7 @@ main ()
   long i;
   for (i = 0; i < 88 + 1; i++)
     a[i] = ~0L;
-  r = malloc (10000 * sizeof (unsigned long));
+  r = calloc (10000, sizeof (unsigned long));
   r2 = r;
   for (i = 0; i < 528; i += 23)
     {
