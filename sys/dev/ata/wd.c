@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.432 2017/10/14 13:20:32 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.433 2017/10/19 20:45:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.432 2017/10/14 13:20:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.433 2017/10/19 20:45:07 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -102,11 +102,10 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.432 2017/10/14 13:20:32 jdolecek Exp $");
 
 #define	WDLABELDEV(dev)	(MAKEWDDEV(major(dev), WDUNIT(dev), RAW_PART))
 
-#define DEBUG_INTR   0x01
-#define DEBUG_XFERS  0x02
-#define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
+#define DEBUG_DETACH 0x20
+#define	DEBUG_XFERS  0x40
 #ifdef ATADEBUG
 int wdcdebug_wd_mask = 0x0;
 #define ATADEBUG_PRINT(args, level) \
@@ -659,15 +658,21 @@ wdstart(device_t self)
 	 * once flush is pending, it will get handled as soon as xfer
 	 * is available.
 	 */
-	if (ISSET(wd->sc_flags, WDF_FLUSH_PEND))
+	if (ISSET(wd->sc_flags, WDF_FLUSH_PEND)) {
+		ATADEBUG_PRINT(("wdstart %s flush pend\n",
+		    device_xname(wd->sc_dev)), DEBUG_XFERS);
 		goto out;
+	}
 
 	while (bufq_peek(wd->sc_q) != NULL) {
 		/* First try to get xfer. Limit to drive openings iff NCQ. */
 		xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0,
 		    WD_USE_NCQ(wd) ? WD_MAX_OPENINGS(wd) : 0);
-		if (xfer == NULL)
+		if (xfer == NULL) {
+			ATADEBUG_PRINT(("wdstart %s no xfer\n",
+			    device_xname(wd->sc_dev)), DEBUG_XFERS);
 			break;
+		}
 
 		/* There is got to be a buf for us */
 		bp = bufq_get(wd->sc_q);
