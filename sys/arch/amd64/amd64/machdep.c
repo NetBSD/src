@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.270 2017/10/19 18:36:31 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.271 2017/10/19 19:05:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2017/10/19 18:36:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2017/10/19 19:05:53 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -453,7 +453,7 @@ x86_64_tls_switch(struct lwp *l)
 		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
 		setds(GSEL(GUDATA32_SEL, SEL_UPL));
 		setes(GSEL(GUDATA32_SEL, SEL_UPL));
-		setfs(tf->tf_fs);
+		setfs(GSEL(GUDATA32_SEL, SEL_UPL));
 		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
 	} else {
 		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
@@ -2138,7 +2138,6 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	kpreempt_disable();
 	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
 	update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
-	setfs(fssel);
 	setusergs(gssel);
 	tf->tf_fs = fssel;
 	tf->tf_gs = gssel;
