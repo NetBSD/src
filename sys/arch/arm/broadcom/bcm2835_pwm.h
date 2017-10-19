@@ -1,4 +1,4 @@
-/* $NetBSD: */
+/*	$NetBSD: bcm2835_pwm.h,v 1.2 2017/10/19 05:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
