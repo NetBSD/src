@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.35 2017/08/13 08:07:52 maxv Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.36 2017/10/19 09:32:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35 2017/08/13 08:07:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.36 2017/10/19 09:32:01 maxv Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -103,6 +103,11 @@ int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 #define copy_to_reg(reg, REG, idx) regs->regs[_REG_##REG] = tf->tf_##reg;
 	_FRAME_GREG(copy_to_reg)
@@ -114,6 +119,11 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	process_read_fpregs_xmm(l, &regs->fxstate);
 
@@ -123,6 +133,11 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 int
 process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
 {
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	x86_dbregs_read(l, regs);
 
@@ -133,9 +148,14 @@ int
 process_write_regs(struct lwp *l, const struct reg *regp)
 {
 	struct trapframe *tf = process_frame(l);
+	struct proc *p = l->l_proc;
 	int error;
 	const long *regs = regp->regs;
 	int err, trapno;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	/*
 	 * Check for security violations.
@@ -168,6 +188,11 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	process_write_fpregs_xmm(l, &regs->fxstate);
 	return 0;
@@ -176,7 +201,12 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 int
 process_write_dbregs(struct lwp *l, const struct dbreg *regs, size_t sz)
 {
+	struct proc *p = l->l_proc;
 	int error;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	/*
 	 * Check for security violations.
@@ -207,6 +237,11 @@ int
 process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
+	struct proc *p = l->l_proc;
+
+	if (p->p_flag & PK_32) {
+		return EINVAL;
+	}
 
 	if ((uint64_t)addr >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
