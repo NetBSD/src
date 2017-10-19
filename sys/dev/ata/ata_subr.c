@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.2 2017/10/17 18:52:50 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.3 2017/10/19 20:45:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.2 2017/10/17 18:52:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.3 2017/10/19 20:45:07 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -248,8 +248,9 @@ ata_get_xfer_ext(struct ata_channel *chp, int flags, uint8_t openings)
 	uint32_t avail, slot, mask;
 	int error;
 
-	ATADEBUG_PRINT(("%s: channel %d flags %x openings %d\n",
-	    __func__, chp->ch_channel, flags, openings),
+	ATADEBUG_PRINT(("%s: channel %d fl 0x%x op %d qavail 0x%x qact %d",
+	    __func__, chp->ch_channel, flags, openings,
+	    chq->queue_xfers_avail, chq->queue_active),
 	    DEBUG_XFERS);
 
 	ata_channel_lock(chp);
@@ -307,6 +308,8 @@ retry:
 
 out:
 	ata_channel_unlock(chp);
+
+	ATADEBUG_PRINT((" xfer %p\n", xfer), DEBUG_XFERS);
 	return xfer;
 }
 
@@ -352,6 +355,11 @@ out:
 	}
 
 	ata_channel_unlock(chp);
+
+	ATADEBUG_PRINT(("%s: channel %d xfer %p qavail 0x%x qact %d\n",
+	    __func__, chp->ch_channel, xfer, chq->queue_xfers_avail,
+	    chq->queue_active),
+	    DEBUG_XFERS);
 }
 
 /*

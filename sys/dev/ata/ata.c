@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.138 2017/10/18 08:38:35 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.139 2017/10/19 20:45:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.138 2017/10/18 08:38:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.139 2017/10/19 20:45:07 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1132,15 +1132,15 @@ atastart(struct ata_channel *chp)
 again:
 	KASSERT(chq->queue_active <= chq->queue_openings);
 	if (chq->queue_active == chq->queue_openings) {
-		ATADEBUG_PRINT(("%s: channel completely busy\n", __func__),
-		    DEBUG_XFERS);
+		ATADEBUG_PRINT(("%s(chp=%p): channel %d completely busy\n",
+		    __func__, chp, chp->ch_channel), DEBUG_XFERS);
 		goto out;
 	}
 
 	/* is there a xfer ? */
 	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL) {
-		ATADEBUG_PRINT(("%s: queue_xfer is empty\n", __func__),
-		    DEBUG_XFERS);
+		ATADEBUG_PRINT(("%s(chp=%p): channel %d queue_xfer is empty\n",
+		    __func__, chp, chp->ch_channel), DEBUG_XFERS);
 		goto out;
 	}
 
