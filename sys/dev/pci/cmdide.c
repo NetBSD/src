@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.39 2017/10/07 16:05:33 jdolecek Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.40 2017/10/19 20:11:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.39 2017/10/07 16:05:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.40 2017/10/19 20:11:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,24 +57,25 @@ static void cmd680_setup_channel(struct ata_channel*);
 static void cmd680_channel_map(const struct pci_attach_args *,
 			       struct pciide_softc *, int);
 
+/* Older CMD64X doesn't have independent channels */
 static const struct pciide_product_desc pciide_cmd_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_640,
-	  0,
+	  IDE_SHARED_CHANNELS,
 	  "CMD Technology PCI0640",
 	  cmd_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_643,
-	  0,
+	  IDE_SHARED_CHANNELS,
 	  "CMD Technology PCI0643",
 	  cmd0643_9_chip_map,
 	},
 	{ PCI_PRODUCT_CMDTECH_646,
-	  0,
+	  IDE_SHARED_CHANNELS,
 	  "CMD Technology PCI0646",
 	  cmd0643_9_chip_map,
 	},
 	{ PCI_PRODUCT_CMDTECH_648,
-	  0,
+	  IDE_SHARED_CHANNELS,
 	  "CMD Technology PCI0648",
 	  cmd0643_9_chip_map,
 	},
@@ -84,7 +85,7 @@ static const struct pciide_product_desc pciide_cmd_products[] =  {
 	  cmd0643_9_chip_map,
 	},
 	{ PCI_PRODUCT_CMDTECH_680,
-	  0,
+	  IDE_SHARED_CHANNELS,
 	  "Silicon Image 0680",
 	  cmd680_chip_map,
 	},
@@ -126,7 +127,8 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	u_int8_t ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CTRL);
-	int interface, one_channel;
+	int interface;
+	bool one_channel = ISSET(sc->sc_pp->ide_flags, IDE_SHARED_CHANNELS);
 
 	/*
 	 * The 0648/0649 can be told to identify as a RAID controller.
@@ -148,18 +150,6 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
-	/*
-	 * Older CMD64X doesn't have independent channels
-	 */
-	switch (sc->sc_pp->ide_product) {
-	case PCI_PRODUCT_CMDTECH_649:
-		one_channel = 0;
-		break;
-	default:
-		one_channel = 1;
-		break;
-	}
-
 	if (channel > 0 && one_channel) {
 		cp->ata_channel.ch_queue =
 		    sc->pciide_channels[0].ata_channel.ch_queue;
@@ -174,11 +164,12 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	}
 
 	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-	    "%s channel %s to %s mode\n", cp->name,
+	    "%s channel %s to %s mode%s\n", cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
 	    "configured" : "wired",
 	    (interface & PCIIDE_INTERFACE_PCI(channel)) ?
-	    "native-PCI" : "compatibility");
+	    "native-PCI" : "compatibility",
+	    one_channel ? ", channel non-independant" : "");
 
 	/*
 	 * with a CMD PCI64x, if we get here, the first channel is enabled:
