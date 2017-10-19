@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.53 2017/10/15 12:49:53 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.54 2017/10/19 10:01:09 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.53 2017/10/15 12:49:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.54 2017/10/19 10:01:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -366,15 +366,15 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	mctx->__gregs[_REG_RCX] = lsigctx->rcx;
 	mctx->__gregs[_REG_RIP] = lsigctx->rip;
 	mctx->__gregs[_REG_RFLAGS] = lsigctx->eflags;
-	mctx->__gregs[_REG_CS] = lsigctx->cs;
-	mctx->__gregs[_REG_GS] = lsigctx->gs;
-	mctx->__gregs[_REG_FS] = lsigctx->fs;
+	mctx->__gregs[_REG_CS] = lsigctx->cs & 0xFFFF;
+	mctx->__gregs[_REG_GS] = lsigctx->gs & 0xFFFF;
+	mctx->__gregs[_REG_FS] = lsigctx->fs & 0xFFFF;
 	mctx->__gregs[_REG_ERR] = lsigctx->err;
 	mctx->__gregs[_REG_TRAPNO] = lsigctx->trapno;
-	mctx->__gregs[_REG_ES] = tf->tf_es;
-	mctx->__gregs[_REG_DS] = tf->tf_ds;
+	mctx->__gregs[_REG_ES] = tf->tf_es & 0xFFFF;
+	mctx->__gregs[_REG_DS] = tf->tf_ds & 0xFFFF;
 	mctx->__gregs[_REG_RSP] = lsigctx->rsp; /* XXX */
-	mctx->__gregs[_REG_SS] = tf->tf_ss;
+	mctx->__gregs[_REG_SS] = tf->tf_ss & 0xFFFF;
 
 	/*
 	 * FPU state 
