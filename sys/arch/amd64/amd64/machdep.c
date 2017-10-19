@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.268 2017/10/17 07:48:10 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.269 2017/10/19 10:01:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2017/10/17 07:48:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2017/10/19 10:01:09 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2123,6 +2123,8 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	KASSERT(l == curlwp);
 
 	tf = l->l_md.md_regs;
+	fssel &= 0xFFFF;
+	gssel &= 0xFFFF;
 
 	pcb = lwp_getpcb(l);
 	kpreempt_disable();

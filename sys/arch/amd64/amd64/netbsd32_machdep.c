@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.111 2017/10/15 12:49:53 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.112 2017/10/19 10:01:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.111 2017/10/15 12:49:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.112 2017/10/19 10:01:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -208,10 +208,10 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_code = ksi->ksi_trap;
 	frame.sf_scp = (uint32_t)(u_long)&fp->sf_sc;
 
-	frame.sf_sc.sc_ds = tf->tf_ds;
-	frame.sf_sc.sc_es = tf->tf_es;
-	frame.sf_sc.sc_fs = tf->tf_fs;
-	frame.sf_sc.sc_gs = tf->tf_gs;
+	frame.sf_sc.sc_ds = tf->tf_ds & 0xFFFF;
+	frame.sf_sc.sc_es = tf->tf_es & 0xFFFF;
+	frame.sf_sc.sc_fs = tf->tf_fs & 0xFFFF;
+	frame.sf_sc.sc_gs = tf->tf_gs & 0xFFFF;
 
 	frame.sf_sc.sc_eflags = tf->tf_rflags;
 	frame.sf_sc.sc_edi = tf->tf_rdi;
@@ -222,9 +222,9 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_ecx = tf->tf_rcx;
 	frame.sf_sc.sc_eax = tf->tf_rax;
 	frame.sf_sc.sc_eip = tf->tf_rip;
-	frame.sf_sc.sc_cs = tf->tf_cs;
+	frame.sf_sc.sc_cs = tf->tf_cs & 0xFFFF;
 	frame.sf_sc.sc_esp = tf->tf_rsp;
-	frame.sf_sc.sc_ss = tf->tf_ss;
+	frame.sf_sc.sc_ss = tf->tf_ss & 0xFFFF;
 	frame.sf_sc.sc_trapno = tf->tf_trapno;
 	frame.sf_sc.sc_err = tf->tf_err;
 
@@ -417,8 +417,8 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
-	tf->tf_ds = context.sc_ds;
-	tf->tf_es = context.sc_es;
+	tf->tf_ds = context.sc_ds & 0xFFFF;
+	tf->tf_es = context.sc_es & 0xFFFF;
 	cpu_fsgs_reload(l, context.sc_fs, context.sc_gs);
 	tf->tf_rflags = context.sc_eflags;
 	tf->tf_rdi = context.sc_edi;
@@ -430,9 +430,9 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 	tf->tf_rax = context.sc_eax;
 
 	tf->tf_rip = context.sc_eip;
-	tf->tf_cs = context.sc_cs;
+	tf->tf_cs = context.sc_cs & 0xFFFF;
 	tf->tf_rsp = context.sc_esp;
-	tf->tf_ss = context.sc_ss;
+	tf->tf_ss = context.sc_ss & 0xFFFF;
 
 	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
@@ -595,12 +595,12 @@ netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 	tf->tf_rdi = regs->r_edi;
 	tf->tf_rip = regs->r_eip;
 	tf->tf_rflags = regs->r_eflags;
-	tf->tf_cs = regs->r_cs;
-	tf->tf_ss = regs->r_ss;
-	tf->tf_ds = regs->r_ds;
-	tf->tf_es = regs->r_es;
-	tf->tf_fs = regs->r_fs;
-	tf->tf_gs = regs->r_gs;
+	tf->tf_cs = regs->r_cs & 0xFFFF;
+	tf->tf_ss = regs->r_ss & 0xFFFF;
+	tf->tf_ds = regs->r_ds & 0xFFFF;
+	tf->tf_es = regs->r_es & 0xFFFF;
+	tf->tf_fs = regs->r_fs & 0xFFFF;
+	tf->tf_gs = regs->r_gs & 0xFFFF;
 
 	return 0;
 }
@@ -943,8 +943,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 			return error;
 
 		cpu_fsgs_reload(l, gr[_REG32_FS], gr[_REG32_GS]);
-		tf->tf_es = gr[_REG32_ES];
-		tf->tf_ds = gr[_REG32_DS];
+		tf->tf_es = gr[_REG32_ES] & 0xFFFF;
+		tf->tf_ds = gr[_REG32_DS] & 0xFFFF;
 		/* Only change the user-alterable part of eflags */
 		tf->tf_rflags &= ~PSL_USER;
 		tf->tf_rflags |= (gr[_REG32_EFL] & PSL_USER);
@@ -956,9 +956,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_rcx    = gr[_REG32_ECX];
 		tf->tf_rax    = gr[_REG32_EAX];
 		tf->tf_rip    = gr[_REG32_EIP];
-		tf->tf_cs     = gr[_REG32_CS];
+		tf->tf_cs     = gr[_REG32_CS] & 0xFFFF;
 		tf->tf_rsp    = gr[_REG32_UESP];
-		tf->tf_ss     = gr[_REG32_SS];
+		tf->tf_ss     = gr[_REG32_SS] & 0xFFFF;
 	}
 
 	if ((flags & _UC_TLSBASE) != 0)
@@ -989,10 +989,10 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	__greg32_t ras_eip;
 
 	/* Save register context. */
-	gr[_REG32_GS]  = tf->tf_gs;
-	gr[_REG32_FS]  = tf->tf_fs;
-	gr[_REG32_ES]  = tf->tf_es;
-	gr[_REG32_DS]  = tf->tf_ds;
+	gr[_REG32_GS]  = tf->tf_gs & 0xFFFF;
+	gr[_REG32_FS]  = tf->tf_fs & 0xFFFF;
+	gr[_REG32_ES]  = tf->tf_es & 0xFFFF;
+	gr[_REG32_DS]  = tf->tf_ds & 0xFFFF;
 	gr[_REG32_EFL] = tf->tf_rflags;
 	gr[_REG32_EDI]    = tf->tf_rdi;
 	gr[_REG32_ESI]    = tf->tf_rsi;
@@ -1002,10 +1002,10 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_ECX]    = tf->tf_rcx;
 	gr[_REG32_EAX]    = tf->tf_rax;
 	gr[_REG32_EIP]    = tf->tf_rip;
-	gr[_REG32_CS]     = tf->tf_cs;
+	gr[_REG32_CS]     = tf->tf_cs & 0xFFFF;
 	gr[_REG32_ESP]    = tf->tf_rsp;
 	gr[_REG32_UESP]   = tf->tf_rsp;
-	gr[_REG32_SS]     = tf->tf_ss;
+	gr[_REG32_SS]     = tf->tf_ss & 0xFFFF;
 	gr[_REG32_TRAPNO] = tf->tf_trapno;
 	gr[_REG32_ERR]    = tf->tf_err;
 
@@ -1166,10 +1166,10 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	if (error != 0)
 		return error;
 
-	tf->tf_gs = context.sc_gs;
-	tf->tf_fs = context.sc_fs;		
-	tf->tf_es = context.sc_es;
-	tf->tf_ds = context.sc_ds;
+	tf->tf_gs = context.sc_gs & 0xFFFF;
+	tf->tf_fs = context.sc_fs & 0xFFFF;		
+	tf->tf_es = context.sc_es & 0xFFFF;
+	tf->tf_ds = context.sc_ds & 0xFFFF;
 	tf->tf_rflags = context.sc_eflags;
 	tf->tf_rdi = context.sc_edi;
 	tf->tf_rsi = context.sc_esi;
@@ -1179,9 +1179,9 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	tf->tf_rcx = context.sc_ecx;
 	tf->tf_rax = context.sc_eax;
 	tf->tf_rip = context.sc_eip;
-	tf->tf_cs = context.sc_cs;
+	tf->tf_cs = context.sc_cs & 0xFFFF;
 	tf->tf_rsp = context.sc_esp;
-	tf->tf_ss = context.sc_ss;
+	tf->tf_ss = context.sc_ss & 0xFFFF;
 
 	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
