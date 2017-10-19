@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.135 2017/10/19 19:05:53 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.136 2017/10/19 20:27:12 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1475,9 +1475,9 @@ ENTRY(intrfastexit)
 	INTR_RESTORE_GPRS
 	testq	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
 	jz	.Lkexit
-	cmpq	$LSEL(LUCODE_SEL, SEL_UPL),TF_CS(%rsp)
+	cmpw	$LSEL(LUCODE_SEL, SEL_UPL),TF_CS(%rsp)
 	je	.Luexit64
-	cmpq	$GSEL(GUCODE_SEL, SEL_UPL),TF_CS(%rsp)
+	cmpw	$GSEL(GUCODE_SEL, SEL_UPL),TF_CS(%rsp)
 	je	.Luexit64
 
 .Luexit32:
