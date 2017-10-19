@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.89 2017/09/29 17:53:57 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.90 2017/10/19 01:57:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.89 2017/09/29 17:53:57 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.90 2017/10/19 01:57:18 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ STATIC struct job *getjob(const char *, int);
 STATIC int dowait(int, struct job *);
 #define WBLOCK	1
 #define WNOFREE 2
+STATIC int jobstatus(const struct job *, int);
 STATIC int waitproc(int, struct job *, int *);
 STATIC void cmdtxt(union node *);
 STATIC void cmdlist(union node *, int);
@@ -606,13 +607,48 @@ freejob(struct job *jp)
 	INTON;
 }
 
+/*
+ * Extract the status of a completed job (for $?)
+ */
+STATIC int
+jobstatus(const struct job *jp, int raw)
+{
+	int status = 0;
+	int retval;
+
+	if (pipefail && jp->nprocs) {
+		int i;
+
+		for (i = 0; i < jp->nprocs; i++)
+			if (jp->ps[i].status != 0)
+				status = jp->ps[i].status;
+	} else
+		status = jp->ps[jp->nprocs ? jp->nprocs - 1 : 0].status;
+
+	if (raw)
+		return status;
+
+	if (WIFEXITED(status))
+		retval = WEXITSTATUS(status);
+#if JOBS
+	else if (WIFSTOPPED(status))
+		retval = WSTOPSIG(status) + 128;
+#endif
+	else {
+		/* XXX: limits number of signals */
+		retval = WTERMSIG(status) + 128;
+	}
+
+	return retval;
+}
+
 
 
 int
 waitcmd(int argc, char **argv)
 {
 	struct job *job;
-	int status, retval;
+	int retval;
 	struct job *jp;
 
 	nextopt("");
@@ -649,27 +685,7 @@ waitcmd(int argc, char **argv)
 			if (dowait(WBLOCK|WNOFREE, job) == -1)
 			       return 128 + lastsig();
 		}
-		if (pipefail && job->nprocs) {
-			int i;
-
-			status = 0;
-			for (i = 0; i < job->nprocs; i++)
-				if (job->ps[i].status != 0)
-					status = job->ps[i].status;
-		} else
-			status =
-			    job->ps[job->nprocs ? job->nprocs - 1 : 0].status;
-
-		if (WIFEXITED(status))
-			retval = WEXITSTATUS(status);
-#if JOBS
-		else if (WIFSTOPPED(status))
-			retval = WSTOPSIG(status) + 128;
-#endif
-		else {
-			/* XXX: limits number of signals */
-			retval = WTERMSIG(status) + 128;
-		}
+		retval = jobstatus(job, 0);
 		if (!iflag)
 			freejob(job);
 	}
@@ -1023,13 +1039,8 @@ waitforjob(struct job *jp)
 	if (jp->state == JOBSTOPPED && curjob != jp - jobtab)
 		set_curjob(jp, 2);
 #endif
-	if (pipefail) {
-		status = 0;
-		for (st = 0; st < jp->nprocs; st++)
-			if (jp->ps[st].status != 0)
-				status = jp->ps[st].status;
-	} else
-		status = jp->ps[jp->nprocs - 1].status;
+	status = jobstatus(jp, 1);
+
 	/* convert to 8 bits */
 	if (WIFEXITED(status))
 		st = WEXITSTATUS(status);
