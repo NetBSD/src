@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.133 2017/10/17 07:48:10 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.134 2017/10/19 18:36:31 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1159,7 +1159,10 @@ skip_CR0:
 	jnz	lwp_32bit
 
 lwp_64bit:
-	/* Zero out %fs/%gs registers. */
+	/* Set default 64bit values in %ds, %es, %fs and %gs. */
+	movq	$GSEL(GUDATA_SEL, SEL_UPL),%rax
+	movw	%ax,%ds
+	movw	%ax,%es
 	xorq	%rax,%rax
 	movw	%ax,%fs
 	CLI(cx)
@@ -1193,8 +1196,11 @@ lwp_32bit:
 	movq	PCB_GS(%r14),%rax
 	movq	%rax,(GUGS_SEL*8)(%rcx)
 
-	/* Reload %fs and %gs */
+	/* Set default 32bit values in %ds, %es. %fs and %gs are special. */
 	movq	L_MD_REGS(%r12),%rbx
+	movq	$GSEL(GUDATA32_SEL, SEL_UPL),%rax
+	movw	%ax,%ds
+	movw	%ax,%es
 	movw	TF_FS(%rbx),%fs
 	CLI(ax)
 	SWAPGS
@@ -1281,10 +1287,10 @@ IDTVEC(syscall)
 	cld
 #endif
 	INTR_SAVE_GPRS
-	movw	%es,TF_ES(%rsp)
-	movw	%fs,TF_FS(%rsp)
-	movw	%gs,TF_GS(%rsp)
-	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
+	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_DS(%rsp)
+	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_ES(%rsp)
+	movw	$0,TF_FS(%rsp)
+	movw	$0,TF_GS(%rsp)
 	STI(si)
 
 do_syscall:
@@ -1313,18 +1319,18 @@ do_syscall:
 #endif
 
 	/*
-	 * If the syscall might have modified some registers, or we are a 32bit
-	 * process we must return to user with an 'iret' instruction.
-	 * If the iret faults in kernel (assumed due to illegal register values)
-	 * then a SIGSEGV will be signalled.
+	 * Decide if we need to take a slow path. That's the case when we
+	 * want to reload %cs and %ss on a 64bit LWP (MDL_IRET set), or when
+	 * we're returning to a 32bit LWP (MDL_COMPAT32 set).
+	 *
+	 * In either case, we jump into intrfastexit and return to userland
+	 * with the iret instruction.
 	 */
 	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
-	INTR_RESTORE_GPRS
-	movw	TF_ES(%rsp),%es
-	movw	TF_DS(%rsp),%ds
-	SWAPGS
-	jnz	.Lkexit
+	jnz	intrfastexit
 
+	INTR_RESTORE_GPRS
+	SWAPGS
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
@@ -1469,11 +1475,20 @@ ENTRY(intrfastexit)
 	INTR_RESTORE_GPRS
 	testq	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
 	jz	.Lkexit
+	cmpq	$LSEL(LUCODE_SEL, SEL_UPL),TF_CS(%rsp)
+	je	.Luexit64
+	cmpq	$GSEL(GUCODE_SEL, SEL_UPL),TF_CS(%rsp)
+	je	.Luexit64
 
-	/* Disable interrupts until the 'iret', user registers loaded. */
+.Luexit32:
 	NOT_XEN(cli;)
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
+	SWAPGS
+	jmp	.Lkexit
+
+.Luexit64:
+	NOT_XEN(cli;)
 	SWAPGS
 
 .Lkexit:

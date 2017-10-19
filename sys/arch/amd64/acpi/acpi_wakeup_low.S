@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.6 2017/09/23 10:18:49 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.7 2017/10/19 18:36:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -40,12 +40,17 @@ acpi_md_sleep_exit:
 	lgdt	ACPI_SUSPEND_GDT(%r8)
 
 	/* Reload fixed descriptors for new GDT */
-	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	$GSEL(GUDATA_SEL, SEL_UPL),%ax
 	movw	%ax,%ds
 	movw	%ax,%es
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
 	movw	%ax,%ss
 
-	/* FS and GS are driven by MSRs, so use NULL for them */
+	/*
+	 * FS and GS are driven by MSRs, so use NULL for them.
+	 * XXX XXX XXX That's not the case if we're returning to a 32bit
+	 * LWP!
+	 */
 	xorw	%ax,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs

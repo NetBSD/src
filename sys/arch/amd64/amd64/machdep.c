@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.269 2017/10/19 10:01:09 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.270 2017/10/19 18:36:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2017/10/19 10:01:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2017/10/19 18:36:31 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -447,15 +447,19 @@ x86_64_tls_switch(struct lwp *l)
 		HYPERVISOR_fpu_taskswitch(1);
 	}
 
-	/* Update TLS segment pointers */
+	/* Update segment registers */
 	if (pcb->pcb_flags & PCB_COMPAT32) {
 		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
 		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+		setds(GSEL(GUDATA32_SEL, SEL_UPL));
+		setes(GSEL(GUDATA32_SEL, SEL_UPL));
 		setfs(tf->tf_fs);
 		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
 	} else {
 		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
 		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
+		setds(GSEL(GUDATA_SEL, SEL_UPL));
+		setes(GSEL(GUDATA_SEL, SEL_UPL));
 		setfs(0);
 		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
 		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
@@ -2063,6 +2067,8 @@ cpu_segregs64_zero(struct lwp *l)
 	kpreempt_disable();
 	tf->tf_fs = 0;
 	tf->tf_gs = 0;
+	setds(GSEL(GUDATA_SEL, SEL_UPL));
+	setes(GSEL(GUDATA_SEL, SEL_UPL));
 	setfs(0);
 	setusergs(0);
 
@@ -2100,6 +2106,8 @@ cpu_segregs32_zero(struct lwp *l)
 	kpreempt_disable();
 	tf->tf_fs = 0;
 	tf->tf_gs = 0;
+	setds(GSEL(GUDATA32_SEL, SEL_UPL));
+	setes(GSEL(GUDATA32_SEL, SEL_UPL));
 	setfs(0);
 	setusergs(0);
 	pcb->pcb_fs = 0;
