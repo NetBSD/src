@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.21 2017/10/20 03:42:53 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.22 2017/10/20 03:45:02 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -318,7 +318,7 @@ rump_server_destroy_ifaces()
 		atf_check -s exit:0 -o ignore rump.ifconfig
 		atf_check -s exit:0 -o ignore rump.netstat -nr
 		# XXX still need hijacking
-		atf_check -s exit:0 -o ignore $HIJACKING rump.netstat -i -a
+		atf_check -s exit:0 -o ignore $HIJACKING rump.netstat -nai
 		atf_check -s exit:0 -o ignore rump.arp -na
 		atf_check -s exit:0 -o ignore rump.ndp -na
 		atf_check -s exit:0 -o ignore $HIJACKING ifmcstat
@@ -362,7 +362,7 @@ rump_server_dump_servers()
 		rump.ifconfig -av
 		rump.netstat -nr
 		# XXX still need hijacking
-		$HIJACKING rump.netstat -i -a
+		$HIJACKING rump.netstat -nai
 		rump.arp -na
 		rump.ndp -na
 		$HIJACKING ifmcstat
