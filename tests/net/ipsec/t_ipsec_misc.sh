@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.18 2017/08/03 03:16:27 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.19 2017/10/20 03:43:51 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -625,6 +625,7 @@ setup_sp()
 	export RUMP_SERVER=$SOCK_LOCAL
 	cat > $tmpfile <<-EOF
 	spdadd $ip_local $ip_peer any -P out ipsec $proto/transport//require;
+	spdadd $ip_peer $ip_local any -P in ipsec $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
@@ -633,6 +634,7 @@ setup_sp()
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
 	spdadd $ip_peer $ip_local any -P out ipsec $proto/transport//require;
+	spdadd $ip_local $ip_peer any -P in ipsec $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
