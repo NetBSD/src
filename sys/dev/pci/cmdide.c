@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.41 2017/10/20 07:06:08 jdolecek Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.42 2017/10/20 21:51:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.41 2017/10/20 07:06:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.42 2017/10/20 21:51:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ static const struct pciide_product_desc pciide_cmd_products[] =  {
 	  cmd0643_9_chip_map,
 	},
 	{ PCI_PRODUCT_CMDTECH_680,
-	  IDE_SHARED_CHANNELS,
+	  0,
 	  "Silicon Image 0680",
 	  cmd680_chip_map,
 	},
