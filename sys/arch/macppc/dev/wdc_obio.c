@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.60 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.61 2017/10/20 07:06:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.60 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.61 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,9 +236,9 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.dma_init = wdc_obio_dma_init;
 	sc->sc_wdcdev.dma_start = wdc_obio_dma_start;
 	sc->sc_wdcdev.dma_finish = wdc_obio_dma_finish;
+
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = ata_queue_alloc(1);
 
 	wdc_init_shadow_regs(wdr);
 

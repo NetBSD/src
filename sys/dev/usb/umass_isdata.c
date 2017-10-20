@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.35 2017/10/10 16:44:24 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.36 2017/10/20 07:06:08 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.35 2017/10/10 16:44:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.36 2017/10/20 07:06:08 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -223,7 +223,6 @@ umass_isdata_attach(struct umass_softc *sc)
 	/* Fake ATA channel so wd(4) ata_{get,free}_xfer() work */
 	ata_channel_init(&scbus->sc_channel);
 	scbus->sc_channel.atabus = (device_t)scbus;
-	scbus->sc_channel.ch_queue = ata_queue_alloc(1);
 
 	scbus->sc_drv_data.drive_type = ATA_DRIVET_ATA;
 	scbus->sc_drv_data.chnl_softc = &scbus->sc_channel;
@@ -237,9 +236,6 @@ void
 umass_isdata_detach(struct umass_softc *sc)
 {
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
-
-	ata_queue_free(scbus->sc_channel.ch_queue);
-	scbus->sc_channel.ch_queue = NULL;
 
 	ata_channel_destroy(&scbus->sc_channel);
 }

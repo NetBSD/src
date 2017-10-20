@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdc.c,v 1.7 2017/10/07 19:58:53 jdolecek Exp $	*/
+/*	$NetBSD: obio_wdc.c,v 1.8 2017/10/20 07:06:06 jdolecek Exp $	*/
 
 /* adapted from iq31244/wdc_obio.c:
  *	NetBSD: wdc_obio.c,v 1.5 2008/04/28 20:23:16 martin Exp
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdc.c,v 1.7 2017/10/07 19:58:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdc.c,v 1.8 2017/10/20 07:06:06 jdolecek Exp $");
 
 #include "locators.h"
 
@@ -140,7 +140,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->ata_channel.ch_queue = ata_queue_alloc(1);
+
 	wdc_init_shadow_regs(wdr);
 
 	aprint_normal("\n");

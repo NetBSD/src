@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_buddha.c,v 1.9 2017/10/07 16:05:31 jdolecek Exp $	*/
+/*	$NetBSD: wdc_buddha.c,v 1.10 2017/10/20 07:06:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -128,12 +128,6 @@ wdc_buddha_attach(device_t parent, device_t self, void *aux)
 
 		cp->ch_channel = ch;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ch_queue = ata_queue_alloc(1);
-		if (cp->ch_queue == NULL) {
-			aprint_error_dev(self,
-			    "can't allocate memory for command queue\n");
-			return;
-		}
 
 		/*
 		 * XXX According to the Buddha docs, we should use a method

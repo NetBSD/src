@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.39 2017/10/07 16:05:31 jdolecek Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.40 2017/10/20 07:06:06 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.39 2017/10/07 16:05:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.40 2017/10/20 07:06:06 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,7 +135,6 @@ wdc_amiga_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_channel.ch_queue = ata_queue_alloc(1);
 
 	wdc_init_shadow_regs(wdr);
 

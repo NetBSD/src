@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.28 2017/10/07 16:05:32 jdolecek Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.28 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -215,7 +215,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = ata_queue_alloc(1);
+
 	wdc_init_shadow_regs(wdr);
 
 	aprint_normal("\n");

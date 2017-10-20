@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.43 2017/10/07 20:02:07 jdolecek Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.44 2017/10/20 07:06:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.43 2017/10/07 20:02:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.44 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ wdc_isapnp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->ata_channel.ch_queue = ata_queue_alloc(1);
+
 	wdc_init_shadow_regs(wdr);
 
 	wdcattach(&sc->ata_channel);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.64 2017/10/17 18:52:50 jdolecek Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.65 2017/10/20 07:06:08 jdolecek Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.64 2017/10/17 18:52:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.65 2017/10/20 07:06:08 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -208,9 +208,6 @@ pciide_common_detach(struct pciide_softc *sc, int flags)
 			pciide_dma_table_teardown(sc, channel, drive);
 #endif
 		}
-
-		ata_queue_free(cp->ata_channel.ch_queue);
-		cp->ata_channel.atabus = NULL;
 	}
 
 #if NATA_DMA
@@ -877,13 +874,7 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	cp->ata_channel.ch_queue = ata_queue_alloc(1);
-	if (cp->ata_channel.ch_queue == NULL) {
-		aprint_error("%s %s channel: "
-		    "can't allocate memory for command queue",
-		device_xname(sc->sc_wdcdev.sc_atac.atac_dev), cp->name);
-		return 0;
-	}
+
 	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 	    "%s channel %s to %s mode\n", cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?

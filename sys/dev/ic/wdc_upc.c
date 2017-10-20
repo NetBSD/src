@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.30 2017/10/07 19:52:11 jdolecek Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.31 2017/10/20 07:06:07 jdolecek Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.30 2017/10/07 19:52:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.31 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,7 +87,6 @@ wdc_upc_attach(device_t parent, device_t self, void *aux)
 	wdr->ctl_ioh = ua->ua_ioh2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdc.sc_atac;
-	sc->sc_channel.ch_queue = ata_queue_alloc(1);
 	sc->sc_wdc.wdc_maxdrives = 2;
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(ua->ua_iot, ua->ua_ioh, i,

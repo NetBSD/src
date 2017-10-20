@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.139 2017/10/19 20:45:07 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.140 2017/10/20 07:06:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.139 2017/10/19 20:45:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.140 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -196,9 +196,9 @@ ata_channel_attach(struct ata_channel *chp)
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
 
-	KASSERT(chp->ch_queue != NULL);
-
 	ata_channel_init(chp);
+
+	KASSERT(chp->ch_queue != NULL);
 
 	chp->atabus = config_found_ia(chp->ch_atac->atac_dev, "ata", chp,
 		atabusprint);
