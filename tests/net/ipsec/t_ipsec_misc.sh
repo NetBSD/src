@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.19 2017/10/20 03:43:51 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.20 2017/10/20 03:45:47 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -702,6 +702,96 @@ add_test_nosa()
 	atf_add_test_case ${name}
 }
 
+test_multiple_sa()
+{
+	local proto=$1
+	local algo=$2
+	local update=$3
+	local ip_local=10.0.0.1
+	local ip_peer=10.0.0.2
+	local ip_peer2=10.0.0.3
+	local algo_args="$(generate_algo_args $proto $algo)"
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local outfile=./out
+
+	rump_server_crypto_start $SOCK_LOCAL netipsec
+	rump_server_crypto_start $SOCK_PEER netipsec
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
+
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer/24
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer2/24 alias
+
+	setup_sp $proto "$algo_args" "$ip_local" "0.0.0.0/0"
+
+	extract_new_packets $BUS > $outfile
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	# There is no SA, so ping should fail
+	atf_check -s not-exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	atf_check -s not-exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer2
+
+	add_sa $proto "$algo_args" $ip_local $ip_peer 100 10000
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	# There is only an SA for $ip_peer, so ping to $ip_peer2 should fail
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	atf_check -s not-exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer2
+
+	add_sa $proto "$algo_args" $ip_local $ip_peer2 100 10010
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer2
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o match:"$proto/transport//require" \
+	    $HIJACKING setkey -D -P
+	# Check if the policy isn't modified accidentally
+	atf_check -s exit:0 -o not-match:"$proto/transport/.+\-.+/require" \
+	    $HIJACKING setkey -D -P
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 -o match:"$proto/transport//require" \
+	    $HIJACKING setkey -D -P
+	# Check if the policy isn't modified accidentally
+	atf_check -s exit:0 -o not-match:"$proto/transport/.+\-.+/require" \
+	    $HIJACKING setkey -D -P
+}
+
+add_test_multiple_sa()
+{
+	local proto=$1
+	local algo=$2
+	local _algo=$(echo $algo | sed 's/-//g')
+	local name= desc=
+
+	desc="Tests multiple SAs with $proto ($algo)"
+	name="ipsec_multiple_sa_${proto}_${_algo}"
+
+	atf_test_case ${name} cleanup
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_multiple_sa $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
+	"
+	atf_add_test_case ${name}
+}
+
 atf_init_test_cases()
 {
 	local algo=
@@ -716,6 +806,7 @@ atf_init_test_cases()
 		add_test_spi esp $algo new timeout
 		add_test_spi esp $algo old timeout
 		add_test_nosa esp $algo
+		add_test_multiple_sa esp $algo
 	done
 	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
 		add_test_lifetime ipv4 ah $algo
@@ -727,5 +818,6 @@ atf_init_test_cases()
 		add_test_spi ah $algo new timeout
 		add_test_spi ah $algo old timeout
 		add_test_nosa ah $algo
+		add_test_multiple_sa ah $algo
 	done
 }
