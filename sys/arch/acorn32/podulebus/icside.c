@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.33 2017/10/07 16:05:31 jdolecek Exp $	*/
+/*	$NetBSD: icside.c,v 1.34 2017/10/20 07:06:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.33 2017/10/07 16:05:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.34 2017/10/20 07:06:06 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -269,7 +269,6 @@ icside_attach(device_t parent, device_t self, void *aux)
 
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ch_queue = ata_queue_alloc(1);
 		wdr->cmd_iot = &sc->sc_tag;
 		wdr->ctl_iot = &sc->sc_tag;
 		if (ide->modspace)

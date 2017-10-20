@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.287 2017/10/17 18:52:50 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.288 2017/10/20 07:06:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.287 2017/10/17 18:52:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -484,7 +484,6 @@ wdcprobe(struct wdc_regs *wdr)
 	memset(&ch, 0, sizeof(ch));
 	ata_channel_init(&ch);
 	ch.ch_atac = &wdc.sc_atac;
-	ch.ch_queue = ata_queue_alloc(1);
 	wdc.regs = wdr;
 
 	/* default reset method */
@@ -493,7 +492,6 @@ wdcprobe(struct wdc_regs *wdr)
 
 	rv = wdcprobe1(&ch, 1);
 
-	ata_queue_free(ch.ch_queue);
 	ata_channel_destroy(&ch);
 
 	return rv;
