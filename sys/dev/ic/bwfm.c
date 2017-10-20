@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.1 2017/10/19 23:58:41 jmcneill Exp $ */
+/* $NetBSD: bwfm.c,v 1.2 2017/10/20 23:38:21 jmcneill Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1573,7 +1573,17 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		}
 		bss = &res->bss_info[0];
 		for (i = 0; i < le16toh(res->bss_count); i++) {
-			bwfm_scan_node(sc, &res->bss_info[i], len);
+			/* Fix alignment of bss_info */
+			union {
+				struct bwfm_bss_info bss_info;
+				uint8_t padding[BWFM_BSS_INFO_BUFLEN];
+			} bss_buf;
+			if (len > sizeof(bss_buf)) {
+				printf("%s: bss_info buffer too big\n", DEVNAME(sc));
+			} else {
+				memcpy(&bss_buf, &res->bss_info[i], len);
+				bwfm_scan_node(sc, &bss_buf.bss_info, len);
+			}
 			len -= sizeof(*bss) + le32toh(bss->length);
 			bss = (void *)(((uintptr_t)bss) + le32toh(bss->length));
 			if (len <= 0)
