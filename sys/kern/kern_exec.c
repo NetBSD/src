@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.447 2017/10/20 12:11:34 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.448 2017/10/20 14:48:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.447 2017/10/20 12:11:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.448 2017/10/20 14:48:43 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -280,11 +280,14 @@ struct spawn_exec_data {
 	volatile uint32_t	sed_refcnt;
 };
 
+static struct vm_map *exec_map;
+static struct pool exec_pool;
+
 static void *
 exec_pool_alloc(struct pool *pp, int flags)
 {
 
-	return (void *)uvm_km_alloc(kernel_map, NCARGS, 0,
+	return (void *)uvm_km_alloc(exec_map, NCARGS, 0,
 	    UVM_KMF_PAGEABLE | UVM_KMF_WAITVA);
 }
 
@@ -292,10 +295,8 @@ static void
 exec_pool_free(struct pool *pp, void *addr)
 {
 
-	uvm_km_free(kernel_map, (vaddr_t)addr, NCARGS, UVM_KMF_PAGEABLE);
+	uvm_km_free(exec_map, (vaddr_t)addr, NCARGS, UVM_KMF_PAGEABLE);
 }
-
-static struct pool exec_pool;
 
 static struct pool_allocator exec_palloc = {
 	.pa_alloc = exec_pool_alloc,
@@ -1820,8 +1821,12 @@ exec_init(int init_boot)
 
 	if (init_boot) {
 		/* do one-time initializations */
+		vaddr_t vmin, vmax;
+
 		rw_init(&exec_lock);
 		mutex_init(&sigobject_lock, MUTEX_DEFAULT, IPL_NONE);
+		exec_map = uvm_km_suballoc(kernel_map, &vmin, &vmax,
+		    maxexec*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 		pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
 		    "execargs", &exec_palloc, IPL_NONE);
 		pool_sethardlimit(&exec_pool, maxexec, "should not happen", 0);
