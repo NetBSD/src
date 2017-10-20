@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.448 2017/10/20 14:48:43 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.449 2017/10/20 19:06:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.448 2017/10/20 14:48:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.449 2017/10/20 19:06:46 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1821,7 +1821,7 @@ exec_init(int init_boot)
 
 	if (init_boot) {
 		/* do one-time initializations */
-		vaddr_t vmin, vmax;
+		vaddr_t vmin = 0, vmax;
 
 		rw_init(&exec_lock);
 		mutex_init(&sigobject_lock, MUTEX_DEFAULT, IPL_NONE);
