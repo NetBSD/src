@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.28 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.28 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,6 @@ wdc_spd_attach(device_t parent, device_t self, void *aux)
 	wdc->sc_atac.atac_nchannels = 1;
 	ch->ch_channel = 0;
 	ch->ch_atac = &sc->sc_wdcdev.sc_atac;
-	ch->ch_queue = ata_queue_alloc(1);
 	ch->ch_ndrives = 2;
 
 	__wdc_spd_bus_space(CHAN_TO_WDC_REGS(ch));
