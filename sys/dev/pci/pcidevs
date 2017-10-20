@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1298 2017/09/15 14:24:32 hikaru Exp $
+$NetBSD: pcidevs,v 1.1299 2017/10/20 12:01:43 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -34,7 +34,7 @@ $NetBSD: pcidevs,v 1.1298 2017/09/15 14:24:32 hikaru Exp $
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://www.pcidatabase.com/
+ *	https://pci-ids.ucw.cz/
  *
  * (but it doesn't always seem to match vendor documentation)
  *
@@ -2448,7 +2448,7 @@ product MARVELL YUKON_C036	0x4366	Yukon 88EC036
 product MARVELL YUKON_C032	0x4367	Yukon 88EC032
 product MARVELL YUKON_C034	0x4368	Yukon 88EC034
 product MARVELL YUKON_C042	0x4369	Yukon 88EC042
-product MARVELL YUKON_C055	0x436a	Yukon 88EC055
+product MARVELL YUKON_8058	0x436a	Yukon 88E8058
 product MARVELL GT64120		0x4620	GT-64120 System Controller
 product MARVELL BELKIN		0x5005	Belkin Gigabit Ethernet
 product MARVELL 88SX5040	0x5040	88SX5040 SATA
