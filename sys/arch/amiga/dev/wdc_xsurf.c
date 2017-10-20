@@ -1,4 +1,4 @@
-/*      $NetBSD: wdc_xsurf.c,v 1.5 2017/10/07 16:05:31 jdolecek Exp $ */
+/*      $NetBSD: wdc_xsurf.c,v 1.6 2017/10/20 07:06:06 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -164,7 +164,6 @@ wdc_xsurf_attach_channel(struct wdc_xsurf_softc *sc, int chnum)
 	memset(&sc->sc_ports[chnum],0,sizeof(struct wdc_xsurf_port));
 	sc->sc_ports[chnum].channel.ch_channel = chnum;
 	sc->sc_ports[chnum].channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_ports[chnum].channel.ch_queue = ata_queue_alloc(1);
 
 	wdc_xsurf_map_channel(sc, chnum);	
 

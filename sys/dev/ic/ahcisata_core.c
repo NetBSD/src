@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.58 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.59 2017/10/20 07:06:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.58 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.59 2017/10/20 07:06:07 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -516,8 +516,6 @@ ahci_detach(struct ahci_softc *sc, int flags)
 		bus_dmamem_free(sc->sc_dmat, &achp->ahcic_cmd_tbl_seg,
 		    achp->ahcic_cmd_tbl_nseg);
 
-		ata_queue_free(chp->ch_queue);
-		chp->ch_queue = NULL;
 		chp->atabus = NULL;
 
 		ata_channel_detach(chp);
