@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmreg.h,v 1.1 2017/10/19 23:58:41 jmcneill Exp $ */
+/* $NetBSD: bwfmreg.h,v 1.2 2017/10/20 23:38:56 jmcneill Exp $ */
 /* $OpenBSD: bwfmreg.h,v 1.4 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -261,6 +261,7 @@ struct bwfm_proto_bcdc_hdr {
 
 #define BWFM_MCSSET_LEN				16
 #define BWFM_MAX_SSID_LEN			32
+#define BWFM_BSS_INFO_BUFLEN			2048
 struct bwfm_bss_info {
 	uint32_t version;
 	uint32_t length;
