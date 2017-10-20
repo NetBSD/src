@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.20 2017/07/24 02:07:43 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.21 2017/10/20 03:42:53 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -359,7 +359,7 @@ rump_server_dump_servers()
 	for sock in $(cat $_rump_server_socks); do
 		echo "### Dumping $sock"
 		export RUMP_SERVER=$sock
-		rump.ifconfig
+		rump.ifconfig -av
 		rump.netstat -nr
 		# XXX still need hijacking
 		$HIJACKING rump.netstat -i -a
