@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.446 2017/09/29 17:47:29 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.447 2017/10/20 12:11:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.446 2017/09/29 17:47:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.447 2017/10/20 12:11:34 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -750,8 +750,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	/* see if we can run it. */
 	if ((error = check_exec(l, epp, data->ed_pathbuf)) != 0) {
 		if (error != ENOENT && error != EACCES) {
-			DPRINTF(("%s: check exec failed %d\n",
-			    __func__, error));
+			DPRINTF(("%s: check exec failed for %s, error %d\n",
+			    __func__, epp->ep_kname, error));
 		}
 		goto freehdr;
 	}
