@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.6 2017/08/08 02:27:03 ozaki-r Exp $
+#	$NetBSD: common.sh,v 1.7 2017/10/20 03:43:51 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -66,6 +66,9 @@ check_sp_entries()
 
 	atf_check -s exit:0 \
 	    -o match:"$local_addr\[any\] $remote_addr\[any\] 255\(reserved\)" \
+	    $HIJACKING setkey -D -P
+	atf_check -s exit:0 \
+	    -o match:"$remote_addr\[any\] $local_addr\[any\] 255\(reserved\)" \
 	    $HIJACKING setkey -D -P
 	# TODO: more detail checks
 }
