@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.10 2017/05/26 01:14:38 ozaki-r Exp $
+#	$NetBSD: t_gif.sh,v 1.10.2.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -727,19 +727,19 @@ add_test()
 	fulldesc="Does ${inner} over ${outer} if_gif ${desc}"
 
 	atf_test_case ${name} cleanup
-	eval "${name}_head() { \
-			atf_set \"descr\" \"${fulldesc}\"; \
-			atf_set \"require.progs\" \"rump_server\"; \
-		}; \
-	    ${name}_body() { \
-			${category}_setup ${inner} ${outer}; \
-			${category}_test ${inner} ${outer}; \
-			${category}_teardown ${inner} ${outer}; \
-			rump_server_destroy_ifaces; \
-	    }; \
-	    ${name}_cleanup() { \
-			$DEBUG && dump; \
-			cleanup; \
+	eval "${name}_head() {
+			atf_set descr \"${fulldesc}\"
+			atf_set require.progs rump_server
+		}
+	    ${name}_body() {
+			${category}_setup ${inner} ${outer}
+			${category}_test ${inner} ${outer}
+			${category}_teardown ${inner} ${outer}
+			rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
 		}"
 	atf_add_test_case ${name}
 }

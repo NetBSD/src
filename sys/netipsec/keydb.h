@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.15 2017/05/17 02:19:09 ozaki-r Exp $	*/
+/*	$NetBSD: keydb.h,v 1.15.2.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -36,6 +36,8 @@
 
 #ifdef _KERNEL
 
+#include <sys/localcount.h>
+
 #include <netipsec/key_var.h>
 #include <net/route.h>
 #include <netinet/in.h>
@@ -65,7 +67,8 @@ struct secasindex {
 
 /* Security Association Data Base */
 struct secashead {
-	LIST_ENTRY(secashead) chain;
+	struct pslist_entry pslist_entry;
+	struct localcount localcount;	/* reference count */
 
 	struct secasindex saidx;
 
@@ -76,7 +79,7 @@ struct secashead {
 	size_t identd_len;		/* length of identd */
 
 	u_int8_t state;			/* MATURE or DEAD. */
-	LIST_HEAD(_satree, secasvar) savtree[SADB_SASTATE_MAX+1];
+	struct pslist_head savlist[SADB_SASTATE_MAX+1];
 					/* SA chain */
 					/* The first of this list is newer SA */
 
@@ -90,9 +93,9 @@ struct comp_algo;
 
 /* Security Association */
 struct secasvar {
-	LIST_ENTRY(secasvar) chain;
+	struct pslist_entry pslist_entry;
+	struct localcount localcount;	/* reference count */
 
-	u_int refcnt;			/* reference count */
 	u_int8_t state;			/* Status of this Association */
 
 	u_int8_t alg_auth;		/* Authentication Algorithm Identifier*/

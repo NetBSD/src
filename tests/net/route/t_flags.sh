@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.15.6.1 2017/07/07 13:57:26 martin Exp $
+#	$NetBSD: t_flags.sh,v 1.15.6.2 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -322,19 +322,19 @@ add_test()
 	local desc="$2"
 
 	atf_test_case "route_flags_${name}" cleanup
-	eval "route_flags_${name}_head() { \
-			atf_set \"descr\" \"${desc}\"; \
-			atf_set \"require.progs\" \"rump_server\"; \
-		}; \
-	    route_flags_${name}_body() { \
-			setup_local; \
-			setup_peer; \
-			test_${name}; \
-			rump_server_destroy_ifaces; \
-		}; \
-	    route_flags_${name}_cleanup() { \
-			$DEBUG && dump; \
-			cleanup; \
+	eval "route_flags_${name}_head() {
+			atf_set descr \"${desc}\"
+			atf_set require.progs rump_server
+		}
+	    route_flags_${name}_body() {
+			setup_local
+			setup_peer
+			test_${name}
+			rump_server_destroy_ifaces
+		}
+	    route_flags_${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
 		}"
 	atf_add_test_case "route_flags_${name}"
 }

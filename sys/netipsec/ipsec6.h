@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.17 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.17.4.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -57,7 +57,6 @@ struct in6pcb;
 /* KAME compatibility shims */
 #define	ipsec6_getpolicybyaddr	ipsec_getpolicybyaddr
 #define	ipsec6_getpolicybysock	ipsec_getpolicybysock
-#define	key_freesp(_x)		KEY_FREESP(&_x)
 
 int ipsec6_delete_pcbpolicy (struct in6pcb *);
 int ipsec6_set_policy (struct in6pcb *, int, const void *, size_t, kauth_cred_t);
@@ -82,9 +81,8 @@ void * ah6_ctlinput(int, const struct sockaddr *, void *);
 
 struct m_tag;
 int ipsec6_common_input(struct mbuf **, int *, int);
-int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, 
-									int, int, struct m_tag *);
-int ipsec6_process_packet (struct mbuf*,struct ipsecrequest *);
+int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, int, int);
+int ipsec6_process_packet(struct mbuf*, const struct ipsecrequest *);
 #endif /*_KERNEL*/
 
 #endif /* !_NETIPSEC_IPSEC6_H_ */

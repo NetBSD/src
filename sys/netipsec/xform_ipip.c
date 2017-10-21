@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.49 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.49.2.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.49 2017/05/11 05:55:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.49.2.1 2017/10/21 19:43:54 snj Exp $");
 
 /*
  * IP-inside-IP processing
@@ -396,14 +396,14 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 int
 ipip_output(
     struct mbuf *m,
-    struct ipsecrequest *isr,
+    const struct ipsecrequest *isr,
+    struct secasvar *sav,
     struct mbuf **mp,
     int skip,
     int protoff
 )
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	const struct secasvar *sav;
 	uint8_t tp, otos;
 	struct secasindex *saidx;
 	int error;
@@ -416,10 +416,7 @@ ipip_output(
 #endif /* INET6 */
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
-
-	KASSERT(isr->sav != NULL);
-	sav = isr->sav;
-	KASSERT(sav->sah != NULL);
+	KASSERT(sav != NULL);
 
 	/* XXX Deal with empty TDB source/destination addresses. */
 
@@ -639,7 +636,7 @@ ipe4_zeroize(struct secasvar *sav)
 static int
 ipe4_input(
     struct mbuf *m,
-    const struct secasvar *sav,
+    struct secasvar *sav,
     int skip,
     int protoff
 )
@@ -652,9 +649,14 @@ ipe4_input(
 }
 
 static struct xformsw ipe4_xformsw = {
-	XF_IP4,		0,		"IPv4 Simple Encapsulation",
-	ipe4_init,	ipe4_zeroize,	ipe4_input,	ipip_output,
-	NULL,
+	.xf_type	= XF_IP4,
+	.xf_flags	= 0,
+	.xf_name	= "IPv4 Simple Encapsulation",
+	.xf_init	= ipe4_init,
+	.xf_zeroize	= ipe4_zeroize,
+	.xf_input	= ipe4_input,
+	.xf_output	= ipip_output,
+	.xf_next	= NULL,
 };
 
 #ifdef INET

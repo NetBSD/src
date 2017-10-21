@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.3 2017/05/15 09:56:47 ozaki-r Exp $
+#	$NetBSD: common.sh,v 1.3.2.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -52,4 +52,31 @@ check_sa_entries()
 	atf_check -s exit:0 -o match:"$remote_addr $local_addr" \
 	    $HIJACKING setkey -D
 	# TODO: more detail checks
+}
+
+check_sp_entries()
+{
+	local sock=$1
+	local local_addr=$2
+	local remote_addr=$3
+
+	export RUMP_SERVER=$sock
+
+	$DEBUG && $HIJACKING setkey -D -P
+
+	atf_check -s exit:0 \
+	    -o match:"$local_addr\[any\] $remote_addr\[any\] 255\(reserved\)" \
+	    $HIJACKING setkey -D -P
+	# TODO: more detail checks
+}
+
+generate_pktproto()
+{
+	local proto=$1
+
+	if [ $proto = ipcomp ]; then
+		echo IPComp
+	else
+		echo $proto | tr 'a-z' 'A-Z'
+	fi
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.213.2.2 2017/07/25 01:55:21 snj Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.213.2.3 2017/10/21 19:43:54 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.2 2017/07/25 01:55:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.3 2017/10/21 19:43:54 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -184,6 +184,11 @@ struct routecb {
 };
 #define sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
 
+static struct rawcbhead rt_rawcb;
+#ifdef NET_MPSAFE
+static kmutex_t *rt_so_mtx;
+#endif
+
 static void
 rt_adjustcount(int af, int cnt)
 {
@@ -239,6 +244,13 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 	return 0;
 }
 
+static void
+rt_pr_init(void)
+{
+
+	LIST_INIT(&rt_rawcb);
+}
+
 static int
 COMPATNAME(route_attach)(struct socket *so, int proto)
 {
@@ -253,7 +265,15 @@ COMPATNAME(route_attach)(struct socket *so, int proto)
 	so->so_pcb = rp;
 
 	s = splsoftnet();
-	if ((error = raw_attach(so, proto)) == 0) {
+
+#ifdef NET_MPSAFE
+	KASSERT(so->so_lock == NULL);
+	mutex_obj_hold(rt_so_mtx);
+	so->so_lock = rt_so_mtx;
+	solock(so);
+#endif
+
+	if ((error = raw_attach(so, proto, &rt_rawcb)) == 0) {
 		rt_adjustcount(rp->rcb_proto.sp_protocol, 1);
 		rp->rcb_laddr = &COMPATNAME(route_info).ri_src;
 		rp->rcb_faddr = &COMPATNAME(route_info).ri_dst;
@@ -1045,7 +1065,7 @@ flush:
 		proto.sp_protocol = family;
 	if (m)
 		raw_input(m, &proto, &COMPATNAME(route_info).ri_src,
-		    &COMPATNAME(route_info).ri_dst);
+		    &COMPATNAME(route_info).ri_dst, &rt_rawcb);
 	if (rp)
 		rp->rcb_proto.sp_family = PF_XROUTE;
     }
@@ -2018,8 +2038,10 @@ COMPATNAME(route_intr)(void *cookie)
 	struct route_info * const ri = &COMPATNAME(route_info);
 	struct mbuf *m;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 	for (;;) {
 		IFQ_LOCK(&ri->ri_intrq);
 		IF_DEQUEUE(&ri->ri_intrq, m);
@@ -2027,10 +2049,18 @@ COMPATNAME(route_intr)(void *cookie)
 		if (m == NULL)
 			break;
 		proto.sp_protocol = M_GETCTX(m, uintptr_t);
-		raw_input(m, &proto, &ri->ri_src, &ri->ri_dst);
+#ifdef NET_MPSAFE
+		mutex_enter(rt_so_mtx);
+#endif
+		raw_input(m, &proto, &ri->ri_src, &ri->ri_dst, &rt_rawcb);
+#ifdef NET_MPSAFE
+		mutex_exit(rt_so_mtx);
+#endif
 	}
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -2067,6 +2097,9 @@ COMPATNAME(route_init)(void)
 
 #ifndef COMPAT_RTSOCK
 	rt_init();
+#endif
+#ifdef NET_MPSAFE
+	rt_so_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 #endif
 
 	sysctl_net_route_setup(NULL);
@@ -2116,7 +2149,7 @@ static const struct protosw COMPATNAME(route_protosw)[] = {
 		.pr_ctlinput = raw_ctlinput,
 		.pr_ctloutput = route_ctloutput,
 		.pr_usrreqs = &route_usrreqs,
-		.pr_init = raw_init,
+		.pr_init = rt_pr_init,
 	},
 };
 

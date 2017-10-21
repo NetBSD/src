@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_private.h,v 1.4 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_private.h,v 1.4.4.1 2017/10/21 19:43:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,6 +78,28 @@ extern	percpu_t *pfkeystat_percpu;
 
 /* superuser opened socket? */
 #define IPSEC_PRIVILEGED_SO(so) ((so)->so_uidinfo->ui_uid == 0)
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
+#ifdef NET_MPSAFE
+#define IPSEC_DECLARE_LOCK_VARIABLE
+#define IPSEC_ACQUIRE_GLOBAL_LOCKS()	do { } while (0)
+#define IPSEC_RELEASE_GLOBAL_LOCKS()	do { } while (0)
+#else
+#include <sys/socketvar.h> /* for softnet_lock */
+
+#define IPSEC_DECLARE_LOCK_VARIABLE	int __s
+#define IPSEC_ACQUIRE_GLOBAL_LOCKS()	do {					\
+					__s = splsoftnet();		\
+					mutex_enter(softnet_lock);	\
+				} while (0)
+#define IPSEC_RELEASE_GLOBAL_LOCKS()	do {					\
+					mutex_exit(softnet_lock);	\
+					splx(__s);			\
+				} while (0)
+#endif
 
 #endif /* _KERNEL */
 

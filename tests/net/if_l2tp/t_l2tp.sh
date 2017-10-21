@@ -1,4 +1,4 @@
-#	$NetBSD: t_l2tp.sh,v 1.2 2017/02/17 00:51:25 ozaki-r Exp $
+#	$NetBSD: t_l2tp.sh,v 1.2.8.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -405,19 +405,19 @@ add_test()
 	fulldesc="Does ${lan_mode} over ${wan_mode} if_l2tp ${desc}"
 
 	atf_test_case ${name} cleanup
-	eval "${name}_head() { \
-			atf_set \"descr\" \"${fulldesc}\"; \
-			atf_set \"require.progs\" \"rump_server\"; \
-		}; \
-	    ${name}_body() { \
-			${category}_setup ${lan_mode} ${wan_mode}; \
-			${category}_test ${lan_mode} ${wan_mode}; \
-			${category}_teardown ${lan_mode} ${wan_mode}; \
-			rump_server_destroy_ifaces; \
-	    }; \
-	    ${name}_cleanup() { \
-			$DEBUG && dump; \
-			cleanup; \
+	eval "${name}_head() {
+			atf_set descr \"${fulldesc}\"
+			atf_set require.progs rump_server
+		}
+	    ${name}_body() {
+			${category}_setup ${lan_mode} ${wan_mode}
+			${category}_test ${lan_mode} ${wan_mode}
+			${category}_teardown ${lan_mode} ${wan_mode}
+			rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
 		}"
 	atf_add_test_case ${name}
 }

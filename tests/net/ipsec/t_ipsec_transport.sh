@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_transport.sh,v 1.4 2017/05/12 02:34:45 ozaki-r Exp $
+#	$NetBSD: t_ipsec_transport.sh,v 1.4.2.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -31,6 +31,17 @@ BUS=./bus_ipsec
 
 DEBUG=${DEBUG:-false}
 
+check_packets()
+{
+	local outfile=$1
+	local src=$2
+	local dst=$3
+	local pktproto=$4
+
+	atf_check -s exit:0 -o match:"$src > $dst: $pktproto" cat $outfile
+	atf_check -s exit:0 -o match:"$dst > $src: $pktproto" cat $outfile
+}
+
 test_ipsec4_transport()
 {
 	local proto=$1
@@ -39,8 +50,9 @@ test_ipsec4_transport()
 	local ip_peer=10.0.0.2
 	local tmpfile=./tmp
 	local outfile=./out
-	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local pktproto=$(generate_pktproto $proto)
 	local algo_args="$(generate_algo_args $proto $algo)"
+	local pktsize=
 
 	rump_server_crypto_start $SOCK_LOCAL netipsec
 	rump_server_crypto_start $SOCK_PEER netipsec
@@ -88,13 +100,30 @@ test_ipsec4_transport()
 	check_sa_entries $SOCK_PEER $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	if [ $proto = ipcomp ]; then
+		# IPComp sends a packet as-is if a compressed payload of
+		# the packet is greater than or equal to the original payload.
+		# So we have to fill a payload with 1 to let IPComp always send
+		# a compressed packet.
 
-	extract_new_packets $BUS > $outfile
-	atf_check -s exit:0 -o match:"$ip_local > $ip_peer: $proto_cap" \
-	    cat $outfile
-	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
-	    cat $outfile
+		# pktsize == minlen - 1
+		pktsize=$(($(get_minlen $algo) - 8 - 1))
+		atf_check -s exit:0 -o ignore \
+		    rump.ping -c 1 -n -w 3 -s $pktsize -p ff $ip_peer
+		extract_new_packets $BUS > $outfile
+		check_packets $outfile $ip_local $ip_peer ICMP
+
+		# pktsize == minlen
+		pktsize=$(($(get_minlen $algo) - 8))
+		atf_check -s exit:0 -o ignore \
+		    rump.ping -c 1 -n -w 3 -s $pktsize -p ff $ip_peer
+		extract_new_packets $BUS > $outfile
+		check_packets $outfile $ip_local $ip_peer $pktproto
+	else
+		atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+		extract_new_packets $BUS > $outfile
+		check_packets $outfile $ip_local $ip_peer $pktproto
+	fi
 
 	test_flush_entries $SOCK_LOCAL
 	test_flush_entries $SOCK_PEER
@@ -108,7 +137,7 @@ test_ipsec6_transport()
 	local ip_peer=fd00::2
 	local tmpfile=./tmp
 	local outfile=./out
-	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local pktproto=$(generate_pktproto $proto)
 	local algo_args="$(generate_algo_args $proto $algo)"
 
 	rump_server_crypto_start $SOCK_LOCAL netinet6 netipsec
@@ -157,13 +186,30 @@ test_ipsec6_transport()
 	check_sa_entries $SOCK_PEER $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_peer
+	if [ $proto = ipcomp ]; then
+		# IPComp sends a packet as-is if a compressed payload of
+		# the packet is greater than or equal to the original payload.
+		# So we have to fill a payload with 1 to let IPComp always send
+		# a compressed packet.
 
-	extract_new_packets $BUS > $outfile
-	atf_check -s exit:0 -o match:"$ip_local > $ip_peer: $proto_cap" \
-	    cat $outfile
-	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
-	    cat $outfile
+		# pktsize == minlen - 1
+		pktsize=$(($(get_minlen $algo) - 8 - 1))
+		atf_check -s exit:0 -o ignore \
+		    rump.ping6 -c 1 -n -X 3 -s $pktsize -p ff $ip_peer
+		extract_new_packets $BUS > $outfile
+		check_packets $outfile $ip_local $ip_peer ICMP6
+
+		# pktsize == minlen
+		pktsize=$(($(get_minlen $algo) - 8))
+		atf_check -s exit:0 -o ignore \
+		    rump.ping6 -c 1 -n -X 3 -s $pktsize -p ff $ip_peer
+		extract_new_packets $BUS > $outfile
+		check_packets $outfile $ip_local $ip_peer $pktproto
+	else
+		atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_peer
+		extract_new_packets $BUS > $outfile
+		check_packets $outfile $ip_local $ip_peer $pktproto
+	fi
 
 	test_flush_entries $SOCK_LOCAL
 	test_flush_entries $SOCK_PEER
@@ -194,19 +240,19 @@ add_test_transport_mode()
 	desc="Tests of IPsec ($ipproto) transport mode with $proto ($algo)"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_transport_common $ipproto $proto $algo;		\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_transport_common $ipproto $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }
@@ -222,5 +268,9 @@ atf_init_test_cases()
 	for algo in $AH_AUTHENTICATION_ALGORITHMS; do
 		add_test_transport_mode ipv4 ah $algo
 		add_test_transport_mode ipv6 ah $algo
+	done
+	for algo in $IPCOMP_COMPRESSION_ALGORITHMS; do
+		add_test_transport_mode ipv4 ipcomp $algo
+		add_test_transport_mode ipv6 ipcomp $algo
 	done
 }

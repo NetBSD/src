@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.177 2015/02/14 22:09:53 he Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.177.10.1 2017/10/21 19:43:54 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -157,7 +157,7 @@
 #define	TCP_KEYLEN_MAX	80	/* maximum length of TCP-MD5 key */
 /*
  * Only a single SA per host may be specified at this time. An SPI is
- * needed in order for the KEY_ALLOCSA() lookup to work.
+ * needed in order for the KEY_LOOKUP_SA() lookup to work.
  */
 #define	TCP_SIG_SPI	0x1000
 #endif /* TCP_SIGNATURE */

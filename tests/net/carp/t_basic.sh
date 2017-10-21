@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.6 2017/05/18 06:34:48 ozaki-r Exp $
+#	$NetBSD: t_basic.sh,v 1.6.2.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -333,22 +333,22 @@ add_test_case()
 	fi
 
 	atf_test_case ${name} cleanup
-	eval "							\
-	    ${name}_head() {					\
-	        atf_set \"descr\" \"$desc\";			\
-	        atf_set \"require.progs\" \"rump_server\";	\
-	    };							\
-	    ${name}_body() {					\
-	        $expected_failure_code				\
-	        test_carp_handover_${ipproto} $halt $carpdevip;	\
-	        if [ $halt != halt ]; then			\
-	             rump_server_destroy_ifaces;		\
-	        fi						\
-	    };							\
-	    ${name}_cleanup() {					\
-	        $DEBUG && dump;					\
-	        cleanup;					\
-	    }							\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server
+	    }
+	    ${name}_body() {
+	        $expected_failure_code
+	        test_carp_handover_${ipproto} $halt $carpdevip
+	        if [ $halt != halt ]; then
+	             rump_server_destroy_ifaces
+	        fi
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }

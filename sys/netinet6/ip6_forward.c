@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.87 2017/05/09 04:24:10 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.87.2.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.87 2017/05/09 04:24:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.87.2.1 2017/10/21 19:43:54 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -462,7 +462,7 @@ ip6_forward(struct mbuf *m, int srcrt)
  out:
 #ifdef IPSEC
 	if (sp != NULL)
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 #endif
 	rtcache_unref(rt, ro);
 	if (ro != NULL)

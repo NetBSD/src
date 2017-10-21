@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.26 2017/04/14 02:43:28 ozaki-r Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.26.4.1 2017/10/21 19:43:54 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.26 2017/04/14 02:43:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.26.4.1 2017/10/21 19:43:54 snj Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -108,7 +108,7 @@ __weak_alias(ipsec_init_policy,rumpnet_stub);
 __weak_alias(ipsec_pcbconn,rumpnet_stub);
 __weak_alias(ipsec_pcbdisconn,rumpnet_stub);
 __weak_alias(key_sa_routechange,rumpnet_stub);
-__weak_alias(_key_freesp,rumpnet_stub);
+__weak_alias(key_sp_unref,rumpnet_stub);
 
 struct ifnet_head ifnet_list;
 struct pslist_head ifnet_pslist;

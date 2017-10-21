@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.18.2.1 2017/07/07 13:57:26 martin Exp $
+#	$NetBSD: net_common.sh,v 1.18.2.2 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -403,4 +403,12 @@ dump()
 
 	rump_server_dump_servers
 	rump_server_dump_buses
+}
+
+skip_if_qemu()
+{
+	if sysctl machdep.cpu_brand 2>/dev/null | grep QEMU >/dev/null 2>&1
+	then
+	    atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
+	fi
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.357.4.1 2017/06/21 18:14:34 snj Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.357.4.2 2017/10/21 19:43:54 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.357.4.1 2017/06/21 18:14:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.357.4.2 2017/10/21 19:43:54 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3208,7 +3208,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	/*
 	 * Look up an SADB entry which matches the address of the peer.
 	 */
-	return KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
+	return KEY_LOOKUP_SA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
 #else
 	return NULL;
 #endif
@@ -3448,12 +3448,12 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 			TCP_STATINC(TCP_STAT_GOODSIG);
 
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 	return 0;
 out:
 	if (sav != NULL)
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	return -1;
 #endif
 }
@@ -4714,7 +4714,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	if (sav) {
 		(void)tcp_signature(m, th, hlen, sav, sigp);
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 #endif
 

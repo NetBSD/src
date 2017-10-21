@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.43.2.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43.2.1 2017/10/21 19:43:54 snj Exp $");
 
 /*
  * IPsec input processing.
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp
 #include <netinet/ip_var.h>
 #include <netinet/in_var.h>
 #include <netinet/in_proto.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
 
 #include <netinet/ip6.h>
 #ifdef INET6
@@ -112,6 +114,63 @@ do {									\
 		break;							\
 	}								\
 } while (/*CONSTCOND*/0)
+
+/*
+ * fixup TCP/UDP checksum
+ *
+ * XXX: if we have NAT-OA payload from IKE server,
+ *      we must do the differential update of checksum.
+ *
+ * XXX: NAT-OAi/NAT-OAr drived from IKE initiator/responder.
+ *      how to know the IKE side from kernel?
+ */
+static struct mbuf *
+ipsec4_fixup_checksum(struct mbuf *m)
+{
+       struct ip *ip;
+       struct tcphdr *th;
+       struct udphdr *uh;
+       int poff, off;
+       int plen;
+
+       if (m->m_len < sizeof(*ip))
+               m = m_pullup(m, sizeof(*ip));
+       ip = mtod(m, struct ip *); 
+       poff = ip->ip_hl << 2;
+       plen = ntohs(ip->ip_len) - poff;
+
+       switch (ip->ip_p) {
+       case IPPROTO_TCP:
+               IP6_EXTHDR_GET(th, struct tcphdr *, m, poff, sizeof(*th));
+               if (th == NULL)
+                       return NULL;
+               off = th->th_off << 2;
+               if (off < sizeof(*th) || off > plen) {
+                       m_freem(m);
+                       return NULL;
+               }
+               th->th_sum = 0;
+               th->th_sum = in4_cksum(m, IPPROTO_TCP, poff, plen);
+               break;
+       case IPPROTO_UDP:
+               IP6_EXTHDR_GET(uh, struct udphdr *, m, poff, sizeof(*uh));
+               if (uh == NULL)
+                       return NULL;
+               off = sizeof(*uh); 
+               if (off > plen) {  
+                       m_freem(m);
+                       return NULL;
+               }
+               uh->uh_sum = 0;
+               uh->uh_sum = in4_cksum(m, IPPROTO_UDP, poff, plen);
+               break;
+       default:
+               /* no checksum */  
+               return m;
+       }
+
+       return m;
+}
 
 /*
  * ipsec_common_input gets called when an IPsec-protected packet
@@ -208,8 +267,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 
 	s = splsoftnet();
 
-	/* NB: only pass dst since key_allocsa follows RFC2401 */
-	sav = KEY_ALLOCSA(&dst_address, sproto, spi, sport, dport);
+	/* NB: only pass dst since key_lookup_sa follows RFC2401 */
+	sav = KEY_LOOKUP_SA(&dst_address, sproto, spi, sport, dport);
 	if (sav == NULL) {
 		IPSECLOG(LOG_DEBUG,
 		    "no key association found for SA %s/%08lx/%u/%u\n",
@@ -222,25 +281,14 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		return ENOENT;
 	}
 
-	if (sav->tdb_xform == NULL) {
-		IPSECLOG(LOG_DEBUG,
-		    "attempted to use uninitialized SA %s/%08lx/%u\n",
-		    ipsec_address(&dst_address, buf, sizeof(buf)),
-		    (u_long) ntohl(spi), sproto);
-		IPSEC_ISTAT(sproto, ESP_STAT_NOXFORM, AH_STAT_NOXFORM,
-		    IPCOMP_STAT_NOXFORM);
-		KEY_FREESAV(&sav);
-		splx(s);
-		m_freem(m);
-		return ENXIO;
-	}
+	KASSERT(sav->tdb_xform != NULL);
 
 	/*
 	 * Call appropriate transform and return -- callback takes care of
 	 * everything else.
 	 */
 	error = (*sav->tdb_xform->xf_input)(m, sav, skip, protoff);
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	splx(s);
 	return error;
 }
@@ -272,12 +320,10 @@ ipsec4_common_input(struct mbuf *m, ...)
  */
 int
 ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
-    int skip, int protoff, struct m_tag *mt)
+    int skip, int protoff)
 {
 	int prot, af __diagused, sproto;
 	struct ip *ip;
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int error;
 
@@ -285,7 +331,6 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 	KASSERT(m != NULL);
 	KASSERT(sav != NULL);
-	KASSERT(sav->sah != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
 	KASSERTMSG(af == AF_INET, "unexpected af %u", af);
@@ -299,24 +344,41 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		IPSECLOG(LOG_DEBUG, "null mbuf");
 		IPSEC_ISTAT(sproto, ESP_STAT_BADKCR, AH_STAT_BADKCR,
 		    IPCOMP_STAT_BADKCR);
-		KEY_FREESAV(&sav);
 		return EINVAL;
 	}
 
 	/* Fix IPv4 header */
-	if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
-		char buf[IPSEC_ADDRSTRLEN];
-		IPSECLOG(LOG_DEBUG, "processing failed for SA %s/%08lx\n",
-		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
-		    (u_long) ntohl(sav->spi));
-		IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
-		    IPCOMP_STAT_HDROPS);
-		error = ENOBUFS;
-		goto bad;
+	if (skip != 0) {
+		if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
+			char buf[IPSEC_ADDRSTRLEN];
+cantpull:
+			IPSECLOG(LOG_DEBUG,
+			    "processing failed for SA %s/%08lx\n",
+			    ipsec_address(&sav->sah->saidx.dst, buf,
+			    sizeof(buf)), (u_long) ntohl(sav->spi));
+			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
+			    IPCOMP_STAT_HDROPS);
+			error = ENOBUFS;
+			goto bad;
+		}
+
+		ip = mtod(m, struct ip *);
+		ip->ip_len = htons(m->m_pkthdr.len);
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+	} else {
+		ip = mtod(m, struct ip *);
 	}
 
-	ip = mtod(m, struct ip *);
-	ip->ip_len = htons(m->m_pkthdr.len);
+	/*
+	 * Update TCP/UDP checksum
+	 * XXX: should only do it in NAT-T case
+	 * XXX: should do it incrementally, see FreeBSD code.
+	 */
+	m = ipsec4_fixup_checksum(m);
+	if (m == NULL)
+		goto cantpull;
+
 	prot = ip->ip_p;
 
 	/* IP-in-IP encapsulation */
@@ -397,37 +459,6 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 	}
 #endif /* INET6 */
 
-	/*
-	 * Record what we've done to the packet (under what SA it was
-	 * processed). If we've been passed an mtag, it means the packet
-	 * was already processed by an ethernet/crypto combo card and
-	 * thus has a tag attached with all the right information, but
-	 * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
-	 * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
-	 */
-	if (mt == NULL && sproto != IPPROTO_IPCOMP) {
-		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
-		    sizeof(struct tdb_ident), M_NOWAIT);
-		if (mtag == NULL) {
-			IPSECLOG(LOG_DEBUG, "failed to get tag\n");
-			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS,
-			    AH_STAT_HDROPS, IPCOMP_STAT_HDROPS);
-			error = ENOMEM;
-			goto bad;
-		}
-
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		memcpy(&tdbi->dst, &saidx->dst, saidx->dst.sa.sa_len);
-		tdbi->proto = sproto;
-		tdbi->spi = sav->spi;
-
-		m_tag_prepend(m, mtag);
-	} else {
-		if (mt != NULL)
-			mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
-			/* XXX do we need to mark m_flags??? */
-	}
-
 	key_sa_recordxfer(sav, m);		/* record data transfer */
 
 	if ((inetsw[ip_protox[prot]].pr_flags & PR_LASTHDR) != 0 &&
@@ -503,13 +534,11 @@ extern	u_char ip6_protox[];
  * filtering and other sanity checks on the processed packet.
  */
 int
-ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int protoff,
-    struct m_tag *mt)
+ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
+    int protoff)
 {
 	int af __diagused, sproto;
 	struct ip6_hdr *ip6;
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int nxt;
 	u_int8_t prot, nxt8;
@@ -517,7 +546,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 
 	KASSERT(m != NULL);
 	KASSERT(sav != NULL);
-	KASSERT(sav->sah != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
 	KASSERTMSG(af == AF_INET6, "unexpected af %u", af);
@@ -629,37 +657,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 			goto bad;
 		}
 #endif /*XXX*/
-	}
-
-	/*
-	 * Record what we've done to the packet (under what SA it was
-	 * processed). If we've been passed an mtag, it means the packet
-	 * was already processed by an ethernet/crypto combo card and
-	 * thus has a tag attached with all the right information, but
-	 * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
-	 * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
-	 */
-	if (mt == NULL && sproto != IPPROTO_IPCOMP) {
-		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
-		    sizeof(struct tdb_ident), M_NOWAIT);
-		if (mtag == NULL) {
-			IPSECLOG(LOG_DEBUG, "failed to get tag\n");
-			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS,
-			    AH_STAT_HDROPS, IPCOMP_STAT_HDROPS);
-			error = ENOMEM;
-			goto bad;
-		}
-
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		memcpy(&tdbi->dst, &saidx->dst, sizeof(union sockaddr_union));
-		tdbi->proto = sproto;
-		tdbi->spi = sav->spi;
-
-		m_tag_prepend(m, mtag);
-	} else {
-		if (mt != NULL)
-			mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
-			/* XXX do we need to mark m_flags??? */
 	}
 
 	key_sa_recordxfer(sav, m);

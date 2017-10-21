@@ -1,4 +1,4 @@
-#	$NetBSD: algorithms.sh,v 1.4 2017/05/12 02:34:45 ozaki-r Exp $
+#	$NetBSD: algorithms.sh,v 1.4.2.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -111,6 +111,12 @@ invalid_keys_aesxcbcmac="120 136"
 #valid_keys_tcpmd5="8 640"
 #invalid_keys_tcpmd5="648"
 
+IPCOMP_COMPRESSION_ALGORITHMS="deflate"
+IPCOMP_COMPRESSION_ALGORITHMS_MINIMUM="deflate"
+valid_keys_deflate="0"
+invalid_keys_deflate="8"
+minlen_deflate="90"
+
 get_one_valid_keylen()
 {
 	local algo=$1
@@ -170,7 +176,18 @@ generate_algo_args()
 
 	if [ $proto = esp ]; then
 		echo "-E $algo $key"
-	else
+	elif [ $proto = ah ]; then
 		echo "-A $algo $key"
+	else
+		echo "-C $algo $key"
 	fi
+}
+
+get_minlen()
+{
+	local algo=$1
+	local minlen=
+
+	eval minlen="\$minlen_${algo}"
+	echo $minlen
 }

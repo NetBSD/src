@@ -1,4 +1,4 @@
-#	$NetBSD: t_mcast.sh,v 1.5 2017/02/28 09:23:23 ozaki-r Exp $
+#	$NetBSD: t_mcast.sh,v 1.5.4.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -115,32 +115,32 @@ add_test()
 
 	fulldesc="Checks $desc"
 	atf_test_case "mcast_${name}" cleanup
-	eval "mcast_${name}_head() { \
-			atf_set \"descr\" \"${fulldesc}\"; \
-			atf_set \"require.progs\" \"rump_server\"; \
-		}; \
-	    mcast_${name}_body() { \
-			run_test \"${name}\" \"${opts}\"; \
-			rump_server_destroy_ifaces; \
-		}; \
-	    mcast_${name}_cleanup() { \
-			${DEBUG} && dump; \
-			cleanup; \
+	eval "mcast_${name}_head() {
+			atf_set descr \"${fulldesc}\"
+			atf_set require.progs rump_server
+		}
+	    mcast_${name}_body() {
+			run_test ${name} \"${opts}\"
+			rump_server_destroy_ifaces
+		}
+	    mcast_${name}_cleanup() {
+			\${DEBUG} && dump
+			cleanup
 		}"
 	atf_add_test_case "mcast_${name}"
 
 	fulldesc="Destroying interface while testing ${desc}"
 	atf_test_case "mcast_destroyif_${name}" cleanup
-	eval "mcast_destroyif_${name}_head() { \
-			atf_set \"descr\" \"${fulldesc}\"; \
-			atf_set \"require.progs\" \"rump_server\"; \
-		}; \
-	    mcast_destroyif_${name}_body() { \
-			run_test_destroyif \"${name}\" \"${opts}\"; \
-		}; \
-	    mcast_destroyif_${name}_cleanup() { \
-			${DEBUG} && dump; \
-			cleanup; \
+	eval "mcast_destroyif_${name}_head() {
+			atf_set descr \"${fulldesc}\"
+			atf_set require.progs rump_server
+		}
+	    mcast_destroyif_${name}_body() {
+			run_test_destroyif ${name} \"${opts}\"
+		}
+	    mcast_destroyif_${name}_cleanup() {
+			\${DEBUG} && dump
+			cleanup
 		}"
 	atf_add_test_case "mcast_destroyif_${name}"
 }
