@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.411 2017/10/21 09:02:23 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.412 2017/10/21 09:12:40 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.411 2017/10/21 09:02:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.412 2017/10/21 09:12:40 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1866,18 +1866,18 @@ audiopoll(struct file *fp, int events)
 	dev_t dev;
 
 	if (fp->f_audioctx == NULL)
-		return EIO;
+		return POLLERR;
 
 	dev = fp->f_audioctx->dev;
 
 	/* Don't bother with device level lock here. */
 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
-		return ENXIO;
+		return POLLERR;
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
 		mutex_exit(sc->sc_lock);
-		return EIO;
+		return POLLERR;
 	}
 
 	switch (AUDIODEV(dev)) {
