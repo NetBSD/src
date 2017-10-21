@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.42 2017/10/19 10:01:09 maxv Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.43 2017/10/21 07:24:26 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.42 2017/10/19 10:01:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.43 2017/10/21 07:24:26 maxv Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_user_ldt.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

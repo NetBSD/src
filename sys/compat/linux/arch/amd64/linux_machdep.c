@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.54 2017/10/19 10:01:09 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.55 2017/10/21 07:24:26 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.54 2017/10/19 10:01:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.55 2017/10/21 07:24:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,8 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.54 2017/10/19 10:01:09 maxv Exp 
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
 #if defined(_KERNEL_OPT)
+#include "opt_user_ldt.h"
 #include "wsdisplay.h"
 #endif
+
 #if (NWSDISPLAY > 0)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
