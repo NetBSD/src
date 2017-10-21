@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.2 2017/10/21 18:18:44 jmcneill Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.3 2017/10/21 20:36:12 jmcneill Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -740,8 +740,9 @@ bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	struct bwfm_usb_softc *sc = (void *)bwfm;
 	struct bwfm_proto_bcdc_hdr *hdr;
 	struct bwfm_usb_tx_data *data;
+	struct ether_header *eh;
 	uint32_t len = 0;
-	int error;
+	int error, ac;
 
 	DPRINTFN(2, ("%s: %s\n", DEVNAME(sc), __func__));
 
@@ -752,6 +753,11 @@ bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 		return ENOBUFS;
 	}
 
+	/* No QoS for EAPOL frames. */
+	eh = mtod(m, struct ether_header *);
+	ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
+	    M_WME_GETAC(m) : WME_AC_BE;
+
 	/* Grab a Tx buffer from our free list. */
 	data = TAILQ_FIRST(&sc->sc_tx_free_list);
 	TAILQ_REMOVE(&sc->sc_tx_free_list, data, next);
@@ -760,7 +766,7 @@ bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 
 	hdr = (void *)&data->buf[len];
 	hdr->data_offset = 0;
-	hdr->priority = 0;
+	hdr->priority = ac;
 	hdr->flags = BWFM_BCDC_FLAG_VER(BWFM_BCDC_FLAG_PROTO_VER);
 	hdr->flags2 = 0;
 	len += sizeof(*hdr);
