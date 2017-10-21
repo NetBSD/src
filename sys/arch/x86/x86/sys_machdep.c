@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.42 2017/10/21 06:55:54 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.43 2017/10/21 08:27:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.42 2017/10/21 06:55:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.43 2017/10/21 08:27:19 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_pmc.h"
@@ -248,6 +248,11 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	/* Check descriptors for access violations. */
 	for (i = 0; i < ua->num; i++) {
 		union descriptor *desc = &descv[i];
+
+#ifdef __x86_64__
+		if (desc->sd.sd_long != 0)
+			return EACCES;
+#endif
 
 		switch (desc->sd.sd_type) {
 		case SDT_SYSNULL:
