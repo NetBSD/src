@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.23 2016/09/10 13:16:12 jakllsch Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.24 2017/10/21 03:17:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.23 2016/09/10 13:16:12 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.24 2017/10/21 03:17:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ static const char * seeprom_compats[] = {
 	"i2c-at24c64",
 	"i2c-at34c02",
 	"atmel,24c02",
+	"atmel,24c16",
 	NULL
 };
 
@@ -122,6 +123,7 @@ static const struct seeprom_size {
 	int size;
 } seeprom_sizes[] = {
 	{ "atmel,24c02", 256 },
+	{ "atmel,24c16", 2048 },
 };
 
 static int
