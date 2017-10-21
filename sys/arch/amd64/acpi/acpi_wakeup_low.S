@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.7 2017/10/19 18:36:31 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.8 2017/10/21 06:55:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -47,9 +47,9 @@ acpi_md_sleep_exit:
 	movw	%ax,%ss
 
 	/*
-	 * FS and GS are driven by MSRs, so use NULL for them.
-	 * XXX XXX XXX That's not the case if we're returning to a 32bit
-	 * LWP!
+	 * FS and GS are driven by MSRs, so use NULL for them. If we're
+	 * returning to a 32bit LWP, %fs/%gs will be restored in
+	 * INTRFASTEXIT.
 	 */
 	xorw	%ax,%ax
 	movw	%ax,%fs
