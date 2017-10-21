@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.123 2017/02/15 02:48:31 elric Exp $	*/
+/*	$NetBSD: inetd.c,v 1.123.4.1 2017/10/21 19:56:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.123 2017/02/15 02:48:31 elric Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.123.4.1 2017/10/21 19:56:06 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -1088,13 +1088,16 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	}
 #endif
 #ifdef IPSEC
-	if (ipsecsetup(sep->se_family, sep->se_fd, sep->se_policy) < 0 &&
-	    sep->se_policy) {
-		syslog(LOG_ERR, "%s/%s: ipsec setup failed",
-		    sep->se_service, sep->se_proto);
-		(void)close(sep->se_fd);
-		sep->se_fd = -1;
-		return;
+	/* Avoid setting a policy if a policy specifier doesn't exist. */
+	if (sep->se_policy != NULL) {
+		int e = ipsecsetup(sep->se_family, sep->se_fd, sep->se_policy);
+		if (e < 0) {
+			syslog(LOG_ERR, "%s/%s: ipsec setup failed",
+			    sep->se_service, sep->se_proto);
+			(void)close(sep->se_fd);
+			sep->se_fd = -1;
+			return;
+		}
 	}
 #endif
 
