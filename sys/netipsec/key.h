@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.19 2017/05/30 01:31:07 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.19.2.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -48,17 +48,23 @@ struct secasindex;
 union sockaddr_union;
 
 int key_havesp(u_int dir);
-struct secpolicy *key_allocsp(const struct secpolicyindex *, u_int,
+struct secpolicy *key_lookup_sp_byspidx(const struct secpolicyindex *, u_int,
 	const char*, int);
-struct secpolicy *key_allocsp2(u_int32_t spi, const union sockaddr_union *dst,
-	u_int8_t proto, u_int dir, const char*, int);
 struct secpolicy *key_newsp(const char*, int);
 struct secpolicy *key_gettunnel(const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
 	const struct sockaddr *, const char*, int);
 /* NB: prepend with _ for KAME IPv6 compatbility */
-void _key_freesp(struct secpolicy **, const char*, int);
+void key_init_sp(struct secpolicy *);
+void key_free_sp(struct secpolicy *);
+u_int key_sp_refcnt(const struct secpolicy *);
 void key_sp_ref(struct secpolicy *, const char*, int);
+void key_sp_unref(struct secpolicy *, const char*, int);
+void key_sa_ref(struct secasvar *, const char*, int);
+void key_sa_unref(struct secasvar *, const char*, int);
+u_int key_sa_refcnt(const struct secasvar *);
+
+void key_socksplist_add(struct secpolicy *);
 
 /*
  * Access to the SADB are interlocked with splsoftnet.  In particular,
@@ -67,30 +73,32 @@ void key_sp_ref(struct secpolicy *, const char*, int);
  * occur on crypto callbacks.  Much of this could go away if
  * key_checkrequest were redone.
  */
-#define	KEY_ALLOCSP(spidx, dir)					\
-	key_allocsp(spidx, dir, __func__, __LINE__)
-#define	KEY_ALLOCSP2(spi, dst, proto, dir)			\
-	key_allocsp2(spi, dst, proto, dir, __func__, __LINE__)
+#define	KEY_LOOKUP_SP_BYSPIDX(spidx, dir)			\
+	key_lookup_sp_byspidx(spidx, dir, __func__, __LINE__)
 #define	KEY_NEWSP()						\
 	key_newsp(__func__, __LINE__)
 #define	KEY_GETTUNNEL(osrc, odst, isrc, idst)			\
 	key_gettunnel(osrc, odst, isrc, idst, __func__, __LINE__)
-#define	KEY_FREESP(spp)						\
-	_key_freesp(spp, __func__, __LINE__)
+#define	KEY_SP_UNREF(spp)					\
+	key_sp_unref(*(spp), __func__, __LINE__)
 #define	KEY_SP_REF(sp)						\
 	key_sp_ref(sp, __func__, __LINE__)
+#define KEY_SA_REF(sav)						\
+	key_sa_ref(sav, __func__, __LINE__)
+#define	KEY_SA_UNREF(psav)					\
+	key_sa_unref(*(psav), __func__, __LINE__)
 
-struct secasvar *key_allocsa(const union sockaddr_union *, 
+struct secasvar *key_lookup_sa(const union sockaddr_union *,
 		u_int, u_int32_t, u_int16_t, u_int16_t, const char*, int);
 void key_freesav(struct secasvar **, const char*, int);
+struct secasvar *key_lookup_sa_bysaidx(const struct secasindex *);
 
-#define	KEY_ALLOCSA(dst, proto, spi, sport, dport)				\
-	key_allocsa(dst, proto, spi, sport, dport,  __func__, __LINE__)
-#define	KEY_FREESAV(psav)					\
-	key_freesav(psav, __func__, __LINE__)
+#define	KEY_LOOKUP_SA(dst, proto, spi, sport, dport)		\
+	key_lookup_sa(dst, proto, spi, sport, dport,  __func__, __LINE__)
 
 int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
-int key_checkrequest (struct ipsecrequest *isr, const struct secasindex *);
+int key_checkrequest(const struct ipsecrequest *, const struct secasindex *,
+    struct secasvar **);
 
 struct secpolicy *key_msg2sp (const struct sadb_x_policy *, size_t, int *);
 struct mbuf *key_sp2msg (const struct secpolicy *);

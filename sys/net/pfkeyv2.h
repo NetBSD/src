@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.31 2017/04/13 16:38:31 christos Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.31.4.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -338,6 +338,9 @@ struct sadb_x_nat_t_frag {
 #define SADB_SASTATE_DYING    2
 #define SADB_SASTATE_DEAD     3
 #define SADB_SASTATE_MAX      3
+
+#define SADB_SASTATE_USABLE_P(sav) \
+    ((sav)->state == SADB_SASTATE_MATURE || (sav)->state == SADB_SASTATE_DYING)
 
 #define SADB_SAFLAGS_PFS      1
 

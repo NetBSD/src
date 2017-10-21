@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel_odd.sh,v 1.2.2.1 2017/10/21 19:43:55 snj Exp $
+#	$NetBSD: t_ipsec_tunnel_ipcomp.sh,v 1.2.2.2 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -51,34 +51,63 @@ setup_servers()
 	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS_REMOTE
 }
 
-check_tunnel_packets()
+check_tunnel_ipcomp_packets()
 {
 	local outfile=$1
-	local src=$2
-	local dst=$3
-	local proto=$4
+	local osrc=$2
+	local odst=$3
+	local oproto=$4
+	local isrc=$5
+	local idst=$6
+	local iproto=$7
 
-	atf_check -s exit:0 -o match:"$src > $dst: $proto" cat $outfile
-	atf_check -s exit:0 -o match:"$dst > $src: $proto" cat $outfile
+	$DEBUG && cat $outfile
+
+	if [ $oproto = ESP ]; then
+		atf_check -s exit:0 \
+		    -o match:"$osrc > $odst: $oproto" \
+		    cat $outfile
+		atf_check -s exit:0 \
+		    -o match:"$odst > $osrc: $oproto" \
+		    cat $outfile
+		# TODO check the packet lengths to check IPComp is really used
+		return
+	fi
+
+	# AH
+	if [ $iproto = IPComp ]; then
+		atf_check -s exit:0 \
+		    -o match:"$osrc > $odst: $oproto.+: $iproto" \
+		    cat $outfile
+		atf_check -s exit:0 \
+		    -o match:"$odst > $osrc: $oproto.+: $iproto" \
+		    cat $outfile
+	else
+		atf_check -s exit:0 \
+		    -o match:"$osrc > $odst: $oproto.+ $isrc > $idst: $iproto" \
+		    cat $outfile
+		atf_check -s exit:0 \
+		    -o match:"$odst > $osrc: $oproto.+ $idst > $isrc: $iproto" \
+		    cat $outfile
+	fi
 }
 
-test_ipsec46_tunnel()
+test_ipsec4_tunnel_ipcomp()
 {
 	local proto=$1
 	local algo=$2
+	local calgo=$3
 	local ip_local=10.0.1.2
 	local ip_gw_local=10.0.1.1
 	local ip_gw_local_tunnel=20.0.0.1
 	local ip_gw_remote_tunnel=20.0.0.2
-	local ip6_gw_local_tunnel=fc00::1
-	local ip6_gw_remote_tunnel=fc00::2
 	local ip_gw_remote=10.0.2.1
 	local ip_remote=10.0.2.2
 	local subnet_local=10.0.1.0
 	local subnet_remote=10.0.2.0
 	local tmpfile=./tmp
 	local outfile=./out
-	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local pktproto=$(generate_pktproto $proto)
 	local algo_args="$(generate_algo_args $proto $algo)"
 
 	setup_servers
@@ -91,20 +120,17 @@ test_ipsec46_tunnel()
 
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
-	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_local/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_local_tunnel/24
-	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip6_gw_local_tunnel/24
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -net $subnet_remote $ip_gw_remote_tunnel
+	rump.sysctl -a |grep ipsec
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
-	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_remote/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_remote_tunnel/24
-	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip6_gw_remote_tunnel/24
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -net $subnet_local $ip_gw_local_tunnel
@@ -131,60 +157,84 @@ test_ipsec46_tunnel()
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
 	# from https://www.netbsd.org/docs/network/ipsec/
 	cat > $tmpfile <<-EOF
-	add $ip6_gw_local_tunnel $ip6_gw_remote_tunnel $proto 10000 $algo_args;
-	add $ip6_gw_remote_tunnel $ip6_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel ipcomp 10000 -C $calgo;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel ipcomp 10001 -C $calgo;
 	spdadd $subnet_local/24 $subnet_remote/24 any -P out ipsec
-	    $proto/tunnel/$ip6_gw_local_tunnel-$ip6_gw_remote_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_local_tunnel-$ip_gw_remote_tunnel/require
+	    $proto/transport//require;
 	spdadd $subnet_remote/24 $subnet_local/24 any -P in ipsec
-	    $proto/tunnel/$ip6_gw_remote_tunnel-$ip6_gw_local_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_remote_tunnel-$ip_gw_local_tunnel/require
+	    $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	check_sa_entries $SOCK_TUNNEL_LOCAL $ip6_gw_local_tunnel \
-	    $ip6_gw_remote_tunnel
+	check_sa_entries $SOCK_TUNNEL_LOCAL $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
-	add $ip6_gw_local_tunnel $ip6_gw_remote_tunnel $proto 10000 $algo_args;
-	add $ip6_gw_remote_tunnel $ip6_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel ipcomp 10000 -C $calgo;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel ipcomp 10001 -C $calgo;
 	spdadd $subnet_remote/24 $subnet_local/24 any -P out ipsec
-	    $proto/tunnel/$ip6_gw_remote_tunnel-$ip6_gw_local_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_remote_tunnel-$ip_gw_local_tunnel/require
+	    $proto/transport//require;
 	spdadd $subnet_local/24 $subnet_remote/24 any -P in ipsec
-	    $proto/tunnel/$ip6_gw_local_tunnel-$ip6_gw_remote_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_local_tunnel-$ip_gw_remote_tunnel/require
+	    $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	check_sa_entries $SOCK_TUNNEL_REMOTE $ip6_gw_local_tunnel \
-	    $ip6_gw_remote_tunnel
+	check_sa_entries $SOCK_TUNNEL_REMOTE $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
+	# IPComp sends a packet as-is if a compressed payload of
+	# the packet is greater than or equal to the original payload.
+	# So we have to fill a payload with 1 to let IPComp always send
+	# a compressed packet.
 
+	# pktsize == minlen - 1
+	pktsize=$(($(get_minlen deflate) - 8 - 20 - 1))
+	atf_check -s exit:0 -o ignore \
+	    rump.ping -c 1 -n -w 3 -s $pktsize -p ff $ip_remote
 	extract_new_packets $BUS_TUNNEL > $outfile
-	check_tunnel_packets $outfile $ip6_gw_local_tunnel $ip6_gw_remote_tunnel \
-	    $proto_cap
+	check_tunnel_ipcomp_packets $outfile \
+	    $ip_gw_local_tunnel $ip_gw_remote_tunnel $pktproto \
+	    $ip_local $ip_remote ICMP
+
+	# pktsize == minlen
+	pktsize=$(($(get_minlen deflate) - 8 - 20))
+	atf_check -s exit:0 -o ignore \
+	    rump.ping -c 1 -n -w 3 -s $pktsize -p ff $ip_remote
+	extract_new_packets $BUS_TUNNEL > $outfile
+	check_tunnel_ipcomp_packets $outfile \
+	    $ip_gw_local_tunnel $ip_gw_remote_tunnel $pktproto \
+	    $ip_local $ip_remote IPComp
 
 	test_flush_entries $SOCK_TUNNEL_LOCAL
 	test_flush_entries $SOCK_TUNNEL_REMOTE
 }
 
-test_ipsec64_tunnel()
+test_ipsec6_tunnel_ipcomp()
 {
 	local proto=$1
 	local algo=$2
+	local calgo=$3
 	local ip_local=fd00:1::2
 	local ip_gw_local=fd00:1::1
 	local ip_gw_local_tunnel=fc00::1
 	local ip_gw_remote_tunnel=fc00::2
-	local ip4_gw_local_tunnel=20.0.0.1
-	local ip4_gw_remote_tunnel=20.0.0.2
 	local ip_gw_remote=fd00:2::1
 	local ip_remote=fd00:2::2
 	local subnet_local=fd00:1::
 	local subnet_remote=fd00:2::
 	local tmpfile=./tmp
 	local outfile=./out
-	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local pktproto=$(generate_pktproto $proto)
 	local algo_args="$(generate_algo_args $proto $algo)"
 
 	setup_servers
@@ -196,21 +246,17 @@ test_ipsec64_tunnel()
 	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gw_local
 
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
-	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_local/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_local_tunnel/64
-	atf_check -s exit:0 rump.ifconfig shmif1 $ip4_gw_local_tunnel
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
-	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_remote/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_remote_tunnel/64
-	atf_check -s exit:0 rump.ifconfig shmif1 $ip4_gw_remote_tunnel
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -inet6 -net $subnet_local/64 $ip_gw_local_tunnel
@@ -237,53 +283,81 @@ test_ipsec64_tunnel()
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
 	# from https://www.netbsd.org/docs/network/ipsec/
 	cat > $tmpfile <<-EOF
-	add $ip4_gw_local_tunnel $ip4_gw_remote_tunnel $proto 10000 $algo_args;
-	add $ip4_gw_remote_tunnel $ip4_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel ipcomp 10000 -C $calgo;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel ipcomp 10001 -C $calgo;
 	spdadd $subnet_local/64 $subnet_remote/64 any -P out ipsec
-	    $proto/tunnel/$ip4_gw_local_tunnel-$ip4_gw_remote_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_local_tunnel-$ip_gw_remote_tunnel/require
+	    $proto/transport//require;
 	spdadd $subnet_remote/64 $subnet_local/64 any -P in ipsec
-	    $proto/tunnel/$ip4_gw_remote_tunnel-$ip4_gw_local_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_remote_tunnel-$ip_gw_local_tunnel/require
+	    $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	check_sa_entries $SOCK_TUNNEL_LOCAL $ip4_gw_local_tunnel \
-	    $ip4_gw_remote_tunnel
+	check_sa_entries $SOCK_TUNNEL_LOCAL $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
-	add $ip4_gw_local_tunnel $ip4_gw_remote_tunnel $proto 10000 $algo_args;
-	add $ip4_gw_remote_tunnel $ip4_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel ipcomp 10000 -C $calgo;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel ipcomp 10001 -C $calgo;
 	spdadd $subnet_remote/64 $subnet_local/64 any -P out ipsec
-	    $proto/tunnel/$ip4_gw_remote_tunnel-$ip4_gw_local_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_remote_tunnel-$ip_gw_local_tunnel/require
+	    $proto/transport//require;
 	spdadd $subnet_local/64 $subnet_remote/64 any -P in ipsec
-	    $proto/tunnel/$ip4_gw_local_tunnel-$ip4_gw_remote_tunnel/require;
+	    ipcomp/tunnel/$ip_gw_local_tunnel-$ip_gw_remote_tunnel/require
+	    $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	check_sa_entries $SOCK_TUNNEL_REMOTE $ip4_gw_local_tunnel \
-	    $ip4_gw_remote_tunnel
+	check_sa_entries $SOCK_TUNNEL_REMOTE $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_remote
 
+	# IPComp sends a packet as-is if a compressed payload of
+	# the packet is greater than or equal to the original payload.
+	# So we have to fill a payload with 1 to let IPComp always send
+	# a compressed packet.
+
+	# pktsize == minlen - 1
+
+	pktsize=$(($(get_minlen deflate) - 8 - 40 - 1))
+	atf_check -s exit:0 -o ignore \
+	    rump.ping6 -c 1 -n -X 3 -s $pktsize -p ff $ip_remote
 	extract_new_packets $BUS_TUNNEL > $outfile
-	check_tunnel_packets $outfile $ip4_gw_local_tunnel $ip4_gw_remote_tunnel \
-	    $proto_cap
+	check_tunnel_ipcomp_packets $outfile \
+	    $ip_gw_local_tunnel $ip_gw_remote_tunnel $pktproto \
+	    $ip_local $ip_remote ICMP6
+
+	# pktsize == minlen
+	pktsize=$(($(get_minlen deflate) - 8 - 40))
+	atf_check -s exit:0 -o ignore \
+	    rump.ping6 -c 1 -n -X 3 -s $pktsize -p ff $ip_remote
+	extract_new_packets $BUS_TUNNEL > $outfile
+	check_tunnel_ipcomp_packets $outfile \
+	    $ip_gw_local_tunnel $ip_gw_remote_tunnel $pktproto \
+	    $ip_local $ip_remote IPComp
 
 	test_flush_entries $SOCK_TUNNEL_LOCAL
 	test_flush_entries $SOCK_TUNNEL_REMOTE
 }
 
-test_tunnel_common()
+test_tunnel_ipcomp_common()
 {
 	local ipproto=$1
 	local proto=$2
 	local algo=$3
+	local calgo=$4
 
-	if [ $ipproto = v4v6 ]; then
-		test_ipsec46_tunnel $proto $algo
+	if [ $ipproto = ipv4 ]; then
+		test_ipsec4_tunnel_ipcomp $proto $algo $calgo
 	else
-		test_ipsec64_tunnel $proto $algo
+		test_ipsec6_tunnel_ipcomp $proto $algo $calgo
 	fi
 }
 
@@ -292,15 +366,12 @@ add_test_tunnel_mode()
 	local ipproto=$1
 	local proto=$2
 	local algo=$3
+	local calgo=$4
 	local _algo=$(echo $algo | sed 's/-//g')
 	local name= desc=
 
-	name="ipsec_tunnel_${ipproto}_${proto}_${_algo}"
-	if [ $ipproto = v4v6 ]; then
-		desc="Tests of IPsec tunnel mode (IPv4 over IPv6) with $proto ($algo)"
-	else
-		desc="Tests of IPsec tunnel mode (IPv6 over IPv4) with $proto ($algo)"
-	fi
+	name="ipsec_tunnel_ipcomp_${calgo}_${ipproto}_${proto}_${_algo}"
+	desc="Tests of IPsec ($ipproto) tunnel mode with $proto ($algo) and ipcomp ($calgo)"
 
 	atf_test_case ${name} cleanup
 	eval "
@@ -309,7 +380,7 @@ add_test_tunnel_mode()
 	        atf_set require.progs rump_server setkey
 	    }
 	    ${name}_body() {
-	        test_tunnel_common $ipproto $proto $algo
+	        test_tunnel_ipcomp_common $ipproto $proto $algo $calgo
 	        rump_server_destroy_ifaces
 	    }
 	    ${name}_cleanup() {
@@ -322,15 +393,17 @@ add_test_tunnel_mode()
 
 atf_init_test_cases()
 {
-	local algo=
+	local calgo= algo=
 
-	for algo in $ESP_ENCRYPTION_ALGORITHMS; do
-		add_test_tunnel_mode v4v6 esp $algo
-		add_test_tunnel_mode v6v4 esp $algo
-	done
+	for calgo in $IPCOMP_COMPRESSION_ALGORITHMS; do
+		for algo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
+			add_test_tunnel_mode ipv4 esp $algo $calgo
+			add_test_tunnel_mode ipv6 esp $algo $calgo
+		done
 
-	for algo in $AH_AUTHENTICATION_ALGORITHMS; do
-		add_test_tunnel_mode v4v6 ah $algo
-		add_test_tunnel_mode v6v4 ah $algo
+		for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
+			add_test_tunnel_mode ipv4 ah $algo $calgo
+			add_test_tunnel_mode ipv6 ah $algo $calgo
+		done
 	done
 }

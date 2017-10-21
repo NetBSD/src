@@ -1,4 +1,4 @@
-# $NetBSD: t_npf.sh,v 1.2 2012/09/18 08:28:15 martin Exp $
+# $NetBSD: t_npf.sh,v 1.2.28.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,12 +39,12 @@ add_test()
 	local desc="${*}";
 
 	atf_test_case "npf_${name}"
-	eval "npf_${name}_head() { \
-			atf_set \"descr\" \"${desc}\"; \
-			atf_set \"require.progs\" \"npfctl npftest\"; \
-		}; \
-	    npf_${name}_body() { \
-			run_test \"${name}\"; \
+	eval "npf_${name}_head() {
+			atf_set descr \"${desc}\"
+			atf_set require.progs npfctl npftest
+		}
+	    npf_${name}_body() {
+			run_test ${name}
 		}"
 	atf_add_test_case "npf_${name}"
 }

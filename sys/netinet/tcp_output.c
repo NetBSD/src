@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.196 2017/06/02 03:41:20 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.196.2.1 2017/10/21 19:43:54 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.196 2017/06/02 03:41:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.196.2.1 2017/10/21 19:43:54 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1505,7 +1505,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 		tcp_signature(m, th, (char *)th - mtod(m, char *), sav, sigp);
 
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 #endif
 

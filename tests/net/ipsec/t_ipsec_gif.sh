@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.5 2017/05/12 02:34:45 ozaki-r Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.5.2.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ BUS_LOCAL=./bus_ipsec_local
 BUS_TUNNEL=./bus_ipsec_tunnel
 BUS_REMOTE=./bus_ipsec_remote
 
-DEBUG=${DEBUG:-false}
+DEBUG=${DEBUG:-true}
 
 make_gif_pktstr()
 {
@@ -388,19 +388,19 @@ add_test_ipsec_gif()
 	desc="Tests of gif/IPsec ($ipproto) ${mode} mode with $proto ($algo)"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_ipsec_gif_common $ipproto $mode $proto $algo;	\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_ipsec_gif_common $ipproto $mode $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }

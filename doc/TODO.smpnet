@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.11 2017/03/30 06:50:53 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.11.6.1 2017/10/21 19:43:54 snj Exp $
 
 MP-safe components
 ==================
@@ -22,10 +22,13 @@ MP-safe components
    - pppoe(4)
      - if_spppsubr.c
    - tun(4)
+   - vlan(4)
  - Packet filters
    - npf(7)
  - Others
    - bpf(4)
+   - ipsec(4)
+   - opencrypto(9)
    - pfil(9)
 
 Non MP-safe components and kernel options
@@ -65,7 +68,6 @@ Non MP-safe components and kernel options
    - strip(4)
    - if_srt
    - tap(4)
-   - vlan(4)
  - Packet filters
    - ipf(4)
    - pf(4)
@@ -75,11 +77,9 @@ Non MP-safe components and kernel options
    - Bluetooth (sys/netbt/)
    - altq(4)
    - CIFS (sys/netsmb/)
-   - ipsec(4)
    - ISDN (sys/netisbn/)
    - kttcp(4)
    - NFS
-   - opencrypto(9)
 
 Know issues
 ===========
@@ -145,3 +145,11 @@ bpf#bd_dcount and bpf#bd_ccount) are also victims of this restriction; for
 scalability the statistic counters should be per-CPU and we should stop using
 atomic operations for them however we have to remain the counters and atomic
 operations.
+
+Scalability
+-----------
+
+ - Per-CPU rtcaches (used in say IP forwarding) aren't scalable on multiple
+   flows per CPU
+ - ipsec(4) isn't scalable on the number of SA/SP; the cost of a look-up
+   is O(n)

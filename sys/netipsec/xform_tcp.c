@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.11 2017/04/19 03:39:14 ozaki-r Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.11.4.1 2017/10/21 19:43:54 snj Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 /* TCP MD5 Signature Option (RFC2385) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.11 2017/04/19 03:39:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.11.4.1 2017/10/21 19:43:54 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -123,8 +123,10 @@ static int
 tcpsignature_zeroize(struct secasvar *sav)
 {
 
-	if (sav->key_auth)
-		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
+	if (sav->key_auth) {
+		explicit_memset(_KEYBUF(sav->key_auth), 0,
+		    _KEYLEN(sav->key_auth));
+	}
 
 	sav->tdb_cryptoid = 0;
 	sav->tdb_authalgxform = NULL;
@@ -139,7 +141,7 @@ tcpsignature_zeroize(struct secasvar *sav)
  * We do this from within tcp itself, so this routine is just a stub.
  */
 static int
-tcpsignature_input(struct mbuf *m, const struct secasvar *sav, int skip,
+tcpsignature_input(struct mbuf *m, struct secasvar *sav, int skip,
     int protoff)
 {
 
@@ -152,18 +154,22 @@ tcpsignature_input(struct mbuf *m, const struct secasvar *sav, int skip,
  * We do this from within tcp itself, so this routine is just a stub.
  */
 static int
-tcpsignature_output(struct mbuf *m, struct ipsecrequest *isr,
-    struct mbuf **mp, int skip, int protoff)
+tcpsignature_output(struct mbuf *m, const struct ipsecrequest *isr,
+    struct secasvar *sav, struct mbuf **mp, int skip, int protoff)
 {
 
 	return (EINVAL);
 }
 
 static struct xformsw tcpsignature_xformsw = {
-	XF_TCPSIGNATURE,	XFT_AUTH,		"TCPMD5",
-	tcpsignature_init,	tcpsignature_zeroize,
-	tcpsignature_input,	tcpsignature_output,
-	NULL
+	.xf_type	= XF_TCPSIGNATURE,
+	.xf_flags	= XFT_AUTH,
+	.xf_name	= "TCPMD5",
+	.xf_init	= tcpsignature_init,
+	.xf_zeroize	= tcpsignature_zeroize,
+	.xf_input	= tcpsignature_input,
+	.xf_output	= tcpsignature_output,
+	.xf_next	= NULL,
 };
 
 void

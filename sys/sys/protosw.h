@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.66 2016/01/20 21:43:59 riastradh Exp $	*/
+/*	$NetBSD: protosw.h,v 1.66.10.1 2017/10/21 19:43:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -492,6 +492,24 @@ name##_wrapper(int a, const struct sockaddr *b, void *c)\
 	rv = name(a, b, c);				\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
+}
+
+#include <sys/socketvar.h> /* for softnet_lock */
+
+#define	PR_WRAP_INPUT(name)				\
+static void						\
+name##_wrapper(struct mbuf *m, ...)			\
+{							\
+	va_list args;					\
+	int off, nxt;					\
+	/* XXX just passing args doesn't work on rump kernels */\
+	va_start(args, m);				\
+	off = va_arg(args, int);			\
+	nxt = va_arg(args, int);			\
+	va_end(args);					\
+	mutex_enter(softnet_lock);			\
+	name(m, off, nxt);				\
+	mutex_exit(softnet_lock);			\
 }
 
 #endif /* _KERNEL */

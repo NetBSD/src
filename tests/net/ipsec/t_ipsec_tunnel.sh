@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel.sh,v 1.8 2017/05/12 02:34:45 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel.sh,v 1.8.2.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -287,19 +287,19 @@ add_test_tunnel_mode()
 	desc="Tests of IPsec ($ipproto) tunnel mode with $proto ($algo)"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_tunnel_common $ipproto $proto $algo;		\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_tunnel_common $ipproto $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }

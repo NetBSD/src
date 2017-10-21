@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.21 2017/04/13 16:38:32 christos Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.21.4.1 2017/10/21 19:43:56 snj Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.21 2017/04/13 16:38:32 christos Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.21.4.1 2017/10/21 19:43:56 snj Exp $");
 #endif
 #endif /* not lint*/
 
@@ -145,7 +145,7 @@ fast_ipsec_stats(u_long off, const char *name)
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ipip.ipip_stats");
 
-	printf("(Fast) IPsec:\n");
+	printf("%s:\n", name);
 
 #define	STAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%"PRIu64" " fmt "\n", x)
 	if (ipsecstats[IPSEC_STAT_IN_POLVIO]+ipsecstats[IPSEC_STAT_OUT_POLVIO])
@@ -160,10 +160,9 @@ fast_ipsec_stats(u_long off, const char *name)
 	STAT(ipsecstats[IPSEC_STAT_SPDCACHELOOKUP], "SPD cache lookups");
 	STAT(ipsecstats[IPSEC_STAT_SPDCACHEMISS], "SPD cache misses");
 #undef STAT
-	printf("\n");
 	
-	printf("IPsec ah:\n");
-#define	AHSTAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%"PRIu64" ah " fmt "\n", x)
+	printf("\tah:\n");
+#define	AHSTAT(x,fmt)	if ((x) || sflag <= 1) printf("\t\t%"PRIu64" ah " fmt "\n", x)
 	AHSTAT(ahstats[AH_STAT_INPUT],   "input packets processed");
 	AHSTAT(ahstats[AH_STAT_OUTPUT],  "output packets processed");
 	AHSTAT(ahstats[AH_STAT_HDROPS],  "headers too short");
@@ -192,10 +191,9 @@ fast_ipsec_stats(u_long off, const char *name)
 	AHSTAT(ahstats[AH_STAT_IBYTES], "bytes received");
 	AHSTAT(ahstats[AH_STAT_OBYTES], "bytes transmitted");
 #undef AHSTAT
-	printf("\n");
 
-	printf("IPsec esp:\n");
-#define	ESPSTAT(x,fmt) if ((x) || sflag <= 1) printf("\t%"PRIu64" esp " fmt "\n", x)
+	printf("\tesp:\n");
+#define	ESPSTAT(x,fmt) if ((x) || sflag <= 1) printf("\t\t%"PRIu64" esp " fmt "\n", x)
 	ESPSTAT(espstats[ESP_STAT_INPUT],"input packets processed");
 	ESPSTAT(espstats[ESP_STAT_OUTPUT],"output packets processed");
 	ESPSTAT(espstats[ESP_STAT_HDROPS],"headers too short");
@@ -224,10 +222,10 @@ fast_ipsec_stats(u_long off, const char *name)
 	ESPSTAT(espstats[ESP_STAT_IBYTES], "bytes received");
 	ESPSTAT(espstats[ESP_STAT_OBYTES], "bytes transmitted");
 #undef ESPSTAT
-	printf("IPsec ipip:\n");
+	printf("\tipip:\n");
 
 #define	IPIPSTAT(x,fmt) \
-	if ((x) || sflag <= 1) printf("\t%"PRIu64" ipip " fmt "\n", x)
+	if ((x) || sflag <= 1) printf("\t\t%"PRIu64" ipip " fmt "\n", x)
 	IPIPSTAT(ipips[IPIP_STAT_IPACKETS],"total input packets");
 	IPIPSTAT(ipips[IPIP_STAT_OPACKETS],"total output packets");
 	IPIPSTAT(ipips[IPIP_STAT_HDROPS],"packets too short for header length");
@@ -240,9 +238,9 @@ fast_ipsec_stats(u_long off, const char *name)
 	IPIPSTAT(ipips[IPIP_STAT_OBYTES],"output bytes processed");
 #undef IPIPSTAT
 
-	printf("IPsec ipcomp:\n");
+	printf("\tipcomp:\n");
 #define	IPCOMP(x,fmt) \
-	if ((x) || sflag <= 1) printf("\t%"PRIu64" ipcomp " fmt "\n", x)
+	if ((x) || sflag <= 1) printf("\t\t%"PRIu64" ipcomp " fmt "\n", x)
 
 	IPCOMP(ipcs[IPCOMP_STAT_HDROPS],"packets too short for header length");
 	IPCOMP(ipcs[IPCOMP_STAT_NOPF],	"protocol family not supported");
@@ -260,7 +258,7 @@ fast_ipsec_stats(u_long off, const char *name)
 	IPCOMP(ipcs[IPCOMP_STAT_PDROPS],"packets blocked due to policy");
 	IPCOMP(ipcs[IPCOMP_STAT_CRYPTO],"failed crypto requests");
 
-	printf("\tIPcomp histogram:\n");
+	printf("\tipcomp histogram:\n");
 	for (i = 0; i < IPCOMP_ALG_MAX; i++)
 		if (ipcs[IPCOMP_STAT_HIST + i])
 			printf("\t\tIPcomp packets with %s: %"PRIu64"\n"

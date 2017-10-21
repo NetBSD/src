@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_esp_keys.sh,v 1.1 2017/04/14 02:56:49 ozaki-r Exp $
+#	$NetBSD: t_ipsec_esp_keys.sh,v 1.1.8.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -73,18 +73,18 @@ add_test_valid_keys()
 	desc="Tests ESP ($ealgo) valid keys"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_esp_valid_keys_common $ealgo;			\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_esp_valid_keys_common $ealgo
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.19 2014/09/10 21:01:33 christos Exp $	*/
+/*	$NetBSD: token.l,v 1.19.8.1 2017/10/21 19:43:53 snj Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -116,6 +116,7 @@ hostname	{name}(({dot}{name})+{dot}?)?
 
 
 add		{ return(ADD); }
+update		{ return(UPDATE); }
 delete		{ return(DELETE); }
 deleteall	{ return(DELETEALL); }
 get		{ return(GET); }

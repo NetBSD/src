@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.18 2017/04/13 01:19:17 ozaki-r Exp $	*/
+/*	$NetBSD: parse.y,v 1.18.4.1 2017/10/21 19:43:53 snj Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -115,7 +115,7 @@ static int setkeymsg_add __P((unsigned int, unsigned int,
 }
 
 %token EOT SLASH BLCL ELCL
-%token ADD GET DELETE DELETEALL FLUSH DUMP EXIT
+%token ADD UPDATE GET DELETE DELETEALL FLUSH DUMP EXIT
 %token PR_ESP PR_AH PR_IPCOMP PR_ESPUDP PR_TCP
 %token F_PROTOCOL F_AUTH F_ENC F_REPLAY F_COMP F_RAWCPI
 %token F_MODE MODE F_REQID
@@ -160,6 +160,7 @@ commands
 
 command
 	:	add_command
+	|	update_command
 	|	get_command
 	|	delete_command
 	|	deleteall_command
@@ -181,6 +182,18 @@ add_command
 			int status;
 
 			status = setkeymsg_add(SADB_ADD, $5, $3, $4);
+			if (status < 0)
+				return -1;
+		}
+	;
+
+	/* update */
+update_command
+	:	UPDATE ipaddropts ipandport ipandport protocol_spec spi extension_spec algorithm_spec EOT
+		{
+			int status;
+
+			status = setkeymsg_add(SADB_UPDATE, $5, $3, $4);
 			if (status < 0)
 				return -1;
 		}

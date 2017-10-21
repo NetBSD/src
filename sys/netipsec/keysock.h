@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.9 2017/06/02 03:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.h,v 1.9.2.1 2017/10/21 19:43:54 snj Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
@@ -71,6 +71,8 @@ struct keycb {
 	int kp_promisc;		/* promiscuous mode */
 	int kp_registered;	/* registered socket */
 };
+
+void key_init_so(void);
 
 int key_sendup (struct socket *, struct sadb_msg *, u_int, int);
 int key_sendup_mbuf (struct socket *, struct mbuf *, int);

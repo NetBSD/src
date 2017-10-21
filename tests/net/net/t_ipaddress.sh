@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.10 2017/02/20 09:00:08 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.10.4.1 2017/10/21 19:43:55 snj Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -170,16 +170,16 @@ add_test()
 	local desc="$2"
 
 	atf_test_case "ipaddr_${name}" cleanup
-	eval "ipaddr_${name}_head() { \
-			atf_set \"descr\" \"${desc}\"; \
-			atf_set \"require.progs\" \"rump_server\"; \
-		}; \
-	    ipaddr_${name}_body() { \
-			test_${name}; \
-		}; \
-	    ipaddr_${name}_cleanup() { \
-			$DEBUG && dump; \
-			cleanup; \
+	eval "ipaddr_${name}_head() {
+			atf_set descr \"${desc}\"
+			atf_set require.progs rump_server
+		}
+	    ipaddr_${name}_body() {
+			test_${name}
+		}
+	    ipaddr_${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
 		}"
 	atf_add_test_case "ipaddr_${name}"
 }

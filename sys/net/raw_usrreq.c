@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.56 2017/04/11 13:55:54 roy Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.56.4.1 2017/10/21 19:43:54 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.56 2017/04/11 13:55:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.56.4.1 2017/10/21 19:43:54 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -53,12 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.56 2017/04/11 13:55:54 roy Exp $");
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/raw_cb.h>
-
-void
-raw_init(void)
-{
-	LIST_INIT(&rawcb);
-}
 
 static inline int
 equal(const struct sockaddr *a1, const struct sockaddr *a2)
@@ -79,17 +73,17 @@ raw_input(struct mbuf *m0, ...)
 	va_list ap;
 	struct sockproto *proto;
 	struct sockaddr *src, *dst;
-
-	KASSERT(mutex_owned(softnet_lock));
+	struct rawcbhead *rawcbhead;
 
 	va_start(ap, m0);
 	proto = va_arg(ap, struct sockproto *);
 	src = va_arg(ap, struct sockaddr *);
 	dst = va_arg(ap, struct sockaddr *);
+	rawcbhead = va_arg(ap, struct rawcbhead *);
 	va_end(ap);
 
 	last = NULL;
-	LIST_FOREACH(rp, &rawcb, rcb_list) {
+	LIST_FOREACH(rp, rawcbhead, rcb_list) {
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
 		if (rp->rcb_proto.sp_protocol  &&

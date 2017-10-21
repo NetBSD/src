@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.355 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.355.2.1 2017/10/21 19:43:54 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355.2.1 2017/10/21 19:43:54 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -758,15 +758,12 @@ ip_input(struct mbuf *m)
 			return;
 		}
 #ifdef IPSEC
-		/* Perform IPsec, if any. */
+		/* Check the security policy (SP) for the packet */
 		if (ipsec_used) {
-			SOFTNET_LOCK();
 			if (ipsec4_input(m, IP_FORWARDING |
 			    (ip_directedbcast ? IP_ALLOWBROADCAST : 0)) != 0) {
-				SOFTNET_UNLOCK();
 				goto out;
 			}
-			SOFTNET_UNLOCK();
 		}
 #endif
 		ip_forward(m, srcrt, ifp);
@@ -809,12 +806,9 @@ ours:
 	 */
 	if (ipsec_used &&
 	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
-		SOFTNET_LOCK();
 		if (ipsec4_input(m, 0) != 0) {
-			SOFTNET_UNLOCK();
 			goto out;
 		}
-		SOFTNET_UNLOCK();
 	}
 #endif
 
@@ -838,9 +832,7 @@ ours:
 
 	const int off = hlen, nh = ip->ip_p;
 
-	SOFTNET_LOCK();
 	(*inetsw[ip_protox[nh]].pr_input)(m, off, nh);
-	SOFTNET_UNLOCK();
 	return;
 
 out:
