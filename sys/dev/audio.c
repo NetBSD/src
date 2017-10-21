@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.412 2017/10/21 09:12:40 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.413 2017/10/21 09:58:56 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.412 2017/10/21 09:12:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.413 2017/10/21 09:58:56 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1903,8 +1903,8 @@ static int
 audiokqfilter(struct file *fp, struct knote *kn)
 {
 	struct audio_softc *sc;
-	int rv;
 	struct audio_chan *chan;
+	int error;
 	dev_t dev;
 
 	chan = fp->f_audioctx;
@@ -1922,18 +1922,19 @@ audiokqfilter(struct file *fp, struct knote *kn)
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		rv = audio_kqfilter(chan, kn);
+		error = audio_kqfilter(chan, kn);
 		break;
 	case AUDIOCTL_DEVICE:
 	case MIXER_DEVICE:
-		rv = 1;
+		error = ENODEV;
 		break;
 	default:
-		rv = 1;
+		error = ENXIO;
+		break;
 	}
 	mutex_exit(sc->sc_lock);
 
-	return rv;
+	return error;
 }
 
 static int
