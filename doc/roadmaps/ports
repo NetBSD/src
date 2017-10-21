@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.5 2017/01/22 19:29:38 dholland Exp $
+$NetBSD: ports,v 1.6 2017/10/21 15:12:27 maxv Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -16,9 +16,8 @@ priorities for the project:
 The following elements, projects, and goals are not strategic
 priorities but are still important undertakings worth doing:
 
- 4. USER_LDT for amd64
- 5. riscv and/or or1k ports
- 6. cheri port
+ 4. riscv and/or or1k ports
+ 5. cheri port
 
 The following elements, projects, and goals are perhaps less pressing;
 this doesn't mean one shouldn't work on them but the expected payoff
@@ -56,19 +55,7 @@ We have some arm64 code but apparently it doesn't really work yet.
  - Contact: ? (XXX)
 
 
- 4. USER_LDT for amd64
-
-The amd64 port is lacking the USER_LDT bits needed to be able to run
-Wine. Adding these bits does not seem to be a particularly large job
-(and some of the bits are in place already) but it persistently
-doesn't get done. Money's been offered in the past, without result.
-
- - As of January 2017 nobody is known to be working on this.
- - There is currently no clear timeframe or release target.
- - Contact ? (XXX) for further information.
-
-
- 5. riscv and/or or1k ports
+ 4. riscv and/or or1k ports
 
 We have some riscv code and a bit of or1k code, but neither is done.
 
@@ -77,7 +64,7 @@ We have some riscv code and a bit of or1k code, but neither is done.
  - Contact matt@ for further information.
 
 
- 6. cheri port
+ 5. cheri port
 
 http://cheri-cpu.org
 There are a number of reasons to tackle this; it will serve as a code
