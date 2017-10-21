@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.120 2017/05/21 15:28:38 riastradh Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.121 2017/10/21 21:16:07 sevan Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd April 13, 2017
+.Dd October 21, 2017
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -608,12 +608,7 @@ installed during a build.
 If set to
 .Dq no ,
 the entire built system will be statically linked.
-.DFLT
-Platform dependent.
-As of this writing, all platforms except
-.Sy sh3
-default to
-.Dq yes .
+.DFLTy
 .
 .It Sy MKPICINSTALL
 .YorN
@@ -1805,7 +1800,7 @@ detected and used automatically.
 See the
 .Cm list-arch
 operation for a way to get a list of valid
-.Sy MACHINE 
+.Sy MACHINE
 and
 .Sy MACHINE_ARCH
 settings.
