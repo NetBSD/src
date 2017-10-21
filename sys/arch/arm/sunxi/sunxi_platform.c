@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.11 2017/10/11 10:52:54 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.12 2017/10/21 02:21:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.11 2017/10/11 10:52:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.12 2017/10/21 02:21:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -194,8 +194,9 @@ sun4i_platform_delay(u_int n)
 {
 	static bus_space_tag_t bst = &armv7_generic_bs_tag;
 	static bus_space_handle_t bsh = 0;
+	const long incs_per_us = SUNXI_REF_FREQ / 1000000;
+	long ticks = n * incs_per_us;
 	uint32_t cur, prev;
-	long ticks = n;
 
 	if (bsh == 0)
 		bus_space_map(bst, SUN4I_TIMER_BASE, SUN4I_TIMER_SIZE, 0, &bsh);
