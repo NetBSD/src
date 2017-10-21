@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.121 2017/10/21 21:16:07 sevan Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.122 2017/10/21 22:03:01 sevan Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,9 +87,11 @@ should only be run for native builds with an appropriately up-to-date
 version of
 .Nx
 .Xr make 1 .
-(For building from out-of-date systems or on a non-native host, see the
+Intended for expert use with knowlege of its shortcomings, it has been superseded
+by the
 .Nm build.sh
-shell script.)
+shell script as the recommended means for building
+.Nx .
 .It Pa UPDATING
 Special notes for updating from an earlier revision of
 .Nx .
@@ -102,7 +104,9 @@ and the
 system from scratch.
 Can be used for both native and cross builds, and should be used instead of
 .Xr make 1
-for any source tree that is updated and recompiled regularly.
+as it performs additional checks to prevent common issues going undetected, such
+as building with an outdated version of
+.Xr make 1 .
 .It Pa crypto/dist/ , dist/ , gnu/dist/
 Sources imported verbatim from third parties, without mangling the
 existing build structure.
