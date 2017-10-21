@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.271 2017/10/19 19:05:53 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.272 2017/10/21 06:55:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2017/10/19 19:05:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2017/10/21 06:55:54 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2138,7 +2138,11 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	kpreempt_disable();
 	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
 	update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+
+#ifdef XEN
 	setusergs(gssel);
+#endif
+
 	tf->tf_fs = fssel;
 	tf->tf_gs = gssel;
 	kpreempt_enable();
