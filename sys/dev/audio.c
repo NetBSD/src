@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.410 2017/10/01 21:49:20 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.411 2017/10/21 09:02:23 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.410 2017/10/01 21:49:20 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.411 2017/10/21 09:02:23 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1952,7 +1952,7 @@ audio_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	error = 0;
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
-		return 1;
+		return error;
 	device_active(sc->dev, DVA_SYSTEM); /* XXXJDM */
 
 	switch (AUDIODEV(dev)) {
