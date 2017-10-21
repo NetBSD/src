@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.136 2017/10/19 20:27:12 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.137 2017/10/21 06:55:54 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1196,7 +1196,7 @@ lwp_32bit:
 	movq	PCB_GS(%r14),%rax
 	movq	%rax,(GUGS_SEL*8)(%rcx)
 
-	/* Set default 32bit values in %ds, %es and %fs. %gs is special. */
+	/* Set default 32bit values in %ds, %es, %fs and %gs. */
 	movq	L_MD_REGS(%r12),%rbx
 	movq	$GSEL(GUDATA32_SEL, SEL_UPL),%rax
 	movw	%ax,%ds
@@ -1204,7 +1204,7 @@ lwp_32bit:
 	movw	%ax,%fs
 	CLI(ax)
 	SWAPGS
-	movw	TF_GS(%rbx),%gs
+	movw	%ax,%gs
 	SWAPGS
 	STI(ax)
 #else
@@ -1486,6 +1486,9 @@ ENTRY(intrfastexit)
 	movw	TF_DS(%rsp),%ds
 	movw	TF_FS(%rsp),%fs
 	SWAPGS
+#ifndef XEN
+	movw	TF_GS(%rsp),%gs
+#endif
 	jmp	.Lkexit
 
 .Luexit64:
