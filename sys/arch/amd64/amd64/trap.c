@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 2017/10/17 06:58:15 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.103 2017/10/21 07:23:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2017/10/17 06:58:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2017/10/21 07:23:22 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -281,10 +281,8 @@ trap_user_kernelmode(struct trapframe *frame, int type, lwp_t *l, proc_t *p)
 
 	case 0x848e:	/* mov 0xa8(%rsp),%es (8e 84 24 a8 00 00 00) */
 	case 0x9c8e:	/* mov 0xb0(%rsp),%ds (8e 9c 24 b0 00 00 00) */
-#ifdef USER_LDT
 	case 0xa48e:	/* mov 0xa0(%rsp),%fs (8e a4 24 a0 00 00 00) */
 	case 0xac8e:	/* mov 0x98(%rsp),%gs (8e ac 24 98 00 00 00) */
-#endif
 		/*
 		 * We faulted loading one of the user segment registers.
 		 * The stack frame containing the user registers is
