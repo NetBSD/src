@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 2017/10/21 07:23:22 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.104 2017/10/21 08:08:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2017/10/21 07:23:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2017/10/21 08:08:26 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -236,6 +236,8 @@ static void trap_user_kernelmode(struct trapframe *, int, lwp_t *, proc_t *);
 static void
 trap_user_kernelmode(struct trapframe *frame, int type, lwp_t *l, proc_t *p)
 {
+	extern uint64_t do_mov_es, do_mov_ds, do_mov_fs, do_mov_gs;
+	extern uint64_t do_iret;
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 
@@ -260,8 +262,7 @@ trap_user_kernelmode(struct trapframe *frame, int type, lwp_t *l, proc_t *p)
 	 */
 	vframe = (void *)frame->tf_rsp;
 
-	switch (*(uint16_t *)frame->tf_rip) {
-	case 0xcf48:	/* iretq */
+	if (frame->tf_rip == (uint64_t)&do_iret) {
 		/*
 		 * The 'iretq' instruction faulted, so we have the
 		 * 'user' registers saved after the kernel
@@ -277,12 +278,10 @@ trap_user_kernelmode(struct trapframe *frame, int type, lwp_t *l, proc_t *p)
 		memmove(vframe, frame, offsetof(struct trapframe, tf_rip));
 		/* Set the faulting address to the user %rip */
 		ksi.ksi_addr = (void *)vframe->tf_rip;
-		break;
-
-	case 0x848e:	/* mov 0xa8(%rsp),%es (8e 84 24 a8 00 00 00) */
-	case 0x9c8e:	/* mov 0xb0(%rsp),%ds (8e 9c 24 b0 00 00 00) */
-	case 0xa48e:	/* mov 0xa0(%rsp),%fs (8e a4 24 a0 00 00 00) */
-	case 0xac8e:	/* mov 0x98(%rsp),%gs (8e ac 24 98 00 00 00) */
+	} else if (frame->tf_rip == (uint64_t)&do_mov_es ||
+	    frame->tf_rip == (uint64_t)&do_mov_ds ||
+	    frame->tf_rip == (uint64_t)&do_mov_fs ||
+	    frame->tf_rip == (uint64_t)&do_mov_gs) {
 		/*
 		 * We faulted loading one of the user segment registers.
 		 * The stack frame containing the user registers is
@@ -291,9 +290,7 @@ trap_user_kernelmode(struct trapframe *frame, int type, lwp_t *l, proc_t *p)
 		if (KERNELMODE(vframe->tf_cs))
 			return;
 		/* There is no valid address for the fault */
-		break;
-
-	default:
+	} else {
 		return;
 	}
 

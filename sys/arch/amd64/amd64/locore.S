@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.137 2017/10/21 06:55:54 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.138 2017/10/21 08:08:26 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -330,6 +330,10 @@
 	.globl	_C_LABEL(biosextmem)
 	.globl	_C_LABEL(lwp0uarea)
 	.globl	do_sysret
+	.globl	do_mov_es
+	.globl	do_mov_ds
+	.globl	do_mov_fs
+	.globl	do_mov_gs
 	.globl	do_iret
 
 	.type	_C_LABEL(tablesize), @object
@@ -1196,7 +1200,7 @@ lwp_32bit:
 	movq	PCB_GS(%r14),%rax
 	movq	%rax,(GUGS_SEL*8)(%rcx)
 
-	/* Set default 32bit values in %ds, %es, %fs and %gs. */
+	/* Set default 32bit values in %ds, %es and %fs. %gs is special. */
 	movq	L_MD_REGS(%r12),%rbx
 	movq	$GSEL(GUDATA32_SEL, SEL_UPL),%rax
 	movw	%ax,%ds
@@ -1482,11 +1486,15 @@ ENTRY(intrfastexit)
 
 .Luexit32:
 	NOT_XEN(cli;)
+do_mov_es:
 	movw	TF_ES(%rsp),%es
+do_mov_ds:
 	movw	TF_DS(%rsp),%ds
+do_mov_fs:
 	movw	TF_FS(%rsp),%fs
 	SWAPGS
 #ifndef XEN
+do_mov_gs:
 	movw	TF_GS(%rsp),%gs
 #endif
 	jmp	.Lkexit
