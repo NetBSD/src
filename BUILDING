@@ -29,8 +29,9 @@ FILES
 
      Makefile       The main Makefile for NetBSD; should only be run for
                     native builds with an appropriately up-to-date version of
-                    NetBSD make(1).  (For building from out-of-date systems or
-                    on a non-native host, see the build.sh shell script.)
+                    NetBSD make(1).  Intended for expert use with knowlege of
+                    its shortcomings, it has been superseded by the build.sh
+                    shell script as the recommended means for building NetBSD.
 
      UPDATING       Special notes for updating from an earlier revision of
                     NetBSD.  It is important to read this file before every
@@ -39,8 +40,9 @@ FILES
      build.sh       Bourne-compatible shell script used for building the host
                     build tools and the NetBSD system from scratch.  Can be
                     used for both native and cross builds, and should be used
-                    instead of make(1) for any source tree that is updated and
-                    recompiled regularly.
+                    instead of make(1) as it performs additional checks to
+                    prevent common issues going undetected, such as building
+                    with an outdated version of make(1).
 
      crypto/dist/, dist/, gnu/dist/
                     Sources imported verbatim from third parties, without
@@ -338,8 +340,7 @@ CONFIGURATION
                  build.  If set to "no", the entire built system will be
                  statically linked.
 
-                 Default: Platform dependent.  As of this writing, all
-                 platforms except sh3 default to "yes".
+                 Default: "yes"
 
      MKPICINSTALL
                  Can be set to "yes" or "no".  Indicates whether the ar(1)
@@ -1110,4 +1111,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                          April 13, 2017                          NetBSD
+NetBSD                         October 21, 2017                         NetBSD
