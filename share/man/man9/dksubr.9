@@ -1,4 +1,4 @@
-.\"	$NetBSD: dksubr.9,v 1.5 2017/10/21 14:38:22 abhinav Exp $
+.\"	$NetBSD: dksubr.9,v 1.6 2017/10/21 21:18:33 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,7 +99,7 @@ struct dk_softc {
 	struct disk		sc_dkdev;
 	struct bufq_state	sc_bufq;
 	krndsource_t		sc_rnd_source;
-...
+\&...
 }
 .Ed
 The
@@ -284,6 +284,7 @@ Often used to flush write caches.
 Issue a single I/O request to invalidate a disk region.
 .It Fn d_firstopen
 Private initialization when first user opens the driver.
+.El
 .Sh SEE ALSO
 .Xr cgd 4 ,
 .Xr ld 4 ,
