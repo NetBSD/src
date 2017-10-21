@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2324 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2325 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -70,4 +70,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[jdolecek 20171007]
 	OpenSSH: Imported 7.6. [christos 20171007]
 	tmux(1): Imported 2.6. [christos 20171012]
+	amd64: Add support for SMAP. [maxv 20171017]
 	amd64: Add support for USER_LDT. [maxv 20171021]
