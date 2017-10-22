@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier.3,v 1.6 2016/07/05 10:04:17 wiz Exp $
+.\" $NetBSD: pthread_barrier.3,v 1.7 2017/10/22 16:09:22 abhinav Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,10 @@
 .Dt PTHREAD_BARRIER 3
 .Os
 .Sh NAME
-.Nm pthread_barrier
+.Nm pthread_barrier ,
+.Nm pthread_barrier_init ,
+.Nm pthread_barrier_destroy ,
+.Nm pthread_barrier_wait
 .Nd barrier interface
 .Sh LIBRARY
 .Lb libpthread
