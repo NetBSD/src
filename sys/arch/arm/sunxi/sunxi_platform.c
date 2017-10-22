@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.12 2017/10/21 02:21:30 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.13 2017/10/22 20:35:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.12 2017/10/21 02:21:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.13 2017/10/22 20:35:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,19 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.12 2017/10/21 02:21:30 jmcneill
 #define	 SUN9I_WDT_CFG_SYS	__BIT(0)
 #define	SUN9I_WDT_MODE		0x18
 #define	 SUN9I_WDT_MODE_EN	__BIT(0)
-
-
-#define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
-#define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
-#define	DEVMAP_ENTRY(va, pa, sz)			\
-	{						\
-		.pd_va = DEVMAP_ALIGN(va),		\
-		.pd_pa = DEVMAP_ALIGN(pa),		\
-		.pd_size = DEVMAP_SIZE(sz),		\
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_cache = PTE_NOCACHE			\
-	}
-#define	DEVMAP_ENTRY_END	{ 0 }
 
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
