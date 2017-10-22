@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin.3,v 1.5 2010/07/09 10:55:11 wiz Exp $
+.\" $NetBSD: pthread_spin.3,v 1.6 2017/10/22 16:37:24 abhinav Exp $
 .\"
 .\" Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,12 @@
 .Dt PTHREAD_SPIN 3
 .Os
 .Sh NAME
-.Nm pthread_spin
+.Nm pthread_spin ,
+.Nm pthread_spin_init ,
+.Nm pthread_spin_destroy ,
+.Nm pthread_spin_lock ,
+.Nm pthread_spin_trylock ,
+.Nm pthread_spin_unlock
 .Nd spin lock interface
 .Sh LIBRARY
 .Lb libpthread

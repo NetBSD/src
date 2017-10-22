@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond.3,v 1.7 2016/07/05 10:04:17 wiz Exp $
+.\" $NetBSD: pthread_cond.3,v 1.8 2017/10/22 16:37:24 abhinav Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,13 @@
 .Dt PTHREAD_COND 3
 .Os
 .Sh NAME
-.Nm pthread_cond
+.Nm pthread_cond ,
+.Nm pthread_cond_init ,
+.Nm pthread_cond_destroy ,
+.Nm pthread_cond_broadcast ,
+.Nm pthread_cond_signal ,
+.Nm pthread_cond_wait ,
+.Nm pthread_cond_timedwait
 .Nd condition variable interface
 .Sh LIBRARY
 .Lb libpthread
