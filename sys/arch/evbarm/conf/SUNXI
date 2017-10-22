@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.45 2017/10/21 11:38:13 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.46 2017/10/22 13:57:47 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -191,6 +191,7 @@ audio*		at audiobus?
 spkr*		at audio?
 
 # SDMMC
+mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 sunximmc*	at fdt?			# SDMMC
 sdmmc*		at sunximmc?
 ld0		at sdmmc0
