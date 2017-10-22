@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.11 2017/10/21 11:47:17 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.12 2017/10/22 13:57:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.11 2017/10/21 11:47:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.12 2017/10/22 13:57:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -168,6 +168,8 @@ struct sunxi_mmc_softc {
 	int sc_gpio_wp_inverted;
 
 	struct fdtbus_regulator *sc_reg_vqmmc;
+
+	struct fdtbus_mmc_pwrseq *sc_pwrseq;
 };
 
 CFATTACH_DECL_NEW(sunxi_mmc, sizeof(struct sunxi_mmc_softc),
@@ -265,6 +267,8 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rst_ahb = fdtbus_reset_get(phandle, "ahb");
 
 	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
+
+	sc->sc_pwrseq = fdtbus_mmc_pwrseq_get(phandle);
 
 	if (clk_enable(sc->sc_clk_ahb) != 0 ||
 	    clk_enable(sc->sc_clk_mmc) != 0) {
@@ -414,9 +418,15 @@ sunxi_mmc_attach_i(device_t self)
 	struct sdmmcbus_attach_args saa;
 	uint32_t width;
 
+	if (sc->sc_pwrseq)
+		fdtbus_mmc_pwrseq_pre_power_on(sc->sc_pwrseq);
+
 	sunxi_mmc_host_reset(sc);
 	sunxi_mmc_bus_width(sc, 1);
 	sunxi_mmc_set_clock(sc, 400, false);
+
+	if (sc->sc_pwrseq)
+		fdtbus_mmc_pwrseq_post_power_on(sc->sc_pwrseq);
 
 	if (of_getprop_uint32(sc->sc_phandle, "bus-width", &width) != 0)
 		width = 4;
