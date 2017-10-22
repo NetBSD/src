@@ -1,4 +1,4 @@
-/*	$NetBSD: v_cmd.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: v_cmd.c,v 1.4 2017/10/22 06:26:01 pgoyette Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_cmd.c,v 10.9 1996/03/28 15:18:39 bostic Exp  (Berkeley) Date: 1996/03/28 15:18:39 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_cmd.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: v_cmd.c,v 1.4 2017/10/22 06:26:01 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 /* 034  ^\ */
 	{v_exmode,	0,
 	    "^\\",
-	    " ^\\ switch to ex mode"},
+	    "^\\ switch to ex mode"},
 /* 035  ^] */
 	{v_tagpush,	V_ABS|V_KEYW|VM_RCM_SET,
 	    "^]",
