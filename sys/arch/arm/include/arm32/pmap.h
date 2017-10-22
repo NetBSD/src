@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.152 2017/08/29 06:28:26 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.153 2017/10/22 20:35:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -212,6 +212,18 @@ struct pmap_devmap {
 	vm_prot_t	pd_prot;	/* protection code */
 	int		pd_cache;	/* cache attributes */
 };
+
+#define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
+#define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
+#define	DEVMAP_ENTRY(va, pa, sz)			\
+	{						\
+		.pd_va = DEVMAP_ALIGN(va),		\
+		.pd_pa = DEVMAP_ALIGN(pa),		\
+		.pd_size = DEVMAP_SIZE(sz),		\
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
+		.pd_cache = PTE_NOCACHE			\
+	}
+#define	DEVMAP_ENTRY_END	{ 0 }
 
 /*
  * The pmap structure itself

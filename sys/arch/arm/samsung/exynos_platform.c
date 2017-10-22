@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.6 2017/06/20 19:13:34 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.7 2017/10/22 20:35:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.6 2017/06/20 19:13:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.7 2017/10/22 20:35:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,18 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.6 2017/06/20 19:13:34 jmcneill
 #include <arm/fdt/arm_fdtvar.h>
 
 #define	EXYNOS5_SWRESET_REG	0x10040400
-
-#define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
-#define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
-#define	DEVMAP_ENTRY(va, pa, sz)			\
-	{						\
-		.pd_va = DEVMAP_ALIGN(va),		\
-		.pd_pa = DEVMAP_ALIGN(pa),		\
-		.pd_size = DEVMAP_SIZE(sz),		\
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_cache = PTE_NOCACHE			\
-	}
-#define	DEVMAP_ENTRY_END	{ 0 }
 
 static const struct pmap_devmap *
 exynos_platform_devmap(void)
