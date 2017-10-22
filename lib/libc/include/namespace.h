@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.187 2017/10/22 00:20:50 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.188 2017/10/22 01:57:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@
  * the application namespace), and then a weak alias is added to the
  * "_" name next to the function definition so that the function is
  * exposed again.
+ *
+ * See src/lib/libc/README for more details.
  */
 
 #ifdef __weak_alias
