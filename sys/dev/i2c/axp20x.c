@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.9 2017/10/09 14:52:43 jmcneill Exp $ */
+/* $NetBSD: axp20x.c,v 1.10 2017/10/22 11:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.9 2017/10/09 14:52:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.10 2017/10/22 11:00:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,8 +563,8 @@ axp20x_read(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len,
 {
 	int ret;
 	iic_acquire_bus(sc->sc_i2c, flags);
-	ret =  iic_smbus_block_read(sc->sc_i2c, sc->sc_addr,
-	    reg, val, len, flags);
+	ret = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+	    &reg, 1, val, len, flags);
 	iic_release_bus(sc->sc_i2c, flags);
 	return ret;
 
@@ -576,8 +576,8 @@ axp20x_write(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len,
 {
 	int ret;
 	iic_acquire_bus(sc->sc_i2c, flags);
-	ret = iic_smbus_block_write(sc->sc_i2c, sc->sc_addr,
-	    reg, val, len, flags);
+	ret = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+	    &reg, 1, val, len, flags);
 	iic_release_bus(sc->sc_i2c, flags);
 	return ret;
 }
