@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.186 2017/02/08 17:30:27 maya Exp $	*/
+/*	$NetBSD: namespace.h,v 1.187 2017/10/22 00:20:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -95,6 +95,16 @@
 #define warn		_warn
 #define warnc		_warnc
 #define warnx		_warnx
+
+/*
+ * namespace protection for libc functions that are used internally
+ * in libc and should be not overriden by applications. To do this,
+ * this header renames them to a name that starts with an "_" so that
+ * libc uses the "_" flavor internally (and this name is not part of
+ * the application namespace), and then a weak alias is added to the
+ * "_" name next to the function definition so that the function is
+ * exposed again.
+ */
 
 #ifdef __weak_alias
 #define MD2Data			_MD2Data
