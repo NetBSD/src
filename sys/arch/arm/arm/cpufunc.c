@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.166 2017/08/27 11:44:49 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.167 2017/10/22 07:52:40 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.166 2017/08/27 11:44:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167 2017/10/22 07:52:40 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2194,7 +2194,7 @@ set_cpufuncs(void)
 	 * Bzzzz. And the answer was ...
 	 */
 	panic("No support for this CPU type (%08x) in kernel", cputype);
-	return(ARCHITECTURE_NOT_PRESENT);
+	return ARCHITECTURE_NOT_PRESENT;
 }
 
 #ifdef CPU_ARM2
