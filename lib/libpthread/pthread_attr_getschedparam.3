@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr_getschedparam.3,v 1.2 2010/07/08 22:19:26 jruoho Exp $
+.\"	$NetBSD: pthread_attr_getschedparam.3,v 1.3 2017/10/22 16:37:24 abhinav Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -29,7 +29,10 @@
 .Dt PTHREAD_ATTR_GETSCHEDPARAM 3
 .Os
 .Sh NAME
-.Nm pthread_attr_getschedparam
+.Nm pthread_attr_getschedparam ,
+.Nm pthread_attr_setschedparam ,
+.Nm pthread_attr_getschedpolicy ,
+.Nm pthread_attr_setschedpolicy
 .Nd get and set scheduling attributes
 .Sh LIBRARY
 .Lb libpthread
