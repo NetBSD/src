@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.9 2016/10/30 23:26:33 kamil Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.10 2017/10/22 16:37:24 abhinav Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,15 @@
 .Dt PTHREAD_MUTEX 3
 .Os
 .Sh NAME
-.Nm pthread_mutex
+.Nm pthread_mutex ,
+.Nm pthread_mutex_init ,
+.Nm pthread_mutex_destroy ,
+.Nm pthread_mutex_lock ,
+.Nm pthread_mutex_trylock ,
+.Nm pthread_mutex_unlock ,
+.Nm pthread_mutex_timedlock ,
+.Nm pthread_mutex_getprioceiling ,
+.Nm pthread_mutex_setprioceiling
 .Nd mutual exclusion primitives
 .Sh LIBRARY
 .Lb libpthread
