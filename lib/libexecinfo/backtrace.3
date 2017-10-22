@@ -1,4 +1,4 @@
-.\"	$NetBSD: backtrace.3,v 1.9 2016/10/31 07:37:10 pgoyette Exp $
+.\"	$NetBSD: backtrace.3,v 1.10 2017/10/22 14:07:03 abhinav Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,11 @@
 .Dt BACKTRACE 3
 .Os
 .Sh NAME
-.Nm backtrace
+.Nm backtrace ,
+.Nm backtrace_symbols ,
+.Nm backtrace_symbols_fd ,
+.Nm backtrace_symbols_fmt ,
+.Nm backtrace_symbols_fd_fmt
 .Nd fill in the backtrace of the currently executing thread
 .Sh LIBRARY
 .Lb libexecinfo
