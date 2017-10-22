@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidfile.3,v 1.15 2016/04/11 08:49:57 wiz Exp $
+.\"	$NetBSD: pidfile.3,v 1.16 2017/10/22 16:55:32 abhinav Exp $
 .\"
 .\" Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,10 @@
 .Dt PIDFILE 3
 .Os
 .Sh NAME
-.Nm pidfile
+.Nm pidfile ,
+.Nm pidfile_lock ,
+.Nm pidfile_read ,
+.Nm pidfile_clean
 .Nd write a daemon pid file
 .Sh LIBRARY
 .Lb libutil
