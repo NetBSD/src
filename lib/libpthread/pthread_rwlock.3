@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock.3,v 1.6 2016/07/05 10:04:17 wiz Exp $
+.\" $NetBSD: pthread_rwlock.3,v 1.7 2017/10/22 16:37:24 abhinav Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,16 @@
 .Dt PTHREAD_RWLOCK 3
 .Os
 .Sh NAME
-.Nm pthread_rwlock
+.Nm pthread_rwlock ,
+.Nm pthread_rwlock_init ,
+.Nm pthread_rwlock_destroy ,
+.Nm pthread_rwlock_rdlock ,
+.Nm pthread_rwlock_timedrdlock ,
+.Nm pthread_rwlock_tryrdlock ,
+.Nm pthread_rwlock_wrlock ,
+.Nm pthread_rwlock_timedwrlock ,
+.Nm pthread_rwlock_trywrlock ,
+.Nm pthread_rwlock_unlock
 .Nd read/write lock interface
 .Sh LIBRARY
 .Lb libpthread
