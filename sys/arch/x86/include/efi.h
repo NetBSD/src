@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.7 2017/03/11 07:21:10 nonaka Exp $   */
+/*     $NetBSD: efi.h,v 1.8 2017/10/22 00:59:28 maya Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -52,6 +52,8 @@ extern const struct uuid EFI_UUID_ACPI20;
 extern const struct uuid EFI_UUID_ACPI10;
 extern const struct uuid EFI_UUID_SMBIOS;
 extern const struct uuid EFI_UUID_SMBIOS3;
+
+extern bool bootmethod_efi;
 
 enum efi_reset {
        EFI_RESET_COLD,
@@ -214,6 +216,7 @@ struct efi_systbl64 {
 };
 #endif
 
+void               efi_init(void);
 bool               efi_probe(void);
 paddr_t            efi_getsystblpa(void);
 struct efi_systbl *efi_getsystbl(void);

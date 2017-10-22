@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.104 2017/07/29 06:29:31 maxv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.105 2017/10/22 00:59:28 maya Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104 2017/07/29 06:29:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.105 2017/10/22 00:59:28 maya Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -90,6 +90,7 @@ extern void platform_init(void);
 #include <dev/pci/pcivar.h>
 #include <i386/pci/pcibios.h>
 #endif
+#include <x86/efi.h>
 
 /*
  * Determine i/o configuration for a machine.
@@ -102,6 +103,7 @@ cpu_configure(void)
 	startrtclock();
 
 #if NBIOS32 > 0
+	efi_init();
 	bios32_init();
 	platform_init();
 	/* identify hypervisor type from SMBIOS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.12 2017/10/22 00:45:32 maya Exp $	*/
+/*	$NetBSD: efi.c,v 1.13 2017/10/22 00:59:28 maya Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.12 2017/10/22 00:45:32 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.13 2017/10/22 00:59:28 maya Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ void 		efi_aprintuuid(const struct uuid *);
 bool 		efi_uuideq(const struct uuid *, const struct uuid *);
 
 static bool efi_is32x64 = false;
+bool bootmethod_efi = true;
 static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
 static struct efi_e820memmap {
@@ -391,19 +392,29 @@ efi_getsystbl(void)
 /*
  * EFI is available if we are able to locate the EFI System Table.
  */
-bool
-efi_probe(void)
+void
+efi_init(void)
 {
+
 	if (efi_getsystbl() == NULL) {
 		aprint_debug("efi: missing or invalid systbl\n");
-		return false;
+		bootmethod_efi = false;
+		return;
 	}
 	if (efi_getcfgtblhead() == NULL) {
 		aprint_debug("efi: missing or invalid cfgtbl\n");
 		efi_relva((vaddr_t) efi_systbl_va);
-		return false;
+		bootmethod_efi = false;
+		return;
 	}
-	return true;
+	bootmethod_efi = true;
+}
+
+bool
+efi_probe(void)
+{
+
+	return bootmethod_efi;
 }
 
 int
