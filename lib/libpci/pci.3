@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.3,v 1.13 2016/09/24 23:12:54 mrg Exp $
+.\"	$NetBSD: pci.3,v 1.14 2017/10/22 15:28:48 abhinav Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -37,7 +37,16 @@
 .Dt PCI 3
 .Os
 .Sh NAME
-.Nm pci
+.Nm pci ,
+.Nm pcibus_conf_read ,
+.Nm pcibus_conf_write ,
+.Nm pcidev_conf_read ,
+.Nm pcidev_conf_write ,
+.Nm pci_findvendor ,
+.Nm pci_devinfo ,
+.Nm pci_conf_print ,
+.Nm pci_drvname ,
+.Nm pci_drvnameonbus
 .Nd library interface for PCI bus access
 .Sh LIBRARY
 .Lb libpci
