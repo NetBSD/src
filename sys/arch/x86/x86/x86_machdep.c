@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.98 2017/10/09 17:49:28 maya Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.99 2017/10/22 01:29:26 maya Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.98 2017/10/09 17:49:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.99 2017/10/22 01:29:26 maya Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -103,6 +103,8 @@ char module_machine_i386pae_xen[] = "i386pae-xen";
 struct bootinfo bootinfo;
 
 /* --------------------------------------------------------------------- */
+
+bool bootmethod_efi;
 
 static kauth_listener_t x86_listener;
 
@@ -1114,6 +1116,23 @@ sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 }
 
 static int
+sysctl_machdep_bootmethod(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	char buf[5];
+
+	node = *rnode;
+	node.sysctl_data = buf;
+	if (bootmethod_efi)
+		memcpy(node.sysctl_data, "UEFI", 5);
+	else
+		memcpy(node.sysctl_data, "BIOS", 5);
+
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+
+static int
 sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -1198,10 +1217,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "bootmethod", NULL,
+		       sysctl_machdep_bootmethod, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
-
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "cpu_brand", NULL,
