@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.48 2017/10/19 20:11:38 jdolecek Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.49 2017/10/22 13:13:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -121,6 +121,9 @@ struct pciide_softc {
 	bus_size_t sc_ba5_ss;
 	int sc_ba5_en;
 #endif	/* NATA_DMA */
+
+	/* for CMD Technology 064x */
+	uint sc_cmd_act_channel;
 
 	/* Vendor info (for interpreting Chip description) */
 	pcireg_t sc_pci_id;
