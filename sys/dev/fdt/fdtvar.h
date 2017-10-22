@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.26 2017/08/25 12:28:10 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.27 2017/10/22 13:56:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -185,6 +185,15 @@ struct fdtbus_phy_controller_func {
 	int	(*enable)(device_t, void *, bool);
 };
 
+struct fdtbus_mmc_pwrseq;
+
+struct fdtbus_mmc_pwrseq_func {
+	void	(*pre_power_on)(device_t);
+	void	(*post_power_on)(device_t);
+	void	(*power_off)(device_t);
+	void	(*reset)(device_t);
+};
+
 struct fdt_console {
 	int	(*match)(int);
 	void	(*consinit)(struct fdt_attach_args *, u_int);
@@ -225,6 +234,8 @@ int		fdtbus_register_power_controller(device_t, int,
 		    const struct fdtbus_power_controller_func *);
 int		fdtbus_register_phy_controller(device_t, int,
 		    const struct fdtbus_phy_controller_func *);
+int		fdtbus_register_mmc_pwrseq(device_t, int,
+		    const struct fdtbus_mmc_pwrseq_func *);
 
 int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
 int		fdtbus_get_reg_byname(int, const char *, bus_addr_t *,
@@ -277,6 +288,12 @@ struct fdtbus_phy *fdtbus_phy_get(int, const char *);
 struct fdtbus_phy *fdtbus_phy_get_index(int, u_int);
 void		fdtbus_phy_put(struct fdtbus_phy *);
 int		fdtbus_phy_enable(struct fdtbus_phy *, bool);
+
+struct fdtbus_mmc_pwrseq *fdtbus_mmc_pwrseq_get(int);
+void		fdtbus_mmc_pwrseq_pre_power_on(struct fdtbus_mmc_pwrseq *);
+void		fdtbus_mmc_pwrseq_post_power_on(struct fdtbus_mmc_pwrseq *);
+void		fdtbus_mmc_pwrseq_power_off(struct fdtbus_mmc_pwrseq *);
+void		fdtbus_mmc_pwrseq_reset(struct fdtbus_mmc_pwrseq *);
 
 int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
 
