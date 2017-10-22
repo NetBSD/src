@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.39 2013/12/20 17:01:39 wiz Exp $
+.\"	$NetBSD: newsyslog.8,v 1.40 2017/10/22 17:53:49 abhinav Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -44,7 +44,8 @@
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
-.Nm newsyslog
+.Nm newsyslog ,
+.Nm newsyslog.conf
 .Nd maintain system log files to manageable sizes
 .Sh SYNOPSIS
 .Nm newsyslog
@@ -107,7 +108,6 @@ Blank lines or lines beginning with
 are ignored.
 The fields of the configuration file are as
 follows:
-.Pp
 .Bl -tag -width indent
 .It Ar logfile_name
 Name of the system log file to be archived.
@@ -304,7 +304,6 @@ rotate at the last day of every month at midnight
 .It Ar $M5D6
 rotate on every 5th day of month at 6:00 hr
 .El
-.Pp
 .It Ar flags
 This field specifies any special processing that is required.
 These flags are parsed in a case insensitive manner.
