@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.42 2017/10/20 21:51:29 jdolecek Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.43 2017/10/22 13:13:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,10 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.42 2017/10/20 21:51:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.43 2017/10/22 13:13:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -36,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.42 2017/10/20 21:51:29 jdolecek Exp $")
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_cmd_reg.h>
 
+#define CMDIDE_ACT_CHANNEL_NONE	0xff
 
 static int  cmdide_match(device_t, cfdata_t, void *);
 static void cmdide_attach(device_t, device_t, void *);
@@ -49,6 +51,8 @@ static void cmd0643_9_chip_map(struct pciide_softc*,
 static void cmd0643_9_setup_channel(struct ata_channel*);
 static void cmd_channel_map(const struct pci_attach_args *,
 			    struct pciide_softc *, int);
+static int cmd064x_claim_hw(struct ata_channel *, int);
+static void cmd064x_free_hw(struct ata_channel *);
 static int  cmd_pci_intr(void *);
 static void cmd646_9_irqack(struct ata_channel *);
 static void cmd680_chip_map(struct pciide_softc*,
@@ -151,11 +155,10 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
 	if (channel > 0 && one_channel) {
-		cp->ata_channel.ch_queue =
-		    sc->pciide_channels[0].ata_channel.ch_queue;
-	} else {
-		/* XXX */
-		cp->ata_channel.ch_queue = ata_queue_alloc(1);
+		/* Channels are not independant, need synchronization */
+		sc->sc_wdcdev.sc_atac.atac_claim_hw = cmd064x_claim_hw;
+		sc->sc_wdcdev.sc_atac.atac_free_hw  = cmd064x_free_hw;
+		sc->sc_cmd_act_channel = CMDIDE_ACT_CHANNEL_NONE;
 	}
 
 	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
@@ -179,6 +182,45 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	}
 
 	pciide_mapchan(pa, cp, interface, cmd_pci_intr);
+}
+
+/*
+ * Check if we can execute next xfer on the channel.
+ * Called with chp channel lock held.
+ */
+static int
+cmd064x_claim_hw(struct ata_channel *chp, int maysleep)
+{
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
+
+	return atomic_cas_uint(&sc->sc_cmd_act_channel,
+	    CMDIDE_ACT_CHANNEL_NONE, chp->ch_channel)
+	    == CMDIDE_ACT_CHANNEL_NONE;
+}
+
+/* Allow another channel to run. Called with ochp channel lock held. */
+static void
+cmd064x_free_hw(struct ata_channel *ochp)
+{
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(ochp);
+	uint oact = atomic_cas_uint(&sc->sc_cmd_act_channel,
+	    ochp->ch_channel, CMDIDE_ACT_CHANNEL_NONE);
+	struct ata_channel *nchp;
+
+	KASSERT(oact == ochp->ch_channel);
+
+	/* Start the other channel(s) */
+	for(uint i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
+		/* Skip the current channel */
+		if (i == oact)
+			continue;
+
+		nchp = &sc->pciide_channels[i].ata_channel;
+		if (nchp->ch_ndrives == 0)
+			continue;
+
+		atastart(nchp);
+	}
 }
 
 static int
