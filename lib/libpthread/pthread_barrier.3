@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier.3,v 1.7 2017/10/22 16:09:22 abhinav Exp $
+.\" $NetBSD: pthread_barrier.3,v 1.8 2017/10/22 16:15:02 abhinav Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" ----------------------------------------------------------------------------
-.Dd June 12, 2016
+.Dd October 22, 2017
 .Dt PTHREAD_BARRIER 3
 .Os
 .Sh NAME
@@ -45,12 +45,6 @@
 .Fn pthread_barrier_destroy "pthread_barrier_t *barrier"
 .Ft int
 .Fn pthread_barrier_wait "pthread_barrier_t *barrier"
-.Ft int
-.Fn pthread_barrierattr_getpshared "const pthread_barrierattr_t * __restrict attr" \
-"int * __restrict pshared"
-.Ft int
-.Fn pthread_barrierattr_setpshared "pthread_barrierattr_t * attr" \
-"int pshared"
 .\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -96,16 +90,7 @@ call have called
 all threads will wake up, return from their respective
 .Fn pthread_barrier_wait
 calls and continue execution.
-.Pp
 .\" -----
-The
-.Fn pthread_barrierattr_getpshared
-function shall obtain the value of the process-shared attribute from the
-attributes object referenced by attr.
-The
-.Fn pthread_barrierattr_setpshared
-function shall set the process-shared attribute in an initialized attributes
-object referenced by attr.
 .\" ----------------------------------------------------------------------------
 .Sh RETURN VALUES
 If successful,
@@ -132,21 +117,6 @@ It is the responsibility of this thread to insure the visibility
 and atomicity of any updates to shared data with respect to the
 other threads participating in the barrier.
 In the case of failure, an error value will be returned.
-.Pp
-.\" -----
-If successful,
-.Fn pthread_barrierattr_getpshared
-shall return zero and store the value of the process-shared attribute of attr
-into the object referenced by the
-.Fa pshared
-parameter.
-Otherwise, an error number shall be returned to indicate the error.
-.Pp
-.\" -----
-If successful,
-.Fn pthread_barrierattr_setpshared
-shall return zero;
-Otherwise, an error number shall be returned to indicate the error.
 .\" ----------------------------------------------------------------------------
 .Sh ERRORS
 The
@@ -186,20 +156,6 @@ The value specified by
 .Fa barrier
 is invalid.
 .El
-.Pp
-.\" -----
-The
-.Fn pthread_barrierattr_setpshared
-function and
-the
-.Fn pthread_barrierattr_getpshared
-function may fail if:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The value specified by
-.Fa attr
-is invalid.
-.El
 .\" ---------------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr pthread_barrierattr 3 ,
@@ -208,10 +164,3 @@ is invalid.
 .Sh STANDARDS
 These functions conform to
 .St -p1003.1-2001 .
-.Sh BUGS
-The
-.Fn pthread_barrierattr_getpshared
-and
-.Fn pthread_barrierattr_setpshared
-functions are hidden by default since only thread shared attributes
-are supported.
