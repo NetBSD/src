@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.11 2017/03/11 07:21:10 nonaka Exp $	*/
+/*	$NetBSD: efi.c,v 1.12 2017/10/22 00:45:32 maya Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.11 2017/03/11 07:21:10 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.12 2017/10/22 00:45:32 maya Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -46,8 +46,8 @@ const struct uuid EFI_UUID_ACPI10 = EFI_TABLE_ACPI10;
 const struct uuid EFI_UUID_SMBIOS = EFI_TABLE_SMBIOS;
 const struct uuid EFI_UUID_SMBIOS3 = EFI_TABLE_SMBIOS3;
 
-vaddr_t 	efi_getva(paddr_t);
-void 		efi_relva(vaddr_t);
+static vaddr_t 	efi_getva(paddr_t);
+static void 	efi_relva(vaddr_t);
 struct efi_cfgtbl *efi_getcfgtblhead(void);
 void 		efi_aprintcfgtbl(void);
 void 		efi_aprintuuid(const struct uuid *);
@@ -65,7 +65,7 @@ static struct efi_e820memmap {
  * Map a physical address (PA) to a newly allocated virtual address (VA).
  * The VA must be freed using efi_relva().
  */
-vaddr_t
+static vaddr_t
 efi_getva(paddr_t pa)
 {
 	vaddr_t va;
@@ -89,7 +89,7 @@ efi_getva(paddr_t pa)
 /*
  * Free a virtual address (VA) allocated using efi_getva().
  */
-void
+static void
 efi_relva(vaddr_t va)
 {
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
