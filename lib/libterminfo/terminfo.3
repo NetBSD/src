@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.3,v 1.13 2015/11/23 22:35:28 christos Exp $
+.\"	$NetBSD: terminfo.3,v 1.14 2017/10/22 16:42:34 abhinav Exp $
 .\"
 .\" Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,15 @@
 .Nm tigetstr ,
 .Nm tparm ,
 .Nm tputs ,
-.Nm putp
+.Nm putp ,
+.Nm ti_setupterm ,
+.Nm ti_getflag ,
+.Nm ti_getnum ,
+.Nm ti_getstr ,
+.Nm tiparm ,
+.Nm ti_tiparm ,
+.Nm ti_puts ,
+.Nm ti_putp
 .Nd terminal independent operation routines
 .Sh LIBRARY
 .Lb libterminfo
