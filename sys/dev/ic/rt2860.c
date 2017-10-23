@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.28 2017/07/25 23:17:20 maya Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.29 2017/10/23 09:31:17 msaitoh Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.28 2017/07/25 23:17:20 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.29 2017/10/23 09:31:17 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -401,7 +401,25 @@ rt2860_attachhook(device_t self)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		int qid;
+
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		for (qid = 0; qid < MAXQS; qid++)
+			rt2860_free_tx_ring(sc, &sc->txq[qid]);
+		rt2860_free_rx_ring(sc, &sc->rxq);
+		rt2860_free_tx_pool(sc);
+
+		if (sc->sc_soft_ih != NULL) {
+			softint_disestablish(sc->sc_soft_ih);
+			sc->sc_soft_ih = NULL;
+		}
+		if (sc->ucode != NULL)
+			firmware_free(sc->ucode, sc->ucsize);
+		return;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
