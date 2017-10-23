@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.3 2017/10/18 17:12:42 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.4 2017/10/23 06:00:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -174,7 +174,7 @@ mm_rand_base()
 
 	size = (NKL2_KIMG_ENTRIES + 1) * NBPD_L2;
 
-	/* yes, this is ridiculous */
+	/* XXX: yes, this is ridiculous, will be fixed soon */
 	rnd = rdtsc();
 	randva = rounddown(KASLR_WINDOW_BASE + rnd % (KASLR_WINDOW_SIZE - size),
 	    PAGE_SIZE);
