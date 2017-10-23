@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.123 2017/06/06 19:48:42 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.124 2017/10/23 06:52:17 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.123 2017/06/06 19:48:42 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.124 2017/10/23 06:52:17 ozaki-r Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1406,7 +1406,7 @@ ioctl(int fd, unsigned long cmd, ...)
 	va_list ap;
 	int rv;
 
-	DPRINTF(("ioctl -> %d\n", fd));
+	DPRINTF(("ioctl -> %d (%s)\n", fd, whichfd(fd)));
 	if (fd_isrump(fd)) {
 		fd = fd_host2rump(fd);
 		op_ioctl = GETSYSCALL(rump, IOCTL);
@@ -1417,6 +1417,7 @@ ioctl(int fd, unsigned long cmd, ...)
 	va_start(ap, cmd);
 	rv = op_ioctl(fd, cmd, va_arg(ap, void *));
 	va_end(ap);
+	DPRINTF(("ioctl <- %d\n", rv));
 	return rv;
 }
 
