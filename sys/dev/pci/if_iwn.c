@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.85 2017/07/19 16:55:12 mlelstv Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.86 2017/10/23 09:31:18 msaitoh Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.85 2017/07/19 16:55:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.86 2017/10/23 09:31:18 msaitoh Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -596,7 +596,12 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail5;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -643,6 +648,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
+fail5:	iwn_free_rx_ring(sc, &sc->rxq);
 fail4:	while (--i >= 0)
 		iwn_free_tx_ring(sc, &sc->txq[i]);
 #ifdef IWN_USE_RBUF

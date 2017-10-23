@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.2 2017/10/20 23:38:21 jmcneill Exp $ */
+/* $NetBSD: bwfm.c,v 1.3 2017/10/23 09:31:17 msaitoh Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -232,7 +232,15 @@ bwfm_attach(struct bwfm_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		printf("%s: if_initialize failed(%d)\n", DEVNAME(sc), error);
+		pcq_destroy(sc->sc_freetask);
+		workqueue_destroy(sc->sc_taskq);
+
+		return; /* Error */
+	}
+		
 	ieee80211_ifattach(ic);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);

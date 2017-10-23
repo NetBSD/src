@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.94 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_se.c,v 1.95 2017/10/23 09:31:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.94 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.95 2017/10/23 09:31:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -314,6 +314,7 @@ seattach(device_t parent, device_t self, void *aux)
 	struct scsipi_periph *periph = sa->sa_periph;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+	int rv;
 
 	sc->sc_dev = self;
 
@@ -363,7 +364,13 @@ seattach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		free(sc->sc_tbuf, M_DEVBUF);
+		callout_destroy(&sc->sc_ifstart_ch);
+		callout_destroy(&sc->sc_recv_ch);
+		return; /* Error */
+	}
 	ether_ifattach(ifp, myaddr);
 	if_register(ifp);
 }
