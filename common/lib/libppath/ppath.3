@@ -1,4 +1,4 @@
-.\"	$NetBSD: ppath.3,v 1.4 2017/10/22 15:34:13 abhinav Exp $
+.\"	$NetBSD: ppath.3,v 1.5 2017/10/23 00:59:44 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -295,9 +295,7 @@ component of
 Before returning a component,
 .Fn ppath_component_at
 increases its reference count.
-.Po
-The first component is 0.
-.Pc
+(The first component is 0.)
 .It Fn ppath_subpath "const ppath_t *p" "unsigned int first" "unsigned int exclast"
 Create a new
 .Vt ppath_t
@@ -424,10 +422,10 @@ is under
 .\" Cross-references should be ordered by section (low to high), then in
 .\"     alphabetical order.
 .Xr ppath_bool 3 ,
-.Xr ppath_data 3 ,
+.\" .Xr ppath_data 3 ,
 .Xr ppath_number 3 ,
 .Xr ppath_object 3 ,
-.Xr ppath_string 3 ,
+.\" .Xr ppath_string 3 ,
 .Xr proplib 3
 .Sh HISTORY
 The
