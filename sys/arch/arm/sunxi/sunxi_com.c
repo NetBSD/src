@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_com.c,v 1.2 2017/06/29 17:05:26 jmcneill Exp $ */
+/* $NetBSD: sunxi_com.c,v 1.3 2017/10/23 21:03:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.2 2017/06/29 17:05:26 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.3 2017/10/23 21:03:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,10 +106,18 @@ sunxi_com_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	ssc->ssc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
-	ssc->ssc_rst = fdtbus_reset_get_index(faa->faa_phandle, 0);
-
 	if (ssc->ssc_clk == NULL) {
-		aprint_error(": couldn't get frequency\n");
+		aprint_error(": couldn't get clock\n");
+		return;
+	}
+	if (clk_enable(ssc->ssc_clk) != 0) {
+		aprint_error(": couldn't enable clock\n");
+		return;
+	}
+
+	ssc->ssc_rst = fdtbus_reset_get_index(faa->faa_phandle, 0);
+	if (ssc->ssc_rst && fdtbus_reset_deassert(ssc->ssc_rst) != 0) {
+		aprint_error(": couldn't de-assert reset\n");
 		return;
 	}
 
