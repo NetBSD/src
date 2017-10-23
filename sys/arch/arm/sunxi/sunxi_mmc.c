@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.12 2017/10/22 13:57:25 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.13 2017/10/23 11:06:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_sunximmc.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.12 2017/10/22 13:57:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.13 2017/10/23 11:06:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +46,17 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.12 2017/10/22 13:57:25 jmcneill Exp 
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/sunxi/sunxi_mmc.h>
+
+#ifdef SUNXI_MMC_DEBUG
+static int sunxi_mmc_debug = SUNXI_MMC_DEBUG;
+#define	DPRINTF(dev, fmt, ...)						\
+do {									\
+	if (sunxi_mmc_debug & __BIT(device_unit(dev)))			\
+		device_printf((dev), fmt, ##__VA_ARGS__);		\
+} while (0)
+#else
+#define	DPRINTF(dev, fmt, ...)		((void)0)
+#endif
 
 enum sunxi_mmc_timing {
 	SUNXI_MMC_TIMING_400K,
@@ -472,10 +485,8 @@ sunxi_mmc_intr(void *priv)
 	MMC_WRITE(sc, SUNXI_MMC_IDST, idst);
 	MMC_WRITE(sc, SUNXI_MMC_RINT, rint);
 
-#ifdef SUNXI_MMC_DEBUG
-	device_printf(sc->sc_dev, "mmc intr idst=%08X rint=%08X\n",
+	DPRINTF(sc->sc_dev, "mmc intr idst=%08X rint=%08X\n",
 	    idst, rint);
-#endif
 
 	if (idst != 0) {
 		sc->sc_idma_idst |= idst;
@@ -538,9 +549,7 @@ sunxi_mmc_host_reset(sdmmc_chipset_handle_t sch)
 	struct sunxi_mmc_softc *sc = sch;
 	int retry = 1000;
 
-#ifdef SUNXI_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "host reset\n");
-#endif
+	DPRINTF(sc->sc_dev, "host reset\n");
 
 	MMC_WRITE(sc, SUNXI_MMC_GCTRL,
 	    MMC_READ(sc, SUNXI_MMC_GCTRL) | SUNXI_MMC_GCTRL_RESET);
@@ -621,9 +630,7 @@ sunxi_mmc_update_clock(struct sunxi_mmc_softc *sc)
 	uint32_t cmd;
 	int retry;
 
-#ifdef SUNXI_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "update clock\n");
-#endif
+	DPRINTF(sc->sc_dev, "update clock\n");
 
 	cmd = SUNXI_MMC_CMD_START |
 	      SUNXI_MMC_CMD_UPCLK_ONLY |
@@ -638,24 +645,22 @@ sunxi_mmc_update_clock(struct sunxi_mmc_softc *sc)
 
 	if (retry == 0) {
 		aprint_error_dev(sc->sc_dev, "timeout updating clock\n");
-#ifdef SUNXI_MMC_DEBUG
-		device_printf(sc->sc_dev, "GCTRL: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "GCTRL: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_GCTRL));
-		device_printf(sc->sc_dev, "CLKCR: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "CLKCR: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_CLKCR));
-		device_printf(sc->sc_dev, "TIMEOUT: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "TIMEOUT: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_TIMEOUT));
-		device_printf(sc->sc_dev, "WIDTH: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "WIDTH: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_WIDTH));
-		device_printf(sc->sc_dev, "CMD: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "CMD: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_CMD));
-		device_printf(sc->sc_dev, "MINT: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "MINT: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_MINT));
-		device_printf(sc->sc_dev, "RINT: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "RINT: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_RINT));
-		device_printf(sc->sc_dev, "STATUS: 0x%08x\n",
+		DPRINTF(sc->sc_dev, "STATUS: 0x%08x\n",
 		    MMC_READ(sc, SUNXI_MMC_STATUS));
-#endif
 		return ETIMEDOUT;
 	}
 
@@ -733,9 +738,7 @@ sunxi_mmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 {
 	struct sunxi_mmc_softc *sc = sch;
 
-#ifdef SUNXI_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "width = %d\n", width);
-#endif
+	DPRINTF(sc->sc_dev, "width = %d\n", width);
 
 	switch (width) {
 	case 1:
@@ -882,12 +885,10 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	const bool poll = (cmd->c_flags & SCF_POLL) != 0;
 	int retry;
 
-#ifdef SUNXI_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev,
+	DPRINTF(sc->sc_dev,
 	    "opcode %d flags 0x%x data %p datalen %d blklen %d poll %d\n",
 	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen,
 	    cmd->c_blklen, poll);
-#endif
 
 	mutex_enter(&sc->sc_intr_lock);
 
@@ -927,9 +928,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	MMC_WRITE(sc, SUNXI_MMC_ARG, cmd->c_arg);
 
-#ifdef SUNXI_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "cmdval = %08x\n", cmdval);
-#endif
+	DPRINTF(sc->sc_dev, "cmdval = %08x\n", cmdval);
 
 	if (cmd->c_datalen == 0) {
 		MMC_WRITE(sc, SUNXI_MMC_CMD, cmdval | cmd->c_opcode);
@@ -957,10 +956,8 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			cmd->c_error = ETIMEDOUT;
 		}
 		if (cmd->c_error) {
-#ifdef SUNXI_MMC_DEBUG
-			aprint_error_dev(sc->sc_dev,
+			DPRINTF(sc->sc_dev,
 			    "xfer failed, error %d\n", cmd->c_error);
-#endif
 			goto done;
 		}
 	}
@@ -975,10 +972,8 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	}
 	if (cmd->c_error) {
-#ifdef SUNXI_MMC_DEBUG
-		aprint_error_dev(sc->sc_dev,
+		DPRINTF(sc->sc_dev,
 		    "cmd failed, error %d\n", cmd->c_error);
-#endif
 		goto done;
 	}
 		
@@ -993,11 +988,9 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			cmd->c_error = ETIMEDOUT;
 		}
 		if (cmd->c_error) {
-#ifdef SUNXI_MMC_DEBUG
-			aprint_error_dev(sc->sc_dev,
+			DPRINTF(sc->sc_dev,
 			    "data timeout, rint = %08x\n",
 			    sc->sc_intr_rint);
-#endif
 			cmd->c_error = ETIMEDOUT;
 			goto done;
 		}
@@ -1028,9 +1021,7 @@ done:
 	mutex_exit(&sc->sc_intr_lock);
 
 	if (cmd->c_error) {
-#ifdef SUNXI_MMC_DEBUG
-		aprint_error_dev(sc->sc_dev, "i/o error %d\n", cmd->c_error);
-#endif
+		DPRINTF(sc->sc_dev, "i/o error %d\n", cmd->c_error);
 		MMC_WRITE(sc, SUNXI_MMC_GCTRL,
 		    MMC_READ(sc, SUNXI_MMC_GCTRL) |
 		      SUNXI_MMC_GCTRL_DMARESET | SUNXI_MMC_GCTRL_FIFORESET);

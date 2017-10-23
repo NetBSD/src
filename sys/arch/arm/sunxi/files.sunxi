@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.36 2017/10/20 22:29:15 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.37 2017/10/23 11:06:31 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -114,6 +114,7 @@ file	arch/arm/sunxi/sunxi_com.c		sunxi_com needs-flag
 device	sunximmc: sdmmcbus
 attach	sunximmc at fdt with sunxi_mmc
 file	arch/arm/sunxi/sunxi_mmc.c		sunxi_mmc
+defparam opt_sunximmc.h				SUNXI_MMC_DEBUG
 
 # USB PHY
 device	sunxiusbphy
