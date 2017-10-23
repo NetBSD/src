@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.9 2017/02/02 10:05:35 nonaka Exp $ */
+/*	$NetBSD: malo.c,v 1.10 2017/10/23 09:31:17 msaitoh Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.9 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.10 2017/10/23 09:31:17 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -366,7 +366,7 @@ malo_attach(struct malo_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
-	int i;
+	int i, rv;
 
 	/* initialize channel scanning timer */
 	callout_init(&sc->sc_scan_to, 0);
@@ -422,7 +422,16 @@ malo_attach(struct malo_softc *sc)
 	aprint_normal(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* attach interface */
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rv);
+		malo_free_tx_ring(sc, &sc->sc_txring);
+		malo_free_rx_ring(sc, &sc->sc_rxring);
+		malo_free_cmd(sc);
+		callout_destroy(&sc->sc_scan_to);
+
+		return rv; /* Error */
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
