@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_screen.c,v 1.4.6.1 2016/12/18 06:37:30 snj Exp $ */
+/*	$NetBSD: cl_screen.c,v 1.4.6.1.2.1 2017/10/23 18:50:38 snj Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_screen.c,v 10.56 2002/05/03 19:59:44 skimo Exp  (Berkeley) Date: 2002/05/03 19:59:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_screen.c,v 1.4.6.1 2016/12/18 06:37:30 snj Exp $");
+__RCSID("$NetBSD: cl_screen.c,v 1.4.6.1.2.1 2017/10/23 18:50:38 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -430,7 +430,7 @@ cl_vi_end(GS *gp)
 	 * Move to the bottom of the window (some endwin implementations don't
 	 * do this for you).
 	 */
-	if (!F_ISSET(clp, CL_IN_EX)) {
+	if (!F_ISSET(clp, CL_IN_EX) && !F_ISSET(gp, G_SRESTART)) {
 		(void)move(0, 0);
 		(void)deleteln();
 		(void)move(LINES - 1, 0);
