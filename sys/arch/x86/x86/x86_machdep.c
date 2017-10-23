@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.99 2017/10/22 01:29:26 maya Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.100 2017/10/23 06:00:59 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.99 2017/10/22 01:29:26 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.100 2017/10/23 06:00:59 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -886,7 +886,7 @@ int
 init_x86_vm(paddr_t pa_kend)
 {
 	extern struct bootspace bootspace;
-	paddr_t pa_kstart = bootspace.text.pa;
+	paddr_t pa_kstart = bootspace.text.pa; /* XXX head instead */
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
 	int x;
