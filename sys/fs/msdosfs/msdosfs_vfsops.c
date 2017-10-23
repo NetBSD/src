@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.115 2014/07/18 17:24:34 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.115.2.1 2017/10/23 19:10:46 snj Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.115 2014/07/18 17:24:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.115.2.1 2017/10/23 19:10:46 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -468,6 +468,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	int	ronly, error, BlkPerSec;
 	uint64_t psize;
 	unsigned secsize;
+	u_long fatbytes, fatblocksecs;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
@@ -695,12 +696,40 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 			pmp->pm_fatdiv = 1;
 		}
 	}
-	if (FAT12(pmp))
-		pmp->pm_fatblocksize = 3 * pmp->pm_BytesPerSec;
-	else
-		pmp->pm_fatblocksize = MAXBSIZE;
 
-	pmp->pm_fatblocksec = pmp->pm_fatblocksize / pmp->pm_BytesPerSec;
+	/* validate cluster count against FAT */
+	if ((pmp->pm_maxcluster & pmp->pm_fatmask) != pmp->pm_maxcluster) {
+		DPRINTF("maxcluster %lu outside of mask %#lx\n",
+			pmp->pm_maxcluster, pmp->pm_fatmask);
+		error = EINVAL;
+		goto error_exit;
+	}
+
+	/* validate FAT size */
+	fatbytes = (pmp->pm_maxcluster+1) * pmp->pm_fatmult / pmp->pm_fatdiv;
+	fatblocksecs = howmany(fatbytes, pmp->pm_BytesPerSec);
+
+	if (pmp->pm_FATsecs != fatblocksecs) {
+		DPRINTF("FATsecs %lu != real %lu\n", pmp->pm_FATsecs,
+			fatblocksecs);
+		error = EINVAL;
+		goto error_exit;
+	}
+
+	if (FAT12(pmp)) {
+		/*
+		 * limit block size to what is needed to read a FAT block
+		 * to not exceed MAXBSIZE
+		 */
+		pmp->pm_fatblocksec = min(3, fatblocksecs);
+		pmp->pm_fatblocksize = pmp->pm_fatblocksec
+			* pmp->pm_BytesPerSec;
+	} else {
+		pmp->pm_fatblocksize = MAXBSIZE;
+		pmp->pm_fatblocksec = pmp->pm_fatblocksize
+			/ pmp->pm_BytesPerSec;
+	}
+
 	pmp->pm_bnshift = ffs(pmp->pm_BytesPerSec) - 1;
 
 	/*
