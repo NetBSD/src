@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread.3,v 1.17 2017/02/08 03:44:41 kamil Exp $
+.\"	$NetBSD: pthread.3,v 1.18 2017/10/23 01:03:23 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,9 +46,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-library provides an implementation of the standard
-.Tn POSIX
-threads library.
+library provides an implementation of the standard POSIX threads
+library.
 .Pp
 The
 .Nx
@@ -63,8 +62,7 @@ In order to remain compatible with future
 .Nx
 releases, programs must be linked against the dynamic version of the
 thread library.
-Statically linked programs using the
-.Tn POSIX
+Statically linked programs using the POSIX
 threads framework may not work when run on a future version of the system.
 .Sh FUNCTIONS
 The following functions comprise the core of the
