@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.540 2017/10/20 09:26:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.541 2017/10/23 09:27:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.540 2017/10/20 09:26:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.541 2017/10/23 09:27:21 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2753,7 +2753,12 @@ alloc_retry:
 #endif
 
 	/* Attach the interface. */
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		return; /* Error */
+	}
 	sc->sc_ipq = if_percpuq_create(&sc->sc_ethercom.ec_if);
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
