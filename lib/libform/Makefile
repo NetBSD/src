@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/03/21 05:38:49 matt Exp $
+#	$NetBSD: Makefile,v 1.11 2017/10/23 15:34:45 abhinav Exp $
 #
 
 WARNS=	2
@@ -26,7 +26,7 @@ MLINKS+=	forms.3 form.3 form_page.3 current_field.3 \
 		form_data.3 data_ahead.3 form_field_new.3 dup_field.3 \
 		form_field_info.3 dynamic_field_info.3 \
 		form_page.3 current_field.3 form_data.3 data_ahead.3 \
-		form_data.3 data_behind.3 form_field_new.3 dup_field.3 \
+		form_data.3 data_behind.3 \
 		form_field_info.3 dynamic_field_info.3 \
 		form_field_validation.3 field_arg.3 \
 		form_field_attributes.3 field_back.3 \
