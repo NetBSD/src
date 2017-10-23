@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2017/05/28 00:30:49 jmcneill Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2017/10/23 07:05:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2017/05/28 00:30:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2017/10/23 07:05:23 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -169,7 +169,6 @@ cpu_configure(void)
 	struct cfdata *cf;
 
 	(void) splhigh();
-	(void) splserial();	/* XXX need an splextreme() */
 
 	for (cf = &cfdata[0]; cf->cf_name; cf++) {
 		if (cf->cf_pspec == NULL) {
