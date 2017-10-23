@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.97 2017/06/08 01:23:01 chs Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.98 2017/10/23 19:03:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.97 2017/06/08 01:23:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.98 2017/10/23 19:03:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -193,7 +193,6 @@ struct wapbl {
 	struct evcnt wl_ev_commit;		/* l	*/
 	struct evcnt wl_ev_journalwrite;	/* l	*/
 	struct evcnt wl_ev_jbufs_bio_nowait;	/* l	*/
-	struct evcnt wl_ev_jbufs_bio_wait;	/* l	*/
 	struct evcnt wl_ev_metawrite;		/* lm	*/
 	struct evcnt wl_ev_cacheflush;		/* l	*/
 #endif
@@ -412,13 +411,11 @@ wapbl_evcnt_init(struct wapbl *wl)
 	evcnt_attach_dynamic(&wl->wl_ev_commit, EVCNT_TYPE_MISC,
 	    NULL, wl->wl_ev_group, "commit");
 	evcnt_attach_dynamic(&wl->wl_ev_journalwrite, EVCNT_TYPE_MISC,
-	    NULL, wl->wl_ev_group, "journal sync block write");
+	    NULL, wl->wl_ev_group, "journal write total");
 	evcnt_attach_dynamic(&wl->wl_ev_jbufs_bio_nowait, EVCNT_TYPE_MISC,
-	    NULL, wl->wl_ev_group, "journal I/O bufs no wait");
-	evcnt_attach_dynamic(&wl->wl_ev_jbufs_bio_wait, EVCNT_TYPE_MISC,
-	    NULL, wl->wl_ev_group, "journal I/O bufs biowait");
+	    NULL, wl->wl_ev_group, "journal write finished async");
 	evcnt_attach_dynamic(&wl->wl_ev_metawrite, EVCNT_TYPE_MISC,
-	    NULL, wl->wl_ev_group, "metadata finished block write");
+	    NULL, wl->wl_ev_group, "metadata async write");
 	evcnt_attach_dynamic(&wl->wl_ev_cacheflush, EVCNT_TYPE_MISC,
 	    NULL, wl->wl_ev_group, "cache flush");
 }
@@ -429,7 +426,6 @@ wapbl_evcnt_free(struct wapbl *wl)
 	evcnt_detach(&wl->wl_ev_commit);
 	evcnt_detach(&wl->wl_ev_journalwrite);
 	evcnt_detach(&wl->wl_ev_jbufs_bio_nowait);
-	evcnt_detach(&wl->wl_ev_jbufs_bio_wait);
 	evcnt_detach(&wl->wl_ev_metawrite);
 	evcnt_detach(&wl->wl_ev_cacheflush);
 }
@@ -1042,8 +1038,6 @@ again:
 			
 		if (ISSET(bp->b_oflags, BO_DONE))
 			wl->wl_ev_jbufs_bio_nowait.ev_count++;
-		else
-			wl->wl_ev_jbufs_bio_wait.ev_count++;
 
 		TAILQ_REMOVE(&wl->wl_iobufs_busy, bp, b_wapbllist);
 		error = biowait(bp);
