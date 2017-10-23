@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.13 2017/10/22 20:35:32 skrll Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.14 2017/10/23 19:36:01 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.13 2017/10/22 20:35:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.14 2017/10/23 19:36:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,10 +121,10 @@ sunxi_platform_early_putchar(char c)
 #define CONSADDR_VA     ((CONSADDR - SUNXI_CORE_PBASE) + SUNXI_CORE_VBASE)
 	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
 
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
 		;
 
-	uartaddr[com_data] = c;
+	uartaddr[com_data] = htole32(c);
 #endif
 }
 
