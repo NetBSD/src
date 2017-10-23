@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.13 2017/10/23 11:06:31 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.14 2017/10/23 13:11:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.13 2017/10/23 11:06:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.14 2017/10/23 13:11:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,6 +96,7 @@ static void	sunxi_mmc_attach(device_t, device_t, void *);
 static void	sunxi_mmc_attach_i(device_t);
 
 static int	sunxi_mmc_intr(void *);
+static int	sunxi_mmc_dmabounce_setup(struct sunxi_mmc_softc *);
 static int	sunxi_mmc_idma_setup(struct sunxi_mmc_softc *);
 
 static int	sunxi_mmc_host_reset(sdmmc_chipset_handle_t);
@@ -164,6 +165,10 @@ struct sunxi_mmc_softc {
 	bus_dmamap_t sc_idma_map;
 	int sc_idma_ndesc;
 	void *sc_idma_desc;
+
+	bus_dmamap_t sc_dmabounce_map;
+	void *sc_dmabounce_buf;
+	size_t sc_dmabounce_buflen;
 
 	uint32_t sc_intr_rint;
 	uint32_t sc_idma_idst;
@@ -321,7 +326,8 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpio_cd_inverted = of_hasprop(phandle, "cd-inverted") ? 0 : 1;
 	sc->sc_gpio_wp_inverted = of_hasprop(phandle, "wp-inverted") ? 0 : 1;
 
-	if (sunxi_mmc_idma_setup(sc) != 0) {
+	if (sunxi_mmc_dmabounce_setup(sc) != 0 ||
+	    sunxi_mmc_idma_setup(sc) != 0) {
 		aprint_error_dev(self, "failed to setup DMA\n");
 		return;
 	}
@@ -341,6 +347,42 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	config_interrupts(self, sunxi_mmc_attach_i);
+}
+
+static int
+sunxi_mmc_dmabounce_setup(struct sunxi_mmc_softc *sc)
+{
+	bus_dma_segment_t ds[1];
+	int error, rseg;
+
+	sc->sc_dmabounce_buflen = sunxi_mmc_host_maxblklen(sc);
+	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmabounce_buflen, 0,
+	    sc->sc_dmabounce_buflen, ds, 1, &rseg, BUS_DMA_WAITOK);
+	if (error)
+		return error;
+	error = bus_dmamem_map(sc->sc_dmat, ds, 1, sc->sc_dmabounce_buflen,
+	    &sc->sc_dmabounce_buf, BUS_DMA_WAITOK);
+	if (error)
+		goto free;
+	error = bus_dmamap_create(sc->sc_dmat, sc->sc_dmabounce_buflen, 1,
+	    sc->sc_dmabounce_buflen, 0, BUS_DMA_WAITOK, &sc->sc_dmabounce_map);
+	if (error)
+		goto unmap;
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmabounce_map,
+	    sc->sc_dmabounce_buf, sc->sc_dmabounce_buflen, NULL,
+	    BUS_DMA_WAITOK);
+	if (error)
+		goto destroy;
+	return 0;
+
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmabounce_map);
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dmabounce_buf,
+	    sc->sc_dmabounce_buflen);
+free:
+	bus_dmamem_free(sc->sc_dmat, ds, rseg);
+	return error;
 }
 
 static int
@@ -798,14 +840,38 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 {
 	struct sunxi_mmc_idma_descriptor *dma = sc->sc_idma_desc;
 	bus_addr_t desc_paddr = sc->sc_idma_map->dm_segs[0].ds_addr;
+	bus_dmamap_t map;
 	bus_size_t off;
 	int desc, resid, seg;
 	uint32_t val;
 
+	/*
+	 * If the command includes a dma map use it, otherwise we need to
+	 * bounce. This can happen for SDIO IO_RW_EXTENDED (CMD53) commands.
+	 */
+	if (cmd->c_dmamap) {
+		map = cmd->c_dmamap;
+	} else {
+		if (cmd->c_datalen > sc->sc_dmabounce_buflen)
+			return E2BIG;
+		map = sc->sc_dmabounce_map;
+
+		if (!ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			memcpy(sc->sc_dmabounce_buf, cmd->c_data,
+			    cmd->c_datalen);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
+			    0, cmd->c_datalen, BUS_DMASYNC_PREWRITE);
+		} else {
+			memset(sc->sc_dmabounce_buf, 0, cmd->c_datalen);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
+			    0, cmd->c_datalen, BUS_DMASYNC_PREREAD);
+		}
+	}
+
 	desc = 0;
-	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
-		bus_addr_t paddr = cmd->c_dmamap->dm_segs[seg].ds_addr;
-		bus_size_t len = cmd->c_dmamap->dm_segs[seg].ds_len;
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
+		bus_addr_t paddr = map->dm_segs[seg].ds_addr;
+		bus_size_t len = map->dm_segs[seg].ds_len;
 		resid = min(len, cmd->c_resid);
 		off = 0;
 		while (resid > 0) {
@@ -859,7 +925,7 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 	    SUNXI_MMC_DMAC_IDMA_ON|SUNXI_MMC_DMAC_FIX_BURST);
 	val = MMC_READ(sc, SUNXI_MMC_IDIE);
 	val &= ~(SUNXI_MMC_IDST_RECEIVE_INT|SUNXI_MMC_IDST_TRANSMIT_INT);
-	if (cmd->c_flags & SCF_CMD_READ)
+	if (ISSET(cmd->c_flags, SCF_CMD_READ))
 		val |= SUNXI_MMC_IDST_RECEIVE_INT;
 	else
 		val |= SUNXI_MMC_IDST_TRANSMIT_INT;
@@ -871,10 +937,22 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 }
 
 static void
-sunxi_mmc_dma_complete(struct sunxi_mmc_softc *sc)
+sunxi_mmc_dma_complete(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 {
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_idma_map, 0,
 	    sc->sc_idma_size, BUS_DMASYNC_POSTWRITE);
+
+	if (cmd->c_dmamap == NULL) {
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
+			    0, cmd->c_datalen, BUS_DMASYNC_POSTWRITE);
+			memcpy(cmd->c_data, sc->sc_dmabounce_buf,
+			    cmd->c_datalen);
+		} else {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
+			    0, cmd->c_datalen, BUS_DMASYNC_POSTREAD);
+		}
+	}
 }
 
 static void
@@ -949,7 +1027,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 				    &sc->sc_intr_lock, hz);
 			}
 		}
-		sunxi_mmc_dma_complete(sc);
+		sunxi_mmc_dma_complete(sc, cmd);
 		if (sc->sc_idma_idst & SUNXI_MMC_IDST_ERROR) {
 			cmd->c_error = EIO;
 		} else if (!(sc->sc_idma_idst & SUNXI_MMC_IDST_COMPLETE)) {
