@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.14 2017/10/23 13:11:17 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.15 2017/10/23 13:28:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.14 2017/10/23 13:11:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.15 2017/10/23 13:28:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -856,15 +856,15 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 			return E2BIG;
 		map = sc->sc_dmabounce_map;
 
-		if (!ISSET(cmd->c_flags, SCF_CMD_READ)) {
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			memset(sc->sc_dmabounce_buf, 0, cmd->c_datalen);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
+			    0, cmd->c_datalen, BUS_DMASYNC_PREREAD);
+		} else {
 			memcpy(sc->sc_dmabounce_buf, cmd->c_data,
 			    cmd->c_datalen);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
 			    0, cmd->c_datalen, BUS_DMASYNC_PREWRITE);
-		} else {
-			memset(sc->sc_dmabounce_buf, 0, cmd->c_datalen);
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
-			    0, cmd->c_datalen, BUS_DMASYNC_PREREAD);
 		}
 	}
 
@@ -945,12 +945,12 @@ sunxi_mmc_dma_complete(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 	if (cmd->c_dmamap == NULL) {
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
-			    0, cmd->c_datalen, BUS_DMASYNC_POSTWRITE);
+			    0, cmd->c_datalen, BUS_DMASYNC_POSTREAD);
 			memcpy(cmd->c_data, sc->sc_dmabounce_buf,
 			    cmd->c_datalen);
 		} else {
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmabounce_map,
-			    0, cmd->c_datalen, BUS_DMASYNC_POSTREAD);
+			    0, cmd->c_datalen, BUS_DMASYNC_POSTWRITE);
 		}
 	}
 }
