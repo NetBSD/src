@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.73 2017/10/23 09:31:18 msaitoh Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.74 2017/10/23 12:55:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.73 2017/10/23 09:31:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.74 2017/10/23 12:55:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -189,7 +189,8 @@ allocif(int unit, struct shmif_sc **scp)
 
 	error = if_initialize(ifp);
 	if (error != 0) {
-		aprint_error("shmif%d: if_initialize failed(%d)\n", unit, rv);
+		aprint_error("shmif%d: if_initialize failed(%d)\n", unit,
+		    error);
 		cv_destroy(&sc->sc_cv);
 		mutex_destroy(&sc->sc_mtx);
 		kmem_free(sc, sizeof(*sc));
