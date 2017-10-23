@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.6.1 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.6.2 2017/10/23 19:15:09 snj Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.6.1 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.6.2 2017/10/23 19:15:09 snj Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -733,9 +733,15 @@ athn_usb_alloc_tx_list(struct athn_usb_softc *usc)
 		/* Append this Tx buffer to our free list. */
 		TAILQ_INSERT_TAIL(&usc->usc_tx_free_list, data, next);
 	}
-	if (error != 0)
+	if (error == 0) {
+		/* Steal one buffer for beacons. */
+		usc->usc_tx_bcn = TAILQ_FIRST(&usc->usc_tx_free_list);
+		TAILQ_REMOVE(&usc->usc_tx_free_list, usc->usc_tx_bcn, next);
+	} else {
 		athn_usb_free_tx_list(usc);
+	}
 	mutex_exit(&usc->usc_tx_mtx);
+
 	return error;
 }
 
@@ -753,6 +759,10 @@ athn_usb_free_tx_list(struct athn_usb_softc *usc)
 		xfer = atomic_swap_ptr(&usc->usc_tx_data[i].xfer, NULL);
 		if (xfer != NULL)
 			usbd_destroy_xfer(xfer);
+	}
+	if (usc->usc_tx_bcn) {
+		usbd_destroy_xfer(usc->usc_tx_bcn->xfer);
+		usc->usc_tx_bcn = NULL;
 	}
 }
 
@@ -2760,12 +2770,6 @@ athn_usb_init_locked(struct ifnet *ifp)
 	mutex_spin_enter(&usc->usc_task_mtx);
 	usc->usc_cmdq.cur = usc->usc_cmdq.next = usc->usc_cmdq.queued = 0;
 	mutex_spin_exit(&usc->usc_task_mtx);
-
-	/* Steal one buffer for beacons. */
-	mutex_enter(&usc->usc_tx_mtx);
-	usc->usc_tx_bcn = TAILQ_FIRST(&usc->usc_tx_free_list);
-	TAILQ_REMOVE(&usc->usc_tx_free_list, usc->usc_tx_bcn, next);
-	mutex_exit(&usc->usc_tx_mtx);
 
 	curchan = ic->ic_curchan;
 	extchan = NULL;
