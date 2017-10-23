@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.90.2.1.4.1 2017/07/08 16:13:55 snj Exp $ */
+/* $NetBSD: cgd.c,v 1.90.2.1.4.2 2017/10/23 19:27:43 snj Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.90.2.1.4.1 2017/07/08 16:13:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.90.2.1.4.2 2017/10/23 19:27:43 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -998,7 +998,7 @@ hexprint(const char *start, void *buf, int len)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, cgd, "dk_subr");
+MODULE(MODULE_CLASS_DRIVER, cgd, "blowfish,des,dk_subr");
 
 #ifdef _MODULE
 CFDRIVER_DECL(cgd, DV_DISK, NULL);
