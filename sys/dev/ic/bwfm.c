@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.3 2017/10/23 09:31:17 msaitoh Exp $ */
+/* $NetBSD: bwfm.c,v 1.4 2017/10/23 15:21:10 jmcneill Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -71,6 +71,7 @@ int	 bwfm_key_set(struct ieee80211com *, const struct ieee80211_key *,
 int	 bwfm_key_delete(struct ieee80211com *, const struct ieee80211_key *);
 int	 bwfm_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	 bwfm_newstate_cb(struct bwfm_softc *, struct bwfm_cmd_newstate *);
+void	 bwfm_newassoc(struct ieee80211_node *, int);
 void	 bwfm_task(struct work *, void *);
 
 int	 bwfm_chip_attach(struct bwfm_softc *);
@@ -248,6 +249,7 @@ bwfm_attach(struct bwfm_softc *sc)
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bwfm_newstate;
+	ic->ic_newassoc = bwfm_newassoc;
 	ic->ic_send_mgmt = bwfm_send_mgmt;
 	ic->ic_recv_mgmt = bwfm_recv_mgmt;
 	ic->ic_crypto.cs_key_set = bwfm_key_set;
@@ -722,6 +724,13 @@ bwfm_newstate_cb(struct bwfm_softc *sc, struct bwfm_cmd_newstate *cmd)
 	sc->sc_newstate(ic, nstate, cmd->arg);
 
 	splx(s);
+}
+
+void
+bwfm_newassoc(struct ieee80211_node *ni, int isnew)
+{
+	/* Firmware handles rate adaptation for us */
+	ni->ni_txrate = 0;
 }
 
 void
