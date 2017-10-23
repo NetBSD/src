@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.14 2017/06/25 12:25:02 maxv Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.15 2017/10/23 09:24:34 msaitoh Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.14 2017/06/25 12:25:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.15 2017/10/23 09:24:34 msaitoh Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -307,7 +307,7 @@ cmalo_attach(void *arg)
 	struct malo_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
-	int i;
+	int i, rv;
 
 	/* disable interrupts */
 	cmalo_intr_mask(sc, 0);
@@ -318,7 +318,7 @@ cmalo_attach(void *arg)
 	    cmalo_fw_load_main(sc) != 0) {
 		/* free firmware */
 		cmalo_fw_free(sc);
-		return;
+		goto fail_1;
 	}
 	sc->sc_flags |= MALO_FW_LOADED;
 
@@ -368,7 +368,11 @@ cmalo_attach(void *arg)
 	}
 
 	/* attach interface */
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rv);
+		goto fail_2;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -386,6 +390,16 @@ cmalo_attach(void *arg)
 
 	/* device attached */
 	sc->sc_flags |= MALO_DEVICE_ATTACHED;
+
+	return;
+
+fail_2:
+	cv_destroy(&sc->sc_cv);
+	mutex_destroy(&sc->sc_mtx);
+	free(sc->sc_cmd, M_DEVBUF);
+	free(sc->sc_data, M_DEVBUF);
+fail_1:
+	cmalo_fw_free(sc);
 }
 
 static void
