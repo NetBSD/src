@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.55 2017/10/23 09:24:34 msaitoh Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.56 2017/10/23 13:12:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.55 2017/10/23 09:24:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.56 2017/10/23 13:12:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -143,13 +143,13 @@ virtif_clone(struct if_clone *ifc, int num)
 		goto fail_2;
 	}
 	snprintf(sc->sc_linkstr, LINKSTRNUMLEN, "%d", sc->sc_num);
-#undef LINKSTRNUMLEN
 	error = virtif_create(ifp);
 	if (error) {
 fail_2:
 		if_detach(ifp);
 		if (sc->sc_linkstr != NULL)
 			kmem_free(sc->sc_linkstr, LINKSTRNUMLEN);
+#undef LINKSTRNUMLEN
 fail_1:
 		kmem_free(sc, sizeof(*sc));
 		ifp->if_softc = NULL;
