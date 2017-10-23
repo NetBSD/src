@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.65 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: an.c,v 1.66 2017/10/23 09:24:34 msaitoh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.65 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.66 2017/10/23 09:24:34 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -166,7 +166,7 @@ an_attach(struct an_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
-	int i, s;
+	int i, s, rv = 0;
 	struct an_rid_wepkey *akey;
 	int buflen, kid, rid;
 	int chan, chan_min, chan_max;
@@ -176,38 +176,38 @@ an_attach(struct an_softc *sc)
 	an_wait(sc);
 	if (an_reset(sc) != 0) {
 		config_deactivate(sc->sc_dev);
-		splx(s);
-		return 1;
+		rv = 1;
+		goto fail_1;
 	}
 
 	sc->sc_soft_ih = softint_establish(SOFTINT_NET, an_softintr, sc);
 	if (sc->sc_soft_ih == NULL) {
-		splx(s);
 		aprint_error_dev(sc->sc_dev, "failed to establish softint\n");
-		return 1;
+		rv = 1;
+		goto fail_1;
 	}
 
 	/* Load factory config */
 	if (an_cmd(sc, AN_CMD_READCFG, 0) != 0) {
-		splx(s);
 		aprint_error_dev(sc->sc_dev, "failed to load config data\n");
-		return 1;
+		rv = 1;
+		goto fail_2;
 	}
 
 	/* Read the current configuration */
 	buflen = sizeof(sc->sc_config);
 	if (an_read_rid(sc, AN_RID_GENCONFIG, &sc->sc_config, &buflen) != 0) {
-		splx(s);
 		aprint_error_dev(sc->sc_dev, "read config failed\n");
-		return 1;
+		rv = 1;
+		goto fail_2;
 	}
 
 	/* Read the card capabilities */
 	buflen = sizeof(sc->sc_caps);
 	if (an_read_rid(sc, AN_RID_CAPABILITIES, &sc->sc_caps, &buflen) != 0) {
-		splx(s);
 		aprint_error_dev(sc->sc_dev, "read caps failed\n");
-		return 1;
+		rv = 1;
+		goto fail_2;
 	}
 
 #ifdef AN_DEBUG
@@ -317,7 +317,11 @@ an_attach(struct an_softc *sc)
 	/*
 	 * Call MI attach routine.
 	 */
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rv);
+		goto fail_2;
+	}
 	ieee80211_ifattach(ic);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
@@ -346,6 +350,14 @@ an_attach(struct an_softc *sc)
 
 	ieee80211_announce(ic);
 	return 0;
+
+fail_2:
+	if (sc->sc_soft_ih != NULL)
+		softint_disestablish(sc->sc_soft_ih);
+fail_1:
+	splx(s);
+
+	return rv;
 }
 
 #ifdef AN_DEBUG
