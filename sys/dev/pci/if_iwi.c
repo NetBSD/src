@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.103 2017/05/23 02:19:14 ozaki-r Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.104 2017/10/23 09:28:13 msaitoh Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.103 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.104 2017/10/23 09:28:13 msaitoh Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -367,7 +367,13 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		ifp->if_softc = NULL; /* For iwi_detach() */
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -454,16 +460,13 @@ iwi_detach(device_t self, int flags)
 	struct iwi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
-	pmf_device_deregister(self);
-
-	if (ifp != NULL)
+	if (ifp->if_softc != NULL) {
+		pmf_device_deregister(self);
 		iwi_stop(ifp, 1);
-
-	iwi_free_firmware(sc);
-
-	ieee80211_ifdetach(&sc->sc_ic);
-	if (ifp != NULL)
+		iwi_free_firmware(sc);
+		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
+	}
 
 	iwi_free_cmd_ring(sc, &sc->cmdq);
 	iwi_free_tx_ring(sc, &sc->txq[0]);
