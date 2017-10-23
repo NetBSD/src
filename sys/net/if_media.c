@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.33 2017/10/20 08:04:39 msaitoh Exp $	*/
+/*	$NetBSD: if_media.c,v 1.34 2017/10/23 03:54:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.33 2017/10/20 08:04:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.34 2017/10/23 03:54:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,6 +405,10 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 			free(ife, M_IFMEDIA);
 		}
 	}
+	if (inst == IFM_INST_ANY) {
+		ifm->ifm_cur = NULL;
+		ifm->ifm_media = IFM_NONE;
+	}
 }
 
 void
@@ -412,8 +416,6 @@ ifmedia_removeall(struct ifmedia *ifm)
 {
 
 	ifmedia_delete_instance(ifm, IFM_INST_ANY);
-	ifm->ifm_cur = NULL;
-	ifm->ifm_media = IFM_NONE;
 }
 
 
