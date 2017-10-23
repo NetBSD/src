@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.41 2017/10/23 09:27:46 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.42 2017/10/23 15:08:05 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.41 2017/10/23 09:27:46 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.42 2017/10/23 15:08:05 jakllsch Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -282,7 +282,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	return;
 fail_2:
 	ifmedia_removeall(&mii->mii_media);
-	mii_detach(&mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	mutex_destroy(&sc->sc_txq.t_mtx);
 	mutex_destroy(&sc->sc_rxq.r_mtx);
 	mutex_obj_free(sc->sc_lock);
