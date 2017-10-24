@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.25 2016/12/14 11:19:15 knakahara Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.25.8.1 2017/10/24 08:47:24 snj Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -49,11 +49,16 @@
 
 struct encaptab;
 
+struct gif_ro {
+	struct route gr_ro;
+	kmutex_t gr_lock;
+};
+
 struct gif_softc {
 	struct ifnet	gif_if;	   /* common area - must be at the top */
 	struct sockaddr	*gif_psrc; /* Physical src addr */
 	struct sockaddr	*gif_pdst; /* Physical dst addr */
-	percpu_t *gif_ro_percpu;
+	percpu_t *gif_ro_percpu;   /* struct gif_ro */
 	int		gif_flags;
 	const struct encaptab *encap_cookie4;
 	const struct encaptab *encap_cookie6;
@@ -76,6 +81,17 @@ int	gif_encapcheck(struct mbuf *, int, int, void *);
 
 /*
  * Locking notes:
- * - All members of struct si_sync are protected by si_lock (an adaptive mutex)
+ * + gif_softc_list is protected by gif_softcs.lock (an adaptive mutex)
+ *       gif_softc_list is list of all gif_softcs. It is used by ioctl
+ *       context only.
+ * + Members of struct gif_softc except for gif_ro_percpu are protected by
+ *   - encap_lock for writer
+ *   - stopping processing when writer begin to run
+ *     for reader(Tx and Rx processing)
+ * + Each CPU's gif_ro.gr_ro of gif_ro_percpu are protected by
+ *   percpu'ed gif_ro.gr_lock.
+ *
+ * Locking order:
+ *     - encap_lock => gif_softcs.lock
  */
 #endif /* !_NET_IF_GIF_H_ */

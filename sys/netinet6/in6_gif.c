@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.85 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.85.6.1 2017/10/24 08:47:24 snj Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.85 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.85.6.1 2017/10/24 08:47:24 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -87,6 +87,7 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
 	struct route *ro;
+	struct gif_ro *gro;
 	struct gif_softc *sc = ifp->if_softc;
 	struct sockaddr_in6 *sin6_src = satosin6(sc->gif_psrc);
 	struct sockaddr_in6 *sin6_dst = satosin6(sc->gif_pdst);
@@ -172,9 +173,12 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	ip6->ip6_flow &= ~ntohl(0xff00000);
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
-	ro = percpu_getref(sc->gif_ro_percpu);
+	gro = percpu_getref(sc->gif_ro_percpu);
+	mutex_enter(&gro->gr_lock);
+	ro = &gro->gr_ro;
 	rt = rtcache_lookup(ro, sc->gif_pdst);
 	if (rt == NULL) {
+		mutex_exit(&gro->gr_lock);
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
@@ -184,6 +188,7 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	if (rt->rt_ifp == ifp) {
 		rtcache_unref(rt, ro);
 		rtcache_free(ro);
+		mutex_exit(&gro->gr_lock);
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;	/* XXX */
@@ -200,6 +205,7 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 #else
 	error = ip6_output(m, 0, ro, 0, NULL, NULL, NULL);
 #endif
+	mutex_exit(&gro->gr_lock);
 	percpu_putref(sc->gif_ro_percpu);
 	return (error);
 }
