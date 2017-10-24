@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.21 2017/03/11 18:23:14 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.22 2017/10/24 17:38:17 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -16,7 +16,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.21 2017/03/11 18:23:14 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.22 2017/10/24 17:38:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -24,6 +24,7 @@ __RCSID("$NetBSD: asctime.c,v 1.21 2017/03/11 18:23:14 christos Exp $");
 
 #include "namespace.h"
 #include "private.h"
+#include <stdio.h>
 
 #ifdef __weak_alias
 __weak_alias(asctime_r,_asctime_r)
@@ -48,9 +49,9 @@ __weak_alias(asctime_r,_asctime_r)
 ** but many implementations pad anyway; most likely the standards are buggy.
 */
 #ifdef __GNUC__
-#define ASCTIME_FMT	"%.3s %.3s%3d %2.2d:%2.2d:%2.2d %-4s\n"
+#define ASCTIME_FMT	"%s %s%3d %2.2d:%2.2d:%2.2d %-4s\n"
 #else /* !defined __GNUC__ */
-#define ASCTIME_FMT	"%.3s %.3s%3d %02.2d:%02.2d:%02.2d %-4s\n"
+#define ASCTIME_FMT	"%s %s%3d %02.2d:%02.2d:%02.2d %-4s\n"
 #endif /* !defined __GNUC__ */
 /*
 ** For years that are more than four digits we put extra spaces before the year
@@ -59,9 +60,9 @@ __weak_alias(asctime_r,_asctime_r)
 ** that no output is better than wrong output).
 */
 #ifdef __GNUC__
-#define ASCTIME_FMT_B	"%.3s %.3s%3d %2.2d:%2.2d:%2.2d     %s\n"
+#define ASCTIME_FMT_B	"%s %s%3d %2.2d:%2.2d:%2.2d     %s\n"
 #else /* !defined __GNUC__ */
-#define ASCTIME_FMT_B	"%.3s %.3s%3d %02.2d:%02.2d:%02.2d     %s\n"
+#define ASCTIME_FMT_B	"%s %s%3d %02.2d:%02.2d:%02.2d     %s\n"
 #endif /* !defined __GNUC__ */
 
 #define STD_ASCTIME_BUF_SIZE	26
@@ -86,10 +87,10 @@ static char	buf_asctime[MAX_ASCTIME_BUF_SIZE];
 char *
 asctime_r(const struct tm *timeptr, char *buf)
 {
-	static const char	wday_name[][3] = {
+	static const char	wday_name[][4] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 	};
-	static const char	mon_name[][3] = {
+	static const char	mon_name[][4] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
