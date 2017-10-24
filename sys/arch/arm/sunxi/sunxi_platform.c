@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.14 2017/10/23 19:36:01 jakllsch Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.15 2017/10/24 15:06:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.14 2017/10/23 19:36:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.15 2017/10/24 15:06:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,7 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.14 2017/10/23 19:36:01 jakllsch
 
 #define	SUN4I_TIMER_BASE	0x01c20c00
 #define	SUN4I_TIMER_SIZE	0x90
-#define	SUN4I_TIMER_0_VAL	0x18
+#define	SUN4I_TIMER_1_CTRL	0x20
+#define	 SUN4I_TIMER_1_CTRL_CLK_SRC	__BITS(3,2)
+#define	 SUN4I_TIMER_1_CTRL_CLK_SRC_OSC24M	1
+#define	 SUN4I_TIMER_1_CTRL_RELOAD	__BIT(1)
+#define	 SUN4I_TIMER_1_CTRL_EN		__BIT(0)
+#define	SUN4I_TIMER_1_INTV_VALUE 0x24
+#define	SUN4I_TIMER_1_VAL	0x28
 
 #define	SUN4I_WDT_BASE		0x01c20c90
 #define	SUN4I_WDT_SIZE		0x10
@@ -185,12 +191,21 @@ sun4i_platform_delay(u_int n)
 	long ticks = n * incs_per_us;
 	uint32_t cur, prev;
 
-	if (bsh == 0)
+	if (bsh == 0) {
 		bus_space_map(bst, SUN4I_TIMER_BASE, SUN4I_TIMER_SIZE, 0, &bsh);
 
-	prev = ~bus_space_read_4(bst, bsh, SUN4I_TIMER_0_VAL);
+		/* Enable Timer 1 */
+		bus_space_write_4(bst, bsh, SUN4I_TIMER_1_INTV_VALUE, ~0U);
+		bus_space_write_4(bst, bsh, SUN4I_TIMER_1_CTRL,
+		    SUN4I_TIMER_1_CTRL_EN |
+		    SUN4I_TIMER_1_CTRL_RELOAD |
+		    __SHIFTIN(SUN4I_TIMER_1_CTRL_CLK_SRC_OSC24M,
+			      SUN4I_TIMER_1_CTRL_CLK_SRC));
+	}
+
+	prev = ~bus_space_read_4(bst, bsh, SUN4I_TIMER_1_VAL);
 	while (ticks > 0) {
-		cur = ~bus_space_read_4(bst, bsh, SUN4I_TIMER_0_VAL);
+		cur = ~bus_space_read_4(bst, bsh, SUN4I_TIMER_1_VAL);
 		if (cur > prev)
 			ticks -= (cur - prev);
 		else
