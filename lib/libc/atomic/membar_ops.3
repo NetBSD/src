@@ -1,4 +1,4 @@
-.\"	$NetBSD: membar_ops.3,v 1.4 2015/01/08 22:27:17 riastradh Exp $
+.\"	$NetBSD: membar_ops.3,v 1.5 2017/10/24 18:19:17 abhinav Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Nm membar_exit ,
 .Nm membar_producer ,
 .Nm membar_consumer ,
+.Nm membar_datadep_consumer ,
 .Nm membar_sync
 .Nd memory access barrier operations
 .\" .Sh LIBRARY
@@ -61,7 +62,6 @@ The
 family of functions provide memory access barrier operations necessary
 for synchronization in multiprocessor execution environments that have
 relaxed load and store order.
-.Pp
 .Bl -tag -width "mem"
 .It Fn membar_enter
 Any store preceding
