@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-#	$NetBSD: tzselect.ksh,v 1.15 2016/03/15 15:16:01 christos Exp $
+#	$NetBSD: tzselect.ksh,v 1.16 2017/10/24 17:38:17 christos Exp $
 #
 PKGVERSION='(tzcode) '
 TZVERSION=see_Makefile
@@ -19,9 +19,9 @@ REPORT_BUGS_TO=tz@iana.org
 # If your host lacks both Bash and the Korn shell, you can get their
 # source from one of these locations:
 #
-#	Bash <http://www.gnu.org/software/bash/bash.html>
+#	Bash <https://www.gnu.org/software/bash/>
 #	Korn Shell <http://www.kornshell.com/>
-#	Public Domain Korn Shell <http://www.cs.mun.ca/~michael/pdksh/>
+#	MirBSD Korn Shell <https://www.mirbsd.org/mksh.htm>
 #
 # For portability to Solaris 9 /bin/sh this script avoids some POSIX
 # features and common extensions, such as $(...) (which works sometimes
@@ -31,8 +31,8 @@ REPORT_BUGS_TO=tz@iana.org
 # If your host lacks awk, or has an old awk that does not conform to Posix,
 # you can use either of the following free programs instead:
 #
-#	Gawk (GNU awk) <http://www.gnu.org/software/gawk/>
-#	mawk <http://invisible-island.net/mawk/>
+#	Gawk (GNU awk) <https://www.gnu.org/software/gawk/>
+#	mawk <https://invisible-island.net/mawk/>
 
 
 # Specify default values for environment variables if they are unset.
