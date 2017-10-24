@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.112.4.1 2017/07/07 13:57:26 martin Exp $	*/
+/*	$NetBSD: route.h,v 1.112.4.2 2017/10/24 08:55:55 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -64,8 +64,7 @@
 struct route {
 	struct	rtentry		*_ro_rt;
 	struct	sockaddr	*ro_sa;
-	LIST_ENTRY(route)	ro_rtcache_next;
-	bool			ro_invalid;
+	uint64_t		ro_rtcache_generation;
 	struct	psref		ro_psref;
 	int			ro_bound;
 };
@@ -458,8 +457,8 @@ struct rtentry *
 static inline void
 rtcache_invariants(const struct route *ro)
 {
+
 	KASSERT(ro->ro_sa != NULL || ro->_ro_rt == NULL);
-	KASSERT(!ro->ro_invalid || ro->_ro_rt != NULL);
 }
 
 static inline struct rtentry *
