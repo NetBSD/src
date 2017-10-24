@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.194 2017/10/19 05:52:57 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.195 2017/10/24 08:32:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.194 2017/10/19 05:52:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.195 2017/10/24 08:32:41 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2692,7 +2692,8 @@ pci_conf_print_aer_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		pci_conf_print_aer_cap_rooterr_status(reg);
 
 		reg = regs[o2i(extcapoff + PCI_AER_ERRSRC_ID)];
-		printf("    Error Source Identification: 0x%04x\n", reg);
+		printf("    Error Source Identification register: 0x%08x\n",
+		    reg);
 		pci_conf_print_aer_cap_errsrc_id(reg);
 		break;
 	}
