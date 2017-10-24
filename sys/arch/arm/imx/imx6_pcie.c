@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.3 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.4 2017/10/24 09:11:51 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.3 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.4 2017/10/24 09:11:51 hkenken Exp $");
 
 #include "opt_pci.h"
 
@@ -141,6 +141,23 @@ static void imx6pcie_intr_disestablish(void *, void *);
 
 CFATTACH_DECL_NEW(imxpcie, sizeof(struct imx6pcie_softc),
     imx6pcie_match, imx6pcie_attach, NULL, NULL);
+
+static int
+imx6pcie_linkup_status(struct imx6pcie_softc *sc)
+{
+	return PCIE_READ(sc, PCIE_PL_DEBUG1) & PCIE_PL_DEBUG1_XMLH_LINK_UP;
+}
+
+static int
+imx6pcie_valid_device(struct imx6pcie_softc *sc, int bus, int dev)
+{
+	if (bus != 0 && !imx6pcie_linkup_status(sc))
+		return 0;
+	if (bus <= 1 && dev > 0)
+		return 0;
+
+	return 1;
+}
 
 static void
 imx6pcie_clock_enable(struct imx6pcie_softc *sc)
@@ -392,14 +409,11 @@ static int
 imx6pcie_wait_for_link(struct imx6pcie_softc *sc)
 {
 	uint32_t ltssm, valid, v;
-	uint32_t linkup;
 	int retry;
 
 #define LINKUP_RETRY	200
 	for (retry = LINKUP_RETRY; retry > 0; --retry) {
-		linkup = PCIE_READ(sc, PCIE_PL_DEBUG1);
-		if ((linkup & PCIE_PL_DEBUG1_XMLH_LINK_UP) &&
-		    !(linkup & PCIE_PL_DEBUG1_XMLH_LINK_IN_TRAINING)) {
+		if (!imx6pcie_linkup_status(sc)) {
 			delay(100);
 			continue;
 		}
@@ -425,8 +439,7 @@ imx6pcie_wait_for_link(struct imx6pcie_softc *sc)
 			imx6pcie_phy_write(sc, PCIE_PHY_RX_OVRD_IN_LO, v);
 		}
 
-		if (linkup)
-			return 0;
+		return 0;
 	}
 
 	aprint_error_dev(sc->sc_dev, "Link Up failed.\n");
@@ -686,11 +699,13 @@ imx6pcie_setup(struct imx6pcie_softc * const sc)
 	v = PCIE_READ(sc, PCI_COMMAND_STATUS_REG);
 	v |= PCI_COMMAND_IO_ENABLE |
 	    PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
+	    PCI_COMMAND_MASTER_ENABLE |
+	    PCI_COMMAND_SERR_ENABLE;
 	PCIE_WRITE(sc, PCI_COMMAND_STATUS_REG, v);
 
 	PCIE_WRITE(sc, PCI_CLASS_REG,
-	    PCI_CLASS_CODE(PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_PCI, PCI_INTERFACE_BRIDGE_PCI_PCI));
+	    PCI_CLASS_CODE(PCI_CLASS_BRIDGE,
+		PCI_SUBCLASS_BRIDGE_PCI, PCI_INTERFACE_BRIDGE_PCI_PCI));
 
 	PCIE_WRITE(sc, PCIE_PL_IATUVR, 0);
 
@@ -785,7 +800,7 @@ imx6pcie_conf_read(void *v, pcitag_t tag, int offset)
 
 	if ((unsigned int)offset >= PCI_EXTCONF_SIZE)
 		return ret;
-	if (b <= 1 && d > 0)
+	if (!imx6pcie_valid_device(sc, b, d))
 		return ret;
 
 	PCIE_WRITE(sc, PCIE_PL_IATUVR, 0);
@@ -832,7 +847,7 @@ imx6pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 
 	if ((unsigned int)offset >= PCI_EXTCONF_SIZE)
 		return;
-	if (b <= 1 && d > 0)
+	if (!imx6pcie_valid_device(sc, b, d))
 		return;
 
 	PCIE_WRITE(sc, PCIE_PL_IATUVR, 0);
