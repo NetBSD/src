@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.117.4.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.117.4.2 2017/10/24 08:55:55 snj Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.117.4.1 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.117.4.2 2017/10/24 08:55:55 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -524,7 +524,6 @@ struct domain inet6domain = {
 	.dom_sa_cmplen = sizeof(struct in6_addr),
 	.dom_sa_any = (const struct sockaddr *)&in6_any,
 	.dom_sockaddr_externalize = sockaddr_in6_externalize,
-	.dom_rtcache = LIST_HEAD_INITIALIZER(inet6domain.dom_rtcache)
 };
 
 #if 0

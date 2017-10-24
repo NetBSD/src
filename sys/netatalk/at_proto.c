@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.21 2016/01/21 15:41:30 riastradh Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.21.10.1 2017/10/24 08:55:55 snj Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.21 2016/01/21 15:41:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.21.10.1 2017/10/24 08:55:55 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,6 @@ struct domain atalkdomain = {
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_at, sat_addr),
 	.dom_sa_cmplen = sizeof(struct at_addr),
-	.dom_rtcache = LIST_HEAD_INITIALIZER(atalkdomain.dom_rtcache)
 };
 
 int

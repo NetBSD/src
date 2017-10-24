@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.64 2016/11/15 09:04:30 ozaki-r Exp $	*/
+/*	$NetBSD: sockin.c,v 1.64.8.1 2017/10/24 08:55:56 snj Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.64 2016/11/15 09:04:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.64.8.1 2017/10/24 08:55:56 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -162,7 +162,6 @@ struct domain sockindomain = {
 	.dom_ifqueues = { NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = { NULL },
 	.dom_sockaddr_cmp = NULL
 };
 struct domain sockin6domain = {
@@ -181,7 +180,6 @@ struct domain sockin6domain = {
 	.dom_ifqueues = { NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = { NULL },
 	.dom_sockaddr_cmp = NULL
 };
 

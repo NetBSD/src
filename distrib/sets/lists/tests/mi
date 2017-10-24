@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752.2.4 2017/10/21 19:43:53 snj Exp $
+# $NetBSD: mi,v 1.752.2.5 2017/10/24 08:55:55 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3376,6 +3376,7 @@
 ./usr/tests/net/route/t_flags			tests-net-tests		atf,rump
 ./usr/tests/net/route/t_flags6			tests-net-tests		atf,rump
 ./usr/tests/net/route/t_route			tests-net-tests		atf,rump
+./usr/tests/net/route/t_rtcache			tests-net-tests		atf,rump
 ./usr/tests/net/sys				tests-net-tests		compattestfile,atf
 ./usr/tests/net/sys/Atffile			tests-net-tests		compattestfile,atf
 ./usr/tests/net/sys/Kyuafile			tests-net-tests		compattestfile,atf,kyua
