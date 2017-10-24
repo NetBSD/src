@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.26 2015/08/13 11:21:18 christos Exp $
-.Dd August 13, 2015
+.\"	$NetBSD: zic.8,v 1.27 2017/10/24 17:38:17 christos Exp $
+.Dd October 24, 2017
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -125,8 +125,16 @@ Any line that is blank (after comment stripping) is ignored.
 Non-blank lines are expected to be of one of three types:
 rule lines, zone lines, and link lines.
 .Pp
-Names (such as month names) must be in English and are case insensitive.
-Abbreviations, if used, must be unambiguous in context.
+Names must be in English and are case insensitive.
+They appear in several contexts, and include month and weekday names
+and keywords such as
+.Dq maximum ,
+.Dq only ,
+.Dq Rolling ,
+and
+.Dq Zone .
+A name can be abbreviated by omitting all but an initial prefix; any
+abbreviation must be unambiguous in context.
 .Pp
 A rule line has the form
 .Dl Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -186,6 +194,13 @@ first Sunday on or after the eighth
 last Sunday on or before the 25th
 .El
 Names of days of the week may be abbreviated or spelled out in full.
+A weekday name (e.g.,
+.Dq Sunday )
+or a weekday name preceded by
+.Dq last
+(e.g.,
+.Dq lastSunday )
+may be abbreviated or spelled out in full.
 Note that there must be no spaces within the
 .Em ON
 field.
@@ -392,17 +407,6 @@ if a second was added
 or
 .Dq \&-
 if a second was skipped.
-.\" There's no need to document the following, since it's impossible for more
-.\" than one leap second to be inserted or deleted at a time.
-.\" The C Standard is in error in suggesting the possibility.
-.\" See Terry J Quinn, The BIPM and the accurate measure of time,
-.\" Proc IEEE 79, 7 (July 1991), 894-905.
-.\"	or
-.\"	.Dq ++
-.\"	if two seconds were added
-.\"	or
-.\"	.Dq --
-.\"	if two seconds were skipped.
 The
 .Em R/S
 field
