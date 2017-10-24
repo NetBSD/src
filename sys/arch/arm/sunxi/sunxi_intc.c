@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_intc.c,v 1.2 2017/10/11 00:17:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_intc.c,v 1.3 2017/10/24 15:07:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.2 2017/10/11 00:17:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.3 2017/10/24 15:07:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,6 +96,7 @@ sunxi_intc_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	KASSERT((mask & sc->sc_enabled_irqs[group]) == 0);
 	sc->sc_enabled_irqs[group] |= mask;
 	INTC_WRITE(sc, INTC_EN_REG(group), sc->sc_enabled_irqs[group]);
+	INTC_WRITE(sc, INTC_MASK_REG(group), ~sc->sc_enabled_irqs[group]);
 }
 
 static void
@@ -106,6 +107,7 @@ sunxi_intc_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 
 	sc->sc_enabled_irqs[group] &= ~mask;
 	INTC_WRITE(sc, INTC_EN_REG(group), sc->sc_enabled_irqs[group]);
+	INTC_WRITE(sc, INTC_MASK_REG(group), ~sc->sc_enabled_irqs[group]);
 }
 
 static void
@@ -246,7 +248,7 @@ sunxi_intc_attach(device_t parent, device_t self, void *aux)
 	/* Disable IRQs */
 	for (i = 0; i < INTC_MAX_GROUPS; i++) {
 		INTC_WRITE(sc, INTC_EN_REG(i), 0);
-		INTC_WRITE(sc, INTC_MASK_REG(i), 0);
+		INTC_WRITE(sc, INTC_MASK_REG(i), ~0U);
 		INTC_WRITE(sc, INTC_IRQ_PEND_REG(i),
 		    INTC_READ(sc, INTC_IRQ_PEND_REG(i)));
 	}
