@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.112 2017/09/16 00:47:16 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.113 2017/10/24 20:24:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -1024,6 +1024,10 @@ ARMREG_READ_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_READ_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_WRITE_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
+ARMREG_READ_INLINE(pmintenset, "p15,0,%0,c9,c14,1") /* PMC Interrupt Enable Set */
+ARMREG_WRITE_INLINE(pmintenset, "p15,0,%0,c9,c14,1") /* PMC Interrupt Enable Set */
+ARMREG_READ_INLINE(pmintenclr, "p15,0,%0,c9,c14,2") /* PMC Interrupt Enable Clear */
+ARMREG_WRITE_INLINE(pmintenclr, "p15,0,%0,c9,c14,2") /* PMC Interrupt Enable Clear */
 ARMREG_READ_INLINE(l2ctrl, "p15,1,%0,c9,c0,2") /* A7/A15 L2 Control Register */
 /* cp10 c10 registers */
 ARMREG_READ_INLINE(prrr, "p15,0,%0,c10,c2,0") /* Primary Region Remap Register */
@@ -1064,6 +1068,8 @@ ARMREG_READ64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer Compa
 ARMREG_WRITE64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
 ARMREG_READ64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
 ARMREG_WRITE64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
+ARMREG_READ64_INLINE(cntvoff, "p15,4,%Q0,%R0,c14") /* Virtual Offset Register */
+ARMREG_WRITE64_INLINE(cntvoff, "p15,4,%Q0,%R0,c14") /* Virtual Offset Register */
 /* cp15 c15 registers */
 ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
 ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
