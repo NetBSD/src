@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.68 2017/03/11 18:23:14 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.69 2017/10/24 17:38:17 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.68 2017/03/11 18:23:14 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.69 2017/10/24 17:38:17 christos Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -20,6 +20,7 @@ __RCSID("$NetBSD: zic.c,v 1.68 2017/03/11 18:23:14 christos Exp $");
 #include <locale.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -52,14 +53,26 @@ typedef int_fast64_t	zic_t;
 #define MKDIR_UMASK 0755
 #endif
 
+#if HAVE_SYS_WAIT_H
+#include <sys/wait.h>	/* for WIFEXITED and WEXITSTATUS */
+#endif /* HAVE_SYS_WAIT_H */
+
+#ifndef WIFEXITED
+#define WIFEXITED(status)	(((status) & 0xff) == 0)
+#endif /* !defined WIFEXITED */
+#ifndef WEXITSTATUS
+#define WEXITSTATUS(status)	(((status) >> 8) & 0xff)
+#endif /* !defined WEXITSTATUS */
+
 /* The maximum ptrdiff_t value, for pre-C99 platforms.  */
 #ifndef PTRDIFF_MAX
 static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 #endif
 
-/* The type and printf format for line numbers.  */
+/* The type for line numbers.  Use PRIdMAX to format them; formerly
+   there was also "#define PRIdLINENO PRIdMAX" and formats used
+   PRIdLINENO, but xgettext cannot grok that.  */
 typedef intmax_t lineno;
-#define PRIdLINENO PRIdMAX
 
 struct rule {
 	const char *	r_filename;
@@ -309,10 +322,13 @@ struct lookup {
 static struct lookup const *	byword(const char * string,
 					const struct lookup * lp);
 
-static struct lookup const	line_codes[] = {
+static struct lookup const zi_line_codes[] = {
 	{ "Rule",	LC_RULE },
 	{ "Zone",	LC_ZONE },
 	{ "Link",	LC_LINK },
+	{ NULL,		0 }
+};
+static struct lookup const leap_line_codes[] = {
 	{ "Leap",	LC_LEAP },
 	{ NULL,		0}
 };
@@ -426,7 +442,7 @@ strdup(char const *str)
 }
 #endif
 
-static ATTRIBUTE_PURE void *
+static void *
 memcheck(void *ptr)
 {
 	if (ptr == NULL)
@@ -496,10 +512,10 @@ verror(const char *const string, va_list args)
 	** on BSD systems.
 	*/
 	if (filename)
-	  fprintf(stderr, _("\"%s\", line %"PRIdLINENO": "), filename, linenum);
+	  fprintf(stderr, _("\"%s\", line %"PRIdMAX": "), filename, linenum);
 	vfprintf(stderr, string, args);
 	if (rfilename != NULL)
-		fprintf(stderr, _(" (rule from \"%s\", line %"PRIdLINENO")"),
+		fprintf(stderr, _(" (rule from \"%s\", line %"PRIdMAX")"),
 			rfilename, rlinenum);
 	fprintf(stderr, "\n");
 }
@@ -644,9 +660,10 @@ _("%s: More than one -p option specified\n"),
 				}
 				break;
 			case 'y':
-				if (yitcommand == NULL)
+				if (yitcommand == NULL) {
+					warning(_("-y is obsolescent"));
 					yitcommand = optarg;
-				else {
+				} else {
 					fprintf(stderr,
 _("%s: More than one -y option specified\n"),
 						progname);
@@ -929,7 +946,7 @@ static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
    Ade PAR, Aghanim N, Armitage-Caplan C et al.  Planck 2013 results.
    I. Overview of products and scientific results.
    arXiv:1303.5062 2013-03-20 20:10:01 UTC
-   <http://arxiv.org/pdf/1303.5062v1> [PDF]
+   <https://arxiv.org/pdf/1303.5062v1> [PDF]
 
    Page 36, Table 9, row Age/Gyr, column Planck+WP+highL+BAO 68% limits
    gives the value 13.798 plus-or-minus 0.037 billion years.
@@ -1126,6 +1143,8 @@ infile(const char *name)
 		} else if (wantcont) {
 			wantcont = inzcont(fields, nfields);
 		} else {
+			struct lookup const *line_codes
+			  = name == leapsec ? leap_line_codes : zi_line_codes;
 			lp = byword(fields[0], line_codes);
 			if (lp == NULL)
 				error(_("input line of unknown type"));
@@ -1142,11 +1161,7 @@ infile(const char *name)
 					wantcont = false;
 					break;
 				case LC_LEAP:
-					if (name != leapsec)
-					  warning(_("%s: Leap line in non leap"
-						    " seconds file %s"),
-						  progname, name);
-					else	inleap(fields, nfields);
+					inleap(fields, nfields);
 					wantcont = false;
 					break;
 				default:	/* "cannot happen" */
@@ -1263,7 +1278,7 @@ _("\"Zone %s\" line and -p option are mutually exclusive"),
 		if (zones[i].z_name != NULL &&
 		    strcmp(zones[i].z_name, fields[ZF_NAME]) == 0) {
 			error(_("duplicate zone name %s"
-				" (file \"%s\", line %"PRIdLINENO")"),
+				" (file \"%s\", line %"PRIdMAX")"),
 				fields[ZF_NAME],
 				zones[i].z_filename,
 				zones[i].z_linenum);
@@ -1447,15 +1462,9 @@ inleap(char **fields, int nfields)
 		if (strcmp(cp, "") == 0) { /* infile() turns "-" into "" */
 			positive = false;
 			count = 1;
-		} else if (strcmp(cp, "--") == 0) {
-			positive = false;
-			count = 2;
 		} else if (strcmp(cp, "+") == 0) {
 			positive = true;
 			count = 1;
-		} else if (strcmp(cp, "++") == 0) {
-			positive = true;
-			count = 2;
 		} else {
 			error(_("illegal CORRECTION field on Leap line"));
 			return;
@@ -1467,8 +1476,8 @@ inleap(char **fields, int nfields)
 			return;
 		}
 		t = tadd(t, tod);
-		if (t < early_time) {
-			error(_("leap second precedes Big Bang"));
+		if (t < 0) {
+			error(_("leap second precedes Epoch"));
 			return;
 		}
 		leapadd(t, positive, lp->l_value, count);
@@ -1596,13 +1605,16 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 			error(_("typed single year"));
 			return;
 		}
+		warning(_("year type \"%s\" is obsolete; use \"-\" instead"),
+			typep);
 		rp->r_yrtype = ecpyalloc(typep);
 	}
 	/*
 	** Day work.
 	** Accept things such as:
 	**	1
-	**	last-Sunday
+	**	lastSunday
+	**	last-Sunday (undocumented; warn about this)
 	**	Sun<=20
 	**	Sun>=7
 	*/
@@ -2776,13 +2788,8 @@ leapadd(zic_t t, bool positive, int rolling, int count)
 		exit(EXIT_FAILURE);
 	}
 	for (i = 0; i < leapcnt; ++i)
-		if (t <= trans[i]) {
-			if (t == trans[i]) {
-				error(_("repeated leap second moment"));
-				exit(EXIT_FAILURE);
-			}
+		if (t <= trans[i])
 			break;
-		}
 	do {
 		for (j = leapcnt; j > i; --j) {
 			trans[j] = trans[j - 1];
@@ -2801,11 +2808,17 @@ adjleap(void)
 {
 	int	i;
 	zic_t	last = 0;
+	zic_t	prevtrans = 0;
 
 	/*
 	** propagate leap seconds forward
 	*/
 	for (i = 0; i < leapcnt; ++i) {
+		if (trans[i] - prevtrans < 28 * SECSPERDAY) {
+			error(_("Leap seconds too close together"));
+			exit(EXIT_FAILURE);
+		}
+		prevtrans = trans[i];
 		trans[i] = tadd(trans[i], last);
 		last = corr[i] += last;
 	}
@@ -2907,7 +2920,7 @@ lowerit(char a)
 }
 
 /* case-insensitive equality */
-static ATTRIBUTE_PURE bool
+static bool
 ciequal(const char *ap, const char *bp)
 {
 	while (lowerit(*ap) == lowerit(*bp++))
@@ -2916,7 +2929,7 @@ ciequal(const char *ap, const char *bp)
 	return false;
 }
 
-static ATTRIBUTE_PURE bool
+static bool
 itsabbr(const char *abbr, const char *word)
 {
 	if (lowerit(*abbr) != lowerit(*word))
@@ -2930,7 +2943,20 @@ itsabbr(const char *abbr, const char *word)
 	return true;
 }
 
-static ATTRIBUTE_PURE const struct lookup *
+/* Return true if ABBR is an initial prefix of WORD, ignoring ASCII case.  */
+
+static bool
+ciprefix(char const *abbr, char const *word)
+{
+  do
+    if (!*abbr)
+      return true;
+  while (lowerit(*abbr++) == lowerit(*word++));
+
+  return false;
+}
+
+static const struct lookup *
 byword(const char *word, const struct lookup *table)
 {
 	const struct lookup *	foundlp;
@@ -2938,6 +2964,20 @@ byword(const char *word, const struct lookup *table)
 
 	if (word == NULL || table == NULL)
 		return NULL;
+
+	/* If TABLE is LASTS and the word starts with "last" followed
+	   by a non-'-', skip the "last" and look in WDAY_NAMES instead.
+	   Warn about any usage of the undocumented prefix "last-".  */
+	if (table == lasts && ciprefix("last", word) && word[4]) {
+	  if (word[4] == '-')
+	    warning(_("\"%s\" is undocumented; use \"last%s\" instead"),
+		    word, word + 5);
+	  else {
+	    word += 4;
+	    table = wday_names;
+	  }
+	}
+
 	/*
 	** Look for exact match.
 	*/
@@ -2949,11 +2989,25 @@ byword(const char *word, const struct lookup *table)
 	*/
 	foundlp = NULL;
 	for (lp = table; lp->l_word != NULL; ++lp)
-		if (itsabbr(word, lp->l_word)) {
+		if (ciprefix(word, lp->l_word)) {
 			if (foundlp == NULL)
 				foundlp = lp;
 			else	return NULL;	/* multiple inexact matches */
 		}
+
+	/* Warn about any backward-compatibility issue with pre-2017c zic.  */
+	if (foundlp) {
+	  bool pre_2017c_match = false;
+	  for (lp = table; lp->l_word; lp++)
+	    if (itsabbr(word, lp->l_word)) {
+	      if (pre_2017c_match) {
+		warning(_("\"%s\" is ambiguous in pre-2017c zic"), word);
+		break;
+	      }
+	      pre_2017c_match = true;
+	    }
+	}
+
 	return foundlp;
 }
 
@@ -3157,11 +3211,14 @@ mkdirs(char const *argname, bool ancestors)
 
 	cp = name = ecpyalloc(argname);
 
+	/* On MS-Windows systems, do not worry about drive letters or
+	   backslashes, as this should suffice in practice.  Time zone
+	   names do not use drive letters and backslashes.  If the -d
+	   option of zic does not name an already-existing directory,
+	   it can use slashes to separate the already-existing
+	   ancestor prefix from the to-be-created subdirectories.  */
+
 	/* Do not mkdir a root directory, as it must exist.  */
-#ifdef HAVE_DOS_FILE_NAMES
-	if (is_alpha(name[0]) && name[1] == ':')
-	  cp += 2;
-#endif
 	while (*cp == '/')
 	  cp++;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.17 2017/01/10 17:44:51 christos Exp $	*/
+/*	$NetBSD: difftime.c,v 1.18 2017/10/24 17:38:17 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	8.1";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.17 2017/01/10 17:44:51 christos Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.18 2017/10/24 17:38:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -25,7 +25,7 @@ dminus(double x)
 	return -x;
 }
 
-double ATTRIBUTE_CONST
+double
 difftime(time_t time1, time_t time0)
 {
 	/*

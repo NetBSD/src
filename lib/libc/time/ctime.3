@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.54 2016/12/29 21:03:51 wiz Exp $
+.\" $NetBSD: ctime.3,v 1.55 2017/10/24 17:38:17 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd December 29, 2016
+.Dd October 24, 2017
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -334,19 +334,10 @@ includes the following fields:
        int tm_wday;     /* day of week (Sunday = 0) */
        int tm_yday;     /* day of year (0 - 365) */
        int tm_isdst;    /* is summer time in effect? */
-       char *tm_zone;   /* abbreviation of timezone name */
-       long tm_gmtoff;  /* offset from UT in seconds */
+       char *tm_zone;   /* abbreviation of timezone name (optional) */
+       long tm_gmtoff;  /* offset from UT in seconds (optional) */
 .Ed
 .Pp
-The
-.Fa tm_zone
-and
-.Fa tm_gmtoff
-fields exist, and are filled in, only if
-arrangements to do so were made when the library containing these functions
-was created.
-There is no guarantee that these fields  will  continue to exist in this form
-in future releases of this code.
 .Bl -bullet
 .It
 .Va tm_isdst
@@ -357,6 +348,20 @@ is the offset (in seconds) of the time represented from UT,
 with positive values indicating east of the Prime Meridian.
 The field's name is derived from Greenwich Mean Time, a precursor of UT.
 .El
+In
+.Ft struct tm
+the
+.Fa tm_zone
+and
+.Fa tm_gmtoff
+fields exist, and are filled in, only if arrangements to do
+so were made when the library containing these functions  was
+created.
+Similarly, the
+.Va tzname
+variable is optional.
+There is no guarantee that these fields and this variable will
+continue to exist in this form in future releases of this code.
 .Sh RETURN VALUES
 .Bl -bullet
 .It
@@ -493,13 +498,20 @@ The functions that do not take an explicit
 argument return values pointing to static data; the data is overwritten by
 each call.
 For the above functions the
+.Dv tzname
+variable (once set) and the
 .Fa tm_zone
 field of a returned
 .Va "struct tm"
-points to a static array of characters, which
-will also be overwritten at the next call
-(and by calls to
-.Xr tzset 3 ) .
+th point to an array of characters that
+can be freed or overwritten by later calls to the functions
+.Fn localtime ,
+.Fn tzfree ,
+and    
+.Fn tzset , 
+if these functions affect the time zone information that specifies the 
+abbreviation in question.
+The remaining functions and data are thread-safe.
 The functions that do take an explicit
 .Ft timezone_t
 argument and set the fields of a supplied

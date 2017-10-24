@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.39 2017/03/11 18:23:14 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.40 2017/10/24 17:38:17 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.39 2017/03/11 18:23:14 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.40 2017/10/24 17:38:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,11 @@ __RCSID("$NetBSD: strftime.c,v 1.39 2017/03/11 18:23:14 christos Exp $");
 
 #include <fcntl.h>
 #include <locale.h>
+#include <stdio.h>
+
+#ifndef DEPRECATE_TWO_DIGIT_YEARS
+# define DEPRECATE_TWO_DIGIT_YEARS false
+#endif
 
 #ifdef __weak_alias
 __weak_alias(strftime_l, _strftime_l)
@@ -79,24 +84,17 @@ __weak_alias(strftime_z, _strftime_z)
     ((_TimeLocale *)((loc)->part_impl[(size_t)LC_TIME]))
 #define c_fmt   d_t_fmt
 
+enum warn { IN_NONE, IN_SOME, IN_THIS, IN_ALL };
+
 static char *	_add(const char *, char *, const char *);
 static char *	_conv(int, const char *, char *, const char *);
 static char *	_fmt(const timezone_t, const char *, const struct tm *, char *,
-			const char *, int *, locale_t);
+			const char *, enum warn *, locale_t);
 static char *	_yconv(int, int, bool, bool, char *, const char *);
-
-#if !HAVE_POSIX_DECLS
-extern char *	tzname[];
-#endif
 
 #ifndef YEAR_2000_NAME
 #define YEAR_2000_NAME	"CHECK_STRFTIME_FORMATS_FOR_TWO_DIGIT_YEARS"
 #endif /* !defined YEAR_2000_NAME */
-
-#define IN_NONE	0
-#define IN_SOME	1
-#define IN_THIS	2
-#define IN_ALL	3
 
 size_t
 strftime_z(const timezone_t sp, char * __restrict s, size_t maxsize,
@@ -120,12 +118,11 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
     const char *const format, const struct tm *const t, locale_t loc)
 {
 	char *	p;
-	int	warn;
+	enum warn warn = IN_NONE;
 
-	warn = IN_NONE;
 	p = _fmt(sp, format, t, s, s + maxsize, &warn, loc);
-#ifndef NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU
-	if (warn != IN_NONE && getenv(YEAR_2000_NAME) != NULL) {
+	if (/*CONSTCOND*/DEPRECATE_TWO_DIGIT_YEARS
+	    && warn != IN_NONE && getenv(YEAR_2000_NAME)) {
 		(void) fprintf(stderr, "\n");
 		(void) fprintf(stderr, "strftime format \"%s\" ", format);
 		(void) fprintf(stderr, "yields only two digits of years in ");
@@ -136,7 +133,6 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
 		else	(void) fprintf(stderr, "all locales");
 		(void) fprintf(stderr, "\n");
 	}
-#endif /* !defined NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU */
 	if (p == s + maxsize)
 		return 0;
 	*p = '\0';
@@ -145,7 +141,7 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
 
 static char *
 _fmt(const timezone_t sp, const char *format, const struct tm *t, char *pt,
-     const char *ptlim, int *warnp, locale_t loc)
+     const char *ptlim, enum warn *warnp, locale_t loc)
 {
 	for ( ; *format; ++format) {
 		if (*format == '%') {
@@ -192,7 +188,7 @@ label:
 				continue;
 			case 'c':
 				{
-				int warn2 = IN_SOME;
+				enum warn warn2 = IN_SOME;
 
 				pt = _fmt(sp, _TIME_LOCALE(loc)->c_fmt, t, pt,
 				    ptlim, &warn2, loc);
@@ -212,7 +208,7 @@ label:
 			case 'E':
 			case 'O':
 				/*
-				** C99 locale modifiers.
+				** Locale modifiers of C99 and later.
 				** The sequences
 				**	%Ec %EC %Ex %EX %Ey %EY
 				**	%Od %oe %OH %OI %Om %OM
@@ -350,7 +346,7 @@ label:
 ** (01-53)."
 ** (ado, 1993-05-24)
 **
-** From <http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html> by Markus Kuhn:
+** From <https://www.cl.cam.ac.uk/~mgk25/iso-time.html> by Markus Kuhn:
 ** "Week 01 of a year is per definition the first week which has the
 ** Thursday in this year, which is equivalent to the week which contains
 ** the fourth day of January. In other words, the first week of a new year
@@ -456,7 +452,7 @@ label:
 				continue;
 			case 'x':
 				{
-				int	warn2 = IN_SOME;
+				enum warn warn2 = IN_SOME;
 
 				pt = _fmt(sp, _TIME_LOCALE(loc)->d_fmt, t, pt,
 				    ptlim, &warn2, loc);
@@ -480,20 +476,21 @@ label:
 			case 'Z':
 #ifdef TM_ZONE
 				pt = _add(t->TM_ZONE, pt, ptlim);
-#endif /* defined TM_ZONE */
+#elif HAVE_TZNAME
 				if (t->tm_isdst >= 0)
 					pt = _add((sp ?
 					    tzgetname(sp, t->tm_isdst) :
 					    tzname[t->tm_isdst != 0]),
 					    pt, ptlim);
+#endif
 				/*
-				** C99 says that %Z must be replaced by the
-				** empty string if the time zone is not
-				** determinable.
+				** C99 and later say that %Z must be
+				** replaced by the empty string if the
+				** time zone is not determinable.
 				*/
 				continue;
 			case 'z':
-#if defined TM_GMTOFF || defined USG_COMPAT || defined ALTZONE
+#if defined TM_GMTOFF || USG_COMPAT || defined ALTZONE
 				{
 				long		diff;
 				char const *	sign;
@@ -505,7 +502,7 @@ label:
 				diff = (int)t->TM_GMTOFF;
 # else 
 				/*
-				** C99 says that the UT offset must
+				** C99 and later say that the UT offset must
 				** be computed by looking only at
 				** tm_isdst. This requirement is
 				** incorrect, since it means the code
@@ -513,19 +510,19 @@ label:
 				** altzone and timezone), and the
 				** magic might not have the correct
 				** offset. Doing things correctly is
-				** tricky and requires disobeying C99;
+				** tricky and requires disobeying the standard;
 				** see GNU C strftime for details.
 				** For now, punt and conform to the
 				** standard, even though it's incorrect.
 				**
-				** C99 says that %z must be replaced by the
-				** empty string if the time zone is not
+				** C99 and later say that %z must be replaced by
+				** the empty string if the time zone is not
 				** determinable, so output nothing if the
 				** appropriate variables are not available.
 				*/
 #  ifndef STD_INSPIRED
 				if (t->tm_isdst == 0)
-#   ifdef USG_COMPAT
+#   if USG_COMPAT
 					diff = -timezone;
 #   else
 					continue;
@@ -571,9 +568,11 @@ label:
 #ifdef TM_ZONE
 				  negative = t->TM_ZONE[0] == '-';
 #else
-				  negative
-				    = (t->tm_isdst < 0
-				       || tzname[t->tm_isdst != 0][0] == '-');
+				  negative = t->tm_isdst < 0;
+# if HAVE_TZNAME
+				  if (tzname[t->tm_isdst != 0][0] == '-')
+				    negative = true;
+# endif
 #endif
 				}
 				if (negative) {
