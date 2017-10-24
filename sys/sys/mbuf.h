@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.170 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.170.2.1 2017/10/24 08:39:00 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ struct m_hdr {
  * checksum) -- this is so we can accumulate the checksum for fragmented
  * packets during reassembly.
  *
- * Size ILP32: 36
+ * Size ILP32: 40
  *       LP64: 56
  */
 struct	pkthdr {
@@ -188,14 +188,16 @@ struct	pkthdr {
 	int		csum_flags;		/* checksum flags */
 	uint32_t	csum_data;		/* checksum data */
 	u_int		segsz;			/* segment size */
+	uint16_t	ether_vtag;		/* ethernet 802.1p+q vlan tag */
+	uint16_t	pad0;			/* padding */
 
 	/*
 	 * Following three fields are open-coded struct altq_pktattr
 	 * to rearrange struct pkthdr fields flexibly.
 	 */
+	int	pattr_af;		/* ALTQ: address family */
 	void	*pattr_class;		/* ALTQ: sched class set by classifier */
 	void	*pattr_hdr;		/* ALTQ: saved header position in mbuf */
-	int	pattr_af;		/* ALTQ: address family */
 };
 
 /*
@@ -370,6 +372,8 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_LINK6		0x00040000	/* link layer specific flag */
 #define	M_LINK7		0x00080000	/* link layer specific flag */
 
+#define	M_VLANTAG	0x00100000	/* ether_vtag is valid */
+
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000
 #define	M_EXT_CLUSTER	0x01000000	/* ext is a cluster */
@@ -385,10 +389,13 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
     "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10AUTHIPDGM" \
     "\11BCAST\12MCAST\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
     "\21LINK4\22LINK5\23LINK6\24LINK7" \
+    "\25VLANTAG" \
     "\31EXT_CLUSTER\32EXT_PAGES\33EXT_ROMAP\34EXT_RW"
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP|M_AUTHIPDGM)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD| \
+    M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP| \
+    M_AUTHIPDGM|M_VLANTAG)
 
 /* flag copied when shallow-copying external storage */
 #define	M_EXTCOPYFLAGS	(M_EXT|M_EXT_FLAGS)
@@ -894,7 +901,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 /* Packet tag types */
 #define PACKET_TAG_NONE				0  /* Nothing */
-#define PACKET_TAG_VLAN				1  /* VLAN ID */
+						   /* 1: Used to be VLAN ID */
 #define PACKET_TAG_ENCAP			2  /* encapsulation data */
 #define PACKET_TAG_ESP				3  /* ESP information */
 #define PACKET_TAG_SO				4  /* sending socket pointer */

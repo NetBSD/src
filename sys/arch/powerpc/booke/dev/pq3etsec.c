@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.29 2016/12/15 09:28:04 ozaki-r Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.29.8.1 2017/10/24 08:38:58 snj Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.29 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.29.8.1 2017/10/24 08:38:58 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1512,8 +1512,7 @@ pq3etsec_rx_offload(
 	const struct rxfcb *fcb)
 {
 	if (fcb->rxfcb_flags & RXFCB_VLN) {
-		VLAN_INPUT_TAG(&sc->sc_if, m, fcb->rxfcb_vlctl,
-		    m_freem(m); return false);
+		vlan_set_tag(m, fcb->rxfcb_vlctl);
 	}
 	if ((fcb->rxfcb_flags & RXFCB_IP) == 0
 	    || (fcb->rxfcb_flags & (RXFCB_CIP|RXFCB_CTU)) == 0)
@@ -1991,14 +1990,18 @@ pq3etsec_tx_offload(
 {
 	struct mbuf *m = *mp;
 	u_int csum_flags = m->m_pkthdr.csum_flags;
-	struct m_tag *vtag = VLAN_OUTPUT_TAG(&sc->sc_ec, m);
+	bool have_vtag;
+	uint16_t vtag;
 
 	KASSERT(m->m_flags & M_PKTHDR);
+
+	have_vtag = vlan_has_tag(m);
+	vtag = (have_vtag) ? vlan_get_tag(m) : 0;
 
 	/*
 	 * Let see if we are doing any offload first.
 	 */
-	if (csum_flags == 0 && vtag == 0) {
+	if (csum_flags == 0 && !have_vtag) {
 		m->m_flags &= ~M_HASFCB;
 		return;
 	}
@@ -2012,7 +2015,7 @@ pq3etsec_tx_offload(
 		    | ((csum_flags & M_CSUM_CIP) ? TXFCB_CIP : 0)
 		    | ((csum_flags & M_CSUM_CTU) ? TXFCB_CTU : 0);
 	}
-	if (vtag) {
+	if (have_vtag) {
 		flags |= TXFCB_VLN;
 	}
 	if (flags == 0) {
@@ -2028,7 +2031,7 @@ pq3etsec_tx_offload(
 		fcb.txfcb_l4os = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
 	fcb.txfcb_l3os = ETHER_HDR_LEN;
 	fcb.txfcb_phcs = 0;
-	fcb.txfcb_vlctl = vtag ? VLAN_TAG_VALUE(vtag) & 0xffff : 0;
+	fcb.txfcb_vlctl = vtag;
 
 #if 0
 	printf("%s: csum_flags=%#x: txfcb flags=%#x lsos=%u l4os=%u phcs=%u vlctl=%#x\n",
@@ -2063,7 +2066,6 @@ pq3etsec_tx_offload(
 				panic("%s: impossible M_CSUM flags %#x",
 				    device_xname(sc->sc_dev), csum_flags);
 #endif
-			} else if (vtag) {
 			}
 
 			m->m_flags &= ~M_HASFCB;

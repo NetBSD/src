@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.2 2017/08/14 23:39:24 snj Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.3 2017/10/24 08:38:59 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.2 2017/08/14 23:39:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.3 2017/10/24 08:38:59 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1231,17 +1231,7 @@ vlan_start(struct ifnet *ifp)
 		 * the tag in the mbuf header.
 		 */
 		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
-			struct m_tag *mtag;
-
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (mtag == NULL) {
-				ifp->if_oerrors++;
-				m_freem(m);
-				continue;
-			}
-			*(u_int *)(mtag + 1) = mib->ifvm_tag;
-			m_tag_prepend(m, mtag);
+			vlan_set_tag(m, mib->ifvm_tag);
 		} else {
 			/*
 			 * insert the tag ourselves
@@ -1360,18 +1350,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	 * the tag in the mbuf header.
 	 */
 	if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
-		struct m_tag *mtag;
-
-		mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-		    M_NOWAIT);
-		if (mtag == NULL) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			error = ENOBUFS;
-			goto out;
-		}
-		*(u_int *)(mtag + 1) = mib->ifvm_tag;
-		m_tag_prepend(m, mtag);
+		vlan_set_tag(m, mib->ifvm_tag);
 	} else {
 		/*
 		 * insert the tag ourselves
@@ -1479,15 +1458,14 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifvlan *ifv;
 	u_int tag;
-	struct m_tag *mtag;
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
+	bool have_vtag;
 
-	mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
-	if (mtag != NULL) {
-		/* m contains a normal ethernet frame, the tag is in mtag */
-		tag = EVL_VLANOFTAG(*(u_int *)(mtag + 1));
-		m_tag_delete(m, mtag);
+	have_vtag = vlan_has_tag(m);
+	if (have_vtag) {
+		tag = EVL_VLANOFTAG(vlan_get_tag(m));
+		m->m_flags &= ~M_VLANTAG;
 	} else {
 		switch (ifp->if_type) {
 		case IFT_ETHER:
@@ -1542,7 +1520,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	 * Now, remove the encapsulation header.  The original
 	 * header has already been fixed up above.
 	 */
-	if (mtag == NULL) {
+	if (!have_vtag) {
 		memmove(mtod(m, char *) + mib->ifvm_encaplen,
 		    mtod(m, void *), sizeof(struct ether_header));
 		m_adj(m, mib->ifvm_encaplen);

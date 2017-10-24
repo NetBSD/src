@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.242 2017/04/06 03:54:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.242.6.1 2017/10/24 08:38:59 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242 2017/04/06 03:54:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.1 2017/10/24 08:38:59 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -679,7 +679,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * see if the device performed the decapsulation and
 	 * provided us with the tag.
 	 */
-	if (ec->ec_nvlans && m_tag_find(m, PACKET_TAG_VLAN, NULL) != NULL) {
+	if (ec->ec_nvlans && vlan_has_tag(m)) {
 #if NVLAN > 0
 		/*
 		 * vlan_input() will either recursively call ether_input()
