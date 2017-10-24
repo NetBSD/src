@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.3 2017/10/15 20:18:17 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.4 2017/10/24 08:38:59 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.3 2017/10/15 20:18:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.4 2017/10/24 08:38:59 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7043,7 +7043,6 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
-	struct m_tag *mtag;
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, ofree, seg, segs_needed, use_tso;
@@ -7292,11 +7291,11 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		 *
 		 * This is only valid on the last descriptor of the packet.
 		 */
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
+		if (vlan_has_tag(m0)) {
 			txq->txq_descs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_VLE);
 			txq->txq_descs[lasttx].wtx_fields.wtxu_vlan
-			    = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
+			    = htole16(vlan_get_tag(m0));
 		}
 
 		txs->txs_lastdesc = lasttx;
@@ -7365,7 +7364,6 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
     struct wm_txsoft *txs, uint32_t *cmdlenp, uint32_t *fieldsp, bool *do_csum)
 {
 	struct mbuf *m0 = txs->txs_mbuf;
-	struct m_tag *mtag;
 	uint32_t vl_len, mssidx, cmdc;
 	struct ether_header *eh;
 	int offset, iphl;
@@ -7409,8 +7407,8 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	vl_len |= (iphl << NQTXC_VLLEN_IPLEN_SHIFT);
 	KASSERT((iphl & ~NQTXC_VLLEN_IPLEN_MASK) == 0);
 
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
-		vl_len |= ((VLAN_TAG_VALUE(mtag) & NQTXC_VLLEN_VLAN_MASK)
+	if (vlan_has_tag(m0)) {
+		vl_len |= ((vlan_get_tag(m0) & NQTXC_VLLEN_VLAN_MASK)
 		     << NQTXC_VLLEN_VLAN_SHIFT);
 		*cmdlenp |= NQTX_CMD_VLE;
 	}
@@ -7648,7 +7646,6 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
-	struct m_tag *mtag;
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, seg, segs_needed;
@@ -7809,12 +7806,11 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 			    htole32(WTX_CMD_IFCS | dmamap->dm_segs[0].ds_len);
 			txq->txq_descs[nexttx].wtx_fields.wtxu_status = 0;
 			txq->txq_descs[nexttx].wtx_fields.wtxu_options = 0;
-			if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) !=
-			    NULL) {
+			if (vlan_has_tag(m0)) {
 				txq->txq_descs[nexttx].wtx_cmdlen |=
 				    htole32(WTX_CMD_VLE);
 				txq->txq_descs[nexttx].wtx_fields.wtxu_vlan =
-				    htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
+				    htole16(vlan_get_tag(m0));
 			} else {
 				txq->txq_descs[nexttx].wtx_fields.wtxu_vlan =0;
 			}
@@ -8228,11 +8224,10 @@ static inline bool
 wm_rxdesc_input_vlantag(struct wm_rxqueue *rxq, uint32_t status, uint16_t vlantag,
     struct mbuf *m)
 {
-	struct ifnet *ifp = &rxq->rxq_sc->sc_ethercom.ec_if;
 
 	if (wm_rxdesc_is_set_status(rxq->rxq_sc, status,
 		WRX_ST_VP, EXTRXC_STATUS_VP, NQRXC_STATUS_VP)) {
-		VLAN_INPUT_TAG(ifp, m, le16toh(vlantag), return false);
+		vlan_set_tag(m, le16toh(vlantag));
 	}
 
 	return true;

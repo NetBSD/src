@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.88 2017/03/06 08:36:20 ozaki-r Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.88.6.1 2017/10/24 08:39:00 snj Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.88 2017/03/06 08:36:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.88.6.1 2017/10/24 08:39:00 snj Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -788,11 +788,8 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 	}
 	if (m != NULL) {
 
-		if (ni->ni_vlan != 0) {
-			/* attach vlan tag */
-			/* XXX goto err? */
-			VLAN_INPUT_TAG(ifp, m, ni->ni_vlan, goto out);
-		}
+		if (ni->ni_vlan != 0)
+			vlan_set_tag(m, ni->ni_vlan);
 
 		/*
 		 * XXX once ieee80211_input (or rxintr itself) runs in softint
@@ -802,11 +799,6 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	return;
-  out:
-	if (m != NULL) {
-		bpf_mtap3(ic->ic_rawbpf, m);
-		m_freem(m);
-	}
 }
 
 static struct mbuf *

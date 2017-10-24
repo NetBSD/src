@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.310 2017/04/27 10:01:54 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.310.2.1 2017/10/24 08:38:59 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.310 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.310.2.1 2017/10/24 08:38:59 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4607,7 +4607,7 @@ bge_rxeof(struct bge_softc *sc)
 		 * to vlan_input() instead of ether_input().
 		 */
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
-			VLAN_INPUT_TAG(ifp, m, cur_rx->bge_vlan_tag, continue);
+			vlan_set_tag(m, cur_rx->bge_vlan_tag & ETHER_VLAN_MASK);
 		}
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -5127,8 +5127,9 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int			i = 0;
-	struct m_tag		*mtag;
 	int			use_tso, maxsegsize, error;
+	bool			have_vtag;
+	uint16_t		vtag;
 
 	cur = frag = *txidx;
 
@@ -5330,9 +5331,9 @@ doit:
 		goto fail_unload;
 	}
 
-	mtag = sc->ethercom.ec_nvlans ?
-	    m_tag_find(m_head, PACKET_TAG_VLAN, NULL) : NULL;
-
+	have_vtag = vlan_has_tag(m_head);
+	if (have_vtag)
+		vtag = vlan_get_tag(m_head);
 
 	/* Iterate over dmap-map fragments. */
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
@@ -5363,9 +5364,9 @@ doit:
 			f->bge_flags = csum_flags;
 		}
 
-		if (mtag != NULL) {
+		if (have_vtag) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
-			f->bge_vlan_tag = VLAN_TAG_VALUE(mtag);
+			f->bge_vlan_tag = vtag;
 		} else {
 			f->bge_vlan_tag = 0;
 		}

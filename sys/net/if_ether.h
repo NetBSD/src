@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.66 2016/12/28 07:32:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.66.8.1 2017/10/24 08:38:59 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -60,6 +60,7 @@
  * Some Ethernet extensions.
  */
 #define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
+#define	ETHER_VLAN_MASK	0xFFF	/* bits in a vlan tag */
 #define	ETHER_PPPOE_ENCAP_LEN 8	/* length of PPPoE encapsulation */
 
 /*
@@ -295,35 +296,30 @@ struct ether_multistep {
  */
 
 /* add VLAN tag to input/received packet */
-static inline int vlan_input_tag(struct ifnet *, struct mbuf *, u_int);
-static inline int
-vlan_input_tag(struct ifnet *ifp, struct mbuf *m, u_int vlanid)
+static inline void
+vlan_set_tag(struct mbuf *m, u_int16_t vlanid)
 {
-	struct m_tag *mtag;
-	mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
-	if (mtag == NULL) {
-		ifp->if_ierrors++;
-		printf("%s: unable to allocate VLAN tag\n", ifp->if_xname);
-		m_freem(m);
-		return 1;
-	}
-	*(u_int *)(mtag + 1) = vlanid;
-	m_tag_prepend(m, mtag);
-	return 0;
+
+	KASSERT((vlanid & ~ETHER_VLAN_MASK) == 0);
+
+	m->m_pkthdr.ether_vtag = vlanid;
+	m->m_flags |= M_VLANTAG;
+	return;
 }
 
-#define VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)		\
-    if (vlan_input_tag(ifp, m, vlanid) != 0) {	 		\
-	_errcase;						\
-    }
-
-/* extract VLAN tag from output/trasmit packet */
-#define VLAN_OUTPUT_TAG(ec, m0)			\
-	(VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL)
+static inline bool
+vlan_has_tag(struct mbuf *m)
+{
+	return (m->m_flags & M_VLANTAG) != 0;
+}
 
 /* extract VLAN ID value from a VLAN tag */
-#define VLAN_TAG_VALUE(mtag)	\
-	((*(u_int *)(mtag + 1)) & 4095)
+static inline uint16_t
+vlan_get_tag(struct mbuf *m)
+{
+	KASSERT(m->m_flags & M_VLANTAG);
+	return m->m_pkthdr.ether_vtag;
+}
 
 /* test if any VLAN is configured for this interface */
 #define VLAN_ATTACHED(ec)	((ec)->ec_nvlans > 0)

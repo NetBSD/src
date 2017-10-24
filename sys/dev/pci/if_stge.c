@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.62 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.62.8.1 2017/10/24 08:38:59 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.62 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.62.8.1 2017/10/24 08:38:59 snj Exp $");
 
 
 #include <sys/param.h>
@@ -805,8 +805,9 @@ stge_start(struct ifnet *ifp)
 	 * descriptors.
 	 */
 	for (;;) {
-		struct m_tag *mtag;
 		uint64_t tfc;
+		bool have_vtag;
+		uint16_t vtag;
 
 		/*
 		 * Grab a packet off the queue.
@@ -827,7 +828,9 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * See if we have any VLAN stuff.
 		 */
-		mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
+		have_vtag = vlan_has_tag(m0);
+		if (have_vtag)
+			vtag = vlan_get_tag(m0);
 
 		/*
 		 * Get the last and next available transmit descriptor.
@@ -931,7 +934,7 @@ stge_start(struct ifnet *ifp)
 		    TFD_FragCount(seg) | csum_flags |
 		    (((nexttx & STGE_TXINTR_SPACING_MASK) == 0) ?
 			TFD_TxDMAIndicate : 0);
-		if (mtag) {
+		if (have_vtag) {
 #if	0
 			struct ether_header *eh =
 			    mtod(m0, struct ether_header *);
@@ -943,7 +946,7 @@ stge_start(struct ifnet *ifp)
 #ifdef	STGE_VLAN_CFI
 			    TFD_CFI |
 #endif
-			    TFD_VID(VLAN_TAG_VALUE(mtag));
+			    TFD_VID(vtag);
 		}
 		tfd->tfd_control = htole64(tfc);
 
@@ -1358,7 +1361,7 @@ stge_rxintr(struct stge_softc *sc)
 		 * Check for VLAN tagged packets
 		 */
 		if (status & RFD_VLANDetected)
-			VLAN_INPUT_TAG(ifp, m, RFD_TCI(status), continue);
+			vlan_set_tag(m, RFD_TCI(status));
 
 #endif
 #if	0
