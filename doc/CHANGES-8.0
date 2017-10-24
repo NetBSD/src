@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.69 2017/10/21 19:56:55 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.70 2017/10/24 09:21:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6346,4 +6346,97 @@ usr.sbin/inetd/inetd.c				1.124
 
 	Don't setup SPs if no policy sepecifier is specified
 	[ozaki-r, ticket #331]
+
+sys/arch/powerpc/booke/dev/pq3etsec.c		1.30-1.31
+sys/arch/x86/pci/if_vmx.c			1.20
+sys/dev/ic/i82557.c				1.148
+sys/dev/ic/rtl8169.c				1.152
+sys/dev/pci/cxgb/cxgb_sge.c			1.5
+sys/dev/pci/if_age.c				1.51
+sys/dev/pci/if_alc.c				1.25
+sys/dev/pci/if_ale.c				1.23
+sys/dev/pci/if_bge.c				1.311
+sys/dev/pci/if_bge.c				1.312
+sys/dev/pci/if_bnx.c				1.62
+sys/dev/pci/if_jme.c				1.32
+sys/dev/pci/if_nfe.c				1.64
+sys/dev/pci/if_sip.c				1.167
+sys/dev/pci/if_stge.c				1.63-1.64
+sys/dev/pci/if_ti.c				1.102
+sys/dev/pci/if_txp.c				1.48
+sys/dev/pci/if_vge.c				1.61
+sys/dev/pci/if_wm.c				1.538
+sys/dev/pci/ixgbe/ix_txrx.c			1.29 via patch
+sys/net/agr/if_agrether_hash.c			1.4
+sys/net/if_ether.h				1.67-1.68
+sys/net/if_ethersubr.c				1.244
+sys/net/if_vlan.c				1.100
+sys/net80211/ieee80211_input.c			1.89
+sys/net80211/ieee80211_output.c			1.59
+sys/sys/mbuf.h					1.171
+
+	VLAN ID uses pkthdr instead of mtag now.
+	[knakahara, ticket #302]
+
+sys/net/if_gif.c				1.129-1.130
+sys/net/if_gif.h				1.26-1.27
+sys/netinet/in_gif.c				1.88
+sys/netinet6/in6_gif.c				1.86
+
+	gif(4) locking fixes.
+	[knahakara, ticket #303]
+
+sys/net/if_loop.c				1.95
+
+	loop_clone_create() must be called after ncpu is counted
+	up for all CPUs.
+	[knakahara, ticket #304]
+
+distrib/sets/lists/tests/mi			1.762
+sys/net/route.c					1.198-1.201
+sys/net/route.h					1.114
+sys/netatalk/at_proto.c				1.22
+sys/netinet/in_proto.c				1.124
+sys/netinet6/in6_proto.c			1.118
+sys/netmpls/mpls_proto.c			1.31
+sys/netnatm/natm_proto.c			1.18
+sys/rump/net/lib/libsockin/sockin.c		1.65
+sys/sys/domain.h				1.33
+tests/net/route/Makefile			1.6
+tests/net/route/t_rtcache.sh			1.1
+
+	- Add tests of rtcache invalidation
+	- Remove unnecessary NULL check of rt_ifp
+	- Invalidate rtcache based on a global generation counter
+	- Remove the global lock for rtcache
+	- Synchronize on rtcache_generation with rtlock
+	[ozaki-r, ticket #305]
+
+sys/netinet6/nd6.c				1.236
+
+	Add missing NULL check.  PR kern/52554
+	[ozaki-r, ticket #307]
+
+sbin/resize_ffs/resize_ffs.8			1.18
+sbin/resize_ffs/resize_ffs.c			1.48-1.53
+
+	Fix numerous overflow errors which can lead to superblock
+	corruption on large filesystems. Documentation fixes.
+	[sborrill, ticket #308]
+
+sys/arch/arm/arm32/vm_machdep.c			1.71-1.72
+
+	In vmapbuf use pmap_enter(pmap_kernel(), ...) and not
+	pmap_kenter_pa as the former handles multiple mappings for
+	VIPT AND VIVT correctly whereas the latter doesn't work for
+	VIVT. PR port-shark/52102
+	[skrll, ticket #315]
+
+sys/arch/arm/vfp/vfp_init.c			1.54-1.55
+sys/kern/subr_pcu.c				1.21
+
+	Fix a race condition that would cause FPU register corruption
+	on ARM SMP, and possibly other ports using the PCU framework.
+	PR port-arm/52603.
+	[bouyer, ticket #326]
 
