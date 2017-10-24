@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.27 2017/10/16 17:52:10 christos Exp $ */
+/* $NetBSD: spdmem.c,v 1.28 2017/10/24 08:02:06 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.27 2017/10/16 17:52:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.28 2017/10/24 08:02:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -879,8 +879,9 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	if (s->sm_ddr4.ddr4_mod_type < __arraycount(spdmem_ddr4_module_types))
 		aprint_normal(" (%s)", 
 		    spdmem_ddr4_module_types[s->sm_ddr4.ddr4_mod_type]);
-	aprint_normal(", %stemp-sensor, ",
-		(s->sm_ddr4.ddr4_has_therm_sensor)?"":"no ");
+	aprint_normal(", %sECC, %stemp-sensor, ",
+		(s->sm_ddr4.ddr4_bus_width_extension) ? "" : "no ",
+		(s->sm_ddr4.ddr4_has_therm_sensor) ? "" : "no ");
 
 	/*
 	 * DDR4 size calculation from JEDEC spec
