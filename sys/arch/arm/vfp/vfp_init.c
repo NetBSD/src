@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.53 2017/05/26 21:17:46 jmcneill Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.53.2.1 2017/10/24 09:14:59 snj Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -520,29 +520,25 @@ vfp_state_load(lwp_t *l, u_int flags)
 		curcpu()->ci_vfp_evs[1].ev_count++;
 	}
 
+	KASSERT((armreg_fpexc_read() & VFP_FPEXC_EN) == 0);
 	/*
 	 * If the VFP is already enabled we must be bouncing an instruction.
 	 */
 	if (flags & PCU_REENABLE) {
 		uint32_t fpexc = armreg_fpexc_read();
 		armreg_fpexc_write(fpexc | VFP_FPEXC_EN);
+		fregs->vfp_fpexc |= VFP_FPEXC_EN;
 		return;
 	}
+	KASSERT((fregs->vfp_fpexc & VFP_FPEXC_EN) == 0);
 
 	/*
 	 * Load and Enable the VFP (so that we can write the registers).
 	 */
-	bool enabled = fregs->vfp_fpexc & VFP_FPEXC_EN;
 	fregs->vfp_fpexc |= VFP_FPEXC_EN;
 	armreg_fpexc_write(fregs->vfp_fpexc);
-	if (enabled) {
-		/*
-		 * If we think the VFP is enabled, it must have be
-		 * disabled by vfp_state_release for another LWP so
-		 * we can now just return.
-		 */
-		return;
-	}
+	KASSERT(curcpu()->ci_pcu_curlwp[PCU_FPU] == NULL);
+	KASSERT(l->l_pcu_cpu[PCU_FPU] == NULL);
 
 	load_vfpregs(fregs);
 	armreg_fpscr_write(fregs->vfp_fpscr);
@@ -562,6 +558,9 @@ vfp_state_save(lwp_t *l)
 	struct vfpreg * const fregs = &pcb->pcb_vfp;
 	uint32_t fpexc = armreg_fpexc_read();
 
+	KASSERT(curcpu()->ci_pcu_curlwp[PCU_FPU] == l);
+	KASSERT(curcpu() == l->l_pcu_cpu[PCU_FPU]);
+	KASSERT(curlwp == l || curlwp->l_pcu_cpu[PCU_FPU] != curcpu());
 	/*
 	 * Enable the VFP (so we can read the registers).
 	 * Make sure the exception bit is cleared so that we can
