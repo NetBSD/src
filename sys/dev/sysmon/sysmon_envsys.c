@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.127.2.1.6.1 2017/10/23 18:57:09 snj Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.127.2.1.6.2 2017/10/24 09:24:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.127.2.1.6.1 2017/10/23 18:57:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.127.2.1.6.2 2017/10/24 09:24:53 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1210,7 +1210,7 @@ sme_remove_userprops(void)
 			 * Detach from entropy collection
 			 */
 			if (edata->flags & ENVSYS_FHAS_ENTROPY)
-				rnd_detach_sources(&edata->rnd_src);
+				rnd_detach_source(&edata->rnd_src);
 
 			/*
 			 * Finally, remove any old limits event, then
