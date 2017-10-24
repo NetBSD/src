@@ -1,122 +1,20 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.63 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.64 2017/10/24 22:38:32 sevan Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
 
 include	"arch/evbarm/conf/std.beagle"
-
-# estimated number of users
-
-maxusers	32
-
-# Standard system options
-
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+include "arch/evbarm/conf/GENERIC.common"
 
 # CPU options
 
 #options 	UVMHIST,UVMHIST_PRINT
 options 	CPU_CORTEXA8
 options 	OMAP_3530
-options 	PMAPCOUNTERS
-
-# Architecture options
-
-# File systems
-
-file-system	FFS		# UFS
-#file-system	LFS		# log-structured file system
-file-system	MFS		# memory file system
-file-system	NFS		# Network file system
-#file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	MSDOSFS		# MS-DOS file system
-#file-system	FDESC		# /dev/fd
-file-system	KERNFS		# /kern
-#file-system	NULLFS		# loopback file system
-file-system	PROCFS		# /proc
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-#file-system	UMAPFS		# NULLFS + uid and gid remapping
-#file-system	UNION		# union file system
-file-system	TMPFS		# memory file system
-file-system	PTYFS		# /dev/pts/N support
-
-# File system options
-#options 	QUOTA		# legacy UFS quotas
-#options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independent support
-#options 	NFSSERVER
-options 	WAPBL		# File system journaling support
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-
-# Networking options
-
-#options 	GATEWAY		# packet forwarding
-options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_DEBUG	# debug for IP security
-#options 	MROUTING	# IP multicast routing
-#options 	PIM		# Protocol Independent Multicast
-#options 	NETATALK	# AppleTalk networking
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-
-options 	NFS_BOOT_BOOTP
-options 	NFS_BOOT_DHCP
-#options		NFS_BOOT_BOOTSTATIC
-#options		NFS_BOOTSTATIC_MYIP="\"192.168.1.4\""
-#options		NFS_BOOTSTATIC_GWIP="\"192.168.1.1\""
-#options		NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
-#options		NFS_BOOTSTATIC_SERVADDR="\"192.168.1.1\""
-#options		NFS_BOOTSTATIC_SERVER="\"192.168.1.1:/nfs/sdp2430\""
-
-options 	NFS_BOOT_RWSIZE=1024
-
-# Compatibility options
-include 	"conf/compat_netbsd30.config"
-options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-# Shared memory options
-
-options 	SYSVMSG		# System V-like message queues
-options 	SYSVSEM		# System V-like semaphores
-options 	SYSVSHM		# System V-like memory sharing
-
-# Device options
-
-#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
-#options 	MEMORY_DISK_DYNAMIC
-#options 	MINIROOTSIZE=1000	# Size in blocks
-#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
-
-# Miscellaneous kernel options
-options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	SCSIVERBOSE	# Verbose SCSI errors
-#options 	MIIVERBOSE	# Verbose MII autoconfuration messages
-#options 	DDB_KEYCODE=0x40
-#options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internal consistency checks
-#options 	DEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-options 	DDB		# in-kernel debugger
-options 	DDB_ONPANIC=1
-options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-#options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
@@ -270,25 +168,5 @@ ukphy*		at mii? phy ?
 options 	HWCLOCK
 options 	HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
 options 	OMAP_CK_REF_SPEED=12000000
-
-# Pseudo-Devices
-
-# disk/mass storage pseudo-devices
-#pseudo-device	md			# memory disk device (ramdisk)
-#pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss			# file system snapshot device
-#pseudo-device	putter			# for puffs and pud
-
-# network pseudo-devices
-pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	loop			# network loopback
-#pseudo-device	kttcp			# network loopback
-
-# miscellaneous pseudo-devices
-pseudo-device	pty			# pseudo-terminals
-#options	RND_COM
-#pseudo-device	clockctl		# user control of clock subsystem
-pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	lockstat		# lock profiling
 
 cinclude "arch/evbarm/conf/BEAGLEBOARD.local"
