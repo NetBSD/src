@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwcache.3,v 1.17 2008/05/02 18:11:04 martin Exp $
+.\"	$NetBSD: pwcache.3,v 1.18 2017/10/24 19:04:58 abhinav Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,11 @@
 .Sh NAME
 .Nm pwcache ,
 .Nm user_from_uid ,
-.Nm group_from_gid
+.Nm uid_from_user ,
+.Nm pwcache_userdb ,
+.Nm group_from_gid ,
+.Nm gid_from_group ,
+.Nm pwcache_groupdb
 .Nd cache password and group entries
 .Sh LIBRARY
 .Lb libc
