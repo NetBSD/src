@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.51.2.3 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.51.2.4 2017/10/24 22:27:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.51.2.3 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.51.2.4 2017/10/24 22:27:42 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -99,7 +99,6 @@ ufs_root(struct mount *mp, struct vnode **vpp)
 }
 
 /*
-<<<<<<< ufs_vfsops.c
  * Get (from disk) and set (to mount structure) maximum I/O size
  */
 
@@ -130,7 +129,6 @@ ufs_update_maxphys(struct mount *mp)
 }
 
 /*
-=======
  * Look up and return a vnode/inode pair by inode number.
  */
 int
@@ -151,7 +149,6 @@ ufs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 }
 
 /*
->>>>>>> 1.53
  * Do operations associated with quotas
  */
 int
