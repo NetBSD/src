@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.94 2017/03/28 08:47:19 ozaki-r Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.94.6.1 2017/10/24 08:50:44 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.94 2017/03/28 08:47:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.94.6.1 2017/10/24 08:50:44 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -146,10 +146,9 @@ void
 loopattach(int n)
 {
 
-	/*
-	 * Nothing to do here, initialization is handled by the
-	 * module initialization code in loopnit() below).
-	 */
+#ifndef _MODULE
+	loop_clone_create(&loop_cloner, 0);	/* lo0 always exists */
+#endif
 }
 
 void
@@ -159,7 +158,9 @@ loopinit(void)
 	if (lo0ifp != NULL)	/* can happen in rump kernel */
 		return;
 
-	(void)loop_clone_create(&loop_cloner, 0);	/* lo0 always exists */
+#ifdef _MODULE
+	loop_clone_create(&loop_cloner, 0);	/* lo0 always exists */
+#endif
 	if_clone_attach(&loop_cloner);
 }
 
