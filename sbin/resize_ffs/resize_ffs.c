@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.47 2016/08/24 07:44:05 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.47.6.1 2017/10/24 09:08:40 snj Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.47 2016/08/24 07:44:05 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.47.6.1 2017/10/24 09:08:40 snj Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -462,10 +462,10 @@ static void
 initcg(int cgn)
 {
 	struct cg *cg;		/* The in-core cg, of course */
-	int base;		/* Disk address of cg base */
-	int dlow;		/* Size of pre-cg data area */
-	int dhigh;		/* Offset of post-inode data area, from base */
-	int dmax;		/* Offset of end of post-inode data area */
+	int64_t base;		/* Disk address of cg base */
+	int64_t dlow;		/* Size of pre-cg data area */
+	int64_t dhigh;		/* Offset of post-inode data area, from base */
+	int64_t dmax;		/* Offset of end of post-inode data area */
 	int i;			/* Generic loop index */
 	int n;			/* Generic count */
 	int start;		/* start of cg maps */
@@ -478,7 +478,7 @@ initcg(int cgn)
 	dmax = newsb->fs_size - base;
 	if (dmax > newsb->fs_fpg)
 		dmax = newsb->fs_fpg;
-	start = &cg->cg_space[0] - (unsigned char *) cg;
+	start = (unsigned char *)&cg->cg_space[0] - (unsigned char *) cg;
 	/*
          * Clear out the cg - assumes all-0-bytes is the correct way
          * to initialize fields we don't otherwise touch, which is
@@ -564,13 +564,16 @@ initcg(int cgn)
 	 * below for the post-inode data area, is that the pre-sb data
 	 * area always starts at 0, and thus is block-aligned, and
 	 * always ends at the sb, which is block-aligned.) */
-	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
-		for (i = 0; i < dlow; i += newsb->fs_frag) {
-			old_cg_blktot(cg, 0)[old_cbtocylno(newsb, i)]++;
+	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
+		int64_t di;
+
+		for (di = 0; di < dlow; di += newsb->fs_frag) {
+			old_cg_blktot(cg, 0)[old_cbtocylno(newsb, di)]++;
 			old_cg_blks(newsb, cg,
-			    old_cbtocylno(newsb, i),
-			    0)[old_cbtorpos(newsb, i)]++;
+			    old_cbtocylno(newsb, di),
+			    0)[old_cbtorpos(newsb, di)]++;
 		}
+	}
 
 	/* Deal with a partial block at the beginning of the post-inode area.
 	 * I'm not convinced this can happen - I think the inodes are always
@@ -592,24 +595,23 @@ initcg(int cgn)
 			cg_clustersum(cg, 0)[(n > newsb->fs_contigsumsize) ?
 			    newsb->fs_contigsumsize : n]++;
 		}
-		if (is_ufs2 == 0)
-			for (i = n; i > 0; i--) {
+		for (i = n; i > 0; i--) {
+			if (is_ufs2 == 0) {
 				old_cg_blktot(cg, 0)[old_cbtocylno(newsb,
 					    dhigh)]++;
 				old_cg_blks(newsb, cg,
 				    old_cbtocylno(newsb, dhigh),
 				    0)[old_cbtorpos(newsb,
 					    dhigh)]++;
-				dhigh += newsb->fs_frag;
 			}
-	}
-	if (is_ufs2 == 0) {
-		/* Deal with any leftover frag at the end of the cg. */
-		i = dmax - dhigh;
-		if (i) {
-			cg->cg_frsum[i]++;
-			cg->cg_cs.cs_nffree += i;
+			dhigh += newsb->fs_frag;
 		}
+	}
+	/* Deal with any leftover frag at the end of the cg. */
+	i = dmax - dhigh;
+	if (i) {
+		cg->cg_frsum[i]++;
+		cg->cg_cs.cs_nffree += i;
 	}
 	/* Update the csum info. */
 	csums[cgn] = cg->cg_cs;
@@ -896,10 +898,10 @@ recompute_fs_dsize(void)
 
 	newsb->fs_dsize = 0;
 	for (i = 0; i < newsb->fs_ncg; i++) {
-		int dlow;	/* size of before-sb data area */
-		int dhigh;	/* offset of post-inode data area */
-		int dmax;	/* total size of cg */
-		int base;	/* base of cg, since cgsblock() etc add it in */
+		int64_t dlow;	/* size of before-sb data area */
+		int64_t dhigh;	/* offset of post-inode data area */
+		int64_t dmax;	/* total size of cg */
+		int64_t base;	/* base of cg, since cgsblock() etc add it in */
 		base = cgbase(newsb, i);
 		dlow = cgsblock(newsb, i) - base;
 		dhigh = cgdmin(newsb, i) - base;
@@ -1046,9 +1048,9 @@ grow(void)
 	 * last cg (though possibly not to a full cg!). */
 	if (oldsb->fs_size % oldsb->fs_fpg) {
 		struct cg *cg;
-		int newcgsize;
-		int prevcgtop;
-		int oldcgsize;
+		int64_t newcgsize;
+		int64_t prevcgtop;
+		int64_t oldcgsize;
 		cg = cgs[oldsb->fs_ncg - 1];
 		cgflags[oldsb->fs_ncg - 1] |= CGF_DIRTY | CGF_BLKMAPS;
 		prevcgtop = oldsb->fs_fpg * (oldsb->fs_ncg - 1);
@@ -1121,13 +1123,12 @@ markblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o)
  * Returns the number of bytes occupied in file, as does markblk().
  * For the sake of update_for_data_move(), we read the indirect block
  * _after_ making the _PRE callback.  The name is historical.  */
-static int
+static off_t
 markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 {
 	int i;
-	int j;
 	unsigned k;
-	int tot;
+	off_t j, tot;
 	static int32_t indirblk1[howmany(MAXBSIZE, sizeof(int32_t))];
 	static int32_t indirblk2[howmany(MAXBSIZE, sizeof(int32_t))];
 	static int32_t indirblk3[howmany(MAXBSIZE, sizeof(int32_t))];
@@ -1138,10 +1139,10 @@ markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 	if (lev < 0)
 		return (markblk(fn, di, bn, o));
 	if (bn == 0) {
-		for (i = newsb->fs_bsize;
+		for (j = newsb->fs_bsize;
 		    lev >= 0;
-		    i *= FFS_NINDIR(newsb), lev--);
-		return (i);
+		    j *= FFS_NINDIR(newsb), lev--);
+		return (j);
 	}
 	(*fn) (bn, newsb->fs_frag, newsb->fs_bsize, MDB_INDIR_PRE);
 	readat(FFS_FSBTODB(newsb, bn), indirblks[lev], newsb->fs_bsize);
@@ -1177,7 +1178,7 @@ static void
 map_inode_data_blocks(union dinode * di, mark_callback_t fn)
 {
 	off_t o;		/* offset within  inode */
-	int inc;		/* increment for o - maybe should be off_t? */
+	off_t inc;		/* increment for o */
 	int b;			/* index within di_db[] and di_ib[] arrays */
 
 	/* Scan the direct blocks... */
@@ -1326,7 +1327,7 @@ mark_move(unsigned int from, unsigned int to, unsigned int n)
  * each block of consecutive allocated frags is moved as a unit.
  */
 static void
-fragmove(struct cg * cg, int base, unsigned int start, unsigned int n)
+fragmove(struct cg * cg, int64_t base, unsigned int start, unsigned int n)
 {
 	unsigned int i;
 	int run;
@@ -1365,7 +1366,7 @@ fragmove(struct cg * cg, int base, unsigned int start, unsigned int n)
 static void
 evict_data(struct cg * cg, unsigned int minfrag, int nfrag)
 {
-	int base;	/* base of cg (in frags from beginning of fs) */
+	int64_t base;	/* base of cg (in frags from beginning of fs) */
 
 	base = cgbase(oldsb, cg->cg_cgx);
 	/* Does the boundary fall in the middle of a block?  To avoid
@@ -1781,10 +1782,10 @@ shrink(void)
 	csum_fixup();
 	/* Evict data from any cgs being wholly eliminated */
 	for (i = newsb->fs_ncg; i < oldsb->fs_ncg; i++) {
-		int base;
-		int dlow;
-		int dhigh;
-		int dmax;
+		int64_t base;
+		int64_t dlow;
+		int64_t dhigh;
+		int64_t dmax;
 		base = cgbase(oldsb, i);
 		dlow = cgsblock(oldsb, i) - base;
 		dhigh = cgdmin(oldsb, i) - base;
@@ -2304,7 +2305,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-cvy] [-s size] special\n",
+	(void)fprintf(stderr, "usage: %s [-cpvy] [-s size] special\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
