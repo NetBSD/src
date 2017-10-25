@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.166 2017/09/01 15:19:59 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.167 2017/10/25 08:12:39 maya Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.166 2017/09/01 15:19:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.167 2017/10/25 08:12:39 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -875,8 +875,12 @@ filt_usbread(struct knote *kn, long hint)
 	return 1;
 }
 
-static const struct filterops usbread_filtops =
-	{ 1, NULL, filt_usbrdetach, filt_usbread };
+static const struct filterops usbread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_usbrdetach,
+	.f_event = filt_usbread,
+};
 
 int
 usbkqfilter(dev_t dev, struct knote *kn)

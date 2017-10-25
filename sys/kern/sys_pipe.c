@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.140 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.141 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.140 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.141 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1446,10 +1446,19 @@ filt_pipewrite(struct knote *kn, long hint)
 	return (kn->kn_data >= PIPE_BUF);
 }
 
-static const struct filterops pipe_rfiltops =
-	{ 1, NULL, filt_pipedetach, filt_piperead };
-static const struct filterops pipe_wfiltops =
-	{ 1, NULL, filt_pipedetach, filt_pipewrite };
+static const struct filterops pipe_rfiltops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_pipedetach,
+	.f_event = filt_piperead,
+};
+
+static const struct filterops pipe_wfiltops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_pipedetach,
+	.f_event = filt_pipewrite,
+};
 
 static int
 pipe_kqfilter(file_t *fp, struct knote *kn)

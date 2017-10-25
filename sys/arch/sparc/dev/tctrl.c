@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.60 2016/12/11 16:25:54 christos Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.61 2017/10/25 08:12:37 maya Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.60 2016/12/11 16:25:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.61 2017/10/25 08:12:37 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1230,8 +1230,12 @@ filt_tctrlread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops tctrlread_filtops =
-	{ 1, NULL, filt_tctrlrdetach, filt_tctrlread };
+static const struct filterops tctrlread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_tctrlrdetach,
+	.f_event = filt_tctrlread,
+};
 
 int
 tctrlkqfilter(dev_t dev, struct knote *kn)
