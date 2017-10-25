@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2327 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2328 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -74,3 +74,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	amd64: Add support for USER_LDT. [maxv 20171021]
 	tzdata updated to 2017c [kre 20171024]
 	libc: Update to tzcode2017c. [christos 20171024]
+	bwfm(4): Add driver for Broadcom BCM43xxx "FullMAC" USB wireless
+		adapters. [jmcneill 20171025]
