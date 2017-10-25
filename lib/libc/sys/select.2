@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.42 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: select.2,v 1.43 2017/10/25 17:39:47 abhinav Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,11 @@
 .Os
 .Sh NAME
 .Nm select ,
-.Nm pselect
+.Nm pselect ,
+.Nm FD_SET ,
+.Nm FD_CLR ,
+.Nm FD_ISSET ,
+.Nm FD_ZERO
 .Nd synchronous I/O multiplexing
 .Sh LIBRARY
 .Lb libc
