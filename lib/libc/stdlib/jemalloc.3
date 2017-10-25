@@ -38,7 +38,8 @@
 .Dt JEMALLOC 3
 .Os
 .Sh NAME
-.Nm jemalloc
+.Nm jemalloc ,
+.Nm malloc.conf
 .Nd the default system allocator
 .Sh LIBRARY
 .Lb libc
@@ -160,7 +161,6 @@ the source code:
 .Bd -literal -offset indent
 _malloc_options = "X";
 .Ed
-.Pp
 .It Em Z
 Each byte of new memory allocated by
 .Fn malloc ,
@@ -228,7 +228,6 @@ determine all metadata regarding small and large allocations in constant time.
 Small objects are managed in groups by page runs.
 Each run maintains a bitmap that tracks which regions are in use.
 Allocation requests can be grouped as follows.
-.Pp
 .Bl -bullet -offset 3n
 .It
 Allocation requests that are no more than half the quantum (see the
@@ -306,7 +305,6 @@ allocation functions.
 .El
 .Sh EXAMPLES
 To dump core whenever a problem occurs:
-.Pp
 .Bd -literal -offset indent
 ln -s 'A' /etc/malloc.conf
 .Ed
