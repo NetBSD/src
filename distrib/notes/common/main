@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.537 2017/10/25 16:59:12 utkarsh009 Exp $
+.\"	$NetBSD: main,v 1.538 2017/10/25 17:27:07 utkarsh009 Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1035,7 +1035,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
-.It Ta Utkarsh Anand Ta Mt utkarsh009@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i
@@ -1449,6 +1448,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta S.P.Zeidler Ta Mt spz@NetBSD.org
 .It Ta Tim Zingelman Ta Mt tez@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
+.It Ta Utkarsh Anand Ta Mt utkarsh009@NetBSD.org
 .It Ta Ta
 .
 .El
