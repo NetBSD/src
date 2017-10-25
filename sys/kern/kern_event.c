@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.94 2017/09/16 23:55:16 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.95 2017/10/25 06:02:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.94 2017/09/16 23:55:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.95 2017/10/25 06:02:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,26 @@ static int		user_kfilterc;		/* current offset */
 static int		user_kfiltermaxc;	/* max size so far */
 static size_t		user_kfiltersz;		/* size of allocated memory */
 
-/* Locks */
+/*
+ * Global Locks.
+ *
+ * Lock order:
+ *
+ *	kqueue_filter_lock
+ *	-> kn_kq->kq_fdp->fd_lock
+ *	-> object lock (e.g., device driver lock, kqueue_misc_lock, &c.)
+ *	-> kn_kq->kq_lock
+ *
+ * Locking rules:
+ *
+ *	f_attach: fdp->fd_lock, KERNEL_LOCK
+ *	f_detach: fdp->fd_lock, KERNEL_LOCK
+ *	f_event(!NOTE_SUBMIT) via kevent: fdp->fd_lock, _no_ object lock
+ *	f_event via knote: whatever caller guarantees
+ *		Typically,	f_event(NOTE_SUBMIT) via knote: object lock
+ *				f_event(!NOTE_SUBMIT) via knote: nothing,
+ *					acquires/releases object lock inside.
+ */
 static krwlock_t	kqueue_filter_lock;	/* lock on filter lists */
 static kmutex_t		kqueue_misc_lock;	/* miscellaneous */
 
