@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.92 2017/10/25 05:42:56 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.93 2017/10/25 08:50:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.92 2017/10/25 05:42:56 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.93 2017/10/25 08:50:05 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -744,7 +744,7 @@ jobidcmd(int argc, char **argv)
 
 	jp = getjob(*argptr, 0);
 	if (job) {
-		out1fmt("%%%jd\n", (size_t)(jp - jobtab + 1));
+		out1fmt("%%%zu\n", (size_t)(jp - jobtab + 1));
 		return 0;
 	}
 	if (pg) {
