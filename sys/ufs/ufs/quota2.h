@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.9 2012/02/05 14:19:04 dholland Exp $ */
+/* $NetBSD: quota2.h,v 1.10 2017/10/25 18:06:01 jdolecek Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -56,7 +56,7 @@ struct quota2_val {
 
 /*
  * On-disk description of a user or group quota
- * These entries are keept as linked list, either in one of the hash HEAD,
+ * These entries are kept as linked list, either in one of the hash HEAD,
  * or in the free list.
  */
 
