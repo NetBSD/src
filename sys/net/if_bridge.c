@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.137 2017/10/25 04:17:34 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.138 2017/10/25 04:33:15 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.137 2017/10/25 04:17:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.138 2017/10/25 04:33:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -465,9 +465,6 @@ bridge_clone_destroy(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 	struct bridge_iflist *bif;
-	int s;
-
-	s = splsoftnet();
 
 	bridge_stop(ifp, 1);
 
@@ -481,8 +478,6 @@ bridge_clone_destroy(struct ifnet *ifp)
 	}
 	PSLIST_DESTROY(&sc->sc_iflist_psref.bip_iflist);
 	BRIDGE_UNLOCK(sc);
-
-	splx(s);
 
 	if_detach(ifp);
 
