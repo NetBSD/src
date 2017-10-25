@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.136 2017/10/23 09:22:51 msaitoh Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.137 2017/10/25 04:17:34 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.136 2017/10/23 09:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.137 2017/10/25 04:17:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -494,7 +494,6 @@ bridge_clone_destroy(struct ifnet *ifp)
 	callout_destroy(&sc->sc_brcallout);
 	callout_destroy(&sc->sc_bstpcallout);
 	workqueue_destroy(sc->sc_rtage_wq);
-	kmem_free(sc->sc_rthash, sizeof(*sc->sc_rthash) * BRIDGE_RTHASH_SIZE);
 	kmem_free(sc, sizeof(*sc));
 
 	return 0;
