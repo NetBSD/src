@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.21 2017/10/25 16:08:09 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.22 2017/10/25 16:09:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.21 2017/10/25 16:08:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.22 2017/10/25 16:09:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -245,19 +245,25 @@ gtmr_delay(unsigned int n)
 	uint32_t freq = sc->sc_freq ? sc->sc_freq : armreg_cnt_frq_read();
 	KASSERT(freq != 0);
 
-	/*
-	 * not quite divide by 1000000 but close enough
-	 * (higher by 1.3% which means we wait 1.3% longer).
-	 */
-	const uint64_t incr_per_us = (freq >> 20) + (freq >> 24);
+	const unsigned int incr_per_us = howmany(freq, 1000000);
+	unsigned int delta = 0, usecs = 0;
 
 	arm_isb();
-	const uint64_t base = armreg_cntp_ct_read();
-	const uint64_t delta = n * incr_per_us;
-	const uint64_t finish = base + delta;
+	uint64_t last = armreg_cntp_ct_read();
 
-	while (armreg_cntp_ct_read() < finish) {
-		arm_isb();	/* spin */
+	while (n > usecs) {
+		arm_isb();
+		uint64_t curr = armreg_cntp_ct_read();
+		if (curr < last)
+			delta += curr + (UINT64_MAX - last);
+		else
+			delta += curr - last;
+
+		last = curr;
+		if (delta >= incr_per_us) {
+			usecs += delta / incr_per_us;
+			delta %= incr_per_us;
+		}
 	}
 }
 
