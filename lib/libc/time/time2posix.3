@@ -1,4 +1,4 @@
-.\"	$NetBSD: time2posix.3,v 1.20 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: time2posix.3,v 1.21 2017/10/25 19:04:07 abhinav Exp $
 .Dd October 6, 2014
 .Dt TIME2POSIX 3
 .Os
@@ -6,7 +6,7 @@
 .Nm time2posix ,
 .Nm time2posix_z ,
 .Nm posix2time ,
-.Nm posix2time_z ,
+.Nm posix2time_z
 .Nd convert seconds since the Epoch
 .Sh LIBRARY
 .Lb libc
@@ -37,7 +37,7 @@ If the time package is configured with leap-second support
 enabled, however, no such adjustment is needed and
 .Va time_t
 values continue to increase over leap events
-(as a true 
+(as a true
 .Dq "seconds since..."
 value).
 This means that these values will differ from those required by POSIX
