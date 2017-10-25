@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.146.2.3 2017/07/23 14:58:14 snj Exp $
+.\"	$NetBSD: sh.1,v 1.146.2.4 2017/10/25 06:51:36 snj Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd July 1, 2017
+.Dd October 6, 2017
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvx
@@ -471,6 +471,10 @@ opened using the
 .Ic exec
 built-in command are passed on to utilities executed
 .Dq ( yes
+in posix mode),
+whether a colon (:) terminates the user name in tilde (~) expansions
+other than in assignment statements
+.Dq ( no
 in posix mode),
 and whether the shell treats
 an empty brace-list compound statement as a syntax error
@@ -1320,14 +1324,22 @@ substitution, or arithmetic evaluation.
 .Ss Tilde Expansion (substituting a user's home directory)
 A word beginning with an unquoted tilde character (~) is
 subjected to tilde expansion.
-All the following characters in the word up to
-a slash (/) or the end of the word are treated as a user name
-and are replaced with the named user's home directory.
+Provided all of the subsequent characters in the word are unquoted
+up to an unquoted slash (/)
+or when in an assignment or not in posix mode, an unquoted colon (:),
+or if neither of those appear, the end of the word,
+they are treated as a user name
+and are replaced with the pathname of the named user's home directory.
 If the user name is missing (as in
 .Pa ~/foobar ) ,
 the tilde is replaced with the value of the
 .Va HOME
 variable (the current user's home directory).
+.Pp
+In variable assignments,
+an unquoted tilde immediately after the assignment operator (=), and
+each unquoted tilde immediately after an unquoted colon in the value
+to be assigned is also subject to tilde expansion as just stated.
 .Ss Parameter Expansion
 The format for parameter expansion is as follows:
 .Pp

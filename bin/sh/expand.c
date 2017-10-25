@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.110.2.2 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: expand.c,v 1.110.2.3 2017/10/25 06:51:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.110.2.2 2017/07/23 14:58:14 snj Exp $");
+__RCSID("$NetBSD: expand.c,v 1.110.2.3 2017/10/25 06:51:36 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,6 +358,7 @@ exptilde(const char *p, int flag)
 #endif
 
 	setstackmark(&smark);
+	(void) grabstackstr(expdest);
 	user = stackblock();		/* we will just borrow top of stack */
 
 	while ((c = *++p) != '\0') {
@@ -369,16 +370,16 @@ exptilde(const char *p, int flag)
 		case CTLARI:		/* just leave original unchanged */
 		case CTLENDARI:
 		case CTLQUOTEMARK:
-		case CTLENDVAR:
 		case '\n':
 			popstackmark(&smark);
 			return (startp);
 		case CTLNONL:
 			continue;
 		case ':':
-			if (flag & EXP_VARTILDE)
+			if (!posix || flag & EXP_VARTILDE)
 				goto done;
 			break;
+		case CTLENDVAR:
 		case '/':
 			goto done;
 		}
@@ -679,7 +680,7 @@ subevalvar(const char *p, const char *str, int subtype, int startloc,
 	herefd = -1;
 	VTRACE(DBG_EXPAND, ("subevalvar(%d) \"%.20s\" ${%.*s} sloc=%d vf=%x\n",
 	    subtype, p, p-str, str, startloc, varflags));
-	argstr(p, EXP_TILDE);
+	argstr(p, subtype == VSASSIGN ? EXP_VARTILDE : EXP_TILDE);
 	STACKSTRNUL(expdest);
 	herefd = saveherefd;
 	argbackq = saveargbackq;
