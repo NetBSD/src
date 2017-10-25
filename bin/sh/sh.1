@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.168 2017/10/15 12:01:43 pgoyette Exp $
+.\"	$NetBSD: sh.1,v 1.169 2017/10/25 05:42:56 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 6, 2017
+.Dd October 24, 2017
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvx
@@ -2433,14 +2433,91 @@ Read the
 .Va file
 to set key bindings as defined by
 .Xr editrc 5 .
-.It jobid Op Ar job
-Print the process id's of the processes in the job.
+.It jobid Oo Fl g Ns \&| Ns Fl j Ns \&| Ns Fl p Oc  Op Ar job
+With no flags, print the process identifiers of the processes in the job.
 If the
 .Ar job
 argument is omitted, the current job is used.
-.It jobs
-This command lists out all the background processes
+Any of the ways to select a job may be used for
+.Ar job ,
+including the
+.Sq \&%
+forms, or the process id of the job leader
+.Po
+.Dq \&$!
+if the job was created in the background.
+.Pc
+.Pp
+If one of the flags is given, then instead of the list of
+process identifiers, the
+.Ic jobid
+command prints:
+.Bl -dash -compact
+.It
+With
+.Fl g
+the process group, if one was created for this job,
+or nothing otherwise (the job is in the same process
+group as the shell.)
+.It
+With
+.Fl j
+the job identifier (using
+.Sq \&%n
+notation, where n is a number) is printed.
+.It
+With
+.Fl p
+only the process id of the process group leader is printed.
+.El
+These flags are mutually exclusive.
+.Pp
+.Ic jobid
+exits with status 2 if there is an argument error,
+status 1, if with
+.Fl g
+the job had no separate process group,
+or with
+.Fl p
+there is no process group leader (should not happen),
+and otherwise exits with status 0.
+.It jobs Oo Fl l Ns \&| Ns Fl p Oc Op job...
+Without job arguments,
+this command lists out all the background processes
 which are children of the current shell process.
+With job arguments, the listed jobs are shown instead.
+Without flags, the output contains the job
+identifier (see
+.Sx Job Control
+below), an indicator character if the job is the current or previous job,
+the current status of the job (running, suspended, or terminated successfully,
+unsuccessfully, or by a signal)
+and a (usually abbreviated) command string.
+.Pp
+With the
+.Fl l
+flag the output is in a longer form, with the process identifiers
+of each process (run from the top level, as in a pipeline), and the
+status of each process, rather than the job status.
+.Pp
+With the
+.Fl p
+flag, the output contains only the process identifier of the lead
+process.
+.Pp
+In an interactive shell, each job shown as completed in the output
+from the jobs command is implicitly waited for, and is removed from
+the jobs table, never to be seen again.
+In an interactive shell, when a background job terminates, the
+.Ic jobs
+command (with that job as an argument) is implicitly run just
+before outputting the next PS1 command prompt, after the job
+terminated.
+This indicates that the job finished, shows its status,
+and cleans up the job table entry for that job.
+Non-interactive shells need to execute
+.Ic wait
+commands to clean up terminated background jobs.
 .It local Oo Fl INx Oc Oo Ar variable | \- Oc ...
 Define local variables for a function.
 Local variables have their attributes, and values,
@@ -3043,6 +3120,150 @@ with no arguments,
 knowledge of the child is removed from the system,
 and it cannot be waited upon again.
 .El
+.Ss Job Control
+Each process (or set of processes) started by
+.Nm
+is created as a
+.Dq job
+and added to the jobs table.
+When enabled by the
+.Fl m
+option
+.Pq aka Fl o Ar monitor
+when the job is created,
+.Nm
+places each job (if run from the top level shell)
+into a process group of its own, which allows control
+of the process(es), and its/their descendants, as a unit.
+When the
+.Fl m
+option is off, or when started from a sub-shell environment,
+jobs share the same process group as the parent shell.
+The
+.Fl m
+option is enabled by default in interactive shells with
+a terminal as standard input and standard error.
+.Pp
+Jobs with separate process groups may be stopped, and then later
+resumed in the foreground (with access to the terminal)
+or in the background (where attempting to read from the
+terminal will result in the job stopping.)
+A list of current jobs can be obtained using the
+.Ic jobs
+built-in command.
+Jobs are identified using either the process identifier
+of the lead process of the job (the value available in
+the special parameter
+.Sq \&$!
+if the job is started in the background), or using percent
+notation.
+Each job is given a
+.Dq job number
+which is a small integer, starting from 1, and can be
+referenced as
+.Sq \&%n
+where n is that number.
+Note that this applies to jobs both with and without their own process groups.
+Job numbers are shown in the output from the
+.Ic jobs
+command enclosed in brackets
+.Po
+.Sq \&[
+and
+.Sq \&]
+.Pc .
+Whenever the job table becomes empty, the numbers begin at one again.
+In addition, there is the concept of a current, and a previous job,
+identified by
+.Sq \&%+
+.Po
+or
+.Sq \&%%
+or even just
+.Sq \&%
+.Pc ,
+and a previous job, identified by
+.Sq \&%\- .
+Whenever a background job is started,
+or a job is resumed in the background,
+it becomes the current job.
+The job that was the current job
+(prepare for a big surprise here, drum roll..., wait for it...\&)
+becomes the previous job.
+When the current job terminates, the previous job is
+promoted to be the current job.
+In addition the form
+.Dq %string
+finds the job for which the command starts with
+.Dq string
+and the form
+.Dq %?string
+finds the job which contains the
+.Dq string
+in its command somewhere.
+Both forms require the result to be unambiguous.
+For this purpose the
+.Dq command
+is that shown in the output from the
+.Ic jobs
+command, not the original command line.
+.Pp
+The
+.Ic bg ,
+.Ic fg ,
+.Ic jobid ,
+.Ic jobs ,
+.Ic kill ,
+and
+.Ic wait
+commands all accept job identifiers as arguments, in addition to
+process identifiers (larger integers).
+See the
+.Sx Built-ins
+section above, and
+.Xr kill 1 ,
+for more details of those commands.
+In addition, a job identifier
+.Pq using one of the Sq \&% forms
+issued as a command, without arguments, is interpreted as
+if it had been given as the argument to the
+.Ic fg
+command.
+.Pp
+To cause a foreground process to stop, enter the terminal's
+.Ic stop
+character (usually control-Z).
+To cause a background process to stop, send it a
+.Sv STOP
+signal, using the kill command.
+A useful function to define is
+.Bd -literal -compact
+        stop() { kill -s STOP "${@:-%%}"; }
+.Ed
+.Pp
+The
+.Ic fg
+command resumes a stopped job, placing it in the foreground,
+and
+.Ic bg
+resumes a stopped job in the background.
+The
+.Ic jobid
+command provides information about process identifiers, job identifiers,
+and the process group identifier, for a job.
+.Pp
+Whenever a sub-shell is created, the jobs table becomes invalid
+(the sub-shell has no children.)
+However, to enable uses like
+.Bd -literal -compact
+        PID=$(jobid -p %1)
+.Ed
+the table is only actually cleared in a sub-shell when needed to
+create the first job there (built-in commands run in the foreground
+do not create jobs.)
+Note that in this environment, there is no useful current job
+(%% actually refers to the sub-shell itself, but is not accessible)
+but the job which is the current job in the parent can be accessed as %\-.
 .Ss Command Line Editing
 When
 .Nm
@@ -3697,6 +3918,8 @@ or
 to a file, and then read the file later using the
 .Dq \&.
 command.
+.Pp
+Job control of compound statements (loops, etc) is a complete mess.
 .Pp
 Many, many, more.
 (But less than there were...)
