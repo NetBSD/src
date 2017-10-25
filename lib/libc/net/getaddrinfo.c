@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.115 2017/01/10 17:51:01 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.115.6.1 2017/10/25 06:56:41 snj Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.115 2017/01/10 17:51:01 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.115.6.1 2017/10/25 06:56:41 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -2539,13 +2539,14 @@ _yp_getaddrinfo(void *rv, void *cb_data, va_list ap)
  */
 static int
 res_queryN(const char *name, /* domain name */ struct res_target *target,
-    res_state res)
+    res_state statp)
 {
 	u_char buf[MAXPACKET];
 	HEADER *hp;
 	int n;
 	struct res_target *t;
 	int rcode;
+	u_char *rdata;
 	int ancount;
 
 	_DIAGASSERT(name != NULL);
@@ -2558,8 +2559,12 @@ res_queryN(const char *name, /* domain name */ struct res_target *target,
 		int class, type;
 		u_char *answer;
 		int anslen;
+		u_int oflags;
 
 		hp = (HEADER *)(void *)t->answer;
+		oflags = statp->_flags;
+
+again:
 		hp->rcode = NOERROR;	/* default */
 
 		/* make it easier... */
@@ -2568,42 +2573,63 @@ res_queryN(const char *name, /* domain name */ struct res_target *target,
 		answer = t->answer;
 		anslen = t->anslen;
 #ifdef DEBUG
-		if (res->options & RES_DEBUG)
+		if (statp->options & RES_DEBUG)
 			printf(";; res_nquery(%s, %d, %d)\n", name, class, type);
 #endif
 
-		n = res_nmkquery(res, QUERY, name, class, type, NULL, 0, NULL,
+		n = res_nmkquery(statp, QUERY, name, class, type, NULL, 0, NULL,
 		    buf, (int)sizeof(buf));
 #ifdef RES_USE_EDNS0
-		if (n > 0 && (res->options & RES_USE_EDNS0) != 0)
-			n = res_nopt(res, n, buf, (int)sizeof(buf), anslen);
+		if (n > 0 && (statp->_flags & RES_F_EDNS0ERR) == 0 &&
+		    (statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0) {
+			n = res_nopt(statp, n, buf, (int)sizeof(buf), anslen);
+			rdata = &buf[n];
+			if (n > 0 && (statp->options & RES_NSID) != 0U) {
+				n = res_nopt_rdata(statp, n, buf,
+				    (int)sizeof(buf),
+				    rdata, NS_OPT_NSID, 0, NULL);
+			}
+		}
 #endif
 		if (n <= 0) {
 #ifdef DEBUG
-			if (res->options & RES_DEBUG)
+			if (statp->options & RES_DEBUG)
 				printf(";; res_nquery: mkquery failed\n");
 #endif
 			h_errno = NO_RECOVERY;
 			return n;
 		}
-		n = res_nsend(res, buf, n, answer, anslen);
-#if 0
+		n = res_nsend(statp, buf, n, answer, anslen);
 		if (n < 0) {
+#ifdef RES_USE_EDNS0
+			/* if the query choked with EDNS0, retry without EDNS0 */
+			if ((statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0U &&
+			    ((oflags ^ statp->_flags) & RES_F_EDNS0ERR) != 0) {
+				statp->_flags |= RES_F_EDNS0ERR;
+				if (statp->options & RES_DEBUG)
+					printf(";; res_nquery: retry without EDNS0\n");
+				goto again;
+			}
+#endif
+#if 0
 #ifdef DEBUG
-			if (res->options & RES_DEBUG)
+			if (statp->options & RES_DEBUG)
 				printf(";; res_query: send error\n");
 #endif
 			h_errno = TRY_AGAIN;
 			return n;
-		}
 #endif
+		}
 
 		if (n < 0 || hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
 			rcode = hp->rcode;	/* record most recent error */
 #ifdef DEBUG
-			if (res->options & RES_DEBUG)
-				printf(";; rcode = %u, ancount=%u\n", hp->rcode,
-				    ntohs(hp->ancount));
+			if (statp->options & RES_DEBUG)
+				printf(";; rcode = (%s), counts = an:%d ns:%d ar:%d\n",
+				       p_rcode(hp->rcode),
+				       ntohs(hp->ancount),
+				       ntohs(hp->nscount),
+				       ntohs(hp->arcount));
 #endif
 			continue;
 		}
