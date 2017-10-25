@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.28 2016/07/07 06:55:38 msaitoh Exp $        */
+/*      $NetBSD: opms.c,v 1.29 2017/10/25 08:12:37 maya Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.28 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.29 2017/10/25 08:12:37 maya Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -979,8 +979,12 @@ filt_opmsread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops opmsread_filtops =
-	{ 1, NULL, filt_opmsrdetach, filt_opmsread };
+static const struct filterops opmsread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_opmsrdetach,
+	.f_event = filt_opmsread,
+};
 
 int
 opmskqfilter(dev_t dev, struct knote *kn)

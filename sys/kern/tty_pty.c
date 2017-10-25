@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.143 2017/10/25 08:12:39 maya Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.143 2017/10/25 08:12:39 maya Exp $");
 
 #include "opt_ptm.h"
 
@@ -997,10 +997,19 @@ filt_ptcwrite(struct knote *kn, long hint)
 	return canwrite;
 }
 
-static const struct filterops ptcread_filtops =
-	{ 1, NULL, filt_ptcrdetach, filt_ptcread };
-static const struct filterops ptcwrite_filtops =
-	{ 1, NULL, filt_ptcwdetach, filt_ptcwrite };
+static const struct filterops ptcread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ptcrdetach,
+	.f_event = filt_ptcread,
+};
+
+static const struct filterops ptcwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ptcwdetach,
+	.f_event = filt_ptcwrite,
+};
 
 int
 ptckqfilter(dev_t dev, struct knote *kn)

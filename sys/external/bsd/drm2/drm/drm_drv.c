@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.17 2015/11/09 22:04:53 jmcneill Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.18 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.17 2015/11/09 22:04:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.18 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -510,8 +510,12 @@ drm_poll(struct file *fp __unused, int events __unused)
 static void	filt_drm_detach(struct knote *);
 static int	filt_drm_event(struct knote *, long);
 
-static const struct filterops drm_filtops =
-	{ 1, NULL, filt_drm_detach, filt_drm_event };
+static const struct filterops drm_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_drm_detach,
+	.f_event = filt_drm_event,
+};
 
 static int
 drm_kqfilter(struct file *fp, struct knote *kn)

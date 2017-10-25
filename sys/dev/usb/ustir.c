@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.37 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: ustir.c,v 1.38 2017/10/25 08:12:39 maya Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.37 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.38 2017/10/25 08:12:39 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1087,10 +1087,19 @@ filt_ustirwrite(struct knote *kn, long hint)
 	return sc->sc_direction != udir_input;
 }
 
-static const struct filterops ustirread_filtops =
-	{ 1, NULL, filt_ustirrdetach, filt_ustirread };
-static const struct filterops ustirwrite_filtops =
-	{ 1, NULL, filt_ustirwdetach, filt_ustirwrite };
+static const struct filterops ustirread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ustirrdetach,
+	.f_event = filt_ustirread,
+};
+
+static const struct filterops ustirwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ustirwdetach,
+	.f_event = filt_ustirwrite,
+};
 
 Static int
 ustir_kqfilter(void *h, struct knote *kn)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.27 2015/04/13 22:43:41 riastradh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.28 2017/10/25 08:12:39 maya Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.27 2015/04/13 22:43:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.28 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -256,8 +256,12 @@ out:	mutex_exit(&cprng->cs_lock);
 static void	filt_cprng_detach(struct knote *);
 static int	filt_cprng_event(struct knote *, long);
 
-static const struct filterops cprng_filtops =
-	{ 1, NULL, filt_cprng_detach, filt_cprng_event };
+static const struct filterops cprng_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_cprng_detach,
+	.f_event = filt_cprng_event,
+};
 
 int
 cprng_strong_kqfilter(struct cprng_strong *cprng, struct knote *kn)

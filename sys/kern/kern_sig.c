@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.337 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.338 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.337 2017/08/28 00:46:07 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.338 2017/10/25 08:12:39 maya Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -2328,5 +2328,8 @@ filt_signal(struct knote *kn, long hint)
 }
 
 const struct filterops sig_filtops = {
-	0, filt_sigattach, filt_sigdetach, filt_signal
+		.f_isfd = 0,
+		.f_attach = filt_sigattach,
+		.f_detach = filt_sigdetach,
+		.f_event = filt_signal,
 };
