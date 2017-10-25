@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.25 2011/10/24 11:43:30 hannken Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.26 2017/10/25 08:12:40 maya Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.25 2011/10/24 11:43:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.26 2017/10/25 08:12:40 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,10 +279,19 @@ filt_nfsvnode(struct knote *kn, long hint)
 }
 
 
-static const struct filterops nfsread_filtops =
-	{ 1, NULL, filt_nfsdetach, filt_nfsread };
-static const struct filterops nfsvnode_filtops =
-	{ 1, NULL, filt_nfsdetach, filt_nfsvnode };
+static const struct filterops nfsread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_nfsdetach,
+	.f_event = filt_nfsread,
+};
+
+static const struct filterops nfsvnode_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_nfsdetach,
+	.f_event = filt_nfsvnode,
+};
 
 int
 nfs_kqfilter(void *v)

@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.28 2014/07/25 08:10:40 dholland Exp $
+ *	$Id: i4b_rbch.c,v 1.29 2017/10/25 08:12:40 maya Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.28 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.29 2017/10/25 08:12:40 maya Exp $");
 
 #include "isdnbchan.h"
 
@@ -842,8 +842,12 @@ filt_i4brbchread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops i4brbchread_filtops =
-	{ 1, NULL, filt_i4brbchdetach, filt_i4brbchread };
+static const struct filterops i4brbchread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4brbchdetach,
+	.f_event = filt_i4brbchread,
+};
 
 static int
 filt_i4brbchwrite(struct knote *kn, long hint)
@@ -860,8 +864,12 @@ filt_i4brbchwrite(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops i4brbchwrite_filtops =
-	{ 1, NULL, filt_i4brbchdetach, filt_i4brbchwrite };
+static const struct filterops i4brbchwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4brbchdetach,
+	.f_event = filt_i4brbchwrite,
+};
 
 int
 isdnbchankqfilter(dev_t dev, struct knote *kn)
