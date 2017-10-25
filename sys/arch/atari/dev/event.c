@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.13 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: event.c,v 1.14 2017/10/25 08:12:37 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14 2017/10/25 08:12:37 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -189,8 +189,12 @@ filt_evread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops ev_filtops =
-	{ 1, NULL, filt_evrdetach, filt_evread };
+static const struct filterops ev_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_evrdetach,
+	.f_event = filt_evread,
+};
 
 int
 ev_kqfilter(struct evvar *ev, struct knote *kn)

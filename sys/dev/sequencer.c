@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.66 2017/06/01 09:44:30 pgoyette Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.67 2017/10/25 08:12:38 maya Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.66 2017/06/01 09:44:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.67 2017/10/25 08:12:38 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -912,8 +912,12 @@ filt_sequencerread(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops sequencerread_filtops =
-	{ 1, NULL, filt_sequencerrdetach, filt_sequencerread };
+static const struct filterops sequencerread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sequencerrdetach,
+	.f_event = filt_sequencerread,
+};
 
 static void
 filt_sequencerwdetach(struct knote *kn)
@@ -946,8 +950,12 @@ filt_sequencerwrite(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops sequencerwrite_filtops =
-	{ 1, NULL, filt_sequencerwdetach, filt_sequencerwrite };
+static const struct filterops sequencerwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sequencerwdetach,
+	.f_event = filt_sequencerwrite,
+};
 
 static int
 sequencerkqfilter(dev_t dev, struct knote *kn)

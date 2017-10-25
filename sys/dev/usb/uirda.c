@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.41 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.42 2017/10/25 08:12:39 maya Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.41 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.42 2017/10/25 08:12:39 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -640,10 +640,19 @@ filt_uirdawdetach(struct knote *kn)
 	splx(s);
 }
 
-static const struct filterops uirdaread_filtops =
-	{ 1, NULL, filt_uirdardetach, filt_uirdaread };
-static const struct filterops uirdawrite_filtops =
-	{ 1, NULL, filt_uirdawdetach, filt_seltrue };
+static const struct filterops uirdaread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_uirdardetach,
+	.f_event = filt_uirdaread,
+};
+
+static const struct filterops uirdawrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_uirdawdetach,
+	.f_event = filt_seltrue,
+};
 
 int
 uirda_kqfilter(void *h, struct knote *kn)

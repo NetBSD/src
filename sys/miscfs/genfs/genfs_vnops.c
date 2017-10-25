@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.198 2017/07/01 20:07:00 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.199 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.198 2017/07/01 20:07:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.199 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,12 +554,26 @@ filt_genfsvnode(struct knote *kn, long hint)
 	return (fflags != 0);
 }
 
-static const struct filterops genfsread_filtops =
-	{ 1, NULL, filt_genfsdetach, filt_genfsread };
-static const struct filterops genfswrite_filtops =
-	{ 1, NULL, filt_genfsdetach, filt_genfswrite };
-static const struct filterops genfsvnode_filtops =
-	{ 1, NULL, filt_genfsdetach, filt_genfsvnode };
+static const struct filterops genfsread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_genfsdetach,
+	.f_event = filt_genfsread,
+};
+
+static const struct filterops genfswrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_genfsdetach,
+	.f_event = filt_genfswrite,
+};
+
+static const struct filterops genfsvnode_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_genfsdetach,
+	.f_event = filt_genfsvnode,
+};
 
 int
 genfs_kqfilter(void *v)

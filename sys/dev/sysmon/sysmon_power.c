@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.57 2015/12/14 01:08:47 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.58 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.57 2015/12/14 01:08:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58 2017/10/25 08:12:39 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -557,11 +557,19 @@ filt_sysmon_power_read(struct knote *kn, long hint)
 	return kn->kn_data > 0;
 }
 
-static const struct filterops sysmon_power_read_filtops =
-    { 1, NULL, filt_sysmon_power_rdetach, filt_sysmon_power_read };
+static const struct filterops sysmon_power_read_filtops = {
+    .f_isfd = 1,
+    .f_attach = NULL,
+    .f_detach = filt_sysmon_power_rdetach,
+    .f_event = filt_sysmon_power_read,
+};
 
-static const struct filterops sysmon_power_write_filtops =
-    { 1, NULL, filt_sysmon_power_rdetach, filt_seltrue };
+static const struct filterops sysmon_power_write_filtops = {
+    .f_isfd = 1,
+    .f_attach = NULL,
+    .f_detach = filt_sysmon_power_rdetach,
+    .f_event = filt_seltrue,
+};
 
 /*
  * sysmonkqfilter_power:

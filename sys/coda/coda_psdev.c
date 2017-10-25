@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.57 2016/07/07 06:55:40 msaitoh Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.58 2017/10/25 08:12:38 maya Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.57 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.58 2017/10/25 08:12:38 maya Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -486,8 +486,12 @@ filt_vc_nb_read(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops vc_nb_read_filtops =
-	{ 1, NULL, filt_vc_nb_detach, filt_vc_nb_read };
+static const struct filterops vc_nb_read_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_vc_nb_detach,
+	.f_event = filt_vc_nb_read,
+};
 
 int
 vc_nb_kqfilter(dev_t dev, struct knote *kn)

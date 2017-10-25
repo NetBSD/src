@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.56 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: qd.c,v 1.57 2017/10/25 08:12:38 maya Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.56 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.57 2017/10/25 08:12:38 maya Exp $");
 
 #include "opt_ddb.h"
 
@@ -1580,11 +1580,19 @@ filt_qdwrite(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops qdread_filtops =
-	{ 1, NULL, filt_qdrdetach, filt_qdread };
+static const struct filterops qdread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_qdrdetach,
+	.f_event = filt_qdread,
+};
 
-static const struct filterops qdwrite_filtops =
-	{ 1, NULL, filt_qdrdetach, filt_qdwrite };
+static const struct filterops qdwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_qdrdetach,
+	.f_event = filt_qdwrite,
+};
 
 int
 qdkqfilter(dev_t dev, struct knote *kn)

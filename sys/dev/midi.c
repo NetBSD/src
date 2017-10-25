@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.86 2017/06/01 09:44:30 pgoyette Exp $	*/
+/*	$NetBSD: midi.c,v 1.87 2017/10/25 08:12:38 maya Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.86 2017/06/01 09:44:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.87 2017/10/25 08:12:38 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -1763,8 +1763,12 @@ filt_midiread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops midiread_filtops =
-	{ 1, NULL, filt_midirdetach, filt_midiread };
+static const struct filterops midiread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_midirdetach,
+	.f_event = filt_midiread,
+};
 
 static void
 filt_midiwdetach(struct knote *kn)
@@ -1807,8 +1811,12 @@ filt_midiwrite(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops midiwrite_filtops =
-	{ 1, NULL, filt_midiwdetach, filt_midiwrite };
+static const struct filterops midiwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_midiwdetach,
+	.f_event = filt_midiwrite,
+};
 
 int
 midikqfilter(dev_t dev, struct knote *kn)

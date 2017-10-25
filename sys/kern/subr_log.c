@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.55 2015/05/20 11:18:36 pooka Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.56 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.55 2015/05/20 11:18:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.56 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,8 +289,12 @@ filt_logread(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops logread_filtops =
-	{ 1, NULL, filt_logrdetach, filt_logread };
+static const struct filterops logread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_logrdetach,
+	.f_event = filt_logread,
+};
 
 static int
 logkqfilter(dev_t dev, struct knote *kn)

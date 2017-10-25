@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.80 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.81 2017/10/25 08:12:39 maya Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.80 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.81 2017/10/25 08:12:39 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -676,8 +676,12 @@ filt_uscannerdetach(struct knote *kn)
 	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
 }
 
-static const struct filterops uscanner_seltrue_filtops =
-	{ 1, NULL, filt_uscannerdetach, filt_seltrue };
+static const struct filterops uscanner_seltrue_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_uscannerdetach,
+	.f_event = filt_seltrue,
+};
 
 int
 uscannerkqfilter(dev_t dev, struct knote *kn)

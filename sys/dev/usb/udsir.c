@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.4 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: udsir.c,v 1.5 2017/10/25 08:12:39 maya Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.4 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.5 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -662,10 +662,19 @@ udsir_poll(void *h, int events, struct lwp *l)
 	return revents;
 }
 
-static const struct filterops udsirread_filtops =
-	{ 1, NULL, filt_udsirrdetach, filt_udsirread };
-static const struct filterops udsirwrite_filtops =
-	{ 1, NULL, filt_udsirwdetach, filt_udsirwrite };
+static const struct filterops udsirread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_udsirrdetach,
+	.f_event = filt_udsirread,
+};
+
+static const struct filterops udsirwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_udsirwdetach,
+	.f_event = filt_udsirwrite,
+};
 
 static int
 udsir_kqfilter(void *h, struct knote *kn)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.26 2013/10/17 21:04:44 christos Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.27 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.26 2013/10/17 21:04:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.27 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,10 +409,19 @@ filt_smbfsvnode(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-static const struct filterops smbfsread_filtops =
-	{ 1, NULL, filt_smbfsdetach, filt_smbfsread };
-static const struct filterops smbfsvnode_filtops =
-	{ 1, NULL, filt_smbfsdetach, filt_smbfsvnode };
+static const struct filterops smbfsread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_smbfsdetach,
+	.f_event = filt_smbfsread,
+};
+
+static const struct filterops smbfsvnode_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_smbfsdetach,
+	.f_event = filt_smbfsvnode,
+};
 
 int
 smbfs_kqfilter(void *v)

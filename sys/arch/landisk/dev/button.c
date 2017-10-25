@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.8 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: button.c,v 1.9 2017/10/25 08:12:37 maya Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.8 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.9 2017/10/25 08:12:37 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -312,11 +312,19 @@ filt_btn_read(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops btn_read_filtops =
-    { 1, NULL, filt_btn_rdetach, filt_btn_read };
+static const struct filterops btn_read_filtops = {
+    .f_isfd = 1,
+    .f_attach = NULL,
+    .f_detach = filt_btn_rdetach,
+    .f_event = filt_btn_read,
+};
 
-static const struct filterops btn_write_filtops =
-    { 1, NULL, filt_btn_rdetach, filt_seltrue };
+static const struct filterops btn_write_filtops = {
+    .f_isfd = 1,
+    .f_attach = NULL,
+    .f_detach = filt_btn_rdetach,
+    .f_event = filt_seltrue,
+};
 
 int
 btnkqfilter(dev_t dev, struct knote *kn)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.78 2017/04/11 14:25:00 riastradh Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.79 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.78 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.79 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,10 +579,19 @@ filt_fifowrite(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops fiforead_filtops =
-	{ 1, NULL, filt_fifordetach, filt_fiforead };
-static const struct filterops fifowrite_filtops =
-	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
+static const struct filterops fiforead_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_fifordetach,
+	.f_event = filt_fiforead,
+};
+
+static const struct filterops fifowrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_fifowdetach,
+	.f_event = filt_fifowrite,
+};
 
 /* ARGSUSED */
 static int

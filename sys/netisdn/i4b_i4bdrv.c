@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.39 2014/07/25 08:10:40 dholland Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.40 2017/10/25 08:12:40 maya Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.39 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.40 2017/10/25 08:12:40 maya Exp $");
 
 #include "isdn.h"
 
@@ -991,11 +991,19 @@ filt_i4bread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops i4bread_filtops =
-	{ 1, NULL, filt_i4brdetach, filt_i4bread };
+static const struct filterops i4bread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4brdetach,
+	.f_event = filt_i4bread,
+};
 
-static const struct filterops i4b_seltrue_filtops =
-	{ 1, NULL, filt_i4brdetach, filt_seltrue };
+static const struct filterops i4b_seltrue_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4brdetach,
+	.f_event = filt_seltrue,
+};
 
 int
 isdnkqfilter(dev_t dev, struct knote *kn)

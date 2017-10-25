@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.27 2014/07/25 08:10:40 dholland Exp $
+ *	$Id: i4b_tel.c,v 1.28 2017/10/25 08:12:40 maya Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.27 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.28 2017/10/25 08:12:40 maya Exp $");
 
 #include "isdntel.h"
 
@@ -984,8 +984,12 @@ filt_i4btel_telread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops i4btel_telread_filtops =
-	{ 1, NULL, filt_i4btel_detach, filt_i4btel_telread };
+static const struct filterops i4btel_telread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4btel_detach,
+	.f_event = filt_i4btel_telread,
+};
 
 static int
 filt_i4btel_telwrite(struct knote *kn, long hint)
@@ -1003,8 +1007,12 @@ filt_i4btel_telwrite(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops i4btel_telwrite_filtops =
-	{ 1, NULL, filt_i4btel_detach, filt_i4btel_telwrite };
+static const struct filterops i4btel_telwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4btel_detach,
+	.f_event = filt_i4btel_telwrite,
+};
 
 static int
 filt_i4btel_dialread(struct knote *kn, long hint)
@@ -1018,11 +1026,19 @@ filt_i4btel_dialread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops i4btel_dialread_filtops =
-	{ 1, NULL, filt_i4btel_detach, filt_i4btel_dialread };
+static const struct filterops i4btel_dialread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4btel_detach,
+	.f_event = filt_i4btel_dialread,
+};
 
-static const struct filterops i4btel_seltrue_filtops =
-	{ 1, NULL, filt_i4btel_detach, filt_seltrue };
+static const struct filterops i4btel_seltrue_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_i4btel_detach,
+	.f_event = filt_seltrue,
+};
 
 int
 isdntelkqfilter(dev_t dev, struct knote *kn)

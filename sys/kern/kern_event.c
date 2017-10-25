@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.95 2017/10/25 06:02:40 riastradh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.96 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.95 2017/10/25 06:02:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.96 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,14 +119,33 @@ static const struct fileops kqueueops = {
 	.fo_restart = fnullop_restart,
 };
 
-static const struct filterops kqread_filtops =
-	{ 1, NULL, filt_kqdetach, filt_kqueue };
-static const struct filterops proc_filtops =
-	{ 0, filt_procattach, filt_procdetach, filt_proc };
-static const struct filterops file_filtops =
-	{ 1, filt_fileattach, NULL, NULL };
-static const struct filterops timer_filtops =
-	{ 0, filt_timerattach, filt_timerdetach, filt_timer };
+static const struct filterops kqread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_kqdetach,
+	.f_event = filt_kqueue,
+};
+
+static const struct filterops proc_filtops = {
+	.f_isfd = 0,
+	.f_attach = filt_procattach,
+	.f_detach = filt_procdetach,
+	.f_event = filt_proc,
+};
+
+static const struct filterops file_filtops = {
+	.f_isfd = 1,
+	.f_attach = filt_fileattach,
+	.f_detach = NULL,
+	.f_event = NULL,
+};
+
+static const struct filterops timer_filtops = {
+	.f_isfd = 0,
+	.f_attach = filt_timerattach,
+	.f_detach = filt_timerdetach,
+	.f_event = filt_timer,
+};
 
 static u_int	kq_ncallouts = 0;
 static int	kq_calloutmax = (4 * 1024);
@@ -729,8 +748,12 @@ filt_seltruedetach(struct knote *kn)
 	/* Nothing to do */
 }
 
-const struct filterops seltrue_filtops =
-	{ 1, NULL, filt_seltruedetach, filt_seltrue };
+const struct filterops seltrue_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_seltruedetach,
+	.f_event = filt_seltrue,
+};
 
 int
 seltrue_kqfilter(dev_t dev, struct knote *kn)

@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.35 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: putter.c,v 1.36 2017/10/25 08:12:38 maya Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.35 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.36 2017/10/25 08:12:38 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,8 +490,12 @@ filt_putter(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops putter_filtops =
-	{ 1, NULL, filt_putterdetach, filt_putter };
+static const struct filterops putter_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_putterdetach,
+	.f_event = filt_putter,
+};
 
 static int
 putter_fop_kqfilter(file_t *fp, struct knote *kn)

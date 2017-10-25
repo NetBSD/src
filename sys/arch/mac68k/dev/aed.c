@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.33 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: aed.c,v 1.34 2017/10/25 08:12:37 maya Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.33 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.34 2017/10/25 08:12:37 maya Exp $");
 
 #include "opt_adb.h"
 
@@ -597,11 +597,19 @@ filt_aedread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops aedread_filtops =
-	{ 1, NULL, filt_aedrdetach, filt_aedread };
+static const struct filterops aedread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_aedrdetach,
+	.f_event = filt_aedread,
+};
 
-static const struct filterops aed_seltrue_filtops =
-	{ 1, NULL, filt_aedrdetach, filt_seltrue };
+static const struct filterops aed_seltrue_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_aedrdetach,
+	.f_event = filt_seltrue,
+};
 
 int
 aedkqfilter(dev_t dev, struct knote *kn)

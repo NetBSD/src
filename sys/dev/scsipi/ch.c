@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.91 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: ch.c,v 1.92 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.91 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.92 2017/10/25 08:12:39 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,11 +487,19 @@ filt_chread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops chread_filtops =
-	{ 1, NULL, filt_chdetach, filt_chread };
+static const struct filterops chread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_chdetach,
+	.f_event = filt_chread,
+};
 
-static const struct filterops chwrite_filtops =
-	{ 1, NULL, filt_chdetach, filt_seltrue };
+static const struct filterops chwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_chdetach,
+	.f_event = filt_seltrue,
+};
 
 static int
 chkqfilter(dev_t dev, struct knote *kn)

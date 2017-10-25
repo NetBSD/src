@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.256 2017/07/06 17:42:39 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.257 2017/10/25 08:12:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.256 2017/07/06 17:42:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.257 2017/10/25 08:12:39 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2319,12 +2319,26 @@ filt_solisten(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops solisten_filtops =
-	{ 1, NULL, filt_sordetach, filt_solisten };
-static const struct filterops soread_filtops =
-	{ 1, NULL, filt_sordetach, filt_soread };
-static const struct filterops sowrite_filtops =
-	{ 1, NULL, filt_sowdetach, filt_sowrite };
+static const struct filterops solisten_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sordetach,
+	.f_event = filt_solisten,
+};
+
+static const struct filterops soread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sordetach,
+	.f_event = filt_soread,
+};
+
+static const struct filterops sowrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sowdetach,
+	.f_event = filt_sowrite,
+};
 
 int
 soo_kqfilter(struct file *fp, struct knote *kn)
