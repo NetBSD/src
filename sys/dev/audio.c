@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.413 2017/10/21 09:58:56 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.414 2017/10/25 08:12:38 maya Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.413 2017/10/21 09:58:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.414 2017/10/25 08:12:38 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3260,8 +3260,12 @@ filt_audioread(struct knote *kn, long hint)
 	return kn->kn_data > 0;
 }
 
-static const struct filterops audioread_filtops =
-	{ 1, NULL, filt_audiordetach, filt_audioread };
+static const struct filterops audioread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_audiordetach,
+	.f_event = filt_audioread,
+};
 
 static void
 filt_audiowdetach(struct knote *kn)
@@ -3305,8 +3309,12 @@ filt_audiowrite(struct knote *kn, long hint)
 	return kn->kn_data > 0;
 }
 
-static const struct filterops audiowrite_filtops =
-	{ 1, NULL, filt_audiowdetach, filt_audiowrite };
+static const struct filterops audiowrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_audiowdetach,
+	.f_event = filt_audiowrite,
+};
 
 int
 audio_kqfilter(struct audio_chan *chan, struct knote *kn)
