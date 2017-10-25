@@ -1,4 +1,4 @@
-.\" $NetBSD: slhci.4,v 1.10 2013/04/28 12:51:04 wiz Exp $
+.\" $NetBSD: slhci.4,v 1.10.20.1 2017/10/25 07:08:45 snj Exp $
 .\"
 .\" Not (c) 2007 Matthew Orgass
 .\" This file is public domain, meaning anyone can make any use of part or all
@@ -7,7 +7,7 @@
 .\" part of a collection then use in the collection is governed by the terms of
 .\" the collection.
 .\"
-.Dd April 28, 2013
+.Dd October 14, 2017
 .Dt SLHCI 4
 .Os
 .Sh NAME
@@ -21,6 +21,10 @@
 .Cd "usb*     at slhci?"
 .Ss ISA controllers
 .Cd "slhci*   at isa? port ? irq ?"
+.Cd "usb*     at slhci?"
+.Ss TURBOchannel controllers
+.Cd "tcu*     at tc? slot ? offset ?"
+.Cd "slhci*   at tcu?"
 .Cd "usb*     at slhci?"
 .Ss x68k
 .Cd "slhci0   at intio0 addr 0xece380 intr 251"
@@ -91,19 +95,20 @@ Hardware supported by the
 driver includes:
 .Bl -item -offset indent
 .It
-.Tn Ratoc
-.Em CFU1U
+Ratoc CFU1U
 .It
-.Tn Nereid
-Ethernet/USB/Memory board
+Nereid Ethernet/USB/Memory board
 .It
-.Tn Thylacine
-USB Host Controller
+Thylacine USB Host Controller
+.It
+flxd TC-USB
 .El
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr isa 4 ,
 .Xr pcmcia 4 ,
+.Xr tc 4 ,
+.Xr tcu 4 ,
 .Xr usb 4
 .Rs
 .%T Cypress SL811HS datasheet, errata, and application note
