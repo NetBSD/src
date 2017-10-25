@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.91 2017/10/23 10:52:07 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.92 2017/10/25 05:42:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.91 2017/10/23 10:52:07 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.92 2017/10/25 05:42:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,6 +384,10 @@ restartjob(struct job *jp)
 		error("Cannot continue job (%s)", strerror(errno));
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
 		if (WIFSTOPPED(ps->status)) {
+			VTRACE(DBG_JOBS, (
+			   "restartjob: [%jd] pid %d status change"
+			   " from %#x (stopped) to -1 (running)\n",
+			   (size_t)(jp-jobtab+1), ps->pid, ps->status));
 			ps->status = -1;
 			jp->state = JOBRUNNING;
 		}
@@ -720,9 +724,43 @@ jobidcmd(int argc, char **argv)
 {
 	struct job *jp;
 	int i;
+	int pg = 0, onep = 0, job = 0;
 
-	nextopt("");
+	while ((i = nextopt("gjp"))) {
+		switch (i) {
+		case 'g':	pg = 1;		break;
+		case 'j':	job = 1;	break;
+		case 'p':	onep = 1;	break;
+		}
+	}
+	CTRACE(DBG_JOBS, ("jobidcmd%s%s%s%s %s\n", pg ? " -g" : "",
+	    onep ? " -p" : "", job ? " -j" : "", jobs_invalid ? " [inv]" : "",
+	    *argptr ? *argptr : "<implicit %%>"));
+	if (pg + onep + job > 1)
+		error("-g -j and -p options cannot be combined");
+
+	if (argptr[0] && argptr[1])
+		error("usage: jobid [-g|-p|-r] jobid");
+
 	jp = getjob(*argptr, 0);
+	if (job) {
+		out1fmt("%%%jd\n", (size_t)(jp - jobtab + 1));
+		return 0;
+	}
+	if (pg) {
+		if (jp->pgrp != 0) {
+			out1fmt("%ld\n", (long)jp->pgrp);
+			return 0;
+		}
+		return 1;
+	}
+	if (onep) {
+		i = jp->nprocs - 1;
+		if (i < 0)
+			return 1;
+		out1fmt("%ld\n", (long)jp->ps[i].pid);
+		return 0;
+	}
 	for (i = 0 ; i < jp->nprocs ; ) {
 		out1fmt("%ld", (long)jp->ps[i].pid);
 		out1c(++i < jp->nprocs ? ' ' : '\n');
@@ -873,6 +911,7 @@ makejob(union node *node, int nprocs)
 	jp->used = 1;
 	jp->changed = 0;
 	jp->nprocs = 0;
+	jp->pgrp = 0;
 #if JOBS
 	jp->jobctl = jobctl;
 	set_curjob(jp, 1);
@@ -939,6 +978,7 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 			pgrp = pid;
 		else
 			pgrp = jp->ps[0].pid;
+		jp->pgrp = pgrp;
 		/* This can fail because we are doing it in the child also */
 		(void)setpgid(pid, pgrp);
 	}
