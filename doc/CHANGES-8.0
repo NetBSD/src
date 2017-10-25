@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.70 2017/10/24 09:21:36 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.71 2017/10/25 07:19:29 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6439,4 +6439,56 @@ sys/kern/subr_pcu.c				1.21
 	on ARM SMP, and possibly other ports using the PCU framework.
 	PR port-arm/52603.
 	[bouyer, ticket #326]
+
+bin/sh/expand.c					1.121
+bin/sh/sh.1					1.167 via patch
+
+	Fixed bugs in handling sh tilde expansions.
+	[kre, ticket #310]
+
+share/man/man4/u3g.4				1.9
+
+	u3ginit was split out and became umodeswitch.
+	[sevan, ticket #311]
+
+lib/libc/net/getaddrinfo.c			1.116
+lib/libc/resolv/res_mkquery.c			1.16
+
+	PR/52578:
+	- Set the AD bit when DNSSEC is enabled
+	- getaddrinfo: Handle EDNS fallback
+	[jdolecek, ticket #317]
+
+sys/dist/pf/net/pf_ioctl.c			1.52
+
+	Fix panic when pf module loading is specified via boot.cfg.
+	PR kern/52620
+	[pgoyette, ticket #322]
+
+bin/sh/sh.1					1.168
+
+	Fix typo: s/one or mode/one or more/
+	[kre, ticket #323]
+
+sys/arch/x86/x86/vmt.c				1.18
+
+	Check that the host supports GET_SPEED as well as
+	GET_VERSION before deciding vmt_probe has succeeded.
+	Fixes harmless warning under qemu.
+	[maya, ticket #325]
+
+share/man/man4/slhci.4				1.11-1.12
+
+	Add TC-USB.
+	[flxd, ticket #327]
+
+sys/net/if_vlan.c				1.103
+
+	Set IFEF_START_MPSAFE by default
+	[ozaki-r, ticket #328]
+
+sys/net/bpf.c					1.217
+
+	Turn on D_MPSAFE flag of bpf_cdevsw that is already MP-safe
+	[ozaki-r, ticket #329]
 
