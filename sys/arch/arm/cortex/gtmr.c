@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.20 2017/09/09 13:14:30 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.21 2017/10/25 16:08:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.20 2017/09/09 13:14:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.21 2017/10/25 16:08:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -308,7 +308,7 @@ gtmr_intr(void *arg)
 #endif
 
 #if 0
-	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n", 
+	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n",
 	     __func__, cf, ci->ci_data.cpu_name, now, delta);
 #endif
 	KASSERTMSG(delta > sc->sc_autoinc / 100,
