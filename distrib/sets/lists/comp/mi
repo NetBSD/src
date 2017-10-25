@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2152 2017/10/16 11:38:25 maya Exp $
+#	$NetBSD: mi,v 1.2153 2017/10/25 06:32:59 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9570,9 +9570,11 @@
 ./usr/share/man/cat3/tcgetattr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcgetpgrp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcgetsid.0			comp-c-catman		.cat
+./usr/share/man/cat3/tcgetwinsize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsendbreak.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsetattr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsetpgrp.0		comp-c-catman		.cat
+./usr/share/man/cat3/tcsetwinsize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/td_close.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/td_map_pth2thr.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/td_open.0			comp-obsolete		obsolete
@@ -17081,9 +17083,11 @@
 ./usr/share/man/html3/tcgetattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcgetpgrp.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcgetsid.html		comp-c-htmlman		html
+./usr/share/man/html3/tcgetwinsize.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsendbreak.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsetattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsetpgrp.html		comp-c-htmlman		html
+./usr/share/man/html3/tcsetwinsize.html		comp-c-htmlman		html
 ./usr/share/man/html3/td_close.html		comp-obsolete		obsolete
 ./usr/share/man/html3/td_map_pth2thr.html	comp-obsolete		obsolete
 ./usr/share/man/html3/td_open.html		comp-obsolete		obsolete
@@ -24653,9 +24657,11 @@
 ./usr/share/man/man3/tcgetattr.3		comp-c-man		.man
 ./usr/share/man/man3/tcgetpgrp.3		comp-c-man		.man
 ./usr/share/man/man3/tcgetsid.3			comp-c-man		.man
+./usr/share/man/man3/tcgetwinsize.3		comp-c-man		.man
 ./usr/share/man/man3/tcsendbreak.3		comp-c-man		.man
 ./usr/share/man/man3/tcsetattr.3		comp-c-man		.man
 ./usr/share/man/man3/tcsetpgrp.3		comp-c-man		.man
+./usr/share/man/man3/tcsetwinsize.3		comp-c-man		.man
 ./usr/share/man/man3/td_close.3			comp-obsolete		obsolete
 ./usr/share/man/man3/td_map_pth2thr.3		comp-obsolete		obsolete
 ./usr/share/man/man3/td_open.3			comp-obsolete		obsolete

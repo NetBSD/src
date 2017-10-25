@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.277 2017/10/05 04:38:08 dholland Exp $
+#	$NetBSD: shlib_version,v 1.278 2017/10/25 06:32:59 kre Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -52,4 +52,4 @@
 # - clean-up initialisation order between crt0.o, rtld and libc.
 # - move environ and __ps_strings from crt0.o into libc.
 major=12
-minor=208
+minor=209
