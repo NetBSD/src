@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.3 2017/10/24 08:38:59 snj Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.4 2017/10/25 07:12:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,11 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.3 2017/10/24 08:38:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.4 2017/10/25 07:12:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -122,10 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.3 2017/10/24 08:38:59 snj Exp $")
 #endif
 
 #include "ioconf.h"
-
-#ifdef NET_MPSAFE
-#define VLAN_MPSAFE		1
-#endif
 
 struct vlan_mc_entry {
 	LIST_ENTRY(vlan_mc_entry)	mc_entries;
@@ -342,9 +337,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = ifv;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef VLAN_MPSAFE
 	ifp->if_extflags = IFEF_START_MPSAFE;
-#endif
 	ifp->if_start = vlan_start;
 	ifp->if_transmit = vlan_transmit;
 	ifp->if_ioctl = vlan_ioctl;
@@ -1182,10 +1175,6 @@ vlan_start(struct ifnet *ifp)
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
 	int error;
-
-#ifndef NET_MPSAFE
-	KASSERT(KERNEL_LOCKED_P());
-#endif
 
 	mib = vlan_getref_linkmib(ifv, &psref);
 	if (mib == NULL)
