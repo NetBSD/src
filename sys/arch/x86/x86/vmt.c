@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.17 2017/06/01 02:45:08 chs Exp $ */
+/* $NetBSD: vmt.c,v 1.17.2.1 2017/10/25 07:05:55 snj Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -126,28 +126,34 @@ static void vmt_pswitch_event(void *);
 
 extern char hostname[MAXHOSTNAMELEN];
 
+static void
+vmt_probe_cmd(struct vm_backdoor *frame, uint16_t cmd)
+{
+	memset(frame, 0, sizeof(*frame));
+
+	(frame->eax).word = VM_MAGIC;
+	(frame->ebx).word = ~VM_MAGIC;
+	(frame->ecx).part.low = cmd;
+	(frame->ecx).part.high = 0xffff;
+	(frame->edx).part.low  = VM_PORT_CMD;
+	(frame->edx).part.high = 0;
+
+	vm_cmd(frame);
+}
+
 static bool
-vmt_probe(uint32_t *type)
+vmt_probe(void)
 {
 	struct vm_backdoor frame;
 
-	memset(&frame, 0, sizeof(frame));
-
-	frame.eax.word = VM_MAGIC;
-	frame.ebx.word = ~VM_MAGIC;
-	frame.ecx.part.low = VM_CMD_GET_VERSION;
-	frame.ecx.part.high = 0xffff;
-	frame.edx.part.low  = VM_PORT_CMD;
-	frame.edx.part.high = 0;
-
-	vm_cmd(&frame);
-
+	vmt_probe_cmd(&frame, VM_CMD_GET_VERSION);
 	if (frame.eax.word == 0xffffffff ||
 	    frame.ebx.word != VM_MAGIC)
 		return false;
 
-	if (type)
-		*type = frame.ecx.word;
+	vmt_probe_cmd(&frame, VM_CMD_GET_SPEED);
+	if (frame.eax.word == VM_MAGIC)
+		return false;
 
 	return true;
 }
@@ -163,23 +169,7 @@ vmt_match(device_t parent, cfdata_t match, void *aux)
 	if ((ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY)) == 0)
 		return 0;
 
-	return vmt_probe(NULL);
-}
-
-static const char *
-vmt_type(void)
-{
-	uint32_t vmwaretype = 0;
-
-	vmt_probe(&vmwaretype);
-
-	switch (vmwaretype) {
-	case 1:	return "Express";
-	case 2:	return "ESX Server";
-	case 3:	return "VMware Server";
-	case 4: return "Workstation";
-	default: return "Unknown";
-	}
+	return vmt_probe();
 }
 
 static void
@@ -189,7 +179,6 @@ vmt_attach(device_t parent, device_t self, void *aux)
 	struct vmt_softc *sc = device_private(self);
 
 	aprint_naive("\n");
-	aprint_normal(": %s\n", vmt_type());
 
 	sc->sc_dev = self;
 	sc->sc_log = NULL;
