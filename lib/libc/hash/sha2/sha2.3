@@ -1,4 +1,4 @@
-.\" $NetBSD: sha2.3,v 1.6 2017/07/03 21:32:49 wiz Exp $
+.\" $NetBSD: sha2.3,v 1.7 2017/10/25 16:04:00 abhinav Exp $
 .\"	$OpenBSD: sha2.3,v 1.11 2004/06/22 01:57:29 jfb Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -25,6 +25,15 @@
 .Dt SHA2 3
 .Os
 .Sh NAME
+.Nm SHA224_Init ,
+.Nm SHA224_Update ,
+.Nm SHA224_Pad ,
+.Nm SHA224_Final ,
+.Nm SHA224_Transform ,
+.Nm SHA224_End ,
+.Nm SHA224_File ,
+.Nm SHA224_FileChunk ,
+.Nm SHA224_Data ,
 .Nm SHA256_Init ,
 .Nm SHA256_Update ,
 .Nm SHA256_Pad ,
@@ -33,7 +42,25 @@
 .Nm SHA256_End ,
 .Nm SHA256_File ,
 .Nm SHA256_FileChunk ,
-.Nm SHA256_Data
+.Nm SHA256_Data ,
+.Nm SHA384_Init ,
+.Nm SHA384_Update ,
+.Nm SHA384_Pad ,
+.Nm SHA384_Final ,
+.Nm SHA384_Transform ,
+.Nm SHA384_End ,
+.Nm SHA384_File ,
+.Nm SHA384_FileChunk ,
+.Nm SHA384_Data ,
+.Nm SHA512_Init ,
+.Nm SHA512_Update ,
+.Nm SHA512_Pad ,
+.Nm SHA512_Final ,
+.Nm SHA512_Transform ,
+.Nm SHA512_End ,
+.Nm SHA512_File ,
+.Nm SHA512_FileChunk ,
+.Nm SHA512_Data
 .Nd calculate the NIST Secure Hash Standard (version 2)
 .Sh SYNOPSIS
 .In sys/types.h
@@ -285,7 +312,8 @@ The SHA2 functions appeared in
 and
 .Nx 3.0 .
 .Sh AUTHORS
-This implementation of the SHA functions was written by Aaron D. Gifford.
+This implementation of the SHA functions was written by
+.An Aaron D. Gifford.
 .Pp
 The
 .Fn SHA256_End ,
@@ -293,7 +321,8 @@ The
 .Fn SHA256_FileChunk ,
 and
 .Fn SHA256_Data
-helper functions are derived from code written by Poul-Henning Kamp.
+helper functions are derived from code written by
+.An Poul-Henning Kamp .
 .Sh CAVEATS
 This implementation of the Secure Hash Standard has not been validated by
 NIST and as such is not in official compliance with the standard.
