@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.106 2017/10/23 09:31:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.107 2017/10/25 04:45:41 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -972,8 +972,13 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		high = (nvmreg >> 12) & 0x0f;
 		low = (nvmreg >> 4) & 0xff;
 		id = nvmreg & 0x0f;
-		aprint_normal(" NVM Image Version %u.%u ID 0x%x,", high, low,
-		    id);
+		aprint_normal(" NVM Image Version %u.", high);
+		if (hw->mac.type == ixgbe_mac_X540)
+			str = "%x";
+		else
+			str = "%02x";
+		aprint_normal(str, low);
+		aprint_normal(" ID 0x%x,", id);
 		break;
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550:
@@ -982,7 +987,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 			break;
 		high = (nvmreg >> 12) & 0x0f;
 		low = nvmreg & 0xff;
-		aprint_normal(" NVM Image Version %u.%u,", high, low);
+		aprint_normal(" NVM Image Version %u.%02x,", high, low);
 		break;
 	default:
 		break;
@@ -998,7 +1003,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		high = (nvmreg >> 12) & 0x0f;
 		low = (nvmreg >> 4) & 0xff;
 		id = nvmreg & 0x000f;
-		aprint_normal(" PHY FW Revision %u.%u ID 0x%x,", high, low,
+		aprint_normal(" PHY FW Revision %u.%02x ID 0x%x,", high, low,
 		    id);
 		break;
 	default:
@@ -1017,7 +1022,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 			aprint_normal(" NVM Map version %u.%02x,", high, low);
 		}
 		hw->eeprom.ops.read(hw, IXGBE_OEM_NVM_IMAGE_VER, &nvmreg);
-		if (nvmreg == 0xffff) {
+		if (nvmreg != 0xffff) {
 			high = (nvmreg >> 12) & 0x0f;
 			low = nvmreg & 0x00ff;
 			aprint_verbose(" OEM NVM Image version %u.%02x,", high,
