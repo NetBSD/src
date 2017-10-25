@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.12 2010/03/22 19:30:54 joerg Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.13 2017/10/25 16:49:24 abhinav Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
@@ -16,6 +16,7 @@
 .Nm svc_getreq_poll ,
 .Nm svc_getreqset ,
 .Nm svc_getrpccaller ,
+.Nm __svc_getcallercreds ,
 .Nm svc_pollset ,
 .Nm svc_run ,
 .Nm svc_sendreply
@@ -73,7 +74,6 @@ See
 for the definition of the
 .Dv SVCXPRT
 data structure.
-.Pp
 .Bl -tag -width __svc_getcallercreds()
 .It Fn svc_dg_enablecache
 This function allocates a duplicate request cache for the
@@ -119,7 +119,6 @@ This variable is read-only (do not pass its address to
 yet it may change after calls to
 .Fn svc_getreqset
 or any creation routines.
-.Pp
 .It Fn svc_freeargs
 A function macro that frees any data allocated by the
 RPC/XDR system when it decoded the arguments to a service procedure
@@ -131,7 +130,6 @@ if the results were successfully
 freed, and
 .Dv FALSE
 otherwise.
-.Pp
 .It Fn svc_getargs
 A function macro that decodes the arguments of an
 RPC request associated with the RPC
@@ -151,7 +149,6 @@ otherwise.
 .It Fn svc_getreq_common
 This routine is called to handle a request on the given
 file descriptor.
-.Pp
 .It Fn svc_getreq_poll
 This routine is only of interest if a service implementor
 does not call
@@ -173,7 +170,6 @@ structures on which the
 was done.
 It is assumed to be an array large enough to
 contain the maximal number of descriptors allowed.
-.Pp
 .It Fn svc_getreqset
 This routine is only of interest if a service implementor
 does not call
@@ -189,13 +185,11 @@ The routine returns when all file descriptors
 associated with the value of
 .Fa rdfds
 have been serviced.
-.Pp
 .It Fn svc_getrpccaller
 The approved way of getting the network address of the caller
 of a procedure associated with the
 RPC service transport handle
 .Fa xprt .
-.Pp
 .It Fn __svc_getcallercreds
 .Em Warning: this macro is specific to
 .Nx
@@ -224,7 +218,6 @@ is made in the current implementation in
 Service implementors who do not call
 .Fn svc_run
 and who wish to use this array must perform this derivation themselves.
-.Pp
 .It Fn svc_run
 This routine never returns.
 It waits for RPC
@@ -235,7 +228,6 @@ when one arrives.
 This procedure is usually waiting for the
 .Xr poll 2
 system call to return.
-.Pp
 .It Fn svc_sendreply
 Called by an RPC service's dispatch routine to send the results of a
 remote procedure call.
