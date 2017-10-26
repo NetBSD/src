@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.415 2017/10/26 22:38:27 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.416 2017/10/26 22:45:00 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.415 2017/10/26 22:38:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.416 2017/10/26 22:45:00 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4769,14 +4769,16 @@ cleanup:
 		blks = ai->hiwat;
 		if (blks > vc->sc_mpr.maxblks)
 			blks = vc->sc_mpr.maxblks;
-		if (blks < 2)
-			blks = 2;
+		if (blks < PREFILL_BLOCKS + 1)
+			blks = PREFILL_BLOCKS + 1;
 		vc->sc_mpr.usedhigh = blks * vc->sc_mpr.blksize;
 	}
 	if (SPECIFIED(ai->lowat)) {
 		blks = ai->lowat;
 		if (blks > vc->sc_mpr.maxblks - 1)
 			blks = vc->sc_mpr.maxblks - 1;
+		if (blks < PREFILL_BLOCKS)
+			blks = PREFILL_BLOCKS;
 		vc->sc_mpr.usedlow = blks * vc->sc_mpr.blksize;
 	}
 	if (SPECIFIED(ai->hiwat) || SPECIFIED(ai->lowat)) {
