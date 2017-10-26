@@ -1,0 +1,6 @@
+#	$NetBSD: files.ti,v 1.1 2017/10/26 01:16:32 jakllsch Exp $
+#
+
+include "arch/evbarm/conf/files.fdt"
+
+include "arch/arm/ti/files.ti"
