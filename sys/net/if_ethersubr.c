@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.244 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.245 2017/10/26 09:41:15 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.244 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.245 2017/10/26 09:41:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1010,13 +1010,13 @@ ether_ifdetach(struct ifnet *ifp)
 		vlan_ifdetach(ifp);
 #endif
 
-	mutex_enter(ec->ec_lock);
+	ETHER_LOCK(ec);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
 		kmem_intr_free(enm, sizeof(*enm));
 		ec->ec_multicnt--;
 	}
-	mutex_exit(ec->ec_lock);
+	ETHER_UNLOCK(ec);
 
 	mutex_destroy(ec->ec_lock);
 
@@ -1236,7 +1236,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	if (enm == NULL)
 		return ENOBUFS;
 
-	mutex_enter(ec->ec_lock);
+	ETHER_LOCK(ec);
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0)
 		goto out;
@@ -1275,7 +1275,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	error = ENETRESET;
 	enm = NULL;
 out:
-	mutex_exit(ec->ec_lock);
+	ETHER_UNLOCK(ec);
 	if (enm != NULL)
 		kmem_intr_free(enm, sizeof(*enm));
 	return error;
@@ -1292,7 +1292,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	u_char addrhi[ETHER_ADDR_LEN];
 	int error;
 
-	mutex_enter(ec->ec_lock);
+	ETHER_LOCK(ec);
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0)
 		goto error;
@@ -1317,7 +1317,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	 */
 	LIST_REMOVE(enm, enm_list);
 	ec->ec_multicnt--;
-	mutex_exit(ec->ec_lock);
+	ETHER_UNLOCK(ec);
 
 	kmem_intr_free(enm, sizeof(*enm));
 	/*
@@ -1326,7 +1326,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	 */
 	return ENETRESET;
 error:
-	mutex_exit(ec->ec_lock);
+	ETHER_UNLOCK(ec);
 	return error;
 }
 
@@ -1561,10 +1561,10 @@ retry:
 	multicnt = ec->ec_multicnt;
 	addrs = kmem_alloc(sizeof(*addrs) * multicnt, KM_SLEEP);
 
-	mutex_enter(ec->ec_lock);
+	ETHER_LOCK(ec);
 	if (multicnt < ec->ec_multicnt) {
 		/* The number of multicast addresses have increased */
-		mutex_exit(ec->ec_lock);
+		ETHER_UNLOCK(ec);
 		kmem_free(addrs, sizeof(*addrs) * multicnt);
 		goto retry;
 	}
@@ -1577,7 +1577,7 @@ retry:
 		memcpy(addr->enm_addrhi, enm->enm_addrhi, ETHER_ADDR_LEN);
 		i++;
 	}
-	mutex_exit(ec->ec_lock);
+	ETHER_UNLOCK(ec);
 
 	error = 0;
 	written = 0;
