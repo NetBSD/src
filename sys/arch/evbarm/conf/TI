@@ -1,4 +1,4 @@
-#	$NetBSD: TI,v 1.1 2017/10/26 01:16:32 jakllsch Exp $
+#	$NetBSD: TI,v 1.2 2017/10/26 23:28:14 jmcneill Exp $
 #
 
 include "arch/evbarm/conf/std.ti"
@@ -34,9 +34,11 @@ fdt* 		at fdtbus?
 cpus*           at fdt? pass 0
 cpu*            at cpus?
 
+am3prcm*	at fdt? pass 1
+
 com*		at fdt?
 
-omapintc* 	at fdt? pass 1
+omapintc* 	at fdt? pass 2
 omaptimer*	at fdt?
 
 fregulator*     at fdt?
