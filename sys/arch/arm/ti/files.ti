@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.1 2017/10/26 01:16:32 jakllsch Exp $
+#	$NetBSD: files.ti,v 1.2 2017/10/26 23:28:15 jmcneill Exp $
 #
 
 include arch/arm/pic/files.pic
@@ -15,10 +15,19 @@ file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/ti/ti_platform.c
 
-# interrupt controller
+# Interrupt controller
 device	omapintc: pic, pic_splfuncs
 attach  omapintc at fdt
 file	arch/arm/ti/ti_omapintc.c omapintc
+
+# PRCM
+define	ti_prcm
+file	arch/arm/ti/ti_prcm.c		ti_prcm
+
+# PRCM (AM3xxx)
+device	am3prcm: ti_prcm
+attach	am3prcm at fdt with am3_prcm
+file	arch/arm/ti/am3_prcm.c		am3_prcm
 
 # UART
 attach	com at fdt with ti_com
@@ -29,6 +38,7 @@ device	omaptimer
 attach  omaptimer at fdt
 file	arch/arm/ti/ti_omaptimer.c	omaptimer
 
+# Ethernet
 device  cpsw: ether, ifnet, arp, mii, mii_phy
 attach  cpsw at fdt
 file    arch/arm/ti/if_cpsw.c                 cpsw
