@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.414 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: audio.c,v 1.415 2017/10/26 22:38:27 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.414 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.415 2017/10/26 22:38:27 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -205,6 +205,7 @@ int	audiodebug = AUDIO_DEBUG;
 #define DPRINTFN(n,x)
 #endif
 
+#define PREFILL_BLOCKS	3	/* no. audioblocks required to start stream */
 #define ROUNDSIZE(x)	(x) &= -16	/* round to nice boundary */
 #define SPECIFIED(x)	((int)(x) != ~0)
 #define SPECIFIED_CH(x)	((x) != (u_char)~0)
@@ -313,6 +314,7 @@ int	audio_set_defaults(struct audio_softc *, u_int,
 static int audio_sysctl_frequency(SYSCTLFN_PROTO);
 static int audio_sysctl_precision(SYSCTLFN_PROTO);
 static int audio_sysctl_channels(SYSCTLFN_PROTO);
+static int audio_sysctl_latency(SYSCTLFN_PROTO);
 
 static int	audiomatch(device_t, cfdata_t, void *);
 static void	audioattach(device_t, device_t, void *);
@@ -498,6 +500,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	sc->sc_recopens = 0;
 	sc->sc_aivalid = false;
  	sc->sc_ready = true;
+	sc->sc_latency = audio_blk_ms * PREFILL_BLOCKS;
 
  	sc->sc_format[0].mode = AUMODE_PLAY | AUMODE_RECORD;
  	sc->sc_format[0].encoding =
@@ -787,6 +790,15 @@ audioattach(device_t parent, device_t self, void *aux)
 			CTLTYPE_INT, "channels",
 			SYSCTL_DESCR("intermediate channels"),
 			audio_sysctl_channels, 0,
+			(void *)sc, 0,
+			CTL_HW, node->sysctl_num,
+			CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
+			CTLFLAG_READWRITE,
+			CTLTYPE_INT, "latency",
+			SYSCTL_DESCR("latency"),
+			audio_sysctl_latency, 0,
 			(void *)sc, 0,
 			CTL_HW, node->sysctl_num,
 			CTL_CREATE, CTL_EOL);
@@ -2634,8 +2646,8 @@ audio_calc_blksize(struct audio_softc *sc, const audio_params_t *parm)
 {
 	int blksize;
 
-	blksize = parm->sample_rate * audio_blk_ms / 1000 *
-	     parm->channels * parm->precision / NBBY;
+	blksize = parm->sample_rate * sc->sc_latency * parm->channels /
+	    1000 * parm->precision / NBBY / PREFILL_BLOCKS;
 	return blksize;
 }
 
@@ -4106,7 +4118,7 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode)
 	    &sc->sc_encodings);
 
 	if (error == 0)
-		error = audiosetinfo(sc, &ai, false, vc);
+		error = audiosetinfo(sc, &ai, true, vc);
 
 	return error;
 }
@@ -5950,6 +5962,64 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting channels, "
 				 "please check hardware capabilities\n");
+	mutex_exit(sc->sc_lock);
+
+	return error;
+}
+
+/* sysctl helper to set audio latency */
+static int
+audio_sysctl_latency(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct audio_softc *sc;
+	int t, error;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+
+	t = sc->sc_latency;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	mutex_enter(sc->sc_lock);
+
+	/* This may not change when a virtual channel is open */
+	if (sc->sc_opens || sc->sc_recopens) {
+		mutex_exit(sc->sc_lock);
+		return EBUSY;
+	}
+
+	if (t < 0 || t > 4000) {
+		mutex_exit(sc->sc_lock);
+		return EINVAL;
+	}
+
+	if (t == 0)
+		sc->sc_latency = audio_blk_ms * PREFILL_BLOCKS;
+	else
+		sc->sc_latency = (unsigned int)t;
+
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "Error setting latency, "
+				 "latency restored to default\n");
+		sc->sc_latency = audio_blk_ms * PREFILL_BLOCKS;
+		error = audio_set_vchan_defaults(sc,
+	    	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
+	}
+
+	if (sc->sc_vchan_params.sample_rate > 0 &&
+	    sc->sc_vchan_params.channels > 0 &&
+	    sc->sc_vchan_params.precision > 0) {
+		    sc->sc_latency = sc->sc_hwvc->sc_mpr.blksize * 1000 * 
+		    PREFILL_BLOCKS / sc->sc_vchan_params.sample_rate /
+		    sc->sc_vchan_params.channels * NBBY /
+		    sc->sc_vchan_params.precision;
+	}
 	mutex_exit(sc->sc_lock);
 
 	return error;
