@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.107 2017/10/25 04:45:41 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.108 2017/10/26 01:40:33 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1316,15 +1316,12 @@ ixgbe_add_media_types(struct adapter *adapter)
 		ADD(IFM_10G_T | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_T) {
-		ADD(IFM_1000_T, 0);
 		ADD(IFM_1000_T | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_100BASE_TX) {
-		ADD(IFM_100_TX, 0);
 		ADD(IFM_100_TX | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10BASE_T) {
-		ADD(IFM_10_T, 0);
 		ADD(IFM_10_T | IFM_FDX, 0);
 	}
 
@@ -1371,7 +1368,6 @@ ixgbe_add_media_types(struct adapter *adapter)
 	}
 #endif
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX) {
-		ADD(IFM_1000_KX, 0);
 		ADD(IFM_1000_KX | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_2500BASE_KX) {
@@ -1387,11 +1383,6 @@ ixgbe_add_media_types(struct adapter *adapter)
 		device_printf(dev, "Media supported: 1000baseBX\n");
 	/* XXX no ifmedia_set? */
 	
-	if (hw->device_id == IXGBE_DEV_ID_82598AT) {
-		ADD(IFM_1000_T | IFM_FDX, 0);
-		ADD(IFM_1000_T, 0);
-	}
-
 	ADD(IFM_AUTO, 0);
 
 #undef ADD
