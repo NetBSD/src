@@ -1,0 +1,34 @@
+#	$NetBSD: files.ti,v 1.1 2017/10/26 01:16:32 jakllsch Exp $
+#
+
+include arch/arm/pic/files.pic
+include arch/arm/cortex/files.cortex
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/ti/ti_platform.c
+
+# interrupt controller
+device	omapintc: pic, pic_splfuncs
+attach  omapintc at fdt
+file	arch/arm/ti/ti_omapintc.c omapintc
+
+# UART
+attach	com at fdt with ti_com
+file	arch/arm/ti/ti_com.c	ti_com needs-flag
+
+# Timer
+device	omaptimer
+attach  omaptimer at fdt
+file	arch/arm/ti/ti_omaptimer.c	omaptimer
+
+device  cpsw: ether, ifnet, arp, mii, mii_phy
+attach  cpsw at fdt
+file    arch/arm/ti/if_cpsw.c                 cpsw

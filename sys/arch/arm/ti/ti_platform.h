@@ -1,0 +1,8 @@
+#ifndef _ARM_TI_TI_PLATFORM_H_
+#define _ARM_TI_TI_PLATFORM_H_
+
+#define TI_CORE_VBASE 0xe4c00000
+#define TI_CORE_PBASE 0x44c00000
+#define TI_CORE_SIZE  0x00400000
+
+#endif /* _ARM_TI_TI_PLATFORM_H_ */
