@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usdhc.c,v 1.4 2017/06/09 18:14:59 ryo Exp $ */
+/*	$NetBSD: imx6_usdhc.c,v 1.5 2017/10/26 05:08:30 ryo Exp $ */
 
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.4 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.5 2017/10/26 05:08:30 ryo Exp $");
 
 #include "imxgpio.h"
 
@@ -125,7 +125,7 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal(": Ultra Secured Digial Host Controller\n");
+	aprint_normal(": Ultra Secured Digital Host Controller\n");
 	aprint_naive("\n");
 	sc->sc_sdhc.sc_host = sc->sc_hosts;
 
