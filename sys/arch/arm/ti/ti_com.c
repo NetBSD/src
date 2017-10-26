@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.2 2017/10/26 10:56:57 jmcneill Exp $ */
+/* $NetBSD: ti_com.c,v 1.3 2017/10/26 23:28:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.2 2017/10/26 10:56:57 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.3 2017/10/26 23:28:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.2 2017/10/26 10:56:57 jmcneill Exp $");
 #include <dev/ic/comvar.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <arch/arm/ti/ti_prcm.h>
 
 static int ti_com_match(device_t, cfdata_t, void *);
 static void ti_com_attach(device_t, device_t, void *);
@@ -77,6 +79,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bsh;
 	bus_space_tag_t bst;
 	char intrstr[128];
+	struct clk *hwmod;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -100,6 +103,13 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
 		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
+
+	hwmod = ti_prcm_get_hwmod(phandle, 0);
+	KASSERT(hwmod != NULL);
+	if (clk_enable(hwmod) != 0) {
+		aprint_error(": couldn't enable module\n");
 		return;
 	}
 
