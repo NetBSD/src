@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $ */
+/* $NetBSD: ti_com.c,v 1.2 2017/10/26 10:56:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.2 2017/10/26 10:56:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,9 +54,6 @@ static const char * const compatible[] = {
 struct ti_com_softc {
 	struct com_softc ssc_sc;
 	void *ssc_ih;
-
-	struct clk *ssc_clk;
-	struct fdtbus_reset *ssc_rst;
 };
 
 CFATTACH_DECL_NEW(ti_com, sizeof(struct ti_com_softc),
@@ -76,6 +73,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	struct ti_com_softc * const ssc = device_private(self);
 	struct com_softc * const sc = &ssc->ssc_sc;
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	bus_space_handle_t bsh;
 	bus_space_tag_t bst;
 	char intrstr[128];
@@ -83,7 +81,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
@@ -92,19 +90,11 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	ssc->ssc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
-	ssc->ssc_rst = fdtbus_reset_get_index(faa->faa_phandle, 0);
-
-#if 0
-	if (ssc->ssc_clk == NULL) {
-		aprint_error(": couldn't get frequency\n");
+	if (of_getprop_uint32(phandle, "clock-frequency", &sc->sc_frequency) != 0) {
+		aprint_error(": missing 'clock-frequency' property\n");
 		return;
 	}
 
-	sc->sc_frequency = clk_get_rate(ssc->ssc_clk);
-#else
-	sc->sc_frequency = 48000000;
-#endif
 	sc->sc_type = COM_TYPE_NORMAL;
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
@@ -118,12 +108,12 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 	aprint_naive("\n");
 
-	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
 
-	ssc->ssc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
+	ssc->ssc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
 	    FDT_INTR_MPSAFE, comintr, sc);
 	if (ssc->ssc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
