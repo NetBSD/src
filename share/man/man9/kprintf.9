@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.35 2017/10/27 11:15:03 utkarsh009 Exp $
+.\"     $NetBSD: kprintf.9,v 1.36 2017/10/27 12:25:14 joerg Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .In sys/systm.h
 .Ft void
 .Fn "device_printf" "device_t" "const char *format" "..."
-.Ft int
+.Ft void
 .Fn "printf" "const char *format" "..."
 .Ft void
 .Fn "printf_nolog" "const char *format" "..."

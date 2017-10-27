@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.273 2017/10/27 09:59:17 utkarsh009 Exp $	*/
+/*	$NetBSD: systm.h,v 1.274 2017/10/27 12:25:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -221,7 +221,7 @@ void	printf_tolog(const char *, ...) __printflike(1, 2);
 
 void	printf_nolog(const char *, ...) __printflike(1, 2);
 
-int	printf(const char *, ...) __printflike(1, 2);
+void	printf(const char *, ...) __printflike(1, 2);
 
 int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 

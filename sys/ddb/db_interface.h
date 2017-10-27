@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.34 2017/10/27 09:59:16 utkarsh009 Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.35 2017/10/27 12:25:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -75,6 +75,6 @@ void		db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 #define	db_stacktrace() \
     db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
-	true, 65535, "", (void *)printf)
+	true, 65535, "", printf)
 
 #endif /* _DDB_DB_INTERFACE_H_ */

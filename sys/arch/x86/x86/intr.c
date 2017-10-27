@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.104 2017/10/27 09:59:16 utkarsh009 Exp $	*/
+/*	$NetBSD: intr.c,v 1.105 2017/10/27 12:25:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.104 2017/10/27 09:59:16 utkarsh009 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.105 2017/10/27 12:25:14 joerg Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1374,7 +1374,7 @@ intr_printconfig(void)
 	CPU_INFO_ITERATOR cii;
 	void (*pr)(const char *, ...);
 
-	pr = (void *)printf;
+	pr = printf;
 #ifdef DDB
 	extern int db_active;
 	if (db_active) {
