@@ -1,4 +1,4 @@
-#	$NetBSD: algorithms.sh,v 1.5 2017/07/03 06:01:16 ozaki-r Exp $
+#	$NetBSD: algorithms.sh,v 1.6 2017/10/27 04:31:50 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -174,7 +174,7 @@ generate_algo_args()
 	local keylen=$(get_one_valid_keylen $algo)
 	local key=$(generate_key $keylen)
 
-	if [ $proto = esp ]; then
+	if [ $proto = esp -o $proto = "esp-udp" ]; then
 		echo "-E $algo $key"
 	elif [ $proto = ah ]; then
 		echo "-A $algo $key"
