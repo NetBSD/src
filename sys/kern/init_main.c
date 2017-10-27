@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.490 2017/01/16 09:28:40 ryo Exp $	*/
+/*	$NetBSD: init_main.c,v 1.491 2017/10/27 09:59:16 utkarsh009 Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.490 2017/01/16 09:28:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.491 2017/10/27 09:59:16 utkarsh009 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1117,7 +1117,7 @@ banner(void)
 		printf_nolog("%s\n", notice);
 		pr = aprint_normal;
 	} else {
-		pr = printf;
+		pr = (void *)printf;
 	}
 
 	memset(pbuf, 0, sizeof(pbuf));

@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.3 2014/01/22 15:20:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.4 2017/10/27 09:59:16 utkarsh009 Exp $");
 
 #include <sys/types.h>
 #include <sys/cpu.h>
@@ -52,7 +52,7 @@ void db_panic(void)
 			    cpu_index(curcpu()));
 			db_stack_trace_print(
 			    (db_expr_t)(intptr_t)__builtin_frame_address(0),
-			    true, 65535, "", printf);
+			    true, 65535, "", (void *)printf);
 			printf("cpu%u: End traceback...\n",
 			    cpu_index(curcpu()));
 			intrace = 0;

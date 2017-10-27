@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.468 2017/06/04 07:58:29 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.469 2017/10/27 09:59:16 utkarsh009 Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.468 2017/06/04 07:58:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.469 2017/10/27 09:59:16 utkarsh009 Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1131,7 +1131,7 @@ vprint(const char *label, struct vnode *vp)
 
 	if (label != NULL)
 		printf("%s: ", label);
-	vprint_common(vp, "\t", printf);
+	vprint_common(vp, "\t", (void *)printf);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -1512,7 +1512,7 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	(*pr)("\n");
-	vprint_common(vp, "", printf);
+	vprint_common(vp, "", (void *)printf);
 	if (full) {
 		struct buf *bp;
 
