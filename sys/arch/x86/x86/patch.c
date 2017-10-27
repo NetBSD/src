@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.23 2017/10/17 06:58:15 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.24 2017/10/27 23:22:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.23 2017/10/17 06:58:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.24 2017/10/27 23:22:01 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -177,7 +177,12 @@ x86_patch(bool early)
 #endif	/* !LOCKDEBUG */
 	}
 	if (!early && (cpu_feature[0] & CPUID_SSE2) != 0) {
-		/* Faster memory barriers. */
+		/*
+		 * Faster memory barriers.  We do not need to patch
+		 * membar_producer to use SFENCE because on x86
+		 * ordinary non-temporal stores are always issued in
+		 * program order to main memory and to other CPUs.
+		 */
 		patchfunc(
 		    sse2_lfence, sse2_lfence_end,
 		    membar_consumer, membar_consumer_end,
