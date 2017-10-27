@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.109 2017/10/24 17:38:17 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.110 2017/10/27 08:43:11 kre Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.109 2017/10/24 17:38:17 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.110 2017/10/27 08:43:11 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -463,6 +463,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 		/* Set doaccess if '.' (as in "../") shows up in name.  */
 		if (strchr(name, '.'))
 			doaccess = true;
+		name = lsp->fullname;
 	}
 	if (doaccess && access(name, R_OK) != 0)
 		return errno;
