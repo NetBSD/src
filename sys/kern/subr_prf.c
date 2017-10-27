@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.160 2016/07/27 09:57:26 skrll Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.161 2017/10/27 09:59:16 utkarsh009 Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.160 2016/07/27 09:57:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.161 2017/10/27 09:59:16 utkarsh009 Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1032,7 +1032,7 @@ printf_nolog(const char *fmt, ...)
 /*
  * printf: print a message to the console and the log
  */
-void
+int
 printf(const char *fmt, ...)
 {
 	va_list ap;
@@ -1047,6 +1047,7 @@ printf(const char *fmt, ...)
 
 	if (!panicstr)
 		logwakeup();
+	return 0;
 }
 
 /*
