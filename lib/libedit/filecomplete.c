@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.47 2017/10/15 18:59:00 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.48 2017/10/27 18:16:09 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.47 2017/10/15 18:59:00 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.48 2017/10/27 18:16:09 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -576,6 +576,8 @@ fn_complete(EditLine *el,
 
 	len = (size_t)(li->cursor - ctemp);
 	temp = el_malloc((len + 1) * sizeof(*temp));
+	if (temp == NULL)
+		goto out;
 	(void)wcsncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
@@ -618,6 +620,8 @@ fn_complete(EditLine *el,
 				 * object is a directory. Also do necessary escape quoting
 				 */
 				char *escaped_completion = escape_filename(el, matches[0]);
+				if (escaped_completion == NULL)
+					goto out;
 				el_winsertstr(el,
 					ct_decode_string(escaped_completion, &el->el_scratch));
 				el_winsertstr(el,
@@ -698,6 +702,8 @@ fn_complete(EditLine *el,
 		el_free(matches);
 		matches = NULL;
 	}
+
+out:
 	el_free(temp);
 	return retval;
 }
