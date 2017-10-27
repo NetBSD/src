@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.416 2017/10/26 22:45:00 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.417 2017/10/27 01:34:32 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.416 2017/10/26 22:45:00 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.417 2017/10/27 01:34:32 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -276,6 +276,8 @@ int	mix_write(void *);
 int	mix_read(void *);
 int	audio_check_params(struct audio_params *);
 
+static void	audio_setblksize(struct audio_softc *,
+				 struct virtual_channel *, int, int);
 int	audio_calc_blksize(struct audio_softc *, const audio_params_t *);
 void	audio_fill_silence(const struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
@@ -2221,9 +2223,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		mode |= AUMODE_PLAY | AUMODE_PLAY_ALL;
 	}
 
-	vc->sc_mpr.blksize = sc->sc_mixring.sc_mpr.blksize;
-	vc->sc_mrr.blksize = sc->sc_mixring.sc_mrr.blksize;
-
 	/*
 	 * Multiplex device: /dev/audio (MU-Law) and /dev/sound (linear)
 	 * The /dev/audio is always (re)set to 8-bit MU-Law mono
@@ -2639,6 +2638,38 @@ audio_clear_intr_unlocked(struct audio_softc *sc, struct virtual_channel *vc)
 	mutex_enter(sc->sc_intr_lock);
 	audio_clear(sc, vc);
 	mutex_exit(sc->sc_intr_lock);
+}
+
+static void
+audio_setblksize(struct audio_softc *sc, struct virtual_channel *vc,
+    int blksize, int mode)
+{
+	struct audio_ringbuffer *mixcb, *cb;
+	audio_params_t *parm;
+	audio_stream_t *stream;
+
+	if (mode == AUMODE_RECORD) {
+		mixcb = &sc->sc_mixring.sc_mrr;
+		cb = &vc->sc_mrr;
+		parm = &vc->sc_rparams;
+		stream = vc->sc_rustream;
+	} else {
+		mixcb = &sc->sc_mixring.sc_mpr;
+		cb = &vc->sc_mpr;
+		parm = &vc->sc_pparams;
+		stream = vc->sc_pustream;
+	}
+
+	if (vc == sc->sc_hwvc) {
+		mixcb->blksize = audio_calc_blksize(sc, parm);
+		cb->blksize = audio_calc_blksize(sc, &cb->s.param);
+	} else {
+		if (SPECIFIED(blksize))
+			cb->blksize = blksize;
+		else {
+			cb->blksize = audio_calc_blksize(sc, &stream->param);
+		}
+	}
 }
 
 int
@@ -4714,24 +4745,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 			audio_init_record(sc, vc);
 	}
 
-	if (vc == sc->sc_hwvc) {
-		if (!cleared) {
-			audio_clear_intr_unlocked(sc, vc);
-			cleared = true;
-		}
-		if (nr > 0) {
-			sc->sc_mixring.sc_mrr.blksize =
-			    audio_calc_blksize(sc, &vc->sc_rparams);
-			vc->sc_mrr.blksize = audio_calc_blksize(sc,
-			    &vc->sc_mrr.s.param);
-		}
-		if (np > 0) {
-			sc->sc_mixring.sc_mpr.blksize = audio_calc_blksize(sc,
-			    &vc->sc_pparams);
-			vc->sc_mpr.blksize = audio_calc_blksize(sc,
-			    &vc->sc_mpr.s.param);
-		}
-	}
+	if (nr > 0)
+		audio_setblksize(sc, vc, ai->blocksize, AUMODE_RECORD);
+	if (np > 0)
+		audio_setblksize(sc, vc, ai->blocksize, AUMODE_PLAY);
 
 	if (hw->commit_settings && sc->sc_opens + sc->sc_recopens == 0) {
 		error = hw->commit_settings(sc->hw_hdl);
