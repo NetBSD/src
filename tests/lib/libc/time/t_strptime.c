@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.13 2017/08/24 01:01:09 ginsbach Exp $ */
+/* $NetBSD: t_strptime.c,v 1.14 2017/10/27 05:14:11 kre Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.13 2017/08/24 01:01:09 ginsbach Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.14 2017/10/27 05:14:11 kre Exp $");
 
 #include <time.h>
 #include <stdlib.h>
@@ -438,7 +438,7 @@ ATF_TC_HEAD(Zone, tc)
 
 ATF_TC_BODY(Zone, tc)
 {
-	ztest("%z");
+	ztest("%Z");
 }
 
 ATF_TP_ADD_TCS(tp)
