@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.120 2017/10/27 09:59:16 utkarsh009 Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.121 2017/10/27 12:25:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.120 2017/10/27 09:59:16 utkarsh009 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.121 2017/10/27 12:25:15 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -138,7 +138,7 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
 		log(pri, fmt);
 		pr = addlog;
 	} else
-		pr = (void *)printf;
+		pr = printf;
 	(*pr)("%s%d%c: %s %sing fsbn ", dname, unit, partname, what,
 	    bp->b_flags & B_READ ? "read" : "writ");
 	sn = bp->b_blkno;
