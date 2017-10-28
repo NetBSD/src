@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_a83t_ccu.c,v 1.2 2017/10/28 12:07:40 jmcneill Exp $ */
+/* $NetBSD: sun8i_a83t_ccu.c,v 1.3 2017/10/28 12:56:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.2 2017/10/28 12:07:40 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.3 2017/10/28 12:56:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,9 +86,9 @@ static struct sunxi_ccu_reset sun8i_a83t_ccu_resets[] = {
 	SUNXI_CCU_RESET(A83T_RST_BUS_SPI0, BUS_SOFT_RST_REG0, 20),
 	SUNXI_CCU_RESET(A83T_RST_BUS_SPI1, BUS_SOFT_RST_REG0, 21),
 	SUNXI_CCU_RESET(A83T_RST_BUS_OTG, BUS_SOFT_RST_REG0, 23),
-	SUNXI_CCU_RESET(A83T_RST_BUS_EHCI0, BUS_SOFT_RST_REG0, 24),
-	SUNXI_CCU_RESET(A83T_RST_BUS_EHCI1, BUS_SOFT_RST_REG0, 25),
-	SUNXI_CCU_RESET(A83T_RST_BUS_OHCI0, BUS_SOFT_RST_REG0, 28),
+	SUNXI_CCU_RESET(A83T_RST_BUS_EHCI0, BUS_SOFT_RST_REG0, 26),
+	SUNXI_CCU_RESET(A83T_RST_BUS_EHCI1, BUS_SOFT_RST_REG0, 27),
+	SUNXI_CCU_RESET(A83T_RST_BUS_OHCI0, BUS_SOFT_RST_REG0, 29),
         
 	SUNXI_CCU_RESET(A83T_RST_BUS_VE, BUS_SOFT_RST_REG1, 0),
 	SUNXI_CCU_RESET(A83T_RST_BUS_TCON0, BUS_SOFT_RST_REG1, 3),
@@ -180,13 +180,13 @@ static struct sunxi_ccu_clk sun8i_a83t_ccu_clks[] = {
 	SUNXI_CCU_GATE(A83T_CLK_BUS_EMAC, "bus-emac", "ahb2",
 	    BUS_CLK_GATING_REG0, 17),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_OTG, "bus-otg", "ahb1",
-	    BUS_CLK_GATING_REG0, 23),
-	SUNXI_CCU_GATE(A83T_CLK_BUS_EHCI0, "bus-ehci0", "ahb1",
 	    BUS_CLK_GATING_REG0, 24),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_EHCI0, "bus-ehci0", "ahb1",
+	    BUS_CLK_GATING_REG0, 26),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_EHCI1, "bus-ehci1", "ahb2",
-	    BUS_CLK_GATING_REG0, 25),
+	    BUS_CLK_GATING_REG0, 27),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_OHCI0, "bus-ohci0", "ahb1",
-	    BUS_CLK_GATING_REG0, 28),
+	    BUS_CLK_GATING_REG0, 29),
 
 	SUNXI_CCU_GATE(A83T_CLK_BUS_PIO, "bus-pio", "apb1",
 	    BUS_CLK_GATING_REG2, 5),
