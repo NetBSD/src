@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.93 2017/10/25 08:50:05 martin Exp $	*/
+/*	$NetBSD: jobs.c,v 1.94 2017/10/28 04:50:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.93 2017/10/25 08:50:05 martin Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.94 2017/10/28 04:50:38 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,7 @@ restartjob(struct job *jp)
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
 		if (WIFSTOPPED(ps->status)) {
 			VTRACE(DBG_JOBS, (
-			   "restartjob: [%jd] pid %d status change"
+			   "restartjob: [%zu] pid %d status change"
 			   " from %#x (stopped) to -1 (running)\n",
 			   (size_t)(jp-jobtab+1), ps->pid, ps->status));
 			ps->status = -1;
