@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.139 2017/10/28 20:06:31 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.140 2017/10/28 20:57:17 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1484,7 +1484,7 @@ ENTRY(intrfastexit)
 	cmpw	$GSEL(GUCODE_SEL, SEL_UPL),TF_CS(%rsp)
 	je	.Luexit64
 #ifdef XEN
-	cmpw	$0xe033,TF_CS(%rsp)
+	cmpw	$FLAT_RING3_CS64,TF_CS(%rsp)
 	je	.Luexit64
 #endif
 
