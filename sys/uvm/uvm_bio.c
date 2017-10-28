@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.90 2017/06/01 02:45:15 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.91 2017/10/28 00:37:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.90 2017/06/01 02:45:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.91 2017/10/28 00:37:13 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -341,7 +341,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	 */
 
 	access_type = umap->writelen ? VM_PROT_WRITE : VM_PROT_READ;
-	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx access_type %d",
+	UVMHIST_LOG(ubchist, "va 0x%jx ubc_offset 0x%jx access_type %jd",
 	    va, ubc_offset, access_type, 0);
 
 	if ((access_type & VM_PROT_WRITE) != 0) {
@@ -373,15 +373,15 @@ again:
 	memset(pgs, 0, sizeof (pgs));
 	mutex_enter(uobj->vmobjlock);
 
-	UVMHIST_LOG(ubchist, "slot_offset 0x%x writeoff 0x%x writelen 0x%x ",
+	UVMHIST_LOG(ubchist, "slot_offset 0x%jx writeoff 0x%jx writelen 0x%jx ",
 	    slot_offset, umap->writeoff, umap->writelen, 0);
-	UVMHIST_LOG(ubchist, "getpages uobj %p offset 0x%x npages %d",
-	    uobj, umap->offset + slot_offset, npages, 0);
+	UVMHIST_LOG(ubchist, "getpages uobj %#jx offset 0x%jx npages %jd",
+	    (uintptr_t)uobj, umap->offset + slot_offset, npages, 0);
 
 	error = (*uobj->pgops->pgo_get)(uobj, umap->offset + slot_offset, pgs,
 	    &npages, 0, access_type, umap->advice, flags | PGO_NOBLOCKALLOC |
 	    PGO_NOTIMESTAMP);
-	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages, 0,
+	UVMHIST_LOG(ubchist, "getpages error %jd npages %jd", error, npages, 0,
 	    0);
 
 	if (error == EAGAIN) {
@@ -408,7 +408,7 @@ again:
 	va = ufi->orig_rvaddr;
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
-	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0, 0);
+	UVMHIST_LOG(ubchist, "va 0x%jx eva 0x%jx", va, eva, 0, 0);
 
 	/*
 	 * Note: normally all returned pages would have the same UVM object.
@@ -420,7 +420,8 @@ again:
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
 		struct vm_page *pg;
 
-		UVMHIST_LOG(ubchist, "pgs[%d] = %p", i, pgs[i], 0, 0);
+		UVMHIST_LOG(ubchist, "pgs[%jd] = %#jx", i, (uintptr_t)pgs[i],
+		    0, 0);
 		pg = pgs[i];
 
 		if (pg == NULL || pg == PGO_DONTCARE) {
@@ -482,8 +483,8 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	int error;
 	UVMHIST_FUNC("ubc_alloc"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx",
-	    uobj, offset, *lenp, 0);
+	UVMHIST_LOG(ubchist, "uobj %#jx offset 0x%jx len 0x%jx",
+	    (uintptr_t)uobj, offset, *lenp, 0);
 
 	KASSERT(*lenp > 0);
 	umap_offset = (offset & ~((voff_t)ubc_winsize - 1));
@@ -557,8 +558,8 @@ again:
 	umap->refcount++;
 	umap->advice = advice;
 	mutex_exit(ubc_object.uobj.vmobjlock);
-	UVMHIST_LOG(ubchist, "umap %p refs %d va %p flags 0x%x",
-	    umap, umap->refcount, va, flags);
+	UVMHIST_LOG(ubchist, "umap %#jx refs %jd va %#jx flags 0x%jx",
+	    (uintptr_t)umap, umap->refcount, (uintptr_t)va, flags);
 
 	if (flags & UBC_FAULTBUSY) {
 		int npages = (*lenp + PAGE_SIZE - 1) >> PAGE_SHIFT;
@@ -581,7 +582,7 @@ again_faultbusy:
 
 		error = (*uobj->pgops->pgo_get)(uobj, trunc_page(offset), pgs,
 		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, advice, gpflags);
-		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error, 0, 0, 0);
+		UVMHIST_LOG(ubchist, "faultbusy getpages %jd", error, 0, 0, 0);
 		if (error) {
 			/*
 			 * Flush: the mapping above might have been removed.
@@ -636,7 +637,7 @@ ubc_release(void *va, int flags)
 	bool unmapped;
 	UVMHIST_FUNC("ubc_release"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "va %p", va, 0, 0, 0);
+	UVMHIST_LOG(ubchist, "va %#jx", (uintptr_t)va, 0, 0, 0);
 	umap = &ubc_object.umap[((char *)va - ubc_object.kva) >> ubc_winshift];
 	umapva = UBC_UMAP_ADDR(umap);
 	uobj = umap->uobj;
@@ -710,7 +711,8 @@ ubc_release(void *va, int flags)
 			    inactive);
 		}
 	}
-	UVMHIST_LOG(ubchist, "umap %p refs %d", umap, umap->refcount, 0, 0);
+	UVMHIST_LOG(ubchist, "umap %cw#jxp refs %jd", (uintptr_t)umap,
+	    umap->refcount, 0, 0);
 	mutex_exit(ubc_object.uobj.vmobjlock);
 }
 

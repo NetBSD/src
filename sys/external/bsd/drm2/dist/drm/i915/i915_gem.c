@@ -1906,7 +1906,7 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	int lcv, retval;
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("i915_udv_fault"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
+	UVMHIST_LOG(maphist,"  flags=%jd", flags,0,0,0);
 
 	/*
 	 * we do not allow device mappings to be mapped copy-on-write
@@ -1914,7 +1914,7 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 */
 
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)",
+		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%jx)",
 		entry->etype, 0,0,0);
 		return(EIO);
 	}
@@ -1948,8 +1948,8 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		mmapflags = 0;
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
-		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
+		    "  MAPPING: device: pm=0x%#jx, va=0x%jx, pa=0x%jx, at=%jd",
+		    (uintptr_t)ufi->orig_map->pmap, curr_va, paddr, mapprot);
 		if (pmap_enter_default(ufi->orig_map->pmap, curr_va, paddr, mapprot,
 		    PMAP_CANFAIL | mapprot | mmapflags) != 0) {
 			/*

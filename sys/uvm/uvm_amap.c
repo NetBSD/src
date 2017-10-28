@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.107 2012/04/08 20:47:10 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.108 2017/10/28 00:37:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.107 2012/04/08 20:47:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.108 2017/10/28 00:37:13 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -252,7 +252,8 @@ amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 		amap_list_insert(amap);
 	}
 
-	UVMHIST_LOG(maphist,"<- done, amap = 0x%x, sz=%d", amap, sz, 0, 0);
+	UVMHIST_LOG(maphist,"<- done, amap = 0x%#jx, sz=%jd", (uintptr_t)amap,
+	    sz, 0, 0);
 	return(amap);
 }
 
@@ -297,7 +298,8 @@ amap_free(struct vm_amap *amap)
 		kmem_free(amap->am_ppref, slots * sizeof(*amap->am_ppref));
 #endif
 	pool_cache_put(&uvm_amap_cache, amap);
-	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
+	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%#jx", (uintptr_t)amap,
+	    0, 0, 0);
 }
 
 /*
@@ -327,8 +329,8 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 
 	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "  (entry=0x%x, addsize=0x%x, flags=0x%x)",
-	    entry, addsize, flags, 0);
+	UVMHIST_LOG(maphist, "  (entry=0x%#jx, addsize=0x%jx, flags=0x%jx)",
+	    (uintptr_t)entry, addsize, flags, 0);
 
 	/*
 	 * first, determine how many slots we need in the amap.  don't
@@ -368,8 +370,8 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 #endif
 			uvm_anon_freelst(amap, tofree);
 			UVMHIST_LOG(maphist,
-			    "<- done (case 1f), amap = 0x%x, sltneed=%d",
-			    amap, slotneed, 0, 0);
+			    "<- done (case 1f), amap = 0x%#jx, sltneed=%jd",
+			    (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		}
 	} else {
@@ -384,8 +386,8 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 #endif
 			uvm_anon_freelst(amap, tofree);
 			UVMHIST_LOG(maphist,
-			    "<- done (case 1b), amap = 0x%x, sltneed=%d",
-			    amap, slotneed, 0, 0);
+			    "<- done (case 1b), amap = 0x%#jx, sltneed=%jd",
+			    (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		}
 	}
@@ -417,8 +419,8 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			 * alloc time and we never shrink an allocation.
 			 */
 
-			UVMHIST_LOG(maphist,"<- done (case 2f), amap = 0x%x, "
-			    "slotneed=%d", amap, slotneed, 0, 0);
+			UVMHIST_LOG(maphist,"<- done (case 2f), amap = 0x%#jx, "
+			    "slotneed=%jd", (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		} else {
 #ifdef UVM_AMAP_PPREF
@@ -474,8 +476,8 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			entry->aref.ar_pageoff = slotspace - slotadd;
 			amap_unlock(amap);
 
-			UVMHIST_LOG(maphist,"<- done (case 2b), amap = 0x%x, "
-			    "slotneed=%d", amap, slotneed, 0, 0);
+			UVMHIST_LOG(maphist,"<- done (case 2b), amap = 0x%#jx, "
+			    "slotneed=%jd", (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		}
 	}
@@ -620,8 +622,8 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	if (oldppref && oldppref != PPREF_NONE)
 		kmem_free(oldppref, oldnslots * sizeof(*oldppref));
 #endif
-	UVMHIST_LOG(maphist,"<- done (case 3), amap = 0x%x, slotneed=%d",
-	    amap, slotneed, 0, 0);
+	UVMHIST_LOG(maphist,"<- done (case 3), amap = 0x%#jx, slotneed=%jd",
+	    (uintptr_t)amap, slotneed, 0, 0);
 	return 0;
 }
 
@@ -695,7 +697,7 @@ amap_wipeout(struct vm_amap *amap)
 	u_int lcv;
 
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
+	UVMHIST_LOG(maphist,"(amap=0x%#jx)", (uintptr_t)amap, 0,0,0);
 
 	KASSERT(mutex_owned(amap->am_lock));
 	KASSERT(amap->am_ref == 0);
@@ -718,8 +720,8 @@ amap_wipeout(struct vm_amap *amap)
 		KASSERT(anon != NULL && anon->an_ref != 0);
 
 		KASSERT(anon->an_lock == amap->am_lock);
-		UVMHIST_LOG(maphist,"  processing anon 0x%x, ref=%d", anon,
-		    anon->an_ref, 0, 0);
+		UVMHIST_LOG(maphist,"  processing anon 0x%#jx, ref=%jd",
+		    (uintptr_t)anon, anon->an_ref, 0, 0);
 
 		/*
 		 * Drop the reference.  Defer freeing.
@@ -769,8 +771,8 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	vsize_t len;
 
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, flags=%d)",
-		    map, entry, flags, 0);
+	UVMHIST_LOG(maphist, "  (map=%#j, entry=%#j, flags=%jd)",
+		    (uintptr_t)map, (uintptr_t)entry, flags, 0);
 
 	KASSERT(map != kernel_map);	/* we use nointr pool */
 
@@ -797,9 +799,10 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 			chunksize = UVM_AMAP_CHUNK << PAGE_SHIFT;
 			startva = (startva / chunksize) * chunksize;
 			endva = roundup(endva, chunksize);
-			UVMHIST_LOG(maphist, "  chunk amap ==> clip 0x%x->0x%x"
-			    "to 0x%x->0x%x", entry->start, entry->end, startva,
-			    endva);
+			UVMHIST_LOG(maphist,
+			    "  chunk amap ==> clip 0x%jx->0x%jx to "
+			    "0x%jx->0x%jx",
+			    entry->start, entry->end, startva, endva);
 			UVM_MAP_CLIP_START(map, entry, startva);
 
 			/* Watch out for endva wrap-around! */
@@ -813,7 +816,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 			return;
 		}
 
-		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%x->0x%x]",
+		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%jx->0x%jx]",
 		    entry->start, entry->end, 0, 0);
 
 		/*
@@ -845,8 +848,8 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 		return;
 	}
 
-	UVMHIST_LOG(maphist,"  amap=%p, ref=%d, must copy it",
-	    srcamap, srcamap->am_ref, 0, 0);
+	UVMHIST_LOG(maphist,"  amap=%#j, ref=%jd, must copy it",
+	    (uintptr_t)srcamap, srcamap->am_ref, 0, 0);
 
 	/*
 	 * Allocate a new amap (note: not initialised, no lock set, etc).
@@ -1413,8 +1416,9 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 	slot += aref->ar_pageoff;
 	an = amap->am_anon[slot];
 
-	UVMHIST_LOG(maphist, "<- done (amap=0x%x, offset=0x%x, result=0x%x)",
-	    amap, offset, an, 0);
+	UVMHIST_LOG(maphist,
+	    "<- done (amap=0x%#jx, offset=0x%jx, result=0x%#jx)",
+	    (uintptr_t)amap, offset, (uintptr_t)an, 0);
 
 	KASSERT(slot < amap->am_nslot);
 	KASSERT(an == NULL || an->an_ref != 0);
@@ -1499,8 +1503,8 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 	}
 	amap->am_anon[slot] = anon;
 	UVMHIST_LOG(maphist,
-	    "<- done (amap=0x%x, offset=0x%x, anon=0x%x, rep=%d)",
-	    amap, offset, anon, replace);
+	    "<- done (amap=0x%#jx, offset=0x%x, anon=0x%#jx, rep=%d)",
+	    (uintptr_t)amap, offset, (uintptr_t)anon, replace);
 }
 
 /*
@@ -1533,7 +1537,8 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 		amap->am_bckptr[amap->am_slots[ptr]] = ptr;
 	}
 	amap->am_nused--;
-	UVMHIST_LOG(maphist, "<- done (amap=0x%x, slot=0x%x)", amap, slot,0, 0);
+	UVMHIST_LOG(maphist, "<- done (amap=0x%#jx, slot=0x%jx)",
+	    (uintptr_t)amap, slot,0, 0);
 }
 
 /*
@@ -1590,7 +1595,7 @@ amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 	}
 	amap_adjref_anons(amap, offset, len, 1, (flags & AMAP_REFALL) != 0);
 
-	UVMHIST_LOG(maphist,"<- done!  amap=0x%x", amap, 0, 0, 0);
+	UVMHIST_LOG(maphist,"<- done!  amap=0x%#jx", (uintptr_t)amap, 0, 0, 0);
 }
 
 /*
@@ -1607,8 +1612,8 @@ amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 
 	amap_lock(amap);
 
-	UVMHIST_LOG(maphist,"  amap=0x%x  refs=%d, nused=%d",
-	    amap, amap->am_ref, amap->am_nused, 0);
+	UVMHIST_LOG(maphist,"  amap=0x%#jx  refs=%d, nused=%d",
+	    (uintptr_t)amap, amap->am_ref, amap->am_nused, 0);
 	KASSERT(amap->am_ref > 0);
 
 	if (amap->am_ref == 1) {
