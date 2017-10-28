@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_io.h,v 1.3 2012/04/22 14:10:36 pgoyette Exp $	*/
+/*	$NetBSD: i2c_io.h,v 1.4 2017/10/28 06:27:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _DEV_I2C_I2C_IO_H_
 #define	_DEV_I2C_I2C_IO_H_
 
+#include <sys/types.h>
 #include <sys/ioccom.h>
 
 /* I2C bus address. */

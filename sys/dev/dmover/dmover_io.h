@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.h,v 1.3 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: dmover_io.h,v 1.4 2017/10/28 06:27:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _DMOVER_DMOVER_IO_H_
 #define _DMOVER_DMOVER_IO_H_
 
+#include <sys/types.h>
 #include <sys/ioccom.h>
 #include <sys/uio.h>
 
