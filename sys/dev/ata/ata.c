@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.140 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141 2017/10/28 04:53:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.140 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141 2017/10/28 04:53:54 riastradh Exp $");
 
 #include "opt_ata.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.140 2017/10/20 07:06:07 jdolecek Exp $");
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>	/* for PIOBM */
 
+#include "ioconf.h"
 #include "locators.h"
 
 #include "atapibus.h"
@@ -120,8 +121,6 @@ const struct cdevsw atabus_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
-
-extern struct cfdriver atabus_cd;
 
 static void atabus_childdetached(device_t, device_t);
 static int atabus_rescan(device_t, const char *, const int *);
