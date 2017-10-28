@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bt.c,v 1.6 2010/09/08 04:48:03 macallan Exp $ */
+/*	$NetBSD: adb_bt.c,v 1.7 2017/10/28 04:53:55 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.6 2010/09/08 04:48:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.7 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.6 2010/09/08 04:48:03 macallan Exp $");
 #include <machine/keyboard.h>
 
 #include <dev/adb/adbvar.h>
+
+#include "ioconf.h"
 
 #include "opt_wsdisplay_compat.h"
 #include "adbdebug.h"
@@ -75,8 +77,6 @@ struct adbbt_softc {
 /* Driver definition. */
 CFATTACH_DECL_NEW(adbbt, sizeof(struct adbbt_softc),
     adbbt_match, adbbt_attach, NULL, NULL);
-
-extern struct cfdriver adbbt_cd;
 
 static void adbbt_handler(void *, int, uint8_t *);
 
