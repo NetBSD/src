@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2328 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2329 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -76,3 +76,6 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	libc: Update to tzcode2017c. [christos 20171024]
 	bwfm(4): Add driver for Broadcom BCM43xxx "FullMAC" USB wireless
 		adapters. [jmcneill 20171025]
+	kernhist(9): Reworked the export-via-sysctl code to use uintptr_t
+		arguments, PR kern/52639.  Requires contemporaneous update
+		of vmstat(1). [pgoyette 20171028]
