@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.67 2017/08/31 05:09:38 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.68 2017/10/28 03:59:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.67 2017/08/31 05:09:38 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.68 2017/10/28 03:59:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -331,6 +331,42 @@ choose_ps1(void)
 }
 
 /*
+ * Validate a string as a valid variable name
+ * nb: not parameter - special params and such are "invalid" here.
+ * Name terminated by either \0 or the term param (usually '=' or '\0').
+ *
+ * If not NULL, the length of the (intended) name is returned via len
+ */
+
+int
+validname(const char *name, int term, int *len)
+{
+	const char *p = name;
+	int ok = 1;
+
+	if (p == NULL || *p == '\0' || *p == term) {
+		if (len != NULL)
+			*len = 0;
+		return 0;
+	}
+
+	if (!is_name(*p))
+		ok = 0;
+	p++;
+	for (;;) {
+		if (*p == '\0' || *p == term)
+			break;
+		if (!is_in_name(*p))
+			ok = 0;
+		p++;
+	}
+	if (len != NULL)
+		*len = p - name;
+
+	return ok;
+}
+
+/*
  * Safe version of setvar, returns 1 on success 0 on failure.
  */
 
@@ -370,23 +406,10 @@ setvar(const char *name, const char *val, int flags)
 	int len;
 	int namelen;
 	char *nameeq;
-	int isbad;
 
-	isbad = 0;
 	p = name;
-	if (! is_name(*p))
-		isbad = 1;
-	p++;
-	for (;;) {
-		if (! is_in_name(*p)) {
-			if (*p == '\0' || *p == '=')
-				break;
-			isbad = 1;
-		}
-		p++;
-	}
-	namelen = p - name;
-	if (isbad)
+
+	if (!validname(p, '=', &namelen))
 		error("%.*s: bad variable name", namelen, name);
 	len = namelen + 2;		/* 2 is space for '=' and '\0' */
 	if (val == NULL) {

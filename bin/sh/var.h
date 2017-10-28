@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.35 2017/06/30 23:05:45 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.36 2017/10/28 03:59:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -143,5 +143,6 @@ int unsetvar(const char *, int);
 void choose_ps1(void);
 int setvarsafe(const char *, const char *, int);
 void print_quoted(const char *);
+int validname(const char *, int, int *);
 
 #endif
