@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.87 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: midi.c,v 1.88 2017/10/28 03:47:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.87 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.88 2017/10/28 03:47:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.87 2017/10/25 08:12:38 maya Exp $");
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
+
+#include "ioconf.h"
 
 #if NMIDI > 0
 
@@ -131,8 +133,6 @@ CFATTACH_DECL_NEW(midi, sizeof(struct midi_softc),
 
 #define MIDI_XMT_ASENSE_PERIOD mstohz(275)
 #define MIDI_RCV_ASENSE_PERIOD mstohz(300)
-
-extern struct cfdriver midi_cd;
 
 static int
 midiprobe(device_t parent, cfdata_t match, void *aux)
@@ -1900,7 +1900,6 @@ midi_attach_mi(const struct midi_hw_if *mhwp, void *hdlp, device_t dev)
 #endif /* NMIDI > 0 || NMIDIBUS > 0 */
 
 #ifdef _MODULE
-extern struct cfdriver midi_cd;
 #include "ioconf.c"
 
 devmajor_t midi_bmajor = -1, midi_cmajor = -1;

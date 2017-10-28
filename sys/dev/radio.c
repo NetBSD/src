@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.27 2014/07/25 08:10:35 dholland Exp $ */
+/* $NetBSD: radio.c,v 1.28 2017/10/28 03:47:24 riastradh Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.27 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.28 2017/10/28 03:47:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.27 2014/07/25 08:10:35 dholland Exp $");
 #include <sys/conf.h>
 
 #include <dev/radio_if.h>
+
+#include "ioconf.h"
 
 struct radio_softc {
 	void		*hw_hdl;	/* hardware driver handle */
@@ -76,8 +78,6 @@ const struct cdevsw radio_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
-
-extern struct cfdriver radio_cd;
 
 static int
 radioprobe(device_t parent, cfdata_t match, void *aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114 2017/02/27 21:25:45 jdolecek Exp $ */
+/* $NetBSD: cgd.c,v 1.115 2017/10/28 03:47:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114 2017/02/27 21:25:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.115 2017/10/28 03:47:24 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -236,7 +236,6 @@ static struct dkdriver cgddkdriver = {
 
 CFATTACH_DECL3_NEW(cgd, sizeof(struct cgd_softc),
     cgd_match, cgd_attach, cgd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
-extern struct cfdriver cgd_cd;
 
 /* DIAGNOSTIC and DEBUG definitions */
 
