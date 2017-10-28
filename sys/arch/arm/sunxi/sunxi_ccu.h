@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.14 2017/10/09 14:01:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.15 2017/10/28 13:13:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -161,6 +161,7 @@ struct sunxi_ccu_nm {
 	uint32_t	flags;
 #define	SUNXI_CCU_NM_POWER_OF_TWO	__BIT(0)
 #define	SUNXI_CCU_NM_ROUND_DOWN		__BIT(1)
+#define	SUNXI_CCU_NM_DIVIDE_BY_TWO	__BIT(2)
 };
 
 int	sunxi_ccu_nm_enable(struct sunxi_ccu_softc *,
