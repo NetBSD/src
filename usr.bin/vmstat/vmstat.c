@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.218 2017/09/06 06:05:23 mlelstv Exp $ */
+/* $NetBSD: vmstat.c,v 1.219 2017/10/28 00:37:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.218 2017/09/06 06:05:23 mlelstv Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.219 2017/10/28 00:37:12 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -2166,7 +2166,8 @@ hist_dodump(struct kern_history *histp)
 			bintime2timeval(&e->bt, &tv);
 			(void)printf("%06ld.%06ld ", (long int)tv.tv_sec,
 			    (long int)tv.tv_usec);
-			(void)printf("%s#%ld@%d: ", fn, e->call, e->cpunum);
+			(void)printf("%s#%" PRId32 "@%" PRId32 "d: ",
+			    fn, e->call, e->cpunum);
 			(void)printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 			(void)putchar('\n');
 		}
@@ -2243,6 +2244,8 @@ hist_traverse_sysctl(int todo, const char *histname)
  
  	if (todo & HISTLIST)
  		(void)putchar('\n');
+	else if (mib[2] == CTL_QUERY)
+		warnx("history %s not found", histname);
  }
  
  /*
@@ -2273,13 +2276,18 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 	if (errno != 0)
 		err(1, "sysctl failed");
  
-	strp = (char *)(&hist->sh_events[hist->sh_listentry.shle_numentries]);
+	/* Make sure we've got matching versions */
+	if (hist->sh_version != KERNHIST_SYSCTL_VERSION ||
+	    hist->sh_arglen != sizeof(uintmax_t))
+		errx(1, "Kernel version or argument length mismatch!");
+
+	strp = (char *)(&hist->sh_events[hist->sh_numentries]);
  
 	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
-	    hist->sh_listentry.shle_numentries,
-	    hist->sh_listentry.shle_nextfree);
+	    hist->sh_numentries,
+	    hist->sh_nextfree);
  
-	i = hist->sh_listentry.shle_nextfree;
+	i = hist->sh_nextfree;
 
 	do {
 		e = &hist->sh_events[i];
@@ -2287,15 +2295,15 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 			fmt = &strp[e->she_fmtoffset];
 			fn = &strp[e->she_funcoffset];
 			bintime2timeval(&e->she_bintime, &tv);
-			(void)printf("%06ld.%06ld %s#%"PRIu64"@%"PRIu32": ",
+			(void)printf("%06ld.%06ld %s#%"PRIu32"@%"PRIu32": ",
 			    (long int)tv.tv_sec, (long int)tv.tv_usec,
 			    fn, e->she_callnumber, e->she_cpunum);
 			(void)printf(fmt, e->she_values[0], e->she_values[1],
 			     e->she_values[2], e->she_values[3]);
  			(void)putchar('\n');
  		}
-		i = (i + 1) % hist->sh_listentry.shle_numentries;
-	} while (i != hist->sh_listentry.shle_nextfree);
+		i = (i + 1) % hist->sh_numentries;
+	} while (i != hist->sh_nextfree);
  
 	free(hist);
  }

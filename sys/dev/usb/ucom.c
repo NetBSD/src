@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.118 2016/12/14 15:11:29 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.119 2017/10/28 00:37:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.118 2016/12/14 15:11:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.119 2017/10/28 00:37:12 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -306,8 +306,8 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	memset(sc->sc_ibuff, 0, sizeof(sc->sc_ibuff));
 	memset(sc->sc_obuff, 0, sizeof(sc->sc_obuff));
 
-	DPRINTF("open pipes in=%d out=%d", sc->sc_bulkin_no, sc->sc_bulkout_no,
-	    0, 0);
+	DPRINTF("open pipes in=%jd out=%jd",
+	    sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
 
 	struct ucom_buffer *ub;
 	usbd_status err;
@@ -317,7 +317,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
 	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
 	if (err) {
-		DPRINTF("open bulk in error (addr %d), err=%d",
+		DPRINTF("open bulk in error (addr %jd), err=%jd",
 		    sc->sc_bulkin_no, err, 0, 0);
 		error = EIO;
 		goto fail_0;
@@ -336,7 +336,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
 	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
 	if (err) {
-		DPRINTF("open bulk out error (addr %d), err=%d",
+		DPRINTF("open bulk out error (addr %jd), err=%jd",
 		    sc->sc_bulkout_no, err, 0, 0);
 		error = EIO;
 		goto fail_1;
@@ -357,7 +357,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	tp->t_hwiflow = ucomhwiflow;
 	sc->sc_tty = tp;
 
-	DPRINTF("tty_attach %p", tp, 0, 0, 0);
+	DPRINTF("tty_attach %#jx", (uintptr_t)tp, 0, 0, 0);
 	tty_attach(tp);
 
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
@@ -403,8 +403,9 @@ ucom_detach(device_t self, int flags)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("sc=%p flags=%d tp=%p", sc, flags, tp, 0);
-	DPRINTF("... pipe=%d,%d", sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
+	DPRINTF("sc=%#jx flags=%jd tp=%#jx", (uintptr_t)sc, flags,
+	    (uintptr_t)tp, 0);
+	DPRINTF("... pipe=%jd,%jd", sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = true;
@@ -454,7 +455,7 @@ ucom_detach(device_t self, int flags)
 
 	/* Nuke the vnodes for any open instances. */
 	mn = device_unit(self);
-	DPRINTF("maj=%d mn=%d", maj, mn, 0, 0);
+	DPRINTF("maj=%jd mn=%jd", maj, mn, 0, 0);
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);
 	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
@@ -503,7 +504,7 @@ ucom_activate(device_t self, enum devact act)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTFN(5, "%d", act, 0, 0, 0);
+	DPRINTFN(5, "%jd", act, 0, 0, 0);
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
@@ -560,7 +561,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	struct tty *tp = sc->sc_tty;
 
-	DPRINTF("unit=%d, tp=%p", unit, tp, 0, 0);
+	DPRINTF("unit=%jd, tp=%#jx", unit, (uintptr_t)tp, 0, 0);
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
 		mutex_exit(&sc->sc_lock);
@@ -671,8 +672,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	cv_signal(&sc->sc_statecv);
 	mutex_exit(&sc->sc_lock);
 
-	DPRINTF("unit=%d, tp=%p dialout %d nonblock %d", unit, tp,
-	    !!UCOMDIALOUT(dev), !!ISSET(flag, O_NONBLOCK));
+	DPRINTF("unit=%jd, tp=%#jx dialout %jd nonblock %jd", unit,
+	    (uintptr_t)tp, !!UCOMDIALOUT(dev), !!ISSET(flag, O_NONBLOCK));
 	error = ttyopen(tp, UCOMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
 	if (error)
 		goto bad;
@@ -714,7 +715,7 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("unit=%d", UCOMUNIT(dev), 0, 0, 0);
+	DPRINTF("unit=%jd", UCOMUNIT(dev), 0, 0, 0);
 
 	if (sc == NULL)
 		return 0;
@@ -808,7 +809,7 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%d refcnt %d", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
+	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
 	mutex_exit(&sc->sc_lock);
 
 	return error;
@@ -843,7 +844,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%d refcnt %d", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
+	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
 	mutex_exit(&sc->sc_lock);
 
 	return error;
@@ -876,7 +877,7 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%d refcnt %d", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
+	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
 	mutex_exit(&sc->sc_lock);
 
 	return revents;
@@ -918,7 +919,7 @@ ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%d refcnt %d", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
+	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
 	mutex_exit(&sc->sc_lock);
 
 	return error;
@@ -933,7 +934,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data, int flag,
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("cmd=0x%08lx", cmd, 0, 0, 0);
+	DPRINTF("cmd=0x%08jx", cmd, 0, 0, 0);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -952,7 +953,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data, int flag,
 
 	error = 0;
 
-	DPRINTF("our cmd=0x%08lx", cmd, 0, 0, 0);
+	DPRINTF("our cmd=0x%08jx", cmd, 0, 0, 0);
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -1092,7 +1093,7 @@ ucom_break(struct ucom_softc *sc, int onoff)
 {
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("onoff=%d", onoff, 0, 0, 0);
+	DPRINTF("onoff=%jd", onoff, 0, 0, 0);
 
 	if (sc->sc_methods->ucom_set != NULL)
 		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
@@ -1104,7 +1105,7 @@ ucom_dtr(struct ucom_softc *sc, int onoff)
 {
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("onoff=%d", onoff, 0, 0, 0);
+	DPRINTF("onoff=%jd", onoff, 0, 0, 0);
 
 	if (sc->sc_methods->ucom_set != NULL)
 		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
@@ -1116,7 +1117,7 @@ ucom_rts(struct ucom_softc *sc, int onoff)
 {
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("onoff=%d", onoff, 0, 0, 0);
+	DPRINTF("onoff=%jd", onoff, 0, 0, 0);
 
 	if (sc->sc_methods->ucom_set != NULL)
 		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
@@ -1244,7 +1245,8 @@ out:
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%d refcnt %d", UCOMUNIT(tp->t_dev), sc->sc_refcnt, 0, 0);
+	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(tp->t_dev), sc->sc_refcnt,
+	    0, 0);
 
 	mutex_exit(&sc->sc_lock);
 
@@ -1547,7 +1549,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
 	    sc->sc_dying) {
 
-		DPRINTF("... done (status %d dying %d)", status, sc->sc_dying,
+		DPRINTF("... done (status %jd dying %jd)", status, sc->sc_dying,
 		    0, 0);
 
 		if (status == USBD_IOERROR || sc->sc_dying) {
@@ -1560,8 +1562,8 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 		if (--sc->sc_refcnt < 0)
 			cv_broadcast(&sc->sc_detachcv);
-		DPRINTF("unit=%d refcnt %d", UCOMUNIT(tp->t_dev), sc->sc_refcnt,
-		    0, 0);
+		DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(tp->t_dev),
+		    sc->sc_refcnt, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
 		return;
@@ -1578,7 +1580,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 			    usbd_errstr(status));
 		}
 
-		DPRINTF("... done (status %d)", status, 0, 0, 0);
+		DPRINTF("... done (status %jd)", status, 0, 0, 0);
 		sc->sc_refcnt--;
 		/* re-adds ub to sc_ibuff_empty and increments sc_refcnt */
 		ucomsubmitread(sc, ub);
