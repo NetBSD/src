@@ -1,4 +1,4 @@
-/*	$NetBSD: mt8173-larb-port.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: mt8173-larb-port.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015-2016 MediaTek Inc.
@@ -17,10 +17,6 @@
 #define __DTS_IOMMU_PORT_MT8173_H
 
 #define MTK_M4U_ID(larb, port)		(((larb) << 5) | (port))
-/* Local arbiter ID */
-#define MTK_M4U_TO_LARB(id)		(((id) >> 5) & 0x7)
-/* PortID within the local arbiter */
-#define MTK_M4U_TO_PORT(id)		((id) & 0x1f)
 
 #define M4U_LARB0_ID			0
 #define M4U_LARB1_ID			1

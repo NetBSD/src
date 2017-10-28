@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5420.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: exynos5420.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
@@ -219,6 +219,9 @@
 #define CLK_MOUT_MCLK_CDREX	654
 #define CLK_MOUT_BPLL		655
 #define CLK_MOUT_MX_MSPLL_CCORE	656
+#define CLK_MOUT_EPLL		657
+#define CLK_MOUT_MAU_EPLL	658
+#define CLK_MOUT_USER_MAU_EPLL	659
 
 /* divider clocks */
 #define CLK_DOUT_PIXEL		768

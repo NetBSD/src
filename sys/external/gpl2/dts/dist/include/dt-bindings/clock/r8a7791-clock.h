@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7791-clock.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: r8a7791-clock.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * Copyright 2013 Ideas On Board SPRL
@@ -111,6 +111,7 @@
 #define R8A7791_CLK_SATA0		15
 
 /* MSTP9 */
+#define R8A7791_CLK_GYROADC		1
 #define R8A7791_CLK_GPIO7		4
 #define R8A7791_CLK_GPIO6		5
 #define R8A7791_CLK_GPIO5		7

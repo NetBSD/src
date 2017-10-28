@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-msm8996.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-msm8996.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
@@ -235,6 +235,8 @@
 #define GCC_PCIE_CLKREF_CLK					216
 #define GCC_RX2_USB2_CLKREF_CLK					217
 #define GCC_RX1_USB2_CLKREF_CLK					218
+#define GCC_HLOS1_VOTE_LPASS_CORE_SMMU_CLK			219
+#define GCC_HLOS1_VOTE_LPASS_ADSP_SMMU_CLK			220
 
 #define GCC_SYSTEM_NOC_BCR					0
 #define GCC_CONFIG_NOC_BCR					1

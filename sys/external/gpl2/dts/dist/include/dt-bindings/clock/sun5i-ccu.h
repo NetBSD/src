@@ -1,4 +1,4 @@
-/*	$NetBSD: sun5i-ccu.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: sun5i-ccu.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * Copyright 2016 Maxime Ripard
@@ -21,6 +21,9 @@
 
 #define CLK_HOSC		1
 
+#define CLK_PLL_VIDEO0_2X	9
+
+#define CLK_PLL_VIDEO1_2X	16
 #define CLK_CPU			17
 
 #define CLK_AHB_OTG		23

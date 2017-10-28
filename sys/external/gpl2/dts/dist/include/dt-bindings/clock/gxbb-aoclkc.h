@@ -1,4 +1,4 @@
-/*	$NetBSD: gxbb-aoclkc.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: gxbb-aoclkc.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
@@ -64,5 +64,6 @@
 #define CLKID_AO_UART1		3
 #define CLKID_AO_UART2		4
 #define CLKID_AO_IR_BLASTER	5
+#define CLKID_AO_CEC_32K	6
 
 #endif
