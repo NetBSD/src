@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.160 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: umass.c,v 1.161 2017/10/28 20:56:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.160 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.161 2017/10/28 20:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1982,7 +1982,8 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 	int tag = UGETDW(cbw->dCBWTag);
 	int flags = cbw->bCBWFlags;
 
-	DPRINTFM(UDMASS_BBB, "sc %#jx: CBW %jd: cmdlen=%jd", sc, tag, clen, 0);
+	DPRINTFM(UDMASS_BBB, "sc %#jx: CBW %jd: cmdlen=%jd",
+	    (uintptr_t)sc, tag, clen, 0);
 	DPRINTFM(UDMASS_BBB, "  0x%02jx%02jx%02jx%02jx...",
 	    c[0], c[1], c[2], c[3]);
 	DPRINTFM(UDMASS_BBB, "  0x%02jx%02jx%02jx%02jx...",
