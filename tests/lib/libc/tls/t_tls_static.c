@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_static.c,v 1.3 2017/10/28 19:24:55 christos Exp $	*/
+/*	$NetBSD: t_tls_static.c,v 1.4 2017/10/28 19:25:31 christos Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tls_static.c,v 1.3 2017/10/28 19:24:55 christos Exp $");
+__RCSID("$NetBSD: t_tls_static.c,v 1.4 2017/10/28 19:25:31 christos Exp $");
 
 #include <atf-c.h>
 #include <pthread.h>
@@ -62,7 +62,7 @@ testf(void *dummy)
 #define CHECK(a, b) \
     ATF_CHECK_EQ_MSG(var ## a, b, "var%d[%d] != %d", a, var ## a, b)
 	CHECK(1, 1);
-	CHECK(1, 0);
+	CHECK(2, 0);
 	testf_helper();
 	CHECK(1, -1);
 	CHECK(2, -1);
