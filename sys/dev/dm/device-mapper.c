@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.38 2016/07/11 11:31:50 msaitoh Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.39 2017/10/28 04:53:55 riastradh Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -110,8 +110,6 @@ const struct dkdriver dmdkdriver = {
 CFATTACH_DECL3_NEW(dm, 0,
      dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
      DVF_DETACH_SHUTDOWN);
-
-extern struct cfdriver dm_cd;
 
 extern uint32_t dm_dev_counter;
 

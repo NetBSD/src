@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.59 2017/07/06 10:43:06 jmcneill Exp $ */
+/* $NetBSD: gpio.c,v 1.60 2017/10/28 04:53:56 riastradh Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.59 2017/07/06 10:43:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.60 2017/10/28 04:53:56 riastradh Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.59 2017/07/06 10:43:06 jmcneill Exp $");
 #include <sys/module.h>
 #include <dev/gpio/gpiovar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 #ifdef GPIO_DEBUG
@@ -113,8 +114,6 @@ const struct cdevsw gpio_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
-
-extern struct cfdriver gpio_cd;
 
 static int
 gpio_match(device_t parent, cfdata_t cf, void *aux)

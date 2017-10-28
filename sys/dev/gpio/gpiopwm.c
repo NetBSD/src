@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopwm.c,v 1.6 2017/01/20 12:25:07 maya Exp $ */
+/* $NetBSD: gpiopwm.c,v 1.7 2017/10/28 04:53:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -36,6 +36,8 @@
 
 #include <dev/gpio/gpiovar.h>
 
+#include "ioconf.h"
+
 #define GPIOPWM_NPINS	1
 
 struct gpiopwm_softc {
@@ -62,8 +64,6 @@ static void gpiopwm_pulse(void *);
 
 CFATTACH_DECL_NEW(gpiopwm, sizeof(struct gpiopwm_softc),
 	gpiopwm_match, gpiopwm_attach, gpiopwm_detach, gpiopwm_activate);
-
-extern struct cfdriver gpiopwm_cd;
 
 int
 gpiopwm_match(device_t parent, cfdata_t cf,
