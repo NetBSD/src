@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_a83t_ccu.c,v 1.3 2017/10/28 12:56:10 jmcneill Exp $ */
+/* $NetBSD: sun8i_a83t_ccu.c,v 1.4 2017/10/28 13:13:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.3 2017/10/28 12:56:10 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.4 2017/10/28 13:13:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.3 2017/10/28 12:56:10 jmcneill 
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
 #define	SDMMC2_CLK_REG		0x090
+#define	 SDMMC2_CLK_MODE_SELECT	__BIT(30)
 #define	USBPHY_CFG_REG		0x0cc
 #define	MBUS_RST_REG		0x0fc
 #define	BUS_SOFT_RST_REG0	0x2c0
@@ -169,7 +170,7 @@ static struct sunxi_ccu_clk sun8i_a83t_ccu_clks[] = {
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
 	SUNXI_CCU_NM(A83T_CLK_MMC2, "mmc2", mod_parents,
 	    SDMMC2_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
-	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN|SUNXI_CCU_NM_DIVIDE_BY_TWO),
 
 	SUNXI_CCU_GATE(A83T_CLK_BUS_MMC0, "bus-mmc0", "ahb1",
 	    BUS_CLK_GATING_REG0, 8),
@@ -214,6 +215,17 @@ static struct sunxi_ccu_clk sun8i_a83t_ccu_clks[] = {
 	    USBPHY_CFG_REG, 16),
 };
 
+static void
+sun8i_a83t_ccu_init(struct sunxi_ccu_softc *sc)
+{
+	uint32_t val;
+
+	/* SDMMC2 has a mode select switch. Always use "New Mode". */
+	val = CCU_READ(sc, SDMMC2_CLK_REG);
+	val |= SDMMC2_CLK_MODE_SELECT;
+	CCU_WRITE(sc, SDMMC2_CLK_REG, val);
+}
+
 static int
 sun8i_a83t_ccu_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -243,6 +255,8 @@ sun8i_a83t_ccu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": A83T CCU\n");
+
+	sun8i_a83t_ccu_init(sc);
 
 	sunxi_ccu_print(sc);
 }

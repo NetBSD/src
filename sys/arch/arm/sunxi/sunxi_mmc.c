@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.15 2017/10/23 13:28:19 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.16 2017/10/28 13:13:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.15 2017/10/23 13:28:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.16 2017/10/28 13:13:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -219,6 +219,13 @@ static const struct sunxi_mmc_config sun7i_a20_mmc_config = {
 	.flags = 0,
 };
 
+static const struct sunxi_mmc_config sun8i_a83t_emmc_config = {
+	.idma_xferlen = 0x10000,
+	.dma_ftrglevel = 0x20070008,
+	.delays = NULL,
+	.flags = SUNXI_MMC_FLAG_NEW_TIMINGS,
+};
+
 static const struct sunxi_mmc_config sun9i_a80_mmc_config = {
 	.idma_xferlen = 0x10000,
 	.dma_ftrglevel = 0x200f0010,
@@ -239,6 +246,7 @@ static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun4i-a10-mmc",	(uintptr_t)&sun4i_a10_mmc_config },
 	{ "allwinner,sun5i-a13-mmc",	(uintptr_t)&sun5i_a13_mmc_config },
 	{ "allwinner,sun7i-a20-mmc",	(uintptr_t)&sun7i_a20_mmc_config },
+	{ "allwinner,sun8i-a83t-emmc",	(uintptr_t)&sun8i_a83t_emmc_config },
 	{ "allwinner,sun9i-a80-mmc",	(uintptr_t)&sun9i_a80_mmc_config },
 	{ "allwinner,sun50i-a64-mmc",	(uintptr_t)&sun50i_a64_mmc_config },
 	{ NULL }
