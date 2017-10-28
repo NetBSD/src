@@ -1,4 +1,4 @@
-/*	$NetBSD: dra.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: dra.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * This header provides constants for DRA pinctrl bindings.
@@ -75,5 +75,8 @@
  */
 #define DRA7XX_CORE_IOPAD(pa, val)	(((pa) & 0xffff) - 0x3400) (val)
 
+/* DRA7 IODELAY configuration parameters */
+#define A_DELAY_PS(val)			((val) & 0xffff)
+#define G_DELAY_PS(val)			((val) & 0xffff)
 #endif
 
