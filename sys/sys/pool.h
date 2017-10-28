@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.79 2015/07/29 00:10:25 christos Exp $	*/
+/*	$NetBSD: pool.h,v 1.80 2017/10/28 19:19:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ struct pool {
 #define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
 #define PR_NOALIGN	0x800	/* don't assume backend alignment */
 #define	PR_LARGECACHE	0x1000	/* use large cache groups */
+#define	PR_GROWING	0x2000	/* pool_grow in progress */
 
 	/*
 	 * `pr_lock' protects the pool's data structures when removing
