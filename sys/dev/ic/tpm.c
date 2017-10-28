@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.11 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: tpm.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.11 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $");
 
 #if 0
 #define	TPM_DEBUG 
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.11 2014/07/25 08:10:37 dholland Exp $");
 
 #include <dev/ic/tpmreg.h>
 #include <dev/ic/tpmvar.h>
+
+#include "ioconf.h"
 
 /* Set when enabling legacy interface in host bridge. */
 int tpm_enabled;
@@ -74,7 +76,6 @@ static dev_type_read(tpmread);
 static dev_type_read(tpmwrite); 
 static dev_type_ioctl(tpmioctl);
 
-extern struct cfdriver	tpm_cd;
 #define TPMUNIT(a)	minor(a)
  
 const struct cdevsw tpm_cdevsw = {

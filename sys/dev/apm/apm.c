@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.32 2017/10/25 08:12:38 maya Exp $ */
+/*	$NetBSD: apm.c,v 1.33 2017/10/28 04:53:54 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.32 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.33 2017/10/28 04:53:54 riastradh Exp $");
 
 #include "opt_apm.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.32 2017/10/25 08:12:38 maya Exp $");
 #include <sys/conf.h>
 
 #include <dev/apm/apmvar.h>
+
+#include "ioconf.h"
 
 #ifdef APMDEBUG
 #define DPRINTF(f, x)		do { if (apmdebug & (f)) printf x; } while (0)
@@ -104,8 +106,6 @@ static void	apm_set_ver(struct apm_softc *);
 static void	apm_standby(struct apm_softc *);
 static void	apm_suspend(struct apm_softc *);
 static void	apm_resume(struct apm_softc *, u_int, u_int);
-
-extern struct cfdriver apm_cd;
 
 dev_type_open(apmopen);
 dev_type_close(apmclose);

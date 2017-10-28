@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.22 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.23 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.22 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.23 2017/10/28 04:53:55 riastradh Exp $");
 
 #include "opt_strtc.h"
 
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.22 2014/11/20 16:34:26 christos Exp $"
 #include <dev/i2c/m41st84reg.h>
 #include <dev/i2c/m41st84var.h>
 
+#include "ioconf.h"
+
 struct strtc_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
@@ -70,8 +72,6 @@ CFATTACH_DECL_NEW(strtc, sizeof(struct strtc_softc),
     strtc_match, strtc_attach, NULL, NULL);
 
 #ifndef STRTC_NO_USERRAM
-extern struct cfdriver strtc_cd;
-
 dev_type_open(strtc_open);
 dev_type_close(strtc_close);
 dev_type_read(strtc_read);

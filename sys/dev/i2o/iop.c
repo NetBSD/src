@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.87 2015/08/16 19:21:33 msaitoh Exp $	*/
+/*	$NetBSD: iop.c,v 1.88 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.87 2015/08/16 19:21:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.88 2017/10/28 04:53:55 riastradh Exp $");
 
 #include "iop.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.87 2015/08/16 19:21:33 msaitoh Exp $");
 #include <dev/i2o/iopreg.h>
 #include <dev/i2o/iopvar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 #define POLL(ms, cond)				\
@@ -88,8 +89,6 @@ static u_long	iop_ictxhash;
 static void	*iop_sdh;
 static struct	i2o_systab *iop_systab;
 static int	iop_systab_size;
-
-extern struct cfdriver iop_cd;
 
 dev_type_open(iopopen);
 dev_type_close(iopclose);

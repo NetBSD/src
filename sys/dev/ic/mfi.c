@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.57 2015/04/04 15:10:47 christos Exp $ */
+/* $NetBSD: mfi.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.57 2015/04/04 15:10:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $");
 
 #include "bio.h"
 
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.57 2015/04/04 15:10:47 christos Exp $");
 #if NBIO > 0
 #include <dev/biovar.h>
 #endif /* NBIO > 0 */
+
+#include "ioconf.h"
 
 #ifdef MFI_DEBUG
 uint32_t	mfi_debug = 0
@@ -197,8 +199,6 @@ const struct cdevsw mfi_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
-
-extern struct cfdriver mfi_cd;
 
 static uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
 static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
