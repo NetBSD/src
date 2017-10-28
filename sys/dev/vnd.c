@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.262 2017/07/28 16:30:41 riastradh Exp $	*/
+/*	$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.262 2017/07/28 16:30:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -229,7 +229,6 @@ static int	vnd_detach(device_t, int);
 
 CFATTACH_DECL3_NEW(vnd, sizeof(struct vnd_softc),
     vnd_match, vnd_attach, vnd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
-extern struct cfdriver vnd_cd;
 
 static struct vnd_softc	*vnd_spawn(int);
 int	vnd_destroy(device_t);

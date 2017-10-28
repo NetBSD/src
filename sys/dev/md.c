@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.78 2016/07/27 05:14:40 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.79 2017/10/28 03:47:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78 2016/07/27 05:14:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.79 2017/10/28 03:47:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -135,7 +135,6 @@ static struct dkdriver mddkdriver = {
 	.d_strategy = mdstrategy
 };
 
-extern struct cfdriver md_cd;
 CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),
 	0, md_attach, md_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.98 2017/06/01 02:45:09 chs Exp $	*/
+/*	$NetBSD: fss.c,v 1.99 2017/10/28 03:47:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.98 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.99 2017/10/28 03:47:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,6 @@ static int fss_detach(device_t, int);
 
 CFATTACH_DECL_NEW(fss, sizeof(struct fss_softc),
     fss_match, fss_attach, fss_detach, NULL);
-extern struct cfdriver fss_cd;
 
 void
 fssattach(int num)

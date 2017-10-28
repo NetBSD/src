@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.33 2017/06/01 02:45:09 chs Exp $ */
+/* $NetBSD: video.c,v 1.34 2017/10/28 03:47:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.33 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.34 2017/10/28 03:47:24 riastradh Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: video.c,v 1.33 2017/06/01 02:45:09 chs Exp $");
 #include <sys/videoio.h>
 
 #include <dev/video_if.h>
+
+#include "ioconf.h"
 
 /* #define VIDEO_DEBUG 1 */
 
@@ -223,8 +225,6 @@ const struct cdevsw video_cdevsw = {
 
 CFATTACH_DECL_NEW(video, sizeof(struct video_softc),
 		  video_match, video_attach, video_detach, video_activate);
-
-extern struct cfdriver video_cd;
 
 static const char *	video_pixel_format_str(enum video_pixel_format);
 
