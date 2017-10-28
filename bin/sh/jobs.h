@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.20 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: jobs.h,v 1.21 2017/10/28 06:36:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,6 +68,7 @@ struct procstat {
 struct job {
 	struct procstat ps0;	/* status of process */
 	struct procstat *ps;	/* status or processes when more than one */
+	void	*ref;		/* temporary reference, used variously */
 	int	nprocs;		/* number of processes */
 	pid_t	pgrp;		/* process group of this job */
 	char	state;
@@ -75,7 +76,9 @@ struct job {
 #define	JOBSTOPPED	1	/* all procs are stopped */
 #define	JOBDONE		2	/* all procs are completed */
 	char	used;		/* true if this entry is in used */
-	char	changed;	/* true if status has changed */
+	char	flags;	
+#define	JOBCHANGED	1	/* set if status has changed */
+#define	JOBWANTED	2	/* set if this is a job being sought */
 #if JOBS
 	char 	jobctl;		/* job running under job control */
 	int	prev_job;	/* previous job index */
