@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.11 2009/03/14 21:04:19 dsl Exp $ */
+/* $NetBSD: vsxxx.c,v 1.12 2017/10/28 04:53:54 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.11 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.12 2017/10/28 04:53:54 riastradh Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.11 2009/03/14 21:04:19 dsl Exp $");
 #include <dev/wscons/wsmousevar.h>
 
 #include <dev/dec/vsxxxvar.h>
+
+#include "ioconf.h"
 
 /*
  * XXX XXX XXX
@@ -72,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.11 2009/03/14 21:04:19 dsl Exp $");
 /* low order 4 bit of the second octet in a SELFTEST reply */
 #define	VS_MOUSE	0x2
 #define	VS_TABLET	0x4
-
-extern struct cfdriver vsms_cd;
 
 static int  vsxxx_enable(void *);
 static int  vsxxx_ioctl(void *, u_long, void *, int, struct proc *);

@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.4 2014/03/01 16:59:41 maxv Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.5 2017/10/28 04:53:55 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.4 2014/03/01 16:59:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.5 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.4 2014/03/01 16:59:41 maxv Exp $");
 #include <dev/acpi/acpivar.h>
 
 #include <dev/isa/isavar.h>
+
+#include "ioconf.h"
 
 #define _COMPONENT          ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME            ("tpm_acpi")
@@ -88,8 +90,6 @@ static const char * const tpm_acpi_ids[] = {
 	"IFX0102",
 	NULL
 };
-
-extern struct cfdriver tpm_cd;
 
 static int
 tpm_acpi_match(device_t parent, cfdata_t match, void *aux)

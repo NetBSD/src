@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.24 2016/10/18 18:54:54 aymeric Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.24 2016/10/18 18:54:54 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.24 2016/10/18 18:54:54 aymeric Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ds1307reg.h>
 #include <dev/sysmon/sysmonvar.h>
+
+#include "ioconf.h"
 
 struct dsrtc_model {
 	uint16_t dm_model;
@@ -150,7 +152,6 @@ static int	dsrtc_match(device_t, cfdata_t, void *);
 
 CFATTACH_DECL_NEW(dsrtc, sizeof(struct dsrtc_softc),
     dsrtc_match, dsrtc_attach, NULL, NULL);
-extern struct cfdriver dsrtc_cd;
 
 dev_type_open(dsrtc_open);
 dev_type_close(dsrtc_close);

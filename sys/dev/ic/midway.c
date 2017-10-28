@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.100 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: midway.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.100 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $");
 
 #include "opt_natm.h"
 
@@ -187,6 +187,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.100 2017/03/31 08:38:13 msaitoh Exp $")
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/ic/midwayreg.h>
 #include <dev/ic/midwayvar.h>
+#include "ioconf.h"
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
@@ -246,12 +247,6 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.100 2017/03/31 08:38:13 msaitoh Exp $")
 #define ENOTHER_SWSL	0x08		/* in software service list */
 
 int en_dma = EN_DMA;			/* use DMA (switch off for dbg) */
-
-/*
- * autoconfig attachments
- */
-
-extern struct cfdriver en_cd;
 
 /*
  * local structures

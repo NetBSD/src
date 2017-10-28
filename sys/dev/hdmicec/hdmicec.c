@@ -1,4 +1,4 @@
-/* $NetBSD: hdmicec.c,v 1.1 2015/08/01 21:19:24 jmcneill Exp $ */
+/* $NetBSD: hdmicec.c,v 1.2 2017/10/28 04:53:56 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdmicec.c,v 1.1 2015/08/01 21:19:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdmicec.c,v 1.2 2017/10/28 04:53:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: hdmicec.c,v 1.1 2015/08/01 21:19:24 jmcneill Exp $")
 
 #include <dev/hdmicec/hdmicec_if.h>
 #include <dev/hdmicec/hdmicecio.h>
+
+#include "ioconf.h"
 
 #define CEC_MAX_FRAMESIZE	16
 
@@ -74,8 +76,6 @@ const struct cdevsw hdmicec_cdevsw = {
 	.d_kqfilter = nokqfilter,
 	.d_flag = D_MPSAFE
 };
-
-extern struct cfdriver hdmicec_cd;
 
 CFATTACH_DECL_NEW(hdmicec, sizeof(struct hdmicec_softc), hdmicec_match,
     hdmicec_attach, NULL, NULL);

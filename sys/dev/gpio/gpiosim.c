@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.20 2017/01/20 12:25:07 maya Exp $ */
+/* $NetBSD: gpiosim.c,v 1.21 2017/10/28 04:53:56 riastradh Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -56,8 +56,6 @@ static void	gpiosim_pin_ctl(void *, int, int);
 
 CFATTACH_DECL_NEW(gpiosim, sizeof(struct gpiosim_softc), gpiosim_match,
     gpiosim_attach, gpiosim_detach, NULL);
-
-extern struct cfdriver gpiosim_cd;
 
 static int
 gpiosim_match(device_t parent, cfdata_t match, void *aux)

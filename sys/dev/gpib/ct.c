@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.28 2016/07/11 11:31:50 msaitoh Exp $ */
+/*	$NetBSD: ct.c,v 1.29 2017/10/28 04:53:56 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.28 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.29 2017/10/28 04:53:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.28 2016/07/11 11:31:50 msaitoh Exp $");
 
 #include <dev/gpib/gpibvar.h>
 #include <dev/gpib/cs80busvar.h>
+
+#include "ioconf.h"
 
 /* number of eof marks to remember */
 #define EOFS	128
@@ -205,8 +207,6 @@ const struct cdevsw ct_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_TAPE
 };
-
-extern struct cfdriver ct_cd;
 
 struct	ctinfo {
 	short	hwid;

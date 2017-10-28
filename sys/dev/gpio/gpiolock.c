@@ -1,4 +1,4 @@
-/* $NetBSD: gpiolock.c,v 1.4 2017/01/20 12:25:07 maya Exp $ */
+/* $NetBSD: gpiolock.c,v 1.5 2017/10/28 04:53:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -38,6 +38,8 @@
 #include <dev/gpio/gpiovar.h>
 #include <dev/keylock.h>
 
+#include "ioconf.h"
+
 #define GPIOLOCK_MAXPINS	4
 #define GPIOLOCK_MINPINS	2
 
@@ -59,8 +61,6 @@ int gpiolock_position(void *);
 
 CFATTACH_DECL_NEW(gpiolock, sizeof(struct gpiolock_softc),
 	gpiolock_match, gpiolock_attach, gpiolock_detach, gpiolock_activate);
-
-extern struct cfdriver gpiolock_cd;
 
 int
 gpiolock_match(device_t parent, cfdata_t cf,

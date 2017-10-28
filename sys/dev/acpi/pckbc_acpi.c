@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.35 2016/10/18 22:08:30 jdolecek Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.36 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.35 2016/10/18 22:08:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.36 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.35 2016/10/18 22:08:30 jdolecek Exp
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
+
+#include "ioconf.h"
 
 static int	pckbc_acpi_match(device_t, cfdata_t, void *);
 static void	pckbc_acpi_attach(device_t, device_t, void *);
@@ -71,8 +73,6 @@ struct pckbc_acpi_softc {
 
 /* Save first port: */
 static struct pckbc_acpi_softc *first;
-
-extern struct cfdriver pckbc_cd;
 
 CFATTACH_DECL_NEW(pckbc_acpi, sizeof(struct pckbc_acpi_softc),
     pckbc_acpi_match, pckbc_acpi_attach, NULL, NULL);

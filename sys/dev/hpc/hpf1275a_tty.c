@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.28 2017/08/02 00:58:18 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.29 2017/10/28 04:53:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.28 2017/08/02 00:58:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.29 2017/10/28 04:53:56 riastradh Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -52,8 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.28 2017/08/02 00:58:18 uwe Exp $"
 #include <dev/hpc/pckbd_encode.h>
 #endif
 
-
-extern struct cfdriver hpf1275a_cd;
+#include "ioconf.h"
 
 struct hpf1275a_softc {
 	device_t sc_dev;

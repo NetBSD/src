@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.30 2017/06/01 02:45:10 chs Exp $	*/
+/*	$NetBSD: nvme.c,v 1.31 2017/10/28 04:53:55 riastradh Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.30 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.31 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.30 2017/06/01 02:45:10 chs Exp $");
 #include <dev/ic/nvmereg.h>
 #include <dev/ic/nvmevar.h>
 #include <dev/ic/nvmeio.h>
+
+#include "ioconf.h"
 
 int nvme_adminq_size = 32;
 int nvme_ioq_size = 1024;
@@ -1661,8 +1663,6 @@ const struct cdevsw nvme_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
-
-extern struct cfdriver nvme_cd;
 
 /*
  * Accept an open operation on the control device.

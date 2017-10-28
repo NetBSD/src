@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.30 2016/07/14 04:00:45 msaitoh Exp $ */
+/*	$NetBSD: mt.c,v 1.31 2017/10/28 04:53:56 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.30 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.31 2017/10/28 04:53:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.30 2016/07/14 04:00:45 msaitoh Exp $");
 #include <dev/gpib/cs80busvar.h>
 
 #include <dev/gpib/mtreg.h>
+
+#include "ioconf.h"
 
 #ifdef DEBUG
 int	mtdebug = 0;
@@ -186,8 +188,6 @@ const struct cdevsw mt_cdevsw = {
 	.d_flag = D_TAPE
 };
 
-
-extern struct cfdriver mt_cd;
 
 struct	mtinfo {
 	u_short	hwid;

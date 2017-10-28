@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.55 2017/06/01 02:45:10 chs Exp $	*/
+/*	$NetBSD: i2c.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.55 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.55 2017/06/01 02:45:10 chs Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 #ifndef I2C_MAX_ADDR
@@ -96,8 +97,6 @@ const struct cdevsw iic_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
-
-extern struct cfdriver iic_cd;
 
 static void	iic_smbus_intr_thread(void *);
 static void	iic_fill_compat(struct i2c_attach_args*, const char*,

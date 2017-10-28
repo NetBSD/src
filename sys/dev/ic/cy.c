@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.60 2014/11/15 19:18:18 christos Exp $	*/
+/*	$NetBSD: cy.c,v 1.61 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.60 2014/11/15 19:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.61 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.60 2014/11/15 19:18:18 christos Exp $");
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
 
+#include "ioconf.h"
+
 static int	cyparam(struct tty *, struct termios *);
 static void	cystart(struct tty *);
 static void	cy_poll(void *);
@@ -45,8 +47,6 @@ static int	cy_modem_control(struct cy_softc *, struct cy_port *, int, int);
 static void	cy_enable_transmitter(struct cy_softc *, struct cy_port *);
 static void	cd1400_channel_cmd(struct cy_softc *, struct cy_port *, int);
 static int	cy_speed(speed_t, int *, int *, int);
-
-extern struct cfdriver cy_cd;
 
 static dev_type_open(cyopen);
 static dev_type_close(cyclose);

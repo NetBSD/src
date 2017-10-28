@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.11 2014/08/09 13:34:10 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.11 2014/08/09 13:34:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.11 2014/08/09 13:34:10 jmcneill Exp
 #include <sys/select.h>
 
 #include <dev/dtv/dtvvar.h>
+
+#include "ioconf.h"
 
 MODULE(MODULE_CLASS_DRIVER, dtv, NULL);
 
@@ -79,8 +81,6 @@ CFATTACH_DECL_NEW(dtv,
     dtv_detach,
     NULL
 );
-
-extern struct cfdriver dtv_cd;
 
 static int
 dtv_match(device_t parent, cfdata_t cfdata, void *aa)

@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.342 2017/08/10 13:25:49 nat Exp $ */
+/* $NetBSD: com.c,v 1.343 2017/10/28 04:53:55 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.342 2017/08/10 13:25:49 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.343 2017/10/28 04:53:55 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.342 2017/08/10 13:25:49 nat Exp $");
 #endif
 #define	com_lcr	com_cfcr
 #include <dev/cons.h>
+
+#include "ioconf.h"
 
 #ifdef	COM_REGMAP
 #define	CSR_WRITE_1(r, o, v)	\
@@ -189,8 +191,6 @@ integrate void com_txsoft(struct com_softc *, struct tty *);
 integrate void com_stsoft(struct com_softc *, struct tty *);
 integrate void com_schedrx(struct com_softc *);
 void	comdiag(void *);
-
-extern struct cfdriver com_cd;
 
 dev_type_open(comopen);
 dev_type_close(comclose);

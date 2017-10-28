@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.65 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: mlx.c,v 1.66 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.65 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.66 2017/10/28 04:53:55 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "ld.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.65 2016/09/27 03:33:32 pgoyette Exp $");
 #include <dev/ic/mlxio.h>
 #include <dev/ic/mlxvar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 #define	MLX_TIMEOUT	60
@@ -146,7 +147,6 @@ const struct cdevsw mlx_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-extern struct	cfdriver mlx_cd;
 static struct	lwp *mlx_periodic_lwp;
 static void	*mlx_sdh;
 
@@ -680,7 +680,6 @@ static void
 mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
 {
 #if NLD > 0
-	extern struct cfdriver ld_cd;
 	struct ld_softc *ld;
 	int i;
 

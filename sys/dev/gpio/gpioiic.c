@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.7 2015/09/01 19:25:32 phx Exp $ */
+/* $NetBSD: gpioiic.c,v 1.8 2017/10/28 04:53:56 riastradh Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.7 2015/09/01 19:25:32 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.8 2017/10/28 04:53:56 riastradh Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.7 2015/09/01 19:25:32 phx Exp $");
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
+
+#include "ioconf.h"
 
 #define GPIOIIC_PIN_SDA		0
 #define GPIOIIC_PIN_SCL		1
@@ -79,8 +81,6 @@ uint32_t	gpioiic_bb_read_bits(void *);
 
 CFATTACH_DECL_NEW(gpioiic, sizeof(struct gpioiic_softc),
 	gpioiic_match, gpioiic_attach, gpioiic_detach, NULL);
-
-extern struct cfdriver gpioiic_cd;
 
 static const struct i2c_bitbang_ops gpioiic_bbops = {
 	gpioiic_bb_set_bits,

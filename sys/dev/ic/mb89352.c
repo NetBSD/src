@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.55 2017/01/11 07:16:48 skrll Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.55 2017/01/11 07:16:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -164,6 +164,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.55 2017/01/11 07:16:48 skrll Exp $");
 #include <dev/ic/mb89352reg.h>
 #include <dev/ic/mb89352var.h>
 
+#include "ioconf.h"
+
 #ifndef DDB
 #define	Debugger() panic("should call debugger here (mb89352.c)")
 #endif /* ! DDB */
@@ -198,8 +200,6 @@ void	spc_dump89352(struct spc_softc *);
 void	spc_show_scsi_cmd(struct spc_acb *);
 void	spc_print_active_acb(void);
 #endif
-
-extern struct cfdriver spc_cd;
 
 /*
  * INITIALIZATION ROUTINES (probe, attach ++)

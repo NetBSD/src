@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.11 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: attimer.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.11 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.11 2011/11/23 23:07:32 jmcneill Exp $"
 #include <dev/ic/attimervar.h>
 #include <dev/ic/i8253reg.h>
 
-extern struct cfdriver attimer_cd;
+#include "ioconf.h"
 
 void
 attimer_attach(struct attimer_softc *sc)

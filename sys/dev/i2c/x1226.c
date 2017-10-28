@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.19 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: x1226.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.19 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.19 2014/11/20 16:34:26 christos Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/x1226reg.h>
 
+#include "ioconf.h"
+
 struct xrtc_softc {
 	device_t		sc_dev;
 	i2c_tag_t		sc_tag;
@@ -65,7 +67,6 @@ static int	xrtc_match(device_t, cfdata_t, void *);
 
 CFATTACH_DECL_NEW(xrtc, sizeof(struct xrtc_softc),
     xrtc_match, xrtc_attach, NULL, NULL);
-extern struct cfdriver xrtc_cd;
 
 dev_type_open(xrtc_open);
 dev_type_close(xrtc_close);

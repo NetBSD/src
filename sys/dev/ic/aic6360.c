@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.100 2017/01/11 07:16:48 skrll Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.100 2017/01/11 07:16:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -140,6 +140,8 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.100 2017/01/11 07:16:48 skrll Exp $");
 
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
+
+#include "ioconf.h"
 
 #ifndef DDB
 #define	Debugger() panic("should call debugger here (aic6360.c)")
@@ -2149,7 +2151,6 @@ aic_print_acb(struct aic_acb *acb)
 void
 aic_print_active_acb(void)
 {
-	extern struct cfdriver aic_cd;
 	struct aic_acb *acb;
 	struct aic_softc *sc = device_lookup_private(&aic_cd, 0);
 

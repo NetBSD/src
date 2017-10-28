@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.57 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: cac.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.57 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.57 2016/09/27 03:33:32 pgoyette Exp $");
 #include <dev/biovar.h>
 #endif /* NBIO > 0 */
 
+#include "ioconf.h"
 #include "locators.h"
 
 static struct	cac_ccb *cac_ccb_alloc(struct cac_softc *, int);
@@ -244,7 +245,6 @@ cac_rescan(device_t self, const char *attr, const int *flags)
 static void
 cac_shutdown(void *cookie)
 {
-	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
 	u_int8_t tbuf[512];
 	int i;

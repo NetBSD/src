@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.45 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: aac.c,v 1.46 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.45 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.46 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,6 @@ int	aac_debug = AAC_DEBUG;
 MALLOC_DEFINE(M_AACBUF, "aacbuf", "Buffers for aac(4)");
 
 static void	*aac_sdh;
-
-extern struct	cfdriver aac_cd;
 
 int
 aac_attach(struct aac_softc *sc)

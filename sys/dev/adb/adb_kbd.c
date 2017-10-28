@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.26 2015/07/29 08:45:28 christos Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.27 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.26 2015/07/29 08:45:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.27 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.26 2015/07/29 08:45:28 christos Exp $"
 
 #include <dev/adb/adbvar.h>
 #include <dev/adb/adb_keymap.h>
+
+#include "ioconf.h"
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_adbkbd.h"
@@ -110,8 +112,6 @@ static int	adbkbd_wait(struct adbkbd_softc *, int);
 /* Driver definition. */
 CFATTACH_DECL_NEW(adbkbd, sizeof(struct adbkbd_softc),
     adbkbd_match, adbkbd_attach, NULL, NULL);
-
-extern struct cfdriver adbkbd_cd;
 
 static int adbkbd_enable(void *, int);
 static int adbkbd_ioctl(void *, u_long, void *, int, struct lwp *);

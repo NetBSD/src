@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.21 2017/06/25 12:21:00 maxv Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.22 2017/10/28 04:53:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.21 2017/06/25 12:21:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.22 2017/10/28 04:53:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.21 2017/06/25 12:21:00 maxv Exp $");
 #include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+
+#include "ioconf.h"
 
 #ifdef HPCAPMDEBUG
 #ifndef HPCAPMDEBUG_CONF
@@ -101,8 +103,6 @@ struct apm_accessops hpcapm_accessops = {
 	hpcapm_cpu_idle,
 	hpcapm_get_capabilities,
 };
-
-extern struct cfdriver hpcapm_cd;
 
 static int
 hpcapm_match(device_t parent, cfdata_t cf, void *aux)

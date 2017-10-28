@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.41 2016/07/11 11:31:50 msaitoh Exp $ */
+/*	$NetBSD: rd.c,v 1.42 2017/10/28 04:53:56 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.41 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.42 2017/10/28 04:53:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.41 2016/07/11 11:31:50 msaitoh Exp $");
 #include <dev/gpib/cs80busvar.h>
 
 #include <dev/gpib/rdreg.h>
+
+#include "ioconf.h"
 
 #ifdef DEBUG
 int	rddebug = 0xff;
@@ -279,8 +281,6 @@ const struct cdevsw rd_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
-
-extern struct cfdriver rd_cd;
 
 int
 rdlookup(int id, int slave, int punit)

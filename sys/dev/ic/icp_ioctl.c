@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.21 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.22 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.21 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.22 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.21 2014/07/25 08:10:37 dholland Exp 
 
 #include <dev/ic/icpreg.h>
 #include <dev/ic/icpvar.h>
+
+#include "ioconf.h"
 
 /* These are simply the same as ICP's "iir" driver for FreeBSD. */
 #define	ICP_DRIVER_VERSION		1
@@ -106,8 +108,6 @@ const struct cdevsw icp_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
-
-extern struct cfdriver icp_cd;
 
 kmutex_t icp_ioctl_mutex;
 

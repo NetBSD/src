@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.12 2014/07/25 08:10:36 dholland Exp $	*/
+/*	$NetBSD: flash.c,v 1.13 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.12 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.13 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,14 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.12 2014/07/25 08:10:36 dholland Exp $");
 #include <sys/malloc.h>
 #include <sys/reboot.h>
 
+#include "ioconf.h"
+
 #include <sys/flashio.h>
 #include "flash.h"
 
 #ifdef FLASH_DEBUG
 int flashdebug = FLASH_DEBUG;
 #endif
-
-extern struct cfdriver flash_cd;
 
 dev_type_open(flashopen);
 dev_type_close(flashclose);
