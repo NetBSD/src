@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.h,v 1.6 2007/12/25 18:33:38 perry Exp $	*/
+/*	$NetBSD: icp_ioctl.h,v 1.7 2017/10/28 06:27:32 riastradh Exp $	*/
 
 /*
  *       Copyright (c) 2000-03 Intel Corporation
@@ -37,7 +37,10 @@
 #ifndef _DEV_IC_ICP_IOCTL_H_
 #define	_DEV_IC_ICP_IOCTL_H_
 
+#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <sys/ioccom.h>
+
 #include <dev/ic/icpreg.h>
 
 #define	GDT_SCRATCH_SZ	3072	/* 3KB scratch buffer */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxio.h,v 1.3 2002/08/26 17:02:15 ad Exp $	*/
+/*	$NetBSD: mlxio.h,v 1.4 2017/10/28 06:27:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Smith
@@ -31,6 +31,7 @@
 #ifndef _IC_MLXIO_H_
 #define	_IC_MLXIO_H_
 
+#include <sys/types.h>
 #include <sys/ioccom.h>
 
 /*
