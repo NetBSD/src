@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7d-pinfunc.h,v 1.1.1.1 2017/06/15 20:14:24 jmcneill Exp $	*/
+/*	$NetBSD: imx7d-pinfunc.h,v 1.1.1.2 2017/10/28 10:30:31 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
@@ -19,9 +19,9 @@
 
 #define MX7D_PAD_LPSR_GPIO1_IO00__GPIO1_IO0                       0x0000 0x0030 0x0000 0x0 0x0
 #define MX7D_PAD_LPSR_GPIO1_IO00__PWM4_OUT                        0x0000 0x0030 0x0000 0x1 0x0
-#define MX7D_PAD_LPSR_GPIO1_IO00__WDOD1_WDOG_ANY                  0x0000 0x0030 0x0000 0x2 0x0
-#define MX7D_PAD_LPSR_GPIO1_IO00__WDOD1_WDOG_B                    0x0000 0x0030 0x0000 0x3 0x0
-#define MX7D_PAD_LPSR_GPIO1_IO00__WDOD1_WDOG__RST_B_DEB           0x0000 0x0030 0x0000 0x4 0x0
+#define MX7D_PAD_LPSR_GPIO1_IO00__WDOG1_WDOG_ANY                  0x0000 0x0030 0x0000 0x2 0x0
+#define MX7D_PAD_LPSR_GPIO1_IO00__WDOG1_WDOG_B                    0x0000 0x0030 0x0000 0x3 0x0
+#define MX7D_PAD_LPSR_GPIO1_IO00__WDOG1_WDOG__RST_B_DEB           0x0000 0x0030 0x0000 0x4 0x0
 #define MX7D_PAD_LPSR_GPIO1_IO01__GPIO1_IO1                       0x0004 0x0034 0x0000 0x0 0x0
 #define MX7D_PAD_LPSR_GPIO1_IO01__PWM1_OUT                        0x0004 0x0034 0x0000 0x1 0x0
 #define MX7D_PAD_LPSR_GPIO1_IO01__CCM_ENET_REF_CLK3               0x0004 0x0034 0x0000 0x2 0x0
