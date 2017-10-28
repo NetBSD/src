@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.417 2017/10/27 01:34:32 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.418 2017/10/28 03:34:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.417 2017/10/27 01:34:32 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.418 2017/10/28 03:34:26 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -194,6 +194,8 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.417 2017/10/27 01:34:32 nat Exp $");
 #include <machine/endian.h>
 
 #include <uvm/uvm.h>
+
+#include "ioconf.h"
 
 /* #define AUDIO_DEBUG	1 */
 #ifdef AUDIO_DEBUG
@@ -465,8 +467,6 @@ int auto_config_freq[] = { 48000, 44100, 96000, 192000, 32000,
 CFATTACH_DECL3_NEW(audio, sizeof(struct audio_softc),
     audiomatch, audioattach, audiodetach, audioactivate, audiorescan,
     audiochilddet, DVF_DETACH_SHUTDOWN);
-
-extern struct cfdriver audio_cd;
 
 static int
 audiomatch(device_t parent, cfdata_t match, void *aux)
@@ -6137,7 +6137,6 @@ shrink_mixer_states(struct audio_softc *sc, int count)
 
 #ifdef _MODULE
 
-extern struct cfdriver audio_cd;
 devmajor_t audio_bmajor = -1, audio_cmajor = -1;
 
 #include "ioconf.c"
