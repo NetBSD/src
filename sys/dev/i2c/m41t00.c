@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.19 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.19 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.20 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.19 2014/11/20 16:34:26 christos Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/m41t00reg.h>
 
+#include "ioconf.h"
+
 struct m41t00_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
@@ -68,7 +70,6 @@ static void m41t00_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(m41trtc, sizeof(struct m41t00_softc),
 	m41t00_match, m41t00_attach, NULL, NULL);
-extern struct cfdriver m41trtc_cd;
 
 dev_type_open(m41t00_open);
 dev_type_close(m41t00_close);

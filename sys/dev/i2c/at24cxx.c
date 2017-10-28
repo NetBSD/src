@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.24 2017/10/21 03:17:09 jmcneill Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.24 2017/10/21 03:17:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.25 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.24 2017/10/21 03:17:09 jmcneill Exp $"
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/at24cxxvar.h>
+
+#include "ioconf.h"
 
 /*
  * AT24Cxx EEPROM I2C address:
@@ -86,7 +88,6 @@ static void seeprom_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(seeprom, sizeof(struct seeprom_softc),
 	seeprom_match, seeprom_attach, NULL, NULL);
-extern struct cfdriver seeprom_cd;
 
 dev_type_open(seeprom_open);
 dev_type_close(seeprom_close);

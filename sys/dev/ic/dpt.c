@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.73 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: dpt.c,v 1.74 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.73 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.74 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.73 2016/07/07 06:55:41 msaitoh Exp $");
 #include <dev/ic/dptvar.h>
 
 #include <dev/i2o/dptivar.h>
+
+#include "ioconf.h"
 
 #ifdef DEBUG
 #define	DPRINTF(x)		printf x
@@ -150,8 +152,6 @@ const struct cdevsw dpt_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
-
-extern struct cfdriver dpt_cd;
 
 static struct dpt_sig dpt_sig = {
 	{ 'd', 'P', 't', 'S', 'i', 'G'},

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.20 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: joy.c,v 1.21 2017/10/28 04:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.20 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.21 2017/10/28 04:53:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.20 2014/07/25 08:10:37 dholland Exp $");
 #include <sys/joystick.h>
 
 #include <dev/ic/joyvar.h>
+
+#include "ioconf.h"
 
 /*
  * The game port can manage 4 buttons and 4 variable resistors (usually 2
@@ -93,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.20 2014/07/25 08:10:37 dholland Exp $");
 #ifndef JOY_TIMEOUT
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
 #endif
-
-extern struct cfdriver joy_cd;
 
 static dev_type_open(joyopen);
 static dev_type_close(joyclose);
