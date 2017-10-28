@@ -1,4 +1,4 @@
-/*	$NetBSD: hi6220-clock.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: hi6220-clock.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015 Hisilicon Limited.
@@ -176,4 +176,8 @@
 #define HI6220_DDRC_AXI1	7
 
 #define HI6220_POWER_NR_CLKS	8
+
+/* clk in Hi6220 acpu sctrl */
+#define HI6220_ACPU_SFT_AT_S		0
+
 #endif
