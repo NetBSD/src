@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.46 2017/10/22 13:57:47 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.47 2017/10/28 10:54:18 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -34,6 +34,10 @@ makeoptions	DTS="
 	sun6i-a31-m9.dts
 	sun6i-a31-mele-a1000g-quad.dts
 
+	sun8i-a83t-allwinner-h8homlet-v2.dts
+	sun8i-a83t-bananapi-m3.dts
+	sun8i-a83t-cubietruck-plus.dts
+
 	sun8i-h2-plus-orangepi-zero.dts
 
 	sun8i-h3-bananapi-m2-plus.dts
@@ -53,9 +57,13 @@ makeoptions	DTS="
 	sun9i-a80-optimus.dts
 
 	sun50i-a64-bananapi-m64.dts
+	sun50i-a64-nanopi-a64.dts
+	sun50i-a64-olinuxino.dts
+	sun50i-a64-orangepi-win.dts
 	sun50i-a64-pine64-plus.dts
 	sun50i-a64-pine64.dts
 	sun50i-a64-pinebook.dts
+	sun50i-a64-sopine-baseboard.dts
 "
 
 options 	MULTIPROCESSOR
