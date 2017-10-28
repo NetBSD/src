@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.169 2017/10/25 05:42:56 kre Exp $
+.\"	$NetBSD: sh.1,v 1.170 2017/10/28 06:36:17 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3104,14 +3104,56 @@ The exit status is 0, unless an attempt was made to unset
 a readonly variable, in which case the exit status is 1.
 It is not an error to unset (or undefine) a variable (or function)
 that is not currently set (or defined.)
-.It wait Op Ar job
-Wait for the specified job to complete and return the exit status of the
-last process in the job, or 127 if the job is not a current child of
-the shell.
-If the argument is omitted, wait for all jobs to
-complete and then return an exit status of zero.
+.It wait Oo Fl n Oc Oo Fl p Ar var Oc Op Ar job ...
+Wait for the specified jobs to complete
+and return the exit status of the last job in the parameter list,
+or 127 if that job is not a current child of the shell.
+.Pp
+If no
+.Ar job
+arguments are given, wait for all jobs to
+complete and then return an exit status of zero
+(including when there were no jobs, and so nothing exited.)
+.Pp
+With the
+.Fl n
+option, wait instead for any one of the given
+.Ar job Ns s,
+or if none are given, any job, to complete, and
+return the exit status of that job.
+If none of the given
+.Ar job
+arguments is a current child of the shell,
+or if no
+.Ar job
+arguments are given and the shell has no unwaited for children,
+then the exit status will be 127.
+.Pp
+The
+.Fl p Ar var
+option allows the process (or job) identifier of the
+job for which the exit status is returned to be obtained.
+The variable named (which must not be readonly) will be
+unset initially, then if a job has exited and its status is
+being returned, set to the identifier from the
+arg list (if given) of that job,
+or the lead process identifier of the job to exit when used with
+.Fl n
+and no job arguments.
+Note that
+.Fl p
+with neither
+.Fl n
+nor
+.Ar job
+arguments is useless, as in that case no job status is
+returned, the variable named is simply unset.
+.Pp
 If the wait is interrupted by a signal,
-its exit status will be greater than 128.
+its exit status will be greater than 128,
+and
+.Ar var ,
+if given, will remain unset.
 .Pp
 Once waited upon, by specific process number or job-id,
 or by a
@@ -3119,6 +3161,31 @@ or by a
 with no arguments,
 knowledge of the child is removed from the system,
 and it cannot be waited upon again.
+.Pp
+Note than when a list of jobs are given, more that
+one argument might refer to the same job.
+In that case, if the final argument represents a job
+that is also given earlier in the list, it is not
+defined whether the status returned will be the
+exit status of the job, or 127 indicating that
+the child no longer existed when the wait command
+reached the later argument in the list.
+In this
+.Nm
+the exit status will be that from the job.
+.Nm
+waits for each job exactly once, regardless of
+how many times (or how many different ways) it
+is listed in the arguments to
+.Ic wait .
+That is
+.Bd -literal -compact
+	wait 100 100 100
+.Ed
+is identical to
+.Bd -literal -compact
+	wait 100
+.Ed
 .El
 .Ss Job Control
 Each process (or set of processes) started by
