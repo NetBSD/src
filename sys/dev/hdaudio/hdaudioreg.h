@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.2 2017/10/28 06:24:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -31,6 +31,9 @@
 
 #ifndef _HDAUDIOREG_H
 #define _HDAUDIOREG_H
+
+#include <sys/cdefs.h>
+#include <sys/types.h>
 
 /*
  * High Definition Audio Audio PCI Configuration Space
