@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.4 2017/10/23 06:00:59 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.5 2017/10/28 19:28:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -112,20 +112,28 @@ mm_mprotect(vaddr_t startva, size_t size, int prot)
 	}
 }
 
+static size_t
+mm_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
+{
+	size_t npages;
+
+	npages = roundup((endva / PAGE_SIZE), (pgsz / PAGE_SIZE)) -
+	    rounddown((startva / PAGE_SIZE), (pgsz / PAGE_SIZE));
+	return (npages / (pgsz / PAGE_SIZE));
+}
+
 static void
 mm_map_tree(vaddr_t startva, vaddr_t endva)
 {
-	size_t i, size, nL4e, nL3e, nL2e;
+	size_t i, nL4e, nL3e, nL2e;
 	size_t L4e_idx, L3e_idx, L2e_idx;
 	paddr_t pa;
-
-	size = endva - startva;
 
 	/*
 	 * Build L4.
 	 */
 	L4e_idx = pl4_i(startva);
-	nL4e = roundup(size, NBPD_L4) / NBPD_L4;
+	nL4e = mm_nentries_range(startva, endva, NBPD_L4);
 	ASSERT(L4e_idx == 511);
 	ASSERT(nL4e == 1);
 	if (!mm_pte_is_valid(L4_BASE[L4e_idx])) {
@@ -137,7 +145,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 	 * Build L3.
 	 */
 	L3e_idx = pl3_i(startva);
-	nL3e = roundup(size, NBPD_L3) / NBPD_L3;
+	nL3e = mm_nentries_range(startva, endva, NBPD_L3);
 	for (i = 0; i < nL3e; i++) {
 		if (mm_pte_is_valid(L3_BASE[L3e_idx+i])) {
 			continue;
@@ -150,7 +158,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 	 * Build L2.
 	 */
 	L2e_idx = pl2_i(startva);
-	nL2e = roundup(size, NBPD_L2) / NBPD_L2;
+	nL2e = mm_nentries_range(startva, endva, NBPD_L2);
 	for (i = 0; i < nL2e; i++) {
 		if (mm_pte_is_valid(L2_BASE[L2e_idx+i])) {
 			continue;
