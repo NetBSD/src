@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.14 2017/07/01 23:27:17 nat Exp $	*/
+/*	$NetBSD: spkr.c,v 1.15 2017/10/28 03:47:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.14 2017/07/01 23:27:17 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15 2017/10/28 03:47:24 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.14 2017/07/01 23:27:17 nat Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsbellvar.h>
 #include <dev/wscons/wsbellmuxvar.h>
+
+#include "ioconf.h"
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
@@ -356,7 +358,6 @@ playstring(struct spkr_softc *sc, const char *cp, size_t slen)
  * This section implements driver hooks to run playstring() and the spkr_tone()
  * and spkr_rest() functions defined above.
  */
-extern struct cfdriver spkr_cd;
 #define spkrenter(d)	device_lookup_private(&spkr_cd, d)
 
 void
@@ -542,7 +543,6 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 #ifdef _MODULE
-extern struct cfdriver spkr_cd;
 #include "ioconf.c"
 #endif
 

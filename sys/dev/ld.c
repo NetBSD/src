@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.103 2017/08/20 15:58:43 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.104 2017/10/28 03:47:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.103 2017/08/20 15:58:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.104 2017/10/28 03:47:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.103 2017/08/20 15:58:43 mlelstv Exp $");
 
 #include <dev/ldvar.h>
 
+#include "ioconf.h"
+
 static void	ldminphys(struct buf *bp);
 static bool	ld_suspend(device_t, const pmf_qual_t *);
 static bool	ld_shutdown(device_t, int);
@@ -71,8 +73,6 @@ static void	ld_config_interrupts (device_t);
 static int	ld_lastclose(device_t);
 static int	ld_discard(device_t, off_t, off_t);
 static int	ld_flush(device_t, bool);
-
-extern struct	cfdriver ld_cd;
 
 static dev_type_open(ldopen);
 static dev_type_close(ldclose);
