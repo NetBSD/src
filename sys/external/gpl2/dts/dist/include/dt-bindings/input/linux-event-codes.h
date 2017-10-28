@@ -1,4 +1,4 @@
-/*	$NetBSD: linux-event-codes.h,v 1.1.1.2 2017/07/29 23:07:09 jmcneill Exp $	*/
+/*	$NetBSD: linux-event-codes.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
 
 /*
  * Input event codes
@@ -602,6 +602,7 @@
 #define KEY_APPSELECT		0x244	/* AL Select Task/Application */
 #define KEY_SCREENSAVER		0x245	/* AL Screen Saver */
 #define KEY_VOICECOMMAND		0x246	/* Listening Voice Command */
+#define KEY_ASSISTANT		0x247	/* AL Context-aware desktop assistant */
 
 #define KEY_BRIGHTNESS_MIN		0x250	/* Set Brightness to Minimum */
 #define KEY_BRIGHTNESS_MAX		0x251	/* Set Brightness to Maximum */
