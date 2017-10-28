@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_a83t_ccu.c,v 1.4 2017/10/28 13:13:45 jmcneill Exp $ */
+/* $NetBSD: sun8i_a83t_ccu.c,v 1.5 2017/10/28 22:59:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.4 2017/10/28 13:13:45 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.5 2017/10/28 22:59:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_a83t_ccu.c,v 1.4 2017/10/28 13:13:45 jmcneill 
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
 #define	BUS_CLK_GATING_REG0	0x060
+#define	BUS_CLK_GATING_REG1	0x064
 #define	BUS_CLK_GATING_REG2	0x068
 #define	BUS_CLK_GATING_REG3	0x06c
 #define	SDMMC0_CLK_REG		0x088
@@ -172,14 +173,30 @@ static struct sunxi_ccu_clk sun8i_a83t_ccu_clks[] = {
 	    SDMMC2_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN|SUNXI_CCU_NM_DIVIDE_BY_TWO),
 
+	SUNXI_CCU_GATE(A83T_CLK_BUS_MIPI_DSI, "bus-mipi-dsi", "ahb1",
+	    BUS_CLK_GATING_REG0, 1),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_SS, "bus-ss", "ahb1",
+	    BUS_CLK_GATING_REG0, 5),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_DMA, "bus-dma", "ahb1",
+	    BUS_CLK_GATING_REG0, 6),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_MMC0, "bus-mmc0", "ahb1",
 	    BUS_CLK_GATING_REG0, 8),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_MMC1, "bus-mmc1", "ahb1",
 	    BUS_CLK_GATING_REG0, 9),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_MMC2, "bus-mmc2", "ahb1",
 	    BUS_CLK_GATING_REG0, 10),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_NAND, "bus-nand", "ahb1",
+	    BUS_CLK_GATING_REG0, 13),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_DRAM, "bus-dram", "ahb1",
+	    BUS_CLK_GATING_REG0, 14),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_EMAC, "bus-emac", "ahb2",
 	    BUS_CLK_GATING_REG0, 17),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_HSTIMER, "bus-hstimer", "ahb1",
+	    BUS_CLK_GATING_REG0, 19),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_SPI0, "bus-spi0", "ahb1",
+	    BUS_CLK_GATING_REG0, 20),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_SPI1, "bus-spi1", "ahb1",
+	    BUS_CLK_GATING_REG0, 21),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_OTG, "bus-otg", "ahb1",
 	    BUS_CLK_GATING_REG0, 24),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_EHCI0, "bus-ehci0", "ahb1",
@@ -189,8 +206,37 @@ static struct sunxi_ccu_clk sun8i_a83t_ccu_clks[] = {
 	SUNXI_CCU_GATE(A83T_CLK_BUS_OHCI0, "bus-ohci0", "ahb1",
 	    BUS_CLK_GATING_REG0, 29),
 
+	SUNXI_CCU_GATE(A83T_CLK_BUS_VE, "bus-ve", "ahb2",
+	    BUS_CLK_GATING_REG1, 0),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_TCON0, "bus-tcon0", "ahb2",
+	    BUS_CLK_GATING_REG1, 4),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_TCON1, "bus-tcon1", "ahb2",
+	    BUS_CLK_GATING_REG1, 5),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_CSI, "bus-csi", "ahb2",
+	    BUS_CLK_GATING_REG1, 8),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_HDMI, "bus-hdmi", "ahb2",
+	    BUS_CLK_GATING_REG1, 11),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_DE, "bus-de", "ahb2",
+	    BUS_CLK_GATING_REG1, 12),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_GPU, "bus-gpu", "ahb2",
+	    BUS_CLK_GATING_REG1, 20),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_MSGBOX, "bus-msgbox", "ahb2",
+	    BUS_CLK_GATING_REG1, 21),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_SPINLOCK, "bus-spinlock", "ahb2",
+	    BUS_CLK_GATING_REG1, 22),
+
+	SUNXI_CCU_GATE(A83T_CLK_BUS_SPDIF, "bus-spdif", "apb1",
+	    BUS_CLK_GATING_REG2, 1),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_PIO, "bus-pio", "apb1",
 	    BUS_CLK_GATING_REG2, 5),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_I2S0, "bus-i2s0", "apb1",
+	    BUS_CLK_GATING_REG2, 12),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_I2S1, "bus-i2s1", "apb1",
+	    BUS_CLK_GATING_REG2, 13),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_I2S2, "bus-i2s2", "apb1",
+	    BUS_CLK_GATING_REG2, 14),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_TDM, "bus-tdm", "apb1",
+	    BUS_CLK_GATING_REG2, 15),
 
 	SUNXI_CCU_GATE(A83T_CLK_BUS_I2C0, "bus-i2c0", "apb2",
 	    BUS_CLK_GATING_REG3, 0),
@@ -206,6 +252,8 @@ static struct sunxi_ccu_clk sun8i_a83t_ccu_clks[] = {
 	    BUS_CLK_GATING_REG3, 18),
 	SUNXI_CCU_GATE(A83T_CLK_BUS_UART3, "bus-uart3", "apb2",
 	    BUS_CLK_GATING_REG3, 19),
+	SUNXI_CCU_GATE(A83T_CLK_BUS_UART4, "bus-uart4", "apb2",
+	    BUS_CLK_GATING_REG3, 20),
 
 	SUNXI_CCU_GATE(A83T_CLK_USB_PHY0, "usb-phy0", "hosc",
 	    USBPHY_CFG_REG, 8),
