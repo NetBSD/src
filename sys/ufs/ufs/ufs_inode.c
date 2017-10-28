@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.101 2017/05/26 14:34:20 riastradh Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.102 2017/10/28 00:37:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.101 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.102 2017/10/28 00:37:13 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -203,8 +203,8 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	struct vm_page **pgs;
 	size_t pgssize;
 	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
-		    vp, off, len, vp->v_size);
+	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx len 0x%jx u_size 0x%jx",
+		    (uintptr_t)vp, off, len, vp->v_size);
 
 	neweof = MAX(vp->v_size, off + len);
 	GOP_SIZE(vp, neweof, &neweob, 0);
