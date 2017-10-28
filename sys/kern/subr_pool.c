@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.208 2017/06/08 04:00:01 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.209 2017/10/28 17:06:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.208 2017/06/08 04:00:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.209 2017/10/28 17:06:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1051,6 +1051,23 @@ pool_grow(struct pool *pp, int flags)
 {
 	struct pool_item_header *ph = NULL;
 	char *cp;
+	int error;
+
+	/*
+	 * If there's a pool_grow in progress, wait for it to complete
+	 * and try again from the top.
+	 */
+	if (pp->pr_flags & PR_GROWING) {
+		if (flags & PR_WAITOK) {
+			do {
+				cv_wait(&pp->pr_cv, &pp->pr_lock);
+			} while (pp->pr_flags & PR_GROWING);
+			return ERESTART;
+		} else {
+			return EWOULDBLOCK;
+		}
+	}
+	pp->pr_flags |= PR_GROWING;
 
 	mutex_exit(&pp->pr_lock);
 	cp = pool_allocator_alloc(pp, flags);
@@ -1062,13 +1079,25 @@ pool_grow(struct pool *pp, int flags)
 			pool_allocator_free(pp, cp);
 		}
 		mutex_enter(&pp->pr_lock);
-		return ENOMEM;
+		error = ENOMEM;
+		goto out;
 	}
 
 	mutex_enter(&pp->pr_lock);
 	pool_prime_page(pp, cp, ph);
 	pp->pr_npagealloc++;
-	return 0;
+	error = 0;
+
+out:
+	/*
+	 * If anyone was waiting for pool_grow, notify them that we
+	 * may have just done it.
+	 */
+	KASSERT(pp->pr_flags & PR_GROWING);
+	pp->pr_flags &= ~PR_GROWING;
+	cv_broadcast(&pp->pr_cv);
+
+	return error;
 }
 
 /*
