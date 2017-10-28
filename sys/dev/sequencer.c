@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.67 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.68 2017/10/28 03:47:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.67 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.68 2017/10/28 03:47:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -355,8 +355,6 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	/* Only now redirect input from MIDI devices. */
 	for (mdno = 0; mdno < sc->nmidi; mdno++) {
-		extern struct cfdriver midi_cd;
-
 		msc = device_lookup_private(&midi_cd, sc->devs[mdno]->unit);
 		if (msc) {
 			mutex_enter(msc->lock);
@@ -453,8 +451,6 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	}
 	/* Bin input from MIDI devices. */
 	for (unit = 0; unit < sc->nmidi; unit++) {
-		extern struct cfdriver midi_cd;
-
 		msc = device_lookup_private(&midi_cd, unit);
 		if (msc) {
 			mutex_enter(msc->lock);
@@ -1407,7 +1403,6 @@ midiseq_in(struct midi_dev *md, u_char *msg, int len)
 static struct midi_dev *
 midiseq_open(int unit, int flags)
 {
-	extern struct cfdriver midi_cd;
 	int error;
 	struct midi_dev *md;
 	struct midi_softc *sc;
@@ -1674,7 +1669,6 @@ midi_writebytes(int unit, u_char *bf, int cc)
 #endif /* NMIDI == 0 */
 
 #ifdef _MODULE
-extern struct cfdriver sequencer_cd;
 #include "ioconf.c"
 
 devmajor_t sequencer_bmajor = -1, sequencer_cmajor = -1;
