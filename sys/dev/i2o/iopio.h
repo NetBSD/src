@@ -1,4 +1,4 @@
-/*	$NetBSD: iopio.h,v 1.7 2015/09/06 06:01:00 dholland Exp $	*/
+/*	$NetBSD: iopio.h,v 1.8 2017/10/28 06:27:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _I2O_IOPIO_H_
 #define	_I2O_IOPIO_H_
 
+#include <sys/types.h>
 #include <sys/ioccom.h>
 
 #define	IOP_MAX_MSG_XFERS	3	/* Maximum transfer count per msg */
