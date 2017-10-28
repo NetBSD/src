@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.104 2017/07/02 16:16:44 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.105 2017/10/28 00:37:12 pgoyette Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.104 2017/07/02 16:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105 2017/10/28 00:37:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,10 +262,10 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Get the current lwp structure */
 
-	UVMHIST_LOG(maphist, " (l=%#x, far=%#x, fsr=%#x",
-	    l, far, fsr, 0);
-	UVMHIST_LOG(maphist, "  tf=%#x, pc=%#x)",
-	    tf, tf->tf_pc, 0, 0);
+	UVMHIST_LOG(maphist, " (l=%#jx, far=%#jx, fsr=%#jx",
+	    (uintptr_t)l, far, fsr, 0);
+	UVMHIST_LOG(maphist, "  tf=%#jx, pc=%#jx)",
+	    (uintptr_t)tf, (uintptr_t)tf->tf_pc, 0, 0);
 
 	/* Data abort came from user mode? */
 	bool user = (TRAP_USERMODE(tf) != 0);
@@ -528,7 +528,7 @@ data_abort_handler(trapframe_t *tf)
 	}
 	ksi.ksi_addr = (uint32_t *)(intptr_t) far;
 	ksi.ksi_trap = fsr;
-	UVMHIST_LOG(maphist, " <- error (%d)", error, 0, 0, 0);
+	UVMHIST_LOG(maphist, " <- error (%jd)", error, 0, 0, 0);
 
 do_trapsignal:
 	call_trapsignal(l, tf, &ksi);
@@ -847,8 +847,8 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
 	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
-	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)",
-	    fault_pc, l, tf, 0);
+	UVMHIST_LOG(maphist, " (pc=0x%jx, l=0x%#jx, tf=0x%#jx)",
+	    fault_pc, (uintptr_t)l, (uintptr_t)tf, 0);
 
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(fault_pc >= VM_MAXUSER_ADDRESS ||
@@ -891,7 +891,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 	KSI_INIT_TRAP(&ksi);
 
-	UVMHIST_LOG (maphist, " <- fatal (%d)", error, 0, 0, 0);
+	UVMHIST_LOG (maphist, " <- fatal (%jd)", error, 0, 0, 0);
 
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "

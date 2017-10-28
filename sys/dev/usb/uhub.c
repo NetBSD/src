@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.136 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: uhub.c,v 1.137 2017/10/28 00:37:12 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.136 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.137 2017/10/28 00:37:12 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -178,7 +178,7 @@ usbd_get_hub_desc(struct usbd_device *dev, usb_hub_descriptor_t *hd, int speed)
 		err = usbd_do_request(dev, &req, &hssd);
 		nports = hssd.bNbrPorts;
 		if (dev->ud_depth != 0 && nports > UHD_SS_NPORTS_MAX) {
-			DPRINTF("num of ports %d exceeds maxports %d",
+			DPRINTF("num of ports %jd exceeds maxports %jd",
 			    nports, UHD_SS_NPORTS_MAX, 0, 0);
 			nports = hd->bNbrPorts = UHD_SS_NPORTS_MAX;
 		}
@@ -237,7 +237,7 @@ uhub_match(device_t parent, cfdata_t match, void *aux)
 	else
 		matchvalue = UMATCH_DEVCLASS_DEVSUBCLASS;
 
-	DPRINTFN(5, "uaa=%p", uaa, 0, 0, 0);
+	DPRINTFN(5, "uaa=%#jx", (uintptr_t)uaa, 0, 0, 0);
 	/*
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
@@ -281,7 +281,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
-		DPRINTF("configuration failed, sc %p error %d", sc, err, 0, 0);
+		DPRINTF("configuration failed, sc %#jx error %jd",
+		    (uintptr_t)sc, err, 0, 0);
 		return;
 	}
 
@@ -297,7 +298,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	err = usbd_get_hub_desc(dev, &hubdesc, dev->ud_speed);
 	nports = hubdesc.bNbrPorts;
 	if (err) {
-		DPRINTF("getting hub descriptor failed, uhub%d error %d",
+		DPRINTF("getting hub descriptor failed, uhub%jd error %jd",
 		    device_unit(self), err, 0, 0);
 		return;
 	}
@@ -439,7 +440,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		if (err)
 			aprint_error_dev(self, "port %d power on failed, %s\n",
 			    port, usbd_errstr(err));
-		DPRINTF("uhub%d turn on port %d power", device_unit(self),
+		DPRINTF("uhub%jd turn on port %jd power", device_unit(self),
 		    port, 0, 0);
 	}
 
@@ -483,8 +484,9 @@ uhub_explore(struct usbd_device *dev)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
-	DPRINTFN(10, "uhub%d dev=%p addr=%d speed=%u",
-	    device_unit(sc->sc_dev), dev, dev->ud_addr, dev->ud_speed);
+	DPRINTFN(10, "uhub%jd dev=%#jx addr=%jd speed=%ju",
+	    device_unit(sc->sc_dev), (uintptr_t)dev, dev->ud_addr,
+	    dev->ud_speed);
 
 	if (!sc->sc_running)
 		return USBD_NOT_STARTED;
@@ -498,13 +500,13 @@ uhub_explore(struct usbd_device *dev)
 
 		err = usbd_get_hub_status(dev, &hs);
 		if (err) {
-			DPRINTF("uhub%d get hub status failed, err %d",
+			DPRINTF("uhub%jd get hub status failed, err %jd",
 			    device_unit(sc->sc_dev), err, 0, 0);
 		} else {
 			/* just acknowledge */
 			status = UGETW(hs.wHubStatus);
 			change = UGETW(hs.wHubChange);
-			DPRINTF("uhub%d s/c=%x/%x", device_unit(sc->sc_dev),
+			DPRINTF("uhub%jd s/c=%jx/%jx", device_unit(sc->sc_dev),
 			    status, change, 0);
 
 			if (change & UHS_LOCAL_POWER)
@@ -529,14 +531,14 @@ uhub_explore(struct usbd_device *dev)
 		if (PORTSTAT_ISSET(sc, port) || reconnect) {
 			err = usbd_get_port_status(dev, port, &up->up_status);
 			if (err) {
-				DPRINTF("uhub%d get port stat failed, err %d",
+				DPRINTF("uhub%jd get port stat failed, err %jd",
 				    device_unit(sc->sc_dev), err, 0, 0);
 				continue;
 			}
 			status = UGETW(up->up_status.wPortStatus);
 			change = UGETW(up->up_status.wPortChange);
 
-			DPRINTF("uhub%d port %d: s/c=%x/%x",
+			DPRINTF("uhub%jd port %jd: s/c=%jx/%jx",
 			    device_unit(sc->sc_dev), port, status, change);
 		}
 		if (!change && !reconnect) {
@@ -547,7 +549,7 @@ uhub_explore(struct usbd_device *dev)
 		}
 
 		if (change & UPS_C_PORT_ENABLED) {
-			DPRINTF("uhub%d port %d C_PORT_ENABLED",
+			DPRINTF("uhub%jd port %jd C_PORT_ENABLED",
 			    device_unit(sc->sc_dev), port, 0, 0);
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
 			if (change & UPS_C_CONNECT_STATUS) {
@@ -610,8 +612,8 @@ uhub_explore(struct usbd_device *dev)
 
 		/* We have a connect status change, handle it. */
 
-		DPRINTF("uhub%d status change port %d", device_unit(sc->sc_dev),
-		    port, 0, 0);
+		DPRINTF("uhub%jd status change port %jd",
+		    device_unit(sc->sc_dev), port, 0, 0);
 		usbd_clear_port_feature(dev, port, UHF_C_PORT_CONNECTION);
 		/*
 		 * If there is already a device on the port the change status
@@ -623,7 +625,8 @@ uhub_explore(struct usbd_device *dev)
 	disco:
 		if (up->up_dev != NULL) {
 			/* Disconnected */
-			DPRINTF("uhub%d device addr=%d disappeared on port %d",
+			DPRINTF("uhub%jd device addr=%jd disappeared on "
+			    "port %jd",
 			    device_unit(sc->sc_dev), up->up_dev->ud_addr, port,
 			    0);
 
@@ -633,7 +636,7 @@ uhub_explore(struct usbd_device *dev)
 		}
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
 			/* Nothing connected, just ignore it. */
-			DPRINTFN(3, "uhub%d port %d !CURRENT_CONNECT_STATUS",
+			DPRINTFN(3, "uhub%jd port %jd !CURRENT_CONNECT_STATUS",
 			    device_unit(sc->sc_dev), port, 0, 0);
 			usb_disconnect_port(up, sc->sc_dev, DETACH_FORCE);
 			usbd_clear_port_feature(dev, port,
@@ -642,7 +645,7 @@ uhub_explore(struct usbd_device *dev)
 		}
 
 		/* Connected */
-		DPRINTF("unit %d dev->speed=%u dev->depth=%u",
+		DPRINTF("unit %jd dev->speed=%ju dev->depth=%ju",
 		    device_unit(sc->sc_dev), dev->ud_speed, dev->ud_depth, 0);
 
 		/* Wait for maximum device power up time. */
@@ -658,8 +661,8 @@ uhub_explore(struct usbd_device *dev)
 		/* Get port status again, it might have changed during reset */
 		err = usbd_get_port_status(dev, port, &up->up_status);
 		if (err) {
-			DPRINTF("uhub%d port %d get port status failed, "
-			    "err %d", device_unit(sc->sc_dev), port, err, 0);
+			DPRINTF("uhub%jd port %jd get port status failed, "
+			    "err %jd", device_unit(sc->sc_dev), port, err, 0);
 			continue;
 		}
 #endif
@@ -669,7 +672,7 @@ uhub_explore(struct usbd_device *dev)
 		 */
 		status = UGETW(up->up_status.wPortStatus);
 		change = UGETW(up->up_status.wPortChange);
-		DPRINTF("uhub%d port %d after reset: s/c=%x/%x",
+		DPRINTF("uhub%jd port %jd after reset: s/c=%jx/%jx",
 		    device_unit(sc->sc_dev), port, status, change);
 
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
@@ -725,7 +728,7 @@ uhub_explore(struct usbd_device *dev)
 		if (speed > dev->ud_speed)
 			speed = dev->ud_speed;
 
-		DPRINTF("uhub%d speed %u", device_unit(sc->sc_dev), speed, 0,
+		DPRINTF("uhub%jd speed %ju", device_unit(sc->sc_dev), speed, 0,
 		    0);
 
 		/*
@@ -752,7 +755,7 @@ uhub_explore(struct usbd_device *dev)
 			  dev->ud_depth + 1, speed, port, up);
 		/* XXX retry a few times? */
 		if (err) {
-			DPRINTF("usbd_new_device failed, error %d", err, 0, 0,
+			DPRINTF("usbd_new_device failed, error %jd", err, 0, 0,
 			    0);
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
@@ -803,7 +806,7 @@ uhub_detach(device_t self, int flags)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
-	DPRINTF("uhub%d flags=%d", device_unit(self), flags, 0, 0);
+	DPRINTF("uhub%jd flags=%jd", device_unit(self), flags, 0, 0);
 
 	if (hub == NULL)		/* Must be partially working */
 		return 0;
@@ -918,7 +921,7 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
-	DPRINTFN(5, "uhub%d", device_unit(sc->sc_dev), 0, 0, 0);
+	DPRINTFN(5, "uhub%jd", device_unit(sc->sc_dev), 0, 0, 0);
 
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
@@ -926,15 +929,15 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 
 		mutex_enter(&sc->sc_lock);
 
-		DPRINTFN(5, "uhub%d: explore pending %d",
+		DPRINTFN(5, "uhub%jd: explore pending %jd",
 		    device_unit(sc->sc_dev), sc->sc_explorepending, 0, 0);
 
 		/* merge port bitmap into pending interrupts list */
 		for (size_t i = 0; i < sc->sc_statuslen; i++) {
 			sc->sc_statuspend[i] |= sc->sc_statusbuf[i];
 
-			DPRINTFN(5, "uhub%d: pending/new ports "
-			    "[%d] %#x/%#x", device_unit(sc->sc_dev),
+			DPRINTFN(5, "uhub%jd: pending/new ports "
+			    "[%jd] %#jx/%#jx", device_unit(sc->sc_dev),
 			    i, sc->sc_statuspend[i], sc->sc_statusbuf[i]);
 		}
 
@@ -946,8 +949,8 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 			memset(sc->sc_statuspend, 0, sc->sc_statuslen);
 
 			for (size_t i = 0; i < sc->sc_statuslen; i++) {
-				DPRINTFN(5, "uhub%d: exploring ports "
-				    "[%d] %#x", device_unit(sc->sc_dev),
+				DPRINTFN(5, "uhub%jd: exploring ports "
+				    "[%jd] %#jx", device_unit(sc->sc_dev),
 				    i, sc->sc_status[i], 0);
 			}
 

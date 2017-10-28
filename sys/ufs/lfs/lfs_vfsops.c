@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.360 2017/07/26 16:42:37 maya Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.361 2017/10/28 00:37:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.360 2017/07/26 16:42:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361 2017/10/28 00:37:13 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2022,8 +2022,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		goto tryagain;
 	}
 
-	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
-	    vp, pgs, npages, flags);
+	UVMHIST_LOG(ubchist, "vp %#jx pgs %#jx npages %jd flags 0x%jx",
+	    (uintptr_t)vp, (uintptr_t)pgs, npages, flags);
 
 	GOP_SIZE(vp, vp->v_size, &eof, 0);
 	haveeof = 1;
@@ -2107,8 +2107,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	}
 
 	mbp = getiobuf(NULL, true);
-	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
-	    vp, mbp, vp->v_numoutput, bytes);
+	UVMHIST_LOG(ubchist, "vp %#jx mbp %#jx num now %jd bytes 0x%jx",
+	    (uintptr_t)vp, (uintptr_t)mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
@@ -2123,7 +2123,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		error = ulfs_bmaparray(vp, lbn, &blkno, NULL, NULL, &run,
 		    lfs_issequential_hole);
 		if (error) {
-			UVMHIST_LOG(ubchist, "ulfs_bmaparray() -> %d",
+			UVMHIST_LOG(ubchist, "ulfs_bmaparray() -> %jd",
 			    error,0,0,0);
 			skipbytes += bytes;
 			bytes = 0;
@@ -2173,8 +2173,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			mutex_exit(vp->v_interlock);
 		} else {
 			bp = getiobuf(NULL, true);
-			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
-			    vp, bp, vp->v_numoutput, 0);
+			UVMHIST_LOG(ubchist, "vp %#jx bp %#jx num now %jd",
+			    (uintptr_t)vp, (uintptr_t)bp, vp->v_numoutput, 0);
 			nestiobuf_setup(mbp, bp, offset - pg->offset, iobytes);
 			/*
 			 * LFS doesn't like async I/O here, dies with
@@ -2204,7 +2204,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 
 	nestiobuf_done(mbp, skipbytes, error);
 	if (skipbytes) {
-		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
+		UVMHIST_LOG(ubchist, "skipbytes %jd", skipbytes, 0,0,0);
 	}
 	UVMHIST_LOG(ubchist, "returning 0", 0,0,0,0);
 
