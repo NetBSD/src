@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.274 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: ohci.c,v 1.275 2017/10/28 07:36:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.274 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.275 2017/10/28 07:36:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1313,14 +1313,12 @@ ohci_intr1(ohci_softc_t *sc)
 		usb_schedsoftintr(&sc->sc_bus);
 	}
 	if (eintrs & OHCI_RD) {
-/* 1 argument, but zero format strings */
-		DPRINTFN(5, "resume detect", (uintptr_t)sc, 0, 0, 0);
+		DPRINTFN(5, "resume detect sc=%#jx", (uintptr_t)sc, 0, 0, 0);
 		printf("%s: resume detect\n", device_xname(sc->sc_dev));
 		/* XXX process resume detect */
 	}
 	if (eintrs & OHCI_UE) {
-/* 1 argument, but zero format strings */
-		DPRINTFN(5, "unrecoverable error", (uintptr_t)sc, 0, 0, 0);
+		DPRINTFN(5, "unrecoverable error sc=%#jx", (uintptr_t)sc, 0, 0, 0);
 		printf("%s: unrecoverable error, controller halted\n",
 		       device_xname(sc->sc_dev));
 		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
