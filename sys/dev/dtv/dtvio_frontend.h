@@ -1,4 +1,4 @@
-/* $NetBSD: dtvio_frontend.h,v 1.2 2011/07/13 23:16:55 jmcneill Exp $ */
+/* $NetBSD: dtvio_frontend.h,v 1.3 2017/10/28 06:27:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,7 @@
 #ifndef _DEV_DTV_DTVIO_FRONTEND_H
 #define _DEV_DTV_DTVIO_FRONTEND_H
 
+#include <sys/types.h>
 #include <sys/ioccom.h>
 
 /*
