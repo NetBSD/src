@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.68 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.69 2017/10/28 04:16:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.68 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.69 2017/10/28 04:16:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -90,6 +90,20 @@ __KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.68 2017/10/28 03:47:24 riastradh Exp
 #include <dev/sequencervar.h>
 
 #include "ioconf.h"
+
+/*
+ * XXX Kludge.  This module uses midi_cd, and depends on the `midi'
+ * module, but there's no obvious way to get midi_cd declared in
+ * ioconf.h without actually pulling MIDI into the module in
+ * sys/modules/sequencer/sequencer.ioconf.  Please fix me!
+ *
+ * XXX XXX XXX Apparently sequencer.ioconf doesn't actually make the
+ * sequencer cdev!  Did this ever work?
+ */
+#ifdef _MODULE
+extern struct cfdriver midi_cd;
+extern struct cfdriver sequencer_cd;
+#endif
 
 #define ADDTIMEVAL(a, b) ( \
 	(a)->tv_sec += (b)->tv_sec, \
