@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.6 2017/10/29 11:28:30 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.7 2017/10/29 11:38:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -385,7 +385,10 @@ mm_map_kernel()
 {
 	memset(&bootspace, 0, sizeof(bootspace));
 	mm_map_head();
+	print_state(true, "Head region mapped");
 	mm_map_segments();
+	print_state(true, "Segments mapped");
 	mm_map_boot();
+	print_state(true, "Boot region mapped");
 }
 
