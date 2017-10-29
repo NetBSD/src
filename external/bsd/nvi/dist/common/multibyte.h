@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.3 2017/10/29 15:29:34 christos Exp $	*/
 #ifndef MULTIBYTE_H
 #define MULTIBYTE_H
 
@@ -53,6 +53,7 @@ typedef wint_t		UCHAR_T;
 #define ISCNTRL		iswcntrl
 #define ISGRAPH		iswgraph
 #define ISLOWER		iswlower
+#define ISALPHA2	iswalpha        
 #define ISPUNCT		iswpunct
 #define ISSPACE		iswspace
 #define ISUPPER		iswupper
@@ -86,6 +87,7 @@ typedef	unsigned char	UCHAR_T;
 #define ISCNTRL		iscntrl
 #define ISGRAPH		isgraph
 #define ISLOWER		islower
+#define ISALPHA2	isalpha
 #define ISPUNCT		ispunct
 #define ISSPACE		isspace
 #define ISUPPER		isupper
