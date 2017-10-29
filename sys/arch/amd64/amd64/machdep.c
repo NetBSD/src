@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.273 2017/10/29 10:01:21 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.274 2017/10/29 10:25:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2017/10/29 10:01:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2017/10/29 10:25:28 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1481,8 +1481,8 @@ init_x86_64_ksyms(void)
 	symtab = lookup_bootinfo(BTINFO_SYMTAB);
 	if (symtab) {
 #ifdef KASLR
-		tssym = PMAP_DIRECT_MAP((paddr_t)symtab->ssym);
-		tesym = PMAP_DIRECT_MAP((paddr_t)symtab->esym);
+		tssym = bootspace.head.va;
+		tesym = bootspace.head.va; /* (unused...) */
 #else
 		tssym = (vaddr_t)symtab->ssym + KERNBASE;
 		tesym = (vaddr_t)symtab->esym + KERNBASE;
