@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.69 2017/10/28 04:16:04 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.70 2017/10/29 17:57:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.69 2017/10/28 04:16:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.70 2017/10/29 17:57:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -99,9 +99,13 @@ __KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.69 2017/10/28 04:16:04 riastradh Exp
  *
  * XXX XXX XXX Apparently sequencer.ioconf doesn't actually make the
  * sequencer cdev!  Did this ever work?
+ *
+ * XXX XXX XXX Apparently there are even some kernels that include a
+ * sequencer pseudo-device but exclude any midi device.  How do they
+ * even link??
  */
-#ifdef _MODULE
 extern struct cfdriver midi_cd;
+#ifdef _MODULE
 extern struct cfdriver sequencer_cd;
 #endif
 
