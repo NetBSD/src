@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2017/10/11 16:18:11 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2017/10/29 11:28:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -444,12 +444,13 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* Map some blank space, to keep pa = va. */
+	/* Map a RO view of the kernel. */
 	movl	$_C_LABEL(__prekern_end),%eax
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	fillkpt_blank
+	orl	$(PG_V|PG_KR),%eax
+	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
