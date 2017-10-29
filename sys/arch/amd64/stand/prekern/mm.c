@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.5 2017/10/28 19:28:11 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.6 2017/10/29 11:28:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -36,6 +36,8 @@ static const pt_entry_t protection_codes[3] = {
 	[MM_PROT_EXECUTE] = PG_RO,
 	/* RWX does not exist */
 };
+
+struct bootspace bootspace;
 
 extern paddr_t kernpa_start, kernpa_end;
 vaddr_t iom_base;
@@ -168,62 +170,222 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 	}
 }
 
-/*
- * Select a random VA, and create a page tree. The size of this tree is
- * actually hard-coded, and matches the one created by the generic NetBSD
- * locore.
- */
-static vaddr_t
-mm_rand_base()
+static uint64_t
+mm_rand_num64()
 {
+	/* XXX: yes, this is ridiculous, will be fixed soon */
+	return rdtsc();
+}
+
+static void
+mm_map_head()
+{
+	size_t i, npages, size;
+	uint64_t rnd;
+	vaddr_t randva;
+
+	/*
+	 * To get the size of the head, we give a look at the read-only
+	 * mapping of the kernel we created in locore. We're identity mapped,
+	 * so kernpa = kernva.
+	 */
+	size = elf_get_head_size((vaddr_t)kernpa_start);
+	npages = size / PAGE_SIZE;
+
+	rnd = mm_rand_num64();
+	randva = rounddown(HEAD_WINDOW_BASE + rnd % (HEAD_WINDOW_SIZE - size),
+	    PAGE_SIZE);
+	mm_map_tree(randva, randva + size);
+
+	/* Enter the area and build the ELF info */
+	for (i = 0; i < npages; i++) {
+		mm_enter_pa(kernpa_start + i * PAGE_SIZE,
+		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
+	}
+	elf_build_head(randva);
+
+	/* Register the values in bootspace */
+	bootspace.head.va = randva;
+	bootspace.head.pa = kernpa_start;
+	bootspace.head.sz = size;
+}
+
+static vaddr_t
+mm_randva_kregion(size_t size)
+{
+	static struct {
+		vaddr_t sva;
+		vaddr_t eva;
+	} regions[4];
+	static size_t idx = 0;
 	vaddr_t randva;
 	uint64_t rnd;
-	size_t size;
+	size_t i;
+	bool ok;
 
-	size = (NKL2_KIMG_ENTRIES + 1) * NBPD_L2;
+	ASSERT(idx < 4);
 
-	/* XXX: yes, this is ridiculous, will be fixed soon */
-	rnd = rdtsc();
-	randva = rounddown(KASLR_WINDOW_BASE + rnd % (KASLR_WINDOW_SIZE - size),
-	    PAGE_SIZE);
+	while (1) {
+		rnd = mm_rand_num64();
+		randva = rounddown(KASLR_WINDOW_BASE +
+		    rnd % (KASLR_WINDOW_SIZE - size), PAGE_SIZE);
+
+		/* Detect collisions */
+		ok = true;
+		for (i = 0; i < idx; i++) {
+			if ((regions[i].sva <= randva) &&
+			    (randva < regions[i].eva)) {
+				ok = false;
+				break;
+			}
+			if ((regions[i].sva < randva + size) &&
+			    (randva + size <= regions[i].eva)) {
+				ok = false;
+				break;
+			}
+		}
+		if (ok) {
+			break;
+		}
+	}
+
+	regions[idx].eva = randva;
+	regions[idx].sva = randva + size;
+	idx++;
 
 	mm_map_tree(randva, randva + size);
 
 	return randva;
 }
 
-/*
- * Virtual address space of the kernel:
- * +---------------+---------------------+------------------+-------------+
- * | KERNEL + SYMS | [PRELOADED MODULES] | BOOTSTRAP TABLES | ISA I/O MEM |
- * +---------------+---------------------+------------------+-------------+
- * We basically choose a random VA, and map everything contiguously starting
- * from there. Note that the physical pages allocated by mm_palloc are part
- * of the BOOTSTRAP TABLES.
- */
-vaddr_t
-mm_map_kernel()
+static void
+mm_map_segments()
 {
 	size_t i, npages, size;
-	vaddr_t baseva;
+	vaddr_t randva;
+	paddr_t pa;
 
-	size = (pa_avail - kernpa_start);
-	baseva = mm_rand_base();
+	/*
+	 * Kernel text segment.
+	 */
+	elf_get_text(&pa, &size);
+	randva = mm_randva_kregion(size);
 	npages = size / PAGE_SIZE;
 
-	/* Enter the whole area linearly */
+	/* Enter the area and build the ELF info */
 	for (i = 0; i < npages; i++) {
-		mm_enter_pa(kernpa_start + i * PAGE_SIZE,
-		    baseva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
+		mm_enter_pa(pa + i * PAGE_SIZE,
+		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
+	elf_build_text(randva, pa, size);
+
+	/* Register the values in bootspace */
+	bootspace.text.va = randva;
+	bootspace.text.pa = pa;
+	bootspace.text.sz = size;
+
+	/*
+	 * Kernel rodata segment.
+	 */
+	elf_get_rodata(&pa, &size);
+	randva = mm_randva_kregion(size);
+	npages = size / PAGE_SIZE;
+
+	/* Enter the area and build the ELF info */
+	for (i = 0; i < npages; i++) {
+		mm_enter_pa(pa + i * PAGE_SIZE,
+		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
+	}
+	elf_build_rodata(randva, pa, size);
+
+	/* Register the values in bootspace */
+	bootspace.rodata.va = randva;
+	bootspace.rodata.pa = pa;
+	bootspace.rodata.sz = size;
+
+	/*
+	 * Kernel data segment.
+	 */
+	elf_get_data(&pa, &size);
+	randva = mm_randva_kregion(size);
+	npages = size / PAGE_SIZE;
+
+	/* Enter the area and build the ELF info */
+	for (i = 0; i < npages; i++) {
+		mm_enter_pa(pa + i * PAGE_SIZE,
+		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
+	}
+	elf_build_data(randva, pa, size);
+
+	/* Register the values in bootspace */
+	bootspace.data.va = randva;
+	bootspace.data.pa = pa;
+	bootspace.data.sz = size;
+}
+
+static void
+mm_map_boot()
+{
+	size_t i, npages, size;
+	vaddr_t randva;
+	paddr_t bootpa;
+
+	/*
+	 * The "boot" region is special: its page tree has a fixed size, but
+	 * the number of pages entered is lower.
+	 */
+
+	/* Create the page tree */
+	size = (NKL2_KIMG_ENTRIES + 1) * NBPD_L2;
+	randva = mm_randva_kregion(size);
+
+	/* Enter the area and build the ELF info */
+	bootpa = bootspace.data.pa + bootspace.data.sz;
+	size = (pa_avail - bootpa);
+	npages = size / PAGE_SIZE;
+	for (i = 0; i < npages; i++) {
+		mm_enter_pa(bootpa + i * PAGE_SIZE,
+		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
+	}
+	elf_build_boot(randva, bootpa);
 
 	/* Enter the ISA I/O MEM */
-	iom_base = baseva + npages * PAGE_SIZE;
+	iom_base = randva + npages * PAGE_SIZE;
 	npages = IOM_SIZE / PAGE_SIZE;
 	for (i = 0; i < npages; i++) {
 		mm_enter_pa(IOM_BEGIN + i * PAGE_SIZE,
 		    iom_base + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
 
-	return baseva;
+	/* Register the values in bootspace */
+	bootspace.boot.va = randva;
+	bootspace.boot.pa = bootpa;
+	bootspace.boot.sz = (size_t)(iom_base + IOM_SIZE) -
+	    (size_t)bootspace.boot.va;
+
+	/* Initialize the values that are located in the "boot" region */
+	extern uint64_t PDPpaddr;
+	bootspace.spareva = bootspace.boot.va + NKL2_KIMG_ENTRIES * NBPD_L2;
+	bootspace.pdir = bootspace.boot.va + (PDPpaddr - bootspace.boot.pa);
+	bootspace.emodule = bootspace.boot.va + NKL2_KIMG_ENTRIES * NBPD_L2;
 }
+
+/*
+ * There are five independent regions: head, text, rodata, data, boot. They are
+ * all mapped at random VAs.
+ *
+ * Head contains the ELF Header and ELF Section Headers, and we use them to
+ * map the rest of the regions. Head must be placed in memory *before* the
+ * other regions.
+ *
+ * At the end of this function, the bootspace structure is fully constructed.
+ */
+void
+mm_map_kernel()
+{
+	memset(&bootspace, 0, sizeof(bootspace));
+	mm_map_head();
+	mm_map_segments();
+	mm_map_boot();
+}
+
