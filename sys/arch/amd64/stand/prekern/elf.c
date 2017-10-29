@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.2 2017/10/11 16:21:06 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.3 2017/10/29 10:07:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -256,6 +256,46 @@ elf_apply_reloc(uintptr_t relocbase, const void *data, bool isrela)
 	}
 }
 
+static bool
+elf_section_is_text(Elf_Shdr *shdr)
+{
+	if (shdr->sh_type != SHT_NOBITS &&
+	    shdr->sh_type != SHT_PROGBITS) {
+		return false;
+	}
+	if (!(shdr->sh_flags & SHF_EXECINSTR)) {
+		return false;
+	}
+	return true;
+}
+
+static bool
+elf_section_is_rodata(Elf_Shdr *shdr)
+{
+	if (shdr->sh_type != SHT_NOBITS &&
+	    shdr->sh_type != SHT_PROGBITS) {
+		return false;
+	}
+	if (shdr->sh_flags & (SHF_EXECINSTR|SHF_WRITE)) {
+		return false;
+	}
+	return true;
+}
+
+static bool
+elf_section_is_data(Elf_Shdr *shdr)
+{
+	if (shdr->sh_type != SHT_NOBITS &&
+	    shdr->sh_type != SHT_PROGBITS) {
+		return false;
+	}
+	if (!(shdr->sh_flags & SHF_WRITE) ||
+	    (shdr->sh_flags & SHF_EXECINSTR)) {
+		return false;
+	}
+	return true;
+}
+
 static void
 elf_build_info(vaddr_t baseva)
 {
@@ -314,11 +354,7 @@ elf_build_info(vaddr_t baseva)
 	/* text */
 	minva = 0xFFFFFFFFFFFFFFFF, maxva = 0;
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (eif.shdr[i].sh_type != SHT_NOBITS &&
-		    eif.shdr[i].sh_type != SHT_PROGBITS) {
-			continue;
-		}
-		if (!(eif.shdr[i].sh_flags & SHF_EXECINSTR)) {
+		if (!elf_section_is_text(&eif.shdr[i])) {
 			continue;
 		}
 		secva = baseva + eif.shdr[i].sh_offset;
@@ -337,11 +373,7 @@ elf_build_info(vaddr_t baseva)
 	/* rodata */
 	minva = 0xFFFFFFFFFFFFFFFF, maxva = 0;
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (eif.shdr[i].sh_type != SHT_NOBITS &&
-		    eif.shdr[i].sh_type != SHT_PROGBITS) {
-			continue;
-		}
-		if ((eif.shdr[i].sh_flags & (SHF_EXECINSTR|SHF_WRITE))) {
+		if (!elf_section_is_rodata(&eif.shdr[i])) {
 			continue;
 		}
 		secva = baseva + eif.shdr[i].sh_offset;
@@ -360,12 +392,7 @@ elf_build_info(vaddr_t baseva)
 	/* data */
 	minva = 0xFFFFFFFFFFFFFFFF, maxva = 0;
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (eif.shdr[i].sh_type != SHT_NOBITS &&
-		    eif.shdr[i].sh_type != SHT_PROGBITS) {
-			continue;
-		}
-		if (!(eif.shdr[i].sh_flags & SHF_WRITE) ||
-		    (eif.shdr[i].sh_flags & SHF_EXECINSTR)) {
+		if (!elf_section_is_data(&eif.shdr[i])) {
 			continue;
 		}
 		secva = baseva + eif.shdr[i].sh_offset;
