@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.796 2017/10/09 17:49:27 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.797 2017/10/29 10:01:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.796 2017/10/09 17:49:27 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.797 2017/10/29 10:01:21 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1104,6 +1104,10 @@ init_bootspace(void)
 	extern char __kernel_end;
 
 	memset(&bootspace, 0, sizeof(bootspace));
+
+	bootspace.head.va = KERNTEXTOFF;
+	bootspace.head.pa = KERNTEXTOFF - KERNBASE;
+	bootspace.head.sz = 0;
 
 	bootspace.text.va = KERNTEXTOFF;
 	bootspace.text.pa = KERNTEXTOFF - KERNBASE;
