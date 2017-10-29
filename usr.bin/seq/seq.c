@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.9 2017/10/29 00:02:23 ginsbach Exp $");
+__RCSID("$NetBSD: seq.c,v 1.10 2017/10/29 01:28:46 ginsbach Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -211,10 +211,10 @@ numeric(const char *s)
 			}
 			if (ISEXP((unsigned char)*s)) {
 				s++;
-				if (ISSIGN((unsigned char)*s)) {
+				/* optional sign */
+				if (ISSIGN((unsigned char)*s))
 					s++;
-					continue;
-				}
+				continue;
 			}
 			break;
 		}
