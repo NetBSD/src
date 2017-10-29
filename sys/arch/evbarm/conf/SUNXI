@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.48 2017/10/29 14:07:11 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.49 2017/10/29 15:00:00 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -170,7 +170,6 @@ com*		at fdt?			# UART
 
 # I2C
 sunxitwi*	at fdt?			# TWI
-options 	GTTWSI_ALLWINNER	# XXX this should be a driver flag
 sunxirsb*	at fdt?			# P2WI/RSB
 iic*		at i2cbus?
 tcakp*		at iic?			# TI TCA8418 Keypad Scan IC

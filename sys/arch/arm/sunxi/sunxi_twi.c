@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.5 2017/10/07 20:17:38 jmcneill Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.6 2017/10/29 15:00:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,9 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_gttwsi.h"
+#ifdef GTTWSI_ALLWINNER
+# error Do not define GTTWSI_ALLWINNER when using this driver
+#endif
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.5 2017/10/07 20:17:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.6 2017/10/29 15:00:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,12 +44,23 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.5 2017/10/07 20:17:38 jmcneill Exp $
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/gttwsivar.h>
+#include <dev/i2c/gttwsireg.h>
 
 #include <dev/fdt/fdtvar.h>
 
 #define	TWI_CCR_REG	0x14
 #define	 TWI_CCR_CLK_M	__BITS(6,3)
 #define	 TWI_CCR_CLK_N	__BITS(2,0)
+
+static uint8_t sunxi_twi_regmap[] = {
+	[TWSI_SLAVEADDR]	= 0x00,
+	[TWSI_EXTEND_SLAVEADDR]	= 0x04,
+	[TWSI_DATA]		= 0x08,
+	[TWSI_CONTROL]		= 0x0c,
+	[TWSI_STATUS]		= 0x10,
+	[TWSI_BAUDRATE]		= 0x14,
+	[TWSI_SOFTRESET]	= 0x18,
+};
 
 static int sunxi_twi_match(device_t, cfdata_t, void *);
 static void sunxi_twi_attach(device_t, device_t, void *);
@@ -81,6 +97,18 @@ sunxi_twi_get_tag(device_t dev)
 const struct fdtbus_i2c_controller_func sunxi_twi_funcs = {
 	.get_tag = sunxi_twi_get_tag,
 };
+
+static uint32_t
+sunxi_twi_reg_read(struct gttwsi_softc *sc, uint32_t reg)
+{
+	return bus_space_read_4(sc->sc_bust, sc->sc_bush, sunxi_twi_regmap[reg]);
+}
+
+static void
+sunxi_twi_reg_write(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
+{
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, sunxi_twi_regmap[reg], val);
+}
 
 static int
 sunxi_twi_match(device_t parent, cfdata_t cf, void *aux)
@@ -148,6 +176,9 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 	const uint32_t ccr = __SHIFTIN(n, TWI_CCR_CLK_N) |
 			     __SHIFTIN(m, TWI_CCR_CLK_M); 
 	bus_space_write_4(bst, bsh, TWI_CCR_REG, ccr);
+
+	sc->sc_reg_read = sunxi_twi_reg_read;
+	sc->sc_reg_write = sunxi_twi_reg_write;
 
 	gttwsi_attach_subr(self, bst, bsh);
 
