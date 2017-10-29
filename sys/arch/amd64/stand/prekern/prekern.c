@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.2 2017/10/29 10:01:22 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.3 2017/10/29 11:28:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -219,8 +219,6 @@ static void init_idt()
 
 /* -------------------------------------------------------------------------- */
 
-struct bootspace bootspace;
-
 struct prekern_args {
 	int boothowto;
 	void *bootinfo;
@@ -239,34 +237,9 @@ struct prekern_args {
 struct prekern_args pkargs;
 
 static void
-init_bootspace(vaddr_t baseva)
+init_prekern_args()
 {
-	extern vaddr_t iom_base;
-	extern uint64_t PDPpaddr;
-
-	elf_get_text(&bootspace.text.va, &bootspace.text.pa,
-	    &bootspace.text.sz);
-	elf_get_rodata(&bootspace.rodata.va, &bootspace.rodata.pa,
-	    &bootspace.rodata.sz);
-	elf_get_data(&bootspace.data.va, &bootspace.data.pa,
-	    &bootspace.data.sz);
-
-	bootspace.head.va = baseva;
-	bootspace.head.pa = mm_vatopa(bootspace.head.va);
-	bootspace.head.sz = bootspace.text.va - baseva;
-
-	bootspace.boot.va = bootspace.data.va + bootspace.data.sz;
-	bootspace.boot.pa = mm_vatopa(bootspace.boot.va);
-	bootspace.boot.sz = (size_t)(iom_base + IOM_SIZE) -
-	    (size_t)bootspace.boot.va;
-	bootspace.spareva = baseva + NKL2_KIMG_ENTRIES * NBPD_L2;
-	bootspace.pdir = baseva + (PDPpaddr - kernpa_start);
-	bootspace.emodule = baseva + NKL2_KIMG_ENTRIES * NBPD_L2;
-}
-
-static void
-init_prekern_args(vaddr_t baseva)
-{
+	extern struct bootspace bootspace;
 	extern int esym;
 	extern int biosextmem;
 	extern int biosbasemem;
@@ -288,7 +261,7 @@ init_prekern_args(vaddr_t baseva)
 	pkargs.nox_flag = nox_flag;
 	pkargs.PDPpaddr = PDPpaddr;
 	pkargs.atdevbase = iom_base;
-	pkargs.lwp0uarea = baseva + (stkpa - kernpa_start);
+	pkargs.lwp0uarea = bootspace.boot.va + (stkpa - bootspace.boot.pa);
 	pkargs.first_avail = pa_avail;
 
 	extern vaddr_t stkva;
@@ -322,7 +295,7 @@ exec_kernel(vaddr_t ent)
 void
 init_prekern(paddr_t pa_start)
 {
-	vaddr_t baseva, ent;
+	vaddr_t ent;
 
 	init_cons();
 	print_banner();
@@ -363,18 +336,13 @@ init_prekern(paddr_t pa_start)
 	/*
 	 * Relocate the kernel.
 	 */
-	baseva = mm_map_kernel();
-	ent = elf_kernel_reloc(baseva);
-
-	/*
-	 * Build the bootspace.
-	 */
-	init_bootspace(baseva);
+	mm_map_kernel();
+	ent = elf_kernel_reloc();
 
 	/*
 	 * Build the arguments.
 	 */
-	init_prekern_args(baseva);
+	init_prekern_args();
 
 	/*
 	 * Finally, jump into the kernel.

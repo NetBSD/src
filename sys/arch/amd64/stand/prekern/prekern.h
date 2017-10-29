@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.2 2017/10/29 10:01:22 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.3 2017/10/29 11:28:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -52,6 +52,9 @@ typedef uint64_t pte_prot_t;
 #define RED_ON_BLACK 0x04
 #define GREEN_ON_BLACK 0x02
 
+#define HEAD_WINDOW_BASE	(KERNBASE - NBPD_L3)
+#define HEAD_WINDOW_SIZE	NBPD_L3
+
 #define KASLR_WINDOW_BASE	KERNBASE		/* max - 2GB */
 #define KASLR_WINDOW_SIZE	(2LLU * (1 << 30))	/* 2GB */
 
@@ -96,10 +99,16 @@ void print_state(bool, char *);
 void print_banner();
 
 /* elf.c */
-vaddr_t elf_kernel_reloc(vaddr_t);
-void elf_get_text(vaddr_t *, paddr_t *, size_t *);
-void elf_get_rodata(vaddr_t *, paddr_t *, size_t *);
-void elf_get_data(vaddr_t *, paddr_t *, size_t *);
+size_t elf_get_head_size(vaddr_t);
+void elf_build_head(vaddr_t);
+void elf_get_text(paddr_t *, size_t *);
+void elf_build_text(vaddr_t, paddr_t, size_t);
+void elf_get_rodata(paddr_t *, size_t *);
+void elf_build_rodata(vaddr_t, paddr_t, size_t);
+void elf_get_data(paddr_t *, size_t *);
+void elf_build_data(vaddr_t, paddr_t, size_t);
+void elf_build_boot(vaddr_t, paddr_t);
+vaddr_t elf_kernel_reloc();
 
 /* locore.S */
 void lidt(void *);
@@ -110,7 +119,7 @@ void jump_kernel();
 void mm_init(paddr_t);
 paddr_t mm_vatopa(vaddr_t);
 void mm_mprotect(vaddr_t, size_t, int);
-vaddr_t mm_map_kernel();
+void mm_map_kernel();
 
 /* prekern.c */
 void fatal(char *);

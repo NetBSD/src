@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.3 2017/10/29 10:07:08 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.4 2017/10/29 11:28:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -55,6 +55,8 @@ struct elfinfo {
 		size_t sz;
 	} data;
 };
+
+extern paddr_t kernpa_start, kernpa_end;
 
 static struct elfinfo eif;
 static const char entrypoint[] = "start_prekern";
@@ -256,6 +258,37 @@ elf_apply_reloc(uintptr_t relocbase, const void *data, bool isrela)
 	}
 }
 
+/* -------------------------------------------------------------------------- */
+
+size_t
+elf_get_head_size(vaddr_t headva)
+{
+	Elf_Ehdr *ehdr;
+	Elf_Shdr *shdr;
+	size_t size;
+
+	ehdr = (Elf_Ehdr *)headva;
+	shdr = (Elf_Shdr *)((uint8_t *)ehdr + ehdr->e_shoff);
+
+	size = (vaddr_t)shdr + (vaddr_t)(ehdr->e_shnum * sizeof(Elf_Shdr)) -
+	    (vaddr_t)ehdr;
+
+	return roundup(size, PAGE_SIZE);
+}
+
+void
+elf_build_head(vaddr_t headva)
+{
+	memset(&eif, 0, sizeof(struct elfinfo));
+
+	eif.ehdr = (Elf_Ehdr *)headva;
+	eif.shdr = (Elf_Shdr *)((uint8_t *)eif.ehdr + eif.ehdr->e_shoff);
+
+	if (elf_check_header() == -1) {
+		fatal("elf_build_info: wrong kernel ELF header");
+	}
+}
+
 static bool
 elf_section_is_text(Elf_Shdr *shdr)
 {
@@ -296,20 +329,180 @@ elf_section_is_data(Elf_Shdr *shdr)
 	return true;
 }
 
-static void
-elf_build_info(vaddr_t baseva)
+void
+elf_get_text(paddr_t *pa, size_t *sz)
 {
-	vaddr_t secva, minva, maxva;
-	size_t secsz;
-	size_t i, j;
+	const paddr_t basepa = kernpa_start;
+	paddr_t minpa, maxpa, secpa;
+	size_t i, secsz;
 
-	memset(&eif, 0, sizeof(struct elfinfo));
+	minpa = 0xFFFFFFFFFFFFFFFF, maxpa = 0;
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (!elf_section_is_text(&eif.shdr[i])) {
+			continue;
+		}
+		secpa = basepa + eif.shdr[i].sh_offset;
+		secsz = eif.shdr[i].sh_size;
+		if (secpa < minpa) {
+			minpa = secpa;
+		}
+		if (secpa + secsz > maxpa) {
+			maxpa = secpa + secsz;
+		}
+	}
+	ASSERT(minpa % PAGE_SIZE == 0);
 
-	eif.ehdr = (Elf_Ehdr *)baseva;
-	eif.shdr = (Elf_Shdr *)((uint8_t *)eif.ehdr + eif.ehdr->e_shoff);
+	*pa = minpa;
+	*sz = roundup(maxpa - minpa, PAGE_SIZE);
+}
 
-	if (elf_check_header(&eif) == -1) {
-		fatal("elf_build_info: wrong kernel ELF header");
+void
+elf_build_text(vaddr_t textva, paddr_t textpa, size_t textsz)
+{
+	const paddr_t basepa = kernpa_start;
+	const vaddr_t headva = (vaddr_t)eif.ehdr;
+	size_t i, offtext;
+
+	eif.text.va = textva;
+	eif.text.sz = textsz;
+
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (!elf_section_is_text(&eif.shdr[i])) {
+			continue;
+		}
+
+		/* Offset of the section within the text segment. */
+		offtext = basepa + eif.shdr[i].sh_offset - textpa;
+
+		/* We want (headva + sh_offset) to be the VA of the section. */
+		eif.shdr[i].sh_offset = (eif.text.va + offtext - headva);
+	}
+}
+
+void
+elf_get_rodata(paddr_t *pa, size_t *sz)
+{
+	const paddr_t basepa = kernpa_start;
+	paddr_t minpa, maxpa, secpa;
+	size_t i, secsz;
+
+	minpa = 0xFFFFFFFFFFFFFFFF, maxpa = 0;
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (!elf_section_is_rodata(&eif.shdr[i])) {
+			continue;
+		}
+		secpa = basepa + eif.shdr[i].sh_offset;
+		secsz = eif.shdr[i].sh_size;
+		if (secpa < minpa) {
+			minpa = secpa;
+		}
+		if (secpa + secsz > maxpa) {
+			maxpa = secpa + secsz;
+		}
+	}
+	ASSERT(minpa % PAGE_SIZE == 0);
+
+	*pa = minpa;
+	*sz = roundup(maxpa - minpa, PAGE_SIZE);
+}
+
+void
+elf_build_rodata(vaddr_t rodatava, paddr_t rodatapa, size_t rodatasz)
+{
+	const paddr_t basepa = kernpa_start;
+	const vaddr_t headva = (vaddr_t)eif.ehdr;
+	size_t i, offrodata;
+
+	eif.rodata.va = rodatava;
+	eif.rodata.sz = rodatasz;
+
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (!elf_section_is_rodata(&eif.shdr[i])) {
+			continue;
+		}
+
+		/* Offset of the section within the rodata segment. */
+		offrodata = basepa + eif.shdr[i].sh_offset - rodatapa;
+
+		/* We want (headva + sh_offset) to be the VA of the section. */
+		eif.shdr[i].sh_offset = (eif.rodata.va + offrodata - headva);
+	}
+}
+
+void
+elf_get_data(paddr_t *pa, size_t *sz)
+{
+	const paddr_t basepa = kernpa_start;
+	paddr_t minpa, maxpa, secpa;
+	size_t i, secsz;
+
+	minpa = 0xFFFFFFFFFFFFFFFF, maxpa = 0;
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (!elf_section_is_data(&eif.shdr[i])) {
+			continue;
+		}
+		secpa = basepa + eif.shdr[i].sh_offset;
+		secsz = eif.shdr[i].sh_size;
+		if (secpa < minpa) {
+			minpa = secpa;
+		}
+		if (secpa + secsz > maxpa) {
+			maxpa = secpa + secsz;
+		}
+	}
+	ASSERT(minpa % PAGE_SIZE == 0);
+
+	*pa = minpa;
+	*sz = roundup(maxpa - minpa, PAGE_SIZE);
+}
+
+void
+elf_build_data(vaddr_t datava, paddr_t datapa, size_t datasz)
+{
+	const paddr_t basepa = kernpa_start;
+	const vaddr_t headva = (vaddr_t)eif.ehdr;
+	size_t i, offdata;
+
+	eif.data.va = datava;
+	eif.data.sz = datasz;
+
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (!elf_section_is_data(&eif.shdr[i])) {
+			continue;
+		}
+
+		/* Offset of the section within the data segment. */
+		offdata = basepa + eif.shdr[i].sh_offset - datapa;
+
+		/* We want (headva + sh_offset) to be the VA of the section. */
+		eif.shdr[i].sh_offset = (eif.data.va + offdata - headva);
+	}
+}
+
+void
+elf_build_boot(vaddr_t bootva, paddr_t bootpa)
+{
+	const paddr_t basepa = kernpa_start;
+	const vaddr_t headva = (vaddr_t)eif.ehdr;
+	size_t i, j, offboot;
+
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (eif.shdr[i].sh_type != SHT_STRTAB &&
+		    eif.shdr[i].sh_type != SHT_REL &&
+		    eif.shdr[i].sh_type != SHT_RELA &&
+		    eif.shdr[i].sh_type != SHT_SYMTAB) {
+			continue;
+		}
+		if (eif.shdr[i].sh_offset == 0) {
+			/* hasn't been loaded */
+			continue;
+		}
+
+		/* Offset of the section within the boot region. */
+		offboot = basepa + eif.shdr[i].sh_offset - bootpa;
+
+		/* We want (headva + sh_offset) to be the VA of the region. */
+		eif.shdr[i].sh_offset = (bootva + offboot - headva);
 	}
 
 	/* Locate the section names */
@@ -344,79 +537,15 @@ elf_build_info(vaddr_t baseva)
 	}
 	eif.strtab = (char *)((uint8_t *)eif.ehdr + eif.shdr[j].sh_offset);
 	eif.strsz = eif.shdr[j].sh_size;
-
-	/*
-	 * Save the locations of the kernel segments. Attention: there is a
-	 * difference between "segment" and "section". A segment can contain
-	 * several sections.
-	 */
-
-	/* text */
-	minva = 0xFFFFFFFFFFFFFFFF, maxva = 0;
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_text(&eif.shdr[i])) {
-			continue;
-		}
-		secva = baseva + eif.shdr[i].sh_offset;
-		secsz = eif.shdr[i].sh_size;
-		if (secva < minva) {
-			minva = secva;
-		}
-		if (secva + secsz > maxva) {
-			maxva = secva + secsz;
-		}
-	}
-	eif.text.va = minva;
-	eif.text.sz = roundup(maxva - minva, PAGE_SIZE);
-	ASSERT(eif.text.va % PAGE_SIZE == 0);
-
-	/* rodata */
-	minva = 0xFFFFFFFFFFFFFFFF, maxva = 0;
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_rodata(&eif.shdr[i])) {
-			continue;
-		}
-		secva = baseva + eif.shdr[i].sh_offset;
-		secsz = eif.shdr[i].sh_size;
-		if (secva < minva) {
-			minva = secva;
-		}
-		if (secva + secsz > maxva) {
-			maxva = secva + secsz;
-		}
-	}
-	eif.rodata.va = minva;
-	eif.rodata.sz = roundup(maxva - minva, PAGE_SIZE);
-	ASSERT(eif.rodata.va % PAGE_SIZE == 0);
-
-	/* data */
-	minva = 0xFFFFFFFFFFFFFFFF, maxva = 0;
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_data(&eif.shdr[i])) {
-			continue;
-		}
-		secva = baseva + eif.shdr[i].sh_offset;
-		secsz = eif.shdr[i].sh_size;
-		if (secva < minva) {
-			minva = secva;
-		}
-		if (secva + secsz > maxva) {
-			maxva = secva + secsz;
-		}
-	}
-	eif.data.va = minva;
-	eif.data.sz = roundup(maxva - minva, PAGE_SIZE);
-	ASSERT(eif.data.va % PAGE_SIZE == 0);
 }
 
 vaddr_t
-elf_kernel_reloc(vaddr_t baseva)
+elf_kernel_reloc()
 {
+	const vaddr_t baseva = (vaddr_t)eif.ehdr;
 	vaddr_t secva, ent;
 	Elf_Sym *sym;
 	size_t i, j;
-
-	elf_build_info(baseva);
 
 	print_state(true, "ELF info created");
 
@@ -523,26 +652,3 @@ elf_kernel_reloc(vaddr_t baseva)
 	return ent;
 }
 
-void
-elf_get_text(vaddr_t *va, paddr_t *pa, size_t *sz)
-{
-	*va = eif.text.va;
-	*pa = mm_vatopa(eif.text.va);
-	*sz = eif.text.sz;
-}
-
-void
-elf_get_rodata(vaddr_t *va, paddr_t *pa, size_t *sz)
-{
-	*va = eif.rodata.va;
-	*pa = mm_vatopa(eif.rodata.va);
-	*sz = eif.rodata.sz;
-}
-
-void
-elf_get_data(vaddr_t *va, paddr_t *pa, size_t *sz)
-{
-	*va = eif.data.va;
-	*pa = mm_vatopa(eif.data.va);
-	*sz = eif.data.sz;
-}
