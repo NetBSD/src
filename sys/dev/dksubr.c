@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.99 2017/08/24 11:26:32 maya Exp $ */
+/* $NetBSD: dksubr.c,v 1.100 2017/10/29 09:44:17 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.99 2017/08/24 11:26:32 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.100 2017/10/29 09:44:17 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,14 +931,28 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 	}
 }
 
+/*      
+ * Heuristic to conjure a disklabel if reading a disklabel failed.
+ *
+ * This is to allow the raw partition to be used for a filesystem
+ * without caring about the write protected label sector. 
+ *
+ * If the driver provides it's own callback, use that instead.
+ */
 /* ARGSUSED */
 static void
 dk_makedisklabel(struct dk_softc *dksc)
 {
-	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
+	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
+	struct  disklabel *lp = dksc->sc_dkdev.dk_label;
 
-	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
 	strlcpy(lp->d_packname, "default label", sizeof(lp->d_packname));
+
+	if (dkd->d_label)
+		dkd->d_label(dksc->sc_dev, lp);
+	else
+		lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
+
 	lp->d_checksum = dkcksum(lp);
 }
 
