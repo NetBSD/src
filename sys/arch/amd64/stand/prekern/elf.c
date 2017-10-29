@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.4 2017/10/29 11:28:30 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.5 2017/10/29 11:38:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -285,7 +285,7 @@ elf_build_head(vaddr_t headva)
 	eif.shdr = (Elf_Shdr *)((uint8_t *)eif.ehdr + eif.ehdr->e_shoff);
 
 	if (elf_check_header() == -1) {
-		fatal("elf_build_info: wrong kernel ELF header");
+		fatal("elf_build_head: wrong kernel ELF header");
 	}
 }
 
@@ -508,10 +508,10 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 	/* Locate the section names */
 	j = eif.ehdr->e_shstrndx;
 	if (j == SHN_UNDEF) {
-		fatal("elf_build_info: shstrtab not found");
+		fatal("elf_build_boot: shstrtab not found");
 	}
 	if (j >= eif.ehdr->e_shnum) {
-		fatal("elf_build_info: wrong shstrtab index");
+		fatal("elf_build_boot: wrong shstrtab index");
 	}
 	eif.shstrtab = (char *)((uint8_t *)eif.ehdr + eif.shdr[j].sh_offset);
 	eif.shstrsz = eif.shdr[j].sh_size;
@@ -522,7 +522,7 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 			break;
 	}
 	if (i == eif.ehdr->e_shnum) {
-		fatal("elf_build_info: symtab not found");
+		fatal("elf_build_boot: symtab not found");
 	}
 	eif.symtab = (Elf_Sym *)((uint8_t *)eif.ehdr + eif.shdr[i].sh_offset);
 	eif.symcnt = eif.shdr[i].sh_size / sizeof(Elf_Sym);
@@ -530,10 +530,10 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 	/* Also locate the string table */
 	j = eif.shdr[i].sh_link;
 	if (j == SHN_UNDEF || j >= eif.ehdr->e_shnum) {
-		fatal("elf_build_info: wrong strtab index");
+		fatal("elf_build_boot: wrong strtab index");
 	}
 	if (eif.shdr[j].sh_type != SHT_STRTAB) {
-		fatal("elf_build_info: wrong strtab type");
+		fatal("elf_build_boot: wrong strtab type");
 	}
 	eif.strtab = (char *)((uint8_t *)eif.ehdr + eif.shdr[j].sh_offset);
 	eif.strsz = eif.shdr[j].sh_size;
