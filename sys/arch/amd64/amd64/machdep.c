@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272 2017/10/21 06:55:54 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.273 2017/10/29 10:01:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2017/10/21 06:55:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2017/10/29 10:01:21 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1510,6 +1510,10 @@ init_bootspace(void)
 
 	memset(&bootspace, 0, sizeof(bootspace));
 
+	bootspace.head.va = KERNTEXTOFF;
+	bootspace.head.pa = KERNTEXTOFF - KERNBASE;
+	bootspace.head.sz = 0;
+
 	bootspace.text.va = KERNTEXTOFF;
 	bootspace.text.pa = KERNTEXTOFF - KERNBASE;
 	bootspace.text.sz = (size_t)&__rodata_start - KERNTEXTOFF;
@@ -2003,6 +2007,13 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 	const vaddr_t v = (vaddr_t)ptr;
 	vaddr_t kva, kva_end;
+
+	kva = bootspace.head.va;
+	kva_end = kva + bootspace.head.sz;
+	if (v >= kva && v < kva_end) {
+		*handled = true;
+		return 0;
+	}
 
 	kva = bootspace.text.va;
 	kva_end = kva + bootspace.text.sz;

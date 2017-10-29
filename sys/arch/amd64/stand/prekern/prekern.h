@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.2 2017/10/29 10:01:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,6 +58,11 @@ typedef uint64_t pte_prot_t;
 /* -------------------------------------------------------------------------- */
 
 struct bootspace {
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} head;
 	struct {
 		vaddr_t va;
 		paddr_t pa;
