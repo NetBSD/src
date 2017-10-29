@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.47 2017/10/28 10:54:18 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.48 2017/10/29 14:07:11 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -167,7 +167,6 @@ ukphy*		at mii? phy ?
 
 # UART
 com*		at fdt?			# UART
-options 	COM_AWIN		# XXX this should be a driver flag
 
 # I2C
 sunxitwi*	at fdt?			# TWI
