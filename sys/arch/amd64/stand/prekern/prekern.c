@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.2 2017/10/29 10:01:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -250,6 +250,11 @@ init_bootspace(vaddr_t baseva)
 	    &bootspace.rodata.sz);
 	elf_get_data(&bootspace.data.va, &bootspace.data.pa,
 	    &bootspace.data.sz);
+
+	bootspace.head.va = baseva;
+	bootspace.head.pa = mm_vatopa(bootspace.head.va);
+	bootspace.head.sz = bootspace.text.va - baseva;
+
 	bootspace.boot.va = bootspace.data.va + bootspace.data.sz;
 	bootspace.boot.pa = mm_vatopa(bootspace.boot.va);
 	bootspace.boot.sz = (size_t)(iom_base + IOM_SIZE) -
