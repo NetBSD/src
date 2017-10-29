@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.49 2017/10/29 15:00:00 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.50 2017/10/29 16:02:46 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -239,7 +239,6 @@ sunxiusbphy*	at fdt?	pass 9		# USB PHY
 ehci*		at fdt?			# EHCI
 ohci*		at fdt?			# OHCI
 motg*		at fdt?			# USB OTG
-options 	MOTG_ALLWINNER		# XXX this should be a driver flag
 usb*		at ehci?
 usb*		at ohci?
 usb*		at motg?
