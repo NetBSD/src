@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.3 2017/10/29 14:59:05 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.3 2017/10/29 14:59:05 jmcneill Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ static int	gttwsi_write_byte(void *v, uint8_t val, int flags);
 static int	gttwsi_wait(struct gttwsi_softc *, uint32_t, uint32_t, int);
 
 static inline uint32_t
-gttwsi_read_4(struct gttwsi_softc *sc, uint32_t reg)
+gttwsi_default_read_4(struct gttwsi_softc *sc, uint32_t reg)
 {
 	uint32_t val = bus_space_read_4(sc->sc_bust, sc->sc_bush, reg);
 #ifdef TWSI_DEBUG
@@ -106,7 +106,7 @@ gttwsi_read_4(struct gttwsi_softc *sc, uint32_t reg)
 }
 
 static inline void
-gttwsi_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
+gttwsi_default_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
 {
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
 #ifdef TWSI_DEBUG
@@ -117,7 +117,17 @@ gttwsi_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
 	return;
 }
 
+static inline uint32_t
+gttwsi_read_4(struct gttwsi_softc *sc, uint32_t reg)
+{
+	return sc->sc_reg_read(sc, reg);
+}
 
+static inline void
+gttwsi_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
+{
+	return sc->sc_reg_write(sc, reg, val);
+}
 
 /* ARGSUSED */
 void
@@ -132,6 +142,11 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 	sc->sc_dev = self;
 	sc->sc_bust = iot;
 	sc->sc_bush = ioh;
+
+	if (sc->sc_reg_read == NULL)
+		sc->sc_reg_read = gttwsi_default_read_4;
+	if (sc->sc_reg_write == NULL)
+		sc->sc_reg_write = gttwsi_default_write_4;
 
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
@@ -213,6 +228,8 @@ gttwsi_send_start(void *v, int flags)
 	struct gttwsi_softc *sc = v;
 	int expect;
 
+	KASSERT(mutex_owned(&sc->sc_buslock));
+
 	if (sc->sc_started)
 		expect = STAT_RSCT;
 	else
@@ -227,6 +244,8 @@ gttwsi_send_stop(void *v, int flags)
 	struct gttwsi_softc *sc = v;
 	int retry = TWSI_RETRY_COUNT;
 	uint32_t control;
+
+	KASSERT(mutex_owned(&sc->sc_buslock));
 
 	sc->sc_started = false;
 
@@ -252,6 +271,8 @@ gttwsi_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 	struct gttwsi_softc *sc = v;
 	uint32_t data, expect;
 	int error, read;
+
+	KASSERT(mutex_owned(&sc->sc_buslock));
 
 	gttwsi_send_start(v, flags);
 
@@ -297,6 +318,8 @@ gttwsi_read_byte(void *v, uint8_t *valp, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
+	KASSERT(mutex_owned(&sc->sc_buslock));
+
 	if (flags & I2C_F_LAST)
 		error = gttwsi_wait(sc, 0, STAT_MRRD_ANT, flags);
 	else
@@ -314,6 +337,8 @@ gttwsi_write_byte(void *v, uint8_t val, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
+	KASSERT(mutex_owned(&sc->sc_buslock));
+
 	gttwsi_write_4(sc, TWSI_DATA, val);
 	error = gttwsi_wait(sc, 0, STAT_MTDB_AR, flags);
 	if (flags & I2C_F_STOP)
@@ -327,6 +352,8 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 {
 	uint32_t status;
 	int timo, error = 0;
+
+	KASSERT(mutex_owned(&sc->sc_buslock));
 
 	DELAY(5);
 	if (!(flags & I2C_F_POLL))
