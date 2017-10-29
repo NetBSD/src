@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.69 2017/09/30 11:43:57 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.70 2017/10/29 10:01:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,6 +112,12 @@
 #include <uvm/pmap/pmap_pvt.h>
 
 struct bootspace {
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} head;
+
 	/* Kernel segments. */
 	struct {
 		vaddr_t va;
