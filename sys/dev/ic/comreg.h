@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.25 2016/05/27 20:01:49 bouyer Exp $	*/
+/*	$NetBSD: comreg.h,v 1.26 2017/10/29 14:06:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -64,9 +64,7 @@
 #define	IIR_NOPEND	0x1	/* No pending interrupts */
 #define	IIR_64B_FIFO	0x20	/* 64byte FIFO Enabled (16750) */
 #define	IIR_FIFO_MASK	0xc0	/* set if FIFOs are enabled */
-#if defined(COM_16750) || defined(COM_AWIN)
-#define IIR_BUSY	0x7	/* Busy indicator */
-#endif
+#define IIR_BUSY	0x7	/* Busy indicator (16750/SUNXI) */
 
 /* fifo control register */
 #define	FIFO_ENABLE	0x01	/* Turn the FIFO on */
@@ -160,11 +158,9 @@
 #define MDR1_MODE_UART_16X		0x00
 #define MDR1_MODE_MASK			0x07
 
-#ifdef COM_AWIN
-/* AWIN-specific registers */
+/* SUNXI-specific registers */
 #define HALT_CHCFG_UD			0x04 /* apply updates to LCR/dividors */
 #define HALT_CHCFG_EN			0x02 /* enable change while busy */
-#endif
 
 
 /* XXX ISA-specific. */
