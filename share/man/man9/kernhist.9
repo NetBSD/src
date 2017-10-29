@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernhist.9,v 1.6 2017/10/29 09:17:42 pgoyette Exp $
+.\"	$NetBSD: kernhist.9,v 1.7 2017/10/29 09:51:42 pgoyette Exp $
 .\"
 .\" Copyright (c) 2015 Matthew R. Green
 .\" All rights reserved.
@@ -70,22 +70,22 @@ format syntax with a maximum of 4 arguments, each of type
 must be present in the kernel configuration to enable these functions and
 macros.
 .Pp
-A kernel history is a fixed-size buffer of an either statically or dynamically
-allocated buffer that is used and read in a cycled basis.
-It includes the time an entry was made, the CPU from which the entry was
-recorded, the
+A kernel history is a fixed-size buffer,either statically or dynamically
+allocated, that is written and read on a circular basis.
+Each entry includes the time the entry was made, the CPU from which the entry
+was recorded, the
 .Xr printf 3
-like format and length, the function name and length, the unique call count
-for this function, and the 4 arguments.
+like format string and length, the function name and length, the unique call
+count for this function, and the 4 arguments.
 .Pp
-The history data can be viewed using the
+The history event data can be viewed using the
 .Fl U
 and
 .Fl u
 .Ar histname
 options to
 .Xr vmstat 1 ,
-or by the
+or by using the
 .Ic show kernhist
 command in
 .Xr ddb 4 .
@@ -94,10 +94,10 @@ User-written programs can retrieve history data from the kernel using the
 variable kern.hist.histname.
 .Pp
 The format string must be a literal string that can be referenced later as it
-is not stored with the event, only a pointer to it.
+is not stored with the event (only a pointer to the format string is stored).
 It should only contain conversion specifiers suitable for
 .Vt uintmax_t
-values, such as
+sized values, such as
 .Dq %jx ,
 .Dq %ju ,
 and
@@ -107,10 +107,10 @@ and address (pointer) arguments should be cast to
 to avoid compiler errors on architectures where pointers are smaller than
 .Vt uintmax_t
 integers.
-Format specifiers without a length modifier, and specifiers with length
+Conversion specifiers without a length modifier, and specifiers with length
 modifiers other than j, should not be used.
 .Pp
-Format specifiers that require additional dereferences of their
+Conversion specifiers that require additional dereferences of their
 corresponding arguments, such as
 .Dq %s ,
 will not work in
@@ -155,14 +155,17 @@ log the format string and arguments in the history as a unique event.
 Declare a function as being called.
 Either this or
 .Fn KERNHIST_CALLARGS
-must be used near the function entry point to maintain the number of
+must be used once, near the function entry point, to maintain the number of
 times the function has been called.
 .It Fn KERNHIST_CALLARGS name fmt arg0 arg1 arg2 arg3
-A frontend to
+A combination of
+.Fn KERNHIST_CALLED
+and
 .Fn KERNHIST_LOG
-that avoids that
+that avoids having a
 .Dq called!
-log message in addition to normal arguments.
+log message in addition to a message containing normal arguments with a
+format string.
 .It Fn KERNHIST_DUMP name
 Call
 .Fn kernhist_dump
