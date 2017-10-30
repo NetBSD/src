@@ -1,4 +1,4 @@
-.\" $NetBSD: sha2.3,v 1.7 2017/10/25 16:04:00 abhinav Exp $
+.\" $NetBSD: sha2.3,v 1.8 2017/10/30 15:44:29 wiz Exp $
 .\"	$OpenBSD: sha2.3,v 1.11 2004/06/22 01:57:29 jfb Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -203,9 +203,8 @@ The
 .Fn SHA256_End
 function is a front end for
 .Fn SHA256_Final
-which converts the digest into an
-.Tn ASCII
-representation of the digest in hexadecimal.
+which converts the digest into an ASCII representation of the digest
+in hexadecimal.
 .Pp
 The
 .Fn SHA256_File
@@ -312,8 +311,9 @@ The SHA2 functions appeared in
 and
 .Nx 3.0 .
 .Sh AUTHORS
+.An -nosplit
 This implementation of the SHA functions was written by
-.An Aaron D. Gifford.
+.An Aaron D. Gifford .
 .Pp
 The
 .Fn SHA256_End ,
