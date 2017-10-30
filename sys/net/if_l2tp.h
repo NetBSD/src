@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.2 2017/05/31 08:19:44 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.3 2017/10/30 11:24:04 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -162,7 +162,7 @@ l2tp_heldref_variant(struct l2tp_variant *var)
 
 /* Prototypes */
 void l2tpattach(int);
-void l2tpattach0(struct l2tp_softc *);
+int l2tpattach0(struct l2tp_softc *);
 void l2tp_input(struct mbuf *, struct ifnet *);
 int l2tp_ioctl(struct ifnet *, u_long, void *);
 
