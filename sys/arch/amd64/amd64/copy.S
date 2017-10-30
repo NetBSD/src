@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.26 2017/10/17 07:02:50 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.27 2017/10/30 17:06:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -105,6 +105,7 @@ ENTRY(do_pmap_load)
 	popq	%rdi
 	leaveq
 	ret
+END(do_pmap_load)
 
 /*
  * SMAP functions. ret+int3+int3 is patched dynamically to STAC/CLAC.
@@ -116,6 +117,7 @@ ENTRY(smap_enable)
 	int3
 	int3
 	ret
+END(smap_enable)
 
 ENTRY(smap_disable)
 .Lstacpatch:
@@ -123,6 +125,7 @@ ENTRY(smap_disable)
 	int3
 	int3
 	ret
+END(smap_disable)
 
 /*
  * Copy routines from and to userland, plus a few more. See the
@@ -190,6 +193,7 @@ ENTRY(kcopy)
 .Lkcopy_end:
 	xorq	%rax,%rax
 	ret
+END(kcopy)
 
 ENTRY(copyout)
 	DEFERRED_SWITCH_CHECK
@@ -219,6 +223,7 @@ ENTRY(copyout)
 	xorl	%eax,%eax
 	ret
 	DEFERRED_SWITCH_CALL
+END(copyout)
 
 ENTRY(copyin)
 	DEFERRED_SWITCH_CHECK
@@ -249,6 +254,7 @@ ENTRY(copyin)
 	xorl	%eax,%eax
 	ret
 	DEFERRED_SWITCH_CALL
+END(copyin)
 
 NENTRY(copy_efault)
 	movq	$EFAULT,%rax
@@ -308,6 +314,7 @@ ENTRY(copyoutstr)
 	movq	$ENAMETOOLONG,%rax
 	jmp	copystr_return
 	DEFERRED_SWITCH_CALL
+END(copyoutstr)
 
 ENTRY(copyinstr)
 	DEFERRED_SWITCH_CHECK
@@ -351,6 +358,7 @@ ENTRY(copyinstr)
 	movq	$ENAMETOOLONG,%rax
 	jmp	copystr_return
 	DEFERRED_SWITCH_CALL
+END(copyinstr)
 
 ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
@@ -394,7 +402,7 @@ ENTRY(copystr)
 	movq	%r8,(%rcx)
 
 7:	ret
-
+END(copystr)
 
 ENTRY(fuswintr)
 	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
@@ -412,6 +420,7 @@ ENTRY(fuswintr)
 
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
+END(fuswintr)
 
 ENTRY(fubyte)
 	DEFERRED_SWITCH_CHECK
@@ -429,6 +438,7 @@ ENTRY(fubyte)
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
 	DEFERRED_SWITCH_CALL
+END(fubyte)
 
 ENTRY(suswintr)
 	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
@@ -447,6 +457,7 @@ ENTRY(suswintr)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
+END(suswintr)
 
 ENTRY(subyte)
 	DEFERRED_SWITCH_CHECK
@@ -466,6 +477,7 @@ ENTRY(subyte)
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
 	DEFERRED_SWITCH_CALL
+END(subyte)
 
 /*
  * These are the same, but must reside at different addresses,
@@ -476,16 +488,19 @@ ENTRY(fusuintrfailure)
 	movq	$0,PCB_ONFAULT(%rcx)
 	movl	$-1,%eax
 	ret
+END(fusuintrfailure)
 
 ENTRY(fusufailure)
 	callq	smap_enable
 	movq	$0,PCB_ONFAULT(%rcx)
 	movl	$-1,%eax
 	ret
+END(fusufailure)
 
 ENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
+END(fusuaddrfault)
 
 /*
  * Compare-and-swap the 64-bit integer in the user-space.
@@ -516,6 +531,7 @@ ENTRY(ucas_64)
 	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
+END(ucas_64)
 
 /*
  * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
@@ -544,6 +560,7 @@ ENTRY(ucas_32)
 	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
+END(ucas_32)
 
 ENTRY(ucas_efault)
 	movq	$EFAULT,%rax
