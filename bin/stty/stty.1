@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.44 2017/10/25 06:32:59 kre Exp $
+.\"	$NetBSD: stty.1,v 1.45 2017/10/30 15:38:52 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -273,15 +273,10 @@ On the terminal NL performs (does not perform) the CR function.
 Local mode flags (lflags) affect various and sundry characteristics of terminal
 processing.
 Historically the term "local" pertained to new job control features
-implemented by Jim Kulp on a
-.Tn PDP Ns -11/70
-at
-.Tn IIASA .
-Later the driver ran on the first
-.Tn VAX
-at Evans Hall, UC Berkeley, where the job control details
-were greatly modified but the structure definitions and names
-remained essentially unchanged.
+implemented by Jim Kulp on a PDP-11/70 at IIASA.
+Later the driver ran on the first VAX at Evans Hall, UC Berkeley,
+where the job control details were greatly modified but the structure
+definitions and names remained essentially unchanged.
 The second interpretation of the
 .Sq l
 in lflag
@@ -405,22 +400,22 @@ Recognized control characters:
 .It control- Ta "" Ta ""
 .It character	Subscript	Description
 .It _________	_________	_______________
-.It eof Ta Tn VEOF Ta EOF No character
-.It eol Ta Tn VEOL Ta EOL No character
-.It eol2 Ta Tn VEOL2 Ta EOL2 No character
-.It erase Ta Tn VERASE Ta ERASE No character
-.It werase Ta Tn VWERASE Ta WERASE No character
-.It kill Ta Tn VKILL Ta KILL No character
-.It reprint Ta Tn VREPRINT Ta REPRINT No character
-.It intr Ta Tn VINTR Ta INTR No character
-.It quit Ta Tn VQUIT Ta QUIT No character
-.It susp Ta Tn VSUSP Ta SUSP No character
-.It dsusp Ta Tn VDSUSP Ta DSUSP No character
-.It start Ta Tn VSTART Ta START No character
-.It stop Ta Tn VSTOP Ta STOP No character
-.It lnext Ta Tn VLNEXT Ta LNEXT No character
-.It status Ta Tn VSTATUS Ta STATUS No character
-.It discard Ta Tn VDISCARD Ta DISCARD No character
+.It eof Ta VEOF Ta EOF No character
+.It eol Ta VEOL Ta EOL No character
+.It eol2 Ta VEOL2 Ta EOL2 No character
+.It erase Ta VERASE Ta ERASE No character
+.It werase Ta VWERASE Ta WERASE No character
+.It kill Ta VKILL Ta KILL No character
+.It reprint Ta VREPRINT Ta REPRINT No character
+.It intr Ta VINTR Ta INTR No character
+.It quit Ta VQUIT Ta QUIT No character
+.It susp Ta VSUSP Ta SUSP No character
+.It dsusp Ta VDSUSP Ta DSUSP No character
+.It start Ta VSTART Ta START No character
+.It stop Ta VSTOP Ta STOP No character
+.It lnext Ta VLNEXT Ta LNEXT No character
+.It status Ta VSTATUS Ta STATUS No character
+.It discard Ta VDISCARD Ta DISCARD No character
 .El
 .Ed
 .It Cm min Ar number
