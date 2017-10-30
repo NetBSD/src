@@ -1,4 +1,4 @@
-.\" $NetBSD: tcgetwinsize.3,v 1.1 2017/10/25 06:32:59 kre Exp $
+.\" $NetBSD: tcgetwinsize.3,v 1.2 2017/10/30 15:43:21 wiz Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,10 +35,8 @@
 .Lb libc
 .Sh SYNOPSIS
 .In termios.h
-.Fd
 .Ft int
 .Fn tcgetwinsize "int fd" "struct winsize *gws"
-.Fd
 .Ft int
 .Fn tcsetwinsize "int fd" "const struct winsize *sws"
 .Sh DESCRIPTION
@@ -97,7 +95,7 @@ If an error occurs,
 .Fn tcgetwinsize
 and
 .Fn tcsetwinsize
-return -1 and cause the global variable
+return \-1 and cause the global variable
 .Va errno
 to be set to indicate the error.
 Common errors are as follows:
@@ -143,10 +141,11 @@ or
 .Fn tcsetwinsize
 does not represent a terminal device capable
 of remembering a window size.
+.El
 .Sh SEE ALSO
 .Xr stty 1 ,
-.Xr termios 4 ,
 .Xr pty 4 ,
+.Xr termios 4 ,
 .Xr tty 4 ,
 .Xr signal 7
 .Sh STANDARDS
