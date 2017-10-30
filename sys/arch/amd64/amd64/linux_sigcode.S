@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.2 2005/12/11 12:16:21 christos Exp $ */
+/*	$NetBSD: linux_sigcode.S,v 1.3 2017/10/30 17:06:42 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -41,6 +41,7 @@
 
 /* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
 NENTRY(linux_sigcode)
+END(linux_sigcode)
 
 /* LINTSTUB: Var: char linux_rt_sigcode[1]; */
 NENTRY(linux_rt_sigcode)
