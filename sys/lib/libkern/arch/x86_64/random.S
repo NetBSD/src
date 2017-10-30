@@ -1,6 +1,6 @@
-/*	$NetBSD: random.S,v 1.2 2008/04/28 20:24:06 martin Exp $	*/
+/*	$NetBSD: random.S,v 1.3 2017/10/30 17:13:39 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -88,3 +88,4 @@ ENTRY(random)
 	subl	$0x7fffffff,%eax
 	movl	%eax,randseed(%rip)
 	ret
+END(random)
