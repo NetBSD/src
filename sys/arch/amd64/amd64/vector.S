@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.51 2017/08/15 09:08:39 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.52 2017/10/30 17:06:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -283,12 +283,15 @@ IDTVEC(recurse_ ## name ## num)						;\
 	subq	$8,%rsp							;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
+	jmp	1f							;\
+IDTVEC_END(recurse_ ## name ## num)					;\
 IDTVEC(resume_ ## name ## num)						\
-	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
+1:	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8,%r14			;\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
 	jmp	1f							;\
+IDTVEC_END(resume_ ## name ## num)					;\
 IDTVEC(intr_ ## name ## num)						;\
 	pushq	$0			/* dummy error code */		;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
@@ -343,7 +346,8 @@ IDTVEC(intr_ ## name ## num)						;\
 9:									\
 	unmask(num)							;\
 	late_ack(num)							;\
-	INTRFASTEXIT
+	INTRFASTEXIT							;\
+IDTVEC_END(intr_ ## name ## num)
 
 #define ICUADDR IO_ICU1
 

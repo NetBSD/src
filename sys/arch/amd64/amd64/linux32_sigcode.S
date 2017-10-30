@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sigcode.S,v 1.3 2015/11/22 13:41:24 maxv Exp $ */
+/*	$NetBSD: linux32_sigcode.S,v 1.4 2017/10/30 17:06:42 maxv Exp $ */
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -12,6 +12,7 @@ NENTRY(linux32_sigcode)
 	int	$0x80
 	movl	$LINUX32_SYS_exit,%eax
 	int	$0x80
+END(linux32_sigcode)
 
 	.balign	16
 NENTRY(linux32_rt_sigcode)
