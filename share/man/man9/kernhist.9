@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernhist.9,v 1.7 2017/10/29 09:51:42 pgoyette Exp $
+.\"	$NetBSD: kernhist.9,v 1.8 2017/10/30 15:55:53 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Matthew R. Green
 .\" All rights reserved.
@@ -64,7 +64,7 @@ extremely early in the kernel initialisation.
 It provides a simple restricted
 .Xr printf 3
 format syntax with a maximum of 4 arguments, each of type
-.Vt uintmax_t.
+.Vt uintmax_t .
 .Pp
 .Cd options KERNHIST
 must be present in the kernel configuration to enable these functions and
@@ -177,7 +177,7 @@ Used to dump a well known list of kernel histories.
 The following histories and their respective value (as seen in
 .Pa kernhist.h )
 are available:
-.Bl -tag
+.Bl -tag -width KERNHIST_SCDEBUGHISTXXX
 .It KERNHIST_UVMMAPHIST
 Include events from
 .Dq maphist .
@@ -256,7 +256,7 @@ generalized it into its current form to be available to non
 frameworks.
 .An Paul Goyette Aq Mt pgoyette@NetBSD.org
 provided the
-.Xr 9 sysctl
+.Xr sysctl 9
 interface.
 .Sh BUGS
 The restriction against using
