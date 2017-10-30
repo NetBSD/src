@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.71 2017/10/25 07:19:29 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.72 2017/10/30 09:35:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6491,4 +6491,35 @@ sys/net/bpf.c					1.217
 
 	Turn on D_MPSAFE flag of bpf_cdevsw that is already MP-safe
 	[ozaki-r, ticket #329]
+
+sbin/fsck_lfs/inode.c				1.69
+sbin/fsck_lfs/lfs.c				1.73
+sbin/fsck_lfs/pass6.c				1.50
+sbin/fsck_lfs/segwrite.c			1.46
+sys/ufs/lfs/lfs.h				1.202-1.203
+sys/ufs/lfs/lfs_accessors.h			1.48
+sys/ufs/lfs/lfs_alloc.c				1.136-1.137
+sys/ufs/lfs/lfs_balloc.c			1.94
+sys/ufs/lfs/lfs_bio.c				1.141
+sys/ufs/lfs/lfs_extern.h			1.113
+sys/ufs/lfs/lfs_inode.c				1.156-1.157
+sys/ufs/lfs/lfs_inode.h				1.20, 1.21, 1.23
+sys/ufs/lfs/lfs_itimes.c			1.20
+sys/ufs/lfs/lfs_pages.c				1.13-1.15
+sys/ufs/lfs/lfs_rename.c			1.22
+sys/ufs/lfs/lfs_segment.c			1.270-1.275
+sys/ufs/lfs/lfs_subr.c				1.94-1.97
+sys/ufs/lfs/lfs_syscalls.c			1.175
+sys/ufs/lfs/lfs_vfsops.c			1.360
+sys/ufs/lfs/lfs_vnops.c				1.316-1.321
+sys/ufs/lfs/ulfs_inode.c			1.20
+sys/ufs/lfs/ulfs_inode.h			1.24
+sys/ufs/lfs/ulfs_lookup.c			1.41
+sys/ufs/lfs/ulfs_quota2.c			1.31
+sys/ufs/lfs/ulfs_readwrite.c			1.24
+sys/ufs/lfs/ulfs_vnops.c			1.49-1.50
+
+	Code cleanup and bugfixes.  Fix buffer overflow/KASSERT when
+	cookies are supplied.
+	[maya, ticket #330]
 
