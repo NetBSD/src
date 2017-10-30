@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.81 2017/10/27 19:00:07 nat Exp $
+.\"	$NetBSD: audio.4,v 1.82 2017/10/30 15:53:51 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 11, 2016
+.Dd October 27, 2017
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -107,7 +107,6 @@ frequency channels and precision.
 These can be modified to taste by the following
 .Xr sysctl 8
 variables.
-.Pp
 .Bl -tag -width -compact
 .It hw.driverN.precision
 .It hw.driverN.frequency
@@ -246,7 +245,6 @@ whenever a mixer value is changed.
 The following
 .Xr ioctl 2
 commands are supported on the sample devices:
-.Pp
 .Bl -tag -width indent
 .It Dv AUDIO_GETCHAN (int)
 This command will return the audio channel in use.
