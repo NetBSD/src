@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.53 2017/01/11 02:10:44 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.54 2017/10/30 04:53:43 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.53 2017/01/11 02:10:44 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.54 2017/10/30 04:53:43 ozaki-r Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -624,7 +624,7 @@ npfctl_conn_print(unsigned alen, const npf_addr_t *a, const in_port_t *p,
 		fputc('\n', fp);
 		return 1;
 	}
-	fprintf(fp, " via %s:%d\n", ifname, ntohs(p[2]));
+	fprintf(fp, " via %s:%d\n", ifname, p[2]);
 	return 1;
 }
 
