@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.45 2015/10/03 08:28:15 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.45.8.1 2017/10/30 09:29:04 snj Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1027,7 +1027,7 @@ lfs_writevnodes(struct lfs *fs, struct segment *sp, int op)
 		/*
 		 * Write the inode/file if dirty and it's not the IFILE.
 		 */
-		if (ip->i_flag & IN_ALLMOD || !LIST_EMPTY(&vp->v_dirtyblkhd)) {
+		if (ip->i_state & IN_ALLMOD || !LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			if (ip->i_number != LFS_IFILE_INUM)
 				lfs_writefile(fs, sp, vp);
 			(void) lfs_writeinode(fs, sp, ip);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.19 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.19.10.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.19 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.19.10.1 2017/10/30 09:29:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -61,12 +61,12 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 #ifdef _KERNEL
 	struct timespec now;
 
-	KASSERT(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
+	KASSERT(ip->i_state & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
 
 	vfs_timestamp(&now);
 #endif
 
-	if (ip->i_flag & IN_ACCESS) {
+	if (ip->i_state & IN_ACCESS) {
 #ifdef _KERNEL
 		if (acc == NULL)
 			acc = &now;
@@ -90,8 +90,8 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			mutex_exit(&lfs_lock);
 		}
 	}
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {
-		if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
+	if (ip->i_state & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {
+		if (ip->i_state & (IN_UPDATE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (mod == NULL)
 				mod = &now;
@@ -100,7 +100,7 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			lfs_dino_setmtimensec(fs, ip->i_din, mod->tv_nsec);
 			ip->i_modrev++;
 		}
-		if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
+		if (ip->i_state & (IN_CHANGE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (cre == NULL)
 				cre = &now;
@@ -109,11 +109,11 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			lfs_dino_setctimensec(fs, ip->i_din, cre->tv_nsec);
 		}
 		mutex_enter(&lfs_lock);
-		if (ip->i_flag & (IN_CHANGE | IN_UPDATE))
+		if (ip->i_state & (IN_CHANGE | IN_UPDATE))
 			LFS_SET_UINO(ip, IN_MODIFIED);
-		if (ip->i_flag & IN_MODIFY)
+		if (ip->i_state & IN_MODIFY)
 			LFS_SET_UINO(ip, IN_ACCESSED);
 		mutex_exit(&lfs_lock);
 	}
-	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
+	ip->i_state &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
 }

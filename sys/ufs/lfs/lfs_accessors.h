@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.47 2017/01/12 18:40:02 christos Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.47.8.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -619,31 +619,31 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
  * "struct inode" associated definitions
  */
 
-#define LFS_SET_UINO(ip, flags) do {					\
-	if (((flags) & IN_ACCESSED) && !((ip)->i_flag & IN_ACCESSED))	\
+#define LFS_SET_UINO(ip, states) do {					\
+	if (((states) & IN_ACCESSED) && !((ip)->i_state & IN_ACCESSED))	\
 		lfs_sb_adduinodes((ip)->i_lfs, 1);			\
-	if (((flags) & IN_CLEANING) && !((ip)->i_flag & IN_CLEANING))	\
+	if (((states) & IN_CLEANING) && !((ip)->i_state & IN_CLEANING))	\
 		lfs_sb_adduinodes((ip)->i_lfs, 1);			\
-	if (((flags) & IN_MODIFIED) && !((ip)->i_flag & IN_MODIFIED))	\
+	if (((states) & IN_MODIFIED) && !((ip)->i_state & IN_MODIFIED))	\
 		lfs_sb_adduinodes((ip)->i_lfs, 1);			\
-	(ip)->i_flag |= (flags);					\
+	(ip)->i_state |= (states);					\
 } while (0)
 
-#define LFS_CLR_UINO(ip, flags) do {					\
-	if (((flags) & IN_ACCESSED) && ((ip)->i_flag & IN_ACCESSED))	\
+#define LFS_CLR_UINO(ip, states) do {					\
+	if (((states) & IN_ACCESSED) && ((ip)->i_state & IN_ACCESSED))	\
 		lfs_sb_subuinodes((ip)->i_lfs, 1);			\
-	if (((flags) & IN_CLEANING) && ((ip)->i_flag & IN_CLEANING))	\
+	if (((states) & IN_CLEANING) && ((ip)->i_state & IN_CLEANING))	\
 		lfs_sb_subuinodes((ip)->i_lfs, 1);			\
-	if (((flags) & IN_MODIFIED) && ((ip)->i_flag & IN_MODIFIED))	\
+	if (((states) & IN_MODIFIED) && ((ip)->i_state & IN_MODIFIED))	\
 		lfs_sb_subuinodes((ip)->i_lfs, 1);			\
-	(ip)->i_flag &= ~(flags);					\
+	(ip)->i_state &= ~(states);					\
 	if (lfs_sb_getuinodes((ip)->i_lfs) < 0) {			\
 		panic("lfs_uinodes < 0");				\
 	}								\
 } while (0)
 
 #define LFS_ITIMES(ip, acc, mod, cre) \
-	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
+	while ((ip)->i_state & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
 		lfs_itimes(ip, acc, mod, cre)
 
 /*
@@ -672,7 +672,7 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 #define	LFS_SEGENTRY(SP, F, IN, BP) do {				\
 	int _e;								\
 	SHARE_IFLOCK(F);						\
-	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
+	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	    ((IN) / lfs_sb_getsepb(F)) + lfs_sb_getcleansz(F),		\
 	    lfs_sb_getbsize(F), 0, &(BP))) != 0)			\
@@ -825,7 +825,7 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 #define	LFS_IENTRY(IP, F, IN, BP) do {					\
 	int _e;								\
 	SHARE_IFLOCK(F);						\
-	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
+	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
 	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
@@ -941,7 +941,7 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 #define LFS_CLEANERINFO(CP, F, BP) do {					\
 	int _e;								\
 	SHARE_IFLOCK(F);						\
-	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
+	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
 	_e = bread((F)->lfs_ivnode,					\
 	    (daddr_t)0, lfs_sb_getbsize(F), 0, &(BP));			\
 	if (_e)								\

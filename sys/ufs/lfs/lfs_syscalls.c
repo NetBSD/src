@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.174 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.174.4.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.174 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.174.4.1 2017/10/30 09:29:04 snj Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -899,7 +899,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	u_long timeout;
 	int error;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_enter(&lfs_lock);
 	if (fsidp == NULL || (mntp = vfs_getvfs(fsidp)) == NULL)
 		addr = &lfs_allclean_wakeup;
 	else
@@ -909,8 +909,8 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	 * XXX IS THAT WHAT IS INTENDED?
 	 */
 	timeout = tvtohz(tv);
-	error = tsleep(addr, PCATCH | PVFS, "segment", timeout);
-	KERNEL_UNLOCK_ONE(NULL);
+	error = cv_timedwait_sig(addr, &lfs_lock, timeout);
+	mutex_exit(&lfs_lock);
 	return (error == ERESTART ? EINTR : 0);
 }
 

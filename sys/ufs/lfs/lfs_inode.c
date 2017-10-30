@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.155 2017/04/01 00:40:42 maya Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.155.6.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.155 2017/04/01 00:40:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.155.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -156,9 +156,9 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	mutex_exit(vp->v_interlock);
 	LFS_ITIMES(ip, acc, mod, NULL);
 	if (updflags & UPDATE_CLOSE)
-		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
+		flags = ip->i_state & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
 	else
-		flags = ip->i_flag & (IN_MODIFIED | IN_CLEANING);
+		flags = ip->i_state & (IN_MODIFIED | IN_CLEANING);
 	if (flags == 0)
 		return (0);
 
@@ -170,10 +170,10 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 		while (vp->v_uflag & VU_DIROP) {
 			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %llu "
 			      "(dirops)\n", (unsigned long long) ip->i_number));
-			DLOG((DLOG_DIROP, "lfs_update: vflags 0x%x, iflags"
+			DLOG((DLOG_DIROP, "lfs_update: vflags 0x%x, i_state"
 			      " 0x%x\n",
 			      vp->v_iflag | vp->v_vflag | vp->v_uflag,
-			      ip->i_flag));
+			      ip->i_state));
 			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
@@ -239,13 +239,13 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		memset((char *)SHORTLINK(oip), 0, (u_int)oip->i_size);
 		oip->i_size = 0;
 		lfs_dino_setsize(fs, oip->i_din, 0);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
+		oip->i_state |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
 		/* still do a uvm_vnp_setsize() as writesize may be larger */
 		uvm_vnp_setsize(ovp, length);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
+		oip->i_state |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 	lfs_imtime(fs);
@@ -296,7 +296,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				return error;
 			}
 			uvm_vnp_setsize(ovp, length);
-			oip->i_flag |= IN_CHANGE | IN_UPDATE;
+			oip->i_state |= IN_CHANGE | IN_UPDATE;
 			KASSERT(ovp->v_size == oip->i_size);
 			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 			return (lfs_update(ovp, NULL, NULL, 0));
@@ -315,7 +315,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 			uvm_vnp_setsize(ovp, length);
 			(void) VOP_BWRITE(bp->b_vp, bp);
-			oip->i_flag |= IN_CHANGE | IN_UPDATE;
+			oip->i_state |= IN_CHANGE | IN_UPDATE;
 			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 			return (lfs_update(ovp, NULL, NULL, 0));
 		}
@@ -592,13 +592,13 @@ done:
 	/*
 	 * If we truncated to zero, take us off the paging queue.
 	 */
-	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
-		oip->i_flags &= ~IN_PAGING;
+	if (oip->i_size == 0 && oip->i_state & IN_PAGING) {
+		oip->i_state &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
 	}
 	mutex_exit(&lfs_lock);
 
-	oip->i_flag |= IN_CHANGE;
+	oip->i_state |= IN_CHANGE;
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	(void) lfs_chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif

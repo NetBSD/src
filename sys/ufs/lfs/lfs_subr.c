@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.92 2017/04/06 03:21:01 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.92.6.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.92 2017/04/06 03:21:01 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.92.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,10 +261,12 @@ lfs_free(struct lfs *fs, void *p, int type)
 		}
 	}
 
+#ifdef notyet /* XXX this assert fires */
 	for (int i = 0; i < LFS_N_TOTAL; i++) {
 		KDASSERTMSG(fs->lfs_resblk[i].p == p,
 		    "lfs_free: inconsistent reserved block");
 	}
+#endif
 
 	mutex_exit(&lfs_lock);
 
@@ -355,7 +357,7 @@ lfs_unmark_dirop(struct lfs *fs)
 	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
 		vp = ITOV(ip);
-		if ((ip->i_flag & (IN_ADIROP | IN_CDIROP)) == IN_CDIROP) {
+		if ((ip->i_state & (IN_ADIROP | IN_CDIROP)) == IN_CDIROP) {
 			--lfs_dirvcount;
 			--fs->lfs_dirvcount;
 			vp->v_uflag &= ~VU_DIROP;
@@ -366,7 +368,7 @@ lfs_unmark_dirop(struct lfs *fs)
 			vrele(vp);
 			mutex_enter(&lfs_lock);
 			fs->lfs_unlockvp = NULL;
-			ip->i_flag &= ~IN_CDIROP;
+			ip->i_state &= ~IN_CDIROP;
 		}
 	}
 
@@ -428,7 +430,10 @@ lfs_segunlock(struct lfs *fs)
 	sp = fs->lfs_sp;
 
 	mutex_enter(&lfs_lock);
-	KASSERT(LFS_SEGLOCK_HELD(fs));
+
+	if (!LFS_SEGLOCK_HELD(fs))
+		panic("lfs seglock not held");
+
 	if (fs->lfs_seglock == 1) {
 		if ((sp->seg_flags & (SEGM_PROT | SEGM_CLEAN)) == 0)
 			do_unmark_dirop = 1;
@@ -534,9 +539,6 @@ lfs_segunlock(struct lfs *fs)
 		rw_exit(&fs->lfs_fraglock);
 		if (do_unmark_dirop)
 			lfs_unmark_dirop(fs);
-	} else if (fs->lfs_seglock == 0) {
-		mutex_exit(&lfs_lock);
-		panic ("Seglock not held");
 	} else {
 		--fs->lfs_seglock;
 		mutex_exit(&lfs_lock);
@@ -649,6 +651,6 @@ lfs_wakeup_cleaner(struct lfs *fs)
 	if (fs->lfs_nowrap > 0)
 		return;
 
-	wakeup(&fs->lfs_nextsegsleep);
-	wakeup(&lfs_allclean_wakeup);
+	cv_broadcast(&fs->lfs_nextsegsleep);
+	cv_broadcast(&lfs_allclean_wakeup);
 }

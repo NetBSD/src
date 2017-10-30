@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.19 2017/04/06 03:21:01 maya Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.19.6.1 2017/10/30 09:29:04 snj Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -107,7 +107,26 @@ struct inode {
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ulfsmount *i_ump; /* Mount point associated with this inode. */
 	struct	vnode *i_devvp;	/* Vnode for block I/O. */
-	uint32_t i_flag;	/* flags, see below */
+
+	uint32_t i_state;	/* state */
+#define	IN_ACCESS	0x0001		/* Access time update request. */
+#define	IN_CHANGE	0x0002		/* Inode change time update request. */
+#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
+#define	IN_MODIFY	0x2000		/* Modification time update request. */
+#define	IN_MODIFIED	0x0008		/* Inode has been modified. */
+#define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
+/* 	   unused	0x0020 */	/* was IN_RENAME */
+#define	IN_SHLOCK	0x0040		/* File has shared lock. */
+#define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
+#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
+#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
+/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
+#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
+#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
+
+/* XXX this is missing some of the flags */
+#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
+
 	dev_t	  i_dev;	/* Device associated with the inode. */
 	ino_t	  i_number;	/* The identity of the inode. */
 
@@ -153,22 +172,6 @@ struct inode {
 	 */
 	union lfs_dinode *i_din;
 };
-
-/* These flags are kept in i_flag. */
-#define	IN_ACCESS	0x0001		/* Access time update request. */
-#define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
-#define	IN_MODIFY	0x2000		/* Modification time update request. */
-#define	IN_MODIFIED	0x0008		/* Inode has been modified. */
-#define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* 	   unused	0x0020 */	/* was IN_RENAME */
-#define	IN_SHLOCK	0x0040		/* File has shared lock. */
-#define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
-#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
-#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
-#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
-#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 
 /*
  * LFS inode extensions.

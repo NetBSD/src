@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.48 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.48.4.1 2017/10/30 09:29:04 snj Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.48 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.48.4.1 2017/10/30 09:29:04 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -305,7 +305,7 @@ ulfs_setattr(void *v)
 			ip->i_flags |= (vap->va_flags & UF_SETTABLE);
 			DIP_ASSIGN(ip, flags, ip->i_flags);
 		}
-		ip->i_flag |= IN_CHANGE;
+		ip->i_state |= IN_CHANGE;
 		if (vap->va_flags & (IMMUTABLE | APPEND)) {
 			error = 0;
 			goto out;
@@ -376,11 +376,11 @@ ulfs_setattr(void *v)
 			goto out;
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
-				ip->i_flag |= IN_ACCESS;
+				ip->i_state |= IN_ACCESS;
 		if (vap->va_mtime.tv_sec != VNOVAL) {
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			ip->i_state |= IN_CHANGE | IN_UPDATE;
 			if (vp->v_mount->mnt_flag & MNT_RELATIME)
-				ip->i_flag |= IN_ACCESS;
+				ip->i_state |= IN_ACCESS;
 		}
 		if (vap->va_birthtime.tv_sec != VNOVAL) {
 			lfs_dino_setbirthtime(fs, ip->i_din,
@@ -430,7 +430,7 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
-	ip->i_flag |= IN_CHANGE;
+	ip->i_state |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	return (0);
 }
@@ -493,7 +493,7 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	return (error);
  good:
 #endif /* LFS_QUOTA || LFS_QUOTA2 */
-	ip->i_flag |= IN_CHANGE;
+	ip->i_state |= IN_CHANGE;
 	return (0);
 }
 
@@ -588,7 +588,7 @@ ulfs_link(void *v)
 	}
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
-	ip->i_flag |= IN_CHANGE;
+	ip->i_state |= IN_CHANGE;
 	error = lfs_update(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
 		error = ulfs_direnter(dvp, ulr, vp,
@@ -597,7 +597,7 @@ ulfs_link(void *v)
 	if (error) {
 		ip->i_nlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
-		ip->i_flag |= IN_CHANGE;
+		ip->i_state |= IN_CHANGE;
 	}
  out1:
 	VOP_UNLOCK(vp);
@@ -737,10 +737,10 @@ ulfs_rmdir(void *v)
 	 */
 	dp->i_nlink--;
 	DIP_ASSIGN(dp, nlink, dp->i_nlink);
-	dp->i_flag |= IN_CHANGE;
+	dp->i_state |= IN_CHANGE;
 	ip->i_nlink--;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
-	ip->i_flag |= IN_CHANGE;
+	ip->i_state |= IN_CHANGE;
 	error = lfs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 #ifdef LFS_DIRHASH
@@ -826,7 +826,7 @@ ulfs_readdir(void *v)
 
 	off = uio->uio_offset;
 	if (ap->a_cookies) {
-		ccount = rcount / _DIRENT_RECLEN(ndp, 1);
+		ccount = rcount / LFS_DIRECTSIZ(fs, 1);
 		ccp = *(ap->a_cookies) = malloc(ccount * sizeof(*ccp),
 		    M_TEMP, M_WAITOK);
 	} else {
@@ -948,7 +948,7 @@ ulfs_print(void *v)
 	    (unsigned long long)major(ip->i_dev),
 	    (unsigned long long)minor(ip->i_dev));
 	printf(" flags 0x%x, nlink %d\n",
-	    ip->i_flag, ip->i_nlink);
+	    ip->i_state, ip->i_nlink);
 	printf("\tmode 0%o, owner %d, group %d, size %qd",
 	    ip->i_mode, ip->i_uid, ip->i_gid,
 	    (long long)ip->i_size);
@@ -977,7 +977,7 @@ ulfsspec_read(void *v)
 	 * Set access flag.
 	 */
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
-		VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
+		VTOI(ap->a_vp)->i_state |= IN_ACCESS;
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
@@ -1000,7 +1000,7 @@ ulfsspec_write(void *v)
 	 * Set update and change flags.
 	 */
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
-		VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
+		VTOI(ap->a_vp)->i_state |= IN_MODIFY;
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -1022,7 +1022,7 @@ ulfsfifo_read(void *v)
 	/*
 	 * Set access flag.
 	 */
-	VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
+	VTOI(ap->a_vp)->i_state |= IN_ACCESS;
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
@@ -1044,7 +1044,7 @@ ulfsfifo_write(void *v)
 	/*
 	 * Set update and change flags.
 	 */
-	VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
+	VTOI(ap->a_vp)->i_state |= IN_MODIFY;
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -1235,7 +1235,7 @@ ulfs_gop_markupdate(struct vnode *vp, int flags)
 	if (mask) {
 		struct inode *ip = VTOI(vp);
 
-		ip->i_flag |= mask;
+		ip->i_state |= mask;
 	}
 }
 

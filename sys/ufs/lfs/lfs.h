@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.201 2017/04/01 14:43:00 maya Exp $	*/
+/*	$NetBSD: lfs.h,v 1.201.6.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -509,13 +509,6 @@ union lfs_dinode {
 
 /* Unused logical block number */
 #define LFS_UNUSED_LBN	-1
-
-/*
- * "struct inode" associated definitions
- */
-
-/* For convenience */
-#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
 
 /*
  * On-disk and in-memory checkpoint segment usage structure.
@@ -1054,7 +1047,7 @@ struct lfs {
 	/* XXX: should be replaced with a condvar */
 	int lfs_availsleep;
 	/* This one replaces &lfs_nextseg... all ditto */
-	int lfs_nextsegsleep;
+	kcondvar_t lfs_nextsegsleep;
 
 	/* Cleaner lwp, set on first bmapv syscall. */
 	struct lwp *lfs_cleaner_thread;
