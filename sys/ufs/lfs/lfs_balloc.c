@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.92 2017/04/06 02:38:08 maya Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.92.6.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.92 2017/04/06 02:38:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.92.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -194,7 +194,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 			ip->i_size = (lastblock + 1) * lfs_sb_getbsize(fs);
 			lfs_dino_setsize(fs, ip->i_din, ip->i_size);
 			uvm_vnp_setsize(vp, ip->i_size);
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			ip->i_state |= IN_CHANGE | IN_UPDATE;
 			/* if we got a buffer for this, write it out now */
 			if (bpp)
 				(void) VOP_BWRITE(bp->b_vp, bp);
@@ -580,7 +580,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
 	/* increase the file's effective block count */
 	ip->i_lfs_effnblks += frags;
 	/* mark the inode dirty */
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	ip->i_state |= IN_CHANGE | IN_UPDATE;
 
 	if (bpp) {
 		obufsize = (*bpp)->b_bufsize;

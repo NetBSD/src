@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.72 2016/09/16 11:13:47 christos Exp $ */
+/* $NetBSD: lfs.c,v 1.72.6.1 2017/10/30 09:29:04 snj Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -366,7 +366,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, daddr_t daddr)
 	ip->i_number = ino;
 	ip->i_lockf = 0;
 	ip->i_lfs_effnblks = 0;
-	ip->i_flag = 0;
+	ip->i_state = 0;
 
 	/* Load inode block and find inode */
 	if (daddr > 0) {
@@ -952,7 +952,7 @@ extend_ifile(struct lfs *fs)
 	lfs_balloc(vp, lfs_dino_getsize(fs, ip->i_din), lfs_sb_getbsize(fs), &bp);
 	lfs_dino_setsize(fs, ip->i_din,
 	    lfs_dino_getsize(fs, ip->i_din) + lfs_sb_getbsize(fs));
-	ip->i_flag |= IN_MODIFIED;
+	ip->i_state |= IN_MODIFIED;
 	
 	i = (blkno - lfs_sb_getsegtabsz(fs) - lfs_sb_getcleansz(fs)) *
 		lfs_sb_getifpb(fs);
@@ -1058,7 +1058,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 						    (bpp ? &bp : NULL))))
 				return (error);
 			lfs_dino_setsize(fs, ip->i_din, (lastblock + 1) * lfs_sb_getbsize(fs));
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			ip->i_state |= IN_CHANGE | IN_UPDATE;
 			if (bpp)
 				(void) VOP_BWRITE(bp);
 		}
@@ -1252,7 +1252,7 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 
 	lfs_sb_subbfree(fs, frags);
 	ip->i_lfs_effnblks += frags;
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	ip->i_state |= IN_CHANGE | IN_UPDATE;
 
 	if (bpp) {
 		(*bpp)->b_data = erealloc((*bpp)->b_data, nsize);

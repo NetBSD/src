@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.40 2017/03/30 09:10:08 hannken Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.40.6.1 2017/10/30 09:29:04 snj Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.135 2015/07/11 11:04:48 mlelstv  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.40 2017/03/30 09:10:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.40.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -478,7 +478,7 @@ notfound:
 		}
 		results->ulr_endoff = roundup(enduseful, dirblksiz);
 #if 0 /* commented out by dbj. none of the on disk fields changed */
-		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		dp->i_state |= IN_CHANGE | IN_UPDATE;
 #endif
 		/*
 		 * We return with the directory locked, so that
@@ -516,7 +516,7 @@ found:
 		dp->i_size =
 		    results->ulr_offset + LFS_DIRSIZ(fs, ep);
 		DIP_ASSIGN(dp, size, dp->i_size);
-		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		dp->i_state |= IN_CHANGE | IN_UPDATE;
 	}
 	brelse(bp, 0);
 
@@ -795,7 +795,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		}
 		dp->i_size = ulr->ulr_offset + dirblksiz;
 		DIP_ASSIGN(dp, size, dp->i_size);
-		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		dp->i_state |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(dvp, dp->i_size);
 		lfs_blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
 		ep = (LFS_DIRHEADER *)((char *)bp->b_data + lfs_blkoff);
@@ -840,7 +840,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 #endif
 		dp->i_size = ulr->ulr_offset + ulr->ulr_count;
 		DIP_ASSIGN(dp, size, dp->i_size);
-		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		dp->i_state |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
 	 * Get the block containing the space for the new directory entry.
@@ -931,7 +931,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		    ulr->ulr_offset & ~(dirblksiz - 1));
 #endif
 	error = VOP_BWRITE(bp->b_vp, bp);
-	dp->i_flag |= IN_CHANGE | IN_UPDATE;
+	dp->i_state |= IN_CHANGE | IN_UPDATE;
 	/*
 	 * If all went well, and the directory can be shortened, proceed
 	 * with the truncation. Note that we have to unlock the inode for
@@ -1047,7 +1047,7 @@ out:
 	if (ip) {
 		ip->i_nlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
-		ip->i_flag |= IN_CHANGE;
+		ip->i_state |= IN_CHANGE;
 	}
 	/*
 	 * XXX did it ever occur to anyone that it might be a good
@@ -1057,7 +1057,7 @@ out:
 	 * definitely do not take this into account.
 	 */
 	error = VOP_BWRITE(bp->b_vp, bp);
-	dp->i_flag |= IN_CHANGE | IN_UPDATE;
+	dp->i_state |= IN_CHANGE | IN_UPDATE;
 	/*
 	 * If the last named reference to a snapshot goes away,
 	 * drop its snapshot reference so that it will be reclaimed
@@ -1103,9 +1103,9 @@ ulfs_dirrewrite(struct inode *dp, off_t offset,
 	lfs_dir_settype(fs, ep, newtype);
 	oip->i_nlink--;
 	DIP_ASSIGN(oip, nlink, oip->i_nlink);
-	oip->i_flag |= IN_CHANGE;
+	oip->i_state |= IN_CHANGE;
 	error = VOP_BWRITE(bp->b_vp, bp);
-	dp->i_flag |= iflags;
+	dp->i_state |= iflags;
 	/*
 	 * If the last named reference to a snapshot goes away,
 	 * drop its snapshot reference so that it will be reclaimed

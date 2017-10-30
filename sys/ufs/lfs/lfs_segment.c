@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.269 2017/04/06 03:21:01 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.269.6.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,11 +60,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.269 2017/04/06 03:21:01 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.269.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
-	if (VTOI(vp)->i_flag & IN_CLEANING)				\
+	if (VTOI(vp)->i_state & IN_CLEANING)				\
 		DLOG((DLOG_WVNODE, "not writing ino %d because %s (op %d)\n", \
 		     VTOI(vp)->i_number, (str), op));			\
 } while(0)
@@ -145,7 +145,7 @@ int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
 static void lfs_shellsort(struct lfs *, struct buf **, union lfs_blocks *,
 			  int, int);
 
-int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
+kcondvar_t	lfs_allclean_wakeup;	/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;		/* whether to flush indir on non-ckp */
 int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
 int	lfs_dirvcount = 0;		/* # active dirops */
@@ -208,7 +208,7 @@ lfs_vflush(struct vnode *vp)
 	KASSERT(mutex_owned(&lfs_lock) == false);
 	KASSERT(mutex_owned(&bufcache_lock) == false);
 	ASSERT_NO_SEGLOCK(fs);
-	if (ip->i_flag & IN_CLEANING) {
+	if (ip->i_state & IN_CLEANING) {
 		ivndebug(vp,"vflush/in_cleaning");
 		mutex_enter(&lfs_lock);
 		LFS_CLR_UINO(ip, IN_CLEANING);
@@ -333,7 +333,7 @@ lfs_vflush(struct vnode *vp)
 		mutex_exit(&bufcache_lock);
 		LFS_CLR_UINO(ip, IN_CLEANING);
 		LFS_CLR_UINO(ip, IN_MODIFIED | IN_ACCESSED);
-		ip->i_flag &= ~IN_ALLMOD;
+		ip->i_state &= ~IN_ALLMOD;
 		DLOG((DLOG_VNODE, "lfs_vflush: done not flushing ino %d\n",
 		      ip->i_number));
 		lfs_segunlock(fs);
@@ -367,13 +367,13 @@ lfs_vflush(struct vnode *vp)
 	if (VPISEMPTY(vp)) {
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_EMPTY);
 		++flushed;
-	} else if ((ip->i_flag & IN_CLEANING) &&
+	} else if ((ip->i_state & IN_CLEANING) &&
 		  (fs->lfs_sp->seg_flags & SEGM_CLEAN)) {
 		ivndebug(vp,"vflush/clean");
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_CLEAN);
 		++flushed;
 	} else if (lfs_dostats) {
-		if (!VPISEMPTY(vp) || (VTOI(vp)->i_flag & IN_ALLMOD))
+		if (!VPISEMPTY(vp) || (VTOI(vp)->i_state & IN_ALLMOD))
 			++lfs_stats.vflush_invoked;
 		ivndebug(vp,"vflush");
 	}
@@ -502,7 +502,7 @@ lfs_writevnodes_selector(void *cl, struct vnode *vp)
 		return false;;
 	}
 	if (op == VN_CLEAN && ip->i_number != LFS_IFILE_INUM &&
-	    vp != c->fs->lfs_flushvp && !(ip->i_flag & IN_CLEANING)) {
+	    vp != c->fs->lfs_flushvp && !(ip->i_state & IN_CLEANING)) {
 		vndebug(vp,"cleaning");
 		return false;
 	}
@@ -543,7 +543,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		/*
 		 * Write the inode/file if dirty and it's not the IFILE.
 		 */
-		if (((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp)) &&
+		if (((ip->i_state & IN_ALLMOD) || !VPISEMPTY(vp)) &&
 		    ip->i_number != LFS_IFILE_INUM) {
 			error = lfs_writefile(fs, sp, vp);
 			if (error) {
@@ -560,7 +560,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 					lfs_writeseg(fs, sp);
 					if (!VPISEMPTY(vp) &&
 					    !WRITEINPROG(vp) &&
-					    !(ip->i_flag & IN_ALLMOD)) {
+					    !(ip->i_state & IN_ALLMOD)) {
 						mutex_enter(&lfs_lock);
 						LFS_SET_UINO(ip, IN_MODIFIED);
 						mutex_exit(&lfs_lock);
@@ -574,7 +574,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			if (!VPISEMPTY(vp)) {
 				if (WRITEINPROG(vp)) {
 					ivndebug(vp,"writevnodes/write2");
-				} else if (!(ip->i_flag & IN_ALLMOD)) {
+				} else if (!(ip->i_state & IN_ALLMOD)) {
 					mutex_enter(&lfs_lock);
 					LFS_SET_UINO(ip, IN_MODIFIED);
 					mutex_exit(&lfs_lock);
@@ -661,7 +661,11 @@ lfs_segwrite(struct mount *mp, int flags)
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
-				/* In case writevnodes errored out */
+				/*
+				 * In case writevnodes errored out
+				 * XXX why are we always doing this and not
+				 * just on error?
+				 */
 				lfs_flush_dirops(fs);
 				ssp = (SEGSUM *)(sp->segsum);
 				lfs_ss_setflags(fs, ssp,
@@ -753,7 +757,7 @@ lfs_segwrite(struct mount *mp, int flags)
 				lfs_writefile(fs, sp, vp);
 			}
 
-			if (ip->i_flag & IN_ALLMOD)
+			if (ip->i_state & IN_ALLMOD)
 				++did_ckp;
 #if 0
 			redo = (do_ckp ? lfs_writeinode(fs, sp, ip) : 0);
@@ -1041,7 +1045,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	SEGSUM *ssp;
 
 	ASSERT_SEGLOCK(fs);
-	if (!(ip->i_flag & IN_ALLMOD) && !(vp->v_uflag & VU_DIROP))
+	if (!(ip->i_state & IN_ALLMOD) && !(vp->v_uflag & VU_DIROP))
 		return (0);
 
 	/* Can't write ifile when writer is not set */
@@ -1160,7 +1164,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 */
 	if (vp->v_uflag & VU_DIROP) {
 		if (!(sp->seg_flags & SEGM_CLEAN))
-			ip->i_flag |= IN_CDIROP;
+			ip->i_state |= IN_CDIROP;
 		else {
 			DLOG((DLOG_DIROP, "lfs_writeinode: not clearing dirop for cleaned ino %d\n", (int)ip->i_number));
 		}
@@ -1249,7 +1253,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	}
 #endif /* DIAGNOSTIC */
 
-	if (ip->i_flag & IN_CLEANING)
+	if (ip->i_state & IN_CLEANING)
 		LFS_CLR_UINO(ip, IN_CLEANING);
 	else {
 		/* XXX IN_ALLMOD */
@@ -1381,7 +1385,8 @@ loop:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd);
 	     bp && LIST_NEXT(bp, b_vnbufs) != NULL;
 	     bp = LIST_NEXT(bp, b_vnbufs))
-		/* nothing */;
+		continue;
+
 	for (; bp && bp != BEG_OF_LIST; bp = nbp) {
 		nbp = BACK_BUF(bp);
 #else /* LFS_NO_BACKBUF_HACK */

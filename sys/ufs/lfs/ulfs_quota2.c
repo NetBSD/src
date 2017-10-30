@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.30 2017/03/30 09:10:08 hannken Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.30.6.1 2017/10/30 09:29:04 snj Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.30 2017/03/30 09:10:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.30.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -322,7 +322,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 		KASSERT((ip->i_size % ump->umq2_bsize) == 0);
 		ip->i_size += ump->umq2_bsize;
 		DIP_ASSIGN(ip, size, ip->i_size);
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		ip->i_state |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(vp, ip->i_size);
 		lfsquota2_addfreeq2e(q2h, bp->b_data, size, ump->umq2_bsize,
 		    needswap);

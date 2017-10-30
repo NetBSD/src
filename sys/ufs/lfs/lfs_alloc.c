@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.135 2017/03/13 20:15:50 maya Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.135.6.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.135 2017/03/13 20:15:50 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.135.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -506,11 +506,11 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	/*
 	 * If the inode was in a dirop, it isn't now.
 	 *
-	 * XXX: why are (v_uflag & VU_DIROP) and (ip->i_flag & IN_ADIROP)
+	 * XXX: why are (v_uflag & VU_DIROP) and (ip->i_state & IN_ADIROP)
 	 * not updated together in one function? (and why do both exist,
 	 * anyway?)
 	 */
-	lfs_unmark_vnode(vp);
+	UNMARK_VNODE(vp);
 
 	mutex_enter(&lfs_lock);
 	if (vp->v_uflag & VU_DIROP) {
@@ -551,7 +551,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(&lfs_lock);
 
 	/* Turn off all inode modification flags */
-	ip->i_flag &= ~IN_ALLMOD;
+	ip->i_state &= ~IN_ALLMOD;
 
 	/* Mark it deleted */
 	ip->i_lfs_iflags |= LFSI_DELETED;

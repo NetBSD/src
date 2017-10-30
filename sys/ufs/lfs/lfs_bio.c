@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.139 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.139.4.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.139 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.139.4.1 2017/10/30 09:29:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 	KASSERT(locked_queue_rcount >= 0);
 	KASSERT(locked_queue_rbytes >= 0);
 
-	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
+	cantwait = (VTOI(vp)->i_state & IN_ADIROP) || fs->lfs_unlockvp == vp;
 	mutex_enter(&lfs_lock);
 	while (!cantwait && n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
@@ -214,7 +214,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 	ASSERT_MAYBE_SEGLOCK(fs);
 	slept = 0;
 	mutex_enter(&lfs_lock);
-	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
+	cantwait = (VTOI(vp)->i_state & IN_ADIROP) || fs->lfs_unlockvp == vp;
 	while (!cantwait && fsb > 0 &&
 	       !lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail)) {
 		mutex_exit(&lfs_lock);
@@ -589,7 +589,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	if (ip->i_number == LFS_IFILE_INUM)
 		return 0;
 	/* If we're being called from inside a dirop, don't sleep */
-	if (ip->i_flag & IN_ADIROP)
+	if (ip->i_state & IN_ADIROP)
 		return 0;
 
 	fs = ip->i_lfs;

@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.68 2015/09/21 01:24:23 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.68.8.1 2017/10/30 09:29:04 snj Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -436,7 +436,7 @@ inocleanup(void)
 void
 inodirty(struct inode *ip)
 {
-	ip->i_flag |= IN_MODIFIED;
+	ip->i_state |= IN_MODIFIED;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.359 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.359.4.1 2017/10/30 09:29:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.359 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.359.4.1 2017/10/30 09:29:04 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -860,6 +860,7 @@ lfs_checkmagic(struct lfs *fs)
 int
 lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
+	static bool lfs_mounted_once = false;
 	struct lfs *primarysb, *altsb, *thesb;
 	struct buf *primarybuf, *altbuf;
 	struct lfs *fs;
@@ -1091,6 +1092,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	cv_init(&fs->lfs_sleeperscv, "lfs_slp");
 	cv_init(&fs->lfs_diropscv, "lfs_dirop");
 	cv_init(&fs->lfs_stopcv, "lfsstop");
+	cv_init(&fs->lfs_nextsegsleep, "segment");
+
+	/* Initialize values for all LFS mounts */
+	if (!lfs_mounted_once) {
+		cv_init(&lfs_allclean_wakeup, "segment");
+		lfs_mounted_once = true;
+	}
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -1409,6 +1417,8 @@ lfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&fs->lfs_sleeperscv);
 	cv_destroy(&fs->lfs_diropscv);
 	cv_destroy(&fs->lfs_stopcv);
+	cv_destroy(&fs->lfs_nextsegsleep);
+
 	rw_destroy(&fs->lfs_fraglock);
 	rw_destroy(&fs->lfs_iflock);
 

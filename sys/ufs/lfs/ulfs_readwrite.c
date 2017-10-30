@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.23 2017/03/30 09:10:08 hannken Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.23.6.1 2017/10/30 09:29:04 snj Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.120 2015/04/12 22:48:38 riastradh Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.23 2017/03/30 09:10:08 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.23.6.1 2017/10/30 09:29:04 snj Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -228,7 +228,7 @@ ulfs_post_read_update(struct vnode *vp, int ioflag, int oerror)
 	int error = oerror;
 
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
-		ip->i_flag |= IN_ACCESS;
+		ip->i_state |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC) {
 			error = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
 		}
@@ -580,9 +580,9 @@ ulfs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
 	int error = oerror;
 
 	/* Trigger ctime and mtime updates, and atime if MNT_RELATIME.  */
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	ip->i_state |= IN_CHANGE | IN_UPDATE;
 	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		ip->i_flag |= IN_ACCESS;
+		ip->i_state |= IN_ACCESS;
 
 	/*
 	 * If we successfully wrote any data and we are not the superuser,

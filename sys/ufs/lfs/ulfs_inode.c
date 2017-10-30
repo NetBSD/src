@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.19 2017/05/26 14:34:20 riastradh Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.19.2.1 2017/10/30 09:29:04 snj Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.19 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.19.2.1 2017/10/30 09:29:04 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -106,13 +106,13 @@ ulfs_inactive(void *v)
 		ip->i_mode = 0;
 		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		ip->i_state |= IN_CHANGE | IN_UPDATE;
 		/*
 		 * Defer final inode free and update to ulfs_reclaim().
 		 */
 	}
 
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+	if (ip->i_state & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		lfs_update(vp, NULL, NULL, 0);
 	}
 
