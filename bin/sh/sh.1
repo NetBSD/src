@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.171 2017/10/29 00:20:42 kre Exp $
+.\"	$NetBSD: sh.1,v 1.172 2017/10/30 15:37:41 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -640,7 +640,7 @@ is processed to form an 8 bit character value.
 If only one or two digits are present, the following
 character must be something other than an octal digit.
 It is safest to always use all 3 digits, with leading
-zeroes if needed.
+zeros if needed.
 If all three digits are present, the first must be one of
 .So 0 Sc Ns \&.. Ns So 3 Sc .
 .Pp
@@ -679,7 +679,7 @@ or
 .Sq \eU .
 The former is followed by from 1 to 4 hex digits, the latter by
 from 1 to 8 hex digits.
-Leading zeroes can be used to pad the sequences to the maximum
+Leading zeros can be used to pad the sequences to the maximum
 permitted length, to avoid any possible ambiguity problem with
 the following character, and because there are some shells that
 insist on exactly 4 (or 8) hex digits.
@@ -733,7 +733,7 @@ an error is generated.
 .Pp
 If any of the preceding escape sequences generate the value
 .Sq \e0
-(a nul character) that character, and all that follow in the
+(a NUL character) that character, and all that follow in the
 same $'...' string, are omitted from the resulting word.
 .Pp
 After the $'...' string has had any included escape sequences
@@ -2152,7 +2152,7 @@ Later attempts to export the variable will be refused.
 Note this does not prevent explicitly exporting a variable
 to a single command, script or function by preceding that
 command invocation by a variable assignment to that variable,
-provided the variable is not also readonly.
+provided the variable is not also read-only.
 That is
 .Dl	export -x FOO ; # FOO will now not be exported by default
 .Dl	FOO=some_value my_command
@@ -2182,9 +2182,9 @@ been marked as unavailable for export,
 in which cases it exits with status 1.
 .Pp
 Note that there is no restriction upon exporting,
-or un-exporting, readonly variables.
+or un-exporting, read-only variables.
 The no-export flag can be reset by unsetting the variable
-and creating it again \(en provided it is not also readonly.
+and creating it again \(en provided it is not also read-only.
 .It fc Oo Fl e Ar editor Oc Oo Ar first Oo Ar last Oc Oc
 .It fc Fl l Oo Fl nr Oc Oo Ar first Oo Ar last Oc Oc
 .It fc Fl s Oo Ar old=new Oc Oo Ar first Oc
@@ -2851,7 +2851,7 @@ Each line contains two accumulated time values, expressed
 in minutes and seconds (including fractions of a second.)
 The first value gives the user time consumed, the second the system time.
 .Pp
-The first output line gives the cpu and system times consumed by the
+The first output line gives the CPU and system times consumed by the
 shell itself.
 The second line gives the accumulated times for children of this
 shell (and their descendants) which have exited, and then been
@@ -3524,7 +3524,7 @@ and
 .Fl V
 options of the
 .Ic set
-builtin command, described in
+built-in command, described in
 .Sx Built-ins
 above, which are documented further above in
 .Sx Argument List Processing . )
