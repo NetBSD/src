@@ -1,4 +1,4 @@
-/*	$NetBSD: custom_apropos_tokenizer.c,v 1.1 2017/06/18 16:24:10 abhinav Exp $	*/
+/*	$NetBSD: custom_apropos_tokenizer.c,v 1.2 2017/10/31 10:14:27 abhinav Exp $	*/
 /*
 ** 2006 September 30
 **
@@ -716,7 +716,10 @@ aproposPorterNext(
 					return SQLITE_NOMEM;
 				c->zToken = pNew;
 			}
-			int stemStatus = do_stem(&z[iStartOffset], n, c->zToken, (size_t *) pnBytes);
+			
+			size_t temp; 
+			int stemStatus = do_stem(&z[iStartOffset], n, c->zToken, &temp);
+			*pnBytes = temp;
 			if (stemStatus != SQLITE_OK)
 				return stemStatus;
 
