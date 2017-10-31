@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.15 2017/10/31 10:35:58 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.16 2017/10/31 11:37:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.15 2017/10/31 10:35:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.16 2017/10/31 11:37:05 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -368,10 +368,12 @@ fpudna(struct trapframe *frame)
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
 
-	if (i386_use_fxsave) {
-		if (x86_xsave_features != 0) {
-			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
-		} else {
+	switch (x86_fpu_save) {
+		case FPU_SAVE_FSAVE:
+			frstor(&pcb->pcb_savefpu);
+			break;
+
+		case FPU_SAVE_FXSAVE:
 			/*
 			 * AMD FPU's do not restore FIP, FDP, and FOP on
 			 * fxrstor, leaking other process's execution history.
@@ -384,11 +386,13 @@ fpudna(struct trapframe *frame)
 			if (fngetsw() & 0x80)
 				fnclex();
 			fldummy();
-
 			fxrstor(&pcb->pcb_savefpu);
-		}
-	} else {
-		frstor(&pcb->pcb_savefpu);
+			break;
+
+		case FPU_SAVE_XSAVE:
+		case FPU_SAVE_XSAVEOPT:
+			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
+			break;
 	}
 
 	KASSERT(ci == curcpu());
@@ -416,13 +420,20 @@ fpusave_cpu(bool save)
 
 	if (save) {
 		clts();
-		if (i386_use_fxsave) {
-			if (x86_xsave_features != 0)
-				xsave(&pcb->pcb_savefpu, x86_xsave_features);
-			else
+
+		switch (x86_fpu_save) {
+			case FPU_SAVE_FSAVE:
+				fnsave(&pcb->pcb_savefpu);
+				break;
+
+			case FPU_SAVE_FXSAVE:
 				fxsave(&pcb->pcb_savefpu);
-		} else {
-			fnsave(&pcb->pcb_savefpu);
+				break;
+
+			case FPU_SAVE_XSAVE:
+			case FPU_SAVE_XSAVEOPT:
+				xsave(&pcb->pcb_savefpu, x86_xsave_features);
+				break;
 		}
 	}
 
