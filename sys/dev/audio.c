@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.420 2017/10/31 21:13:24 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.421 2017/10/31 21:18:02 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.420 2017/10/31 21:13:24 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.421 2017/10/31 21:18:02 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2689,11 +2689,9 @@ audio_setblksize(struct audio_softc *sc, struct virtual_channel *vc,
 		mixcb->blksize = audio_calc_blksize(sc, parm);
 		cb->blksize = audio_calc_blksize(sc, &cb->s.param);
 	} else {
-		if (SPECIFIED(blksize))
+		cb->blksize = audio_calc_blksize(sc, &stream->param);
+		if (SPECIFIED(blksize) && blksize > cb->blksize)
 			cb->blksize = blksize;
-		else {
-			cb->blksize = audio_calc_blksize(sc, &stream->param);
-		}
 	}
 }
 
