@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2153 2017/10/25 06:32:59 kre Exp $
+#	$NetBSD: mi,v 1.2154 2017/10/31 08:10:11 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11109,7 +11109,7 @@
 ./usr/share/man/cat9/powerhook_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/powerhook_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/powerof2.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ppi.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ppi.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/ppsratecheck.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/preempt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
@@ -26195,7 +26195,7 @@
 ./usr/share/man/man9/powerhook_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/powerhook_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/powerof2.9			comp-sys-man		.man
-./usr/share/man/man9/ppi.9			comp-sys-man		.man
+./usr/share/man/man9/ppi.9			comp-obsolete		obsolete
 ./usr/share/man/man9/ppsratecheck.9		comp-sys-man		.man
 ./usr/share/man/man9/preempt.9			comp-sys-man		.man
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
