@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.76 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: pf.c,v 1.77 2017/10/31 15:00:03 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.76 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.77 2017/10/31 15:00:03 christos Exp $");
 
 #include "pflog.h"
 
@@ -1708,7 +1708,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	m->m_pkthdr.pf.tag = rtag;
 
 	if (r != NULL && r->rtableid >= 0)
-		m->m_pkthdr.pf.rtableid = m->m_pkthdr.pf.rtableid;
+		m->m_pkthdr.pf.rtableid = r->rtableid;
 #endif /* !__NetBSD__ */
 
 #ifdef ALTQ
