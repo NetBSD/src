@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.60 2017/10/09 17:49:28 maya Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.61 2017/10/31 11:37:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.60 2017/10/09 17:49:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.61 2017/10/31 11:37:05 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -64,7 +64,7 @@ static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] =
 int cpu_vendor;
 char cpu_brand_string[49];
 
-int x86_fpu_save __read_mostly = FPU_SAVE_FSAVE;
+int x86_fpu_save __read_mostly;
 unsigned int x86_fpu_save_size __read_mostly = 512;
 uint64_t x86_xsave_features __read_mostly = 0;
 
@@ -723,6 +723,8 @@ cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
 
+	x86_fpu_save = FPU_SAVE_FSAVE;
+
 #ifdef i386 /* amd64 always has fxsave, sse and sse2 */
 	/* If we have FXSAVE/FXRESTOR, use them. */
 	if ((ci->ci_feat_val[0] & CPUID_FXSR) == 0) {
@@ -750,7 +752,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_FXSAVE;
 
-	/* See if xsave (for AVX is supported) */
+	/* See if xsave (for AVX) is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
 
@@ -768,6 +770,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 #ifdef XEN
 	/* Don't use xsave, force fxsave with x86_xsave_features = 0. */
+	x86_fpu_save = FPU_SAVE_FXSAVE;
 #else
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
 #endif
