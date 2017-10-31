@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.22 2017/04/19 21:48:58 jdolecek Exp $
+$NetBSD: storage,v 1.23 2017/10/31 19:03:32 jdolecek Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -94,7 +94,8 @@ best option at this point is:
 disk early) has been examined by several people who know the code base
 and judged difficult. Also, some other problems have come to light
 more recently; e.g. PR 50725, and 45676. Still, it might be the best
-way forward.
+way forward. Some performance and stability issues were resolved
+in netbsd-8, and more work is planned.
 
 + There is another journaling FFS; the Harvard one done by Margo
 Seltzer's group some years back. We have a copy of this, but as it was
@@ -121,6 +122,13 @@ forward. Given the general manpower shortage, it may be that the best
 way is whatever looks best to someone who wants to work on the
 problem.
 
+ - There is no clear timeframe or release target; but given that WAPBL
+   has been disabled by default for new installs in -7 this problem
+   can reasonably be said to have become critical.
+ - jdolecek fixed some WAPBL stability issues, that work is included
+   in netbsd-8, could be possibly enough for making it default for new
+   installs again; there is kern/47030 which seems to be triggered by WAPBL
+   however
  - There has been some interest in the Harvard journaling FFS but no
    significant progress. Nobody is known to be working on or particularly
    interested in porting softupdates-with-journaling. And, while
@@ -129,13 +137,8 @@ problem.
    realistic prospect of significant progress on that in the
    foreseeable future, and nobody else is known to have or be working
    on even that much.
- - There is no clear timeframe or release target; but given that WAPBL
-   has been disabled by default for new installs in -7 this problem
-   can reasonably be said to have become critical.
- - jdolecek is working on fixing WAPBL, goal is to get WAPBL fixed
-   enough to be safe to re-enable as default for -8
- - Contact joerg or martin regarding WAPBL; contact dholland regarding
-   the Harvard journaling FFS.
+ - Contact joerg, martin, or jdolecek regarding WAPBL; contact dholland
+   regarding the Harvard journaling FFS.
 
 
 4. Getting zfs working for real
