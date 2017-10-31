@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.418 2017/10/28 03:34:26 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.419 2017/10/31 21:09:26 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.418 2017/10/28 03:34:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.419 2017/10/31 21:09:26 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2004,9 +2004,21 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 		blksize = rp->s.bufsize / AUMINNOBLK;
 	ROUNDSIZE(blksize);
 	DPRINTF(("audio_init_ringbuffer: MI blksize=%d\n", blksize));
-	if (sc->hw_if->round_blocksize)
+
+	struct virtual_channel *hwvc = sc->sc_hwvc;
+	if (sc->hw_if->round_blocksize &&
+	    (rp == &hwvc->sc_mpr || rp == &hwvc->sc_mrr)) {
 		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize,
-						     mode, &rp->s.param);
+		    mode, &rp->s.param);
+	} else {
+		int tmpblksize = 1;
+		/* round blocksize to a power of 2 */
+		while (tmpblksize < blksize)
+			tmpblksize <<= 1;
+
+		blksize = tmpblksize;
+	}
+
 	if (blksize <= 0)
 		panic("audio_init_ringbuffer: blksize=%d", blksize);
 	nblks = rp->s.bufsize / blksize;
