@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.16 2017/10/31 11:37:05 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.17 2017/10/31 12:02:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.16 2017/10/31 11:37:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17 2017/10/31 12:02:20 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -493,21 +493,24 @@ void
 fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save = process_fpframe(l);
+	struct pcb *pcb = lwp_getpcb(l);
 
 	if (i386_use_fxsave)
 		fpu_save->sv_xmm.fx_cw = x87_cw;
 	else
 		fpu_save->sv_87.s87_cw = x87_cw;
-	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
+	pcb->pcb_fpu_dflt_cw = x87_cw;
 }
 
 void
 fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save;
+	struct pcb *pcb;
 
 	fpusave_lwp(l, false);
 	fpu_save = process_fpframe(l);
+	pcb = lwp_getpcb(l);
 
 	if (i386_use_fxsave) {
 		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
@@ -519,13 +522,14 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 		fpu_save->sv_87.s87_tw = 0xffff;
 		fpu_save->sv_87.s87_cw = x87_cw;
 	}
-	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
+	pcb->pcb_fpu_dflt_cw = x87_cw;
 }
 
 void
 fpu_save_area_reset(struct lwp *l)
 {
 	union savefpu *fpu_save = process_fpframe(l);
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/*
 	 * For signal handlers the register values don't matter. Just reset
@@ -535,10 +539,10 @@ fpu_save_area_reset(struct lwp *l)
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 		fpu_save->sv_xmm.fx_tw = 0;
-		fpu_save->sv_xmm.fx_cw = fpu_save->sv_os.fxo_dflt_cw;
+		fpu_save->sv_xmm.fx_cw = pcb->pcb_fpu_dflt_cw;
 	} else {
 		fpu_save->sv_87.s87_tw = 0xffff;
-		fpu_save->sv_87.s87_cw = fpu_save->sv_os.fxo_dflt_cw;
+		fpu_save->sv_87.s87_cw = pcb->pcb_fpu_dflt_cw;
 	}
 }
 

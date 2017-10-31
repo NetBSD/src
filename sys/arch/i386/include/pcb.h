@@ -1,6 +1,6 @@
-/*	$NetBSD: pcb.h,v 1.56 2017/08/12 12:48:47 maxv Exp $	*/
+/*	$NetBSD: pcb.h,v 1.57 2017/10/31 12:02:20 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -91,8 +91,9 @@ struct pcb {
 	void 	*pcb_onfault;		/* copyin/out fault recovery */
 	char	*pcb_iomap;		/* I/O permission bitmap */
 	struct dbreg	*pcb_dbregs;	/* CPU Debug Registers */
+	uint16_t pcb_fpu_dflt_cw;
 
-	int	not_used[17];
+	int	not_used[16];
 
 	/* floating point state */
 	struct cpu_info	*pcb_fpcpu;	/* cpu holding our fp state. */
