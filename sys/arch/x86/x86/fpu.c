@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.19 2017/10/31 18:13:37 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.20 2017/10/31 18:23:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2017/10/31 18:13:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2017/10/31 18:23:29 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -645,7 +645,7 @@ process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
 	fpu_save = process_fpframe(l);
 
 	if (i386_use_fxsave) {
-		memset(fpregs, 0, 12);
+		memset(fpregs, 0, sizeof(*fpregs));
 		process_xmm_to_s87(&fpu_save->sv_xmm, fpregs);
 	} else {
 		memcpy(fpregs, &fpu_save->sv_87, sizeof(fpu_save->sv_87));
