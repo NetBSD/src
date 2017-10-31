@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.11 2017/08/10 12:46:31 maxv Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.12 2017/10/31 10:39:13 maxv Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -106,6 +106,7 @@ struct fxsave {
 	uint16_t fx_cw;		/* FPU Control Word */
 	uint16_t fx_sw;		/* FPU Status Word */
 	uint8_t fx_tw;		/* FPU Tag Word (abridged) */
+	uint8_t fx_zero;	/* zero */
 	uint16_t fx_opcode;	/* FPU Opcode */
 	union fp_addr fx_ip;	/* FPU Instruction Pointer */
 	union fp_addr fx_dp;	/* FPU Data pointer */
@@ -131,10 +132,11 @@ struct fxsave_os {
  * For XSAVE, a 64byte header follows the fxsave data.
  */
 struct xsave_header {
-	uint64_t xsh_fxsave[64];	/* to align in the union */
+	uint8_t xsh_fxsave[512];	/* to align in the union */
 	uint64_t xsh_xstate_bv;		/* bitmap of saved sub structures */
-	uint64_t xsh_rsrvd[2];		/* must be zero */
-	uint64_t xsh_reserved[5];	/* best if zero */
+	uint64_t xsh_xcomp_bv;		/* bitmap of compact sub structures */
+	uint8_t xsh_rsrvd[8];		/* must be zero */
+	uint8_t xsh_reserved[40];	/* best if zero */
 };
 __CTASSERT(sizeof(struct xsave_header) == 512 + 64);
 
