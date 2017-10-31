@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.15 2017/10/31 14:55:45 christos Exp $	*/
+/*	$NetBSD: sc.c,v 1.16 2017/10/31 15:10:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -406,6 +406,9 @@ scabort(struct scsi_softc *hs)
 
 	printf("sc%d: abort  phase=0x%x, ssts=0x%x, ints=0x%x\n",
 	    hs->sc_ctlr, hd->scsi_psns, hd->scsi_ssts, hd->scsi_ints);
+
+	if (hd->scsi_ints != 0)
+		hd->scsi_ints = hd->scsi_ints;
 
 	if (hd->scsi_psns == 0 || (hd->scsi_ssts & SSTS_INITIATOR) == 0)
 		/* no longer connected to scsi target */
