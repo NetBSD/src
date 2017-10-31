@@ -1,6 +1,6 @@
-/*	$NetBSD: pcb.h,v 1.26 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: pcb.h,v 1.27 2017/10/31 12:02:20 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -91,9 +91,10 @@ struct pcb {
 	uint64_t  pcb_fs;
 	uint64_t  pcb_gs;
 	struct dbreg *pcb_dbregs;
+	uint16_t pcb_fpu_dflt_cw;
 	int pcb_iopl;
 
-	uint32_t pcb_unused[9];		/* unused */
+	uint32_t pcb_unused[8];		/* unused */
 
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	union savefpu	pcb_savefpu __aligned(64); /* floating point state */
