@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.13 2017/10/31 12:02:20 maxv Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.14 2017/10/31 18:30:36 maxv Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -203,12 +203,6 @@ union savefpu {
  * and then again when it is truncated to 53 bits.
  *
  * However the C language explicitly allows the extra precision.
- *
- * The iBCS control word has underflow, overflow, zero divide, and invalid
- * operation exceptions unmasked.  But that causes an unexpected exception
- * in the test program 'paranoia' and makes denormals useless (DBL_MIN / 2
- * underflows).  It doesn't make a lot of sense to trap underflow without
- * trapping denormals.
  */
 #define	__INITIAL_NPXCW__	0x037f
 /* Modern NetBSD uses the default control word.. */
