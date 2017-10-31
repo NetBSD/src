@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl_base.c,v 1.7 2015/08/25 14:52:31 pooka Exp $ */
+/*	$NetBSD: init_sysctl_base.c,v 1.8 2017/10/31 12:37:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.7 2015/08/25 14:52:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.8 2017/10/31 12:37:23 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/proc.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/disklabel.h>
@@ -183,6 +184,19 @@ SYSCTL_SETUP(sysctl_kernbase_setup, "sysctl kern subtree base setup")
 		       CTL_KERN, KERN_RAWPARTITION, CTL_EOL);
 }
 
+static int
+sysctl_hw_machine_arch(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+#ifndef PROC_MACHINE_ARCH
+#define PROC_MACHINE_ARCH(P)	machine_arch
+#endif
+
+	node.sysctl_data = PROC_MACHINE_ARCH(l->l_proc);
+	node.sysctl_size = strlen(node.sysctl_data) + 1;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
 SYSCTL_SETUP(sysctl_hwbase_setup, "sysctl hw subtree base setup")
 {
 	u_int u;
@@ -202,10 +216,10 @@ SYSCTL_SETUP(sysctl_hwbase_setup, "sysctl hw subtree base setup")
 		       NULL, 0, machine, 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRING, "machine_arch",
 		       SYSCTL_DESCR("Machine CPU class"),
-		       NULL, 0, machine_arch, 0,
+		       sysctl_hw_machine_arch, 0, NULL, 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
