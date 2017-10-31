@@ -1,6 +1,6 @@
-/*	$NetBSD: fpu.c,v 1.14 2017/10/09 17:49:28 maya Exp $	*/
+/*	$NetBSD: fpu.c,v 1.15 2017/10/31 10:35:58 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
  * rights reserved.
  *
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
 
-/*-
+/*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 William Jolitz.
  *
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14 2017/10/09 17:49:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.15 2017/10/31 10:35:58 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -465,7 +465,7 @@ fpusave_lwp(struct lwp *l, bool save)
 			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
 			    cpu_name(oci));
 		}
-#else /* XEN */
+#else
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
 #endif
 		while (pcb->pcb_fpcpu == oci && ticks == hardclock_ticks) {
@@ -490,10 +490,6 @@ fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
 }
 
-/*
- * Exec needs to clear the fpu save area to avoid leaking info from the
- * old process to userspace.
- */
 void
 fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 {
@@ -503,7 +499,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	fpu_save = process_fpframe(l);
 
 	if (i386_use_fxsave) {
-		memset(&fpu_save->sv_xmm, 0, sizeof(fpu_save->sv_xmm));
+		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 		fpu_save->sv_xmm.fx_cw = x87_cw;
@@ -515,12 +511,15 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
 }
 
-/* For signal handlers the register values don't matter */
 void
 fpu_save_area_reset(struct lwp *l)
 {
 	union savefpu *fpu_save = process_fpframe(l);
 
+	/*
+	 * For signal handlers the register values don't matter. Just reset
+	 * a few fields.
+	 */
 	if (i386_use_fxsave) {
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
@@ -532,15 +531,15 @@ fpu_save_area_reset(struct lwp *l)
 	}
 }
 
-/* During fork the xsave data needs to be copied */
 void
 fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 {
 	ssize_t extra;
 
-	/* The pcb itself has been copied, but the xsave area
-	 * extends further. */
-
+	/*
+	 * The pcb itself has been copied, but the xsave area
+	 * extends further.
+	 */
 	extra = offsetof(struct pcb, pcb_savefpu) + x86_fpu_save_size -
 	    sizeof (struct pcb);
 
@@ -548,11 +547,6 @@ fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 		memcpy(pcb2 + 1, pcb1 + 1, extra);
 }
 
-
-/*
- * Write the FP registers.
- * Buffer has usually come from userspace so should not be trusted.
- */
 void
 process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 {
@@ -570,7 +564,6 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 	}
 }
 
-/* We need to use x87 format for 32bit ptrace */
 void
 process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 {
@@ -588,10 +581,6 @@ process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 	}
 }
 
-/*
- * Read fpu registers, the buffer is usually copied out to userspace.
- * Ensure we write to the entire structure.
- */
 void
 process_read_fpregs_xmm(struct lwp *l, struct fxsave *fpregs)
 {
@@ -603,7 +592,6 @@ process_read_fpregs_xmm(struct lwp *l, struct fxsave *fpregs)
 	if (i386_use_fxsave) {
 		memcpy(fpregs, &fpu_save->sv_xmm, sizeof(fpu_save->sv_xmm));
 	} else {
-		/* This usually gets copied to userspace */
 		memset(fpregs, 0, sizeof(*fpregs));
 		process_s87_to_xmm(&fpu_save->sv_87, fpregs);
 	}
