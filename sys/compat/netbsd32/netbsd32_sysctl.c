@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.37 2017/10/31 12:37:23 martin Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.38 2017/10/31 16:10:25 kre Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.37 2017/10/31 12:37:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.38 2017/10/31 16:10:25 kre Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -110,7 +110,7 @@ sysctl_hw_machine_arch32(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 #ifndef PROC_MACHINE_ARCH32
 	extern const char machine_arch32[];
-#define PROC_MACHINE_ARCH32(P)	machine_arch32
+#define PROC_MACHINE_ARCH32(P)	__UNCONST(machine_arch32)
 #endif
 
 	node.sysctl_data = PROC_MACHINE_ARCH32(l->l_proc);
