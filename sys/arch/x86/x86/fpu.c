@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.17 2017/10/31 12:02:20 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.18 2017/10/31 15:16:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17 2017/10/31 12:02:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.18 2017/10/31 15:16:10 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -574,6 +574,16 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 		memcpy(&fpu_save->sv_xmm, fpregs, sizeof(fpu_save->sv_xmm));
 		/* Invalid bits in the mxcsr_mask will cause faults */
 		fpu_save->sv_xmm.fx_mxcsr_mask &= __INITIAL_MXCSR_MASK__;
+
+		/*
+		 * Make sure the x87 and SSE bits are set in xstate_bv.
+		 * Otherwise xrstor will not restore them.
+		 */
+		if (x86_fpu_save == FPU_SAVE_XSAVE ||
+		    x86_fpu_save == FPU_SAVE_XSAVEOPT) {
+			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
+			    (XCR0_X87 | XCR0_SSE);
+		}
 	} else {
 		process_xmm_to_s87(fpregs, &fpu_save->sv_87);
 	}
@@ -589,6 +599,16 @@ process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 		fpusave_lwp(l, true);
 		fpu_save = process_fpframe(l);
 		process_s87_to_xmm(fpregs, &fpu_save->sv_xmm);
+
+		/*
+		 * Make sure the x87 and SSE bits are set in xstate_bv.
+		 * Otherwise xrstor will not restore them.
+		 */
+		if (x86_fpu_save == FPU_SAVE_XSAVE ||
+		    x86_fpu_save == FPU_SAVE_XSAVEOPT) {
+			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
+			    (XCR0_X87 | XCR0_SSE);
+		}
 	} else {
 		fpusave_lwp(l, false);
 		fpu_save = process_fpframe(l);
