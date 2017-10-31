@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2154 2017/10/31 08:10:11 jdolecek Exp $
+#	$NetBSD: mi,v 1.2155 2017/10/31 11:46:45 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -18571,7 +18571,7 @@
 ./usr/share/man/html9/powerhook_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/powerhook_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/powerof2.html		comp-sys-htmlman	html
-./usr/share/man/html9/ppi.html			comp-sys-htmlman	html
+./usr/share/man/html9/ppi.html			comp-obsolete		obsolete
 ./usr/share/man/html9/ppsratecheck.html		comp-sys-htmlman	html
 ./usr/share/man/html9/preempt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
