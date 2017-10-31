@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.419 2017/10/31 21:09:26 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.420 2017/10/31 21:13:24 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.419 2017/10/31 21:09:26 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.420 2017/10/31 21:13:24 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -278,6 +278,7 @@ int	mix_write(void *);
 int	mix_read(void *);
 int	audio_check_params(struct audio_params *);
 
+static void	audio_calc_latency(struct audio_softc *);
 static void	audio_setblksize(struct audio_softc *,
 				 struct virtual_channel *, int, int);
 int	audio_calc_blksize(struct audio_softc *, const audio_params_t *);
@@ -2650,6 +2651,18 @@ audio_clear_intr_unlocked(struct audio_softc *sc, struct virtual_channel *vc)
 	mutex_enter(sc->sc_intr_lock);
 	audio_clear(sc, vc);
 	mutex_exit(sc->sc_intr_lock);
+}
+
+static void
+audio_calc_latency(struct audio_softc *sc)
+{
+	const struct audio_params *ap = &sc->sc_vchan_params;
+
+	if (ap->sample_rate == 0 || ap->channels == 0 || ap->precision == 0)
+		return;
+
+	sc->sc_latency = sc->sc_hwvc->sc_mpr.blksize * 1000 * PREFILL_BLOCKS
+	    * NBBY / ap->sample_rate / ap->channels / ap->precision;
 }
 
 static void
@@ -6043,14 +6056,7 @@ audio_sysctl_latency(SYSCTLFN_ARGS)
 	    	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 	}
 
-	if (sc->sc_vchan_params.sample_rate > 0 &&
-	    sc->sc_vchan_params.channels > 0 &&
-	    sc->sc_vchan_params.precision > 0) {
-		    sc->sc_latency = sc->sc_hwvc->sc_mpr.blksize * 1000 * 
-		    PREFILL_BLOCKS / sc->sc_vchan_params.sample_rate /
-		    sc->sc_vchan_params.channels * NBBY /
-		    sc->sc_vchan_params.precision;
-	}
+	audio_calc_latency(sc);
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -6100,19 +6106,25 @@ vchan_autoconfig(struct audio_softc *sc)
 						sc->sc_vchan_params.precision,
 						sc->sc_vchan_params.channels,
 						sc->sc_vchan_params.sample_rate);
-					mutex_exit(sc->sc_lock);
 
-					return 0;
+					goto found;
 				}
 			}
 		}
 	}
 
-	aprint_error_dev(sc->sc_dev, "Virtual format auto config failed!\n"
-		     "Please check hardware capabilities\n");
+found:
+	if (error == 0) {
+		audio_calc_latency(sc);
+		aprint_normal_dev(sc->sc_dev, "Latency: %d milliseconds\n",
+		    sc->sc_latency);
+	} else {
+		aprint_error_dev(sc->sc_dev, "Virtual format auto config failed!\n");
+		aprint_error_dev(sc->sc_dev, "Please check hardware capabilities\n");
+	}
 	mutex_exit(sc->sc_lock);
 
-	return EINVAL;
+	return error;
 }
 
 static void
