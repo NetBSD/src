@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.12 2017/10/31 10:39:13 maxv Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.13 2017/10/31 12:02:20 maxv Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -120,15 +120,6 @@ struct fxsave {
 __CTASSERT_NOLINT(sizeof(struct fxsave) == 512);
 
 /*
- * The end of the fsave buffer can be used by the operating system
- */
-struct fxsave_os {
-	uint8_t fxo_fxsave[512 - 48];
-	/* 48 bytes available, NB copied to/from userspace */
-	uint16_t fxo_dflt_cw;	/* Control word for signal handlers */
-};
-
-/*
  * For XSAVE, a 64byte header follows the fxsave data.
  */
 struct xsave_header {
@@ -158,7 +149,6 @@ union savefpu {
 	struct save87		sv_87;
 	struct fxsave		sv_xmm;
 #ifdef _KERNEL
-	struct fxsave_os	sv_os;
 	struct xsave_header	sv_xsave_hdr;
 #endif
 };
