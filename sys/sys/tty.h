@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.93 2014/11/15 19:17:05 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.94 2017/10/31 10:45:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -202,6 +202,10 @@ struct tty {
 #define	TS_LNCH		0x04000		/* Next character is literal. */
 #define	TS_TYPEN	0x08000		/* Retyping suspended input (PENDIN). */
 #define	TS_LOCAL	(TS_BKSL | TS_CNTTB | TS_ERASE | TS_LNCH | TS_TYPEN)
+
+/* for special line disciplines, like dev/sun/sunkbd.c */
+#define	TS_KERN_ONLY	0x10000		/* Device is accessible by kernel
+					 * only, deny all userland access */
 
 /* Character type information. */
 #define	ORDINARY	0
