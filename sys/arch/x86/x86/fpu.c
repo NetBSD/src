@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.18 2017/10/31 15:16:10 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.19 2017/10/31 18:13:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.18 2017/10/31 15:16:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2017/10/31 18:13:37 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -572,8 +572,12 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 
 	if (i386_use_fxsave) {
 		memcpy(&fpu_save->sv_xmm, fpregs, sizeof(fpu_save->sv_xmm));
-		/* Invalid bits in the mxcsr_mask will cause faults */
+
+		/*
+		 * Invalid bits in mxcsr or mxcsr_mask will cause faults.
+		 */
 		fpu_save->sv_xmm.fx_mxcsr_mask &= __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_mxcsr &= fpu_save->sv_xmm.fx_mxcsr_mask;
 
 		/*
 		 * Make sure the x87 and SSE bits are set in xstate_bv.
