@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.29 2017/04/27 17:07:22 jdolecek Exp $ */
+/* $NetBSD: dkvar.h,v 1.30 2017/11/01 19:15:31 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_DKVAR_H_
+#define _DEV_DKVAR_H_
 
 #include <sys/rndsource.h>
 
@@ -108,3 +111,5 @@ void	dk_getdisklabel(struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_softc *, struct disklabel *);
 
 int	dk_lookup(struct pathbuf *, struct lwp *, struct vnode **);
+
+#endif /* ! _DEV_DKVAR_H_ */   
