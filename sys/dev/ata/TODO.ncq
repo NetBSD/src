@@ -17,8 +17,6 @@ done on a mpata branch?)
 
 queue is allocated regardless if there are any drives, fix? 
 
-change wd(4) to use dksubr
-
 dump to unopened disk fails (e.g. dump do wd1b when wd1a not mounted), due
 to the open path executing ata_get_params(), which eventually tsleeps()
 while waiting for the command to finish; specifically, if WDF_LOADED is not
