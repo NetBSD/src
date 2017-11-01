@@ -1,6 +1,6 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.8 2017/10/21 06:55:54 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.9 2017/11/01 09:47:53 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -34,9 +34,9 @@
 #include <machine/specialreg.h>
 
 	.text
+
 	.p2align 2, 0x90
-	.globl acpi_md_sleep_exit
-acpi_md_sleep_exit:
+NENTRY(acpi_md_sleep_exit)
 	lgdt	ACPI_SUSPEND_GDT(%r8)
 
 	/* Reload fixed descriptors for new GDT */
@@ -110,11 +110,10 @@ acpi_md_sleep_exit:
 	pushq	ACPI_SUSPEND_REG+(7*8)(%r8)
 	popfq
 	ret
+END(acpi_md_sleep_exit)
 
 	.p2align 2, 0x90
-	.type acpi_md_sleep_prepare, @function
-	.globl acpi_md_sleep_prepare
-acpi_md_sleep_prepare:
+NENTRY(acpi_md_sleep_prepare)
 	movq	CPUVAR(SELF),%r8
 	movq	%rbx,ACPI_SUSPEND_REG+(1*8)(%r8)
 	movq	%rbp,ACPI_SUSPEND_REG+(2*8)(%r8)
@@ -167,3 +166,4 @@ acpi_md_sleep_prepare:
 	/* acpi_md_sleep_enter only returns on failure. */
 	movl	$-1,%eax
 	ret
+END(acpi_md_sleep_prepare)
