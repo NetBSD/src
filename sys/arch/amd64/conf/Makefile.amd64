@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.59 2017/10/07 10:16:47 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.60 2017/11/01 09:31:24 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -77,7 +77,7 @@ KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript
 locore.o machdep.o: Makefile
 
 acpi_wakeup_low.o amd64func.o busfunc.o cpufunc.o cpu_in_cksum.o: assym.h
-linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
+linux_sigcode.o linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
 netbsd32_sigcode.o: assym.h
 
 ##
