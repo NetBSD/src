@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_jmicron.c,v 1.5 2014/03/25 16:19:13 christos Exp $	*/
+/*	$NetBSD: ata_raid_jmicron.c,v 1.6 2017/11/01 19:34:46 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.5 2014/03/25 16:19:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.6 2017/11/01 19:34:46 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -118,6 +118,7 @@ ata_raid_jmicron_print_info(struct jmicron_raid_conf *info)
 int
 ata_raid_read_config_jmicron(struct wd_softc *sc)
 {
+	struct dk_softc *dksc = &sc->sc_dksc;
 	struct atabus_softc *atabus;
 	struct jmicron_raid_conf *info;
 	struct vnode *vp;
@@ -131,10 +132,10 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 
 	info = malloc(sizeof(*info), M_DEVBUF, M_WAITOK|M_ZERO);
 
-	bmajor = devsw_name2blk(device_xname(sc->sc_dev), NULL, 0);
+	bmajor = devsw_name2blk(dksc->sc_xname, NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */
-	dev = MAKEDISKDEV(bmajor, device_unit(sc->sc_dev), RAW_PART);
+	dev = MAKEDISKDEV(bmajor, device_unit(dksc->sc_dev), RAW_PART);
 	error = bdevvp(dev, &vp);
 	if (error)
 		goto out;
@@ -151,14 +152,14 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 	vput(vp);
 	if (error) {
 		DPRINTF(("%s: error %d reading JMicron config block\n",
-		    device_xname(sc->sc_dev), error));
+		    dksc->sc_xname, error));
 		goto out;
 	}
 
 	/* Check for JMicron signature. */
 	if (strncmp(info->signature, JMICRON_MAGIC, 2)) {
 		DPRINTF(("%s: JMicron RAID signature check failed\n",
-		    device_xname(sc->sc_dev)));
+		    dksc->sc_xname));
 		error = ESRCH;
 		goto out;
 	}
@@ -169,7 +170,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 		checksum += *ptr++;
 	if (checksum) {
 		DPRINTF(("%s: JMicron checksum failed\n",
-		    device_xname(sc->sc_dev)));
+		    dksc->sc_xname));
 		error = ESRCH;
 		goto out;
 	}
@@ -223,7 +224,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 		break;
 	default:
 		DPRINTF(("%s: unknown JMicron RAID type 0x%02x\n",
-		    device_xname(sc->sc_dev), info->type));
+		    dksc->sc_xname, info->type));
 		error = EINVAL;
 		goto out;
 	}
@@ -243,11 +244,11 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 	if (info->name)
 		strlcpy(aai->aai_name, info->name, sizeof(aai->aai_name));
 
-	atabus = device_private(device_parent(sc->sc_dev));
+	atabus = device_private(device_parent(dksc->sc_dev));
 	drive = atabus->sc_chan->ch_channel;
 	if (drive >= aai->aai_ndisks) {
 		DPRINTF(("%s: drive number %d doesn't make sense within "
-		    "%d-disk array\n", device_xname(sc->sc_dev),
+		    "%d-disk array\n", dksc->sc_xname,
 		    drive, aai->aai_ndisks));
 		error = EINVAL;
 		goto out;
@@ -255,7 +256,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 
 	if (info->disks[drive] == info->disk_id) {
 		adi = &aai->aai_disks[drive];
-		adi->adi_dev = sc->sc_dev;
+		adi->adi_dev = dksc->sc_dev;
 		adi->adi_status = ADI_S_ONLINE | ADI_S_ASSIGNED;
 		adi->adi_sectors = aai->aai_capacity;
 		adi->adi_compsize = disk_size - aai->aai_reserved;
