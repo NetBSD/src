@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernhist.9,v 1.8 2017/10/30 15:55:53 wiz Exp $
+.\"	$NetBSD: kernhist.9,v 1.9 2017/11/01 23:00:05 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Matthew R. Green
 .\" All rights reserved.
@@ -70,7 +70,7 @@ format syntax with a maximum of 4 arguments, each of type
 must be present in the kernel configuration to enable these functions and
 macros.
 .Pp
-A kernel history is a fixed-size buffer,either statically or dynamically
+A kernel history is a fixed-size buffer, either statically or dynamically
 allocated, that is written and read on a circular basis.
 Each entry includes the time the entry was made, the CPU from which the entry
 was recorded, the
