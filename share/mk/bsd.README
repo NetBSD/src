@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.363 2017/10/08 15:03:50 christos Exp $
+#	$NetBSD: bsd.README,v 1.364 2017/11/01 15:24:42 khorben Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -374,7 +374,7 @@ MKRELRO		If "partial", set the non-PLT GOT to read-only. If "full"
 		also force immediate symbol binding.
 		Default: no
 	
-MKREPRO         If "yes", create reproducable builds. This enables
+MKREPRO         If "yes", create reproducible builds. This enables
 		different switches to make two builds from the same source tree
 		result in the same build results.
 		Default: no
@@ -1210,7 +1210,7 @@ LIBDIR		Target directory for libraries.
 
 MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
 		permissions in files inside its archives to those of
-		the file it was fed. This leads to non-reproduceable
+		the file it was fed. This leads to non-reproducible
 		builds. If MKARZERO is set to "yes" (default is the
 		same as MKREPRO, or "no" if MKREPRO is not defined),
 		then the "D" flag is passed to ar, causing the
