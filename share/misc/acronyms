@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.261 2017/11/01 15:11:31 riastradh Exp $
+$NetBSD: acronyms,v 1.262 2017/11/01 15:34:28 khorben Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -73,6 +73,8 @@ BNYA	burned now you are
 BOC	but of course
 BOFH	bastard operator from hell
 BOT	back on topic
+BPM	beam propagation method
+BPM	beats per minute
 BRB	[I'll] be right back
 BSD	booze, sex, drugs
 BTDT	been there, done that
