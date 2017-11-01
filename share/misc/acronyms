@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.260 2017/09/18 03:14:02 riastradh Exp $
+$NetBSD: acronyms,v 1.261 2017/11/01 15:11:31 riastradh Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -423,6 +423,7 @@ POV	point of view
 PPL	people
 PPL	pretty please
 PPP	petty pet peeve
+PPS	pulse per second (signal)
 PR	public relations
 PSA 	prostate-specific antigen
 PSA 	public service announcement
