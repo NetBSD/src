@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.27 2017/10/30 17:06:42 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.28 2017/11/01 09:17:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -258,19 +258,17 @@ END(copyin)
 
 NENTRY(copy_efault)
 	movq	$EFAULT,%rax
-
-/*
- * kcopy_fault is used by kcopy and copy_fault is used by copyin/out.
- *
- * they're distinguished for lazy pmap switching.  see trap().
- */
+	ret
+END(copy_efault)
 
 NENTRY(kcopy_fault)
 	ret
+END(kcopy_fault)
 
 NENTRY(copy_fault)
 	callq	smap_enable
 	ret
+END(copy_fault)
 
 ENTRY(copyoutstr)
 	DEFERRED_SWITCH_CHECK
@@ -362,6 +360,8 @@ END(copyinstr)
 
 ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
+	jmp	copystr_return
+END(copystr_efault)
 
 ENTRY(copystr_fault)
 	callq	smap_enable
@@ -371,8 +371,8 @@ copystr_return:
 	jz	8f
 	subq	%rdx,%r8
 	movq	%r8,(%r9)
-
 8:	ret
+END(copystr_fault)
 
 ENTRY(copystr)
 	xchgq	%rdi,%rsi
@@ -564,10 +564,13 @@ END(ucas_32)
 
 ENTRY(ucas_efault)
 	movq	$EFAULT,%rax
+	ret
+END(ucas_efault)
 
 NENTRY(ucas_fault)
 	callq	smap_enable
 	ret
+END(ucas_fault)
 
 /*
  * int	ucas_ptr(volatile void **uptr, void *old, void *new, void **ret);
