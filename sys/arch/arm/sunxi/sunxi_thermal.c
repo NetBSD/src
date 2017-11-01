@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.2 2017/11/01 01:47:00 pgoyette Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.3 2017/11/01 05:42:32 kre Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.2 2017/11/01 01:47:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.3 2017/11/01 05:42:32 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,7 +553,7 @@ sunxi_thermal_attach(device_t parent, device_t self, void *aux)
 		sc->data[i].units = ENVSYS_STEMP;
 		sc->data[i].state = ENVSYS_SINVALID;
 		strlcpy(sc->data[1].desc, sc->conf->sensors[i].desc,
-		    sizeof(sc->data[1].desc);
+		    sizeof(sc->data[1].desc));
 		sysmon_envsys_sensor_attach(sc->sme, &sc->data[i]);
 	}
 	sysmon_envsys_register(sc->sme);
