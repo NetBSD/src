@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.5 2017/10/29 11:38:43 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.6 2017/11/01 17:00:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -146,6 +146,10 @@ elf_sym_lookup(size_t symidx)
 	const Elf_Sym *sym;
 	char *buf, *secname;
 	Elf_Shdr *sec;
+
+	if (symidx == STN_UNDEF) {
+		return 0;
+	}
 
 	if (symidx >= eif.symcnt) {
 		fatal("elf_sym_lookup: symbol beyond table");
