@@ -1,6 +1,6 @@
-/*	$NetBSD: segments.h,v 1.31 2017/10/15 12:49:53 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.32 2017/11/01 07:14:29 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  *	@(#)segments.h	7.1 (Berkeley) 5/9/91
  */
 
-/*-
+/*
  * Copyright (c) 1995, 1997
  *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1990 William F. Jolitz
@@ -297,27 +297,6 @@ void cpu_fsgs_reload(struct lwp *, int, int);
 #define SDT_MEMERC	30	/* memory execute read conforming */
 #define SDT_MEMERAC	31	/* memory execute read accessed conforming */
 
-/* is memory segment descriptor pointer ? */
-#define ISMEMSDP(s)	((s->d_type) >= SDT_MEMRO && \
-			 (s->d_type) <= SDT_MEMERAC)
-
-/* is 286 gate descriptor pointer ? */
-#define IS286GDP(s)	((s->d_type) >= SDT_SYS286CGT && \
-			 (s->d_type) < SDT_SYS286TGT)
-
-/* is 386 gate descriptor pointer ? */
-#define IS386GDP(s)	((s->d_type) >= SDT_SYS386CGT && \
-			 (s->d_type) < SDT_SYS386TGT)
-
-/* is gate descriptor pointer ? */
-#define ISGDP(s)	(IS286GDP(s) || IS386GDP(s))
-
-/* is segment descriptor pointer ? */
-#define ISSDP(s)	(ISMEMSDP(s) || !ISGDP(s))
-
-/* is system segment descriptor pointer ? */
-#define ISSYSSDP(s)	(!ISMEMSDP(s) && !ISGDP(s))
-
 /*
  * Segment Protection Exception code bits
  */
@@ -365,24 +344,18 @@ void cpu_fsgs_reload(struct lwp *, int, int);
 #define GDT_ADDR_MEM(s,i)	\
     ((struct mem_segment_descriptor *)((s) + ((i) << 3)))
 #define GDT_ADDR_SYS(s,i)	\
-   ((struct sys_segment_descriptor *)((s) + (((i) << 4) + SYSSEL_START)))
+    ((struct sys_segment_descriptor *)((s) + (((i) << 4) + SYSSEL_START)))
 
 /*
  * Byte offsets in the Local Descriptor Table (LDT)
  * Strange order because of syscall/sysret insns
  */
-#define LSYS5CALLS_SEL	0	/* iBCS system call gate */
-/*			8	   second half */
-#define LSOL26CALLS_SEL	32	/* Solaris 2.6 system call gate */
-/*			40	   second half */
 #define LUCODE32_SEL	48	/* 32 bit user code descriptor */
 #define LUDATA_SEL	56	/* User data descriptor */
 #define LUCODE_SEL	64	/* User code descriptor */
 #define LUDATA32_SEL	72	/* 32 bit user data descriptor (needed?)*/
-#define LBSDICALLS_SEL	128	/* BSDI system call gate */
-/*			136	   second half */
 
-#define LDT_SIZE	144
+#define LDT_SIZE	80
 
 #define LSYSRETBASE_SEL	LUCODE32_SEL
 
