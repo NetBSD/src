@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.359 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.360 2017/11/01 21:11:44 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.359 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.360 2017/11/01 21:11:44 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -7887,10 +7887,7 @@ arm_pmap_alloc_poolpage(int flags)
 	/*
 	 * On some systems, only some pages may be "coherent" for dma and we
 	 * want to prefer those for pool pages (think mbufs) but fallback to
-	 * any page if none is available.  But we can only fallback if we
-	 * aren't direct mapping memory or all of memory can be direct-mapped.
-	 * If that isn't true, pool changes can only come from direct-mapped
-	 * memory.
+	 * any page if none is available.
 	 */
 	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT) {
 		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
