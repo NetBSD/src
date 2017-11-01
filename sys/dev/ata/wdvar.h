@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.44 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.45 2017/11/01 19:34:46 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -31,14 +31,12 @@
 #include "opt_wd.h"
 #endif
 
-#include <sys/rndsource.h>
+#include <dev/dkvar.h>
 #include <sys/sysctl.h>
 
 struct wd_softc {
 	/* General disk infos */
-	device_t sc_dev;
-	struct disk sc_dk;
-	struct bufq_state *sc_q;
+	struct dk_softc sc_dksc;
 	kmutex_t sc_lock;
 	int sc_quirks;			/* any quirks drive might have */
 
@@ -47,8 +45,6 @@ struct wd_softc {
 	const struct ata_bustype *atabus;
 	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;
-#define	WDF_WLABEL	0x004 /* label is writable */
-#define	WDF_LABELLING	0x008 /* writing label */
 /*
  * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
  * more fully implemented.
@@ -56,7 +52,6 @@ struct wd_softc {
 #define WDF_LOADED	0x010 /* parameters loaded */
 #define WDF_WAIT	0x020 /* waiting for resources */
 #define WDF_LBA		0x040 /* using LBA mode */
-#define WDF_KLABEL	0x080 /* retain label after 'full' close */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
 #define WDF_FLUSH_PEND	0x200 /* cache flush waits for free xfer */
 	uint64_t sc_capacity; /* full capacity of the device */
@@ -68,7 +63,6 @@ struct wd_softc {
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
 	u_int sc_bscount;
 #endif
-	krndsource_t	rnd_source;
 
 	/* Sysctl nodes specific for the disk */
 	struct sysctllog *nodelog;

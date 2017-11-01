@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.7 2014/03/25 16:19:13 christos Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.8 2017/11/01 19:34:46 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.7 2014/03/25 16:19:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.8 2017/11/01 19:34:46 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -136,6 +136,7 @@ ata_raid_intel_print_info(struct intel_raid_conf *info)
 int
 ata_raid_read_config_intel(struct wd_softc *sc)
 {
+	struct dk_softc *dksc = &sc->sc_dksc;
 	struct intel_raid_conf *info;
 	struct intel_raid_mapping *map;
 	struct ataraid_array_info *aai;
@@ -149,10 +150,10 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 
 	info = malloc(1536, M_DEVBUF, M_WAITOK|M_ZERO);
 
-	bmajor = devsw_name2blk(device_xname(sc->sc_dev), NULL, 0);
+	bmajor = devsw_name2blk(dksc->sc_xname, NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */
-	dev = MAKEDISKDEV(bmajor, device_unit(sc->sc_dev), RAW_PART);
+	dev = MAKEDISKDEV(bmajor, device_unit(dksc->sc_dev), RAW_PART);
 	error = bdevvp(dev, &vp);
 	if (error)
 		goto out;
@@ -169,7 +170,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	vput(vp);
 	if (error) {
 		DPRINTF(("%s: error %d reading Intel MatrixRAID config block\n",
-		    device_xname(sc->sc_dev), error));
+		    dksc->sc_xname, error));
 		goto out;
 	}
 
@@ -181,7 +182,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	/* Check if this is a Intel RAID struct */
 	if (strncmp(info->intel_id, INTEL_MAGIC, strlen(INTEL_MAGIC))) {
 		DPRINTF(("%s: Intel MatrixRAID signature check failed\n",
-		    device_xname(sc->sc_dev)));
+		    dksc->sc_xname));
 		error = ESRCH;
 		goto out;
 	}
@@ -194,7 +195,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	checksum -= info->checksum;
 	if (checksum != info->checksum) {
 		DPRINTF(("%s: Intel MatrixRAID checksum failed 0x%x != 0x%x\n",
-		    device_xname(sc->sc_dev), checksum, info->checksum));
+		    dksc->sc_xname, checksum, info->checksum));
 		error = ESRCH;
 		goto out;
 	}
@@ -208,7 +209,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 
 	volumeid = find_volume_id(info);
 	if (volumeid < 0) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(dksc->sc_dev,
 				 "too many RAID arrays\n");
 		error = ENOMEM;
 		goto out;
@@ -235,7 +236,7 @@ findvol:
 		break;
 	default:
 		DPRINTF(("%s: unknown Intel MatrixRAID type 0x%02x\n",
-		    device_xname(sc->sc_dev), map->type));
+		    dksc->sc_xname, map->type));
 		error = EINVAL;
 		goto out;
 	}
@@ -280,7 +281,7 @@ findvol:
 		adi->adi_status &= ~ADI_S_ONLINE;
 
 	if (adi->adi_status) {
-		adi->adi_dev = sc->sc_dev;
+		adi->adi_dev = dksc->sc_dev;
 		adi->adi_sectors = info->disk[diskidx].sectors;
 		adi->adi_compsize = adi->adi_sectors - aai->aai_reserved;
 
