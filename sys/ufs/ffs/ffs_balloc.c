@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.62 2016/09/25 11:45:39 jdolecek Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.62.8.1 2017/11/02 21:29:52 snj Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.62 2016/09/25 11:45:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.62.8.1 2017/11/02 21:29:52 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -121,7 +121,8 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
-	UVMHIST_LOG(ubchist, "vp %p lbn 0x%x size 0x%x", vp, lbn, size,0);
+	UVMHIST_LOG(ubchist, "vp %#jx lbn 0x%jx size 0x%jx", (uintptr_t)vp,
+	    lbn, size, 0);
 
 	if (lbn < 0)
 		return (EFBIG);
@@ -536,7 +537,8 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
-	UVMHIST_LOG(ubchist, "vp %p lbn 0x%x size 0x%x", vp, lbn, size,0);
+	UVMHIST_LOG(ubchist, "vp %#jx lbn 0x%jx size 0x%jx", (uintptr_t)vp,
+	    lbn, size, 0);
 
 	if (lbn < 0)
 		return (EFBIG);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernhist.9,v 1.4 2015/10/29 00:32:55 mrg Exp $
+.\"	$NetBSD: kernhist.9,v 1.4.8.1 2017/11/02 21:29:51 snj Exp $
 .\"
 .\" Copyright (c) 2015 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 28, 2015
+.Dd October 25, 2017
 .Dt KERNHIST 9
 .Os
 .Sh NAME
@@ -63,28 +63,60 @@ facility provides a very low-level tracing facility that can be called
 extremely early in the kernel initialisation.
 It provides a simple restricted
 .Xr printf 3
-format syntax with a maximum of 4 arguments.
-The format must be a literal string that can be referenced later as it
-is not stored with the event, only a pointer to it.
+format syntax with a maximum of 4 arguments, each of type
+.Vt uintmax_t .
 .Pp
 .Cd options KERNHIST
 must be present in the kernel configuration to enable these functions and
 macros.
 .Pp
-Arguments that require additional dereferences, such as
+A kernel history is a fixed-size buffer,either statically or dynamically
+allocated, that is written and read on a circular basis.
+Each entry includes the time the entry was made, the CPU from which the entry
+was recorded, the
+.Xr printf 3
+like format string and length, the function name and length, the unique call
+count for this function, and the 4 arguments.
+.Pp
+The history event data can be viewed using the
+.Fl U
+and
+.Fl u
+.Ar histname
+options to
+.Xr vmstat 1 ,
+or by using the
+.Ic show kernhist
+command in
+.Xr ddb 4 .
+User-written programs can retrieve history data from the kernel using the
+.Xr sysctl 9
+variable kern.hist.histname.
+.Pp
+The format string must be a literal string that can be referenced later as it
+is not stored with the event (only a pointer to the format string is stored).
+It should only contain conversion specifiers suitable for
+.Vt uintmax_t
+sized values, such as
+.Dq %jx ,
+.Dq %ju ,
+and
+.Dq %jo ,
+and address (pointer) arguments should be cast to
+.Vt uintptr_t
+to avoid compiler errors on architectures where pointers are smaller than
+.Vt uintmax_t
+integers.
+Conversion specifiers without a length modifier, and specifiers with length
+modifiers other than j, should not be used.
+.Pp
+Conversion specifiers that require additional dereferences of their
+corresponding arguments, such as
 .Dq %s ,
 will not work in
 .Xr vmstat 1 ,
-but will when called from
+but will work when called from
 .Xr ddb 4 .
-.Pp
-A kernel history is a fixed-size buffer of an either statically or dynamically
-allocated buffer that is used and read in a cycled basis.
-It includes the time an entry was made, the CPU that the entry was recorded
-from, the
-.Xr printf 3
-like format and length, the function name and length, the unique call count
-for this function, and the 4 argumnts.
 .Pp
 These macros provide access to most kernel history functionality:
 .Bl -tag -width 4n
@@ -118,18 +150,22 @@ Callable only once per function.
 .It Fn KERNHIST_LOG name fmt arg0 arg1 arg2 arg3
 For the given kernel history
 .Fa name ,
-log the format and arguments in the history as a unique event.
+log the format string and arguments in the history as a unique event.
 .It Fn KERNHIST_CALLED name
 Declare a function as being called.
 Either this or
 .Fn KERNHIST_CALLARGS
-must be used near the function entry point.
+must be used once, near the function entry point, to maintain the number of
+times the function has been called.
 .It Fn KERNHIST_CALLARGS name fmt arg0 arg1 arg2 arg3
-A frontend to
+A combination of
+.Fn KERNHIST_CALLED
+and
 .Fn KERNHIST_LOG
-that avoids that
+that avoids having a
 .Dq called!
-log message in addition to normal arguments.
+log message in addition to a message containing normal arguments with a
+format string.
 .It Fn KERNHIST_DUMP name
 Call
 .Fn kernhist_dump
@@ -141,7 +177,7 @@ Used to dump a well known list of kernel histories.
 The following histories and their respective value (as seen in
 .Pa kernhist.h )
 are available:
-.Bl -tag
+.Bl -tag -width KERNHIST_SCDEBUGHISTXXX
 .It KERNHIST_UVMMAPHIST
 Include events from
 .Dq maphist .
@@ -160,6 +196,9 @@ Include events from
 .It KERNHIST_SCDEBUGHIST
 Include events from
 .Dq scdebughist .
+.It KERNHIST_BIOHIST
+Include events from
+.Dq biohist .
 .El
 .It Fn kernhist_print pr
 Print all the kernel histories to the kernel message buffer.
@@ -167,6 +206,19 @@ The
 .Fn pr
 argument is currently ignored.
 .El
+.Sh CODE REFERENCES
+The
+.Nm
+functionality is implemented within the files
+.Pa sys/sys/kernhist.h
+and
+.Pa sys/kern/kern_history.c .
+The former file contains the definitions of data structures used to export
+the
+.Nm data
+via the
+.Xr sysctl 9
+mechanism.
 .Sh SEE ALSO
 .Xr vmstat 1 ,
 .Xr usbdi 9 ,
@@ -176,6 +228,22 @@ argument is currently ignored.
 .\" add example here of code usage
 .\"
 .Sh HISTORY
+A uvm-specific version of the
+.Nm
+facility first appeared in
+.Nx 1.4 .
+The generalized version of
+.Nm
+appeared in
+.Nx 6.0 .
+The
+.Xr sysctl 9
+interface to
+.Nm
+was introduced in
+.Nx 8.0 .
+.Sh AUTHORS
+.An -nosplit
 .Nm
 was originally written by
 .An Charles D. Cranor
@@ -183,15 +251,19 @@ as part of the
 .Xr uvm 9
 framework, under the name UVMHIST.
 .An Matthew R. Green
-generalised it into its current form to be available to non
+generalized it into its current form to be available to non
 .Xr uvm 9
 frameworks.
+.An Paul Goyette Aq Mt pgoyette@NetBSD.org
+provided the
+.Xr sysctl 9
+interface.
 .Sh BUGS
-The restriction about using
+The restriction against using
 .Dq %s
 .Xr printf 3
-format strings could be reduced to literal strings (such as the table of
-system call names) if
+specifier in format strings could be reduced to literal strings (such as
+the table of system call names) if
 .Xr vmstat 1
 was extended to convert
 .Dq %s
@@ -204,6 +276,10 @@ The
 .Fn kernhist_dumpmask
 list of masks could be properly published and made available, and as such
 this function may be removed in a future release.
+.Pp
+In addition to a statically-defined set of kernel histories, it would be
+possible to allow modular code to register and unregister their own
+histories dynamically, when a module is loaded or unloaded.
 .Pp
 The
 .Fn kernhist_print

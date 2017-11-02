@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.2 2016/04/23 10:15:32 skrll Exp $ */
+/* $NetBSD: usbroothub.c,v 1.2.14.1 2017/11/02 21:29:52 snj Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	req = &xfer->ux_request;
 
-	USBHIST_LOG(usbdebug, "type=%#2x request=%#2x", req->bmRequestType,
+	USBHIST_LOG(usbdebug, "type=%#2jx request=%#2jx", req->bmRequestType,
 	    req->bRequest, 0, 0);
 
 	len = UGETW(req->wLength);
@@ -304,7 +304,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		USBHIST_LOG(usbdebug, "wValue=%#4x", value, 0, 0, 0);
+		USBHIST_LOG(usbdebug, "wValue=%#4jx", value, 0, 0, 0);
 
 		if (len == 0)
 			break;
@@ -407,8 +407,8 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 		break;
 	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
 		/* Set Address, 9.4.6 */
-		USBHIST_LOG(usbdebug, "UR_SET_ADDRESS, UT_WRITE_DEVICE: addr %d",
-		    value, 0, 0, 0);
+		USBHIST_LOG(usbdebug, "UR_SET_ADDRESS, UT_WRITE_DEVICE: "
+		    "addr %jd", value, 0, 0, 0);
 		if (value >= USB_MAX_DEVICES) {
 			goto fail;
 		}
@@ -442,8 +442,8 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	}
 
 	actlen = bus->ub_methods->ubm_rhctrl(bus, req, buf, buflen);
-	USBHIST_LOG(usbdebug, "xfer %p buflen %d actlen %d", xfer, buflen,
-	    actlen, 0);
+	USBHIST_LOG(usbdebug, "xfer %#jx buflen %jd actlen %jd",
+	    (uintptr_t)xfer, buflen, actlen, 0);
 	if (actlen < 0)
 		goto fail;
 
@@ -451,7 +451,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	err = USBD_NORMAL_COMPLETION;
 
  fail:
-	USBHIST_LOG(usbdebug, "xfer %p err %d", xfer, err, 0, 0);
+	USBHIST_LOG(usbdebug, "xfer %#jx err %jd", (uintptr_t)xfer, err, 0, 0);
 
 	xfer->ux_status = err;
 	mutex_enter(bus->ub_lock);

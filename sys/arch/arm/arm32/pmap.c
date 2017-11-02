@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.349 2017/05/24 06:31:07 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.349.2.1 2017/11/02 21:29:51 snj Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.349 2017/05/24 06:31:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.349.2.1 2017/11/02 21:29:51 snj Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3058,9 +3058,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, " (pm %p va %#x pa %#x prot %#x",
-	    pm, va, pa, prot);
-	UVMHIST_LOG(maphist, "  flag %#x", flags, 0, 0, 0);
+	UVMHIST_LOG(maphist, " (pm %#jx va %#jx pa %#jx prot %#jx",
+	    (uintptr_t)pm, va, pa, prot);
+	UVMHIST_LOG(maphist, "  flag %#jx", flags, 0, 0, 0);
 
 	KDASSERT((flags & PMAP_WIRED) == 0 || (flags & VM_PROT_ALL) != 0);
 	KDASSERT(((va | pa) & PGOFSET) == 0);
@@ -3308,7 +3308,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pm->pm_stats.resident_count++;
 	}
 
-	UVMHIST_LOG(maphist, " opte %#x npte %#x", opte, npte, 0, 0);
+	UVMHIST_LOG(maphist, " opte %#jx npte %#jx", opte, npte, 0, 0);
 
 #if defined(ARM_MMU_EXTENDED)
 	/*
@@ -3361,7 +3361,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif /* !ARM_MMU_EXTENDED */
 
 #ifndef ARM_MMU_EXTENDED
-		UVMHIST_LOG(maphist, "  is_cached %d cs 0x%08x\n",
+		UVMHIST_LOG(maphist, "  is_cached %jd cs 0x%08jx",
 		    is_cached, pm->pm_cstate.cs_all, 0, 0);
 
 		if (pg != NULL) {
@@ -3417,7 +3417,8 @@ void
 pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, " (pm=%p, sva=%#x, eva=%#x)", pm, sva, eva, 0);
+	UVMHIST_LOG(maphist, " (pm=%#jx, sva=%#jx, eva=%#jx)",
+	    (uintptr_t)pm, sva, eva, 0);
 
 	/*
 	 * we lock in the pmap => pv_head direction
@@ -3654,7 +3655,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	if (pmap_initialized) {
 		UVMHIST_CALLED(maphist);
-		UVMHIST_LOG(maphist, " (va=%#x, pa=%#x, prot=%#x, flags=%#x",
+		UVMHIST_LOG(maphist, " (va=%#jx, pa=%#jx, prot=%#jx, flags=%#jx",
 		    va, pa, prot, flags);
 	}
 
@@ -3783,8 +3784,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	KASSERT(md == NULL || !pmap_page_locked_p(md));
 #endif
 	if (pmap_initialized) {
-		UVMHIST_LOG(maphist, "  <-- done (ptep %p: %#x -> %#x)",
-		    ptep, opte, npte, 0);
+		UVMHIST_LOG(maphist, "  <-- done (ptep %#jx: %#jx -> %#jx)",
+		    (uintptr_t)ptep, opte, npte, 0);
 	}
 
 }
@@ -3800,7 +3801,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, " (va=%#x, len=%#x)", va, len, 0, 0);
+	UVMHIST_LOG(maphist, " (va=%#jx, len=%#jx)", va, len, 0, 0);
 
 	const vaddr_t eva = va + len;
 
@@ -3869,7 +3870,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	}
 	pmap_release_pmap_lock(pmap_kernel());
 	cpu_cpwait();
-	UVMHIST_LOG(maphist, "  <--- done (%u mappings removed)",
+	UVMHIST_LOG(maphist, "  <--- done (%ju mappings removed)",
 	    total_mappings, 0, 0, 0);
 }
 
@@ -4307,12 +4308,13 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 	KASSERT(!user || (pm != pmap_kernel()));
 
-	UVMHIST_LOG(maphist, " (pm=%#x, va=%#x, ftype=%#x, user=%d)",
-	    pm, va, ftype, user);
+	UVMHIST_LOG(maphist, " (pm=%#jx, va=%#jx, ftype=%#jx, user=%jd)",
+	    (uintptr_t)pm, va, ftype, user);
 #ifdef ARM_MMU_EXTENDED
-	UVMHIST_LOG(maphist, " ti=%#x pai=%#x asid=%#x",
-	    cpu_tlb_info(curcpu()), PMAP_PAI(pm, cpu_tlb_info(curcpu())),
-	    PMAP_PAI(pm, cpu_tlb_info(curcpu()))->pai_asid, 0);
+	UVMHIST_LOG(maphist, " ti=%#jx pai=%#jx asid=%#jx",
+	    (uintptr_t)cpu_tlb_info(curcpu()), 
+	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu())),
+	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu()))->pai_asid, 0);
 #endif
 
 	pmap_acquire_pmap_lock(pm);
@@ -4326,7 +4328,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 */
 	l2 = pm->pm_l2[L2_IDX(l1slot)];
 	if (l2 == NULL) {
-		UVMHIST_LOG(maphist, " no l2 for l1slot %#x", l1slot, 0, 0, 0);
+		UVMHIST_LOG(maphist, " no l2 for l1slot %#jx", l1slot, 0, 0, 0);
 		goto out;
 	}
 
@@ -4335,7 +4337,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 */
 	l2b = &l2->l2_bucket[L2_BUCKET(l1slot)];
 	if (l2b->l2b_kva == NULL) {
-		UVMHIST_LOG(maphist, " <-- done (no ptep for l1slot %#x)", l1slot, 0, 0, 0);
+		UVMHIST_LOG(maphist, " <-- done (no ptep for l1slot %#jx)",
+		    l1slot, 0, 0, 0);
 		goto out;
 	}
 
@@ -4345,7 +4348,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	pt_entry_t * const ptep = &l2b->l2b_kva[l2pte_index(va)];
 	pt_entry_t const opte = *ptep;
 	if (opte == 0 || (opte & L2_TYPE_MASK) == L2_TYPE_L) {
-		UVMHIST_LOG(maphist, " <-- done (empty pde for l1slot %#x)", l1slot, 0, 0, 0);
+		UVMHIST_LOG(maphist, " <-- done (empty pde for l1slot %#jx)",
+		    l1slot, 0, 0, 0);
 		goto out;
 	}
 
@@ -4436,8 +4440,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		PTE_SYNC(ptep);
 		PMAPCOUNT(fixup_mod);
 		rv = 1;
-		UVMHIST_LOG(maphist, " <-- done (mod/ref emul: changed pte from %#x to %#x)",
-		    opte, npte, 0, 0);
+		UVMHIST_LOG(maphist, " <-- done (mod/ref emul: changed pte "
+		    "from %#jx to %#jx)", opte, npte, 0, 0);
 	} else if ((opte & L2_TYPE_MASK) == L2_TYPE_INV) {
 		/*
 		 * This looks like a good candidate for "page referenced"
@@ -4490,8 +4494,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 			 * If we haven't synced the page, do so now.
 			 */
 			if ((md->pvh_attrs & PVF_EXEC) == 0) {
-				UVMHIST_LOG(maphist, " ref emul: syncicache page #%#x",
-				    pa, 0, 0, 0);
+				UVMHIST_LOG(maphist, " ref emul: syncicache "
+				    "page #%#jx", pa, 0, 0, 0);
 				pmap_syncicache_page(md, pa);
 				PMAPCOUNT(fixup_exec);
 			}
@@ -4507,8 +4511,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		PTE_SYNC(ptep);
 		PMAPCOUNT(fixup_ref);
 		rv = 1;
-		UVMHIST_LOG(maphist, " <-- done (ref emul: changed pte from %#x to %#x)",
-		    opte, npte, 0, 0);
+		UVMHIST_LOG(maphist, " <-- done (ref emul: changed pte from "
+		    "%#jx to %#jx)", opte, npte, 0, 0);
 #ifdef ARM_MMU_EXTENDED
 	} else if (user && (ftype & VM_PROT_EXECUTE) && (opte & L2_XS_XN)) {
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
@@ -4532,7 +4536,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 * If we haven't synced the page, do so now.
 		 */
 		if ((md->pvh_attrs & PVF_EXEC) == 0) {
-			UVMHIST_LOG(maphist, "syncicache page #%#x",
+			UVMHIST_LOG(maphist, "syncicache page #%#jx",
 			    pa, 0, 0, 0);
 			pmap_syncicache_page(md, pa);
 		}
@@ -4548,7 +4552,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		PTE_SYNC(ptep);
 		rv = 1;
 		PMAPCOUNT(fixup_exec);
-		UVMHIST_LOG(maphist, "exec: changed pte from %#x to %#x",
+		UVMHIST_LOG(maphist, "exec: changed pte from %#jx to %#jx",
 		    opte, opte & ~L2_XS_XN, 0, 0);
 #endif
 	}
@@ -4800,8 +4804,8 @@ pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
 	}
 	cpu_cpwait();
 
-	UVMHIST_LOG(maphist, " pm %p pm->pm_l1_pa %08x asid %u... done", pm,
-	    pm->pm_l1_pa, pai->pai_asid, 0);
+	UVMHIST_LOG(maphist, " pm %#jx pm->pm_l1_pa %08jx asid %ju... done",
+	    (uintptr_t)pm, pm->pm_l1_pa, pai->pai_asid, 0);
 
 	KASSERTMSG(ci->ci_pmap_asid_cur == pai->pai_asid, "%u vs %u",
 	    ci->ci_pmap_asid_cur, pai->pai_asid);
@@ -4842,7 +4846,8 @@ pmap_activate(struct lwp *l)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(l=%#x) pm=%#x", l, npm, 0, 0);
+	UVMHIST_LOG(maphist, "(l=%#jx) pm=%#jx", (uintptr_t)l, (uintptr_t)npm,
+	    0, 0);
 
 	struct cpu_info * const ci = curcpu();
 
@@ -4860,7 +4865,8 @@ pmap_activate(struct lwp *l)
 	    || npm->pm_activated == true
 #endif
 	    || false) {
-		UVMHIST_LOG(maphist, " <-- (same pmap)", curlwp, l, 0, 0);
+		UVMHIST_LOG(maphist, " <-- (same pmap)", (uintptr_t)curlwp,
+		    (uintptr_t)l, 0, 0);
 		return;
 	}
 
@@ -4998,7 +5004,8 @@ pmap_deactivate(struct lwp *l)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(l=%#x) pm=%#x", l, pm, 0, 0);
+	UVMHIST_LOG(maphist, "(l=%#jx) pm=%#jx", (uintptr_t)l, (uintptr_t)pm,
+	    0, 0);
 
 #ifdef ARM_MMU_EXTENDED
 	pmap_md_pdetab_deactivate(pm);
@@ -5022,8 +5029,8 @@ pmap_update(pmap_t pm)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "pm=%#x remove_all %d", pm, pm->pm_remove_all, 0,
-	    0);
+	UVMHIST_LOG(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
+	    pm->pm_remove_all, 0, 0);
 
 #ifndef ARM_MMU_EXTENDED
 	if (pm->pm_remove_all) {
@@ -5139,8 +5146,8 @@ pmap_destroy(pmap_t pm)
 	if (pm == NULL)
 		return;
 
-	UVMHIST_LOG(maphist, "pm=%#x remove_all %d", pm, pm->pm_remove_all, 0,
-	    0);
+	UVMHIST_LOG(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
+	    pm->pm_remove_all, 0, 0);
 
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED

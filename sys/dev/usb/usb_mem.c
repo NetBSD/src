@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.69 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.69.2.1 2017/11/02 21:29:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.69 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.69.2.1 2017/11/02 21:29:52 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -116,7 +116,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	int error;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-	DPRINTFN(5, "size=%zu align=%zu", size, align, 0, 0);
+	DPRINTFN(5, "size=%ju align=%ju", size, align, 0, 0);
 
 	ASSERT_SLEEPABLE();
 	KASSERT(size != 0);
@@ -131,7 +131,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 			LIST_REMOVE(b, next);
 			usb_blk_nfree--;
 			*dmap = b;
-			DPRINTFN(6, "free list size=%zu", b->size, 0, 0, 0);
+			DPRINTFN(6, "free list size=%ju", b->size, 0, 0, 0);
 			return USBD_NORMAL_COMPLETION;
 		}
 	}
@@ -240,7 +240,7 @@ usb_block_freemem(usb_dma_block_t *b)
 	KASSERT(mutex_owned(&usb_blk_lock));
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-	DPRINTFN(6, "size=%zu", b->size, 0, 0, 0);
+	DPRINTFN(6, "size=%ju", b->size, 0, 0, 0);
 #ifdef DEBUG
 	LIST_REMOVE(b, next);
 #endif
@@ -277,7 +277,7 @@ usb_allocmem_flags(struct usbd_bus *bus, size_t size, size_t align, usb_dma_t *p
 
 	/* If the request is large then just use a full block. */
 	if (size > USB_MEM_SMALL || align > USB_MEM_SMALL) {
-		DPRINTFN(1, "large alloc %d", size, 0, 0, 0);
+		DPRINTFN(1, "large alloc %jd", size, 0, 0, 0);
 		size = (size + USB_MEM_BLOCK - 1) & ~(USB_MEM_BLOCK - 1);
 		mutex_enter(&usb_blk_lock);
 		err = usb_block_allocmem(tag, size, align, &p->udma_block, frag);
@@ -331,7 +331,7 @@ usb_allocmem_flags(struct usbd_bus *bus, size_t size, size_t align, usb_dma_t *p
 #endif
 	LIST_REMOVE(f, ufd_next);
 	mutex_exit(&usb_blk_lock);
-	DPRINTFN(5, "use frag=%p size=%d", f, size, 0, 0);
+	DPRINTFN(5, "use frag=%#jx size=%jd", (uintptr_t)f, size, 0, 0);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -368,7 +368,7 @@ usb_freemem(struct usbd_bus *bus, usb_dma_t *p)
 #endif
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, ufd_next);
 	mutex_exit(&usb_blk_lock);
-	DPRINTFN(5, "frag=%p", f, 0, 0, 0);
+	DPRINTFN(5, "frag=%#jx", (uintptr_t)f, 0, 0, 0);
 }
 
 bus_addr_t

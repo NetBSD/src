@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.6 2016/08/04 06:44:58 kiyohara Exp $ */
+/* $NetBSD: tiotg.c,v 1.6.8.1 2017/11/02 21:29:51 snj Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.6 2016/08/04 06:44:58 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.6.8.1 2017/11/02 21:29:51 snj Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -325,14 +325,14 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	}
 	/* turn clock on */
 	sitara_cm_reg_read_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, &val);
-	DPRINTF("power val 0x%x", val, 0, 0, 0);
+	DPRINTF("power val 0x%jx", val, 0, 0, 0);
 	/* Enable power */
 	val &= ~(OMAP2SCM_USB_CTLx_OTGPHY_PWD | OMAP2SCM_USB_CTLx_CMPHY_PWD);
 	/* enable vbus detect and session end */
 	val |= (OMAP2SCM_USB_CTLx_VBUSDET | OMAP2SCM_USB_CTLx_SESSIONEND);
 	sitara_cm_reg_write_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, val);
 	sitara_cm_reg_read_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, &val);
-	DPRINTF("now val 0x%x", val, 0, 0, 0);
+	DPRINTF("now val 0x%jx", val, 0, 0, 0);
 #endif
 	/* XXX configure mode */
 #if 0
@@ -402,7 +402,8 @@ ti_motg_intr(void *v)
 	stat = TIOTG_USBC_READ4(sc, USBCTRL_STAT);
 	stat0 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT0);
 	stat1 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT1);
-	DPRINTF("USB %d 0x%x 0x%x stat %d", sc->sc_ctrlport, stat0, stat1, stat);
+	DPRINTF("USB %jd 0x%jx 0x%jx stat %jd",
+	    sc->sc_ctrlport, stat0, stat1, stat);
 	/* try to deal with vbus errors */
 	if (stat1 & MUSB2_MASK_IVBUSERR ) {
 		stat1 &= ~MUSB2_MASK_IVBUSERR;
