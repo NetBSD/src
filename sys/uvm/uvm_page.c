@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.193 2017/06/01 02:45:15 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.193.2.1 2017/11/02 21:29:53 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.193 2017/06/01 02:45:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.193.2.1 2017/11/02 21:29:53 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1377,13 +1377,15 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			wakeup(pg);
 		}
 		if (pg->flags & PG_RELEASED) {
-			UVMHIST_LOG(ubchist, "releasing pg %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "releasing pg %#jx",
+			    (uintptr_t)pg, 0, 0, 0);
 			KASSERT(pg->uobject != NULL ||
 			    (pg->uanon != NULL && pg->uanon->an_ref > 0));
 			pg->flags &= ~PG_RELEASED;
 			uvm_pagefree(pg);
 		} else {
-			UVMHIST_LOG(ubchist, "unbusying pg %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "unbusying pg %#jx",
+			    (uintptr_t)pg, 0, 0, 0);
 			KASSERT((pg->flags & PG_FAKE) == 0);
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);

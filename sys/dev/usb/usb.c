@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.165.6.1 2017/09/04 06:40:37 snj Exp $	*/
+/*	$NetBSD: usb.c,v 1.165.6.2 2017/11/02 21:29:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.1 2017/09/04 06:40:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.2 2017/11/02 21:29:52 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -412,11 +412,11 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task, int queue)
 	mutex_enter(&taskq->lock);
 	if (atomic_cas_uint(&task->queue, USB_NUM_TASKQS, queue) ==
 	    USB_NUM_TASKQS) {
-		DPRINTFN(2, "task=%p", task, 0, 0, 0);
+		DPRINTFN(2, "task=%#jx", (uintptr_t)task, 0, 0, 0);
 		TAILQ_INSERT_TAIL(&taskq->tasks, task, next);
 		cv_signal(&taskq->cv);
 	} else {
-		DPRINTFN(2, "task=%p on q", task, 0, 0, 0);
+		DPRINTFN(2, "task=%#jx on q", (uintptr_t)task, 0, 0, 0);
 	}
 	mutex_exit(&taskq->lock);
 }
@@ -477,7 +477,7 @@ usb_event_thread(void *arg)
 		cv_timedwait(&sc->sc_bus->ub_needsexplore_cv,
 		    sc->sc_bus->ub_lock, usb_noexplore ? 0 : hz * 60);
 
-		DPRINTFN(2, "sc %p woke up", sc, 0, 0, 0);
+		DPRINTFN(2, "sc %#jx woke up", (uintptr_t)sc, 0, 0, 0);
 	}
 	sc->sc_event_thread = NULL;
 
@@ -485,7 +485,7 @@ usb_event_thread(void *arg)
 	cv_signal(&sc->sc_bus->ub_needsexplore_cv);
 	mutex_exit(sc->sc_bus->ub_lock);
 
-	DPRINTF("sc %p exit", sc, 0, 0, 0);
+	DPRINTF("sc %#jx exit", (uintptr_t)sc, 0, 0, 0);
 	kthread_exit(0);
 }
 
@@ -499,7 +499,7 @@ usb_task_thread(void *arg)
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
 	taskq = arg;
-	DPRINTF("start taskq %p", taskq, 0, 0, 0);
+	DPRINTF("start taskq %#jx", (uintptr_t)taskq, 0, 0, 0);
 
 	mutex_enter(&taskq->lock);
 	for (;;) {
@@ -508,7 +508,7 @@ usb_task_thread(void *arg)
 			cv_wait(&taskq->cv, &taskq->lock);
 			task = TAILQ_FIRST(&taskq->tasks);
 		}
-		DPRINTFN(2, "woke up task=%p", task, 0, 0, 0);
+		DPRINTFN(2, "woke up task=%#jx", (uintptr_t)task, 0, 0, 0);
 		if (task != NULL) {
 			mpsafe = ISSET(task->flags, USB_TASKQ_MPSAFE);
 			TAILQ_REMOVE(&taskq->tasks, task, next);
@@ -698,7 +698,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		return EIO;
 
 	int error = 0;
-	DPRINTF("cmd %#x", cmd, 0, 0, 0);
+	DPRINTF("cmd %#jx", cmd, 0, 0, 0);
 	switch (cmd) {
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
@@ -722,7 +722,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			goto fail;
 		}
 
-		DPRINTF("USB_REQUEST addr=%d len=%d", addr, len, 0, 0);
+		DPRINTF("USB_REQUEST addr=%jd len=%jd", addr, len, 0, 0);
 		if (len < 0 || len > 32768) {
 			error = EINVAL;
 			goto fail;
@@ -828,7 +828,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 
 fail:
 
-	DPRINTF("... done (error = %d)", error, 0, 0, 0);
+	DPRINTF("... done (error = %jd)", error, 0, 0, 0);
 
 	return error;
 }
@@ -1073,7 +1073,7 @@ usb_schedsoftintr(struct usbd_bus *bus)
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-	DPRINTFN(10, "polling=%d", bus->ub_usepolling, 0, 0, 0);
+	DPRINTFN(10, "polling=%jd", bus->ub_usepolling, 0, 0, 0);
 
 	if (bus->ub_usepolling) {
 		bus->ub_methods->ubm_softint(bus);

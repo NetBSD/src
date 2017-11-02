@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.18.8.1 2017/10/13 08:14:51 snj Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.18.8.2 2017/11/02 21:29:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -47,21 +47,21 @@
 
 struct kern_history_ent {
 	struct bintime bt; 		/* time stamp */
-	int cpunum;
+	uint32_t cpunum;
 	const char *fmt;		/* printf format */
 	size_t fmtlen;			/* length of printf format */
 	const char *fn;			/* function name */
 	size_t fnlen;			/* length of function name */
-	u_long call;			/* function call number */
-	u_long v[4];			/* values */
+	uint32_t call;			/* function call number */
+	uintmax_t v[4];			/* values */
 };
 
 struct kern_history {
 	const char *name;		/* name of this history */
 	size_t namelen;			/* length of name, not including null */
 	LIST_ENTRY(kern_history) list;	/* link on list of all histories */
-	unsigned int n;			/* number of entries */
-	unsigned int f;			/* next free one */
+	uint32_t n;			/* number of entries */
+	uint32_t f;			/* next free one */
 	struct kern_history_ent *e;	/* the allocated entries */
 	int s;				/* our sysctl number */
 };
@@ -70,19 +70,18 @@ struct kern_history {
  * structs for exporting history info via sysctl(3)
  */
 
-/* info for a single kernhist */
-struct sysctl_history_list_entry {
-	uint32_t	shle_nameoffset;
-	uint32_t	shle_numentries;
-	uint32_t	shle_nextfree;
-	uint32_t	shle_filler;
-};
+/*
+ * Bump this version definition whenever the contents of the
+ * sysctl structures change.
+ */
+
+#define KERNHIST_SYSCTL_VERSION 1
 
 /* info for a single history event */
 struct sysctl_history_event {
 	struct bintime	she_bintime;
-	uint64_t	she_callnumber;
-	uint64_t	she_values[4];
+	uintmax_t	she_values[4];
+	uint32_t	she_callnumber;
 	uint32_t	she_cpunum;
 	uint32_t	she_fmtoffset;
 	uint32_t	she_funcoffset;
@@ -90,8 +89,11 @@ struct sysctl_history_event {
 
 /* list of all events for a single history */
 struct sysctl_history {
-	struct sysctl_history_list_entry
-			sh_listentry;
+	uint16_t	sh_version;
+	uint16_t	sh_arglen;
+	uint32_t	sh_nameoffset;
+	uint32_t	sh_numentries;
+	uint32_t	sh_nextfree;
 	struct sysctl_history_event
 			sh_events[];
 	/* char		sh_strings[]; */	/* follows last sh_events */
@@ -216,22 +218,22 @@ do { \
 	struct kern_history_ent * const _e_ = &(NAME).e[_i_]; \
 	if (__predict_true(!cold)) \
 		bintime(&_e_->bt); \
-	_e_->cpunum = cpu_number(); \
+	_e_->cpunum = (uint32_t)cpu_number(); \
 	_e_->fmt = (FMT); \
 	_e_->fmtlen = strlen(FMT); \
 	_e_->fn = _kernhist_name; \
 	_e_->fnlen = strlen(_kernhist_name); \
 	_e_->call = _kernhist_call; \
-	_e_->v[0] = (u_long)(A); \
-	_e_->v[1] = (u_long)(B); \
-	_e_->v[2] = (u_long)(C); \
-	_e_->v[3] = (u_long)(D); \
+	_e_->v[0] = (uintmax_t)(A); \
+	_e_->v[1] = (uintmax_t)(B); \
+	_e_->v[2] = (uintmax_t)(C); \
+	_e_->v[3] = (uintmax_t)(D); \
 	KERNHIST_PRINTNOW(_e_); \
 } while (/*CONSTCOND*/ 0)
 
 #define KERNHIST_CALLED(NAME) \
 do { \
-	_kernhist_call = atomic_inc_uint_nv(&_kernhist_cnt); \
+	_kernhist_call = atomic_inc_32_nv(&_kernhist_cnt); \
 	KERNHIST_LOG(NAME, "called!", 0, 0, 0, 0); \
 } while (/*CONSTCOND*/ 0)
 
@@ -241,14 +243,14 @@ do { \
  */
 #define KERNHIST_CALLARGS(NAME, FMT, A, B, C, D) \
 do { \
-	_kernhist_call = atomic_inc_uint_nv(&_kernhist_cnt); \
+	_kernhist_call = atomic_inc_32_nv(&_kernhist_cnt); \
 	KERNHIST_LOG(NAME, "called: "FMT, (A), (B), (C), (D)); \
 } while (/*CONSTCOND*/ 0)
 
 #define KERNHIST_FUNC(FNAME) \
-	static unsigned int _kernhist_cnt = 0; \
+	static uint32_t _kernhist_cnt = 0; \
 	static const char *const _kernhist_name = FNAME; \
-	unsigned int _kernhist_call = 0;
+	uint32_t _kernhist_call = 0;
 
 #ifdef DDB
 #define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME, printf)
@@ -262,8 +264,8 @@ kernhist_entry_print(const struct kern_history_ent *e, void (*pr)(const char *, 
 	struct timeval tv;
 
 	bintime2timeval(&e->bt, &tv);
-	pr("%06" PRIu64 ".%06d ", tv.tv_sec, tv.tv_usec);
-	pr("%s#%ld@%d: ", e->fn, e->call, e->cpunum);
+	pr("%06ld.%06ld ", (long int)tv.tv_sec, (long int)tv.tv_usec);
+	pr("%s#%" PRIu32 "@%" PRIu32 ": ", e->fn, e->call, e->cpunum);
 	pr(e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 	pr("\n");
 }

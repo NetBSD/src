@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.73 2015/10/29 00:27:08 mrg Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.73.10.1 2017/11/02 21:29:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.73 2015/10/29 00:27:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.73.10.1 2017/11/02 21:29:52 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -178,52 +178,52 @@ scdebug_call(register_t code, const register_t args[])
 	if (scdebug & SCDEBUG_KERNHIST) {
 		if (CODE_NOT_OK(code, em)) {
 			SCDEBUG_KERNHIST_LOG(scdebughist, 
-			    "pid %d:%d: OUT OF RANGE (%ld)",
+			    "pid %jd:%jd: OUT OF RANGE (%jd)",
 			    p->p_pid, l->l_lid, code, 0);
 		} else {
 			SCDEBUG_KERNHIST_LOG(scdebughist,
-			    "pid %d:%d: num %d call %p",
-			    p->p_pid, l->l_lid, code, sy->sy_call);
+			    "pid %jd:%jd: num %jd call %#jx",
+			    p->p_pid, l->l_lid, code, (uintptr_t)sy->sy_call);
 			if ((scdebug & SCDEBUG_SHOWARGS) == 0)
 				return;
 
 			if (sy->sy_narg > 7) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[4-7]: (%lx, %lx, %lx, %lx, ...)",
+				    "args[4-7]: (%jx, %jx, %jx, %jx, ...)",
 				    (long)args[4], (long)args[5],
 				    (long)args[6], (long)args[7]);
 			} else if (sy->sy_narg > 6) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[4-6]: (%lx, %lx, %lx)",
+				    "args[4-6]: (%jx, %jx, %jx)",
 				    (long)args[4], (long)args[5],
 				    (long)args[6], 0);
 			} else if (sy->sy_narg > 5) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[4-5]: (%lx, %lx)",
+				    "args[4-5]: (%jx, %jx)",
 				    (long)args[4], (long)args[5], 0, 0);
 			} else if (sy->sy_narg == 5) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[4]: (%lx)",
+				    "args[4]: (%jx)",
 				    (long)args[4], 0, 0, 0);
 			}
 
 			if (sy->sy_narg > 3) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[0-3]: (%lx, %lx, %lx, %lx, ...)",
+				    "args[0-3]: (%jx, %jx, %jx, %jx, ...)",
 				    (long)args[0], (long)args[1],
 				    (long)args[2], (long)args[3]);
 			} else if (sy->sy_narg > 2) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[0-2]: (%lx, %lx, %lx)",
+				    "args[0-2]: (%jx, %jx, %jx)",
 				    (long)args[0], (long)args[1],
 				    (long)args[2], 0);
 			} else if (sy->sy_narg > 1) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[0-1]: (%lx, %lx)",
+				    "args[0-1]: (%jx, %jx)",
 				    (long)args[0], (long)args[1], 0, 0);
 			} else if (sy->sy_narg == 1) {
 				SCDEBUG_KERNHIST_LOG(scdebughist,
-				    "args[0]: (%lx)",
+				    "args[0]: (%jx)",
 				    (long)args[0], 0, 0, 0);
 			}
 		}
@@ -273,14 +273,14 @@ scdebug_ret(register_t code, int error, const register_t retval[])
 	if (scdebug & SCDEBUG_KERNHIST) {
 		if (CODE_NOT_OK(code, em)) {
 			SCDEBUG_KERNHIST_LOG(scdebughist, 
-			    "pid %d:%d: OUT OF RANGE (%ld)",
+			    "pid %jd:%jd: OUT OF RANGE (%jd)",
 			    p->p_pid, l->l_lid, code, 0);
 		} else {
 			SCDEBUG_KERNHIST_LOG(scdebughist,
-			    "pid %d:%d: num %ld",
+			    "pid %jd:%jd: num %jd",
 			    p->p_pid, l->l_lid, code, 0);
 			SCDEBUG_KERNHIST_LOG(scdebughist,
-			    "ret: err = %d, rv = 0x%lx,0x%lx",
+			    "ret: err = %jd, rv = 0x%jx,0x%jx",
 			    error, (long)retval[0], (long)retval[1], 0);
 		}
 		return;

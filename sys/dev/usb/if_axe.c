@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.82 2017/03/06 01:50:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.82.6.1 2017/11/02 21:29:52 snj Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.82 2017/03/06 01:50:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.82.6.1 2017/11/02 21:29:52 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -305,7 +305,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	if (sc->axe_dying)
 		return 0;
 
-	DPRINTFN(20, "cmd %#x index %#x val %#x", cmd, index, val, 0);
+	DPRINTFN(20, "cmd %#jx index %#jx val %#jx", cmd, index, val, 0);
 
 	if (AXE_CMD_DIR(cmd))
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -319,7 +319,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	err = usbd_do_request(sc->axe_udev, &req, buf);
 
 	if (err) {
-		DPRINTF("cmd %d err %d", cmd, err, 0, 0);
+		DPRINTF("cmd %jd err %jd", cmd, err, 0, 0);
 		return -1;
 	}
 	return 0;
@@ -333,7 +333,7 @@ axe_miibus_readreg_locked(device_t dev, int phy, int reg)
 	usbd_status err;
 	uint16_t val;
 
-	DPRINTFN(30, "phy 0x%x reg 0x%x\n", phy, reg, 0, 0);
+	DPRINTFN(30, "phy 0x%jx reg 0x%jx\n", phy, reg, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 
@@ -355,7 +355,7 @@ axe_miibus_readreg_locked(device_t dev, int phy, int reg)
 		 val &= ~BMSR_EXTCAP;
 	}
 
-	DPRINTFN(30, "phy 0x%x reg 0x%x val %#x", phy, reg, val, 0);
+	DPRINTFN(30, "phy 0x%jx reg 0x%jx val %#jx", phy, reg, val, 0);
 
 	return val;
 }
@@ -452,7 +452,7 @@ axe_miibus_statchg(struct ifnet *ifp)
 		}
 	}
 
-	DPRINTF("val=0x%x", val, 0, 0, 0);
+	DPRINTF("val=0x%jx", val, 0, 0, 0);
 	axe_lock_mii(sc);
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	axe_unlock_mii(sc);
@@ -599,7 +599,7 @@ axe_ax88178_init(struct axe_softc *sc)
 
 	eeprom = le16toh(eeprom);
 
-	DPRINTF("EEPROM is 0x%x", eeprom, 0, 0, 0);
+	DPRINTF("EEPROM is 0x%jx", eeprom, 0, 0, 0);
 
 	/* if EEPROM is invalid we have to use to GPIO0 */
 	if (eeprom == 0xffff) {
@@ -612,7 +612,7 @@ axe_ax88178_init(struct axe_softc *sc)
 		ledmode = eeprom >> 8;
 	}
 
-	DPRINTF("use gpio0: %d, phymode %d", gpio0, phymode, 0, 0);
+	DPRINTF("use gpio0: %jd, phymode %jd", gpio0, phymode, 0, 0);
 
 	/* Program GPIOs depending on PHY hardware. */
 	switch (phymode) {
@@ -942,7 +942,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
 
-	DPRINTF(" phyaddrs[0]: %x phyaddrs[1]: %x",
+	DPRINTF(" phyaddrs[0]: %jx phyaddrs[1]: %jx",
 	    sc->axe_phyaddrs[0], sc->axe_phyaddrs[1], 0, 0);
 	sc->axe_phyno = axe_get_phyno(sc, AXE_PHY_SEL_PRI);
 	if (sc->axe_phyno == -1)
@@ -1250,7 +1250,7 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 
 			memcpy(&hdr, buf, sizeof(hdr));
 
-			DPRINTFN(20, "total_len %#x len %x ilen %#x",
+			DPRINTFN(20, "total_len %#jx len %jx ilen %#jx",
 			    total_len,
 			    (le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK),
 			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK), 0);
@@ -1289,8 +1289,8 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			csum_hdr.ilen = le16toh(csum_hdr.ilen);
 			csum_hdr.cstatus = le16toh(csum_hdr.cstatus);
 
-			DPRINTFN(20, "total_len %#x len %#x ilen %#x"
-			    " cstatus %#x", total_len,
+			DPRINTFN(20, "total_len %#jx len %#jx ilen %#jx"
+			    " cstatus %#jx", total_len,
 			    csum_hdr.len, csum_hdr.ilen, csum_hdr.cstatus);
 
 			if ((AXE_CSUM_RXBYTES(csum_hdr.len) ^
@@ -1298,7 +1298,8 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			    sc->sc_lenmask) {
 				/* we lost sync */
 				ifp->if_ierrors++;
-				DPRINTFN(20, "len %#x ilen %#x lenmask %#x err",
+				DPRINTFN(20, "len %#jx ilen %#jx lenmask %#jx "
+				    "err",
 				    AXE_CSUM_RXBYTES(csum_hdr.len),
 				    AXE_CSUM_RXBYTES(csum_hdr.ilen),
 				    sc->sc_lenmask, 0);
@@ -1313,7 +1314,7 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			u_int len = sizeof(csum_hdr) + pktlen;
 			len = (len + 3) & ~3;
 			if (total_len < len) {
-				DPRINTFN(20, "total_len %#x < len %#x",
+				DPRINTFN(20, "total_len %#jx < len %#jx",
 				    total_len, len, 0, 0);
 				/* invalid length */
 				ifp->if_ierrors++;
@@ -1344,8 +1345,8 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 				total_len -= len;
 				rxlen = len - sizeof(csum_hdr);
 			}
-			DPRINTFN(20, "total_len %#x len %#x pktlen %#x"
-			    " rxlen %#x", total_len, len, pktlen, rxlen);
+			DPRINTFN(20, "total_len %#jx len %#jx pktlen %#jx"
+			    " rxlen %#jx", total_len, len, pktlen, rxlen);
 		} else { /* AX172 */
 			pktlen = rxlen = total_len;
 			total_len = 0;
@@ -1374,7 +1375,7 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		memcpy(mtod(m, uint8_t *), buf, pktlen);
 		buf += rxlen;
 
-		DPRINTFN(10, "deliver %d (%#x)", m->m_len, m->m_len, 0, 0);
+		DPRINTFN(10, "deliver %jd (%#jx)", m->m_len, m->m_len, 0, 0);
 
 		s = splnet();
 
@@ -1721,7 +1722,7 @@ axe_init(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_BROADCAST)
 		rxmode |= AXE_RXCMD_BROADCAST;
 
-	DPRINTF("rxmode 0x%#x", rxmode, 0, 0, 0);
+	DPRINTF("rxmode 0x%#jx", rxmode, 0, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 	axe_unlock_mii(sc);

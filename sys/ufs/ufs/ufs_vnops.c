@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.237 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.237.4.1 2017/11/02 21:29:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.237 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.237.4.1 2017/11/02 21:29:53 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1832,8 +1832,8 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
                  */
 
                 if (ip->i_size < off + bsize) {
-                        UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
-                            vp, ip->i_size, off + bsize, 0);
+                        UVMHIST_LOG(ubchist, "vp %#jx old 0x%jx new 0x%x",
+                            (uintptr_t)vp, ip->i_size, off + bsize, 0);
                         ip->i_size = off + bsize;
 			DIP_ASSIGN(ip, size, ip->i_size);
                 }

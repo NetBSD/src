@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.273 2017/05/25 02:28:07 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.273.2.1 2017/11/02 21:29:52 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.273 2017/05/25 02:28:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.273.2.1 2017/11/02 21:29:52 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -814,8 +814,8 @@ bwrite(buf_t *bp)
 	struct vnode *vp;
 	struct mount *mp;
 
-	BIOHIST_FUNC(__func__); BIOHIST_CALLARGS(biohist, "bp=%p",
-	    bp, 0, 0, 0);
+	BIOHIST_FUNC(__func__); BIOHIST_CALLARGS(biohist, "bp=%#jx",
+	    (uintptr_t)bp, 0, 0, 0);
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 	KASSERT(!cv_has_waiters(&bp->b_done));
@@ -939,8 +939,8 @@ void
 bdwrite(buf_t *bp)
 {
 
-	BIOHIST_FUNC(__func__); BIOHIST_CALLARGS(biohist, "bp=%p",
-	    bp, 0, 0, 0);
+	BIOHIST_FUNC(__func__); BIOHIST_CALLARGS(biohist, "bp=%#jx",
+	    (uintptr_t)bp, 0, 0, 0);
 
 	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
 	    bp->b_vp->v_type == VBLK || ISSET(bp->b_flags, B_COWDONE));
@@ -1530,18 +1530,19 @@ biowait(buf_t *bp)
 
 	mutex_enter(bp->b_objlock);
 
-	BIOHIST_CALLARGS(biohist, "bp=%p, oflags=0x%x, ret_addr %p",
-	    bp, bp->b_oflags, __builtin_return_address(0), 0);
+	BIOHIST_CALLARGS(biohist, "bp=%#jx, oflags=0x%jx, ret_addr=%#jx",
+	    (uintptr_t)bp, bp->b_oflags, 
+	    (uintptr_t)__builtin_return_address(0), 0);
 
 	while (!ISSET(bp->b_oflags, BO_DONE | BO_DELWRI)) {
-		BIOHIST_LOG(biohist, "waiting bp=%p", bp, 0, 0, 0);
+		BIOHIST_LOG(biohist, "waiting bp=%#jx", (uintptr_t)bp, 0, 0, 0);
 		cv_wait(&bp->b_done, bp->b_objlock);
 	}
 	mutex_exit(bp->b_objlock);
 
 	SDT_PROBE1(io, kernel, , wait__done, bp);
 
-	BIOHIST_LOG(biohist, "return %d", bp->b_error, 0, 0, 0);
+	BIOHIST_LOG(biohist, "return %jd", bp->b_error, 0, 0, 0);
 
 	return bp->b_error;
 }
@@ -1576,8 +1577,8 @@ biodone(buf_t *bp)
 		s = splvm();
 		TAILQ_INSERT_TAIL(&curcpu()->ci_data.cpu_biodone, bp, b_actq);
 
-		BIOHIST_CALLARGS(biohist, "bp=%p, softint scheduled",
-		    bp, 0, 0, 0);
+		BIOHIST_CALLARGS(biohist, "bp=%#jx, softint scheduled",
+		    (uintptr_t)bp, 0, 0, 0);
 		softint_schedule(biodone_sih);
 		splx(s);
 	} else {
@@ -1596,7 +1597,7 @@ biodone2(buf_t *bp)
 	SDT_PROBE1(io, kernel, ,done, bp);
 
 	BIOHIST_FUNC(__func__);
-	BIOHIST_CALLARGS(biohist, "bp=%p", bp, 0, 0, 0);
+	BIOHIST_CALLARGS(biohist, "bp=%#jx", (uintptr_t)bp, 0, 0, 0);
 
 	mutex_enter(bp->b_objlock);
 	/* Note that the transfer is done. */
@@ -1611,7 +1612,8 @@ biodone2(buf_t *bp)
 		vwakeup(bp);
 
 	if ((callout = bp->b_iodone) != NULL) {
-		BIOHIST_LOG(biohist, "callout %p", callout, 0, 0, 0);
+		BIOHIST_LOG(biohist, "callout %#jx", (uintptr_t)callout,
+		    0, 0, 0);
 
 		/* Note callout done, then call out. */
 		KASSERT(!cv_has_waiters(&bp->b_done));
@@ -1653,7 +1655,7 @@ biointr(void *cookie)
 		TAILQ_REMOVE(&ci->ci_data.cpu_biodone, bp, b_actq);
 		splx(s);
 
-		BIOHIST_LOG(biohist, "bp=%p", bp, 0, 0, 0);
+		BIOHIST_LOG(biohist, "bp=%#jx", (uintptr_t)bp, 0, 0, 0);
 		biodone2(bp);
 
 		s = splvm();

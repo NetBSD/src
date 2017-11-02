@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.63 2013/10/25 20:08:11 martin Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.63.22.1 2017/11/02 21:29:53 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.63 2013/10/25 20:08:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.63.22.1 2017/11/02 21:29:53 snj Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -105,7 +105,7 @@ uvm_anon_dispose(struct vm_anon *anon)
 	struct vm_page *pg = anon->an_page;
 
 	UVMHIST_FUNC("uvm_anon_dispose"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(anon=0x%x)", anon, 0,0,0);
+	UVMHIST_LOG(maphist,"(anon=0x%#jx)", (uintptr_t)anon, 0,0,0);
 
 	KASSERT(mutex_owned(anon->an_lock));
 
@@ -163,8 +163,9 @@ uvm_anon_dispose(struct vm_anon *anon)
 			mutex_enter(&uvm_pageqlock);
 			uvm_pagefree(pg);
 			mutex_exit(&uvm_pageqlock);
-			UVMHIST_LOG(maphist, "anon 0x%x, page 0x%x: "
-				    "freed now!", anon, pg, 0, 0);
+			UVMHIST_LOG(maphist, "anon 0x%#jx, page 0x%#jx: "
+			    "freed now!", (uintptr_t)anon, (uintptr_t)pg,
+			    0, 0);
 		}
 	}
 
@@ -412,8 +413,8 @@ uvm_anon_dropswap(struct vm_anon *anon)
 	if (anon->an_swslot == 0)
 		return;
 
-	UVMHIST_LOG(maphist,"freeing swap for anon %p, paged to swslot 0x%x",
-		    anon, anon->an_swslot, 0, 0);
+	UVMHIST_LOG(maphist,"freeing swap for anon %#jx, paged to swslot 0x%jx",
+		    (uintptr_t)anon, anon->an_swslot, 0, 0);
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
 }
