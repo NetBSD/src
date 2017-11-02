@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.30 2017/11/02 18:37:14 kamil Exp $	*/
+/*	$NetBSD: atexit.c,v 1.31 2017/11/02 19:39:33 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.30 2017/11/02 18:37:14 kamil Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.31 2017/11/02 19:39:33 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -205,7 +205,7 @@ again:
 		if (dso == NULL || dso == ah->ah_dso || ah->ah_atexit == NULL) {
 			if (ah->ah_atexit != NULL) {
 				void *p = atexit_handler_stack;
-				if (ah->ah_dso != NULL || ah->ah_arg != NULL) {
+				if (ah->ah_dso != NULL) {
 					cxa_func = ah->ah_cxa_atexit;
 					ah->ah_cxa_atexit = NULL;
 					(*cxa_func)(ah->ah_arg);
