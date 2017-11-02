@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1158.2.1 2017/09/23 17:50:43 snj Exp $
+# $NetBSD: mi,v 1.1158.2.2 2017/11/02 21:02:06 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5629,7 +5629,7 @@
 ./usr/share/zoneinfo/Canada			base-sys-share
 ./usr/share/zoneinfo/Canada/Atlantic		base-sys-share		share
 ./usr/share/zoneinfo/Canada/Central		base-sys-share		share
-./usr/share/zoneinfo/Canada/East-Saskatchewan	base-sys-share		share
+./usr/share/zoneinfo/Canada/East-Saskatchewan	base-obsolete		obsolete
 ./usr/share/zoneinfo/Canada/Eastern		base-sys-share		share
 ./usr/share/zoneinfo/Canada/Mountain		base-sys-share		share
 ./usr/share/zoneinfo/Canada/Newfoundland	base-sys-share		share
