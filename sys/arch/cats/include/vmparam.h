@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.29 2015/02/23 20:34:37 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.30 2017/11/02 09:42:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -74,7 +74,7 @@
  * we support 2 free lists:
  *
  *	- DEFAULT for all systems
- *	- ISADMA for the ISA DMA range on Sharks only
+ *	- ISADMA for the ISA DMA range
  */
 
 #define	VM_NFREELIST		2
