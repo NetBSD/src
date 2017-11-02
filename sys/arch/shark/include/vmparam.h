@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 2015/02/23 20:34:38 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 2017/11/02 09:42:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -74,7 +74,7 @@
  * we support 2 free lists:
  *
  *	- DEFAULT for all systems
- *	- ISADMA for the ISA DMA range on Sharks only
+ *	- ISADMA for the ISA DMA range
  *	- RPCDMA for the DMA range on RiscPC's + Kinetic cards
  */
 
