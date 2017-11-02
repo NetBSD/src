@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.108 2017/10/26 01:40:33 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.109 2017/11/02 08:41:15 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2689,9 +2689,8 @@ ixgbe_media_change(struct ifnet *ifp)
 
 	hw->mac.autotry_restart = TRUE;
 	hw->mac.ops.setup_link(hw, speed, TRUE);
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		adapter->advertise = 0;
-	} else {
+	adapter->advertise = 0;
+	if (IFM_SUBTYPE(ifm->ifm_media) != IFM_AUTO) {
 		if ((speed & IXGBE_LINK_SPEED_10GB_FULL) != 0)
 			adapter->advertise |= 1 << 2;
 		if ((speed & IXGBE_LINK_SPEED_1GB_FULL) != 0)
@@ -4783,7 +4782,7 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 		return (EINVAL);
 	}
 
-	if (advertise < 0x0 || advertise > 0xF) {
+	if (advertise < 0x0 || advertise > 0x2f) {
 		device_printf(dev,
 		    "Invalid advertised speed; valid modes are 0x0 through 0x7\n");
 		return (EINVAL);
