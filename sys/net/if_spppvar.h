@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.20 2016/12/13 00:35:11 knakahara Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.20.8.1 2017/11/02 20:28:24 snj Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -111,7 +111,7 @@ struct sppp {
 	int	pp_auth_failures;	/* authorization failures */
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
 	int	pp_phase;	/* phase we're currently in */
-	kmutex_t	*pp_lock;	/* lock for sppp structure */
+	krwlock_t	pp_lock;	/* lock for sppp structure */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
 	uint32_t	dns_addrs[2];
 	int	state[IDX_COUNT];	/* state machine */
@@ -181,8 +181,26 @@ int sppp_ioctl(struct ifnet *, u_long, void *);
 struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
-void sppp_lock_enter(struct sppp *);
-void sppp_lock_exit(struct sppp *);
-int sppp_locked(struct sppp *);
 #endif
+
+/*
+ * Locking notes:
+ * + spppq is protected by spppq_lock (an adaptive mutex)
+ *     spppq is a list of all struct sppps, and it is used for
+ *     sending keepalive packets.
+ * + struct sppp is protected by sppp->pp_lock (an rwlock)
+ *     sppp holds configuration parameters for line,
+ *     authentication and addresses. It also has pointers
+ *     of functions to notify events to lower layer.
+ *     When notify events, sppp->pp_lock must be released.
+ *     Because the event handler implemented in a lower
+ *     layer often call functions implemented in
+ *     if_spppsubr.c.
+ *
+ * Locking order:
+ *    - spppq_lock => struct sppp->pp_lock
+ *
+ * NOTICE
+ * - Lower layers must not acquire sppp->pp_lock
+ */
 #endif /* !_NET_IF_SPPPVAR_H_ */
