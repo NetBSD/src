@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.72 2017/10/30 09:35:51 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.73 2017/11/02 21:41:35 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6522,4 +6522,120 @@ sys/ufs/lfs/ulfs_vnops.c			1.49-1.50
 	Code cleanup and bugfixes.  Fix buffer overflow/KASSERT when
 	cookies are supplied.
 	[maya, ticket #330]
+
+sys/net/if_pppoe.c				1.127-1.128
+sys/net/if_pppoe.h				1.15
+sys/net/if_spppsubr.c				1.170-1.171
+sys/net/if_spppvar.h				1.21-1.22
+
+	- Integrate two locks used to protect PPPoE softc.
+	- sppp_lock is changed from mutex to rwlock now.
+	- Add a locking notes for if_pppoe
+	- Add a locking notes for if_spppsubr
+	- Fix no INET6 build.
+	[knakahara, ticket #332]
+
+doc/3RDPARTY					1.1479
+distrib/sets/lists/base/mi			1.1164
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.4
+external/public-domain/tz/dist/LICENSE          up to 1.1.1.3
+external/public-domain/tz/dist/Makefile         up to 1.1.1.18
+external/public-domain/tz/dist/NEWS             up to 1.1.1.19
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.9
+external/public-domain/tz/dist/Theory           delete
+external/public-domain/tz/dist/africa           up to 1.1.1.12
+external/public-domain/tz/dist/antarctica       up to 1.1.1.9
+external/public-domain/tz/dist/asia             up to 1.1.1.17
+external/public-domain/tz/dist/australasia      up to 1.1.1.12
+external/public-domain/tz/dist/backward         up to 1.1.1.8
+external/public-domain/tz/dist/backzone         up to 1.1.1.12
+external/public-domain/tz/dist/calendars        up to 1.1.1.1
+external/public-domain/tz/dist/checklinks.awk   up to 1.1.1.3
+external/public-domain/tz/dist/europe           up to 1.1.1.18
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.8
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.9
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.6
+external/public-domain/tz/dist/northamerica     up to 1.1.1.17
+external/public-domain/tz/dist/southamerica     up to 1.1.1.12
+external/public-domain/tz/dist/theory.html      up to 1.1.1.1
+external/public-domain/tz/dist/version          up to 1.1.1.6
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.1
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.12
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.14
+
+	Update tzdata to 2017c.
+	[kre, ticket #333]
+
+etc/namedb/root.cache				1.23
+
+	Update root.cache to 2017102400 (October 24, 2017).
+	[taca, ticket #334]
+
+share/man/man9/kernhist.9			1.5-1.8
+sys/arch/acorn26/acorn26/pmap.c			1.39
+sys/arch/arm/arm32/fault.c			1.105 via patch
+sys/arch/arm/arm32/pmap.c			1.350, 1.359
+sys/arch/arm/broadcom/bcm2835_bsc.c		1.7
+sys/arch/arm/omap/if_cpsw.c			1.20
+sys/arch/arm/omap/tiotg.c			1.7
+sys/arch/evbarm/conf/RPI2_INSTALL		1.3
+sys/dev/ic/sl811hs.c				1.98
+sys/dev/usb/ehci.c				1.256
+sys/dev/usb/if_axe.c				1.83
+sys/dev/usb/motg.c				1.18
+sys/dev/usb/ohci.c				1.274
+sys/dev/usb/ucom.c				1.119
+sys/dev/usb/uhci.c				1.277
+sys/dev/usb/uhub.c				1.137
+sys/dev/usb/umass.c				1.160-1.162
+sys/dev/usb/umass_quirks.c			1.100
+sys/dev/usb/umass_scsipi.c			1.55
+sys/dev/usb/usb.c				1.168
+sys/dev/usb/usb_mem.c				1.70
+sys/dev/usb/usb_subr.c				1.221
+sys/dev/usb/usbdi.c				1.175
+sys/dev/usb/usbdi_util.c			1.67-1.70
+sys/dev/usb/usbroothub.c			1.3
+sys/dev/usb/xhci.c				1.75
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.34
+sys/kern/kern_history.c				1.15
+sys/kern/kern_xxx.c				1.74
+sys/kern/vfs_bio.c				1.275-1.276
+sys/miscfs/genfs/genfs_io.c			1.71
+sys/sys/kernhist.h				1.21
+sys/ufs/ffs/ffs_balloc.c			1.63
+sys/ufs/lfs/lfs_vfsops.c			1.361
+sys/ufs/lfs/ulfs_inode.c			1.21
+sys/ufs/lfs/ulfs_vnops.c			1.52
+sys/ufs/ufs/ufs_inode.c				1.102
+sys/ufs/ufs/ufs_vnops.c				1.239
+sys/uvm/pmap/pmap.c				1.37-1.39
+sys/uvm/pmap/pmap_tlb.c				1.22
+sys/uvm/uvm_amap.c				1.108
+sys/uvm/uvm_anon.c				1.64
+sys/uvm/uvm_aobj.c				1.126
+sys/uvm/uvm_bio.c				1.91
+sys/uvm/uvm_device.c				1.66
+sys/uvm/uvm_fault.c				1.201
+sys/uvm/uvm_km.c				1.144
+sys/uvm/uvm_loan.c				1.85
+sys/uvm/uvm_map.c				1.353
+sys/uvm/uvm_page.c				1.194
+sys/uvm/uvm_pager.c				1.111
+sys/uvm/uvm_pdaemon.c				1.109
+sys/uvm/uvm_swap.c				1.175
+sys/uvm/uvm_vnode.c				1.103
+usr.bin/vmstat/vmstat.c				1.219
+
+	Update the kernhist(9) kernel history code to address issues
+	identified in PR kern/52639, as well as some general cleanup.
+	[pgoyette, ticket #335]
+
+sys/uvm/uvm_mmap.c				1.167
+
+	PR kern/52658:
+	Due to incorrect error recovery mmap requests that were
+	denied due to PaX/MPROTECT ended up not cleaning up, which
+	made processes stuck.
+	[christos, ticket #336]
 
