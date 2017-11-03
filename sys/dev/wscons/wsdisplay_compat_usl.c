@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.49 2015/08/24 22:50:33 pooka Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.50 2017/11/03 13:34:56 maya Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.49 2015/08/24 22:50:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.50 2017/11/03 13:34:56 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.49 2015/08/24 22:50:33 po
 #include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
 
@@ -101,9 +101,8 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	struct usl_syncdata *sd;
 	int res;
 
-	sd = malloc(sizeof(struct usl_syncdata), M_DEVBUF, M_WAITOK);
-	if (!sd)
-		return (ENOMEM);
+	sd = kmem_alloc(sizeof(struct usl_syncdata), KM_SLEEP);
+
 	sd->s_scr = scr;
 	sd->s_proc = p;
 	sd->s_pid = p->p_pid;
@@ -117,7 +116,7 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	callout_setfunc(&sd->s_detach_ch, usl_detachtimeout, sd);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
-		free(sd, M_DEVBUF);
+		kmem_free(sd, sizeof(struct usl_syncdata));
 		return (res);
 	}
 	*sdp = sd;
@@ -136,7 +135,7 @@ usl_sync_done(struct usl_syncdata *sd)
 		(*sd->s_callback)(sd->s_cbarg, ENXIO, 0);
 	}
 	wsscreen_detach_sync(sd->s_scr);
-	free(sd, M_DEVBUF);
+	kmem_free(sd, sizeof(struct usl_syncdata));
 }
 
 static int
