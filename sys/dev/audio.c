@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.422 2017/11/02 02:08:02 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.423 2017/11/03 05:04:17 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.422 2017/11/02 02:08:02 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.423 2017/11/03 05:04:17 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2360,8 +2360,9 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 		 * block was too short.  Pad it and start now.
 		 */
 		uint8_t *inp = cb->s.inp;
+		int blksize = sc->sc_mixring.sc_mpr.blksize;
 
-		cc = cb->blksize - (inp - cb->s.start) % cb->blksize;
+		cc = blksize - (inp - cb->s.start) % blksize;
 		audio_fill_silence(&cb->s.param, inp, cc);
 		cb->s.inp = audio_stream_add_inp(&cb->s, inp, cc);
 		mutex_exit(sc->sc_intr_lock);
@@ -2400,9 +2401,9 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 #endif
 	vc->sc_draining = true;
 
-	drops = cb->drops;
+	drops = cb->drops + (cb->blksize * PREFILL_BLOCKS);
 	error = 0;
-	while (cb->drops == drops && !error) {
+	while (cb->drops < drops && !error) {
 		DPRINTF(("audio_drain: vc=%p used=%d, drops=%ld\n",
 			vc,
 			audio_stream_get_used(&vc->sc_mpr.s),
@@ -2941,7 +2942,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			filter = vc->sc_pfilters[0];
 			filter->set_fetcher(filter, &ufetcher.base);
 			fetcher = &vc->sc_pfilters[vc->sc_npfilters - 1]->base;
-			cc = cb->blksize * 2;
+			cc = sc->sc_mixring.sc_mpr.blksize * 2;
 			error = fetcher->fetch_to(sc, fetcher, &stream, cc);
 			if (error != 0) {
 				fetcher = &ufetcher.base;
@@ -3525,7 +3526,7 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 	if (vc == sc->sc_hwvc)
 		return 0;
 
-	if (!vc->sc_mpr.mmapped && used < vc->sc_mpr.blksize) {
+	if (!vc->sc_mpr.mmapped && used < sc->sc_mixring.sc_mpr.blksize) {
 		cv_broadcast(&sc->sc_wchan);
 		DPRINTF(("%s: wakeup and return\n", __func__));
 		return 0;
