@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.33 2015/09/06 06:01:02 dholland Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.34 2017/11/03 09:59:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -131,7 +131,8 @@ typedef int (*ksyms_callback_t)(const char *, int, void *,
 
 int ksyms_getname(const char **, const char **, vaddr_t, int);
 int ksyms_getval(const char *, const char *, unsigned long *, int);
-int ksyms_getval_unlocked(const char *, const char *, unsigned long *, int);
+int ksyms_getval_unlocked(const char *, const char *, void **,
+    unsigned long *, int);
 struct ksyms_symtab *ksyms_get_mod(const char *);
 int ksyms_mod_foreach(const char *mod, ksyms_callback_t, void *);
 int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);
