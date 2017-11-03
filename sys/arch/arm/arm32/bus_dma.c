@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.98 2017/01/05 09:08:45 msaitoh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.99 2017/11/03 15:31:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.98 2017/01/05 09:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.99 2017/11/03 15:31:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1459,7 +1459,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	/*
 	 * Check to see if this used direct mapped memory.  Get its physical
 	 * address and try to map it.  If the resultant matches the kva, then
-	 * it was and so we can just return since we have notice to free up.
+	 * it was and so we can just return since we have nothing to free up.
 	 */
 	paddr_t pa;
 	vaddr_t va;
