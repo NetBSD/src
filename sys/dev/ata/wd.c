@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.434 2017/11/01 19:34:46 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.435 2017/11/03 13:01:26 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.434 2017/11/01 19:34:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.435 2017/11/03 13:01:26 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -194,6 +194,7 @@ static struct	wd_ioctl *wi_get(struct wd_softc *);
 static void	wdioctlstrategy(struct buf *);
 
 static void	wdstart(device_t);
+static void	wdstart1(struct wd_softc *, struct buf *, struct ata_xfer *);
 static int	wd_diskstart(device_t, struct buf *);
 static int	wd_dumpblocks(device_t, void *, daddr_t, int);
 static void	wd_iosize(device_t, int *);
@@ -607,23 +608,10 @@ err:
 	biodone(bp);
 }
 
-static int
-wd_diskstart(device_t dev, struct buf *bp)
+static void
+wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 {
-	struct wd_softc *wd = device_private(dev);
 	struct dk_softc *dksc = &wd->sc_dksc;
-	struct ata_xfer *xfer;
-
-	mutex_enter(&wd->sc_lock);
-
-	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0,
-	    WD_USE_NCQ(wd) ? WD_MAX_OPENINGS(wd) : 0);
-	if (xfer == NULL) {
-		ATADEBUG_PRINT(("wdstart %s no xfer\n",
-		    dksc->sc_xname), DEBUG_XFERS);
-		mutex_exit(&wd->sc_lock);
-		return EAGAIN;
-	}
 
 	KASSERT(bp == xfer->c_bio.bp || xfer->c_bio.bp == NULL);
 	KASSERT((xfer->c_flags & (C_WAITACT|C_FREE)) == 0);
@@ -722,6 +710,29 @@ wd_diskstart(device_t dev, struct buf *bp)
 	default:
 		panic("wdstart1: bad return code from ata_bio()");
 	}
+}
+
+static int
+wd_diskstart(device_t dev, struct buf *bp)
+{
+	struct wd_softc *wd = device_private(dev);
+#ifdef ATADEBUG
+	struct dk_softc *dksc = &wd->sc_dksc;
+#endif
+	struct ata_xfer *xfer;
+
+	mutex_enter(&wd->sc_lock);
+
+	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0,
+	    WD_USE_NCQ(wd) ? WD_MAX_OPENINGS(wd) : 0);
+	if (xfer == NULL) {
+		ATADEBUG_PRINT(("wd_diskstart %s no xfer\n",
+		    dksc->sc_xname), DEBUG_XFERS);
+		mutex_exit(&wd->sc_lock);
+		return EAGAIN;
+	}
+
+	wdstart1(wd, bp, xfer);
 
 	mutex_exit(&wd->sc_lock);
 
@@ -825,7 +836,7 @@ retry2:
 			/* Rerun ASAP if just requeued */
 			callout_reset(&xfer->c_retry_callout,
 			    (xfer->c_bio.error == REQUEUE) ? 1 : RECOVERYTIME,
-			    wdbiorestart, wd);
+			    wdbiorestart, xfer);
 
 			mutex_exit(&wd->sc_lock);
 			return;
@@ -896,13 +907,19 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 static void
 wdbiorestart(void *v)
 {
-	struct wd_softc *wd = v;
+	struct ata_xfer *xfer = v;
+	struct buf *bp = xfer->c_bio.bp;
+	struct wd_softc *wd = device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
+#ifdef ATADEBUG
 	struct dk_softc *dksc = &wd->sc_dksc;
+#endif
 
-	ATADEBUG_PRINT(("wdrestart %s\n", dksc->sc_xname),
+	ATADEBUG_PRINT(("wdbiorestart %s\n", dksc->sc_xname),
 	    DEBUG_XFERS);
 
-	dk_start(dksc, NULL);
+	mutex_enter(&wd->sc_lock);
+	wdstart1(wd, bp, xfer);
+	mutex_exit(&wd->sc_lock);
 }
 
 static void
@@ -985,7 +1002,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	 * If any partition is open, but the disk has been invalidated,
 	 * disallow further opens.
 	 */
-	if ((wd->sc_flags & WDF_LOADED) == 0) {
+	if ((wd->sc_flags & (WDF_OPEN | WDF_LOADED)) == WDF_OPEN) {
 		if (part != RAW_PART || fmt != S_IFCHR)
 			return EIO;
 	}
@@ -1023,6 +1040,7 @@ wd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 		wd->sc_flags |= WDF_LOADED;
 	}
 
+	wd->sc_flags |= WDF_OPEN;
 	return 0;
 
 bad:
@@ -1041,6 +1059,7 @@ wd_lastclose(device_t self)
 	wd_flushcache(wd, AT_WAIT, false);
 
 	wd->atabus->ata_delref(wd->drvp);
+	wd->sc_flags &= ~WDF_OPEN;
 
 	return 0;
 }
