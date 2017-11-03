@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: kobj_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: kobj_machdep.c,v 1.2 2017/11/03 09:59:08 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	Elf_Sword addend = rela->r_addend;	/* needs to be signed */
 	const u_int rtype = ELF_R_TYPE(rela->r_info);
 	const u_int symidx = ELF_R_SYM(rela->r_info);
+	int error;
 
 	switch (rtype) {
 	case R_RISCV_NONE:
@@ -81,9 +82,10 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 #endif
 	case R_RISCV_LO12_I:
 	case R_RISCV_LO12_S: {
-		Elf_Addr addr = kobj_sym_lookup(ko, symidx);
-	       	if (addr == 0)
-	       		return -1;
+		Elf_Addr addr;
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
+			return -1;
 
 #if 0
 		/*
