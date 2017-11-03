@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.63 2017/11/03 13:11:39 kre Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.64 2017/11/03 16:21:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.63 2017/11/03 13:11:39 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.64 2017/11/03 16:21:01 kre Exp $");
 
 #include "opt_xen.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.63 2017/11/03 13:11:39 kre Exp $");
 #include <x86/cacheinfo.h>
 #include <x86/cpuvar.h>
 #include <x86/cpu_msr.h>
+#include <x86/fpu.h>
 
 #include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
 #include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
@@ -752,9 +753,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_FXSAVE;
 
-#ifndef XEN
 	fpuinit_mxcsr_mask();
-#endif
 
 	/* See if xsave (for AVX) is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
