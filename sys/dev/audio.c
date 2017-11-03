@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.427 2017/11/03 21:12:44 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.428 2017/11/03 21:15:18 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.427 2017/11/03 21:12:44 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.428 2017/11/03 21:15:18 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2020,6 +2020,12 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 				hwblksize = sc->sc_hwvc->sc_mrr.blksize;
 		}
 
+		int tmpblksize = 1; 	 
+		/* round blocksize to a power of 2 */ 	 
+		while (tmpblksize < blksize) 	 
+			tmpblksize <<= 1; 	 
+
+		blksize = tmpblksize;
 		if (blksize > hwblksize)
 			blksize = hwblksize;
 	}
