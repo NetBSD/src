@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.39 2017/11/03 17:57:58 maya Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.40 2017/11/03 18:42:35 maya Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.39 2017/11/03 17:57:58 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.40 2017/11/03 18:42:35 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -60,19 +60,19 @@ static void wsemul_vt100_setmsgattrs(void *, const struct wsscreen_descr *,
 static void wsemul_vt100_resize(void *, const struct wsscreen_descr *);
 
 const struct wsemul_ops wsemul_vt100_ops = {
-	"vt100",
-	wsemul_vt100_cnattach,
-	wsemul_vt100_attach,
-	wsemul_vt100_output,
-	wsemul_vt100_translate,
-	wsemul_vt100_detach,
-	wsemul_vt100_resetop,
+	.name = "vt100",
+	.cnattach = wsemul_vt100_cnattach,
+	.attach = wsemul_vt100_attach,
+	.output = wsemul_vt100_output,
+	.translate = wsemul_vt100_translate,
+	.detach = wsemul_vt100_detach,
+	.reset = wsemul_vt100_resetop,
 #ifdef WSDISPLAY_CUSTOM_OUTPUT
-	wsemul_vt100_getmsgattrs,
-	wsemul_vt100_setmsgattrs,
+	.getmsgattrs = wsemul_vt100_getmsgattrs,
+	.setmsgattrs = wsemul_vt100_setmsgattrs,
 #else
-	NULL,
-	NULL,
+	.getmsgattrs = NULL,
+	.setmsgattrs = NULL,
 #endif
 	.resize = wsemul_vt100_resize
 };
