@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.8 2017/06/13 05:49:48 nat Exp $ */
+/* $NetBSD: wsbell.c,v 1.9 2017/11/03 19:49:23 maya Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.8 2017/06/13 05:49:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.9 2017/11/03 19:49:23 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -131,7 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.8 2017/06/13 05:49:48 nat Exp $");
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 
 #include <dev/wscons/wsconsio.h>

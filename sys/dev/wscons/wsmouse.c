@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.67 2017/11/03 19:20:27 maya Exp $ */
+/* $NetBSD: wsmouse.c,v 1.68 2017/11/03 19:49:23 maya Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.67 2017/11/03 19:20:27 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.68 2017/11/03 19:49:23 maya Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.67 2017/11/03 19:20:27 maya Exp $");
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
