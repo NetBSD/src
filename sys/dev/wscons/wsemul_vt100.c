@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.38 2017/05/19 19:22:33 macallan Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.39 2017/11/03 17:57:58 maya Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.38 2017/05/19 19:22:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.39 2017/11/03 17:57:58 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -242,9 +242,7 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 
 	if (console) {
 		edp = &wsemul_vt100_console_emuldata;
-#ifdef DIAGNOSTIC
 		KASSERT(edp->console == 1);
-#endif
 	} else {
 		edp = malloc(sizeof *edp, M_DEVBUF, M_WAITOK);
 		wsemul_vt100_init(edp, type, cookie, ccol, crow, defattr);
