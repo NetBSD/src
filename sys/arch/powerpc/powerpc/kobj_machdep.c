@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.6 2014/03/06 09:22:52 matt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7 2017/11/03 09:59:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2014/03/06 09:22:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2017/11/03 09:59:08 maxv Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -75,6 +75,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	Elf_Sword addend;		/* needs to be signed */
 	u_int rtype, symidx;
 	const Elf_Rela *rela;
+	int error;
 
 	if (!isrela) {
 		panic("kobj_reloc: REL relocations not supported");
@@ -114,9 +115,9 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	case R_PPC_ADDR16_LO:	/* half16 #lo(S + A) */
 	case R_PPC_ADDR16_HA:	/* half16 #ha(S + A) */
 	case R_PPC_ADDR16_HI:	/* half16 #hi(S + A) */
-		addr = kobj_sym_lookup(ko, symidx);
-	       	if (addr == 0)
-	       		return -1;
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
+			return -1;
 
 #if 0
 		/*

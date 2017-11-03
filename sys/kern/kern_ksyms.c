@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.85 2017/06/14 00:52:37 chs Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.86 2017/11/03 09:59:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.85 2017/06/14 00:52:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.86 2017/11/03 09:59:07 maxv Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -374,7 +374,12 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 		}
 #endif
 
-		nsym[n].st_shndx = SHBSS;
+		if (sym[i].st_shndx != SHN_ABS) {
+			nsym[n].st_shndx = SHBSS;
+		} else {
+			/* SHN_ABS is a magic value, don't overwrite it */
+		}
+
 		j = strlen(nsym[n].st_name + str) + 1;
 		if (j > ksyms_maxlen)
 			ksyms_maxlen = j;
@@ -561,8 +566,8 @@ ksyms_addsyms_explicit(void *ehdr, void *symstart, size_t symsize,
  * Call with ksyms_lock, unless known that the symbol table can't change.
  */
 int
-ksyms_getval_unlocked(const char *mod, const char *sym, unsigned long *val,
-    int type)
+ksyms_getval_unlocked(const char *mod, const char *sym, void **symp,
+    unsigned long *val, int type)
 {
 	struct ksyms_symtab *st;
 	Elf_Sym *es;
@@ -580,6 +585,8 @@ ksyms_getval_unlocked(const char *mod, const char *sym, unsigned long *val,
 			continue;
 		if ((es = findsym(sym, st, type)) != NULL) {
 			*val = es->st_value;
+			if (symp)
+				*symp = (void *)es;
 			return 0;
 		}
 	}
@@ -595,7 +602,7 @@ ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 		return ENOENT;
 
 	mutex_enter(&ksyms_lock);
-	rc = ksyms_getval_unlocked(mod, sym, val, type);
+	rc = ksyms_getval_unlocked(mod, sym, NULL, val, type);
 	mutex_exit(&ksyms_lock);
 	return rc;
 }
