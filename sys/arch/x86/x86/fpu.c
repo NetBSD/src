@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.20 2017/10/31 18:23:29 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.21 2017/11/03 07:14:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2017/10/31 18:23:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2017/11/03 07:14:24 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -124,6 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2017/10/31 18:23:29 maxv Exp $");
 #define clts() HYPERVISOR_fpu_taskswitch(0)
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
+
+static uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
 static inline union savefpu *
 process_fpframe(struct lwp *lwp)
@@ -223,6 +225,37 @@ fpuinit(struct cpu_info *ci)
 	clts();
 	fninit();
 	stts();
+}
+
+/*
+ * Get the value of MXCSR_MASK supported by the CPU.
+ */
+void
+fpuinit_mxcsr_mask(void)
+{
+	union savefpu fpusave __aligned(16);
+	u_long cr0, psl;
+
+	memset(&fpusave, 0, sizeof(fpusave));
+
+	/* Disable interrupts, and enable FPU */
+	psl = x86_read_psl();
+	x86_disable_intr();
+	cr0 = rcr0();
+	lcr0(cr0 & ~(CR0_EM|CR0_TS));
+
+	/* Fill in the FPU area */
+	fxsave(&fpusave);
+
+	/* Restore previous state */
+	lcr0(cr0);
+	x86_write_psl(psl);
+
+	if (fpusave.sv_xmm.fx_mxcsr_mask == 0) {
+		x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+	} else {
+		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
+	}
 }
 
 /*
@@ -515,7 +548,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	if (i386_use_fxsave) {
 		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
-		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_cw = x87_cw;
 	} else {
 		memset(&fpu_save->sv_87, 0, x86_fpu_save_size);
@@ -537,7 +570,7 @@ fpu_save_area_reset(struct lwp *l)
 	 */
 	if (i386_use_fxsave) {
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
-		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_tw = 0;
 		fpu_save->sv_xmm.fx_cw = pcb->pcb_fpu_dflt_cw;
 	} else {
@@ -576,7 +609,7 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 		/*
 		 * Invalid bits in mxcsr or mxcsr_mask will cause faults.
 		 */
-		fpu_save->sv_xmm.fx_mxcsr_mask &= __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_mxcsr &= fpu_save->sv_xmm.fx_mxcsr_mask;
 
 		/*
