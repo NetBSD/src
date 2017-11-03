@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.424 2017/11/03 05:07:37 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.425 2017/11/03 05:09:49 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.424 2017/11/03 05:07:37 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.425 2017/11/03 05:09:49 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5916,6 +5916,8 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting frequency, "
 				 "please check hardware capabilities\n");
+	if (error == 0)
+		audio_calc_latency(sc);
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -5968,6 +5970,8 @@ audio_sysctl_precision(SYSCTLFN_ARGS)
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting precision, "
 				 "please check hardware capabilities\n");
+	if (error == 0)
+		audio_calc_latency(sc);
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -6009,6 +6013,8 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting channels, "
 				 "please check hardware capabilities\n");
+	if (error == 0)
+		audio_calc_latency(sc);
 	mutex_exit(sc->sc_lock);
 
 	return error;
