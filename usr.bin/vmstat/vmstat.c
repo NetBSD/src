@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.219 2017/10/28 00:37:12 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.220 2017/11/03 22:45:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.219 2017/10/28 00:37:12 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.220 2017/11/03 22:45:14 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -2276,11 +2276,6 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 	if (errno != 0)
 		err(1, "sysctl failed");
  
-	/* Make sure we've got matching versions */
-	if (hist->sh_version != KERNHIST_SYSCTL_VERSION ||
-	    hist->sh_arglen != sizeof(uintmax_t))
-		errx(1, "Kernel version or argument length mismatch!");
-
 	strp = (char *)(&hist->sh_events[hist->sh_numentries]);
  
 	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
