@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.142 2017/05/19 19:22:33 macallan Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.143 2017/11/03 18:49:37 maya Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.142 2017/05/19 19:22:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.143 2017/11/03 18:49:37 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -271,8 +271,6 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	struct wsscreen *scr;
 
 	scr = malloc(sizeof(struct wsscreen), M_DEVBUF, M_WAITOK);
-	if (!scr)
-		return (NULL);
 
 	if (console) {
 		dconf = &wsdisplay_console_conf;
@@ -284,7 +282,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 			(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr, 0);
 	} else { /* not console */
 		dconf = malloc(sizeof(struct wsscreen_internal),
-			       M_DEVBUF, M_NOWAIT);
+			       M_DEVBUF, M_WAITOK);
 		dconf->emulops = type->textops;
 		dconf->emulcookie = cookie;
 		if (dconf->emulops) {
