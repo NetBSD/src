@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.11 2016/07/11 15:51:01 martin Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.12 2017/11/03 09:59:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.11 2016/07/11 15:51:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.12 2017/11/03 09:59:08 maxv Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -78,6 +78,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	Elf_Word rtype, symidx;
 	const Elf_Rel *rel;
 	const Elf_Rela *rela;
+	int error;
 
 	if (isrela) {
 		rela = (const Elf_Rela *)data;
@@ -99,8 +100,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		return 0;
 
 	case R_ARM_ABS32:
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 		*where = addr + addend;
 		return 0;
@@ -110,8 +111,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_ARM_JUMP_SLOT:
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 		*where = addr;
 		return 0;
@@ -126,8 +127,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	case R_ARM_MOVT_ABS:
 		if ((*where & 0x0fb00000) != 0x03000000)
 			break;
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 		if (rtype == R_ARM_MOVT_ABS)
 			addr >>= 16;
@@ -150,8 +151,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 		addend <<= 2;
 
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 
 		addend += (uintptr_t)addr - (uintptr_t)where;
@@ -171,8 +172,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_ARM_REL32:	/* ((S + A) | T) -  P */
 		/* T = 0 for now */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 
 		addend += (uintptr_t)addr - (uintptr_t)where;
@@ -184,8 +185,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		if (addend & 0x40000000)
 			addend |= 0xc0000000;
 		/* T = 0 for now */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 
 		addend += (uintptr_t)addr - (uintptr_t)where;

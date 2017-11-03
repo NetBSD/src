@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.14 2014/02/01 08:05:51 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.15 2017/11/03 09:59:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.14 2014/02/01 08:05:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.15 2017/11/03 09:59:08 maxv Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -155,52 +155,52 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_TYPE(DIR32):
 		/* symbol + addend */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value += addr;
 		break;
 
 	case R_TYPE(DIR21L):
 		/* LR(symbol, addend) */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value = LR(addr, value);
 		break;
 
 	case R_TYPE(DIR17R):
 	case R_TYPE(DIR14R):
 		/* RR(symbol, addend) */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value = RR(addr, value);
 		break;
 
 	case R_TYPE(PCREL32):
 	case R_TYPE(PCREL17F):
 		/* symbol - PC - 8 + addend */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value += addr - (Elf_Word)where - 8;
 		break;
 
 	case R_TYPE(DPREL21L):
 		/* LR(symbol - GP, addend) */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value = LR(addr - GP, value);
 		break;
 
 	case R_TYPE(DPREL14R):
 		/* RR(symbol - GP, addend) */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value = RR(addr - GP, value);
 		break;
 
 	case R_TYPE(PLABEL32):
 		/* fptr(symbol) */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value = addr;
 		break;
 
 	case R_TYPE(SEGREL32):
 		/* symbol - SB + addend */
 		/* XXX SB */
-		addr = kobj_sym_lookup(ko, symidx);
+		kobj_sym_lookup(ko, symidx, &addr);
 		value += addr;
 		break;
 

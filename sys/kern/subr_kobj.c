@@ -1,6 +1,6 @@
-/*	$NetBSD: subr_kobj.c,v 1.62 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.63 2017/11/03 09:59:07 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1998-2000 Doug Rabson
  * Copyright (c) 2004 Peter Wemm
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.62 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.63 2017/11/03 09:59:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -873,21 +873,29 @@ kobj_jettison(kobj_t ko)
  *	Symbol lookup function to be used when the symbol index
  *	is known (ie during relocation).
  */
-uintptr_t
-kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
+int
+kobj_sym_lookup(kobj_t ko, uintptr_t symidx, uintptr_t *val)
 {
 	const Elf_Sym *sym;
 	const char *symbol;
 
-	/* Don't even try to lookup the symbol if the index is bogus. */
-	if (symidx >= ko->ko_symcnt)
-		return 0;
-
 	sym = ko->ko_symtab + symidx;
+
+	if (symidx == SHN_ABS) {
+		*val = (uintptr_t)sym->st_value;
+		return 0;
+	} else if (symidx >= ko->ko_symcnt) {
+		/*
+		 * Don't even try to lookup the symbol if the index is
+		 * bogus.
+		 */
+		return EINVAL;
+	}
 
 	/* Quick answer if there is a definition included. */
 	if (sym->st_shndx != SHN_UNDEF) {
-		return (uintptr_t)sym->st_value;
+		*val = (uintptr_t)sym->st_value;
+		return 0;
 	}
 
 	/* If we get here, then it is undefined and needs a lookup. */
@@ -895,7 +903,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 	case STB_LOCAL:
 		/* Local, but undefined? huh? */
 		kobj_error(ko, "local symbol undefined");
-		return 0;
+		return EINVAL;
 
 	case STB_GLOBAL:
 		/* Relative to Data or Function name */
@@ -904,17 +912,22 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 		/* Force a lookup failure if the symbol name is bogus. */
 		if (*symbol == 0) {
 			kobj_error(ko, "bad symbol name");
-			return 0;
+			return EINVAL;
+		}
+		if (sym->st_value == 0) {
+			kobj_error(ko, "bad value");
+			return EINVAL;
 		}
 
-		return (uintptr_t)sym->st_value;
+		*val = (uintptr_t)sym->st_value;
+		return 0;
 
 	case STB_WEAK:
 		kobj_error(ko, "weak symbols not supported");
-		return 0;
+		return EINVAL;
 
 	default:
-		return 0;
+		return EINVAL;
 	}
 }
 
@@ -946,7 +959,7 @@ static int
 kobj_checksyms(kobj_t ko, bool undefined)
 {
 	unsigned long rval;
-	Elf_Sym *sym, *ms;
+	Elf_Sym *sym, *ksym, *ms;
 	const char *name;
 	int error;
 
@@ -967,7 +980,7 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		 * module_lock).
 		 */
 		name = ko->ko_strtab + sym->st_name;
-		if (ksyms_getval_unlocked(NULL, name, &rval,
+		if (ksyms_getval_unlocked(NULL, name, (void **)&ksym, &rval,
 		    KSYMS_EXTERN) != 0) {
 			if (undefined) {
 				kobj_error(ko, "symbol `%s' not found",
@@ -979,6 +992,9 @@ kobj_checksyms(kobj_t ko, bool undefined)
 
 		/* Save values of undefined globals. */
 		if (undefined) {
+			if (ksym->st_shndx == SHN_ABS) {
+				sym->st_shndx = SHN_ABS;
+			}
 			sym->st_value = (Elf_Addr)rval;
 			continue;
 		}

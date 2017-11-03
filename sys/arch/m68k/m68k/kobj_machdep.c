@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3 2010/10/14 16:33:50 tsutsui Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.4 2017/11/03 09:59:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3 2010/10/14 16:33:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2017/11/03 09:59:08 maxv Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -45,6 +45,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	uintptr_t addr, tmp;
 	int rtype, symnum;
 	const Elf_Rela *rela;
+	int error;
 
 	if (!isrela) {
 		printf("kobj_reloc: support only RELA relocations\n");
@@ -61,8 +62,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_TYPE(PC32):
-		addr = kobj_sym_lookup(ko, symnum);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symnum, &addr);
+		if (error)
 			return -1;
 		tmp = (Elf_Addr)(addr + rela->r_addend) - (Elf_Addr)where;
 		if (*where != tmp)
@@ -71,8 +72,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_TYPE(32):
 	case R_TYPE(GLOB_DAT):
-		addr = kobj_sym_lookup(ko, symnum);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symnum, &addr);
+		if (error)
 			return -1;
 		tmp = (Elf_Addr)(addr + *where + rela->r_addend);
 		*where = tmp;
