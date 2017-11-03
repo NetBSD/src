@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.40 2017/11/03 18:42:35 maya Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.41 2017/11/03 19:20:27 maya Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.40 2017/11/03 18:42:35 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.41 2017/11/03 19:20:27 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -1006,10 +1006,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 			wsemul_vt100_output_normal(edp, *data, kernel);
 			continue;
 		}
-#ifdef DIAGNOSTIC
-		if (edp->state > sizeof(vt100_output) / sizeof(vt100_output[0]))
-			panic("wsemul_vt100: invalid state %d", edp->state);
-#endif
+		KASSERT(edp->state < __arraycount(vt100_output) - 1);
 		edp->state = vt100_output[edp->state - 1](edp, *data);
 	}
 	if (vd->flags & VTFL_CURSORON)

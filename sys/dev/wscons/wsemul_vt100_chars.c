@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_chars.c,v 1.14 2010/02/25 11:20:09 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_chars.c,v 1.15 2017/11/03 19:20:27 maya Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.14 2010/02/25 11:20:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.15 2017/11/03 19:20:27 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ vt100_setnrc(struct wsemul_vt100_emuldata *edp, int nrc)
 	int i;
 	struct vt100base_data *vd = &edp->bd;
 
-	KASSERT(nrc < sizeof(nrctable) / sizeof(nrctable[0]));
+	KASSERT(nrc < __arraycount(nrctable));
 
 	for (i = 0; i < 128; i++)
 		(*vd->emulops->mapchar)(vd->emulcookie, i, &edp->nrctab[i]);
