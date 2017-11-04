@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.22 2017/04/05 20:15:49 jdolecek Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.23 2017/11/04 21:02:37 jdolecek Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -77,7 +77,7 @@ struct scsipi_rw_10 {
 #define	WRITE_12		0xaa
 struct scsipi_rw_12 {
 	u_int8_t opcode;
-	u_int8_t byte2;		/* see scsipi_rw_big bits */
+	u_int8_t byte2;		/* see scsipi_rw_10 bits */
 	u_int8_t addr[4];
 	u_int8_t length[4];
 	u_int8_t byte11;
@@ -88,7 +88,7 @@ struct scsipi_rw_12 {
 #define	WRITE_16		0x8a
 struct scsipi_rw_16 {
 	u_int8_t opcode;
-	u_int8_t byte2;		/* see scsipi_rw_big bits */
+	u_int8_t byte2;		/* see scsipi_rw_10 bits */
 	u_int8_t addr[8];
 	u_int8_t length[4];
 	u_int8_t byte15;
