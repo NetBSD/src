@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.64 2017/11/04 12:14:41 martin Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.65 2017/11/04 22:17:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.64 2017/11/04 12:14:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.65 2017/11/04 22:17:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -980,7 +980,7 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		 * module_lock).
 		 */
 		name = ko->ko_strtab + sym->st_name;
-		if (ksyms_getval_unlocked(NULL, name, (void **)&ksym, &rval,
+		if (ksyms_getval_unlocked(NULL, name, &ksym, &rval,
 		    KSYMS_EXTERN) != 0) {
 			if (undefined) {
 				kobj_error(ko, "symbol `%s' not found",

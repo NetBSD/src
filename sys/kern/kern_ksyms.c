@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.86 2017/11/03 09:59:07 maxv Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.87 2017/11/04 22:17:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.86 2017/11/03 09:59:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.87 2017/11/04 22:17:55 christos Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -566,7 +566,7 @@ ksyms_addsyms_explicit(void *ehdr, void *symstart, size_t symsize,
  * Call with ksyms_lock, unless known that the symbol table can't change.
  */
 int
-ksyms_getval_unlocked(const char *mod, const char *sym, void **symp,
+ksyms_getval_unlocked(const char *mod, const char *sym, Elf_Sym **symp,
     unsigned long *val, int type)
 {
 	struct ksyms_symtab *st;
@@ -574,8 +574,7 @@ ksyms_getval_unlocked(const char *mod, const char *sym, void **symp,
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_CALLS)
-		printf("ksyms_getval_unlocked: mod %s sym %s valp %p\n",
-		    mod, sym, val);
+		printf("%s: mod %s sym %s valp %p\n", __func__, mod, sym, val);
 #endif
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
@@ -586,7 +585,7 @@ ksyms_getval_unlocked(const char *mod, const char *sym, void **symp,
 		if ((es = findsym(sym, st, type)) != NULL) {
 			*val = es->st_value;
 			if (symp)
-				*symp = (void *)es;
+				*symp = es;
 			return 0;
 		}
 	}
