@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.52 2015/07/27 15:45:20 msaitoh Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.53 2017/11/04 14:56:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.52 2015/07/27 15:45:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.53 2017/11/04 14:56:48 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -565,6 +565,25 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 	pp->ip_vector = idtvec;
 	pp->ip_cpu = ci;
 	apic_set_redir(sc, pin, idtvec, ci);
+
+#if defined(XEN)
+	/*
+	 * This is kludgy, and not the right place, but we can't bind
+	 * before the routing has been set to the appropriate 'vector'.
+	 * in x86/intr.c, this is done after idt_vec_set(), where this
+	 * would have been more appropriate to put this.
+	 */
+
+	int port, irq;
+	irq = vect2irq[idtvec];
+	port = bind_pirq_to_evtch(irq);
+	KASSERT(port < NR_EVENT_CHANNELS);
+
+	irq2port[irq] = port;
+
+	xen_atomic_set_bit(&ci->ci_evtmask[0], port);
+#endif
+
 }
 
 static void
@@ -573,6 +592,16 @@ ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
 {
 
 	ioapic_hwmask(pic, pin);
+
+#if defined(XEN)
+	int port, irq;
+	irq = vect2irq[idtvec];
+	port = bind_pirq_to_evtch(irq);
+	port = unbind_pirq_from_evtch(irq);
+
+	KASSERT(port < NR_EVENT_CHANNELS);
+#endif
+
 }
 
 #ifdef DDB
