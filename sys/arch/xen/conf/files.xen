@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.161 2017/11/04 14:56:48 cherry Exp $
+#	$NetBSD: files.xen,v 1.162 2017/11/04 15:24:42 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -232,7 +232,7 @@ include	"dev/pckbport/files.pckbport"
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
-file	arch/xen/xen/pciide_machdep.c	pciide_common
+file	arch/x86/pci/pciide_machdep.c	pciide_common
 
 device	pciback {unit = -1}
 attach	pciback at pci
@@ -382,7 +382,9 @@ defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
-file	arch/xen/xen/pci_intr_machdep.c	hypervisor & pci
+file	arch/x86/pci/pci_intr_machdep.c	hypervisor & pci
+file	arch/x86/pci/pci_msi_machdep.c	hypervisor & pci
+file	arch/x86/pci/msipic.c		hypervisor & pci
 file	arch/x86/isa/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif

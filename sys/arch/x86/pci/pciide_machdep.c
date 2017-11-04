@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.16 2016/10/15 16:46:14 jdolecek Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.17 2017/11/04 15:24:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.16 2016/10/15 16:46:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.17 2017/11/04 15:24:42 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.16 2016/10/15 16:46:14 jdolecek
 #include <machine/mpbiosvar.h>
 #endif
 
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 void *
 pciide_machdep_compat_intr_establish(device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *),
@@ -96,7 +97,9 @@ pciide_machdep_compat_intr_establish(device_t dev,
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return cookie;
 }
+#endif /* __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH */
 
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
 void
 pciide_machdep_compat_intr_disestablish(device_t dev, pci_chipset_tag_t pc,
     int chan, void *cookie)
@@ -104,3 +107,4 @@ pciide_machdep_compat_intr_disestablish(device_t dev, pci_chipset_tag_t pc,
 	isa_intr_disestablish(NULL, cookie);
 	return;
 }
+#endif /* __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH */
