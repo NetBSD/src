@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.6 2017/11/04 03:26:41 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.7 2017/11/04 06:12:26 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Exp  (Berkeley) Date: 2001/11/01 15:24:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: recover.c,v 1.6 2017/11/04 03:26:41 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.7 2017/11/04 06:12:26 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -115,17 +115,17 @@ __RCSID("$NetBSD: recover.c,v 1.6 2017/11/04 03:26:41 christos Exp $");
 #define	VI_FHEADER	"X-vi-recover-file: "
 #define	VI_PHEADER	"X-vi-recover-path: "
 
-static int	 rcv_copy __P((SCR *, int, char *));
-static void	 rcv_email __P((SCR *, char *));
-static char	*rcv_gets __P((char *, size_t, int));
-static int	 rcv_mailfile __P((SCR *, int, char *));
-static int	 rcv_mktemp __P((SCR *, char *, const char *, int));
+static int	 rcv_copy(SCR *, int, char *);
+static void	 rcv_email(SCR *, const char *);
+static char	*rcv_gets(char *, size_t, int);
+static int	 rcv_mailfile(SCR *, int, char *);
+static int	 rcv_mktemp(SCR *, char *, const char *, int);
 
 /*
  * rcv_tmp --
  *	Build a file name that will be used as the recovery file.
  *
- * PUBLIC: int rcv_tmp __P((SCR *, EXF *, char *));
+ * PUBLIC: int rcv_tmp(SCR *, EXF *, char *);
  */
 int
 rcv_tmp(SCR *sp, EXF *ep, char *name)
@@ -186,7 +186,7 @@ err:		msgq(sp, M_ERR,
  * rcv_init --
  *	Force the file to be snapshotted for recovery.
  *
- * PUBLIC: int rcv_init __P((SCR *));
+ * PUBLIC: int rcv_init(SCR *);
  */
 int
 rcv_init(SCR *sp)
@@ -248,7 +248,7 @@ err:	msgq(sp, M_ERR,
  *		sending email to the user if the file was modified
  *		ending the file session
  *
- * PUBLIC: int rcv_sync __P((SCR *, u_int));
+ * PUBLIC: int rcv_sync(SCR *, u_int);
  */
 int
 rcv_sync(SCR *sp, u_int flags)
@@ -505,7 +505,7 @@ checkok(int fd)
  * rcv_list --
  *	List the files that can be recovered by this user.
  *
- * PUBLIC: int rcv_list __P((SCR *));
+ * PUBLIC: int rcv_list(SCR *);
  */
 int
 rcv_list(SCR *sp)
@@ -614,7 +614,7 @@ next:		(void)fclose(fp);
  * rcv_read --
  *	Start a recovered file as the file to edit.
  *
- * PUBLIC: int rcv_read __P((SCR *, FREF *));
+ * PUBLIC: int rcv_read(SCR *, FREF *);
  */
 int
 rcv_read(SCR *sp, FREF *frp)
@@ -871,29 +871,61 @@ rcv_mktemp(SCR *sp, char *path, const char *dname, int perms)
 	return (fd);
 }
 
+extern char **environ;
+
 /*
  * rcv_email --
  *	Send email.
  */
 static void
-rcv_email(SCR *sp, char *fname)
+rcv_email(SCR *sp, const char *fname)
 {
 	struct stat sb;
-	char buf[MAXPATHLEN * 2 + 20];
+	char buf[BUFSIZ];
+	FILE *fin, *fout;
+	const char *argv[4];
+	size_t l;
 
-	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb))
+	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb) == -1) {
 		msgq_str(sp, M_SYSERR,
 		    _PATH_SENDMAIL, "071|not sending email: %s");
-	else {
-		/*
-		 * !!!
-		 * If you need to port this to a system that doesn't have
-		 * sendmail, the -t flag causes sendmail to read the message
-		 * for the recipients instead of specifying them some other
-		 * way.
-		 */
-		(void)snprintf(buf, sizeof(buf),
-		    "%s -t < %s", _PATH_SENDMAIL, fname);
-		(void)system(buf);
+		return;
 	}
+
+	/*
+	 * !!!
+	 * If you need to port this to a system that doesn't have
+	 * sendmail, the -t flag causes sendmail to read the message
+	 * for the recipients instead of specifying them some other
+	 * way.
+	 */
+	if ((fin = fopen(fname, "refl")) == NULL) {
+		msgq_str(sp, M_SYSERR,
+		    fname, "071|cannot open: %s");
+		return;
+	}
+
+	if (!checkok(fname)) {
+		(void)fclose(fin);
+		return;
+	}
+
+	argv[0] = _PATH_SENDMAIL;
+	argv[1] = "-t";
+	argv[2] = fname;
+	argv[3] = NULL;
+
+	fout = popenve(_PATH_SENDMAIL, argv, environ, "w");
+	if (fout == NULL) {
+		msgq_str(sp, M_SYSERR,
+		    _PATH_SENDMAIL, "071|cannot execute sendmail: %s");
+		fclose(fin);
+		return;
+	}
+
+	while ((x = fread(fin, 1, sizeof(buf), buf)) != 0)
+		(void)fwrite(fout, 1, x, buf);
+
+	(void)fclose(fin);
+	(void)pclose(fout);
 }
