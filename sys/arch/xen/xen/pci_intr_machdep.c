@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.20 2017/07/28 07:42:41 cherry Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.21 2017/11/04 14:56:48 cherry Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.20 2017/07/28 07:42:41 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.21 2017/11/04 14:56:48 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,7 +149,7 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #if NIOAPIC > 0
 end:
 #endif
-	evtch = xen_intr_map((int *)ihp, IST_LEVEL);
+	evtch = xen_pirq_alloc((intr_handle_t *)ihp, IST_LEVEL);
 	if (evtch == -1)
 		goto bad;
 

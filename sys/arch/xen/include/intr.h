@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.43 2017/11/04 09:22:16 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.44 2017/11/04 14:56:48 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -69,9 +69,6 @@ extern int irq2port[NR_EVENT_CHANNELS];
 int xen_intr_biglock_wrapper(void *);
 #endif
 
-int xen_intr_map(int *, int);
-struct pic *intr_findpic(int);
-void intr_add_pcibus(struct pcibus_attach_args *);
 #if defined(DOM0OPS) || NPCI > 0
 int xen_pirq_alloc(intr_handle_t *, int);
 #endif /* defined(DOM0OPS) || NPCI > 0 */
