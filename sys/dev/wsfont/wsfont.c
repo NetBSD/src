@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.61 2016/11/20 15:55:31 macallan Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.62 2017/11/04 08:33:28 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.61 2016/11/20 15:55:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.62 2017/11/04 08:33:28 maya Exp $");
 
 #include "opt_wsfont.h"
 
@@ -367,8 +367,6 @@ wsfont_rotate_cw_internal(struct wsdisplay_font *font)
 
 	/* Duplicate the existing font... */
 	newfont = malloc(sizeof(*font), M_DEVBUF, M_WAITOK);
-	if (newfont == NULL)
-		return (NULL);
 
 	*newfont = *font;
 
@@ -382,10 +380,6 @@ wsfont_rotate_cw_internal(struct wsdisplay_font *font)
 	newstride = (font->fontheight + 7) / 8;
 	newbits = malloc(newstride * font->fontwidth * font->numchars,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
-	if (newbits == NULL) {
-		free(newfont, M_DEVBUF);
-		return (NULL);
-	}
 
 	/* Rotate the font a bit at a time. */
 	for (n = 0; n < font->numchars; n++) {
@@ -438,8 +432,6 @@ wsfont_rotate_ccw_internal(struct wsdisplay_font *font)
 
 	/* Duplicate the existing font... */
 	newfont = malloc(sizeof(*font), M_DEVBUF, M_WAITOK);
-	if (newfont == NULL)
-		return (NULL);
 
 	*newfont = *font;
 
@@ -453,10 +445,6 @@ wsfont_rotate_ccw_internal(struct wsdisplay_font *font)
 	newstride = (font->fontheight + 7) / 8;
 	newbits = malloc(newstride * font->fontwidth * font->numchars,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
-	if (newbits == NULL) {
-		free(newfont, M_DEVBUF);
-		return (NULL);
-	}
 
 	/* Rotate the font a bit at a time. */
 	for (n = 0; n < font->numchars; n++) {
