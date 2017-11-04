@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.156 2017/08/15 08:51:38 maxv Exp $
+#	$NetBSD: files.xen,v 1.157 2017/11/04 07:01:45 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -14,6 +14,9 @@ defparam opt_kernbase.h	KERNBASE
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
+
+# Interrupt debug
+defflag opt_intrdebug.h	INTRDEBUG
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
