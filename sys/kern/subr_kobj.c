@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.63 2017/11/03 09:59:07 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.64 2017/11/04 12:14:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.63 2017/11/03 09:59:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.64 2017/11/04 12:14:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -874,7 +874,7 @@ kobj_jettison(kobj_t ko)
  *	is known (ie during relocation).
  */
 int
-kobj_sym_lookup(kobj_t ko, uintptr_t symidx, uintptr_t *val)
+kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 {
 	const Elf_Sym *sym;
 	const char *symbol;
