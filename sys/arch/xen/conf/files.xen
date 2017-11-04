@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.159 2017/11/04 08:55:50 cherry Exp $
+#	$NetBSD: files.xen,v 1.160 2017/11/04 09:22:16 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -138,6 +138,7 @@ file	arch/xen/x86/xen_bus_dma.c	machdep
 file	arch/x86/x86/bus_space.c	machdep
 file	arch/xen/x86/consinit.c		machdep
 file	arch/x86/x86/identcpu.c		machdep
+file	arch/xen/x86/pintr.c		machdep & dom0ops
 file	arch/xen/x86/intr.c		machdep
 file	arch/xen/x86/xen_ipi.c		multiprocessor
 file	arch/x86/x86/idt.c		machdep

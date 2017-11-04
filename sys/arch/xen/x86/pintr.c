@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2017/11/04 09:22:16 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.1 2017/11/04 09:22:16 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -132,7 +132,19 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2017/11/04 09:22:16 cherry Exp $");
 #include "opt_mpbios.h"
 
 #if NIOAPIC > 0
+/* XXX: todo - compat with lapic.c and XEN for x2apic */
+bool x2apic_mode __read_mostly = false;
+/* for x86/i8259.c */
+struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0,0}};
+/* for x86/ioapic.c */
+struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
+struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
+struct intrstub x2apic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
+struct intrstub x2apic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
 #include <machine/i82093var.h>
+int irq2port[NR_EVENT_CHANNELS] = {0};
+int irq2vect[256] = {0};
+int vect2irq[256] = {0};
 #endif /* NIOAPIC */
 #if NACPICA > 0
 #include <machine/mpconfig.h>
@@ -146,86 +158,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2017/11/04 09:22:16 cherry Exp $");
 #include <dev/pci/ppbreg.h>
 #endif
 
-/*
- * Fake interrupt handler structures for the benefit of symmetry with
- * other interrupt sources.
- */
-struct intrhand fake_softclock_intrhand;
-struct intrhand fake_softnet_intrhand;
-struct intrhand fake_softserial_intrhand;
-struct intrhand fake_timer_intrhand;
-struct intrhand fake_ipi_intrhand;
-
-/*
- * Initialize all handlers that aren't dynamically allocated, and exist
- * for each CPU. Also init ci_iunmask[].
- */
-void
-cpu_intr_init(struct cpu_info *ci)
-{
-	int i;
-#if defined(INTRSTACKSIZE)
-	char *cp;
-#endif
-
-	ci->ci_iunmask[0] = 0xfffffffe;
-	for (i = 1; i < NIPL; i++)
-		ci->ci_iunmask[i] = ci->ci_iunmask[i - 1] & ~(1 << i);
-
-#if defined(INTRSTACKSIZE)
-	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
-	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
-#endif
-	ci->ci_idepth = -1;
-}
-
-#if NPCI > 0 || NISA > 0
-void *
-intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg,
-    bool known_mpsafe, const char *xname)
-{
-	/* XXX xname registration not supported */
-	return intr_establish(legacy_irq, pic, pin, type, level, handler, arg,
-	    known_mpsafe);
-}
-
-void *
-intr_establish(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg,
-    bool known_mpsafe)
-{
-	struct pintrhand *ih;
-	int evtchn;
-	char evname[16];
-#ifdef DIAGNOSTIC
-	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
-		panic("intr_establish: bad legacy IRQ value");
-	if (legacy_irq == -1 && pic == &i8259_pic)
-		panic("intr_establish: non-legacy IRQ on i8259");
-#endif /* DIAGNOSTIC */
-	if (legacy_irq == -1) {
-#if NIOAPIC > 0
-		/* will do interrupts via I/O APIC */
-		legacy_irq = APIC_INT_VIA_APIC;
-		legacy_irq |= pic->pic_apicid << APIC_INT_APIC_SHIFT;
-		legacy_irq |= pin << APIC_INT_PIN_SHIFT;
-		snprintf(evname, sizeof(evname), "%s pin %d",
-		    pic->pic_name, pin);
-#else /* NIOAPIC */
-		return NULL;
-#endif /* NIOAPIC */
-	} else
-		snprintf(evname, sizeof(evname), "irq%d", legacy_irq);
-
-	evtchn = xen_intr_map(&legacy_irq, type);
-	ih = pirq_establish(legacy_irq & 0xff, evtchn, handler, arg, level,
-	    evname);
-	return ih;
-}
-
+#if defined(DOM0OPS) || NPCI > 0
 int
-xen_intr_map(int *pirq, int type)
+xen_pirq_alloc(intr_handle_t *pirq, int type)
 {
 	int irq = *pirq;
 #if NIOAPIC > 0
@@ -273,194 +208,6 @@ retry:
 		*pirq |= irq;
 	}
 #endif /* NIOAPIC */
-	return bind_pirq_to_evtch(irq);
+	return irq2port[irq];
 }
-
-void
-intr_disestablish(struct intrhand *ih)
-{
-	printf("intr_disestablish irq\n");
-}
-
-#if defined(MPBIOS) || NACPICA > 0
-struct pic *
-intr_findpic(int num)
-{
-#if NIOAPIC > 0
-	struct ioapic_softc *pic;
-
-	pic = ioapic_find_bybase(num);
-	if (pic != NULL)
-		return &pic->sc_pic;
-#endif
-	if (num < NUM_LEGACY_IRQS)
-		return &i8259_pic;
-
-	return NULL;
-}
-#endif
-
-#if NIOAPIC > 0 || NACPICA > 0
-struct intr_extra_bus {
-	int bus;
-	pcitag_t *pci_bridge_tag;
-	pci_chipset_tag_t pci_chipset_tag;
-	LIST_ENTRY(intr_extra_bus) list;
-};
-
-LIST_HEAD(, intr_extra_bus) intr_extra_buses =
-    LIST_HEAD_INITIALIZER(intr_extra_buses);
-
-#if NPCI > 0
-static int intr_scan_bus(int, int, intr_handle_t *);
-#endif
-
-void
-intr_add_pcibus(struct pcibus_attach_args *pba)
-{
-	struct intr_extra_bus *iebp;
-
-	iebp = malloc(sizeof(struct intr_extra_bus), M_TEMP, M_WAITOK);
-	iebp->bus = pba->pba_bus;
-	iebp->pci_chipset_tag = pba->pba_pc;
-	iebp->pci_bridge_tag = pba->pba_bridgetag;
-	LIST_INSERT_HEAD(&intr_extra_buses, iebp, list);
-}
-
-static int
-intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
-		    pci_chipset_tag_t *pc)
-{
-	struct intr_extra_bus *iebp;
-	struct mp_bus *mpb;
-
-	if (bus < 0)
-		return ENOENT;
-
-	if (bus < mp_nbus) {
-		mpb = &mp_busses[bus];
-		if (mpb->mb_pci_bridge_tag == NULL)
-			return ENOENT;
-		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
-		*pc = mpb->mb_pci_chipset_tag;
-		return 0;
-	}
-
-	LIST_FOREACH(iebp, &intr_extra_buses, list) {
-		if (iebp->bus == bus) {
-			if (iebp->pci_bridge_tag == NULL)
-				return ENOENT;
-			*pci_bridge_tag = *iebp->pci_bridge_tag;
-			*pc = iebp->pci_chipset_tag;
-			return 0;
-		}
-	}
-	return ENOENT;
-}
-
-/* XXX: Unify with x86/intr.c */
-int
-intr_find_mpmapping(int bus, int pin, intr_handle_t *handle)
-{
-#if NPCI > 0
-	int dev, func;
-	pcitag_t pci_bridge_tag;
-	pci_chipset_tag_t pc;
-#endif
-
-#if NPCI > 0
-	while (intr_scan_bus(bus, pin, handle) != 0) {
-		if (intr_find_pcibridge(bus, &pci_bridge_tag,
-		    &pc) != 0)
-			return ENOENT;
-		dev = pin >> 2;
-		pin = pin & 3;
-		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
-		pci_decompose_tag(pc, pci_bridge_tag, &bus,
-		    &dev, &func);
-		pin |= (dev << 2);
-	}
-	return 0;
-#else
-	return intr_scan_bus(bus, pin, handle);
-#endif
-}
-
-#if NPCI > 0
-static int
-intr_scan_bus(int bus, int pin, intr_handle_t *handle)
-{
-	struct mp_intr_map *mip, *intrs;
-
-	if (bus < 0 || bus >= mp_nbus)
-		return ENOENT;
-
-	intrs = mp_busses[bus].mb_intrs;
-	if (intrs == NULL)
-		return ENOENT;
-
-	for (mip = intrs; mip != NULL; mip = mip->next) {
-		if (mip->bus_pin == pin) {
-#if NACPICA > 0
-			if (mip->linkdev != NULL)
-				if (mpacpi_findintr_linkdev(mip) != 0)
-					continue;
-#endif
-			*handle = mip->ioapic_ih;
-			return 0;
-		}
-	}
-	return ENOENT;
-}
-#endif /* NPCI > 0 */
-#endif /* NIOAPIC > 0 || NACPICA > 0 */
-#endif /* NPCI > 0 || NISA > 0 */
-
-
-#ifdef INTRDEBUG
-void
-intr_printconfig(void)
-{
-	int i;
-	struct intrhand *ih;
-	struct intrsource *isp;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("%s: interrupt masks:\n", device_xname(ci->ci_dev));
-		for (i = 0; i < NIPL; i++)
-			printf("IPL %d mask %lx unmask %lx\n", i,
-			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
-		for (i = 0; i < MAX_INTR_SOURCES; i++) {
-			isp = ci->ci_isources[i];
-			if (isp == NULL)
-				continue;
-			printf("%s source %d is pin %d from pic %s maxlevel %d\n",
-			    device_xname(ci->ci_dev), i, isp->is_pin,
-			    isp->is_pic->pic_name, isp->is_maxlevel);
-			for (ih = isp->is_handlers; ih != NULL;
-			     ih = ih->ih_next)
-				printf("\thandler %p level %d\n",
-				    ih->ih_fun, ih->ih_level);
-
-		}
-	}
-}
-#endif
-
-void
-cpu_intr_redistribute(void)
-{
-
-	/* XXX nothing */
-}
-
-u_int
-cpu_intr_count(struct cpu_info *ci)
-{
-
-	KASSERT(ci->ci_nintrhand >= 0);
-
-	return ci->ci_nintrhand;
-}
+#endif /* defined(DOM0OPS) || NPCI > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.42 2017/07/16 14:02:48 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.43 2017/11/04 09:22:16 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -61,7 +61,9 @@ struct evtsource {
 };
 
 extern struct intrstub xenev_stubs[];
-
+extern int irq2vect[256];
+extern int vect2irq[256];
+extern int irq2port[NR_EVENT_CHANNELS];
 
 #ifdef MULTIPROCESSOR
 int xen_intr_biglock_wrapper(void *);
@@ -70,6 +72,9 @@ int xen_intr_biglock_wrapper(void *);
 int xen_intr_map(int *, int);
 struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
+#if defined(DOM0OPS) || NPCI > 0
+int xen_pirq_alloc(intr_handle_t *, int);
+#endif /* defined(DOM0OPS) || NPCI > 0 */
 
 #ifdef MULTIPROCESSOR
 void xen_ipi_init(void);
