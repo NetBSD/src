@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.73 2017/07/16 14:02:48 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.74 2017/11/04 10:26:14 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.73 2017/07/16 14:02:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.74 2017/11/04 10:26:14 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -114,6 +114,81 @@ physdev_op_t physdev_op_notify = {
 	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
 };
 #endif
+
+static void xen_evtchn_mask(struct pic *, int);
+static void xen_evtchn_unmask(struct pic *, int);
+static void xen_evtchn_addroute(struct pic *, struct cpu_info *, int, int, int);
+static void xen_evtchn_delroute(struct pic *, struct cpu_info *, int, int, int);
+static bool xen_evtchn_trymask(struct pic *, int);
+
+
+struct pic xen_pic = {
+	.pic_name = "xenev0",
+	.pic_type = PIC_XEN,
+	.pic_vecbase = 0,
+	.pic_apicid = 0,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
+	.pic_hwmask = xen_evtchn_mask,
+	.pic_hwunmask = xen_evtchn_unmask,
+	.pic_addroute = xen_evtchn_addroute,
+	.pic_delroute = xen_evtchn_delroute,
+	.pic_trymask = xen_evtchn_trymask,
+	.pic_level_stubs = xenev_stubs,
+	.pic_edge_stubs = xenev_stubs,
+};
+	
+/*
+ * We try to stick to the traditional x86 PIC semantics wrt Xen
+ * events.
+ *
+ * PIC pins exist in a global namespace which may be hierarchical, and
+ * are mapped to a cpu bus concept called 'IRQ' numbers, which are
+ * also global, but linear. Thus a PIC, pin tuple will always map to
+ * an IRQ number. These tuples can alias to the same IRQ number, thus
+ * causing IRQ "sharing". IRQ numbers can be bound to specific CPUs,
+ * and to specific callback vector indices on the CPU called idt_vec,
+ * which are aliases to handlers meant to run on destination
+ * CPUs. This binding can also happen at interrupt time and resolved
+ * 'round-robin' between all CPUs, depending on the lapic setup. In
+ * this case, all CPUs need to have identical idt_vec->handler
+ * mappings.
+ *
+ * The job of pic_addroute() is to setup the 'wiring' between the
+ * source pin, and the destination CPU handler, ideally on a specific
+ * CPU in MP systems (or 'round-robin').
+ *
+ * On Xen, a global namespace of 'events' exist, which are initially
+ * bound to nothing. This is similar to the relationship between
+ * realworld realworld IRQ numbers wrt PIC pins, since before routing,
+ * IRQ numbers by themselves have no causal connection setup with the
+ * real world. (Except for the hardwired cases on the PC Architecture,
+ * which we ignore for the purpose of this description). However the
+ * really important routing is from pin to idt_vec. On PIC_XEN, all
+ * three (pic, irq, idt_vec) belong to the same namespace and are
+ * identical. Further, the mapping between idt_vec and the actual
+ * callback handler is setup via calls to the evtchn.h api - this
+ * last bit is analogous to x86/idt.c:idt_vec_set() on real h/w
+ *
+ * For now we handle two cases:
+ * - IPC style events - eg: timer, PV devices, etc.
+ * - dom0 physical irq bound events.
+ *
+ * In the case of IPC style events, we currently externalise the
+ * event binding by using evtchn.h functions. From the POV of
+ * PIC_XEN ,  'pin' , 'irq' and 'idt_vec' are all identical to the
+ * port number of the event.
+ *
+ * In the case of dom0 physical irq bound events, we currently
+ * event binding by exporting evtchn.h functions. From the POV of
+ * PIC_LAPIC/PIC_IOAPIC, the 'pin' is the hardware pin, the 'irq' is
+ * the x86 global irq number  - the port number is extracted out of a
+ * global array (this is currently kludgy and breaks API abstraction)
+ * and the binding happens during pic_addroute() of the ioapic.
+ *
+ * Later when we integrate more tightly with x86/intr.c, we will be
+ * able to conform better to (PIC_LAPIC/PIC_IOAPIC)->PIC_XEN
+ * cascading model.
+ */
 
 int debug_port = -1;
 
@@ -358,6 +433,96 @@ splx:
 }
 
 #define PRIuCPUID	"lu" /* XXX: move this somewhere more appropriate */
+
+/* PIC callbacks */
+/* pic "pin"s are conceptually mapped to event port numbers */
+static void
+xen_evtchn_mask(struct pic *pic, int pin)
+{
+	evtchn_port_t evtchn = pin;
+
+	KASSERT(pic->pic_type == PIC_XEN);
+	KASSERT(evtchn < NR_EVENT_CHANNELS);
+
+	hypervisor_mask_event(evtchn);
+	
+}
+
+static void
+xen_evtchn_unmask(struct pic *pic, int pin)
+{
+	evtchn_port_t evtchn = pin;
+
+	KASSERT(pic->pic_type == PIC_XEN);
+	KASSERT(evtchn < NR_EVENT_CHANNELS);
+
+	hypervisor_unmask_event(evtchn);
+	
+}
+
+
+static void
+xen_evtchn_addroute(struct pic *pic, struct cpu_info *ci, int pin, int idt_vec, int type)
+{
+
+	evtchn_port_t evtchn = pin;
+
+	/* Events are simulated as level triggered interrupts */
+	KASSERT(type == IST_LEVEL); 
+
+	KASSERT(evtchn < NR_EVENT_CHANNELS);
+#if notyet
+	evtchn_port_t boundport = idt_vec;
+#endif
+	
+	KASSERT(pic->pic_type == PIC_XEN);
+
+	xen_atomic_set_bit(&ci->ci_evtmask[0], evtchn);
+
+}
+
+static void
+xen_evtchn_delroute(struct pic *pic, struct cpu_info *ci, int pin, int idt_vec, int type)
+{
+	/*
+	 * XXX: In the future, this is a great place to
+	 * 'unbind' events to underlying events and cpus.
+	 * For now, just disable interrupt servicing on this cpu for
+	 * this pin aka cpu.
+	 */
+	evtchn_port_t evtchn = pin;
+
+	/* Events are simulated as level triggered interrupts */
+	KASSERT(type == IST_LEVEL); 
+
+	KASSERT(evtchn < NR_EVENT_CHANNELS);
+#if notyet
+	evtchn_port_t boundport = idt_vec;
+#endif
+	
+	KASSERT(pic->pic_type == PIC_XEN);
+
+	xen_atomic_clear_bit(&ci->ci_evtmask[0], evtchn);
+}
+
+static bool
+xen_evtchn_trymask(struct pic *pic, int pin)
+{
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
+
+	/* Already masked! */
+	if (xen_atomic_test_bit(&s->evtchn_mask[0], pin))
+		return true;
+	
+	/* Pending - bail! */
+	if (xen_atomic_test_bit(&s->evtchn_pending[0], pin))
+		return false;
+
+	/* XXX: There's a race here - anything we can do about this ? */
+	/* Mask it */
+	xen_atomic_set_bit(&s->evtchn_mask[0], pin);
+	return true;
+}
 
 evtchn_port_t
 bind_vcpu_to_evtch(cpuid_t vcpu)
