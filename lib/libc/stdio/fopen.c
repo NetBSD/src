@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.15 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fopen.c,v 1.16 2017/11/04 07:26:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.15 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.16 2017/11/04 07:26:35 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,6 +88,7 @@ fopen(const char *file, const char *mode)
 	 * open. (We treat the short as unsigned, and special-case -1).
 	 */
 	if (f >= USHRT_MAX) {
+		(void)close(f);
 		errno = EMFILE;
 		goto release;
 	}
