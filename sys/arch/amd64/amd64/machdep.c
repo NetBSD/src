@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.274 2017/10/29 10:25:28 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.275 2017/11/04 08:50:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2017/10/29 10:25:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2017/11/04 08:50:47 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1747,6 +1747,7 @@ init_x86_64(paddr_t first_avail)
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
 		pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
+		idt_vec_reserve(x);
 		xen_idt[xen_idt_idx].vector = x;
 
 		switch (x) {
@@ -1776,6 +1777,7 @@ init_x86_64(paddr_t first_avail)
 	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 #else
+	idt_vec_reserve(128);
 	xen_idt[xen_idt_idx].vector = 128;
 	xen_idt[xen_idt_idx].flags = SEL_KPL;
 	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
