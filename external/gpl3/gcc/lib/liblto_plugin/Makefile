@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/04/20 17:18:52 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2017/11/04 16:03:12 kamil Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -30,6 +30,10 @@ LIBDIR=		/usr/libexec
 
 SHLIB_MAJOR=	0
 SHLIB_MINOR=	0
+
+LIBIBERTYDIR!=	cd ${.CURDIR}/../../lib/libiberty && ${PRINTOBJDIR}
+LDADD+=		-L${LIBIBERTYDIR} -liberty
+DPADD+=		${LIBIBERTYDIR}/libiberty.a
 
 # Yuck, we have to run configure to generate this one...
 CLEANFILES+=	config.h
