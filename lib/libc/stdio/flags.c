@@ -1,4 +1,4 @@
-/*	$NetBSD: flags.c,v 1.17 2012/11/15 03:50:36 christos Exp $	*/
+/*	$NetBSD: flags.c,v 1.18 2017/11/04 02:49:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)flags.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: flags.c,v 1.17 2012/11/15 03:50:36 christos Exp $");
+__RCSID("$NetBSD: flags.c,v 1.18 2017/11/04 02:49:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,8 +88,9 @@ __sflags(const char *mode, int *optr)
 
 	/*
 	 * [rwa]\+ or [rwa]b\+ means read and write 
-	 * f means open only plain files,
 	 * e means set close on exec.
+	 * f means open only plain files.
+	 * l means don't follow symlinks.
 	 * x means exclusive open.
 	 */
 	for (; *mode; mode++)
@@ -98,16 +99,19 @@ __sflags(const char *mode, int *optr)
 			ret = __SRW;
 			m = O_RDWR;
 			break;
-		case 'f':
-			o |= O_NONBLOCK;
+		case 'b':
 			break;
 		case 'e':
 			o |= O_CLOEXEC;
 			break;
+		case 'f':
+			o |= O_NONBLOCK;
+			break;
+		case 'l':
+			o |= O_NOFOLLOW;
+			break;
 		case 'x':
 			o |= O_EXCL;
-			break;
-		case 'b':
 			break;
 		default:	/* We could produce a warning here */
 			break;
