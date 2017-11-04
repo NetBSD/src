@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.32 2017/11/04 02:49:55 christos Exp $
+.\"	$NetBSD: fopen.3,v 1.33 2017/11/04 07:59:17 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,11 +99,11 @@ is ignored.
 .It Sq e
 The letter
 .Sq e
-in the mode string sets the close-on-exec 
+in the mode string sets the close-on-exec
 .Pq Dv O_CLOEXEC
 flag of the file descriptor, which means that it will not be available
 after an
-.Xr exec 2
+.Xr exec 3
 system call.
 This is a non
 .St -ansiC
@@ -221,9 +221,7 @@ Upon successful completion
 .Fn fdopen
 and
 .Fn freopen
-return a
-.Tn FILE
-pointer.
+return a FILE pointer.
 Otherwise,
 .Dv NULL
 is returned and the global variable
