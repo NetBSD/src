@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.5 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.6 2017/11/04 03:26:41 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Exp  (Berkeley) Date: 2001/11/01 15:24:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: recover.c,v 1.5 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.6 2017/11/04 03:26:41 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -482,6 +482,22 @@ err:	if (!issync)
 }
 
 /*
+ * Since vi creates recovery files only accessible by the user, files
+ * accessible by group or others are probably malicious so avoid them.
+ * This is simpler than checking for getuid() == st.st_uid and we want
+ * to preserve the functionality that root can recover anything which
+ * means that root should know better and be careful.
+ */
+static int
+checkok(int fd)
+{
+	struct stat sb;
+
+	return fstat(fd, &sb) != -1 && S_ISREG(sb.st_mode) &&
+	    (sb.st_mode & (S_IRWXG|S_IRWXO)) == 0;
+}
+
+/*
  *	people making love
  *	never exactly the same
  *	just like a snowflake
@@ -525,8 +541,13 @@ rcv_list(SCR *sp)
 		 * if we're using fcntl(2), there's no way to lock a file
 		 * descriptor that's not open for writing.
 		 */
-		if ((fp = fopen(dp->d_name, "r+")) == NULL)
+		if ((fp = fopen(dp->d_name, "r+efl")) == NULL)
 			continue;
+
+		if (!checkok(fileno(fp))) {
+			(void)fclose(fp);
+			continue;
+		}
 
 		switch (file_lock(sp, NULL, NULL, fileno(fp), 1)) {
 		case LOCK_FAILED:
@@ -638,8 +659,14 @@ rcv_read(SCR *sp, FREF *frp)
 		 * if we're using fcntl(2), there's no way to lock a file
 		 * descriptor that's not open for writing.
 		 */
-		if ((fd = open(recpath, O_RDWR, 0)) == -1)
+		if ((fd = open(recpath, O_RDWR|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC,
+		    0)) == -1)
 			continue;
+
+		if (!checkok(fd)) {
+			(void)close(fd);
+			continue;
+		}
 
 		switch (file_lock(sp, NULL, NULL, fd, 1)) {
 		case LOCK_FAILED:
