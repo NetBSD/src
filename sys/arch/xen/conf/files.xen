@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.158 2017/11/04 08:50:47 cherry Exp $
+#	$NetBSD: files.xen,v 1.159 2017/11/04 08:55:50 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -256,7 +256,7 @@ include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/xen/xen/xen_acpi_machdep.c	acpi
 file	arch/x86/x86/mpacpi.c		acpi
-file	arch/x86/x86/i8259.c
+file	arch/x86/x86/i8259.c		dom0ops
 
 # Stubs for x86 routines not included in the system
 file	arch/x86/x86/x86_stub.c
