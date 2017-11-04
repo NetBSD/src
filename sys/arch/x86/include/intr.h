@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.51 2017/07/16 14:02:48 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.52 2017/11/04 14:56:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -117,6 +117,18 @@ struct intrsource {
  */
 
 struct intrhand {
+#if defined(XEN)
+	/*
+	 * Note: This is transitional and will go away.
+	 *
+	 * We ought to use a union here, but too much effort.
+	 * We use this field to tear down the cookie handed to us
+	 * via x86/intr.c:intr_disestablish();
+	 * Interestingly, the intr_establish_xname() function returns
+	 * a "void *" - so we abuse this for now.
+	 */
+	int	pic_type; /* Overloading wrt struct pintrhand */
+#endif
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_level;
@@ -124,10 +136,9 @@ struct intrhand {
 	void	*ih_realarg;
 	struct	intrhand *ih_next;
 	struct	intrhand **ih_prevp;
-#if !defined(XEN)
 	int	ih_pin;
 	int	ih_slot;
-#else
+#if defined(XEN)
 	struct	intrhand *ih_evt_next;
 #endif
 	struct cpu_info *ih_cpu;

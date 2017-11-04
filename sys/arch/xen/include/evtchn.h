@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.24 2017/07/16 05:03:36 cherry Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.25 2017/11/04 14:56:48 cherry Exp $	*/
 
 /*
  *
@@ -60,6 +60,8 @@ int unbind_virq_from_evtch(int);
 evtchn_port_t bind_vcpu_to_evtch(cpuid_t);
 
 struct pintrhand {
+	/* See comments in x86/include/intr.h:struct intrhand {} */
+	int pic_type;
 	int pirq;
 	int evtch;
 	int (*func)(void *);

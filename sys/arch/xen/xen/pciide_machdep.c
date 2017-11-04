@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.19 2017/07/16 06:14:24 cherry Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.20 2017/11/04 14:56:48 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.19 2017/07/16 06:14:24 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.20 2017/11/04 14:56:48 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ pciide_machdep_compat_intr_establish(device_t dev,
 	}
 #endif
 	xenih |= PCIIDE_COMPAT_IRQ(chan);
-	evtch = xen_intr_map((int *)&xenih, IST_EDGE);
+	evtch = xen_pirq_alloc((intr_handle_t *)&xenih, IST_EDGE);
 	if (evtch == -1)
 		return NULL;
 #if NIOAPIC > 0

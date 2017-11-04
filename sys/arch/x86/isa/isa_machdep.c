@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.36 2017/07/21 12:27:48 cherry Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.37 2017/11/04 14:56:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.36 2017/07/21 12:27:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.37 2017/11/04 14:56:48 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 
 	mpih |= APIC_IRQ_LEGACY_IRQ(irq);
 
-	evtch = xen_intr_map((int *)&mpih, type); /* XXX: legacy - xen just tosses irq back at us */
+	evtch = xen_pirq_alloc((intr_handle_t *)&mpih, type); /* XXX: legacy - xen just tosses irq back at us */
 	if (evtch == -1)
 		return NULL;
 #if NIOAPIC > 0
