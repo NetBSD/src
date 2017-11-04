@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.186 2017/10/25 06:32:59 kre Exp $
+# $NetBSD: shl.mi,v 1.187 2017/11/04 16:21:49 kamil Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -297,7 +297,7 @@
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.0.debug	comp-sys-debug	debug,gcc
+./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.1.debug	comp-sys-debug	debug,gcc
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-obsolete		debug,compattestfile,atf,obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/tls/h_tls_dlopen.so.1.debug	tests-lib-debug		debug,compattestfile,atf
@@ -320,4 +320,3 @@
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a			comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso3_g.a			comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a			comp-c-debuglib	atf,debuglib,compattestfile
-
