@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.27 2009/03/14 15:36:16 dsl Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.28 2017/11/04 22:17:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2009 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.27 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.28 2017/11/04 22:17:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <ddb/ddb.h>
 
+#include <machine/db_machdep.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.27 2009/03/14 15:36:16 dsl Exp $");
 
 #define	ELFSIZE		DB_ELFSIZE
 
+#include <ddb/ddb.h>
 #include <sys/exec_elf.h>
 
 static char	*db_elf_find_strtab(db_symtab_t *);
