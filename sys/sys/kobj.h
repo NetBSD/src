@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.17 2017/11/03 09:59:07 maxv Exp $	*/
+/*	$NetBSD: kobj.h,v 1.18 2017/11/04 12:14:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ int		kobj_stat(kobj_t, vaddr_t *, size_t *);
 int		kobj_find_section(kobj_t, const char *, void **, size_t *);
 
 /* MI-MD interface. */
-int		kobj_sym_lookup(kobj_t, uintptr_t, uintptr_t *);
+int		kobj_sym_lookup(kobj_t, uintptr_t, Elf_Addr *);
 int		kobj_reloc(kobj_t, uintptr_t, const void *, bool, bool);
 int		kobj_machdep(kobj_t, void *, size_t, bool);
 
