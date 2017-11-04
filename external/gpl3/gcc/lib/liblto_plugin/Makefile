@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/11/04 16:03:12 kamil Exp $
+#	$NetBSD: Makefile,v 1.6 2017/11/04 16:21:49 kamil Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -29,7 +29,7 @@ LIBDIR=		/usr/libexec
 .if ${MKGCC} != "no"
 
 SHLIB_MAJOR=	0
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 LIBIBERTYDIR!=	cd ${.CURDIR}/../../lib/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${LIBIBERTYDIR} -liberty
