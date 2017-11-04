@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.9 2017/06/02 19:30:10 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.10 2017/11/04 01:52:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -74,7 +74,9 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 	gc->gc_lines = lines;
 	gc->gc_buckets = NULL;
 	gc->gc_numbuckets = 0;
-	gc->gc_buckets = kmem_alloc(sizeof(gc_bucket) * NBUCKETS, KM_SLEEP);
+	// XXX: Never free?
+	gc->gc_buckets = kmem_alloc(sizeof(*gc->gc_buckets) * NBUCKETS,
+	    KM_SLEEP);
 	gc->gc_nbuckets = NBUCKETS;
 	return glyphcache_reconfig(gc, cellwidth, cellheight, attr);
 
