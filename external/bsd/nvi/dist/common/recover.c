@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.8 2017/11/04 06:15:56 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.9 2017/11/04 14:20:12 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Exp  (Berkeley) Date: 2001/11/01 15:24:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: recover.c,v 1.8 2017/11/04 06:15:56 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.9 2017/11/04 14:20:12 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -871,8 +871,6 @@ rcv_mktemp(SCR *sp, char *path, const char *dname, int perms)
 	return (fd);
 }
 
-extern char **environ;
-
 /*
  * rcv_email --
  *	Send email.
@@ -883,7 +881,6 @@ rcv_email(SCR *sp, const char *fname)
 	struct stat sb;
 	char buf[BUFSIZ];
 	FILE *fin, *fout;
-	const char *argv[4];
 	size_t l;
 
 	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb) == -1) {
@@ -910,12 +907,7 @@ rcv_email(SCR *sp, const char *fname)
 		return;
 	}
 
-	argv[0] = _PATH_SENDMAIL;
-	argv[1] = "-t";
-	argv[2] = fname;
-	argv[3] = NULL;
-
-	fout = popenve(_PATH_SENDMAIL, __UNCONST(argv), environ, "w");
+	fout = popen(_PATH_SENDMAIL " -t", "w");
 	if (fout == NULL) {
 		msgq_str(sp, M_SYSERR,
 		    _PATH_SENDMAIL, "326|cannot execute sendmail: %s");
