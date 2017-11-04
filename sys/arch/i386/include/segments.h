@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.62 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.63 2017/11/04 08:50:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -200,12 +200,12 @@ void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 void update_descriptor(union descriptor *, union descriptor *);
 
-#if !defined(XEN)
+
 void idt_vec_reserve(int);
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
 void idt_vec_free(int);
-#endif
+
 
 #endif /* _KERNEL */
 

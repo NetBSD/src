@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.32 2017/11/01 07:14:29 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.33 2017/11/04 08:50:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -245,12 +245,12 @@ void set_mem_segment(struct mem_segment_descriptor *, void *, size_t,
 void cpu_init_idt(void);
 void update_descriptor(void *, void *);
 
-#if !defined(XEN)
+
 void idt_vec_reserve(int);
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
 void idt_vec_free(int);
-#endif
+
 
 struct lwp;
 void cpu_segregs64_zero(struct lwp *);
