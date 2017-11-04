@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.23 2017/11/04 07:38:42 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.24 2017/11/04 08:58:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23 2017/11/04 07:38:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24 2017/11/04 08:58:30 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -471,8 +471,11 @@ fpusave_cpu(bool save)
 				break;
 
 			case FPU_SAVE_XSAVE:
-			case FPU_SAVE_XSAVEOPT:
 				xsave(&pcb->pcb_savefpu, x86_xsave_features);
+				break;
+
+			case FPU_SAVE_XSAVEOPT:
+				xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
 				break;
 		}
 	}
@@ -559,8 +562,9 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 		fpu_save->sv_xmm.fx_cw = x87_cw;
 
 		/* Force a reload of CW */
-		if (x86_fpu_save == FPU_SAVE_XSAVE ||
-		    x86_fpu_save == FPU_SAVE_XSAVEOPT) {
+		if ((x87_cw != __INITIAL_NPXCW__) &&
+		    (x86_fpu_save == FPU_SAVE_XSAVE ||
+		    x86_fpu_save == FPU_SAVE_XSAVEOPT)) {
 			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
 			    XCR0_X87;
 		}
