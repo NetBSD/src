@@ -1,4 +1,7 @@
-/*	 $NetBSD: i82093var.h,v 1.4 2010/03/22 16:43:08 cegger Exp $ */
+/*	 $NetBSD: i82093var.h,v 1.5 2017/11/04 09:31:08 cherry Exp $ */
+
+#ifndef _XEN_I82093VAR_H_
+#define _XEN_I82093VAR_H_
 
 #include "opt_xen.h"
 #define _IOAPIC_CUSTOM_RW
@@ -36,3 +39,5 @@ ioapic_write_ul(struct ioapic_softc *sc, int regid, uint32_t val)
 	if (ret)
 		printf("PHYSDEVOP_APIC_WRITE ret %d\n", ret);
 }
+
+#endif /* !_XEN_I82093VAR_H_ */
