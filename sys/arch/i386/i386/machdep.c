@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.797 2017/10/29 10:01:21 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.798 2017/11/04 08:50:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.797 2017/10/29 10:01:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.798 2017/11/04 08:50:47 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1355,6 +1355,7 @@ init386(paddr_t first_avail)
 	xen_idt_idx = 0;
 	for (x = 0; x < 32; x++) {
 		KASSERT(xen_idt_idx < MAX_XEN_IDT);
+		idt_vec_reserve(x);
 		xen_idt[xen_idt_idx].vector = x;
 
 		switch (x) {
@@ -1377,6 +1378,7 @@ init386(paddr_t first_avail)
 		xen_idt_idx++;
 	}
 	KASSERT(xen_idt_idx < MAX_XEN_IDT);
+	idt_vec_reserve(128);
 	xen_idt[xen_idt_idx].vector = 128;
 	xen_idt[xen_idt_idx].flags = SEL_UPL;
 	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
