@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.21 2017/11/03 07:14:24 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.22 2017/11/04 07:35:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2017/11/03 07:14:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22 2017/11/04 07:35:00 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -233,6 +233,7 @@ fpuinit(struct cpu_info *ci)
 void
 fpuinit_mxcsr_mask(void)
 {
+#ifndef XEN
 	union savefpu fpusave __aligned(16);
 	u_long cr0, psl;
 
@@ -256,6 +257,12 @@ fpuinit_mxcsr_mask(void)
 	} else {
 		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
 	}
+#else
+	/*
+	 * XXX: Does the detection above work on Xen?
+	 */
+	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+#endif
 }
 
 /*
