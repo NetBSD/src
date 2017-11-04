@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.5 2017/08/07 17:10:09 maxv Exp $	*/
+/*	$NetBSD: idt.c,v 1.6 2017/11/04 08:50:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.5 2017/08/07 17:10:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.6 2017/11/04 08:50:47 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.5 2017/08/07 17:10:09 maxv Exp $");
 
 #include <machine/segments.h>
 
+/* On xen PV this is just numberspace management - used in x86/intr.c */
 #if !defined(XEN)
 
 struct gate_descriptor *idt;
+#endif
+
 static char idt_allocmap[NIDT];
 
 /*
@@ -120,8 +123,10 @@ idt_vec_set(int vec, void (*function)(void))
 {
 
 	KASSERT(idt_allocmap[vec] == 1);
+#if !defined(XEN)
 	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
+#endif
 }
 
 /*
@@ -131,8 +136,9 @@ void
 idt_vec_free(int vec)
 {
 
+#if !defined(XEN)
 	unsetgate(&idt[vec]);
+#endif
 	idt_allocmap[vec] = 0;
 }
 
-#endif /* !defined(XEN) */
