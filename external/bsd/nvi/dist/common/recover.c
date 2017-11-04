@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.7 2017/11/04 06:12:26 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.8 2017/11/04 06:15:56 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Exp  (Berkeley) Date: 2001/11/01 15:24:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: recover.c,v 1.7 2017/11/04 06:12:26 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.8 2017/11/04 06:15:56 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -901,11 +901,11 @@ rcv_email(SCR *sp, const char *fname)
 	 */
 	if ((fin = fopen(fname, "refl")) == NULL) {
 		msgq_str(sp, M_SYSERR,
-		    fname, "071|cannot open: %s");
+		    fname, "325|cannot open: %s");
 		return;
 	}
 
-	if (!checkok(fname)) {
+	if (!checkok(fileno(fin))) {
 		(void)fclose(fin);
 		return;
 	}
@@ -915,16 +915,16 @@ rcv_email(SCR *sp, const char *fname)
 	argv[2] = fname;
 	argv[3] = NULL;
 
-	fout = popenve(_PATH_SENDMAIL, argv, environ, "w");
+	fout = popenve(_PATH_SENDMAIL, __UNCONST(argv), environ, "w");
 	if (fout == NULL) {
 		msgq_str(sp, M_SYSERR,
-		    _PATH_SENDMAIL, "071|cannot execute sendmail: %s");
+		    _PATH_SENDMAIL, "326|cannot execute sendmail: %s");
 		fclose(fin);
 		return;
 	}
 
-	while ((x = fread(fin, 1, sizeof(buf), buf)) != 0)
-		(void)fwrite(fout, 1, x, buf);
+	while ((l = fread(buf, 1, sizeof(buf), fin)) != 0)
+		(void)fwrite(buf, 1, l, fout);
 
 	(void)fclose(fin);
 	(void)pclose(fout);
