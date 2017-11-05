@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.31 2012/01/31 21:17:57 mlelstv Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.32 2017/11/05 16:16:26 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,11 +40,7 @@
 
 #include <sys/types.h>
 
-/*
- * XXX - Would rather not pull in vm headers, but need boolean_t,
- * at least until boolean_t moves to <sys/types.h> or someplace.
- */
-#include <uvm/uvm_param.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
