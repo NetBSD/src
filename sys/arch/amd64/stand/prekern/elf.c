@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.6 2017/11/01 17:00:17 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.7 2017/11/05 16:26:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -42,18 +42,6 @@ struct elfinfo {
 	size_t symcnt;
 	char *strtab;
 	size_t strsz;
-	struct {
-		vaddr_t va;
-		size_t sz;
-	} text;
-	struct {
-		vaddr_t va;
-		size_t sz;
-	} rodata;
-	struct {
-		vaddr_t va;
-		size_t sz;
-	} data;
 };
 
 extern paddr_t kernpa_start, kernpa_end;
@@ -361,14 +349,11 @@ elf_get_text(paddr_t *pa, size_t *sz)
 }
 
 void
-elf_build_text(vaddr_t textva, paddr_t textpa, size_t textsz)
+elf_build_text(vaddr_t textva, paddr_t textpa)
 {
 	const paddr_t basepa = kernpa_start;
 	const vaddr_t headva = (vaddr_t)eif.ehdr;
 	size_t i, offtext;
-
-	eif.text.va = textva;
-	eif.text.sz = textsz;
 
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
 		if (!elf_section_is_text(&eif.shdr[i])) {
@@ -379,7 +364,7 @@ elf_build_text(vaddr_t textva, paddr_t textpa, size_t textsz)
 		offtext = basepa + eif.shdr[i].sh_offset - textpa;
 
 		/* We want (headva + sh_offset) to be the VA of the section. */
-		eif.shdr[i].sh_offset = (eif.text.va + offtext - headva);
+		eif.shdr[i].sh_offset = (textva + offtext - headva);
 	}
 }
 
@@ -411,14 +396,11 @@ elf_get_rodata(paddr_t *pa, size_t *sz)
 }
 
 void
-elf_build_rodata(vaddr_t rodatava, paddr_t rodatapa, size_t rodatasz)
+elf_build_rodata(vaddr_t rodatava, paddr_t rodatapa)
 {
 	const paddr_t basepa = kernpa_start;
 	const vaddr_t headva = (vaddr_t)eif.ehdr;
 	size_t i, offrodata;
-
-	eif.rodata.va = rodatava;
-	eif.rodata.sz = rodatasz;
 
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
 		if (!elf_section_is_rodata(&eif.shdr[i])) {
@@ -429,7 +411,7 @@ elf_build_rodata(vaddr_t rodatava, paddr_t rodatapa, size_t rodatasz)
 		offrodata = basepa + eif.shdr[i].sh_offset - rodatapa;
 
 		/* We want (headva + sh_offset) to be the VA of the section. */
-		eif.shdr[i].sh_offset = (eif.rodata.va + offrodata - headva);
+		eif.shdr[i].sh_offset = (rodatava + offrodata - headva);
 	}
 }
 
@@ -461,14 +443,11 @@ elf_get_data(paddr_t *pa, size_t *sz)
 }
 
 void
-elf_build_data(vaddr_t datava, paddr_t datapa, size_t datasz)
+elf_build_data(vaddr_t datava, paddr_t datapa)
 {
 	const paddr_t basepa = kernpa_start;
 	const vaddr_t headva = (vaddr_t)eif.ehdr;
 	size_t i, offdata;
-
-	eif.data.va = datava;
-	eif.data.sz = datasz;
 
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
 		if (!elf_section_is_data(&eif.shdr[i])) {
@@ -479,7 +458,7 @@ elf_build_data(vaddr_t datava, paddr_t datapa, size_t datasz)
 		offdata = basepa + eif.shdr[i].sh_offset - datapa;
 
 		/* We want (headva + sh_offset) to be the VA of the section. */
-		eif.shdr[i].sh_offset = (eif.data.va + offdata - headva);
+		eif.shdr[i].sh_offset = (datava + offdata - headva);
 	}
 }
 
@@ -643,15 +622,6 @@ elf_kernel_reloc()
 	}
 
 	print_state(true, "Entry point found");
-
-	/*
-	 * Remap the code segments with proper permissions.
-	 */
-	mm_mprotect(eif.text.va, eif.text.sz, MM_PROT_READ|MM_PROT_EXECUTE);
-	mm_mprotect(eif.rodata.va, eif.rodata.sz, MM_PROT_READ);
-	mm_mprotect(eif.data.va, eif.data.sz, MM_PROT_READ|MM_PROT_WRITE);
-
-	print_state(true, "Segments protection updated");
 
 	return ent;
 }
