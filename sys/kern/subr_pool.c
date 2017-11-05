@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.209 2017/10/28 17:06:43 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.210 2017/11/05 07:49:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.209 2017/10/28 17:06:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.210 2017/11/05 07:49:45 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -829,6 +829,14 @@ pool_get(struct pool *pp, int flags)
 		 */
 		error = pool_grow(pp, flags);
 		if (error != 0) {
+			/*
+			 * pool_grow aborts when another thread
+			 * is allocating a new page. Retry if it
+			 * waited for it.
+			 */
+			if (error == ERESTART)
+				goto startover;
+
 			/*
 			 * We were unable to allocate a page or item
 			 * header, but we released the lock during
