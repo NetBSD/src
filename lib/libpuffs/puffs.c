@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.121 2017/05/31 17:56:00 christos Exp $	*/
+/*	$NetBSD: puffs.c,v 1.122 2017/11/05 15:33:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.121 2017/05/31 17:56:00 christos Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.122 2017/11/05 15:33:15 christos Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -134,7 +134,7 @@ puffs_kernerr_abort(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, puffs_cookie_t cookie)
 {
 
-	warnx("abort: type %d, error %d, cookie %p (%s)",
+	warnx("%s: type %d, error %d, cookie %p (%s)", __func__,
 	    type, error, cookie, str);
 	abort();
 }
@@ -145,7 +145,7 @@ puffs_kernerr_log(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, puffs_cookie_t cookie)
 {
 
-	syslog(LOG_WARNING, "kernel: type %d, error %d, cookie %p (%s)",
+	syslog(LOG_WARNING, "%s: type %d, error %d, cookie %p (%s)", __func__,
 	    type, error, cookie, str);
 }
 
@@ -583,19 +583,20 @@ do {									\
 		dirlen = strlen(dir);
 		if (strncmp(dir, rp, rplen) != 0 ||
 		    strspn(dir + rplen, "/") != dirlen - rplen) {
-			warnx("puffs_mount: \"%s\" is a relative path.", dir);
-			warnx("puffs_mount: using \"%s\" instead.", rp);
+			warnx("%s: `%s' is a %s path.", __func__, dir,
+			    dir[0] != '/' ? "relative" : "non canonical");
+			warnx("%s: using `%s' instead.", __func__, rp);
 		}
 
 		fd = open(_PATH_PUFFS, O_RDWR);
 		if (fd == -1) {
-			warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
+			warnx("%s: cannot open `%s'", __func__, _PATH_PUFFS);
 			rv = -1;
 			goto out;
 		}
 		if (fd <= 2)
-			warnx("puffs_mount: device fd %d (<= 2), sure this is "
-			    "what you want?", fd);
+			warnx("%s: device fd %d (<= 2), sure this is "
+			    "what you want?", __func__, fd);
 
 		pu->pu_kargp->pa_fd = pu->pu_fd = fd;
 		if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
