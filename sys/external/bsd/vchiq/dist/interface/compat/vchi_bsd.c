@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: vchi_bsd.c,v 1.9 2014/09/02 09:55:48 jmcneill Exp $
+ * $Id: vchi_bsd.c,v 1.10 2017/11/05 09:11:43 skrll Exp $
  */
 
 #include <sys/types.h>
@@ -136,7 +136,7 @@ void
 _sema_init(struct semaphore *s, int value)
 {
 	memset(s, 0, sizeof(*s));
-	mutex_init(&s->mtx, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&s->mtx, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&s->cv, "semacv");
 	s->value = value;
 }
