@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.3 2017/10/29 11:28:30 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.4 2017/11/05 16:26:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -102,11 +102,11 @@ void print_banner();
 size_t elf_get_head_size(vaddr_t);
 void elf_build_head(vaddr_t);
 void elf_get_text(paddr_t *, size_t *);
-void elf_build_text(vaddr_t, paddr_t, size_t);
+void elf_build_text(vaddr_t, paddr_t);
 void elf_get_rodata(paddr_t *, size_t *);
-void elf_build_rodata(vaddr_t, paddr_t, size_t);
+void elf_build_rodata(vaddr_t, paddr_t);
 void elf_get_data(paddr_t *, size_t *);
-void elf_build_data(vaddr_t, paddr_t, size_t);
+void elf_build_data(vaddr_t, paddr_t);
 void elf_build_boot(vaddr_t, paddr_t);
 vaddr_t elf_kernel_reloc();
 
@@ -118,7 +118,7 @@ void jump_kernel();
 /* mm.c */
 void mm_init(paddr_t);
 paddr_t mm_vatopa(vaddr_t);
-void mm_mprotect(vaddr_t, size_t, int);
+void mm_bootspace_mprotect();
 void mm_map_kernel();
 
 /* prekern.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.7 2017/10/29 11:38:43 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.8 2017/11/05 16:26:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -96,7 +96,7 @@ mm_vatopa(vaddr_t va)
 	return (PTE_BASE[pl1_i(va)] & PG_FRAME);
 }
 
-void
+static void
 mm_mprotect(vaddr_t startva, size_t size, int prot)
 {
 	size_t i, npages;
@@ -112,6 +112,20 @@ mm_mprotect(vaddr_t startva, size_t size, int prot)
 		mm_enter_pa(pa, va, prot);
 		mm_flush_va(va);
 	}
+}
+
+void
+mm_bootspace_mprotect()
+{
+	/*
+	 * Remap the kernel segments with proper permissions.
+	 */
+	mm_mprotect(bootspace.text.va, bootspace.text.sz,
+	    MM_PROT_READ|MM_PROT_EXECUTE);
+	mm_mprotect(bootspace.rodata.va, bootspace.rodata.sz,
+	    MM_PROT_READ);
+
+	print_state(true, "Segments protection updated");
 }
 
 static size_t
@@ -277,7 +291,7 @@ mm_map_segments()
 		mm_enter_pa(pa + i * PAGE_SIZE,
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
-	elf_build_text(randva, pa, size);
+	elf_build_text(randva, pa);
 
 	/* Register the values in bootspace */
 	bootspace.text.va = randva;
@@ -296,7 +310,7 @@ mm_map_segments()
 		mm_enter_pa(pa + i * PAGE_SIZE,
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
-	elf_build_rodata(randva, pa, size);
+	elf_build_rodata(randva, pa);
 
 	/* Register the values in bootspace */
 	bootspace.rodata.va = randva;
@@ -315,7 +329,7 @@ mm_map_segments()
 		mm_enter_pa(pa + i * PAGE_SIZE,
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
-	elf_build_data(randva, pa, size);
+	elf_build_data(randva, pa);
 
 	/* Register the values in bootspace */
 	bootspace.data.va = randva;
