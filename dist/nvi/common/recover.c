@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: recover.c,v 1.3.24.1 2017/11/05 20:04:00 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -112,7 +112,7 @@ static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Ex
 #define	VI_PHEADER	"X-vi-recover-path: "
 
 static int	 rcv_copy __P((SCR *, int, char *));
-static void	 rcv_email __P((SCR *, char *));
+static void	 rcv_email __P((SCR *, const char *));
 static char	*rcv_gets __P((char *, size_t, int));
 static int	 rcv_mailfile __P((SCR *, int, char *));
 static int	 rcv_mktemp __P((SCR *, char *, const char *, int));
@@ -470,6 +470,23 @@ err:	if (!issync)
 }
 
 /*
+ * Since vi creates recovery files only accessible by the user, files
+ * accessible by group or others are probably malicious so avoid them.
+ * This is simpler than checking for getuid() == st.st_uid and we want
+ * to preserve the functionality that root can recover anything which
+ * means that root should know better and be careful.
+ */
+static int
+checkok(int fd)
+{
+       struct stat sb;
+
+       return fstat(fd, &sb) != -1 && S_ISREG(sb.st_mode) &&
+           (sb.st_mode & (S_IRWXG|S_IRWXO)) == 0;
+}
+
+
+/*
  *	people making love
  *	never exactly the same
  *	just like a snowflake
@@ -513,8 +530,13 @@ rcv_list(SCR *sp)
 		 * if we're using fcntl(2), there's no way to lock a file
 		 * descriptor that's not open for writing.
 		 */
-		if ((fp = fopen(dp->d_name, "r+")) == NULL)
+		if ((fp = fopen(dp->d_name, "r+efl")) == NULL)
 			continue;
+
+		if (!checkok(fileno(fp))) {
+			(void)fclose(fp);
+			continue;
+		}
 
 		switch (file_lock(sp, NULL, NULL, fileno(fp), 1)) {
 		case LOCK_FAILED:
@@ -626,8 +648,15 @@ rcv_read(SCR *sp, FREF *frp)
 		 * if we're using fcntl(2), there's no way to lock a file
 		 * descriptor that's not open for writing.
 		 */
-		if ((fd = open(recpath, O_RDWR, 0)) == -1)
+		if ((fd = open(recpath, O_RDWR|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC,
+		               0)) == -1)
 			continue;
+
+		if (!checkok(fd)) {
+			(void)close(fd);
+			continue;
+		}
+
 
 		switch (file_lock(sp, NULL, NULL, fd, 1)) {
 		case LOCK_FAILED:
@@ -836,24 +865,48 @@ rcv_mktemp(SCR *sp, char *path, const char *dname, int perms)
  *	Send email.
  */
 static void
-rcv_email(SCR *sp, char *fname)
+rcv_email(SCR *sp, const char *fname)
 {
 	struct stat sb;
-	char buf[MAXPATHLEN * 2 + 20];
+	char buf[BUFSIZ];
+	FILE *fin, *fout;
+	size_t l;
 
-	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb))
+	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb) == -1) {
 		msgq_str(sp, M_SYSERR,
 		    _PATH_SENDMAIL, "071|not sending email: %s");
-	else {
-		/*
-		 * !!!
-		 * If you need to port this to a system that doesn't have
-		 * sendmail, the -t flag causes sendmail to read the message
-		 * for the recipients instead of specifying them some other
-		 * way.
-		 */
-		(void)snprintf(buf, sizeof(buf),
-		    "%s -t < %s", _PATH_SENDMAIL, fname);
-		(void)system(buf);
+		return;
 	}
+
+	/*
+	 * !!!
+	 * If you need to port this to a system that doesn't have
+	 * sendmail, the -t flag causes sendmail to read the message
+	 * for the recipients instead of specifying them some other
+	 * way.
+	 */
+	if ((fin = fopen(fname, "refl")) == NULL) {
+		msgq_str(sp, M_SYSERR,
+		    fname, "325|cannot open: %s");
+		return;
+	}
+	
+	if (!checkok(fileno(fin))) {
+		(void)fclose(fin);
+		return;
+	}
+
+	fout = popen(_PATH_SENDMAIL " -t", "w");
+	if (fout == NULL) {
+		msgq_str(sp, M_SYSERR,
+		    _PATH_SENDMAIL, "326|cannot execute sendmail: %s");
+		fclose(fin);
+		return;
+	}
+
+	while ((l = fread(buf, 1, sizeof(buf), fin)) != 0)
+		(void)fwrite(buf, 1, l, fout);
+
+	(void)fclose(fin);
+	(void)pclose(fout);
 }
