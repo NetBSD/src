@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.33 2016/08/18 08:02:58 mrg Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.34 2017/11/05 22:52:12 christos Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -25,7 +25,13 @@ EXTRAS=	${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/sys/dtrace.h
 .endif
 
 .if !make(cleandir) && !make(obj) && !make(includes) && !make(install)
-DEPFILEGLOB = ${TOOL_SED} -ne '/\/usr\/.*include\/.*\.h[ 	]/{s/[ 	]obsolete$$//;t' -e 's/xenio//;t' -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
+DEPFILEGLOB = ${TOOL_SED} \
+    -ne '/\/usr\/.*include\/.*\.h[ 	]/{s/[ 	,]obsolete//;t' \
+    -e "s/xorg_server_ver=${XORG_SERVER_VER}//;t skipserver" \
+    -e "s/xorg_server_ver=//;t" \
+    -e ":skipserver" \
+    -e 's/xenio//;t' \
+    -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
 DEPFILES != (${DEPFILEGLOB}; echo ${EXTRAS}) | xargs egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' 2>/dev/null || :
 .endif
 
