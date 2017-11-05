@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.45 2015/10/22 00:29:58 christos Exp $
+#	$NetBSD: mkioctls,v 1.46 2017/11/05 17:44:28 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -79,10 +79,25 @@ echo "#include <dev/pci/mlyreg.h>"
 echo "#include <prop/proplib.h>"
 echo
 
+# kernel headers <sys/*.h> and <net/*.h> should not include stdbool.h
+# but they do; then xf86Opt.h needs a bool struct field.
+
+needundef=true
 for i
 do
+	case $i in
+	*X11*)
+		if $needundef; then
+			echo "#undef bool"
+			needundef=false;
+		fi;;
+	esac
 	echo "#include <$i>"
 done | ${SED} -e "s,${DESTDIR}/usr/include/,,g"
+
+if ! $needundef; then
+    echo "#define bool _Bool"
+fi
 
 ${CC} -E -nostdinc -isystem ${DESTDIR}/usr/include \
     -I${DESTDIR}/usr/X11R7/include \
