@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/11/04 16:21:49 kamil Exp $
+#	$NetBSD: Makefile,v 1.7 2017/11/05 02:36:00 kamil Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -11,7 +11,7 @@ GNUHOSTDIST=	${DIST}
 SRCS=		lto-plugin.c hashtab.c simple-object.c pex-unix.c \
 		pex-common.c argv.c make-temp-file.c concat.c \
 		simple-object-elf.c simple-object-mach-o.c \
-		simple-object-coff.c simple-object-xcoff.c
+		simple-object-coff.c simple-object-xcoff.c xstrerror.c
 
 CPPFLAGS+=	-I${DIST}/include -I. 
 CPPFLAGS+=	-DHAVE_CONFIG_H
@@ -30,10 +30,6 @@ LIBDIR=		/usr/libexec
 
 SHLIB_MAJOR=	0
 SHLIB_MINOR=	1
-
-LIBIBERTYDIR!=	cd ${.CURDIR}/../../lib/libiberty && ${PRINTOBJDIR}
-LDADD+=		-L${LIBIBERTYDIR} -liberty
-DPADD+=		${LIBIBERTYDIR}/libiberty.a
 
 # Yuck, we have to run configure to generate this one...
 CLEANFILES+=	config.h
