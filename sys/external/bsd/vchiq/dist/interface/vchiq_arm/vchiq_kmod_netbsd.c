@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.8 2017/09/21 19:29:35 skrll Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.9 2017/11/05 09:11:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.8 2017/09/21 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.9 2017/11/05 09:11:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ vchiq_defer(device_t self)
 
 	vchiq_core_initialize();
 
-	sc->sc_ih = intr_establish(sc->sc_intr, IPL_SCHED, IST_LEVEL,
+	sc->sc_ih = intr_establish(sc->sc_intr, IPL_VM, IST_LEVEL | IST_MPSAFE,
 	    vchiq_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
