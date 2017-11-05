@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.36 2017/10/23 19:46:03 snj Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.37 2017/11/05 21:07:32 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -3729,4 +3729,72 @@ sys/dev/cgd.c					1.113
 	The cgd(4) module requires des and blowfish symbols.
 	PR kern/52630
 	[kamil, ticket #1518]
+
+distrib/sets/lists/base/mi			1.1164 
+doc/3RDPARTY					1.2326 via patch
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.4
+external/public-domain/tz/dist/LICENSE          up to 1.1.1.3
+external/public-domain/tz/dist/Makefile         up to 1.1.1.18
+external/public-domain/tz/dist/NEWS             up to 1.1.1.19
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.9
+external/public-domain/tz/dist/Theory           delete
+external/public-domain/tz/dist/africa           up to 1.1.1.12
+external/public-domain/tz/dist/antarctica       up to 1.1.1.9
+external/public-domain/tz/dist/asia             up to 1.1.1.17
+external/public-domain/tz/dist/australasia      up to 1.1.1.12
+external/public-domain/tz/dist/backward         up to 1.1.1.8
+external/public-domain/tz/dist/backzone         up to 1.1.1.12
+external/public-domain/tz/dist/calendars        up to 1.1.1.1
+external/public-domain/tz/dist/checklinks.awk   up to 1.1.1.3
+external/public-domain/tz/dist/europe           up to 1.1.1.18
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.8
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.9
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.6
+external/public-domain/tz/dist/northamerica     up to 1.1.1.17
+external/public-domain/tz/dist/southamerica     up to 1.1.1.12
+external/public-domain/tz/dist/theory.html      up to 1.1.1.1
+external/public-domain/tz/dist/version          up to 1.1.1.6
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.1
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.12
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.14
+
+	Update tzdata to 2017c.
+	[kre, ticket #1519]
+
+etc/namedb/root.cache				1.23
+
+	Update root.cache to 2017102400 (October 24, 2017).
+	[taca, ticket #1520]
+
+external/bsd/nvi/dist/common/recover.c		1.6-1.9
+external/bsd/nvi/usr.bin/recover/virecover	1.2-1.3
+
+	Fix vulnerabilities in the handling of recovery files.
+	[spz, ticket #1522]
+
+xsrc/external/mit/xorg-server/dist/Xext/panoramiX.c patch
+xsrc/external/mit/xorg-server/dist/Xext/saver.c	patch
+xsrc/external/mit/xorg-server/dist/Xext/xvdisp.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xichangehierarchy.c patch
+xsrc/external/mit/xorg-server/dist/dbe/dbe.c	patch
+xsrc/external/mit/xorg-server/dist/dix/dispatch.c patch
+xsrc/external/mit/xorg-server/dist/hw/dmx/dmxpict.c patch
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dixmods/extmod/xf86dga2.c patch
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri/xf86dri.c patch
+xsrc/external/mit/xorg-server/dist/render/render.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/cursor.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/region.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/saveset.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/xfixes.c patch
+xsrc/xfree/xc/programs/Xserver/Xext/panoramiX.c	patch
+xsrc/xfree/xc/programs/Xserver/Xext/saver.c	patch
+xsrc/xfree/xc/programs/Xserver/Xext/xf86dga2.c	patch
+xsrc/xfree/xc/programs/Xserver/Xext/xvdisp.c	patch
+xsrc/xfree/xc/programs/Xserver/dbe/dbe.c	patch
+xsrc/xfree/xc/programs/Xserver/dix/dispatch.c	patch
+xsrc/xfree/xc/programs/Xserver/hw/dmx/dmxpict.c	patch
+xsrc/xfree/xc/programs/Xserver/render/render.c	patch
+
+	apply fixes for CVEs 2017-12176 to 2017-12187
+	[mrg, ticket #1523]
 
