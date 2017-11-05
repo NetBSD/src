@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.116 2017/10/17 16:01:23 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.117 2017/11/05 20:33:02 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14852,4 +14852,41 @@ external/bsd/wpa/dist/wpa_supplicant/wnm_sta.c	1.4
 	CVE-2017-13079 CVE-2017-13080 CVE-2017-13081 CVE-2017-13082
 	CVE-2017-13086 CVE-2017-13087 CVE-2017-13088
 	[spz, ticket #1507]
+
+etc/namedb/root.cache				1.23
+
+	Update root.cache to 2017102400 (October 24, 2017).
+	[taca, ticket #1508]
+
+external/bsd/nvi/dist/common/recover.c		1.6-1.9 via patch to dist/nvi/common/recover.c
+external/bsd/nvi/usr.bin/recover/virecover	1.2-1.3 via patch usr.bin/nvi/recover/virecover
+
+	Fix vulnerabilities in the handling of recovery files.
+	[spz, ticket #1509]
+
+xsrc/external/mit/xorg-server/dist/Xext/panoramiX.c patch
+xsrc/external/mit/xorg-server/dist/Xext/saver.c	patch
+xsrc/external/mit/xorg-server/dist/Xext/xvdisp.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xichangehierarchy.c patch
+xsrc/external/mit/xorg-server/dist/dbe/dbe.c	patch
+xsrc/external/mit/xorg-server/dist/dix/dispatch.c patch
+xsrc/external/mit/xorg-server/dist/hw/dmx/dmxpict.c patch
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dixmods/extmod/xf86dga2.c patch
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri/xf86dri.c patch
+xsrc/external/mit/xorg-server/dist/render/render.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/cursor.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/region.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/saveset.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/xfixes.c patch
+xsrc/xfree/xc/programs/Xserver/Xext/panoramiX.c	patch
+xsrc/xfree/xc/programs/Xserver/Xext/saver.c	patch
+xsrc/xfree/xc/programs/Xserver/Xext/xf86dga2.c	patch
+xsrc/xfree/xc/programs/Xserver/Xext/xvdisp.c	patch
+xsrc/xfree/xc/programs/Xserver/dbe/dbe.c	patch
+xsrc/xfree/xc/programs/Xserver/dix/dispatch.c	patch
+xsrc/xfree/xc/programs/Xserver/hw/dmx/dmxpict.c	patch
+xsrc/xfree/xc/programs/Xserver/render/render.c	patch
+
+	apply fixes for CVEs 2017-12176 to 2017-12187
+	[mrg, ticket #1511]
 
