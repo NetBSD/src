@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.4 2017/11/03 09:59:08 maxv Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.5 2017/11/05 01:18:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -126,9 +126,9 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	   bool isrela, bool local)
 {
 	const Elf_Rela *rela;
-	Elf_Addr *where;
+	Elf_Addr *where, addr;
 	Elf_Word value, mask;
-	uintptr_t tmp, addr;
+	uintptr_t tmp;
 	u_int symidx, type;
 	int error;
 
