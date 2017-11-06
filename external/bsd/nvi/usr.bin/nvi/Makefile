@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2017/11/06 03:27:34 rin Exp $
+#	$NetBSD: Makefile,v 1.9 2017/11/06 03:37:52 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -34,8 +34,6 @@ SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	ex_shift.c ex_source.c ex_stop.c ex_subst.c ex_tag.c ex_tcl.c \
 	ex_txt.c ex_undo.c ex_usage.c ex_util.c ex_version.c ex_visual.c \
 	ex_write.c ex_yank.c ex_z.c exf.c getc.c gs.c \
-	ip_funcs.c ip_read.c ip_screen.c ip_term.c \
-	ip_run.c ip_send.c ip_trans.c ipc_cmd.c ipc_method.c \
 	key.c trace.c \
 	main.c mark.c msg.c nothread.c options.c options_f.c put.c recover.c \
 	screen.c search.c seq.c util.c v_at.c v_ch.c v_cmd.c v_delete.c \
@@ -45,6 +43,9 @@ SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	v_txt.c v_ulcase.c v_undo.c v_util.c v_word.c v_xchar.c v_yank.c \
 	v_z.c v_zexit.c vi.c vs_line.c vs_msg.c vs_refresh.c \
 	vs_relative.c vs_smap.c vs_split.c
+
+NOTUSED=ip_funcs.c ip_read.c ip_screen.c ip_term.c \
+	ip_run.c ip_send.c ip_trans.c ipc_cmd.c ipc_method.c
 
 # For wide char support
 .if ${USE_WIDECHAR} == "yes"
@@ -85,7 +86,7 @@ DPSRCS+=${i}_extern.h
 CLEANFILES+=${i}_extern.h
 # does not work, DIST isn't set yet here
 #_${i}_SRCS != echo ${DIST}/${i}/*.c ${DIST}/${i}/*.xs
-${i}_extern.h: ${SRCS}
+${i}_extern.h: ${SRCS} ${NOTUSED}
 	${_MKTARGET_CREATE}
 	@${TOOL_SED} -n "s/^ \* PUBLIC: \(.*\)/\1/p" ${.ALLSRC:M${DIST}/$i/*} > ${.TARGET}.tmp
 	@if cmp -s ${.TARGET}.tmp ${.TARGET}; then \
