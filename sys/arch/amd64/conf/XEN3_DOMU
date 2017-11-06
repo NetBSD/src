@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.79 2017/09/30 09:03:38 pgoyette Exp $
+# $NetBSD: XEN3_DOMU,v 1.80 2017/11/06 02:57:18 rin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.79 $"
+#ident		"XEN3_DOMU-$Revision: 1.80 $"
 
 maxusers	32		# estimated number of users
 
@@ -98,6 +98,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
