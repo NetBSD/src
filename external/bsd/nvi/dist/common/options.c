@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: options.c,v 1.4 2017/11/06 03:17:37 rin Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: options.c,v 10.65 2002/01/18 22:34:43 skimo Exp  (Berkeley) Date: 2002/01/18 22:34:43 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: options.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.4 2017/11/06 03:17:37 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -100,9 +100,11 @@ OPTLIST const optlist[] = {
 	{L("fileencoding"),f_encoding,	OPT_STR,	OPT_WC},
 /* O_FLASH	    HPUX */
 	{L("flash"),	NULL,		OPT_1BOOL,	0},
-#ifdef GTAGS
 /* O_GTAGSMODE	    FreeBSD/NetBSD */
+#ifdef GTAGS
 	{L("gtagsmode"),NULL,		OPT_0BOOL,	0},
+#else
+	{L("gtagsmode"),NULL,		OPT_0BOOL,	OPT_NDISP|OPT_NOSAVE|OPT_NOSET},
 #endif
 /* O_HARDTABS	    4BSD */
 	{L("hardtabs"),	NULL,		OPT_NUM,	0},
