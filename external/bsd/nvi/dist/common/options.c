@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.4 2017/11/06 03:17:37 rin Exp $ */
+/*	$NetBSD: options.c,v 1.5 2017/11/06 03:21:13 rin Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: options.c,v 10.65 2002/01/18 22:34:43 skimo Exp  (Berkeley) Date: 2002/01/18 22:34:43 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: options.c,v 1.4 2017/11/06 03:17:37 rin Exp $");
+__RCSID("$NetBSD: options.c,v 1.5 2017/11/06 03:21:13 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -275,10 +275,10 @@ static OABBREV const abbrev[] = {
 	{L("ed"),	O_EDCOMPATIBLE},	/*     4BSD */
 	{L("et"),	O_EXPANDTAB},		/* NetBSD 5.0 */
 	{L("ex"),	O_EXRC},		/* System V (undocumented) */
+	{L("fe"),	O_FILEENCODING},
 #ifdef GTAGS
 	{L("gt"),	O_GTAGSMODE},		/* FreeBSD, NetBSD */
 #endif
-	{L("fe"),	O_FILEENCODING},
 	{L("ht"),	O_HARDTABS},		/*     4BSD */
 	{L("ic"),	O_IGNORECASE},		/*     4BSD */
 	{L("ie"),	O_INPUTENCODING},
