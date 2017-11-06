@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.7 2016/12/19 17:51:40 rin Exp $ */
+/*	$NetBSD: ex_script.c,v 1.8 2017/11/06 03:27:34 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 static const char sccsid[] = "Id: ex_script.c,v 10.38 2001/06/25 15:19:19 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:19 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_script.c,v 1.7 2016/12/19 17:51:40 rin Exp $");
+__RCSID("$NetBSD: ex_script.c,v 1.8 2017/11/06 03:27:34 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: ex_script.c,v 1.7 2016/12/19 17:51:40 rin Exp $");
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#ifdef __NetBSD__
+#ifdef HAVE_UTIL_H
 #include <util.h>
 #endif
 
@@ -58,7 +58,7 @@ static void	sscr_check __P((SCR *));
 static int	sscr_getprompt __P((SCR *));
 static int	sscr_init __P((SCR *));
 static int	sscr_insert __P((SCR *));
-#ifdef __NetBSD__
+#ifdef HAVE_OPENPTY
 #define	sscr_pty openpty
 #else
 static int	sscr_pty __P((int *, int *, char *, struct termios *, void *));
@@ -587,7 +587,7 @@ sscr_check(SCR *sp)
 	F_CLR(gp, G_SCRWIN);
 }
 
-#ifndef __NetBSD__
+#ifndef HAVE_OPENPTY
 #ifdef HAVE_SYS5_PTY
 static int ptys_open __P((int, char *));
 static int ptym_open __P((char *));
@@ -755,4 +755,4 @@ sscr_pty(amaster, aslave, name, termp, winp)
 }
 
 #endif /* HAVE_SYS5_PTY */
-#endif /* !__NetBSD__ */
+#endif /* !HAVE_OPENPTY */
