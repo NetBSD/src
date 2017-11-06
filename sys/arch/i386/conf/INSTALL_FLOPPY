@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.42 2017/09/14 07:58:41 mrg Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.43 2017/11/06 02:57:18 rin Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -107,6 +107,7 @@ file-system	TMPFS		# Efficient memory file-system
 # Filesystem options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
