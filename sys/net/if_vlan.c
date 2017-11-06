@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.4 2017/10/25 07:12:33 snj Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.5 2017/11/06 09:57:39 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.4 2017/10/25 07:12:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.5 2017/11/06 09:57:39 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -468,6 +468,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	 */
 	ifv->ifv_if.if_type = p->if_type;
 
+	PSLIST_ENTRY_INIT(ifv, ifv_hash);
 	idx = tag_hash_func(tag, ifv_hash.mask);
 
 	mutex_enter(&ifv_hash.lock);
@@ -572,6 +573,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	PSLIST_WRITER_REMOVE(ifv, ifv_hash);
 	pserialize_perform(vlan_psz);
 	mutex_exit(&ifv_hash.lock);
+	PSLIST_ENTRY_DESTROY(ifv, ifv_hash);
 
 	vlan_linkmib_update(ifv, nmib);
 
