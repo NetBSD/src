@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.33 2015/03/04 22:58:35 christos Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.34 2017/11/06 21:07:17 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.33 2015/03/04 22:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.34 2017/11/06 21:07:17 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,10 @@ struct synaptics_packet {
 	signed short	sp_y;
 	u_char	sp_z;		/* Z (pressure) */
 	u_char	sp_w;		/* W (contact patch width) */
+	signed short	sp_sx;	/* Secondary finger unscaled absolute */
+				/* X/Y coordinates */
+	signed short	sp_xy;
+	u_char	sp_finger;	/* 0 for primary, 1 for secondary */
 	char	sp_left;	/* Left mouse button status */
 	char	sp_right;	/* Right mouse button status */
 	char	sp_middle;	/* Middle button status (possibly emulated) */
@@ -105,6 +109,9 @@ static int synaptics_edge_bottom = SYNAPTICS_EDGE_BOTTOM;
 static int synaptics_edge_motion_delta = 32;
 static u_int synaptics_finger_high = SYNAPTICS_FINGER_LIGHT + 5;
 static u_int synaptics_finger_low = SYNAPTICS_FINGER_LIGHT - 10;
+static int synaptics_button_boundary = SYNAPTICS_EDGE_BOTTOM + 720;
+static int synaptics_button2 = SYNAPTICS_EDGE_LEFT + (SYNAPTICS_EDGE_RIGHT - SYNAPTICS_EDGE_LEFT) / 3;
+static int synaptics_button3 = SYNAPTICS_EDGE_LEFT + 2 * (SYNAPTICS_EDGE_RIGHT - SYNAPTICS_EDGE_LEFT) / 3;
 static int synaptics_two_fingers_emul = 0;
 static int synaptics_scale_x = 16;
 static int synaptics_scale_y = 16;
@@ -113,6 +120,9 @@ static int synaptics_max_speed_y = 32;
 static int synaptics_movement_threshold = 4;
 
 /* Sysctl nodes. */
+static int synaptics_button_boundary_nodenum;
+static int synaptics_button2_nodenum;
+static int synaptics_button3_nodenum;
 static int synaptics_up_down_emul_nodenum;
 static int synaptics_up_down_motion_delta_nodenum;
 static int synaptics_gesture_move_nodenum;
@@ -131,11 +141,56 @@ static int synaptics_max_speed_x_nodenum;
 static int synaptics_max_speed_y_nodenum;
 static int synaptics_movement_threshold_nodenum;
 
+static int
+synaptics_poll_cmd(struct pms_softc *psc, ...)
+{
+	u_char cmd[4];
+	size_t i;
+	va_list ap;
+
+	va_start(ap, psc);
+
+	for (i = 0; i < __arraycount(cmd); i++)
+		if ((cmd[i] = (u_char)va_arg(ap, int)) == 0)
+			break;
+	va_end(ap);
+
+	int res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, i, 0,
+    	    NULL, 0);
+	if (res)
+		aprint_error_dev(psc->sc_dev, "command error %#x\n", cmd[0]);
+	return res;
+}
+
+static int
+synaptics_poll_reset(struct pms_softc *psc)
+{
+	u_char resp[2];
+	int res;
+
+	u_char cmd[1] = { PMS_RESET };
+	res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 2,
+	    resp, 1);
+	aprint_debug_dev(psc->sc_dev, "reset %d 0x%02x 0x%02x\n",
+	    res, resp[0], resp[1]);
+	return res;
+}
+
+static int
+synaptics_poll_status(struct pms_softc *psc, u_char slice, u_char resp[3])
+{
+	u_char cmd[1] = { PMS_SEND_DEV_STATUS };
+	int res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot, slice);
+
+	return res | pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+	    cmd, 1, 3, resp, 0);
+}
+
 static void
 pms_synaptics_probe_extended(struct pms_softc *psc)
 {
 	struct synaptics_softc *sc = &psc->u.synaptics;
-	u_char cmd[1], resp[3];
+	u_char resp[3];
 	int res;
 
 	aprint_debug_dev(psc->sc_dev,
@@ -156,11 +211,7 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08)
 	    >= SYNAPTICS_EXTENDED_QUERY)
 	{
-		res = pms_sliced_command(psc->sc_kbctag,
-		    psc->sc_kbcslot, SYNAPTICS_EXTENDED_QUERY);
-		cmd[0] = PMS_SEND_DEV_STATUS;
-		res |= pckbport_poll_cmd(psc->sc_kbctag,
-		    psc->sc_kbcslot, cmd, 1, 3, resp, 0);
+		res = synaptics_poll_status(psc, SYNAPTICS_EXTENDED_QUERY, resp);
 		if (res == 0) {
 			int buttons = (resp[1] >> 4);
 			aprint_debug_dev(psc->sc_dev,
@@ -192,11 +243,9 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08) >=
 	    SYNAPTICS_CONTINUED_CAPABILITIES)
 	{
-		res = pms_sliced_command(psc->sc_kbctag,
-		    psc->sc_kbcslot, SYNAPTICS_CONTINUED_CAPABILITIES);
-		cmd[0] = PMS_SEND_DEV_STATUS;
-		res |= pckbport_poll_cmd(psc->sc_kbctag,
-		    psc->sc_kbcslot, cmd, 1, 3, resp, 0);
+		res = synaptics_poll_status(psc,
+		    SYNAPTICS_CONTINUED_CAPABILITIES, resp);
+
 /*
  * The following describes response for the
  * SYNAPTICS_CONTINUED_CAPABILITIES query.
@@ -267,10 +316,7 @@ pms_synaptics_probe_init(void *vsc)
 		 * Reset device in case the probe confused it.
 		 */
  doreset:
-		cmd[0] = PMS_RESET;
-		(void) pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
-		    1, 2, resp, 1);
-		return (res);
+		return synaptics_poll_reset(psc);
 	}
 
 	if (resp[1] != SYNAPTICS_MAGIC_BYTE) {
@@ -293,12 +339,9 @@ pms_synaptics_probe_init(void *vsc)
 		goto done;
 	}
 
+
 	/* Query the hardware capabilities. */
-	res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot,
-	    SYNAPTICS_READ_CAPABILITIES);
-	cmd[0] = PMS_SEND_DEV_STATUS;
-	res |= pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 3,
-	    resp, 0);
+	res = synaptics_poll_status(psc, SYNAPTICS_READ_CAPABILITIES, resp);
 	if (res) {
 		/* Hmm, failed to get capabilites. */
 		aprint_error_dev(psc->sc_dev,
@@ -385,7 +428,7 @@ pms_synaptics_enable(void *vsc)
 {
 	struct pms_softc *psc = vsc;
 	struct synaptics_softc *sc = &psc->u.synaptics;
-	u_char cmd[2], resp[2];
+	u_char enable_modes;
 	int res;
 
 	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
@@ -393,21 +436,43 @@ pms_synaptics_enable(void *vsc)
 		 * Extended capability probes can confuse the passthrough device;
 		 * reset the touchpad now to cure that.
 		 */
-		cmd[0] = PMS_RESET;
-		res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
-		    1, 2, resp, 1);
+		res = synaptics_poll_reset(psc);
 	}
 
 	/*
 	 * Enable Absolute mode with W (width) reporting, and set
-	 * the packet rate to maximum (80 packets per second).
+	 * the packet rate to maximum (80 packets per second). Enable
+	 * extended W mode if supported so we can report second finger
+	 * position.
 	 */
+	enable_modes =
+	   SYNAPTICS_MODE_ABSOLUTE | SYNAPTICS_MODE_W | SYNAPTICS_MODE_RATE;
+
+	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) 
+		enable_modes |= SYNAPTICS_MODE_EXTENDED_W;
+
+	/*
+ 	* Synaptics documentation says to disable device before
+ 	* setting mode.
+ 	*/
+	synaptics_poll_cmd(psc, PMS_DEV_DISABLE, 0);
+	/* a couple of set scales to clear out pending commands */
+	for (int i = 0; i < 2; i++)
+		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
+
 	res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot,
-	    SYNAPTICS_MODE_ABSOLUTE | SYNAPTICS_MODE_W | SYNAPTICS_MODE_RATE);
-	cmd[0] = PMS_SET_SAMPLE;
-	cmd[1] = SYNAPTICS_CMD_SET_MODE2;
-	res |= pckbport_enqueue_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 2, 0,
-	    1, NULL);
+	    enable_modes);
+	if (res)
+		aprint_error("synaptics: set mode error\n");
+
+	synaptics_poll_cmd(psc, PMS_SET_SAMPLE, SYNAPTICS_CMD_SET_MODE2, 0);
+	
+	/* a couple of set scales to clear out pending commands */
+	for (int i = 0; i < 2; i++)
+		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
+
+	synaptics_poll_cmd(psc, PMS_DEV_ENABLE, 0);
+
 	sc->up_down = 0;
 	sc->prev_fingers = 0;
 	sc->gesture_start_x = sc->gesture_start_y = 0;
@@ -415,27 +480,17 @@ pms_synaptics_enable(void *vsc)
 	sc->gesture_tap_packet = 0;
 	sc->gesture_type = 0;
 	sc->gesture_buttons = 0;
-	sc->rem_x = sc->rem_y = 0;
-	sc->movement_history = 0;
-	if (res) {
-		aprint_error_dev(psc->sc_dev,
-		    "synaptics_enable: Error enabling device.\n");
-	}
+	sc->rem_x[0] = sc->rem_y[0] = 0;
+	sc->rem_x[1] = sc->rem_y[1] = 0;
+	sc->movement_history[0] = 0;
+	sc->movement_history[1] = 0;
+	sc->button_history = 0;
 }
 
 void
 pms_synaptics_resume(void *vsc)
 {
-	struct pms_softc *psc = vsc;
-	unsigned char cmd[1],resp[2] = { 0,0 };
-	int res;
-
-	cmd[0] = PMS_RESET;
-	res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 2,
-	    resp, 1);
-	aprint_debug_dev(psc->sc_dev,
-	    "pms_synaptics_resume: reset on resume %d 0x%02x 0x%02x\n",
-	    res, resp[0], resp[1]);
+	(void)synaptics_poll_reset(vsc);
 }
 
 static void
@@ -655,6 +710,42 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 		goto err;
 
 	synaptics_movement_threshold_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "button_boundary",
+	    SYSCTL_DESCR("Top edge of button area"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_button_boundary,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_button_boundary_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "button2_edge",
+	    SYSCTL_DESCR("Left edge of button 2 region"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_button2,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_button2_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "button3_edge",
+	    SYSCTL_DESCR("Left edge of button 3 region"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_button3,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_button3_nodenum = node->sysctl_num;
 	return;
 
 err:
@@ -716,6 +807,16 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 		if (t < 0 || t > (SYNAPTICS_EDGE_MAX / 4))
 			return (EINVAL);
 	} else
+	if (node.sysctl_num == synaptics_button_boundary) {
+		if (t < 0 || t < SYNAPTICS_EDGE_BOTTOM || 
+		    t > SYNAPTICS_EDGE_TOP)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_button2 ||
+	    node.sysctl_num == synaptics_button3) {
+		if (t < SYNAPTICS_EDGE_LEFT || t > SYNAPTICS_EDGE_RIGHT)
+			return (EINVAL);
+	} else
 		return (EINVAL);
 
 	*(int *)rnode->sysctl_data = t;
@@ -733,64 +834,145 @@ pms_synaptics_parse(struct pms_softc *psc)
 {
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	struct synaptics_packet sp;
+	char new_buttons, ew_mode;
 
 	memset(&sp, 0, sizeof(sp));
-
-	/* Absolute X/Y coordinates of finger */
-	sp.sp_x = psc->packet[4] + ((psc->packet[1] & 0x0f) << 8) +
-	   ((psc->packet[3] & 0x10) << 8);
-	sp.sp_y = psc->packet[5] + ((psc->packet[1] & 0xf0) << 4) +
-	   ((psc->packet[3] & 0x20) << 7);
-
-	/* Pressure */
-	sp.sp_z = psc->packet[2];
 
 	/* Width of finger */
 	sp.sp_w = ((psc->packet[0] & 0x30) >> 2) +
 	   ((psc->packet[0] & 0x04) >> 1) +
 	   ((psc->packet[3] & 0x04) >> 2);
+	sp.sp_finger = 0;
+	if (sp.sp_w ==  SYNAPTICS_WIDTH_EXTENDED_W) {
+		ew_mode = psc->packet[5] >> 4;
+		switch (ew_mode)
+		{
+		case SYNAPTICS_EW_WHEEL:
+			/* scroll wheel report, ignore for now */
+			aprint_debug_dev(psc->sc_dev, "mouse wheel packet\n");
+			return;
 
-	/* Left/Right button handling. */
-	sp.sp_left = psc->packet[0] & PMS_LBUTMASK;
-	sp.sp_right = psc->packet[0] & PMS_RBUTMASK;
+		case SYNAPTICS_EW_SECONDARY_FINGER:
+			/* parse the second finger report */
+			
+			sp.sp_finger = 1; /* just one other finger for now */
+			sp.sp_x = psc->packet[1]
+			    + ((psc->packet[4] & 0x0f) << 8);
+			sp.sp_y = psc->packet[2]
+			    + ((psc->packet[4] & 0xf0) << 4);
+			sp.sp_z = (psc->packet[3] & 0x30)
+			    + (psc->packet[5] & 0x0f);
 
-	/* Up/Down buttons. */
-	if (sc->flags & SYN_FLAG_HAS_BUTTONS_4_5) {
-		/* Old up/down buttons. */
-		sp.sp_up = sp.sp_left ^
-		    (psc->packet[3] & PMS_LBUTMASK);
-		sp.sp_down = sp.sp_right ^
-		    (psc->packet[3] & PMS_RBUTMASK);
-	} else
-	if (sc->flags & SYN_FLAG_HAS_UP_DOWN_BUTTONS &&
-	   ((psc->packet[0] & PMS_RBUTMASK) ^
-	   (psc->packet[3] & PMS_RBUTMASK))) {
-		/* New up/down button. */
-		sp.sp_up = psc->packet[4] & SYN_1BUTMASK;
-		sp.sp_down = psc->packet[5] & SYN_2BUTMASK;
+			/* keep same buttons down as primary */
+			sp.sp_left = sc->button_history & PMS_LBUTMASK;
+			sp.sp_middle = sc->button_history & PMS_MBUTMASK;
+			sp.sp_right = sc->button_history & PMS_RBUTMASK;
+			break;
+
+		case SYNAPTICS_EW_FINGER_STATUS:
+			/* reports which finger is primary/secondary
+			 * ignore for now.
+			 */
+			return;
+
+		default:
+			aprint_error_dev(psc->sc_dev,
+			    "invalid extended w mode %d\n",
+			    ew_mode);
+			return;
+		}
 	} else {
-		sp.sp_up = 0;
-		sp.sp_down = 0;
-	}
 
-	if(sc->flags & SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD) {
-		/* This is not correctly specified. Read this button press
-		 * from L/U bit.
-		 */
-		sp.sp_left = ((psc->packet[0] ^ psc->packet[3]) & 0x01) ? 1 : 0;
-	} else
-	/* Middle button. */
-	if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
-		/* Old style Middle Button. */
-		sp.sp_middle = (psc->packet[0] & PMS_LBUTMASK) ^
-		    (psc->packet[3] & PMS_LBUTMASK);
-	} else
-	if (synaptics_up_down_emul == 1) {
-		/* Do middle button emulation using up/down buttons */
-		sp.sp_middle = sp.sp_up | sp.sp_down;
-		sp.sp_up = sp.sp_down = 0;
-	} else
-		sp.sp_middle = 0;
+		/* Absolute X/Y coordinates of finger */
+		sp.sp_x = psc->packet[4] + ((psc->packet[1] & 0x0f) << 8) +
+	   	((psc->packet[3] & 0x10) << 8);
+		sp.sp_y = psc->packet[5] + ((psc->packet[1] & 0xf0) << 4) +
+	   	((psc->packet[3] & 0x20) << 7);
+
+		/* Pressure */
+		sp.sp_z = psc->packet[2];
+
+		/* Left/Right button handling. */
+		sp.sp_left = psc->packet[0] & PMS_LBUTMASK;
+		sp.sp_right = psc->packet[0] & PMS_RBUTMASK;
+
+		/* Up/Down buttons. */
+		if (sc->flags & SYN_FLAG_HAS_BUTTONS_4_5) {
+			/* Old up/down buttons. */
+			sp.sp_up = sp.sp_left ^
+		    	    (psc->packet[3] & PMS_LBUTMASK);
+			sp.sp_down = sp.sp_right ^
+		    	    (psc->packet[3] & PMS_RBUTMASK);
+		} else if (sc->flags & SYN_FLAG_HAS_UP_DOWN_BUTTONS &&
+	   	    ((psc->packet[0] & PMS_RBUTMASK) ^
+	   	    (psc->packet[3] & PMS_RBUTMASK))) {
+			/* New up/down button. */
+			sp.sp_up = psc->packet[4] & SYN_1BUTMASK;
+			sp.sp_down = psc->packet[5] & SYN_2BUTMASK;
+		} else {
+			sp.sp_up = 0;
+			sp.sp_down = 0;
+		}
+
+		new_buttons = 0;
+		if(sc->flags & SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD) {
+			/* This is not correctly specified. Read this button press
+		 	* from L/U bit.  Emulate 3 buttons by checking the 
+		 	* coordinates of the click and returning the appropriate
+		 	* button code.  Outside the button region default to a
+		 	* left click.
+		 	*/
+			u_char bstate = (psc->packet[0] ^ psc->packet[3])
+					    & 0x01;
+			if (sp.sp_y < synaptics_button_boundary) {
+				if (sp.sp_x > synaptics_button3) {
+					sp.sp_right =
+			   			bstate ? PMS_RBUTMASK : 0;
+				} else if (sp.sp_x > synaptics_button2) {
+					sp.sp_middle =
+				   		bstate ? PMS_MBUTMASK : 0;
+				} else {
+					sp.sp_left = bstate ? PMS_LBUTMASK : 0;
+				}
+			} else
+				sp.sp_left = bstate ? 1 : 0;
+			new_buttons = sp.sp_left | sp.sp_middle | sp.sp_right;
+			if (new_buttons != sc->button_history) {
+				if (sc->button_history == 0)
+					sc->button_history = new_buttons;
+				else if (new_buttons == 0) {
+					sc->button_history = 0;
+				       /* ensure all buttons are cleared just in
+				 	* case finger comes off in a different
+				 	* region.
+				 	*/
+					sp.sp_left = 0;
+					sp.sp_middle = 0;
+					sp.sp_right = 0;
+				} else {
+					/* make sure we keep the same button even
+				 	* if the finger moves to a different
+				 	* region.  This precludes chording
+				 	* but, oh well.
+				 	*/
+					sp.sp_left = sc->button_history & PMS_LBUTMASK;
+					sp.sp_middle = sc->button_history
+				    	& PMS_MBUTMASK;
+					sp.sp_right = sc->button_history & PMS_RBUTMASK;
+				}
+			}
+		} else if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
+			/* Old style Middle Button. */
+			sp.sp_middle = (psc->packet[0] & PMS_LBUTMASK) ^
+		    	    (psc->packet[3] & PMS_LBUTMASK);
+		} else if (synaptics_up_down_emul == 1) {
+			/* Do middle button emulation using up/down buttons */
+			sp.sp_middle = sp.sp_up | sp.sp_down;
+			sp.sp_up = sp.sp_down = 0;
+		} else
+			sp.sp_middle = 0;
+
+	}
 
 	pms_synaptics_process_packet(psc, &sp);
 }
@@ -853,6 +1035,9 @@ pms_synaptics_input(void *vsc, int data)
 			    "pms_input: unusual delay (%ld.%06ld s), "
 			    "scheduling reset\n",
 			    (long)diff.tv_sec, (long)diff.tv_usec);
+			printf("pms_input: unusual delay (%ld.%06ld s), "
+			    "scheduling reset\n",
+			    (long)diff.tv_sec, (long)diff.tv_usec);
 			psc->inputstate = 0;
 			psc->sc_enabled = 0;
 			wakeup(&psc->sc_enabled);
@@ -888,7 +1073,6 @@ pms_synaptics_input(void *vsc, int data)
 		 * Extract the pertinent details.
 		 */
 		psc->inputstate = 0;
-
 		if ((psc->packet[0] & 0xfc) == 0x84 &&
 		    (psc->packet[3] & 0xcc) == 0xc4) {
 			/* W = SYNAPTICS_WIDTH_PASSTHROUGH, PS/2 passthrough */
@@ -948,7 +1132,8 @@ synaptics_finger_detect(struct synaptics_softc *sc, struct synaptics_packet *sp,
 	 * fingers appear within the tap gesture time period.
 	 */
 	if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER &&
-	    SYN_TIME(sc, sc->gesture_start_packet) < synaptics_gesture_length) {
+	    SYN_TIME(sc, sc->gesture_start_packet,
+	    sp->sp_finger) < synaptics_gesture_length) {
 		switch (sp->sp_w) {
 		case SYNAPTICS_WIDTH_TWO_FINGERS:
 			fingers = 2;
@@ -985,7 +1170,7 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 	int gesture_len, gesture_buttons;
 	int set_buttons;
 
-	gesture_len = SYN_TIME(sc, sc->gesture_start_packet);
+	gesture_len = SYN_TIME(sc, sc->gesture_start_packet, sp->sp_finger);
 	gesture_buttons = sc->gesture_buttons;
 
 	if (fingers > 0 && (fingers == sc->prev_fingers)) {
@@ -1010,7 +1195,7 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 		sc->gesture_start_y = abs(sp->sp_y);
 		sc->gesture_move_x = 0;
 		sc->gesture_move_y = 0;
-		sc->gesture_start_packet = sc->total_packets;
+		sc->gesture_start_packet = sc->total_packets[0];
 
 #ifdef DIAGNOSTIC
 		aprint_debug("Finger applied: gesture_start_x: %d gesture_start_y: %d\n",
@@ -1053,7 +1238,7 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 				 * Single tap gesture. Set the tap length timer
 				 * and flag a single-click.
 				 */
-				sc->gesture_tap_packet = sc->total_packets;
+				sc->gesture_tap_packet = sc->total_packets[0];
 				sc->gesture_type |= SYN_GESTURE_SINGLE;
 
 				/*
@@ -1110,7 +1295,7 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 		 * Activate the relevant button(s) until the
 		 * gesture tap timer has expired.
 		 */
-		if (SYN_TIME(sc, sc->gesture_tap_packet) <
+		if (SYN_TIME(sc, sc->gesture_tap_packet, sp->sp_finger) <
 		    synaptics_gesture_length)
 			set_buttons = 1;
 		else
@@ -1139,11 +1324,12 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 }
 
 static inline int
-synaptics_filter_policy(struct synaptics_softc *sc, int *history, int value)
+synaptics_filter_policy(struct synaptics_softc *sc, int finger, int *history,
+			int value)
 {
 	int a, b, rv, count;
 
-	count = sc->total_packets;
+	count = sc->total_packets[finger];
 
 	/*
 	 * Once we've accumulated at least SYN_HIST_SIZE values, combine
@@ -1156,7 +1342,7 @@ synaptics_filter_policy(struct synaptics_softc *sc, int *history, int value)
 	 * Using a rolling average helps to filter out jitter caused by
 	 * tiny finger movements.
 	 */
-	if (sc->movement_history >= SYN_HIST_SIZE) {
+	if (sc->movement_history[finger] >= SYN_HIST_SIZE) {
 		a = (history[(count + 0) % SYN_HIST_SIZE] +
 		    history[(count + 1) % SYN_HIST_SIZE]) / 2;
 
@@ -1248,15 +1434,17 @@ synaptics_scale(int delta, int scale, int *remp)
 
 static inline void
 synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
-    int *dxp, int *dyp)
+    int finger, int *dxp, int *dyp)
 {
 	int dx, dy, edge;
 
 	/*
 	 * Compute the next values of dx and dy
 	 */
-	dx = synaptics_filter_policy(sc, sc->history_x, sp->sp_x);
-	dy = synaptics_filter_policy(sc, sc->history_y, sp->sp_y);
+	dx = synaptics_filter_policy(sc, finger, sc->history_x[finger],
+		sp->sp_x);
+	dy = synaptics_filter_policy(sc, finger, sc->history_y[finger],
+		sp->sp_y);
 
 	/*
 	 * If we're dealing with a drag gesture, and the finger moves to
@@ -1279,8 +1467,8 @@ synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
 	/*
 	 * Apply scaling to both deltas
 	 */
-	dx = synaptics_scale(dx, synaptics_scale_x, &sc->rem_x);
-	dy = synaptics_scale(dy, synaptics_scale_y, &sc->rem_y);
+	dx = synaptics_scale(dx, synaptics_scale_x, &sc->rem_x[finger]);
+	dy = synaptics_scale(dy, synaptics_scale_y, &sc->rem_y[finger]);
 
 	/*
 	 * Clamp deltas to specified maximums.
@@ -1293,7 +1481,7 @@ synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
 	*dxp = dx;
 	*dyp = dy;
 
-	sc->movement_history++;
+	sc->movement_history[finger]++;
 }
 
 static void
@@ -1343,9 +1531,10 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	fingers = synaptics_finger_detect(sc, sp, &palm);
 
 	/*
-	 * Do gesture processing only if we didn't detect a palm.
+	 * Do gesture processing only if we didn't detect a palm and
+	 * it is not the seondary finger.
 	 */
-	if (palm == 0)
+	if ((sp->sp_finger == 0) && (palm == 0))
 		synaptics_gesture_detect(sc, sp, fingers);
 	else
 		sc->gesture_type = sc->gesture_buttons = 0;
@@ -1362,19 +1551,29 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	psc->buttons ^= changed;
 
 	sc->prev_fingers = fingers;
-	sc->total_packets++;
+	sc->total_packets[sp->sp_finger]++;
 
 	/*
-	 * Do movement processing IFF we have a single finger and no palm.
+	 * Do movement processing IFF we have a single finger and no palm or
+	 * a secondary finger and no palm.
 	 */
-	if (fingers == 1 && palm == 0)
-		synaptics_movement(sc, sp, &dx, &dy);
-	else {
+	if (palm == 0) {
+		if (fingers == 1) {
+			synaptics_movement(sc, sp, sp->sp_finger, &dx, &dy);
+		} else {
+			/*
+			 * No valid finger. Therefore no movement.
+			 */
+			sc->movement_history[sp->sp_finger] = 0;
+			sc->rem_x[sp->sp_finger] = sc->rem_y[sp->sp_finger] = 0;
+			dx = dy = 0;
+		}
+	} else {
 		/*
 		 * No valid finger. Therefore no movement.
 		 */
-		sc->movement_history = 0;
-		sc->rem_x = sc->rem_y = 0;
+		sc->movement_history[0] = 0;
+		sc->rem_x[0] = sc->rem_y[0] = 0;
 		dx = dy = 0;
 	}
 
