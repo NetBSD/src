@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.18.8.2 2017/07/25 02:00:33 snj Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.18.8.3 2017/11/06 09:52:15 snj Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.18.8.2 2017/07/25 02:00:33 snj Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.18.8.3 2017/11/06 09:52:15 snj Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -410,6 +410,7 @@ main(int argc, char *argv[])
 			    (num == ULONG_MAX || num == 0)))
 				errx(1, "illegal number -- %s", optarg);
 			image_magic = (uint32_t)num;
+			break;
 		case 'n':	/* name */
 			image_name = strdup(optarg);
 			break;
