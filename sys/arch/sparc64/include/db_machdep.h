@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.34 2015/10/31 02:36:17 nakayama Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.35 2017/11/06 03:47:48 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -134,11 +134,6 @@ int kdb_trap(int, struct trapframe64 *);
  * We use elf symbols in DDB.
  */
 #define	DB_ELF_SYMBOLS
-#ifdef __arch64__
-#define DB_ELFSIZE	64
-#else
-#define DB_ELFSIZE	32
-#endif
 
 /*
  * KGDB definitions

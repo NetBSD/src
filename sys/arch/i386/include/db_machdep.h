@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.30 2011/05/26 15:34:13 joerg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.31 2017/11/06 03:47:46 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -143,7 +143,6 @@ int kdb_trap(int, int, db_regs_t *);
  * We use Elf32 symbols in DDB.
  */
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	32
 
 extern void db_machine_init(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.24 2017/02/20 17:27:32 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.25 2017/11/06 03:47:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -121,7 +121,6 @@ void db_machine_init(void);
 int db_validate_address(vaddr_t addr);
 
 #define DB_ELF_SYMBOLS
-#define DB_ELFSIZE 32
 
 /*
  * kgdb
