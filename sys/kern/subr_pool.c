@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.210 2017/11/05 07:49:45 mlelstv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.211 2017/11/06 18:41:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.210 2017/11/05 07:49:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.211 2017/11/06 18:41:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -805,6 +805,7 @@ pool_get(struct pool *pp, int flags)
 		pp->pr_nfail++;
 
 		mutex_exit(&pp->pr_lock);
+		KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
 		return (NULL);
 	}
 
@@ -848,6 +849,7 @@ pool_get(struct pool *pp, int flags)
 
 			pp->pr_nfail++;
 			mutex_exit(&pp->pr_lock);
+			KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
 			return (NULL);
 		}
 
@@ -2181,8 +2183,10 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 
 	object = pool_get(&pc->pc_pool, flags);
 	*objectp = object;
-	if (__predict_false(object == NULL))
+	if (__predict_false(object == NULL)) {
+		KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
 		return false;
+	}
 
 	if (__predict_false((*pc->pc_ctor)(pc->pc_arg, object, flags) != 0)) {
 		pool_put(&pc->pc_pool, object);
@@ -2273,6 +2277,11 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			break;
 	}
 
+	/*
+	 * We would like to KASSERT(object || (flags & PR_NOWAIT)), but
+	 * pool_cache_get can fail even in the PR_WAITOK case, if the
+	 * constructor fails.
+	 */
 	return object;
 }
 
