@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fopen.c,v 1.4 2017/11/06 17:32:53 christos Exp $ */
+/*	$NetBSD: t_fopen.c,v 1.5 2017/11/06 23:06:55 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fopen.c,v 1.4 2017/11/06 17:32:53 christos Exp $");
+__RCSID("$NetBSD: t_fopen.c,v 1.5 2017/11/06 23:06:55 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -253,9 +253,10 @@ ATF_TC_BODY(fopen_mode, tc)
 
 	static const char *mode[] = {
 		"r", "r+", "w", "w+", "a", "a+",
-		"rb", "r+b", "wb", "w+b", "ab", "a+b"
-		"re", "r+e", "we", "w+e", "ae", "a+e"
-		"rf", "r+f", "wf", "w+f", "af", "a+f"
+		"rb", "r+b", "wb", "w+b", "ab", "a+b",
+		"re", "r+e", "we", "w+e", "ae", "a+e",
+		"rf", "r+f", "wf", "w+f", "af", "a+f",
+		"rl", "r+l", "wl", "w+l", "al", "a+l"
 	};
 
 	f = fopen(path, "w+");
@@ -327,11 +328,16 @@ ATF_TC_BODY(fopen_regular, tc)
 			if (f == NULL && errno == EFTYPE)
 				continue;
 
-			if (f != NULL)
+			if (f != NULL) {
 				(void)fclose(f);
 
-			atf_tc_fail_nonfatal("opened %s as %s",
-			    devs[i], mode[j]);
+				atf_tc_fail_nonfatal("opened %s as %s",
+				    devs[i], mode[j]);
+			} else {
+				atf_tc_fail_nonfatal(
+				    "err %d (%s) from open of %s as %s", errno,
+				    strerror(errno), devs[i], mode[j]);
+			}
 		}
 	}
 }
@@ -360,10 +366,16 @@ ATF_TC_BODY(fopen_symlink, tc)
 		if (f == NULL && errno == EFTYPE)
 			continue;
 
-		if (f != NULL)
+		if (f != NULL) {
 			(void)fclose(f);
 
-		atf_tc_fail_nonfatal("opened %s as %s", linkpath, mode[j]);
+			atf_tc_fail_nonfatal("opened %s as %s", linkpath,
+			    mode[j]);
+		} else {
+			atf_tc_fail_nonfatal(
+			    "err %d (%s) from open of %s as %s", errno,
+			    strerror(errno), linkpath, mode[j]);
+		}
 	}
 	ATF_REQUIRE(unlink(linkpath) == 0);
 }
