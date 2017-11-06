@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_bsd.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: cl_bsd.c,v 1.4 2017/11/06 03:08:41 rin Exp $ */
 /*-
  * Copyright (c) 1995, 1996
  *	Keith Bostic.  All rights reserved.
@@ -14,7 +14,7 @@
 static const char sccsid[] = "Id: cl_bsd.c,v 8.32 2000/12/01 13:56:17 skimo Exp  (Berkeley) Date: 2000/12/01 13:56:17 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_bsd.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: cl_bsd.c,v 1.4 2017/11/06 03:08:41 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -287,7 +287,9 @@ lcmp(const void *a, const void *b)
  * Try and work around the problem, since we only care about the return value.
  *
  * PUBLIC: #ifdef HAVE_CURSES_TIGETSTR
+ * PUBLIC: #if 0
  * PUBLIC: char *tigetstr __P((const char *));
+ * PUBLIC: #endif
  * PUBLIC: #else
  * PUBLIC: char *tigetstr __P((char *));
  * PUBLIC: #endif
