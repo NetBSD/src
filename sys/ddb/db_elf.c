@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.28 2017/11/04 22:17:55 christos Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.29 2017/11/06 04:08:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2009 The NetBSD Foundation, Inc.
@@ -31,24 +31,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.28 2017/11/04 22:17:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.29 2017/11/06 04:08:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-
 
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
 
 #ifdef DB_ELF_SYMBOLS
-
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-
-#define	ELFSIZE		DB_ELFSIZE
 
 #include <ddb/ddb.h>
 #include <sys/exec_elf.h>
