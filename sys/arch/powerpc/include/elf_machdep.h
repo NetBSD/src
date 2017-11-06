@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.14 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.15 2017/11/06 19:20:54 christos Exp $	*/
 
 #ifndef _POWERPC_ELF_MACHDEP_H_
 #define _POWERPC_ELF_MACHDEP_H_
@@ -16,14 +16,13 @@
 #define	ELF32_MACHDEP_ID	EM_PPC
 #define	ELF64_MACHDEP_ID	EM_PPC64
 
-#define KERN_ELFSIZE		32
 
-#ifndef ARCH_ELFSIZE
 #ifdef _LP64
+#define KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 #else
+#define KERN_ELFSIZE		32
 #define ARCH_ELFSIZE		32	/* MD native binary size */
-#endif
 #endif
 
 /* Specify the value of _GLOBAL_OFFSET_TABLE_ */
