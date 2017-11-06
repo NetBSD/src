@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.98.6.1 2017/08/01 23:33:18 snj Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.98.6.2 2017/11/06 09:54:01 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -208,6 +208,12 @@ typedef union ext_rxdesc {
 #define EXTRXC_STATUS_PKTTYPE_MASK	__BITS(19,16)
 #define EXTRXC_STATUS_PKTTYPE(status)	__SHIFTOUT(status,EXTRXC_STATUS_PKTTYPE_MASK)
 
+#define	EXTRXC_VLAN_ID_MASK	__BITS(11,0)	/* VLAN identifier mask */
+#define	EXTRXC_VLAN_ID(x)	((x) & EXTRXC_VLAN_ID_MASK) /* VLAN identifier */
+#define	EXTRXC_VLAN_CFI		__BIT(12)	/* Canonical Form Indicator */
+#define	EXTRXC_VLAN_PRI_MASK	__BITS(15,13)	/* VLAN priority mask */
+#define	EXTRXC_VLAN_PRI(x)	__SHIFTOUT((x),EXTRXC_VLAN_PRI_MASK) /* VLAN priority */
+
 /* advanced RX descriptor for 82575 and newer */
 typedef union nq_rxdesc {
 	struct {
@@ -329,6 +335,12 @@ typedef union nq_rxdesc {
 #define NQRXC_STATUS_LB		__BIT(18) /* Sent by a local virtual machine (VM to VM switch indication). */
 #define NQRXC_STATUS_MC		__BIT(19) /* Packet received from Manageability Controller */
 					  /* "MBC" in i350 spec */
+
+#define	NQRXC_VLAN_ID_MASK	__BITS(11,0)	/* VLAN identifier mask */
+#define	NQRXC_VLAN_ID(x)	((x) & NQRXC_VLAN_ID_MASK) /* VLAN identifier */
+#define	NQRXC_VLAN_CFI		__BIT(12)	/* Canonical Form Indicator */
+#define	NQRXC_VLAN_PRI_MASK	__BITS(15,13)	/* VLAN priority mask */
+#define	NQRXC_VLAN_PRI(x)	__SHIFTOUT((x),NQRXC_VLAN_PRI_MASK) /* VLAN priority */
 
 /*
  * The Wiseman transmit descriptor.
