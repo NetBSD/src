@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.37 2017/11/05 21:07:32 snj Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.38 2017/11/06 09:23:51 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -3797,4 +3797,9 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	patch
 
 	apply fixes for CVEs 2017-12176 to 2017-12187
 	[mrg, ticket #1523]
+
+sys/dev/pci/if_wm.c				1.497
+
+	Fix panic on shutdown.  PR kern/52039.
+	[kardel, ticket #1385]
 
