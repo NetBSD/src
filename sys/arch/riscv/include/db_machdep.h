@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.2 2017/11/06 03:47:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,9 +34,6 @@
 #include <riscv/locore.h>		/* T_BREAK */
 
 #define	DB_ELF_SYMBOLS
-#ifndef DB_ELFSIZE
-#define	DB_ELFSIZE	32
-#endif
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 #define	DDB_EXPR_FMT	"l"		/* expression is long */

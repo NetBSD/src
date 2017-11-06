@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.5 2015/05/28 02:19:05 matt Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.6 2017/11/06 03:47:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 		case EM_RISCV:		\
 			break;
 
+#define	KERN_ELFSIZE		32
 #ifdef _LP64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 #else

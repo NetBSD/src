@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.12 2016/12/05 12:42:33 joerg Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.13 2017/11/06 03:47:48 christos Exp $	*/
 
 #include <machine/endian_machdep.h>
 
@@ -17,6 +17,7 @@
 
 #define	ELF32_MACHDEP_ID	EM_SH
 
+#define	KERN_ELFSIZE		32
 #define	ARCH_ELFSIZE		32	/* MD native binary size */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2017/07/24 09:56:45 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2017/11/06 03:47:46 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2017/07/24 09:56:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2017/11/06 03:47:46 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -111,10 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2017/07/24 09:56:45 mrg Exp $");
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define	ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 

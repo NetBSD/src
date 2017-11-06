@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.5 2016/02/02 20:13:59 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.6 2017/11/06 03:47:45 christos Exp $	*/
 
 #if !defined __i386__
 
@@ -15,6 +15,7 @@
 #define	ELF32_MACHDEP_ID	EM_386
 #define	ELF64_MACHDEP_ID	EM_X86_64
 
+#define	KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 
 /* x86-64 relocations */
