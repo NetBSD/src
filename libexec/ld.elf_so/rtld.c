@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.187 2017/08/12 09:03:27 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.188 2017/11/06 21:16:04 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.187 2017/08/12 09:03:27 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.188 2017/11/06 21:16:04 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -259,6 +259,22 @@ _rtld_call_init_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 #endif /* HAVE_INITFINI_ARRAY */
 }
 
+static bool
+_rtld_call_ifunc_functions(sigset_t *mask, Obj_Entry *obj, u_int cur_objgen)
+{
+	if (obj->ifunc_remaining
+#ifdef __sparc__
+	    || obj->ifunc_remaining_nonplt
+#endif
+	) {
+		_rtld_call_ifunc(obj, mask, cur_objgen);
+		if (_rtld_objgen != cur_objgen) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static void
 _rtld_call_init_functions(sigset_t *mask)
 {
@@ -275,19 +291,21 @@ restart:
 
 	/* First pass: objects with IRELATIVE relocations. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
-		Obj_Entry * const obj = elm->obj;
-		if (obj->ifunc_remaining
-#ifdef __sparc__
-		    || obj->ifunc_remaining_nonplt
-#endif
-		) {
-			_rtld_call_ifunc(obj, mask, cur_objgen);
-			if (_rtld_objgen != cur_objgen) {
-				dbg(("restarting init iteration"));
-				_rtld_objlist_clear(&initlist);
-				goto restart;
-			}
+		if (_rtld_call_ifunc_functions(mask, elm->obj, cur_objgen)) {
+			dbg(("restarting init iteration"));
+			_rtld_objlist_clear(&initlist);
+			goto restart;
 		}
+	}
+	/*
+	 * XXX: For historic reasons, init/fini of the main object are called
+	 * from crt0. Don't introduce that mistake for ifunc, so look at
+	 * the head of _rtld_objlist that _rtld_initlist_tsort skipped.
+	 */
+	if (_rtld_call_ifunc_functions(mask, _rtld_objlist, cur_objgen)) {
+		dbg(("restarting init iteration"));
+		_rtld_objlist_clear(&initlist);
+		goto restart;
 	}
 
 	/* Second pass: objects marked with DF_1_INITFIRST. */

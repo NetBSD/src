@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.39 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.40 2017/11/06 21:16:04 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.39 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.40 2017/11/06 21:16:04 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -197,9 +197,6 @@ int
 _rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
-
-	if (!obj->relocbase)
-		return 0;
 
 	for (rel = obj->pltrellim; rel-- > obj->pltrel; ) {
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);

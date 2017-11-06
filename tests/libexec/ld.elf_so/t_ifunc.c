@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.4 2017/08/12 09:03:28 joerg Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.5 2017/11/06 21:16:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -149,9 +149,36 @@ ATF_TC_BODY(rtld_hidden_ifunc, tc)
 	}
 }
 
+ATF_TC(rtld_main_ifunc);
+ATF_TC_HEAD(rtld_main_ifunc, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ifunc functions are resolved in the executable");
+}
+
+static unsigned int
+ifunc_helper(void)
+{
+	return 0xdeadbeef;
+}
+
+static __attribute__((used))
+unsigned int (*resolve_ifunc(void))(void)
+{
+	return ifunc_helper;
+}
+__hidden_ifunc(ifunc, resolve_ifunc);
+unsigned int ifunc(void);
+
+ATF_TC_BODY(rtld_main_ifunc, tc)
+{
+	ATF_CHECK(ifunc() == 0xdeadbeef);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, rtld_ifunc);
 	ATF_TP_ADD_TC(tp, rtld_hidden_ifunc);
+	ATF_TP_ADD_TC(tp, rtld_main_ifunc);
 	return 0;
 }
