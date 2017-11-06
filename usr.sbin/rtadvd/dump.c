@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.14 2016/06/15 13:57:39 riastradh Exp $	*/
+/*	$NetBSD: dump.c,v 1.15 2017/11/06 15:15:04 christos Exp $	*/
 /*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 #include "rtadvd.h"
 #include "timer.h"
+#include "logit.h"
 #include "if.h"
 #include "dump.h"
 #include "prog_ops.h"
@@ -266,11 +267,11 @@ if_dump(void)
 void
 rtadvd_dump_file(const char *dumpfile)
 {
-	syslog(LOG_DEBUG, "<%s> dump current status to %s", __func__,
+	logit(LOG_DEBUG, "<%s> dump current status to %s", __func__,
 	    dumpfile);
 
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		syslog(LOG_WARNING, "<%s> open a dump file(%s): %m",
+		logit(LOG_WARNING, "<%s> open a dump file(%s): %m",
 		       __func__, dumpfile);
 		return;
 	}

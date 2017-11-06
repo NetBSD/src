@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.13 2015/11/11 07:48:41 ozaki-r Exp $	*/
+/*	$NetBSD: timer.c,v 1.14 2017/11/06 15:15:04 christos Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <search.h>
 #include "timer.h"
+#include "logit.h"
 #include "prog_ops.h"
 
 struct rtadvd_timer_head_t ra_timer = TAILQ_HEAD_INITIALIZER(ra_timer);
@@ -62,7 +63,7 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
 	struct rtadvd_timer *newtimer;
 
 	if ((newtimer = malloc(sizeof(*newtimer))) == NULL) {
-		syslog(LOG_ERR,
+		logit(LOG_ERR,
 		       "<%s> can't allocate memory", __func__);
 		exit(1);
 	}
@@ -70,7 +71,7 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
 	memset(newtimer, 0, sizeof(*newtimer));
 
 	if (timeout == NULL) {
-		syslog(LOG_ERR,
+		logit(LOG_ERR,
 		       "<%s> timeout function unspecified", __func__);
 		exit(1);
 	}
@@ -156,7 +157,7 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 
 	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	if (timespeccmp(&timer->tm, &now, <=)) {
-		syslog(LOG_DEBUG,
+		logit(LOG_DEBUG,
 		       "<%s> a timer must be expired, but not yet",
 		       __func__);
 		returnval.tv_sec = 0;

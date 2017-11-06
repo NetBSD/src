@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.24 2015/11/11 07:48:41 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.25 2017/11/06 15:15:04 christos Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 
 #include "rtadvd.h"
 #include "if.h"
+#include "logit.h"
 #include "prog_ops.h"
 
 #ifndef RT_ROUNDUP
@@ -135,14 +136,14 @@ if_getflags(int ifindex, int oifflags)
 	int s;
 
 	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "<%s> socket: %m", __func__);
+		logit(LOG_ERR, "<%s> socket: %m", __func__);
 		return (oifflags & ~IFF_UP);
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
 	if_indextoname(ifindex, ifr.ifr_name);
 	if (prog_ioctl(s, SIOCGIFFLAGS, &ifr) < 0) {
-		syslog(LOG_ERR, "<%s> ioctl:SIOCGIFFLAGS: failed for %s",
+		logit(LOG_ERR, "<%s> ioctl:SIOCGIFFLAGS: failed for %s",
 		       __func__, ifr.ifr_name);
 		prog_close(s);
 		return (oifflags & ~IFF_UP);
@@ -179,7 +180,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 		memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
 		break;
 	default:
-		syslog(LOG_ERR, "<%s> unsupported link type(%d)",
+		logit(LOG_ERR, "<%s> unsupported link type(%d)",
 		    __func__, sdl->sdl_type);
 		exit(1);
 	}
@@ -203,7 +204,7 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 	     rtm = (struct rt_msghdr *)(((char *)rtm) + rtm->rtm_msglen)) {
 		/* just for safety */
 		if (!rtm->rtm_msglen) {
-			syslog(LOG_WARNING, "<%s> rtm_msglen is 0 "
+			logit(LOG_WARNING, "<%s> rtm_msglen is 0 "
 				"(buf=%p lim=%p rtm=%p)", __func__,
 				buf, lim, rtm);
 			break;
