@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.23 2016/12/22 14:47:57 cherry Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.24 2017/11/06 03:47:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.23 2016/12/22 14:47:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.24 2017/11/06 03:47:46 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -64,10 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.23 2016/12/22 14:47:57 cher
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define ELFSIZE	DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 

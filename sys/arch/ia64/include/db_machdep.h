@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.3 2011/05/26 15:34:13 joerg Exp $ */
+/* $NetBSD: db_machdep.h,v 1.4 2017/11/06 03:47:47 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -123,7 +123,6 @@ int ia64_trap(int, int, db_regs_t *); /* See: trap.c */
  * We use Elf64 symbols in DDB.
  */
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	64
 
 /*
  * Stuff for KGDB.

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.13 2017/08/10 19:03:27 joerg Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.14 2017/11/06 03:47:48 christos Exp $	*/
 
 #ifndef _POWERPC_ELF_MACHDEP_H_
 #define _POWERPC_ELF_MACHDEP_H_
@@ -15,6 +15,8 @@
 
 #define	ELF32_MACHDEP_ID	EM_PPC
 #define	ELF64_MACHDEP_ID	EM_PPC64
+
+#define KERN_ELFSIZE		32
 
 #ifndef ARCH_ELFSIZE
 #ifdef _LP64

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.13 2016/01/11 08:14:08 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.14 2017/11/06 03:47:46 christos Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -39,7 +39,6 @@
 #include <machine/frame.h>
 
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	32
 
 /* types the generic ddb module needs */
 typedef	vaddr_t db_addr_t;

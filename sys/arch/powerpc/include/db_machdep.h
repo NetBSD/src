@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.25 2015/01/23 07:27:05 nonaka Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.26 2017/11/06 03:47:48 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,7 +42,6 @@
 #endif
 
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	32
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 #define	DDB_EXPR_FMT	"l"		/* expression is long */

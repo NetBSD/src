@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.57 2016/12/22 14:47:55 cherry Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.58 2017/11/06 03:47:46 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.57 2016/12/22 14:47:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.58 2017/11/06 03:47:46 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.57 2016/12/22 14:47:55 cherry 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define ELFSIZE	DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 

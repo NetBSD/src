@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.29 2015/06/06 22:19:07 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.30 2017/11/06 03:47:47 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -41,9 +41,6 @@
 #include <mips/pcb.h>
 
 #define	DB_ELF_SYMBOLS
-#ifndef DB_ELFSIZE
-#define	DB_ELFSIZE	32
-#endif
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 #ifdef __mips_n32

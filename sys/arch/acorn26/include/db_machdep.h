@@ -1,10 +1,9 @@
-/* $NetBSD: db_machdep.h,v 1.9 2013/01/05 15:04:00 christos Exp $ */
+/* $NetBSD: db_machdep.h,v 1.10 2017/11/06 03:47:45 christos Exp $ */
 
 #include <arm/db_machdep.h>
 
 /* acorn26 uses ELF */
 #define DB_ELF_SYMBOLS
-#define DB_ELFSIZE 32
 
 void db_show_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_bus_write_cmd(db_expr_t, bool, db_expr_t, const char *);

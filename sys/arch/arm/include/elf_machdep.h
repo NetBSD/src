@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.18 2017/08/10 19:03:27 joerg Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.19 2017/11/06 03:47:45 christos Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -41,6 +41,7 @@
 
 #define	ELF32_MACHDEP_ID	EM_ARM
 
+#define	KERN_ELFSIZE		32
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 
 /* Processor specific relocation types */
