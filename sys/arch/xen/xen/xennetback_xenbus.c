@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.59 2017/08/30 16:01:55 maxv Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.60 2017/11/06 15:27:09 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.59 2017/08/30 16:01:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.60 2017/11/06 15:27:09 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -112,7 +112,8 @@ struct xnetback_instance {
 	uint8_t xni_enaddr[ETHER_ADDR_LEN];
 
 	/* remote domain communication stuff */
-	unsigned int xni_evtchn; /* our even channel */
+	unsigned int xni_evtchn; /* our event channel */
+	struct intrhand *xni_ih;
 	netif_tx_back_ring_t xni_txring;
 	netif_rx_back_ring_t xni_rxring;
 	grant_handle_t xni_tx_ring_handle; /* to unmap the ring */
@@ -389,7 +390,8 @@ xennetback_xenbus_destroy(void *arg)
 #endif
 	aprint_verbose_ifnet(&xneti->xni_if, "disconnecting\n");
 	hypervisor_mask_event(xneti->xni_evtchn);
-	event_remove_handler(xneti->xni_evtchn, xennetback_evthandler, xneti);
+	intr_disestablish(xneti->xni_ih);
+
 	if (xneti->xni_softintr) {
 		softint_disestablish(xneti->xni_softintr);
 		xneti->xni_softintr = NULL;
@@ -549,8 +551,9 @@ xennetback_connect(struct xnetback_instance *xneti)
 	xneti->xni_status = CONNECTED;
 	xen_wmb();
 
-	event_set_handler(xneti->xni_evtchn, xennetback_evthandler,
-	    xneti, IPL_NET, xneti->xni_if.if_xname);
+	xneti->xni_ih = intr_establish_xname(0, &xen_pic, xneti->xni_evtchn, IST_LEVEL, IPL_NET,
+	    xennetback_evthandler, xneti, true, xneti->xni_if.if_xname);
+	KASSERT(xneti->xni_ih != NULL);
 	xennetback_ifinit(&xneti->xni_if);
 	hypervisor_enable_event(xneti->xni_evtchn);
 	hypervisor_notify_via_evtchn(xneti->xni_evtchn);

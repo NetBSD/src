@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.63 2016/12/26 08:16:28 skrll Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.64 2017/11/06 15:27:09 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.63 2016/12/26 08:16:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.64 2017/11/06 15:27:09 cherry Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -170,6 +170,7 @@ struct xbdback_instance {
 	bool xbdi_ro; /* is device read-only ? */
 	/* parameters for the communication */
 	unsigned int xbdi_evtchn;
+	struct intrhand *xbdi_ih;
 	/* private parameters for communication */
 	blkif_back_ring_proto_t xbdi_ring;
 	enum xbdi_proto xbdi_proto;
@@ -636,8 +637,9 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	XENPRINTF(("xbdback %s: connect evchannel %d\n", xbusd->xbusd_path, xbdi->xbdi_evtchn));
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
-	event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
-	    xbdi, IPL_BIO, xbdi->xbdi_name);
+	xbdi->xbdi_ih = intr_establish_xname(0, &xen_pic, xbdi->xbdi_evtchn, IST_LEVEL, IPL_BIO,
+	    xbdback_evthandler, xbdi, true, xbdi->xbdi_name);
+	KASSERT(xbdi->xbdi_ih != NULL);
 	aprint_verbose("xbd backend domain %d handle %#x (%d) "
 	    "using event channel %d, protocol %s\n", xbdi->xbdi_domid,
 	    xbdi->xbdi_handle, xbdi->xbdi_handle, xbdi->xbdi_evtchn, proto);
@@ -681,8 +683,7 @@ xbdback_disconnect(struct xbdback_instance *xbdi)
 		return;
 	}
 	hypervisor_mask_event(xbdi->xbdi_evtchn);
-	event_remove_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
-	    xbdi);
+	intr_disestablish(xbdi->xbdi_ih);
 
 	/* signal thread that we want to disconnect, then wait for it */
 	xbdi->xbdi_status = DISCONNECTING;

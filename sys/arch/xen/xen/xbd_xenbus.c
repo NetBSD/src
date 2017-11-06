@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.76 2017/03/05 23:07:12 mlelstv Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.77 2017/11/06 15:27:09 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.76 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.77 2017/11/06 15:27:09 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -123,6 +123,8 @@ struct xbd_xenbus_softc {
 	struct dk_softc sc_dksc;	/* Must be first in this struct */
 	struct xenbus_device *sc_xbusd;
 
+	struct intrhand *sc_ih; /* Interrupt handler for this instance. */
+	
 	blkif_front_ring_t sc_ring;
 
 	unsigned int sc_evtchn;
@@ -368,7 +370,8 @@ xbd_xenbus_detach(device_t dev, int flags)
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
-	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);
+	intr_disestablish(sc->sc_ih);
+
 	while (xengnt_status(sc->sc_ring_gntref)) {
 		tsleep(xbd_xenbus_detach, PRIBIO, "xbd_ref", hz/2);
 	}
@@ -397,7 +400,7 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	hypervisor_mask_event(sc->sc_evtchn);
 	sc->sc_backend_status = BLKIF_STATE_SUSPENDED;
-	event_remove_handler(sc->sc_evtchn, xbd_handler, sc);
+	intr_disestablish(sc->sc_ih);
 
 	splx(s);
 
@@ -449,8 +452,9 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	event_set_handler(sc->sc_evtchn, &xbd_handler, sc,
-	    IPL_BIO, device_xname(dev));
+	sc->sc_ih = intr_establish_xname(0, &xen_pic, sc->sc_evtchn, IST_LEVEL, IPL_BIO, &xbd_handler, sc, true, "clock");
+	
+	KASSERT(sc->sc_ih != NULL);
 
 again:
 	xbt = xenbus_transaction_start();

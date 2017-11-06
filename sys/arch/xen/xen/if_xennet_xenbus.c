@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.71 2017/08/30 16:01:55 maxv Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.72 2017/11/06 15:27:09 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.71 2017/08/30 16:01:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.72 2017/11/06 15:27:09 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -181,7 +181,8 @@ struct xennet_xenbus_softc {
 
 	unsigned int sc_evtchn;
 	void *sc_softintr;
-
+	struct intrhand *sc_ih;
+	
 	grant_ref_t sc_tx_ring_gntref;
 	grant_ref_t sc_rx_ring_gntref;
 
@@ -422,7 +423,7 @@ xennet_xenbus_detach(device_t self, int flags)
 	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
 	s0 = splnet();
 	xennet_stop(ifp, 1);
-	event_remove_handler(sc->sc_evtchn, &xennet_handler, sc);
+	intr_disestablish(sc->sc_ih);
 	/* wait for pending TX to complete, and collect pending RX packets */
 	xennet_handler(sc);
 	while (sc->sc_tx_ring.sring->rsp_prod != sc->sc_tx_ring.rsp_cons) {
@@ -513,8 +514,9 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 		goto abort_resume;
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	event_set_handler(sc->sc_evtchn, &xennet_handler, sc,
-	    IPL_NET, device_xname(dev));
+	sc->sc_ih = intr_establish_xname(0, &xen_pic, sc->sc_evtchn, IST_LEVEL, IPL_NET,
+	    &xennet_handler, sc, true, device_xname(dev));
+	KASSERT(sc->sc_ih != NULL);
 	return true;
 
 abort_resume:
@@ -635,7 +637,7 @@ xennet_xenbus_suspend(device_t dev, const pmf_qual_t *qual)
 	 */
 
 	sc->sc_backend_status = BEST_SUSPENDED;
-	event_remove_handler(sc->sc_evtchn, &xennet_handler, sc);
+	intr_disestablish(sc->sc_ih);
 
 	splx(s);
 
