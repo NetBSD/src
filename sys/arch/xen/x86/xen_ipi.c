@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.22 2017/08/15 09:16:59 maxv Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.23 2017/11/06 15:27:09 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.22 2017/08/15 09:16:59 maxv Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23 2017/11/06 15:27:09 cherry Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.22 2017/08/15 09:16:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23 2017/11/06 15:27:09 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -78,12 +78,17 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 	xen_ipi_generic,
 };
 
-static void
-xen_ipi_handler(struct cpu_info *ci, struct intrframe *regs)
+static int
+xen_ipi_handler(void *arg)
 {
 	uint32_t pending;
 	int bit;
+	struct cpu_info *ci;
+	struct intrframe *regs;
 
+	ci = curcpu();
+	regs = arg;
+	
 	pending = atomic_swap_32(&ci->ci_ipis, 0);
 
 	KDASSERT((pending >> XEN_NIPIS) == 0);
@@ -98,6 +103,8 @@ xen_ipi_handler(struct cpu_info *ci, struct intrframe *regs)
 			/* NOTREACHED */
 		}
 	}
+
+	return 0;
 }
 
 /* Must be called once for every cpu that expects to send/recv ipis */
@@ -118,9 +125,9 @@ xen_ipi_init(void)
 
 	KASSERT(evtchn != -1 && evtchn < NR_EVENT_CHANNELS);
 
-	if (0 != event_set_handler(evtchn, (int (*)(void *))xen_ipi_handler,
-				   ci, IPL_HIGH, "ipi")) {
-		panic("event_set_handler(...) KPI violation\n");
+	if(intr_establish_xname(0, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
+		xen_ipi_handler, ci, true, "ipi") == NULL) {
+		panic("%s: unable to register ipi handler\n", __func__);
 		/* NOTREACHED */
 	}
 

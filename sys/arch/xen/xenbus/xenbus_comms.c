@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.15 2016/07/07 06:55:40 msaitoh Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.16 2017/11/06 15:27:09 cherry Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.15 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.16 2017/11/06 15:27:09 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.15 2016/07/07 06:55:40 msaitoh Ex
 #define XENPRINTF(x)
 #endif
 
+static struct intrhand *ih;
 struct xenstore_domain_interface *xenstore_interface;
 
 extern int xenstored_ready;
@@ -220,7 +221,9 @@ xb_init_comms(device_t dev)
 
 	evtchn = xen_start_info.store_evtchn;
 
-	event_set_handler(evtchn, wake_waiting, NULL, IPL_TTY, "xenbus");
+	ih = intr_establish_xname(0, &xen_pic, evtchn, IST_LEVEL, IPL_TTY,
+	    wake_waiting, NULL, true, "xenbus");
+
 	hypervisor_enable_event(evtchn);
 	aprint_verbose_dev(dev, "using event channel %d\n", evtchn);
 
@@ -235,7 +238,7 @@ xb_suspend_comms(device_t dev)
 	evtchn = xen_start_info.store_evtchn;
 
 	hypervisor_mask_event(evtchn);
-	event_remove_handler(evtchn, wake_waiting, NULL);
+	intr_disestablish(ih);
 	aprint_verbose_dev(dev, "removed event channel %d\n", evtchn);
 }
 
