@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.15 2017/10/24 15:06:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.16 2017/11/06 21:03:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.15 2017/10/24 15:06:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.16 2017/11/06 21:03:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -263,6 +263,7 @@ static const struct arm_platform sun5i_platform = {
 };
 
 ARM_PLATFORM(sun5i_a13, "allwinner,sun5i-a13", &sun5i_platform);
+ARM_PLATFORM(sun5i_gr8, "nextthing,gr8", &sun5i_platform);
 
 static const struct arm_platform sun6i_platform = {
 	.devmap = sunxi_platform_devmap,

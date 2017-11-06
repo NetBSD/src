@@ -1,4 +1,4 @@
-/* $NetBSD: sun5i_a13_ccu.c,v 1.3 2017/08/27 17:53:31 jmcneill Exp $ */
+/* $NetBSD: sun5i_a13_ccu.c,v 1.4 2017/11/06 21:03:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.3 2017/08/27 17:53:31 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.4 2017/11/06 21:03:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,6 +67,7 @@ static void sun5i_a13_ccu_attach(device_t, device_t, void *);
 
 static const char * const compatible[] = {
 	"allwinner,sun5i-a13-ccu",
+	"nextthing,gr8-ccu",
 	NULL
 };
 
