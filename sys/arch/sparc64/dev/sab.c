@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.54 2014/11/15 19:20:02 christos Exp $	*/
+/*	$NetBSD: sab.c,v 1.54.12.1 2017/11/06 10:29:06 snj Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.54 2014/11/15 19:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.54.12.1 2017/11/06 10:29:06 snj Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -680,6 +680,13 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 	tp->t_dev = dev;
+
+	/*
+	 * If the device is exclusively for kernel use, deny userland
+	 * open.
+	 */
+	if (ISSET(tp->t_state, TS_KERN_ONLY))
+		return (EBUSY);
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);

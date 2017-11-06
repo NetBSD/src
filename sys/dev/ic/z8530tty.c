@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.131 2014/11/15 19:18:18 christos Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.131.12.1 2017/11/06 10:29:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.131 2014/11/15 19:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.131.12.1 2017/11/06 10:29:06 snj Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -558,6 +558,13 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	/* If KGDB took the line, then tp==NULL */
 	if (tp == NULL)
+		return (EBUSY);
+
+	/*
+	 * If the device is exclusively for kernel use, deny userland
+	 * open.
+	 */
+	if (ISSET(tp->t_state, TS_KERN_ONLY))
 		return (EBUSY);
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))

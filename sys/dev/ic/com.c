@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.339 2016/05/27 20:01:49 bouyer Exp $ */
+/* $NetBSD: com.c,v 1.339.10.1 2017/11/06 10:29:06 snj Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.339 2016/05/27 20:01:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.339.10.1 2017/11/06 10:29:06 snj Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -871,6 +871,13 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
+	/*
+	 * If the device is exclusively for kernel use, deny userland
+	 * open.
+	 */
+	if (ISSET(tp->t_state, TS_KERN_ONLY))
+		return (EBUSY);
+
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
@@ -1008,6 +1015,12 @@ comclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
+		return (0);
+	/*
+	 * If the device is exclusively for kernel use, deny userland
+	 * close.
+	 */
+	if (ISSET(tp->t_state, TS_KERN_ONLY))
 		return (0);
 
 	(*tp->t_linesw->l_close)(tp, flag);
