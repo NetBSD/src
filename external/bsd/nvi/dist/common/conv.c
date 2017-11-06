@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: conv.c,v 1.5 2017/11/06 03:02:22 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp  (Berkeley) Date: 2001/08/18 21:41:41 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: conv.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: conv.c,v 1.5 2017/11/06 03:02:22 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -96,7 +96,7 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 	outleft = CONV_BUFFER_SIZE;					\
 	errno = 0;							\
 	if (iconv(id, (const char **)&str, &left, &bp, &outleft) 	\
-	    == (size_t)-1 /* && errno != E2BIG */)			\
+	    == (size_t)-1 && errno != E2BIG)				\
 		HANDLE_ICONV_ERROR(bp, str, outleft, left);		\
 	if ((len = CONV_BUFFER_SIZE - outleft) == 0) {			\
 	    error = -left;						\
