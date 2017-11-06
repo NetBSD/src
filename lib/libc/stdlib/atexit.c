@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.31 2017/11/02 19:39:33 kamil Exp $	*/
+/*	$NetBSD: atexit.c,v 1.32 2017/11/06 14:26:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.31 2017/11/02 19:39:33 kamil Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.32 2017/11/06 14:26:03 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -142,12 +142,12 @@ __aeabi_atexit(void *arg, void (*func)(void *), void *dso);
 int
 __aeabi_atexit(void *arg, void (*func)(void *), void *dso)
 {
-	return __cxa_atexit(func, arg, dso);
+	return (__cxa_atexit(func, arg, dso));
 }
 #endif
 
-int
-__cxa_atexit(void (*func)(void *), void *arg, void *dso)
+static int
+__cxa_atexit_internal(void (*func)(void *), void *arg, void *dso)
 {
 	struct atexit_handler *ah;
 
@@ -170,6 +170,13 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 
 	mutex_unlock(&__atexit_mutex);
 	return (0);
+}
+
+int
+__cxa_atexit(void (*func)(void *), void *arg, void *dso)
+{
+	_DIAGASSERT(dso != NULL);
+	return (__cxa_atexit_internal(func, arg, dso));
 }
 
 /*
@@ -255,5 +262,5 @@ int
 atexit(void (*func)(void))
 {
 
-	return (__cxa_atexit((void (*)(void *))func, NULL, NULL));
+	return (__cxa_atexit_internal((void (*)(void *))func, NULL, NULL));
 }
