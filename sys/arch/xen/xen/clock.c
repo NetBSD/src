@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.64 2016/06/12 09:08:09 jnemeth Exp $	*/
+/*	$NetBSD: clock.c,v 1.65 2017/11/06 15:27:09 cherry Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64 2016/06/12 09:08:09 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65 2017/11/06 15:27:09 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64 2016/06/12 09:08:09 jnemeth Exp $");
 #include <dev/clock_subr.h>
 #include <x86/rtc.h>
 
-static int xen_timer_handler(void *, struct intrframe *);
+static int xen_timer_handler(void *);
+static struct intrhand *ih;
 
 /* A timecounter: Xen system_time extrapolated with a TSC. */
 u_int xen_get_timecount(struct timecounter*);
@@ -509,7 +510,7 @@ xen_suspendclocks(struct cpu_info *ci)
 	KASSERT(evtch != -1);
 
 	hypervisor_mask_event(evtch);
-	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, ci);
+	intr_disestablish(ih);
 
 	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
 }
@@ -522,8 +523,11 @@ xen_resumeclocks(struct cpu_info *ci)
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
-	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
-	    ci, IPL_CLOCK, "clock");
+	ih = intr_establish_xname(0, &xen_pic, evtch, IST_LEVEL, IPL_CLOCK,
+	    xen_timer_handler, ci, true, "clock");
+
+	KASSERT(ih != NULL);
+
 	hypervisor_enable_event(evtch);
 
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
@@ -531,11 +535,12 @@ xen_resumeclocks(struct cpu_info *ci)
 
 /* ARGSUSED */
 static int
-xen_timer_handler(void *arg, struct intrframe *regs)
+xen_timer_handler(void *arg)
 {
 	int64_t delta;
 	struct cpu_info *ci = curcpu();
-	KASSERT(arg == ci);
+	struct intrframe *regs = arg;
+
 	int err;
 again:
 	mutex_enter(&tmutex);
