@@ -41,6 +41,7 @@
 
 #define	ELF64_MACHDEP_ID	EM_IA_64	/* XXX */
 
+#define	KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 
 /*

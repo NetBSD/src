@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.12 2010/09/30 09:11:19 skrll Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.13 2017/11/06 03:47:45 christos Exp $ */
 
 #ifndef	_ALPHA_ELF_MACHDEP_H_
 #define	_ALPHA_ELF_MACHDEP_H_
@@ -21,6 +21,7 @@
 
 #define	ELF64_MACHDEP_ID	EM_ALPHA_EXP	/* XXX */
 
+#define	KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 
 /*
