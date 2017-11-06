@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.11 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.11.2.1 2017/11/06 09:59:01 snj Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.1 2017/11/06 09:59:01 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1069,6 +1069,7 @@ l2tp_set_session(struct l2tp_softc *sc, uint32_t my_sess_id,
 		pserialize_perform(l2tp_psz);
 	}
 	mutex_exit(&l2tp_hash.lock);
+	PSLIST_ENTRY_DESTROY(sc, l2tp_hash);
 
 	l2tp_variant_update(sc, nvar);
 	mutex_exit(&sc->l2tp_lock);
@@ -1078,6 +1079,7 @@ l2tp_set_session(struct l2tp_softc *sc, uint32_t my_sess_id,
 		log(LOG_DEBUG, "%s: add hash entry: sess_id=%" PRIu32 ", idx=%" PRIu32 "\n",
 		    sc->l2tp_ec.ec_if.if_xname, nvar->lv_my_sess_id, idx);
 
+	PSLIST_ENTRY_INIT(sc, l2tp_hash);
 	mutex_enter(&l2tp_hash.lock);
 	PSLIST_WRITER_INSERT_HEAD(&l2tp_hash.lists[idx], sc, l2tp_hash);
 	mutex_exit(&l2tp_hash.lock);
