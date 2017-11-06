@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.29 2017/11/06 21:11:17 blymn Exp $
+.\" $NetBSD: pms.4,v 1.30 2017/11/06 21:40:04 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 6, 2017
+.Dd November 6, 2017
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -160,10 +160,11 @@ two or three buttons by detecting the finger location and reporting
 either a button 2 or button 3 click iff the the click occurs within
 the region bounded by button_boundary and the bottom of the clickpad.
 .It Dv hw.synaptics.button3_edge
-This defines the left hand edige of the button 3 region.
+This defines the left hand edge of the button 3 region.
 If a click occurs in the region bounded by button_boundary, button3_edge
-the right hand edge of the click pad then the click will be reported
-as a button3 event.  Button 3 emulation can be disabled by setting
+and the right hand edge of the click pad then the click will be reported
+as a button3 event.
+Button 3 emulation can be disabled by setting
 button3_edge to the right hand edge of the clickpad.
 .It Dv hw.synaptics.button2_edge
 This defines the left hand edge of the button 2 region.
@@ -173,7 +174,7 @@ If a click occurs in this region then it will be reported as a button2
 event.
 For completeness, the region between the left hand side of the clickpad,
 button2_edge and button_boundary will be reported as a button1 event
-as will any clicks htat occur outside the button emulation region.
+as will any clicks that occur outside the button emulation region.
 .El
 .Pp
 The following
