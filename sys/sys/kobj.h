@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.19 2017/11/06 03:50:13 christos Exp $	*/
+/*	$NetBSD: kobj.h,v 1.20 2017/11/06 17:56:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #ifndef _SYS_KOBJ_H_
 #define	_SYS_KOBJ_H_
 
-#ifndef ELFSIZE
+#if !defined(ELFSIZE) && !defined(_RUMPKERNEL)
 #define ELFSIZE KERN_ELFSIZE
 #endif
 
