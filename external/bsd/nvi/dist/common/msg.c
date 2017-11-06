@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: msg.c,v 1.4 2017/11/06 03:03:54 rin Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: msg.c,v 10.61 2003/07/18 23:17:30 skimo Exp  (Berkeley) Date: 2003/07/18 23:17:30 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: msg.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.4 2017/11/06 03:03:54 rin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -657,7 +657,8 @@ msgq_status(SCR *sp, db_recno_t lno, u_int flags)
 			p += len;
 		} else {
 			t = msg_cat(sp, "027|line %lu of %lu [%ld%%]", &len);
-			(void)sprintf(p, t, lno, last, (lno * 100) / last);
+			(void)sprintf(p, t, lno, last,
+			    (long)((lno * 100) / last));
 			p += strlen(p);
 		}
 	} else {
