@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.22 2017/02/27 06:47:00 chs Exp $	*/
+/*	$NetBSD: fbt.c,v 1.23 2017/11/06 04:43:50 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -72,7 +72,6 @@
 #include <arm/frame.h>
 #endif
 
-#define ELFSIZE ARCH_ELFSIZE
 #include <sys/exec_elf.h>
 
 #include <sys/dtrace.h>
