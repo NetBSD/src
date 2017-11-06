@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.32 2013/09/15 14:13:19 martin Exp $	*/
+/*	$NetBSD: sunms.c,v 1.32.22.1 2017/11/06 10:29:06 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.32 2013/09/15 14:13:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.32.22.1 2017/11/06 10:29:06 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ sunms_attach(device_t parent, device_t self, void *aux)
 	tp->t_linesw = ttyldisc_lookup(sunms_disc.l_name);
 	KASSERT(tp->t_linesw == &sunms_disc);
 	tp->t_oflag &= ~OPOST;
+	SET(tp->t_state, TS_KERN_ONLY);
 
 	/* Initialize translator. */
 	ms->ms_byteno = -1;
@@ -192,6 +193,7 @@ sunmsiopen(device_t dev, int flags)
 	int error;
 
 	/* Open the lower device */
+	CLR(tp->t_state, TS_KERN_ONLY);
 	if ((error = cdev_open(tp->t_dev, O_NONBLOCK|flags,
 				     0/* ignored? */, l)) != 0)
 		return (error);
@@ -202,6 +204,7 @@ sunmsiopen(device_t dev, int flags)
 	t.c_ospeed = sunms_bps;
 	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
+	SET(tp->t_state, TS_KERN_ONLY);
 
 	return (0);
 }
