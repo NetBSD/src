@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.1 2014/09/03 19:34:26 matt Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.2 2017/11/06 03:47:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 #define	ELF64_MACHDEP_ID_CASES
 
+#define	KERN_ELFSIZE		32
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 
 /* Processor specific flags for the ELF header e_flags field.  */

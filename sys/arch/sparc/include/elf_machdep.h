@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.9 2017/08/12 09:03:28 joerg Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10 2017/11/06 03:47:48 christos Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -12,6 +12,7 @@
 
 #define	ELF32_MACHDEP_ID	EM_SPARC
 
+#define	KERN_ELFSIZE		32
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #define R_SPARC_NONE		0
