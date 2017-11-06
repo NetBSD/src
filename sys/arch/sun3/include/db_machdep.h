@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.18 2012/02/02 16:06:48 tsutsui Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.19 2017/11/06 03:47:48 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,6 @@
 
 #include <m68k/db_machdep.h>
 #define DB_ELF_SYMBOLS
-#define DB_ELFSIZE 32
 
 /* This enables some code in db_command.c */
 /* XXX: disable db_machdep.c for crash(8) */
