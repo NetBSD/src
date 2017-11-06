@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.18.8.2 2017/11/02 21:29:52 snj Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.18.8.3 2017/11/06 09:55:57 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -89,8 +89,7 @@ struct sysctl_history_event {
 
 /* list of all events for a single history */
 struct sysctl_history {
-	uint16_t	sh_version;
-	uint16_t	sh_arglen;
+	uint32_t	filler;
 	uint32_t	sh_nameoffset;
 	uint32_t	sh_numentries;
 	uint32_t	sh_nextfree;

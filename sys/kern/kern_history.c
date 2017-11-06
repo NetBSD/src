@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.14.8.1 2017/11/02 21:29:52 snj Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.14.8.2 2017/11/06 09:55:57 snj Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.14.8.1 2017/11/02 21:29:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.14.8.2 2017/11/06 09:55:57 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -458,12 +458,6 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 	    h->n * sizeof(struct sysctl_history_event) +
 	    xlate_t[xlate_c].offset;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
-
-	/*
-	 * Set the export structure's version info
-	 */
-	buf->sh_version = KERNHIST_SYSCTL_VERSION;
-	buf->sh_arglen = sizeof(uintmax_t);
 
 	/*
 	 * Copy history header info to the export structure
