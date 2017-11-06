@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.57 2017/11/06 15:15:04 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.58 2017/11/06 19:12:23 joerg Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1843,6 +1843,7 @@ ra_timer_update(void *data, struct timespec *tm)
 	       (intmax_t)tm->tv_sec, (intmax_t)tm->tv_nsec);
 }
 
+ __format_arg(3)
 static const char *
 expandm(char *buf, size_t len, const char *fmt)
 {
