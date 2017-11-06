@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.289.2.13 2017/03/09 06:28:36 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.289.2.13.2.1 2017/11/06 09:21:48 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.13 2017/03/09 06:28:36 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.13.2.1 2017/11/06 09:21:48 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -11153,7 +11153,7 @@ wm_enable_wakeup(struct wm_softc *sc)
 
 			/* Assume that the PHY is copper */
 			child = LIST_FIRST(&sc->sc_mii.mii_phys);
-			if (child->mii_mpd_rev <= 2)
+			if ((child != NULL) && (child->mii_mpd_rev <= 2))
 				sc->sc_mii.mii_writereg(sc->sc_dev, 1,
 				    (768 << 5) | 25, 0x0444); /* magic num */
 		}
