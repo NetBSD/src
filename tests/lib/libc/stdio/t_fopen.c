@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fopen.c,v 1.3 2011/09/14 14:34:37 martin Exp $ */
+/*	$NetBSD: t_fopen.c,v 1.4 2017/11/06 17:32:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fopen.c,v 1.3 2011/09/14 14:34:37 martin Exp $");
+__RCSID("$NetBSD: t_fopen.c,v 1.4 2017/11/06 17:32:53 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -336,6 +336,43 @@ ATF_TC_BODY(fopen_regular, tc)
 	}
 }
 
+static char linkpath[] = "symlink";
+
+ATF_TC_WITH_CLEANUP(fopen_symlink);
+ATF_TC_HEAD(fopen_symlink, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test fopen(3) with 'l' mode");
+}
+
+ATF_TC_BODY(fopen_symlink, tc)
+{
+	static const char *mode[] = { "rl", "r+l", "wl", "w+l", "al", "a+l" };
+	size_t j;
+	FILE *f;
+
+	ATF_CHECK(symlink("/dev/null", linkpath) != -1);
+
+	for (j = 0; j < __arraycount(mode); j++) {
+
+		errno = 0;
+		f = fopen(linkpath, mode[j]);
+
+		if (f == NULL && errno == EFTYPE)
+			continue;
+
+		if (f != NULL)
+			(void)fclose(f);
+
+		atf_tc_fail_nonfatal("opened %s as %s", linkpath, mode[j]);
+	}
+	ATF_REQUIRE(unlink(linkpath) == 0);
+}
+
+ATF_TC_CLEANUP(fopen_symlink, tc)
+{
+	(void)unlink(linkpath);
+}
+
 ATF_TC_WITH_CLEANUP(fopen_seek);
 ATF_TC_HEAD(fopen_seek, tc)
 {
@@ -435,6 +472,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, fopen_mode);
 	ATF_TP_ADD_TC(tp, fopen_perm);
 	ATF_TP_ADD_TC(tp, fopen_regular);
+	ATF_TP_ADD_TC(tp, fopen_symlink);
 	ATF_TP_ADD_TC(tp, fopen_seek);
 	ATF_TP_ADD_TC(tp, freopen_std);
 
