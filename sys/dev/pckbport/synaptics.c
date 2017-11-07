@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.34 2017/11/06 21:07:17 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.35 2017/11/07 12:39:07 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.34 2017/11/06 21:07:17 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.35 2017/11/07 12:39:07 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,8 @@ pms_synaptics_probe_init(void *vsc)
 		 * Reset device in case the probe confused it.
 		 */
  doreset:
-		return synaptics_poll_reset(psc);
+		(void)synaptics_poll_reset(psc);
+		return res;
 	}
 
 	if (resp[1] != SYNAPTICS_MAGIC_BYTE) {
