@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.66 2017/10/26 22:38:27 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.67 2017/11/07 01:13:19 nat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -204,6 +204,7 @@ struct audio_softc {
 	bool		sc_trigger_started;
 	bool		sc_rec_started;
 	bool		sc_writeme;
+	bool		sc_usemixer;
 	bool		sc_ready;	/* audio hw configured properly */
 	unsigned int	sc_latency;
 	int		sc_opens;
