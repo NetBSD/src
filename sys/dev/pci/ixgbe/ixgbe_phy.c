@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.12 2017/08/30 08:49:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.13 2017/11/07 05:41:54 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -37,6 +37,8 @@
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
+
+#include <dev/mii/mdio.h>
 
 static void ixgbe_i2c_start(struct ixgbe_hw *hw);
 static void ixgbe_i2c_stop(struct ixgbe_hw *hw);
@@ -855,18 +857,39 @@ s32 ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
 			      IXGBE_MDIO_AUTO_NEG_DEV_TYPE,
 			      autoneg_reg);
 
-	/* Blocked by MNG FW so don't reset PHY */
-	if (ixgbe_check_reset_blocked(hw))
-		return status;
+	if (hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_100_FULL) {
+		u16 ctrl;
 
-	/* Restart PHY auto-negotiation. */
-	hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
+		/* Force 100Mbps */
+		hw->phy.ops.read_reg(hw, MDIO_PMAPMD_CTRL1, MDIO_MMD_PMAPMD,
+		    &ctrl);
+		ctrl &= ~PMAPMD_CTRL1_SPEED_MASK;
+		ctrl |= PMAPMD_CTRL1_SPEED_100;
+		hw->phy.ops.write_reg(hw, MDIO_PMAPMD_CTRL1,MDIO_MMD_PMAPMD,
+		    ctrl);
+
+		/* Don't use auto-nego for 100Mbps */
+		hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
 			     IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &autoneg_reg);
 
-	autoneg_reg |= IXGBE_MII_RESTART;
+		autoneg_reg &= ~AN_CTRL1_AUTOEN;	
 
-	hw->phy.ops.write_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
+		hw->phy.ops.write_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
 			      IXGBE_MDIO_AUTO_NEG_DEV_TYPE, autoneg_reg);
+	} else {
+		/* Blocked by MNG FW so don't reset PHY */
+		if (ixgbe_check_reset_blocked(hw))
+			return status;
+
+		/* Restart PHY auto-negotiation. */
+		hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
+		    IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &autoneg_reg);
+
+		autoneg_reg |= IXGBE_MII_RESTART | AN_CTRL1_AUTOEN;
+
+		hw->phy.ops.write_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
+		    IXGBE_MDIO_AUTO_NEG_DEV_TYPE, autoneg_reg);
+	}
 
 	return status;
 }
