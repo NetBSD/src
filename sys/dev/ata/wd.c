@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.435 2017/11/03 13:01:26 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.436 2017/11/07 04:09:08 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.435 2017/11/03 13:01:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.436 2017/11/07 04:09:08 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -901,7 +901,7 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
 	dk_done(dksc, bp);
-	dk_start(dksc, NULL);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 }
 
 static void
