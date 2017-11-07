@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.202 2017/04/21 15:10:34 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.203 2017/11/07 19:44:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.202 2017/04/21 15:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.203 2017/11/07 19:44:04 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -346,6 +346,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_textvp = p1->p_textvp;
 	if (p2->p_textvp)
 		vref(p2->p_textvp);
+	if (p1->p_path)
+		p2->p_path = kmem_strdupsize(p1->p_path, NULL, KM_SLEEP);
+	else
+		p2->p_path = NULL;
 
 	if (flags & FORK_SHAREFILES)
 		fd_share(p2);

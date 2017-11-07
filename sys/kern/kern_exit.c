@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.269 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.270 2017/11/07 19:44:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.269 2017/08/28 00:46:07 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.270 2017/11/07 19:44:04 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1250,6 +1250,7 @@ proc_free(struct proc *p, struct wrusage *wru)
 	 */
 	if (p->p_textvp)
 		vrele(p->p_textvp);
+	kmem_strfree(p->p_path);
 
 	mutex_destroy(&p->p_auxlock);
 	mutex_obj_free(p->p_lock);
