@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.17 2017/09/13 22:24:46 sevan Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.18 2017/11/07 18:35:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.17 2017/09/13 22:24:46 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.18 2017/11/07 18:35:57 christos Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1104,9 +1104,8 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	vfe->status = FINGERPRINT_NOTEVAL;
 	if (prop_bool_true(prop_dictionary_get(dict, "keep-filename"))) {
-		vfe->filename_len = strlen(file) + 1;
-		vfe->filename = kmem_alloc(vfe->filename_len, KM_SLEEP);
-		strlcpy(vfe->filename, file, vfe->filename_len);
+		vfe->filename = kmem_strdupsize(file, &vfe->filename_len,
+		    KM_SLEEP);
 	} else
 		vfe->filename = NULL;
 
