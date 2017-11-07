@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.430 2017/11/07 01:13:19 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.431 2017/11/07 09:26:55 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.430 2017/11/07 01:13:19 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.431 2017/11/07 09:26:55 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3789,7 +3789,7 @@ audio_mix(void *v)
 	if (sc->sc_dying == true)
 		return;
 
-	blksize = sc->sc_hwvc->sc_mpr.blksize;
+	blksize = sc->sc_mixring.sc_mpr.blksize;
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
 		vc = chan->vc;
 
@@ -5552,10 +5552,10 @@ mix_write(void *arg)
 
 	if (sc->sc_usemixer &&
 	    audio_stream_get_used(vc->sc_pustream) <=
-				vc->sc_mpr.blksize) {
+				sc->sc_mixring.sc_mpr.blksize) {
 		tocopy = vc->sc_pustream->inp;
 		orig = sc->sc_mixring.sc_mpr.s.outp;
-		used = vc->sc_mpr.blksize;
+		used = sc->sc_mixring.sc_mpr.blksize;
 
 		while (used > 0) {
 			cc = used;
@@ -5578,12 +5578,12 @@ mix_write(void *arg)
 		}
 
 		vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
-		    vc->sc_pustream->inp, vc->sc_mpr.blksize);
+		    vc->sc_pustream->inp, sc->sc_mixring.sc_mpr.blksize);
 
 		sc->sc_mixring.sc_mpr.s.outp =
 		    audio_stream_add_outp(&sc->sc_mixring.sc_mpr.s,
 		    	sc->sc_mixring.sc_mpr.s.outp,
-			vc->sc_mpr.blksize);
+			sc->sc_mixring.sc_mpr.blksize);
 	}
 
 	if (vc->sc_npfilters > 0) {
@@ -5901,7 +5901,7 @@ audio_play_thread(void *v)
 			kthread_exit(0);
 		}
 
-		while (sc->sc_trigger_started && sc->sc_usemixer &&
+		while (sc->sc_usemixer &&
 		    audio_stream_get_used(&sc->sc_mixring.sc_mpr.s) <
 						sc->sc_mixring.sc_mpr.blksize) {
 			mutex_exit(sc->sc_intr_lock);
