@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.23 2017/10/30 15:59:23 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.24 2017/11/07 09:17:06 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -183,7 +183,7 @@ BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet \
 FS_LIBS="$BASIC_LIBS -lrumpvfs -lrumpfs_ffs"
 CRYPTO_LIBS="$BASIC_LIBS -lrumpvfs -lrumpdev_opencrypto \
     -lrumpkern_z -lrumpkern_crypto"
-NPF_LIBS="$BASIC_LIBS -lrumpvfs -lrumpdev_bpf -lrumpnet_bpfjit -lrumpnet_npf"
+NPF_LIBS="$BASIC_LIBS -lrumpvfs -lrumpdev_bpf -lrumpnet_npf"
 
 # We cannot keep variables between test phases, so need to store in files
 _rump_server_socks=./.__socks
