@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.96 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.97 2017/11/07 18:35:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.96 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.97 2017/11/07 18:35:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,9 +370,7 @@ kfilter_register(const char *name, const struct filterops *filtops,
 	/* Adding new slot */
 	kfilter = &user_kfilters[user_kfilterc++];
 reuse:
-	kfilter->namelen = strlen(name) + 1;
-	kfilter->name = kmem_alloc(kfilter->namelen, KM_SLEEP);
-	memcpy(__UNCONST(kfilter->name), name, kfilter->namelen);
+	kfilter->name = kmem_strdupsize(name, &kfilter->namelen, KM_SLEEP);
 
 	kfilter->filter = (kfilter - user_kfilters) + EVFILT_SYSCOUNT;
 
