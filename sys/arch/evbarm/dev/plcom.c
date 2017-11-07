@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.52 2015/04/13 21:18:41 riastradh Exp $	*/
+/*	$NetBSD: plcom.c,v 1.53 2017/11/07 07:21:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.52 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.53 2017/11/07 07:21:13 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -2323,7 +2323,7 @@ plcom_common_putc(dev_t dev, struct plcom_instance *pi, int c)
 
 	/* wait for any pending transmission to finish */
 	timo = 150000;
-	while (!ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_TXFE) && --timo)
+	while (ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_TXFF) && --timo)
 		continue;
 
 	PWRITE1(pi, PL01XCOM_DR, c);
