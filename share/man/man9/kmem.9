@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.22 2017/08/26 21:58:31 joerg Exp $
+.\"	$NetBSD: kmem.9,v 1.23 2017/11/07 18:36:27 christos Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd February 28, 2016
+.Dd November 7, 2017
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -59,6 +59,13 @@
 .Ft char *
 .Fn kmem_asprintf \
 "const char *fmt" "..."
+.\" ---
+.Ft char *
+.Fn kmem_strdupsize \
+"const char *str" "size_t *size" "km_flag_t kmflags"
+.Ft void
+.Fn kmem_strfree \
+"char *str"
 .\" ------------------------------------------------------------
 .Pp
 .Cd "options KMEM_SIZE"
@@ -163,6 +170,31 @@ These routines are for the special cases.
 Normally,
 .Xr pool_cache 9
 should be used for memory allocation from interrupt context.
+.Pp
+The
+.Fn kmem_strdupsize
+function is a utility function that can be used to copy the string in the
+.Fa str
+argument to a new buffer allocated using
+.Fn kmem_alloc
+and optionally return the size of the allocation (the length of the string
+plus the trailing
+.Dv NUL )
+in the
+.Fa size
+argument if that is not
+.Dv NULL .
+.Pp
+The
+.Fn kmem_strfree
+function can be used to free a
+.Dv NUL
+terminated string computing the length of the string using
+.Xr strlen 3
+and adding one for the
+.Dv NUL
+and then using
+.Fn kmem_free .
 .\" ------------------------------------------------------------
 .Sh NOTES
 Making
@@ -313,7 +345,11 @@ is enabled by default on
 .Dv DEBUG .
 .Sh RETURN VALUES
 On success,
-.Fn kmem_alloc
+.Fn kmem_alloc ,
+.Fn kmem_asprintf ,
+.Fn kmem_intr_alloc ,
+.Fn kmem_intr_zalloc ,
+.Fn kmem_strdupsize ,
 and
 .Fn kmem_zalloc
 return a pointer to allocated memory.
@@ -335,12 +371,16 @@ subsystem is implemented within the file
 .Xr uvm_km 9
 .\" ------------------------------------------------------------
 .Sh CAVEATS
-Neither
-.Fn kmem_alloc
-nor
-.Fn kmem_free
-can be used from interrupt context, from a soft interrupt, or from
-a callout.
+The
+.Fn kmem_alloc ,
+.Fn kmem_asprintf ,
+.Fn kmem_free ,
+.Fn kmem_strdupsize ,
+.Fn kmem_strfree ,
+and
+.Fn kmem_zalloc
+functions cannot be used from interrupt context, from a soft interrupt,
+or from a callout.
 Use
 .Xr pool_cache 9
 in these situations.
