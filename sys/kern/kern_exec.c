@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.450 2017/11/07 19:44:04 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.451 2017/11/07 20:58:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.450 2017/11/07 19:44:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.451 2017/11/07 20:58:23 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1154,7 +1154,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (error != 0)
 		goto exec_abort;
 
-	pathexec(p, epp->ep_resolvedname);
+	// XXX: Can't use epp->ep_resolvedname since namei can return
+	// a relative path in pnbuf when being passed an absolute path!
+	pathexec(p, data->ed_pathstring);
 
 	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
