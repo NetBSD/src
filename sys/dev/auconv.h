@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.19 2017/07/27 23:39:37 nat Exp $	*/
+/*	$NetBSD: auconv.h,v 1.20 2017/11/07 01:15:42 nat Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,10 +66,6 @@ extern stream_filter_factory_t linear32_32_to_linear32;
 extern stream_filter_factory_t linear32_32_to_linear24;
 extern stream_filter_factory_t linear32_32_to_linear16;
 extern stream_filter_factory_t linear32_32_to_linear8;
-extern stream_filter_factory_t linear24_32_to_linear32;
-extern stream_filter_factory_t linear24_32_to_linear24;
-extern stream_filter_factory_t linear24_32_to_linear16;
-extern stream_filter_factory_t linear24_32_to_linear8;
 extern stream_filter_factory_t linear24_24_to_linear32;
 extern stream_filter_factory_t linear24_24_to_linear24;
 extern stream_filter_factory_t linear24_24_to_linear16;
