@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2156 2017/11/07 18:37:00 christos Exp $
+#	$NetBSD: mi,v 1.2157 2017/11/07 21:28:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2251,7 +2251,6 @@
 ./usr/include/net/raw_cb.h			comp-c-include
 ./usr/include/net/route.h			comp-c-include
 ./usr/include/net/slcompress.h			comp-c-include
-./usr/include/net/tstamp.h			comp-c-include
 ./usr/include/net/slip.h			comp-c-include
 ./usr/include/net/zlib.h			comp-c-include
 ./usr/include/net80211/_ieee80211.h		comp-c-include
