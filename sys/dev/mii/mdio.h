@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.6 2017/06/09 04:43:33 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.7 2017/11/07 05:33:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -64,6 +64,24 @@
  * Table 45-3
  */
 #define MDIO_PMAPMD_CTRL1		0   /* PMA/PMD control 1 */
+#define PMAPMD_CTRL1_RESET	0x8000		/* Reset */
+#define PMAPMD_CTRL1_SPEED0	0x2000		/* Speed selection (LSB) */
+#define PMAPMD_CTRL1_LOWPWR	0x0800		/* Low power */
+#define PMAPMD_CTRL1_SPEED1	0x0040		/* Speed selection (MSB) */
+#define PMAPMD_CTRL1_SPEED2	0x003c		/* Speed selection (over 1G) */
+#define PMAPMD_CTRL1_LOOP_REM	0x0002		/* PMA remote loopback */
+#define PMAPMD_CTRL1_LOOP_LOC	0x0001		/* PMA local loopback */
+#define PMAPMD_CTRL1_SPEED_SEL52 (PMAPMD_CTRL1_SPEED0 | PMAPMD_CTRL1_SPEED1)
+#define PMAPMD_CTRL1_SPEED_MASK	(PMAPMD_CTRL1_SPEED_SEL52 \
+	    | PMAPMD_CTRL1_SPEED2)
+#define PMAPMD_CTRL1_SPEED_10	   0
+#define PMAPMD_CTRL1_SPEED_100	   PMAPMD_CTRL1_SPEED0
+#define PMAPMD_CTRL1_SPEED_1G	   PMAPMD_CTRL1_SPEED1
+#define PMAPMD_CTRL1_SPEED_10G     PMAPMD_CTRL1_SPEED_SEL52
+#define PMAPMD_CTRL1_SPEED_10PASS (PMAPMD_CTRL1_SPEED_SEL52 | (1 << 2))
+#define PMAPMD_CTRL1_SPEED_40G	  (PMAPMD_CTRL1_SPEED_SEL52 | (2 << 2))
+#define PMAPMD_CTRL1_SPEED_100G   (PMAPMD_CTRL1_SPEED_SEL52 | (3 << 2))
+
 #define MDIO_PMAPMD_STAT1		1   /* PMA/PMD status 1 */
 #define MDIO_PMAPMD_DEVID1		2   /* PMA/PMD device identifier 1 */
 #define MDIO_PMAPMD_DEVID2		3   /* PMA/PMD device identifier 2 */
@@ -529,6 +547,11 @@
  * Table 45-200
  */
 #define MDIO_AN_CTRL1		0   /* AN control 1 */
+#define AN_CTRL1_ANRESET	0x8000 /* AN reset */
+#define AN_CTRL1_ENP		0x2000 /* Extended Next Page  */
+#define AN_CTRL1_AUTOEN		0x1000 /* Auto-Negotiation enable */
+#define AN_CTRL1_STARTNEG	0x0200 /* Restart Auto-Negotiation */
+
 #define MDIO_AN_STAT1		1   /* AN status 1 */
 #define MDIO_AN_DEVID1		2   /* AN device identifier 1 */
 #define MDIO_AN_DEVID2		3   /* AN device identifier 2 */
