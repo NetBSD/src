@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2155 2017/10/31 11:46:45 martin Exp $
+#	$NetBSD: mi,v 1.2156 2017/11/07 18:37:00 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2251,6 +2251,7 @@
 ./usr/include/net/raw_cb.h			comp-c-include
 ./usr/include/net/route.h			comp-c-include
 ./usr/include/net/slcompress.h			comp-c-include
+./usr/include/net/tstamp.h			comp-c-include
 ./usr/include/net/slip.h			comp-c-include
 ./usr/include/net/zlib.h			comp-c-include
 ./usr/include/net80211/_ieee80211.h		comp-c-include
@@ -3148,6 +3149,8 @@
 ./usr/lib					base-sys-usr		compatdir
 ./usr/lib/crt0.o				comp-c-lib		compatfile
 ./usr/lib/gcrt0.o				comp-c-lib		compatfile
+./usr/lib/mcrt0.o				comp-c-lib		compatfile,staticpie
+./usr/lib/rcrt0.o				comp-c-lib		compatfile,staticpie
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib		compatfile
 ./usr/lib/i18n/libDECHanyu.a			comp-i18n-lib		compatfile
 ./usr/lib/i18n/libEUC.a				comp-i18n-lib		compatfile
@@ -10749,6 +10752,8 @@
 ./usr/share/man/cat9/kmem_intr_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_intr_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_intr_zalloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_strdupsize.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_strfree.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
@@ -18216,6 +18221,8 @@
 ./usr/share/man/html9/kmem_intr_alloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_intr_free.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_intr_zalloc.html	comp-sys-htmlman	html
+./usr/share/man/html9/kmem_strdupsize.html	comp-sys-htmlman	html
+./usr/share/man/html9/kmem_strfree.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_zalloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/knote.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpause.html		comp-sys-htmlman	html
@@ -25835,6 +25842,8 @@
 ./usr/share/man/man9/kmem_intr_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_intr_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_intr_zalloc.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_strdupsize.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_strfree.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
 ./usr/share/man/man9/kpause.9			comp-sys-man		.man
