@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.37 2017/04/25 08:46:38 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.38 2017/11/07 18:35:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37 2017/04/25 08:46:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.38 2017/11/07 18:35:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -128,7 +128,6 @@ devsw_attach(const char *devname,
 	struct devsw_conv *conv;
 	char *name;
 	int error, i;
-	size_t len;
 
 	if (devname == NULL || cdev == NULL)
 		return (EINVAL);
@@ -204,14 +203,12 @@ devsw_attach(const char *devname,
 		max_devsw_convs = new_convs;
 	}
 
-	len = strlen(devname) + 1;
-	name = kmem_alloc(len, KM_NOSLEEP);
+	name = kmem_strdupsize(devname, NULL, KM_NOSLEEP);
 	if (name == NULL) {
 		devsw_detach_locked(bdev, cdev);
 		error = ENOMEM;
 		goto fail;
 	}
-	strlcpy(name, devname, len);
 
 	devsw_conv[i].d_name = name;
 	devsw_conv[i].d_bmajor = *bmajor;
