@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.516 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.517 2017/11/07 15:57:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.516 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.517 2017/11/07 15:57:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2466,6 +2466,7 @@ do_sys_symlinkat(struct lwp *l, const char *patharg, int fdat,
 	struct vattr vattr;
 	char *path;
 	int error;
+	size_t len;
 	struct pathbuf *linkpb;
 	struct nameidata nd;
 
@@ -2473,20 +2474,21 @@ do_sys_symlinkat(struct lwp *l, const char *patharg, int fdat,
 
 	path = PNBUF_GET();
 	if (seg == UIO_USERSPACE) {
-		if ((error = copyinstr(patharg, path, MAXPATHLEN, NULL)) != 0)
+		if ((error = copyinstr(patharg, path, MAXPATHLEN, &len)) != 0)
 			goto out1;
 		if ((error = pathbuf_copyin(link, &linkpb)) != 0)
 			goto out1;
 	} else {
-		KASSERT(strlen(patharg) < MAXPATHLEN);
-		strcpy(path, patharg);
+		len = strlen(patharg) + 1;
+		KASSERT(len <= MAXPATHLEN);
+		memcpy(path, patharg, len);
 		linkpb = pathbuf_create(link);
 		if (linkpb == NULL) {
 			error = ENOMEM;
 			goto out1;
 		}
 	}
-	ktrkuser("symlink-target", path, strlen(path));
+	ktrkuser("symlink-target", path, len - 1);
 
 	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, linkpb);
 	if ((error = fd_nameiat(l, fdat, &nd)) != 0)
