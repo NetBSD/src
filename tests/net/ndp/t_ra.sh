@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.30 2017/11/06 10:51:40 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.31 2017/11/07 02:19:23 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -151,7 +151,8 @@ start_rtadvd()
 	local pidfile=$2
 
 	export RUMP_SERVER=$sock
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p $pidfile shmif0
+	atf_check -s exit:0 -e ignore \
+	    rump.rtadvd -D -c ${CONFIG} -p $pidfile shmif0
 	while [ ! -f $pidfile ]; do
 		sleep 0.2
 	done
