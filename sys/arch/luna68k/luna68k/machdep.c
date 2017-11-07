@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.100 2017/03/09 14:05:59 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.101 2017/11/07 14:55:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2017/03/09 14:05:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2017/11/07 14:55:30 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2017/03/09 14:05:59 tsutsui Exp $"
 #include <sys/kgdb.h>
 #endif
 #include <sys/boot_flag.h>
-#define ELFSIZE 32
 #include <sys/exec_elf.h>
 #include <sys/cpu.h>
 
