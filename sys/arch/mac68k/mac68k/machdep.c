@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.351 2017/08/15 09:26:56 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.352 2017/11/07 14:56:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.351 2017/08/15 09:26:56 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352 2017/11/07 14:56:03 christos Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -114,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.351 2017/08/15 09:26:56 maya Exp $");
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
-#define ELFSIZE 32
 #include <sys/exec_elf.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
