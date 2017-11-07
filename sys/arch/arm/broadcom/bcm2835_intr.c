@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.13 2017/10/15 09:33:25 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.14 2017/11/07 09:05:05 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.13 2017/10/15 09:33:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.14 2017/11/07 09:05:05 ryo Exp $");
 
 #define _INTR_PRIVATE
 
@@ -204,10 +204,11 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 #if defined(BCM2836)
 #if defined(MULTIPROCESSOR)
 	aprint_normal(": Multiprocessor");
-#endif
-
 	bcm2836mp_intr_init(curcpu());
+#else
+	pic_add(&bcm2836mp_pic[0], BCM2836_INT_BASECPUN(0));
 #endif
+#endif /* BCM2836 */
 	pic_add(sc->sc_pic, BCM2835_INT_BASE);
 
 	aprint_normal("\n");
