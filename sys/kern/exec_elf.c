@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.92 2017/10/16 01:50:55 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.93 2017/11/07 19:44:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.92 2017/10/16 01:50:55 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.93 2017/11/07 19:44:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -226,11 +226,9 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 		a->a_v = l->l_proc->p_stackbase;
 		a++;
 
-		if (pack->ep_path) {
-			execname = a;
-			a->a_type = AT_SUN_EXECNAME;
-			a++;
-		}
+		execname = a;
+		a->a_type = AT_SUN_EXECNAME;
+		a++;
 
 		exec_free_emul_arg(pack);
 	}
@@ -243,15 +241,12 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 
 	KASSERT(vlen <= sizeof(ai));
 
-	if (execname) {
-		char *path = pack->ep_path;
-		execname->a_v = (uintptr_t)(*stackp + vlen);
-		len = strlen(path) + 1;
-		if ((error = copyout(path, (*stackp + vlen), len)) != 0)
-			return error;
-		len = ALIGN(len);
-	} else
-		len = 0;
+	char *path = l->l_proc->p_path;
+	execname->a_v = (uintptr_t)(*stackp + vlen);
+	len = strlen(path) + 1;
+	if ((error = copyout(path, (*stackp + vlen), len)) != 0)
+		return error;
+	len = ALIGN(len);
 
 	if ((error = copyout(ai, *stackp, vlen)) != 0)
 		return error;

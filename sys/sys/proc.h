@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.342 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.343 2017/11/07 19:44:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -315,6 +315,7 @@ struct proc {
 	lwpid_t		p_lwp_created;	/* :: lwp created */
 	lwpid_t		p_lwp_exited;	/* :: lwp exited */
 	u_int		p_nsems;	/* Count of semaphores */
+	char		*p_path;	/* :: full pathname of executable */
 
 /*
  * End area that is zeroed on creation
