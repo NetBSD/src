@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.211.6.2 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.211.6.3 2017/11/08 22:24:55 snj Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211.6.2 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211.6.3 2017/11/08 22:24:55 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2012,7 +2012,8 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 			/*
 			 * Check AH/ESP integrity
 			 */
-			if (ipsec_used && !ipsec6_in_reject(m, last))
+			if (!ipsec_used ||
+			    (ipsec_used && !ipsec6_in_reject(m, last)))
 #endif /* IPSEC */
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
