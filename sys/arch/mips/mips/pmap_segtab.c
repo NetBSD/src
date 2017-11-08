@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.4.2.1 2012/07/05 18:39:42 riz Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.4.2.1.6.1 2017/11/08 21:22:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.4.2.1 2012/07/05 18:39:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.4.2.1.6.1 2017/11/08 21:22:57 snj Exp $");
 
 /*
  *	Manages physical address maps.
@@ -217,18 +217,7 @@ pmap_segtab_release(union segtab *stp, u_int level)
 		}
 #endif
 
-#ifdef MIPS3_PLUS	/* XXX mmu XXX */
-		/*
-		 * The pica pmap.c flushed the segmap pages here.  I'm
-		 * not sure why, but I suspect it's because the page(s)
-		 * were being accessed by KSEG0 (cached) addresses and
-		 * may cause cache coherency problems when the page
-		 * is reused with KSEG2 (mapped) addresses.  This may
-		 * cause problems on machines without VCED/VCEI.
-		 */
-		if (MIPS_CACHE_VIRTUAL_ALIAS)
-			mips_dcache_inv_range((vaddr_t)pte, PAGE_SIZE);
-#endif	/* MIPS3_PLUS */
+		/* No need to flush page here as unmap poolpage does it */
 #ifdef _LP64
 		KASSERT(MIPS_XKPHYS_P(pte));
 #endif
