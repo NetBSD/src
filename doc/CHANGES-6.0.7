@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.120 2017/11/05 20:34:36 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.121 2017/11/08 21:32:14 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -15216,4 +15216,53 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	patch
 
 	apply fixes for CVEs 2017-12176 to 2017-12187
 	[mrg, ticket #1511]
+
+sys/arch/mips/mips/pmap.c			1.210-1.213
+sys/arch/mips/mips/vm_machdep.c			1.143
+
+	Fix a logic inversion introduced with the matt-nb5-mips64
+	branch for pmap_{zero,copy}_page cache alias handing.
+	Additionally flush the cache for the uarea va to avoid potential
+	(future) cache aliases in cpu_uarea_free when handing pages back
+	to uvm for later use.
+	Use pmap_tlb_asid_check to reduce code c&p.
+	
+	PR/44900 - R5000/Rm5200 mips ports are broken
+	PR/46170 - NetBSD/cobalt 6.0_BETA does not boot
+	PR/46890 - upcoming NetBSD 6.0 release is very unstable / unusable
+		   on cobalt qube 2
+	PR/48628 - cobalt and hpcmips ports are dead
+	[skrll, ticket #1056]
+
+sys/arch/mips/include/pmap.h			1.63
+sys/arch/mips/mips/pmap.c			1.214
+sys/arch/mips/mips/pmap_segtab.c		1.8
+
+	Deal with incompatible cache aliases.
+	PR#44900, PR#46890, and PR#48628.
+	[skrll, ticket #1068]
+
+sys/arch/mips/mips/pmap.c			1.221-1.223
+
+	Fix PR/51288 reproducable panic on evbmips64-eb (erlite)
+
+	pmap_page_remove from the previous change neglected to
+	terminate the pv list correctly when it started with an
+	initial unmanaged mapping and subsequent managed mappings.
+	Fix this.
+
+	Fix MIPS3_NO_PV_UNCACHED alias handling by looping through the
+	pv_list looking for bad aliases and removing the bad entries.
+	That is, revert to the code before the matt-mips64 merge.
+
+	Additionally, fix the pmap_update call to not use the (recently
+	removed/freed) pv for the pmap_t.
+
+	Fixes the following two PRs
+
+	PR/49903: Panic during installation on WorkPad Z50 (hpcmips)
+		  whilst uncompressing base.tgz
+       	PR/51226: Install bug for hpcmips NetBSD V7 using FTP Full
+		  installation
+	[skrll, ticket #1390]
 
