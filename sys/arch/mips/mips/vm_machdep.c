@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.141 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.141.14.1 2017/11/08 21:19:46 snj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.141 2011/09/27 01:02:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.141.14.1 2017/11/08 21:19:46 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -242,6 +242,11 @@ cpu_uarea_free(void *va)
 	if (!MIPS_KSEG0_P(va))
 		return false;
 	paddr_t pa = MIPS_KSEG0_TO_PHYS(va);
+#endif
+
+#ifdef MIPS3_PLUS
+	if (MIPS_CACHE_VIRTUAL_ALIAS)
+		mips_dcache_inv_range((vaddr_t)va, USPACE);
 #endif
 
 	for (const paddr_t epa = pa + USPACE; pa < epa; pa += PAGE_SIZE) {
