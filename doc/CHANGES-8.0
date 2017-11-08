@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.74 2017/11/06 10:40:42 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.75 2017/11/08 22:26:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6730,4 +6730,20 @@ sys/compat/netbsd32/netbsd32_conv.h		1.33
 
 	PR kern/52681: fix msghdr conversion.
 	[martin, ticket #339]
+
+sys/net/if_l2tp.c				1.14
+sys/net/if_tap.c				1.101
+sys/net/if_tun.c				1.141
+sys/net/if_vlan.c				1.106
+
+	Set IFEF_NO_LINK_STATE_CHANGE flag to pseudo devices that
+	don't use if_link_state_change
+	[ozaki-r, ticket #349]
+
+sys/netinet6/icmp6.c				1.214
+sys/netinet6/raw_ip6.c				1.158
+
+	Fix usages of ipsec_used.  If IPsec isn't used, we must go
+	back to the normal path.  PR kern/52659
+	[ozaki-r, ticket #350]
 
