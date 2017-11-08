@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.14 2017/10/31 18:30:36 maxv Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.15 2017/11/08 17:55:54 maxv Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -114,8 +114,7 @@ struct fxsave {
 	uint32_t fx_mxcsr_mask;
 	struct fpaccfx fx_87_ac[8];	/* 8 x87 registers */
 	struct xmmreg fx_xmm[16];	/* XMM regs (8 in 32bit modes) */
-	uint8_t fx_rsvd[48];
-	uint8_t fx_kernel[48];	/* Not written by the hardware */
+	uint8_t fx_rsvd[96];
 } __aligned(16);
 __CTASSERT_NOLINT(sizeof(struct fxsave) == 512);
 
