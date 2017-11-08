@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.343 2017/08/25 15:06:51 joerg Exp $
+#	$NetBSD: BRANCHES,v 1.344 2017/11/08 20:24:53 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -570,10 +570,20 @@ Notes:
 
 Branch:		matt-nb5-pq3
 Description:	Rototill the powerpc code to support mpc85xx
-Status:		Active
+Status:		Inactive
 Start Date:	2010-12-20
 End Date:
 Base Tag:	matt-nb5-pq3-base
+Maintainer:	Matt Thomas <matt@NetBSD.org>
+Scope:		kernel & userland
+Notes:		
+
+Branch:		matt-nb8-mediatek
+Description:	Add support for various MediaTek SoCs
+Status:		Active
+Start Date:	2017-10-27
+End Date:
+Base Tag:	matt-nb8-mediatek-base
 Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:		
