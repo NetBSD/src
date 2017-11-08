@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.199 2017/11/08 00:42:12 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.200 2017/11/08 00:51:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.199 2017/11/08 00:42:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.200 2017/11/08 00:51:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -782,8 +782,6 @@ procfs_getattr(void *v)
 	case PFSself:
 	case PFScurproc:
 		vap->va_bytes = vap->va_size =
-/*###785 [cc] error: 'bf' undeclared (first use in this function)%%%*/
-/*###785 [cc] note: each undeclared identifier is reported only once for each function it appears in%%%*/
 		    snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
 		break;
 	case PFStask:
@@ -843,7 +841,6 @@ procfs_getattr(void *v)
 		vap->va_bytes = vap->va_size = procp->p_execsw->es_arglen;
 		break;
 
-
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 	case PFSregs:
 		vap->va_bytes = vap->va_size = sizeof(struct reg);
@@ -884,7 +881,6 @@ procfs_getattr(void *v)
 
 	case PFScwd:
 	case PFSchroot:
-/*###885 [cc] error: 'bp' undeclared (first use in this function)%%%*/
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
 		procfs_dir(pfs->pfs_type, curlwp, procp, &bp, path,
@@ -1601,7 +1597,7 @@ procfs_readlink(void *v)
 	int len = 0;
 	int error = 0;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
-	struct proc *pown;
+	struct proc *pown = NULL;
 
 	if (pfs->pfs_fileno == PROCFS_FILENO(0, PFScurproc, -1))
 		len = snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
@@ -1614,7 +1610,6 @@ procfs_readlink(void *v)
 			return error;
 		bp = pown->p_path;
 		len = strlen(bp);
-		procfs_proc_unlock(pown);
 	} else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFScwd, -1) ||
 	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1)) {
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
@@ -1628,7 +1623,6 @@ procfs_readlink(void *v)
 		*--bp = '\0';
 		procfs_dir(PROCFS_TYPE(pfs->pfs_fileno), curlwp, pown,
 		    &bp, path, MAXPATHLEN);
-		procfs_proc_unlock(pown);
 		len = strlen(bp);
 	} else {
 		file_t *fp;
@@ -1696,11 +1690,12 @@ procfs_readlink(void *v)
 			break;
 		}	
 		closef(fp);
-		procfs_proc_unlock(pown);
 	}
 
 	if (error == 0)
 		error = uiomove(bp, len, ap->a_uio);
+	if (pown)
+		procfs_proc_unlock(pown);
 	if (path)
 		free(path, M_TEMP);
 	return error;
