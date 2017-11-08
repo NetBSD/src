@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.207.2.1.6.2 2017/11/08 21:22:57 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207.2.1.6.3 2017/11/08 21:28:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207.2.1.6.2 2017/11/08 21:22:57 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207.2.1.6.3 2017/11/08 21:28:24 snj Exp $");
 
 /*
  *	Manages physical address maps.
@@ -316,6 +316,7 @@ u_int		pmap_page_colormask;
 	 (pm) == curlwp->l_proc->p_vmspace->vm_map.pmap)
 
 /* Forward function declarations */
+void pmap_page_remove(struct vm_page *);
 void pmap_remove_pv(pmap_t, vaddr_t, struct vm_page *, bool);
 void pmap_enter_pv(pmap_t, vaddr_t, struct vm_page *, u_int *, int);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
@@ -1063,6 +1064,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			while (pv != NULL) {
 				const pmap_t pmap = pv->pv_pmap;
 				const uint16_t gen = PG_MD_PVLIST_GEN(md);
+				if (pv->pv_va & PV_KENTER) {
+					pv = pv->pv_next;
+					continue;
+				}
 				va = trunc_page(pv->pv_va);
 				PG_MD_PVLIST_UNLOCK(md);
 				pmap_protect(pmap, va, va + PAGE_SIZE, prot);
@@ -1087,17 +1092,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		if (pmap_clear_mdpage_attributes(md, PG_MD_EXECPAGE)) {
 			PMAP_COUNT(exec_uncached_page_protect);
 		}
-		(void)PG_MD_PVLIST_LOCK(md, false);
-		pv = &md->pvh_first;
-		while (pv->pv_pmap != NULL) {
-			const pmap_t pmap = pv->pv_pmap;
-			va = trunc_page(pv->pv_va);
-			PG_MD_PVLIST_UNLOCK(md);
-			pmap_remove(pmap, va, va + PAGE_SIZE);
-			pmap_update(pmap);
-			(void)PG_MD_PVLIST_LOCK(md, false);
-		}
-		PG_MD_PVLIST_UNLOCK(md);
+		pmap_page_remove(pg);
 	}
 }
 
@@ -2069,6 +2064,32 @@ pmap_set_modified(paddr_t pa)
 /******************** pv_entry management ********************/
 
 static void
+pmap_check_alias(struct vm_page *pg)
+{
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
+#ifndef MIPS3_NO_PV_UNCACHED
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	if (MIPS_HAS_R4K_MMU && PG_MD_UNCACHED_P(md)) {
+		/*
+		 * Page is currently uncached, check if alias mapping has been
+		 * removed.  If it was, then reenable caching.
+		 */
+		pv_entry_t pv = &md->pvh_first;
+		pv_entry_t pv0 = pv->pv_next;
+
+		for (; pv0; pv0 = pv0->pv_next) {
+			if (mips_cache_badalias(pv->pv_va, pv0->pv_va))
+				break;
+		}
+		if (pv0 == NULL)
+			pmap_page_cache(pg, true);
+	}
+#endif
+#endif	/* MIPS3_PLUS */
+}
+
+static void
 pmap_check_pvlist(struct vm_page_md *md)
 {
 #ifdef PARANOIADIAG
@@ -2155,12 +2176,12 @@ again:
 			 * be mapped with one index at any given time.
 			 */
 
-			if (mips_cache_badalias(pv->pv_va, va)) {
-				for (npv = pv; npv; npv = npv->pv_next) {
-					vaddr_t nva = trunc_page(npv->pv_va);
-					pmap_remove(npv->pv_pmap, nva,
-					    nva + PAGE_SIZE);
-					pmap_update(npv->pv_pmap);
+			for (npv = pv; npv; npv = npv->pv_next) {
+				vaddr_t nva = trunc_page(npv->pv_va);
+				pmap_t npm = npv->pv_pmap;
+				if (mips_cache_badalias(nva, va)) {
+					pmap_remove(npm, nva, nva + PAGE_SIZE);
+					pmap_update(npm);
 					goto again;
 				}
 			}
@@ -2283,6 +2304,114 @@ again:
 }
 
 /*
+ * Remove this page from all physical maps in which it resides.
+ * Reflects back modify bits to the pager.
+ */
+void
+pmap_page_remove(struct vm_page *pg)
+{
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	(void)PG_MD_PVLIST_LOCK(md, true);
+	pmap_check_pvlist(md);
+
+	pv_entry_t pv = &md->pvh_first;
+	if (pv->pv_pmap == NULL) {
+		PG_MD_PVLIST_UNLOCK(md);
+		return;
+	}
+
+	pv_entry_t npv;
+	pv_entry_t pvp = NULL;
+
+	kpreempt_disable();
+	for (; pv != NULL; pv = npv) {
+		npv = pv->pv_next;
+		if (pv->pv_va & PV_KENTER) {
+#ifdef DEBUG
+			if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) {
+				printf("%s: %p %p, %"PRIxVADDR" skip\n",
+				    __func__, pv, pv->pv_pmap, pv->pv_va);
+			}
+#endif
+			KASSERT(pv->pv_pmap == pmap_kernel());
+
+			/* Assume no more - it'll get fixed if there are */
+			pv->pv_next = NULL;
+
+			/*
+			 * pvp is non-null when we already have a PV_KENTER
+			 * pv in pvh_first; otherwise we haven't seen a
+			 * PV_KENTER pv and we need to copy this one to
+			 * pvh_first
+			 */
+			if (pvp) {
+				/*
+				 * The previous PV_KENTER pv needs to point to
+				 * this PV_KENTER pv
+				 */
+				pvp->pv_next = pv;
+			} else {
+				pv_entry_t fpv = &md->pvh_first;
+				*fpv = *pv;
+				KASSERT(fpv->pv_pmap == pmap_kernel());
+			}
+			pvp = pv;
+			continue;
+		}
+
+		const pmap_t pmap = pv->pv_pmap;
+		vaddr_t va = trunc_page(pv->pv_va);
+		pt_entry_t *pte = pmap_pte(pmap, va);
+
+#ifdef DEBUG
+		if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) {
+			printf("%s: %p %p, %"PRIxVADDR", %p\n",
+			    __func__, pv, pmap, va, pte);
+		}
+#endif
+
+		KASSERT(pte);
+		if (mips_pg_wired(pte->pt_entry))
+			pmap->pm_stats.wired_count--;
+		pmap->pm_stats.resident_count--;
+
+		if (pmap == pmap_kernel()) {
+			if (MIPS_HAS_R4K_MMU)
+				/* See above about G bit */
+				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
+			else
+				pte->pt_entry = MIPS1_PG_NV;
+		} else {
+			pte->pt_entry = mips_pg_nv_bit();
+		}
+		/*
+		 * Flush the TLB for the given address.
+		 */
+		pmap_tlb_invalidate_addr(pmap, va);
+
+		/*
+		 * non-null means this is a non-pvh_first pv, so we should
+		 * free it.
+		 */
+		if (pvp) {
+			KASSERT(pvp->pv_pmap == pmap_kernel());
+			KASSERT(pvp->pv_next == NULL);
+			pmap_pv_free(pv);
+		} else {
+			pv->pv_pmap = NULL;
+			pv->pv_next = NULL;
+		}
+	}
+	pmap_check_alias(pg);
+
+	pmap_check_pvlist(md);
+
+	kpreempt_enable();
+	PG_MD_PVLIST_UNLOCK(md);
+}
+
+/*
  * Remove a physical to virtual address translation.
  * If cache was inhibited on this page, and there are no more cache
  * conflicts, restore caching.
@@ -2337,25 +2466,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			pv->pv_next = npv->pv_next;
 		}
 	}
-#ifdef MIPS3_PLUS	/* XXX mmu XXX */
-#ifndef MIPS3_NO_PV_UNCACHED
-	if (MIPS_HAS_R4K_MMU && PG_MD_UNCACHED_P(md)) {
-		/*
-		 * Page is currently uncached, check if alias mapping has been
-		 * removed.  If it was, then reenable caching.
-		 */
-		pv = &md->pvh_first;
-		pv_entry_t pv0 = pv->pv_next;
-
-		for (; pv0; pv0 = pv0->pv_next) {
-			if (mips_cache_badalias(pv->pv_va, pv0->pv_va))
-				break;
-		}
-		if (pv0 == NULL)
-			pmap_page_cache(pg, true);
-	}
-#endif
-#endif	/* MIPS3_PLUS */
+	pmap_check_alias(pg);
 
 	pmap_check_pvlist(md);
 	PG_MD_PVLIST_UNLOCK(md);
