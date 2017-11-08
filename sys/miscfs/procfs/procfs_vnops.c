@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.198 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.199 2017/11/08 00:42:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.198 2017/08/28 00:46:07 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.199 2017/11/08 00:42:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,9 +569,6 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	case PFSchroot:
 		vp = target->p_cwdi->cwdi_rdir;
 		break;
-	case PFSexe:
-		vp = target->p_textvp;
-		break;
 	default:
 		rw_exit(&cwdi->cwdi_lock);
 		return;
@@ -596,14 +593,8 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	    len / 2, 0, caller) != 0) {
 		vp = NULL;
 		if (bpp) {
-/* 
-			if (t == PFSexe) {
-				snprintf(path, len, "%s/%d/file"
-				    mp->mnt_stat.f_mntonname, pfs->pfs_pid);
-			} else */ {
-				bp = *bpp;
-				*--bp = '/';
-			}
+			bp = *bpp;
+			*--bp = '/';
 		}
 	}
 
@@ -633,7 +624,7 @@ procfs_getattr(void *v)
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
 	struct proc *procp;
-	char *path;
+	char *path, *bp, bf[16];
 	int error;
 
 	/* first check the process still exists */
@@ -660,7 +651,6 @@ procfs_getattr(void *v)
 		/*FALLTHROUGH*/
 	case PFScwd:
 	case PFSchroot:
-	case PFSexe:
 		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK|M_CANFAIL);
 		if (path == NULL && procp != NULL) {
 			procfs_proc_unlock(procp);
@@ -746,6 +736,8 @@ procfs_getattr(void *v)
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
 		vap->va_gid = kauth_cred_getegid(procp->p_cred);
 		break;
+	case PFScwd:
+	case PFSchroot:
 	case PFSmeminfo:
 	case PFSdevices:
 	case PFScpuinfo:
@@ -754,19 +746,17 @@ procfs_getattr(void *v)
 	case PFScpustat:
 	case PFSloadavg:
 	case PFSversion:
+	case PFSexe:
+	case PFSself:
+	case PFScurproc:
+	case PFSroot:
 		vap->va_nlink = 1;
 		vap->va_uid = vap->va_gid = 0;
 		break;
 
 	case PFSproc:
 	case PFStask:
-	case PFSexe:
 	case PFSfile:
-	case PFSself:
-	case PFScurproc:
-	case PFScwd:
-	case PFSroot:
-	case PFSchroot:
 	case PFSfd:
 		break;
 
@@ -786,28 +776,18 @@ procfs_getattr(void *v)
 
 	switch (pfs->pfs_type) {
 	case PFSroot:
-		/*
-		 * Set nlink to 1 to tell fts(3) we don't actually know.
-		 */
-		vap->va_nlink = 1;
-		vap->va_uid = 0;
-		vap->va_gid = 0;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
 	case PFSself:
-	case PFScurproc: {
-		char bf[16];		/* should be enough */
-		vap->va_nlink = 1;
-		vap->va_uid = 0;
-		vap->va_gid = 0;
+	case PFScurproc:
 		vap->va_bytes = vap->va_size =
+/*###785 [cc] error: 'bf' undeclared (first use in this function)%%%*/
+/*###785 [cc] note: each undeclared identifier is reported only once for each function it appears in%%%*/
 		    snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
 		break;
-	}
 	case PFStask:
 		if (pfs->pfs_fd != -1) {
-			char bf[4];		/* should be enough */
 			vap->va_nlink = 1;
 			vap->va_uid = 0;
 			vap->va_gid = 0;
@@ -904,19 +884,17 @@ procfs_getattr(void *v)
 
 	case PFScwd:
 	case PFSchroot:
-	case PFSexe: {
-		char *bp;
-
-		vap->va_nlink = 1;
-		vap->va_uid = 0;
-		vap->va_gid = 0;
+/*###885 [cc] error: 'bp' undeclared (first use in this function)%%%*/
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
 		procfs_dir(pfs->pfs_type, curlwp, procp, &bp, path,
 		     MAXPATHLEN);
 		vap->va_bytes = vap->va_size = strlen(bp);
 		break;
-	}
+
+	case PFSexe:
+		vap->va_bytes = vap->va_size = strlen(procp->p_path);
+		break;
 
 	case PFSemul:
 		vap->va_bytes = vap->va_size = strlen(procp->p_emul->e_name);
@@ -1631,9 +1609,14 @@ procfs_readlink(void *v)
 		len = snprintf(bf, sizeof(bf), "%s", "curproc");
 	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFStask, 0))
 		len = snprintf(bf, sizeof(bf), "..");
-	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFScwd, -1) ||
-	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1) ||
-	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSexe, -1)) {
+	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSexe, -1)) {
+		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
+			return error;
+		bp = pown->p_path;
+		len = strlen(bp);
+		procfs_proc_unlock(pown);
+	} else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFScwd, -1) ||
+	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1)) {
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
 		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK|M_CANFAIL);
