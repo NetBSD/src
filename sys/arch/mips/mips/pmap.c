@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.207.2.1 2012/07/05 18:39:42 riz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207.2.1.6.1 2017/11/08 21:19:46 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207.2.1 2012/07/05 18:39:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207.2.1.6.1 2017/11/08 21:19:46 snj Exp $");
 
 /*
  *	Manages physical address maps.
@@ -453,19 +453,21 @@ pmap_unmap_ephemeral_page(struct vm_page *pg, vaddr_t va,
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv = &md->pvh_first;
 	
-	(void)PG_MD_PVLIST_LOCK(md, false);
-	if (MIPS_CACHE_VIRTUAL_ALIAS
-	    && (PG_MD_UNCACHED_P(md)
-		|| (pv->pv_pmap != NULL
-		    && mips_cache_badalias(pv->pv_va, va)))) {
-		/*
-		 * If this page was previously uncached or we had to use an
-		 * incompatible alias and it has a valid mapping, flush it
-		 * from the cache.
-		 */
-		mips_dcache_wbinv_range(va, PAGE_SIZE);
+	if (MIPS_CACHE_VIRTUAL_ALIAS) {
+		(void)PG_MD_PVLIST_LOCK(md, false);
+		if (PG_MD_CACHED_P(md)
+		    || (pv->pv_pmap != NULL
+			&& mips_cache_badalias(pv->pv_va, va))) {
+
+			/*
+			 * If this page was previously cached or we had to use an
+			 * incompatible alias and it has a valid mapping, flush it
+			 * from the cache.
+			 */
+			mips_dcache_wbinv_range(va, PAGE_SIZE);
+		}
+		PG_MD_PVLIST_UNLOCK(md);
 	}
-	PG_MD_PVLIST_UNLOCK(md);
 #ifndef _LP64
 	/*
 	 * If we had to map using a page table entry, unmap it now.
@@ -575,7 +577,7 @@ pmap_bootstrap(void)
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
-	 * after virtual_end is initialized).
+	 * after mips_virtual_end is initialized).
 	 */
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
@@ -1023,15 +1025,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_remove: uva not in range");
 	if (PMAP_IS_ACTIVE(pmap)) {
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
-		uint32_t asid;
-
-		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pai->pai_asid) {
-			panic("inconsistency for active TLB flush: %d <-> %d",
-			    asid, pai->pai_asid);
-		}
+		pmap_tlb_asid_check();
 	}
 #endif
 #ifdef PMAP_FAULTINFO
@@ -1214,15 +1208,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_protect: uva not in range");
 	if (PMAP_IS_ACTIVE(pmap)) {
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
-		uint32_t asid;
-
-		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pai->pai_asid) {
-			panic("inconsistency for active TLB update: %d <-> %d",
-			    asid, pai->pai_asid);
-		}
+		pmap_tlb_asid_check();
 	}
 #endif
 
@@ -1586,6 +1572,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 #ifdef PARANOIADIAG
 	if (PMAP_IS_ACTIVE(pmap)) {
+		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
 		uint32_t asid;
 
 		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
@@ -1774,7 +1761,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (pmap == pmap_kernel()) {
 		/* change entries in kernel pmap */
 #ifdef PARANOIADIAG
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS || va >= mips_virtual_end)
 			panic("pmap_unwire");
 #endif
 		pte = kvtopte(va);
@@ -2088,7 +2075,7 @@ static void
 pmap_check_pvlist(struct vm_page_md *md)
 {
 #ifdef PARANOIADIAG
-	pt_entry_t pv = &md->pvh_first;
+	pv_entry_t pv = &md->pvh_first;
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
 			KASSERT(!MIPS_KSEG0_P(pv->pv_va));
