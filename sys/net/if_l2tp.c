@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.11.2.1 2017/11/06 09:59:01 snj Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.11.2.2 2017/11/08 22:20:59 snj Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.1 2017/11/06 09:59:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.2 2017/11/08 22:20:59 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -261,7 +261,8 @@ l2tpattach0(struct l2tp_softc *sc)
 	sc->l2tp_ec.ec_if.if_addrlen = 0;
 	sc->l2tp_ec.ec_if.if_mtu    = L2TP_MTU;
 	sc->l2tp_ec.ec_if.if_flags  = IFF_POINTOPOINT|IFF_MULTICAST|IFF_SIMPLEX;
-	sc->l2tp_ec.ec_if.if_extflags  = IFEF_OUTPUT_MPSAFE|IFEF_START_MPSAFE;
+	sc->l2tp_ec.ec_if.if_extflags  = IFEF_OUTPUT_MPSAFE |
+	    IFEF_START_MPSAFE | IFEF_NO_LINK_STATE_CHANGE;
 	sc->l2tp_ec.ec_if.if_ioctl  = l2tp_ioctl;
 	sc->l2tp_ec.ec_if.if_output = l2tp_output;
 	sc->l2tp_ec.ec_if.if_type   = IFT_L2TP;

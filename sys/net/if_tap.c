@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.99 2017/02/12 09:47:31 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.99.6.1 2017/11/08 22:20:59 snj Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99 2017/02/12 09:47:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99.6.1 2017/11/08 22:20:59 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -370,6 +370,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	strcpy(ifp->if_xname, device_xname(self));
 	ifp->if_softc	= sc;
 	ifp->if_flags	= IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_NO_LINK_STATE_CHANGE;
 	ifp->if_ioctl	= tap_ioctl;
 	ifp->if_start	= tap_start;
 	ifp->if_stop	= tap_stop;
