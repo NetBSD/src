@@ -38,6 +38,7 @@
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
+#include <dev/mii/mii.h>
 
 static s32 ixgbe_setup_ixfi_x550em(struct ixgbe_hw *hw, ixgbe_link_speed *speed);
 static s32 ixgbe_acquire_swfw_sync_X550a(struct ixgbe_hw *, u32 mask);
@@ -788,6 +789,8 @@ s32 ixgbe_init_ops_X550EM(struct ixgbe_hw *hw)
 	return ret_val;
 }
 
+#define IXGBE_DENVERTON_WA 1
+
 /**
  * ixgbe_setup_fw_link - Setup firmware-controlled PHYs
  * @hw: pointer to hardware structure
@@ -796,6 +799,10 @@ static s32 ixgbe_setup_fw_link(struct ixgbe_hw *hw)
 {
 	u32 setup[FW_PHY_ACT_DATA_COUNT] = { 0 };
 	s32 rc;
+#ifdef IXGBE_DENVERTON_WA
+	s32 ret_val;
+	u16 phydata;
+#endif
 	u16 i;
 
 	if (hw->phy.reset_disable || ixgbe_check_reset_blocked(hw))
@@ -833,9 +840,67 @@ static s32 ixgbe_setup_fw_link(struct ixgbe_hw *hw)
 	if (hw->phy.eee_speeds_advertised)
 		setup[0] |= FW_PHY_ACT_SETUP_LINK_EEE;
 
+#ifdef IXGBE_DENVERTON_WA
+	/* Don't use auto-nego for 10/100Mbps */
+	if ((hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_100_FULL)
+	    || (hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_10_FULL)) {
+		setup[0] &= ~FW_PHY_ACT_SETUP_LINK_AN;
+		setup[0] &= ~FW_PHY_ACT_SETUP_LINK_EEE;
+		setup[0] &= ~(FW_PHY_ACT_SETUP_LINK_PAUSE_RXTX
+		    << FW_PHY_ACT_SETUP_LINK_PAUSE_SHIFT);
+	}
+#endif
+
 	rc = ixgbe_fw_phy_activity(hw, FW_PHY_ACT_SETUP_LINK, &setup);
 	if (rc)
 		return rc;
+
+#ifdef IXGBE_DENVERTON_WA
+	ret_val = ixgbe_read_phy_reg_x550a(hw, MII_BMCR, 0, &phydata);
+	if (ret_val != 0)
+		goto out;
+
+	/*
+	 *  Broken firmware sets BMCR register incorrectly if
+	 * FW_PHY_ACT_SETUP_LINK_AN isn't set.
+	 * a) FDX may not be set.
+	 * b) BMCR_SPEED1 (bit 6) is always cleard.
+	 * + -------+------+-----------+-----+--------------------------+
+	 * |request | BMCR | BMCR spd | BMCR |                          |
+	 * |        | (HEX)| (in bits)|  FDX |                          |
+	 * +--------+------+----------+------+--------------------------+
+	 * |   10M  | 0000 |  10M(00) |    0 |                          |
+	 * |   10M  | 2000 | 100M(01) |    0 |(I've never observed this)|
+	 * |   10M  | 2100 | 100M(01) |    1 |                          |
+	 * |  100M  | 0000 |  10M(00) |    0 |                          |
+	 * |  100M  | 0100 |  10M(00) |    1 |                          |
+	 * +--------------------------+------+--------------------------+
+	 */
+	if (((hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_100_FULL)
+		&& (((phydata & BMCR_FDX) == 0) || (BMCR_SPEED(phydata) == 0)))
+	    || ((hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_10_FULL)
+		&& (((phydata & BMCR_FDX) == 0)
+		    || (BMCR_SPEED(phydata) != BMCR_S10)))) {
+		phydata = BMCR_FDX;
+		switch (hw->phy.autoneg_advertised) {
+		case IXGBE_LINK_SPEED_10_FULL:
+			phydata |= BMCR_S10;
+			break;
+		case IXGBE_LINK_SPEED_100_FULL:
+			phydata |= BMCR_S100;
+			break;
+		case IXGBE_LINK_SPEED_1GB_FULL:
+			panic("%s: 1GB_FULL is set", __func__);
+			break;
+		default:
+			break;
+		}
+		ret_val = ixgbe_write_phy_reg_x550a(hw, MII_BMCR, 0, phydata);
+		if (ret_val != 0)
+			return ret_val;
+	}
+out:
+#endif
 	if (setup[0] == FW_PHY_ACT_SETUP_LINK_RSP_DOWN)
 		return IXGBE_ERR_OVERTEMP;
 	return IXGBE_SUCCESS;
