@@ -1,6 +1,6 @@
-/*	$NetBSD: vector.S,v 1.52 2017/10/30 17:06:42 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.53 2017/11/08 18:29:04 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -140,6 +140,7 @@ IDTVEC(intr_lapic_ipi)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
+	jmp	1f
 IDTVEC_END(intr_lapic_ipi)
 IDTVEC(resume_lapic_ipi)
 1:
@@ -223,6 +224,7 @@ IDTVEC(intr_lapic_ltimer)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
+	jmp	1f
 IDTVEC_END(intr_lapic_ltimer)
 IDTVEC(resume_lapic_ltimer)
 1:
