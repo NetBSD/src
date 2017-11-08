@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.68 2017/10/11 09:53:14 maxv Exp $	*/
+/*	$NetBSD: boot2.c,v 1.69 2017/11/08 18:31:00 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -403,6 +403,7 @@ command_help(char *arg)
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+	       "pkboot [xdNx:][filename] [-12acdqsvxz]\n"
 #if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
 #endif
