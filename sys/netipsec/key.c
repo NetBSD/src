@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.234 2017/10/03 08:56:52 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.235 2017/11/08 10:35:30 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.234 2017/10/03 08:56:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.235 2017/11/08 10:35:30 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -8106,7 +8106,7 @@ key_do_init(void)
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
-	callout_init(&key_timehandler_ch, 0);
+	callout_init(&key_timehandler_ch, CALLOUT_MPSAFE);
 	error = workqueue_create(&key_timehandler_wq, "key_timehandler",
 	    key_timehandler_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
 	if (error != 0)
