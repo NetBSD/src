@@ -1,4 +1,4 @@
-/*	$NetBSD: valz_acpi.c,v 1.7 2015/10/05 15:57:50 christos Exp $	*/
+/*	$NetBSD: valz_acpi.c,v 1.8 2017/11/09 23:51:54 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.7 2015/10/05 15:57:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.8 2017/11/09 23:51:54 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ valz_acpi_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 		break;
 
 	default:
-		aprint_error_dev(sc->sc_dev,
+		aprint_debug_dev(sc->sc_dev,
 		    "unknown notify 0x%02X\n", notify);
 		break;
 	}
