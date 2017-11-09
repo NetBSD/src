@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.43 2014/12/16 19:30:24 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.44 2017/11/09 20:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.43 2014/12/16 19:30:24 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.44 2017/11/09 20:27:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,7 +501,7 @@ bounce_one(int msgno, const char **smargs, struct name *h_to)
 	(void)snprintf(mailtempname, sizeof(mailtempname),
 	    "%s/mail.RsXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(mailtempname)) == -1 ||
-	    (obuf = Fdopen(fd, "we+")) == NULL) {
+	    (obuf = Fdopen(fd, "wef+")) == NULL) {
 		if (fd != -1)
 			(void)close(fd);
 		warn("%s", mailtempname);
