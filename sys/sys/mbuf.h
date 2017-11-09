@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.171 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.172 2017/11/09 22:34:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -516,7 +516,7 @@ do {									\
 do {									\
 	(m)->m_ext_storage.ext_buf = (char *)				\
 	    pool_cache_get_paddr((pool_cache),				\
-		(how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,		\
+		(how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : PR_NOWAIT,	\
 		&(m)->m_ext_storage.ext_paddr);				\
 	if ((m)->m_ext_storage.ext_buf != NULL) {			\
 		MCLINITREFERENCE(m);					\
