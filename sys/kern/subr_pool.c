@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.211 2017/11/06 18:41:22 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.212 2017/11/09 15:40:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.211 2017/11/06 18:41:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.212 2017/11/09 15:40:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -790,7 +790,9 @@ pool_get(struct pool *pp, int flags)
 			 * it be?
 			 */
 			pp->pr_flags |= PR_WANTED;
-			cv_wait(&pp->pr_cv, &pp->pr_lock);
+			do {
+				cv_wait(&pp->pr_cv, &pp->pr_lock);
+			} while (pp->pr_flags & PR_WANTED);
 			goto startover;
 		}
 
