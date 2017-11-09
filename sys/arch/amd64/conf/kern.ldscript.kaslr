@@ -1,0 +1,62 @@
+/*	$NetBSD: kern.ldscript.kaslr,v 1.1 2017/11/09 15:46:48 maxv Exp $	*/
+
+#include "assym.h"
+
+ENTRY(_start)
+SECTIONS
+{
+	.text :
+	{
+		*(.text)
+		*(.text.*)
+		*(.stub)
+	} =0xCC
+	_etext = . ;
+	PROVIDE (etext = .) ;
+
+	__rodata_start = . ;
+	.rodata :
+	{
+		*(.rodata)
+		*(.rodata.*)
+	}
+
+	__data_start = . ;
+	.data :
+	{
+		*(.data)
+	}
+
+	. = ALIGN(COHERENCY_UNIT);
+	.data.cacheline_aligned :
+	{
+		*(.data.cacheline_aligned)
+	}
+	. = ALIGN(COHERENCY_UNIT);
+	.data.read_mostly :
+	{
+		*(.data.read_mostly)
+	}
+	. = ALIGN(COHERENCY_UNIT);
+
+	_edata = . ;
+	PROVIDE (edata = .) ;
+	__bss_start = . ;
+	.bss :
+	{
+		*(.bss)
+		*(.bss.*)
+		*(COMMON)
+	}
+
+	/* End of the kernel image */
+	__kernel_end = . ;
+
+	_end = . ;
+	PROVIDE (end = .) ;
+	.note.netbsd.ident :
+	{
+		KEEP(*(.note.netbsd.ident));
+	}
+}
+
