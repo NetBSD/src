@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.109 2017/11/02 08:41:15 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.110 2017/11/09 09:33:28 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1069,7 +1069,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		break;
 	}
 
-	if (hw->phy.id != 0) {
+	/*
+	 *  Print PHY ID only for copper PHY. On device which has SFP(+) cage
+	 * and a module is inserted, phy.id is not MII PHY id but SFF 8024 ID.
+	 */
+	if (hw->phy.media_type == ixgbe_media_type_copper) {
 		uint16_t id1, id2;
 		int oui, model, rev;
 		const char *descr;
