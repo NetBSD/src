@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.6 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.7 2017/11/09 05:57:23 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.6 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.7 2017/11/09 05:57:23 hkenken Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx6clk.h"
@@ -63,6 +63,7 @@ struct imxccm_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh_analog;
 
 	/* for sysctl */
 	struct sysctllog *sc_log;
@@ -118,8 +119,15 @@ imxccm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = iot;
 	sc->sc_log = NULL;
 
-	if (bus_space_map(iot, aa->aa_addr, IMX6_CCM_SIZE, 0, &sc->sc_ioh)) {
-		aprint_error(": can't map registers\n");
+	if (bus_space_map(iot, aa->aa_addr, AIPS1_CCM_SIZE, 0, &sc->sc_ioh)) {
+		aprint_error(": can't map CCM registers\n");
+		return;
+	}
+
+	if (bus_space_map(iot, IMX6_AIPS1_BASE + AIPS1_CCM_ANALOG_BASE,
+	    AIPS1_CCM_ANALOG_SIZE, 0, &sc->sc_ioh_analog)) {
+		aprint_error(": can't map CCM_ANALOG registers\n");
+		bus_space_unmap(iot, sc->sc_ioh, AIPS1_CCM_SIZE);
 		return;
 	}
 
@@ -414,8 +422,29 @@ imx6_ccm_write(uint32_t reg, uint32_t val)
 	bus_space_write_4(ccm_softc->sc_iot, ccm_softc->sc_ioh, reg, val);
 }
 
+
+uint32_t
+imx6_ccm_analog_read(uint32_t reg)
+{
+	if (ccm_softc == NULL)
+		return 0;
+
+	return bus_space_read_4(ccm_softc->sc_iot, ccm_softc->sc_ioh_analog,
+	    reg);
+}
+
+void
+imx6_ccm_analog_write(uint32_t reg, uint32_t val)
+{
+	if (ccm_softc == NULL)
+		return;
+
+	bus_space_write_4(ccm_softc->sc_iot, ccm_softc->sc_ioh_analog, reg,
+	    val);
+}
+
 int
-imx6_set_clock(enum imx6_clock clk, uint32_t freq)
+imx6_set_clock(enum imx6_clock_id clk, uint32_t freq)
 {
 	uint32_t v;
 
@@ -434,11 +463,13 @@ imx6_set_clock(enum imx6_clock clk, uint32_t freq)
 
 					v = imx6_ccm_read(CCM_CACRR);
 					v &= ~CCM_CACRR_ARM_PODF;
-					imx6_ccm_write(CCM_CACRR, v | __SHIFTIN(cacrr, CCM_CACRR_ARM_PODF));
+					imx6_ccm_write(CCM_CACRR,
+					    v | __SHIFTIN(cacrr, CCM_CACRR_ARM_PODF));
 
-					v = imx6_ccm_read(CCM_ANALOG_PLL_ARM);
+					v = imx6_ccm_analog_read(CCM_ANALOG_PLL_ARM);
 					v &= ~CCM_ANALOG_PLL_ARM_DIV_SELECT;
-					imx6_ccm_write(CCM_ANALOG_PLL_ARM, v | __SHIFTIN(pll, CCM_ANALOG_PLL_ARM_DIV_SELECT));
+					imx6_ccm_analog_write(CCM_ANALOG_PLL_ARM,
+					    v | __SHIFTIN(pll, CCM_ANALOG_PLL_ARM_DIV_SELECT));
 
 					v = imx6_get_clock(IMX6CLK_ARM_ROOT);
 					cpufreq_set_all(v);
@@ -462,7 +493,7 @@ imx6_set_clock(enum imx6_clock clk, uint32_t freq)
 }
 
 uint32_t
-imx6_get_clock(enum imx6_clock clk)
+imx6_get_clock(enum imx6_clock_id clk)
 {
 	uint32_t d, denom, num, sel, v;
 	uint64_t freq;
@@ -473,33 +504,33 @@ imx6_get_clock(enum imx6_clock clk)
 	switch (clk) {
 	/* CLOCK SWITCHER */
 	case IMX6CLK_PLL1:
-		v = imx6_ccm_read(CCM_ANALOG_PLL_ARM);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_ARM);
 		freq = IMX6_OSC_FREQ * (v & CCM_ANALOG_PLL_ARM_DIV_SELECT) / 2;
 		break;
 	case IMX6CLK_PLL2:
-		v = imx6_ccm_read(CCM_ANALOG_PLL_SYS);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_SYS);
 		freq = IMX6_OSC_FREQ * ((v & CCM_ANALOG_PLL_SYS_DIV_SELECT) ? 22 : 20);
 		break;
 	case IMX6CLK_PLL3:
-		v = imx6_ccm_read(CCM_ANALOG_PLL_USB1);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_USB1);
 		freq = IMX6_OSC_FREQ * ((v & CCM_ANALOG_PLL_USB1_DIV_SELECT) ? 22 : 20);
 		break;
 
 	case IMX6CLK_PLL4:
-		v = imx6_ccm_read(CCM_ANALOG_PLL_AUDIO);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_AUDIO);
 		d = __SHIFTOUT(v, CCM_ANALOG_PLL_AUDIO_DIV_SELECT);
-		num = imx6_ccm_read(CCM_ANALOG_PLL_AUDIO_NUM);
-		denom = imx6_ccm_read(CCM_ANALOG_PLL_AUDIO_DENOM);
+		num = imx6_ccm_analog_read(CCM_ANALOG_PLL_AUDIO_NUM);
+		denom = imx6_ccm_analog_read(CCM_ANALOG_PLL_AUDIO_DENOM);
 		freq = (uint64_t)IMX6_OSC_FREQ * (d + num / denom);
 		d = __SHIFTOUT(v, CCM_ANALOG_PLL_AUDIO_POST_DIV_SELECT);
 		freq = freq >> (2 - d);
 		break;
 
 	case IMX6CLK_PLL5:
-		v = imx6_ccm_read(CCM_ANALOG_PLL_VIDEO);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_VIDEO);
 		d = __SHIFTOUT(v, CCM_ANALOG_PLL_VIDEO_DIV_SELECT);
-		num = imx6_ccm_read(CCM_ANALOG_PLL_VIDEO_NUM);
-		denom = imx6_ccm_read(CCM_ANALOG_PLL_VIDEO_DENOM);
+		num = imx6_ccm_analog_read(CCM_ANALOG_PLL_VIDEO_NUM);
+		denom = imx6_ccm_analog_read(CCM_ANALOG_PLL_VIDEO_DENOM);
 		freq = (uint64_t)IMX6_OSC_FREQ * (d + num / denom);
 		d = __SHIFTOUT(v, CCM_ANALOG_PLL_VIDEO_POST_DIV_SELECT);
 		freq = freq >> (2 - d);
@@ -507,7 +538,7 @@ imx6_get_clock(enum imx6_clock clk)
 
 	case IMX6CLK_PLL6:
 		/* XXX: iMX6UL has 2 div. which? */
-		v = imx6_ccm_read(CCM_ANALOG_PLL_ENET);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_ENET);
 		switch (v & CCM_ANALOG_PLL_ENET_DIV_SELECT_MASK) {
 		case 0:
 			freq = 25 * 1000 * 1000;
@@ -524,8 +555,8 @@ imx6_get_clock(enum imx6_clock clk)
 		}
 		break;
 	case IMX6CLK_PLL7:
-		v = imx6_ccm_read(CCM_ANALOG_PLL_USB2);
-		freq = IMX6_OSC_FREQ * ((v & CCM_ANALOG_PLL_USBn_DIV_SELECT(1)) ? 22 : 20);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PLL_USB2);
+		freq = IMX6_OSC_FREQ * ((v & CCM_ANALOG_PLL_USBn_DIV_SELECT) ? 22 : 20);
 		break;
 
 #if 0
@@ -536,37 +567,37 @@ imx6_get_clock(enum imx6_clock clk)
 
 	case IMX6CLK_PLL2_PFD0:
 		freq = imx6_get_clock(IMX6CLK_PLL2);
-		v = imx6_ccm_read(CCM_ANALOG_PFD_528);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PFD_528);
 		freq = freq * 18 / __SHIFTOUT(v, CCM_ANALOG_PFD_528_PFD0_FRAC);
 		break;
 	case IMX6CLK_PLL2_PFD1:
 		freq = imx6_get_clock(IMX6CLK_PLL2);
-		v = imx6_ccm_read(CCM_ANALOG_PFD_528);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PFD_528);
 		freq = freq * 18 / __SHIFTOUT(v, CCM_ANALOG_PFD_528_PFD1_FRAC);
 		break;
 	case IMX6CLK_PLL2_PFD2:
 		freq = imx6_get_clock(IMX6CLK_PLL2);
-		v = imx6_ccm_read(CCM_ANALOG_PFD_528);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PFD_528);
 		freq = freq * 18 / __SHIFTOUT(v, CCM_ANALOG_PFD_528_PFD2_FRAC);
 		break;
 	case IMX6CLK_PLL3_PFD3:
 		freq = imx6_get_clock(IMX6CLK_PLL3);
-		v = imx6_ccm_read(CCM_ANALOG_PFD_480);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PFD_480);
 		freq = freq * 18 / __SHIFTOUT(v, CCM_ANALOG_PFD_480_PFD3_FRAC);
 		break;
 	case IMX6CLK_PLL3_PFD2:
 		freq = imx6_get_clock(IMX6CLK_PLL3);
-		v = imx6_ccm_read(CCM_ANALOG_PFD_480);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PFD_480);
 		freq = freq * 18 / __SHIFTOUT(v, CCM_ANALOG_PFD_480_PFD2_FRAC);
 		break;
 	case IMX6CLK_PLL3_PFD1:
 		freq = imx6_get_clock(IMX6CLK_PLL3);
-		v = imx6_ccm_read(CCM_ANALOG_PFD_480);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PFD_480);
 		freq = freq * 18 / __SHIFTOUT(v, CCM_ANALOG_PFD_480_PFD1_FRAC);
 		break;
 	case IMX6CLK_PLL3_PFD0:
 		freq = imx6_get_clock(IMX6CLK_PLL3);
-		v = imx6_ccm_read(CCM_ANALOG_PFD_480);
+		v = imx6_ccm_analog_read(CCM_ANALOG_PFD_480);
 		freq = freq * 18 / __SHIFTOUT(v, CCM_ANALOG_PFD_480_PFD0_FRAC);
 		break;
 
@@ -865,26 +896,26 @@ imx6_pll_power(uint32_t pllreg, int on, uint32_t en)
 	switch (pllreg) {
 	case CCM_ANALOG_PLL_USB1:
 	case CCM_ANALOG_PLL_USB2:
-		v = imx6_ccm_read(pllreg);
+		v = imx6_ccm_analog_read(pllreg);
 		if (on) {
 			v |= en;
 			v &= ~CCM_ANALOG_PLL_USBn_BYPASS;
 		} else {
 			v &= ~en;
 		}
-		imx6_ccm_write(pllreg, v);
+		imx6_ccm_analog_write(pllreg, v);
 		return 0;
 
 	case CCM_ANALOG_PLL_ENET:
-		v = imx6_ccm_read(pllreg);
+		v = imx6_ccm_analog_read(pllreg);
 		if (on)
 			v &= ~CCM_ANALOG_PLL_ENET_POWERDOWN;
 		else
 			v |= CCM_ANALOG_PLL_ENET_POWERDOWN;
-		imx6_ccm_write(pllreg, v);
+		imx6_ccm_analog_write(pllreg, v);
 
 		for (timeout = 100000; timeout > 0; timeout--) {
-			if (imx6_ccm_read(pllreg) &
+			if (imx6_ccm_analog_read(pllreg) &
 			    CCM_ANALOG_PLL_ENET_LOCK)
 				break;
 		}
@@ -894,12 +925,12 @@ imx6_pll_power(uint32_t pllreg, int on, uint32_t en)
 		v |= CCM_ANALOG_PLL_ENET_ENABLE;
 		if (on) {
 			v &= ~CCM_ANALOG_PLL_ENET_BYPASS;
-			imx6_ccm_write(pllreg, v);
+			imx6_ccm_analog_write(pllreg, v);
 			v |= en;
 		} else {
 			v &= ~en;
 		}
-		imx6_ccm_write(pllreg, v);
+		imx6_ccm_analog_write(pllreg, v);
 		return 0;
 
 	case CCM_ANALOG_PLL_ARM:

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_reg.h,v 1.6 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6_reg.h,v 1.7 2017/11/09 05:57:23 hkenken Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -141,8 +141,14 @@
 #define	AIPS1_SNVS_SIZE		0x00000c00
 #define	AIPS1_USBPHY2_BASE	0x000ca000
 #define	AIPS1_USBPHY1_BASE	0x000c9000
-#define	AIPS1_ANATOP_DIG_BASE	0x000c8000
+#define	AIPS1_USBPHY_SIZE	0x00001000
+
+#define	AIPS1_CCM_ANALOG_BASE	0x000c8000
+#define	AIPS1_CCM_ANALOG_SIZE	0x00001000
+
 #define	AIPS1_CCM_BASE		0x000c4000
+#define	AIPS1_CCM_SIZE		0x00004000
+
 #define	AIPS1_WDOG2_BASE	0x000c0000
 #define	AIPS1_WDOG1_BASE	0x000bc000
 #define	AIPS1_WDOG_SIZE		0x00000010
