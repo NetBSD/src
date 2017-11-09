@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.13 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: NITROGEN6X,v 1.14 2017/11/09 05:57:23 hkenken Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -285,6 +285,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # USB Controller and Devices
+imxusbphy0	at axi? addr 0x020c9000
+imxusbphy1	at axi? addr 0x020ca000
 imxusbc0	at axi? addr 0x02184000
 ehci0		at imxusbc0 unit 0 irq 75	# OTG
 ehci1		at imxusbc0 unit 1 irq 72	# Host1
