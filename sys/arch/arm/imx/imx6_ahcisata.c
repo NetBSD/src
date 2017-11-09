@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.5 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.6 2017/11/09 05:57:23 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.5 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.6 2017/11/09 05:57:23 hkenken Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -273,9 +273,9 @@ ixm6_ahcisata_init(struct imx_ahci_softc *sc)
 		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
 		return -1;
 	}
-	v = imx6_ccm_read(CCM_ANALOG_PLL_ENET);
+	v = imx6_ccm_analog_read(CCM_ANALOG_PLL_ENET);
 	v |= CCM_ANALOG_PLL_ENET_ENABLE_100M;
-	imx6_ccm_write(CCM_ANALOG_PLL_ENET, v);
+	imx6_ccm_analog_write(CCM_ANALOG_PLL_ENET, v);
 
 	v = iomux_read(IOMUX_GPR13);
 	/* clear */
