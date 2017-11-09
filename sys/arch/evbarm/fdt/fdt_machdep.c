@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.14 2017/09/10 23:03:06 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.15 2017/11/09 21:38:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.14 2017/09/10 23:03:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.15 2017/11/09 21:38:48 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -234,7 +234,7 @@ fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
 	struct extent_region *er;
 	uint64_t addr, size;
 	int index, error;
- 
+
 	fdt_memory_ext = extent_create("FDT Memory", mem_addr, max_addr,
 	    fdt_memory_ext_storage, sizeof(fdt_memory_ext_storage), EX_EARLY);
 
@@ -428,7 +428,7 @@ initarm(void *arg)
 #ifndef PMAP_NEED_ALLOC_POOLPAGE
 	if (memory_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		DPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (memory_size >> 20),     
+		    __func__, (unsigned long) (memory_size >> 20),
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		memory_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
