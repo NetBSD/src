@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.20 2017/10/20 03:45:47 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.21 2017/11/09 04:50:37 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -88,6 +88,7 @@ test_ipsec4_lifetime()
 	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
 	local algo_args="$(generate_algo_args $proto $algo)"
 	local lifetime=3
+	local buffertime=2
 
 	rump_server_crypto_start $SOCK_LOCAL netipsec
 	rump_server_crypto_start $SOCK_PEER netipsec
@@ -119,7 +120,7 @@ test_ipsec4_lifetime()
 	setup_sasp $proto "$algo_args" $ip_local $ip_peer 1
 
 	# Wait for the SAs to be expired
-	atf_check -s exit:0 sleep 2
+	atf_check -s exit:0 sleep $((1 + $buffertime))
 
 	# Check the SAs have been expired
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -148,7 +149,7 @@ test_ipsec4_lifetime()
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
 
-	atf_check -s exit:0 sleep $((lifetime + 1))
+	atf_check -s exit:0 sleep $((lifetime + $buffertime))
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	$DEBUG && $HIJACKING setkey -D
@@ -176,6 +177,7 @@ test_ipsec6_lifetime()
 	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
 	local algo_args="$(generate_algo_args $proto $algo)"
 	local lifetime=3
+	local buffertime=2
 
 	rump_server_crypto_start $SOCK_LOCAL netinet6 netipsec
 	rump_server_crypto_start $SOCK_PEER netinet6 netipsec
@@ -205,7 +207,7 @@ test_ipsec6_lifetime()
 	setup_sasp $proto "$algo_args" $ip_local $ip_peer 1
 
 	# Wait for the SAs to be expired
-	atf_check -s exit:0 sleep 2
+	atf_check -s exit:0 sleep $((1 + $buffertime))
 
 	# Check the SAs have been expired
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -234,7 +236,7 @@ test_ipsec6_lifetime()
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
 
-	atf_check -s exit:0 sleep $((lifetime + 1))
+	atf_check -s exit:0 sleep $((lifetime + $buffertime))
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	$DEBUG && $HIJACKING setkey -D
