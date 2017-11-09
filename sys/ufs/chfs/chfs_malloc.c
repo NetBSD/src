@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_malloc.c,v 1.4 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_malloc.c,v 1.5 2017/11/09 22:16:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -314,7 +314,7 @@ struct chfs_flash_vnode*
 chfs_alloc_flash_vnode(void)
 {
 	struct chfs_flash_vnode *ret;
-	ret = pool_cache_get(chfs_flash_vnode_cache, 0);
+	ret = pool_cache_get(chfs_flash_vnode_cache, PR_WAITOK);
 	return ret;
 }
 
@@ -330,7 +330,7 @@ struct chfs_flash_dirent_node*
 chfs_alloc_flash_dirent(void)
 {
 	struct chfs_flash_dirent_node *ret;
-	ret = pool_cache_get(chfs_flash_dirent_cache, 0);
+	ret = pool_cache_get(chfs_flash_dirent_cache, PR_WAITOK);
 	return ret;
 }
 
@@ -346,7 +346,7 @@ struct chfs_flash_data_node*
 chfs_alloc_flash_dnode(void)
 {
 	struct chfs_flash_data_node *ret;
-	ret = pool_cache_get(chfs_flash_dnode_cache, 0);
+	ret = pool_cache_get(chfs_flash_dnode_cache, PR_WAITOK);
 	return ret;
 }
 
@@ -362,7 +362,7 @@ struct chfs_node_frag*
 chfs_alloc_node_frag(void)
 {
 	struct chfs_node_frag *ret;
-	ret = pool_cache_get(chfs_node_frag_cache, 0);
+	ret = pool_cache_get(chfs_node_frag_cache, PR_WAITOK);
 	return ret;
 }
 
@@ -378,7 +378,7 @@ struct chfs_tmp_dnode *
 chfs_alloc_tmp_dnode(void)
 {
 	struct chfs_tmp_dnode *ret;
-	ret = pool_cache_get(chfs_tmp_dnode_cache, 0);
+	ret = pool_cache_get(chfs_tmp_dnode_cache, PR_WAITOK);
 	ret->next = NULL;
 	return ret;
 }
@@ -395,7 +395,7 @@ struct chfs_tmp_dnode_info *
 chfs_alloc_tmp_dnode_info(void)
 {
 	struct chfs_tmp_dnode_info *ret;
-	ret = pool_cache_get(chfs_tmp_dnode_info_cache, 0);
+	ret = pool_cache_get(chfs_tmp_dnode_info_cache, PR_WAITOK);
 	ret->tmpnode = NULL;
 	return ret;
 }
