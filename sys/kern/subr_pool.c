@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.214 2017/11/09 19:34:17 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.215 2017/11/09 22:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.214 2017/11/09 19:34:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.215 2017/11/09 22:52:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -751,6 +751,7 @@ pool_get(struct pool *pp, int flags)
 	struct pool_item_header *ph;
 	void *v;
 
+	KASSERT(!(flags & PR_NOWAIT) != !(flags & PR_WAITOK));
 	KASSERTMSG((pp->pr_itemsperpage != 0),
 	    "%s: [%s] pr_itemsperpage is zero, "
 	    "pool not initialized?", __func__, pp->pr_wchan);
@@ -2230,6 +2231,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 	void *object;
 	int s;
 
+	KASSERT(!(flags & PR_NOWAIT) != !(flags & PR_WAITOK));
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()) ||
 	    (pc->pc_pool.pr_ipl != IPL_NONE || cold || panicstr != NULL),
 	    "%s: [%s] is IPL_NONE, but called from interrupt context",
