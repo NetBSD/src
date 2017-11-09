@@ -1,4 +1,4 @@
-# $NetBSD: files.nand,v 1.5 2012/10/31 18:58:08 riz Exp $
+# $NetBSD: files.nand,v 1.6 2017/11/09 21:50:15 jmcneill Exp $
 
 define	nandbus	{ }
 
@@ -10,6 +10,7 @@ file	dev/nand/nand_bbt.c	nand
 file	dev/nand/nand_crc.c	nand
 file	dev/nand/nand_micron.c	nand
 file	dev/nand/nand_samsung.c	nand
+file	dev/nand/nand_toshiba.c	nand
 
 defpseudodev	nandemulator: nandbus
 file	dev/nand/nandemulator.c	nandemulator
