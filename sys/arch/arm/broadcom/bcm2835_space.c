@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.10 2016/02/02 13:55:50 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.11 2017/11/09 21:37:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.10 2016/02/02 13:55:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.11 2017/11/09 21:37:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE) {
 		match = true;
 		pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(ba);
-		
+
 	}
 #ifdef BCM2836
 	if (ba >= BCM2836_ARM_LOCAL_BASE &&

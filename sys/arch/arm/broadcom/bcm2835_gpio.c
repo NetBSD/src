@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.4 2017/09/21 19:28:14 skrll Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.5 2017/11/09 21:37:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.4 2017/09/21 19:28:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.5 2017/11/09 21:37:52 skrll Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -107,12 +107,12 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 	u_int func;
 	int error;
 #endif
-	
+
 	sc->sc_dev = self;
-	
+
 #if NGPIO > 0
 	if (device_unit(sc->sc_dev) > 1) {
-		aprint_naive(" NO GPIO\n");	
+		aprint_naive(" NO GPIO\n");
 		aprint_normal(": NO GPIO\n");
 		return;
 	} else if (device_unit(sc->sc_dev) == 1) {
@@ -122,8 +122,8 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 		maxpin = 31;
 		minpin = 0;
 	}
-	
-	aprint_naive("\n");	
+
+	aprint_naive("\n");
 	aprint_normal(": GPIO [%d...%d]\n", minpin, maxpin);
 
 	sc->sc_iot = aaa->aaa_iot;
@@ -137,13 +137,13 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 
 	for (pin = minpin; pin <= maxpin; pin++) {
 	        int epin = pin - minpin;
-	
+
 	        sc->sc_gpio_pins[epin].pin_num = epin;
 		/*
 		 * find out pins still available for GPIO
 		 */
 		func = bcm2835gpio_function_read(pin);
-		
+
 		if (func == BCM2835_GPIO_IN ||
 		    func == BCM2835_GPIO_OUT) {
 	                sc->sc_gpio_pins[epin].pin_caps = GPIO_PIN_INPUT |
@@ -160,13 +160,13 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
   			DPRINTF(1, ("%s: skip pin %d - func = 0x%x\n", device_xname(sc->sc_dev), pin, func));
 		}
 	}
-	
+
 	/* create controller tag */
 	sc->sc_gpio_gc.gp_cookie = sc;
 	sc->sc_gpio_gc.gp_pin_read = bcm2835gpio_gpio_pin_read;
 	sc->sc_gpio_gc.gp_pin_write = bcm2835gpio_gpio_pin_write;
 	sc->sc_gpio_gc.gp_pin_ctl = bcm2835gpio_gpio_pin_ctl;
-	
+
 	gba.gba_gc = &sc->sc_gpio_gc;
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = maxpin - minpin + 1;
@@ -190,7 +190,7 @@ bcm2835gpio_gpio_pin_read(void *arg, int pin)
 	if (device_unit(sc->sc_dev) > 1) {
 		return 0;
 	}
-	
+
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		BCM2835_GPIO_GPLEV(epin / BCM2835_GPIO_GPLEV_PINS_PER_REGISTER));
 
@@ -198,7 +198,7 @@ bcm2835gpio_gpio_pin_read(void *arg, int pin)
 		GPIO_PIN_HIGH : GPIO_PIN_LOW;
 
 	DPRINTF(2, ("%s: gpio_read pin %d->%d\n", device_xname(sc->sc_dev), epin, (res == GPIO_PIN_HIGH)));
-	
+
 	return res;
 }
 
@@ -208,17 +208,17 @@ bcm2835gpio_gpio_pin_write(void *arg, int pin, int value)
 	struct bcmgpio_softc *sc = arg;
 	int epin = pin + device_unit(sc->sc_dev) * 32;
 	bus_size_t reg;
-	
+
 	if (device_unit(sc->sc_dev) > 1) {
 		return;
 	}
-	
+
 	if (value == GPIO_PIN_HIGH) {
 		reg = BCM2835_GPIO_GPSET(epin / BCM2835_GPIO_GPSET_PINS_PER_REGISTER);
 	} else {
 		reg = BCM2835_GPIO_GPCLR(epin / BCM2835_GPIO_GPCLR_PINS_PER_REGISTER);
 	}
-	
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		reg, 1 << (epin % BCM2835_GPIO_GPSET_PINS_PER_REGISTER));
 	DPRINTF(2, ("%s: gpio_write pin %d<-%d\n", device_xname(sc->sc_dev), epin, (value == GPIO_PIN_HIGH)));
@@ -230,11 +230,11 @@ bcm2835gpio_gpio_pin_ctl(void *arg, int pin, int flags)
 	struct bcmgpio_softc *sc = arg;
 	uint32_t cmd;
 	int epin = pin + device_unit(sc->sc_dev) * 32;
-	
+
 	if (device_unit(sc->sc_dev) > 1) {
 		return;
 	}
-	
+
 	DPRINTF(2, ("%s: gpio_ctl pin %d flags 0x%x\n", device_xname(sc->sc_dev), epin, flags));
 
 	if (flags & (GPIO_PIN_OUTPUT|GPIO_PIN_INPUT)) {
@@ -264,7 +264,7 @@ bcm2835gpio_gpio_pin_ctl(void *arg, int pin, int flags)
 	delay(1); /* wait 150 cycles */
 	/* reset control signal and clock */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		BCM2835_GPIO_GPPUD, BCM2835_GPIO_GPPUD_PULLOFF);	
+		BCM2835_GPIO_GPPUD, BCM2835_GPIO_GPPUD_PULLOFF);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		BCM2835_GPIO_GPPUDCLK(device_unit(sc->sc_dev)),
 		0);
