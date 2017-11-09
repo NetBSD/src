@@ -1,4 +1,4 @@
-/*	$NetBSD: flags.c,v 1.18 2017/11/04 02:49:55 christos Exp $	*/
+/*	$NetBSD: flags.c,v 1.19 2017/11/09 20:30:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)flags.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: flags.c,v 1.18 2017/11/04 02:49:55 christos Exp $");
+__RCSID("$NetBSD: flags.c,v 1.19 2017/11/09 20:30:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,7 +105,7 @@ __sflags(const char *mode, int *optr)
 			o |= O_CLOEXEC;
 			break;
 		case 'f':
-			o |= O_NONBLOCK;
+			o |= O_REGULAR;
 			break;
 		case 'l':
 			o |= O_NOFOLLOW;
