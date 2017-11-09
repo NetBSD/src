@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.16 2012/11/03 12:12:48 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.17 2017/11/09 21:50:15 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -428,6 +428,7 @@ extern const struct nand_manufacturer nand_mfrs[];
  */
 int nand_read_parameters_micron(device_t, struct nand_chip *);
 int nand_read_parameters_samsung(device_t, struct nand_chip *);
+int nand_read_parameters_toshiba(device_t, struct nand_chip *);
 
 /* debug inlines */
 
