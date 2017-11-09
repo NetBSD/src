@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.213 2017/11/09 15:53:40 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.214 2017/11/09 19:34:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.213 2017/11/09 15:53:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.214 2017/11/09 19:34:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1128,6 +1128,8 @@ pool_prime(struct pool *pp, int n)
 	while (newpages-- > 0) {
 		error = pool_grow(pp, PR_NOWAIT);
 		if (error) {
+			if (error == ERESTART)
+				continue;
 			break;
 		}
 		pp->pr_minpages++;
@@ -1240,6 +1242,8 @@ pool_catchup(struct pool *pp)
 	while (POOL_NEEDS_CATCHUP(pp)) {
 		error = pool_grow(pp, PR_NOWAIT);
 		if (error) {
+			if (error == ERESTART)
+				continue;
 			break;
 		}
 	}
