@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.1 2015/06/03 04:20:02 hsuenaga Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.2 2017/11/09 22:22:58 christos Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1498,7 +1498,7 @@ mvxpsec_session_alloc(struct mvxpsec_softc *sc)
 {
 	struct mvxpsec_session *mv_s;
 
-	mv_s = pool_cache_get(sc->sc_session_pool, 0);
+	mv_s = pool_cache_get(sc->sc_session_pool, PR_NOWAIT);
 	if (mv_s == NULL) {
 		log(LOG_ERR, "%s: cannot allocate memory\n", __func__);
 		return NULL;
@@ -1614,7 +1614,7 @@ mvxpsec_packet_alloc(struct mvxpsec_session *mv_s)
 		sc->sc_free_qlen--;
 	}
 	else {
-		mv_p = pool_cache_get(sc->sc_packet_pool, 0);
+		mv_p = pool_cache_get(sc->sc_packet_pool, PR_NOWAIT);
 		if (mv_p == NULL) {
 			log(LOG_ERR, "%s: cannot allocate memory\n",
 			    __func__);
