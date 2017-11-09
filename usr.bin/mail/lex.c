@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.43 2013/02/20 14:38:13 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.44 2017/11/09 20:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.43 2013/02/20 14:38:13 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.44 2017/11/09 20:27:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ setfile(const char *name)
 	if ((name = expand(name)) == NULL)
 		return -1;
 
-	if ((ibuf = Fopen(name, "re")) == NULL) {
+	if ((ibuf = Fopen(name, "ref")) == NULL) {
 		if (!isedit && errno == ENOENT)
 			goto nomail;
 		warn("Can't open `%s'", name);
@@ -278,9 +278,9 @@ setfile(const char *name)
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
-	    (otf = fdopen(fd, "we")) == NULL)
+	    (otf = fdopen(fd, "wef")) == NULL)
 		err(EXIT_FAILURE, "Can't create tmp file `%s'", tempname);
-	if ((itf = fopen(tempname, "re")) == NULL)
+	if ((itf = fopen(tempname, "ref")) == NULL)
 		err(EXIT_FAILURE, "Can't create tmp file `%s'", tempname);
 	(void)rm(tempname);
 	setptr(ibuf, (off_t)0);
@@ -317,7 +317,7 @@ incfile(void)
 
 	omsgCount = get_abs_msgCount();
 
-	ibuf = Fopen(mailname, "re");
+	ibuf = Fopen(mailname, "ref");
 	if (ibuf == NULL)
 		return -1;
 	sig_check();
@@ -1121,7 +1121,7 @@ load(const char *name)
 {
 	FILE *in, *oldin;
 
-	if ((in = Fopen(name, "re")) == NULL)
+	if ((in = Fopen(name, "ref")) == NULL)
 		return;
 	oldin = input;
 	input = in;

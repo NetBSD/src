@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.38 2014/12/16 19:30:24 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.39 2017/11/09 20:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.38 2014/12/16 19:30:24 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.39 2017/11/09 20:27:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -487,13 +487,13 @@ infix(struct header *hp, FILE *fi)
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RsXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
-	    (nfo = Fdopen(fd, "we")) == NULL) {
+	    (nfo = Fdopen(fd, "wef")) == NULL) {
 		if (fd != -1)
 			(void)close(fd);
 		warn("%s", tempname);
 		return fi;
 	}
-	if ((nfi = Fopen(tempname, "re")) == NULL) {
+	if ((nfi = Fopen(tempname, "ref")) == NULL) {
 		warn("%s", tempname);
 		(void)Fclose(nfo);
 		(void)rm(tempname);
@@ -553,7 +553,7 @@ savemail(const char name[], FILE *fi)
 	int afterblank;
 
 	m = umask(077);
-	fo = Fopen(name, "ae");
+	fo = Fopen(name, "aef");
 	(void)umask(m);
 	if (fo == NULL) {
 		warn("%s", name);

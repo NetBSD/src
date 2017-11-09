@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.27 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.28 2017/11/09 20:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.27 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.28 2017/11/09 20:27:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -626,7 +626,7 @@ matchbody(int (*cmpfn)(void *, char *, size_t),
 		fp = NULL;
 		if ((fd = mkstemp(tempname)) != -1) {
 			(void)unlink(tempname);
-			if ((fp = Fdopen(fd, "we+")) == NULL)
+			if ((fp = Fdopen(fd, "wef+")) == NULL)
 				(void)close(fd);
 		}
 		if (fp == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.48 2017/05/02 03:29:14 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.49 2017/11/09 20:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.48 2017/05/02 03:29:14 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.49 2017/11/09 20:27:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ mespipe(FILE *fp, char cmd[])
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.ReXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
-	    (nf = Fdopen(fd, "we+")) == NULL) {
+	    (nf = Fdopen(fd, "wef+")) == NULL) {
 		if (fd != -1)
 			(void)close(fd);
 		warn("%s", tempname);
@@ -403,7 +403,7 @@ collect(struct header *hp, int printheaders)
 	(void)snprintf(mailtempname, sizeof(mailtempname),
 	    "%s/mail.RsXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(mailtempname)) == -1 ||
-	    (collf = Fdopen(fd, "we+")) == NULL) {
+	    (collf = Fdopen(fd, "wef+")) == NULL) {
 		if (fd != -1)
 			(void)close(fd);
 		warn("%s", mailtempname);
@@ -634,7 +634,7 @@ collect(struct header *hp, int printheaders)
 				(void)snprintf(tempname, sizeof(tempname),
 				    "%s/mail.ReXXXXXXXXXX", tmpdir);
 				if ((fd = mkstemp(tempname)) == -1 ||
-				    (fbuf = Fdopen(fd, "we+")) == NULL) {
+				    (fbuf = Fdopen(fd, "wef+")) == NULL) {
 					if (fd != -1)
 						(void)close(fd);
 					warn("%s", tempname);

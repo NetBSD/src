@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.25 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.26 2017/11/09 20:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.25 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.26 2017/11/09 20:27:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ save1(char str[], int markmsg, const char *cmd, struct ignoretab *igtab)
 		disp = "[Appended]";
 	else
 		disp = "[New file]";
-	if ((obuf = Fopen(fn, "ae")) == NULL) {
+	if ((obuf = Fopen(fn, "aef")) == NULL) {
 		warn(NULL);
 		return 1;
 	}
