@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.59 2012/11/29 15:31:25 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.60 2017/11/09 08:34:50 knakahara Exp $	*/
 
-/* $Id: pfkey.c,v 1.59 2012/11/29 15:31:25 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.60 2017/11/09 08:34:50 knakahara Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3177,8 +3177,8 @@ migrate_ph2_one_isr(spid, isr_cur, xisr_old, xisr_new)
 
 	/* Then, verify reqid if necessary */
 	if (isr_cur->saidx.reqid &&
-	    (xisr_old->sadb_x_ipsecrequest_reqid != IPSEC_LEVEL_UNIQUE ||
-	     xisr_new->sadb_x_ipsecrequest_reqid != IPSEC_LEVEL_UNIQUE ||
+	    (xisr_old->sadb_x_ipsecrequest_level != IPSEC_LEVEL_UNIQUE ||
+	     xisr_new->sadb_x_ipsecrequest_level != IPSEC_LEVEL_UNIQUE ||
 	     isr_cur->saidx.reqid != xisr_old->sadb_x_ipsecrequest_reqid ||
 	     isr_cur->saidx.reqid != xisr_new->sadb_x_ipsecrequest_reqid))
 		return -1;
