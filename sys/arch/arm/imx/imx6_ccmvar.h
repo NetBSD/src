@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmvar.h,v 1.4 2016/11/24 03:59:36 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccmvar.h,v 1.5 2017/11/09 05:57:23 hkenken Exp $	*/
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -28,7 +28,7 @@
 #ifndef	_ARM_IMX_IMX6_CCMVAR_H_
 #define	_ARM_IMX_IMX6_CCMVAR_H_
 
-enum imx6_clock {
+enum imx6_clock_id {
 	IMX6CLK_PLL1,		/* = PLL_ARM */
 	IMX6CLK_PLL2,		/* = PLL_SYS = 528_PLL (24MHz * 22) */
 	IMX6CLK_PLL3,		/* = PLL_USB1 = 480_PLL1 */
@@ -73,11 +73,13 @@ enum imx6_clock {
 	IMX6CLK_LDB_DI1_SERIAL_CLK_ROOT,
 };
 
-uint32_t imx6_get_clock(enum imx6_clock);
-int imx6_set_clock(enum imx6_clock, uint32_t);
+uint32_t imx6_get_clock(enum imx6_clock_id);
+int imx6_set_clock(enum imx6_clock_id, uint32_t);
 int imx6_pll_power(uint32_t, int, uint32_t);
 
 uint32_t imx6_ccm_read(uint32_t);
 void imx6_ccm_write(uint32_t, uint32_t);
+uint32_t imx6_ccm_analog_read(uint32_t);
+void imx6_ccm_analog_write(uint32_t, uint32_t);
 
 #endif	/* _ARM_IMX_IMX6_CCMVAR_H_ */

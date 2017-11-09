@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HUMMINGBOARD,v 1.1 2016/11/24 12:06:44 hkenken Exp $
+#	$NetBSD: HUMMINGBOARD,v 1.2 2017/11/09 05:57:23 hkenken Exp $
 #
 #	Hummingboard -- Freescale i.MX6 Eval Board Kernel
 #
@@ -132,6 +132,8 @@ ld*		at sdmmc?			# MMC/SD card
 #options 	SDMMC_DEBUG
 
 # USB
+imxusbphy0	at axi? addr 0x020c9000
+imxusbphy1	at axi? addr 0x020ca000
 imxusbc0	at axi? addr 0x02184000
 ehci0		at imxusbc0	unit 0	irq 75 # OTG
 ehci1		at imxusbc0	unit 1	irq 72 # Host1
@@ -154,5 +156,5 @@ pci*		at imxpcie0
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
 
-iwn*		at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
-iwm*		at pci? dev ? function ?	# Intel Centrino 7260
+# local configuration
+cinclude "arch/evbarm/conf/HUMMINGBOARD.local"

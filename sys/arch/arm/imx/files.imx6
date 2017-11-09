@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.11 2017/09/08 05:29:12 hkenken Exp $
+#	$NetBSD: files.imx6,v 1.12 2017/11/09 05:57:23 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -89,6 +89,11 @@ file	arch/arm/imx/if_enet_imx6.c		enet
 # attach of this driver need to be specified in paltform configuration
 device	imxusbc { unit, irq } : bus_dma_generic
 file	arch/arm/imx/imx6_usb.c			imxusbc
+
+# USB Phy
+device	imxusbphy
+attach	imxusbphy at axi
+file	arch/arm/imx/imx6_usbphy.c		imxusbphy
 
 attach	ehci at imxusbc with imxehci
 file	arch/arm/imx/imxusb.c			imxehci

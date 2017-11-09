@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.8 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.9 2017/11/09 05:57:23 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.8 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.9 2017/11/09 05:57:23 hkenken Exp $");
 
 #include "opt_imx.h"
 #include "arml2cc.h"
@@ -189,7 +189,7 @@ imx6_armrootclk(void)
 	uint32_t v;
 
 	v = bus_space_read_4(imx6_ioreg_bst, imx6_ioreg_bsh,
-	    AIPS1_CCM_BASE + CCM_ANALOG_PLL_ARM);
+	    AIPS1_CCM_ANALOG_BASE + CCM_ANALOG_PLL_ARM);
 	clk = IMX6_OSC_FREQ * (v & CCM_ANALOG_PLL_ARM_DIV_SELECT) / 2;
 	v = bus_space_read_4(imx6_ioreg_bst, imx6_ioreg_bsh,
 	    AIPS1_CCM_BASE + CCM_CACRR);

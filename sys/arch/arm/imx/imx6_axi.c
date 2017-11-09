@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_axi.c,v 1.3 2017/08/17 09:11:04 hkenken Exp $	*/
+/*	$NetBSD: imx6_axi.c,v 1.4 2017/11/09 05:57:23 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_axi.c,v 1.3 2017/08/17 09:11:04 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_axi.c,v 1.4 2017/11/09 05:57:23 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,7 +103,8 @@ axi_critical_search(device_t parent, struct cfdata *cf,
 	    (strcmp(cf->cf_name, "imxgpio") != 0) &&
 	    (strcmp(cf->cf_name, "imxiomux") != 0) &&
 	    (strcmp(cf->cf_name, "imxocotp") != 0) &&
-	    (strcmp(cf->cf_name, "imxuart") != 0))
+	    (strcmp(cf->cf_name, "imxuart") != 0) &&
+	    (strcmp(cf->cf_name, "imxusbphy") != 0))
 		return 0;
 
 	aa->aa_name = cf->cf_name;

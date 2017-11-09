@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_usb.c,v 1.2 2016/11/24 03:59:36 hkenken Exp $	*/
+/*	$NetBSD: nitrogen6_usb.c,v 1.3 2017/11/09 05:57:23 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2013  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.2 2016/11/24 03:59:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.3 2017/11/09 05:57:23 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,38 +124,18 @@ init_otg(struct imxehci_softc *sc)
 	sc->sc_iftype = IMXUSBC_IF_UTMI_WIDE;
 
 	/* USB1 power */
-	imx6_ccm_write(USB_ANALOG_USB1_CHRG_DETECT, 
+	imx6_ccm_analog_write(USB_ANALOG_USB1_CHRG_DETECT,
 	    USB_ANALOG_USB_CHRG_DETECT_EN_B |
 	    USB_ANALOG_USB_CHRG_DETECT_CHK_CHRG_B);
 	imx6_pll_power(CCM_ANALOG_PLL_USB1, 1, CCM_ANALOG_PLL_USBn_ENABLE);
-	imx6_ccm_write(CCM_ANALOG_PLL_USB1_CLR,
+	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB1_CLR,
 	    CCM_ANALOG_PLL_USBn_BYPASS);
-	imx6_ccm_write(CCM_ANALOG_PLL_USB1_SET,
+	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB1_SET,
 	   CCM_ANALOG_PLL_USBn_ENABLE |
 	   CCM_ANALOG_PLL_USBn_POWER |
 	   CCM_ANALOG_PLL_USBn_EN_USB_CLK);
 
-	/* USBPHY enable */
-	/* PHY1 */
-	imx6_ccm_write(USBPHY1_CTRL, USBPHY_CTRL_CLKGATE);
-
 	imxehci_reset(sc);
-
-	v = imx6_ccm_read(USBPHY1_CTRL);
-	v |= USBPHY_CTRL_SFTRST;
-	imx6_ccm_write(USBPHY1_CTRL, v);
-	delay(100);
-
-	v = imx6_ccm_read(USBPHY1_CTRL);
-	v &= ~(USBPHY_CTRL_SFTRST | USBPHY_CTRL_CLKGATE);
-	imx6_ccm_write(USBPHY1_CTRL, v);
-	delay(100);
-
-	imx6_ccm_write(USBPHY1_PWD, 0);
-
-	v = imx6_ccm_read(USBPHY1_CTRL);
-	v |= USBPHY_CTRL_ENUTMILEVEL2 | USBPHY_CTRL_ENUTMILEVEL3;
-	imx6_ccm_write(USBPHY1_CTRL, v);
 
 	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh, USBNC_USB_OTG_CTRL);
 	v |= USBNC_USB_OTG_CTRL_WKUP_VBUS_EN;
@@ -173,12 +153,12 @@ init_h1(struct imxehci_softc *sc)
 
 	sc->sc_iftype = IMXUSBC_IF_UTMI_WIDE;
 
-	imx6_ccm_write(USB_ANALOG_USB2_CHRG_DETECT, 
+	imx6_ccm_analog_write(USB_ANALOG_USB2_CHRG_DETECT,
 	    USB_ANALOG_USB_CHRG_DETECT_EN_B |
 	    USB_ANALOG_USB_CHRG_DETECT_CHK_CHRG_B);
-	imx6_ccm_write(CCM_ANALOG_PLL_USB2_CLR,
+	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB2_CLR,
 	    CCM_ANALOG_PLL_USBn_BYPASS);
-	imx6_ccm_write(CCM_ANALOG_PLL_USB2_SET,
+	imx6_ccm_analog_write(CCM_ANALOG_PLL_USB2_SET,
 	    CCM_ANALOG_PLL_USBn_ENABLE |
 	    CCM_ANALOG_PLL_USBn_POWER |
 	    CCM_ANALOG_PLL_USBn_EN_USB_CLK);
@@ -188,24 +168,8 @@ init_h1(struct imxehci_softc *sc)
 	v |= USBNC_USB_UH1_CTRL_OVER_CUR_DIS;
 	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh, USBNC_USB_UH1_CTRL, v);
 
-	/* gate clocks */
-	imx6_ccm_write(USBPHY2_CTRL_CLR, USBPHY_CTRL_CLKGATE);
-
 	/* do reset */
 	imxehci_reset(sc);
-	imx6_ccm_write(USBPHY2_CTRL_SET, USBPHY_CTRL_SFTRST);
-	delay(100);
-
-	/* clear reset, and run clocks */
-	imx6_ccm_write(USBPHY2_CTRL_CLR, USBPHY_CTRL_SFTRST | USBPHY_CTRL_CLKGATE);
-	delay(100);
-
-	/* power on */
-	imx6_ccm_write(USBPHY2_PWD, 0);
-
-	/* UTMI+Level2, Level3 */
-	imx6_ccm_write(USBPHY2_CTRL_SET,
-	    USBPHY_CTRL_ENUTMILEVEL2 | USBPHY_CTRL_ENUTMILEVEL3);
 
 	/* set mode */
 	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh, USBC_UH1_USBMODE);

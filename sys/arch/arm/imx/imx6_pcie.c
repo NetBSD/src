@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.4 2017/10/24 09:11:51 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.5 2017/11/09 05:57:23 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.4 2017/10/24 09:11:51 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.5 2017/11/09 05:57:23 hkenken Exp $");
 
 #include "opt_pci.h"
 
@@ -164,12 +164,12 @@ imx6pcie_clock_enable(struct imx6pcie_softc *sc)
 {
 	uint32_t v;
 
-	v = imx6_ccm_read(CCM_ANALOG_MISC1);
+	v = imx6_ccm_analog_read(CCM_ANALOG_MISC1);
 	v &= ~CCM_ANALOG_MISC1_LVDS_CLK1_IBEN;
 	v &= ~CCM_ANALOG_MISC1_LVDS_CLK1_SRC;
 	v |= CCM_ANALOG_MISC1_LVDS_CLK1_OBEN;
 	v |= CCM_ANALOG_MISC1_LVDS_CLK1_SRC_SATA;
-	imx6_ccm_write(CCM_ANALOG_MISC1, v);
+	imx6_ccm_analog_write(CCM_ANALOG_MISC1, v);
 
 	/* select PCIe clock source from axi */
 	v = imx6_ccm_read(CCM_CBCMR);
