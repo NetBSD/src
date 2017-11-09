@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1300 2017/10/30 01:24:47 sevan Exp $
+$NetBSD: pcidevs,v 1.1301 2017/11/09 03:07:10 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5804,6 +5804,7 @@ product PLX 9656FPBGA	0x5601	9656 I/O Accelerator FPBGA
 product PLX PEX_8111	0x8111	PEX 8111 PCIe-to-PCI Bridge
 product PLX PEX_8112	0x8112	PEX 8112 PCIe-to-PCI Bridge
 product PLX PEX_8114	0x8114	PEX 8114 PCIe-to-PCI/PCI-X Bridge
+product PLX PEX_8605	0x8605	PEX 8605 4port 4lane PCIe Gen 2 switch
 product PLX 9030	0x9030	9030 I/O Accelrator
 product PLX 9050	0x9050	9050 I/O Accelrator
 product PLX 9054	0x9054	9054 I/O Accelerator
