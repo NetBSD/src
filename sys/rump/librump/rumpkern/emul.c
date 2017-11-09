@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.182 2017/06/04 08:05:42 hannken Exp $	*/
+/*	$NetBSD: emul.c,v 1.183 2017/11/09 12:46:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.182 2017/06/04 08:05:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.183 2017/11/09 12:46:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -84,6 +84,7 @@ int mem_no = 2;
 device_t booted_device;
 device_t booted_wedge;
 int booted_partition;
+const char *booted_method;
 
 /* XXX: unused */
 kmutex_t tty_lock;
