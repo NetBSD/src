@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.27 2017/10/07 10:26:38 maxv Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.28 2017/11/09 01:01:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -44,7 +44,7 @@
 
 #define BTINFO_STR "bootpath", "rootdevice", "bootdisk", "netif", \
     "console", "biosgeom", "symtab", "memmap", "bootwedge", "modulelist", \
-    "framebuffer", "userconfcommands", "efi", "efimemmap",
+    "framebuffer", "userconfcommands", "efi", "efimemmap", "prekern",
 
 #ifndef _LOCORE
 
