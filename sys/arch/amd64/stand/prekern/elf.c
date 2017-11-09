@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.8 2017/11/09 15:24:39 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.9 2017/11/09 15:56:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -48,29 +48,6 @@ extern paddr_t kernpa_start, kernpa_end;
 
 static struct elfinfo eif;
 static const char entrypoint[] = "start_prekern";
-
-/* XXX */
-static int
-memcmp(const char *a, const char *b, size_t c)
-{
-	size_t i;
-	for (i = 0; i < c; i++) {
-		if (a[i] != b[i])
-			return 1;
-	}
-	return 0;
-}
-static int
-strcmp(char *a, char *b)
-{
-	size_t i;
-	for (i = 0; a[i] != '\0'; i++) {
-		if (a[i] != b[i])
-			return 1;
-	}
-	return 0;
-}
-
 
 static int
 elf_check_header()

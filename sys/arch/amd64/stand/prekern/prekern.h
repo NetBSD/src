@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.5 2017/11/09 15:24:39 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.6 2017/11/09 15:56:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -67,6 +67,28 @@ memset(void *dst, char c, size_t sz)
 		*bdst = c;
 		bdst++, sz--;
 	}
+}
+
+static inline int
+memcmp(const char *a, const char *b, size_t c)
+{
+	size_t i;
+	for (i = 0; i < c; i++) {
+		if (a[i] != b[i])
+			return 1;
+	}
+	return 0;
+}
+
+static inline int
+strcmp(char *a, char *b)
+{
+	size_t i;
+	for (i = 0; a[i] != '\0'; i++) {
+		if (a[i] != b[i])
+			return 1;
+	}
+	return 0;
 }
 
 /* -------------------------------------------------------------------------- */
