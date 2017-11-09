@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.350 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.351 2017/11/09 01:02:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.350 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.351 2017/11/09 01:02:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -568,6 +568,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		    rsc->sc_r.root_partition == 1 ||
 		    rf_containsboot(&rsc->sc_r, booted_device)) {
 			booted_device = candidate_root;
+			booted_method = "raidframe/single";
 			booted_partition = 0;	/* XXX assume 'a' */
 		}
 	} else if (num_root > 1) {
@@ -603,6 +604,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 
 		if (num_root == 1) {
 			booted_device = dksc->sc_dev;
+			booted_method = "raidframe/multi";
 			booted_partition = 0;	/* XXX assume 'a' */
 		} else {
 			/* we can't guess.. require the user to answer... */
