@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.149 2016/06/19 09:35:06 bouyer Exp $ */
+/* $NetBSD: device.h,v 1.150 2017/11/09 01:02:55 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -413,6 +413,7 @@ struct pdevinit {
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern device_t booted_device;		/* the device we booted from */
+extern const char *booted_method;	/* the method the device was found */
 extern int booted_partition;		/* the partition on that device */
 extern daddr_t booted_startblk;		/* or the start of a wedge */
 extern uint64_t booted_nblks;		/* and the size of that wedge */

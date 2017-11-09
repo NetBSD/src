@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.217 2016/05/12 02:24:16 ozaki-r Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.218 2017/11/09 01:02:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.217 2016/05/12 02:24:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.218 2017/11/09 01:02:55 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -156,6 +156,7 @@ int md_is_root = 0;
  * The device and partition that we booted from.
  */
 device_t booted_device;
+const char *booted_method;
 int booted_partition;
 daddr_t booted_startblk;
 uint64_t booted_nblks;
