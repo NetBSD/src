@@ -1,4 +1,4 @@
-/* $NetBSD: sun5i_a13_ccu.c,v 1.4 2017/11/06 21:03:58 jmcneill Exp $ */
+/* $NetBSD: sun5i_a13_ccu.c,v 1.5 2017/11/09 21:52:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.4 2017/11/06 21:03:58 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.5 2017/11/09 21:52:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.4 2017/11/06 21:03:58 jmcneill E
 #define	AHB_GATING_REG1		0x064
 #define	APB0_GATING_REG		0x068
 #define	APB1_GATING_REG		0x06c
+#define	NAND_SCLK_CFG_REG	0x080
 #define	SD0_SCLK_CFG_REG        0x088
 #define	SD1_SCLK_CFG_REG        0x08c
 #define	SD2_SCLK_CFG_REG        0x090
@@ -193,6 +194,14 @@ static struct sunxi_ccu_clk sun5i_a13_ccu_clks[] = {
 	    SUNXI_CCU_NM_POWER_OF_TWO),
 	SUNXI_CCU_NM(A13_CLK_MMC2, "mmc2", mod_parents,
 	    SD2_SCLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+
+	SUNXI_CCU_NM(A13_CLK_NAND, "nand", mod_parents,
+	    NAND_SCLK_CFG_REG,		/* reg */
 	    __BITS(17,16),		/* n */
 	    __BITS(3,0),		/* m */
 	    __BITS(25,24),		/* sel */
