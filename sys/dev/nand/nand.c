@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.25 2016/10/04 14:47:18 kiyohara Exp $	*/
+/*	$NetBSD: nand.c,v 1.26 2017/11/09 21:50:15 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.25 2016/10/04 14:47:18 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.26 2017/11/09 21:50:15 jmcneill Exp $");
 
 #include "locators.h"
 
@@ -88,7 +88,6 @@ struct flash_interface nand_flash_if = {
 	.submit = nand_flash_submit
 };
 
-#ifdef NAND_VERBOSE
 const struct nand_manufacturer nand_mfrs[] = {
 	{ NAND_MFR_AMD,		"AMD" },
 	{ NAND_MFR_FUJITSU,	"Fujitsu" },
@@ -116,7 +115,6 @@ nand_midtoname(int id)
 
 	return nand_mfrs[i].name;
 }
-#endif
 
 /* ARGSUSED */
 int
@@ -335,6 +333,8 @@ nand_fill_chip_structure_legacy(device_t self, struct nand_chip *chip)
 		return nand_read_parameters_micron(self, chip);
 	case NAND_MFR_SAMSUNG:
 		return nand_read_parameters_samsung(self, chip);
+	case NAND_MFR_TOSHIBA:
+		return nand_read_parameters_toshiba(self, chip);
 	default:
 		return 1;
 	}
@@ -368,6 +368,12 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	nand_read_1(self, &onfi_signature[3]);
 	nand_select(self, false);
 
+#ifdef NAND_DEBUG
+	device_printf(self, "signature: %02x %02x %02x %02x\n",
+	    onfi_signature[0], onfi_signature[1],
+	    onfi_signature[2], onfi_signature[3]);
+#endif
+
 	if (onfi_signature[0] != 'O' || onfi_signature[1] != 'N' ||
 	    onfi_signature[2] != 'F' || onfi_signature[3] != 'I') {
 		chip->nc_isonfi = false;
@@ -395,13 +401,11 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 		}
 	}
 
-#ifdef NAND_VERBOSE
 	aprint_normal_dev(self,
 	    "manufacturer id: 0x%.2x (%s), device id: 0x%.2x\n",
 	    chip->nc_manf_id,
 	    nand_midtoname(chip->nc_manf_id),
 	    chip->nc_dev_id);
-#endif
 
 	aprint_normal_dev(self,
 	    "page size: %" PRIu32 " bytes, spare size: %" PRIu32 " bytes, "
