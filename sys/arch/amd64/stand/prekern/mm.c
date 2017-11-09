@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.8 2017/11/05 16:26:15 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.9 2017/11/09 15:24:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -29,6 +29,10 @@
  */
 
 #include "prekern.h"
+
+#define PAD_TEXT	0xCC
+#define PAD_RODATA	0x00
+#define PAD_DATA	0x00
 
 static const pt_entry_t protection_codes[3] = {
 	[MM_PROT_READ] = PG_RO | PG_NX,
@@ -275,14 +279,15 @@ mm_randva_kregion(size_t size)
 static void
 mm_map_segments()
 {
-	size_t i, npages, size;
+	size_t i, npages, size, elfsz;
 	vaddr_t randva;
 	paddr_t pa;
 
 	/*
 	 * Kernel text segment.
 	 */
-	elf_get_text(&pa, &size);
+	elf_get_text(&pa, &elfsz);
+	size = roundup(elfsz, PAGE_SIZE);
 	randva = mm_randva_kregion(size);
 	npages = size / PAGE_SIZE;
 
@@ -293,6 +298,9 @@ mm_map_segments()
 	}
 	elf_build_text(randva, pa);
 
+	/* Fill in the padding */
+	memset((void *)(randva + elfsz), PAD_TEXT, size - elfsz);
+
 	/* Register the values in bootspace */
 	bootspace.text.va = randva;
 	bootspace.text.pa = pa;
@@ -301,7 +309,8 @@ mm_map_segments()
 	/*
 	 * Kernel rodata segment.
 	 */
-	elf_get_rodata(&pa, &size);
+	elf_get_rodata(&pa, &elfsz);
+	size = roundup(elfsz, PAGE_SIZE);
 	randva = mm_randva_kregion(size);
 	npages = size / PAGE_SIZE;
 
@@ -312,6 +321,9 @@ mm_map_segments()
 	}
 	elf_build_rodata(randva, pa);
 
+	/* Fill in the padding */
+	memset((void *)(randva + elfsz), PAD_RODATA, size - elfsz);
+
 	/* Register the values in bootspace */
 	bootspace.rodata.va = randva;
 	bootspace.rodata.pa = pa;
@@ -320,7 +332,8 @@ mm_map_segments()
 	/*
 	 * Kernel data segment.
 	 */
-	elf_get_data(&pa, &size);
+	elf_get_data(&pa, &elfsz);
+	size = roundup(elfsz, PAGE_SIZE);
 	randva = mm_randva_kregion(size);
 	npages = size / PAGE_SIZE;
 
@@ -330,6 +343,9 @@ mm_map_segments()
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
 	elf_build_data(randva, pa);
+
+	/* Fill in the padding */
+	memset((void *)(randva + elfsz), PAD_DATA, size - elfsz);
 
 	/* Register the values in bootspace */
 	bootspace.data.va = randva;
