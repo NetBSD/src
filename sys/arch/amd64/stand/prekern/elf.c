@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.7 2017/11/05 16:26:15 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.8 2017/11/09 15:24:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -345,7 +345,7 @@ elf_get_text(paddr_t *pa, size_t *sz)
 	ASSERT(minpa % PAGE_SIZE == 0);
 
 	*pa = minpa;
-	*sz = roundup(maxpa - minpa, PAGE_SIZE);
+	*sz = maxpa - minpa;
 }
 
 void
@@ -392,7 +392,7 @@ elf_get_rodata(paddr_t *pa, size_t *sz)
 	ASSERT(minpa % PAGE_SIZE == 0);
 
 	*pa = minpa;
-	*sz = roundup(maxpa - minpa, PAGE_SIZE);
+	*sz = maxpa - minpa;
 }
 
 void
@@ -439,7 +439,7 @@ elf_get_data(paddr_t *pa, size_t *sz)
 	ASSERT(minpa % PAGE_SIZE == 0);
 
 	*pa = minpa;
-	*sz = roundup(maxpa - minpa, PAGE_SIZE);
+	*sz = maxpa - minpa;
 }
 
 void
