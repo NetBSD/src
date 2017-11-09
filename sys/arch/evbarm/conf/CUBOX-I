@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.11 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: CUBOX-I,v 1.12 2017/11/09 05:57:23 hkenken Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -296,6 +296,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # USB Controller and Devices
+imxusbphy0	at axi? addr 0x020c9000
+imxusbphy1	at axi? addr 0x020ca000
 imxusbc0	at axi? addr 0x02184000
 ehci0		at imxusbc0 unit 0 irq 75	# OTG
 ehci1		at imxusbc0 unit 1 irq 72	# Host1
