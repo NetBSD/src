@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.9 2012/11/03 12:12:48 ahoka Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.10 2017/11/09 21:45:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.9 2012/11/03 12:12:48 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.10 2017/11/09 21:45:24 jmcneill Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -181,13 +181,13 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 			planesize = 1024 * 1024 * 1024 / 8;
 			break;
 		case 0x5:
-			planesize = 2ul * 1024 * 1024 * 1024 / 8;
+			planesize = 2ull * 1024 * 1024 * 1024 / 8;
 			break;
 		case 0x6:
-			planesize = 4ul * 1024 * 1024 * 1024 / 8;
+			planesize = 4ull * 1024 * 1024 * 1024 / 8;
 			break;
 		case 0x7:
-			planesize = 8ul * 1024 * 1024 * 1024 / 8;
+			planesize = 8ull * 1024 * 1024 * 1024 / 8;
 			break;
 		default:
 			KASSERTMSG(false, "ID Data parsing bug detected!");
