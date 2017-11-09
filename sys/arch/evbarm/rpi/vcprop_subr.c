@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop_subr.c,v 1.2 2014/10/03 17:57:48 skrll Exp $	*/
+/*	$NetBSD: vcprop_subr.c,v 1.3 2017/11/09 21:39:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael Lorenz
@@ -28,7 +28,7 @@
 /*
  * Mailbox property interface wrapper functions
  */
- 
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/bus.h>
@@ -347,7 +347,7 @@ rpi_fb_initcursor(bus_addr_t pixels, int hx, int hy)
 {
 	int error;
 	uint32_t res;
-	
+
 
 	struct __aligned(16) {
 		struct vcprop_buffer_hdr	vb_hdr;
