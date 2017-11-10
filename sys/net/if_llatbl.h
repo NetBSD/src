@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.12 2017/06/23 05:46:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.13 2017/11/10 07:24:28 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -190,7 +190,7 @@ struct llentry {
 typedef	struct llentry *(llt_lookup_t)(struct lltable *, u_int flags,
     const struct sockaddr *l3addr);
 typedef	struct llentry *(llt_create_t)(struct lltable *, u_int flags,
-    const struct sockaddr *l3addr);
+    const struct sockaddr *l3addr, const struct rtentry *);
 typedef	int (llt_delete_t)(struct lltable *, u_int flags,
     const struct sockaddr *l3addr);
 typedef void (llt_prefix_free_t)(struct lltable *,
@@ -297,10 +297,11 @@ lla_lookup(struct lltable *llt, u_int flags, const struct sockaddr *l3addr)
 }
 
 static __inline struct llentry *
-lla_create(struct lltable *llt, u_int flags, const struct sockaddr *l3addr)
+lla_create(struct lltable *llt, u_int flags, const struct sockaddr *l3addr,
+    const struct rtentry *rt)
 {
 
-	return (llt->llt_create(llt, flags, l3addr));
+	return (llt->llt_create(llt, flags, l3addr, rt));
 }
 
 static __inline int

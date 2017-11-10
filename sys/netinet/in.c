@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.208 2017/11/10 07:15:32 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.209 2017/11/10 07:24:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.208 2017/11/10 07:15:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.209 2017/11/10 07:24:28 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1975,12 +1975,11 @@ in_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 }
 
 static int
-in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr)
+in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr,
+    const struct rtentry *rt)
 {
-	struct rtentry *rt;
 	int error = EINVAL;
 
-	rt = rtalloc1(l3addr, 0);
 	if (rt == NULL)
 		return error;
 
@@ -2041,7 +2040,6 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 
 	error = 0;
 error:
-	rt_unref(rt);
 	return error;
 }
 
@@ -2132,7 +2130,8 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 }
 
 static struct llentry *
-in_lltable_create(struct lltable *llt, u_int flags, const struct sockaddr *l3addr)
+in_lltable_create(struct lltable *llt, u_int flags, const struct sockaddr *l3addr,
+    const struct rtentry *rt)
 {
 	const struct sockaddr_in *sin = (const struct sockaddr_in *)l3addr;
 	struct ifnet *ifp = llt->llt_ifp;
@@ -2157,7 +2156,7 @@ in_lltable_create(struct lltable *llt, u_int flags, const struct sockaddr *l3add
 	 * verify this.
 	 */
 	if (!(flags & LLE_IFADDR) &&
-	    in_lltable_rtcheck(ifp, flags, l3addr) != 0)
+	    in_lltable_rtcheck(ifp, flags, l3addr, rt) != 0)
 		return (NULL);
 
 	lle = in_lltable_new(sin->sin_addr, flags);
