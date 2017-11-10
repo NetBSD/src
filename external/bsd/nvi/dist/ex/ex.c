@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: ex.c,v 1.5 2017/11/10 14:35:25 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex.c,v 10.75 2004/03/16 14:13:35 skimo Exp  (Berkeley) Date: 2004/03/16 14:13:35 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ex.c,v 1.5 2017/11/10 14:35:25 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2259,7 +2259,7 @@ ex_comm_search(SCR *sp, CHAR_T *name, size_t len)
 			return (NULL);
 		if (cp->name[0] != name[0])
 			continue;
-		if (!MEMCMP(name, cp->name, len))
+		if (STRLEN(cp->name) >= len && !MEMCMP(name, cp->name, len))
 			return (cp);
 	}
 	return (NULL);
