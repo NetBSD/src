@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.5 2017/11/06 03:02:22 rin Exp $ */
+/*	$NetBSD: conv.c,v 1.6 2017/11/10 18:08:11 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp  (Berkeley) Date: 2001/08/18 21:41:41 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: conv.c,v 1.5 2017/11/06 03:02:22 rin Exp $");
+__RCSID("$NetBSD: conv.c,v 1.6 2017/11/10 18:08:11 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -260,10 +260,11 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
  * cw->bp is grown as required
  */
 #ifdef USE_ICONV
-#define CONVERT2(len, cw, offset)					\
+#define CONVERT2(_buffer, lenp, cw, offset)				\
     do {								\
-	const char *bp = buffer;					\
-	while (len != 0) {						\
+	const char *bp = _buffer;					\
+	size_t ret;							\
+	do {								\
 	    size_t outleft = cw->blen1 - offset;			\
 	    char *obp = (char *)cw->bp1 + offset;		    	\
 	    if (cw->blen1 < offset + MB_CUR_MAX) {		    	\
@@ -271,14 +272,14 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 		BINC_RETC(NULL, cw->bp1, cw->blen1, nlen);		\
 	    }						    		\
 	    errno = 0;						    	\
-	    if (iconv(id, &bp, &len, &obp, &outleft) == (size_t)-1 &&	\
-		errno != E2BIG) 					\
+	    ret = iconv(id, &bp, lenp, &obp, &outleft);			\
+	    if (ret == (size_t)-1 && errno != E2BIG) 			\
 		    HANDLE_ICONV_ERROR(obp, bp, outleft, len);		\
 	    offset = cw->blen1 - outleft;			        \
-	}							        \
+	} while (ret != 0);					        \
     } while (0)
 #else
-#define CONVERT2(len, cw, offset)
+#define CONVERT2(_buffer, lenp, cw, offset)
 #endif
 
 
@@ -304,7 +305,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 	j += n;
 	if (buflen < j + MB_CUR_MAX) {
 	    if (id != (iconv_t)-1) {
-		CONVERT2(j, cw, offset);
+		CONVERT2(buffer, &j, cw, offset);
 	    } else {
 		nlen += 256;
 		BINC_RETC(NULL, *tostr, *blen, nlen);
@@ -318,7 +319,8 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
     *tolen = j;
 
     if (id != (iconv_t)-1) {
-	CONVERT2(j, cw, offset);
+	CONVERT2(buffer, &j, cw, offset);
+	CONVERT2(NULL, NULL, cw, offset);  /* back to the initial state */
 	*tolen = offset;
     }
 
