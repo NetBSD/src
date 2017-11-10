@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: vs_line.c,v 1.4 2017/11/10 14:44:13 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_line.c,v 10.38 2002/01/19 21:59:07 skimo Exp  (Berkeley) Date: 2002/01/19 21:59:07 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_line.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: vs_line.c,v 1.4 2017/11/10 14:44:13 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -271,38 +271,64 @@ empty:					(void)gp->scr_addstr(sp,
 
 	/* Do it the hard way, for leftright scrolling screens. */
 	if (O_ISSET(sp, O_LEFTRIGHT)) {
-		for (; offset_in_line < len; ++offset_in_line) {
-			chlen = (ch = (UCHAR_T)*p++) == L('\t') && !list_tab ?
+		 while (offset_in_line < len) {
+			ch = (UCHAR_T)*p;
+			chlen = (ch == '\t' && !list_tab) ?
 			    TAB_OFF(scno) : KEY_COL(sp, ch);
-			if ((scno += chlen) >= skip_cols)
-				break;
+
+			/* easy cases first. */
+			if (scno + chlen < skip_cols) {
+				scno += chlen;
+				p++;
+				offset_in_line++;
+				continue;
+			}
+
+			if (scno + chlen == skip_cols) {
+				scno += chlen;
+				p++;
+				offset_in_line++;
+			}
+
+			break;
 		}
 
 		/* Set cols_per_screen to 2nd and later line length. */
 		cols_per_screen = sp->cols;
 
 		/* Put starting info for this line in the cache. */
-		if (offset_in_line >= len) {
-			smp->c_sboff = offset_in_line;
-			smp->c_scoff = 255;
-		} else if (scno != skip_cols) {
-			smp->c_sboff = offset_in_line;
-			smp->c_scoff =
-			    offset_in_char = chlen - (scno - skip_cols);
-			--p;
-		} else {
-			smp->c_sboff = ++offset_in_line;
-			smp->c_scoff = 0;
-		}
+		smp->c_sboff = offset_in_line;
+		smp->c_scoff = offset_in_char = scno + chlen - skip_cols;
 	}
 
 	/* Do it the hard way, for historic line-folding screens. */
 	else {
-		for (; offset_in_line < len; ++offset_in_line) {
-			chlen = (ch = (UCHAR_T)*p++) == L('\t') && !list_tab ?
+		 while (offset_in_line < len) {
+			ch = (UCHAR_T)*p;
+			chlen = (ch == '\t' && !list_tab) ?
 			    TAB_OFF(scno) : KEY_COL(sp, ch);
-			if ((scno += chlen) < cols_per_screen)
+
+			/* Easy case first. */
+			if (scno + chlen < cols_per_screen) {
+				scno += chlen;
+				p++;
+				offset_in_line++;
 				continue;
+			}
+
+			/*
+			 * Since we can't generally cross the rightmost column
+			 * by displaying multi-width char, we must check it.
+			 * In that case, we fake the scno so that you'll see
+			 * that the line was already filled up completely.
+			 */
+			if (!INTISWIDE(ch) || scno + chlen == cols_per_screen) {
+				scno += chlen;
+				p++;
+				offset_in_line++;
+			} else
+				scno = cols_per_screen;
+
 			scno -= cols_per_screen;
 
 			/* Set cols_per_screen to 2nd and later line length. */
@@ -320,9 +346,10 @@ empty:					(void)gp->scr_addstr(sp,
 		if (scno != 0) {
 			smp->c_sboff = offset_in_line;
 			smp->c_scoff = offset_in_char = chlen - scno;
-			--p;
+			offset_in_line--;
+			p--;
 		} else {
-			smp->c_sboff = ++offset_in_line;
+			smp->c_sboff = offset_in_line;
 			smp->c_scoff = 0;
 		}
 	}
@@ -334,10 +361,16 @@ display:
 	 * called repeatedly with a valid pointer to a cursor position.
 	 * Don't fill anything in unless it's the right line and the right
 	 * character, and the right part of the character...
+	 *
+	 * It is not true that every wide chars occupy at least single column.
+	 * - It is safe to compare sp->cno and offset_in_line since they are
+	 *   both offset in unit of CHAR_T.
+	 * - We can't simply compare offset_in_line + cols_per_screen against
+	 *   sp->cno, since cols_per_screen is screen column, not offset in
+	 *   CHAR_T.  Do it slowly.
 	 */
 	if (yp == NULL ||
-	    smp->lno != sp->lno || sp->cno < offset_in_line ||
-	    offset_in_line + cols_per_screen < sp->cno) {
+	    smp->lno != sp->lno || sp->cno < offset_in_line) {
 		cno_cnt = 0;
 		/* If the line is on the screen, quit. */
 		if (is_cached || no_draw)
@@ -357,6 +390,23 @@ display:
 			is_tab = 0;
 		}
 
+		/*
+		 * Since we can't generally cross the rightmost column
+		 * by displaying multi-width char, we must check it.
+		 * In that case, we fake the scno so that you'll see
+		 * that the line was already filled up completely.
+		 */
+		if (INTISWIDE(ch) && scno > cols_per_screen) {
+			smp->c_ecsize = chlen;
+			smp->c_eclen = 0;
+
+			is_partial = 1;
+
+			smp->c_eboff = offset_in_line;
+
+			/* Terminate the loop. */
+			offset_in_line = len;
+		} else
 		/*
 		 * Only display up to the right-hand column.  Set a flag if
 		 * the entire character wasn't displayed for use in setting
@@ -400,6 +450,8 @@ display:
 					*xp = scno - smp->c_ecsize;
 				else
 					*xp = scno - chlen;
+			else if (INTISWIDE(ch))
+				*xp = scno - chlen;
 			else
 				*xp = scno - 1;
 			if (O_ISSET(sp, O_NUMBER) &&
@@ -437,8 +489,8 @@ display:
 			if (cbp + chlen >= ecbp)
 				FLUSH;
 
-			/* don't display half a wide character */
-			if (is_partial && CHAR_WIDTH(sp, ch) > 1) {
+			/* Don't display half a multi-width character */
+			if (is_partial && INTISWIDE(ch)) {
 				*cbp++ = ' ';
 				break;
 			}
@@ -458,7 +510,7 @@ display:
 
 	if (scno < cols_per_screen) {
 		/* If didn't paint the whole line, update the cache. */
-		smp->c_ecsize = smp->c_eclen = KEY_LEN(sp, ch);
+		smp->c_ecsize = smp->c_eclen = KEY_COL(sp, ch);
 		smp->c_eboff = len - 1;
 
 		/*
