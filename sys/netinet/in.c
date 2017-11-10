@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.207 2017/08/10 04:31:58 ryo Exp $	*/
+/*	$NetBSD: in.c,v 1.208 2017/11/10 07:15:32 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.207 2017/08/10 04:31:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.208 2017/11/10 07:15:32 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1979,9 +1979,6 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 {
 	struct rtentry *rt;
 	int error = EINVAL;
-
-	KASSERTMSG(l3addr->sa_family == AF_INET,
-	    "sin_family %d", l3addr->sa_family);
 
 	rt = rtalloc1(l3addr, 0);
 	if (rt == NULL)
