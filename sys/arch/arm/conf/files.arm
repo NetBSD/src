@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.135 2017/10/08 15:29:33 jmcneill Exp $
+#	$NetBSD: files.arm,v 1.136 2017/11/10 22:07:30 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -50,6 +50,7 @@ defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA9: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA15: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA17: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA35: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA53: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA57: CPU_CORTEX
 defflag	opt_cputypes.h		FPU_VFP
