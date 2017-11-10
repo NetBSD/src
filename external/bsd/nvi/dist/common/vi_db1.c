@@ -15,7 +15,7 @@
 static const char sccsid[] = "Id: db1.c,v 10.1 2002/03/09 12:53:57 skimo Exp  (Berkeley) Date: 2002/03/09 12:53:57 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vi_db1.c,v 1.8 2015/11/28 13:20:03 christos Exp $");
+__RCSID("$NetBSD: vi_db1.c,v 1.9 2017/11/10 14:35:25 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -184,7 +184,7 @@ err3:		if (lenp != NULL)
 			nlen = data.size;
 			goto retry;
 		} else
-			memcpy(sp->c_lp, data.data, nlen);
+			memcpy(sp->c_lp, data.data, data.size);
 	}
 
 	if (FILE2INT(sp, data.data, data.size, wp, wlen)) {
