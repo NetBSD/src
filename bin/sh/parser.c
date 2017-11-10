@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.144 2017/08/21 13:20:49 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.145 2017/11/10 17:31:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.144 2017/08/21 13:20:49 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.145 2017/11/10 17:31:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2401,9 +2401,27 @@ getprompt(void *unused)
  * Expand a string ... used for expanding prompts (PS1...)
  *
  * Never return NULL, always some string (return input string if invalid)
+ *
+ * The internal routine does the work, leaving the result on the
+ * stack (or in a static string, or even the input string) and
+ * handles parser recursion, and cleanup after an error while parsing.
+ *
+ * The visible interface copies the result off the stack (if it is there),
+ * and handles stack management, leaving the stack in the exact same
+ * state it was when expandstr() was called (so it can be used part way
+ * through building a stack data structure - as in when PS2 is being
+ * expanded half way through reading a "command line")
+ *
+ * on error, expandonstack() cleans up the parser state, but then
+ * simply jumps out through expandstr() withut doing any stack cleanup,
+ * which is OK, as the error handler must deal with that anyway.
+ *
+ * The split into two funcs is to avoid problems with setjmp/longjmp
+ * and local variables which could otherwise be optimised into bizarre
+ * behaviour.
  */
-const char *
-expandstr(char *ps, int lineno)
+static const char *
+expandonstack(char *ps, int lineno)
 {
 	union node n;
 	struct jmploc jmploc;
@@ -2412,19 +2430,7 @@ expandstr(char *ps, int lineno)
 	const int save_x = xflag;
 	struct parse_state new_state = init_parse_state;
 	struct parse_state *const saveparser = psp.v_current_parser;
-	struct stackmark smark;
 	const char *result = NULL;
-
-	setstackmark(&smark);
-	/*
-	 * At this point we anticipate that there may be a string
-	 * growing on the stack, but we have no idea how big it is.
-	 * However we know that it cannot be bigger than the current
-	 * allocated stack block, so simply reserve the whole thing,
-	 * then we can use the stack without barfing all over what
-	 * is there already...   (the stack mark undoes this later.)
-	 */
-	(void) stalloc(stackblocksize());
 
 	if (!setjmp(jmploc.loc)) {
 		handler = &jmploc;
@@ -2452,7 +2458,6 @@ expandstr(char *ps, int lineno)
 	xflag = save_x;
 	popfilesupto(savetopfile);
 	handler = savehandler;
-	popstackmark(&smark);
 
 	if (result != NULL) {
 		INTON;
@@ -2461,6 +2466,74 @@ expandstr(char *ps, int lineno)
 			exraise(SIGINT);
 		result = ps;
 	}
+
+	return result;
+}
+
+const char *
+expandstr(char *ps, int lineno)
+{
+	const char *result = NULL;
+	struct stackmark smark;
+	static char *buffer = NULL;	/* storage for prompt, never freed */
+	static size_t bufferlen = 0;
+
+	setstackmark(&smark);
+	/*
+	 * At this point we anticipate that there may be a string
+	 * growing on the stack, but we have no idea how big it is.
+	 * However we know that it cannot be bigger than the current
+	 * allocated stack block, so simply reserve the whole thing,
+	 * then we can use the stack without barfing all over what
+	 * is there already...   (the stack mark undoes this later.)
+	 */
+	(void) stalloc(stackblocksize());
+
+	result = expandonstack(ps, lineno);
+
+	if (__predict_true(result == stackblock())) {
+		size_t len = strlen(result) + 1;
+
+		/*
+		 * the result (usual case) is on the stack, which we
+		 * are just about to discard (popstackmark()) so we
+		 * need to move it somewhere safe first.
+		 */
+
+		if (__predict_false(len > bufferlen)) {
+			char *new;
+			size_t newlen = bufferlen;
+
+			if (__predict_false(len > (SIZE_MAX >> 4))) {
+				result = "huge prompt: ";
+				goto getout;
+			}
+
+			if (newlen == 0)
+				newlen = 32;
+			while (newlen <= len)
+				newlen <<= 1;
+
+			new = (char *)realloc(buffer, newlen);
+
+			if (__predict_false(new == NULL)) {
+				/*
+				 * this should rarely (if ever) happen
+				 * but we must do something when it does...
+				 */
+				result = "No mem for prompt: ";
+				goto getout;
+			} else {
+				buffer = new;
+				bufferlen = newlen;
+			}
+		}
+		(void)memcpy(buffer, result, len);
+		result = buffer;
+	}
+
+  getout:;
+	popstackmark(&smark);
 
 	return result;
 }
