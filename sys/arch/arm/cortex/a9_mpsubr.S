@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.52 2017/11/04 17:09:55 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.53 2017/11/10 22:54:20 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,9 +50,11 @@
 	blx	ip
 #endif
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17) \
+    || defined(CPU_CORTEXA35)
 	.arch		armv7a
-	.arch_extension virt
+	.arch_extension	virt
+#define CPU_CORTEXVIRT
 #endif
 
 // We'll modify va and pa at run time so we can use relocatable addresses.
@@ -350,21 +352,19 @@ xputc:
 cortex_init:
 	mov	r10, lr				// save lr
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
+#if defined(CPU_CORTEXVIRT)
 	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
 	mrs	r0, cpsr
-	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
-	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
+	and	r1, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
+	teq	r1, #(PSR_HYP32_MODE)	/* Hyp Mode? */
 	bne	1f
 
 	/* Set CNTVOFF to 0 */
-	mov	r0, #0
-	mcrr	p15, 4, r0, r0, c14
+	mov	r1, #0
+	mcrr	p15, 4, r1, r1, c14
 
 	/* Ensure that IRQ, and FIQ will be disabled after eret */
-	mrs	r0, cpsr
-	bic	r0, r0, #(PSR_MODE)
-	orr	r0, r0, #(PSR_SVC32_MODE)
+	eor	r0, r0, #(PSR_SVC32_MODE^PSR_HYP32_MODE)
 	orr	r0, r0, #(I32_bit | F32_bit)
 	msr	spsr_cxsf, r0
 	/* Exit hypervisor mode */
