@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.248 2017/06/22 09:53:25 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.249 2017/11/10 07:15:32 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.248 2017/06/22 09:53:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.249 2017/11/10 07:15:32 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2464,9 +2464,6 @@ in6_lltable_rtcheck(struct ifnet *ifp,
 {
 	struct rtentry *rt;
 	char ip6buf[INET6_ADDRSTRLEN];
-
-	KASSERTMSG(l3addr->sa_family == AF_INET6,
-	    "sin_family %d", l3addr->sa_family);
 
 	rt = rtalloc1(l3addr, 0);
 	if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) || rt->rt_ifp != ifp) {
