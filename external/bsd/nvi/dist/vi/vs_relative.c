@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_relative.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: vs_relative.c,v 1.4 2017/11/10 14:44:13 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_relative.c,v 10.18 2001/07/08 13:02:48 skimo Exp  (Berkeley) Date: 2001/07/08 13:02:48 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_relative.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: vs_relative.c,v 1.4 2017/11/10 14:44:13 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -162,22 +162,84 @@ done:		if (diffp != NULL)		/* XXX */
 			curoff -= sp->cols;				\
 	}								\
 }
-	if (cnop == NULL)
-		while (len--) {
-			chlen = CHLEN(curoff);
+	if (cnop == NULL) {
+		while (len > 0) {
+			ch = (UCHAR_T)*p;
+
+			/* singlebyte case */
+			if (!INTISWIDE(ch)) {
+				chlen = CHLEN(curoff);
+				last = scno;
+				scno += chlen;
+				len--;
+				/* p will be modified in CHLEN() */
+				TAB_RESET;
+				continue;
+			}
+
+			/* multibyte case */
+			chlen = CHAR_WIDTH(sp, ch);
 			last = scno;
 			scno += chlen;
-			TAB_RESET;
+			len--;
+			p++;
+
+			/*
+			 * If multi-width char crosses the end-of-screen,
+			 * put it on the next line.
+			 */
+			curoff += chlen;
+			if (!leftright && curoff >= sp->cols) {
+				if (curoff == sp->cols)
+					curoff = 0;
+				else {
+					scno -= scno % sp->cols;
+					scno += chlen;
+					curoff = chlen;
+				}
+			}
 		}
-	else
+	} else {
 		for (cno = *cnop;; --cno) {
-			chlen = CHLEN(curoff);
+			ch = (UCHAR_T)*p;
+
+			/* singlebyte case */
+			if (!INTISWIDE(ch)) {
+				chlen = CHLEN(curoff);
+				last = scno;
+				scno += chlen;
+				/* p will be modified in CHLEN() */
+				TAB_RESET;
+				if (cno == 0)
+					break;
+				continue;
+			}
+
+			/* multibyte case */
+			chlen = CHAR_WIDTH(sp, ch);
 			last = scno;
 			scno += chlen;
-			TAB_RESET;
+			p++;
+
+			/*
+			 * If multi-width char crosses the end-of-screen,
+			 * put it on the next line.
+			 */
+			curoff += chlen;
+			if (!leftright && curoff >= sp->cols) {
+				if (curoff == sp->cols)
+					curoff = 0;
+				else {
+					scno -= scno % sp->cols;
+					scno += chlen;
+					curoff = chlen;
+				}
+			}
+
 			if (cno == 0)
 				break;
 		}
+	}
 
 	/* Add the trailing '$' if the O_LIST option set. */
 	if (listset && cnop == NULL)
@@ -249,8 +311,45 @@ vs_colpos(SCR *sp, db_recno_t lno, size_t cno)
 	off = cno / sp->cols;
 	cno %= sp->cols;
 	for (scno = 0, p = lp, len = llen; off--;) {
-		for (; len && scno < sp->cols; --len)
-			scno += CHLEN(scno);
+		while (len && scno < sp->cols) {
+			ch = (UCHAR_T)*p;
+			if (ch == '\t' && !listset) {
+				scno += TAB_OFF(scno);
+				len--;
+				p++;
+				continue;
+			}
+
+			chlen = KEY_COL(sp, ch);
+			if (!INTISWIDE(ch) || scno + chlen < sp->cols) {
+				/*
+				 * Singlebyte char can be displayed across
+				 * the end-of-screen.
+				 * If a multi-width char fits into this line,
+				 * put it here.
+				 */
+				scno += chlen;
+				len--;
+				p++;
+			} else if (leftright) {
+				/*
+				 * Side-scrolling screen is similar to
+				 * singlebyte case.
+				 */
+				scno += chlen;
+				len--;
+				p++;
+			} else {
+				/*
+				 * If multi-width char crosses the
+				 * end-of-screen, put it on the next line.
+				 *
+				 * We must adjust ch to the last char of the
+				 * line.
+				 */
+				scno = sp->cols;
+			}
+		}
 
 		/*
 		 * If reached the end of the physical line, return the last
