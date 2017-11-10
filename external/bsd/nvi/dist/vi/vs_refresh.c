@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.6 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.7 2017/11/10 14:44:13 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_refresh.c,v 10.50 2001/06/25 15:19:37 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:37 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_refresh.c,v 1.6 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: vs_refresh.c,v 1.7 2017/11/10 14:44:13 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -148,7 +148,7 @@ vs_paint(SCR *sp, u_int flags)
 	SMAP *smp, tmp;
 	VI_PRIVATE *vip;
 	db_recno_t lastline, lcnt;
-	size_t cwtotal, cnt, len, notused, off, y;
+	size_t cwtotal, cnt, len, notused, off, y, chlen;
 	int ch = 0, didpaint, isempty, leftright_warp;
 	CHAR_T *p;
 
@@ -467,15 +467,31 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 		/*
 		 * 7a: Cursor moved left.
 		 *
-		 * Point to the old character.  The old cursor position can
-		 * be past EOL if, for example, we just deleted the rest of
-		 * the line.  In this case, since we don't know the width of
-		 * the characters we traversed, we have to do it slowly.
+		 * The old cursor position can be past EOL if, for example,
+		 * we just deleted the rest of the line.  In this case, since
+		 * we don't know the width of the characters we traversed, we
+		 * have to do it slowly.
 		 */
-		p += OCNO;
-		cnt = (OCNO - CNO) + 1;
 		if (OCNO >= len)
 			goto slow;
+
+		/*
+		 * cwtotal acts as new value for SCNO.  Set cwtotal to the
+		 * first char for content on CNO byte, for ease handling of
+		 * wide characters.
+		 *
+		 * If the character we're stepping on lies across a screen
+		 * boundary, we have no hope to speed it up.  Do it slowly.
+		 */
+		p += OCNO;
+		if (INTISWIDE(ch = (UCHAR_T)*p))
+			cwtotal = SCNO;
+		else {
+			if (ch == '\t' || (chlen = KEY_LEN(sp, ch)) > SCNO + 1)
+				goto slow;
+			cwtotal = SCNO + 1 - chlen;
+		}
+		cnt = OCNO - CNO;
 
 		/*
 		 * Quick sanity check -- it's hard to figure out exactly when
@@ -488,63 +504,87 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 
 		/*
 		 * Count up the widths of the characters.  If it's a tab
-		 * character, go do it the the slow way.
+		 * character, go do it the slow way.
 		 */
-		for (cwtotal = 0; cnt--; cwtotal += KEY_COL(sp, ch))
-			if ((ch = *(UCHAR_T *)p--) == '\t')
+		while (cnt--) {
+			if ((ch = (UCHAR_T)*--p) == '\t'
+			    || (chlen = KEY_COL(sp, ch)) > cwtotal)
 				goto slow;
+			cwtotal -= chlen;
+		}
 
 		/*
-		 * Decrement the screen cursor by the total width of the
-		 * characters minus 1.
-		 */
-		cwtotal -= 1;
-
-		/*
-		 * If we're moving left, and there's a wide character in the
+		 * If we're moving left, and there's a multi-width char in the
 		 * current position, go to the end of the character.
 		 */
-		if (KEY_COL(sp, ch) > 1)
-			cwtotal -= KEY_COL(sp, ch) - 1;
+		if (!INTISWIDE(ch) && (chlen = KEY_LEN(sp, ch)) > 1)
+			cwtotal += chlen - 1;
 
 		/*
-		 * If the new column moved us off of the current logical line,
-		 * calculate a new one.  If doing leftright scrolling, we've
-		 * moved off of the current screen, as well.
+		 * At last, update the screen cursor.
 		 */
-		if (SCNO < cwtotal)
-			goto slow;
-		SCNO -= cwtotal;
+		SCNO = cwtotal;
 	} else {
 		/*
 		 * 7b: Cursor moved right.
-		 *
-		 * Point to the first character to the right.
 		 */
-		p += OCNO + 1;
+		if (OCNO >= len)
+			goto slow;
+
+		/*
+		 * cwtotal acts as new value for SCNO.  Set cwtotal to the
+		 * first char for content on CNO byte, for ease handling
+		 * of wide characters.
+		 */
+		p += OCNO;
+		if (INTISWIDE(ch = (UCHAR_T)*p))
+			cwtotal = SCNO;
+		else
+			cwtotal = SCNO + 1 - KEY_LEN(sp, ch);
 		cnt = CNO - OCNO;
 
 		/*
 		 * Count up the widths of the characters.  If it's a tab
-		 * character, go do it the the slow way.  If we cross a
-		 * screen boundary, we can quit.
+		 * character, go do it the the slow way.
+		 *
+		 * If a multi-width char seems to occupy the screen boundary,
+		 * that will be pushed to the next line.  Adjust the cursor
+		 * in that case.
+		 *
+		 * If we cross a screen boundary, we can quit.
 		 */
-		for (cwtotal = SCNO; cnt--;) {
-			if ((ch = *(UCHAR_T *)p++) == '\t')
+		while (cnt) {
+			if (ch == '\t')
 				goto slow;
-			if ((cwtotal += KEY_COL(sp, ch)) >= SCREEN_COLS(sp))
+			cwtotal += KEY_COL(sp, ch);
+			cnt--;
+			if (INTISWIDE(ch = (UCHAR_T)*++p)
+			    && (chlen = CHAR_WIDTH(sp, ch)) > 1
+			    && cwtotal + chlen >= SCREEN_COLS(sp))
+				cwtotal = SCREEN_COLS(sp);
+			if (cwtotal >= SCREEN_COLS(sp))
 				break;
 		}
 
 		/*
-		 * Increment the screen cursor by the total width of the
-		 * characters.
+		 * If we are on the tab character, we must do it slowly.
+		 *
+		 * If we're on a multi-width character in the current position,
+		 * go to the end of the character.
 		 */
-		SCNO = cwtotal;
+		if (ch == '\t')
+			goto slow;
+		if (!INTISWIDE(ch) && (chlen = KEY_LEN(sp, ch)) > 1)
+			cwtotal += chlen - 1;
 
 		/* See screen change comment in section 6a. */
-		if (SCNO >= SCREEN_COLS(sp))
+		if (cwtotal >= SCREEN_COLS(sp))
 			goto slow;
+
+		/*
+		 * At last, update the screen cursor.
+		 */
+		SCNO = cwtotal;
 	}
 
 	/*
@@ -678,6 +718,8 @@ done_cursor:
 	}
 #else
 	if (vip->sc_smap == NULL) {
+		if (F_ISSET(sp, SC_SCR_REFORMAT))
+			abort(); /* XXX */
 		F_SET(sp, SC_SCR_REFORMAT);
 		return (vs_paint(sp, flags));
 	}
