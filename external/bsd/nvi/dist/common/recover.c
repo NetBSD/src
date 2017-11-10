@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.10 2017/11/10 16:35:54 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.11 2017/11/10 20:01:11 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,12 +16,13 @@
 static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Exp  (Berkeley) Date: 2001/11/01 15:24:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: recover.c,v 1.10 2017/11/10 16:35:54 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.11 2017/11/10 20:01:11 christos Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */
 #include <sys/queue.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 
 /*
@@ -116,7 +117,7 @@ __RCSID("$NetBSD: recover.c,v 1.10 2017/11/10 16:35:54 christos Exp $");
 #define	VI_PHEADER	"X-vi-recover-path: "
 
 static int	 rcv_copy(SCR *, int, char *);
-static void	 rcv_email(SCR *, const char *);
+static void	 rcv_email(SCR *, int fd);
 static char	*rcv_gets(char *, size_t, int);
 static int	 rcv_mailfile(SCR *, int, char *);
 static int	 rcv_mktemp(SCR *, char *, const char *, int);
@@ -290,7 +291,7 @@ rcv_sync(SCR *sp, u_int flags)
 
 		/* REQUEST: send email. */
 		if (LF_ISSET(RCV_EMAIL))
-			rcv_email(sp, ep->rcv_mpath);
+			rcv_email(sp, ep->rcv_fd);
 	}
 
 	/*
@@ -470,7 +471,7 @@ wout:		*t2++ = '\n';
 	}
 
 	if (issync) {
-		rcv_email(sp, mpath);
+		rcv_email(sp, fd);
 		if (close(fd)) {
 werr:			msgq(sp, M_SYSERR, "065|Recovery file");
 			goto err;
@@ -885,12 +886,10 @@ rcv_mktemp(SCR *sp, char *path, const char *dname, int perms)
  *	Send email.
  */
 static void
-rcv_email(SCR *sp, const char *fname)
+rcv_email(SCR *sp, int fd)
 {
 	struct stat sb;
-	char buf[BUFSIZ];
-	FILE *fin, *fout;
-	size_t l;
+	pid_t pid;
 
 	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb) == -1) {
 		msgq_str(sp, M_SYSERR,
@@ -905,28 +904,26 @@ rcv_email(SCR *sp, const char *fname)
 	 * for the recipients instead of specifying them some other
 	 * way.
 	 */
-	if ((fin = fopen(fname, "refl")) == NULL) {
-		msgq_str(sp, M_SYSERR,
-		    fname, "325|cannot open: %s");
-		return;
+	switch (pid = fork()) {
+	case -1:                /* Error. */
+		msgq(sp, M_SYSERR, "fork");
+		break;
+	case 0:                 /* Sendmail. */
+		if (lseek(fd, 0, SEEK_SET) == -1) {
+			msgq(sp, M_SYSERR, "lseek");
+			_exit(127);
+		}
+		if (fd != STDIN_FILENO) {
+			(void)dup2(fd, STDIN_FILENO);
+			(void)close(fd);
+		}
+		execl(_PATH_SENDMAIL, "sendmail", "-t", NULL);
+		msgq(sp, M_SYSERR, _PATH_SENDMAIL);
+		_exit(127);
+	default:                /* Parent. */
+		while (waitpid(pid, NULL, 0) == -1 && errno == EINTR)
+			continue;
+		break;
 	}
 
-	if (!checkok(fileno(fin))) {
-		(void)fclose(fin);
-		return;
-	}
-
-	fout = popen(_PATH_SENDMAIL " -t", "w");
-	if (fout == NULL) {
-		msgq_str(sp, M_SYSERR,
-		    _PATH_SENDMAIL, "326|cannot execute sendmail: %s");
-		fclose(fin);
-		return;
-	}
-
-	while ((l = fread(buf, 1, sizeof(buf), fin)) != 0)
-		(void)fwrite(buf, 1, l, fout);
-
-	(void)fclose(fin);
-	(void)pclose(fout);
 }
