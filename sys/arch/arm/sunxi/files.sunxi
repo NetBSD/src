@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.37 2017/10/23 11:06:31 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.38 2017/11/10 00:09:23 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -221,6 +221,11 @@ file	arch/arm/sunxi/sunxi_sata.c		sunxi_sata
 device	sunxisramc
 attach	sunxisramc at fdt with sunxi_sramc
 file	arch/arm/sunxi/sunxi_sramc.c		sunxi_sramc
+
+# NAND Flash Controller
+device	sunxinand: nandbus
+attach	sunxinand at fdt with sunxi_nand
+file	arch/arm/sunxi/sunxi_nand.c		sunxi_nand
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
