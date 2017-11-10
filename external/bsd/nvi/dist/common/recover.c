@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.9 2017/11/04 14:20:12 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.10 2017/11/10 16:35:54 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Exp  (Berkeley) Date: 2001/11/01 15:24:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: recover.c,v 1.9 2017/11/04 14:20:12 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.10 2017/11/10 16:35:54 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -120,6 +120,10 @@ static void	 rcv_email(SCR *, const char *);
 static char	*rcv_gets(char *, size_t, int);
 static int	 rcv_mailfile(SCR *, int, char *);
 static int	 rcv_mktemp(SCR *, char *, const char *, int);
+
+#ifndef O_REGULAR
+#define O_REGULAR O_NONBLOCK
+#endif
 
 /*
  * rcv_tmp --
@@ -487,14 +491,19 @@ err:	if (!issync)
  * This is simpler than checking for getuid() == st.st_uid and we want
  * to preserve the functionality that root can recover anything which
  * means that root should know better and be careful.
+ *
+ * Checking the mode is racy though (someone can chmod between the
+ * open and the stat call, so also check for uid match or root.
  */
 static int
 checkok(int fd)
 {
 	struct stat sb;
+	uid_t uid = getuid();
 
 	return fstat(fd, &sb) != -1 && S_ISREG(sb.st_mode) &&
-	    (sb.st_mode & (S_IRWXG|S_IRWXO)) == 0;
+	    (sb.st_mode & (S_IRWXG|S_IRWXO)) == 0 &&
+	    (uid == 0 || uid == sb.st_uid);
 }
 
 /*
@@ -659,7 +668,7 @@ rcv_read(SCR *sp, FREF *frp)
 		 * if we're using fcntl(2), there's no way to lock a file
 		 * descriptor that's not open for writing.
 		 */
-		if ((fd = open(recpath, O_RDWR|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC,
+		if ((fd = open(recpath, O_RDWR|O_REGULAR|O_NOFOLLOW|O_CLOEXEC,
 		    0)) == -1)
 			continue;
 
