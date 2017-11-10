@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.7 2017/11/10 08:05:38 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.8 2017/11/10 08:52:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -41,7 +41,6 @@
 #define MM_PROT_EXECUTE	0x02
 
 #define ASSERT(a) if (!(a)) fatal("ASSERT");
-#define memcpy(d, v, l) __builtin_memcpy(d, v, l)
 typedef uint64_t paddr_t;
 typedef uint64_t vaddr_t;
 typedef uint64_t pt_entry_t;
@@ -58,6 +57,16 @@ typedef uint64_t pte_prot_t;
 #define KASLR_WINDOW_SIZE	(2LLU * (1 << 30))	/* 2GB */
 
 /* -------------------------------------------------------------------------- */
+
+static inline void
+memcpy(void *dst, void *src, size_t sz)
+{
+	char *bdst = dst, *bsrc = src;
+	while (sz > 0) {
+		*bdst = *bsrc;
+		bdst++, bsrc++, sz--;
+	}
+}
 
 static inline void
 memset(void *dst, char c, size_t sz)
