@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.237 2017/11/10 07:24:28 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.238 2017/11/10 07:25:39 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.237 2017/11/10 07:24:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.238 2017/11/10 07:25:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1446,7 +1446,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 
 	switch (req) {
 	case RTM_ADD: {
-		int s;
+		struct psref psref;
 
 		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
@@ -1554,9 +1554,8 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 * check if rt_getkey(rt) is an address assigned
 		 * to the interface.
 		 */
-		s = pserialize_read_enter();
-		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp,
-		    &satocsin6(rt_getkey(rt))->sin6_addr);
+		ifa = (struct ifaddr *)in6ifa_ifpwithaddr_psref(ifp,
+		    &satocsin6(rt_getkey(rt))->sin6_addr, &psref);
 		if (ifa != NULL) {
 			if (nd6_useloopback) {
 				rt->rt_ifp = lo0ifp;	/* XXX */
@@ -1593,7 +1592,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			}
 		}
 	out:
-		pserialize_read_exit(s);
+		ifa_release(ifa, &psref);
 		/*
 		 * If we have too many cache entries, initiate immediate
 		 * purging for some entries.
