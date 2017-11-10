@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.6 2017/11/09 15:56:56 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.7 2017/11/10 08:05:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -144,8 +144,10 @@ void elf_build_boot(vaddr_t, paddr_t);
 vaddr_t elf_kernel_reloc();
 
 /* locore.S */
+void cpuid(uint32_t, uint32_t, uint32_t *);
 void lidt(void *);
 uint64_t rdtsc();
+int rdseed(uint64_t *);
 void jump_kernel();
 
 /* mm.c */
