@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_join.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: ex_join.c,v 1.4 2017/11/10 14:53:00 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex_join.c,v 10.17 2004/03/16 14:14:04 skimo Exp  (Berkeley) Date: 2004/03/16 14:14:04 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_join.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ex_join.c,v 1.4 2017/11/10 14:53:00 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -109,7 +109,30 @@ ex_join(SCR *sp, EXCMD *cmdp)
 		 */
 		extra = 0;
 		if (!first && !FL_ISSET(cmdp->iflags, E_C_FORCE)) {
-			if (ISBLANK(echar))
+			/*
+			 * Here we implement behavior just based on nvi-m17n.
+			 *	last char	first char	behavior
+			 *	---		---		---
+			 *	multi-width	multi-width	nothing ins'ed
+			 *	multi-width	single-width	1 spc ins'ed
+			 *	single-width	multi-width	1 spc ins'ed
+			 *	single-width	single-width	original
+			 */
+			if (INTISWIDE(echar) && CHAR_WIDTH(sp, echar) > 1) {
+				if (INTISWIDE(p[0])
+				    && CHAR_WIDTH(sp, p[0]) > 1) {
+					; /* nothing */
+				} else {
+					*tbp++ = ' ';
+					++clen;
+					for (; len && ISBLANK((UCHAR_T)*p);
+					    --len, ++p);
+				}
+			} else if (INTISWIDE(p[0])
+				   && CHAR_WIDTH(sp, p[0]) > 1) {
+				*tbp++ = ' ';
+				++clen;
+			} else if (ISBLANK(echar))
 				for (; len && ISBLANK((UCHAR_T)*p); --len, ++p);
 			else if (p[0] != ')') {
 				if (STRCHR(L(".?!"), echar)) {
