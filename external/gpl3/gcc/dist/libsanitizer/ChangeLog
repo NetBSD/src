@@ -1,3 +1,69 @@
+2017-10-10  Release Manager
+
+	* GCC 5.5.0 released.
+
+2017-09-07  Matthias Klose  <doko@ubuntu.com>
+
+	* asan/asan_linux.cc: Include <signal.h>
+
+2017-09-07  Matthias Klose  <doko@ubuntu.com>
+
+	Backported from mainline
+	2017-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/81066
+	* sanitizer_common/sanitizer_linux.h: Cherry-pick upstream r307969.
+	* sanitizer_common/sanitizer_linux.cc: Likewise.
+	* sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc: Likewise.
+	* tsan/tsan_platform_linux.cc: Likewise.
+
+2017-06-29  Eric Botcazou  <ebotcazou@adacore.com>
+
+	Backport from mainline
+	2017-01-10  James Clarke  <jrtc27@jrtc27.com>
+
+	PR sanitizer/78992
+	* sanitizer_common/sanitizer_platform_limits_posix.h
+	(struct __sanitizer_sigaction): Cherry-pick upstream r291561.
+
+	2016-11-30  Maxim Ostapenko  <m.ostapenko@samsung.com>
+
+	PR sanitizer/78532
+	* sanitizer_common/sanitizer_platform_limits_posix.h
+	(__sanitizer_sigaction): Adjust for sparc targets and various Glibc
+	versions.
+
+2017-05-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2016-09-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/77396
+	* asan/asan_globals.cc: Cherry-pick upstream r280657.
+
+2017-05-29  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2017-04-06  Martin Liska  <mliska@suse.cz>
+
+	PR sanitizer/80166
+	* sanitizer_common/sanitizer_common_interceptors.inc (INTERCEPTOR):
+	Cherry-pick upstream r299036.
+
+2017-02-17  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	Backported from mainline
+	2017-02-16  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	PR sanitizer/79562
+	* sanitizer_common/sanitizer_platform_limits_posix.cc: Cherry-pick
+	upstream r294806.
+
+2016-11-16  Markus Trippelsdorf  <markus@trippelsdorf.de>
+
+	PR sanitizer/78294
+	* tsan/tsan_rtl.cc: Add missing attribute.
+
 2016-06-03  Release Manager
 
 	* GCC 5.4.0 released.
