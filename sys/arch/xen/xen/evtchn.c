@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.75 2017/11/10 19:24:17 riastradh Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.76 2017/11/11 08:22:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.75 2017/11/10 19:24:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.76 2017/11/11 08:22:08 riastradh Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -314,12 +314,9 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	int i;
 	uint32_t iplbit;
 
-#ifdef DIAGNOSTIC
-	if (evtch >= NR_EVENT_CHANNELS) {
-		printf("event number %d > NR_IRQS\n", evtch);
-		panic("evtchn_do_event");
-	}
-#endif
+	KASSERTMSG(evtch >= 0, "negative evtch: %d", evtch);
+	KASSERTMSG(evtch < NR_EVENT_CHANNELS,
+	    "evtch number %d > NR_EVENT_CHANNELS", evtch);
 
 #ifdef IRQ_DEBUG
 	if (evtch == IRQ_DEBUG)
@@ -337,11 +334,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		return 0;
 	}
 
-#ifdef DIAGNOSTIC
-	if (evtsource[evtch] == NULL) {
-		panic("evtchn_do_event: unknown event");
-	}
-#endif
+	KASSERTMSG(evtsource[evtch] != NULL, "unknown event %d", evtch);
 	ci->ci_data.cpu_nintr++;
 	evtsource[evtch]->ev_evcnt.ev_count++;
 	ilevel = ci->ci_ilevel;
@@ -851,12 +844,9 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	printf("event_set_handler IRQ %d handler %p\n", evtch, func);
 #endif
 
-#ifdef DIAGNOSTIC
-	if (evtch >= NR_EVENT_CHANNELS) {
-		printf("evtch number %d > NR_EVENT_CHANNELS\n", evtch);
-		panic("event_set_handler");
-	}
-#endif
+	KASSERTMSG(evtch >= 0, "negative evtch: %d", evtch);
+	KASSERTMSG(evtch < NR_EVENT_CHANNELS,
+	    "evtch number %d > NR_EVENT_CHANNELS", evtch);
 
 #if 0
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
