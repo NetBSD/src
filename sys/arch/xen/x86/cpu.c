@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.113 2017/11/08 17:52:22 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.114 2017/11/11 06:16:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.113 2017/11/08 17:52:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.114 2017/11/11 06:16:52 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.113 2017/11/08 17:52:22 maxv Exp $");
 
 #include <uvm/uvm.h>
 
+#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -525,7 +526,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
-	extern int x86_fpu_save;
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
