@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.77 2017/11/11 08:23:50 riastradh Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.78 2017/11/11 17:02:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.77 2017/11/11 08:23:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.78 2017/11/11 17:02:53 riastradh Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -386,11 +386,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		ci->ci_ilevel = ih->ih_level;
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
-		KASSERTMSG(ci->ci_ilevel == ih->ih_level,
-		    "event handler %p for evtsource[%d] (%s) changed ipl:"
-		    " %d != %d",
-		    ih->ih_realfun, evtch, evtsource[evtch]->ev_evname,
-		    ci->ci_ilevel, ih->ih_level);
 		ih = ih->ih_evt_next;
 	}
 	mutex_spin_exit(&evtlock[evtch]);
@@ -415,13 +410,6 @@ splx:
 					sti();
 					ih_fun = (void *)ih->ih_fun;
 					ih_fun(ih->ih_arg, regs);
-					KASSERTMSG(ci->ci_ilevel == i,
-					    "interrupt handler %p"
-					    " for interrupt source %s"
-					    " changed ipl: %d != %d",
-					    ih->ih_realfun,
-					    ci->ci_isources[i]->is_xname,
-					    ci->ci_ilevel, i);
 					cli();
 				}
 				hypervisor_enable_ipl(i);
