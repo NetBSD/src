@@ -1,10 +1,10 @@
-/*	$NetBSD: cdbw.c,v 1.5 2012/07/21 22:49:37 joerg Exp $	*/
+/*	$NetBSD: cdbw.c,v 1.6 2017/11/11 18:05:31 alnsn Exp $	*/
 /*-
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Joerg Sonnenberger.
+ * by Joerg Sonnenberger and Alexander Nasonov.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbw.c,v 1.5 2012/07/21 22:49:37 joerg Exp $");
+__RCSID("$NetBSD: cdbw.c,v 1.6 2017/11/11 18:05:31 alnsn Exp $");
 
 #include "namespace.h"
 
@@ -278,18 +278,31 @@ cdbw_stable_seeder(void)
 	return 0;
 }
 
-#define unused 0xffffffffU
+/*
+ * The algorithm below is based on paper
+ * Cache-Oblivious Peeling of Random Hypergraphs by Djamal Belazzougui,
+ * Paolo Boldi, Giuseppe Ottaviano, Rossano Venturini, and Sebastiano
+ * Vigna.
+ * http://zola.di.unipi.it/rossano/wp-content/papercite-data/pdf/dcc14.pdf
+ */
 
-struct vertex {
-	uint32_t l_edge, m_edge, r_edge;
+/*
+ * Data type for a valid oriented edge (v0, v1, v2), v1 < v2.
+ * The first vertex v0 is implicit and is determined by an index
+ * of the corresponding element in the state->oedges array.
+ * If the degree of v0 is greater than 1, other members don't
+ * make sense because they're a result of XORing multiple values.
+ */
+struct oedge {
+	uint32_t degree;   /* Degree of v0. */
+	uint32_t verts[2]; /* v1 and v2 */
+	uint32_t edge;
 };
 
 struct edge {
 	uint32_t idx;
 
 	uint32_t left, middle, right;
-	uint32_t l_prev, m_prev, l_next;
-	uint32_t r_prev, m_next, r_next;
 };
 
 struct state {
@@ -301,69 +314,49 @@ struct state {
 	uint32_t *g;
 	char *visited;
 
-	struct vertex *verts;
+	struct oedge *oedges;
 	struct edge *edges;
 	uint32_t output_index;
 	uint32_t *output_order;
 };
 
-static void
-remove_vertex(struct state *state, struct vertex *v)
+/*
+ * Add (delta == 1) or remove (delta == -1) the edge e from vertex v0.
+ */
+static inline void
+add_remove_edge(struct oedge *o, int delta, uint32_t e,
+    uint32_t v0, uint32_t v1, uint32_t v2)
 {
-	struct edge *e;
-	struct vertex *vl, *vm, *vr;
 
-	if (v->l_edge != unused && v->m_edge != unused)
-		return;
-	if (v->l_edge != unused && v->r_edge != unused)
-		return;
-	if (v->m_edge != unused && v->r_edge != unused)
-		return;
-	if (v->l_edge == unused && v->m_edge == unused && v->r_edge == unused)
-		return;
+	o[v0].verts[v1 < v2 ? 0 : 1] ^= v1;
+	o[v0].verts[v1 < v2 ? 1 : 0] ^= v2;
+	o[v0].degree += delta;
+	o[v0].edge ^= e;
+}
 
-	if (v->l_edge != unused) {
-		e = &state->edges[v->l_edge];
-		if (e->l_next != unused)
-			return;
-	} else if (v->m_edge != unused) {
-		e = &state->edges[v->m_edge];
-		if (e->m_next != unused)
-			return;
-	} else {
-		if (v->r_edge == unused)
-			abort();
-		e = &state->edges[v->r_edge];
-		if (e->r_next != unused)
-			return;
+static inline void
+add_edge(struct oedge *o, uint32_t e,
+    uint32_t v0, uint32_t v1, uint32_t v2)
+{
+
+	add_remove_edge(o, 1, e, v0, v1, v2);
+}
+
+static inline void
+remove_vertex(struct state *state, uint32_t v0)
+{
+	uint32_t e, v1, v2;
+	struct oedge *o = state->oedges;
+
+	if (o[v0].degree == 1) {
+		e = o[v0].edge;
+		v1 = o[v0].verts[0];
+		v2 = o[v0].verts[1];
+		o[v0].degree = 0;
+		add_remove_edge(o, -1, e, v1, v0, v2);
+		add_remove_edge(o, -1, e, v2, v0, v1);
+		state->output_order[--state->output_index] = e;
 	}
-
-	state->output_order[--state->output_index] = e - state->edges;
-
-	vl = &state->verts[e->left];
-	vm = &state->verts[e->middle];
-	vr = &state->verts[e->right];
-
-	if (e->l_prev == unused)
-		vl->l_edge = e->l_next;
-	else
-		state->edges[e->l_prev].l_next = e->l_next;
-	if (e->l_next != unused)
-		state->edges[e->l_next].l_prev = e->l_prev;
-
-	if (e->m_prev == unused)
-		vm->m_edge = e->m_next;
-	else
-		state->edges[e->m_prev].m_next = e->m_next;
-	if (e->m_next != unused)
-		state->edges[e->m_next].m_prev = e->m_prev;
-
-	if (e->r_prev == unused)
-		vr->r_edge = e->r_next;
-	else
-		state->edges[e->r_prev].r_next = e->r_next;
-	if (e->r_next != unused)
-		state->edges[e->r_next].r_prev = e->r_prev;
 }
 
 static int
@@ -371,10 +364,11 @@ build_graph(struct cdbw *cdbw, struct state *state)
 {
 	struct key_hash_head *head;
 	struct key_hash *key_hash;
-	struct vertex *v;
 	struct edge *e;
 	uint32_t hashes[3];
 	size_t i;
+
+	memset(state->oedges, 0, sizeof(struct oedge) * state->entries);
 
 	e = state->edges;
 	for (i = 0; i < cdbw->hash_size; ++i) {
@@ -389,57 +383,32 @@ build_graph(struct cdbw *cdbw, struct state *state)
 
 			if (e->left == e->middle)
 				return -1;
+			add_edge(state->oedges, e - state->edges,
+			    e->right, e->left, e->middle);
 			if (e->left == e->right)
 				return -1;
+			add_edge(state->oedges, e - state->edges,
+			    e->middle, e->left, e->right);
 			if (e->middle == e->right)
 				return -1;
+			add_edge(state->oedges, e - state->edges,
+			    e->left, e->middle, e->right);
 
 			++e;
 		}
 	}
 
-	for (i = 0; i < state->entries; ++i) {
-		v = state->verts + i;
-		v->l_edge = unused;
-		v->m_edge = unused;
-		v->r_edge = unused;
-	}
-
-	for (i = 0; i < state->keys; ++i) {
-		e = state->edges + i;
-		v = state->verts + e->left;
-		if (v->l_edge != unused)
-			state->edges[v->l_edge].l_prev = i;
-		e->l_next = v->l_edge;
-		e->l_prev = unused;
-		v->l_edge = i;
-
-		v = &state->verts[e->middle];
-		if (v->m_edge != unused)
-			state->edges[v->m_edge].m_prev = i;
-		e->m_next = v->m_edge;
-		e->m_prev = unused;
-		v->m_edge = i;
-
-		v = &state->verts[e->right];
-		if (v->r_edge != unused)
-			state->edges[v->r_edge].r_prev = i;
-		e->r_next = v->r_edge;
-		e->r_prev = unused;
-		v->r_edge = i;
-	}
-
 	state->output_index = state->keys;
 	for (i = 0; i < state->entries; ++i)
-		remove_vertex(state, state->verts + i);
+		remove_vertex(state, i);
 
 	i = state->keys;
 	while (i > 0 && i > state->output_index) {
 		--i;
 		e = state->edges + state->output_order[i];
-		remove_vertex(state, state->verts + e->left);
-		remove_vertex(state, state->verts + e->middle);
-		remove_vertex(state, state->verts + e->right);
+		remove_vertex(state, e->left);
+		remove_vertex(state, e->middle);
+		remove_vertex(state, e->right);
 	}
 
 	return state->output_index == 0 ? 0 : -1;
@@ -590,12 +559,12 @@ cdbw_output(struct cdbw *cdbw, int fd, const char descr[16],
 #define	NALLOC(var, n)	var = calloc(sizeof(*var), n)
 	NALLOC(state.g, state.entries);
 	NALLOC(state.visited, state.entries);
-	NALLOC(state.verts, state.entries);
-	NALLOC(state.edges, state.entries);
+	NALLOC(state.oedges, state.entries);
+	NALLOC(state.edges, state.keys);
 	NALLOC(state.output_order, state.keys);
 #undef NALLOC
 
-	if (state.g == NULL || state.visited == NULL || state.verts == NULL ||
+	if (state.g == NULL || state.visited == NULL || state.oedges == NULL ||
 	    state.edges == NULL || state.output_order == NULL) {
 		rv = -1;
 		goto release;
@@ -615,7 +584,7 @@ cdbw_output(struct cdbw *cdbw, int fd, const char descr[16],
 release:
 	free(state.g);
 	free(state.visited);
-	free(state.verts);
+	free(state.oedges);
 	free(state.edges);
 	free(state.output_order);
 
