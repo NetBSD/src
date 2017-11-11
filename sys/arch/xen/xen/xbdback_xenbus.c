@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.64 2017/11/06 15:27:09 cherry Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.65 2017/11/11 21:03:01 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.64 2017/11/06 15:27:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.65 2017/11/11 21:03:01 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -637,8 +637,9 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	XENPRINTF(("xbdback %s: connect evchannel %d\n", xbusd->xbusd_path, xbdi->xbdi_evtchn));
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
-	xbdi->xbdi_ih = intr_establish_xname(0, &xen_pic, xbdi->xbdi_evtchn, IST_LEVEL, IPL_BIO,
-	    xbdback_evthandler, xbdi, true, xbdi->xbdi_name);
+	xbdi->xbdi_ih = intr_establish_xname(0, &xen_pic, xbdi->xbdi_evtchn,
+	    IST_LEVEL, IPL_BIO, xbdback_evthandler, xbdi, false,
+	    xbdi->xbdi_name);
 	KASSERT(xbdi->xbdi_ih != NULL);
 	aprint_verbose("xbd backend domain %d handle %#x (%d) "
 	    "using event channel %d, protocol %s\n", xbdi->xbdi_domid,
