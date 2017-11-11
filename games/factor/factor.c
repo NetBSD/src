@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.27 2014/10/02 21:36:37 ast Exp $	*/
+/*	$NetBSD: factor.c,v 1.28 2017/11/11 23:48:44 rin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.27 2014/10/02 21:36:37 ast Exp $");
+__RCSID("$NetBSD: factor.c,v 1.28 2017/11/11 23:48:44 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,15 +52,18 @@ __RCSID("$NetBSD: factor.c,v 1.27 2014/10/02 21:36:37 ast Exp $");
  * By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
  *
  * usage:
- *	factor [number] ...
+ *	factor [-h] [number] ...
  *
- * The form of the output is:
+ * By Default, the form of the output is:
  *
  *	number: factor1 factor1 factor2 factor3 factor3 factor3 ...
  *
  * where factor1 <= factor2 <= factor3 <= ...
  *
- * If no args are given, the list of numbers are read from stdin.
+ * If the -h flag is specified, the output is in "human-readable" format.
+ * Duplicate factors are printed in the form of x^n.
+ *
+ * If no number args are given, the list of numbers are read from stdin.
  */
 
 #include <ctype.h>
@@ -103,7 +106,7 @@ static int BN_dec2bn(BIGNUM **a, const char *str);
 static BN_CTX *ctx;			/* just use a global context */
 #endif
 
-static void pr_fact(BIGNUM *);		/* print factors of a value */
+static void pr_fact(BIGNUM *, int);	/* print factors of a value */
 static void BN_print_dec_fp(FILE *, const BIGNUM *);
 static void usage(void) __dead;
 #ifdef HAVE_OPENSSL
@@ -132,7 +135,7 @@ int
 main(int argc, char *argv[])
 {
 	BIGNUM *val;
-	int ch;
+	int ch, hflag;
 	char *p, buf[LINE_MAX];		/* > max number of digits. */
 
 #ifdef HAVE_OPENSSL 
@@ -142,8 +145,12 @@ main(int argc, char *argv[])
 	if (val == NULL)
 		errx(1, "can't initialise bignum");
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	hflag = 0;
+	while ((ch = getopt(argc, argv, "h")) != -1)
 		switch (ch) {
+		case 'h':
+			hflag = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -166,7 +173,7 @@ main(int argc, char *argv[])
 				errx(1, "negative numbers aren't permitted.");
 			if (BN_dec2bn(&val, buf) == 0)
 				errx(1, "%s: illegal numeric format.", argv[0]);
-			pr_fact(val);
+			pr_fact(val, hflag);
 		}
 	/* Factor the arguments. */
 	else
@@ -175,7 +182,7 @@ main(int argc, char *argv[])
 				errx(1, "numbers <= 1 aren't permitted.");
 			if (BN_dec2bn(&val, argv[0]) == 0)
 				errx(1, "%s: illegal numeric format.", argv[0]);
-			pr_fact(val);
+			pr_fact(val, hflag);
 		}
 	exit(0);
 }
@@ -188,15 +195,19 @@ main(int argc, char *argv[])
  * processing.
  *
  * Print the factors of the number, from the lowest to the highest.
- * A factor will be printed numtiple times if it divides the value
- * multiple times.
+ * By default, a factor will be printed numtiple times if it divides
+ * the value multiple times.
+ *
+ * If hflag is specified, duplicate factors are printed in "human-
+ * readable" form of x^n.
  *
  * Factors are printed with leading tabs.
  */
 static void
-pr_fact(BIGNUM *val)
+pr_fact(BIGNUM *val, int hflag)
 {
 	const uint64_t *fact;		/* The factor found. */
+	int i;
 
 	/* Firewall - catch 0 and 1. */
 	if (BN_is_zero(val) || BN_is_one(val))
@@ -236,10 +247,19 @@ pr_fact(BIGNUM *val)
 		}
 
 		/* Divide factor out until none are left. */
+		i = 0;
 		do {
-			printf(" %" PRIu64, *fact);
+			i++;
+			if (!hflag)
+				printf(" %" PRIu64, *fact);
 			BN_div_word(val, (BN_ULONG)*fact);
 		} while (BN_mod_word(val, (BN_ULONG)*fact) == 0);
+
+		if (hflag) {
+			printf(" %" PRIu64, *fact);
+			if (i > 1)
+				printf("^%d", i);
+		}
 
 		/* Let the user know we're doing something. */
 		fflush(stdout);
@@ -265,7 +285,7 @@ BN_print_dec_fp(FILE *fp, const BIGNUM *num)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: factor [value ...]\n");
+	fprintf(stderr, "usage: factor [-h] [value ...]\n");
 	exit (0);
 }
 
