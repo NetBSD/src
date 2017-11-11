@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.263 2017/10/29 10:01:21 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.264 2017/11/11 12:51:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2017/10/29 10:01:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.264 2017/11/11 12:51:05 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1556,6 +1556,7 @@ pmap_remap_global(void)
 {
 	vaddr_t kva, kva_end;
 	unsigned long p1i;
+	size_t i;
 
 	/* head */
 	kva = bootspace.head.va;
@@ -1566,31 +1567,18 @@ pmap_remap_global(void)
 			PTE_BASE[p1i] |= PG_G;
 	}
 
-	/* kernel text */
-	kva = bootspace.text.va;
-	kva_end = kva + bootspace.text.sz;
-	for ( ; kva < kva_end; kva += PAGE_SIZE) {
-		p1i = pl1_i(kva);
-		if (pmap_valid_entry(PTE_BASE[p1i]))
-			PTE_BASE[p1i] |= PG_G;
-	}
-
-	/* kernel rodata */
-	kva = bootspace.rodata.va;
-	kva_end = kva + bootspace.rodata.sz;
-	for ( ; kva < kva_end; kva += PAGE_SIZE) {
-		p1i = pl1_i(kva);
-		if (pmap_valid_entry(PTE_BASE[p1i]))
-			PTE_BASE[p1i] |= PG_G;
-	}
-
-	/* kernel data */
-	kva = bootspace.data.va;
-	kva_end = kva + bootspace.data.sz;
-	for ( ; kva < kva_end; kva += PAGE_SIZE) {
-		p1i = pl1_i(kva);
-		if (pmap_valid_entry(PTE_BASE[p1i]))
-			PTE_BASE[p1i] |= PG_G;
+	/* kernel segments */
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type == BTSEG_NONE) {
+			continue;
+		}
+		kva = bootspace.segs[i].va;
+		kva_end = kva + bootspace.segs[i].sz;
+		for ( ; kva < kva_end; kva += PAGE_SIZE) {
+			p1i = pl1_i(kva);
+			if (pmap_valid_entry(PTE_BASE[p1i]))
+				PTE_BASE[p1i] |= PG_G;
+		}
 	}
 
 	/* boot space */
@@ -1613,6 +1601,7 @@ pmap_remap_largepages(void)
 	pd_entry_t *pde;
 	vaddr_t kva, kva_end;
 	paddr_t pa;
+	size_t i;
 
 #ifdef KASLR
 	/* XXX no large pages yet, soon */
@@ -1620,36 +1609,51 @@ pmap_remap_largepages(void)
 #endif
 
 	/* Remap the kernel text using large pages. */
-	kva = roundup(bootspace.text.va, NBPD_L2);
-	kva_end = rounddown(bootspace.text.va +
-	    bootspace.text.sz, NBPD_L1);
-	pa = roundup(bootspace.text.pa, NBPD_L2);
-	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
-		pde = &L2_BASE[pl2_i(kva)];
-		*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
-		tlbflushg();
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type != BTSEG_TEXT) {
+			continue;
+		}
+		kva = roundup(bootspace.segs[i].va, NBPD_L2);
+		kva_end = rounddown(bootspace.segs[i].va +
+			bootspace.segs[i].sz, NBPD_L1);
+		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
+			pde = &L2_BASE[pl2_i(kva)];
+			*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
+			tlbflushg();
+		}
 	}
 
 	/* Remap the kernel rodata using large pages. */
-	kva = roundup(bootspace.rodata.va, NBPD_L2);
-	kva_end = rounddown(bootspace.rodata.va +
-	    bootspace.rodata.sz, NBPD_L1);
-	pa = roundup(bootspace.rodata.pa, NBPD_L2);
-	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
-		pde = &L2_BASE[pl2_i(kva)];
-		*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KR | PG_V;
-		tlbflushg();
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type != BTSEG_RODATA) {
+			continue;
+		}
+		kva = roundup(bootspace.segs[i].va, NBPD_L2);
+		kva_end = rounddown(bootspace.segs[i].va +
+			bootspace.segs[i].sz, NBPD_L1);
+		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
+			pde = &L2_BASE[pl2_i(kva)];
+			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KR | PG_V;
+			tlbflushg();
+		}
 	}
 
 	/* Remap the kernel data+bss using large pages. */
-	kva = roundup(bootspace.data.va, NBPD_L2);
-	kva_end = rounddown(bootspace.data.va +
-	    bootspace.data.sz, NBPD_L1);
-	pa = roundup(bootspace.data.pa, NBPD_L2);
-	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
-		pde = &L2_BASE[pl2_i(kva)];
-		*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KW | PG_V;
-		tlbflushg();
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type != BTSEG_DATA) {
+			continue;
+		}
+		kva = roundup(bootspace.segs[i].va, NBPD_L2);
+		kva_end = rounddown(bootspace.segs[i].va +
+			bootspace.segs[i].sz, NBPD_L1);
+		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
+			pde = &L2_BASE[pl2_i(kva)];
+			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KW | PG_V;
+			tlbflushg();
+		}
 	}
 }
 #endif /* !XEN */

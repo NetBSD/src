@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.8 2017/11/10 08:52:57 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.9 2017/11/11 12:51:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -102,6 +102,11 @@ strcmp(char *a, char *b)
 
 /* -------------------------------------------------------------------------- */
 
+#define BTSEG_NONE	0
+#define BTSEG_TEXT	1
+#define BTSEG_RODATA	2
+#define BTSEG_DATA	3
+#define BTSPACE_NSEGS	64
 struct bootspace {
 	struct {
 		vaddr_t va;
@@ -109,20 +114,11 @@ struct bootspace {
 		size_t sz;
 	} head;
 	struct {
+		int type;
 		vaddr_t va;
 		paddr_t pa;
 		size_t sz;
-	} text;
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} rodata;
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} data;
+	} segs[BTSPACE_NSEGS];
 	struct {
 		vaddr_t va;
 		paddr_t pa;
