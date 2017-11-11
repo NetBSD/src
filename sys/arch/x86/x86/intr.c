@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.106 2017/11/04 14:56:48 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.107 2017/11/11 07:46:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.106 2017/11/04 14:56:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.107 2017/11/11 07:46:52 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1257,12 +1257,11 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 	int evtchn;
 	char evname[16];
 
-#ifdef DIAGNOSTIC
-	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
-		panic("intr_establish: bad legacy IRQ value");
-	if (legacy_irq == -1 && pic == &i8259_pic)
-		panic("intr_establish: non-legacy IRQ on i8259");
-#endif /* DIAGNOSTIC */
+	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < 16),
+	    "bad legacy IRQ value: %d", legacy_irq);
+	KASSERTMSG(!(legacy_irq == -1 && pic == &i8259_pic),
+	    "non-legacy IRQon i8259 ");
+
 	if (legacy_irq == -1) {
 #if NIOAPIC > 0
 		/* will do interrupts via I/O APIC */
