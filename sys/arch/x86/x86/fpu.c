@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.26 2017/11/11 09:10:19 bouyer Exp $	*/
+/*	$NetBSD: fpu.c,v 1.27 2017/11/11 11:00:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26 2017/11/11 09:10:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27 2017/11/11 11:00:46 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -235,21 +235,20 @@ fpuinit_mxcsr_mask(void)
 {
 #ifndef XEN
 	union savefpu fpusave __aligned(16);
-	u_long cr0, psl;
+	u_long psl;
 
 	memset(&fpusave, 0, sizeof(fpusave));
 
 	/* Disable interrupts, and enable FPU */
 	psl = x86_read_psl();
 	x86_disable_intr();
-	cr0 = rcr0();
-	lcr0(cr0 & ~(CR0_EM|CR0_TS));
+	clts();
 
 	/* Fill in the FPU area */
 	fxsave(&fpusave);
 
 	/* Restore previous state */
-	lcr0(cr0);
+	stts();
 	x86_write_psl(psl);
 
 	if (fpusave.sv_xmm.fx_mxcsr_mask == 0) {
@@ -258,9 +257,6 @@ fpuinit_mxcsr_mask(void)
 		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
 	}
 #else
-	/*
-	 * XXX: Does the detection above work on Xen?
-	 */
 	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 #endif
 }
