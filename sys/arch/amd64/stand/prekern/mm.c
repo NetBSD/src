@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.10 2017/11/11 12:51:06 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.11 2017/11/11 13:50:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -238,17 +238,11 @@ mm_map_head()
 static vaddr_t
 mm_randva_kregion(size_t size)
 {
-	static struct {
-		vaddr_t sva;
-		vaddr_t eva;
-	} regions[4];
-	static size_t idx = 0;
+	vaddr_t sva, eva;
 	vaddr_t randva;
 	uint64_t rnd;
 	size_t i;
 	bool ok;
-
-	ASSERT(idx < 4);
 
 	while (1) {
 		rnd = mm_rand_num64();
@@ -257,14 +251,18 @@ mm_randva_kregion(size_t size)
 
 		/* Detect collisions */
 		ok = true;
-		for (i = 0; i < idx; i++) {
-			if ((regions[i].sva <= randva) &&
-			    (randva < regions[i].eva)) {
+		for (i = 0; i < BTSPACE_NSEGS; i++) {
+			if (bootspace.segs[i].type == BTSEG_NONE) {
+				continue;
+			}
+			sva = bootspace.segs[i].va;
+			eva = sva + bootspace.segs[i].sz;
+
+			if ((sva <= randva) && (randva < eva)) {
 				ok = false;
 				break;
 			}
-			if ((regions[i].sva < randva + size) &&
-			    (randva + size <= regions[i].eva)) {
+			if ((sva < randva + size) && (randva + size <= eva)) {
 				ok = false;
 				break;
 			}
@@ -273,10 +271,6 @@ mm_randva_kregion(size_t size)
 			break;
 		}
 	}
-
-	regions[idx].eva = randva;
-	regions[idx].sva = randva + size;
-	idx++;
 
 	mm_map_tree(randva, randva + size);
 
