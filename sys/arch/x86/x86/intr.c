@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.111 2017/11/11 19:25:29 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.112 2017/11/11 21:05:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.111 2017/11/11 19:25:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.112 2017/11/11 21:05:58 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1225,6 +1225,13 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 {
 	if (pic->pic_type == PIC_XEN) {
 		struct intrhand *rih;
+
+		/*
+		 * event_set_handler interprets `level != IPL_VM' to
+		 * mean MP-safe, so we require the caller to match that
+		 * for the moment.
+		 */
+		KASSERT(known_mpsafe == (level != IPL_VM));
 
 		event_set_handler(pin, handler, arg, level, xname);
 
