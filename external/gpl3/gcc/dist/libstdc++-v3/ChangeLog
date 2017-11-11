@@ -1,3 +1,1150 @@
+2017-10-10  Release Manager
+
+	* GCC 5.5.0 released.
+
+2017-09-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/20_util/reference_wrapper/80504.cc: Do not use invalid
+	effective-target.
+	* testsuite/22_locale/conversions/buffer/2.cc: Likewise.
+	* testsuite/28_regex/basic_regex/ctors/basic/iter.cc: Likewise. Fix
+	use of test_container.
+
+	PR libstdc++/81468
+	* include/std/chrono (time_point(const time_point<_Dur2>&)): Add
+	missing constraint from LWG DR 1177.
+	* testsuite/20_util/duration/cons/dr1177.cc: New.
+	* testsuite/20_util/time_point/cons/81468.cc: New.
+	* testsuite/20_util/duration/literals/range.cc: Update dg-error line.
+
+	* doc/doxygen/mainpage.html: Fix broken URLs.
+
+	PR libstdc++/81835
+	* doc/xml/manual/extensions.xml: Replace unstable URL.
+	* doc/html/manual/ext_demangling.html: Regenerate.
+	* libsupc++/cxxabi.h (__cxa_demangle): Fix broken URL.
+
+2017-09-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2017-08-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/79820
+	PR libstdc++/81751
+	* config/io/basic_file_stdio.cc (sys_open(FILE*, ios_base::openmode)):
+	Call fflush on the stream instead of calling sync() while _M_cfile is
+	null. Restore original value of errno.
+	* testsuite/ext/stdio_filebuf/char/79820.cc: New.
+	* testsuite/ext/stdio_filebuf/char/81751.cc: New.
+
+	Backport from mainline
+	2017-07-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/53984
+	* include/bits/basic_ios.h (basic_ios::_M_setstate): Adjust comment.
+	* include/bits/istream.tcc (basic_istream::sentry): Handle exceptions
+	during construction.
+	* include/std/istream: Adjust comments for formatted input functions
+	and unformatted input functions.
+	* testsuite/27_io/basic_fstream/53984.cc: New.
+	* testsuite/27_io/basic_istream/sentry/char/53984.cc: New.
+
+	Backport from mainline
+	2017-06-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/81017
+	* include/std/functional (function::function(function&&))
+	(function::operator=(function&&)): Add noexcept.
+	* testsuite/20_util/function/assign/move.cc: Check for noexcept.
+	* testsuite/20_util/function/cons/move.cc: Likewise.
+
+	Backport from mainline
+	2017-06-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/shared_ptr_base.h (__shared_ptr::owner_before)
+	(__weak_ptr::owner_before, _Sp_owner_less::operator()): Add noexcept
+	specifiers as per LWG 2873 and LWG 2942.
+	* testsuite/20_util/owner_less/noexcept.cc: New.
+	* testsuite/20_util/shared_ptr/observers/owner_before.cc: Test
+	noexcept guarantees.
+	* testsuite/20_util/weak_ptr/observers/owner_before.cc: Likewise.
+
+	Backport from mainline
+	2017-08-31  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR c++/82039
+	* include/ext/new_allocator.h (__gnu_cxx::new_allocator::allocate):
+	Adjust null pointer constant to avoid warning.
+
+	Backport from mainline
+	2017-08-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/81891
+	* include/bits/hashtable.h (_Hashtable(_InputIterator, _InputIterator,
+	size_type, const _H1&, const _H2&, const _Hash&, const _Equal&,
+	const _ExtractKey&, const allocator_type&)): Let destructor do clean
+	up if an exception is thrown.
+	* testsuite/23_containers/unordered_map/cons/81891.cc: New.
+
+	Backport from mainline
+	2017-07-31  Marek Polacek  <polacek@redhat.com>
+
+	PR libstdc++/81599
+	* include/bits/stl_stack.h: Fix typo.
+
+	Backport from mainline
+	2017-07-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/81338
+	* include/bits/basic_string.h [_GLIBCXX_USE_CXX11_ABI] (basic_string):
+	Declare basic_stringbuf to be a friend.
+	* include/bits/sstream.tcc (basic_stringbuf::overflow)
+	[_GLIBCXX_USE_CXX11_ABI]: Use unused capacity before reallocating.
+	* include/std/sstream (basic_stringbuf::__xfer_bufptrs): Update string
+	length to buffer length.
+	* testsuite/27_io/basic_stringstream/assign/81338.cc: New.
+
+2017-09-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-10-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/status_cxx2011.xml: Update status.
+	* doc/html/manual/status.html: Regenerate.
+	* include/std/scoped_allocator (__outer_allocator_t, __outermost_type):
+	New helpers for recursive OUTERMOST.
+	(__outermost): Use __outermost_type::_S_outermost.
+	(__do_outermost, scoped_allocator_adaptor::__outermost_type): Remove.
+	(scoped_allocator_adaptor::__outermost_alloc_traits): Use new
+	__outermost_type helper.
+	(scoped_allocator_adaptor::_Constructible): New alias template.
+	(scoped_allocator_adaptor::scoped_allocator_adaptor<_Outer2>):
+	Constrain template constructors.
+	* testsuite/20_util/scoped_allocator/3.cc: New test.
+	* testsuite/20_util/scoped_allocator/outermost.cc: New test.
+
+2017-06-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/locale_conv.h (wbuffer_convert::sync): Fix condition.
+	* testsuite/22_locale/conversions/buffer/2.cc: New.
+
+	* doc/xml/manual/appendix_contributing.xml: Link to the list of bad
+	names, and link to the test docs and note higher DejaGnu version
+	requirement.
+	* doc/xml/manual/allocator.xml: Fix ViewCVS URLs.
+	* doc/xml/manual/mt_allocator.xml: Likewise.
+	* doc/html/*: Regenerate.
+
+	* include/bits/locale_conv.h (wbuffer_convert::_M_put): Add missing
+	return statement.
+
+2017-06-07  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/81002
+	* include/bits/regex_compiler.h (__compile_nfa): Add template argument
+	list to specify traits type.
+	* testsuite/28_regex/basic_regex/ctors/basic/iter.cc: New.
+
+2017-05-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/22_locale/codecvt/codecvt_utf16/79980.cc: Replace
+	effective-target with dg-options directive.
+	* testsuite/22_locale/codecvt/codecvt_utf16/80041.cc: Likewise.
+	* testsuite/22_locale/codecvt/codecvt_utf16/members.cc: Likewise.
+	* testsuite/22_locale/codecvt/codecvt_utf16/misaligned.cc: Likewise.
+	* testsuite/22_locale/codecvt/codecvt_utf8/79980.cc: Likewise.
+	* testsuite/22_locale/codecvt/codecvt_utf8/members.cc: Likewise.
+	* testsuite/22_locale/codecvt/codecvt_utf8_utf16/79511.cc: Likewise.
+	* testsuite/22_locale/codecvt/codecvt_utf8_utf16/members.cc: Likewise.
+
+	Backport from mainline
+	2016-08-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/18_support/bad_exception/23591_thread-1.c: Skip test if
+	options are present that aren't valid for C.
+	* testsuite/abi/header_cxxabi.c: Likewise.
+
+	Backport from mainline
+	2017-04-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/80504
+	* include/std/functional (ref, cref): Qualify calls.
+	* testsuite/20_util/reference_wrapper/80504.cc: New test.
+
+	Backport from mainline
+	2017-04-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/80448
+	* include/experimental/bits/fs_dir.h (directory_iterator)
+	(recursive_directory_iterator): Remove noexcept from defaulted
+	constructors.
+
+	Backport from mainline
+	2017-04-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/20_util/reference_wrapper/invoke.cc: Uncomment tests
+	that no longer fail.
+
+	Backport from mainline
+	2017-04-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/ios_base.h: Correct comment.
+	* testsuite/util/testsuite_hooks.h: Likewise.
+
+	Backport from mainline
+	2017-03-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/67440
+	* python/libstdcxx/v6/printers.py (find_type): Avoid gdb.Type.name
+	for GDB 7.6 compatibility, use gdb.Type.unqualified instead.
+
+	Backport from mainline
+	2017-01-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69699
+	* doc/xml/manual/abi.xml (abi.versioning.history): Explain why the
+	_GLIBCXX__ macro is not useful. Remove redundant date information
+	and link to the GCC release timeline.
+	(abi.versioning.active): Move partial sentence into the previous
+	paragraph.
+	* doc/html/*: Regenerate.
+
+	Backport from mainline
+	2016-12-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71444
+	* config/os/mingw32-w64/error_constants.h
+	(address_family_not_supported, address_in_use, address_not_available)
+	(already_connected, connection_aborted, connection_already_in_progress)
+	connection_refused, connection_reset, cross_device_link)
+	(destination_address_required, host_unreachable, message_size)
+	(network_down, network_reset, network_unreachable, no_buffer_space)
+	(no_protocol_option, not_a_socket, not_connected, operation_canceled)
+	(operation_in_progress, operation_not_supported, protocol_error)
+	(protocol_not_supported, too_many_links, too_many_symbolic_link_levels)
+	(value_too_large, wrong_protocol_type): Define.
+	(bad_message, identifier_removed, no_link, no_message_available)
+	(no_message, no_stream_resources, not_a_stream, owner_dead)
+	(state_not_recoverable, stream_timeout, text_file_busy): Define
+	conditionally.
+	* testsuite/19_diagnostics/headers/system_error/errc_std_c++0x.cc:
+	Guard test for no_message with _GLIBCXX_HAVE_ENOMSG.
+
+	Backport from mainline
+	2016-11-09  Tim Shen  <timshen@google.com>
+
+	PR libstdc++/78236
+	* libstdc++-v3/include/bits/regex.h (regex_iterator::regex_iterator()):
+	Define end() as _M_pregex == nullptr.
+	* libstdc++-v3/include/bits/regex.tcc (regex_iterator::operator==(),
+	regex_iterator::operator++()): Fix operator==() and operator++() to
+	look at null-ness of _M_pregex on both sides.
+	* testsuite/28_regex/regression.cc: New testcase.
+
+	Backport from mainline
+	2016-12-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/59170
+	* python/libstdcxx/v6/printers.py (StdListIteratorPrinter.to_string)
+	(StdSlistIteratorPrinter.to_string, StdVectorIteratorPrinter.to_string)
+	(StdRbtreeIteratorPrinter.to_string)
+	(StdDequeIteratorPrinter.to_string): Add check for value-initialized
+	iterators.
+	* testsuite/libstdc++-prettyprinters/simple.cc: Test them.
+	* testsuite/libstdc++-prettyprinters/simple11.cc: Likewise.
+
+	Backport from mainline
+	2016-12-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/59161
+	* python/libstdcxx/v6/printers.py (StdListIteratorPrinter.to_string)
+	(StdSlistIteratorPrinter.to_string, StdVectorIteratorPrinter.to_string)
+	(StdRbtreeIteratorPrinter.to_string, StdDequeIteratorPrinter.to_string)
+	(StdDebugIteratorPrinter.to_string): Return string instead of
+	gdb.Value.
+	* testsuite/libstdc++-prettyprinters/59161.cc: New test.
+
+	Backport from mainline
+	2016-10-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* python/libstdcxx/v6/printers.py (build_libstdcxx_dictionary):
+	Register printer for std::__cxx11::list.
+	* python/libstdcxx/v6/xmethods.py (ListMethodsMatcher.match): Match
+	std::__cxx11::list as well as std::list.
+
+2017-05-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2017-03-15  Xi Ruoyao  <ryxi@stu.xidian.edu.cn>
+
+	PR libstdc++/62045
+	* include/ext/pb_ds/detail/binary_heap_/binary_heap_.hpp
+	(is_heap): Remove.
+	(push_heap): Remove the wrong checking using is_heap.
+	(make_heap): Remove the assertion using is_heap.
+	* include/ext/pb_ds/detail/binary_heap_/insert_fn_imps.hpp
+	(modify): Ditto.
+	(resize_for_insert_if_needed): Add PB_DS_ASSERT_VALID after
+	calling make_heap.
+
+	Backport from mainline
+	2017-03-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/62045
+	* testsuite/ext/pb_ds/regression/priority_queue_binary_heap-62045.cc:
+	New test.
+	* testsuite/ext/pb_ds/regression/priority_queues.cc: Fix copy&paste
+	error in comment.
+
+	Backport from mainline
+	2015-11-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/66059
+	* include/std/utility (_Build_index_tuple): Optimise.
+
+2017-03-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2017-03-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++11/codecvt.cc (range): Add non-type template parameter and
+	define oerloaded operators for reading and writing code units.
+	(range<Elem, false>): Define partial specialization for accessing
+	wide characters in potentially unaligned byte ranges.
+	(ucs2_span(const char16_t*, const char16_t*, ...))
+	(ucs4_span(const char16_t*, const char16_t*, ...)): Change parameters
+	to range<const char16_t, false> in order to avoid unaligned reads.
+	(__codecvt_utf16_base<char16_t>::do_out)
+	(__codecvt_utf16_base<char32_t>::do_out)
+	(__codecvt_utf16_base<wchar_t>::do_out): Use range specialization for
+	unaligned data to avoid unaligned writes.
+	(__codecvt_utf16_base<char16_t>::do_in)
+	(__codecvt_utf16_base<char32_t>::do_in)
+	(__codecvt_utf16_base<wchar_t>::do_in): Likewise for writes. Return
+	error if there are unprocessable trailing bytes.
+	(__codecvt_utf16_base<char16_t>::do_length)
+	(__codecvt_utf16_base<char32_t>::do_length)
+	(__codecvt_utf16_base<wchar_t>::do_length): Pass arguments of type
+	range<const char16_t, false> to span functions.
+	* testsuite/22_locale/codecvt/codecvt_utf16/misaligned.cc: New test.
+
+	Backport from mainline
+	2017-03-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/79980
+	* src/c++11/codecvt.cc (to_integer(codecvt_mode)): Fix target type.
+
+	PR libstdc++/80041
+	* src/c++11/codecvt.cc (__codecvt_utf16_base<wchar_t>::do_out)
+	(__codecvt_utf16_base<wchar_t>::do_in): Convert char arguments to
+	char16_t to work with UTF-16 instead of UTF-8.
+	* testsuite/22_locale/codecvt/codecvt_utf16/80041.cc: New test.
+
+	* src/c++11/codecvt.cc (codecvt<char16_t, char, mbstate_t>)
+	(codecvt<char32_t, char, mbstate_t>, __codecvt_utf8_base<char16_t>)
+	(__codecvt_utf8_base<char32_t>, __codecvt_utf8_base<wchar_t>)
+	(__codecvt_utf16_base<char16_t>, __codecvt_utf16_base<char32_t>)
+	(__codecvt_utf16_base<wchar_t>, __codecvt_utf8_utf16_base<char16_t>)
+	(__codecvt_utf8_utf16_base<char32_t>)
+	(__codecvt_utf8_utf16_base<wchar_t>): Fix do_encoding() and
+	do_max_length() return values.
+	* testsuite/22_locale/codecvt/codecvt_utf16/members.cc: New test.
+	* testsuite/22_locale/codecvt/codecvt_utf8/members.cc: New test.
+	* testsuite/22_locale/codecvt/codecvt_utf8_utf16/members.cc: New test.
+
+	PR libstdc++/79980
+	* include/bits/locale_conv.h (__do_str_codecvt): Set __count on
+	error path.
+	* src/c++11/codecvt.cc (operator&=, operator|=, operator~): Overloads
+	for manipulating codecvt_mode values.
+	(read_utf16_bom): Compare input to BOM constants instead of integral
+	constants that depend on endianness.  Take mode parameter by
+	reference and adjust it, to distinguish between no BOM present and
+	UTF-16BE BOM present.
+	(ucs4_in, ucs2_span, ucs4_span): Adjust calls to read_utf16_bom.
+	(surrogates): New enumeration type.
+	(utf16_in, utf16_out): Add surrogates parameter to choose between
+	UTF-16 and UCS2 behaviour.
+	(utf16_span, ucs2_span): Use std::min not std::max.
+	(ucs2_out): Use std::min not std::max.  Disallow surrogate pairs.
+	(ucs2_in): Likewise. Adjust calls to read_utf16_bom.
+	* testsuite/22_locale/codecvt/codecvt_utf16/79980.cc: New test.
+	* testsuite/22_locale/codecvt/codecvt_utf8/79980.cc: New test.
+
+	PR libstdc++/79511
+	* src/c++11/codecvt.cc (write_utf16_code_point): Don't write 0xffff
+	as a surrogate pair.
+	(__codecvt_utf8_utf16_base<char32_t>::do_in): Use native endianness
+	for internal representation.
+	(__codecvt_utf8_utf16_base<wchar_t>::do_in): Likewise.
+	* testsuite/22_locale/codecvt/codecvt_utf8_utf16/79511.cc: New test.
+
+2017-03-14  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/17_intro/names.cc: Undefine macros that clash with
+	identifiers in AIX system headers.
+
+2017-03-13  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	PR libstdc++/80034
+	* include/bits/list.tcc (merge(list&&)): Use const for the size_t
+	in the function and in the catch-block, qualify uses of std::distance.
+	(merge(list&&, _StrictWeakOrdering)): Likewise.
+	* testsuite/23_containers/list/operations/80034.cc: New.
+
+2017-03-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/79789
+	* include/bits/ios_base.h (make_error_code, make_error_condition):
+	Likewise.
+	* include/bits/mask_array.h (mask_array): Likewise.
+	* include/bits/regex.h (regex_token_iterator): Likewise.
+	* include/bits/slice_array.h (slice_array): Likewise.
+	* include/std/memory (undeclare_no_pointers): Likewise.
+	* testsuite/17_intro/names.cc: New test.
+
+2017-02-14  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2017-01-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69321
+	* include/experimental/any (__any_caster): Avoid instantiating
+	manager function for types that can't be stored in any.
+	* testsuite/experimental/any/misc/any_cast.cc: Test non-copyable type.
+	* testsuite/experimental/any/misc/any_cast_neg.cc: Adjust dg-error.
+
+	Backport from mainline
+	2017-01-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69301
+	* include/std/atomic (atomic<T>::load, atomic<T>::exchange): Use
+	aligned buffer instead of default-initialized variable.
+	* testsuite/29_atomics/atomic/69301.cc: New test.
+	* include/ext/pointer.h (_Pointer_adapter::operator++(int))
+	(_Pointer_adapter::operator--(int)): Likewise.
+
+	Backport from mainline
+	2017-01-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78702
+	* include/bits/locale_classes.h (locale::facet::__shim): Change from
+	private to protected.
+	* src/c++11/cxx11-shim_facets.cc (__shim_accessor): Define helper to
+	make locale::facet::__shim accessible.
+
+	Backport from mainline
+	2017-01-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78134
+	* include/bits/stl_map.h (map::lower_bound, map::upper_bound)
+	(map::equal_range): Fix return type of heterogeneous overloads.
+	* include/bits/stl_multimap.h (multimap::lower_bound)
+	(multimap::upper_bound, multimap::equal_range): Likewise.
+	* include/bits/stl_multiset.h (multiset::lower_bound)
+	(multiset::upper_bound, multiset::equal_range): Likewise.
+	* include/bits/stl_set.h (set::lower_bound, set::upper_bound)
+	(set::equal_range): Likewise.
+	* testsuite/23_containers/map/operations/2.cc: Check return types.
+	* testsuite/23_containers/multimap/operations/2.cc: Likewise.
+	* testsuite/23_containers/multiset/operations/2.cc: Likewise.
+	* testsuite/23_containers/set/operations/2.cc: Likewise.
+
+	Backport from mainline
+	2017-01-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78273
+	* include/bits/stl_map.h (map::count<_Kt>(const _Kt&)): Don't assume
+	the heterogeneous comparison can only find one match.
+	* include/bits/stl_set.h (set::count<_Kt>(const _Kt&)): Likewise.
+	* testsuite/23_containers/map/operations/2.cc: Test count works with
+	comparison function that just partitions rather than sorting.
+	* testsuite/23_containers/set/operations/2.cc: Likewise.
+
+2017-02-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78346
+	* include/bits/predefined_ops.h (_Iter_equals_iter): Store iterator
+	not its referent.
+	(_Iter_comp_to_iter): Likewise.
+	* testsuite/25_algorithms/search/78346.cc: New test.
+
+	PR libstdc++/79254
+	* include/bits/basic_string.h [_GLIBCXX_USE_CXX11_ABI]
+	(basic_string::operator=(const basic_string&)): If source object is
+	small just deallocate, otherwise perform new allocation before
+	making any changes.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/copy_assign.cc:
+	Test exception-safety of copy assignment when allocator propagates.
+	* testsuite/21_strings/basic_string/allocator/char/copy_assign.cc:
+	Likewise.
+	* testsuite/util/testsuite_allocator.h (uneq_allocator::swap): Make
+	std::swap visible.
+
+2017-01-22  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	Merge from mainline
+	2017-01-01  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* doc/xml/faq.xml: Update address of C++ ABI link.
+	* doc/xml/manual/abi.xml: Ditto.
+	
+2017-01-16  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Backport from mainline
+	2017-01-16  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	PR libstdc++/78389
+	* include/bits/list.tcc (merge(list&&)): Fix backwards size adjustments.
+	(merge(list&&, _StrictWeakOrdering)): Likewise.
+	* testsuite/23_containers/list/operations/78389.cc: Add
+	better test for the sizes.
+
+2017-01-15  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Backport from mainline
+        2017-01-13  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	PR libstdc++/78389
+	* include/bits/list.tcc (merge(list&&)):
+	Adjust list sizes if the comparator throws.
+	(merge(list&&, _StrictWeakOrdering)): Likewise.
+	* testsuite/23_containers/list/operations/78389.cc: New.
+
+2017-01-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/30_threads/thread/cons/lwg2097.cc: Compile with
+	-std=gnu++11.
+
+	* testsuite/25_algorithms/sort/78991.cc: Compile with -std=gnu++14.
+
+2017-01-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2017-01-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78956
+	* include/std/thread (thread(const thread&&)): Add deleted
+	constructor.
+	* testsuite/30_threads/thread/cons/lwg2097.cc: New test.
+
+2017-01-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78991
+	* include/bits/predefined_ops.h (_Iter_comp_iter, _Iter_comp_val)
+	(_Val_comp_iter, _Iter_equals_val, _Iter_pred, _Iter_comp_to_val)
+	(_Iter_comp_to_iter, _Iter_negate): Make constructors explicit.
+	* testsuite/25_algorithms/sort/78991.cc: New test.
+
+2016-12-19  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Backport from mainline
+	2016-12-19  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Make the perfect-forwarding constructor of a two-element tuple
+	sfinae away when the first argument is an allocator_arg.
+	* include/std/tuple (tuple(_U1&&, _U2&&)): Constrain.
+	* testsuite/20_util/tuple/cons/allocator_with_any.cc: New.
+
+2016-12-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-10-26  Uros Bizjak  <ubizjak@gmail.com>
+
+	* acinclude.m4 (GLIBCXX_CHECK_FILESYSTEM_DEPS): Include <limits.h>
+	for PATH_MAX in realpath test.
+	* configure: Regenerate.
+
+	Backport from mainline
+	2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	* acinclude.m4 (GLIBCXX_CHECK_FILESYSTEM_DEPS): Fix test for sendfile.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+
+2016-12-12  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-12-07  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/18_support/headers/new/synopsis.cc: Add C++14 declarations.
+	* testsuite/18_support/headers/new/synopsis_cxx98.cc: New test.
+
+2016-12-12  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-11-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78465
+	* testsuite/29_atomics/headers/atomic/macros.cc: Replace runtime tests
+	with preprocessor conditions.
+
+2016-12-12  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	PR libstdc++/70975
+	PR libstdc++/71337
+	PR libstdc++/78111
+	* include/experimental/bits/fs_dir.h (recursive_directory_iterator):
+	Overload pop (LWG 2706).
+	* include/experimental/bits/fs_fwd.h (perms::resolve_symlinks):
+	Replace with symlink_nofollow (LWG 2720).
+	* include/experimental/bits/fs_ops.h
+	(exists(const path&, error_code&)): Clear error if status is known
+	(LWG 2725).
+	* include/experimental/bits/fs_path.h (__is_path_src)
+	(_S_range_begin, _S_range_end): Overload to treat string_view as a
+	Source object.
+	(path::operator+=, path::compare): Overload for basic_string_view.
+	(path::path(string_type&&))
+	(path::operator=(string&&), path::assign(string_type&&)): Define
+	construction and assignment from string_type rvalues (LWG 2707).
+	(path::_S_convert<_Iter>(_Iter, _Iter)): Remove cv-qualifiers from
+	iterator's value_type.
+	(path::_S_convert<_Iter>(_Iter __first, __null_terminated)): Likewise.
+	Do not use operation not supported by input iterators.
+	(path::__is_path_iter_src): Add partial specialization for const
+	encoded character types.
+	* src/filesystem/dir.cc (open_dir): Return same value for errors
+	whether ignored or not.
+	(_Dir::advance(error_code*, directory_options)): Return false on
+	error.
+	(directory_iterator(const path&, directory_options, error_code*)):
+	Create end iterator on error (LWG 2723).
+	(recursive_directory_iterator(const path&, directory_options,
+	error_code*)): Likewise.
+	(recursive_directory_iterator::increment): Reset state on error.
+	(recursive_directory_iterator::pop): Define new overload.
+	* src/filesystem/ops.cc (canonical): Set error for non-existent path.
+	(file_time): Take error_code parameter and check for overflow.
+	(close_fd): Remove.
+	(do_copy_file): Report an error if source or destination is not a
+	regular file (LWG 2712). Pass error_code in file_time calls.  Just
+	use close(3) instead of close_fd, to prevent retrying on error.
+	Check if _GLIBCXX_USE_FCHMODAT is defined.
+	[_GLIBCXX_USE_SENDFILE]: Fallback to read/write operations in case
+	sendfile fails with ENOSYS or EINVAL. Pass non-null pointer to
+	sendfile for offset argument.
+	(copy): Update comment to refer to LWG 2681. Implement 2682 and 2683
+	resolutions.
+	(equivalent): Fix error handling and result when only one file exists.
+	(is_empty): Fix error handling.
+	(last_write_time(const path&, error_code&)): Pass error_code in
+	file_time calls.
+	(last_write_time(const path&, file_time_type, error_code&)): Handle
+	negative times correctly.
+	(permissions(const path&, perms, error_code&)): Handle
+	symlink_nofollow.
+	(read_symlink): Add missing ec.clear().
+	(status(const path&, error_code&)): Handle EOVERFLOW.
+	(temp_directory_path): Pass error_code argument to other filesystem
+	operations.
+	* testsuite/experimental/filesystem/iterators/directory_iterator.cc:
+	Update expected behaviour on error.
+	* testsuite/experimental/filesystem/iterators/pop.cc: New.
+	* testsuite/experimental/filesystem/iterators/
+	recursive_directory_iterator.cc: Update expected behaviour on error.
+	* testsuite/experimental/filesystem/operations/copy.cc: Update
+	expected behaviour for copying directories with create_symlinks.
+	Verify that error_code arguments are cleared if there's no error.
+	Remove files created by tests. Test copying directories.
+	* testsuite/experimental/filesystem/operations/copy_file.cc: Remove
+	files created by tests.
+	* testsuite/experimental/filesystem/operations/create_symlink.cc: New.
+	* testsuite/experimental/filesystem/operations/equivalent.cc: New.
+	* testsuite/experimental/filesystem/operations/exists.cc: Test
+	overload taking an error_code.
+	* testsuite/experimental/filesystem/operations/is_empty.cc: New.
+	* testsuite/experimental/filesystem/operations/last_write_time.cc:
+	New.
+	* testsuite/experimental/filesystem/operations/permissions.cc: Test
+	overload taking error_code. Test symlink_nofollow on non-symlinks.
+	* testsuite/experimental/filesystem/operations/read_symlink.cc: New.
+	* testsuite/experimental/filesystem/operations/remove_all.cc: New.
+	* testsuite/experimental/filesystem/operations/temp_directory_path.cc:
+	Add testcase for inaccessible directory.
+	* testsuite/experimental/filesystem/path/construct/range.cc: Test
+	construction from input iterators with const value types.
+	* testsuite/experimental/filesystem/path/construct/string_view.cc:
+	New.
+	* testsuite/util/testsuite_fs.h (scoped_file): Define RAII helper.
+
+2016-12-07  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Backport from mainline
+	2016-12-06  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Constrain optional's __constexpr_addressof in its return type
+	and use a constexpr addressof for optional, if available.
+	* include/experimental/optional (__constexpr_addressof):
+	Constrain in the return type instead of in a template parameter.
+	(_Has_addressof_mem)
+	(_Has_addressof_free, _Has_addressof, __constexpr_addressof):
+	Guard with #ifndef __cpp_lib_addressof_constexpr.
+	(operator->()): Use std::__addressof if it's constexpr.
+
+2016-12-06  Aditya Kumar  <hiraditya@msn.com>
+
+	* src/c++11/shared_ptr.cc (_Sp_locker::_Sp_locker(const void* p)): Add
+	noexcept on constructor.
+	(_Sp_locker::_Sp_locker(const void* p1, const void* p2)): Same.
+
+2016-12-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	Backport from mainline
+	2016-11-21  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* acinclude.m4 (GLIBCXX_CHECK_MATH11_PROTO): Update comments.
+	(__CORRECT_ISO_CPP11_MATH_H_PROTO): Rename to ...
+	(__CORRECT_ISO_CPP11_MATH_H_PROTO_FP): ... this.
+	Add test for C++11 <math.h> integral overloads.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+
+	* include/c_global/cmath [__cplusplus >= 201103L]: Reflect
+	__CORRECT_ISO_CPP11_MATH_H_PROTO to
+	__CORRECT_ISO_CPP11_MATH_H_PROTO_FP rename.
+	* include/c_global/cmath [_GLIBCXX_USE_C99_MATH &&
+	!_GLIBCXX_USE_C99_FP_MACROS_DYNAMIC && __cplusplus >= 201103L]
+	(std::fpclassify): Wrap in !__CORRECT_ISO_CPP11_MATH_H_PROTO_INT.
+	(std::isfinite): Likewise.
+	(std::isinf): Likewise.
+	(std::isnan): Likewise.
+	(std::isnormal): Likewise.
+	(std::signbit): Likewise.
+	(std::isgreater): Likewise.
+	(std::isgreaterequal): Likewise.
+	(std::isless): Likewise.
+	(std::islessequal): Likewise.
+	(std::islessgreater): Likewise.
+	(std::isunordered): Likewise.
+	[__cplusplus >= 201103L && _GLIBCXX_USE_C99_MATH_TR1]
+	(std::acosh): Likewise.
+	(std::asinh): Likewise.
+	(std::atanh): Likewise.
+	(std::cbrt): Likewise.
+	(std::copysign): Likewise.
+	(std::erf): Likewise.
+	(std::erfc): Likewise.
+	(std::exp2): Likewise.
+	(std::expm1): Likewise.
+	(std::fdim): Likewise.
+	(std::fma): Likewise.
+	(std::fmax): Likewise.
+	(std::fmin): Likewise.
+	(std::hypot): Likewise.
+	(std::ilogb): Likewise.
+	(std::lgamma): Likewise.
+	(std::llrint): Likewise.
+	(std::llround): Likewise.
+	(std::log1p): Likewise.
+	(std::log2): Likewise.
+	(std::logb): Likewise.
+	(std::lrint): Likewise.
+	(std::lround): Likewise.
+	(std::nearbyint): Likewise.
+	(std::nextafter): Likewise.
+	(std::nexttoward): Likewise.
+	(std::remainder): Likewise.
+	(std::remquo): Likewise.
+	(std::rint): Likewise.
+	(std::round): Likewise.
+	(std::scalbln): Likewise.
+	(std::scalbn): Likewise.
+	(std::tgamma): Likewise.
+	(std::trunc): Likewise.
+	* include/tr1/cmath [_GLIBCXX_USE_C99_MATH_TR1 && __cplusplus >=
+	201103L]: Reflect __CORRECT_ISO_CPP11_MATH_H_PROTO to
+	__CORRECT_ISO_CPP11_MATH_H_PROTO_FP rename.
+
+2016-11-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/24_iterators/reverse_iterator/71771.cc: Replace calls to
+	C++14 std::rbegin and std::rend.  Use dg-options instead of
+	effective-target.
+
+2016-11-22  Uros Bizjak  <ubizjak@gmail.com>
+
+	* testsuite/Makefile.am
+	(check-DEJAGNU $(check_DEJAGNU_normal_targets)): Fix detection
+	of -j argument.
+	* testsuite/Makefile.in: Regenereate.
+
+2016-11-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/experimental/any/typedefs.cc: Fix license text.
+	* testsuite/experimental/chrono/value.cc: Likewise.
+	* testsuite/experimental/optional/assignment/1.cc: Likewise.
+	* testsuite/experimental/optional/assignment/2.cc: Likewise.
+	* testsuite/experimental/optional/assignment/3.cc: Likewise.
+	* testsuite/experimental/optional/assignment/4.cc: Likewise.
+	* testsuite/experimental/optional/assignment/5.cc: Likewise.
+	* testsuite/experimental/optional/assignment/6.cc: Likewise.
+	* testsuite/experimental/optional/cons/move.cc: Likewise.
+	* testsuite/experimental/optional/cons/value.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/cons/value.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/make_optional.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/observers/1.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/observers/2.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/observers/3.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/observers/4.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/observers/5.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/relops/1.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/relops/2.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/relops/3.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/relops/4.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/relops/5.cc: Likewise.
+	* testsuite/experimental/optional/constexpr/relops/6.cc: Likewise.
+	* testsuite/experimental/optional/make_optional.cc: Likewise.
+	* testsuite/experimental/optional/observers/1.cc: Likewise.
+	* testsuite/experimental/optional/observers/2.cc: Likewise.
+	* testsuite/experimental/optional/observers/3.cc: Likewise.
+	* testsuite/experimental/optional/observers/4.cc: Likewise.
+	* testsuite/experimental/optional/observers/5.cc: Likewise.
+	* testsuite/experimental/optional/relops/1.cc: Likewise.
+	* testsuite/experimental/optional/relops/2.cc: Likewise.
+	* testsuite/experimental/optional/relops/3.cc: Likewise.
+	* testsuite/experimental/optional/relops/4.cc: Likewise.
+	* testsuite/experimental/optional/relops/5.cc: Likewise.
+	* testsuite/experimental/optional/relops/6.cc: Likewise.
+	* testsuite/experimental/optional/requirements.cc: Likewise.
+	* testsuite/experimental/optional/swap/1.cc: Likewise.
+	* testsuite/experimental/optional/typedefs.cc: Likewise.
+	* testsuite/experimental/ratio/value.cc: Likewise.
+	* testsuite/experimental/string_view/typedefs.cc: Likewise.
+	* testsuite/experimental/system_error/value.cc: Likewise.
+	* testsuite/experimental/tuple/tuple_size.cc: Likewise.
+	* testsuite/experimental/type_traits/value.cc: Likewise.
+
+2016-10-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/78052
+	* include/bits/allocator.h (allocator<void>::construct)
+	(allocator<void>::destroy): Define.
+	* testsuite/20_util/allocator/void.cc: New test.
+
+2016-10-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/77990
+	* include/bits/unique_ptr.h (unique_ptr::unique_ptr(pointer)): Set
+	pointer member after value-initialization of tuple.
+	* testsuite/20_util/unique_ptr/assign/48635_neg.cc: Adjust dg-errors.
+	* testsuite/20_util/unique_ptr/cons/77990.cc: New test.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline:
+	2016-10-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/appendix_contributing.xml (contrib.organization):
+	Replace <literallayout> with nested <variablelist> elements. Update
+	some more outdated text.
+	* doc/html/*: Regenerate.
+
+	Backport from mainline:
+	2016-10-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/appendix_contributing.xml (contrib.organization):
+	Describe other subdirectories and add markup. Remove outdated
+	reference to check-script target.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline:
+	2016-10-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/26_numerics/random/default_random_engine.cc: Use VERIFY
+	instead of assert.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline:
+	2016-10-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/string_view (basic_string_view::_S_compare):
+	Remove redundant const from return type.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline:
+	2016-10-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/functional (boyer_moore_searcher)
+	(__boyer_moore_map_base, __boyer_moore_array_base): Qualify containers
+	with _GLIBCXX_STD_C.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline:
+	2016-08-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/77322
+	* doc/xml/manual/intro.xml: Document DR 2062 change.
+	* include/std/functional (function::swap): Add noexcept.
+	(swap(function<Res(Args...)&, function<Res(Args...)&)): Likewise.
+	* testsuite/20_util/function/77322.cc: New test.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline:
+	2016-08-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/20_util/reference_wrapper/invoke-2.cc: Fix invalid dg-do
+	directive and use effective target instead of dg-options.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline:
+	2016-08-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/72820
+	* include/std/functional (_Function_base::_Base_manager::_M_clone):
+	Qualify new operator.
+	* testsuite/20_util/function/cons/72820.cc: New test.
+
+2016-10-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/77994
+	* include/experimental/algorithm (experimental::sample): Convert size
+	argument to iterator difference type. Fix invalid use of input
+	iterator. Defend against overloaded comma operator.
+
+2016-10-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/70564
+	* include/experimental/functional (_Not_fn): Add second parameter to
+	disambiguate copying from initialization by not_fn.
+	(not_fn): Add second argument to initialization.
+	* testsuite/experimental/functional/not_fn.cc: Copy call wrapper using
+	direct-initialization. Test abstract class.
+
+	PR libstdc++/77864
+	* include/bits/stl_map.h (map::map()): Use nothrow constructibility
+	of comparison function in conditional noexcept.
+	* include/bits/stl_multimap.h (multimap::multimap()): Likewise.
+	* include/bits/stl_multiset.h (multiset::multiset()): Likewise.
+	* include/bits/stl_set.h (set::set()): Likewise.
+	* testsuite/23_containers/map/cons/noexcept_default_construct.cc:
+	New test.
+	* testsuite/23_containers/multimap/cons/noexcept_default_construct.cc:
+	Likewise.
+	* testsuite/23_containers/multiset/cons/noexcept_default_construct.cc:
+	Likewise.
+	* testsuite/23_containers/set/cons/noexcept_default_construct.cc:
+	Likewise.
+
+2016-10-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/68323
+	PR libstdc++/77794
+	* config/abi/pre/gnu-versioned-namespace.ver: Add export for
+	__cxa_thread_atexit.
+	* include/Makefile.am: Add <experimental/lfts_config.h>
+	* include/Makefile.in: Regenerate.
+	* src/filesystem/Makefile.in: Likewise.
+	* include.bits/basic_string.h: Fix nesting of versioned namespaces.
+	* include/bits/c++config: Declare versioned namespaces for literals.
+	* include/bits/regex.h (basic_regex, match_results): Add workarounds
+	for PR c++/59256.
+	* include/bits/uniform_int_dist.h: Fix nesting of versioned namespace.
+	* include/std/chrono: Likewise.
+	* include/std/complex: Likewise.
+	* include/experimental/fs_fwd.h: Declare versioned namespace.
+	* include/experimental/lfts_config.h: Declare versioned namespaces.
+	* include/experimental/algorithm: Include
+	<experimental/lfts_config.h>.
+	* include/experimental/any: Likewise.
+	* include/experimental/chrono: Likewise.
+	* include/experimental/functional: Likewise.
+	* include/experimental/optional: Likewise.
+	* include/experimental/ratio: Likewise.
+	* include/experimental/system_error: Likewise.
+	* include/experimental/tuple: Likewise.
+	* include/experimental/type_traits: Likewise.
+	* include/experimental/string_view: Likewise. Fix nesting of
+	versioned namespaces.
+	* include/experimental/string_view.tcc: Reopen inline namespace for
+	non-inline function definitions.
+	* testsuite/17_intro/using_namespace_std_exp_neg.cc: New test.
+	* testsuite/20_util/duration/literals/range.cc: Adjust dg-error line.
+	* testsuite/experimental/any/misc/any_cast_neg.cc: Likewise.
+	* testsuite/ext/profile/mutex_extensions_neg.cc: Likewise.
+
+2016-09-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/77686
+	* include/std/functional (_Any_data): Add may_alias attribute.
+
+2016-09-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/debug/safe_iterator.h (_Safe_iterator::operator++()): Fix
+	lifetime of lock.
+
+2016-09-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	* python/libstdcxx/v6/xmethods.py (DequeWorkerBase.__init__)
+	(DequeWorkerBase.index, VectorWorkerBase.get): Use // for division.
+
+2016-09-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/77645
+	* python/libstdcxx/v6/xmethods.py (DequeWorkerBase.__init__)
+	(DequeWorkerBase.index, VectorWorkerBase.get): Cast results of
+	division to int to work with Python 3.
+
+2016-08-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/23_containers/map/77334.cc: Use dg-options for C++11.
+
+	PR libstdc++/77334
+	* include/bits/stl_tree.h (_Rb_tree::_M_move_assign): New functions.
+	(_Rb_tree::operator=(_Rb_tree&&)): Dispatch to _M_move_assign.
+	Include _Compare in noexcept.
+	* testsuite/23_containers/map/77334.cc: New test.
+
+2016-08-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/api.xml: Replace hardcoded links for specific versions with
+	link to docs for all releases.
+	* doc/html/*: Regenerate.
+
+	* include/bits/stl_iterator.h
+	(operator-(reverse_iterator<Iter>, reverse_iterator<Iter>): Constrain
+	for C++11 and later.
+	* testsuite/24_iterators/reverse_iterator/71771.cc: New test.
+
+2016-08-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-08-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/functional (function::_Callable): Use lvalue in
+	result_of expression.
+	* testsuite/20_util/function/cons/refqual.cc: New test.
+
+	Backport from mainline
+	2016-07-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71964
+	* include/bits/stl_tree.h (_Rb_tree(_Rb_tree&&)): Move allocator.
+	* testsuite/23_containers/set/allocator/71964.cc: New test.
+
+	Backport from mainline
+	2016-08-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/21_strings/basic_string/allocator/wchar_t/copy.cc:
+	Remove reundant check for _GLIBCXX_USE_WCHAR_T and fix char type.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/copy_assign.cc:
+	Likewise.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/minimal.cc:
+	Likewise.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/move.cc:
+	Likewise.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/move_assign.cc:
+	Likewise.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/noexcept.cc:
+	Likewise.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/swap.cc:
+	Likewise.
+
+	Backport from mainline
+	2016-01-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69243
+	* include/std/functional (_Function_base::_M_not_empty_function):
+	Change overloads for pointers to take arguments by value.
+	* testsuite/20_util/function/cons/57465.cc: Add tests for
+	pointer-to-member cases.
+
+	* doc/xml/manual/status_cxx2011.xml: Change "mainline GCC SVN" to
+	refer to the release series.
+	* doc/xml/manual/status_cxx2014.xml: Likewise.
+	* doc/html/manual/status.xml: Regenerate.
+
+	* testsuite/lib/libstdc++.exp (check_v3_target_filesystem_ts): Improve
+	comments.
+
+2016-08-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/lib/libstdc++.exp (v3-build_support): Add
+	-fno-lto to additional flags for compiling libtestc++.a objects.
+
+2016-07-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-06-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71320
+	* src/filesystem/ops.cc (permissions(const path&, perms, error_code&)):
+	Add or remove permissions according to perms argument.
+	* testsuite/experimental/filesystem/operations/permissions.cc: New
+	test.
+
+2016-07-12  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2015-10-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/21_strings/basic_string/allocator/char/minimal.cc: Guard
+	explicit instantiation with check for new ABI.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/minimal.cc:
+	Likewise. Use wchar_t as char_type.
+
+	Backport from mainline
+	2015-09-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/58265
+	* doc/xml/manual/intro.xml: Document LWG 2063 and 2064 resolutions.
+	* doc/html/manual/bugs.html: Regenerate.
+	* include/bits/basic_string.h (basic_string): Implement N4258. Add
+	correct exception-specifications and propagate allocators correctly.
+	* include/bits/basic_string.tcc (basic_string::swap): Propagate
+	allocators correctly.
+	* include/debug/string (__gnu_debug::basic_string): Add correct
+	exceptions-specifications and allcoator-extended constructors.
+	* testsuite/21_strings/basic_string/allocator/char/copy.cc: New.
+	* testsuite/21_strings/basic_string/allocator/char/copy_assign.cc:
+	New.
+	* testsuite/21_strings/basic_string/allocator/char/minimal.cc: New.
+	* testsuite/21_strings/basic_string/allocator/char/move.cc: New.
+	* testsuite/21_strings/basic_string/allocator/char/move_assign.cc:
+	New.
+	* testsuite/21_strings/basic_string/allocator/char/noexcept.cc: New.
+	* testsuite/21_strings/basic_string/allocator/char/swap.cc: New.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/copy.cc: New.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/copy_assign.cc:
+	New.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/minimal.cc: New.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/move.cc: New.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/move_assign.cc:
+	New.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/noexcept.cc: New.
+	* testsuite/21_strings/basic_string/allocator/wchar_t/swap.cc: New.
+	* testsuite/util/testsuite_allocator.h (tracker_allocator): Define
+	defaulted assignment operators.
+
+2016-07-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2015-06-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/html/ext/lwg-active.html: Update to R93.
+	* doc/html/ext/lwg-closed.html: Likewise.
+	* doc/html/ext/lwg-defects.html: Likewise.
+	* doc/html/manual/*: Regenerate.
+	* doc/xml/manual/intro.xml: Document status of several DRs.
+
+2016-07-04  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Backport from mainline
+	2016-07-04  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	PR libstdc++/71313
+	* src/filesystem/ops.cc (remove_all(const path&, error_code&)):
+	Call remove_all for children of a directory.
+	* testsuite/experimental/filesystem/operations/create_directories.cc:
+	Adjust.
+
 2016-06-03  Release Manager
 
 	* GCC 5.4.0 released.
