@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.72 2017/11/06 15:27:09 cherry Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.73 2017/11/11 21:03:01 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.72 2017/11/06 15:27:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.73 2017/11/11 21:03:01 riastradh Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -514,8 +514,8 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 		goto abort_resume;
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	sc->sc_ih = intr_establish_xname(0, &xen_pic, sc->sc_evtchn, IST_LEVEL, IPL_NET,
-	    &xennet_handler, sc, true, device_xname(dev));
+	sc->sc_ih = intr_establish_xname(0, &xen_pic, sc->sc_evtchn, IST_LEVEL,
+	    IPL_NET, &xennet_handler, sc, false, device_xname(dev));
 	KASSERT(sc->sc_ih != NULL);
 	return true;
 
