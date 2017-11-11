@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.110 2017/11/11 17:37:03 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.111 2017/11/11 19:25:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.110 2017/11/11 17:37:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.111 2017/11/11 19:25:29 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1210,7 +1210,7 @@ intr_num_handlers(struct intrsource *isp)
 #else /* XEN */
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg,
+    int type, int level, int (*handler)(void *), void *arg,
     bool known_mpsafe)
 {
 
@@ -1220,7 +1220,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 
 void *
 intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg,
+    int type, int level, int (*handler)(void *), void *arg,
     bool known_mpsafe, const char *xname)
 {
 	if (pic->pic_type == PIC_XEN) {
@@ -1228,8 +1228,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 
 		event_set_handler(pin, handler, arg, level, xname);
 
-		rih = kmem_zalloc(sizeof(struct intrhand),
-	    cold ? KM_NOSLEEP : KM_SLEEP);
+		rih = kmem_zalloc(sizeof(*rih), cold ? KM_NOSLEEP : KM_SLEEP);
 		if (rih == NULL) {
 			printf("%s: can't allocate handler info\n", __func__);
 			return NULL;
@@ -1244,7 +1243,6 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		 * All that goes away when we nuke event_set_handler()
 		 * et. al. and unify with x86/intr.c
 		 */
-		
 		rih->ih_pin = pin; /* port */
 		rih->ih_fun = handler;
 		rih->ih_arg = arg;
@@ -1273,8 +1271,9 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 #else /* NIOAPIC */
 		return NULL;
 #endif /* NIOAPIC */
-	} else
+	} else {
 		snprintf(evname, sizeof(evname), "irq%d", legacy_irq);
+	}
 
 	evtchn = xen_pirq_alloc((intr_handle_t *)&legacy_irq, type);
 	pih = pirq_establish(legacy_irq & 0xff, evtchn, handler, arg, level,
@@ -1315,7 +1314,7 @@ intr_disestablish(struct intrhand *ih)
 	} else {
 		where = xc_unicast(0, intr_disestablish_xcall, ih, NULL, ci);
 		xc_wait(where);
-	}	
+	}
 	if (!msipic_is_msi_pic(isp->is_pic) && intr_num_handlers(isp) < 1) {
 		intr_free_io_intrsource_direct(isp);
 	}
@@ -1323,7 +1322,8 @@ intr_disestablish(struct intrhand *ih)
 	kmem_free(ih, sizeof(*ih));
 #else /* XEN */
 	if (ih->pic_type == PIC_XEN) {
-		event_remove_handler(ih->ih_pin, ih->ih_realfun, ih->ih_realarg);
+		event_remove_handler(ih->ih_pin, ih->ih_realfun,
+		    ih->ih_realarg);
 		kmem_free(ih, sizeof(*ih));
 		return;
 	}
