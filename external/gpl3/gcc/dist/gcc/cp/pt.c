@@ -6912,11 +6912,12 @@ coerce_template_parameter_pack (tree parms,
 
   /* Convert the remaining arguments, which will be a part of the
      parameter pack "parm".  */
+  int first_pack_arg = arg_idx;
   for (; arg_idx < nargs; ++arg_idx)
     {
       tree arg = TREE_VEC_ELT (inner_args, arg_idx);
       tree actual_parm = TREE_VALUE (parm);
-      int pack_idx = arg_idx - parm_idx;
+      int pack_idx = arg_idx - first_pack_arg;
 
       if (packed_parms)
         {
@@ -6945,12 +6946,12 @@ coerce_template_parameter_pack (tree parms,
       TREE_VEC_ELT (packed_args, pack_idx) = arg;
     }
 
-  if (arg_idx - parm_idx < TREE_VEC_LENGTH (packed_args)
+  if (arg_idx - first_pack_arg < TREE_VEC_LENGTH (packed_args)
       && TREE_VEC_LENGTH (packed_args) > 0)
     {
       if (complain & tf_error)
 	error ("wrong number of template arguments (%d, should be %d)",
-	       arg_idx - parm_idx, TREE_VEC_LENGTH (packed_args));
+	       arg_idx - first_pack_arg, TREE_VEC_LENGTH (packed_args));
       return error_mark_node;
     }
 
@@ -12987,7 +12988,7 @@ tsubst_init (tree init, tree decl, tree args,
 
   init = tsubst_expr (init, args, complain, in_decl, false);
 
-  if (!init)
+  if (!init && TREE_TYPE (decl) != error_mark_node)
     {
       /* If we had an initializer but it
 	 instantiated to nothing,
@@ -13287,7 +13288,8 @@ tsubst_copy (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 	      len = TREE_VEC_LENGTH (expanded);
 	      /* Set TREE_USED for the benefit of -Wunused.  */
 	      for (int i = 0; i < len; i++)
-		TREE_USED (TREE_VEC_ELT (expanded, i)) = true;
+		if (DECL_P (TREE_VEC_ELT (expanded, i)))
+		  TREE_USED (TREE_VEC_ELT (expanded, i)) = true;
 	    }
 
 	  if (expanded == error_mark_node)
@@ -18805,7 +18807,7 @@ unify (tree tparms, tree targs, tree parm, tree arg, int strict,
       /* An unresolved overload is a nondeduced context.  */
       if (is_overloaded_fn (parm) || type_unknown_p (parm))
 	return unify_success (explain_p);
-      gcc_assert (EXPR_P (parm));
+      gcc_assert (EXPR_P (parm) || TREE_CODE (parm) == TRAIT_EXPR);
 
       /* We must be looking at an expression.  This can happen with
 	 something like:
@@ -20409,7 +20411,10 @@ instantiate_decl (tree d, int defer_ok,
   else
     {
       deleted_p = false;
-      pattern_defined = ! DECL_IN_AGGR_P (code_pattern);
+      if (DECL_CLASS_SCOPE_P (code_pattern))
+	pattern_defined = ! DECL_IN_AGGR_P (code_pattern);
+      else
+	pattern_defined = ! DECL_EXTERNAL (code_pattern);
     }
 
   /* We may be in the middle of deferred access check.  Disable it now.  */
