@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/11/05 01:16:16 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2017/11/11 07:49:43 kamil Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -11,7 +11,8 @@ GNUHOSTDIST=	${DIST}
 SRCS=		lto-plugin.c hashtab.c simple-object.c pex-unix.c \
 		pex-common.c argv.c make-temp-file.c concat.c \
 		simple-object-elf.c simple-object-mach-o.c \
-		simple-object-coff.c simple-object-xcoff.c xstrerror.c
+		simple-object-coff.c simple-object-xcoff.c xstrerror.c \
+		safe-ctype.c
 
 CPPFLAGS+=	-I${DIST}/include -I. 
 CPPFLAGS+=	-DHAVE_CONFIG_H
