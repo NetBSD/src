@@ -3118,7 +3118,18 @@ get_computation_aff (struct loop *loop,
       var = fold_convert (uutype, var);
     }
 
-  if (!constant_multiple_of (ustep, cstep, &rat))
+  /* Ratio is 1 when computing the value of biv cand by itself.
+     We can't rely on constant_multiple_of in this case because the
+     use is created after the original biv is selected.  The call
+     could fail because of inconsistent fold behavior.  See PR68021
+     for more information.  */
+  if (cand->pos == IP_ORIGINAL && cand->incremented_at == use->stmt)
+    {
+      gcc_assert (is_gimple_assign (use->stmt));
+      gcc_assert (gimple_assign_lhs (use->stmt) == cand->var_after);
+      rat = 1;
+    }
+  else if (!constant_multiple_of (ustep, cstep, &rat))
     return false;
 
   /* In case both UBASE and CBASE are shortened to UUTYPE from some common
@@ -6617,7 +6628,11 @@ rewrite_use_address (struct ivopts_data *data,
     base_hint = var_at_stmt (data->current_loop, cand, use->stmt);
 
   iv = var_at_stmt (data->current_loop, cand, use->stmt);
-  ref = create_mem_ref (&bsi, TREE_TYPE (*use->op_p), &aff,
+  tree type = TREE_TYPE (*use->op_p);
+  unsigned int align = get_object_alignment (*use->op_p);
+  if (align != TYPE_ALIGN (type))
+    type = build_aligned_type (type, align);
+  ref = create_mem_ref (&bsi, type, &aff,
 			reference_alias_ptr_type (*use->op_p),
 			iv, base_hint, data->speed);
   copy_ref_info (ref, *use->op_p);
