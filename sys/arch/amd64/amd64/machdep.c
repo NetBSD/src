@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.275 2017/11/04 08:50:47 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.276 2017/11/11 12:51:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2017/11/04 08:50:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2017/11/11 12:51:06 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1507,6 +1507,7 @@ init_bootspace(void)
 	extern char __rodata_start;
 	extern char __data_start;
 	extern char __kernel_end;
+	size_t i = 0;
 
 	memset(&bootspace, 0, sizeof(bootspace));
 
@@ -1514,17 +1515,23 @@ init_bootspace(void)
 	bootspace.head.pa = KERNTEXTOFF - KERNBASE;
 	bootspace.head.sz = 0;
 
-	bootspace.text.va = KERNTEXTOFF;
-	bootspace.text.pa = KERNTEXTOFF - KERNBASE;
-	bootspace.text.sz = (size_t)&__rodata_start - KERNTEXTOFF;
+	bootspace.segs[i].type = BTSEG_TEXT;
+	bootspace.segs[i].va = KERNTEXTOFF;
+	bootspace.segs[i].pa = KERNTEXTOFF - KERNBASE;
+	bootspace.segs[i].sz = (size_t)&__rodata_start - KERNTEXTOFF;
+	i++;
 
-	bootspace.rodata.va = (vaddr_t)&__rodata_start;
-	bootspace.rodata.pa = (paddr_t)&__rodata_start - KERNBASE;
-	bootspace.rodata.sz = (size_t)&__data_start - (size_t)&__rodata_start;
+	bootspace.segs[i].type = BTSEG_RODATA;
+	bootspace.segs[i].va = (vaddr_t)&__rodata_start;
+	bootspace.segs[i].pa = (paddr_t)&__rodata_start - KERNBASE;
+	bootspace.segs[i].sz = (size_t)&__data_start - (size_t)&__rodata_start;
+	i++;
 
-	bootspace.data.va = (vaddr_t)&__data_start;
-	bootspace.data.pa = (paddr_t)&__data_start - KERNBASE;
-	bootspace.data.sz = (size_t)&__kernel_end - (size_t)&__data_start;
+	bootspace.segs[i].type = BTSEG_DATA;
+	bootspace.segs[i].va = (vaddr_t)&__data_start;
+	bootspace.segs[i].pa = (paddr_t)&__data_start - KERNBASE;
+	bootspace.segs[i].sz = (size_t)&__kernel_end - (size_t)&__data_start;
+	i++;
 
 	bootspace.boot.va = (vaddr_t)&__kernel_end;
 	bootspace.boot.pa = (paddr_t)&__kernel_end - KERNBASE;
@@ -2009,6 +2016,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 	const vaddr_t v = (vaddr_t)ptr;
 	vaddr_t kva, kva_end;
+	size_t i;
 
 	kva = bootspace.head.va;
 	kva_end = kva + bootspace.head.sz;
@@ -2017,30 +2025,16 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		return 0;
 	}
 
-	kva = bootspace.text.va;
-	kva_end = kva + bootspace.text.sz;
-	if (v >= kva && v < kva_end) {
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		kva = bootspace.segs[i].va;
+		kva_end = kva + bootspace.segs[i].sz;
 		*handled = true;
-		if (prot & VM_PROT_WRITE) {
-			return EFAULT;
+		if (bootspace.segs[i].type == BTSEG_TEXT ||
+		    bootspace.segs[i].type == BTSEG_RODATA) {
+			if (prot & VM_PROT_WRITE) {
+				return EFAULT;
+			}
 		}
-		return 0;
-	}
-
-	kva = bootspace.rodata.va;
-	kva_end = kva + bootspace.rodata.sz;
-	if (v >= kva && v < kva_end) {
-		*handled = true;
-		if (prot & VM_PROT_WRITE) {
-			return EFAULT;
-		}
-		return 0;
-	}
-
-	kva = bootspace.data.va;
-	kva_end = kva + bootspace.data.sz;
-	if (v >= kva && v < kva_end) {
-		*handled = true;
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.70 2017/10/29 10:01:22 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.71 2017/11/11 12:51:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -111,6 +111,12 @@
 #include <sys/kcpuset.h>
 #include <uvm/pmap/pmap_pvt.h>
 
+#define BTSEG_NONE	0
+#define BTSEG_TEXT	1
+#define BTSEG_RODATA	2
+#define BTSEG_DATA	3
+#define BTSPACE_NSEGS	64
+
 struct bootspace {
 	struct {
 		vaddr_t va;
@@ -120,20 +126,11 @@ struct bootspace {
 
 	/* Kernel segments. */
 	struct {
+		int type;
 		vaddr_t va;
 		paddr_t pa;
 		size_t sz;
-	} text;
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} rodata;
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} data;
+	} segs[BTSPACE_NSEGS];
 
 	/*
 	 * The area used by the early kernel bootstrap. It contains the kernel

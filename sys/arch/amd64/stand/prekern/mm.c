@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.9 2017/11/09 15:24:39 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.10 2017/11/11 12:51:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -121,13 +121,20 @@ mm_mprotect(vaddr_t startva, size_t size, int prot)
 void
 mm_bootspace_mprotect()
 {
-	/*
-	 * Remap the kernel segments with proper permissions.
-	 */
-	mm_mprotect(bootspace.text.va, bootspace.text.sz,
-	    MM_PROT_READ|MM_PROT_EXECUTE);
-	mm_mprotect(bootspace.rodata.va, bootspace.rodata.sz,
-	    MM_PROT_READ);
+	int prot;
+	size_t i;
+
+	/* Remap the kernel segments with proper permissions. */
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type == BTSEG_TEXT) {
+			prot = MM_PROT_READ|MM_PROT_EXECUTE;
+		} else if (bootspace.segs[i].type == BTSEG_RODATA) {
+			prot = MM_PROT_READ;
+		} else {
+			continue;
+		}
+		mm_mprotect(bootspace.segs[i].va, bootspace.segs[i].sz, prot);
+	}
 
 	print_state(true, "Segments protection updated");
 }
@@ -276,6 +283,42 @@ mm_randva_kregion(size_t size)
 	return randva;
 }
 
+static paddr_t
+bootspace_getend()
+{
+	paddr_t pa, max = 0;
+	size_t i;
+
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type == BTSEG_NONE) {
+			continue;
+		}
+		pa = bootspace.segs[i].pa + bootspace.segs[i].sz;
+		if (pa > max)
+			max = pa;
+	}
+
+	return max;
+}
+
+static void
+bootspace_addseg(int type, vaddr_t va, paddr_t pa, size_t sz)
+{
+	size_t i;
+
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type == BTSEG_NONE) {
+			bootspace.segs[i].type = type;
+			bootspace.segs[i].va = va;
+			bootspace.segs[i].pa = pa;
+			bootspace.segs[i].sz = sz;
+			return;
+		}
+	}
+
+	fatal("bootspace_addseg: segments full");
+}
+
 static void
 mm_map_segments()
 {
@@ -302,9 +345,7 @@ mm_map_segments()
 	memset((void *)(randva + elfsz), PAD_TEXT, size - elfsz);
 
 	/* Register the values in bootspace */
-	bootspace.text.va = randva;
-	bootspace.text.pa = pa;
-	bootspace.text.sz = size;
+	bootspace_addseg(BTSEG_TEXT, randva, pa, size);
 
 	/*
 	 * Kernel rodata segment.
@@ -325,9 +366,7 @@ mm_map_segments()
 	memset((void *)(randva + elfsz), PAD_RODATA, size - elfsz);
 
 	/* Register the values in bootspace */
-	bootspace.rodata.va = randva;
-	bootspace.rodata.pa = pa;
-	bootspace.rodata.sz = size;
+	bootspace_addseg(BTSEG_RODATA, randva, pa, size);
 
 	/*
 	 * Kernel data segment.
@@ -348,9 +387,7 @@ mm_map_segments()
 	memset((void *)(randva + elfsz), PAD_DATA, size - elfsz);
 
 	/* Register the values in bootspace */
-	bootspace.data.va = randva;
-	bootspace.data.pa = pa;
-	bootspace.data.sz = size;
+	bootspace_addseg(BTSEG_DATA, randva, pa, size);
 }
 
 static void
@@ -370,7 +407,7 @@ mm_map_boot()
 	randva = mm_randva_kregion(size);
 
 	/* Enter the area and build the ELF info */
-	bootpa = bootspace.data.pa + bootspace.data.sz;
+	bootpa = bootspace_getend();
 	size = (pa_avail - bootpa);
 	npages = size / PAGE_SIZE;
 	for (i = 0; i < npages; i++) {
