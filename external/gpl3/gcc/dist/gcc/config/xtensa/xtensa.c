@@ -634,6 +634,7 @@ xtensa_mem_offset (unsigned v, machine_mode mode)
     case HImode:
       return xtensa_uimm8x2 (v);
 
+    case DImode:
     case DFmode:
       return (xtensa_uimm8x4 (v) && xtensa_uimm8x4 (v + 4));
 
@@ -1808,7 +1809,8 @@ xtensa_emit_call (int callop, rtx *operands)
   rtx tgt = operands[callop];
 
   if (GET_CODE (tgt) == CONST_INT)
-    sprintf (result, "call%d\t0x%lx", WINDOW_SIZE, INTVAL (tgt));
+    sprintf (result, "call%d\t" HOST_WIDE_INT_PRINT_HEX,
+	     WINDOW_SIZE, INTVAL (tgt));
   else if (register_operand (tgt, VOIDmode))
     sprintf (result, "callx%d\t%%%d", WINDOW_SIZE, callop);
   else
@@ -1891,23 +1893,23 @@ xtensa_tls_module_base (void)
 static rtx_insn *
 xtensa_call_tls_desc (rtx sym, rtx *retp)
 {
-  rtx fn, arg, a10;
+  rtx fn, arg, a_io;
   rtx_insn *call_insn, *insns;
 
   start_sequence ();
   fn = gen_reg_rtx (Pmode);
   arg = gen_reg_rtx (Pmode);
-  a10 = gen_rtx_REG (Pmode, 10);
+  a_io = gen_rtx_REG (Pmode, WINDOW_SIZE + 2);
 
   emit_insn (gen_tls_func (fn, sym));
   emit_insn (gen_tls_arg (arg, sym));
-  emit_move_insn (a10, arg);
-  call_insn = emit_call_insn (gen_tls_call (a10, fn, sym, const1_rtx));
-  use_reg (&CALL_INSN_FUNCTION_USAGE (call_insn), a10);
+  emit_move_insn (a_io, arg);
+  call_insn = emit_call_insn (gen_tls_call (a_io, fn, sym, const1_rtx));
+  use_reg (&CALL_INSN_FUNCTION_USAGE (call_insn), a_io);
   insns = get_insns ();
   end_sequence ();
 
-  *retp = a10;
+  *retp = a_io;
   return insns;
 }
 
@@ -2379,14 +2381,14 @@ print_operand (FILE *file, rtx x, int letter)
 
     case 'L':
       if (GET_CODE (x) == CONST_INT)
-	fprintf (file, "%ld", (32 - INTVAL (x)) & 0x1f);
+	fprintf (file, HOST_WIDE_INT_PRINT_DEC, (32 - INTVAL (x)) & 0x1f);
       else
 	output_operand_lossage ("invalid %%L value");
       break;
 
     case 'R':
       if (GET_CODE (x) == CONST_INT)
-	fprintf (file, "%ld", INTVAL (x) & 0x1f);
+	fprintf (file, HOST_WIDE_INT_PRINT_DEC, INTVAL (x) & 0x1f);
       else
 	output_operand_lossage ("invalid %%R value");
       break;
@@ -2400,7 +2402,7 @@ print_operand (FILE *file, rtx x, int letter)
 
     case 'd':
       if (GET_CODE (x) == CONST_INT)
-	fprintf (file, "%ld", INTVAL (x));
+	fprintf (file, HOST_WIDE_INT_PRINT_DEC, INTVAL (x));
       else
 	output_operand_lossage ("invalid %%d value");
       break;
@@ -2455,7 +2457,7 @@ print_operand (FILE *file, rtx x, int letter)
       else if (GET_CODE (x) == MEM)
 	output_address (XEXP (x, 0));
       else if (GET_CODE (x) == CONST_INT)
-	fprintf (file, "%ld", INTVAL (x));
+	fprintf (file, HOST_WIDE_INT_PRINT_DEC, INTVAL (x));
       else
 	output_addr_const (file, x);
     }
@@ -4165,7 +4167,10 @@ hwloop_optimize (hwloop_info loop)
       entry_after = BB_END (entry_bb);
       while (DEBUG_INSN_P (entry_after)
              || (NOTE_P (entry_after)
-                 && NOTE_KIND (entry_after) != NOTE_INSN_BASIC_BLOCK))
+                 && NOTE_KIND (entry_after) != NOTE_INSN_BASIC_BLOCK
+		 /* Make sure we don't split a call and its corresponding
+		    CALL_ARG_LOCATION note.  */
+                 && NOTE_KIND (entry_after) != NOTE_INSN_CALL_ARG_LOCATION))
         entry_after = PREV_INSN (entry_after);
 
       emit_insn_after (seq, entry_after);
