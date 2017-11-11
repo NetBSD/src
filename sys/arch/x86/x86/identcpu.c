@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.66 2017/11/11 09:10:19 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.67 2017/11/11 11:00:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.66 2017/11/11 09:10:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.67 2017/11/11 11:00:46 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -752,8 +752,6 @@ cpu_probe_fpu(struct cpu_info *ci)
 #endif	/* i386 */
 
 	x86_fpu_save = FPU_SAVE_FXSAVE;
-
-	fpuinit_mxcsr_mask();
 
 	/* See if xsave (for AVX) is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
