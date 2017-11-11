@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.139 2017/11/08 17:52:22 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.140 2017/11/11 09:10:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.139 2017/11/08 17:52:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.140 2017/11/11 09:10:19 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -541,7 +541,6 @@ cpu_childdetached(device_t self, device_t child)
 void
 cpu_init(struct cpu_info *ci)
 {
-	extern int x86_fpu_save;
 	uint32_t cr4 = 0;
 
 	lcr0(rcr0() | CR0_WP);
@@ -583,10 +582,6 @@ cpu_init(struct cpu_info *ci)
 	if (cr4) {
 		cr4 |= rcr4();
 		lcr4(cr4);
-	}
-
-	if (x86_fpu_save >= FPU_SAVE_FXSAVE) {
-		fpuinit_mxcsr_mask();
 	}
 
 	/* If xsave is enabled, enable all fpu features */
