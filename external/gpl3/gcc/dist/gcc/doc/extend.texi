@@ -8625,10 +8625,10 @@ together with checking whether the operations overflowed.
 @deftypefn {Built-in Function} bool __builtin_add_overflow (@var{type1} a, @var{type2} b, @var{type3} *res)
 @deftypefnx {Built-in Function} bool __builtin_sadd_overflow (int a, int b, int *res)
 @deftypefnx {Built-in Function} bool __builtin_saddl_overflow (long int a, long int b, long int *res)
-@deftypefnx {Built-in Function} bool __builtin_saddll_overflow (long long int a, long long int b, long int *res)
+@deftypefnx {Built-in Function} bool __builtin_saddll_overflow (long long int a, long long int b, long long int *res)
 @deftypefnx {Built-in Function} bool __builtin_uadd_overflow (unsigned int a, unsigned int b, unsigned int *res)
 @deftypefnx {Built-in Function} bool __builtin_uaddl_overflow (unsigned long int a, unsigned long int b, unsigned long int *res)
-@deftypefnx {Built-in Function} bool __builtin_uaddll_overflow (unsigned long long int a, unsigned long long int b, unsigned long int *res)
+@deftypefnx {Built-in Function} bool __builtin_uaddll_overflow (unsigned long long int a, unsigned long long int b, unsigned long long int *res)
 
 These built-in functions promote the first two operands into infinite precision signed
 type and perform addition on those promoted operands.  The result is then
@@ -8651,10 +8651,10 @@ after addition, conditional jump on carry etc.
 @deftypefn {Built-in Function} bool __builtin_sub_overflow (@var{type1} a, @var{type2} b, @var{type3} *res)
 @deftypefnx {Built-in Function} bool __builtin_ssub_overflow (int a, int b, int *res)
 @deftypefnx {Built-in Function} bool __builtin_ssubl_overflow (long int a, long int b, long int *res)
-@deftypefnx {Built-in Function} bool __builtin_ssubll_overflow (long long int a, long long int b, long int *res)
+@deftypefnx {Built-in Function} bool __builtin_ssubll_overflow (long long int a, long long int b, long long int *res)
 @deftypefnx {Built-in Function} bool __builtin_usub_overflow (unsigned int a, unsigned int b, unsigned int *res)
 @deftypefnx {Built-in Function} bool __builtin_usubl_overflow (unsigned long int a, unsigned long int b, unsigned long int *res)
-@deftypefnx {Built-in Function} bool __builtin_usubll_overflow (unsigned long long int a, unsigned long long int b, unsigned long int *res)
+@deftypefnx {Built-in Function} bool __builtin_usubll_overflow (unsigned long long int a, unsigned long long int b, unsigned long long int *res)
 
 These built-in functions are similar to the add overflow checking built-in
 functions above, except they perform subtraction, subtract the second argument
@@ -8665,10 +8665,10 @@ from the first one, instead of addition.
 @deftypefn {Built-in Function} bool __builtin_mul_overflow (@var{type1} a, @var{type2} b, @var{type3} *res)
 @deftypefnx {Built-in Function} bool __builtin_smul_overflow (int a, int b, int *res)
 @deftypefnx {Built-in Function} bool __builtin_smull_overflow (long int a, long int b, long int *res)
-@deftypefnx {Built-in Function} bool __builtin_smulll_overflow (long long int a, long long int b, long int *res)
+@deftypefnx {Built-in Function} bool __builtin_smulll_overflow (long long int a, long long int b, long long int *res)
 @deftypefnx {Built-in Function} bool __builtin_umul_overflow (unsigned int a, unsigned int b, unsigned int *res)
 @deftypefnx {Built-in Function} bool __builtin_umull_overflow (unsigned long int a, unsigned long int b, unsigned long int *res)
-@deftypefnx {Built-in Function} bool __builtin_umulll_overflow (unsigned long long int a, unsigned long long int b, unsigned long int *res)
+@deftypefnx {Built-in Function} bool __builtin_umulll_overflow (unsigned long long int a, unsigned long long int b, unsigned long long int *res)
 
 These built-in functions are similar to the add overflow checking built-in
 functions above, except they perform multiplication, instead of addition.
@@ -9041,7 +9041,7 @@ is enabled. Cilk Plus can be enabled using the @option{-fcilkplus} flag.
 
 Further details and examples about these built-in functions are described 
 in the Cilk Plus language manual which can be found at 
-@uref{http://www.cilkplus.org}.
+@uref{https://www.cilkplus.org}.
 
 @node Other Builtins
 @section Other Built-in Functions Provided by GCC
@@ -12486,14 +12486,14 @@ The following built-in functions are available for the PowerPC family
 of processors when hardware decimal floating point
 (@option{-mhard-dfp}) is available:
 @smallexample
-_Decimal64 __builtin_dxex (_Decimal64);
-_Decimal128 __builtin_dxexq (_Decimal128);
+long long __builtin_dxex (_Decimal64);
+long long __builtin_dxexq (_Decimal128);
 _Decimal64 __builtin_ddedpd (int, _Decimal64);
 _Decimal128 __builtin_ddedpdq (int, _Decimal128);
 _Decimal64 __builtin_denbcd (int, _Decimal64);
 _Decimal128 __builtin_denbcdq (int, _Decimal128);
-_Decimal64 __builtin_diex (_Decimal64, _Decimal64);
-_Decimal128 _builtin_diexq (_Decimal128, _Decimal128);
+_Decimal64 __builtin_diex (long long, _Decimal64);
+_Decimal128 _builtin_diexq (long long, _Decimal128);
 _Decimal64 __builtin_dscli (_Decimal64, int);
 _Decimal128 __builtin_dscliq (_Decimal128, int);
 _Decimal64 __builtin_dscri (_Decimal64, int);
@@ -14638,20 +14638,21 @@ void vec_vsx_st (vector bool char, int, vector bool char *);
 void vec_vsx_st (vector bool char, int, unsigned char *);
 void vec_vsx_st (vector bool char, int, signed char *);
 
-vector double vec_xxpermdi (vector double, vector double, int);
-vector float vec_xxpermdi (vector float, vector float, int);
-vector long long vec_xxpermdi (vector long long, vector long long, int);
+vector double vec_xxpermdi (vector double, vector double, const int);
+vector float vec_xxpermdi (vector float, vector float, const int);
+vector long long vec_xxpermdi (vector long long, vector long long, const int);
 vector unsigned long long vec_xxpermdi (vector unsigned long long,
-                                        vector unsigned long long, int);
-vector int vec_xxpermdi (vector int, vector int, int);
+                                        vector unsigned long long, const int);
+vector int vec_xxpermdi (vector int, vector int, const int);
 vector unsigned int vec_xxpermdi (vector unsigned int,
-                                  vector unsigned int, int);
-vector short vec_xxpermdi (vector short, vector short, int);
+                                  vector unsigned int, const int);
+vector short vec_xxpermdi (vector short, vector short, const int);
 vector unsigned short vec_xxpermdi (vector unsigned short,
-                                    vector unsigned short, int);
-vector signed char vec_xxpermdi (vector signed char, vector signed char, int);
+                                    vector unsigned short, const int);
+vector signed char vec_xxpermdi (vector signed char, vector signed char,
+                                 const int);
 vector unsigned char vec_xxpermdi (vector unsigned char,
-                                   vector unsigned char, int);
+                                   vector unsigned char, const int);
 
 vector double vec_xxsldi (vector double, vector double, int);
 vector float vec_xxsldi (vector float, vector float, int);
@@ -17221,7 +17222,7 @@ unsigned long long _pext_u64 (unsigned long long, unsigned long long)
 The following built-in functions are available when @option{-mlzcnt} is used.
 All of them generate the machine instruction that is part of the name.
 @smallexample
-unsigned short __builtin_ia32_lzcnt_16(unsigned short);
+unsigned short __builtin_ia32_lzcnt_u16(unsigned short);
 unsigned int __builtin_ia32_lzcnt_u32(unsigned int);
 unsigned long long __builtin_ia32_lzcnt_u64 (unsigned long long);
 @end smallexample

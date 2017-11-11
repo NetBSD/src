@@ -59,7 +59,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Forward declarations.  */
 
 static tree cp_genericize_r (tree *, int *, void *);
-static void cp_genericize_tree (tree*);
+static void cp_genericize_tree (tree*, bool);
 
 /* Local declarations.  */
 
@@ -592,7 +592,7 @@ cp_gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 				  init, VEC_INIT_EXPR_VALUE_INIT (*expr_p),
 				  from_array,
 				  tf_warning_or_error);
-	cp_genericize_tree (expr_p);
+	cp_genericize_tree (expr_p, false);
 	ret = GS_OK;
 	input_location = loc;
       }
@@ -906,6 +906,7 @@ struct cp_genericize_data
   vec<tree> bind_expr_stack;
   struct cp_genericize_omp_taskreg *omp_ctx;
   bool no_sanitize_p;
+  bool handle_invisiref_parm_p;
 };
 
 /* Perform any pre-gimplification lowering of C++ front end trees to
@@ -926,7 +927,8 @@ cp_genericize_r (tree *stmt_p, int *walk_subtrees, void *data)
       && omp_var_to_track (stmt))
     omp_cxx_notice_variable (wtd->omp_ctx, stmt);
 
-  if (is_invisiref_parm (stmt)
+  if (wtd->handle_invisiref_parm_p
+      && is_invisiref_parm (stmt)
       /* Don't dereference parms in a thunk, pass the references through. */
       && !(DECL_THUNK_P (current_function_decl)
 	   && TREE_CODE (stmt) == PARM_DECL))
@@ -1279,7 +1281,7 @@ cp_genericize_r (tree *stmt_p, int *walk_subtrees, void *data)
 /* Lower C++ front end trees to GENERIC in T_P.  */
 
 static void
-cp_genericize_tree (tree* t_p)
+cp_genericize_tree (tree* t_p, bool handle_invisiref_parm_p)
 {
   struct cp_genericize_data wtd;
 
@@ -1287,6 +1289,7 @@ cp_genericize_tree (tree* t_p)
   wtd.bind_expr_stack.create (0);
   wtd.omp_ctx = NULL;
   wtd.no_sanitize_p = false;
+  wtd.handle_invisiref_parm_p = handle_invisiref_parm_p;
   cp_walk_tree (t_p, cp_genericize_r, &wtd, NULL);
   delete wtd.p_set;
   wtd.bind_expr_stack.release ();
@@ -1337,14 +1340,11 @@ cp_ubsan_maybe_instrument_return (tree fndecl)
     }
   if (t == NULL_TREE)
     return;
-  t = DECL_SAVED_TREE (fndecl);
-  if (TREE_CODE (t) == BIND_EXPR
-      && TREE_CODE (BIND_EXPR_BODY (t)) == STATEMENT_LIST)
-    {
-      tree_stmt_iterator i = tsi_last (BIND_EXPR_BODY (t));
-      t = ubsan_instrument_return (DECL_SOURCE_LOCATION (fndecl));
-      tsi_link_after (&i, t, TSI_NEW_STMT);
-    }
+  tree *p = &DECL_SAVED_TREE (fndecl);
+  if (TREE_CODE (*p) == BIND_EXPR)
+    p = &BIND_EXPR_BODY (*p);
+  t = ubsan_instrument_return (DECL_SOURCE_LOCATION (fndecl));
+  append_to_statement_list (t, p);
 }
 
 void
@@ -1384,7 +1384,8 @@ cp_genericize (tree fndecl)
 
 	  if (outer)
 	    for (var = BLOCK_VARS (outer); var; var = DECL_CHAIN (var))
-	      if (DECL_NAME (t) == DECL_NAME (var)
+	      if (VAR_P (var)
+		  && DECL_NAME (t) == DECL_NAME (var)
 		  && DECL_HAS_VALUE_EXPR_P (var)
 		  && DECL_VALUE_EXPR (var) == t)
 		{
@@ -1402,12 +1403,12 @@ cp_genericize (tree fndecl)
   /* Expand all the array notations here.  */
   if (flag_cilkplus 
       && contains_array_notation_expr (DECL_SAVED_TREE (fndecl)))
-    DECL_SAVED_TREE (fndecl) = 
-      expand_array_notation_exprs (DECL_SAVED_TREE (fndecl));
+    DECL_SAVED_TREE (fndecl)
+      = expand_array_notation_exprs (DECL_SAVED_TREE (fndecl));
 
   /* We do want to see every occurrence of the parms, so we can't just use
      walk_tree's hash functionality.  */
-  cp_genericize_tree (&DECL_SAVED_TREE (fndecl));
+  cp_genericize_tree (&DECL_SAVED_TREE (fndecl), true);
 
   if (flag_sanitize & SANITIZE_RETURN
       && do_ubsan_in_current_function ())
@@ -1622,7 +1623,8 @@ cxx_omp_const_qual_no_mutable (tree decl)
 
 	  if (outer)
 	    for (var = BLOCK_VARS (outer); var; var = DECL_CHAIN (var))
-	      if (DECL_NAME (decl) == DECL_NAME (var)
+	      if (VAR_P (var)
+		  && DECL_NAME (decl) == DECL_NAME (var)
 		  && (TYPE_MAIN_VARIANT (type)
 		      == TYPE_MAIN_VARIANT (TREE_TYPE (var))))
 		{

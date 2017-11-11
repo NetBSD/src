@@ -27,8 +27,7 @@ presence of the required flag.
 </para>
 
 <para>
-This page describes the C++11 support in mainline GCC SVN, not in any
-particular release.
+This page describes the C++11 support in the GCC 5 series.
 </para>
 
 <!-- Status is Yes or No, Broken/Partial-->
@@ -1008,11 +1007,10 @@ particular release.
       <entry/>
     </row>
     <row>
-      <?dbhtml bgcolor="#B0B0B0" ?>
       <entry>20.12.4</entry>
       <entry>Scoped allocator adaptor members</entry>
-      <entry>Partial</entry>
-      <entry>OUTERMOST is not recursive.</entry>
+      <entry>Y</entry>
+      <entry/>
     </row>
     <row>
       <entry>20.12.5</entry>
