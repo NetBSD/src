@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.59 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.60 2017/11/11 16:49:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.59 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60 2017/11/11 16:49:13 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -572,6 +572,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 
 	is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), is);
+
 	AHCIDEBUG_PRINT((
 	    "ahci_intr_port %s port %d is 0x%x CI 0x%x SACT 0x%x TFD 0x%x\n",
 	    AHCINAME(sc),
@@ -604,8 +605,10 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 				    >> AHCI_P_CMD_CCS_SHIFT;
 			}
 
-			aprint_error("%s port %d: active %x is 0x%x tfd 0x%x\n",
-			    AHCINAME(sc), chp->ch_channel, sact, is, tfd);
+			AHCIDEBUG_PRINT((
+			    "%s port %d: TFE: sact 0x%x is 0x%x tfd 0x%x\n",
+			    AHCINAME(sc), chp->ch_channel, sact, is, tfd),
+			    DEBUG_INTR);
 		} else {
 			/* mark an error, and set BSY */
 			tfd = (WDCE_ABRT << AHCI_P_TFD_ERR_SHIFT) |
@@ -613,9 +616,10 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		}
 
 		if (is & AHCI_P_IX_IFS) {
-			aprint_error("%s port %d: SERR 0x%x\n",
+			AHCIDEBUG_PRINT(("%s port %d: SERR 0x%x\n",
 			    AHCINAME(sc), chp->ch_channel,
-			    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel)));
+			    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel))),
+			    DEBUG_INTR);
 		}
 
 		if (!achp->ahcic_recovering)
@@ -628,8 +632,8 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			if (!achp->ahcic_recovering)
 				recover = true;
 
-			aprint_error("%s port %d: transfer aborted 0x%x\n",
-			    AHCINAME(sc), chp->ch_channel, tfd);
+			AHCIDEBUG_PRINT(("%s port %d: transfer aborted 0x%x\n",
+			    AHCINAME(sc), chp->ch_channel, tfd), DEBUG_INTR);
 
 		}
 	} else {
