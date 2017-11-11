@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.107 2017/11/11 07:46:52 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.108 2017/11/11 07:52:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.107 2017/11/11 07:46:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108 2017/11/11 07:52:41 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1226,7 +1226,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 	if (pic->pic_type == PIC_XEN) {
 		struct intrhand *rih;
 		event_set_handler(pin, handler,
-		    arg, IPL_CLOCK, "clock");
+		    arg, level, "XEN");
 
 		rih = kmem_zalloc(sizeof(struct intrhand),
 	    cold ? KM_NOSLEEP : KM_SLEEP);
