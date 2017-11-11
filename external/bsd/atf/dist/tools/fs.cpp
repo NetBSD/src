@@ -707,11 +707,17 @@ impl::cleanup(const path& p)
 impl::path
 impl::get_current_dir(void)
 {
-    std::auto_ptr< char > cwd;
-    cwd.reset(getcwd(NULL, 0));
-    if (cwd.get() == NULL)
+    char *cwd = getcwd(NULL, 0);
+    if (cwd == NULL)
         throw tools::system_error(IMPL_NAME "::get_current_dir()",
                                 "getcwd() failed", errno);
 
-    return path(cwd.get());
+    try {
+        impl::path p(cwd);
+        free(cwd);
+        return p;
+    } catch(...) {
+        free(cwd);
+        throw;
+    }
 }
