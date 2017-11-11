@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.97 2017/11/07 18:35:57 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.98 2017/11/11 03:58:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.97 2017/11/07 18:35:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.98 2017/11/11 03:58:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -982,6 +982,10 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		}
 		mutex_enter(&fdp->fd_lock);
 		ff = fdp->fd_dt->dt_ff[fd];
+		if (ff->ff_refcnt & FR_CLOSING) {
+			error = EBADF;
+			goto doneunlock;
+		}
 		if (fd <= fdp->fd_lastkqfile) {
 			SLIST_FOREACH(kn, &ff->ff_knlist, kn_link) {
 				if (kq == kn->kn_kq &&
@@ -1096,8 +1100,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	} else {
 		if (kn == NULL) {
 			error = ENOENT;
-		 	mutex_exit(&fdp->fd_lock);
-			goto done;
+			goto doneunlock;
 		}
 		if (kev->flags & EV_DELETE) {
 			/* knote_detach() drops fdp->fd_lock */
@@ -1118,6 +1121,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	if ((kev->flags & EV_ENABLE)) {
 		knote_enqueue(kn);
 	}
+doneunlock:
 	mutex_exit(&fdp->fd_lock);
  done:
 	rw_exit(&kqueue_filter_lock);
