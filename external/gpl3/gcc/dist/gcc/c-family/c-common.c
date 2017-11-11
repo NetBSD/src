@@ -7561,7 +7561,7 @@ handle_mode_attribute (tree *node, tree name, tree args,
 	  return NULL_TREE;
 	}
 
-      *node = typefm;
+      *node = build_qualified_type (typefm, TYPE_QUALS (type));
     }
 
   return NULL_TREE;
@@ -7940,9 +7940,14 @@ handle_alias_ifunc_attribute (bool is_alias, tree *node, tree name, tree args,
 	TREE_STATIC (decl) = 1;
 
       if (!is_alias)
-	/* ifuncs are also aliases, so set that attribute too. */
-	DECL_ATTRIBUTES (decl)
-	  = tree_cons (get_identifier ("alias"), args, DECL_ATTRIBUTES (decl));
+	{
+	  /* ifuncs are also aliases, so set that attribute too.  */
+	  DECL_ATTRIBUTES (decl)
+	    = tree_cons (get_identifier ("alias"), args,
+			 DECL_ATTRIBUTES (decl));
+	  DECL_ATTRIBUTES (decl) = tree_cons (get_identifier ("ifunc"),
+					      NULL, DECL_ATTRIBUTES (decl));
+	}
     }
   else
     {
@@ -9321,7 +9326,6 @@ parse_optimize_options (tree args, bool attr_p)
   bool ret = true;
   unsigned opt_argc;
   unsigned i;
-  int saved_flag_strict_aliasing;
   const char **opt_argv;
   struct cl_decoded_option *decoded_options;
   unsigned int decoded_options_count;
@@ -9414,8 +9418,6 @@ parse_optimize_options (tree args, bool attr_p)
   for (i = 1; i < opt_argc; i++)
     opt_argv[i] = (*optimize_args)[i];
 
-  saved_flag_strict_aliasing = flag_strict_aliasing;
-
   /* Now parse the options.  */
   decode_cmdline_options_to_array_default_mask (opt_argc, opt_argv,
 						&decoded_options,
@@ -9425,9 +9427,6 @@ parse_optimize_options (tree args, bool attr_p)
 		  input_location, global_dc);
 
   targetm.override_options_after_change();
-
-  /* Don't allow changing -fstrict-aliasing.  */
-  flag_strict_aliasing = saved_flag_strict_aliasing;
 
   optimize_args->truncate (0);
   return ret;
@@ -10479,9 +10478,13 @@ complete_array_type (tree *ptype, tree initial_value, bool do_default)
 void 
 c_common_mark_addressable_vec (tree t)
 {   
+  if (TREE_CODE (t) == C_MAYBE_CONST_EXPR)
+    t = C_MAYBE_CONST_EXPR_EXPR (t);
   while (handled_component_p (t))
     t = TREE_OPERAND (t, 0);
-  if (TREE_CODE (t) != VAR_DECL && TREE_CODE (t) != PARM_DECL)
+  if (!VAR_P (t)
+      && TREE_CODE (t) != PARM_DECL
+      && TREE_CODE (t) != COMPOUND_LITERAL_EXPR)
     return;
   TREE_ADDRESSABLE (t) = 1;
 }
@@ -10518,10 +10521,9 @@ sync_resolve_size (tree function, vec<tree, va_gc> *params)
     }
 
   type = TREE_TYPE ((*params)[0]);
-  if (TREE_CODE (type) == ARRAY_TYPE)
+  if (TREE_CODE (type) == ARRAY_TYPE && c_dialect_cxx ())
     {
       /* Force array-to-pointer decay for C++.  */
-      gcc_assert (c_dialect_cxx());
       (*params)[0] = default_conversion ((*params)[0]);
       type = TREE_TYPE ((*params)[0]);
     }
@@ -10676,10 +10678,9 @@ get_atomic_generic_size (location_t loc, tree function,
 
   /* Get type of first parameter, and determine its size.  */
   type_0 = TREE_TYPE ((*params)[0]);
-  if (TREE_CODE (type_0) == ARRAY_TYPE)
+  if (TREE_CODE (type_0) == ARRAY_TYPE && c_dialect_cxx ())
     {
       /* Force array-to-pointer decay for C++.  */
-      gcc_assert (c_dialect_cxx());
       (*params)[0] = default_conversion ((*params)[0]);
       type_0 = TREE_TYPE ((*params)[0]);
     }
@@ -10718,6 +10719,12 @@ get_atomic_generic_size (location_t loc, tree function,
       /* __atomic_compare_exchange has a bool in the 4th position, skip it.  */
       if (n_param == 6 && x == 3)
         continue;
+      if (TREE_CODE (type) == ARRAY_TYPE && c_dialect_cxx ())
+	{
+	  /* Force array-to-pointer decay for C++.  */
+	  (*params)[x] = default_conversion ((*params)[x]);
+	  type = TREE_TYPE ((*params)[x]);
+	}
       if (!POINTER_TYPE_P (type))
 	{
 	  error_at (loc, "argument %d of %qE must be a pointer type", x + 1,
@@ -11775,7 +11782,12 @@ set_underlying_type (tree x)
       tt = build_variant_type_copy (tt);
       TYPE_STUB_DECL (tt) = TYPE_STUB_DECL (DECL_ORIGINAL_TYPE (x));
       TYPE_NAME (tt) = x;
-      TREE_USED (tt) = TREE_USED (x);
+
+      /* Mark the type as used only when its type decl is decorated
+	 with attribute unused.  */
+      if (lookup_attribute ("unused", DECL_ATTRIBUTES (x)))
+	TREE_USED (tt) = 1;
+
       TREE_TYPE (x) = tt;
     }
 }
