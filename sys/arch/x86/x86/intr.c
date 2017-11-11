@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.108 2017/11/11 07:52:41 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.109 2017/11/11 17:26:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108 2017/11/11 07:52:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.109 2017/11/11 17:26:51 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1209,24 +1209,24 @@ intr_num_handlers(struct intrsource *isp)
 
 #else /* XEN */
 void *
-intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg,
-    bool known_mpsafe, const char *xname)
-{
-	/* XXX xname registration not supported */
-	return intr_establish(legacy_irq, pic, pin, type, level, handler, arg,
-	    known_mpsafe);
-}
-
-void *
 intr_establish(int legacy_irq, struct pic *pic, int pin,
     int type, int level, int (*handler)(void *) , void *arg,
     bool known_mpsafe)
 {
+
+	return intr_establish_xname(legacy_irq, pic, pin, type, level,
+	    handler, arg, known_mpsafe, "XEN");
+}
+
+void *
+intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
+    int type, int level, int (*handler)(void *) , void *arg,
+    bool known_mpsafe, const char *xname)
+{
 	if (pic->pic_type == PIC_XEN) {
 		struct intrhand *rih;
-		event_set_handler(pin, handler,
-		    arg, level, "XEN");
+
+		event_set_handler(pin, handler, arg, level, xname);
 
 		rih = kmem_zalloc(sizeof(struct intrhand),
 	    cold ? KM_NOSLEEP : KM_SLEEP);
