@@ -6467,7 +6467,15 @@ move_stmt_op (tree *tp, int *walk_subtrees, void *data)
 		*tp = t = out->to;
 	    }
 
-	  DECL_CONTEXT (t) = p->to_context;
+	  /* For FORCED_LABELs we can end up with references from other
+	     functions if some SESE regions are outlined.  It is UB to
+	     jump in between them, but they could be used just for printing
+	     addresses etc.  In that case, DECL_CONTEXT on the label should
+	     be the function containing the glabel stmt with that LABEL_DECL,
+	     rather than whatever function a reference to the label was seen
+	     last time.  */
+	  if (!FORCED_LABEL (t) && !DECL_NONLOCAL (t))
+	    DECL_CONTEXT (t) = p->to_context;
 	}
       else if (p->remap_decls_p)
 	{
@@ -6586,6 +6594,21 @@ move_stmt_r (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
     case GIMPLE_OMP_RETURN:
     case GIMPLE_OMP_CONTINUE:
       break;
+
+    case GIMPLE_LABEL:
+      {
+	/* For FORCED_LABEL, move_stmt_op doesn't adjust DECL_CONTEXT,
+	   so that such labels can be referenced from other regions.
+	   Make sure to update it when seeing a GIMPLE_LABEL though,
+	   that is the owner of the label.  */
+	walk_gimple_op (stmt, move_stmt_op, wi);
+	*handled_ops_p = true;
+	tree label = gimple_label_label (as_a <glabel *> (stmt));
+	if (FORCED_LABEL (label) || DECL_NONLOCAL (label))
+	  DECL_CONTEXT (label) = p->to_context;
+      }
+      break;
+
     default:
       if (is_gimple_omp (stmt))
 	{
@@ -8623,16 +8646,14 @@ execute_fixup_cfg (void)
   gcov_type count_scale;
   edge e;
   edge_iterator ei;
+  cgraph_node *node = cgraph_node::get (current_function_decl);
 
   count_scale
-      = GCOV_COMPUTE_SCALE (cgraph_node::get (current_function_decl)->count,
-			    ENTRY_BLOCK_PTR_FOR_FN (cfun)->count);
+    = GCOV_COMPUTE_SCALE (node->count, ENTRY_BLOCK_PTR_FOR_FN (cfun)->count);
 
-  ENTRY_BLOCK_PTR_FOR_FN (cfun)->count =
-			    cgraph_node::get (current_function_decl)->count;
-  EXIT_BLOCK_PTR_FOR_FN (cfun)->count =
-			    apply_scale (EXIT_BLOCK_PTR_FOR_FN (cfun)->count,
-                                       count_scale);
+  ENTRY_BLOCK_PTR_FOR_FN (cfun)->count = node->count;
+  EXIT_BLOCK_PTR_FOR_FN (cfun)->count
+    = apply_scale (EXIT_BLOCK_PTR_FOR_FN (cfun)->count, count_scale);
 
   FOR_EACH_EDGE (e, ei, ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs)
     e->count = apply_scale (e->count, count_scale);
@@ -8725,10 +8746,19 @@ execute_fixup_cfg (void)
 	    {
 	      if (stmt && is_gimple_call (stmt))
 		gimple_call_set_ctrl_altering (stmt, false);
-	      stmt = gimple_build_call
-		  (builtin_decl_implicit (BUILT_IN_UNREACHABLE), 0);
+	      tree fndecl = builtin_decl_implicit (BUILT_IN_UNREACHABLE);
+	      stmt = gimple_build_call (fndecl, 0);
 	      gimple_stmt_iterator gsi = gsi_last_bb (bb);
 	      gsi_insert_after (&gsi, stmt, GSI_NEW_STMT);
+	      if (!cfun->after_inlining)
+		{
+		  gcall *call_stmt = dyn_cast <gcall *> (stmt);
+		  int freq
+		    = compute_call_stmt_bb_frequency (current_function_decl,
+						      bb);
+		  node->create_edge (cgraph_node::get_create (fndecl),
+				     call_stmt, bb->count, freq);
+		}
 	    }
 	}
     }

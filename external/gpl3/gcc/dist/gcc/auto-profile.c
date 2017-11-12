@@ -19,10 +19,8 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-
-#include <string.h>
-#include <map>
-#include <set>
+#define INCLUDE_MAP
+#define INCLUDE_SET
 #include "system.h"
 
 #include "coretypes.h"
@@ -390,7 +388,7 @@ get_function_decl_from_block (tree block)
 {
   tree decl;
 
-  if (LOCATION_LOCUS (BLOCK_SOURCE_LOCATION (block) == UNKNOWN_LOCATION))
+  if (LOCATION_LOCUS (BLOCK_SOURCE_LOCATION (block)) == UNKNOWN_LOCATION)
     return NULL_TREE;
 
   for (decl = BLOCK_ABSTRACT_ORIGIN (block);
@@ -1469,7 +1467,9 @@ afdo_vpt_for_early_inline (stmt_set *promoted_stmts)
 
   if (has_vpt)
     {
-      optimize_inline_calls (current_function_decl);
+      unsigned todo = optimize_inline_calls (current_function_decl);
+      if (todo & TODO_update_ssa_any)
+       update_ssa (TODO_update_ssa);
       return true;
     }
 
