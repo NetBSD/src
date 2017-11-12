@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.64 2017/07/03 21:28:48 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.65 2017/11/12 21:14:33 riastradh Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -825,8 +825,8 @@ Free a tag created by
 .Fn bus_dmatag_subregion .
 .El
 .Sh SEE ALSO
-.Xr bus_space 9 ,
-.Xr mb 9
+.Xr membar_ops 3 ,
+.Xr bus_space 9
 .Rs
 .%A Jason Thorpe
 .%T "A Machine-Independent DMA Framework for NetBSD"

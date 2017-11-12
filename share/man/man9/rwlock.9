@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwlock.9,v 1.16 2017/06/03 08:44:59 abhinav Exp $
+.\"	$NetBSD: rwlock.9,v 1.17 2017/11/12 21:14:33 riastradh Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -208,9 +208,9 @@ The header file
 describes the public interface, and interfaces that machine-dependent
 code must provide to support RW locks.
 .Sh SEE ALSO
+.Xr membar_ops 3 ,
 .Xr lockstat 8 ,
 .Xr condvar 9 ,
-.Xr mb 9 ,
 .Xr mutex 9
 .Rs
 .%A Jim Mauro
