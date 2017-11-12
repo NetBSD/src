@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.9,v 1.18 2017/05/30 13:49:01 abhinav Exp $
+.\"     $NetBSD: intro.9,v 1.19 2017/11/12 21:07:15 riastradh Exp $
 .\"
 .\" Copyright (c) 1997, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -207,6 +207,10 @@ TCP congestion control API.
 See
 .Xr tcp_congctl 9 .
 .Sh LOCKING AND INTERRUPT CONTROL
+See
+.Xr locking 9
+for an overview.
+.Pp
 Condition variables.
 See
 .Xr condvar 9 .
@@ -217,7 +221,7 @@ See
 .Pp
 Memory barriers.
 See
-.Xr mb 9 .
+.Xr membar_ops 3 .
 .Pp
 Mutual exclusion primitives.
 See
