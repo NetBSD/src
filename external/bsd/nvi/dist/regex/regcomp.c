@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.6 2017/10/29 15:29:34 christos Exp $ */
+/*	$NetBSD: regcomp.c,v 1.7 2017/11/12 16:33:31 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.4 (Berkeley) 3/19/94";
 #endif /* LIBC_SCCS and not lint */
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.6 2017/10/29 15:29:34 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.7 2017/11/12 16:33:31 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ static void p_b_cclass __P((struct parse *p, cset *cs));
 static void p_b_eclass __P((struct parse *p, cset *cs));
 static char p_b_symbol __P((struct parse *p));
 static char p_b_coll_elem __P((struct parse *p, int endc));
-static char othercase __P((int ch));
+static RCHAR_T othercase __P((int ch));
 static void bothcases __P((struct parse *p, int ch));
 static void ordinary __P((struct parse *p, int ch));
 static void nonnewline __P((struct parse *p));
@@ -946,7 +946,7 @@ p_b_coll_elem(struct parse *p, int endc)
  - othercase - return the case counterpart of an alphabetic
  == static char othercase(int ch);
  */
-static char			/* if no counterpart, return ch */
+static RCHAR_T			/* if no counterpart, return ch */
 othercase(int ch)
 {
 	assert(ISALPHA2(ch));
