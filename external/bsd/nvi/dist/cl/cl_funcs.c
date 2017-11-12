@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: cl_funcs.c,v 1.5 2017/11/12 15:33:03 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_funcs.c,v 10.72 2002/03/02 23:18:33 skimo Exp  (Berkeley) Date: 2002/03/02 23:18:33 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_funcs.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: cl_funcs.c,v 1.5 2017/11/12 15:33:03 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -500,17 +500,21 @@ cl_keyval(SCR *sp, scr_keyval_t val, CHAR_T *chp, int *dnep)
 	clp = CLP(sp);
 	switch (val) {
 	case KEY_VEOF:
-		*dnep = (*chp = clp->orig.c_cc[VEOF]) == _POSIX_VDISABLE;
+		*dnep =
+		    (*chp = clp->orig.c_cc[VEOF]) == (CHAR_T)_POSIX_VDISABLE;
 		break;
 	case KEY_VERASE:
-		*dnep = (*chp = clp->orig.c_cc[VERASE]) == _POSIX_VDISABLE;
+		*dnep =
+		    (*chp = clp->orig.c_cc[VERASE]) == (CHAR_T)_POSIX_VDISABLE;
 		break;
 	case KEY_VKILL:
-		*dnep = (*chp = clp->orig.c_cc[VKILL]) == _POSIX_VDISABLE;
+		*dnep = 
+		    (*chp = clp->orig.c_cc[VKILL]) == (CHAR_T)_POSIX_VDISABLE;
 		break;
 #ifdef VWERASE
 	case KEY_VWERASE:
-		*dnep = (*chp = clp->orig.c_cc[VWERASE]) == _POSIX_VDISABLE;
+		*dnep =
+		    (*chp = clp->orig.c_cc[VWERASE]) == (CHAR_T)_POSIX_VDISABLE;
 		break;
 #endif
 	default:
