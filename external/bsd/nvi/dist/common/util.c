@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: util.c,v 1.4 2017/11/12 15:26:33 rin Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: util.c,v 10.22 2001/06/25 15:19:12 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:12 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: util.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.4 2017/11/12 15:26:33 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -169,7 +169,7 @@ enum nresult
 nget_uslong(SCR *sp, u_long *valp, const CHAR_T *p, CHAR_T **endp, int base)
 {
 	errno = 0;
-	*valp = STRTOUL(p, (RCHAR_T **)endp, base);
+	*valp = STRTOUL(p, endp, base);
 	if (errno == 0)
 		return (NUM_OK);
 	if (errno == ERANGE && *valp == ULONG_MAX)
@@ -187,7 +187,7 @@ enum nresult
 nget_slong(SCR *sp, long int *valp, const CHAR_T *p, CHAR_T **endp, int base)
 {
 	errno = 0;
-	*valp = STRTOL(p, (RCHAR_T **)endp, base);
+	*valp = STRTOL(p, endp, base);
 	if (errno == 0)
 		return (NUM_OK);
 	if (errno == ERANGE) {
