@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.110 2017/11/09 09:33:28 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.111 2017/11/12 05:11:36 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5976,7 +5976,6 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 
 	if (ixgbe_num_queues != 0)
 		queues = ixgbe_num_queues;
-	/* Set max queues to 8 when autoconfiguring */
 	else
 		queues = min(queues,
 		    min(mac->max_tx_queues, mac->max_rx_queues));
