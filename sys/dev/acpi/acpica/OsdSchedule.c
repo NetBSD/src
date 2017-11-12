@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.18 2016/01/09 21:14:42 christos Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.19 2017/11/12 02:59:55 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.18 2016/01/09 21:14:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.19 2017/11/12 02:59:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -168,12 +168,14 @@ AcpiOsStall(UINT32 Microseconds)
 UINT64
 AcpiOsGetTimer(void)
 {
+	static UINT64 xt;
 	struct timeval tv;
 	UINT64 t;
 
 	/* XXX During early boot there is no (decent) timer available yet. */
-	if (cold)
-		panic("acpi: timer op not yet supported during boot");
+	if (cold) {
+		return xt += 100;
+	}
 
 	microtime(&tv);
 	t = (UINT64)10 * tv.tv_usec;
