@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2017/10/10 19:17:57 christos Exp $
+# $NetBSD: Makefile,v 1.17 2017/11/12 03:02:15 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -25,9 +25,11 @@ DPSRCS= aslcompilerparse.y aslcompilerlex.c aslcompilerparse.c \
 .PATH:	${TOPDIR}
 SRCS+= \
 	adfile.c \
+	aslallocate.c \
 	aslanalyze.c \
 	aslascii.c \
 	aslbtypes.c \
+	aslcache.c \
 	aslcodegen.c \
 	aslcompile.c \
 	aslcompilerlex.c \
