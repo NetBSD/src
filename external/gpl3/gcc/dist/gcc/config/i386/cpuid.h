@@ -63,7 +63,7 @@
 #define bit_MMXEXT	(1 << 22)
 #define bit_LM		(1 << 29)
 #define bit_3DNOWP	(1 << 30)
-#define bit_3DNOW	(1 << 31)
+#define bit_3DNOW	(1u << 31)
 
 /* Extended Features (%eax == 7) */
 /* %ebx */
@@ -79,7 +79,6 @@
 #define bit_RDSEED	(1 << 18)
 #define bit_ADX	(1 << 19)
 #define bit_AVX512IFMA	(1 << 21)
-#define bit_PCOMMIT	(1 << 22)
 #define bit_CLFLUSHOPT	(1 << 23)
 #define bit_CLWB	(1 << 24)
 #define bit_AVX512PF	(1 << 26)
@@ -87,7 +86,7 @@
 #define bit_AVX512CD	(1 << 28)
 #define bit_SHA		(1 << 29)
 #define bit_AVX512BW	(1 << 30)
-#define bit_AVX512VL	(1 << 31)
+#define bit_AVX512VL	(1u << 31)
 
 /* %ecx */
 #define bit_PREFETCHWT1	  (1 << 0)
@@ -168,7 +167,7 @@
 
 
 /* Return highest supported input value for cpuid instruction.  ext can
-   be either 0x0 or 0x8000000 to return highest supported value for
+   be either 0x0 or 0x80000000 to return highest supported value for
    basic or extended cpuid information.  Function returns 0 if cpuid
    is not supported or whatever cpuid returns in eax register.  If sig
    pointer is non-null, then first four bytes of the signature
