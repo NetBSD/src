@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.16 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: condvar.9,v 1.17 2017/11/12 20:04:28 riastradh Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -207,15 +207,24 @@ Similar to
 .Fn cv_timedwait
 and
 .Fn cv_timedwait_sig ,
-however the
-.Fa bintime
-argument is decremented in place with the amount of time actually waited,
-and on return contains the amount of time remaining.
+but
+.Fa bt
+is decremented in place with the amount of time actually waited, and on
+return contains the amount of time remaining, possibly negative if the
+timeout expired.
 .Pp
-The
+The hint
 .Fa epsilon
-argument is currently reserved for future use in choosing between low
-and high-resolution timers.
+requests that the wakeup not be delayed more than
+.Fa bt Li "+" Fa epsilon ,
+so that the system can coalesce multiple wakeups within their
+respective epsilons into a single high-resolution clock interrupt or
+choose to use cheaper low-resolution clock interrupts instead.
+.Pp
+However, the system is still limited by its best clock interrupt
+resolution and by scheduling competition, which may delay the wakeup by
+more than
+.Fa bt Li "+" Fa epsilon .
 .It Fn cv_signal "cv"
 .Pp
 Awaken one LWP (potentially among many) that is waiting on the specified
@@ -268,15 +277,18 @@ Consuming a resource:
 	 * five seconds.  If the resource is not available within the
 	 * alloted time, return an error.
 	 */
-	bt.sec = 5;
-	bt.frac = 0;
-	while (res->state == BUSY && (bt.sec || bt.frac))
-		cv_timedwaitbt(&res->condvar, \\
-		    &res->mutex, bt, epsilon);
-
-	if (res->state == BUSY) {
-		mutex_exit(&res->mutex);
-		return ETIMEDOUT;
+	struct bintime timeout = { .sec = 5, .frac = 0 };
+	const struct bintime epsilon = { .sec = 1, .frac = 0 };
+	while (res->state == BUSY) {
+		error = cv_timedwaitbt(&res->condvar, \\
+		    &res->mutex, &timeout, &epsilon);
+		if (error) {
+			KASSERT(error == EWOULDBLOCK);
+			if (res->state != BUSY)
+				break;
+			mutex_exit(&res->mutex);
+			return ETIMEDOUT;
+		}
 	}
 
 	/*
