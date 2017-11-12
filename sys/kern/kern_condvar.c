@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.37 2017/07/03 02:12:47 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.38 2017/11/12 19:46:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.37 2017/07/03 02:12:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.38 2017/11/12 19:46:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,19 +391,28 @@ timo2bintime(unsigned timo)
  *
  *	On entry, bt is a timeout in bintime.  cv_timedwaitbt subtracts
  *	the time slept, so on exit, bt is the time remaining after
- *	sleeping.  No infinite timeout; use cv_wait_sig instead.
+ *	sleeping, possibly negative if the complete time has elapsed.
+ *	No infinite timeout; use cv_wait_sig instead.
  *
  *	epsilon is a requested maximum error in timeout (excluding
  *	spurious wakeups).  Currently not used, will be used in the
  *	future to choose between low- and high-resolution timers.
+ *	Actual wakeup time will be somewhere in [t, t + max(e, r) + s)
+ *	where r is the finest resolution of clock available and s is
+ *	scheduling delays for scheduler overhead and competing threads.
+ *	Time is measured by the interrupt source implementing the
+ *	timeout, not by another timecounter.
  */
 int
 cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
-    const struct bintime *epsilon __unused)
+    const struct bintime *epsilon __diagused)
 {
 	struct bintime slept;
 	unsigned start, end;
 	int error;
+
+	KASSERTMSG(bt->sec >= 0, "negative timeout");
+	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
 	 * hardclock_ticks is technically int, but nothing special
