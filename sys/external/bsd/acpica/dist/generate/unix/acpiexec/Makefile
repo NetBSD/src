@@ -45,9 +45,11 @@ OBJECTS = \
 	$(OBJDIR)/aeexception.o\
 	$(OBJDIR)/aehandlers.o\
 	$(OBJDIR)/aeinitfile.o\
+	$(OBJDIR)/aeinstall.o\
 	$(OBJDIR)/aemain.o\
 	$(OBJDIR)/aeregion.o\
 	$(OBJDIR)/aetables.o\
+	$(OBJDIR)/aetests.o\
 	$(OBJDIR)/ahids.o\
 	$(OBJDIR)/ahuuids.o\
 	$(OBJDIR)/cmfsize.o\
@@ -140,6 +142,7 @@ OBJECTS = \
 	$(OBJDIR)/hwpci.o\
 	$(OBJDIR)/hwregs.o\
 	$(OBJDIR)/hwsleep.o\
+	$(OBJDIR)/hwtimer.o\
 	$(OBJDIR)/hwvalid.o\
 	$(OBJDIR)/hwxface.o\
 	$(OBJDIR)/hwxfsleep.o\

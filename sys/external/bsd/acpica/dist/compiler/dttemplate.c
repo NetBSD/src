@@ -43,7 +43,6 @@
 
 #include "aslcompiler.h"
 #include "acapps.h"
-#include "dtcompiler.h"
 #include "dttemplate.h" /* Contains the hex ACPI table templates */
 
 #define _COMPONENT          DT_COMPILER
@@ -207,7 +206,7 @@ Exit:
     /* Shutdown ACPICA subsystem */
 
     (void) AcpiTerminate ();
-    CmDeleteCaches ();
+    UtDeleteLocalCaches ();
     return (Status);
 }
 

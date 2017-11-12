@@ -44,7 +44,6 @@
 #define _DECLARE_PR_GLOBALS
 
 #include "aslcompiler.h"
-#include "dtcompiler.h"
 
 /*
  * TBDs:

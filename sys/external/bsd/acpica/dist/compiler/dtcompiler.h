@@ -46,7 +46,6 @@
 #ifndef _DTCOMPILER
 #define _DTCOMPILER
 
-#include <stdio.h>
 #include "acdisasm.h"
 
 
@@ -402,18 +401,6 @@ void
 DtSetTableLength(
     void);
 
-DT_SUBTABLE *
-UtSubtableCacheCalloc (
-    void);
-
-DT_FIELD *
-UtFieldCacheCalloc (
-    void);
-
-void
-DtDeleteCaches (
-    void);
-
 
 /* dttable - individual table compilation */
 
@@ -514,15 +501,19 @@ DtCompileNfit (
     void                    **PFieldList);
 
 ACPI_STATUS
+DtCompilePcct (
+    void                    **PFieldList);
+
+ACPI_STATUS
+DtCompilePdtt (
+    void                    **PFieldList);
+
+ACPI_STATUS
 DtCompilePmtt (
     void                    **PFieldList);
 
 ACPI_STATUS
 DtCompilePptt (
-    void                    **PFieldList);
-
-ACPI_STATUS
-DtCompilePcct (
     void                    **PFieldList);
 
 ACPI_STATUS
@@ -532,6 +523,10 @@ DtCompileRsdt (
 ACPI_STATUS
 DtCompileS3pt (
     DT_FIELD                **PFieldList);
+
+ACPI_STATUS
+DtCompileSdev (
+    void                    **PFieldList);
 
 ACPI_STATUS
 DtCompileSlic (
@@ -551,6 +546,10 @@ DtCompileStao (
 
 ACPI_STATUS
 DtCompileTcpa (
+    void                    **PFieldList);
+
+ACPI_STATUS
+DtCompileTpm2 (
     void                    **PFieldList);
 
 ACPI_STATUS
@@ -616,6 +615,7 @@ extern const unsigned char  TemplateMsdm[];
 extern const unsigned char  TemplateMtmr[];
 extern const unsigned char  TemplateNfit[];
 extern const unsigned char  TemplatePcct[];
+extern const unsigned char  TemplatePdtt[];
 extern const unsigned char  TemplatePmtt[];
 extern const unsigned char  TemplatePptt[];
 extern const unsigned char  TemplateRasf[];
@@ -623,6 +623,7 @@ extern const unsigned char  TemplateRsdt[];
 extern const unsigned char  TemplateS3pt[];
 extern const unsigned char  TemplateSbst[];
 extern const unsigned char  TemplateSdei[];
+extern const unsigned char  TemplateSdev[];
 extern const unsigned char  TemplateSlic[];
 extern const unsigned char  TemplateSlit[];
 extern const unsigned char  TemplateSpcr[];

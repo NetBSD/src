@@ -185,7 +185,7 @@ OpcParsePrintf (
 
         if (StringToProcess)
         {
-            NewString = UtStringCacheCalloc (StringLength + 1);
+            NewString = UtLocalCacheCalloc (StringLength + 1);
             strncpy (NewString, StartPosition, StringLength);
 
             NewOp = TrAllocateOp (PARSEOP_STRING_LITERAL);
@@ -274,7 +274,7 @@ OpcParsePrintf (
 
     if (StringToProcess)
     {
-        NewString = UtStringCacheCalloc (StringLength + 1);
+        NewString = UtLocalCacheCalloc (StringLength + 1);
         strncpy (NewString, StartPosition, StringLength);
 
         NewOp = TrAllocateOp (PARSEOP_STRING_LITERAL);

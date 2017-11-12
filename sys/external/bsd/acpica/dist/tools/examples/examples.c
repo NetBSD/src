@@ -104,9 +104,6 @@ RegionInit (
 static void
 ExecuteMAIN (void);
 
-static void
-ExecuteOSI (void);
-
 ACPI_STATUS
 InitializeAcpiTables (
     void);
@@ -155,7 +152,7 @@ main (
     ACPI_EXCEPTION   ((AE_INFO, AE_AML_OPERAND_TYPE,
         "Example ACPICA exception message"));
 
-    ExecuteOSI ();
+    ExecuteOSI (NULL, 0);
     ExecuteMAIN ();
     return (0);
 }
@@ -432,8 +429,10 @@ InstallHandlers (void)
  *
  *****************************************************************************/
 
-static void
-ExecuteOSI (void)
+ACPI_STATUS
+ExecuteOSI (
+    char                    *OsiString,
+    UINT64                  ExpectedResult)
 {
     ACPI_STATUS             Status;
     ACPI_OBJECT_LIST        ArgList;
@@ -461,7 +460,7 @@ ExecuteOSI (void)
     if (ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status, "While executing _OSI"));
-        return;
+        return (AE_OK);
     }
 
     /* Ensure that the return object is large enough */
@@ -490,6 +489,7 @@ ErrorExit:
     /* Free a buffer created via ACPI_ALLOCATE_BUFFER */
 
     AcpiOsFree (ReturnValue.Pointer);
+    return (AE_OK);
 }
 
 
