@@ -72,9 +72,9 @@
 #define AX_REQUIRED_TABLE           1
 
 #define AX_UTILITY_NAME             "ACPI Binary Table Extraction Utility"
-#define AX_SUPPORTED_OPTIONS        "ahlms:v"
+#define AX_SUPPORTED_OPTIONS        "afhlms:v^"
 #define AX_MULTI_TABLE_FILENAME     "amltables.dat"
-#define AX_TABLE_INFO_FORMAT        "Acpi table [%4.4s] - %7u bytes written to %s\n"
+#define AX_TABLE_INFO_FORMAT        "  %4.4s - %7u bytes written (0x%8.8X) - %s\n"
 
 /* Extraction states */
 
@@ -85,6 +85,8 @@
 
 #define AX_LINE_BUFFER_SIZE         256
 #define AX_MIN_BLOCK_HEADER_LENGTH  6   /* strlen ("DSDT @") */
+#define AX_IS_TABLE_BLOCK_HEADER    (strlen (Gbl_LineBuffer) < AX_END_OF_HEX_DATA) && (strstr (Gbl_LineBuffer, " @ "))
+#define AX_END_OF_HEX_DATA          55
 
 
 typedef struct AxTableInfo
@@ -102,11 +104,12 @@ typedef struct AxTableInfo
 ACPI_GLOBAL (char,           Gbl_LineBuffer[AX_LINE_BUFFER_SIZE]);
 ACPI_GLOBAL (char,           Gbl_HeaderBuffer[AX_LINE_BUFFER_SIZE]);
 ACPI_GLOBAL (char,           Gbl_InstanceBuffer[AX_LINE_BUFFER_SIZE]);
-
 ACPI_GLOBAL (AX_TABLE_INFO, *Gbl_TableListHead);
 ACPI_GLOBAL (char,           Gbl_OutputFilename[32]);
 ACPI_GLOBAL (unsigned char,  Gbl_BinaryData[16]);
 ACPI_GLOBAL (unsigned int,   Gbl_TableCount);
+ACPI_GLOBAL (BOOLEAN,        Gbl_ForceExtraction);
+
 
 /*
  * acpixtract.c
@@ -122,18 +125,13 @@ AxExtractToMultiAmlFile (
     char                    *InputPathname);
 
 int
-AxListTables (
+AxListAllTables (
     char                    *InputPathname);
 
 
 /*
  * axutils.c
  */
-size_t
-AxGetTableHeader (
-    FILE                    *InputFile,
-    unsigned char           *OutputData);
-
 unsigned int
 AxCountTableInstances (
     char                    *InputPathname,
@@ -153,21 +151,33 @@ AxCheckAscii (
     char                    *Name,
     int                     Count);
 
-int
+BOOLEAN
+AxIsFileAscii (
+    FILE                    *Handle);
+
+BOOLEAN
+AxIsHexDataLine (
+    void);
+
+BOOLEAN
 AxIsEmptyLine (
     char                    *Buffer);
 
-int
+BOOLEAN
 AxIsDataBlockHeader (
     void);
 
 long
-AxProcessOneTextLine (
+AxConvertAndWrite (
     FILE                    *OutputFile,
     char                    *ThisSignature,
     unsigned int            ThisTableBytesWritten);
 
 size_t
-AxConvertLine (
+AxConvertToBinary (
     char                    *InputLine,
     unsigned char           *OutputData);
+
+void
+AxDumpTableHeader (
+    unsigned char           *Header);

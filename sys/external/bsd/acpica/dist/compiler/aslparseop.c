@@ -50,13 +50,6 @@
         ACPI_MODULE_NAME    ("aslparseop")
 
 
-/* Local prototypes */
-
-static ACPI_PARSE_OBJECT *
-TrGetOpFromCache (
-    void);
-
-
 /*******************************************************************************
  *
  * FUNCTION:    TrCreateOp
@@ -382,7 +375,7 @@ TrCreateTargetOp (
         return (NULL);
     }
 
-    Op = TrGetOpFromCache ();
+    Op = UtParseOpCacheCalloc ();
 
     /* Copy the pertinent values (omit link pointer fields) */
 
@@ -680,7 +673,7 @@ TrAllocateOp (
     ACPI_PARSE_OBJECT       *LatestOp;
 
 
-    Op = TrGetOpFromCache ();
+    Op = UtParseOpCacheCalloc ();
 
     Op->Asl.ParseOpcode       = (UINT16) ParseOpcode;
     Op->Asl.Filename          = Gbl_Files[ASL_FILE_INPUT].Filename;
@@ -764,50 +757,6 @@ TrAllocateOp (
     }
 
     return (Op);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrGetOpFromCache
- *
- * PARAMETERS:  None
- *
- * RETURN:      New parse op. Aborts on allocation failure
- *
- * DESCRIPTION: Allocate a new parse op for the parse tree. Bypass the local
- *              dynamic memory manager for performance reasons (This has a
- *              major impact on the speed of the compiler.)
- *
- ******************************************************************************/
-
-static ACPI_PARSE_OBJECT *
-TrGetOpFromCache (
-    void)
-{
-    ASL_CACHE_INFO          *Cache;
-
-
-    if (Gbl_ParseOpCacheNext >= Gbl_ParseOpCacheLast)
-    {
-        /* Allocate a new buffer */
-
-        Cache = UtLocalCalloc (sizeof (Cache->Next) +
-            (sizeof (ACPI_PARSE_OBJECT) * ASL_PARSEOP_CACHE_SIZE));
-
-        /* Link new cache buffer to head of list */
-
-        Cache->Next = Gbl_ParseOpCacheList;
-        Gbl_ParseOpCacheList = Cache;
-
-        /* Setup cache management pointers */
-
-        Gbl_ParseOpCacheNext = ACPI_CAST_PTR (ACPI_PARSE_OBJECT, Cache->Buffer);
-        Gbl_ParseOpCacheLast = Gbl_ParseOpCacheNext + ASL_PARSEOP_CACHE_SIZE;
-    }
-
-    Gbl_ParseOpCount++;
-    return (Gbl_ParseOpCacheNext++);
 }
 
 
