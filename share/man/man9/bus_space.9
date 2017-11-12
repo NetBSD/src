@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.51 2017/04/16 06:36:03 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.52 2017/11/12 21:14:33 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1957,8 +1957,8 @@ old, deprecated specification can be compiled by defining the
 preprocessor symbol before including
 .In sys/bus.h .
 .Sh SEE ALSO
-.Xr bus_dma 9 ,
-.Xr mb 9
+.Xr membar_ops 3 ,
+.Xr bus_dma 9
 .Sh HISTORY
 The
 .Nm
