@@ -165,7 +165,8 @@ static tree clear_storage_libcall_fn (int);
 static rtx_insn *compress_float_constant (rtx, rtx);
 static rtx get_subtarget (rtx);
 static void store_constructor_field (rtx, unsigned HOST_WIDE_INT,
-				     HOST_WIDE_INT, machine_mode,
+				     HOST_WIDE_INT, unsigned HOST_WIDE_INT,
+				     unsigned HOST_WIDE_INT, machine_mode,
 				     tree, int, alias_set_type);
 static void store_constructor (tree, rtx, int, HOST_WIDE_INT);
 static rtx store_field (rtx, HOST_WIDE_INT, HOST_WIDE_INT,
@@ -5900,7 +5901,10 @@ all_zeros_p (const_tree exp)
 
 static void
 store_constructor_field (rtx target, unsigned HOST_WIDE_INT bitsize,
-			 HOST_WIDE_INT bitpos, machine_mode mode,
+			 HOST_WIDE_INT bitpos,
+			 unsigned HOST_WIDE_INT bitregion_start,
+			 unsigned HOST_WIDE_INT bitregion_end,
+			 machine_mode mode,
 			 tree exp, int cleared, alias_set_type alias_set)
 {
   if (TREE_CODE (exp) == CONSTRUCTOR
@@ -5933,7 +5937,8 @@ store_constructor_field (rtx target, unsigned HOST_WIDE_INT bitsize,
       store_constructor (exp, target, cleared, bitsize / BITS_PER_UNIT);
     }
   else
-    store_field (target, bitsize, bitpos, 0, 0, mode, exp, alias_set, false);
+    store_field (target, bitsize, bitpos, bitregion_start, bitregion_end, mode,
+		 exp, alias_set, false);
 }
 
 
@@ -5968,6 +5973,7 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 #ifdef WORD_REGISTER_OPERATIONS
   HOST_WIDE_INT exp_size = int_size_in_bytes (type);
 #endif
+  HOST_WIDE_INT bitregion_end = size > 0 ? size * BITS_PER_UNIT - 1 : 0;
 
   switch (TREE_CODE (type))
     {
@@ -6043,7 +6049,7 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 	    if (tree_fits_uhwi_p (DECL_SIZE (field)))
 	      bitsize = tree_to_uhwi (DECL_SIZE (field));
 	    else
-	      bitsize = -1;
+	      gcc_unreachable ();
 
 	    mode = DECL_MODE (field);
 	    if (DECL_BIT_FIELD (field))
@@ -6057,28 +6063,7 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 		offset = 0;
 	      }
 	    else
-	      bitpos = tree_to_shwi (DECL_FIELD_BIT_OFFSET (field));
-
-	    if (offset)
-	      {
-	        machine_mode address_mode;
-		rtx offset_rtx;
-
-		offset
-		  = SUBSTITUTE_PLACEHOLDER_IN_EXPR (offset,
-						    make_tree (TREE_TYPE (exp),
-							       target));
-
-		offset_rtx = expand_normal (offset);
-		gcc_assert (MEM_P (to_rtx));
-
-		address_mode = get_address_mode (to_rtx);
-		if (GET_MODE (offset_rtx) != address_mode)
-		  offset_rtx = convert_to_mode (address_mode, offset_rtx, 0);
-
-		to_rtx = offset_address (to_rtx, offset_rtx,
-					 highest_pow2_factor (offset));
-	      }
+	      gcc_unreachable ();
 
 #ifdef WORD_REGISTER_OPERATIONS
 	    /* If this initializes a field that is smaller than a
@@ -6101,6 +6086,13 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 		    type = lang_hooks.types.type_for_mode
 		      (word_mode, TYPE_UNSIGNED (type));
 		    value = fold_convert (type, value);
+		    /* Make sure the bits beyond the original bitsize are zero
+		       so that we can correctly avoid extra zeroing stores in
+		       later constructor elements.  */
+		    tree bitsize_mask
+		      = wide_int_to_tree (type, wi::mask (bitsize, false,
+							   BITS_PER_WORD));
+		    value = fold_build2 (BIT_AND_EXPR, type, value, bitsize_mask);
 		  }
 
 		if (BYTES_BIG_ENDIAN)
@@ -6120,7 +6112,8 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 		MEM_KEEP_ALIAS_SET_P (to_rtx) = 1;
 	      }
 
-	    store_constructor_field (to_rtx, bitsize, bitpos, mode,
+	    store_constructor_field (to_rtx, bitsize, bitpos,
+				     0, bitregion_end, mode,
 				     value, cleared,
 				     get_alias_set (TREE_TYPE (field)));
 	  }
@@ -6276,7 +6269,8 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 			  }
 
 			store_constructor_field
-			  (target, bitsize, bitpos, mode, value, cleared,
+			  (target, bitsize, bitpos, 0, bitregion_end,
+			   mode, value, cleared,
 			   get_alias_set (elttype));
 		      }
 		  }
@@ -6379,7 +6373,8 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 		    target = copy_rtx (target);
 		    MEM_KEEP_ALIAS_SET_P (target) = 1;
 		  }
-		store_constructor_field (target, bitsize, bitpos, mode, value,
+		store_constructor_field (target, bitsize, bitpos, 0,
+					 bitregion_end, mode, value,
 					 cleared, get_alias_set (elttype));
 	      }
 	  }
@@ -6512,7 +6507,8 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size)
 		  ? TYPE_MODE (TREE_TYPE (value))
 		  : eltmode;
 		bitpos = eltpos * elt_size;
-		store_constructor_field (target, bitsize, bitpos, value_mode,
+		store_constructor_field (target, bitsize, bitpos, 0,
+					 bitregion_end, value_mode,
 					 value, cleared, alias);
 	      }
 	  }
@@ -8857,6 +8853,18 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
       if (temp != 0)
 	return temp;
 
+      /* For vector MIN <x, y>, expand it a VEC_COND_EXPR <x <= y, x, y>
+	 and similarly for MAX <x, y>.  */
+      if (VECTOR_TYPE_P (type))
+	{
+	  tree t0 = make_tree (type, op0);
+	  tree t1 = make_tree (type, op1);
+	  tree comparison = build2 (code == MIN_EXPR ? LE_EXPR : GE_EXPR,
+				    type, t0, t1);
+	  return expand_vec_cond_expr (type, comparison, t0, t1,
+				       original_target);
+	}
+
       /* At this point, a MEM target is no longer useful; we will get better
 	 code without it.  */
 
@@ -10202,8 +10210,36 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 	if (GET_CODE (op0) == CONCAT && !must_force_mem)
 	  {
 	    if (bitpos == 0
-		&& bitsize == GET_MODE_BITSIZE (GET_MODE (op0)))
-	      return op0;
+		&& bitsize == GET_MODE_BITSIZE (GET_MODE (op0))
+		&& COMPLEX_MODE_P (mode1)
+		&& COMPLEX_MODE_P (GET_MODE (op0))
+		&& (GET_MODE_PRECISION (GET_MODE_INNER (mode1))
+		    == GET_MODE_PRECISION (GET_MODE_INNER (GET_MODE (op0)))))
+	      {
+		if (mode1 != GET_MODE (op0))
+		  {
+		    rtx parts[2];
+		    for (int i = 0; i < 2; i++)
+		      {
+			rtx op = read_complex_part (op0, i != 0);
+			if (GET_CODE (op) == SUBREG)
+			  op = force_reg (GET_MODE (op), op);
+			rtx temp = gen_lowpart_common (GET_MODE_INNER (mode1),
+						       op);
+			if (temp)
+			  op = temp;
+			else
+			  {
+			    if (!REG_P (op) && !MEM_P (op))
+			      op = force_reg (GET_MODE (op), op);
+			    op = gen_lowpart (GET_MODE_INNER (mode1), op);
+			  }
+			parts[i] = op;
+		      }
+		    op0 = gen_rtx_CONCAT (mode1, parts[0], parts[1]);
+		  }
+		return op0;
+	      }
 	    if (bitpos == 0
 		&& bitsize == GET_MODE_BITSIZE (GET_MODE (XEXP (op0, 0)))
 		&& bitsize)
