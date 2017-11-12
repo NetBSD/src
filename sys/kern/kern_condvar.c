@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.38 2017/11/12 19:46:34 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.39 2017/11/12 20:04:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.38 2017/11/12 19:46:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.39 2017/11/12 20:04:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,11 +448,14 @@ cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
  */
 int
 cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
-    const struct bintime *epsilon __unused)
+    const struct bintime *epsilon __diagused)
 {
 	struct bintime slept;
 	unsigned start, end;
 	int error;
+
+	KASSERTMSG(bt->sec >= 0, "negative timeout");
+	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
 	 * hardclock_ticks is technically int, but nothing special
