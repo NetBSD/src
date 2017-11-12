@@ -68,8 +68,10 @@
 /* Macros for signons and file headers */
 #ifdef ACPI_REPRO
 #define ACPI_DATE "18 Dec 2013"
+#define ACPI_TIME "00:00:00"
 #else
 #define ACPI_DATE __DATE__
+#define ACPI_TIME __TIME__
 #endif
 
 #define ACPI_COMMON_SIGNON(UtilityName) \
@@ -84,6 +86,9 @@
     Prefix, UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, \
     Prefix, ACPICA_COPYRIGHT, \
     Prefix
+
+#define ACPI_COMMON_BUILD_TIME \
+    "Build date/time: %s %s\n", ACPI_DATE, ACPI_TIME
 
 /* Macros for usage messages */
 
