@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.550 2017/11/07 19:44:05 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.551 2017/11/12 19:46:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -477,6 +477,8 @@
 	    ((t +0u) / hz) * 1000u : \
 	    ((t +0u) * 1000u) / hz)
 #endif
+
+#define	hz2bintime(t)	(ms2bintime(hztoms(t)))
 
 extern const int schedppq;
 extern size_t coherency_unit;
