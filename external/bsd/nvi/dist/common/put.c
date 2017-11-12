@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: put.c,v 1.5 2017/11/12 15:23:51 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: put.c,v 10.18 2001/06/25 15:19:11 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:11 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: put.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: put.c,v 1.5 2017/11/12 15:23:51 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: put.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
  * put --
  *	Put text buffer contents into the file.
  *
- * PUBLIC: int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
+ * PUBLIC: int put __P((SCR *, CB *, ARG_CHAR_T *, MARK *, MARK *, int));
  */
 int
 put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
