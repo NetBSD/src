@@ -1,4 +1,4 @@
-.\"	$NetBSD: mb.9,v 1.6 2011/01/02 07:14:02 jruoho Exp $
+.\"	$NetBSD: mb.9,v 1.7 2017/11/12 21:20:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,12 @@
 .Ft void
 .Fn mb_write "void"
 .Sh DESCRIPTION
+.Em The
+.Nm
+.Em API is deprecated; use
+.Xr membar_ops 3
+.Em instead.
+.Pp
 Many types of processor can execute instructions in a different order
 than issued by the compiler or assembler.
 On a uniprocessor system, out of order execution is transparent
@@ -111,6 +117,7 @@ Loads may be reordered ahead of or behind a call to
 .El
 .Sh SEE ALSO
 .Xr __insn_barrier 3 ,
+.Xr membar_ops 3 ,
 .Xr bus_dma 9 ,
 .Xr bus_space 9 ,
 .Xr mutex 9 ,
