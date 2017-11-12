@@ -42,8 +42,6 @@
  */
 
 #include "aslcompiler.h"
-#include "dtcompiler.h"
-
 
 #define _COMPONENT          ASL_PREPROCESSOR
         ACPI_MODULE_NAME    ("prutils")
@@ -407,7 +405,7 @@ PrPushInputFileStack (
     /* Reset the global line count and filename */
 
     Gbl_Files[ASL_FILE_INPUT].Filename =
-        UtStringCacheCalloc (strlen (Filename) + 1);
+        UtLocalCacheCalloc (strlen (Filename) + 1);
     strcpy (Gbl_Files[ASL_FILE_INPUT].Filename, Filename);
 
     Gbl_Files[ASL_FILE_INPUT].Handle = InputFile;
