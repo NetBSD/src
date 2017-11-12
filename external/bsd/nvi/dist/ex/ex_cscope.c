@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.7 2014/08/26 15:19:38 aymeric Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.8 2017/11/12 15:22:09 rin Exp $ */
 /*-
  * Copyright (c) 1994, 1996
  *	Rob Mayoff.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex_cscope.c,v 10.21 2003/11/05 17:11:54 skimo Exp  (Berkeley) Date: 2003/11/05 17:11:54 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_cscope.c,v 1.7 2014/08/26 15:19:38 aymeric Exp $");
+__RCSID("$NetBSD: ex_cscope.c,v 1.8 2017/11/12 15:22:09 rin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -232,6 +232,7 @@ cscope_add(SCR *sp, EXCMD *cmdp, const CHAR_T *dname)
 	if (cmdp->argc == cur_argc + 1)
 		dname = cmdp->argv[cur_argc]->bp;
 	else {
+		INT2CHAR(sp, dname, STRLEN(dname)+1, np, nlen);
 		ex_emsg(sp, np, EXM_FILECOUNT);
 		return (1);
 	}
