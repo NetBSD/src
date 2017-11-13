@@ -38,7 +38,7 @@ extern "C" {
 #endif
 #endif
 
-#include <map>
+#define INCLUDE_MAP
 #include "system.h"
 #include "coretypes.h"
 #include "hash-set.h"
