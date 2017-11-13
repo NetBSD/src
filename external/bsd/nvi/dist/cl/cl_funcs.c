@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.6 2017/11/13 01:37:48 rin Exp $ */
+/*	$NetBSD: cl_funcs.c,v 1.7 2017/11/13 01:51:47 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_funcs.c,v 10.72 2002/03/02 23:18:33 skimo Exp  (Berkeley) Date: 2002/03/02 23:18:33 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_funcs.c,v 1.6 2017/11/13 01:37:48 rin Exp $");
+__RCSID("$NetBSD: cl_funcs.c,v 1.7 2017/11/13 01:51:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -314,9 +314,12 @@ cl_cursor(SCR *sp, size_t *yp, size_t *xp)
 int
 cl_deleteln(SCR *sp)
 {
-	CHAR_T ch;
 	WINDOW *win;
-	size_t col, lno, spcnt, y, x;
+	size_t y, x;
+#ifndef HAVE_MVWCHGAT
+	CHAR_T ch;
+	size_t col, lno, spcnt;
+#endif
 
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
@@ -340,7 +343,7 @@ cl_deleteln(SCR *sp)
 	 */
 	if (!F_ISSET(sp, SC_SCR_EXWROTE) && IS_SPLIT(sp)) {
 		getyx(win, y, x);
-#ifdef mvchgat
+#ifdef HAVE_MVWCHGAT
 		mvwchgat(win, RLNO(sp, LASTLINE(sp)), 0, -1, A_NORMAL, 0, NULL);
 #else
 		for (lno = RLNO(sp, LASTLINE(sp)), col = spcnt = 0;;) {
