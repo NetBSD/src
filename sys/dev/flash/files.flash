@@ -1,10 +1,11 @@
-# $NetBSD: files.flash,v 1.2 2011/06/28 18:14:11 ahoka Exp $
+# $NetBSD: files.flash,v 1.3 2017/11/13 17:35:58 jmcneill Exp $
 
-define	flashbus	{ [offset = 0], [size = 0], [readonly = 0] }
+define	flashbus	{ [offset = 0], [size = 0], [readonly = 0], [dynamic = 0] }
 
 device	flash
 attach	flash at flashbus
 file	dev/flash/flash.c		flash
 file	dev/flash/flash_io.c		flash
+file	dev/flash/flash_mtdparts.c	flash
 
 defflag opt_flash.h			FLASH_STATIC_PARTITIONS
