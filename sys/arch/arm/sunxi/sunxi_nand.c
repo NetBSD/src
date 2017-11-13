@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nand.c,v 1.1 2017/11/10 00:09:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_nand.c,v 1.2 2017/11/13 13:47:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.1 2017/11/10 00:09:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.2 2017/11/13 13:47:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -334,8 +334,6 @@ sunxi_nand_select(device_t dev, bool enable)
 
 			NAND_WRITE(sc, NDFC_SPARE_AREA, nc->nc_page_size);
 		}
-	} else {
-		ctl &= ~NDFC_CTL_EN;
 	}
 	NAND_WRITE(sc, NDFC_CTL, ctl);
 }
