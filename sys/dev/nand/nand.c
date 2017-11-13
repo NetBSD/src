@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.26 2017/11/09 21:50:15 jmcneill Exp $	*/
+/*	$NetBSD: nand.c,v 1.27 2017/11/13 17:36:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.26 2017/11/09 21:50:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.27 2017/11/13 17:36:39 jmcneill Exp $");
 
 #include "locators.h"
 
@@ -188,8 +188,12 @@ nand_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct nand_chip *chip = &sc->sc_chip;
 	struct flash_attach_args faa;
 
+	if (cf->cf_loc[FLASHBUSCF_DYNAMIC] != 0)
+		return 0;
+
 	faa.flash_if = &nand_flash_if;
 
+	faa.partinfo.part_name = NULL;
 	faa.partinfo.part_offset = cf->cf_loc[FLASHBUSCF_OFFSET];
 
 	if (cf->cf_loc[FLASHBUSCF_SIZE] == 0) {
@@ -213,6 +217,16 @@ nand_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 
 	return 1;
+}
+
+void
+nand_attach_mtdparts(device_t parent, const char *mtd_id, const char *cmdline)
+{
+	struct nand_softc *sc = device_private(parent);
+	struct nand_chip *chip = &sc->sc_chip;
+
+	flash_attach_mtdparts(&nand_flash_if, parent, chip->nc_size,
+	    mtd_id, cmdline);
 }
 
 int
