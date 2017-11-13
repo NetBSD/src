@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.11 2017/11/13 21:32:21 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.12 2017/11/13 21:33:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -295,6 +295,7 @@ elf_map_sections()
 		secva = mm_map_segment(segtype, secpa, secsz);
 
 		/* We want (headva + sh_offset) to be the VA of the section. */
+		ASSERT(secva > headva);
 		shdr->sh_offset = secva - headva;
 	}
 }
