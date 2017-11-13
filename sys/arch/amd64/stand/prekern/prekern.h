@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.9 2017/11/11 12:51:06 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.10 2017/11/13 20:03:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/stdbool.h>
+#include <lib/libkern/libkern.h>
 #include <machine/pte.h>
 
 #include "pdir.h"
@@ -55,50 +56,6 @@ typedef uint64_t pte_prot_t;
 
 #define KASLR_WINDOW_BASE	KERNBASE		/* max - 2GB */
 #define KASLR_WINDOW_SIZE	(2LLU * (1 << 30))	/* 2GB */
-
-/* -------------------------------------------------------------------------- */
-
-static inline void
-memcpy(void *dst, void *src, size_t sz)
-{
-	char *bdst = dst, *bsrc = src;
-	while (sz > 0) {
-		*bdst = *bsrc;
-		bdst++, bsrc++, sz--;
-	}
-}
-
-static inline void
-memset(void *dst, char c, size_t sz)
-{
-	char *bdst = dst;
-	while (sz > 0) {
-		*bdst = c;
-		bdst++, sz--;
-	}
-}
-
-static inline int
-memcmp(const char *a, const char *b, size_t c)
-{
-	size_t i;
-	for (i = 0; i < c; i++) {
-		if (a[i] != b[i])
-			return 1;
-	}
-	return 0;
-}
-
-static inline int
-strcmp(char *a, char *b)
-{
-	size_t i;
-	for (i = 0; a[i] != '\0'; i++) {
-		if (a[i] != b[i])
-			return 1;
-	}
-	return 0;
-}
 
 /* -------------------------------------------------------------------------- */
 
