@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nand.c,v 1.3 2017/11/13 14:14:25 jmcneill Exp $ */
+/* $NetBSD: sunxi_nand.c,v 1.4 2017/11/13 17:37:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.3 2017/11/13 14:14:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.4 2017/11/13 17:37:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.3 2017/11/13 14:14:25 jmcneill Exp 
 
 #include <dev/nand/nand.h>
 #include <dev/nand/onfi.h>
+
+#include <arm/bootconfig.h>
 
 #define	NDFC_CTL		0x00
 #define	 NDFC_CTL_CE_SEL		__BITS(27,24)
@@ -432,7 +434,7 @@ sunxi_nand_attach_chip(struct sunxi_nand_softc *sc,
     struct sunxi_nand_chip *chip, int phandle)
 {
 	struct nand_interface *nand = &chip->chip_nand;
-	const char *ecc_mode;
+	const char *ecc_mode, *mtdparts;
 
 	chip->chip_sc = sc;
 	chip->chip_phandle = phandle;
@@ -514,6 +516,17 @@ sunxi_nand_attach_chip(struct sunxi_nand_softc *sc,
 #endif
 
 	chip->chip_dev = nand_attach_mi(nand, sc->sc_dev);
+	if (chip->chip_dev == NULL)
+		return;
+
+	mtdparts = get_bootconf_string(boot_args, "mtdparts");
+	if (mtdparts != NULL) {
+		char mtd_id[strlen("sunxi-nand.X") + 1];
+		snprintf(mtd_id, sizeof(mtd_id), "sunxi-nand.%u",
+		    device_unit(sc->sc_dev));
+
+		nand_attach_mtdparts(chip->chip_dev, mtd_id, mtdparts);
+	}
 }
 
 static int
