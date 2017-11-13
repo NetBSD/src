@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.5 2017/11/10 14:35:25 rin Exp $ */
+/*	$NetBSD: ex.c,v 1.6 2017/11/13 01:40:37 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex.c,v 10.75 2004/03/16 14:13:35 skimo Exp  (Berkeley) Date: 2004/03/16 14:13:35 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex.c,v 1.5 2017/11/10 14:35:25 rin Exp $");
+__RCSID("$NetBSD: ex.c,v 1.6 2017/11/13 01:40:37 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -441,7 +441,7 @@ loop:	ecp = LIST_FIRST(&wp->ecq);
 			break;
 		case 'E': case 'F': case 'N': case 'P': case 'T': case 'V':
 			newscreen = 1;
-			p[0] = TOLOWER(p[0]);
+			p[0] = TOLOWER((UCHAR_T)p[0]);
 			break;
 		}
 
