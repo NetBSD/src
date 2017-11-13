@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2017/07/23 01:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2017/11/13 07:46:53 mrg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -11,7 +11,8 @@ GNUHOSTDIST=	${DIST}
 SRCS=		lto-plugin.c hashtab.c simple-object.c pex-unix.c \
 		pex-common.c argv.c make-temp-file.c concat.c \
 		simple-object-elf.c simple-object-mach-o.c \
-		simple-object-coff.c simple-object-xcoff.c
+		simple-object-coff.c simple-object-xcoff.c xstrerror.c \
+		safe-ctype.c
 
 CPPFLAGS+=	-I${DIST}/include -I. 
 CPPFLAGS+=	-DHAVE_CONFIG_H
@@ -29,7 +30,7 @@ LIBDIR=		/usr/libexec
 .if ${MKGCC} != "no"
 
 SHLIB_MAJOR=	0
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 # Yuck, we have to run configure to generate this one...
 CLEANFILES+=	config.h

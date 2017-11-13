@@ -7342,6 +7342,7 @@ make_extraction (machine_mode mode, rtx inner, HOST_WIDE_INT pos,
   if (tmode != BLKmode
       && ((pos_rtx == 0 && (pos % BITS_PER_WORD) == 0
 	   && !MEM_P (inner)
+	   && (pos == 0 || REG_P (inner))
 	   && (inner_mode == tmode
 	       || !REG_P (inner)
 	       || TRULY_NOOP_TRUNCATION_MODES_P (tmode, inner_mode)
@@ -7418,10 +7419,9 @@ make_extraction (machine_mode mode, rtx inner, HOST_WIDE_INT pos,
 	}
       else
 	new_rtx = force_to_mode (inner, tmode,
-			     len >= HOST_BITS_PER_WIDE_INT
-			     ? ~(unsigned HOST_WIDE_INT) 0
-			     : ((unsigned HOST_WIDE_INT) 1 << len) - 1,
-			     0);
+				 len >= HOST_BITS_PER_WIDE_INT
+				 ? ~(unsigned HOST_WIDE_INT) 0
+				 : ((unsigned HOST_WIDE_INT) 1 << len) - 1, 0);
 
       /* If this extraction is going into the destination of a SET,
 	 make a STRICT_LOW_PART unless we made a MEM.  */
@@ -7726,10 +7726,12 @@ extract_left_shift (rtx x, int count)
 
    We try, as much as possible, to re-use rtl expressions to save memory.
 
-   IN_CODE says what kind of expression we are processing.  Normally, it is
-   SET.  In a memory address (inside a MEM, PLUS or minus, the latter two
-   being kludges), it is MEM.  When processing the arguments of a comparison
-   or a COMPARE against zero, it is COMPARE.  */
+   IN_CODE says what kind of expression we are processing.  Normally,
+   it is SET.  In a memory address (inside a MEM, PLUS or minus, the
+   latter two being kludges), it is MEM.  When processing the
+   arguments of a comparison or a COMPARE against zero, it is COMPARE,
+   or EQ if more + precisely it is an equality comparison against
+   zero..  */
 
 rtx
 make_compound_operation (rtx x, enum rtx_code in_code)
@@ -7743,11 +7745,17 @@ make_compound_operation (rtx x, enum rtx_code in_code)
   rtx new_rtx = 0;
   rtx tem;
   const char *fmt;
+  bool equality_comparison = false;
 
   /* Select the code to be used in recursive calls.  Once we are inside an
      address, we stay there.  If we have a comparison, set to COMPARE,
      but once inside, go back to our default of SET.  */
 
+  if (in_code == EQ)
+    {
+      equality_comparison = true;
+      in_code = COMPARE;
+    }
   next_code = (code == MEM ? MEM
 	       : ((code == PLUS || code == MINUS)
 		  && SCALAR_INT_MODE_P (mode)) ? MEM
@@ -7935,11 +7943,12 @@ make_compound_operation (rtx x, enum rtx_code in_code)
       /* If we are in a comparison and this is an AND with a power of two,
 	 convert this into the appropriate bit extract.  */
       else if (in_code == COMPARE
-	       && (i = exact_log2 (UINTVAL (XEXP (x, 1)))) >= 0)
+	       && (i = exact_log2 (UINTVAL (XEXP (x, 1)))) >= 0
+	       && (equality_comparison || i < GET_MODE_PRECISION (mode) - 1))
 	new_rtx = make_extraction (mode,
-			       make_compound_operation (XEXP (x, 0),
-							next_code),
-			       i, NULL_RTX, 1, 1, 0, 1);
+				   make_compound_operation (XEXP (x, 0),
+							    next_code),
+				   i, NULL_RTX, 1, 1, 0, 1);
 
       break;
 
@@ -12253,7 +12262,11 @@ simplify_comparison (enum rtx_code code, rtx *pop0, rtx *pop1)
      We can never remove a SUBREG for a non-equality comparison because
      the sign bit is in a different place in the underlying object.  */
 
-  op0 = make_compound_operation (op0, op1 == const0_rtx ? COMPARE : SET);
+  rtx_code op0_mco_code = SET;
+  if (op1 == const0_rtx)
+    op0_mco_code = code == NE || code == EQ ? EQ : COMPARE;
+
+  op0 = make_compound_operation (op0, op0_mco_code);
   op1 = make_compound_operation (op1, SET);
 
   if (GET_CODE (op0) == SUBREG && subreg_lowpart_p (op0)
@@ -13039,6 +13052,12 @@ get_last_value (const_rtx x)
      we can't use it even if the register was only set once.  */
   if (rsp->last_set_label == label_tick
       && DF_INSN_LUID (rsp->last_set) >= subst_low_luid)
+    return 0;
+
+  /* If fewer bits were set than what we are asked for now, we cannot use
+     the value.  */
+  if (GET_MODE_PRECISION (rsp->last_set_mode)
+      < GET_MODE_PRECISION (GET_MODE (x)))
     return 0;
 
   /* If the value has all its registers valid, return it.  */

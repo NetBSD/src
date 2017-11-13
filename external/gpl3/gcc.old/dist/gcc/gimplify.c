@@ -4095,7 +4095,7 @@ gimplify_init_constructor (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 	  }
 
 	/* Vector types use CONSTRUCTOR all the way through gimple
-	  compilation as a general initializer.  */
+	   compilation as a general initializer.  */
 	FOR_EACH_VEC_SAFE_ELT (elts, ix, ce)
 	  {
 	    enum gimplify_status tret;
@@ -4103,6 +4103,10 @@ gimplify_init_constructor (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 				  fb_rvalue);
 	    if (tret == GS_ERROR)
 	      ret = GS_ERROR;
+	    else if (TREE_STATIC (ctor)
+		     && !initializer_constant_valid_p (ce->value,
+						       TREE_TYPE (ce->value)))
+	      TREE_STATIC (ctor) = 0;
 	  }
 	if (!is_gimple_reg (TREE_OPERAND (*expr_p, 0)))
 	  TREE_OPERAND (*expr_p, 1) = get_formal_tmp_var (ctor, pre_p);
@@ -4116,24 +4120,23 @@ gimplify_init_constructor (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 
   if (ret == GS_ERROR)
     return GS_ERROR;
-  else if (want_value)
+  /* If we have gimplified both sides of the initializer but have
+     not emitted an assignment, do so now.  */
+  if (*expr_p)
+    {
+      tree lhs = TREE_OPERAND (*expr_p, 0);
+      tree rhs = TREE_OPERAND (*expr_p, 1);
+      gassign *init = gimple_build_assign (lhs, rhs);
+      gimplify_seq_add_stmt (pre_p, init);
+    }
+  if (want_value)
     {
       *expr_p = object;
       return GS_OK;
     }
   else
     {
-      /* If we have gimplified both sides of the initializer but have
-	 not emitted an assignment, do so now.  */
-      if (*expr_p)
-	{
-	  tree lhs = TREE_OPERAND (*expr_p, 0);
-	  tree rhs = TREE_OPERAND (*expr_p, 1);
-	  gassign *init = gimple_build_assign (lhs, rhs);
-	  gimplify_seq_add_stmt (pre_p, init);
-	  *expr_p = NULL;
-	}
-
+      *expr_p = NULL;
       return GS_ALL_DONE;
     }
 }
@@ -4290,6 +4293,14 @@ gimplify_modify_expr_rhs (tree *expr_p, tree *from_p, tree *to_p,
 	      if (ret != GS_ERROR)
 		ret = GS_OK;
 
+	      /* If we are going to write RESULT more than once, clear
+		 TREE_READONLY flag, otherwise we might incorrectly promote
+		 the variable to static const and initialize it at compile
+		 time in one of the branches.  */
+	      if (VAR_P (result)
+		  && TREE_TYPE (TREE_OPERAND (cond, 1)) != void_type_node
+		  && TREE_TYPE (TREE_OPERAND (cond, 2)) != void_type_node)
+		TREE_READONLY (result) = 0;
 	      if (TREE_TYPE (TREE_OPERAND (cond, 1)) != void_type_node)
 		TREE_OPERAND (cond, 1)
 		  = build2 (code, void_type_node, result,
@@ -9425,6 +9436,10 @@ gimplify_function_tree (tree fndecl)
   /* ??? Add some way to ignore exceptions for this TFE.  */
   if (flag_instrument_function_entry_exit
       && !DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (fndecl)
+      /* Do not instrument extern inline functions.  */
+      && !(DECL_DECLARED_INLINE_P (fndecl)
+	   && DECL_EXTERNAL (fndecl)
+	   && DECL_DISREGARD_INLINE_LIMITS (fndecl))
       && !flag_instrument_functions_exclude_p (fndecl))
     {
       tree x;
