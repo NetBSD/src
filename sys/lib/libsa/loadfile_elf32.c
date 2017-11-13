@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.48 2017/10/18 16:29:56 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.49 2017/11/13 20:21:10 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -341,7 +341,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
 	const u_long offset = 0;
 	Elf_Shdr *shdr;
-	Elf_Addr shpp, addr, align;
+	Elf_Addr shpp, addr;
 	int i, j, loaded;
 	size_t size, shdrsz;
 	Elf_Addr maxp, elfp = 0;
@@ -383,22 +383,11 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	maxp += roundup(shdrsz, ELFROUND);
 
 	/*
-	 * Load the KERNEL SECTIONS, and group them into segments. First text,
-	 * then rodata, then data. Between sections, we align to the requested
-	 * section alignment. Between segments, we align to KERNALIGN.
+	 * Load the KERNEL SECTIONS.
 	 */
-
-	/* text */
 	maxp = roundup(maxp, KERNALIGN);
 	for (i = 0; i < elf->e_shnum; i++) {
-		if (!(shdr[i].sh_flags & SHF_EXECINSTR)) {
-			continue;
-		}
-		align = shdr[i].sh_addralign;
-		if (align == 0) {
-			align = ELFROUND;
-		}
-		addr = roundup(maxp, align);
+		addr = maxp;
 		size = (size_t)shdr[i].sh_size;
 
 		loaded = 0;
@@ -422,94 +411,15 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 
 		if (loaded) {
-			shdr[i].sh_offset = addr - elfp;
-			maxp = addr + size;
-		}
-	}
-
-	/* rodata */
-	maxp = roundup(maxp, KERNALIGN);
-	for (i = 0; i < elf->e_shnum; i++) {
-		if ((shdr[i].sh_flags & (SHF_EXECINSTR|SHF_WRITE))) {
-			continue;
-		}
-		align = shdr[i].sh_addralign;
-		if (align == 0) {
-			align = ELFROUND;
-		}
-		addr = roundup(maxp, align);
-		size = (size_t)shdr[i].sh_size;
-
-		loaded = 0;
-		switch (shdr[i].sh_type) {
-		case SHT_NOBITS:
-			/* Zero out bss. */
-			BZERO(addr, size);
-			loaded = 1;
-			break;
-		case SHT_PROGBITS:
-			ret = ELFNAMEEND(readfile_global)(fd, offset,
-			    shdr[i].sh_offset, addr, size);
-			if (ret == -1) {
-				goto out;
-			}
-			loaded = 1;
-			break;
-		default:
-			loaded = 0;
-			break;
-		}
-
-		if (loaded) {
-			shdr[i].sh_offset = addr - elfp;
-			maxp = addr + size;
-		}
-	}
-
-	/* data */
-	maxp = roundup(maxp, KERNALIGN);
-	for (i = 0; i < elf->e_shnum; i++) {
-		if (!(shdr[i].sh_flags & SHF_WRITE) ||
-		    (shdr[i].sh_flags & SHF_EXECINSTR)) {
-			continue;
-		}
-		align = shdr[i].sh_addralign;
-		if (align == 0) {
-			align = ELFROUND;
-		}
-		addr = roundup(maxp, align);
-		size = (size_t)shdr[i].sh_size;
-
-		loaded = 0;
-		switch (shdr[i].sh_type) {
-		case SHT_NOBITS:
-			/* Zero out bss. */
-			BZERO(addr, size);
-			loaded = 1;
-			break;
-		case SHT_PROGBITS:
-			ret = ELFNAMEEND(readfile_global)(fd, offset,
-			    shdr[i].sh_offset, addr, size);
-			if (ret == -1) {
-				goto out;
-			}
-			loaded = 1;
-			break;
-		default:
-			loaded = 0;
-			break;
-		}
-
-		if (loaded) {
-			shdr[i].sh_offset = addr - elfp;
-			maxp = addr + size;
+			shdr[i].sh_offset = maxp - elfp;
+			maxp = roundup(maxp + size, KERNALIGN);
 		}
 	}
 
 	/*
 	 * Load the SYM+REL SECTIONS.
 	 */
-	maxp = roundup(maxp, KERNALIGN);
+	maxp = roundup(maxp, ELFROUND);
 	for (i = 0; i < elf->e_shnum; i++) {
 		addr = maxp;
 		size = (size_t)shdr[i].sh_size;
