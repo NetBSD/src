@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.452 2017/11/13 20:38:31 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.453 2017/11/13 22:01:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.452 2017/11/13 20:38:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.453 2017/11/13 22:01:45 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -338,15 +338,17 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	struct nameidata nd;
 	size_t		resid;
 
+#if 1
+	// grab the absolute pathbuf here before namei() trashes it.
+	pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
+#endif
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0)
 		return error;
 	epp->ep_vp = vp = nd.ni_vp;
-#if 1
-	pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
-#else
+#if 0
 	/*
 	 * XXX: can't use nd.ni_pnbuf, because although pb contains an
 	 * absolute path, nd.ni_pnbuf does not if the path contains symlinks.
