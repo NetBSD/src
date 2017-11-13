@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.51 2017/11/08 21:44:29 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.52 2017/11/13 17:37:47 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -206,6 +206,11 @@ ld1		at sdmmc1
 ld2		at sdmmc2
 ld3		at sdmmc3
 ld*		at sdmmc?
+
+# NAND Flash
+sunxinand*	at fdt?			# NAND flash controller
+nand*		at nandbus?
+flash*		at nand? dynamic 1
 
 # SATA
 ahcisata*	at fdt?			# SATA
