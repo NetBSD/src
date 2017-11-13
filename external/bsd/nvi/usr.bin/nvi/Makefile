@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2017/11/06 03:37:52 rin Exp $
+#	$NetBSD: Makefile,v 1.10 2017/11/13 01:51:47 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 CPPFLAGS+=-DHAVE_OPENPTY -DHAVE_UTIL_H
 CPPFLAGS+=-DHAVE_SIGTIMEDWAIT 
+CPPFLAGS+=-DHAVE_MVWCHGAT
 
 #DBG=-g
 #CPPFLAGS+=-DLOGDEBUG -DTRACE
