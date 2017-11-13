@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.8 2017/05/23 08:54:38 nonaka Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.9 2017/11/13 11:45:54 nakayama Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -57,6 +57,7 @@
 	movq	IOAPIC_SC_DATA(%rdi),%r15			;\
 	movl	(%r15),%esi					;\
 	orl	$IOAPIC_REDLO_MASK,%esi				;\
+	andl	$~IOAPIC_REDLO_RIRR,%esi			;\
 	movl	%esi,(%r15)					;\
 	movq	IS_PIC(%r14),%rdi				;\
 	ioapic_asm_unlock(num)
@@ -73,7 +74,7 @@
 	movq	IOAPIC_SC_DATA(%rdi),%r13			;\
 	movl	%esi, (%r15)					;\
 	movl	(%r13),%r12d					;\
-	andl	$~IOAPIC_REDLO_MASK,%r12d			;\
+	andl	$~(IOAPIC_REDLO_MASK|IOAPIC_REDLO_RIRR),%r12d	;\
 	movl	%esi,(%r15)					;\
 	movl	%r12d,(%r13)					;\
 	movq	IS_PIC(%r14),%rdi				;\
