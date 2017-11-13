@@ -1644,6 +1644,17 @@ remap_gimple_stmt (gimple stmt, copy_body_data *id)
 	    gimple_call_set_tail (call_stmt, false);
 	  if (gimple_call_from_thunk_p (call_stmt))
 	    gimple_call_set_from_thunk (call_stmt, false);
+	  if (gimple_call_internal_p (call_stmt))
+	    switch (gimple_call_internal_fn (call_stmt))
+	      {
+	      case IFN_GOMP_SIMD_LANE:
+	      case IFN_GOMP_SIMD_VF:
+	      case IFN_GOMP_SIMD_LAST_LANE:
+		DECL_STRUCT_FUNCTION (id->dst_fn)->has_simduid_loops = true;
+	        break;
+	      default:
+		break;
+	      }
 	}
 
       /* Remap the region numbers for __builtin_eh_{pointer,filter},
@@ -1852,7 +1863,8 @@ copy_bb (copy_body_data *id, basic_block bb, int frequency_scale,
 	  call_stmt = dyn_cast <gcall *> (stmt);
 	  if (call_stmt
 	      && gimple_call_va_arg_pack_p (call_stmt)
-	      && id->call_stmt)
+	      && id->call_stmt
+	      && ! gimple_call_va_arg_pack_p (id->call_stmt))
 	    {
 	      /* __builtin_va_arg_pack () should be replaced by
 		 all arguments corresponding to ... in the caller.  */
@@ -1932,7 +1944,8 @@ copy_bb (copy_body_data *id, basic_block bb, int frequency_scale,
 		   && id->call_stmt
 		   && (decl = gimple_call_fndecl (stmt))
 		   && DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL
-		   && DECL_FUNCTION_CODE (decl) == BUILT_IN_VA_ARG_PACK_LEN)
+		   && DECL_FUNCTION_CODE (decl) == BUILT_IN_VA_ARG_PACK_LEN
+		   && ! gimple_call_va_arg_pack_p (id->call_stmt))
 	    {
 	      /* __builtin_va_arg_pack_len () should be replaced by
 		 the number of anonymous arguments.  */
@@ -2345,53 +2358,59 @@ copy_phis_for_bb (basic_block bb, copy_body_data *id)
 	{
 	  walk_tree (&new_res, copy_tree_body_r, id, NULL);
 	  new_phi = create_phi_node (new_res, new_bb);
-	  FOR_EACH_EDGE (new_edge, ei, new_bb->preds)
+	  if (EDGE_COUNT (new_bb->preds) == 0)
 	    {
-	      edge old_edge = find_edge ((basic_block) new_edge->src->aux, bb);
-	      tree arg;
-	      tree new_arg;
-	      edge_iterator ei2;
-	      location_t locus;
-
-	      /* When doing partial cloning, we allow PHIs on the entry block
-		 as long as all the arguments are the same.  Find any input
-		 edge to see argument to copy.  */
-	      if (!old_edge)
-		FOR_EACH_EDGE (old_edge, ei2, bb->preds)
-		  if (!old_edge->src->aux)
-		    break;
-
-	      arg = PHI_ARG_DEF_FROM_EDGE (phi, old_edge);
-	      new_arg = arg;
-	      walk_tree (&new_arg, copy_tree_body_r, id, NULL);
-	      gcc_assert (new_arg);
-	      /* With return slot optimization we can end up with
-	         non-gimple (foo *)&this->m, fix that here.  */
-	      if (TREE_CODE (new_arg) != SSA_NAME
-		  && TREE_CODE (new_arg) != FUNCTION_DECL
-		  && !is_gimple_val (new_arg))
-		{
-		  gimple_seq stmts = NULL;
-		  new_arg = force_gimple_operand (new_arg, &stmts, true, NULL);
-		  gsi_insert_seq_on_edge (new_edge, stmts);
-		  inserted = true;
-		}
-	      locus = gimple_phi_arg_location_from_edge (phi, old_edge);
-	      if (LOCATION_BLOCK (locus))
-		{
-		  tree *n;
-		  n = id->decl_map->get (LOCATION_BLOCK (locus));
-		  gcc_assert (n);
-		  if (*n)
-		    locus = COMBINE_LOCATION_DATA (line_table, locus, *n);
-		  else
-		    locus = LOCATION_LOCUS (locus);
-		}
-	      else
-		locus = LOCATION_LOCUS (locus);
-
-	      add_phi_arg (new_phi, new_arg, new_edge, locus);
+	      /* Technically we'd want a SSA_DEFAULT_DEF here... */
+	      SSA_NAME_DEF_STMT (new_res) = gimple_build_nop ();
 	    }
+	  else
+	    FOR_EACH_EDGE (new_edge, ei, new_bb->preds)
+	      {
+		edge old_edge = find_edge ((basic_block) new_edge->src->aux, bb);
+		tree arg;
+		tree new_arg;
+		edge_iterator ei2;
+		location_t locus;
+
+		/* When doing partial cloning, we allow PHIs on the entry block
+		   as long as all the arguments are the same.  Find any input
+		   edge to see argument to copy.  */
+		if (!old_edge)
+		  FOR_EACH_EDGE (old_edge, ei2, bb->preds)
+		    if (!old_edge->src->aux)
+		      break;
+
+		arg = PHI_ARG_DEF_FROM_EDGE (phi, old_edge);
+		new_arg = arg;
+		walk_tree (&new_arg, copy_tree_body_r, id, NULL);
+		gcc_assert (new_arg);
+		/* With return slot optimization we can end up with
+		   non-gimple (foo *)&this->m, fix that here.  */
+		if (TREE_CODE (new_arg) != SSA_NAME
+		    && TREE_CODE (new_arg) != FUNCTION_DECL
+		    && !is_gimple_val (new_arg))
+		  {
+		    gimple_seq stmts = NULL;
+		    new_arg = force_gimple_operand (new_arg, &stmts, true, NULL);
+		    gsi_insert_seq_on_edge (new_edge, stmts);
+		    inserted = true;
+		  }
+		locus = gimple_phi_arg_location_from_edge (phi, old_edge);
+		if (LOCATION_BLOCK (locus))
+		  {
+		    tree *n;
+		    n = id->decl_map->get (LOCATION_BLOCK (locus));
+		    gcc_assert (n);
+		    if (*n)
+		      locus = COMBINE_LOCATION_DATA (line_table, locus, *n);
+		    else
+		      locus = LOCATION_LOCUS (locus);
+		  }
+		 else
+		   locus = LOCATION_LOCUS (locus);
+
+		add_phi_arg (new_phi, new_arg, new_edge, locus);
+	      }
 	}
     }
 
@@ -4580,7 +4599,7 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id)
   id->src_fn = fn;
   id->src_node = cg_edge->callee;
   id->src_cfun = DECL_STRUCT_FUNCTION (fn);
-  id->call_stmt = stmt;
+  id->call_stmt = call_stmt;
 
   gcc_assert (!id->src_cfun->after_inlining);
 
@@ -4755,7 +4774,7 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id)
 	{
 	  tree name = gimple_call_lhs (stmt);
 	  tree var = SSA_NAME_VAR (name);
-	  tree def = ssa_default_def (cfun, var);
+	  tree def = var ? ssa_default_def (cfun, var) : NULL;
 
 	  if (def)
 	    {
@@ -4766,6 +4785,11 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id)
 	    }
 	  else
 	    {
+	      if (!var)
+		{
+		  var = create_tmp_reg_fn (cfun, TREE_TYPE (name), NULL);
+		  SET_SSA_NAME_VAR_OR_IDENTIFIER (name, var);
+		}
 	      /* Otherwise make this variable undefined.  */
 	      gsi_remove (&stmt_gsi, true);
 	      set_ssa_default_def (cfun, var, name);
