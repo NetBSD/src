@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nand.c,v 1.2 2017/11/13 13:47:16 jmcneill Exp $ */
+/* $NetBSD: sunxi_nand.c,v 1.3 2017/11/13 14:14:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.2 2017/11/13 13:47:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.3 2017/11/13 14:14:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -510,7 +510,7 @@ sunxi_nand_attach_chip(struct sunxi_nand_softc *sc,
 	}
 #else
 	nand->ecc.necc_code_size = 3;
-	nand->ecc.necc_block_size = 512;
+	nand->ecc.necc_block_size = 256;
 #endif
 
 	chip->chip_dev = nand_attach_mi(nand, sc->sc_dev);
