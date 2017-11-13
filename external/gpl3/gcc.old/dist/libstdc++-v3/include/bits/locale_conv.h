@@ -81,7 +81,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	     && (__outstr.size() - __outchars) < __maxlen);
 
       if (__result == codecvt_base::error)
-	return false;
+	{
+	  __count = __next - __first;
+	  return false;
+	}
 
       if (__result == codecvt_base::noconv)
 	{
@@ -372,7 +375,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
     protected:
       int
       sync()
-      { return _M_buf && _M_conv_put() && _M_buf->pubsync() ? 0 : -1; }
+      { return _M_buf && _M_conv_put() && !_M_buf->pubsync() ? 0 : -1; }
 
       typename _Wide_streambuf::int_type
       overflow(typename _Wide_streambuf::int_type __out)
@@ -479,6 +482,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
       {
 	if (_M_buf->sputn(__p, __n) < __n)
 	  return false;
+	return true;
       }
 
       // convert the put area and write to the byte stream buffer

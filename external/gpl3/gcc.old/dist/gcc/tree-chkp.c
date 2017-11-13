@@ -2236,6 +2236,7 @@ chkp_build_returned_bound (gcall *call)
   tree bounds;
   gimple stmt;
   tree fndecl = gimple_call_fndecl (call);
+  tree lhs = gimple_call_lhs (call);
   unsigned int retflags;
 
   /* To avoid fixing alloca expands in targets we handle
@@ -2246,9 +2247,8 @@ chkp_build_returned_bound (gcall *call)
 	  || DECL_FUNCTION_CODE (fndecl) == BUILT_IN_ALLOCA_WITH_ALIGN))
     {
       tree size = gimple_call_arg (call, 0);
-      tree lb = gimple_call_lhs (call);
       gimple_stmt_iterator iter = gsi_for_stmt (call);
-      bounds = chkp_make_bounds (lb, size, &iter, true);
+      bounds = chkp_make_bounds (lhs, size, &iter, true);
     }
   /* We know bounds returned by set_bounds builtin call.  */
   else if (fndecl
@@ -2301,9 +2301,10 @@ chkp_build_returned_bound (gcall *call)
 
       bounds = chkp_find_bounds (gimple_call_arg (call, argno), &iter);
     }
-  else if (chkp_call_returns_bounds_p (call))
+  else if (chkp_call_returns_bounds_p (call)
+	   && BOUNDED_P (lhs))
     {
-      gcc_assert (TREE_CODE (gimple_call_lhs (call)) == SSA_NAME);
+      gcc_assert (TREE_CODE (lhs) == SSA_NAME);
 
       /* In general case build checker builtin call to
 	 obtain returned bounds.  */
@@ -2330,7 +2331,7 @@ chkp_build_returned_bound (gcall *call)
       print_gimple_stmt (dump_file, call, 0, TDF_VOPS|TDF_MEMSYMS);
     }
 
-  bounds = chkp_maybe_copy_and_register_bounds (gimple_call_lhs (call), bounds);
+  bounds = chkp_maybe_copy_and_register_bounds (lhs, bounds);
 
   return bounds;
 }
@@ -3100,6 +3101,9 @@ chkp_get_bounds_for_decl_addr (tree decl)
       && !flag_chkp_incomplete_type)
       return chkp_get_zero_bounds ();
 
+  if (VOID_TYPE_P (TREE_TYPE (decl)))
+    return chkp_get_zero_bounds ();
+
   if (flag_chkp_use_static_bounds
       && TREE_CODE (decl) == VAR_DECL
       && (TREE_STATIC (decl)
@@ -3556,8 +3560,8 @@ chkp_find_bounds_1 (tree ptr, tree ptr_src, gimple_stmt_iterator *iter)
       break;
 
     case PARM_DECL:
-      gcc_unreachable ();
-      bounds = chkp_get_bound_for_parm (ptr_src);
+      /* Handled above but failed.  */
+      bounds = chkp_get_invalid_op_bounds ();
       break;
 
     case TARGET_MEM_REF:
@@ -3618,6 +3622,8 @@ chkp_find_bounds_1 (tree ptr, tree ptr_src, gimple_stmt_iterator *iter)
       break;
 
     case INTEGER_CST:
+    case COMPLEX_CST:
+    case VECTOR_CST:
       if (integer_zerop (ptr_src))
 	bounds = chkp_get_none_bounds ();
       else
@@ -3690,7 +3696,7 @@ chkp_walk_pointer_assignments (tree lhs, tree rhs, void *arg,
 
 	  FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (rhs), cnt, field, val)
 	    {
-	      if (chkp_type_has_pointer (TREE_TYPE (field)))
+	      if (field && chkp_type_has_pointer (TREE_TYPE (field)))
 		{
 		  tree lhs_field = chkp_build_component_ref (lhs, field);
 		  chkp_walk_pointer_assignments (lhs_field, val, arg, handler);
