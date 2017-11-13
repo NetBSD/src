@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.kaslr,v 1.1 2017/11/09 15:46:48 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript.kaslr,v 1.2 2017/11/13 20:01:48 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -27,17 +27,16 @@ SECTIONS
 		*(.data)
 	}
 
-	. = ALIGN(COHERENCY_UNIT);
-	.data.cacheline_aligned :
+	.data.cacheline_aligned : SUBALIGN(COHERENCY_UNIT)
 	{
 		*(.data.cacheline_aligned)
+		. = ALIGN(COHERENCY_UNIT);
 	}
-	. = ALIGN(COHERENCY_UNIT);
-	.data.read_mostly :
+	.data.read_mostly : SUBALIGN(COHERENCY_UNIT)
 	{
 		*(.data.read_mostly)
+		. = ALIGN(COHERENCY_UNIT);
 	}
-	. = ALIGN(COHERENCY_UNIT);
 
 	_edata = . ;
 	PROVIDE (edata = .) ;
@@ -59,4 +58,3 @@ SECTIONS
 		KEEP(*(.note.netbsd.ident));
 	}
 }
-
