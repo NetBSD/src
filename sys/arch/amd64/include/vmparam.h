@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.44 2017/11/11 20:23:49 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.45 2017/11/13 07:06:49 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * Default pager_map of 16MB is awfully small.  There is have plenty
+ * Default pager_map of 16MB is awfully small.  There is plenty
  * of VA so use it.
  */
 #define	PAGER_MAP_DEFAULT_SIZE (512 * 1024 * 1024)
