@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.6 2017/11/10 18:08:11 rin Exp $ */
+/*	$NetBSD: conv.c,v 1.7 2017/11/13 04:21:55 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp  (Berkeley) Date: 2001/08/18 21:41:41 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: conv.c,v 1.6 2017/11/10 18:08:11 rin Exp $");
+__RCSID("$NetBSD: conv.c,v 1.7 2017/11/13 04:21:55 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -33,7 +33,7 @@ __RCSID("$NetBSD: conv.c,v 1.6 2017/11/10 18:08:11 rin Exp $");
 
 #include "common.h"
 
-#ifdef USE_ICONV
+#if defined(USE_WIDECHAR) && defined(USE_ICONV)
 #include <langinfo.h>
 #include <iconv.h>
 
@@ -365,10 +365,10 @@ conv_init (SCR *orig, SCR *sp)
 	sp->conv.file2int = fe_char2int;
 	sp->conv.int2file = fe_int2char;
 	sp->conv.input2int = ie_char2int;
-#endif
 #ifdef USE_ICONV
 	o_set(sp, O_FILEENCODING, OS_STRDUP, nl_langinfo(CODESET), 0);
 	o_set(sp, O_INPUTENCODING, OS_STRDUP, nl_langinfo(CODESET), 0);
+#endif
 #endif
     }
 }
