@@ -243,26 +243,25 @@ tre_regwexec(const regex_t *preg, const wchar_t *str,
 	 size_t nmatch, regmatch_t pmatch[], int eflags)
 {
 	size_t shift, len, i;
-	int startend, ret;
+	int ret;
 	tre_tnfa_t *tnfa = (void *)preg->TRE_REGEX_T_FIELD;
 	regmatch_t *p;
 
 	if (eflags & REG_STARTEND) {
-		if (pmatch == NULL || pmatch->rm_so < 0
+		if (pmatch == NULL || pmatch->rm_so < 0 || pmatch->rm_eo < 0
 		    || pmatch->rm_so > pmatch->rm_eo)
 			return REG_INVARG;
 		str += shift = pmatch->rm_so;
 		len = pmatch->rm_eo - pmatch->rm_so;
-		eflags = (unsigned)(eflags & ~REG_STARTEND);
-		startend = 1;
+		eflags &= ~REG_STARTEND;
 	} else {
+		shift = 0;
 		len = (size_t)-1;
-		startend = 0;
 	}
 
 	ret = tre_regwnexec(preg, str, len, nmatch, pmatch, eflags);
 
-	if (!ret && !(tnfa->cflags & REG_NOSUB) && startend) {
+	if (!ret && !(tnfa->cflags & REG_NOSUB) && len != (size_t)-1) {
 		for (i = nmatch, p = pmatch; i > 0; p++, i--) {
 			if (p->rm_so >= 0) p->rm_so += shift;
 			if (p->rm_eo >= 0) p->rm_eo += shift;
