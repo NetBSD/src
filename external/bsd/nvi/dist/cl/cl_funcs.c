@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.5 2017/11/12 15:33:03 rin Exp $ */
+/*	$NetBSD: cl_funcs.c,v 1.6 2017/11/13 01:37:48 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_funcs.c,v 10.72 2002/03/02 23:18:33 skimo Exp  (Berkeley) Date: 2002/03/02 23:18:33 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_funcs.c,v 1.5 2017/11/12 15:33:03 rin Exp $");
+__RCSID("$NetBSD: cl_funcs.c,v 1.6 2017/11/13 01:37:48 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -346,7 +346,7 @@ cl_deleteln(SCR *sp)
 		for (lno = RLNO(sp, LASTLINE(sp)), col = spcnt = 0;;) {
 			(void)wmove(win, lno, col);
 			ch = winch(win);
-			if (isblank(ch))
+			if (ISBLANK(ch))
 				++spcnt;
 			else {
 				(void)wmove(win, lno, col - spcnt);
