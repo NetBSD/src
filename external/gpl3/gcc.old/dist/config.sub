@@ -1408,8 +1408,7 @@ case $os in
 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox*)
+	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos* | -phoenix*)
 	# Remember, each alternative MUST END IN *, to match a version number.
 		;;
 	-qnx*)

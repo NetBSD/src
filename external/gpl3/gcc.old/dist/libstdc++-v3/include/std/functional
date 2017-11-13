@@ -448,17 +448,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp>
     void cref(const _Tp&&) = delete;
 
-  /// Partial specialization.
+  /// std::ref overload to prevent wrapping a reference_wrapper
   template<typename _Tp>
     inline reference_wrapper<_Tp>
     ref(reference_wrapper<_Tp> __t) noexcept
-    { return ref(__t.get()); }
+    { return std::ref(__t.get()); }
 
-  /// Partial specialization.
+  /// std::cref overload to prevent wrapping a reference_wrapper
   template<typename _Tp>
     inline reference_wrapper<const _Tp>
     cref(reference_wrapper<_Tp> __t) noexcept
-    { return cref(__t.get()); }
+    { return std::cref(__t.get()); }
 
   // @} group functors
 
@@ -1593,7 +1593,7 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
     void (_Undefined_class::*_M_member_pointer)();
   };
 
-  union _Any_data
+  union [[gnu::may_alias]] _Any_data
   {
     void*       _M_access()       { return &_M_pod_data[0]; }
     const void* _M_access() const { return &_M_pod_data[0]; }
@@ -1699,7 +1699,7 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
 	static void
 	_M_clone(_Any_data& __dest, const _Any_data& __source, true_type)
 	{
-	  new (__dest._M_access()) _Functor(__source._M_access<_Functor>());
+	  ::new (__dest._M_access()) _Functor(__source._M_access<_Functor>());
 	}
 
 	// Clone a function object that is not location-invariant or
@@ -1764,13 +1764,13 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
 
 	template<typename _Tp>
 	  static bool
-	  _M_not_empty_function(_Tp* const& __fp)
-	  { return __fp; }
+	  _M_not_empty_function(_Tp* __fp)
+	  { return __fp != nullptr; }
 
 	template<typename _Class, typename _Tp>
 	  static bool
-	  _M_not_empty_function(_Tp _Class::* const& __mp)
-	  { return __mp; }
+	  _M_not_empty_function(_Tp _Class::* __mp)
+	  { return __mp != nullptr; }
 
 	template<typename _Tp>
 	  static bool
@@ -1780,7 +1780,7 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
       private:
 	static void
 	_M_init_functor(_Any_data& __functor, _Functor&& __f, true_type)
-	{ new (__functor._M_access()) _Functor(std::move(__f)); }
+	{ ::new (__functor._M_access()) _Functor(std::move(__f)); }
 
 	static void
 	_M_init_functor(_Any_data& __functor, _Functor&& __f, false_type)
@@ -1978,7 +1978,7 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
       typedef _Res _Signature_type(_ArgTypes...);
 
       template<typename _Func,
-	       typename _Res2 = typename result_of<_Func(_ArgTypes...)>::type>
+	       typename _Res2 = typename result_of<_Func&(_ArgTypes...)>::type>
 	struct _Callable : __check_func_return_type<_Res2, _Res> { };
 
       // Used so the return type convertibility checks aren't done when
@@ -2025,7 +2025,7 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
        *  The newly-created %function contains the target of @a __x
        *  (if it has one).
        */
-      function(function&& __x) : _Function_base()
+      function(function&& __x) noexcept : _Function_base()
       {
 	__x.swap(*this);
       }
@@ -2084,7 +2084,7 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
        *  object, then this operation will not throw an %exception.
        */
       function&
-      operator=(function&& __x)
+      operator=(function&& __x) noexcept
       {
 	function(std::move(__x)).swap(*this);
 	return *this;
@@ -2151,7 +2151,7 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
        *  Swap the targets of @c this function object and @a __f. This
        *  function will not throw an %exception.
        */
-      void swap(function& __x)
+      void swap(function& __x) noexcept
       {
 	std::swap(_M_functor, __x._M_functor);
 	std::swap(_M_manager, __x._M_manager);
@@ -2364,9 +2364,11 @@ _GLIBCXX_MEM_FN_TRAITS(&&, false_type, true_type)
    *
    *  This function will not throw an %exception.
    */
+  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+  // 2062. Effect contradictions w/o no-throw guarantee of std::function swaps
   template<typename _Res, typename... _Args>
     inline void
-    swap(function<_Res(_Args...)>& __x, function<_Res(_Args...)>& __y)
+    swap(function<_Res(_Args...)>& __x, function<_Res(_Args...)>& __y) noexcept
     { __x.swap(__y); }
 
 _GLIBCXX_END_NAMESPACE_VERSION

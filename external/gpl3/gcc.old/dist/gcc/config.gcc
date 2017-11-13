@@ -369,7 +369,7 @@ i[34567]86-*-*)
 		       xsavesintrin.h avx512dqintrin.h avx512bwintrin.h
 		       avx512vlintrin.h avx512vlbwintrin.h avx512vldqintrin.h
 		       avx512ifmaintrin.h avx512ifmavlintrin.h avx512vbmiintrin.h
-		       avx512vbmivlintrin.h clwbintrin.h pcommitintrin.h mwaitxintrin.h"
+		       avx512vbmivlintrin.h clwbintrin.h mwaitxintrin.h"
 	;;
 x86_64-*-*)
 	cpu_type=i386
@@ -390,7 +390,7 @@ x86_64-*-*)
 		       xsavesintrin.h avx512dqintrin.h avx512bwintrin.h
 		       avx512vlintrin.h avx512vlbwintrin.h avx512vldqintrin.h
 		       avx512ifmaintrin.h avx512ifmavlintrin.h avx512vbmiintrin.h
-		       avx512vbmivlintrin.h clwbintrin.h pcommitintrin.h mwaitxintrin.h"
+		       avx512vbmivlintrin.h clwbintrin.h mwaitxintrin.h"
 	;;
 ia64-*-*)
 	extra_headers=ia64intrin.h
@@ -813,6 +813,11 @@ case ${target} in
       ;;
   esac
   ;;
+*-*-phoenix*)
+  gas=yes
+  gnu_ld=yes
+  default_use_cxa_atexit=yes
+  ;;
 *-*-rtems*)
   case ${enable_threads} in
     "" | yes | rtems) thread_file='rtems' ;;
@@ -932,6 +937,11 @@ aarch64*-*-elf)
 	done
 	TM_MULTILIB_CONFIG=`echo $TM_MULTILIB_CONFIG | sed 's/^,//'`
 	;;
+aarch64*-*-freebsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h ${fbsd_tm_file}"
+	tm_file="${tm_file} aarch64/aarch64-elf.h aarch64/aarch64-freebsd.h"
+	tmake_file="${tmake_file} aarch64/t-aarch64 aarch64/t-aarch64-freebsd"
+	;;
 aarch64*-*-linux*)
 	tm_file="${tm_file} dbxelf.h elfos.h gnu-user.h linux.h glibc-stdint.h"
 	tm_file="${tm_file} aarch64/aarch64-elf.h aarch64/aarch64-linux.h"
@@ -1049,11 +1059,9 @@ arm*-*-freebsd*)                # ARM FreeBSD EABI
 	case $target in
 	armv6*-*-freebsd*)
 	    tm_defines="${tm_defines} TARGET_FREEBSD_ARMv6=1"
-	    ;;
-	esac
-	case $target in
-	arm*hf-*-freebsd*)
-	    tm_defines="${tm_defines} TARGET_FREEBSD_ARM_HARD_FLOAT=1"
+            if test $fbsd_major -ge 11; then
+               tm_defines="${tm_defines} TARGET_FREEBSD_ARM_HARD_FLOAT=1"
+            fi
 	    ;;
 	esac
 	with_tls=${with_tls:-gnu}
@@ -1119,6 +1127,12 @@ arm*-*-uclinux*eabi*)		# ARM ucLinux
 	tm_file="$tm_file arm/bpabi.h arm/uclinux-eabi.h arm/aout.h vxworks-dummy.h arm/arm.h"
 	# The EABI requires the use of __cxa_atexit.
 	default_use_cxa_atexit=yes
+	;;
+arm*-*-phoenix*)
+	tm_file="elfos.h arm/unknown-elf.h arm/elf.h arm/bpabi.h"
+	tm_file="${tm_file} newlib-stdint.h phoenix.h"
+	tm_file="${tm_file} arm/aout.h arm/arm.h"
+	tmake_file="${tmake_file} arm/t-arm arm/t-bpabi arm/t-phoenix"
 	;;
 arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-rtems*)
 	case ${target} in

@@ -856,6 +856,7 @@ c_cpp_builtins (cpp_reader *pfile)
 	  cpp_define (pfile, "__cpp_decltype=200707");
 	  cpp_define (pfile, "__cpp_attributes=200809");
 	  cpp_define (pfile, "__cpp_rvalue_reference=200610");
+	  cpp_define (pfile, "__cpp_rvalue_references=200610");
 	  cpp_define (pfile, "__cpp_variadic_templates=200704");
 	  cpp_define (pfile, "__cpp_initializer_lists=200806");
 	  cpp_define (pfile, "__cpp_delegating_constructors=200604");
@@ -878,6 +879,8 @@ c_cpp_builtins (cpp_reader *pfile)
 	}
       if (flag_sized_deallocation)
 	cpp_define (pfile, "__cpp_sized_deallocation=201309");
+      if (flag_threadsafe_statics)
+	cpp_define (pfile, "__cpp_threadsafe_static_init=200806");
     }
   /* Note that we define this for C as well, so that we know if
      __attribute__((cleanup)) will interface with EH.  */

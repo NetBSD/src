@@ -249,11 +249,17 @@ warn_function_const (tree decl, bool known_finite)
 static void
 warn_function_noreturn (tree decl)
 {
+  tree original_decl = decl;
+
+  cgraph_node *node = cgraph_node::get (decl);
+  if (node->instrumentation_clone)
+    decl = node->instrumented_version->decl;
+
   static hash_set<tree> *warned_about;
   if (!lang_hooks.missing_noreturn_ok_p (decl)
       && targetm.warn_func_return (decl))
     warned_about 
-      = suggest_attribute (OPT_Wsuggest_attribute_noreturn, decl,
+      = suggest_attribute (OPT_Wsuggest_attribute_noreturn, original_decl,
 			   true, warned_about, "noreturn");
 }
 
@@ -1184,7 +1190,8 @@ static bool
 cdtor_p (cgraph_node *n, void *)
 {
   if (DECL_STATIC_CONSTRUCTOR (n->decl) || DECL_STATIC_DESTRUCTOR (n->decl))
-    return !TREE_READONLY (n->decl) && !DECL_PURE_P (n->decl);
+    return ((!TREE_READONLY (n->decl) && !DECL_PURE_P (n->decl))
+	    || DECL_LOOPING_CONST_OR_PURE_P (n->decl));
   return false;
 }
 
@@ -1961,10 +1968,25 @@ pass_nothrow::execute (function *)
     }
 
   node->set_nothrow_flag (true);
+
+  bool cfg_changed = false;
+  if (self_recursive_p (node))
+    FOR_EACH_BB_FN (this_block, cfun)
+      if (gimple g = last_stmt (this_block))
+	if (is_gimple_call (g))
+	  {
+	    tree callee_t = gimple_call_fndecl (g);
+	    if (callee_t
+		&& recursive_call_p (current_function_decl, callee_t)
+		&& maybe_clean_eh_stmt (g)
+		&& gimple_purge_dead_eh_edges (this_block))
+	      cfg_changed = true;
+	  }
+
   if (dump_file)
     fprintf (dump_file, "Function found to be nothrow: %s\n",
 	     current_function_name ());
-  return 0;
+  return cfg_changed ? TODO_cleanup_cfg : 0;
 }
 
 } // anon namespace
