@@ -365,6 +365,10 @@ get_ubsan_type_info_for_type (tree type)
     return 0;
 }
 
+/* Counters for internal labels.  ubsan_ids[0] for Lubsan_type,
+   ubsan_ids[1] for Lubsan_data labels.  */
+static GTY(()) unsigned int ubsan_ids[2];
+
 /* Helper routine that returns ADDR_EXPR of a VAR_DECL of a type
    descriptor.  It first looks into the hash table; if not found,
    create the VAR_DECL, put it into the hash table and return the
@@ -427,6 +431,7 @@ ubsan_type_descriptor (tree type, enum ubsan_print_style pstyle)
     /* We weren't able to determine the type name.  */
     tname = "<unknown>";
 
+  tree eltype = type;
   if (pstyle == UBSAN_PRINT_POINTER)
     {
       pp_printf (&pretty_name, "'%s%s%s%s%s%s%s",
@@ -475,12 +480,12 @@ ubsan_type_descriptor (tree type, enum ubsan_print_style pstyle)
       pp_quote (&pretty_name);
 
       /* Save the tree with stripped types.  */
-      type = t;
+      eltype = t;
     }
   else
     pp_printf (&pretty_name, "'%s'", tname);
 
-  switch (TREE_CODE (type))
+  switch (TREE_CODE (eltype))
     {
     case BOOLEAN_TYPE:
     case ENUMERAL_TYPE:
@@ -490,9 +495,9 @@ ubsan_type_descriptor (tree type, enum ubsan_print_style pstyle)
     case REAL_TYPE:
       /* FIXME: libubsan right now only supports float, double and
 	 long double type formats.  */
-      if (TYPE_MODE (type) == TYPE_MODE (float_type_node)
-	  || TYPE_MODE (type) == TYPE_MODE (double_type_node)
-	  || TYPE_MODE (type) == TYPE_MODE (long_double_type_node))
+      if (TYPE_MODE (eltype) == TYPE_MODE (float_type_node)
+	  || TYPE_MODE (eltype) == TYPE_MODE (double_type_node)
+	  || TYPE_MODE (eltype) == TYPE_MODE (long_double_type_node))
 	tkind = 0x0001;
       else
 	tkind = 0xffff;
@@ -501,7 +506,7 @@ ubsan_type_descriptor (tree type, enum ubsan_print_style pstyle)
       tkind = 0xffff;
       break;
     }
-  tinfo = get_ubsan_type_info_for_type (type);
+  tinfo = get_ubsan_type_info_for_type (eltype);
 
   /* Create a new VAR_DECL of type descriptor.  */
   const char *tmp = pp_formatted_text (&pretty_name);
@@ -512,10 +517,9 @@ ubsan_type_descriptor (tree type, enum ubsan_print_style pstyle)
   TREE_STATIC (str) = 1;
 
   char tmp_name[32];
-  static unsigned int type_var_id_num;
-  ASM_GENERATE_INTERNAL_LABEL (tmp_name, "Lubsan_type", type_var_id_num++);
+  ASM_GENERATE_INTERNAL_LABEL (tmp_name, "Lubsan_type", ubsan_ids[0]++);
   decl = build_decl (UNKNOWN_LOCATION, VAR_DECL, get_identifier (tmp_name),
-			  dtype);
+		     dtype);
   TREE_STATIC (decl) = 1;
   TREE_PUBLIC (decl) = 0;
   DECL_ARTIFICIAL (decl) = 1;
@@ -615,8 +619,7 @@ ubsan_create_data (const char *name, int loccnt, const location_t *ploc, ...)
 
   /* Now, fill in the type.  */
   char tmp_name[32];
-  static unsigned int ubsan_var_id_num;
-  ASM_GENERATE_INTERNAL_LABEL (tmp_name, "Lubsan_data", ubsan_var_id_num++);
+  ASM_GENERATE_INTERNAL_LABEL (tmp_name, "Lubsan_data", ubsan_ids[1]++);
   tree var = build_decl (UNKNOWN_LOCATION, VAR_DECL, get_identifier (tmp_name),
 			 ret);
   TREE_STATIC (var) = 1;
@@ -1772,7 +1775,7 @@ instrument_object_size (gimple_stmt_iterator *gsi, bool is_lhs)
 	{
 	  tree repr = DECL_BIT_FIELD_REPRESENTATIVE (TREE_OPERAND (t, 1));
 	  t = build3 (COMPONENT_REF, TREE_TYPE (repr), TREE_OPERAND (t, 0),
-		      repr, NULL_TREE);
+		      repr, TREE_OPERAND (t, 2));
 	}
       break;
     case ARRAY_REF:
@@ -1806,7 +1809,11 @@ instrument_object_size (gimple_stmt_iterator *gsi, bool is_lhs)
   bool decl_p = DECL_P (inner);
   tree base;
   if (decl_p)
-    base = inner;
+    {
+      if (DECL_REGISTER (inner))
+	return;
+      base = inner;
+    }
   else if (TREE_CODE (inner) == MEM_REF)
     base = TREE_OPERAND (inner, 0);
   else
