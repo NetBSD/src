@@ -1,5 +1,5 @@
-This is libgomp.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-5.4.0/gcc-5.4.0/libgomp/libgomp.texi.
+This is libgomp.info, produced by makeinfo version 6.1 from
+libgomp.texi.
 
 Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
@@ -18,9 +18,8 @@ Free Documentation License".
    (b) The FSF's Back-Cover Text is:
 
    You have freedom to copy and modify this GNU Manual, like GNU
-software.  Copies published by the Free Software Foundation raise
-funds for GNU development.
-
+software.  Copies published by the Free Software Foundation raise funds
+for GNU development.
 INFO-DIR-SECTION GNU Libraries
 START-INFO-DIR-ENTRY
 * libgomp: (libgomp).          GNU Offloading and Multi Processing Runtime Library.
@@ -51,8 +50,8 @@ Free Documentation License".
    (b) The FSF's Back-Cover Text is:
 
    You have freedom to copy and modify this GNU Manual, like GNU
-software.  Copies published by the Free Software Foundation raise
-funds for GNU development.
+software.  Copies published by the Free Software Foundation raise funds
+for GNU development.
 
 
 File: libgomp.info,  Node: Top,  Next: Enabling OpenMP,  Up: (dir)
@@ -60,11 +59,11 @@ File: libgomp.info,  Node: Top,  Next: Enabling OpenMP,  Up: (dir)
 Introduction
 ************
 
-This manual documents the usage of libgomp, the GNU Offloading and
-Multi Processing Runtime Library.  This includes the GNU implementation
-of the OpenMP (http://www.openmp.org) Application Programming Interface
-(API) for multi-platform shared-memory parallel programming in C/C++
-and Fortran, and the GNU implementation of the OpenACC
+This manual documents the usage of libgomp, the GNU Offloading and Multi
+Processing Runtime Library.  This includes the GNU implementation of the
+OpenMP (http://www.openmp.org) Application Programming Interface (API)
+for multi-platform shared-memory parallel programming in C/C++ and
+Fortran, and the GNU implementation of the OpenACC
 (http://www.openacc.org/) Application Programming Interface (API) for
 offloading of code to accelerator devices in C/C++ and Fortran.
 
@@ -98,17 +97,16 @@ File: libgomp.info,  Node: Enabling OpenMP,  Next: Runtime Library Routines,  Pr
 *****************
 
 To activate the OpenMP extensions for C/C++ and Fortran, the
-compile-time flag `-fopenmp' must be specified.  This enables the
-OpenMP directive `#pragma omp' in C/C++ and `!$omp' directives in free
-form, `c$omp', `*$omp' and `!$omp' directives in fixed form, `!$'
-conditional compilation sentinels in free form and `c$', `*$' and `!$'
-sentinels in fixed form, for Fortran.  The flag also arranges for
-automatic linking of the OpenMP runtime library (*note Runtime Library
-Routines::).
+compile-time flag '-fopenmp' must be specified.  This enables the OpenMP
+directive '#pragma omp' in C/C++ and '!$omp' directives in free form,
+'c$omp', '*$omp' and '!$omp' directives in fixed form, '!$' conditional
+compilation sentinels in free form and 'c$', '*$' and '!$' sentinels in
+fixed form, for Fortran.  The flag also arranges for automatic linking
+of the OpenMP runtime library (*note Runtime Library Routines::).
 
-   A complete description of all OpenMP directives accepted may be
-found in the OpenMP Application Program Interface
-(http://www.openmp.org) manual, version 4.0.
+   A complete description of all OpenMP directives accepted may be found
+in the OpenMP Application Program Interface (http://www.openmp.org)
+manual, version 4.0.
 
 
 File: libgomp.info,  Node: Runtime Library Routines,  Next: Environment Variables,  Prev: Enabling OpenMP,  Up: Top
@@ -175,7 +173,7 @@ Portable, thread-based, wall clock timer.
 
 File: libgomp.info,  Node: omp_get_active_level,  Next: omp_get_ancestor_thread_num,  Up: Runtime Library Routines
 
-2.1 `omp_get_active_level' - Number of parallel regions
+2.1 'omp_get_active_level' - Number of parallel regions
 =======================================================
 
 _Description_:
@@ -183,10 +181,10 @@ _Description_:
      blocks, which enclose the calling call.
 
 _C/C++_
-     _Prototype_:  `int omp_get_active_level(void);'
+     _Prototype_:   'int omp_get_active_level(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_active_level()'
+     _Interface_:   'integer function omp_get_active_level()'
 
 _See also_:
      *note omp_get_level::, *note omp_get_max_active_levels::, *note
@@ -198,21 +196,21 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_ancestor_thread_num,  Next: omp_get_cancellation,  Prev: omp_get_active_level,  Up: Runtime Library Routines
 
-2.2 `omp_get_ancestor_thread_num' - Ancestor thread ID
+2.2 'omp_get_ancestor_thread_num' - Ancestor thread ID
 ======================================================
 
 _Description_:
      This function returns the thread identification number for the
      given nesting level of the current thread.  For values of LEVEL
-     outside zero to `omp_get_level' -1 is returned; if LEVEL is
-     `omp_get_level' the result is identical to `omp_get_thread_num'.
+     outside zero to 'omp_get_level' -1 is returned; if LEVEL is
+     'omp_get_level' the result is identical to 'omp_get_thread_num'.
 
 _C/C++_
-     _Prototype_:  `int omp_get_ancestor_thread_num(int level);'
+     _Prototype_:   'int omp_get_ancestor_thread_num(int level);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_ancestor_thread_num(level)'
-                   `integer level'
+     _Interface_:   'integer function omp_get_ancestor_thread_num(level)'
+                    'integer level'
 
 _See also_:
      *note omp_get_level::, *note omp_get_thread_num::, *note
@@ -224,20 +222,20 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_cancellation,  Next: omp_get_default_device,  Prev: omp_get_ancestor_thread_num,  Up: Runtime Library Routines
 
-2.3 `omp_get_cancellation' - Whether cancellation support is enabled
+2.3 'omp_get_cancellation' - Whether cancellation support is enabled
 ====================================================================
 
 _Description_:
-     This function returns `true' if cancellation is activated, `false'
-     otherwise.  Here, `true' and `false' represent their
-     language-specific counterparts.  Unless `OMP_CANCELLATION' is set
+     This function returns 'true' if cancellation is activated, 'false'
+     otherwise.  Here, 'true' and 'false' represent their
+     language-specific counterparts.  Unless 'OMP_CANCELLATION' is set
      true, cancellations are deactivated.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_cancellation(void);'
+     _Prototype_:   'int omp_get_cancellation(void);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_get_cancellation()'
+     _Interface_:   'logical function omp_get_cancellation()'
 
 _See also_:
      *note OMP_CANCELLATION::
@@ -248,17 +246,17 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_default_device,  Next: omp_get_dynamic,  Prev: omp_get_cancellation,  Up: Runtime Library Routines
 
-2.4 `omp_get_default_device' - Get the default device for target regions
+2.4 'omp_get_default_device' - Get the default device for target regions
 ========================================================================
 
 _Description_:
      Get the default device for target regions without device clause.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_default_device(void);'
+     _Prototype_:   'int omp_get_default_device(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_default_device()'
+     _Interface_:   'integer function omp_get_default_device()'
 
 _See also_:
      *note OMP_DEFAULT_DEVICE::, *note omp_set_default_device::
@@ -269,23 +267,23 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_dynamic,  Next: omp_get_level,  Prev: omp_get_default_device,  Up: Runtime Library Routines
 
-2.5 `omp_get_dynamic' - Dynamic teams setting
+2.5 'omp_get_dynamic' - Dynamic teams setting
 =============================================
 
 _Description_:
-     This function returns `true' if enabled, `false' otherwise.  Here,
-     `true' and `false' represent their language-specific counterparts.
+     This function returns 'true' if enabled, 'false' otherwise.  Here,
+     'true' and 'false' represent their language-specific counterparts.
 
      The dynamic team setting may be initialized at startup by the
-     `OMP_DYNAMIC' environment variable or at runtime using
-     `omp_set_dynamic'.  If undefined, dynamic adjustment is disabled
-     by default.
+     'OMP_DYNAMIC' environment variable or at runtime using
+     'omp_set_dynamic'.  If undefined, dynamic adjustment is disabled by
+     default.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_dynamic(void);'
+     _Prototype_:   'int omp_get_dynamic(void);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_get_dynamic()'
+     _Interface_:   'logical function omp_get_dynamic()'
 
 _See also_:
      *note omp_set_dynamic::, *note OMP_DYNAMIC::
@@ -296,7 +294,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_level,  Next: omp_get_max_active_levels,  Prev: omp_get_dynamic,  Up: Runtime Library Routines
 
-2.6 `omp_get_level' - Obtain the current nesting level
+2.6 'omp_get_level' - Obtain the current nesting level
 ======================================================
 
 _Description_:
@@ -304,10 +302,10 @@ _Description_:
      which enclose the calling call.
 
 _C/C++_
-     _Prototype_:  `int omp_get_level(void);'
+     _Prototype_:   'int omp_get_level(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_level()'
+     _Interface_:   'integer function omp_level()'
 
 _See also_:
      *note omp_get_active_level::
@@ -318,7 +316,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_max_active_levels,  Next: omp_get_max_threads,  Prev: omp_get_level,  Up: Runtime Library Routines
 
-2.7 `omp_get_max_active_levels' - Maximum number of active regions
+2.7 'omp_get_max_active_levels' - Maximum number of active regions
 ==================================================================
 
 _Description_:
@@ -326,10 +324,10 @@ _Description_:
      parallel regions.
 
 _C/C++_
-     _Prototype_:  `int omp_get_max_active_levels(void);'
+     _Prototype_:   'int omp_get_max_active_levels(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_max_active_levels()'
+     _Interface_:   'integer function omp_get_max_active_levels()'
 
 _See also_:
      *note omp_set_max_active_levels::, *note omp_get_active_level::
@@ -340,18 +338,18 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_max_threads,  Next: omp_get_nested,  Prev: omp_get_max_active_levels,  Up: Runtime Library Routines
 
-2.8 `omp_get_max_threads' - Maximum number of threads of parallel region
+2.8 'omp_get_max_threads' - Maximum number of threads of parallel region
 ========================================================================
 
 _Description_:
      Return the maximum number of threads used for the current parallel
-     region that does not use the clause `num_threads'.
+     region that does not use the clause 'num_threads'.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_max_threads(void);'
+     _Prototype_:   'int omp_get_max_threads(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_max_threads()'
+     _Interface_:   'integer function omp_get_max_threads()'
 
 _See also_:
      *note omp_set_num_threads::, *note omp_set_dynamic::, *note
@@ -363,24 +361,24 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_nested,  Next: omp_get_num_devices,  Prev: omp_get_max_threads,  Up: Runtime Library Routines
 
-2.9 `omp_get_nested' - Nested parallel regions
+2.9 'omp_get_nested' - Nested parallel regions
 ==============================================
 
 _Description_:
-     This function returns `true' if nested parallel regions are
-     enabled, `false' otherwise.  Here, `true' and `false' represent
+     This function returns 'true' if nested parallel regions are
+     enabled, 'false' otherwise.  Here, 'true' and 'false' represent
      their language-specific counterparts.
 
      Nested parallel regions may be initialized at startup by the
-     `OMP_NESTED' environment variable or at runtime using
-     `omp_set_nested'.  If undefined, nested parallel regions are
+     'OMP_NESTED' environment variable or at runtime using
+     'omp_set_nested'.  If undefined, nested parallel regions are
      disabled by default.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_nested(void);'
+     _Prototype_:   'int omp_get_nested(void);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_get_nested()'
+     _Interface_:   'logical function omp_get_nested()'
 
 _See also_:
      *note omp_set_nested::, *note OMP_NESTED::
@@ -391,17 +389,17 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_num_devices,  Next: omp_get_num_procs,  Prev: omp_get_nested,  Up: Runtime Library Routines
 
-2.10 `omp_get_num_devices' - Number of target devices
+2.10 'omp_get_num_devices' - Number of target devices
 =====================================================
 
 _Description_:
      Returns the number of target devices.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_num_devices(void);'
+     _Prototype_:   'int omp_get_num_devices(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_num_devices()'
+     _Interface_:   'integer function omp_get_num_devices()'
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 3.2.25.
@@ -409,17 +407,17 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_num_procs,  Next: omp_get_num_teams,  Prev: omp_get_num_devices,  Up: Runtime Library Routines
 
-2.11 `omp_get_num_procs' - Number of processors online
+2.11 'omp_get_num_procs' - Number of processors online
 ======================================================
 
 _Description_:
      Returns the number of processors online on that device.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_num_procs(void);'
+     _Prototype_:   'int omp_get_num_procs(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_num_procs()'
+     _Interface_:   'integer function omp_get_num_procs()'
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 3.2.5.
@@ -427,17 +425,17 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_num_teams,  Next: omp_get_num_threads,  Prev: omp_get_num_procs,  Up: Runtime Library Routines
 
-2.12 `omp_get_num_teams' - Number of teams
+2.12 'omp_get_num_teams' - Number of teams
 ==========================================
 
 _Description_:
      Returns the number of teams in the current team region.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_num_teams(void);'
+     _Prototype_:   'int omp_get_num_teams(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_num_teams()'
+     _Interface_:   'integer function omp_get_num_teams()'
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 3.2.26.
@@ -445,25 +443,25 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_num_threads,  Next: omp_get_proc_bind,  Prev: omp_get_num_teams,  Up: Runtime Library Routines
 
-2.13 `omp_get_num_threads' - Size of the active team
+2.13 'omp_get_num_threads' - Size of the active team
 ====================================================
 
 _Description_:
-     Returns the number of threads in the current team.  In a
-     sequential section of the program `omp_get_num_threads' returns 1.
+     Returns the number of threads in the current team.  In a sequential
+     section of the program 'omp_get_num_threads' returns 1.
 
      The default team size may be initialized at startup by the
-     `OMP_NUM_THREADS' environment variable.  At runtime, the size of
-     the current team may be set either by the `NUM_THREADS' clause or
-     by `omp_set_num_threads'.  If none of the above were used to
-     define a specific value and `OMP_DYNAMIC' is disabled, one thread
-     per CPU online is used.
+     'OMP_NUM_THREADS' environment variable.  At runtime, the size of
+     the current team may be set either by the 'NUM_THREADS' clause or
+     by 'omp_set_num_threads'.  If none of the above were used to define
+     a specific value and 'OMP_DYNAMIC' is disabled, one thread per CPU
+     online is used.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_num_threads(void);'
+     _Prototype_:   'int omp_get_num_threads(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_num_threads()'
+     _Interface_:   'integer function omp_get_num_threads()'
 
 _See also_:
      *note omp_get_max_threads::, *note omp_set_num_threads::, *note
@@ -475,22 +473,22 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_proc_bind,  Next: omp_get_schedule,  Prev: omp_get_num_threads,  Up: Runtime Library Routines
 
-2.14 `omp_get_proc_bind' - Whether theads may be moved between CPUs
+2.14 'omp_get_proc_bind' - Whether theads may be moved between CPUs
 ===================================================================
 
 _Description_:
-     This functions returns the currently active thread affinity
-     policy, which is set via `OMP_PROC_BIND'.  Possible values are
-     `omp_proc_bind_false', `omp_proc_bind_true',
-     `omp_proc_bind_master', `omp_proc_bind_close' and
-     `omp_proc_bind_spread'.
+     This functions returns the currently active thread affinity policy,
+     which is set via 'OMP_PROC_BIND'.  Possible values are
+     'omp_proc_bind_false', 'omp_proc_bind_true',
+     'omp_proc_bind_master', 'omp_proc_bind_close' and
+     'omp_proc_bind_spread'.
 
 _C/C++_:
-     _Prototype_:  `omp_proc_bind_t omp_get_proc_bind(void);'
+     _Prototype_:   'omp_proc_bind_t omp_get_proc_bind(void);'
 
 _Fortran_:
-     _Interface_:  `integer(kind=omp_proc_bind_kind) function
-                   omp_get_proc_bind()'
+     _Interface_:   'integer(kind=omp_proc_bind_kind) function
+                    omp_get_proc_bind()'
 
 _See also_:
      *note OMP_PROC_BIND::, *note OMP_PLACES::, *note
@@ -502,23 +500,23 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_schedule,  Next: omp_get_team_num,  Prev: omp_get_proc_bind,  Up: Runtime Library Routines
 
-2.15 `omp_get_schedule' - Obtain the runtime scheduling method
+2.15 'omp_get_schedule' - Obtain the runtime scheduling method
 ==============================================================
 
 _Description_:
      Obtain the runtime scheduling method.  The KIND argument will be
-     set to the value `omp_sched_static', `omp_sched_dynamic',
-     `omp_sched_guided' or `omp_sched_auto'.  The second argument,
+     set to the value 'omp_sched_static', 'omp_sched_dynamic',
+     'omp_sched_guided' or 'omp_sched_auto'.  The second argument,
      MODIFIER, is set to the chunk size.
 
 _C/C++_
-     _Prototype_:  `void omp_get_schedule(omp_sched_t *kind, int
-                   *modifier);'
+     _Prototype_:   'void omp_get_schedule(omp_sched_t *kind, int
+                    *modifier);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_get_schedule(kind, modifier)'
-                   `integer(kind=omp_sched_kind) kind'
-                   `integer modifier'
+     _Interface_:   'subroutine omp_get_schedule(kind, modifier)'
+                    'integer(kind=omp_sched_kind) kind'
+                    'integer modifier'
 
 _See also_:
      *note omp_set_schedule::, *note OMP_SCHEDULE::
@@ -529,17 +527,17 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_team_num,  Next: omp_get_team_size,  Prev: omp_get_schedule,  Up: Runtime Library Routines
 
-2.16 `omp_get_team_num' - Get team number
+2.16 'omp_get_team_num' - Get team number
 =========================================
 
 _Description_:
      Returns the team number of the calling thread.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_team_num(void);'
+     _Prototype_:   'int omp_get_team_num(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_team_num()'
+     _Interface_:   'integer function omp_get_team_num()'
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 3.2.27.
@@ -547,22 +545,22 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_team_size,  Next: omp_get_thread_limit,  Prev: omp_get_team_num,  Up: Runtime Library Routines
 
-2.17 `omp_get_team_size' - Number of threads in a team
+2.17 'omp_get_team_size' - Number of threads in a team
 ======================================================
 
 _Description_:
      This function returns the number of threads in a thread team to
      which either the current thread or its ancestor belongs.  For
-     values of LEVEL outside zero to `omp_get_level', -1 is returned;
-     if LEVEL is zero, 1 is returned, and for `omp_get_level', the
-     result is identical to `omp_get_num_threads'.
+     values of LEVEL outside zero to 'omp_get_level', -1 is returned; if
+     LEVEL is zero, 1 is returned, and for 'omp_get_level', the result
+     is identical to 'omp_get_num_threads'.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_team_size(int level);'
+     _Prototype_:   'int omp_get_team_size(int level);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_team_size(level)'
-                   `integer level'
+     _Interface_:   'integer function omp_get_team_size(level)'
+                    'integer level'
 
 _See also_:
      *note omp_get_num_threads::, *note omp_get_level::, *note
@@ -574,17 +572,17 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_thread_limit,  Next: omp_get_thread_num,  Prev: omp_get_team_size,  Up: Runtime Library Routines
 
-2.18 `omp_get_thread_limit' - Maximum number of threads
+2.18 'omp_get_thread_limit' - Maximum number of threads
 =======================================================
 
 _Description_:
      Return the maximum number of threads of the program.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_thread_limit(void);'
+     _Prototype_:   'int omp_get_thread_limit(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_thread_limit()'
+     _Interface_:   'integer function omp_get_thread_limit()'
 
 _See also_:
      *note omp_get_max_threads::, *note OMP_THREAD_LIMIT::
@@ -595,21 +593,21 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_thread_num,  Next: omp_in_parallel,  Prev: omp_get_thread_limit,  Up: Runtime Library Routines
 
-2.19 `omp_get_thread_num' - Current thread ID
+2.19 'omp_get_thread_num' - Current thread ID
 =============================================
 
 _Description_:
      Returns a unique thread identification number within the current
-     team.  In a sequential parts of the program, `omp_get_thread_num'
-     always returns 0.  In parallel regions the return value varies
-     from 0 to `omp_get_num_threads'-1 inclusive.  The return value of
-     the master thread of a team is always 0.
+     team.  In a sequential parts of the program, 'omp_get_thread_num'
+     always returns 0.  In parallel regions the return value varies from
+     0 to 'omp_get_num_threads'-1 inclusive.  The return value of the
+     master thread of a team is always 0.
 
 _C/C++_:
-     _Prototype_:  `int omp_get_thread_num(void);'
+     _Prototype_:   'int omp_get_thread_num(void);'
 
 _Fortran_:
-     _Interface_:  `integer function omp_get_thread_num()'
+     _Interface_:   'integer function omp_get_thread_num()'
 
 _See also_:
      *note omp_get_num_threads::, *note omp_get_ancestor_thread_num::
@@ -620,19 +618,19 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_in_parallel,  Next: omp_in_final,  Prev: omp_get_thread_num,  Up: Runtime Library Routines
 
-2.20 `omp_in_parallel' - Whether a parallel region is active
+2.20 'omp_in_parallel' - Whether a parallel region is active
 ============================================================
 
 _Description_:
-     This function returns `true' if currently running in parallel,
-     `false' otherwise.  Here, `true' and `false' represent their
+     This function returns 'true' if currently running in parallel,
+     'false' otherwise.  Here, 'true' and 'false' represent their
      language-specific counterparts.
 
 _C/C++_:
-     _Prototype_:  `int omp_in_parallel(void);'
+     _Prototype_:   'int omp_in_parallel(void);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_in_parallel()'
+     _Interface_:   'logical function omp_in_parallel()'
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 3.2.6.
@@ -640,19 +638,19 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_in_final,  Next: omp_is_initial_device,  Prev: omp_in_parallel,  Up: Runtime Library Routines
 
-2.21 `omp_in_final' - Whether in final or included task region
+2.21 'omp_in_final' - Whether in final or included task region
 ==============================================================
 
 _Description_:
-     This function returns `true' if currently running in a final or
-     included task region, `false' otherwise.  Here, `true' and `false'
+     This function returns 'true' if currently running in a final or
+     included task region, 'false' otherwise.  Here, 'true' and 'false'
      represent their language-specific counterparts.
 
 _C/C++_:
-     _Prototype_:  `int omp_in_final(void);'
+     _Prototype_:   'int omp_in_final(void);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_in_final()'
+     _Interface_:   'logical function omp_in_final()'
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 3.2.21.
@@ -660,19 +658,19 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_is_initial_device,  Next: omp_set_default_device,  Prev: omp_in_final,  Up: Runtime Library Routines
 
-2.22 `omp_is_initial_device' - Whether executing on the host device
+2.22 'omp_is_initial_device' - Whether executing on the host device
 ===================================================================
 
 _Description_:
-     This function returns `true' if currently running on the host
-     device, `false' otherwise.  Here, `true' and `false' represent
+     This function returns 'true' if currently running on the host
+     device, 'false' otherwise.  Here, 'true' and 'false' represent
      their language-specific counterparts.
 
 _C/C++_:
-     _Prototype_:  `int omp_is_initial_device(void);'
+     _Prototype_:   'int omp_is_initial_device(void);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_is_initial_device()'
+     _Interface_:   'logical function omp_is_initial_device()'
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 3.2.28.
@@ -680,7 +678,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_default_device,  Next: omp_set_dynamic,  Prev: omp_is_initial_device,  Up: Runtime Library Routines
 
-2.23 `omp_set_default_device' - Set the default device for target regions
+2.23 'omp_set_default_device' - Set the default device for target regions
 =========================================================================
 
 _Description_:
@@ -688,11 +686,11 @@ _Description_:
      The argument shall be a nonnegative device number.
 
 _C/C++_:
-     _Prototype_:  `void omp_set_default_device(int device_num);'
+     _Prototype_:   'void omp_set_default_device(int device_num);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_default_device(device_num)'
-                   `integer device_num'
+     _Interface_:   'subroutine omp_set_default_device(device_num)'
+                    'integer device_num'
 
 _See also_:
      *note OMP_DEFAULT_DEVICE::, *note omp_get_default_device::
@@ -703,21 +701,21 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_dynamic,  Next: omp_set_max_active_levels,  Prev: omp_set_default_device,  Up: Runtime Library Routines
 
-2.24 `omp_set_dynamic' - Enable/disable dynamic teams
+2.24 'omp_set_dynamic' - Enable/disable dynamic teams
 =====================================================
 
 _Description_:
      Enable or disable the dynamic adjustment of the number of threads
      within a team.  The function takes the language-specific equivalent
-     of `true' and `false', where `true' enables dynamic adjustment of
-     team sizes and `false' disables it.
+     of 'true' and 'false', where 'true' enables dynamic adjustment of
+     team sizes and 'false' disables it.
 
 _C/C++_:
-     _Prototype_:  `void omp_set_dynamic(int dynamic_threads);'
+     _Prototype_:   'void omp_set_dynamic(int dynamic_threads);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_dynamic(dynamic_threads)'
-                   `logical, intent(in) :: dynamic_threads'
+     _Interface_:   'subroutine omp_set_dynamic(dynamic_threads)'
+                    'logical, intent(in) :: dynamic_threads'
 
 _See also_:
      *note OMP_DYNAMIC::, *note omp_get_dynamic::
@@ -728,7 +726,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_max_active_levels,  Next: omp_set_nested,  Prev: omp_set_dynamic,  Up: Runtime Library Routines
 
-2.25 `omp_set_max_active_levels' - Limits the number of active parallel regions
+2.25 'omp_set_max_active_levels' - Limits the number of active parallel regions
 ===============================================================================
 
 _Description_:
@@ -736,11 +734,11 @@ _Description_:
      parallel regions.
 
 _C/C++_
-     _Prototype_:  `void omp_set_max_active_levels(int max_levels);'
+     _Prototype_:   'void omp_set_max_active_levels(int max_levels);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_max_active_levels(max_levels)'
-                   `integer max_levels'
+     _Interface_:   'subroutine omp_set_max_active_levels(max_levels)'
+                    'integer max_levels'
 
 _See also_:
      *note omp_get_max_active_levels::, *note omp_get_active_level::
@@ -751,21 +749,21 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_nested,  Next: omp_set_num_threads,  Prev: omp_set_max_active_levels,  Up: Runtime Library Routines
 
-2.26 `omp_set_nested' - Enable/disable nested parallel regions
+2.26 'omp_set_nested' - Enable/disable nested parallel regions
 ==============================================================
 
 _Description_:
      Enable or disable nested parallel regions, i.e., whether team
      members are allowed to create new teams.  The function takes the
-     language-specific equivalent of `true' and `false', where `true'
-     enables dynamic adjustment of team sizes and `false' disables it.
+     language-specific equivalent of 'true' and 'false', where 'true'
+     enables dynamic adjustment of team sizes and 'false' disables it.
 
 _C/C++_:
-     _Prototype_:  `void omp_set_nested(int nested);'
+     _Prototype_:   'void omp_set_nested(int nested);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_nested(nested)'
-                   `logical, intent(in) :: nested'
+     _Interface_:   'subroutine omp_set_nested(nested)'
+                    'logical, intent(in) :: nested'
 
 _See also_:
      *note OMP_NESTED::, *note omp_get_nested::
@@ -776,20 +774,20 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_num_threads,  Next: omp_set_schedule,  Prev: omp_set_nested,  Up: Runtime Library Routines
 
-2.27 `omp_set_num_threads' - Set upper team size limit
+2.27 'omp_set_num_threads' - Set upper team size limit
 ======================================================
 
 _Description_:
      Specifies the number of threads used by default in subsequent
-     parallel sections, if those do not specify a `num_threads' clause.
-     The argument of `omp_set_num_threads' shall be a positive integer.
+     parallel sections, if those do not specify a 'num_threads' clause.
+     The argument of 'omp_set_num_threads' shall be a positive integer.
 
 _C/C++_:
-     _Prototype_:  `void omp_set_num_threads(int num_threads);'
+     _Prototype_:   'void omp_set_num_threads(int num_threads);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_num_threads(num_threads)'
-                   `integer, intent(in) :: num_threads'
+     _Interface_:   'subroutine omp_set_num_threads(num_threads)'
+                    'integer, intent(in) :: num_threads'
 
 _See also_:
      *note OMP_NUM_THREADS::, *note omp_get_num_threads::, *note
@@ -801,25 +799,24 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_schedule,  Next: omp_init_lock,  Prev: omp_set_num_threads,  Up: Runtime Library Routines
 
-2.28 `omp_set_schedule' - Set the runtime scheduling method
+2.28 'omp_set_schedule' - Set the runtime scheduling method
 ===========================================================
 
 _Description_:
      Sets the runtime scheduling method.  The KIND argument can have the
-     value `omp_sched_static', `omp_sched_dynamic', `omp_sched_guided'
-     or `omp_sched_auto'.  Except for `omp_sched_auto', the chunk size
+     value 'omp_sched_static', 'omp_sched_dynamic', 'omp_sched_guided'
+     or 'omp_sched_auto'.  Except for 'omp_sched_auto', the chunk size
      is set to the value of MODIFIER if positive, or to the default
-     value if zero or negative.  For `omp_sched_auto' the MODIFIER
+     value if zero or negative.  For 'omp_sched_auto' the MODIFIER
      argument is ignored.
 
 _C/C++_
-     _Prototype_:  `void omp_set_schedule(omp_sched_t kind, int
-                   modifier);'
+     _Prototype_:   'void omp_set_schedule(omp_sched_t kind, int modifier);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_schedule(kind, modifier)'
-                   `integer(kind=omp_sched_kind) kind'
-                   `integer modifier'
+     _Interface_:   'subroutine omp_set_schedule(kind, modifier)'
+                    'integer(kind=omp_sched_kind) kind'
+                    'integer modifier'
 
 _See also_:
      *note omp_get_schedule:: *note OMP_SCHEDULE::
@@ -830,7 +827,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_init_lock,  Next: omp_set_lock,  Prev: omp_set_schedule,  Up: Runtime Library Routines
 
-2.29 `omp_init_lock' - Initialize simple lock
+2.29 'omp_init_lock' - Initialize simple lock
 =============================================
 
 _Description_:
@@ -838,11 +835,11 @@ _Description_:
      unlocked state.
 
 _C/C++_:
-     _Prototype_:  `void omp_init_lock(omp_lock_t *lock);'
+     _Prototype_:   'void omp_init_lock(omp_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_init_lock(svar)'
-                   `integer(omp_lock_kind), intent(out) :: svar'
+     _Interface_:   'subroutine omp_init_lock(svar)'
+                    'integer(omp_lock_kind), intent(out) :: svar'
 
 _See also_:
      *note omp_destroy_lock::
@@ -853,21 +850,21 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_lock,  Next: omp_test_lock,  Prev: omp_init_lock,  Up: Runtime Library Routines
 
-2.30 `omp_set_lock' - Wait for and set simple lock
+2.30 'omp_set_lock' - Wait for and set simple lock
 ==================================================
 
 _Description_:
-     Before setting a simple lock, the lock variable must be
-     initialized by `omp_init_lock'.  The calling thread is blocked
-     until the lock is available.  If the lock is already held by the
-     current thread, a deadlock occurs.
+     Before setting a simple lock, the lock variable must be initialized
+     by 'omp_init_lock'.  The calling thread is blocked until the lock
+     is available.  If the lock is already held by the current thread, a
+     deadlock occurs.
 
 _C/C++_:
-     _Prototype_:  `void omp_set_lock(omp_lock_t *lock);'
+     _Prototype_:   'void omp_set_lock(omp_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_lock(svar)'
-                   `integer(omp_lock_kind), intent(inout) :: svar'
+     _Interface_:   'subroutine omp_set_lock(svar)'
+                    'integer(omp_lock_kind), intent(inout) :: svar'
 
 _See also_:
      *note omp_init_lock::, *note omp_test_lock::, *note
@@ -879,22 +876,22 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_test_lock,  Next: omp_unset_lock,  Prev: omp_set_lock,  Up: Runtime Library Routines
 
-2.31 `omp_test_lock' - Test and set simple lock if available
+2.31 'omp_test_lock' - Test and set simple lock if available
 ============================================================
 
 _Description_:
-     Before setting a simple lock, the lock variable must be
-     initialized by `omp_init_lock'.  Contrary to `omp_set_lock',
-     `omp_test_lock' does not block if the lock is not available.  This
-     function returns `true' upon success, `false' otherwise.  Here,
-     `true' and `false' represent their language-specific counterparts.
+     Before setting a simple lock, the lock variable must be initialized
+     by 'omp_init_lock'.  Contrary to 'omp_set_lock', 'omp_test_lock'
+     does not block if the lock is not available.  This function returns
+     'true' upon success, 'false' otherwise.  Here, 'true' and 'false'
+     represent their language-specific counterparts.
 
 _C/C++_:
-     _Prototype_:  `int omp_test_lock(omp_lock_t *lock);'
+     _Prototype_:   'int omp_test_lock(omp_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_test_lock(svar)'
-                   `integer(omp_lock_kind), intent(inout) :: svar'
+     _Interface_:   'logical function omp_test_lock(svar)'
+                    'integer(omp_lock_kind), intent(inout) :: svar'
 
 _See also_:
      *note omp_init_lock::, *note omp_set_lock::, *note omp_set_lock::
@@ -905,23 +902,23 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_unset_lock,  Next: omp_destroy_lock,  Prev: omp_test_lock,  Up: Runtime Library Routines
 
-2.32 `omp_unset_lock' - Unset simple lock
+2.32 'omp_unset_lock' - Unset simple lock
 =========================================
 
 _Description_:
      A simple lock about to be unset must have been locked by
-     `omp_set_lock' or `omp_test_lock' before.  In addition, the lock
-     must be held by the thread calling `omp_unset_lock'.  Then, the
-     lock becomes unlocked.  If one or more threads attempted to set
-     the lock before, one of them is chosen to, again, set the lock to
+     'omp_set_lock' or 'omp_test_lock' before.  In addition, the lock
+     must be held by the thread calling 'omp_unset_lock'.  Then, the
+     lock becomes unlocked.  If one or more threads attempted to set the
+     lock before, one of them is chosen to, again, set the lock to
      itself.
 
 _C/C++_:
-     _Prototype_:  `void omp_unset_lock(omp_lock_t *lock);'
+     _Prototype_:   'void omp_unset_lock(omp_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_unset_lock(svar)'
-                   `integer(omp_lock_kind), intent(inout) :: svar'
+     _Interface_:   'subroutine omp_unset_lock(svar)'
+                    'integer(omp_lock_kind), intent(inout) :: svar'
 
 _See also_:
      *note omp_set_lock::, *note omp_test_lock::
@@ -932,7 +929,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_destroy_lock,  Next: omp_init_nest_lock,  Prev: omp_unset_lock,  Up: Runtime Library Routines
 
-2.33 `omp_destroy_lock' - Destroy simple lock
+2.33 'omp_destroy_lock' - Destroy simple lock
 =============================================
 
 _Description_:
@@ -940,11 +937,11 @@ _Description_:
      must be in the unlocked state.
 
 _C/C++_:
-     _Prototype_:  `void omp_destroy_lock(omp_lock_t *lock);'
+     _Prototype_:   'void omp_destroy_lock(omp_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_destroy_lock(svar)'
-                   `integer(omp_lock_kind), intent(inout) :: svar'
+     _Interface_:   'subroutine omp_destroy_lock(svar)'
+                    'integer(omp_lock_kind), intent(inout) :: svar'
 
 _See also_:
      *note omp_init_lock::
@@ -955,7 +952,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_init_nest_lock,  Next: omp_set_nest_lock,  Prev: omp_destroy_lock,  Up: Runtime Library Routines
 
-2.34 `omp_init_nest_lock' - Initialize nested lock
+2.34 'omp_init_nest_lock' - Initialize nested lock
 ==================================================
 
 _Description_:
@@ -963,11 +960,11 @@ _Description_:
      unlocked state and the nesting count is set to zero.
 
 _C/C++_:
-     _Prototype_:  `void omp_init_nest_lock(omp_nest_lock_t *lock);'
+     _Prototype_:   'void omp_init_nest_lock(omp_nest_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_init_nest_lock(nvar)'
-                   `integer(omp_nest_lock_kind), intent(out) :: nvar'
+     _Interface_:   'subroutine omp_init_nest_lock(nvar)'
+                    'integer(omp_nest_lock_kind), intent(out) :: nvar'
 
 _See also_:
      *note omp_destroy_nest_lock::
@@ -978,22 +975,21 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_set_nest_lock,  Next: omp_test_nest_lock,  Prev: omp_init_nest_lock,  Up: Runtime Library Routines
 
-2.35 `omp_set_nest_lock' - Wait for and set nested lock
+2.35 'omp_set_nest_lock' - Wait for and set nested lock
 =======================================================
 
 _Description_:
-     Before setting a nested lock, the lock variable must be
-     initialized by `omp_init_nest_lock'.  The calling thread is
-     blocked until the lock is available.  If the lock is already held
-     by the current thread, the nesting count for the lock is
-     incremented.
+     Before setting a nested lock, the lock variable must be initialized
+     by 'omp_init_nest_lock'.  The calling thread is blocked until the
+     lock is available.  If the lock is already held by the current
+     thread, the nesting count for the lock is incremented.
 
 _C/C++_:
-     _Prototype_:  `void omp_set_nest_lock(omp_nest_lock_t *lock);'
+     _Prototype_:   'void omp_set_nest_lock(omp_nest_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_set_nest_lock(nvar)'
-                   `integer(omp_nest_lock_kind), intent(inout) :: nvar'
+     _Interface_:   'subroutine omp_set_nest_lock(nvar)'
+                    'integer(omp_nest_lock_kind), intent(inout) :: nvar'
 
 _See also_:
      *note omp_init_nest_lock::, *note omp_unset_nest_lock::
@@ -1004,23 +1000,22 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_test_nest_lock,  Next: omp_unset_nest_lock,  Prev: omp_set_nest_lock,  Up: Runtime Library Routines
 
-2.36 `omp_test_nest_lock' - Test and set nested lock if available
+2.36 'omp_test_nest_lock' - Test and set nested lock if available
 =================================================================
 
 _Description_:
-     Before setting a nested lock, the lock variable must be
-     initialized by `omp_init_nest_lock'.  Contrary to
-     `omp_set_nest_lock', `omp_test_nest_lock' does not block if the
-     lock is not available.  If the lock is already held by the current
-     thread, the new nesting count is returned.  Otherwise, the return
-     value equals zero.
+     Before setting a nested lock, the lock variable must be initialized
+     by 'omp_init_nest_lock'.  Contrary to 'omp_set_nest_lock',
+     'omp_test_nest_lock' does not block if the lock is not available.
+     If the lock is already held by the current thread, the new nesting
+     count is returned.  Otherwise, the return value equals zero.
 
 _C/C++_:
-     _Prototype_:  `int omp_test_nest_lock(omp_nest_lock_t *lock);'
+     _Prototype_:   'int omp_test_nest_lock(omp_nest_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `logical function omp_test_nest_lock(nvar)'
-                   `integer(omp_nest_lock_kind), intent(inout) :: nvar'
+     _Interface_:   'logical function omp_test_nest_lock(nvar)'
+                    'integer(omp_nest_lock_kind), intent(inout) :: nvar'
 
 _See also_:
      *note omp_init_lock::, *note omp_set_lock::, *note omp_set_lock::
@@ -1031,24 +1026,24 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_unset_nest_lock,  Next: omp_destroy_nest_lock,  Prev: omp_test_nest_lock,  Up: Runtime Library Routines
 
-2.37 `omp_unset_nest_lock' - Unset nested lock
+2.37 'omp_unset_nest_lock' - Unset nested lock
 ==============================================
 
 _Description_:
      A nested lock about to be unset must have been locked by
-     `omp_set_nested_lock' or `omp_test_nested_lock' before.  In
+     'omp_set_nested_lock' or 'omp_test_nested_lock' before.  In
      addition, the lock must be held by the thread calling
-     `omp_unset_nested_lock'.  If the nesting count drops to zero, the
+     'omp_unset_nested_lock'.  If the nesting count drops to zero, the
      lock becomes unlocked.  If one ore more threads attempted to set
      the lock before, one of them is chosen to, again, set the lock to
      itself.
 
 _C/C++_:
-     _Prototype_:  `void omp_unset_nest_lock(omp_nest_lock_t *lock);'
+     _Prototype_:   'void omp_unset_nest_lock(omp_nest_lock_t *lock);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_unset_nest_lock(nvar)'
-                   `integer(omp_nest_lock_kind), intent(inout) :: nvar'
+     _Interface_:   'subroutine omp_unset_nest_lock(nvar)'
+                    'integer(omp_nest_lock_kind), intent(inout) :: nvar'
 
 _See also_:
      *note omp_set_nest_lock::
@@ -1059,7 +1054,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_destroy_nest_lock,  Next: omp_get_wtick,  Prev: omp_unset_nest_lock,  Up: Runtime Library Routines
 
-2.38 `omp_destroy_nest_lock' - Destroy nested lock
+2.38 'omp_destroy_nest_lock' - Destroy nested lock
 ==================================================
 
 _Description_:
@@ -1068,11 +1063,11 @@ _Description_:
      zero.
 
 _C/C++_:
-     _Prototype_:  `void omp_destroy_nest_lock(omp_nest_lock_t *);'
+     _Prototype_:   'void omp_destroy_nest_lock(omp_nest_lock_t *);'
 
 _Fortran_:
-     _Interface_:  `subroutine omp_destroy_nest_lock(nvar)'
-                   `integer(omp_nest_lock_kind), intent(inout) :: nvar'
+     _Interface_:   'subroutine omp_destroy_nest_lock(nvar)'
+                    'integer(omp_nest_lock_kind), intent(inout) :: nvar'
 
 _See also_:
      *note omp_init_lock::
@@ -1083,7 +1078,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_wtick,  Next: omp_get_wtime,  Prev: omp_destroy_nest_lock,  Up: Runtime Library Routines
 
-2.39 `omp_get_wtick' - Get timer precision
+2.39 'omp_get_wtick' - Get timer precision
 ==========================================
 
 _Description_:
@@ -1091,10 +1086,10 @@ _Description_:
      successive clock ticks.
 
 _C/C++_:
-     _Prototype_:  `double omp_get_wtick(void);'
+     _Prototype_:   'double omp_get_wtick(void);'
 
 _Fortran_:
-     _Interface_:  `double precision function omp_get_wtick()'
+     _Interface_:   'double precision function omp_get_wtick()'
 
 _See also_:
      *note omp_get_wtime::
@@ -1105,7 +1100,7 @@ _Reference_:
 
 File: libgomp.info,  Node: omp_get_wtime,  Prev: omp_get_wtick,  Up: Runtime Library Routines
 
-2.40 `omp_get_wtime' - Elapsed wall clock time
+2.40 'omp_get_wtime' - Elapsed wall clock time
 ==============================================
 
 _Description_:
@@ -1116,10 +1111,10 @@ _Description_:
      execution of the program.
 
 _C/C++_:
-     _Prototype_:  `double omp_get_wtime(void);'
+     _Prototype_:   'double omp_get_wtime(void);'
 
 _Fortran_:
-     _Interface_:  `double precision function omp_get_wtime()'
+     _Interface_:   'double precision function omp_get_wtime()'
 
 _See also_:
      *note omp_get_wtick::
@@ -1133,9 +1128,9 @@ File: libgomp.info,  Node: Environment Variables,  Next: The libgomp ABI,  Prev:
 3 Environment Variables
 ***********************
 
-The environment variables which beginning with `OMP_' are defined by
+The environment variables which beginning with 'OMP_' are defined by
 section 4 of the OpenMP specification in version 4.0, while those
-beginning with `GOMP_' are GNU extensions.
+beginning with 'GOMP_' are GNU extensions.
 
 * Menu:
 
@@ -1160,13 +1155,13 @@ beginning with `GOMP_' are GNU extensions.
 
 File: libgomp.info,  Node: OMP_CANCELLATION,  Next: OMP_DISPLAY_ENV,  Up: Environment Variables
 
-3.1 `OMP_CANCELLATION' - Set whether cancellation is activated
+3.1 'OMP_CANCELLATION' - Set whether cancellation is activated
 ==============================================================
 
 _Description_:
-     If set to `TRUE', the cancellation is activated.  If set to
-     `FALSE' or if unset, cancellation is disabled and the `cancel'
-     construct is ignored.
+     If set to 'TRUE', the cancellation is activated.  If set to 'FALSE'
+     or if unset, cancellation is disabled and the 'cancel' construct is
+     ignored.
 
 _See also_:
      *note omp_get_cancellation::
@@ -1177,15 +1172,15 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_DISPLAY_ENV,  Next: OMP_DEFAULT_DEVICE,  Prev: OMP_CANCELLATION,  Up: Environment Variables
 
-3.2 `OMP_DISPLAY_ENV' - Show OpenMP version and environment variables
+3.2 'OMP_DISPLAY_ENV' - Show OpenMP version and environment variables
 =====================================================================
 
 _Description_:
-     If set to `TRUE', the OpenMP version number and the values
+     If set to 'TRUE', the OpenMP version number and the values
      associated with the OpenMP environment variables are printed to
-     `stderr'.  If set to `VERBOSE', it additionally shows the value of
+     'stderr'.  If set to 'VERBOSE', it additionally shows the value of
      the environment variables which are GNU extensions.  If undefined
-     or set to `FALSE', this information will not be shown.
+     or set to 'FALSE', this information will not be shown.
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 4.12
@@ -1193,15 +1188,15 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_DEFAULT_DEVICE,  Next: OMP_DYNAMIC,  Prev: OMP_DISPLAY_ENV,  Up: Environment Variables
 
-3.3 `OMP_DEFAULT_DEVICE' - Set the device used in target regions
+3.3 'OMP_DEFAULT_DEVICE' - Set the device used in target regions
 ================================================================
 
 _Description_:
-     Set to choose the device which is used in a `target' region,
-     unless the value is overridden by `omp_set_default_device' or by a
-     `device' clause.  The value shall be the nonnegative device
-     number. If no device with the given device number exists, the code
-     is executed on the host.  If unset, device number 0 will be used.
+     Set to choose the device which is used in a 'target' region, unless
+     the value is overridden by 'omp_set_default_device' or by a
+     'device' clause.  The value shall be the nonnegative device number.
+     If no device with the given device number exists, the code is
+     executed on the host.  If unset, device number 0 will be used.
 
 _See also_:
      *note omp_get_default_device::, *note omp_set_default_device::,
@@ -1212,14 +1207,14 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_DYNAMIC,  Next: OMP_MAX_ACTIVE_LEVELS,  Prev: OMP_DEFAULT_DEVICE,  Up: Environment Variables
 
-3.4 `OMP_DYNAMIC' - Dynamic adjustment of threads
+3.4 'OMP_DYNAMIC' - Dynamic adjustment of threads
 =================================================
 
 _Description_:
      Enable or disable the dynamic adjustment of the number of threads
      within a team.  The value of this environment variable shall be
-     `TRUE' or `FALSE'.  If undefined, dynamic adjustment is disabled
-     by default.
+     'TRUE' or 'FALSE'.  If undefined, dynamic adjustment is disabled by
+     default.
 
 _See also_:
      *note omp_set_dynamic::
@@ -1230,7 +1225,7 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_MAX_ACTIVE_LEVELS,  Next: OMP_NESTED,  Prev: OMP_DYNAMIC,  Up: Environment Variables
 
-3.5 `OMP_MAX_ACTIVE_LEVELS' - Set the maximum number of nested parallel regions
+3.5 'OMP_MAX_ACTIVE_LEVELS' - Set the maximum number of nested parallel regions
 ===============================================================================
 
 _Description_:
@@ -1247,13 +1242,13 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_NESTED,  Next: OMP_NUM_THREADS,  Prev: OMP_MAX_ACTIVE_LEVELS,  Up: Environment Variables
 
-3.6 `OMP_NESTED' - Nested parallel regions
+3.6 'OMP_NESTED' - Nested parallel regions
 ==========================================
 
 _Description_:
      Enable or disable nested parallel regions, i.e., whether team
      members are allowed to create new teams.  The value of this
-     environment variable shall be `TRUE' or `FALSE'.  If undefined,
+     environment variable shall be 'TRUE' or 'FALSE'.  If undefined,
      nested parallel regions are disabled by default.
 
 _See also_:
@@ -1265,15 +1260,15 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_NUM_THREADS,  Next: OMP_PROC_BIND,  Prev: OMP_NESTED,  Up: Environment Variables
 
-3.7 `OMP_NUM_THREADS' - Specifies the number of threads to use
+3.7 'OMP_NUM_THREADS' - Specifies the number of threads to use
 ==============================================================
 
 _Description_:
-     Specifies the default number of threads to use in parallel
-     regions.  The value of this variable shall be a comma-separated
-     list of positive integers; the value specified the number of
-     threads to use for the corresponding nested level.  If undefined
-     one thread per CPU is used.
+     Specifies the default number of threads to use in parallel regions.
+     The value of this variable shall be a comma-separated list of
+     positive integers; the value specified the number of threads to use
+     for the corresponding nested level.  If undefined one thread per
+     CPU is used.
 
 _See also_:
      *note omp_set_num_threads::
@@ -1284,22 +1279,22 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_PROC_BIND,  Next: OMP_PLACES,  Prev: OMP_NUM_THREADS,  Up: Environment Variables
 
-3.8 `OMP_PROC_BIND' - Whether theads may be moved between CPUs
+3.8 'OMP_PROC_BIND' - Whether theads may be moved between CPUs
 ==============================================================
 
 _Description_:
      Specifies whether threads may be moved between processors.  If set
-     to `TRUE', OpenMP theads should not be moved; if set to `FALSE'
+     to 'TRUE', OpenMP theads should not be moved; if set to 'FALSE'
      they may be moved.  Alternatively, a comma separated list with the
-     values `MASTER', `CLOSE' and `SPREAD' can be used to specify the
+     values 'MASTER', 'CLOSE' and 'SPREAD' can be used to specify the
      thread affinity policy for the corresponding nesting level.  With
-     `MASTER' the worker threads are in the same place partition as the
-     master thread.  With `CLOSE' those are kept close to the master
-     thread in contiguous place partitions.  And with `SPREAD' a sparse
+     'MASTER' the worker threads are in the same place partition as the
+     master thread.  With 'CLOSE' those are kept close to the master
+     thread in contiguous place partitions.  And with 'SPREAD' a sparse
      distribution across the place partitions is used.
 
-     When undefined, `OMP_PROC_BIND' defaults to `TRUE' when
-     `OMP_PLACES' or `GOMP_CPU_AFFINITY' is set and `FALSE' otherwise.
+     When undefined, 'OMP_PROC_BIND' defaults to 'TRUE' when
+     'OMP_PLACES' or 'GOMP_CPU_AFFINITY' is set and 'FALSE' otherwise.
 
 _See also_:
      *note OMP_PLACES::, *note GOMP_CPU_AFFINITY::, *note
@@ -1311,19 +1306,19 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_PLACES,  Next: OMP_STACKSIZE,  Prev: OMP_PROC_BIND,  Up: Environment Variables
 
-3.9 `OMP_PLACES' - Specifies on which CPUs the theads should be placed
+3.9 'OMP_PLACES' - Specifies on which CPUs the theads should be placed
 ======================================================================
 
 _Description_:
-     The thread placement can be either specified using an abstract
-     name or by an explicit list of the places.  The abstract names
-     `threads', `cores' and `sockets' can be optionally followed by a
+     The thread placement can be either specified using an abstract name
+     or by an explicit list of the places.  The abstract names
+     'threads', 'cores' and 'sockets' can be optionally followed by a
      positive number in parentheses, which denotes the how many places
-     shall be created.  With `threads' each place corresponds to a
-     single hardware thread; `cores' to a single core with the
-     corresponding number of hardware threads; and with `sockets' the
+     shall be created.  With 'threads' each place corresponds to a
+     single hardware thread; 'cores' to a single core with the
+     corresponding number of hardware threads; and with 'sockets' the
      place corresponds to a single socket.  The resulting placement can
-     be shown by setting the `OMP_DISPLAY_ENV' environment variable.
+     be shown by setting the 'OMP_DISPLAY_ENV' environment variable.
 
      Alternatively, the placement can be specified explicitly as
      comma-separated list of places.  A place is specified by set of
@@ -1336,11 +1331,11 @@ _Description_:
      after after the hardware thread number or the place.  Optionally,
      the length can be followed by a colon and the stride number -
      otherwise a unit stride is assumed.  For instance, the following
-     specifies the same places list: `"{0,1,2}, {3,4,6}, {7,8,9},
-     {10,11,12}"'; `"{0:3}, {3:3}, {7:3}, {10:3}"'; and `"{0:2}:4:3"'.
+     specifies the same places list: '"{0,1,2}, {3,4,6}, {7,8,9},
+     {10,11,12}"'; '"{0:3}, {3:3}, {7:3}, {10:3}"'; and '"{0:2}:4:3"'.
 
-     If `OMP_PLACES' and `GOMP_CPU_AFFINITY' are unset and
-     `OMP_PROC_BIND' is either unset or `false', threads may be moved
+     If 'OMP_PLACES' and 'GOMP_CPU_AFFINITY' are unset and
+     'OMP_PROC_BIND' is either unset or 'false', threads may be moved
      between CPUs following no placement policy.
 
 _See also_:
@@ -1353,18 +1348,18 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_STACKSIZE,  Next: OMP_SCHEDULE,  Prev: OMP_PLACES,  Up: Environment Variables
 
-3.10 `OMP_STACKSIZE' - Set default thread stack size
+3.10 'OMP_STACKSIZE' - Set default thread stack size
 ====================================================
 
 _Description_:
      Set the default thread stack size in kilobytes, unless the number
-     is suffixed by `B', `K', `M' or `G', in which case the size is,
-     respectively, in bytes, kilobytes, megabytes or gigabytes.  This
-     is different from `pthread_attr_setstacksize' which gets the
-     number of bytes as an argument.  If the stack size cannot be set
-     due to system constraints, an error is reported and the initial
-     stack size is left unchanged.  If undefined, the stack size is
-     system dependent.
+     is suffixed by 'B', 'K', 'M' or 'G', in which case the size is,
+     respectively, in bytes, kilobytes, megabytes or gigabytes.  This is
+     different from 'pthread_attr_setstacksize' which gets the number of
+     bytes as an argument.  If the stack size cannot be set due to
+     system constraints, an error is reported and the initial stack size
+     is left unchanged.  If undefined, the stack size is system
+     dependent.
 
 _Reference_:
      OpenMP specification v4.0 (http://www.openmp.org/), Section 4.7
@@ -1372,15 +1367,15 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_SCHEDULE,  Next: OMP_THREAD_LIMIT,  Prev: OMP_STACKSIZE,  Up: Environment Variables
 
-3.11 `OMP_SCHEDULE' - How threads are scheduled
+3.11 'OMP_SCHEDULE' - How threads are scheduled
 ===============================================
 
 _Description_:
-     Allows to specify `schedule type' and `chunk size'.  The value of
-     the variable shall have the form: `type[,chunk]' where `type' is
-     one of `static', `dynamic', `guided' or `auto' The optional
-     `chunk' size shall be a positive integer.  If undefined, dynamic
-     scheduling and a chunk size of 1 is used.
+     Allows to specify 'schedule type' and 'chunk size'.  The value of
+     the variable shall have the form: 'type[,chunk]' where 'type' is
+     one of 'static', 'dynamic', 'guided' or 'auto' The optional 'chunk'
+     size shall be a positive integer.  If undefined, dynamic scheduling
+     and a chunk size of 1 is used.
 
 _See also_:
      *note omp_set_schedule::
@@ -1392,7 +1387,7 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_THREAD_LIMIT,  Next: OMP_WAIT_POLICY,  Prev: OMP_SCHEDULE,  Up: Environment Variables
 
-3.12 `OMP_THREAD_LIMIT' - Set the maximum number of threads
+3.12 'OMP_THREAD_LIMIT' - Set the maximum number of threads
 ===========================================================
 
 _Description_:
@@ -1409,13 +1404,13 @@ _Reference_:
 
 File: libgomp.info,  Node: OMP_WAIT_POLICY,  Next: GOMP_CPU_AFFINITY,  Prev: OMP_THREAD_LIMIT,  Up: Environment Variables
 
-3.13 `OMP_WAIT_POLICY' - How waiting threads are handled
+3.13 'OMP_WAIT_POLICY' - How waiting threads are handled
 ========================================================
 
 _Description_:
      Specifies whether waiting threads should be active or passive.  If
-     the value is `PASSIVE', waiting threads should not consume CPU
-     power while waiting; while the value is `ACTIVE' specifies that
+     the value is 'PASSIVE', waiting threads should not consume CPU
+     power while waiting; while the value is 'ACTIVE' specifies that
      they should.  If undefined, threads wait actively for a short time
      before waiting passively.
 
@@ -1428,7 +1423,7 @@ _Reference_:
 
 File: libgomp.info,  Node: GOMP_CPU_AFFINITY,  Next: GOMP_DEBUG,  Prev: OMP_WAIT_POLICY,  Up: Environment Variables
 
-3.14 `GOMP_CPU_AFFINITY' - Bind threads to specific CPUs
+3.14 'GOMP_CPU_AFFINITY' - Bind threads to specific CPUs
 ========================================================
 
 _Description_:
@@ -1436,26 +1431,26 @@ _Description_:
      space-separated or comma-separated list of CPUs.  This list may
      contain different kinds of entries: either single CPU numbers in
      any order, a range of CPUs (M-N) or a range with some stride
-     (M-N:S).  CPU numbers are zero based.  For example,
-     `GOMP_CPU_AFFINITY="0 3 1-2 4-15:2"' will bind the initial thread
+     (M-N:S). CPU numbers are zero based.  For example,
+     'GOMP_CPU_AFFINITY="0 3 1-2 4-15:2"' will bind the initial thread
      to CPU 0, the second to CPU 3, the third to CPU 1, the fourth to
      CPU 2, the fifth to CPU 4, the sixth through tenth to CPUs 6, 8,
      10, 12, and 14 respectively and then start assigning back from the
-     beginning of the list.  `GOMP_CPU_AFFINITY=0' binds all threads to
+     beginning of the list.  'GOMP_CPU_AFFINITY=0' binds all threads to
      CPU 0.
 
      There is no libgomp library routine to determine whether a CPU
      affinity specification is in effect.  As a workaround,
-     language-specific library functions, e.g., `getenv' in C or
-     `GET_ENVIRONMENT_VARIABLE' in Fortran, may be used to query the
-     setting of the `GOMP_CPU_AFFINITY' environment variable.  A
-     defined CPU affinity on startup cannot be changed or disabled
-     during the runtime of the application.
+     language-specific library functions, e.g., 'getenv' in C or
+     'GET_ENVIRONMENT_VARIABLE' in Fortran, may be used to query the
+     setting of the 'GOMP_CPU_AFFINITY' environment variable.  A defined
+     CPU affinity on startup cannot be changed or disabled during the
+     runtime of the application.
 
-     If both `GOMP_CPU_AFFINITY' and `OMP_PROC_BIND' are set,
-     `OMP_PROC_BIND' has a higher precedence.  If neither has been set
-     and `OMP_PROC_BIND' is unset, or when `OMP_PROC_BIND' is set to
-     `FALSE', the host system will handle the assignment of threads to
+     If both 'GOMP_CPU_AFFINITY' and 'OMP_PROC_BIND' are set,
+     'OMP_PROC_BIND' has a higher precedence.  If neither has been set
+     and 'OMP_PROC_BIND' is unset, or when 'OMP_PROC_BIND' is set to
+     'FALSE', the host system will handle the assignment of threads to
      CPUs.
 
 _See also_:
@@ -1464,12 +1459,12 @@ _See also_:
 
 File: libgomp.info,  Node: GOMP_DEBUG,  Next: GOMP_STACKSIZE,  Prev: GOMP_CPU_AFFINITY,  Up: Environment Variables
 
-3.15 `GOMP_DEBUG' - Enable debugging output
+3.15 'GOMP_DEBUG' - Enable debugging output
 ===========================================
 
 _Description_:
-     Enable debugging output.  The variable should be set to `0'
-     (disabled, also the default if not set), or `1' (enabled).
+     Enable debugging output.  The variable should be set to '0'
+     (disabled, also the default if not set), or '1' (enabled).
 
      If enabled, some debugging output will be printed during execution.
      This is currently not specified in more detail, and subject to
@@ -1478,12 +1473,12 @@ _Description_:
 
 File: libgomp.info,  Node: GOMP_STACKSIZE,  Next: GOMP_SPINCOUNT,  Prev: GOMP_DEBUG,  Up: Environment Variables
 
-3.16 `GOMP_STACKSIZE' - Set default thread stack size
+3.16 'GOMP_STACKSIZE' - Set default thread stack size
 =====================================================
 
 _Description_:
      Set the default thread stack size in kilobytes.  This is different
-     from `pthread_attr_setstacksize' which gets the number of bytes as
+     from 'pthread_attr_setstacksize' which gets the number of bytes as
      an argument.  If the stack size cannot be set due to system
      constraints, an error is reported and the initial stack size is
      left unchanged.  If undefined, the stack size is system dependent.
@@ -1500,24 +1495,23 @@ _Reference_:
 
 File: libgomp.info,  Node: GOMP_SPINCOUNT,  Prev: GOMP_STACKSIZE,  Up: Environment Variables
 
-3.17 `GOMP_SPINCOUNT' - Set the busy-wait spin count
+3.17 'GOMP_SPINCOUNT' - Set the busy-wait spin count
 ====================================================
 
 _Description_:
      Determines how long a threads waits actively with consuming CPU
      power before waiting passively without consuming CPU power.  The
-     value may be either `INFINITE', `INFINITY' to always wait actively
+     value may be either 'INFINITE', 'INFINITY' to always wait actively
      or an integer which gives the number of spins of the busy-wait
      loop.  The integer may optionally be followed by the following
-     suffixes acting as multiplication factors: `k' (kilo, thousand),
-     `M' (mega, million), `G' (giga, billion), or `T' (tera, trillion).
-     If undefined, 0 is used when `OMP_WAIT_POLICY' is `PASSIVE',
-     300,000 is used when `OMP_WAIT_POLICY' is undefined and 30 billion
-     is used when `OMP_WAIT_POLICY' is `ACTIVE'.  If there are more
-     OpenMP threads than available CPUs, 1000 and 100 spins are used
-     for `OMP_WAIT_POLICY' being `ACTIVE' or undefined, respectively;
-     unless the `GOMP_SPINCOUNT' is lower or `OMP_WAIT_POLICY' is
-     `PASSIVE'.
+     suffixes acting as multiplication factors: 'k' (kilo, thousand),
+     'M' (mega, million), 'G' (giga, billion), or 'T' (tera, trillion).
+     If undefined, 0 is used when 'OMP_WAIT_POLICY' is 'PASSIVE',
+     300,000 is used when 'OMP_WAIT_POLICY' is undefined and 30 billion
+     is used when 'OMP_WAIT_POLICY' is 'ACTIVE'.  If there are more
+     OpenMP threads than available CPUs, 1000 and 100 spins are used for
+     'OMP_WAIT_POLICY' being 'ACTIVE' or undefined, respectively; unless
+     the 'GOMP_SPINCOUNT' is lower or 'OMP_WAIT_POLICY' is 'PASSIVE'.
 
 _See also_:
      *note OMP_WAIT_POLICY::
@@ -1528,8 +1522,8 @@ File: libgomp.info,  Node: The libgomp ABI,  Next: Reporting Bugs,  Prev: Enviro
 4 The libgomp ABI
 *****************
 
-The following sections present notes on the external ABI as presented
-by libgomp.  Only maintainers should need them.
+The following sections present notes on the external ABI as presented by
+libgomp.  Only maintainers should need them.
 
 * Menu:
 
@@ -1589,7 +1583,7 @@ File: libgomp.info,  Node: Implementing ATOMIC construct,  Next: Implementing FL
 4.3 Implementing ATOMIC construct
 =================================
 
-The target should implement the `__sync' builtins.
+The target should implement the '__sync' builtins.
 
    Failing that we could add
 
@@ -1605,7 +1599,7 @@ File: libgomp.info,  Node: Implementing FLUSH construct,  Next: Implementing BAR
 4.4 Implementing FLUSH construct
 ================================
 
-Expands to the `__sync_synchronize' builtin.
+Expands to the '__sync_synchronize' builtin.
 
 
 File: libgomp.info,  Node: Implementing BARRIER construct,  Next: Implementing THREADPRIVATE construct,  Prev: Implementing FLUSH construct,  Up: The libgomp ABI
@@ -1621,10 +1615,10 @@ File: libgomp.info,  Node: Implementing THREADPRIVATE construct,  Next: Implemen
 4.6 Implementing THREADPRIVATE construct
 ========================================
 
-In _most_ cases we can map this directly to `__thread'.  Except that
-OMP allows constructors for C++ objects.  We can either refuse to
-support this (how often is it used?) or we can implement something akin
-to .ctors.
+In _most_ cases we can map this directly to '__thread'.  Except that OMP
+allows constructors for C++ objects.  We can either refuse to support
+this (how often is it used?)  or we can implement something akin to
+.ctors.
 
    Even more ideally, this ctor feature is handled by extensions to the
 main pthreads library.  Failing that, we can have a set of entry points
@@ -1656,8 +1650,8 @@ copy in values for scalar and "small" structs; copy in addresses for
 others TREE_ADDRESSABLE types.  In the subfunction, copy the value into
 the local variable.
 
-   It is not clear what to do with bare FOR or SECTION blocks.  The
-only thing I can figure is that we do something like:
+   It is not clear what to do with bare FOR or SECTION blocks.  The only
+thing I can figure is that we do something like:
 
      #pragma omp for firstprivate(x) lastprivate(y)
      for (int i = 0; i < n; ++i)
@@ -1675,8 +1669,8 @@ only thing I can figure is that we do something like:
      }
 
    where the "x=x" and "y=y" assignments actually have different uids
-for the two variables, i.e. not something you could write directly in
-C.  Presumably this only makes sense if the "outer" x and y are global
+for the two variables, i.e.  not something you could write directly in
+C. Presumably this only makes sense if the "outer" x and y are global
 variables.
 
    COPYPRIVATE would work the same way, except the structure broadcast
@@ -1689,10 +1683,10 @@ File: libgomp.info,  Node: Implementing REDUCTION clause,  Next: Implementing PA
 =================================
 
 The private struct mentioned in the previous section should have a
-pointer to an array of the type of the variable, indexed by the
-thread's TEAM_ID.  The thread stores its final value into the array,
-and after the barrier, the master thread iterates over the array to
-collect the values.
+pointer to an array of the type of the variable, indexed by the thread's
+TEAM_ID.  The thread stores its final value into the array, and after
+the barrier, the master thread iterates over the array to collect the
+values.
 
 
 File: libgomp.info,  Node: Implementing PARALLEL construct,  Next: Implementing FOR construct,  Prev: Implementing REDUCTION clause,  Up: The libgomp ABI
@@ -1729,14 +1723,14 @@ FIRSTPRIVATE et al.
    The NUM_THREADS argument is 1 if an IF clause is present and false,
 or the value of the NUM_THREADS clause, if present, or 0.
 
-   The function needs to create the appropriate number of threads
-and/or launch them from the dock.  It needs to create the team
-structure and assign team ids.
+   The function needs to create the appropriate number of threads and/or
+launch them from the dock.  It needs to create the team structure and
+assign team ids.
 
        void GOMP_parallel_end (void)
 
    Tears down the team and returns us to the previous
-`omp_in_parallel()' state.
+'omp_in_parallel()' state.
 
 
 File: libgomp.info,  Node: Implementing FOR construct,  Next: Implementing ORDERED construct,  Prev: Implementing PARALLEL construct,  Up: The libgomp ABI
@@ -1788,14 +1782,14 @@ non-constant STEP, there isn't really.  We're explicitly allowed to
 evaluate it as many times as we want, and any variables involved should
 automatically be handled as PRIVATE or SHARED like any other variables.
 So the expression should remain evaluable in the subfunction.  We can
-also pull it into a local variable if we like, but since its supposed
-to remain unchanged, we can also not if we like.
+also pull it into a local variable if we like, but since its supposed to
+remain unchanged, we can also not if we like.
 
-   If we have SCHEDULE(STATIC), and no ORDERED, then we ought to be
-able to get away with no work-sharing context at all, since we can
-simply perform the arithmetic directly in each thread to divide up the
-iterations.  Which would mean that we wouldn't need to call any of
-these routines.
+   If we have SCHEDULE(STATIC), and no ORDERED, then we ought to be able
+to get away with no work-sharing context at all, since we can simply
+perform the arithmetic directly in each thread to divide up the
+iterations.  Which would mean that we wouldn't need to call any of these
+routines.
 
    There are separate routines for handling loops with an ORDERED
 clause.  Bookkeeping for that is non-trivial...
@@ -1889,8 +1883,8 @@ File: libgomp.info,  Node: Reporting Bugs,  Next: Copying,  Prev: The libgomp AB
 
 Bugs in the GNU Offloading and Multi Processing Runtime Library should
 be reported via Bugzilla (http://gcc.gnu.org/bugzilla/).  Please add
-"openacc", or "openmp", or both to the keywords field in the bug
-report, as appropriate.
+"openacc", or "openmp", or both to the keywords field in the bug report,
+as appropriate.
 
 
 File: libgomp.info,  Node: Copying,  Next: GNU Free Documentation License,  Prev: Reporting Bugs,  Up: Top
@@ -1900,7 +1894,7 @@ GNU General Public License
 
                         Version 3, 29 June 2007
 
-     Copyright (C) 2007 Free Software Foundation, Inc. `http://fsf.org/'
+     Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
 
      Everyone is permitted to copy and distribute verbatim copies of this
      license document, but changing it is not allowed.
@@ -1928,9 +1922,9 @@ want it, that you can change the software or use pieces of it in new
 free programs, and that you know you can do these things.
 
    To protect your rights, we need to prevent others from denying you
-these rights or asking you to surrender the rights.  Therefore, you
-have certain responsibilities if you distribute copies of the software,
-or if you modify it: responsibilities to respect the freedom of others.
+these rights or asking you to surrender the rights.  Therefore, you have
+certain responsibilities if you distribute copies of the software, or if
+you modify it: responsibilities to respect the freedom of others.
 
    For example, if you distribute copies of such a program, whether
 gratis or for a fee, you must pass on to the recipients the same
@@ -1949,16 +1943,15 @@ changed, so that their problems will not be attributed erroneously to
 authors of previous versions.
 
    Some devices are designed to deny users access to install or run
-modified versions of the software inside them, although the
-manufacturer can do so.  This is fundamentally incompatible with the
-aim of protecting users' freedom to change the software.  The
-systematic pattern of such abuse occurs in the area of products for
-individuals to use, which is precisely where it is most unacceptable.
-Therefore, we have designed this version of the GPL to prohibit the
-practice for those products.  If such problems arise substantially in
-other domains, we stand ready to extend this provision to those domains
-in future versions of the GPL, as needed to protect the freedom of
-users.
+modified versions of the software inside them, although the manufacturer
+can do so.  This is fundamentally incompatible with the aim of
+protecting users' freedom to change the software.  The systematic
+pattern of such abuse occurs in the area of products for individuals to
+use, which is precisely where it is most unacceptable.  Therefore, we
+have designed this version of the GPL to prohibit the practice for those
+products.  If such problems arise substantially in other domains, we
+stand ready to extend this provision to those domains in future versions
+of the GPL, as needed to protect the freedom of users.
 
    Finally, every program is threatened constantly by software patents.
 States should not allow patents to restrict development and use of
@@ -1995,8 +1988,8 @@ TERMS AND CONDITIONS
 
      To "propagate" a work means to do anything with it that, without
      permission, would make you directly or secondarily liable for
-     infringement under applicable copyright law, except executing it
-     on a computer or modifying a private copy.  Propagation includes
+     infringement under applicable copyright law, except executing it on
+     a computer or modifying a private copy.  Propagation includes
      copying, distribution (with or without modification), making
      available to the public, and in some countries other activities as
      well.
@@ -2010,8 +2003,8 @@ TERMS AND CONDITIONS
      to the extent that it includes a convenient and prominently visible
      feature that (1) displays an appropriate copyright notice, and (2)
      tells the user that there is no warranty for the work (except to
-     the extent that warranties are provided), that licensees may
-     convey the work under this License, and how to view a copy of this
+     the extent that warranties are provided), that licensees may convey
+     the work under this License, and how to view a copy of this
      License.  If the interface presents a list of user commands or
      options, such as a menu, a prominent item in the list meets this
      criterion.
@@ -2019,8 +2012,8 @@ TERMS AND CONDITIONS
   1. Source Code.
 
      The "source code" for a work means the preferred form of the work
-     for making modifications to it.  "Object code" means any
-     non-source form of a work.
+     for making modifications to it.  "Object code" means any non-source
+     form of a work.
 
      A "Standard Interface" means an interface that either is an
      official standard defined by a recognized standards body, or, in
@@ -2031,10 +2024,10 @@ TERMS AND CONDITIONS
      The "System Libraries" of an executable work include anything,
      other than the work as a whole, that (a) is included in the normal
      form of packaging a Major Component, but which is not part of that
-     Major Component, and (b) serves only to enable use of the work
-     with that Major Component, or to implement a Standard Interface
-     for which an implementation is available to the public in source
-     code form.  A "Major Component", in this context, means a major
+     Major Component, and (b) serves only to enable use of the work with
+     that Major Component, or to implement a Standard Interface for
+     which an implementation is available to the public in source code
+     form.  A "Major Component", in this context, means a major
      essential component (kernel, window system, and so on) of the
      specific operating system (if any) on which the executable work
      runs, or a compiler used to produce the work, or an object code
@@ -2042,15 +2035,15 @@ TERMS AND CONDITIONS
 
      The "Corresponding Source" for a work in object code form means all
      the source code needed to generate, install, and (for an executable
-     work) run the object code and to modify the work, including
-     scripts to control those activities.  However, it does not include
-     the work's System Libraries, or general-purpose tools or generally
+     work) run the object code and to modify the work, including scripts
+     to control those activities.  However, it does not include the
+     work's System Libraries, or general-purpose tools or generally
      available free programs which are used unmodified in performing
      those activities but which are not part of the work.  For example,
-     Corresponding Source includes interface definition files
-     associated with source files for the work, and the source code for
-     shared libraries and dynamically linked subprograms that the work
-     is specifically designed to require, such as by intimate data
+     Corresponding Source includes interface definition files associated
+     with source files for the work, and the source code for shared
+     libraries and dynamically linked subprograms that the work is
+     specifically designed to require, such as by intimate data
      communication or control flow between those subprograms and other
      parts of the work.
 
@@ -2067,22 +2060,22 @@ TERMS AND CONDITIONS
      copyright on the Program, and are irrevocable provided the stated
      conditions are met.  This License explicitly affirms your unlimited
      permission to run the unmodified Program.  The output from running
-     a covered work is covered by this License only if the output,
-     given its content, constitutes a covered work.  This License
-     acknowledges your rights of fair use or other equivalent, as
-     provided by copyright law.
+     a covered work is covered by this License only if the output, given
+     its content, constitutes a covered work.  This License acknowledges
+     your rights of fair use or other equivalent, as provided by
+     copyright law.
 
      You may make, run and propagate covered works that you do not
      convey, without conditions so long as your license otherwise
      remains in force.  You may convey covered works to others for the
-     sole purpose of having them make modifications exclusively for
-     you, or provide you with facilities for running those works,
-     provided that you comply with the terms of this License in
-     conveying all material for which you do not control copyright.
-     Those thus making or running the covered works for you must do so
-     exclusively on your behalf, under your direction and control, on
-     terms that prohibit them from making any copies of your
-     copyrighted material outside their relationship with you.
+     sole purpose of having them make modifications exclusively for you,
+     or provide you with facilities for running those works, provided
+     that you comply with the terms of this License in conveying all
+     material for which you do not control copyright.  Those thus making
+     or running the covered works for you must do so exclusively on your
+     behalf, under your direction and control, on terms that prohibit
+     them from making any copies of your copyrighted material outside
+     their relationship with you.
 
      Conveying under any other circumstances is permitted solely under
      the conditions stated below.  Sublicensing is not allowed; section
@@ -2099,8 +2092,8 @@ TERMS AND CONDITIONS
      When you convey a covered work, you waive any legal power to forbid
      circumvention of technological measures to the extent such
      circumvention is effected by exercising rights under this License
-     with respect to the covered work, and you disclaim any intention
-     to limit operation or modification of the work as a means of
+     with respect to the covered work, and you disclaim any intention to
+     limit operation or modification of the work as a means of
      enforcing, against the work's users, your or third parties' legal
      rights to forbid circumvention of technological measures.
 
@@ -2170,8 +2163,8 @@ TERMS AND CONDITIONS
 
        b. Convey the object code in, or embodied in, a physical product
           (including a physical distribution medium), accompanied by a
-          written offer, valid for at least three years and valid for
-          as long as you offer spare parts or customer support for that
+          written offer, valid for at least three years and valid for as
+          long as you offer spare parts or customer support for that
           product model, to give anyone who possesses the object code
           either (1) a copy of the Corresponding Source for all the
           software in the product that is covered by this License, on a
@@ -2181,31 +2174,30 @@ TERMS AND CONDITIONS
           to copy the Corresponding Source from a network server at no
           charge.
 
-       c. Convey individual copies of the object code with a copy of
-          the written offer to provide the Corresponding Source.  This
+       c. Convey individual copies of the object code with a copy of the
+          written offer to provide the Corresponding Source.  This
           alternative is allowed only occasionally and noncommercially,
           and only if you received the object code with such an offer,
           in accord with subsection 6b.
 
        d. Convey the object code by offering access from a designated
-          place (gratis or for a charge), and offer equivalent access
-          to the Corresponding Source in the same way through the same
+          place (gratis or for a charge), and offer equivalent access to
+          the Corresponding Source in the same way through the same
           place at no further charge.  You need not require recipients
           to copy the Corresponding Source along with the object code.
           If the place to copy the object code is a network server, the
-          Corresponding Source may be on a different server (operated
-          by you or a third party) that supports equivalent copying
-          facilities, provided you maintain clear directions next to
-          the object code saying where to find the Corresponding Source.
+          Corresponding Source may be on a different server (operated by
+          you or a third party) that supports equivalent copying
+          facilities, provided you maintain clear directions next to the
+          object code saying where to find the Corresponding Source.
           Regardless of what server hosts the Corresponding Source, you
-          remain obligated to ensure that it is available for as long
-          as needed to satisfy these requirements.
+          remain obligated to ensure that it is available for as long as
+          needed to satisfy these requirements.
 
        e. Convey the object code using peer-to-peer transmission,
           provided you inform other peers where the object code and
           Corresponding Source of the work are being offered to the
           general public at no charge under subsection 6d.
-
 
      A separable portion of the object code, whose source code is
      excluded from the Corresponding Source as a System Library, need
@@ -2214,8 +2206,8 @@ TERMS AND CONDITIONS
      A "User Product" is either (1) a "consumer product", which means
      any tangible personal property which is normally used for personal,
      family, or household purposes, or (2) anything designed or sold for
-     incorporation into a dwelling.  In determining whether a product
-     is a consumer product, doubtful cases shall be resolved in favor of
+     incorporation into a dwelling.  In determining whether a product is
+     a consumer product, doubtful cases shall be resolved in favor of
      coverage.  For a particular product received by a particular user,
      "normally used" refers to a typical or common use of that class of
      product, regardless of the status of the particular user or of the
@@ -2246,11 +2238,11 @@ TERMS AND CONDITIONS
 
      The requirement to provide Installation Information does not
      include a requirement to continue to provide support service,
-     warranty, or updates for a work that has been modified or
-     installed by the recipient, or for the User Product in which it
-     has been modified or installed.  Access to a network may be denied
-     when the modification itself materially and adversely affects the
-     operation of the network or violates the rules and protocols for
+     warranty, or updates for a work that has been modified or installed
+     by the recipient, or for the User Product in which it has been
+     modified or installed.  Access to a network may be denied when the
+     modification itself materially and adversely affects the operation
+     of the network or violates the rules and protocols for
      communication across the network.
 
      Corresponding Source conveyed, and Installation Information
@@ -2280,8 +2272,8 @@ TERMS AND CONDITIONS
 
      Notwithstanding any other provision of this License, for material
      you add to a covered work, you may (if authorized by the copyright
-     holders of that material) supplement the terms of this License
-     with terms:
+     holders of that material) supplement the terms of this License with
+     terms:
 
        a. Disclaiming warranty or limiting liability differently from
           the terms of sections 15 and 16 of this License; or
@@ -2291,9 +2283,8 @@ TERMS AND CONDITIONS
           Legal Notices displayed by works containing it; or
 
        c. Prohibiting misrepresentation of the origin of that material,
-          or requiring that modified versions of such material be
-          marked in reasonable ways as different from the original
-          version; or
+          or requiring that modified versions of such material be marked
+          in reasonable ways as different from the original version; or
 
        d. Limiting the use for publicity purposes of names of licensors
           or authors of the material; or
@@ -2312,11 +2303,10 @@ TERMS AND CONDITIONS
      you received it, or any part of it, contains a notice stating that
      it is governed by this License along with a term that is a further
      restriction, you may remove that term.  If a license document
-     contains a further restriction but permits relicensing or
-     conveying under this License, you may add to a covered work
-     material governed by the terms of that license document, provided
-     that the further restriction does not survive such relicensing or
-     conveying.
+     contains a further restriction but permits relicensing or conveying
+     under this License, you may add to a covered work material governed
+     by the terms of that license document, provided that the further
+     restriction does not survive such relicensing or conveying.
 
      If you add terms to a covered work in accord with this section, you
      must place, in the relevant source files, a statement of the
@@ -2332,13 +2322,13 @@ TERMS AND CONDITIONS
      You may not propagate or modify a covered work except as expressly
      provided under this License.  Any attempt otherwise to propagate or
      modify it is void, and will automatically terminate your rights
-     under this License (including any patent licenses granted under
-     the third paragraph of section 11).
+     under this License (including any patent licenses granted under the
+     third paragraph of section 11).
 
      However, if you cease all violation of this License, then your
      license from a particular copyright holder is reinstated (a)
-     provisionally, unless and until the copyright holder explicitly
-     and finally terminates your license, and (b) permanently, if the
+     provisionally, unless and until the copyright holder explicitly and
+     finally terminates your license, and (b) permanently, if the
      copyright holder fails to notify you of the violation by some
      reasonable means prior to 60 days after the cessation.
 
@@ -2350,10 +2340,10 @@ TERMS AND CONDITIONS
      after your receipt of the notice.
 
      Termination of your rights under this section does not terminate
-     the licenses of parties who have received copies or rights from
-     you under this License.  If your rights have been terminated and
-     not permanently reinstated, you do not qualify to receive new
-     licenses for the same material under section 10.
+     the licenses of parties who have received copies or rights from you
+     under this License.  If your rights have been terminated and not
+     permanently reinstated, you do not qualify to receive new licenses
+     for the same material under section 10.
 
   9. Acceptance Not Required for Having Copies.
 
@@ -2367,7 +2357,7 @@ TERMS AND CONDITIONS
      by modifying or propagating a covered work, you indicate your
      acceptance of this License to do so.
 
- 10. Automatic Licensing of Downstream Recipients.
+  10. Automatic Licensing of Downstream Recipients.
 
      Each time you convey a covered work, the recipient automatically
      receives a license from the original licensors, to run, modify and
@@ -2381,21 +2371,21 @@ TERMS AND CONDITIONS
      covered work results from an entity transaction, each party to that
      transaction who receives a copy of the work also receives whatever
      licenses to the work the party's predecessor in interest had or
-     could give under the previous paragraph, plus a right to
-     possession of the Corresponding Source of the work from the
-     predecessor in interest, if the predecessor has it or can get it
-     with reasonable efforts.
+     could give under the previous paragraph, plus a right to possession
+     of the Corresponding Source of the work from the predecessor in
+     interest, if the predecessor has it or can get it with reasonable
+     efforts.
 
      You may not impose any further restrictions on the exercise of the
      rights granted or affirmed under this License.  For example, you
-     may not impose a license fee, royalty, or other charge for
-     exercise of rights granted under this License, and you may not
-     initiate litigation (including a cross-claim or counterclaim in a
-     lawsuit) alleging that any patent claim is infringed by making,
-     using, selling, offering for sale, or importing the Program or any
-     portion of it.
+     may not impose a license fee, royalty, or other charge for exercise
+     of rights granted under this License, and you may not initiate
+     litigation (including a cross-claim or counterclaim in a lawsuit)
+     alleging that any patent claim is infringed by making, using,
+     selling, offering for sale, or importing the Program or any portion
+     of it.
 
- 11. Patents.
+  11. Patents.
 
      A "contributor" is a copyright holder who authorizes use under this
      License of the Program or a work on which the Program is based.
@@ -2415,15 +2405,15 @@ TERMS AND CONDITIONS
      Each contributor grants you a non-exclusive, worldwide,
      royalty-free patent license under the contributor's essential
      patent claims, to make, use, sell, offer for sale, import and
-     otherwise run, modify and propagate the contents of its
-     contributor version.
+     otherwise run, modify and propagate the contents of its contributor
+     version.
 
      In the following three paragraphs, a "patent license" is any
      express agreement or commitment, however denominated, not to
      enforce a patent (such as an express permission to practice a
-     patent or covenant not to sue for patent infringement).  To
-     "grant" such a patent license to a party means to make such an
-     agreement or commitment not to enforce a patent against the party.
+     patent or covenant not to sue for patent infringement).  To "grant"
+     such a patent license to a party means to make such an agreement or
+     commitment not to enforce a patent against the party.
 
      If you convey a covered work, knowingly relying on a patent
      license, and the Corresponding Source of the work is not available
@@ -2453,36 +2443,35 @@ TERMS AND CONDITIONS
      conditioned on the non-exercise of one or more of the rights that
      are specifically granted under this License.  You may not convey a
      covered work if you are a party to an arrangement with a third
-     party that is in the business of distributing software, under
-     which you make payment to the third party based on the extent of
-     your activity of conveying the work, and under which the third
-     party grants, to any of the parties who would receive the covered
-     work from you, a discriminatory patent license (a) in connection
-     with copies of the covered work conveyed by you (or copies made
-     from those copies), or (b) primarily for and in connection with
-     specific products or compilations that contain the covered work,
-     unless you entered into that arrangement, or that patent license
-     was granted, prior to 28 March 2007.
+     party that is in the business of distributing software, under which
+     you make payment to the third party based on the extent of your
+     activity of conveying the work, and under which the third party
+     grants, to any of the parties who would receive the covered work
+     from you, a discriminatory patent license (a) in connection with
+     copies of the covered work conveyed by you (or copies made from
+     those copies), or (b) primarily for and in connection with specific
+     products or compilations that contain the covered work, unless you
+     entered into that arrangement, or that patent license was granted,
+     prior to 28 March 2007.
 
      Nothing in this License shall be construed as excluding or limiting
      any implied license or other defenses to infringement that may
      otherwise be available to you under applicable patent law.
 
- 12. No Surrender of Others' Freedom.
+  12. No Surrender of Others' Freedom.
 
-     If conditions are imposed on you (whether by court order,
-     agreement or otherwise) that contradict the conditions of this
-     License, they do not excuse you from the conditions of this
-     License.  If you cannot convey a covered work so as to satisfy
-     simultaneously your obligations under this License and any other
-     pertinent obligations, then as a consequence you may not convey it
-     at all.  For example, if you agree to terms that obligate you to
-     collect a royalty for further conveying from those to whom you
-     convey the Program, the only way you could satisfy both those
-     terms and this License would be to refrain entirely from conveying
-     the Program.
+     If conditions are imposed on you (whether by court order, agreement
+     or otherwise) that contradict the conditions of this License, they
+     do not excuse you from the conditions of this License.  If you
+     cannot convey a covered work so as to satisfy simultaneously your
+     obligations under this License and any other pertinent obligations,
+     then as a consequence you may not convey it at all.  For example,
+     if you agree to terms that obligate you to collect a royalty for
+     further conveying from those to whom you convey the Program, the
+     only way you could satisfy both those terms and this License would
+     be to refrain entirely from conveying the Program.
 
- 13. Use with the GNU Affero General Public License.
+  13. Use with the GNU Affero General Public License.
 
      Notwithstanding any other provision of this License, you have
      permission to link or combine any covered work with a work licensed
@@ -2493,22 +2482,21 @@ TERMS AND CONDITIONS
      General Public License, section 13, concerning interaction through
      a network will apply to the combination as such.
 
- 14. Revised Versions of this License.
+  14. Revised Versions of this License.
 
      The Free Software Foundation may publish revised and/or new
-     versions of the GNU General Public License from time to time.
-     Such new versions will be similar in spirit to the present
-     version, but may differ in detail to address new problems or
-     concerns.
+     versions of the GNU General Public License from time to time.  Such
+     new versions will be similar in spirit to the present version, but
+     may differ in detail to address new problems or concerns.
 
      Each version is given a distinguishing version number.  If the
      Program specifies that a certain numbered version of the GNU
      General Public License "or any later version" applies to it, you
      have the option of following the terms and conditions either of
-     that numbered version or of any later version published by the
-     Free Software Foundation.  If the Program does not specify a
-     version number of the GNU General Public License, you may choose
-     any version ever published by the Free Software Foundation.
+     that numbered version or of any later version published by the Free
+     Software Foundation.  If the Program does not specify a version
+     number of the GNU General Public License, you may choose any
+     version ever published by the Free Software Foundation.
 
      If the Program specifies that a proxy can decide which future
      versions of the GNU General Public License can be used, that
@@ -2520,24 +2508,24 @@ TERMS AND CONDITIONS
      author or copyright holder as a result of your choosing to follow a
      later version.
 
- 15. Disclaimer of Warranty.
+  15. Disclaimer of Warranty.
 
      THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-     APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE
+     APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE
      COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS"
      WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
      INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE
+     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE
      RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.
      SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
      NECESSARY SERVICING, REPAIR OR CORRECTION.
 
- 16. Limitation of Liability.
+  16. Limitation of Liability.
 
      IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
      WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES
-     AND/OR CONVEYS THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU
-     FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR
+     AND/OR CONVEYS THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR
+     DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR
      CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
      THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA
      BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
@@ -2545,7 +2533,7 @@ TERMS AND CONDITIONS
      PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF
      THE POSSIBILITY OF SUCH DAMAGES.
 
- 17. Interpretation of Sections 15 and 16.
+  17. Interpretation of Sections 15 and 16.
 
      If the disclaimer of warranty and limitation of liability provided
      above cannot be given local legal effect according to their terms,
@@ -2553,7 +2541,6 @@ TERMS AND CONDITIONS
      approximates an absolute waiver of all civil liability in
      connection with the Program, unless a warranty or assumption of
      liability accompanies a copy of the Program in return for a fee.
-
 
 END OF TERMS AND CONDITIONS
 ===========================
@@ -2585,7 +2572,7 @@ state the exclusion of warranty; and each file should have at least the
      General Public License for more details.
 
      You should have received a copy of the GNU General Public License
-     along with this program.  If not, see `http://www.gnu.org/licenses/'.
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
    Also add information on how to contact you by electronic and paper
 mail.
@@ -2594,11 +2581,11 @@ mail.
 notice like this when it starts in an interactive mode:
 
      PROGRAM Copyright (C) YEAR NAME OF AUTHOR
-     This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+     This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.
      This is free software, and you are welcome to redistribute it
-     under certain conditions; type `show c' for details.
+     under certain conditions; type 'show c' for details.
 
-   The hypothetical commands `show w' and `show c' should show the
+   The hypothetical commands 'show w' and 'show c' should show the
 appropriate parts of the General Public License.  Of course, your
 program's commands might be different; for a GUI interface, you would
 use an "about box".
@@ -2606,14 +2593,14 @@ use an "about box".
    You should also get your employer (if you work as a programmer) or
 school, if any, to sign a "copyright disclaimer" for the program, if
 necessary.  For more information on this, and how to apply and follow
-the GNU GPL, see `http://www.gnu.org/licenses/'.
+the GNU GPL, see <http://www.gnu.org/licenses/>.
 
    The GNU General Public License does not permit incorporating your
 program into proprietary programs.  If your program is a subroutine
 library, you may consider it more useful to permit linking proprietary
 applications with the library.  If this is what you want to do, use the
 GNU Lesser General Public License instead of this License.  But first,
-please read `http://www.gnu.org/philosophy/why-not-lgpl.html'.
+please read <http://www.gnu.org/philosophy/why-not-lgpl.html>.
 
 
 File: libgomp.info,  Node: GNU Free Documentation License,  Next: Funding,  Prev: Copying,  Up: Top
@@ -2624,7 +2611,7 @@ GNU Free Documentation License
                      Version 1.3, 3 November 2008
 
      Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
-     `http://fsf.org/'
+     <http://fsf.org/>
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -2649,21 +2636,21 @@ GNU Free Documentation License
      free program should come with manuals providing the same freedoms
      that the software does.  But this License is not limited to
      software manuals; it can be used for any textual work, regardless
-     of subject matter or whether it is published as a printed book.
-     We recommend this License principally for works whose purpose is
+     of subject matter or whether it is published as a printed book.  We
+     recommend this License principally for works whose purpose is
      instruction or reference.
 
   1. APPLICABILITY AND DEFINITIONS
 
      This License applies to any manual or other work, in any medium,
-     that contains a notice placed by the copyright holder saying it
-     can be distributed under the terms of this License.  Such a notice
+     that contains a notice placed by the copyright holder saying it can
+     be distributed under the terms of this License.  Such a notice
      grants a world-wide, royalty-free license, unlimited in duration,
      to use that work under the conditions stated herein.  The
      "Document", below, refers to any such manual or work.  Any member
-     of the public is a licensee, and is addressed as "you".  You
-     accept the license if you copy, modify or distribute the work in a
-     way requiring permission under copyright law.
+     of the public is a licensee, and is addressed as "you".  You accept
+     the license if you copy, modify or distribute the work in a way
+     requiring permission under copyright law.
 
      A "Modified Version" of the Document means any work containing the
      Document or a portion of it, either copied verbatim, or with
@@ -2681,12 +2668,12 @@ GNU Free Documentation License
      regarding them.
 
      The "Invariant Sections" are certain Secondary Sections whose
-     titles are designated, as being those of Invariant Sections, in
-     the notice that says that the Document is released under this
-     License.  If a section does not fit the above definition of
-     Secondary then it is not allowed to be designated as Invariant.
-     The Document may contain zero Invariant Sections.  If the Document
-     does not identify any Invariant Sections then there are none.
+     titles are designated, as being those of Invariant Sections, in the
+     notice that says that the Document is released under this License.
+     If a section does not fit the above definition of Secondary then it
+     is not allowed to be designated as Invariant.  The Document may
+     contain zero Invariant Sections.  If the Document does not identify
+     any Invariant Sections then there are none.
 
      The "Cover Texts" are certain short passages of text that are
      listed, as Front-Cover Texts or Back-Cover Texts, in the notice
@@ -2697,27 +2684,27 @@ GNU Free Documentation License
      A "Transparent" copy of the Document means a machine-readable copy,
      represented in a format whose specification is available to the
      general public, that is suitable for revising the document
-     straightforwardly with generic text editors or (for images
-     composed of pixels) generic paint programs or (for drawings) some
-     widely available drawing editor, and that is suitable for input to
-     text formatters or for automatic translation to a variety of
-     formats suitable for input to text formatters.  A copy made in an
-     otherwise Transparent file format whose markup, or absence of
-     markup, has been arranged to thwart or discourage subsequent
-     modification by readers is not Transparent.  An image format is
-     not Transparent if used for any substantial amount of text.  A
-     copy that is not "Transparent" is called "Opaque".
+     straightforwardly with generic text editors or (for images composed
+     of pixels) generic paint programs or (for drawings) some widely
+     available drawing editor, and that is suitable for input to text
+     formatters or for automatic translation to a variety of formats
+     suitable for input to text formatters.  A copy made in an otherwise
+     Transparent file format whose markup, or absence of markup, has
+     been arranged to thwart or discourage subsequent modification by
+     readers is not Transparent.  An image format is not Transparent if
+     used for any substantial amount of text.  A copy that is not
+     "Transparent" is called "Opaque".
 
      Examples of suitable formats for Transparent copies include plain
      ASCII without markup, Texinfo input format, LaTeX input format,
-     SGML or XML using a publicly available DTD, and
-     standard-conforming simple HTML, PostScript or PDF designed for
-     human modification.  Examples of transparent image formats include
-     PNG, XCF and JPG.  Opaque formats include proprietary formats that
-     can be read and edited only by proprietary word processors, SGML or
-     XML for which the DTD and/or processing tools are not generally
-     available, and the machine-generated HTML, PostScript or PDF
-     produced by some word processors for output purposes only.
+     SGML or XML using a publicly available DTD, and standard-conforming
+     simple HTML, PostScript or PDF designed for human modification.
+     Examples of transparent image formats include PNG, XCF and JPG.
+     Opaque formats include proprietary formats that can be read and
+     edited only by proprietary word processors, SGML or XML for which
+     the DTD and/or processing tools are not generally available, and
+     the machine-generated HTML, PostScript or PDF produced by some word
+     processors for output purposes only.
 
      The "Title Page" means, for a printed book, the title page itself,
      plus such following pages as are needed to hold, legibly, the
@@ -2755,8 +2742,8 @@ GNU Free Documentation License
      may not use technical measures to obstruct or control the reading
      or further copying of the copies you make or distribute.  However,
      you may accept compensation in exchange for copies.  If you
-     distribute a large enough number of copies you must also follow
-     the conditions in section 3.
+     distribute a large enough number of copies you must also follow the
+     conditions in section 3.
 
      You may also lend copies, under the same conditions stated above,
      and you may publicly display copies.
@@ -2770,12 +2757,11 @@ GNU Free Documentation License
      these Cover Texts: Front-Cover Texts on the front cover, and
      Back-Cover Texts on the back cover.  Both covers must also clearly
      and legibly identify you as the publisher of these copies.  The
-     front cover must present the full title with all words of the
-     title equally prominent and visible.  You may add other material
-     on the covers in addition.  Copying with changes limited to the
-     covers, as long as they preserve the title of the Document and
-     satisfy these conditions, can be treated as verbatim copying in
-     other respects.
+     front cover must present the full title with all words of the title
+     equally prominent and visible.  You may add other material on the
+     covers in addition.  Copying with changes limited to the covers, as
+     long as they preserve the title of the Document and satisfy these
+     conditions, can be treated as verbatim copying in other respects.
 
      If the required texts for either cover are too voluminous to fit
      legibly, you should put the first ones listed (as many as fit
@@ -2783,40 +2769,39 @@ GNU Free Documentation License
      adjacent pages.
 
      If you publish or distribute Opaque copies of the Document
-     numbering more than 100, you must either include a
-     machine-readable Transparent copy along with each Opaque copy, or
-     state in or with each Opaque copy a computer-network location from
-     which the general network-using public has access to download
-     using public-standard network protocols a complete Transparent
-     copy of the Document, free of added material.  If you use the
-     latter option, you must take reasonably prudent steps, when you
-     begin distribution of Opaque copies in quantity, to ensure that
-     this Transparent copy will remain thus accessible at the stated
-     location until at least one year after the last time you
-     distribute an Opaque copy (directly or through your agents or
-     retailers) of that edition to the public.
+     numbering more than 100, you must either include a machine-readable
+     Transparent copy along with each Opaque copy, or state in or with
+     each Opaque copy a computer-network location from which the general
+     network-using public has access to download using public-standard
+     network protocols a complete Transparent copy of the Document, free
+     of added material.  If you use the latter option, you must take
+     reasonably prudent steps, when you begin distribution of Opaque
+     copies in quantity, to ensure that this Transparent copy will
+     remain thus accessible at the stated location until at least one
+     year after the last time you distribute an Opaque copy (directly or
+     through your agents or retailers) of that edition to the public.
 
      It is requested, but not required, that you contact the authors of
-     the Document well before redistributing any large number of
-     copies, to give them a chance to provide you with an updated
-     version of the Document.
+     the Document well before redistributing any large number of copies,
+     to give them a chance to provide you with an updated version of the
+     Document.
 
   4. MODIFICATIONS
 
      You may copy and distribute a Modified Version of the Document
      under the conditions of sections 2 and 3 above, provided that you
-     release the Modified Version under precisely this License, with
-     the Modified Version filling the role of the Document, thus
-     licensing distribution and modification of the Modified Version to
-     whoever possesses a copy of it.  In addition, you must do these
-     things in the Modified Version:
+     release the Modified Version under precisely this License, with the
+     Modified Version filling the role of the Document, thus licensing
+     distribution and modification of the Modified Version to whoever
+     possesses a copy of it.  In addition, you must do these things in
+     the Modified Version:
 
        A. Use in the Title Page (and on the covers, if any) a title
-          distinct from that of the Document, and from those of
-          previous versions (which should, if there were any, be listed
-          in the History section of the Document).  You may use the
-          same title as a previous version if the original publisher of
-          that version gives permission.
+          distinct from that of the Document, and from those of previous
+          versions (which should, if there were any, be listed in the
+          History section of the Document).  You may use the same title
+          as a previous version if the original publisher of that
+          version gives permission.
 
        B. List on the Title Page, as authors, one or more persons or
           entities responsible for authorship of the modifications in
@@ -2846,31 +2831,30 @@ GNU Free Documentation License
 
        I. Preserve the section Entitled "History", Preserve its Title,
           and add to it an item stating at least the title, year, new
-          authors, and publisher of the Modified Version as given on
-          the Title Page.  If there is no section Entitled "History" in
-          the Document, create one stating the title, year, authors,
-          and publisher of the Document as given on its Title Page,
-          then add an item describing the Modified Version as stated in
-          the previous sentence.
+          authors, and publisher of the Modified Version as given on the
+          Title Page.  If there is no section Entitled "History" in the
+          Document, create one stating the title, year, authors, and
+          publisher of the Document as given on its Title Page, then add
+          an item describing the Modified Version as stated in the
+          previous sentence.
 
        J. Preserve the network location, if any, given in the Document
           for public access to a Transparent copy of the Document, and
           likewise the network locations given in the Document for
-          previous versions it was based on.  These may be placed in
-          the "History" section.  You may omit a network location for a
-          work that was published at least four years before the
-          Document itself, or if the original publisher of the version
-          it refers to gives permission.
+          previous versions it was based on.  These may be placed in the
+          "History" section.  You may omit a network location for a work
+          that was published at least four years before the Document
+          itself, or if the original publisher of the version it refers
+          to gives permission.
 
        K. For any section Entitled "Acknowledgements" or "Dedications",
-          Preserve the Title of the section, and preserve in the
-          section all the substance and tone of each of the contributor
+          Preserve the Title of the section, and preserve in the section
+          all the substance and tone of each of the contributor
           acknowledgements and/or dedications given therein.
 
-       L. Preserve all the Invariant Sections of the Document,
-          unaltered in their text and in their titles.  Section numbers
-          or the equivalent are not considered part of the section
-          titles.
+       L. Preserve all the Invariant Sections of the Document, unaltered
+          in their text and in their titles.  Section numbers or the
+          equivalent are not considered part of the section titles.
 
        M. Delete any section Entitled "Endorsements".  Such a section
           may not be included in the Modified Version.
@@ -2883,11 +2867,11 @@ GNU Free Documentation License
 
      If the Modified Version includes new front-matter sections or
      appendices that qualify as Secondary Sections and contain no
-     material copied from the Document, you may at your option
-     designate some or all of these sections as invariant.  To do this,
-     add their titles to the list of Invariant Sections in the Modified
-     Version's license notice.  These titles must be distinct from any
-     other section titles.
+     material copied from the Document, you may at your option designate
+     some or all of these sections as invariant.  To do this, add their
+     titles to the list of Invariant Sections in the Modified Version's
+     license notice.  These titles must be distinct from any other
+     section titles.
 
      You may add a section Entitled "Endorsements", provided it contains
      nothing but endorsements of your Modified Version by various
@@ -2896,15 +2880,15 @@ GNU Free Documentation License
      definition of a standard.
 
      You may add a passage of up to five words as a Front-Cover Text,
-     and a passage of up to 25 words as a Back-Cover Text, to the end
-     of the list of Cover Texts in the Modified Version.  Only one
-     passage of Front-Cover Text and one of Back-Cover Text may be
-     added by (or through arrangements made by) any one entity.  If the
-     Document already includes a cover text for the same cover,
-     previously added by you or by arrangement made by the same entity
-     you are acting on behalf of, you may not add another; but you may
-     replace the old one, on explicit permission from the previous
-     publisher that added the old one.
+     and a passage of up to 25 words as a Back-Cover Text, to the end of
+     the list of Cover Texts in the Modified Version.  Only one passage
+     of Front-Cover Text and one of Back-Cover Text may be added by (or
+     through arrangements made by) any one entity.  If the Document
+     already includes a cover text for the same cover, previously added
+     by you or by arrangement made by the same entity you are acting on
+     behalf of, you may not add another; but you may replace the old
+     one, on explicit permission from the previous publisher that added
+     the old one.
 
      The author(s) and publisher(s) of the Document do not by this
      License give permission to use their names for publicity for or to
@@ -2914,8 +2898,8 @@ GNU Free Documentation License
 
      You may combine the Document with other documents released under
      this License, under the terms defined in section 4 above for
-     modified versions, provided that you include in the combination
-     all of the Invariant Sections of all of the original documents,
+     modified versions, provided that you include in the combination all
+     of the Invariant Sections of all of the original documents,
      unmodified, and list them all as Invariant Sections of your
      combined work in its license notice, and that you preserve all
      their Warranty Disclaimers.
@@ -2942,20 +2926,20 @@ GNU Free Documentation License
      documents released under this License, and replace the individual
      copies of this License in the various documents with a single copy
      that is included in the collection, provided that you follow the
-     rules of this License for verbatim copying of each of the
-     documents in all other respects.
+     rules of this License for verbatim copying of each of the documents
+     in all other respects.
 
      You may extract a single document from such a collection, and
      distribute it individually under this License, provided you insert
-     a copy of this License into the extracted document, and follow
-     this License in all other respects regarding verbatim copying of
-     that document.
+     a copy of this License into the extracted document, and follow this
+     License in all other respects regarding verbatim copying of that
+     document.
 
   7. AGGREGATION WITH INDEPENDENT WORKS
 
      A compilation of the Document or its derivatives with other
-     separate and independent documents or works, in or on a volume of
-     a storage or distribution medium, is called an "aggregate" if the
+     separate and independent documents or works, in or on a volume of a
+     storage or distribution medium, is called an "aggregate" if the
      copyright resulting from the compilation is not used to limit the
      legal rights of the compilation's users beyond what the individual
      works permit.  When the Document is included in an aggregate, this
@@ -3000,8 +2984,8 @@ GNU Free Documentation License
 
      However, if you cease all violation of this License, then your
      license from a particular copyright holder is reinstated (a)
-     provisionally, unless and until the copyright holder explicitly
-     and finally terminates your license, and (b) permanently, if the
+     provisionally, unless and until the copyright holder explicitly and
+     finally terminates your license, and (b) permanently, if the
      copyright holder fails to notify you of the violation by some
      reasonable means prior to 60 days after the cessation.
 
@@ -3013,33 +2997,33 @@ GNU Free Documentation License
      after your receipt of the notice.
 
      Termination of your rights under this section does not terminate
-     the licenses of parties who have received copies or rights from
-     you under this License.  If your rights have been terminated and
-     not permanently reinstated, receipt of a copy of some or all of
-     the same material does not give you any rights to use it.
+     the licenses of parties who have received copies or rights from you
+     under this License.  If your rights have been terminated and not
+     permanently reinstated, receipt of a copy of some or all of the
+     same material does not give you any rights to use it.
 
- 10. FUTURE REVISIONS OF THIS LICENSE
+  10. FUTURE REVISIONS OF THIS LICENSE
 
      The Free Software Foundation may publish new, revised versions of
      the GNU Free Documentation License from time to time.  Such new
      versions will be similar in spirit to the present version, but may
      differ in detail to address new problems or concerns.  See
-     `http://www.gnu.org/copyleft/'.
+     <http://www.gnu.org/copyleft/>.
 
      Each version of the License is given a distinguishing version
      number.  If the Document specifies that a particular numbered
      version of this License "or any later version" applies to it, you
      have the option of following the terms and conditions either of
      that specified version or of any later version that has been
-     published (not as a draft) by the Free Software Foundation.  If
-     the Document does not specify a version number of this License,
-     you may choose any version ever published (not as a draft) by the
-     Free Software Foundation.  If the Document specifies that a proxy
-     can decide which future versions of this License can be used, that
+     published (not as a draft) by the Free Software Foundation.  If the
+     Document does not specify a version number of this License, you may
+     choose any version ever published (not as a draft) by the Free
+     Software Foundation.  If the Document specifies that a proxy can
+     decide which future versions of this License can be used, that
      proxy's public statement of acceptance of a version permanently
      authorizes you to choose that version for the Document.
 
- 11. RELICENSING
+  11. RELICENSING
 
      "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
      World Wide Web server that publishes copyrightable works and also
@@ -3069,7 +3053,6 @@ GNU Free Documentation License
      site under CC-BY-SA on the same site at any time before August 1,
      2009, provided the MMC is eligible for relicensing.
 
-
 ADDENDUM: How to use this License for your documents
 ====================================================
 
@@ -3086,7 +3069,7 @@ notices just after the title page:
        Free Documentation License''.
 
    If you have Invariant Sections, Front-Cover Texts and Back-Cover
-Texts, replace the "with...Texts." line with this:
+Texts, replace the "with...Texts."  line with this:
 
          with the Invariant Sections being LIST THEIR TITLES, with
          the Front-Cover Texts being LIST, and with the Back-Cover Texts
@@ -3097,9 +3080,9 @@ combination of the three, merge those two alternatives to suit the
 situation.
 
    If your document contains nontrivial examples of program code, we
-recommend releasing these examples in parallel under your choice of
-free software license, such as the GNU General Public License, to
-permit their use in free software.
+recommend releasing these examples in parallel under your choice of free
+software license, such as the GNU General Public License, to permit
+their use in free software.
 
 
 File: libgomp.info,  Node: Funding,  Next: Library Index,  Prev: GNU Free Documentation License,  Up: Top
@@ -3129,8 +3112,8 @@ for comparison.
 
    Even a precise fraction "of the profits from this disk" is not very
 meaningful, since creative accounting and unrelated business decisions
-can greatly alter what fraction of the sales price counts as profit.
-If the price you pay is $50, ten percent of the profit is probably less
+can greatly alter what fraction of the sales price counts as profit.  If
+the price you pay is $50, ten percent of the profit is probably less
 than a dollar; it might be a few cents, or nothing at all.
 
    Some redistributors do development work themselves.  This is useful
@@ -3140,8 +3123,8 @@ difference than others.  For example, maintaining a separate version of
 a program contributes very little; maintaining the standard version of a
 program for the whole community contributes much.  Easy new ports
 contribute little, since someone else would surely do them; difficult
-ports such as adding a new CPU to the GNU Compiler Collection
-contribute more; major new features or packages contribute the most.
+ports such as adding a new CPU to the GNU Compiler Collection contribute
+more; major new features or packages contribute the most.
 
    By establishing the idea that supporting further development is "the
 proper thing to do" when distributing free software for a fee, we can
@@ -3160,115 +3143,115 @@ Library Index
  [index ]
 * Menu:
 
-* Environment Variable <1>:              GOMP_SPINCOUNT.        (line 6)
-* Environment Variable <2>:              GOMP_STACKSIZE.        (line 6)
-* Environment Variable <3>:              GOMP_DEBUG.            (line 6)
-* Environment Variable <4>:              GOMP_CPU_AFFINITY.     (line 6)
-* Environment Variable <5>:              OMP_WAIT_POLICY.       (line 6)
-* Environment Variable <6>:              OMP_THREAD_LIMIT.      (line 6)
-* Environment Variable <7>:              OMP_SCHEDULE.          (line 6)
-* Environment Variable <8>:              OMP_STACKSIZE.         (line 6)
-* Environment Variable <9>:              OMP_PLACES.            (line 6)
-* Environment Variable <10>:             OMP_PROC_BIND.         (line 6)
-* Environment Variable <11>:             OMP_NUM_THREADS.       (line 6)
-* Environment Variable <12>:             OMP_NESTED.            (line 6)
-* Environment Variable <13>:             OMP_MAX_ACTIVE_LEVELS. (line 6)
-* Environment Variable <14>:             OMP_DYNAMIC.           (line 6)
-* Environment Variable <15>:             OMP_DEFAULT_DEVICE.    (line 6)
-* Environment Variable <16>:             OMP_DISPLAY_ENV.       (line 6)
 * Environment Variable:                  OMP_CANCELLATION.      (line 6)
+* Environment Variable <1>:              OMP_DISPLAY_ENV.       (line 6)
+* Environment Variable <2>:              OMP_DEFAULT_DEVICE.    (line 6)
+* Environment Variable <3>:              OMP_DYNAMIC.           (line 6)
+* Environment Variable <4>:              OMP_MAX_ACTIVE_LEVELS. (line 6)
+* Environment Variable <5>:              OMP_NESTED.            (line 6)
+* Environment Variable <6>:              OMP_NUM_THREADS.       (line 6)
+* Environment Variable <7>:              OMP_PROC_BIND.         (line 6)
+* Environment Variable <8>:              OMP_PLACES.            (line 6)
+* Environment Variable <9>:              OMP_STACKSIZE.         (line 6)
+* Environment Variable <10>:             OMP_SCHEDULE.          (line 6)
+* Environment Variable <11>:             OMP_THREAD_LIMIT.      (line 6)
+* Environment Variable <12>:             OMP_WAIT_POLICY.       (line 6)
+* Environment Variable <13>:             GOMP_CPU_AFFINITY.     (line 6)
+* Environment Variable <14>:             GOMP_DEBUG.            (line 6)
+* Environment Variable <15>:             GOMP_STACKSIZE.        (line 6)
+* Environment Variable <16>:             GOMP_SPINCOUNT.        (line 6)
 * FDL, GNU Free Documentation License:   GNU Free Documentation License.
                                                                 (line 6)
-* Implementation specific setting <1>:   GOMP_SPINCOUNT.        (line 6)
-* Implementation specific setting <2>:   GOMP_STACKSIZE.        (line 6)
-* Implementation specific setting <3>:   OMP_SCHEDULE.          (line 6)
-* Implementation specific setting <4>:   OMP_NUM_THREADS.       (line 6)
 * Implementation specific setting:       OMP_NESTED.            (line 6)
+* Implementation specific setting <1>:   OMP_NUM_THREADS.       (line 6)
+* Implementation specific setting <2>:   OMP_SCHEDULE.          (line 6)
+* Implementation specific setting <3>:   GOMP_STACKSIZE.        (line 6)
+* Implementation specific setting <4>:   GOMP_SPINCOUNT.        (line 6)
 * Introduction:                          Top.                   (line 6)
 
 
 
 Tag Table:
-Node: Top2130
-Node: Enabling OpenMP3925
-Node: Runtime Library Routines4712
-Node: omp_get_active_level7699
-Node: omp_get_ancestor_thread_num8397
-Node: omp_get_cancellation9324
-Node: omp_get_default_device10136
-Node: omp_get_dynamic10810
-Node: omp_get_level11683
-Node: omp_get_max_active_levels12301
-Node: omp_get_max_threads12998
-Node: omp_get_nested13753
-Node: omp_get_num_devices14663
-Node: omp_get_num_procs15182
-Node: omp_get_num_teams15719
-Node: omp_get_num_threads16233
-Node: omp_get_proc_bind17320
-Node: omp_get_schedule18238
-Node: omp_get_team_num19179
-Node: omp_get_team_size19676
-Node: omp_get_thread_limit20633
-Node: omp_get_thread_num21250
-Node: omp_in_parallel22119
-Node: omp_in_final22766
-Node: omp_is_initial_device23438
-Node: omp_set_default_device24129
-Node: omp_set_dynamic24917
-Node: omp_set_max_active_levels25800
-Node: omp_set_nested26574
-Node: omp_set_num_threads27463
-Node: omp_set_schedule28328
-Node: omp_init_lock29394
-Node: omp_set_lock30044
-Node: omp_test_lock30896
-Node: omp_unset_lock31869
-Node: omp_destroy_lock32797
-Node: omp_init_nest_lock33471
-Node: omp_set_nest_lock34203
-Node: omp_test_nest_lock35120
-Node: omp_unset_nest_lock36150
-Node: omp_destroy_nest_lock37162
-Node: omp_get_wtick37910
-Node: omp_get_wtime38500
-Node: Environment Variables39274
-Node: OMP_CANCELLATION40666
-Node: OMP_DISPLAY_ENV41199
-Node: OMP_DEFAULT_DEVICE41902
-Node: OMP_DYNAMIC42682
-Node: OMP_MAX_ACTIVE_LEVELS43278
-Node: OMP_NESTED43917
-Node: OMP_NUM_THREADS44522
-Node: OMP_PROC_BIND45211
-Node: OMP_PLACES46403
-Node: OMP_STACKSIZE48578
-Node: OMP_SCHEDULE49402
-Node: OMP_THREAD_LIMIT50098
-Node: OMP_WAIT_POLICY50698
-Node: GOMP_CPU_AFFINITY51390
-Node: GOMP_DEBUG53121
-Node: GOMP_STACKSIZE53628
-Node: GOMP_SPINCOUNT54457
-Node: The libgomp ABI55634
-Node: Implementing MASTER construct56433
-Node: Implementing CRITICAL construct56847
-Node: Implementing ATOMIC construct57586
-Node: Implementing FLUSH construct58067
-Node: Implementing BARRIER construct58338
-Node: Implementing THREADPRIVATE construct58607
-Node: Implementing PRIVATE clause59259
-Node: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses59840
-Node: Implementing REDUCTION clause61164
-Node: Implementing PARALLEL construct61721
-Node: Implementing FOR construct62978
-Node: Implementing ORDERED construct64976
-Node: Implementing SECTIONS construct65282
-Node: Implementing SINGLE construct66048
-Node: Reporting Bugs66710
-Node: Copying67070
-Node: GNU Free Documentation License104635
-Node: Funding129777
-Node: Library Index132302
+Node: Top2083
+Node: Enabling OpenMP3878
+Node: Runtime Library Routines4665
+Node: omp_get_active_level7652
+Node: omp_get_ancestor_thread_num8352
+Node: omp_get_cancellation9282
+Node: omp_get_default_device10096
+Node: omp_get_dynamic10772
+Node: omp_get_level11647
+Node: omp_get_max_active_levels12267
+Node: omp_get_max_threads12966
+Node: omp_get_nested13723
+Node: omp_get_num_devices14635
+Node: omp_get_num_procs15156
+Node: omp_get_num_teams15695
+Node: omp_get_num_threads16211
+Node: omp_get_proc_bind17300
+Node: omp_get_schedule18221
+Node: omp_get_team_num19167
+Node: omp_get_team_size19666
+Node: omp_get_thread_limit20626
+Node: omp_get_thread_num21245
+Node: omp_in_parallel22116
+Node: omp_in_final22765
+Node: omp_is_initial_device23439
+Node: omp_set_default_device24132
+Node: omp_set_dynamic24923
+Node: omp_set_max_active_levels25809
+Node: omp_set_nested26586
+Node: omp_set_num_threads27478
+Node: omp_set_schedule28346
+Node: omp_init_lock29397
+Node: omp_set_lock30050
+Node: omp_test_lock30905
+Node: omp_unset_lock31881
+Node: omp_destroy_lock32812
+Node: omp_init_nest_lock33489
+Node: omp_set_nest_lock34224
+Node: omp_test_nest_lock35139
+Node: omp_unset_nest_lock36166
+Node: omp_destroy_nest_lock37181
+Node: omp_get_wtick37932
+Node: omp_get_wtime38524
+Node: Environment Variables39300
+Node: OMP_CANCELLATION40692
+Node: OMP_DISPLAY_ENV41225
+Node: OMP_DEFAULT_DEVICE41928
+Node: OMP_DYNAMIC42708
+Node: OMP_MAX_ACTIVE_LEVELS43304
+Node: OMP_NESTED43943
+Node: OMP_NUM_THREADS44548
+Node: OMP_PROC_BIND45236
+Node: OMP_PLACES46428
+Node: OMP_STACKSIZE48603
+Node: OMP_SCHEDULE49427
+Node: OMP_THREAD_LIMIT50123
+Node: OMP_WAIT_POLICY50723
+Node: GOMP_CPU_AFFINITY51415
+Node: GOMP_DEBUG53145
+Node: GOMP_STACKSIZE53652
+Node: GOMP_SPINCOUNT54481
+Node: The libgomp ABI55653
+Node: Implementing MASTER construct56452
+Node: Implementing CRITICAL construct56866
+Node: Implementing ATOMIC construct57605
+Node: Implementing FLUSH construct58086
+Node: Implementing BARRIER construct58357
+Node: Implementing THREADPRIVATE construct58626
+Node: Implementing PRIVATE clause59279
+Node: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses59860
+Node: Implementing REDUCTION clause61184
+Node: Implementing PARALLEL construct61741
+Node: Implementing FOR construct62998
+Node: Implementing ORDERED construct64996
+Node: Implementing SECTIONS construct65302
+Node: Implementing SINGLE construct66068
+Node: Reporting Bugs66730
+Node: Copying67090
+Node: GNU Free Documentation License104637
+Node: Funding129760
+Node: Library Index132286
 
 End Tag Table
