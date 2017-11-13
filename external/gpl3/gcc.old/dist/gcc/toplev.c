@@ -135,8 +135,6 @@ along with GCC; see the file COPYING3.  If not see
 #define HAVE_prologue 0
 #endif
 
-#include <new>
-
 static void general_init (const char *, bool);
 static void do_compile ();
 static void process_options (void);
@@ -1367,14 +1365,31 @@ process_options (void)
     {
       if (targetm.chkp_bound_mode () == VOIDmode)
 	{
-	  error ("-fcheck-pointer-bounds is not supported for this target");
+	  error ("%<-fcheck-pointer-bounds%> is not supported for this "
+		 "target");
 	  flag_check_pointer_bounds = 0;
 	}
 
+      if (flag_sanitize & SANITIZE_BOUNDS)
+	{
+	  error ("%<-fcheck-pointer-bounds%> is not supported with "
+		 "%<-fsanitize=bounds%>");
+ 	  flag_check_pointer_bounds = 0;
+ 	}
+
       if (flag_sanitize & SANITIZE_ADDRESS)
 	{
-	  error ("-fcheck-pointer-bounds is not supported with "
+	  error ("%<-fcheck-pointer-bounds%> is not supported with "
 		 "Address Sanitizer");
+	  flag_check_pointer_bounds = 0;
+	}
+
+      if (flag_sanitize & SANITIZE_THREAD)
+	{
+	  error (UNKNOWN_LOCATION,
+		 "%<-fcheck-pointer-bounds%> is not supported with "
+		 "Thread Sanitizer");
+
 	  flag_check_pointer_bounds = 0;
 	}
     }
@@ -1981,6 +1996,9 @@ finalize (bool no_backend)
 
   if (stack_usage_file)
     fclose (stack_usage_file);
+
+  if (seen_error ())
+    coverage_remove_note_file ();
 
   if (!no_backend)
     {

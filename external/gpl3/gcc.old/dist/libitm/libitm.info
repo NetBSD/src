@@ -1,5 +1,4 @@
-This is libitm.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-5.4.0/gcc-5.4.0/libitm/libitm.texi.
+This is libitm.info, produced by makeinfo version 6.1 from libitm.texi.
 
 Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
@@ -9,7 +8,6 @@ any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.  A
 copy of the license is included in the section entitled "GNU Free
 Documentation License".
-
 INFO-DIR-SECTION GNU Libraries
 START-INFO-DIR-ENTRY
 * libitm: (libitm).                    GNU Transactional Memory Library
@@ -33,7 +31,7 @@ Introduction
 ************
 
 This manual documents the usage and internals of libitm, the GNU
-Transactional Memory Library. It provides transaction support for
+Transactional Memory Library.  It provides transaction support for
 accesses to a process' memory, enabling easy-to-use synchronization of
 accesses to shared memory by several threads.
 
@@ -55,9 +53,9 @@ File: libitm.info,  Node: Enabling libitm,  Next: C/C++ Language Constructs for 
 1 Enabling libitm
 *****************
 
-To activate support for TM in C/C++, the compile-time flag `-fgnu-tm'
-must be specified. This enables TM language-level constructs such as
-transaction statements (e.g., `__transaction_atomic', *note C/C++
+To activate support for TM in C/C++, the compile-time flag '-fgnu-tm'
+must be specified.  This enables TM language-level constructs such as
+transaction statements (e.g., '__transaction_atomic', *note C/C++
 Language Constructs for TM:: for details).
 
 
@@ -67,15 +65,14 @@ File: libitm.info,  Node: C/C++ Language Constructs for TM,  Next: The libitm AB
 **********************************
 
 Transactions are supported in C++ and C in the form of transaction
-statements, transaction expressions, and function transactions. In the
-following example, both `a' and `b' will be read and the difference
-will be written to `c', all atomically and isolated from other
-transactions:
+statements, transaction expressions, and function transactions.  In the
+following example, both 'a' and 'b' will be read and the difference will
+be written to 'c', all atomically and isolated from other transactions:
 
      __transaction_atomic { c = a - b; }
 
    Therefore, another thread can use the following code to concurrently
-update `b' without ever causing `c' to hold a negative value (and
+update 'b' without ever causing 'c' to hold a negative value (and
 without having to use other synchronization constructs such as locks or
 C++11 atomics):
 
@@ -83,14 +80,14 @@ C++11 atomics):
 
    GCC follows the Draft Specification of Transactional Language
 Constructs for C++ (v1.1)
-(https://sites.google.com/site/tmforcplusplus/) in its implementation
-of transactions.
+(https://sites.google.com/site/tmforcplusplus/) in its implementation of
+transactions.
 
    The precise semantics of transactions are defined in terms of the
-C++11/C11 memory model (see the specification). Roughly, transactions
+C++11/C11 memory model (see the specification).  Roughly, transactions
 provide synchronization guarantees that are similar to what would be
 guaranteed when using a single global lock as a guard for all
-transactions. Note that like other synchronization constructs in C/C++,
+transactions.  Note that like other synchronization constructs in C/C++,
 transactions rely on a data-race-free program (e.g., a nontransactional
 write that is concurrent with a transactional read to the same memory
 location is a data race).
@@ -102,11 +99,11 @@ File: libitm.info,  Node: The libitm ABI,  Next: Internals,  Prev: C/C++ Languag
 ****************
 
 The ABI provided by libitm is basically equal to the Linux variant of
-Intel's current TM ABI specification document (Revision 1.1, May 6
-2009) but with the differences listed in this chapter. It would be good
-if these changes would eventually be merged into a future version of
-this specification. To ease look-up, the following subsections mirror
-the structure of this specification.
+Intel's current TM ABI specification document (Revision 1.1, May 6 2009)
+but with the differences listed in this chapter.  It would be good if
+these changes would eventually be merged into a future version of this
+specification.  To ease look-up, the following subsections mirror the
+structure of this specification.
 
 3.1 [No changes] Objectives
 ===========================
@@ -133,14 +130,14 @@ the structure of this specification.
 ----------------------------
 
 The memory locations accessed with transactional loads and stores and
-the memory locations whose values are logged must not overlap. This
+the memory locations whose values are logged must not overlap.  This
 required separation only extends to the scope of the execution of one
 transaction including all the executions of all nested transactions.
 
    The compiler must be consistent (within the scope of a single
 transaction) about which memory locations are shared and which are not
 shared with other threads (i.e., data must be accessed either
-transactionally or nontransactionally). Otherwise, non-write-through TM
+transactionally or nontransactionally).  Otherwise, non-write-through TM
 algorithms would not work.
 
    For memory locations on the stack, this requirement extends to only
@@ -162,7 +159,7 @@ these stack frames' lifetimes will end before the transaction finishes.
 3.3.9 Store allocation
 ----------------------
 
-There is no `getTransaction' function.
+There is no 'getTransaction' function.
 
 3.3.10 [No changes] Naming conventions
 --------------------------------------
@@ -175,8 +172,8 @@ Currently, this is not implemented.
 3.4 Types and macros list
 =========================
 
-`_ITM_codeProperties' has changed, *note Starting a transaction:
-txn-code-properties.  `_ITM_srcLocation' is not used.
+'_ITM_codeProperties' has changed, *note Starting a transaction:
+txn-code-properties.  '_ITM_srcLocation' is not used.
 
 3.5 Function list
 =================
@@ -198,7 +195,7 @@ These functions are not part of the ABI.
 3.5.5 State manipulation functions
 ----------------------------------
 
-There is no `getTransaction' function. Transaction identifiers for
+There is no 'getTransaction' function.  Transaction identifiers for
 nested transactions will be ordered but not necessarily sequential
 (i.e., for a nested transaction's identifier IN and its enclosing
 transaction's identifier IE, it is guaranteed that IN >= IE).
@@ -212,35 +209,36 @@ transaction's identifier IE, it is guaranteed that IN >= IE).
 3.5.7.1 Transaction code properties
 ...................................
 
-The bit `hasNoXMMUpdate' is instead called `hasNoVectorUpdate'.  Iff it
+The bit 'hasNoXMMUpdate' is instead called 'hasNoVectorUpdate'.  Iff it
 is set, vector register save/restore is not necessary for any target
 machine.
 
-   The `hasNoFloatUpdate' bit (`0x0010') is new. Iff it is set, floating
-point register save/restore is not necessary for any target machine.
+   The 'hasNoFloatUpdate' bit ('0x0010') is new.  Iff it is set,
+floating point register save/restore is not necessary for any target
+machine.
 
-   `undoLogCode' is not supported and a fatal runtime error will be
-raised if this bit is set. It is not properly defined in the ABI why
-barriers other than undo logging are not present; Are they not
-necessary (e.g., a transaction operating purely on thread-local data)
-or have they been omitted by the compiler because it thinks that some
-kind of global synchronization (e.g., serial mode) might perform
-better? The specification suggests that the latter might be the case,
-but the former seems to be more useful.
+   'undoLogCode' is not supported and a fatal runtime error will be
+raised if this bit is set.  It is not properly defined in the ABI why
+barriers other than undo logging are not present; Are they not necessary
+(e.g., a transaction operating purely on thread-local data) or have they
+been omitted by the compiler because it thinks that some kind of global
+synchronization (e.g., serial mode) might perform better?  The
+specification suggests that the latter might be the case, but the former
+seems to be more useful.
 
-   The `readOnly' bit (`0x4000') is new. *TODO* Lexical or dynamic
+   The 'readOnly' bit ('0x4000') is new.  *TODO* Lexical or dynamic
 scope?
 
-   `hasNoRetry' is not supported. If this bit is not set, but
-`hasNoAbort' is set, the library can assume that transaction rollback
+   'hasNoRetry' is not supported.  If this bit is not set, but
+'hasNoAbort' is set, the library can assume that transaction rollback
 will not be requested.
 
    It would be useful if the absence of externally-triggered rollbacks
 would be reported for the dynamic scope as well, not just for the
-lexical scope (`hasNoAbort'). Without this, a library cannot exploit
+lexical scope ('hasNoAbort').  Without this, a library cannot exploit
 this together with flat nesting.
 
-   `exceptionBlock' is not supported because exception blocks are not
+   'exceptionBlock' is not supported because exception blocks are not
 used.
 
 3.5.7.2 [No changes] Windows exception state
@@ -255,27 +253,27 @@ used.
 3.5.8 Aborting a transaction
 ----------------------------
 
-`_ITM_rollbackTransaction' is not supported. `_ITM_abortTransaction' is
-supported but the abort reasons `exceptionBlockAbort', `TMConflict',
-and `userRetry' are not supported. There are no exception blocks in
-general, so the related cases also do not have to be considered. To
-encode `__transaction_cancel [[outer]]', compilers must set the new
-`outerAbort' bit (`0x10') additionally to the `userAbort' bit in the
+'_ITM_rollbackTransaction' is not supported.  '_ITM_abortTransaction' is
+supported but the abort reasons 'exceptionBlockAbort', 'TMConflict', and
+'userRetry' are not supported.  There are no exception blocks in
+general, so the related cases also do not have to be considered.  To
+encode '__transaction_cancel [[outer]]', compilers must set the new
+'outerAbort' bit ('0x10') additionally to the 'userAbort' bit in the
 abort reason.
 
 3.5.9 Committing a transaction
 ------------------------------
 
-The exception handling (EH) scheme is different. The Intel ABI requires
-the `_ITM_tryCommitTransaction' function that will return even when the
+The exception handling (EH) scheme is different.  The Intel ABI requires
+the '_ITM_tryCommitTransaction' function that will return even when the
 commit failed and will have to be matched with calls to either
-`_ITM_abortTransaction' or `_ITM_commitTransaction'. In contrast, gcc
+'_ITM_abortTransaction' or '_ITM_commitTransaction'.  In contrast, gcc
 relies on transactional wrappers for the functions of the Exception
-Handling ABI and on one additional commit function (shown below). This
+Handling ABI and on one additional commit function (shown below).  This
 allows the TM to keep track of EH internally and thus it does not have
 to embed the cleanup of EH state into the existing EH code in the
-program.  `_ITM_tryCommitTransaction' is not supported.
-`_ITM_commitTransactionToId' is also not supported because the
+program.  '_ITM_tryCommitTransaction' is not supported.
+'_ITM_commitTransactionToId' is also not supported because the
 propagation of thrown exceptions will not bypass commits of nested
 transactions.
 
@@ -285,38 +283,38 @@ transactions.
      void *_ITM_cxa_begin_catch (void *exc_ptr);
      void _ITM_cxa_end_catch (void);
 
-   `_ITM_commitTransactionEH' must be called to commit a transaction if
-an exception could be in flight at this position in the code. `exc_ptr'
+   '_ITM_commitTransactionEH' must be called to commit a transaction if
+an exception could be in flight at this position in the code.  'exc_ptr'
 is the current exception or zero if there is no current exception.  The
-`_ITM_cxa...' functions are transactional wrappers for the respective
-`__cxa...' functions and must be called instead of these in
+'_ITM_cxa...' functions are transactional wrappers for the respective
+'__cxa...' functions and must be called instead of these in
 transactional code.
 
    To support this EH scheme, libstdc++ needs to provide one additional
-function (`_cxa_tm_cleanup'), which is used by the TM to clean up the
+function ('_cxa_tm_cleanup'), which is used by the TM to clean up the
 exception handling state while rolling back a transaction:
 
      void __cxa_tm_cleanup (void *unthrown_obj, void *cleanup_exc,
                             unsigned int caught_count);
 
-   `unthrown_obj' is non-null if the program called
-`__cxa_allocate_exception' for this exception but did not yet called
-`__cxa_throw' for it. `cleanup_exc' is non-null if the program is
+   'unthrown_obj' is non-null if the program called
+'__cxa_allocate_exception' for this exception but did not yet called
+'__cxa_throw' for it.  'cleanup_exc' is non-null if the program is
 currently processing a cleanup along an exception path but has not
-caught this exception yet. `caught_count' is the nesting depth of
-`__cxa_begin_catch' within the transaction (which can be counted by the
-TM using `_ITM_cxa_begin_catch' and `_ITM_cxa_end_catch');
-`__cxa_tm_cleanup' then performs rollback by essentially performing
-`__cxa_end_catch' that many times.
+caught this exception yet.  'caught_count' is the nesting depth of
+'__cxa_begin_catch' within the transaction (which can be counted by the
+TM using '_ITM_cxa_begin_catch' and '_ITM_cxa_end_catch');
+'__cxa_tm_cleanup' then performs rollback by essentially performing
+'__cxa_end_catch' that many times.
 
 3.5.10 Exception handling support
 ---------------------------------
 
 Currently, there is no support for functionality like
-`__transaction_cancel throw' as described in the C++ TM specification.
+'__transaction_cancel throw' as described in the C++ TM specification.
 Supporting this should be possible with the EH scheme explained
-previously because via the transactional wrappers for the EH ABI, the
-TM is able to observe and intercept EH.
+previously because via the transactional wrappers for the EH ABI, the TM
+is able to observe and intercept EH.
 
 3.5.11 [No changes] Transition to serial-irrevocable mode
 ---------------------------------------------------------
@@ -332,7 +330,7 @@ TM is able to observe and intercept EH.
 
 If either the source or destination memory region is to be accessed
 nontransactionally, then source and destination regions must not be
-overlapping. The respective `_ITM_memmove' functions are still
+overlapping.  The respective '_ITM_memmove' functions are still
 available but a fatal runtime error will be raised if such regions do
 overlap.  To support this functionality, the ABI would have to specify
 how the intersection of the regions has to be accessed (i.e.,
@@ -348,36 +346,36 @@ transactionally or nontransactionally).
 ----------------------------------------------
 
 Commit actions will get executed in the same order in which the
-respective calls to `_ITM_addUserCommitAction' happened. Only
-`_ITM_noTransactionId' is allowed as value for the
-`resumingTransactionId' argument. Commit actions get executed after
+respective calls to '_ITM_addUserCommitAction' happened.  Only
+'_ITM_noTransactionId' is allowed as value for the
+'resumingTransactionId' argument.  Commit actions get executed after
 privatization safety has been ensured.
 
-   Undo actions will get executed in reverse order compared to the
-order in which the respective calls to `_ITM_addUserUndoAction'
-happened. The ordering of undo actions w.r.t. the roll-back of other
-actions (e.g., data transfers or memory allocations) is undefined.
+   Undo actions will get executed in reverse order compared to the order
+in which the respective calls to '_ITM_addUserUndoAction' happened.  The
+ordering of undo actions w.r.t.  the roll-back of other actions (e.g.,
+data transfers or memory allocations) is undefined.
 
-   `_ITM_getThreadnum' is not supported currently because its only
+   '_ITM_getThreadnum' is not supported currently because its only
 purpose is to provide a thread ID that matches some assumed performance
 tuning output, but this output is not part of the ABI nor further
 defined by it.
 
-   `_ITM_dropReferences' is not supported currently because its
-semantics and the intention behind it is not entirely clear. The
+   '_ITM_dropReferences' is not supported currently because its
+semantics and the intention behind it is not entirely clear.  The
 specification suggests that this function is necessary because of
 certain orderings of data transfer undos and the releasing of memory
-regions (i.e., privatization). However, this ordering is never defined,
-nor is the ordering of dropping references w.r.t. other events.
+regions (i.e., privatization).  However, this ordering is never defined,
+nor is the ordering of dropping references w.r.t.  other events.
 
 3.5.18 [New] Transactional indirect calls
 -----------------------------------------
 
 Indirect calls (i.e., calls through a function pointer) within
 transactions should execute the transactional clone of the original
-function (i.e., a clone of the original that has been fully
-instrumented to use the TM runtime), if such a clone is available. The
-runtime provides two functions to register/deregister clone tables:
+function (i.e., a clone of the original that has been fully instrumented
+to use the TM runtime), if such a clone is available.  The runtime
+provides two functions to register/deregister clone tables:
 
      struct clone_entry
      {
@@ -392,11 +390,11 @@ live throughout the life-time of the TM runtime.
 
    *TODO* The intention was always to drop the registration functions
 entirely, and create a new ELF Phdr describing the linker-sorted table.
-Much like what currently happens for `PT_GNU_EH_FRAME'.  This work kept
+Much like what currently happens for 'PT_GNU_EH_FRAME'.  This work kept
 getting bogged down in how to represent the N different code generation
 variants.  We clearly needed at least two--SW and HW transactional
-clones--but there was always a suggestion of more variants for
-different TM assumptions/invariants.
+clones--but there was always a suggestion of more variants for different
+TM assumptions/invariants.
 
    The compiler can then use two TM runtime functions to perform
 indirect calls in transactions:
@@ -404,7 +402,7 @@ indirect calls in transactions:
      void *_ITM_getTMCloneSafe (void *function) ITM_REGPARM;
 
    If there is a registered clone for supplied function, both will
-return a pointer to the clone. If not, the first runtime function will
+return a pointer to the clone.  If not, the first runtime function will
 attempt to switch to serial-irrevocable mode and return the original
 pointer, whereas the second will raise a fatal runtime error.
 
@@ -417,8 +415,8 @@ pointer, whereas the second will raise a fatal runtime error.
             __attribute__((__malloc__)) ITM_PURE;
      void _ITM_free (void *) ITM_PURE;
 
-   These functions are essentially transactional wrappers for `malloc',
-`calloc', and `free'. Within transactions, the compiler should replace
+   These functions are essentially transactional wrappers for 'malloc',
+'calloc', and 'free'.  Within transactions, the compiler should replace
 calls to the original functions with calls to the wrapper functions.
 
 3.6 [No changes] Future Enhancements to the ABI
@@ -427,22 +425,22 @@ calls to the original functions with calls to the wrapper functions.
 3.7 Sample code
 ===============
 
-The code examples might not be correct w.r.t. the current version of
+The code examples might not be correct w.r.t.  the current version of
 the ABI, especially everything related to exception handling.
 
 3.8 [New] Memory model
 ======================
 
-The ABI should define a memory model and the ordering that is
-guaranteed for data transfers and commit/undo actions, or at least
-refer to another memory model that needs to be preserved. Without that,
-the compiler cannot ensure the memory model specified on the level of
-the programming language (e.g., by the C++ TM specification).
+The ABI should define a memory model and the ordering that is guaranteed
+for data transfers and commit/undo actions, or at least refer to another
+memory model that needs to be preserved.  Without that, the compiler
+cannot ensure the memory model specified on the level of the programming
+language (e.g., by the C++ TM specification).
 
    For example, if a transactional load is ordered before another
 load/store, then the TM runtime must also ensure this ordering when
-accessing shared state. If not, this might break the kind of
-publication safety used in the C++ TM specification. Likewise, the TM
+accessing shared state.  If not, this might break the kind of
+publication safety used in the C++ TM specification.  Likewise, the TM
 runtime must ensure privatization safety.
 
 
@@ -456,41 +454,40 @@ File: libitm.info,  Node: Internals,  Next: GNU Free Documentation License,  Pre
 
 libitm supports several ways of synchronizing transactions with each
 other.  These TM methods (or TM algorithms) are implemented in the form
-of subclasses of `abi_dispatch', which provide methods for
-transactional loads and stores as well as callbacks for rollback and
-commit.  All methods that are compatible with each other (i.e., that
-let concurrently running transactions still synchronize correctly even
-if different methods are used) belong to the same TM method group.
-Pointers to TM methods can be obtained using the factory methods
-prefixed with `dispatch_' in `libitm_i.h'. There are two special
-methods, `dispatch_serial' and `dispatch_serialirr', that are
-compatible with all methods because they run transactions completely in
-serial mode.
+of subclasses of 'abi_dispatch', which provide methods for transactional
+loads and stores as well as callbacks for rollback and commit.  All
+methods that are compatible with each other (i.e., that let concurrently
+running transactions still synchronize correctly even if different
+methods are used) belong to the same TM method group.  Pointers to TM
+methods can be obtained using the factory methods prefixed with
+'dispatch_' in 'libitm_i.h'.  There are two special methods,
+'dispatch_serial' and 'dispatch_serialirr', that are compatible with all
+methods because they run transactions completely in serial mode.
 
 4.1.1 TM method life cycle
 --------------------------
 
 The state of TM methods does not change after construction, but they do
-alter the state of transactions that use this method. However, because
-per-transaction data gets used by several methods, `gtm_thread' is
+alter the state of transactions that use this method.  However, because
+per-transaction data gets used by several methods, 'gtm_thread' is
 responsible for setting an initial state that is useful for all methods.
-After that, methods are responsible for resetting/clearing this state
-on each rollback or commit (of outermost transactions), so that the
+After that, methods are responsible for resetting/clearing this state on
+each rollback or commit (of outermost transactions), so that the
 transaction executed next is not affected by the previous transaction.
 
    There is also global state associated with each method group, which
-is initialized and shut down (`method_group::init()' and `fini()') when
-switching between method groups (see `retry.cc').
+is initialized and shut down ('method_group::init()' and 'fini()') when
+switching between method groups (see 'retry.cc').
 
 4.1.2 Selecting the default method
 ----------------------------------
 
 The default method that libitm uses for freshly started transactions
 (but not necessarily for restarted transactions) can be set via an
-environment variable (`ITM_DEFAULT_METHOD'), whose value should be
-equal to the name of one of the factory methods returning abi_dispatch
-subclasses but without the "dispatch_" prefix (e.g., "serialirr"
-instead of `GTM::dispatch_serialirr()').
+environment variable ('ITM_DEFAULT_METHOD'), whose value should be equal
+to the name of one of the factory methods returning abi_dispatch
+subclasses but without the "dispatch_" prefix (e.g., "serialirr" instead
+of 'GTM::dispatch_serialirr()').
 
    Note that this environment variable is only a hint for libitm and
 might not be supported in the future.
@@ -498,9 +495,9 @@ might not be supported in the future.
 4.2 Nesting: flat vs. closed
 ============================
 
-We support two different kinds of nesting of transactions. In the case
+We support two different kinds of nesting of transactions.  In the case
 of _flat nesting_, the nesting structure is flattened and all nested
-transactions are subsumed by the enclosing transaction. In contrast,
+transactions are subsumed by the enclosing transaction.  In contrast,
 with _closed nesting_, nested transactions that have not yet committed
 can be rolled back separately from the enclosing transactions; when they
 commit, they are subsumed by the enclosing transaction, and their
@@ -510,41 +507,41 @@ independently of the enclosing transactions) are not supported.
 
    Flat nesting is the default nesting mode, but closed nesting is
 supported and used when transactions contain user-controlled aborts
-(`__transaction_cancel' statements). We assume that user-controlled
+('__transaction_cancel' statements).  We assume that user-controlled
 aborts are rare in typical code and used mostly in exceptional
-situations.  Thus, it makes more sense to use flat nesting by default
-to avoid the performance overhead of the additional checkpoints
-required for closed nesting. User-controlled aborts will correctly
-abort the innermost enclosing transaction, whereas the whole (i.e.,
-outermost) transaction will be restarted otherwise (e.g., when a
-transaction encounters data conflicts during optimistic execution).
+situations.  Thus, it makes more sense to use flat nesting by default to
+avoid the performance overhead of the additional checkpoints required
+for closed nesting.  User-controlled aborts will correctly abort the
+innermost enclosing transaction, whereas the whole (i.e., outermost)
+transaction will be restarted otherwise (e.g., when a transaction
+encounters data conflicts during optimistic execution).
 
 4.3 Locking conventions
 =======================
 
 This section documents the locking scheme and rules for all uses of
-locking in libitm. We have to support serial(-irrevocable) mode, which
-is implemented using a global lock as explained next (called the
-_serial lock_). To simplify the overall design, we use the same lock as
+locking in libitm.  We have to support serial(-irrevocable) mode, which
+is implemented using a global lock as explained next (called the _serial
+lock_).  To simplify the overall design, we use the same lock as
 catch-all locking mechanism for other infrequent tasks such as
-(de)registering clone tables or threads. Besides the serial lock, there
+(de)registering clone tables or threads.  Besides the serial lock, there
 are _per-method-group locks_ that are managed by specific method groups
 (i.e., groups of similar TM concurrency control algorithms), and
 lock-like constructs for quiescence-based operations such as ensuring
 privatization safety.
 
-   Thus, the actions that participate in the libitm-internal locking
-are either _active transactions_ that do not run in serial mode, _serial
+   Thus, the actions that participate in the libitm-internal locking are
+either _active transactions_ that do not run in serial mode, _serial
 transactions_ (which (are about to) run in serial mode), and management
 tasks that do not execute within a transaction but have acquired the
 serial mode like a serial transaction would do (e.g., to be able to
-register threads with libitm). Transactions become active as soon as
+register threads with libitm).  Transactions become active as soon as
 they have successfully used the serial lock to announce this globally
-(*note Serial lock implementation: serial-lock-impl.). Likewise,
+(*note Serial lock implementation: serial-lock-impl.).  Likewise,
 transactions become serial transactions as soon as they have acquired
 the exclusive rights provided by the serial lock (i.e., serial mode,
 which also means that there are no other concurrent active or serial
-transactions). Note that active transactions can become serial
+transactions).  Note that active transactions can become serial
 transactions when they enter serial mode during the runtime of the
 transaction.
 
@@ -555,29 +552,26 @@ Application data is protected by the serial lock if there is a serial
 transaction and no concurrently running active transaction (i.e.,
 non-serial).  Otherwise, application data is protected by the currently
 selected method group, which might use per-method-group locks or other
-mechanisms. Also note that application data that is about to be
+mechanisms.  Also note that application data that is about to be
 privatized might not be allowed to be accessed by nontransactional code
 until privatization safety has been ensured; the details of this are
 handled by the current method group.
 
    libitm-internal state is either protected by the serial lock or
-accessed through custom concurrent code. The latter applies to the
+accessed through custom concurrent code.  The latter applies to the
 public/shared part of a transaction object and most typical
 method-group-specific state.
 
    The former category (protected by the serial lock) includes:
    * The list of active threads that have used transactions.
-
    * The tables that map functions to their transactional clones.
-
    * The current selection of which method group to use.
-
-   * Some method-group-specific data, or invariants of this data. For
+   * Some method-group-specific data, or invariants of this data.  For
      example, resetting a method group to its initial state is handled
      by switching to the same method group, so the serial lock protects
      such resetting as well.
    In general, such state is immutable whenever there exists an active
-(non-serial) transaction. If there is no active transaction, a serial
+(non-serial) transaction.  If there is no active transaction, a serial
 transaction (or a thread that is not currently executing a transaction
 but has acquired the serial lock) is allowed to modify this state (but
 must of course be careful to not surprise the current method group's
@@ -587,39 +581,38 @@ implementation with such modifications).
 ----------------------------
 
 To prevent deadlocks, locks acquisition must happen in a globally
-agreed-upon order. Note that this applies to other forms of blocking
+agreed-upon order.  Note that this applies to other forms of blocking
 too, but does not necessarily apply to lock acquisitions that do not
-block (e.g., trylock() calls that do not get retried forever). Note
+block (e.g., trylock() calls that do not get retried forever).  Note
 that serial transactions are never return back to active transactions
-until the transaction has committed.  Likewise, active transactions
-stay active until they have committed.  Per-method-group locks are
-typically also not released before commit.
+until the transaction has committed.  Likewise, active transactions stay
+active until they have committed.  Per-method-group locks are typically
+also not released before commit.
 
    Lock acquisition / blocking rules:
+
    * Transactions must become active or serial before they are allowed
      to use method-group-specific locks or blocking (i.e., the serial
-     lock must be acquired before those other locks, either in serial
-     or nonserial mode).
+     lock must be acquired before those other locks, either in serial or
+     nonserial mode).
 
-   * Any number of threads that do not currently run active
-     transactions can block while trying to get the serial lock in
-     exclusive mode. Note that active transactions must not block when
-     trying to upgrade to serial mode unless there is no other
-     transaction that is trying that (the latter is ensured by the
-     serial lock implementation.
+   * Any number of threads that do not currently run active transactions
+     can block while trying to get the serial lock in exclusive mode.
+     Note that active transactions must not block when trying to upgrade
+     to serial mode unless there is no other transaction that is trying
+     that (the latter is ensured by the serial lock implementation.
 
-   * Method groups must prevent deadlocks on their locks. In
+   * Method groups must prevent deadlocks on their locks.  In
      particular, they must also be prepared for another active
      transaction that has acquired method-group-specific locks but is
-     blocked during an attempt to upgrade to being a serial
-     transaction. See below for details.
+     blocked during an attempt to upgrade to being a serial transaction.
+     See below for details.
 
-   * Serial transactions can acquire method-group-specific locks
-     because there will be no other active nor serial transaction.
-
+   * Serial transactions can acquire method-group-specific locks because
+     there will be no other active nor serial transaction.
 
    There is no single rule for per-method-group blocking because this
-depends on when a TM method might acquire locks. If no active
+depends on when a TM method might acquire locks.  If no active
 transaction can upgrade to being a serial transaction after it has
 acquired per-method-group locks (e.g., when those locks are only
 acquired during an attempt to commit), then the TM method does not need
@@ -632,45 +625,43 @@ per-method-group locks, then TM methods need to avoid those deadlocks:
      transactions to finish (*note Serial lock implementation:
      serial-lock-impl. for details), we have to wake up all active
      transactions waiting on the upgrader's per-method-group locks.
-
    * Active transactions blocking on per-method-group locks need to
      check the serial lock and abort if there is a pending serial
      transaction.
-
    * Lost wake-ups have to be prevented (e.g., by changing a bit in each
      per-method-group lock before doing the wake-up, and only blocking
      on this lock using a futex if this bit is not group).
 
-   *TODO*: Can reuse serial lock for gl-*? And if we can, does it make
-sense to introduce further complexity in the serial lock? For gl-*, we
+   *TODO*: Can reuse serial lock for gl-*?  And if we can, does it make
+sense to introduce further complexity in the serial lock?  For gl-*, we
 can really only avoid an abort if we do -wb and -vbv.
 
 4.3.3 Serial lock implementation
 --------------------------------
 
 The serial lock implementation is optimized towards assuming that serial
-transactions are infrequent and not the common case. However, the
+transactions are infrequent and not the common case.  However, the
 performance of entering serial mode can matter because when only few
 transactions are run concurrently or if there are few threads, then it
 can be efficient to run transactions serially.
 
    The serial lock is similar to a multi-reader-single-writer lock in
 that there can be several active transactions but only one serial
-transaction. However, we do want to avoid contention (in the lock
+transaction.  However, we do want to avoid contention (in the lock
 implementation) between active transactions, so we split up the reader
 side of the lock into per-transaction flags that are true iff the
-transaction is active. The exclusive writer side remains a shared
+transaction is active.  The exclusive writer side remains a shared
 single flag, which is acquired using a CAS, for example.  On the
 fast-path, the serial lock then works similar to Dekker's algorithm but
 with several reader flags that a serial transaction would have to check.
 A serial transaction thus requires a list of all threads with
 potentially active transactions; we can use the serial lock itself to
-protect this list (i.e., only threads that have acquired the serial
-lock can modify this list).
+protect this list (i.e., only threads that have acquired the serial lock
+can modify this list).
 
    We want starvation-freedom for the serial lock to allow for using it
 to ensure progress for potentially starved transactions (*note Progress
-Guarantees: progress-guarantees. for details). However, this is
+Guarantees: progress-guarantees. for details).  However, this is
 currently not enforced by the implementation of the serial lock.
 
    Here is pseudo-code for the read/write fast paths of acquiring the
@@ -694,57 +685,57 @@ serial lock (read-to-write upgrade is similar to write_lock:
      if (need_blocking) goto slowpath;
 
    Releasing a lock in this spin-lock version then just consists of
-resetting `tx->shared_state' to inactive or clearing
-`serial_lock.exclusive'.
+resetting 'tx->shared_state' to inactive or clearing
+'serial_lock.exclusive'.
 
    However, we can't rely on a pure spinlock because we need to get the
-OS involved at some time (e.g., when there are more threads than CPUs
-to run on).  Therefore, the real implementation falls back to a
-blocking slow path, either based on pthread mutexes or Linux futexes.
+OS involved at some time (e.g., when there are more threads than CPUs to
+run on).  Therefore, the real implementation falls back to a blocking
+slow path, either based on pthread mutexes or Linux futexes.
 
 4.3.4 Reentrancy
 ----------------
 
 libitm has to consider the following cases of reentrancy:
+
    * Transaction calls unsafe code that starts a new transaction: The
-     outer transaction will become a serial transaction before
-     executing unsafe code.  Therefore, nesting within serial
-     transactions must work, even if the nested transaction is called
-     from within uninstrumented code.
+     outer transaction will become a serial transaction before executing
+     unsafe code.  Therefore, nesting within serial transactions must
+     work, even if the nested transaction is called from within
+     uninstrumented code.
 
    * Transaction calls either a transactional wrapper or safe code,
      which in turn starts a new transaction: It is not yet defined in
-     the specification whether this is allowed. Thus, it is undefined
+     the specification whether this is allowed.  Thus, it is undefined
      whether libitm supports this.
 
    * Code that starts new transactions might be called from within any
      part of libitm: This kind of reentrancy would likely be rather
-     complex and can probably be avoided. Therefore, it is not
+     complex and can probably be avoided.  Therefore, it is not
      supported.
-
 
 4.3.5 Privatization safety
 --------------------------
 
 Privatization safety is ensured by libitm using a quiescence-based
 approach.  Basically, a privatizing transaction waits until all
-concurrent active transactions will either have finished (are not
-active anymore) or operate on a sufficiently recent snapshot to not
-access the privatized data anymore. This happens after the privatizing
-transaction has stopped being an active transaction, so waiting for
-quiescence does not contribute to deadlocks.
+concurrent active transactions will either have finished (are not active
+anymore) or operate on a sufficiently recent snapshot to not access the
+privatized data anymore.  This happens after the privatizing transaction
+has stopped being an active transaction, so waiting for quiescence does
+not contribute to deadlocks.
 
    In method groups that need to ensure publication safety explicitly,
 active transactions maintain a flag or timestamp in the public/shared
-part of the transaction descriptor. Before blocking, privatizers need
+part of the transaction descriptor.  Before blocking, privatizers need
 to let the other transactions know that they should wake up the
 privatizer.
 
-   *TODO* Ho to implement the waiters? Should those flags be
-per-transaction or at a central place? We want to avoid one wake/wait
+   *TODO* Ho to implement the waiters?  Should those flags be
+per-transaction or at a central place?  We want to avoid one wake/wait
 call per active transactions, so we might want to use either a tree or
 combining to reduce the syscall overhead, or rather spin for a long
-amount of time instead of doing blocking. Also, it would be good if
+amount of time instead of doing blocking.  Also, it would be good if
 only the last transaction that the privatizer waits for would do the
 wake-up.
 
@@ -752,36 +743,35 @@ wake-up.
 -------------------------
 
 Transactions that do not make progress when using the current TM method
-will eventually try to execute in serial mode. Thus, the serial lock's
+will eventually try to execute in serial mode.  Thus, the serial lock's
 progress guarantees determine the progress guarantees of the whole TM.
-Obviously, we at least need deadlock-freedom for the serial lock, but
-it would also be good to provide starvation-freedom (informally, all
+Obviously, we at least need deadlock-freedom for the serial lock, but it
+would also be good to provide starvation-freedom (informally, all
 threads will finish executing a transaction eventually iff they get
 enough cycles).
 
    However, the scheduling of transactions (e.g., thread scheduling by
 the OS) also affects the handling of progress guarantees by the TM.
 First, the TM can only guarantee deadlock-freedom if threads do not get
-stopped. Likewise, low-priority threads can starve if they do not get
+stopped.  Likewise, low-priority threads can starve if they do not get
 scheduled when other high-priority threads get those cycles instead.
 
-   If all threads get scheduled eventually, correct lock
-implementations will provide deadlock-freedom, but might not provide
-starvation-freedom. We can either enforce the latter in the TM's lock
-implementation, or assume that the scheduling is sufficiently random to
-yield a probabilistic guarantee that no thread will starve (because
-eventually, a transaction will encounter a scheduling that will allow
-it to run). This can indeed work well in practice but is not
-necessarily guaranteed to work (e.g., simple spin locks can be pretty
-efficient).
+   If all threads get scheduled eventually, correct lock implementations
+will provide deadlock-freedom, but might not provide starvation-freedom.
+We can either enforce the latter in the TM's lock implementation, or
+assume that the scheduling is sufficiently random to yield a
+probabilistic guarantee that no thread will starve (because eventually,
+a transaction will encounter a scheduling that will allow it to run).
+This can indeed work well in practice but is not necessarily guaranteed
+to work (e.g., simple spin locks can be pretty efficient).
 
-   Because enforcing stronger progress guarantees in the TM has a
-higher runtime overhead, we focus on deadlock-freedom right now and
-assume that the threads will get scheduled eventually by the OS (but
-don't consider threads with different priorities). We should support
-starvation-freedom for serial transactions in the future. Everything
-beyond that is highly related to proper contention management across
-all of the TM (including with TM method to choose), and is future work.
+   Because enforcing stronger progress guarantees in the TM has a higher
+runtime overhead, we focus on deadlock-freedom right now and assume that
+the threads will get scheduled eventually by the OS (but don't consider
+threads with different priorities).  We should support
+starvation-freedom for serial transactions in the future.  Everything
+beyond that is highly related to proper contention management across all
+of the TM (including with TM method to choose), and is future work.
 
    *TODO* Handling thread priorities: We want to avoid priority
 inversion but it's unclear how often that actually matters in practice.
@@ -800,7 +790,7 @@ GNU Free Documentation License
                      Version 1.3, 3 November 2008
 
      Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
-     `http://fsf.org/'
+     <http://fsf.org/>
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -825,21 +815,21 @@ GNU Free Documentation License
      free program should come with manuals providing the same freedoms
      that the software does.  But this License is not limited to
      software manuals; it can be used for any textual work, regardless
-     of subject matter or whether it is published as a printed book.
-     We recommend this License principally for works whose purpose is
+     of subject matter or whether it is published as a printed book.  We
+     recommend this License principally for works whose purpose is
      instruction or reference.
 
   1. APPLICABILITY AND DEFINITIONS
 
      This License applies to any manual or other work, in any medium,
-     that contains a notice placed by the copyright holder saying it
-     can be distributed under the terms of this License.  Such a notice
+     that contains a notice placed by the copyright holder saying it can
+     be distributed under the terms of this License.  Such a notice
      grants a world-wide, royalty-free license, unlimited in duration,
      to use that work under the conditions stated herein.  The
      "Document", below, refers to any such manual or work.  Any member
-     of the public is a licensee, and is addressed as "you".  You
-     accept the license if you copy, modify or distribute the work in a
-     way requiring permission under copyright law.
+     of the public is a licensee, and is addressed as "you".  You accept
+     the license if you copy, modify or distribute the work in a way
+     requiring permission under copyright law.
 
      A "Modified Version" of the Document means any work containing the
      Document or a portion of it, either copied verbatim, or with
@@ -857,12 +847,12 @@ GNU Free Documentation License
      regarding them.
 
      The "Invariant Sections" are certain Secondary Sections whose
-     titles are designated, as being those of Invariant Sections, in
-     the notice that says that the Document is released under this
-     License.  If a section does not fit the above definition of
-     Secondary then it is not allowed to be designated as Invariant.
-     The Document may contain zero Invariant Sections.  If the Document
-     does not identify any Invariant Sections then there are none.
+     titles are designated, as being those of Invariant Sections, in the
+     notice that says that the Document is released under this License.
+     If a section does not fit the above definition of Secondary then it
+     is not allowed to be designated as Invariant.  The Document may
+     contain zero Invariant Sections.  If the Document does not identify
+     any Invariant Sections then there are none.
 
      The "Cover Texts" are certain short passages of text that are
      listed, as Front-Cover Texts or Back-Cover Texts, in the notice
@@ -873,27 +863,27 @@ GNU Free Documentation License
      A "Transparent" copy of the Document means a machine-readable copy,
      represented in a format whose specification is available to the
      general public, that is suitable for revising the document
-     straightforwardly with generic text editors or (for images
-     composed of pixels) generic paint programs or (for drawings) some
-     widely available drawing editor, and that is suitable for input to
-     text formatters or for automatic translation to a variety of
-     formats suitable for input to text formatters.  A copy made in an
-     otherwise Transparent file format whose markup, or absence of
-     markup, has been arranged to thwart or discourage subsequent
-     modification by readers is not Transparent.  An image format is
-     not Transparent if used for any substantial amount of text.  A
-     copy that is not "Transparent" is called "Opaque".
+     straightforwardly with generic text editors or (for images composed
+     of pixels) generic paint programs or (for drawings) some widely
+     available drawing editor, and that is suitable for input to text
+     formatters or for automatic translation to a variety of formats
+     suitable for input to text formatters.  A copy made in an otherwise
+     Transparent file format whose markup, or absence of markup, has
+     been arranged to thwart or discourage subsequent modification by
+     readers is not Transparent.  An image format is not Transparent if
+     used for any substantial amount of text.  A copy that is not
+     "Transparent" is called "Opaque".
 
      Examples of suitable formats for Transparent copies include plain
      ASCII without markup, Texinfo input format, LaTeX input format,
-     SGML or XML using a publicly available DTD, and
-     standard-conforming simple HTML, PostScript or PDF designed for
-     human modification.  Examples of transparent image formats include
-     PNG, XCF and JPG.  Opaque formats include proprietary formats that
-     can be read and edited only by proprietary word processors, SGML or
-     XML for which the DTD and/or processing tools are not generally
-     available, and the machine-generated HTML, PostScript or PDF
-     produced by some word processors for output purposes only.
+     SGML or XML using a publicly available DTD, and standard-conforming
+     simple HTML, PostScript or PDF designed for human modification.
+     Examples of transparent image formats include PNG, XCF and JPG.
+     Opaque formats include proprietary formats that can be read and
+     edited only by proprietary word processors, SGML or XML for which
+     the DTD and/or processing tools are not generally available, and
+     the machine-generated HTML, PostScript or PDF produced by some word
+     processors for output purposes only.
 
      The "Title Page" means, for a printed book, the title page itself,
      plus such following pages as are needed to hold, legibly, the
@@ -931,8 +921,8 @@ GNU Free Documentation License
      may not use technical measures to obstruct or control the reading
      or further copying of the copies you make or distribute.  However,
      you may accept compensation in exchange for copies.  If you
-     distribute a large enough number of copies you must also follow
-     the conditions in section 3.
+     distribute a large enough number of copies you must also follow the
+     conditions in section 3.
 
      You may also lend copies, under the same conditions stated above,
      and you may publicly display copies.
@@ -946,12 +936,11 @@ GNU Free Documentation License
      these Cover Texts: Front-Cover Texts on the front cover, and
      Back-Cover Texts on the back cover.  Both covers must also clearly
      and legibly identify you as the publisher of these copies.  The
-     front cover must present the full title with all words of the
-     title equally prominent and visible.  You may add other material
-     on the covers in addition.  Copying with changes limited to the
-     covers, as long as they preserve the title of the Document and
-     satisfy these conditions, can be treated as verbatim copying in
-     other respects.
+     front cover must present the full title with all words of the title
+     equally prominent and visible.  You may add other material on the
+     covers in addition.  Copying with changes limited to the covers, as
+     long as they preserve the title of the Document and satisfy these
+     conditions, can be treated as verbatim copying in other respects.
 
      If the required texts for either cover are too voluminous to fit
      legibly, you should put the first ones listed (as many as fit
@@ -959,40 +948,39 @@ GNU Free Documentation License
      adjacent pages.
 
      If you publish or distribute Opaque copies of the Document
-     numbering more than 100, you must either include a
-     machine-readable Transparent copy along with each Opaque copy, or
-     state in or with each Opaque copy a computer-network location from
-     which the general network-using public has access to download
-     using public-standard network protocols a complete Transparent
-     copy of the Document, free of added material.  If you use the
-     latter option, you must take reasonably prudent steps, when you
-     begin distribution of Opaque copies in quantity, to ensure that
-     this Transparent copy will remain thus accessible at the stated
-     location until at least one year after the last time you
-     distribute an Opaque copy (directly or through your agents or
-     retailers) of that edition to the public.
+     numbering more than 100, you must either include a machine-readable
+     Transparent copy along with each Opaque copy, or state in or with
+     each Opaque copy a computer-network location from which the general
+     network-using public has access to download using public-standard
+     network protocols a complete Transparent copy of the Document, free
+     of added material.  If you use the latter option, you must take
+     reasonably prudent steps, when you begin distribution of Opaque
+     copies in quantity, to ensure that this Transparent copy will
+     remain thus accessible at the stated location until at least one
+     year after the last time you distribute an Opaque copy (directly or
+     through your agents or retailers) of that edition to the public.
 
      It is requested, but not required, that you contact the authors of
-     the Document well before redistributing any large number of
-     copies, to give them a chance to provide you with an updated
-     version of the Document.
+     the Document well before redistributing any large number of copies,
+     to give them a chance to provide you with an updated version of the
+     Document.
 
   4. MODIFICATIONS
 
      You may copy and distribute a Modified Version of the Document
      under the conditions of sections 2 and 3 above, provided that you
-     release the Modified Version under precisely this License, with
-     the Modified Version filling the role of the Document, thus
-     licensing distribution and modification of the Modified Version to
-     whoever possesses a copy of it.  In addition, you must do these
-     things in the Modified Version:
+     release the Modified Version under precisely this License, with the
+     Modified Version filling the role of the Document, thus licensing
+     distribution and modification of the Modified Version to whoever
+     possesses a copy of it.  In addition, you must do these things in
+     the Modified Version:
 
        A. Use in the Title Page (and on the covers, if any) a title
-          distinct from that of the Document, and from those of
-          previous versions (which should, if there were any, be listed
-          in the History section of the Document).  You may use the
-          same title as a previous version if the original publisher of
-          that version gives permission.
+          distinct from that of the Document, and from those of previous
+          versions (which should, if there were any, be listed in the
+          History section of the Document).  You may use the same title
+          as a previous version if the original publisher of that
+          version gives permission.
 
        B. List on the Title Page, as authors, one or more persons or
           entities responsible for authorship of the modifications in
@@ -1022,31 +1010,30 @@ GNU Free Documentation License
 
        I. Preserve the section Entitled "History", Preserve its Title,
           and add to it an item stating at least the title, year, new
-          authors, and publisher of the Modified Version as given on
-          the Title Page.  If there is no section Entitled "History" in
-          the Document, create one stating the title, year, authors,
-          and publisher of the Document as given on its Title Page,
-          then add an item describing the Modified Version as stated in
-          the previous sentence.
+          authors, and publisher of the Modified Version as given on the
+          Title Page.  If there is no section Entitled "History" in the
+          Document, create one stating the title, year, authors, and
+          publisher of the Document as given on its Title Page, then add
+          an item describing the Modified Version as stated in the
+          previous sentence.
 
        J. Preserve the network location, if any, given in the Document
           for public access to a Transparent copy of the Document, and
           likewise the network locations given in the Document for
-          previous versions it was based on.  These may be placed in
-          the "History" section.  You may omit a network location for a
-          work that was published at least four years before the
-          Document itself, or if the original publisher of the version
-          it refers to gives permission.
+          previous versions it was based on.  These may be placed in the
+          "History" section.  You may omit a network location for a work
+          that was published at least four years before the Document
+          itself, or if the original publisher of the version it refers
+          to gives permission.
 
        K. For any section Entitled "Acknowledgements" or "Dedications",
-          Preserve the Title of the section, and preserve in the
-          section all the substance and tone of each of the contributor
+          Preserve the Title of the section, and preserve in the section
+          all the substance and tone of each of the contributor
           acknowledgements and/or dedications given therein.
 
-       L. Preserve all the Invariant Sections of the Document,
-          unaltered in their text and in their titles.  Section numbers
-          or the equivalent are not considered part of the section
-          titles.
+       L. Preserve all the Invariant Sections of the Document, unaltered
+          in their text and in their titles.  Section numbers or the
+          equivalent are not considered part of the section titles.
 
        M. Delete any section Entitled "Endorsements".  Such a section
           may not be included in the Modified Version.
@@ -1059,11 +1046,11 @@ GNU Free Documentation License
 
      If the Modified Version includes new front-matter sections or
      appendices that qualify as Secondary Sections and contain no
-     material copied from the Document, you may at your option
-     designate some or all of these sections as invariant.  To do this,
-     add their titles to the list of Invariant Sections in the Modified
-     Version's license notice.  These titles must be distinct from any
-     other section titles.
+     material copied from the Document, you may at your option designate
+     some or all of these sections as invariant.  To do this, add their
+     titles to the list of Invariant Sections in the Modified Version's
+     license notice.  These titles must be distinct from any other
+     section titles.
 
      You may add a section Entitled "Endorsements", provided it contains
      nothing but endorsements of your Modified Version by various
@@ -1072,15 +1059,15 @@ GNU Free Documentation License
      definition of a standard.
 
      You may add a passage of up to five words as a Front-Cover Text,
-     and a passage of up to 25 words as a Back-Cover Text, to the end
-     of the list of Cover Texts in the Modified Version.  Only one
-     passage of Front-Cover Text and one of Back-Cover Text may be
-     added by (or through arrangements made by) any one entity.  If the
-     Document already includes a cover text for the same cover,
-     previously added by you or by arrangement made by the same entity
-     you are acting on behalf of, you may not add another; but you may
-     replace the old one, on explicit permission from the previous
-     publisher that added the old one.
+     and a passage of up to 25 words as a Back-Cover Text, to the end of
+     the list of Cover Texts in the Modified Version.  Only one passage
+     of Front-Cover Text and one of Back-Cover Text may be added by (or
+     through arrangements made by) any one entity.  If the Document
+     already includes a cover text for the same cover, previously added
+     by you or by arrangement made by the same entity you are acting on
+     behalf of, you may not add another; but you may replace the old
+     one, on explicit permission from the previous publisher that added
+     the old one.
 
      The author(s) and publisher(s) of the Document do not by this
      License give permission to use their names for publicity for or to
@@ -1090,8 +1077,8 @@ GNU Free Documentation License
 
      You may combine the Document with other documents released under
      this License, under the terms defined in section 4 above for
-     modified versions, provided that you include in the combination
-     all of the Invariant Sections of all of the original documents,
+     modified versions, provided that you include in the combination all
+     of the Invariant Sections of all of the original documents,
      unmodified, and list them all as Invariant Sections of your
      combined work in its license notice, and that you preserve all
      their Warranty Disclaimers.
@@ -1118,20 +1105,20 @@ GNU Free Documentation License
      documents released under this License, and replace the individual
      copies of this License in the various documents with a single copy
      that is included in the collection, provided that you follow the
-     rules of this License for verbatim copying of each of the
-     documents in all other respects.
+     rules of this License for verbatim copying of each of the documents
+     in all other respects.
 
      You may extract a single document from such a collection, and
      distribute it individually under this License, provided you insert
-     a copy of this License into the extracted document, and follow
-     this License in all other respects regarding verbatim copying of
-     that document.
+     a copy of this License into the extracted document, and follow this
+     License in all other respects regarding verbatim copying of that
+     document.
 
   7. AGGREGATION WITH INDEPENDENT WORKS
 
      A compilation of the Document or its derivatives with other
-     separate and independent documents or works, in or on a volume of
-     a storage or distribution medium, is called an "aggregate" if the
+     separate and independent documents or works, in or on a volume of a
+     storage or distribution medium, is called an "aggregate" if the
      copyright resulting from the compilation is not used to limit the
      legal rights of the compilation's users beyond what the individual
      works permit.  When the Document is included in an aggregate, this
@@ -1176,8 +1163,8 @@ GNU Free Documentation License
 
      However, if you cease all violation of this License, then your
      license from a particular copyright holder is reinstated (a)
-     provisionally, unless and until the copyright holder explicitly
-     and finally terminates your license, and (b) permanently, if the
+     provisionally, unless and until the copyright holder explicitly and
+     finally terminates your license, and (b) permanently, if the
      copyright holder fails to notify you of the violation by some
      reasonable means prior to 60 days after the cessation.
 
@@ -1189,33 +1176,33 @@ GNU Free Documentation License
      after your receipt of the notice.
 
      Termination of your rights under this section does not terminate
-     the licenses of parties who have received copies or rights from
-     you under this License.  If your rights have been terminated and
-     not permanently reinstated, receipt of a copy of some or all of
-     the same material does not give you any rights to use it.
+     the licenses of parties who have received copies or rights from you
+     under this License.  If your rights have been terminated and not
+     permanently reinstated, receipt of a copy of some or all of the
+     same material does not give you any rights to use it.
 
- 10. FUTURE REVISIONS OF THIS LICENSE
+  10. FUTURE REVISIONS OF THIS LICENSE
 
      The Free Software Foundation may publish new, revised versions of
      the GNU Free Documentation License from time to time.  Such new
      versions will be similar in spirit to the present version, but may
      differ in detail to address new problems or concerns.  See
-     `http://www.gnu.org/copyleft/'.
+     <http://www.gnu.org/copyleft/>.
 
      Each version of the License is given a distinguishing version
      number.  If the Document specifies that a particular numbered
      version of this License "or any later version" applies to it, you
      have the option of following the terms and conditions either of
      that specified version or of any later version that has been
-     published (not as a draft) by the Free Software Foundation.  If
-     the Document does not specify a version number of this License,
-     you may choose any version ever published (not as a draft) by the
-     Free Software Foundation.  If the Document specifies that a proxy
-     can decide which future versions of this License can be used, that
+     published (not as a draft) by the Free Software Foundation.  If the
+     Document does not specify a version number of this License, you may
+     choose any version ever published (not as a draft) by the Free
+     Software Foundation.  If the Document specifies that a proxy can
+     decide which future versions of this License can be used, that
      proxy's public statement of acceptance of a version permanently
      authorizes you to choose that version for the Document.
 
- 11. RELICENSING
+  11. RELICENSING
 
      "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
      World Wide Web server that publishes copyrightable works and also
@@ -1245,7 +1232,6 @@ GNU Free Documentation License
      site under CC-BY-SA on the same site at any time before August 1,
      2009, provided the MMC is eligible for relicensing.
 
-
 ADDENDUM: How to use this License for your documents
 ====================================================
 
@@ -1262,7 +1248,7 @@ notices just after the title page:
        Free Documentation License''.
 
    If you have Invariant Sections, Front-Cover Texts and Back-Cover
-Texts, replace the "with...Texts." line with this:
+Texts, replace the "with...Texts."  line with this:
 
          with the Invariant Sections being LIST THEIR TITLES, with
          the Front-Cover Texts being LIST, and with the Back-Cover Texts
@@ -1273,9 +1259,9 @@ combination of the three, merge those two alternatives to suit the
 situation.
 
    If your document contains nontrivial examples of program code, we
-recommend releasing these examples in parallel under your choice of
-free software license, such as the GNU General Public License, to
-permit their use in free software.
+recommend releasing these examples in parallel under your choice of free
+software license, such as the GNU General Public License, to permit
+their use in free software.
 
 
 File: libitm.info,  Node: Library Index,  Prev: GNU Free Documentation License,  Up: Top
@@ -1293,15 +1279,15 @@ Library Index
 
 
 Tag Table:
-Node: Top1187
-Node: Enabling libitm2090
-Node: C/C++ Language Constructs for TM2484
-Node: The libitm ABI3964
-Ref: txn-code-properties7757
-Node: Internals18032
-Ref: serial-lock-impl28057
-Ref: progress-guarantees32807
-Node: GNU Free Documentation License35081
-Node: Library Index60230
+Node: Top1141
+Node: Enabling libitm2045
+Node: C/C++ Language Constructs for TM2440
+Node: The libitm ABI3923
+Ref: txn-code-properties7721
+Node: Internals18026
+Ref: serial-lock-impl28064
+Ref: progress-guarantees32825
+Node: GNU Free Documentation License35103
+Node: Library Index60233
 
 End Tag Table

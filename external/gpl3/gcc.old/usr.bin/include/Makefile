@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2017/11/13 07:46:53 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -7,6 +7,9 @@
 .endif
 
 INCS= ${G_EXTRA_HEADERS:T}
+
+# Part of the standard headers, the rest of which we replace.
+INCS+=	stdatomic.h
 
 # XXX missed some how
 .if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"

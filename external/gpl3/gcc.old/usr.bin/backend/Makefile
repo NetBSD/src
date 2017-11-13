@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2017/11/13 07:46:53 mrg Exp $
 
 LIBISPRIVATE=	yes
 
 LIB=		backend
 
 SRCS=		${G_OBJS:.o=.c} ${G_out_file:T} regsub.c
+
+# Make sure we use the pre-generated C files
+.l.c:
+	@true
 
 BOTH_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
@@ -445,6 +449,7 @@ final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-h
 
 .if ${GCC_MACHINE_ARCH} == "alpha"
 alpha.d alpha.o: tm-constrs.h tm_p.h insn-opinit.h target-hooks-def.h
+alpha.d: pass-instances.def
 .endif
 
 .if ${MACHINE_CPU} == "arm"
