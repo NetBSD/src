@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.10 2017/11/13 21:14:04 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.11 2017/11/13 21:32:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -272,6 +272,9 @@ elf_map_sections()
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
 		shdr = &eif.shdr[i];
 
+		if (!(shdr->sh_flags & SHF_ALLOC)) {
+			continue;
+		}
 		if (shdr->sh_type != SHT_NOBITS &&
 		    shdr->sh_type != SHT_PROGBITS) {
 			continue;

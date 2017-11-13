@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.49 2017/11/13 20:21:10 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.50 2017/11/13 21:32:21 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -389,6 +389,10 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	for (i = 0; i < elf->e_shnum; i++) {
 		addr = maxp;
 		size = (size_t)shdr[i].sh_size;
+
+		if (!(shdr[i].sh_flags & SHF_ALLOC)) {
+			continue;
+		}
 
 		loaded = 0;
 		switch (shdr[i].sh_type) {
