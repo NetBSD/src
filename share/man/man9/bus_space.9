@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.52 2017/11/12 21:14:33 riastradh Exp $
+.\" $NetBSD: bus_space.9,v 1.53 2017/11/13 09:10:37 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1047,16 +1047,16 @@ is undefined, and
 returns a non-zero error code.
 Possible error codes include
 .Bl -tag -width EOPNOTSUPP -offset indent
+.It Er ENOMEM
+There was not sufficient bus space at
+.Fa bpa
+to satisfy the request.
 .It Er EOPNOTSUPP
 .Fn bus_space_reserve
 is not supported on this architecture, or
 .Fa flags
 was incompatible with the bus space represented by
 .Fa t .
-.It Er ENOMEM
-There was not sufficient bus space at
-.Fa bpa
-to satisfy the request.
 .El
 .Pp
 .It Fn bus_space_reserve_subregion "t" "reg_start" "reg_end" \
@@ -1091,16 +1091,16 @@ is undefined, and
 returns a non-zero error code.
 Possible error codes include
 .Bl -tag -width EOPNOTSUPP -offset indent
+.It Er ENOMEM
+There was not sufficient bus space at
+.Fa bpa
+to satisfy the request.
 .It Er EOPNOTSUPP
 .Fn bus_space_reserve
 is not supported on this architecture, or
 .Fa flags
 was incompatible with the bus space represented by
 .Fa t .
-.It Er ENOMEM
-There was not sufficient bus space at
-.Fa bpa
-to satisfy the request.
 .El
 .Pp
 .It Fn bus_space_release "t" "bsr"
@@ -1388,7 +1388,6 @@ input port, and are placed by the device on a stack, the top of
 which is read by reading from the output port.
 The sequence to correctly write two data bytes to the device then read
 those two data bytes back would be:
-.Pp
 .Bd -literal
 /*
  * t and h are the tag and handle for the mapped device's
@@ -1424,7 +1423,6 @@ minimum number of bus space locations.
 It is correct (and often easier) to make barrier operations cover the
 device's whole range of bus space, that is, to specify an offset of zero
 and the size of the whole region.
-.El
 .El
 .Sh REGION OPERATIONS
 Some devices use buffers which are mapped as regions in bus space.
@@ -1900,7 +1898,6 @@ The definition of the
 functions should not yet be considered finalized.
 There are several changes and improvements which should be explored,
 including:
-.Pp
 .Bl -bullet
 .It
 Providing a mechanism by which incorrectly-written drivers will be
