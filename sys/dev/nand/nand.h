@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.17 2017/11/09 21:50:15 jmcneill Exp $	*/
+/*	$NetBSD: nand.h,v 1.18 2017/11/13 17:36:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -468,6 +468,7 @@ int nand_read_oob(device_t, size_t, uint8_t *);
 
 device_t nand_attach_mi(struct nand_interface *, device_t);
 void nand_init_interface(struct nand_interface *);
+void nand_attach_mtdparts(device_t, const char *, const char *);
 
 /* controller drivers may use these functions to get info about the chip */
 void nand_read_id(device_t, uint8_t *, uint8_t *);
