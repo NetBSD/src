@@ -9,8 +9,8 @@
 
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
-#define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_MINOR_VERSION 6
+#define YY_FLEX_SUBMINOR_VERSION 0
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -55,7 +55,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -85,6 +84,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -142,7 +143,15 @@ typedef unsigned int flex_uint32_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -154,7 +163,12 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-extern int yyleng;
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
+extern yy_size_t yyleng;
 
 extern FILE *yyin, *yyout;
 
@@ -163,13 +177,14 @@ extern FILE *yyin, *yyout;
 #define EOB_ACT_LAST_MATCH 2
 
     #define YY_LESS_LINENO(n)
+    #define YY_LINENO_REWIND_TO(ptr)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        int yyless_macro_arg = (n); \
+        yy_size_t yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		*yy_cp = (yy_hold_char); \
 		YY_RESTORE_YY_MORE_OFFSET \
@@ -179,11 +194,6 @@ extern FILE *yyin, *yyout;
 	while ( 0 )
 
 #define unput(c) yyunput( c, (yytext_ptr)  )
-
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
-#endif
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
@@ -202,7 +212,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -272,8 +282,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
-static int yy_n_chars;		/* number of characters read into yy_ch_buf */
-int yyleng;
+static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
+yy_size_t yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
@@ -301,7 +311,7 @@ static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
 YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len  );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
 
 void *yyalloc (yy_size_t  );
 void *yyrealloc (void *,yy_size_t  );
@@ -333,7 +343,7 @@ void yyfree (void *  );
 
 /* Begin user sect3 */
 
-#define yywrap(n) 1
+#define yywrap() (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
 
 typedef unsigned char YY_CHAR;
@@ -347,11 +357,17 @@ extern int yylineno;
 int yylineno = 1;
 
 extern char *yytext;
+#ifdef yytext_ptr
+#undef yytext_ptr
+#endif
 #define yytext_ptr yytext
 
 static yy_state_type yy_get_previous_state (void );
 static yy_state_type yy_try_NUL_trans (yy_state_type current_state  );
 static int yy_get_next_buffer (void );
+#if defined(__GNUC__) && __GNUC__ >= 3
+__attribute__((__noreturn__))
+#endif
 static void yy_fatal_error (yyconst char msg[]  );
 
 /* Done after the current pattern has been matched and before the
@@ -438,7 +454,7 @@ static yyconst flex_int16_t yy_accept[561] =
         0,   45,    0,    0,    0,    0,    0,    0,    0,    0
     } ;
 
-static yyconst flex_int32_t yy_ec[256] =
+static yyconst YY_CHAR yy_ec[256] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         2,    2,    2,    1,    1,    1,    1,    1,    1,    1,
@@ -470,7 +486,7 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[68] =
+static yyconst YY_CHAR yy_meta[68] =
     {   0,
         1,    2,    3,    1,    1,    1,    1,    1,    1,    4,
         5,    1,    1,    6,    6,    7,    8,    9,    9,    9,
@@ -481,7 +497,7 @@ static yyconst flex_int32_t yy_meta[68] =
        11,   11,   11,   11,   11,   11,    1
     } ;
 
-static yyconst flex_int16_t yy_base[608] =
+static yyconst flex_uint16_t yy_base[608] =
     {   0,
         0,   67,  134,   16,   16,   17,   18,   20, 1232, 2403,
      2403,   19, 1191,   19,   31,   41,   43,   32,   33,   34,
@@ -623,7 +639,7 @@ static yyconst flex_int16_t yy_def[608] =
       560,  560,  560,  560,  560,  560,  560
     } ;
 
-static yyconst flex_int16_t yy_nxt[2471] =
+static yyconst flex_uint16_t yy_nxt[2471] =
     {   0,
        10,   10,   11,   10,   12,   10,   10,   13,   10,   10,
        10,   10,   14,   10,   10,   10,   10,   56,   59,   59,
@@ -1187,7 +1203,7 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 1 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 /* -*- indented-text -*- */
 /* Process source files and output type information.
    Copyright (C) 2002-2015 Free Software Foundation, Inc.
@@ -1208,7 +1224,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 #define YY_NO_INPUT 1
-#line 24 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 24 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 #ifdef HOST_GENERATOR_FILE
 #include "config.h"
 #define GENERATOR_FILE 1
@@ -1238,7 +1254,7 @@ update_lineno (const char *l, size_t len)
 
 /* Include '::' in identifiers to capture C++ scope qualifiers.  */
 
-#line 1241 "gengtype-lex.c"
+#line 1257 "gengtype-lex.c"
 
 #define INITIAL 0
 #define in_struct 1
@@ -1274,19 +1290,19 @@ void yyset_extra (YY_EXTRA_TYPE user_defined  );
 
 FILE *yyget_in (void );
 
-void yyset_in  (FILE * in_str  );
+void yyset_in  (FILE * _in_str  );
 
 FILE *yyget_out (void );
 
-void yyset_out  (FILE * out_str  );
+void yyset_out  (FILE * _out_str  );
 
-int yyget_leng (void );
+yy_size_t yyget_leng (void );
 
 char *yyget_text (void );
 
 int yyget_lineno (void );
 
-void yyset_lineno (int line_number  );
+void yyset_lineno (int _line_number  );
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -1298,6 +1314,10 @@ extern "C" int yywrap (void );
 #else
 extern int yywrap (void );
 #endif
+#endif
+
+#ifndef YY_NO_UNPUT
+    
 #endif
 
 #ifndef yytext_ptr
@@ -1320,7 +1340,12 @@ static int input (void );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -1328,7 +1353,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -1339,7 +1364,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1407,7 +1432,7 @@ extern int yylex (void);
 
 /* Code executed at the end of each rule. */
 #ifndef YY_BREAK
-#define YY_BREAK break;
+#define YY_BREAK /*LINTED*/break;
 #endif
 
 #define YY_RULE_SETUP \
@@ -1420,23 +1445,10 @@ extern int yylex (void);
  */
 YY_DECL
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp, *yy_bp;
-	register int yy_act;
+	yy_state_type yy_current_state;
+	char *yy_cp, *yy_bp;
+	int yy_act;
     
-#line 66 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
-
-  /* Do this on entry to yylex():  */
-  *yylval = 0;
-  if (lexer_toplevel_done)
-    {
-      BEGIN(INITIAL);
-      lexer_toplevel_done = 0;
-    }
-
-  /* Things we look for in skipping mode: */
-#line 1438 "gengtype-lex.c"
-
 	if ( !(yy_init) )
 		{
 		(yy_init) = 1;
@@ -1463,7 +1475,21 @@ YY_DECL
 		yy_load_buffer_state( );
 		}
 
-	while ( 1 )		/* loops until end-of-file is reached */
+	{
+#line 66 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
+
+  /* Do this on entry to yylex():  */
+  *yylval = 0;
+  if (lexer_toplevel_done)
+    {
+      BEGIN(INITIAL);
+      lexer_toplevel_done = 0;
+    }
+
+  /* Things we look for in skipping mode: */
+#line 1490 "gengtype-lex.c"
+
+	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
 		yy_cp = (yy_c_buf_p);
 
@@ -1480,7 +1506,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)] ;
 			if ( yy_accept[yy_current_state] )
 				{
 				(yy_last_accepting_state) = yy_current_state;
@@ -1518,10 +1544,11 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 77 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 77 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return TYPEDEF;
@@ -1530,10 +1557,11 @@ YY_RULE_SETUP
 case 2:
 /* rule 2 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 81 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 81 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return STRUCT;
@@ -1542,10 +1570,11 @@ YY_RULE_SETUP
 case 3:
 /* rule 3 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 85 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 85 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return UNION;
@@ -1554,10 +1583,11 @@ YY_RULE_SETUP
 case 4:
 /* rule 4 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 89 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 89 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return STRUCT;
@@ -1566,10 +1596,11 @@ YY_RULE_SETUP
 case 5:
 /* rule 5 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 93 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 93 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return EXTERN;
@@ -1578,10 +1609,11 @@ YY_RULE_SETUP
 case 6:
 /* rule 6 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 97 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 97 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return STATIC;
@@ -1592,52 +1624,54 @@ YY_RULE_SETUP
 
 case 7:
 YY_RULE_SETUP
-#line 105 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 105 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { BEGIN(in_struct_comment); }
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 106 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 106 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 108 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 108 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { update_lineno (yytext, yyleng); }
 	YY_BREAK
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 109 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 109 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 11:
 /* rule 11 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 5);
 (yy_c_buf_p) = yy_cp = yy_bp + 5;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 111 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 111 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 /* don't care */
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
-#line 113 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 113 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 13:
 /* rule 13 can match eol */
-#line 114 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 114 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 14:
 /* rule 14 can match eol */
-#line 115 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 115 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 115 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 115 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
     *yylval = XDUPVAR (const char, yytext, yyleng, yyleng + 1);
     return IGNORABLE_CXX_KEYWORD;
@@ -1646,99 +1680,109 @@ YY_RULE_SETUP
 case 16:
 /* rule 16 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 3);
 (yy_c_buf_p) = yy_cp = yy_bp + 3;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 119 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 119 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return GTY_TOKEN; }
 	YY_BREAK
 case 17:
 /* rule 17 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 5);
 (yy_c_buf_p) = yy_cp = yy_bp + 5;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 120 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 120 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return UNION; }
 	YY_BREAK
 case 18:
 /* rule 18 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 6);
 (yy_c_buf_p) = yy_cp = yy_bp + 6;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 121 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 121 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return STRUCT; }
 	YY_BREAK
 case 19:
 /* rule 19 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 5);
 (yy_c_buf_p) = yy_cp = yy_bp + 5;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 122 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 122 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return STRUCT; }
 	YY_BREAK
 case 20:
 /* rule 20 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 7);
 (yy_c_buf_p) = yy_cp = yy_bp + 7;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 123 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 123 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return TYPEDEF; }
 	YY_BREAK
 case 21:
 /* rule 21 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 4);
 (yy_c_buf_p) = yy_cp = yy_bp + 4;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 124 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 124 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return ENUM; }
 	YY_BREAK
 case 22:
 /* rule 22 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 9);
 (yy_c_buf_p) = yy_cp = yy_bp + 9;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 125 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 125 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return PTR_ALIAS; }
 	YY_BREAK
 case 23:
 /* rule 23 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 10);
 (yy_c_buf_p) = yy_cp = yy_bp + 10;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 126 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 126 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return NESTED_PTR; }
 	YY_BREAK
 case 24:
 /* rule 24 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 4);
 (yy_c_buf_p) = yy_cp = yy_bp + 4;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 127 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 127 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return USER_GTY; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 128 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 128 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return NUM; }
 	YY_BREAK
 case 26:
 /* rule 26 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
-#line 131 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 131 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 27:
 /* rule 27 can match eol */
 YY_RULE_SETUP
-#line 131 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 131 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   size_t len;
 
@@ -1753,10 +1797,11 @@ YY_RULE_SETUP
 case 28:
 /* rule 28 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 142 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 142 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext, yyleng, yyleng+1);
   return ID;
@@ -1765,7 +1810,7 @@ YY_RULE_SETUP
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 147 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 147 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext+1, yyleng-2, yyleng-1);
   return STRING;
@@ -1775,7 +1820,7 @@ YY_RULE_SETUP
 case 30:
 /* rule 30 can match eol */
 YY_RULE_SETUP
-#line 152 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 152 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext+1, yyleng-2, yyleng-1);
   return ARRAY;
@@ -1784,7 +1829,7 @@ YY_RULE_SETUP
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 156 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 156 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext+1, yyleng-2, yyleng);
   return CHAR;
@@ -1792,24 +1837,24 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 161 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 161 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return ELLIPSIS; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 162 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 162 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { return yytext[0]; }
 	YY_BREAK
 /* ignore pp-directives */
 case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
-#line 165 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 165 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {lexer_line.line++;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 167 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 167 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   error_at_line (&lexer_line, "unexpected character `%s'", yytext);
 }
@@ -1817,86 +1862,88 @@ YY_RULE_SETUP
 
 case 36:
 YY_RULE_SETUP
-#line 172 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 172 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { BEGIN(in_comment); }
 	YY_BREAK
 case 37:
 /* rule 37 can match eol */
 YY_RULE_SETUP
-#line 173 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 173 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 174 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 174 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 39:
-#line 176 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 176 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 40:
 /* rule 40 can match eol */
-#line 177 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 177 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 41:
 /* rule 41 can match eol */
 YY_RULE_SETUP
-#line 177 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 177 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 178 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 178 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { update_lineno (yytext, yyleng); }
 	YY_BREAK
 case 43:
 /* rule 43 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 1);
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 179 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 179 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 
 case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
-#line 182 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 182 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 45:
-#line 184 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 184 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 46:
 YY_RULE_SETUP
-#line 184 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 184 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 case 47:
 /* rule 47 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 1);
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 185 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 185 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 
 case 48:
 YY_RULE_SETUP
-#line 188 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 188 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { BEGIN(INITIAL); } 
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 189 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 189 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 { BEGIN(in_struct); }
 	YY_BREAK
 case 50:
-#line 192 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 192 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 case 51:
 YY_RULE_SETUP
-#line 192 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 192 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 {
   error_at_line (&lexer_line, 
 		 "unterminated comment or string; unexpected EOF");
@@ -1905,15 +1952,15 @@ YY_RULE_SETUP
 case 52:
 /* rule 52 can match eol */
 YY_RULE_SETUP
-#line 197 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 197 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 199 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 199 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1916 "gengtype-lex.c"
+#line 1963 "gengtype-lex.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(in_struct):
 case YY_STATE_EOF(in_struct_comment):
@@ -2048,6 +2095,7 @@ case YY_STATE_EOF(in_comment):
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of yylex */
 
 /* yy_get_next_buffer - try to read in a new buffer
@@ -2059,9 +2107,9 @@ case YY_STATE_EOF(in_comment):
  */
 static int yy_get_next_buffer (void)
 {
-    	register char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-	register char *source = (yytext_ptr);
-	register int number_to_move, i;
+    	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+	char *source = (yytext_ptr);
+	yy_size_t number_to_move, i;
 	int ret_val;
 
 	if ( (yy_c_buf_p) > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars) + 1] )
@@ -2090,7 +2138,7 @@ static int yy_get_next_buffer (void)
 	/* Try to read more data. */
 
 	/* First move last chars to start of buffer. */
-	number_to_move = (int) ((yy_c_buf_p) - (yytext_ptr)) - 1;
+	number_to_move = (yy_size_t) ((yy_c_buf_p) - (yytext_ptr)) - 1;
 
 	for ( i = 0; i < number_to_move; ++i )
 		*(dest++) = *(source++);
@@ -2110,14 +2158,14 @@ static int yy_get_next_buffer (void)
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
 
 			int yy_c_buf_p_offset =
 				(int) ((yy_c_buf_p) - b->yy_ch_buf);
 
 			if ( b->yy_is_our_buffer )
 				{
-				int new_size = b->yy_buf_size * 2;
+				yy_size_t new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -2148,7 +2196,7 @@ static int yy_get_next_buffer (void)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			(yy_n_chars), (size_t) num_to_read );
+			(yy_n_chars), num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars);
 		}
@@ -2193,15 +2241,15 @@ static int yy_get_next_buffer (void)
 
     static yy_state_type yy_get_previous_state (void)
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp;
+	yy_state_type yy_current_state;
+	char *yy_cp;
     
 	yy_current_state = (yy_start);
 	yy_current_state += YY_AT_BOL();
 
 	for ( yy_cp = (yytext_ptr) + YY_MORE_ADJ; yy_cp < (yy_c_buf_p); ++yy_cp )
 		{
-		register YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
+		YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
 		if ( yy_accept[yy_current_state] )
 			{
 			(yy_last_accepting_state) = yy_current_state;
@@ -2226,10 +2274,10 @@ static int yy_get_next_buffer (void)
  */
     static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state )
 {
-	register int yy_is_jam;
-    	register char *yy_cp = (yy_c_buf_p);
+	int yy_is_jam;
+    	char *yy_cp = (yy_c_buf_p);
 
-	register YY_CHAR yy_c = 1;
+	YY_CHAR yy_c = 1;
 	if ( yy_accept[yy_current_state] )
 		{
 		(yy_last_accepting_state) = yy_current_state;
@@ -2244,8 +2292,12 @@ static int yy_get_next_buffer (void)
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 	yy_is_jam = (yy_current_state == 560);
 
-	return yy_is_jam ? 0 : yy_current_state;
+		return yy_is_jam ? 0 : yy_current_state;
 }
+
+#ifndef YY_NO_UNPUT
+
+#endif
 
 #ifndef YY_NO_INPUT
 #ifdef __cplusplus
@@ -2271,7 +2323,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			int offset = (yy_c_buf_p) - (yytext_ptr);
+			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -2398,7 +2450,7 @@ static void yy_load_buffer_state  (void)
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
-	b->yy_buf_size = size;
+	b->yy_buf_size = (yy_size_t)size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
@@ -2545,7 +2597,7 @@ void yypop_buffer_state (void)
  */
 static void yyensure_buffer_stack (void)
 {
-	int num_to_alloc;
+	yy_size_t num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -2553,7 +2605,7 @@ static void yyensure_buffer_stack (void)
 		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
 		 * immediate realloc on the next call.
          */
-		num_to_alloc = 1;
+      num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
 		(yy_buffer_stack) = (struct yy_buffer_state**)yyalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
@@ -2570,7 +2622,7 @@ static void yyensure_buffer_stack (void)
 	if ((yy_buffer_stack_top) >= ((yy_buffer_stack_max)) - 1){
 
 		/* Increase the buffer to prepare for a possible push. */
-		int grow_size = 8 /* arbitrary grow size */;
+		yy_size_t grow_size = 8 /* arbitrary grow size */;
 
 		num_to_alloc = (yy_buffer_stack_max) + grow_size;
 		(yy_buffer_stack) = (struct yy_buffer_state**)yyrealloc
@@ -2637,17 +2689,17 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	int i;
+	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -2678,7 +2730,7 @@ YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
 
 static void yy_fatal_error (yyconst char* msg )
 {
-    	(void) fprintf( stderr, "%s\n", msg );
+			(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -2689,7 +2741,7 @@ static void yy_fatal_error (yyconst char* msg )
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        int yyless_macro_arg = (n); \
+        yy_size_t yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		yytext[yyleng] = (yy_hold_char); \
 		(yy_c_buf_p) = yytext + yyless_macro_arg; \
@@ -2729,7 +2781,7 @@ FILE *yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-int yyget_leng  (void)
+yy_size_t yyget_leng  (void)
 {
         return yyleng;
 }
@@ -2744,29 +2796,29 @@ char *yyget_text  (void)
 }
 
 /** Set the current line number.
- * @param line_number
+ * @param _line_number line number
  * 
  */
-void yyset_lineno (int  line_number )
+void yyset_lineno (int  _line_number )
 {
     
-    yylineno = line_number;
+    yylineno = _line_number;
 }
 
 /** Set the input stream. This does not discard the current
  * input buffer.
- * @param in_str A readable stream.
+ * @param _in_str A readable stream.
  * 
  * @see yy_switch_to_buffer
  */
-void yyset_in (FILE *  in_str )
+void yyset_in (FILE *  _in_str )
 {
-        yyin = in_str ;
+        yyin = _in_str ;
 }
 
-void yyset_out (FILE *  out_str )
+void yyset_out (FILE *  _out_str )
 {
-        yyout = out_str ;
+        yyout = _out_str ;
 }
 
 int yyget_debug  (void)
@@ -2774,9 +2826,9 @@ int yyget_debug  (void)
         return yy_flex_debug;
 }
 
-void yyset_debug (int  bdebug )
+void yyset_debug (int  _bdebug )
 {
-        yy_flex_debug = bdebug ;
+        yy_flex_debug = _bdebug ;
 }
 
 static int yy_init_globals (void)
@@ -2836,7 +2888,8 @@ int yylex_destroy  (void)
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )
 {
-	register int i;
+		
+	int i;
 	for ( i = 0; i < n; ++i )
 		s1[i] = s2[i];
 }
@@ -2845,7 +2898,7 @@ static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )
 #ifdef YY_NEED_STRLEN
 static int yy_flex_strlen (yyconst char * s )
 {
-	register int n;
+	int n;
 	for ( n = 0; s[n]; ++n )
 		;
 
@@ -2855,11 +2908,12 @@ static int yy_flex_strlen (yyconst char * s )
 
 void *yyalloc (yy_size_t  size )
 {
-	return (void *) malloc( size );
+			return (void *) malloc( size );
 }
 
 void *yyrealloc  (void * ptr, yy_size_t  size )
 {
+		
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
 	 * that use void* generic pointers.  It works with the latter
@@ -2872,12 +2926,12 @@ void *yyrealloc  (void * ptr, yy_size_t  size )
 
 void yyfree (void * ptr )
 {
-	free( (char *) ptr );	/* see yyrealloc() for (char *) cast */
+			free( (char *) ptr );	/* see yyrealloc() for (char *) cast */
 }
 
 #define YYTABLES_NAME "yytables"
 
-#line 199 "/space/rguenther/gcc-5.4.0/gcc-5.4.0/gcc/gengtype-lex.l"
+#line 199 "/d/gcc-5.5.0/gcc-5.5.0/gcc/gengtype-lex.l"
 
 
 
