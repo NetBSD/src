@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.451 2017/11/07 20:58:23 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.452 2017/11/13 20:38:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.451 2017/11/07 20:58:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.452 2017/11/13 20:38:31 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -344,9 +344,17 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	if ((error = namei(&nd)) != 0)
 		return error;
 	epp->ep_vp = vp = nd.ni_vp;
+#if 1
+	pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
+#else
+	/*
+	 * XXX: can't use nd.ni_pnbuf, because although pb contains an
+	 * absolute path, nd.ni_pnbuf does not if the path contains symlinks.
+	 */
 	/* normally this can't fail */
 	error = copystr(nd.ni_pnbuf, epp->ep_resolvedname, PATH_MAX, NULL);
 	KASSERT(error == 0);
+#endif
 
 #ifdef DIAGNOSTIC
 	/* paranoia (take this out once namei stuff stabilizes) */
@@ -1154,9 +1162,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (error != 0)
 		goto exec_abort;
 
-	// XXX: Can't use epp->ep_resolvedname since namei can return
-	// a relative path in pnbuf when being passed an absolute path!
-	pathexec(p, data->ed_pathstring);
+	pathexec(p, epp->ep_resolvedname);
 
 	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
