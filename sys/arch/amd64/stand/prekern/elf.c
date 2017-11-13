@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.9 2017/11/09 15:56:56 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.10 2017/11/13 21:14:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -258,184 +258,41 @@ elf_build_head(vaddr_t headva)
 	}
 }
 
-static bool
-elf_section_is_text(Elf_Shdr *shdr)
-{
-	if (shdr->sh_type != SHT_NOBITS &&
-	    shdr->sh_type != SHT_PROGBITS) {
-		return false;
-	}
-	if (!(shdr->sh_flags & SHF_EXECINSTR)) {
-		return false;
-	}
-	return true;
-}
-
-static bool
-elf_section_is_rodata(Elf_Shdr *shdr)
-{
-	if (shdr->sh_type != SHT_NOBITS &&
-	    shdr->sh_type != SHT_PROGBITS) {
-		return false;
-	}
-	if (shdr->sh_flags & (SHF_EXECINSTR|SHF_WRITE)) {
-		return false;
-	}
-	return true;
-}
-
-static bool
-elf_section_is_data(Elf_Shdr *shdr)
-{
-	if (shdr->sh_type != SHT_NOBITS &&
-	    shdr->sh_type != SHT_PROGBITS) {
-		return false;
-	}
-	if (!(shdr->sh_flags & SHF_WRITE) ||
-	    (shdr->sh_flags & SHF_EXECINSTR)) {
-		return false;
-	}
-	return true;
-}
-
 void
-elf_get_text(paddr_t *pa, size_t *sz)
-{
-	const paddr_t basepa = kernpa_start;
-	paddr_t minpa, maxpa, secpa;
-	size_t i, secsz;
-
-	minpa = 0xFFFFFFFFFFFFFFFF, maxpa = 0;
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_text(&eif.shdr[i])) {
-			continue;
-		}
-		secpa = basepa + eif.shdr[i].sh_offset;
-		secsz = eif.shdr[i].sh_size;
-		if (secpa < minpa) {
-			minpa = secpa;
-		}
-		if (secpa + secsz > maxpa) {
-			maxpa = secpa + secsz;
-		}
-	}
-	ASSERT(minpa % PAGE_SIZE == 0);
-
-	*pa = minpa;
-	*sz = maxpa - minpa;
-}
-
-void
-elf_build_text(vaddr_t textva, paddr_t textpa)
+elf_map_sections()
 {
 	const paddr_t basepa = kernpa_start;
 	const vaddr_t headva = (vaddr_t)eif.ehdr;
-	size_t i, offtext;
-
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_text(&eif.shdr[i])) {
-			continue;
-		}
-
-		/* Offset of the section within the text segment. */
-		offtext = basepa + eif.shdr[i].sh_offset - textpa;
-
-		/* We want (headva + sh_offset) to be the VA of the section. */
-		eif.shdr[i].sh_offset = (textva + offtext - headva);
-	}
-}
-
-void
-elf_get_rodata(paddr_t *pa, size_t *sz)
-{
-	const paddr_t basepa = kernpa_start;
-	paddr_t minpa, maxpa, secpa;
+	Elf_Shdr *shdr;
+	int segtype;
+	vaddr_t secva;
+	paddr_t secpa;
 	size_t i, secsz;
 
-	minpa = 0xFFFFFFFFFFFFFFFF, maxpa = 0;
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_rodata(&eif.shdr[i])) {
-			continue;
-		}
-		secpa = basepa + eif.shdr[i].sh_offset;
-		secsz = eif.shdr[i].sh_size;
-		if (secpa < minpa) {
-			minpa = secpa;
-		}
-		if (secpa + secsz > maxpa) {
-			maxpa = secpa + secsz;
-		}
-	}
-	ASSERT(minpa % PAGE_SIZE == 0);
+		shdr = &eif.shdr[i];
 
-	*pa = minpa;
-	*sz = maxpa - minpa;
-}
-
-void
-elf_build_rodata(vaddr_t rodatava, paddr_t rodatapa)
-{
-	const paddr_t basepa = kernpa_start;
-	const vaddr_t headva = (vaddr_t)eif.ehdr;
-	size_t i, offrodata;
-
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_rodata(&eif.shdr[i])) {
+		if (shdr->sh_type != SHT_NOBITS &&
+		    shdr->sh_type != SHT_PROGBITS) {
 			continue;
 		}
 
-		/* Offset of the section within the rodata segment. */
-		offrodata = basepa + eif.shdr[i].sh_offset - rodatapa;
+		if (shdr->sh_flags & SHF_EXECINSTR) {
+			segtype = BTSEG_TEXT;
+		} else if (shdr->sh_flags & SHF_WRITE) {
+			segtype = BTSEG_DATA;
+		} else {
+			segtype = BTSEG_RODATA;
+		}
+		secpa = basepa + shdr->sh_offset;
+		secsz = shdr->sh_size;
+		ASSERT(shdr->sh_offset != 0);
+		ASSERT(secpa % PAGE_SIZE == 0);
+
+		secva = mm_map_segment(segtype, secpa, secsz);
 
 		/* We want (headva + sh_offset) to be the VA of the section. */
-		eif.shdr[i].sh_offset = (rodatava + offrodata - headva);
-	}
-}
-
-void
-elf_get_data(paddr_t *pa, size_t *sz)
-{
-	const paddr_t basepa = kernpa_start;
-	paddr_t minpa, maxpa, secpa;
-	size_t i, secsz;
-
-	minpa = 0xFFFFFFFFFFFFFFFF, maxpa = 0;
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_data(&eif.shdr[i])) {
-			continue;
-		}
-		secpa = basepa + eif.shdr[i].sh_offset;
-		secsz = eif.shdr[i].sh_size;
-		if (secpa < minpa) {
-			minpa = secpa;
-		}
-		if (secpa + secsz > maxpa) {
-			maxpa = secpa + secsz;
-		}
-	}
-	ASSERT(minpa % PAGE_SIZE == 0);
-
-	*pa = minpa;
-	*sz = maxpa - minpa;
-}
-
-void
-elf_build_data(vaddr_t datava, paddr_t datapa)
-{
-	const paddr_t basepa = kernpa_start;
-	const vaddr_t headva = (vaddr_t)eif.ehdr;
-	size_t i, offdata;
-
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (!elf_section_is_data(&eif.shdr[i])) {
-			continue;
-		}
-
-		/* Offset of the section within the data segment. */
-		offdata = basepa + eif.shdr[i].sh_offset - datapa;
-
-		/* We want (headva + sh_offset) to be the VA of the section. */
-		eif.shdr[i].sh_offset = (datava + offdata - headva);
+		shdr->sh_offset = secva - headva;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.11 2017/11/11 13:50:57 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.12 2017/11/13 21:14:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -313,75 +313,34 @@ bootspace_addseg(int type, vaddr_t va, paddr_t pa, size_t sz)
 	fatal("bootspace_addseg: segments full");
 }
 
-static void
-mm_map_segments()
+vaddr_t
+mm_map_segment(int segtype, paddr_t pa, size_t elfsz)
 {
-	size_t i, npages, size, elfsz;
+	size_t i, npages, size;
 	vaddr_t randva;
-	paddr_t pa;
+	char pad;
 
-	/*
-	 * Kernel text segment.
-	 */
-	elf_get_text(&pa, &elfsz);
 	size = roundup(elfsz, PAGE_SIZE);
 	randva = mm_randva_kregion(size);
 	npages = size / PAGE_SIZE;
 
-	/* Enter the area and build the ELF info */
 	for (i = 0; i < npages; i++) {
 		mm_enter_pa(pa + i * PAGE_SIZE,
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
-	elf_build_text(randva, pa);
 
-	/* Fill in the padding */
-	memset((void *)(randva + elfsz), PAD_TEXT, size - elfsz);
-
-	/* Register the values in bootspace */
-	bootspace_addseg(BTSEG_TEXT, randva, pa, size);
-
-	/*
-	 * Kernel rodata segment.
-	 */
-	elf_get_rodata(&pa, &elfsz);
-	size = roundup(elfsz, PAGE_SIZE);
-	randva = mm_randva_kregion(size);
-	npages = size / PAGE_SIZE;
-
-	/* Enter the area and build the ELF info */
-	for (i = 0; i < npages; i++) {
-		mm_enter_pa(pa + i * PAGE_SIZE,
-		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
+	if (segtype == BTSEG_TEXT) {
+		pad = PAD_TEXT;
+	} else if (segtype == BTSEG_RODATA) {
+		pad = PAD_RODATA;
+	} else {
+		pad = PAD_DATA;
 	}
-	elf_build_rodata(randva, pa);
+	memset((void *)(randva + elfsz), pad, size - elfsz);
 
-	/* Fill in the padding */
-	memset((void *)(randva + elfsz), PAD_RODATA, size - elfsz);
+	bootspace_addseg(segtype, randva, pa, size);
 
-	/* Register the values in bootspace */
-	bootspace_addseg(BTSEG_RODATA, randva, pa, size);
-
-	/*
-	 * Kernel data segment.
-	 */
-	elf_get_data(&pa, &elfsz);
-	size = roundup(elfsz, PAGE_SIZE);
-	randva = mm_randva_kregion(size);
-	npages = size / PAGE_SIZE;
-
-	/* Enter the area and build the ELF info */
-	for (i = 0; i < npages; i++) {
-		mm_enter_pa(pa + i * PAGE_SIZE,
-		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
-	}
-	elf_build_data(randva, pa);
-
-	/* Fill in the padding */
-	memset((void *)(randva + elfsz), PAD_DATA, size - elfsz);
-
-	/* Register the values in bootspace */
-	bootspace_addseg(BTSEG_DATA, randva, pa, size);
+	return randva;
 }
 
 static void
@@ -447,7 +406,7 @@ mm_map_kernel()
 	memset(&bootspace, 0, sizeof(bootspace));
 	mm_map_head();
 	print_state(true, "Head region mapped");
-	mm_map_segments();
+	elf_map_sections();
 	print_state(true, "Segments mapped");
 	mm_map_boot();
 	print_state(true, "Boot region mapped");
