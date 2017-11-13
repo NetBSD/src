@@ -1290,7 +1290,7 @@
 
 /* Define if you have the iconv() function. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 #endif
 
 
@@ -1819,7 +1819,7 @@
 
 /* Define as const if the declaration of iconv() needs const. */
 #ifndef USED_FOR_TARGET
-/* #undef ICONV_CONST */
+#define ICONV_CONST const
 #endif
 
 
