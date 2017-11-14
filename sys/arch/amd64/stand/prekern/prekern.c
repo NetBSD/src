@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.4 2017/11/05 16:26:15 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.5 2017/11/14 07:06:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -89,8 +89,8 @@ static void setgate(struct gate_descriptor *, void *, int, int, int, int);
 static void set_sys_segment(struct sys_segment_descriptor *, void *,
     size_t, int, int, int);
 static void set_sys_gdt(int, void *, size_t, int, int, int);
-static void init_tss();
-static void init_idt();
+static void init_tss(void);
+static void init_idt(void);
 
 void trap(struct smallframe *);
 
@@ -192,7 +192,7 @@ set_sys_gdt(int slotoff, void *base, size_t limit, int type, int dpl, int gran)
 	memcpy(&gdt64_start + slotoff, &sd, sizeof(sd));
 }
 
-static void init_tss()
+static void init_tss(void)
 {
 	memset(&prekern_tss, 0, sizeof(prekern_tss));
 	prekern_tss.tss_ist[0] = (uintptr_t)(&faultstack[PAGE_SIZE-1]) & ~0xf;
@@ -201,7 +201,7 @@ static void init_tss()
 	    sizeof(struct x86_64_tss) - 1, SDT_SYS386TSS, SEL_KPL, 0);
 }
 
-static void init_idt()
+static void init_idt(void)
 {
 	struct region_descriptor region;
 	struct gate_descriptor *idt;
@@ -237,7 +237,7 @@ struct prekern_args {
 struct prekern_args pkargs;
 
 static void
-init_prekern_args()
+init_prekern_args(void)
 {
 	extern struct bootspace bootspace;
 	extern int esym;
@@ -353,4 +353,3 @@ init_prekern(paddr_t pa_start)
 
 	fatal("init_prekern: unreachable!");
 }
-

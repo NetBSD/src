@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/11/13 20:03:26 maxv Exp $
+#	$NetBSD: Makefile,v 1.3 2017/11/14 07:06:34 maxv Exp $
 
 PROG=		prekern
 SRCS=	locore.S trap.S prekern.c mm.c console.c elf.c
@@ -23,6 +23,7 @@ CPPFLAGS+=	-D_STANDALONE
 
 CPPFLAGS+=	-DKERNEL -D__x86_64__
 CFLAGS+=	-Wall -Werror -mno-red-zone -mno-mmx -mno-sse -mno-avx -ffreestanding
+CFLAGS+=	-Wstrict-prototypes
 STRIPFLAG=
 LINKFLAGS=	-X -z max-page-size=0x100000 -Ttext 0x100000 -T prekern.ldscript
 

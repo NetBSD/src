@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.11 2017/11/13 21:14:03 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.12 2017/11/14 07:06:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -87,32 +87,32 @@ struct bootspace {
 };
 
 /* console.c */
-void init_cons();
+void init_cons(void);
 void print_ext(int, char *);
 void print(char *);
 void print_state(bool, char *);
-void print_banner();
+void print_banner(void);
 
 /* elf.c */
 size_t elf_get_head_size(vaddr_t);
 void elf_build_head(vaddr_t);
-void elf_map_sections();
+void elf_map_sections(void);
 void elf_build_boot(vaddr_t, paddr_t);
-vaddr_t elf_kernel_reloc();
+vaddr_t elf_kernel_reloc(void);
 
 /* locore.S */
 void cpuid(uint32_t, uint32_t, uint32_t *);
 void lidt(void *);
-uint64_t rdtsc();
+uint64_t rdtsc(void);
 int rdseed(uint64_t *);
-void jump_kernel();
+void jump_kernel(vaddr_t);
 
 /* mm.c */
 void mm_init(paddr_t);
 paddr_t mm_vatopa(vaddr_t);
-void mm_bootspace_mprotect();
+void mm_bootspace_mprotect(void);
 vaddr_t mm_map_segment(int, paddr_t, size_t);
-void mm_map_kernel();
+void mm_map_kernel(void);
 
 /* prekern.c */
 void fatal(char *);
