@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.351 2017/11/09 01:02:56 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.352 2017/11/14 14:27:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.351 2017/11/09 01:02:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.352 2017/11/14 14:27:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3575,9 +3575,12 @@ void
 rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 	     size_t xmin, size_t xmax)
 {
+	int error;
+
 	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
-	pool_prime(p, xmin);
+	if ((error = pool_prime(p, xmin)) != 0)
+		panic("%s: failed to prime pool: %d", __func__, error);
 	pool_setlowat(p, xmin);
 }
 
