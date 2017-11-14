@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.218 2017/11/09 01:02:55 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.219 2017/11/14 14:14:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.218 2017/11/09 01:02:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.219 2017/11/14 14:14:29 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -163,12 +163,13 @@ uint64_t booted_nblks;
 char *bootspec;
 
 /*
- * Use partition letters if it's a disk class but not a wedge.
- * XXX Check for wedge is kinda gross.
+ * Use partition letters if it's a disk class but not a wedge or flash.
+ * XXX Check for wedge/flash is kinda gross.
  */
 #define	DEV_USES_PARTITIONS(dv)						\
 	(device_class((dv)) == DV_DISK &&				\
-	 !device_is_a((dv), "dk"))
+	 !device_is_a((dv), "dk") &&					\
+	 !device_is_a((dv), "flash"))
 
 void
 setroot(device_t bootdv, int bootpartition)
