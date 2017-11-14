@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.215 2017/11/09 22:52:26 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.216 2017/11/14 15:02:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.215 2017/11/09 22:52:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.216 2017/11/14 15:02:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -809,7 +809,7 @@ pool_get(struct pool *pp, int flags)
 		pp->pr_nfail++;
 
 		mutex_exit(&pp->pr_lock);
-		KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
+		KASSERT((flags & (PR_NOWAIT|PR_LIMITFAIL)) != 0);
 		return (NULL);
 	}
 
@@ -1062,10 +1062,6 @@ pool_put(struct pool *pp, void *v)
 static int
 pool_grow(struct pool *pp, int flags)
 {
-	struct pool_item_header *ph = NULL;
-	char *cp;
-	int error;
-
 	/*
 	 * If there's a pool_grow in progress, wait for it to complete
 	 * and try again from the top.
@@ -1083,34 +1079,32 @@ pool_grow(struct pool *pp, int flags)
 	pp->pr_flags |= PR_GROWING;
 
 	mutex_exit(&pp->pr_lock);
-	cp = pool_allocator_alloc(pp, flags);
-	if (__predict_true(cp != NULL)) {
-		ph = pool_alloc_item_header(pp, cp, flags);
-	}
-	if (__predict_false(cp == NULL || ph == NULL)) {
-		if (cp != NULL) {
-			pool_allocator_free(pp, cp);
-		}
-		mutex_enter(&pp->pr_lock);
-		error = ENOMEM;
+	char *cp = pool_allocator_alloc(pp, flags);
+	if (__predict_false(cp == NULL))
+		goto out;
+
+	struct pool_item_header *ph = pool_alloc_item_header(pp, cp, flags);
+	if (__predict_false(ph == NULL)) {
+		pool_allocator_free(pp, cp);
 		goto out;
 	}
 
 	mutex_enter(&pp->pr_lock);
 	pool_prime_page(pp, cp, ph);
 	pp->pr_npagealloc++;
-	error = 0;
-
-out:
+	KASSERT(pp->pr_flags & PR_GROWING);
+	pp->pr_flags &= ~PR_GROWING;
 	/*
 	 * If anyone was waiting for pool_grow, notify them that we
 	 * may have just done it.
 	 */
+	cv_broadcast(&pp->pr_cv);
+	return 0;
+out:
 	KASSERT(pp->pr_flags & PR_GROWING);
 	pp->pr_flags &= ~PR_GROWING;
-	cv_broadcast(&pp->pr_cv);
-
-	return error;
+	mutex_enter(&pp->pr_lock);
+	return ENOMEM;
 }
 
 /*
@@ -1126,7 +1120,7 @@ pool_prime(struct pool *pp, int n)
 
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
-	while (newpages-- > 0) {
+	while (newpages > 0) {
 		error = pool_grow(pp, PR_NOWAIT);
 		if (error) {
 			if (error == ERESTART)
@@ -1134,6 +1128,7 @@ pool_prime(struct pool *pp, int n)
 			break;
 		}
 		pp->pr_minpages++;
+		newpages--;
 	}
 
 	if (pp->pr_minpages >= pp->pr_maxpages)
