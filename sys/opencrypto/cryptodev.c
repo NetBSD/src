@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.95 2017/06/15 12:41:18 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.96 2017/11/14 14:29:33 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.95 2017/06/15 12:41:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.96 2017/11/14 14:29:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2110,6 +2110,8 @@ cryptof_poll(struct file *fp, int events)
 void
 cryptoattach(int num)
 {
+	int error;
+
 	crypto_init();
 
 	mutex_init(&cryptodev_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -2126,8 +2128,9 @@ cryptoattach(int num)
 	 * the negotiation, plus HMAC_SHA1 for the actual SSL records,
 	 * consuming one session here for each algorithm.
 	 */
-	pool_prime(&fcrpl, 64);
-	pool_prime(&csepl, 64 * 5);
+	if ((error = pool_prime(&fcrpl, 64)) != 0 ||
+	    (error = pool_prime(&csepl, 64 * 5)) != 0)
+		panic("%s: can't prime pool: %d", __func__, error);
 }
 
 void	crypto_attach(device_t, device_t, void *);
