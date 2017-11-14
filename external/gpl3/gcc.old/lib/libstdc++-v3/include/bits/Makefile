@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2017/11/14 00:54:38 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -29,7 +29,7 @@ INCSDIR=	/usr/include/g++/bits
 
 .include "${.CURDIR}/../Makefile.includes"
 
-CLEANFILES+=	{BUILDINCS}
+CLEANFILES+=	${BUILDINCS}
 
 CXXDIST=			${DIST}/libstdc++-v3
 COPYHEADERS= \
