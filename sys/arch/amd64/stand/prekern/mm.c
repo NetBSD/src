@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.12 2017/11/13 21:14:04 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.13 2017/11/14 07:06:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -119,7 +119,7 @@ mm_mprotect(vaddr_t startva, size_t size, int prot)
 }
 
 void
-mm_bootspace_mprotect()
+mm_bootspace_mprotect(void)
 {
 	int prot;
 	size_t i;
@@ -196,14 +196,14 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 }
 
 static uint64_t
-mm_rand_num64()
+mm_rand_num64(void)
 {
 	/* XXX: yes, this is ridiculous, will be fixed soon */
 	return rdtsc();
 }
 
 static void
-mm_map_head()
+mm_map_head(void)
 {
 	size_t i, npages, size;
 	uint64_t rnd;
@@ -278,7 +278,7 @@ mm_randva_kregion(size_t size)
 }
 
 static paddr_t
-bootspace_getend()
+bootspace_getend(void)
 {
 	paddr_t pa, max = 0;
 	size_t i;
@@ -344,7 +344,7 @@ mm_map_segment(int segtype, paddr_t pa, size_t elfsz)
 }
 
 static void
-mm_map_boot()
+mm_map_boot(void)
 {
 	size_t i, npages, size;
 	vaddr_t randva;
@@ -401,7 +401,7 @@ mm_map_boot()
  * At the end of this function, the bootspace structure is fully constructed.
  */
 void
-mm_map_kernel()
+mm_map_kernel(void)
 {
 	memset(&bootspace, 0, sizeof(bootspace));
 	mm_map_head();
@@ -411,4 +411,3 @@ mm_map_kernel()
 	mm_map_boot();
 	print_state(true, "Boot region mapped");
 }
-
