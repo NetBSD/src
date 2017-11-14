@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.81 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.82 2017/11/14 06:43:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -335,10 +335,6 @@ int uvm_page_lookup_freelist(struct vm_page *);
 
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
-
-#if !defined(PMAP_STEAL_MEMORY)
-bool uvm_page_physget(paddr_t *);
-#endif
 
 /*
  * macros
