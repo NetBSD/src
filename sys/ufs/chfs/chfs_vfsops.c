@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.16 2017/02/17 08:31:26 hannken Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.17 2017/11/14 22:06:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -227,7 +227,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	err = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
 	VOP_UNLOCK(devvp);
 	if (err)
-		return (err);
+		goto fail0;
 
 	/* Setup device. */
 	flash_major = cdevsw_lookup_major(&flash_cdevsw);
@@ -241,10 +241,8 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 		    major(dev), flash_major);
 		err = ENODEV;
 	}
-	if (err) {
-		vrele(devvp);
-		return (err);
-	}
+	if (err)
+		goto fail0;
 
 	/* Connect CHFS to UFS. */
 	ump = kmem_zalloc(sizeof(struct ufsmount), KM_SLEEP);
@@ -262,7 +260,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	err = ebh_open(chmp->chm_ebh, devvp->v_rdev);
 	if (err) {
 		dbg("error while opening flash\n");
-		goto fail;
+		goto fail1;
 	}
 
 	//TODO check flash sizes
@@ -320,10 +318,8 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 
 	if (err) {
 		/* Armageddon and return. */
-		chfs_vnocache_hash_destroy(chmp->chm_vnocache_hash);
-		ebh_close(chmp->chm_ebh);
 		err = EIO;
-		goto fail;
+		goto fail2;
 	}
 
 	/* Initialize UFS. */
@@ -359,10 +355,31 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	spec_node_setmountedfs(devvp, mp);
 	return 0;
 
-fail:
+fail2:
+	KASSERT(TAILQ_EMPTY(&chmp->chm_erase_pending_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_erasable_pending_wbuf_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_very_dirty_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_dirty_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_clean_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_free_queue));
+	rw_destroy(&chmp->chm_lock_wbuf);
+	kmem_free(chmp->chm_wbuf, chmp->chm_wbuf_pagesize);
+	mutex_destroy(&chmp->chm_lock_vnocache);
+	mutex_destroy(&chmp->chm_lock_sizes);
+	mutex_destroy(&chmp->chm_lock_mountfields);
+	kmem_free(chmp->chm_blocks, chmp->chm_ebh->peb_nr *
+	    sizeof(struct chfs_eraseblock));
+	chfs_vnocache_hash_destroy(chmp->chm_vnocache_hash);
+	ebh_close(chmp->chm_ebh);
+
+fail1:
 	kmem_free(chmp->chm_ebh, sizeof(struct chfs_ebh));
+	mutex_destroy(&ump->um_lock);
 	kmem_free(chmp, sizeof(struct chfs_mount));
 	kmem_free(ump, sizeof(struct ufsmount));
+
+fail0:
+	KASSERT(err);
 	return err;
 }
 
