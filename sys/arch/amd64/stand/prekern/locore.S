@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2017/11/10 08:05:38 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2017/11/14 13:58:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -623,6 +623,6 @@ END(rdseed)
 
 ENTRY(jump_kernel)
 	movq	_C_LABEL(stkva),%rsp
-	movq	$exec_kernel,%rax
-	jmpq	*%rax
+	xorq	%rbp,%rbp
+	callq	exec_kernel
 END(jump_kernel)
