@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.7 2017/11/10 14:44:13 rin Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.8 2017/11/14 12:20:55 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_refresh.c,v 10.50 2001/06/25 15:19:37 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:37 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_refresh.c,v 1.7 2017/11/10 14:44:13 rin Exp $");
+__RCSID("$NetBSD: vs_refresh.c,v 1.8 2017/11/14 12:20:55 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -484,7 +484,8 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 		 * boundary, we have no hope to speed it up.  Do it slowly.
 		 */
 		p += OCNO;
-		if (INTISWIDE(ch = (UCHAR_T)*p))
+		ch = (UCHAR_T)*p;
+		if (INTISWIDE(ch))
 			cwtotal = SCNO;
 		else {
 			if (ch == '\t' || (chlen = KEY_LEN(sp, ch)) > SCNO + 1)
@@ -537,7 +538,8 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 		 * of wide characters.
 		 */
 		p += OCNO;
-		if (INTISWIDE(ch = (UCHAR_T)*p))
+		ch = (UCHAR_T)*p;
+		if (INTISWIDE(ch))
 			cwtotal = SCNO;
 		else
 			cwtotal = SCNO + 1 - KEY_LEN(sp, ch);
@@ -558,7 +560,8 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 				goto slow;
 			cwtotal += KEY_COL(sp, ch);
 			cnt--;
-			if (INTISWIDE(ch = (UCHAR_T)*++p)
+			ch = (UCHAR_T)*++p;
+			if (INTISWIDE(ch)
 			    && (chlen = CHAR_WIDTH(sp, ch)) > 1
 			    && cwtotal + chlen >= SCREEN_COLS(sp))
 				cwtotal = SCREEN_COLS(sp);
