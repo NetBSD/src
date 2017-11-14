@@ -1,4 +1,4 @@
-/*	$NetBSD: redef.h,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: redef.h,v 1.2 2017/11/14 13:58:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -43,5 +43,4 @@
  * -------------------------------------------------------------------------- */
 
 #define PDE_SIZE 8
-#define FRAMESIZE 8 /* XXX */
-
+#define FRAMESIZE 240
