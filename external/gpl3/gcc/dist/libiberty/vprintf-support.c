@@ -36,6 +36,7 @@ Floor, Boston, MA 02110-1301, USA.  */
 extern unsigned long strtoul ();
 #endif
 #include "libiberty.h"
+#include "vprintf-support.h"
 
 int
 libiberty_vprintf_buffer_size (const char *format, va_list args)
