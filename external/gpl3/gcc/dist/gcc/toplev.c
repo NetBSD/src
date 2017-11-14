@@ -1386,8 +1386,7 @@ process_options (void)
 
       if (flag_sanitize & SANITIZE_THREAD)
 	{
-	  error (UNKNOWN_LOCATION,
-		 "%<-fcheck-pointer-bounds%> is not supported with "
+	  error ("%<-fcheck-pointer-bounds%> is not supported with "
 		 "Thread Sanitizer");
 
 	  flag_check_pointer_bounds = 0;
