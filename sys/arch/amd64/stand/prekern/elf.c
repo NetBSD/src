@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.12 2017/11/13 21:33:42 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.13 2017/11/14 07:06:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -50,7 +50,7 @@ static struct elfinfo eif;
 static const char entrypoint[] = "start_prekern";
 
 static int
-elf_check_header()
+elf_check_header(void)
 {
 	if (memcmp((char *)eif.ehdr->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    eif.ehdr->e_ident[EI_CLASS] != ELFCLASS ||
@@ -61,7 +61,7 @@ elf_check_header()
 }
 
 static vaddr_t
-elf_get_entrypoint()
+elf_get_entrypoint(void)
 {
 	Elf_Sym *sym;
 	size_t i;
@@ -259,7 +259,7 @@ elf_build_head(vaddr_t headva)
 }
 
 void
-elf_map_sections()
+elf_map_sections(void)
 {
 	const paddr_t basepa = kernpa_start;
 	const vaddr_t headva = (vaddr_t)eif.ehdr;
@@ -361,7 +361,7 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 }
 
 vaddr_t
-elf_kernel_reloc()
+elf_kernel_reloc(void)
 {
 	const vaddr_t baseva = (vaddr_t)eif.ehdr;
 	vaddr_t secva, ent;
@@ -454,7 +454,7 @@ elf_kernel_reloc()
 	/*
 	 * Get the entry point.
 	 */
-	ent = elf_get_entrypoint(&eif);
+	ent = elf_get_entrypoint();
 	if (ent == 0) {
 		fatal("elf_kernel_reloc: entry point not found");
 	}
@@ -463,4 +463,3 @@ elf_kernel_reloc()
 
 	return ent;
 }
-

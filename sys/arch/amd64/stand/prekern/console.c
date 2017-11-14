@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: console.c,v 1.2 2017/11/14 07:06:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -38,14 +38,14 @@ static char *cons_start;
 static size_t cons_x, cons_y;
 static char cons_buffer[CONS_WID * 2 * CONS_HEI];
 
-void init_cons()
+void init_cons(void)
 {
 	cons_start = (char *)atdevbase + (0xB8000 - IOM_BEGIN);
 	cons_x = 0;
 	cons_y = 0;
 }
 
-static void check_scroll()
+static void check_scroll(void)
 {
 	char *src, *dst;
 	size_t i;
@@ -106,7 +106,7 @@ void print_state(bool ok, char *buf)
 	print("\n");
 }
 
-void print_banner()
+void print_banner(void)
 {
 	char *banner = 
 		"           __________                 __                        \n"
