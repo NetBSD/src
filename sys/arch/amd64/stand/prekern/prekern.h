@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.12 2017/11/14 07:06:34 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.13 2017/11/15 18:02:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -111,7 +111,7 @@ void jump_kernel(vaddr_t);
 void mm_init(paddr_t);
 paddr_t mm_vatopa(vaddr_t);
 void mm_bootspace_mprotect(void);
-vaddr_t mm_map_segment(int, paddr_t, size_t);
+vaddr_t mm_map_segment(int, paddr_t, size_t, size_t);
 void mm_map_kernel(void);
 
 /* prekern.c */
