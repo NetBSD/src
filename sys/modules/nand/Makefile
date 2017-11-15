@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2012/11/03 11:48:54 ahoka Exp $
+# $NetBSD: Makefile,v 1.5 2017/11/15 00:48:42 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -12,5 +12,6 @@ SRCS+=	nand_crc.c
 SRCS+=	hamming.c
 SRCS+=	nand_micron.c
 SRCS+=	nand_samsung.c
+SRCS+=	nand_toshiba.c
 
 .include <bsd.kmodule.mk>
