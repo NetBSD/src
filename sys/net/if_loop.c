@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.96 2017/10/23 09:32:00 msaitoh Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.97 2017/11/15 04:08:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.96 2017/10/23 09:32:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.97 2017/11/15 04:08:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -247,7 +247,9 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	MCLAIM(m, ifp->if_mowner);
 
+#ifndef NET_MPSAFE
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
@@ -373,7 +375,9 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	schednetisr(isr);
 	splx(s);
 out:
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
+#endif
 	return error;
 }
 
