@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.362 2017/11/15 09:55:22 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.363 2017/11/15 09:56:31 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.362 2017/11/15 09:55:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.363 2017/11/15 09:56:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3652,14 +3652,16 @@ static struct pool syn_cache_pool;
  * We don't estimate RTT with SYNs, so each packet starts with the default
  * RTT and each timer step has a fixed timeout value.
  */
-#define	SYN_CACHE_TIMER_ARM(sc)						\
-do {									\
-	TCPT_RANGESET((sc)->sc_rxtcur,					\
-	    TCPTV_SRTTDFLT * tcp_backoff[(sc)->sc_rxtshift], TCPTV_MIN,	\
-	    TCPTV_REXMTMAX);						\
-	callout_reset(&(sc)->sc_timer,					\
-	    (sc)->sc_rxtcur * (hz / PR_SLOWHZ), syn_cache_timer, (sc));	\
-} while (/*CONSTCOND*/0)
+static inline void
+syn_cache_timer_arm(struct syn_cache *sc)
+{
+
+	TCPT_RANGESET(sc->sc_rxtcur,
+	    TCPTV_SRTTDFLT * tcp_backoff[sc->sc_rxtshift], TCPTV_MIN,
+	    TCPTV_REXMTMAX);
+	callout_reset(&sc->sc_timer,
+	    sc->sc_rxtcur * (hz / PR_SLOWHZ), syn_cache_timer, sc);
+}
 
 #define	SYN_CACHE_TIMESTAMP(sc)	(tcp_now - (sc)->sc_timebase)
 
@@ -3782,7 +3784,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 */
 	sc->sc_rxttot = 0;
 	sc->sc_rxtshift = 0;
-	SYN_CACHE_TIMER_ARM(sc);
+	syn_cache_timer_arm(sc);
 
 	/* Link it from tcpcb entry */
 	LIST_INSERT_HEAD(&tp->t_sc, sc, sc_tpq);
@@ -3835,7 +3837,7 @@ syn_cache_timer(void *arg)
 
 	/* Advance the timer back-off. */
 	sc->sc_rxtshift++;
-	SYN_CACHE_TIMER_ARM(sc);
+	syn_cache_timer_arm(sc);
 
 	goto out;
 
@@ -4513,7 +4515,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		 * syn_cache_put() will try to schedule the timer, so
 		 * we need to initialize it
 		 */
-		SYN_CACHE_TIMER_ARM(sc);
+		syn_cache_timer_arm(sc);
 		syn_cache_put(sc);
 		splx(s);
 		TCP_STATINC(TCP_STAT_SC_DROPPED);
