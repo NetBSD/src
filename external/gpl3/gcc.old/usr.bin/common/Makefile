@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/07/23 01:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2017/11/15 07:47:10 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -30,6 +30,8 @@ HOSTPROG_CXX=	1
 
 COPTS.diagnostic.c=	-Wno-stack-protector
 COPTS.intl.c=		-Wno-stack-protector
+
+version.c: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 ${SRCS}: ${GCCARCH}/defs.mk
 
