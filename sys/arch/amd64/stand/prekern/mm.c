@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.14 2017/11/15 18:02:36 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.15 2017/11/15 18:44:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -35,6 +35,10 @@
 #define PAD_DATA	0x00
 
 #define ELFROUND	64
+
+#define MM_PROT_READ	0x00
+#define MM_PROT_WRITE	0x01
+#define MM_PROT_EXECUTE	0x02
 
 static const pt_entry_t protection_codes[3] = {
 	[MM_PROT_READ] = PG_RO | PG_NX,
