@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.129 2017/10/23 09:32:33 msaitoh Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.130 2017/11/15 07:52:58 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.129 2017/10/23 09:32:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.130 2017/11/15 07:52:58 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -317,7 +317,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	/* changed to real address later */
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 
-	callout_init(&sc->sc_timeout, 0);
+	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 
 	sc->sc_sppp.pp_if.if_start = pppoe_start;
 #ifdef PPPOE_MPSAFE
