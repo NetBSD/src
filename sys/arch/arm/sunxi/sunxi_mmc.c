@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.16 2017/10/28 13:13:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.17 2017/11/15 13:53:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.16 2017/10/28 13:13:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.17 2017/11/15 13:53:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,6 +188,9 @@ struct sunxi_mmc_softc {
 	struct fdtbus_regulator *sc_reg_vqmmc;
 
 	struct fdtbus_mmc_pwrseq *sc_pwrseq;
+
+	bool sc_non_removable;
+	bool sc_broken_cd;
 };
 
 CFATTACH_DECL_NEW(sunxi_mmc, sizeof(struct sunxi_mmc_softc),
@@ -333,6 +336,9 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gpio_cd_inverted = of_hasprop(phandle, "cd-inverted") ? 0 : 1;
 	sc->sc_gpio_wp_inverted = of_hasprop(phandle, "wp-inverted") ? 0 : 1;
+
+	sc->sc_non_removable = of_hasprop(phandle, "non-removable");
+	sc->sc_broken_cd = of_hasprop(phandle, "broken-cd");
 
 	if (sunxi_mmc_dmabounce_setup(sc) != 0 ||
 	    sunxi_mmc_idma_setup(sc) != 0) {
@@ -638,9 +644,14 @@ sunxi_mmc_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct sunxi_mmc_softc *sc = sch;
 
-	if (sc->sc_gpio_cd == NULL) {
-		return 1;	/* no card detect pin, assume present */
-	} else {
+	if (sc->sc_non_removable || sc->sc_broken_cd) {
+		/*
+		 * Non-removable or broken card detect flag set in
+		 * DT, assume always present
+		 */
+		return 1;
+	} else if (sc->sc_gpio_cd != NULL) {
+		/* Use card detect GPIO */
 		int v = 0, i;
 		for (i = 0; i < 5; i++) {
 			v += (fdtbus_gpio_read(sc->sc_gpio_cd) ^
@@ -652,6 +663,11 @@ sunxi_mmc_card_detect(sdmmc_chipset_handle_t sch)
 		else if (v == 0)
 			sc->sc_mmc_present = 1;
 		return sc->sc_mmc_present;
+	} else {
+		/* Use CARD_PRESENT field of SD_STATUS register */
+		const uint32_t present = MMC_READ(sc, SUNXI_MMC_STATUS) &
+		    SUNXI_MMC_STATUS_CARD_PRESENT;
+		return present != 0;
 	}
 }
 
