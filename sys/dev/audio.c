@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.433 2017/11/15 01:49:59 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.434 2017/11/15 01:55:45 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.433 2017/11/15 01:49:59 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.434 2017/11/15 01:55:45 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2402,13 +2402,13 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 		return 0;
 
 	used = audio_stream_get_used(&cb->s);
-	if (vc == sc->sc_hwvc) {
+	if (vc == sc->sc_hwvc && sc->sc_usemixer) {
 		hw = true;
 		used += audio_stream_get_used(&sc->sc_mixring.sc_mpr.s);
 	}
 	for (i = 0; i < vc->sc_npfilters; i++)
 		used += audio_stream_get_used(&vc->sc_pstreams[i]);
-	if (used <= 0 || (hw == true && sc->hw_if->trigger_output == NULL))
+	if (used <= 0)
 		return 0;
 
 	if (hw == false && !vc->sc_pbus) {
@@ -2457,9 +2457,14 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 #endif
 	vc->sc_draining = true;
 
-	drops = cb->drops + (cb->blksize * PREFILL_BLOCKS);
+	drops = cb->drops;
+	if (vc == sc->sc_hwvc)
+		drops += cb->blksize;
+	else if (sc->sc_usemixer)
+		drops += sc->sc_mixring.sc_mpr.blksize * PREFILL_BLOCKS;
+
 	error = 0;
-	while (cb->drops < drops && !error) {
+	while (cb->drops <= drops && !error) {
 		DPRINTF(("audio_drain: vc=%p used=%d, drops=%ld\n",
 			vc,
 			audio_stream_get_used(&vc->sc_mpr.s),
