@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nand.c,v 1.4 2017/11/13 17:37:02 jmcneill Exp $ */
+/* $NetBSD: sunxi_nand.c,v 1.5 2017/11/15 00:30:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.4 2017/11/13 17:37:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.5 2017/11/15 00:30:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,8 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.4 2017/11/13 17:37:02 jmcneill Exp 
 #define	NDFC_ST			0x04
 #define	 NDFC_ST_RB_STATE(n)		__BIT(8 + (n))
 #define	 NDFC_ST_CMD_FIFO_STATUS	__BIT(3)
+#define	 NDFC_ST_DMA_INT_FLAG		__BIT(2)
 #define	 NDFC_ST_CMD_INT_FLAG		__BIT(1)
+#define	 NDFC_ST_INT_MASK		__BITS(2,0)
 #define	NDFC_INT		0x08
+#define	 NDFC_INT_CMD_INT_ENABLE	__BIT(1)
 #define	NDFC_TIMING_CTL		0x0c
 #define	NDFC_TIMING_CFG		0x10
 #define	NDFC_ADDR_LOW		0x14
@@ -130,6 +133,12 @@ struct sunxi_nand_softc {
 	int				sc_phandle;
 	bus_space_tag_t			sc_bst;
 	bus_space_handle_t		sc_bsh;
+	void				*sc_ih;
+
+	kmutex_t			sc_lock;
+	kcondvar_t			sc_cv;
+
+	uint32_t			sc_intr;
 
 	struct clk			*sc_clk_mod;
 	struct clk			*sc_clk_ahb;
@@ -157,7 +166,7 @@ static int
 sunxi_nand_wait_status(struct sunxi_nand_softc *sc, uint32_t mask, uint32_t val)
 {
 	uint32_t status;
-	int retry;
+	int retry, error = 0;
 
 	for (retry = 1000000; retry > 0; retry--) {
 		status = NAND_READ(sc, NDFC_ST);
@@ -171,13 +180,42 @@ sunxi_nand_wait_status(struct sunxi_nand_softc *sc, uint32_t mask, uint32_t val)
 		    "device timeout; status=%x mask=%x val=%x\n",
 		    status, mask, val);
 #endif
-		return ETIMEDOUT;
+		error = ETIMEDOUT;
 	}
 
 	if (mask == NDFC_ST_CMD_INT_FLAG)
 		NAND_WRITE(sc, NDFC_ST, NDFC_ST_CMD_INT_FLAG);
 
-	return 0;
+	return error;
+}
+
+static int
+sunxi_nand_wait_intr(struct sunxi_nand_softc *sc, uint32_t mask)
+{
+	struct bintime timeo, epsilon;
+	int error = 0;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	sc->sc_intr = 0;
+
+	/* Enable interrupts */
+	NAND_WRITE(sc, NDFC_INT, mask);
+
+	/* Wait for the command to complete */
+	timeo = ms2bintime(1000);
+	epsilon = ms2bintime(1000);
+	do {
+		if (sc->sc_intr & mask)
+			break;
+		error = cv_timedwaitbt(&sc->sc_cv, &sc->sc_lock, &timeo,
+		    &epsilon);
+	} while (error == 0);
+
+	/* Disable interrupts */
+	NAND_WRITE(sc, NDFC_INT, 0);
+
+	return error;
 }
 
 static void
@@ -232,8 +270,15 @@ sunxi_nand_read_buf_n(device_t dev, void *data, size_t len, int n)
 		    NDFC_CMD_DATA_TRANS | NDFC_CMD_DATA_METHOD);
 
 		/* Wait for the command to finish */
-		error = sunxi_nand_wait_status(sc, NDFC_ST_CMD_INT_FLAG,
-		    NDFC_ST_CMD_INT_FLAG);
+		if (cold) {
+			error = sunxi_nand_wait_status(sc, NDFC_ST_CMD_INT_FLAG,
+			    NDFC_ST_CMD_INT_FLAG);
+		} else {
+			mutex_enter(&sc->sc_lock);
+			error = sunxi_nand_wait_intr(sc, NDFC_ST_CMD_INT_FLAG);
+			mutex_exit(&sc->sc_lock);
+		}
+
 		if (error != 0)
 			return error;
 
@@ -293,8 +338,14 @@ sunxi_nand_write_buf_n(device_t dev, const void *data, size_t len, int n)
 		    NDFC_CMD_ACCESS_DIR);
 
 		/* Wait for the command to finish */
-		error = sunxi_nand_wait_status(sc, NDFC_ST_CMD_INT_FLAG,
-		    NDFC_ST_CMD_INT_FLAG);
+		if (cold) {
+			error = sunxi_nand_wait_status(sc, NDFC_ST_CMD_INT_FLAG,
+			    NDFC_ST_CMD_INT_FLAG);
+		} else {
+			mutex_enter(&sc->sc_lock);
+			error = sunxi_nand_wait_intr(sc, NDFC_ST_CMD_INT_FLAG);
+			mutex_exit(&sc->sc_lock);
+		}
 		if (error != 0)
 			return error;
 
@@ -427,6 +478,26 @@ static void
 sunxi_nand_write_buf_2(device_t dev, const void *data, size_t len)
 {
 	sunxi_nand_write_buf_n(dev, data, len, 2);
+}
+
+static int
+sunxi_nand_intr(void *priv)
+{
+	struct sunxi_nand_softc * const sc = priv;
+	uint32_t status;
+	int rv = 0;
+
+	mutex_enter(&sc->sc_lock);
+	status = NAND_READ(sc, NDFC_ST) & NDFC_ST_INT_MASK;
+	if (status) {
+		sc->sc_intr |= status;
+		NAND_WRITE(sc, NDFC_ST, status);
+		cv_signal(&sc->sc_cv);
+		rv = 1;
+	}
+	mutex_exit(&sc->sc_lock);
+
+	return rv;
 }
 
 static void
@@ -569,12 +640,17 @@ sunxi_nand_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_nand_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
 	int child;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": couldn't decode interrupt\n");
 		return;
 	}
 
@@ -585,9 +661,20 @@ sunxi_nand_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sc->sc_cv, "nandxfer");
 
 	aprint_naive("\n");
 	aprint_normal(": NAND Flash Controller\n");
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sunxi_nand_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	if (sunxi_nand_init_resources(sc) != 0) {
 		aprint_error_dev(self, "couldn't initialize resources\n");
