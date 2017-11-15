@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.432 2017/11/15 01:45:57 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.433 2017/11/15 01:49:59 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.432 2017/11/15 01:45:57 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.433 2017/11/15 01:49:59 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2310,7 +2310,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
-	grow_mixer_states(sc, 2);
+	if (sc->sc_usemixer)
+		grow_mixer_states(sc, 2);
 	if (flags & FREAD)
 		sc->sc_recopens++;
 	if (flags & FWRITE)
