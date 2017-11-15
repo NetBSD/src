@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.16 2017/11/15 20:25:29 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.17 2017/11/15 20:45:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -35,6 +35,13 @@
 #define PAD_DATA	0x00
 
 #define ELFROUND	64
+
+static const int pads[4] = {
+	[BTSEG_NONE] = 0x00,
+	[BTSEG_TEXT] = 0xCC,
+	[BTSEG_RODATA] = 0x00,
+	[BTSEG_DATA] = 0x00
+};
 
 #define MM_PROT_READ	0x00
 #define MM_PROT_WRITE	0x01
@@ -107,7 +114,7 @@ mm_vatopa(vaddr_t va)
 }
 
 static void
-mm_mprotect(vaddr_t startva, size_t size, int prot)
+mm_mprotect(vaddr_t startva, size_t size, pte_prot_t prot)
 {
 	size_t i, npages;
 	vaddr_t va;
@@ -127,7 +134,7 @@ mm_mprotect(vaddr_t startva, size_t size, int prot)
 void
 mm_bootspace_mprotect(void)
 {
-	int prot;
+	pte_prot_t prot;
 	size_t i;
 
 	/* Remap the kernel segments with proper permissions. */
@@ -242,7 +249,7 @@ mm_map_head(void)
 }
 
 static vaddr_t
-mm_randva_kregion(size_t size, size_t align)
+mm_randva_kregion(size_t size, size_t pagesz)
 {
 	vaddr_t sva, eva;
 	vaddr_t randva;
@@ -253,7 +260,7 @@ mm_randva_kregion(size_t size, size_t align)
 	while (1) {
 		rnd = mm_rand_num64();
 		randva = rounddown(KASLR_WINDOW_BASE +
-		    rnd % (KASLR_WINDOW_SIZE - size), align);
+		    rnd % (KASLR_WINDOW_SIZE - size), pagesz);
 
 		/* Detect collisions */
 		ok = true;
@@ -329,6 +336,8 @@ mm_shift_segment(vaddr_t va, size_t pagesz, size_t elfsz, size_t elfalign)
 		elfalign = ELFROUND;
 	}
 
+	ASSERT(pagesz >= elfalign);
+	ASSERT(pagesz % elfalign == 0);
 	shiftsize = roundup(elfsz, pagesz) - roundup(elfsz, elfalign);
 	if (shiftsize == 0) {
 		return 0;
@@ -368,13 +377,7 @@ mm_map_segment(int segtype, paddr_t pa, size_t elfsz, size_t elfalign)
 	offset = mm_shift_segment(randva, pagesz, elfsz, elfalign);
 	ASSERT(offset + elfsz <= size);
 
-	if (segtype == BTSEG_TEXT) {
-		pad = PAD_TEXT;
-	} else if (segtype == BTSEG_RODATA) {
-		pad = PAD_RODATA;
-	} else {
-		pad = PAD_DATA;
-	}
+	pad = pads[segtype];
 	memset((void *)randva, pad, offset);
 	memset((void *)(randva + offset + elfsz), pad, size - elfsz - offset);
 
