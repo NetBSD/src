@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.360 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.361 2017/11/15 09:54:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.360 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.361 2017/11/15 09:54:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3806,15 +3806,12 @@ syn_cache_timer(void *arg)
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+
 	callout_ack(&sc->sc_timer);
 
 	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
 		TCP_STATINC(TCP_STAT_SC_DELAYED_FREE);
-		callout_destroy(&sc->sc_timer);
-		pool_put(&syn_cache_pool, sc);
-		KERNEL_UNLOCK_ONE(NULL);
-		mutex_exit(softnet_lock);
-		return;
+		goto free;
 	}
 
 	if (__predict_false(sc->sc_rxtshift == TCP_MAXRXTSHIFT)) {
@@ -3838,9 +3835,7 @@ syn_cache_timer(void *arg)
 	sc->sc_rxtshift++;
 	SYN_CACHE_TIMER_ARM(sc);
 
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-	return;
+	goto out;
 
  dropit:
 	TCP_STATINC(TCP_STAT_SC_TIMED_OUT);
@@ -3848,8 +3843,12 @@ syn_cache_timer(void *arg)
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
 	rtcache_free(&sc->sc_route);
+
+ free:
 	callout_destroy(&sc->sc_timer);
 	pool_put(&syn_cache_pool, sc);
+
+ out:
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
