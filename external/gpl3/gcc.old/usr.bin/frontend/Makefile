@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2017/11/15 07:47:10 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -22,6 +22,8 @@ SRCS+=		driver-rs6000.c
 .endif
 
 .include "../Makefile.target-defines"
+
+version.c: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 CPPFLAGS+=	-I${GCCARCH} -I. \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
