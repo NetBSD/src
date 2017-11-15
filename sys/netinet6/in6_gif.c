@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.86 2017/09/21 09:42:03 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.87 2017/11/15 10:42:41 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.86 2017/09/21 09:42:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.87 2017/11/15 10:42:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -211,20 +211,19 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 }
 
 int
-in6_gif_input(struct mbuf **mp, int *offp, int proto)
+in6_gif_input(struct mbuf **mp, int *offp, int proto, void *eparg)
 {
 	struct mbuf *m = *mp;
-	struct ifnet *gifp = NULL;
+	struct ifnet *gifp = eparg;
 	struct ip6_hdr *ip6;
 	int af = 0;
 	u_int32_t otos;
 
+	KASSERT(gifp != NULL);
+
 	ip6 = mtod(m, struct ip6_hdr *);
 
-	gifp = (struct ifnet *)encap_getarg(m);
-
-	if (gifp == NULL || (gifp->if_flags & (IFF_UP|IFF_RUNNING))
-		!= (IFF_UP|IFF_RUNNING)) {
+	if ((gifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
 		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
