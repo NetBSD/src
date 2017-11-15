@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.14 2017/11/15 18:02:36 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.15 2017/11/15 20:45:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -370,11 +370,6 @@ elf_kernel_reloc(void)
 	size_t i, j;
 
 	print_state(true, "ELF info created");
-
-	/*
-	 * The loaded sections are: SHT_PROGBITS, SHT_NOBITS, SHT_STRTAB,
-	 * SHT_SYMTAB.
-	 */
 
 	/*
 	 * Update all symbol values with the appropriate offset.
