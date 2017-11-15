@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.67 2017/11/07 01:13:19 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.68 2017/11/15 04:28:45 nat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -126,7 +126,6 @@ struct virtual_channel {
 	u_char			sc_mode;	/* bitmask for RECORD/PLAY */
 
 	uint8_t			*sc_sil_start;	/* start of silence in buffer */
-	int			sc_sil_count;	/* # of silence bytes */
 	bool			sc_pbus;	/* output DMA in progress */
 	audio_params_t		sc_pparams;	/* play encoding parameters */
 	audio_stream_t		*sc_pustream;	/* the first buffer */

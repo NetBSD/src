@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.437 2017/11/15 02:13:33 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.438 2017/11/15 04:28:45 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.437 2017/11/15 02:13:33 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.438 2017/11/15 04:28:45 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -294,9 +294,6 @@ int	audio_drain(struct audio_softc *, struct virtual_channel *);
 void	audio_clear(struct audio_softc *, struct virtual_channel *);
 void	audio_clear_intr_unlocked(struct audio_softc *sc,
 				  struct virtual_channel *);
-static inline void
-	audio_pint_silence(struct audio_softc *, struct audio_ringbuffer *,
-			   uint8_t *, int, struct virtual_channel *);
 int	audio_alloc_ring(struct audio_softc *, struct audio_ringbuffer *, int,
 			 size_t);
 void	audio_free_ring(struct audio_softc *, struct audio_ringbuffer *);
@@ -2086,7 +2083,6 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		((vc->sc_open & AUOPEN_WRITE) || vc == sc->sc_hwvc)) {
 		audio_init_ringbuffer(sc, &vc->sc_mpr,
 		    AUMODE_PLAY);
-		vc->sc_sil_count = 0;
 		if (sc->sc_opens == 0 && (vc->sc_open & AUOPEN_WRITE)) {
 			if (hw->init_output) {
 				error = hw->init_output(sc->hw_hdl,
@@ -2181,7 +2177,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if (sc->sc_usemixer) {
 		vc->sc_open = 0;
 		vc->sc_mode = 0;
-		vc->sc_sil_count = 0;
 		vc->sc_nrfilters = 0;
 		memset(vc->sc_rfilters, 0,
 		    sizeof(vc->sc_rfilters));
@@ -3020,12 +3015,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 		einp = cb->s.inp;
 
 		/*
-		 * This is a very suboptimal way of keeping track of
-		 * silence in the buffer, but it is simple.
-		 */
-		vc->sc_sil_count = 0;
-
-		/*
 		 * If the interrupt routine wants the last block filled AND
 		 * the copy did not fill the last block completely it needs to
 		 * be padded.
@@ -3623,60 +3612,6 @@ done:
 	return error;
 }
 
-/*
- * When the play interrupt routine finds that the write isn't keeping
- * the buffer filled it will insert silence in the buffer to make up
- * for this.  The part of the buffer that is filled with silence
- * is kept track of in a very approximate way: it starts at sc_sil_start
- * and extends sc_sil_count bytes.  If there is already silence in
- * the requested area nothing is done; so when the whole buffer is
- * silent nothing happens.  When the writer starts again sc_sil_count
- * is set to 0.
- *
- * XXX
- * Putting silence into the output buffer should not really be done
- * from the device interrupt handler.  Consider deferring to the soft
- * interrupt.
- */
-static inline void
-audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
-		   uint8_t *inp, int cc, struct virtual_channel *vc)
-{
-	uint8_t *s, *e, *p, *q;
-
-	KASSERT(mutex_owned(sc->sc_lock));
-
-	if (vc->sc_sil_count > 0) {
-		s = vc->sc_sil_start; /* start of silence */
-		e = s + vc->sc_sil_count; /* end of sil., may be beyond end */
-		p = inp;	/* adjusted pointer to area to fill */
-		if (p < s)
-			p += cb->s.end - cb->s.start;
-		q = p + cc;
-		/* Check if there is already silence. */
-		if (!(s <= p && p <  e &&
-		      s <= q && q <= e)) {
-			if (s <= p)
-				vc->sc_sil_count = max(vc->sc_sil_count, q-s);
-			DPRINTFN(5,("audio_pint_silence: fill cc=%d inp=%p, "
-				    "count=%d size=%d\n",
-				    cc, inp, vc->sc_sil_count,
-				    (int)(cb->s.end - cb->s.start)));
-			audio_fill_silence(&cb->s.param, inp, cc);
-		} else {
-			DPRINTFN(5,("audio_pint_silence: already silent "
-				    "cc=%d inp=%p\n", cc, inp));
-
-		}
-	} else {
-		vc->sc_sil_start = inp;
-		vc->sc_sil_count = cc;
-		DPRINTFN(5, ("audio_pint_silence: start fill %p %d\n",
-			     inp, cc));
-		audio_fill_silence(&cb->s.param, inp, cc);
-	}
-}
-
 static void
 audio_softintr_rd(void *cookie)
 {
@@ -3899,15 +3834,15 @@ audio_mix(void *v)
 					vc->sc_playdrop += cc;
 				}
 
-				audio_pint_silence(sc, cb, inp, cc, vc);
+				audio_fill_silence(&cb->s.param, inp, cc);
 				cb->s.inp = audio_stream_add_inp(&cb->s, inp,
 				    cc);
 
 				/* Clear next block to keep ahead of the DMA. */
 				used = audio_stream_get_used(&cb->s);
 				if (used + blksize < cb->s.end - cb->s.start) {
-					audio_pint_silence(sc, cb, cb->s.inp,
-					    blksize, vc);
+					audio_fill_silence(&cb->s.param, cb->s.inp,
+					    blksize);
 				}
 			}
 		}
