@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.14 2017/11/15 18:44:34 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.15 2017/11/15 20:45:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -41,7 +41,6 @@
 typedef uint64_t paddr_t;
 typedef uint64_t vaddr_t;
 typedef uint64_t pt_entry_t;
-typedef uint64_t pd_entry_t;
 typedef uint64_t pte_prot_t;
 #define WHITE_ON_BLACK 0x07
 #define RED_ON_BLACK 0x04
