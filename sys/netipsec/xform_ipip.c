@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.54 2017/10/03 08:56:52 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.55 2017/11/15 10:42:41 knakahara Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.54 2017/10/03 08:56:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.55 2017/11/15 10:42:41 knakahara Exp $");
 
 /*
  * IP-inside-IP processing
@@ -121,7 +121,7 @@ static void _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp);
  * Really only a wrapper for ipip_input(), for use with IPv6.
  */
 int
-ip4_input6(struct mbuf **m, int *offp, int proto)
+ip4_input6(struct mbuf **m, int *offp, int proto, void *eparg __unused)
 {
 #if 0
 	/* If we do not accept IP-in-IP explicitly, drop.  */
@@ -142,7 +142,7 @@ ip4_input6(struct mbuf **m, int *offp, int proto)
  * Really only a wrapper for ipip_input(), for use with IPv4.
  */
 void
-ip4_input(struct mbuf *m, int off, int proto)
+ip4_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 {
 
 #if 0

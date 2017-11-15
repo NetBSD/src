@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.102 2017/10/23 09:32:55 msaitoh Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.103 2017/11/15 10:42:41 knakahara Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.102 2017/10/23 09:32:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.103 2017/11/15 10:42:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -591,15 +591,17 @@ stf_checkaddr6(struct stf_softc *sc, const struct in6_addr *in6,
 }
 
 void
-in_stf_input(struct mbuf *m, int off, int proto)
+in_stf_input(struct mbuf *m, int off, int proto, void *eparg)
 {
 	int s;
-	struct stf_softc *sc;
+	struct stf_softc *sc = eparg;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	uint8_t otos, itos;
 	struct ifnet *ifp;
 	size_t pktlen;
+
+	KASSERT(sc != NULL);
 
 	if (proto != IPPROTO_IPV6) {
 		m_freem(m);
@@ -608,9 +610,7 @@ in_stf_input(struct mbuf *m, int off, int proto)
 
 	ip = mtod(m, struct ip *);
 
-	sc = (struct stf_softc *)encap_getarg(m);
-
-	if (sc == NULL || (sc->sc_if.if_flags & IFF_UP) == 0) {
+	if ((sc->sc_if.if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.3 2017/07/11 05:03:45 knakahara Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.4 2017/11/15 10:42:41 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.3 2017/07/11 05:03:45 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.4 2017/11/15 10:42:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.3 2017/07/11 05:03:45 knakahara Exp $"
 
 int ip_l2tp_ttl = L2TP_TTL;
 
-static void in_l2tp_input(struct mbuf *, int, int);
+static void in_l2tp_input(struct mbuf *, int, int, void *);
 
 static const struct encapsw in_l2tp_encapsw = {
 	.encapsw4 = {
@@ -250,7 +250,7 @@ out:
 }
 
 static void
-in_l2tp_input(struct mbuf *m, int off, int proto)
+in_l2tp_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 {
 	struct ifnet *l2tpp = NULL;
 	struct l2tp_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.h,v 1.15 2016/07/04 04:22:47 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.h,v 1.16 2017/11/15 10:42:41 knakahara Exp $	*/
 /*	$KAME: in6_gif.h,v 1.7 2001/07/26 06:53:16 jinmei Exp $	*/
 
 /*
@@ -38,7 +38,7 @@ extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
 
 struct gif_softc;
 struct sockaddr;
-int in6_gif_input(struct mbuf **, int *, int);
+int in6_gif_input(struct mbuf **, int *, int, void *);
 int in6_gif_output(struct ifnet *, int, struct mbuf *);
 #ifdef GIF_ENCAPCHECK
 int gif_encapcheck6(struct mbuf *, int, int, void *);
