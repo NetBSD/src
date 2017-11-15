@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.13 2017/11/14 07:06:34 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.14 2017/11/15 18:02:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -267,7 +267,7 @@ elf_map_sections(void)
 	int segtype;
 	vaddr_t secva;
 	paddr_t secpa;
-	size_t i, secsz;
+	size_t i, secsz, secalign;
 
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
 		shdr = &eif.shdr[i];
@@ -289,10 +289,11 @@ elf_map_sections(void)
 		}
 		secpa = basepa + shdr->sh_offset;
 		secsz = shdr->sh_size;
+		secalign = shdr->sh_addralign;
 		ASSERT(shdr->sh_offset != 0);
 		ASSERT(secpa % PAGE_SIZE == 0);
 
-		secva = mm_map_segment(segtype, secpa, secsz);
+		secva = mm_map_segment(segtype, secpa, secsz, secalign);
 
 		/* We want (headva + sh_offset) to be the VA of the section. */
 		ASSERT(secva > headva);
