@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.138 2017/10/25 04:33:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.139 2017/11/15 06:17:40 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.138 2017/10/25 04:33:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.139 2017/11/15 06:17:40 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -415,8 +415,8 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	if (error)
 		panic("%s: workqueue_create %d\n", __func__, error);
 
-	callout_init(&sc->sc_brcallout, 0);
-	callout_init(&sc->sc_bstpcallout, 0);
+	callout_init(&sc->sc_brcallout, CALLOUT_MPSAFE);
+	callout_init(&sc->sc_bstpcallout, CALLOUT_MPSAFE);
 
 	mutex_init(&sc->sc_iflist_psref.bip_lock, MUTEX_DEFAULT, IPL_NONE);
 	PSLIST_INIT(&sc->sc_iflist_psref.bip_iflist);
