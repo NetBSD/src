@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.361 2017/11/15 09:54:18 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.362 2017/11/15 09:55:22 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.361 2017/11/15 09:54:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.362 2017/11/15 09:55:22 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -248,6 +248,8 @@ static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
 static int tcp_ackdrop_ppslim_count = 0;
 static struct timeval tcp_ackdrop_ppslim_last;
+
+static void syn_cache_timer(void *);
 
 #define TCP_PAWS_IDLE	(24U * 24 * 60 * 60 * PR_SLOWHZ)
 
@@ -3799,7 +3801,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
  * If we have retransmitted an entry the maximum number of times, expire
  * that entry.
  */
-void
+static void
 syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
