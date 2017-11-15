@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.15 2017/11/15 18:44:34 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.16 2017/11/15 20:25:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -350,7 +350,7 @@ mm_map_segment(int segtype, paddr_t pa, size_t elfsz, size_t elfalign)
 	vaddr_t randva;
 	char pad;
 
-	if (elfsz < PAGE_SIZE) {
+	if (elfsz <= PAGE_SIZE) {
 		pagesz = NBPD_L1;
 	} else {
 		pagesz = NBPD_L2;
