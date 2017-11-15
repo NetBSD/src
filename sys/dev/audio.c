@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.435 2017/11/15 01:58:48 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.436 2017/11/15 02:02:55 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.435 2017/11/15 01:58:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.436 2017/11/15 02:02:55 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3735,6 +3735,7 @@ void
 audio_pint(void *v)
 {
 	struct audio_softc *sc;
+	struct audio_ringbuffer *cb;
 	struct virtual_channel *vc;
 	int blksize, cc, used;
 
@@ -3745,31 +3746,34 @@ audio_pint(void *v)
 	if (sc->sc_dying == true || sc->sc_trigger_started == false)
 		return;
 
-	if (vc->sc_draining && (!sc->sc_usemixer ||
-	    (sc->sc_mixring.sc_mpr.drops != sc->sc_last_drops))) {
+	if (sc->sc_usemixer)
+		cb = &sc->sc_mixring.sc_mpr;
+	else
+		cb = &vc->sc_mpr;
+
+	if (vc->sc_draining && cb->drops != sc->sc_last_drops) {
 		vc->sc_mpr.drops += blksize;
 		cv_broadcast(&sc->sc_wchan);
 	}
-	sc->sc_last_drops = sc->sc_mixring.sc_mpr.drops;
+
+	sc->sc_last_drops = cb->drops;
 
 	vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
 	    vc->sc_mpr.s.outp, blksize);
 
-	if (audio_stream_get_used(&sc->sc_mixring.sc_mpr.s) < blksize) {
+	if (audio_stream_get_used(&cb->s) < blksize) {
 		DPRINTFN(3, ("HW RING - INSERT SILENCE\n"));
 		used = blksize;
 		while (used > 0) {
-			cc = sc->sc_mixring.sc_mpr.s.end -
-			    sc->sc_mixring.sc_mpr.s.inp;
+			cc = cb->s.end - cb->s.inp;
 			if (cc > used)
 				cc = used;
-			audio_fill_silence(&vc->sc_pustream->param,
-			    sc->sc_mixring.sc_mpr.s.inp, cc);
-			sc->sc_mixring.sc_mpr.s.inp =
-			    audio_stream_add_inp(&sc->sc_mixring.sc_mpr.s,
-			        sc->sc_mixring.sc_mpr.s.inp, cc);
+			audio_fill_silence(&cb->s.param, cb->s.inp, cc);
+			cb->s.inp =
+			    audio_stream_add_inp(&cb->s, cb->s.inp, cc);
 			used -= cc;
 		}
+		vc->sc_mpr.drops += blksize;
 	}
 
 	mix_write(sc);
