@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.13 2017/11/14 07:06:34 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.14 2017/11/15 18:02:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -33,6 +33,8 @@
 #define PAD_TEXT	0xCC
 #define PAD_RODATA	0x00
 #define PAD_DATA	0x00
+
+#define ELFROUND	64
 
 static const pt_entry_t protection_codes[3] = {
 	[MM_PROT_READ] = PG_RO | PG_NX,
@@ -236,7 +238,7 @@ mm_map_head(void)
 }
 
 static vaddr_t
-mm_randva_kregion(size_t size)
+mm_randva_kregion(size_t size, size_t align)
 {
 	vaddr_t sva, eva;
 	vaddr_t randva;
@@ -247,7 +249,7 @@ mm_randva_kregion(size_t size)
 	while (1) {
 		rnd = mm_rand_num64();
 		randva = rounddown(KASLR_WINDOW_BASE +
-		    rnd % (KASLR_WINDOW_SIZE - size), PAGE_SIZE);
+		    rnd % (KASLR_WINDOW_SIZE - size), align);
 
 		/* Detect collisions */
 		ok = true;
@@ -313,21 +315,54 @@ bootspace_addseg(int type, vaddr_t va, paddr_t pa, size_t sz)
 	fatal("bootspace_addseg: segments full");
 }
 
-vaddr_t
-mm_map_segment(int segtype, paddr_t pa, size_t elfsz)
+static size_t
+mm_shift_segment(vaddr_t va, size_t pagesz, size_t elfsz, size_t elfalign)
 {
-	size_t i, npages, size;
+	size_t shiftsize, offset;
+	uint64_t rnd;
+
+	if (elfalign == 0) {
+		elfalign = ELFROUND;
+	}
+
+	shiftsize = roundup(elfsz, pagesz) - roundup(elfsz, elfalign);
+	if (shiftsize == 0) {
+		return 0;
+	}
+
+	rnd = mm_rand_num64();
+	offset = roundup(rnd % shiftsize, elfalign);
+	ASSERT((va + offset) % elfalign == 0);
+
+	memmove((void *)(va + offset), (void *)va, elfsz);
+
+	return offset;
+}
+
+vaddr_t
+mm_map_segment(int segtype, paddr_t pa, size_t elfsz, size_t elfalign)
+{
+	size_t i, npages, size, pagesz, offset;
 	vaddr_t randva;
 	char pad;
 
-	size = roundup(elfsz, PAGE_SIZE);
-	randva = mm_randva_kregion(size);
-	npages = size / PAGE_SIZE;
+	if (elfsz < PAGE_SIZE) {
+		pagesz = NBPD_L1;
+	} else {
+		pagesz = NBPD_L2;
+	}
 
+	size = roundup(elfsz, pagesz);
+	randva = mm_randva_kregion(size, pagesz);
+
+	npages = size / PAGE_SIZE;
 	for (i = 0; i < npages; i++) {
 		mm_enter_pa(pa + i * PAGE_SIZE,
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
+
+	offset = mm_shift_segment(randva, pagesz, elfsz, elfalign);
+	ASSERT(offset + elfsz <= size);
 
 	if (segtype == BTSEG_TEXT) {
 		pad = PAD_TEXT;
@@ -336,11 +371,12 @@ mm_map_segment(int segtype, paddr_t pa, size_t elfsz)
 	} else {
 		pad = PAD_DATA;
 	}
-	memset((void *)(randva + elfsz), pad, size - elfsz);
+	memset((void *)randva, pad, offset);
+	memset((void *)(randva + offset + elfsz), pad, size - elfsz - offset);
 
 	bootspace_addseg(segtype, randva, pa, size);
 
-	return randva;
+	return (randva + offset);
 }
 
 static void
@@ -357,7 +393,7 @@ mm_map_boot(void)
 
 	/* Create the page tree */
 	size = (NKL2_KIMG_ENTRIES + 1) * NBPD_L2;
-	randva = mm_randva_kregion(size);
+	randva = mm_randva_kregion(size, PAGE_SIZE);
 
 	/* Enter the area and build the ELF info */
 	bootpa = bootspace_getend();
