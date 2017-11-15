@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.h,v 1.7 2016/08/18 11:38:58 knakahara Exp $	*/
+/*	$NetBSD: if_stf.h,v 1.8 2017/11/15 10:42:41 knakahara Exp $	*/
 /*	$KAME: if_stf.h,v 1.3 2000/03/25 07:23:33 sumikawa Exp $	*/
 
 /*
@@ -39,6 +39,6 @@
 #define	STF_MTU_MIN	(1280)	/* Minimum MTU */
 #define	STF_MTU_MAX	(8192)	/* Maximum MTU */
 
-void	in_stf_input(struct mbuf *, int, int);
+void	in_stf_input(struct mbuf *, int, int, void *);
 
 #endif /* !_NET_IF_STF_H_ */
