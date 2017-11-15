@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.50 2017/11/13 21:32:21 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.51 2017/11/15 18:02:37 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -265,7 +265,8 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 
 /* -------------------------------------------------------------------------- */
 
-#define KERNALIGN 4096	/* XXX should depend on marks[] */
+#define KERNALIGN_SMALL (1 << 12)	/* XXX should depend on marks[] */
+#define KERNALIGN_LARGE (1 << 21)	/* XXX should depend on marks[] */
 
 /*
  * Read some data from a file, and put it in the bootloader memory (local).
@@ -343,7 +344,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	Elf_Shdr *shdr;
 	Elf_Addr shpp, addr;
 	int i, j, loaded;
-	size_t size, shdrsz;
+	size_t size, shdrsz, align;
 	Elf_Addr maxp, elfp = 0;
 	int ret;
 
@@ -385,14 +386,18 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	/*
 	 * Load the KERNEL SECTIONS.
 	 */
-	maxp = roundup(maxp, KERNALIGN);
+	maxp = roundup(maxp, KERNALIGN_SMALL);
 	for (i = 0; i < elf->e_shnum; i++) {
-		addr = maxp;
-		size = (size_t)shdr[i].sh_size;
-
 		if (!(shdr[i].sh_flags & SHF_ALLOC)) {
 			continue;
 		}
+		size = (size_t)shdr[i].sh_size;
+		if (size <= KERNALIGN_SMALL) {
+			align = KERNALIGN_SMALL;
+		} else {
+			align = KERNALIGN_LARGE;
+		}
+		addr = roundup(maxp, align);
 
 		loaded = 0;
 		switch (shdr[i].sh_type) {
@@ -415,10 +420,11 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 
 		if (loaded) {
-			shdr[i].sh_offset = maxp - elfp;
-			maxp = roundup(maxp + size, KERNALIGN);
+			shdr[i].sh_offset = addr - elfp;
+			maxp = roundup(addr + size, align);
 		}
 	}
+	maxp = roundup(maxp, KERNALIGN_LARGE);
 
 	/*
 	 * Load the SYM+REL SECTIONS.
@@ -456,7 +462,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			break;
 		}
 	}
-	maxp = roundup(maxp, KERNALIGN);
+	maxp = roundup(maxp, KERNALIGN_SMALL);
 
 	/*
 	 * Finally, load the SECTION HEADERS.
