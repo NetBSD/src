@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.434 2017/11/15 01:55:45 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.435 2017/11/15 01:58:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.434 2017/11/15 01:55:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.435 2017/11/15 01:58:48 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3593,7 +3593,13 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 	if (vc == sc->sc_hwvc && sc->sc_usemixer)
 		return 0;
 
-	if (!vc->sc_mpr.mmapped && used < sc->sc_mixring.sc_mpr.blksize) {
+	int blksize;
+	if (sc->sc_usemixer)
+		blksize = sc->sc_mixring.sc_mpr.blksize;
+	else
+		blksize = vc->sc_mpr.blksize;
+
+	if (!vc->sc_mpr.mmapped && used < blksize) {
 		cv_broadcast(&sc->sc_wchan);
 		DPRINTF(("%s: wakeup and return\n", __func__));
 		return 0;
@@ -3610,13 +3616,14 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 		error = mix_write(sc);
 		if (error)
 			goto done;
-		vc = sc->sc_hwvc;
-		vc->sc_mpr.s.outp =
-		    audio_stream_add_outp(&vc->sc_mpr.s,
-		      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
-		error = mix_write(sc);
-		if (sc->sc_usemixer)
+		if (sc->sc_usemixer) {
+			vc = sc->sc_hwvc;
+			vc->sc_mpr.s.outp =
+			    audio_stream_add_outp(&vc->sc_mpr.s,
+			      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
+			error = mix_write(sc);
 			cv_broadcast(&sc->sc_condvar);
+		}
 done:
 		mutex_exit(sc->sc_intr_lock);
 	}
