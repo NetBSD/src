@@ -1,3 +1,5 @@
+/* $Id: wbsioreg.h,v 1.4 2017/11/15 09:13:26 msaitoh Exp $ */
+
 /* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
