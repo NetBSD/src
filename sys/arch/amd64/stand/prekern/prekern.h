@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.13 2017/11/15 18:02:36 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.14 2017/11/15 18:44:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -36,10 +36,6 @@
 
 #include "pdir.h"
 #include "redef.h"
-
-#define MM_PROT_READ	0x00
-#define MM_PROT_WRITE	0x01
-#define MM_PROT_EXECUTE	0x02
 
 #define ASSERT(a) if (!(a)) fatal("ASSERT");
 typedef uint64_t paddr_t;
