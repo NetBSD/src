@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.431 2017/11/07 09:26:55 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.432 2017/11/15 01:45:57 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.431 2017/11/07 09:26:55 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.432 2017/11/15 01:45:57 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1605,7 +1605,7 @@ audio_waitio(struct audio_softc *sc, kcondvar_t *chan, struct virtual_channel *v
 	/* Wait for pending I/O to complete. */
 	error = cv_wait_sig(chan, sc->sc_lock);
 
-	if (!sc->sc_usemixer)
+	if (!sc->sc_usemixer || vc == sc->sc_hwvc)
 		return error;
 
 	found = false;
