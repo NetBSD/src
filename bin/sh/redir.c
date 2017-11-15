@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.58 2017/06/30 23:01:21 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.59 2017/11/15 09:21:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.58 2017/06/30 23:01:21 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.59 2017/11/15 09:21:48 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: redir.c,v 1.58 2017/06/30 23:01:21 kre Exp $");
 #include "memalloc.h"
 #include "mystring.h"
 #include "error.h"
+#include "show.h"
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
@@ -278,6 +279,8 @@ openredirect(union node *redir, char memory[10], int flags)
 			eflags = 0;
 		if ((f = open(fname, O_RDONLY|eflags)) < 0)
 			goto eopen;
+		VTRACE(DBG_REDIR, ("openredirect(< '%s') -> %d [%#x]",
+		    fname, f, eflags));
 		if (eflags)
 			(void)fcntl(f, F_SETFL, fcntl(f, F_GETFL, 0) & ~eflags);
 		break;
@@ -285,6 +288,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		fname = redir->nfile.expfname;
 		if ((f = open(fname, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0)
 			goto ecreate;
+		VTRACE(DBG_REDIR, ("openredirect(<> '%s') -> %d", fname, f));
 		break;
 	case NTO:
 		if (Cflag) {
@@ -310,11 +314,13 @@ openredirect(union node *redir, char memory[10], int flags)
 		fname = redir->nfile.expfname;
 		if ((f = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
 			goto ecreate;
+		VTRACE(DBG_REDIR, ("openredirect(> '%s') -> %d", fname, f));
 		break;
 	case NAPPEND:
 		fname = redir->nfile.expfname;
 		if ((f = open(fname, O_WRONLY|O_CREAT|O_APPEND, 0666)) < 0)
 			goto ecreate;
+		VTRACE(DBG_REDIR, ("openredirect(>> '%s') -> %d", fname, f));
 		break;
 	case NTOFD:
 	case NFROMFD:
@@ -326,13 +332,19 @@ openredirect(union node *redir, char memory[10], int flags)
 			    (flags & REDIR_KEEP) == 0) < 0)
 				error("Redirect (from %d to %d) failed: %s",
 				    redir->ndup.dupfd, fd, strerror(errno));
-		} else
+			VTRACE(DBG_REDIR, ("openredirect: %d%c&%d\n", fd,
+			    "<>"[redir->nfile.type==NTOFD], redir->ndup.dupfd));
+		} else {
 			(void) close(fd);
+			VTRACE(DBG_REDIR, ("openredirect: %d%c&-\n", fd,
+			    "<>"[redir->nfile.type==NTOFD]));
+		}
 		INTON;
 		return;
 	case NHERE:
 	case NXHERE:
 		f = openhere(redir);
+		VTRACE(DBG_REDIR, ("openredirect: %d<<...", fd));
 		break;
 	default:
 		abort();
@@ -340,6 +352,7 @@ openredirect(union node *redir, char memory[10], int flags)
 
 	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0 && !posix;
 	if (f != fd) {
+		VTRACE(DBG_REDIR, (" -> %d", fd));
 		if (copyfd(f, fd, cloexec) < 0) {
 			int e = errno;
 
@@ -350,6 +363,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		close(f);
 	} else if (cloexec)
 		(void)fcntl(f, F_SETFD, FD_CLOEXEC);
+	VTRACE(DBG_REDIR, ("%s\n", cloexec ? " cloexec" : ""));
 
 	INTON;
 	return;
@@ -549,6 +563,7 @@ to_upper_fd(int fd)
 {
 	int i;
 
+	VTRACE(DBG_REDIR|DBG_OUTPUT, ("to_upper_fd(%d)", fd));
 	if (big_sh_fd < 10)
 		find_big_fd();
 	do {
@@ -556,6 +571,7 @@ to_upper_fd(int fd)
 		if (i >= 0) {
 			if (fd != i)
 				close(fd);
+			VTRACE(DBG_REDIR|DBG_OUTPUT, ("-> %d\n", i));
 			return i;
 		}
 		if (errno != EMFILE && errno != EINVAL)
@@ -569,6 +585,7 @@ to_upper_fd(int fd)
 	 * if the reassignment failed.
 	 */
 	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
+	VTRACE(DBG_REDIR|DBG_OUTPUT, (" fails ->%d\n", fd));
 	return fd;
 }
 
