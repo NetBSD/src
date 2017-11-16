@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.438 2017/11/15 04:28:45 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.439 2017/11/16 23:32:11 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.438 2017/11/15 04:28:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.439 2017/11/16 23:32:11 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3749,8 +3749,9 @@ audio_mix(void *v)
 		inp = cb->s.inp;
 		cb->stamp += blksize;
 		if (cb->mmapped) {
-			DPRINTF(("audio_pint: mmapped outp=%p cc=%d inp=%p\n",
-				     cb->s.outp, blksize, cb->s.inp));
+			DPRINTF(("audio_pint: vc=%p mmapped outp=%p cc=%d "
+				 "inp=%p\n", vc, cb->s.outp, blksize,
+				  cb->s.inp));
 			mutex_enter(sc->sc_intr_lock);
 			mix_func(sc, cb, vc);
 			cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp,
@@ -3825,6 +3826,9 @@ audio_mix(void *v)
 				DPRINTFN(1, ("audio_pint: copying in "
 					 "progress\n"));
 			} else {
+				DPRINTF(("audio_pint: used < blksize vc=%p "
+					  "used=%d blksize=%d\n", vc, used,
+					  blksize));
 				inp = cb->s.inp;
 				cc = blksize - (inp - cb->s.start) % blksize;
 				if (cb->pause)
@@ -3847,17 +3851,16 @@ audio_mix(void *v)
 			}
 		}
 
-		DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->s.outp,
-			 blksize));
+		DPRINTFN(5, ("audio_pint: vc=%p outp=%p used=%d cc=%d\n", vc,
+			 cb->s.outp, used, blksize));
 		mutex_enter(sc->sc_intr_lock);
 		mix_func(sc, cb, vc);
 		mutex_exit(sc->sc_intr_lock);
 		cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp, blksize);
 
-		DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
-			     vc->sc_mode, cb->pause,
-			     audio_stream_get_used(vc->sc_pustream),
-			     cb->usedlow));
+		DPRINTFN(2, ("audio_pint: vc=%p mode=%d pause=%d used=%d "
+			     "lowat=%d\n", vc, vc->sc_mode, cb->pause,
+			     audio_stream_get_used(&cb->s), cb->usedlow));
 
 		if ((vc->sc_mode & AUMODE_PLAY) && !cb->pause) {
 			if (audio_stream_get_used(&cb->s) <= cb->usedlow)
