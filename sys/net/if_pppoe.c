@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.130 2017/11/15 07:52:58 knakahara Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.131 2017/11/16 03:07:18 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.130 2017/11/15 07:52:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.131 2017/11/16 03:07:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -303,7 +303,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_if.if_mtu = PPPOE_MAXMTU;
 	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX|IFF_POINTOPOINT|IFF_MULTICAST;
 #ifdef PPPOE_MPSAFE
-	sc->sc_sppp.pp_if.if_extflags = IFEF_OUTPUT_MPSAFE;
+	sc->sc_sppp.pp_if.if_extflags = IFEF_MPSAFE;
 #endif
 	sc->sc_sppp.pp_if.if_type = IFT_PPP;
 	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header) + PPPOE_HEADERLEN;

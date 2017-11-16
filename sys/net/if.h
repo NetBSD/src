@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.241 2017/10/23 09:21:20 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.242 2017/11/16 03:07:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -387,16 +387,21 @@ typedef struct ifnet {
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
 
-#define	IFEF_OUTPUT_MPSAFE		__BIT(0)	/* if_output() can run parallel */
-#define	IFEF_START_MPSAFE		__BIT(1)	/* if_start() can run parallel */
-#define	IFEF_NO_LINK_STATE_CHANGE	__BIT(2)	/* doesn't use link state interrupts */
+#define	IFEF_MPSAFE			__BIT(0)	/* handlers can run in parallel (see below) */
+#define	IFEF_NO_LINK_STATE_CHANGE	__BIT(1)	/* doesn't use link state interrupts */
+
+/*
+ * if_XXX() handlers that IFEF_MPSAFE suppresses KERNEL_LOCK:
+ *   - if_start
+ *   - if_output
+ */
 
 #ifdef _KERNEL
 static inline bool
-if_output_is_mpsafe(struct ifnet *ifp)
+if_is_mpsafe(struct ifnet *ifp)
 {
 
-	return ((ifp->if_extflags & IFEF_OUTPUT_MPSAFE) != 0);
+	return ((ifp->if_extflags & IFEF_MPSAFE) != 0);
 }
 
 static inline int
@@ -404,7 +409,7 @@ if_output_lock(struct ifnet *cifp, struct ifnet *ifp, struct mbuf *m,
     const struct sockaddr *dst, const struct rtentry *rt)
 {
 
-	if (if_output_is_mpsafe(cifp)) {
+	if (if_is_mpsafe(cifp)) {
 		return (*cifp->if_output)(ifp, m, dst, rt);
 	} else {
 		int ret;
@@ -416,18 +421,11 @@ if_output_lock(struct ifnet *cifp, struct ifnet *ifp, struct mbuf *m,
 	}
 }
 
-static inline bool
-if_start_is_mpsafe(struct ifnet *ifp)
-{
-
-	return ((ifp->if_extflags & IFEF_START_MPSAFE) != 0);
-}
-
 static inline void
 if_start_lock(struct ifnet *ifp)
 {
 
-	if (if_start_is_mpsafe(ifp)) {
+	if (if_is_mpsafe(ifp)) {
 		(*ifp->if_start)(ifp);
 	} else {
 		KERNEL_LOCK(1, NULL);
