@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.91 2016/09/05 00:40:28 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.92 2017/11/16 17:08:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.91 2016/09/05 00:40:28 sevan Exp $");
+__RCSID("$NetBSD: main.c,v 1.92 2017/11/16 17:08:07 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1868,6 +1868,15 @@ check_dead_devi(const char *key, void *value, void *aux)
 	return 0;
 }
 
+static int
+is_orphan_loop(const struct devbase *d, const struct devbase *p)
+{
+
+	for (; p && d != p; p = p->d_levelparent)
+		continue;
+	return d == p;
+}
+
 static void
 do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
     int state)
@@ -1878,6 +1887,9 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 	struct devi *i, *j = NULL;
 	struct pspec *p;
 	int active = 0;
+
+	if (d->d_levelparent == NULL)
+		d->d_levelparent = parent;
 
 	/*
 	 * A pseudo-device will always attach at root, and if it has an
@@ -1938,9 +1950,9 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 		/*
 		 * If we've been there but have made no change, stop.
 		 */
-		if (seen && !active)
+		if (seen && active != DEVI_ACTIVE)
 			return;
-		if (!active) {
+		if (active != DEVI_ACTIVE) {
 			struct cdd_params cdd = { d, at, parent };
 			/* Look for a matching dead devi */
 			if (ht_enumerate(deaddevitab, check_dead_devi, &cdd) &&
@@ -1963,9 +1975,15 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 
 	for (al = d->d_attrs; al != NULL; al = al->al_next) {
 		a = al->al_this;
-		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next)
+		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next) {
+			if (is_orphan_loop(nv1->nv_ptr, d)) {
+				if (d->d_level++ > 1)
+					continue;
+			}
 			do_kill_orphans(nv1->nv_ptr, a, d, active);
+		}
 	}
+	d->d_levelparent = NULL;
 }
 
 static int

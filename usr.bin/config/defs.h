@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.99 2017/06/16 00:10:09 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.100 2017/11/16 17:08:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,6 +264,8 @@ struct pspec {
 struct devbase {
 	const char *d_name;		/* e.g., "sd" */
 	TAILQ_ENTRY(devbase) d_next;
+	int 	d_level;
+	struct devbase *d_levelparent;
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
 	devmajor_t d_major;		/* used for "root on sd0", e.g. */
