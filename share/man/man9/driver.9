@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.30 2017/07/03 21:28:48 wiz Exp $
+.\"     $NetBSD: driver.9,v 1.31 2017/11/16 18:40:28 riastradh Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -234,9 +234,11 @@ is a pointer to the driver's parent device structure.
 The second argument
 .Fa self
 is a pointer to the driver's device structure.
-It is also a pointer to our
+The device's
 .Em softc
-structure since the device structure is its first member.
+structure can be obtained from it using the
+.Xr device_private 9
+function.
 The third argument
 .Fa aux
 is a pointer to the attachment structure.
