@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.4 2017/10/11 08:10:53 msaitoh Exp $
+#	$NetBSD: t_vlan.sh,v 1.5 2017/11/16 06:31:00 msaitoh Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -456,7 +456,13 @@ vlan_configs_body_common()
 	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
 	atf_check -s not-exit:0 -e match:'File exists' \
 	    rump.ifconfig vlan1 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	atf_check -s exit:0 rump.ifconfig vlan1 vlan 10 vlanif shmif1
+
+	atf_check -s exit:0 rump.ifconfig vlan1 -vlanif shmif1
+	atf_check -s exit:0 rump.ifconfig vlan1 vlan 10 vlanif shmif1
+
+	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif shmif0
+	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
 }
 
 atf_test_case vlan_configs cleanup
