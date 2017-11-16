@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.111 2017/11/12 05:11:36 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.112 2017/11/16 03:07:18 ozaki-r Exp $ */
 
 /******************************************************************************
 
@@ -1214,7 +1214,7 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_softc = adapter;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef IXGBE_MPSAFE
-	ifp->if_extflags = IFEF_START_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_ioctl = ixgbe_ioctl;
 #if __FreeBSD_version >= 1100045

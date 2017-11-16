@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.97 2017/11/15 04:08:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.98 2017/11/16 03:07:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.97 2017/11/15 04:08:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.98 2017/11/16 03:07:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -183,7 +183,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 
 	ifp->if_mtu = LOMTU;
 	ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST | IFF_RUNNING;
-	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_ioctl = loioctl;
 	ifp->if_output = looutput;
 #ifdef ALTQ

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.91 2017/10/23 09:31:18 msaitoh Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.92 2017/11/16 03:07:18 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.91 2017/10/23 09:31:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.92 2017/11/16 03:07:18 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -880,7 +880,6 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	/* Overwrite ethernet defaults */
 	ifp->if_type = IFT_CARP;
 	ifp->if_output = carp_output;
-	ifp->if_extflags &= ~IFEF_OUTPUT_MPSAFE;
 	if_register(ifp);
 
 	return (0);

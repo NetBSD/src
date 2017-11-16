@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.8 2017/10/01 15:05:09 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.9 2017/11/16 03:07:17 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.8 2017/10/01 15:05:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.9 2017/11/16 03:07:17 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1381,7 +1381,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	snprintf(ifp->if_xname, IFNAMSIZ, EMAC_IFNAME, device_unit(self));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef EMAC_MPSAFE
-	ifp->if_extflags = IFEF_START_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_start = sunxi_emac_start;
 	ifp->if_ioctl = sunxi_emac_ioctl;

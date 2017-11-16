@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.73 2017/10/23 09:31:18 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.74 2017/11/16 03:07:18 ozaki-r Exp $*/
 
 /******************************************************************************
 
@@ -1391,7 +1391,7 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_softc = adapter;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef IXGBE_MPSAFE
-	ifp->if_extflags = IFEF_START_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_ioctl = ixv_ioctl;
 	if (adapter->feat_en & IXGBE_FEATURE_LEGACY_TX) {
