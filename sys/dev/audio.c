@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.439 2017/11/16 23:32:11 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.440 2017/11/16 23:43:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.439 2017/11/16 23:32:11 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.440 2017/11/16 23:43:48 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3802,7 +3802,7 @@ audio_mix(void *v)
 		 * at accurate timing.  If used < blksize, uaudio(4) already
 		 * request transfer of garbage data.
 		 */
-		if (used <= cb->usedlow && !cb->copying &&
+		if (used <= sc->sc_hwvc->sc_mpr.usedlow && !cb->copying &&
 		    vc->sc_npfilters > 0) {
 			/* we might have data in filter pipeline */
 			null_fetcher.fetch_to = null_fetcher_fetch_to;
@@ -3863,7 +3863,7 @@ audio_mix(void *v)
 			     audio_stream_get_used(&cb->s), cb->usedlow));
 
 		if ((vc->sc_mode & AUMODE_PLAY) && !cb->pause) {
-			if (audio_stream_get_used(&cb->s) <= cb->usedlow)
+			if (audio_stream_get_used(vc->sc_pustream) <= cb->usedlow)
 				sc->schedule_wih = true;
 		}
 		/* Possible to return one or more "phantom blocks" now. */
