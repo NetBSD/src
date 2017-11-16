@@ -2850,7 +2850,9 @@ make_pass_fold_builtins (gcc::context *ctxt)
  * time assert that the value matches gcc's MALLOC_ABI_ALIGNMENT here.
  */
 
-#if defined(__alpha__) || defined(__amd64__) || defined(__sparc64__)	\
+#if defined(__hppa__)
+#define	JEMALLOC_TINY_MIN_2POW	4
+#elif defined(__alpha__) || defined(__amd64__) || defined(__sparc64__)	\
      ||	(defined(__arm__) && defined(__ARM_EABI__)) \
      || defined(__ia64__) || defined(__powerpc__) \
      || ((defined(__mips__) || defined(__riscv__)) && defined(_LP64))
