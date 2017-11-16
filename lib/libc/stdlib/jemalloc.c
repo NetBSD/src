@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.42 2017/05/19 19:55:16 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.43 2017/11/16 13:54:00 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.42 2017/05/19 19:55:16 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.43 2017/11/16 13:54:00 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -287,6 +287,7 @@ __RCSID("$NetBSD: jemalloc.c,v 1.42 2017/05/19 19:55:16 christos Exp $");
 #endif
 #ifdef __hppa__                                                                                                                                         
 #  define QUANTUM_2POW_MIN     4                                                                                                                        
+#  define TINY_MIN_2POW        4
 #  define SIZEOF_PTR_2POW      2                                                                                                                        
 #  define USE_BRK                                                                                                                                       
 #endif           
