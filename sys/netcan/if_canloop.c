@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.3 2017/11/16 03:07:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.3 2017/11/16 03:07:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -112,7 +112,7 @@ canloop_clone_create(struct if_clone *ifc, int unit)
 	if_initname(ifp, ifc->ifc_name, unit);
 
 	ifp->if_flags = IFF_LOOPBACK | IFF_RUNNING;
-	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_ioctl = canloop_ioctl;
 	ifp->if_start = canloop_ifstart;
 	can_ifattach(ifp);
