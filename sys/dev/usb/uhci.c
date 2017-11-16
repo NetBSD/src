@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.277 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: uhci.c,v 1.278 2017/11/16 21:54:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.277 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.278 2017/11/16 21:54:51 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2754,7 +2754,8 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Take lock to protect nexttoggle */
-	mutex_enter(&sc->sc_lock);
+	if (!sc->sc_bus.ub_usepolling)
+		mutex_enter(&sc->sc_lock);
 	uhci_reset_std_chain(sc, xfer, xfer->ux_length, isread,
 	    &upipe->nexttoggle, &dataend);
 
@@ -2786,7 +2787,8 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	}
 	uhci_add_intr_list(sc, ux);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!sc->sc_bus.ub_usepolling)
+		mutex_exit(&sc->sc_lock);
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 10) {
