@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.75 2017/11/08 22:26:58 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.76 2017/11/17 15:08:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6746,4 +6746,23 @@ sys/netinet6/raw_ip6.c				1.158
 	Fix usages of ipsec_used.  If IPsec isn't used, we must go
 	back to the normal path.  PR kern/52659
 	[ozaki-r, ticket #350]
+
+sys/kern/vfs_vnode.c				1.99-1.100
+sys/sys/vnode_impl.h				1.17
+
+	Change the VSTATE_ASSERT_UNLOCKED code by pushing the potential lock
+	handling into the backend and doing an optimistic (unlocked) check
+	first. Always taking the vnode interlock makes this assertion
+	otherwise very heavy for multi-processor machines.
+	[hannken, ticket #309]
+
+bin/sh/jobs.c					1.91 via patch
+
+	Fix job table handling for PR bin/52640 and PR bin/52641.
+	[kre, ticket #337]
+
+sys/arch/arm/cortex/a9_mpsubr.S			1.52
+
+	Ensure CNTVOFF is 0 before dropping out of Hyp mode.
+	[skrll, ticket #351]
 
