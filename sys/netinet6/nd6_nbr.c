@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.138 2017/03/14 04:25:10 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.139 2017/11/17 07:37:12 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138 2017/03/14 04:25:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.139 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1228,10 +1228,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 	char ip6buf[INET6_ADDRSTRLEN];
 	bool need_free = false;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&nd6_dad_lock);
 
 	/* Sanity check */
@@ -1327,10 +1324,7 @@ done:
 	if (duplicate)
 		nd6_dad_duplicated(ifa);
 
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static void

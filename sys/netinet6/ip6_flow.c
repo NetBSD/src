@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.34 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.35 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.34 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.35 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -519,10 +519,7 @@ ip6flow_slowtimo_work(struct work *wk, void *arg)
 	/* We can allow enqueuing another work at this point */
 	atomic_swap_uint(&ip6flow_work_enqueued, 0);
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&ip6flow_lock);
 
 	for (ip6f = TAILQ_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
@@ -542,10 +539,7 @@ ip6flow_slowtimo_work(struct work *wk, void *arg)
 	}
 
 	mutex_exit(&ip6flow_lock);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 void
@@ -572,9 +566,7 @@ ip6flow_create(struct route *ro, struct mbuf *m)
 
 	ip6 = mtod(m, const struct ip6_hdr *);
 
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&ip6flow_lock);
 
 	/*
@@ -636,9 +628,7 @@ ip6flow_create(struct route *ro, struct mbuf *m)
 
  out:
 	mutex_exit(&ip6flow_lock);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*
@@ -681,17 +671,11 @@ sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
 	ip6flow_reap(0);
 
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 
 	return (0);
 }
@@ -713,15 +697,9 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
-#ifndef NET_MPSAFE
-		mutex_enter(softnet_lock);
-		KERNEL_LOCK(1, NULL);
-#endif
+		SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 		error = ip6flow_invalidate_all(tmp);
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
-		mutex_exit(softnet_lock);
-#endif
+		SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 	} else {
 		/*
 		 * EINVAL if not a power of 2

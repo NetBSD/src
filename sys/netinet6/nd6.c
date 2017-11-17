@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.238 2017/11/10 07:25:39 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.239 2017/11/17 07:37:12 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.238 2017/11/10 07:25:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.239 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -450,10 +450,7 @@ nd6_llinfo_timer(void *arg)
 	bool send_ns = false;
 	const struct in6_addr *daddr6 = NULL;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	LLE_WLOCK(ln);
 	if ((ln->la_flags & LLE_LINKED) == 0)
 		goto out;
@@ -569,10 +566,7 @@ nd6_llinfo_timer(void *arg)
 out:
 	if (ln != NULL)
 		LLE_FREE_LOCKED(ln);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*
@@ -590,10 +584,7 @@ nd6_timer_work(struct work *wk, void *arg)
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
 	    nd6_timer, NULL);
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
 	/* expire default router list */
 
@@ -717,10 +708,7 @@ nd6_timer_work(struct work *wk, void *arg)
 	}
 	ND6_UNLOCK();
 
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static void
@@ -2228,10 +2216,7 @@ nd6_slowtimo(void *ignored_arg)
 	struct ifnet *ifp;
 	int s;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
 	    nd6_slowtimo, NULL);
 
@@ -2252,10 +2237,7 @@ nd6_slowtimo(void *ignored_arg)
 	}
 	pserialize_read_exit(s);
 
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*

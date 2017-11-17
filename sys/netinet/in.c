@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.209 2017/11/10 07:24:28 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.210 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.209 2017/11/10 07:24:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.210 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -751,13 +751,9 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	int error;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 	error = in_control0(so, cmd, data, ifp);
-#ifndef NET_MPSAFE
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 
 	return error;
 }

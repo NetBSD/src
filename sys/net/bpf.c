@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.218 2017/10/25 08:12:40 maya Exp $	*/
+/*	$NetBSD: bpf.c,v 1.219 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.218 2017/10/25 08:12:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.219 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -484,13 +484,9 @@ bpf_detachd(struct bpf_d *d)
 		 * the interface was configured down, so only panic
 		 * if we don't get an unexpected error.
 		 */
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
+		KERNEL_LOCK_UNLESS_NET_MPSAFE();
   		error = ifpromisc(bp->bif_ifp, 0);
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
-#endif
+		KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 #ifdef DIAGNOSTIC
 		if (error)
 			printf("%s: ifpromisc failed: %d", __func__, error);
@@ -1022,13 +1018,9 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 			break;
 		}
 		if (d->bd_promisc == 0) {
-#ifndef NET_MPSAFE
-			KERNEL_LOCK(1, NULL);
-#endif
+			KERNEL_LOCK_UNLESS_NET_MPSAFE();
 			error = ifpromisc(d->bd_bif->bif_ifp, 1);
-#ifndef NET_MPSAFE
-			KERNEL_UNLOCK_ONE(NULL);
-#endif
+			KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 			if (error == 0)
 				d->bd_promisc = 1;
 		}
@@ -2249,13 +2241,9 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	bpf_attachd(d, bp);
 	reset_d(d);
 	if (opromisc) {
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
+		KERNEL_LOCK_UNLESS_NET_MPSAFE();
 		error = ifpromisc(bp->bif_ifp, 1);
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
-#endif
+		KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 		if (error)
 			printf("%s: bpf_setdlt: ifpromisc failed (%d)\n",
 			    bp->bif_ifp->if_xname, error);
