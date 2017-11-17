@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.64 2017/01/24 07:09:24 ozaki-r Exp $	*/
+/*	$NetBSD: igmp.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.64 2017/01/24 07:09:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -542,10 +542,8 @@ igmp_fasttimo(void)
 		return;
 	}
 
-#ifndef NET_MPSAFE
 	/* XXX: Needed for ip_output(). */
-	mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 
 	in_multi_lock(RW_WRITER);
 	igmp_timers_on = false;
@@ -569,9 +567,7 @@ igmp_fasttimo(void)
 		inm = in_next_multi(&step);
 	}
 	in_multi_unlock();
-#ifndef NET_MPSAFE
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 void

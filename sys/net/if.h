@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.242 2017/11/16 03:07:18 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.243 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -440,6 +440,46 @@ if_is_link_state_changeable(struct ifnet *ifp)
 
 	return ((ifp->if_extflags & IFEF_NO_LINK_STATE_CHANGE) == 0);
 }
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
+/* XXX explore a better place to define */
+#ifdef NET_MPSAFE
+
+#define KERNEL_LOCK_UNLESS_NET_MPSAFE()		do { } while (0)
+#define KERNEL_UNLOCK_UNLESS_NET_MPSAFE()	do { } while (0)
+
+#define SOFTNET_LOCK_UNLESS_NET_MPSAFE()	do { } while (0)
+#define SOFTNET_UNLOCK_UNLESS_NET_MPSAFE()	do { } while (0)
+
+#else /* NET_MPSAFE */
+
+#define KERNEL_LOCK_UNLESS_NET_MPSAFE()					\
+	do { KERNEL_LOCK(1, NULL); } while (0)
+#define KERNEL_UNLOCK_UNLESS_NET_MPSAFE()				\
+	do { KERNEL_UNLOCK_ONE(NULL); } while (0)
+
+#define SOFTNET_LOCK_UNLESS_NET_MPSAFE()				\
+	do { mutex_enter(softnet_lock); } while (0)
+#define SOFTNET_UNLOCK_UNLESS_NET_MPSAFE()				\
+	do { mutex_exit(softnet_lock); } while (0)
+
+#endif /* NET_MPSAFE */
+
+#define SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE()				\
+	do {								\
+		SOFTNET_LOCK_UNLESS_NET_MPSAFE();			\
+		KERNEL_LOCK_UNLESS_NET_MPSAFE();			\
+	} while (0)
+
+#define SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE()			\
+	do {								\
+		KERNEL_UNLOCK_UNLESS_NET_MPSAFE();			\
+		SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();			\
+	} while (0)
+
 #endif /* _KERNEL */
 
 #define	IFFBITS \
