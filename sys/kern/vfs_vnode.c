@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.93.2.2 2017/08/25 05:46:46 snj Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.93.2.3 2017/11/17 14:34:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.93.2.2 2017/08/25 05:46:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.93.2.3 2017/11/17 14:34:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -242,17 +242,34 @@ extern struct vfsops	dead_vfsops;
 	vstate_assert_wait_stable((vp), __func__, __LINE__)
 
 void
-_vstate_assert(vnode_t *vp, enum vnode_state state, const char *func, int line)
+_vstate_assert(vnode_t *vp, enum vnode_state state, const char *func, int line,
+    bool has_lock)
 {
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
+	if (!has_lock) {
+		/*
+		 * Prevent predictive loads from the CPU, but check the state
+		 * without loooking first.
+		 */
+		membar_enter();
+		if (state == VS_ACTIVE && vp->v_usecount > 0 &&
+		    (vip->vi_state == VS_LOADED || vip->vi_state == VS_BLOCKED))
+			return;
+		if (vip->vi_state == state)
+			return;
+		mutex_enter((vp)->v_interlock);
+	}
+
 	KASSERTMSG(mutex_owned(vp->v_interlock), "at %s:%d", func, line);
 
-	if (state == VS_ACTIVE && vp->v_usecount > 0 &&
-	    (vip->vi_state == VS_LOADED || vip->vi_state == VS_BLOCKED))
+	if ((state == VS_ACTIVE && vp->v_usecount > 0 &&
+	    (vip->vi_state == VS_LOADED || vip->vi_state == VS_BLOCKED)) ||
+	    vip->vi_state == state) {
+		if (!has_lock)
+			mutex_exit((vp)->v_interlock);
 		return;
-	if (vip->vi_state == state)
-		return;
+	}
 	vnpanic(vp, "state is %s, usecount %d, expected %s at %s:%d",
 	    vstate_name(vip->vi_state), vp->v_usecount,
 	    vstate_name(state), func, line);
@@ -329,7 +346,8 @@ vstate_assert_change(vnode_t *vp, enum vnode_state from, enum vnode_state to,
 #define VSTATE_WAIT_STABLE(vp) \
 	vstate_wait_stable((vp))
 void
-_vstate_assert(vnode_t *vp, enum vnode_state state, const char *func, int line)
+_vstate_assert(vnode_t *vp, enum vnode_state state, const char *func, int line,
+    bool has_lock)
 {
 
 }
