@@ -1619,8 +1619,8 @@ tre_make_trans(tre_pos_and_tags_t *p1, tre_pos_and_tags_t *p2,
 	      (trans + 1)->state = NULL;
 	    /* Use the character ranges, assertions, etc. from `p1' for
 	       the transition from `p1' to `p2'. */
-	    trans->code_min = p1->code_min;
-	    trans->code_max = p1->code_max;
+	    trans->code_min = (tre_cint_t) p1->code_min;
+	    trans->code_max = (tre_cint_t) p1->code_max;
 	    trans->state = transitions + offs[p2->position];
 	    trans->state_id = p2->position;
 	    trans->assertions = p1->assertions | p2->assertions
@@ -1845,10 +1845,10 @@ tre_ast_to_tnfa(tre_ast_node_t *node, tre_tnfa_transition_t *transitions,
   do				  \
     {				  \
       errcode = err;		  \
-      if (/*CONSTCOND*/1)	  \
+      if (/*CONSTCOND*/(void)1,1)	  \
       	goto error_exit;	  \
     }				  \
- while (/*CONSTCOND*/0)
+ while (/*CONSTCOND*/(void)0,0)
 
 
 int
@@ -1890,6 +1890,8 @@ tre_compile(regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
   parse_ctx.len = n;
   parse_ctx.cflags = cflags;
   parse_ctx.max_backref = -1;
+  /* workaround for PR#14408: use 8-bit optimizations in 8-bit mode */
+  parse_ctx.cur_max = (cflags & REG_USEBYTES) ? 1 : TRE_MB_CUR_MAX;
   DPRINT(("tre_compile: parsing '%.*" STRF "'\n", (int)n, regex));
   errcode = tre_parse(&parse_ctx);
   if (errcode != REG_OK)
