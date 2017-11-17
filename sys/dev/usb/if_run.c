@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.23 2017/11/17 12:55:16 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.24 2017/11/17 13:08:48 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.23 2017/11/17 12:55:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.24 2017/11/17 13:08:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -599,13 +599,13 @@ run_attach(device_t parent, device_t self, void *aux)
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
 			sc->rxq.pipe_no = ed->bEndpointAddress;
 			nrx++;
-		} else if (ntx < 4) {
+		} else if (ntx < RUN_MAXEPOUT) {
 			sc->txq[ntx].pipe_no = ed->bEndpointAddress;
 			ntx++;
 		}
 	}
 	/* make sure we've got them all */
-	if (nrx < 1 || ntx < 4) {
+	if (nrx < 1 || ntx < RUN_MAXEPOUT) {
 		aprint_error_dev(sc->sc_dev, "missing endpoint\n");
 		return;
 	}
