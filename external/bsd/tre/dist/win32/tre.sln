@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "retest", "retest.vcproj", "{F9A3C846-B5B3-4A68-9F8D-A918942FFB29}"
+	ProjectSection(ProjectDependencies) = postProject
+		{69258B5D-ECAE-40E4-8F64-5F063B05C998} = {69258B5D-ECAE-40E4-8F64-5F063B05C998}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tre", "tre.vcproj", "{69258B5D-ECAE-40E4-8F64-5F063B05C998}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F9A3C846-B5B3-4A68-9F8D-A918942FFB29}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F9A3C846-B5B3-4A68-9F8D-A918942FFB29}.Debug|Win32.Build.0 = Debug|Win32
+		{F9A3C846-B5B3-4A68-9F8D-A918942FFB29}.Release|Win32.ActiveCfg = Release|Win32
+		{F9A3C846-B5B3-4A68-9F8D-A918942FFB29}.Release|Win32.Build.0 = Release|Win32
+		{69258B5D-ECAE-40E4-8F64-5F063B05C998}.Debug|Win32.ActiveCfg = Debug|Win32
+		{69258B5D-ECAE-40E4-8F64-5F063B05C998}.Debug|Win32.Build.0 = Debug|Win32
+		{69258B5D-ECAE-40E4-8F64-5F063B05C998}.Release|Win32.ActiveCfg = Release|Win32
+		{69258B5D-ECAE-40E4-8F64-5F063B05C998}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
