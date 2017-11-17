@@ -227,6 +227,7 @@ tre_regexec(const regex_t *preg, const char *str,
 	return ret;
 }
 
+#ifdef REG_USEBYTES
 int
 tre_regexecb(const regex_t *preg, const char *str,
         size_t nmatch, regmatch_t pmatch[], int eflags)
@@ -244,6 +245,7 @@ tre_regnexecb(const regex_t *preg, const char *str, size_t len,
 
   return tre_match(tnfa, str, len, STR_BYTE, nmatch, pmatch, eflags);
 }
+#endif /* REG_USEBYTES */
 
 
 #ifdef TRE_WCHAR
@@ -364,6 +366,7 @@ tre_regaexec(const regex_t *preg, const char *str,
   return tre_reganexec(preg, str, (unsigned)-1, match, params, eflags);
 }
 
+#ifdef REG_USEBYTES
 int
 tre_regaexecb(const regex_t *preg, const char *str,
           regamatch_t *match, regaparams_t params, int eflags)
@@ -373,6 +376,7 @@ tre_regaexecb(const regex_t *preg, const char *str,
   return tre_match_approx(tnfa, str, (unsigned)-1, STR_BYTE,
                           match, params, eflags);
 }
+#endif /* REG_USEBYTES */
 
 #ifdef TRE_WCHAR
 
