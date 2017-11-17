@@ -254,12 +254,17 @@ if test "$tre_system_abi" = "yes"; then
     [ Define to include the system regex.h from TRE regex.h ])
   AC_DEFINE_UNQUOTED(TRE_SYSTEM_REGEX_H_PATH, "$tre_system_regex_h",
     [ Define to the absolute path to the system regex.h ])
-  AC_DEFINE_UNQUOTED(TRE_REGEX_T_FIELD, $tre_regex_t_field,
-    [ Define to a field in the regex_t struct where TRE should store a
-      pointer to the internal tre_tnfa_t structure ])
+  AC_DEFINE_UNQUOTED(TRE_REGEX_T_FIELD, $tre_regex_t_field)
 else
   AC_DEFINE(TRE_REGEX_T_FIELD, value)
 fi
+
+AH_VERBATIM(TRE_REGEX_T_FIELD,
+[/* Define to a field in the regex_t struct where TRE should store a pointer to
+   the internal tre_tnfa_t structure */
+#ifndef TRE_REGEX_T_FIELD
+#undef TRE_REGEX_T_FIELD
+#endif])
 
 AC_CHECK_FUNCS([isascii isblank])
 
