@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2331 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2332 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -69,6 +69,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	mvsata(4): Add support for NCQ, and enable ATAPI support.
 		[jdolecek 20171007]
 	OpenSSH: Imported 7.6. [christos 20171007]
+	amd64: Add support for Kernel ASLR [maxv 20171010]
 	tmux(1): Imported 2.6. [christos 20171012]
 	amd64: Add support for SMAP. [maxv 20171017]
 	amd64: Add support for USER_LDT. [maxv 20171021]
@@ -79,6 +80,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernhist(9): Reworked the export-via-sysctl code to use uintptr_t
 		arguments, PR kern/52639.  Requires contemporaneous update
 		of vmstat(1). [pgoyette 20171028]
+	x86: Add support for XSAVEOPT [maxv 20171104]
 	acpi(4): Updated ACPICA to 20171110. [christos 20171111]
 	sunxinand(4): Add driver for Allwinner NAND Flash Controller.
 		[jmcneill 20171113]
