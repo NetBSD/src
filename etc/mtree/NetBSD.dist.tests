@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.147.2.1 2017/07/05 20:01:01 snj Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.147.2.2 2017/11/17 20:43:11 snj Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -142,6 +142,7 @@
 ./usr/libdata/debug/usr/tests/net/if
 ./usr/libdata/debug/usr/tests/net/if_loop
 ./usr/libdata/debug/usr/tests/net/in_cksum
+./usr/libdata/debug/usr/tests/net/ipsec
 ./usr/libdata/debug/usr/tests/net/mcast
 ./usr/libdata/debug/usr/tests/net/net
 ./usr/libdata/debug/usr/tests/net/sys

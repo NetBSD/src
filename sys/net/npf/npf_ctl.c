@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.48 2017/05/17 18:56:12 christos Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.48.2.1 2017/11/17 20:43:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.48 2017/05/17 18:56:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.48.2.1 2017/11/17 20:43:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -630,15 +630,31 @@ fail:
 	if (tblset) {
 		npf_tableset_destroy(tblset);
 	}
-	prop_object_release(npf_dict);
-
-	/* Error report. */
-#if !defined(_NPF_TESTING) && !defined(_NPF_STANDALONE)
-	prop_dictionary_set_int32(errdict, "errno", error);
-	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
-	prop_object_release(errdict);
-	error = 0;
+#if defined(_NPF_TESTING) || defined(_NPF_STANDALONE)
+	/* Free only if allocated by prop_dictionary_copyin_ioctl_size. */
+	if (!npfctl_testing)
 #endif
+		prop_object_release(npf_dict);
+
+	/*
+	 * - _NPF_STANDALONE doesn't require to set prop.
+	 * - For _NPF_TESTING, if npfctl_testing, setting prop isn't needed,
+	 *   otherwise it's needed.
+	 */
+#ifndef _NPF_STANDALONE
+#ifdef _NPF_TESTING
+	if (!npfctl_testing) {
+#endif
+		/* Error report. */
+		prop_dictionary_set_int32(errdict, "errno", error);
+		prop_dictionary_copyout_ioctl(pref, cmd, errdict);
+		error = 0;
+#ifdef _NPF_TESTING
+	}
+#endif
+#endif /* _NPF_STANDALONE */
+	prop_object_release(errdict);
+
 	return error;
 }
 

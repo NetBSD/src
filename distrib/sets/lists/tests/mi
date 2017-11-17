@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752.2.5 2017/10/24 08:55:55 snj Exp $
+# $NetBSD: mi,v 1.752.2.6 2017/11/17 20:43:10 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -162,6 +162,7 @@
 ./usr/libdata/debug/usr/tests/net/if					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_loop				tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/in_cksum				tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/ipsec					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/mcast					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/net					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug		compattestfile,atf
@@ -3316,11 +3317,13 @@
 ./usr/tests/net/ipsec				tests-net-tests		compattestfile,atf
 ./usr/tests/net/ipsec/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/ipsec/natt_terminator		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_ah_keys		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_esp_keys		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_gif		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_l2tp		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_misc		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_natt		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_sockopt		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_sysctl		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_tcp		tests-net-tests		atf,rump
