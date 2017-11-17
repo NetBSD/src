@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.278 2017/11/16 21:54:51 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.279 2017/11/17 08:22:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.278 2017/11/16 21:54:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.279 2017/11/17 08:22:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -657,7 +657,7 @@ uhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	struct uhci_softc *sc = UHCI_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
-	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct uhci_xfer));
 
