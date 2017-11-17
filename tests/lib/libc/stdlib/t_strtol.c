@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtol.c,v 1.5 2011/06/14 02:45:58 jruoho Exp $ */
+/*	$NetBSD: t_strtol.c,v 1.5.22.1 2017/11/17 20:08:29 snj Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtol.c,v 1.5 2011/06/14 02:45:58 jruoho Exp $");
+__RCSID("$NetBSD: t_strtol.c,v 1.5.22.1 2017/11/17 20:08:29 snj Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -59,9 +59,10 @@ check(struct test *t, long int li, long long int lli, char *end)
 		atf_tc_fail_nonfatal("strtoll(%s, NULL, %d) failed "
 		    "(rv = %lld)", t->str, t->base, lli);
 
-	if (t->end != NULL && strcmp(t->end, end) != 0)
-		atf_tc_fail_nonfatal("invalid end pointer ('%s') from "
-		    "strtol(%s, &end, %d)", end, t->str, t->base);
+	if ((t->end != NULL && strcmp(t->end, end) != 0) ||
+	    (t->end == NULL && *end != '\0'))
+		atf_tc_fail_nonfatal("invalid end pointer (%p) from "
+		    "strtol(%p, &end, %d)", end, t->str, t->base);
 }
 
 ATF_TC(strtol_base);
@@ -89,15 +90,21 @@ ATF_TC_BODY(strtol_base, tc)
 		{ "12579781",			 123456789, 14, NULL	},
 		{ "AC89BC9",			 123456789, 15, NULL	},
 		{ "75BCD15",			 123456789, 16, NULL	},
-		{ "123456789",			    342391,  8, NULL	},
-		{ "0123456789",			    342391,  0, NULL	},
+		{ "1234567",			    342391,  8, NULL	},
+		{ "01234567",			    342391,  0, NULL	},
 		{ "0123456789",			 123456789, 10, NULL	},
-		{ "0x75bcd15",		         123456789,  0, NULL	},
+		{ "0x75bcd15",			 123456789,  0, NULL	},
+		{ " 0xX",			         0,  0, "xX"	},
+		{ " 0xX",			         0, 16, "xX"	},
+		{ " 0XX",			         0,  0, "XX"	},
+		{ " 0XX",			         0, 16, "XX"	},
 	};
 
 	long long int lli;
 	long int li;
-	char *end;
+	long long int ulli;
+	long int uli;
+	char *end, *end2;
 	size_t i;
 
 	for (i = 0; i < __arraycount(t); i++) {
@@ -105,7 +112,20 @@ ATF_TC_BODY(strtol_base, tc)
 		li = strtol(t[i].str, &end, t[i].base);
 		lli = strtoll(t[i].str, NULL, t[i].base);
 
+		uli = strtoul(t[i].str, &end2, t[i].base);
+		ulli = strtoull(t[i].str, NULL, t[i].base);
+
 		check(&t[i], li, lli, end);
+
+		if (li != uli)
+			atf_tc_fail_nonfatal("strtoul(%s, NULL, %d) failed "
+			    "(rv = %lu)", t[i].str, t[i].base, uli);
+		if (end != end2)
+			atf_tc_fail_nonfatal("invalid end pointer ('%p') from "
+			    "strtoul(%s, &end, %d)", end2, t[i].str, t[i].base);
+		if (lli != ulli)
+			atf_tc_fail_nonfatal("strtoull(%s, NULL, %d) failed "
+			    "(rv = %llu)", t[i].str, t[i].base, ulli);
 	}
 }
 
@@ -121,7 +141,7 @@ ATF_TC_BODY(strtol_case, tc)
 		{ "abcd",	0xabcd, 16, NULL	},
 		{ "     dcba",	0xdcba, 16, NULL	},
 		{ "abcd dcba",	0xabcd, 16, " dcba"	},
-		{ "abc0x123",	0xabc0, 16, NULL	},
+		{ "abc0x123",	0xabc0, 16, "x123"	},
 		{ "abcd\0x123",	0xabcd, 16, "\0x123"	},
 		{ "ABCD",	0xabcd, 16, NULL	},
 		{ "aBcD",	0xabcd, 16, NULL	},
