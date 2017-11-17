@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1484 2017/11/16 14:28:19 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1485 2017/11/17 16:21:44 rin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1569,10 +1569,10 @@ Notes:
 		Need to feed back local changes
 
 Package:	tre
-Version:	0.8.0
+Version:	0.8.0, git source as of 20171117
 Current Vers:	0.8.0
 Maintainer:	http://laurikari.net/tre
-Archive Site:	http://laurikari.net/tre
+Archive Site:	https://github.com/laurikari/tre
 Home Page:	http://laurikari.net/tre
 Mailing List:
 Responsible:	agc, christos
