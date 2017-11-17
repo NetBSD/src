@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.53 2017/11/05 21:06:42 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.54 2017/11/17 20:19:00 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4856,4 +4856,12 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	patch
 
 	apply fixes for CVEs 2017-12176 to 2017-12187
 	[mrg, ticket #1523]
+
+common/lib/libc/stdlib/_strtol.h		1.11 via patch
+common/lib/libc/stdlib/_strtoul.h		1.11 via patch
+tests/lib/libc/stdlib/t_strtol.c		1.7 via patch
+
+	Fix ISO C compliance: strtol of "0xX" should give the largest
+	valid numeric prefix, which is 0.
+	[joerg, ticket #1448]
 
