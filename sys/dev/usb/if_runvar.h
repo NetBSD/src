@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.3 2016/09/16 09:25:30 mlelstv Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.4 2017/11/17 13:08:48 skrll Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -132,6 +132,8 @@ struct run_node {
 	uint8_t			ctl_ridx[IEEE80211_RATE_MAXSIZE];
 };
 
+#define	RUN_MAXEPOUT	4
+
 struct run_softc {
 	device_t			sc_dev;
 	struct ethercom			sc_ec;
@@ -191,7 +193,7 @@ struct run_softc {
 	callout_t			calib_to;
 
 	struct run_rx_ring		rxq;
-	struct run_tx_ring		txq[4];
+	struct run_tx_ring		txq[RUN_MAXEPOUT];
 	struct run_host_cmd_ring	cmdq;
 	uint8_t				qfullmsk;
 	int				sc_tx_timer;
