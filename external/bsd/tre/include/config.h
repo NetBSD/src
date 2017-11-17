@@ -198,7 +198,9 @@
 
 /* Define to a field in the regex_t struct where TRE should store a pointer to
    the internal tre_tnfa_t structure */
-#define TRE_REGEX_T_FIELD re_g
+#ifndef TRE_REGEX_T_FIELD
+#define TRE_REGEX_T_FIELD value
+#endif
 
 /* Define to the absolute path to the system regex.h */
 /* #undef TRE_SYSTEM_REGEX_H_PATH */
