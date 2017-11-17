@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2 2017/11/14 07:06:34 maxv Exp $	*/
+/*	$NetBSD: console.c,v 1.3 2017/11/17 07:07:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -108,7 +108,7 @@ void print_state(bool ok, char *buf)
 
 void print_banner(void)
 {
-	char *banner = 
+	char *banner =
 		"           __________                 __                        \n"
 		"           \\______   \\_______   ____ |  | __ ___________  ____  \n"
 		"            |     ___/\\_  __ \\_/ __ \\|  |/ // __ \\_  __ \\/    \\ \n"

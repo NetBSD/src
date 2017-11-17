@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.15 2017/11/15 20:45:16 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.16 2017/11/17 07:07:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -292,6 +292,7 @@ elf_map_sections(void)
 		secalign = shdr->sh_addralign;
 		ASSERT(shdr->sh_offset != 0);
 		ASSERT(secpa % PAGE_SIZE == 0);
+		ASSERT(secpa + secsz <= kernpa_end);
 
 		secva = mm_map_segment(segtype, secpa, secsz, secalign);
 
