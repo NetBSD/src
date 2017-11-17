@@ -1,5 +1,4 @@
 ## Process this file with automake to produce Makefile.in
-
 lib_LTLIBRARIES = libtre.la
 libtre_la_LDFLAGS = -no-undefined -version-info 5:0:0 $(LDFLAGS)
 libtre_la_LIBADD = $(LTLIBINTL)

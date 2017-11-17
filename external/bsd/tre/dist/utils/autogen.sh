@@ -5,9 +5,6 @@ set -e
 # Clear the cache to get a clean rebuild.
 rm -rf autom4te.cache
 
-# Generate the ChangeLog file.
-darcs changes --summary > ChangeLog
-
 # Replace variables here and there to get a consistent tree.
 ./utils/replace-vars.sh
 
@@ -15,9 +12,14 @@ darcs changes --summary > ChangeLog
 autopoint
 
 # Set up libtool stuff for use with Automake.
-libtoolize --automake
+if type glibtoolize > /dev/null 2>&1; then
+   # On macOS, this name is used for some reason.
+   glibtoolize --automake
+else
+   libtoolize --automake
+fi
 
-# Update aclocal.m4, using the macros from the m4 directories.
+# Update aclocal.m4, using the macros from the m4 directory.
 aclocal -I m4
 
 # Run autoheader to generate config.h.in.
