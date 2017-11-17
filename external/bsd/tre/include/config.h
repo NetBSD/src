@@ -14,7 +14,7 @@
 /* #undef ENABLE_NLS */
 
 /* Define to 1 if you have `alloca', as a function or macro. */
-#define HAVE_ALLOCA 1
+/* #undef HAVE_ALLOCA */
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
@@ -48,7 +48,7 @@
 #define HAVE_ICONV 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#define HAVE_INTTYPES_H 1
+/* #undef HAVE_INTTYPES_H */
 
 /* Define to 1 if you have the `isascii' function. */
 #define HAVE_ISASCII 1
@@ -81,34 +81,34 @@
 #define HAVE_MBSTATE_T 1
 
 /* Define to 1 if you have the `mbtowc' function or macro. */
-#define HAVE_MBTOWC 1
+/* #undef HAVE_MBTOWC */
 
 /* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
+/* #undef HAVE_MEMORY_H */
 
 /* Define to 1 if you have the <regex.h> header file. */
-#define HAVE_REGEX_H 1
+/* #undef HAVE_REGEX_H */
 
 /* Define to 1 if the system has the type `reg_errcode_t'. */
 /* #undef HAVE_REG_ERRCODE_T */
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#define HAVE_STDINT_H 1
+/* #undef HAVE_STDINT_H */
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#define HAVE_STDLIB_H 1
+/* #undef HAVE_STDLIB_H */
 
 /* Define to 1 if you have the <strings.h> header file. */
-#define HAVE_STRINGS_H 1
+/* #undef HAVE_STRINGS_H */
 
 /* Define to 1 if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
+/* #undef HAVE_STRING_H */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#define HAVE_SYS_STAT_H 1
+/* #undef HAVE_SYS_STAT_H */
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_SYS_TYPES_H */
 
 /* Define to 1 if you have the `towlower' function or macro. */
 #define HAVE_TOWLOWER 1
@@ -117,7 +117,7 @@
 #define HAVE_TOWUPPER 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#define HAVE_UNISTD_H 1
+/* #undef HAVE_UNISTD_H */
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
@@ -141,7 +141,7 @@
 #define HAVE_WCSRTOMBS 1
 
 /* Define to 1 if you have the `wcstombs' function or macro. */
-#define HAVE_WCSTOMBS 1
+/* #undef HAVE_WCSTOMBS */
 
 /* Define to 1 if you have the `wctype' function or macro. */
 #define HAVE_WCTYPE 1
@@ -152,17 +152,17 @@
 /* Define to 1 if the system has the type `wint_t'. */
 #define HAVE_WINT_T 1
 
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#define LT_OBJDIR ".libs/"
+
 /* Define if you want to disable debug assertions. */
 #define NDEBUG 1
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
 
 /* Name of package */
 #define PACKAGE "tre"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "tre-general@lists.laurikari.net"
+#define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "TRE"
@@ -172,6 +172,9 @@
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tre"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "0.8.0"
@@ -207,7 +210,7 @@
 
 /* Define if you want TRE to use alloca() instead of malloc() when allocating
    memory needed for regexec operations. */
-#define TRE_USE_ALLOCA 1
+/* #undef TRE_USE_ALLOCA */
 
 /* Define to include the system regex.h from TRE regex.h */
 /* #undef TRE_USE_SYSTEM_REGEX_H */
@@ -234,10 +237,15 @@
 /* #undef WCHAR_MAX */
 
 /* Define if wchar_t is signed */
-#define WCHAR_T_SIGNED 1
+/* #undef WCHAR_T_SIGNED */
 
 /* Define if wchar_t is unsigned */
 /* #undef WCHAR_T_UNSIGNED */
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -259,3 +267,6 @@
 #ifndef __cplusplus
 /* #undef inline */
 #endif
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* #undef size_t */
