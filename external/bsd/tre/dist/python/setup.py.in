@@ -9,7 +9,7 @@ import sys
 import os
 import shutil
 
-version = "0.8.0"
+version = "@TRE_VERSION@"
 data_files = []
 include_dirs = ["../lib"]
 libraries = ["tre"]

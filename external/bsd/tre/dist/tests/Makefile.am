@@ -1,4 +1,5 @@
 ## Process this file with automake to produce Makefile.in
+AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = agrep
 
@@ -59,7 +60,7 @@ endif TRE_MULTIBYTE
   randtest_LDADD = libxtre.la $(LDADD)
 endif !TRE_DEBUG
 
-INCLUDES = -I$(top_srcdir)/lib
+AM_CPPFLAGS = -I$(top_srcdir)/lib
 
 EXTRA_DIST = build-tests.sh
 
