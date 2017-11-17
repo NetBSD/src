@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.5 2017/11/14 07:06:34 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.6 2017/11/17 07:07:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,10 +46,9 @@ struct bootinfo bootinfo;
 
 extern paddr_t kernpa_start, kernpa_end;
 
-extern uint64_t *gdt64_start;
-uint8_t idtstore[PAGE_SIZE];
-uint8_t faultstack[PAGE_SIZE];
-struct x86_64_tss prekern_tss;
+static uint8_t idtstore[PAGE_SIZE];
+static uint8_t faultstack[PAGE_SIZE];
+static struct x86_64_tss prekern_tss;
 
 /* GDT offsets */
 #define PREKERN_GDT_NUL_OFF	(0 * 8)
@@ -117,7 +116,7 @@ static char *trap_type[] = {
 	"SSE FP exception",			/* 19 T_XMM */
 	"reserved trap",			/* 20 T_RESERVED */
 };
-int	trap_types = __arraycount(trap_type);
+static int trap_types = __arraycount(trap_type);
 
 /*
  * Trap handler.
@@ -152,7 +151,7 @@ setregion(struct region_descriptor *rd, void *base, uint16_t limit)
 
 static void
 setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl,
-	int sel)
+    int sel)
 {
 	gd->gd_looffset = (uint64_t)func & 0xffff;
 	gd->gd_selector = sel;
@@ -169,7 +168,7 @@ setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl,
 
 static void
 set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
-	int type, int dpl, int gran)
+    int type, int dpl, int gran)
 {
 	memset(sd, 0, sizeof(*sd));
 	sd->sd_lolimit = (unsigned)limit;
@@ -186,13 +185,15 @@ static void
 set_sys_gdt(int slotoff, void *base, size_t limit, int type, int dpl, int gran)
 {
 	struct sys_segment_descriptor sd;
+	extern uint64_t *gdt64_start;
 
 	set_sys_segment(&sd, base, limit, type, dpl, gran);
 
 	memcpy(&gdt64_start + slotoff, &sd, sizeof(sd));
 }
 
-static void init_tss(void)
+static void
+init_tss(void)
 {
 	memset(&prekern_tss, 0, sizeof(prekern_tss));
 	prekern_tss.tss_ist[0] = (uintptr_t)(&faultstack[PAGE_SIZE-1]) & ~0xf;
@@ -201,7 +202,8 @@ static void init_tss(void)
 	    sizeof(struct x86_64_tss) - 1, SDT_SYS386TSS, SEL_KPL, 0);
 }
 
-static void init_idt(void)
+static void
+init_idt(void)
 {
 	struct region_descriptor region;
 	struct gate_descriptor *idt;

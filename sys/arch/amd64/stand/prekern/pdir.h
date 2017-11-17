@@ -1,4 +1,4 @@
-/*	$NetBSD: pdir.h,v 1.2 2017/11/05 16:27:18 maxv Exp $	*/
+/*	$NetBSD: pdir.h,v 1.3 2017/11/17 07:07:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -28,11 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define PREKERNBASE		0x0
+#define PREKERNBASE	0x0
 #define PREKERNTEXTOFF	(PREKERNBASE + 0x100000)
 
 #define L4_SLOT_PREKERN	0 /* pl4_i(PREKERNBASE) */
-#define L4_SLOT_PTE		255
+#define L4_SLOT_PTE	255
 
 #define PDIR_SLOT_KERN	L4_SLOT_PREKERN
 #define PDIR_SLOT_PTE	L4_SLOT_PTE
