@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.18 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.18 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.19 2017/11/17 08:22:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_motg.h"
@@ -752,7 +752,7 @@ motg_allocx(struct usbd_bus *bus, unsigned int nframes)
 	struct motg_softc *sc = MOTG_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
-	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct motg_xfer));
 #ifdef DIAGNOSTIC
