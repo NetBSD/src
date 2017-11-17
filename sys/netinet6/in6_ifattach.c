@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.112 2017/02/23 07:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.112.6.1 2017/11/17 20:26:19 snj Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.112 2017/02/23 07:57:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.112.6.1 2017/11/17 20:26:19 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,13 +787,15 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	 */
 	if (!(ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
 	    ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL) {
-		int s = pserialize_read_enter();
-		ia = in6ifa_ifpforlinklocal(ifp, 0);
+		int bound = curlwp_bind();
+		struct psref psref;
+		ia = in6ifa_ifpforlinklocal_psref(ifp, 0, &psref);
 		if (ia == NULL && in6_ifattach_linklocal(ifp, altifp) != 0) {
 			printf("%s: cannot assign link-local address\n",
 			    ifp->if_xname);
 		}
-		pserialize_read_exit(s);
+		ia6_release(ia, &psref);
+		curlwp_bindx(bound);
 	}
 }
 
