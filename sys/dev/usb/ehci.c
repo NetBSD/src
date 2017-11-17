@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.256 2017/10/28 00:37:12 pgoyette Exp $ */
+/*	$NetBSD: ehci.c,v 1.257 2017/11/17 08:22:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.256 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.257 2017/11/17 08:22:02 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1516,7 +1516,7 @@ ehci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	struct ehci_softc *sc = EHCI_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
-	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ehci_xfer));
 #ifdef DIAGNOSTIC
