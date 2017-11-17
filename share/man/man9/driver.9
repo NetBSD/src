@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.31 2017/11/16 18:40:28 riastradh Exp $
+.\"     $NetBSD: driver.9,v 1.32 2017/11/17 07:42:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,6 @@ statically inside the driver.
 For example, the interface to driver
 .Dq foo
 is defined with:
-.Pp
 .Bd -literal
 CFATTACH_DECL_NEW(foo, 			/* driver name */
 	sizeof(struct foo_softc),	/* size of instance data */
@@ -95,7 +94,6 @@ For example, the
 structure for driver
 .Dq foo
 is defined with:
-.Pp
 .Bd -literal
 struct foo_softc {
 	device_t sc_dev;		/* generic device info */
@@ -121,7 +119,6 @@ For example, the
 structure for driver
 .Dq foo
 is defined with:
-.Pp
 .Bd -literal
 const struct cdevsw foo_cdevsw {
 	int (*d_open)(dev_t, int, int, struct lwp *);
@@ -154,7 +151,6 @@ For example, the
 structure for driver
 .Dq foo
 is defined with:
-.Pp
 .Bd -literal
 const struct bdevsw foo_bdevsw {
 	int (*d_open)(dev_t, int, int, struct lwp *);
@@ -237,8 +233,9 @@ is a pointer to the driver's device structure.
 The device's
 .Em softc
 structure can be obtained from it using the
-.Xr device_private 9
-function.
+.Fn device_private
+function (see
+.Xr disk 9 ) .
 The third argument
 .Fa aux
 is a pointer to the attachment structure.
