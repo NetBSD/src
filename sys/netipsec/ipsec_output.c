@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.64 2017/10/03 08:56:52 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.64 2017/10/03 08:56:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -117,9 +117,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 
 	KASSERT(af == AF_INET || af == AF_INET6);
 
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	ro = percpu_getref(ipsec_rtcache_percpu);
 	switch (af) {
 #ifdef INET
@@ -139,9 +137,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 #endif
 	}
 	percpu_putref(ipsec_rtcache_percpu);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 
 	return rv;
 }
