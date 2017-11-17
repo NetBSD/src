@@ -1,5 +1,5 @@
 
-/*	$NetBSD: kmem.h,v 1.6 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: kmem.h,v 1.7 2017/11/17 18:18:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ u_long	kmem_size(void);
 u_long	kmem_used(void);
 void	kmem_reap(void);
 
-void	*calloc(size_t n, size_t s);
+void	*calloc(size_t, size_t);
 
 static inline kmem_cache_t *
 kmem_cache_create(char *name, size_t bufsize, size_t align,
@@ -62,8 +62,29 @@ kmem_cache_create(char *name, size_t bufsize, size_t align,
 	return pc;
 }
 
+static inline void *
+kmem_cache_alloc(kmem_cache_t *cache, int flags)
+{
+	/*
+	 * This happens when we specify KM_PUSHPAGE by itself.
+	 *
+	 * According to kmem_cache_create(9) KM_PUSHPAGE can be used
+	 * together with KM_SLEEP and in that case the code will not
+	 * cause a deadlock. It does not say if KM_PUSHPAGE can be
+	 * used with KM_NOSLEEP. In our case, we don't have a pool
+	 * of emergency pages, so we prefer to KM_SLEEP instead of
+	 * using KM_NOSLEEP and potentially returning NULL, under the
+	 * assumption that the code wants to use the emergency pool
+	 * because it does not want the allocation to fail. If that
+	 * causes a deadlock we either need to provide an emergency
+	 * pool or handle the failure.
+	 */
+	if (flags == 0)
+		flags |= KM_SLEEP;
+	return pool_cache_get(cache, flags);
+}
+
 #define	kmem_cache_destroy(cache)		pool_cache_destroy(cache)
-#define	kmem_cache_alloc(cache, flags)		pool_cache_get(cache, flags)
 #define	kmem_cache_free(cache, buf)		pool_cache_put(cache, buf)
 #define	kmem_cache_reap_now(cache)		pool_cache_invalidate(cache)
 
