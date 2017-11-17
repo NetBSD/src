@@ -11,9 +11,9 @@ SUBDIRS = lib $(agrep_dirs) tests utils po m4
 EXTRA_DIST = \
 	LICENSE \
 	win32/tre-config.h win32/config.h \
-	win32/tre.dsw \
-	win32/tre.dsp win32/tre.def \
-	win32/retest.dsp \
+	win32/tre.vcproj \
+	win32/tre.sln \
+	win32/retest.vcproj \
 	python/tre-python.c \
 	python/setup.py \
 	python/example.py

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 localedir = $(datadir)/locale
-INCLUDES = -I$(top_srcdir)/lib
+AM_CPPFLAGS = -I$(top_srcdir)/lib
 
 if TRE_AGREP
 bin_PROGRAMS = agrep
