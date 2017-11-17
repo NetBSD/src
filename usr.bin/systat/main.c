@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2016/12/03 03:26:27 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2017/11/17 20:43:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.51 2016/12/03 03:26:27 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2017/11/17 20:43:08 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ main(int argc, char **argv)
 	egid = getegid();
 	(void)setegid(getgid());
 
-	while ((ch = getopt(argc, argv, "M:N:nw:t:")) != -1)
+	while ((ch = getopt(argc, argv, "M:N:bnw:t:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
@@ -110,19 +110,19 @@ main(int argc, char **argv)
 		case 'N':
 			nlistf = optarg;
 			break;
+		case 'b':
+			bflag = !bflag;
+			break;
 		case 'n':
 			nflag = !nflag;
-			break;
-		case 'w':
-			if ((naptime = strtod(optarg, NULL)) <= 0)
-				errx(1, "interval <= 0.");
 			break;
 		case 't':
 			if ((turns = atoi(optarg)) <= 0)
 				errx(1, "turns <= 0.");
 			break;
-		case 'b':
-			bflag = !bflag;
+		case 'w':
+			if ((naptime = strtod(optarg, NULL)) <= 0)
+				errx(1, "interval <= 0.");
 			break;
 		case '?':
 		default:
