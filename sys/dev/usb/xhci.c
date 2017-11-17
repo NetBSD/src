@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.76 2017/11/09 10:03:46 msaitoh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.77 2017/11/17 08:22:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.76 2017/11/09 10:03:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.77 2017/11/17 08:22:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2189,7 +2189,7 @@ xhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct xhci_xfer));
 #ifdef DIAGNOSTIC
