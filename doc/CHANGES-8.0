@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.76 2017/11/17 15:08:35 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.77 2017/11/17 20:47:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6765,4 +6765,60 @@ sys/arch/arm/cortex/a9_mpsubr.S			1.52
 
 	Ensure CNTVOFF is 0 before dropping out of Hyp mode.
 	[skrll, ticket #351]
+
+sys/external/bsd/ipf/netinet/ip_state.c		1.9-1.10
+
+	Stop a kernel panic when altering the ipf state table size
+	at runtime due to unallocated memory.
+	[sborrill, ticket #352]
+
+sys/net/if_llatbl.c				1.22
+sys/net/if_llatbl.h				1.13
+sys/netinet/if_arp.c				1.254
+sys/netinet/in.c				1.208
+sys/netinet/in.c				1.209
+sys/netinet6/in6.c				1.249
+sys/netinet6/in6.c				1.250
+sys/netinet6/nd6.c				1.237
+
+	Fix a deadlock on route update.
+	[ozaki-r, ticket #353]
+
+sys/netinet6/in6_ifattach.c			1.113
+sys/netinet6/nd6.c				1.238
+
+	Fix race conditions; pserialize was used for sleepable
+	code that required psref instead.
+	[ozaki-r, ticket #354]
+
+bin/sh/parser.c					1.145
+
+	Correct PR bin/52715 in /bin/sh a (mostly harmless) use after
+	free in prompt expansion processing (detected by asan.)
+	[kre, ticket #355]
+
+sys/dev/usb/xhci.c				1.76
+
+	Wait 1ms first after reset. Existing Intel xHCI requires 1ms
+	delay to prevent system hang (Errata).
+	[msaitoh, ticket #356]
+
+distrib/sets/lists/debug/mi			1.228
+distrib/sets/lists/tests/mi			1.765
+distrib/sets/lists/tests/mi			1.766
+etc/mtree/NetBSD.dist.tests			1.149
+sys/net/npf/npf_ctl.c				1.49
+tests/net/ipsec/Makefile			1.10
+tests/net/ipsec/algorithms.sh			1.6
+tests/net/ipsec/natt_terminator.c		1.1
+tests/net/ipsec/t_ipsec_natt.sh			1.1
+tests/net/net_common.sh				1.23
+tests/net/net_common.sh				1.24
+usr.sbin/npf/npfctl/npfctl.c			1.54
+
+	- Add ATF tests for IPsec NAT-T
+	- Fix npfclt reload on rump kernels
+	- npfctl(8): Fix showing translated port (ntohs-ed twice wrongly)
+	- tests/net/net_common.sh: Stop using bpfjit
+	[ozaki-r, ticket #357]
 
