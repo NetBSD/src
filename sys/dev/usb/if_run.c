@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.22 2017/05/04 14:07:34 hauke Exp $	*/
+/*	$NetBSD: if_run.c,v 1.23 2017/11/17 12:55:16 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.22 2017/05/04 14:07:34 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.23 2017/11/17 12:55:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -494,12 +494,12 @@ static const struct {
 	RT3572_DEF_RF
 },rt3593_def_rf[] = {
 	RT3593_DEF_RF
-},rt5390_def_rf[] = {   
-	RT5390_DEF_RF   
-},rt5392_def_rf[] = {   
-	RT5392_DEF_RF   
-},rt5592_def_rf[] = {   
-	RT5592_DEF_RF   
+},rt5390_def_rf[] = {
+	RT5390_DEF_RF
+},rt5392_def_rf[] = {
+	RT5392_DEF_RF
+},rt5592_def_rf[] = {
+	RT5592_DEF_RF
 },rt5592_2ghz_def_rf[] = {
 	RT5592_2GHZ_DEF_RF
 },rt5592_5ghz_def_rf[] = {
@@ -2485,13 +2485,13 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	txd->flags = RT2860_TX_QSEL_EDCA;
 	txd->len = htole16(xferlen);
 
-	/* 
+	/*
 	 * Ether both are true or both are false, the header
 	 * are nicely aligned to 32-bit. So, no L2 padding.
-	 */     
+	 */
 	if (IEEE80211_HAS_ADDR4(wh) == IEEE80211_QOS_HAS_SEQ(wh))
 		pad = 0;
-	else    
+	else
 		pad = 2;
 
 	/* setup TX Wireless Information */
@@ -3630,8 +3630,8 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 	usbd_delay_ms(sc->sc_udev, 10);
 
 	/* Perform IQ calibration. */
-	if (sc->mac_ver >= 0x5392) 
-		run_iq_calib(sc, chan); 
+	if (sc->mac_ver >= 0x5392)
+		run_iq_calib(sc, chan);
 
 	return 0;
 }
@@ -3639,7 +3639,7 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 static void
 run_updateprot(struct run_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic; 
+	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
 
 	tmp = RT2860_RTSTH_EN | RT2860_PROT_NAV_SHORT | RT2860_TXOP_ALLOW_ALL;
@@ -3816,7 +3816,7 @@ run_rssi2dbm(struct run_softc *sc, uint8_t rssi, uint8_t rxchain)
 	return -12 - delta - rssi;
 }
 
-static void     
+static void
 run_rt5390_bbp_init(struct run_softc *sc)
 {
 	u_int i;
@@ -3839,26 +3839,26 @@ run_rt5390_bbp_init(struct run_softc *sc)
 		for (i = 0; i < (int)__arraycount(rt5592_bbp_r196); i++) {
 			run_bbp_write(sc, 195, i + 0x80);
 			run_bbp_write(sc, 196, rt5592_bbp_r196[i]);
-		}       
-	} else {        
+		}
+	} else {
 		for (i = 0; i < (int)__arraycount(rt5390_def_bbp); i++) {
 			run_bbp_write(sc, rt5390_def_bbp[i].reg,
 			    rt5390_def_bbp[i].val);
-		} 
-	}  
+		}
+	}
 	if (sc->mac_ver == 0x5392) {
-		run_bbp_write(sc, 88, 0x90); 
-		run_bbp_write(sc, 95, 0x9a); 
-		run_bbp_write(sc, 98, 0x12); 
+		run_bbp_write(sc, 88, 0x90);
+		run_bbp_write(sc, 95, 0x9a);
+		run_bbp_write(sc, 98, 0x12);
 		run_bbp_write(sc, 106, 0x12);
 		run_bbp_write(sc, 134, 0xd0);
 		run_bbp_write(sc, 135, 0xf6);
 		run_bbp_write(sc, 148, 0x84);
-	} 
-  
+	}
+
 	run_bbp_read(sc, 152, &bbp);
 	run_bbp_write(sc, 152, bbp | 0x80);
-	
+
 	/* Fix BBP254 for RT5592C. */
 	if (sc->mac_ver == 0x5592 && sc->mac_rev >= 0x0221) {
 		run_bbp_read(sc, 254, &bbp);
@@ -4312,14 +4312,14 @@ run_rt3070_rf_setup(struct run_softc *sc)
 	}
 }
 
-static void     
+static void
 run_rt3593_rf_setup(struct run_softc *sc)
 {
 	uint8_t bbp, rf;
 
 	if (sc->mac_rev >= 0x0211) {
 		/* Enable DC filter. */
-		run_bbp_write(sc, 103, 0xc0); 
+		run_bbp_write(sc, 103, 0xc0);
 	}
 	run_write(sc, RT2860_TX_SW_CFG1, 0);
 	if (sc->mac_rev < 0x0211) {
@@ -4327,22 +4327,22 @@ run_rt3593_rf_setup(struct run_softc *sc)
 		    sc->patch_dac ? 0x2c : 0x0f);
 	} else
 		run_write(sc, RT2860_TX_SW_CFG2, 0);
-	
+
 	run_rt3070_rf_read(sc, 50, &rf);
 	run_rt3070_rf_write(sc, 50, rf & ~RT3593_TX_LO2);
 
 	run_rt3070_rf_read(sc, 51, &rf);
 	rf = (rf & ~(RT3593_TX_LO1 | 0x0c)) |
-	    ((sc->txmixgain_2ghz & 0x07) << 2); 
+	    ((sc->txmixgain_2ghz & 0x07) << 2);
 	run_rt3070_rf_write(sc, 51, rf);
-	
+
 	run_rt3070_rf_read(sc, 38, &rf);
 	run_rt3070_rf_write(sc, 38, rf & ~RT5390_RX_LO1);
-	
+
 	run_rt3070_rf_read(sc, 39, &rf);
 	run_rt3070_rf_write(sc, 39, rf & ~RT5390_RX_LO2);
 
-	run_rt3070_rf_read(sc, 1, &rf); 
+	run_rt3070_rf_read(sc, 1, &rf);
 	run_rt3070_rf_write(sc, 1, rf & ~(RT3070_RF_BLOCK | RT3070_PLL_PD));
 
 	run_rt3070_rf_read(sc, 30, &rf);
@@ -4353,7 +4353,7 @@ run_rt3593_rf_setup(struct run_softc *sc)
 	run_bbp_read(sc, 105, &bbp);
 	if (sc->nrxchains > 1)
 		run_bbp_write(sc, 105, bbp | RT5390_MLD);
-	
+
 	/* Avoid data lost and CRC error. */
 	run_bbp_read(sc, 4, &bbp);
 	run_bbp_write(sc, 4, bbp | RT5390_MAC_IF_CTRL);
