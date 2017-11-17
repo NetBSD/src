@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250.2.2 2017/07/07 13:57:27 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250.2.3 2017/11/17 20:24:05 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.2 2017/07/07 13:57:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.3 2017/11/17 20:24:05 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -754,10 +754,15 @@ notfound:
 	}
 #undef _IFF_NOARP
 	if (la == NULL) {
+		struct rtentry *_rt;
+
 		create_lookup = "create";
+		_rt = rtalloc1(dst, 0);
 		IF_AFDATA_WLOCK(ifp);
-		la = lla_create(LLTABLE(ifp), LLE_EXCLUSIVE, dst);
+		la = lla_create(LLTABLE(ifp), LLE_EXCLUSIVE, dst, _rt);
 		IF_AFDATA_WUNLOCK(ifp);
+		if (_rt != NULL)
+			rt_unref(_rt);
 		if (la == NULL)
 			ARP_STATINC(ARP_STAT_ALLOCFAIL);
 		else {
@@ -1452,9 +1457,14 @@ arpcreate(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
 	la = arplookup(ifp, m, addr, sa, wlock);
 
 	if (la == NULL) {
+		struct rtentry *rt;
+
+		rt = rtalloc1(sa, 0);
 		IF_AFDATA_WLOCK(ifp);
-		la = lla_create(LLTABLE(ifp), flags, sa);
+		la = lla_create(LLTABLE(ifp), flags, sa, rt);
 		IF_AFDATA_WUNLOCK(ifp);
+		if (rt != NULL)
+			rt_unref(rt);
 
 		if (la != NULL)
 			arp_init_llentry(ifp, la);

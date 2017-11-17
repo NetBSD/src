@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.18.6.1 2017/07/07 13:57:26 martin Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.18.6.2 2017/11/17 20:24:05 snj Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -386,7 +386,7 @@ llentry_alloc(struct ifnet *ifp, struct lltable *lt,
 	    (ifp->if_flags & IFF_NOARP) == 0) {
 #endif
 		IF_AFDATA_WLOCK(ifp);
-		la = lla_create(lt, 0, (struct sockaddr *)dst);
+		la = lla_create(lt, 0, (struct sockaddr *)dst, NULL /* XXX */);
 		IF_AFDATA_WUNLOCK(ifp);
 	}
 
@@ -656,7 +656,12 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 	error = 0;
 
 	switch (rtm_type) {
-	case RTM_ADD:
+	case RTM_ADD: {
+		struct rtentry *rt;
+
+		/* Never call rtalloc1 with IF_AFDATA_WLOCK */
+		rt = rtalloc1(dst, 0);
+
 		/* Add static LLE */
 		IF_AFDATA_WLOCK(ifp);
 		lle = lla_lookup(llt, 0, dst);
@@ -666,15 +671,19 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 		    (lle->la_flags & LLE_STATIC || lle->la_expire == 0)) {
 			LLE_RUNLOCK(lle);
 			IF_AFDATA_WUNLOCK(ifp);
+			if (rt != NULL)
+				rt_unref(rt);
 			error = EEXIST;
 			goto out;
 		}
 		if (lle != NULL)
 			LLE_RUNLOCK(lle);
 
-		lle = lla_create(llt, 0, dst);
+		lle = lla_create(llt, 0, dst, rt);
 		if (lle == NULL) {
 			IF_AFDATA_WUNLOCK(ifp);
+			if (rt != NULL)
+				rt_unref(rt);
 			error = ENOMEM;
 			goto out;
 		}
@@ -703,6 +712,8 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 		laflags = lle->la_flags;
 		LLE_WUNLOCK(lle);
 		IF_AFDATA_WUNLOCK(ifp);
+		if (rt != NULL)
+			rt_unref(rt);
 #if defined(INET) && NARP > 0
 		/* gratuitous ARP */
 		if ((laflags & LLE_PUB) && dst->sa_family == AF_INET) {
@@ -721,8 +732,8 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 #else
 		(void)laflags;
 #endif
-
 		break;
+	    }
 
 	case RTM_DELETE:
 		IF_AFDATA_WLOCK(ifp);
