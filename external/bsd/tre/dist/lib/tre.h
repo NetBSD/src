@@ -113,6 +113,8 @@ typedef enum {
 #define REG_RIGHT_ASSOC (REG_LITERAL << 1)
 #define REG_UNGREEDY    (REG_RIGHT_ASSOC << 1)
 
+#define REG_USEBYTES    (REG_UNGREEDY << 1)
+
 /* POSIX tre_regexec() flags. */
 #define REG_NOTBOL 1
 #define REG_NOTEOL (REG_NOTBOL << 1)
@@ -140,6 +142,13 @@ tre_regcomp(regex_t *preg, const char *regex, int cflags);
 
 extern int
 tre_regexec(const regex_t *preg, const char *string, size_t nmatch,
+	regmatch_t pmatch[], int eflags);
+
+extern int
+tre_regcompb(regex_t *preg, const char *regex, int cflags);
+
+extern int
+tre_regexecb(const regex_t *preg, const char *string, size_t nmatch,
 	regmatch_t pmatch[], int eflags);
 
 extern size_t
@@ -171,6 +180,14 @@ tre_regncomp(regex_t *preg, const char *regex, size_t len, int cflags);
 extern int
 tre_regnexec(const regex_t *preg, const char *string, size_t len,
 	 size_t nmatch, regmatch_t pmatch[], int eflags);
+
+/* regn*b versions take byte literally as 8-bit values */
+extern int
+tre_regncompb(regex_t *preg, const char *regex, size_t n, int cflags);
+
+extern int
+tre_regnexecb(const regex_t *preg, const char *str, size_t len,
+	  size_t nmatch, regmatch_t pmatch[], int eflags);
 
 #ifdef TRE_WCHAR
 extern int
@@ -215,6 +232,11 @@ tre_regaexec(const regex_t *preg, const char *string,
 extern int
 tre_reganexec(const regex_t *preg, const char *string, size_t len,
 	  regamatch_t *match, regaparams_t params, int eflags);
+
+extern int
+tre_regaexecb(const regex_t *preg, const char *string,
+	  regamatch_t *match, regaparams_t params, int eflags);
+
 #ifdef TRE_WCHAR
 /* Wide character approximate matching. */
 extern int
