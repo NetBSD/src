@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.54 2017/10/31 00:57:14 khorben Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.55 2017/11/17 13:27:09 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.54 2017/10/31 00:57:14 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.55 2017/11/17 13:27:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -590,8 +590,8 @@ static int
 urtwn_open_pipes(struct urtwn_softc *sc)
 {
 	/* Bulk-out endpoints addresses (from highest to lowest prio). */
-	static uint8_t epaddr[3];
-	static uint8_t rxepaddr[3];
+	static uint8_t epaddr[R92C_MAX_EPOUT];
+	static uint8_t rxepaddr[R92C_MAX_EPIN];
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	size_t i, ntx = 0, nrx = 0;
@@ -603,26 +603,32 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
-		if (ed != NULL &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
-		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT) {
-			epaddr[ntx] = ed->bEndpointAddress;
+		if (ed == NULL || UE_GET_XFERTYPE(ed->bmAttributes) != UE_BULK) {
+			continue;
+		}
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT) {
+			if (ntx < sizeof(epaddr))
+				epaddr[ntx] = ed->bEndpointAddress;
 			ntx++;
 		}
-		if (ed != NULL &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
-		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
-			rxepaddr[nrx] = ed->bEndpointAddress;
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
+			if (nrx < sizeof(rxepaddr))
+				rxepaddr[nrx] = ed->bEndpointAddress;
 			nrx++;
 		}
 	}
-	DPRINTFN(DBG_INIT, ("%s: %s: found %zd bulk-out pipes\n",
-	    device_xname(sc->sc_dev), __func__, ntx));
+	if (nrx == 0 || nrx > R92C_MAX_EPIN) {
+		aprint_error_dev(sc->sc_dev,
+		    "%zd: invalid number of Rx bulk pipes\n", nrx);
+		return EIO;
+	}
 	if (ntx == 0 || ntx > R92C_MAX_EPOUT) {
 		aprint_error_dev(sc->sc_dev,
 		    "%zd: invalid number of Tx bulk pipes\n", ntx);
 		return EIO;
 	}
+	DPRINTFN(DBG_INIT, ("%s: %s: found %zd/%zd bulk-in/out pipes\n",
+	    device_xname(sc->sc_dev), __func__, nrx, ntx));
 	sc->rx_npipe = nrx;
 	sc->tx_npipe = ntx;
 
