@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245.2.1 2017/07/07 13:57:26 martin Exp $	*/
+/*	$NetBSD: in6.c,v 1.245.2.2 2017/11/17 20:24:05 snj Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.1 2017/07/07 13:57:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.2 2017/11/17 20:24:05 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2458,17 +2458,11 @@ in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 }
 
 static int
-in6_lltable_rtcheck(struct ifnet *ifp,
-		    u_int flags,
-		    const struct sockaddr *l3addr)
+in6_lltable_rtcheck(struct ifnet *ifp, u_int flags,
+    const struct sockaddr *l3addr, const struct rtentry *rt)
 {
-	struct rtentry *rt;
 	char ip6buf[INET6_ADDRSTRLEN];
 
-	KASSERTMSG(l3addr->sa_family == AF_INET6,
-	    "sin_family %d", l3addr->sa_family);
-
-	rt = rtalloc1(l3addr, 0);
 	if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) || rt->rt_ifp != ifp) {
 		int s;
 		struct ifaddr *ifa;
@@ -2481,19 +2475,14 @@ in6_lltable_rtcheck(struct ifnet *ifp,
 		ifa = ifaof_ifpforaddr(l3addr, ifp);
 		if (ifa != NULL) {
 			pserialize_read_exit(s);
-			if (rt != NULL)
-				rt_unref(rt);
 			return 0;
 		}
 		pserialize_read_exit(s);
 		log(LOG_INFO, "IPv6 address: \"%s\" is not on the network\n",
 		    IN6_PRINT(ip6buf,
 		    &((const struct sockaddr_in6 *)l3addr)->sin6_addr));
-		if (rt != NULL)
-			rt_unref(rt);
 		return EINVAL;
 	}
-	rt_unref(rt);
 	return 0;
 }
 
@@ -2585,7 +2574,7 @@ in6_lltable_delete(struct lltable *llt, u_int flags,
 
 static struct llentry *
 in6_lltable_create(struct lltable *llt, u_int flags,
-	const struct sockaddr *l3addr)
+    const struct sockaddr *l3addr, const struct rtentry *rt)
 {
 	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)l3addr;
 	struct ifnet *ifp = llt->llt_ifp;
@@ -2608,7 +2597,7 @@ in6_lltable_create(struct lltable *llt, u_int flags,
 	 * verify this.
 	 */
 	if (!(flags & LLE_IFADDR) &&
-	    in6_lltable_rtcheck(ifp, flags, l3addr) != 0)
+	    in6_lltable_rtcheck(ifp, flags, l3addr, rt) != 0)
 		return NULL;
 
 	lle = in6_lltable_new(&sin6->sin6_addr, flags);

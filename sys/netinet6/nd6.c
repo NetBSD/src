@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.232.2.2 2017/10/24 09:00:22 snj Exp $	*/
+/*	$NetBSD: nd6.c,v 1.232.2.3 2017/11/17 20:24:05 snj Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.2 2017/10/24 09:00:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.3 2017/11/17 20:24:05 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -950,14 +950,17 @@ nd6_create(const struct in6_addr *addr6, const struct ifnet *ifp)
 {
 	struct sockaddr_in6 sin6;
 	struct llentry *ln;
+	struct rtentry *rt;
 
 	sockaddr_in6_init(&sin6, addr6, 0, 0, 0);
+	rt = rtalloc1(sin6tosa(&sin6), 0);
 
 	IF_AFDATA_WLOCK(ifp);
-	ln = lla_create(LLTABLE6(ifp), LLE_EXCLUSIVE,
-	    sin6tosa(&sin6));
+	ln = lla_create(LLTABLE6(ifp), LLE_EXCLUSIVE, sin6tosa(&sin6), rt);
 	IF_AFDATA_WUNLOCK(ifp);
 
+	if (rt != NULL)
+		rt_unref(rt);
 	if (ln != NULL)
 		ln->ln_state = ND6_LLINFO_NOSTATE;
 
