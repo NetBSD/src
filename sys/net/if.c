@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.396 2017/10/23 09:21:20 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.397 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.396 2017/10/23 09:21:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.397 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2331,10 +2331,7 @@ if_link_state_change_si(void *arg)
 	int s;
 	uint8_t state;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	s = splnet();
 
 	/* Pop a link state change from the queue and process it. */
@@ -2346,10 +2343,7 @@ if_link_state_change_si(void *arg)
 		softint_schedule(ifp->if_link_si);
 
 	splx(s);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*
