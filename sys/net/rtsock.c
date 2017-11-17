@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.229 2017/09/25 01:57:54 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.230 2017/11/17 07:37:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.229 2017/09/25 01:57:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.230 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2038,10 +2038,7 @@ COMPATNAME(route_intr)(void *cookie)
 	struct route_info * const ri = &COMPATNAME(route_info);
 	struct mbuf *m;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	for (;;) {
 		IFQ_LOCK(&ri->ri_intrq);
 		IF_DEQUEUE(&ri->ri_intrq, m);
@@ -2057,10 +2054,7 @@ COMPATNAME(route_intr)(void *cookie)
 		mutex_exit(rt_so_mtx);
 #endif
 	}
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*

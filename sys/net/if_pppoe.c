@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.131 2017/11/16 03:07:18 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.132 2017/11/17 07:37:12 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.131 2017/11/16 03:07:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.132 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -477,9 +477,7 @@ pppoeintr(void)
 	struct mbuf *m;
 	int disc_done, data_done;
 
-#ifndef PPPOE_MPSAFE
-		mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 
 	do {
 		disc_done = 0;
@@ -502,9 +500,8 @@ pppoeintr(void)
 			pppoe_data_input(m);
 		}
 	} while (disc_done || data_done);
-#ifndef PPPOE_MPSAFE
-		mutex_exit(softnet_lock);
-#endif
+
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /* analyze and handle a single received packet while not in session state */
