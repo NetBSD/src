@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.77 2016/09/13 16:06:59 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.78 2017/11/18 18:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.77 2016/09/13 16:06:59 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.78 2017/11/18 18:41:44 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -1352,6 +1352,34 @@ deldevi(const char *name, const char *at, int nowarn)
 }
 
 static void
+remove_pspec(struct devi *i)
+{
+	struct pspec *p = i->i_pspec;
+	struct nvlist *nv, *onv;
+
+	if (p == NULL)
+		return;
+
+	/* Double-linked nvlist anyone? */
+	for (nv = p->p_devs; nv->nv_next != NULL; nv = nv->nv_next) {
+		if (nv->nv_next && nv->nv_next->nv_ptr == i) {
+			onv = nv->nv_next;
+			nv->nv_next = onv->nv_next;
+			nvfree(onv);
+			break;
+		}
+		if (nv->nv_ptr == i) {
+			/* nv is p->p_devs in that case */
+			p->p_devs = nv->nv_next;
+			nvfree(nv);
+			break;
+		}
+	}
+	if (p->p_devs == NULL)
+		TAILQ_REMOVE(&allpspecs, p, p_list);
+}
+
+static void
 remove_devi(struct devi *i)
 {
 	struct devbase *d = i->i_base;
@@ -1453,28 +1481,8 @@ remove_devi(struct devi *i)
 	/*
 	 *   - delete the pspec
 	 */
-	if (i->i_pspec) {
-		struct pspec *p = i->i_pspec;
-		struct nvlist *nv, *onv;
+	remove_pspec(i);
 
-		/* Double-linked nvlist anyone? */
-		for (nv = p->p_devs; nv->nv_next != NULL; nv = nv->nv_next) {
-			if (nv->nv_next && nv->nv_next->nv_ptr == i) {
-				onv = nv->nv_next;
-				nv->nv_next = onv->nv_next;
-				nvfree(onv);
-				break;
-			}
-			if (nv->nv_ptr == i) {
-				/* nv is p->p_devs in that case */
-				p->p_devs = nv->nv_next;
-				nvfree(nv);
-				break;
-			}
-		}
-		if (p->p_devs == NULL)
-			TAILQ_REMOVE(&allpspecs, p, p_list);
-	}
 	/*
 	 *   - delete the alldevi entry
 	 */
@@ -1846,6 +1854,7 @@ int
 fixdevis(void)
 {
 	struct devi *i;
+	struct pspec *p;
 	int error = 0;
 
 	TAILQ_FOREACH(i, &alldevi, i_next) {
@@ -1858,9 +1867,11 @@ fixdevis(void)
 			 * i_at or i_pspec are NULL.
 			 */
 			++error;
+			p = i->i_pspec;
 			cfgxerror(i->i_srcfile, i->i_lineno,
 			    "`%s at %s' is orphaned (%s `%s' found)", 
-			    i->i_name, i->i_at, i->i_pspec->p_atunit == WILD ?
+			    i->i_name, i->i_at,
+			    p == NULL || p->p_atunit == WILD ?
 			    "nothing matching" : "no", i->i_at);
 		} else if (vflag && i->i_active == DEVI_IGNORED)
 			cfgxwarn(i->i_srcfile, i->i_lineno, "ignoring "
