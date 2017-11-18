@@ -1,5 +1,5 @@
 
-/*	$NetBSD: kmem.h,v 1.8 2017/11/18 13:51:56 christos Exp $	*/
+/*	$NetBSD: kmem.h,v 1.9 2017/11/18 18:52:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
 #include_next <sys/kmem.h>
 #include_next <sys/pool.h>
 #include_next <sys/vmem.h>
+
+#define	KM_PUSHPAGE	0x00	/* XXXNETBSD */
+#define	KMC_NODEBUG	0x00
 
 typedef void kmem_cache_t;
 
@@ -87,8 +90,5 @@ kmem_cache_alloc(kmem_cache_t *cache, int flags)
 #define	kmem_cache_destroy(cache)		pool_cache_destroy(cache)
 #define	kmem_cache_free(cache, buf)		pool_cache_put(cache, buf)
 #define	kmem_cache_reap_now(cache)		pool_cache_invalidate(cache)
-
-#define	KM_PUSHPAGE	0x00	/* XXXNETBSD */
-#define	KMC_NODEBUG	0x00
 
 #endif	/* _OPENSOLARIS_SYS_KMEM_H_ */
