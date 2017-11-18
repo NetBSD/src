@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.92 2017/11/16 17:08:07 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.93 2017/11/18 01:11:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.92 2017/11/16 17:08:07 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.93 2017/11/18 01:11:05 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1878,6 +1878,20 @@ is_orphan_loop(const struct devbase *d, const struct devbase *p)
 }
 
 static void
+addlevelparent(struct devbase *d, struct devbase *parent)
+{
+	struct devbase *p;
+
+	if (d->d_levelparent)
+		return;
+
+	for (p = parent; p != NULL; p = p->d_levelparent)
+		if (d == p)
+			return;
+	d->d_levelparent = p;
+}
+
+static void
 do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
     int state)
 {
@@ -1888,8 +1902,7 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 	struct pspec *p;
 	int active = 0;
 
-	if (d->d_levelparent == NULL)
-		d->d_levelparent = parent;
+	addlevelparent(d, parent);
 
 	/*
 	 * A pseudo-device will always attach at root, and if it has an
