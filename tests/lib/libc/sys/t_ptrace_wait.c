@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.9 2017/05/03 19:46:54 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.10 2017/11/18 17:00:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.9 2017/05/03 19:46:54 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.10 2017/11/18 17:00:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5757,7 +5757,7 @@ ATF_TC_BODY(signal3, tc)
 #endif
 	sigset_t intmask;
 
-#if defined(__sparc__) && !defined(__sparc64__)
+#if defined(__sparc__)
 	atf_tc_expect_timeout("PR kern/52167");
 
 	// timeout wins, failure still valid
