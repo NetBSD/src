@@ -1,5 +1,5 @@
 
-/*	$NetBSD: kmem.h,v 1.7 2017/11/17 18:18:01 christos Exp $	*/
+/*	$NetBSD: kmem.h,v 1.8 2017/11/18 13:51:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ kmem_cache_alloc(kmem_cache_t *cache, int flags)
 	 * causes a deadlock we either need to provide an emergency
 	 * pool or handle the failure.
 	 */
-	if (flags == 0)
+	if (flags == KM_PUSHPAGE)
 		flags |= KM_SLEEP;
 	return pool_cache_get(cache, flags);
 }
