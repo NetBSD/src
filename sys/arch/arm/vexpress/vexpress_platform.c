@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.4 2017/10/22 20:35:32 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.5 2017/11/18 00:25:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.4 2017/10/22 20:35:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.5 2017/11/18 00:25:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.4 2017/10/22 20:35:32 skrll 
 #include <libfdt.h>
 
 #define	VEXPRESS_CLCD_NODE_PATH	\
-	"/smb@08000000/motherboard/iofpga@3,00000000/clcd@1f0000"
+	"/smb@8000000/motherboard/iofpga@3,00000000/clcd@1f0000"
 #define	VEXPRESS_REF_FREQ	24000000
 
 extern struct bus_space armv7_generic_bs_tag;
