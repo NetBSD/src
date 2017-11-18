@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.33 2015/11/12 14:38:21 pooka Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.34 2017/11/18 18:44:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.33 2015/11/12 14:38:21 pooka Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.34 2017/11/18 18:44:20 christos Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -338,11 +338,15 @@ static void
 emitparents(FILE *fp)
 {
 	struct pspec *p;
+	int inst = -1;
 
 	NEWLINE;
 	TAILQ_FOREACH(p, &allpspecs, p_list) {
 		if (p->p_devs == NULL || p->p_active != DEVI_ACTIVE)
 			continue;
+		if (inst == p->p_inst)
+			continue;
+		inst = p->p_inst;
 		fprintf(fp,
 		    "static const struct cfparent pspec%d = {\n", p->p_inst);
 		fprintf(fp, "\t\"%s\", ", p->p_iattr->a_name);
