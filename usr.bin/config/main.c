@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.93 2017/11/18 01:11:05 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.94 2017/11/18 18:39:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.93 2017/11/18 01:11:05 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.94 2017/11/18 18:39:16 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1957,6 +1957,12 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 					j->i_active = active = state;
 					if (p != NULL)
 						p->p_active = state;
+					if (state == DEVI_IGNORED) {
+						CFGDBG(5,
+						    "`%s' at '%s' ignored",
+						    d->d_name, parent ?
+						    parent->d_name : "(root)");
+					}
 				}
 			}
 		}
@@ -1969,7 +1975,7 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 			struct cdd_params cdd = { d, at, parent };
 			/* Look for a matching dead devi */
 			if (ht_enumerate(deaddevitab, check_dead_devi, &cdd) &&
-			    d != parent)
+			    d != parent) {
 				/*
 				 * That device had its instances removed.
 				 * Continue the loop marking descendants
@@ -1981,7 +1987,10 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 				 * have to continue looping.
 				 */
 				active = DEVI_IGNORED;
-			else
+				CFGDBG(5, "`%s' at '%s' ignored", d->d_name,
+				    parent ? parent->d_name : "(root)");
+
+			} else
 				return;
 		}
 	}
