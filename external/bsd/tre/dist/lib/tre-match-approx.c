@@ -225,6 +225,8 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
 
   size_t i, id;
 
+  reg_errcode_t ret;
+
   if (!match_tags)
     num_tags = 0;
   else
@@ -781,16 +783,17 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
   DPRINT(("match end offset = %d, match cost = %d\n", match_eo,
 	  match_costs[TRE_M_COST]));
 
-#ifndef TRE_USE_ALLOCA
-  if (buf)
-    xfree(buf);
-#endif /* !TRE_USE_ALLOCA */
-
   match->cost = match_costs[TRE_M_COST];
   match->num_ins = match_costs[TRE_M_NUM_INS];
   match->num_del = match_costs[TRE_M_NUM_DEL];
   match->num_subst = match_costs[TRE_M_NUM_SUBST];
   *match_end_ofs = match_eo;
 
-  return match_eo >= 0 ? REG_OK : REG_NOMATCH;
+  ret = match_eo >= 0 ? REG_OK : REG_NOMATCH;
+error_exit:
+#ifndef TRE_USE_ALLOCA
+  if (buf)
+    xfree(buf);
+#endif /* !TRE_USE_ALLOCA */
+  return ret;
 }

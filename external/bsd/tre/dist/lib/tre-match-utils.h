@@ -52,8 +52,10 @@
 	    else							      \
 	      {								      \
 		w = tre_mbrtowc(&next_c, str_byte, (size_t)max, &mbstate);    \
-		if (w == (size_t)-1 || w == (size_t)-2)			      \
-		  return REG_NOMATCH;					      \
+		if (w == (size_t)-1 || w == (size_t)-2) {		      \
+		  ret = REG_NOMATCH;					      \
+		  goto error_exit;					      \
+		}							      \
 		if (w == 0 && len >= 0)					      \
 		  {							      \
 		    pos_add_next = 1;					      \
