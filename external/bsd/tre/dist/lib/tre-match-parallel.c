@@ -121,6 +121,7 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
   int new_match = 0;
   int *tmp_tags = NULL;
   int *tmp_iptr;
+  reg_errcode_t ret;
 
 #ifdef TRE_MBSTATE
   memset(&mbstate, '\0', sizeof(mbstate));
@@ -474,13 +475,14 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
 
   DPRINT(("match end offset = %d\n", match_eo));
 
+  *match_end_ofs = match_eo;
+  ret = match_eo >= 0 ? REG_OK : REG_NOMATCH;
+error_exit:
 #ifndef TRE_USE_ALLOCA
   if (buf)
     xfree(buf);
 #endif /* !TRE_USE_ALLOCA */
-
-  *match_end_ofs = match_eo;
-  return match_eo >= 0 ? REG_OK : REG_NOMATCH;
+  return ret;
 }
 
 /* EOF */
