@@ -230,7 +230,7 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 
   tre_tnfa_transition_t *trans_i;
   regmatch_t *pmatch = NULL;
-  int ret;
+  reg_errcode_t ret;
 
 #ifdef TRE_MBSTATE
   memset(&mbstate, '\0', sizeof(mbstate));
