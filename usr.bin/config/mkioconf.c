@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.34 2017/11/18 18:44:20 christos Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.35 2017/11/19 01:46:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.34 2017/11/18 18:44:20 christos Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.35 2017/11/19 01:46:29 christos Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -344,7 +344,7 @@ emitparents(FILE *fp)
 	TAILQ_FOREACH(p, &allpspecs, p_list) {
 		if (p->p_devs == NULL || p->p_active != DEVI_ACTIVE)
 			continue;
-		if (inst == p->p_inst)
+		if (inst >= p->p_inst)
 			continue;
 		inst = p->p_inst;
 		fprintf(fp,
