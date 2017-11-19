@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.50 2017/07/24 12:35:37 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.51 2017/11/19 03:23:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.50 2017/07/24 12:35:37 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.51 2017/11/19 03:23:01 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,10 +252,12 @@ set_opt_val(size_t i, int val)
 		    if (optlist[j].opt_set == flag)
 			optlist[j].val = 0;
 	}
+	if (i == _SH_OPT_Xflag)
+		xtracefdsetup(val);
 	optlist[i].val = val;
 #ifdef DEBUG
 	if (&optlist[i].val == &debug)
-		opentrace();
+		opentrace();	/* different "trace" than the -x one... */
 #endif
 }
 
@@ -307,6 +309,8 @@ minus_o(char *name, int val)
 		for (i = 0; i < NOPTS; i++)
 			if (optlist[i].name && equal(name, optlist[i].name)) {
 				set_opt_val(i, val);
+				if (i == _SH_OPT_Xflag)
+					set_opt_val(_SH_OPT_xflag, val);
 				return;
 			}
 		error("Illegal option %co %s", "+-"[val], name);
@@ -321,7 +325,9 @@ setoption(int flag, int val)
 
 	for (i = 0; i < NOPTS; i++)
 		if (optlist[i].letter == flag) {
-			set_opt_val( i, val );
+			set_opt_val(i, val);
+			if (i == _SH_OPT_Xflag)
+				set_opt_val(_SH_OPT_xflag, val);
 			return;
 		}
 	error("Illegal option %c%c", "+-"[val], flag);

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.38 2017/11/19 03:22:55 kre Exp $	*/
+/*	$NetBSD: output.c,v 1.39 2017/11/19 03:23:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.38 2017/11/19 03:22:55 kre Exp $");
+__RCSID("$NetBSD: output.c,v 1.39 2017/11/19 03:23:01 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,9 @@ __RCSID("$NetBSD: output.c,v 1.38 2017/11/19 03:22:55 kre Exp $");
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "redir.h"
+#include "options.h"
+#include "show.h"
 
 
 #define OUTBUFSIZ BUFSIZ
@@ -74,12 +77,14 @@ __RCSID("$NetBSD: output.c,v 1.38 2017/11/19 03:22:55 kre Exp $");
 #define MEM_OUT -3		/* output to dynamically allocated memory */
 
 
-struct output output = {NULL, 0, OUTBUFSIZ, NULL, 1, 0};
-struct output errout = {NULL, 0, 100, NULL, 2, 0};
-struct output memout = {NULL, 0, 0, NULL, MEM_OUT, 0};
+		/*      nextc  nleft  bufsize  buf     fd  flags  chain */
+struct output output = {NULL,    0, OUTBUFSIZ, NULL,    1,    0,   NULL };
+struct output errout = {NULL,    0,       100, NULL,    2,    0,   NULL };
+struct output memout = {NULL,    0,         0, NULL, MEM_OUT, 0,   NULL };
 struct output *out1 = &output;
 struct output *out2 = &errout;
-
+struct output *outx = &errout;
+struct output *outxtop = NULL;
 
 
 #ifdef mkinit
@@ -128,13 +133,21 @@ out2str(const char *p)
 	outstr(p, out2);
 }
 
+void
+outxstr(const char *p)
+{
+	outstr(p, outx);
+}
+
 
 void
 outstr(const char *p, struct output *file)
 {
+	char c = 0;
+
 	while (*p)
-		outc(*p++, file);
-	if (file == out2)
+		outc((c = *p++), file);
+	if (file == out2 || (file == outx && c == '\n'))
 		flushout(file);
 }
 
@@ -145,6 +158,11 @@ out2shstr(const char *p)
 	outshstr(p, out2);
 }
 
+void
+outxshstr(const char *p)
+{
+	outshstr(p, outx);
+}
 
 /*
  * ' is in this list, not because it does not require quoting
@@ -245,6 +263,8 @@ emptyoutbuf(struct output *dest)
 		dest->nextc = dest->buf;
 		dest->nleft = dest->bufsize;
 		INTON;
+		VTRACE(DBG_OUTPUT, ("emptyoutbuf now %d @%p for fd %d\n",
+		    dest->nleft, dest->buf, dest->fd));
 	} else if (dest->fd == MEM_OUT) {
 		offset = dest->bufsize;
 		INTOFF;
@@ -274,6 +294,8 @@ flushout(struct output *dest)
 
 	if (dest->buf == NULL || dest->nextc == dest->buf || dest->fd < 0)
 		return;
+	VTRACE(DBG_OUTPUT, ("flushout fd=%d %zd to write\n", dest->fd,
+	    (size_t)(dest->nextc - dest->buf)));
 	if (xwrite(dest->fd, dest->buf, dest->nextc - dest->buf) < 0)
 		dest->flags |= OUTPUT_ERR;
 	dest->nextc = dest->buf;
@@ -605,4 +627,130 @@ xioctl(int fd, unsigned long request, char *arg)
 
 	while ((i = ioctl(fd, request, arg)) == -1 && errno == EINTR);
 	return i;
+}
+
+static void
+xtrace_fd_swap(int from, int to)
+{
+	struct output *o = outxtop;
+
+	while (o != NULL) {
+		if (o->fd == from)
+			o->fd = to;
+		o = o->chain;
+	}
+}
+
+/*
+ * the -X flag is to be set or reset (not necessarily changed)
+ * Do what is needed to make tracing go to where it should
+ *
+ * Note: Xflag has not yet been altered, "on" indicates what it will become
+ */
+
+void
+xtracefdsetup(int on)
+{
+	if (!on) {
+		flushout(outx);
+
+		if (Xflag != 1)		/* Was already +X */
+			return;		/* so nothing to do */
+
+		outx = out2;
+		CTRACE(DBG_OUTPUT, ("Tracing to stderr\n"));
+		return;
+	}
+
+	if (Xflag == 1) {				/* was already set */
+		/*
+		 * This is a change of output file only
+		 * Just close the current one, and reuse the struct output
+		 */
+		if (!(outx->flags & OUTPUT_CLONE))
+			sh_close(outx->fd);
+	} else if (outxtop == NULL) {
+		/*
+		 * -X is just turning on, for the forst time,
+		 * need a new output struct to become outx
+		 */
+		xtrace_clone(1);
+	} else
+		outx = outxtop;
+
+	if (outx != out2) {
+		outx->flags &= ~OUTPUT_CLONE;
+		outx->fd = to_upper_fd(dup(out2->fd));
+		register_sh_fd(outx->fd, xtrace_fd_swap);
+	}
+
+	CTRACE(DBG_OUTPUT, ("Tracing now to fd %d (from %d)\n",
+	    outx->fd, out2->fd));
+}
+
+void
+xtrace_clone(int new)
+{
+	struct output *o;
+
+	CTRACE(DBG_OUTPUT,
+	    ("xtrace_clone(%d): %sfd=%d buf=%p nleft=%d flags=%x ",
+	    new, (outx == out2 ? "out2: " : ""),
+	    outx->fd, outx->buf, outx->nleft, outx->flags));
+
+	flushout(outx);
+
+	if (!new && outxtop == NULL && Xflag == 0) {
+		/* following stderr, nothing to save */
+		CTRACE(DBG_OUTPUT, ("+X\n"));
+		return;
+	}
+
+	o = ckmalloc(sizeof(*o));
+	o->fd = outx->fd;
+	o->flags = OUTPUT_CLONE;
+	o->bufsize = outx->bufsize;
+	o->nleft = 0;
+	o->buf = NULL;
+	o->nextc = NULL;
+	o->chain = outxtop;
+	outx = o;
+	outxtop = o;
+
+	CTRACE(DBG_OUTPUT, ("-> fd=%d flags=%x[CLONE]\n", outx->fd, o->flags));
+}
+
+void
+xtrace_pop(void)
+{
+	struct output *o;
+
+	CTRACE(DBG_OUTPUT, ("trace_pop: fd=%d buf=%p nleft=%d flags=%x ",
+	    outx->fd, outx->buf, outx->nleft, outx->flags));
+
+	flushout(outx);
+
+	if (outxtop == NULL) {
+		/*
+		 * No -X has been used, so nothing much to do
+		 */
+		CTRACE(DBG_OUTPUT, ("+X\n"));
+		return;
+	}
+
+	o = outxtop;
+	outx = o->chain;
+	if (outx == NULL)
+		outx = &errout;
+	outxtop = o->chain;
+	if (o != &errout) {
+		if (o->fd >= 0 && !(o->flags & OUTPUT_CLONE))
+			sh_close(o->fd);
+		if (o->buf)
+			ckfree(o->buf);
+		ckfree(o);
+	}
+
+	CTRACE(DBG_OUTPUT, ("-> fd=%d buf=%p nleft=%d flags=%x\n",
+	    outx->fd, outx->buf, outx->nleft, outx->flags));
 }

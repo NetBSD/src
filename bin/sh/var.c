@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.68 2017/10/28 03:59:11 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.68 2017/10/28 03:59:11 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -925,6 +925,7 @@ mklocal(const char *name, int flags)
 		p = ckmalloc(sizeof_optlist);
 		lvp->text = memcpy(p, optlist, sizeof_optlist);
 		vp = NULL;
+		xtrace_clone(0);
 	} else {
 		vp = find_var(name, &vpp, NULL);
 		if (vp == NULL) {
@@ -985,6 +986,7 @@ poplocalvars(void)
 		if (vp == NULL) {	/* $- saved */
 			memcpy(optlist, lvp->text, sizeof_optlist);
 			ckfree(lvp->text);
+			xtrace_pop();
 			optschanged();
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
 			(void)unsetvar(vp->text, 0);

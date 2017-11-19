@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.25 2017/11/19 03:22:55 kre Exp $	*/
+/*	$NetBSD: output.h,v 1.26 2017/11/19 03:23:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,22 +45,27 @@ struct output {
 	char *buf;
 	short fd;
 	short flags;
+	struct output *chain;
 };
 
 /* flags for ->flags */
-#define OUTPUT_ERR 01		/* error occurred on output */
+#define OUTPUT_ERR	0x01		/* error occurred on output */
+#define OUTPUT_CLONE	0x02		/* this is a clone of another */
 
 extern struct output output;
 extern struct output errout;
 extern struct output memout;
 extern struct output *out1;
 extern struct output *out2;
+extern struct output *outx;
 
 void open_mem(char *, int, struct output *);
 void out1str(const char *);
 void out2str(const char *);
+void outxstr(const char *);
 void outstr(const char *, struct output *);
 void out2shstr(const char *);
+void outxshstr(const char *);
 void outshstr(const char *, struct output *);
 void emptyoutbuf(struct output *);
 void flushall(void);
@@ -75,10 +80,14 @@ void fmtstr(char *, size_t, const char *, ...) __printflike(3, 4);
 void doformat(struct output *, const char *, va_list) __printflike(2, 0);
 int xwrite(int, char *, int);
 int xioctl(int, unsigned long, char *);
+void xtracefdsetup(int);
+void xtrace_clone(int);
+void xtrace_pop(void);
 
 #define outc(c, file)	(--(file)->nleft < 0? (emptyoutbuf(file), *(file)->nextc++ = (c)) : (*(file)->nextc++ = (c)))
 #define out1c(c)	outc(c, out1)
 #define out2c(c)	outc(c, out2)
+#define outxc(c)	outc(c, outx)
 
 #define OUTPUT_INCL
 #endif
