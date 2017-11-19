@@ -43,8 +43,11 @@ tre_fill_pmatch(size_t nmatch, regmatch_t pmatch[], int cflags,
   unsigned int i, j;
   int *parents;
 
+  if (cflags & REG_NOSUB)
+    return;
+
   i = 0;
-  if (match_eo >= 0 && !(cflags & REG_NOSUB))
+  if (match_eo >= 0)
     {
       /* Construct submatch offsets from the tags. */
       DPRINT(("end tag = t%d = %d\n", tnfa->end_tag, match_eo));
@@ -127,6 +130,7 @@ tre_match(const tre_tnfa_t *tnfa, const void *string, size_t len,
 {
   reg_errcode_t status;
   int *tags = NULL, eo;
+  if (tnfa->cflags & REG_NOSUB) nmatch = 0;
   if (tnfa->num_tags > 0 && nmatch > 0)
     {
 #ifdef TRE_USE_ALLOCA
@@ -315,20 +319,26 @@ tre_match_approx(const tre_tnfa_t *tnfa, const void *string, size_t len,
 {
   reg_errcode_t status;
   int *tags = NULL, eo;
+  size_t nmatch;
+
+  if (tnfa->cflags & REG_NOSUB)
+    nmatch = 0;
+  else
+    nmatch = match->nmatch;
 
   /* If the regexp does not use approximate matching features, the
      maximum cost is zero, and the approximate matcher isn't forced,
      use the exact matcher instead. */
   if (params.max_cost == 0 && !tnfa->have_approx
       && !(eflags & REG_APPROX_MATCHER))
-    return tre_match(tnfa, string, len, type, match->nmatch, match->pmatch,
+    return tre_match(tnfa, string, len, type, nmatch, match->pmatch,
 		     eflags);
 
   /* Back references are not supported by the approximate matcher. */
   if (tnfa->have_backrefs)
     return REG_BADPAT;
 
-  if (tnfa->num_tags > 0 && match->nmatch > 0)
+  if (tnfa->num_tags > 0 && nmatch > 0)
     {
 #if TRE_USE_ALLOCA
       tags = alloca(sizeof(*tags) * tnfa->num_tags);
@@ -341,7 +351,7 @@ tre_match_approx(const tre_tnfa_t *tnfa, const void *string, size_t len,
   status = tre_tnfa_run_approx(tnfa, string, (int)len, type, tags,
 			       match, params, eflags, &eo);
   if (status == REG_OK)
-    tre_fill_pmatch(match->nmatch, match->pmatch, tnfa->cflags, tnfa, tags, eo);
+    tre_fill_pmatch(nmatch, match->pmatch, tnfa->cflags, tnfa, tags, eo);
 #ifndef TRE_USE_ALLOCA
   if (tags)
     xfree(tags);
