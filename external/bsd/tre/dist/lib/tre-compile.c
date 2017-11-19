@@ -1949,7 +1949,7 @@ tre_compile(regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
 		 sizeof(*tag_directions) * (tnfa->num_tags + 1));
 	}
       tnfa->minimal_tags = xcalloc((unsigned)tnfa->num_tags * 2 + 1,
-				   sizeof(tnfa->minimal_tags));
+				   sizeof(*tnfa->minimal_tags));
       if (tnfa->minimal_tags == NULL)
 	ERROR_EXIT(REG_ESPACE);
 
