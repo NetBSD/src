@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.397 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.398 2017/11/19 16:59:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.397 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.398 2017/11/19 16:59:25 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -447,13 +447,14 @@ if_dl_create(const struct ifnet *ifp, const struct sockaddr_dl **sdlp)
 	addrlen = ifp->if_addrlen;
 	socksize = roundup(sockaddr_dl_measure(namelen, addrlen), sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
-	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
+	ifa = malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
 
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	mask = (struct sockaddr_dl *)(socksize + (char *)sdl);
 
 	sockaddr_dl_init(sdl, socksize, ifp->if_index, ifp->if_type,
 	    ifp->if_xname, namelen, NULL, addrlen);
+	mask->sdl_family = AF_LINK;
 	mask->sdl_len = sockaddr_dl_measure(namelen, 0);
 	memset(&mask->sdl_data[0], 0xff, namelen);
 	ifa->ifa_rtrequest = link_rtrequest;
