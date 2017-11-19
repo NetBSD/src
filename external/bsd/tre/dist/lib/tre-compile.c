@@ -594,7 +594,8 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 		  {
 		    status = tre_add_tag_right(mem, left, tag_left);
 		    tnfa->tag_directions[tag_left] = TRE_TAG_MAXIMIZE;
-		    status = tre_add_tag_right(mem, right, tag_right);
+		    if (status == REG_OK)
+		      status = tre_add_tag_right(mem, right, tag_right);
 		    tnfa->tag_directions[tag_right] = TRE_TAG_MAXIMIZE;
 		  }
 		DPRINT(("  num_tags += 2\n"));
