@@ -409,7 +409,7 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 	  DPRINT(("  should match back reference %d\n", bt));
 	  /* Get the substring we need to match against.  Remember to
 	     turn off REG_NOSUB temporarily. */
-	  tre_fill_pmatch(bt + 1, pmatch, tnfa->cflags & /*LINTED*/!REG_NOSUB,
+	  tre_fill_pmatch(bt + 1, pmatch, tnfa->cflags & ~REG_NOSUB,
 			  tnfa, tags, pos);
 	  /* LINTED */so = pmatch[bt].rm_so;
 	  /* LINTED */eo = pmatch[bt].rm_eo;
