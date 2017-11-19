@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.173 2017/11/15 08:50:07 kre Exp $
+.\"	$NetBSD: sh.1,v 1.174 2017/11/19 03:23:01 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .Dd October 24, 2017
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
-.ds flags abCEeFfhIiLmnpquVvx
+.ds flags abCEeFfhIiLmnpquVvXx
 .Os
 .Sh NAME
 .Nm sh
@@ -434,10 +434,36 @@ section below.)
 .It Fl v Em verbose
 The shell writes its input to standard error as it is read.
 Useful for debugging.
+.It Fl X Em Xtrace
+Cause output from the
+.Ic xtrace
+.Pq Fl x
+option to be sent to standard error as it exists when the
+.Fl X
+option is enabled (regardless of its previous state.)
+For example:
+.Bd -compact -literal
+        set -X 2>/tmp/trace-file
+.Ed
+will arrange for tracing output to be sent to the file named,
+instead of wherever it was previously being sent,
+until the X option is set again, or cleared.
+.Pp
+Each change (set or clear) to
+.Fl X
+is also performed upon
+.Fl x ,
+but not the converse.
 .It Fl x Em xtrace
 Write each command to standard error (preceded by the expanded value of
 .Dq $PS4 )
 before it is executed.
+Unless
+.Fl X
+is set,
+.Dq "standard error"
+means that which existed immediately before any redirections to
+be applied to the command are performed.
 Useful for debugging.
 .It "\ \ " Em cdprint
 Make an interactive shell always print the new directory name when
@@ -2633,6 +2659,16 @@ Making
 local causes any shell options that are changed via the set command inside the
 function to be restored to their original values when the function
 returns.
+If
+.Fl X
+option is altered after
+.Dq \-
+has been made local, then when the function returns, the previous
+destination for
+.Ic xtrace
+output (as of the time of the
+.Ic local
+command) will also be restored.
 .Pp
 It is an error to use
 .Ic local
