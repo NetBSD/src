@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2017/02/02 22:07:05 martin Exp $
+#	$NetBSD: Makefile,v 1.25 2017/11/19 21:05:26 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,6 +15,7 @@ TESTS_C+=	t_rwtoro
 TESTS_C+=	t_union
 TESTS_C+=	t_unpriv
 TESTS_C+=	t_mtime_otrunc
+TESTS_C+=	t_mtime_write
 TESTS_C+=	t_vfsops
 TESTS_C+=	t_vnops
 

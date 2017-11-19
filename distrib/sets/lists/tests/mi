@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.766 2017/11/01 08:44:34 martin Exp $
+# $NetBSD: mi,v 1.767 2017/11/19 21:05:26 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1555,6 +1555,7 @@
 ./usr/tests/fs/vfs/t_full				tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs/t_io					tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs/t_mtime_otrunc			tests-fs-tests		atf,rump
+./usr/tests/fs/vfs/t_mtime_write			tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs/t_renamerace				tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs/t_rmdirrace				tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs/t_ro					tests-fs-tests		atf,rump
