@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.24 2012/03/15 02:02:20 joerg Exp $	*/
+/*	$NetBSD: output.h,v 1.25 2017/11/19 03:22:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,8 +41,8 @@
 struct output {
 	char *nextc;
 	int nleft;
-	char *buf;
 	int bufsize;
+	char *buf;
 	short fd;
 	short flags;
 };

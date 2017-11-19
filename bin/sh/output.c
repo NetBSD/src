@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.37 2017/11/16 19:41:02 kre Exp $	*/
+/*	$NetBSD: output.c,v 1.38 2017/11/19 03:22:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.37 2017/11/16 19:41:02 kre Exp $");
+__RCSID("$NetBSD: output.c,v 1.38 2017/11/19 03:22:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,9 +74,9 @@ __RCSID("$NetBSD: output.c,v 1.37 2017/11/16 19:41:02 kre Exp $");
 #define MEM_OUT -3		/* output to dynamically allocated memory */
 
 
-struct output output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
-struct output errout = {NULL, 0, NULL, 100, 2, 0};
-struct output memout = {NULL, 0, NULL, 0, MEM_OUT, 0};
+struct output output = {NULL, 0, OUTBUFSIZ, NULL, 1, 0};
+struct output errout = {NULL, 0, 100, NULL, 2, 0};
+struct output memout = {NULL, 0, 0, NULL, MEM_OUT, 0};
 struct output *out1 = &output;
 struct output *out2 = &errout;
 
