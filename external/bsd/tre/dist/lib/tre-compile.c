@@ -61,6 +61,7 @@ tre_add_tag_left(tre_mem_t mem, tre_ast_node_t *node, int tag_id)
   c->right->firstpos = NULL;
   c->right->lastpos = NULL;
   c->right->num_tags = 0;
+  c->right->num_submatches = 0;
   node->obj = c;
   node->type = CATENATION;
   return REG_OK;
@@ -93,6 +94,7 @@ tre_add_tag_right(tre_mem_t mem, tre_ast_node_t *node, int tag_id)
   c->left->firstpos = NULL;
   c->left->lastpos = NULL;
   c->left->num_tags = 0;
+  c->left->num_submatches = 0;
   node->obj = c;
   node->type = CATENATION;
   return REG_OK;
