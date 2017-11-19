@@ -108,7 +108,7 @@ tre_new_item(tre_mem_t mem, int min, int max, int *i, int *max_i,
       if (*max_i > 1024)
 	return REG_ESPACE;
       *max_i *= 2;
-      new_items = xrealloc(array, sizeof(*items) * *max_i);
+      new_items = xrealloc(array, sizeof(*array) * *max_i);
       if (new_items == NULL)
 	return REG_ESPACE;
       *items = array = new_items;
@@ -509,7 +509,7 @@ tre_parse_bracket(tre_parse_ctx_t *ctx, tre_ast_node_t **result)
 	  if (num_neg_classes > 0)
 	    {
 	      l->neg_classes = tre_mem_alloc(ctx->mem,
-					     (sizeof(l->neg_classes)
+					     (sizeof(*l->neg_classes)
 					      * (num_neg_classes + 1)));
 	      if (l->neg_classes == NULL)
 		{
@@ -550,7 +550,7 @@ tre_parse_bracket(tre_parse_ctx_t *ctx, tre_ast_node_t **result)
 	  if (num_neg_classes > 0)
 	    {
 	      l->neg_classes = tre_mem_alloc(ctx->mem,
-					     (sizeof(l->neg_classes)
+					     (sizeof(*l->neg_classes)
 					      * (num_neg_classes + 1)));
 	      if (l->neg_classes == NULL)
 		{
