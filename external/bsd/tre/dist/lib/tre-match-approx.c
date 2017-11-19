@@ -252,6 +252,16 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
      or with malloc() if alloca is unavailable. */
   {
     unsigned char *buf_cursor;
+
+    /* Ensure that tag_bytes*num_states cannot overflow, and that it don't
+     * contribute more than 1/8 of SIZE_MAX to total_bytes. */
+    if (num_tags > SIZE_MAX/(8 * sizeof(*tmp_tags) * tnfa->num_states))
+      return REG_ESPACE;
+
+    /* Likewise check reach_bytes. */
+    if (tnfa->num_states > SIZE_MAX/(8 * sizeof(*reach_next)))
+      return REG_ESPACE;
+
     /* Space needed for one array of tags. */
     size_t tag_bytes = sizeof(*tmp_tags) * num_tags;
     /* Space needed for one reach table. */
