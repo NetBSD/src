@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.79 2017/11/18 18:44:20 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.80 2017/11/19 00:41:10 kre Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.79 2017/11/18 18:44:20 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.80 2017/11/19 00:41:10 kre Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -1915,7 +1915,6 @@ getpspec(struct attr *attr, struct devbase *ab, int atunit, struct deva *da)
 		   	inst = p->p_inst; 
 		}
 	}
-printf("2. %d %p %s %d %s\n", npspecs, attr, ab->d_name, atunit, da->d_name);
 
 	p = ecalloc(1, sizeof(*p));
 
