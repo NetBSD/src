@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.201 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.202 2017/11/20 21:06:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.201 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.202 2017/11/20 21:06:54 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1211,7 +1211,7 @@ uvm_fault_upper_lookup(
 }
 
 /*
- * uvm_fault_upper_neighbor: enter single lower neighbor page.
+ * uvm_fault_upper_neighbor: enter single upper neighbor page.
  *
  * => called with amap and anon locked.
  */
@@ -1493,6 +1493,8 @@ uvm_fault_upper_enter(
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg,
 	struct vm_anon *oanon)
 {
+	struct pmap *pmap = ufi->orig_map->pmap;
+	vaddr_t va = ufi->orig_rvaddr;
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	UVMHIST_FUNC("uvm_fault_upper_enter"); UVMHIST_CALLED(maphist);
 
@@ -1508,12 +1510,24 @@ uvm_fault_upper_enter(
 
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: anon: pm=%#jx, va=%#jx, pg=%#jx, promote=%jd",
-	    (uintptr_t)ufi->orig_map->pmap, ufi->orig_rvaddr,
-	    (uintptr_t)pg, flt->promote);
-	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
-	    VM_PAGE_TO_PHYS(pg),
+	    (uintptr_t)pmap, va, (uintptr_t)pg, flt->promote);
+	if (pmap_enter(pmap, va, VM_PAGE_TO_PHYS(pg),
 	    flt->enter_prot, flt->access_type | PMAP_CANFAIL |
 	    (flt->wire_mapping ? PMAP_WIRED : 0)) != 0) {
+
+		/*
+		 * If pmap_enter() fails, it must not leave behind an existing
+		 * pmap entry.  In particular, a now-stale entry for a different
+		 * page would leave the pmap inconsistent with the vm_map.
+		 * This is not to imply that pmap_enter() should remove an
+		 * existing mapping in such a situation (since that could create
+		 * different problems, eg. if the existing mapping is wired),
+		 * but rather that the pmap should be designed such that it
+		 * never needs to fail when the new mapping is replacing an
+		 * existing mapping and the new page has no existing mappings.
+		 */
+
+		KASSERT(!pmap_extract(pmap, va, NULL));
 
 		/*
 		 * No need to undo what we did; we can simply think of
@@ -1541,7 +1555,7 @@ uvm_fault_upper_enter(
 	 * done case 1!  finish up by unlocking everything and returning success
 	 */
 
-	pmap_update(ufi->orig_map->pmap);
+	pmap_update(pmap);
 	uvmfault_unlockall(ufi, amap, uobj);
 	return 0;
 }
