@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.151 2017/11/20 00:01:05 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.152 2017/11/20 17:00:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.151 2017/11/20 00:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.152 2017/11/20 17:00:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -906,6 +906,7 @@ rump_vop_setattr(void *v)
 	}
 
 	int flags = 0;
+	getnanotime(&now);
 	if (vap->va_atime.tv_sec != VNOVAL)
 		if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 			flags |= RUMPFS_ACCESS;
@@ -913,11 +914,13 @@ rump_vop_setattr(void *v)
 		flags |= RUMPFS_CHANGE | RUMPFS_MODIFY;
 		if (vp->v_mount->mnt_flag & MNT_RELATIME)
 			flags |= RUMPFS_ACCESS;
+	} else if (vap->va_size == 0) {
+		flags |= RUMPFS_MODIFY;
+		vap->va_mtime = now;
 	}
 	SETIFVAL(va_birthtime.tv_sec, time_t);
 	SETIFVAL(va_birthtime.tv_nsec, long);
 	flags |= RUMPFS_CHANGE;
-	getnanotime(&now);
 	error = rumpfs_update(flags, vp, &vap->va_atime, &vap->va_mtime, &now);
 	if (error)
 		return error;
