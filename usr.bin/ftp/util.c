@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.158 2013/02/19 23:29:15 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.159 2017/11/20 21:11:36 kre Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.158 2013/02/19 23:29:15 dsl Exp $");
+__RCSID("$NetBSD: util.c,v 1.159 2017/11/20 21:11:36 kre Exp $");
 #endif /* not lint */
 
 /*
@@ -478,7 +478,8 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		}
 	}
 	updatelocalcwd();
-	updateremotecwd();
+	remotecwd[0] = '\0';
+	remcwdvalid = 0;
 
  cleanup_ftp_login:
 	FREEPTR(fuser);
@@ -835,6 +836,7 @@ updateremotecwd(void)
 	size_t	 i;
 	char	*cp;
 
+	remcwdvalid = 1;	/* whether it works or not, we are done */
 	overbose = verbose;
 	ocode = code;
 	if (ftp_debug == 0)
@@ -1174,6 +1176,8 @@ formatbuf(char *buf, size_t len, const char *src)
 		case '/':
 		case '.':
 		case 'c':
+			if (connected && !remcwdvalid)
+				updateremotecwd();
 			p2 = connected ? remotecwd : "";
 			updirs = pdirs = 0;
 
