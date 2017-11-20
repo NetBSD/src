@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.83 2017/03/22 21:14:11 jdolecek Exp $
+.\"	$NetBSD: mount.8,v 1.84 2017/11/20 16:41:55 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd March 22, 2017
+.Dd November 20, 2017
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -55,6 +55,14 @@ command invokes a file system-specific program to prepare and graft the
 device on to the file system tree at the point
 .Ar node ,
 or to update options for an already-mounted file system.
+.Pp
+These programs are named
+.Dq mount_<fstype>
+where
+.Dq <fstype>
+refers to the file system-specific type; for example
+for NFS the mount program is called
+.Xr mount_nfs 8 .
 .Pp
 The
 .Ar node
@@ -273,7 +281,10 @@ All cached meta-data are invalidated, superblock and summary information
 is re-read from disk, all cached inactive vnodes and file data are
 invalidated and all inode data are re-read for all active vnodes.
 .It Cm rump
-Instead of running mount_type to mount the file system, run rump_type.
+Instead of running 
+.Dq mount_<fstype>
+to mount the file system, run
+.Dq rump_<fstype> .
 This uses a userspace server to mount the file system and does not
 require kernel support for the specific file system type.
 See the
@@ -462,7 +473,7 @@ The file system object is to be read and write.
 .Pp
 The options specific to the various file system types are
 described in the manual pages for those file systems'
-.Nm mount_XXX
+.Dq mount_<fstype>
 commands;
 for instance, the options specific to Berkeley
 Fast File System (FFS) are described in the
