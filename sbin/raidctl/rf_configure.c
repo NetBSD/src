@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.28 2017/11/20 19:10:45 christos Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.29 2017/11/20 22:16:23 kre Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.28 2017/11/20 19:10:45 christos Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.29 2017/11/20 22:16:23 kre Exp $");
 #endif
 
 
@@ -76,9 +76,11 @@ static int rf_get_next_nonblank_line(char *, int, FILE *, const char *);
 static int     distSpareYes = 1;
 static int     distSpareNo = 0;
 
-/* The mapsw[] table below contains all the various RAID types that might
-be supported by the kernel.  The actual supported types are found
-in sys/dev/raidframe/rf_layout.c. */
+/*
+ * The mapsw[] table below contains all the various RAID types that might
+ * be supported by the kernel.  The actual supported types are found
+ * in sys/dev/raidframe/rf_layout.c.
+ */
 
 static const RF_LayoutSW_t mapsw[] = {
 	/* parity declustering */
@@ -135,7 +137,7 @@ rf_GetLayout(RF_ParityConfig_t parityConfig)
  * version of the driver, and in the user-level program that configures
  * the system via ioctl.
  */
-int 
+int
 rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 {
 	int numscanned, val, r, c, retcode, aa, bb, cc;
@@ -162,9 +164,9 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 	    "and numCol");
 
 	/*
-         * wackiness with aa, bb, cc to get around size problems on
-         * different platforms
-         */
+	 * wackiness with aa, bb, cc to get around size problems on
+	 * different platforms
+	 */
 	numscanned = sscanf(buf, "%d %d %d", &aa, &bb, &cc);
 	if (numscanned != 3) {
 		warnx("Config file error (\"array\" section): unable to get "
@@ -195,6 +197,7 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 	rewind(fp);
 	strlcpy(cfgPtr->diskQueueType, "fifo", sizeof(cfgPtr->diskQueueType));
 	cfgPtr->maxOutstandingDiskReqs = 1;
+
 	/* scan the file for the block related to disk queues */
 	if (rf_search_file_for_start_of("queue", buf, sizeof(buf), fp) ||
 	    rf_get_next_nonblank_line(buf, sizeof(buf), fp, NULL)) {
@@ -202,9 +205,11 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 		    "Using %s.]", configname, cfgPtr->diskQueueType);
 	}
 
-	/* the queue specifier line contains two entries: 1st char of first
+	/*
+	 * the queue specifier line contains two entries: 1st char of first
 	 * word specifies queue to be used 2nd word specifies max num reqs
-	 * that can be outstanding on the disk itself (typically 1) */
+	 * that can be outstanding on the disk itself (typically 1)
+	 */
 	if (sscanf(buf, "%s %d", buf1, &val) != 2) {
 		warnx("Can't determine queue type and/or max outstanding "
 		    "reqs from line: %*s", (int)(sizeof(buf) - 1), buf);
@@ -244,13 +249,13 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 				goto out;
 			}
 
-		        b = getfsspecname(b1, sizeof(b1), buf);
-                        if (b == NULL) {
+			b = getfsspecname(b1, sizeof(b1), buf);
+			if (b == NULL) {
 				warnx("Config file error: warning: unable to "
 				    "get device file for disk at row %d col "
 				    "%d: %s", r, c, b1);
 				b = buf;
-			} 
+			}
 
 			strlcpy(&cfgPtr->devnames[r][c][0], b,
 			    sizeof(cfgPtr->devnames[r][c][0]));
@@ -279,7 +284,7 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 			b = buf;
 		}
 
-	        strlcpy(&cfgPtr->spare_names[r][0], b, 
+	        strlcpy(&cfgPtr->spare_names[r][0], b,
 		    sizeof(cfgPtr->spare_names[r][0]));
 	}
 
@@ -326,10 +331,11 @@ out:
 }
 
 
-/* used in architectures such as RAID0 where there is no layout-specific
+/*
+ * used in architectures such as RAID0 where there is no layout-specific
  * information to be passed into the configuration code.
  */
-int 
+int
 rf_MakeLayoutSpecificNULL(FILE *fp, RF_Config_t *cfgPtr, void *ignored)
 {
 	cfgPtr->layoutSpecificSize = 0;
@@ -337,7 +343,7 @@ rf_MakeLayoutSpecificNULL(FILE *fp, RF_Config_t *cfgPtr, void *ignored)
 	return 0;
 }
 
-int 
+int
 rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 {
 	int b, v, k, r, lambda, norotate, i, val, distSpare;
@@ -373,8 +379,10 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 		fclose(fp);
 		return EINVAL;
 	}
-	/* set the sparemap directory.  In the in-kernel version, there's a
-	 * daemon that's responsible for finding the sparemaps */
+	/*
+	 * set the sparemap directory.  In the in-kernel version, there's a
+	 * daemon that's responsible for finding the sparemaps
+	 */
 	if (distSpare) {
 		if (rf_get_next_nonblank_line(smbuf, sizeof(buf), configfp,
 		    "Can't find sparemap file name in config file")) {
@@ -409,9 +417,9 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	}
 
 	/*
-         * fill in the buffer with the block design parameters
-         * and then the block design itself
-         */
+	 * fill in the buffer with the block design parameters
+	 * and then the block design itself
+	 */
 	*((int *) p) = b;
 	p += sizeof(int);
 	*((int *) p) = v;
@@ -466,7 +474,7 @@ rf_find_white(char *p)
  * searches a file for a line that says "START string", where string is
  * specified as a parameter
  */
-static int 
+static int
 rf_search_file_for_start_of(const char *string, char *buf, int len, FILE *fp)
 {
 	char *p;
@@ -485,7 +493,7 @@ rf_search_file_for_start_of(const char *string, char *buf, int len, FILE *fp)
 }
 
 /* reads from file fp into buf until it finds an interesting line */
-static int 
+static int
 rf_get_next_nonblank_line(char *buf, int len, FILE *fp, const char *errmsg)
 {
 	char *p;
@@ -519,7 +527,6 @@ rf_get_next_nonblank_line(char *buf, int len, FILE *fp, const char *errmsg)
  * This is specific to the declustered layout, but doesn't belong in
  * rf_decluster.c because it uses stuff that can't be compiled into
  * the kernel, and it needs to be compiled into the user-level sparemap daemon.
- *
  */
 void *
 rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
