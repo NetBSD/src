@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.16 2017/10/25 07:35:40 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.17 2017/11/20 09:01:20 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -51,6 +51,7 @@ Non MP-safe components and kernel options
    - MROUTING
    - PIM
    - MPLS (mpls(4))
+   - IPv6 address selection policy
  - Layer 4
    - DCCP
    - SCTP
