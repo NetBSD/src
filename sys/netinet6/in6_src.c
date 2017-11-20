@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.81 2017/09/17 17:35:10 christos Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.82 2017/11/20 09:01:20 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.81 2017/09/17 17:35:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.82 2017/11/20 09:01:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -878,6 +878,9 @@ addrsel_policy_init(void)
 	defaultaddrpolicy.label = ADDR_LABEL_NOTAPP;
 }
 
+/*
+ * XXX: NOMPSAFE if a policy is set
+ */
 static struct in6_addrpolicy *
 lookup_addrsel_policy(struct sockaddr_in6 *key)
 {
