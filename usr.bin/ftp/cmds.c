@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.137 2016/02/27 16:31:31 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.138 2017/11/20 21:11:36 kre Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.137 2016/02/27 16:31:31 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.138 2017/11/20 21:11:36 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1158,7 +1158,8 @@ cd(int argc, char *argv[])
 	}
 	if (r == COMPLETE) {
 		dirchange = 1;
-		updateremotecwd();
+		remotecwd[0] = '\0';
+		remcwdvalid = 0;
 	}
 }
 
@@ -1544,9 +1545,9 @@ pwd(int argc, char *argv[])
 		UPRINTF("usage: %s\n", argv[0]);
 		return;
 	}
-	if (! remotecwd[0])
+	if (!remcwdvalid || remotecwd[0] == '\0')
 		updateremotecwd();
-	if (! remotecwd[0])
+	if (remotecwd[0] == '\0')
 		fprintf(ttyout, "Unable to determine remote directory\n");
 	else {
 		fprintf(ttyout, "Remote directory: %s\n", remotecwd);
@@ -2359,7 +2360,8 @@ cdup(int argc, char *argv[])
 	}
 	if (r == COMPLETE) {
 		dirchange = 1;
-		updateremotecwd();
+		remotecwd[0] = '\0';
+		remcwdvalid = 0;
 	}
 }
 
