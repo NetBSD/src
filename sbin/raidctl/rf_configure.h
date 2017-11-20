@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.h,v 1.1 2001/10/04 16:00:37 oster Exp $	*/
+/*	$NetBSD: rf_configure.h,v 1.2 2017/11/20 19:10:45 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -45,9 +45,9 @@
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 
-int     rf_MakeConfig(char *configname, RF_Config_t * cfgPtr);
-int     rf_MakeLayoutSpecificNULL(FILE * fp, RF_Config_t * cfgPtr, void *arg);
-int     rf_MakeLayoutSpecificDeclustered(FILE * configfp, RF_Config_t * cfgPtr, void *arg);
-void   *rf_ReadSpareTable(RF_SparetWait_t * req, char *fname);
+int     rf_MakeConfig(char *, RF_Config_t *);
+int     rf_MakeLayoutSpecificNULL(FILE *, RF_Config_t *, void *);
+int     rf_MakeLayoutSpecificDeclustered(FILE *, RF_Config_t *, void *);
+void   *rf_ReadSpareTable(RF_SparetWait_t *, char *);
 
-#endif				/* !_RF__RF_CONFIGURE_H_ */
+#endif /* !_RF__RF_CONFIGURE_H_ */
