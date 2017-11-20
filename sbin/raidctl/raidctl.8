@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.72 2017/07/03 21:33:42 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.73 2017/11/20 18:37:56 kardel Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -388,6 +388,7 @@ START disks
 .Ed
 .Pp
 specifies the three component disks to be used in the RAID device.
+Disk wedges may also be specified with the NAME=<wedge name> syntax.
 If any of the specified drives cannot be found when the RAID device is
 configured, then they will be marked as
 .Sq failed ,

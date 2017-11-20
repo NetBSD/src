@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.26 2016/03/09 19:53:32 christos Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.27 2017/11/20 18:37:56 kardel Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.26 2016/03/09 19:53:32 christos Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.27 2017/11/20 18:37:56 kardel Exp $");
 #endif
 
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: rf_configure.c,v 1.26 2016/03/09 19:53:32 christos Exp $");
 #include <errno.h>
 #include <strings.h>
 #include <err.h>
+#include <util.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -72,6 +73,7 @@ char   *rf_find_white(char *p);
 #define RF_ERRORMSG(s)            printf((s))
 #define RF_ERRORMSG1(s,a)         printf((s),(a))
 #define RF_ERRORMSG2(s,a,b)       printf((s),(a),(b))
+#define RF_ERRORMSG3(s,a,b,c)     printf((s),(a),(b),(c))
 
 int     distSpareYes = 1;
 int     distSpareNo = 0;
@@ -231,12 +233,25 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 	}
 	for (r = 0; r < cfgPtr->numRow; r++) {
 		for (c = 0; c < cfgPtr->numCol; c++) {
+			char b1[80];
+			const char *b;
+
 			if (rf_get_next_nonblank_line(
-			    &cfgPtr->devnames[r][c][0], 50, fp, NULL)) {
+			    buf, sizeof(buf), fp, NULL)) {
 				RF_ERRORMSG2("Config file error: unable to get device file for disk at row %d col %d\n", r, c);
 				retcode = -1;
 				goto out;
 			}
+
+		        b = getfsspecname(b1, sizeof(b1), buf);
+                        if (b == NULL) {
+				RF_ERRORMSG3(
+				    "Config file error: warning: unable to get device file for disk at row %d col %d: %s\n",
+				    r, c, b1);
+				b = buf;
+			} 
+
+			strncpy(&cfgPtr->devnames[r][c][0], b, 50);
 		}
 	}
 
@@ -245,12 +260,23 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 	if (rf_search_file_for_start_of("spare", buf, 256, fp))
 		cfgPtr->numSpare = 0;
 	for (c = 0; c < cfgPtr->numSpare; c++) {
-		if (rf_get_next_nonblank_line(&cfgPtr->spare_names[c][0],
-		    256, fp, NULL)) {
+		char b1[80];
+		const char *b;
+
+		if (rf_get_next_nonblank_line(buf,
+		    sizeof(buf), fp, NULL)) {
 			RF_ERRORMSG1("Config file error: unable to get device file for spare disk %d\n", c);
 			retcode = -1;
 			goto out;
 		}
+
+		b = getfsspecname(b1, sizeof(b1), buf);
+		if (b == NULL) {
+			RF_ERRORMSG2("Config file error: warning: unable to get device file for spare disk %d: %s\n", c, b);
+			b = buf;
+		}
+
+	        strncpy(&cfgPtr->spare_names[r][0], b, 50);
 	}
 
 	/* scan the file for the block related to layout */
