@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.183.2.1 2017/07/04 14:35:21 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.183.2.2 2017/11/21 14:16:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.1 2017/07/04 14:35:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.2 2017/11/21 14:16:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1530,7 +1530,91 @@ pci_conf_print_subsystem_cap(const pcireg_t *regs, int capoff)
 }
 
 /* XXX pci_conf_print_agp8_cap */
-/* XXX pci_conf_print_secure_cap */
+static void
+pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t reg, reg2, val;
+	bool havemisc1;
+
+	printf("\n  Secure Capability Register\n");
+	reg = regs[o2i(capoff + PCI_SECURE_CAP)];
+	printf("    Capability Register: 0x%04x\n", reg >> 16);
+	val = __SHIFTOUT(reg, PCI_SECURE_CAP_TYPE);
+	printf("      Capability block type: ");
+	/* I know IOMMU Only */
+	if (val == PCI_SECURE_CAP_TYPE_IOMMU)
+		printf("IOMMU\n");
+	else {
+		printf("0x%x(unknown)\n", val);
+		return;
+	}
+
+	val = __SHIFTOUT(reg, PCI_SECURE_CAP_REV);
+	printf("      Capability revision: 0x%02x ", val);
+	if (val == PCI_SECURE_CAP_REV_IOMMU)
+		printf("(IOMMU)\n");
+	else {
+		printf("(unknown)\n");
+		return;
+	}
+	onoff("IOTLB support", reg, PCI_SECURE_CAP_IOTLBSUP);
+	onoff("HyperTransport tunnel translation support", reg,
+	    PCI_SECURE_CAP_HTTUNNEL);
+	onoff("Not present table entries cached", reg, PCI_SECURE_CAP_NPCACHE);
+	onoff("IOMMU Extended Feature Register support", reg,
+	    PCI_SECURE_CAP_EFRSUP);
+	onoff("IOMMU Miscellaneous Information Register 1", reg,
+	    PCI_SECURE_CAP_EXT);
+	havemisc1 = reg & PCI_SECURE_CAP_EXT;
+	
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_BAL)];
+	printf("    Base Address Low Register: 0x%08x\n", reg);
+	onoff("Enable", reg, PCI_SECURE_IOMMU_BAL_EN);
+	reg2 = regs[o2i(capoff + PCI_SECURE_IOMMU_BAH)];
+	printf("    Base Address High Register: 0x%08x\n", reg2);
+	printf("      Base Address : 0x%016" PRIx64 "\n",
+	    ((uint64_t)reg2 << 32)
+	    | (reg & (PCI_SECURE_IOMMU_BAL_H | PCI_SECURE_IOMMU_BAL_L)));
+	
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_RANGE)];
+	printf("    IOMMU Range Register: 0x%08x\n", reg);
+	printf("      HyperTransport UnitID: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_UNITID));
+	onoff("Range valid", reg, PCI_SECURE_IOMMU_RANGE_RNGVALID);
+	printf("      Device range bus number: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_BUSNUM));
+	printf("      First device: 0x%04x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_FIRSTDEV));
+	printf("      Last device: 0x%04x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_RANGE_LASTDEV));
+
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_MISC0)];
+	printf("    Miscellaneous Information Register 0: 0x%08x\n", reg);
+	printf("      MSI Message number: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_MSINUM));
+	val = __SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_GVASIZE);
+	printf("      Guest Virtual Address size: ");
+	if (val == PCI_SECURE_IOMMU_MISC0_GVASIZE_48B)
+		printf("48bits\n");
+	else
+		printf("0x%x(unknown)\n", val);
+	val = __SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_PASIZE);
+	printf("      Physical Address size: %dbits\n", val);
+	val = __SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_VASIZE);
+	printf("      Virtual Address size: %dbits\n", val);
+	onoff("ATS response address range reserved", reg,
+	    PCI_SECURE_IOMMU_MISC0_ATSRESV);
+	printf("      Peripheral Page Request MSI Message number: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC0_MISNPPR));
+
+	if (!havemisc1)
+		return;
+	
+	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_MISC1)];
+	printf("    Miscellaneous Information Register 1: 0x%08x\n", reg);
+	printf("      MSI Message number (GA): 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_SECURE_IOMMU_MISC1_MSINUM));
+}
 
 static void
 pci_print_pcie_L0s_latency(uint32_t val)
@@ -2087,7 +2171,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	}
 	printf("      OBFF Supported: ");
-	switch ((reg & PCIE_DCAP2_OBFF) >> 18) {
+	switch (__SHIFTOUT(reg, PCIE_DCAP2_OBFF)) {
 	case 0x0:
 		printf("Not supported\n");
 		break;
@@ -2139,7 +2223,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Emergency Power Reduction Request", reg,
 	    PCIE_DCSR2_EMGPWRRED_REQ);
 	printf("      OBFF: ");
-	switch ((reg & PCIE_DCSR2_OBFF_EN) >> 13) {
+	switch (__SHIFTOUT(reg, PCIE_DCSR2_OBFF_EN)) {
 	case 0x0:
 		printf("Disabled\n");
 		break;
@@ -2352,7 +2436,7 @@ static struct {
 	{ PCI_CAP_SUBVENDOR,	"Subsystem vendor ID",
 	  pci_conf_print_subsystem_cap },
 	{ PCI_CAP_AGP8,		"AGP 8x",	NULL },
-	{ PCI_CAP_SECURE,	"Secure Device", NULL },
+	{ PCI_CAP_SECURE,	"Secure Device", pci_conf_print_secure_cap },
 	{ PCI_CAP_PCIEXPRESS,	"PCI Express",	pci_conf_print_pcie_cap },
 	{ PCI_CAP_MSIX,		"MSI-X",	pci_conf_print_msix_cap },
 	{ PCI_CAP_SATA,		"SATA",		pci_conf_print_sata_cap },
@@ -3415,15 +3499,15 @@ pci_conf_print_dpa_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static const char *
-pci_conf_print_tph_req_cap_sttabloc(unsigned char val)
+pci_conf_print_tph_req_cap_sttabloc(uint8_t val)
 {
 
 	switch (val) {
-	case 0x0:
+	case PCI_TPH_REQ_STTBLLOC_NONE:
 		return "Not Present";
-	case 0x1:
+	case PCI_TPH_REQ_STTBLLOC_TPHREQ:
 		return "in the TPH Requester Capability Structure";
-	case 0x2:
+	case PCI_TPH_REQ_STTBLLOC_MSIX:
 		return "in the MSI-X Table";
 	default:
 		return "Unknown";
@@ -3435,6 +3519,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 {
 	pcireg_t reg;
 	int size, i, j;
+	uint8_t sttbloc;
 
 	printf("\n  TPH Requester Extended Capability\n");
 
@@ -3444,9 +3529,9 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("Interrupt Vector Mode Supported", reg, PCI_TPH_REQ_CAP_INTVEC);
 	onoff("Device Specific Mode Supported", reg, PCI_TPH_REQ_CAP_DEVSPEC);
 	onoff("Extend TPH Reqester Supported", reg, PCI_TPH_REQ_CAP_XTPHREQ);
+	sttbloc = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC);
 	printf("      ST Table Location: %s\n",
-	    pci_conf_print_tph_req_cap_sttabloc(
-		    (unsigned char)__SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC)));
+	    pci_conf_print_tph_req_cap_sttabloc(sttbloc));
 	size = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLSIZ) + 1;
 	printf("      ST Table Size: %d\n", size);
 
@@ -3482,7 +3567,10 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		printf("(reserved vaule)\n");
 		break;
 	}
-	
+
+	if (sttbloc != PCI_TPH_REQ_STTBLLOC_TPHREQ)
+		return;
+
 	for (i = 0; i < size ; i += 2) {
 		reg = regs[o2i(extcapoff + PCI_TPH_REQ_STTBL + i / 2)];
 		for (j = 0; j < 2 ; j++) {
@@ -3873,6 +3961,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_desigvndsp_cap */
 /* XXX pci_conf_print_vf_resizbar_cap */
 /* XXX pci_conf_print_hierarchyid_cap */
+/* XXX pci_conf_print_npem_cap */
 
 #undef	MS
 #undef	SM
@@ -3939,7 +4028,7 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_PASID,	"Process Address Space ID",
 	  pci_conf_print_pasid_cap },
-	{ PCI_EXTCAP_LN_REQ,	"LN Requester",
+	{ PCI_EXTCAP_LNR,	"LN Requester",
 	  pci_conf_print_lnr_cap },
 	{ PCI_EXTCAP_DPC,	"Downstream Port Containment",
 	  pci_conf_print_dpc_cap },
@@ -3958,6 +4047,8 @@ static struct {
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
+	  NULL },
+	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
 	  NULL },
 };
 
@@ -4099,6 +4190,7 @@ pci_conf_print_type0(
 {
 	int off, width;
 	pcireg_t rval;
+	const char *str;
 
 	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width) {
 #ifdef _KERNEL
@@ -4115,9 +4207,43 @@ pci_conf_print_type0(
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
-	/* XXX */
-	printf("    Expansion ROM Base Address: 0x%08x\n",
-	    regs[o2i(PCI_MAPREG_ROM)]);
+	rval = regs[o2i(PCI_MAPREG_ROM)];
+	printf("    Expansion ROM Base Address Register: 0x%08x\n", rval);
+	printf("      base: 0x%08x\n", (uint32_t)PCI_MAPREG_ROM_ADDR(rval));
+	onoff("Expansion ROM Enable", rval, PCI_MAPREG_ROM_ENABLE);
+	printf("      Validation Status: ");
+	switch (__SHIFTOUT(rval, PCI_MAPREG_ROM_VALID_STAT)) {
+	case PCI_MAPREG_ROM_VSTAT_NOTSUPP:
+		str = "Validation not supported";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_INPROG:
+		str = "Validation in Progress";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VPASS:
+		str = "Validation Pass. "
+		    "Valid contents, trust test was not performed";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VPASSTRUST:
+		str = "Validation Pass. Valid and trusted contents";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VFAIL:
+		str = "Validation Fail. Invalid contents";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_VFAILUNTRUST:
+		str = "Validation Fail. Valid but untrusted contents";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_WPASS:
+		str = "Warning Pass. Validation passed with warning. "
+		    "Valid contents, trust test was not performed";
+		break;
+	case PCI_MAPREG_ROM_VSTAT_WPASSTRUST:
+		str = "Warning Pass. Validation passed with warning. "
+		    "Valid and trusted contents";
+		break;
+	}
+	printf("%s\n", str);
+	printf("      Validation Details: 0x%x\n",
+	    (uint32_t)__SHIFTOUT(rval, PCI_MAPREG_ROM_VALID_DETAIL));
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
