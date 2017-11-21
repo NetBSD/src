@@ -1,14 +1,18 @@
-#	$NetBSD: Makefile,v 1.15 2017/11/21 02:45:03 rin Exp $
+#	$NetBSD: Makefile,v 1.16 2017/11/21 02:47:14 rin Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
 
-WARNS=	4
+WARNS=	5
 
 COPTS.exf.c+=		-Wno-format-nonliteral
 COPTS.msg.c+=		-Wno-format-nonliteral
-.if ${USE_WIDECHAR} != "yes"
+.if ${USE_WIDECHAR} == "yes"
+.if ${ACTIVE_CC} == "gcc"
+COPTS.regexec.c+=	-Wno-old-style-definition
+.endif
+.else
 COPTS.v_increment.c+=	-Wno-format-nonliteral
 CWARNFLAGS.gcc+=	-Wno-unused
 CWARNFLAGS.clang+=	-Wno-unsequenced
