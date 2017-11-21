@@ -98,7 +98,8 @@ typedef enum {
   REG_BADBR,		/* Invalid content of {} */
   REG_ERANGE,		/* Invalid use of range operator */
   REG_ESPACE,		/* Out of memory.  */
-  REG_BADRPT            /* Invalid use of repetition operators. */
+  REG_BADRPT,           /* Invalid use of repetition operators. */
+  REG_INVARG,           /* Invalid arguments. */
 } reg_errcode_t;
 
 /* POSIX tre_regcomp() flags. */
@@ -122,6 +123,7 @@ typedef enum {
 /* Extra tre_regexec() flags. */
 #define REG_APPROX_MATCHER	 (REG_NOTEOL << 1)
 #define REG_BACKTRACKING_MATCHER (REG_APPROX_MATCHER << 1)
+#define REG_STARTEND		 (REG_BACKTRACKING_MATCHER << 1)
 
 #endif /* !TRE_USE_SYSTEM_REGEX_H */
 
