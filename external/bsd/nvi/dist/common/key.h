@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.3 2016/01/07 14:07:01 christos Exp $ */
+/*	$NetBSD: key.h,v 1.4 2017/11/21 07:43:47 rin Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -25,8 +25,9 @@
     sp->conv.int2sys(sp, w, wlen, &sp->wp->cw, &nlen, &n)
 #define INPUT2INT5(sp,cw,n,nlen,w,wlen)					    \
     sp->conv.input2int(sp, n, nlen, &(cw), &wlen, &w)
-#define INTISWIDE(c)	(wctob(c) == EOF)	    /* XXX wrong name */
-#define CHAR_WIDTH(sp, ch)  wcwidth(ch)
+#define INTISWIDE(c)	     (wctob(c) == EOF)	/* XXX wrong name */
+#define CHAR_WIDTH(sp, ch)   wcwidth(ch)
+#define ISMULTIWIDTH(sp, ch) (INTISWIDE(ch) && CHAR_WIDTH(sp, ch) > 1)
 #else
 #define FILE2INT5(sp,buf,n,nlen,w,wlen) \
     (w = n, wlen = nlen, 0)
@@ -40,8 +41,9 @@
     (n = w, nlen = wlen, 0)
 #define INPUT2INT5(sp,buf,n,nlen,w,wlen) \
     (w = n, wlen = nlen, 0)
-#define INTISWIDE(c)	    0
-#define CHAR_WIDTH(sp, ch)  1
+#define INTISWIDE(c)	     0
+#define CHAR_WIDTH(sp, ch)   1
+#define ISMULTIWIDTH(sp, ch) 0
 #endif
 #define FILE2INT(sp,n,nlen,w,wlen)					    \
     FILE2INT5(sp,sp->wp->cw,n,nlen,w,wlen)
