@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.17 2017/11/15 20:45:16 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.18 2017/11/21 07:56:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #define ELFROUND	64
 
-static const int pads[4] = {
+static const uint8_t pads[4] = {
 	[BTSEG_NONE] = 0x00,
 	[BTSEG_TEXT] = 0xCC,
 	[BTSEG_RODATA] = 0x00,
@@ -107,12 +107,6 @@ mm_pte_is_valid(pt_entry_t pte)
 	return ((pte & PG_V) != 0);
 }
 
-paddr_t
-mm_vatopa(vaddr_t va)
-{
-	return (PTE_BASE[pl1_i(va)] & PG_FRAME);
-}
-
 static void
 mm_mprotect(vaddr_t startva, size_t size, pte_prot_t prot)
 {
@@ -169,9 +163,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 	size_t L4e_idx, L3e_idx, L2e_idx;
 	paddr_t pa;
 
-	/*
-	 * Build L4.
-	 */
+	/* Build L4. */
 	L4e_idx = pl4_i(startva);
 	nL4e = mm_nentries_range(startva, endva, NBPD_L4);
 	ASSERT(L4e_idx == 511);
@@ -181,9 +173,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 		L4_BASE[L4e_idx] = pa | PG_V | PG_RW;
 	}
 
-	/*
-	 * Build L3.
-	 */
+	/* Build L3. */
 	L3e_idx = pl3_i(startva);
 	nL3e = mm_nentries_range(startva, endva, NBPD_L3);
 	for (i = 0; i < nL3e; i++) {
@@ -194,9 +184,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 		L3_BASE[L3e_idx+i] = pa | PG_V | PG_RW;
 	}
 
-	/*
-	 * Build L2.
-	 */
+	/* Build L2. */
 	L2e_idx = pl2_i(startva);
 	nL2e = mm_nentries_range(startva, endva, NBPD_L2);
 	for (i = 0; i < nL2e; i++) {
@@ -213,39 +201,6 @@ mm_rand_num64(void)
 {
 	/* XXX: yes, this is ridiculous, will be fixed soon */
 	return rdtsc();
-}
-
-static void
-mm_map_head(void)
-{
-	size_t i, npages, size;
-	uint64_t rnd;
-	vaddr_t randva;
-
-	/*
-	 * To get the size of the head, we give a look at the read-only
-	 * mapping of the kernel we created in locore. We're identity mapped,
-	 * so kernpa = kernva.
-	 */
-	size = elf_get_head_size((vaddr_t)kernpa_start);
-	npages = size / PAGE_SIZE;
-
-	rnd = mm_rand_num64();
-	randva = rounddown(HEAD_WINDOW_BASE + rnd % (HEAD_WINDOW_SIZE - size),
-	    PAGE_SIZE);
-	mm_map_tree(randva, randva + size);
-
-	/* Enter the area and build the ELF info */
-	for (i = 0; i < npages; i++) {
-		mm_enter_pa(kernpa_start + i * PAGE_SIZE,
-		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
-	}
-	elf_build_head(randva);
-
-	/* Register the values in bootspace */
-	bootspace.head.va = randva;
-	bootspace.head.pa = kernpa_start;
-	bootspace.head.sz = size;
 }
 
 static vaddr_t
@@ -352,6 +307,39 @@ mm_shift_segment(vaddr_t va, size_t pagesz, size_t elfsz, size_t elfalign)
 	return offset;
 }
 
+static void
+mm_map_head(void)
+{
+	size_t i, npages, size;
+	uint64_t rnd;
+	vaddr_t randva;
+
+	/*
+	 * To get the size of the head, we give a look at the read-only
+	 * mapping of the kernel we created in locore. We're identity mapped,
+	 * so kernpa = kernva.
+	 */
+	size = elf_get_head_size((vaddr_t)kernpa_start);
+	npages = size / PAGE_SIZE;
+
+	rnd = mm_rand_num64();
+	randva = rounddown(HEAD_WINDOW_BASE + rnd % (HEAD_WINDOW_SIZE - size),
+	    PAGE_SIZE);
+	mm_map_tree(randva, randva + size);
+
+	/* Enter the area and build the ELF info */
+	for (i = 0; i < npages; i++) {
+		mm_enter_pa(kernpa_start + i * PAGE_SIZE,
+		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
+	}
+	elf_build_head(randva);
+
+	/* Register the values in bootspace */
+	bootspace.head.va = randva;
+	bootspace.head.pa = kernpa_start;
+	bootspace.head.sz = size;
+}
+
 vaddr_t
 mm_map_segment(int segtype, paddr_t pa, size_t elfsz, size_t elfalign)
 {
@@ -434,8 +422,8 @@ mm_map_boot(void)
 }
 
 /*
- * There are five independent regions: head, text, rodata, data, boot. They are
- * all mapped at random VAs.
+ * There is a variable number of independent regions: one head, several kernel
+ * segments, one boot. They are all mapped at random VAs.
  *
  * Head contains the ELF Header and ELF Section Headers, and we use them to
  * map the rest of the regions. Head must be placed in memory *before* the
