@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.6.2.2 2017/10/21 19:43:55 snj Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.6.2.3 2017/11/21 11:11:20 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -78,6 +78,42 @@ setup_sasp()
 	#check_sa_entries $SOCK_PEER $ip_local $ip_peer
 }
 
+test_sad_disapper_until()
+{
+	local time=$1
+	local check_dead_sa=$2
+	local setkey_opts=
+	local n=$time
+	local tmpfile=./__tmp
+	local sock= ok=
+
+	if $check_dead_sa; then
+		setkey_opts="-D -a"
+	else
+		setkey_opts="-D"
+	fi
+
+	while [ $n -ne 0 ]; do
+		ok=0
+		sleep 1
+		for sock in $SOCK_LOCAL $SOCK_PEER; do
+			export RUMP_SERVER=$sock
+			$HIJACKING setkey $setkey_opts > $tmpfile
+			$DEBUG && cat $tmpfile
+			if grep -q 'No SAD entries.' $tmpfile; then
+				ok=$((ok + 1))
+			fi
+		done
+		if [ $ok -eq 2 ]; then
+			return
+		fi
+
+		n=$((n - 1))
+	done
+
+	atf_fail "SAs didn't disappear after $time sec."
+}
+
 test_ipsec4_lifetime()
 {
 	local proto=$1
@@ -88,6 +124,7 @@ test_ipsec4_lifetime()
 	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
 	local algo_args="$(generate_algo_args $proto $algo)"
 	local lifetime=3
+	local buffertime=2
 
 	rump_server_crypto_start $SOCK_LOCAL netipsec
 	rump_server_crypto_start $SOCK_PEER netipsec
@@ -118,16 +155,8 @@ test_ipsec4_lifetime()
 	# Set up SAs with lifetime 1 sec.
 	setup_sasp $proto "$algo_args" $ip_local $ip_peer 1
 
-	# Wait for the SAs to be expired
-	atf_check -s exit:0 sleep 2
-
 	# Check the SAs have been expired
-	export RUMP_SERVER=$SOCK_LOCAL
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D
-	export RUMP_SERVER=$SOCK_PEER
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D
+	test_sad_disapper_until $((1 + $buffertime)) false
 
 	# Clean up SPs
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -148,15 +177,8 @@ test_ipsec4_lifetime()
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
 
-	atf_check -s exit:0 sleep $((lifetime + 1))
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
-
-	export RUMP_SERVER=$SOCK_PEER
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
+	# Check the SAs have been expired
+	test_sad_disapper_until $((lifetime + $buffertime)) true
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s not-exit:0 -o match:'0 packets received' \
@@ -176,6 +198,7 @@ test_ipsec6_lifetime()
 	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
 	local algo_args="$(generate_algo_args $proto $algo)"
 	local lifetime=3
+	local buffertime=2
 
 	rump_server_crypto_start $SOCK_LOCAL netinet6 netipsec
 	rump_server_crypto_start $SOCK_PEER netinet6 netipsec
@@ -204,16 +227,8 @@ test_ipsec6_lifetime()
 	# Set up SAs with lifetime 1 sec.
 	setup_sasp $proto "$algo_args" $ip_local $ip_peer 1
 
-	# Wait for the SAs to be expired
-	atf_check -s exit:0 sleep 2
-
 	# Check the SAs have been expired
-	export RUMP_SERVER=$SOCK_LOCAL
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D
-	export RUMP_SERVER=$SOCK_PEER
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D
+	test_sad_disapper_until $((1 + $buffertime)) false
 
 	# Clean up SPs
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -234,15 +249,8 @@ test_ipsec6_lifetime()
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
 
-	atf_check -s exit:0 sleep $((lifetime + 1))
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
-
-	export RUMP_SERVER=$SOCK_PEER
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
+	# Check the SAs have been expired
+	test_sad_disapper_until $((lifetime + $buffertime)) true
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s not-exit:0 -o match:'0 packets received' \
