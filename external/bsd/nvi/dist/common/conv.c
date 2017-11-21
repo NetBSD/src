@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.9 2017/11/21 02:11:44 rin Exp $ */
+/*	$NetBSD: conv.c,v 1.10 2017/11/21 02:36:45 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp  (Berkeley) Date: 2001/08/18 21:41:41 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: conv.c,v 1.9 2017/11/21 02:11:44 rin Exp $");
+__RCSID("$NetBSD: conv.c,v 1.10 2017/11/21 02:36:45 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -39,14 +39,13 @@ __RCSID("$NetBSD: conv.c,v 1.9 2017/11/21 02:11:44 rin Exp $");
 
 #define LANGCODESET	nl_langinfo(CODESET)
 #else
-typedef int	iconv_t;
-
 #define LANGCODESET	""
 #endif
 
 #include <locale.h>
 
 #ifdef USE_WIDECHAR
+#ifdef USE_ICONV
 static int 
 raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 	const CHAR_T **dst)
@@ -67,6 +66,7 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 
     return 0;
 }
+#endif
 
 #ifndef ERROR_ON_CONVERT
 #define HANDLE_ICONV_ERROR(o, i, ol, il) do {				\
@@ -104,8 +104,6 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 	}				    				\
 	src = buffer;							\
     } while (0)
-#else
-#define CONVERT(str, left, src, len)
 #endif
 
 static int 
@@ -120,10 +118,12 @@ default_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw,
     size_t   n;
     ssize_t  nlen = len;
     const char *src = (const char *)str;
+    int		error = 1;
+#ifdef USE_ICONV
     iconv_t	id = (iconv_t)-1;
     char	buffer[CONV_BUFFER_SIZE];
     size_t	left = len;
-    int		error = 1;
+#endif
 
     MEMSET(&mbs, 0, 1);
     BINC_RETW(NULL, *tostr, *blen, nlen);
@@ -153,24 +153,30 @@ default_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw,
 	    nlen += 256;
 	    BINC_GOTOW(NULL, *tostr, *blen, nlen);
 	}
+#ifdef USE_ICONV
 	if (id != (iconv_t)-1 && j == len && left) {
 	    CONVERT(str, left, src, len);
 	    j = 0;
 	}
+#endif
     }
     *tolen = i;
 
+#ifdef USE_ICONV
     if (id != (iconv_t)-1)
 	iconv_close(id);
+#endif
 
     *dst = cw->bp1;
 
     return 0;
-err:
 alloc_err:
-    *tolen = i;
+#ifdef USE_ICONV
+err:
     if (id != (iconv_t)-1)
 	iconv_close(id);
+#endif
+    *tolen = i;
     *dst = cw->bp1;
 
     return error;
@@ -197,6 +203,7 @@ cs_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw,
     return default_char2int(sp, str, len, cw, tolen, dst, LANGCODESET);
 }
 
+#ifdef USE_ICONV
 static int 
 CHAR_T_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
 	size_t *tolen, const char **dst)
@@ -238,13 +245,13 @@ int2raw(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 
     return 0;
 }
+#endif
 
 static int 
 default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
 		size_t *tolen, const char **pdst, const char *enc)
 {
     size_t i, j = 0;
-    int offset = 0;
     char **tostr = (char **)(void *)&cw->bp1;
     size_t  *blen = &cw->blen1;
     mbstate_t mbs;
@@ -252,8 +259,11 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
     ssize_t  nlen = len + MB_CUR_MAX;
     char *dst;
     size_t buflen;
+#ifdef USE_ICONV
+    int		offset = 0;
     char	buffer[CONV_BUFFER_SIZE];
     iconv_t	id = (iconv_t)-1;
+#endif
 
 /* convert first len bytes of buffer and append it to cw->bp
  * len is adjusted => 0
@@ -279,10 +289,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 	    offset = cw->blen1 - outleft;			        \
 	} while (ret != 0);					        \
     } while (0)
-#else
-#define CONVERT2(_buffer, lenp, cw, offset)
 #endif
-
 
     MEMSET(&mbs, 0, 1);
     BINC_RETC(NULL, *tostr, *blen, nlen);
@@ -305,9 +312,12 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 	   HANDLE_MBR_ERROR(n, mbs, dst[j], w);
 	j += n;
 	if (buflen < j + MB_CUR_MAX) {
+#ifdef USE_ICONV
 	    if (id != (iconv_t)-1) {
 		CONVERT2(buffer, &j, cw, offset);
-	    } else {
+	    } else
+#endif
+	    {
 		nlen += 256;
 		BINC_RETC(NULL, *tostr, *blen, nlen);
 		dst = *tostr; buflen = *blen;
@@ -319,25 +329,28 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
     j += n - 1;				/* don't count NUL at the end */
     *tolen = j;
 
+#ifdef USE_ICONV
     if (id != (iconv_t)-1) {
 	CONVERT2(buffer, &j, cw, offset);
 	CONVERT2(NULL, NULL, cw, offset);  /* back to the initial state */
 	*tolen = offset;
 	iconv_close(id);
     }
+#endif
 
     *pdst = cw->bp1;
 
     return 0;
-err:
+#ifdef USE_ICONV
 alloc_err:
-    *tolen = j;
-    if (id != (iconv_t)-1) {
+err:
+    if (id != (iconv_t)-1)
 	iconv_close(id);
-    }
+    *tolen = j;
     *pdst = cw->bp1;
 
     return 1;
+#endif
 }
 
 static int 
