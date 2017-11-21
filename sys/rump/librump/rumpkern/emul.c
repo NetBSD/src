@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.183 2017/11/09 12:46:55 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.184 2017/11/21 08:49:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.183 2017/11/09 12:46:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.184 2017/11/21 08:49:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -166,11 +166,23 @@ calc_cache_size(vsize_t vasz, int pct, int va_pct)
 	return t;
 }
 
+#define	RETURN_ADDRESS	(uintptr_t)__builtin_return_address(0)
+
 void
 assert_sleepable(void)
 {
+	const char *reason = NULL;
 
 	/* always sleepable, although we should improve this */
+
+	if (!pserialize_not_in_read_section()) {
+		reason = "pserialize";
+	}
+
+	if (reason) {
+		panic("%s: %s caller=%p", __func__, reason,
+		    (void *)RETURN_ADDRESS);
+	}
 }
 
 void
