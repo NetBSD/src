@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: mem.h,v 1.3 2017/11/21 02:04:39 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -23,7 +23,7 @@
 #define	BINC_GOTO(sp, type, lp, llen, nlen) {				\
 	CHECK_TYPE(type *, lp)						\
 	void *L__bincp;							\
-	if ((nlen) > llen) {						\
+	if ((size_t)(nlen) > llen) {					\
 		if ((L__bincp = binc(sp, lp, &(llen), nlen)) == NULL)	\
 			goto alloc_err;					\
 		/*							\
