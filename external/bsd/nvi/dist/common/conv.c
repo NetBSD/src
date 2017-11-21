@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.8 2017/11/21 02:00:29 rin Exp $ */
+/*	$NetBSD: conv.c,v 1.9 2017/11/21 02:11:44 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp  (Berkeley) Date: 2001/08/18 21:41:41 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: conv.c,v 1.8 2017/11/21 02:00:29 rin Exp $");
+__RCSID("$NetBSD: conv.c,v 1.9 2017/11/21 02:11:44 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ default_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw,
 	j += n;
 	if (++i >= *blen) {
 	    nlen += 256;
-	    BINC_RETW(NULL, *tostr, *blen, nlen);
+	    BINC_GOTOW(NULL, *tostr, *blen, nlen);
 	}
 	if (id != (iconv_t)-1 && j == len && left) {
 	    CONVERT(str, left, src, len);
@@ -167,6 +167,7 @@ default_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw,
 
     return 0;
 err:
+alloc_err:
     *tolen = i;
     if (id != (iconv_t)-1)
 	iconv_close(id);
@@ -269,7 +270,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 	    char *obp = (char *)cw->bp1 + offset;		    	\
 	    if (cw->blen1 < offset + MB_CUR_MAX) {		    	\
 		nlen += 256;						\
-		BINC_RETC(NULL, cw->bp1, cw->blen1, nlen);		\
+		BINC_GOTOC(NULL, cw->bp1, cw->blen1, nlen);		\
 	    }						    		\
 	    errno = 0;						    	\
 	    ret = iconv(id, &bp, lenp, &obp, &outleft);			\
@@ -322,14 +323,18 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 	CONVERT2(buffer, &j, cw, offset);
 	CONVERT2(NULL, NULL, cw, offset);  /* back to the initial state */
 	*tolen = offset;
+	iconv_close(id);
     }
 
     *pdst = cw->bp1;
 
     return 0;
 err:
+alloc_err:
     *tolen = j;
-
+    if (id != (iconv_t)-1) {
+	iconv_close(id);
+    }
     *pdst = cw->bp1;
 
     return 1;
