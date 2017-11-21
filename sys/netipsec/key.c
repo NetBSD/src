@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.241 2017/11/21 07:25:17 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.242 2017/11/21 07:33:06 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.241 2017/11/21 07:25:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.242 2017/11/21 07:33:06 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -6569,6 +6569,12 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp, int mfla
 	mtod(result, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
+	/*
+	 * Called from key_api_acquire that must come from userland, so
+	 * we can call key_sendup_mbuf immediately.
+	 */
+	if (mflag == M_WAITOK)
+		return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 	/*
 	 * XXX we cannot call key_sendup_mbuf directly here because
 	 * it can cause a deadlock:
