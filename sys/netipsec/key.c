@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.236 2017/11/21 06:49:56 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.237 2017/11/21 06:51:54 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.236 2017/11/21 06:49:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.237 2017/11/21 06:51:54 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -8352,8 +8352,13 @@ key_alloc_mbuf(int l)
 	len = l;
 	while (len > 0) {
 		MGET(n, M_DONTWAIT, MT_DATA);
-		if (n && len > MLEN)
+		if (n && len > MLEN) {
 			MCLGET(n, M_DONTWAIT);
+			if ((n->m_flags & M_EXT) == 0) {
+				m_freem(n);
+				n = NULL;
+			}
+		}
 		if (!n) {
 			m_freem(m);
 			return NULL;
