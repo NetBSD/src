@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.276 2017/11/11 12:51:06 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.277 2017/11/21 10:42:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2017/11/11 12:51:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277 2017/11/21 10:42:44 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -232,8 +232,6 @@ int cpu_class = CPUCLASS_686;
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-uint64_t dumpmem_low;
-uint64_t dumpmem_high;
 int cpu_class;
 int use_pae;
 
