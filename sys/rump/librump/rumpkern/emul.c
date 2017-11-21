@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.184 2017/11/21 08:49:14 ozaki-r Exp $	*/
+/*	$NetBSD: emul.c,v 1.185 2017/11/21 15:22:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.184 2017/11/21 08:49:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185 2017/11/21 15:22:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.184 2017/11/21 08:49:14 ozaki-r Exp $");
 #include <sys/module.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#include <sys/pserialize.h>
 #ifdef LOCKDEBUG
 #include <sys/sleepq.h>
 #endif
