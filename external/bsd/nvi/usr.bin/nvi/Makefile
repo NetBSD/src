@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/11/21 02:44:13 rin Exp $
+#	$NetBSD: Makefile,v 1.15 2017/11/21 02:45:03 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,6 @@ WARNS=	4
 
 COPTS.exf.c+=		-Wno-format-nonliteral
 COPTS.msg.c+=		-Wno-format-nonliteral
-CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 .if ${USE_WIDECHAR} != "yes"
 COPTS.v_increment.c+=	-Wno-format-nonliteral
 CWARNFLAGS.gcc+=	-Wno-unused
