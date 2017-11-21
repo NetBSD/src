@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.7 2017/11/13 04:21:55 rin Exp $ */
+/*	$NetBSD: conv.c,v 1.8 2017/11/21 02:00:29 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp  (Berkeley) Date: 2001/08/18 21:41:41 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: conv.c,v 1.7 2017/11/13 04:21:55 rin Exp $");
+__RCSID("$NetBSD: conv.c,v 1.8 2017/11/21 02:00:29 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -242,7 +242,7 @@ static int
 default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
 		size_t *tolen, const char **pdst, const char *enc)
 {
-    size_t i, j;
+    size_t i, j = 0;
     int offset = 0;
     char **tostr = (char **)(void *)&cw->bp1;
     size_t  *blen = &cw->blen1;
