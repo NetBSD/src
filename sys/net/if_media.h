@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.57.8.1 2017/07/04 16:13:58 martin Exp $	*/
+/*	$NetBSD: if_media.h,v 1.57.8.2 2017/11/21 15:06:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -224,6 +224,8 @@
 #define	IFM_10G_T	26		/* 10GBase-T - RJ45 */
 #define	IFM_1000_KX	27		/* 1000base-KX backplane */
 #define	IFM_2500_KX	28		/* 2500base-KX backplane */
+#define	IFM_2500_T	29		/* 2500base-T - RJ45 */
+#define	IFM_5000_T	30		/* 5Gbase-T - RJ45 */
 /* IFM_OMASK bits */
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -392,23 +394,27 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_1000_T,	"1000BASE-T" },			\
 	{ IFM_ETHER | IFM_HPNA_1,	"HomePNA1" },			\
 	{ IFM_ETHER | IFM_HPNA_1,	"HPNA1" },			\
-	{ IFM_ETHER | IFM_2500_KX,	"2500BASE-KX" },		\
-	{ IFM_ETHER | IFM_2500_KX,	"2500baseKX" },			\
-	{ IFM_ETHER | IFM_10G_LR,	"10GbaseLR" },			\
-	{ IFM_ETHER | IFM_10G_LR,	"10GLR" },			\
-	{ IFM_ETHER | IFM_10G_LR,	"10GBASE-LR" },			\
-	{ IFM_ETHER | IFM_10G_SR,	"10GbaseSR" },			\
-	{ IFM_ETHER | IFM_10G_SR,	"10GSR" },			\
-	{ IFM_ETHER | IFM_10G_SR,	"10GBASE-SR" },			\
-	{ IFM_ETHER | IFM_10G_LRM,	"10Gbase-LRM" },		\
-	{ IFM_ETHER | IFM_10G_TWINAX,	"10Gbase-Twinax" },		\
-	{ IFM_ETHER | IFM_10G_TWINAX_LONG,	"10Gbase-Twinax-Long" },\
-	{ IFM_ETHER | IFM_10G_T,	"10Gbase-T" },			\
-	{ IFM_ETHER | IFM_10G_CX4,	"10GbaseCX4" },			\
-	{ IFM_ETHER | IFM_10G_CX4,	"10GCX4" },			\
-	{ IFM_ETHER | IFM_10G_CX4,	"10GBASE-CX4" },		\
-	{ IFM_ETHER | IFM_2500_SX,	"2500baseSX" },			\
-	{ IFM_ETHER | IFM_2500_SX,	"2500SX" },			\
+	{ IFM_ETHER | IFM_2500_KX | IFM_FDX,	"2500BASE-KX" },	\
+	{ IFM_ETHER | IFM_2500_KX | IFM_FDX,	"2500baseKX" },		\
+	{ IFM_ETHER | IFM_2500_T | IFM_FDX,	"2.5GBASE-T" },		\
+	{ IFM_ETHER | IFM_2500_T | IFM_FDX,	"2500baseT" },		\
+	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GBASE-T" },		\
+	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GbaseT" },		\
+	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GbaseLR" },		\
+	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GLR" },		\
+	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GBASE-LR" },		\
+	{ IFM_ETHER | IFM_10G_SR | IFM_FDX,	"10GbaseSR" },		\
+	{ IFM_ETHER | IFM_10G_SR | IFM_FDX,	"10GSR" },		\
+	{ IFM_ETHER | IFM_10G_SR | IFM_FDX,	"10GBASE-SR" },		\
+	{ IFM_ETHER | IFM_10G_LRM | IFM_FDX,	"10Gbase-LRM" },	\
+	{ IFM_ETHER | IFM_10G_TWINAX | IFM_FDX,	"10Gbase-Twinax" }, 	\
+	{ IFM_ETHER | IFM_10G_TWINAX_LONG | IFM_FDX, "10Gbase-Twinax-Long" },\
+	{ IFM_ETHER | IFM_10G_T | IFM_FDX,	"10Gbase-T" },		\
+	{ IFM_ETHER | IFM_10G_CX4 | IFM_FDX,	"10GbaseCX4" },		\
+	{ IFM_ETHER | IFM_10G_CX4 | IFM_FDX,	"10GCX4" },		\
+	{ IFM_ETHER | IFM_10G_CX4 | IFM_FDX,	"10GBASE-CX4" }, 	\
+	{ IFM_ETHER | IFM_2500_SX | IFM_FDX,	"2500baseSX" },		\
+	{ IFM_ETHER | IFM_2500_SX | IFM_FDX,	"2500SX" },		\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"4STP" },			\
@@ -549,6 +555,8 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_10G_T,	IF_Gbps(10) },			\
 	{ IFM_ETHER | IFM_1000_KX,	IF_Mbps(1000ULL) },		\
 	{ IFM_ETHER | IFM_2500_KX,	IF_Mbps(2500ULL) },		\
+	{ IFM_ETHER | IFM_2500_T,	IF_Mbps(2500ULL) },		\
+	{ IFM_ETHER | IFM_5000_T,	IF_Mbps(5000ULL) },		\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN | IFM_TOK_STP16,	IF_Mbps(16) },			\
