@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/11/21 02:42:08 rin Exp $
+#	$NetBSD: Makefile,v 1.14 2017/11/21 02:44:13 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -10,11 +10,9 @@ COPTS.exf.c+=		-Wno-format-nonliteral
 COPTS.msg.c+=		-Wno-format-nonliteral
 CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 .if ${USE_WIDECHAR} != "yes"
+COPTS.v_increment.c+=	-Wno-format-nonliteral
 CWARNFLAGS.gcc+=	-Wno-unused
 CWARNFLAGS.clang+=	-Wno-unsequenced
-.ifdef HAVE_GCC
-COPTS.v_increment.c+=	-Wno-format-nonliteral
-.endif
 .endif
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
