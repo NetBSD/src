@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.130.2.1 2017/07/04 14:35:21 martin Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.130.2.2 2017/11/21 14:16:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -485,6 +485,20 @@ typedef u_int8_t pci_revision_t;
 	    (PCI_MAPREG_IO_ADDR(mr) & -PCI_MAPREG_IO_ADDR(mr))
 #define	PCI_MAPREG_IO_ADDR_MASK		0xfffffffc
 
+#define	PCI_MAPREG_ROM_ADDR(mr)						\
+	    ((mr) & PCI_MAPREG_ROM_ADDR_MASK)
+#define	PCI_MAPREG_ROM_VALID_STAT   __BITS(3, 1) /* Validation Status */
+#define	PCI_MAPREG_ROM_VSTAT_NOTSUPP	0x0 /* Validation not supported */
+#define	PCI_MAPREG_ROM_VSTAT_INPROG	0x1 /* Validation in Progress */
+#define	PCI_MAPREG_ROM_VSTAT_VPASS	0x2 /* Valid contnt, trust test nperf*/
+#define	PCI_MAPREG_ROM_VSTAT_VPASSTRUST	0x3 /* Valid and trusted contents */
+#define	PCI_MAPREG_ROM_VSTAT_VFAIL	0x4 /* Invaild contents */
+#define	PCI_MAPREG_ROM_VSTAT_VFAILUNTRUST 0x5 /* Vaild but untrusted contents*/
+#define	PCI_MAPREG_ROM_VSTAT_WPASS	0x6 /* VPASS + warning */
+#define	PCI_MAPREG_ROM_VSTAT_WPASSTRUST	0x7 /* VPASSTRUST + warning */
+#define	PCI_MAPREG_ROM_VALID_DETAIL __BITS(7, 4) /* Validation Details */
+#define	PCI_MAPREG_ROM_ADDR_MASK	__BITS(31, 11)
+
 #define PCI_MAPREG_SIZE_TO_MASK(size)					\
 	    (-(size))
 
@@ -886,8 +900,43 @@ typedef u_int8_t pci_revision_t;
 
 /*
  * Capability ID: 0x0f
- * Secure
+ * Secure Device
+ *
+ * Reference: AMD I/O Virtualization Technology(IOMMU) Specification (#48882)
+ * Revision 3.00.
  */
+#define PCI_SECURE_CAP	       0x00 /* Capability Header */
+#define PCI_SECURE_CAP_TYPE	__BITS(18, 16)	/* Capability block type */
+#define PCI_SECURE_CAP_TYPE_IOMMU	0x3		/* IOMMU Cap */
+#define PCI_SECURE_CAP_REV	__BITS(23, 19)	/* Capability revision */
+#define PCI_SECURE_CAP_REV_IOMMU	0x01		/* IOMMU interface  */
+/* For IOMMU only */
+#define PCI_SECURE_CAP_IOTLBSUP	__BIT(24)	/* IOTLB */
+#define PCI_SECURE_CAP_HTTUNNEL	__BIT(25)	/* HT tunnel translation */
+#define PCI_SECURE_CAP_NPCACHE	__BIT(26) /* Not present table entries cahced*/
+#define PCI_SECURE_CAP_EFRSUP	__BIT(27)	/* IOMMU Ext-Feature Reg */
+#define PCI_SECURE_CAP_EXT	__BIT(28)	/* IOMMU Misc Info Reg 1 */
+#define PCI_SECURE_IOMMU_BAL   0x04 /* Base Address Low */
+#define PCI_SECURE_IOMMU_BAL_EN		__BIT(0)	/* Enable */
+#define PCI_SECURE_IOMMU_BAL_L		__BITS(18, 14)	/* Base Addr [18:14] */
+#define PCI_SECURE_IOMMU_BAL_H		__BITS(31, 19)	/* Base Addr [31:19] */
+#define PCI_SECURE_IOMMU_BAH   0x08 /* Base Address High */
+#define PCI_SECURE_IOMMU_RANGE 0x0c /* IOMMU Range */
+#define PCI_SECURE_IOMMU_RANGE_UNITID	__BITS(4, 0)	/* HT UnitID */
+#define PCI_SECURE_IOMMU_RANGE_RNGVALID	__BIT(7)	/* Range valid */
+#define PCI_SECURE_IOMMU_RANGE_BUSNUM	__BITS(15, 8)	/* bus number */
+#define PCI_SECURE_IOMMU_RANGE_FIRSTDEV	__BITS(23, 16)	/* First device */
+#define PCI_SECURE_IOMMU_RANGE_LASTDEV	__BITS(31, 24)	/* Last device */
+#define PCI_SECURE_IOMMU_MISC0 0x10 /* IOMMU Miscellaneous Information 0 */
+#define PCI_SECURE_IOMMU_MISC0_MSINUM  __BITS(4, 0)  /* MSI Message number */
+#define PCI_SECURE_IOMMU_MISC0_GVASIZE __BITS(7, 5) /* Guest Virtual Adr siz */
+#define PCI_SECURE_IOMMU_MISC0_GVASIZE_48B	0x2	/* 48bits */
+#define PCI_SECURE_IOMMU_MISC0_PASIZE  __BITS(14, 8) /* Physical Address siz */
+#define PCI_SECURE_IOMMU_MISC0_VASIZE  __BITS(21, 15)/* Virtual Address size */
+#define PCI_SECURE_IOMMU_MISC0_ATSRESV __BIT(22) /* ATS resp addr range rsvd */
+#define PCI_SECURE_IOMMU_MISC0_MISNPPR __BITS(31, 27)/* Periph Pg Rq MSI Msgn*/
+#define PCI_SECURE_IOMMU_MISC1 0x14 /* IOMMU Miscellaneous Information 1 */
+#define PCI_SECURE_IOMMU_MISC1_MSINUM __BITS(4, 0) /* MSI Messsage number(GA)*/
 
 /*
  * Capability ID: 0x10
@@ -1433,7 +1482,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_SEC_PCIE	0x0019	/* Secondary PCI Express */
 #define	PCI_EXTCAP_PMUX		0x001a	/* Protocol Multiplexing */
 #define	PCI_EXTCAP_PASID	0x001b	/* Process Address Space ID */
-#define	PCI_EXTCAP_LN_REQ	0x001c	/* LN Requester */
+#define	PCI_EXTCAP_LNR		0x001c	/* LN Requester */
 #define	PCI_EXTCAP_DPC		0x001d	/* Downstream Port Containment */
 #define	PCI_EXTCAP_L1PM		0x001e	/* L1 PM Substates */
 #define	PCI_EXTCAP_PTM		0x001f	/* Precision Time Management */
@@ -1443,6 +1492,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
 #define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
 #define	PCI_EXTCAP_HIERARCHYID	0x0028	/* Hierarchy ID */
+#define	PCI_EXTCAP_NPEM		0x0029	/* Native PCIe Enclosure Management */
 
 /*
  * Extended capability ID: 0x0001
@@ -1854,6 +1904,9 @@ struct pci_rom {
 #define	PCI_TPH_REQ_CAP_DEVSPEC	__BIT(2)   /* Device Specific Mode Supported */
 #define	PCI_TPH_REQ_CAP_XTPHREQ	__BIT(8)    /* Extend TPH Reqester Supported */
 #define	PCI_TPH_REQ_CAP_STTBLLOC __BITS(10, 9)	/* ST Table Location */
+#define	PCI_TPH_REQ_STTBLLOC_NONE 	0	/* not present */
+#define	PCI_TPH_REQ_STTBLLOC_TPHREQ 	1	/* in the TPHREQ cap */
+#define	PCI_TPH_REQ_STTBLLOC_MSIX 	2	/* in the MSI-X table */
 #define	PCI_TPH_REQ_CAP_STTBLSIZ __BITS(26, 16)	/* ST Table Size */
 #define	PCI_TPH_REQ_CTL	0x08	/* TPH Requester Control */
 #define	PCI_TPH_REQ_CTL_STSEL	__BITS(2, 0)	/* ST Mode Select */
@@ -2040,6 +2093,16 @@ struct pci_rom {
 /*
  * Extended capability ID: 0x0024
  * VF Resizable BAR
+ */
+
+/*
+ * Extended capability ID: 0x0028
+ * Hierarchy ID
+ */
+
+/*
+ * Extended capability ID: 0x0029
+ * Native PCIe Enclosure Management
  */
 
 #endif /* _DEV_PCI_PCIREG_H_ */
