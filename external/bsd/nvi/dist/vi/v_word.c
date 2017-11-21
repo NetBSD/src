@@ -1,4 +1,4 @@
-/*	$NetBSD: v_word.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: v_word.c,v 1.4 2017/11/21 07:43:47 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_word.c,v 10.6 2001/06/25 15:19:36 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:36 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_word.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: v_word.c,v 1.4 2017/11/21 07:43:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,6 +68,9 @@ __RCSID("$NetBSD: v_word.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
  * 'b', 'E' and 'e' commands would treat the group as a single word, and
  * the 'B' and 'b' commands will treat the lines as individual words.  This
  * implementation treats all of these cases as a single white-space word.
+ *
+ * We regard a boundary between single- and multi-width characters as
+ * a word boundary.
  */
 
 enum which {BIGWORD, LITTLEWORD};
@@ -110,6 +113,7 @@ fword(SCR *sp, VICMD *vp, enum which type)
 	enum { INWORD, NOTWORD } state;
 	VCS cs;
 	u_long cnt;
+	int nmw, omw;
 
 	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
 	cs.cs_lno = vp->m_start.lno;
@@ -147,12 +151,15 @@ fword(SCR *sp, VICMD *vp, enum which type)
 	 */
 	if (type == BIGWORD)
 		while (cnt--) {
+			nmw = ISMULTIWIDTH(sp, cs.cs_ch);
 			for (;;) {
+				omw = nmw;
 				if (cs_next(sp, &cs))
 					return (1);
 				if (cs.cs_flags == CS_EOF)
 					goto ret;
-				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
+				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch) ||
+				    (nmw = ISMULTIWIDTH(sp, cs.cs_ch)) != omw)
 					break;
 			}
 			/*
@@ -170,7 +177,7 @@ fword(SCR *sp, VICMD *vp, enum which type)
 			}
 
 			/* Eat whitespace characters. */
-			if (cs_fblank(sp, &cs))
+			if (nmw == omw && cs_fblank(sp, &cs))
 				return (1);
 			if (cs.cs_flags == CS_EOF)
 				goto ret;
@@ -179,12 +186,15 @@ fword(SCR *sp, VICMD *vp, enum which type)
 		while (cnt--) {
 			state = cs.cs_flags == 0 &&
 			    inword(cs.cs_ch) ? INWORD : NOTWORD;
+			nmw = ISMULTIWIDTH(sp, cs.cs_ch);
 			for (;;) {
+				omw = nmw;
 				if (cs_next(sp, &cs))
 					return (1);
 				if (cs.cs_flags == CS_EOF)
 					goto ret;
-				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
+				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch) ||
+				    (nmw = ISMULTIWIDTH(sp, cs.cs_ch)) != omw)
 					break;
 				if (state == INWORD) {
 					if (!inword(cs.cs_ch))
@@ -270,6 +280,7 @@ eword(SCR *sp, VICMD *vp, enum which type)
 	enum { INWORD, NOTWORD } state;
 	VCS cs;
 	u_long cnt;
+	int nmw, omw;
 
 	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
 	cs.cs_lno = vp->m_start.lno;
@@ -300,12 +311,15 @@ eword(SCR *sp, VICMD *vp, enum which type)
 	 */
 start:	if (type == BIGWORD)
 		while (cnt--) {
+			nmw = ISMULTIWIDTH(sp, cs.cs_ch);
 			for (;;) {
+				omw = nmw;
 				if (cs_next(sp, &cs))
 					return (1);
 				if (cs.cs_flags == CS_EOF)
 					goto ret;
-				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
+				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch) ||
+				    (nmw = ISMULTIWIDTH(sp, cs.cs_ch)) != omw)
 					break;
 			}
 			/*
@@ -320,7 +334,7 @@ start:	if (type == BIGWORD)
 			}
 
 			/* Eat whitespace characters. */
-			if (cs_fblank(sp, &cs))
+			if (nmw == omw && cs_fblank(sp, &cs))
 				return (1);
 			if (cs.cs_flags == CS_EOF)
 				goto ret;
@@ -329,12 +343,15 @@ start:	if (type == BIGWORD)
 		while (cnt--) {
 			state = cs.cs_flags == 0 &&
 			    inword(cs.cs_ch) ? INWORD : NOTWORD;
+			nmw = ISMULTIWIDTH(sp, cs.cs_ch);
 			for (;;) {
+				omw = nmw;
 				if (cs_next(sp, &cs))
 					return (1);
 				if (cs.cs_flags == CS_EOF)
 					goto ret;
-				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
+				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch) ||
+				    (nmw = ISMULTIWIDTH(sp, cs.cs_ch)) != omw)
 					break;
 				if (state == INWORD) {
 					if (!inword(cs.cs_ch))
@@ -416,6 +433,7 @@ bword(SCR *sp, VICMD *vp, enum which type)
 	enum { INWORD, NOTWORD } state;
 	VCS cs;
 	u_long cnt;
+	int nmw, omw;
 
 	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
 	cs.cs_lno = vp->m_start.lno;
@@ -447,12 +465,15 @@ bword(SCR *sp, VICMD *vp, enum which type)
 	 */
 start:	if (type == BIGWORD)
 		while (cnt--) {
+			nmw = ISMULTIWIDTH(sp, cs.cs_ch);
 			for (;;) {
+				omw = nmw;
 				if (cs_prev(sp, &cs))
 					return (1);
 				if (cs.cs_flags == CS_SOF)
 					goto ret;
-				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
+				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch) ||
+				    (nmw = ISMULTIWIDTH(sp, cs.cs_ch)) != omw)
 					break;
 			}
 			/*
@@ -467,7 +488,7 @@ start:	if (type == BIGWORD)
 			}
 
 			/* Eat whitespace characters. */
-			if (cs_bblank(sp, &cs))
+			if (nmw == omw && cs_bblank(sp, &cs))
 				return (1);
 			if (cs.cs_flags == CS_SOF)
 				goto ret;
@@ -476,12 +497,15 @@ start:	if (type == BIGWORD)
 		while (cnt--) {
 			state = cs.cs_flags == 0 &&
 			    inword(cs.cs_ch) ? INWORD : NOTWORD;
+			nmw = ISMULTIWIDTH(sp, cs.cs_ch);
 			for (;;) {
+				omw = nmw;
 				if (cs_prev(sp, &cs))
 					return (1);
 				if (cs.cs_flags == CS_SOF)
 					goto ret;
-				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
+				if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch) ||
+				    (nmw = ISMULTIWIDTH(sp, cs.cs_ch)) != omw)
 					break;
 				if (state == INWORD) {
 					if (!inword(cs.cs_ch))
