@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.140 2017/10/28 20:57:17 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.141 2017/11/21 09:58:09 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -420,9 +420,6 @@ END(farjmp64)
 	.size	tmpstk, tmpstk - .
 	.space	512
 tmpstk:
-
-	.globl _C_LABEL(cpu_private)
-	.comm _C_LABEL(cpu_private),PAGE_SIZE,PAGE_SIZE
 
 /*
  * Some hackage to deal with 64bit symbols in 32 bit mode.
