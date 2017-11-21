@@ -1,4 +1,4 @@
-/* $NetBSD: option.list,v 1.7 2017/11/19 03:23:01 kre Exp $ */
+/* $NetBSD: option.list,v 1.8 2017/11/21 03:42:39 kre Exp $ */
 
 /*
  * define the shell's settable options
@@ -66,7 +66,7 @@ qflag	quietprofile	q		# disable -v/-x in startup files
 fnline1	local_lineno	L on		# number lines in funcs starting at 1
 promptcmds promptcmds			# allow $( ) in PS1 (et al).
 pipefail pipefail			# pipe exit status
-Xflag	Xtrace		X		# sticky stderr for -x (implies -x)
+Xflag	Xtrace		X #ifndef SMALL	# sticky stderr for -x (implies -x)
 
 // editline/history related options ("vi" is standard, 'V' and others are not)
 // only one of vi/emacs can be set, hence the "set" definition, value
