@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.16 2017/11/17 07:07:52 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.17 2017/11/21 07:56:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -347,6 +347,9 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 	if (i == eif.ehdr->e_shnum) {
 		fatal("elf_build_boot: symtab not found");
 	}
+	if (eif.shdr[i].sh_offset == 0) {
+		fatal("elf_build_boot: symtab not loaded");
+	}
 	eif.symtab = (Elf_Sym *)((uint8_t *)eif.ehdr + eif.shdr[i].sh_offset);
 	eif.symcnt = eif.shdr[i].sh_size / sizeof(Elf_Sym);
 
@@ -357,6 +360,9 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 	}
 	if (eif.shdr[j].sh_type != SHT_STRTAB) {
 		fatal("elf_build_boot: wrong strtab type");
+	}
+	if (eif.shdr[j].sh_offset == 0) {
+		fatal("elf_build_boot: strtab not loaded");
 	}
 	eif.strtab = (char *)((uint8_t *)eif.ehdr + eif.shdr[j].sh_offset);
 	eif.strsz = eif.shdr[j].sh_size;
@@ -380,6 +386,7 @@ elf_kernel_reloc(void)
 		    eif.shdr[i].sh_type != SHT_PROGBITS) {
 			continue;
 		}
+		ASSERT(eif.shdr[i].sh_offset != 0);
 		secva = baseva + eif.shdr[i].sh_offset;
 		for (j = 0; j < eif.symcnt; j++) {
 			sym = &eif.symtab[j];
@@ -400,9 +407,10 @@ elf_kernel_reloc(void)
 		size_t secidx, nrel;
 		uintptr_t base;
 
-		if (eif.shdr[i].sh_type != SHT_REL)
+		if (eif.shdr[i].sh_type != SHT_REL) {
 			continue;
-
+		}
+		ASSERT(eif.shdr[i].sh_offset != 0);
 		reltab = (Elf_Rel *)((uint8_t *)eif.ehdr + eif.shdr[i].sh_offset);
 		nrel = eif.shdr[i].sh_size / sizeof(Elf_Rel);
 
@@ -428,9 +436,10 @@ elf_kernel_reloc(void)
 		size_t secidx, nrela;
 		uintptr_t base;
 
-		if (eif.shdr[i].sh_type != SHT_RELA)
+		if (eif.shdr[i].sh_type != SHT_RELA) {
 			continue;
-
+		}
+		ASSERT(eif.shdr[i].sh_offset != 0);
 		relatab = (Elf_Rela *)((uint8_t *)eif.ehdr + eif.shdr[i].sh_offset);
 		nrela = eif.shdr[i].sh_size / sizeof(Elf_Rela);
 
