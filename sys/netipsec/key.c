@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.235 2017/11/08 10:35:30 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.236 2017/11/21 06:49:56 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.235 2017/11/08 10:35:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.236 2017/11/21 06:49:56 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -788,6 +788,7 @@ static const char *key_getuserfqdn (void);
 static void key_sa_chgstate (struct secasvar *, u_int8_t);
 
 static struct mbuf *key_alloc_mbuf (int);
+static struct mbuf *key_alloc_mbuf_simple(int, int);
 
 static void key_timehandler(void *);
 static void key_timehandler_work(struct work *, void *);
@@ -2416,6 +2417,22 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
     }
 }
 
+static struct mbuf *
+key_alloc_mbuf_simple(int len, int mflag)
+{
+	struct mbuf *n;
+
+	MGETHDR(n, mflag, MT_DATA);
+	if (n && len > MHLEN) {
+		MCLGET(n, mflag);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			n = NULL;
+		}
+	}
+	return n;
+}
+
 /*
  * SADB_SPDDELETE2 processing
  * receive
@@ -2465,14 +2482,7 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 	/* create new sadb_msg to reply. */
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
-	MGETHDR(n, M_DONTWAIT, MT_DATA);
-	if (n && len > MHLEN) {
-		MCLGET(n, M_DONTWAIT);
-		if ((n->m_flags & M_EXT) == 0) {
-			m_freem(n);
-			n = NULL;
-		}
-	}
+	n = key_alloc_mbuf_simple(len, M_DONTWAIT);
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
@@ -4072,14 +4082,7 @@ key_setsadbmsg(u_int8_t type,  u_int16_t tlen, u_int8_t satype,
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m && len > MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_freem(m);
-			m = NULL;
-		}
-	}
+	m = key_alloc_mbuf_simple(len, M_DONTWAIT);
 	if (!m)
 		return NULL;
 	m->m_pkthdr.len = m->m_len = len;
@@ -5257,14 +5260,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg)) +
 	    PFKEY_ALIGN8(sizeof(struct sadb_sa));
 
-	MGETHDR(n, M_DONTWAIT, MT_DATA);
-	if (len > MHLEN) {
-		MCLGET(n, M_DONTWAIT);
-		if ((n->m_flags & M_EXT) == 0) {
-			m_freem(n);
-			n = NULL;
-		}
-	}
+	n = key_alloc_mbuf_simple(len, M_DONTWAIT);
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
@@ -7105,14 +7101,7 @@ key_api_register(struct socket *so, struct mbuf *m,
 	if (len > MCLBYTES)
 		return key_senderror(so, m, ENOBUFS);
 
-	MGETHDR(n, M_DONTWAIT, MT_DATA);
-	if (len > MHLEN) {
-		MCLGET(n, M_DONTWAIT);
-		if ((n->m_flags & M_EXT) == 0) {
-			m_freem(n);
-			n = NULL;
-		}
-	}
+	n = key_alloc_mbuf_simple(len, M_DONTWAIT);
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
@@ -7728,14 +7717,7 @@ key_parse(struct mbuf *m, struct socket *so)
 	if (m->m_next) {
 		struct mbuf *n;
 
-		MGETHDR(n, M_DONTWAIT, MT_DATA);
-		if (n && m->m_pkthdr.len > MHLEN) {
-			MCLGET(n, M_DONTWAIT);
-			if ((n->m_flags & M_EXT) == 0) {
-				m_free(n);
-				n = NULL;
-			}
-		}
+		n = key_alloc_mbuf_simple(m->m_pkthdr.len, M_DONTWAIT);
 		if (!n) {
 			m_freem(m);
 			return ENOBUFS;
