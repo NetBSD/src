@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.77 2017/11/17 20:47:51 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.78 2017/11/21 13:09:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5680,11 +5680,10 @@ sys/arch/x86/x86/procfs_machdep.c		1.16
 	Check buffer length correctly to not to print a garbage character.
 	[msaitoh, ticket #247]
 
-sys/dev/pci/ixgbe/ixgbe.c			1.96-1.97
+sys/dev/pci/ixgbe/ixgbe.c			1.96
 sys/dev/pci/ixgbe/ixgbe.h			1.25
 
 	Remove unused counters.
-	Don't limit number of queue pairs to 8.
 	[msaitoh, ticket #248]
 
 sys/arch/hppa/stand/Makefile.buildboot		1.4
@@ -6821,4 +6820,39 @@ usr.sbin/npf/npfctl/npfctl.c			1.54
 	- npfctl(8): Fix showing translated port (ntohs-ed twice wrongly)
 	- tests/net/net_common.sh: Stop using bpfjit
 	[ozaki-r, ticket #357]
+
+tests/net/ndp/t_ra.sh				1.30-1.31
+usr.sbin/rtadvd/advcap.c			1.17
+usr.sbin/rtadvd/config.c			1.37
+usr.sbin/rtadvd/dump.c				1.15
+usr.sbin/rtadvd/if.c				1.25
+usr.sbin/rtadvd/logit.h				1.1
+usr.sbin/rtadvd/rrenum.c			1.20
+usr.sbin/rtadvd/rtadvd.8			1.26
+usr.sbin/rtadvd/rtadvd.c			1.54-1.58
+usr.sbin/rtadvd/timer.c				1.14
+
+	Don't start another copy of rtadvd if one is running.
+	Don't exit if adding interface to multicast group fails.
+	Kill rtadvd surely even if the tests fail in the middle.
+	Change the meaning of the 'D' flag to print errors to stderr instead
+	of syslog(3) and exit if poll(2) fails (intended to be used with
+	unit-tests). Let rtadvd not use syslog for logging in rump tests.
+	[ozaki-r, ticket #358]
+
+sys/arch/amd64/include/i82093reg.h		1.9
+sys/arch/i386/include/i82093reg.h		1.11
+sys/arch/x86/x86/ioapic.c			1.54
+
+	Don't write a 1 to the read only RIRR bit in the IOAPIC redirection
+	register, this blocks interrupts in Hyper-V VMs.
+	[nakayama, ticket #359]
+
+sys/netipsec/key.c				1.235
+tests/net/ipsec/t_ipsec_misc.sh			1.21-1.22
+
+	Mark key_timehandler_ch callout as MP-safe. Adjust tests
+	and optimize testing time.
+	[ozaki-r, ticket #360]
+
 
