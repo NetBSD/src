@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.52 2015/07/27 15:45:20 msaitoh Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.52.10.1 2017/11/21 11:01:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.52 2015/07/27 15:45:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.52.10.1 2017/11/21 11:01:02 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -508,6 +508,7 @@ ioapic_hwmask(struct pic *pic, int pin)
 	flags = ioapic_lock(sc);
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
 	redlo |= IOAPIC_REDLO_MASK;
+	redlo &= ~IOAPIC_REDLO_RIRR;
 	ioapic_write_ul(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_unlock(sc, flags);
 }
@@ -548,7 +549,7 @@ ioapic_hwunmask(struct pic *pic, int pin)
 
 	flags = ioapic_lock(sc);
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
-	redlo &= ~IOAPIC_REDLO_MASK;
+	redlo &= ~(IOAPIC_REDLO_MASK | IOAPIC_REDLO_RIRR);
 	ioapic_write_ul(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_unlock(sc, flags);
 }
