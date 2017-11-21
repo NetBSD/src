@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.29 2017/11/20 22:16:23 kre Exp $ */
+/*	$NetBSD: rf_configure.c,v 1.30 2017/11/21 16:19:31 kre Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.29 2017/11/20 22:16:23 kre Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.30 2017/11/21 16:19:31 kre Exp $");
 #endif
 
 
@@ -258,7 +258,7 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 			}
 
 			strlcpy(&cfgPtr->devnames[r][c][0], b,
-			    sizeof(cfgPtr->devnames[r][c][0]));
+			    sizeof(cfgPtr->devnames[r][c]));
 		}
 	}
 
@@ -285,7 +285,7 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 		}
 
 	        strlcpy(&cfgPtr->spare_names[r][0], b,
-		    sizeof(cfgPtr->spare_names[r][0]));
+		    sizeof(cfgPtr->spare_names[r]));
 	}
 
 	/* scan the file for the block related to layout */
