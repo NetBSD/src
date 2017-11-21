@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.27.2.1 2017/07/07 13:57:26 martin Exp $
+#	$NetBSD: t_ra.sh,v 1.27.2.2 2017/11/21 10:54:19 martin Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -85,6 +85,34 @@ wait_term()
 	return 0
 }
 
+kill_rtadvd()
+{
+	local pidfile=$1
+
+	kill -KILL `cat $pidfile`
+	rm -f $pidfile
+}
+
+terminate_rtadvd()
+{
+	local pidfile=$1
+	local n=5
+
+	if [ ! -f $pidfile ]; then
+		return
+	fi
+
+	kill -TERM `cat $pidfile`
+	while [ -f $pidfile ]; do
+		n=$((n - 1))
+		if [ $n = 0 ]; then
+			kill_rtadvd $pidfile
+			break
+		fi
+		sleep 0.2
+	done
+}
+
 create_rtadvdconfig()
 {
 
@@ -123,7 +151,8 @@ start_rtadvd()
 	local pidfile=$2
 
 	export RUMP_SERVER=$sock
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p $pidfile shmif0
+	atf_check -s exit:0 -e ignore \
+	    rump.rtadvd -D -c ${CONFIG} -p $pidfile shmif0
 	while [ ! -f $pidfile ]; do
 		sleep 0.2
 	done
@@ -203,8 +232,7 @@ ra_basic_body()
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
+	terminate_rtadvd $PIDFILE
 
 	export RUMP_SERVER=${RUMPCLI}
 	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
@@ -215,8 +243,7 @@ ra_basic_body()
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
+	terminate_rtadvd $PIDFILE
 
 	rump_server_destroy_ifaces
 }
@@ -224,12 +251,8 @@ ra_basic_body()
 ra_basic_cleanup()
 {
 
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
-
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
 	cleanup
 }
 
@@ -267,7 +290,7 @@ ra_flush_prefix_entries_body()
 
 	# Terminate rtadvd to prevent new RA messages from coming
 	# Note that ifconfig down; kill -TERM doesn't work
-	kill -KILL `cat ${PIDFILE}`
+	kill_rtadvd $PIDFILE
 
 	# Flush all the entries in the prefix list
 	atf_check -s exit:0 rump.ndp -P
@@ -288,6 +311,7 @@ ra_flush_prefix_entries_cleanup()
 {
 
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
 	cleanup
 }
 
@@ -325,7 +349,7 @@ ra_flush_defrouter_entries_body()
 
 	# Terminate rtadvd to prevent new RA messages from coming
 	# Note that ifconfig down; kill -TERM doesn't work
-	kill -KILL `cat ${PIDFILE}`
+	kill_rtadvd $PIDFILE
 
 	# Flush all the entries in the default router list
 	atf_check -s exit:0 rump.ndp -R
@@ -345,6 +369,7 @@ ra_flush_defrouter_entries_cleanup()
 {
 
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
 	cleanup
 }
 
@@ -384,8 +409,7 @@ ra_delete_address_body()
 	    $(rump.ifconfig shmif0 |awk '/AUTOCONF/ {print $2}') delete
 	unset RUMP_SERVER
 
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
+	terminate_rtadvd $PIDFILE
 
 	rump_server_destroy_ifaces
 }
@@ -393,12 +417,8 @@ ra_delete_address_body()
 ra_delete_address_cleanup()
 {
 
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
-
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
 	cleanup
 }
 
@@ -444,10 +464,8 @@ ra_multiple_routers_body()
 	atf_check_equal $n 2
 	unset RUMP_SERVER
 
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE3}`
-	wait_term ${PIDFILE3}
+	terminate_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE3
 
 	rump_server_destroy_ifaces
 }
@@ -455,16 +473,9 @@ ra_multiple_routers_body()
 ra_multiple_routers_cleanup()
 {
 
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
-	if [ -f ${PIDFILE3} ]; then
-		kill -TERM `cat ${PIDFILE3}`
-		wait_term ${PIDFILE3}
-	fi
-
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE3
 	cleanup
 }
 
@@ -510,10 +521,8 @@ ra_multiple_routers_single_prefix_body()
 	atf_check_equal $n 1
 	unset RUMP_SERVER
 
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE1_2}`
-	wait_term ${PIDFILE1_2}
+	terminate_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE1_2
 
 	rump_server_destroy_ifaces
 }
@@ -521,16 +530,9 @@ ra_multiple_routers_single_prefix_body()
 ra_multiple_routers_single_prefix_cleanup()
 {
 
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
-	if [ -f ${PIDFILE1_2} ]; then
-		kill -TERM `cat ${PIDFILE1_2}`
-		wait_term ${PIDFILE1_2}
-	fi
-
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE1_2
 	cleanup
 }
 
@@ -588,12 +590,9 @@ ra_multiple_routers_maxifprefixes_body()
 	# TODO check other conditions
 	unset RUMP_SERVER
 
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE3}`
-	wait_term ${PIDFILE3}
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE4}`
-	wait_term ${PIDFILE4}
+	terminate_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE3
+	terminate_rtadvd $PIDFILE4
 
 	rump_server_destroy_ifaces
 }
@@ -601,20 +600,10 @@ ra_multiple_routers_maxifprefixes_body()
 ra_multiple_routers_maxifprefixes_cleanup()
 {
 
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
-	if [ -f ${PIDFILE3} ]; then
-		kill -TERM `cat ${PIDFILE3}`
-		wait_term ${PIDFILE3}
-	fi
-	if [ -f ${PIDFILE4} ]; then
-		kill -TERM `cat ${PIDFILE4}`
-		wait_term ${PIDFILE4}
-	fi
-
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE3
+	terminate_rtadvd $PIDFILE4
 	cleanup
 }
 
@@ -693,8 +682,7 @@ ra_temporary_address_body()
 
 	unset RUMP_SERVER
 
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term $PIDFILE
+	terminate_rtadvd $PIDFILE
 
 	rump_server_destroy_ifaces
 }
@@ -702,12 +690,8 @@ ra_temporary_address_body()
 ra_temporary_address_cleanup()
 {
 
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
-
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
 	cleanup
 }
 
@@ -747,7 +731,7 @@ ra_defrouter_expiration_body()
 
 	# Terminate rtadvd to prevent new RA messages from coming
 	# Note that ifconfig down; kill -TERM doesn't work
-	kill -KILL `cat ${PIDFILE}`
+	kill_rtadvd $PIDFILE
 
 	# Wait until the default routers and prefix entries are expired
 	sleep $expire_time
@@ -772,6 +756,7 @@ ra_defrouter_expiration_cleanup()
 {
 
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
 	cleanup
 }
 
@@ -811,7 +796,7 @@ ra_prefix_expiration_body()
 
 	# Terminate rtadvd to prevent new RA messages from coming
 	# Note that ifconfig down; kill -TERM doesn't work
-	kill -KILL `cat ${PIDFILE}`
+	kill_rtadvd $PIDFILE
 
 	# Wait until the default routers and prefix entries are expired
 	sleep $expire_time
@@ -837,6 +822,7 @@ ra_prefix_expiration_cleanup()
 {
 
 	$DEBUG && dump
+	terminate_rtadvd $PIDFILE
 	cleanup
 }
 
