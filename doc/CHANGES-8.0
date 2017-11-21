@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.78 2017/11/21 13:09:49 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.79 2017/11/21 15:13:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6855,4 +6855,77 @@ tests/net/ipsec/t_ipsec_misc.sh			1.21-1.22
 	and optimize testing time.
 	[ozaki-r, ticket #360]
 
+
+sys/dev/pci/pci_subr.c				1.190-1.194
+sys/dev/pci/pcireg.h				1.132-1.135
+
+	Official shortname of LN Requester is LNR, so change PCI_EXTCAP_LN_REQ
+	to PCI_EXTCAP_LNR
+	Add PCI_MAPREG_ROM_ADDR_MASK macro and PCI_MAPREG_ROM_ADDR() macro.
+	Print PCI_MAPREG_ROM_ENABLE bit.
+	Decode Expansion ROM Validation ECN.
+	Add Native PCIe Enclosure Management ECN's extended capability type
+	(not decoded yet).
+	Decode IOMMU capability of PCI secure device capability. From "AMD I/O
+	Virtualization Technology(IOMMU) Specification (#48882) Revision 3.00".
+	Fix a bug that the TPH ST table is decoded even if it's not in the TPH
+	Requester extended capability structure.
+	[msaitoh, ticket #362]
+
+
+sys/dev/mii/mdio.h				1.4-1.7
+
+	Update IEEE 802.3 Clause 45 definitions from IEEE 802.3 2009 to
+	IEEE 802.3 2015.
+	Modify register names.
+	Modify comments.
+	Define bit definitions of MDIO_PMAPMD_CTRL1 and MDIO_AN_CTRL1.
+	[msaitoh, ticket #363]
+
+sys/dev/pci/pcidevs				1.1290,1.1292-1.1298,
+						1.1300-1.1301
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Change VMware's 0x0770 from "Virtual USB" to "Virtual EHCI".
+	Add VMware's 0x0774(UHCI) and 0x0778(xHCI).
+	Add Intel 82Q965 HECI.
+	Add Atom Z8000 devices.
+	Add some AMD devices.
+	Add Broadcom BCM5762.
+	Add Intel 5520/X58 QuickPath.
+	Atom x5-Z8350's video is 0x22b0, 0x22b0 is Intel HD Graphics 400.
+	Add C3000 devices.
+	Add Intel QuickAssist devices.
+	Add Areca ARC1214 & ARC1880.
+	Add PEX 8605 4port 4lane PCIe Gen 2 switch.
+	[msaitoh, ticket #364]
+
+sys/arch/x86/include/specialreg.h		1.99-1.105
+sys/arch/x86/x86/cpu_topology.c			1.10
+sys/arch/x86/x86/identcpu.c			1.56-1.57
+usr.sbin/cpuctl/arch/i386.c			1.75-1.78
+
+	Add EFER_TCE.
+	Add a comment about APICBASE_PHYSADDR.
+	Define CPUID Fn00000001 %ebx bits and use them.
+	Add some instruction bits in Structured Extended Flags Enumeration.
+	Update several cpus from the latest Intel SDM.
+	Add Turbo Boost Max Technology 3.0 bit.
+	Add some AMD SVM features.
+	[msaitoh, ticket #365]
+
+sys/net/if_media.h				1.60-1.61
+
+	All Ethernet media more than 1000Mbps don't support half
+	duplex. For the convinience, ifconfig without "mediaopt
+	fullduplex" sets IFM_FDX automatically for those medias.
+	Add 2.5GBASE-T and 5GBASE-T.
+	[msaitoh, ticket #366]
+
+sys/arch/x86/x86/procfs_machdep.c		1.17-1.18,1.20
+
+	Enhance cpuid output.
+	Fix the location of AMD's smca(Scalable MCA) bit.
+	[msaitoh, ticket #367]
 
