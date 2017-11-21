@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_join.c,v 1.4 2017/11/10 14:53:00 rin Exp $ */
+/*	$NetBSD: ex_join.c,v 1.5 2017/11/21 07:48:07 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex_join.c,v 10.17 2004/03/16 14:14:04 skimo Exp  (Berkeley) Date: 2004/03/16 14:14:04 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_join.c,v 1.4 2017/11/10 14:53:00 rin Exp $");
+__RCSID("$NetBSD: ex_join.c,v 1.5 2017/11/21 07:48:07 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -118,9 +118,8 @@ ex_join(SCR *sp, EXCMD *cmdp)
 			 *	single-width	multi-width	1 spc ins'ed
 			 *	single-width	single-width	original
 			 */
-			if (INTISWIDE(echar) && CHAR_WIDTH(sp, echar) > 1) {
-				if (INTISWIDE(p[0])
-				    && CHAR_WIDTH(sp, p[0]) > 1) {
+			if (ISMULTIWIDTH(sp, echar)) {
+				if (ISMULTIWIDTH(sp, p[0])) {
 					; /* nothing */
 				} else {
 					*tbp++ = ' ';
@@ -128,8 +127,7 @@ ex_join(SCR *sp, EXCMD *cmdp)
 					for (; len && ISBLANK((UCHAR_T)*p);
 					    --len, ++p);
 				}
-			} else if (INTISWIDE(p[0])
-				   && CHAR_WIDTH(sp, p[0]) > 1) {
+			} else if (ISMULTIWIDTH(sp, p[0])) {
 				*tbp++ = ' ';
 				++clen;
 			} else if (ISBLANK(echar))
