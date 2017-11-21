@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.39 2017/11/19 03:23:01 kre Exp $	*/
+/*	$NetBSD: output.c,v 1.40 2017/11/21 03:42:39 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.39 2017/11/19 03:23:01 kre Exp $");
+__RCSID("$NetBSD: output.c,v 1.40 2017/11/21 03:42:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,15 +76,23 @@ __RCSID("$NetBSD: output.c,v 1.39 2017/11/19 03:23:01 kre Exp $");
 #define BLOCK_OUT -2		/* output to a fixed block of memory */
 #define MEM_OUT -3		/* output to dynamically allocated memory */
 
+#ifdef SMALL
+#define	CHAIN
+#else
+#define	CHAIN	,NULL
+#endif
+
 
 		/*      nextc  nleft  bufsize  buf     fd  flags  chain */
-struct output output = {NULL,    0, OUTBUFSIZ, NULL,    1,    0,   NULL };
-struct output errout = {NULL,    0,       100, NULL,    2,    0,   NULL };
-struct output memout = {NULL,    0,         0, NULL, MEM_OUT, 0,   NULL };
+struct output output = {NULL,    0, OUTBUFSIZ, NULL,    1,    0   CHAIN };
+struct output errout = {NULL,    0,       100, NULL,    2,    0   CHAIN };
+struct output memout = {NULL,    0,         0, NULL, MEM_OUT, 0   CHAIN };
 struct output *out1 = &output;
 struct output *out2 = &errout;
+#ifndef SMALL
 struct output *outx = &errout;
 struct output *outxtop = NULL;
+#endif
 
 
 #ifdef mkinit
@@ -133,11 +141,13 @@ out2str(const char *p)
 	outstr(p, out2);
 }
 
+#ifndef SMALL
 void
 outxstr(const char *p)
 {
 	outstr(p, outx);
 }
+#endif
 
 
 void
@@ -158,11 +168,13 @@ out2shstr(const char *p)
 	outshstr(p, out2);
 }
 
+#ifndef SMALL
 void
 outxshstr(const char *p)
 {
 	outshstr(p, outx);
 }
+#endif
 
 /*
  * ' is in this list, not because it does not require quoting
@@ -614,21 +626,7 @@ xwrite(int fd, char *buf, int nbytes)
 	return nbytes;
 }
 
-
-/*
- * Version of ioctl that retries after a signal is caught.
- * XXX unused function
- */
-
-int
-xioctl(int fd, unsigned long request, char *arg)
-{
-	int i;
-
-	while ((i = ioctl(fd, request, arg)) == -1 && errno == EINTR);
-	return i;
-}
-
+#ifndef SMALL
 static void
 xtrace_fd_swap(int from, int to)
 {
@@ -754,3 +752,4 @@ xtrace_pop(void)
 	CTRACE(DBG_OUTPUT, ("-> fd=%d buf=%p nleft=%d flags=%x\n",
 	    outx->fd, outx->buf, outx->nleft, outx->flags));
 }
+#endif /* SMALL */
