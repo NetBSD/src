@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.12 2017/11/13 04:09:41 rin Exp $
+#	$NetBSD: Makefile,v 1.13 2017/11/21 02:42:08 rin Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
 
+WARNS=	4
+
+COPTS.exf.c+=		-Wno-format-nonliteral
+COPTS.msg.c+=		-Wno-format-nonliteral
 CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 .if ${USE_WIDECHAR} != "yes"
 CWARNFLAGS.gcc+=	-Wno-unused
@@ -22,12 +26,6 @@ CPPFLAGS+=-DHAVE_MVWCHGAT
 #CPPFLAGS+=-DLOGDEBUG -DTRACE
 #CPPFLAGS+=-DDBDEBUG -DTRACE
 #CPPFLAGS+=-DQUEUEDEBUG
-
-#CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
-#.if defined(HAVE_GCC)
-#CWARNFLAGS+=-Wno-pointer-sign
-#COPTS+=-fno-strict-aliasing
-#.endif
 
 LDADD+=	-lcurses -lterminfo -lutil
 DPADD+=	${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
@@ -117,16 +115,11 @@ version.h:	../../Makefile.inc
 
 .include "${.CURDIR}/../../Makefile.inc"
 
-WARNS=	4
-
 .PATH: ${DIST}/vi ${DIST}/ex ${DIST}/cl
 .PATH: ${DIST}/common
 .PATH: ${DIST}/ipc
 .PATH: ${DIST}/ip
 .PATH: ${DIST}/regex
 .PATH: ${DIST}/docs/vi.man
-
-COPTS.exf.c += -Wno-format-nonliteral
-COPTS.msg.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
