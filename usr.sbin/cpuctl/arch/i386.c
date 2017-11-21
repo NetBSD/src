@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74 2016/10/11 04:16:28 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.1 2017/11/21 15:03:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74 2016/10/11 04:16:28 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.1 2017/11/21 15:03:20 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -371,15 +371,17 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x4d] = "Atom C2000",
 				[0x4e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 				[0x4f] = "Xeon E[57] v4 (Broadwell), Core i7-69xx Extreme",
-				[0x55] = "Future Xeon",
+				[0x55] = "Xeon Scalable (Skylake)",
 				[0x56] = "Xeon D-1500 (Broadwell)",
-				[0x57] = "Xeon Phi [357]200",
+				[0x57] = "Xeon Phi [357]200 (Knights Landing)",
 				[0x5a] = "Atom E3500",
-				[0x5c] = "Next Atom (Goldmont)",
+				[0x5c] = "Atom (Goldmont)",
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
 				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
-				[0x5f] = "Future Atom (Denverton)",
-				[0x85] = "Future Xeon Phi",
+				[0x5f] = "Atom (Goldmont, Denverton)",
+				[0x66] = "Future Core (Cannon Lake)",
+				[0x7a] = "Atom (Goldmont Plus)",
+				[0x85] = "Future Xeon Phi (Knights Mill)",
 				[0x8e] = "7th gen Core (Kaby Lake)",
 				[0x9e] = "7th gen Core (Kaby Lake)",
 			},
@@ -1506,9 +1508,9 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_model = CPUID_TO_MODEL(ci->ci_signature);
 
 	/* Brand is low order 8 bits of ebx */
-	ci->ci_brand_id = descs[1] & 0xff;
+	ci->ci_brand_id = __SHIFTOUT(descs[1], CPUID_BRAND_INDEX);
 	/* Initial local APIC ID */
-	ci->ci_initapicid = (descs[1] >> 24) & 0xff;
+	ci->ci_initapicid = __SHIFTOUT(descs[1], CPUID_LOCAL_APIC_ID);
 
 	ci->ci_feat_val[1] = descs[2];
 	ci->ci_feat_val[0] = descs[3];
@@ -1668,7 +1670,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 
 	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
 		x86_cpuid(1, descs);
-		lp_max = (descs[1] >> 16) & 0xff;
+		lp_max = __SHIFTOUT(descs[1], CPUID_HTT_CORES);
 	}
 	if (ci->ci_cpuid_level >= 4) {
 		x86_cpuid2(4, 0, descs);
@@ -1892,7 +1894,12 @@ identifycpu(int fd, const char *cpuname)
 
 	print_bits(cpuname, "padloack features", CPUID_FLAGS_PADLOCK,
 	    ci->ci_feat_val[4]);
-
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+		print_bits(cpuname, "features5", CPUID_SEF_FLAGS,
+		    ci->ci_feat_val[5]);
+	if (cpu_vendor == CPUVENDOR_INTEL)
+		print_bits(cpuname, "features6", CPUID_SEF_FLAGS1,
+		    ci->ci_feat_val[6]);
 	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[7]);
 	print_bits(cpuname, "xsave instructions", CPUID_PES1_FLAGS,
 	    ci->ci_feat_val[8]);
@@ -1977,8 +1984,6 @@ identifycpu(int fd, const char *cpuname)
 			case 7:
 				aprint_verbose("%s: SEF highest subleaf %08x\n",
 				    cpuname, data[0]);
-				print_bits(cpuname, "SEF-main", CPUID_SEF_FLAGS,
-				    data[1]);
 				break;
 #if 0
 			default:
