@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/11/06 10:55:27 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2017/11/21 03:09:41 rin Exp $
 
 # for information:
 # the configure script is run as:
@@ -19,8 +19,4 @@ SRCS+=	tre-ast.c tre-compile.c tre-match-approx.c
 SRCS+=	tre-match-backtrack.c tre-match-parallel.c tre-mem.c
 SRCS+=	tre-parse.c tre-stack.c xmalloc.c
 
-WARNS=	4
-
 .include <bsd.lib.mk>
-
-CFLAGS+=	-Wno-stack-protector
