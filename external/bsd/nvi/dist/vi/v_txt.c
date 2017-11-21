@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: v_txt.c,v 1.5 2017/11/21 06:35:22 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_txt.c,v 10.108 2003/07/18 21:27:42 skimo Exp  (Berkeley) Date: 2003/07/18 21:27:42 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_txt.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: v_txt.c,v 1.5 2017/11/21 06:35:22 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2275,11 +2275,11 @@ txt_emark(SCR *sp, TEXT *tp, size_t cno)
 	 * The end mark may not be the same size as the current character.
 	 * Don't let the line shift.
 	 */
-	nlen = KEY_LEN(sp, ch);
+	nlen = KEY_COL(sp, ch);
 	if (tp->lb[cno] == '\t')
 		(void)vs_columns(sp, tp->lb, tp->lno, &cno, &olen);
 	else
-		olen = KEY_LEN(sp, tp->lb[cno]);
+		olen = KEY_COL(sp, tp->lb[cno]);
 
 	/*
 	 * If the line got longer, well, it's weird, but it's easy.  If
@@ -2299,7 +2299,19 @@ txt_emark(SCR *sp, TEXT *tp, size_t cno)
 		if (tp->lb[cno] == '\t')
 			for (cno += chlen; chlen--;)
 				*p++ = ' ';
-		else
+		else if (INTISWIDE(tp->lb[cno])) {
+			/*
+			 * Do not put the end mark on a part of a multi-width
+			 * char, which results in screen corruption.
+			 */
+			for (; chlen >= nlen; chlen -= nlen) {
+				cno++;
+				*p++ = ch;
+			}
+			/* Paranoia: nlen is usually 1. */
+			for (cno += chlen; chlen--;)
+				*p++ = ' ';
+		} else
 			for (kp = KEY_NAME(sp, tp->lb[cno]),
 			    cno += chlen; chlen--;)
 				*p++ = *kp++;
@@ -2457,7 +2469,7 @@ txt_insch(SCR *sp, TEXT *tp, ARG_CHAR_T *chp, u_int flags)
 			(void)vs_columns(sp, tp->lb, tp->lno, &cno, &nlen);
 			tp->lb[cno] = savech;
 		} else
-			nlen = KEY_LEN(sp, *chp);
+			nlen = KEY_COL(sp, *chp);
 
 		/*
 		 * Eat overwrite characters until we run out of them or we've
@@ -2472,7 +2484,7 @@ txt_insch(SCR *sp, TEXT *tp, ARG_CHAR_T *chp, u_int flags)
 				(void)vs_columns(sp,
 				    tp->lb, tp->lno, &cno, &olen);
 			else
-				olen = KEY_LEN(sp, tp->lb[cno]);
+				olen = KEY_COL(sp, tp->lb[cno]);
 
 			if (olen == nlen) {
 				nlen = 0;
@@ -2491,7 +2503,12 @@ txt_insch(SCR *sp, TEXT *tp, ARG_CHAR_T *chp, u_int flags)
 
 				tp->len += chlen;
 				tp->owrite += chlen;
-				if (tp->lb[cno] == '\t')
+				/*
+				 * Do not rewrite a part of a multi-width char,
+				 * which results in screen corruption.
+				 */
+				if (tp->lb[cno] == '\t'
+				    || INTISWIDE(tp->lb[cno]))
 					for (p = tp->lb + cno + 1; chlen--;)
 						*p++ = ' ';
 				else
