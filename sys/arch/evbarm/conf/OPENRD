@@ -1,4 +1,4 @@
-#	$NetBSD: OPENRD,v 1.6 2015/12/13 04:55:12 cyber Exp $
+#	$NetBSD: OPENRD,v 1.7 2017/11/21 00:47:38 christos Exp $
 #
 # This is a working config file for OpenRD(.org) Client.  Note that the
 # default boot address will not work and the kernel has to load at 8MB
@@ -28,4 +28,7 @@ wsdisplay*	at vga? console ?
 # mvsdio doesn't currently function on OPENRD
 # Tested on OpenRD-Client
 no mvsdio
+no sdmmc* at mvsdio?
+no ld* at sdmmc?
+no sbt* at sdmmc?
 
