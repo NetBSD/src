@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.16 2015/11/11 07:48:41 ozaki-r Exp $	*/
+/*	$NetBSD: advcap.c,v 1.16.8.1 2017/11/21 10:54:18 martin Exp $	*/
 /*	$KAME: advcap.c,v 1.11 2003/05/19 09:46:50 keiichi Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
 #include <string.h>
 #include "pathnames.h"
 #include "prog_ops.h"
+
+#include "logit.h"
 
 #ifndef __UNCONST
 #define __UNCONST(a)		((void *)(unsigned long)(const void *)(a))
@@ -137,7 +139,7 @@ getent(char *bp, char *name, char *cp)
 		tf = open(RM = cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		syslog(LOG_INFO, "<%s> open: %m", __func__);
+		logit(LOG_INFO, "<%s> open: %m", __func__);
 		return (-2);
 	}
 	for (;;) {
