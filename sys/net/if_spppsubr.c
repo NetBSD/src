@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.173 2017/11/22 05:42:30 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.174 2017/11/22 08:28:56 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.173 2017/11/22 05:42:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.174 2017/11/22 08:28:56 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5528,6 +5528,8 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in6 *sin6;
+	int s;
+	struct psref psref;
 
 	/*
 	 * Pick the first link-local AF_INET6 address from the list,
@@ -5535,15 +5537,19 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	 */
 
 	sin6 = NULL;
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp)
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 		{
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-			if (sin6 && IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+			if (sin6 && IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+				ifa_acquire(ifa, &psref);
 				break;
+			}
 		}
 	}
+	pserialize_read_exit(s);
 
 	if (ifa && sin6)
 	{
@@ -5560,6 +5566,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 		if (!error) {
 			pfil_run_addrhooks(if_pfil, SIOCAIFADDR_IN6, ifa);
 		}
+		ifa_release(ifa, &psref);
 	}
 }
 #endif
