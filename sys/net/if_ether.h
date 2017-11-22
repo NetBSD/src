@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.68 2017/09/28 16:26:14 christos Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.69 2017/11/22 02:35:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,9 +59,11 @@
 /*
  * Some Ethernet extensions.
  */
-#define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
-#define	ETHER_VLAN_MASK	0xFFF	/* bits in a vlan tag */
-#define	ETHER_PPPOE_ENCAP_LEN 8	/* length of PPPoE encapsulation */
+#define	ETHER_VLAN_ENCAP_LEN	4      /* length of 802.1Q VLAN encapsulation */
+#define	EVL_VLANOFTAG(tag)	((tag) & 4095)		/* VLAN ID */
+#define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)	/* Priority */
+#define	EVL_CFIOFTAG(tag)	(((tag) >> 12) & 1)	/* CFI */
+#define	ETHER_PPPOE_ENCAP_LEN	8	/* length of PPPoE encapsulation */
 
 /*
  * Ethernet address - 6 octets
@@ -297,12 +299,12 @@ struct ether_multistep {
 
 /* add VLAN tag to input/received packet */
 static inline void
-vlan_set_tag(struct mbuf *m, u_int16_t vlanid)
+vlan_set_tag(struct mbuf *m, u_int16_t vlantag)
 {
 
-	KASSERT((vlanid & ~ETHER_VLAN_MASK) == 0);
+	/* VLAN tag contains priority, CFI and VLAN ID */
 
-	m->m_pkthdr.ether_vtag = vlanid;
+	m->m_pkthdr.ether_vtag = vlantag;
 	m->m_flags |= M_VLANTAG;
 	return;
 }
