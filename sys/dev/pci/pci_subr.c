@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.183.2.2 2017/11/21 14:16:38 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.183.2.3 2017/11/22 14:38:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.2 2017/11/21 14:16:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.3 2017/11/22 14:38:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2692,7 +2692,8 @@ pci_conf_print_aer_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		pci_conf_print_aer_cap_rooterr_status(reg);
 
 		reg = regs[o2i(extcapoff + PCI_AER_ERRSRC_ID)];
-		printf("    Error Source Identification: 0x%04x\n", reg);
+		printf("    Error Source Identification register: 0x%08x\n",
+		    reg);
 		pci_conf_print_aer_cap_errsrc_id(reg);
 		break;
 	}
@@ -4348,9 +4349,9 @@ pci_conf_print_type1(
 	}
 	if (base < limit) {
 		if (use_upper == 1)
-			printf("      range:  0x%08x-0x%08x\n", base, limit);
+			printf("      range: 0x%08x-0x%08x\n", base, limit);
 		else
-			printf("      range:  0x%04x-0x%04x\n", base, limit);
+			printf("      range: 0x%04x-0x%04x\n", base, limit);
 	} else
 		printf("      range:  not set\n");
 
@@ -4366,9 +4367,9 @@ pci_conf_print_type1(
 	limit = (((rval >> PCI_BRIDGE_MEMORY_LIMIT_SHIFT)
 		& PCI_BRIDGE_MEMORY_LIMIT_MASK) << 20) | 0x000fffff;
 	if (base < limit)
-		printf("      range:  0x%08x-0x%08x\n", base, limit);
+		printf("      range: 0x%08x-0x%08x\n", base, limit);
 	else
-		printf("      range:  not set\n");
+		printf("      range: not set\n");
 
 	/* Prefetchable memory region */
 	rval = regs[o2i(PCI_BRIDGE_PREFETCHMEM_REG)];
@@ -4398,13 +4399,13 @@ pci_conf_print_type1(
 	}
 	if (pbase < plimit) {
 		if (use_upper == 1)
-			printf("      range:  0x%016" PRIx64 "-0x%016" PRIx64
+			printf("      range: 0x%016" PRIx64 "-0x%016" PRIx64
 			    "\n", pbase, plimit);
 		else
-			printf("      range:  0x%08x-0x%08x\n",
+			printf("      range: 0x%08x-0x%08x\n",
 			    (uint32_t)pbase, (uint32_t)plimit);
 	} else
-		printf("      range:  not set\n");
+		printf("      range: not set\n");
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
