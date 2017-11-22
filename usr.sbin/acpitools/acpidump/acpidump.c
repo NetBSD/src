@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.c,v 1.6 2015/09/20 17:45:25 wiz Exp $ */
+/* $NetBSD: acpidump.c,v 1.6.8.1 2017/11/22 15:54:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,11 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.c,v 1.13 2009/08/25 20:35:57 jhb Exp $
+ *	$FreeBSD: head/usr.sbin/acpi/acpidump/acpidump.c 302788 2016-07-13 22:53:30Z andrew $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpidump.c,v 1.6 2015/09/20 17:45:25 wiz Exp $");
+__RCSID("$NetBSD: acpidump.c,v 1.6.8.1 2017/11/22 15:54:09 martin Exp $");
 
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ int
 main(int argc, char *argv[])
 {
 	ACPI_TABLE_HEADER *rsdt, *sdt;
-	char	c;
+	int	c;
 	char	*dsdt_input_file, *dsdt_output_file;
 
 	dsdt_input_file = dsdt_output_file = NULL;

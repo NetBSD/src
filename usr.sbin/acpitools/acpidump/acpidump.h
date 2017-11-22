@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.h,v 1.5 2011/02/17 15:06:34 jruoho Exp $ */
+/* $NetBSD: acpidump.h,v 1.5.36.1 2017/11/22 15:54:09 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.h,v 1.24 2009/08/25 20:35:57 jhb Exp $
+ *	$FreeBSD$
  */
 
 #ifndef _ACPIDUMP_H_
@@ -36,17 +36,6 @@
 #include <acpi_common.h>
 #include <dev/acpi/acpica.h>
 
-/* GAS address space ID constants. */
-#define	ACPI_GAS_MEMORY		0
-#define	ACPI_GAS_IO		1
-#define	ACPI_GAS_PCI		2
-#define	ACPI_GAS_EMBEDDED	3
-#define	ACPI_GAS_SMBUS		4
-#define	ACPI_GAS_CMOS		5
-#define	ACPI_GAS_PCIBAR		6
-#define	ACPI_GAS_DATATABLE	7
-#define	ACPI_GAS_FIXED		0x7f
-
 /* Subfields in the HPET Id member. */
 #define	ACPI_HPET_ID_HARDWARE_REV_ID	0x000000ff
 #define	ACPI_HPET_ID_COMPARATORS	0x00001f00
@@ -54,10 +43,80 @@
 #define	ACPI_HPET_ID_LEGACY_CAPABLE	0x00008000
 #define	ACPI_HPET_ID_PCI_VENDOR_ID	0xffff0000
 
-#define ACPI_RSDP_REV0_SIZE     20  /* Size of original ACPI 1.0 RSDP */
-
 /* Find and map the RSD PTR structure and return it for parsing */
 ACPI_TABLE_HEADER *sdt_load_devmem(void);
+
+/* TCPA */
+struct TCPAbody {
+	ACPI_TABLE_HEADER header;
+	uint16_t	platform_class;
+#define ACPI_TCPA_BIOS_CLIENT	0x00
+#define ACPI_TCPA_BIOS_SERVER	0x01
+	union {
+		struct client_hdr {
+			uint32_t	log_max_len __packed;
+			uint64_t	log_start_addr __packed;
+		} client;
+		struct server_hdr {
+			uint16_t	reserved;
+			uint64_t	log_max_len __packed;
+			uint64_t	log_start_addr __packed;
+		} server;
+	};
+} __packed;
+
+struct TCPAevent {
+	u_int32_t	pcr_index;
+	u_int32_t	event_type;
+	u_int8_t	pcr_value[20];
+	u_int32_t	event_size;
+	u_int8_t	event_data[0];
+};
+
+struct TCPApc_event {
+	u_int32_t	event_id;
+	u_int32_t	event_size;
+	u_int8_t	event_data[0];
+};
+
+enum TCPAevent_types {
+	PREBOOT = 0,
+	POST_CODE,
+	UNUSED,
+	NO_ACTION,
+	SEPARATOR,
+	ACTION,
+	EVENT_TAG,
+	SCRTM_CONTENTS,
+	SCRTM_VERSION,
+	CPU_MICROCODE,
+	PLATFORM_CONFIG_FLAGS,
+	TABLE_OF_DEVICES,
+	COMPACT_HASH,
+	IPL,
+	IPL_PARTITION_DATA,
+	NONHOST_CODE,
+	NONHOST_CONFIG,
+	NONHOST_INFO,
+	EVENT_TYPE_MAX,
+};
+
+enum TCPApcclient_ids {
+	SMBIOS = 1,
+	BIS_CERT,
+	POST_BIOS_ROM,
+	ESCD,
+	CMOS,
+	NVRAM,
+	OPTION_ROM_EXEC,
+	OPTION_ROM_CONFIG,
+	OPTION_ROM_MICROCODE = 10,
+	S_CRTM_VERSION,
+	S_CRTM_CONTENTS,
+	POST_CONTENTS,
+	HOST_TABLE_OF_DEVICES,
+	PCCLIENT_ID_MAX,
+};
 
 /*
  * Load the DSDT from a previous save file.  Note that other tables are
