@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.266 2017/11/20 20:57:58 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.267 2017/11/22 21:26:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2017/11/20 20:57:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2017/11/22 21:26:01 christos Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1800,8 +1800,8 @@ pmap_pp_needs_pve(struct pmap_page *pp)
 	 * since the first pv entry is stored in the pmap_page.
 	 */
 
-	return (pp->pp_flags & PP_EMBEDDED) != 0 ||
-		!LIST_EMPTY(&pp->pp_head.pvh_list);
+	return pp && ((pp->pp_flags & PP_EMBEDDED) != 0 ||
+	    !LIST_EMPTY(&pp->pp_head.pvh_list));
 }
 
 /*
@@ -4181,7 +4181,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 
 	bool needpves = pmap_pp_needs_pve(new_pp);
-	if (new_pp && needpves) {
+	if (needpves) {
 		new_pve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
 		new_sparepve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
 	} else {
