@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_user.c,v 1.2 2009/12/22 08:44:03 cegger Exp $ */
+/* $NetBSD: acpi_user.c,v 1.2.38.1 2017/11/22 15:35:52 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi_user.c,v 1.2 2009/12/22 08:44:03 cegger Exp $");
+__RCSID("$NetBSD: acpi_user.c,v 1.2.38.1 2017/11/22 15:35:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: acpi_user.c,v 1.2 2009/12/22 08:44:03 cegger Exp $");
 
 #include "acpidump.h"
 
+static char	machdep_acpi_root[] = "hw.acpi.root";
 static int      acpi_mem_fd = -1;
 
 struct acpi_user_mapping {
@@ -164,22 +165,16 @@ acpi_scan_rsd_ptr(void)
 ACPI_TABLE_RSDP *
 acpi_find_rsd_ptr(void)
 {
-	int i;
-	uint8_t		buf[sizeof(ACPI_TABLE_RSDP)];
+	ACPI_TABLE_RSDP	*rsdp;
+	u_long		addr = 0;
+	size_t		len = sizeof(addr);
 
 	acpi_user_init();
-	for (i = 0; i < 1024 * 1024; i += 16) {
-		read(acpi_mem_fd, buf, 16);
-		if (!memcmp(buf, "RSD PTR ", 8)) {
-			/* Read the rest of the structure */
-			read(acpi_mem_fd, buf + 16, sizeof(ACPI_TABLE_RSDP) - 16);
 
-			/* Verify checksum before accepting it. */
-			if (acpi_checksum(buf, sizeof(ACPI_TABLE_RSDP)))
-				continue;
-			return (acpi_map_physical(i, sizeof(ACPI_TABLE_RSDP)));
-		}
-	}
+	if (sysctlbyname(machdep_acpi_root, &addr, &len, NULL, 0) != 0)
+		addr = 0;
+	if (addr != 0 && (rsdp = acpi_get_rsdp(addr)) != NULL)
+		return rsdp;
 
 	return acpi_scan_rsd_ptr();
 }
