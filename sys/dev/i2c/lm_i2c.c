@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_i2c.c,v 1.2 2008/10/13 11:16:00 pgoyette Exp $	*/
+/*	$NetBSD: lm_i2c.c,v 1.2.80.1 2017/11/22 14:56:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.2 2008/10/13 11:16:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.2.80.1 2017/11/22 14:56:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ void 	lm_i2c_attach(device_t, device_t, void *);
 int 	lm_i2c_detach(device_t, int);
 
 uint8_t lm_i2c_readreg(struct lm_softc *, int);
-void 	lm_i2c_writereg(struct lm_softc *, int, int);
+void 	lm_i2c_writereg(struct lm_softc *, int, uint8_t);
 
 struct lm_i2c_softc {
 	struct lm_softc sc_lmsc;
@@ -76,7 +76,7 @@ lm_i2c_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_lmsc.lm_readreg = lm_i2c_readreg;
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
-	rv = lm_probe(&sc.sc_lmsc);
+	rv = lm_match(&sc.sc_lmsc);
 
 	return rv;
 }
@@ -127,7 +127,7 @@ lm_i2c_readreg(struct lm_softc *lmsc, int reg)
 
 
 void
-lm_i2c_writereg(struct lm_softc *lmsc, int reg, int val)
+lm_i2c_writereg(struct lm_softc *lmsc, int reg, uint8_t val)
 {
 	struct lm_i2c_softc *sc = (struct lm_i2c_softc *)lmsc;
 	uint8_t cmd, data;

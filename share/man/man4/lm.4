@@ -1,4 +1,4 @@
-.\"	$NetBSD: lm.4,v 1.32 2010/02/21 05:16:29 cnst Exp $
+.\"	$NetBSD: lm.4,v 1.32.40.1 2017/11/22 14:56:30 martin Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 2010
+.Dd July 12, 2017
 .Dt LM 4
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ the
 .Xr envsys 4
 API.
 .Pp
-Most supported devices possess 11 sensors:
+The original LM78 hardware monitor supports 11 sensors:
 .Bl -column "Sensor" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
 .It Li "IN0" Ta "uV DC" Ta "Core voltage"
@@ -66,8 +66,7 @@ Most supported devices possess 11 sensors:
 .It Li "Fan1" Ta "RPM" Ta "Chassis Fan"
 .It Li "Fan2" Ta "RPM" Ta "Fan"
 .El
-for some devices (most Winbond devices) sensor names and numbers will be
-different.
+For other devices, sensors' names and numbers will be different.
 .Pp
 Due to hardware limitations, fresh sensor data is only available every
 2 seconds.
@@ -75,7 +74,6 @@ Due to hardware limitations, fresh sensor data is only available every
 Chips supported by the
 .Nm
 driver include:
-.Pp
 .Bl -item -offset indent
 .It
 .Tn National Semiconductor
@@ -84,6 +82,19 @@ driver include:
 .Em LM79
 and
 .Em LM81 .
+.It
+.Tn Nuvoton
+.Em NCT5104D ,
+.Em NCT6775F ,
+.Em NCT6776F ,
+.Em NCT6102D ,
+.Em NCT6104D ,
+.Em NCT6106D ,
+.Em NCT6779D ,
+.Em NCT6791D ,
+.Em NCT6792D ,
+.Em NCT6793D ,
+.Em NCT6795D .
 .It
 .Tn Winbond
 .Em W83627HF* ,
@@ -124,6 +135,10 @@ The
 .Nm
 device appeared in
 .Nx 1.5 .
+.Sh CAVEATS
+Some vendors connect these chips to non-standard thermal diodes and
+resistors.
+This will result in bogus sensor values.
 .Sh BUGS
 Interrupt support is unimplemented.
 .Pp
