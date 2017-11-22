@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_user.c,v 1.2.38.1 2017/11/22 15:35:52 martin Exp $ */
+/* $NetBSD: acpi_user.c,v 1.2.38.2 2017/11/22 15:54:09 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -26,11 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi_user.c,v 1.15 2009/08/25 20:35:57 jhb Exp $
+ *	$FreeBSD: head/usr.sbin/acpi/acpidump/acpi_user.c 251186 2013-05-31 17:23:38Z jkim $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi_user.c,v 1.2.38.1 2017/11/22 15:35:52 martin Exp $");
+__RCSID("$NetBSD: acpi_user.c,v 1.2.38.2 2017/11/22 15:54:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -56,7 +56,7 @@ struct acpi_user_mapping {
 	size_t          size;
 };
 
-LIST_HEAD(acpi_user_mapping_list, acpi_user_mapping) maplist;
+static LIST_HEAD(acpi_user_mapping_list, acpi_user_mapping) maplist;
 
 static void
 acpi_user_init(void)
@@ -122,7 +122,7 @@ acpi_get_rsdp(u_long addr)
 
 	/* If the revision is 0, assume a version 1 length. */
 	if (rsdp.Revision == 0)
-		len = ACPI_RSDP_REV0_SIZE;
+		len = sizeof(ACPI_RSDP_COMMON);
 	else
 		len = rsdp.Length;
 
