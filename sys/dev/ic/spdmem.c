@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.24 2017/01/18 06:02:50 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.24.6.1 2017/11/22 14:33:23 martin Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.24 2017/01/18 06:02:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.24.6.1 2017/11/22 14:33:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -748,12 +748,21 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s)
 }
 
 static void
+print_part(const char *part, size_t pnsize)
+{
+	const char *p = memchr(part, ' ', pnsize);
+	if (p == NULL)
+		p = part + pnsize;
+	aprint_normal(": %.*s\n", (int)(p - part), part);
+}
+
+static void
 decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
 {
 	int dimm_size, cycle_time, bits;
 
 	aprint_naive("\n");
-	aprint_normal(": %18s\n", s->sm_ddr3.ddr3_part);
+	print_part(s->sm_ddr3.ddr3_part, sizeof(s->sm_ddr3.ddr3_part));
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 
 	if (s->sm_ddr3.ddr3_mod_type ==
@@ -864,13 +873,15 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	int tAA_clocks, tRCD_clocks,tRP_clocks, tRAS_clocks;
 
 	aprint_naive("\n");
-	aprint_normal(": %20s\n", s->sm_ddr4.ddr4_part_number);
+	print_part(s->sm_ddr4.ddr4_part_number,
+	    sizeof(s->sm_ddr4.ddr4_part_number));
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 	if (s->sm_ddr4.ddr4_mod_type < __arraycount(spdmem_ddr4_module_types))
 		aprint_normal(" (%s)", 
 		    spdmem_ddr4_module_types[s->sm_ddr4.ddr4_mod_type]);
-	aprint_normal(", %stemp-sensor, ",
-		(s->sm_ddr4.ddr4_has_therm_sensor)?"":"no ");
+	aprint_normal(", %sECC, %stemp-sensor, ",
+		(s->sm_ddr4.ddr4_bus_width_extension) ? "" : "no ",
+		(s->sm_ddr4.ddr4_has_therm_sensor) ? "" : "no ");
 
 	/*
 	 * DDR4 size calculation from JEDEC spec
