@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.112 2017/11/16 03:07:18 ozaki-r Exp $ */
+/* $NetBSD: ixgbe.c,v 1.113 2017/11/22 15:15:09 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -257,7 +257,6 @@ static void	ixgbe_handle_msf(void *);
 static void	ixgbe_handle_mod(void *);
 static void	ixgbe_handle_phy(void *);
 
-const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 static ixgbe_vendor_info_t *ixgbe_lookup(const struct pci_attach_args *);
 
 /************************************************************************
@@ -853,6 +852,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	} else
 		adapter->num_segs = IXGBE_82598_SCATTER;
 
+	hw->mac.ops.set_lan_id(hw);
 	ixgbe_init_device_features(adapter);
 
 	if (ixgbe_configure_interrupts(adapter)) {
