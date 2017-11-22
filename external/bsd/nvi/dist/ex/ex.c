@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.6 2017/11/13 01:40:37 rin Exp $ */
+/*	$NetBSD: ex.c,v 1.7 2017/11/22 13:13:18 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex.c,v 10.75 2004/03/16 14:13:35 skimo Exp  (Berkeley) Date: 2004/03/16 14:13:35 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex.c,v 1.6 2017/11/13 01:40:37 rin Exp $");
+__RCSID("$NetBSD: ex.c,v 1.7 2017/11/22 13:13:18 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1512,7 +1512,7 @@ addr_verify:
 
 		ecp->save_cmd -= arg1_len;
 		ecp->save_cmdlen += arg1_len;
-		MEMCPYW(ecp->save_cmd, arg1, arg1_len);
+		MEMMOVEW(ecp->save_cmd, arg1, arg1_len);
 
 		/*
 		 * Any commands executed from a +cmd are executed starting at
