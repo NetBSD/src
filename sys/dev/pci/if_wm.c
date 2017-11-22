@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.5 2017/11/06 09:54:01 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.6 2017/11/22 16:40:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.5 2017/11/06 09:54:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.6 2017/11/22 16:40:42 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4022,10 +4022,18 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		case WM_T_PCH_LPT:
 		case WM_T_PCH_SPT:
 			/* TARC0 */
-			if ((sc->sc_type == WM_T_ICH8)
-			    || (sc->sc_type == WM_T_PCH_SPT)) {
+			if (sc->sc_type == WM_T_ICH8) {
 				/* Set TARC0 bits 29 and 28 */
 				tarc0 |= __BITS(29, 28);
+			} else if (sc->sc_type == WM_T_PCH_SPT) {
+				tarc0 |= __BIT(29);
+				/*
+				 *  Drop bit 28. From Linux.
+				 * See I218/I219 spec update
+				 * "5. Buffer Overrun While the I219 is
+				 * Processing DMA Transactions"
+				 */
+				tarc0 &= ~__BIT(28);
 			}
 			/* Set TARC0 bits 23,24,26,27 */
 			tarc0 |= __BITS(27, 26) | __BITS(24, 23);
