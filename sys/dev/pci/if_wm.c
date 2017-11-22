@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.543 2017/11/16 03:07:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.544 2017/11/22 02:36:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.543 2017/11/16 03:07:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.544 2017/11/22 02:36:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8108,11 +8108,11 @@ wm_rxdesc_get_vlantag(struct wm_rxqueue *rxq, int idx)
 	struct wm_softc *sc = rxq->rxq_sc;
 
 	if (sc->sc_type == WM_T_82574)
-		return EXTRXC_VLAN_ID(rxq->rxq_ext_descs[idx].erx_ctx.erxc_vlan);
+		return rxq->rxq_ext_descs[idx].erx_ctx.erxc_vlan;
 	else if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
-		return NQRXC_VLAN_ID(rxq->rxq_nq_descs[idx].nqrx_ctx.nrxc_vlan);
+		return rxq->rxq_nq_descs[idx].nqrx_ctx.nrxc_vlan;
 	else
-		return WRX_VLAN_ID(rxq->rxq_descs[idx].wrx_special);
+		return rxq->rxq_descs[idx].wrx_special;
 }
 
 static inline int
