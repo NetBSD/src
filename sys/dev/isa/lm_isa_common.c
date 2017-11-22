@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa_common.c,v 1.4 2016/06/01 02:37:47 pgoyette Exp $ */
+/*	$NetBSD: lm_isa_common.c,v 1.4.10.1 2017/11/22 14:56:30 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.4 2016/06/01 02:37:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.4.10.1 2017/11/22 14:56:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ void 	lm_isa_attach(device_t, device_t, void *);
 int 	lm_isa_detach(device_t, int);
 
 static uint8_t 	lm_isa_readreg(struct lm_softc *, int);
-static void 	lm_isa_writereg(struct lm_softc *, int, int);
+static void 	lm_isa_writereg(struct lm_softc *, int, uint8_t);
 
 struct lm_isa_softc {
 	struct lm_softc lmsc;
@@ -80,13 +80,12 @@ lm_isa_match(device_t parent, cfdata_t match, void *aux)
 	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 8, 0, &ioh))
 		return 0;
 
-
 	/* Bus independent probe */
 	sc.lm_iot = ia->ia_iot;
 	sc.lm_ioh = ioh;
 	sc.lmsc.lm_writereg = lm_isa_writereg;
 	sc.lmsc.lm_readreg = lm_isa_readreg;
-	rv = lm_probe(&sc.lmsc);
+	rv = lm_match(&sc.lmsc);
 
 	bus_space_unmap(ia->ia_iot, ioh, 8);
 
@@ -122,7 +121,7 @@ lm_isa_attach(device_t parent, device_t self, void *aux)
 	sc->lmsc.lm_writereg = lm_isa_writereg;
 	sc->lmsc.lm_readreg = lm_isa_readreg;
 	/* pass wbsio Device ID */
-	sc->lmsc.sioid = (uint8_t)(uintptr_t)ia->ia_aux;
+	sc->lmsc.sioid = (uint16_t)(uintptr_t)ia->ia_aux;
 
 	lm_attach(&sc->lmsc);
 }
@@ -147,7 +146,7 @@ lm_isa_readreg(struct lm_softc *lmsc, int reg)
 }
 
 static void
-lm_isa_writereg(struct lm_softc *lmsc, int reg, int val)
+lm_isa_writereg(struct lm_softc *lmsc, int reg, uint8_t val)
 {
 	struct lm_isa_softc *sc = (struct lm_isa_softc *)lmsc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.64.10.1 2017/11/22 14:56:30 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64.10.1 2017/11/22 14:56:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $")
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/isa/wbsioreg.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -71,15 +72,21 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $")
 
 #define LM_REFRESH_TIMO	(2 * hz)	/* 2 seconds */
 
-static int lm_match(struct lm_softc *);
+static const struct wb_product *wb_lookup(struct lm_softc *,
+    const struct wb_product *, uint16_t);
 static int wb_match(struct lm_softc *);
+static int wb_attach(struct lm_softc *);
+static int nslm_match(struct lm_softc *);
+static int nslm_attach(struct lm_softc *);
 static int def_match(struct lm_softc *);
+static int def_attach(struct lm_softc *);
 static void wb_temp_diode_type(struct lm_softc *, int);
+static uint16_t wb_read_vendorid(struct lm_softc *);
 
 static void lm_refresh(void *);
 
-static void lm_generic_banksel(struct lm_softc *, int);
-static void lm_setup_sensors(struct lm_softc *, struct lm_sensor *);
+static void lm_generic_banksel(struct lm_softc *, uint8_t);
+static void lm_setup_sensors(struct lm_softc *, const struct lm_sensor *);
 static void lm_refresh_sensor_data(struct lm_softc *);
 static void lm_refresh_volt(struct lm_softc *, int);
 static void lm_refresh_temp(struct lm_softc *, int);
@@ -93,20 +100,22 @@ static void wb_refresh_temp(struct lm_softc *, int);
 static void wb_refresh_fanrpm(struct lm_softc *, int);
 static void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
 static void wb_nct6776f_refresh_fanrpm(struct lm_softc *, int);
+
 static void as_refresh_temp(struct lm_softc *, int);
 
 struct lm_chip {
 	int (*chip_match)(struct lm_softc *);
+	int (*chip_attach)(struct lm_softc *);
 };
 
 static struct lm_chip lm_chips[] = {
-	{ wb_match },
-	{ lm_match },
-	{ def_match } /* Must be last */
+	{ wb_match,	wb_attach },
+	{ nslm_match,	nslm_attach },
+	{ def_match,	def_attach } /* Must be last */
 };
 
 /* LM78/78J/79/81 */
-static struct lm_sensor lm78_sensors[] = {
+static const struct lm_sensor lm78_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -205,7 +214,7 @@ static struct lm_sensor lm78_sensors[] = {
 };
 
 /* W83627HF */
-static struct lm_sensor w83627hf_sensors[] = {
+static const struct lm_sensor w83627hf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -344,7 +353,7 @@ static struct lm_sensor w83627hf_sensors[] = {
  * need special treatment, also because the reference voltage is 2.048 V
  * instead of the traditional 3.6 V.
  */
-static struct lm_sensor w83627ehf_sensors[] = {
+static const struct lm_sensor w83627ehf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -483,7 +492,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 };
 
 /*  W83627DHG */
-static struct lm_sensor w83627dhg_sensors[] = {
+static const struct lm_sensor w83627dhg_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -614,7 +623,7 @@ static struct lm_sensor w83627dhg_sensors[] = {
 };
 
 /* W83637HF */
-static struct lm_sensor w83637hf_sensors[] = {
+static const struct lm_sensor w83637hf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -729,7 +738,7 @@ static struct lm_sensor w83637hf_sensors[] = {
 };
 
 /* W83697HF */
-static struct lm_sensor w83697hf_sensors[] = {
+static const struct lm_sensor w83697hf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -842,7 +851,7 @@ static struct lm_sensor w83697hf_sensors[] = {
  * +5V, but using the values from the W83782D datasheets seems to
  * provide sensible results.
  */
-static struct lm_sensor w83781d_sensors[] = {
+static const struct lm_sensor w83781d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -957,7 +966,7 @@ static struct lm_sensor w83781d_sensors[] = {
 };
 
 /* W83782D */
-static struct lm_sensor w83782d_sensors[] = {
+static const struct lm_sensor w83782d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1088,7 +1097,7 @@ static struct lm_sensor w83782d_sensors[] = {
 };
 
 /* W83783S */
-static struct lm_sensor w83783s_sensors[] = {
+static const struct lm_sensor w83783s_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1187,7 +1196,7 @@ static struct lm_sensor w83783s_sensors[] = {
 };
 
 /* W83791D */
-static struct lm_sensor w83791d_sensors[] = {
+static const struct lm_sensor w83791d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1342,7 +1351,7 @@ static struct lm_sensor w83791d_sensors[] = {
 };
 
 /* W83792D */
-static struct lm_sensor w83792d_sensors[] = {
+static const struct lm_sensor w83792d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -1505,7 +1514,7 @@ static struct lm_sensor w83792d_sensors[] = {
 };
 
 /* AS99127F */
-static struct lm_sensor as99127f_sensors[] = {
+static const struct lm_sensor as99127f_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -1619,8 +1628,8 @@ static struct lm_sensor as99127f_sensors[] = {
 	{ .desc = NULL }
 };
 
-/*  NCT6776F */
-static struct lm_sensor nct6776f_sensors[] = {
+/* NCT6776F */
+static const struct lm_sensor nct6776f_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1767,23 +1776,411 @@ static struct lm_sensor nct6776f_sensors[] = {
 	{ .desc = NULL }
 };
 
+/* NCT610[246]D */
+static const struct lm_sensor nct6102d_sensors[] = {
+	/* Voltage */
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x00,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN0",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x01,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "AVCC",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x02,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "3VCC",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x03,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VIN1",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x04,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN2",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x05,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "+3.3VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x07,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x08,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VTT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x09,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+
+	/* Temperature */
+	{
+		.desc = "MB Temperature",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x18,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Temperature",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x19,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x1a,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+
+	/* Fans */
+	{
+		.desc = "System Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x30,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x32,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x34,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+
+	{ .desc = NULL }
+};
+
+/* NCT6779D */
+static const struct lm_sensor nct6779d_sensors[] = {
+	/* Voltage */
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x80,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "VIN1",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x81,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(56, 10) / 2
+	},
+	{
+		.desc = "AVCC",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x82,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x83,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VIN0",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x84,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(48600, 10000)
+	},
+	{
+		.desc = "VIN8",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x85,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "VIN4",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x86,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x87,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x88,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VTT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x89,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN5",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8a,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN6",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8b,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN2",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8c,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN3",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8d,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(14414, 10000)
+	},
+	{
+		.desc = "VIN7",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8e,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+
+	/* Temperature */
+	{
+		.desc = "MB Temperature",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x90,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Temperature",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x91,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x92,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x93,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x94,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp3",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x95,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+
+	/* Fans */
+	{
+		.desc = "System Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xc0,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xc2,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xc4,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xc6,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xc8,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+
+	{ .desc = NULL }
+};
+
+static const struct wb_product wb_products[] = {
+    { WB_CHIPID_W83627HF,   "W83627HF",	w83627hf_sensors, NULL },
+    { WB_CHIPID_W83627THF,  "W83627THF",w83637hf_sensors, NULL },
+    { WB_CHIPID_W83627EHF_A,"W83627EHF-A",w83627ehf_sensors,NULL },
+    { WB_CHIPID_W83627EHF,  "W83627EHF",w83627ehf_sensors,NULL },
+    { WB_CHIPID_W83627DHG,  NULL,	NULL,   NULL },
+    { WB_CHIPID_W83637HF,   "W83637HF",	w83637hf_sensors, NULL },
+    { WB_CHIPID_W83697HF,   "W83697HF",	w83697hf_sensors, NULL },
+    { WB_CHIPID_W83781D,    "W83781D",	w83781d_sensors,  NULL },
+    { WB_CHIPID_W83781D_2,  "W83781D",	w83781d_sensors,  NULL },
+    { WB_CHIPID_W83782D,    "W83782D",	w83782d_sensors,  NULL },
+    { WB_CHIPID_W83783S,    "W83783S",	w83783s_sensors,  NULL },
+    { WB_CHIPID_W83791D,    "W83791D",	w83791d_sensors,  NULL },
+    { WB_CHIPID_W83791SD,   "W83791SD",	NULL,		  NULL },
+    { WB_CHIPID_W83792D,    "W83792D",	w83792d_sensors,  NULL },
+    { WB_CHIPID_AS99127F,   NULL,	NULL,  NULL },
+    { 0, NULL, NULL, NULL }
+};
+
+static const struct wb_product wbsio_products[] = {
+    { WBSIO_ID_W83627DHG,   "W83627DHG",w83627dhg_sensors,NULL },
+    { WBSIO_ID_NCT6775F,    "NCT6775F", nct6776f_sensors, NULL },
+    { WBSIO_ID_NCT6776F,    "NCT6776F", nct6776f_sensors, NULL },
+    { WBSIO_ID_NCT5104D,    "NCT5104D or 610[246]D",nct6102d_sensors,NULL },
+    { WBSIO_ID_NCT6779D,    "NCT6779D", nct6779d_sensors, NULL },
+    { WBSIO_ID_NCT6791D,    "NCT6791D", nct6779d_sensors, NULL },
+    { WBSIO_ID_NCT6792D,    "NCT6792D", nct6779d_sensors, NULL },
+    { WBSIO_ID_NCT6793D,    "NCT6793D", nct6779d_sensors, NULL },
+    { WBSIO_ID_NCT6795D,    "NCT6795D", nct6779d_sensors, NULL },
+    { 0, NULL, NULL, NULL }
+};
+
+static const struct wb_product as99127f_products[] = {
+    { WB_VENDID_ASUS,       "AS99127F", w83781d_sensors,  NULL },
+    { WB_VENDID_WINBOND,    "AS99127F rev 2",as99127f_sensors,NULL },
+    { 0, NULL, NULL, NULL }
+};
+
 static void
-lm_generic_banksel(struct lm_softc *lmsc, int bank)
+lm_generic_banksel(struct lm_softc *lmsc, uint8_t bank)
 {
 	(*lmsc->lm_writereg)(lmsc, WB_BANKSEL, bank);
 }
 
 /*
- * bus independent probe
+ * bus independent match
  *
  * prerequisites:  lmsc contains valid lm_{read,write}reg() routines
  * and associated bus access data is present in attachment's softc
  */
 int
-lm_probe(struct lm_softc *lmsc)
+lm_match(struct lm_softc *lmsc)
 {
 	uint8_t cr;
-	int rv;
+	int i, rv;
 
 	/* Perform LM78 reset */
 	/*(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, 0x80); */
@@ -1791,24 +2188,52 @@ lm_probe(struct lm_softc *lmsc)
 	cr = (*lmsc->lm_readreg)(lmsc, LMD_CONFIG);
 
 	/* XXX - spec says *only* 0x08! */
-	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03) || (cr == 0x06))
-		rv = 1;
-	else
-		rv = 0;
+	if ((cr != 0x08) && (cr != 0x01) && (cr != 0x03) && (cr != 0x06))
+		return 0;
 
-	DPRINTF(("%s: rv = %d, cr = %x\n", __func__, rv, cr));
+	DPRINTF(("%s: 0x80 check: cr = %x\n", __func__, cr));
 
-	return rv;
+	for (i = 0; i < __arraycount(lm_chips); i++)
+		if ((rv = lm_chips[i].chip_match(lmsc)) != 0)
+			return rv;
+
+	return 0;
+}
+
+int
+nslm_match(struct lm_softc *sc)
+{
+	uint8_t chipid;
+
+	/* See if we have an LM78/LM78J/LM79 or LM81 */
+	chipid = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
+	switch(chipid) {
+	case LM_ID_LM78:
+	case LM_ID_LM78J:
+	case LM_ID_LM79:
+	case LM_ID_LM81:
+		break;
+	default:
+		return 0;
+	}
+	DPRINTF(("%s: chipid %x\n", __func__, chipid));
+	return 1;
 }
 
 void
 lm_attach(struct lm_softc *lmsc)
 {
 	uint32_t i;
+	int rv;
 
-	for (i = 0; i < __arraycount(lm_chips); i++)
-		if (lm_chips[i].chip_match(lmsc))
-			break;
+	for (i = 0; i < __arraycount(lm_chips); i++) {
+		if (lm_chips[i].chip_match(lmsc) != 0) {
+			if (lm_chips[i].chip_attach(lmsc) == 0)
+				break;
+			else
+				return;
+		}
+	}
 
 	/* Start the monitoring loop */
 	(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, 0x01);
@@ -1817,9 +2242,11 @@ lm_attach(struct lm_softc *lmsc)
 	/* Initialize sensors */
 	for (i = 0; i < lmsc->numsensors; i++) {
 		lmsc->sensors[i].state = ENVSYS_SINVALID;
-		if (sysmon_envsys_sensor_attach(lmsc->sc_sme,
-						&lmsc->sensors[i])) {
+		if ((rv = sysmon_envsys_sensor_attach(lmsc->sc_sme,
+			    &lmsc->sensors[i])) != 0) {
 			sysmon_envsys_destroy(lmsc->sc_sme);
+			aprint_error_dev(lmsc->sc_dev,
+			    "sysmon_envsys_sensor_attach() returned %d\n", rv);
 			return;
 		}
 	}
@@ -1866,10 +2293,10 @@ lm_refresh(void *arg)
 }
 
 static int
-lm_match(struct lm_softc *sc)
+nslm_attach(struct lm_softc *sc)
 {
 	const char *model = NULL;
-	int chipid;
+	uint8_t chipid;
 
 	/* See if we have an LM78/LM78J/LM79 or LM81 */
 	chipid = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
@@ -1887,7 +2314,7 @@ lm_match(struct lm_softc *sc)
 		model = "LM81";
 		break;
 	default:
-		return 0;
+		return -1;
 	}
 
 	aprint_naive("\n");
@@ -1897,28 +2324,35 @@ lm_match(struct lm_softc *sc)
 
 	lm_setup_sensors(sc, lm78_sensors);
 	sc->refresh_sensor_data = lm_refresh_sensor_data;
-	return 1;
+	return 0;
 }
 
 static int
 def_match(struct lm_softc *sc)
 {
-	int chipid;
+
+	return 1;
+}
+
+static int
+def_attach(struct lm_softc *sc)
+{
+	uint8_t chipid;
 
 	chipid = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
 	aprint_naive("\n");
 	aprint_normal("\n");
-	aprint_error_dev(sc->sc_dev, "Unknown chip (ID %d)\n", chipid);
+	aprint_error_dev(sc->sc_dev, "Unknown chip (ID 0x%02x)\n", chipid);
 
 	lm_setup_sensors(sc, lm78_sensors);
 	sc->refresh_sensor_data = lm_refresh_sensor_data;
-	return 1;
+	return 0;
 }
 
 static void
 wb_temp_diode_type(struct lm_softc *sc, int diode_type)
 {
-	int regval, banksel;
+	uint8_t regval, banksel;
 
 	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
 	switch (diode_type) {
@@ -1963,136 +2397,240 @@ wb_temp_diode_type(struct lm_softc *sc, int diode_type)
 	}
 }
 
+static const struct wb_product *
+wb_lookup(struct lm_softc *sc, const struct wb_product *products, uint16_t id)
+{
+	const struct wb_product *prod = products;
+	int i = 0;
+
+	while (prod[i].id != 0) {
+		if (prod[i].id != id) {
+			i++;
+			continue;
+		}
+		if (prod[i].str == NULL) {
+			if (products == wb_products) {
+				if (id == WB_CHIPID_W83627DHG) {
+					/*
+					 *  Lookup wbsio_products
+					 * with WBSIO_ID.
+					 */
+					return wb_lookup(sc, wbsio_products,
+					    sc->sioid);
+				} else if (id == WB_CHIPID_AS99127F) {
+					/*
+					 *  Lookup as99127f_products
+					 * with WB_VENDID.
+					 */
+					return wb_lookup(sc, as99127f_products,
+					    wb_read_vendorid(sc));
+				} else
+					return NULL; /* not occur */
+			}
+			return NULL; /* not occur */
+		}
+		return &prod[i];
+	}
+
+	/* Not found */
+	return NULL;
+}
+
+static uint16_t
+wb_read_vendorid(struct lm_softc *sc)
+{
+	uint16_t vendid;
+	uint8_t vendidreg;
+	uint8_t banksel;
+
+	/* Save bank */
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
+
+	/* Check default vendor ID register first */
+	vendidreg = WB_VENDID;
+
+retry:
+	/* Read vendor ID */
+	lm_generic_banksel(sc, WB_BANKSEL_HBAC);
+	vendid = (*sc->lm_readreg)(sc, vendidreg) << 8;
+	lm_generic_banksel(sc, 0);
+	vendid |= (*sc->lm_readreg)(sc, vendidreg);
+
+	if ((vendidreg == WB_VENDID)
+	    &&  (vendid != WB_VENDID_WINBOND && vendid != WB_VENDID_ASUS)) {
+		/* If it failed, try NCT6102 vendor ID register */
+		vendidreg = WB_NCT6102_VENDID;
+		goto retry;
+	} else if ((vendidreg == WB_NCT6102_VENDID)
+	    && (vendid != WB_VENDID_WINBOND))
+		vendid = 0; /* XXX */
+	
+	/* Restore bank */
+	lm_generic_banksel(sc, banksel);
+
+	return vendid;
+}
+
+static uint8_t
+wb_read_chipid(struct lm_softc *sc)
+{
+	const struct wb_product *prod;
+	uint8_t chipidreg, chipid, banksel;
+
+	/* Save bank */
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
+
+	/* Check default vendor ID register first */
+	chipidreg = WB_BANK0_CHIPID;
+	lm_generic_banksel(sc, WB_BANKSEL_B0);
+
+retry:
+	(void)(*sc->lm_readreg)(sc, LMD_CHIPID);
+	chipid = (*sc->lm_readreg)(sc, chipidreg);
+	prod = wb_lookup(sc, wb_products, chipid);
+	if (prod == NULL) {
+		if (chipidreg == WB_BANK0_CHIPID) {
+			chipidreg = WB_BANK0_NCT6102_CHIPID;
+			goto retry;
+		} else
+			chipid = 0;
+	}
+	/* Restore bank */
+	lm_generic_banksel(sc, banksel);
+
+	return chipid;
+}
+
 static int
 wb_match(struct lm_softc *sc)
 {
-	const char *model = NULL;
-	const char *vendor = "Winbond";
-	int banksel, vendid, cf_flags;
+	const struct wb_product *prod;
+	uint16_t vendid;
+	uint8_t chipid;
 
-	aprint_naive("\n");
-	aprint_normal("\n");
 	/* Read vendor ID */
-	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
-	lm_generic_banksel(sc, WB_BANKSEL_HBAC);
-	vendid = (*sc->lm_readreg)(sc, WB_VENDID) << 8;
-	lm_generic_banksel(sc, 0);
-	vendid |= (*sc->lm_readreg)(sc, WB_VENDID);
+	vendid = wb_read_vendorid(sc);
 	DPRINTF(("%s: winbond vend id 0x%x\n", __func__, vendid));
-	if (vendid != WB_VENDID_WINBOND && vendid != WB_VENDID_ASUS)
+	if ((vendid != WB_VENDID_WINBOND && vendid != WB_VENDID_ASUS))
 		return 0;
 
 	/* Read device/chip ID */
-	lm_generic_banksel(sc, WB_BANKSEL_B0);
-	(void)(*sc->lm_readreg)(sc, LMD_CHIPID);
-	sc->chipid = (*sc->lm_readreg)(sc, WB_BANK0_CHIPID);
-	lm_generic_banksel(sc, banksel);
-	cf_flags = device_cfdata(sc->sc_dev)->cf_flags;
+	chipid = wb_read_chipid(sc);
+	DPRINTF(("%s: winbond chip id 0x%x\n", __func__, chipid));
+	prod = wb_lookup(sc, wb_products, chipid);
+
+	if (prod == NULL) {
+		if (vendid == WB_VENDID_WINBOND)
+			return 1; /* Generic match */
+		else
+			return 0;
+	}
+	DPRINTF(("%s: chipid %02x, sioid = %04x\n", __func__, chipid,
+		sc->sioid));
+
+	return 10; /* found */
+}
+
+static int
+wb_attach(struct lm_softc *sc)
+{
+	device_t dev = sc->sc_dev;
+	const struct wb_product *prod;
+	const char *model = NULL;
+	const char *vendor = "Winbond";
+	const struct lm_sensor *sensors;
+	uint16_t vendid;
+	uint8_t banksel;
+	int cf_flags;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+	/* Read device/chip ID */
+	sc->chipid = wb_read_chipid(sc);
 	DPRINTF(("%s: winbond chip id 0x%x\n", __func__, sc->chipid));
 
-	switch(sc->chipid) {
-	case WB_CHIPID_W83627HF:
-		model = "W83627HF";
-		lm_setup_sensors(sc, w83627hf_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83627THF:
-		model = "W83627THF";
-		lm_generic_banksel(sc, WB_BANKSEL_B0);
-		if ((*sc->lm_readreg)(sc, WB_BANK0_CONFIG) & WB_CONFIG_VMR9)
-			sc->vrm9 = 1;
-		lm_generic_banksel(sc, banksel);
-		lm_setup_sensors(sc, w83637hf_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83627EHF_A:
-		model = "W83627EHF-A";
-		lm_setup_sensors(sc, w83627ehf_sensors);
-		break;
-	case WB_CHIPID_W83627EHF:
-		model = "W83627EHF";
-		lm_setup_sensors(sc, w83627ehf_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83627DHG:
-		if (sc->sioid == WBSIO_ID_NCT6776F) {
+	if ((prod = wb_lookup(sc, wb_products, sc->chipid)) != NULL) {
+		switch (prod->str[0]) {
+		case 'W':
+			vendor = "Winbond";
+			break;
+		case 'A':
+			vendor = "ASUS";
+			break;
+		case 'N':
 			vendor = "Nuvoton";
-			model = "NCT6776F";
-			lm_setup_sensors(sc, nct6776f_sensors);
-		} else {
-			model = "W83627DHG";
-			lm_setup_sensors(sc, w83627dhg_sensors);
+			break;
+		default:
+			aprint_error_dev(dev, "Unknown model (%s)\n", model);
+			return -1;
 		}
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83637HF:
-		model = "W83637HF";
-		lm_generic_banksel(sc, WB_BANKSEL_B0);
-		if ((*sc->lm_readreg)(sc, WB_BANK0_CONFIG) & WB_CONFIG_VMR9)
-			sc->vrm9 = 1;
-		lm_generic_banksel(sc, banksel);
-		lm_setup_sensors(sc, w83637hf_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83697HF:
-		model = "W83697HF";
-		lm_setup_sensors(sc, w83697hf_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83781D:
-	case WB_CHIPID_W83781D_2:
-		model = "W83781D";
-		lm_setup_sensors(sc, w83781d_sensors);
-		break;
-	case WB_CHIPID_W83782D:
-		model = "W83782D";
-		lm_setup_sensors(sc, w83782d_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83783S:
-		model = "W83783S";
-		lm_setup_sensors(sc, w83783s_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83791D:
-		model = "W83791D";
-		lm_setup_sensors(sc, w83791d_sensors);
-		wb_temp_diode_type(sc, cf_flags);
-		break;
-	case WB_CHIPID_W83791SD:
-		model = "W83791SD";
-		break;
-	case WB_CHIPID_W83792D:
-		model = "W83792D";
-		lm_setup_sensors(sc, w83792d_sensors);
-		break;
-	case WB_CHIPID_AS99127F:
-		vendor = "ASUS";
-		if (vendid == WB_VENDID_ASUS) {
-			model = "AS99127F";
-			lm_setup_sensors(sc, w83781d_sensors);
+		model = prod->str;
+		sensors = prod->sensors;
+		sc->refresh_sensor_data = wb_refresh_sensor_data;
+		if (prod->extattach != NULL)
+			prod->extattach(sc);
+	} else {
+		vendid = wb_read_vendorid(sc);
+		if (vendid == WB_VENDID_WINBOND) {
+			vendor = "Winbond";
+			model = "unknown-model";
+
+			/* Handle as a standard LM78. */
+			sensors = lm78_sensors;
+			sc->refresh_sensor_data = lm_refresh_sensor_data;
 		} else {
-			model = "AS99127F rev 2";
-			lm_setup_sensors(sc, as99127f_sensors);
+			aprint_error_dev(dev, "Unknown chip (ID %02x)\n",
+			    sc->chipid);
+			return -1;
 		}
-		break;
-	default:
-		aprint_normal_dev(sc->sc_dev,
-		    "unknown Winbond chip (ID 0x%x)\n", sc->chipid);
-		/* Handle as a standard LM78. */
-		lm_setup_sensors(sc, lm78_sensors);
-		sc->refresh_sensor_data = lm_refresh_sensor_data;
-		return 1;
+	}
+	
+	cf_flags = device_cfdata(dev)->cf_flags;
+
+	if (sensors != NULL) {
+		lm_setup_sensors(sc, sensors);
+
+		/* XXX Is this correct? Check all datasheets. */
+		switch (sc->chipid) {
+		case WB_CHIPID_W83627EHF_A:
+		case WB_CHIPID_W83781D:
+		case WB_CHIPID_W83781D_2:
+		case WB_CHIPID_W83791SD:
+		case WB_CHIPID_W83792D:
+		case WB_CHIPID_AS99127F:
+			break;
+		default:
+			wb_temp_diode_type(sc, cf_flags);
+			break;
+		}
 	}
 
-	aprint_normal_dev(sc->sc_dev, "%s %s Hardware monitor\n", vendor, model);
+	/* XXX Is this correct? Check all datasheets. */
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
+	switch(sc->chipid) {
+	case WB_CHIPID_W83627THF:
+		lm_generic_banksel(sc, WB_BANKSEL_B0);
+		if ((*sc->lm_readreg)(sc, WB_BANK0_CONFIG) & WB_CONFIG_VMR9)
+			sc->vrm9 = 1;
+		lm_generic_banksel(sc, banksel);
+		break;
+	case WB_CHIPID_W83637HF:
+		lm_generic_banksel(sc, WB_BANKSEL_B0);
+		if ((*sc->lm_readreg)(sc, WB_BANK0_CONFIG) & WB_CONFIG_VMR9)
+			sc->vrm9 = 1;
+		lm_generic_banksel(sc, banksel);
+		break;
+	default:
+		break;
+	}
 
-	sc->refresh_sensor_data = wb_refresh_sensor_data;
-	return 1;
+	aprint_normal_dev(dev, "%s %s Hardware monitor\n", vendor, model);
+
+	return 0;
 }
 
 static void
-lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
+lm_setup_sensors(struct lm_softc *sc, const struct lm_sensor *sensors)
 {
 	int i;
 
@@ -2198,7 +2736,8 @@ lm_refresh_fanrpm(struct lm_softc *sc, int n)
 static void
 wb_refresh_sensor_data(struct lm_softc *sc)
 {
-	int banksel, bank, i;
+	uint8_t banksel, bank;
+	int i;
 
 	/*
 	 * Properly save and restore bank selection register.
@@ -2367,7 +2906,8 @@ wb_nct6776f_refresh_fanrpm(struct lm_softc *sc, int n)
 static void
 wb_w83792d_refresh_fanrpm(struct lm_softc *sc, int n)
 {
-	int reg, shift, data, divisor = 1;
+	int shift, data, divisor = 1;
+	uint8_t reg;
 
 	shift = 0;
 
