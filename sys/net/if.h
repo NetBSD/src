@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.243 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.244 2017/11/22 03:03:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -391,9 +391,11 @@ typedef struct ifnet {
 #define	IFEF_NO_LINK_STATE_CHANGE	__BIT(1)	/* doesn't use link state interrupts */
 
 /*
- * if_XXX() handlers that IFEF_MPSAFE suppresses KERNEL_LOCK:
+ * The following if_XXX() handlers don't take KERNEL_LOCK if the interface
+ * is set IFEF_MPSAFE:
  *   - if_start
  *   - if_output
+ *   - if_ioctl
  */
 
 #ifdef _KERNEL
@@ -440,6 +442,16 @@ if_is_link_state_changeable(struct ifnet *ifp)
 
 	return ((ifp->if_extflags & IFEF_NO_LINK_STATE_CHANGE) == 0);
 }
+
+#define KERNEL_LOCK_IF_IFP_MPSAFE(ifp)					\
+	do { if (if_is_mpsafe(ifp)) { KERNEL_LOCK(1, NULL); } } while (0)
+#define KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp)				\
+	do { if (if_is_mpsafe(ifp)) { KERNEL_UNLOCK_ONE(NULL); } } while (0)
+
+#define KERNEL_LOCK_UNLESS_IFP_MPSAFE(ifp)				\
+	do { if (!if_is_mpsafe(ifp)) { KERNEL_LOCK(1, NULL); } } while (0)
+#define KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(ifp)				\
+	do { if (!if_is_mpsafe(ifp)) { KERNEL_UNLOCK_ONE(NULL); } } while (0)
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
