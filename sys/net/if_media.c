@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.32 2017/01/25 07:19:24 msaitoh Exp $	*/
+/*	$NetBSD: if_media.c,v 1.32.6.1 2017/11/22 14:36:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.32 2017/01/25 07:19:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.32.6.1 2017/11/22 14:36:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,9 +206,8 @@ ifmedia_set(struct ifmedia *ifm, int target)
 		if (match == NULL) {
 			ifmedia_add(ifm, target, 0, NULL);
 			match = ifmedia_match(ifm, target, ifm->ifm_mask);
-			if (match == NULL) {
+			if (match == NULL)
 				panic("ifmedia_set failed");
-			}
 		}
 	}
 	ifm->ifm_cur = match;
@@ -265,7 +264,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 				    newmedia);
 			}
 #endif
-			return (EINVAL);
+			return EINVAL;
 		}
 
 		/*
@@ -355,10 +354,10 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	}
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -398,8 +397,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 {
 	struct ifmedia_entry *ife, *nife;
 
-	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL;
-	     ife = nife) {
+	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL; ife = nife) {
 		nife = TAILQ_NEXT(ife, ifm_list);
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
@@ -407,20 +405,17 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 			free(ife, M_IFMEDIA);
 		}
 	}
+	if (inst == IFM_INST_ANY) {
+		ifm->ifm_cur = NULL;
+		ifm->ifm_media = IFM_NONE;
+	}
 }
 
 void
 ifmedia_removeall(struct ifmedia *ifm)
 {
-	struct ifmedia_entry *ife, *nife;
 
-	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL; ife = nife) {
-		nife = TAILQ_NEXT(ife, ifm_list);
-		TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-		free(ife, M_IFMEDIA);
-	}
-	ifm->ifm_cur = NULL;
-	ifm->ifm_media = IFM_NONE;
+	ifmedia_delete_instance(ifm, IFM_INST_ANY);
 }
 
 
@@ -443,7 +438,7 @@ ifmedia_baudrate(int mword)
 	}
 
 	/* Not known. */
-	return (0);
+	return 0;
 }
 
 #ifdef IFMEDIA_DEBUG
