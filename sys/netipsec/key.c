@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.242 2017/11/21 07:33:06 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.243 2017/11/22 05:43:28 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.242 2017/11/21 07:33:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.243 2017/11/22 05:43:28 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -8139,7 +8139,7 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 	 * Sort the list by lft_c->sadb_lifetime_addtime
 	 * in ascending order.
 	 */
-	SAVLIST_READER_FOREACH(_sav, sav->sah, state) {
+	SAVLIST_WRITER_FOREACH(_sav, sav->sah, state) {
 		if (_sav->lft_c->sadb_lifetime_addtime >
 		    sav->lft_c->sadb_lifetime_addtime) {
 			SAVLIST_WRITER_INSERT_BEFORE(_sav, sav);
