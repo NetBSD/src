@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2017/11/17 20:43:08 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2017/11/22 02:52:42 snj Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.52 2017/11/17 20:43:08 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.53 2017/11/22 02:52:42 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -242,7 +242,7 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: systat [-n] [-M core] [-N system] [-w wait] "
+	fprintf(stderr, "usage: systat [-bn] [-M core] [-N system] [-w wait] "
 		"[-t turns]\n\t\t[display] [refresh-interval]\n");
 	exit(1);
 }
