@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.6 2017/11/08 22:20:59 snj Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.7 2017/11/22 14:30:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.6 2017/11/08 22:20:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.7 2017/11/22 14:30:23 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -379,10 +379,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	struct ifnet *ifp = &ifv->ifv_if;
 	struct ifvlan_linkmib *nmib = NULL;
 	struct ifvlan_linkmib *omib = NULL;
+	struct ifvlan_linkmib *checkmib = NULL;
 	struct psref_target *nmib_psref = NULL;
 	int error = 0;
 	int idx;
 	bool omib_cleanup = false;
+	struct psref psref;
 
 	nmib = kmem_alloc(sizeof(*nmib), KM_SLEEP);
 
@@ -391,6 +393,14 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 
 	if (omib->ifvm_p != NULL) {
 		error = EBUSY;
+		goto done;
+	}
+
+	/* Duplicate check */
+	checkmib = vlan_lookup_tag_psref(p, tag, &psref);
+	if (checkmib != NULL) {
+		vlan_putref_linkmib(checkmib, &psref);
+		error = EEXIST;
 		goto done;
 	}
 
