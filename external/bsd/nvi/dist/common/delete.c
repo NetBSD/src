@@ -1,4 +1,4 @@
-/*	$NetBSD: delete.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: delete.c,v 1.4 2017/11/22 12:47:30 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: delete.c,v 10.17 2001/06/25 15:19:09 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:09 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: delete.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: delete.c,v 1.4 2017/11/22 12:47:30 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -95,14 +95,16 @@ del(SCR *sp, MARK *fm, MARK *tm, int lmode)
 	if (tm->lno == fm->lno) {
 		if (db_get(sp, fm->lno, DBG_FATAL, &p, &len))
 			return (1);
-		GET_SPACE_RETW(sp, bp, blen, len);
-		if (fm->cno != 0)
-			MEMCPYW(bp, p, fm->cno);
-		MEMCPYW(bp + fm->cno, p + (tm->cno + 1), 
-			len - (tm->cno + 1));
-		if (db_set(sp, fm->lno,
-		    bp, len - ((tm->cno - fm->cno) + 1)))
-			goto err;
+		if (len != 0) {
+			GET_SPACE_RETW(sp, bp, blen, len);
+			if (fm->cno != 0)
+				MEMCPYW(bp, p, fm->cno);
+			MEMCPYW(bp + fm->cno, p + (tm->cno + 1), 
+				len - (tm->cno + 1));
+			if (db_set(sp, fm->lno,
+			    bp, len - ((tm->cno - fm->cno) + 1)))
+				goto err;
+		}
 		goto done;
 	}
 
