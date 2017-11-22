@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.31 2017/11/21 16:31:37 christos Exp $ */
+/*	$NetBSD: rf_configure.c,v 1.32 2017/11/22 00:31:31 kre Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.31 2017/11/21 16:31:37 christos Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.32 2017/11/22 00:31:31 kre Exp $");
 #endif
 
 
@@ -384,12 +384,18 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	 * daemon that's responsible for finding the sparemaps
 	 */
 	if (distSpare) {
-		if (rf_get_next_nonblank_line(smbuf, sizeof(buf), configfp,
+		if (rf_get_next_nonblank_line(smbuf, sizeof(smbuf), configfp,
 		    "Can't find sparemap file name in config file")) {
 			fclose(fp);
 			return EINVAL;
 		}
 		smname = rf_find_non_white(smbuf, 1);
+		if (strlen(smname) >= RF_SPAREMAP_NAME_LEN) {
+			warnx("sparemap file name '%s' too long (max %d)",
+			    smname, RF_SPAREMAP_NAME_LEN - 1);
+			fclose(fp);
+			return EINVAL;
+		}
 	} else {
 		smbuf[0] = '\0';
 		smname = smbuf;
@@ -414,6 +420,13 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	while (i < RF_SPAREMAP_NAME_LEN) {
 		*p++ = '\0';
 		i++;
+	}
+	if ((i & (sizeof(int) - 1)) != 0) {
+		/* panic, unaligned data; RF_SPAREMAP_NAME_LEN invalid */
+		warnx("Program Bug: (RF_SPAREMAP_NAME_LEN(%d) %% %zd) != 0",
+		    RF_SPAREMAP_NAME_LEN, sizeof(int));
+		fclose(fp);
+		return EINVAL;
 	}
 
 	/*
@@ -454,8 +467,8 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 static char *
 rf_find_non_white(char *p, int eatnl)
 {
-	for (; *p != '\0' && (*p == ' ' || *p == '\t'); p++)
-		continue;
+	while (*p == ' ' || *p == '\t')
+		p++;
 	if (*p == '\n' && eatnl)
 		*p = '\0';
 	return p;
@@ -465,8 +478,8 @@ rf_find_non_white(char *p, int eatnl)
 static char *
 rf_find_white(char *p)
 {
-	for (; *p != '\0' && *p != ' ' && *p != '\t'; p++)
-		continue;
+	while (*p != '\0' && *p != ' ' && *p != '\t')
+		p++;
 	return p;
 }
 
@@ -497,17 +510,15 @@ static int
 rf_get_next_nonblank_line(char *buf, int len, FILE *fp, const char *errmsg)
 {
 	char *p;
-	int l;
+	size_t l;
 
 	while (fgets(buf, len, fp) != NULL) {
 		p = rf_find_non_white(buf, 0);
 		if (*p == '\n' || *p == '\0' || *p == '#')
 			continue;
-		l = strlen(buf) - 1;
-		while (l >= 0 && (buf[l] == ' ' || buf[l] == '\n')) {
+		l = strlen(buf);
+		while (l > 0 && (buf[--l] == ' ' || buf[l] == '\n'))
 			buf[l] = '\0';
-			l--;
-		}
 		return 0;
 	}
 	if (errmsg)
@@ -536,6 +547,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 	char buf[BUFSIZ], targString[BUFSIZ], errString[BUFSIZ];
 	RF_SpareTableEntry_t **table;
 	FILE *fp = NULL;
+	size_t len;
 
 	/* allocate and initialize the table */
 	table = calloc(req->TablesPerSpareRegion, sizeof(*table));
@@ -546,7 +558,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 	for (i = 0; i < req->TablesPerSpareRegion; i++) {
 		table[i] = calloc(req->BlocksPerTable, sizeof(**table));
 		if (table[i] == NULL) {
-			warn("%s: Unable to allocate table", __func__);
+			warn("%s: Unable to allocate table:%d", __func__, i);
 			goto out;
 		}
 		for (j = 0; j < req->BlocksPerTable; j++)
@@ -563,7 +575,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 	    "Invalid sparemap file:  can't find header line"))
 		goto out;
 
-	size_t len = strlen(buf);
+	len = strlen(buf);
 	if (len != 0 && buf[len - 1] == '\n')
 		buf[len - 1] = '\0';
 
@@ -579,11 +591,19 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 	/* no more blank lines or comments allowed now */
 	linecount = req->TablesPerSpareRegion * req->TableDepthInPUs;
 	for (i = 0; i < linecount; i++) {
-		numFound = fscanf(fp, " %d %d %d %d", &tableNum, &tupleNum,
-		    &spareDisk, &spareBlkOffset);
-		if (numFound != 4) {
+		char linebuf[BUFSIZ];
+
+		if (fgets(linebuf, BUFSIZ, fp) == NULL) {
 			warnx("Sparemap file prematurely exhausted after %d "
 			    "of %d lines", i, linecount);
+			goto out;
+		}
+		numFound = sscanf(linebuf, " %d %d %d %d", &tableNum, &tupleNum,
+		    &spareDisk, &spareBlkOffset);
+		if (numFound != 4) {
+			warnx("Sparemap file format error - "
+			    "line %d of %d lines",
+			    i + 1, linecount);
 			goto out;
 		}
 
