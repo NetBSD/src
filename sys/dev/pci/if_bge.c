@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.312 2017/09/28 16:24:39 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.313 2017/11/22 02:35:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.312 2017/09/28 16:24:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.313 2017/11/22 02:35:54 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4607,7 +4607,7 @@ bge_rxeof(struct bge_softc *sc)
 		 * to vlan_input() instead of ether_input().
 		 */
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
-			vlan_set_tag(m, cur_rx->bge_vlan_tag & ETHER_VLAN_MASK);
+			vlan_set_tag(m, cur_rx->bge_vlan_tag);
 		}
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
