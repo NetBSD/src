@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: search.c,v 1.4 2017/11/22 16:17:30 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: search.c,v 10.31 2001/06/25 15:19:12 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:12 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: search.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.4 2017/11/22 16:17:30 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -148,7 +148,7 @@ f_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 	db_recno_t lno;
 	regmatch_t match[1];
 	size_t coff, len;
-	int cnt, eval, rval, wrapped;
+	int cnt, eval, rval, wrapped = 0;
 	CHAR_T *l;
 
 	if (search_init(sp, FORWARD, ptrn, plen, eptrn, flags))
@@ -191,13 +191,14 @@ f_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 					return (1);
 				}
 				lno = 1;
+				wrapped = 1;
 			}
 		} else
 			coff = fm->cno + 1;
 	}
 
 	btype = BUSY_ON;
-	for (cnt = INTERRUPT_CHECK, rval = 1, wrapped = 0;; ++lno, coff = 0) {
+	for (cnt = INTERRUPT_CHECK, rval = 1;; ++lno, coff = 0) {
 		if (cnt-- == 0) {
 			if (INTERRUPTED(sp))
 				break;
