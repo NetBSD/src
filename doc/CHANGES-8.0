@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.79 2017/11/21 15:13:36 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.80 2017/11/22 16:47:21 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -6928,4 +6928,154 @@ sys/arch/x86/x86/procfs_machdep.c		1.17-1.18,1.20
 	Enhance cpuid output.
 	Fix the location of AMD's smca(Scalable MCA) bit.
 	[msaitoh, ticket #367]
+
+sys/net/if_vlan.c				1.101-1.102
+
+	Check if VLAN ID isn't duplicated on a same parent interface and
+	return EEXIST if it failed.
+	[msaitoh, ticket #368]
+
+sys/dev/ic/spdmem.c				1.25-1.28
+
+	A part number field of DDR3 and DDR4 is not NUL terminated.
+	All unused chars are filled by 0x20. Print it correctly.
+	Print "ECC" or "no ECC" for DDR4.
+	[msaitoh, ticket #369]
+
+sys/net/if_media.c				1.33-1.34
+
+	Clear ifm_cur and ifm_media after removing all ifmedia entries
+	(IFM_INST_ANY) in ifmedia_delete_instance() like if_media.c
+	rev. 1.32. 
+	Simplify & KNF.
+	[msaitoh, ticket #370]
+
+sys/dev/pci/pci_subr.c				1.195-1.196
+
+	Print Error Source Identification register correctly.
+	Whitespace fix.
+	[msaitoh, ticket #371]
+
+sys/dev/mii/miidevs				1.126
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
+
+	Add X550 and X557.
+	[msaitoh, ticket #372]
+
+sys/dev/isa/itesio_isa.c			1.26-1.27
+sys/dev/isa/itesio_isavar.h			1.10-1.11
+
+	Enable the IT8628E shipped with my gigabyte GA-N3150N-D3V board.
+	Add IT8728F and IT877[12]E.
+	[msaitoh, ticket #373]
+
+share/man/man4/lm.4				1.33-1.34
+share/man/man4/wbsio.4				1.4-1.6
+sys/dev/i2c/lm_i2c.c				1.3-1.4
+sys/dev/ic/nslm7x.c				1.65-1.70
+sys/dev/ic/nslm7xvar.h				1.30-1.33
+sys/dev/isa/lm_isa_common.c			1.5-1.6
+sys/dev/isa/wbsio.c				1.11-1.15
+sys/dev/isa/wbsioreg.h				1.1-1.5
+
+	wbsio(4): Add Winbond W83627DHG-P, W83627SF, W83627UHG,
+	W83667HGB, W83687THF, W83697UG, Nuvoton NCT5104D, NCT610[246]D,
+	NCT6775, NCT6779, NCT6791, NCT6792, NCT6793 and NCT6795D.
+	lm(4): Add support for NCT5104D, NCT610[246]D, NCT6775F, NCT6779D and
+	NCT679[1235]D.
+	Sprinkle static and const. Use uint8_t instead of int.
+	Print chip ID in hexadecimal instead of octal in def_match().
+	WBSIO_ID_W83627DHG and newer devices have 12bit device ID. Change
+	sioid from 8bit to 16bit and check with it strictly.
+	rename the lm_match function into nslm_match
+	split {wb,lm,def}_match() to XXX_match and XXX_attach().
+	Rename lm_probe with lm_match and call {wb,nslm,def}_match()
+	at the end of the function to check strictly.
+	NCT610[246]D is different from others, so add new
+	nct6102d_sensors[] table.
+	Register offsets of vendor ID and chip id of NCT610[246]D are
+	different from others. When it failed reading vendor ID or chip ID,
+	fallback to NCT610[246]D's register offsets.
+	Add debug messages.
+	[msaitoh, ticket #374]
+
+common/dist/zlib/inflate.c			1.6
+
+	Restore a local change (in rev1.4) that was lost on zlib 1.12.10 merge.
+	[tsutsui, ticket #375]
+
+sys/arch/luna68k/stand/boot/Makefile		1.14
+
+	Explicitly set NOPIE. GOT seems problematic on elf2aout(1) conversion.
+	Fixes silent hang of luna68k boot.
+	[tsutsui, ticket #376]
+
+usr.sbin/acpitools/acpidump/acpi_user.c		1.3
+
+	On UEFI environment, ACPI table is not at low address.
+	Get ACPI root pointer from hw.acpi.root first.
+	[msaitoh, ticket #377]
+
+usr.sbin/acpitools/acpidump/acpi.c		1.16-1.26,1.28
+usr.sbin/acpitools/acpidump/acpi_user.c		1.4
+usr.sbin/acpitools/acpidump/acpidump.8		1.8-1.10
+usr.sbin/acpitools/acpidump/acpidump.c		1.7
+usr.sbin/acpitools/acpidump/acpidump.h		1.6-1.7
+
+	- Decode DMAR, NFIT, DBG2, SPMI and WDDT.
+	- Decode UEFI (not fully decoded yet).
+	- Dump TCG ACPI spec table (TCPA) more.
+	- Consistently cast ACPICA 64-bit integer types when we print them.
+	- Display the 'Flags' field in the HPET Description Table.
+	- Do not crash when RSDT/XSDT contains an empty entry.
+	- Print 64-bit addresses clearly with leading zeros to avoid confusions.
+	- Create temp file safely.
+	- Add missing flags into FADT.
+	- Print some new ACPI 5.1 MADT entries.
+	- Warn and exit loop on invalid subtable length.
+	- Fix the type used to hold the value returned from getopt.
+	  On arm64 char is unsigned so will never be -1.
+	- Check DSDT signature in acpi_handle_fadt() for broken ACPI table.
+	- Add new function acpi_select_address() derived from
+	  acpi_get_fadt_revision(). On some systems, 32bit address is used for
+	  (X)Dsdt even if (X)Facs uses 64bit.
+	  Don't assume an address size from FADT revision.
+	- Decode ACPI_HEST_GENERIC_V2.
+	- Decode ACPI_MADT_GENERIC_MSI_FRAME.
+	- Add NMI, CMCI, MCE, GPIO-Signal, ARMv8 SEA, ARMv8 SEI and GSIV
+	  in acpi_print_hest_notify().
+	- Add ACPI_EINJ_SET_ERROR_TYPE_WITH_ADDRESS and ACPI_EINJ_GET_EXECUTE_TIMINGS
+	  in acpi_print_einj_action().
+	- Add ACPI_ERST_EXECUTE_TIMINGS in acpi_print_erst_action().
+	- Print Valid Field in ACPI_NFIT_CONTROL_REGION with 0x%02x.
+	- Fix Flags of ACPI_NFIT_CONTROL_REGION.
+	- Add "Performance Server" and "Tablet" for Preferred_PM_Profile.
+	- Don't print FADT_RESET_REG if FADT version is 1.
+	- Print FADT ArmBootFlags, MinorRevision, SleepControl, SleepStatus
+	  and HypervisorId.
+	- Print "{}" even if any flags aren't set.
+	- Fix calculation the offset of the Action Table in WDAT to print each
+	  entries correctly.
+	- Calculate offset of a sub header correctly in acpi_handle_hest() to
+	  print all of sub entries in HEST correctly.
+	- Print a SpaceID number for unknown ID in acpi_print_gas().
+	- Use PRINTFLAG() in acpi_print_hest_notify().
+	- Use %u instead of %d for unsigned values in acpi_print_hest_generic().
+	- Space, tab and newline change for consistency output.
+	- Print a type number for unknown HEST sub entry ID.
+	- Don't define GAS address ID constants in acpidump.h and use
+	  actypes.h's definitions. No functional change.
+	- Use __arraycount().
+	[msaitoh, ticket #378]
+
+sys/dev/pci/if_wm.c				1.540
+
+	On I219, drop TARC0 bit 28 for DMA hang workaround.
+	[msaitoh, ticket #379]
+
+tests/net/if_vlan/t_vlan.sh			1.2-1.5
+
+	Add some test cases for vlan(4).
+	[msaitoh, ticket #380]
 
