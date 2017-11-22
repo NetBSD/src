@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.27 2017/11/02 08:41:15 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.28 2017/11/22 15:15:09 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -718,6 +718,8 @@ int  ixgbe_setup_receive_structures(struct adapter *);
 void ixgbe_free_receive_structures(struct adapter *);
 void ixgbe_txeof(struct tx_ring *);
 bool ixgbe_rxeof(struct ix_queue *);
+
+const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_sriov.h"

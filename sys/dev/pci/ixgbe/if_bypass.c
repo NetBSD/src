@@ -134,6 +134,7 @@ ixgbe_bp_version(SYSCTLFN_ARGS)
 		goto err;
 	ixgbe_bypass_mutex_clear(adapter);
 	featversion &= BYPASS_CTL2_DATA_M;
+	node.sysctl_data = &featversion;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	return (error);
 err:
@@ -171,6 +172,7 @@ ixgbe_bp_set_state(SYSCTLFN_ARGS)
 		return (error);
 	state = (state >> BYPASS_STATUS_OFF_SHIFT) & 0x3;
 
+	node.sysctl_data = &state;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -233,6 +235,7 @@ ixgbe_bp_timeout(SYSCTLFN_ARGS)
 		return (error);
 	timeout = (timeout >> BYPASS_WDTIMEOUT_SHIFT) & 0x3;
 
+	node.sysctl_data = &timeout;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -276,6 +279,7 @@ ixgbe_bp_main_on(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
+	node.sysctl_data = &main_on;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -319,6 +323,7 @@ ixgbe_bp_main_off(SYSCTLFN_ARGS)
 		return (error);
 	main_off = (main_off >> BYPASS_MAIN_OFF_SHIFT) & 0x3;
 
+	node.sysctl_data = &main_off;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -362,6 +367,7 @@ ixgbe_bp_aux_on(SYSCTLFN_ARGS)
 		return (error);
 	aux_on = (aux_on >> BYPASS_AUX_ON_SHIFT) & 0x3;
 
+	node.sysctl_data = &aux_on;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -405,6 +411,7 @@ ixgbe_bp_aux_off(SYSCTLFN_ARGS)
 		return (error);
 	aux_off = (aux_off >> BYPASS_AUX_OFF_SHIFT) & 0x3;
 
+	node.sysctl_data = &aux_off;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -460,6 +467,7 @@ ixgbe_bp_wd_set(SYSCTLFN_ARGS)
 	if ((tmp & (0x1 << BYPASS_WDT_ENABLE_SHIFT)) == 0)
 		timeout = 0;
 
+	node.sysctl_data = &timeout;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -529,6 +537,7 @@ ixgbe_bp_wd_reset(SYSCTLFN_ARGS)
 	int             cmd, count = 0, error = 0;
 	int             reset_wd = 0;
 
+	node.sysctl_data = &reset_wd;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -579,6 +588,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 	struct ixgbe_bypass_eeprom eeprom[BYPASS_MAX_LOGS];
 	int                        i, error = 0;
 
+	node.sysctl_data = &status;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
@@ -759,7 +769,7 @@ ixgbe_bypass_init(struct adapter *adapter)
 
 	/* Now set up the SYSCTL infrastructure */
 	log = &adapter->sysctllog;
-	if ((rnode = adapter->sysctltop) == NULL) {
+	if ((rnode = ixgbe_sysctl_instance(adapter)) == NULL) {
 		aprint_error_dev(dev, "could not create sysctl root\n");
 		return;
 	}
