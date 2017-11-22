@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.109 2017/11/22 03:03:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.110 2017/11/22 03:45:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.109 2017/11/22 03:03:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.110 2017/11/22 03:45:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -207,6 +207,7 @@ static int	vlan_unconfig_locked(struct ifvlan *,
     struct ifvlan_linkmib *);
 static void	vlan_hash_init(void);
 static int	vlan_hash_fini(void);
+static int	vlan_tag_hash(uint16_t, u_long);
 static struct ifvlan_linkmib*	vlan_getref_linkmib(struct ifvlan *,
     struct psref *);
 static void	vlan_putref_linkmib(struct ifvlan_linkmib *,
@@ -215,7 +216,6 @@ static void	vlan_linkmib_update(struct ifvlan *,
     struct ifvlan_linkmib *);
 static struct ifvlan_linkmib*	vlan_lookup_tag_psref(struct ifnet *,
     uint16_t, struct psref *);
-static int	tag_hash_func(uint16_t, u_long);
 
 LIST_HEAD(vlan_ifvlist, ifvlan);
 static struct {
@@ -508,7 +508,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	ifv->ifv_if.if_type = p->if_type;
 
 	PSLIST_ENTRY_INIT(ifv, ifv_hash);
-	idx = tag_hash_func(vid, ifv_hash.mask);
+	idx = vlan_tag_hash(vid, ifv_hash.mask);
 
 	mutex_enter(&ifv_hash.lock);
 	PSLIST_WRITER_INSERT_HEAD(&ifv_hash.lists[idx], ifv, ifv_hash);
@@ -680,7 +680,7 @@ vlan_hash_fini(void)
 }
 
 static int
-tag_hash_func(uint16_t tag, u_long mask)
+vlan_tag_hash(uint16_t tag, u_long mask)
 {
 	uint32_t hash;
 
@@ -724,7 +724,7 @@ vlan_lookup_tag_psref(struct ifnet *ifp, uint16_t tag, struct psref *psref)
 	int s;
 	struct ifvlan *sc;
 
-	idx = tag_hash_func(tag, ifv_hash.mask);
+	idx = vlan_tag_hash(tag, ifv_hash.mask);
 
 	s = pserialize_read_enter();
 	PSLIST_READER_FOREACH(sc, &ifv_hash.lists[idx], struct ifvlan,
@@ -941,7 +941,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EINVAL;		 /* check for valid tag */
 			break;
 		}
-		if ((pr = ifunit(vlr.vlr_parent)) == 0) {
+		if ((pr = ifunit(vlr.vlr_parent)) == NULL) {
 			error = ENOENT;
 			break;
 		}
