@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.110 2017/11/22 03:45:15 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.111 2017/11/22 04:56:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.110 2017/11/22 03:45:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.111 2017/11/22 04:56:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -414,6 +414,10 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	int idx;
 	bool omib_cleanup = false;
 	struct psref psref;
+
+	/* VLAN ID 0 and 65535 are reserved in the spec */
+	if ((vid == 0) || (vid == 0xfff))
+		return EINVAL;
 
 	nmib = kmem_alloc(sizeof(*nmib), KM_SLEEP);
 
