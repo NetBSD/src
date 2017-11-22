@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.174 2017/11/22 08:28:56 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.175 2017/11/22 17:11:51 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.174 2017/11/22 08:28:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.175 2017/11/22 17:11:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4046,7 +4046,7 @@ sppp_ipv6cp_close(struct sppp *sp)
 static void
 sppp_ipv6cp_TO(void *cookie)
 {
-	struct sppp *sp = cookie;
+	struct sppp *sp __diagused = cookie;
 
 	KASSERT(SPPP_WLOCKED(sp));
 }
