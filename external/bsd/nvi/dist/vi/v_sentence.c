@@ -1,4 +1,4 @@
-/*	$NetBSD: v_sentence.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: v_sentence.c,v 1.4 2017/11/22 12:47:30 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_sentence.c,v 10.9 2001/06/25 15:19:35 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:35 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_sentence.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: v_sentence.c,v 1.4 2017/11/22 12:47:30 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -297,7 +297,7 @@ ret:			slno = cs.cs_lno;
 			 * we can end up where we started.  Fix it.
 			 */
 			if (vp->m_start.lno != cs.cs_lno ||
-			    vp->m_start.cno != cs.cs_cno)
+			    vp->m_start.cno > cs.cs_cno)
 				goto okret;
 
 			/*
