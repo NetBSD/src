@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.251 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.252 2017/11/23 07:05:02 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.251 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.252 2017/11/23 07:05:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1187,7 +1187,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				error = EINVAL;
 				if (hostIsNew)
 					free(ia, M_IFADDR);
-				goto exit;
+				return error;
 			}
 
 			if (!IN6_ARE_ADDR_EQUAL(&ia->ia_prefixmask.sin6_addr,
@@ -1263,7 +1263,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	if (error != 0) {
 		if (hostIsNew)
 			free(ia, M_IFADDR);
-		goto exit;
+		return error;
 	}
 
 	/*
@@ -1357,7 +1357,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
   cleanup:
 	in6_purgeaddr(&ia->ia_ifa);
-  exit:
 	return error;
 }
 
