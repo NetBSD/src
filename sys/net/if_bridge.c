@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.134.6.2 2017/11/23 02:13:31 snj Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.134.6.3 2017/11/23 13:34:24 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.2 2017/11/23 02:13:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.3 2017/11/23 13:34:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -424,7 +424,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
-	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
+	ifp->if_extflags = IFEF_OUTPUT_MPSAFE | IFEF_NO_LINK_STATE_CHANGE;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = bridge_ioctl;
 	ifp->if_output = bridge_output;
