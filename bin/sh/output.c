@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.36 2017/05/18 13:31:10 kre Exp $	*/
+/*	$NetBSD: output.c,v 1.36.2.1 2017/11/23 13:26:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.36 2017/05/18 13:31:10 kre Exp $");
+__RCSID("$NetBSD: output.c,v 1.36.2.1 2017/11/23 13:26:01 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,11 @@ out2shstr(const char *p)
 }
 
 
+/*
+ * ' is in this list, not because it does not require quoting
+ * (which applies to all the others) but because '' quoting cannot
+ * be used to quote it.
+ */
 static const char norm_chars [] = \
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/+-=_,.'";
 
@@ -158,25 +163,42 @@ inquote(const char *p)
 	return s == NULL ? p[l] != '\0' : s - p > (off_t)l;
 }
 
-
 void
 outshstr(const char *p, struct output *file)
 {
-	/*
-	 * ' is in this list, not because it does not require quoting
-	 * (which applies to all the others) but because '' quoting cannot
-	 * be used to quote it.
-	 */
-	int need_q = p[0] == 0 || p[strspn(p, norm_chars)] != 0;
+	int need_q;
 	int inq;
 	char c;
+
+	if (strchr(p, '\'') != NULL && p[1] != '\0') {
+		/*
+		 * string contains ' in it, and is not only the '
+		 * see if " quoting will work
+		 */
+		size_t i = strcspn(p, "\\\"$`");
+
+		if (p[i] == '\0') {
+			/*
+			 * string contains no $ ` \ or " chars, perfect...
+			 *
+			 * We know it contains ' so needs quoting, so
+			 * this is easy...
+			 */
+			outc('"', file);
+			outstr(p, file);
+			outc('"', file);
+			return;
+		}
+	}
+
+	need_q = p[0] == 0 || p[strspn(p, norm_chars)] != 0;
 
 	/*
 	 * Don't emit ' unless something needs quoting before closing '
 	 */
-	if (need_q) {
-		if ((inq = inquote(p)) != 0)
-			outc('\'', file);
+	if (need_q && (p[0] == 0 || inquote(p) != 0)) {
+		outc('\'', file);
+		inq = 1;
 	} else
 		inq = 0;
 
