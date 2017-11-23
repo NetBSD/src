@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.6 2017/11/23 04:12:36 kre Exp $
+#	$NetBSD: t_vlan.sh,v 1.7 2017/11/23 04:59:49 kre Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -337,9 +337,22 @@ vlan_vlanid_body_common()
 	$config_and_ping 4094
 	# $config_and_ping 4095 #reserved vlan id
 
+	if [ "${RANDOM:-0}" != "${RANDOM:-0}" ]
+	then
+		for TAG in $(( ${RANDOM:-0} % 4092 + 2 )) \
+			   $(( ${RANDOM:-0} % 4092 + 2 )) \
+			   $(( ${RANDOM:-0} % 4092 + 2 ))
+		do
+			$config_and_ping "${TAG}"
+		done
+	fi
+
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s not-exit:0 -e ignore \
-	    rump.ifconfig vlan0 vlan 4096 vlanif shmif0
+	for TAG in 0 4095 4096 $((4096*4 + 1)) 65536 65537 $((65536 + 4095))
+	do
+		atf_check -s not-exit:0 -e not-empty \
+		    rump.ifconfig vlan0 vlan "${TAG}" vlanif shmif0
+	done
 
 	atf_check -s exit:0 rump.ifconfig vlan0 vlan 1 vlanif shmif0
 	atf_check -s not-exit:0 -e ignore \
