@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.264 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: acpi.c,v 1.265 2017/11/23 15:48:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.264 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.265 2017/11/23 15:48:24 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -713,6 +713,8 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 	case ACPI_TYPE_DEVICE:
 		acpi_activate_device(handle, &devinfo);
+		/* FALLTHROUGH */
+
 	case ACPI_TYPE_PROCESSOR:
 	case ACPI_TYPE_THERMAL:
 	case ACPI_TYPE_POWER:
