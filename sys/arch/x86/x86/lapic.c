@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.63 2017/11/04 12:53:00 maxv Exp $	*/
+/*	$NetBSD: lapic.c,v 1.64 2017/11/23 19:53:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.63 2017/11/04 12:53:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.64 2017/11/23 19:53:20 jmcneill Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -123,6 +123,8 @@ bool x2apic_enable = true;
 #else
 bool x2apic_enable = false;
 #endif
+
+static bool lapic_broken_periodic __read_mostly;
 
 static uint32_t
 i82489_readreg(u_int reg)
@@ -678,6 +680,16 @@ lapic_calibrate_timer(struct cpu_info *ci)
 			    32;
 
 		/*
+		 * Apply workaround for broken periodic timer under KVM
+		 */
+		if (vm_guest == VM_GUEST_KVM) {
+			lapic_broken_periodic = true;
+			lapic_timecounter.tc_quality = -100;
+			aprint_debug_dev(ci->ci_dev,
+			    "applying KVM timer workaround\n");
+		}
+
+		/*
 		 * Now that the timer's calibrated, use the apic timer routines
 		 * for all our timing needs..
 		 */
@@ -717,6 +729,12 @@ lapic_delay(unsigned int usec)
 
 	while (deltat > 0) {
 		xtick = lapic_gettick();
+		if (lapic_broken_periodic && xtick == 0 && otick == 0) {
+			lapic_initclocks();
+			xtick = lapic_gettick();
+			if (xtick == 0)
+				panic("lapic timer stopped ticking");
+		}
 		if (xtick > otick)
 			deltat -= lapic_tval - (xtick - otick);
 		else
