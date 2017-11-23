@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.82 2017/11/23 11:04:18 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.83 2017/11/23 13:42:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -7841,4 +7841,40 @@ lib/libc/stdlib/jemalloc.c					1.43
 	The HPPA architectures (1.1 and 2.0) both define quadruple-word
 	(128-bit) floating point types.  Adjust alignment to match.
 	[mrg, ticket #381]
+
+sys/dev/usb/if_urtwn.c				1.55
+
+	Malicious USB devices attaching as urtwn(4) could corrupt kernel
+	memory.
+	[skrll, ticket #383]
+
+bin/sh/output.c					1.37
+
+	Fix bug in /bin/sh xtrace output where empty words ('') were omitted.
+	[kre, ticket #384]
+
+sys/dev/usb/ehci.c				1.257
+sys/dev/usb/motg.c				1.19
+sys/dev/usb/ohci.c				1.276
+sys/dev/usb/uhci.c				1.279
+sys/dev/usb/xhci.c				1.77
+sys/external/bsd/dwc2/dwc2.c			1.47
+
+	Allow allocations of xfers to sleep.
+	[skrll, ticket #385]
+
+sys/net/if_bridge.c				1.141
+
+	Add missing IFEF_NO_LINK_STATE_CHANGE to bridge
+	[ozaki-r, ticket #386]
+
+sys/kern/kern_softint.c				1.44
+
+	Increase the size of softint's data to prevent panic on big
+	machine. Nowadays, some device drivers and some pseudo
+	interfaces allocate a lot of softints. The resource size for
+	softints are static and it panics when it execeed the limit.
+	It can be dynamically resized. Untill dynamically resizing is
+	implemented, increase softint_bytes from 8192 to 32768.
+	[msaitoh, ticket #387]
 
