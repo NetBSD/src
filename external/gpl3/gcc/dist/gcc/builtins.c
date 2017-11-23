@@ -5594,6 +5594,12 @@ expand_builtin_atomic_fetch_op (machine_mode mode, tree exp, rtx target,
   gcc_assert (TREE_OPERAND (addr, 0) == fndecl);
   TREE_OPERAND (addr, 0) = builtin_decl_explicit (ext_call);
 
+  /* If we will emit code after the call, the call can not be a tail call.
+     If it is emitted as a tail call, a barrier is emitted after it, and
+     then all trailing code is removed.  */
+  if (!ignore)
+    CALL_EXPR_TAILCALL (exp) = 0;
+
   /* Expand the call here so we can emit trailing code.  */
   ret = expand_call (exp, target, ignore);
 
@@ -5719,8 +5725,10 @@ fold_builtin_atomic_always_lock_free (tree arg0, tree arg1)
 	 end before anything else has a chance to look at it.  The pointer
 	 parameter at this point is usually cast to a void *, so check for that
 	 and look past the cast.  */
-      if (CONVERT_EXPR_P (arg1) && POINTER_TYPE_P (ttype)
-	  && VOID_TYPE_P (TREE_TYPE (ttype)))
+      if (CONVERT_EXPR_P (arg1)
+	  && POINTER_TYPE_P (ttype)
+	  && VOID_TYPE_P (TREE_TYPE (ttype))
+	  && POINTER_TYPE_P (TREE_TYPE (TREE_OPERAND (arg1, 0))))
 	arg1 = TREE_OPERAND (arg1, 0);
 
       ttype = TREE_TYPE (arg1);

@@ -15,7 +15,6 @@
 
 #include <unistd.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 
 namespace __sanitizer {
 

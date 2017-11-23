@@ -334,6 +334,11 @@ aarch64*-*-elf)
 	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
 	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
 	;;
+aarch64*-*-freebsd*)
+	extra_parts="$extra_parts crtfastmath.o"
+	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
+	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
+	;;
 aarch64*-*-linux*)
 	extra_parts="$extra_parts crtfastmath.o"
 	md_unwind_header=aarch64/linux-unwind.h
@@ -379,7 +384,7 @@ arm-wrs-vxworks)
 	;;
 arm*-*-freebsd*)                # ARM FreeBSD EABI
 	tmake_file="${tmake_file} arm/t-arm t-fixedpoint-gnu-prefix arm/t-elf"
-	tmake_file="${tmake_file} arm/t-bpabi arm/t-freebsd t-slibgcc-libgcc"
+	tmake_file="${tmake_file} arm/t-bpabi arm/t-freebsd"
 	tm_file="${tm_file} arm/bpabi-lib.h"
 	unwind_header=config/arm/unwind-arm.h
 	tmake_file="${tmake_file} t-softfp-sfdf t-softfp-excl arm/t-softfp t-softfp"
@@ -410,6 +415,13 @@ arm*-*-uclinux*)		# ARM ucLinux
 	tm_file="$tm_file arm/bpabi-lib.h"
 	unwind_header=config/arm/unwind-arm.h
 	extra_parts="$extra_parts crti.o crtn.o"
+	;;
+arm*-*-phoenix*)
+	tmake_file="t-hardfp t-softfp arm/t-arm arm/t-elf arm/t-softfp arm/t-phoenix"
+	tmake_file="${tmake_file} arm/t-bpabi"
+	tm_file="$tm_file arm/bpabi-lib.h"
+	extra_parts="crtbegin.o crtend.o crti.o crtn.o"
+	unwind_header=config/arm/unwind-arm.h
 	;;
 arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-rtems*)
 	tmake_file="${tmake_file} arm/t-arm arm/t-elf t-fixedpoint-gnu-prefix"

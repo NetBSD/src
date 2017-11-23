@@ -44,8 +44,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "ubsan.h"
 #include "internal-fn.h"
 
-#include <new>                    // For placement-new.
-
 #define pp_separate_with_comma(PP) pp_cxx_separate_with (PP, ',')
 #define pp_separate_with_semicolon(PP) pp_cxx_separate_with (PP, ';')
 
@@ -2005,6 +2003,7 @@ dump_expr (cxx_pretty_printer *pp, tree t, int flags)
       break;
 
     case COND_EXPR:
+    case VEC_COND_EXPR:
       pp_cxx_left_paren (pp);
       dump_expr (pp, TREE_OPERAND (t, 0), flags | TFF_EXPR_IN_PARENS);
       pp_string (pp, " ? ");

@@ -165,7 +165,7 @@ class ArrayMethodsMatcher(gdb.xmethod.XMethodMatcher):
 class DequeWorkerBase(gdb.xmethod.XMethodWorker):
     def __init__(self, val_type):
         self._val_type = val_type
-        self._bufsize = (512 / val_type.sizeof) or 1
+        self._bufsize = 512 // val_type.sizeof or 1
 
     def size(self, obj):
         first_node = obj['_M_impl']['_M_start']['_M_node']
@@ -174,10 +174,10 @@ class DequeWorkerBase(gdb.xmethod.XMethodWorker):
         first = obj['_M_impl']['_M_finish']['_M_first']
         return (last_node - first_node) * self._bufsize + (cur - first)
 
-    def index(self, obj, index):
+    def index(self, obj, idx):
         first_node = obj['_M_impl']['_M_start']['_M_node']
-        index_node = first_node + index / self._bufsize
-        return index_node[0][index % self._bufsize]
+        index_node = first_node + int(idx) // self._bufsize
+        return index_node[0][idx % self._bufsize]
 
 class DequeEmptyWorker(DequeWorkerBase):
     def get_arg_types(self):
@@ -381,7 +381,7 @@ class ListMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::list<.*>$', class_type.tag):
+        if not re.match('^std::(__cxx11::)?list<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -410,7 +410,7 @@ class VectorWorkerBase(gdb.xmethod.XMethodWorker):
         if self._val_type.code == gdb.TYPE_CODE_BOOL:
             start = obj['_M_impl']['_M_start']['_M_p']
             bit_size = start.dereference().type.sizeof * 8
-            valp = start + index / bit_size
+            valp = start + index // bit_size
             offset = index % bit_size
             return (valp.dereference() & (1 << offset)) > 0
         else:
