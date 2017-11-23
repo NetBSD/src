@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2333 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2334 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -84,4 +84,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	acpi(4): Updated ACPICA to 20171110. [christos 20171111]
 	sunxinand(4): Add driver for Allwinner NAND Flash Controller.
 		[jmcneill 20171113]
+	gcc: Import GCC 5.5.  [mrg 20171113]
 	libtre: Update to the latest git source. [rin 20171117]
