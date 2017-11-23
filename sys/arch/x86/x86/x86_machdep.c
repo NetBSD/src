@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.101 2017/10/29 10:01:21 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.102 2017/11/23 16:30:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.101 2017/10/29 10:01:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.102 2017/11/23 16:30:50 kamil Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1256,6 +1256,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 
 	/* None of these can ever change once the system has booted */
+	const_sysctl(clog, "fpu_present", CTLTYPE_INT, i386_fpu_present,
+	    CPU_FPU_PRESENT);
 	const_sysctl(clog, "osfxsr", CTLTYPE_INT, i386_use_fxsave,
 	    CPU_OSFXSR);
 	const_sysctl(clog, "sse", CTLTYPE_INT, i386_has_sse,
