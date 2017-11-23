@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.5 2017/11/16 06:31:00 msaitoh Exp $
+#	$NetBSD: t_vlan.sh,v 1.6 2017/11/23 04:12:36 kre Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -332,10 +332,10 @@ vlan_vlanid_body_common()
 	atf_check -s not-exit:0 -e ignore\
 	    rump.ifconfig vlan0 vlan -1 vlanif shmif0
 
-	$config_and_ping 0 # reserved vlan id
+	# $config_and_ping 0 # reserved vlan id
 	$config_and_ping 1
 	$config_and_ping 4094
-	$config_and_ping 4095 #reserved vlan id
+	# $config_and_ping 4095 #reserved vlan id
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s not-exit:0 -e ignore \
