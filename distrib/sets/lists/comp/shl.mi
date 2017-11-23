@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.306.2.1 2017/10/11 22:49:48 snj Exp $
+# $NetBSD: shl.mi,v 1.306.2.2 2017/11/23 11:02:16 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -276,4 +276,4 @@
 ./usr/lib/libzpool_pic.a			comp-zfs-piclib		compatfile,zfs,picinstall
 ./usr/libexec/liblto_plugin.so			comp-c-bin              gcc
 ./usr/libexec/liblto_plugin.so.0		comp-c-bin              gcc
-./usr/libexec/liblto_plugin.so.0.0		comp-c-bin              gcc
+./usr/libexec/liblto_plugin.so.0.1		comp-c-bin              gcc

@@ -1,3 +1,101 @@
+2017-10-10  Release Manager
+
+	* GCC 5.5.0 released.
+
+2017-09-16  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2017-09-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/82112
+	* c-common.c (sync_resolve_size): Instead of c_dialect_cxx ()
+	assertion check that in the condition.
+	(get_atomic_generic_size): Likewise.  Before testing if parameter
+	has pointer type, if it has array type, call for C++
+	default_conversion to perform array-to-pointer conversion.
+
+	2017-07-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/45784
+	* c-omp.c (c_finish_omp_for): If the condition is wrapped in
+	rhs of COMPOUND_EXPR(s), skip them and readd their lhs into
+	new COMPOUND_EXPRs around the rhs of the comparison.
+
+2017-09-15  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2017-06-28  Martin Liska  <mliska@suse.cz>
+
+	PR ipa/81128
+	* c-attribs.c (handle_alias_ifunc_attribute): Append ifunc alias
+	to a function declaration.
+
+2017-09-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR c++/81852
+	* c-cppbuiltin.c (c_cpp_builtins): Define __cpp_threadsafe_static_init.
+
+2017-05-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2017-02-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/79641
+	* c-common.c (handle_mode_attribute): Use build_qualified_type to
+	preserve quals.
+
+2017-05-10  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	PR c/79756
+	* c-common.c (c_common_mark_addressable_vec): Look through
+	C_MAYBE_CONST_EXPR.
+
+2017-03-22  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2017-03-09  Martin Liska  <mliska@suse.cz>
+
+	* c-ada-spec.c (macro_length): Increment value instead of a pointer.
+
+2017-03-21  Martin Sebor  <msebor@redhat.com>
+
+	PR c++/79548
+	* c-common.c (set_underlying_type): Mark type used only when
+	original del is declared unused.
+
+2017-01-24  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2016-09-06  Richard Biener  <rguenther@suse.de>
+
+	PR c/77450
+	* c-common.c (c_common_mark_addressable_vec): Handle
+	COMPOUND_LITERAL_EXPR.
+
+2017-01-10  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2017-01-05  Martin Liska  <mliska@suse.cz>
+
+	PR pch/78970
+	* c-opts.c (c_common_post_options): Reject '-' filename for a precompiled
+	header.
+
+2016-07-07  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2016-06-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/71498
+	* c-gimplify.c (ubsan_walk_array_refs_r): Set *walk_subtrees = 0 on
+	all BIND_EXPRs, and on all BIND_EXPRs recurse also on BIND_EXPR_BODY.
+
+2016-07-05  Markus Trippelsdorf  <markus@trippelsdorf.de>
+
+	PR c++/71214
+	* c-cppbuiltin.c (c_cpp_builtins): Define __cpp_rvalue_references.
+
 2016-06-03  Release Manager
 
 	* GCC 5.4.0 released.

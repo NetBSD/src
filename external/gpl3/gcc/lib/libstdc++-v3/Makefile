@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.26.4.1 2017/10/11 22:49:49 snj Exp $
+#	$NetBSD: Makefile,v 1.26.4.2 2017/11/23 11:02:07 martin Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
+UNSUPPORTED_COMPILER.clang=	# defined
 
 .include <bsd.init.mk>
 

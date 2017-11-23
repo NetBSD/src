@@ -167,7 +167,12 @@ chrec_fold_plus_poly_poly (enum tree_code code,
 
   /* This function should never be called for chrecs of loops that
      do not belong to the same loop nest.  */
-  gcc_assert (loop0 == loop1);
+  if (loop0 != loop1)
+    {
+      /* It still can happen if we are not in loop-closed SSA form.  */
+      gcc_assert (! loops_state_satisfies_p (LOOP_CLOSED_SSA));
+      return chrec_dont_know;
+    }
 
   if (code == PLUS_EXPR || code == POINTER_PLUS_EXPR)
     {
@@ -229,7 +234,12 @@ chrec_fold_multiply_poly_poly (tree type,
        chrec_fold_multiply (type, CHREC_LEFT (poly0), poly1),
        CHREC_RIGHT (poly0));
 
-  gcc_assert (loop0 == loop1);
+  if (loop0 != loop1)
+    {
+      /* It still can happen if we are not in loop-closed SSA form.  */
+      gcc_assert (! loops_state_satisfies_p (LOOP_CLOSED_SSA));
+      return chrec_dont_know;
+    }
 
   /* poly0 and poly1 are two polynomials in the same variable,
      {a, +, b}_x * {c, +, d}_x  ->  {a*c, +, a*d + b*c + b*d, +, 2*b*d}_x.  */
@@ -502,7 +512,6 @@ tree_fold_binomial (tree type, tree n, unsigned int k)
 {
   bool overflow;
   unsigned int i;
-  tree res;
 
   /* Handle the most frequent cases.  */
   if (k == 0)
@@ -510,18 +519,20 @@ tree_fold_binomial (tree type, tree n, unsigned int k)
   if (k == 1)
     return fold_convert (type, n);
 
+  widest_int num = wi::to_widest (n);
+
   /* Check that k <= n.  */
-  if (wi::ltu_p (n, k))
+  if (wi::ltu_p (num, k))
     return NULL_TREE;
 
   /* Denominator = 2.  */
-  wide_int denom = wi::two (TYPE_PRECISION (TREE_TYPE (n)));
+  widest_int denom = 2;
 
   /* Index = Numerator-1.  */
-  wide_int idx = wi::sub (n, 1);
+  widest_int idx = num - 1;
 
   /* Numerator = Numerator*Index = n*(n-1).  */
-  wide_int num = wi::smul (n, idx, &overflow);
+  num = wi::smul (num, idx, &overflow);
   if (overflow)
     return NULL_TREE;
 
@@ -540,9 +551,10 @@ tree_fold_binomial (tree type, tree n, unsigned int k)
     }
 
   /* Result = Numerator / Denominator.  */
-  wide_int di_res = wi::udiv_trunc (num, denom);
-  res = wide_int_to_tree (type, di_res);
-  return int_fits_type_p (res, type) ? res : NULL_TREE;
+  num = wi::udiv_trunc (num, denom);
+  if (! wi::fits_to_tree_p (num, type))
+    return NULL_TREE;
+  return wide_int_to_tree (type, num);
 }
 
 /* Helper function.  Use the Newton's interpolating formula for

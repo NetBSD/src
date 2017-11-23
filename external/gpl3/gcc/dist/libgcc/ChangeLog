@@ -1,3 +1,130 @@
+2017-10-10  Release Manager
+
+	* GCC 5.5.0 released.
+
+2017-07-04  Joseph Myers  <joseph@codesourcery.com>
+
+	* config/aarch64/linux-unwind.h (aarch64_fallback_frame_state),
+	config/alpha/linux-unwind.h (alpha_fallback_frame_state),
+	config/bfin/linux-unwind.h (bfin_fallback_frame_state),
+	config/i386/linux-unwind.h (x86_64_fallback_frame_state,
+	x86_fallback_frame_state), config/m68k/linux-unwind.h (struct
+	uw_ucontext), config/nios2/linux-unwind.h (struct nios2_ucontext),
+	config/pa/linux-unwind.h (pa32_fallback_frame_state),
+	config/sh/linux-unwind.h (sh_fallback_frame_state),
+	config/tilepro/linux-unwind.h (tile_fallback_frame_state),
+	config/xtensa/linux-unwind.h (xtensa_fallback_frame_state): Use
+	ucontext_t instead of struct ucontext.
+
+2017-05-30  Max Filippov  <jcmvbkbc@gmail.com>
+
+	Backport from mainline
+	2016-10-18  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* config/xtensa/t-elf (LIB2ADDEH_XTENSA_UNWIND_DW2_FDE): New
+	definition.
+	* config/xtensa/t-linux (LIB2ADDEH_XTENSA_UNWIND_DW2_FDE): New
+	definition.
+	* config/xtensa/t-windowed (LIB2ADDEH): Use
+	LIB2ADDEH_XTENSA_UNWIND_DW2_FDE defined by either xtensa/t-elf
+	or xtensa/t-linux.
+
+2017-05-30  Max Filippov  <jcmvbkbc@gmail.com>
+
+	Backport from mainline
+	2016-02-17  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* config/xtensa/ieee754-df.S (__muldf3_aux, __divdf3_aux): Add
+	.literal_position before the function.
+	* config/xtensa/ieee754-sf.S (__mulsf3_aux, __divsf3_aux):
+	Likewise.
+
+2017-05-30  Max Filippov  <jcmvbkbc@gmail.com>
+
+	Backport from mainline
+	2015-09-15  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* config/xtensa/linux-unwind.h (xtensa_fallback_frame_state):
+	Add support for call0 ABI.
+
+2017-05-30  Max Filippov  <jcmvbkbc@gmail.com>
+
+	Backport from mainline
+	2015-08-18  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* config/xtensa/unwind-dw2-xtensa.c (_Unwind_GetCFA): Return
+	context->sp instead of context->cfa.
+
+2017-05-30  Max Filippov  <jcmvbkbc@gmail.com>
+
+	Backport from mainline
+	2015-08-18  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* config/xtensa/t-windowed (LIB2ADDEH): Replace unwind-dw2-fde
+	with unwind-dw2-fde-dip.
+
+2017-05-29  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2017-04-18  Martin Liska  <mliska@suse.cz>
+
+	PR gcov-profile/78783
+	* libgcov-driver.c (gcov_get_filename): New function.
+
+2017-05-19  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	Backport from mainline
+	2017-05-17  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	* config/arm/unwind-arm.h: Make _Unwind_GetIP, _Unwind_GetIPInfo and
+	_Unwind_SetIP available as functions for arm*-*-freebsd*.
+	* config/arm/unwind-arm.c: Implement the above.
+
+2017-05-15  Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+
+	* config/sparc/lb1spc.S [__ELF__ && __linux__]: Emit .note.GNU-stack
+	section for a non-executable stack.
+
+2017-05-09  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	Backport from mainline
+        2017-05-09  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	* config.host: Use the generic FreeBSD t-slibgcc-elf-ver for
+	arm*-*-freebsd* instead of the t-slibgcc-libgcc.
+
+2017-04-07  Alan Modra  <amodra@gmail.com>
+
+	PR target/45053
+	* config/rs6000/t-crtstuff (CRTSTUFF_T_CFLAGS): Add -O2.
+
+2017-01-09  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	Backport from mainline
+	2016-10-10  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	* config.host: Add support for aarch64-*-freebsd*.
+
+2016-11-07  Florian Weimer  <fweimer@redhat.com>
+
+	Backport from mainline
+	2016-10-24  Florian Weimer  <fweimer@redhat.com>
+
+	PR libgcc/78064
+	* unwind-c.c: Include auto-target.h.
+
+2016-09-28  Joseph Myers  <joseph@codesourcery.com>
+
+	Backport from mainline
+	2016-09-07  Joseph Myers  <joseph@codesourcery.com>
+
+	PR libgcc/77519
+	* libgcc2.c (NOTRUNC): Invert settings.
+
+2016-08-31  Jakub Sejdak  <jakub.sejdak@phoesys.com>
+
+	* config.host: Add support for arm*-*-phoenix* targets.
+
 2016-06-03  Release Manager
 
 	* GCC 5.4.0 released.

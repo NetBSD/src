@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.243 2017/02/23 03:34:22 kamil Exp $
+# $NetBSD: md.amd64,v 1.243.4.1 2017/11/23 11:02:16 martin Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -384,7 +384,7 @@
 ./usr/include/gcc-5/mmintrin.h			comp-c-include		gcccmds,gcc=53
 ./usr/include/gcc-5/mwaitxintrin.h		comp-c-include		gcccmds,gcc=53
 ./usr/include/gcc-5/nmmintrin.h			comp-c-include		gcccmds,gcc=53
-./usr/include/gcc-5/pcommitintrin.h		comp-c-include		gcccmds,gcc=53
+./usr/include/gcc-5/pcommitintrin.h		comp-c-include		obsolete
 ./usr/include/gcc-5/pmmintrin.h			comp-c-include		gcccmds,gcc=53
 ./usr/include/gcc-5/popcntintrin.h		comp-c-include		gcccmds,gcc=53
 ./usr/include/gcc-5/prfchwintrin.h		comp-c-include		gcccmds,gcc=53
