@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.253 2017/11/23 07:06:14 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.254 2017/11/23 07:09:20 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.253 2017/11/23 07:06:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.254 2017/11/23 07:09:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1258,29 +1258,35 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 */
 		ifaref(&ia->ia_ifa);
 	}
+
+	/* Must execute in6_ifinit and ifa_insert atomically */
+	mutex_enter(&in6_ifaddr_lock);
+
 	/* reset the interface and routing table appropriately. */
 	error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew);
 	if (error != 0) {
 		if (hostIsNew)
 			free(ia, M_IFADDR);
+		mutex_exit(&in6_ifaddr_lock);
 		return error;
 	}
 
 	/*
 	 * We are done if we have simply modified an existing address.
 	 */
-	if (!hostIsNew)
+	if (!hostIsNew) {
+		mutex_exit(&in6_ifaddr_lock);
 		return error;
+	}
 
 	/*
 	 * Insert ia to the global list and ifa to the interface's list.
 	 * A reference to it is already gained above.
 	 */
-	mutex_enter(&in6_ifaddr_lock);
 	IN6_ADDRLIST_WRITER_INSERT_TAIL(ia);
-	mutex_exit(&in6_ifaddr_lock);
-
 	ifa_insert(ifp, &ia->ia_ifa);
+
+	mutex_exit(&in6_ifaddr_lock);
 
 	/*
 	 * Beyond this point, we should call in6_purgeaddr upon an error,
@@ -1755,28 +1761,30 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	const struct sockaddr_in6 *sin6, int newhost)
 {
 	int	error = 0, ifacount = 0;
-	int	s = splsoftnet();
+	int s;
 	struct ifaddr *ifa;
+
+	KASSERT(mutex_owned(&in6_ifaddr_lock));
 
 	/*
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ifacount++;
 	}
+	pserialize_read_exit(s);
 
 	ia->ia_addr = *sin6;
 
 	if (ifacount == 0 &&
 	    (error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0) {
-		splx(s);
 		return error;
 	}
-	splx(s);
 
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 
