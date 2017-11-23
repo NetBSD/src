@@ -1,4 +1,4 @@
-/* $NetBSD: t_sprintf.c,v 1.3 2017/07/12 17:32:51 perseant Exp $ */
+/* $NetBSD: t_sprintf.c,v 1.4 2017/11/23 23:47:09 kre Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sprintf.c,v 1.3 2017/07/12 17:32:51 perseant Exp $");
+__RCSID("$NetBSD: t_sprintf.c,v 1.4 2017/11/23 23:47:09 kre Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -125,12 +125,17 @@ h_sprintf(const struct test *t)
 static void
 h_strto(const struct test *t)
 {
+	double d;
+
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
 	printf("Trying locale %s...\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_NUMERIC, t->locale) != NULL);
 
 	ATF_REQUIRE_EQ((int)strtol(t->int_input, NULL, 10), t->int_value);
-	ATF_REQUIRE_EQ(strtod(t->double_input, NULL), t->double_value);
+	d = strtod(t->double_input, NULL);
+	ATF_REQUIRE_EQ_MSG(d, t->double_value, "In %s: "
+	    "strtod(t->double_input[%s], NULL)[%g] != t->double_value[%g]",
+	    t->locale, t->double_input, d, t->double_value);
 }
 
 static void
