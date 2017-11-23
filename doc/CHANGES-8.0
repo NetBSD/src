@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.80 2017/11/22 16:47:21 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.81 2017/11/23 02:18:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -7078,4 +7078,10 @@ tests/net/if_vlan/t_vlan.sh			1.2-1.5
 
 	Add some test cases for vlan(4).
 	[msaitoh, ticket #380]
+
+sys/net/if_bridge.c				1.139
+sys/net/if_loop.c				1.97
+
+	Remove unnecessary KERNEL_LOCK if NET_MPSAFE.
+	[ozaki-r, ticket #382]
 
