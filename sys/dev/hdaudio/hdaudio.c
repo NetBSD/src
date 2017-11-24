@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.6 2017/11/24 00:30:29 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.7 2017/11/24 14:00:04 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.6 2017/11/24 00:30:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.7 2017/11/24 14:00:04 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -428,10 +428,10 @@ hdaudio_corb_stop(struct hdaudio_softc *sc)
 	corbctl = hda_read1(sc, HDAUDIO_MMIO_CORBCTL);
 	if (corbctl & HDAUDIO_CORBCTL_RUN) {
 		corbctl &= ~HDAUDIO_CORBCTL_RUN;
-		hda_write4(sc, HDAUDIO_MMIO_CORBCTL, corbctl);
+		hda_write1(sc, HDAUDIO_MMIO_CORBCTL, corbctl);
 		do {
 			hda_delay(10);
-			corbctl = hda_read4(sc, HDAUDIO_MMIO_CORBCTL);
+			corbctl = hda_read1(sc, HDAUDIO_MMIO_CORBCTL);
 		} while (--retry > 0 && (corbctl & HDAUDIO_CORBCTL_RUN) != 0);
 		if (retry == 0) {
 			hda_error(sc, "timeout stopping CORB\n");
@@ -452,10 +452,10 @@ hdaudio_corb_start(struct hdaudio_softc *sc)
 	corbctl = hda_read1(sc, HDAUDIO_MMIO_CORBCTL);
 	if ((corbctl & HDAUDIO_CORBCTL_RUN) == 0) {
 		corbctl |= HDAUDIO_CORBCTL_RUN;
-		hda_write4(sc, HDAUDIO_MMIO_CORBCTL, corbctl);
+		hda_write1(sc, HDAUDIO_MMIO_CORBCTL, corbctl);
 		do {
 			hda_delay(10);
-			corbctl = hda_read4(sc, HDAUDIO_MMIO_CORBCTL);
+			corbctl = hda_read1(sc, HDAUDIO_MMIO_CORBCTL);
 		} while (--retry > 0 && (corbctl & HDAUDIO_CORBCTL_RUN) == 0);
 		if (retry == 0) {
 			hda_error(sc, "timeout starting CORB\n");
