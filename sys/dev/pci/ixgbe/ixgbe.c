@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.113 2017/11/22 15:15:09 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.114 2017/11/24 08:36:22 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1003,8 +1003,13 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		high = (nvmreg >> 12) & 0x0f;
 		low = (nvmreg >> 4) & 0xff;
 		id = nvmreg & 0x000f;
-		aprint_normal(" PHY FW Revision %u.%02x ID 0x%x,", high, low,
-		    id);
+		aprint_normal(" PHY FW Revision %u.", high);
+		if (hw->mac.type == ixgbe_mac_X540)
+			str = "%x";
+		else
+			str = "%02x";
+		aprint_normal(str, low);
+		aprint_normal(" ID 0x%x,", id);
 		break;
 	default:
 		break;
