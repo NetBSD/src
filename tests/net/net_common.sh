@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.24 2017/11/07 09:17:06 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.25 2017/11/24 03:28:49 kre Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -42,9 +42,9 @@ extract_new_packets()
 		old=/dev/null
 	fi
 
-	shmif_dumpbus -p - $bus 2>/dev/null| \
+	shmif_dumpbus -p - $bus 2>/dev/null |
 	    tcpdump -n -e -r - 2>/dev/null > ./.__new
-	diff -u $old ./.__new |grep '^+' |cut -d '+' -f 2 > ./.__diff
+	diff -u $old ./.__new | grep '^+' | cut -d '+' -f 2   > ./.__diff
 	mv -f ./.__new ./.__old
 	cat ./.__diff
 }
@@ -56,11 +56,11 @@ check_route()
 	local flags=${3:-\.\+}
 	local ifname=${4:-\.\+}
 
-	target=$(echo $target |sed 's/\./\\./g')
+	target=$(echo $target | sed 's/\./\\./g')
 	if [ "$gw" = "" ]; then
 		gw=".+"
 	else
-		gw=$(echo $gw |sed 's/\./\\./g')
+		gw=$(echo $gw | sed 's/\./\\./g')
 	fi
 
 	atf_check -s exit:0 -e ignore \
@@ -82,19 +82,16 @@ check_route_gw()
 
 check_route_no_entry()
 {
-	local target=$(echo $1 |sed 's/\./\\./g')
+	local target=$(echo "$1" | sed 's/\./\\./g')
 
-	atf_check -s exit:0 -e ignore -o not-match:"^$target" \
-	    rump.netstat -rn
+	atf_check -s exit:0 -e ignore -o not-match:"^$target" rump.netstat -rn
 }
 
 get_linklocal_addr()
 {
 
-	export RUMP_SERVER=${1}
-	rump.ifconfig ${2} inet6 |
+	RUMP_SERVER=${1} rump.ifconfig ${2} inet6 |
 	    awk "/fe80/ {sub(/%$2/, \"\"); sub(/\\/[0-9]*/, \"\"); print \$2;}"
-	unset RUMP_SERVER
 
 	return 0
 }
@@ -102,8 +99,7 @@ get_linklocal_addr()
 get_macaddr()
 {
 
-	env RUMP_SERVER=${1} \
-	    rump.ifconfig ${2} |awk '/address/ {print $2;}'
+	RUMP_SERVER=${1} rump.ifconfig ${2} | awk '/address/ {print $2;}'
 }
 
 HTTPD_PID=./.__httpd.pid
@@ -142,7 +138,7 @@ start_nc_server()
 	local outfile=$3
 	local proto=${4:-ipv4}
 	local backup=$RUMP_SERVER
-	local pid= opts=
+	local opts=
 
 	export RUMP_SERVER=$sock
 
@@ -152,10 +148,8 @@ start_nc_server()
 		opts="-l -6"
 	fi
 
-	env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    nc $opts $port > $outfile &
-	pid=$!
-	echo $pid > $NC_PID
+	env LD_PRELOAD=/usr/lib/librumphijack.so nc $opts $port > $outfile &
+	echo $! > $NC_PID
 
 	if [ $proto = ipv4 ]; then
 		$DEBUG && rump.netstat -a -f inet
@@ -178,8 +172,7 @@ stop_nc_server()
 	fi
 }
 
-BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet \
-    -lrumpnet_shmif -lrumpdev"
+BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
 FS_LIBS="$BASIC_LIBS -lrumpvfs -lrumpfs_ffs"
 CRYPTO_LIBS="$BASIC_LIBS -lrumpvfs -lrumpdev_opencrypto \
     -lrumpkern_z -lrumpkern_crypto"
@@ -198,13 +191,11 @@ IPSEC_KEY_DEBUG=${IPSEC_KEY_DEBUG:-false}
 _rump_server_start_common()
 {
 	local sock=$1
-	local libs=
 	local backup=$RUMP_SERVER
 
 	shift 1
-	libs="$*"
 
-	atf_check -s exit:0 rump_server $libs $sock
+	atf_check -s exit:0 rump_server "$@" "$sock"
 
 	if $DEBUG; then
 		# Enable debugging features in the kernel
@@ -233,13 +224,13 @@ _rump_server_start_common()
 rump_server_start()
 {
 	local sock=$1
-	local _libs=
+	local lib=
 	local libs="$BASIC_LIBS"
 
 	shift 1
-	_libs="$*"
 
-	for lib in $_libs; do
+	for lib
+	do
 		libs="$libs -lrumpnet_$lib"
 	done
 
@@ -251,13 +242,13 @@ rump_server_start()
 rump_server_fs_start()
 {
 	local sock=$1
-	local _libs=
+	local lib=
 	local libs="$FS_LIBS"
 
 	shift 1
-	_libs="$*"
 
-	for lib in $_libs; do
+	for lib
+	do
 		libs="$libs -lrumpnet_$lib"
 	done
 
@@ -269,13 +260,13 @@ rump_server_fs_start()
 rump_server_crypto_start()
 {
 	local sock=$1
-	local _libs=
+	local lib=
 	local libs="$CRYPTO_LIBS"
 
 	shift 1
-	_libs="$*"
 
-	for lib in $_libs; do
+	for lib
+	do
 		libs="$libs -lrumpnet_$lib"
 	done
 
@@ -287,13 +278,13 @@ rump_server_crypto_start()
 rump_server_npf_start()
 {
 	local sock=$1
-	local _libs=
+	local lib=
 	local libs="$NPF_LIBS"
 
 	shift 1
-	_libs="$*"
 
-	for lib in $_libs; do
+	for lib
+	do
 		libs="$libs -lrumpnet_$lib"
 	done
 
