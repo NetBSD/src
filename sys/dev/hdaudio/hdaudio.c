@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.7 2017/11/24 14:00:04 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.8 2017/11/24 17:51:10 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.7 2017/11/24 14:00:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.8 2017/11/24 17:51:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -347,6 +347,9 @@ hdaudio_command_unlocked(struct hdaudio_codec *co, int nid, uint32_t control,
 	hdaudio_corb_enqueue(sc, co->co_addr, nid, control, param);
 	result = hdaudio_rirb_dequeue(sc, false);
 
+	/* Clear response interrupt status */
+	hda_write1(sc, HDAUDIO_MMIO_RIRBSTS, hda_read1(sc, HDAUDIO_MMIO_RIRBSTS));
+
 	return result;
 }
 
@@ -497,20 +500,21 @@ hdaudio_rirb_start(struct hdaudio_softc *sc)
 	uint8_t rirbctl;
 	int retry = HDAUDIO_RIRB_TIMEOUT;
 
-	/* Start the RIRB if necessary */
+	/* Set the RIRB interrupt count */
+	hda_write2(sc, HDAUDIO_MMIO_RINTCNT, 1);
+
+	/* Start the RIRB */
 	rirbctl = hda_read1(sc, HDAUDIO_MMIO_RIRBCTL);
-	if ((rirbctl & (HDAUDIO_RIRBCTL_RUN|HDAUDIO_RIRBCTL_INT_EN)) == 0) {
-		rirbctl |= HDAUDIO_RIRBCTL_RUN;
-		rirbctl |= HDAUDIO_RIRBCTL_INT_EN;
-		hda_write1(sc, HDAUDIO_MMIO_RIRBCTL, rirbctl);
-		do {
-			hda_delay(10);
-			rirbctl = hda_read1(sc, HDAUDIO_MMIO_RIRBCTL);
-		} while (--retry > 0 && (rirbctl & HDAUDIO_RIRBCTL_RUN) == 0);
-		if (retry == 0) {
-			hda_error(sc, "timeout starting RIRB\n");
-			return ETIME;
-		}
+	rirbctl |= HDAUDIO_RIRBCTL_RUN;
+	rirbctl |= HDAUDIO_RIRBCTL_INT_EN;
+	hda_write1(sc, HDAUDIO_MMIO_RIRBCTL, rirbctl);
+	do {
+		hda_delay(10);
+		rirbctl = hda_read1(sc, HDAUDIO_MMIO_RIRBCTL);
+	} while (--retry > 0 && (rirbctl & HDAUDIO_RIRBCTL_RUN) == 0);
+	if (retry == 0) {
+		hda_error(sc, "timeout starting RIRB\n");
+		return ETIME;
 	}
 
 	return 0;
@@ -558,8 +562,6 @@ static int
 hdaudio_rirb_config(struct hdaudio_softc *sc)
 {
 	uint32_t rirbubase, rirblbase;
-	uint32_t rirbwp;
-	int retry = HDAUDIO_RIRB_TIMEOUT;
 
 	/* Program command buffer base address and size */
 	rirblbase = (uint32_t)DMA_DMAADDR(&sc->sc_rirb);
@@ -570,15 +572,6 @@ hdaudio_rirb_config(struct hdaudio_softc *sc)
 
 	/* Clear the write pointer */
 	hda_write2(sc, HDAUDIO_MMIO_RIRBWP, HDAUDIO_RIRBWP_WP_RESET);
-	hda_write2(sc, HDAUDIO_MMIO_RIRBWP, 0);
-	do {
-		hda_delay(10);
-		rirbwp = hda_read2(sc, HDAUDIO_MMIO_RIRBWP);
-	} while (--retry > 0 && (rirbwp & HDAUDIO_RIRBWP_WP_RESET) != 0);
-	if (retry == 0) {
-		hda_error(sc, "timeout resetting RIRB\n");
-		return ETIME;
-	}
 	sc->sc_rirbrp = 0;
 
 	return 0;
