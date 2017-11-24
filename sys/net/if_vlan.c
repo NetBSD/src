@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.7 2017/11/22 14:30:23 martin Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.8 2017/11/24 08:39:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.7 2017/11/22 14:30:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.8 2017/11/24 08:39:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -207,6 +207,7 @@ static int	vlan_unconfig_locked(struct ifvlan *,
     struct ifvlan_linkmib *);
 static void	vlan_hash_init(void);
 static int	vlan_hash_fini(void);
+static int	vlan_tag_hash(uint16_t, u_long);
 static struct ifvlan_linkmib*	vlan_getref_linkmib(struct ifvlan *,
     struct psref *);
 static void	vlan_putref_linkmib(struct ifvlan_linkmib *,
@@ -215,7 +216,6 @@ static void	vlan_linkmib_update(struct ifvlan *,
     struct ifvlan_linkmib *);
 static struct ifvlan_linkmib*	vlan_lookup_tag_psref(struct ifnet *,
     uint16_t, struct psref *);
-static int	tag_hash_func(uint16_t, u_long);
 
 LIST_HEAD(vlan_ifvlist, ifvlan);
 static struct {
@@ -381,6 +381,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	struct ifvlan_linkmib *omib = NULL;
 	struct ifvlan_linkmib *checkmib = NULL;
 	struct psref_target *nmib_psref = NULL;
+	uint16_t vid = EVL_VLANOFTAG(tag);
 	int error = 0;
 	int idx;
 	bool omib_cleanup = false;
@@ -397,7 +398,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	}
 
 	/* Duplicate check */
-	checkmib = vlan_lookup_tag_psref(p, tag, &psref);
+	checkmib = vlan_lookup_tag_psref(p, vid, &psref);
 	if (checkmib != NULL) {
 		vlan_putref_linkmib(checkmib, &psref);
 		error = EEXIST;
@@ -467,7 +468,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	}
 
 	nmib->ifvm_p = p;
-	nmib->ifvm_tag = tag;
+	nmib->ifvm_tag = vid;
 	ifv->ifv_if.if_mtu = p->if_mtu - nmib->ifvm_mtufudge;
 	ifv->ifv_if.if_flags = p->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
@@ -479,7 +480,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	ifv->ifv_if.if_type = p->if_type;
 
 	PSLIST_ENTRY_INIT(ifv, ifv_hash);
-	idx = tag_hash_func(tag, ifv_hash.mask);
+	idx = vlan_tag_hash(vid, ifv_hash.mask);
 
 	mutex_enter(&ifv_hash.lock);
 	PSLIST_WRITER_INSERT_HEAD(&ifv_hash.lists[idx], ifv, ifv_hash);
@@ -649,7 +650,7 @@ vlan_hash_fini(void)
 }
 
 static int
-tag_hash_func(uint16_t tag, u_long mask)
+vlan_tag_hash(uint16_t tag, u_long mask)
 {
 	uint32_t hash;
 
@@ -693,7 +694,7 @@ vlan_lookup_tag_psref(struct ifnet *ifp, uint16_t tag, struct psref *psref)
 	int s;
 	struct ifvlan *sc;
 
-	idx = tag_hash_func(tag, ifv_hash.mask);
+	idx = vlan_tag_hash(tag, ifv_hash.mask);
 
 	s = pserialize_read_enter();
 	PSLIST_READER_FOREACH(sc, &ifv_hash.lists[idx], struct ifvlan,
@@ -910,7 +911,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EINVAL;		 /* check for valid tag */
 			break;
 		}
-		if ((pr = ifunit(vlr.vlr_parent)) == 0) {
+		if ((pr = ifunit(vlr.vlr_parent)) == NULL) {
 			error = ENOENT;
 			break;
 		}
@@ -1458,14 +1459,14 @@ void
 vlan_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifvlan *ifv;
-	u_int tag;
+	uint16_t vid;
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
 	bool have_vtag;
 
 	have_vtag = vlan_has_tag(m);
 	if (have_vtag) {
-		tag = EVL_VLANOFTAG(vlan_get_tag(m));
+		vid = EVL_VLANOFTAG(vlan_get_tag(m));
 		m->m_flags &= ~M_VLANTAG;
 	} else {
 		switch (ifp->if_type) {
@@ -1483,7 +1484,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 			evl = mtod(m, struct ether_vlan_header *);
 			KASSERT(ntohs(evl->evl_encap_proto) == ETHERTYPE_VLAN);
 
-			tag = EVL_VLANOFTAG(ntohs(evl->evl_tag));
+			vid = EVL_VLANOFTAG(ntohs(evl->evl_tag));
 
 			/*
 			 * Restore the original ethertype.  We'll remove
@@ -1495,14 +1496,14 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		    }
 
 		default:
-			tag = (u_int) -1;	/* XXX GCC */
+			vid = (uint16_t) -1;	/* XXX GCC */
 #ifdef DIAGNOSTIC
 			panic("vlan_input: impossible");
 #endif
 		}
 	}
 
-	mib = vlan_lookup_tag_psref(ifp, tag, &psref);
+	mib = vlan_lookup_tag_psref(ifp, vid, &psref);
 	if (mib == NULL) {
 		m_freem(m);
 		ifp->if_noproto++;
