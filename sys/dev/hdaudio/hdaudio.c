@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.4.10.1 2017/06/05 08:13:05 snj Exp $ */
+/* $NetBSD: hdaudio.c,v 1.4.10.2 2017/11/24 08:35:34 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.10.1 2017/06/05 08:13:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.10.2 2017/11/24 08:35:34 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -612,20 +612,20 @@ hdaudio_reset(struct hdaudio_softc *sc)
 	hda_write1(sc, HDAUDIO_MMIO_RIRBSTS,
 	    hda_read1(sc, HDAUDIO_MMIO_RIRBSTS));
 
-	/* If the controller isn't in reset state, initiate the transition */
+	/* Put the controller into reset state */
 	gctl = hda_read4(sc, HDAUDIO_MMIO_GCTL);
-	if (gctl & HDAUDIO_GCTL_CRST) {
-		gctl &= ~HDAUDIO_GCTL_CRST;
-		hda_write4(sc, HDAUDIO_MMIO_GCTL, gctl);
-		do {
-			hda_delay(10);
-			gctl = hda_read4(sc, HDAUDIO_MMIO_GCTL);
-		} while (--retry > 0 && (gctl & HDAUDIO_GCTL_CRST) != 0);
-		if (retry == 0) {
-			hda_error(sc, "timeout entering reset state\n");
-			return ETIME;
-		}
+	gctl &= ~HDAUDIO_GCTL_CRST;
+	hda_write4(sc, HDAUDIO_MMIO_GCTL, gctl);
+	do {
+		hda_delay(10);
+		gctl = hda_read4(sc, HDAUDIO_MMIO_GCTL);
+	} while (--retry > 0 && (gctl & HDAUDIO_GCTL_CRST) != 0);
+	if (retry == 0) {
+		hda_error(sc, "timeout entering reset state\n");
+		return ETIME;
 	}
+
+	hda_delay(1000);
 
 	/* Now the controller is in reset state, so bring it out */
 	retry = HDAUDIO_RESET_TIMEOUT;
@@ -638,6 +638,8 @@ hdaudio_reset(struct hdaudio_softc *sc)
 		hda_error(sc, "timeout leaving reset state\n");
 		return ETIME;
 	}
+
+	hda_delay(2000);
 
 	/* Accept unsolicited responses */
 	hda_write4(sc, HDAUDIO_MMIO_GCTL, gctl | HDAUDIO_GCTL_UNSOL_EN);
