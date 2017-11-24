@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.82 2017/11/20 09:01:20 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.83 2017/11/24 14:03:25 roy Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.82 2017/11/20 09:01:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.83 2017/11/24 14:03:25 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -217,10 +217,14 @@ in6_select_best_ia(struct sockaddr_in6 *dstsock, struct in6_addr *dst,
 		}
 
 		/* avoid unusable addresses */
-		if ((ia->ia6_flags &
-		     (IN6_IFF_NOTREADY | IN6_IFF_ANYCAST | IN6_IFF_DETACHED))) {
-				continue;
-		}
+		if ((ia->ia6_flags & (IN6_IFF_DUPLICATED | IN6_IFF_ANYCAST)))
+			continue;
+		/* Prefer validated addresses */
+		if (!(ia->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED)) &&
+		    ia_best != NULL &&
+		    ia_best->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED))
+			REPLACE(0);
+
 		if (!ip6_use_deprecated && IFA6_IS_DEPRECATED(ia))
 			continue;
 
@@ -238,7 +242,7 @@ in6_select_best_ia(struct sockaddr_in6 *dstsock, struct in6_addr *dst,
 		}
 
 		if (ia_best == NULL)
-			REPLACE(0);
+			REPLACE(1);
 
 		/* Rule 2: Prefer appropriate scope */
 		if (dst_scope < 0)
