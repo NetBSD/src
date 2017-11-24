@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.29 2017/06/28 08:17:50 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.30 2017/11/24 03:38:32 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -418,7 +418,7 @@ ndp_rtm_body()
 {
 	local macaddr_src= macaddr_dst=
 	local file=./tmp
-	local pid= str=
+	local pid= hdr= what= addr=
 
 	rump_server_start $SOCKSRC netinet6
 	rump_server_start $SOCKDST netinet6
@@ -433,33 +433,31 @@ ndp_rtm_body()
 
 	# Test ping and a resulting routing message (RTM_ADD)
 	rump.route -n monitor -c 1 > $file &
-	pid=$?
+	pid=$!
 	sleep 1
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6DST
 	wait $pid
 	$DEBUG && cat $file
 
-	str="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
-	atf_check -s exit:0 -o match:"$str" cat $file
-	str="<DST,GATEWAY>"
-	atf_check -s exit:0 -o match:"$str" cat $file
-	str="$IP6DST link#2"
-	atf_check -s exit:0 -o match:"$str" cat $file
+	hdr="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
+	what="<DST,GATEWAY>"
+	addr="$IP6DST link#2"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		cat $file
 
 	# Test ndp -d and resulting routing messages (RTM_DELETE)
-	rump.route -n monitor -c 2 > $file &
-	pid=$?
+	rump.route -n monitor -c 1 > $file &
+	pid=$!
 	sleep 1
 	atf_check -s exit:0 -o ignore rump.ndp -d $IP6DST
 	wait $pid
 	$DEBUG && cat $file
 
-	str="RTM_DELETE.+<HOST,DONE,LLINFO,CLONED>"
-	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
-	str="<DST,GATEWAY>"
-	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
-	str="$IP6DST $macaddr_dst"
-	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
+	hdr="RTM_DELETE.+<HOST,DONE,LLINFO,CLONED>"
+	what="<DST,GATEWAY>"
+	addr="$IP6DST $macaddr_dst"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		grep -A 3 RTM_DELETE $file
 
 	rump_server_destroy_ifaces
 }
