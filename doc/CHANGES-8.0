@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.83 2017/11/23 13:42:09 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.84 2017/11/24 08:40:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -7877,4 +7877,25 @@ sys/kern/kern_softint.c				1.44
 	It can be dynamically resized. Untill dynamically resizing is
 	implemented, increase softint_bytes from 8192 to 32768.
 	[msaitoh, ticket #387]
+
+sys/dev/hdaudio/hdaudio.c			1.6
+
+	Enter link reset even if GCTL says we are already in reset state.
+	Fixes hdaudio codec detection under VirtualBox on a "cold" boot.
+	[jmcneill, ticket #388]
+
+
+sys/dev/pci/if_bge.c				1.313
+sys/dev/pci/if_wm.c				1.544
+sys/dev/pci/if_wmreg.h				1.105
+sys/net/if_ether.h				1.69-1.70
+sys/net/if_vlan.c				1.108,1.110
+sys/net/if_vlanvar.h				1.11-1.12
+
+
+	Fix a bug that a vlan packet which has priority or CFI
+	bit in the tag causes panic.
+	Revert part of if_bge.c 1.312, if_wm.c 1.542 and if_wmreg.h 1.104,
+	it's not required to mask other than VLAN ID bits in VLAN tag.
+	[msaitoh, ticket #389]
 
