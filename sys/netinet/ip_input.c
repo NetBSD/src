@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.362 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.363 2017/11/24 14:03:25 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.362 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.363 2017/11/24 14:03:25 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -371,11 +371,14 @@ ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
 				continue;
 			if (checkif && ia->ia_ifp != ifp)
 				continue;
-			if ((ia->ia_ifp->if_flags & IFF_UP) != 0 &&
-			    (ia->ia4_flags & IN_IFF_DETACHED) == 0)
-				break;
-			else
+			if ((ia->ia_ifp->if_flags & IFF_UP) == 0) {
 				(*downmatch)++;
+				continue;
+			}
+			if (ia->ia4_flags & IN_IFF_DETACHED &&
+			    (ifp->if_flags & IFF_LOOPBACK) == 0)
+				continue;
+			break;
 		}
 	}
 
@@ -392,7 +395,10 @@ ip_match_our_address_broadcast(struct ifnet *ifp, struct ip *ip)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		ia = ifatoia(ifa);
-		if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
+		if (ia->ia4_flags & IN_IFF_NOTREADY)
+			continue;
+		if (ia->ia4_flags & IN_IFF_DETACHED &&
+		    (ifp->if_flags & IFF_LOOPBACK) == 0)
 			continue;
 		if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
 		    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
