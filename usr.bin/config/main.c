@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.94 2017/11/18 18:39:16 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.95 2017/11/24 23:42:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.94 2017/11/18 18:39:16 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.95 2017/11/24 23:42:36 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1868,27 +1868,30 @@ check_dead_devi(const char *key, void *value, void *aux)
 	return 0;
 }
 
+static struct devbase root;
+
 static int
-is_orphan_loop(const struct devbase *d, const struct devbase *p)
-{
-
-	for (; p && d != p; p = p->d_levelparent)
-		continue;
-	return d == p;
-}
-
-static void
 addlevelparent(struct devbase *d, struct devbase *parent)
 {
 	struct devbase *p;
 
-	if (d->d_levelparent)
-		return;
+	if (d == parent) {
+		if (d->d_level++ > 1)
+			return 0;
+		return 1;
+	}
+
+	if (d->d_levelparent) {
+		if (d->d_level++ > 1)
+			return 0;
+		return 1;
+	}
 
 	for (p = parent; p != NULL; p = p->d_levelparent)
-		if (d == p)
-			return;
-	d->d_levelparent = p;
+		if (d == p && d->d_level++ > 1)
+			return 0;
+	d->d_levelparent = p ? p : &root; 
+	return 1;
 }
 
 static void
@@ -1902,7 +1905,8 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 	struct pspec *p;
 	int active = 0;
 
-	addlevelparent(d, parent);
+	if (!addlevelparent(d, parent))
+		return;
 
 	/*
 	 * A pseudo-device will always attach at root, and if it has an
@@ -1970,7 +1974,7 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 		 * If we've been there but have made no change, stop.
 		 */
 		if (seen && active != DEVI_ACTIVE)
-			return;
+			goto out;
 		if (active != DEVI_ACTIVE) {
 			struct cdd_params cdd = { d, at, parent };
 			/* Look for a matching dead devi */
@@ -1990,22 +1994,19 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 				CFGDBG(5, "`%s' at '%s' ignored", d->d_name,
 				    parent ? parent->d_name : "(root)");
 
-			} else
-				return;
+			}
 		}
 	}
 
 	for (al = d->d_attrs; al != NULL; al = al->al_next) {
 		a = al->al_this;
 		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next) {
-			if (is_orphan_loop(nv1->nv_ptr, d)) {
-				if (d->d_level++ > 1)
-					continue;
-			}
 			do_kill_orphans(nv1->nv_ptr, a, d, active);
 		}
 	}
+out:
 	d->d_levelparent = NULL;
+	d->d_level--;
 }
 
 static int
