@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.184 2017/11/24 14:03:25 roy Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.185 2017/11/25 13:18:02 kre Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.184 2017/11/24 14:03:25 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.185 2017/11/25 13:18:02 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -526,7 +526,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			addrok = (ifa_ifwithaddr(sin6tosa(&sin6)) != NULL);
 			pserialize_read_exit(s);
 		} else
-			addrok = 0;
+			addrok = 1;
 		if (addrok) {
 			/* this address is ready */
 			ours = 1;
