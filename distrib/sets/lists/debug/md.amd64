@@ -1,9 +1,10 @@
-# $NetBSD: md.amd64,v 1.99 2017/10/06 19:21:17 christos Exp $
+# $NetBSD: md.amd64,v 1.100 2017/11/25 23:29:43 jmcneill Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
+./usr/libdata/debug/sbin/mount_qemufwcfg.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-util-debug		debug

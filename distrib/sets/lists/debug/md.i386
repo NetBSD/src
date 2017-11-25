@@ -1,9 +1,10 @@
-# $NetBSD: md.i386,v 1.14 2017/08/12 21:46:01 kre Exp $
+# $NetBSD: md.i386,v 1.15 2017/11/25 23:29:43 jmcneill Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-obsolete		obsolete
 ./usr/libdata/debug/lib/libm387.so.0.1.debug	comp-sys-debug	pic,debug
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/sbin/mount_qemufwcfg.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-util-debug		debug
