@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.6 2017/11/15 16:19:19 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.7 2017/11/25 09:40:17 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -49,8 +49,7 @@ umask 022
 mount_gemdos() mount_msdos -G "$@"
 
 makerootwritable() {
-	# note, only handles up to partition 'j'
-	rootdev=/dev/$(sysctl -n kern.root_device)$(sysctl -n kern.root_partition | sed y/0123456789/abcdefghij/)
+	rootdev=/kern/rootdev
 	if ! mount -u $rootdev / ; then
 	    echo "Unable to mount $rootdev read-write"
 	    exit 1
@@ -65,6 +64,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
+
+	# mount the kernfs so that we can check rootdev etc.
+	mount -t kernfs /kern /kern
 
 	# mount root read write
 	makerootwritable
