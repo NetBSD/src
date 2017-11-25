@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.13 2017/06/18 16:24:10 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.14 2017/11/25 14:29:38 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -71,6 +71,16 @@ enum man_sec {
 	MANSEC_NONE
 };
 
+typedef struct query_callback_args {
+	const char *name;
+	const char *section;
+	const char *machine;
+	const char *name_desc;
+	const char *snippet;
+	size_t snippet_length;
+	void *other_data;
+} query_callback_args;
+
 typedef struct query_args {
 	const char *search_str;		// user query
 	char **sections;		// Sections in which to do the search
@@ -78,11 +88,11 @@ typedef struct query_args {
 	int offset;		//From which position to start processing the records
 	int legacy;
 	const char *machine;
-	int (*callback) (void *, const char *, const char *, const char *,
-		const char *, size_t);	// The callback function
+	int (*callback) (query_callback_args *);
 	void *callback_data;	// data to pass to the callback function
 	char **errmsg;		// buffer for storing the error msg
 } query_args;
+
 
 typedef enum query_format {
     APROPOS_NONE,

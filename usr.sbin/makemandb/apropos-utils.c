@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.39 2017/08/01 16:16:32 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.40 2017/11/25 14:29:38 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.39 2017/08/01 16:16:32 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.40 2017/11/25 14:29:38 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -56,8 +56,7 @@ __RCSID("$NetBSD: apropos-utils.c,v 1.39 2017/08/01 16:16:32 abhinav Exp $");
 
 typedef struct orig_callback_data {
 	void *data;
-	int (*callback) (void *, const char *, const char *, const char *,
-		const char *, size_t);
+	int (*callback) (query_callback_args*);
 } orig_callback_data;
 
 typedef struct inverse_document_frequency {
@@ -657,15 +656,12 @@ static unsigned int
 execute_search_query(sqlite3 *db, char *query, query_args *args)
 {
 	sqlite3_stmt *stmt;
-	const char *section;
 	char *name;
 	char *slash_ptr;
-	const char *name_desc;
-	const char *machine;
-	const char *snippet = "";
 	const char *name_temp;
 	char *m = NULL;
 	int rc;
+	query_callback_args callback_args;
 	inverse_document_frequency idf = {0, 0};
 
 	if (!args->legacy) {
@@ -693,25 +689,27 @@ execute_search_query(sqlite3 *db, char *query, query_args *args)
 	unsigned int nresults = 0;
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		nresults++;
-		section = (const char *) sqlite3_column_text(stmt, 0);
+		callback_args.section = (const char *) sqlite3_column_text(stmt, 0);
 		name_temp = (const char *) sqlite3_column_text(stmt, 1);
-		name_desc = (const char *) sqlite3_column_text(stmt, 2);
-		machine = (const char *) sqlite3_column_text(stmt, 3);
+		callback_args.name_desc = (const char *) sqlite3_column_text(stmt, 2);
+		callback_args.machine = (const char *) sqlite3_column_text(stmt, 3);
 		if (!args->legacy)
-			snippet = (const char *) sqlite3_column_text(stmt, 4);
+			callback_args.snippet = (const char *) sqlite3_column_text(stmt, 4);
+		else
+			callback_args.snippet = "";
 		if ((slash_ptr = strrchr(name_temp, '/')) != NULL)
 			name_temp = slash_ptr + 1;
-		if (machine && machine[0]) {
-			m = estrdup(machine);
+		if (callback_args.machine && callback_args.machine[0]) {
+			m = estrdup(callback_args.machine);
 			easprintf(&name, "%s/%s", lower(m), name_temp);
 			free(m);
 		} else {
 			name = estrdup((const char *)
 			    sqlite3_column_text(stmt, 1));
 		}
-
-		(args->callback)(args->callback_data, section, name,
-		    name_desc, snippet, args->legacy? 0: strlen(snippet));
+		callback_args.name = name;
+		callback_args.other_data = args->callback_data;
+		(args->callback)(&callback_args);
 		free(name);
 	}
 	sqlite3_finalize(stmt);
@@ -818,20 +816,20 @@ get_escaped_html_string(const char *src, size_t *slen)
  *  calls the actual user supplied callback function.
  */
 static int
-callback_html(void *data, const char *section, const char *name,
-    const char *name_desc, const char *snippet, size_t snippet_length)
+callback_html(query_callback_args *callback_args)
 {
-	struct orig_callback_data *orig_data = data;
-	int (*callback)(void *, const char *, const char *, const char *,
-	    const char *, size_t) = orig_data->callback;
-	size_t length = snippet_length;
-	size_t name_description_length = strlen(name_desc);
-	char *qsnippet = get_escaped_html_string(snippet, &length);
-	char *qname_description = get_escaped_html_string(name_desc,
+	struct orig_callback_data *orig_data = callback_args->other_data;
+	int (*callback)(query_callback_args*) = orig_data->callback;
+	size_t length = callback_args->snippet_length;
+	size_t name_description_length = strlen(callback_args->name_desc);
+	char *qsnippet = get_escaped_html_string(callback_args->snippet, &length);
+	char *qname_description = get_escaped_html_string(callback_args->name_desc,
 	    &name_description_length);
-
-	(*callback)(orig_data->data, section, name, qname_description,
-	    qsnippet, length);
+	callback_args->name_desc = qname_description;
+	callback_args->snippet = qsnippet;
+	callback_args->snippet_length = length;
+	callback_args->other_data = orig_data->data;
+	(*callback)(callback_args);
 	free(qsnippet);
 	free(qname_description);
 	return 0;
@@ -889,12 +887,11 @@ ul_pager(int ul, const char *s)
  *  more or less.
  */
 static int
-callback_pager(void *data, const char *section, const char *name,
-	const char *name_desc, const char *snippet, size_t snippet_length)
+callback_pager(query_callback_args *callback_args)
 {
-	struct orig_callback_data *orig_data = data;
+	struct orig_callback_data *orig_data = callback_args->other_data;
 	char *psnippet;
-	const char *temp = snippet;
+	const char *temp = callback_args->snippet;
 	int count = 0;
 	int i = 0, did;
 	size_t sz = 0;
@@ -913,7 +910,7 @@ callback_pager(void *data, const char *section, const char *name,
 		temp++;
 	}
 
-	psnippet_length = snippet_length + count;
+	psnippet_length = callback_args->snippet_length + count;
 	psnippet = emalloc(psnippet_length + 1);
 
 	/* Copy the bytes from snippet to psnippet:
@@ -923,6 +920,7 @@ callback_pager(void *data, const char *section, const char *name,
 	 * 3. To overstrike a byte 'A' we need to write 'A\bA'
 	 */
 	did = 0;
+	const char *snippet = callback_args->snippet;
 	while (*snippet) {
 		sz = strcspn(snippet, "\002");
 		memcpy(&psnippet[i], snippet, sz);
@@ -945,11 +943,16 @@ callback_pager(void *data, const char *section, const char *name,
 	}
 
 	psnippet[i] = 0;
-	char *ul_section = ul_pager(did, section);
-	char *ul_name = ul_pager(did, name);
-	char *ul_name_desc = ul_pager(did, name_desc);
-	(orig_data->callback)(orig_data->data, ul_section, ul_name,
-	    ul_name_desc, psnippet, psnippet_length);
+	char *ul_section = ul_pager(did, callback_args->section);
+	char *ul_name = ul_pager(did, callback_args->name);
+	char *ul_name_desc = ul_pager(did, callback_args->name_desc);
+	callback_args->section = ul_section;
+	callback_args->name = ul_name;
+	callback_args->name_desc = ul_name_desc;
+	callback_args->snippet = psnippet;
+	callback_args->snippet_length = psnippet_length;
+	callback_args->other_data = orig_data->data;
+	(orig_data->callback)(callback_args);
 	free(ul_section);
 	free(ul_name);
 	free(ul_name_desc);
@@ -982,17 +985,19 @@ ul_term(const char *s, const struct term_args *ta)
  *  more or less.
  */
 static int
-callback_term(void *data, const char *section, const char *name,
-	const char *name_desc, const char *snippet, size_t snippet_length)
+callback_term(query_callback_args *callback_args)
 {
-	struct term_args *ta = data;
+	struct term_args *ta = callback_args->other_data;
 	struct orig_callback_data *orig_data = ta->orig_data;
 
-	char *ul_section = ul_term(section, ta);
-	char *ul_name = ul_term(name, ta);
-	char *ul_name_desc = ul_term(name_desc, ta);
-	(orig_data->callback)(orig_data->data, ul_section, ul_name,
-	    ul_name_desc, snippet, snippet_length);
+	char *ul_section = ul_term(callback_args->section, ta);
+	char *ul_name = ul_term(callback_args->name, ta);
+	char *ul_name_desc = ul_term(callback_args->name_desc, ta);
+	callback_args->section = ul_section;
+	callback_args->name = ul_name;
+	callback_args->name_desc = ul_name_desc;
+	callback_args->other_data = orig_data->data;
+	(orig_data->callback)(callback_args);
 	free(ul_section);
 	free(ul_name);
 	free(ul_name_desc);

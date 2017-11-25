@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.23 2017/08/02 12:52:18 jmcneill Exp $	*/
+/*	$NetBSD: apropos.c,v 1.24 2017/11/25 14:29:38 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.23 2017/08/02 12:52:18 jmcneill Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.24 2017/11/25 14:29:38 abhinav Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -60,8 +60,7 @@ typedef struct callback_data {
 } callback_data;
 
 static char *remove_stopwords(const char *);
-static int query_callback(void *, const char * , const char *, const char *,
-	const char *, size_t);
+static int query_callback(query_callback_args *);
 __dead static void usage(void);
 
 #define _PATH_PAGER	"/usr/bin/more -s"
@@ -286,22 +285,21 @@ main(int argc, char *argv[])
  *  output stream.
  */
 static int
-query_callback(void *data, const char *section, const char *name,
-	const char *name_desc, const char *snippet, size_t snippet_length)
+query_callback(query_callback_args *qargs)
 {
-	callback_data *cbdata = (callback_data *) data;
+	callback_data *cbdata = (callback_data *) qargs->other_data;
 	FILE *out = cbdata->out;
 	cbdata->count++;
 	if (cbdata->aflags->format != APROPOS_HTML) {
 	    fprintf(out, cbdata->aflags->legacy ? "%s(%s) - %s\n" :
-		"%s (%s)\t%s\n", name, section, name_desc);
+		"%s (%s)\t%s\n", qargs->name, qargs->section, qargs->name_desc);
 	    if (cbdata->aflags->no_context == 0)
-		    fprintf(out, "%s\n\n", snippet);
+		    fprintf(out, "%s\n\n", qargs->snippet);
 	} else {
-	    fprintf(out, "<tr><td>%s(%s)</td><td>%s</td></tr>\n", name,
-		section, name_desc);
+	    fprintf(out, "<tr><td>%s(%s)</td><td>%s</td></tr>\n", qargs->name,
+		qargs->section, qargs->name_desc);
 	    if (cbdata->aflags->no_context == 0)
-		    fprintf(out, "<tr><td colspan=2>%s</td></tr>\n", snippet);
+		    fprintf(out, "<tr><td colspan=2>%s</td></tr>\n", qargs->snippet);
 	}
 
 	return 0;
