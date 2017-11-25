@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2159 2017/11/07 22:20:05 christos Exp $
+#	$NetBSD: mi,v 1.2160 2017/11/25 16:31:03 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -514,6 +514,7 @@
 ./usr/include/dev/ic/pckbcvar.h			comp-obsolete		obsolete
 ./usr/include/dev/ic/pdqreg.h			comp-obsolete		obsolete
 ./usr/include/dev/ic/pdqvar.h			comp-obsolete		obsolete
+./usr/include/dev/ic/qemufwcfgio.h		comp-c-include
 ./usr/include/dev/ic/rrunnerreg.h		comp-c-include
 ./usr/include/dev/ic/rrunnervar.h		comp-c-include
 ./usr/include/dev/ic/smc83c170reg.h		comp-obsolete		obsolete

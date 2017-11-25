@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.76 2016/12/08 11:31:08 nat Exp $
+# $NetBSD: majors,v 1.77 2017/11/25 16:31:03 jmcneill Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -75,3 +75,4 @@ device-major spkr      char 240		   spkr
 
 device-major hdmicec   char 340            hdmicec
 device-major nvme      char 341		   nvme
+device-major qemufwcfg char 342		   qemufwcfg
