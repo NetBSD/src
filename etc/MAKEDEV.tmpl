@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.186 2017/08/28 01:34:52 sevan Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.187 2017/11/25 16:31:03 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -873,6 +873,11 @@ lua)
 pad)
 	makedev pad0 pad1 pad2 pad3
 	lndev pad0 pad
+	;;
+
+qemufwcfg)
+	makedev qemufwcfg0
+	lndev qemufwcfg0 qemufwcfg
 	;;
 
 radio)
@@ -1759,6 +1764,11 @@ openfirm)
 pad[0-9]*)
 	unit=${i#pad}
 	mkdev pad$unit c %pad_chr% $unit 444
+	;;
+
+qemufwcfg[0-9]*)
+	unit=${i#qemufwcfg}
+	mkdev qemufwcfg$unit c %qemufwcfg_chr% $unit 660
 	;;
 
 nvram)
