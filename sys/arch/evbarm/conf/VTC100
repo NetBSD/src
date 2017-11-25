@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.14 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: VTC100,v 1.15 2017/11/25 04:53:24 christos Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -85,7 +85,6 @@ options 	NFS_BOOT_RWSIZE=1024
 # Compatibility options
 include 	"conf/compat_netbsd30.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-include 	"arch/evbarm/conf/compat_netbsd09.config"
 
 # Shared memory options
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ROCKCHIP,v 1.20 2015/04/03 23:25:07 jmcneill Exp $
+#	$NetBSD: ROCKCHIP,v 1.21 2017/11/25 04:53:24 christos Exp $
 #
 #	Rockchip RK3066/RK3188 based SBC (Single Board Computer)
 #
@@ -11,7 +11,7 @@ options 	CPU_CORTEXA9
 options 	MULTIPROCESSOR
 options 	MEMSIZE=1024
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

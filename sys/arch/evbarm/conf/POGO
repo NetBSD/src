@@ -7,12 +7,12 @@ no options	COMPAT_LINUX
 no options	DIAGNOSTIC
 no options	DEBUG
 no uaudio*
-no umidi*
+#no umidi*
 no uberry*
 no urio*
 no uvisor*
 no ukyopon*
-no uscanner*
+#no uscanner*
 no usscanner*
 no utoppy*
 no uyap*
