@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.9 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.10 2017/11/25 04:53:24 christos Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -79,7 +79,7 @@ include 	"conf/compat_netbsd60.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 #options 	COMPAT_NDIS	# NDIS network driver
-options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+#options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 
 # Wedge support
