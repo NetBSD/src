@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3 2008/11/17 20:14:35 abs Exp $
+#	$NetBSD: install.md,v 1.4 2017/11/25 09:41:45 tsutsui Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,19 +46,29 @@ md_set_term() {
 	export TERM
 }
 
+__mount_kernfs() {
+	# Make sure kernfs is mounted.
+	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
+		mkdir /kern > /dev/null 2>&1
+		/sbin/mount_kernfs /kern /kern
+	fi
+}
+
 md_makerootwritable() {
 	# Mount root rw for convenience of the tester ;-)
 	if [ ! -e /tmp/.root_writable ]; then
-		rootdev=/dev/$(sysctl -n kern.root_device)$(sysctl -n kern.root_partition | sed y/0123456789/abcdefghij/)
-		mount -t ffs -u $rootdev / > /dev/null 2>&1
+		__mount_kernfs
+		mount -u /kern/rootdev /
 		cp /dev/null /tmp/.root_writable
 	fi
 }
 
 md_get_diskdevs() {
 	# return available disk devices
-	sysctl -n hw.disknames | sed 'y/ /\n/' | sed -n '/^[sw]d[0-9]/p' \
-		| sort -u
+	__mount_kernfs
+	sed -n -e '/^sd[0-9] /s/ .*//p' \
+	       -e '/^wd[0-9] /s/ .*//p' \
+		< /kern/msgbuf | sort -u
 }
 
 md_prep_disklabel()
