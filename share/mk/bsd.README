@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.364 2017/11/01 15:24:42 khorben Exp $
+#	$NetBSD: bsd.README,v 1.365 2017/11/25 23:22:41 jmcneill Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1617,6 +1617,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBPUFFS?=	${DESTDIR}/usr/lib/libpuffs.a
 		LIBQUOTA?=	${DESTDIR}/usr/lib/libquota.a
 		LIBRADIUS?=	${DESTDIR}/usr/lib/libradius.a
+		LIBREFUSE?=	${DESTDIR}/usr/lib/librefuse.a
 		LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 		LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
 		LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
