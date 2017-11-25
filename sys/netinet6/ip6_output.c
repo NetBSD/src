@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.194 2017/11/24 14:03:25 roy Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.195 2017/11/25 13:18:02 kre Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.194 2017/11/24 14:03:25 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.195 2017/11/25 13:18:02 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3388,7 +3388,7 @@ ip6_ifaddrvalid(const struct in6_addr *src, const struct in6_addr *dst)
 	else if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
 		error = 1;
 	else if (ia6->ia6_flags & IN6_IFF_DETACHED &&
-	    ifa_ifwithaddr(sin6tosa(&dst)) == NULL)
+	    (sin6.sin6_addr = *dst, ifa_ifwithaddr(sin6tosa(&sin6)) == NULL))
 		/* Allow internal traffic to DETACHED addresses */
 		error = 1;
 	else
