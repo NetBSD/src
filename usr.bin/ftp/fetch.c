@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.228 2017/02/15 11:52:11 nonaka Exp $	*/
+/*	$NetBSD: fetch.c,v 1.229 2017/11/25 15:39:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.228 2017/02/15 11:52:11 nonaka Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.229 2017/11/25 15:39:17 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -2097,14 +2097,15 @@ fetch_ftp(const char *url)
 		mget(xargc, xargv);
 		interactive = ointeractive;
 	} else {
-		if (outfile == NULL) {
+		char *destfile = outfile;
+		if (destfile == NULL) {
 			cp = strrchr(file, '/');	/* find savefile */
 			if (cp != NULL)
-				outfile = cp + 1;
+				destfile = cp + 1;
 			else
-				outfile = file;
+				destfile = file;
 		}
-		xargv[2] = (char *)outfile;
+		xargv[2] = (char *)destfile;
 		xargv[3] = NULL;
 		xargc++;
 		if (restartautofetch)
@@ -2250,8 +2251,9 @@ auto_fetch(int argc, char *argv[])
 			anonftp = 2;	/* Handle "automatic" transfers. */
 		rval = go_fetch(argv[argpos]);
 		if (outfile != NULL && strcmp(outfile, "-") != 0
-		    && outfile[0] != '|')
-			outfile = NULL;
+		    && outfile[0] != '|') {
+			FREEPTR(outfile);
+		}
 		if (rval > 0)
 			rval = argpos + 1;
 	}
