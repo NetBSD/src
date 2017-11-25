@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.58 2017/11/06 19:12:23 joerg Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.59 2017/11/25 02:37:04 kre Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1864,6 +1864,7 @@ expandm(char *buf, size_t len, const char *fmt)
 		buf[cur] = '\0';
 	}
 	strlcat(buf, fmt, len);
+	strlcat(buf, "\n", len); /* syslog does not need \n, printf does */
 	return buf;
 }
 
