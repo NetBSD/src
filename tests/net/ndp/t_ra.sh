@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.31 2017/11/07 02:19:23 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.32 2017/11/25 07:58:47 kre Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -43,14 +43,16 @@ PIDFILE1_2=./rump.rtadvd.pid12
 PIDFILE3=./rump.rtadvd.pid3
 PIDFILE4=./rump.rtadvd.pid4
 CONFIG=./rtadvd.conf
-WAITTIME=2
 DEBUG=${DEBUG:-false}
+
+RUMP_PROGS="rump_server rump.rtadvd rump.ndp rump.ifconfig rump.netstat"
 
 init_server()
 {
 
 	export RUMP_SERVER=$1
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
+	atf_check -s exit:0 -o match:'0.->.1' \
+		rump.sysctl -w net.inet6.ip6.forwarding=1
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
 	unset LD_PRELOAD
@@ -72,25 +74,17 @@ setup_shmif0()
 	$DEBUG && rump.ifconfig
 }
 
-wait_term()
-{
-	local PIDFILE=${1}
-	shift
-
-	while [ -f ${PIDFILE} ]
-	do
-		sleep 0.2
-	done
-
-	return 0
-}
-
 kill_rtadvd()
 {
-	local pidfile=$1
+	local pid=$(cat "$1")
 
-	kill -KILL `cat $pidfile`
-	rm -f $pidfile
+	test -n "$pid" && {
+		case "$pid" in
+		*[!0-9]*)	return 1;;
+		esac
+		test "$pid" -gt 1 && kill -s KILL "${pid}"
+	}
+	rm -f "$1"
 }
 
 terminate_rtadvd()
@@ -98,102 +92,131 @@ terminate_rtadvd()
 	local pidfile=$1
 	local n=5
 
-	if [ ! -f $pidfile ]; then
+	if ! [ -f "$pidfile" ]; then
 		return
 	fi
 
-	kill -TERM `cat $pidfile`
-	while [ -f $pidfile ]; do
+	local pid=$(cat "$pidfile")
+
+	test -n "${pid}" && kill -s TERM "${pid}"
+
+	# Note, rtadvd cannot remove its own pidfile, it chroots after
+	# creating it (and if it chroot'd first, we would not be able to
+	# control where it puts the thing, and so it would be useless.)
+	# However, it does truncate it... so watch for that.
+	while [ -s "$pidfile" ]; do
 		n=$((n - 1))
-		if [ $n = 0 ]; then
-			kill_rtadvd $pidfile
-			break
+		if [ "$n" = 0 ]; then
+			kill_rtadvd "$pidfile"
+			return
 		fi
 		sleep 0.2
 	done
+	# and finally complete the cleanup that rtadvd did not do.
+	rm -f "$pidfile"
 }
 
 create_rtadvdconfig()
 {
-
 	cat << _EOF > ${CONFIG}
-shmif0:\
+shmif0:\\
 	:mtu#1300:maxinterval#4:mininterval#3:
 _EOF
 }
 
 create_rtadvdconfig_rltime()
 {
-	local time=$1
-
 	cat << _EOF > ${CONFIG}
-shmif0:\
-	:mtu#1300:maxinterval#4:mininterval#3:rltime#$time:
+shmif0:\\
+	:mtu#1300:maxinterval#4:mininterval#3:rltime#$1:
 _EOF
 	$DEBUG && cat ${CONFIG}
 }
 
 create_rtadvdconfig_vltime()
 {
-	local addr=$1
-	local time=$2
-
 	cat << _EOF > ${CONFIG}
-shmif0:\
-	:mtu#1300:maxinterval#4:mininterval#3:addr="$addr":vltime#$time:
+shmif0:\\
+	:mtu#1300:maxinterval#4:mininterval#3:addr="$1":vltime#$2:
 _EOF
 	$DEBUG && cat ${CONFIG}
 }
 
-start_rtadvd()
+RA_count()
 {
-	local sock=$1
-	local pidfile=$2
+	RUMP_SERVER="$1" rump.netstat -p icmp6 | sed -n '
+		$ {
+			s/^.*$/0/p
+			q
+		}
+		/router advertisement:/!d
+		s/.*router advertisement: *//
+		s/[ 	]*$//
+		s/^$/0/
+		p
+		q
+	'
+}
 
-	export RUMP_SERVER=$sock
-	atf_check -s exit:0 -e ignore \
-	    rump.rtadvd -D -c ${CONFIG} -p $pidfile shmif0
-	while [ ! -f $pidfile ]; do
+await_RA()
+{
+	local N=$(RA_count "$1")
+	while [ "$(RA_count "$1")" -le "$N" ]; do
 		sleep 0.2
 	done
-	unset RUMP_SERVER
+}
+
+start_rtadvd()
+{
+	local RUMP_SERVER="$1"
+	export RUMP_SERVER
+
+	atf_check -s exit:0 -e ignore \
+	    rump.rtadvd -D -c ${CONFIG} -p "$2" shmif0
+
+	# don't wait for the pid file to appear and get a pid in it.
+	# we look for receiving RAs instead, must more reliable
+	# extra delay here increases possibility of RA arriving before
+	# we start looking (which means we then wait for the next .. boring!)
 }
 
 check_entries()
 {
-	local cli=$1
+	local RUMP_SERVER="$1"
 	local srv=$2
 	local addr_prefix=$3
 	local mac_srv= ll_srv=
+	export RUMP_SERVER
 
-	ll_srv=$(get_linklocal_addr $srv shmif0)
-	mac_srv=$(get_macaddr $srv shmif0)
+	ll_srv=$(get_linklocal_addr "$srv" shmif0)
+	mac_srv=$(get_macaddr "$srv" shmif0)
 
-	export RUMP_SERVER=$cli
 	$DEBUG && dump_entries
-	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
-	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
-	atf_check -s exit:0 -o match:"${ll_srv}%shmif0 \(reachable\)" rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:if=shmif0 rump.ndp -r
+	atf_check -s exit:0 -o match:advertised  \
+	    -o match:"${ll_srv}%shmif0 \(reachable\)" \
+		rump.ndp -p
+	atf_check -s exit:0 -o match:linkmtu=1300 rump.ndp -n -i shmif0
 	atf_check -s exit:0 \
 	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +$ONEDAYISH S R" \
-	    rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:$addr_prefix rump.ndp -n -a
+	    -o not-match:"$addr_prefix"  \
+		    rump.ndp -n -a
 	atf_check -s exit:0 \
 	    -o match:"$addr_prefix.+<(TENTATIVE,)?AUTOCONF>" \
 	    rump.ifconfig shmif0 inet6
-	unset RUMP_SERVER
 }
 
 dump_entries()
 {
+	local marker="+-+-+-+-+-+-+-+-+"
 
-	echo ndp -n -a
+	printf '%s %s\n' "$marker" 'ndp -n -a'
 	rump.ndp -n -a
-	echo ndp -p
+	printf '%s %s\n' "$marker" 'ndp -p'
 	rump.ndp -p
-	echo ndp -r
+	printf '%s %s\n' "$marker" 'ndp -r'
 	rump.ndp -r
+	printf '%s\n' "$marker"
 }
 
 atf_test_case ra_basic cleanup
@@ -201,7 +224,7 @@ ra_basic_head()
 {
 
 	atf_set "descr" "Tests for basic functions of router advaertisement(RA)"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_basic_body()
@@ -216,30 +239,30 @@ ra_basic_body()
 	setup_shmif0 ${RUMPCLI} ${IP6CLI}
 	export RUMP_SERVER=${RUMPCLI}
 	$DEBUG && rump.ndp -n -a
-	atf_check -s exit:0 -o match:'= 0' rump.sysctl net.inet6.ip6.accept_rtadv
+	atf_check -s exit:0 -o match:'= 0' \
+		rump.sysctl net.inet6.ip6.accept_rtadv
 	unset RUMP_SERVER
 
 	create_rtadvdconfig
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	export RUMP_SERVER=${RUMPCLI}
 	atf_check -s exit:0 -o empty rump.ndp -r
-	atf_check -s exit:0 -o not-match:'advertised' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=0' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o not-match:'S R' rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o not-match:advertised rump.ndp -p
+	atf_check -s exit:0 -o match:linkmtu=0 rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o not-match:'S R' -o not-match:fc00:1: \
+		rump.ndp -n -a
+	atf_check -s exit:0 -o not-match:fc00:1: rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
 	terminate_rtadvd $PIDFILE
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	unset RUMP_SERVER
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0 -> 1' \
+		rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
@@ -261,7 +284,7 @@ ra_flush_prefix_entries_head()
 {
 
 	atf_set "descr" "Tests for flushing prefixes (ndp -P)"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_flush_prefix_entries_body()
@@ -278,29 +301,29 @@ ra_flush_prefix_entries_body()
 	create_rtadvdconfig
 
 	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	atf_check -s exit:0 -o match:'0 -> 1' \
+		rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 
 	# Terminate rtadvd to prevent new RA messages from coming
-	# Note that ifconfig down; kill -TERM doesn't work
-	kill_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE
 
 	# Flush all the entries in the prefix list
 	atf_check -s exit:0 rump.ndp -P
 
 	$DEBUG && dump_entries
-	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o match:if=shmif0 rump.ndp -r
 	atf_check -s exit:0 -o empty rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o match:linkmtu=1300 rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" -o not-match:fc00:1: \
+		rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
@@ -320,7 +343,7 @@ ra_flush_defrouter_entries_head()
 {
 
 	atf_set "descr" "Tests for flushing default routers (ndp -R)"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_flush_defrouter_entries_body()
@@ -336,20 +359,18 @@ ra_flush_defrouter_entries_body()
 
 	create_rtadvdconfig
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	unset RUMP_SERVER
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0 -> 1' \
+		rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 
 	# Terminate rtadvd to prevent new RA messages from coming
-	# Note that ifconfig down; kill -TERM doesn't work
-	kill_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE
 
 	# Flush all the entries in the default router list
 	atf_check -s exit:0 rump.ndp -R
@@ -357,8 +378,8 @@ ra_flush_defrouter_entries_body()
 	$DEBUG && dump_entries
 	atf_check -s exit:0 -o empty rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o match:linkmtu=1300 rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o not-match:fc00:1: rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
@@ -378,7 +399,7 @@ ra_delete_address_head()
 {
 
 	atf_set "descr" "Tests for deleting auto-configured address"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_delete_address_body()
@@ -394,19 +415,18 @@ ra_delete_address_body()
 
 	create_rtadvdconfig
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	unset RUMP_SERVER
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0 -> 1' \
+		rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 	$DEBUG && rump.ifconfig shmif0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 \
-	    $(rump.ifconfig shmif0 |awk '/AUTOCONF/ {print $2}') delete
+	    $(rump.ifconfig shmif0 | awk '/AUTOCONF/ {print $2}') delete
 	unset RUMP_SERVER
 
 	terminate_rtadvd $PIDFILE
@@ -427,7 +447,7 @@ ra_multiple_routers_head()
 {
 
 	atf_set "descr" "Tests for multiple routers"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_multiple_routers_body()
@@ -447,22 +467,20 @@ ra_multiple_routers_body()
 
 	create_rtadvdconfig
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	unset RUMP_SERVER
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0 -> 1' \
+		rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 
 	start_rtadvd $RUMPSRV $PIDFILE
 	start_rtadvd $RUMPSRV3 $PIDFILE3
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 	check_entries $RUMPCLI $RUMPSRV3 $IP6SRV3_PREFIX
 
-	export RUMP_SERVER=$RUMPCLI
 	# Two prefixes are advertised by differnt two routers
-	n=$(rump.ndp -p |grep 'advertised by' |wc -l)
+	n=$(RUMP_SERVER=$RUMPCLI rump.ndp -p | grep 'advertised by' | wc -l)
 	atf_check_equal $n 2
-	unset RUMP_SERVER
 
 	terminate_rtadvd $PIDFILE
 	terminate_rtadvd $PIDFILE3
@@ -484,7 +502,7 @@ ra_multiple_routers_single_prefix_head()
 {
 
 	atf_set "descr" "Tests for multiple routers with a single prefix"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_multiple_routers_single_prefix_body()
@@ -504,13 +522,13 @@ ra_multiple_routers_single_prefix_body()
 
 	create_rtadvdconfig
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	unset RUMP_SERVER
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0 -> 1' \
+		rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 
 	start_rtadvd $RUMPSRV $PIDFILE
 	start_rtadvd $RUMPSRV1_2 $PIDFILE1_2
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 	check_entries $RUMPCLI $RUMPSRV1_2 $IP6SRV_PREFIX
@@ -541,7 +559,7 @@ ra_multiple_routers_maxifprefixes_head()
 {
 
 	atf_set "descr" "Tests for exceeding the number of maximum prefixes"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_multiple_routers_maxifprefixes_body()
@@ -564,31 +582,28 @@ ra_multiple_routers_maxifprefixes_body()
 
 	create_rtadvdconfig
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' \
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0.->.1' \
 	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 	# Limit the maximum number of prefix entries to 2
-	atf_check -s exit:0 -o match:'16.->.2' \
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'16 -> 2' \
 	    rump.sysctl -w net.inet6.ip6.maxifprefixes=2
-	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
 	start_rtadvd $RUMPSRV3 $PIDFILE3
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 	check_entries $RUMPCLI $RUMPSRV3 $IP6SRV3_PREFIX
 
 	start_rtadvd $RUMPSRV4 $PIDFILE4
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
-	export RUMP_SERVER=${RUMPCLI}
-	$DEBUG && dump_entries
+	$DEBUG && RUMP_SERVER="${RUMPCLI}" dump_entries
 	# There should remain two prefixes
-	n=$(rump.ndp -p |grep 'advertised by' |wc -l)
+	n=$(RUMP_SERVER=${RUMPCLI} rump.ndp -p | grep 'advertised by' | wc -l)
 	atf_check_equal $n 2
 	# TODO check other conditions
-	unset RUMP_SERVER
 
 	terminate_rtadvd $PIDFILE
 	terminate_rtadvd $PIDFILE3
@@ -612,7 +627,7 @@ ra_temporary_address_head()
 {
 
 	atf_set "descr" "Tests for IPv6 temporary address"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 check_echo_request_pkt()
@@ -620,7 +635,7 @@ check_echo_request_pkt()
 	local pkt="$2 > $3: .+ echo request"
 
 	extract_new_packets $1 > ./out
-	$DEBUG && echo $pkt
+	$DEBUG && echo "$pkt"
 	$DEBUG && cat ./out
 	atf_check -s exit:0 -o match:"$pkt" cat ./out
 }
@@ -636,16 +651,14 @@ ra_temporary_address_body()
 	init_server $RUMPSRV
 	setup_shmif0 $RUMPCLI $IP6CLI
 
-	export RUMP_SERVER=$RUMPCLI
-	atf_check -s exit:0 -o match:'0.->.1' \
+	RUMP_SERVER=$RUMPCLI atf_check -s exit:0 -o match:'0 -> 1' \
 	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	atf_check -s exit:0 -o match:'0.->.1' \
+	RUMP_SERVER=$RUMPCLI atf_check -s exit:0 -o match:'0 -> 1' \
 	    rump.sysctl -w net.inet6.ip6.use_tempaddr=1
-	unset RUMP_SERVER
 
 	create_rtadvdconfig
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
@@ -661,9 +674,11 @@ ra_temporary_address_body()
 	#
 	atf_check -s exit:0 rump.ifconfig -w 10
 	$DEBUG && rump.ifconfig shmif0
-	ip_auto=$(rump.ifconfig shmif0 |awk '/<AUTOCONF>/ {sub(/\/[0-9]*/, ""); print $2;}')
-	ip_temp=$(rump.ifconfig shmif0 |awk '/<AUTOCONF,TEMPORARY>/ {sub(/\/[0-9]*/, ""); print $2;}')
-	$DEBUG && echo $ip_auto $ip_temp
+	ip_auto=$(rump.ifconfig shmif0 |
+	    awk '/<AUTOCONF>/ {sub(/\/[0-9]*/, ""); print $2;}')
+	ip_temp=$(rump.ifconfig shmif0 |
+	    awk '/<AUTOCONF,TEMPORARY>/ {sub(/\/[0-9]*/, ""); print $2;}')
+	$DEBUG && echo "AUTO=$ip_auto TEMP=$ip_temp"
 
 	# Ignore old packets
 	extract_new_packets bus1 > /dev/null
@@ -673,7 +688,7 @@ ra_temporary_address_body()
 	check_echo_request_pkt bus1 $ip_auto $IP6SRV
 
 	# Enable net.inet6.ip6.prefer_tempaddr
-	atf_check -s exit:0 -o match:'0.->.1' \
+	atf_check -s exit:0 -o match:'0 -> 1' \
 	    rump.sysctl -w net.inet6.ip6.prefer_tempaddr=1
 
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X 2 -c 1 $IP6SRV
@@ -700,7 +715,7 @@ ra_defrouter_expiration_head()
 {
 
 	atf_set "descr" "Tests for default router expiration"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_defrouter_expiration_body()
@@ -717,36 +732,37 @@ ra_defrouter_expiration_body()
 
 	create_rtadvdconfig_rltime $expire_time
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' \
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0.->.1' \
 	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 
 	# Terminate rtadvd to prevent new RA messages from coming
-	# Note that ifconfig down; kill -TERM doesn't work
-	kill_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE
 
 	# Wait until the default routers and prefix entries are expired
+	# XXX need to work out a better way ... this is a race.
+	# XXX fortunately this race usually ends with the winner we want
+	# XXX (long odds on - not worth placing a bet...)
 	sleep $expire_time
 
 	$DEBUG && dump_entries
 
 	# Give nd6_timer a chance to sweep default routers and prefix entries
+	# XXX Ugh again.
 	sleep 2
 
 	$DEBUG && dump_entries
-	atf_check -s exit:0 -o not-match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o not-match:if=shmif0 rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o match:linkmtu=1300 rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o not-match:fc00:1: rump.ndp -n -a
+	atf_check -s exit:0 -o match:fc00:1: rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
 	rump_server_destroy_ifaces
@@ -765,7 +781,7 @@ ra_prefix_expiration_head()
 {
 
 	atf_set "descr" "Tests for prefix expiration"
-	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+	atf_set "require.progs" "${RUMP_PROGS}"
 }
 
 ra_prefix_expiration_body()
@@ -782,37 +798,36 @@ ra_prefix_expiration_body()
 
 	create_rtadvdconfig_vltime "${IP6SRV_PREFIX}:" $expire_time
 
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:'0.->.1' \
+	RUMP_SERVER=${RUMPCLI} atf_check -s exit:0 -o match:'0 -> 1' \
 	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
-	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
+	await_RA "${RUMPCLI}"
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 
 	# Terminate rtadvd to prevent new RA messages from coming
-	# Note that ifconfig down; kill -TERM doesn't work
-	kill_rtadvd $PIDFILE
+	terminate_rtadvd $PIDFILE
 
 	# Wait until the default routers and prefix entries are expired
+	# XXX need the same better way here too...
 	sleep $expire_time
 
 	$DEBUG && dump_entries
 
 	# Give nd6_timer a chance to sweep default routers and prefix entries
+	# XXX and here
 	sleep 2
 
 	$DEBUG && dump_entries
-	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o match:if=shmif0 rump.ndp -r
 	atf_check -s exit:0 -o empty rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o match:linkmtu=1300 rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" -o not-match:fc00:1: \
+		rump.ndp -n -a
+	atf_check -s exit:0 -o not-match:fc00:1: rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
 	rump_server_destroy_ifaces
