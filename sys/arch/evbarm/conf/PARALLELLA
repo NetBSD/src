@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PARALLELLA,v 1.2 2015/04/10 10:58:07 hkenken Exp $
+#	$NetBSD: PARALLELLA,v 1.3 2017/11/25 04:53:24 christos Exp $
 #
 #	Parallella -- Xilinx Zynq Eval Board Kernel
 #
@@ -26,7 +26,7 @@ options		MEMSIZE=1024
 options 	CONSDEVNAME="\"zynquart\"",CONADDR=0xe0001000
 options 	CONSPEED=115200	# Console speed
 
-options         DIAGNOSTIC      # internal consistency checks
+#options         DIAGNOSTIC      # internal consistency checks
 #options        DEBUG
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
