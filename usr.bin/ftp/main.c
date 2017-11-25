@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.123 2015/04/23 23:31:23 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.124 2017/11/25 15:39:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2015 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.123 2015/04/23 23:31:23 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.124 2017/11/25 15:39:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -324,7 +324,7 @@ main(int volatile argc, char **volatile argv)
 			break;
 
 		case 'o':
-			outfile = optarg;
+			outfile = ftp_strdup(optarg);
 			if (strcmp(outfile, "-") == 0)
 				ttyout = stderr;
 			break;
