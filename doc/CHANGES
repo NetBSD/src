@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2334 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2335 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -86,3 +86,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[jmcneill 20171113]
 	gcc: Import GCC 5.5.  [mrg 20171113]
 	libtre: Update to the latest git source. [rin 20171117]
+	qemufwcfg(4): Add driver for QEMU Firmware Configuration device.
+		[jmcneill 20171125]
