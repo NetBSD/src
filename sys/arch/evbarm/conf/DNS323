@@ -1,4 +1,4 @@
-#	$NetBSD: DNS323,v 1.8 2015/08/21 01:52:07 uebayasi Exp $
+#	$NetBSD: DNS323,v 1.9 2017/11/25 04:53:24 christos Exp $
 #
 #  DNS323 -- D-Link. DNS-323 platform kernel
 #
@@ -19,8 +19,8 @@ options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-options 	DDB		# in-kernel debugger
-pseudo-device	ksyms
+#options 	DDB		# in-kernel debugger
+#pseudo-device	ksyms
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 #options 	DEBUG_KGDB
