@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.64 2017/11/23 19:53:20 jmcneill Exp $	*/
+/*	$NetBSD: lapic.c,v 1.65 2017/11/26 11:37:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.64 2017/11/23 19:53:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.65 2017/11/26 11:37:10 maxv Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -494,7 +494,6 @@ lapic_gettick(void)
 
 #include <sys/kernel.h>		/* for hz */
 
-int lapic_timer = 0;
 uint32_t lapic_tval;
 
 /*
