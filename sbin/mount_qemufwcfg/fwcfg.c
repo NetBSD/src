@@ -1,4 +1,4 @@
-/* $NetBSD: fwcfg.c,v 1.2 2017/11/26 03:06:24 christos Exp $ */
+/* $NetBSD: fwcfg.c,v 1.3 2017/11/26 15:03:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fwcfg.c,v 1.2 2017/11/26 03:06:24 christos Exp $");
+__RCSID("$NetBSD: fwcfg.c,v 1.3 2017/11/26 15:03:15 christos Exp $");
 
 #include <sys/ioctl.h>
 
@@ -252,8 +252,10 @@ main(int argc, char *argv[])
 		case 'u':
 			fwcfg_uid = (uid_t)atoi(optarg);
 			break;
+#ifdef notyet
 		default:
 			usage();
+#endif
 		}
 	}
 
