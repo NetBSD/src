@@ -1,4 +1,4 @@
-/*	$NetBSD: prng.c,v 1.1 2017/11/26 11:01:09 maxv Exp $	*/
+/*	$NetBSD: prng.c,v 1.2 2017/11/26 11:08:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -154,6 +154,7 @@ prng_init(void)
 
 	memset(&rng, 0, sizeof(rng));
 
+	/* detect cpu features */
 	cpuid(0x07, 0x00, descs);
 	has_rdseed = (descs[1] & CPUID_SEF_RDSEED) != 0;
 	cpuid(0x01, 0x00, descs);
