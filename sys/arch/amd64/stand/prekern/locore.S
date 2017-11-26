@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2017/11/14 13:58:07 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2017/11/26 10:21:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -612,14 +612,25 @@ END(rdtsc)
 
 ENTRY(rdseed)
 	rdseed	%rax
-	jc	.Lsuccess
+	jc	.Lrdseed_success
 	movq	$(-1),%rax
 	ret
-.Lsuccess:
+.Lrdseed_success:
 	movq	%rax,(%rdi)
 	xorq	%rax,%rax
 	ret
 END(rdseed)
+
+ENTRY(rdrand)
+	rdrand	%rax
+	jc	.Lrdrand_success
+	movq	$(-1),%rax
+	ret
+.Lrdrand_success:
+	movq	%rax,(%rdi)
+	xorq	%rax,%rax
+	ret
+END(rdrand)
 
 ENTRY(jump_kernel)
 	movq	_C_LABEL(stkva),%rsp
