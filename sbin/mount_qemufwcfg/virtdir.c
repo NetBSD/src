@@ -1,4 +1,4 @@
-/* $NetBSD: virtdir.c,v 1.2 2017/11/26 03:06:24 christos Exp $ */
+/* $NetBSD: virtdir.c,v 1.3 2017/11/26 03:51:45 christos Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -44,8 +44,8 @@
 static int
 compare(const void *vp1, const void *vp2)
 {
-	const virt_dirent_t *tp1 = (const virt_dirent_t *) vp1;
-	const virt_dirent_t *tp2 = (const virt_dirent_t *) vp2;
+	const virt_dirent_t *tp1 = vp1;
+	const virt_dirent_t *tp2 = vp2;
 
 	return strcmp(tp1->name, tp2->name);
 }
@@ -60,7 +60,7 @@ mkdirs(virtdir_t *tp, const char *path, size_t size)
 
 	(void) strlcpy(name, path, sizeof(name));
 	for (slash = name + 1 ; (slash = strchr(slash + 1, '/')) != NULL ; ) {
-		*slash = 0x0;
+		*slash = '\0';
 		if ((ep = virtdir_find(tp, name, strlen(name))) == NULL) {
 			virtdir_add(tp, name, strlen(name), 'd', NULL, 0, 0);
 		}
@@ -101,7 +101,8 @@ normalise(const char *name, size_t namelen, char *path, size_t pathsize)
 
 /* initialise the tree */
 int
-virtdir_init(virtdir_t *tp, const char *rootdir, struct stat *d, struct stat *f, struct stat *l)
+virtdir_init(virtdir_t *tp, const char *rootdir, const struct stat *d,
+    const struct stat *f, const struct stat *l)
 {
 	tp->dir = *d;
 	tp->dir.st_mode = S_IFDIR | 0755;
@@ -120,7 +121,8 @@ virtdir_init(virtdir_t *tp, const char *rootdir, struct stat *d, struct stat *f,
 
 /* add an entry to the tree */
 int
-virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, const char *tgt, size_t tgtlen, uint16_t select)
+virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type,
+    const char *tgt, size_t tgtlen, uint16_t select)
 {
 	char		path[MAXPATHLEN];
 	size_t		pathlen;
@@ -131,13 +133,11 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, const ch
 		return 0;
 	}
 	if (tp->c == tp->size || tp->size == 0) {
-		tp->size += 10,
+		tp->size += 10;
 		tp->v = erealloc(tp->v, tp->size * sizeof(*tp->v));
 	}
 	tp->v[tp->c].namelen = pathlen;
-	if ((tp->v[tp->c].name = estrndup(path, pathlen)) == NULL) {
-		return 0;
-	}
+	tp->v[tp->c].name = estrndup(path, pathlen);
 	tp->v[tp->c].d_name = strrchr(tp->v[tp->c].name, '/') + 1;
 	tp->v[tp->c].type = type;
 	tp->v[tp->c].ino = (ino_t) random() & 0xfffff;
@@ -159,7 +159,7 @@ virtdir_find(virtdir_t *tp, const char *name, size_t namelen)
 	virt_dirent_t	e;
 	char		path[MAXPATHLEN];
 
-	(void) memset(&e, 0x0, sizeof(e));
+	(void) memset(&e, 0, sizeof(e));
 	e.namelen = normalise(name, namelen, path, sizeof(path));
 	e.name = path;
 	return bsearch(&e, tp->v, tp->c, sizeof(tp->v[0]), compare);
@@ -167,7 +167,7 @@ virtdir_find(virtdir_t *tp, const char *name, size_t namelen)
 
 /* return the virtual offset in the tree */
 off_t
-virtdir_offset(virtdir_t *tp, virt_dirent_t *dp)
+virtdir_offset(const virtdir_t *tp, const virt_dirent_t *dp)
 {
 	return dp - tp->v;
 }
@@ -194,7 +194,7 @@ readvirtdir(VIRTDIR *dirp)
 {
 	char	*from;
 
-	for ( ; dirp->i < dirp->tp->c ; dirp->i++) {
+	for ( ; dirp->i < dirp->tp->c; dirp->i++) {
 		from = (strcmp(dirp->dirname, "/") == 0) ?
 		    &dirp->tp->v[dirp->i].name[1] :
 		    &dirp->tp->v[dirp->i].name[dirp->dirnamelen + 1];
