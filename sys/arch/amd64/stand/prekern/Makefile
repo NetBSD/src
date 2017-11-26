@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2017/11/17 07:07:52 maxv Exp $
+#	$NetBSD: Makefile,v 1.5 2017/11/26 11:01:09 maxv Exp $
 
 PROG=		prekern
-SRCS=		locore.S trap.S prekern.c mm.c console.c elf.c
+SRCS=		locore.S trap.S prekern.c mm.c console.c elf.c prng.c
 
 NOSSP=		# defined
 NOPIE=		# defined

@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.17 2017/11/26 10:21:20 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.18 2017/11/26 11:01:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -111,3 +111,7 @@ void mm_map_kernel(void);
 
 /* prekern.c */
 void fatal(char *);
+
+/* prng.c */
+void prng_init(void);
+void prng_get_rand(void *, size_t);

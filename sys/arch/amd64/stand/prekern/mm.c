@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.18 2017/11/21 07:56:05 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.19 2017/11/26 11:01:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -196,13 +196,6 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 	}
 }
 
-static uint64_t
-mm_rand_num64(void)
-{
-	/* XXX: yes, this is ridiculous, will be fixed soon */
-	return rdtsc();
-}
-
 static vaddr_t
 mm_randva_kregion(size_t size, size_t pagesz)
 {
@@ -213,7 +206,7 @@ mm_randva_kregion(size_t size, size_t pagesz)
 	bool ok;
 
 	while (1) {
-		rnd = mm_rand_num64();
+		prng_get_rand(&rnd, sizeof(rnd));
 		randva = rounddown(KASLR_WINDOW_BASE +
 		    rnd % (KASLR_WINDOW_SIZE - size), pagesz);
 
@@ -298,7 +291,7 @@ mm_shift_segment(vaddr_t va, size_t pagesz, size_t elfsz, size_t elfalign)
 		return 0;
 	}
 
-	rnd = mm_rand_num64();
+	prng_get_rand(&rnd, sizeof(rnd));
 	offset = roundup(rnd % shiftsize, elfalign);
 	ASSERT((va + offset) % elfalign == 0);
 
@@ -322,7 +315,7 @@ mm_map_head(void)
 	size = elf_get_head_size((vaddr_t)kernpa_start);
 	npages = size / PAGE_SIZE;
 
-	rnd = mm_rand_num64();
+	prng_get_rand(&rnd, sizeof(rnd));
 	randva = rounddown(HEAD_WINDOW_BASE + rnd % (HEAD_WINDOW_SIZE - size),
 	    PAGE_SIZE);
 	mm_map_tree(randva, randva + size);
