@@ -1,4 +1,4 @@
-/* $NetBSD: fwcfg.c,v 1.1 2017/11/25 23:23:39 jmcneill Exp $ */
+/* $NetBSD: fwcfg.c,v 1.2 2017/11/26 03:06:24 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fwcfg.c,v 1.1 2017/11/25 23:23:39 jmcneill Exp $");
+__RCSID("$NetBSD: fwcfg.c,v 1.2 2017/11/26 03:06:24 christos Exp $");
 
 #include <sys/ioctl.h>
 
@@ -93,7 +93,7 @@ fwcfg_getattr(const char *path, struct stat *st)
 	switch (ep->type) {
 	case 'f':
 		memcpy(st, &fwcfg_virtdir.file, sizeof(*st));
-		st->st_size = ep->tgtlen;
+		st->st_size = (off_t)ep->tgtlen;
 		st->st_mode = S_IFREG | fwcfg_file_mask;
 		break;
 	case 'd':
@@ -101,7 +101,7 @@ fwcfg_getattr(const char *path, struct stat *st)
 		st->st_mode = S_IFDIR | fwcfg_dir_mask;
 		break;
 	}
-	st->st_ino = virtdir_offset(&fwcfg_virtdir, ep) + 10;
+	st->st_ino = (ino_t)virtdir_offset(&fwcfg_virtdir, ep) + 10;
 
 	return 0;
 }
@@ -152,15 +152,15 @@ fwcfg_read(const char *path, char *buf, size_t size, off_t offset,
 
 	/* Seek to correct offset */
 	while (offset > 0) {
-		const int len = MIN(sizeof(tmp), (size_t)offset);
+		const size_t len = MIN(sizeof(tmp), (size_t)offset);
 		read_data(tmp, len);
-		offset -= len;
+		offset -= (off_t)len;
 	}
 
 	/* Read the data */
 	read_data(buf, size);
 
-	return size;
+	return (int)size;
 }
 
 static int
@@ -198,8 +198,6 @@ build_tree(virtdir_t *v)
 	st.st_gid = fwcfg_gid;
 	virtdir_init(v, NULL, &st, &st, &st);
 
-printf("init with uid = %d, gid = %d\n", st.st_uid, st.st_gid);
-
 	set_index(FW_CFG_FILE_DIR);
 	read_data(&count, sizeof(count));
 	for (n = 0; n < be32toh(count); n++) {
@@ -210,11 +208,20 @@ printf("init with uid = %d, gid = %d\n", st.st_uid, st.st_gid);
 	}
 }
 
+static __dead void
+usage(void)
+{
+	fprintf(stderr, "Usage: %s [-F <path>] [-g <gid>] [-m <file-mode>] "
+	    "[-M <dir-mode>] [-u <uid>] [<fuse-options>]", getprogname());
+	exit(EXIT_FAILURE);
+}
+
 int
 main(int argc, char *argv[])
 {
 	const char *path = _PATH_FWCFG;
-	int ch, m;
+	int ch;
+	long m;
 	char *ep;
 
 	fwcfg_uid = geteuid();
@@ -226,23 +233,27 @@ main(int argc, char *argv[])
 			path = optarg;
 			break;
 		case 'g':
-			fwcfg_gid = atoi(optarg);
+			fwcfg_gid = (gid_t)atoi(optarg);
 			break;
 		case 'm':
 			m = strtol(optarg, &ep, 8);
 			if (optarg == ep || *ep || m < 0)
-				errx(1, "invalid file mode: %s", optarg);
-			fwcfg_file_mask = m;
+				errx(EXIT_FAILURE, "invalid file mode: %s",
+				    optarg);
+			fwcfg_file_mask = (mode_t)m;
 			break;
 		case 'M':
 			m = strtol(optarg, &ep, 8);
 			if (optarg == ep || *ep || m < 0)
-				errx(1, "invalid file mode: %s", optarg);
-			fwcfg_dir_mask = m;
+				errx(EXIT_FAILURE, "invalid directory mode: %s",
+				    optarg);
+			fwcfg_dir_mask = (mode_t)m;
 			break;
 		case 'u':
-			fwcfg_uid = atoi(optarg);
+			fwcfg_uid = (uid_t)atoi(optarg);
 			break;
+		default:
+			usage();
 		}
 	}
 
@@ -251,9 +262,6 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "failed to open %s", path);
 
 	build_tree(&fwcfg_virtdir);
-
-	for (int i = 0; i < argc; i++)
-		printf("argv[%d] = \"%s\"\n", i, argv[i]);
 
 	return fuse_main(argc, argv, &fwcfg_ops, NULL);
 }

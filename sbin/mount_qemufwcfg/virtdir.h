@@ -1,4 +1,4 @@
-/* $NetBSD: virtdir.h,v 1.1 2017/11/25 23:23:39 jmcneill Exp $ */
+/* $NetBSD: virtdir.h,v 1.2 2017/11/26 03:06:24 christos Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -34,8 +34,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "defs.h"
-
 /* this struct keeps a note of all the info related to a virtual directory entry */
 typedef struct virt_dirent_t {
 	char		*name;		/* entry name - used as key */
@@ -63,9 +61,9 @@ typedef struct virtdir_t {
 /* this struct is used to walk through directories */
 typedef struct VIRTDIR {
 	char		*dirname;	/* directory name */
-	int		 dirnamelen;	/* length of directory name */
+	size_t		 dirnamelen;	/* length of directory name */
 	virtdir_t	*tp;		/* the directory tree */
-	int		 i;		/* current offset in dir tree */
+	size_t		 i;		/* current offset in dir tree */
 } VIRTDIR;
 
 int virtdir_init(virtdir_t *, const char *, struct stat *, struct stat *, struct stat *);
@@ -76,6 +74,6 @@ VIRTDIR *openvirtdir(virtdir_t *, const char *);
 virt_dirent_t *readvirtdir(VIRTDIR *);
 void closevirtdir(VIRTDIR *);
 
-int virtdir_offset(virtdir_t *, virt_dirent_t *);
+off_t virtdir_offset(virtdir_t *, virt_dirent_t *);
 
 #endif

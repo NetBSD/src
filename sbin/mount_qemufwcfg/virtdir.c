@@ -1,4 +1,4 @@
-/* $NetBSD: virtdir.c,v 1.1 2017/11/25 23:23:39 jmcneill Exp $ */
+/* $NetBSD: virtdir.c,v 1.2 2017/11/26 03:06:24 christos Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -29,38 +29,25 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "virtdir.h"
-#include "defs.h"
 
  /* utility comparison routine for sorting and searching */
 static int
 compare(const void *vp1, const void *vp2)
 {
-	const virt_dirent_t	*tp1 = (const virt_dirent_t *) vp1;
-	const virt_dirent_t	*tp2 = (const virt_dirent_t *) vp2;
+	const virt_dirent_t *tp1 = (const virt_dirent_t *) vp1;
+	const virt_dirent_t *tp2 = (const virt_dirent_t *) vp2;
 
 	return strcmp(tp1->name, tp2->name);
-}
-
-/* save `n' chars of `s' in allocated storage */
-static char *
-strnsave(const char *s, int n)
-{
-	char	*cp;
-
-	if (n < 0) {
-		n = strlen(s);
-	}
-	NEWARRAY(char, cp, n + 1, "strnsave", return NULL);
-	(void) memcpy(cp, s, n);
-	cp[n] = 0x0;
-	return cp;
 }
 
 /* ensure intermediate directories exist */
@@ -82,22 +69,24 @@ mkdirs(virtdir_t *tp, const char *path, size_t size)
 }
 
 /* get rid of multiple slashes in input */
-static int
+static size_t
 normalise(const char *name, size_t namelen, char *path, size_t pathsize)
 {
 	const char	*np;
 	char		*pp;
 	int		 done;
 
-	for (pp = path, np = name, done = 0 ; !done && (int)(pp - path) < pathsize - 1 && (int)(np - name) <= namelen ; ) {
-		switch(*np) {
+	for (pp = path, np = name, done = 0 ; !done &&
+	    (size_t)(pp - path) < pathsize - 1 &&
+	    (size_t)(np - name) <= namelen; ) {
+		switch (*np) {
 		case '/':
 			if (pp == path || *(pp - 1) != '/') {
 				*pp++ = *np;
 			}
 			np += 1;
 			break;
-		case 0x0:
+		case '\0':
 			done = 1;
 			break;
 		default:
@@ -106,25 +95,25 @@ normalise(const char *name, size_t namelen, char *path, size_t pathsize)
 		}
 	}
 	/* XXX - trailing slash? */
-	*pp = 0x0;
-	return (int)(pp - path);
+	*pp = '\0';
+	return (size_t)(pp - path);
 }
 
 /* initialise the tree */
 int
 virtdir_init(virtdir_t *tp, const char *rootdir, struct stat *d, struct stat *f, struct stat *l)
 {
-	(void) memcpy(&tp->dir, d, sizeof(tp->dir));
+	tp->dir = *d;
 	tp->dir.st_mode = S_IFDIR | 0755;
 	tp->dir.st_nlink = 2;
-	(void) memcpy(&tp->file, f, sizeof(tp->file));
+	tp->file = *f;
 	tp->file.st_mode = S_IFREG | 0644;
 	tp->file.st_nlink = 1;
-	(void) memcpy(&tp->lnk, l, sizeof(tp->lnk));
+	tp->lnk = *l;
 	tp->lnk.st_mode = S_IFLNK | 0644;
 	tp->lnk.st_nlink = 1;
 	if (rootdir != NULL) {
-		tp->rootdir = strdup(rootdir);
+		tp->rootdir = estrdup(rootdir);
 	}
 	return 1;
 }
@@ -134,17 +123,19 @@ int
 virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, const char *tgt, size_t tgtlen, uint16_t select)
 {
 	char		path[MAXPATHLEN];
-	int		pathlen;
+	size_t		pathlen;
 
 	pathlen = normalise(name, size, path, sizeof(path));
 	if (virtdir_find(tp, path, pathlen) != NULL) {
 		/* attempt to add a duplicate directory entry */
 		return 0;
 	}
-	ALLOC(virt_dirent_t, tp->v, tp->size, tp->c, 10, 10, "virtdir_add",
-			return 0);
+	if (tp->c == tp->size || tp->size == 0) {
+		tp->size += 10,
+		tp->v = erealloc(tp->v, tp->size * sizeof(*tp->v));
+	}
 	tp->v[tp->c].namelen = pathlen;
-	if ((tp->v[tp->c].name = strnsave(path, pathlen)) == NULL) {
+	if ((tp->v[tp->c].name = estrndup(path, pathlen)) == NULL) {
 		return 0;
 	}
 	tp->v[tp->c].d_name = strrchr(tp->v[tp->c].name, '/') + 1;
@@ -152,7 +143,7 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, const ch
 	tp->v[tp->c].ino = (ino_t) random() & 0xfffff;
 	tp->v[tp->c].tgtlen = tgtlen;
 	if (tgt != NULL) {
-		tp->v[tp->c].tgt = strnsave(tgt, tgtlen);
+		tp->v[tp->c].tgt = estrndup(tgt, tgtlen);
 	}
 	tp->v[tp->c].select = select;
 	tp->c += 1;
@@ -175,10 +166,10 @@ virtdir_find(virtdir_t *tp, const char *name, size_t namelen)
 }
 
 /* return the virtual offset in the tree */
-int
+off_t
 virtdir_offset(virtdir_t *tp, virt_dirent_t *dp)
 {
-	return (int)(dp - tp->v);
+	return dp - tp->v;
 }
 
 /* analogous to opendir(3) - open a directory, save information, and
@@ -188,8 +179,8 @@ openvirtdir(virtdir_t *tp, const char *d)
 {
 	VIRTDIR	*dirp;
 
-	NEW(VIRTDIR, dirp, "openvirtdir", exit(EXIT_FAILURE));
-	dirp->dirname = strdup(d);
+	dirp = emalloc(sizeof(*dirp));
+	dirp->dirname = estrdup(d);
 	dirp->dirnamelen = strlen(d);
 	dirp->tp = tp;
 	dirp->i = 0;
@@ -205,12 +196,11 @@ readvirtdir(VIRTDIR *dirp)
 
 	for ( ; dirp->i < dirp->tp->c ; dirp->i++) {
 		from = (strcmp(dirp->dirname, "/") == 0) ?
-			&dirp->tp->v[dirp->i].name[1] :
-			&dirp->tp->v[dirp->i].name[dirp->dirnamelen + 1];
+		    &dirp->tp->v[dirp->i].name[1] :
+		    &dirp->tp->v[dirp->i].name[dirp->dirnamelen + 1];
 		if (strncmp(dirp->tp->v[dirp->i].name, dirp->dirname,
-				dirp->dirnamelen) == 0 &&
-		    *from != 0x0 &&
-		    strchr(from, '/') == NULL) {
+		    dirp->dirnamelen) == 0 &&
+		    *from != '\0' && strchr(from, '/') == NULL) {
 			return &dirp->tp->v[dirp->i++];
 		}
 	}
@@ -222,5 +212,5 @@ void
 closevirtdir(VIRTDIR *dirp)
 {
 	free(dirp->dirname);
-	FREE(dirp);
+	free(dirp);
 }
