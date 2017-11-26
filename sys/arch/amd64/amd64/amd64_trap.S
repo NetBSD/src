@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.12 2017/10/17 07:33:44 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.13 2017/11/26 14:54:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.12 2017/10/17 07:33:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.13 2017/11/26 14:54:43 maxv Exp $");
 #endif
 
 /*
@@ -132,21 +132,21 @@ IDTVEC(trap02)
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
 	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
-	jae	noswapgs
+	jae	.Lnoswapgs
 
 	swapgs
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
 	swapgs
-	jmp	nmileave
+	jmp	.Lnmileave
 
-noswapgs:
+.Lnoswapgs:
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 
-nmileave:
+.Lnmileave:
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
 	INTR_RESTORE_GPRS
