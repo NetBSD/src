@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.16 2017/11/21 07:56:05 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.17 2017/11/26 10:21:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -100,6 +100,7 @@ void cpuid(uint32_t, uint32_t, uint32_t *);
 void lidt(void *);
 uint64_t rdtsc(void);
 int rdseed(uint64_t *);
+int rdrand(uint64_t *);
 void jump_kernel(vaddr_t);
 
 /* mm.c */
