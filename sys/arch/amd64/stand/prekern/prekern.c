@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.6 2017/11/17 07:07:52 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.7 2017/11/26 11:01:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -334,6 +334,11 @@ init_prekern(paddr_t pa_start)
 	init_idt();
 
 	print_state(true, "Prekern loaded");
+
+	/*
+	 * Init the PRNG.
+	 */
+	prng_init();
 
 	/*
 	 * Relocate the kernel.
