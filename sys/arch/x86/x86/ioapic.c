@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.54 2017/11/13 11:45:54 nakayama Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.55 2017/11/26 11:37:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.54 2017/11/13 11:45:54 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.55 2017/11/26 11:37:10 maxv Exp $");
 
 #include "opt_ddb.h"
 
@@ -111,8 +111,6 @@ void ioapic_hwunmask(struct pic *, int);
 bool ioapic_trymask(struct pic *, int);
 static void ioapic_addroute(struct pic *, struct cpu_info *, int, int, int);
 static void ioapic_delroute(struct pic *, struct cpu_info *, int, int, int);
-
-int apic_verbose = 0;
 
 struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
