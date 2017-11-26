@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.6 2017/08/22 07:09:00 maya Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.7 2017/11/26 18:41:14 jmcneill Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.6 2017/08/22 07:09:00 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.7 2017/11/26 18:41:14 jmcneill Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -365,6 +365,9 @@ octeon_eth_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities =
 		IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 		IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
+
+	/* 802.1Q VLAN-sized frames are supported */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	octeon_gmx_set_mac_addr(sc->sc_gmx_port, enaddr);
 	octeon_gmx_set_filter(sc->sc_gmx_port);
