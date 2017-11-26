@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.19 2017/11/26 11:01:09 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.20 2017/11/26 14:29:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -71,6 +71,15 @@ mm_init(paddr_t first_pa)
 static void
 mm_enter_pa(paddr_t pa, vaddr_t va, pte_prot_t prot)
 {
+	if (PTE_BASE[pl1_i(va)] & PG_V) {
+		fatal("mm_enter_pa: mapping already present");
+	}
+	PTE_BASE[pl1_i(va)] = pa | PG_V | protection_codes[prot];
+}
+
+static void
+mm_reenter_pa(paddr_t pa, vaddr_t va, pte_prot_t prot)
+{
 	PTE_BASE[pl1_i(va)] = pa | PG_V | protection_codes[prot];
 }
 
@@ -92,7 +101,7 @@ mm_palloc(size_t npages)
 
 	/* Zero them out */
 	for (i = 0; i < npages; i++) {
-		mm_enter_pa(pa + i * PAGE_SIZE, tmpva,
+		mm_reenter_pa(pa + i * PAGE_SIZE, tmpva,
 		    MM_PROT_READ|MM_PROT_WRITE);
 		mm_flush_va(tmpva);
 		memset((void *)tmpva, 0, PAGE_SIZE);
@@ -120,7 +129,7 @@ mm_mprotect(vaddr_t startva, size_t size, pte_prot_t prot)
 	for (i = 0; i < npages; i++) {
 		va = startva + i * PAGE_SIZE;
 		pa = (PTE_BASE[pl1_i(va)] & PG_FRAME);
-		mm_enter_pa(pa, va, prot);
+		mm_reenter_pa(pa, va, prot);
 		mm_flush_va(va);
 	}
 }
@@ -224,6 +233,10 @@ mm_randva_kregion(size_t size, size_t pagesz)
 				break;
 			}
 			if ((sva < randva + size) && (randva + size <= eva)) {
+				ok = false;
+				break;
+			}
+			if (randva < sva && eva < (randva + size)) {
 				ok = false;
 				break;
 			}
