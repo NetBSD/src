@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.25 2017/09/28 17:48:20 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.26 2017/11/26 14:54:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -145,9 +145,9 @@ _TRMP_LABEL(mp_startup)
 	movl	$SMP_DATA_LARGE,%ecx
 	movl	(%ecx),%ecx
 	orl	%ecx,%ecx
-	jz	no_PSE
+	jz	.Lno_PSE
 	orl	$CR4_PSE,%eax
-no_PSE:
+.Lno_PSE:
 	movl	%eax,%cr4
 
 	/*
@@ -161,9 +161,9 @@ no_PSE:
 	movl	$SMP_DATA_NOX,%ebx
 	movl	(%ebx),%ebx
 	cmpl	$0,%ebx
-	je 	no_NOX
+	je 	.Lno_NOX
 	orl	$(EFER_NXE),%eax
-no_NOX:
+.Lno_NOX:
 	wrmsr
 
 	/* Load %cr3. */
@@ -176,8 +176,8 @@ no_NOX:
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
 
-	jmp	mptramp_compat
-mptramp_compat:
+	jmp	.Lmptramp_compat
+.Lmptramp_compat:
 
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	/* switch to new segment */
 	movl	%eax,%ds
