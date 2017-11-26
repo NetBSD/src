@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.142 2017/11/26 14:54:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.143 2017/11/26 15:00:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1197,7 +1197,7 @@ ENTRY(cpu_switchto)
 	movq	PCB_GS(%r14),%rax
 	movq	%rax,(GUGS_SEL*8)(%rcx)
 
-	/* Set default 32bit values in %ds, %es and %fs. %gs is special. */
+	/* Set default 32bit values in %ds, %es, %fs and %gs. */
 	movq	L_MD_REGS(%r12),%rbx
 	movq	$GSEL(GUDATA32_SEL, SEL_UPL),%rax
 	movw	%ax,%ds
@@ -1474,7 +1474,7 @@ END(pagezero)
 
 ENTRY(intrfastexit)
 	INTR_RESTORE_GPRS
-	testq	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
+	testw	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
 	jz	.Lkexit
 	cmpw	$LSEL(LUCODE_SEL, SEL_UPL),TF_CS(%rsp)
 	je	.Luexit64
