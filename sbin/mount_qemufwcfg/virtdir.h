@@ -1,4 +1,4 @@
-/* $NetBSD: virtdir.h,v 1.2 2017/11/26 03:06:24 christos Exp $ */
+/* $NetBSD: virtdir.h,v 1.3 2017/11/26 03:51:45 christos Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -66,14 +66,16 @@ typedef struct VIRTDIR {
 	size_t		 i;		/* current offset in dir tree */
 } VIRTDIR;
 
-int virtdir_init(virtdir_t *, const char *, struct stat *, struct stat *, struct stat *);
-int virtdir_add(virtdir_t *, const char *, size_t, uint8_t, const char *, size_t, uint16_t);
+int virtdir_init(virtdir_t *, const char *, const struct stat *,
+    const struct stat *, const struct stat *);
+int virtdir_add(virtdir_t *, const char *, size_t, uint8_t, const char *,
+    size_t, uint16_t);
 virt_dirent_t *virtdir_find(virtdir_t *, const char *, size_t);
 
 VIRTDIR *openvirtdir(virtdir_t *, const char *);
 virt_dirent_t *readvirtdir(VIRTDIR *);
 void closevirtdir(VIRTDIR *);
 
-off_t virtdir_offset(virtdir_t *, virt_dirent_t *);
+off_t virtdir_offset(const virtdir_t *, const virt_dirent_t *);
 
 #endif
