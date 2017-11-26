@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.141 2017/11/21 09:58:09 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.142 2017/11/26 14:54:43 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -450,7 +450,7 @@ ENTRY(start)
 	/* Load 'bootinfo' */
 	movl	12(%esp),%eax
 	testl	%eax,%eax		/* bootinfo = NULL? */
-	jz	bootinfo_finished
+	jz	.Lbootinfo_finished
 
 	movl	(%eax),%ebx		/* bootinfo::bi_nentries */
 	movl	$RELOC(bootinfo),%ebp
@@ -459,9 +459,9 @@ ENTRY(start)
 	movl	%ebx,(%edx)
 	addl	$4,%edx
 
-bootinfo_entryloop:
+.Lbootinfo_entryloop:
 	testl	%ebx,%ebx		/* no remaining entries? */
-	jz	bootinfo_finished
+	jz	.Lbootinfo_finished
 
 	addl	$4,%eax
 	movl	(%eax),%ecx		/* address of entry */
@@ -473,7 +473,7 @@ bootinfo_entryloop:
 	movl	%edx,%edi
 	addl	%eax,%edx		/* update dest pointer */
 	cmpl	%ebp,%edx		/* beyond bootinfo+BOOTINFO_MAXSIZE? */
-	jg	bootinfo_overflow
+	jg	.Lbootinfo_overflow
 
 	movl	%ecx,%esi
 	movl	%eax,%ecx
@@ -483,34 +483,34 @@ bootinfo_entryloop:
 	 * later to compute the initial bootstrap tables.
 	 */
 	cmpl	$BTINFO_MODULELIST,4(%esi) /* btinfo_common::type */
-	jne	bootinfo_copy
+	jne	.Lbootinfo_copy
 
 	/* Skip the modules if we won't have enough VA to map them */
 	movl	12(%esi),%eax		/* btinfo_modulelist::endpa */
 	addl	$PGOFSET,%eax		/* roundup to a page */
 	andl	$~PGOFSET,%eax
 	cmpl	$BOOTMAP_VA_SIZE,%eax
-	jg	bootinfo_skip
+	jg	.Lbootinfo_skip
 	movl	%eax,RELOC(eblob)
 	addl	$KERNBASE_LO,RELOC(eblob)
 	adcl	$KERNBASE_HI,RELOC(eblob)+4
 
-bootinfo_copy:
+.Lbootinfo_copy:
 	rep
 	movsb				/* copy esi -> edi */
-	jmp	bootinfo_next
+	jmp	.Lbootinfo_next
 
-bootinfo_skip:
+.Lbootinfo_skip:
 	subl	%ecx,%edx		/* revert dest pointer */
 
-bootinfo_next:
+.Lbootinfo_next:
 	popl	%eax
 	popl	%esi
 	popl	%edi
 	subl	$1,%ebx			/* decrement the # of entries */
-	jmp	bootinfo_entryloop
+	jmp	.Lbootinfo_entryloop
 
-bootinfo_overflow:
+.Lbootinfo_overflow:
 	/*
 	 * Cleanup for overflow case. Pop the registers, and correct the number
 	 * of entries.
@@ -521,7 +521,7 @@ bootinfo_overflow:
 	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp,%edx
 	subl	%ebx,(%edx)		/* correct the number of entries */
-bootinfo_finished:
+.Lbootinfo_finished:
 
 	/* Load 'esym' */
 	movl	16(%esp),%eax
@@ -539,22 +539,22 @@ bootinfo_finished:
 	movl	$RELOC(biosextmem),%ebp
 	movl	(%ebp),%eax
 	testl	%eax,%eax		/* already set? */
-	jnz	biosextmem_finished
+	jnz	.Lbiosextmem_finished
 
 	movl	20(%esp),%eax
 	movl	%eax,(%ebp)
 
-biosextmem_finished:
+.Lbiosextmem_finished:
 	/* Load 'biosbasemem' */
 	movl	$RELOC(biosbasemem),%ebp
 	movl	(%ebp),%eax
 	testl	%eax,%eax		/* already set? */
-	jnz	biosbasemem_finished
+	jnz	.Lbiosbasemem_finished
 
 	movl	24(%esp),%eax
 	movl	%eax,(%ebp)
 
-biosbasemem_finished:
+.Lbiosbasemem_finished:
 	/*
 	 * Done with the parameters!
 	 */
@@ -588,9 +588,9 @@ biosbasemem_finished:
 	movl	$0x80000001,%eax
 	cpuid
 	andl	$CPUID_NOX,%edx
-	jz	no_NOX
+	jz	.Lno_NOX
 	movl	$PG_NX32,RELOC(nox_flag)
-no_NOX:
+.Lno_NOX:
 
 /*
  * There are four levels of pages in amd64: PML4 -> PDP -> PD -> PT. They will
@@ -795,9 +795,9 @@ no_NOX:
 	orl	$(EFER_LME|EFER_SCE),%eax
 	movl	RELOC(nox_flag),%ebx
 	cmpl	$0,%ebx
-	je 	skip_NOX
+	je 	.Lskip_NOX
 	orl	$(EFER_NXE),%eax
-skip_NOX:
+.Lskip_NOX:
 	wrmsr
 
 	/*
@@ -1080,13 +1080,13 @@ ENTRY(cpu_switchto)
 	movq	%rsi,%r12	/* newlwp */
 
 	testq	%r13,%r13	/* oldlwp = NULL ? */
-	jz	skip_save
+	jz	.Lskip_save
 
 	/* Save old context. */
 	movq	L_PCB(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
-skip_save:
+.Lskip_save:
 
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
@@ -1102,7 +1102,7 @@ skip_save:
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl		/* returning = true ? */
-	jnz	switch_return
+	jnz	.Lswitch_return
 
 	/* Switch ring0 stack */
 #ifndef XEN
@@ -1115,21 +1115,21 @@ skip_save:
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
-	jnz	switch_return
+	jnz	.Lswitch_return
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movq	L_PROC(%r12),%rdi
 	cmpq	$0,P_RASLIST(%rdi)
-	je	no_RAS
+	je	.Lno_RAS
 
 	/* Handle restartable atomic sequences (RAS). */
 	movq	L_MD_REGS(%r12),%rbx
 	movq	TF_RIP(%rbx),%rsi
 	call	_C_LABEL(ras_lookup)
 	cmpq	$-1,%rax
-	je	no_RAS
+	je	.Lno_RAS
 	movq	%rax,TF_RIP(%rbx)
-no_RAS:
+.Lno_RAS:
 
 	/*
 	 * Restore cr0 including FPU state (may have CR0_TS set).  Note that
@@ -1145,21 +1145,21 @@ no_RAS:
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	cmpq	CPUVAR(FPCURLWP),%r12
-	je	skip_TS
+	je	.Lskip_TS
 	orq	$CR0_TS,%rcx
-skip_TS:
+.Lskip_TS:
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
 	cmpq	%rdx,%rcx
-	je	skip_CR0
+	je	.Lskip_CR0
 	movq	%rcx,%cr0
-skip_CR0:
+.Lskip_CR0:
 
 	/* The 32bit LWPs are handled differently. */
 	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
-	jnz	lwp_32bit
+	jnz	.Llwp_32bit
 
-lwp_64bit:
+.Llwp_64bit:
 	/* Set default 64bit values in %ds, %es, %fs and %gs. */
 	movq	$GSEL(GUDATA_SEL, SEL_UPL),%rax
 	movw	%ax,%ds
@@ -1187,9 +1187,9 @@ lwp_64bit:
 	movl	4+PCB_GS(%r14),%edx
 	wrmsr
 
-	jmp	switch_return
+	jmp	.Lswitch_return
 
-lwp_32bit:
+.Llwp_32bit:
 	/* Reload %fs/%gs GDT descriptors. */
 	movq	CPUVAR(GDT),%rcx
 	movq	PCB_FS(%r14),%rax
@@ -1213,7 +1213,7 @@ lwp_32bit:
 	callq	_C_LABEL(x86_64_tls_switch)
 #endif
 
-switch_return:
+.Lswitch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
 	movq	%r13,%rax
 	popq	%r15
@@ -1294,7 +1294,7 @@ IDTVEC(syscall)
 	movw	$0,TF_GS(%rsp)
 	STI(si)
 
-do_syscall:
+.Ldo_syscall:
 	movq	CPUVAR(CURLWP),%r14
 	incq	CPUVAR(NSYSCALL)	/* count it atomically */
 	movq	%rsp,L_MD_REGS(%r14)	/* save pointer to frame */
@@ -1316,7 +1316,7 @@ do_syscall:
 
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
-	jne	spl_error
+	jne	.Lspl_error
 #endif
 
 	/*
@@ -1346,7 +1346,7 @@ do_sysret:
 
 #ifdef DIAGNOSTIC
 	/* Report SPL error */
-spl_error:
+.Lspl_error:
 	movabsq	$4f,%rdi
 	movl	TF_RAX(%rsp),%esi
 	movl	TF_RDI(%rsp),%edx
@@ -1408,7 +1408,7 @@ IDTVEC(osyscall)
 	pushq	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
 	STI(si)
-	jmp	do_syscall
+	jmp	.Ldo_syscall
 IDTVEC_END(osyscall)
 
 /*
