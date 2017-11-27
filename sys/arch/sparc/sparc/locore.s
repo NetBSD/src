@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.268 2012/11/04 00:32:47 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.268.30.1 2017/11/27 10:31:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6288,8 +6288,9 @@ ENTRY(longjmp)
 	cmp	%fp, %g7	! compare against desired frame
 	bl,a	1b		! if below,
 	 restore		!    pop frame and loop
-	be,a	2f		! if there,
-	 ldd	[%g1+0], %o2	!    fetch return %sp and pc, and get out
+	ld	[%g1+0], %o2	! fetch return %sp
+	be,a	2f		! we're there, get out
+	 ld	[%g1+4], %o3	! fetch return pc
 
 Llongjmpbotch:
 				! otherwise, went too far; bomb out
