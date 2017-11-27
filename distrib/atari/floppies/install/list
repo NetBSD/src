@@ -1,8 +1,8 @@
-#	$NetBSD: list,v 1.20 2017/02/08 16:12:59 rin Exp $
+#	$NetBSD: list,v 1.20.4.1 2017/11/27 11:31:52 martin Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
-#PROG	bin/cp
+PROG	bin/cp
 PROG	bin/dd
 PROG	bin/df
 PROG	bin/ln
@@ -31,7 +31,7 @@ PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/route
-#PROG	sbin/sysctl
+PROG	sbin/sysctl
 PROG	sbin/umount
 
 PROG	usr/bin/ftp
