@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.73 2017/04/23 01:58:48 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.74 2017/11/27 16:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.73 2017/04/23 01:58:48 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.74 2017/11/27 16:37:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -432,10 +432,10 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	mdst = NULL;
 	if ((psrc = calloc(mbslength + 1, sizeof(*psrc))) == NULL)
 		return -1;
-	if ((pdst = calloc((4 * mbslength) + 1, sizeof(*pdst))) == NULL)
+	if ((pdst = calloc((16 * mbslength) + 1, sizeof(*pdst))) == NULL)
 		goto out;
 	if (*mbdstp == NULL) {
-		if ((mdst = calloc((4 * mbslength) + 1, sizeof(*mdst))) == NULL)
+		if ((mdst = calloc((16 * mbslength) + 1, sizeof(*mdst))) == NULL)
 			goto out;
 		*mbdstp = mdst;
 	}
@@ -468,12 +468,13 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 			clen = 1;
 			cerr = 1;
 		}
-		if (clen == 0)
+		if (clen == 0) {
 			/*
 			 * NUL in input gives 0 return value. process
 			 * as single NUL byte and keep going.
 			 */
 			clen = 1;
+		}
 		/* Advance buffer character pointer. */
 		src++;
 		/* Advance input pointer by number of bytes read. */
