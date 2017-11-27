@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.3 2016/08/01 19:05:24 jakllsch Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.4 2017/11/27 07:44:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.3 2016/08/01 19:05:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.4 2017/11/27 07:44:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ armv7_generic_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
 {
 
 	*nbshp = bsh + offset;
-	return (0);
+	return 0;
 }
 
 int
@@ -357,7 +357,7 @@ armv7_generic_a4x_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offse
 {
 
 	*nbshp = bsh + 4 * offset;
-	return (0);
+	return 0;
 }
 
 void
@@ -385,7 +385,7 @@ armv7_generic_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
 		bus_flags |= ARM32_MMAP_WRITECOMBINE;
 
-	return (arm_btop(bpa + offset) | bus_flags);
+	return arm_btop(bpa + offset) | bus_flags;
 }
 
 paddr_t
@@ -396,7 +396,7 @@ armv7_generic_a4x_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int f
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
 		bus_flags |= ARM32_MMAP_WRITECOMBINE;
 
-	return (arm_btop(bpa + 4 * offset) | bus_flags);
+	return arm_btop(bpa + 4 * offset) | bus_flags;
 }
 
 int
