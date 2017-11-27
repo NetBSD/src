@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.95 2017/11/24 23:42:36 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.96 2017/11/27 00:25:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.95 2017/11/24 23:42:36 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.96 2017/11/27 00:25:46 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1959,8 +1959,11 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 						continue;
 					}
 					j->i_active = active = state;
-					if (p != NULL)
-						p->p_active = state;
+					if (p != NULL) {
+						if (state == DEVI_ACTIVE ||
+						    --p->p_ref == 0)
+							p->p_active = state;
+					}
 					if (state == DEVI_IGNORED) {
 						CFGDBG(5,
 						    "`%s' at '%s' ignored",

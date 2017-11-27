@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.101 2017/11/18 18:44:20 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.102 2017/11/27 00:25:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -234,9 +234,9 @@ struct pspec {
 	struct	devbase *p_atdev;	/* optional parent device base */
 	int	p_atunit;		/* optional parent device unit */
 	struct	nvlist *p_devs;		/* children using it */
-	struct	deva *p_deva;		/* attribute */
 	int	p_inst;			/* parent spec instance */
 	int	p_active;		/* parent spec is actively used */
+	int	p_ref;			/* refcount */
 };
 
 /*
