@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.81 2017/11/24 18:45:59 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.82 2017/11/27 00:25:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.81 2017/11/24 18:45:59 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.82 2017/11/27 00:25:46 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -79,8 +79,7 @@ static int has_errobj(struct attrlist *, struct attr *);
 static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
 static int resolve(struct nvlist **, const char *, const char *,
 		   struct nvlist *, int);
-static struct pspec *getpspec(struct attr *, struct devbase *, int,
-    struct deva *);
+static struct pspec *getpspec(struct attr *, struct devbase *, int, int);
 static struct devi *newdevi(const char *, int, struct devbase *d);
 static struct devi *getdevi(const char *);
 static void remove_devi(struct devi *);
@@ -1296,7 +1295,7 @@ adddev(const char *name, const char *at, struct loclist *loclist, int flags)
 			 * XXX: This creates multiple pspecs that look the
 			 * same in the config file and could be merged.
 			 */
-			p = getpspec(attr, ab, atunit, iba);
+			p = getpspec(attr, ab, atunit, first);
 			p->p_devs = newnv(NULL, NULL, i, 0, p->p_devs);
 		} else
 			p = NULL;
@@ -1907,17 +1906,23 @@ fixdevis(void)
  * Look up a parent spec, creating a new one if it does not exist.
  */
 static struct pspec *
-getpspec(struct attr *attr, struct devbase *ab, int atunit, struct deva *da)
+getpspec(struct attr *attr, struct devbase *ab, int atunit, int first)
 {
 	struct pspec *p;
 	int inst = npspecs;
+	int ref = 1;
 
 	TAILQ_FOREACH(p, &allpspecs, p_list) {
 		if (p->p_iattr == attr && p->p_atdev == ab &&
 		    p->p_atunit == atunit) {
-			if (p->p_deva == da)
-				return (p);
-		   	inst = p->p_inst; 
+			p->p_ref++;
+			if (first)
+				return p;
+			else {
+				inst = p->p_inst;
+				ref = p->p_ref;
+			}
+				
 		}
 	}
 
@@ -1929,8 +1934,8 @@ getpspec(struct attr *attr, struct devbase *ab, int atunit, struct deva *da)
 	p->p_inst = inst;
 	if (inst == npspecs)
 		npspecs++;
-	p->p_deva = da;
 	p->p_active = 0;
+	p->p_ref = ref;
 
 	TAILQ_INSERT_TAIL(&allpspecs, p, p_list);
 
