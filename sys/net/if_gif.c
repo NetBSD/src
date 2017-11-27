@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.132 2017/11/16 03:07:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.133 2017/11/27 05:02:22 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.132 2017/11/16 03:07:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.133 2017/11/27 05:02:22 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -57,6 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.132 2017/11/16 03:07:18 ozaki-r Exp $")
 #include <sys/xcall.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
+#include <sys/pserialize.h>
+#include <sys/psref.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -102,6 +105,9 @@ static struct {
 	kmutex_t lock;
 } gif_softcs __cacheline_aligned;
 
+pserialize_t gif_psz __read_mostly;
+struct psref_class *gv_psref_class __read_mostly;
+
 static void	gif_ro_init_pc(void *, void *, struct cpu_info *);
 static void	gif_ro_fini_pc(void *, void *, struct cpu_info *);
 
@@ -110,6 +116,7 @@ static int	gif_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, const struct rtentry *);
 static void	gif_start(struct ifnet *);
 static int	gif_transmit(struct ifnet *, struct mbuf *);
+static int	gif_transmit_direct(struct gif_variant *, struct mbuf *);
 static int	gif_ioctl(struct ifnet *, u_long, void *);
 static int	gif_set_tunnel(struct ifnet *, struct sockaddr *,
 			       struct sockaddr *);
@@ -119,9 +126,10 @@ static int	gif_clone_create(struct if_clone *, int);
 static int	gif_clone_destroy(struct ifnet *);
 static int	gif_check_nesting(struct ifnet *, struct mbuf *);
 
-static int	gif_encap_attach(struct gif_softc *);
-static int	gif_encap_detach(struct gif_softc *);
-static void	gif_encap_pause(struct gif_softc *);
+static int	gif_encap_attach(struct gif_variant *);
+static int	gif_encap_detach(struct gif_variant *);
+
+static void	gif_update_variant(struct gif_softc *, struct gif_variant *);
 
 static struct if_clone gif_cloner =
     IF_CLONE_INITIALIZER("gif", gif_clone_create, gif_clone_destroy);
@@ -216,6 +224,9 @@ gifinit(void)
 	LIST_INIT(&gif_softcs.list);
 	if_clone_attach(&gif_cloner);
 
+	gif_psz = pserialize_create();
+	gv_psref_class = psref_class_create("gifvar", IPL_SOFTNET);
+
 	gif_sysctl_setup();
 }
 
@@ -231,6 +242,9 @@ gifdetach(void)
 	}
 
 	if (error == 0) {
+		psref_class_destroy(gv_psref_class);
+		pserialize_destroy(gif_psz);
+
 		if_clone_detach(&gif_cloner);
 		sysctl_teardown(&gif_sysctl);
 	}
@@ -242,6 +256,7 @@ static int
 gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
+	struct gif_variant *var;
 	int rv;
 
 	sc = kmem_zalloc(sizeof(struct gif_softc), KM_SLEEP);
@@ -254,6 +269,12 @@ gif_clone_create(struct if_clone *ifc, int unit)
 		return rv;
 	}
 
+	var = kmem_zalloc(sizeof(*var), KM_SLEEP);
+	var->gv_softc = sc;
+	psref_target_init(&var->gv_psref, gv_psref_class);
+
+	sc->gif_var = var;
+	mutex_init(&sc->gif_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->gif_ro_percpu = percpu_alloc(sizeof(struct gif_ro));
 	percpu_foreach(sc->gif_ro_percpu, gif_ro_init_pc, NULL);
 
@@ -267,8 +288,6 @@ static int
 gifattach0(struct gif_softc *sc)
 {
 	int rv;
-
-	sc->encap_cookie4 = sc->encap_cookie6 = NULL;
 
 	sc->gif_if.if_addrlen = 0;
 	sc->gif_if.if_mtu    = GIF_MTU;
@@ -325,6 +344,7 @@ static int
 gif_clone_destroy(struct ifnet *ifp)
 {
 	struct gif_softc *sc = (void *) ifp;
+	struct gif_variant *var;
 
 	LIST_REMOVE(sc, gif_list);
 
@@ -335,6 +355,10 @@ gif_clone_destroy(struct ifnet *ifp)
 	percpu_foreach(sc->gif_ro_percpu, gif_ro_fini_pc, NULL);
 	percpu_free(sc->gif_ro_percpu, sizeof(struct gif_ro));
 
+	mutex_destroy(&sc->gif_lock);
+
+	var = sc->gif_var;
+	kmem_free(var, sizeof(*var));
 	kmem_free(sc, sizeof(struct gif_softc));
 
 	return 0;
@@ -346,6 +370,9 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct gif_softc *sc;
+	struct gif_variant *var;
+	struct psref psref;
+	int ret = 0;
 
 	sc = arg;
 	if (sc == NULL)
@@ -355,9 +382,13 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	    != (IFF_UP|IFF_RUNNING))
 		return 0;
 
+	var = gif_getref_variant(sc, &psref);
+	if (var->gv_psrc == NULL || var->gv_pdst == NULL)
+		goto out;
+
 	/* no physical address */
-	if (!sc->gif_psrc || !sc->gif_pdst)
-		return 0;
+	if (!var->gv_psrc || !var->gv_pdst)
+		goto out;
 
 	switch (proto) {
 #ifdef INET
@@ -369,36 +400,42 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 		break;
 #endif
 	default:
-		return 0;
+		goto out;
 	}
 
 	/* Bail on short packets */
 	KASSERT(m->m_flags & M_PKTHDR);
 	if (m->m_pkthdr.len < sizeof(ip))
-		return 0;
+		goto  out;
 
 	m_copydata(m, 0, sizeof(ip), &ip);
 
 	switch (ip.ip_v) {
 #ifdef INET
 	case 4:
-		if (sc->gif_psrc->sa_family != AF_INET ||
-		    sc->gif_pdst->sa_family != AF_INET)
-			return 0;
-		return gif_encapcheck4(m, off, proto, arg);
+		if (var->gv_psrc->sa_family != AF_INET ||
+		    var->gv_pdst->sa_family != AF_INET)
+			goto out;
+		ret = gif_encapcheck4(m, off, proto, var);
+		break;
 #endif
 #ifdef INET6
 	case 6:
 		if (m->m_pkthdr.len < sizeof(struct ip6_hdr))
-			return 0;
-		if (sc->gif_psrc->sa_family != AF_INET6 ||
-		    sc->gif_pdst->sa_family != AF_INET6)
-			return 0;
-		return gif_encapcheck6(m, off, proto, arg);
+			goto out;
+		if (var->gv_psrc->sa_family != AF_INET6 ||
+		    var->gv_pdst->sa_family != AF_INET6)
+			goto out;
+		ret = gif_encapcheck6(m, off, proto, var);
+		break;
 #endif
 	default:
-		return 0;
+		goto out;
 	}
+
+out:
+	gif_putref_variant(var, &psref);
+	return ret;
 }
 #endif
 
@@ -444,6 +481,8 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     const struct rtentry *rt)
 {
 	struct gif_softc *sc = ifp->if_softc;
+	struct gif_variant *var = NULL;
+	struct psref psref;
 	int error = 0;
 
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
@@ -453,15 +492,21 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto end;
 	}
 
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-	if (((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) ||
-	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
 	}
 
+	var = gif_getref_variant(sc, &psref);
+	if (var->gv_psrc == NULL || var->gv_pdst == NULL) {
+		m_freem(m);
+		error = ENETDOWN;
+		goto end;
+	}
 	/* XXX should we check if our outer source is legal? */
+
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	/* use DLT_NULL encapsulation here to pass inner af type */
 	M_PREPEND(m, sizeof(int), M_DONTWAIT);
@@ -475,8 +520,10 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
 
-	error = if_transmit_lock(ifp, m);
-  end:
+	error = gif_transmit_direct(var, m);
+end:
+	if (var != NULL)
+		gif_putref_variant(var, &psref);
 	if (error)
 		ifp->if_oerrors++;
 	return error;
@@ -486,12 +533,17 @@ static void
 gif_start(struct ifnet *ifp)
 {
 	struct gif_softc *sc;
+	struct gif_variant *var;
 	struct mbuf *m;
+	struct psref psref;
 	int family;
 	int len;
 	int error;
 
 	sc = ifp->if_softc;
+	var = gif_getref_variant(sc, &psref);
+
+	KASSERT(var->gv_output != NULL);
 
 	/* output processing */
 	while (1) {
@@ -513,33 +565,7 @@ gif_start(struct ifnet *ifp)
 
 		len = m->m_pkthdr.len;
 
-		/* dispatch to output logic based on outer AF */
-		switch (sc->gif_psrc->sa_family) {
-#ifdef INET
-		case AF_INET:
-			/* XXX
-			 * To add mutex_enter(softnet_lock) or
-			 * KASSERT(mutex_owned(softnet_lock)) here, we shold
-			 * coordinate softnet_lock between in6_if_up() and
-			 * in6_purgeif().
-			 */
-			error = in_gif_output(ifp, family, m);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			/* XXX
-			 * the same as in_gif_output()
-			 */
-			error = in6_gif_output(ifp, family, m);
-			break;
-#endif
-		default:
-			m_freem(m);
-			error = ENETDOWN;
-			break;
-		}
-
+		error = var->gv_output(var, family, m);
 		if (error)
 			ifp->if_oerrors++;
 		else {
@@ -547,14 +573,16 @@ gif_start(struct ifnet *ifp)
 			ifp->if_obytes += len;
 		}
 	}
+
+	gif_putref_variant(var, &psref);
 }
 
 static int
 gif_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	struct gif_softc *sc;
-	int family;
-	int len;
+	struct gif_variant *var;
+	struct psref psref;
 	int error;
 
 	sc = ifp->if_softc;
@@ -562,6 +590,24 @@ gif_transmit(struct ifnet *ifp, struct mbuf *m)
 	/* output processing */
 	if (m == NULL)
 		return EINVAL;
+
+	var = gif_getref_variant(sc, &psref);
+	error = gif_transmit_direct(var, m);
+	gif_putref_variant(var, &psref);
+
+	return error;
+}
+
+static int
+gif_transmit_direct(struct gif_variant *var, struct mbuf *m)
+{
+	struct ifnet *ifp = &var->gv_softc->gif_if;
+	int error;
+	int family;
+	int len;
+
+	KASSERT(gif_heldref_variant(var));
+	KASSERT(var->gv_output != NULL);
 
 	/* grab and chop off inner af type */
 	if (sizeof(int) > m->m_len) {
@@ -577,33 +623,7 @@ gif_transmit(struct ifnet *ifp, struct mbuf *m)
 
 	len = m->m_pkthdr.len;
 
-	/* dispatch to output logic based on outer AF */
-	switch (sc->gif_psrc->sa_family) {
-#ifdef INET
-	case AF_INET:
-		/* XXX
-		 * To add mutex_enter(softnet_lock) or
-		 * KASSERT(mutex_owned(softnet_lock)) here, we shold
-		 * coordinate softnet_lock between in6_if_up() and
-		 * in6_purgeif().
-		 */
-		error = in_gif_output(ifp, family, m);
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		/* XXX
-		 * the same as in_gif_output()
-		 */
-		error = in6_gif_output(ifp, family, m);
-		break;
-#endif
-	default:
-		m_freem(m);
-		error = ENETDOWN;
-		break;
-	}
-
+	error = var->gv_output(var, family, m);
 	if (error)
 		ifp->if_oerrors++;
 	else {
@@ -673,8 +693,10 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct gif_softc *sc  = ifp->if_softc;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	struct ifaddr    *ifa = (struct ifaddr*)data;
-	int error = 0, size;
+	int error = 0, size, bound;
 	struct sockaddr *dst, *src;
+	struct gif_variant *var;
+	struct psref psref;
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
@@ -794,13 +816,20 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* checks done in the above */
 			break;
 		}
-
+		/*
+		 * calls gif_getref_variant() for other softcs to check
+		 * address pair duplicattion
+		 */
+		bound = curlwp_bind();
 		error = gif_set_tunnel(&sc->gif_if, src, dst);
+		curlwp_bindx(bound);
 		break;
 
 #ifdef SIOCDIFPHYADDR
 	case SIOCDIFPHYADDR:
+		bound = curlwp_bind();
 		gif_delete_tunnel(&sc->gif_if);
+		curlwp_bindx(bound);
 		break;
 #endif
 
@@ -808,11 +837,15 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef INET6
 	case SIOCGIFPSRCADDR_IN6:
 #endif /* INET6 */
-		if (sc->gif_psrc == NULL) {
+		bound = curlwp_bind();
+		var = gif_getref_variant(sc, &psref);
+		if (var->gv_psrc == NULL) {
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		src = sc->gif_psrc;
+		src = var->gv_psrc;
 		switch (cmd) {
 #ifdef INET
 		case SIOCGIFPSRCADDR:
@@ -828,23 +861,34 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 #endif /* INET6 */
 		default:
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		if (src->sa_len > size)
+		if (src->sa_len > size) {
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			return EINVAL;
+		}
 		memcpy(dst, src, src->sa_len);
+		gif_putref_variant(var, &psref);
+		curlwp_bindx(bound);
 		break;
 
 	case SIOCGIFPDSTADDR:
 #ifdef INET6
 	case SIOCGIFPDSTADDR_IN6:
 #endif /* INET6 */
-		if (sc->gif_pdst == NULL) {
+		bound = curlwp_bind();
+		var = gif_getref_variant(sc, &psref);
+		if (var->gv_pdst == NULL) {
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		src = sc->gif_pdst;
+		src = var->gv_pdst;
 		switch (cmd) {
 #ifdef INET
 		case SIOCGIFPDSTADDR:
@@ -860,37 +904,56 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 #endif /* INET6 */
 		default:
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		if (src->sa_len > size)
+		if (src->sa_len > size) {
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			return EINVAL;
+		}
 		memcpy(dst, src, src->sa_len);
+		gif_putref_variant(var, &psref);
+		curlwp_bindx(bound);
 		break;
 
 	case SIOCGLIFPHYADDR:
-		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+		bound = curlwp_bind();
+		var = gif_getref_variant(sc, &psref);
+		if (var->gv_psrc == NULL || var->gv_pdst == NULL) {
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
 
 		/* copy src */
-		src = sc->gif_psrc;
+		src = var->gv_psrc;
 		dst = (struct sockaddr *)
 			&(((struct if_laddrreq *)data)->addr);
 		size = sizeof(((struct if_laddrreq *)data)->addr);
-		if (src->sa_len > size)
+		if (src->sa_len > size) {
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			return EINVAL;
+		}
 		memcpy(dst, src, src->sa_len);
 
 		/* copy dst */
-		src = sc->gif_pdst;
+		src = var->gv_pdst;
 		dst = (struct sockaddr *)
 			&(((struct if_laddrreq *)data)->dstaddr);
 		size = sizeof(((struct if_laddrreq *)data)->dstaddr);
-		if (src->sa_len > size)
+		if (src->sa_len > size) {
+			gif_putref_variant(var, &psref);
+			curlwp_bindx(bound);
 			return EINVAL;
+		}
 		memcpy(dst, src, src->sa_len);
+		gif_putref_variant(var, &psref);
+		curlwp_bindx(bound);
 		break;
 
 	default:
@@ -901,22 +964,22 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 static int
-gif_encap_attach(struct gif_softc *sc)
+gif_encap_attach(struct gif_variant *var)
 {
 	int error;
 
-	if (sc == NULL || sc->gif_psrc == NULL)
+	if (var == NULL || var->gv_psrc == NULL)
 		return EINVAL;
 
-	switch (sc->gif_psrc->sa_family) {
+	switch (var->gv_psrc->sa_family) {
 #ifdef INET
 	case AF_INET:
-		error = in_gif_attach(sc);
+		error = in_gif_attach(var);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = in6_gif_attach(sc);
+		error = in6_gif_attach(var);
 		break;
 #endif
 	default:
@@ -928,22 +991,22 @@ gif_encap_attach(struct gif_softc *sc)
 }
 
 static int
-gif_encap_detach(struct gif_softc *sc)
+gif_encap_detach(struct gif_variant *var)
 {
 	int error;
 
-	if (sc == NULL || sc->gif_psrc == NULL)
+	if (var == NULL || var->gv_psrc == NULL)
 		return EINVAL;
 
-	switch (sc->gif_psrc->sa_family) {
+	switch (var->gv_psrc->sa_family) {
 #ifdef INET
 	case AF_INET:
-		error = in_gif_detach(sc);
+		error = in_gif_detach(var);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = in6_gif_detach(sc);
+		error = in6_gif_detach(var);
 		break;
 #endif
 	default:
@@ -952,45 +1015,6 @@ gif_encap_detach(struct gif_softc *sc)
 	}
 
 	return error;
-}
-
-static void
-gif_encap_pause(struct gif_softc *sc)
-{
-	struct ifnet *ifp;
-	uint64_t where;
-
-	if (sc == NULL || sc->gif_psrc == NULL)
-		return;
-
-	ifp = &sc->gif_if;
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
-
-	switch (sc->gif_psrc->sa_family) {
-#ifdef INET
-	case AF_INET:
-		(void)in_gif_pause(sc);
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		(void)in6_gif_pause(sc);
-		break;
-#endif
-	}
-
-	ifp->if_flags &= ~IFF_RUNNING;
-	/* membar_sync() is done in xc_broadcast(). */
-
-	/*
-	 * Wait for softint_execute()(ipintr() or ip6intr())
-	 * completion done by other CPUs which already run over if_flags
-	 * check in in_gif_input() or in6_gif_input().
-	 * Furthermore, wait for gif_output() completion too.
-	 */
-	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(where);
 }
 
 static int
@@ -998,6 +1022,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 {
 	struct gif_softc *sc = ifp->if_softc;
 	struct gif_softc *sc2;
+	struct gif_variant *ovar, *nvar;
 	struct sockaddr *osrc, *odst;
 	struct sockaddr *nsrc, *ndst;
 	int error;
@@ -1014,78 +1039,84 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		return error;
 	}
 
+	nsrc = sockaddr_dup(src, M_WAITOK);
+	ndst = sockaddr_dup(dst, M_WAITOK);
+	nvar = kmem_alloc(sizeof(*nvar), KM_SLEEP);
+
+	mutex_enter(&sc->gif_lock);
+
+	ovar = sc->gif_var;
+
+	if ((ovar->gv_pdst && sockaddr_cmp(ovar->gv_pdst, dst) == 0) &&
+	    (ovar->gv_psrc && sockaddr_cmp(ovar->gv_psrc, src) == 0)) {
+		/* address and port pair not changed. */
+		error = 0;
+		goto out;
+	}
+
 	mutex_enter(&gif_softcs.lock);
 	LIST_FOREACH(sc2, &gif_softcs.list, gif_list) {
+		struct gif_variant *var2;
+		struct psref psref;
+
 		if (sc2 == sc)
 			continue;
-		if (!sc2->gif_pdst || !sc2->gif_psrc)
+		var2 = gif_getref_variant(sc, &psref);
+		if (!var2->gv_pdst || !var2->gv_psrc) {
+			gif_putref_variant(var2, &psref);
 			continue;
+		}
 		/* can't configure same pair of address onto two gifs */
-		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
-		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
+		if (sockaddr_cmp(var2->gv_pdst, dst) == 0 &&
+		    sockaddr_cmp(var2->gv_psrc, src) == 0) {
 			/* continue to use the old configureation. */
+			gif_putref_variant(var2, &psref);
 			mutex_exit(&gif_softcs.lock);
 			error =  EADDRNOTAVAIL;
 			goto out;
 		}
-
+		gif_putref_variant(var2, &psref);
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 	mutex_exit(&gif_softcs.lock);
 
-	nsrc = sockaddr_dup(src, M_WAITOK);
-	ndst = sockaddr_dup(dst, M_WAITOK);
+	osrc = ovar->gv_psrc;
+	odst = ovar->gv_pdst;
 
-	gif_encap_pause(sc);
+	*nvar = *ovar;
+	nvar->gv_psrc = nsrc;
+	nvar->gv_pdst = ndst;
+	nvar->gv_encap_cookie4 = NULL;
+	nvar->gv_encap_cookie6 = NULL;
+	error = gif_encap_attach(nvar);
+	if (error)
+		goto out;
+	psref_target_init(&nvar->gv_psref, gv_psref_class);
+	membar_producer();
+	gif_update_variant(sc, nvar);
 
-	/* Firstly, clear old configurations. */
-	/* XXX we can detach from both, but be polite just in case */
-	if (sc->gif_psrc)
-		(void)gif_encap_detach(sc);
+	mutex_exit(&sc->gif_lock);
 
-	/*
-	 * Secondly, try to set new configurations.
-	 */
-	osrc = sc->gif_psrc;
-	odst = sc->gif_pdst;
-	sc->gif_psrc = nsrc;
-	sc->gif_pdst = ndst;
-	error = gif_encap_attach(sc);
-	if (error && osrc != NULL && odst != NULL) {
-		/*
-		 * Thirdly, when error occured, rollback to old configurations,
-		 * if last setting is valid.
-		 */
-		sc->gif_psrc = osrc;
-		sc->gif_pdst = odst;
-		osrc = nsrc; /* to free */
-		odst = ndst; /* to free */
-		error = gif_encap_attach(sc);
-	}
-	if (error) {
-		/*
-		 * Fourthly, even rollback failed or last setting is not valid,
-		 * clear configurations.
-		 */
-		osrc = sc->gif_psrc; /* to free */
-		odst = sc->gif_pdst; /* to free */
-		sc->gif_psrc = NULL;
-		sc->gif_pdst = NULL;
-		sockaddr_free(nsrc);
-		sockaddr_free(ndst);
-	}
+	(void)gif_encap_detach(ovar);
+	encap_lock_exit();
 
 	if (osrc)
 		sockaddr_free(osrc);
 	if (odst)
 		sockaddr_free(odst);
+	kmem_free(ovar, sizeof(*ovar));
 
-	if (sc->gif_psrc && sc->gif_pdst)
-		ifp->if_flags |= IFF_RUNNING;
-	else
-		ifp->if_flags &= ~IFF_RUNNING;
+#ifndef GIF_MPSAFE
+	splx(s);
+#endif
+	return 0;
 
  out:
+	sockaddr_free(nsrc);
+	sockaddr_free(ndst);
+	kmem_free(nvar, sizeof(*nvar));
+
+	mutex_exit(&sc->gif_lock);
 	encap_lock_exit();
 #ifndef GIF_MPSAFE
 	splx(s);
@@ -1097,6 +1128,8 @@ static void
 gif_delete_tunnel(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
+	struct gif_variant *ovar, *nvar;
+	struct sockaddr *osrc, *odst;
 	int error;
 #ifndef GIF_MPSAFE
 	int s;
@@ -1111,32 +1144,69 @@ gif_delete_tunnel(struct ifnet *ifp)
 		return;
 	}
 
-	gif_encap_pause(sc);
-	if (sc->gif_psrc) {
-		sockaddr_free(sc->gif_psrc);
-		sc->gif_psrc = NULL;
-	}
-	if (sc->gif_pdst) {
-		sockaddr_free(sc->gif_pdst);
-		sc->gif_pdst = NULL;
-	}
-	/* it is safe to detach from both */
-#ifdef INET
-	(void)in_gif_detach(sc);
-#endif
-#ifdef INET6
-	(void)in6_gif_detach(sc);
-#endif
+	nvar = kmem_alloc(sizeof(*nvar), KM_SLEEP);
 
-	if (sc->gif_psrc && sc->gif_pdst)
-		ifp->if_flags |= IFF_RUNNING;
-	else
-		ifp->if_flags &= ~IFF_RUNNING;
+	mutex_enter(&sc->gif_lock);
 
+	ovar = sc->gif_var;
+	osrc = ovar->gv_psrc;
+	odst = ovar->gv_pdst;
+	if (osrc == NULL || odst == NULL) {
+		/* address pair not changed. */
+		mutex_exit(&sc->gif_lock);
+		encap_lock_exit();
+		kmem_free(nvar, sizeof(*nvar));
+		return;
+	}
+
+	*nvar = *ovar;
+	nvar->gv_psrc = NULL;
+	nvar->gv_pdst = NULL;
+	nvar->gv_encap_cookie4 = NULL;
+	nvar->gv_encap_cookie6 = NULL;
+	nvar->gv_output = NULL;
+	psref_target_init(&nvar->gv_psref, gv_psref_class);
+	membar_producer();
+	gif_update_variant(sc, nvar);
+
+	mutex_exit(&sc->gif_lock);
+
+	gif_encap_detach(ovar);
 	encap_lock_exit();
+
+	sockaddr_free(osrc);
+	sockaddr_free(odst);
+	kmem_free(ovar, sizeof(*ovar));
+
 #ifndef GIF_MPSAFE
 	splx(s);
 #endif
+}
+
+/*
+ * gif_variant update API.
+ *
+ * Assumption:
+ * reader side dereferences sc->gif_var in reader critical section only,
+ * that is, all of reader sides do not reader the sc->gif_var after
+ * pserialize_perform().
+ */
+static void
+gif_update_variant(struct gif_softc *sc, struct gif_variant *nvar)
+{
+	struct ifnet *ifp = &sc->gif_if;
+	struct gif_variant *ovar = sc->gif_var;
+
+	KASSERT(mutex_owned(&sc->gif_lock));
+
+	sc->gif_var = nvar;
+	pserialize_perform(gif_psz);
+	psref_target_destroy(&ovar->gv_psref, gv_psref_class);
+
+	if (nvar->gv_psrc != NULL && nvar->gv_pdst != NULL)
+		ifp->if_flags |= IFF_RUNNING;
+	else
+		ifp->if_flags &= ~IFF_RUNNING;
 }
 
 /*
