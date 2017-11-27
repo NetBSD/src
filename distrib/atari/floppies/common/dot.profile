@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.5 2016/01/30 00:52:11 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.5.8.1 2017/11/27 11:31:52 martin Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -79,7 +79,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		_num=0
 		for i in $_maps; do
 			echo "	$_num  $i"
-			_num=`expr $_num + 1`
+			_num=$(( $_num + 1 ))
 		done
 		echo
 		echo -n "Select the number of the map you want to activate: "
