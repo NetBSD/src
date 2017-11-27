@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.12 2017/11/27 22:43:07 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.13 2017/11/27 23:54:28 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.12 2017/11/27 22:43:07 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.13 2017/11/27 23:54:28 maya Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -556,12 +556,11 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 
 	/* make sure that we've enough space for result string */
 	bufsize = avalue_size * 2 + 1;
-	rslt = malloc(bufsize);
+	rslt = calloc(1, bufsize);
 	if (rslt == NULL) {
 		free(avalue);
 		return (NULL);
 	}
-	memset(rslt, 0, bufsize);
 	bufend = rslt + bufsize - 1;	/* reserve space for trailing '\0' */
 
 	/* skip spaces at beggining */
