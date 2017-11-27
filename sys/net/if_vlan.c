@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.8 2017/11/24 08:39:09 martin Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.9 2017/11/27 14:11:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.8 2017/11/24 08:39:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.9 2017/11/27 14:11:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1347,6 +1347,14 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	ec = (void *)mib->ifvm_p;
 
 	bpf_mtap(ifp, m);
+
+	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT) != 0) {
+		if (m != NULL)
+			m_freem(m);
+		error = 0;
+		goto out;
+	}
+
 	/*
 	 * If the parent can insert the tag itself, just mark
 	 * the tag in the mbuf header.
@@ -1530,6 +1538,12 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 
 	m_set_rcvif(m, &ifv->ifv_if);
 	ifv->ifv_if.if_ipackets++;
+
+	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN) != 0) {
+		if (m != NULL)
+			m_freem(m);
+		goto out;
+	}
 
 	m->m_flags &= ~M_PROMISC;
 	if_input(&ifv->ifv_if, m);
