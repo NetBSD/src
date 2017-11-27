@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.11 2017/08/16 13:53:20 joerg Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.12 2017/11/27 22:43:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.11 2017/08/16 13:53:20 joerg Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.12 2017/11/27 22:43:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -241,8 +241,12 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 			free(currency_symbol);
 		if (flags & USE_INTL_CURRENCY) {
 			currency_symbol = strdup(lc->int_curr_symbol);
-			if (currency_symbol != NULL)
-				space_char = *(currency_symbol+3);
+			if (currency_symbol != NULL &&
+			    strlen(currency_symbol) > 3) {
+				space_char = currency_symbol[3];
+				currency_symbol[3] = '\0';
+			}
+
 		} else
 			currency_symbol = strdup(lc->currency_symbol);
 
@@ -418,7 +422,7 @@ __setup_vars(struct lconv *lc, int flags, char *cs_precedes, char *sep_by_space,
 		*cs_precedes = lc->int_n_cs_precedes;
 		*sep_by_space = lc->int_n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->int_n_sign_posn;
-		*signstr = (lc->negative_sign == '\0') ? "-"
+		*signstr = (*lc->negative_sign == '\0') ? "-"
 		    : lc->negative_sign;
 	} else if (flags & USE_INTL_CURRENCY) {
 		*cs_precedes = lc->int_p_cs_precedes;
@@ -429,7 +433,7 @@ __setup_vars(struct lconv *lc, int flags, char *cs_precedes, char *sep_by_space,
 		*cs_precedes = lc->n_cs_precedes;
 		*sep_by_space = lc->n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->n_sign_posn;
-		*signstr = (lc->negative_sign == '\0') ? "-"
+		*signstr = (*lc->negative_sign == '\0') ? "-"
 		    : lc->negative_sign;
 	} else {
 		*cs_precedes = lc->p_cs_precedes;
@@ -438,11 +442,11 @@ __setup_vars(struct lconv *lc, int flags, char *cs_precedes, char *sep_by_space,
 		*signstr = lc->positive_sign;
 	}
 
-	/* Set defult values for unspecified information. */
+	/* Set default values for unspecified information. */
 	if (*cs_precedes != 0)
 		*cs_precedes = 1;
 	if ((unsigned char)*sep_by_space == NBCHAR_MAX)
-		*sep_by_space = 0;
+		*sep_by_space = 1;
 	if ((unsigned char)*sign_posn == NBCHAR_MAX)
 		*sign_posn = 0;
 }
@@ -615,8 +619,7 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 		memset(bufend, pad_char, (size_t) padded);
 	}
 
-	bufsize = bufsize - (bufend - rslt) + 1;
-	memmove(rslt, bufend, bufsize);
+	memmove(rslt, bufend, bufend - rslt + 1);
 	free(avalue);
 	return (rslt);
 }
