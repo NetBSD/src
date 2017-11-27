@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.81 2017/11/23 16:30:50 kamil Exp $	*/
+/*	$NetBSD: cpu.h,v 1.82 2017/11/27 09:10:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,8 +92,6 @@ struct cpu_info {
 	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
 	volatile struct vcpu_info *ci_vcpu; /* for XEN */
-	void	*ci_tlog_base;		/* Trap log base */
-	int32_t ci_tlog_offset;		/* Trap log current offset */
 
 	/*
 	 * Will be accessed by other CPUs.
@@ -101,18 +99,14 @@ struct cpu_info {
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	int	_unused1[2];
 	cpuid_t ci_cpuid;		/* our CPU ID */
-	int	_unused;
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
 
 	/*
 	 * Private members.
 	 */
-	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
-	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	int ci_want_pmapload;		/* pmap_load() is needed */
 	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
@@ -156,11 +150,9 @@ struct cpu_info {
 
 	uint32_t ci_flags;		/* flags; see below */
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
-	uint32_t sc_apic_version;	/* local APIC version */
 
 	uint32_t	ci_signature;	 /* X86 cpuid type (cpuid.1.%eax) */
 	uint32_t	ci_vendor[4];	 /* vendor string */
-	uint32_t	_unused2;
 	uint32_t	ci_max_cpuid;	/* cpuid.0:%eax */
 	uint32_t	ci_max_ext_cpuid; /* cpuid.80000000:%eax */
 	volatile uint32_t	ci_lapic_counter;
