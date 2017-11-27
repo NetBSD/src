@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.36 2017/10/19 09:32:01 maxv Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.37 2017/11/27 09:18:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.36 2017/10/19 09:32:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.37 2017/11/27 09:18:01 maxv Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -109,9 +109,33 @@ process_read_regs(struct lwp *l, struct reg *regs)
 		return EINVAL;
 	}
 
-#define copy_to_reg(reg, REG, idx) regs->regs[_REG_##REG] = tf->tf_##reg;
-	_FRAME_GREG(copy_to_reg)
-#undef copy_to_reg
+	regs->regs[_REG_RDI] = tf->tf_rdi;
+	regs->regs[_REG_RSI] = tf->tf_rsi;
+	regs->regs[_REG_RDX] = tf->tf_rdx;
+	regs->regs[_REG_R10] = tf->tf_r10;
+	regs->regs[_REG_R8]  = tf->tf_r8;
+	regs->regs[_REG_R9]  = tf->tf_r9;
+	/* argX not touched */
+	regs->regs[_REG_RCX] = tf->tf_rcx;
+	regs->regs[_REG_R11] = tf->tf_r11;
+	regs->regs[_REG_R12] = tf->tf_r12;
+	regs->regs[_REG_R13] = tf->tf_r13;
+	regs->regs[_REG_R14] = tf->tf_r14;
+	regs->regs[_REG_R15] = tf->tf_r15;
+	regs->regs[_REG_RBP] = tf->tf_rbp;
+	regs->regs[_REG_RBX] = tf->tf_rbx;
+	regs->regs[_REG_RAX] = tf->tf_rax;
+	regs->regs[_REG_GS]  = tf->tf_gs & 0xFFFF;
+	regs->regs[_REG_FS]  = tf->tf_fs & 0xFFFF;
+	regs->regs[_REG_ES]  = tf->tf_es & 0xFFFF;
+	regs->regs[_REG_DS]  = tf->tf_ds & 0xFFFF;
+	regs->regs[_REG_TRAPNO] = tf->tf_trapno;
+	regs->regs[_REG_ERR] = tf->tf_err;
+	regs->regs[_REG_RIP] = tf->tf_rip;
+	regs->regs[_REG_CS]  = tf->tf_cs & 0xFFFF;
+	regs->regs[_REG_RFLAGS] = tf->tf_rflags;
+	regs->regs[_REG_RSP] = tf->tf_rsp;
+	regs->regs[_REG_SS]  = tf->tf_ss & 0xFFFF;
 
 	return 0;
 }
@@ -151,30 +175,45 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	struct proc *p = l->l_proc;
 	int error;
 	const long *regs = regp->regs;
-	int err, trapno;
 
 	if (p->p_flag & PK_32) {
 		return EINVAL;
 	}
 
 	/*
-	 * Check for security violations.
-	 * Note that struct regs is compatible with
-	 * the __gregs array in mcontext_t.
+	 * Check for security violations. Note that struct regs is compatible
+	 * with the __gregs array in mcontext_t.
 	 */
 	error = cpu_mcontext_validate(l, (const mcontext_t *)regs);
 	if (error != 0)
 		return error;
 
-	err = tf->tf_err;
-	trapno = tf->tf_trapno;
-
-#define copy_to_frame(reg, REG, idx) tf->tf_##reg = regs[_REG_##REG];
-	_FRAME_GREG(copy_to_frame)
-#undef copy_to_frame
-
-	tf->tf_err = err;
-	tf->tf_trapno = trapno;
+	tf->tf_rdi  = regs[_REG_RDI];
+	tf->tf_rsi  = regs[_REG_RSI];
+	tf->tf_rdx  = regs[_REG_RDX];
+	tf->tf_r10  = regs[_REG_R10];
+	tf->tf_r8   = regs[_REG_R8];
+	tf->tf_r9   = regs[_REG_R9];
+	/* argX not touched */
+	tf->tf_rcx  = regs[_REG_RCX];
+	tf->tf_r11  = regs[_REG_R11];
+	tf->tf_r12  = regs[_REG_R12];
+	tf->tf_r13  = regs[_REG_R13];
+	tf->tf_r14  = regs[_REG_R14];
+	tf->tf_r15  = regs[_REG_R15];
+	tf->tf_rbp  = regs[_REG_RBP];
+	tf->tf_rbx  = regs[_REG_RBX];
+	tf->tf_rax  = regs[_REG_RAX];
+	tf->tf_gs   = regs[_REG_GS] & 0xFFFF;
+	tf->tf_fs   = regs[_REG_FS] & 0xFFFF;
+	tf->tf_es   = regs[_REG_ES] & 0xFFFF;
+	tf->tf_ds   = regs[_REG_DS] & 0xFFFF;
+	/* trapno, err not touched */
+	tf->tf_rip  = regs[_REG_RIP];
+	tf->tf_cs   = regs[_REG_CS] & 0xFFFF;
+	tf->tf_rflags = regs[_REG_RFLAGS];
+	tf->tf_rsp  = regs[_REG_RSP];
+	tf->tf_ss   = regs[_REG_SS] & 0xFFFF;
 
 #ifdef XEN
 	/* see comment in cpu_setmcontext */
