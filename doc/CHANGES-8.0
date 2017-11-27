@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.84 2017/11/24 08:40:26 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.85 2017/11/27 14:18:21 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -7898,4 +7898,57 @@ sys/net/if_vlanvar.h				1.11-1.12
 	Revert part of if_bge.c 1.312, if_wm.c 1.542 and if_wmreg.h 1.104,
 	it's not required to mask other than VLAN ID bits in VLAN tag.
 	[msaitoh, ticket #389]
+
+sys/dev/hdaudio/hdaudio.c			1.7-1.8
+
+	Always access CORBCTL using hda_read1/hda_write1 (it is an 8-bit
+	wide reg).
+	Always go through RIRB startup process, initialize RIRB interrupt
+	count register, and ack RIRBs as we process them in polling mode.
+	[jmcneill, ticket #391]
+
+sys/arch/sparc/sparc/locore.s			1.269
+
+	Avoid an instruction requiring a higher alignment than we are
+	guaranteed.
+	[maya, ticket #392]
+
+distrib/atari/floppies/common/dot.profile	1.6
+distrib/atari/floppies/install/list		1.21
+
+	Avoid use of expr(1), which is not available in the install
+	environment.
+	Put back /bin/cp and /sbin/sysctl to installation binaries.
+	[tsutsui, ticket #393]
+
+share/mk/bsd.own.mk				1.1014-1.1015,1.1017 (patch)
+
+	Switch luna68, dreamcast, and hp300 to xorg-server 1.18
+	[tsutsui, ticket #394]
+
+usr.bin/audio/common/wav.c			1.14
+
+	Make accessing ext.sub_tag byte order independend.
+	[jdolecek, ticket #395]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.90
+sys/compat/netbsd32/netbsd32_ioctl.h		1.57
+
+	Add support for SIOCGIFGENERIC and SIOCSIFGENERIC ioctls.
+	[jmcneill, ticket #396]
+
+sys/arch/mips/cavium/dev/if_cnmac.c		1.7
+
+	Set ETHERCAP_VLAN_MTU capability flag.
+	[jmcneill, ticket #397]
+
+sys/net/if_vlan.c				1.113
+
+	Add pfil hooks support to vlan(4).
+	[jmcneill, ticket #398]
+
+sys/dev/pci/mlyreg.h				1.6
+
+	Fix a typo, pack the structure correctly.
+	[maxv, ticket #399]
 
