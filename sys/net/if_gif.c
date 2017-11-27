@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.133 2017/11/27 05:02:22 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.134 2017/11/27 05:05:50 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.133 2017/11/27 05:02:22 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.134 2017/11/27 05:05:50 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -378,8 +378,7 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	if (sc == NULL)
 		return 0;
 
-	if ((sc->gif_if.if_flags & (IFF_UP|IFF_RUNNING))
-	    != (IFF_UP|IFF_RUNNING))
+	if ((sc->gif_if.if_flags & IFF_UP) == 0)
 		return 0;
 
 	var = gif_getref_variant(sc, &psref);
@@ -492,7 +491,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto end;
 	}
 
-	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
+	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
