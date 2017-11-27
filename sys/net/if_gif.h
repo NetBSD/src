@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.28 2017/11/27 05:02:22 knakahara Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.29 2017/11/27 05:03:11 knakahara Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -140,14 +140,15 @@ int	gif_encapcheck(struct mbuf *, int, int, void *);
  * + gif_softc_list is protected by gif_softcs.lock (an adaptive mutex)
  *       gif_softc_list is list of all gif_softcs. It is used by ioctl
  *       context only.
- * + Members of struct gif_softc except for gif_ro_percpu are protected by
- *   - encap_lock for writer
- *   - stopping processing when writer begin to run
- *     for reader(Tx and Rx processing)
+ * + gif_softc->gif_var is protected by
+ *   - gif_softc->gif_lock (an adaptive mutex) for writer
+ *   - gif_var->gv_psref for reader
+ *       gif_softc->gif_var is used for variant values while the gif tunnel
+ *       exists.
  * + Each CPU's gif_ro.gr_ro of gif_ro_percpu are protected by
  *   percpu'ed gif_ro.gr_lock.
  *
  * Locking order:
- *     - encap_lock => gif_softcs.lock
+ *     - encap_lock => gif_softc->gif_lock => gif_softcs.lock
  */
 #endif /* !_NET_IF_GIF_H_ */
