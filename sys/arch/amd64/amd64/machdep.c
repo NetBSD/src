@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.277 2017/11/21 10:42:44 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.278 2017/11/27 09:18:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277 2017/11/21 10:42:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278 2017/11/27 09:18:01 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1876,10 +1876,33 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t ras_rip;
 
-	/* Copy general registers member by member */
-#define copy_from_tf(reg, REG, idx) mcp->__gregs[_REG_##REG] = tf->tf_##reg;
-	_FRAME_GREG(copy_from_tf)
-#undef copy_from_tf
+	mcp->__gregs[_REG_RDI] = tf->tf_rdi;
+	mcp->__gregs[_REG_RSI] = tf->tf_rsi;
+	mcp->__gregs[_REG_RDX] = tf->tf_rdx;
+	mcp->__gregs[_REG_R10] = tf->tf_r10;
+	mcp->__gregs[_REG_R8]  = tf->tf_r8;
+	mcp->__gregs[_REG_R9]  = tf->tf_r9;
+	/* argX not touched */
+	mcp->__gregs[_REG_RCX] = tf->tf_rcx;
+	mcp->__gregs[_REG_R11] = tf->tf_r11;
+	mcp->__gregs[_REG_R12] = tf->tf_r12;
+	mcp->__gregs[_REG_R13] = tf->tf_r13;
+	mcp->__gregs[_REG_R14] = tf->tf_r14;
+	mcp->__gregs[_REG_R15] = tf->tf_r15;
+	mcp->__gregs[_REG_RBP] = tf->tf_rbp;
+	mcp->__gregs[_REG_RBX] = tf->tf_rbx;
+	mcp->__gregs[_REG_RAX] = tf->tf_rax;
+	mcp->__gregs[_REG_GS]  = tf->tf_gs & 0xFFFF;
+	mcp->__gregs[_REG_FS]  = tf->tf_fs & 0xFFFF;
+	mcp->__gregs[_REG_ES]  = tf->tf_es & 0xFFFF;
+	mcp->__gregs[_REG_DS]  = tf->tf_ds & 0xFFFF;
+	mcp->__gregs[_REG_TRAPNO] = tf->tf_trapno;
+	mcp->__gregs[_REG_ERR] = tf->tf_err;
+	mcp->__gregs[_REG_RIP] = tf->tf_rip;
+	mcp->__gregs[_REG_CS]  = tf->tf_cs & 0xFFFF;
+	mcp->__gregs[_REG_RFLAGS] = tf->tf_rflags;
+	mcp->__gregs[_REG_RSP] = tf->tf_rsp;
+	mcp->__gregs[_REG_SS]  = tf->tf_ss & 0xFFFF;
 
 	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
 	    (void *) mcp->__gregs[_REG_RIP])) != -1)
@@ -1901,7 +1924,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
 	int error;
-	int err, trapno;
 	int64_t rflags;
 
 	CTASSERT(sizeof (mcontext_t) == 26 * 8 + 8 + 512);
@@ -1910,33 +1932,44 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		error = cpu_mcontext_validate(l, mcp);
 		if (error != 0)
 			return error;
-		/*
-		 * save and restore some values we don't want to change.
-		 * _FRAME_GREG(copy_to_tf) below overwrites them.
-		 *
-		 * XXX maybe inline this.
-		 */
-		rflags = tf->tf_rflags;
-		err = tf->tf_err;
-		trapno = tf->tf_trapno;
 
-		/* Copy general registers member by member */
-#define copy_to_tf(reg, REG, idx) tf->tf_##reg = gr[_REG_##REG];
-		_FRAME_GREG(copy_to_tf)
-#undef copy_to_tf
+		tf->tf_rdi  = gr[_REG_RDI];
+		tf->tf_rsi  = gr[_REG_RSI];
+		tf->tf_rdx  = gr[_REG_RDX];
+		tf->tf_r10  = gr[_REG_R10];
+		tf->tf_r8   = gr[_REG_R8];
+		tf->tf_r9   = gr[_REG_R9];
+		/* argX not touched */
+		tf->tf_rcx  = gr[_REG_RCX];
+		tf->tf_r11  = gr[_REG_R11];
+		tf->tf_r12  = gr[_REG_R12];
+		tf->tf_r13  = gr[_REG_R13];
+		tf->tf_r14  = gr[_REG_R14];
+		tf->tf_r15  = gr[_REG_R15];
+		tf->tf_rbp  = gr[_REG_RBP];
+		tf->tf_rbx  = gr[_REG_RBX];
+		tf->tf_rax  = gr[_REG_RAX];
+		tf->tf_gs   = gr[_REG_GS] & 0xFFFF;
+		tf->tf_fs   = gr[_REG_FS] & 0xFFFF;
+		tf->tf_es   = gr[_REG_ES] & 0xFFFF;
+		tf->tf_ds   = gr[_REG_DS] & 0xFFFF;
+		/* trapno, err not touched */
+		tf->tf_rip  = gr[_REG_RIP];
+		tf->tf_cs   = gr[_REG_CS] & 0xFFFF;
+		rflags = tf->tf_rflags;
+		rflags &= ~PSL_USER;
+		tf->tf_rflags = rflags | (gr[_REG_RFLAGS] & PSL_USER);
+		tf->tf_rsp  = gr[_REG_RSP];
+		tf->tf_ss   = gr[_REG_SS] & 0xFFFF;
 
 #ifdef XEN
 		/*
 		 * Xen has its own way of dealing with %cs and %ss,
-		 * reset it to proper values.
+		 * reset them to proper values.
 		 */
 		tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 #endif
-		rflags &= ~PSL_USER;
-		tf->tf_rflags = rflags | (gr[_REG_RFLAGS] & PSL_USER);
-		tf->tf_err = err;
-		tf->tf_trapno = trapno;
 
 		l->l_md.md_flags |= MDL_IRET;
 	}
