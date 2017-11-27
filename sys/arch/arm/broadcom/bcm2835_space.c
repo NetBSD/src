@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.11 2017/11/09 21:37:52 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.12 2017/11/27 17:27:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.11 2017/11/09 21:37:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.12 2017/11/27 17:27:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ bcm2835_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
 {
 
 	*nbshp = bsh + offset;
-	return (0);
+	return 0;
 }
 
 void
@@ -393,7 +393,7 @@ bcm2835_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
 		bus_flags |= ARM32_MMAP_WRITECOMBINE;
 
-	return (arm_btop(pa + offset) | bus_flags);
+	return arm_btop(pa + offset) | bus_flags;
 }
 
 int
