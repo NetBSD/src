@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.56 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.56.8.1 2017/11/27 14:07:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -373,6 +373,9 @@ struct netbsd32_if_clonereq {
 
 #define	SIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
 #define	OSIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_oifreq)	/* set net media */
+
+#define	SIOCSIFGENERIC32 _IOW('i', 57, struct netbsd32_ifreq)	/* generic IF set op */
+#define	SIOCGIFGENERIC32 _IOWR('i', 58, struct netbsd32_ifreq)	/* generic IF get op */
 
 #define	SIOCIFGCLONERS32 _IOWR('i', 120, struct netbsd32_if_clonereq) /* get cloners */
 

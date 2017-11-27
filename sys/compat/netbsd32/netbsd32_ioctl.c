@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.89 2017/01/14 16:34:44 maya Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.89.8.1 2017/11/27 14:07:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.89 2017/01/14 16:34:44 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.89.8.1 2017/11/27 14:07:53 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -116,8 +116,14 @@ netbsd32_to_ifreq(struct netbsd32_ifreq *s32p, struct ifreq *p, u_long cmd)
 	 * union member needs to be converted to 64 bits... this
 	 * is very driver specific and so we ignore it for now..
 	 */
-	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
+	switch (cmd) {
+	case SIOCGIFDATA:
+	case SIOCZIFDATA:
+	case SIOCGIFGENERIC:
+	case SIOCSIFGENERIC:
 		p->ifr_data = (void *)NETBSD32PTR64(s32p->ifr_data);
+		break;
+	}
 }
 
 static inline void
@@ -534,8 +540,14 @@ netbsd32_from_ifreq(struct ifreq *p, struct netbsd32_ifreq *s32p, u_long cmd)
 	 * is very driver specific and so we ignore it for now..
 	 */
 	memcpy(s32p, p, sizeof *s32p);
-	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
+	switch (cmd) {
+	case SIOCGIFDATA:
+	case SIOCZIFDATA:
+	case SIOCGIFGENERIC:
+	case SIOCSIFGENERIC:
 		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
+		break;
+	}
 }
 
 static inline void
@@ -1232,6 +1244,11 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case SIOCGIFMEDIA32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
+
+	case SIOCGIFGENERIC32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFGENERIC, ifreq);
+	case SIOCSIFGENERIC32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFGENERIC, ifreq);
 
 	case PPPOESETPARMS32:
 		IOCTL_STRUCT_CONV_TO(PPPOESETPARMS, pppoediscparms);
