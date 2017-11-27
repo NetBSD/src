@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.13 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.13.8.1 2017/11/27 12:00:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.13 2015/08/05 06:54:39 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.13.8.1 2017/11/27 12:00:37 martin Exp $");
 #endif
 
 
@@ -140,7 +140,7 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		memcpy(&ext, owhere + sizeof fmt, sizeof ext);
 		if (getle16(ext.len) < sizeof(ext) - sizeof(ext.len))
 			return (AUDIO_ESHORTHDR);
-		fmttag = ext.sub_tag;
+		fmttag = getle16(ext.sub_tag);
 		if (verbose)
 			printf("WAVE extensible sub tag: %x\n", fmttag);
 	}
