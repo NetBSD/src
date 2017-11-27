@@ -1,4 +1,4 @@
-.\"	$NetBSD: qemufwcfg.4,v 1.1 2017/11/26 21:02:37 wiz Exp $
+.\"	$NetBSD: qemufwcfg.4,v 1.2 2017/11/27 12:25:02 wiz Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,6 +38,11 @@ The
 .Nm
 interface allows QEMU guests to query and modify various data items on
 the host, usually related to firmware configuration.
+.Sh FILES
+.Bl -tag -width 20n
+.It Pa /dev/qemufwctl<n>
+device path
+.El
 .Sh SEE ALSO
 .Rs
 .%T QEMU Firmware Configuration (fw_cfg) Device
