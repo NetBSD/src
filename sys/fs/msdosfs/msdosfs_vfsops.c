@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.128 2017/08/20 11:48:15 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.129 2017/11/27 15:02:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.128 2017/08/20 11:48:15 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.129 2017/11/27 15:02:05 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -724,8 +724,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	fatbytes = (pmp->pm_maxcluster+1) * pmp->pm_fatmult / pmp->pm_fatdiv;
 	fatblocksecs = howmany(fatbytes, pmp->pm_BytesPerSec);
 
-	if (pmp->pm_FATsecs != fatblocksecs) {
-		DPRINTF("FATsecs %lu != real %lu\n", pmp->pm_FATsecs,
+	if (pmp->pm_FATsecs < fatblocksecs) {
+		DPRINTF("FATsecs %lu < real %lu\n", pmp->pm_FATsecs,
 			fatblocksecs);
 		error = EINVAL;
 		goto error_exit;
