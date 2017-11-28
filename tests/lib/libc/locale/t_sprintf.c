@@ -1,4 +1,4 @@
-/* $NetBSD: t_sprintf.c,v 1.5 2017/11/24 21:30:43 kre Exp $ */
+/* $NetBSD: t_sprintf.c,v 1.6 2017/11/28 23:26:01 kre Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sprintf.c,v 1.5 2017/11/24 21:30:43 kre Exp $");
+__RCSID("$NetBSD: t_sprintf.c,v 1.6 2017/11/28 23:26:01 kre Exp $");
 
 #include <locale.h>
 #include <math.h>
@@ -134,11 +134,15 @@ h_strto(const struct test *t)
 
 	ATF_REQUIRE_EQ((int)strtol(t->int_input, NULL, 10), t->int_value);
 	d = strtod(t->double_input, NULL);
-	if ((diff = fabs(d - t->double_value)) > 1e-7)
-		ATF_REQUIRE_EQ_MSG(d, t->double_value, "In %s: d=strtod("
-		    "t->double_input[%s], NULL)[%.9g] != t->double_value[%.9g]"
-		    ": diff=%g", t->locale, t->double_input, d,
-		    t->double_value, diff);
+	diff = fabs(d - t->double_value);
+#if 0
+	if (diff >= 1e-7)
+#endif
+		ATF_REQUIRE_EQ_MSG(d, t->double_value, "In %s:"
+		    " d=strtod(t->double_input[%s], NULL)[%.12g = %a] !="
+		    " t->double_value[%.12g = %a]: diff=%g",
+		    t->locale, t->double_input, d, d,
+		    t->double_value, t->double_value, diff);
 }
 
 static void
