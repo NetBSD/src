@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2017/07/01 12:23:09 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.32 2017/11/28 22:25:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,25 @@ INSTALL_TARGET=	install-gdb
 #GDB_MACHINE_ARCH=       ${MACHINE_ARCH:C/e?armv[4-7]h?f?/arm/}
 
 .include "${.CURDIR}/../Makefile.gmakehost"
+BUILD_MAKE=${TOOL_GMAKE}
+
+BINENV=		/usr/bin/env -i
+
+
+MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
+			CC_FOR_BUILD=${HOST_CC:Q} \
+			CC=${CC:Q}' '${CCADDFLAGS:Q} \
+			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
+			CPP=${CPP:Q}' '-isystem' '${DESTDIR}/usr/include \
+			MAKE=${BUILD_MAKE:Q} \
+			CFLAGS= CPPFLAGS= CXXFLAGS=${CXXADDFLAGS:Q} \
+			LDFLAGS=${LDADDFLAGS:Q} \
+			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
+			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
+			LIBS=-lintl \
+			${MKNATIVE_CONFIGURE_PRESET}
+
+MKENV_BUILD_MAKE=${MKNATIVE_ENV} ${BUILD_MAKE}
 
 CCADDFLAGS+= --sysroot=${DESTDIR} -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
 LDADDFLAGS+= -L${DESTDIR}/lib -L${DESTDIR}/usr/lib
@@ -65,36 +84,28 @@ CONFIGURE_ARGS_SIM+= --disable-sim
 
 native-gdb: .native/.configure_done
 	@echo 'Extracting GDB configury for a native toolchain.'
-	MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} gdb \
+	MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} gdb \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM} \
 		${GDB_MACHINE_ARCH}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	mkdir ${.OBJDIR}/.native 2>/dev/null || true
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd ${.OBJDIR}/.native && ${CONFIGURE_ENV:NC*:NLD*} \
-			CC_FOR_BUILD=${HOST_CC:Q} \
-			CC=${CC:Q}' '${CCADDFLAGS:Q} \
-			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
-			CPP=${CPP:Q}' '-isystem' '${DESTDIR}/usr/include \
-			CFLAGS= CPPFLAGS= CXXFLAGS=${CXXADDFLAGS:Q} \
-			LDFLAGS=${LDADDFLAGS:Q} \
-			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
-			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
-			LIBS=-lintl \
-			${MKNATIVE_CONFIGURE_PRESET} \
-			${HOST_SH} ${GNUHOSTDIST}/configure \
+		(cd ${.OBJDIR}/.native && \
+			${MKNATIVE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
 			${CONFIGURE_ARGS_SIM} \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
-			--target=${MACHINE_GNU_PLATFORM}) && \
+			--target=${MACHINE_GNU_PLATFORM})
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd ${.OBJDIR}/.native && \
-			/usr/bin/env ${MKNATIVE_CONFIGURE_PRESET} \
-				${MAKE} configure-host) && \
-		(cd ${.OBJDIR}/.native/bfd && ${MAKE} bfd.h bfdver.h) && \
-		(cd ${.OBJDIR}/.native/gdb && ${MAKE} init.c version.c)
+			${MKENV_BUILD_MAKE} configure-host) && \
+		(cd ${.OBJDIR}/.native/bfd && \
+			${MKENV_BUILD_MAKE} bfd.h bfdver.h) && \
+		(cd ${.OBJDIR}/.native/gdb && \
+			${MKENV_BUILD_MAKE} init.c version.c)
 	@touch $@
 
 clean: clean.native
