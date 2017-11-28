@@ -172,8 +172,8 @@ extern int rl_yank PARAMS((int, int));
 extern int rl_yank_pop PARAMS((int, int));
 extern int rl_yank_nth_arg PARAMS((int, int));
 extern int rl_yank_last_arg PARAMS((int, int));
-/* Not available unless __CYGWIN__ is defined. */
-#ifdef __CYGWIN__
+/* Not available unless _WIN32 is defined. */
+#ifdef _WIN32
 extern int rl_paste_from_clipboard PARAMS((int, int));
 #endif
 

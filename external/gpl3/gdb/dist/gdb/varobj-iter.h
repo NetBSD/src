@@ -1,5 +1,5 @@
 /* Iterator of varobj.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 typedef struct varobj_item
 {
   /* Name of this item.  */
-  char *name;
+  std::string name;
 
   /* Value of this item.  */
   struct value *value;

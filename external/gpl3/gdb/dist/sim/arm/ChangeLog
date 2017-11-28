@@ -1,3 +1,11 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* armos.c: Include libiberty.h.
+	(SWIopen): Use ARRAY_SIZE.
+	* armsupp.c: Include libiberty.h.
+	(ModeToBank): Use ARRAY_SIZE.
+	* wrapper.c (sim_target_parse_command_line): Likewise.
+
 2016-07-14  Nick Clifton  <nickc@redhat.com>
 
 	* armemu.c (Multiply64): Only issue error messages about invalid

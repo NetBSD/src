@@ -123,6 +123,10 @@ history_filename (filename)
     return (return_val);
   
   home = sh_get_env_value ("HOME");
+#ifdef _WIN32
+  if (!home)
+    home = sh_get_env_value ("APPDATA");
+#endif
 
   if (home == 0)
     {

@@ -1,3 +1,13 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* decode.c (lm32bf_init_idesc_table): Use ARRAY_SIZE.
+
+2016-08-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (find_limit): Change prototype to take a SIM_DESC.
+	Replace symbol lookup code with a call to trace_sym_value.
+	(sim_open): Update find_limit call.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

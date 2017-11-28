@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -184,7 +184,8 @@ tdesc_start_reg (struct gdb_xml_parser *parser,
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
   struct gdb_xml_value *attrs = VEC_address (gdb_xml_value_s, attributes);
   int ix = 0, length;
-  char *name, *group, *type;
+  char *name, *group;
+  const char *type;
   int bitsize, regnum, save_restore;
 
   length = VEC_length (gdb_xml_value_s, attributes);
@@ -413,8 +414,8 @@ tdesc_start_field (struct gdb_xml_parser *parser,
 	gdb_xml_error (parser, _("Bitfield \"%s\" has start after end"),
 		       field_name);
       if (end >= data->current_type_size * TARGET_CHAR_BIT)
-	gdb_xml_error (parser,
-		       _("Bitfield \"%s\" does not fit in struct"));
+	gdb_xml_error (parser, _("Bitfield \"%s\" does not fit in struct"),
+		       field_name);
 
       if (field_type != NULL)
 	tdesc_add_typed_bitfield (t, field_name, start, end, field_type);
@@ -694,7 +695,6 @@ file_read_description_xml (const char *filename)
   struct target_desc *tdesc;
   char *tdesc_str;
   struct cleanup *back_to;
-  char *dirname;
 
   tdesc_str = xml_fetch_content_from_file (filename, NULL);
   if (tdesc_str == NULL)
@@ -705,11 +705,8 @@ file_read_description_xml (const char *filename)
 
   back_to = make_cleanup (xfree, tdesc_str);
 
-  dirname = ldirname (filename);
-  if (dirname != NULL)
-    make_cleanup (xfree, dirname);
-
-  tdesc = tdesc_parse_xml (tdesc_str, xml_fetch_content_from_file, dirname);
+  tdesc = tdesc_parse_xml (tdesc_str, xml_fetch_content_from_file,
+			   (void *) ldirname (filename).c_str ());
   do_cleanups (back_to);
 
   return tdesc;

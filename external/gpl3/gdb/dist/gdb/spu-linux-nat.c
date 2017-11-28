@@ -1,5 +1,5 @@
 /* SPU native-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -318,37 +318,35 @@ spu_bfd_iovec_stat (struct bfd *abfd, void *stream, struct stat *sb)
   return 0;
 }
 
-static bfd *
+static gdb_bfd_ref_ptr
 spu_bfd_open (ULONGEST addr)
 {
-  struct bfd *nbfd;
   asection *spu_name;
 
   ULONGEST *open_closure = XNEW (ULONGEST);
   *open_closure = addr;
 
-  nbfd = gdb_bfd_openr_iovec ("<in-memory>", "elf32-spu",
-			      spu_bfd_iovec_open, open_closure,
-			      spu_bfd_iovec_pread, spu_bfd_iovec_close,
-			      spu_bfd_iovec_stat);
-  if (!nbfd)
+  gdb_bfd_ref_ptr nbfd (gdb_bfd_openr_iovec ("<in-memory>", "elf32-spu",
+					     spu_bfd_iovec_open, open_closure,
+					     spu_bfd_iovec_pread,
+					     spu_bfd_iovec_close,
+					     spu_bfd_iovec_stat));
+  if (nbfd == NULL)
     return NULL;
 
-  if (!bfd_check_format (nbfd, bfd_object))
-    {
-      gdb_bfd_unref (nbfd);
-      return NULL;
-    }
+  if (!bfd_check_format (nbfd.get (), bfd_object))
+    return NULL;
 
   /* Retrieve SPU name note and update BFD name.  */
-  spu_name = bfd_get_section_by_name (nbfd, ".note.spu_name");
+  spu_name = bfd_get_section_by_name (nbfd.get (), ".note.spu_name");
   if (spu_name)
     {
-      int sect_size = bfd_section_size (nbfd, spu_name);
+      int sect_size = bfd_section_size (nbfd.get (), spu_name);
       if (sect_size > 20)
 	{
 	  char *buf = (char *)alloca (sect_size - 20 + 1);
-	  bfd_get_section_contents (nbfd, spu_name, buf, 20, sect_size - 20);
+	  bfd_get_section_contents (nbfd.get (), spu_name, buf, 20,
+				    sect_size - 20);
 	  buf[sect_size - 20] = '\0';
 
 	  xfree ((char *)nbfd->filename);
@@ -367,7 +365,6 @@ static void
 spu_symbol_file_add_from_memory (int inferior_fd)
 {
   ULONGEST addr;
-  struct bfd *nbfd;
 
   gdb_byte id[128];
   char annex[32];
@@ -385,15 +382,12 @@ spu_symbol_file_add_from_memory (int inferior_fd)
     return;
 
   /* Open BFD representing SPE executable and read its symbols.  */
-  nbfd = spu_bfd_open (addr);
-  if (nbfd)
+  gdb_bfd_ref_ptr nbfd (spu_bfd_open (addr));
+  if (nbfd != NULL)
     {
-      struct cleanup *cleanup = make_cleanup_bfd_unref (nbfd);
-
-      symbol_file_add_from_bfd (nbfd, bfd_get_filename (nbfd),
+      symbol_file_add_from_bfd (nbfd.get (), bfd_get_filename (nbfd),
 				SYMFILE_VERBOSE | SYMFILE_MAINLINE,
 				NULL, 0, NULL);
-      do_cleanups (cleanup);
     }
 }
 
@@ -498,6 +492,11 @@ spu_fetch_inferior_registers (struct target_ops *ops,
   int fd;
   ULONGEST addr;
 
+  /* Since we use functions that rely on inferior_ptid, we need to set and
+     restore it.  */
+  scoped_restore save_ptid
+    = make_scoped_restore (&inferior_ptid, regcache_get_ptid (regcache));
+
   /* We must be stopped on a spu_run system call.  */
   if (!parse_spufs_run (&fd, &addr))
     return;
@@ -544,6 +543,11 @@ spu_store_inferior_registers (struct target_ops *ops,
 {
   int fd;
   ULONGEST addr;
+
+  /* Since we use functions that rely on inferior_ptid, we need to set and
+     restore it.  */
+  scoped_restore save_ptid
+    = make_scoped_restore (&inferior_ptid, regcache_get_ptid (regcache));
 
   /* We must be stopped on a spu_run system call.  */
   if (!parse_spufs_run (&fd, &addr))

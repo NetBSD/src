@@ -1,5 +1,5 @@
 /* Target-machine dependent code for Nios II, for GDB.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Peter Brookes (pbrookes@altera.com)
    and Andrew Draper (adraper@altera.com).
    Contributed by Mentor Graphics, Inc.
@@ -44,6 +44,7 @@
 
 /* To get entry_point_address.  */
 #include "objfiles.h"
+#include <algorithm>
 
 /* Nios II specific header.  */
 #include "nios2-tdep.h"
@@ -1685,7 +1686,7 @@ nios2_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
         = skip_prologue_using_sal (gdbarch, func_addr);
 
       if (post_prologue_pc != 0)
-        return max (start_pc, post_prologue_pc);
+        return std::max (start_pc, post_prologue_pc);
     }
 
   /* Prologue analysis does the rest....  */
@@ -1693,9 +1694,34 @@ nios2_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
   return nios2_analyze_prologue (gdbarch, start_pc, start_pc, &cache, NULL);
 }
 
-/* Implement the breakpoint_from_pc gdbarch hook.
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
 
-   The Nios II ABI for Linux says: "Userspace programs should not use
+static int
+nios2_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
+{
+  unsigned long mach = gdbarch_bfd_arch_info (gdbarch)->mach;
+
+  if (mach == bfd_mach_nios2r2)
+    {
+      unsigned int insn;
+      const struct nios2_opcode *op
+	= nios2_fetch_insn (gdbarch, *pcptr, &insn);
+
+      if (op && op->size == NIOS2_CDX_OPCODE_SIZE)
+	return NIOS2_CDX_OPCODE_SIZE;
+      else
+	return NIOS2_OPCODE_SIZE;
+    }
+  else
+    return NIOS2_OPCODE_SIZE;
+}
+
+/* Implement the sw_breakpoint_from_kind gdbarch method.  */
+
+static const gdb_byte *
+nios2_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
+{
+/* The Nios II ABI for Linux says: "Userspace programs should not use
    the break instruction and userspace debuggers should not insert
    one." and "Userspace breakpoints are accomplished using the trap
    instruction with immediate operand 31 (all ones)."
@@ -1703,51 +1729,46 @@ nios2_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
    So, we use "trap 31" consistently as the breakpoint on bare-metal
    as well as Linux targets.  */
 
-static const gdb_byte*
-nios2_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *bp_addr,
-			  int *bp_size)
-{
-  enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
-  unsigned long mach = gdbarch_bfd_arch_info (gdbarch)->mach;
+  /* R2 trap encoding:
+     ((0x2d << 26) | (0x1f << 21) | (0x1d << 16) | (0x20 << 0))
+     0xb7fd0020
+     CDX trap.n encoding:
+     ((0xd << 12) | (0x1f << 6) | (0x9 << 0))
+     0xd7c9
+     Note that code is always little-endian on R2.  */
+  *size = kind;
 
-  if (mach == bfd_mach_nios2r2)
+  if (kind == NIOS2_CDX_OPCODE_SIZE)
     {
-      /* R2 trap encoding:
-	   ((0x2d << 26) | (0x1f << 21) | (0x1d << 16) | (0x20 << 0))
-	   0xb7fd0020
-	 CDX trap.n encoding:
-	   ((0xd << 12) | (0x1f << 6) | (0x9 << 0))
-	   0xd7c9
-         Note that code is always little-endian on R2.  */
-      static const gdb_byte r2_breakpoint_le[] = {0x20, 0x00, 0xfd, 0xb7};
       static const gdb_byte cdx_breakpoint_le[] = {0xc9, 0xd7};
-      unsigned int insn;
-      const struct nios2_opcode *op
-	= nios2_fetch_insn (gdbarch, *bp_addr, &insn);
 
-      if (op && op->size == NIOS2_CDX_OPCODE_SIZE)
-	{
-	  *bp_size = NIOS2_CDX_OPCODE_SIZE;
-	  return cdx_breakpoint_le;
-	}
-      else
-	{
-	  *bp_size = NIOS2_OPCODE_SIZE;
-	  return r2_breakpoint_le;
-	}
+      return cdx_breakpoint_le;
     }
   else
     {
-      /* R1 trap encoding:
-	 ((0x1d << 17) | (0x2d << 11) | (0x1f << 6) | (0x3a << 0))
-	 0x003b6ffa */
-      static const gdb_byte r1_breakpoint_le[] = {0xfa, 0x6f, 0x3b, 0x0};
-      static const gdb_byte r1_breakpoint_be[] = {0x0, 0x3b, 0x6f, 0xfa};
-      *bp_size = NIOS2_OPCODE_SIZE;
-      if (byte_order_for_code == BFD_ENDIAN_BIG)
-	return r1_breakpoint_be;
+      unsigned long mach = gdbarch_bfd_arch_info (gdbarch)->mach;
+
+      if (mach == bfd_mach_nios2r2)
+	{
+	  static const gdb_byte r2_breakpoint_le[] = {0x20, 0x00, 0xfd, 0xb7};
+
+	  return r2_breakpoint_le;
+	}
       else
-	return r1_breakpoint_le;
+	{
+	  enum bfd_endian byte_order_for_code
+	    = gdbarch_byte_order_for_code (gdbarch);
+	  /* R1 trap encoding:
+	     ((0x1d << 17) | (0x2d << 11) | (0x1f << 6) | (0x3a << 0))
+	     0x003b6ffa */
+	  static const gdb_byte r1_breakpoint_le[] = {0xfa, 0x6f, 0x3b, 0x0};
+	  static const gdb_byte r1_breakpoint_be[] = {0x0, 0x3b, 0x6f, 0xfa};
+
+	  if (byte_order_for_code == BFD_ENDIAN_BIG)
+	    return r1_breakpoint_be;
+	  else
+	    return r1_breakpoint_le;
+	}
     }
 }
 
@@ -2105,9 +2126,9 @@ static const struct frame_unwind nios2_stub_frame_unwind =
    branch prediction.  */
 
 static CORE_ADDR
-nios2_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
+nios2_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   unsigned long mach = gdbarch_bfd_arch_info (gdbarch)->mach;
   unsigned int insn;
@@ -2125,10 +2146,10 @@ nios2_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
     
   if (nios2_match_branch (insn, op, mach, &ra, &rb, &imm, &cond))
     {
-      int ras = get_frame_register_signed (frame, ra);
-      int rbs = get_frame_register_signed (frame, rb);
-      unsigned int rau = get_frame_register_unsigned (frame, ra);
-      unsigned int rbu = get_frame_register_unsigned (frame, rb);
+      int ras = regcache_raw_get_signed (regcache, ra);
+      int rbs = regcache_raw_get_signed (regcache, rb);
+      unsigned int rau = regcache_raw_get_unsigned (regcache, ra);
+      unsigned int rbu = regcache_raw_get_unsigned (regcache, rb);
 
       pc += op->size;
       switch (cond)
@@ -2171,7 +2192,7 @@ nios2_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 
   else if (nios2_match_jmpr (insn, op, mach, &ra)
 	   || nios2_match_callr (insn, op, mach, &ra))
-    pc = get_frame_register_unsigned (frame, ra);
+    pc = regcache_raw_get_unsigned (regcache, ra);
 
   else if (nios2_match_ldwm (insn, op, mach, &uimm, &ra, &imm, &wb, &id, &ret)
 	   && ret)
@@ -2179,15 +2200,15 @@ nios2_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
       /* If ra is in the reglist, we have to use the value saved in the
 	 stack frame rather than the current value.  */
       if (uimm & (1 << NIOS2_RA_REGNUM))
-	pc = nios2_unwind_pc (gdbarch, frame);
+	pc = nios2_unwind_pc (gdbarch, get_current_frame ());
       else
-	pc = get_frame_register_unsigned (frame, NIOS2_RA_REGNUM);
+	pc = regcache_raw_get_unsigned (regcache, NIOS2_RA_REGNUM);
     }
 
   else if (nios2_match_trap (insn, op, mach, &uimm) && uimm == 0)
     {
       if (tdep->syscall_next_pc != NULL)
-	return tdep->syscall_next_pc (frame, op);
+	return tdep->syscall_next_pc (get_current_frame (), op);
     }
 
   else
@@ -2198,16 +2219,16 @@ nios2_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 
 /* Implement the software_single_step gdbarch method.  */
 
-static int
-nios2_software_single_step (struct frame_info *frame)
+static VEC (CORE_ADDR) *
+nios2_software_single_step (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
-  CORE_ADDR next_pc = nios2_get_next_pc (frame, get_frame_pc (frame));
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  CORE_ADDR next_pc = nios2_get_next_pc (regcache, regcache_read_pc (regcache));
+  VEC (CORE_ADDR) *next_pcs = NULL;
 
-  insert_single_step_breakpoint (gdbarch, aspace, next_pc);
+  VEC_safe_push (CORE_ADDR, next_pcs, next_pc);
 
-  return 1;
+  return next_pcs;
 }
 
 /* Implement the get_longjump_target gdbarch method.  */
@@ -2315,7 +2336,8 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, nios2_skip_prologue);
   set_gdbarch_stack_frame_destroyed_p (gdbarch, nios2_stack_frame_destroyed_p);
-  set_gdbarch_breakpoint_from_pc (gdbarch, nios2_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, nios2_breakpoint_kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, nios2_sw_breakpoint_from_kind);
 
   set_gdbarch_dummy_id (gdbarch, nios2_dummy_id);
   set_gdbarch_unwind_pc (gdbarch, nios2_unwind_pc);

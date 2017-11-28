@@ -1,4 +1,4 @@
-#   Copyright 1988-2016 Free Software Foundation, Inc.
+#   Copyright 1988-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ gdb_test "help bt" $help_backtrace_text "help backtrace \"bt\" abbreviation"
 gdb_test "help backtrace" $help_backtrace_text "help backtrace"
 
 # test help commands
-gdb_test "help commands" "Set commands to be executed when a breakpoint is hit\.\[\r\n\]+Give breakpoint number as argument after \"commands\"\.\[\r\n\]+With no argument, the targeted breakpoint is the last one set\.\[\r\n\]+The commands themselves follow starting on the next line\.\[\r\n\]+Type a line containing \"end\" to indicate the end of them\.\[\r\n\]+Give \"silent\" as the first line to make the breakpoint silent;\[\r\n\]+then no output is printed when it is hit, except what the commands print\." "help commands"
+gdb_test "help commands" "Set commands to be executed when the given breakpoints are hit\.\[\r\n\]+Give a space-separated breakpoint list as argument after \"commands\"\.\[\r\n\]+A list element can be a breakpoint number \\(e.g. `5'\\) or a range of numbers\[\r\n\]+\\(e.g. `5-7'\\)\.\[\r\n\]+With no argument, the targeted breakpoint is the last one set\.\[\r\n\]+The commands themselves follow starting on the next line\.\[\r\n\]+Type a line containing \"end\" to indicate the end of them\.\[\r\n\]+Give \"silent\" as the first line to make the breakpoint silent;\[\r\n\]+then no output is printed when it is hit, except what the commands print\." "help commands"
 
 # Test a prefix command.  "delete" is picked at random.
 # test help delete "d" abbreviation

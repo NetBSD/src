@@ -1,4 +1,4 @@
-# Copyright 2005-2016 Free Software Foundation, Inc.
+# Copyright 2005-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {}] != "" } {
-    unsupported "Testcase compile failed."
+    unsupported "failed to compile"
     return -1
 }
 
@@ -38,7 +38,7 @@ proc test_stepi {function } {
     # of the previous tests, this makes sure that it doesn't affect
     # this series of tests.
     if ![runto_main] then {
-        fail "Can't run to main"
+        fail "can't run to main"
         return 0
     }
 
@@ -94,7 +94,7 @@ proc test_stepi {function } {
     
     gdb_test "x /i \$pc" \
              "0x\[0-9a-fA-F\]+ <.*>:\[ \t\]+fneg.*" \
-             "Check stepi over fb$function stopped on fneg instruction"
+             "check stepi over fb$function stopped on fneg instruction"
 
 }
 

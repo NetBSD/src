@@ -1,5 +1,5 @@
 /* bfd back-end for mips support
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.

@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2011-2016 Free Software Foundation, Inc.
+# Copyright (C) 2011-2017 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -39,6 +39,7 @@ IMPORTED_GNULIB_MODULES="\
     frexpl \
     inttypes \
     lstat \
+    limits-h \
     memchr \
     memmem \
     pathmax \
@@ -57,7 +58,7 @@ IMPORTED_GNULIB_MODULES="\
 "
 
 # The gnulib commit ID to use for the update.
-GNULIB_COMMIT_SHA1="1029a8112290f6eee9d7878a391c49db42c999bd"
+GNULIB_COMMIT_SHA1="38237baf99386101934cd93278023aa4ae523ec0"
 
 # The expected version number for the various auto tools we will
 # use after the import.

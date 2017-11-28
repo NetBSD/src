@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,6 +39,10 @@ struct cleanup *make_cleanup_regcache_xfree (struct regcache *regcache);
 struct regcache *regcache_xmalloc (struct gdbarch *gdbarch,
 				   struct address_space *aspace);
 
+/* Return REGCACHE's ptid.  */
+
+extern ptid_t regcache_get_ptid (const struct regcache *regcache);
+
 /* Return REGCACHE's architecture.  */
 
 extern struct gdbarch *get_regcache_arch (const struct regcache *regcache);
@@ -49,6 +53,10 @@ extern struct address_space *get_regcache_aspace (const struct regcache *);
 
 enum register_status regcache_register_status (const struct regcache *regcache,
 					       int regnum);
+
+/* Make certain that the register REGNUM in REGCACHE is up-to-date.  */
+
+void regcache_raw_update (struct regcache *regcache, int regnum);
 
 /* Transfer a raw register [0..NUM_REGS) between core-gdb and the
    regcache.  The read variants return the status of the register.  */
@@ -65,6 +73,12 @@ extern void regcache_raw_write_signed (struct regcache *regcache,
 				       int regnum, LONGEST val);
 extern void regcache_raw_write_unsigned (struct regcache *regcache,
 					 int regnum, ULONGEST val);
+
+/* Return the register's value in signed or throw if it's not
+   available.  */
+
+extern LONGEST regcache_raw_get_signed (struct regcache *regcache,
+					int regnum);
 
 /* Set a raw register's value in the regcache's buffer.  Unlike
    regcache_raw_write, this is not write-through.  The intention is
@@ -221,5 +235,11 @@ extern void regcache_cpy (struct regcache *dest, struct regcache *src);
 
 extern void registers_changed (void);
 extern void registers_changed_ptid (ptid_t);
+
+/* Dump the contents of a register from the register cache to the target
+   debug.  */
+extern void regcache_debug_print_register (const char *func,
+					   struct regcache *regcache,
+					   int regno);
 
 #endif /* REGCACHE_H */

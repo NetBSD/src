@@ -1,5 +1,5 @@
 /* PowerPC-specific support for 64-bit ELF.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -48,6 +48,9 @@ struct ppc_elf_params
   /* The bfd backend detected a non-PIC reference to a protected symbol
      defined in a shared library.  */
   int pic_fixup;
+
+  /* Relocate 16A relocs as 16D and vice versa.  */
+  int vle_reloc_fixup;
 
   bfd_vma pagesize;
 };

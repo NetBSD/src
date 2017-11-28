@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,6 +56,14 @@ enum gdb_regnum {
   ARM_LAST_ARG_REGNUM = ARM_A4_REGNUM,
   ARM_NUM_FP_ARG_REGS = 4,
   ARM_LAST_FP_ARG_REGNUM = ARM_F3_REGNUM
+};
+
+/* Enum describing the different kinds of breakpoints.  */
+enum arm_breakpoint_kinds
+{
+   ARM_BP_KIND_THUMB = 2,
+   ARM_BP_KIND_THUMB2 = 3,
+   ARM_BP_KIND_ARM = 4,
 };
 
 /* Instruction condition field values.  */

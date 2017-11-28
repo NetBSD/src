@@ -2,7 +2,7 @@
 
 # GDB script to list of problems using awk.
 #
-# Copyright (C) 2002-2016 Free Software Foundation, Inc.
+# Copyright (C) 2002-2017 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -567,16 +567,6 @@ Function name in first column should be restricted to function implementation"
 }
 
 
-# Functions without any parameter should have (void)
-# after their name not simply ().
-BEGIN { doc["no parameter function"] = "\
-Function having no parameter should be declared with funcname (void)."
-    category["no parameter function"] = ari_code
-}
-/^[a-zA-Z][a-z0-9A-Z_]*[[:space:]]*\(\)/ {
-    fail("no parameter function")
-}
-
 BEGIN { doc["hash"] = "\
 Do not use ` #...'\'', instead use `#...'\''(some compilers only correctly \
 parse a C preprocessor directive when `#'\'' is the first character on \
@@ -1097,6 +1087,22 @@ Do not use vasprintf(), instead use xstrvprintf"
     fail("vasprintf")
 }
 
+BEGIN { doc["printf_vma"] = "\
+Do not use printf_vma, instead use paddress or phex_nz"
+    category["printf_vma"] = ari_code
+}
+/(^|[^_[:alnum:]])printf_vma[[:space:]]*\(/ {
+    fail("printf_vma")
+}
+
+BEGIN { doc["sprintf_vma"] = "\
+Do not use sprintf_vma, instead use paddress or phex_nz"
+    category["sprintf_vma"] = ari_code
+}
+/(^|[^_[:alnum:]])sprintf_vma[[:space:]]*\(/ {
+    fail("sprintf_vma")
+}
+
 # More generic memory operations
 
 BEGIN { doc["bzero"] = "\
@@ -1136,32 +1142,12 @@ Do not use strnicmp(), instead use strncasecmp()"
 # Boolean expressions and conditionals
 
 BEGIN { doc["boolean"] = "\
-Do not use `boolean'\'',  use `int'\'' instead"
+Do not use `boolean'\'',  use `bool'\'' instead"
     category["boolean"] = ari_regression
 }
 /(^|[^_[:alnum:]])boolean([^_[:alnum:]]|$)/ {
     if (is_yacc_or_lex == 0) {
        fail("boolean")
-    }
-}
-
-BEGIN { doc["false"] = "\
-Definitely do not use `false'\'' in boolean expressions"
-    category["false"] = ari_regression
-}
-/(^|[^_[:alnum:]])false([^_[:alnum:]]|$)/ {
-    if (is_yacc_or_lex == 0) {
-       fail("false")
-    }
-}
-
-BEGIN { doc["true"] = "\
-Do not try to use `true'\'' in boolean expressions"
-    category["true"] = ari_regression
-}
-/(^|[^_[:alnum:]])true([^_[:alnum:]]|$)/ {
-    if (is_yacc_or_lex == 0) {
-       fail("true")
     }
 }
 

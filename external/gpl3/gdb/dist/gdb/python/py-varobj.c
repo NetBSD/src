@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 #include "python-internal.h"
 #include "varobj.h"
 #include "varobj-iter.h"
+#include "py-ref.h"
 
 /* A dynamic varobj iterator "class" for python pretty-printed
    varobjs.  This inherits struct varobj_iter.  */
@@ -38,11 +39,8 @@ static void
 py_varobj_iter_dtor (struct varobj_iter *self)
 {
   struct py_varobj_iter *dis = (struct py_varobj_iter *) self;
-  struct cleanup *back_to = varobj_ensure_python_env (self->var);
-
+  gdbpy_enter_varobj enter_py (self->var);
   Py_XDECREF (dis->iter);
-
-  do_cleanups (back_to);
 }
 
 /* Implementation of the 'next' method of pretty-printed varobj
@@ -52,8 +50,6 @@ static varobj_item *
 py_varobj_iter_next (struct varobj_iter *self)
 {
   struct py_varobj_iter *t = (struct py_varobj_iter *) self;
-  struct cleanup *back_to;
-  PyObject *item;
   PyObject *py_v;
   varobj_item *vitem;
   const char *name = NULL;
@@ -61,9 +57,9 @@ py_varobj_iter_next (struct varobj_iter *self)
   if (!gdb_python_initialized)
     return NULL;
 
-  back_to = varobj_ensure_python_env (self->var);
+  gdbpy_enter_varobj enter_py (self->var);
 
-  item = PyIter_Next (t->iter);
+  gdbpy_ref<> item (PyIter_Next (t->iter));
 
   if (item == NULL)
     {
@@ -75,10 +71,11 @@ py_varobj_iter_next (struct varobj_iter *self)
       if (PyErr_ExceptionMatches (gdbpy_gdb_memory_error))
 	{
 	  PyObject *type, *value, *trace;
-	  char *name_str, *value_str;
+	  char *name_str;
 
 	  PyErr_Fetch (&type, &value, &trace);
-	  value_str = gdbpy_exception_to_string (type, value);
+	  gdb::unique_xmalloc_ptr<char>
+	    value_str (gdbpy_exception_to_string (type, value));
 	  Py_XDECREF (type);
 	  Py_XDECREF (value);
 	  Py_XDECREF (trace);
@@ -90,9 +87,8 @@ py_varobj_iter_next (struct varobj_iter *self)
 
 	  name_str = xstrprintf ("<error at %d>",
 				 self->next_raw_index++);
-	  item = Py_BuildValue ("(ss)", name_str, value_str);
+	  item.reset (Py_BuildValue ("(ss)", name_str, value_str.get ()));
 	  xfree (name_str);
-	  xfree (value_str);
 	  if (item == NULL)
 	    {
 	      gdbpy_print_stack ();
@@ -107,20 +103,19 @@ py_varobj_iter_next (struct varobj_iter *self)
 	}
     }
 
-  if (!PyArg_ParseTuple (item, "sO", &name, &py_v))
+  if (!PyArg_ParseTuple (item.get (), "sO", &name, &py_v))
     {
       gdbpy_print_stack ();
       error (_("Invalid item from the child list"));
     }
 
-  vitem = XNEW (struct varobj_item);
+  vitem = new varobj_item ();
   vitem->value = convert_value_from_python (py_v);
   if (vitem->value == NULL)
     gdbpy_print_stack ();
-  vitem->name = xstrdup (name);
+  vitem->name = name;
 
   self->next_raw_index++;
-  do_cleanups (back_to);
   return vitem;
 }
 
@@ -167,28 +162,23 @@ py_varobj_iter_new (struct varobj *var, PyObject *pyiter)
 struct varobj_iter *
 py_varobj_get_iterator (struct varobj *var, PyObject *printer)
 {
-  PyObject *children;
   PyObject *iter;
   struct py_varobj_iter *py_iter;
-  struct cleanup *back_to = varobj_ensure_python_env (var);
+
+  gdbpy_enter_varobj enter_py (var);
 
   if (!PyObject_HasAttr (printer, gdbpy_children_cst))
-    {
-      do_cleanups (back_to);
-      return NULL;
-    }
+    return NULL;
 
-  children = PyObject_CallMethodObjArgs (printer, gdbpy_children_cst,
-					 NULL);
+  gdbpy_ref<> children (PyObject_CallMethodObjArgs (printer, gdbpy_children_cst,
+						    NULL));
   if (children == NULL)
     {
       gdbpy_print_stack ();
       error (_("Null value returned for children"));
     }
 
-  make_cleanup_py_decref (children);
-
-  iter = PyObject_GetIter (children);
+  iter = PyObject_GetIter (children.get ());
   if (iter == NULL)
     {
       gdbpy_print_stack ();
@@ -196,8 +186,6 @@ py_varobj_get_iterator (struct varobj *var, PyObject *printer)
     }
 
   py_iter = py_varobj_iter_new (var, iter);
-
-  do_cleanups (back_to);
 
   return &py_iter->base;
 }

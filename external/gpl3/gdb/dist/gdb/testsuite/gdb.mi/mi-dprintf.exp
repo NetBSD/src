@@ -1,4 +1,4 @@
-#   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 #   Contributed by Hui Zhu  <hui@codesourcery.com>
 
 # This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@ if [mi_gdb_start] {
 standard_testfile
 
 if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
-    untested "failed to compile $testfile"
+    untested "failed to compile"
     return -1
 }
 

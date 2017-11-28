@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2016 Free Software Foundation, Inc.
+# Copyright (C) 2009-2017 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -24,29 +24,26 @@ class TypeFlag:
 
     In the GDB sources, struct type has a component called instance_flags
     in which the value is the addition of various flags.  These flags are
-    defined by two enumerates: type_flag_value, and type_instance_flag_value.
-    This class helps us recreate a list with all these flags that is
-    easy to manipulate and sort.  Because all flag names start with either
-    TYPE_FLAG_ or TYPE_INSTANCE_FLAG_, a short_name attribute is provided
-    that strips this prefix.
+    defined by the enumerates type_instance_flag_value.  This class helps us
+    recreate a list with all these flags that is easy to manipulate and sort.
+    Because all flag names start with TYPE_INSTANCE_FLAG_, a short_name
+    attribute is provided that strips this prefix.
 
     ATTRIBUTES
-      name:  The enumeration name (eg: "TYPE_FLAG_UNSIGNED").
+      name:  The enumeration name (eg: "TYPE_INSTANCE_FLAG_CONST").
       value: The associated value.
       short_name: The enumeration name, with the suffix stripped.
     """
     def __init__(self, name, value):
         self.name = name
         self.value = value
-        self.short_name = name.replace("TYPE_FLAG_", '')
-        if self.short_name == name:
-            self.short_name = name.replace("TYPE_INSTANCE_FLAG_", '')
+        self.short_name = name.replace("TYPE_INSTANCE_FLAG_", '')
     def __cmp__(self, other):
         """Sort by value order."""
         return self.value.__cmp__(other.value)
 
-# A list of all existing TYPE_FLAGS_* and TYPE_INSTANCE_FLAGS_*
-# enumerations, stored as TypeFlags objects.  Lazy-initialized.
+# A list of all existing TYPE_INSTANCE_FLAGS_* enumerations,
+# stored as TypeFlags objects.  Lazy-initialized.
 TYPE_FLAGS = None
 
 class TypeFlagsPrinter:
@@ -86,24 +83,13 @@ class TypeFlagsPrinter:
         global TYPE_FLAGS
         TYPE_FLAGS = []
         try:
-            flags = gdb.lookup_type("enum type_flag_value")
-        except:
-            print("Warning: Cannot find enum type_flag_value type.")
-            print("         `struct type' pretty-printer will be degraded")
-            return
-        try:
             iflags = gdb.lookup_type("enum type_instance_flag_value")
         except:
             print("Warning: Cannot find enum type_instance_flag_value type.")
             print("         `struct type' pretty-printer will be degraded")
             return
-        # Note: TYPE_FLAG_MIN is a duplicate of TYPE_FLAG_UNSIGNED,
-        # so exclude it from the list we are building.
         TYPE_FLAGS = [TypeFlag(field.name, field.enumval)
-                      for field in flags.fields()
-                      if field.name != 'TYPE_FLAG_MIN']
-        TYPE_FLAGS += [TypeFlag(field.name, field.enumval)
-                       for field in iflags.fields()]
+                      for field in iflags.fields()]
         TYPE_FLAGS.sort()
 
 class StructTypePrettyPrinter:

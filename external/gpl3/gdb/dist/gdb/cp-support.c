@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -93,24 +93,6 @@ copy_string_to_obstack (struct obstack *obstack, const char *string,
 {
   *len = strlen (string);
   return (char *) obstack_copy (obstack, string, *len);
-}
-
-/* A cleanup wrapper for cp_demangled_name_parse_free.  */
-
-static void
-do_demangled_name_parse_free_cleanup (void *data)
-{
-  struct demangle_parse_info *info = (struct demangle_parse_info *) data;
-
-  cp_demangled_name_parse_free (info);
-}
-
-/* Create a cleanup for C++ name parsing.  */
-
-struct cleanup *
-make_cleanup_cp_demangled_name_parse_free (struct demangle_parse_info *info)
-{
-  return make_cleanup (do_demangled_name_parse_free_cleanup, info);
 }
 
 /* Return 1 if STRING is clearly already in canonical form.  This
@@ -209,8 +191,7 @@ inspect_type (struct demangle_parse_info *info,
 	  long len;
 	  int is_anon;
 	  struct type *type;
-	  struct demangle_parse_info *i;
-	  struct ui_file *buf;
+	  std::unique_ptr<demangle_parse_info> i;
 
 	  /* Get the real type of the typedef.  */
 	  type = check_typedef (otype);
@@ -246,23 +227,21 @@ inspect_type (struct demangle_parse_info *info,
 		type = last;
 	    }
 
-	  buf = mem_fileopen ();
+	  string_file buf;
 	  TRY
-	  {
-	    type_print (type, "", buf, -1);
-	  }
-
+	    {
+	      type_print (type, "", &buf, -1);
+	    }
 	  /* If type_print threw an exception, there is little point
 	     in continuing, so just bow out gracefully.  */
 	  CATCH (except, RETURN_MASK_ERROR)
 	    {
-	      ui_file_delete (buf);
 	      return 0;
 	    }
 	  END_CATCH
 
-	  name = ui_file_obsavestring (buf, &info->obstack, &len);
-	  ui_file_delete (buf);
+	  len = buf.size ();
+	  name = (char *) obstack_copy0 (&info->obstack, buf.c_str (), len);
 
 	  /* Turn the result into a new tree.  Note that this
 	     tree will contain pointers into NAME, so NAME cannot
@@ -272,7 +251,7 @@ inspect_type (struct demangle_parse_info *info,
 	  if (i != NULL)
 	    {
 	      /* Merge the two trees.  */
-	      cp_merge_demangle_parse_infos (info, ret_comp, i);
+	      cp_merge_demangle_parse_infos (info, ret_comp, i.get ());
 
 	      /* Replace any newly introduced typedefs -- but not
 		 if the type is anonymous (that would lead to infinite
@@ -288,14 +267,12 @@ inspect_type (struct demangle_parse_info *info,
 
 		 Canonicalize the name again, and store it in the
 		 current node (RET_COMP).  */
-	      char *canon = cp_canonicalize_string_no_typedefs (name);
+	      std::string canon = cp_canonicalize_string_no_typedefs (name);
 
-	      if (canon != NULL)
+	      if (!canon.empty ())
 		{
-		  /* Copy the canonicalization into the obstack and
-		     free CANON.  */
-		  name = copy_string_to_obstack (&info->obstack, canon, &len);
-		  xfree (canon);
+		  /* Copy the canonicalization into the obstack.  */
+		  name = copy_string_to_obstack (&info->obstack, canon.c_str (), &len);
 		}
 
 	      ret_comp->u.s_name.s = name;
@@ -321,7 +298,7 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
 {
   long len;
   char *name;
-  struct ui_file *buf = mem_fileopen ();
+  string_file buf;
   struct demangle_component *comp = ret_comp;
 
   /* Walk each node of the qualified name, reconstructing the name of
@@ -335,9 +312,9 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
 	{
 	  struct demangle_component newobj;
 
-	  ui_file_write (buf, d_left (comp)->u.s_name.s,
-			 d_left (comp)->u.s_name.len);
-	  name = ui_file_obsavestring (buf, &info->obstack, &len);
+	  buf.write (d_left (comp)->u.s_name.s, d_left (comp)->u.s_name.len);
+	  len = buf.size ();
+	  name = (char *) obstack_copy0 (&info->obstack, buf.c_str (), len);
 	  newobj.type = DEMANGLE_COMPONENT_NAME;
 	  newobj.u.s_name.s = name;
 	  newobj.u.s_name.len = len;
@@ -350,12 +327,11 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
 		 string and replace the top DEMANGLE_COMPONENT_QUAL_NAME
 		 node.  */
 
-	      ui_file_rewind (buf);
+	      buf.clear ();
 	      n = cp_comp_to_string (&newobj, 100);
 	      if (n == NULL)
 		{
 		  /* If something went astray, abort typedef substitutions.  */
-		  ui_file_delete (buf);
 		  return;
 		}
 
@@ -380,14 +356,13 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
 	  if (name == NULL)
 	    {
 	      /* If something went astray, abort typedef substitutions.  */
-	      ui_file_delete (buf);
 	      return;
 	    }
-	  fputs_unfiltered (name, buf);
+	  buf.puts (name);
 	  xfree (name);
 	}
 
-      ui_file_write (buf, "::", 2);
+      buf.write ("::", 2);
       comp = d_right (comp);
     }
 
@@ -397,8 +372,9 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
 
   if (comp->type == DEMANGLE_COMPONENT_NAME)
     {
-      ui_file_write (buf, comp->u.s_name.s, comp->u.s_name.len);
-      name = ui_file_obsavestring (buf, &info->obstack, &len);
+      buf.write (comp->u.s_name.s, comp->u.s_name.len);
+      len = buf.size ();
+      name = (char *) obstack_copy0 (&info->obstack, buf.c_str (), len);
 
       /* Replace the top (DEMANGLE_COMPONENT_QUAL_NAME) node
 	 with a DEMANGLE_COMPONENT_NAME node containing the whole
@@ -410,8 +386,6 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
     }
   else
     replace_typedefs (info, comp, finder, data);
-
-  ui_file_delete (buf);
 }
 
 
@@ -520,6 +494,7 @@ replace_typedefs (struct demangle_parse_info *info,
 	case DEMANGLE_COMPONENT_RESTRICT_THIS:
 	case DEMANGLE_COMPONENT_POINTER:
 	case DEMANGLE_COMPONENT_REFERENCE:
+	case DEMANGLE_COMPONENT_RVALUE_REFERENCE:
 	  replace_typedefs (info, d_left (ret_comp), finder, data);
 	  break;
 
@@ -529,43 +504,36 @@ replace_typedefs (struct demangle_parse_info *info,
     }
 }
 
-/* Parse STRING and convert it to canonical form, resolving any typedefs.
-   If parsing fails, or if STRING is already canonical, return NULL.
-   Otherwise return the canonical form.  The return value is allocated via
-   xmalloc.  If FINDER is not NULL, then type components are passed to
-   FINDER to be looked up.  DATA is passed verbatim to FINDER.  */
+/* Parse STRING and convert it to canonical form, resolving any
+   typedefs.  If parsing fails, or if STRING is already canonical,
+   return the empty string.  Otherwise return the canonical form.  If
+   FINDER is not NULL, then type components are passed to FINDER to be
+   looked up.  DATA is passed verbatim to FINDER.  */
 
-char *
+std::string
 cp_canonicalize_string_full (const char *string,
 			     canonicalization_ftype *finder,
 			     void *data)
 {
-  char *ret;
+  std::string ret;
   unsigned int estimated_len;
-  struct demangle_parse_info *info;
+  std::unique_ptr<demangle_parse_info> info;
 
-  ret = NULL;
   estimated_len = strlen (string) * 2;
   info = cp_demangled_name_to_comp (string, NULL);
   if (info != NULL)
     {
       /* Replace all the typedefs in the tree.  */
-      replace_typedefs (info, info->tree, finder, data);
+      replace_typedefs (info.get (), info->tree, finder, data);
 
       /* Convert the tree back into a string.  */
       ret = cp_comp_to_string (info->tree, estimated_len);
-      gdb_assert (ret != NULL);
-
-      /* Free the parse information.  */
-      cp_demangled_name_parse_free (info);
+      gdb_assert (!ret.empty ());
 
       /* Finally, compare the original string with the computed
 	 name, returning NULL if they are the same.  */
-      if (strcmp (string, ret) == 0)
-	{
-	  xfree (ret);
-	  return NULL;
-	}
+      if (ret == string)
+	return std::string ();
     }
 
   return ret;
@@ -574,46 +542,41 @@ cp_canonicalize_string_full (const char *string,
 /* Like cp_canonicalize_string_full, but always passes NULL for
    FINDER.  */
 
-char *
+std::string
 cp_canonicalize_string_no_typedefs (const char *string)
 {
   return cp_canonicalize_string_full (string, NULL, NULL);
 }
 
 /* Parse STRING and convert it to canonical form.  If parsing fails,
-   or if STRING is already canonical, return NULL.  Otherwise return
-   the canonical form.  The return value is allocated via xmalloc.  */
+   or if STRING is already canonical, return the empty string.
+   Otherwise return the canonical form.  */
 
-char *
+std::string
 cp_canonicalize_string (const char *string)
 {
-  struct demangle_parse_info *info;
+  std::unique_ptr<demangle_parse_info> info;
   unsigned int estimated_len;
-  char *ret;
 
   if (cp_already_canonical (string))
-    return NULL;
+    return std::string ();
 
   info = cp_demangled_name_to_comp (string, NULL);
   if (info == NULL)
-    return NULL;
+    return std::string ();
 
   estimated_len = strlen (string) * 2;
-  ret = cp_comp_to_string (info->tree, estimated_len);
-  cp_demangled_name_parse_free (info);
+  std::string ret = cp_comp_to_string (info->tree, estimated_len);
 
-  if (ret == NULL)
+  if (ret.empty ())
     {
       warning (_("internal error: string \"%s\" failed to be canonicalized"),
 	       string);
-      return NULL;
+      return std::string ();
     }
 
-  if (strcmp (string, ret) == 0)
-    {
-      xfree (ret);
-      return NULL;
-    }
+  if (ret == string)
+    return std::string ();
 
   return ret;
 }
@@ -624,12 +587,11 @@ cp_canonicalize_string (const char *string)
    freed when finished with the tree, or NULL if none was needed.
    OPTIONS will be passed to the demangler.  */
 
-static struct demangle_parse_info *
+static std::unique_ptr<demangle_parse_info>
 mangled_name_to_comp (const char *mangled_name, int options,
 		      void **memory, char **demangled_p)
 {
   char *demangled_name;
-  struct demangle_parse_info *info;
 
   /* If it looks like a v3 mangled name, then try to go directly
      to trees.  */
@@ -641,7 +603,7 @@ mangled_name_to_comp (const char *mangled_name, int options,
 					  options, memory);
       if (ret)
 	{
-	  info = cp_new_demangle_parse_info ();
+	  std::unique_ptr<demangle_parse_info> info (new demangle_parse_info);
 	  info->tree = ret;
 	  *demangled_p = NULL;
 	  return info;
@@ -656,7 +618,8 @@ mangled_name_to_comp (const char *mangled_name, int options,
   
   /* If we could demangle the name, parse it to build the component
      tree.  */
-  info = cp_demangled_name_to_comp (demangled_name, NULL);
+  std::unique_ptr<demangle_parse_info> info
+    = cp_demangled_name_to_comp (demangled_name, NULL);
 
   if (info == NULL)
     {
@@ -676,7 +639,7 @@ cp_class_name_from_physname (const char *physname)
   void *storage = NULL;
   char *demangled_name = NULL, *ret;
   struct demangle_component *ret_comp, *prev_comp, *cur_comp;
-  struct demangle_parse_info *info;
+  std::unique_ptr<demangle_parse_info> info;
   int done;
 
   info = mangled_name_to_comp (physname, DMGL_ANSI,
@@ -755,7 +718,6 @@ cp_class_name_from_physname (const char *physname)
 
   xfree (storage);
   xfree (demangled_name);
-  cp_demangled_name_parse_free (info);
   return ret;
 }
 
@@ -825,7 +787,7 @@ method_name_from_physname (const char *physname)
   void *storage = NULL;
   char *demangled_name = NULL, *ret;
   struct demangle_component *ret_comp;
-  struct demangle_parse_info *info;
+  std::unique_ptr<demangle_parse_info> info;
 
   info = mangled_name_to_comp (physname, DMGL_ANSI,
 			       &storage, &demangled_name);
@@ -842,7 +804,6 @@ method_name_from_physname (const char *physname)
 
   xfree (storage);
   xfree (demangled_name);
-  cp_demangled_name_parse_free (info);
   return ret;
 }
 
@@ -857,7 +818,7 @@ cp_func_name (const char *full_name)
 {
   char *ret;
   struct demangle_component *ret_comp;
-  struct demangle_parse_info *info;
+  std::unique_ptr<demangle_parse_info> info;
 
   info = cp_demangled_name_to_comp (full_name, NULL);
   if (!info)
@@ -869,7 +830,6 @@ cp_func_name (const char *full_name)
   if (ret_comp != NULL)
     ret = cp_comp_to_string (ret_comp, 10);
 
-  cp_demangled_name_parse_free (info);
   return ret;
 }
 
@@ -882,7 +842,7 @@ cp_remove_params (const char *demangled_name)
 {
   int done = 0;
   struct demangle_component *ret_comp;
-  struct demangle_parse_info *info;
+  std::unique_ptr<demangle_parse_info> info;
   char *ret = NULL;
 
   if (demangled_name == NULL)
@@ -915,7 +875,6 @@ cp_remove_params (const char *demangled_name)
   if (ret_comp->type == DEMANGLE_COMPONENT_TYPED_NAME)
     ret = cp_comp_to_string (d_left (ret_comp), 10);
 
-  cp_demangled_name_parse_free (info);
   return ret;
 }
 
@@ -1283,7 +1242,7 @@ make_symbol_overload_list_adl_namespace (struct type *type,
   int i, prefix_len;
 
   while (TYPE_CODE (type) == TYPE_CODE_PTR
-	 || TYPE_CODE (type) == TYPE_CODE_REF
+	 || TYPE_IS_REFERENCE (type)
          || TYPE_CODE (type) == TYPE_CODE_ARRAY
          || TYPE_CODE (type) == TYPE_CODE_TYPEDEF)
     {

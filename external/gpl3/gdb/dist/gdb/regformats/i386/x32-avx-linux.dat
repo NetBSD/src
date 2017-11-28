@@ -61,6 +61,8 @@ expedite:rbp,rsp,rip
 128:xmm15
 32:mxcsr
 64:orig_rax
+64:fs_base
+64:gs_base
 128:ymm0h
 128:ymm1h
 128:ymm2h

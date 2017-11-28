@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ if [get_compiler_info "c++"] {
 
 if { [gdb_compile_shlib $srcdir/$subdir/$srcfile2 $sofile {debug c++}] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable [list debug "c++" shlib=${sofile}]] != ""} {
-    untested gdb2384.exp
+    untested "failed to compile"
     return -1
 }
 

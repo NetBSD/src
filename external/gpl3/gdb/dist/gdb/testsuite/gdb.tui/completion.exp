@@ -1,0 +1,58 @@
+# Copyright 2015-2017 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+gdb_exit
+gdb_start
+
+if {[skip_tui_tests] || [target_info exists gdb,nointerrupts]} {
+    return
+}
+
+gdb_test_no_output "set max-completions unlimited"
+
+with_test_prefix "completion of layout names" {
+    set test "tab completion"
+    send_gdb "layout\t\t\t"
+    gdb_test_multiple "" "$test" {
+	-re "asm *next *prev *regs *split *src *\r\n$gdb_prompt layout $" {
+	    pass "$test"
+	}
+    }
+    send_gdb "\003"
+    set test "quit command input"
+    gdb_test_multiple "" "$test" {
+	-re "$gdb_prompt $" {
+	    pass "$test"
+	}
+    }
+}
+
+with_test_prefix "completion of focus command" {
+    set test "tab completion"
+    send_gdb "focus \t\t"
+    gdb_test_multiple "" "$test" {
+	-re "cmd *next *prev *src *\r\n$gdb_prompt focus $" {
+	    pass "$test"
+	}
+    }
+
+    send_gdb "\003"
+    set test "quit command input"
+    gdb_test_multiple "" "$test" {
+	-re "$gdb_prompt $" {
+	    pass "$test"
+	}
+    }
+}

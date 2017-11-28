@@ -1,4 +1,4 @@
-#   Copyright 2002-2016 Free Software Foundation, Inc.
+#   Copyright 2002-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ if { [skip_cplus_tests] } { continue }
 
 standard_testfile hang1.cc hang2.cc hang3.cc
 
-if {[prepare_for_testing $testfile.exp $testfile \
+if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2 $srcfile3] {debug c++}]} {
     return -1
 }
@@ -58,8 +58,8 @@ if {[prepare_for_testing $testfile.exp $testfile \
 #
 # Since `hang2.o''s psymtab lists `hang1.o' as a dependency, GDB first
 # reads `hang1.o''s symbols.  When GDB sees `(1,3)=xsB:', it creates a
-# type object for `struct B', sets its TYPE_FLAG_STUB flag, and
-# records it as type number `(1,3)'.
+# type object for `struct B', sets its TYPE_STUB flag, and records it
+# as type number `(1,3)'.
 #
 # When GDB finds the definition of `struct C::B', since the stabs
 # don't indicate that the type is nested within C, it treats it as

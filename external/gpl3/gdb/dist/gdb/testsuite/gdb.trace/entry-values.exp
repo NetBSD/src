@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ gdb_test_multiple $test $test {
 }
 
 if { [string equal $returned_from_foo ""] } {
-    fail "Find the call or branch instruction offset in bar"
+    fail "find the call or branch instruction offset in bar"
     # The following test makes no sense if the offset is unknown.  We need
     # to update the pattern above to match call or branch instruction for
     # the target architecture.
@@ -175,7 +175,7 @@ if  {[gdb_compile [list ${binfile}1.o ${binfile}2.o] \
 clean_restart ${testfile}
 
 if ![runto_main] {
-    fail "Can't run to main"
+    fail "can't run to main"
     return -1
 }
 
@@ -210,7 +210,7 @@ clean_restart $binfile
 load_lib "trace-support.exp"
 
 if ![runto_main] {
-    fail "Can't run to main to check for trace support"
+    fail "can't run to main to check for trace support"
     return -1
 }
 
