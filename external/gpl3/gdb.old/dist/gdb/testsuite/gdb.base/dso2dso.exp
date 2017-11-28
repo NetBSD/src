@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,14 +57,15 @@ if { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable \
 }
 
 clean_restart $binfile
-gdb_load_shlibs $binfile_libdso2 $binfile_libdso1
+gdb_load_shlib $binfile_libdso2
+gdb_load_shlib $binfile_libdso1
 
 if { ![runto_main] } {
   return -1
 }
 
 set bp_location [gdb_get_line_number "STOP HERE" [file tail $srcfile_libdso1]]
-gdb_breakpoint ${srcfile_libdso1}:${bp_location}
+gdb_breakpoint ${libdso1}.c:${bp_location}
 
 gdb_continue_to_breakpoint "at call to sub2" \
     ".*sub2 ().*"
