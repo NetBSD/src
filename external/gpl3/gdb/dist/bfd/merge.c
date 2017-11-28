@@ -1,5 +1,5 @@
 /* SEC_MERGE support.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -859,11 +859,10 @@ _bfd_merged_section_offset (bfd *output_bfd ATTRIBUTE_UNUSED, asection **psec,
   if (offset >= sec->rawsize)
     {
       if (offset > sec->rawsize)
-	{
-	  (*_bfd_error_handler)
-	    (_("%s: access beyond end of merged section (%ld)"),
-	     bfd_get_filename (sec->owner), (long) offset);
-	}
+	_bfd_error_handler
+	  /* xgettext:c-format */
+	  (_("%B: access beyond end of merged section (%ld)"),
+	   sec->owner, (long) offset);
       return secinfo->first_str ? sec->size : 0;
     }
 
