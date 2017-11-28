@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -23,14 +23,14 @@ set options [list debug [gdb_target_symbol_prefix_flags]]
 
 # Check that the target supports trace.
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
-    untested "Couldn't compile test program"
+    untested "failed to compile"
     return -1
 }
 
 clean_restart ${testfile}
 
 if ![runto_main] {
-    fail "Can't run to main to check for trace support"
+    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -46,7 +46,7 @@ gdb_load_shlib $libipa
 lappend options shlib=$libipa
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
-    untested "Couldn't compile test program with in-process agent library"
+    untested "failed to compile with in-process agent library"
     return -1
 }
 
@@ -62,7 +62,7 @@ proc test_tracepoint_enable_disable { tracepoint_cmd } {
 	set expected 0
 
 	if ![runto_main] {
-	    fail "Can't run to main."
+	    fail "can't run to main."
 	    return -1
 	}
 

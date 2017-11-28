@@ -1413,11 +1413,11 @@ static char *(netbsd_signal_names[]) = {
 
 static emul_syscall emul_netbsd_syscalls = {
   netbsd_descriptors,
-  sizeof(netbsd_descriptors) / sizeof(netbsd_descriptors[0]),
+  ARRAY_SIZE (netbsd_descriptors),
   netbsd_error_names,
-  sizeof(netbsd_error_names) / sizeof(netbsd_error_names[0]),
+  ARRAY_SIZE (netbsd_error_names),
   netbsd_signal_names,
-  sizeof(netbsd_signal_names) / sizeof(netbsd_signal_names[0]),
+  ARRAY_SIZE (netbsd_signal_names),
 };
 
 

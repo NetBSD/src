@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ proc build_inferior {exefile lang} {
 
   if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object "debug $lang"] != ""
        || [gdb_compile "${objfile}" "${exefile}" executable "debug $lang"] != "" } {
-      untested "Couldn't compile ${srcfile} in $lang mode"
+      untested "failed to compile in $lang mode"
       return -1
   }
   return 0
@@ -54,10 +54,19 @@ proc test_value_creation {} {
   if { $gdb_py_is_py3k == 0 } {
     gdb_py_test_silent_cmd "python i = gdb.Value (5L)" "create long value" 1
   }
+
+  gdb_py_test_silent_cmd "python l = gdb.Value(0xffffffff12345678)" "create large unsigned 64-bit value" 1
+  if { $gdb_py_is_py3k == 0 } {
+    gdb_test "python print long(l)" "18446744069720004216" "large unsigned 64-bit int conversion to python"
+  } else {
+    gdb_test "python print (int(l))" "18446744069720004216" "large unsigned 64-bit int conversion to python"
+  }
+
   gdb_py_test_silent_cmd "python f = gdb.Value (1.25)" "create double value" 1
   gdb_py_test_silent_cmd "python a = gdb.Value ('string test')" "create 8-bit string value" 1
   gdb_test "python print (a)" "\"string test\"" "print 8-bit string"
   gdb_test "python print (a.__class__)" "<(type|class) 'gdb.Value'>" "verify type of 8-bit string"
+
   if { $gdb_py_is_py3k == 0 } {
     gdb_py_test_silent_cmd "python a = gdb.Value (u'unicode test')" "create unicode value" 1
     gdb_test "python print (a)" "\"unicode test\"" "print Unicode string"
@@ -65,7 +74,7 @@ proc test_value_creation {} {
   }
 
   # Test address attribute is None in a non-addressable value
-  gdb_test "python print ('result = %s' % i.address)" "= None" "Test address attribute in non-addressable value"
+  gdb_test "python print ('result = %s' % i.address)" "= None" "test address attribute in non-addressable value"
 }
 
 proc test_value_numeric_ops {} {
@@ -241,10 +250,10 @@ proc test_value_in_inferior {} {
   }
 
   # Smoke-test is_optimized_out attribute
-  gdb_test "python print ('result = %s' % arg0.is_optimized_out)" "= False" "Test is_optimized_out attribute"
+  gdb_test "python print ('result = %s' % arg0.is_optimized_out)" "= False" "test is_optimized_out attribute"
 
   # Test address attribute
-  gdb_test "python print ('result = %s' % arg0.address)" "= 0x\[\[:xdigit:\]\]+" "Test address attribute"
+  gdb_test "python print ('result = %s' % arg0.address)" "= 0x\[\[:xdigit:\]\]+" "test address attribute"
 
   # Test displaying a variable that is temporarily at a bad address.
   # But if we can examine what's at memory address 0, then we'll also be
@@ -269,32 +278,33 @@ proc test_value_in_inferior {} {
     gdb_test "python inval2 = inval+1" "gdb.MemoryError: Cannot access memory at address 0x0.*" $test
     gdb_test "python inval.fetch_lazy ()" "gdb.MemoryError: Cannot access memory at address 0x0.*" $test
   }
+  set argc_value [get_integer_valueof "argc" 0]
   gdb_test "python argc_lazy = gdb.parse_and_eval('argc')"
   gdb_test "python argc_notlazy = gdb.parse_and_eval('argc')"
   gdb_test "python argc_notlazy.fetch_lazy()"
   gdb_test "python print (argc_lazy.is_lazy)" "True"
   gdb_test "python print (argc_notlazy.is_lazy)" "False"
-  gdb_test "print argc" " = 1" "sanity check argc"
+  gdb_test "print argc" " = $argc_value" "sanity check argc"
   gdb_test "python print (argc_lazy.is_lazy)" "\r\nTrue"
-  gdb_test_no_output "set argc=2"
-  gdb_test "python print (argc_notlazy)" "\r\n1"
-  gdb_test "python print (argc_lazy)" "\r\n2"
+  gdb_test_no_output "set argc=[expr $argc_value + 1]" "change argc"
+  gdb_test "python print (argc_notlazy)" "\r\n$argc_value"
+  gdb_test "python print (argc_lazy)" "\r\n[expr $argc_value + 1]"
   gdb_test "python print (argc_lazy.is_lazy)" "False"
 
   # Test string fetches,  both partial and whole.
   gdb_test "print st" "\"divide et impera\""
   gdb_py_test_silent_cmd "python st = gdb.history (0)" "get value from history" 1
   gdb_test "python print (st.string ())"  "divide et impera"  "Test string with no length"
-  gdb_test "python print (st.string (length = -1))" "divide et impera" "Test string (length = -1) is all of the string"
+  gdb_test "python print (st.string (length = -1))" "divide et impera" "test string (length = -1) is all of the string"
   gdb_test "python print (st.string (length = 6))" "divide"
-  gdb_test "python print (\"---\"+st.string (length = 0)+\"---\")" "------" "Test string (length = 0) is empty"
-  gdb_test "python print (len(st.string (length = 0)))" "0" "Test length is 0"
+  gdb_test "python print (\"---\"+st.string (length = 0)+\"---\")" "------" "test string (length = 0) is empty"
+  gdb_test "python print (len(st.string (length = 0)))" "0" "test length is 0"
 
 
   # Fetch a string that has embedded nulls.
   gdb_test "print nullst" "\"divide\\\\000et\\\\000impera\".*"
   gdb_py_test_silent_cmd "python nullst = gdb.history (0)" "get value from history" 1
-  gdb_test "python print (nullst.string ())" "divide" "Test string to first null"
+  gdb_test "python print (nullst.string ())" "divide" "test string to first null"
   # Python cannot print strings that contain the null (\0) character.
   # For the purposes of this test, use repr()
   gdb_py_test_silent_cmd "python nullst = nullst.string (length = 9)" "get string beyond null" 1
@@ -306,29 +316,6 @@ proc test_value_in_inferior {} {
   gdb_test "python print(xstr\['text'\].string (length = xstr\['length'\]))" "x{100}" \
     "read string beyond declared size"
 }
-
-proc test_lazy_strings {} {
-
-  global hex
-
-  gdb_test "print sptr" "\"pointer\""
-  gdb_py_test_silent_cmd "python sptr = gdb.history (0)" "Get value from history" 1
-
-  gdb_py_test_silent_cmd "python lstr = sptr.lazy_string()" "Aquire lazy string" 1
-  gdb_test "python print (lstr.type)" "const char \*." "Test lazy-string type name equality"
-  gdb_test "python print (sptr.type)" "const char \*." "Test string type name equality"
-
-  # Prevent symbol on address 0x0 being printed.
-  gdb_test_no_output "set print symbol off"
-  gdb_test "print sn" "0x0"
-
-  gdb_py_test_silent_cmd "python snptr = gdb.history (0)" "Get value from history" 1
-  gdb_test "python snstr = snptr.lazy_string(length=5)" ".*Cannot create a lazy string with address.*" "Test lazy string"
-  gdb_py_test_silent_cmd "python snstr = snptr.lazy_string(length=0)" "Succesfully create a lazy string" 1
-  gdb_test "python print (snstr.length)" "0" "Test lazy string length"
-  gdb_test "python print (snstr.address)" "0" "Test lazy string address"
-}
-
 
 proc test_inferior_function_call {} {
     global gdb_prompt hex decimal
@@ -379,7 +366,7 @@ proc test_value_after_death {} {
   gdb_test "kill" "" "kill the inferior" \
     "Kill the program being debugged. .y or n. $" \
     "y"
-  gdb_test "file" "" "Discard the symbols" \
+  gdb_test "file" "" "discard the symbols" \
     "Discard symbol table from.*y or n. $" \
     "y"
 
@@ -418,7 +405,7 @@ proc test_subscript_regression {exefile lang} {
 	 "Obtain address" 1
      gdb_py_test_silent_cmd "python rptr = gdb.history(0)" \
 	 "Obtains value from GDB" 1
-     gdb_test "python print (rptr\[0\])" "2" "Check pointer passed as reference"
+     gdb_test "python print (rptr\[0\])" "2" "check pointer passed as reference"
 
      # Just the most basic test of dynamic_cast -- it is checked in
      # the C++ tests.
@@ -444,19 +431,19 @@ proc test_subscript_regression {exefile lang} {
      "Create a value for subscript test" 1
 
  # Try to access an int with a subscript.  This should fail.
- gdb_test "python print (intv)" "1" "Baseline print of an int Python value"
+ gdb_test "python print (intv)" "1" "baseline print of an int Python value"
  gdb_test "python print (intv\[0\])" "gdb.error: Cannot subscript requested type.*" \
      "Attempt to access an integer with a subscript"
 
  # Try to access a string with a subscript.  This should pass.
- gdb_test "python print (stringv)" "foo." "Baseline print of a string Python value"
- gdb_test "python print (stringv\[0\])" "f." "Attempt to access a string with a subscript"
+ gdb_test "python print (stringv)" "foo." "baseline print of a string Python value"
+ gdb_test "python print (stringv\[0\])" "f." "attempt to access a string with a subscript"
 
  # Try to access an int array via a pointer with a subscript.  This should pass.
  gdb_py_test_silent_cmd "print p" "Build pointer to array" 1
  gdb_py_test_silent_cmd "python pointer = gdb.history(0)" "" 1
- gdb_test "python print (pointer\[0\])" "1" "Access array via pointer with int subscript"
- gdb_test "python print (pointer\[intv\])" "2" "Access array via pointer with value subscript"
+ gdb_test "python print (pointer\[0\])" "1" "access array via pointer with int subscript"
+ gdb_test "python print (pointer\[intv\])" "2" "access array via pointer with value subscript"
 
  # Try to access a single dimension array with a subscript to the
  # result.  This should fail.
@@ -467,7 +454,7 @@ proc test_subscript_regression {exefile lang} {
  # dimensions.  This should pass.
  gdb_py_test_silent_cmd "print {\"fu \",\"foo\",\"bar\"}" "Build array" 1
  gdb_py_test_silent_cmd "python marray = gdb.history(0)" "" 1
- gdb_test "python print (marray\[1\]\[2\])" "o." "Test multiple subscript"
+ gdb_test "python print (marray\[1\]\[2\])" "o." "test multiple subscript"
 }
 
 # A few tests of gdb.parse_and_eval.
@@ -490,10 +477,10 @@ proc test_value_hash {} {
     "three = gdb.Value(3)" "" \
     "vdict = {one:\"one str\",two:\"two str\",three:\"three str\"}" "" \
     "end"
-    gdb_test "python print (vdict\[one\])" "one str" "Test dictionary hash"
-    gdb_test "python print (vdict\[two\])" "two str" "Test dictionary hash"
-    gdb_test "python print (vdict\[three\])" "three str" "Test dictionary hash"
-    gdb_test "python print (one.__hash__() == hash(one))" "True" "Test inbuilt hash"
+    gdb_test "python print (vdict\[one\])" "one str" "test dictionary hash"
+    gdb_test "python print (vdict\[two\])" "two str" "test dictionary hash"
+    gdb_test "python print (vdict\[three\])" "three str" "test dictionary hash"
+    gdb_test "python print (one.__hash__() == hash(one))" "True" "test inbuilt hash"
 }
 
 # Build C version of executable.  C++ is built later.
@@ -518,13 +505,12 @@ test_value_hash
 # The following tests require execution.
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 
 test_value_in_inferior
 test_inferior_function_call
-test_lazy_strings
 test_value_after_death
 
 # Test either C or C++ values. 

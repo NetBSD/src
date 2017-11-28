@@ -1,6 +1,6 @@
 /* Target-dependent code for FT32.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,6 +41,7 @@
 
 #include "ft32-tdep.h"
 #include "gdb/sim-ft32.h"
+#include <algorithm>
 
 #define RAM_BIAS  0x800000  /* Bias added to RAM addresses.  */
 
@@ -77,17 +78,10 @@ ft32_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
   return sp & ~1;
 }
 
-/* Implement the "breakpoint_from_pc" gdbarch method.  */
 
-static const unsigned char *
-ft32_breakpoint_from_pc (struct gdbarch *gdbarch,
-			 CORE_ADDR *pcptr, int *lenptr)
-{
-  static const gdb_byte breakpoint[] = { 0x02, 0x00, 0x34, 0x00 };
+constexpr gdb_byte ft32_break_insn[] = { 0x02, 0x00, 0x34, 0x00 };
 
-  *lenptr = sizeof (breakpoint);
-  return breakpoint;
-}
+typedef BP_MANIPULATION (ft32_break_insn) ft32_breakpoint;
 
 /* FT32 register names.  */
 
@@ -274,7 +268,7 @@ ft32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       CORE_ADDR post_prologue_pc
 	= skip_prologue_using_sal (gdbarch, func_addr);
       if (post_prologue_pc != 0)
-	return max (pc, post_prologue_pc);
+	return std::max (pc, post_prologue_pc);
       else
 	{
 	  /* Can't determine prologue from the symbol table, need to examine
@@ -610,9 +604,8 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
      be defined.  */
   void_type = arch_type (gdbarch, TYPE_CODE_VOID, 1, "void");
   func_void_type = make_function_type (void_type, NULL);
-  tdep->pc_type = arch_type (gdbarch, TYPE_CODE_PTR, 4, NULL);
-  TYPE_TARGET_TYPE (tdep->pc_type) = func_void_type;
-  TYPE_UNSIGNED (tdep->pc_type) = 1;
+  tdep->pc_type = arch_pointer_type (gdbarch, 4 * TARGET_CHAR_BIT, NULL,
+				     func_void_type);
   TYPE_INSTANCE_FLAGS (tdep->pc_type) |= TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1;
 
   set_gdbarch_read_pc (gdbarch, ft32_read_pc);
@@ -631,7 +624,8 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, ft32_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_breakpoint_from_pc (gdbarch, ft32_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, ft32_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, ft32_breakpoint::bp_from_kind);
   set_gdbarch_frame_align (gdbarch, ft32_frame_align);
 
   frame_base_set_default (gdbarch, &ft32_frame_base);

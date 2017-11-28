@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2016 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2017 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -38,23 +38,13 @@ AC_CONFIG_AUX_DIR(..)
 AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
 
-# See if we are building with C++, and substitute COMPILER.
-GDB_AC_BUILD_WITH_CXX
+# We require a C++11 compiler.  Check if one is available, and if
+# necessary, set CXX_DIALECT to some -std=xxx switch.
+AX_CXX_COMPILE_STDCXX(11, , mandatory)
 
 # Dependency checking.
 ZW_CREATE_DEPDIR
 ZW_PROG_COMPILER_DEPENDENCIES([CC])
-
-# Check for the 'make' the user wants to use.
-AC_CHECK_PROGS(MAKE, make)
-MAKE_IS_GNU=
-case "`$MAKE --version 2>&1 | sed 1q`" in
-  *GNU*)
-    MAKE_IS_GNU=yes
-    ;;
-esac
-AM_CONDITIONAL(GMAKE, test "$MAKE_IS_GNU" = yes)
-AC_PROG_MAKE_SET
 
 gnulib_extra_configure_args=
 # If large-file support is disabled, make sure gnulib does the same.
@@ -607,7 +597,7 @@ fi
 
 # Since GDB uses Readline, we need termcap functionality.  In many
 # cases this will be provided by the curses library, but some systems
-# have a seperate termcap library, or no curses library at all.
+# have a separate termcap library, or no curses library at all.
 
 case $host_os in
   cygwin*)
@@ -1544,12 +1534,6 @@ if test "${target}" = "${host}"; then
       AC_DEFINE(NEW_PROC_API, 1,
       [Define if you want to use new multi-fd /proc interface.])
       ;;
-  mips-sgi-irix5*)
-      # Work around <sys/proc.h> needing _KMEMUSER problem on IRIX 5.
-      AC_DEFINE([_KMEMUSER], 1,
-      [Define to 1 so <sys/proc.h> gets a definition of anon_hdl.  Works
-       around a <sys/proc.h> problem on IRIX 5.])
-      ;;
   esac
 fi
 
@@ -2366,6 +2350,8 @@ AC_DEFINE(GDB_DEFAULT_HOST_CHARSET, "UTF-8",
 if $development; then
   AC_DEFINE(GDB_SELF_TEST, 1,
             [Define if self-testing features should be enabled])
+  CONFIG_OBS="$CONFIG_OBS \$(SUBDIR_UNITTESTS_OBS)"
+  CONFIG_SRCS="$CONFIG_SRCS \$(SUBDIR_UNITTESTS_SRCS)"
 fi
 
 GDB_AC_TRANSFORM([gdb], [GDB_TRANSFORM_NAME])

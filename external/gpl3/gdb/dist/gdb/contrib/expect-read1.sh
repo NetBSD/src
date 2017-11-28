@@ -1,7 +1,7 @@
 #! /bin/sh
 # runtest wrapper to reliably reproduce racy incomplete reads in the testsuite.
 
-# Copyright (C) 2013-2016 Free Software Foundation, Inc.
+# Copyright (C) 2013-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This tool excercise any incomplete reads handling in the testsuite by
+# This tool exercises any incomplete reads handling in the testsuite by
 # simulating read always returns just 1 character.
 # Testsuite incompatibilities are tracked as GDB PR testsuite/12649.
 

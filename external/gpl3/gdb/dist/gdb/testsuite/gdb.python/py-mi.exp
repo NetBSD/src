@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if [mi_gdb_start] {
 standard_testfile py-prettyprint.c
 set pyfile py-prettyprint.py
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DMI}] != "" } {
-    untested ${testfile}.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -44,7 +44,7 @@ mi_runto main
 
 set remote_python_file [gdb_remote_download host ${srcdir}/${subdir}/${pyfile}]
 
-mi_gdb_test "python exec (open ('${remote_python_file}').read ())" ""
+mi_gdb_test "source ${remote_python_file}" "load python file"
 
 mi_continue_to_line [gdb_get_line_number {MI breakpoint here} ${srcfile}] \
   "step to breakpoint"
@@ -321,7 +321,7 @@ mi_gdb_test "-var-update c" \
 gdb_exit
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}-cxx" \
 	   executable {debug c++ additional_flags=-DMI}] != "" } {
-    untested "Couldn't compile ${srcfile} in c++ mode"
+    untested "failed to compile in C++ mode"
     return -1
 }
 

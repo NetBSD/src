@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ load_lib "trace-support.exp"
 standard_testfile unavailable.cc
 set executable $testfile
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile \
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 	 {debug nowarnings c++}]} {
     return -1
 }
@@ -732,7 +732,7 @@ proc gdb_trace_collection_test {} {
 runto_main
 
 if { ![gdb_target_supports_trace] } then {
-    unsupported "Current target does not support trace"
+    unsupported "current target does not support trace"
     return 1
 }
 

@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -138,7 +138,7 @@ sparc_fetch_inferior_registers (struct target_ops *ops,
 				struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int pid;
+  pid_t pid;
 
   /* NOTE: cagney/2002-12-03: This code assumes that the currently
      selected light weight processes' registers can be written
@@ -153,9 +153,7 @@ sparc_fetch_inferior_registers (struct target_ops *ops,
      These functions should instead be paramaterized with an explicit
      object (struct regcache, struct thread_info?) into which the LWPs
      registers can be written.  */
-  pid = ptid_get_lwp (inferior_ptid);
-  if (pid == 0)
-    pid = ptid_get_pid (inferior_ptid);
+  pid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regnum == SPARC_G0_REGNUM)
     {
@@ -193,13 +191,11 @@ sparc_store_inferior_registers (struct target_ops *ops,
 				struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int pid;
+  pid_t pid;
 
   /* NOTE: cagney/2002-12-02: See comment in fetch_inferior_registers
      about threaded assumptions.  */
-  pid = ptid_get_lwp (inferior_ptid);
-  if (pid == 0)
-    pid = ptid_get_pid (inferior_ptid);
+  pid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regnum == -1 || sparc_gregset_supplies_p (gdbarch, regnum))
     {

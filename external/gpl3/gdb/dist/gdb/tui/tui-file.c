@@ -1,5 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,145 +17,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "ui-file.h"
 #include "tui/tui-file.h"
 #include "tui/tui-io.h"
 #include "tui/tui-command.h"
 #include "tui.h"
 
-/* A ``struct ui_file'' that is compatible with all the legacy
-   code.  */
-
-/* new */
-enum streamtype
-{
-  afile,
-  astring
-};
-
-/* new */
-struct tui_stream
-{
-  int *ts_magic;
-  enum streamtype ts_streamtype;
-  FILE *ts_filestream;
-  char *ts_strbuf;
-  int ts_buflen;
-};
-
-static ui_file_flush_ftype tui_file_flush;
-extern ui_file_fputs_ftype tui_file_fputs;
-static ui_file_isatty_ftype tui_file_isatty;
-static ui_file_rewind_ftype tui_file_rewind;
-static ui_file_put_ftype tui_file_put;
-static ui_file_delete_ftype tui_file_delete;
-static struct ui_file *tui_file_new (void);
-static int tui_file_magic;
-
-static struct ui_file *
-tui_file_new (void)
-{
-  struct tui_stream *tui = XNEW (struct tui_stream);
-  struct ui_file *file = ui_file_new ();
-
-  set_ui_file_data (file, tui, tui_file_delete);
-  set_ui_file_flush (file, tui_file_flush);
-  set_ui_file_fputs (file, tui_file_fputs);
-  set_ui_file_isatty (file, tui_file_isatty);
-  set_ui_file_rewind (file, tui_file_rewind);
-  set_ui_file_put (file, tui_file_put);
-  tui->ts_magic = &tui_file_magic;
-  return file;
-}
-
-static void
-tui_file_delete (struct ui_file *file)
-{
-  struct tui_stream *tmpstream = (struct tui_stream *) ui_file_data (file);
-
-  if (tmpstream->ts_magic != &tui_file_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("tui_file_delete: bad magic number"));
-  if ((tmpstream->ts_streamtype == astring) 
-      && (tmpstream->ts_strbuf != NULL))
-    {
-      xfree (tmpstream->ts_strbuf);
-    }
-  xfree (tmpstream);
-}
-
-struct ui_file *
-tui_fileopen (FILE *stream)
-{
-  struct ui_file *file = tui_file_new ();
-  struct tui_stream *tmpstream = (struct tui_stream *) ui_file_data (file);
-
-  tmpstream->ts_streamtype = afile;
-  tmpstream->ts_filestream = stream;
-  tmpstream->ts_strbuf = NULL;
-  tmpstream->ts_buflen = 0;
-  return file;
-}
-
-struct ui_file *
-tui_sfileopen (int n)
-{
-  struct ui_file *file = tui_file_new ();
-  struct tui_stream *tmpstream = (struct tui_stream *) ui_file_data (file);
-
-  tmpstream->ts_streamtype = astring;
-  tmpstream->ts_filestream = NULL;
-  if (n > 0)
-    {
-      tmpstream->ts_strbuf = XNEWVEC (char, n + 1);
-      tmpstream->ts_strbuf[0] = '\0';
-    }
-  else
-    /* Do not allocate the buffer now.  The first time something is
-       printed one will be allocated by tui_file_adjust_strbuf().  */
-    tmpstream->ts_strbuf = NULL;
-  tmpstream->ts_buflen = n;
-  return file;
-}
-
-static int
-tui_file_isatty (struct ui_file *file)
-{
-  struct tui_stream *stream = (struct tui_stream *) ui_file_data (file);
-
-  if (stream->ts_magic != &tui_file_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("tui_file_isatty: bad magic number"));
-  if (stream->ts_streamtype == afile)
-    return (isatty (fileno (stream->ts_filestream)));
-  else
-    return 0;
-}
-
-static void
-tui_file_rewind (struct ui_file *file)
-{
-  struct tui_stream *stream = (struct tui_stream *) ui_file_data (file);
-
-  if (stream->ts_magic != &tui_file_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("tui_file_rewind: bad magic number"));
-  stream->ts_strbuf[0] = '\0';
-}
-
-static void
-tui_file_put (struct ui_file *file,
-	      ui_file_put_method_ftype *write,
-	      void *dest)
-{
-  struct tui_stream *stream = (struct tui_stream *) ui_file_data (file);
-
-  if (stream->ts_magic != &tui_file_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("tui_file_put: bad magic number"));
-  if (stream->ts_streamtype == astring)
-    write (dest, stream->ts_strbuf, strlen (stream->ts_strbuf));
-}
+tui_file::tui_file (FILE *stream)
+  : stdio_file (stream)
+{}
 
 /* All TUI I/O sent to the *_filtered and *_unfiltered functions
    eventually ends up here.  The fputs_unfiltered_hook is primarily
@@ -164,91 +33,32 @@ tui_file_put (struct ui_file *file,
    gdb_stderr are sent to the hook.  Everything else is sent on to
    fputs to allow file I/O to be handled appropriately.  */
 
-/* FIXME: Should be broken up and moved to a TUI specific file.  */
+void
+tui_file::puts (const char *linebuffer)
+{
+  tui_puts (linebuffer);
+  /* gdb_stdout is buffered, and the caller must gdb_flush it at
+     appropriate times.  Other streams are not so buffered.  */
+  if (this != gdb_stdout)
+    tui_refresh_cmd_win ();
+}
 
 void
-tui_file_fputs (const char *linebuffer, struct ui_file *file)
+tui_file::write (const char *buf, long length_buf)
 {
-  struct tui_stream *stream = (struct tui_stream *) ui_file_data (file);
-
-  if (stream->ts_streamtype == astring)
-    {
-      tui_file_adjust_strbuf (strlen (linebuffer), file);
-      strcat (stream->ts_strbuf, linebuffer);
-    }
-  else
-    {
-      tui_puts (linebuffer);
-      /* gdb_stdout is buffered, and the caller must gdb_flush it at
-	 appropriate times.  Other streams are not so buffered.  */
-      if (file != gdb_stdout)
-	tui_refresh_cmd_win ();
-    }
+  tui_write (buf, length_buf);
+  /* gdb_stdout is buffered, and the caller must gdb_flush it at
+     appropriate times.  Other streams are not so buffered.  */
+  if (this != gdb_stdout)
+    tui_refresh_cmd_win ();
 }
 
-char *
-tui_file_get_strbuf (struct ui_file *file)
-{
-  struct tui_stream *stream = (struct tui_stream *) ui_file_data (file);
-
-  if (stream->ts_magic != &tui_file_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("tui_file_get_strbuf: bad magic number"));
-  return (stream->ts_strbuf);
-}
-
-/* Adjust the length of the buffer by the amount necessary to
-   accomodate appending a string of length N to the buffer
-   contents.  */
 void
-tui_file_adjust_strbuf (int n, struct ui_file *file)
+tui_file::flush ()
 {
-  struct tui_stream *stream = (struct tui_stream *) ui_file_data (file);
-  int non_null_chars;
-
-  if (stream->ts_magic != &tui_file_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("tui_file_adjust_strbuf: bad magic number"));
-
-  if (stream->ts_streamtype != astring)
-    return;
-
-  if (stream->ts_strbuf)
-    {
-      /* There is already a buffer allocated.  */
-      non_null_chars = strlen (stream->ts_strbuf);
-
-      if (n > (stream->ts_buflen - non_null_chars - 1))
-	{
-	  stream->ts_buflen = n + non_null_chars + 1;
-	  stream->ts_strbuf
-	    = XRESIZEVEC (char, stream->ts_strbuf, stream->ts_buflen);
-	}
-    }
-  else
-    /* No buffer yet, so allocate one of the desired size.  */
-    stream->ts_strbuf = XNEWVEC (char, n + 1);
-}
-
-static void
-tui_file_flush (struct ui_file *file)
-{
-  struct tui_stream *stream = (struct tui_stream *) ui_file_data (file);
-
-  if (stream->ts_magic != &tui_file_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("tui_file_flush: bad magic number"));
-
-  switch (stream->ts_streamtype)
-    {
-    case astring:
-      break;
-    case afile:
-      /* gdb_stdout is buffered.  Other files are always flushed on
-	 every write.  */
-      if (file == gdb_stdout)
-	tui_refresh_cmd_win ();
-      fflush (stream->ts_filestream);
-      break;
-    }
+  /* gdb_stdout is buffered.  Other files are always flushed on
+     every write.  */
+  if (this == gdb_stdout)
+    tui_refresh_cmd_win ();
+  stdio_file::flush ();
 }

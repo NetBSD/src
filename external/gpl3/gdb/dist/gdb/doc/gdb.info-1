@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.12.
+Source-Level Debugger' for GDB (GDB) Version 8.0.1.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -44,9 +44,9 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Tenth Edition, for GDB (GDB) Version 7.12.
+   This is the Tenth Edition, for GDB (GDB) Version 8.0.1.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This edition of the GDB manual is dedicated to the memory of Fred
 Fish.  Fred was a long-standing contributor to GDB and to Free software
@@ -445,6 +445,11 @@ John Newlin, and Scott Foehner.
    Michael Eager and staff of Xilinx, Inc., contributed support for the
 Xilinx MicroBlaze architecture.
 
+   Initial support for the FreeBSD/mips target and native configuration
+was developed by SRI International and the University of Cambridge
+Computer Laboratory under DARPA/AFRL contract FA8750-10-C-0237
+("CTSRD"), as part of the DARPA CRASH research programme.
+
 
 File: gdb.info,  Node: Sample Session,  Next: Invocation,  Prev: Summary,  Up: Top
 
@@ -491,7 +496,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 7.12, Copyright 1999 Free Software Foundation, Inc...
+     GDB 8.0.1, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -987,7 +992,7 @@ or quiet mode.
      Activate the "Text User Interface" when starting.  The Text User
      Interface manages several text windows on the terminal, showing
      source, assembly, registers and GDB command outputs (*note GDB Text
-     User Interface: TUI.).  Do not use this option if you run GDB from
+     User Interface: TUI.). Do not use this option if you run GDB from
      Emacs (*note Using GDB under GNU Emacs: Emacs.).
 
 '-interpreter INTERP'
@@ -2945,11 +2950,11 @@ breakpoints you use the breakpoint number to say which breakpoint you
 want to change.  Each breakpoint may be "enabled" or "disabled"; if
 disabled, it has no effect on your program until you enable it again.
 
-   Some GDB commands accept a range of breakpoints on which to operate.
-A breakpoint range is either a single breakpoint number, like '5', or
-two such numbers, in increasing order, separated by a hyphen, like
-'5-7'.  When a breakpoint range is given to a command, all breakpoints
-in that range are operated on.
+   Some GDB commands accept a space-separated list of breakpoints on
+which to operate.  A list element can be either a single breakpoint
+number, like '5', or a range of such numbers, like '5-7'.  When a
+breakpoint list is given to a command, all breakpoints in that list are
+operated on.
 
 * Menu:
 
@@ -3092,8 +3097,8 @@ variables.
      The colon separating the filename qualifier from the regex may
      optionally be surrounded by spaces.
 
-'info breakpoints [N...]'
-'info break [N...]'
+'info breakpoints [LIST...]'
+'info break [LIST...]'
      Print a table of all breakpoints, watchpoints, and catchpoints set
      and not deleted.  Optional argument N means print information only
      about the specified breakpoint(s) (or watchpoint(s) or
@@ -3261,8 +3266,7 @@ with the 'break' command as well as to internal breakpoints set by
 commands like 'next' and 'finish'.  For breakpoints set with 'hbreak',
 GDB will always use hardware breakpoints.
 
-   You can control this automatic behaviour with the following
-commands::
+   You can control this automatic behaviour with the following commands:
 
 'set breakpoint auto-hw on'
      This is the default behavior.  When GDB sets a breakpoint, it will
@@ -3427,7 +3431,7 @@ running of your program.
      Set a watchpoint that will break when EXPR is either read from or
      written into by the program.
 
-'info watchpoints [N...]'
+'info watchpoints [LIST...]'
      This command prints a list of watchpoints, using the same format as
      'info break' (*note Set Breaks::).
 
@@ -3852,9 +3856,9 @@ address.
           Delete any breakpoints set at or within the code of the
           specified LINENUM of the specified FILENAME.
 
-'delete [breakpoints] [RANGE...]'
+'delete [breakpoints] [LIST...]'
      Delete the breakpoints, watchpoints, or catchpoints of the
-     breakpoint ranges specified as arguments.  If no argument is
+     breakpoint list specified as argument.  If no argument is
      specified, delete all breakpoints (GDB asks confirmation, unless
      you have 'set confirm off').  You can abbreviate this command as
      'd'.
@@ -3896,22 +3900,22 @@ different states of enablement:
    You can use the following commands to enable or disable breakpoints,
 watchpoints, and catchpoints:
 
-'disable [breakpoints] [RANGE...]'
+'disable [breakpoints] [LIST...]'
      Disable the specified breakpoints--or all breakpoints, if none are
      listed.  A disabled breakpoint has no effect but is not forgotten.
      All options such as ignore-counts, conditions and commands are
      remembered in case the breakpoint is enabled again later.  You may
      abbreviate 'disable' as 'dis'.
 
-'enable [breakpoints] [RANGE...]'
+'enable [breakpoints] [LIST...]'
      Enable the specified breakpoints (or all defined breakpoints).
      They become effective once again in stopping your program.
 
-'enable [breakpoints] once RANGE...'
+'enable [breakpoints] once LIST...'
      Enable the specified breakpoints temporarily.  GDB disables any of
      these breakpoints immediately after stopping your program.
 
-'enable [breakpoints] count COUNT RANGE...'
+'enable [breakpoints] count COUNT LIST...'
      Enable the specified breakpoints temporarily.  GDB records COUNT
      with each of the specified breakpoints, and decrements a
      breakpoint's count when it is hit.  When any count reaches 0, GDB
@@ -3919,7 +3923,7 @@ watchpoints, and catchpoints:
      (*note Break Conditions: Conditions.), that will be decremented to
      0 before COUNT is affected.
 
-'enable [breakpoints] delete RANGE...'
+'enable [breakpoints] delete LIST...'
      Enable the specified breakpoints to work once, then die.  GDB
      deletes any of these breakpoints as soon as your program stops
      there.  Breakpoints set by the 'tbreak' command start out in this
@@ -4059,7 +4063,7 @@ commands to execute when your program stops due to that breakpoint.  For
 example, you might want to print the values of certain expressions, or
 enable other breakpoints.
 
-'commands [RANGE...]'
+'commands [LIST...]'
 '... COMMAND-LIST ...'
 'end'
      Specify a list of commands for the given breakpoints.  The commands
@@ -4165,17 +4169,17 @@ without needing to communicate with GDB.
      the print commands, simply define normal breakpoints with
      explicitly-supplied command lists.)
 
-'gdb'
-     Handle the output using the GDB 'printf' command.
+     'gdb'
+          Handle the output using the GDB 'printf' command.
 
-'call'
-     Handle the output by calling a function in your program (normally
-     'printf').
+     'call'
+          Handle the output by calling a function in your program
+          (normally 'printf').
 
-'agent'
-     Have the remote debugging agent (such as 'gdbserver') handle the
-     output itself.  This style is only available for agents that
-     support running commands on the target.
+     'agent'
+          Have the remote debugging agent (such as 'gdbserver') handle
+          the output itself.  This style is only available for agents
+          that support running commands on the target.
 
 'set dprintf-function FUNCTION'
      Set the function to call if the dprintf style is 'call'.  By
@@ -6738,9 +6742,9 @@ ADDRESS:
 
 'FUNCADDR'
      An address of a function or procedure derived from its name.  In C,
-     C++, Java, Objective-C, Fortran, minimal, and assembly, this is
-     simply the function's name FUNCTION (and actually a special case of
-     a valid expression).  In Pascal and Modula-2, this is '&FUNCTION'.
+     C++, Objective-C, Fortran, minimal, and assembly, this is simply
+     the function's name FUNCTION (and actually a special case of a
+     valid expression).  In Pascal and Modula-2, this is '&FUNCTION'.
      In Ada, this is 'FUNCTION'Address' (although the Pascal form also
      works).
 

@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -472,6 +472,7 @@ print_insn_arg (int d,
     case 'f':
       /* A "gen" operand but 5 bits from the end of instruction.  */
       ioffset -= 5;
+      /* Fall through.  */
     case 'Z':
     case 'F':
     case 'L':

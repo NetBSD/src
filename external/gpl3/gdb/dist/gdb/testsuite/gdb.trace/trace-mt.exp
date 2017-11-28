@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -23,14 +23,14 @@ set additional_flags [gdb_target_symbol_prefix_flags]
 
 if { [gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile \
 	  executable [list debug $additional_flags] ] != "" } {
-    untested "Couldn't compile test program"
+    untested "failed to compile"
     return -1
 }
 
 clean_restart ${testfile}
 
 if ![runto_main] {
-    fail "Can't run to main to check for trace support"
+    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -50,7 +50,7 @@ proc step_over_tracepoint { trace_type } \
     # Make sure inferior is running in all-stop mode.
     gdb_test_no_output "set non-stop 0"
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -75,7 +75,7 @@ proc break_trace_same_addr { trace_type option } \
     # Start with a fresh gdb.
     clean_restart ${executable}
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -112,19 +112,19 @@ set remote_libipa [gdb_load_shlib $libipa]
 # Compile test case again with IPA.
 if { [gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile \
 	  executable [list debug $additional_flags shlib=$libipa] ] != "" } {
-    untested "failed to compile ftrace tests"
+    untested "failed to compile with in-process agent library"
     return -1
 }
 clean_restart ${executable}
 
 if ![runto_main] {
-    fail "Can't run to main for ftrace tests"
+    fail "can't run to main for ftrace tests"
     return 0
 }
 
 gdb_reinitialize_dir $srcdir/$subdir
 if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
-    untested "Could not find IPA lib loaded"
+    untested "could not find IPA lib loaded"
 } else {
     foreach break_always_inserted { "on" "off" } {
 	break_trace_same_addr "ftrace" ${break_always_inserted}

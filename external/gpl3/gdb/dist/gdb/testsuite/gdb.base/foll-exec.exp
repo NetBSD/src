@@ -1,4 +1,4 @@
-#   Copyright 1997-2016 Free Software Foundation, Inc.
+#   Copyright 1997-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,12 +32,12 @@ set compile_options debug
 
 # build the first test case
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable $compile_options] != "" } {
-     untested foll-exec.exp
+     untested "failed to compile"
      return -1
 }
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $compile_options] != "" } {
-     untested foll-exec.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -48,7 +48,7 @@ proc do_exec_tests {} {
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     fail "Couldn't run ${testfile}"
+     fail "couldn't run ${testfile}"
      return
    }
 
@@ -75,7 +75,7 @@ proc do_exec_tests {} {
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     fail "Couldn't run ${testfile}"
+     fail "couldn't run ${testfile}"
      return
    }
    # Execute the code setting up variable PROG.
@@ -162,7 +162,7 @@ proc do_exec_tests {} {
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     fail "Couldn't run ${testfile} (2nd try)"
+     fail "couldn't run ${testfile} (2nd try)"
      return
    }
 
@@ -191,7 +191,7 @@ proc do_exec_tests {} {
 
    send_gdb "continue\n"
    gdb_expect {
-     -re ".*xecuting new program:.*${testfile2}.*Catchpoint .*(exec\'d .*${testfile2}).*in .*$gdb_prompt $"\
+     -re ".*xecuting new program:.*${testfile2}.*Catchpoint .*(exec\'d .*${testfile2}).*$gdb_prompt $"\
                      {pass "hit catch exec"}
      -re "$gdb_prompt $" {fail "hit catch exec"}
      timeout         {fail "(timeout) hit catch exec"}
@@ -231,7 +231,7 @@ proc do_exec_tests {} {
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     fail "Couldn't run ${testfile} (3rd try)"
+     fail "couldn't run ${testfile} (3rd try)"
      return
    }
    # Execute the code setting up variable PROG.
@@ -296,7 +296,7 @@ proc do_exec_tests {} {
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     fail "Couldn't run ${testfile} (4th try)"
+     fail "couldn't run ${testfile} (4th try)"
      return
    }
    # Execute the code setting up variable PROG.
@@ -355,7 +355,7 @@ proc do_exec_tests {} {
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     fail "Couldn't run ${testfile} (5th try)"
+     fail "couldn't run ${testfile} (5th try)"
      return
    }
 

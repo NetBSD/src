@@ -2374,7 +2374,7 @@ insert_some_chars (string, count, col)
      char *string;
      int count, col;
 {
-#if defined (__MSDOS__) || defined (__MINGW32__)
+#if defined (__MSDOS__) || (defined (__MINGW32__) && !defined (NCURSES_VERSION))
   _rl_output_some_chars (string, count);
 #else
   /* DEBUGGING */
@@ -2426,7 +2426,7 @@ delete_chars (count)
   if (count > _rl_screenwidth)	/* XXX */
     return;
 
-#if !defined (__MSDOS__) && !defined (__MINGW32__)
+#if !defined (__MSDOS__) && !(defined (__MINGW32__) && !defined (NCURSES_VERSION))
   if (_rl_term_DC && *_rl_term_DC)
     {
       char *buffer;

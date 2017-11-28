@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.2.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.2"
+#define YYBISON_VERSION "3.0.4"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -107,7 +107,7 @@ int yyparse (void);
 
 static int yylex (void);
 
-void yyerror (char *);
+void yyerror (const char *);
 
 static void write_int (struct parser_state *, LONGEST, struct type *);
 
@@ -151,11 +151,11 @@ static struct type *type_system_address (struct parser_state *);
 
 #line 153 "ada-exp.c" /* yacc.c:339  */
 
-# ifndef YY_NULLPTR
+# ifndef YY_NULLPTRPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULLPTR nullptr
+#   define YY_NULLPTRPTR nullptr
 #  else
-#   define YY_NULLPTR 0
+#   define YY_NULLPTRPTR 0
 #  endif
 # endif
 
@@ -279,7 +279,7 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
+
 union YYSTYPE
 {
 #line 124 "ada-exp.y" /* yacc.c:355  */
@@ -301,6 +301,8 @@ union YYSTYPE
 
 #line 303 "ada-exp.c" /* yacc.c:355  */
 };
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -314,7 +316,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 318 "ada-exp.c" /* yacc.c:358  */
+#line 320 "ada-exp.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -651,7 +653,7 @@ static const char *const yytname[] =
   "tick_arglist", "type_prefix", "opt_type_prefix", "var_or_type", "block",
   "aggregate", "aggregate_component_list", "positional_list",
   "component_groups", "others", "component_group",
-  "component_associations", "$@2", "$@3", "$@4", "$@5", YY_NULLPTR
+  "component_associations", "$@2", "$@3", "$@4", "$@5", YY_NULLPTRPTR
 };
 #endif
 
@@ -1267,11 +1269,11 @@ static int
 yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                 yytype_int16 *yyssp, int yytoken)
 {
-  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
+  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTRPTR, yytname[yytoken]);
   YYSIZE_T yysize = yysize0;
   enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
   /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
+  const char *yyformat = YY_NULLPTRPTR;
   /* Arguments of yyformat. */
   char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
   /* Number of reported tokens (one for the "unexpected", one per
@@ -1328,7 +1330,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                   }
                 yyarg[yycount++] = yytname[yyx];
                 {
-                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
+                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTRPTR, yytname[yyx]);
                   if (! (yysize <= yysize1
                          && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
                     return 2;
@@ -1662,26 +1664,26 @@ yyreduce:
         case 4:
 #line 195 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_COMMA); }
-#line 1667 "ada-exp.c" /* yacc.c:1646  */
+#line 1669 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 5:
 #line 197 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_ASSIGN); }
-#line 1673 "ada-exp.c" /* yacc.c:1646  */
+#line 1675 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 6:
 #line 202 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_IND); }
-#line 1679 "ada-exp.c" /* yacc.c:1646  */
+#line 1681 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 7:
 #line 206 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_op_with_string (pstate, STRUCTOP_STRUCT,
 						    (yyvsp[0].sval)); }
-#line 1686 "ada-exp.c" /* yacc.c:1646  */
+#line 1688 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 8:
@@ -1691,7 +1693,7 @@ yyreduce:
 			  write_exp_elt_longcst (pstate, (yyvsp[-1].lval));
 			  write_exp_elt_opcode (pstate, OP_FUNCALL);
 		        }
-#line 1696 "ada-exp.c" /* yacc.c:1646  */
+#line 1698 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 9:
@@ -1712,13 +1714,13 @@ yyreduce:
 			      write_exp_elt_opcode (pstate, OP_FUNCALL);
 			    }
 			}
-#line 1717 "ada-exp.c" /* yacc.c:1646  */
+#line 1719 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 10:
 #line 235 "ada-exp.y" /* yacc.c:1646  */
     { type_qualifier = (yyvsp[-2].tval); }
-#line 1723 "ada-exp.c" /* yacc.c:1646  */
+#line 1725 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 11:
@@ -1731,19 +1733,19 @@ yyreduce:
 			  write_exp_elt_opcode (pstate, UNOP_QUAL);
 			  type_qualifier = (yyvsp[-4].tval);
 			}
-#line 1736 "ada-exp.c" /* yacc.c:1646  */
+#line 1738 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 12:
 #line 247 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.tval) = type_qualifier; }
-#line 1742 "ada-exp.c" /* yacc.c:1646  */
+#line 1744 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 13:
 #line 252 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, TERNOP_SLICE); }
-#line 1748 "ada-exp.c" /* yacc.c:1646  */
+#line 1750 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 14:
@@ -1753,13 +1755,13 @@ yyreduce:
 			  else
 			    error (_("Cannot slice a type"));
 			}
-#line 1758 "ada-exp.c" /* yacc.c:1646  */
+#line 1760 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 15:
 #line 261 "ada-exp.y" /* yacc.c:1646  */
     { }
-#line 1764 "ada-exp.c" /* yacc.c:1646  */
+#line 1766 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 16:
@@ -1771,67 +1773,67 @@ yyreduce:
 			      write_exp_elt_opcode (pstate, OP_TYPE);
 			    }
 			}
-#line 1776 "ada-exp.c" /* yacc.c:1646  */
+#line 1778 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 17:
 #line 283 "ada-exp.y" /* yacc.c:1646  */
     { write_dollar_variable (pstate, (yyvsp[0].sval)); }
-#line 1782 "ada-exp.c" /* yacc.c:1646  */
+#line 1784 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 20:
 #line 293 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_NEG); }
-#line 1788 "ada-exp.c" /* yacc.c:1646  */
+#line 1790 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 21:
 #line 297 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_PLUS); }
-#line 1794 "ada-exp.c" /* yacc.c:1646  */
+#line 1796 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 22:
 #line 301 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT); }
-#line 1800 "ada-exp.c" /* yacc.c:1646  */
+#line 1802 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 23:
 #line 305 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_ABS); }
-#line 1806 "ada-exp.c" /* yacc.c:1646  */
+#line 1808 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 24:
 #line 308 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 0; }
-#line 1812 "ada-exp.c" /* yacc.c:1646  */
+#line 1814 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 25:
 #line 312 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 1818 "ada-exp.c" /* yacc.c:1646  */
+#line 1820 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 26:
 #line 314 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 1824 "ada-exp.c" /* yacc.c:1646  */
+#line 1826 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 27:
 #line 316 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[-2].lval) + 1; }
-#line 1830 "ada-exp.c" /* yacc.c:1646  */
+#line 1832 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 28:
 #line 318 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[-4].lval) + 1; }
-#line 1836 "ada-exp.c" /* yacc.c:1646  */
+#line 1838 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 29:
@@ -1843,85 +1845,85 @@ yyreduce:
 			  write_exp_elt_type (pstate, (yyvsp[-2].tval));
 			  write_exp_elt_opcode (pstate, UNOP_MEMVAL);
 			}
-#line 1848 "ada-exp.c" /* yacc.c:1646  */
+#line 1850 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 30:
 #line 335 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_EXP); }
-#line 1854 "ada-exp.c" /* yacc.c:1646  */
+#line 1856 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 31:
 #line 339 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_MUL); }
-#line 1860 "ada-exp.c" /* yacc.c:1646  */
+#line 1862 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 32:
 #line 343 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_DIV); }
-#line 1866 "ada-exp.c" /* yacc.c:1646  */
+#line 1868 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 33:
 #line 347 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_REM); }
-#line 1872 "ada-exp.c" /* yacc.c:1646  */
+#line 1874 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 34:
 #line 351 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_MOD); }
-#line 1878 "ada-exp.c" /* yacc.c:1646  */
+#line 1880 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 35:
 #line 355 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_REPEAT); }
-#line 1884 "ada-exp.c" /* yacc.c:1646  */
+#line 1886 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 36:
 #line 359 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_ADD); }
-#line 1890 "ada-exp.c" /* yacc.c:1646  */
+#line 1892 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 37:
 #line 363 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_CONCAT); }
-#line 1896 "ada-exp.c" /* yacc.c:1646  */
+#line 1898 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 38:
 #line 367 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_SUB); }
-#line 1902 "ada-exp.c" /* yacc.c:1646  */
+#line 1904 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 40:
 #line 374 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_EQUAL); }
-#line 1908 "ada-exp.c" /* yacc.c:1646  */
+#line 1910 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 41:
 #line 378 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
-#line 1914 "ada-exp.c" /* yacc.c:1646  */
+#line 1916 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 42:
 #line 382 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_LEQ); }
-#line 1920 "ada-exp.c" /* yacc.c:1646  */
+#line 1922 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 43:
 #line 386 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, TERNOP_IN_RANGE); }
-#line 1926 "ada-exp.c" /* yacc.c:1646  */
+#line 1928 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 44:
@@ -1930,7 +1932,7 @@ yyreduce:
 			  write_exp_elt_longcst (pstate, (LONGEST) (yyvsp[0].lval));
 			  write_exp_elt_opcode (pstate, BINOP_IN_BOUNDS);
 			}
-#line 1935 "ada-exp.c" /* yacc.c:1646  */
+#line 1937 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 45:
@@ -1942,7 +1944,7 @@ yyreduce:
 		          write_exp_elt_type (pstate, (yyvsp[0].tval));
 		          write_exp_elt_opcode (pstate, UNOP_IN_RANGE);
 			}
-#line 1947 "ada-exp.c" /* yacc.c:1646  */
+#line 1949 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 46:
@@ -1950,7 +1952,7 @@ yyreduce:
     { write_exp_elt_opcode (pstate, TERNOP_IN_RANGE);
 		          write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT);
 			}
-#line 1955 "ada-exp.c" /* yacc.c:1646  */
+#line 1957 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 47:
@@ -1960,7 +1962,7 @@ yyreduce:
 			  write_exp_elt_opcode (pstate, BINOP_IN_BOUNDS);
 		          write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT);
 			}
-#line 1965 "ada-exp.c" /* yacc.c:1646  */
+#line 1967 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 48:
@@ -1973,91 +1975,91 @@ yyreduce:
 		          write_exp_elt_opcode (pstate, UNOP_IN_RANGE);
 		          write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT);
 			}
-#line 1978 "ada-exp.c" /* yacc.c:1646  */
+#line 1980 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 49:
 #line 422 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_GEQ); }
-#line 1984 "ada-exp.c" /* yacc.c:1646  */
+#line 1986 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 50:
 #line 426 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_LESS); }
-#line 1990 "ada-exp.c" /* yacc.c:1646  */
+#line 1992 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 51:
 #line 430 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_GTR); }
-#line 1996 "ada-exp.c" /* yacc.c:1646  */
+#line 1998 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 58:
 #line 443 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_BITWISE_AND); }
-#line 2002 "ada-exp.c" /* yacc.c:1646  */
+#line 2004 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 59:
 #line 445 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_BITWISE_AND); }
-#line 2008 "ada-exp.c" /* yacc.c:1646  */
+#line 2010 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 60:
 #line 450 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
-#line 2014 "ada-exp.c" /* yacc.c:1646  */
+#line 2016 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 61:
 #line 452 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
-#line 2020 "ada-exp.c" /* yacc.c:1646  */
+#line 2022 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 62:
 #line 457 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_BITWISE_IOR); }
-#line 2026 "ada-exp.c" /* yacc.c:1646  */
+#line 2028 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 63:
 #line 459 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_BITWISE_IOR); }
-#line 2032 "ada-exp.c" /* yacc.c:1646  */
+#line 2034 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 64:
 #line 464 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
-#line 2038 "ada-exp.c" /* yacc.c:1646  */
+#line 2040 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 65:
 #line 466 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
-#line 2044 "ada-exp.c" /* yacc.c:1646  */
+#line 2046 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 66:
 #line 470 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_BITWISE_XOR); }
-#line 2050 "ada-exp.c" /* yacc.c:1646  */
+#line 2052 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 67:
 #line 472 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_BITWISE_XOR); }
-#line 2056 "ada-exp.c" /* yacc.c:1646  */
+#line 2058 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 68:
 #line 484 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_ADDR); }
-#line 2062 "ada-exp.c" /* yacc.c:1646  */
+#line 2064 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 69:
@@ -2068,82 +2070,82 @@ yyreduce:
 					      type_system_address (pstate));
 			  write_exp_elt_opcode (pstate, UNOP_CAST);
 			}
-#line 2073 "ada-exp.c" /* yacc.c:1646  */
+#line 2075 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 70:
 #line 493 "ada-exp.y" /* yacc.c:1646  */
     { write_int (pstate, (yyvsp[0].lval), type_int (pstate));
 			  write_exp_elt_opcode (pstate, OP_ATR_FIRST); }
-#line 2080 "ada-exp.c" /* yacc.c:1646  */
+#line 2082 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 71:
 #line 496 "ada-exp.y" /* yacc.c:1646  */
     { write_int (pstate, (yyvsp[0].lval), type_int (pstate));
 			  write_exp_elt_opcode (pstate, OP_ATR_LAST); }
-#line 2087 "ada-exp.c" /* yacc.c:1646  */
+#line 2089 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 72:
 #line 499 "ada-exp.y" /* yacc.c:1646  */
     { write_int (pstate, (yyvsp[0].lval), type_int (pstate));
 			  write_exp_elt_opcode (pstate, OP_ATR_LENGTH); }
-#line 2094 "ada-exp.c" /* yacc.c:1646  */
+#line 2096 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 73:
 #line 502 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_ATR_SIZE); }
-#line 2100 "ada-exp.c" /* yacc.c:1646  */
+#line 2102 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 74:
 #line 504 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_ATR_TAG); }
-#line 2106 "ada-exp.c" /* yacc.c:1646  */
+#line 2108 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 75:
 #line 506 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_ATR_MIN); }
-#line 2112 "ada-exp.c" /* yacc.c:1646  */
+#line 2114 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 76:
 #line 508 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_ATR_MAX); }
-#line 2118 "ada-exp.c" /* yacc.c:1646  */
+#line 2120 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 77:
 #line 510 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_ATR_POS); }
-#line 2124 "ada-exp.c" /* yacc.c:1646  */
+#line 2126 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 78:
 #line 512 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_ATR_VAL); }
-#line 2130 "ada-exp.c" /* yacc.c:1646  */
+#line 2132 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 79:
 #line 514 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_ATR_MODULUS); }
-#line 2136 "ada-exp.c" /* yacc.c:1646  */
+#line 2138 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 80:
 #line 518 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 2142 "ada-exp.c" /* yacc.c:1646  */
+#line 2144 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 81:
 #line 520 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[-1].typed_val).val; }
-#line 2148 "ada-exp.c" /* yacc.c:1646  */
+#line 2150 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 82:
@@ -2154,7 +2156,7 @@ yyreduce:
 			  write_exp_elt_opcode (pstate, OP_TYPE);
 			  write_exp_elt_type (pstate, (yyvsp[0].tval));
 			  write_exp_elt_opcode (pstate, OP_TYPE); }
-#line 2159 "ada-exp.c" /* yacc.c:1646  */
+#line 2161 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 84:
@@ -2163,13 +2165,13 @@ yyreduce:
 			  write_exp_elt_type (pstate,
 					  parse_type (pstate)->builtin_void);
 			  write_exp_elt_opcode (pstate, OP_TYPE); }
-#line 2168 "ada-exp.c" /* yacc.c:1646  */
+#line 2170 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 85:
 #line 544 "ada-exp.y" /* yacc.c:1646  */
     { write_int (pstate, (LONGEST) (yyvsp[0].typed_val).val, (yyvsp[0].typed_val).type); }
-#line 2174 "ada-exp.c" /* yacc.c:1646  */
+#line 2176 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 86:
@@ -2179,7 +2181,7 @@ yyreduce:
 			       (type_qualifier == NULL) 
 			       ? (yyvsp[0].typed_val).type : type_qualifier);
 		  }
-#line 2184 "ada-exp.c" /* yacc.c:1646  */
+#line 2186 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 87:
@@ -2189,13 +2191,13 @@ yyreduce:
 			  write_exp_elt_dblcst (pstate, (yyvsp[0].typed_val_float).dval);
 			  write_exp_elt_opcode (pstate, OP_DOUBLE);
 			}
-#line 2194 "ada-exp.c" /* yacc.c:1646  */
+#line 2196 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 88:
 #line 564 "ada-exp.y" /* yacc.c:1646  */
     { write_int (pstate, 0, type_int (pstate)); }
-#line 2200 "ada-exp.c" /* yacc.c:1646  */
+#line 2202 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 89:
@@ -2203,37 +2205,37 @@ yyreduce:
     { 
 			  write_exp_op_with_string (pstate, OP_STRING, (yyvsp[0].sval));
 			}
-#line 2208 "ada-exp.c" /* yacc.c:1646  */
+#line 2210 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 90:
 #line 574 "ada-exp.y" /* yacc.c:1646  */
     { write_int (pstate, 1, type_boolean (pstate)); }
-#line 2214 "ada-exp.c" /* yacc.c:1646  */
+#line 2216 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 91:
 #line 576 "ada-exp.y" /* yacc.c:1646  */
     { write_int (pstate, 0, type_boolean (pstate)); }
-#line 2220 "ada-exp.c" /* yacc.c:1646  */
+#line 2222 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 92:
 #line 580 "ada-exp.y" /* yacc.c:1646  */
     { error (_("NEW not implemented.")); }
-#line 2226 "ada-exp.c" /* yacc.c:1646  */
+#line 2228 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 93:
 #line 584 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.tval) = write_var_or_type (pstate, NULL, (yyvsp[0].sval)); }
-#line 2232 "ada-exp.c" /* yacc.c:1646  */
+#line 2234 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 94:
 #line 586 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.tval) = write_var_or_type (pstate, (yyvsp[-1].bval), (yyvsp[0].sval)); }
-#line 2238 "ada-exp.c" /* yacc.c:1646  */
+#line 2240 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 95:
@@ -2245,7 +2247,7 @@ yyreduce:
 			  else
 			    (yyval.tval) = lookup_pointer_type ((yyval.tval));
 			}
-#line 2250 "ada-exp.c" /* yacc.c:1646  */
+#line 2252 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 96:
@@ -2257,19 +2259,19 @@ yyreduce:
 			  else
 			    (yyval.tval) = lookup_pointer_type ((yyval.tval));
 			}
-#line 2262 "ada-exp.c" /* yacc.c:1646  */
+#line 2264 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 97:
 #line 607 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.bval) = block_lookup (NULL, (yyvsp[-1].sval).ptr); }
-#line 2268 "ada-exp.c" /* yacc.c:1646  */
+#line 2270 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 98:
 #line 609 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.bval) = block_lookup ((yyvsp[-2].bval), (yyvsp[-1].sval).ptr); }
-#line 2274 "ada-exp.c" /* yacc.c:1646  */
+#line 2276 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 99:
@@ -2279,13 +2281,13 @@ yyreduce:
 			  write_exp_elt_longcst (pstate, (yyvsp[-1].lval));
 			  write_exp_elt_opcode (pstate, OP_AGGREGATE);
 		        }
-#line 2284 "ada-exp.c" /* yacc.c:1646  */
+#line 2286 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 100:
 #line 622 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[0].lval); }
-#line 2290 "ada-exp.c" /* yacc.c:1646  */
+#line 2292 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 101:
@@ -2295,13 +2297,13 @@ yyreduce:
 			  write_exp_elt_opcode (pstate, OP_POSITIONAL);
 			  (yyval.lval) = (yyvsp[-1].lval) + 1;
 			}
-#line 2300 "ada-exp.c" /* yacc.c:1646  */
+#line 2302 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 102:
 #line 630 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[-1].lval) + (yyvsp[0].lval); }
-#line 2306 "ada-exp.c" /* yacc.c:1646  */
+#line 2308 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 103:
@@ -2311,7 +2313,7 @@ yyreduce:
 			  write_exp_elt_opcode (pstate, OP_POSITIONAL);
 			  (yyval.lval) = 1;
 			}
-#line 2316 "ada-exp.c" /* yacc.c:1646  */
+#line 2318 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 104:
@@ -2321,31 +2323,31 @@ yyreduce:
 			  write_exp_elt_opcode (pstate, OP_POSITIONAL);
 			  (yyval.lval) = (yyvsp[-2].lval) + 1; 
 			}
-#line 2326 "ada-exp.c" /* yacc.c:1646  */
+#line 2328 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 105:
 #line 649 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 2332 "ada-exp.c" /* yacc.c:1646  */
+#line 2334 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 106:
 #line 650 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 2338 "ada-exp.c" /* yacc.c:1646  */
+#line 2340 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 107:
 #line 652 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[0].lval) + 1; }
-#line 2344 "ada-exp.c" /* yacc.c:1646  */
+#line 2346 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 108:
 #line 656 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_OTHERS); }
-#line 2350 "ada-exp.c" /* yacc.c:1646  */
+#line 2352 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 109:
@@ -2355,25 +2357,25 @@ yyreduce:
 			  write_exp_elt_longcst (pstate, (yyvsp[0].lval));
 			  write_exp_elt_opcode (pstate, OP_CHOICES);
 		        }
-#line 2360 "ada-exp.c" /* yacc.c:1646  */
+#line 2362 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 110:
 #line 675 "ada-exp.y" /* yacc.c:1646  */
     { write_name_assoc (pstate, (yyvsp[-1].sval)); }
-#line 2366 "ada-exp.c" /* yacc.c:1646  */
+#line 2368 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 111:
 #line 676 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 2372 "ada-exp.c" /* yacc.c:1646  */
+#line 2374 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 112:
 #line 678 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 2378 "ada-exp.c" /* yacc.c:1646  */
+#line 2380 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 113:
@@ -2382,65 +2384,65 @@ yyreduce:
 			  write_exp_op_with_string (pstate, OP_NAME,
 						    empty_stoken);
 			}
-#line 2387 "ada-exp.c" /* yacc.c:1646  */
+#line 2389 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 114:
 #line 684 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = 1; }
-#line 2393 "ada-exp.c" /* yacc.c:1646  */
+#line 2395 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 115:
 #line 686 "ada-exp.y" /* yacc.c:1646  */
     { write_name_assoc (pstate, (yyvsp[-1].sval)); }
-#line 2399 "ada-exp.c" /* yacc.c:1646  */
+#line 2401 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 116:
 #line 687 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[0].lval) + 1; }
-#line 2405 "ada-exp.c" /* yacc.c:1646  */
+#line 2407 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 117:
 #line 689 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[0].lval) + 1; }
-#line 2411 "ada-exp.c" /* yacc.c:1646  */
+#line 2413 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 118:
 #line 691 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, OP_DISCRETE_RANGE); }
-#line 2417 "ada-exp.c" /* yacc.c:1646  */
+#line 2419 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 119:
 #line 692 "ada-exp.y" /* yacc.c:1646  */
     { (yyval.lval) = (yyvsp[0].lval) + 1; }
-#line 2423 "ada-exp.c" /* yacc.c:1646  */
+#line 2425 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 120:
 #line 699 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_IND); }
-#line 2429 "ada-exp.c" /* yacc.c:1646  */
+#line 2431 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 121:
 #line 701 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, UNOP_ADDR); }
-#line 2435 "ada-exp.c" /* yacc.c:1646  */
+#line 2437 "ada-exp.c" /* yacc.c:1646  */
     break;
 
   case 122:
 #line 703 "ada-exp.y" /* yacc.c:1646  */
     { write_exp_elt_opcode (pstate, BINOP_SUBSCRIPT); }
-#line 2441 "ada-exp.c" /* yacc.c:1646  */
+#line 2443 "ada-exp.c" /* yacc.c:1646  */
     break;
 
 
-#line 2445 "ada-exp.c" /* yacc.c:1646  */
+#line 2447 "ada-exp.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2717,7 +2719,7 @@ ada_parse (struct parser_state *par_state)
 }
 
 void
-yyerror (char *msg)
+yyerror (const char *msg)
 {
   error (_("Error in expression, near `%s'."), lexptr);
 }

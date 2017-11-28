@@ -1,7 +1,540 @@
+2017-04-12  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* remote-utils.c: Include "gdb_termios.h" instead of
+	"terminal.h".
+	* terminal.h: Delete file.
+
+2017-04-12  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* server.c: Include <vector>.
+	<program_argv, wrapper_argv>: Convert to std::vector.
+	(start_inferior): Rewrite function to use C++.
+	(handle_v_run): Likewise.  Update code that calculates the argv
+	based on the vRun packet; use C++.
+	(captured_main): Likewise.
+
+2017-04-06  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (handle_v_cont): Initialize thread_resume::thread
+	with null_ptid.
+
+2017-04-05  Pedro Alves  <palves@redhat.com>
+
+	* configure: Regenerate.
+
+2017-04-05  Pedro Alves  <palves@redhat.com>
+
+	* gdbreplay.c (sync_error): Constify.
+	* linux-x86-low.c (push_opcode): Constify.
+
+2017-04-05  Pedro Alves  <palves@redhat.com>
+
+	* win32-low.c (get_child_debug_event)
+	<CREATE_PROCESS_DEBUG_EVENT>: Don't report TARGET_WAITKIND_EXECD.
+	Report TARGET_WAITKIND_SPURIOUS instead.
+
+2017-04-05  Pedro Alves  <palves@redhat.com>
+
+        * remote-utils.c (remote_prepare, remote_open): Constify.
+        * remote-utils.h (remote_prepare, remote_open): Constify.
+        * server.c (captured_main): Constify 'port' handling.
+
+2017-04-04  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (clean): Clear .deps.
+
+2017-03-31  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* .gitignore: Remove generated files, replace with wildcard.
+	* (clean): Replace removal of generated files with wildcard.
+	(version.c): Replace with...
+	(version-generated.c): ...this.
+	(xml-builtin.c): Replace with...
+	(xml-builtin-generated.c): ...this.
+	(%-ipa.o: %-generated.c, %.o: %-generated.c): New rules.
+	(%.c: *regformats*): Replace with...
+	(%-generated.c: *regformats*): ...this.
+
+2017-03-27  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* linux-xtensa-low.c (regnum::R_THREADPTR): New enum member.
+	(xtensa_fill_gregset): Call collect_register_by_name for
+	threadptr register.
+	(xtensa_store_gregset): Call supply_register_by_name for
+	threadptr register.
+
+2017-03-27  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* linux-xtensa-low.c (xtensa_fill_gregset): Call collect_register
+	for all registers in a0_regnum..a0_regnum + C0_NREGS range.
+	(xtensa_store_gregset): Call supply_register for all registers in
+	a0_regnum..a0_regnum + C0_NREGS range.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (%-ipa.o: %-ipa.c): New rule.
+	(ax-ipa.o: ax.c): Remove.
+	(linux-i386-ipa.o: linux-i386-ipa.c): Remove.
+	(linux-amd64-ipa.o: linux-amd64-ipa.c): Remove.
+	(linux-aarch64-ipa.o: linux-aarch64-ipa.c): Remove.
+	(linux-s390-ipa.o: linux-s390-ipa.c): Remove.
+	(linux-ppc-ipa.o: linux-ppc-ipa.c): Remove.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (%-ipa.o: ../common/%.c): New rule.
+	(print-utils-ipa.o: ../common/print-utils.c): Remove.
+	(rsp-low-ipa.o: ../common/rsp-low.c): Remove.
+	(errors-ipa.o: ../common/errors.c): Remove.
+	(format-ipa.o: ../common/format.c): Remove.
+	(common-utils-ipa.o: ../common/common-utils.c): Remove.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (%-ipa.o: %.c): New rule.
+	(tracepoint-ipa.o: tracepoint.c): Remove.
+	(utils-ipa.o: utils.c): Remove.
+	(remote-utils-ipa.o: remote-utils.c): Remove.
+	(regcache-ipa.o: regcache.c): Remove.
+	(i386-linux-ipa.o: i386-linux.c): Remove.
+	(i386-mmx-linux-ipa.o: i386-mmx-linux.c): Remove.
+	(i386-avx-linux-ipa.o: i386-avx-linux.c): Remove.
+	(i386-mpx-linux-ipa.o: i386-mpx-linux.c): Remove.
+	(i386-avx-mpx-linux-ipa.o: i386-avx-mpx-linux.c): Remove.
+	(i386-avx-avx512-linux-ipa.o: i386-avx-avx512-linux.c): Remove.
+	(i386-avx-mpx-avx512-pku-linux-ipa.o: i386-avx-mpx-avx512-pku-linux.c): Remove.
+	(amd64-linux-ipa.o: amd64-linux.c): Remove.
+	(amd64-avx-linux-ipa.o: amd64-avx-linux.c): Remove.
+	(amd64-mpx-linux-ipa.o: amd64-mpx-linux.c): Remove.
+	(amd64-avx-mpx-linux-ipa.o: amd64-avx-mpx-linux.c): Remove.
+	(amd64-avx-avx512-linux-ipa.o: amd64-avx-avx512-linux.c): Remove.
+	(amd64-avx-mpx-avx512-pku-linux-ipa.o: amd64-avx-mpx-avx512-pku-linux.c): Remove.
+	(aarch64-ipa.o: aarch64.c): Remove.
+	(s390-linux32-ipa.o: s390-linux32.c): Remove.
+	(s390-linux32v1-ipa.o: s390-linux32v1.c): Remove.
+	(s390-linux32v2-ipa.o: s390-linux32v2.c): Remove.
+	(s390-linux64-ipa.o: s390-linux64.c): Remove.
+	(s390-linux64v1-ipa.o: s390-linux64v1.c): Remove.
+	(s390-linux64v2-ipa.o: s390-linux64v2.c): Remove.
+	(s390-te-linux64-ipa.o: s390-te-linux64.c): Remove.
+	(s390-vx-linux64-ipa.o: s390-vx-linux64.c): Remove.
+	(s390-tevx-linux64-ipa.o: s390-tevx-linux64.c): Remove.
+	(s390x-linux64-ipa.o: s390x-linux64.c): Remove.
+	(s390x-linux64v1-ipa.o: s390x-linux64v1.c): Remove.
+	(s390x-linux64v2-ipa.o: s390x-linux64v2.c): Remove.
+	(s390x-te-linux64-ipa.o: s390x-te-linux64.c): Remove.
+	(s390x-vx-linux64-ipa.o: s390x-vx-linux64.c): Remove.
+	(s390x-tevx-linux64-ipa.o: s390x-tevx-linux64.c): Remove.
+	(powerpc-32l-ipa.o: powerpc-32l.c): Remove.
+	(powerpc-altivec32l-ipa.o: powerpc-altivec32l.c): Remove.
+	(powerpc-cell32l-ipa.o: powerpc-cell32l.c): Remove.
+	(powerpc-vsx32l-ipa.o: powerpc-vsx32l.c): Remove.
+	(powerpc-isa205-32l-ipa.o: powerpc-isa205-32l.c): Remove.
+	(powerpc-isa205-altivec32l-ipa.o: powerpc-isa205-altivec32l.c): Remove.
+	(powerpc-isa205-vsx32l-ipa.o: powerpc-isa205-vsx32l.c): Remove.
+	(powerpc-e500l-ipa.o: powerpc-e500l.c): Remove.
+	(powerpc-64l-ipa.o: powerpc-64l.c): Remove.
+	(powerpc-altivec64l-ipa.o: powerpc-altivec64l.c): Remove.
+	(powerpc-cell64l-ipa.o: powerpc-cell64l.c): Remove.
+	(powerpc-vsx64l-ipa.o: powerpc-vsx64l.c): Remove.
+	(powerpc-isa205-64l-ipa.o: powerpc-isa205-64l.c): Remove.
+	(powerpc-isa205-altivec64l-ipa.o: powerpc-isa205-altivec64l.c): Remove.
+	(powerpc-isa205-vsx64l-ipa.o: powerpc-isa205-vsx64l.c): Remove.
+	(tdesc-ipa.o: tdesc.c): Remove.
+	(x32-linux-ipa.o: x32-linux.c): Remove.
+	(x32-avx-linux-ipa.o: x32-avx-linux.c): Remove.
+	(x32-avx512-linux-ipa.o: x32-avx512-linux.c): Remove.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (%.o: ../arch/%.c): New rule.
+	(arm.o: ../arch/arm.c): Remove.
+	(arm-linux.o: ../arch/arm-linux.c): Remove.
+	(arm-get-next-pcs.o: ../arch/arm-get-next-pcs.c): Remove.
+	(aarch64-insn.o: ../arch/aarch64-insn.c): Remove.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (%.o: ../nat/%.c): New rule.
+	(x86-dregs.o: ../nat/x86-dregs.c): Remove.
+	(amd64-linux-siginfo.o: ../nat/amd64-linux-siginfo.c): Remove.
+	(linux-btrace.o: ../nat/linux-btrace.c): Remove.
+	(linux-osdata.o: ../nat/linux-osdata.c): Remove.
+	(linux-procfs.o: ../nat/linux-procfs.c): Remove.
+	(linux-ptrace.o: ../nat/linux-ptrace.c): Remove.
+	(linux-waitpid.o: ../nat/linux-waitpid.c): Remove.
+	(mips-linux-watch.o: ../nat/mips-linux-watch.c): Remove.
+	(ppc-linux.o: ../nat/ppc-linux.c): Remove.
+	(linux-personality.o: ../nat/linux-personality.c): Remove.
+	(aarch64-linux-hw-point.o: ../nat/aarch64-linux-hw-point.c): Remove.
+	(aarch64-linux.o: ../nat/aarch64-linux.c): Remove.
+	(x86-linux.o: ../nat/x86-linux.c): Remove.
+	(x86-linux-dregs.o: ../nat/x86-linux-dregs.c): Remove.
+	(linux-namespaces.o: ../nat/linux-namespaces.c): Remove.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (%.o: ../common/%.c): New rule.
+	(signals.o: ../common/signals.c): Remove.
+	(print-utils.o: ../common/print-utils.c): Remove.
+	(rsp-low.o: ../common/rsp-low.c): Remove.
+	(common-utils.o: ../common/common-utils.c): Remove.
+	(posix-strerror.o: ../common/posix-strerror.c): Remove.
+	(mingw-strerror.o: ../common/mingw-strerror.c): Remove.
+	(vec.o: ../common/vec.c): Remove.
+	(gdb_vecs.o: ../common/gdb_vecs.c): Remove.
+	(xml-utils.o: ../common/xml-utils.c): Remove.
+	(ptid.o: ../common/ptid.c): Remove.
+	(buffer.o: ../common/buffer.c): Remove.
+	(format.o: ../common/format.c): Remove.
+	(filestuff.o: ../common/filestuff.c): Remove.
+	(agent.o: ../common/agent.c): Remove.
+	(errors.o: ../common/errors.c): Remove.
+	(environ.o: ../common/environ.c): Remove.
+	(common-debug.o: ../common/common-debug.c): Remove.
+	(cleanups.o: ../common/cleanups.c): Remove.
+	(common-exceptions.o: ../common/common-exceptions.c): Remove.
+	(fileio.o: ../common/fileio.c): Remove.
+	(common-regcache.o: ../common/common-regcache.c): Remove.
+	(signals-state-save-restore.o: ../common/signals-state-save-restore.c): Remove.
+	(new-op.o: ../common/new-op.c): Remove.
+	(btrace-common.o: ../common/btrace-common.c): Remove.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (%.o: ../target/%.c): New rule.
+	(waitstatus.o: ../target/waitstatus.c): Remove.
+
+2017-03-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in
+	(%.c: ../regformats/%.dat,
+	(%.c: ../regformats/arm/%.dat,
+	(%.c: ../regformats/i386/%.dat,
+	(%.c: ../regformats/rs6000/%.dat): New rules.
+	(aarch64.c): Remove.
+	(reg-arm.c): Remove.
+	(arm-with-iwmmxt.c): Remove.
+	(arm-with-vfpv2.c): Remove.
+	(arm-with-vfpv3.c): Remove.
+	(arm-with-neon.c): Remove.
+	(reg-bfin.c): Remove.
+	(reg-cris.c): Remove.
+	(reg-crisv32.c): Remove.
+	(i386.c): Remove.
+	(i386-linux.c): Remove.
+	(i386-avx.c): Remove.
+	(i386-avx-linux.c): Remove.
+	(i386-avx-avx512.c): Remove.
+	(i386-avx-avx512-linux.c): Remove.
+	(i386-mpx.c): Remove.
+	(i386-mpx-linux.c): Remove.
+	(i386-avx-mpx-avx512-pku.c): Remove.
+	(i386-avx-mpx-avx512-pku-linux.c): Remove.
+	(i386-avx-mpx.c): Remove.
+	(i386-avx-mpx-linux.c): Remove.
+	(i386-mmx.c): Remove.
+	(i386-mmx-linux.c): Remove.
+	(reg-ia64.c): Remove.
+	(reg-m32r.c): Remove.
+	(reg-m68k.c): Remove.
+	(reg-cf.c): Remove.
+	(mips-linux.c): Remove.
+	(mips-dsp-linux.c): Remove.
+	(mips64-linux.c): Remove.
+	(mips64-dsp-linux.c): Remove.
+	(nios2-linux.c): Remove.
+	(powerpc-32.c): Remove.
+	(powerpc-32l.c): Remove.
+	(powerpc-altivec32l.c): Remove.
+	(powerpc-cell32l.c): Remove.
+	(powerpc-vsx32l.c): Remove.
+	(powerpc-isa205-32l.c): Remove.
+	(powerpc-isa205-altivec32l.c): Remove.
+	(powerpc-isa205-vsx32l.c): Remove.
+	(powerpc-e500l.c): Remove.
+	(powerpc-64l.c): Remove.
+	(powerpc-altivec64l.c): Remove.
+	(powerpc-cell64l.c): Remove.
+	(powerpc-vsx64l.c): Remove.
+	(powerpc-isa205-64l.c): Remove.
+	(powerpc-isa205-altivec64l.c): Remove.
+	(powerpc-isa205-vsx64l.c): Remove.
+	(s390-linux32.c): Remove.
+	(s390-linux32v1.c): Remove.
+	(s390-linux32v2.c): Remove.
+	(s390-linux64.c): Remove.
+	(s390-linux64v1.c): Remove.
+	(s390-linux64v2.c): Remove.
+	(s390-te-linux64.c): Remove.
+	(s390-vx-linux64.c): Remove.
+	(s390-tevx-linux64.c): Remove.
+	(s390x-linux64.c): Remove.
+	(s390x-linux64v1.c): Remove.
+	(s390x-linux64v2.c): Remove.
+	(s390x-te-linux64.c): Remove.
+	(s390x-vx-linux64.c): Remove.
+	(s390x-tevx-linux64.c): Remove.
+	(tic6x-c64xp-linux.c): Remove.
+	(tic6x-c64x-linux.c): Remove.
+	(tic6x-c62x-linux.c): Remove.
+	(reg-sh.c): Remove.
+	(reg-sparc64.c): Remove.
+	(reg-spu.c): Remove.
+	(amd64.c): Remove.
+	(amd64-linux.c): Remove.
+	(amd64-avx.c): Remove.
+	(amd64-avx-linux.c): Remove.
+	(amd64-avx-avx512.c): Remove.
+	(amd64-avx-avx512-linux.c): Remove.
+	(amd64-mpx.c): Remove.
+	(amd64-mpx-linux.c): Remove.
+	(amd64-avx-mpx-avx512-pku.c): Remove.
+	(amd64-avx-mpx-avx512-pku-linux.c): Remove.
+	(amd64-avx-mpx.c): Remove.
+	(amd64-avx-mpx-linux.c): Remove.
+	(x32.c): Remove.
+	(x32-linux.c): Remove.
+	(x32-avx.c): Remove.
+	(x32-avx-linux.c): Remove.
+	(x32-avx-avx512.c): Remove.
+	(x32-avx-avx512-linux.c): Remove.
+	(reg-xtensa.c): Remove.
+	(reg-tilegx.c): Remove.
+	(reg-tilegx32.c): Remove.
+
+2017-03-07  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* Makefile.in (SFILES): Add "common/environ.c".
+	(OBJS): Add "common/environ.h".
+
+2017-01-27  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* configure.ac: Check if the fs_base and gs_base members of
+	`struct user_regs_struct' exist.
+	* config.in: Regenerated.
+	* configure: Likewise.
+
+2017-01-09  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* linux-aarch32-low.c (arm_breakpoint_kind_from_pc): Use
+	target_read_memory.
+	* linux-arm-low.c (get_next_pcs_read_memory_unsigned_integer): Likewise.
+	(get_next_pcs_syscall_next_pc): Likewise.
+
+2016-12-23  Luis Machado  <lgustavo@codesourcery.com>
+
+	* win32-i386-low.c: Fix incorrect reference to a couple source files.
+	* nto-x86-low.c: Likewise.
+
+2016-11-30  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in: Include disable-implicit-rules.mk.
+
+2016-11-23  Pedro Alves  <palves@redhat.com>
+
+	* debug.c: Include <chrono> instead of "gdb_sys_time.h".
+	(debug_vprintf): Use std::chrono::steady_clock instead of
+	gettimeofday.  Use '.' instead of ':'.
+	* tracepoint.c: Include <chrono> instead of "gdb_sys_time.h".
+	(get_timestamp): Use std::chrono::steady_clock instead of
+	gettimeofday.
+
+2016-11-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in: Fix whitespace formatting.
+
+2016-11-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (SFILES, OBS): Flatten list and order
+	alphabetically.
+
+2016-11-23  Pedro Alves  <palves@redhat.com>
+
+	* event-loop.c (handle_file_event): Use warning.
+	* linux-low.c (linux_resume_one_lwp_throw): Use warning.
+	* mem-break.c (add_breakpoint_condition, add_breakpoint_commands):
+	Use warning.
+
+2016-11-23  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (check_zombie_leaders): Use debug_printf for debug
+	output.
+	* notif.c (handle_notif_ack, notif_event_enque): Likewise.
+	* remote-utils.c (putpkt_binary_1, readchar, getpkt): Use
+	debug_printf and debug_flush for debug output.
+	* server.c (handle_general_set): Likewise.
+	* thread-db.c (try_thread_db_load): Use debug_printf for debug
+	output.
+
+2016-11-17  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (.c.o): Replace rule with ...
+	(%.o: %.c): ... this one.
+
+2016-11-17  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in: Remove @GMAKE_TRUE@ prefixes and removes lines
+	prefixed with @GMAKE_FALSE@.  Update comment related to non-GNU
+	make.
+	* configure.ac: Remove checks for the make program.
+	* configure: Re-generate.
+
+2016-10-28  Pedro Alves  <palves@redhat.com>
+
+	* Makefile.in (CXX_DIALECT): Get from configure.
+	(COMPILE.pre, CC_LD): Append $(CXX_DIALECT).
+	* acinclude.m4: Include ../ax_cxx_compile_stdcxx.m4.
+	* configure.ac: Call AX_CXX_COMPILE_STDCXX.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2016-10-27  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-low.c (linux_supports_range_stepping): Return true if
+	can_software_single_step return true.
+
+2016-10-27  Yao Qi  <yao.qi@linaro.org>
+
+	* inferiors.c (find_inferior_in_random): New function.
+	* inferiors.h (find_inferior_in_random): Declare.
+	* linux-low.c (linux_wait_for_event_filtered): Call
+	find_inferior_in_random instead of find_inferior.
+
+2016-10-27  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-low.c (linux_wait_1): If single-step breakpoints are
+	inserted, remove them.
+
+2016-10-26  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (handle_extended_wait): Link parent/child fork
+	threads.
+	(linux_wait_1): Unlink them.
+	(linux_set_resume_request): Ignore resume requests for
+	already-resumed and unhandled fork child threads.
+	* linux-low.h (struct lwp_info) <fork_relative>: New field.
+	* server.c (in_queued_stop_replies_ptid, in_queued_stop_replies):
+	New functions.
+	(handle_v_requests) <vCont>: Don't call require_running.
+	* server.h (in_queued_stop_replies): New declaration.
+
+2016-10-24  Yao Qi  <yao.qi@linaro.org>
+
+	PR server/20733
+	* linux-aarch64-low.c (append_insns): Cast the return value to
+	'uint32_t *'.
+
+2016-10-10  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-aarch32-low.c (enum arm_breakpoint_kinds): Remove.
+
+2016-10-06  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* target.c (target_supports_multi_process): New function, moved
+	from...
+	* target.h (target_supports_multi_process): ... here.  Remove
+	macro.
+
+2016-10-05  Tom Tromey  <tom@tromey.com>
+
+	PR remote/20655:
+	* tracepoint.c (handle_tracepoint_bkpts): Check
+	ipa_error_tracepoint, not ipa_stopping_tracepoint.
+
+2016-10-05  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv: Update the path of arm-*.xml files.
+
+2016-10-05  Terry Guo  <terry.guo@arm.com>
+	    Yao Qi  <yao.qi@linaro.org>
+
+	* Makefile.in: Adjust the path of rules.
+	* configure.srv: Update the path of xml files.
+	* regformats/arm-with-iwmmxt.dat: Regenerated.
+	* regformats/arm-with-neon.dat: Likewise.
+	* regformats/arm-with-vfpv2.dat: Likewise.
+	* regformats/arm-with-vfpv3.dat Likewise.
+
+2016-09-30  Yao Qi  <yao.qi@linaro.org>
+
+	PR gdbserver/20627
+	* target.c (target_stop_and_wait): Don't call
+	target_continue_no_signal, use resume_stop instead.
+
+2016-09-26  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-low.c (linux_wait_1): Call debug_exit.
+
+2016-09-23  Pedro Alves  <palves@redhat.com>
+
+	* Makefile.in (SFILES): Add common/new-op.c.
+	(OBS): Add common/new-op.o.
+	(new-op.o): New rule.
+
+2016-09-21  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* .gitinore: Ignore more files.
+
 2016-09-21  Yao Qi  <yao.qi@linaro.org>
 
 	* linux-aarch32-low.c (arm_fill_gregset): Keep bits 20 to
 	23.
+
+2016-09-19  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* server.c (start_inferior): Call target_mourn_inferior instead of
+	mourn_inferior; pass ptid_t argument to it.
+	(resume): Likewise.
+	(handle_target_event): Likewise.
+	* target.c (target_mourn_inferior): New function.
+	* target.h (mourn_inferior): Delete macro.
+
+2016-09-16  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-low.c (lwp_is_stepping): New function.
+
+2016-09-06  Carl Love  <cel@us.ibm.com>
+
+	* server.c (start_inferior):  Fixed comment, requested comment change
+	didn't get updated correctly.  Removed reference to ptrace () call as
+	it is only true on Linux systems.
+
+2016-09-06  Carl Love  <cel@us.ibm.com>
+
+	* server.c (start_inferior):  Do not call
+	function target_post_create_inferior () if the
+	inferior process has already exited.
+
+2016-09-05  Pedro Alves  <palves@redhat.com>
+
+	* Makefile.in (COMPILER, COMPILER_CFLAGS): Remove.
+	(COMPILE.pre, CC_LD): Use CXX directly.
+	(INTERNAL_CFLAGS_BASE): Use CXXFLAGS directly.
+	* acinclude.m4: Don't include build-with-cxx.m4.
+	* configure.ac: Remove GDB_AC_BUILD_WITH_CXX call.
+	* configure: Regenerate.
+
+2016-09-02  Akash Trehan  <akash.trehan123@gmail.com>
+
+	PR gdb/19495
+	* remote-utils.c (relocate_instruction): Remove redundant strcpy()
+	call writing data to own_buf.
+
+2016-09-01  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* target.c (mywait): Call target_wait instead of
+	the_target->wait.
+	(target_wait): New function.
+
+2016-09-01  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* server.c (start_inferior): New variable 'ptid'.  Replace calls
+	to the_target->resume by target_continue{,_no_signal}, depending
+	on the case.
+	* target.c (target_stop_and_wait): Call target_continue_no_signal
+	instead of the_target->resume.
+	(target_continue): New function.
 
 2016-08-31  Antoine Tremblay  <antoine.tremblay@ericsson.com>
 
@@ -22,21 +555,21 @@
 	* linux-x86-low.c (ps_get_thread_area): Likewise.
 	* linux-xtensa-low.c (ps_get_thread_area): Likewise.
 
-2016-08-23  Pedro Alves  <palves@redhat.com>
+2016-08-19  Pedro Alves  <palves@redhat.com>
 
 	* linux-x86-low.c (amd64_emit_call): Emit missing call opcode.
 
-2016-08-23  Pedro Alves  <palves@redhat.com>
+2016-08-19  Pedro Alves  <palves@redhat.com>
 
 	* linux-x86-low.c (amd64_install_fast_tracepoint_jump_pad): Fix
 	comment.  Use memcpy instead of casting through unsigned long.
 
-2016-08-23  Pedro Alves  <palves@redhat.com>
+2016-08-19  Pedro Alves  <palves@redhat.com>
 
 	* linux-amd64-ipa.c (alloc_jump_pad_buffer) [__ILP32__]: Try
 	allocating around 0x80000000.
 
-2016-08-23  Pedro Alves  <palves@redhat.com>
+2016-08-19  Pedro Alves  <palves@redhat.com>
 
 	PR gdb/20415
 	* Makefile.in (x32-linux-ipa.o, x32-avx-linux-ipa.o)
@@ -71,6 +604,14 @@
 
 	* linux-low.c (regsets_fetch_inferior_registers): Check
 	errno is ESRCH or not.
+
+2016-08-02  Yao Qi  <yao.qi@linaro.org>
+
+	* thread-db.c (struct thread_db) <td_ta_event_getmsg_p>: Remove.
+	<td_ta_set_event_p, td_ta_event_addr_p>: Remove.
+	(thread_db_load_search): Update.
+	(try_thread_db_load_1): Don't look for td_ta_event_addr,
+	td_ta_set_event and td_ta_event_getmsg.
 
 2016-07-26  Pedro Alves  <palves@redhat.com>
 

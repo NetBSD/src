@@ -1,6 +1,6 @@
 /* Target-dependent code for the ALPHA architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,6 +43,7 @@
 #include "elf-bfd.h"
 
 #include "alpha-tdep.h"
+#include <algorithm>
 
 /* Instruction decoding.  The notations for registers, immediates and
    opcodes are the same as the one used in Compaq's Alpha architecture
@@ -644,14 +645,10 @@ alpha_return_in_memory_always (struct type *type)
   return 1;
 }
 
-static const gdb_byte *
-alpha_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
-{
-  static const gdb_byte break_insn[] = { 0x80, 0, 0, 0 }; /* call_pal bpt */
 
-  *len = sizeof(break_insn);
-  return break_insn;
-}
+constexpr gdb_byte alpha_break_insn[] = { 0x80, 0, 0, 0 }; /* call_pal bpt */
+
+typedef BP_MANIPULATION (alpha_break_insn) alpha_breakpoint;
 
 
 /* This returns the PC of the first insn after the prologue.
@@ -721,7 +718,7 @@ alpha_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 
   post_prologue_pc = alpha_after_prologue (pc);
   if (post_prologue_pc != 0)
-    return max (pc, post_prologue_pc);
+    return std::max (pc, post_prologue_pc);
 
   /* Can't determine prologue from the symbol table, need to examine
      instructions.  */
@@ -768,12 +765,11 @@ static const int stq_c_opcode = 0x2f;
    is found, attempt to step through it.  A breakpoint is placed at the end of 
    the sequence.  */
 
-static int 
-alpha_deal_with_atomic_sequence (struct frame_info *frame)
+static VEC (CORE_ADDR) *
+alpha_deal_with_atomic_sequence (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
-  CORE_ADDR pc = get_frame_pc (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  CORE_ADDR pc = regcache_read_pc (regcache);
   CORE_ADDR breaks[2] = {-1, -1};
   CORE_ADDR loc = pc;
   CORE_ADDR closing_insn; /* Instruction that closes the atomic sequence.  */
@@ -783,11 +779,12 @@ alpha_deal_with_atomic_sequence (struct frame_info *frame)
   int last_breakpoint = 0; /* Defaults to 0 (no breakpoints placed).  */  
   const int atomic_sequence_length = 16; /* Instruction sequence length.  */
   int bc_insn_count = 0; /* Conditional branch instruction count.  */
+  VEC (CORE_ADDR) *next_pcs = NULL;
 
   /* Assume all atomic sequences start with a LDL_L/LDQ_L instruction.  */
   if (INSN_OPCODE (insn) != ldl_l_opcode
       && INSN_OPCODE (insn) != ldq_l_opcode)
-    return 0;
+    return NULL;
 
   /* Assume that no atomic sequence is longer than "atomic_sequence_length" 
      instructions.  */
@@ -806,8 +803,8 @@ alpha_deal_with_atomic_sequence (struct frame_info *frame)
 	  immediate = (immediate ^ 0x400000) - 0x400000;
 
 	  if (bc_insn_count >= 1)
-	    return 0; /* More than one branch found, fallback 
-			 to the standard single-step code.  */
+	    return NULL; /* More than one branch found, fallback 
+			    to the standard single-step code.  */
 
 	  breaks[1] = loc + ALPHA_INSN_SIZE + immediate;
 
@@ -823,7 +820,7 @@ alpha_deal_with_atomic_sequence (struct frame_info *frame)
   /* Assume that the atomic sequence ends with a STL_C/STQ_C instruction.  */
   if (INSN_OPCODE (insn) != stl_c_opcode
       && INSN_OPCODE (insn) != stq_c_opcode)
-    return 0;
+    return NULL;
 
   closing_insn = loc;
   loc += ALPHA_INSN_SIZE;
@@ -838,11 +835,10 @@ alpha_deal_with_atomic_sequence (struct frame_info *frame)
 	  || (breaks[1] >= pc && breaks[1] <= closing_insn)))
     last_breakpoint = 0;
 
-  /* Effectively inserts the breakpoints.  */
   for (index = 0; index <= last_breakpoint; index++)
-    insert_single_step_breakpoint (gdbarch, aspace, breaks[index]);
+    VEC_safe_push (CORE_ADDR, next_pcs, breaks[index]);
 
-  return 1;
+  return next_pcs;
 }
 
 
@@ -1601,9 +1597,9 @@ fp_register_sign_bit (LONGEST reg)
    the target of the coming instruction and breakpoint it.  */
 
 static CORE_ADDR
-alpha_next_pc (struct frame_info *frame, CORE_ADDR pc)
+alpha_next_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   unsigned int insn;
   unsigned int op;
   int regno;
@@ -1619,7 +1615,7 @@ alpha_next_pc (struct frame_info *frame, CORE_ADDR pc)
     {
       /* Jump format: target PC is:
 	 RB & ~3  */
-      return (get_frame_register_unsigned (frame, (insn >> 16) & 0x1f) & ~3);
+      return (regcache_raw_get_unsigned (regcache, (insn >> 16) & 0x1f) & ~3);
     }
 
   if ((op & 0x30) == 0x30)
@@ -1650,7 +1646,7 @@ alpha_next_pc (struct frame_info *frame, CORE_ADDR pc)
             regno += gdbarch_fp0_regnum (gdbarch);
 	}
       
-      rav = get_frame_register_signed (frame, regno);
+      rav = regcache_raw_get_signed (regcache, regno);
 
       switch (op)
 	{
@@ -1721,18 +1717,17 @@ alpha_next_pc (struct frame_info *frame, CORE_ADDR pc)
   return (pc + ALPHA_INSN_SIZE);
 }
 
-int
-alpha_software_single_step (struct frame_info *frame)
+VEC (CORE_ADDR) *
+alpha_software_single_step (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
-  CORE_ADDR pc, next_pc;
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  CORE_ADDR pc;
+  VEC (CORE_ADDR) *next_pcs = NULL;
 
-  pc = get_frame_pc (frame);
-  next_pc = alpha_next_pc (frame, pc);
+  pc = regcache_read_pc (regcache);
 
-  insert_single_step_breakpoint (gdbarch, aspace, next_pc);
-  return 1;
+  VEC_safe_push (CORE_ADDR, next_pcs, alpha_next_pc (regcache, pc));
+  return next_pcs;
 }
 
 
@@ -1776,6 +1771,8 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_int_bit (gdbarch, 32);
   set_gdbarch_long_bit (gdbarch, 64);
   set_gdbarch_long_long_bit (gdbarch, 64);
+  set_gdbarch_wchar_bit (gdbarch, 64);
+  set_gdbarch_wchar_signed (gdbarch, 0);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
   set_gdbarch_long_double_bit (gdbarch, 64);
@@ -1821,7 +1818,10 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
 
-  set_gdbarch_breakpoint_from_pc (gdbarch, alpha_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       alpha_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       alpha_breakpoint::bp_from_kind);
   set_gdbarch_decr_pc_after_break (gdbarch, ALPHA_INSN_SIZE);
   set_gdbarch_cannot_step_breakpoint (gdbarch, 1);
 

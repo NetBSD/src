@@ -1,4 +1,4 @@
-# Copyright 2008-2016 Free Software Foundation, Inc.
+# Copyright 2008-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if {![istarget "powerpc*"] || ![is_lp64_target]} {
 
 standard_testfile .S
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug quiet}] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug quiet}] } {
     return -1
 }
 
@@ -46,23 +46,23 @@ proc do_test { displaced } {
 
     set bp1 [gdb_get_line_number "lwarx"]
     gdb_breakpoint "$bp1" "Breakpoint $decimal at $hex" \
-	"Set the breakpoint at the start of the lwarx/stwcx sequence"
+	"set the breakpoint at the start of the lwarx/stwcx sequence"
 
     set bp2 [gdb_get_line_number "ldarx"]
     gdb_breakpoint "$bp2" "Breakpoint $decimal at $hex" \
-	"Set the breakpoint at the start of the ldarx/stdcx sequence"
+	"set the breakpoint at the start of the ldarx/stdcx sequence"
 
     gdb_test continue "Continuing.*Breakpoint $decimal.*" \
-	"Continue until lwarx/stwcx start breakpoint"
+	"continue until lwarx/stwcx start breakpoint"
 
     gdb_test nexti "bne.*1b" \
-	"Step through the lwarx/stwcx sequence"
+	"step through the lwarx/stwcx sequence"
 
     gdb_test continue "Continuing.*Breakpoint $decimal.*" \
-	"Continue until ldarx/stdcx start breakpoint"
+	"continue until ldarx/stdcx start breakpoint"
 
     gdb_test nexti "bne.*1b" \
-	"Step through the ldarx/stdcx sequence"
+	"step through the ldarx/stdcx sequence"
 }
 
 foreach displaced { "off" "on" } {

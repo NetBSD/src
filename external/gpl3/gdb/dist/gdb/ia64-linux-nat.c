@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,6 +40,8 @@
 
 /* Prototypes for supply_gregset etc.  */
 #include "gregset.h"
+
+#include "inf-ptrace.h"
 
 /* These must match the order of the register names.
 
@@ -696,7 +698,8 @@ ia64_linux_fetch_register (struct regcache *regcache, int regnum)
   CORE_ADDR addr;
   size_t size;
   PTRACE_TYPE_RET *buf;
-  int pid, i;
+  pid_t pid;
+  int i;
 
   /* r0 cannot be fetched but is always zero.  */
   if (regnum == IA64_GR0_REGNUM)
@@ -735,11 +738,7 @@ ia64_linux_fetch_register (struct regcache *regcache, int regnum)
       return;
     }
 
-  /* Cater for systems like GNU/Linux, that implement threads as
-     separate processes.  */
-  pid = ptid_get_lwp (inferior_ptid);
-  if (pid == 0)
-    pid = ptid_get_pid (inferior_ptid);
+  pid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   /* This isn't really an address, but ptrace thinks of it as one.  */
   addr = ia64_register_addr (gdbarch, regnum);
@@ -788,16 +787,13 @@ ia64_linux_store_register (const struct regcache *regcache, int regnum)
   CORE_ADDR addr;
   size_t size;
   PTRACE_TYPE_RET *buf;
-  int pid, i;
+  pid_t pid;
+  int i;
 
   if (ia64_cannot_store_register (gdbarch, regnum))
     return;
 
-  /* Cater for systems like GNU/Linux, that implement threads as
-     separate processes.  */
-  pid = ptid_get_lwp (inferior_ptid);
-  if (pid == 0)
-    pid = ptid_get_pid (inferior_ptid);
+  pid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   /* This isn't really an address, but ptrace thinks of it as one.  */
   addr = ia64_register_addr (gdbarch, regnum);

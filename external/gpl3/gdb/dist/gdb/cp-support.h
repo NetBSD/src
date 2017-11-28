@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
    Namespace support contributed by David Carlton.
@@ -50,6 +50,10 @@ struct using_direct;
 
 struct demangle_parse_info
 {
+  demangle_parse_info ();
+
+  ~demangle_parse_info ();
+
   /* The memory used during the parse.  */
   struct demangle_info *info;
 
@@ -63,15 +67,15 @@ struct demangle_parse_info
 
 /* Functions from cp-support.c.  */
 
-extern char *cp_canonicalize_string (const char *string);
+extern std::string cp_canonicalize_string (const char *string);
 
-extern char *cp_canonicalize_string_no_typedefs (const char *string);
+extern std::string cp_canonicalize_string_no_typedefs (const char *string);
 
 typedef const char *(canonicalization_ftype) (struct type *, void *);
 
-extern char *cp_canonicalize_string_full (const char *string,
-					  canonicalization_ftype *finder,
-					  void *data);
+extern std::string cp_canonicalize_string_full (const char *string,
+						canonicalization_ftype *finder,
+						void *data);
 
 extern char *cp_class_name_from_physname (const char *physname);
 
@@ -135,20 +139,15 @@ struct type *cp_find_type_baseclass_by_name (struct type *parent_type,
 
 /* Functions from cp-name-parser.y.  */
 
-extern struct demangle_parse_info *cp_demangled_name_to_comp
+extern std::unique_ptr<demangle_parse_info> cp_demangled_name_to_comp
      (const char *demangled_name, const char **errmsg);
 
 extern char *cp_comp_to_string (struct demangle_component *result,
 				int estimated_len);
 
-extern void cp_demangled_name_parse_free (struct demangle_parse_info *);
-extern struct cleanup *make_cleanup_cp_demangled_name_parse_free
-     (struct demangle_parse_info *);
 extern void cp_merge_demangle_parse_infos (struct demangle_parse_info *,
 					   struct demangle_component *,
 					   struct demangle_parse_info *);
-
-extern struct demangle_parse_info *cp_new_demangle_parse_info (void);
 
 /* The list of "maint cplus" commands.  */
 

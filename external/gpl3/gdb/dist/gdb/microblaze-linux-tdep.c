@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,8 +49,6 @@ microblaze_linux_memory_remove_breakpoint (struct gdbarch *gdbarch,
 
   /* Determine appropriate breakpoint contents and size for this address.  */
   bp = gdbarch_breakpoint_from_pc (gdbarch, &addr, &bplen);
-  if (bp == NULL)
-    error (_("Software breakpoints not implemented for this target."));
 
   val = target_read_memory (addr, old_contents, bplen);
 

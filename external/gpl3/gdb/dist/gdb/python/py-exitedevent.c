@@ -1,6 +1,6 @@
 /* Python interface to inferior exit events.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,42 +26,29 @@ extern PyTypeObject exited_event_object_type
 static PyObject *
 create_exited_event_object (const LONGEST *exit_code, struct inferior *inf)
 {
-  PyObject *exited_event;
-  PyObject *inf_obj = NULL;
+  gdbpy_ref<> exited_event (create_event_object (&exited_event_object_type));
 
-  exited_event = create_event_object (&exited_event_object_type);
-
-  if (!exited_event)
-    goto fail;
+  if (exited_event == NULL)
+    return NULL;
 
   if (exit_code)
     {
-      PyObject *exit_code_obj = PyLong_FromLongLong (*exit_code);
-      int failed;
+      gdbpy_ref<> exit_code_obj (PyLong_FromLongLong (*exit_code));
 
       if (exit_code_obj == NULL)
-	goto fail;
-
-      failed = evpy_add_attribute (exited_event, "exit_code",
-				   exit_code_obj) < 0;
-      Py_DECREF (exit_code_obj);
-      if (failed)
-	goto fail;
+	return NULL;
+      if (evpy_add_attribute (exited_event.get (), "exit_code",
+			      exit_code_obj.get ()) < 0)
+	return NULL;
     }
 
-  inf_obj = inferior_to_inferior_object (inf);
-  if (!inf_obj || evpy_add_attribute (exited_event,
-                                      "inferior",
-                                      inf_obj) < 0)
-    goto fail;
-  Py_DECREF (inf_obj);
+  gdbpy_ref<> inf_obj (inferior_to_inferior_object (inf));
+  if (inf_obj == NULL || evpy_add_attribute (exited_event.get (),
+					     "inferior",
+					     inf_obj.get ()) < 0)
+    return NULL;
 
-  return exited_event;
-
- fail:
-  Py_XDECREF (inf_obj);
-  Py_XDECREF (exited_event);
-  return NULL;
+  return exited_event.release ();
 }
 
 /* Callback that is used when an exit event occurs.  This function
@@ -70,15 +57,13 @@ create_exited_event_object (const LONGEST *exit_code, struct inferior *inf)
 int
 emit_exited_event (const LONGEST *exit_code, struct inferior *inf)
 {
-  PyObject *event;
-
   if (evregpy_no_listeners_p (gdb_py_events.exited))
     return 0;
 
-  event = create_exited_event_object (exit_code, inf);
+  gdbpy_ref<> event (create_exited_event_object (exit_code, inf));
 
-  if (event)
-    return evpy_emit_event (event, gdb_py_events.exited);
+  if (event != NULL)
+    return evpy_emit_event (event.get (), gdb_py_events.exited);
 
   return -1;
 }

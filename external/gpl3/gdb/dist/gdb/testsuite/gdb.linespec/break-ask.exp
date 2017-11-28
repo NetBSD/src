@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 standard_testfile lspec.cc
 
 if {[skip_cplus_tests]} {
-    unsupported ${testfile}.exp
+    unsupported "skipping C++ tests"
     return
 }
 
