@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2017/11/26 03:06:24 christos Exp $
+# $NetBSD: Makefile,v 1.3 2017/11/28 11:59:16 wiz Exp $
 
 WARNS=	6
 
@@ -6,7 +6,7 @@ PROG=	mount_qemufwcfg
 SRCS=	fwcfg.c virtdir.c
 DPADD+=	${LIBREFUSE} ${LIBUTIL}
 LDADD=	-lrefuse -lutil
-NOMAN=	# defined
+MAN=	mount_qemufwcfg.8
 
 CPPFLAGS+=	-D_KERNTYPES
 
