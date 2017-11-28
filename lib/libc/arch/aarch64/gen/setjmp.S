@@ -1,4 +1,4 @@
-/*.$NetBSD: setjmp.S,v 1.1 2014/08/10 05:47:36 matt Exp $.*/
+/*.$NetBSD: setjmp.S,v 1.2 2017/11/28 13:09:05 ryo Exp $.*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ ENTRY(__longjmp14)
 
 	ldp	x4,  x5,  [x0, #_JB_X29]
 	cbz	x3, .Lbotch
-	cbz	x4, .Lbotch
 	cbz	x5, .Lbotch
 
 	ldp	x19, x20, [x0, #_JB_X19]
@@ -101,8 +100,8 @@ ENTRY(__longjmp14)
 	ldp	x25, x26, [x0, #_JB_X25]
 	ldp	x27, x28, [x0, #_JB_X27]
 
-	ldr	x5, [x0, #_JB_TPIDR]
-	msr	tpidr_el0, x5 
+	ldr	x2, [x0, #_JB_TPIDR]
+	msr	tpidr_el0, x2
 
 	ldp	d8,  d9,  [x0, #_JB_D8]
 	ldp	d10, d11, [x0, #_JB_D10]
