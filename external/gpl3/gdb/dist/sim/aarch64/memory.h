@@ -1,6 +1,6 @@
 /* memory.h -- Prototypes for AArch64 memory accessor functions.
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -23,7 +23,6 @@
 #define _MEMORY_H
 
 #include <sys/types.h>
-#include "bfd.h"
 #include "simulator.h"
 
 extern void         aarch64_get_mem_long_double (sim_cpu *, uint64_t, FRegister *);
@@ -52,7 +51,5 @@ extern void         aarch64_set_mem_s8  (sim_cpu *, uint64_t, int8_t);
 
 extern uint64_t     aarch64_get_heap_start (sim_cpu *);
 extern uint64_t     aarch64_get_stack_start (sim_cpu *);
-
-extern void         mem_add_blk (sim_cpu *, uint64_t, char *, uint64_t, bfd_boolean);
 
 #endif /* _MEMORY_H */

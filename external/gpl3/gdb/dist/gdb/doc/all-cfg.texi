@@ -1,6 +1,6 @@
 @c GDB MANUAL configuration file.  
 @c
-@c Copyright (C) 1993-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1993-2017 Free Software Foundation, Inc.
 @c
 @c NOTE: While the GDB manual is configurable (by changing these
 @c switches), its configuration is ***NOT*** automatically tied in to

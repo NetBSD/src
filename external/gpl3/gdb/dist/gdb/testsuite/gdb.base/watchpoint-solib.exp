@@ -1,4 +1,4 @@
-#   Copyright 2007-2016 Free Software Foundation, Inc.
+#   Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME=\"${lib_dlope
 
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile $srcfile $binfile executable $exec_opts] != ""} {
-    untested "Couldn't compile $libsrc or $srcfile."
+    untested "failed to compile"
     return -1
 }
 

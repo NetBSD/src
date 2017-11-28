@@ -1,5 +1,5 @@
 /* chew
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Contributed by steve chamberlain @cygnus
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -170,7 +170,9 @@ static void
 delete_string (buffer)
      string_type *buffer;
 {
-  free (buffer->ptr);
+  if (buffer->ptr)
+    free (buffer->ptr);
+  buffer->ptr = NULL;
 }
 
 static char *
@@ -1088,6 +1090,7 @@ drop ()
 {
   tos--;
   check_range ();
+  delete_string (tos + 1);
   pc++;
 }
 
@@ -1244,6 +1247,35 @@ lookup_word (word)
 }
 
 static void
+free_words (void)
+{
+  dict_type *ptr = root;
+
+  while (ptr)
+    {
+      dict_type *next;
+
+      if (ptr->word)
+	free (ptr->word);
+      if (ptr->code)
+	{
+	  int i;
+	  for (i = 0; i < ptr->code_length; i ++)
+	    if (ptr->code[i] == push_text
+		&& ptr->code[i + 1])
+	      {
+		free (ptr->code[i + 1] - 1);
+		++ i;
+	      }
+	  free (ptr->code);
+	}
+      next = ptr->next;
+      free (ptr);
+      ptr = next;
+    }
+}
+
+static void
 perform ()
 {
   tos = stack;
@@ -1313,7 +1345,7 @@ add_intrinsic (name, func)
      char *name;
      void (*func) ();
 {
-  dict_type *new_d = newentry (name);
+  dict_type *new_d = newentry (strdup (name));
   add_to_definition (new_d, func);
   add_to_definition (new_d, 0);
 }
@@ -1334,24 +1366,27 @@ compile (string)
 {
   /* Add words to the dictionary.  */
   char *word;
+
   string = nextword (string, &word);
   while (string && *string && word[0])
     {
       if (strcmp (word, "var") == 0)
 	{
+	  free (word);
 	  string = nextword (string, &word);
-
 	  add_var (word);
 	  string = nextword (string, &word);
 	}
       else if (word[0] == ':')
 	{
 	  dict_type *ptr;
-	  /* Compile a word and add to dictionary.  */
-	  string = nextword (string, &word);
 
+	  /* Compile a word and add to dictionary.  */
+	  free (word);
+	  string = nextword (string, &word);
 	  ptr = newentry (word);
 	  string = nextword (string, &word);
+	  
 	  while (word[0] != ';')
 	    {
 	      switch (word[0])
@@ -1376,15 +1411,19 @@ compile (string)
 		     function */
 		  add_to_definition (ptr, push_number);
 		  add_to_definition (ptr, (stinst_type) atol (word));
+		  free (word);
 		  break;
 		default:
 		  add_to_definition (ptr, call);
 		  add_to_definition (ptr, (stinst_type) lookup_word (word));
+		  free (word);
 		}
 
 	      string = nextword (string, &word);
 	    }
 	  add_to_definition (ptr, 0);
+	  free (word);
+	  word = NULL;
 	  string = nextword (string, &word);
 	}
       else
@@ -1392,6 +1431,8 @@ compile (string)
 	  fprintf (stderr, "syntax error at %s\n", string - 1);
 	}
     }
+  if (word)
+    free (word);
 }
 
 static void
@@ -1561,6 +1602,7 @@ main (ac, av)
 	      read_in (&b, f);
 	      compile (b.ptr);
 	      perform ();
+	      delete_string (&b);
 	    }
 	  else if (av[i][1] == 'i')
 	    {
@@ -1575,6 +1617,9 @@ main (ac, av)
 	}
     }
   write_buffer (stack + 0, stdout);
+  free_words ();
+  delete_string (&pptr);
+  delete_string (&buffer);
   if (tos != stack)
     {
       fprintf (stderr, "finishing with current stack level %ld\n",

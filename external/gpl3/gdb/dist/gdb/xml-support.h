@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -200,13 +200,13 @@ int gdb_xml_parse_quick (const char *name, const char *dtd_name,
 /* Issue a debugging message from one of PARSER's handlers.  */
 
 void gdb_xml_debug (struct gdb_xml_parser *parser, const char *format, ...)
-     ATTRIBUTE_PRINTF (2, 0);
+  ATTRIBUTE_PRINTF (2, 3);
 
 /* Issue an error message from one of PARSER's handlers, and stop
    parsing.  */
 
 void gdb_xml_error (struct gdb_xml_parser *parser, const char *format, ...)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 0);
+  ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
 
 /* Find the attribute named NAME in the set of parsed attributes
    ATTRIBUTES.  Returns NULL if not found.  */

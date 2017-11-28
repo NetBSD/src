@@ -1,6 +1,6 @@
 /* BFD library -- caching of file descriptors.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -212,7 +212,7 @@ close_one (void)
       return TRUE;
     }
 
-  to_kill->where = real_ftell ((FILE *) to_kill->iostream);
+  to_kill->where = _bfd_real_ftell ((FILE *) to_kill->iostream);
 
   return bfd_cache_delete (to_kill);
 }
@@ -262,14 +262,16 @@ bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
   if (bfd_open_file (abfd) == NULL)
     ;
   else if (!(flag & CACHE_NO_SEEK)
-	   && real_fseek ((FILE *) abfd->iostream, abfd->where, SEEK_SET) != 0
+	   && _bfd_real_fseek ((FILE *) abfd->iostream,
+			       abfd->where, SEEK_SET) != 0
 	   && !(flag & CACHE_NO_SEEK_ERROR))
     bfd_set_error (bfd_error_system_call);
   else
     return (FILE *) abfd->iostream;
 
-  (*_bfd_error_handler) (_("reopening %B: %s\n"),
-			 orig_bfd, bfd_errmsg (bfd_get_error ()));
+  /* xgettext:c-format */
+  _bfd_error_handler (_("reopening %B: %s\n"),
+		      orig_bfd, bfd_errmsg (bfd_get_error ()));
   return NULL;
 }
 
@@ -279,7 +281,7 @@ cache_btell (struct bfd *abfd)
   FILE *f = bfd_cache_lookup (abfd, CACHE_NO_OPEN);
   if (f == NULL)
     return abfd->where;
-  return real_ftell (f);
+  return _bfd_real_ftell (f);
 }
 
 static int
@@ -288,7 +290,7 @@ cache_bseek (struct bfd *abfd, file_ptr offset, int whence)
   FILE *f = bfd_cache_lookup (abfd, whence != SEEK_CUR ? CACHE_NO_SEEK : CACHE_NORMAL);
   if (f == NULL)
     return -1;
-  return real_fseek (f, offset, whence);
+  return _bfd_real_fseek (f, offset, whence);
 }
 
 /* Note that archive entries don't have streams; they share their parent's.
@@ -608,15 +610,15 @@ bfd_open_file (bfd *abfd)
     {
     case read_direction:
     case no_direction:
-      abfd->iostream = real_fopen (abfd->filename, FOPEN_RB);
+      abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_RB);
       break;
     case both_direction:
     case write_direction:
       if (abfd->opened_once)
 	{
-	  abfd->iostream = real_fopen (abfd->filename, FOPEN_RUB);
+	  abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_RUB);
 	  if (abfd->iostream == NULL)
-	    abfd->iostream = real_fopen (abfd->filename, FOPEN_WUB);
+	    abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_WUB);
 	}
       else
 	{
@@ -646,7 +648,7 @@ bfd_open_file (bfd *abfd)
 	  if (stat (abfd->filename, &s) == 0 && s.st_size != 0)
 	    unlink_if_ordinary (abfd->filename);
 #endif
-	  abfd->iostream = real_fopen (abfd->filename, FOPEN_WUB);
+	  abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_WUB);
 	  abfd->opened_once = TRUE;
 	}
       break;

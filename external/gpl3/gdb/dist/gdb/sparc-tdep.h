@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,12 @@
 
 #ifndef SPARC_TDEP_H
 #define SPARC_TDEP_H 1
+
+#define SPARC_CORE_REGISTERS                      \
+  "g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7", \
+  "o0", "o1", "o2", "o3", "o4", "o5", "sp", "o7", \
+  "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7", \
+  "i0", "i1", "i2", "i3", "i4", "i5", "fp", "i7"
 
 struct frame_info;
 struct gdbarch;
@@ -57,6 +63,12 @@ struct gdbarch_tdep
   int pc_regnum;
   int npc_regnum;
 
+  /* Register names specific for architecture (sparc32 vs. sparc64) */
+  const char **fpu_register_names;
+  size_t fpu_registers_num;
+  const char **cp0_register_names;
+  size_t cp0_registers_num;
+
   /* Register sets.  */
   const struct regset *gregset;
   size_t sizeof_gregset;
@@ -76,6 +88,7 @@ struct gdbarch_tdep
   /* ISA-specific data types.  */
   struct type *sparc_psr_type;
   struct type *sparc_fsr_type;
+  struct type *sparc64_ccr_type;
   struct type *sparc64_pstate_type;
   struct type *sparc64_fsr_type;
   struct type *sparc64_fprs_type;
@@ -85,7 +98,7 @@ struct gdbarch_tdep
 
 enum sparc_regnum
 {
-  SPARC_G0_REGNUM,		/* %g0 */
+  SPARC_G0_REGNUM = 0,		/* %g0 */
   SPARC_G1_REGNUM,
   SPARC_G2_REGNUM,
   SPARC_G3_REGNUM,
@@ -140,9 +153,12 @@ enum sparc32_regnum
   SPARC32_NPC_REGNUM,		/* %npc */
   SPARC32_FSR_REGNUM,		/* %fsr */
   SPARC32_CSR_REGNUM,		/* %csr */
+};
 
-  /* Pseudo registers.  */
-  SPARC32_D0_REGNUM,		/* %d0 */
+/* Pseudo registers.  */
+enum sparc32_pseudo_regnum
+{
+  SPARC32_D0_REGNUM = 0,	/* %d0 */
   SPARC32_D30_REGNUM		/* %d30 */
   = SPARC32_D0_REGNUM + 15
 };
@@ -246,8 +262,8 @@ extern const struct sparc_gregmap sparc32nbsd_gregmap;
 extern CORE_ADDR sparcnbsd_step_trap (struct frame_info *frame,
 				      unsigned long insn);
 
-extern void sparc32nbsd_elf_init_abi (struct gdbarch_info info,
-				      struct gdbarch *gdbarch);
+extern void sparc32nbsd_init_abi (struct gdbarch_info info,
+				  struct gdbarch *gdbarch);
 
 extern struct trad_frame_saved_reg *
   sparc32nbsd_sigcontext_saved_regs (struct frame_info *next_frame);

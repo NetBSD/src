@@ -1,6 +1,6 @@
 /* Memory-access and commands for "inferior" process, for GDB.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -261,14 +261,14 @@ construct_inferior_arguments (int argc, char **argv)
 #ifdef __MINGW32__
       /* This holds all the characters considered special to the
 	 Windows shells.  */
-      char *special = "\"!&*|[]{}<>?`~^=;, \t\n";
-      const char quote = '"';
+      static const char special[] = "\"!&*|[]{}<>?`~^=;, \t\n";
+      static const char quote = '"';
 #else
       /* This holds all the characters considered special to the
 	 typical Unix shells.  We include `^' because the SunOS
 	 /bin/sh treats it as a synonym for `|'.  */
-      char *special = "\"!#$&*()\\|[]{}<>?'`~^; \t\n";
-      const char quote = '\'';
+      static const char special[] = "\"!#$&*()\\|[]{}<>?'`~^; \t\n";
+      static const char quote = '\'';
 #endif
       int i;
       int length = 0;
@@ -458,7 +458,7 @@ post_create_inferior (struct target_ops *target, int from_tty)
 	  /* If the solist is global across processes, there's no need to
 	     refetch it here.  */
 	  if (!gdbarch_has_global_solist (target_gdbarch ()))
-	    solib_add (NULL, 0, target, auto_solib_add);
+	    solib_add (NULL, 0, auto_solib_add);
 	}
     }
 
@@ -526,7 +526,7 @@ prepare_execution_command (struct target_ops *target, int background)
 static void
 run_command_1 (char *args, int from_tty, int tbreak_at_main)
 {
-  char *exec_file;
+  const char *exec_file;
   struct cleanup *old_chain;
   ptid_t ptid;
   struct ui_out *uiout = current_uiout;
@@ -574,7 +574,7 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
   if (tbreak_at_main)
     tbreak_command (main_name (), 0);
 
-  exec_file = (char *) get_exec_file (0);
+  exec_file = get_exec_file (0);
 
   /* We keep symbols from add-symbol-file, on the grounds that the
      user might want to add some symbols before running the program
@@ -590,16 +590,16 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
 
   if (from_tty)
     {
-      ui_out_field_string (uiout, NULL, "Starting program");
-      ui_out_text (uiout, ": ");
+      uiout->field_string (NULL, "Starting program");
+      uiout->text (": ");
       if (exec_file)
-	ui_out_field_string (uiout, "execfile", exec_file);
-      ui_out_spaces (uiout, 1);
+	uiout->field_string ("execfile", exec_file);
+      uiout->spaces (1);
       /* We call get_inferior_args() because we might need to compute
 	 the value now.  */
-      ui_out_field_string (uiout, "infargs", get_inferior_args ());
-      ui_out_text (uiout, "\n");
-      ui_out_flush (uiout);
+      uiout->field_string ("infargs", get_inferior_args ());
+      uiout->text ("\n");
+      uiout->flush ();
     }
 
   /* Done with ARGS.  */
@@ -607,7 +607,8 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
 
   /* We call get_inferior_args() because we might need to compute
      the value now.  */
-  run_target->to_create_inferior (run_target, exec_file, get_inferior_args (),
+  run_target->to_create_inferior (run_target, exec_file,
+				  std::string (get_inferior_args ()),
 				  environ_vector (current_inferior ()->environment),
 				  from_tty);
   /* to_create_inferior should push the target, so after this point we
@@ -1670,34 +1671,27 @@ print_return_value_1 (struct ui_out *uiout, struct return_value_info *rv)
   if (rv->value != NULL)
     {
       struct value_print_options opts;
-      struct ui_file *stb;
-      struct cleanup *old_chain;
 
       /* Print it.  */
-      stb = mem_fileopen ();
-      old_chain = make_cleanup_ui_file_delete (stb);
-      ui_out_text (uiout, "Value returned is ");
-      ui_out_field_fmt (uiout, "gdb-result-var", "$%d",
-			rv->value_history_index);
-      ui_out_text (uiout, " = ");
+      uiout->text ("Value returned is ");
+      uiout->field_fmt ("gdb-result-var", "$%d",
+			 rv->value_history_index);
+      uiout->text (" = ");
       get_no_prettyformat_print_options (&opts);
-      value_print (rv->value, stb, &opts);
-      ui_out_field_stream (uiout, "return-value", stb);
-      ui_out_text (uiout, "\n");
-      do_cleanups (old_chain);
+
+      string_file stb;
+
+      value_print (rv->value, &stb, &opts);
+      uiout->field_stream ("return-value", stb);
+      uiout->text ("\n");
     }
   else
     {
-      struct cleanup *oldchain;
-      char *type_name;
-
-      type_name = type_to_string (rv->type);
-      oldchain = make_cleanup (xfree, type_name);
-      ui_out_text (uiout, "Value returned has type: ");
-      ui_out_field_string (uiout, "return-type", type_name);
-      ui_out_text (uiout, ".");
-      ui_out_text (uiout, " Cannot determine contents\n");
-      do_cleanups (oldchain);
+      std::string type_name = type_to_string (rv->type);
+      uiout->text ("Value returned has type: ");
+      uiout->field_string ("return-type", type_name.c_str ());
+      uiout->text (".");
+      uiout->text (" Cannot determine contents\n");
     }
 }
 
@@ -2274,7 +2268,7 @@ static void
 path_command (char *dirname, int from_tty)
 {
   char *exec_path;
-  char *env;
+  const char *env;
 
   dont_repeat ();
   env = get_in_environ (current_inferior ()->environment, path_var_name);
@@ -2320,7 +2314,6 @@ default_print_one_register_info (struct ui_file *file,
       opts.deref_ref = 1;
 
       val_print (regtype,
-		 value_contents_for_printing (val),
 		 value_embedded_offset (val), 0,
 		 file, 0, val, &opts, current_language);
 
@@ -2339,7 +2332,6 @@ default_print_one_register_info (struct ui_file *file,
       get_formatted_print_options (&opts, 'x');
       opts.deref_ref = 1;
       val_print (regtype,
-		 value_contents_for_printing (val),
 		 value_embedded_offset (val), 0,
 		 file, 0, val, &opts, current_language);
       /* If not a vector register, print it also according to its
@@ -2350,7 +2342,6 @@ default_print_one_register_info (struct ui_file *file,
 	  opts.deref_ref = 1;
 	  fprintf_filtered (file, "\t");
 	  val_print (regtype,
-		     value_contents_for_printing (val),
 		     value_embedded_offset (val), 0,
 		     file, 0, val, &opts, current_language);
 	}
@@ -2691,7 +2682,7 @@ enum attach_post_wait_mode
    should be running.  Else if ATTACH, */
 
 static void
-attach_post_wait (char *args, int from_tty, enum attach_post_wait_mode mode)
+attach_post_wait (const char *args, int from_tty, enum attach_post_wait_mode mode)
 {
   struct inferior *inferior;
 
@@ -3071,7 +3062,7 @@ interrupt_target_1 (int all_threads)
 
 /* interrupt [-a]
    Stop the execution of the target while running in async mode, in
-   the backgound.  In all-stop, stop the whole process.  In non-stop
+   the background.  In all-stop, stop the whole process.  In non-stop
    mode, stop the current thread only by default, or stop all threads
    if the `-a' switch is used.  */
 
@@ -3238,7 +3229,10 @@ is restored."),
 				     set_inferior_tty_command,
 				     show_inferior_tty_command,
 				     &setlist, &showlist);
-  add_com_alias ("tty", "set inferior-tty", class_alias, 0);
+  cmd_name = "inferior-tty";
+  c = lookup_cmd (&cmd_name, setlist, "", -1, 1);
+  gdb_assert (c != NULL);
+  add_alias_cmd ("tty", c, class_alias, 0, &cmdlist);
 
   cmd_name = "args";
   add_setshow_string_noescape_cmd (cmd_name, class_run,

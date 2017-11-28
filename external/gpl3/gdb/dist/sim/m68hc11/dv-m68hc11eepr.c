@@ -1,5 +1,5 @@
 /*  dv-m68hc11eepr.c -- Simulation of the 68HC11 Internal EEPROM.
-    Copyright (C) 1999-2016 Free Software Foundation, Inc.
+    Copyright (C) 1999-2017 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     
@@ -217,7 +217,7 @@ attach_m68hc11eepr_regs (struct hw *me,
   
   controller->attach_space = attach_space;
   controller->base_address = attach_address;
-  controller->eeprom = (char*) hw_malloc (me, attach_size + 1);
+  controller->eeprom = hw_malloc (me, attach_size + 1);
   controller->eeprom_min_cycles = 10000;
   controller->size = attach_size + 1;
   controller->mapped = 0;

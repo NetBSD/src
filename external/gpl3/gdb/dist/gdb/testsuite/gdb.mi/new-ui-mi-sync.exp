@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ load_lib mi-support.exp
 standard_testfile
 
 if {[build_executable $testfile.exp $testfile ${srcfile} "debug"] == -1} {
-    untested "failed to compile $testfile"
+    untested "failed to compile"
     return -1
 }
 
@@ -40,7 +40,7 @@ proc do_test {sync_command} {
     mi_gdb_exit
 
     if {[mi_gdb_start "separate-mi-tty"] != 0} {
-	fail "Could not start gdb"
+	fail "could not start gdb"
 	return
     }
 

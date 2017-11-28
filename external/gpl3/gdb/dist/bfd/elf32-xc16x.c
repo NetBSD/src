@@ -1,5 +1,5 @@
 /* Infineon XC16X-specific support for 16-bit ELF.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
    Contributed by KPIT Cummins Infosystems
 
    This file is part of BFD, the Binary File Descriptor library.

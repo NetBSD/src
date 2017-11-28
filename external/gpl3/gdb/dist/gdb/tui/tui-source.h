@@ -1,6 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -28,7 +28,7 @@ struct symtab;
 struct tui_win_info;
 
 extern void tui_set_source_content_nil (struct tui_win_info *, 
-					char *);
+					const char *);
 
 extern enum tui_status tui_set_source_content (struct symtab *, 
 					       int, int);

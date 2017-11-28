@@ -1,5 +1,5 @@
 # memmem.m4 serial 24
-dnl Copyright (C) 2002-2004, 2007-2015 Free Software Foundation, Inc.
+dnl Copyright (C) 2002-2004, 2007-2016 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -93,7 +93,7 @@ AC_DEFUN([gl_FUNC_MEMMEM],
 #include <string.h> /* for memmem */
 #include <stdlib.h> /* for malloc */
 #include <unistd.h> /* for alarm */
-static void quit (int sig) { exit (sig + 128); }
+static void quit (int sig) { _exit (sig + 128); }
 ]], [[
     int result = 0;
     size_t m = 1000000;

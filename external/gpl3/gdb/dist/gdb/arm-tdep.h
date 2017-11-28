@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -259,9 +259,7 @@ CORE_ADDR arm_get_next_pcs_addr_bits_remove (struct arm_get_next_pcs *self,
 
 int arm_get_next_pcs_is_thumb (struct arm_get_next_pcs *self);
 
-void arm_insert_single_step_breakpoint (struct gdbarch *,
-					struct address_space *, CORE_ADDR);
-int arm_software_single_step (struct frame_info *);
+VEC (CORE_ADDR) *arm_software_single_step (struct regcache *);
 int arm_is_thumb (struct regcache *regcache);
 int arm_frame_is_thumb (struct frame_info *frame);
 
@@ -278,7 +276,7 @@ extern int arm_pc_is_thumb (struct gdbarch *, CORE_ADDR);
 
 extern int arm_process_record (struct gdbarch *gdbarch, 
                                struct regcache *regcache, CORE_ADDR addr);
-/* Functions exported from armbsd-tdep.h.  */
+/* Functions exported from arm-bsd-tdep.h.  */
 
 /* Return the appropriate register set for the core section identified
    by SECT_NAME and SECT_SIZE.  */

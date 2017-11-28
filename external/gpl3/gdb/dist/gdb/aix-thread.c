@@ -1,6 +1,6 @@
 /* Low level interface for debugging AIX 4.3+ pthreads.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Written by Nick Duffek <nsd@redhat.com>.
 
    This file is part of GDB.
@@ -155,7 +155,7 @@ static pthdb_session_t pd_session;
 /* Return a printable representation of pthdebug function return
    STATUS.  */
 
-static char *
+static const char *
 pd_status2str (int status)
 {
   switch (status)
@@ -1297,8 +1297,8 @@ fetch_regs_kernel_thread (struct regcache *regcache, int regno,
     }
 }
 
-/* Fetch register REGNO if != -1 or all registers otherwise in the
-   thread/process specified by inferior_ptid.  */
+/* Fetch register REGNO if != -1 or all registers otherwise from the
+   thread/process connected to REGCACHE.  */
 
 static void
 aix_thread_fetch_registers (struct target_ops *ops,
@@ -1308,11 +1308,11 @@ aix_thread_fetch_registers (struct target_ops *ops,
   pthdb_tid_t tid;
   struct target_ops *beneath = find_target_beneath (ops);
 
-  if (!PD_TID (inferior_ptid))
+  if (!PD_TID (regcache_get_ptid (regcache)))
     beneath->to_fetch_registers (beneath, regcache, regno);
   else
     {
-      thread = find_thread_ptid (inferior_ptid);
+      thread = find_thread_ptid (regcache_get_ptid (regcache));
       tid = thread->priv->tid;
 
       if (tid == PTHDB_INVALID_TID)
@@ -1652,7 +1652,7 @@ store_regs_kernel_thread (const struct regcache *regcache, int regno,
 }
 
 /* Store gdb's current view of the register set into the
-   thread/process specified by inferior_ptid.  */
+   thread/process connected to REGCACHE.  */
 
 static void
 aix_thread_store_registers (struct target_ops *ops,
@@ -1662,11 +1662,11 @@ aix_thread_store_registers (struct target_ops *ops,
   pthdb_tid_t tid;
   struct target_ops *beneath = find_target_beneath (ops);
 
-  if (!PD_TID (inferior_ptid))
+  if (!PD_TID (regcache_get_ptid (regcache)))
     beneath->to_store_registers (beneath, regcache, regno);
   else
     {
-      thread = find_thread_ptid (inferior_ptid);
+      thread = find_thread_ptid (regcache_get_ptid (regcache));
       tid = thread->priv->tid;
 
       if (tid == PTHDB_INVALID_TID)
@@ -1725,7 +1725,7 @@ aix_thread_thread_alive (struct target_ops *ops, ptid_t ptid)
 /* Return a printable representation of composite PID for use in
    "info threads" output.  */
 
-static char *
+static const char *
 aix_thread_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char *ret = NULL;
@@ -1745,11 +1745,10 @@ aix_thread_pid_to_str (struct target_ops *ops, ptid_t ptid)
 /* Return a printable representation of extra information about
    THREAD, for use in "info threads" output.  */
 
-static char *
+static const char *
 aix_thread_extra_thread_info (struct target_ops *self,
 			      struct thread_info *thread)
 {
-  struct ui_file *buf;
   int status;
   pthdb_pthread_t pdtid;
   pthdb_tid_t tid;
@@ -1762,43 +1761,42 @@ aix_thread_extra_thread_info (struct target_ops *self,
   if (!PD_TID (thread->ptid))
     return NULL;
 
-  buf = mem_fileopen ();
+  string_file buf;
 
   pdtid = thread->priv->pdtid;
   tid = thread->priv->tid;
 
   if (tid != PTHDB_INVALID_TID)
     /* i18n: Like "thread-identifier %d, [state] running, suspended" */
-    fprintf_unfiltered (buf, _("tid %d"), (int)tid);
+    buf.printf (_("tid %d"), (int)tid);
 
   status = pthdb_pthread_state (pd_session, pdtid, &state);
   if (status != PTHDB_SUCCESS)
     state = PST_NOTSUP;
-  fprintf_unfiltered (buf, ", %s", state2str (state));
+  buf.printf (", %s", state2str (state));
 
   status = pthdb_pthread_suspendstate (pd_session, pdtid, 
 				       &suspendstate);
   if (status == PTHDB_SUCCESS && suspendstate == PSS_SUSPENDED)
     /* i18n: Like "Thread-Id %d, [state] running, suspended" */
-    fprintf_unfiltered (buf, _(", suspended"));
+    buf.printf (_(", suspended"));
 
   status = pthdb_pthread_detachstate (pd_session, pdtid, 
 				      &detachstate);
   if (status == PTHDB_SUCCESS && detachstate == PDS_DETACHED)
     /* i18n: Like "Thread-Id %d, [state] running, detached" */
-    fprintf_unfiltered (buf, _(", detached"));
+    buf.printf (_(", detached"));
 
   pthdb_pthread_cancelpend (pd_session, pdtid, &cancelpend);
   if (status == PTHDB_SUCCESS && cancelpend)
     /* i18n: Like "Thread-Id %d, [state] running, cancel pending" */
-    fprintf_unfiltered (buf, _(", cancel pending"));
+    buf.printf (_(", cancel pending"));
 
-  ui_file_write (buf, "", 1);
+  buf.write ("", 1);
 
   xfree (ret);			/* Free old buffer.  */
 
-  ret = ui_file_xstrdup (buf, NULL);
-  ui_file_delete (buf);
+  ret = xstrdup (buf.c_str ());
 
   return ret;
 }

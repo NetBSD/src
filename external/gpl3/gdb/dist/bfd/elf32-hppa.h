@@ -4,7 +4,7 @@
    in the Stratus FTX/Golf Object File Format (SED-1762) dated
    February 1994.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    Written by:
 

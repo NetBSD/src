@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,13 +31,13 @@ if [mi_gdb_start] {
 standard_testfile var-cmd.c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-    untested mi-var-invalidate.exp
+    untested "failed to compile"
     return -1
 }
 # Just change the output binary.
 set binfile_bis [standard_output_file mi-var-invalidate_bis]
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile_bis}" executable {debug}] != "" } {
-    untested mi-var-invalidate.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -45,7 +45,7 @@ set testfile2 "basics"
 set srcfile2 ${testfile2}.c
 set binfile2 [standard_output_file ${testfile2}]
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug}] != "" } {
-    untested mi-var-invalidate.exp
+    untested "failed to compile"
     return -1
 }
 

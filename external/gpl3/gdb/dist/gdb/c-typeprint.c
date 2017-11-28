@@ -1,5 +1,5 @@
 /* Support for printing C and C++ types for GDB, the GNU debugger.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,6 @@
 #include "c-lang.h"
 #include "typeprint.h"
 #include "cp-abi.h"
-#include "jv-lang.h"
 #include "cp-support.h"
 
 static void c_type_print_varspec_prefix (struct type *,
@@ -61,15 +60,14 @@ print_name_maybe_canonical (const char *name,
 			    const struct type_print_options *flags,
 			    struct ui_file *stream)
 {
-  char *s = NULL;
+  std::string s;
 
   if (!flags->raw)
     s = cp_canonicalize_string_full (name,
 				     find_typedef_for_canonicalize,
 				     (void *) flags);
 
-  fputs_filtered (s ? s : name, stream);
-  xfree (s);
+  fputs_filtered (!s.empty () ? s.c_str () : name, stream);
 }
 
 
@@ -112,7 +110,7 @@ c_print_type (struct type *type,
 		      && !TYPE_VECTOR (type))
 		  || code == TYPE_CODE_MEMBERPTR
 		  || code == TYPE_CODE_METHODPTR
-		  || code == TYPE_CODE_REF)))
+		  || TYPE_IS_REFERENCE (type))))
 	fputs_filtered (" ", stream);
       need_post_space = (varstring != NULL && strcmp (varstring, "") != 0);
       c_type_print_varspec_prefix (type, stream, show, 0, need_post_space,
@@ -228,13 +226,21 @@ cp_type_print_method_args (struct type *mtype, const char *prefix,
 			   language_cplus, DMGL_ANSI);
   fputs_filtered ("(", stream);
 
-  /* Skip the class variable.  */
+  /* Skip the class variable.  We keep this here to accommodate older
+     compilers and debug formats which may not support artificial
+     parameters.  */
   i = staticp ? 0 : 1;
   if (nargs > i)
     {
       while (i < nargs)
 	{
-	  c_print_type (args[i++].type, "", stream, 0, 0, flags);
+	  struct field arg = args[i++];
+
+	  /* Skip any artificial arguments.  */
+	  if (FIELD_ARTIFICIAL (arg))
+	    continue;
+
+	  c_print_type (arg.type, "", stream, 0, 0, flags);
 
 	  if (i == nargs && varargs)
 	    fprintf_filtered (stream, ", ...");
@@ -341,9 +347,10 @@ c_type_print_varspec_prefix (struct type *type,
       break;
 
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
       c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
 				   stream, show, 1, 0, flags);
-      fprintf_filtered (stream, "&");
+      fprintf_filtered (stream, TYPE_CODE(type) == TYPE_CODE_REF ? "&" : "&&");
       c_type_print_modifier (type, stream, 1, need_post_space);
       break;
 
@@ -410,8 +417,7 @@ c_type_print_modifier (struct type *type, struct ui_file *stream,
   /* We don't print `const' qualifiers for references --- since all
      operators affect the thing referenced, not the reference itself,
      every reference is `const'.  */
-  if (TYPE_CONST (type)
-      && TYPE_CODE (type) != TYPE_CODE_REF)
+  if (TYPE_CONST (type) && !TYPE_IS_REFERENCE (type))
     {
       if (need_pre_space)
 	fprintf_filtered (stream, " ");
@@ -465,7 +471,7 @@ c_type_print_modifier (struct type *type, struct ui_file *stream,
    parameter types get removed their possible const and volatile qualifiers to
    match demangled linkage name parameters part of such function type.
    LANGUAGE is the language in which TYPE was defined.  This is a necessary
-   evil since this code is used by the C, C++, and Java backends.  */
+   evil since this code is used by the C and C++.  */
 
 void
 c_type_print_args (struct type *type, struct ui_file *stream,
@@ -504,10 +510,7 @@ c_type_print_args (struct type *type, struct ui_file *stream,
 	  param_type = make_cv_type (0, 0, param_type, NULL);
 	}
 
-      if (language == language_java)
-	java_print_type (param_type, "", stream, -1, 0, flags);
-      else
-	c_print_type (param_type, "", stream, -1, 0, flags);
+      c_print_type (param_type, "", stream, -1, 0, flags);
       printed_any = 1;
     }
 
@@ -524,8 +527,7 @@ c_type_print_args (struct type *type, struct ui_file *stream,
 	}
     }
   else if (!printed_any
-	   && ((TYPE_PROTOTYPED (type) && language != language_java)
-	       || language == language_cplus))
+	   && (TYPE_PROTOTYPED (type) || language == language_cplus))
     fprintf_filtered (stream, "void");
 
   fprintf_filtered (stream, ")");
@@ -726,6 +728,7 @@ c_type_print_varspec_suffix (struct type *type,
 
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
       c_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream,
 				   show, 1, 0, flags);
       break;
@@ -894,6 +897,7 @@ c_type_print_base (struct type *type, struct ui_file *stream,
     case TYPE_CODE_PTR:
     case TYPE_CODE_MEMBERPTR:
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
     case TYPE_CODE_FUNC:
     case TYPE_CODE_METHOD:
     case TYPE_CODE_METHODPTR:

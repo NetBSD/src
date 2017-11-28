@@ -82,7 +82,7 @@ TARGETNAME
 	The name of the target, for run-time lookups.
 	Usually "a.out-<target>"
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

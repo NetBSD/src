@@ -1,7 +1,7 @@
 /* Target-dependent code for the Texas Instruments MSP430 for GDB, the
    GNU debugger.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -221,10 +221,9 @@ msp430_pseudo_register_read (struct gdbarch *gdbarch,
 			     struct regcache *regcache,
 			     int regnum, gdb_byte *buffer)
 {
-  enum register_status status = REG_UNKNOWN;
-
   if (MSP430_NUM_REGS <= regnum && regnum < MSP430_NUM_TOTAL_REGS)
     {
+      enum register_status status;
       ULONGEST val;
       enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
       int regsize = register_size (gdbarch, regnum);
@@ -234,11 +233,10 @@ msp430_pseudo_register_read (struct gdbarch *gdbarch,
       if (status == REG_VALID)
 	store_unsigned_integer (buffer, regsize, byte_order, val);
 
+      return status;
     }
   else
     gdb_assert_not_reached ("invalid pseudo register number");
-
-  return status;
 }
 
 /* Implement the "pseudo_register_write" gdbarch method.  */
@@ -277,17 +275,9 @@ msp430_register_sim_regno (struct gdbarch *gdbarch, int regnum)
   return regnum;
 }
 
-/* Implement the "breakpoint_from_pc" gdbarch method.  */
+constexpr gdb_byte msp430_break_insn[] = { 0x43, 0x43 };
 
-static const gdb_byte *
-msp430_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-			   int *lenptr)
-{
-  static gdb_byte breakpoint[] = { 0x43, 0x43 };
-
-  *lenptr = sizeof breakpoint;
-  return breakpoint;
-}
+typedef BP_MANIPULATION (msp430_break_insn) msp430_breakpoint;
 
 /* Define a "handle" struct for fetching the next opcode.  */
 
@@ -768,7 +758,7 @@ msp430_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 		  if (code_model == MSP_LARGE_CODE_MODEL
 		      && (TYPE_CODE (arg_type) == TYPE_CODE_PTR
-		          || TYPE_CODE (arg_type) == TYPE_CODE_REF
+		          || TYPE_IS_REFERENCE (arg_type)
 			  || TYPE_CODE (arg_type) == TYPE_CODE_STRUCT
 			  || TYPE_CODE (arg_type) == TYPE_CODE_UNION))
 		    {
@@ -1001,7 +991,10 @@ msp430_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_long_double_format (gdbarch, floatformats_ieee_double);
 
   /* Breakpoints.  */
-  set_gdbarch_breakpoint_from_pc (gdbarch, msp430_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       msp430_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       msp430_breakpoint::bp_from_kind);
   set_gdbarch_decr_pc_after_break (gdbarch, 1);
 
   /* Disassembly.  */

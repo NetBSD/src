@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -71,7 +71,5 @@ extern void gdb_rl_callback_handler_install (const char *prompt);
 /* Reinstall the readline callback handler (with no prompt), if not
    currently installed.  */
 extern void gdb_rl_callback_handler_reinstall (void);
-
-extern void cli_command_loop (void *);
 
 #endif
