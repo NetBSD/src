@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2015 Free Software Foundation, Inc.
+# Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ proc prepare_test { } {
 	return 0
     }
 
-    gdb_test_no_output "python exec (open ('${remote_python_file}').read ())"
+    gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+	"read file"
 
     gdb_test_no_output "py progspace = gdb.current_progspace()"
     gdb_test_no_output "py my_pretty_printer1 = build_pretty_printer1()"
@@ -108,9 +109,13 @@ with_test_prefix "replace" {
     gdb_test "py gdb.printing.register_pretty_printer(progspace, my_pretty_printer2, replace=False)" \
 	"RuntimeError: pretty-printer already registered: pp-test\r\nError while executing Python code."
 
-    test_printers "s1"
+    with_test_prefix "test printers 1" {
+	test_printers "s1"
+    }
 
     gdb_test_no_output "py gdb.printing.register_pretty_printer(progspace, my_pretty_printer2, replace=True)"
 
-    test_printers "s2"
+    with_test_prefix "test printers 2" {
+	test_printers "s2"
+    }
 }

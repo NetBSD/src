@@ -37,6 +37,10 @@
    */
 #undef HAVE_DECL_PERROR
 
+/* Define to 1 if you have the declaration of `ptrace', and to 0 if you don't.
+   */
+#undef HAVE_DECL_PTRACE
+
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_SNPRINTF
@@ -94,6 +98,9 @@
 
 /* Define to 1 if you have the `fdwalk' function. */
 #undef HAVE_FDWALK
+
+/* Define to 1 if you have the `fork' function. */
+#undef HAVE_FORK
 
 /* Define to 1 if you have the `getauxval' function. */
 #undef HAVE_GETAUXVAL
@@ -183,6 +190,9 @@
 /* Define if the target supports PTRACE_GETREGS for register access. */
 #undef HAVE_PTRACE_GETREGS
 
+/* Define to 1 if you have the <ptrace.h> header file. */
+#undef HAVE_PTRACE_H
+
 /* Define to 1 if you have the `pwrite' function. */
 #undef HAVE_PWRITE
 
@@ -191,6 +201,9 @@
 
 /* Define to 1 if you have the <sgtty.h> header file. */
 #undef HAVE_SGTTY_H
+
+/* Define to 1 if you have the `sigaction' function. */
+#undef HAVE_SIGACTION
 
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
@@ -234,6 +247,9 @@
 /* Define to 1 if you have the <sys/procfs.h> header file. */
 #undef HAVE_SYS_PROCFS_H
 
+/* Define to 1 if you have the <sys/ptrace.h> header file. */
+#undef HAVE_SYS_PTRACE_H
+
 /* Define to 1 if you have the <sys/reg.h> header file. */
 #undef HAVE_SYS_REG_H
 
@@ -276,8 +292,20 @@
 /* Define if UST is available */
 #undef HAVE_UST
 
+/* Define to 1 if you have the `vfork' function. */
+#undef HAVE_VFORK
+
+/* Define to 1 if you have the <vfork.h> header file. */
+#undef HAVE_VFORK_H
+
 /* Define to 1 if you have the <wait.h> header file. */
 #undef HAVE_WAIT_H
+
+/* Define to 1 if `fork' works. */
+#undef HAVE_WORKING_FORK
+
+/* Define to 1 if `vfork' works. */
+#undef HAVE_WORKING_VFORK
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -299,6 +327,21 @@
 
 /* Additional package description */
 #undef PKGVERSION
+
+/* Define to the type of arg 1 for ptrace. */
+#undef PTRACE_TYPE_ARG1
+
+/* Define to the type of arg 3 for ptrace. */
+#undef PTRACE_TYPE_ARG3
+
+/* Define to the type of arg 4 for ptrace. */
+#undef PTRACE_TYPE_ARG4
+
+/* Define to the type of arg 5 for ptrace. */
+#undef PTRACE_TYPE_ARG5
+
+/* Define as the return type of ptrace. */
+#undef PTRACE_TYPE_RET
 
 /* Bug reporting address */
 #undef REPORT_BUGS_TO
@@ -368,3 +411,9 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define as `fork' if `vfork' does not work. */
+#undef vfork

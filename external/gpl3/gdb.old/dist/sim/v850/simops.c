@@ -3317,7 +3317,7 @@ v850_bins (SIM_DESC sd, unsigned int source, unsigned int lsb, unsigned int msb,
   pos = lsb;
   width = (msb - lsb) + 1;
 
-  mask = ~ (-1 << width);
+  mask = ~ (-(1 << width));
   source &= mask;
   mask <<= pos;
   result = (* dest) & ~ mask;

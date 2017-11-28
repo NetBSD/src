@@ -1,7 +1,7 @@
 /* Get info from stack frames; convert between frames, blocks,
    functions and pc values.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -197,7 +197,6 @@ find_pc_partial_function_gnu_ifunc (CORE_ADDR pc, const char **name,
   struct bound_minimal_symbol msymbol;
   struct compunit_symtab *compunit_symtab = NULL;
   struct objfile *objfile;
-  int i;
   CORE_ADDR mapped_pc;
 
   /* To ensure that the symbol returned belongs to the correct setion

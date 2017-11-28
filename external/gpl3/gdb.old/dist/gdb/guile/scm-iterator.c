@@ -1,6 +1,6 @@
 /* Simple iterators for GDB/Scheme.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -301,7 +301,7 @@ gdbscm_iterator_next_x (SCM self)
 
 static const scheme_function iterator_functions[] =
 {
-  { "make-iterator", 3, 0, 0, gdbscm_make_iterator,
+  { "make-iterator", 3, 0, 0, as_a_scm_t_subr (gdbscm_make_iterator),
     "\
 Create a <gdb:iterator> object.\n\
 \n\
@@ -314,31 +314,32 @@ Create a <gdb:iterator> object.\n\
       By convention end-of-iteration should be marked with (end-of-iteration)\n\
       from module (gdb iterator)." },
 
-  { "iterator?", 1, 0, 0, gdbscm_iterator_p,
+  { "iterator?", 1, 0, 0, as_a_scm_t_subr (gdbscm_iterator_p),
     "\
 Return #t if the object is a <gdb:iterator> object." },
 
-  { "iterator-object", 1, 0, 0, gdbscm_iterator_object,
+  { "iterator-object", 1, 0, 0, as_a_scm_t_subr (gdbscm_iterator_object),
     "\
 Return the object being iterated over." },
 
-  { "iterator-progress", 1, 0, 0, gdbscm_iterator_progress,
+  { "iterator-progress", 1, 0, 0, as_a_scm_t_subr (gdbscm_iterator_progress),
     "\
 Return the progress object of the iterator." },
 
-  { "set-iterator-progress!", 2, 0, 0, gdbscm_set_iterator_progress_x,
+  { "set-iterator-progress!", 2, 0, 0,
+    as_a_scm_t_subr (gdbscm_set_iterator_progress_x),
     "\
 Set the progress object of the iterator." },
 
-  { "iterator-next!", 1, 0, 0, gdbscm_iterator_next_x,
+  { "iterator-next!", 1, 0, 0, as_a_scm_t_subr (gdbscm_iterator_next_x),
     "\
 Invoke the next! procedure of the iterator and return its result." },
 
-  { "end-of-iteration", 0, 0, 0, gdbscm_end_of_iteration,
+  { "end-of-iteration", 0, 0, 0, as_a_scm_t_subr (gdbscm_end_of_iteration),
     "\
 Return the end-of-iteration marker." },
 
-  { "end-of-iteration?", 1, 0, 0, gdbscm_end_of_iteration_p,
+  { "end-of-iteration?", 1, 0, 0, as_a_scm_t_subr (gdbscm_end_of_iteration_p),
     "\
 Return #t if the object is the end-of-iteration marker." },
 

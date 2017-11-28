@@ -1,6 +1,6 @@
 /* Dump-to-file commands, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -212,7 +212,7 @@ dump_memory_to_file (const char *cmd, const char *mode, const char *file_format)
   CORE_ADDR hi;
   ULONGEST count;
   const char *filename;
-  void *buf;
+  gdb_byte *buf;
   const char *lo_exp;
   const char *hi_exp;
 
@@ -237,7 +237,7 @@ dump_memory_to_file (const char *cmd, const char *mode, const char *file_format)
 
   /* FIXME: Should use read_memory_partial() and a magic blocking
      value.  */
-  buf = xmalloc (count);
+  buf = (gdb_byte *) xmalloc (count);
   make_cleanup (xfree, buf);
   read_memory (lo, buf, count);
   
@@ -392,7 +392,7 @@ struct dump_context
 static void
 call_dump_func (struct cmd_list_element *c, char *args, int from_tty)
 {
-  struct dump_context *d = get_cmd_context (c);
+  struct dump_context *d = (struct dump_context *) get_cmd_context (c);
 
   d->func (args, d->mode);
 }
@@ -447,7 +447,7 @@ struct callback_data {
 static void
 restore_section_callback (bfd *ibfd, asection *isec, void *args)
 {
-  struct callback_data *data = args;
+  struct callback_data *data = (struct callback_data *) args;
   bfd_vma sec_start  = bfd_section_vma (ibfd, isec);
   bfd_size_type size = bfd_section_size (ibfd, isec);
   bfd_vma sec_end    = sec_start + size;
@@ -482,7 +482,7 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
     sec_load_count -= sec_end - data->load_end;
 
   /* Get the data.  */
-  buf = xmalloc (size);
+  buf = (gdb_byte *) xmalloc (size);
   old_chain = make_cleanup (xfree, buf);
   if (!bfd_get_section_contents (ibfd, isec, buf, 0, size))
     error (_("Failed to read bfd file %s: '%s'."), bfd_get_filename (ibfd), 
@@ -553,7 +553,7 @@ restore_binary_file (const char *filename, struct callback_data *data)
     perror_with_name (filename);
 
   /* Now allocate a buffer and read the file contents.  */
-  buf = xmalloc (len);
+  buf = (gdb_byte *) xmalloc (len);
   make_cleanup (xfree, buf);
   if (fread (buf, 1, len, file) != len)
     perror_with_name (filename);
@@ -596,8 +596,9 @@ restore_command (char *args_in, int from_tty)
 	}
       /* Parse offset (optional).  */
       if (args != NULL && *args != '\0')
-      data.load_offset = 
-	parse_and_eval_address (scan_expression_with_cleanup (&args, NULL));
+	data.load_offset = binary_flag ?
+	  parse_and_eval_address (scan_expression_with_cleanup (&args, NULL)) :
+	  parse_and_eval_long (scan_expression_with_cleanup (&args, NULL));
       if (args != NULL && *args != '\0')
 	{
 	  /* Parse start address (optional).  */

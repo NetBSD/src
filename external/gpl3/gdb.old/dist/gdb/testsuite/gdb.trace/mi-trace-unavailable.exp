@@ -1,4 +1,4 @@
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -130,26 +130,39 @@ proc test_trace_unavailable { data_source } {
 	    ".*\\^done,found=\"1\",tracepoint=\"${decimal}\",traceframe=\"1\",frame=\{.*" \
 	    "-trace-find frame-number 1"
 
-	set pcnum 0
+	set pcnum -1
+	set gpr0num -1
 	if [is_amd64_regs_target] {
 	    set pcnum 16
+	    set gpr0num 0
 	} elseif [is_x86_like_target] {
 	    set pcnum 8
+	    set gpr0num 0
+	} elseif [is_aarch64_target] {
+	    set pcnum 32
+	    set gpr0num 0
+	} elseif [istarget "powerpc*-*-*"] {
+	    set pcnum 64
+	    set gpr0num 0
+	} elseif { [istarget "s390*-*-*"] } {
+	    # Strictly speaking, this is PSWA, not PC.
+	    set pcnum 1
+	    set gpr0num 2
 	} else {
 	    # Other ports support tracepoint should define the number
 	    # of its own pc register.
 	}
 
-	if { $pcnum != 0 } {
+	if { $pcnum != -1 } {
 	    global hex
 	    # Test that register 0 and PC are displayed, and register
 	    # 0 is unavailable.
-	    mi_gdb_test "-data-list-register-values x 0 ${pcnum}" \
-		".*\\^done,register-values=\\\[\{number=\"0\",value=\"<unavailable>\"\},\{number=\"${pcnum}\",value=\"${hex}\"\}\\\]" \
+	    mi_gdb_test "-data-list-register-values x ${gpr0num} ${pcnum}" \
+		".*\\^done,register-values=\\\[\{number=\"${gpr0num}\",value=\"<unavailable>\"\},\{number=\"${pcnum}\",value=\"${hex}\"\}\\\]" \
 		"-data-list-register-values x"
 
 	    # Test that only available register PC is displayed.
-	    mi_gdb_test "-data-list-register-values --skip-unavailable x 0 ${pcnum}" \
+	    mi_gdb_test "-data-list-register-values --skip-unavailable x ${gpr0num} ${pcnum}" \
 		".*\\^done,register-values=\\\[\{number=\"${pcnum}\",value=\"${hex}\"\}\\\]" \
 		"-data-list-register-values --skip-unavailable x"
 	}

@@ -1,4 +1,4 @@
-# Copyright 2002-2015 Free Software Foundation, Inc.
+# Copyright 2002-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ gdb_test "print test1.key2" "\\$\[0-9\]* = 77" "simple object, static long"
 # simple object, static enum
 gdb_test "print test1.value" "\\$\[0-9\]* = oriental" "simple object, static enum"
 
-if { [istarget arm*-*-*] } {
+if { [is_aarch32_target] } {
     gdb_test "print test5.single_constructor" \
 	{ = {single_constructor \*\(single_constructor \* const\)} 0x[0-9a-f]+ <single_constructor::single_constructor\(\)>} \
 	"simple object instance, print constructor"

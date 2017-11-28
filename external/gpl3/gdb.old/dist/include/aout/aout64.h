@@ -1,6 +1,6 @@
 /* `a.out' object-file definitions, including extensions to 64-bit fields
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -136,7 +136,7 @@ struct external_exec
    in the text.  */
 #ifndef N_HEADER_IN_TEXT
 #define N_HEADER_IN_TEXT(x) \
-  (((x).a_entry & (TARGET_PAGE_SIZE-1)) >= EXEC_BYTES_SIZE)
+  (((x)->a_entry & (TARGET_PAGE_SIZE-1)) >= EXEC_BYTES_SIZE)
 #endif
 
 /* Sun shared libraries, not linux.  This macro is only relevant for ZMAGIC
@@ -199,12 +199,12 @@ struct external_exec
 #define	N_TXTSIZE(x) \
   (/* For QMAGIC, we don't consider the header part of the text section.  */\
    N_IS_QMAGIC (x)							\
-   ? (x).a_text - EXEC_BYTES_SIZE					\
+   ? (x)->a_text - EXEC_BYTES_SIZE					\
    : ((N_MAGIC (x) != ZMAGIC || N_SHARED_LIB (x))			\
-      ? (x).a_text							\
+      ? (x)->a_text							\
       : (N_HEADER_IN_TEXT (x)						\
-	 ? (x).a_text - EXEC_BYTES_SIZE	/* No padding.  */		\
-	 : (x).a_text			/* A page of padding.  */ )))
+	 ? (x)->a_text - EXEC_BYTES_SIZE	/* No padding.  */	\
+	 : (x)->a_text				/* A page of padding.  */ )))
 #endif
 /* The address of the data segment in virtual memory.
    It is the text segment address, plus text segment size, rounded
@@ -218,7 +218,7 @@ struct external_exec
 #endif
 /* The address of the BSS segment -- immediately after the data segment.  */
 
-#define N_BSSADDR(x)	(N_DATADDR (x) + (x).a_data)
+#define N_BSSADDR(x)	(N_DATADDR (x) + (x)->a_data)
 
 /* Offsets of the various portions of the file after the text segment.  */
 
@@ -238,16 +238,16 @@ struct external_exec
 #define N_DATOFF(x)	(N_TXTOFF (x) + N_TXTSIZE (x))
 #endif
 #ifndef N_TRELOFF
-#define N_TRELOFF(x)	(N_DATOFF (x) + (x).a_data)
+#define N_TRELOFF(x)	(N_DATOFF (x) + (x)->a_data)
 #endif
 #ifndef N_DRELOFF
-#define N_DRELOFF(x)	(N_TRELOFF (x) + (x).a_trsize)
+#define N_DRELOFF(x)	(N_TRELOFF (x) + (x)->a_trsize)
 #endif
 #ifndef N_SYMOFF
-#define N_SYMOFF(x)	(N_DRELOFF (x) + (x).a_drsize)
+#define N_SYMOFF(x)	(N_DRELOFF (x) + (x)->a_drsize)
 #endif
 #ifndef N_STROFF
-#define N_STROFF(x)	(N_SYMOFF (x) + (x).a_syms)
+#define N_STROFF(x)	(N_SYMOFF (x) + (x)->a_syms)
 #endif
 
 /* Symbols */

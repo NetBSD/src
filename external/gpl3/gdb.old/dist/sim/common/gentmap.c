@@ -11,21 +11,21 @@ struct tdefs {
 
 static struct tdefs sys_tdefs[] = {
 #define sys_defs
-#include "targ-vals.def"
+#include "nltvals.def"
 #undef sys_defs
   { 0, 0 }
 };
 
 static struct tdefs errno_tdefs[] =  {
 #define errno_defs
-#include "targ-vals.def"
+#include "nltvals.def"
 #undef errno_defs
   { 0, 0 }
 };
 
 static struct tdefs open_tdefs[] = {
 #define open_defs
-#include "targ-vals.def"
+#include "nltvals.def"
 #undef open_defs
   { 0, 0 }
 };

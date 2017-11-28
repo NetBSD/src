@@ -36,14 +36,16 @@ esac
 # map target info into gdb names.
 
 case "${targ}" in
-aarch64*-*-elf)
+aarch64*-*-elf | aarch64*-*-rtems*)
 	# Target: AArch64 embedded system
-	gdb_target_obs="aarch64-tdep.o aarch64-newlib-tdep.o"
+	gdb_target_obs="aarch64-tdep.o aarch64-newlib-tdep.o aarch64-insn.o"
 	;;
 
 aarch64*-*-linux*)
 	# Target: AArch64 linux
-	gdb_target_obs="aarch64-tdep.o aarch64-linux-tdep.o \
+	gdb_target_obs="aarch64-tdep.o aarch64-linux-tdep.o aarch64-insn.o \
+			arm.o arm-linux.o arm-get-next-pcs.o arm-tdep.o \
+			arm-linux-tdep.o \
 			glibc-tdep.o linux-tdep.o solib-svr4.o \
 			symfile-mem.o linux-record.o"
 	build_gdbserver=yes
@@ -52,7 +54,7 @@ aarch64*-*-linux*)
 aarch64*-*-netbsd*)
 	# Target: AArch64 NetBSD
 	#gdb_target_obs="aarch64-tdep.o aarch64-netbsd-tdep.o"
-	gdb_target_obs="aarch64-tdep.o"
+	gdb_target_obs="aarch64-tdep.o aarch64-insn.o solib-svr4.o"
 	;;
 
 alpha*-*-osf*)
@@ -93,31 +95,34 @@ am33_2.0*-*-linux*)
 
 arm*-wince-pe | arm*-*-mingw32ce*)
 	# Target: ARM based machine running Windows CE (win32)
-	gdb_target_obs="arm-tdep.o arm-wince-tdep.o windows-tdep.o"
+	gdb_target_obs="arm.o arm-get-next-pcs.o arm-tdep.o \
+			arm-wince-tdep.o windows-tdep.o"
 	build_gdbserver=yes
 	;;
 arm*-*-linux*)
 	# Target: ARM based machine running GNU/Linux
-	gdb_target_obs="arm-tdep.o arm-linux-tdep.o glibc-tdep.o \
+	gdb_target_obs="arm.o arm-linux.o arm-get-next-pcs.o arm-tdep.o \
+                        arm-linux-tdep.o glibc-tdep.o \
 			solib-svr4.o symfile-mem.o linux-tdep.o linux-record.o"
 	build_gdbserver=yes
 	;;
 arm*-*-netbsd* | arm*-*-knetbsd*-gnu)
 	# Target: NetBSD/arm
-	gdb_target_obs="arm-tdep.o armnbsd-tdep.o solib-svr4.o"
+	gdb_target_obs="arm.o arm-get-next-pcs.o arm-tdep.o armbsd-tdep.o \
+			armnbsd-tdep.o nbsd-tdep.o solib-svr4.o"
 	;;
 arm*-*-openbsd*)
 	# Target: OpenBSD/arm
-	gdb_target_obs="arm-tdep.o armbsd-tdep.o armobsd-tdep.o obsd-tdep.o \
-			solib-svr4.o"
+	gdb_target_obs="arm.o arm-get-next-pcs.o arm-tdep.o armbsd-tdep.o \
+			armobsd-tdep.o obsd-tdep.o solib-svr4.o"
 	;;
 arm*-*-symbianelf*)
 	# Target: SymbianOS/arm
-	gdb_target_obs="arm-tdep.o arm-symbian-tdep.o"
+	gdb_target_obs="arm.o arm-get-next-pcs.o arm-tdep.o arm-symbian-tdep.o"
 	;;
 arm*-*-*)
 	# Target: ARM embedded system
-	gdb_target_obs="arm-tdep.o"
+	gdb_target_obs="arm.o arm-get-next-pcs.o arm-tdep.o"
 	gdb_sim=../sim/arm/libsim.a
 	;;
 
@@ -156,8 +161,8 @@ moxie-*-elf | moxie-*-moxiebox | moxie-*-rtems*)
 	;;
 
 h8300-*-*)
-	# Target: H8300 with HMS monitor and H8 simulator
-	gdb_target_obs="h8300-tdep.o monitor.o dsrec.o"
+	# Target: H8300 processor
+	gdb_target_obs="h8300-tdep.o"
 	gdb_sim=../sim/h8300/libsim.a
 	;;
 
@@ -290,7 +295,7 @@ m32c-*-*)
 
 m32r*-*-linux*)
 	# Target: Renesas M32R running GNU/Linux
-	gdb_target_obs="m32r-tdep.o m32r-linux-tdep.o remote-m32r-sdi.o \
+	gdb_target_obs="m32r-tdep.o m32r-linux-tdep.o \
 			glibc-tdep.o solib-svr4.o symfile-mem.o \
 			linux-tdep.o"
 	gdb_sim=../sim/m32r/libsim.a
@@ -298,8 +303,7 @@ m32r*-*-linux*)
 	;;
 m32r*-*-*)
 	# Target: Renesas m32r processor
-	gdb_target_obs="m32r-tdep.o monitor.o m32r-rom.o dsrec.o \
-			remote-m32r-sdi.o"
+	gdb_target_obs="m32r-tdep.o"
 	gdb_sim=../sim/m32r/libsim.a
 	;;
 
@@ -311,8 +315,8 @@ m68hc11*-*-*|m6811*-*-*)
 
 m68*-*-aout* | m68*-*-coff* | m68*-*-elf* | m68*-*-rtems* | m68*-*-uclinux* | \
 fido-*-elf*)
-	# Target: Motorola m68k embedded (e.g. bug monitors)
-	gdb_target_obs="m68k-tdep.o monitor.o dbug-rom.o dsrec.o"
+	# Target: Motorola m68k embedded
+	gdb_target_obs="m68k-tdep.o"
 	;;
 m68*-*-linux*)
 	# Target: Motorola m68k with a.out and ELF
@@ -342,13 +346,13 @@ mep-*-*)
 
 microblaze*-linux-*|microblaze*-*-linux*)
 	# Target: Xilinx MicroBlaze running Linux
-	gdb_target_obs="microblaze-tdep.o microblaze-linux-tdep.o microblaze-rom.o \
-			monitor.o dsrec.o solib-svr4.o symfile-mem.o linux-tdep.o"
+	gdb_target_obs="microblaze-tdep.o microblaze-linux-tdep.o solib-svr4.o \
+			symfile-mem.o linux-tdep.o"
 	gdb_sim=../sim/microblaze/libsim.a
 	;;
 microblaze*-*-*)
 	# Target: Xilinx MicroBlaze running standalone
-	gdb_target_obs="microblaze-tdep.o microblaze-rom.o monitor.o dsrec.o"
+	gdb_target_obs="microblaze-tdep.o"
 	gdb_sim=../sim/microblaze/libsim.a
 	;;
 
@@ -370,12 +374,12 @@ mips64*-*-openbsd*)
 	;;
 mips*-sde*-elf*)
 	# Target: MIPS SDE
-	gdb_target_obs="mips-tdep.o mips-sde-tdep.o remote-mips.o"
+	gdb_target_obs="mips-tdep.o mips-sde-tdep.o"
 	gdb_sim=../sim/mips/libsim.a
 	;;
 mips*-*-elf)
 	# Target: MIPS ELF
-	gdb_target_obs="mips-tdep.o remote-mips.o"
+	gdb_target_obs="mips-tdep.o"
 	gdb_sim=../sim/mips/libsim.a
 	;;
 mips*-*-*)
@@ -398,6 +402,11 @@ msp430*-*-elf)
 mt-*-*)
 	# Target: Morpho Technologies ms1 processor
 	gdb_target_obs="mt-tdep.o"
+	;;
+
+nds32*-*-elf)
+	# Target: AndesTech NDS32 core
+	gdb_target_obs="nds32-tdep.o"
 	;;
 
 nios2*-*-linux*)
@@ -452,22 +461,20 @@ powerpc*-*-linux*)
 powerpc-*-lynx*178)
 	# Target: PowerPC running Lynx178.
 	gdb_target_obs="rs6000-tdep.o rs6000-lynx178-tdep.o \
-			xcoffread.o monitor.o dsrec.o ppc-sysv-tdep.o \
+			xcoffread.o ppc-sysv-tdep.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o"
 	;;
 powerpc*-*-*)
 	# Target: PowerPC running eabi
-	gdb_target_obs="rs6000-tdep.o monitor.o dsrec.o ppcbug-rom.o \
-			dink32-rom.o ppc-sysv-tdep.o solib-svr4.o \
+	gdb_target_obs="rs6000-tdep.o ppc-sysv-tdep.o solib-svr4.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o"
-	if test -f ../sim/ppc/Makefile; then
-	  gdb_sim=../sim/ppc/libsim.a
-	fi
+	gdb_sim=../sim/ppc/libsim.a
 	;;
 
 s390*-*-linux*)
 	# Target: S390 running Linux
-	gdb_target_obs="s390-linux-tdep.o solib-svr4.o linux-tdep.o"
+	gdb_target_obs="s390-linux-tdep.o solib-svr4.o linux-tdep.o \
+			linux-record.o"
 	build_gdbserver=yes
 	;;
 
@@ -486,16 +493,13 @@ rx-*-elf)
 score-*-*)
 	# Target: S+core embedded system
 	gdb_target_obs="score-tdep.o"
-	if test -f ../sim/score/Makefile; then
-	  gdb_sim=../sim/score/libsim.a
-	fi
 	build_gdbserver=yes
 	;;
 
 sh*-*-linux*)
 	# Target: GNU/Linux Super-H
-	gdb_target_obs="sh-tdep.o sh64-tdep.o sh-linux-tdep.o monitor.o \
-			dsrec.o solib-svr4.o symfile-mem.o \
+	gdb_target_obs="sh-tdep.o sh64-tdep.o sh-linux-tdep.o \
+			solib-svr4.o symfile-mem.o \
 			glibc-tdep.o linux-tdep.o"
 	gdb_sim=../sim/sh/libsim.a
 	build_gdbserver=yes
@@ -516,8 +520,8 @@ sh64-*-elf*)
 	gdb_sim=../sim/sh64/libsim.a
 	;;
 sh*)
-	# Target: Embedded Renesas Super-H with ICE and simulator
-	gdb_target_obs="sh-tdep.o sh64-tdep.o monitor.o dsrec.o"
+	# Target: Embedded Renesas Super-H processor
+	gdb_target_obs="sh-tdep.o sh64-tdep.o"
 	gdb_sim=../sim/sh/libsim.a
 	;;
 
@@ -663,6 +667,9 @@ x86_64-*-dicos*)
 	gdb_target_obs="amd64-tdep.o i386-tdep.o i387-tdep.o \
 			dicos-tdep.o i386-dicos-tdep.o amd64-dicos-tdep.o"
 	;;
+x86_64-*-elf* | x86_64-*-rtems*)
+	gdb_target_obs="amd64-tdep.o i386-tdep.o i387-tdep.o i386bsd-tdep.o"
+	 ;;
 x86_64-*-linux*)
 	# Target: GNU/Linux x86-64
 	gdb_target_obs="amd64-tdep.o amd64-linux-tdep.o i386-tdep.o \

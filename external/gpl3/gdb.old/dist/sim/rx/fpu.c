@@ -1,6 +1,6 @@
 /* fpu.c --- FPU emulator for stand-alone RX simulator.
 
-Copyright (C) 2008-2015 Free Software Foundation, Inc.
+Copyright (C) 2008-2016 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -433,7 +433,7 @@ check_exceptions (FP_Parts *a, FP_Parts *b, fp_t *c,
       FP_RAISE (V);
       if (a->type == FP_SNAN)
 	*c = a->orig_value | 0x00400000;
-      else if  (a->type == FP_SNAN)
+      else if  (b->type == FP_SNAN)
 	*c = b->orig_value | 0x00400000;
       else
 	*c = 0x7fc00000;

@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,18 +24,19 @@ if {[get_compiler_info]} {
     return 1
 }
 
-#
-# test running programs
-#
+# Compile the testcase program and library.  BINSUFFIX is the suffix
+# to append to the program and library filenames, to make them unique
+# between invocations.  OPTIONS is passed to gdb_compile when
+# compiling the program.
 
-proc compile_jit_test {testname options} {
+proc compile_jit_test {testname binsuffix options} {
     global testfile srcfile binfile srcdir subdir
     global solib_testfile solib_srcfile solib_binfile solib_binfile_test_msg
     global solib_binfile_target
 
     set testfile jit-main
     set srcfile ${testfile}.c
-    set binfile [standard_output_file $testfile]
+    set binfile [standard_output_file $testfile$binsuffix]
     if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	      executable [concat debug $options]] != "" } {
 	untested $testname
@@ -44,8 +45,8 @@ proc compile_jit_test {testname options} {
 
     set solib_testfile "jit-solib"
     set solib_srcfile "${srcdir}/${subdir}/${solib_testfile}.c"
-    set solib_binfile [standard_output_file ${solib_testfile}.so]
-    set solib_binfile_test_msg "SHLIBDIR/${solib_testfile}.so"
+    set solib_binfile [standard_output_file ${solib_testfile}$binsuffix.so]
+    set solib_binfile_test_msg "SHLIBDIR/${solib_testfile}$binsuffix.so"
 
     # Note: compiling without debug info: the library goes through
     # symbol renaming by munging on its symbol table, and that
@@ -56,16 +57,54 @@ proc compile_jit_test {testname options} {
 	return -1
     }
 
-    if {[is_remote target]} {
-	set solib_binfile_target [gdb_download ${solib_binfile}]
-    } else {
-	set solib_binfile_target $solib_binfile
-    }
+    set solib_binfile_target [gdb_remote_download target ${solib_binfile}]
 
     return 0
 }
 
-proc one_jit_test {count match_str} {
+# Detach, restart GDB, and re-attach to the program.
+
+proc clean_reattach {} {
+    global decimal gdb_prompt srcfile testfile
+
+    # Get PID of test program.
+    set testpid -1
+    set test "get inferior process ID"
+    gdb_test_multiple "p mypid" $test {
+	-re ".* = ($decimal).*$gdb_prompt $" {
+	    set testpid $expect_out(1,string)
+	    pass $test
+	}
+    }
+
+    gdb_test_no_output "set var wait_for_gdb = 1"
+    gdb_test "detach" "Detaching from .*"
+
+    clean_restart $testfile
+
+    set test "attach"
+    gdb_test_multiple "attach $testpid" "$test" {
+	-re "Attaching to program.*.*main.*at .*$srcfile:.*$gdb_prompt $" {
+	    pass "$test"
+	}
+    }
+
+    gdb_test_no_output "set var wait_for_gdb = 0"
+}
+
+# Continue to LOCATION in the program.  If REATTACH, detach and
+# re-attach to the program from scratch.
+proc continue_to_test_location {location reattach} {
+    gdb_breakpoint [gdb_get_line_number $location]
+    gdb_continue_to_breakpoint $location
+    if {$reattach} {
+	with_test_prefix "$location" {
+	    clean_reattach
+	}
+    }
+}
+
+proc one_jit_test {count match_str reattach} {
     with_test_prefix "one_jit_test-$count" {
 	global verbose testfile solib_binfile_target solib_binfile_test_msg
 
@@ -90,8 +129,7 @@ proc one_jit_test {count match_str} {
 	gdb_test_no_output "set var libname = \"$solib_binfile_target\"" "set var libname = \"$solib_binfile_test_msg\""
 	gdb_test_no_output "set var count = $count"
 
-	gdb_breakpoint [gdb_get_line_number "break here 1"]
-	gdb_continue_to_breakpoint "break here 1"
+	continue_to_test_location "break here 1" $reattach
 
 	gdb_test "info function ^jit_function" "$match_str"
 
@@ -101,25 +139,39 @@ proc one_jit_test {count match_str} {
 	    gdb_test "maintenance info break"
 	}
 
-	gdb_breakpoint [gdb_get_line_number "break here 2"]
-	gdb_continue_to_breakpoint "break here 2"
+	continue_to_test_location "break here 2" $reattach
+
 	# All jit librares must have been unregistered
 	gdb_test "info function jit_function" \
 	    "All functions matching regular expression \"jit_function\":"
     }
 }
 
-if {[compile_jit_test jit.exp {}] < 0} {
+if {[compile_jit_test jit.exp "" {}] < 0} {
     return
 }
-one_jit_test 1 "${hex}  jit_function_0000"
-one_jit_test 2 "${hex}  jit_function_0000\[\r\n\]+${hex}  jit_function_0001"
+one_jit_test 1 "${hex}  jit_function_0000" 0
+one_jit_test 2 "${hex}  jit_function_0000\[\r\n\]+${hex}  jit_function_0001" 0
 
-with_test_prefix PIE {
-    if {[compile_jit_test "jit.exp PIE tests" \
-	     {additional_flags=-fPIE ldflags=-pie}] < 0} {
+# Test attaching to an inferior with some JIT libraries already
+# registered.  We reuse the normal test, and detach/reattach at
+# specific interesting points.
+if {[can_spawn_for_attach]} {
+    if {[compile_jit_test "jit.exp attach tests" \
+	     "-attach" {additional_flags=-DATTACH=1}] < 0} {
 	return
     }
 
-    one_jit_test 1 "${hex}  jit_function_0000"
+    with_test_prefix attach {
+	one_jit_test 2 "${hex}  jit_function_0000\[\r\n\]+${hex}  jit_function_0001" 1
+    }
+}
+
+with_test_prefix PIE {
+    if {[compile_jit_test "jit.exp PIE tests" \
+	     "-pie" {additional_flags=-fPIE ldflags=-pie}] < 0} {
+	return
+    }
+
+    one_jit_test 1 "${hex}  jit_function_0000" 0
 }
