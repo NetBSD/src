@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.h,v 1.2 2016/04/23 10:15:32 skrll Exp $ */
+/* $NetBSD: usbroothub.h,v 1.3 2017/11/28 07:36:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,20 @@ struct usb_roothub_descriptors {
 	usb_config_descriptor_t urh_confd;
 	usb_interface_descriptor_t urh_ifcd;
 	usb_endpoint_descriptor_t urh_endpd;
+};
+
+struct usb3_roothub_descriptors {
+	usb_config_descriptor_t urh_confd;
+	usb_interface_descriptor_t urh_ifcd;
+	usb_endpoint_descriptor_t urh_endpd;
+	usb_endpoint_ss_comp_descriptor_t urh_endpssd;
+};
+
+struct usb3_roothub_bos_descriptors {
+	usb_bos_descriptor_t urh_bosd;
+	usb_devcap_usb2ext_descriptor_t urh_usb2extd;
+	usb_devcap_ss_descriptor_t urh_ssd;
+	usb_devcap_container_id_descriptor_t urh_containerd;
 };
 
 #define	USBROOTHUB_INTR_ENDPT	1
