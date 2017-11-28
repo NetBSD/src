@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.68 2017/11/28 00:24:08 kre Exp $
+# $NetBSD: mkimage,v 1.69 2017/11/28 02:56:44 kre Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,6 +76,12 @@ cleanup() {
 	case "$tmp" in
 	"${TMPDIR:-/tmp}/$PROG."*)	rm -fr "$tmp";;
 	esac
+}
+
+fail() {
+	IFS=' '
+	echo >&2 "${PROG}: $*"
+	exit 1
 }
 
 getsize() {
