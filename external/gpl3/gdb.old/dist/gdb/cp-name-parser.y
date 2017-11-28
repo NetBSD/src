@@ -1,6 +1,6 @@
 /* YACC parser for C++ names, for GDB.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    Parts of the lexer are based on c-exp.y from GDB.
 
@@ -69,7 +69,7 @@ d_grab (void)
     {
       if (demangle_info->next == NULL)
 	{
-	  more = malloc (sizeof (struct demangle_info));
+	  more = XNEW (struct demangle_info);
 	  more->next = NULL;
 	  demangle_info->next = more;
 	}
@@ -432,7 +432,7 @@ function
 
 demangler_special
 		:	DEMANGLER_SPECIAL start
-			{ $$ = make_empty ($1);
+			{ $$ = make_empty ((enum demangle_component_type) $1);
 			  d_left ($$) = $2;
 			  d_right ($$) = NULL; }
 		|	CONSTRUCTION_VTABLE start CONSTRUCTION_IN start
@@ -1977,7 +1977,7 @@ yyerror (char *msg)
 static struct demangle_info *
 allocate_info (void)
 {
-  struct demangle_info *info = malloc (sizeof (struct demangle_info));
+  struct demangle_info *info = XNEW (struct demangle_info);
 
   info->next = NULL;
   info->used = 0;
@@ -2007,7 +2007,7 @@ cp_new_demangle_parse_info (void)
 {
   struct demangle_parse_info *info;
 
-  info = malloc (sizeof (struct demangle_parse_info));
+  info = XNEW (struct demangle_parse_info);
   info->info = NULL;
   info->tree = NULL;
   obstack_init (&info->obstack);

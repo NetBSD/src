@@ -1,5 +1,5 @@
 /* Motorola 68k series support for 32-bit ELF
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2232,7 +2232,7 @@ elf_m68k_partition_multi_got_2 (struct elf_m68k_partition_multi_got_arg *arg)
 
   arg->n_slots += arg->current_got->n_slots[R_32];
 
-  if (!arg->info->shared)
+  if (!bfd_link_pic (arg->info))
     /* If we are generating a shared object, we need to
        output a R_68K_RELATIVE reloc so that the dynamic
        linker can adjust this GOT entry.  Overwise we
@@ -2554,7 +2554,7 @@ elf_m68k_check_relocs (bfd *abfd,
   asection *sreloc;
   struct elf_m68k_got *got;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -2620,7 +2620,7 @@ elf_m68k_check_relocs (bfd *abfd,
 	case R_68K_TLS_DTPREL32:
 
 	  if (ELF32_R_TYPE (rel->r_info) == R_68K_TLS_TPREL32
-	      && info->shared)
+	      && bfd_link_pic (info))
 	    /* Do the special chorus for libraries with static TLS.  */
 	    info->flags |= DF_STATIC_TLS;
 
@@ -2641,7 +2641,7 @@ elf_m68k_check_relocs (bfd *abfd,
 	    }
 
 	  if (srelgot == NULL
-	      && (h != NULL || info->shared))
+	      && (h != NULL || bfd_link_pic (info)))
 	    {
 	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 	      if (srelgot == NULL)
@@ -2755,10 +2755,10 @@ elf_m68k_check_relocs (bfd *abfd,
 	     will be set later (it is never cleared).  We account for that
 	     possibility below by storing information in the
 	     pcrel_relocs_copied field of the hash table entry.  */
-	  if (!(info->shared
+	  if (!(bfd_link_pic (info)
 		&& (sec->flags & SEC_ALLOC) != 0
 		&& h != NULL
-		&& (!info->symbolic
+		&& (!SYMBOLIC_BIND (info, h)
 		    || h->root.type == bfd_link_hash_defweak
 		    || !h->def_regular)))
 	    {
@@ -2786,14 +2786,14 @@ elf_m68k_check_relocs (bfd *abfd,
 		 turns out to be a function defined by a dynamic object.  */
 	      h->plt.refcount++;
 
-	      if (info->executable)
+	      if (bfd_link_executable (info))
 		/* This symbol needs a non-GOT reference.  */
 		h->non_got_ref = 1;
 	    }
 
 	  /* If we are creating a shared library, we need to copy the
 	     reloc into the shared library.  */
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      /* When creating a shared object, we must copy these
 		 reloc types into the output file.  We create a reloc
@@ -2938,7 +2938,7 @@ elf_m68k_gc_sweep_hook (bfd *abfd,
   bfd *dynobj;
   struct elf_m68k_got *got;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -3153,7 +3153,7 @@ elf_m68k_adjust_dynamic_symbol (struct bfd_link_info *info,
 	 location in the .plt.  This is required to make function
 	 pointers compare as equal between the normal executable and
 	 the shared library.  */
-      if (!info->shared
+      if (!bfd_link_pic (info)
 	  && !h->def_regular)
 	{
 	  h->root.u.def.section = s;
@@ -3202,7 +3202,7 @@ elf_m68k_adjust_dynamic_symbol (struct bfd_link_info *info,
      only references to the symbol are via the global offset table.
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     return TRUE;
 
   /* If there are no references to this symbol that do not use the
@@ -3257,7 +3257,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -3283,7 +3283,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
      against symbols that have become local due to visibility changes.
      We allocated space for them in the check_relocs routine, but we
      will not fill them in in the relocate_section routine.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     elf_link_hash_traverse (elf_hash_table (info),
 			    elf_m68k_discard_copies,
 			    info);
@@ -3366,7 +3366,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (info->executable)
+      if (bfd_link_executable (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -3680,7 +3680,7 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       switch (r_type)
@@ -3810,8 +3810,10 @@ elf_m68k_relocate_section (bfd *output_bfd,
 		    bfd_boolean dyn;
 
 		    dyn = elf_hash_table (info)->dynamic_sections_created;
-		    if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-			|| (info->shared
+		    if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
+							  bfd_link_pic (info),
+							  h)
+			|| (bfd_link_pic (info)
 			    && SYMBOL_REFERENCES_LOCAL (info, h))
 			|| (ELF_ST_VISIBILITY (h->other)
 			    && h->root.type == bfd_link_hash_undefweak))
@@ -3841,7 +3843,7 @@ elf_m68k_relocate_section (bfd *output_bfd,
 		    else
 		      unresolved_reloc = FALSE;
 		  }
-		else if (info->shared) /* && h == NULL */
+		else if (bfd_link_pic (info)) /* && h == NULL */
 		  /* Process local symbol during dynamic link.  */
 		  {
 		    if (srela == NULL)
@@ -3860,7 +3862,7 @@ elf_m68k_relocate_section (bfd *output_bfd,
 
 		    *off_ptr |= 1;
 		  }
-		else /* h == NULL && !info->shared */
+		else /* h == NULL && !bfd_link_pic (info) */
 		  {
 		    elf_m68k_init_got_entry_static (info,
 						    output_bfd,
@@ -3914,7 +3916,7 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	case R_68K_TLS_LE32:
 	case R_68K_TLS_LE16:
 	case R_68K_TLS_LE8:
-	  if (info->shared && !info->pie)
+	  if (bfd_link_dll (info))
 	    {
 	      (*_bfd_error_handler)
 		(_("%B(%A+0x%lx): R_68K_TLS_LE32 relocation not permitted "
@@ -3987,7 +3989,7 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	case R_68K_PC8:
 	case R_68K_PC16:
 	case R_68K_PC32:
-	  if (info->shared
+	  if (bfd_link_pic (info)
 	      && r_symndx != STN_UNDEF
 	      && (input_section->flags & SEC_ALLOC) != 0
 	      && (h == NULL
@@ -4026,8 +4028,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 		       && (r_type == R_68K_PC8
 			   || r_type == R_68K_PC16
 			   || r_type == R_68K_PC32
-			   || !info->shared
-			   || !info->symbolic
+			   || !bfd_link_pic (info)
+			   || !SYMBOLIC_BIND (info, h)
 			   || !h->def_regular))
 		{
 		  outrel.r_info = ELF32_R_INFO (h->dynindx, r_type);
@@ -4183,13 +4185,9 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	    }
 
 	  if (r == bfd_reloc_overflow)
-	    {
-	      if (!(info->callbacks->reloc_overflow
-		    (info, (h ? &h->root : NULL), name, howto->name,
-		     (bfd_vma) 0, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
-	    }
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  else
 	    {
 	      (*_bfd_error_handler)
@@ -4335,7 +4333,7 @@ elf_m68k_finish_dynamic_symbol (bfd *output_bfd,
 	     the symbol was forced to be local because of a version file.
 	     The entry in the global offset table already have been
 	     initialized in the relocate_section function.  */
-	  if (info->shared
+	  if (bfd_link_pic (info)
 	      && SYMBOL_REFERENCES_LOCAL (info, h))
 	    {
 	      bfd_vma relocation;
@@ -4494,20 +4492,18 @@ elf_m68k_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	      break;
 
 	    case DT_PLTGOT:
-	      name = ".got";
+	      name = ".got.plt";
 	      goto get_vma;
 	    case DT_JMPREL:
 	      name = ".rela.plt";
 	    get_vma:
-	      s = bfd_get_section_by_name (output_bfd, name);
-	      BFD_ASSERT (s != NULL);
-	      dyn.d_un.d_ptr = s->vma;
+	      s = bfd_get_linker_section (dynobj, name);
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = bfd_get_section_by_name (output_bfd, ".rela.plt");
-	      BFD_ASSERT (s != NULL);
+	      s = bfd_get_linker_section (dynobj, ".rela.plt");
 	      dyn.d_un.d_val = s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
@@ -4520,7 +4516,7 @@ elf_m68k_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 		 linker script arranges for .rela.plt to follow all
 		 other relocation sections, we don't have to worry
 		 about changing the DT_RELA entry.  */
-	      s = bfd_get_section_by_name (output_bfd, ".rela.plt");
+	      s = bfd_get_linker_section (dynobj, ".rela.plt");
 	      if (s != NULL)
 		dyn.d_un.d_val -= s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
@@ -4577,12 +4573,9 @@ elf_m68k_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
    objects, and before the final_link entry point is called.  */
 
 bfd_boolean
-bfd_m68k_elf32_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     asection *datasec;
-     asection *relsec;
-     char **errmsg;
+bfd_m68k_elf32_create_embedded_relocs (bfd *abfd, struct bfd_link_info *info,
+				       asection *datasec, asection *relsec,
+				       char **errmsg)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Sym *isymbuf = NULL;
@@ -4591,7 +4584,7 @@ bfd_m68k_elf32_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
   bfd_byte *p;
   bfd_size_type amt;
 
-  BFD_ASSERT (! info->relocatable);
+  BFD_ASSERT (! bfd_link_relocatable (info));
 
   *errmsg = NULL;
 
@@ -4842,11 +4835,10 @@ elf_m68k_add_symbol_hook (bfd *abfd,
 			  asection **secp ATTRIBUTE_UNUSED,
 			  bfd_vma *valp ATTRIBUTE_UNUSED)
 {
-  if ((ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
-       || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE)
+  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
       && (abfd->flags & DYNAMIC) == 0
       && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
-    elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
+    elf_tdata (info->output_bfd)->has_gnu_symbols |= elf_gnu_symbol_ifunc;
 
   return TRUE;
 }

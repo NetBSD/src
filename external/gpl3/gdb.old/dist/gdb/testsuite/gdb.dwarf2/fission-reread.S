@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Free Software Foundation, Inc.
+/* Copyright 2012-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,27 +38,36 @@
    further hand-edited to support that.
 */
 
+#define CONCAT1(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a ## b
+
+#ifdef SYMBOL_PREFIX
+# define SYMBOL(str)     CONCAT1(SYMBOL_PREFIX, str)
+#else
+# define SYMBOL(str)     str
+#endif
+
 	.file	"fission-reread.cc"
 
-	.globl	baz
+	.globl	SYMBOL(baz)
 	.data	/* Previously this used .bss, but it's not portable.  */
 	.align 4
-	.type	baz, %object
-	.size	baz, 4
-baz:
+	.type	SYMBOL(baz), %object
+	.size	SYMBOL(baz), 4
+SYMBOL(baz):
 	.zero	4
 
 	.text
 .Ltext0:
-	.globl	main
-	.type	main, %function
-main:
+	.globl	SYMBOL(main)
+	.type	SYMBOL(main), %function
+SYMBOL(main):
 .LFB0:
 	.file 1 "fission-reread.cc"
 	.loc 1 11 0
 	.4byte 0
 .LFE0:
-	.size	main, .-main
+	.size	SYMBOL(main), .-SYMBOL(main)
 .Letext0:
 
 	.section	.debug_types.dwo
@@ -450,4 +459,4 @@ main:
 	.section	.debug_addr
 .Ldebug_addr0:
 	.4byte	.LFB0	/* DW_AT_low_pc */
-	.4byte	baz	/* DW_AT_location */
+	.4byte	SYMBOL(baz)	/* DW_AT_location */

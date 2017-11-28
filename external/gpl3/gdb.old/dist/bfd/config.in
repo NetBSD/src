@@ -337,6 +337,9 @@
 /* Name of host specific header file to include in trad-core.c. */
 #undef TRAD_HEADER
 
+/* Define if we should use 64-bit archives. */
+#undef USE_64_BIT_ARCHIVE
+
 /* Use b modifier when opening binary files? */
 #undef USE_BINARY_FOPEN
 
@@ -348,9 +351,6 @@
 
 /* Define if we should default to creating read-only plt entries */
 #undef USE_SECUREPLT
-
-/* Define if we may generate symbols with ELF's STT_COMMON type */
-#undef USE_STT_COMMON
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE

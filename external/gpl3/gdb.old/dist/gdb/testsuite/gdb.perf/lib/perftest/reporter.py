@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Text reports are written here.
+# This is the perftest counterpart to gdb.sum.
+SUM_FILE_NAME = "perftest.sum"
+
+# Raw data that went into the report is written here.
+# This is the perftest counterpart to gdb.log.
+LOG_FILE_NAME = "perftest.log"
+
 
 class Reporter(object):
     """Base class of reporter to report test results in a certain format.
@@ -43,22 +52,34 @@ class Reporter(object):
         """
         raise NotImplementedError("Abstract Method:end.")
 
+
 class TextReporter(Reporter):
     """Report results in a plain text file 'perftest.log'."""
 
     def __init__(self, append):
         super (TextReporter, self).__init__(Reporter(append))
+        self.txt_sum = None
         self.txt_log = None
 
-    def report(self, *args):
-        self.txt_log.write(' '.join(str(arg) for arg in args))
-        self.txt_log.write('\n')
+    def report(self, test_name, measurement_name, data_points):
+        if len(data_points) == 0:
+            self.txt_sum.write("%s %s *no data recorded*\n" % (
+                test_name, measurement_name))
+            return
+        average = sum(data_points) / len(data_points)
+        data_min = min(data_points)
+        data_max = max(data_points)
+        self.txt_sum.write("%s %s %s\n" % (
+            test_name, measurement_name, average))
+        self.txt_log.write("%s %s %s, min %s, max %s, data %s\n" % (
+            test_name, measurement_name, average, data_min, data_max,
+            data_points))
 
     def start(self):
-        if self.append:
-            self.txt_log = open ("perftest.log", 'a+');
-        else:
-            self.txt_log = open ("perftest.log", 'w');
+        mode = "a+" if self.append else "w"
+        self.txt_sum = open (SUM_FILE_NAME, mode);
+        self.txt_log = open (LOG_FILE_NAME, mode);
 
     def end(self):
+        self.txt_sum.close ()
         self.txt_log.close ()

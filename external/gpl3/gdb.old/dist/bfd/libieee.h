@@ -1,5 +1,5 @@
 /* IEEE-695 object file formats:  definitions internal to BFD.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.  Mostly Steve Chamberlain's fault.
 
    This file is part of BFD, the Binary File Descriptor library.

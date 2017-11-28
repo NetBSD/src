@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/amd64.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -136,7 +136,7 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   if (*this_cache)
-    return *this_cache;
+    return (struct trad_frame_cache *)*this_cache;
 
   cache = trad_frame_cache_zalloc (this_frame);
   *this_cache = cache;

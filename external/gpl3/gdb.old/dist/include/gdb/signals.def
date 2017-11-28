@@ -1,5 +1,5 @@
 /* Target signal numbers for GDB and the GDB remote protocol.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -194,7 +194,9 @@ SET (GDB_EXC_EMULATION, 148, "EXC_EMULATION", "Emulation instruction")
 SET (GDB_EXC_SOFTWARE, 149, "EXC_SOFTWARE", "Software generated exception")
 SET (GDB_EXC_BREAKPOINT, 150, "EXC_BREAKPOINT", "Breakpoint")
 
+SET (GDB_SIGNAL_LIBRT, 151, "SIGLIBRT", "librt internal signal")
+
 /* If you are adding a new signal, add it just above this comment.  */
 
 /* Last and unused enum value, for sizing arrays, etc.  */
-SET (GDB_SIGNAL_LAST, 151, NULL, "GDB_SIGNAL_LAST")
+SET (GDB_SIGNAL_LAST, 152, NULL, "GDB_SIGNAL_LAST")

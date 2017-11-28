@@ -1,4 +1,4 @@
-# Copyright 2006-2015 Free Software Foundation, Inc.
+# Copyright 2006-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,12 @@
 
 # Test ARM/Thumb prologue analyzer.
 
-if {![istarget arm*-*]} then {
+if {![is_aarch32_target]} then {
     verbose "Skipping ARM prologue tests."
     return
 }
 
-set testfile "thumb-prologue"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 # Don't use "debug", so that we don't have line information for the assembly
 # fragments.

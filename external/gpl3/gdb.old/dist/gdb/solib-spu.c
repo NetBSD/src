@@ -1,5 +1,5 @@
 /* Cell SPU GNU/Linux support -- shared library handling.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -56,8 +56,8 @@ spu_relocate_main_executable (int spufs_fd)
   if (symfile_objfile == NULL)
     return;
 
-  new_offsets = alloca (symfile_objfile->num_sections
-			* sizeof (struct section_offsets));
+  new_offsets = XALLOCAVEC (struct section_offsets,
+			    symfile_objfile->num_sections);
 
   for (i = 0; i < symfile_objfile->num_sections; i++)
     new_offsets->offsets[i] = SPUADDR (spufs_fd, 0);
@@ -105,7 +105,8 @@ append_ocl_sos (struct so_list **link_ptr)
 
   ALL_OBJFILES (objfile)
     {
-      ocl_program_addr_base = objfile_data (objfile, ocl_program_data_key);
+      ocl_program_addr_base
+	= (CORE_ADDR *) objfile_data (objfile, ocl_program_data_key);
       if (ocl_program_addr_base != NULL)
         {
 	  enum bfd_endian byte_order = bfd_big_endian (objfile->obfd)?
@@ -295,7 +296,7 @@ spu_bfd_iovec_pread (bfd *abfd, void *stream, void *buf,
   CORE_ADDR addr = *(CORE_ADDR *)stream;
   int ret;
 
-  ret = target_read_memory (addr + offset, buf, nbytes);
+  ret = target_read_memory (addr + offset, (gdb_byte *) buf, nbytes);
   if (ret != 0)
     {
       bfd_set_error (bfd_error_invalid_operation);
@@ -322,8 +323,8 @@ static bfd *
 spu_bfd_fopen (char *name, CORE_ADDR addr)
 {
   bfd *nbfd;
+  CORE_ADDR *open_closure = XNEW (CORE_ADDR);
 
-  CORE_ADDR *open_closure = xmalloc (sizeof (CORE_ADDR));
   *open_closure = addr;
 
   nbfd = gdb_bfd_openr_iovec (name, "elf32-spu",
@@ -373,7 +374,8 @@ spu_bfd_open (char *pathname)
 
       if (sect_size > 20)
 	{
-	  char *buf = alloca (sect_size - 20 + strlen (original_name) + 1);
+	  char *buf
+	    = (char *) alloca (sect_size - 20 + strlen (original_name) + 1);
 
 	  bfd_get_section_contents (abfd, spu_name, buf, 20, sect_size - 20);
 	  buf[sect_size - 20] = '\0';
@@ -389,7 +391,7 @@ spu_bfd_open (char *pathname)
 }
 
 /* Lookup global symbol in a SPE executable.  */
-static struct symbol *
+static struct block_symbol
 spu_lookup_lib_symbol (struct objfile *objfile,
 		       const char *name,
 		       const domain_enum domain)
@@ -399,7 +401,7 @@ spu_lookup_lib_symbol (struct objfile *objfile,
 
   if (svr4_so_ops.lookup_lib_global_symbol != NULL)
     return svr4_so_ops.lookup_lib_global_symbol (objfile, name, domain);
-  return NULL;
+  return (struct block_symbol) {NULL, NULL};
 }
 
 /* Enable shared library breakpoint.  */

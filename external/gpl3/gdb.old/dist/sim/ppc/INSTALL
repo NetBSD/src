@@ -197,36 +197,6 @@ Each PSIM specific option is discussed in detail below.
 
 
 
---enable-sim-cflags=<opts>
-
-
-Specify additional C compiler flags that are to be used when compiling
-just PSIM.
-
-PSIM places heavy demands on both the host machine and its C compiler.  So that
-the builder has better control over the compiler the above option can be used
-to pass additional options to the compiler while PSIM is being built.
-
-Ex: No debug information
-
-PSIM can be built with everything inline.  Unfortunately, because of
-all the debugging information generated the C compiler can grow very
-very large as a result.  For GCC, the debug information can be
-restricted with the `-g0' option.  To specify that this option should
-be include in the CFLAGS when compiling the psim source code use:
-
-	--enable-sim-cflags=-g0
-
-Ex: Additional optimization flags
-
-A significant gain in performance can be achieved by tuning the
-optimization flags passed to the C compiler.  For instance on an x86
-you may consider:
-
-	--enable-sim-cflags='-g0 -O2 -fno-strength-reduce -f...'
-
-
-
 --enable-sim-warnings=<flags>
 
 
@@ -477,22 +447,6 @@ For if you have a very large cache the model module could be inlined
 with:
 
 	--enable-sim-inline=MODEL
-
-
-
---enable-sim-bswap
-
-
-(x86 specific) Use the i486/P5/P6 byte swap instruction.
-
-PSIM contains generic byte swapping code.  For the x86 (P[4-6]) PSIM
-can be built so that it uses the bswap instruction instead of relying
-on the compiler to generate byte swap code.
-
-Ex: default
-
-By default, when compiling with GCC-2 on an i486/P5/P6 the bswap
-instruction is used.
 
 
 
@@ -773,8 +727,7 @@ TYPICAL CONFIGURATION OPTIONS:
                 --enable-sim-env=user \
                 --disable-sim-reserved-bits \
                 --disable-sim-assert \
-                --disable-sim-trace \
-                --enable-sim-cflags='-g0,-O2,-fno-strength-reduce,-fomit-frame-pointer'
+                --disable-sim-trace
 
 
 	OEA CODE ONLY:
@@ -808,5 +761,4 @@ TYPICAL CONFIGURATION OPTIONS:
                 --disable-sim-assert \
                 --disable-sim-trace \
                 --enable-sim-opcode=ppc-opcode-flat \
-                --disable-sim-icache \
-                --enable-sim-cflags='-g0,-O3,-fno-strength-reduce,-fomit-frame-pointer'
+                --disable-sim-icache

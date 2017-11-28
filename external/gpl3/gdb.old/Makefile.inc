@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2016/10/16 04:36:51 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.9 2017/11/28 18:09:41 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes

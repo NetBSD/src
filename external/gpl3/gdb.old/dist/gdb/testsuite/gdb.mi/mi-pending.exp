@@ -1,4 +1,4 @@
-# Copyright 2007-2015 Free Software Foundation, Inc.
+# Copyright 2007-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,8 +64,8 @@ mi_gdb_test "-break-insert -f pendfunc1" \
     "MI pending breakpoint on pendfunc1"
 
 # Set pending breakpoint with a condition via MI.
-mi_gdb_test "-break-insert -f -c x==4 ${libsrc1}:pendfunc2" \
-    ".*\\^done,bkpt=\{number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"<PENDING>\",pending=\"${libsrc1}:pendfunc2\",cond=\"x==4\",times=\"0\",original-location=\"${libsrc1}:pendfunc2\"\}"\
+mi_gdb_test "-break-insert -f -c x==4 ${libfile1}.c:pendfunc2" \
+    ".*\\^done,bkpt=\{number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"<PENDING>\",pending=\"${libfile1}.c:pendfunc2\",cond=\"x==4\",times=\"0\",original-location=\"${libfile1}.c:pendfunc2\"\}"\
     "MI pending breakpoint on ${libfile1}.c:pendfunc2 if x==4"
 
 # Set breakpoint so that we can stop when the thread is created
@@ -112,7 +112,7 @@ mi_send_resuming_command "exec-continue" "continuing execution to thread conditi
 
 # Check if we stopped in thread 2 like we should.
 set testname "Run till MI pending breakpoint on pendfunc3 on thread 2"
-gdb_expect 5 {
+gdb_expect {
     -re "\\*stopped,reason=\"breakpoint-hit\",disp=\"keep\",bkptno=\"4\",frame=\{addr=\"$hex\",func=\"pendfunc3\".*thread-id=\"2\".*" {
 	pass $testname
 	return 0

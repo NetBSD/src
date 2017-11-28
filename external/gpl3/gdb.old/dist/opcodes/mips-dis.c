@@ -1,5 +1,5 @@
 /* Print mips instructions for GDB, the GNU debugger, or for objdump.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
    Contributed by Nobuyuki Hikichi(hikichi@sra.co.jp).
 
    This file is part of the GNU opcodes library.
@@ -155,18 +155,6 @@ static const char * const mips_cp0_names_r5900[32] =
   "$20",          "$21",          "$22",          "c0_badpaddr",
   "c0_depc",      "c0_perfcnt",   "$26",          "$27",
   "c0_taglo",     "c0_taghi",     "c0_errorepc",  "$31"
-};
-
-static const struct mips_cp0sel_name mips_cp0sel_names_mipsr5900[] =
-{
-  { 24, 2, "c0_iab"			},
-  { 24, 3, "c0_iabm"		},
-  { 24, 4, "c0_dab"			},
-  { 24, 5, "c0_dabm"		},
-  { 24, 6, "c0_dvb"			},
-  { 24, 7, "c0_dvbm"		},
-  { 25, 1, "c0_perfcnt,1"	},
-  { 25, 2, "c0_perfcnt,2"	}
 };
 
 static const char * const mips_cp0_names_mips3264[32] =
@@ -575,7 +563,7 @@ const struct mips_arch_choice mips_arch_choices[] =
   { "mips32r6",	1, bfd_mach_mipsisa32r6, CPU_MIPS32R6,
     ISA_MIPS32R6,
     (ASE_EVA | ASE_MSA | ASE_VIRT | ASE_XPA | ASE_MCU | ASE_MT | ASE_DSP
-     | ASE_DSPR2),
+     | ASE_DSPR2 | ASE_DSPR3),
     mips_cp0_names_mips3264r2,
     mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
     mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
@@ -614,7 +602,7 @@ const struct mips_arch_choice mips_arch_choices[] =
   { "mips64r6",	1, bfd_mach_mipsisa64r6, CPU_MIPS64R6,
     ISA_MIPS64R6,
     (ASE_EVA | ASE_MSA | ASE_MSA64 | ASE_XPA | ASE_VIRT | ASE_VIRT64
-     | ASE_MCU | ASE_MT | ASE_DSP | ASE_DSPR2),
+     | ASE_MCU | ASE_MT | ASE_DSP | ASE_DSPR2 | ASE_DSPR3),
     mips_cp0_names_mips3264r2,
     mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
     mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
@@ -875,8 +863,8 @@ parse_mips_dis_option (const char *option, unsigned int len)
       mips_ase |= ASE_XPA;
       return;
     }
-  
-  
+
+
   /* Look for the = that delimits the end of the option name.  */
   for (i = 0; i < len; i++)
     if (option[i] == '=')
@@ -1709,7 +1697,7 @@ print_insn_mips (bfd_vma memaddr,
     {
       for (; op < &mips_opcodes[NUMOPCODES]; op++)
 	{
-	  if (op->pinfo != INSN_MACRO 
+	  if (op->pinfo != INSN_MACRO
 	      && !(no_aliases && (op->pinfo2 & INSN2_ALIAS))
 	      && (word & op->mask) == op->match)
 	    {
@@ -1906,11 +1894,13 @@ print_mips16_insn_arg (struct disassemble_info *info,
 		{
 		  operand = ext_operand;
 		  if (operand->size == 16)
-		    uval |= ((extend & 0x1f) << 11) | (extend & 0x7e0);
+		    uval = (((extend & 0x1f) << 11) | (extend & 0x7e0)
+			    | (uval & 0x1f));
 		  else if (operand->size == 15)
 		    uval |= ((extend & 0xf) << 11) | (extend & 0x7f0);
 		  else
-		    uval = ((extend >> 6) & 0x1f) | (extend & 0x20);
+		    uval = ((((extend >> 6) & 0x1f) | (extend & 0x20))
+			    & ((1U << operand->size) - 1));
 		}
 	    }
 	}
@@ -2197,41 +2187,7 @@ print_insn_micromips (bfd_vma memaddr, struct disassemble_info *info)
   else
     insn = bfd_getl16 (buffer);
 
-  if ((insn & 0xfc00) == 0x7c00)
-    {
-      /* This is a 48-bit microMIPS instruction.  */
-      higher = insn;
-
-      status = (*info->read_memory_func) (memaddr + 2, buffer, 2, info);
-      if (status != 0)
-	{
-	  infprintf (is, "micromips 0x%x", higher);
-	  (*info->memory_error_func) (status, memaddr + 2, info);
-	  return -1;
-	}
-      if (info->endian == BFD_ENDIAN_BIG)
-	insn = bfd_getb16 (buffer);
-      else
-	insn = bfd_getl16 (buffer);
-      higher = (higher << 16) | insn;
-
-      status = (*info->read_memory_func) (memaddr + 4, buffer, 2, info);
-      if (status != 0)
-	{
-	  infprintf (is, "micromips 0x%x", higher);
-	  (*info->memory_error_func) (status, memaddr + 4, info);
-	  return -1;
-	}
-      if (info->endian == BFD_ENDIAN_BIG)
-	insn = bfd_getb16 (buffer);
-      else
-	insn = bfd_getl16 (buffer);
-      infprintf (is, "0x%x%04x (48-bit insn)", higher, insn);
-
-      info->insn_type = dis_noninsn;
-      return 6;
-    }
-  else if ((insn & 0x1c00) == 0x0000 || (insn & 0x1000) == 0x1000)
+  if ((insn & 0x1c00) == 0x0000 || (insn & 0x1000) == 0x1000)
     {
       /* This is a 32-bit microMIPS instruction.  */
       higher = insn;
@@ -2312,33 +2268,33 @@ print_insn_micromips (bfd_vma memaddr, struct disassemble_info *info)
 }
 
 /* Return 1 if a symbol associated with the location being disassembled
-   indicates a compressed (MIPS16 or microMIPS) mode.  We iterate over
-   all the symbols at the address being considered assuming if at least
-   one of them indicates code compression, then such code has been
-   genuinely produced here (other symbols could have been derived from
-   function symbols defined elsewhere or could define data).  Otherwise,
-   return 0.  */
+   indicates a compressed mode, either MIPS16 or microMIPS, according to
+   MICROMIPS_P.  We iterate over all the symbols at the address being
+   considered assuming if at least one of them indicates code compression,
+   then such code has been genuinely produced here (other symbols could
+   have been derived from function symbols defined elsewhere or could
+   define data).  Otherwise, return 0.  */
 
 static bfd_boolean
-is_compressed_mode_p (struct disassemble_info *info)
+is_compressed_mode_p (struct disassemble_info *info, bfd_boolean micromips_p)
 {
   int i;
   int l;
 
   for (i = info->symtab_pos, l = i + info->num_symbols; i < l; i++)
     if (((info->symtab[i])->flags & BSF_SYNTHETIC) != 0
-	&& ((!micromips_ase
+	&& ((!micromips_p
 	     && ELF_ST_IS_MIPS16 ((*info->symbols)->udata.i))
-	    || (micromips_ase
+	    || (micromips_p
 		&& ELF_ST_IS_MICROMIPS ((*info->symbols)->udata.i))))
       return 1;
     else if (bfd_asymbol_flavour (info->symtab[i]) == bfd_target_elf_flavour
 	      && info->symtab[i]->section == info->section)
       {
 	elf_symbol_type *symbol = (elf_symbol_type *) info->symtab[i];
-	if ((!micromips_ase
+	if ((!micromips_p
 	     && ELF_ST_IS_MIPS16 (symbol->internal_elf_sym.st_other))
-	    || (micromips_ase
+	    || (micromips_p
 		&& ELF_ST_IS_MICROMIPS (symbol->internal_elf_sym.st_other)))
 	  return 1;
       }
@@ -2357,7 +2313,6 @@ _print_insn_mips (bfd_vma memaddr,
 		  struct disassemble_info *info,
 		  enum bfd_endian endianness)
 {
-  int (*print_insn_compr) (bfd_vma, struct disassemble_info *);
   bfd_byte buffer[INSNLEN];
   int status;
 
@@ -2369,18 +2324,23 @@ _print_insn_mips (bfd_vma memaddr,
   if (info->mach == bfd_mach_mips_micromips)
     return print_insn_micromips (memaddr, info);
 
-  print_insn_compr = !micromips_ase ? print_insn_mips16 : print_insn_micromips;
-
 #if 1
   /* FIXME: If odd address, this is CLEARLY a compressed instruction.  */
   /* Only a few tools will work this way.  */
   if (memaddr & 0x01)
-    return print_insn_compr (memaddr, info);
+    {
+      if (micromips_ase)
+	return print_insn_micromips (memaddr, info);
+      else
+	return print_insn_mips16 (memaddr, info);
+    }
 #endif
 
 #if SYMTAB_AVAILABLE
-  if (is_compressed_mode_p (info))
-    return print_insn_compr (memaddr, info);
+  if (is_compressed_mode_p (info, TRUE))
+    return print_insn_micromips (memaddr, info);
+  if (is_compressed_mode_p (info, FALSE))
+    return print_insn_mips16 (memaddr, info);
 #endif
 
   status = (*info->read_memory_func) (memaddr, buffer, INSNLEN, info);

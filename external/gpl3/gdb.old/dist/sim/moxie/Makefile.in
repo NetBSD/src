@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the moxie sim library.
-#    Copyright (C) 2008-2015 Free Software Foundation, Inc.
+#    Copyright (C) 2008-2016 Free Software Foundation, Inc.
 #    Written by Anthony Green
 #
 # This program is free software; you can redistribute it and/or modify
@@ -22,14 +22,11 @@ dtbdir = @datadir@/gdb/dtb
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
 	interp.o \
-	sim-hload.o \
-	sim-reason.o \
-	sim-resume.o \
-	sim-stop.o
+	sim-resume.o
 
 SIM_EXTRA_LIBS = -lm -lz
 SIM_EXTRA_INSTALL = install-dtb
-SIM_CFLAGS = -DDTB="\"$(dtbdir)/moxie-gdb.dtb\""
+SIM_EXTRA_CFLAGS = -DDTB="\"$(dtbdir)/moxie-gdb.dtb\""
 
 ## COMMON_POST_CONFIG_FRAG
 

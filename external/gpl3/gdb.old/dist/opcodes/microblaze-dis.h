@@ -1,6 +1,6 @@
 /* Disassemble Xilinx microblaze instructions.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -26,12 +26,12 @@
 extern "C" {
 #endif
 
-extern enum microblaze_instr microblaze_decode_insn (long, int *, int *, 
+extern enum microblaze_instr microblaze_decode_insn (long, int *, int *,
 						     int *, int *);
 extern unsigned long microblaze_get_target_address (long, bfd_boolean, int,
 			       long, long, long, bfd_boolean *, bfd_boolean *);
 
-extern enum microblaze_instr get_insn_microblaze (long, bfd_boolean *, 
+extern enum microblaze_instr get_insn_microblaze (long, bfd_boolean *,
 						  enum microblaze_instr_type *,
   		     				  short *);
 

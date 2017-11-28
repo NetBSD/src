@@ -1,4 +1,4 @@
-# Copyright 2014-2015 Free Software Foundation, Inc.
+# Copyright 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,12 +15,6 @@
 
 # Test that when following an exec, we don't try to insert breakpoints
 # in the new image at the addresses the symbols had before the exec.
-
-# Remote protocol does not support follow-exec notifications.
-
-if [is_remote target] {
-    continue
-}
 
 standard_testfile
 
@@ -102,6 +96,7 @@ if {!$cannot_access} {
 
 proc test { always_inserted } {
     global exec1
+    global gdb_prompt
 
     clean_restart ${exec1}
 
@@ -112,13 +107,39 @@ proc test { always_inserted } {
 	return -1
     }
 
-    # On a buggy GDB, with always-inserted on, we'd see:
+    # Set a second breakpoint (whose original address also ends up
+    # unmmapped after the exec), for PR 19548.
+    gdb_test "break some_function" "Breakpoint .*"
+
+    # PR17431: with always-inserted on, we'd see:
     #  (gdb) continue
     #  Continuing.
     #  Warning:
     #  Cannot insert breakpoint 1.
     #  Cannot access memory at address 0x10000ff
-    gdb_test "continue" "Breakpoint 1, main.*" "continue across exec"
+
+    # PR 19548: with more than one breakpoint, we'd see:
+    #  (gdb) continue
+    #  Continuing.
+    #  process (...) is executing new program: (...)/execl-update-breakpoints2
+    #  Error in re-setting breakpoint 1: Warning:
+    #  Cannot insert breakpoint 2.
+    #  Cannot access memory at address 0x1000764
+    set not_nl "\[^\r\n\]*"
+    set regex ""
+    append regex \
+	"^continue\r\n" \
+	"Continuing\\.\r\n" \
+	"${not_nl} is executing new program: ${not_nl}\r\n" \
+	"(Reading ${not_nl} from remote target\\.\\.\\.\r\n)*" \
+	"\r\n" \
+	"Breakpoint 1, main.*$gdb_prompt $"
+    set message "continue across exec"
+    gdb_test_multiple "continue" $message {
+	-re $regex {
+	    pass $message
+	}
+    }
 }
 
 foreach always_inserted { "off" "on" } {

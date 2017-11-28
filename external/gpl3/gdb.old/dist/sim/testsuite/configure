@@ -1823,10 +1823,12 @@ esac
 
 
 
-sim_common=yes
 sim_igen=no
 sim_arch=
 case "${target}" in
+   aarch64*-*-*)
+       sim_arch=aarch64
+       ;;
    arm*-*-*)
        sim_arch=arm
        ;;
@@ -1910,10 +1912,6 @@ case "${target}" in
    v850*-*-*)
        sim_arch=v850
        sim_igen=yes
-       ;;
-   *)
-       # No simulator subdir, so the subdir "common" isn't needed.
-       sim_common=no
        ;;
 esac
 

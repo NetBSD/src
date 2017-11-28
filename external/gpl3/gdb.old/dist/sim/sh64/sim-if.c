@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the SH5.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU simulators.
@@ -32,10 +32,6 @@ static void free_state (SIM_DESC);
 /* Since we don't build the cgen-opcode table, we use a wrapper around
    the existing disassembler from libopcodes. */
 static CGEN_DISASSEMBLER sh64_disassemble_insn;
-
-/* Records simulator descriptor so utilities like sh5_dump_regs can be
-   called from gdb.  */
-SIM_DESC current_state;
 
 /* Cover function of sim_state_free to free the cpu buffers as well.  */
 
@@ -55,7 +51,7 @@ sim_open (kind, callback, abfd, argv)
      SIM_OPEN_KIND kind;
      host_callback *callback;
      struct bfd *abfd;
-     char **argv;
+     char * const *argv;
 {
   char c;
   int i;
@@ -83,17 +79,7 @@ sim_open (kind, callback, abfd, argv)
       return 0;
     }
 
-#if 0 /* FIXME: 'twould be nice if we could do this */
-  /* These options override any module options.
-     Obviously ambiguity should be avoided, however the caller may wish to
-     augment the meaning of an option.  */
-  if (extra_options != NULL)
-    sim_add_option_table (sd, extra_options);
-#endif
-
-  /* getopt will print the error message so we just have to exit if this fails.
-     FIXME: Hmmm...  in the case of gdb we need getopt to call
-     print_filtered.  */
+  /* The parser will print an error message for us, so we silently return.  */
   if (sim_parse_args (sd, argv) != SIM_RC_OK)
     {
       free_state (sd);
@@ -155,28 +141,15 @@ sim_open (kind, callback, abfd, argv)
      Must be done after sh_cgen_cpu_open.  */
   cgen_init (sd);
 
-  /* Store in a global so things like sparc32_dump_regs can be invoked
-     from the gdb command line.  */
-  current_state = sd;
-
   return sd;
-}
-
-void
-sim_close (sd, quitting)
-     SIM_DESC sd;
-     int quitting;
-{
-  sh_cgen_cpu_close (CPU_CPU_DESC (STATE_CPU (sd, 0)));
-  sim_module_uninstall (sd);
 }
 
 SIM_RC
 sim_create_inferior (sd, abfd, argv, envp)
      SIM_DESC sd;
      struct bfd *abfd;
-     char **argv;
-     char **envp;
+     char * const *argv;
+     char * const *envp;
 {
   SIM_CPU *current_cpu = STATE_CPU (sd, 0);
   SIM_ADDR addr;
@@ -187,10 +160,15 @@ sim_create_inferior (sd, abfd, argv, envp)
     addr = 0;
   sim_pc_set (current_cpu, addr);
 
-#if 0
-  STATE_ARGV (sd) = sim_copy_argv (argv);
-  STATE_ENVP (sd) = sim_copy_argv (envp);
-#endif
+  /* Standalone mode (i.e. `run`) will take care of the argv for us in
+     sim_open() -> sim_parse_args().  But in debug mode (i.e. 'target sim'
+     with `gdb`), we need to handle it because the user can change the
+     argv on the fly via gdb's 'run'.  */
+  if (STATE_PROG_ARGV (sd) != argv)
+    {
+      freeargv (STATE_PROG_ARGV (sd));
+      STATE_PROG_ARGV (sd) = dupargv (argv);
+    }
 
   return SIM_RC_OK;
 }

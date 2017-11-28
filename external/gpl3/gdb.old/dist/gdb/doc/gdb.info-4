@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
 
-Copyright (C) 1988-2015 Free Software Foundation, Inc.
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.10.1.
+Source-Level Debugger' for GDB (GDB) Version 7.12.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,369 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Types In Python,  Next: Pretty Printing API,  Prev: Values From Inferior,  Up: Python API
+
+23.2.2.4 Types In Python
+........................
+
+GDB represents types from the inferior using the class 'gdb.Type'.
+
+   The following type-related functions are available in the 'gdb'
+module:
+
+ -- Function: gdb.lookup_type (name [, block])
+     This function looks up a type by its NAME, which must be a string.
+
+     If BLOCK is given, then NAME is looked up in that scope.
+     Otherwise, it is searched for globally.
+
+     Ordinarily, this function will return an instance of 'gdb.Type'.
+     If the named type cannot be found, it will throw an exception.
+
+   If the type is a structure or class type, or an enum type, the fields
+of that type can be accessed using the Python "dictionary syntax".  For
+example, if 'some_type' is a 'gdb.Type' instance holding a structure
+type, you can access its 'foo' field with:
+
+     bar = some_type['foo']
+
+   'bar' will be a 'gdb.Field' object; see below under the description
+of the 'Type.fields' method for a description of the 'gdb.Field' class.
+
+   An instance of 'Type' has the following attributes:
+
+ -- Variable: Type.code
+     The type code for this type.  The type code will be one of the
+     'TYPE_CODE_' constants defined below.
+
+ -- Variable: Type.name
+     The name of this type.  If this type has no name, then 'None' is
+     returned.
+
+ -- Variable: Type.sizeof
+     The size of this type, in target 'char' units.  Usually, a target's
+     'char' type will be an 8-bit byte.  However, on some unusual
+     platforms, this type may have a different size.
+
+ -- Variable: Type.tag
+     The tag name for this type.  The tag name is the name after
+     'struct', 'union', or 'enum' in C and C++; not all languages have
+     this concept.  If this type has no tag name, then 'None' is
+     returned.
+
+   The following methods are provided:
+
+ -- Function: Type.fields ()
+     For structure and union types, this method returns the fields.
+     Range types have two fields, the minimum and maximum values.  Enum
+     types have one field per enum constant.  Function and method types
+     have one field per parameter.  The base types of C++ classes are
+     also represented as fields.  If the type has no fields, or does not
+     fit into one of these categories, an empty sequence will be
+     returned.
+
+     Each field is a 'gdb.Field' object, with some pre-defined
+     attributes:
+     'bitpos'
+          This attribute is not available for 'enum' or 'static' (as in
+          C++ or Java) fields.  The value is the position, counting in
+          bits, from the start of the containing type.
+
+     'enumval'
+          This attribute is only available for 'enum' fields, and its
+          value is the enumeration member's integer representation.
+
+     'name'
+          The name of the field, or 'None' for anonymous fields.
+
+     'artificial'
+          This is 'True' if the field is artificial, usually meaning
+          that it was provided by the compiler and not the user.  This
+          attribute is always provided, and is 'False' if the field is
+          not artificial.
+
+     'is_base_class'
+          This is 'True' if the field represents a base class of a C++
+          structure.  This attribute is always provided, and is 'False'
+          if the field is not a base class of the type that is the
+          argument of 'fields', or if that type was not a C++ class.
+
+     'bitsize'
+          If the field is packed, or is a bitfield, then this will have
+          a non-zero value, which is the size of the field in bits.
+          Otherwise, this will be zero; in this case the field's size is
+          given by its type.
+
+     'type'
+          The type of the field.  This is usually an instance of 'Type',
+          but it can be 'None' in some situations.
+
+     'parent_type'
+          The type which contains this field.  This is an instance of
+          'gdb.Type'.
+
+ -- Function: Type.array (N1 [, N2])
+     Return a new 'gdb.Type' object which represents an array of this
+     type.  If one argument is given, it is the inclusive upper bound of
+     the array; in this case the lower bound is zero.  If two arguments
+     are given, the first argument is the lower bound of the array, and
+     the second argument is the upper bound of the array.  An array's
+     length must not be negative, but the bounds can be.
+
+ -- Function: Type.vector (N1 [, N2])
+     Return a new 'gdb.Type' object which represents a vector of this
+     type.  If one argument is given, it is the inclusive upper bound of
+     the vector; in this case the lower bound is zero.  If two arguments
+     are given, the first argument is the lower bound of the vector, and
+     the second argument is the upper bound of the vector.  A vector's
+     length must not be negative, but the bounds can be.
+
+     The difference between an 'array' and a 'vector' is that arrays
+     behave like in C: when used in expressions they decay to a pointer
+     to the first element whereas vectors are treated as first class
+     values.
+
+ -- Function: Type.const ()
+     Return a new 'gdb.Type' object which represents a 'const'-qualified
+     variant of this type.
+
+ -- Function: Type.volatile ()
+     Return a new 'gdb.Type' object which represents a
+     'volatile'-qualified variant of this type.
+
+ -- Function: Type.unqualified ()
+     Return a new 'gdb.Type' object which represents an unqualified
+     variant of this type.  That is, the result is neither 'const' nor
+     'volatile'.
+
+ -- Function: Type.range ()
+     Return a Python 'Tuple' object that contains two elements: the low
+     bound of the argument type and the high bound of that type.  If the
+     type does not have a range, GDB will raise a 'gdb.error' exception
+     (*note Exception Handling::).
+
+ -- Function: Type.reference ()
+     Return a new 'gdb.Type' object which represents a reference to this
+     type.
+
+ -- Function: Type.pointer ()
+     Return a new 'gdb.Type' object which represents a pointer to this
+     type.
+
+ -- Function: Type.strip_typedefs ()
+     Return a new 'gdb.Type' that represents the real type, after
+     removing all layers of typedefs.
+
+ -- Function: Type.target ()
+     Return a new 'gdb.Type' object which represents the target type of
+     this type.
+
+     For a pointer type, the target type is the type of the pointed-to
+     object.  For an array type (meaning C-like arrays), the target type
+     is the type of the elements of the array.  For a function or method
+     type, the target type is the type of the return value.  For a
+     complex type, the target type is the type of the elements.  For a
+     typedef, the target type is the aliased type.
+
+     If the type does not have a target, this method will throw an
+     exception.
+
+ -- Function: Type.template_argument (n [, block])
+     If this 'gdb.Type' is an instantiation of a template, this will
+     return a new 'gdb.Value' or 'gdb.Type' which represents the value
+     of the Nth template argument (indexed starting at 0).
+
+     If this 'gdb.Type' is not a template type, or if the type has fewer
+     than N template arguments, this will throw an exception.
+     Ordinarily, only C++ code will have template types.
+
+     If BLOCK is given, then NAME is looked up in that scope.
+     Otherwise, it is searched for globally.
+
+ -- Function: Type.optimized_out ()
+     Return 'gdb.Value' instance of this type whose value is optimized
+     out.  This allows a frame decorator to indicate that the value of
+     an argument or a local variable is not known.
+
+   Each type has a code, which indicates what category this type falls
+into.  The available type categories are represented by constants
+defined in the 'gdb' module:
+
+'gdb.TYPE_CODE_PTR'
+     The type is a pointer.
+
+'gdb.TYPE_CODE_ARRAY'
+     The type is an array.
+
+'gdb.TYPE_CODE_STRUCT'
+     The type is a structure.
+
+'gdb.TYPE_CODE_UNION'
+     The type is a union.
+
+'gdb.TYPE_CODE_ENUM'
+     The type is an enum.
+
+'gdb.TYPE_CODE_FLAGS'
+     A bit flags type, used for things such as status registers.
+
+'gdb.TYPE_CODE_FUNC'
+     The type is a function.
+
+'gdb.TYPE_CODE_INT'
+     The type is an integer type.
+
+'gdb.TYPE_CODE_FLT'
+     A floating point type.
+
+'gdb.TYPE_CODE_VOID'
+     The special type 'void'.
+
+'gdb.TYPE_CODE_SET'
+     A Pascal set type.
+
+'gdb.TYPE_CODE_RANGE'
+     A range type, that is, an integer type with bounds.
+
+'gdb.TYPE_CODE_STRING'
+     A string type.  Note that this is only used for certain languages
+     with language-defined string types; C strings are not represented
+     this way.
+
+'gdb.TYPE_CODE_BITSTRING'
+     A string of bits.  It is deprecated.
+
+'gdb.TYPE_CODE_ERROR'
+     An unknown or erroneous type.
+
+'gdb.TYPE_CODE_METHOD'
+     A method type, as found in C++ or Java.
+
+'gdb.TYPE_CODE_METHODPTR'
+     A pointer-to-member-function.
+
+'gdb.TYPE_CODE_MEMBERPTR'
+     A pointer-to-member.
+
+'gdb.TYPE_CODE_REF'
+     A reference type.
+
+'gdb.TYPE_CODE_CHAR'
+     A character type.
+
+'gdb.TYPE_CODE_BOOL'
+     A boolean type.
+
+'gdb.TYPE_CODE_COMPLEX'
+     A complex float type.
+
+'gdb.TYPE_CODE_TYPEDEF'
+     A typedef to some other type.
+
+'gdb.TYPE_CODE_NAMESPACE'
+     A C++ namespace.
+
+'gdb.TYPE_CODE_DECFLOAT'
+     A decimal floating point type.
+
+'gdb.TYPE_CODE_INTERNAL_FUNCTION'
+     A function internal to GDB.  This is the type used to represent
+     convenience functions.
+
+   Further support for types is provided in the 'gdb.types' Python
+module (*note gdb.types::).
+
+
+File: gdb.info,  Node: Pretty Printing API,  Next: Selecting Pretty-Printers,  Prev: Types In Python,  Up: Python API
+
+23.2.2.5 Pretty Printing API
+............................
+
+An example output is provided (*note Pretty Printing::).
+
+   A pretty-printer is just an object that holds a value and implements
+a specific interface, defined here.
+
+ -- Function: pretty_printer.children (self)
+     GDB will call this method on a pretty-printer to compute the
+     children of the pretty-printer's value.
+
+     This method must return an object conforming to the Python iterator
+     protocol.  Each item returned by the iterator must be a tuple
+     holding two elements.  The first element is the "name" of the
+     child; the second element is the child's value.  The value can be
+     any Python object which is convertible to a GDB value.
+
+     This method is optional.  If it does not exist, GDB will act as
+     though the value has no children.
+
+ -- Function: pretty_printer.display_hint (self)
+     The CLI may call this method and use its result to change the
+     formatting of a value.  The result will also be supplied to an MI
+     consumer as a 'displayhint' attribute of the variable being
+     printed.
+
+     This method is optional.  If it does exist, this method must return
+     a string.
+
+     Some display hints are predefined by GDB:
+
+     'array'
+          Indicate that the object being printed is "array-like".  The
+          CLI uses this to respect parameters such as 'set print
+          elements' and 'set print array'.
+
+     'map'
+          Indicate that the object being printed is "map-like", and that
+          the children of this value can be assumed to alternate between
+          keys and values.
+
+     'string'
+          Indicate that the object being printed is "string-like".  If
+          the printer's 'to_string' method returns a Python string of
+          some kind, then GDB will call its internal language-specific
+          string-printing function to format the string.  For the CLI
+          this means adding quotation marks, possibly escaping some
+          characters, respecting 'set print elements', and the like.
+
+ -- Function: pretty_printer.to_string (self)
+     GDB will call this method to display the string representation of
+     the value passed to the object's constructor.
+
+     When printing from the CLI, if the 'to_string' method exists, then
+     GDB will prepend its result to the values returned by 'children'.
+     Exactly how this formatting is done is dependent on the display
+     hint, and may change as more hints are added.  Also, depending on
+     the print settings (*note Print Settings::), the CLI may print just
+     the result of 'to_string' in a stack trace, omitting the result of
+     'children'.
+
+     If this method returns a string, it is printed verbatim.
+
+     Otherwise, if this method returns an instance of 'gdb.Value', then
+     GDB prints this value.  This may result in a call to another
+     pretty-printer.
+
+     If instead the method returns a Python value which is convertible
+     to a 'gdb.Value', then GDB performs the conversion and prints the
+     resulting value.  Again, this may result in a call to another
+     pretty-printer.  Python scalars (integers, floats, and booleans)
+     and strings are convertible to 'gdb.Value'; other types are not.
+
+     Finally, if this method returns 'None' then no further operations
+     are peformed in this method and nothing is printed.
+
+     If the result is not one of these types, an exception is raised.
+
+   GDB provides a function which can be used to look up the default
+pretty-printer for a 'gdb.Value':
+
+ -- Function: gdb.default_visualizer (value)
+     This function takes a 'gdb.Value' object as an argument.  If a
+     pretty-printer for this value exists, then it is returned.  If no
+     such printer exists, then this returns 'None'.
 
 
 File: gdb.info,  Node: Selecting Pretty-Printers,  Next: Writing a Pretty-Printer,  Prev: Pretty Printing API,  Up: Python API
@@ -1573,6 +1936,20 @@ and details of the events they emit:
       -- Variable: RegisterChangedEvent.regnum
           Denotes which register was modified.
 
+'events.breakpoint_created'
+     This is emitted when a new breakpoint has been created.  The
+     argument that is passed is the new 'gdb.Breakpoint' object.
+
+'events.breakpoint_modified'
+     This is emitted when a breakpoint has been modified in some way.
+     The argument that is passed is the new 'gdb.Breakpoint' object.
+
+'events.breakpoint_deleted'
+     This is emitted when a breakpoint has been deleted.  The argument
+     that is passed is the 'gdb.Breakpoint' object.  When this event is
+     emitted, the 'gdb.Breakpoint' object will already be in its invalid
+     state; that is, the 'is_valid' method will return 'False'.
+
 
 File: gdb.info,  Node: Threads In Python,  Next: Commands In Python,  Prev: Events In Python,  Up: Python API
 
@@ -1603,7 +1980,12 @@ module:
      user-specified thread name.
 
  -- Variable: InferiorThread.num
-     ID of the thread, as assigned by GDB.
+     The per-inferior number of the thread, as assigned by GDB.
+
+ -- Variable: InferiorThread.global_num
+     The global ID of the thread, as assigned by GDB. You can use this
+     to make Python breakpoints thread-specific, for example (*note The
+     Breakpoint.thread attribute: python_breakpoint_thread.).
 
  -- Variable: InferiorThread.ptid
      ID of the thread, as assigned by the operating system.  This
@@ -1612,6 +1994,10 @@ module:
      and the third is the Thread ID (TID). Either the LWPID or TID may
      be 0, which indicates that the operating system does not use that
      identifier.
+
+ -- Variable: InferiorThread.inferior
+     The inferior this thread belongs to.  This attribute is represented
+     as a 'gdb.Inferior' object.  This attribute is not writable.
 
    A 'gdb.InferiorThread' object has the following methods:
 
@@ -2292,6 +2678,13 @@ module:
      frames, as expressed by the given REASON code (an integer, see the
      'unwind_stop_reason' method further down in this section).
 
+ -- Function: gdb.invalidate_cached_frames
+     GDB internally keeps a cache of the frames that have been unwound.
+     This function invalidates this cache.
+
+     This function should not generally be called by ordinary Python
+     code.  It is documented for the sake of completeness.
+
    A 'gdb.Frame' object has the following methods:
 
  -- Function: Frame.is_valid ()
@@ -2912,6 +3305,36 @@ Python code can manipulate breakpoints via the 'gdb.Breakpoint' class.
      TYPE is 'gdb.BP_WATCHPOINT'.  If a watchpoint class is not
      provided, it is assumed to be a 'gdb.WP_WRITE' class.
 
+   The available types are represented by constants defined in the 'gdb'
+module:
+
+'gdb.BP_BREAKPOINT'
+     Normal code breakpoint.
+
+'gdb.BP_WATCHPOINT'
+     Watchpoint breakpoint.
+
+'gdb.BP_HARDWARE_WATCHPOINT'
+     Hardware assisted watchpoint.
+
+'gdb.BP_READ_WATCHPOINT'
+     Hardware assisted read watchpoint.
+
+'gdb.BP_ACCESS_WATCHPOINT'
+     Hardware assisted access watchpoint.
+
+   The available watchpoint types represented by constants are defined
+in the 'gdb' module:
+
+'gdb.WP_READ'
+     Read only watchpoint.
+
+'gdb.WP_WRITE'
+     Write only watchpoint.
+
+'gdb.WP_ACCESS'
+     Read/Write watchpoint.
+
  -- Function: Breakpoint.stop (self)
      The 'gdb.Breakpoint' class can be sub-classed and, in particular,
      you may choose to implement the 'stop' method.  If this method is
@@ -2943,18 +3366,6 @@ Python code can manipulate breakpoints via the 'gdb.Breakpoint' class.
                     return True
                   return False
 
-   The available watchpoint types represented by constants are defined
-in the 'gdb' module:
-
-'gdb.WP_READ'
-     Read only watchpoint.
-
-'gdb.WP_WRITE'
-     Write only watchpoint.
-
-'gdb.WP_ACCESS'
-     Read/Write watchpoint.
-
  -- Function: Breakpoint.is_valid ()
      Return 'True' if this 'Breakpoint' object is valid, 'False'
      otherwise.  A 'Breakpoint' object can become invalid if the user
@@ -2981,9 +3392,13 @@ in the 'gdb' module:
      the first command is 'silent'.  This is not reported by the
      'silent' attribute.
 
+ -- Variable: Breakpoint.pending
+     This attribute is 'True' if the breakpoint is pending, and 'False'
+     otherwise.  *Note Set Breaks::.  This attribute is read-only.
+
  -- Variable: Breakpoint.thread
      If the breakpoint is thread-specific, this attribute holds the
-     thread id.  If the breakpoint is not thread-specific, this
+     thread's global id.  If the breakpoint is not thread-specific, this
      attribute is 'None'.  This attribute is writable.
 
  -- Variable: Breakpoint.task
@@ -3019,24 +3434,6 @@ in the 'gdb' module:
      'is_valid' function, will result in an error after the breakpoint
      has been hit (as it has been automatically deleted).  This
      attribute is not writable.
-
-   The available types are represented by constants defined in the 'gdb'
-module:
-
-'gdb.BP_BREAKPOINT'
-     Normal code breakpoint.
-
-'gdb.BP_WATCHPOINT'
-     Watchpoint breakpoint.
-
-'gdb.BP_HARDWARE_WATCHPOINT'
-     Hardware assisted watchpoint.
-
-'gdb.BP_READ_WATCHPOINT'
-     Hardware assisted read watchpoint.
-
-'gdb.BP_ACCESS_WATCHPOINT'
-     Hardware assisted access watchpoint.
 
  -- Variable: Breakpoint.hit_count
      This attribute holds the hit count for the breakpoint, an integer.
@@ -6200,12 +6597,13 @@ outside of Guile.
      be zero.
 
  -- Scheme Procedure: breakpoint-thread breakpoint
-     Return the thread-id for thread-specific breakpoint BREAKPOINT.
-     Return #f if BREAKPOINT is not thread-specific.
+     Return the global-thread-id for thread-specific breakpoint
+     BREAKPOINT.  Return #f if BREAKPOINT is not thread-specific.
 
- -- Scheme Procedure: set-breakpoint-thread! breakpoint thread-id|#f
-     Set the thread-id for BREAKPOINT to THREAD-ID.  If set to '#f', the
-     breakpoint is no longer thread-specific.
+ -- Scheme Procedure: set-breakpoint-thread! breakpoint
+          global-thread-id|#f
+     Set the thread-id for BREAKPOINT to GLOBAL-THREAD-ID If set to
+     '#f', the breakpoint is no longer thread-specific.
 
  -- Scheme Procedure: breakpoint-task breakpoint
      If the breakpoint is Ada task-specific, return the Ada task id.  If
@@ -7029,438 +7427,4 @@ testsuite.
 safe-path' (*note Auto-loading safe path::).  The path to specify in
 'auto-load safe-path' is the path of the file containing the
 '.debug_gdb_scripts' section.
-
-
-File: gdb.info,  Node: Which flavor to choose?,  Prev: dotdebug_gdb_scripts section,  Up: Auto-loading extensions
-
-23.4.3 Which flavor to choose?
-------------------------------
-
-Given the multiple ways of auto-loading extensions, it might not always
-be clear which one to choose.  This section provides some guidance.
-
-Benefits of the '-gdb.EXT' way:
-
-   * Can be used with file formats that don't support multiple sections.
-
-   * Ease of finding scripts for public libraries.
-
-     Scripts specified in the '.debug_gdb_scripts' section are searched
-     for in the source search path.  For publicly installed libraries,
-     e.g., 'libstdc++', there typically isn't a source directory in
-     which to find the script.
-
-   * Doesn't require source code additions.
-
-Benefits of the '.debug_gdb_scripts' way:
-
-   * Works with static linking.
-
-     Scripts for libraries done the '-gdb.EXT' way require an objfile to
-     trigger their loading.  When an application is statically linked
-     the only objfile available is the executable, and it is cumbersome
-     to attach all the scripts from all the input libraries to the
-     executable's '-gdb.EXT' script.
-
-   * Works with classes that are entirely inlined.
-
-     Some classes can be entirely inlined, and thus there may not be an
-     associated shared library to attach a '-gdb.EXT' script to.
-
-   * Scripts needn't be copied out of the source tree.
-
-     In some circumstances, apps can be built out of large collections
-     of internal libraries, and the build infrastructure necessary to
-     install the '-gdb.EXT' scripts in a place where GDB can find them
-     is cumbersome.  It may be easier to specify the scripts in the
-     '.debug_gdb_scripts' section as relative paths, and add a path to
-     the top of the source tree to the source search path.
-
-
-File: gdb.info,  Node: Multiple Extension Languages,  Next: Aliases,  Prev: Auto-loading extensions,  Up: Extending GDB
-
-23.5 Multiple Extension Languages
-=================================
-
-The Guile and Python extension languages do not share any state, and
-generally do not interfere with each other.  There are some things to be
-aware of, however.
-
-23.5.1 Python comes first
--------------------------
-
-Python was GDB's first extension language, and to avoid breaking
-existing behaviour Python comes first.  This is generally solved by the
-"first one wins" principle.  GDB maintains a list of enabled extension
-languages, and when it makes a call to an extension language, (say to
-pretty-print a value), it tries each in turn until an extension language
-indicates it has performed the request (e.g., has returned the
-pretty-printed form of a value).  This extends to errors while
-performing such requests: If an error happens while, for example, trying
-to pretty-print an object then the error is reported and any following
-extension languages are not tried.
-
-
-File: gdb.info,  Node: Aliases,  Prev: Multiple Extension Languages,  Up: Extending GDB
-
-23.6 Creating new spellings of existing commands
-================================================
-
-It is often useful to define alternate spellings of existing commands.
-For example, if a new GDB command defined in Python has a long name to
-type, it is handy to have an abbreviated version of it that involves
-less typing.
-
-   GDB itself uses aliases.  For example 's' is an alias of the 'step'
-command even though it is otherwise an ambiguous abbreviation of other
-commands like 'set' and 'show'.
-
-   Aliases are also used to provide shortened or more common versions of
-multi-word commands.  For example, GDB provides the 'tty' alias of the
-'set inferior-tty' command.
-
-   You can define a new alias with the 'alias' command.
-
-'alias [-a] [--] ALIAS = COMMAND'
-
-   ALIAS specifies the name of the new alias.  Each word of ALIAS must
-consist of letters, numbers, dashes and underscores.
-
-   COMMAND specifies the name of an existing command that is being
-aliased.
-
-   The '-a' option specifies that the new alias is an abbreviation of
-the command.  Abbreviations are not shown in command lists displayed by
-the 'help' command.
-
-   The '--' option specifies the end of options, and is useful when
-ALIAS begins with a dash.
-
-   Here is a simple example showing how to make an abbreviation of a
-command so that there is less to type.  Suppose you were tired of typing
-'disas', the current shortest unambiguous abbreviation of the
-'disassemble' command and you wanted an even shorter version named 'di'.
-The following will accomplish this.
-
-     (gdb) alias -a di = disas
-
-   Note that aliases are different from user-defined commands.  With a
-user-defined command, you also need to write documentation for it with
-the 'document' command.  An alias automatically picks up the
-documentation of the existing command.
-
-   Here is an example where we make 'elms' an abbreviation of 'elements'
-in the 'set print elements' command.  This is to show that you can make
-an abbreviation of any part of a command.
-
-     (gdb) alias -a set print elms = set print elements
-     (gdb) alias -a show print elms = show print elements
-     (gdb) set p elms 20
-     (gdb) show p elms
-     Limit on string chars or array elements to print is 200.
-
-   Note that if you are defining an alias of a 'set' command, and you
-want to have an alias for the corresponding 'show' command, then you
-need to define the latter separately.
-
-   Unambiguously abbreviated commands are allowed in COMMAND and ALIAS,
-just as they are normally.
-
-     (gdb) alias -a set pr elms = set p ele
-
-   Finally, here is an example showing the creation of a one word alias
-for a more complex command.  This creates alias 'spe' of the command
-'set print elements'.
-
-     (gdb) alias spe = set print elements
-     (gdb) spe 20
-
-
-File: gdb.info,  Node: Interpreters,  Next: TUI,  Prev: Extending GDB,  Up: Top
-
-24 Command Interpreters
-***********************
-
-GDB supports multiple command interpreters, and some command
-infrastructure to allow users or user interface writers to switch
-between interpreters or run commands in other interpreters.
-
-   GDB currently supports two command interpreters, the console
-interpreter (sometimes called the command-line interpreter or CLI) and
-the machine interface interpreter (or GDB/MI).  This manual describes
-both of these interfaces in great detail.
-
-   By default, GDB will start with the console interpreter.  However,
-the user may choose to start GDB with another interpreter by specifying
-the '-i' or '--interpreter' startup options.  Defined interpreters
-include:
-
-'console'
-     The traditional console or command-line interpreter.  This is the
-     most often used interpreter with GDB.  With no interpreter
-     specified at runtime, GDB will use this interpreter.
-
-'mi'
-     The newest GDB/MI interface (currently 'mi2').  Used primarily by
-     programs wishing to use GDB as a backend for a debugger GUI or an
-     IDE. For more information, see *note The GDB/MI Interface: GDB/MI.
-
-'mi2'
-     The current GDB/MI interface.
-
-'mi1'
-     The GDB/MI interface included in GDB 5.1, 5.2, and 5.3.
-
-   The interpreter being used by GDB may not be dynamically switched at
-runtime.  Although possible, this could lead to a very precarious
-situation.  Consider an IDE using GDB/MI.  If a user enters the command
-"interpreter-set console" in a console view, GDB would switch to using
-the console interpreter, rendering the IDE inoperable!
-
-   Although you may only choose a single interpreter at startup, you may
-execute commands in any interpreter from the current interpreter using
-the appropriate command.  If you are running the console interpreter,
-simply use the 'interpreter-exec' command:
-
-     interpreter-exec mi "-data-list-register-names"
-
-   GDB/MI has a similar command, although it is only available in
-versions of GDB which support GDB/MI version 2 (or greater).
-
-
-File: gdb.info,  Node: TUI,  Next: Emacs,  Prev: Interpreters,  Up: Top
-
-25 GDB Text User Interface
-**************************
-
-* Menu:
-
-* TUI Overview::                TUI overview
-* TUI Keys::                    TUI key bindings
-* TUI Single Key Mode::         TUI single key mode
-* TUI Commands::                TUI-specific commands
-* TUI Configuration::           TUI configuration variables
-
-The GDB Text User Interface (TUI) is a terminal interface which uses the
-'curses' library to show the source file, the assembly output, the
-program registers and GDB commands in separate text windows.  The TUI
-mode is supported only on platforms where a suitable version of the
-'curses' library is available.
-
-   The TUI mode is enabled by default when you invoke GDB as 'gdb -tui'.
-You can also switch in and out of TUI mode while GDB runs by using
-various TUI commands and key bindings, such as 'tui enable' or 'C-x
-C-a'.  *Note TUI Commands: TUI Commands, and *note TUI Key Bindings: TUI
-Keys.
-
-
-File: gdb.info,  Node: TUI Overview,  Next: TUI Keys,  Up: TUI
-
-25.1 TUI Overview
-=================
-
-In TUI mode, GDB can display several text windows:
-
-_command_
-     This window is the GDB command window with the GDB prompt and the
-     GDB output.  The GDB input is still managed using readline.
-
-_source_
-     The source window shows the source file of the program.  The
-     current line and active breakpoints are displayed in this window.
-
-_assembly_
-     The assembly window shows the disassembly output of the program.
-
-_register_
-     This window shows the processor registers.  Registers are
-     highlighted when their values change.
-
-   The source and assembly windows show the current program position by
-highlighting the current line and marking it with a '>' marker.
-Breakpoints are indicated with two markers.  The first marker indicates
-the breakpoint type:
-
-'B'
-     Breakpoint which was hit at least once.
-
-'b'
-     Breakpoint which was never hit.
-
-'H'
-     Hardware breakpoint which was hit at least once.
-
-'h'
-     Hardware breakpoint which was never hit.
-
-   The second marker indicates whether the breakpoint is enabled or not:
-
-'+'
-     Breakpoint is enabled.
-
-'-'
-     Breakpoint is disabled.
-
-   The source, assembly and register windows are updated when the
-current thread changes, when the frame changes, or when the program
-counter changes.
-
-   These windows are not all visible at the same time.  The command
-window is always visible.  The others can be arranged in several
-layouts:
-
-   * source only,
-
-   * assembly only,
-
-   * source and assembly,
-
-   * source and registers, or
-
-   * assembly and registers.
-
-   A status line above the command window shows the following
-information:
-
-_target_
-     Indicates the current GDB target.  (*note Specifying a Debugging
-     Target: Targets.).
-
-_process_
-     Gives the current process or thread number.  When no process is
-     being debugged, this field is set to 'No process'.
-
-_function_
-     Gives the current function name for the selected frame.  The name
-     is demangled if demangling is turned on (*note Print Settings::).
-     When there is no symbol corresponding to the current program
-     counter, the string '??' is displayed.
-
-_line_
-     Indicates the current line number for the selected frame.  When the
-     current line number is not known, the string '??' is displayed.
-
-_pc_
-     Indicates the current program counter address.
-
-
-File: gdb.info,  Node: TUI Keys,  Next: TUI Single Key Mode,  Prev: TUI Overview,  Up: TUI
-
-25.2 TUI Key Bindings
-=====================
-
-The TUI installs several key bindings in the readline keymaps (*note
-Command Line Editing::).  The following key bindings are installed for
-both TUI mode and the GDB standard mode.
-
-'C-x C-a'
-'C-x a'
-'C-x A'
-     Enter or leave the TUI mode.  When leaving the TUI mode, the curses
-     window management stops and GDB operates using its standard mode,
-     writing on the terminal directly.  When reentering the TUI mode,
-     control is given back to the curses windows.  The screen is then
-     refreshed.
-
-'C-x 1'
-     Use a TUI layout with only one window.  The layout will either be
-     'source' or 'assembly'.  When the TUI mode is not active, it will
-     switch to the TUI mode.
-
-     Think of this key binding as the Emacs 'C-x 1' binding.
-
-'C-x 2'
-     Use a TUI layout with at least two windows.  When the current
-     layout already has two windows, the next layout with two windows is
-     used.  When a new layout is chosen, one window will always be
-     common to the previous layout and the new one.
-
-     Think of it as the Emacs 'C-x 2' binding.
-
-'C-x o'
-     Change the active window.  The TUI associates several key bindings
-     (like scrolling and arrow keys) with the active window.  This
-     command gives the focus to the next TUI window.
-
-     Think of it as the Emacs 'C-x o' binding.
-
-'C-x s'
-     Switch in and out of the TUI SingleKey mode that binds single keys
-     to GDB commands (*note TUI Single Key Mode::).
-
-   The following key bindings only work in the TUI mode:
-
-<PgUp>
-     Scroll the active window one page up.
-
-<PgDn>
-     Scroll the active window one page down.
-
-<Up>
-     Scroll the active window one line up.
-
-<Down>
-     Scroll the active window one line down.
-
-<Left>
-     Scroll the active window one column left.
-
-<Right>
-     Scroll the active window one column right.
-
-'C-L'
-     Refresh the screen.
-
-   Because the arrow keys scroll the active window in the TUI mode, they
-are not available for their normal use by readline unless the command
-window has the focus.  When another window is active, you must use other
-readline key bindings such as 'C-p', 'C-n', 'C-b' and 'C-f' to control
-the command window.
-
-
-File: gdb.info,  Node: TUI Single Key Mode,  Next: TUI Commands,  Prev: TUI Keys,  Up: TUI
-
-25.3 TUI Single Key Mode
-========================
-
-The TUI also provides a "SingleKey" mode, which binds several frequently
-used GDB commands to single keys.  Type 'C-x s' to switch into this
-mode, where the following key bindings are used:
-
-'c'
-     continue
-
-'d'
-     down
-
-'f'
-     finish
-
-'n'
-     next
-
-'q'
-     exit the SingleKey mode.
-
-'r'
-     run
-
-'s'
-     step
-
-'u'
-     up
-
-'v'
-     info locals
-
-'w'
-     where
-
-   Other keys temporarily switch to the GDB command prompt.  The key
-that was pressed is inserted in the editing buffer so that it is
-possible to type most GDB commands without interaction with the TUI
-SingleKey mode.  Once the command is entered the TUI SingleKey mode is
-restored.  The only way to permanently leave this mode is by typing 'q'
-or 'C-x s'.
 

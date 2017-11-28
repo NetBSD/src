@@ -1,6 +1,6 @@
 /* `a.out.adobe' differences from standard a.out files
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ struct external_exec
 #undef	OMAGIC
 #undef	NMAGIC
 
-#define N_BADMAG(x)	  ((x).a_info != ZMAGIC)
+#define N_BADMAG(x)	  ((x)->a_info != ZMAGIC)
 
 /* By default, segment size is constant.  But some machines override this
    to be a function of the a.out header (e.g. machine type).  */
@@ -77,25 +77,25 @@ struct internal_segdesc {
 	unsigned int	a_filebase;	/* Base address in object file */
 };
 
-#define N_TXTADDR(x) \
+#define N_TXTADDR(x) is_this_really_unused?
 
 /* This is documented to be at 1024, but appears to really be at 2048.
    FIXME?!  */
 #define N_TXTOFF(x)	2048
 
-#define	N_TXTSIZE(x) ((x).a_text)
+#define	N_TXTSIZE(x) ((x)->a_text)
 
-#define N_DATADDR(x)
+#define N_DATADDR(x) is_this_really_unused?
 
-#define N_BSSADDR(x)
+#define N_BSSADDR(x) is_this_really_unused?
 
 /* Offsets of the various portions of the file after the text segment.  */
 
 #define N_DATOFF(x)	( N_TXTOFF(x) + N_TXTSIZE(x) )
-#define N_TRELOFF(x)	( N_DATOFF(x) + (x).a_data )
-#define N_DRELOFF(x)	( N_TRELOFF(x) + (x).a_trsize )
-#define N_SYMOFF(x)	( N_DRELOFF(x) + (x).a_drsize )
-#define N_STROFF(x)	( N_SYMOFF(x) + (x).a_syms )
+#define N_TRELOFF(x)	( N_DATOFF(x) + (x)->a_data )
+#define N_DRELOFF(x)	( N_TRELOFF(x) + (x)->a_trsize )
+#define N_SYMOFF(x)	( N_DRELOFF(x) + (x)->a_drsize )
+#define N_STROFF(x)	( N_SYMOFF(x) + (x)->a_syms )
 
 /* Symbols */
 struct external_nlist {

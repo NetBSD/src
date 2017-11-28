@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -22,9 +22,6 @@
 
 #ifndef HW_DEVICE_H
 #define HW_DEVICE_H
-
-/* declared in sim-basics.h, this object is used everywhere */
-/* typedef struct _device device; */
 
 
 /* Introduction:

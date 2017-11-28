@@ -1,6 +1,6 @@
 /* Basic C++ demangling support for GDB.
 
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -240,7 +240,7 @@ _initialize_demangler (void)
        libiberty_demanglers[ndems].demangling_style != unknown_demangling; 
        ndems++)
     ;
-  demangling_style_names = xcalloc (ndems + 1, sizeof (char *));
+  demangling_style_names = XCNEWVEC (const char *, ndems + 1);
   for (i = 0;
        libiberty_demanglers[i].demangling_style != unknown_demangling; 
        i++)

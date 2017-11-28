@@ -1,4 +1,4 @@
-# Copyright 2009-2015 Free Software Foundation, Inc.
+# Copyright 2009-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -139,7 +139,7 @@ gdb_caching_proc skip_cell_tests {
             set result 1
         }
         default {
-            verbose -log "\n$me Cell/B.E. hardware not detected (default case)"
+            unresolved "$me: unexpected failure"
             set result 1
         }
     }

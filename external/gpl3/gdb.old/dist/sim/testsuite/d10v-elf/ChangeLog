@@ -64,7 +64,7 @@ Mon Feb 16 09:20:57 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* t-dbt.s (test_dbt): New file.
 
 	* Makefile.in (TESTS): Add t-rdt and t-dbt.
-	
+
 
 Fri Feb 13 16:21:13 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
@@ -103,7 +103,7 @@ Thu Dec  4 16:56:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 Wed Dec  3 16:35:24 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* t-rac.s: New files.
-	
+
 	* t-macros.i: Add macros for checking psw and 2w quantities.
 
 	* Makefile.in (TESTS): Update.
@@ -112,7 +112,7 @@ Tue Dec  2 11:01:36 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* t-sub2w.s, t-mulxu.s, t-mac.s, t-mvtac.s, t-msbu.s, t-sub.s: New
  	files.
-  	
+
 	* Makefile.in: Update.
 
 Mon Nov 17 20:14:48 1997  Andrew Cagney  <cagney@b1.cygnus.com>

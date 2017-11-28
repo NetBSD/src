@@ -1,6 +1,6 @@
 /* Native-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,7 +57,7 @@ m68kbsd_fpregset_supplies_p (int regnum)
 static void
 m68kbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  const char *regs = gregs;
+  const char *regs = (const char *)gregs;
   int regnum;
 
   for (regnum = M68K_D0_REGNUM; regnum <= M68K_PC_REGNUM; regnum++)
@@ -70,7 +70,7 @@ static void
 m68kbsd_supply_fpregset (struct regcache *regcache, const void *fpregs)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  const char *regs = fpregs;
+  const char *regs = (const char *)fpregs;
   int regnum;
 
   for (regnum = M68K_FP0_REGNUM; regnum <= M68K_FPI_REGNUM; regnum++)
@@ -85,7 +85,7 @@ static void
 m68kbsd_collect_gregset (const struct regcache *regcache,
 			 void *gregs, int regnum)
 {
-  char *regs = gregs;
+  char *regs = (char *)gregs;
   int i;
 
   for (i = M68K_D0_REGNUM; i <= M68K_PC_REGNUM; i++)
@@ -103,7 +103,7 @@ m68kbsd_collect_fpregset (const struct regcache *regcache,
 			  void *fpregs, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  char *regs = fpregs;
+  char *regs = (char *)fpregs;
   int i;
 
   for (i = M68K_FP0_REGNUM; i <= M68K_FPI_REGNUM; i++)
@@ -253,7 +253,7 @@ m68kbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   tmp = pcb->pcb_ps & 0xffff;
   regcache_raw_supply (regcache, M68K_PS_REGNUM, &tmp);
 
-  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (char *) &tmp, sizeof tmp);
+  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (unsigned char *) &tmp, sizeof tmp);
   regcache_raw_supply (regcache, M68K_PC_REGNUM, &tmp);
 
   return 1;

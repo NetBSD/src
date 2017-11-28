@@ -1,5 +1,5 @@
 /* m68hc11-dis.c -- Motorola 68HC11 & 68HC12 disassembly
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
    XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
 
@@ -697,7 +697,7 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	    {
 	      int cur_page;
 	      bfd_vma vaddr;
-                
+
 	      if (memaddr >= M68HC12_BANK_VIRT)
 		cur_page = ((memaddr - M68HC12_BANK_VIRT)
 			    >> M68HC12_BANK_SHIFT);
@@ -827,7 +827,7 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	  val = buffer[0] & 0x0ff;
 	  (*info->fprintf_func) (info->stream, ", 0x%x", val);
 	}
-      
+
 #ifdef DEBUG
       /* Consistency check.  'format' must be 0, so that we have handled
 	 all formats; and the computed size of the insn must match the

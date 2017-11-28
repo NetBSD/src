@@ -1,4 +1,4 @@
-#   Copyright 1988-2015 Free Software Foundation, Inc.
+#   Copyright 1988-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -118,12 +118,6 @@ set bp_location6 [gdb_get_line_number "set breakpoint 6 here"]
 
 set main_line $bp_location6
 
-if {$hp_aCC_compiler} {
-    set proto "\\(int\\)"
-} else {
-    set proto ""
-}
-
 set bp_location7 [gdb_get_line_number "set breakpoint 7 here"]
 set bp_location8 [gdb_get_line_number "set breakpoint 8 here" $srcfile1]
 
@@ -131,7 +125,7 @@ gdb_test "info break" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$main_line.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in marker2 at .*$srcfile1:$bp_location8.*
-\[0-9\]+\[\t \]+breakpoint     keep y.* in factorial$proto at .*$srcfile:$bp_location7.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in factorial at .*$srcfile:$bp_location7.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location1.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location1.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location2.*
@@ -459,7 +453,7 @@ gdb_test  "tbreak $srcfile:$bp_location11" "Temporary breakpoint.*at.* file .*$s
 #
 gdb_test "info break" "Num     Type.*Disp Enb Address.*What.*\[\r\n\]
 \[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$main_line.*\[\r\n\]
-\[0-9\]+\[\t \]+breakpoint     del.*y.*in factorial$proto at .*$srcfile:$bp_location7.*\[\r\n\]
+\[0-9\]+\[\t \]+breakpoint     del.*y.*in factorial at .*$srcfile:$bp_location7.*\[\r\n\]
 \[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$bp_location1.*\[\r\n\]
 \[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$bp_location6.*\[\r\n\]
 \[0-9\]+\[\t \]+breakpoint     del.*y.*in main at .*$srcfile:$bp_location2.*\[\r\n\]
@@ -479,48 +473,14 @@ gdb_test "catch" \
     "Catch requires an event name." \
     "catch requires an event name"
 
+gdb_test "catch fork" "Catchpoint \[0-9\]+ \\(fork\\)" \
+    "set catch fork, never expected to trigger"
 
-set name "set catch fork, never expected to trigger"
-gdb_test_multiple "catch fork" "$name" {
-    -re "Catchpoint \[0-9\]* .fork..*$gdb_prompt $" {
-	pass $name
-    }
-    -re "Catch of fork not yet implemented.*$gdb_prompt $" {
-	pass $name
-    }
-}
+gdb_test "catch vfork" "Catchpoint \[0-9\]+ \\(vfork\\)" \
+    "set catch vfork, never expected to trigger"
 
-
-# If we are on HP-UX 10.20, we expect an error message to be
-# printed if we type "catch vfork" at the gdb gdb_prompt.  This is
-# because on HP-UX 10.20, we cannot catch vfork events.
-
-set name "set catch vfork, never expected to trigger"
-
-if [istarget "hppa*-hp-hpux10.20"] then {
-    gdb_test "catch vfork" \
-	"Catch of vfork events not supported on HP-UX 10.20..*" \
-	"$name"
-} else {
-    gdb_test_multiple "catch vfork" "$name" {
-	-re "Catchpoint \[0-9\]* .vfork..*$gdb_prompt $" {
-	    pass $name
-	}
-	-re "Catch of vfork not yet implemented.*$gdb_prompt $" {
-	    pass $name
-	}
-    }
-}
-
-set name "set catch exec, never expected to trigger"
-gdb_test_multiple "catch exec" "$name" {
-    -re "Catchpoint \[0-9\]* .exec..*$gdb_prompt $" {
-	pass $name
-    }
-    -re "Catch of exec not yet implemented.*$gdb_prompt $" {
-	pass $name
-    }
-}
+gdb_test "catch exec" "Catchpoint \[0-9\]+ \\(exec\\)" \
+    "set catch exec, never expected to trigger"
 
 # Verify that GDB responds gracefully when asked to set a breakpoint
 # on a nonexistent source line.
@@ -590,7 +550,7 @@ gdb_test "break $bp_location12 thread 999" "Unknown thread 999.*" \
     "thread-specific breakpoint on non-existent thread disallowed"
 
 gdb_test "break $bp_location12 thread foo" \
-    "Junk after thread keyword.*" \
+    "Invalid thread ID: foo" \
     "thread-specific breakpoint on bogus thread ID disallowed"
 
 # Verify that GDB responds gracefully to a breakpoint command with
@@ -647,32 +607,20 @@ gdb_test "break marker2" \
     "set breakpoint on to-be-called function"
 
 gdb_test "print marker2(99)" \
-    "The program being debugged stopped while in a function called from GDB.\r\nEvaluation of the expression containing the function\r\n.marker2$proto. will be abandoned.\r\nWhen the function is done executing, GDB will silently stop.*" \
+    "The program being debugged stopped while in a function called from GDB.\r\nEvaluation of the expression containing the function\r\n.marker2. will be abandoned.\r\nWhen the function is done executing, GDB will silently stop.*" \
     "hit breakpoint on called function"
 
 # As long as we're stopped (breakpointed) in a called function,
 # verify that we can successfully backtrace & such from here.
-#
-# In this and the following test, the _sr4export check apparently is needed
-# for hppa*-*-hpux.
-#
-gdb_test_multiple "bt" "backtrace while in called function" {
-    -re "#0\[ \t\]*($hex in )?marker2.*:$bp_location8\r\n#1.*_sr4export.*$gdb_prompt $" {
-	pass "backtrace while in called function"
-    }
-    -re "#0\[ \t\]*($hex in )?marker2.*:$bp_location8\r\n#1.*function called from gdb.*$gdb_prompt $" {
-	pass "backtrace while in called function"
-    }
-}
+gdb_test "bt" \
+    "#0\[ \t\]*($hex in )?marker2.*:$bp_location8\r\n#1\[ \t\]*<function called from gdb>.*" \
+    "backtrace while in called function"
 
 # Return from the called function.  For remote targets, it's important to do
 # this before runto_main, which otherwise may silently stop on the dummy
 # breakpoint inserted by GDB at the program's entry point.
 #
 gdb_test_multiple "finish" "finish from called function" {
-    -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.* in _sr4export.*$gdb_prompt $" {
-	pass "finish from called function"
-    }
     -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.*function called from gdb.*$gdb_prompt $" {
 	pass "finish from called function"
     }
@@ -708,40 +656,6 @@ gdb_test_multiple "finish" "finish from outermost frame disallowed" {
     -re "Run till exit from.*\r\n$gdb_prompt $" {
 	pass "finish from outermost frame disallowed"
     }
-}
-
-# Verify that we can explicitly ask GDB to stop on all shared library
-# events, and that it does so.
-#
-if [istarget "hppa*-*-hpux*"] then {
-    if ![runto_main] then { fail "break tests suppressed" }
-
-    gdb_test_no_output "set stop-on-solib-events 1" \
-	"set stop-on-solib-events"
-
-    gdb_test "run" \
-	"Stopped due to shared library event.*" \
-	"triggered stop-on-solib-events" \
-	"Start it from the beginning.*y or n. $" \
-	"y" 
-
-    gdb_test_no_output "set stop-on-solib-events 0" \
-	"reset stop-on-solib-events"
-}
-
-# Hardware breakpoints are unsupported on HP-UX.  Verify that GDB
-# gracefully responds to requests to create them.
-#
-if [istarget "hppa*-*-hpux*"] then {
-    if ![runto_main] then { fail "break tests suppressed" }
-
-    gdb_test "hbreak" \
-	"No hardware breakpoint support in the target.*" \
-	"hw breaks disallowed"
-
-    gdb_test "thbreak" \
-	"No hardware breakpoint support in the target.*" \
-	"temporary hw breaks disallowed"
 }
 
 #********

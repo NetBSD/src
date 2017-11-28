@@ -1,6 +1,6 @@
 /* Handle Darwin shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -96,7 +96,8 @@ get_darwin_info (void)
 {
   struct darwin_info *info;
 
-  info = program_space_data (current_program_space, solib_darwin_pspace_data);
+  info = (struct darwin_info *) program_space_data (current_program_space,
+						    solib_darwin_pspace_data);
   if (info != NULL)
     return info;
 
@@ -131,7 +132,7 @@ darwin_load_image_infos (struct darwin_info *info)
 
   /* The structure has 4 fields: version (4 bytes), count (4 bytes),
      info (pointer) and notifier (pointer).  */
-  len = 4 + 4 + 2 * ptr_type->length;
+  len = 4 + 4 + 2 * TYPE_LENGTH (ptr_type);
   gdb_assert (len <= sizeof (buf));
   memset (&info->all_image, 0, sizeof (info->all_image));
 
@@ -147,7 +148,7 @@ darwin_load_image_infos (struct darwin_info *info)
   info->all_image.count = extract_unsigned_integer (buf + 4, 4, byte_order);
   info->all_image.info = extract_typed_address (buf + 8, ptr_type);
   info->all_image.notifier = extract_typed_address
-    (buf + 8 + ptr_type->length, ptr_type);
+    (buf + 8 + TYPE_LENGTH (ptr_type), ptr_type);
 }
 
 /* Link map info to include in an allocated so_list entry.  */
@@ -325,14 +326,43 @@ darwin_current_sos (void)
   return head;
 }
 
-/* Get the load address of the executable.  We assume that the dyld info are
-   correct.  */
+/* Check LOAD_ADDR points to a Mach-O executable header.  Return LOAD_ADDR
+   in case of success, 0 in case of failure.  */
 
 static CORE_ADDR
-darwin_read_exec_load_addr (struct darwin_info *info)
+darwin_validate_exec_header (CORE_ADDR load_addr)
+{
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  struct mach_o_header_external hdr;
+  unsigned long hdr_val;
+
+  /* Read Mach-O header from memory.  */
+  if (target_read_memory (load_addr, (gdb_byte *) &hdr, sizeof (hdr) - 4))
+    return 0;
+
+  /* Discard wrong magic numbers.  Shouldn't happen.  */
+  hdr_val = extract_unsigned_integer
+    (hdr.magic, sizeof (hdr.magic), byte_order);
+  if (hdr_val != BFD_MACH_O_MH_MAGIC && hdr_val != BFD_MACH_O_MH_MAGIC_64)
+    return 0;
+
+  /* Check executable.  */
+  hdr_val = extract_unsigned_integer
+    (hdr.filetype, sizeof (hdr.filetype), byte_order);
+  if (hdr_val == BFD_MACH_O_MH_EXECUTE)
+    return load_addr;
+
+  return 0;
+}
+
+/* Get the load address of the executable using dyld list of images.
+   We assume that the dyld info are correct (which is wrong if the target
+   is stopped at the first instruction).  */
+
+static CORE_ADDR
+darwin_read_exec_load_addr_from_dyld (struct darwin_info *info)
 {
   struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   int ptr_len = TYPE_LENGTH (ptr_type);
   unsigned int image_info_size = ptr_len * 3;
   int i;
@@ -343,31 +373,45 @@ darwin_read_exec_load_addr (struct darwin_info *info)
       CORE_ADDR iinfo = info->all_image.info + i * image_info_size;
       gdb_byte buf[image_info_size];
       CORE_ADDR load_addr;
-      struct mach_o_header_external hdr;
-      unsigned long hdr_val;
 
       /* Read image info from inferior.  */
       if (target_read_memory (iinfo, buf, image_info_size))
 	break;
 
       load_addr = extract_typed_address (buf, ptr_type);
-
-      /* Read Mach-O header from memory.  */
-      if (target_read_memory (load_addr, (gdb_byte *) &hdr, sizeof (hdr) - 4))
-	break;
-      /* Discard wrong magic numbers.  Shouldn't happen.  */
-      hdr_val = extract_unsigned_integer
-        (hdr.magic, sizeof (hdr.magic), byte_order);
-      if (hdr_val != BFD_MACH_O_MH_MAGIC && hdr_val != BFD_MACH_O_MH_MAGIC_64)
-        continue;
-      /* Check executable.  */
-      hdr_val = extract_unsigned_integer
-        (hdr.filetype, sizeof (hdr.filetype), byte_order);
-      if (hdr_val == BFD_MACH_O_MH_EXECUTE)
+      if (darwin_validate_exec_header (load_addr) == load_addr)
 	return load_addr;
     }
 
   return 0;
+}
+
+/* Get the load address of the executable when the PC is at the dyld
+   entry point using parameter passed by the kernel (at SP). */
+
+static CORE_ADDR
+darwin_read_exec_load_addr_at_init (struct darwin_info *info)
+{
+  struct gdbarch *gdbarch = target_gdbarch ();
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  int addr_size = gdbarch_addr_bit (gdbarch) / 8;
+  ULONGEST load_ptr_addr;
+  ULONGEST load_addr;
+  gdb_byte buf[8];
+
+  /* Get SP.  */
+  if (regcache_cooked_read_unsigned (get_current_regcache (),
+				     gdbarch_sp_regnum (gdbarch),
+				     &load_ptr_addr) != REG_VALID)
+    return 0;
+
+  /* Read value at SP (image load address).  */
+  if (target_read_memory (load_ptr_addr, buf, addr_size))
+    return 0;
+
+  load_addr = extract_unsigned_integer (buf, addr_size, byte_order);
+
+  return darwin_validate_exec_header (load_addr);
 }
 
 /* Return 1 if PC lies in the dynamic symbol resolution code of the
@@ -437,8 +481,8 @@ darwin_solib_get_all_image_info_addr_at_init (struct darwin_info *info)
       bfd *sub;
 
       make_cleanup_bfd_unref (dyld_bfd);
-      sub = gdb_bfd_mach_o_fat_extract (dyld_bfd, bfd_object,
-					gdbarch_bfd_arch_info (target_gdbarch ()));
+      sub = gdb_bfd_mach_o_fat_extract
+	(dyld_bfd, bfd_object, gdbarch_bfd_arch_info (target_gdbarch ()));
       if (sub)
 	{
 	  dyld_bfd = sub;
@@ -471,22 +515,28 @@ darwin_solib_get_all_image_info_addr_at_init (struct darwin_info *info)
   info->all_image_addr += load_addr;
 }
 
-/* Extract dyld_all_image_addr reading it from 
+/* Extract dyld_all_image_addr reading it from
    TARGET_OBJECT_DARWIN_DYLD_INFO.  */
 
 static void
 darwin_solib_read_all_image_info_addr (struct darwin_info *info)
 {
-  gdb_byte buf[8 + 8 + 4];
+  gdb_byte buf[8];
   LONGEST len;
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
 
-  len = target_read (&current_target, TARGET_OBJECT_DARWIN_DYLD_INFO, NULL,
-                     buf, 0, sizeof (buf));
-  if (len != sizeof (buf))
+  /* Sanity check.  */
+  if (TYPE_LENGTH (ptr_type) > sizeof (buf))
     return;
 
-  info->all_image_addr = extract_unsigned_integer (buf, 8, byte_order);
+  len = target_read (&current_target, TARGET_OBJECT_DARWIN_DYLD_INFO, NULL,
+		     buf, 0, TYPE_LENGTH (ptr_type));
+  if (len <= 0)
+    return;
+
+  /* The use of BIG endian is intended, as BUF is a raw stream of bytes.  This
+      makes the support of remote protocol easier.  */
+  info->all_image_addr = extract_unsigned_integer (buf, len, BFD_ENDIAN_BIG);
 }
 
 /* Shared library startup support.  See documentation in solib-svr4.c.  */
@@ -515,10 +565,25 @@ darwin_solib_create_inferior_hook (int from_tty)
       return;
     }
 
+  /* Add the breakpoint which is hit by dyld when the list of solib is
+     modified.  */
   create_solib_event_breakpoint (target_gdbarch (), info->all_image.notifier);
 
-  /* Possible relocate the main executable (PIE).  */
-  load_addr = darwin_read_exec_load_addr (info);
+  if (info->all_image.count != 0)
+    {
+      /* Possible relocate the main executable (PIE).  */
+      load_addr = darwin_read_exec_load_addr_from_dyld (info);
+    }
+  else
+    {
+      /* Possible issue:
+	 Do not break on the notifier if dyld is not initialized (deduced from
+	 count == 0).  In that case, dyld hasn't relocated itself and the
+	 notifier may point to a wrong address.  */
+
+      load_addr = darwin_read_exec_load_addr_at_init (info);
+    }
+
   if (load_addr != 0 && symfile_objfile != NULL)
     {
       CORE_ADDR vmaddr;
@@ -569,12 +634,12 @@ darwin_relocate_section_addresses (struct so_list *so,
     so->addr_low = sec->addr;
 }
 
-static struct symbol *
+static struct block_symbol
 darwin_lookup_lib_symbol (struct objfile *objfile,
 			  const char *name,
 			  const domain_enum domain)
 {
-  return NULL;
+  return (struct block_symbol) {NULL, NULL};
 }
 
 static bfd *

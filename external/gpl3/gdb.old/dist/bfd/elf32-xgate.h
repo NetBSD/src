@@ -1,5 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    Contributed by Sean Keys (skeys@ipdatasys.com)
    (Heavily copied from the HC11 port by Stephane Carrez (stcarrez@nerim.fr))

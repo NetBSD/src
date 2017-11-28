@@ -1,5 +1,5 @@
 /* HP PA-RISC SOM object file format:  definitions internal to BFD.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -462,7 +462,7 @@ enum hppa_opcode_type
 static inline int
 bfd_hppa_insn2fmt (bfd *abfd, int insn)
 {
-  enum hppa_opcode_type op = get_opcode (insn);
+  enum hppa_opcode_type op = (enum hppa_opcode_type) get_opcode (insn);
 
   switch (op)
     {

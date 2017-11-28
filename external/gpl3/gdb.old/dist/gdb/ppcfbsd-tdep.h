@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB on PowerPC systems running FreeBSD.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

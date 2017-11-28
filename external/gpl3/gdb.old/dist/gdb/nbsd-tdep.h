@@ -1,5 +1,5 @@
 /* Common target-dependent definitions for NetBSD systems.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -25,4 +25,6 @@ struct link_map_offsets *nbsd_lp64_solib_svr4_fetch_link_map_offsets (void);
 
 int nbsd_pc_in_sigtramp (CORE_ADDR, const char *);
 
+CORE_ADDR nbsd_skip_solib_resolver (struct gdbarch *gdbarch,
+				    CORE_ADDR pc);
 #endif /* NBSD_TDEP_H */

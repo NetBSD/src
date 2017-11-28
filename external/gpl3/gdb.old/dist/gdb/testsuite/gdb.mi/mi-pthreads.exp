@@ -1,4 +1,4 @@
-# Copyright 2002-2015 Free Software Foundation, Inc.
+# Copyright 2002-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@ proc check_mi_thread_command_set {} {
 
   foreach thread $thread_list {
       mi_gdb_test "-interpreter-exec console \"thread $thread\"" \
-          ".*\\^done\r\n=thread-selected,id=\"$thread\"" \
-          "check =thread-selected: thread $thread"
+	  ".*=thread-selected,id=\"$thread\".*\r\n\\^done" \
+	  "check =thread-selected: thread $thread"
   }
 }
 

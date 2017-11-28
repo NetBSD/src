@@ -1,6 +1,6 @@
 /* Support for printing Fortran values for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com), additionally worked over by Stan Shebs.
@@ -36,23 +36,12 @@
 
 extern void _initialize_f_valprint (void);
 static void info_common_command (char *, int);
-static void f77_create_arrayprint_offset_tbl (struct type *,
-					      struct ui_file *);
 static void f77_get_dynamic_length_of_aggregate (struct type *);
 
 int f77_array_offset_tbl[MAX_FORTRAN_DIMS + 1][2];
 
 /* Array which holds offsets to be applied to get a row's elements
    for a given array.  Array also holds the size of each subarray.  */
-
-/* The following macro gives us the size of the nth dimension, Where 
-   n is 1 based.  */
-
-#define F77_DIM_SIZE(n) (f77_array_offset_tbl[n][1])
-
-/* The following gives us the offset for row n where n is 1-based.  */
-
-#define F77_DIM_OFFSET(n) (f77_array_offset_tbl[n][0])
 
 int
 f77_get_lowerbound (struct type *type)
@@ -111,47 +100,6 @@ f77_get_dynamic_length_of_aggregate (struct type *type)
     * TYPE_LENGTH (check_typedef (TYPE_TARGET_TYPE (type)));
 }
 
-/* Function that sets up the array offset,size table for the array 
-   type "type".  */
-
-static void
-f77_create_arrayprint_offset_tbl (struct type *type, struct ui_file *stream)
-{
-  struct type *tmp_type;
-  int eltlen;
-  int ndimen = 1;
-  int upper, lower;
-
-  tmp_type = type;
-
-  while (TYPE_CODE (tmp_type) == TYPE_CODE_ARRAY)
-    {
-      upper = f77_get_upperbound (tmp_type);
-      lower = f77_get_lowerbound (tmp_type);
-
-      F77_DIM_SIZE (ndimen) = upper - lower + 1;
-
-      tmp_type = TYPE_TARGET_TYPE (tmp_type);
-      ndimen++;
-    }
-
-  /* Now we multiply eltlen by all the offsets, so that later we 
-     can print out array elements correctly.  Up till now we 
-     know an offset to apply to get the item but we also 
-     have to know how much to add to get to the next item.  */
-
-  ndimen--;
-  eltlen = TYPE_LENGTH (tmp_type);
-  F77_DIM_OFFSET (ndimen) = eltlen;
-  while (--ndimen > 0)
-    {
-      eltlen *= F77_DIM_SIZE (ndimen + 1);
-      F77_DIM_OFFSET (ndimen) = eltlen;
-    }
-}
-
-
-
 /* Actual function which prints out F77 arrays, Valaddr == address in 
    the superior.  Address == the address in the inferior.  */
 
@@ -164,41 +112,56 @@ f77_print_array_1 (int nss, int ndimensions, struct type *type,
 		   const struct value_print_options *options,
 		   int *elts)
 {
+  struct type *range_type = TYPE_INDEX_TYPE (check_typedef (type));
+  CORE_ADDR addr = address + embedded_offset;
+  LONGEST lowerbound, upperbound;
   int i;
+
+  get_discrete_bounds (range_type, &lowerbound, &upperbound);
 
   if (nss != ndimensions)
     {
-      for (i = 0;
-	   (i < F77_DIM_SIZE (nss) && (*elts) < options->print_max);
+      size_t dim_size = TYPE_LENGTH (TYPE_TARGET_TYPE (type));
+      size_t offs = 0;
+
+      for (i = lowerbound;
+	   (i < upperbound + 1 && (*elts) < options->print_max);
 	   i++)
 	{
+	  struct value *subarray = value_from_contents_and_address
+	    (TYPE_TARGET_TYPE (type), value_contents_for_printing_const (val)
+	     + offs, addr + offs);
+
 	  fprintf_filtered (stream, "( ");
-	  f77_print_array_1 (nss + 1, ndimensions, TYPE_TARGET_TYPE (type),
-			     valaddr,
-			     embedded_offset + i * F77_DIM_OFFSET (nss),
-			     address,
-			     stream, recurse, val, options, elts);
+	  f77_print_array_1 (nss + 1, ndimensions, value_type (subarray),
+			     value_contents_for_printing (subarray),
+			     value_embedded_offset (subarray),
+			     value_address (subarray),
+			     stream, recurse, subarray, options, elts);
+	  offs += dim_size;
 	  fprintf_filtered (stream, ") ");
 	}
-      if (*elts >= options->print_max && i < F77_DIM_SIZE (nss)) 
+      if (*elts >= options->print_max && i < upperbound)
 	fprintf_filtered (stream, "...");
     }
   else
     {
-      for (i = 0; i < F77_DIM_SIZE (nss) && (*elts) < options->print_max;
+      for (i = lowerbound; i < upperbound + 1 && (*elts) < options->print_max;
 	   i++, (*elts)++)
 	{
-	  val_print (TYPE_TARGET_TYPE (type),
-		     valaddr,
-		     embedded_offset + i * F77_DIM_OFFSET (ndimensions),
-		     address, stream, recurse,
-		     val, options, current_language);
+	  struct value *elt = value_subscript ((struct value *)val, i);
 
-	  if (i != (F77_DIM_SIZE (nss) - 1))
+	  val_print (value_type (elt),
+		     value_contents_for_printing (elt),
+		     value_embedded_offset (elt),
+		     value_address (elt), stream, recurse,
+		     elt, options, current_language);
+
+	  if (i != upperbound)
 	    fprintf_filtered (stream, ", ");
 
 	  if ((*elts == options->print_max - 1)
-	      && (i != (F77_DIM_SIZE (nss) - 1)))
+	      && (i != upperbound))
 	    fprintf_filtered (stream, "...");
 	}
     }
@@ -225,12 +188,6 @@ f77_print_array (struct type *type, const gdb_byte *valaddr,
 Type node corrupt! F77 arrays cannot have %d subscripts (%d Max)"),
 	   ndimensions, MAX_FORTRAN_DIMS);
 
-  /* Since F77 arrays are stored column-major, we set up an 
-     offset table to get at the various row's elements.  The 
-     offset table contains entries for both offset and subarray size.  */
-
-  f77_create_arrayprint_offset_tbl (type, stream);
-
   f77_print_array_1 (1, ndimensions, type, valaddr, embedded_offset,
 		     address, stream, recurse, val, options, &elts);
 }
@@ -246,6 +203,8 @@ static const struct generic_val_print_decorations f_decorations =
   ".TRUE.",
   ".FALSE.",
   "VOID",
+  "{",
+  "}"
 };
 
 /* See val_print for a description of the various parameters of this
@@ -259,12 +218,12 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 {
   struct gdbarch *gdbarch = get_type_arch (type);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  unsigned int i = 0;	/* Number of characters printed.  */
+  int printed_field = 0; /* Number of fields printed.  */
   struct type *elttype;
   CORE_ADDR addr;
   int index;
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_STRING:
@@ -333,8 +292,8 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 	    {
 	      if (want_space)
 		fputs_filtered (" ", stream);
-	      i = val_print_string (TYPE_TARGET_TYPE (type), NULL, addr, -1,
-				    stream, options);
+	      val_print_string (TYPE_TARGET_TYPE (type), NULL, addr, -1,
+				stream, options);
 	    }
 	  return;
 	}
@@ -375,15 +334,35 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
       fprintf_filtered (stream, "( ");
       for (index = 0; index < TYPE_NFIELDS (type); index++)
         {
-          int offset = TYPE_FIELD_BITPOS (type, index) / 8;
+	  struct value *field = value_field
+	    ((struct value *)original_value, index);
 
-          val_print (TYPE_FIELD_TYPE (type, index), valaddr,
-		     embedded_offset + offset,
-		     address, stream, recurse + 1,
-		     original_value, options, current_language);
-          if (index != TYPE_NFIELDS (type) - 1)
-            fputs_filtered (", ", stream);
-        }
+	  struct type *field_type = check_typedef (TYPE_FIELD_TYPE (type, index));
+
+
+	  if (TYPE_CODE (field_type) != TYPE_CODE_FUNC)
+	    {
+	      const char *field_name;
+
+	      if (printed_field > 0)
+		fputs_filtered (", ", stream);
+
+	      field_name = TYPE_FIELD_NAME (type, index);
+	      if (field_name != NULL)
+		{
+		  fputs_filtered (field_name, stream);
+		  fputs_filtered (" = ", stream);
+		}
+
+	      val_print (value_type (field),
+			 value_contents_for_printing (field),
+			 value_embedded_offset (field),
+			 value_address (field), stream, recurse + 1,
+			 field, options, current_language);
+
+	      ++printed_field;
+	    }
+	 }
       fprintf_filtered (stream, " )");
       break;     
 

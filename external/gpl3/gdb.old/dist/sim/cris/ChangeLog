@@ -1,3 +1,159 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+	* rvdummy.c: Change cconfig.h to config.h.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (cris_devices): Delete.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.h (TARGET_BIG_ENDIAN): Delete.
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change LITTLE_ENDIAN to
+	LITTLE.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (xprintf, eprintf): Delete.
+	(cris_load_elf_file): Delete callback.  Change xprintf to
+	sim_io_printf and eprintf to sim_io_eprintf.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (current_state): Delete.
+	(sim_open): Delete current_state assignment.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Delete current_target_byte_order assignment.
+	* configure.ac: Call SIM_AC_OPTION_ENDIAN.
+	* configure: Regenerate.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (cris_program_offset_write, sim_load): Delete.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+	* Makefile.in (rvdummy.o): Delete tconfig.h.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Delete cpu variable.  Pass NULL/NULL_CIA to
+	sim_core_write_buffer.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_create_inferior): Delete old comment and set up
+	STATE_PROG_ARGV.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HARDWARE): Change default to yes and
+	add cris_900000xx.
+	* configure: Regenerated.
+	* devices.c: Delete file.
+	* dv-cris_900000xx.c: New device model.
+	* Makefile.in (SIM_OBJS): Delete devices.o.
+	* sim-if.c (sim_open): Replace cris_have_900000xxif logic with a
+	call to sim_hw_parse.
+	* tconfig.h: Delete file.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* rvdummy.c (_GNU_SOURCE): Delete.
+	(setupsocket): Mark static.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-model.o.
+	* tconfig.h (SIM_HAVE_MODEL): Delete.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.c: Rename MACH to SIM_MACH.
+	* cpuall.h: Likewise.
+	* modelv10.c: Rename MACH to SIM_MACH, MACH_IMP_PROPERTIES to
+	SIM_MACH_IMP_PROPERTIES, and MODEL to SIM_MODEL.
+	* modelv32.c: Likewise.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_SCACHE_PBB): Move from ...
+	* tconfig.h (WITH_SCACHE_PBB): ... here.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* devices.c (device_error): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HANDLES_LMA): Delete.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_close): Delete.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.

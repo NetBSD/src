@@ -1,5 +1,5 @@
 /* GNU/Linux/SH specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,24 +58,18 @@ sh_cannot_fetch_register (int regno)
   return 0;
 }
 
-static CORE_ADDR
-sh_get_pc (struct regcache *regcache)
-{
-  unsigned long pc;
-  collect_register_by_name (regcache, "pc", &pc);
-  return pc;
-}
-
-static void
-sh_set_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  unsigned long newpc = pc;
-  supply_register_by_name (regcache, "pc", &newpc);
-}
-
 /* Correct in either endianness, obviously.  */
 static const unsigned short sh_breakpoint = 0xc3c3;
 #define sh_breakpoint_len 2
+
+/* Implementation of linux_target_ops method "sw_breakpoint_from_kind".  */
+
+static const gdb_byte *
+sh_sw_breakpoint_from_kind (int kind, int *size)
+{
+  *size = sh_breakpoint_len;
+  return (const gdb_byte *) &sh_breakpoint;
+}
 
 static int
 sh_breakpoint_at (CORE_ADDR where)
@@ -89,6 +83,14 @@ sh_breakpoint_at (CORE_ADDR where)
   /* If necessary, recognize more trap instructions here.  GDB only uses the
      one.  */
   return 0;
+}
+
+/* Support for hardware single step.  */
+
+static int
+sh_supports_hardware_single_step (void)
+{
+  return 1;
 }
 
 /* Provide only a fill function for the general register set.  ps_lgetregs
@@ -105,7 +107,7 @@ static void sh_fill_gregset (struct regcache *regcache, void *buf)
 
 static struct regset_info sh_regsets[] = {
   { 0, 0, 0, 0, GENERAL_REGS, sh_fill_gregset, NULL },
-  { 0, 0, 0, -1, -1, NULL, NULL }
+  NULL_REGSET
 };
 
 static struct regsets_info sh_regsets_info =
@@ -146,13 +148,34 @@ struct linux_target_ops the_low_target = {
   sh_cannot_fetch_register,
   sh_cannot_store_register,
   NULL, /* fetch_register */
-  sh_get_pc,
-  sh_set_pc,
-  (const unsigned char *) &sh_breakpoint,
-  sh_breakpoint_len,
+  linux_get_pc_32bit,
+  linux_set_pc_32bit,
+  NULL, /* breakpoint_kind_from_pc */
+  sh_sw_breakpoint_from_kind,
   NULL,
   0,
   sh_breakpoint_at,
+  NULL, /* supports_z_point_type */
+  NULL, /* insert_point */
+  NULL, /* remove_point */
+  NULL, /* stopped_by_watchpoint */
+  NULL, /* stopped_data_address */
+  NULL, /* collect_ptrace_register */
+  NULL, /* supply_ptrace_register */
+  NULL, /* siginfo_fixup */
+  NULL, /* new_process */
+  NULL, /* new_thread */
+  NULL, /* new_fork */
+  NULL, /* prepare_to_resume */
+  NULL, /* process_qsupported */
+  NULL, /* supports_tracepoints */
+  NULL, /* get_thread_area */
+  NULL, /* install_fast_tracepoint_jump_pad */
+  NULL, /* emit_ops */
+  NULL, /* get_min_fast_tracepoint_insn_len */
+  NULL, /* supports_range_stepping */
+  NULL, /* breakpoint_kind_from_current_state */
+  sh_supports_hardware_single_step,
 };
 
 void

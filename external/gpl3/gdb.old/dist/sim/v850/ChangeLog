@@ -1,3 +1,104 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change LITTLE_ENDIAN to
+	LITTLE.
+	* configure: Regenerate.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (v850_reg_store, v850_reg_fetch): Define.
+	(sim_open): Call CPU_REG_FETCH/CPU_REG_STORE.
+	(sim_store_register): Rename to ...
+	(v850_reg_store): ... this.
+	(sim_fetch_register): Rename to ...
+	(v850_reg_fetch): ... this.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_WATCHPOINTS): Delete.
+
+2015-12-15  Dominik Vogt  <vogt@linux.vnet.ibm.com>
+
+	* simops.c (v850_bins): Fix left shift of negative value.
+
+2015-11-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_CORE): Delete.
+
+2015-11-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_MODULO_MEMORY): Delete.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o and sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Delete.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -171,14 +272,14 @@
 	* interp.c (sim_open): Add support for bfd_arch_v850_rh850
 	architecture type.  Add support for bfd_mach_v850e2 and
 	bfd_mach_v850e2v3 machine numbers.
-        * v850.igen (dbtrap): Add support for SIM_OPEN_DEBUG.
-        (cmpf.d): Correct order of operands.
-        (cmpf.s): Likewise.
-        (trncf.dul): New pattern.
-        (trncf.duw): New pattern.
-        (trncf.sul): New pattern.
-        (trncf.suw): New pattern.
-        * v850-dc: Correct bitfield selection for TRNCF.SW and CVTF.SW.
+	* v850.igen (dbtrap): Add support for SIM_OPEN_DEBUG.
+	(cmpf.d): Correct order of operands.
+	(cmpf.s): Likewise.
+	(trncf.dul): New pattern.
+	(trncf.duw): New pattern.
+	(trncf.sul): New pattern.
+	(trncf.suw): New pattern.
+	* v850-dc: Correct bitfield selection for TRNCF.SW and CVTF.SW.
 
 2012-09-13  Nick Clifton  <nickc@redhat.com>
 
@@ -312,8 +413,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -324,7 +425,7 @@
 	(OP_2C007E0): Likewise.
 	(OP_28007E0): Likewise.
 	* v850.igen (divh): Likewise.
-	
+
 	* simops.c (OP_C0): Correct saturation logic.
 	(OP_220): Likewise.
 	(OP_A0): Likewise.
@@ -346,7 +447,7 @@
 	(OP_28007E0): Likewise, for divh.  Also, sign-extend the correct
 	operand.
 	* v850.igen (divh): Likewise, for 2-op divh.
-	
+
 	* v850.igen (bsh): Fix carry logic.
 
 2007-02-20  Daniel Jacobowitz  <dan@codesourcery.com>
@@ -413,7 +514,7 @@
 	Only generate a trap if the target is not the v850e1.
 	Otherwise treat it as a special kind of branch.
 	(break): Mark as v850/v850e specific.
-	
+
 2003-05-16  Ian Lance Taylor  <ian@airs.com>
 
 	* Makefile.in (SHELL): Make sure this is defined.
@@ -476,7 +577,7 @@
 	(simops.h): New file.
 	($(BUILT_SRC_FROM_IGEN)): Do not depend on simops.h.
 	* gencode.c: Delete file.
-	
+
 2001-04-15  J.T. Conklin  <jtc@redback.com>
 
 	* Makefile.in (simops.o): Add simops.h to dependency list.
@@ -515,7 +616,7 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 Tue Dec  1 17:25:16 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* Makefile.in (NL_TARGET): Define as -DNL_TARGET_v850.
@@ -541,7 +642,7 @@ Wed May  6 19:43:27 1998  Doug Evans  <devans@canuck.cygnus.com>
 
 Tue Apr 28 18:33:31 1998  Geoffrey Noer  <noer@cygnus.com>
 
-        * configure: Regenerated to track ../common/aclocal.m4 changes.
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
 
 Sun Apr 26 15:31:55 1998  Tom Tromey  <tromey@creche>
 
@@ -594,7 +695,7 @@ Wed Feb 18 10:47:32 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-main.h (trace_module): Change variable decl to integer type.
 	(TRACE_BRANCH*, TRACE_LD, TRACE_ST): Update.
-	
+
 Tue Feb 17 12:51:18 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* interp.c (sim_store_register, sim_fetch_register): Pass in
@@ -648,7 +749,7 @@ Sat Nov 22 21:32:07 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* v850.igen (BREAK), simops.c (OP_12007E0): Rename SIGTRAP to
  	SIM_SIGTRAP.
 	(illegal): Rename SIGILL to SIM_SIGILL.
-	
+
 	* sim-main.h, simops.c, interp.c: Do not include signal.h.
 
 	* sim-main.h: Include sim-signal.h instead of signal.h.
@@ -676,7 +777,7 @@ Fri Sep 26 11:56:02 1997  Felix Lee  <flee@cygnus.com>
 
 	* sim-main.h: delete null override of SIM_ENGINE_HALT_HOOK and
  	SIM_ENGINE_RESTART_HOOK.
-	
+
 Wed Sep 24 17:38:57 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
@@ -701,7 +802,7 @@ Tue Sep 23 10:19:51 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* Makefile.in (SIM_WARNINGS, SIM_ALIGNMENT, SIM_ENDIAN,
  	SIM_HOSTENDIAN, SIM_RESERVED_BITS): Delete, moved to common.
 	(SIM_EXTRA_CFLAGS): Update.
-	
+
 Mon Sep 22 11:46:20 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
@@ -738,7 +839,7 @@ Fri Sep 19 10:37:20 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 Wed Sep 17 16:21:08 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* simops.c: Move "mov", "reti", to v850.igen, fix tracing.
-	
+
 	* interp.c (hash): Delete.
 
 	* v850.igen (nop): Really do nothing.
@@ -753,11 +854,11 @@ Wed Sep 17 14:02:10 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(trace_module): Global, save component/module name across insn.
 
 	* simops.c: Move "bsh" to v850.igen, fix.
-	
+
 	* v850.igen (callt): Load correct number of bytes. Fix tracing.
 	(stsr, ldsr): Correct src, dest fields. Fix tracing.
 	(ctret): Force alignment.  Fix tracing.
-	
+
 Tue Sep 16 22:14:01 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* simops.c (trace_output): Add result argument.
@@ -772,10 +873,10 @@ Tue Sep 16 22:14:01 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(trace_values, trace_name, trace_pc, trace_num_values): Make
  	global.
 	(GR, SR): Define.
-	
+
 	v850.insn (movea, stsr): Use.
 	(sxb, sxh, zxb, zxh): Ditto.
-	
+
 Tue Sep 16 21:14:01 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* simops.c: Move "movea" from here.
@@ -784,12 +885,12 @@ Tue Sep 16 21:14:01 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* v850.igen (simm16): Define, sign extend imm16.
 	(uimm16): Define, no sign extension.
 	(addi, andi, movea, movhi, mulhi, ori, satsubi, xori): Use.
-	
+
 	* simops.c: Move "sxh", "switch", "sxb", "callt", "dispose",
  	"mov32" from here.
 	* v850.igen: To here.
 	(switch): Fix off by two error in NIA calc.
-	
+
 Tue Sep 16 15:14:01 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* simops.c (trace_pc, trace_name, trace_values, trace_num_values):
@@ -798,7 +899,7 @@ Tue Sep 16 15:14:01 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(trace_output): Write trace values to a buffer.  Use
  	trace_one_insn to print trace info and buffer.
 	(SIZE_OPERANDS, SIZE_LOCATION): Delete.
-	
+
 Tue Sep 16 09:02:00 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-main.h (struct _sim_cpu): Add psw_mask so that reserved bits
@@ -808,7 +909,7 @@ Tue Sep 16 09:02:00 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	instructions from here.
 	* v850.igen (ldsr, stsr): To here.  Mask out reserved bits when
  	setting PSW.
-	
+
 	* interp.c (sim_open): Set psw_mask if machine known.
 
 Tue Sep 16 10:20:00 1997  Andrew Cagney  <cagney@b1.cygnus.com>
@@ -831,12 +932,12 @@ Tue Sep 16 09:02:00 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 Mon Sep 15 17:36:15 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* simops.c (OP_300, OP_400, OP_70): Make behavour depend on PSW[US].
-	
+
 	* simops.c: Move "divun", "sld.bu", "divhn", "divhun", "divn",
  	"divun", "pushml" code from here to v850.igen.
 	(divun): Make global.
 	(type3_regs): Make global
-	
+
 	* v850.igen: Move simops.c code to here.
 
 	* interp.c (sim_create_inferior): For v850eq set US bit by
@@ -865,7 +966,7 @@ Fri Sep 12 15:11:03 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* v850.igen (prepare, ...): Add to v850eq architecture.
 
 	* interp.c (sim_open): Default to v850eq.
-	
+
 	* interp.c (sim_open): Default to v850e.
 	* sim-main.h (signal.h): Include.
 
@@ -880,7 +981,7 @@ Thu Sep 11 08:40:03 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* interp.c (sim_open): Use sim_do_commandf instead of asprintf.
 
-	* sim-main.h (INSN_NAME): 
+	* sim-main.h (INSN_NAME):
 
 	* Makefile.in (INCLUDE): Add SIM_EXTRA_DEPS.
 	(SIM_EXTRA_DEPS): Add itable.h
@@ -922,7 +1023,7 @@ Mon Sep  8 18:33:04 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(SEXT32): Delete, used?
 	(SEXT40, SEXT44, SEXT64): Use UNSIGNED64 for constants, not ...LL.
 	(WITH_TARGET_WORD_MSB): Define as 31. v850 little bit endian.
-	
+
 	* simops.c: Use EXTEND15 from sim-bits instead of SEXT16.
 
 	* sim-main.h (DEBUG_TRACE, DEBUG_VALUES, v850_debug): Delete,
@@ -950,7 +1051,7 @@ Fri Sep  5 17:04:48 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-main.h (WITH_WATCHPOINTS): Define.
 	(WITH_MODULO_MEMORY): Define
-	
+
 	* Makefile.in (SIM_OBJS): Add sim-resume, sim-watch, sim-stop,
  	sim-reason.
 
@@ -1011,7 +1112,7 @@ Wed Sep  3 10:18:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-main.h: Replace SIM_HAVE_FLATMEM with mem ptr.
 	* interp.c (map): Do not add to a void pointer.
-	
+
 	* Makefile.in (INCLUDE): Add sim-main.h
 
 	* configure.in: Check for time.h
@@ -1039,7 +1140,7 @@ Wed Sep  3 10:18:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(AC_CHECK_FUNCS): Add utime.
 	(AC_CHECK_HEADERS): Add stdlib.h, string.h, strings.h, utime.h
 	configure: Regenerate.
-	
+
 
 	* Makefile.in (SIM_RUN_OBJS): Use nrun.o.
 	(SIM_OBJS): Add sim-io.o, sim-hload.o, sim-utils.o, sim-options.o,
@@ -1055,7 +1156,7 @@ Wed Sep  3 10:18:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gencode.c (write_template): Generate #include sim-main.h.
 	(write_opcodes): Ditto.
-	
+
 	* interp.c (prog_bfd, prog_bfd_was_opened_p): Delete.
 	(v850_callback): Ditto.
 	(sim_kind, myname): Ditto.
@@ -1076,7 +1177,7 @@ Wed Sep  3 10:18:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(sim_set_callbacks): Delete.
 	(sim_set_interrupt): Pass in SD, use.
 	(start_time): Delete.
-	
+
 	* v850_sim.h: Remove everything except `struct simops' from here.
  	* sim-main.h: Move most to here.
 	* gencode.c: Move #includes to here.
@@ -1093,7 +1194,7 @@ Mon Sep  1 12:07:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* configure.in: Check for time, chmod.
 	* configure: Regenerate.
 	* simops.c (SYS_time, SYS_chmod): Use HAVE_TIME, HAVE_CHMOD.
-	
+
 	* simops.c (../../libgloss/v850/sys/syscall.h): Include instead of
  	sys/syscall.h.
 	(OP_10007E0): Check the existance each SYS_* macro independantly.
@@ -1125,16 +1226,16 @@ Fri Aug 22 10:39:28 1997  Nick Clifton  <nickc@cygnus.com>
 
 	* simops.c (bsh): Only set CY flag if either of the bottom
 	bytes is zero.
-	
+
 	* simops.c (prepare, dispose): Lower numbered
 	registers go to higher numbered address.
 
 	* simops.c (unsigned divide instructions): S bit set if result has
 	top bit set.
-	
+
 	* simops.c (pushml, pushmh, popml, popmh): Lower numbered
 	registers go to higher numbered address.
-	
+
 Wed Aug 20 13:56:35 1997  Nick Clifton  <nickc@cygnus.com>
 
 	* simops.c (OP_107E0, OP_107F0, OP_307E0, OP_307F0): Use correct
@@ -1151,22 +1252,22 @@ Wed Aug 13 19:06:55 1997  Nick Clifton  <nickc@cygnus.com>
 	* interp.c (sim_resume): Opcode functions return amount to be
 	added to PC and all opcodes take a standard format in the OP[]
 	array.
-	
+
 	(do_format_*): Functions removed.
 
 	* v850_sim.h (SP, EP): New register mnemonics.
-	
+
 	* gencode.c (write_header): Functions prototypes return an
 	integer.
 
 	* simops.c: Opcode functions return amount to be added to PC.
-	
+
 	* v850_sim.h (CTPC, CTPSW, CTBP): New register mnemonics.
-	
+
 	* simops.c: Add support for v850e instructions.
-	
+
 	* simops.c: Add support for v850eq instructions.
-	
+
 Tue May 20 10:24:14 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* interp.c (sim_open): Add callback argument.
@@ -1303,12 +1404,12 @@ Sun Nov  3 23:02:54 1996  Stan Shebs  <shebs@andros.cygnus.com>
 	* interp.c: Add support for variable-size allocation of memory,
 	via simulator command "sim memory-map".
 	(map): Issue SIGSEGV for references to invalid memory regions.
-	
+
 Thu Oct 31 14:44:10 1996  Gavin Koch  <gavin@cygnus.com>
-        
-        * simops.c: Include <sys/time.h> for struct timeval and 
-        struct timezone.
-        
+
+	* simops.c: Include <sys/time.h> for struct timeval and
+	struct timezone.
+
 Wed Oct 30 08:49:10 1996  Jeffrey A Law  (law@cygnus.com)
 
 	* simops.c (OP_10007E0): Handle SYS_times and SYS_gettimeofday.
@@ -1358,11 +1459,11 @@ Tue Oct 15 16:19:51 1996  Stu Grossman  (grossman@critters.cygnus.com)
 	* (sim_size):  MEM_SIZE is now bytes, not shift factor.
 
 Tue Oct  1 15:53:24 1996  Gavin Koch <gavin@cygnus.com>
-        
-        * simops.c (trace_input): Swapped order of operands for output
-        output of OP_IMM_REG.  Changed the fetching of the operands for
-        OP_LOAD32, and OP_STORE32 to work like op-function.
-        
+
+	* simops.c (trace_input): Swapped order of operands for output
+	output of OP_IMM_REG.  Changed the fetching of the operands for
+	OP_LOAD32, and OP_STORE32 to work like op-function.
+
 Mon Sep 30 15:46:33 1996  Stu Grossman  (grossman@critters.cygnus.com)
 
 	* interp.c:  Move includes of remote-sim.h and callback.h to
@@ -1392,7 +1493,7 @@ Fri Sep 27 18:34:09 1996  Stu Grossman  (grossman@critters.cygnus.com)
 
 Fri Sep 27 17:42:37 1996  Jeffrey A Law  (law@cygnus.com)
 
-	* simops.c (trace_input): Fix thinko. 
+	* simops.c (trace_input): Fix thinko.
 
 Wed Sep 18 09:54:12 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
@@ -1568,6 +1669,6 @@ Thu Aug 29 13:53:29 1996  Jeffrey A Law  (law@cygnus.com)
 
 Wed Aug 28 13:53:22 1996  Jeffrey A Law  (law@cygnus.com)
 
-	* ChangeLog, Makefile.in, configure, configure.in, v850_sim.h, 
+	* ChangeLog, Makefile.in, configure, configure.in, v850_sim.h,
 	gencode.c, interp.c, simops.c: Created.
 

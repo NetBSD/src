@@ -1,6 +1,6 @@
 /* Simulator for TI MSP430 and MSP430X
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Based on sim/bfin/bfin-sim.c which was contributed by Analog Devices, Inc.
 
@@ -30,19 +30,7 @@
 #include "opcode/msp430-decode.h"
 #include "sim-main.h"
 #include "sim-syscall.h"
-#include "dis-asm.h"
 #include "targ-vals.h"
-#include "trace.h"
-
-static int
-loader_write_mem (SIM_DESC sd,
-		  SIM_ADDR taddr,
-		  const unsigned char *buf,
-		  int bytes)
-{
-  SIM_CPU *cpu = MSP430_CPU (sd);
-  return sim_core_write_buffer (sd, cpu, write_map, buf, taddr, bytes);
-}
 
 static sim_cia
 msp430_pc_fetch (SIM_CPU *cpu)
@@ -63,6 +51,9 @@ lookup_symbol (SIM_DESC sd, const char *name)
   asymbol **symbol_table = STATE_SYMBOL_TABLE (sd);
   long number_of_symbols = STATE_NUM_SYMBOLS (sd);
   long i;
+
+  if (abfd == NULL)
+    return -1;
 
   if (symbol_table == NULL)
     {
@@ -146,11 +137,10 @@ SIM_DESC
 sim_open (SIM_OPEN_KIND kind,
 	  struct host_callback_struct *callback,
 	  struct bfd *abfd,
-	  char **argv)
+	  char * const *argv)
 {
   SIM_DESC sd = sim_state_alloc (kind, callback);
   char c;
-  struct bfd *prog_bfd;
 
   /* Initialise the simulator.  */
 
@@ -181,8 +171,8 @@ sim_open (SIM_OPEN_KIND kind,
      Note - these values match the memory regions in the libgloss/msp430/msp430[xl]-sim.ld scripts.  */
   if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x2, 1) == 0)
     sim_do_commandf (sd, "memory-region 0,0x20"); /* Needed by the GDB testsuite.  */
-  if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x200, 1) == 0)
-    sim_do_commandf (sd, "memory-region 0x200,0xfd00");  /* RAM and/or ROM */
+  if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x500, 1) == 0)
+    sim_do_commandf (sd, "memory-region 0x500,0xfa00");  /* RAM and/or ROM */
   if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0xfffe, 1) == 0)
     sim_do_commandf (sd, "memory-region 0xffc0,0x40"); /* VECTORS.  */
   if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x10000, 1) == 0)
@@ -199,14 +189,6 @@ sim_open (SIM_OPEN_KIND kind,
       sim_state_free (sd);
       return 0;
     }
-
-  prog_bfd = sim_load_file (sd, argv[0], callback,
-			    "the program",
-			    STATE_PROG_BFD (sd),
-			    0 /* verbose */,
-			    1 /* use LMA instead of VMA */,
-			    loader_write_mem);
-  /* Allow prog_bfd to be NULL - this is needed by the GDB testsuite.  */
 
   /* Establish any remaining configuration options.  */
   if (sim_config (sd) != SIM_RC_OK)
@@ -225,32 +207,25 @@ sim_open (SIM_OPEN_KIND kind,
   assert (MAX_NR_PROCESSORS == 1);
   msp430_initialize_cpu (sd, MSP430_CPU (sd));
 
-  msp430_trace_init (STATE_PROG_BFD (sd));
-
-  if (prog_bfd != NULL)
-    {
-      MSP430_CPU (sd)->state.cio_breakpoint = lookup_symbol (sd, "C$$IO$$");
-      MSP430_CPU (sd)->state.cio_buffer = lookup_symbol (sd, "__CIOBUF__");
-      if (MSP430_CPU (sd)->state.cio_buffer == -1)
-	MSP430_CPU (sd)->state.cio_buffer = lookup_symbol (sd, "_CIOBUF_");
-    }
+  MSP430_CPU (sd)->state.cio_breakpoint = lookup_symbol (sd, "C$$IO$$");
+  MSP430_CPU (sd)->state.cio_buffer = lookup_symbol (sd, "__CIOBUF__");
+  if (MSP430_CPU (sd)->state.cio_buffer == -1)
+    MSP430_CPU (sd)->state.cio_buffer = lookup_symbol (sd, "_CIOBUF_");
 
   return sd;
 }
 
 void
-sim_close (SIM_DESC sd,
-	   int quitting)
+msp430_sim_close (SIM_DESC sd, int quitting)
 {
   free (STATE_SYMBOL_TABLE (sd));
-  sim_state_free (sd);
 }
 
 SIM_RC
 sim_create_inferior (SIM_DESC sd,
 		     struct bfd *abfd,
-		     char **argv,
-		     char **env)
+		     char * const *argv,
+		     char * const *env)
 {
   unsigned char resetv[2];
   int c;
@@ -366,7 +341,7 @@ get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
 
 	  /* Index values are signed.  */
 	  if (addr & (1 << (sign - 1)))
-	    addr |= -1 << sign;
+	    addr |= -(1 << sign);
 
 	  addr += reg;
 
@@ -406,10 +381,12 @@ get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
       if (addr == 0x5dd)
 	rv = 2;
 #endif
-      if (addr >= 0x130 && addr <= 0x15B)
+      if ((addr >= 0x130 && addr <= 0x15B)
+	  || (addr >= 0x4C0 && addr <= 0x4EB))
 	{
 	  switch (addr)
 	    {
+	    case 0x4CA:
 	    case 0x13A:
 	      switch (HWMULT (sd, hwmult_type))
 		{
@@ -424,6 +401,7 @@ get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
 		}
 	      break;
 
+	    case 0x4CC:
 	    case 0x13C:
 	      switch (HWMULT (sd, hwmult_type))
 		{
@@ -439,6 +417,7 @@ get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
 		}
 	      break;
 
+	    case 0x4CE:
 	    case 0x13E:
 	      switch (HWMULT (sd, hwmult_type))
 		{
@@ -457,18 +436,22 @@ get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
 		}
 	      break;
 
+	    case 0x4E4:
 	    case 0x154:
 	      rv = zero_ext (HWMULT (sd, hw32mult_result), 16);
 	      break;
 
+	    case 0x4E6:
 	    case 0x156:
 	      rv = zero_ext (HWMULT (sd, hw32mult_result) >> 16, 16);
 	      break;
 
+	    case 0x4E8:
 	    case 0x158:
 	      rv = zero_ext (HWMULT (sd, hw32mult_result) >> 32, 16);
 	      break;
 
+	    case 0x4EA:
 	    case 0x15A:
 	      switch (HWMULT (sd, hw32mult_type))
 		{
@@ -559,7 +542,7 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 
 	  /* Index values are signed.  */
 	  if (addr & (1 << (sign - 1)))
-	    addr |= -1 << sign;
+	    addr |= -(1 << sign);
 
 	  addr += reg;
 
@@ -583,7 +566,8 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
       if (addr == 0x5ce)
 	putchar (val);
 #endif
-      if (addr >= 0x130 && addr <= 0x15B)
+      if ((addr >= 0x130 && addr <= 0x15B)
+	  || (addr >= 0x4C0 && addr <= 0x4EB))
 	{
 	  signed int a,b;
 
@@ -592,12 +576,33 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 
 	  switch (addr)
 	    {
-	    case 0x130: HWMULT (sd, hwmult_op1) = val; HWMULT (sd, hwmult_type) = UNSIGN_32; break;
-	    case 0x132: HWMULT (sd, hwmult_op1) = val; HWMULT (sd, hwmult_type) = SIGN_32; break;
-	    case 0x134: HWMULT (sd, hwmult_op1) = val; HWMULT (sd, hwmult_type) = UNSIGN_MAC_32; break;
-	    case 0x136: HWMULT (sd, hwmult_op1) = val; HWMULT (sd, hwmult_type) = SIGN_MAC_32; break;
+	    case 0x4C0:
+	    case 0x130:
+	      HWMULT (sd, hwmult_op1) = val;
+	      HWMULT (sd, hwmult_type) = UNSIGN_32;
+	      break;
 
-	    case 0x138: HWMULT (sd, hwmult_op2) = val;
+	    case 0x4C2:
+	    case 0x132:
+	      HWMULT (sd, hwmult_op1) = val;
+	      HWMULT (sd, hwmult_type) = SIGN_32;
+	      break;
+
+	    case 0x4C4:
+	    case 0x134:
+	      HWMULT (sd, hwmult_op1) = val;
+	      HWMULT (sd, hwmult_type) = UNSIGN_MAC_32;
+	      break;
+
+	    case 0x4C6:
+	    case 0x136:
+	      HWMULT (sd, hwmult_op1) = val;
+	      HWMULT (sd, hwmult_type) = SIGN_MAC_32;
+	      break;
+
+	    case 0x4C8:
+	    case 0x138:
+	      HWMULT (sd, hwmult_op2) = val;
 	      switch (HWMULT (sd, hwmult_type))
 		{
 		case UNSIGN_32:
@@ -632,7 +637,8 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 		}
 	      break;
 
-	    case 0x13a:
+	    case 0x4CA:
+	    case 0x13A:
 	      /* Copy into LOW result...  */
 	      switch (HWMULT (sd, hwmult_type))
 		{
@@ -649,24 +655,34 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 		}
 	      break;
 		
+	    case 0x4D0:
 	    case 0x140:
 	      HWMULT (sd, hw32mult_op1) = val;
 	      HWMULT (sd, hw32mult_type) = UNSIGN_64;
 	      break;
+
+	    case 0x4D2:
 	    case 0x142:
 	      HWMULT (sd, hw32mult_op1) = (HWMULT (sd, hw32mult_op1) & 0xFFFF) | (val << 16);
 	      break;
+
+	    case 0x4D4:
 	    case 0x144:
 	      HWMULT (sd, hw32mult_op1) = val;
 	      HWMULT (sd, hw32mult_type) = SIGN_64;
 	      break;
+
+	    case 0x4D6:
 	    case 0x146:
 	      HWMULT (sd, hw32mult_op1) = (HWMULT (sd, hw32mult_op1) & 0xFFFF) | (val << 16);
 	      break;
+
+	    case 0x4E0:
 	    case 0x150:
 	      HWMULT (sd, hw32mult_op2) = val;
 	      break;
 
+	    case 0x4E2:
 	    case 0x152:
 	      HWMULT (sd, hw32mult_op2) = (HWMULT (sd, hw32mult_op2) & 0xFFFF) | (val << 16);
 	      switch (HWMULT (sd, hw32mult_type))
@@ -836,17 +852,6 @@ msp430_cio (SIM_DESC sd)
 #define SRC     get_op (sd, opcode, 1)
 #define DSRC    get_op (sd, opcode, 0)
 #define DEST(V) put_op (sd, opcode, 0, (V))
-
-static int
-msp430_dis_read (bfd_vma memaddr,
-		 bfd_byte *myaddr,
-		 unsigned int length,
-		 struct disassemble_info *dinfo)
-{
-  SIM_DESC sd = dinfo->private_data;
-  sim_core_read_buffer (sd, MSP430_CPU (sd), 0, myaddr, memaddr, length);
-  return 0;
-}
 
 #define DO_ALU(OP,SOP,MORE)						\
   {									\
@@ -1105,32 +1110,11 @@ msp430_step_once (SIM_DESC sd)
       break;
     }
 
-  if (TRACE_INSN_P (MSP430_CPU (sd)))
-    {
-      disassemble_info info;
-      unsigned char b[10];
-
-      msp430_trace_one (opcode_pc);
-
-      sim_core_read_buffer (sd, MSP430_CPU (sd), 0, b, opcode_pc, opsize);
-
-      init_disassemble_info (&info, stderr, (fprintf_ftype) fprintf);
-      info.private_data = sd;
-      info.read_memory_func = msp430_dis_read;
-      fprintf (stderr, "%#8x  ", opcode_pc);
-      for (i = 0; i < opsize; i += 2)
-	fprintf (stderr, " %02x%02x", b[i+1], b[i]);
-      for (; i < 6; i += 2)
-	fprintf (stderr, "     ");
-      fprintf (stderr, "  ");
-      print_insn_msp430 (opcode_pc, &info);
-      fprintf (stderr, "\n");
-      fflush (stdout);
-    }
-
   if (TRACE_ANY_P (MSP430_CPU (sd)))
     trace_prefix (sd, MSP430_CPU (sd), NULL_CIA, opcode_pc,
 		  TRACE_LINENUM_P (MSP430_CPU (sd)), NULL, 0, "");
+
+  TRACE_DISASM (MSP430_CPU (sd), opcode_pc);
 
   carry_to_use = 0;
   switch (opcode->id)

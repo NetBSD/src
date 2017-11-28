@@ -1,5 +1,5 @@
 /* Simulator tracing/debugging support.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -22,11 +22,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef SIM_TRACE_H
 #define SIM_TRACE_H
 
+#include "dis-asm.h"
+
 /* Standard traceable entities.  */
 
 enum {
-  /* Trace insn execution.  */
+  /* Trace insn execution.  The port itself is responsible for displaying what
+     it thinks it is decoding.  */
   TRACE_INSN_IDX = 1,
+
+  /* Disassemble code addresses.  Like insn tracing, but relies on the opcode
+     framework for displaying code.  Can be slower, more accurate as to what
+     the binary code actually is, but not how the sim is decoding it.  */
+  TRACE_DISASM_IDX,
 
   /* Trace insn decoding.
      ??? This is more of a simulator debugging operation and might best be
@@ -97,6 +105,7 @@ enum {
    The case choice here is on purpose.  The lowercase parts are args to
    --with-trace.  */
 #define TRACE_insn     (1 << TRACE_INSN_IDX)
+#define TRACE_disasm   (1 << TRACE_DISASM_IDX)
 #define TRACE_decode   (1 << TRACE_DECODE_IDX)
 #define TRACE_extract  (1 << TRACE_EXTRACT_IDX)
 #define TRACE_linenum  (1 << TRACE_LINENUM_IDX)
@@ -118,6 +127,7 @@ enum {
 /* Preprocessor macros to simplify tests of WITH_TRACE.  */
 #define WITH_TRACE_ANY_P	(WITH_TRACE)
 #define WITH_TRACE_INSN_P	WITH_TRACE_P (TRACE_INSN_IDX)
+#define WITH_TRACE_DISASM_P	WITH_TRACE_P (TRACE_DISASM_IDX)
 #define WITH_TRACE_DECODE_P	WITH_TRACE_P (TRACE_DECODE_IDX)
 #define WITH_TRACE_EXTRACT_P	WITH_TRACE_P (TRACE_EXTRACT_IDX)
 #define WITH_TRACE_LINENUM_P	WITH_TRACE_P (TRACE_LINENUM_IDX)
@@ -190,6 +200,19 @@ typedef struct _trace_data {
      ??? Not all cpu's support this.  */
   ADDR_RANGE range;
 #define TRACE_RANGE(t) (& (t)->range)
+
+  /* The bfd used to disassemble code.  Should compare against STATE_PROG_BFD
+     before using the disassembler helper.
+     Meant for use by the internal trace module only.  */
+  struct bfd *dis_bfd;
+
+  /* The function used to actually disassemble code.
+     Meant for use by the internal trace module only.  */
+  disassembler_ftype disassembler;
+
+  /* State used with the disassemble function.
+     Meant for use by the internal trace module only.  */
+  disassemble_info dis_info;
 } TRACE_DATA;
 
 /* System tracing support.  */
@@ -204,6 +227,7 @@ typedef struct _trace_data {
 /* Non-zero if --trace-<xxxx> was specified for SD.  */
 #define STRACE_ANY_P(sd)	(WITH_TRACE_ANY_P && (STATE_TRACE_DATA (sd)->trace_any_p))
 #define STRACE_INSN_P(sd)	STRACE_P (sd, TRACE_INSN_IDX)
+#define STRACE_DISASM_P(sd)	STRACE_P (sd, TRACE_DISASM_IDX)
 #define STRACE_DECODE_P(sd)	STRACE_P (sd, TRACE_DECODE_IDX)
 #define STRACE_EXTRACT_P(sd)	STRACE_P (sd, TRACE_EXTRACT_IDX)
 #define STRACE_LINENUM_P(sd)	STRACE_P (sd, TRACE_LINENUM_IDX)
@@ -226,6 +250,7 @@ typedef struct _trace_data {
       trace_generic (sd, NULL, idx, fmt, ## args); \
   } while (0)
 #define STRACE_INSN(sd, fmt, args...)		STRACE (sd, TRACE_INSN_IDX, fmt, ## args)
+#define STRACE_DISASM(sd, fmt, args...)		STRACE (sd, TRACE_DISASM_IDX, fmt, ## args)
 #define STRACE_DECODE(sd, fmt, args...)		STRACE (sd, TRACE_DECODE_IDX, fmt, ## args)
 #define STRACE_EXTRACT(sd, fmt, args...)	STRACE (sd, TRACE_EXTRACT_IDX, fmt, ## args)
 #define STRACE_LINENUM(sd, fmt, args...)	STRACE (sd, TRACE_LINENUM_IDX, fmt, ## args)
@@ -252,6 +277,7 @@ typedef struct _trace_data {
 /* Non-zero if --trace-<xxxx> was specified for CPU.  */
 #define TRACE_ANY_P(cpu)	(WITH_TRACE_ANY_P && (CPU_TRACE_DATA (cpu)->trace_any_p))
 #define TRACE_INSN_P(cpu)	TRACE_P (cpu, TRACE_INSN_IDX)
+#define TRACE_DISASM_P(cpu)	TRACE_P (cpu, TRACE_DISASM_IDX)
 #define TRACE_DECODE_P(cpu)	TRACE_P (cpu, TRACE_DECODE_IDX)
 #define TRACE_EXTRACT_P(cpu)	TRACE_P (cpu, TRACE_EXTRACT_IDX)
 #define TRACE_LINENUM_P(cpu)	TRACE_P (cpu, TRACE_LINENUM_IDX)
@@ -266,6 +292,7 @@ typedef struct _trace_data {
 #define TRACE_SYSCALL_P(cpu)	TRACE_P (cpu, TRACE_SYSCALL_IDX)
 #define TRACE_REGISTER_P(cpu)	TRACE_P (cpu, TRACE_REGISTER_IDX)
 #define TRACE_DEBUG_P(cpu)	TRACE_P (cpu, TRACE_DEBUG_IDX)
+#define TRACE_DISASM_P(cpu)	TRACE_P (cpu, TRACE_DISASM_IDX)
 
 /* Helper functions for printing messages.  */
 #define TRACE(cpu, idx, fmt, args...) \
@@ -288,6 +315,11 @@ typedef struct _trace_data {
 #define TRACE_SYSCALL(cpu, fmt, args...)	TRACE (cpu, TRACE_SYSCALL_IDX, fmt, ## args)
 #define TRACE_REGISTER(cpu, fmt, args...)	TRACE (cpu, TRACE_REGISTER_IDX, fmt, ## args)
 #define TRACE_DEBUG(cpu, fmt, args...)		TRACE (cpu, TRACE_DEBUG_IDX, fmt, ## args)
+#define TRACE_DISASM(cpu, addr) \
+  do { \
+    if (TRACE_DISASM_P (cpu)) \
+      trace_disasm (CPU_STATE (cpu), cpu, addr); \
+  } while (0)
 
 /* Tracing functions.  */
 
@@ -312,6 +344,10 @@ extern void trace_generic (SIM_DESC sd,
 			   const char *fmt,
 			   ...)
      __attribute__((format (printf, 4, 5)));
+
+/* Disassemble the specified address.  */
+
+extern void trace_disasm (SIM_DESC sd, sim_cpu *cpu, address_word addr);
 
 typedef enum {
   trace_fmt_invalid,

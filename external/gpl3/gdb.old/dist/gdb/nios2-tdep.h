@@ -1,5 +1,5 @@
 /* Target-dependent header for the Nios II architecture, for GDB.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Mentor Graphics, Inc.
 
    This file is part of GDB.
@@ -19,6 +19,9 @@
 
 #ifndef NIOS2_TDEP_H
 #define NIOS2_TDEP_H
+
+/* Nios II ISA specific encodings and macros.  */
+#include "opcode/nios2.h"
 
 /* Registers.  */
 #define NIOS2_Z_REGNUM 0     /* Zero */
@@ -61,13 +64,15 @@
 
 /* Size of an instruction, in bytes.  */
 #define NIOS2_OPCODE_SIZE 4
+#define NIOS2_CDX_OPCODE_SIZE 2
 
 /* Target-dependent structure in gdbarch.  */
 struct gdbarch_tdep
 {
   /* Assumes FRAME is stopped at a syscall (trap) instruction; returns
      the expected next PC.  */
-  CORE_ADDR (*syscall_next_pc) (struct frame_info *frame);
+  CORE_ADDR (*syscall_next_pc) (struct frame_info *frame,
+				const struct nios2_opcode *op);
 
   /* Offset to PC value in jump buffer.
      If this is negative, longjmp support will be disabled.  */

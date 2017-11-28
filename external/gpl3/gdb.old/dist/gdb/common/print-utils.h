@@ -1,6 +1,6 @@
 /* Cell-based print utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,10 @@
 
 #ifndef COMMON_CELLS_H
 #define COMMON_CELLS_H
+
+/* How many characters (including the terminating null byte) fit in a
+   cell.  */
+#define PRINT_CELL_SIZE 50
 
 /* %d for LONGEST.  The result is stored in a circular static buffer,
    NUMCELLS deep.  */
@@ -65,6 +69,14 @@ extern const char *core_addr_to_string (const CORE_ADDR addr);
 
 extern const char *core_addr_to_string_nz (const CORE_ADDR addr);
 
-extern const char *host_address_to_string (const void *addr);
+extern const char *host_address_to_string_1 (const void *addr);
+
+/* Wrapper that avoids adding a pointless cast to all callers.  */
+#define host_address_to_string(ADDR) \
+  host_address_to_string_1 ((const void *) (ADDR))
+
+/* Return the next entry in the circular print buffer.  */
+
+extern char *get_print_cell (void);
 
 #endif /* COMMON_CELLS_H */

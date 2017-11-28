@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,18 +61,14 @@ if { [gdb_compile_shlib ${solib_srcfile} ${solib_binfile} {}] != "" } {
     return -1
 }
 
-if {[is_remote target]} {
-    set solib_binfile_target [gdb_download ${solib_binfile}]
-} else {
-    set solib_binfile_target $solib_binfile
-}
+set solib_binfile_target [gdb_remote_download target ${solib_binfile}]
 
 proc one_jit_test {count match_str} {
     with_test_prefix "one_jit_test-$count" {
 	global verbose testfile srcfile2 binfile2 binfile2_dlopen solib_binfile_target solib_binfile_test_msg
 
 	clean_restart $testfile
-	gdb_load_shlibs $binfile2
+	gdb_load_shlib $binfile2
 
 	# This is just to help debugging when things fail
 	if {$verbose > 0} {
@@ -121,3 +117,10 @@ proc one_jit_test {count match_str} {
 
 one_jit_test 1 "${hex}  jit_function_0000"
 one_jit_test 2 "${hex}  jit_function_0000\[\r\n\]+${hex}  jit_function_0001"
+
+# We don't intend to load the .so as a JIT debuginfo reader, but we
+# need some handy file name for a completion test.
+gdb_test \
+    "complete jit-reader-load [standard_output_file ${solib_testfile}.s]" \
+    "jit-reader-load $solib_binfile" \
+    "test jit-reader-load filename completion"

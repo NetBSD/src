@@ -1,3 +1,11 @@
+2015-08-31  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2010-08-06  Yaakov Selkowitz  <yselkowi@redhat.com>
+
+	* configure: Regenerate.
+
 2010-06-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
 
 	PR bootstrap/44621
@@ -110,8 +118,8 @@
 
 2004-04-25  Paolo Bonzini  <bonzini@gnu.org>
 
-        * configure.ac: Point config.intl to the parent directory of
-        ${top_builddir}.
+	* configure.ac: Point config.intl to the parent directory of
+	${top_builddir}.
 	* configure: Regenerate.
 
 2004-03-10  Kelley Cook  <kcook@gcc.gnu.org>

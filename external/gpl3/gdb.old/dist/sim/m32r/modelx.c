@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2015 Free Software Foundation, Inc.
+Copyright 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -3010,7 +3010,7 @@ m32rx_model_init (SIM_CPU *cpu)
 #define TIMING_DATA(td) 0
 #endif
 
-static const MODEL m32rx_models[] =
+static const SIM_MODEL m32rx_models[] =
 {
   { "m32rx", & m32rx_mach, MODEL_M32RX, TIMING_DATA (& m32rx_timing[0]), m32rx_model_init },
   { 0 }
@@ -3018,7 +3018,7 @@ static const MODEL m32rx_models[] =
 
 /* The properties of this cpu's implementation.  */
 
-static const MACH_IMP_PROPERTIES m32rxf_imp_properties =
+static const SIM_MACH_IMP_PROPERTIES m32rxf_imp_properties =
 {
   sizeof (SIM_CPU),
 #if WITH_SCACHE
@@ -3060,7 +3060,7 @@ m32rx_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH m32rx_mach =
+const SIM_MACH m32rx_mach =
 {
   "m32rx", "m32rx", MACH_M32RX,
   32, 32, & m32rx_models[0], & m32rxf_imp_properties,

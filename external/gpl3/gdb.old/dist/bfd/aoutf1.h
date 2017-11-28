@@ -1,5 +1,5 @@
 /* A.out "format 1" file handling code for BFD.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -155,8 +155,8 @@ sunos_set_arch_mach (bfd *abfd, enum machine_type machtype)
   bfd_set_arch_mach (abfd, arch, machine);
 }
 
-#define SET_ARCH_MACH(ABFD, EXEC) \
-  NAME(sunos,set_arch_mach) (ABFD, N_MACHTYPE (EXEC)); \
+#define SET_ARCH_MACH(ABFD, EXECP) \
+  NAME(sunos,set_arch_mach) (ABFD, N_MACHTYPE (EXECP)); \
   choose_reloc_size(ABFD);
 
 /* Determine the size of a relocation entry, based on the architecture.  */
@@ -194,14 +194,14 @@ sunos_write_object_contents (bfd *abfd)
       switch (bfd_get_mach (abfd))
 	{
 	case bfd_mach_m68000:
-	  N_SET_MACHTYPE (*execp, M_UNKNOWN);
+	  N_SET_MACHTYPE (execp, M_UNKNOWN);
 	  break;
 	case bfd_mach_m68010:
-	  N_SET_MACHTYPE (*execp, M_68010);
+	  N_SET_MACHTYPE (execp, M_68010);
 	  break;
 	default:
 	case bfd_mach_m68020:
-	  N_SET_MACHTYPE (*execp, M_68020);
+	  N_SET_MACHTYPE (execp, M_68020);
 	  break;
 	}
       break;
@@ -209,28 +209,28 @@ sunos_write_object_contents (bfd *abfd)
       switch (bfd_get_mach (abfd))
 	{
 	case bfd_mach_sparc_sparclet:
-	  N_SET_MACHTYPE (*execp, M_SPARCLET);
+	  N_SET_MACHTYPE (execp, M_SPARCLET);
 	  break;
 	case bfd_mach_sparc_sparclite_le:
-	  N_SET_MACHTYPE (*execp, M_SPARCLITE_LE);
+	  N_SET_MACHTYPE (execp, M_SPARCLITE_LE);
 	  break;
 	default:
-	  N_SET_MACHTYPE (*execp, M_SPARC);
+	  N_SET_MACHTYPE (execp, M_SPARC);
 	  break;
 	}
       break;
     case bfd_arch_i386:
-      N_SET_MACHTYPE (*execp, M_386);
+      N_SET_MACHTYPE (execp, M_386);
       break;
     default:
-      N_SET_MACHTYPE (*execp, M_UNKNOWN);
+      N_SET_MACHTYPE (execp, M_UNKNOWN);
     }
 
   choose_reloc_size (abfd);
 
-  N_SET_FLAGS (*execp, aout_backend_info (abfd)->exec_hdr_flags);
+  N_SET_FLAGS (execp, aout_backend_info (abfd)->exec_hdr_flags);
 
-  N_SET_DYNAMIC (*execp, (long)(bfd_get_file_flags (abfd) & DYNAMIC));
+  N_SET_DYNAMIC (execp, (long)(bfd_get_file_flags (abfd) & DYNAMIC));
 
   WRITE_HEADERS (abfd, execp);
 
@@ -397,7 +397,7 @@ swapcore_sun3 (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
   intcore->c_signo = H_GET_32 (abfd, &extcore->c_signo);
   intcore->c_tsize = H_GET_32 (abfd, &extcore->c_tsize);
   intcore->c_dsize = H_GET_32 (abfd, &extcore->c_dsize);
-  intcore->c_data_addr = N_DATADDR (intcore->c_aouthdr);
+  intcore->c_data_addr = N_DATADDR (&intcore->c_aouthdr);
   intcore->c_ssize = H_GET_32 (abfd, &extcore->c_ssize);
   memcpy (intcore->c_cmdname, extcore->c_cmdname, sizeof (intcore->c_cmdname));
   intcore->fp_stuff_pos = offsetof (struct external_sun3_core, fp_stuff);
@@ -432,7 +432,7 @@ swapcore_sparc (bfd *abfd, char *ext, struct internal_sunos_core *intcore)
   intcore->c_signo = H_GET_32 (abfd, &extcore->c_signo);
   intcore->c_tsize = H_GET_32 (abfd, &extcore->c_tsize);
   intcore->c_dsize = H_GET_32 (abfd, &extcore->c_dsize);
-  intcore->c_data_addr = N_DATADDR (intcore->c_aouthdr);
+  intcore->c_data_addr = N_DATADDR (&intcore->c_aouthdr);
   intcore->c_ssize = H_GET_32 (abfd, &extcore->c_ssize);
   memcpy (intcore->c_cmdname, extcore->c_cmdname, sizeof (intcore->c_cmdname));
   intcore->fp_stuff_pos = offsetof (struct external_sparc_core, fp_stuff);

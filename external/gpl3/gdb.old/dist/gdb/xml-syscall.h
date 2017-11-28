@@ -1,7 +1,7 @@
 /* Functions that provide the mechanism to parse a syscall XML file
    and get its values.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,5 +49,21 @@ void get_syscall_by_name (struct gdbarch *gdbarch,
    system, or NULL otherwise.  */
 
 const char **get_syscall_names (struct gdbarch *gdbarch);
+
+/* Function used to retrieve the list of syscalls of a given group in
+   the system.  Return a list of syscalls that are element of the
+   group, terminated by an empty element. The list is malloc'ed
+   and must be freed by the caller.  If group doesn't exist, return
+   NULL.  */
+
+struct syscall *get_syscalls_by_group (struct gdbarch *gdbarch,
+				       const char *group);
+
+/* Function used to retrieve the list of syscall groups in the system.
+   Return an array of strings terminated by a NULL element.  The list
+   must be freed by the caller.  Return NULL if there is no syscall
+   information available.  */
+
+const char **get_syscall_group_names (struct gdbarch *gdbarch);
 
 #endif /* XML_SYSCALL_H */

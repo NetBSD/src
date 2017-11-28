@@ -1,7 +1,7 @@
 /* Target-dependent code for the Texas Instruments MSP430 for GDB, the
    GNU debugger.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -248,7 +248,6 @@ msp430_pseudo_register_write (struct gdbarch *gdbarch,
 			      struct regcache *regcache,
 			      int regnum, const gdb_byte *buffer)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   if (MSP430_NUM_REGS <= regnum && regnum < MSP430_NUM_TOTAL_REGS)
 
     {
@@ -306,7 +305,8 @@ struct msp430_get_opcode_byte_handle
 static int
 msp430_get_opcode_byte (void *handle)
 {
-  struct msp430_get_opcode_byte_handle *opcdata = handle;
+  struct msp430_get_opcode_byte_handle *opcdata
+    = (struct msp430_get_opcode_byte_handle *) handle;
   int status;
   gdb_byte byte;
 
@@ -502,10 +502,11 @@ msp430_analyze_frame_prologue (struct frame_info *this_frame,
 	stop_addr = func_start;
 
       msp430_analyze_prologue (get_frame_arch (this_frame), func_start,
-			       stop_addr, *this_prologue_cache);
+			       stop_addr,
+			       (struct msp430_prologue *) *this_prologue_cache);
     }
 
-  return *this_prologue_cache;
+  return (struct msp430_prologue *) *this_prologue_cache;
 }
 
 /* Given a frame and a prologue cache, return this frame's base.  */
@@ -581,13 +582,9 @@ static const struct frame_unwind msp430_unwind = {
 static int
 msp430_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 {
-  if (reg < MSP430_NUM_REGS)
+  if (reg >= 0 && reg < MSP430_NUM_REGS)
     return reg + MSP430_NUM_REGS;
-  else
-    {
-      warning (_("Unmapped DWARF Register #%d encountered."), reg);
-      return -1;
-    }
+  return -1;
 }
 
 /* Implement the "return_value" gdbarch method.  */
@@ -770,10 +767,16 @@ msp430_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		  int size = 2;
 
 		  if (code_model == MSP_LARGE_CODE_MODEL
-		      && TYPE_CODE (arg_type) == TYPE_CODE_PTR)
+		      && (TYPE_CODE (arg_type) == TYPE_CODE_PTR
+		          || TYPE_CODE (arg_type) == TYPE_CODE_REF
+			  || TYPE_CODE (arg_type) == TYPE_CODE_STRUCT
+			  || TYPE_CODE (arg_type) == TYPE_CODE_UNION))
 		    {
-		      /* Pointer arguments using large memory model are passed
-		         using entire register.  */
+		      /* When using the large memory model, pointer,
+			 reference, struct, and union arguments are
+			 passed using the entire register.  (As noted
+			 earlier, aggregates are always passed by
+			 reference.) */
 		      if (offset != 0)
 			continue;
 		      size = 4;
@@ -951,7 +954,7 @@ msp430_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = (struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));
+  tdep = XNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
   tdep->isa = isa;

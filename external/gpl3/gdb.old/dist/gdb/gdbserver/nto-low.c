@@ -1,6 +1,6 @@
 /* QNX Neutrino specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -794,7 +794,7 @@ nto_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
 {
   int wtype = _DEBUG_BREAK_HW; /* Always request HW.  */
 
-  TRACE ("%s type:%c addr: 0x%08lx len:%d\n", __func__, (int)type, addr, len);
+  TRACE ("%s type:%c addr: 0x%08lx len:%d\n", __func__, (int)type, addr, size);
   switch (type)
     {
     case raw_bkpt_type_sw:
@@ -826,7 +826,7 @@ nto_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
 {
   int wtype = _DEBUG_BREAK_HW; /* Always request HW.  */
 
-  TRACE ("%s type:%c addr: 0x%08lx len:%d\n", __func__, (int)type, addr, len);
+  TRACE ("%s type:%c addr: 0x%08lx len:%d\n", __func__, (int)type, addr, size);
   switch (type)
     {
     case raw_bkpt_type_sw:
@@ -921,10 +921,19 @@ nto_supports_non_stop (void)
   return 0;
 }
 
+/* Implementation of the target_ops method "sw_breakpoint_from_kind".  */
+
+static const gdb_byte *
+nto_sw_breakpoint_from_kind (int kind, int *size)
+{
+  *size = the_low_target.breakpoint_len;
+  return the_low_target.breakpoint;
+}
 
 
 static struct target_ops nto_target_ops = {
   nto_create_inferior,
+  NULL,  /* post_create_inferior */
   nto_attach,
   nto_kill,
   nto_detach,
@@ -949,10 +958,7 @@ static struct target_ops nto_target_ops = {
   NULL, /* supports_stopped_by_sw_breakpoint */
   NULL, /* stopped_by_hw_breakpoint */
   NULL, /* supports_stopped_by_hw_breakpoint */
-  /* Although nto has hardware single step, still disable this
-     feature for not, because it is implemented in linux-low.c instead
-     of in generic code.  */
-  NULL, /* supports_conditional_breakpoints */
+  target_can_do_hardware_single_step,
   nto_stopped_by_watchpoint,
   nto_stopped_data_address,
   NULL, /* nto_read_offsets */
@@ -963,7 +969,42 @@ static struct target_ops nto_target_ops = {
   NULL, /* xfer_siginfo */
   nto_supports_non_stop,
   NULL, /* async */
-  NULL  /* start_non_stop */
+  NULL, /* start_non_stop */
+  NULL, /* supports_multi_process */
+  NULL, /* supports_fork_events */
+  NULL, /* supports_vfork_events */
+  NULL, /* supports_exec_events */
+  NULL, /* handle_new_gdb_connection */
+  NULL, /* handle_monitor_command */
+  NULL, /* core_of_thread */
+  NULL, /* read_loadmap */
+  NULL, /* process_qsupported */
+  NULL, /* supports_tracepoints */
+  NULL, /* read_pc */
+  NULL, /* write_pc */
+  NULL, /* thread_stopped */
+  NULL, /* get_tib_address */
+  NULL, /* pause_all */
+  NULL, /* unpause_all */
+  NULL, /* stabilize_threads */
+  NULL, /* install_fast_tracepoint_jump_pad */
+  NULL, /* emit_ops */
+  NULL, /* supports_disable_randomization */
+  NULL, /* get_min_fast_tracepoint_insn_len */
+  NULL, /* qxfer_libraries_svr4 */
+  NULL, /* support_agent */
+  NULL, /* support_btrace */
+  NULL, /* enable_btrace */
+  NULL, /* disable_btrace */
+  NULL, /* read_btrace */
+  NULL, /* read_btrace_conf */
+  NULL, /* supports_range_stepping */
+  NULL, /* pid_to_exec_file */
+  NULL, /* multifs_open */
+  NULL, /* multifs_unlink */
+  NULL, /* multifs_readlink */
+  NULL, /* breakpoint_kind_from_pc */
+  nto_sw_breakpoint_from_kind,
 };
 
 
@@ -977,8 +1018,6 @@ initialize_low (void)
 
   TRACE ("%s\n", __func__);
   set_target_ops (&nto_target_ops);
-  set_breakpoint_data (the_low_target.breakpoint,
-		       the_low_target.breakpoint_len);
 
   /* We use SIGUSR1 to gain control after we block waiting for a process.
      We use sigwaitevent to wait.  */

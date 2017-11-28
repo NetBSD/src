@@ -70,55 +70,41 @@ BISON = bison
 MAKEINFO = makeinfo
 RANLIB = @RANLIB@
 
-SIM_CFLAGS = @sim_cflags@
 INLINE_CFLAGS = @sim_inline@
-BSWAP_CFLAGS = @sim_bswap@
 ENDIAN_CFLAGS = @sim_endian@
-REGPARM_CFLAGS = @sim_regparm@
-STDCALL_CFLAGS = @sim_stdcall@
 HOSTENDIAN_CFLAGS = @sim_hostendian@
 SMP_CFLAGS = @sim_smp@
 XOR_ENDIAN_CFLAGS = @sim_xor_endian@
 BITSIZE_CFLAGS = @sim_bitsize@
 HOSTBITSIZE_CFLAGS = @sim_hostbitsize@
-ENV_CFLAGS = @sim_env@
 TIMEBASE_CFLAGS = @sim_timebase@
 ALIGNMENT_CFLAGS = @sim_alignment@
 FLOAT_CFLAGS = @sim_float@
-TRACE_CFLAGS = @sim_trace@
-ASSERT_CFLAGS = @sim_assert@
 RESERVED_CFLAGS = @sim_reserved@
 MONITOR_CFLAGS = @sim_monitor@
 MODEL_CFLAGS = @sim_model@ @sim_default_model@ @sim_model_issue@
-STDIO_CFLAGS = @sim_stdio@
 TERMIO_CFLAGS = @sim_termio@
 WARNING_CFLAGS = @sim_warnings@
 DEVZERO_CFLAGS = @sim_devzero@
-CONFIG_CFLAGS = $(BSWAP_CFLAGS) \
+CONFIG_CFLAGS = \
   $(ENDIAN_CFLAGS) \
-  $(REGPARM_CFLAGS) \
-  $(STDCALL_CFLAGS) \
   $(HOSTENDIAN_CFLAGS) \
   $(SMP_CFLAGS) \
   $(XOR_ENDIAN_CFLAGS) \
   $(BITSIZE_CFLAGS) \
   $(HOSTBITSIZE_CFLAGS) \
-  $(ENV_CFLAGS) \
   $(TIMEBASE_CFLAGS) \
   $(ALIGNMENT_CFLAGS) \
   $(FLOAT_CFLAGS) \
-  $(TRACE_CFLAGS) \
-  $(ASSERT_CFLAGS) \
   $(RESERVED_CFLAGS) \
   $(MONITOR_CFLAGS) \
   $(MODEL_CFLAGS) \
-  $(STDIO_CFLAGS) \
   $(TERMIO_CFLAGS) \
   $(DEVZERO_CFLAGS)
 SIM_FPU_CFLAGS = @sim_fpu_cflags@
 
-STD_CFLAGS	= $(CFLAGS) $(INLINE_CFLAGS) $(CONFIG_CFLAGS) $(WARNING_CFLAGS) $(SIM_CFLAGS) $(HDEFINES) $(TDEFINES) $(INCLUDES) $(INTL_CFLAGS) $(SIM_FPU_CFLAGS)
-NOWARN_CFLAGS	= $(CFLAGS) $(INLINE_CFLAGS) $(CONFIG_CFLAGS) $(SIM_CFLAGS) $(HDEFINES) $(TDEFINES) $(INCLUDES)  $(SIM_FPU_CFLAGS)
+STD_CFLAGS	= $(CFLAGS) $(INLINE_CFLAGS) $(CONFIG_CFLAGS) $(WARNING_CFLAGS) $(HDEFINES) $(TDEFINES) $(INCLUDES) $(INTL_CFLAGS) $(SIM_FPU_CFLAGS)
+NOWARN_CFLAGS	= $(CFLAGS) $(INLINE_CFLAGS) $(CONFIG_CFLAGS) $(HDEFINES) $(TDEFINES) $(INCLUDES)  $(SIM_FPU_CFLAGS)
 BUILD_CFLAGS	= $(CFLAGS_FOR_BUILD) $(INCLUDES) $(WARNING_CFLAGS)
 
 BUILD_LDFLAGS	=
@@ -446,9 +432,6 @@ SUPPORT_H = \
 TARG_VALS_H = \
         targ-vals.h
 
-TCONFIG_H = \
-        tconfig.h
-
 INLINE = \
 	inline.h \
 	inline.c
@@ -554,7 +537,7 @@ PACKAGE_OBJ = @sim_pk_obj@
 
 
 psim: $(TARGETLIB) main.o $(LIBIBERTY_LIB) $(BFD_LIB) $(LIBINTL_DEP)
-	$(CC) $(CFLAGS) $(SIM_CFLAGS) $(LDFLAGS) -o psim$(EXEEXT) main.o $(TARGETLIB) $(BFD_LIB) $(ZLIB) $(LIBINTL) $(LIBIBERTY_LIB) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o psim$(EXEEXT) main.o $(TARGETLIB) $(BFD_LIB) $(ZLIB) $(LIBINTL) $(LIBIBERTY_LIB) $(LIBS)
 
 run: psim
 	rm -f run$(EXEEXT)
@@ -635,8 +618,9 @@ mon.o: mon.c $(BASICS_H) $(CPU_H) $(MON_H)
 
 # GDB after 4.16 expects the default_callback structure to be setup.
 # As a kludge, build the common stuff here for now.
-gentmap: ../common/gentmap.c Makefile targ-vals.def
-	$(CC_FOR_BUILD) $(BUILD_CFLAGS) -I. -I../common -I$(srcdir)/../common -o gentmap $< $(BUILD_LIBS)
+gentmap: $(srcdir)/../common/gentmap.c Makefile targ-vals.def
+	$(CC_FOR_BUILD) $(BUILD_CFLAGS) -I. -I../common -I$(srcdir)/../common \
+		-o gentmap $(srcdir)/../common/gentmap.c $(BUILD_LIBS)
 
 targ-vals.def: $(srcdir)/../common/nltvals.def
 	rm -f targ-vals.def tmp-def
@@ -653,21 +637,17 @@ targ-map.c: Makefile gentmap $(srcdir)/../../move-if-change
 	./gentmap -c > tmp-map.c
 	$(SHELL) $(srcdir)/../../move-if-change tmp-map.c targ-map.c
 
-callback.o: ../common/callback.c $(TARG_VALS_H) $(CONFIG_H)
-	$(CC) -c $(STD_CFLAGS) -DHAVE_CONFIG_H $<
+callback.o: $(srcdir)/../common/callback.c $(TARG_VALS_H) $(CONFIG_H)
+	$(CC) -c $(STD_CFLAGS) -DHAVE_CONFIG_H $(srcdir)/../common/callback.c
 
 targ-map.o: targ-map.c $(ANSIDECL_H) $(GDB_CALLBACK_H) $(TARG_VALS_H)
 
-sim-fpu.o: $(srcdir)/../common/sim-fpu.c $(CONFIG_H) $(TCONFIG_H)
+sim-fpu.o: $(srcdir)/../common/sim-fpu.c $(CONFIG_H)
 	$(CC) -c $(STD_CFLAGS) -DHAVE_CONFIG_H $(srcdir)/../common/sim-fpu.c 
-
-tconfig.h:
-	rm -f tconfig.h
-	echo > tconfig.h
 
 # Rebuild options whenever something changes so the date/time is up to date.
 options.o: options.c $(CPU_H) $(OPTIONS_H) $(DEFINES_H) $(BASICS_H) $(IDECODE_H) $(INLINE) $(LIB_SRC) $(BUILT_SRC) config.status Makefile
-	$(CC) -c $(STD_CFLAGS) '-DOPCODE_RULES="@sim_opcode@"' '-DIGEN_FLAGS="$(IGEN_FLAGS)"' '-DDGEN_FLAGS="$(DGEN_FLAGS)"' $<
+	$(CC) -c $(STD_CFLAGS) '-DOPCODE_RULES="@sim_opcode@"' '-DIGEN_FLAGS="$(IGEN_FLAGS)"' '-DDGEN_FLAGS="$(DGEN_FLAGS)"' $(srcdir)/options.c
 
 defines.h: tmp-defines; @true
 tmp-defines: config.h Makefile

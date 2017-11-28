@@ -2,7 +2,7 @@
 
 @c This file is part of the GDB manual.
 @c
-@c Copyright (C) 2003-2015 Free Software Foundation, Inc.
+@c Copyright (C) 2003-2016 Free Software Foundation, Inc.
 @c
 @c See the file gdbint.texinfo for copying conditions.
 @c
@@ -141,11 +141,16 @@ at the entry-point instruction.  For @samp{attach} and @samp{core},
 inferior, and before any information on the inferior has been printed.
 @end deftypefun
 
-@deftypefun void record_changed (struct inferior *@var{inferior}, int @var{started})
+@deftypefun void record_changed (struct inferior *@var{inferior}, int @var{started}, const char *@var{method}, const char *@var{format})
 The status of process record for inferior @var{inferior} in
 @value{GDBN} has changed.  The process record is started if
 @var{started} is true, and the process record is stopped if
 @var{started} is false.
+
+When @var{started} is true, @var{method} indicates the short name of the method
+used for recording.  If the method supports multiple formats, @var{format}
+indicates which one is being used, otherwise it is NULL.  When @var{started} is
+false, they are both NULL.
 @end deftypefun
 
 @deftypefun void solib_loaded (struct so_list *@var{solib})
@@ -302,3 +307,7 @@ This observer is used for internal testing.  Do not use.
 See testsuite/gdb.gdb/observer.exp.
 @end deftypefun
 
+@deftypefun void user_selected_context_changed (user_selected_what @var{selection})
+The user-selected inferior, thread and/or frame has changed.  The user_select_what
+flag specifies if the inferior, thread and/or frame has changed.
+@end deftypefun

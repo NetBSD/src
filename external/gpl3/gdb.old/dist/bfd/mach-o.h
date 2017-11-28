@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,6 +23,7 @@
 
 #include "bfd.h"
 #include "mach-o/loader.h"
+#include "mach-o/external.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -591,6 +592,10 @@ typedef struct mach_o_data_struct
 {
   /* Mach-O header.  */
   bfd_mach_o_header header;
+
+  /* File offset of the header.  Usually this is 0.  */
+  file_ptr hdr_offset;
+
   /* Array of load commands (length is given by header.ncmds).  */
   bfd_mach_o_load_command *first_command;
   bfd_mach_o_load_command *last_command;
@@ -641,8 +646,8 @@ bfd_boolean bfd_mach_o_valid (bfd *);
 bfd_boolean bfd_mach_o_mkobject_init (bfd *);
 const bfd_target *bfd_mach_o_object_p (bfd *);
 const bfd_target *bfd_mach_o_core_p (bfd *);
-const bfd_target *bfd_mach_o_archive_p (bfd *);
-bfd *bfd_mach_o_openr_next_archived_file (bfd *, bfd *);
+const bfd_target *bfd_mach_o_fat_archive_p (bfd *);
+bfd *bfd_mach_o_fat_openr_next_archived_file (bfd *, bfd *);
 bfd_boolean bfd_mach_o_set_arch_mach (bfd *, enum bfd_architecture,
                                       unsigned long);
 int bfd_mach_o_lookup_command (bfd *, bfd_mach_o_load_command_type, bfd_mach_o_load_command **);
@@ -672,7 +677,7 @@ char *bfd_mach_o_core_file_failing_command (bfd *);
 int bfd_mach_o_core_file_failing_signal (bfd *);
 bfd_boolean bfd_mach_o_core_file_matches_executable_p (bfd *, bfd *);
 bfd *bfd_mach_o_fat_extract (bfd *, bfd_format , const bfd_arch_info_type *);
-const bfd_target *bfd_mach_o_header_p (bfd *, bfd_mach_o_filetype,
+const bfd_target *bfd_mach_o_header_p (bfd *, file_ptr, bfd_mach_o_filetype,
                                        bfd_mach_o_cpu_type);
 bfd_boolean bfd_mach_o_build_commands (bfd *);
 bfd_boolean bfd_mach_o_set_section_contents (bfd *, asection *, const void *,
@@ -698,6 +703,11 @@ bfd_boolean bfd_mach_o_read_symtab_symbols (bfd *);
 bfd_boolean bfd_mach_o_read_symtab_strtab (bfd *abfd);
 
 bfd_vma bfd_mach_o_get_base_address (bfd *);
+
+void bfd_mach_o_swap_in_non_scattered_reloc (bfd *, bfd_mach_o_reloc_info *,
+					     unsigned char *);
+bfd_boolean bfd_mach_o_canonicalize_non_scattered_reloc (bfd *, bfd_mach_o_reloc_info *, arelent *, asymbol **);
+bfd_boolean bfd_mach_o_pre_canonicalize_one_reloc (bfd *, struct mach_o_reloc_info_external *, bfd_mach_o_reloc_info *, arelent *, asymbol **);
 
 /* A placeholder in case we need to suppress emitting the dysymtab for some
    reason (e.g. compatibility with older system versions).  */
@@ -735,7 +745,8 @@ typedef struct bfd_mach_o_backend_data
 {
   enum bfd_architecture arch;
   bfd_vma page_size;
-  bfd_boolean (*_bfd_mach_o_swap_reloc_in)(arelent *, bfd_mach_o_reloc_info *);
+  bfd_boolean (*_bfd_mach_o_canonicalize_one_reloc)
+    (bfd *, struct mach_o_reloc_info_external *, arelent *, asymbol **);
   bfd_boolean (*_bfd_mach_o_swap_reloc_out)(arelent *, bfd_mach_o_reloc_info *);
   bfd_boolean (*_bfd_mach_o_print_thread)(bfd *, bfd_mach_o_thread_flavour *,
                                           void *, char *);

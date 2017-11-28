@@ -1,7 +1,7 @@
 # Host: FreeBSD/amd64
 NATDEPFILES= fork-child.o inf-ptrace.o \
 	fbsd-nat.o amd64-nat.o amd64bsd-nat.o amd64fbsd-nat.o \
-	bsd-kvm.o x86-nat.o x86-dregs.o
+	bsd-kvm.o x86-nat.o x86-dregs.o x86bsd-nat.o
 HAVE_NATIVE_GCORE_HOST = 1
 
 LOADLIBES= -lkvm

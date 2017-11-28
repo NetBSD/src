@@ -1,4 +1,5 @@
 # Simulator dejagnu utilities.
+# TODO: Switch to using dg-xxx helpers rather than parsing the files directly.
 
 # Communicate simulator path from sim_init to sim_version.
 # For some reason [board_info target sim] doesn't work in sim_version.
@@ -423,6 +424,7 @@ proc run_sim_test { name requested_machs } {
 # Subroutine of run_sim_test to process options in FILE.
 
 proc slurp_options { file } {
+    global subdir srcdir
     if [catch { set f [open $file r] } x] {
 	#perror "couldn't open `$file': $x"
 	perror "$x"
@@ -442,6 +444,10 @@ proc slurp_options { file } {
 	# Whitespace here is space-tab.
 	if [regexp $pat $line xxx opt_name opt_machs opt_val] {
 	    # match!
+	    set opt_val [string map [list \
+		{$srcdir} "$srcdir" \
+		{$subdir} "$subdir" \
+	    ] "$opt_val"]
 	    lappend opt_array [list $opt_name $opt_machs $opt_val]
 	    set seen_opt 1
 	} else {

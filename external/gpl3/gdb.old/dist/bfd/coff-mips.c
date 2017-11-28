@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -940,11 +940,10 @@ mips_relocate_section (bfd *output_bfd,
 	{
 	  if (gp_undefined)
 	    {
-	      if (! ((*info->callbacks->reloc_dangerous)
-		     (info, _("GP relative relocation used when GP not defined"),
-		      input_bfd, input_section,
-		      int_rel.r_vaddr - input_section->vma)))
-		return FALSE;
+	      (*info->callbacks->reloc_dangerous)
+		(info, _("GP relative relocation used when GP not defined"),
+		 input_bfd, input_section,
+		 int_rel.r_vaddr - input_section->vma);
 	      /* Only give the error once per link.  */
 	      gp = 4;
 	      _bfd_set_gp_value (output_bfd, gp);
@@ -960,7 +959,7 @@ mips_relocate_section (bfd *output_bfd,
 		 and the GP value of OUTPUT_BFD (which is in GP).  */
 	      addend = ecoff_data (input_bfd)->gp - gp;
 	    }
-	  else if (! info->relocatable
+	  else if (! bfd_link_relocatable (info)
 		   || h->root.type == bfd_link_hash_defined
 		   || h->root.type == bfd_link_hash_defweak)
 	    {
@@ -986,7 +985,7 @@ mips_relocate_section (bfd *output_bfd,
 	    }
 	}
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	{
 	  /* We are generating relocatable output, and must convert
 	     the existing reloc.  */
@@ -1075,11 +1074,9 @@ mips_relocate_section (bfd *output_bfd,
 		  if (int_rel.r_symndx == -1)
 		    {
 		      /* This symbol is not being written out.  */
-		      if (! ((*info->callbacks->unattached_reloc)
-			     (info, h->root.root.string, input_bfd,
-			      input_section,
-			      int_rel.r_vaddr - input_section->vma)))
-			return FALSE;
+		      (*info->callbacks->unattached_reloc)
+			(info, h->root.root.string, input_bfd, input_section,
+			 int_rel.r_vaddr - input_section->vma);
 		      int_rel.r_symndx = 0;
 		    }
 		  relocation = 0;
@@ -1151,11 +1148,9 @@ mips_relocate_section (bfd *output_bfd,
 		}
 	      else
 		{
-		  if (! ((*info->callbacks->undefined_symbol)
-			 (info, h->root.root.string, input_bfd,
-			  input_section,
-			  int_rel.r_vaddr - input_section->vma, TRUE)))
-		    return FALSE;
+		  (*info->callbacks->undefined_symbol)
+		    (info, h->root.root.string, input_bfd, input_section,
+		     int_rel.r_vaddr - input_section->vma, TRUE);
 		  relocation = 0;
 		}
 	    }
@@ -1223,11 +1218,10 @@ mips_relocate_section (bfd *output_bfd,
 		  name = NULL;
 		else
 		  name = bfd_section_name (input_bfd, s);
-		if (! ((*info->callbacks->reloc_overflow)
-		       (info, (h ? &h->root : NULL), name, howto->name,
-			(bfd_vma) 0, input_bfd, input_section,
-			int_rel.r_vaddr - input_section->vma)))
-		  return FALSE;
+		(*info->callbacks->reloc_overflow)
+		  (info, (h ? &h->root : NULL), name, howto->name,
+		   (bfd_vma) 0, input_bfd, input_section,
+		   int_rel.r_vaddr - input_section->vma);
 	      }
 	      break;
 	    }

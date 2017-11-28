@@ -1,5 +1,5 @@
 /* Return the canonical absolute name of a given file.
-   Copyright (C) 1996-2012 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LIBC
+/* Don't use __attribute__ __nonnull__ in this compilation unit.  Otherwise gcc
+   optimizes away the name == NULL test below.  */
+# define _GL_ARG_NONNULL(params)
+
 # define _GL_USE_STDLIB_ALLOC 1
 # include <config.h>
 #endif
 
 #if !HAVE_CANONICALIZE_FILE_NAME || !FUNC_REALPATH_WORKS || defined _LIBC
-
-/* Don't use __attribute__ __nonnull__ in this compilation unit.  Otherwise gcc
-   optimizes away the name == NULL test below.  */
-#define _GL_ARG_NONNULL(params)
 
 /* Specification.  */
 #include <stdlib.h>

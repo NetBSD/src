@@ -1,5 +1,5 @@
 /* Low-level file-handling.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -316,7 +316,7 @@ gdb_fopen_cloexec (const char *filename, const char *opentype)
     {
       char *copy;
 
-      copy = alloca (strlen (opentype) + 2);
+      copy = (char *) alloca (strlen (opentype) + 2);
       strcpy (copy, opentype);
       /* This is a glibc extension but we try it unconditionally on
 	 this path.  */
@@ -410,17 +410,17 @@ gdb_pipe_cloexec (int filedes[2])
 static void
 do_close_cleanup (void *arg)
 {
-  int *fd = arg;
+  int *fd = (int *) arg;
 
   close (*fd);
 }
 
-/* See cleanup-utils.h.  */
+/* See filestuff.h.  */
 
 struct cleanup *
 make_cleanup_close (int fd)
 {
-  int *saved_fd = xmalloc (sizeof (fd));
+  int *saved_fd = XNEW (int);
 
   *saved_fd = fd;
   return make_cleanup_dtor (do_close_cleanup, saved_fd, xfree);

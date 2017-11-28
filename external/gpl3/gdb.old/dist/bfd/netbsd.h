@@ -1,5 +1,5 @@
 /* BFD back-end definitions used by all NetBSD targets.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,21 +34,21 @@
 #define N_SHARED_LIB(x) 	(N_DYNAMIC (x))
 
 /* We have 6 bits of flags and 10 bits of machine ID.  */
-#define N_MACHTYPE(exec) \
-	((enum machine_type) (((exec).a_info >> 16) & 0x03ff))
-#define N_FLAGS(exec) \
-	(((exec).a_info >> 26) & 0x3f)
+#define N_MACHTYPE(execp) \
+	((enum machine_type) (((execp)->a_info >> 16) & 0x03ff))
+#define N_FLAGS(execp) \
+	(((execp)->a_info >> 26) & 0x3f)
 
-#define N_SET_INFO(exec, magic, type, flags) \
-	((exec).a_info = ((magic) & 0xffff) \
+#define N_SET_INFO(execp, magic, type, flags) \
+	((execp)->a_info = ((magic) & 0xffff) \
 	 | (((int) (type) & 0x3ff) << 16) \
 	 | (((flags) & 0x3f) << 24))
-#define N_SET_MACHTYPE(exec, machtype) \
-	((exec).a_info = \
-         ((exec).a_info & 0xfb00ffff) | ((((int) (machtype)) & 0x3ff) << 16))
-#define N_SET_FLAGS(exec, flags) \
-	((exec).a_info = \
-	 ((exec).a_info & 0x03ffffff) | ((flags & 0x03f) << 26))
+#define N_SET_MACHTYPE(execp, machtype) \
+	((execp)->a_info = \
+         ((execp)->a_info & 0xfb00ffff) | ((((int) (machtype)) & 0x3ff) << 16))
+#define N_SET_FLAGS(execp, flags) \
+	((execp)->a_info = \
+	 ((execp)->a_info & 0x03ffffff) | ((flags & 0x03f) << 26))
 
 #include "sysdep.h"
 #include "bfd.h"
@@ -84,12 +84,7 @@ MY (write_object_contents) (bfd *abfd)
      will normally have been done by set_section_contents, but only if
      there actually are some section contents.  */
   if (! abfd->output_has_begun)
-    {
-      bfd_size_type text_size;
-      file_ptr text_end;
-
-      NAME (aout, adjust_sizes_and_vmas) (abfd, & text_size, & text_end);
-    }
+    NAME (aout, adjust_sizes_and_vmas) (abfd);
 
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
 
@@ -97,10 +92,10 @@ MY (write_object_contents) (bfd *abfd)
   switch (bfd_get_arch(abfd))
     {
     case DEFAULT_ARCH:
-      N_SET_MACHTYPE(*execp, DEFAULT_MID);
+      N_SET_MACHTYPE (execp, DEFAULT_MID);
       break;
     default:
-      N_SET_MACHTYPE(*execp, M_UNKNOWN);
+      N_SET_MACHTYPE (execp, M_UNKNOWN);
       break;
     }
 

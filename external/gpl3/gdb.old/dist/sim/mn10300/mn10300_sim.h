@@ -8,7 +8,6 @@
 #include "bfd.h"
 #include "sim-fpu.h"
 
-extern host_callback *mn10300_callback;
 extern SIM_DESC simulator;
 
 typedef unsigned8 uint8;

@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -63,7 +63,6 @@ static struct
 {
   const char *name;
   int offset;
-  int required;
 } symbol_list[] = {
   IPA_SYM(helper_thread_id),
   IPA_SYM(cmd_buf),
@@ -94,9 +93,10 @@ agent_look_up_symbols (void *arg)
     {
       CORE_ADDR *addrp =
 	(CORE_ADDR *) ((char *) &ipa_sym_addrs + symbol_list[i].offset);
+      struct objfile *objfile = (struct objfile *) arg;
 
       if (find_minimal_symbol_address (symbol_list[i].name, addrp,
-				       arg) != 0)
+				       objfile) != 0)
 	{
 	  DEBUG_AGENT ("symbol `%s' not found\n", symbol_list[i].name);
 	  return -1;

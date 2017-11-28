@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2015 Free Software Foundation, Inc.
+Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -738,263 +738,263 @@ const CGEN_OPERAND xc16x_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", XC16X_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_NIL] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sr: source register */
   { "sr", XC16X_OPERAND_SR, HW_H_GR, 11, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R2] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* dr: destination register */
   { "dr", XC16X_OPERAND_DR, HW_H_GR, 15, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R1] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* dri: destination register */
   { "dri", XC16X_OPERAND_DRI, HW_H_GR, 11, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R4] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R4] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* srb: source register */
   { "srb", XC16X_OPERAND_SRB, HW_H_GRB, 11, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R2] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* drb: destination register */
   { "drb", XC16X_OPERAND_DRB, HW_H_GRB, 15, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R1] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sr2: 2 bit source register */
   { "sr2", XC16X_OPERAND_SR2, HW_H_GR, 9, 2,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R0] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R0] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* src1: source register 1 */
   { "src1", XC16X_OPERAND_SRC1, HW_H_GR, 15, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R1] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* src2: source register 2 */
   { "src2", XC16X_OPERAND_SRC2, HW_H_GR, 11, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R2] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_R2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* srdiv: source register 2 */
   { "srdiv", XC16X_OPERAND_SRDIV, HW_H_REGDIV8, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REG8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REG8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* RegNam: PSW bits */
   { "RegNam", XC16X_OPERAND_REGNAM, HW_H_PSW, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REG8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REG8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm2: 2 bit unsigned number */
   { "uimm2", XC16X_OPERAND_UIMM2, HW_H_EXT, 13, 2,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM2] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM2] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm3: 3 bit unsigned number */
   { "uimm3", XC16X_OPERAND_UIMM3, HW_H_R01, 10, 3,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM3] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM3] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm4: 4 bit unsigned number */
   { "uimm4", XC16X_OPERAND_UIMM4, HW_H_UINT, 15, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM4] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM4] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm7: 7 bit trap number */
   { "uimm7", XC16X_OPERAND_UIMM7, HW_H_UINT, 15, 7,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM7] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM7] } },
     { 0|A(HASH_PREFIX)|A(RELOC)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm8: 8 bit unsigned immediate */
   { "uimm8", XC16X_OPERAND_UIMM8, HW_H_UINT, 23, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM8] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm16: 16 bit unsigned immediate */
   { "uimm16", XC16X_OPERAND_UIMM16, HW_H_UINT, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM16] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM16] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* upof16: 16 bit unsigned immediate */
   { "upof16", XC16X_OPERAND_UPOF16, HW_H_ADDR, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MEMORY] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MEMORY] } },
     { 0|A(POF_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* reg8: 8 bit word register number */
   { "reg8", XC16X_OPERAND_REG8, HW_H_R8, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REG8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REG8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* regmem8: 8 bit word register number */
   { "regmem8", XC16X_OPERAND_REGMEM8, HW_H_REGMEM8, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGMEM8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGMEM8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* regbmem8: 8 bit byte register number */
   { "regbmem8", XC16X_OPERAND_REGBMEM8, HW_H_REGBMEM8, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGMEM8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGMEM8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* regoff8: 8 bit word register number */
   { "regoff8", XC16X_OPERAND_REGOFF8, HW_H_R8, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGOFF8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGOFF8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* reghi8: 8 bit word register number */
   { "reghi8", XC16X_OPERAND_REGHI8, HW_H_R8, 23, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGHI8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGHI8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* regb8: 8 bit byte register number */
   { "regb8", XC16X_OPERAND_REGB8, HW_H_GRB8, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGB8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGB8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* genreg: 8 bit word register number */
   { "genreg", XC16X_OPERAND_GENREG, HW_H_R8, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGB8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REGB8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* seg: 8 bit segment number */
   { "seg", XC16X_OPERAND_SEG, HW_H_UINT, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_SEG8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_SEG8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* seghi8: 8 bit hi segment number */
   { "seghi8", XC16X_OPERAND_SEGHI8, HW_H_UINT, 23, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_SEGNUM8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_SEGNUM8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* caddr: 16 bit address offset */
   { "caddr", XC16X_OPERAND_CADDR, HW_H_ADDR, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OFFSET16] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OFFSET16] } },
     { 0|A(RELOC)|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rel: 8 bit signed relative offset */
   { "rel", XC16X_OPERAND_REL, HW_H_SINT, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REL8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_REL8] } },
     { 0|A(RELOC)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* relhi: hi 8 bit signed relative offset */
   { "relhi", XC16X_OPERAND_RELHI, HW_H_SINT, 23, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_RELHI8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_RELHI8] } },
     { 0|A(RELOC)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* condbit: condition bit */
   { "condbit", XC16X_OPERAND_CONDBIT, HW_H_COND, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bit1: gap of 1 bit */
   { "bit1", XC16X_OPERAND_BIT1, HW_H_UINT, 11, 1,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT1] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bit2: gap of 2 bits */
   { "bit2", XC16X_OPERAND_BIT2, HW_H_UINT, 11, 2,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT2] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bit4: gap of 4 bits */
   { "bit4", XC16X_OPERAND_BIT4, HW_H_UINT, 11, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT4] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT4] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* lbit4: gap of 4 bits */
   { "lbit4", XC16X_OPERAND_LBIT4, HW_H_UINT, 15, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_LBIT4] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_LBIT4] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* lbit2: gap of 2 bits */
   { "lbit2", XC16X_OPERAND_LBIT2, HW_H_UINT, 15, 2,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_LBIT2] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_LBIT2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bit8: gap of 8 bits */
   { "bit8", XC16X_OPERAND_BIT8, HW_H_UINT, 31, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_BIT8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* u4: gap of 4 bits */
   { "u4", XC16X_OPERAND_U4, HW_H_R0, 15, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM4] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM4] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bitone: field of 1 bit */
   { "bitone", XC16X_OPERAND_BITONE, HW_H_UINT, 9, 1,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_ONEBIT] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_ONEBIT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bit01: field of 1 bit */
   { "bit01", XC16X_OPERAND_BIT01, HW_H_UINT, 8, 1,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_1BIT] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OP_1BIT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cond: condition code */
   { "cond", XC16X_OPERAND_COND, HW_H_CC, 7, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_CONDCODE] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_CONDCODE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* icond: indirect condition code */
   { "icond", XC16X_OPERAND_ICOND, HW_H_CC, 15, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_ICONDCODE] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_ICONDCODE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* extcond: extended condition code */
   { "extcond", XC16X_OPERAND_EXTCOND, HW_H_ECC, 15, 5,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_EXTCCODE] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_EXTCCODE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* memory: 16 bit memory */
   { "memory", XC16X_OPERAND_MEMORY, HW_H_ADDR, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MEMORY] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MEMORY] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* memgr8: 16 bit memory */
   { "memgr8", XC16X_OPERAND_MEMGR8, HW_H_MEMGR8, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MEMGR8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MEMGR8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cbit: carry bit */
   { "cbit", XC16X_OPERAND_CBIT, HW_H_CBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* qbit: bit addr */
   { "qbit", XC16X_OPERAND_QBIT, HW_H_UINT, 7, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_QBIT] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_QBIT] } },
     { 0|A(DOT_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* qlobit: bit addr */
   { "qlobit", XC16X_OPERAND_QLOBIT, HW_H_UINT, 31, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_QLOBIT] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_QLOBIT] } },
     { 0|A(DOT_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* qhibit: bit addr */
   { "qhibit", XC16X_OPERAND_QHIBIT, HW_H_UINT, 27, 4,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_QHIBIT] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_QHIBIT] } },
     { 0|A(DOT_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* mask8: 8 bit mask */
   { "mask8", XC16X_OPERAND_MASK8, HW_H_UINT, 23, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MASK8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_MASK8] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* masklo8: 8 bit mask */
   { "masklo8", XC16X_OPERAND_MASKLO8, HW_H_UINT, 31, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_DATAHI8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_DATAHI8] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* pagenum: 10 bit page number */
   { "pagenum", XC16X_OPERAND_PAGENUM, HW_H_UINT, 25, 10,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_PAGENUM] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_PAGENUM] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* data8: 8 bit data */
   { "data8", XC16X_OPERAND_DATA8, HW_H_UINT, 23, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_DATA8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_DATA8] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* datahi8: 8 bit data */
   { "datahi8", XC16X_OPERAND_DATAHI8, HW_H_UINT, 31, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_DATAHI8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_DATAHI8] } },
     { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sgtdisbit: segmentation enable bit */
   { "sgtdisbit", XC16X_OPERAND_SGTDISBIT, HW_H_SGTDIS, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* upag16: 16 bit unsigned immediate */
   { "upag16", XC16X_OPERAND_UPAG16, HW_H_UINT, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM16] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_UIMM16] } },
     { 0|A(PAG_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* useg8: 8 bit segment  */
   { "useg8", XC16X_OPERAND_USEG8, HW_H_UINT, 15, 8,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_SEG8] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_SEG8] } },
     { 0|A(SEG_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* useg16: 16 bit address offset */
   { "useg16", XC16X_OPERAND_USEG16, HW_H_UINT, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OFFSET16] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OFFSET16] } },
     { 0|A(SEG_PREFIX)|A(RELOC)|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* usof16: 16 bit address offset */
   { "usof16", XC16X_OPERAND_USOF16, HW_H_UINT, 31, 16,
-    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OFFSET16] } }, 
+    { 0, { (const PTR) &xc16x_cgen_ifld_table[XC16X_F_OFFSET16] } },
     { 0|A(SOF_PREFIX)|A(RELOC)|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* hash: # prefix */
   { "hash", XC16X_OPERAND_HASH, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* dot: . prefix */
   { "dot", XC16X_OPERAND_DOT, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* pof: pof: prefix */
   { "pof", XC16X_OPERAND_POF, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* pag: pag: prefix */
   { "pag", XC16X_OPERAND_PAG, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sof: sof: prefix */
   { "sof", XC16X_OPERAND_SOF, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* segm: seg: prefix */
   { "segm", XC16X_OPERAND_SEGM, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
@@ -3452,7 +3452,7 @@ xc16x_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 
   /* Default to not allowing signed overflow.  */
   cd->signed_overflow_ok_p = 0;
-  
+
   return (CGEN_CPU_DESC) cd;
 }
 
@@ -3492,7 +3492,7 @@ xc16x_cgen_cpu_close (CGEN_CPU_DESC cd)
       for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
 	if (CGEN_INSN_RX (insns))
 	  regfree (CGEN_INSN_RX (insns));
-    }  
+    }
 
   if (cd->macro_insn_table.init_entries)
     free ((CGEN_INSN *) cd->macro_insn_table.init_entries);

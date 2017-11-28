@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,6 +32,10 @@ gdb_start
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
+
+gdb_test "info frame-filter" \
+    "No frame filters\\." \
+    "info frame filter before loading filters"
 
 # Make the -gdb.py script available to gdb, it is automagically loaded by gdb.
 # Care is taken to put it in the same directory as the binary so that
@@ -104,6 +108,9 @@ gdb_test "show frame-filter priority global Elider" \
 gdb_test "info frame-filter" \
     ".*1000.*Yes.*Elider.*100.*Yes.*Reverse.*10.*.*No.*Object.*1.*" \
     "info frame filter after setting priority"
+gdb_test "set frame-filter priority global NoSuchFilter 900" \
+    "frame-filter 'NoSuchFilter' not found." \
+    "set priority of a non-existing filter"
 
 # Test enable/disable
 gdb_test "info frame-filter" \
@@ -119,6 +126,9 @@ gdb_test_no_output  "enable frame-filter global Elider" \
 gdb_test "info frame-filter" \
     ".*1000.*Yes.*Elider.*100.*Yes.*Reverse.*10.*.*No.*Object.*1.*" \
     "info frame filter after reenabling frame filter"
+gdb_test "disable frame-filter global NoSuchFilter" \
+    "frame-filter 'NoSuchFilter' not found." \
+    "disable a non-existing filter"
 
 # Test no-filters
 gdb_test "bt no-filters" \

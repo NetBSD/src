@@ -1,6 +1,6 @@
 # temargs.exp - Template argument tests
 #
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@ if {![runto_main]} {
 # NOTE: prepare_for_testing calls get_compiler_info, which we need
 # for the test_compiler_info calls.
 # gcc 4.4 and earlier don't emit enough info for some of our template tests.
-verbose -log "compiler_info: $compiler_info"
 set have_older_template_gcc 0
 set have_pr_41736_fixed 1
 set have_pr_45024_fixed 1

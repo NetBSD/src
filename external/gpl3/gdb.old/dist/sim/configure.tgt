@@ -11,10 +11,12 @@ dnl the shell level, so use sinclude(...) to pull it in.
 dnl glue to avoid code duplication at top level
 m4_ifndef([SIM_ARCH], [AC_DEFUN([SIM_ARCH],[sim_arch=$1])])
 
-sim_common=yes
 sim_igen=no
 sim_arch=
 case "${target}" in
+   aarch64*-*-*)
+       SIM_ARCH(aarch64)
+       ;;
    arm*-*-*)
        SIM_ARCH(arm)
        ;;
@@ -98,10 +100,6 @@ case "${target}" in
    v850*-*-*)
        SIM_ARCH(v850)
        sim_igen=yes
-       ;;
-   *)
-       # No simulator subdir, so the subdir "common" isn't needed.
-       sim_common=no
        ;;
 esac
 AC_SUBST(sim_arch)

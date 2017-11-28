@@ -1,6 +1,6 @@
 /* Native-dependent code for x86 (i386 and x86-64).
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -75,11 +75,9 @@ x86_find_process_pid (pid_t pid)
 static struct x86_process_info *
 x86_add_process (pid_t pid)
 {
-  struct x86_process_info *proc;
+  struct x86_process_info *proc = XCNEW (struct x86_process_info);
 
-  proc = xcalloc (1, sizeof (*proc));
   proc->pid = pid;
-
   proc->next = x86_process_list;
   x86_process_list = proc;
 
@@ -109,7 +107,7 @@ x86_debug_reg_state (pid_t pid)
   return &x86_process_info_get (pid)->state;
 }
 
-/* See declaration in i386-nat.h.  */
+/* See declaration in x86-nat.h.  */
 
 void
 x86_forget_process (pid_t pid)
@@ -149,9 +147,8 @@ x86_cleanup_dregs (void)
    of the type TYPE.  Return 0 on success, -1 on failure.  */
 
 static int
-x86_insert_watchpoint (struct target_ops *self,
-		       CORE_ADDR addr, int len, int type,
-		       struct expression *cond)
+x86_insert_watchpoint (struct target_ops *self, CORE_ADDR addr, int len,
+		       enum target_hw_bp_type type, struct expression *cond)
 {
   struct x86_debug_reg_state *state
     = x86_debug_reg_state (ptid_get_pid (inferior_ptid));
@@ -163,9 +160,8 @@ x86_insert_watchpoint (struct target_ops *self,
    address ADDR, whose length is LEN bytes, and for accesses of the
    type TYPE.  Return 0 on success, -1 on failure.  */
 static int
-x86_remove_watchpoint (struct target_ops *self,
-		       CORE_ADDR addr, int len, int type,
-		       struct expression *cond)
+x86_remove_watchpoint (struct target_ops *self, CORE_ADDR addr, int len,
+		       enum target_hw_bp_type type, struct expression *cond)
 {
   struct x86_debug_reg_state *state
     = x86_debug_reg_state (ptid_get_pid (inferior_ptid));
@@ -255,11 +251,11 @@ x86_remove_hw_breakpoint (struct target_ops *self, struct gdbarch *gdbarch,
    extreme example, consider the case where all the watchpoints watch
    the same address and the same region length: then we can handle a
    virtually unlimited number of watchpoints, due to debug register
-   sharing implemented via reference counts in i386-nat.c.  */
+   sharing implemented via reference counts in x86-nat.c.  */
 
 static int
 x86_can_use_hw_breakpoint (struct target_ops *self,
-			   int type, int cnt, int othertype)
+			   enum bptype type, int cnt, int othertype)
 {
   return 1;
 }

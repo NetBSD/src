@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the arm sim library.
-#    Copyright 1995-2015 Free Software Foundation, Inc.
+#    Copyright 1995-2016 Free Software Foundation, Inc.
 #    Written by Cygnus Support.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -23,9 +23,8 @@ SIM_EXTRA_LIBS = -lm
 SIM_OBJS = \
 	wrapper.o \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-hload.o \
 	armemu26.o armemu32.o arminit.o armos.o armsupp.o \
-	armvirt.o bag.o thumbemu.o \
+	armvirt.o thumbemu.o \
 	armcopro.o maverick.o iwmmxt.o
 
 ## COMMON_POST_CONFIG_FRAG

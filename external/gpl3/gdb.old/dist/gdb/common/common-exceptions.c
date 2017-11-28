@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,7 @@
 #include "common-defs.h"
 #include "common-exceptions.h"
 
-const struct gdb_exception exception_none = { 0, GDB_NO_ERROR, NULL };
-
-#ifndef __cplusplus
+const struct gdb_exception exception_none = { (enum return_reason) 0, GDB_NO_ERROR, NULL };
 
 /* Possible catcher states.  */
 enum catcher_state {
@@ -46,7 +44,7 @@ struct catcher
 {
   enum catcher_state state;
   /* Jump buffer pointing back at the exception handler.  */
-  SIGJMP_BUF buf;
+  jmp_buf buf;
   /* Status buffer belonging to the exception handler.  */
   struct gdb_exception exception;
   struct cleanup *saved_cleanup_chain;
@@ -56,6 +54,8 @@ struct catcher
 
 /* Where to go for throw_exception().  */
 static struct catcher *current_catcher;
+
+#if GDB_XCPT == GDB_XCPT_SJMP
 
 /* Return length of current_catcher list.  */
 
@@ -73,7 +73,9 @@ catcher_list_size (void)
   return size;
 }
 
-SIGJMP_BUF *
+#endif
+
+jmp_buf *
 exceptions_state_mc_init (void)
 {
   struct catcher *new_catcher = XCNEW (struct catcher);
@@ -193,8 +195,8 @@ exceptions_state_mc_catch (struct gdb_exception *exception,
 	}
 
       /* The caller didn't request that the event be caught, relay the
-	 event to the next exception_catch/CATCH.  */
-      throw_exception (*exception);
+	 event to the next exception_catch/CATCH_SJLJ.  */
+      throw_exception_sjlj (*exception);
     }
 
   /* No exception was thrown.  */
@@ -213,7 +215,7 @@ exceptions_state_mc_action_iter_1 (void)
   return exceptions_state_mc (CATCH_ITER_1);
 }
 
-#else /* !__cplusplus */
+#if GDB_XCPT != GDB_XCPT_SJMP
 
 /* How many nested TRY blocks we have.  See exception_messages and
    throw_it.  */
@@ -248,7 +250,6 @@ exception_rethrow (void)
 {
   /* Run this scope's cleanups before re-throwing to the next
      outermost scope.  */
-  prepare_to_throw_exception ();
   do_cleanups (all_cleanups ());
   throw;
 }
@@ -261,25 +262,32 @@ gdb_exception_sliced_copy (struct gdb_exception *to, const struct gdb_exception 
   *to = *from;
 }
 
-#endif /* !__cplusplus */
+#endif /* !GDB_XCPT_SJMP */
 
 /* Return EXCEPTION to the nearest containing catch_errors().  */
 
 void
-throw_exception (struct gdb_exception exception)
+throw_exception_sjlj (struct gdb_exception exception)
 {
-  prepare_to_throw_exception ();
-
   do_cleanups (all_cleanups ());
 
-#ifndef __cplusplus
   /* Jump to the containing catch_errors() call, communicating REASON
      to that call via setjmp's return value.  Note that REASON can't
      be zero, by definition in defs.h.  */
   exceptions_state_mc (CATCH_THROWING);
   current_catcher->exception = exception;
-  SIGLONGJMP (current_catcher->buf, exception.reason);
-#else
+  longjmp (current_catcher->buf, exception.reason);
+}
+
+#if GDB_XCPT != GDB_XCPT_SJMP
+
+/* Implementation of throw_exception that uses C++ try/catch.  */
+
+static ATTRIBUTE_NORETURN void
+throw_exception_cxx (struct gdb_exception exception)
+{
+  do_cleanups (all_cleanups ());
+
   if (exception.reason == RETURN_QUIT)
     {
       gdb_exception_RETURN_MASK_QUIT ex;
@@ -296,6 +304,17 @@ throw_exception (struct gdb_exception exception)
     }
   else
     gdb_assert_not_reached ("invalid return reason");
+}
+
+#endif
+
+void
+throw_exception (struct gdb_exception exception)
+{
+#if GDB_XCPT == GDB_XCPT_SJMP
+  throw_exception_sjlj (exception);
+#else
+  throw_exception_cxx (exception);
 #endif
 }
 
@@ -320,7 +339,7 @@ throw_it (enum return_reason reason, enum errors error, const char *fmt,
 {
   struct gdb_exception e;
   char *new_message;
-#ifndef __cplusplus
+#if GDB_XCPT == GDB_XCPT_SJMP
   int depth = catcher_list_size ();
 #else
   int depth = try_scope_depth;
@@ -336,9 +355,8 @@ throw_it (enum return_reason reason, enum errors error, const char *fmt,
       int old_size = exception_messages_size;
 
       exception_messages_size = depth + 10;
-      exception_messages = (char **) xrealloc (exception_messages,
-					       exception_messages_size
-					       * sizeof (char *));
+      exception_messages = XRESIZEVEC (char *, exception_messages,
+				       exception_messages_size);
       memset (exception_messages + old_size, 0,
 	      (exception_messages_size - old_size) * sizeof (char *));
     }

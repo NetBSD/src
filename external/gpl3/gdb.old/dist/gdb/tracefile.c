@@ -1,6 +1,6 @@
 /* Trace file support in GDB.
 
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,7 +41,7 @@
 static void
 trace_file_writer_xfree (void *arg)
 {
-  struct trace_file_writer *writer = arg;
+  struct trace_file_writer *writer = (struct trace_file_writer *) arg;
 
   writer->ops->dtor (writer);
   xfree (writer);
@@ -57,14 +57,12 @@ trace_save (const char *filename, struct trace_file_writer *writer,
 	    int target_does_save)
 {
   struct trace_status *ts = current_trace_status ();
-  int status;
   struct uploaded_tp *uploaded_tps = NULL, *utp;
   struct uploaded_tsv *uploaded_tsvs = NULL, *utsv;
 
   ULONGEST offset = 0;
 #define MAX_TRACE_UPLOAD 2000
   gdb_byte buf[MAX_TRACE_UPLOAD];
-  int written;
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
 
   /* If the target is to save the data to a file on its own, then just
@@ -78,8 +76,10 @@ trace_save (const char *filename, struct trace_file_writer *writer,
     }
 
   /* Get the trace status first before opening the file, so if the
-     target is losing, we can get out without touching files.  */
-  status = target_get_trace_status (ts);
+     target is losing, we can get out without touching files.  Since
+     we're just calling this for side effects, we ignore the
+     result.  */
+  target_get_trace_status (ts);
 
   writer->ops->start (writer, filename);
 
@@ -89,6 +89,9 @@ trace_save (const char *filename, struct trace_file_writer *writer,
 
   /* Write out the size of a register block.  */
   writer->ops->write_regblock_type (writer, trace_regblock_size);
+
+  /* Write out the target description info.  */
+  writer->ops->write_tdesc (writer);
 
   /* Write out status of the tracing run (aka "tstatus" info).  */
   writer->ops->write_status (writer, ts);
@@ -385,7 +388,8 @@ void
 tracefile_fetch_registers (struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int regn, pc_regno;
+  struct tracepoint *tp = get_tracepoint (get_tracepoint_number ());
+  int regn;
 
   /* We get here if no register data has been found.  Mark registers
      as unavailable.  */
@@ -394,48 +398,29 @@ tracefile_fetch_registers (struct regcache *regcache, int regno)
 
   /* We can often usefully guess that the PC is going to be the same
      as the address of the tracepoint.  */
-  pc_regno = gdbarch_pc_regnum (gdbarch);
-
-  /* XXX This guessing code below only works if the PC register isn't
-     a pseudo-register.  The value of a pseudo-register isn't stored
-     in the (non-readonly) regcache -- instead it's recomputed
-     (probably from some other cached raw register) whenever the
-     register is read.  This guesswork should probably move to some
-     higher layer.  */
-  if (pc_regno < 0 || pc_regno >= gdbarch_num_regs (gdbarch))
+  if (tp == NULL || tp->base.loc == NULL)
     return;
 
-  if (regno == -1 || regno == pc_regno)
+  /* But don't try to guess if tracepoint is multi-location...  */
+  if (tp->base.loc->next)
     {
-      struct tracepoint *tp = get_tracepoint (get_tracepoint_number ());
-      gdb_byte *regs;
-
-      if (tp && tp->base.loc)
-	{
-	  /* But don't try to guess if tracepoint is multi-location...  */
-	  if (tp->base.loc->next)
-	    {
-	      warning (_("Tracepoint %d has multiple "
-			 "locations, cannot infer $pc"),
-		       tp->base.number);
-	      return;
-	    }
-	  /* ... or does while-stepping.  */
-	  if (tp->step_count > 0)
-	    {
-	      warning (_("Tracepoint %d does while-stepping, "
-			 "cannot infer $pc"),
-		       tp->base.number);
-	      return;
-	    }
-
-	  regs = alloca (register_size (gdbarch, pc_regno));
-	  store_unsigned_integer (regs, register_size (gdbarch, pc_regno),
-				  gdbarch_byte_order (gdbarch),
-				  tp->base.loc->address);
-	  regcache_raw_supply (regcache, pc_regno, regs);
-	}
+      warning (_("Tracepoint %d has multiple "
+		 "locations, cannot infer $pc"),
+	       tp->base.number);
+      return;
     }
+  /* ... or does while-stepping.  */
+  else if (tp->step_count > 0)
+    {
+      warning (_("Tracepoint %d does while-stepping, "
+		 "cannot infer $pc"),
+	       tp->base.number);
+      return;
+    }
+
+  /* Guess what we can from the tracepoint location.  */
+  gdbarch_guess_tracepoint_registers (gdbarch, regcache,
+				      tp->base.loc->address);
 }
 
 /* This is the implementation of target_ops method to_has_all_memory.  */

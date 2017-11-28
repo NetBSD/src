@@ -1,5 +1,5 @@
 /* BFD backend for hp-ux 9000/300
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Glenn Engel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -224,32 +224,32 @@ MY (callback) (bfd *abfd)
   struct internal_exec *execp = exec_hdr (abfd);
 
   /* Calculate the file positions of the parts of a newly read aout header */
-  obj_textsec (abfd)->size = N_TXTSIZE (*execp);
+  obj_textsec (abfd)->size = N_TXTSIZE (execp);
 
   /* The virtual memory addresses of the sections */
-  obj_textsec (abfd)->vma = N_TXTADDR (*execp);
-  obj_datasec (abfd)->vma = N_DATADDR (*execp);
-  obj_bsssec (abfd)->vma = N_BSSADDR (*execp);
+  obj_textsec (abfd)->vma = N_TXTADDR (execp);
+  obj_datasec (abfd)->vma = N_DATADDR (execp);
+  obj_bsssec (abfd)->vma = N_BSSADDR (execp);
 
   obj_textsec (abfd)->lma = obj_textsec (abfd)->vma;
   obj_datasec (abfd)->lma = obj_datasec (abfd)->vma;
   obj_bsssec (abfd)->lma = obj_bsssec (abfd)->vma;
 
   /* The file offsets of the sections */
-  obj_textsec (abfd)->filepos = N_TXTOFF (*execp);
-  obj_datasec (abfd)->filepos = N_DATOFF (*execp);
+  obj_textsec (abfd)->filepos = N_TXTOFF (execp);
+  obj_datasec (abfd)->filepos = N_DATOFF (execp);
 
   /* The file offsets of the relocation info */
-  obj_textsec (abfd)->rel_filepos = N_TRELOFF (*execp);
-  obj_datasec (abfd)->rel_filepos = N_DRELOFF (*execp);
+  obj_textsec (abfd)->rel_filepos = N_TRELOFF (execp);
+  obj_datasec (abfd)->rel_filepos = N_DRELOFF (execp);
 
   /* The file offsets of the string table and symbol table.  */
-  obj_sym_filepos (abfd) = N_SYMOFF (*execp);
-  obj_str_filepos (abfd) = N_STROFF (*execp);
+  obj_sym_filepos (abfd) = N_SYMOFF (execp);
+  obj_str_filepos (abfd) = N_STROFF (execp);
 
   /* Determine the architecture and machine type of the object file.  */
 #ifdef SET_ARCH_MACH
-  SET_ARCH_MACH (abfd, *execp);
+  SET_ARCH_MACH (abfd, execp);
 #else
   bfd_default_set_arch_mach (abfd, DEFAULT_ARCH, 0);
 #endif
@@ -257,11 +257,11 @@ MY (callback) (bfd *abfd)
   if (obj_aout_subformat (abfd) == gnu_encap_format)
     {
       /* The file offsets of the relocation info */
-      obj_textsec (abfd)->rel_filepos = N_GNU_TRELOFF (*execp);
-      obj_datasec (abfd)->rel_filepos = N_GNU_DRELOFF (*execp);
+      obj_textsec (abfd)->rel_filepos = N_GNU_TRELOFF (execp);
+      obj_datasec (abfd)->rel_filepos = N_GNU_DRELOFF (execp);
 
       /* The file offsets of the string table and symbol table.  */
-      obj_sym_filepos (abfd) = N_GNU_SYMOFF (*execp);
+      obj_sym_filepos (abfd) = N_GNU_SYMOFF (execp);
       obj_str_filepos (abfd) = (obj_sym_filepos (abfd) + execp->a_syms);
 
       abfd->flags |= HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS;
@@ -280,15 +280,13 @@ MY (write_object_contents) (bfd * abfd)
 {
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
-  bfd_size_type text_size;	/* dummy vars */
-  file_ptr text_end;
 
   memset (&exec_bytes, 0, sizeof (exec_bytes));
 
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
 
   if (adata (abfd).magic == undecided_magic)
-    NAME (aout,adjust_sizes_and_vmas) (abfd, &text_size, &text_end);
+    NAME (aout,adjust_sizes_and_vmas) (abfd);
   execp->a_syms = 0;
 
   execp->a_entry = bfd_get_start_address (abfd);
@@ -298,8 +296,8 @@ MY (write_object_contents) (bfd * abfd)
   execp->a_drsize = ((obj_datasec (abfd)->reloc_count) *
 		     obj_reloc_entry_size (abfd));
 
-  N_SET_MACHTYPE (*execp, 0xc);
-  N_SET_FLAGS (*execp, aout_backend_info (abfd)->exec_hdr_flags);
+  N_SET_MACHTYPE (execp, 0xc);
+  N_SET_FLAGS (execp, aout_backend_info (abfd)->exec_hdr_flags);
 
   NAME (aout,swap_exec_header_out) (abfd, execp, &exec_bytes);
 
@@ -319,7 +317,7 @@ MY (write_object_contents) (bfd * abfd)
   if (bfd_get_symcount (abfd) != 0)
     {
       /* Skip the relocs to where we want to put the symbols.  */
-      if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (*execp) + execp->a_drsize),
+      if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (execp) + execp->a_drsize),
 		    SEEK_SET) != 0)
 	return FALSE;
     }
@@ -329,11 +327,11 @@ MY (write_object_contents) (bfd * abfd)
 
   if (bfd_get_symcount (abfd) != 0)
     {
-      if (bfd_seek (abfd, (file_ptr) N_TRELOFF (*execp), SEEK_CUR) != 0)
+      if (bfd_seek (abfd, (file_ptr) N_TRELOFF (execp), SEEK_CUR) != 0)
 	return FALSE;
       if (!NAME (aout,squirt_out_relocs) (abfd, obj_textsec (abfd)))
 	return FALSE;
-      if (bfd_seek (abfd, (file_ptr) N_DRELOFF (*execp), SEEK_CUR) != 0)
+      if (bfd_seek (abfd, (file_ptr) N_DRELOFF (execp), SEEK_CUR) != 0)
 	return FALSE;
       if (!NAME (aout,squirt_out_relocs) (abfd, obj_datasec (abfd)))
 	return FALSE;

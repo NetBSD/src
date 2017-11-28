@@ -6,12 +6,8 @@
 # List of object files, less common parts.
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-hload.o \
-	sim-model.o \
-	sim-reg.o \
-	sim-signal.o \
         cgen-utils.o cgen-trace.o cgen-scache.o \
-        cgen-run.o sim-reason.o sim-stop.o \
+        cgen-run.o \
         sim-if.o arch.o \
         cpu.o decode.o sem.o model.o mloop.o \
         lm32.o traps.o user.o 

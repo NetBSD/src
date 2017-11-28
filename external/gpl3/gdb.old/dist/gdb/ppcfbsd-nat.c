@@ -1,6 +1,6 @@
 /* Native-dependent code for PowerPC's running FreeBSD, for GDB.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -121,7 +121,7 @@ ppcfbsd_fetch_inferior_registers (struct target_ops *ops,
 {
   gdb_gregset_t regs;
 
-  if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+  if (ptrace (PT_GETREGS, ptid_get_lwp (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
@@ -132,7 +132,7 @@ ppcfbsd_fetch_inferior_registers (struct target_ops *ops,
       const struct regset *fpregset = ppc_fbsd_fpregset ();
       gdb_fpregset_t fpregs;
 
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+      if (ptrace (PT_GETFPREGS, ptid_get_lwp (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get FP registers"));
 
@@ -149,13 +149,13 @@ ppcfbsd_store_inferior_registers (struct target_ops *ops,
 {
   gdb_gregset_t regs;
 
-  if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+  if (ptrace (PT_GETREGS, ptid_get_lwp (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   fill_gregset (regcache, &regs, regno);
 
-  if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+  if (ptrace (PT_SETREGS, ptid_get_lwp (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't write registers"));
 
@@ -163,13 +163,13 @@ ppcfbsd_store_inferior_registers (struct target_ops *ops,
     {
       gdb_fpregset_t fpregs;
 
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+      if (ptrace (PT_GETFPREGS, ptid_get_lwp (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get FP registers"));
 
       fill_fpregset (regcache, &fpregs, regno);
 
-      if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
+      if (ptrace (PT_SETFPREGS, ptid_get_lwp (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't set FP registers"));
     }
