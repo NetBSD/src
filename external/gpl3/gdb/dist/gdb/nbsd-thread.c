@@ -207,7 +207,7 @@ find_active_thread (void)
     }
       if (pl.pl_lwpid == 0)
 	/* found no "active" thread, stay with current */
-	pl.pl_lwpid = inferior_ptid.lwp;
+	pl.pl_lwpid = ptid_get_lwp (inferior_ptid);
     }
   else
     {
@@ -330,7 +330,7 @@ nbsd_core_files_info (struct target_ops *ignore)
 
 /* Convert a ptid to printable form. */
 
-static char *
+static const char *
 nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[100];
@@ -455,8 +455,9 @@ nbsd_update_thread_list (struct target_ops *ops)
 /* Fork an inferior process, and start debugging it.  */
 
 static void
-nbsd_thread_create_inferior (struct target_ops *ops, char *exec_file,
-			     char *allargs, char **env, int from_tty)
+nbsd_thread_create_inferior (struct target_ops *ops, 
+			     const char *exec_file, const std::string &allargs,
+			     char **env, int from_tty)
 {
   struct target_ops *beneath = find_target_beneath (ops);
   nbsd_thread_core = 0;

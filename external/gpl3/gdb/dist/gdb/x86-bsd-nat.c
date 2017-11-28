@@ -54,7 +54,13 @@ x86bsd_mourn_inferior (struct target_ops *ops)
 /* Not all versions of FreeBSD/i386 that support the debug registers
    have this macro.  */
 #ifndef DBREG_DRX
-#define DBREG_DRX(d, x) ((&d->dr0)[x])
+# if defined(__NetBSD__)
+#  define DBREG_DRX(d, x) (((unsigned long *)&d->dr)[x])
+# elif defined(__FreeBSD__)
+#  define DBREG_DRX(d, x) ((&d->dr0)[x])
+# else
+#  error "No drx macro"
+# endif
 #endif
 
 static unsigned long

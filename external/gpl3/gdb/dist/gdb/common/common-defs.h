@@ -1,6 +1,6 @@
 /* Common definitions.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,28 +27,36 @@
 #include "build-gnulib/config.h"
 #endif
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-
 /* From:
     https://www.gnu.org/software/gnulib/manual/html_node/stdint_002eh.html
 
    "On some hosts that predate C++11, when using C++ one must define
    __STDC_CONSTANT_MACROS to make visible the definitions of constant
    macros such as INTMAX_C, and one must define __STDC_LIMIT_MACROS to
-   make visible the definitions of limit macros such as INTMAX_MAX."
+   make visible the definitions of limit macros such as INTMAX_MAX.".
 
-   gnulib doesn't fix this for us correctly yet.  See:
-     https://lists.gnu.org/archive/html/bug-gnulib/2015-11/msg00004.html
+   And:
+    https://www.gnu.org/software/gnulib/manual/html_node/inttypes_002eh.html
 
-   Meanwhile, explicitly define these ourselves, as C99 intended.  */
+   "On some hosts that predate C++11, when using C++ one must define
+   __STDC_FORMAT_MACROS to make visible the declarations of format
+   macros such as PRIdMAX."
+
+   Must do this before including any system header, since other system
+   headers may include stdint.h/inttypes.h.  */
 #define __STDC_CONSTANT_MACROS 1
 #define __STDC_LIMIT_MACROS 1
-#include <stdint.h>
+#define __STDC_FORMAT_MACROS 1
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
+#ifdef HAVE_STRINGS_H
+#include <strings.h>	/* for strcasecmp and strncasecmp */
+#endif
 #include <errno.h>
 
 #include "ansidecl.h"
@@ -76,14 +84,11 @@
 #include "cleanups.h"
 #include "common-exceptions.h"
 
-#ifdef __cplusplus
-# define EXTERN_C extern "C"
-# define EXTERN_C_PUSH extern "C" {
-# define EXTERN_C_POP }
-#else
-# define EXTERN_C extern
-# define EXTERN_C_PUSH
-# define EXTERN_C_POP
-#endif
+#define EXTERN_C extern "C"
+#define EXTERN_C_PUSH extern "C" {
+#define EXTERN_C_POP }
+
+/* Pull in gdb::unique_xmalloc_ptr.  */
+#include "common/gdb_unique_ptr.h"
 
 #endif /* COMMON_DEFS_H */

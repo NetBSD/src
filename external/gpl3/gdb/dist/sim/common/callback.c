@@ -1,5 +1,5 @@
 /* Remote target callback routines.
-   Copyright 1995-2016 Free Software Foundation, Inc.
+   Copyright 1995-2017 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.

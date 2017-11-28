@@ -21,6 +21,8 @@ case $host in
     ;;
  *-*-irix* | \
  alpha*-*-osf* | \
+ alpha*-*-freebsd* | \
+ alpha*-*-kfreebsd*-gnu | \
  arm*-*-netbsd* | \
  hppa*-*-hiux* | \
  i[34567]86-ncr-* | \
@@ -84,8 +86,6 @@ case "${host}" in
 aarch64*-*-linux*)	gdb_host=linux ;;
 
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
-alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
-			gdb_host=fbsd ;;
 alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 alpha*-*-openbsd*)	gdb_host=nbsd ;;
@@ -129,6 +129,7 @@ m88*-*-openbsd*)	gdb_host=obsd ;;
 mips*-*-linux*)		gdb_host=linux ;;
 mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
+mips*-*-freebsd*)	gdb_host=fbsd ;;
 mips64*-*-openbsd*)	gdb_host=obsd64 ;;
 
 powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)

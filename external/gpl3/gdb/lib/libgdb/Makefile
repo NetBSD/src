@@ -1,8 +1,13 @@
-#	$NetBSD: Makefile,v 1.11 2016/10/14 16:38:27 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2017/11/28 22:04:55 christos Exp $
+
+NOCTF=
+HOSTPROG_CXX=   1
 
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
+
+
 
 LIBISPRIVATE=	yes
 LIB=		gdb
@@ -36,18 +41,23 @@ CPPFLAGS+=	-I${.CURDIR} \
 # XXX inf-ptrace.c has some bogus (PTRACE_TYPE_ARG3) casts, but in 
 # code that's never exercised on NetBSD.
 CPPFLAGS.inf-ptrace.c=	-Wno-error
+CPPFLAGS.i386-nbsd-tdep.c+= -Wno-narrowing
 
 CWARNFLAGS.clang+=	-Wno-switch
 
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>
 
+# Force c++
+HOST_CC:=       ${HOST_CXX} -std=gnu++11 -Wno-error=stack-protector
+CC:=            ${CXX} -std=gnu++11 -Wno-error=stack-protector
+CFLAGS:=        ${CXXFLAGS}
+
 .PATH: ${DIST}/gdb ${DIST}/gdb/arch ${DIST}/gdb/mi ${DIST}/gdb/cli  \
     ${DIST}/gdb/tui ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
     ${DIST}/gdb/guile ${DIST}/gdb/compile ${DIST}/gdb/doc ${GDBARCHDIR}
 
 #
-COPTS+=	-Wno-stack-protector
 
 ada-exp.c: ada-lex.c
 

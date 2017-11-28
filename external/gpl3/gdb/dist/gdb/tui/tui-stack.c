@@ -1,6 +1,6 @@
 /* TUI display locator.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -68,12 +68,9 @@ tui_make_status_line (struct tui_locator_element *loc)
   int status_size;
   int i, proc_width;
   const char *pid_name;
-  const char *pc_buf;
   int target_width;
   int pid_width;
   int line_width;
-  int pc_width;
-  struct ui_file *pc_out;
 
   if (ptid_equal (inferior_ptid, null_ptid))
     pid_name = "No process";
@@ -102,12 +99,14 @@ tui_make_status_line (struct tui_locator_element *loc)
     line_width = MIN_LINE_WIDTH;
 
   /* Translate PC address.  */
-  pc_out = tui_sfileopen (128);
+  string_file pc_out;
+
   fputs_filtered (loc->gdbarch? paddress (loc->gdbarch, loc->addr) : "??",
-		  pc_out);
-  pc_buf = tui_file_get_strbuf (pc_out);
-  pc_width = strlen (pc_buf);
-  
+		  &pc_out);
+
+  const char *pc_buf = pc_out.c_str ();
+  int pc_width = pc_out.size ();
+
   /* First determine the amount of proc name width we have available.
      The +1 are for a space separator between fields.
      The -1 are to take into account the \0 counted by sizeof.  */
@@ -204,7 +203,6 @@ tui_make_status_line (struct tui_locator_element *loc)
     string[i] = ' ';
   string[status_size] = (char) 0;
 
-  ui_file_delete (pc_out);
   return string;
 }
 
@@ -215,21 +213,21 @@ static char*
 tui_get_function_from_frame (struct frame_info *fi)
 {
   static char name[256];
-  struct ui_file *stream = tui_sfileopen (256);
-  char *p;
+  string_file stream;
 
   print_address_symbolic (get_frame_arch (fi), get_frame_pc (fi),
-			  stream, demangle, "");
-  p = tui_file_get_strbuf (stream);
+			  &stream, demangle, "");
 
   /* Use simple heuristics to isolate the function name.  The symbol
      can be demangled and we can have function parameters.  Remove
      them because the status line is too short to display them.  */
-  if (*p == '<')
-    p++;
-  strncpy (name, p, sizeof (name) - 1);
+  const char *d = stream.c_str ();
+  if (*d == '<')
+    d++;
+  strncpy (name, d, sizeof (name) - 1);
   name[sizeof (name) - 1] = 0;
-  p = strchr (name, '(');
+
+  char *p = strchr (name, '(');
   if (!p)
     p = strchr (name, '>');
   if (p)
@@ -237,7 +235,6 @@ tui_get_function_from_frame (struct frame_info *fi)
   p = strchr (name, '+');
   if (p)
     *p = 0;
-  ui_file_delete (stream);
   return name;
 }
 

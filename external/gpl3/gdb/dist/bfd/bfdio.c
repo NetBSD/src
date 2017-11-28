@@ -1,6 +1,6 @@
 /* Low-level I/O routines for BFDs.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -41,7 +41,7 @@
 #endif
 
 file_ptr
-real_ftell (FILE *file)
+_bfd_real_ftell (FILE *file)
 {
 #if defined (HAVE_FTELLO64)
   return ftello64 (file);
@@ -53,7 +53,7 @@ real_ftell (FILE *file)
 }
 
 int
-real_fseek (FILE *file, file_ptr offset, int whence)
+_bfd_real_fseek (FILE *file, file_ptr offset, int whence)
 {
 #if defined (HAVE_FSEEKO64)
   return fseeko64 (file, offset, whence);
@@ -82,7 +82,7 @@ close_on_exec (FILE *file)
 }
 
 FILE *
-real_fopen (const char *filename, const char *modes)
+_bfd_real_fopen (const char *filename, const char *modes)
 {
 #ifdef VMS
   char *vms_attr;

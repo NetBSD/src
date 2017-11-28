@@ -1,6 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -79,7 +79,8 @@ static void
 inf_ptrace_me (void)
 {
   /* "Trace me, Dr. Memory!"  */
-  ptrace (PT_TRACE_ME, 0, (PTRACE_TYPE_ARG3)0, 0);
+  if (ptrace (PT_TRACE_ME, 0, (PTRACE_TYPE_ARG3) 0, 0) < 0)
+    trace_start_error_with_name ("ptrace");
 }
 
 /* Start a new inferior Unix child process.  EXEC_FILE is the file to
@@ -89,8 +90,8 @@ inf_ptrace_me (void)
 
 static void
 inf_ptrace_create_inferior (struct target_ops *ops,
-			    char *exec_file, char *allargs, char **env,
-			    int from_tty)
+			    const char *exec_file, const std::string &allargs,
+			    char **env, int from_tty)
 {
   int pid;
 
@@ -287,7 +288,7 @@ inf_ptrace_kill (struct target_ops *ops)
   ptrace (PT_KILL, pid, (PTRACE_TYPE_ARG3)0, 0);
   waitpid (pid, &status, 0);
 
-  target_mourn_inferior ();
+  target_mourn_inferior (inferior_ptid);
 }
 
 /* Interrupt the inferior.  */
@@ -457,6 +458,72 @@ inf_ptrace_wait (struct target_ops *ops,
   return pid_to_ptid (pid);
 }
 
+/* Transfer data via ptrace into process PID's memory from WRITEBUF, or
+   from process PID's memory into READBUF.  Start at target address ADDR
+   and transfer up to LEN bytes.  Exactly one of READBUF and WRITEBUF must
+   be non-null.  Return the number of transferred bytes.  */
+
+static ULONGEST
+inf_ptrace_peek_poke (pid_t pid, gdb_byte *readbuf,
+		      const gdb_byte *writebuf,
+		      ULONGEST addr, ULONGEST len)
+{
+  ULONGEST n;
+  unsigned int chunk;
+
+  /* We transfer aligned words.  Thus align ADDR down to a word
+     boundary and determine how many bytes to skip at the
+     beginning.  */
+  ULONGEST skip = addr & (sizeof (PTRACE_TYPE_RET) - 1);
+  addr -= skip;
+
+  for (n = 0;
+       n < len;
+       n += chunk, addr += sizeof (PTRACE_TYPE_RET), skip = 0)
+    {
+      /* Restrict to a chunk that fits in the current word.  */
+      chunk = std::min (sizeof (PTRACE_TYPE_RET) - skip, len - n);
+
+      /* Use a union for type punning.  */
+      union
+      {
+	PTRACE_TYPE_RET word;
+	gdb_byte byte[sizeof (PTRACE_TYPE_RET)];
+      } buf;
+
+      /* Read the word, also when doing a partial word write.  */
+      if (readbuf != NULL || chunk < sizeof (PTRACE_TYPE_RET))
+	{
+	  errno = 0;
+	  buf.word = ptrace (PT_READ_I, pid,
+			     (PTRACE_TYPE_ARG3)(uintptr_t) addr, 0);
+	  if (errno != 0)
+	    break;
+	  if (readbuf != NULL)
+	    memcpy (readbuf + n, buf.byte + skip, chunk);
+	}
+      if (writebuf != NULL)
+	{
+	  memcpy (buf.byte + skip, writebuf + n, chunk);
+	  errno = 0;
+	  ptrace (PT_WRITE_D, pid, (PTRACE_TYPE_ARG3)(uintptr_t) addr,
+		  buf.word);
+	  if (errno != 0)
+	    {
+	      /* Using the appropriate one (I or D) is necessary for
+		 Gould NP1, at least.  */
+	      errno = 0;
+	      ptrace (PT_WRITE_I, pid, (PTRACE_TYPE_ARG3)(uintptr_t) addr,
+		      buf.word);
+	      if (errno != 0)
+		break;
+	    }
+	}
+    }
+
+  return n;
+}
+
 /* Implement the to_xfer_partial target_ops method.  */
 
 static enum target_xfer_status
@@ -465,7 +532,7 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 			 const gdb_byte *writebuf,
 			 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
-  pid_t pid = ptid_get_pid (inferior_ptid);
+  pid_t pid = get_ptrace_pid (inferior_ptid);
 
   switch (object)
     {
@@ -511,79 +578,9 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 	  return TARGET_XFER_EOF;
       }
 #endif
-      {
-	union
-	{
-	  PTRACE_TYPE_RET word;
-	  gdb_byte byte[sizeof (PTRACE_TYPE_RET)];
-	} buffer;
-	ULONGEST rounded_offset;
-	ULONGEST partial_len;
-
-	/* Round the start offset down to the next long word
-	   boundary.  */
-	rounded_offset = offset & -(ULONGEST) sizeof (PTRACE_TYPE_RET);
-
-	/* Since ptrace will transfer a single word starting at that
-	   rounded_offset the partial_len needs to be adjusted down to
-	   that (remember this function only does a single transfer).
-	   Should the required length be even less, adjust it down
-	   again.  */
-	partial_len = (rounded_offset + sizeof (PTRACE_TYPE_RET)) - offset;
-	if (partial_len > len)
-	  partial_len = len;
-
-	if (writebuf)
-	  {
-	    /* If OFFSET:PARTIAL_LEN is smaller than
-	       ROUNDED_OFFSET:WORDSIZE then a read/modify write will
-	       be needed.  Read in the entire word.  */
-	    if (rounded_offset < offset
-		|| (offset + partial_len
-		    < rounded_offset + sizeof (PTRACE_TYPE_RET)))
-	      /* Need part of initial word -- fetch it.  */
-	      buffer.word = ptrace (PT_READ_I, pid,
-				    (PTRACE_TYPE_ARG3)(uintptr_t)
-				    rounded_offset, 0);
-
-	    /* Copy data to be written over corresponding part of
-	       buffer.  */
-	    memcpy (buffer.byte + (offset - rounded_offset),
-		    writebuf, partial_len);
-
-	    errno = 0;
-	    ptrace (PT_WRITE_D, pid,
-		    (PTRACE_TYPE_ARG3)(uintptr_t)rounded_offset,
-		    buffer.word);
-	    if (errno)
-	      {
-		/* Using the appropriate one (I or D) is necessary for
-		   Gould NP1, at least.  */
-		errno = 0;
-		ptrace (PT_WRITE_I, pid,
-			(PTRACE_TYPE_ARG3)(uintptr_t)rounded_offset,
-			buffer.word);
-		if (errno)
-		  return TARGET_XFER_EOF;
-	      }
-	  }
-
-	if (readbuf)
-	  {
-	    errno = 0;
-	    buffer.word = ptrace (PT_READ_I, pid,
-				  (PTRACE_TYPE_ARG3)(uintptr_t)rounded_offset,
-				  0);
-	    if (errno)
-	      return TARGET_XFER_EOF;
-	    /* Copy appropriate bytes out of the buffer.  */
-	    memcpy (readbuf, buffer.byte + (offset - rounded_offset),
-		    partial_len);
-	  }
-
-	*xfered_len = partial_len;
-	return TARGET_XFER_OK;
-      }
+      *xfered_len = inf_ptrace_peek_poke (pid, readbuf, writebuf,
+					  offset, len);
+      return *xfered_len != 0 ? TARGET_XFER_OK : TARGET_XFER_EOF;
 
     case TARGET_OBJECT_UNWIND_TABLE:
       return TARGET_XFER_E_IO;
@@ -643,7 +640,7 @@ inf_ptrace_files_info (struct target_ops *ignore)
 		   target_pid_to_str (inferior_ptid));
 }
 
-static char *
+static const char *
 inf_ptrace_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   return normal_pid_to_str (ptid);
@@ -732,7 +729,8 @@ inf_ptrace_fetch_register (struct regcache *regcache, int regnum)
   CORE_ADDR addr;
   size_t size;
   PTRACE_TYPE_RET *buf;
-  int pid, i;
+  pid_t pid;
+  int i;
 
   /* This isn't really an address, but ptrace thinks of it as one.  */
   addr = inf_ptrace_register_u_offset (gdbarch, regnum, 0);
@@ -743,11 +741,7 @@ inf_ptrace_fetch_register (struct regcache *regcache, int regnum)
       return;
     }
 
-  /* Cater for systems like GNU/Linux, that implement threads as
-     separate processes.  */
-  pid = ptid_get_lwp (inferior_ptid);
-  if (pid == 0)
-    pid = ptid_get_pid (inferior_ptid);
+  pid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   size = register_size (gdbarch, regnum);
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
@@ -793,7 +787,8 @@ inf_ptrace_store_register (const struct regcache *regcache, int regnum)
   CORE_ADDR addr;
   size_t size;
   PTRACE_TYPE_RET *buf;
-  int pid, i;
+  pid_t pid;
+  int i;
 
   /* This isn't really an address, but ptrace thinks of it as one.  */
   addr = inf_ptrace_register_u_offset (gdbarch, regnum, 1);
@@ -801,11 +796,7 @@ inf_ptrace_store_register (const struct regcache *regcache, int regnum)
       || gdbarch_cannot_store_register (gdbarch, regnum))
     return;
 
-  /* Cater for systems like GNU/Linux, that implement threads as
-     separate processes.  */
-  pid = ptid_get_lwp (inferior_ptid);
-  if (pid == 0)
-    pid = ptid_get_pid (inferior_ptid);
+  pid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   size = register_size (gdbarch, regnum);
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
