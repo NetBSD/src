@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux i386.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,6 +36,7 @@
 #include "linux-nat.h"
 #include "x86-linux-nat.h"
 #include "nat/linux-ptrace.h"
+#include "inf-ptrace.h"
 
 /* The register sets used in GNU/Linux ELF core-dumps are identical to
    the register sets in `struct user' that is used for a.out
@@ -59,7 +60,7 @@
   (I386_ST0_REGNUM <= (regno) && (regno) < I386_SSE_NUM_REGS)
 
 #define GETXSTATEREGS_SUPPLIES(regno) \
-  (I386_ST0_REGNUM <= (regno) && (regno) < I386_AVX512_NUM_REGS)
+  (I386_ST0_REGNUM <= (regno) && (regno) < I386_PKEYS_NUM_REGS)
 
 /* Does the current host support the GETREGS request?  */
 int have_ptrace_getregs =
@@ -94,7 +95,7 @@ int have_ptrace_getfpxregs =
 static void
 fetch_register (struct regcache *regcache, int regno)
 {
-  int tid;
+  pid_t tid;
   int val;
 
   gdb_assert (!have_ptrace_getregs);
@@ -104,10 +105,7 @@ fetch_register (struct regcache *regcache, int regno)
       return;
     }
 
-  /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   errno = 0;
   val = ptrace (PTRACE_PEEKUSER, tid,
@@ -125,17 +123,14 @@ fetch_register (struct regcache *regcache, int regno)
 static void
 store_register (const struct regcache *regcache, int regno)
 {
-  int tid;
+  pid_t tid;
   int val;
 
   gdb_assert (!have_ptrace_getregs);
   if (i386_linux_gregset_reg_offset[regno] == -1)
     return;
 
-  /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   errno = 0;
   regcache_raw_collect (regcache, regno, &val);
@@ -455,7 +450,7 @@ static void
 i386_linux_fetch_inferior_registers (struct target_ops *ops,
 				     struct regcache *regcache, int regno)
 {
-  int tid;
+  pid_t tid;
 
   /* Use the old method of peeking around in `struct user' if the
      GETREGS request isn't available.  */
@@ -470,10 +465,7 @@ i386_linux_fetch_inferior_registers (struct target_ops *ops,
       return;
     }
 
-  /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   /* Use the PTRACE_GETFPXREGS request whenever possible, since it
      transfers more registers in one system call, and we'll cache the
@@ -536,7 +528,7 @@ static void
 i386_linux_store_inferior_registers (struct target_ops *ops,
 				     struct regcache *regcache, int regno)
 {
-  int tid;
+  pid_t tid;
 
   /* Use the old method of poking around in `struct user' if the
      SETREGS request isn't available.  */
@@ -551,10 +543,7 @@ i386_linux_store_inferior_registers (struct target_ops *ops,
       return;
     }
 
-  /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   /* Use the PTRACE_SETFPXREGS requests whenever possible, since it
      transfers more registers in one system call.  But remember that

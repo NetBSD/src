@@ -1,5 +1,5 @@
 /* Header file for GDB CLI command implementation library.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,20 +38,23 @@ extern enum command_control_type
 extern enum command_control_type
 	execute_control_command_untraced (struct command_line *cmd);
 
-extern struct command_line *get_command_line (enum command_control_type,
-					      char *);
+extern command_line_up get_command_line (enum command_control_type,
+					 const char *);
 
 extern void print_command_lines (struct ui_out *,
 				 struct command_line *, unsigned int);
 
-extern struct command_line * copy_command_lines (struct command_line *cmds);
-
-extern struct cleanup *
-  make_cleanup_free_command_lines (struct command_line **arg);
+extern command_line_up copy_command_lines (struct command_line *cmds);
 
 /* Exported to gdb/infrun.c */
 
 extern void execute_user_command (struct cmd_list_element *c, char *args);
+
+/* If we're in a user-defined command, replace any $argc/$argN
+   reference found in LINE with the arguments that were passed to the
+   command.  Otherwise, treat $argc/$argN as normal convenience
+   variables.  */
+extern std::string insert_user_defined_cmd_args (const char *line);
 
 /* Exported to top.c */
 

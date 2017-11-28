@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016 Free Software Foundation, Inc.
+# Copyright (C) 2011-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # exposing values to Python.
 
 if {[skip_shlib_tests]} {
-	untested py-finish-breakpoint.exp
+	untested "skipping shared library tests"
     return 0
 }
 
@@ -37,7 +37,7 @@ if [get_compiler_info] {
 
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != ""} {
-    untested "Could not compile either $libsrc or $srcdir/$subdir/$srcfile."
+    untested "failed to compile"
     return -1
 }
 
@@ -49,7 +49,7 @@ if { [skip_python_tests] } { continue }
 if { $gdb_py_is_py24 == 1 } {
     # Python 2.4, 2.5 do not support the "ValueError as e" syntax used in
     # the py-finish-breakpoint.py script.
-	untested py-finish-breakpoint.exp
+	untested "missing support on Python 2.4 and 2.5"
     return 0
 }
 
@@ -64,7 +64,7 @@ clean_restart ${testfile}
 gdb_load_shlib ${lib_sl}
 
 if ![runto_main] then {
-    fail "Cannot run to main."
+    fail "cannot run to main."
     return 0
 }
 
@@ -115,7 +115,7 @@ gdb_test "source $python_file" "Python script imported.*" \
 set cond_line [gdb_get_line_number "Condition Break."]
 
 if ![runto_main] then {
-    fail "Cannot run to main."
+    fail "cannot run to main."
     return 0
 }
 
@@ -168,7 +168,7 @@ gdb_test "source $python_file" "Python script imported.*" \
 
 
 if ![runto_main] then {
-    fail "Cannot run to main."
+    fail "cannot run to main."
     return 0
 }
          
@@ -193,7 +193,7 @@ gdb_test "source $python_file" "Python script imported.*" \
          "import python scripts"
 
 if ![runto_main] then {
-    fail "Cannot run to main."
+    fail "cannot run to main."
     return 0
 }
 
@@ -220,7 +220,7 @@ gdb_test "source $python_file" "Python script imported.*" \
          "import python scripts"
 
 if ![runto_main] then {
-    fail "Cannot run to main."
+    fail "cannot run to main."
     return 0
 }
 
@@ -247,7 +247,7 @@ gdb_test "print increase(&i)" \
 #
 
 if ![runto "test_exec_exit"] then {
-    fail "Cannot run to test_exec_exit."
+    fail "cannot run to test_exec_exit."
     return 0
 }
 
@@ -260,7 +260,7 @@ gdb_test "continue" "SimpleFinishBreakpoint out of scope.*" "catch out of scope 
 #
 
 if ![runto "test_exec_exit"] then {
-    fail "Cannot run to test_exec_exit."
+    fail "cannot run to test_exec_exit."
     return 0
 }     
 

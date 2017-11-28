@@ -1,6 +1,6 @@
 /* BFD back-end for VMS archive files.
 
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
    Written by Tristan Gingold <gingold@adacore.com>, AdaCore.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1441,8 +1441,9 @@ _bfd_vms_lib_get_imagelib_file (bfd *el)
 
   if (res == NULL)
     {
-      (*_bfd_error_handler)(_("could not open shared image '%s' from '%s'"),
-                            filename, archive->filename);
+      /* xgettext:c-format */
+      _bfd_error_handler(_("could not open shared image '%s' from '%s'"),
+			 filename, archive->filename);
       bfd_release (archive, filename);
       return NULL;
     }

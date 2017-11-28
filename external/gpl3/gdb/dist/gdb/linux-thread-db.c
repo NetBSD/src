@@ -1,6 +1,6 @@
 /* libthread_db assisted debugging support, generic parts.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,6 +45,7 @@
 #include <signal.h>
 #include <ctype.h>
 #include "nat/linux-namespaces.h"
+#include <algorithm>
 
 /* GNU/Linux libthread_db support.
 
@@ -261,7 +262,7 @@ struct private_thread_info
 };
 
 
-static char *
+static const char *
 thread_db_err_str (td_err_e err)
 {
   static char buf[64];
@@ -1371,7 +1372,7 @@ thread_db_update_thread_list (struct target_ops *ops)
   ops->beneath->to_update_thread_list (ops->beneath);
 }
 
-static char *
+static const char *
 thread_db_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   struct thread_info *thread_info = find_thread_ptid (ptid);
@@ -1396,7 +1397,7 @@ thread_db_pid_to_str (struct target_ops *ops, ptid_t ptid)
 /* Return a string describing the state of the thread specified by
    INFO.  */
 
-static char *
+static const char *
 thread_db_extra_thread_info (struct target_ops *self,
 			     struct thread_info *info)
 {
@@ -1599,13 +1600,13 @@ info_auto_load_libthread_db (char *args, int from_tty)
       if (i == 0 || strcmp (array[i - 1]->filename, array[i]->filename) != 0)
 	{
 	  unique_filenames++;
-	  max_filename_len = max (max_filename_len,
-				  strlen (array[i]->filename));
+	  max_filename_len = std::max (max_filename_len,
+				       strlen (array[i]->filename));
 
 	  if (i > 0)
 	    {
 	      pids_len -= strlen (", ");
-	      max_pids_len = max (max_pids_len, pids_len);
+	      max_pids_len = std::max (max_pids_len, pids_len);
 	    }
 	  pids_len = 0;
 	}
@@ -1614,21 +1615,20 @@ info_auto_load_libthread_db (char *args, int from_tty)
   if (i)
     {
       pids_len -= strlen (", ");
-      max_pids_len = max (max_pids_len, pids_len);
+      max_pids_len = std::max (max_pids_len, pids_len);
     }
 
   /* Table header shifted right by preceding "libthread-db:  " would not match
      its columns.  */
   if (info_count > 0 && args == auto_load_info_scripts_pattern_nl)
-    ui_out_text (uiout, "\n");
+    uiout->text ("\n");
 
   make_cleanup_ui_out_table_begin_end (uiout, 2, unique_filenames,
 				       "LinuxThreadDbTable");
 
-  ui_out_table_header (uiout, max_filename_len, ui_left, "filename",
-		       "Filename");
-  ui_out_table_header (uiout, pids_len, ui_left, "PIDs", "Pids");
-  ui_out_table_body (uiout);
+  uiout->table_header (max_filename_len, ui_left, "filename", "Filename");
+  uiout->table_header (pids_len, ui_left, "PIDs", "Pids");
+  uiout->table_body ();
 
   pids = (char *) xmalloc (max_pids_len + 1);
   make_cleanup (xfree, pids);
@@ -1640,7 +1640,7 @@ info_auto_load_libthread_db (char *args, int from_tty)
       char *pids_end;
 
       info = array[i];
-      ui_out_field_string (uiout, "filename", info->filename);
+      uiout->field_string ("filename", info->filename);
       pids_end = pids;
 
       while (i < info_count && strcmp (info->filename, array[i]->filename) == 0)
@@ -1658,16 +1658,16 @@ info_auto_load_libthread_db (char *args, int from_tty)
 	}
       *pids_end = '\0';
 
-      ui_out_field_string (uiout, "pids", pids);
+      uiout->field_string ("pids", pids);
 
-      ui_out_text (uiout, "\n");
+      uiout->text ("\n");
       do_cleanups (chain);
     }
 
   do_cleanups (back_to);
 
   if (info_count == 0)
-    ui_out_message (uiout, 0, _("No auto-loaded libthread-db.\n"));
+    uiout->message (_("No auto-loaded libthread-db.\n"));
 }
 
 static void

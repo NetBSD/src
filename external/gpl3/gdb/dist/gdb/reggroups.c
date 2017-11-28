@@ -1,6 +1,6 @@
 /* Register groupings for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -270,14 +270,11 @@ maintenance_print_reggroups (char *args, int from_tty)
     reggroups_dump (gdbarch, gdb_stdout);
   else
     {
-      struct cleanup *cleanups;
-      struct ui_file *file = gdb_fopen (args, "w");
+      stdio_file file;
 
-      if (file == NULL)
+      if (!file.open (args, "w"))
 	perror_with_name (_("maintenance print reggroups"));
-      cleanups = make_cleanup_ui_file_delete (file);
-      reggroups_dump (gdbarch, file);
-      do_cleanups (cleanups);
+      reggroups_dump (gdbarch, &file);
     }
 }
 

@@ -1,6 +1,6 @@
 /* Parse expressions for GDB.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo, 1991.
@@ -49,6 +49,7 @@
 #include "source.h"
 #include "objfiles.h"
 #include "user-regs.h"
+#include <algorithm>
 
 /* Standard set of definitions for printing, dumping, prefixifying,
  * and evaluating expressions.  */
@@ -114,12 +115,12 @@ static void free_funcalls (void *ignore);
 static int prefixify_subexp (struct expression *, struct expression *, int,
 			     int);
 
-static struct expression *parse_exp_in_context (const char **, CORE_ADDR,
-						const struct block *, int, 
-						int, int *);
-static struct expression *parse_exp_in_context_1 (const char **, CORE_ADDR,
-						  const struct block *, int,
-						  int, int *);
+static expression_up parse_exp_in_context (const char **, CORE_ADDR,
+					   const struct block *, int,
+					   int, int *);
+static expression_up parse_exp_in_context_1 (const char **, CORE_ADDR,
+					     const struct block *, int,
+					     int, int *);
 
 void _initialize_parse (void);
 
@@ -826,7 +827,7 @@ prefixify_expression (struct expression *expr)
 /* Return the number of exp_elements in the postfix subexpression 
    of EXPR whose operator is at index ENDPOS - 1 in EXPR.  */
 
-int
+static int
 length_of_subexp (struct expression *expr, int endpos)
 {
   int oplen, args;
@@ -1107,14 +1108,14 @@ prefixify_subexp (struct expression *inexpr,
 
    If COMMA is nonzero, stop if a comma is reached.  */
 
-struct expression *
+expression_up
 parse_exp_1 (const char **stringptr, CORE_ADDR pc, const struct block *block,
 	     int comma)
 {
   return parse_exp_in_context (stringptr, pc, block, comma, 0, NULL);
 }
 
-static struct expression *
+static expression_up
 parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
 		      const struct block *block,
 		      int comma, int void_context_p, int *out_subexp)
@@ -1130,7 +1131,7 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
    left-hand-side of the struct op.  If not doing such completion, it
    is left untouched.  */
 
-static struct expression *
+static expression_up
 parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
 			const struct block *block,
 			int comma, int void_context_p, int *out_subexp)
@@ -1253,18 +1254,16 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
   discard_cleanups (old_chain);
 
   *stringptr = lexptr;
-  return ps.expout;
+  return expression_up (ps.expout);
 }
 
 /* Parse STRING as an expression, and complain if this fails
    to use up all of the contents of STRING.  */
 
-struct expression *
+expression_up
 parse_expression (const char *string)
 {
-  struct expression *exp;
-
-  exp = parse_exp_1 (&string, 0, 0, 0);
+  expression_up exp = parse_exp_1 (&string, 0, 0, 0);
   if (*string)
     error (_("Junk after end of expression."));
   return exp;
@@ -1273,11 +1272,10 @@ parse_expression (const char *string)
 /* Same as parse_expression, but using the given language (LANG)
    to parse the expression.  */
 
-struct expression *
+expression_up
 parse_expression_with_language (const char *string, enum language lang)
 {
   struct cleanup *old_chain = NULL;
-  struct expression *expr;
 
   if (current_language->la_language != lang)
     {
@@ -1285,7 +1283,7 @@ parse_expression_with_language (const char *string, enum language lang)
       set_language (lang);
     }
 
-  expr = parse_expression (string);
+  expression_up expr = parse_expression (string);
 
   if (old_chain != NULL)
     do_cleanups (old_chain);
@@ -1304,7 +1302,7 @@ struct type *
 parse_expression_for_completion (const char *string, char **name,
 				 enum type_code *code)
 {
-  struct expression *exp = NULL;
+  expression_up exp;
   struct value *val;
   int subexp;
 
@@ -1332,24 +1330,17 @@ parse_expression_for_completion (const char *string, char **name,
     }
 
   if (expout_last_struct == -1)
-    {
-      xfree (exp);
-      return NULL;
-    }
+    return NULL;
 
-  *name = extract_field_op (exp, &subexp);
+  *name = extract_field_op (exp.get (), &subexp);
   if (!*name)
-    {
-      xfree (exp);
-      return NULL;
-    }
+    return NULL;
 
   /* This might throw an exception.  If so, we want to let it
      propagate.  */
-  val = evaluate_subexpression_type (exp, subexp);
+  val = evaluate_subexpression_type (exp.get (), subexp);
   /* (*NAME) is a part of the EXP memory block freed below.  */
   *name = xstrdup (*name);
-  xfree (exp);
 
   return value_type (val);
 }
@@ -1470,10 +1461,10 @@ insert_into_type_stack (int slot, union type_stack_elt element)
 }
 
 /* Insert a new type, TP, at the bottom of the type stack.  If TP is
-   tp_pointer or tp_reference, it is inserted at the bottom.  If TP is
-   a qualifier, it is inserted at slot 1 (just above a previous
-   tp_pointer) if there is anything on the stack, or simply pushed if
-   the stack is empty.  Other values for TP are invalid.  */
+   tp_pointer, tp_reference or tp_rvalue_reference, it is inserted at the
+   bottom.  If TP is a qualifier, it is inserted at slot 1 (just above a
+   previous tp_pointer) if there is anything on the stack, or simply pushed
+   if the stack is empty.  Other values for TP are invalid.  */
 
 void
 insert_type (enum type_pieces tp)
@@ -1482,7 +1473,8 @@ insert_type (enum type_pieces tp)
   int slot;
 
   gdb_assert (tp == tp_pointer || tp == tp_reference
-	      || tp == tp_const || tp == tp_volatile);
+	      || tp == tp_rvalue_reference || tp == tp_const
+	      || tp == tp_volatile);
 
   /* If there is anything on the stack (we know it will be a
      tp_pointer), insert the qualifier above it.  Otherwise, simply
@@ -1695,18 +1687,22 @@ follow_types (struct type *follow_type)
 	make_addr_space = 0;
 	break;
       case tp_reference:
-	follow_type = lookup_reference_type (follow_type);
-	if (make_const)
-	  follow_type = make_cv_type (make_const, 
-				      TYPE_VOLATILE (follow_type), 
-				      follow_type, 0);
-	if (make_volatile)
-	  follow_type = make_cv_type (TYPE_CONST (follow_type), 
-				      make_volatile, 
-				      follow_type, 0);
-	if (make_addr_space)
-	  follow_type = make_type_with_address_space (follow_type, 
-						      make_addr_space);
+	 follow_type = lookup_lvalue_reference_type (follow_type);
+	 goto process_reference;
+	case tp_rvalue_reference:
+	 follow_type = lookup_rvalue_reference_type (follow_type);
+	process_reference:
+	 if (make_const)
+	   follow_type = make_cv_type (make_const,
+				       TYPE_VOLATILE (follow_type),
+				       follow_type, 0);
+	 if (make_volatile)
+	   follow_type = make_cv_type (TYPE_CONST (follow_type),
+				       make_volatile,
+				       follow_type, 0);
+	 if (make_addr_space)
+	   follow_type = make_type_with_address_space (follow_type,
+						       make_addr_space);
 	make_const = make_volatile = 0;
 	make_addr_space = 0;
 	break;
@@ -1925,7 +1921,7 @@ increase_expout_size (struct parser_state *ps, size_t lenelt)
 {
   if ((ps->expout_ptr + lenelt) >= ps->expout_size)
     {
-      ps->expout_size = max (ps->expout_size * 2,
+      ps->expout_size = std::max (ps->expout_size * 2,
 			     ps->expout_ptr + lenelt + 10);
       ps->expout = (struct expression *)
 	xrealloc (ps->expout, (sizeof (struct expression)

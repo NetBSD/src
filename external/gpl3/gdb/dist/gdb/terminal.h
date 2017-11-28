@@ -1,5 +1,5 @@
 /* Terminal interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,63 +18,6 @@
 
 #if !defined (TERMINAL_H)
 #define TERMINAL_H 1
-
-
-/* If we're using autoconf, it will define HAVE_TERMIOS_H,
-   HAVE_TERMIO_H and HAVE_SGTTY_H for us.  One day we can rewrite
-   ser-unix.c and inflow.c to inspect those names instead of
-   HAVE_TERMIOS, HAVE_TERMIO and the implicit HAVE_SGTTY (when neither
-   HAVE_TERMIOS or HAVE_TERMIO is set).  Until then, make sure that
-   nothing has already defined the one of the names, and do the right
-   thing.  */
-
-#if !defined (HAVE_TERMIOS) && !defined(HAVE_TERMIO) && !defined(HAVE_SGTTY)
-#if defined(HAVE_TERMIOS_H)
-#define HAVE_TERMIOS
-#else /* ! defined (HAVE_TERMIOS_H) */
-#if defined(HAVE_TERMIO_H)
-#define HAVE_TERMIO
-#else /* ! defined (HAVE_TERMIO_H) */
-#if defined(HAVE_SGTTY_H)
-#define HAVE_SGTTY
-#endif /* ! defined (HAVE_SGTTY_H) */
-#endif /* ! defined (HAVE_TERMIO_H) */
-#endif /* ! defined (HAVE_TERMIOS_H) */
-#endif /* !defined (HAVE_TERMIOS) && !defined (HAVE_TERMIO) &&
-	  !defined (HAVE_SGTTY) */
-
-#if defined(HAVE_TERMIOS)
-#include <termios.h>
-#endif
-
-#if !defined(_WIN32) && !defined (HAVE_TERMIOS)
-
-/* Define a common set of macros -- BSD based -- and redefine whatever
-   the system offers to make it look like that.  FIXME: serial.h and
-   ser-*.c deal with this in a much cleaner fashion; as soon as stuff
-   is converted to use them, can get rid of this crap.  */
-
-#ifdef HAVE_TERMIO
-
-#include <termio.h>
-
-#undef TIOCGETP
-#define TIOCGETP TCGETA
-#undef TIOCSETN
-#define TIOCSETN TCSETA
-#undef TIOCSETP
-#define TIOCSETP TCSETAF
-#define TERMINAL struct termio
-
-#else /* sgtty */
-
-#include <fcntl.h>
-#include <sgtty.h>
-#include <sys/ioctl.h>
-#define TERMINAL struct sgttyb
-
-#endif /* sgtty */
-#endif
 
 struct inferior;
 

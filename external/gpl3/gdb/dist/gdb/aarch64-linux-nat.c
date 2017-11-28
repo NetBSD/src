@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -163,7 +163,7 @@ fetch_gregs_from_thread (struct regcache *regcache)
      and arm.  */
   gdb_static_assert (sizeof (regs) >= 18 * 4);
 
-  tid = ptid_get_lwp (inferior_ptid);
+  tid = ptid_get_lwp (regcache_get_ptid (regcache));
 
   iovec.iov_base = &regs;
   if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 32)
@@ -200,7 +200,7 @@ store_gregs_to_thread (const struct regcache *regcache)
   /* Make sure REGS can hold all registers contents on both aarch64
      and arm.  */
   gdb_static_assert (sizeof (regs) >= 18 * 4);
-  tid = ptid_get_lwp (inferior_ptid);
+  tid = ptid_get_lwp (regcache_get_ptid (regcache));
 
   iovec.iov_base = &regs;
   if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 32)
@@ -244,7 +244,7 @@ fetch_fpregs_from_thread (struct regcache *regcache)
      and arm.  */
   gdb_static_assert (sizeof regs >= VFP_REGS_SIZE);
 
-  tid = ptid_get_lwp (inferior_ptid);
+  tid = ptid_get_lwp (regcache_get_ptid (regcache));
 
   iovec.iov_base = &regs;
 
@@ -291,7 +291,7 @@ store_fpregs_to_thread (const struct regcache *regcache)
   /* Make sure REGS can hold all VFP registers contents on both aarch64
      and arm.  */
   gdb_static_assert (sizeof regs >= VFP_REGS_SIZE);
-  tid = ptid_get_lwp (inferior_ptid);
+  tid = ptid_get_lwp (regcache_get_ptid (regcache));
 
   iovec.iov_base = &regs;
 

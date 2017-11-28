@@ -1,5 +1,5 @@
 /* Event loop machinery for GDB, the GNU debugger.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -212,7 +212,7 @@ gdb_notifier;
    first occasion after WHEN.  */
 struct gdb_timer
   {
-    struct timeval when;
+    std::chrono::steady_clock::time_point when;
     int timer_id;
     struct gdb_timer *next;
     timer_handler_func *proc;	    /* Function to call to do the work.  */
@@ -1097,33 +1097,22 @@ delete_async_event_handler (async_event_handler **async_handler_ptr)
   *async_handler_ptr = NULL;
 }
 
-/* Create a timer that will expire in MILLISECONDS from now.  When the
-   timer is ready, PROC will be executed.  At creation, the timer is
-   aded to the timers queue.  This queue is kept sorted in order of
-   increasing timers.  Return a handle to the timer struct.  */
+/* Create a timer that will expire in MS milliseconds from now.  When
+   the timer is ready, PROC will be executed.  At creation, the timer
+   is added to the timers queue.  This queue is kept sorted in order
+   of increasing timers.  Return a handle to the timer struct.  */
+
 int
-create_timer (int milliseconds, timer_handler_func * proc, 
+create_timer (int ms, timer_handler_func *proc,
 	      gdb_client_data client_data)
 {
+  using namespace std::chrono;
   struct gdb_timer *timer_ptr, *timer_index, *prev_timer;
-  struct timeval time_now, delta;
 
-  /* Compute seconds.  */
-  delta.tv_sec = milliseconds / 1000;
-  /* Compute microseconds.  */
-  delta.tv_usec = (milliseconds % 1000) * 1000;
+  steady_clock::time_point time_now = steady_clock::now ();
 
-  gettimeofday (&time_now, NULL);
-
-  timer_ptr = XNEW (struct gdb_timer);
-  timer_ptr->when.tv_sec = time_now.tv_sec + delta.tv_sec;
-  timer_ptr->when.tv_usec = time_now.tv_usec + delta.tv_usec;
-  /* Carry?  */
-  if (timer_ptr->when.tv_usec >= 1000000)
-    {
-      timer_ptr->when.tv_sec += 1;
-      timer_ptr->when.tv_usec -= 1000000;
-    }
+  timer_ptr = new gdb_timer ();
+  timer_ptr->when = time_now + milliseconds (ms);
   timer_ptr->proc = proc;
   timer_ptr->client_data = client_data;
   timer_list.num_timers++;
@@ -1136,11 +1125,7 @@ create_timer (int milliseconds, timer_handler_func * proc,
        timer_index != NULL;
        timer_index = timer_index->next)
     {
-      /* If the seconds field is greater or if it is the same, but the
-         microsecond field is greater.  */
-      if ((timer_index->when.tv_sec > timer_ptr->when.tv_sec)
-	  || ((timer_index->when.tv_sec == timer_ptr->when.tv_sec)
-	      && (timer_index->when.tv_usec > timer_ptr->when.tv_usec)))
+      if (timer_index->when > timer_ptr->when)
 	break;
     }
 
@@ -1194,9 +1179,25 @@ delete_timer (int id)
 	;
       prev_timer->next = timer_ptr->next;
     }
-  xfree (timer_ptr);
+  delete timer_ptr;
 
   gdb_notifier.timeout_valid = 0;
+}
+
+/* Convert a std::chrono duration to a struct timeval.  */
+
+template<typename Duration>
+static struct timeval
+duration_cast_timeval (const Duration &d)
+{
+  using namespace std::chrono;
+  seconds sec = duration_cast<seconds> (d);
+  microseconds msec = duration_cast<microseconds> (d - sec);
+
+  struct timeval tv;
+  tv.tv_sec = sec.count ();
+  tv.tv_usec = msec.count ();
+  return tv;
 }
 
 /* Update the timeout for the select() or poll().  Returns true if the
@@ -1205,36 +1206,29 @@ delete_timer (int id)
 static int
 update_wait_timeout (void)
 {
-  struct timeval time_now, delta;
-
   if (timer_list.first_timer != NULL)
     {
-      gettimeofday (&time_now, NULL);
-      delta.tv_sec = timer_list.first_timer->when.tv_sec - time_now.tv_sec;
-      delta.tv_usec = timer_list.first_timer->when.tv_usec - time_now.tv_usec;
-      /* Borrow?  */
-      if (delta.tv_usec < 0)
-	{
-	  delta.tv_sec -= 1;
-	  delta.tv_usec += 1000000;
-	}
+      using namespace std::chrono;
+      steady_clock::time_point time_now = steady_clock::now ();
+      struct timeval timeout;
 
-      /* Cannot simply test if delta.tv_sec is negative because time_t
-         might be unsigned.  */
-      if (timer_list.first_timer->when.tv_sec < time_now.tv_sec
-	  || (timer_list.first_timer->when.tv_sec == time_now.tv_sec
-	      && timer_list.first_timer->when.tv_usec < time_now.tv_usec))
+      if (timer_list.first_timer->when < time_now)
 	{
 	  /* It expired already.  */
-	  delta.tv_sec = 0;
-	  delta.tv_usec = 0;
+	  timeout.tv_sec = 0;
+	  timeout.tv_usec = 0;
+	}
+      else
+	{
+	  steady_clock::duration d = timer_list.first_timer->when - time_now;
+	  timeout = duration_cast_timeval (d);
 	}
 
       /* Update the timeout for select/ poll.  */
       if (use_poll)
 	{
 #ifdef HAVE_POLL
-	  gdb_notifier.poll_timeout = delta.tv_sec * 1000;
+	  gdb_notifier.poll_timeout = timeout.tv_sec * 1000;
 #else
 	  internal_error (__FILE__, __LINE__,
 			  _("use_poll without HAVE_POLL"));
@@ -1242,12 +1236,12 @@ update_wait_timeout (void)
 	}
       else
 	{
-	  gdb_notifier.select_timeout.tv_sec = delta.tv_sec;
-	  gdb_notifier.select_timeout.tv_usec = delta.tv_usec;
+	  gdb_notifier.select_timeout.tv_sec = timeout.tv_sec;
+	  gdb_notifier.select_timeout.tv_usec = timeout.tv_usec;
 	}
       gdb_notifier.timeout_valid = 1;
 
-      if (delta.tv_sec == 0 && delta.tv_usec == 0)
+      if (timer_list.first_timer->when < time_now)
 	return 1;
     }
   else

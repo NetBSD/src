@@ -1,6 +1,6 @@
 /* Functions specific to running GDB native on HPPA running GNU/Linux.
 
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "inferior.h"
 #include "target.h"
 #include "linux-nat.h"
+#include "inf-ptrace.h"
 
 #include <sys/procfs.h>
 #include "nat/gdb_ptrace.h"
@@ -213,7 +214,7 @@ static void
 fetch_register (struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int tid;
+  pid_t tid;
   int val;
 
   if (gdbarch_cannot_fetch_register (gdbarch, regno))
@@ -222,10 +223,7 @@ fetch_register (struct regcache *regcache, int regno)
       return;
     }
 
-  /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   errno = 0;
   val = ptrace (PTRACE_PEEKUSER, tid, hppa_linux_register_addr (regno, 0), 0);
@@ -243,16 +241,13 @@ static void
 store_register (const struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int tid;
+  pid_t tid;
   int val;
 
   if (gdbarch_cannot_store_register (gdbarch, regno))
     return;
 
-  /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   errno = 0;
   regcache_raw_collect (regcache, regno, &val);

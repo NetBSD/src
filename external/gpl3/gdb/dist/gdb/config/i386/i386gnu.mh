@@ -1,5 +1,5 @@
 # Host: Intel 386 running the GNU Hurd
-NATDEPFILES= i386gnu-nat.o gnu-nat.o \
+NATDEPFILES= i386-gnu-nat.o gnu-nat.o \
 	     x86-nat.o x86-dregs.o fork-child.o \
 	     notify_S.o process_reply_S.o msg_reply_S.o \
 	     msg_U.o exc_request_U.o exc_request_S.o
@@ -31,6 +31,9 @@ MIGCOM = $(MIG) -cc cat - /dev/null
 %_U.h %_U.c: %.defs
 	$(CPP) $(CPPFLAGS) $($*-MIGUFLAGS) -x c $< \
 	| $(MIGCOM) -sheader /dev/null -server /dev/null -user $*_U.c -header $*_U.h
+
+# MIG stubs are not yet ready for C++ compilation.
+%_S.o %_U.o : COMPILE.post += -x c
 
 NAT_GENERATED_FILES = notify_S.h notify_S.c \
 	process_reply_S.h process_reply_S.c \

@@ -1,5 +1,5 @@
 /* Definitions for opcode table for the sparc.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, GDB, the GNU debugger, and
    the GNU Binutils.
@@ -80,6 +80,10 @@ typedef struct sparc_opcode_arch
      (SPARC_OPCODE_ARCH_MASK (..._V6) | SPARC_OPCODE_ARCH_MASK (..._V7)).
      These are short's because sparc_opcode.architecture is.  */
   short supported;
+  /* Bitmaps describing the set of hardware capabilities implemented
+     by the opcode arch.  */
+  int hwcaps;
+  int hwcaps2;
 } sparc_opcode_arch;
 
 extern const struct sparc_opcode_arch sparc_opcode_archs[];
@@ -112,6 +116,14 @@ typedef struct sparc_opcode
   unsigned int hwcaps2;
   short architecture;	/* Bitmask of sparc_opcode_arch_val's.  */
 } sparc_opcode;
+
+/* Struct for ASIs - to handle ASIs introduced in a specific architecture */
+typedef struct
+{
+  int value;
+  const char *name;
+  short architecture;
+} sparc_asi;
 
 /* FIXME: Add F_ANACHRONISTIC flag for v9.  */
 #define	F_DELAYED	0x00000001 /* Delayed branch.  */
@@ -292,7 +304,7 @@ typedef struct sparc_opcode
 extern const struct sparc_opcode sparc_opcodes[];
 extern const int sparc_num_opcodes;
 
-extern int sparc_encode_asi (const char *);
+extern const sparc_asi *sparc_encode_asi (const char *);
 extern const char *sparc_decode_asi (int);
 extern int sparc_encode_membar (const char *);
 extern const char *sparc_decode_membar (int);

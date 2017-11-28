@@ -1,5 +1,5 @@
 /* xgate.h -- Freescale XGATE opcode list
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
    Written by Sean Keys (skeys@ipdatasys.com)
 
    This file is part of the GNU opcodes library.
@@ -29,14 +29,14 @@
 #define XGATE_C_BIT   0x01	/* XGC - Carry Flag */
 
 /* Access Detail Notation
-   V — Vector fetch: always an aligned word read, lasts for at least one RISC core cycle
-   P — Program word fetch: always an aligned word read, lasts for at least one RISC core cycle
-   r — 8-bit data read: lasts for at least one RISC core cycle
-   R — 16-bit data read: lasts for at least one RISC core cycle
-   w — 8-bit data write: lasts for at least one RISC core cycle
-   W — 16-bit data write: lasts for at least one RISC core cycle
-   A — Alignment cycle: no read or write, lasts for zero or one RISC core cycles
-   f — Free cycle: no read or write, lasts for one RISC core cycles.  */
+   V - Vector fetch: always an aligned word read, lasts for at least one RISC core cycle
+   P - Program word fetch: always an aligned word read, lasts for at least one RISC core cycle
+   r - 8-bit data read: lasts for at least one RISC core cycle
+   R - 16-bit data read: lasts for at least one RISC core cycle
+   w - 8-bit data write: lasts for at least one RISC core cycle
+   W - 16-bit data write: lasts for at least one RISC core cycle
+   A - Alignment cycle: no read or write, lasts for zero or one RISC core cycles
+   f - Free cycle: no read or write, lasts for one RISC core cycles.  */
 #define XGATE_CYCLE_V	0x01
 #define XGATE_CYCLE_P	0x02
 #define XGATE_CYCLE_r	0x04

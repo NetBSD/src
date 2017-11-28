@@ -17,6 +17,7 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "ansidecl.h"
+#include "libiberty.h"
 #include <math.h>
 
 /* Definitions for the support routines.  */
@@ -373,7 +374,7 @@ ModeToBank (ARMword mode)
     DUMMYBANK, DUMMYBANK, DUMMYBANK, SYSTEMBANK
   };
 
-  if (mode >= (sizeof (bankofmode) / sizeof (bankofmode[0])))
+  if (mode >= ARRAY_SIZE (bankofmode))
     return DUMMYBANK;
 
   return bankofmode[mode];

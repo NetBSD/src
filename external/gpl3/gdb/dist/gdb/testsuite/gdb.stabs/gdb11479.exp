@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@ set testfile "gdb11479"
 
 proc do_test {version} {
     if ![runto_main] {
-        fail "Can't run to main $version"
+        fail "can't run to main $version"
         return -1
     }
-    gdb_test "rb test" "" "Set breakpoints $version"
-    gdb_test "continue" "Breakpoint .* test2 .*" "Stop at first breakpoint $version"
+    gdb_test "rb test" "" "set breakpoints $version"
+    gdb_test "continue" "Breakpoint .* test2 .*" "stop at first breakpoint $version"
     # Check that the struct is read in correctly
     gdb_test "print *t" ".*\{x = 5, y = 25, b = 2.5\}.*" \
 	"Inspect t in test2 $version"
@@ -40,7 +40,7 @@ proc do_test {version} {
     gdb_test "print sizeof (*e)" "= \[1-9\]*" "sizeof (*e) in test $version"
 }
 
-if { [prepare_for_testing $testfile.exp $testfile $testfile.c {debug additional_flags=-gstabs}] == 0 } {
+if { [prepare_for_testing "failed to prepare" $testfile $testfile.c {debug additional_flags=-gstabs}] == 0 } {
     do_test forced_stabs
 }
 
@@ -48,7 +48,7 @@ if { [prepare_for_testing $testfile.exp $testfile $testfile.c {debug additional_
 # by GDB which can generate a compilation failure. 
 gdb_exit
 
-if { [prepare_for_testing $testfile.exp $testfile $testfile.c {debug}] == 0 } {
+if { [prepare_for_testing "failed to prepare" $testfile $testfile.c {debug}] == 0 } {
     do_test natural_debug_format
 }
 

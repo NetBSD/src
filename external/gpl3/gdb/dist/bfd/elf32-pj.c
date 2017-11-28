@@ -1,5 +1,5 @@
 /* picoJava specific support for 32-bit ELF
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Contributed by Steve Chamberlan of Transmeta (sac@pobox.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -321,8 +321,9 @@ pj_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 
   if (r >= R_PJ_max)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised PicoJava reloc number: %d"),
-			     abfd, r);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: unrecognised PicoJava reloc number: %d"),
+			  abfd, r);
       bfd_set_error (bfd_error_bad_value);
       r = R_PJ_NONE;
     }

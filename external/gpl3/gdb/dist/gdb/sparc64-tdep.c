@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,7 @@
 #include "objfiles.h"
 #include "osabi.h"
 #include "regcache.h"
+#include "target-descriptions.h"
 #include "target.h"
 #include "value.h"
 
@@ -67,6 +68,7 @@ sparc64_integral_or_pointer_p (const struct type *type)
       return 1;
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
       {
 	int len = TYPE_LENGTH (type);
 	gdb_assert (len == 8);
@@ -172,6 +174,31 @@ sparc64_pstate_type (struct gdbarch *gdbarch)
 }
 
 static struct type *
+sparc64_ccr_type (struct gdbarch *gdbarch)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (tdep->sparc64_ccr_type == NULL)
+    {
+      struct type *type;
+
+      type = arch_flags_type (gdbarch, "builtin_type_sparc64_ccr", 8);
+      append_flags_type_flag (type, 0, "icc.c");
+      append_flags_type_flag (type, 1, "icc.v");
+      append_flags_type_flag (type, 2, "icc.z");
+      append_flags_type_flag (type, 3, "icc.n");
+      append_flags_type_flag (type, 4, "xcc.c");
+      append_flags_type_flag (type, 5, "xcc.v");
+      append_flags_type_flag (type, 6, "xcc.z");
+      append_flags_type_flag (type, 7, "xcc.n");
+
+      tdep->sparc64_ccr_type = type;
+    }
+
+  return tdep->sparc64_ccr_type;
+}
+
+static struct type *
 sparc64_fsr_type (struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -181,16 +208,16 @@ sparc64_fsr_type (struct gdbarch *gdbarch)
       struct type *type;
 
       type = arch_flags_type (gdbarch, "builtin_type_sparc64_fsr", 8);
-      append_flags_type_flag (type, 0, "NXA");
-      append_flags_type_flag (type, 1, "DZA");
-      append_flags_type_flag (type, 2, "UFA");
-      append_flags_type_flag (type, 3, "OFA");
-      append_flags_type_flag (type, 4, "NVA");
-      append_flags_type_flag (type, 5, "NXC");
-      append_flags_type_flag (type, 6, "DZC");
-      append_flags_type_flag (type, 7, "UFC");
-      append_flags_type_flag (type, 8, "OFC");
-      append_flags_type_flag (type, 9, "NVC");
+      append_flags_type_flag (type, 0, "NXC");
+      append_flags_type_flag (type, 1, "DZC");
+      append_flags_type_flag (type, 2, "UFC");
+      append_flags_type_flag (type, 3, "OFC");
+      append_flags_type_flag (type, 4, "NVC");
+      append_flags_type_flag (type, 5, "NXA");
+      append_flags_type_flag (type, 6, "DZA");
+      append_flags_type_flag (type, 7, "UFA");
+      append_flags_type_flag (type, 8, "OFA");
+      append_flags_type_flag (type, 9, "NVA");
       append_flags_type_flag (type, 22, "NS");
       append_flags_type_flag (type, 23, "NXM");
       append_flags_type_flag (type, 24, "DZM");
@@ -226,28 +253,29 @@ sparc64_fprs_type (struct gdbarch *gdbarch)
 
 
 /* Register information.  */
+#define SPARC64_FPU_REGISTERS                             \
+  "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",         \
+  "f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15",   \
+  "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23", \
+  "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31", \
+  "f32", "f34", "f36", "f38", "f40", "f42", "f44", "f46", \
+  "f48", "f50", "f52", "f54", "f56", "f58", "f60", "f62"
+#define SPARC64_CP0_REGISTERS                                             \
+  "pc", "npc",                                                            \
+  /* FIXME: Give "state" a name until we start using register groups.  */ \
+  "state",                                                                \
+  "fsr",                                                                  \
+  "fprs",                                                                 \
+  "y"
+
+static const char *sparc64_fpu_register_names[] = { SPARC64_FPU_REGISTERS };
+static const char *sparc64_cp0_register_names[] = { SPARC64_CP0_REGISTERS };
 
 static const char *sparc64_register_names[] =
 {
-  "g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7",
-  "o0", "o1", "o2", "o3", "o4", "o5", "sp", "o7",
-  "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
-  "i0", "i1", "i2", "i3", "i4", "i5", "fp", "i7",
-
-  "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",
-  "f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15",
-  "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
-  "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",
-  "f32", "f34", "f36", "f38", "f40", "f42", "f44", "f46",
-  "f48", "f50", "f52", "f54", "f56", "f58", "f60", "f62",
-
-  "pc", "npc",
-  
-  /* FIXME: Give "state" a name until we start using register groups.  */
-  "state",
-  "fsr",
-  "fprs",
-  "y",
+  SPARC_CORE_REGISTERS,
+  SPARC64_FPU_REGISTERS,
+  SPARC64_CP0_REGISTERS
 };
 
 /* Total number of registers.  */
@@ -272,19 +300,59 @@ static const char *sparc64_pseudo_register_names[] =
 /* Total number of pseudo registers.  */
 #define SPARC64_NUM_PSEUDO_REGS ARRAY_SIZE (sparc64_pseudo_register_names)
 
+/* Return the name of pseudo register REGNUM.  */
+
+static const char *
+sparc64_pseudo_register_name (struct gdbarch *gdbarch, int regnum)
+{
+  regnum -= gdbarch_num_regs (gdbarch);
+
+  if (regnum < SPARC64_NUM_PSEUDO_REGS)
+    return sparc64_pseudo_register_names[regnum];
+
+  internal_error (__FILE__, __LINE__,
+                  _("sparc64_pseudo_register_name: bad register number %d"),
+                  regnum);
+}
+
 /* Return the name of register REGNUM.  */
 
 static const char *
 sparc64_register_name (struct gdbarch *gdbarch, int regnum)
 {
-  if (regnum >= 0 && regnum < SPARC64_NUM_REGS)
+  if (tdesc_has_registers (gdbarch_target_desc (gdbarch)))
+    return tdesc_register_name (gdbarch, regnum);
+
+  if (regnum >= 0 && regnum < gdbarch_num_regs (gdbarch))
     return sparc64_register_names[regnum];
 
-  if (regnum >= SPARC64_NUM_REGS
-      && regnum < SPARC64_NUM_REGS + SPARC64_NUM_PSEUDO_REGS)
-    return sparc64_pseudo_register_names[regnum - SPARC64_NUM_REGS];
+  return sparc64_pseudo_register_name (gdbarch, regnum);
+}
 
-  return NULL;
+/* Return the GDB type object for the "standard" data type of data in
+   pseudo register REGNUM.  */
+
+static struct type *
+sparc64_pseudo_register_type (struct gdbarch *gdbarch, int regnum)
+{
+  regnum -= gdbarch_num_regs (gdbarch);
+
+  if (regnum == SPARC64_CWP_REGNUM)
+    return builtin_type (gdbarch)->builtin_int64;
+  if (regnum == SPARC64_PSTATE_REGNUM)
+    return sparc64_pstate_type (gdbarch);
+  if (regnum == SPARC64_ASI_REGNUM)
+    return builtin_type (gdbarch)->builtin_int64;
+  if (regnum == SPARC64_CCR_REGNUM)
+    return sparc64_ccr_type (gdbarch);
+  if (regnum >= SPARC64_D0_REGNUM && regnum <= SPARC64_D62_REGNUM)
+    return builtin_type (gdbarch)->builtin_double;
+  if (regnum >= SPARC64_Q0_REGNUM && regnum <= SPARC64_Q60_REGNUM)
+    return builtin_type (gdbarch)->builtin_long_double;
+
+  internal_error (__FILE__, __LINE__,
+                  _("sparc64_pseudo_register_type: bad register number %d"),
+                  regnum);
 }
 
 /* Return the GDB type object for the "standard" data type of data in
@@ -293,8 +361,10 @@ sparc64_register_name (struct gdbarch *gdbarch, int regnum)
 static struct type *
 sparc64_register_type (struct gdbarch *gdbarch, int regnum)
 {
-  /* Raw registers.  */
+  if (tdesc_has_registers (gdbarch_target_desc (gdbarch)))
+    return tdesc_register_type (gdbarch, regnum);
 
+  /* Raw registers.  */
   if (regnum == SPARC_SP_REGNUM || regnum == SPARC_FP_REGNUM)
     return builtin_type (gdbarch)->builtin_data_ptr;
   if (regnum >= SPARC_G0_REGNUM && regnum <= SPARC_I7_REGNUM)
@@ -319,19 +389,8 @@ sparc64_register_type (struct gdbarch *gdbarch, int regnum)
     return builtin_type (gdbarch)->builtin_int64;
 
   /* Pseudo registers.  */
-
-  if (regnum == SPARC64_CWP_REGNUM)
-    return builtin_type (gdbarch)->builtin_int64;
-  if (regnum == SPARC64_PSTATE_REGNUM)
-    return sparc64_pstate_type (gdbarch);
-  if (regnum == SPARC64_ASI_REGNUM)
-    return builtin_type (gdbarch)->builtin_int64;
-  if (regnum == SPARC64_CCR_REGNUM)
-    return builtin_type (gdbarch)->builtin_int64;
-  if (regnum >= SPARC64_D0_REGNUM && regnum <= SPARC64_D62_REGNUM)
-    return builtin_type (gdbarch)->builtin_double;
-  if (regnum >= SPARC64_Q0_REGNUM && regnum <= SPARC64_Q60_REGNUM)
-    return builtin_type (gdbarch)->builtin_long_double;
+  if (regnum >= gdbarch_num_regs (gdbarch))
+    return sparc64_pseudo_register_type (gdbarch, regnum);
 
   internal_error (__FILE__, __LINE__, _("invalid regnum"));
 }
@@ -344,7 +403,7 @@ sparc64_pseudo_register_read (struct gdbarch *gdbarch,
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   enum register_status status;
 
-  gdb_assert (regnum >= SPARC64_NUM_REGS);
+  regnum -= gdbarch_num_regs (gdbarch);
 
   if (regnum >= SPARC64_D0_REGNUM && regnum <= SPARC64_D30_REGNUM)
     {
@@ -421,7 +480,8 @@ sparc64_pseudo_register_write (struct gdbarch *gdbarch,
 			       int regnum, const gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  gdb_assert (regnum >= SPARC64_NUM_REGS);
+
+  regnum -= gdbarch_num_regs (gdbarch);
 
   if (regnum >= SPARC64_D0_REGNUM && regnum <= SPARC64_D30_REGNUM)
     {
@@ -638,6 +698,7 @@ static void
 sparc64_store_floating_fields (struct regcache *regcache, struct type *type,
 			       const gdb_byte *valbuf, int element, int bitpos)
 {
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   int len = TYPE_LENGTH (type);
 
   gdb_assert (element < 16);
@@ -652,14 +713,15 @@ sparc64_store_floating_fields (struct regcache *regcache, struct type *type,
 	  gdb_assert (bitpos == 0);
 	  gdb_assert ((element % 2) == 0);
 
-	  regnum = SPARC64_Q0_REGNUM + element / 2;
+	  regnum = gdbarch_num_regs (gdbarch) + SPARC64_Q0_REGNUM + element / 2;
 	  regcache_cooked_write (regcache, regnum, valbuf);
 	}
       else if (len == 8)
 	{
 	  gdb_assert (bitpos == 0 || bitpos == 64);
 
-	  regnum = SPARC64_D0_REGNUM + element + bitpos / 64;
+	  regnum = gdbarch_num_regs (gdbarch) + SPARC64_D0_REGNUM
+                   + element + bitpos / 64;
 	  regcache_cooked_write (regcache, regnum, valbuf + (bitpos / 8));
 	}
       else
@@ -712,6 +774,8 @@ static void
 sparc64_extract_floating_fields (struct regcache *regcache, struct type *type,
 				 gdb_byte *valbuf, int bitpos)
 {
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+
   if (sparc64_floating_p (type))
     {
       int len = TYPE_LENGTH (type);
@@ -721,14 +785,15 @@ sparc64_extract_floating_fields (struct regcache *regcache, struct type *type,
 	{
 	  gdb_assert (bitpos == 0 || bitpos == 128);
 
-	  regnum = SPARC64_Q0_REGNUM + bitpos / 128;
+	  regnum = gdbarch_num_regs (gdbarch) + SPARC64_Q0_REGNUM
+                   + bitpos / 128;
 	  regcache_cooked_read (regcache, regnum, valbuf + (bitpos / 8));
 	}
       else if (len == 8)
 	{
 	  gdb_assert (bitpos % 64 == 0 && bitpos >= 0 && bitpos < 256);
 
-	  regnum = SPARC64_D0_REGNUM + bitpos / 64;
+	  regnum = gdbarch_num_regs (gdbarch) + SPARC64_D0_REGNUM + bitpos / 64;
 	  regcache_cooked_read (regcache, regnum, valbuf + (bitpos / 8));
 	}
       else
@@ -911,13 +976,13 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 	  /* Float Complex or double Complex arguments.  */
 	  if (element < 16)
 	    {
-	      regnum = SPARC64_D0_REGNUM + element;
+	      regnum = gdbarch_num_regs (gdbarch) + SPARC64_D0_REGNUM + element;
 
 	      if (len == 16)
 		{
-		  if (regnum < SPARC64_D30_REGNUM)
+		  if (regnum < gdbarch_num_regs (gdbarch) + SPARC64_D30_REGNUM)
 		    regcache_cooked_write (regcache, regnum + 1, valbuf + 8);
-		  if (regnum < SPARC64_D10_REGNUM)
+		  if (regnum < gdbarch_num_regs (gdbarch) + SPARC64_D10_REGNUM)
 		    regcache_cooked_write (regcache,
 					   SPARC_O0_REGNUM + element + 1,
 					   valbuf + 8);
@@ -932,12 +997,14 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 	      if (element % 2)
 		element++;
 	      if (element < 16)
-		regnum = SPARC64_Q0_REGNUM + element / 2;
+		regnum = gdbarch_num_regs (gdbarch) + SPARC64_Q0_REGNUM
+                         + element / 2;
 	    }
 	  else if (len == 8)
 	    {
 	      if (element < 16)
-		regnum = SPARC64_D0_REGNUM + element;
+		regnum = gdbarch_num_regs (gdbarch) + SPARC64_D0_REGNUM
+                         + element;
 	    }
 	  else if (len == 4)
 	    {
@@ -952,7 +1019,8 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 	      valbuf = buf;
 	      len = 8;
 	      if (element < 16)
-		regnum = SPARC64_D0_REGNUM + element;
+		regnum = gdbarch_num_regs (gdbarch) + SPARC64_D0_REGNUM
+                         + element;
 	    }
 	}
       else
@@ -969,19 +1037,24 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 
 	  /* If we're storing the value in a floating-point register,
              also store it in the corresponding %0 register(s).  */
-	  if (regnum >= SPARC64_D0_REGNUM && regnum <= SPARC64_D10_REGNUM)
-	    {
-	      gdb_assert (element < 6);
-	      regnum = SPARC_O0_REGNUM + element;
-	      regcache_cooked_write (regcache, regnum, valbuf);
-	    }
-	  else if (regnum >= SPARC64_Q0_REGNUM && regnum <= SPARC64_Q8_REGNUM)
-	    {
-	      gdb_assert (element < 5);
-	      regnum = SPARC_O0_REGNUM + element;
-	      regcache_cooked_write (regcache, regnum, valbuf);
-	      regcache_cooked_write (regcache, regnum + 1, valbuf + 8);
-	    }
+	  if (regnum >= gdbarch_num_regs (gdbarch))
+            {
+              regnum -= gdbarch_num_regs (gdbarch);
+
+              if (regnum >= SPARC64_D0_REGNUM && regnum <= SPARC64_D10_REGNUM)
+	        {
+	          gdb_assert (element < 6);
+	          regnum = SPARC_O0_REGNUM + element;
+	          regcache_cooked_write (regcache, regnum, valbuf);
+                }
+              else if (regnum >= SPARC64_Q0_REGNUM && regnum <= SPARC64_Q8_REGNUM)
+                {
+                  gdb_assert (element < 5);
+                  regnum = SPARC_O0_REGNUM + element;
+                  regcache_cooked_write (regcache, regnum, valbuf);
+                  regcache_cooked_write (regcache, regnum + 1, valbuf + 8);
+	        }
+            }
 	}
 
       /* Always store the argument in memory.  */
@@ -1185,16 +1258,25 @@ sparc64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tdep->pc_regnum = SPARC64_PC_REGNUM;
   tdep->npc_regnum = SPARC64_NPC_REGNUM;
+  tdep->fpu_register_names = sparc64_fpu_register_names;
+  tdep->fpu_registers_num = ARRAY_SIZE (sparc64_fpu_register_names);
+  tdep->cp0_register_names = sparc64_cp0_register_names;
+  tdep->cp0_registers_num = ARRAY_SIZE (sparc64_cp0_register_names);
 
   /* This is what all the fuss is about.  */
   set_gdbarch_long_bit (gdbarch, 64);
   set_gdbarch_long_long_bit (gdbarch, 64);
   set_gdbarch_ptr_bit (gdbarch, 64);
 
+  set_gdbarch_wchar_bit (gdbarch, 16);
+  set_gdbarch_wchar_signed (gdbarch, 0);
+
   set_gdbarch_num_regs (gdbarch, SPARC64_NUM_REGS);
   set_gdbarch_register_name (gdbarch, sparc64_register_name);
   set_gdbarch_register_type (gdbarch, sparc64_register_type);
   set_gdbarch_num_pseudo_regs (gdbarch, SPARC64_NUM_PSEUDO_REGS);
+  set_tdesc_pseudo_register_name (gdbarch, sparc64_pseudo_register_name);
+  set_tdesc_pseudo_register_type (gdbarch, sparc64_pseudo_register_type);
   set_gdbarch_pseudo_register_read (gdbarch, sparc64_pseudo_register_read);
   set_gdbarch_pseudo_register_write (gdbarch, sparc64_pseudo_register_write);
 

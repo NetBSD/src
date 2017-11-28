@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas M32R, for GDB.
 
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,8 +36,11 @@
 #include "trad-frame.h"
 #include "dis-asm.h"
 #include "objfiles.h"
-
 #include "m32r-tdep.h"
+#include <algorithm>
+
+/* The size of the argument registers (r0 - r3) in bytes.  */
+#define M32R_ARG_REGISTER_SIZE 4
 
 /* Local functions */
 
@@ -91,7 +94,7 @@ m32r_memory_insert_breakpoint (struct gdbarch *gdbarch,
     return val;			/* return error */
 
   memcpy (bp_tgt->shadow_contents, contents_cache, 4);
-  bp_tgt->placed_size = bp_tgt->shadow_len = 4;
+  bp_tgt->shadow_len = 4;
 
   /* Determine appropriate breakpoint contents and size for this address.  */
   if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
@@ -165,9 +168,21 @@ m32r_memory_remove_breakpoint (struct gdbarch *gdbarch,
   return val;
 }
 
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
+
+static int
+m32r_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
+{
+  if ((*pcptr & 3) == 0)
+    return 4;
+  else
+    return 2;
+}
+
+/* Implement the sw_breakpoint_from_kind gdbarch method.  */
+
 static const gdb_byte *
-m32r_breakpoint_from_pc (struct gdbarch *gdbarch,
-			 CORE_ADDR *pcptr, int *lenptr)
+m32r_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
   static gdb_byte be_bp_entry[] = {
     0x10, 0xf1, 0x70, 0x00
@@ -175,41 +190,22 @@ m32r_breakpoint_from_pc (struct gdbarch *gdbarch,
   static gdb_byte le_bp_entry[] = {
     0x00, 0x70, 0xf1, 0x10
   };	/* dpt -> nop */
-  gdb_byte *bp;
+
+  *size = kind;
 
   /* Determine appropriate breakpoint.  */
   if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-    {
-      if ((*pcptr & 3) == 0)
-	{
-	  bp = be_bp_entry;
-	  *lenptr = 4;
-	}
-      else
-	{
-	  bp = be_bp_entry;
-	  *lenptr = 2;
-	}
-    }
+    return be_bp_entry;
   else
     {
-      if ((*pcptr & 3) == 0)
-	{
-	  bp = le_bp_entry;
-	  *lenptr = 4;
-	}
+      if (kind == 4)
+	return le_bp_entry;
       else
-	{
-	  bp = le_bp_entry + 2;
-	  *lenptr = 2;
-	}
+	return le_bp_entry + 2;
     }
-
-  return bp;
 }
 
-
-char *m32r_register_names[] = {
+static const char *m32r_register_names[] = {
   "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
   "r8", "r9", "r10", "r11", "r12", "fp", "lr", "sp",
   "psw", "cbr", "spi", "spu", "bpc", "pc", "accl", "acch",
@@ -484,7 +480,7 @@ m32r_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	   the end of the function.  In this case, there probably isn't a
 	   prologue.  */
 	{
-	  func_end = min (func_end, func_addr + DEFAULT_SEARCH_LIMIT);
+	  func_end = std::min (func_end, func_addr + DEFAULT_SEARCH_LIMIT);
 	}
     }
   else
@@ -684,7 +680,7 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   enum type_code typecode;
   CORE_ADDR regval;
   gdb_byte *val;
-  gdb_byte valbuf[MAX_REGISTER_SIZE];
+  gdb_byte valbuf[M32R_ARG_REGISTER_SIZE];
   int len;
 
   /* First force sp to a 4-byte alignment.  */
@@ -915,6 +911,9 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep = XNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
+  set_gdbarch_wchar_bit (gdbarch, 16);
+  set_gdbarch_wchar_signed (gdbarch, 0);
+
   set_gdbarch_read_pc (gdbarch, m32r_read_pc);
   set_gdbarch_unwind_sp (gdbarch, m32r_unwind_sp);
 
@@ -929,7 +928,8 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, m32r_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_breakpoint_from_pc (gdbarch, m32r_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, m32r_breakpoint_kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, m32r_sw_breakpoint_from_kind);
   set_gdbarch_memory_insert_breakpoint (gdbarch,
 					m32r_memory_insert_breakpoint);
   set_gdbarch_memory_remove_breakpoint (gdbarch,

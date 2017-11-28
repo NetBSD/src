@@ -1,4 +1,4 @@
-# Copyright 2002-2016 Free Software Foundation, Inc.
+# Copyright 2002-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ proc test_with_self {} {
     # An empty filename
     gdb_test "print gdb_realpath (\"\")" \
              ".\[0-9\]+ =.*\"\"" \
-             "An empty filename"
+             "an empty filename"
 
     return 0
 }

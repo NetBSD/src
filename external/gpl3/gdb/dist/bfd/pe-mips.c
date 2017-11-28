@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS PE COFF files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Modified from coff-i386.c by DJ Delorie, dj@cygnus.com
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -605,7 +605,7 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 
   if (bfd_link_relocatable (info))
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
 	(_("%B: `ld -r' not supported with PE MIPS objects\n"), input_bfd);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
@@ -715,9 +715,11 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	   mem = pointer to memory we're fixing up
 	   val = VMA of what we need to refer to.  */
 
-#define UI(x) (*_bfd_error_handler) (_("%B: unimplemented %s\n"), \
-				     input_bfd, x); \
-	      bfd_set_error (bfd_error_bad_value);
+#define UI(x)						       \
+      /* xgettext:c-format */				       \
+	_bfd_error_handler (_("%B: unimplemented %s\n"),       \
+			    input_bfd, x);		       \
+	bfd_set_error (bfd_error_bad_value);
 
       switch (rel->r_type)
 	{
@@ -741,7 +743,7 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	  targ = val + (tmp & 0x03ffffff) * 4;
 	  if ((src & 0xf0000000) != (targ & 0xf0000000))
 	    {
-	      (*_bfd_error_handler) (_("%B: jump too far away\n"), input_bfd);
+	      _bfd_error_handler (_("%B: jump too far away\n"), input_bfd);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -767,8 +769,8 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	      targ = val + low + ((tmp & 0xffff) << 16);
 	      break;
 	    default:
-	      (*_bfd_error_handler) (_("%B: bad pair/reflo after refhi\n"),
-				     input_bfd);
+	      _bfd_error_handler (_("%B: bad pair/reflo after refhi\n"),
+				  input_bfd);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }

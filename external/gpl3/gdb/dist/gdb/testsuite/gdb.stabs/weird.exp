@@ -1,4 +1,4 @@
-# Copyright 1997-2016 Free Software Foundation, Inc.
+# Copyright 1997-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -142,11 +142,11 @@ proc do_tests {} {
 	gdb_test "p sizeof (const70)" " = 2" "'e' constant with embedded type"
 
 	gdb_test "p constchar" " = 97 'a'" "char constant"
-        gdb_test "p constString1" " = \"Single quote String1\"" "String constant 1"
-        gdb_test "p constString2" " = \"Double quote String2\"" "String constant 2"
+        gdb_test "p constString1" " = \"Single quote String1\"" "string constant 1"
+        gdb_test "p constString2" " = \"Double quote String2\"" "string constant 2"
 
-        gdb_test "p constString3" " = \"String3 with embedded quote ' in the middle\"" "String constant 3"
-        gdb_test "p constString4" { = "String4 with embedded quote \\" in the middle"} "String constant 4"
+        gdb_test "p constString3" " = \"String3 with embedded quote ' in the middle\"" "string constant 3"
+        gdb_test "p constString4" { = "String4 with embedded quote \\" in the middle"} "string constant 4"
 	gdb_test "p bad_neg0" " = \{field0 = 42, field2 =.*field3 = 45\}" "p bad_neg0"
 
 	gdb_test "ptype inttype" "type = (unsigned int|inttype)" "ptype on inttype"
@@ -271,7 +271,7 @@ if { [lindex $exec_output 0] != 0 } {
 }
 
 if  { [gdb_compile "${srcfile}" "${binfile}" object ""] != "" } {
-     untested weird.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -305,7 +305,7 @@ gdb_expect 60 {
 	pass "weirdx.o read without error"
     }
     -re ".*$gdb_prompt $" {
-	fail "Errors reading weirdx.o"
+	fail "errors reading weirdx.o"
     }
     timeout {
 	perror "couldn't load $binfile into $GDB (timed out)."

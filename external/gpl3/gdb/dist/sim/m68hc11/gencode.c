@@ -1,5 +1,5 @@
 /* gencode.c -- Motorola 68HC11 & 68HC12 Emulator Generator
-   Copyright 1999-2016 Free Software Foundation, Inc.
+   Copyright 1999-2017 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -18,14 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <errno.h>
 
 #include "ansidecl.h"
+#include "libiberty.h"
 #include "opcode/m68hc11.h"
-
-#define TABLE_SIZE(X)	    (sizeof(X) / sizeof(X[0]))
 
 /* Combination of CCR flags.  */
 #define M6811_ZC_BIT	M6811_Z_BIT|M6811_C_BIT
@@ -89,134 +89,134 @@ struct m6811_opcode_pattern
 struct m6811_opcode_pattern m6811_opcode_patterns[] = {
   /* Move 8 and 16 bits.  We need two implementations: one that sets the
      flags and one that preserve them.	*/
-  { "movtst8",	"dst8 = src8",	 "cpu_ccr_update_tst8 (proc, dst8)" },
-  { "movtst16", "dst16 = src16", "cpu_ccr_update_tst16 (proc, dst16)" },
+  { "movtst8",	"dst8 = src8",	 "cpu_ccr_update_tst8 (cpu, dst8)" },
+  { "movtst16", "dst16 = src16", "cpu_ccr_update_tst16 (cpu, dst16)" },
   { "mov8",	"dst8 = src8" },
   { "mov16",	"dst16 = src16" },
   { "lea16",	"dst16 = addr" },
 
   /* Conditional branches.  'addr' is the address of the branch.  */
-  { "bra", "cpu_set_pc (proc, addr)" },
+  { "bra", "cpu_set_pc (cpu, addr)" },
   { "bhi",
-   "if ((cpu_get_ccr (proc) & (M6811_C_BIT|M6811_Z_BIT)) == 0)\n@ \
-     cpu_set_pc (proc, addr)" },
+   "if ((cpu_get_ccr (cpu) & (M6811_C_BIT|M6811_Z_BIT)) == 0)\n@ \
+     cpu_set_pc (cpu, addr)" },
   { "bls",
-    "if ((cpu_get_ccr (proc) & (M6811_C_BIT|M6811_Z_BIT)))\n@ \
-     cpu_set_pc (proc, addr)" },
-  { "bcc", "if (!cpu_get_ccr_C (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "bcs", "if (cpu_get_ccr_C (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "bne", "if (!cpu_get_ccr_Z (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "beq", "if (cpu_get_ccr_Z (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "bvc", "if (!cpu_get_ccr_V (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "bvs", "if (cpu_get_ccr_V (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "bpl", "if (!cpu_get_ccr_N (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "bmi", "if (cpu_get_ccr_N (proc))\n@ cpu_set_pc (proc, addr)" },
-  { "bge", "if ((cpu_get_ccr_N (proc) ^ cpu_get_ccr_V (proc)) == 0)\n@ cpu_set_pc (proc, addr)" },
-  { "blt", "if ((cpu_get_ccr_N (proc) ^ cpu_get_ccr_V (proc)))\n@ cpu_set_pc (proc, addr)" },
+    "if ((cpu_get_ccr (cpu) & (M6811_C_BIT|M6811_Z_BIT)))\n@ \
+     cpu_set_pc (cpu, addr)" },
+  { "bcc", "if (!cpu_get_ccr_C (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "bcs", "if (cpu_get_ccr_C (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "bne", "if (!cpu_get_ccr_Z (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "beq", "if (cpu_get_ccr_Z (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "bvc", "if (!cpu_get_ccr_V (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "bvs", "if (cpu_get_ccr_V (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "bpl", "if (!cpu_get_ccr_N (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "bmi", "if (cpu_get_ccr_N (cpu))\n@ cpu_set_pc (cpu, addr)" },
+  { "bge", "if ((cpu_get_ccr_N (cpu) ^ cpu_get_ccr_V (cpu)) == 0)\n@ cpu_set_pc (cpu, addr)" },
+  { "blt", "if ((cpu_get_ccr_N (cpu) ^ cpu_get_ccr_V (cpu)))\n@ cpu_set_pc (cpu, addr)" },
   { "bgt",
-    "if ((cpu_get_ccr_Z (proc) | (cpu_get_ccr_N (proc) ^ cpu_get_ccr_V (proc))) == 0)\n@ \
-     cpu_set_pc (proc, addr)" },
+    "if ((cpu_get_ccr_Z (cpu) | (cpu_get_ccr_N (cpu) ^ cpu_get_ccr_V (cpu))) == 0)\n@ \
+     cpu_set_pc (cpu, addr)" },
   { "ble",
-    "if ((cpu_get_ccr_Z (proc) | (cpu_get_ccr_N (proc) ^ cpu_get_ccr_V (proc))))\n@ \
-     cpu_set_pc (proc, addr)" },
+    "if ((cpu_get_ccr_Z (cpu) | (cpu_get_ccr_N (cpu) ^ cpu_get_ccr_V (cpu))))\n@ \
+     cpu_set_pc (cpu, addr)" },
 
   /* brclr and brset perform a test and a conditional jump at the same
      time.  Flags are not changed.  */
   { "brclr8",
-    "if ((src8 & dst8) == 0)\n@	 cpu_set_pc (proc, addr)" },
+    "if ((src8 & dst8) == 0)\n@	 cpu_set_pc (cpu, addr)" },
   { "brset8",
-    "if (((~src8) & dst8) == 0)\n@  cpu_set_pc (proc, addr)" },
+    "if (((~src8) & dst8) == 0)\n@  cpu_set_pc (cpu, addr)" },
   
 
-  { "rts11",  "addr = cpu_m68hc11_pop_uint16 (proc); cpu_set_pc (proc, addr); cpu_return(proc)" },
-  { "rts12",  "addr = cpu_m68hc12_pop_uint16 (proc); cpu_set_pc (proc, addr); cpu_return(proc)" },
+  { "rts11",  "addr = cpu_m68hc11_pop_uint16 (cpu); cpu_set_pc (cpu, addr); cpu_return (cpu)" },
+  { "rts12",  "addr = cpu_m68hc12_pop_uint16 (cpu); cpu_set_pc (cpu, addr); cpu_return (cpu)" },
 
   { "mul16", "dst16 = ((uint16) src8 & 0x0FF) * ((uint16) dst8 & 0x0FF)",
-    "cpu_set_ccr_C (proc, src8 & 0x80)" },
+    "cpu_set_ccr_C (cpu, src8 & 0x80)" },
   { "neg8", "dst8 = - src8",
-    "cpu_set_ccr_C (proc, src8 == 0); cpu_ccr_update_tst8 (proc, dst8)" },
+    "cpu_set_ccr_C (cpu, src8 == 0); cpu_ccr_update_tst8 (cpu, dst8)" },
   { "com8", "dst8 = ~src8",
-    "cpu_set_ccr_C (proc, 1); cpu_ccr_update_tst8 (proc, dst8);" },
+    "cpu_set_ccr_C (cpu, 1); cpu_ccr_update_tst8 (cpu, dst8);" },
   { "clr8", "dst8 = 0",
-    "cpu_set_ccr (proc, (cpu_get_ccr (proc) & (M6811_S_BIT|M6811_X_BIT|M6811_H_BIT| \
+    "cpu_set_ccr (cpu, (cpu_get_ccr (cpu) & (M6811_S_BIT|M6811_X_BIT|M6811_H_BIT| \
 M6811_I_BIT)) | M6811_Z_BIT)"},
   { "clr16","dst16 = 0",
-    "cpu_set_ccr (proc, (cpu_get_ccr (proc) & (M6811_S_BIT|M6811_X_BIT|M6811_H_BIT| \
+    "cpu_set_ccr (cpu, (cpu_get_ccr (cpu) & (M6811_S_BIT|M6811_X_BIT|M6811_H_BIT| \
 M6811_I_BIR)) | M6811_Z_BIT)"},
 
   /* 8-bits shift and rotation.	 */
   { "lsr8",  "dst8 = src8 >> 1",
-    "cpu_set_ccr_C (proc, src8 & 1); cpu_ccr_update_shift8 (proc, dst8)" },
+    "cpu_set_ccr_C (cpu, src8 & 1); cpu_ccr_update_shift8 (cpu, dst8)" },
   { "lsl8",  "dst8 = src8 << 1",
-    "cpu_set_ccr_C (proc, (src8 & 0x80) >> 7); cpu_ccr_update_shift8 (proc, dst8)" },
+    "cpu_set_ccr_C (cpu, (src8 & 0x80) >> 7); cpu_ccr_update_shift8 (cpu, dst8)" },
   { "asr8",  "dst8 = (src8 >> 1) | (src8 & 0x80)",
-    "cpu_set_ccr_C (proc, src8 & 1); cpu_ccr_update_shift8 (proc, dst8)" },
-  { "ror8",  "dst8 = (src8 >> 1) | (cpu_get_ccr_C (proc) << 7)",
-    "cpu_set_ccr_C (proc, src8 & 1); cpu_ccr_update_shift8 (proc, dst8)" },
-  { "rol8",  "dst8 = (src8 << 1) | (cpu_get_ccr_C (proc))",
-    "cpu_set_ccr_C (proc, (src8 & 0x80) >> 7); cpu_ccr_update_shift8 (proc, dst8)" },
+    "cpu_set_ccr_C (cpu, src8 & 1); cpu_ccr_update_shift8 (cpu, dst8)" },
+  { "ror8",  "dst8 = (src8 >> 1) | (cpu_get_ccr_C (cpu) << 7)",
+    "cpu_set_ccr_C (cpu, src8 & 1); cpu_ccr_update_shift8 (cpu, dst8)" },
+  { "rol8",  "dst8 = (src8 << 1) | (cpu_get_ccr_C (cpu))",
+    "cpu_set_ccr_C (cpu, (src8 & 0x80) >> 7); cpu_ccr_update_shift8 (cpu, dst8)" },
 
   /* 16-bits shift instructions.  */
   { "lsl16",  "dst16 = src16 << 1",
-    "cpu_set_ccr_C (proc, (src16&0x8000) >> 15); cpu_ccr_update_shift16 (proc, dst16)"},
+    "cpu_set_ccr_C (cpu, (src16&0x8000) >> 15); cpu_ccr_update_shift16 (cpu, dst16)"},
   { "lsr16",  "dst16 = src16 >> 1",
-    "cpu_set_ccr_C (proc, src16 & 1); cpu_ccr_update_shift16 (proc, dst16)"},
+    "cpu_set_ccr_C (cpu, src16 & 1); cpu_ccr_update_shift16 (cpu, dst16)"},
 
-  { "dec8", "dst8 = src8 - 1", "cpu_ccr_update_tst8 (proc, dst8)" },
-  { "inc8", "dst8 = src8 + 1", "cpu_ccr_update_tst8 (proc, dst8)" },
-  { "tst8", 0, "cpu_set_ccr_C (proc, 0); cpu_ccr_update_tst8 (proc, src8)" },
+  { "dec8", "dst8 = src8 - 1", "cpu_ccr_update_tst8 (cpu, dst8)" },
+  { "inc8", "dst8 = src8 + 1", "cpu_ccr_update_tst8 (cpu, dst8)" },
+  { "tst8", 0, "cpu_set_ccr_C (cpu, 0); cpu_ccr_update_tst8 (cpu, src8)" },
 
-  { "sub8", "cpu_ccr_update_sub8 (proc, dst8 - src8, dst8, src8);\
+  { "sub8", "cpu_ccr_update_sub8 (cpu, dst8 - src8, dst8, src8);\
 dst8 = dst8 - src8", 0 },
-  { "add8", "cpu_ccr_update_add8 (proc, dst8 + src8, dst8, src8);\
+  { "add8", "cpu_ccr_update_add8 (cpu, dst8 + src8, dst8, src8);\
 dst8 = dst8 + src8", 0 },
-  { "sbc8", "if (cpu_get_ccr_C (proc))\n@ \
+  { "sbc8", "if (cpu_get_ccr_C (cpu))\n@ \
 {\n\
-  cpu_ccr_update_sub8 (proc, dst8 - src8 - 1, dst8, src8);\n\
+  cpu_ccr_update_sub8 (cpu, dst8 - src8 - 1, dst8, src8);\n\
   dst8 = dst8 - src8 - 1;\n\
 }\n\
 else\n\
 {\n\
-  cpu_ccr_update_sub8 (proc, dst8 - src8, dst8, src8);\n\
+  cpu_ccr_update_sub8 (cpu, dst8 - src8, dst8, src8);\n\
   dst8 = dst8 - src8;\n\
 }", 0 },
-  { "adc8", "if (cpu_get_ccr_C (proc))\n@ \
+  { "adc8", "if (cpu_get_ccr_C (cpu))\n@ \
 {\n\
-  cpu_ccr_update_add8 (proc, dst8 + src8 + 1, dst8, src8);\n\
+  cpu_ccr_update_add8 (cpu, dst8 + src8 + 1, dst8, src8);\n\
   dst8 = dst8 + src8 + 1;\n\
 }\n\
 else\n\
 {\n\
-  cpu_ccr_update_add8 (proc, dst8 + src8, dst8, src8);\n\
+  cpu_ccr_update_add8 (cpu, dst8 + src8, dst8, src8);\n\
   dst8 = dst8 + src8;\n\
 }",
     0 },
 
   /* 8-bits logical operations.	 */
-  { "and8", "dst8 = dst8 & src8", "cpu_ccr_update_tst8 (proc, dst8)" },
-  { "eor8", "dst8 = dst8 ^ src8", "cpu_ccr_update_tst8 (proc, dst8)" },
-  { "or8",  "dst8 = dst8 | src8", "cpu_ccr_update_tst8 (proc, dst8)" },
-  { "bclr8","dst8 = (~dst8) & src8", "cpu_ccr_update_tst8 (proc, dst8)" },
+  { "and8", "dst8 = dst8 & src8", "cpu_ccr_update_tst8 (cpu, dst8)" },
+  { "eor8", "dst8 = dst8 ^ src8", "cpu_ccr_update_tst8 (cpu, dst8)" },
+  { "or8",  "dst8 = dst8 | src8", "cpu_ccr_update_tst8 (cpu, dst8)" },
+  { "bclr8","dst8 = (~dst8) & src8", "cpu_ccr_update_tst8 (cpu, dst8)" },
 
   /* 16-bits add and subtract instructions.  */
-  { "sub16", "cpu_ccr_update_sub16 (proc, dst16 - src16, dst16, src16);\
+  { "sub16", "cpu_ccr_update_sub16 (cpu, dst16 - src16, dst16, src16);\
 dst16 = dst16 - src16", 0 },
-  { "add16", "cpu_ccr_update_add16 (proc, dst16 + src16, dst16, src16);\
+  { "add16", "cpu_ccr_update_add16 (cpu, dst16 + src16, dst16, src16);\
 dst16 = dst16 + src16", 0 },
-  { "inc16", "dst16 = src16 + 1", "cpu_set_ccr_Z (proc, dst16 == 0)" },
-  { "dec16", "dst16 = src16 - 1", "cpu_set_ccr_Z (proc, dst16 == 0)" },
+  { "inc16", "dst16 = src16 + 1", "cpu_set_ccr_Z (cpu, dst16 == 0)" },
+  { "dec16", "dst16 = src16 - 1", "cpu_set_ccr_Z (cpu, dst16 == 0)" },
 
   /* Special increment/decrement for the stack pointer:
      flags are not changed.  */
   { "ins16", "dst16 = src16 + 1" },
   { "des16", "dst16 = src16 - 1" },
   
-  { "jsr_11_16", "cpu_m68hc11_push_uint16 (proc, cpu_get_pc (proc)); cpu_call (proc, addr)"},
-  { "jsr_12_16", "cpu_m68hc12_push_uint16 (proc, cpu_get_pc (proc)); cpu_call (proc, addr)"},
+  { "jsr_11_16", "cpu_m68hc11_push_uint16 (cpu, cpu_get_pc (cpu)); cpu_call (cpu, addr)"},
+  { "jsr_12_16", "cpu_m68hc12_push_uint16 (cpu, cpu_get_pc (cpu)); cpu_call (cpu, addr)"},
 
   /* xgdx and xgdx patterns. Flags are not changed.  */
-  { "xgdxy16", "dst16 = cpu_get_d (proc); cpu_set_d (proc, src16)"},
-  { "stop", "cpu_special (proc, M6811_STOP)"},
+  { "xgdxy16", "dst16 = cpu_get_d (cpu); cpu_set_d (cpu, src16)"},
+  { "stop", "cpu_special (cpu, M6811_STOP)"},
 
   /* tsx, tsy, txs, tys don't affect the flags.	 Sp value is corrected
      by +/- 1.	*/
@@ -227,7 +227,7 @@ dst16 = dst16 + src16", 0 },
   { "abxy16","dst16 = dst16 + (uint16) src8"},
 
   /* After 'daa', the Z flag is undefined. Mark it as changed.	*/
-  { "daa8",  "cpu_special (proc, M6811_DAA)" },
+  { "daa8",  "cpu_special (cpu, M6811_DAA)" },
   { "nop",  0 },
 
 
@@ -237,87 +237,87 @@ dst16 = dst16 + src16", 0 },
   { "idiv16", "if (src16 == 0)\n{\n\
 dst16 = 0xffff;\
 }\nelse\n{\n\
-cpu_set_d (proc, dst16 % src16);\
+cpu_set_d (cpu, dst16 % src16);\
 dst16 = dst16 / src16;\
 }",
-  "cpu_set_ccr_Z (proc, dst16 == 0); cpu_set_ccr_V (proc, 0);\
-cpu_set_ccr_C (proc, src16 == 0)" },
+  "cpu_set_ccr_Z (cpu, dst16 == 0); cpu_set_ccr_V (cpu, 0);\
+cpu_set_ccr_C (cpu, src16 == 0)" },
 
   /* Fractional divide:
      (parallel (set IX (div (mul D 65536) IX)
 	       (set D  (mod (mul D 65536) IX))))  */
   { "fdiv16", "if (src16 <= dst16 )\n{\n\
 dst16 = 0xffff;\n\
-cpu_set_ccr_Z (proc, 0);\n\
-cpu_set_ccr_V (proc, 1);\n\
-cpu_set_ccr_C (proc, dst16 == 0);\n\
+cpu_set_ccr_Z (cpu, 0);\n\
+cpu_set_ccr_V (cpu, 1);\n\
+cpu_set_ccr_C (cpu, dst16 == 0);\n\
 }\nelse\n{\n\
 unsigned long l = (unsigned long) (dst16) << 16;\n\
-cpu_set_d (proc, (uint16) (l % (unsigned long) (src16)));\n\
+cpu_set_d (cpu, (uint16) (l % (unsigned long) (src16)));\n\
 dst16 = (uint16) (l / (unsigned long) (src16));\n\
-cpu_set_ccr_V (proc, 0);\n\
-cpu_set_ccr_C (proc, 0);\n\
-cpu_set_ccr_Z (proc, dst16 == 0);\n\
+cpu_set_ccr_V (cpu, 0);\n\
+cpu_set_ccr_C (cpu, 0);\n\
+cpu_set_ccr_Z (cpu, dst16 == 0);\n\
 }", 0 },
 
   /* Operations to get/set the CCR.  */
-  { "clv",  0, "cpu_set_ccr_V (proc, 0)" },
-  { "sev",  0, "cpu_set_ccr_V (proc, 1)" },
-  { "clc",  0, "cpu_set_ccr_C (proc, 0)" },
-  { "sec",  0, "cpu_set_ccr_C (proc, 1)" },
-  { "cli",  0, "cpu_set_ccr_I (proc, 0)" },
-  { "sei",  0, "cpu_set_ccr_I (proc, 1)" },
+  { "clv",  0, "cpu_set_ccr_V (cpu, 0)" },
+  { "sev",  0, "cpu_set_ccr_V (cpu, 1)" },
+  { "clc",  0, "cpu_set_ccr_C (cpu, 0)" },
+  { "sec",  0, "cpu_set_ccr_C (cpu, 1)" },
+  { "cli",  0, "cpu_set_ccr_I (cpu, 0)" },
+  { "sei",  0, "cpu_set_ccr_I (cpu, 1)" },
 
   /* Some special instructions are implemented by 'cpu_special'.  */
-  { "rti11",  "cpu_special (proc, M6811_RTI)" },
-  { "rti12",  "cpu_special (proc, M6812_RTI)" },
-  { "wai",  "cpu_special (proc, M6811_WAI)" },
-  { "test", "cpu_special (proc, M6811_TEST)" },
-  { "swi",  "cpu_special (proc, M6811_SWI)" },
-  { "syscall","cpu_special (proc, M6811_EMUL_SYSCALL)" },
+  { "rti11",  "cpu_special (cpu, M6811_RTI)" },
+  { "rti12",  "cpu_special (cpu, M6812_RTI)" },
+  { "wai",  "cpu_special (cpu, M6811_WAI)" },
+  { "test", "cpu_special (cpu, M6811_TEST)" },
+  { "swi",  "cpu_special (cpu, M6811_SWI)" },
+  { "syscall","cpu_special (cpu, M6811_EMUL_SYSCALL)" },
 
-  { "page2", "cpu_page2_interp (proc)", 0 },
-  { "page3", "cpu_page3_interp (proc)", 0 },
-  { "page4", "cpu_page4_interp (proc)", 0 },
+  { "page2", "cpu_page2_interp (cpu)", 0 },
+  { "page3", "cpu_page3_interp (cpu)", 0 },
+  { "page4", "cpu_page4_interp (cpu)", 0 },
 
   /* 68HC12 special instructions.  */
-  { "bgnd",  "cpu_special (proc, M6812_BGND)" },
-  { "call8", "cpu_special (proc, M6812_CALL)" },
-  { "call_ind", "cpu_special (proc, M6812_CALL_INDIRECT)" },
-  { "dbcc8", "cpu_dbcc (proc)" },
-  { "ediv",  "cpu_special (proc, M6812_EDIV)" },
-  { "emul",  "{ uint32 src1 = (uint32) cpu_get_d (proc);\
-  uint32 src2 = (uint32) cpu_get_y (proc);\
+  { "bgnd",  "cpu_special (cpu, M6812_BGND)" },
+  { "call8", "cpu_special (cpu, M6812_CALL)" },
+  { "call_ind", "cpu_special (cpu, M6812_CALL_INDIRECT)" },
+  { "dbcc8", "cpu_dbcc (cpu)" },
+  { "ediv",  "cpu_special (cpu, M6812_EDIV)" },
+  { "emul",  "{ uint32 src1 = (uint32) cpu_get_d (cpu);\
+  uint32 src2 = (uint32) cpu_get_y (cpu);\
   src1 *= src2;\
-  cpu_set_d (proc, src1);\
-  cpu_set_y (proc, src1 >> 16);\
-  cpu_set_ccr_Z (proc, src1 == 0);\
-  cpu_set_ccr_C (proc, src1 & 0x08000);\
-  cpu_set_ccr_N (proc, src1 & 0x80000000);}" },
-  { "emuls",  "cpu_special (proc, M6812_EMULS)" },
-  { "mem",   "cpu_special (proc, M6812_MEM)" },
-  { "rtc",   "cpu_special (proc, M6812_RTC)" },
-  { "emacs", "cpu_special (proc, M6812_EMACS)" },
-  { "idivs", "cpu_special (proc, M6812_IDIVS)" },
-  { "edivs", "cpu_special (proc, M6812_EDIVS)" },
-  { "exg8",  "cpu_exg (proc, src8)" },
-  { "move8", "cpu_move8 (proc, op)" },
-  { "move16","cpu_move16 (proc, op)" },
+  cpu_set_d (cpu, src1);\
+  cpu_set_y (cpu, src1 >> 16);\
+  cpu_set_ccr_Z (cpu, src1 == 0);\
+  cpu_set_ccr_C (cpu, src1 & 0x08000);\
+  cpu_set_ccr_N (cpu, src1 & 0x80000000);}" },
+  { "emuls",  "cpu_special (cpu, M6812_EMULS)" },
+  { "mem",   "cpu_special (cpu, M6812_MEM)" },
+  { "rtc",   "cpu_special (cpu, M6812_RTC)" },
+  { "emacs", "cpu_special (cpu, M6812_EMACS)" },
+  { "idivs", "cpu_special (cpu, M6812_IDIVS)" },
+  { "edivs", "cpu_special (cpu, M6812_EDIVS)" },
+  { "exg8",  "cpu_exg (cpu, src8)" },
+  { "move8", "cpu_move8 (cpu, op)" },
+  { "move16","cpu_move16 (cpu, op)" },
 
-  { "max8",  "cpu_ccr_update_sub8 (proc, dst8 - src8, dst8, src8);\
+  { "max8",  "cpu_ccr_update_sub8 (cpu, dst8 - src8, dst8, src8);\
               if (dst8 < src8) dst8 = src8" },
-  { "min8",  "cpu_ccr_update_sub8 (proc, dst8 - src8, dst8, src8);\
+  { "min8",  "cpu_ccr_update_sub8 (cpu, dst8 - src8, dst8, src8);\
               if (dst8 > src8) dst8 = src8" },
-  { "max16", "cpu_ccr_update_sub16 (proc, dst16 - src16, dst16, src16);\
+  { "max16", "cpu_ccr_update_sub16 (cpu, dst16 - src16, dst16, src16);\
               if (dst16 < src16) dst16 = src16" },
-  { "min16", "cpu_ccr_update_sub16 (proc, dst16 - src16, dst16, src16);\
+  { "min16", "cpu_ccr_update_sub16 (cpu, dst16 - src16, dst16, src16);\
               if (dst16 > src16) dst16 = src16" },
 
-  { "rev",   "cpu_special (proc, M6812_REV);" },
-  { "revw",  "cpu_special (proc, M6812_REVW);" },
-  { "wav",   "cpu_special (proc, M6812_WAV);" },
-  { "tbl8",  "cpu_special (proc, M6812_ETBL);" },
-  { "tbl16", "cpu_special (proc, M6812_ETBL);" }
+  { "rev",   "cpu_special (cpu, M6812_REV);" },
+  { "revw",  "cpu_special (cpu, M6812_REVW);" },
+  { "wav",   "cpu_special (cpu, M6812_WAV);" },
+  { "tbl8",  "cpu_special (cpu, M6812_ETBL);" },
+  { "tbl16", "cpu_special (cpu, M6812_ETBL);" }
 };
 
 /* Definition of an opcode of the 68HC11.  */
@@ -1281,12 +1281,12 @@ print (FILE *fp, int col, const char *msg, ...)
    -	End of input operands.
   
    Example:
-       (x),a->a	      addr = x + (uint16) (fetch8 (proc));
+       (x),a->a	      addr = x + (uint16) (fetch8 (cpu));
 		      src8 = a
-       *,#,r	      addr = (uint16) (fetch8 (proc))  <- Temporary 'addr'
-		      src8 = read_mem8 (proc, addr)
-		      dst8 = fetch8 (proc)
-		      addr = fetch_relbranch (proc)    <- Final 'addr'
+       *,#,r	      addr = (uint16) (fetch8 (cpu))  <- Temporary 'addr'
+		      src8 = read_mem8 (cpu, addr)
+		      dst8 = fetch8 (cpu)
+		      addr = fetch_relbranch (cpu)    <- Final 'addr'
   
    Returns 1 if the 'addr' operand is set, 0 otherwise.	 */
 int
@@ -1314,35 +1314,35 @@ gen_fetch_operands (FILE *fp, int col,
 	  if (cur_var >= 2)
 	    fatal_error (opcode, "Too many locals");
 	  
-	  print (fp, col, "%s8 = cpu_get_a (proc);", vars[cur_var]);
+	  print (fp, col, "%s8 = cpu_get_a (cpu);", vars[cur_var]);
 	  break;
 
 	case 'b':
 	  if (cur_var >= 2)
 	    fatal_error (opcode, "Too many locals");
 
-	  print (fp, col, "%s8 = cpu_get_b (proc);", vars[cur_var]);
+	  print (fp, col, "%s8 = cpu_get_b (cpu);", vars[cur_var]);
 	  break;
 
 	case 'd':
 	  if (cur_var >= 2)
 	    fatal_error (opcode, "Too many locals");
 
-	  print (fp, col, "%s16 = cpu_get_d (proc);", vars[cur_var]);
+	  print (fp, col, "%s16 = cpu_get_d (cpu);", vars[cur_var]);
 	  break;
 
 	case 'x':
 	  if (cur_var >= 2)
 	    fatal_error (opcode, "Too many locals");
 
-	  print (fp, col, "%s16 = cpu_get_x (proc);", vars[cur_var]);
+	  print (fp, col, "%s16 = cpu_get_x (cpu);", vars[cur_var]);
 	  break;
 
 	case 'y':
 	  if (cur_var >= 2)
 	    fatal_error (opcode, "Too many locals");
 
-	  print (fp, col, "%s16 = cpu_get_y (proc);", vars[cur_var]);
+	  print (fp, col, "%s16 = cpu_get_y (cpu);", vars[cur_var]);
 	  break;
 
 	case '*':
@@ -1354,8 +1354,8 @@ gen_fetch_operands (FILE *fp, int col,
 	  
 	  addr_set = 1;
 	  current_insn_size += 1;
-	  print (fp, col, "addr = (uint16) cpu_fetch8 (proc);");
-	  print (fp, col, "%s%s = memory_read%s (proc, addr);",
+	  print (fp, col, "addr = (uint16) cpu_fetch8 (cpu);");
+	  print (fp, col, "%s%s = memory_read%s (cpu, addr);",
 		 vars[cur_var], operand_size, operand_size);
 	  break;
 
@@ -1367,25 +1367,25 @@ gen_fetch_operands (FILE *fp, int col,
 	  if (strncmp (operands, "(x)", 3) == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_x (proc) + (uint16) cpu_fetch8 (proc);");
+	      print (fp, col, "addr = cpu_get_x (cpu) + (uint16) cpu_fetch8 (cpu);");
 	      operands += 3;
 	    }
 	  else if (strncmp (operands, "(y)", 3) == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_y (proc) + (uint16) cpu_fetch8 (proc);");
+	      print (fp, col, "addr = cpu_get_y (cpu) + (uint16) cpu_fetch8 (cpu);");
 	      operands += 3;
 	    }
 	  else if (strncmp (operands, "()", 2) == 0)
 	    {
 	      current_insn_size += 2;
-	      print (fp, col, "addr = cpu_fetch16 (proc);");
+	      print (fp, col, "addr = cpu_fetch16 (cpu);");
 	      operands += 2;
 	    }
 	  else if (strncmp (operands, "[]", 2) == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_indexed_operand_addr (proc, 0);");
+	      print (fp, col, "addr = cpu_get_indexed_operand_addr (cpu, 0);");
 	      operands += 2;
 	    }
 	  else
@@ -1405,8 +1405,8 @@ gen_fetch_operands (FILE *fp, int col,
 	    {
 	      addr_set = 1;
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_x (proc) + (uint16) cpu_fetch8 (proc);");
-	      print (fp, col, "%s%s = memory_read%s (proc, addr);",
+	      print (fp, col, "addr = cpu_get_x (cpu) + (uint16) cpu_fetch8 (cpu);");
+	      print (fp, col, "%s%s = memory_read%s (cpu, addr);",
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 2;
 	    }
@@ -1414,8 +1414,8 @@ gen_fetch_operands (FILE *fp, int col,
 	    {
 	      addr_set = 1;
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_y (proc) + (uint16) cpu_fetch8 (proc);");
-	      print (fp, col, "%s%s = memory_read%s (proc, addr);",
+	      print (fp, col, "addr = cpu_get_y (cpu) + (uint16) cpu_fetch8 (cpu);");
+	      print (fp, col, "%s%s = memory_read%s (cpu, addr);",
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 2;
 	    }
@@ -1423,22 +1423,22 @@ gen_fetch_operands (FILE *fp, int col,
 	    {
 	      addr_set = 1;
 	      current_insn_size += 2;
-	      print (fp, col, "addr = cpu_fetch16 (proc);");
-	      print (fp, col, "%s%s = memory_read%s (proc, addr);",
+	      print (fp, col, "addr = cpu_fetch16 (cpu);");
+	      print (fp, col, "%s%s = memory_read%s (cpu, addr);",
 		     vars[cur_var], operand_size, operand_size);
 	      operands++;
 	    }
 	  else if (strncmp (operands, "@)", 2) == 0)
 	    {
 	      current_insn_size += 2;
-	      print (fp, col, "addr = cpu_fetch16 (proc);");
-	      print (fp, col, "%s%s = memory_read%s (proc, addr);",
+	      print (fp, col, "addr = cpu_fetch16 (cpu);");
+	      print (fp, col, "%s%s = memory_read%s (cpu, addr);",
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 2;
 	    }
 	  else if (strncmp (operands, "sp)", 3) == 0)
 	    {
-	      print (fp, col, "%s%s = cpu_%s_pop_uint%s (proc);",
+	      print (fp, col, "%s%s = cpu_%s_pop_uint%s (cpu);",
 		     vars[cur_var], operand_size,
                      cpu_type == cpu6811 ? "m68hc11" : "m68hc12",
                      operand_size);
@@ -1461,8 +1461,8 @@ gen_fetch_operands (FILE *fp, int col,
 	    {
 	      addr_set = 1;
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_indexed_operand_addr (proc,0);");
-	      print (fp, col, "%s%s = memory_read%s (proc, addr);",
+	      print (fp, col, "addr = cpu_get_indexed_operand_addr (cpu,0);");
+	      print (fp, col, "%s%s = memory_read%s (cpu, addr);",
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 1;
 	    }
@@ -1471,7 +1471,7 @@ gen_fetch_operands (FILE *fp, int col,
 	  else if (strncmp (operands, "]", 1) == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "%s%s = cpu_get_indexed_operand%s (proc,0);",
+	      print (fp, col, "%s%s = cpu_get_indexed_operand%s (cpu,0);",
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 1;
 	    }
@@ -1492,7 +1492,7 @@ gen_fetch_operands (FILE *fp, int col,
 	  if (strncmp (operands, "}", 1) == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "%s%s = cpu_get_indexed_operand%s (proc, 1);",
+	      print (fp, col, "%s%s = cpu_get_indexed_operand%s (cpu, 1);",
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 1;
 	    }
@@ -1508,7 +1508,7 @@ gen_fetch_operands (FILE *fp, int col,
 	  
 	  if (strncmp (operands, "p", 1) == 0)
 	    {
-	      print (fp, col, "%s16 = cpu_get_sp (proc);", vars[cur_var]);
+	      print (fp, col, "%s16 = cpu_get_sp (cpu);", vars[cur_var]);
 	      operands++;
 	    }
 	  else
@@ -1520,7 +1520,7 @@ gen_fetch_operands (FILE *fp, int col,
 	case 'c':
 	  if (strncmp (operands, "cr", 2) == 0)
 	    {
-	      print (fp, col, "%s8 = cpu_get_ccr (proc);", vars[cur_var]);
+	      print (fp, col, "%s8 = cpu_get_ccr (cpu);", vars[cur_var]);
 	      operands += 2;
 	    }
 	  else
@@ -1535,7 +1535,7 @@ gen_fetch_operands (FILE *fp, int col,
 
 	  addr_set = 1;
 	  current_insn_size += 1;
-	  print (fp, col, "addr = cpu_fetch_relbranch (proc);");
+	  print (fp, col, "addr = cpu_fetch_relbranch (cpu);");
 	  break;
 
 	case 'R':
@@ -1544,7 +1544,7 @@ gen_fetch_operands (FILE *fp, int col,
 
 	  addr_set = 1;
 	  current_insn_size += 2;
-	  print (fp, col, "addr = cpu_fetch_relbranch16 (proc);");
+	  print (fp, col, "addr = cpu_fetch_relbranch16 (cpu);");
 	  break;
 
 	case '#':
@@ -1556,7 +1556,7 @@ gen_fetch_operands (FILE *fp, int col,
 	    {
 	      current_insn_size += 2;
 	    }
-	  print (fp, col, "%s%s = cpu_fetch%s (proc);", vars[cur_var],
+	  print (fp, col, "%s%s = cpu_fetch%s (cpu);", vars[cur_var],
 		 operand_size, operand_size);
 	  break;
 	  
@@ -1638,37 +1638,37 @@ gen_save_result (FILE *fp, int col,
     {
     case 'a':
       result_size = "8";
-      print (fp, col, "cpu_set_a (proc, dst8);");
+      print (fp, col, "cpu_set_a (cpu, dst8);");
       break;
 
     case 'b':
       result_size = "8";
-      print (fp, col, "cpu_set_b (proc, dst8);");
+      print (fp, col, "cpu_set_b (cpu, dst8);");
       break;
 
     case 'd':
       result_size = "16";
-      print (fp, col, "cpu_set_d (proc, dst16);");
+      print (fp, col, "cpu_set_d (cpu, dst16);");
       break;
 
     case 'x':
       result_size = "16";
-      print (fp, col, "cpu_set_x (proc, dst16);");
+      print (fp, col, "cpu_set_x (cpu, dst16);");
       break;
 
     case 'y':
       result_size = "16";
-      print (fp, col, "cpu_set_y (proc, dst16);");
+      print (fp, col, "cpu_set_y (cpu, dst16);");
       break;
 
     case '*':
       if (addr_set == 0)
 	{
 	  current_insn_size += 1;
-	  print (fp, col, "addr = (uint16) cpu_fetch8 (proc);");
+	  print (fp, col, "addr = (uint16) cpu_fetch8 (cpu);");
 	}
       result_size = operand_size;
-      print (fp, col, "memory_write%s (proc, addr, dst%s);",
+      print (fp, col, "memory_write%s (cpu, addr, dst%s);",
 	     operand_size, operand_size);
       break;
 
@@ -1678,9 +1678,9 @@ gen_save_result (FILE *fp, int col,
 	  if (addr_set == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_x (proc) + cpu_fetch8 (proc);");
+	      print (fp, col, "addr = cpu_get_x (cpu) + cpu_fetch8 (cpu);");
 	    }
-	  print (fp, col, "memory_write%s (proc, addr, dst%s);",
+	  print (fp, col, "memory_write%s (cpu, addr, dst%s);",
 		 operand_size, operand_size);
 	  operands += 2;
 	  result_size = operand_size;
@@ -1690,9 +1690,9 @@ gen_save_result (FILE *fp, int col,
 	  if (addr_set == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_y (proc) + cpu_fetch8 (proc);");
+	      print (fp, col, "addr = cpu_get_y (cpu) + cpu_fetch8 (cpu);");
 	    }
-	  print (fp, col, "memory_write%s (proc, addr, dst%s);",
+	  print (fp, col, "memory_write%s (cpu, addr, dst%s);",
 		 operand_size, operand_size);
 	  operands += 2;
 	  result_size = operand_size;
@@ -1702,16 +1702,16 @@ gen_save_result (FILE *fp, int col,
 	  if (addr_set == 0)
 	    {
 	      current_insn_size += 2;
-	      print (fp, col, "addr = cpu_fetch16 (proc);");
+	      print (fp, col, "addr = cpu_fetch16 (cpu);");
 	    }
-	  print (fp, col, "memory_write%s (proc, addr, dst%s);",
+	  print (fp, col, "memory_write%s (cpu, addr, dst%s);",
 		 operand_size, operand_size);
 	  operands++;
 	  result_size = operand_size;
 	}
       else if (strncmp (operands, "sp)", 3) == 0)
 	{
-	  print (fp, col, "cpu_%s_push_uint%s (proc, dst%s);",
+	  print (fp, col, "cpu_%s_push_uint%s (cpu, dst%s);",
                  cpu_type == cpu6811 ? "m68hc11" : "m68hc12",
 		 operand_size, operand_size);
 	  operands += 3;
@@ -1729,9 +1729,9 @@ gen_save_result (FILE *fp, int col,
 	  if (addr_set == 0)
 	    {
 	      current_insn_size += 1;
-	      print (fp, col, "addr = cpu_get_indexed_operand_addr (proc,0);");
+	      print (fp, col, "addr = cpu_get_indexed_operand_addr (cpu,0);");
 	    }
-	  print (fp, col, "memory_write%s (proc, addr, dst%s);",
+	  print (fp, col, "memory_write%s (cpu, addr, dst%s);",
 		 operand_size, operand_size);
 	  operands++;
 	  result_size = operand_size;
@@ -1746,8 +1746,8 @@ gen_save_result (FILE *fp, int col,
       if (strncmp (operands, "}", 1) == 0)
 	{
 	  current_insn_size += 1;
-	  print (fp, col, "addr = cpu_get_indexed_operand_addr (proc, 1);");
-	  print (fp, col, "memory_write%s (proc, addr, dst%s);",
+	  print (fp, col, "addr = cpu_get_indexed_operand_addr (cpu, 1);");
+	  print (fp, col, "memory_write%s (cpu, addr, dst%s);",
 		 operand_size, operand_size);
 	  operands++;
 	  result_size = operand_size;
@@ -1761,7 +1761,7 @@ gen_save_result (FILE *fp, int col,
     case 's':
       if (strncmp (operands, "p", 1) == 0)
 	{
-	  print (fp, col, "cpu_set_sp (proc, dst16);");
+	  print (fp, col, "cpu_set_sp (cpu, dst16);");
 	  operands++;
 	  result_size = "16";
 	}
@@ -1774,7 +1774,7 @@ gen_save_result (FILE *fp, int col,
     case 'c':
       if (strncmp (operands, "cr", 2) == 0)
 	{
-	  print (fp, col, "cpu_set_ccr (proc, dst8);");
+	  print (fp, col, "cpu_set_ccr (cpu, dst8);");
 	  operands += 2;
 	  result_size = "8";
 	}
@@ -1811,7 +1811,7 @@ find_opcode_pattern (const struct m6811_opcode_def *opcode)
     {
       pattern = opcode->name;
     }
-  for (i = 0; i < TABLE_SIZE(m6811_opcode_patterns); i++)
+  for (i = 0; i < ARRAY_SIZE (m6811_opcode_patterns); i++)
     {
       if (strcmp (m6811_opcode_patterns[i].name, pattern) == 0)
 	{
@@ -1895,8 +1895,8 @@ gen_interpreter_for_table (FILE *fp, int col,
     || table == m6812_page1_opcodes? 1 : 2;
   
   /* Get the opcode and dispatch directly.  */
-  print (fp, col, "op = cpu_fetch8 (proc);");
-  print (fp, col, "cpu_add_cycles (proc, %s[op]);", cycles_table_name);
+  print (fp, col, "op = cpu_fetch8 (cpu);");
+  print (fp, col, "cpu_add_cycles (cpu, %s[op]);", cycles_table_name);
   
   print (fp, col, "switch (op)\n");
   col += indent_level;
@@ -1920,7 +1920,7 @@ gen_interpreter_for_table (FILE *fp, int col,
     }
 
   print (fp, col, "default:\n");
-  print (fp, col + indent_level, "cpu_special (proc, M6811_ILLEGAL);");
+  print (fp, col + indent_level, "cpu_special (cpu, M6811_ILLEGAL);");
   print (fp, col + indent_level, "break;");
   print (fp, col, "}\n");
 }
@@ -1987,8 +1987,7 @@ void
 gen_function_entry (FILE *fp, const char *name, int locals)
 {
   /* Generate interpretor entry point.	*/
-  print (fp, 0, "%s (proc)\n", name);
-  print (fp, indent_level, "struct _sim_cpu* proc;");
+  print (fp, 0, "%s (sim_cpu *cpu)\n", name);
   print (fp, indent_level, "{\n");
 
   /* Interpretor local variables.  */
@@ -2007,7 +2006,7 @@ gen_function_close (FILE *fp)
 }
 
 int
-cmp_opcode (void* e1, void* e2)
+cmp_opcode (const void *e1, const void *e2)
 {
   struct m6811_opcode_def* op1 = (struct m6811_opcode_def*) e1;
   struct m6811_opcode_def* op2 = (struct m6811_opcode_def*) e2;
@@ -2036,13 +2035,13 @@ gen_interpreter (FILE *fp)
 {
   int col = 0;
 
-  prepare_table (m6811_page1_opcodes, TABLE_SIZE (m6811_page1_opcodes));
-  prepare_table (m6811_page2_opcodes, TABLE_SIZE (m6811_page2_opcodes));
-  prepare_table (m6811_page3_opcodes, TABLE_SIZE (m6811_page3_opcodes));
-  prepare_table (m6811_page4_opcodes, TABLE_SIZE (m6811_page4_opcodes));
+  prepare_table (m6811_page1_opcodes, ARRAY_SIZE (m6811_page1_opcodes));
+  prepare_table (m6811_page2_opcodes, ARRAY_SIZE (m6811_page2_opcodes));
+  prepare_table (m6811_page3_opcodes, ARRAY_SIZE (m6811_page3_opcodes));
+  prepare_table (m6811_page4_opcodes, ARRAY_SIZE (m6811_page4_opcodes));
 
-  prepare_table (m6812_page1_opcodes, TABLE_SIZE (m6812_page1_opcodes));
-  prepare_table (m6812_page2_opcodes, TABLE_SIZE (m6812_page2_opcodes));
+  prepare_table (m6812_page1_opcodes, ARRAY_SIZE (m6812_page1_opcodes));
+  prepare_table (m6812_page2_opcodes, ARRAY_SIZE (m6812_page2_opcodes));
 
   /* Generate header of interpretor.  */
   print (fp, col, "/* File generated automatically by gencode. */\n");
@@ -2051,25 +2050,25 @@ gen_interpreter (FILE *fp)
   if (cpu_type & cpu6811)
     {
       gen_cycle_table (fp, "cycles_page1", m6811_page1_opcodes,
-		       TABLE_SIZE (m6811_page1_opcodes));
+		       ARRAY_SIZE (m6811_page1_opcodes));
       gen_cycle_table (fp, "cycles_page2", m6811_page2_opcodes,
-		       TABLE_SIZE (m6811_page2_opcodes));
+		       ARRAY_SIZE (m6811_page2_opcodes));
       gen_cycle_table (fp, "cycles_page3", m6811_page3_opcodes,
-		       TABLE_SIZE (m6811_page3_opcodes));
+		       ARRAY_SIZE (m6811_page3_opcodes));
       gen_cycle_table (fp, "cycles_page4", m6811_page4_opcodes,
-		       TABLE_SIZE (m6811_page4_opcodes));
+		       ARRAY_SIZE (m6811_page4_opcodes));
 
       gen_function_entry (fp, "static void\ncpu_page3_interp", 0);
       gen_interpreter_for_table (fp, indent_level,
 				 m6811_page3_opcodes,
-				 TABLE_SIZE(m6811_page3_opcodes),
+				 ARRAY_SIZE (m6811_page3_opcodes),
 				 "cycles_page3");
       gen_function_close (fp);
   
       gen_function_entry (fp, "static void\ncpu_page4_interp", 0);
       gen_interpreter_for_table (fp, indent_level,
 				 m6811_page4_opcodes,
-				 TABLE_SIZE(m6811_page4_opcodes),
+				 ARRAY_SIZE (m6811_page4_opcodes),
 				 "cycles_page4");
       gen_function_close (fp);
 
@@ -2078,7 +2077,7 @@ gen_interpreter (FILE *fp)
                           USE_SRC8 | USE_DST8);
       gen_interpreter_for_table (fp, indent_level,
 				 m6811_page2_opcodes,
-				 TABLE_SIZE(m6811_page2_opcodes),
+				 ARRAY_SIZE (m6811_page2_opcodes),
 				 "cycles_page2");
       gen_function_close (fp);
 
@@ -2087,22 +2086,22 @@ gen_interpreter (FILE *fp)
                           USE_SRC8 | USE_DST8);
 
       gen_interpreter_for_table (fp, indent_level, m6811_page1_opcodes,
-				 TABLE_SIZE(m6811_page1_opcodes),
+				 ARRAY_SIZE (m6811_page1_opcodes),
 				 "cycles_page1");
       gen_function_close (fp);
     }
   else
     {
       gen_cycle_table (fp, "cycles_page1", m6812_page1_opcodes,
-		       TABLE_SIZE (m6812_page1_opcodes));
+		       ARRAY_SIZE (m6812_page1_opcodes));
       gen_cycle_table (fp, "cycles_page2", m6812_page2_opcodes,
-		       TABLE_SIZE (m6812_page2_opcodes));
+		       ARRAY_SIZE (m6812_page2_opcodes));
 
       gen_function_entry (fp, "static void\ncpu_page2_interp",
                           USE_SRC8 | USE_DST8);
       gen_interpreter_for_table (fp, indent_level,
 				 m6812_page2_opcodes,
-				 TABLE_SIZE(m6812_page2_opcodes),
+				 ARRAY_SIZE (m6812_page2_opcodes),
 				 "cycles_page2");
       gen_function_close (fp);
 
@@ -2111,7 +2110,7 @@ gen_interpreter (FILE *fp)
                           USE_SRC8 | USE_DST8);
 
       gen_interpreter_for_table (fp, indent_level, m6812_page1_opcodes,
-				 TABLE_SIZE(m6812_page1_opcodes),
+				 ARRAY_SIZE (m6812_page1_opcodes),
 				 "cycles_page1");
       gen_function_close (fp);
     }

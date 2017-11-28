@@ -1,4 +1,4 @@
-# Copyright 2008-2016 Free Software Foundation, Inc.
+# Copyright 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 standard_testfile .c inline-markers.c
 
-if {[prepare_for_testing $testfile.exp $testfile \
+if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] \
 	 {debug additional_flags=-Winline}]} {
     return -1
@@ -26,7 +26,7 @@ runto_main
 get_compiler_info
 get_debug_format
 if { [skip_inline_frame_tests] } {
-    untested inline-bt.exp
+    untested "skipping inline frame tests"
     return
 }
 

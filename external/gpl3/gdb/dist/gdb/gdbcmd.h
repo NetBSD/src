@@ -6,7 +6,7 @@
    fnasser@redhat.com    */
 
 /* Header file for GDB-specific command-line stuff.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -128,7 +128,7 @@ extern struct cmd_list_element *showchecklist;
 extern struct cmd_list_element *save_cmdlist;
 
 extern void execute_command (char *, int);
-extern char *execute_command_to_string (char *p, int from_tty);
+extern std::string execute_command_to_string (char *p, int from_tty);
 
 enum command_control_type execute_control_command (struct command_line *);
 

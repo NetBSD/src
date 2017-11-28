@@ -1,6 +1,6 @@
 /* Scheme interface to lazy strings.
 
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,14 +44,20 @@ typedef struct
       freed.  */
   char *encoding;
 
-  /* Holds the length of the string in characters.  If the length is -1,
-     then the string will be fetched and encoded up to the first null of
-     appropriate width.  */
+  /* If TYPE is an array: If the length is known, then this value is the
+     array's length, otherwise it is -1.
+     If TYPE is not an array: Then this value represents the string's length.
+     In either case, if the value is -1 then the string will be fetched and
+     encoded up to the first null of appropriate width.  */
   int length;
 
-  /*  This attribute holds the type that is represented by the lazy
-      string's type.  */
-  struct type *type;
+  /* The type of the string.
+     For example if the lazy string was created from a C "char*" then TYPE
+     represents a C "char*".  To get the type of the character in the string
+     call lsscm_elt_type which handles the different kinds of values for TYPE.
+     This is recorded as an SCM object so that we take advantage of support for
+     preserving the type should its owning objfile go away.  */
+  SCM type;
 } lazy_string_smob;
 
 static const char lazy_string_smob_name[] = "gdb:lazy-string";
@@ -95,7 +101,10 @@ lsscm_print_lazy_string_smob (SCM self, SCM port, scm_print_state *pstate)
 }
 
 /* Low level routine to create a <gdb:lazy-string> object.
-   The caller must verify !(address == 0 && length != 0).  */
+   The caller must verify:
+   - length >= -1
+   - !(address == 0 && length != 0)
+   - type != NULL */
 
 static SCM
 lsscm_make_lazy_string_smob (CORE_ADDR address, int length,
@@ -105,18 +114,17 @@ lsscm_make_lazy_string_smob (CORE_ADDR address, int length,
     scm_gc_malloc (sizeof (lazy_string_smob), lazy_string_smob_name);
   SCM ls_scm;
 
-  /* Caller must verify this.  */
+  gdb_assert (length >= -1);
   gdb_assert (!(address == 0 && length != 0));
   gdb_assert (type != NULL);
 
   ls_smob->address = address;
-  /* Coerce all values < 0 to -1.  */
-  ls_smob->length = length < 0 ? -1 : length;
+  ls_smob->length = length;
   if (encoding == NULL || strcmp (encoding, "") == 0)
     ls_smob->encoding = NULL;
   else
     ls_smob->encoding = xstrdup (encoding);
-  ls_smob->type = type;
+  ls_smob->type = tyscm_scm_from_type (type);
 
   ls_scm = scm_new_smob (lazy_string_smob_tag, (scm_t_bits) ls_smob);
   gdbscm_init_gsmob (&ls_smob->base);
@@ -147,11 +155,18 @@ SCM
 lsscm_make_lazy_string (CORE_ADDR address, int length,
 			const char *encoding, struct type *type)
 {
+  if (length < -1)
+    {
+      return gdbscm_make_out_of_range_error (NULL, 0,
+					     scm_from_int (length),
+					     _("invalid length"));
+    }
+
   if (address == 0 && length != 0)
     {
       return gdbscm_make_out_of_range_error
 	(NULL, 0, scm_from_int (length),
-	 _("cannot create a lazy string with address 0x0"
+	 _("cannot create a lazy string with address 0x0,"
 	   " and a non-zero length"));
     }
 
@@ -174,6 +189,28 @@ lsscm_get_lazy_string_arg_unsafe (SCM self, int arg_pos, const char *func_name)
 		   lazy_string_smob_name);
 
   return self;
+}
+
+/* Return the type of a character in lazy string LS_SMOB.  */
+
+static struct type *
+lsscm_elt_type (lazy_string_smob *ls_smob)
+{
+  struct type *type = tyscm_scm_to_type (ls_smob->type);
+  struct type *realtype;
+
+  realtype = check_typedef (type);
+
+  switch (TYPE_CODE (realtype))
+    {
+    case TYPE_CODE_PTR:
+    case TYPE_CODE_ARRAY:
+      return TYPE_TARGET_TYPE (realtype);
+    default:
+      /* This is done to preserve existing behaviour.  PR 20769.
+	 E.g., gdb.parse_and_eval("my_int_variable").lazy_string().type.  */
+      return realtype;
+    }
 }
 
 /* Lazy string methods.  */
@@ -223,7 +260,7 @@ gdbscm_lazy_string_type (SCM self)
   SCM ls_scm = lsscm_get_lazy_string_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   lazy_string_smob *ls_smob = (lazy_string_smob *) SCM_SMOB_DATA (ls_scm);
 
-  return tyscm_scm_from_type (ls_smob->type);
+  return ls_smob->type;
 }
 
 /* (lazy-string->value <gdb:lazy-string>) -> <gdb:value> */
@@ -232,25 +269,13 @@ static SCM
 gdbscm_lazy_string_to_value (SCM self)
 {
   SCM ls_scm = lsscm_get_lazy_string_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
-  lazy_string_smob *ls_smob = (lazy_string_smob *) SCM_SMOB_DATA (ls_scm);
-  struct value *value = NULL;
+  SCM except_scm;
+  struct value *value;
 
-  if (ls_smob->address == 0)
-    {
-      gdbscm_throw (gdbscm_make_out_of_range_error (FUNC_NAME, SCM_ARG1, self,
-				_("cannot create a value from NULL")));
-    }
-
-  TRY
-    {
-      value = value_at_lazy (ls_smob->type, ls_smob->address);
-    }
-  CATCH (except, RETURN_MASK_ALL)
-    {
-      GDBSCM_HANDLE_GDB_EXCEPTION (except);
-    }
-  END_CATCH
-
+  value = lsscm_safe_lazy_string_to_value (ls_scm, SCM_ARG1, FUNC_NAME,
+					   &except_scm);
+  if (value == NULL)
+    gdbscm_throw (except_scm);
   return vlscm_scm_from_value (value);
 }
 
@@ -275,19 +300,41 @@ lsscm_safe_lazy_string_to_value (SCM string, int arg_pos,
   gdb_assert (lsscm_is_lazy_string (string));
 
   ls_smob = (lazy_string_smob *) SCM_SMOB_DATA (string);
-  *except_scmp = SCM_BOOL_F;
 
   if (ls_smob->address == 0)
     {
       *except_scmp
-	= gdbscm_make_out_of_range_error (FUNC_NAME, SCM_ARG1, string,
+	= gdbscm_make_out_of_range_error (func_name, arg_pos, string,
 					 _("cannot create a value from NULL"));
       return NULL;
     }
 
   TRY
     {
-      value = value_at_lazy (ls_smob->type, ls_smob->address);
+      struct type *type = tyscm_scm_to_type (ls_smob->type);
+      struct type *realtype = check_typedef (type);
+
+      switch (TYPE_CODE (realtype))
+	{
+	case TYPE_CODE_PTR:
+	  /* If a length is specified we need to convert this to an array
+	     of the specified size.  */
+	  if (ls_smob->length != -1)
+	    {
+	      /* PR 20786: There's no way to specify an array of length zero.
+		 Record a length of [0,-1] which is how Ada does it.  Anything
+		 we do is broken, but this one possible solution.  */
+	      type = lookup_array_range_type (TYPE_TARGET_TYPE (realtype),
+					      0, ls_smob->length - 1);
+	      value = value_at_lazy (type, ls_smob->address);
+	    }
+	  else
+	    value = value_from_pointer (type, ls_smob->address);
+	  break;
+	default:
+	  value = value_at_lazy (type, ls_smob->address);
+	  break;
+	}
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -307,12 +354,14 @@ lsscm_val_print_lazy_string (SCM string, struct ui_file *stream,
 			     const struct value_print_options *options)
 {
   lazy_string_smob *ls_smob;
+  struct type *elt_type;
 
   gdb_assert (lsscm_is_lazy_string (string));
 
   ls_smob = (lazy_string_smob *) SCM_SMOB_DATA (string);
+  elt_type = lsscm_elt_type (ls_smob);
 
-  val_print_string (ls_smob->type, ls_smob->encoding,
+  val_print_string (elt_type, ls_smob->encoding,
 		    ls_smob->address, ls_smob->length,
 		    stream, options);
 }

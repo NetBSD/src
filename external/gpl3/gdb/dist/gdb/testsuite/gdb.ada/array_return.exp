@@ -1,4 +1,4 @@
-# Copyright 2005-2016 Free Software Foundation, Inc.
+# Copyright 2005-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ clean_restart ${testfile}
 # Start the inferior
 
 if ![runto_main] then {
-   fail "Cannot run to main, testcase aborted"
+   fail "cannot run to main, testcase aborted"
    return 0
 }
 
@@ -52,7 +52,7 @@ gdb_test "break create_small_float_vector" \
 
 gdb_test "cont" \
          "Breakpoint \[0-9\]+, pck.create_small \\(\\).*" \
-         "Continuing to Create_Small"
+         "continuing to Create_Small"
 
 gdb_test "finish" \
          "Value returned is \\\$\[0-9\]+ = \\(1, 1\\)" \
@@ -63,7 +63,7 @@ gdb_test "finish" \
 
 gdb_test "cont" \
          "Breakpoint \[0-9\]+, pck.create_large \\(\\).*" \
-         "Continuing to Create_Large"
+         "continuing to Create_Large"
 
 # On hppa32, the value returned is too large to be returned via a register.
 # Instead, it is returned using the struct convention, and the debugger
@@ -82,7 +82,7 @@ gdb_test "finish" \
 
 gdb_test "cont" \
          "Breakpoint \[0-9\]+, pck.create_small_float_vector \\(\\).*" \
-         "Continuing to Create_Small_Float_Vector"
+         "continuing to Create_Small_Float_Vector"
 
 gdb_test "finish" \
          "Value returned is \\\$\[0-9\]+ = \\(4.25, 4.25\\)" \

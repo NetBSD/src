@@ -1,4 +1,4 @@
 # Host: Solaris x86
-NATDEPFILES= fork-child.o i386v4-nat.o i386-sol2-nat.o \
+NATDEPFILES= fork-child.o i386-v4-nat.o i386-sol2-nat.o \
 	procfs.o proc-api.o proc-events.o proc-flags.o proc-why.o
 HAVE_NATIVE_GCORE_HOST = 1

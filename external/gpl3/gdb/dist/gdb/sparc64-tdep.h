@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,9 +56,12 @@ enum sparc64_regnum
   SPARC64_FSR_REGNUM,		/* %fsr */
   SPARC64_FPRS_REGNUM,		/* %fprs */
   SPARC64_Y_REGNUM,		/* %y */
+};
 
-  /* Pseudo registers.  */
-  SPARC64_CWP_REGNUM,		/* %cwp */
+/* Pseudo registers.  */
+enum sparc64_pseudo_regnum
+{
+  SPARC64_CWP_REGNUM = 0,	/* %cwp */
   SPARC64_PSTATE_REGNUM,	/* %pstate */
   SPARC64_ASI_REGNUM,		/* %asi */
   SPARC64_CCR_REGNUM,		/* %ccr */
@@ -119,12 +122,12 @@ extern const struct sparc_fpregmap sparc64_sol2_fpregmap;
 extern void sparc64_sol2_init_abi (struct gdbarch_info info,
 				   struct gdbarch *gdbarch);
 
-/* Variables exported from sparc64fbsd-tdep.c.  */
+/* Variables exported from sparc64-fbsd-tdep.c.  */
 
 /* Register offsets for FreeBSD/sparc64.  */
 extern const struct sparc_gregmap sparc64fbsd_gregmap;
 
-/* Functions and variables exported from sparc64nbsd-tdep.c.  */
+/* Functions and variables exported from sparc64-nbsd-tdep.c.  */
 
 /* Register offsets for NetBSD/sparc64.  */
 extern const struct sparc_gregmap sparc64nbsd_gregmap;

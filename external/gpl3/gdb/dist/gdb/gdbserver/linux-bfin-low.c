@@ -1,6 +1,6 @@
 /* GNU/Linux/BFIN specific low level interface, for the remote server for GDB.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 

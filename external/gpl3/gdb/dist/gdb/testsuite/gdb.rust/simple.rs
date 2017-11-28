@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Free Software Foundation, Inc.
+// Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -63,6 +63,23 @@ enum SpaceSaver {
     Nothing,
 }
 
+enum Univariant {
+    Foo {a: u8}
+}
+enum UnivariantAnon {
+    Foo(u8)
+}
+
+enum ParametrizedEnum<T> {
+    Val { val: T },
+    Empty,
+}
+
+struct ParametrizedStruct<T> {
+    next: ParametrizedEnum<Box<ParametrizedStruct<T>>>,
+    value: T
+}
+
 fn main () {
     let a = ();
     let b : [i32; 0] = [];
@@ -93,6 +110,9 @@ fn main () {
     let y = HiBob {field1: 7, field2: 8};
     let z = ByeBob(7, 8);
 
+    let univariant = Univariant::Foo {a : 1};
+    let univariant_anon = UnivariantAnon::Foo(1);
+
     let slice = &w[2..3];
     let fromslice = slice[0];
     let slice2 = &slice[0..1];
@@ -116,6 +136,16 @@ fn main () {
     let int_none = None::<u8>;
     let custom_some = NonZeroOptimized::Value("hi".into());
     let custom_none = NonZeroOptimized::Empty;
+
+    let parametrized = ParametrizedStruct {
+        next: ParametrizedEnum::Val {
+            val: Box::new(ParametrizedStruct {
+                next: ParametrizedEnum::Empty,
+                value: 1,
+            })
+        },
+        value: 0,
+    };
 
     println!("{}, {}", x.0, x.1);        // set breakpoint here
     println!("{}", diff2(92, 45));

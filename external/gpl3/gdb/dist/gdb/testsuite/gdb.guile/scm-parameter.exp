@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2016 Free Software Foundation, Inc.
+# Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,9 +52,9 @@ gdb_test_multiline "Simple gdb boolean parameter" \
 
 with_test_prefix "test-param" {
     gdb_test "guile (print (parameter-value test-param))" "= #t" "parameter value (true)"
-    gdb_test "show print test-param" "The state of the Test Parameter is on." "Show parameter on"
+    gdb_test "show print test-param" "The state of the Test Parameter is on." "show parameter on"
     gdb_test_no_output "set print test-param off"
-    gdb_test "show print test-param" "The state of the Test Parameter is off." "Show parameter off"
+    gdb_test "show print test-param" "The state of the Test Parameter is off." "show parameter off"
     gdb_test "guile (print (parameter-value test-param))" "= #f" "parameter value (false)"
     gdb_test "help show print test-param" "Show the state of the boolean test-param.*" "show help"
     gdb_test "help set print test-param" "Set the state of the boolean test-param.*" "set help"
@@ -187,9 +187,9 @@ gdb_test_no_output "guile (register-parameter! prev-ambig)"
 
 with_test_prefix "previously-ambiguous" {
     gdb_test "guile (print (parameter-value prev-ambig))" "= #f" "parameter value (false)"
-    gdb_test "show print s" "Command is not documented is off." "Show parameter off"
+    gdb_test "show print s" "Command is not documented is off." "show parameter off"
     gdb_test_no_output "set print s on"
-    gdb_test "show print s" "Command is not documented is on." "Show parameter on"
+    gdb_test "show print s" "Command is not documented is on." "show parameter on"
     gdb_test "guile (print (parameter-value prev-ambig))" "= #t" "parameter value (true)"
     gdb_test "help show print s" "This command is not documented." "show help"
     gdb_test "help set print s" "This command is not documented." "set help"

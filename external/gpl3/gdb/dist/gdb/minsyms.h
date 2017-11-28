@@ -1,6 +1,6 @@
 /* Minimal symbol table definitions for GDB.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,81 +53,100 @@ struct bound_minimal_symbol
    as opaque and use functions provided by minsyms.c to inspect them.
 */
 
-/* Prepare to start collecting minimal symbols.  This should be called
-   by a symbol reader to initialize the minimal symbol module.
-   Currently, minimal symbol table creation is not reentrant; it
-   relies on global (static) variables in minsyms.c.  */
+struct msym_bunch;
 
-void init_minimal_symbol_collection (void);
+/* An RAII-based object that is used to record minimal symbols while
+   they are being read.  */
+class minimal_symbol_reader
+{
+ public:
 
-/* Return a cleanup which is used to clean up the global state left
-   over by minimal symbol creation.  After calling
-   init_minimal_symbol_collection, a symbol reader should call this
-   function.  Then, after all minimal symbols have been read,
-   regardless of whether they are installed or not, the cleanup
-   returned by this function should be run.  */
+  /* Prepare to start collecting minimal symbols.  This should be
+     called by a symbol reader to initialize the minimal symbol
+     module.  */
 
-struct cleanup *make_cleanup_discard_minimal_symbols (void);
+  explicit minimal_symbol_reader (struct objfile *);
 
-/* Record a new minimal symbol.  This is the "full" entry point;
-   simpler convenience entry points are also provided below.
+  ~minimal_symbol_reader ();
+
+  /* Install the minimal symbols that have been collected into the
+     given objfile.  */
+
+  void install ();
+
+  /* Record a new minimal symbol.  This is the "full" entry point;
+     simpler convenience entry points are also provided below.
    
-   This returns a new minimal symbol.  It is ok to modify the returned
-   minimal symbol (though generally not necessary).  It is not ok,
-   though, to stash the pointer anywhere; as minimal symbols may be
-   moved after creation.  The memory for the returned minimal symbol
-   is still owned by the minsyms.c code, and should not be freed.
+     This returns a new minimal symbol.  It is ok to modify the returned
+     minimal symbol (though generally not necessary).  It is not ok,
+     though, to stash the pointer anywhere; as minimal symbols may be
+     moved after creation.  The memory for the returned minimal symbol
+     is still owned by the minsyms.c code, and should not be freed.
    
-   Arguments are:
+     Arguments are:
 
-   NAME - the symbol's name
-   NAME_LEN - the length of the name
-   COPY_NAME - if true, the minsym code must make a copy of NAME.  If
-   false, then NAME must be NUL-terminated, and must have a lifetime
-   that is at least as long as OBJFILE's lifetime.
-   ADDRESS - the address of the symbol
-   MS_TYPE - the type of the symbol
-   SECTION - the symbol's section
-   appropriate obj_section for the minimal symbol.  This can be NULL.
-   OBJFILE - the objfile associated with the minimal symbol.  */
+     NAME - the symbol's name
+     NAME_LEN - the length of the name
+     COPY_NAME - if true, the minsym code must make a copy of NAME.  If
+     false, then NAME must be NUL-terminated, and must have a lifetime
+     that is at least as long as OBJFILE's lifetime.
+     ADDRESS - the address of the symbol
+     MS_TYPE - the type of the symbol
+     SECTION - the symbol's section
+  */
 
-struct minimal_symbol *prim_record_minimal_symbol_full
-    (const char *name,
-     int name_len,
-     int copy_name,
-     CORE_ADDR address,
-     enum minimal_symbol_type ms_type,
-     int section,
-     struct objfile *objfile);
+  struct minimal_symbol *record_full (const char *name,
+				      int name_len,
+				      bool copy_name,
+				      CORE_ADDR address,
+				      enum minimal_symbol_type ms_type,
+				      int section);
 
-/* Like prim_record_minimal_symbol_full, but:
-   - uses strlen to compute NAME_LEN,
-   - passes COPY_NAME = 1,
-   - and passes a default SECTION, depending on the type
-   
-   This variant does not return the new symbol.  */
+  /* Like record_full, but:
+     - uses strlen to compute NAME_LEN,
+     - passes COPY_NAME = true,
+     - and passes a default SECTION, depending on the type
 
-void prim_record_minimal_symbol (const char *, CORE_ADDR,
-				 enum minimal_symbol_type,
-				 struct objfile *);
+     This variant does not return the new symbol.  */
 
-/* Like prim_record_minimal_symbol_full, but:
-   - uses strlen to compute NAME_LEN,
-   - passes COPY_NAME = 1.  */
+  void record (const char *name, CORE_ADDR address,
+	       enum minimal_symbol_type ms_type);
 
-struct minimal_symbol *prim_record_minimal_symbol_and_info
-    (const char *,
-     CORE_ADDR,
-     enum minimal_symbol_type,
-     int section,
-     struct objfile *);
+  /* Like record_full, but:
+     - uses strlen to compute NAME_LEN,
+     - passes COPY_NAME = true.  */
 
-/* Install the minimal symbols that have been collected into the given
-   objfile.  After this is called, the cleanup returned by
-   make_cleanup_discard_minimal_symbols should be run in order to
-   clean up global state.  */
+  struct minimal_symbol *record_with_info (const char *name,
+					   CORE_ADDR address,
+					   enum minimal_symbol_type ms_type,
+					   int section)
+  {
+    return record_full (name, strlen (name), true, address, ms_type, section);
+  }
 
-void install_minimal_symbols (struct objfile *);
+ private:
+
+  /* No need for these.  They are intentionally not defined anywhere.  */
+  minimal_symbol_reader &operator=
+    (const minimal_symbol_reader &);
+  minimal_symbol_reader (const minimal_symbol_reader &);
+
+  struct objfile *m_objfile;
+
+  /* Bunch currently being filled up.
+     The next field points to chain of filled bunches.  */
+
+  struct msym_bunch *m_msym_bunch;
+
+  /* Number of slots filled in current bunch.  */
+
+  int m_msym_bunch_index;
+
+  /* Total number of minimal symbols recorded so far for the
+     objfile.  */
+
+  int m_msym_count;
+};
 
 /* Create the terminating entry of OBJFILE's minimal symbol table.
    If OBJFILE->msymbols is zero, allocate a single entry from

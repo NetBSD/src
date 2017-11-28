@@ -1,4 +1,4 @@
-# Copyright 2009-2016 Free Software Foundation, Inc.
+# Copyright 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ if { (![istarget "x86_64-*-*"] && ![istarget "i?86-*-*"]) || ![is_lp64_target]
     return
 }
 
-if [prepare_for_testing amd64-i386-address.exp amd64-i386-address amd64-i386-address.S [list debug "additional_flags=-m32 -nostdlib"]] {
+if [prepare_for_testing "failed to prepare" amd64-i386-address amd64-i386-address.S [list debug "additional_flags=-m32 -nostdlib"]] {
     return -1
 }
 

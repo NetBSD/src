@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2016 Free Software Foundation, Inc.
+# Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -44,21 +44,24 @@
 #   make GDB=/path/to/gdb XMLTOC="xml files" cfiles
 
 WHICH = aarch64 \
-	arm-with-iwmmxt arm-with-vfpv2 arm-with-vfpv3 arm-with-neon \
+	arm/arm-with-iwmmxt arm/arm-with-vfpv2 arm/arm-with-vfpv3 \
+	arm/arm-with-neon \
 	i386/i386 i386/i386-linux \
 	i386/i386-mmx i386/i386-mmx-linux \
 	i386/amd64 i386/amd64-linux \
 	i386/i386-avx i386/i386-avx-linux \
 	i386/i386-mpx i386/i386-mpx-linux \
 	i386/i386-avx-mpx i386/i386-avx-mpx-linux \
-	i386/i386-avx512 i386/i386-avx512-linux \
+	i386/i386-avx-avx512 i386/i386-avx-avx512-linux \
+	i386/i386-avx-mpx-avx512-pku i386/i386-avx-mpx-avx512-pku-linux \
 	i386/amd64-avx i386/amd64-avx-linux \
 	i386/amd64-mpx i386/amd64-mpx-linux \
 	i386/amd64-avx-mpx i386/amd64-avx-mpx-linux \
-	i386/amd64-avx512 i386/amd64-avx512-linux \
+	i386/amd64-avx-avx512 i386/amd64-avx-avx512-linux \
+	i386/amd64-avx-mpx-avx512-pku i386/amd64-avx-mpx-avx512-pku-linux \
 	i386/x32 i386/x32-linux \
 	i386/x32-avx i386/x32-avx-linux \
-	i386/x32-avx512 i386/x32-avx512-linux \
+	i386/x32-avx-avx512 i386/x32-avx-avx512-linux \
 	mips-linux mips-dsp-linux \
 	microblaze-with-stack-protect \
 	mips64-linux mips64-dsp-linux \
@@ -67,6 +70,9 @@ WHICH = aarch64 \
 	rs6000/powerpc-32l rs6000/powerpc-altivec32l rs6000/powerpc-e500l \
 	rs6000/powerpc-64l rs6000/powerpc-altivec64l rs6000/powerpc-vsx32l \
 	rs6000/powerpc-vsx64l rs6000/powerpc-cell32l rs6000/powerpc-cell64l \
+	rs6000/powerpc-isa205-32l rs6000/powerpc-isa205-64l \
+	rs6000/powerpc-isa205-altivec32l rs6000/powerpc-isa205-altivec64l \
+	rs6000/powerpc-isa205-vsx32l rs6000/powerpc-isa205-vsx64l \
 	s390-linux32 s390-linux64 s390x-linux64 \
 	s390-linux32v1 s390-linux64v1 s390x-linux64v1 \
 	s390-linux32v2 s390-linux64v2 s390x-linux64v2 \
@@ -78,34 +84,9 @@ WHICH = aarch64 \
 # Record which registers should be sent to GDB by default after stop.
 aarch64-expedite = x29,sp,pc
 arm-expedite = r11,sp,pc
-i386/i386-expedite = ebp,esp,eip
-i386/i386-linux-expedite = ebp,esp,eip
-i386/amd64-expedite = rbp,rsp,rip
-i386/amd64-linux-expedite = rbp,rsp,rip
-i386/i386-avx-expedite = ebp,esp,eip
-i386/i386-avx-linux-expedite = ebp,esp,eip
-i386/i386-mpx-expedite = ebp,esp,eip
-i386/i386-avx-mpx-expedite = ebp,esp,eip
-i386/i386-mpx-linux-expedite = ebp,esp,eip
-i386/i386-avx-mpx-linux-expedite = ebp,esp,eip
-i386/i386-avx512-expedite = ebp,esp,eip
-i386/i386-avx512-linux-expedite = ebp,esp,eip
-i386/i386-mmx-expedite = ebp,esp,eip
-i386/i386-mmx-linux-expedite = ebp,esp,eip
-i386/amd64-avx-expedite = rbp,rsp,rip
-i386/amd64-avx-linux-expedite = rbp,rsp,rip
-i386/amd64-mpx-expedite = rbp,rsp,rip
-i386/amd64-avx-mpx-expedite = rbp,rsp,rip
-i386/amd64-mpx-linux-expedite = rbp,rsp,rip
-i386/amd64-avx-mpx-linux-expedite = rbp,rsp,rip
-i386/amd64-avx512-expedite = rbp,rsp,rip
-i386/amd64-avx512-linux-expedite = rbp,rsp,rip
-i386/x32-expedite = rbp,rsp,rip
-i386/x32-linux-expedite = rbp,rsp,rip
-i386/x32-avx-expedite = rbp,rsp,rip
-i386/x32-avx-linux-expedite = rbp,rsp,rip
-i386/x32-avx512-expedite = rbp,rsp,rip
-i386/x32-avx512-linux-expedite = rbp,rsp,rip
+i386-expedite = ebp,esp,eip
+amd64-expedite = rbp,rsp,rip
+x32-expedite = rbp,rsp,rip
 mips-expedite = r29,pc
 mips-dsp-expedite = r29,pc
 mips64-expedite = r29,pc
@@ -148,17 +129,21 @@ OUTPUTS = $(patsubst %,$(outdir)/%.dat,$(WHICH))
 # to make on the command line.
 XMLTOC = \
 	aarch64.xml \
-	arm-with-iwmmxt.xml \
-	arm-with-m-fpa-layout.xml \
-	arm-with-m-vfp-d16.xml \
-	arm-with-m.xml \
-	arm-with-neon.xml \
-	arm-with-vfpv2.xml \
-	arm-with-vfpv3.xml \
+	arc-v2.xml \
+	arc-arcompact.xml \
+	arm/arm-with-iwmmxt.xml \
+	arm/arm-with-m-fpa-layout.xml \
+	arm/arm-with-m-vfp-d16.xml \
+	arm/arm-with-m.xml \
+	arm/arm-with-neon.xml \
+	arm/arm-with-vfpv2.xml \
+	arm/arm-with-vfpv3.xml \
 	i386/amd64-avx-linux.xml \
 	i386/amd64-avx.xml \
-	i386/amd64-avx512-linux.xml \
-	i386/amd64-avx512.xml \
+	i386/amd64-avx-avx512-linux.xml \
+	i386/amd64-avx-avx512.xml \
+	i386/amd64-avx-mpx-avx512-pku-linux.xml \
+	i386/amd64-avx-mpx-avx512-pku.xml \
 	i386/amd64-linux.xml \
 	i386/amd64-mpx-linux.xml \
 	i386/amd64-mpx.xml \
@@ -167,8 +152,10 @@ XMLTOC = \
 	i386/amd64.xml \
 	i386/i386-avx-linux.xml \
 	i386/i386-avx.xml \
-	i386/i386-avx512-linux.xml \
-	i386/i386-avx512.xml \
+	i386/i386-avx-avx512-linux.xml \
+	i386/i386-avx-avx512.xml \
+	i386/i386-avx-mpx-avx512-pku-linux.xml \
+	i386/i386-avx-mpx-avx512-pku.xml \
 	i386/i386-linux.xml \
 	i386/i386-mmx-linux.xml \
 	i386/i386-mmx.xml \
@@ -179,8 +166,8 @@ XMLTOC = \
 	i386/i386.xml \
 	i386/x32-avx-linux.xml \
 	i386/x32-avx.xml \
-	i386/x32-avx512-linux.xml \
-	i386/x32-avx512.xml \
+	i386/x32-avx-avx512-linux.xml \
+	i386/x32-avx-avx512.xml \
 	i386/x32-linux.xml \
 	i386/x32.xml \
 	microblaze-with-stack-protect.xml \
@@ -237,6 +224,10 @@ XMLTOC = \
 	s390x-linux64v1.xml \
 	s390x-linux64v2.xml \
 	s390x-te-linux64.xml \
+	s390-tevx-linux64.xml \
+	s390-vx-linux64.xml \
+	s390x-tevx-linux64.xml \
+	s390x-vx-linux64.xml \
 	tic6x-c62x-linux.xml \
 	tic6x-c62x.xml \
 	tic6x-c64x-linux.xml \
@@ -268,13 +259,13 @@ cfiles: $(CFILES)
 	sh ../../move-if-change $@.tmp $@
 
 # Other dependencies.
-$(outdir)/arm-with-iwmmxt.dat: arm-core.xml xscale-iwmmxt.xml
+$(outdir)/arm/arm-with-iwmmxt.dat: arm/arm-core.xml arm/xscale-iwmmxt.xml
 $(outdir)/i386/i386.dat: i386/32bit-core.xml i386/32bit-sse.xml
 $(outdir)/i386/i386-linux.dat: i386/32bit-core.xml i386/32bit-sse.xml \
 			       i386/32bit-linux.xml
 $(outdir)/i386/amd64.dat: i386/64bit-core.xml i386/64bit-sse.xml
 $(outdir)/i386/amd64-linux.dat: i386/64bit-core.xml i386/64bit-sse.xml \
-			        i386/64bit-linux.xml
+			       i386/64bit-linux.xml i386/64bit-segments.xml
 $(outdir)/i386/i386-avx.dat: i386/32bit-core.xml i386/32bit-avx.xml
 $(outdir)/i386/i386-avx-linux.dat: i386/32bit-core.xml i386/32bit-avx.xml \
 			       i386/32bit-linux.xml
@@ -286,38 +277,51 @@ $(outdir)/i386/i386-mpx-linux.dat: i386/32bit-core.xml \
 			       i386/32bit-linux.xml i386/32bit-mpx.xml
 $(outdir)/i386/i386-avx-mpx-linux.dat: i386/32bit-core.xml \
 			       i386/32bit-linux.xml i386/32bit-mpx.xml
-$(outdir)/i386/i386-avx512.dat: i386/32bit-core.xml i386/32bit-avx.xml \
-			       i386/32bit-mpx.xml i386/32bit-avx512.xml
-$(outdir)/i386/i386-avx512-linux.dat: i386/32bit-core.xml i386/32bit-avx.xml \
-			       i386/32bit-linux.xml i386/32bit-mpx.xml i386/32bit-avx512.xml
+$(outdir)/i386/i386-avx-avx512.dat: i386/32bit-core.xml i386/32bit-avx.xml \
+			       i386/32bit-avx512.xml
+$(outdir)/i386/i386-avx-avx512-linux.dat: i386/32bit-core.xml i386/32bit-avx.xml \
+			       i386/32bit-linux.xml i386/32bit-avx512.xml
+$(outdir)/i386/i386-avx-mpx-avx512-pku.dat: i386/32bit-core.xml
+			       i386/32bit-avx.xml i386/32bit-mpx.xml i386/32bit-avx512.xml \
+			       i386/32bit-pkeys.xml
+$(outdir)/i386/i386-avx-mpx-avx512-pku-linux.dat: i386/32bit-core.xml \
+			       i386/32bit-avx.xml i386/32bit-mpx.xml i386/32bit-avx512.xml \
+			       i386/32bit-pkeys.xml i386/32bit-linux.xml
 $(outdir)/i386/i386-mmx.dat: i386/32bit-core.xml 
 $(outdir)/i386/i386-mmx-linux.dat: i386/32bit-core.xml i386/32bit-linux.xml
 $(outdir)/i386/amd64-avx.dat: i386/64bit-core.xml i386/64bit-avx.xml
 $(outdir)/i386/amd64-avx-linux.dat: i386/64bit-core.xml i386/64bit-avx.xml \
-				    i386/64bit-linux.xml
+			       i386/64bit-linux.xml i386/64bit-segments.xml
 $(outdir)/i386/amd64-mpx-linux.dat: i386/64bit-core.xml i386/64bit-avx.xml \
-			       i386/64bit-linux.xml i386/64bit-mpx.xml
+			       i386/64bit-linux.xml i386/64bit-segments.xml i386/64bit-mpx.xml
 $(outdir)/i386/amd64-avx-mpx-linux.dat: i386/64bit-core.xml \
-			       i386/64bit-linux.xml i386/64bit-mpx.xml
+			       i386/64bit-linux.xml i386/64bit-segments.xml i386/64bit-mpx.xml
 $(outdir)/i386/amd64-mpx.dat: i386/64bit-core.xml i386/64bit-avx.xml \
 			       i386/64bit-mpx.xml
 $(outdir)/i386/amd64-avx-mpx.dat: i386/64bit-core.xml \
 			       i386/64bit-mpx.xml
-$(outdir)/i386/amd64-avx512.dat: i386/64bit-core.xml i386/64bit-avx.xml \
-			       i386/64bit-mpx.xml i386/64bit-avx512.xml
-$(outdir)/i386/amd64-avx512-linux.dat: i386/64bit-core.xml i386/64bit-avx.xml \
-			       i386/64bit-mpx.xml i386/64bit-avx512.xml \
-			       i386/64bit-linux.xml
+$(outdir)/i386/amd64-avx-avx512.dat: i386/64bit-core.xml i386/64bit-avx.xml \
+			       i386/64bit-avx512.xml
+$(outdir)/i386/amd64-avx-avx512-linux.dat: i386/64bit-core.xml i386/64bit-avx.xml \
+			       i386/64bit-avx512.xml i386/64bit-linux.xml
+$(outdir)/i386/amd64-avx-mpx-avx512-pku.dat: i386/64bit-core.xml \
+			       i386/64bit-avx.xml i386/64bit-mpx.xml i386/64bit-avx512.xml \
+			       i386/64bit-pkeys.xml
+$(outdir)/i386/amd64-avx-mpx-avx512-pku-linux.dat: i386/64bit-core.xml \
+			       i386/64bit-avx.xml i386/64bit-mpx.xml i386/64bit-avx512.xml \
+			       i386/64bit-linux.xml i386/64bit-segments.xml \
+			       i386/64bit-pkeys.xml
 $(outdir)/i386/x32.dat: i386/x32-core.xml i386/64bit-sse.xml
 $(outdir)/i386/x32-linux.dat: i386/x32-core.xml i386/64bit-sse.xml \
-			      i386/64bit-linux.xml
+			       i386/64bit-linux.xml i386/64bit-segments.xml
 $(outdir)/i386/x32-avx.dat: i386/x32-core.xml i386/64bit-avx.xml
 $(outdir)/i386/x32-avx-linux.dat: i386/x32-core.xml i386/64bit-avx.xml \
-				  i386/64bit-linux.xml
-$(outdir)/i386/x32-avx512.dat: i386/x32-core.xml i386/64bit-avx.xml \
-			       i386/64bit-mpx.xml i386/64bit-avx512.xml
-$(outdir)/i386/x32-avx512-linux.dat: i386/x32-core.xml i386/64bit-avx.xml \
-			       i386/64bit-mpx.xml i386/64bit-avx512.xml i386/64bit-linux.xml
+			       i386/64bit-linux.xml i386/64bit-segments.xml
+$(outdir)/i386/x32-avx-avx512.dat: i386/x32-core.xml i386/64bit-avx.xml \
+			       i386/64bit-avx512.xml
+$(outdir)/i386/x32-avx-avx512-linux.dat: i386/x32-core.xml i386/64bit-avx.xml \
+			       i386/64bit-avx512.xml i386/64bit-linux.xml \
+			       i386/64bit-segments.xml
 
 # 'all' doesn't build the C files, so don't delete them in 'clean'
 # either.

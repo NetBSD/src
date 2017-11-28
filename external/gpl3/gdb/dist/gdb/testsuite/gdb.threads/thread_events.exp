@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2016 Free Software Foundation, Inc.
+# Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ proc test_thread_messages {enabled} {
   # The initial thread may log a 'New Thread' message, but we don't
   # check for it.
   if ![runto_main] then {
-     fail "Can't run to main $enabled_string"
+     fail "can't run to main $enabled_string"
      return 1
   }
 

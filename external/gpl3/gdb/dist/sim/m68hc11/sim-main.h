@@ -1,5 +1,5 @@
 /* sim-main.h -- Simulator for Motorola 68HC11 & 68HC12
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, the GNU debugger.
@@ -219,83 +219,80 @@ struct _sim_cpu {
 
 /* Returns the cpu absolute cycle time (A virtual counter incremented
    at each 68HC11 E clock).  */
-#define cpu_current_cycle(PROC) ((PROC)->cpu_absolute_cycle)
-#define cpu_add_cycles(PROC,T)  ((PROC)->cpu_current_cycle += (signed64) (T))
-#define cpu_is_running(PROC)    ((PROC)->cpu_running)
+#define cpu_current_cycle(cpu)    ((cpu)->cpu_absolute_cycle)
+#define cpu_add_cycles(cpu, T)    ((cpu)->cpu_current_cycle += (signed64) (T))
+#define cpu_is_running(cpu)       ((cpu)->cpu_running)
 
 /* Get the IO/RAM base addresses depending on the M6811_INIT register.  */
-#define cpu_get_io_base(PROC) \
-        (((uint16)(((PROC)->ios[M6811_INIT]) & 0x0F))<<12)
-#define cpu_get_reg_base(PROC) \
-        (((uint16)(((PROC)->ios[M6811_INIT]) & 0xF0))<<8)
+#define cpu_get_io_base(cpu) \
+  (((uint16)(((cpu)->ios[M6811_INIT]) & 0x0F)) << 12)
+#define cpu_get_reg_base(cpu) \
+  (((uint16)(((cpu)->ios[M6811_INIT]) & 0xF0)) << 8)
 
 /* Returns the different CPU registers.  */
-#define cpu_get_ccr(PROC)          ((PROC)->cpu_regs.ccr)
-#define cpu_get_pc(PROC)           ((PROC)->cpu_regs.pc)
-#define cpu_get_d(PROC)            ((PROC)->cpu_regs.d)
-#define cpu_get_x(PROC)            ((PROC)->cpu_regs.ix)
-#define cpu_get_y(PROC)            ((PROC)->cpu_regs.iy)
-#define cpu_get_sp(PROC)           ((PROC)->cpu_regs.sp)
-#define cpu_get_a(PROC)            ((PROC->cpu_regs.d >> 8) & 0x0FF)
-#define cpu_get_b(PROC)            ((PROC->cpu_regs.d) & 0x0FF)
-#define cpu_get_page(PROC)         ((PROC)->cpu_regs.page)
+#define cpu_get_ccr(cpu)          ((cpu)->cpu_regs.ccr)
+#define cpu_get_pc(cpu)           ((cpu)->cpu_regs.pc)
+#define cpu_get_d(cpu)            ((cpu)->cpu_regs.d)
+#define cpu_get_x(cpu)            ((cpu)->cpu_regs.ix)
+#define cpu_get_y(cpu)            ((cpu)->cpu_regs.iy)
+#define cpu_get_sp(cpu)           ((cpu)->cpu_regs.sp)
+#define cpu_get_a(cpu)            (((cpu)->cpu_regs.d >> 8) & 0x0FF)
+#define cpu_get_b(cpu)            ((cpu)->cpu_regs.d & 0x0FF)
+#define cpu_get_page(cpu)         ((cpu)->cpu_regs.page)
 
 /* 68HC12 specific and Motorola internal registers.  */
-#define cpu_get_tmp3(PROC)         (0)
-#define cpu_get_tmp2(PROC)         (0)
+#define cpu_get_tmp3(cpu)         (0)
+#define cpu_get_tmp2(cpu)         (0)
 
-#define cpu_set_d(PROC,VAL)        (((PROC)->cpu_regs.d) = (VAL))
-#define cpu_set_x(PROC,VAL)        (((PROC)->cpu_regs.ix) = (VAL))
-#define cpu_set_y(PROC,VAL)        (((PROC)->cpu_regs.iy) = (VAL))
-#define cpu_set_page(PROC,VAL)     (((PROC)->cpu_regs.page) = (VAL))
+#define cpu_set_d(cpu, val)       ((cpu)->cpu_regs.d = (val))
+#define cpu_set_x(cpu, val)       ((cpu)->cpu_regs.ix = (val))
+#define cpu_set_y(cpu, val)       ((cpu)->cpu_regs.iy = (val))
+#define cpu_set_page(cpu, val)    ((cpu)->cpu_regs.page = (val))
 
 /* 68HC12 specific and Motorola internal registers.  */
-#define cpu_set_tmp3(PROC,VAL)     (0)
-#define cpu_set_tmp2(PROC,VAL)     (void) (0)
+#define cpu_set_tmp3(cpu, val)    (0)
+#define cpu_set_tmp2(cpu, val)    (void) (0)
 
 #if 0
 /* This is a function in m68hc11_sim.c to keep track of the frame.  */
-#define cpu_set_sp(PROC,VAL)       (((PROC)->cpu_regs.sp) = (VAL))
+#define cpu_set_sp(cpu, val)      ((cpu)->cpu_regs.sp = (val))
 #endif
 
-#define cpu_set_pc(PROC,VAL)       (((PROC)->cpu_regs.pc) = (VAL))
+#define cpu_set_pc(cpu, val)      ((cpu)->cpu_regs.pc = (val))
 
-#define cpu_set_a(PROC,VAL)  \
-      cpu_set_d(PROC,((VAL) << 8) | cpu_get_b(PROC))
-#define cpu_set_b(PROC,VAL)  \
-      cpu_set_d(PROC,((cpu_get_a(PROC)) << 8)|(VAL & 0x0FF))
+#define cpu_set_a(cpu, val)  \
+  cpu_set_d(cpu, ((val) << 8) | cpu_get_b (cpu))
+#define cpu_set_b(cpu, val)  \
+  cpu_set_d(cpu, ((cpu_get_a (cpu)) << 8) | ((val) & 0x0FF))
 
-#define cpu_set_ccr(PROC,VAL)      ((PROC)->cpu_regs.ccr = (VAL))
-#define cpu_get_ccr_H(PROC)        ((cpu_get_ccr(PROC) & M6811_H_BIT) ? 1: 0)
-#define cpu_get_ccr_X(PROC)        ((cpu_get_ccr(PROC) & M6811_X_BIT) ? 1: 0)
-#define cpu_get_ccr_S(PROC)        ((cpu_get_ccr(PROC) & M6811_S_BIT) ? 1: 0)
-#define cpu_get_ccr_N(PROC)        ((cpu_get_ccr(PROC) & M6811_N_BIT) ? 1: 0)
-#define cpu_get_ccr_V(PROC)        ((cpu_get_ccr(PROC) & M6811_V_BIT) ? 1: 0)
-#define cpu_get_ccr_C(PROC)        ((cpu_get_ccr(PROC) & M6811_C_BIT) ? 1: 0)
-#define cpu_get_ccr_Z(PROC)        ((cpu_get_ccr(PROC) & M6811_Z_BIT) ? 1: 0)
-#define cpu_get_ccr_I(PROC)        ((cpu_get_ccr(PROC) & M6811_I_BIT) ? 1: 0)
+#define cpu_set_ccr(cpu, val)     ((cpu)->cpu_regs.ccr = (val))
+#define cpu_get_ccr_H(cpu)        ((cpu_get_ccr (cpu) & M6811_H_BIT) ? 1 : 0)
+#define cpu_get_ccr_X(cpu)        ((cpu_get_ccr (cpu) & M6811_X_BIT) ? 1 : 0)
+#define cpu_get_ccr_S(cpu)        ((cpu_get_ccr (cpu) & M6811_S_BIT) ? 1 : 0)
+#define cpu_get_ccr_N(cpu)        ((cpu_get_ccr (cpu) & M6811_N_BIT) ? 1 : 0)
+#define cpu_get_ccr_V(cpu)        ((cpu_get_ccr (cpu) & M6811_V_BIT) ? 1 : 0)
+#define cpu_get_ccr_C(cpu)        ((cpu_get_ccr (cpu) & M6811_C_BIT) ? 1 : 0)
+#define cpu_get_ccr_Z(cpu)        ((cpu_get_ccr (cpu) & M6811_Z_BIT) ? 1 : 0)
+#define cpu_get_ccr_I(cpu)        ((cpu_get_ccr (cpu) & M6811_I_BIT) ? 1 : 0)
 
-#define cpu_set_ccr_flag(S,B,V) \
-cpu_set_ccr(S,(cpu_get_ccr(S) & ~(B)) | ((V) ? B : 0))
+#define cpu_set_ccr_flag(S, B, V) \
+  cpu_set_ccr (S, (cpu_get_ccr (S) & ~(B)) | ((V) ? (B) : 0))
 
-#define cpu_set_ccr_H(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_H_BIT, VAL)
-#define cpu_set_ccr_X(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_X_BIT, VAL)
-#define cpu_set_ccr_S(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_S_BIT, VAL)
-#define cpu_set_ccr_N(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_N_BIT, VAL)
-#define cpu_set_ccr_V(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_V_BIT, VAL)
-#define cpu_set_ccr_C(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_C_BIT, VAL)
-#define cpu_set_ccr_Z(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_Z_BIT, VAL)
-#define cpu_set_ccr_I(PROC,VAL)    cpu_set_ccr_flag(PROC, M6811_I_BIT, VAL)
+#define cpu_set_ccr_H(cpu, val)   cpu_set_ccr_flag (cpu, M6811_H_BIT, val)
+#define cpu_set_ccr_X(cpu, val)   cpu_set_ccr_flag (cpu, M6811_X_BIT, val)
+#define cpu_set_ccr_S(cpu, val)   cpu_set_ccr_flag (cpu, M6811_S_BIT, val)
+#define cpu_set_ccr_N(cpu, val)   cpu_set_ccr_flag (cpu, M6811_N_BIT, val)
+#define cpu_set_ccr_V(cpu, val)   cpu_set_ccr_flag (cpu, M6811_V_BIT, val)
+#define cpu_set_ccr_C(cpu, val)   cpu_set_ccr_flag (cpu, M6811_C_BIT, val)
+#define cpu_set_ccr_Z(cpu, val)   cpu_set_ccr_flag (cpu, M6811_Z_BIT, val)
+#define cpu_set_ccr_I(cpu, val)   cpu_set_ccr_flag (cpu, M6811_I_BIT, val)
 
-#undef inline
-#define inline static __inline__
-
-extern void cpu_memory_exception (struct _sim_cpu *proc,
+extern void cpu_memory_exception (sim_cpu *cpu,
                                   SIM_SIGNAL excep,
                                   uint16 addr,
                                   const char *message);
 
-inline address_word
+STATIC_INLINE address_word
 phys_to_virt (sim_cpu *cpu, address_word addr)
 {
   if (addr >= cpu->bank_start && addr < cpu->bank_end)
@@ -306,7 +303,7 @@ phys_to_virt (sim_cpu *cpu, address_word addr)
     return (address_word) (addr);
 }
 
-inline uint8
+STATIC_INLINE uint8
 memory_read8 (sim_cpu *cpu, uint16 addr)
 {
   uint8 val;
@@ -319,7 +316,7 @@ memory_read8 (sim_cpu *cpu, uint16 addr)
   return val;
 }
 
-inline void
+STATIC_INLINE void
 memory_write8 (sim_cpu *cpu, uint16 addr, uint8 val)
 {
   if (sim_core_write_buffer (CPU_STATE (cpu), cpu, 0, &val, addr, 1) != 1)
@@ -329,7 +326,7 @@ memory_write8 (sim_cpu *cpu, uint16 addr, uint8 val)
     }
 }
 
-inline uint16
+STATIC_INLINE uint16
 memory_read16 (sim_cpu *cpu, uint16 addr)
 {
   uint8 b[2];
@@ -342,7 +339,7 @@ memory_read16 (sim_cpu *cpu, uint16 addr)
   return (((uint16) (b[0])) << 8) | ((uint16) b[1]);
 }
 
-inline void
+STATIC_INLINE void
 memory_write16 (sim_cpu *cpu, uint16 addr, uint16 val)
 {
   uint8 b[2];
@@ -356,189 +353,189 @@ memory_write16 (sim_cpu *cpu, uint16 addr, uint16 val)
     }
 }
 extern void
-cpu_ccr_update_tst8 (sim_cpu *proc, uint8 val);
+cpu_ccr_update_tst8 (sim_cpu *cpu, uint8 val);
 
-     inline void
-cpu_ccr_update_tst16 (sim_cpu *proc, uint16 val)
+STATIC_INLINE void
+cpu_ccr_update_tst16 (sim_cpu *cpu, uint16 val)
 {
-  cpu_set_ccr_V (proc, 0);
-  cpu_set_ccr_N (proc, val & 0x8000 ? 1 : 0);
-  cpu_set_ccr_Z (proc, val == 0 ? 1 : 0);
+  cpu_set_ccr_V (cpu, 0);
+  cpu_set_ccr_N (cpu, val & 0x8000 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, val == 0 ? 1 : 0);
 }
 
-     inline void
-cpu_ccr_update_shift8 (sim_cpu *proc, uint8 val)
+STATIC_INLINE void
+cpu_ccr_update_shift8 (sim_cpu *cpu, uint8 val)
 {
-  cpu_set_ccr_N (proc, val & 0x80 ? 1 : 0);
-  cpu_set_ccr_Z (proc, val == 0 ? 1 : 0);
-  cpu_set_ccr_V (proc, cpu_get_ccr_N (proc) ^ cpu_get_ccr_C (proc));
+  cpu_set_ccr_N (cpu, val & 0x80 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, val == 0 ? 1 : 0);
+  cpu_set_ccr_V (cpu, cpu_get_ccr_N (cpu) ^ cpu_get_ccr_C (cpu));
 }
 
-     inline void
-cpu_ccr_update_shift16 (sim_cpu *proc, uint16 val)
+STATIC_INLINE void
+cpu_ccr_update_shift16 (sim_cpu *cpu, uint16 val)
 {
-  cpu_set_ccr_N (proc, val & 0x8000 ? 1 : 0);
-  cpu_set_ccr_Z (proc, val == 0 ? 1 : 0);
-  cpu_set_ccr_V (proc, cpu_get_ccr_N (proc) ^ cpu_get_ccr_C (proc));
+  cpu_set_ccr_N (cpu, val & 0x8000 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, val == 0 ? 1 : 0);
+  cpu_set_ccr_V (cpu, cpu_get_ccr_N (cpu) ^ cpu_get_ccr_C (cpu));
 }
 
-inline void
-cpu_ccr_update_add8 (sim_cpu *proc, uint8 r, uint8 a, uint8 b)
+STATIC_INLINE void
+cpu_ccr_update_add8 (sim_cpu *cpu, uint8 r, uint8 a, uint8 b)
 {
-  cpu_set_ccr_C (proc, ((a & b) | (b & ~r) | (a & ~r)) & 0x80 ? 1 : 0);
-  cpu_set_ccr_V (proc, ((a & b & ~r) | (~a & ~b & r)) & 0x80 ? 1 : 0);
-  cpu_set_ccr_Z (proc, r == 0);
-  cpu_set_ccr_N (proc, r & 0x80 ? 1 : 0);
+  cpu_set_ccr_C (cpu, ((a & b) | (b & ~r) | (a & ~r)) & 0x80 ? 1 : 0);
+  cpu_set_ccr_V (cpu, ((a & b & ~r) | (~a & ~b & r)) & 0x80 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, r == 0);
+  cpu_set_ccr_N (cpu, r & 0x80 ? 1 : 0);
 }
 
 
-inline void
-cpu_ccr_update_sub8 (sim_cpu *proc, uint8 r, uint8 a, uint8 b)
+STATIC_INLINE void
+cpu_ccr_update_sub8 (sim_cpu *cpu, uint8 r, uint8 a, uint8 b)
 {
-  cpu_set_ccr_C (proc, ((~a & b) | (b & r) | (~a & r)) & 0x80 ? 1 : 0);
-  cpu_set_ccr_V (proc, ((a & ~b & ~r) | (~a & b & r)) & 0x80 ? 1 : 0);
-  cpu_set_ccr_Z (proc, r == 0);
-  cpu_set_ccr_N (proc, r & 0x80 ? 1 : 0);
+  cpu_set_ccr_C (cpu, ((~a & b) | (b & r) | (~a & r)) & 0x80 ? 1 : 0);
+  cpu_set_ccr_V (cpu, ((a & ~b & ~r) | (~a & b & r)) & 0x80 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, r == 0);
+  cpu_set_ccr_N (cpu, r & 0x80 ? 1 : 0);
 }
 
-inline void
-cpu_ccr_update_add16 (sim_cpu *proc, uint16 r, uint16 a, uint16 b)
+STATIC_INLINE void
+cpu_ccr_update_add16 (sim_cpu *cpu, uint16 r, uint16 a, uint16 b)
 {
-  cpu_set_ccr_C (proc, ((a & b) | (b & ~r) | (a & ~r)) & 0x8000 ? 1 : 0);
-  cpu_set_ccr_V (proc, ((a & b & ~r) | (~a & ~b & r)) & 0x8000 ? 1 : 0);
-  cpu_set_ccr_Z (proc, r == 0);
-  cpu_set_ccr_N (proc, r & 0x8000 ? 1 : 0);
+  cpu_set_ccr_C (cpu, ((a & b) | (b & ~r) | (a & ~r)) & 0x8000 ? 1 : 0);
+  cpu_set_ccr_V (cpu, ((a & b & ~r) | (~a & ~b & r)) & 0x8000 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, r == 0);
+  cpu_set_ccr_N (cpu, r & 0x8000 ? 1 : 0);
 }
 
-inline void
-cpu_ccr_update_sub16 (sim_cpu *proc, uint16 r, uint16 a, uint16 b)
+STATIC_INLINE void
+cpu_ccr_update_sub16 (sim_cpu *cpu, uint16 r, uint16 a, uint16 b)
 {
-  cpu_set_ccr_C (proc, ((~a & b) | (b & r) | (~a & r)) & 0x8000 ? 1 : 0);
-  cpu_set_ccr_V (proc, ((a & ~b & ~r) | (~a & b & r)) & 0x8000 ? 1 : 0);
-  cpu_set_ccr_Z (proc, r == 0);
-  cpu_set_ccr_N (proc, r & 0x8000 ? 1 : 0);
+  cpu_set_ccr_C (cpu, ((~a & b) | (b & r) | (~a & r)) & 0x8000 ? 1 : 0);
+  cpu_set_ccr_V (cpu, ((a & ~b & ~r) | (~a & b & r)) & 0x8000 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, r == 0);
+  cpu_set_ccr_N (cpu, r & 0x8000 ? 1 : 0);
 }
 
 /* Push and pop instructions for 68HC11 (next-available stack mode).  */
-inline void
-cpu_m68hc11_push_uint8 (sim_cpu *proc, uint8 val)
+STATIC_INLINE void
+cpu_m68hc11_push_uint8 (sim_cpu *cpu, uint8 val)
 {
-  uint16 addr = proc->cpu_regs.sp;
+  uint16 addr = cpu->cpu_regs.sp;
 
-  memory_write8 (proc, addr, val);
-  proc->cpu_regs.sp = addr - 1;
+  memory_write8 (cpu, addr, val);
+  cpu->cpu_regs.sp = addr - 1;
 }
 
-inline void
-cpu_m68hc11_push_uint16 (sim_cpu *proc, uint16 val)
+STATIC_INLINE void
+cpu_m68hc11_push_uint16 (sim_cpu *cpu, uint16 val)
 {
-  uint16 addr = proc->cpu_regs.sp - 1;
+  uint16 addr = cpu->cpu_regs.sp - 1;
 
-  memory_write16 (proc, addr, val);
-  proc->cpu_regs.sp = addr - 1;
+  memory_write16 (cpu, addr, val);
+  cpu->cpu_regs.sp = addr - 1;
 }
 
-inline uint8
-cpu_m68hc11_pop_uint8 (sim_cpu *proc)
+STATIC_INLINE uint8
+cpu_m68hc11_pop_uint8 (sim_cpu *cpu)
 {
-  uint16 addr = proc->cpu_regs.sp;
+  uint16 addr = cpu->cpu_regs.sp;
   uint8 val;
   
-  val = memory_read8 (proc, addr + 1);
-  proc->cpu_regs.sp = addr + 1;
+  val = memory_read8 (cpu, addr + 1);
+  cpu->cpu_regs.sp = addr + 1;
   return val;
 }
 
-inline uint16
-cpu_m68hc11_pop_uint16 (sim_cpu *proc)
+STATIC_INLINE uint16
+cpu_m68hc11_pop_uint16 (sim_cpu *cpu)
 {
-  uint16 addr = proc->cpu_regs.sp;
+  uint16 addr = cpu->cpu_regs.sp;
   uint16 val;
   
-  val = memory_read16 (proc, addr + 1);
-  proc->cpu_regs.sp = addr + 2;
+  val = memory_read16 (cpu, addr + 1);
+  cpu->cpu_regs.sp = addr + 2;
   return val;
 }
 
 /* Push and pop instructions for 68HC12 (last-used stack mode).  */
-inline void
-cpu_m68hc12_push_uint8 (sim_cpu *proc, uint8 val)
+STATIC_INLINE void
+cpu_m68hc12_push_uint8 (sim_cpu *cpu, uint8 val)
 {
-  uint16 addr = proc->cpu_regs.sp;
+  uint16 addr = cpu->cpu_regs.sp;
 
   addr --;
-  memory_write8 (proc, addr, val);
-  proc->cpu_regs.sp = addr;
+  memory_write8 (cpu, addr, val);
+  cpu->cpu_regs.sp = addr;
 }
 
-inline void
-cpu_m68hc12_push_uint16 (sim_cpu *proc, uint16 val)
+STATIC_INLINE void
+cpu_m68hc12_push_uint16 (sim_cpu *cpu, uint16 val)
 {
-  uint16 addr = proc->cpu_regs.sp;
+  uint16 addr = cpu->cpu_regs.sp;
 
   addr -= 2;
-  memory_write16 (proc, addr, val);
-  proc->cpu_regs.sp = addr;
+  memory_write16 (cpu, addr, val);
+  cpu->cpu_regs.sp = addr;
 }
 
-inline uint8
-cpu_m68hc12_pop_uint8 (sim_cpu *proc)
+STATIC_INLINE uint8
+cpu_m68hc12_pop_uint8 (sim_cpu *cpu)
 {
-  uint16 addr = proc->cpu_regs.sp;
+  uint16 addr = cpu->cpu_regs.sp;
   uint8 val;
   
-  val = memory_read8 (proc, addr);
-  proc->cpu_regs.sp = addr + 1;
+  val = memory_read8 (cpu, addr);
+  cpu->cpu_regs.sp = addr + 1;
   return val;
 }
 
-inline uint16
-cpu_m68hc12_pop_uint16 (sim_cpu *proc)
+STATIC_INLINE uint16
+cpu_m68hc12_pop_uint16 (sim_cpu *cpu)
 {
-  uint16 addr = proc->cpu_regs.sp;
+  uint16 addr = cpu->cpu_regs.sp;
   uint16 val;
   
-  val = memory_read16 (proc, addr);
-  proc->cpu_regs.sp = addr + 2;
+  val = memory_read16 (cpu, addr);
+  cpu->cpu_regs.sp = addr + 2;
   return val;
 }
 
 /* Fetch a 8/16 bit value and update the PC.  */
-inline uint8
-cpu_fetch8 (sim_cpu *proc)
+STATIC_INLINE uint8
+cpu_fetch8 (sim_cpu *cpu)
 {
-  uint16 addr = proc->cpu_regs.pc;
+  uint16 addr = cpu->cpu_regs.pc;
   uint8 val;
   
-  val = memory_read8 (proc, addr);
-  proc->cpu_regs.pc = addr + 1;
+  val = memory_read8 (cpu, addr);
+  cpu->cpu_regs.pc = addr + 1;
   return val;
 }
 
-inline uint16
-cpu_fetch16 (sim_cpu *proc)
+STATIC_INLINE uint16
+cpu_fetch16 (sim_cpu *cpu)
 {
-  uint16 addr = proc->cpu_regs.pc;
+  uint16 addr = cpu->cpu_regs.pc;
   uint16 val;
   
-  val = memory_read16 (proc, addr);
-  proc->cpu_regs.pc = addr + 2;
+  val = memory_read16 (cpu, addr);
+  cpu->cpu_regs.pc = addr + 2;
   return val;
 }
 
-extern void cpu_call (sim_cpu* proc, uint16 addr);
-extern void cpu_exg (sim_cpu* proc, uint8 code);
-extern void cpu_dbcc (sim_cpu* proc);
-extern void cpu_special (sim_cpu *proc, enum M6811_Special special);
-extern void cpu_move8 (sim_cpu *proc, uint8 op);
-extern void cpu_move16 (sim_cpu *proc, uint8 op);
+extern void cpu_call (sim_cpu *cpu, uint16 addr);
+extern void cpu_exg (sim_cpu *cpu, uint8 code);
+extern void cpu_dbcc (sim_cpu *cpu);
+extern void cpu_special (sim_cpu *cpu, enum M6811_Special special);
+extern void cpu_move8 (sim_cpu *cpu, uint8 op);
+extern void cpu_move16 (sim_cpu *cpu, uint8 op);
 
-extern uint16 cpu_fetch_relbranch (sim_cpu *proc);
-extern uint16 cpu_fetch_relbranch16 (sim_cpu *proc);
-extern void cpu_push_all (sim_cpu *proc);
-extern void cpu_single_step (sim_cpu *proc);
+extern uint16 cpu_fetch_relbranch (sim_cpu *cpu);
+extern uint16 cpu_fetch_relbranch16 (sim_cpu *cpu);
+extern void cpu_push_all (sim_cpu *cpu);
+extern void cpu_single_step (sim_cpu *cpu);
 
-extern void cpu_info (SIM_DESC sd, sim_cpu *proc);
+extern void cpu_info (SIM_DESC sd, sim_cpu *cpu);
 
 extern int cpu_initialize (SIM_DESC sd, sim_cpu *cpu);
 

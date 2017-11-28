@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ set srcfile1 ${testfile1}.c
 set binfile1 [standard_output_file ${testfile1}]
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" executable {debug}] != "" } {
-    untested "Couldn't compile ${srcfile1}"
+    untested "failed to compile first testcase"
     return -1
 }
 
@@ -46,7 +46,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" executable {d
 
 clean_restart ${binfile1}
 
-with_test_prefix "${binfile1}" {
+with_test_prefix "${testfile1}" {
 
     gdb_test "break *main" \
         "Breakpoint.*at.* file .*$srcfile1, line .*" \
@@ -65,7 +65,7 @@ set srcfile2 ${testfile2}.c
 set binfile2 [standard_output_file ${testfile2}]
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug}] != "" } {
-    untested "Couldn't compile ${srcfile2}"
+    untested "failed to compile second testcase"
     return -1
 }
 
@@ -73,7 +73,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {d
 # start a new debugging session with a different executable.
 gdb_load ${binfile2}
 
-with_test_prefix "${binfile2}" {
+with_test_prefix "${testfile2}" {
 
     gdb_run_cmd
     gdb_test "" \

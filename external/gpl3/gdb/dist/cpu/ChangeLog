@@ -1,3 +1,11 @@
+2017-03-15  Stafford Horne  <shorne@gmail.com>
+
+	* or1kcommon.cpu: Add pc set semantics to also update ppc.
+
+2016-10-06  Alan Modra  <amodra@gmail.com>
+
+	* mep.opc (expand_string): Add fall through comment.
+
 2016-03-03  Alan Modra  <amodra@gmail.com>
 
 	* fr30.cpu (f-m4): Replace bogus comment with a better guess

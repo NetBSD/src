@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -775,7 +775,7 @@ bfd_mach_o_canonicalize_symtab (bfd *abfd, asymbol **alocation)
 
   if (!bfd_mach_o_read_symtab_symbols (abfd))
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
         (_("bfd_mach_o_canonicalize_symtab: unable to load symbols"));
       return 0;
     }
@@ -1978,8 +1978,8 @@ bfd_mach_o_build_dysymtab (bfd *abfd, bfd_mach_o_dysymtab_command *cmd)
       || cmd->ntoc != 0
       || cmd->nextrefsyms != 0)
     {
-      (*_bfd_error_handler) (_("sorry: modtab, toc and extrefsyms are not yet"
-				" implemented for dysymtab commands."));
+      _bfd_error_handler (_("sorry: modtab, toc and extrefsyms are not yet"
+			    " implemented for dysymtab commands."));
       return FALSE;
     }
 
@@ -2421,8 +2421,8 @@ bfd_mach_o_mangle_sections (bfd *abfd, bfd_mach_o_data_struct *mdata)
   /* We need to check that this can be done...  */
   if (nsect > 255)
     {
-      (*_bfd_error_handler) (_("mach-o: there are too many sections (%u)"
-			       " maximum is 255,\n"), nsect);
+      _bfd_error_handler (_("mach-o: there are too many sections (%u)"
+			    " maximum is 255,\n"), nsect);
       return FALSE;
     }
 
@@ -2527,7 +2527,7 @@ bfd_mach_o_write_contents (bfd *abfd)
 	/* Nothing to do.  */
 	break;
       default:
-	(*_bfd_error_handler)
+	_bfd_error_handler
 	  (_("unable to allocate data for load command 0x%lx"),
 	   (unsigned long) cmd->type);
 	break;
@@ -2632,7 +2632,7 @@ bfd_mach_o_write_contents (bfd *abfd)
 	    return FALSE;
 	  break;
 	default:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("unable to write unknown load command 0x%lx"),
 	     (unsigned long) cmd->type);
 	  return FALSE;
@@ -2815,7 +2815,8 @@ bfd_mach_o_build_exec_seg_command (bfd *abfd, bfd_mach_o_segment_command *seg)
 
       if (s->addr < vma)
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("section address (%lx) below start of segment (%lx)"),
 	       (unsigned long) s->addr, (unsigned long) vma);
 	  return FALSE;
@@ -2956,7 +2957,7 @@ bfd_mach_o_layout_commands (bfd_mach_o_data_struct *mdata)
 		 + BFD_MACH_O_LC_SIZE;
 	  break;
 	default:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("unable to layout unknown load command 0x%lx"),
 	     (unsigned long) cmd->type);
 	  ret = FALSE;
@@ -3492,8 +3493,9 @@ bfd_mach_o_read_section_32 (bfd *abfd, unsigned long prot)
   /* PR 17512: file: 0017eb76.  */
   if (section->align > 64)
     {
-      (*_bfd_error_handler) (_("bfd_mach_o_read_section_32: overlarge alignment value: 0x%x, using 32 instead"),
-			     section->align);
+      _bfd_error_handler
+	(_("bfd_mach_o_read_section_32: overlarge alignment value: 0x%x, "
+	   "using 32 instead"), section->align);
       section->align = 32;
     }
   section->reloff = bfd_h_get_32 (abfd, raw.reloff);
@@ -3534,8 +3536,9 @@ bfd_mach_o_read_section_64 (bfd *abfd, unsigned long prot)
   section->align = bfd_h_get_32 (abfd, raw.align);
   if (section->align > 64)
     {
-      (*_bfd_error_handler) (_("bfd_mach_o_read_section_64: overlarge alignment value: 0x%x, using 32 instead"),
-			     section->align);
+      _bfd_error_handler
+	(_("bfd_mach_o_read_section_64: overlarge alignment value: 0x%x, "
+	   "using 32 instead"), section->align);
       section->align = 32;
     }
   section->reloff = bfd_h_get_32 (abfd, raw.reloff);
@@ -3583,7 +3586,8 @@ bfd_mach_o_read_symtab_symbol (bfd *abfd,
   if (bfd_seek (abfd, symoff, SEEK_SET) != 0
       || bfd_bread (&raw, symwidth, abfd) != symwidth)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
         (_("bfd_mach_o_read_symtab_symbol: unable to read %d bytes at %lu"),
          symwidth, (unsigned long) symoff);
       return FALSE;
@@ -3601,7 +3605,8 @@ bfd_mach_o_read_symtab_symbol (bfd *abfd,
 
   if (stroff >= sym->strsize)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
         (_("bfd_mach_o_read_symtab_symbol: name out of range (%lu >= %lu)"),
          (unsigned long) stroff,
          (unsigned long) sym->strsize);
@@ -3683,9 +3688,12 @@ bfd_mach_o_read_symtab_symbol (bfd *abfd,
 	      /* Mach-O uses 0 to mean "no section"; not an error.  */
 	      if (section != 0)
 		{
-		  (*_bfd_error_handler) (_("bfd_mach_o_read_symtab_symbol: "
-					   "symbol \"%s\" specified invalid section %d (max %lu): setting to undefined"),
-					 s->symbol.name, section, mdata->nsects);
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("bfd_mach_o_read_symtab_symbol: "
+		       "symbol \"%s\" specified invalid section %d (max %lu): "
+		       "setting to undefined"),
+		     s->symbol.name, section, mdata->nsects);
 		}
 	      s->symbol.section = bfd_und_section_ptr;
 	    }
@@ -3699,9 +3707,11 @@ bfd_mach_o_read_symtab_symbol (bfd *abfd,
 	  s->symbol.value = 0;
 	  break;
 	default:
-	  (*_bfd_error_handler) (_("bfd_mach_o_read_symtab_symbol: "
-				   "symbol \"%s\" specified invalid type field 0x%x: setting to undefined"),
-				 s->symbol.name, symtype);
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("bfd_mach_o_read_symtab_symbol: "
+	       "symbol \"%s\" specified invalid type field 0x%x: "
+	       "setting to undefined"), s->symbol.name, symtype);
 	  s->symbol.section = bfd_und_section_ptr;
 	  break;
 	}
@@ -3773,7 +3783,8 @@ bfd_mach_o_read_symtab_symbols (bfd *abfd)
   sym->symbols = bfd_alloc2 (abfd, sym->nsyms, sizeof (bfd_mach_o_asymbol));
   if (sym->symbols == NULL)
     {
-      (*_bfd_error_handler) (_("bfd_mach_o_read_symtab_symbols: unable to allocate memory for symbols"));
+      _bfd_error_handler (_("bfd_mach_o_read_symtab_symbols: "
+			    "unable to allocate memory for symbols"));
       sym->nsyms = 0;
       return FALSE;
     }
@@ -4745,8 +4756,8 @@ bfd_mach_o_read_command (bfd *abfd, bfd_mach_o_load_command *command)
       break;
     default:
       command->len = 0;
-      (*_bfd_error_handler)(_("%B: unknown load command 0x%lx"),
-			    abfd, (unsigned long) command->type);
+      _bfd_error_handler (_("%B: unknown load command 0x%lx"),
+			  abfd, (unsigned long) command->type);
       return FALSE;
     }
 
@@ -4934,7 +4945,8 @@ bfd_mach_o_scan (bfd *abfd,
 				   &cputype, &cpusubtype);
   if (cputype == bfd_arch_unknown)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
         (_("bfd_mach_o_scan: unknown architecture 0x%lx/0x%lx"),
          header->cputype, header->cpusubtype);
       return FALSE;
@@ -5040,8 +5052,8 @@ bfd_mach_o_header_p (bfd *abfd,
   if (! (header.byteorder == BFD_ENDIAN_BIG
 	 || header.byteorder == BFD_ENDIAN_LITTLE))
     {
-      (*_bfd_error_handler) (_("unknown header byte-order value 0x%lx"),
-			     (unsigned long) header.byteorder);
+      _bfd_error_handler (_("unknown header byte-order value 0x%lx"),
+			  (unsigned long) header.byteorder);
       goto wrong;
     }
 
@@ -5629,9 +5641,9 @@ bfd_mach_o_core_file_failing_signal (bfd *abfd ATTRIBUTE_UNUSED)
 static bfd_mach_o_uuid_command *
 bfd_mach_o_lookup_uuid_command (bfd *abfd)
 {
-  bfd_mach_o_load_command *uuid_cmd;
+  bfd_mach_o_load_command *uuid_cmd = NULL;
   int ncmd = bfd_mach_o_lookup_command (abfd, BFD_MACH_O_LC_UUID, &uuid_cmd);
-  if (ncmd != 1)
+  if (ncmd != 1 || uuid_cmd == NULL)
     return FALSE;
   return &uuid_cmd->command.uuid;
 }

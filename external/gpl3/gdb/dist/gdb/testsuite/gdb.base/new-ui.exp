@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ standard_testfile
 
 set compile_options "debug"
 if {[build_executable $testfile.exp $testfile ${srcfile} ${compile_options}] == -1} {
-    untested "failed to compile $testfile"
+    untested "failed to compile"
     return -1
 }
 
@@ -73,7 +73,7 @@ proc do_execution_tests {con1 con1_name con2 con2_name} {
 
 # The test proper.
 
-proc do_test {} {
+proc_with_prefix do_test {} {
     global srcfile testfile
     global gdb_prompt
     global gdb_spawn_id
@@ -128,6 +128,18 @@ proc do_test {} {
 	gdb_test "print 2" "^print 2\r\n\\\$2 = 2" "print on extra console"
     }
 
+    # Verify that we get proper queries on the main UI, but that they are
+    # auto-answered on secondary UIs.
+    with_spawn_id $gdb_main_spawn_id {
+	gdb_test "delete" "" "delete all breakpoint on main console" \
+		 "Delete all breakpoints. .y or n. $" "n"
+    }
+    with_spawn_id $extra_spawn_id {
+	gdb_test "delete" \
+		 "Delete all breakpoints. .y or n. .answered Y; input not from terminal." \
+		 "delete all breakpoints on extra console"
+    }
+
     # Run a few execution tests with the main console as the driver
     # console.
     with_test_prefix "main console" {
@@ -145,7 +157,7 @@ proc do_test {} {
 
 # Test missing / invalid arguments.
 
-proc do_test_invalid_args {} {
+proc_with_prefix do_test_invalid_args {} {
     global testfile
 
     clean_restart $testfile
@@ -169,5 +181,5 @@ proc do_test_invalid_args {} {
     }
 }
 
-with_test_prefix "do_test" do_test
-with_test_prefix "do_test_invalid_args" do_test_invalid_args
+do_test
+do_test_invalid_args

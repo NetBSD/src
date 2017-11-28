@@ -1,5 +1,5 @@
 /* Handling of inferior events for the event loop for GDB, the GNU debugger.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -20,7 +20,6 @@
 #include "defs.h"
 #include "inferior.h"
 #include "infrun.h"
-#include "target.h"             /* For enum inferior_event_type.  */
 #include "event-loop.h"
 #include "event-top.h"
 #include "inf-loop.h"

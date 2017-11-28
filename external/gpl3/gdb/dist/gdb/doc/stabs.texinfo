@@ -17,7 +17,7 @@
 @end direntry
 
 @copying
-Copyright @copyright{} 1992-2016 Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2017 Free Software Foundation, Inc.
 Contributed by Cygnus Support.  Written by Julia Menapace, Jim Kingdon,
 and David MacKenzie.
 

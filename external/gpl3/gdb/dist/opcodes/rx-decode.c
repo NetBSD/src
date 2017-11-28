@@ -1,6 +1,6 @@
 #line 1 "rx-decode.opc"
 /* -*- c -*- */
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 

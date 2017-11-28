@@ -1,4 +1,4 @@
-# Copyright 1997-2016 Free Software Foundation, Inc.
+# Copyright 1997-2017 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ standard_testfile overlays.c ovlymgr.c foo.c bar.c baz.c grbx.c
 if {[build_executable $testfile.exp $testfile \
 	 [list $srcfile $srcfile2 $srcfile3 $srcfile4 $srcfile5 $srcfile6] \
 	 {debug ldscript=-Wl,-T$linker_script}] == -1} {
-     untested overlays.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -67,7 +67,7 @@ set iptrcast [string_to_regexp "(int *)"]
 set hexx "0x\[0-9abcdefABCDEF\]+"
 
 gdb_test_no_output "overlay manual"
-gdb_test "overlay list" "No sections are mapped." "List with none mapped"
+gdb_test "overlay list" "No sections are mapped." "list with none mapped"
 
 # capture the LMA addresses of [foo bar baz grbx foox barx bazx grbxx]
 
@@ -113,39 +113,39 @@ if $data_overlays then {
 # capture the VMA addresses of [foo bar baz grbx foox barx bazx grbxx]
 
 gdb_test "overlay map .ovly0" "" 
-gdb_test "overlay list" "Section .ovly0, loaded at.*, mapped at.*" "List ovly0"
+gdb_test "overlay list" "Section .ovly0, loaded at.*, mapped at.*" "list ovly0"
 set foo_vma [get_func_address "foo"  "foo"  "foo  runtime address"]
 
 gdb_test "overlay map .ovly1" "" 
-gdb_test "overlay list" "Section .ovly1, loaded at.*, mapped at.*" "List ovly1"
+gdb_test "overlay list" "Section .ovly1, loaded at.*, mapped at.*" "list ovly1"
 set bar_vma [get_func_address "bar"  "bar"  "bar  runtime address"]
 
 gdb_test "overlay map .ovly2" "" 
-gdb_test "overlay list" "Section .ovly2, loaded at.*, mapped at.*" "List ovly2"
+gdb_test "overlay list" "Section .ovly2, loaded at.*, mapped at.*" "list ovly2"
 set baz_vma [get_func_address "baz"  "baz"  "baz  runtime address"]
 
 gdb_test "overlay map .ovly3" "" 
-gdb_test "overlay list" "Section .ovly3, loaded at.*, mapped at.*" "List ovly3"
+gdb_test "overlay list" "Section .ovly3, loaded at.*, mapped at.*" "list ovly3"
 set grbx_vma [get_func_address "grbx" "grbx" "grbx runtime address"]
 
 if $data_overlays then {
     gdb_test "overlay map .data00" "" 
-    gdb_test "overlay list" "Section .data00, loaded .*, mapped .*" "List data00"
+    gdb_test "overlay list" "Section .data00, loaded .*, mapped .*" "list data00"
     gdb_test "print \$foox_vma = &foox" \
 	".* $iptrcast 0x.*"  "foox runtime addr"
 
     gdb_test "overlay map .data01" "" 
-    gdb_test "overlay list" "Section .data01, loaded .*, mapped .*" "List data01"
+    gdb_test "overlay list" "Section .data01, loaded .*, mapped .*" "list data01"
     gdb_test "print \$barx_vma = &barx" \
 	".* $iptrcast 0x.*"  "barx runtime addr"
 
     gdb_test "overlay map .data02" "" 
-    gdb_test "overlay list" "Section .data02, loaded .*, mapped .*" "List data02"
+    gdb_test "overlay list" "Section .data02, loaded .*, mapped .*" "list data02"
     gdb_test "print \$bazx_vma = &bazx" \
 	".* $iptrcast 0x.*"  "bazx runtime addr"
 
     gdb_test "overlay map .data03" "" 
-    gdb_test "overlay list" "Section .data03, loaded .*, mapped .*" "List data03"
+    gdb_test "overlay list" "Section .data03, loaded .*, mapped .*" "list data03"
     gdb_test "print \$grbxx_vma = &grbxx" \
 	".* $iptrcast 0x.*"  "grbxx runtime addr"
 }
@@ -171,7 +171,7 @@ gdb_expect {
     -re ".*ovly2, "	 	{ fail ".ovly2  not unmapped by .ovly3"  }
     -re ".*data00,"		{ fail ".data00 not unmapped by .data01" }
     -re ".*data02,"		{ fail ".data02 not unmapped by .data03" }
-    -re ".*$gdb_prompt $"	{ pass "Automatic unmapping"             }
+    -re ".*$gdb_prompt $"	{ pass "automatic unmapping"             }
     timeout			{ fail "(timeout) Automatic unmapping"   }
 }
 
@@ -216,7 +216,7 @@ if $data_overlays then {
 # test automatic mode
 
 gdb_test_no_output "overlay auto"
-gdb_test "overlay list" "No sections are mapped." "List none mapped (auto)"
+gdb_test "overlay list" "No sections are mapped." "list none mapped (auto)"
 gdb_test "break foo"  "Breakpoint .*at .*file .*foo.c.*"  "break foo"
 gdb_test "break bar"  "Breakpoint .*at .*file .*bar.c.*"  "break bar"
 gdb_test "break baz"  "Breakpoint .*at .*file .*baz.c.*"  "break baz"

@@ -151,23 +151,27 @@ initialize_tdesc_amd64_avx_linux (void)
   feature = tdesc_create_feature (result, "org.gnu.gdb.i386.linux");
   tdesc_create_reg (feature, "orig_rax", 57, 1, NULL, 64, "int");
 
+  feature = tdesc_create_feature (result, "org.gnu.gdb.i386.segments");
+  tdesc_create_reg (feature, "fs_base", 58, 1, NULL, 64, "int");
+  tdesc_create_reg (feature, "gs_base", 59, 1, NULL, 64, "int");
+
   feature = tdesc_create_feature (result, "org.gnu.gdb.i386.avx");
-  tdesc_create_reg (feature, "ymm0h", 58, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm1h", 59, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm2h", 60, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm3h", 61, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm4h", 62, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm5h", 63, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm6h", 64, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm7h", 65, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm8h", 66, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm9h", 67, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm10h", 68, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm11h", 69, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm12h", 70, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm13h", 71, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm14h", 72, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm15h", 73, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm0h", 60, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm1h", 61, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm2h", 62, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm3h", 63, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm4h", 64, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm5h", 65, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm6h", 66, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm7h", 67, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm8h", 68, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm9h", 69, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm10h", 70, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm11h", 71, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm12h", 72, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm13h", 73, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm14h", 74, 1, NULL, 128, "uint128");
+  tdesc_create_reg (feature, "ymm15h", 75, 1, NULL, 128, "uint128");
 
   tdesc_amd64_avx_linux = result;
 }

@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -36,7 +36,7 @@ if [get_compiler_info] {
 
 if { [gdb_compile_shlib ${srcfile_lib} ${binfile_lib} $lib_flags] != ""
      || [gdb_compile ${srcfile} ${binfile} executable $bin_flags] != "" } {
-  untested "Could not compile $binfile_lib or $binfile."
+  untested "failed to compile"
   return -1
 }
 
@@ -54,7 +54,7 @@ gdb_test "br foo2" \
 delete_breakpoints
 
 if ![runto_main] then {
-  fail "Can't run to main"
+  fail "can't run to main"
   return 0
 }
 

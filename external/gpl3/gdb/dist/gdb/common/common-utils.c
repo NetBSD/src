@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -150,6 +150,29 @@ xsnprintf (char *str, size_t size, const char *format, ...)
   return ret;
 }
 
+/* See documentation in common-utils.h.  */
+
+std::string
+string_printf (const char* fmt, ...)
+{
+  va_list vp;
+  int size;
+
+  va_start (vp, fmt);
+  size = vsnprintf (NULL, 0, fmt, vp);
+  va_end (vp);
+
+  std::string str (size, '\0');
+
+  /* C++11 and later guarantee std::string uses contiguous memory and
+     always includes the terminating '\0'.  */
+  va_start (vp, fmt);
+  vsprintf (&str[0], fmt, vp);
+  va_end (vp);
+
+  return str;
+}
+
 char *
 savestring (const char *ptr, size_t len)
 {
@@ -293,4 +316,15 @@ skip_to_space_const (const char *chp)
   while (*chp && !isspace (*chp))
     chp++;
   return chp;
+}
+
+/* See common/common-utils.h.  */
+
+void
+free_vector_argv (std::vector<char *> &v)
+{
+  for (char *el : v)
+    xfree (el);
+
+  v.clear ();
 }

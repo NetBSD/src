@@ -1,0 +1,3 @@
+# Host: FreeBSD/mips
+NATDEPFILES= fork-child.o inf-ptrace.o fbsd-nat.o mips-fbsd-nat.o
+HAVE_NATIVE_GCORE_HOST = 1

@@ -1,4 +1,4 @@
-# Copyright 1992-2016 Free Software Foundation, Inc.
+# Copyright 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,9 @@ if [get_compiler_info] {
     return -1
 }
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile $compile_flags]} {
-    untested $testfile.exp
+set skip_float_test [gdb_skip_float_test]
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile $compile_flags]} {
     return -1
 }
 
@@ -1155,7 +1156,7 @@ gdb_test_no_output "set print frame-arguments all"
 
 integral_args
 unsigned_integral_args
-if {![target_info exists gdb,skip_float_tests]} {
+if {!$skip_float_test} {
   float_and_integral_args
 }
 
@@ -1165,7 +1166,7 @@ if [support_complex_tests] {
 
     complex_integral_args
 
-    if {![target_info exists gdb,skip_float_tests]} {
+    if {!$skip_float_test} {
 	complex_float_integral_args
     }
 }

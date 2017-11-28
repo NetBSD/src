@@ -1,5 +1,5 @@
 /* MI Command Set - catch commands.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    Contributed by Intel Corporation.
 
@@ -30,7 +30,7 @@
 /* Handler for the -catch-assert command.  */
 
 void
-mi_cmd_catch_assert (char *cmd, char *argv[], int argc)
+mi_cmd_catch_assert (const char *cmd, char *argv[], int argc)
 {
   struct gdbarch *gdbarch = get_current_arch();
   char *condition = NULL;
@@ -91,7 +91,7 @@ mi_cmd_catch_assert (char *cmd, char *argv[], int argc)
 /* Handler for the -catch-exception command.  */
 
 void
-mi_cmd_catch_exception (char *cmd, char *argv[], int argc)
+mi_cmd_catch_exception (const char *cmd, char *argv[], int argc)
 {
   struct gdbarch *gdbarch = get_current_arch();
   char *condition = NULL;
@@ -225,7 +225,7 @@ mi_catch_load_unload (int load, char *argv[], int argc)
 /* Handler for the -catch-load.  */
 
 void
-mi_cmd_catch_load (char *cmd, char *argv[], int argc)
+mi_cmd_catch_load (const char *cmd, char *argv[], int argc)
 {
   mi_catch_load_unload (1, argv, argc);
 }
@@ -234,7 +234,7 @@ mi_cmd_catch_load (char *cmd, char *argv[], int argc)
 /* Handler for the -catch-unload.  */
 
 void
-mi_cmd_catch_unload (char *cmd, char *argv[], int argc)
+mi_cmd_catch_unload (const char *cmd, char *argv[], int argc)
 {
   mi_catch_load_unload (0, argv, argc);
 }

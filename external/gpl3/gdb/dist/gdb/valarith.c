@@ -1,6 +1,6 @@
 /* Perform arithmetic and other operations on values, for GDB.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -194,7 +194,6 @@ value_subscripted_rvalue (struct value *array, LONGEST index, int lowerbound)
   struct type *elt_type = check_typedef (TYPE_TARGET_TYPE (array_type));
   ULONGEST elt_size = type_length_units (elt_type);
   ULONGEST elt_offs = elt_size * (index - lowerbound);
-  struct value *v;
 
   if (index < lowerbound || (!TYPE_ARRAY_UPPER_BOUND_IS_UNDEFINED (array_type)
 			     && elt_offs >= type_length_units (array_type)))
@@ -215,21 +214,7 @@ value_subscripted_rvalue (struct value *array, LONGEST index, int lowerbound)
       elt_type = resolve_dynamic_type (elt_type, NULL, address);
     }
 
-  if (VALUE_LVAL (array) == lval_memory && value_lazy (array))
-    v = allocate_value_lazy (elt_type);
-  else
-    {
-      v = allocate_value (elt_type);
-      value_contents_copy (v, value_embedded_offset (v),
-			   array, value_embedded_offset (array) + elt_offs,
-			   elt_size);
-    }
-
-  set_value_component_location (v, array);
-  VALUE_REGNUM (v) = VALUE_REGNUM (array);
-  VALUE_FRAME_ID (v) = VALUE_FRAME_ID (array);
-  set_value_offset (v, value_offset (array) + elt_offs);
-  return v;
+  return value_from_component (array, elt_type, elt_offs);
 }
 
 
@@ -247,11 +232,11 @@ binop_types_user_defined_p (enum exp_opcode op,
     return 0;
 
   type1 = check_typedef (type1);
-  if (TYPE_CODE (type1) == TYPE_CODE_REF)
+  if (TYPE_IS_REFERENCE (type1))
     type1 = check_typedef (TYPE_TARGET_TYPE (type1));
 
   type2 = check_typedef (type2);
-  if (TYPE_CODE (type2) == TYPE_CODE_REF)
+  if (TYPE_IS_REFERENCE (type2))
     type2 = check_typedef (TYPE_TARGET_TYPE (type2));
 
   return (TYPE_CODE (type1) == TYPE_CODE_STRUCT
@@ -285,7 +270,7 @@ unop_user_defined_p (enum exp_opcode op, struct value *arg1)
   if (op == UNOP_ADDR)
     return 0;
   type1 = check_typedef (value_type (arg1));
-  if (TYPE_CODE (type1) == TYPE_CODE_REF)
+  if (TYPE_IS_REFERENCE (type1))
     type1 = check_typedef (TYPE_TARGET_TYPE (type1));
   return TYPE_CODE (type1) == TYPE_CODE_STRUCT;
 }

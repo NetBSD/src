@@ -1,3 +1,66 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* gencode.c: Include libiberty.h.
+	(TABLE_SIZE): Delete.
+	(find_opcode_pattern): Change TABLE_SIZE to ARRAY_SIZE.
+	(gen_interpreter): Likewise.
+	* interrupts.c (TableSize): Delete.
+	(interrupts_update_pending): Change TableSize to ARRAY_SIZE.
+
+2016-08-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (inline): Delete define.
+	(phys_to_virt): Change inline to STATIC_INLINE.
+	(memory_read8, memory_write8, memory_read16, memory_write16,
+	cpu_ccr_update_tst16, cpu_ccr_update_shift8, cpu_ccr_update_shift16,
+	cpu_ccr_update_add8, cpu_ccr_update_sub8, cpu_ccr_update_add16,
+	cpu_ccr_update_sub16, cpu_m68hc11_push_uint8, cpu_m68hc11_push_uint16,
+	cpu_m68hc11_pop_uint8, cpu_m68hc11_pop_uint16, cpu_m68hc12_push_uint8,
+	cpu_m68hc12_push_uint16, cpu_m68hc12_pop_uint8,
+	cpu_m68hc12_pop_uint16, cpu_fetch8, cpu_fetch16): Likewise.
+
+2016-08-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_get_bank_parameters): Delete abfd arg.
+	Replace all symbol lookup code with calls to trace_sym_value.
+	(sim_prepare_for_program): Update sim_get_bank_parameters call.
+
+2016-08-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-m68hc11.c (m68hc11cpu_port_event): Adjust cpu prototype style.
+	* dv-m68hc11spi.c (m68hc11spi_port_event): Likewise.
+	* dv-m68hc11tim.c (m68hc11tim_print_timer): Likewise.
+	* emulos.c (emul_bench): Likewise.
+	(emul_write): Likewise.  Also rename state to cpu.
+	(emul_os): Rename proc to cpu.
+	* gencode.c: Rename proc to cpu.
+	* interrupts.c (interrupts_initialize): Likewise.
+	* interrupts.h (interrupts): Adjust cpu type.
+	(interrupts_initialize): Likewise.
+	* m68hc11_sim.c (cpu_get_reg): Adjust cpu prototype style.
+	(cpu_get_src_reg, cpu_set_dst_reg, cpu_set_reg,
+	cpu_get_indexed_operand_addr, cpu_get_indexed_operand8,
+	cpu_get_indexed_operand16, cpu_dbcc, cpu_exg): Likewise.
+	(cpu_ccr_update_tst8): Rename proc to cpu.
+	* sim-main.h: Rename PROC and proc to cpu.
+
+2016-08-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-m68hc11eepr.c (attach_m68hc11eepr_regs): Drop cast with
+	return value of hw_malloc.
+	* dv-m68hc11sio.c (m68hc11sio_rx_poll): Mark static.
+	(m68hc11sio_tx_poll): Likewise.
+	* dv-m68hc11spi.c (m68hc11spi_clock): Likewise.
+	* dv-m68hc11tim.c (m68hc11tim_timer_event): Likewise.
+	* dv-nvram.c (attach_nvram_regs): Drop cast with
+	return value of hw_malloc.
+	* emulos.c (emul_bench): Mark static.
+	(emul_write): Likewise.
+	(emul_exit): Likewise.
+	* gencode.c: Include stdio.h.
+	(gen_function_entry): Unify two print lines.
+	(cmp_opcode): Mark args const.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

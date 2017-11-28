@@ -1,6 +1,6 @@
 /* Safe version of strerror for POSIX systems for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

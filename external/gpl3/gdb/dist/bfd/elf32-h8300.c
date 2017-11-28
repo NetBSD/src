@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas H8/300 ELF binaries.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -33,7 +33,8 @@ static void elf32_h8_info_to_howto_rel
 static unsigned long elf32_h8_mach (flagword);
 static void elf32_h8_final_write_processing (bfd *, bfd_boolean);
 static bfd_boolean elf32_h8_object_p (bfd *);
-static bfd_boolean elf32_h8_merge_private_bfd_data (bfd *, bfd *);
+static bfd_boolean elf32_h8_merge_private_bfd_data
+  (bfd *, struct bfd_link_info *);
 static bfd_boolean elf32_h8_relax_section
   (bfd *, asection *, struct bfd_link_info *, bfd_boolean *);
 static bfd_boolean elf32_h8_relax_delete_bytes
@@ -640,8 +641,10 @@ elf32_h8_object_p (bfd *abfd)
    time is the architecture/machine information.  */
 
 static bfd_boolean
-elf32_h8_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+elf32_h8_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
+
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;

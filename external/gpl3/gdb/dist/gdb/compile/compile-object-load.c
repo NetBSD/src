@@ -1,6 +1,6 @@
 /* Load module for 'compile' command.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,7 @@
 #include "compile.h"
 #include "block.h"
 #include "arch-utils.h"
+#include <algorithm>
 
 /* Track inferior memory reserved by inferior mmap.  */
 
@@ -186,7 +187,7 @@ setup_sections (bfd *abfd, asection *sect, void *data_voidp)
     return;
 
   alignment = ((CORE_ADDR) 1) << bfd_get_section_alignment (abfd, sect);
-  data->last_max_alignment = max (data->last_max_alignment, alignment);
+  data->last_max_alignment = std::max (data->last_max_alignment, alignment);
 
   data->last_size = (data->last_size + alignment - 1) & -alignment;
 
@@ -600,20 +601,17 @@ store_regs (struct type *regs_type, CORE_ADDR regs_base)
     }
 }
 
-/* Load OBJECT_FILE into inferior memory.  Throw an error otherwise.
-   Caller must fully dispose the return value by calling compile_object_run.
-   SOURCE_FILE's copy is stored into the returned object.
-   Caller should free both OBJECT_FILE and SOURCE_FILE immediatelly after this
-   function returns.
-   Function returns NULL only for COMPILE_I_PRINT_ADDRESS_SCOPE when
-   COMPILE_I_PRINT_VALUE_SCOPE should have been used instead.  */
+/* Load the object file specified in FILE_NAMES into inferior memory.
+   Throw an error otherwise.  Caller must fully dispose the return
+   value by calling compile_object_run.  Returns NULL only for
+   COMPILE_I_PRINT_ADDRESS_SCOPE when COMPILE_I_PRINT_VALUE_SCOPE
+   should have been used instead.  */
 
 struct compile_module *
-compile_object_load (const char *object_file, const char *source_file,
+compile_object_load (const compile_file_names &file_names,
 		     enum compile_i_scope_types scope, void *scope_data)
 {
   struct cleanup *cleanups, *cleanups_free_objfile;
-  bfd *abfd;
   struct setup_sections_data setup_sections_data;
   CORE_ADDR addr, regs_addr, out_value_addr = 0;
   struct symbol *func_sym;
@@ -632,20 +630,19 @@ compile_object_load (const char *object_file, const char *source_file,
   struct type *expect_return_type;
   struct munmap_list *munmap_list_head = NULL;
 
-  filename = tilde_expand (object_file);
+  filename = tilde_expand (file_names.object_file ());
   cleanups = make_cleanup (xfree, filename);
 
-  abfd = gdb_bfd_open (filename, gnutarget, -1);
+  gdb_bfd_ref_ptr abfd (gdb_bfd_open (filename, gnutarget, -1));
   if (abfd == NULL)
     error (_("\"%s\": could not open as compiled module: %s"),
           filename, bfd_errmsg (bfd_get_error ()));
-  make_cleanup_bfd_unref (abfd);
 
-  if (!bfd_check_format_matches (abfd, bfd_object, &matching))
+  if (!bfd_check_format_matches (abfd.get (), bfd_object, &matching))
     error (_("\"%s\": not in loadable format: %s"),
           filename, gdb_bfd_errmsg (bfd_get_error (), matching));
 
-  if ((bfd_get_file_flags (abfd) & (EXEC_P | DYNAMIC)) != 0)
+  if ((bfd_get_file_flags (abfd.get ()) & (EXEC_P | DYNAMIC)) != 0)
     error (_("\"%s\": not in object format."), filename);
 
   setup_sections_data.last_size = 0;
@@ -654,17 +651,17 @@ compile_object_load (const char *object_file, const char *source_file,
   setup_sections_data.last_max_alignment = 1;
   setup_sections_data.munmap_list_headp = &munmap_list_head;
   make_cleanup (munmap_listp_free_cleanup, &munmap_list_head);
-  bfd_map_over_sections (abfd, setup_sections, &setup_sections_data);
-  setup_sections (abfd, NULL, &setup_sections_data);
+  bfd_map_over_sections (abfd.get (), setup_sections, &setup_sections_data);
+  setup_sections (abfd.get (), NULL, &setup_sections_data);
 
-  storage_needed = bfd_get_symtab_upper_bound (abfd);
+  storage_needed = bfd_get_symtab_upper_bound (abfd.get ());
   if (storage_needed < 0)
     error (_("Cannot read symbols of compiled module \"%s\": %s"),
           filename, bfd_errmsg (bfd_get_error ()));
 
   /* SYMFILE_VERBOSE is not passed even if FROM_TTY, user is not interested in
      "Reading symbols from ..." message for automatically generated file.  */
-  objfile = symbol_file_add_from_bfd (abfd, filename, 0, NULL, 0, NULL);
+  objfile = symbol_file_add_from_bfd (abfd.get (), filename, 0, NULL, 0, NULL);
   cleanups_free_objfile = make_cleanup_free_objfile (objfile);
 
   func_sym = lookup_global_symbol_from_objfile (objfile,
@@ -713,7 +710,7 @@ compile_object_load (const char *object_file, const char *source_file,
      called from default_symfile_relocate.  */
   symbol_table = (asymbol **) obstack_alloc (&objfile->objfile_obstack,
 					     storage_needed);
-  number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table);
+  number_of_symbols = bfd_canonicalize_symtab (abfd.get (), symbol_table);
   if (number_of_symbols < 0)
     error (_("Cannot parse symbols of compiled module \"%s\": %s"),
           filename, bfd_errmsg (bfd_get_error ()));
@@ -772,7 +769,7 @@ compile_object_load (const char *object_file, const char *source_file,
   if (missing_symbols)
     error (_("%ld symbols were missing, cannot continue."), missing_symbols);
 
-  bfd_map_over_sections (abfd, copy_sections, symbol_table);
+  bfd_map_over_sections (abfd.get (), copy_sections, symbol_table);
 
   regs_type = get_regs_type (func_sym, objfile);
   if (regs_type == NULL)
@@ -823,7 +820,7 @@ compile_object_load (const char *object_file, const char *source_file,
 
   retval = XNEW (struct compile_module);
   retval->objfile = objfile;
-  retval->source_file = xstrdup (source_file);
+  retval->source_file = xstrdup (file_names.source_file ());
   retval->func_sym = func_sym;
   retval->regs_addr = regs_addr;
   retval->scope = scope;

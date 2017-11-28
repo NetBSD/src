@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2016 Free Software Foundation, Inc.
+Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -24,6 +24,10 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
 #ifndef IQ2000_CPU_H
 #define IQ2000_CPU_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CGEN_ARCH iq2000
 
@@ -343,5 +347,9 @@ extern CGEN_KEYWORD iq2000_cgen_opval_gr_names;
 extern const CGEN_HW_ENTRY iq2000_cgen_hw_table[];
 
 
+
+   #ifdef __cplusplus
+   }
+   #endif
 
 #endif /* IQ2000_CPU_H */

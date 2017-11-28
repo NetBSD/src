@@ -17,8 +17,8 @@ Rem
 Rem The following 2 lines need to be changed with each new GDB release, to
 Rem be identical to the name of the top-level directory where the GDB
 Rem distribution unpacks itself.
-set GDBVER=$package-7.12
-if "%GDBVER%"=="$package-7.12" GoTo EnvOk
+set GDBVER=$package-8.0.1
+if "%GDBVER%"=="$package-8.0.1" GoTo EnvOk
 Rem If their environment space is too small, re-exec with a larger one
 command.com /e:4096 /c %0 %1
 GoTo End

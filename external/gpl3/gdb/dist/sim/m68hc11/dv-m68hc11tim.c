@@ -1,5 +1,5 @@
 /*  dv-m68hc11tim.c -- Simulation of the 68HC11 timer devices.
-    Copyright (C) 1999-2016 Free Software Foundation, Inc.
+    Copyright (C) 1999-2017 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 
@@ -236,7 +236,7 @@ enum event_type
   COMPARE_EVENT
 };
 
-void
+static void
 m68hc11tim_timer_event (struct hw *me, void *data)
 {
   SIM_DESC sd;
@@ -521,7 +521,7 @@ m68hc11tim_print_timer (struct hw *me, const char *name,
   else
     {
       signed64 t;
-      sim_cpu* cpu;
+      sim_cpu *cpu;
 
       cpu = STATE_CPU (sd, 0);
 

@@ -1,4 +1,4 @@
-# Copyright 2009-2016 Free Software Foundation, Inc.
+# Copyright 2009-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -74,13 +74,13 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     }
     if { [gdb_compile_shlib ${srcfile_lib} ${binfile_lib} $sep_lib_flags] != ""
 	 || [gdb_compile ${srcfile} ${binfile} executable $bin_flags] != "" } {
-      untested "Could not compile $binfile_lib or $binfile."
+      untested "failed to compile"
       return -1
     }
 
     if {$libsepdebug == "SEP"} {
 	if {[gdb_gnu_strip_debug $binfile_lib] != 0} {
-	    unsupported "Could not split debug of $binfile_lib."
+	    unsupported "could not split debug of $binfile_lib."
 	    return
 	} else {
 	    pass "split solib"
@@ -90,7 +90,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     clean_restart $executable
 
     if ![runto_main] then {
-      fail "Can't run to main"
+      fail "can't run to main"
       return 0
     }
 
@@ -99,7 +99,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     gdb_test "display c_global" "3: c_global = 43"
 
     if { [gdb_start_cmd] < 0 } {
-	fail "Can't run to main (2)"
+	fail "can't run to main (2)"
 	continue
     }
 
@@ -112,7 +112,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     # Now rebuild the library without b_global
     if { [gdb_compile_shlib ${srcfile_lib} ${binfile_lib} \
 	      "$sep_lib_flags additional_flags=-DNO_B_GLOBAL"] != ""} {
-	fail "Can't rebuild $binfile_lib"
+	fail "can't rebuild $binfile_lib"
     }
 
     if {$libsepdebug == "SEP"} {
@@ -126,7 +126,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     }
 
     if { [gdb_start_cmd] < 0 } {
-	fail "Can't run to main (3)"
+	fail "can't run to main (3)"
 	continue
     }
 
@@ -149,7 +149,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     gdb_test "display a_static" "6: a_static = 46"
 
     if { [gdb_start_cmd] < 0 } {
-	fail "Can't run to main (4)"
+	fail "can't run to main (4)"
 	continue
     }
 

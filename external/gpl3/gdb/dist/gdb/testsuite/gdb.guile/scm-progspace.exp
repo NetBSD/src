@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2016 Free Software Foundation, Inc.
+# Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,9 +73,9 @@ with_test_prefix "program unloaded" {
 # deleted.  We need to, for example, delete an inferior to get the progspace
 # to go away.
 
-gdb_test "add-inferior" "Added inferior 2" "Create new inferior"
-gdb_test "inferior 2" ".*" "Switch to new inferior"
-gdb_test_no_output "remove-inferiors 1" "Remove first inferior"
+gdb_test "add-inferior" "Added inferior 2" "create new inferior"
+gdb_test "inferior 2" ".*" "switch to new inferior"
+gdb_test_no_output "remove-inferiors 1" "remove first inferior"
 
 with_test_prefix "inferior removed" {
     gdb_test "gu (print (progspace-valid? progspace))" "= #f"

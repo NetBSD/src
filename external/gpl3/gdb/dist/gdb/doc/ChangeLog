@@ -1,3 +1,179 @@
+2017-05-04  Tim Wiederhake  <tim.wiederhake@intel.com>
+
+	* python.texi (Recording in Python): Factor out the documentation of
+	gdb.RecordInstruction's super class.
+
+2017-05-04  Tim Wiederhake  <tim.wiederhake@intel.com>
+
+	* python.texi (Recording in Python): Replace gdb.BtraceFunction with
+	gdb.RecordFunctionSegment.  Rename prev_sibling and next_sibling to
+	prev and next.
+
+2017-05-04  Tim Wiederhake  <tim.wiederhake@intel.com>
+
+	* python.texi (Recording in Python): Replace gdb.BtraceInstruction with
+	gdb.RecordInstruction
+
+2017-05-04  Tim Wiederhake  <tim.wiederhake@intel.com>
+
+	* python.texi (Recording in Python): Add documentation for
+	gdb.RecordGap and remove documentation of special cases for
+	gdb.BtraceInstruction.
+
+2017-05-04  Tim Wiederhake <tim.wiederhake@intel.com>
+
+	* python.texi (Recording in Python): Remove Record.ptid defvar.
+
+2017-03-28  Anton Kolesov  <anton.kolesov@synopsys.com>
+
+	* gdb.texinfo (Synopsys ARC): Document "set debug arc 2".
+
+2017-03-28  Anton Kolesov  <anton.kolesov@synopsys.com>
+
+	* gdb.texinfo (Synopsys ARC): Add "maint print arc arc-instruction".
+
+2017-03-22  Yao Qi  <yao.qi@linaro.org>
+
+	* python.texi (Inferiors In Python): Remove @code from Python.
+
+2017-03-21  Tim Wiederhake  <tim.wiederhake@intel.com>
+
+	* python.texi (Recordings In Python): Document return type of
+	gdb.BtraceInstruction.data.
+
+2017-03-20  Marc-Andre Laperle  <marc-andre.laperle@ericsson.com>
+
+	* gdb.texinfo (gdb/mi Symbol Query Commands): Document new MI
+	command file-list-shared-libraries
+	(GDB/MI Async Records): Update documentation of library-loaded with new
+	field.
+
+2017-03-16  Doug Evans  <dje@google.com>
+
+	* guile.texi (Lazy Strings In Guile): Mention arrays.
+	* python.texi (Lazy Strings In Python): Ditto.
+
+2017-03-08  Jiong Wang  <jiong.wang@arm.com>
+
+        * gdb.texinfo (Memory Protection Extensions): Add missing escape
+	character "@".
+
+2017-03-07  Walfred Tedeschi <walfred.tedeschi@intel.com>
+
+	* Memory Protection Extensions: Add information about inferior
+	calls.
+
+2017-02-20  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (Print Settings, Tail Call Frames): Rename DW_OP_GNU_*,
+	DW_TAG_GNU_* and DW_AT_GNU_*.
+
+2017-02-14  Tim Wiederhake  <tim.wiederhake@intel.com>
+
+	* python.texi (Recordings In Python): New section.
+
+2017-02-14  Tom Tromey  <tom@tromey.com>
+
+	PR python/13598:
+	* python.texi (Events In Python): Document events.before_prompt.
+
+2017-02-13  Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.texinfo (Target Commands): Document the optional offset
+	argument for the load command.
+
+2017-02-10  Martin Galvan  <martingalvan@sourceware.org>
+
+	PR gdb/21122
+	* gdb.texinfo (Breakpoints): Reword documentation to speak in terms of
+	space-separated breakpoint lists.  Also add a missing @table command
+	and @cindex for breakpoint lists.
+
+2017-02-06  Ivo Raisr  <ivo.raisr@oracle.com>
+
+	PR tdep/20936
+	* gdb.texinfo: (Standard Target Features): Document SPARC features.
+	(Sparc Features): New node.
+
+2017-01-27  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* gdb.texinfo (i386 Features): Add system segment registers
+	as feature.
+
+2017-01-24  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* python.texi (Events In Python): Fix typo.
+
+2017-01-20  Mike Wrighton  <mike_wrighton@codesourcery.com>
+	    Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.texinfo (-target-flash-erase): New MI command description.
+	(flash-erase): New CLI command description.
+
+2017-01-04  John Baldwin  <jhb@FreeBSD.org>
+
+	* gdb.texinfo (Contributors): Add SRI International and University
+	of Cambridge for FreeBSD/mips.
+
+2016-12-22  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.texinfo (Symbols): Update docs for symbol printing maintenance
+	commands.
+
+2016-12-02  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (User-defined Commands): Limit on number of
+	arguments passed to user-defined commands removed; update.
+
+2016-12-02  Pedro Alves  <palves@redhat.com>
+
+	PR cli/20559
+	* gdb.texinfo (Define): Add example of using "eval" to process a
+	variable number of arguments.
+	(Output) <eval>: Add anchor.
+
+2016-11-30  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in: Likewise.
+
+2016-11-18  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.texinfo (GDB/MI Async Records): Add missing comma after
+	xref.
+
+2016-10-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Packets) <vCont>: Remove mention of default
+	actions.
+
+2016-10-26  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Packets): Clarify vCont packets with multiple
+	actions that match a thread, and what happens when an action
+	matches a thread that is already running.
+
+2016-10-14  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.texinfo (Using Trace Files): Fix typo.
+	(GDB/MI Tracepoint Commands): Likewise.
+
+2016-10-14  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.texinfo (GDB/MI Tracepoint Commands): Document -ctf switch
+	of -trace-save.
+
+2016-10-06  Tom Tromey  <tom@tromey.com>
+
+	* guile.texi (Types In Guile): Remove Java mentions.
+	* python.texi (Types In Python): Remove Java mentions.
+	* gdb.texinfo (Address Locations, Supported Languages)
+	(Index Section Format): Remove Java mentions.
+
+2016-08-15  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Target Description Format): Update docs on "end"
+	field spec and field default type.
+
 2016-10-03  Antoine Tremblay  <antoine.tremblay@ericsson.com>
 2016-10-03  Simon Marchi  <simon.marchi@ericsson.com>
 
@@ -9,15 +185,36 @@
 	* observer.texi (GDB Observers): New user_selected_context_changed
 	observer.
 
+2016-09-28  Tom Tromey  <tom@tromey.com>
+
+	* gdb.texinfo (Packets) <z0>: Use "software breakpoint" rather
+	than "memory breakpoint".  Further document "kind".  Move
+	protocol-details link earlier.
+	<z1>: Document the cmd_list argument.  Fix typo.
+	<g>: Remove incorrect sentence.
+	(Stop Reply Packets): Document "OK" response to requests when in
+	non-stop mode.
+	<swbreak>: Use "software breakpoint" rather than "memory
+	breakpoint".
+	<create>: Document that "R" is ignored.
+	<W, X, w>: Document formatting of "AA".
+	(Notification Packets): Use "%Stop", not "%%Stop".
+
+2016-09-21  Anton Kolesov  <anton.kolesov@synopsys.com>
+
+	* gdb.texinfo (Embedded Processors): Document ARC.
+	(Synopsys ARC): New section.
+	(Standard Target Features): Document ARC features.
+	(ARC Features): New section.
+
+2016-09-21  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* .gitignore: New file.
+
 2016-08-24  Simon Marchi  <simon.marchi@ericsson.com>
 
 	* gdb.texinfo (Input/Output): Mention possibility to unset
 	inferior-tty.
-
-2016-08-15  Doug Evans  <dje@google.com>
-
-	* gdb.texinfo (Target Description Format): Update docs on "end"
-	field spec and field default type.
 
 2016-07-25  Tim Wiederhake  <tim.wiederhake@intel.com>
 

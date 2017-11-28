@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RL78 for GDB, the GNU debugger.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -261,6 +261,30 @@ struct rl78_prologue
   int reg_offset[RL78_NUM_TOTAL_REGS];
 };
 
+/* Construct type for PSW register.  */
+
+static struct type *
+rl78_psw_type (struct gdbarch *gdbarch)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (tdep->rl78_psw_type == NULL)
+    {
+      tdep->rl78_psw_type = arch_flags_type (gdbarch,
+					     "builtin_type_rl78_psw", 1);
+      append_flags_type_flag (tdep->rl78_psw_type, 0, "CY");
+      append_flags_type_flag (tdep->rl78_psw_type, 1, "ISP0");
+      append_flags_type_flag (tdep->rl78_psw_type, 2, "ISP1");
+      append_flags_type_flag (tdep->rl78_psw_type, 3, "RBS0");
+      append_flags_type_flag (tdep->rl78_psw_type, 4, "AC");
+      append_flags_type_flag (tdep->rl78_psw_type, 5, "RBS1");
+      append_flags_type_flag (tdep->rl78_psw_type, 6, "Z");
+      append_flags_type_flag (tdep->rl78_psw_type, 7, "IE");
+    }
+
+  return tdep->rl78_psw_type;
+}
+
 /* Implement the "register_type" gdbarch method.  */
 
 static struct type *
@@ -273,7 +297,7 @@ rl78_register_type (struct gdbarch *gdbarch, int reg_nr)
   else if (reg_nr == RL78_RAW_PC_REGNUM)
     return tdep->rl78_uint32;
   else if (reg_nr == RL78_PSW_REGNUM)
-    return (tdep->rl78_psw_type);
+    return rl78_psw_type (gdbarch);
   else if (reg_nr <= RL78_MEM_REGNUM
            || (RL78_X_REGNUM <= reg_nr && reg_nr <= RL78_H_REGNUM)
 	   || (RL78_BANK0_R0_REGNUM <= reg_nr
@@ -768,21 +792,13 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
     gdb_assert_not_reached ("invalid pseudo register number");
 }
 
-/* Implement the "breakpoint_from_pc" gdbarch method.  */
+/* The documented BRK instruction is actually a two byte sequence,
+   {0x61, 0xcc}, but instructions may be as short as one byte.
+   Correspondence with Renesas revealed that the one byte sequence
+   0xff is used when a one byte breakpoint instruction is required.  */
+constexpr gdb_byte rl78_break_insn[] = { 0xff };
 
-static const gdb_byte *
-rl78_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-                         int *lenptr)
-{
-  /* The documented BRK instruction is actually a two byte sequence,
-     {0x61, 0xcc}, but instructions may be as short as one byte.
-     Correspondence with Renesas revealed that the one byte sequence
-     0xff is used when a one byte breakpoint instruction is required.  */
-  static gdb_byte breakpoint[] = { 0xff };
-
-  *lenptr = sizeof breakpoint;
-  return breakpoint;
-}
+typedef BP_MANIPULATION (rl78_break_insn) rl78_breakpoint;
 
 /* Define a "handle" struct for fetching the next opcode.  */
 
@@ -1396,7 +1412,7 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = XNEW (struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
 
@@ -1410,26 +1426,9 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep->rl78_int32 = arch_integer_type (gdbarch, 32, 0, "int32_t");
 
   tdep->rl78_data_pointer
-    = arch_type (gdbarch, TYPE_CODE_PTR, 16 / TARGET_CHAR_BIT,
-                 xstrdup ("rl78_data_addr_t"));
-  TYPE_TARGET_TYPE (tdep->rl78_data_pointer) = tdep->rl78_void;
-  TYPE_UNSIGNED (tdep->rl78_data_pointer) = 1;
-
+    = arch_pointer_type (gdbarch, 16, "rl78_data_addr_t", tdep->rl78_void);
   tdep->rl78_code_pointer
-    = arch_type (gdbarch, TYPE_CODE_PTR, 32 / TARGET_CHAR_BIT,
-                 xstrdup ("rl78_code_addr_t"));
-  TYPE_TARGET_TYPE (tdep->rl78_code_pointer) = tdep->rl78_void;
-  TYPE_UNSIGNED (tdep->rl78_code_pointer) = 1;
-
-  tdep->rl78_psw_type = arch_flags_type (gdbarch, "builtin_type_rl78_psw", 1);
-  append_flags_type_flag (tdep->rl78_psw_type, 0, "CY");
-  append_flags_type_flag (tdep->rl78_psw_type, 1, "ISP0");
-  append_flags_type_flag (tdep->rl78_psw_type, 2, "ISP1");
-  append_flags_type_flag (tdep->rl78_psw_type, 3, "RBS0");
-  append_flags_type_flag (tdep->rl78_psw_type, 4, "AC");
-  append_flags_type_flag (tdep->rl78_psw_type, 5, "RBS1");
-  append_flags_type_flag (tdep->rl78_psw_type, 6, "Z");
-  append_flags_type_flag (tdep->rl78_psw_type, 7, "IE");
+    = arch_pointer_type (gdbarch, 32, "rl78_code_addr_t", tdep->rl78_void);
 
   /* Registers.  */
   set_gdbarch_num_regs (gdbarch, RL78_NUM_REGS);
@@ -1467,7 +1466,8 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_addr_bits_remove (gdbarch, rl78_addr_bits_remove);
 
   /* Breakpoints.  */
-  set_gdbarch_breakpoint_from_pc (gdbarch, rl78_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, rl78_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, rl78_breakpoint::bp_from_kind);
   set_gdbarch_decr_pc_after_break (gdbarch, 1);
 
   /* Disassembly.  */

@@ -1,6 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -287,13 +287,13 @@ build_d_types (struct gdbarch *gdbarch)
     = arch_integer_type (gdbarch, 128, 1, "ucent");
   builtin_d_type->builtin_float
     = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch),
-		       "float", NULL);
+		       "float", gdbarch_float_format (gdbarch));
   builtin_d_type->builtin_double
     = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch),
-		       "double", NULL);
+		       "double", gdbarch_double_format (gdbarch));
   builtin_d_type->builtin_real
     = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
-		       "real", NULL);
+		       "real", gdbarch_long_double_format (gdbarch));
 
   TYPE_INSTANCE_FLAGS (builtin_d_type->builtin_byte)
     |= TYPE_INSTANCE_FLAG_NOTTEXT;
@@ -303,13 +303,13 @@ build_d_types (struct gdbarch *gdbarch)
   /* Imaginary and complex types.  */
   builtin_d_type->builtin_ifloat
     = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch),
-		       "ifloat", NULL);
+		       "ifloat", gdbarch_float_format (gdbarch));
   builtin_d_type->builtin_idouble
     = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch),
-		       "idouble", NULL);
+		       "idouble", gdbarch_double_format (gdbarch));
   builtin_d_type->builtin_ireal
     = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
-		       "ireal", NULL);
+		       "ireal", gdbarch_long_double_format (gdbarch));
   builtin_d_type->builtin_cfloat
     = arch_complex_type (gdbarch, "cfloat",
 			 builtin_d_type->builtin_float);

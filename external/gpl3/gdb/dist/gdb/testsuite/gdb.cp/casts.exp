@@ -1,4 +1,4 @@
-# Copyright 2002-2016 Free Software Foundation, Inc.
+# Copyright 2002-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,13 +27,13 @@
 
 if { [skip_cplus_tests] } { continue }
 
-standard_testfile .cc
+standard_testfile .cc casts03.cc
 
 if [get_compiler_info "c++"] {
     return -1
 }
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
@@ -110,10 +110,6 @@ gdb_test "print reinterpret_cast<void> (b)" "Invalid reinterpret_cast" \
 gdb_test "print reinterpret_cast<A &> (*b)" " = \\(A \\&\\) @$hex: {a = 42}" \
     "reinterpret_cast to reference type"
 
-# Test that keyword shadowing works.
-
-gdb_test "whatis decltype(5)" " = double"
-
 # Basic tests using typeof.
 
 foreach opname {__typeof__ __typeof __decltype} {
@@ -176,3 +172,23 @@ gdb_test "print dynamic_cast<DoublyDerived *> (add)" \
 gdb_test "print dynamic_cast<Gamma *> (add)" \
     " = \\(Gamma \\*\\) $nonzero_hex" \
     "dynamic_cast to sibling"
+
+if {[prepare_for_testing "failed to prepare" ${testfile}03 $srcfile2 \
+			 {debug c++ additional_flags=-std=c++03}]} {
+    return -1
+}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+# Prevent symbol on address 0x0 being printed.
+gdb_test_no_output "set print symbol off"
+
+gdb_breakpoint [gdb_get_line_number "casts.exp: 1" $srcfile2]
+gdb_continue_to_breakpoint "end of casts03"
+
+# Test that keyword shadowing works.
+
+gdb_test "whatis decltype(5)" " = double"

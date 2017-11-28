@@ -1,4 +1,4 @@
-# Copyright 1994-2016 Free Software Foundation, Inc.
+# Copyright 1994-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ if { ! [target_info exists gdb,nosignals] } {
 }
 
 if {[build_executable $testfile.exp $testfile $srcfile $options] == -1} {
-    untested $testfile.exp
+    untested "failed to compile"
     return -1
 }
 

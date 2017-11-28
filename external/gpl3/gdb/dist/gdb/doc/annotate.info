@@ -1,7 +1,7 @@
-This is annotate.info, produced by makeinfo version 6.0 from
+This is annotate.info, produced by makeinfo version 6.3 from
 annotate.texinfo.
 
-Copyright (C) 1994-2016 Free Software Foundation, Inc.
+Copyright (C) 1994-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -16,7 +16,7 @@ END-INFO-DIR-ENTRY
 
    This file documents GDB's obsolete annotations.
 
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or

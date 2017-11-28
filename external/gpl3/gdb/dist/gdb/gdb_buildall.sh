@@ -2,7 +2,7 @@
 
 # Build script to build GDB with all targets enabled.
 
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -103,7 +103,7 @@ builddir=`cd $2 && /bin/pwd` || exit 1
 make=${MAKE:-make}
 MAKE=${make}
 export MAKE
-# We dont want GDB do dump cores.
+# We don't want GDB do dump cores.
 ulimit -c 0
 
 # Just make sure we're in the right directory.

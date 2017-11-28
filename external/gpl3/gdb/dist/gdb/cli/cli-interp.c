@@ -1,6 +1,6 @@
 /* CLI Definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,12 +30,36 @@
 #include "gdbthread.h"
 #include "thread-fsm.h"
 
+cli_interp_base::cli_interp_base (const char *name)
+  : interp (name)
+{}
+
+cli_interp_base::~cli_interp_base ()
+{}
+
 /* The console interpreter.  */
-struct cli_interp
+
+class cli_interp final : public cli_interp_base
 {
+ public:
+  explicit cli_interp (const char *name);
+
+  void init (bool top_level) override;
+  void resume () override;
+  void suspend () override;
+  gdb_exception exec (const char *command_str) override;
+  ui_out *interp_ui_out () override;
+
   /* The ui_out for the console interpreter.  */
-  struct ui_out *cli_uiout;
+  cli_ui_out *cli_uiout;
 };
+
+cli_interp::cli_interp (const char *name)
+  : cli_interp_base (name)
+{
+  /* Create a default uiout builder for the CLI.  */
+  this->cli_uiout = cli_out_new (gdb_stdout);
+}
 
 /* Suppress notification struct.  */
 struct cli_suppress_notification cli_suppress_notification =
@@ -50,7 +74,7 @@ static struct cli_interp *
 as_cli_interp (struct interp *interp)
 {
   if (strcmp (interp_name (interp), INTERP_CONSOLE) == 0)
-    return (struct cli_interp *) interp_data (interp);
+    return (struct cli_interp *) interp;
   return NULL;
 }
 
@@ -99,12 +123,10 @@ should_print_stop_to_console (struct interp *console_interp,
 static void
 cli_on_normal_stop (struct bpstats *bs, int print_frame)
 {
-  struct switch_thru_all_uis state;
-
   if (!print_frame)
     return;
 
-  SWITCH_THRU_ALL_UIS (state)
+  SWITCH_THRU_ALL_UIS ()
     {
       struct interp *interp = top_level_interpreter ();
       struct cli_interp *cli = as_cli_interp (interp);
@@ -124,9 +146,7 @@ cli_on_normal_stop (struct bpstats *bs, int print_frame)
 static void
 cli_on_signal_received (enum gdb_signal siggnal)
 {
-  struct switch_thru_all_uis state;
-
-  SWITCH_THRU_ALL_UIS (state)
+  SWITCH_THRU_ALL_UIS ()
     {
       struct cli_interp *cli = as_cli_interp (top_level_interpreter ());
 
@@ -142,9 +162,7 @@ cli_on_signal_received (enum gdb_signal siggnal)
 static void
 cli_on_end_stepping_range (void)
 {
-  struct switch_thru_all_uis state;
-
-  SWITCH_THRU_ALL_UIS (state)
+  SWITCH_THRU_ALL_UIS ()
     {
       struct cli_interp *cli = as_cli_interp (top_level_interpreter ());
 
@@ -160,9 +178,7 @@ cli_on_end_stepping_range (void)
 static void
 cli_on_signal_exited (enum gdb_signal siggnal)
 {
-  struct switch_thru_all_uis state;
-
-  SWITCH_THRU_ALL_UIS (state)
+  SWITCH_THRU_ALL_UIS ()
     {
       struct cli_interp *cli = as_cli_interp (top_level_interpreter ());
 
@@ -178,9 +194,7 @@ cli_on_signal_exited (enum gdb_signal siggnal)
 static void
 cli_on_exited (int exitstatus)
 {
-  struct switch_thru_all_uis state;
-
-  SWITCH_THRU_ALL_UIS (state)
+  SWITCH_THRU_ALL_UIS ()
     {
       struct cli_interp *cli = as_cli_interp (top_level_interpreter ());
 
@@ -196,9 +210,7 @@ cli_on_exited (int exitstatus)
 static void
 cli_on_no_history (void)
 {
-  struct switch_thru_all_uis state;
-
-  SWITCH_THRU_ALL_UIS (state)
+  SWITCH_THRU_ALL_UIS ()
     {
       struct cli_interp *cli = as_cli_interp (top_level_interpreter ());
 
@@ -240,7 +252,6 @@ cli_on_command_error (void)
 static void
 cli_on_user_selected_context_changed (user_selected_what selection)
 {
-  struct switch_thru_all_uis state;
   struct thread_info *tp;
 
   /* This event is suppressed.  */
@@ -249,7 +260,7 @@ cli_on_user_selected_context_changed (user_selected_what selection)
 
   tp = find_thread_ptid (inferior_ptid);
 
-  SWITCH_THRU_ALL_UIS (state)
+  SWITCH_THRU_ALL_UIS ()
     {
       struct cli_interp *cli = as_cli_interp (top_level_interpreter ());
 
@@ -268,24 +279,23 @@ cli_on_user_selected_context_changed (user_selected_what selection)
 /* pre_command_loop implementation.  */
 
 void
-cli_interpreter_pre_command_loop (struct interp *self)
+cli_interp_base::pre_command_loop ()
 {
   display_gdb_prompt (0);
 }
 
 /* These implement the cli out interpreter: */
 
-static void *
-cli_interpreter_init (struct interp *self, int top_level)
+void
+cli_interp::init (bool top_level)
 {
-  return interp_data (self);
 }
 
-static int
-cli_interpreter_resume (void *data)
+void
+cli_interp::resume ()
 {
   struct ui *ui = current_ui;
-  struct cli_interp *cli = (struct cli_interp *) data;
+  struct cli_interp *cli = this;
   struct ui_file *stream;
 
   /*sync_execution = 1; */
@@ -294,10 +304,10 @@ cli_interpreter_resume (void *data)
      previously writing to gdb_stdout, then set it to the new
      gdb_stdout afterwards.  */
 
-  stream = cli_out_set_stream (cli->cli_uiout, gdb_stdout);
+  stream = cli->cli_uiout->set_stream (gdb_stdout);
   if (stream != gdb_stdout)
     {
-      cli_out_set_stream (cli->cli_uiout, stream);
+      cli->cli_uiout->set_stream (stream);
       stream = NULL;
     }
 
@@ -306,22 +316,19 @@ cli_interpreter_resume (void *data)
   ui->input_handler = command_line_handler;
 
   if (stream != NULL)
-    cli_out_set_stream (cli->cli_uiout, gdb_stdout);
-
-  return 1;
+    cli->cli_uiout->set_stream (gdb_stdout);
 }
 
-static int
-cli_interpreter_suspend (void *data)
+void
+cli_interp::suspend ()
 {
   gdb_disable_readline ();
-  return 1;
 }
 
-static struct gdb_exception
-cli_interpreter_exec (void *data, const char *command_str)
+gdb_exception
+cli_interp::exec (const char *command_str)
 {
-  struct cli_interp *cli = (struct cli_interp *) data;
+  struct cli_interp *cli = this;
   struct ui_file *old_stream;
   struct gdb_exception result;
 
@@ -337,16 +344,16 @@ cli_interpreter_exec (void *data, const char *command_str)
 
      It is important that it gets reset everytime, since the user
      could set gdb to use a different interpreter.  */
-  old_stream = cli_out_set_stream (cli->cli_uiout, gdb_stdout);
+  old_stream = cli->cli_uiout->set_stream (gdb_stdout);
   result = safe_execute_command (cli->cli_uiout, str, 1);
-  cli_out_set_stream (cli->cli_uiout, old_stream);
+  cli->cli_uiout->set_stream (old_stream);
   return result;
 }
 
-int
-cli_interpreter_supports_command_editing (struct interp *interp)
+bool
+cli_interp_base::supports_command_editing ()
 {
-  return 1;
+  return true;
 }
 
 static struct gdb_exception
@@ -378,38 +385,76 @@ safe_execute_command (struct ui_out *command_uiout, char *command, int from_tty)
   return e;
 }
 
-static struct ui_out *
-cli_ui_out (struct interp *self)
+ui_out *
+cli_interp::interp_ui_out ()
 {
-  struct cli_interp *cli = (struct cli_interp *) interp_data (self);
+  struct cli_interp *cli = (struct cli_interp *) this;
 
   return cli->cli_uiout;
 }
 
-/* The CLI interpreter's vtable.  */
-
-static const struct interp_procs cli_interp_procs = {
-  cli_interpreter_init,		/* init_proc */
-  cli_interpreter_resume,	/* resume_proc */
-  cli_interpreter_suspend,	/* suspend_proc */
-  cli_interpreter_exec,		/* exec_proc */
-  cli_ui_out,			/* ui_out_proc */
-  NULL,                       	/* set_logging_proc */
-  cli_interpreter_pre_command_loop, /* pre_command_loop_proc */
-  cli_interpreter_supports_command_editing, /* supports_command_editing_proc */
+/* These hold the pushed copies of the gdb output files.
+   If NULL then nothing has yet been pushed.  */
+struct saved_output_files
+{
+  ui_file *out;
+  ui_file *err;
+  ui_file *log;
+  ui_file *targ;
+  ui_file *targerr;
 };
+static saved_output_files saved_output;
+
+/* See cli-interp.h.  */
+
+void
+cli_interp_base::set_logging (ui_file_up logfile, bool logging_redirect)
+{
+  if (logfile != NULL)
+    {
+      saved_output.out = gdb_stdout;
+      saved_output.err = gdb_stderr;
+      saved_output.log = gdb_stdlog;
+      saved_output.targ = gdb_stdtarg;
+      saved_output.targerr = gdb_stdtargerr;
+
+      /* A raw pointer since ownership is transferred to
+	 gdb_stdout.  */
+      ui_file *output = make_logging_output (gdb_stdout,
+					     std::move (logfile),
+					     logging_redirect);
+      gdb_stdout = output;
+      gdb_stdlog = output;
+      gdb_stderr = output;
+      gdb_stdtarg = output;
+      gdb_stdtargerr = output;
+    }
+  else
+    {
+      /* Only delete one of the files -- they are all set to the same
+	 value.  */
+      delete gdb_stdout;
+
+      gdb_stdout = saved_output.out;
+      gdb_stderr = saved_output.err;
+      gdb_stdlog = saved_output.log;
+      gdb_stdtarg = saved_output.targ;
+      gdb_stdtargerr = saved_output.targerr;
+
+      saved_output.out = NULL;
+      saved_output.err = NULL;
+      saved_output.log = NULL;
+      saved_output.targ = NULL;
+      saved_output.targerr = NULL;
+    }
+}
 
 /* Factory for CLI interpreters.  */
 
 static struct interp *
 cli_interp_factory (const char *name)
 {
-  struct cli_interp *cli = XNEW (struct cli_interp);
-
-  /* Create a default uiout builder for the CLI.  */
-  cli->cli_uiout = cli_out_new (gdb_stdout);
-
-  return interp_new (name, &cli_interp_procs, cli);
+  return new cli_interp (name);
 }
 
 /* Standard gdb initialization hook.  */

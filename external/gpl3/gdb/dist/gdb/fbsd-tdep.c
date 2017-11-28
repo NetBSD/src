@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD, architecture-independent.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 
 /* This is how we want PTIDs from core files to be printed.  */
 
-static char *
+static const char *
 fbsd_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
 {
   static char buf[80];
@@ -193,15 +193,11 @@ static void
 fbsd_corefile_thread (struct thread_info *info,
 		      struct fbsd_corefile_thread_data *args)
 {
-  struct cleanup *old_chain;
   struct regcache *regcache;
 
   regcache = get_thread_arch_regcache (info->ptid, args->gdbarch);
 
-  old_chain = save_inferior_ptid ();
-  inferior_ptid = info->ptid;
   target_fetch_registers (regcache, -1);
-  do_cleanups (old_chain);
 
   args->note_data = fbsd_collect_thread_registers
     (regcache, info->ptid, args->obfd, args->note_data,
@@ -334,7 +330,7 @@ fbsd_get_syscall_number (struct gdbarch *gdbarch,
   internal_error (__FILE__, __LINE__, _("fbsd_get_sycall_number called"));
 }
 
-/* To be called from GDB_OSABI_FREEBSD_ELF handlers. */
+/* To be called from GDB_OSABI_FREEBSD handlers. */
 
 void
 fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)

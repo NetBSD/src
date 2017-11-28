@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -321,7 +321,7 @@ fbsd_fetch_kinfo_proc (pid_t pid, struct kinfo_proc *kp)
   FreeBSD's first thread support was via a "reentrant" version of libc
   (libc_r) that first shipped in 2.2.7.  This library multiplexed all
   of the threads in a process onto a single kernel thread.  This
-  library is supported via the bsd-uthread target.
+  library was supported via the bsd-uthread target.
 
   FreeBSD 5.1 introduced two new threading libraries that made use of
   multiple kernel threads.  The first (libkse) scheduled M user
@@ -368,7 +368,7 @@ fbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
 /* Convert PTID to a string.  Returns the string in a static
    buffer.  */
 
-static char *
+static const char *
 fbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   lwpid_t lwp;
@@ -653,38 +653,6 @@ fbsd_next_vfork_done (void)
 #endif
 #endif
 
-static int
-resume_one_thread_cb (struct thread_info *tp, void *data)
-{
-  ptid_t *ptid = (ptid_t *) data;
-  int request;
-
-  if (ptid_get_pid (tp->ptid) != ptid_get_pid (*ptid))
-    return 0;
-
-  if (ptid_get_lwp (tp->ptid) == ptid_get_lwp (*ptid))
-    request = PT_RESUME;
-  else
-    request = PT_SUSPEND;
-
-  if (ptrace (request, ptid_get_lwp (tp->ptid), NULL, 0) == -1)
-    perror_with_name (("ptrace"));
-  return 0;
-}
-
-static int
-resume_all_threads_cb (struct thread_info *tp, void *data)
-{
-  ptid_t *filter = (ptid_t *) data;
-
-  if (!ptid_match (tp->ptid, *filter))
-    return 0;
-
-  if (ptrace (PT_RESUME, ptid_get_lwp (tp->ptid), NULL, 0) == -1)
-    perror_with_name (("ptrace"));
-  return 0;
-}
-
 /* Implement the "to_resume" target_ops method.  */
 
 static void
@@ -711,13 +679,37 @@ fbsd_resume (struct target_ops *ops,
   if (ptid_lwp_p (ptid))
     {
       /* If ptid is a specific LWP, suspend all other LWPs in the process.  */
-      iterate_over_threads (resume_one_thread_cb, &ptid);
+      struct thread_info *tp;
+      int request;
+
+      ALL_NON_EXITED_THREADS (tp)
+        {
+	  if (ptid_get_pid (tp->ptid) != ptid_get_pid (ptid))
+	    continue;
+
+	  if (ptid_get_lwp (tp->ptid) == ptid_get_lwp (ptid))
+	    request = PT_RESUME;
+	  else
+	    request = PT_SUSPEND;
+
+	  if (ptrace (request, ptid_get_lwp (tp->ptid), NULL, 0) == -1)
+	    perror_with_name (("ptrace"));
+	}
     }
   else
     {
       /* If ptid is a wildcard, resume all matching threads (they won't run
 	 until the process is continued however).  */
-      iterate_over_threads (resume_all_threads_cb, &ptid);
+      struct thread_info *tp;
+
+      ALL_NON_EXITED_THREADS (tp)
+        {
+	  if (!ptid_match (tp->ptid, ptid))
+	    continue;
+
+	  if (ptrace (PT_RESUME, ptid_get_lwp (tp->ptid), NULL, 0) == -1)
+	    perror_with_name (("ptrace"));
+	}
       ptid = inferior_ptid;
     }
   super_resume (ops, ptid, step, signo);

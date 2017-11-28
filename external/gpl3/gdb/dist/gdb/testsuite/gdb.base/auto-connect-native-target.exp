@@ -1,4 +1,4 @@
-# Copyright 2014-2016 Free Software Foundation, Inc.
+# Copyright 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ gdb_test_multiple $test $test {
 }
 
 if { !$have_native } {
-    unsupported "No \"target native\" support."
+    unsupported "no \"target native\" support."
     return
 }
 
@@ -62,14 +62,14 @@ set topmost [get_topmost_target "check whether a target is already connected"]
 
 # Testing against the extended-remote board, for example?
 if { $topmost != "exec" } {
-    unsupported "Already connected to target $topmost."
+    unsupported "already connected to target $topmost."
     return
 }
 
 # Check which target this board connects to.  If testing with a native
 # target board, this should cause the native target to auto connect.
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 
@@ -94,7 +94,7 @@ proc check_native_target {test} {
 
 # Testing against a remote board, for example?
 if { ![check_native_target "check whether board tests the native target"] } {
-    unsupported "Not testing the native target."
+    unsupported "not testing the native target."
     return
 }
 

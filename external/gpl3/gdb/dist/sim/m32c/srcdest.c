@@ -1,6 +1,6 @@
 /* srcdest.c --- decoding M32C addressing modes.
 
-Copyright (C) 2005-2016 Free Software Foundation, Inc.
+Copyright (C) 2005-2017 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "libiberty.h"
 #include "cpu.h"
 #include "mem.h"
 
@@ -354,7 +355,7 @@ decode_sd23 (int bbb, int bb, int bytes, int ind, int add)
   srcdest sd;
   int code = (bbb << 2) | bb;
 
-  if (code >= sizeof (modes23) / sizeof (modes23[0]))
+  if (code >= ARRAY_SIZE (modes23))
     abort ();
 
   if (trace)

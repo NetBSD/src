@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2016 Free Software Foundation, Inc.
+# Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -171,7 +171,7 @@ proc test_startup {} {
     gdb_test "break thread2" "Breakpoint .* file .*$srcfile.*"
     gdb_test "continue" \
 	    "Continuing.*Breakpoint .*, thread2 \\(arg=0xdeadbeef\\).*at.*$srcfile.*" \
-	    "Continue to creation of second thread"
+	    "continue to creation of second thread"
 
     # Extract the thread id number of thread 2 from "info threads" output.
     gdb_test_multiple "info threads" "get thread 2 id" {
@@ -189,13 +189,13 @@ proc check_control_c {} {
 
     # Verify that all threads are running.
     if [all_threads_running] then {
-	pass "All threads running after startup"
+	pass "all threads running after startup"
     }
 
     # Send a continue followed by ^C to the process to stop it.
     gdb_test_multiple "continue" "continue with all threads running" {
 	-re "Continuing." {
-	    pass "Continue with all threads running"
+	    pass "continue with all threads running"
 	}
     }
     after 2000
@@ -217,7 +217,7 @@ proc check_control_c {} {
 
     # Verify that all threads can be run again after a ^C stop.
     if [all_threads_running] then {
-	pass "All threads running after continuing from ^C stop"
+	pass "all threads running after continuing from ^C stop"
     }
     return 0
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2016 Free Software Foundation, Inc.
+# Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +70,9 @@ proc test_demangling_core {tester test result} {
     }
 
     if {[string compare $style $current_demangling_style]} {
-	set_demangling_style $style
+	with_test_prefix $test {
+	    set_demangling_style $style
+	}
     }
 
     $tester "demangle $name" $result $test
@@ -520,6 +522,44 @@ proc test_gnu_style_demangling {} {
     test_demangling_exact "gnu: foo__I40" "foo(int64_t)"
     test_demangling_exact "gnu: foo__I_200_" "foo(int512_t)"
     test_demangling_exact "gnu: foo__I_200" "Can't demangle \"foo__I_200\""
+
+    # Rvalue reference tests
+    test_demangling_exact "gnu-v3: _ZN9ArrowLine19ArrowheadIntersectsEP9ArrowheadO6BoxObjP7Graphic" "ArrowLine::ArrowheadIntersects(Arrowhead*, BoxObj&&, Graphic*)"
+    test_demangling "gnu-v3: _Z13BitPatterntoaOK10BitPatternccc" \
+	"BitPatterntoa\[(\]+(const BitPattern|BitPattern const)&&, char, char, char\[)\]+"
+    test_demangling_exact "gnu-v3: _ZN8TextCode14CoreConstDeclsEO7ostream" "TextCode::CoreConstDecls(ostream&&)"
+    test_demangling "gnu-v3: _Z31DrawDestinationTransformedImageP7_XImageiiS0_iimjiijmmP4_XGCOK13ivTransformeriiii" \
+	"DrawDestinationTransformedImage\[(\]+_XImage\[*\]+, int, int, _XImage\[*\]+, int, int, unsigned long, unsigned int, int, int, unsigned int, unsigned long, unsigned long, _XGC\[*\]+, (const ivTransformer|ivTransformer const)&&, int, int, int, int\[)\]+"
+    test_demangling_exact "gnu-v3: _ZN11RelateManip6EffectEO7ivEvent" "RelateManip::Effect(ivEvent&&)"
+    test_demangling_exact "gnu-v3: _ZN20DisplayList_IteratorC4EO11DisplayList" "DisplayList_Iterator::DisplayList_Iterator(DisplayList&&)"
+    test_demangling_exact "gnu-v3: _ZN3fooC4EOS_" "foo::foo(foo&&)"
+    test_demangling_exact "gnu-v3: _ZN3fooC4EiOS_iS0_iS0_" "foo::foo(int, foo&&, int, foo&&, int, foo&&)"
+    test_demangling "gnu-v3: _ZN7ivWorldC2EPKcOiPPcPK12ivOptionDescPK14ivPropertyData" \
+	"ivWorld::ivWorld\[(\]+(const char|char const)\[*\]+, int&&, char\[*\]+\[*\]+, (const ivOptionDesc|ivOptionDesc const)\[*\]+, (const ivPropertyData|ivPropertyData const)\[*\]+\[)\]+"
+    test_demangling "gnu-v3: _Z3argOK7Complex" \
+	"arg\[(\]+(const Complex|Complex const)&&\[)\]+"
+    test_demangling "gnu-v3: _ZNK9BitString8containsEOK10BitPattern" \
+	"BitString::contains\[(\]+(const BitPattern|BitPattern const)&&\[)\]+ const"
+    test_demangling "gnu-v3: _ZNK9BitString8containsEOK12BitSubStringi" \
+	"BitString::contains\[(\]+(const BitSubString|BitSubString const)&&, int\[)\]+ const"
+    test_demangling "gnu-v3: _ZNK9BitString8containsEOKS_" \
+	"BitString::contains\[(\]+(const BitString|BitString const)&&\[)\]+ const"
+    test_demangling_exact "gnu-v3: _ZN4ListI10VHDLEntityE3PixC4EOKS2_" \
+	"List<VHDLEntity>::Pix::Pix(List<VHDLEntity>::Pix const&&)"
+    test_demangling_exact "gnu-v3: _ZN4ListI10VHDLEntityE7elementC2EOKS0_PS2_" \
+	"List<VHDLEntity>::element::element(VHDLEntity const&&, List<VHDLEntity>::element*)"
+    test_demangling_exact "gnu-v3: _ZN4ListI10VHDLEntityE7elementC4EOKS2_" \
+	"List<VHDLEntity>::element::element(List<VHDLEntity>::element const&&)"
+    test_demangling_exact "gnu-v3: _ZNK4ListI10VHDLEntityEclEOKNS1_3PixE" \
+	"List<VHDLEntity>::operator()(List<VHDLEntity>::Pix const&&) const"
+    test_demangling_exact "gnu-v3: _ZN4ListI10VHDLEntityEC4EOKS1_" \
+	"List<VHDLEntity>::List(List<VHDLEntity> const&&)"
+    test_demangling_exact "gnu-v3: _ZN4PixXI11VHDLLibrary14VHDLLibraryRep4ListI10VHDLEntityEEC2EOKS5_" \
+	"PixX<VHDLLibrary, VHDLLibraryRep, List<VHDLEntity> >::PixX(PixX<VHDLLibrary, VHDLLibraryRep, List<VHDLEntity> > const&&)"
+    test_demangling_exact "gnu-v3: _ZNK11VHDLLibrary5nextEEO4PixXIS_14VHDLLibraryRep4ListI10VHDLEntityEE" \
+	"VHDLLibrary::nextE(PixX<VHDLLibrary, VHDLLibraryRep, List<VHDLEntity> >&&) const"
+    test_demangling_exact "gnu-v3: _ZNK4ListI10VHDLEntityE4nextEONS1_3PixE" \
+	"List<VHDLEntity>::next(List<VHDLEntity>::Pix&&) const"
 
     ## Buffer overrun.  Should make GDB crash.  Woo hoo!
     test_demangling_exact "gnu: foo__I_4000000000000000000000000000000000000000000000000000000000000000000000000" "Can't demangle \"foo__I_4000000000000000000000000000000000000000000000000000000000000000000000000\""

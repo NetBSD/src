@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2016 Free Software Foundation, Inc.
+# Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -14,6 +14,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please keep lists in this file sorted alphabetically, with one item per line.
+# Here are the general guidelines for ordering files and directories:
+#
+#   - Files come before directories.
+#   - The extensions are not taken into account when comparing filenames, except
+#     if the filenames are otherwise equal.
+#   - A filename that is a prefix of another one comes before.
+#   - Underscores and dashes are treated equally, and come before alphanumeric
+#     characters.
+#
+# For example:
+#
+# SOME_FILES = \
+# 	foo.c \
+# 	foo.h \
+# 	foo-bar.c \
+# 	foobar.c \
+# 	foo/bar.c
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -79,18 +98,14 @@ MSGMERGE = msgmerge
 PACKAGE = @PACKAGE@
 CATALOGS = @CATALOGS@
 
-# The name of the compiler to use.
-COMPILER = @COMPILER@
-# Set to CFLAGS or CXXFLAGS, depending on compiler/language.
-COMPILER_CFLAGS = @COMPILER_CFLAGS@
-
 # If you are compiling with GCC, make sure that either 1) You have the
 # fixed include files where GCC can reach them, or 2) You use the
 # -traditional flag.  Otherwise the ioctl calls in inflow.c
 # will be incorrectly compiled.  The "fixincludes" script in the gcc
 # distribution will fix your include files up.
-CC=@CC@
-CXX=@CXX@
+CC = @CC@
+CXX = @CXX@
+CXX_DIALECT = @CXX_DIALECT@
 
 # Dependency tracking information.
 DEPMODE = @CCDEPMODE@
@@ -99,7 +114,7 @@ depcomp = $(SHELL) $(srcdir)/../depcomp
 
 # Note that these are overridden by GNU make-specific code below if
 # GNU make is used.  The overrides implement dependency tracking.
-COMPILE.pre = $(COMPILER)
+COMPILE.pre = $(CXX) $(CXX_DIALECT)
 COMPILE.post = -c -o $@
 COMPILE = $(COMPILE.pre) $(INTERNAL_CFLAGS) $(COMPILE.post)
 POSTCOMPILE = @true
@@ -109,7 +124,7 @@ srcdir = @srcdir@
 VPATH = @srcdir@
 top_srcdir = @top_srcdir@
 
-YACC=@YACC@
+YACC = @YACC@
 
 # This is used to rebuild ada-lex.c from ada-lex.l.  If the program is
 # not defined, but ada-lex.c is present, compilation will continue,
@@ -129,13 +144,13 @@ MAKEHTMLFLAGS =
 
 # Set this up with gcc if you have gnu ld and the loader will print out
 # line numbers for undefined references.
-#CC_LD=gcc -static
-CC_LD=$(COMPILER)
+#CC_LD = g++ -static
+CC_LD = $(CXX) $(CXX_DIALECT)
 
 # Where is our "include" directory?  Typically $(srcdir)/../include.
 # This is essentially the header file directory for the library
 # routines in libiberty.
-INCLUDE_DIR =  $(srcdir)/../include
+INCLUDE_DIR = $(srcdir)/../include
 INCLUDE_CFLAGS = -I$(INCLUDE_DIR)
 
 # Where is the "-liberty" library?  Typically in ../libiberty.
@@ -218,45 +233,79 @@ GNULIB_H = $(GNULIB_BUILDDIR)/import/string.h @GNULIB_STDINT_H@
 # CLI sub directory definitons
 #
 SUBDIR_CLI_OBS = \
+	cli-cmds.o \
+	cli-decode.o \
 	cli-dump.o \
-	cli-decode.o cli-script.o cli-cmds.o cli-setshow.o \
+	cli-interp.o \
 	cli-logging.o \
-	cli-interp.o cli-utils.o
+	cli-script.o \
+	cli-setshow.o \
+	cli-utils.o
+
 SUBDIR_CLI_SRCS = \
+	cli/cli-cmds.c \
+	cli/cli-decode.c \
 	cli/cli-dump.c \
-	cli/cli-decode.c cli/cli-script.c cli/cli-cmds.c cli/cli-setshow.c \
+	cli/cli-interp.c \
 	cli/cli-logging.c \
-	cli/cli-interp.c cli/cli-utils.c
+	cli/cli-script.c \
+	cli/cli-setshow.c \
+	cli/cli-utils.c
+
 SUBDIR_CLI_DEPS =
-SUBDIR_CLI_LDFLAGS=
-SUBDIR_CLI_CFLAGS=
+SUBDIR_CLI_LDFLAGS =
+SUBDIR_CLI_CFLAGS =
 
 #
 # MI sub directory definitons
 #
 SUBDIR_MI_OBS = \
-	mi-out.o mi-console.o \
-	mi-cmds.o mi-cmd-catch.o mi-cmd-env.o \
-	mi-cmd-var.o mi-cmd-break.o mi-cmd-stack.o \
-	mi-cmd-file.o mi-cmd-disas.o mi-symbol-cmds.o mi-cmd-target.o \
-	mi-cmd-info.o mi-interp.o \
-	mi-main.o mi-parse.o mi-getopt.o
+	mi-cmd-break.o \
+	mi-cmd-catch.o \
+	mi-cmd-disas.o \
+	mi-cmd-env.o \
+	mi-cmd-file.o \
+	mi-cmd-info.o \
+	mi-cmd-stack.o \
+	mi-cmd-target.o \
+	mi-cmd-var.o \
+	mi-cmds.o \
+	mi-console.o \
+	mi-getopt.o \
+	mi-interp.o \
+	mi-main.o \
+	mi-out.o \
+	mi-parse.o \
+	mi-symbol-cmds.o
+
 SUBDIR_MI_SRCS = \
-	mi/mi-out.c mi/mi-console.c \
-	mi/mi-cmds.c mi/mi-cmd-catch.c mi/mi-cmd-env.c \
-	mi/mi-cmd-var.c mi/mi-cmd-break.c mi/mi-cmd-stack.c \
-	mi/mi-cmd-file.c mi/mi-cmd-disas.c mi/mi-symbol-cmds.c \
-	mi/mi-cmd-target.c mi/mi-cmd-info.c mi/mi-interp.c \
-	mi/mi-main.c mi/mi-parse.c mi/mi-getopt.c
+	mi/mi-cmd-break.c \
+	mi/mi-cmd-catch.c \
+	mi/mi-cmd-disas.c \
+	mi/mi-cmd-env.c \
+	mi/mi-cmd-file.c \
+	mi/mi-cmd-info.c \
+	mi/mi-cmd-stack.c \
+	mi/mi-cmd-target.c \
+	mi/mi-cmd-var.c \
+	mi/mi-cmds.c \
+	mi/mi-console.c \
+	mi/mi-getopt.c \
+	mi/mi-interp.c \
+	mi/mi-main.c \
+	mi/mi-out.c \
+	mi/mi-parse.c \
+	mi/mi-symbol-cmds.c
+
 SUBDIR_MI_DEPS =
-SUBDIR_MI_LDFLAGS=
-SUBDIR_MI_CFLAGS=
+SUBDIR_MI_LDFLAGS =
+SUBDIR_MI_CFLAGS =
 
 #
 # TUI sub directory definitions
 #
-
 SUBDIR_TUI_OBS = \
+	tui.o \
 	tui-command.o \
 	tui-data.o \
 	tui-disasm.o \
@@ -272,10 +321,10 @@ SUBDIR_TUI_OBS = \
 	tui-win.o \
 	tui-windata.o \
 	tui-wingeneral.o \
-	tui-winsource.o \
-	tui.o
+	tui-winsource.o
 
 SUBDIR_TUI_SRCS = \
+	tui/tui.c \
 	tui/tui-command.c \
 	tui/tui-data.c \
 	tui/tui-disasm.c \
@@ -291,34 +340,38 @@ SUBDIR_TUI_SRCS = \
 	tui/tui-win.c \
 	tui/tui-windata.c \
 	tui/tui-wingeneral.c \
-	tui/tui-winsource.c \
-	tui/tui.c
+	tui/tui-winsource.c
 
 SUBDIR_TUI_DEPS =
-SUBDIR_TUI_LDFLAGS=
-SUBDIR_TUI_CFLAGS= \
-	-DTUI=1
+SUBDIR_TUI_LDFLAGS =
+SUBDIR_TUI_CFLAGS = -DTUI=1
 
 #
 # GCC Compile support sub-directory definitions
 #
 SUBDIR_GCC_COMPILE_OBS = \
-	compile.o compile-c-symbols.o compile-c-types.o \
-	compile-object-load.o compile-object-run.o \
-	compile-loc2c.o compile-c-support.o
+	compile.o \
+	compile-c-support.o \
+	compile-c-symbols.o \
+	compile-c-types.o \
+	compile-loc2c.o \
+	compile-object-load.o \
+	compile-object-run.o
+
 SUBDIR_GCC_COMPILE_SRCS = \
 	compile/compile.c \
+	compile/compile-c-support.c \
 	compile/compile-c-symbols.c \
 	compile/compile-c-types.c \
+	compile/compile-loc2c.c \
 	compile/compile-object-load.c \
 	compile/compile-object-load.h \
 	compile/compile-object-run.c \
-	compile/compile-object-run.h \
-	compile/compile-loc2c.c \
-	compile/compile-c-support.c
+	compile/compile-object-run.h
 
+#
 # Guile sub directory definitons for guile support.
-
+#
 SUBDIR_GUILE_OBS = \
 	guile.o \
 	scm-arch.o \
@@ -332,8 +385,8 @@ SUBDIR_GUILE_OBS = \
 	scm-gsmob.o \
 	scm-iterator.o \
 	scm-lazy-string.o \
-	scm-objfile.o \
 	scm-math.o \
+	scm-objfile.o \
 	scm-param.o \
 	scm-ports.o \
 	scm-pretty-print.o \
@@ -345,6 +398,7 @@ SUBDIR_GUILE_OBS = \
 	scm-type.o \
 	scm-utils.o \
 	scm-value.o
+
 SUBDIR_GUILE_SRCS = \
 	guile/guile.c \
 	guile/scm-arch.c \
@@ -358,8 +412,8 @@ SUBDIR_GUILE_SRCS = \
 	guile/scm-gsmob.c \
 	guile/scm-iterator.c \
 	guile/scm-lazy-string.c \
-	guile/scm-objfile.c \
 	guile/scm-math.c \
+	guile/scm-objfile.c \
 	guile/scm-param.c \
 	guile/scm-ports.c \
 	guile/scm-pretty-print.c \
@@ -371,15 +425,15 @@ SUBDIR_GUILE_SRCS = \
 	guile/scm-type.c \
 	guile/scm-utils.c \
 	guile/scm-value.c
+
 SUBDIR_GUILE_DEPS =
-SUBDIR_GUILE_LDFLAGS=
-SUBDIR_GUILE_CFLAGS=
+SUBDIR_GUILE_LDFLAGS =
+SUBDIR_GUILE_CFLAGS =
 
 #
 # python sub directory definitons
 #
 SUBDIR_PYTHON_OBS = \
-	python.o \
 	py-arch.o \
 	py-auto-load.o \
 	py-block.o \
@@ -387,7 +441,6 @@ SUBDIR_PYTHON_OBS = \
 	py-breakpoint.o \
 	py-cmd.o \
 	py-continueevent.o \
-	py-xmethods.o \
 	py-event.o \
 	py-evtregistry.o \
 	py-evts.o \
@@ -400,6 +453,7 @@ SUBDIR_PYTHON_OBS = \
 	py-inferior.o \
 	py-infevents.o \
 	py-infthread.o \
+	py-instruction.o \
 	py-lazy-string.o \
 	py-linetable.o \
 	py-newobjfileevent.o \
@@ -407,6 +461,9 @@ SUBDIR_PYTHON_OBS = \
 	py-param.o \
 	py-prettyprint.o \
 	py-progspace.o \
+	py-record.o \
+	py-record-btrace.o \
+	py-record-full.o \
 	py-signalevent.o \
 	py-stopevent.o \
 	py-symbol.o \
@@ -416,10 +473,11 @@ SUBDIR_PYTHON_OBS = \
 	py-unwind.o \
 	py-utils.o \
 	py-value.o \
-	py-varobj.o
+	py-varobj.o \
+	py-xmethods.o \
+	python.o
 
 SUBDIR_PYTHON_SRCS = \
-	python/python.c \
 	python/py-arch.c \
 	python/py-auto-load.c \
 	python/py-block.c \
@@ -427,7 +485,6 @@ SUBDIR_PYTHON_SRCS = \
 	python/py-breakpoint.c \
 	python/py-cmd.c \
 	python/py-continueevent.c \
-	python/py-xmethods.c \
 	python/py-event.c \
 	python/py-evtregistry.c \
 	python/py-evts.c \
@@ -440,6 +497,7 @@ SUBDIR_PYTHON_SRCS = \
 	python/py-inferior.c \
 	python/py-infevents.c \
 	python/py-infthread.c \
+	python/py-instruction.c \
 	python/py-lazy-string.c \
 	python/py-linetable.c \
 	python/py-newobjfileevent.c \
@@ -447,6 +505,9 @@ SUBDIR_PYTHON_SRCS = \
 	python/py-param.c \
 	python/py-prettyprint.c \
 	python/py-progspace.c \
+	python/py-record.c \
+	python/py-record-btrace.c \
+	python/py-record-full.c \
 	python/py-signalevent.c \
 	python/py-stopevent.c \
 	python/py-symbol.c \
@@ -456,10 +517,23 @@ SUBDIR_PYTHON_SRCS = \
 	python/py-unwind.c \
 	python/py-utils.c \
 	python/py-value.c \
-	python/py-varobj.c
+	python/py-varobj.c \
+	python/py-xmethods.c \
+	python/python.c
+
 SUBDIR_PYTHON_DEPS =
-SUBDIR_PYTHON_LDFLAGS=
-SUBDIR_PYTHON_CFLAGS=
+SUBDIR_PYTHON_LDFLAGS =
+SUBDIR_PYTHON_CFLAGS =
+
+SUBDIR_UNITTESTS_SRCS = \
+	unittests/function-view-selftests.c \
+	unittests/offset-type-selftests.c \
+	unittests/ptid-selftests.c
+
+SUBDIR_UNITTESTS_OBS = \
+	function-view-selftests.o \
+	offset-type-selftests.o \
+	ptid-selftests.o
 
 # Opcodes currently live in one of two places.  Either they are in the
 # opcode library, typically ../opcodes, or they are in a header file
@@ -499,7 +573,7 @@ WIN32LDAPP = @WIN32LDAPP@
 
 LIBGUI = @LIBGUI@
 GUI_CFLAGS_X = @GUI_CFLAGS_X@
-IDE_CFLAGS=$(GUI_CFLAGS_X) $(IDE_CFLAGS_X)
+IDE_CFLAGS = $(GUI_CFLAGS_X) $(IDE_CFLAGS_X)
 
 ALL_TCL_CFLAGS = $(TCL_CFLAGS) $(TK_CFLAGS)
 
@@ -513,26 +587,39 @@ GDBTK_LIBRARY = $(datadir)/insight$(GDBTK_VERSION)
 GDBTK_SRC_DIR = @GDBTK_SRC_DIR@
 
 SUBDIR_GDBTK_OBS = \
-	gdbtk.o gdbtk-bp.o gdbtk-cmds.o gdbtk-hooks.o gdbtk-interp.o \
-	gdbtk-register.o gdbtk-stack.o gdbtk-varobj.o gdbtk-wrapper.o
-SUBDIR_GDBTK_SRCS = \
-	gdbtk/generic/gdbtk.c gdbtk/generic/gdbtk-bp.c \
-	gdbtk/generic/gdbtk-cmds.c gdbtk/generic/gdbtk-hooks.c \
-	gdbtk/generic/gdbtk-interp.c \
-	gdbtk/generic/gdbtk-register.c gdbtk/generic/gdbtk-stack.c \
-	gdbtk/generic/gdbtk-varobj.c gdbtk/generic/gdbtk-wrapper.c \
-	gdbtk/generic/gdbtk-main.c
-SUBDIR_GDBTK_DEPS = $(LIBGUI) $(TCL_DEPS) $(TK_DEPS)
-SUBDIR_GDBTK_LDFLAGS=
-SUBDIR_GDBTK_CFLAGS= -DGDBTK
+	gdbtk.o \
+	gdbtk-bp.o \
+	gdbtk-cmds.o \
+	gdbtk-hooks.o \
+	gdbtk-interp.o \
+	gdbtk-register.o \
+	gdbtk-stack.o \
+	gdbtk-varobj.o \
+	gdbtk-wrapper.o
 
-CONFIG_OBS= @CONFIG_OBS@
-CONFIG_SRCS= @CONFIG_SRCS@
-CONFIG_DEPS= @CONFIG_DEPS@
+SUBDIR_GDBTK_SRCS = \
+	gdbtk/generic/gdbtk.c \
+	gdbtk/generic/gdbtk-bp.c \
+	gdbtk/generic/gdbtk-cmds.c \
+	gdbtk/generic/gdbtk-hooks.c \
+	gdbtk/generic/gdbtk-interp.c \
+	gdbtk/generic/gdbtk-main.c \
+	gdbtk/generic/gdbtk-register.c \
+	gdbtk/generic/gdbtk-stack.c \
+	gdbtk/generic/gdbtk-varobj.c \
+	gdbtk/generic/gdbtk-wrapper.c
+
+SUBDIR_GDBTK_DEPS = $(LIBGUI) $(TCL_DEPS) $(TK_DEPS)
+SUBDIR_GDBTK_LDFLAGS =
+SUBDIR_GDBTK_CFLAGS = -DGDBTK
+
+CONFIG_OBS = @CONFIG_OBS@
+CONFIG_SRCS = @CONFIG_SRCS@
+CONFIG_DEPS = @CONFIG_DEPS@
 CONFIG_LDFLAGS = @CONFIG_LDFLAGS@
-ENABLE_CFLAGS= @ENABLE_CFLAGS@
-CONFIG_ALL= @CONFIG_ALL@
-CONFIG_CLEAN= @CONFIG_CLEAN@
+ENABLE_CFLAGS = @ENABLE_CFLAGS@
+CONFIG_ALL = @CONFIG_ALL@
+CONFIG_CLEAN = @CONFIG_CLEAN@
 CONFIG_INSTALL = @CONFIG_INSTALL@
 CONFIG_UNINSTALL = @CONFIG_UNINSTALL@
 HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
@@ -568,7 +655,7 @@ INTERNAL_CPPFLAGS = @CPPFLAGS@ @GUILE_CPPFLAGS@ @PYTHON_CPPFLAGS@
 
 # INTERNAL_CFLAGS is the aggregate of all other *CFLAGS macros.
 INTERNAL_CFLAGS_BASE = \
-	$(COMPILER_CFLAGS) $(GLOBAL_CFLAGS) $(PROFILE_CFLAGS) \
+	$(CXXFLAGS) $(GLOBAL_CFLAGS) $(PROFILE_CFLAGS) \
 	$(GDB_CFLAGS) $(OPCODES_CFLAGS) $(READLINE_CFLAGS) $(ZLIBINC) \
 	$(BFD_CFLAGS) $(INCLUDE_CFLAGS) $(LIBDECNUMBER_CFLAGS) \
 	$(INTL_CFLAGS) $(INCGNU) $(ENABLE_CFLAGS) $(INTERNAL_CPPFLAGS)
@@ -584,7 +671,7 @@ LDFLAGS = @LDFLAGS@
 # and have it work; that's why CFLAGS is here.
 # PROFILE_CFLAGS is _not_ included, however, because we use monstartup.
 INTERNAL_LDFLAGS = \
-	$(COMPILER_CFLAGS) $(GLOBAL_CFLAGS) $(MH_LDFLAGS) \
+	$(CXXFLAGS) $(GLOBAL_CFLAGS) $(MH_LDFLAGS) \
 	$(LDFLAGS) $(CONFIG_LDFLAGS)
 
 # If your system is missing alloca(), or, more likely, it's there but
@@ -604,23 +691,28 @@ CDEPS = $(XM_CDEPS) $(NAT_CDEPS) $(SIM) $(BFD) $(READLINE_DEPS) \
 ADD_FILES = $(XM_ADD_FILES) $(TM_ADD_FILES) $(NAT_ADD_FILES)
 ADD_DEPS = $(XM_ADD_FILES) $(TM_ADD_FILES) $(NAT_ADD_FILES)
 
-DIST=gdb
+DIST = gdb
 
-LINT=/usr/5bin/lint
-LINTFLAGS= $(GDB_CFLAGS) $(OPCODES_CFLAGS) $(READLINE_CFLAGS) \
+LINT = /usr/5bin/lint
+LINTFLAGS = $(GDB_CFLAGS) $(OPCODES_CFLAGS) $(READLINE_CFLAGS) \
 	$(BFD_CFLAGS) $(INCLUDE_CFLAGS) \
 	$(INTL_CFLAGS)
 
 RUNTEST = runtest
-RUNTESTFLAGS=
+RUNTESTFLAGS =
 
 # XML files to build in to GDB.
-XMLFILES = $(srcdir)/features/gdb-target.dtd $(srcdir)/features/xinclude.dtd \
+XMLFILES = \
+	$(srcdir)/features/btrace.dtd \
+	$(srcdir)/features/btrace-conf.dtd \
+	$(srcdir)/features/gdb-target.dtd \
 	$(srcdir)/features/library-list.dtd \
 	$(srcdir)/features/library-list-aix.dtd \
-	$(srcdir)/features/library-list-svr4.dtd $(srcdir)/features/osdata.dtd \
-	$(srcdir)/features/threads.dtd $(srcdir)/features/traceframe-info.dtd \
-	$(srcdir)/features/btrace.dtd $(srcdir)/features/btrace-conf.dtd
+	$(srcdir)/features/library-list-svr4.dtd \
+	$(srcdir)/features/osdata.dtd \
+	$(srcdir)/features/threads.dtd \
+	$(srcdir)/features/traceframe-info.dtd \
+	$(srcdir)/features/xinclude.dtd
 
 # This is ser-unix.o for any system which supports a v7/BSD/SYSV/POSIX
 # interface to the serial port.  Hopefully if get ported to OS/2, VMS,
@@ -632,8 +724,17 @@ SER_HARDWIRE = @SER_HARDWIRE@
 
 # The `remote' debugging target is supported for most architectures,
 # but not all (e.g. 960)
-REMOTE_OBS = remote.o dcache.o tracepoint.o ax-general.o ax-gdb.o remote-fileio.o \
-	remote-notif.o ctf.o tracefile.o tracefile-tfile.o
+REMOTE_OBS = \
+	ax-gdb.o \
+	ax-general.o \
+	ctf.o \
+	dcache.o \
+	remote.o \
+	remote-fileio.o \
+	remote-notif.o \
+	tracefile.o \
+	tracefile-tfile.o \
+	tracepoint.o
 
 # This is remote-sim.o if a simulator is to be linked in.
 SIM_OBS = @SIM_OBS@
@@ -644,84 +745,160 @@ TARGET_OBS = @TARGET_OBS@
 # All target-dependent objects files that require 64-bit CORE_ADDR
 # (used with --enable-targets=all --enable-64-bit-bfd).
 ALL_64_TARGET_OBS = \
-	aarch64-tdep.o aarch64-linux-tdep.o aarch64-newlib-tdep.o aarch64-insn.o \
-	alphabsd-tdep.o alphafbsd-tdep.o alpha-linux-tdep.o alpha-mdebug-tdep.o \
-	alphanbsd-tdep.o alphaobsd-tdep.o alpha-tdep.o \
-	amd64fbsd-tdep.o amd64-darwin-tdep.o amd64-dicos-tdep.o \
-	amd64-linux-tdep.o amd64nbsd-tdep.o \
-	amd64obsd-tdep.o amd64-sol2-tdep.o amd64-tdep.o amd64-windows-tdep.o \
-	ia64-linux-tdep.o ia64-vms-tdep.o ia64-tdep.o \
-	mips64obsd-tdep.o \
-	sparc64fbsd-tdep.o sparc64-linux-tdep.o sparc64nbsd-tdep.o \
-	sparc64obsd-tdep.o sparc64-sol2-tdep.o sparc64-tdep.o
+	aarch64-insn.o \
+	aarch64-linux-tdep.o \
+	aarch64-newlib-tdep.o \
+	aarch64-tdep.o \
+	alpha-bsd-tdep.o \
+	alpha-linux-tdep.o \
+	alpha-mdebug-tdep.o \
+	alpha-nbsd-tdep.o \
+	alpha-obsd-tdep.o \
+	alpha-tdep.o \
+	amd64-darwin-tdep.o \
+	amd64-dicos-tdep.o \
+	amd64-fbsd-tdep.o \
+	amd64-linux-tdep.o \
+	amd64-nbsd-tdep.o \
+	amd64-obsd-tdep.o \
+	amd64-sol2-tdep.o \
+	amd64-tdep.o \
+	amd64-windows-tdep.o \
+	ia64-linux-tdep.o \
+	ia64-tdep.o \
+	ia64-vms-tdep.o \
+	mips64-obsd-tdep.o \
+	sparc64-fbsd-tdep.o \
+	sparc64-linux-tdep.o \
+	sparc64-nbsd-tdep.o \
+	sparc64-obsd-tdep.o \
+	sparc64-sol2-tdep.o \
+	sparc64-tdep.o
 
 # All other target-dependent objects files (used with --enable-targets=all).
 ALL_TARGET_OBS = \
-	armbsd-tdep.o arm.o arm-linux.o arm-linux-tdep.o \
-	arm-get-next-pcs.o arm-symbian-tdep.o \
-	armnbsd-tdep.o armobsd-tdep.o \
-	arm-tdep.o arm-wince-tdep.o \
+	arc-tdep.o \
+	arm.o \
+	arm-bsd-tdep.o \
+	arm-get-next-pcs.o \
+	arm-linux.o \
+	arm-linux-tdep.o \
+	arm-nbsd-tdep.o \
+	arm-obsd-tdep.o \
+	arm-symbian-tdep.o \
+	arm-tdep.o \
+	arm-wince-tdep.o \
 	avr-tdep.o \
-	bfin-linux-tdep.o bfin-tdep.o \
-	cris-linux-tdep.o cris-tdep.o \
+	bfin-linux-tdep.o \
+	bfin-tdep.o \
+	bsd-uthread.o \
+	cris-linux-tdep.o \
+	cris-tdep.o \
 	dicos-tdep.o \
 	fbsd-tdep.o \
-	frv-linux-tdep.o frv-tdep.o \
+	frv-linux-tdep.o \
+	frv-tdep.o \
 	ft32-tdep.o \
+	glibc-tdep.o \
 	h8300-tdep.o \
-	hppabsd-tdep.o hppanbsd-tdep.o hppaobsd-tdep.o \
-	hppa-linux-tdep.o hppa-tdep.o \
-	i386bsd-tdep.o i386-cygwin-tdep.o i386fbsd-tdep.o i386gnu-tdep.o \
-	i386-linux-tdep.o i386nbsd-tdep.o i386-nto-tdep.o i386obsd-tdep.o \
-	i386-sol2-tdep.o i386-tdep.o i387-tdep.o \
-	i386-dicos-tdep.o i386-darwin-tdep.o \
+	hppa-bsd-tdep.o \
+	hppa-linux-tdep.o \
+	hppa-nbsd-tdep.o \
+	hppa-obsd-tdep.o \
+	hppa-tdep.o \
+	i386-bsd-tdep.o \
+	i386-cygwin-tdep.o \
+	i386-darwin-tdep.o \
+	i386-dicos-tdep.o \
+	i386-fbsd-tdep.o \
+	i386-gnu-tdep.o \
+	i386-go32-tdep.o \
+	i386-linux-tdep.o \
+	i386-nbsd-tdep.o \
+	i386-nto-tdep.o \
+	i386-obsd-tdep.o \
+	i386-sol2-tdep.o \
+	i386-tdep.o \
+	i387-tdep.o \
 	iq2000-tdep.o \
+	linux-record.o \
 	linux-tdep.o \
 	lm32-tdep.o \
 	m32c-tdep.o \
-	m32r-linux-tdep.o m32r-tdep.o \
+	m32r-linux-tdep.o \
+	m32r-tdep.o \
 	m68hc11-tdep.o \
-	m68kbsd-tdep.o m68klinux-tdep.o m68k-tdep.o \
+	m68k-bsd-tdep.o \
+	m68k-linux-tdep.o \
+	m68k-tdep.o \
 	m88k-tdep.o \
 	mep-tdep.o \
-	microblaze-tdep.o microblaze-linux-tdep.o \
-	mips-linux-tdep.o mips-sde-tdep.o \
-	mipsnbsd-tdep.o mips-tdep.o \
-	mn10300-linux-tdep.o mn10300-tdep.o \
+	microblaze-linux-tdep.o \
+	microblaze-tdep.o \
+	mips-fbsd-tdep.o \
+	mips-linux-tdep.o \
+	mips-nbsd-tdep.o \
+	mips-sde-tdep.o \
+	mips-tdep.o \
+	mn10300-linux-tdep.o \
+	mn10300-tdep.o \
 	moxie-tdep.o \
 	msp430-tdep.o \
 	mt-tdep.o \
+	nbsd-tdep.o \
 	nds32-tdep.o \
-	nios2-tdep.o nios2-linux-tdep.o \
+	nios2-linux-tdep.o \
+	nios2-tdep.o \
 	nto-tdep.o \
-	ppc-linux-tdep.o ppcfbsd-tdep.o ppcnbsd-tdep.o ppcobsd-tdep.o  \
-	ppc-sysv-tdep.o ppc64-tdep.o rl78-tdep.o \
-	rs6000-aix-tdep.o rs6000-tdep.o solib-aix.o ppc-ravenscar-thread.o \
+	obsd-tdep.o \
+	ppc-fbsd-tdep.o \
+	ppc-linux-tdep.o \
+	ppc-nbsd-tdep.o \
+	ppc-obsd-tdep.o \
+	ppc-ravenscar-thread.o \
+	ppc-sysv-tdep.o \
+	ppc64-tdep.o \
+	ravenscar-thread.o \
+	rl78-tdep.o \
+	rs6000-aix-tdep.o \
 	rs6000-lynx178-tdep.o \
+	rs6000-tdep.o \
 	rx-tdep.o \
 	s390-linux-tdep.o \
 	score-tdep.o \
-	sh64-tdep.o sh-linux-tdep.o shnbsd-tdep.o sh-tdep.o \
-	sparc-linux-tdep.o sparcnbsd-tdep.o sparcobsd-tdep.o \
-	sparc-sol2-tdep.o sparc-tdep.o sparc-ravenscar-thread.o \
-	spu-tdep.o spu-multiarch.o solib-spu.o \
-	tic6x-tdep.o tic6x-linux-tdep.o \
-	tilegx-tdep.o tilegx-linux-tdep.o \
-	v850-tdep.o \
-	vaxnbsd-tdep.o vaxobsd-tdep.o vax-tdep.o \
-	xstormy16-tdep.o \
-	xtensa-config.o xtensa-tdep.o xtensa-linux-tdep.o \
-	glibc-tdep.o \
-	bsd-uthread.o \
-	nbsd-tdep.o obsd-tdep.o \
+	sh-linux-tdep.o \
+	sh-nbsd-tdep.o \
+	sh-tdep.o \
+	sh64-tdep.o \
 	sol2-tdep.o \
-	solib-frv.o solib-svr4.o \
-	solib-darwin.o solib-dsbt.o \
-	xcoffread.o \
+	solib-aix.o \
+	solib-darwin.o \
+	solib-dsbt.o \
+	solib-frv.o \
+	solib-spu.o \
+	solib-svr4.o \
+	sparc-linux-tdep.o \
+	sparc-nbsd-tdep.o \
+	sparc-obsd-tdep.o \
+	sparc-ravenscar-thread.o \
+	sparc-sol2-tdep.o \
+	sparc-tdep.o \
+	spu-multiarch.o \
+	spu-tdep.o \
 	symfile-mem.o \
+	tic6x-linux-tdep.o \
+	tic6x-tdep.o \
+	tilegx-linux-tdep.o \
+	tilegx-tdep.o \
+	v850-tdep.o \
+	vax-nbsd-tdep.o \
+	vax-tdep.o \
 	windows-tdep.o \
-	linux-record.o \
-	ravenscar-thread.o
+	xcoffread.o \
+	xstormy16-tdep.o \
+	xtensa-config.o \
+	xtensa-linux-tdep.o \
+	xtensa-tdep.o
 
 # Host-dependent makefile fragment comes in here.
 @host_makefile_frag@
@@ -746,6 +923,7 @@ FLAGS_TO_PASS = \
 	"CC=$(CC)" \
 	"CFLAGS=$(CFLAGS)" \
 	"CXX=$(CXX)" \
+	"CXX_DIALECT=$(CXX_DIALECT)" \
 	"CXXFLAGS=$(CXXFLAGS)" \
 	"DLLTOOL=$(DLLTOOL)" \
 	"LDFLAGS=$(LDFLAGS)" \
@@ -823,81 +1001,233 @@ TARGET_FLAGS_TO_PASS = \
 # Links made at configuration time should not be specified here, since
 # SFILES is used in building the distribution archive.
 
-SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
+SFILES = \
+	ada-exp.y \
+	ada-lang.c \
+	ada-tasks.c \
+	ada-typeprint.c \
+	ada-valprint.c \
 	ada-varobj.c \
-	addrmap.c auto-load.c \
-	auxv.c ax-general.c ax-gdb.c \
+	addrmap.c \
 	agent.c \
+	annotate.c \
+	arch-utils.c \
+	auto-load.c \
+	auxv.c \
+	ax-gdb.c \
+	ax-general.c \
 	bcache.c \
 	bfd-target.c \
-	block.c blockframe.c \
-	breakpoint.c break-catch-sig.c break-catch-throw.c \
+	block.c \
+	blockframe.c \
+	break-catch-sig.c \
 	break-catch-syscall.c \
-	build-id.c buildsym.c \
-	c-exp.y c-lang.c c-typeprint.c c-valprint.c c-varobj.c \
-	charset.c common/cleanups.c cli-out.c coffread.c coff-pe-read.c \
-	complaints.c completer.c continuations.c corefile.c corelow.c \
-	cp-abi.c cp-support.c cp-namespace.c cp-valprint.c \
-	d-exp.y d-lang.c d-namespace.c d-valprint.c \
+	break-catch-throw.c \
+	breakpoint.c \
+	btrace.c \
+	build-id.c \
+	buildsym.c \
+	c-exp.y \
+	c-lang.c \
+	c-typeprint.c \
+	c-valprint.c \
+	c-varobj.c \
+	charset.c \
+	cli-out.c \
+	coff-pe-read.c \
+	coffread.c \
+	complaints.c \
+	completer.c \
+	continuations.c \
+	copying.c \
+	corefile.c \
+	corelow.c \
+	cp-abi.c \
 	cp-name-parser.y \
-	dbxread.c demangle.c dictionary.c disasm.c doublest.c \
-	dtrace-probe.c dummy-frame.c \
-	dwarf2expr.c dwarf2loc.c dwarf2read.c dwarf2-frame.c \
+	cp-namespace.c \
+	cp-support.c \
+	cp-valprint.c \
+	ctf.c \
+	d-exp.y \
+	d-lang.c \
+	d-namespace.c \
+	d-valprint.c \
+	dbxread.c \
+	demangle.c \
+	dfp.c \
+	dictionary.c \
+	disasm.c \
+	disasm-selftests.c \
+	doublest.c \
+	dtrace-probe.c \
+	dummy-frame.c \
+	dwarf2-frame.c \
 	dwarf2-frame-tailcall.c \
-	elfread.c environ.c eval.c event-loop.c event-top.c \
-	exceptions.c expprint.c extension.c \
-	f-exp.y f-lang.c f-typeprint.c f-valprint.c filesystem.c \
-	findcmd.c findvar.c frame.c frame-base.c frame-unwind.c \
-	gdbarch.c arch-utils.c gdb_bfd.c gdb_obstack.c \
-	gdbtypes.c gnu-v2-abi.c gnu-v3-abi.c \
-	go-exp.y go-lang.c go-typeprint.c go-valprint.c \
+	dwarf2expr.c \
+	dwarf2loc.c \
+	dwarf2read.c \
+	elfread.c \
+	eval.c \
+	event-loop.c \
+	event-top.c \
+	exceptions.c \
+	expprint.c \
+	extension.c \
+	f-exp.y \
+	f-lang.c \
+	f-typeprint.c \
+	f-valprint.c \
+	filesystem.c \
+	findcmd.c \
+	findvar.c \
+	frame.c \
+	frame-base.c \
+	frame-unwind.c \
+	gcore.c \
+	gdb.c \
+	gdb_bfd.c \
+	gdb-dlfcn.c \
+	gdb_obstack.c \
+	gdb_usleep.c \
+	gdbarch.c \
+	gdbtypes.c \
+	gnu-v2-abi.c \
+	gnu-v3-abi.c \
+	go-exp.y \
+	go-lang.c \
+	go-typeprint.c \
+	go-valprint.c \
+	inf-child.c \
 	inf-loop.c \
 	infcall.c \
-	infcmd.c inflow.c infrun.c \
+	infcmd.c \
+	inferior.c \
+	inflow.c \
+	infrun.c \
 	inline-frame.c \
 	interps.c \
-	jv-exp.y jv-lang.c jv-valprint.c jv-typeprint.c jv-varobj.c \
-	language.c linespec.c location.c minidebug.c \
-	m2-exp.y m2-lang.c m2-typeprint.c m2-valprint.c \
-	macrotab.c macroexp.c macrocmd.c macroscope.c main.c maint.c \
-	mdebugread.c memattr.c mem-break.c minsyms.c mipsread.c memory-map.c \
-	memrange.c mi/mi-common.c \
+	jit.c \
+	language.c \
+	linespec.c \
+	location.c \
+	m2-exp.y \
+	m2-lang.c \
+	m2-typeprint.c \
+	m2-valprint.c \
+	macrocmd.c \
+	macroexp.c \
+	macroscope.c \
+	macrotab.c \
+	main.c \
+	maint.c \
+	mdebugread.c \
+	mem-break.c \
+	memattr.c \
+	memory-map.c \
+	memrange.c \
+	minidebug.c \
+	minsyms.c \
+	mipsread.c \
 	namespace.c \
 	objc-lang.c \
-	objfiles.c osabi.c observer.c osdata.c \
+	objfiles.c \
+	observer.c \
 	opencl-lang.c \
-	p-exp.y p-lang.c p-typeprint.c p-valprint.c parse.c printcmd.c \
-	proc-service.list progspace.c \
-	prologue-value.c psymtab.c \
-	regcache.c reggroups.c remote.c remote-fileio.c remote-notif.c reverse.c \
-	rust-exp.y rust-lang.c \
-	selftest.c sentinel-frame.c \
-	serial.c ser-base.c ser-unix.c ser-event.c skip.c \
-	solib.c solib-target.c source.c \
-	stabsread.c stack.c probe.c stap-probe.c std-regs.c \
-	symfile.c symfile-debug.c symfile-mem.c symmisc.c symtab.c \
-	target.c target-dcache.c target-descriptions.c target-memory.c \
-	tid-parse.c thread.c top.c tracepoint.c \
+	osabi.c \
+	osdata.c \
+	p-exp.y \
+	p-lang.c \
+	p-typeprint.c \
+	p-valprint.c \
+	parse.c \
+	printcmd.c \
+	probe.c \
+	proc-service.list \
+	progspace.c \
+	prologue-value.c \
+	psymtab.c \
+	record.c \
+	record-btrace.c \
+	record-full.c \
+	regcache.c \
+	reggroups.c \
+	remote.c \
+	remote-fileio.c \
+	remote-notif.c \
+	reverse.c \
+	rust-exp.y \
+	rust-lang.c \
+	selftest.c \
+	selftest-arch.c \
+	sentinel-frame.c \
+	ser-base.c \
+	ser-event.c \
+	ser-unix.c \
+	serial.c \
+	skip.c \
+	sol-thread.c \
+	solib.c \
+	solib-target.c \
+	source.c \
+	stabsread.c \
+	stack.c \
+	stap-probe.c \
+	std-regs.c \
+	stub-termcap.c \
+	symfile.c \
+	symfile-debug.c \
+	symfile-mem.c \
+	symmisc.c \
+	symtab.c \
+	target.c \
+	target-dcache.c \
+	target-descriptions.c \
+	target-memory.c \
+	thread.c \
+	tid-parse.c \
+	top.c \
+	tracepoint.c \
 	trad-frame.c \
 	tramp-frame.c \
 	typeprint.c \
-	ui-out.c utils.c ui-file.h ui-file.c \
+	ui-file.c \
+	ui-file.h \
+	ui-out.c \
 	user-regs.c \
-	valarith.c valops.c valprint.c value.c varobj.c common/vec.c \
-	xml-tdesc.c xml-support.c \
-	inferior.c gdb_usleep.c \
-	record.c record-full.c gcore.c \
-	jit.c \
+	utils.c \
+	valarith.c \
+	valops.c \
+	valprint.c \
+	value.c \
+	varobj.c \
+	xml-support.c \
 	xml-syscall.c \
-	annotate.c common/signals.c copying.c dfp.c gdb.c inf-child.c \
-	sol-thread.c stub-termcap.c \
-	common/gdb_vecs.c common/common-utils.c common/xml-utils.c \
-	common/ptid.c common/buffer.c gdb-dlfcn.c common/agent.c \
-	common/format.c common/filestuff.c btrace.c record-btrace.c ctf.c \
-	target/waitstatus.c common/print-utils.c common/rsp-low.c \
-	common/errors.c common/common-debug.c common/common-exceptions.c \
-	common/btrace-common.c common/fileio.c common/common-regcache.c \
+	xml-tdesc.c \
+	common/agent.c \
+	common/btrace-common.c \
+	common/buffer.c \
+	common/cleanups.c \
+	common/common-debug.c \
+	common/common-exceptions.c \
+	common/common-regcache.c \
+	common/common-utils.c \
+	common/errors.c \
+	common/environ.c \
+	common/fileio.c \
+	common/filestuff.c \
+	common/format.c \
+	common/gdb_vecs.c \
+	common/new-op.c \
+	common/print-utils.c \
+	common/ptid.c \
+	common/rsp-low.c \
+	common/run-time-clock.c \
+	common/signals.c \
 	common/signals-state-save-restore.c \
+	common/vec.c \
+	common/xml-utils.c \
+	mi/mi-common.c \
+	target/waitstatus.c \
 	$(SUBDIR_GCC_COMPILE_SRCS)
 
 LINTFILES = $(SFILES) $(YYFILES) $(CONFIG_SRCS) init.c
@@ -909,94 +1239,354 @@ LINTFILES = $(SFILES) $(YYFILES) $(CONFIG_SRCS) init.c
 # right, it is probably easiest just to list .h files here directly.
 
 HFILES_NO_SRCDIR = \
-common/gdb_signals.h nat/gdb_thread_db.h common/gdb_vecs.h \
-common/x86-xstate.h nat/linux-ptrace.h nat/mips-linux-watch.h \
-proc-utils.h aarch64-tdep.h arm-tdep.h ax-gdb.h ppcfbsd-tdep.h \
-ppcnbsd-tdep.h cli-out.h gdb_expat.h breakpoint.h infcall.h obsd-tdep.h \
-exec.h m32r-tdep.h osabi.h gdbcore.h x86bsd-nat.h \
-i386bsd-nat.h xml-support.h xml-tdesc.h alphabsd-tdep.h gdb_obstack.h \
-ia64-tdep.h ada-lang.h varobj.h varobj-iter.h frv-tdep.h \
-nto-tdep.h serial.h \
-c-lang.h d-lang.h go-lang.h frame.h event-loop.h block.h cli/cli-setshow.h \
-cli/cli-decode.h cli/cli-cmds.h cli/cli-utils.h \
-cli/cli-script.h macrotab.h symtab.h common/version.h \
-compile/compile.h gnulib/import/string.in.h gnulib/import/str-two-way.h \
-gnulib/import/stdint.in.h remote.h remote-notif.h gdb.h sparc-nat.h \
-gdbthread.h dwarf2-frame.h dwarf2-frame-tailcall.h nbsd-nat.h dcache.h \
-amd64-nat.h s390-linux-tdep.h arm-linux-tdep.h exceptions.h macroscope.h \
-gdbarch.h bsd-uthread.h memory-map.h memrange.h obsd-nat.h \
-mdebugread.h m88k-tdep.h stabsread.h hppa-linux-offsets.h linux-fork.h \
-ser-unix.h inf-ptrace.h terminal.h ui-out.h frame-base.h \
-f-lang.h dwarf2loc.h value.h sparc-tdep.h defs.h target-descriptions.h \
-objfiles.h common/vec.h disasm.h mips-tdep.h ser-base.h \
-gdb_curses.h bfd-target.h memattr.h inferior.h ax.h dummy-frame.h \
-inflow.h fbsd-nat.h ia64-libunwind-tdep.h completer.h \
-solib-target.h gdb_vfork.h alpha-tdep.h dwarf2expr.h \
-m2-lang.h stack.h charset.h addrmap.h command.h solist.h source.h \
-target.h target-dcache.h prologue-value.h cp-abi.h tui/tui-hooks.h tui/tui.h \
-tui/tui-file.h tui/tui-command.h tui/tui-disasm.h tui/tui-wingeneral.h \
-tui/tui-windata.h tui/tui-data.h tui/tui-win.h tui/tui-stack.h \
-tui/tui-winsource.h tui/tui-regs.h tui/tui-io.h tui/tui-layout.h \
-tui/tui-source.h sol2-tdep.h gregset.h sh-tdep.h sh64-tdep.h \
-expression.h score-tdep.h gdb_select.h ser-tcp.h \
-extension.h extension-priv.h nat/aarch64-linux-hw-point.h \
-build-id.h buildsym.h valprint.h nat/aarch64-linux.h \
-typeprint.h mi/mi-getopt.h mi/mi-parse.h mi/mi-console.h \
-mi/mi-out.h mi/mi-main.h mi/mi-common.h mi/mi-cmds.h linux-nat.h \
-complaints.h gdb_proc_service.h gdb_regex.h xtensa-tdep.h inf-loop.h \
-common/gdb_wait.h common/gdb_assert.h solib.h ppc-tdep.h cp-support.h glibc-tdep.h \
-interps.h auxv.h gdbcmd.h tramp-frame.h mipsnbsd-tdep.h	\
-amd64-linux-tdep.h linespec.h location.h i387-tdep.h mn10300-tdep.h \
-sparc64-tdep.h ppcobsd-tdep.h \
-coff-pe-read.h parser-defs.h gdb_ptrace.h mips-linux-tdep.h \
-m68k-tdep.h spu-tdep.h jv-lang.h environ.h amd64-tdep.h \
-doublest.h regset.h hppa-tdep.h ppc-linux-tdep.h ppc64-tdep.h \
-rs6000-tdep.h rs6000-aix-tdep.h \
-common/gdb_locale.h arch-utils.h trad-frame.h gnu-nat.h \
-language.h nbsd-tdep.h solib-svr4.h \
-macroexp.h ui-file.h regcache.h tracepoint.h tracefile.h i386-tdep.h \
-inf-child.h p-lang.h event-top.h gdbtypes.h user-regs.h \
-regformats/regdef.h config/i386/nm-i386gnu.h \
-config/i386/nm-fbsd.h \
-config/nm-nto.h config/sparc/nm-sol2.h config/nm-linux.h \
-top.h bsd-kvm.h gdb-stabs.h reggroups.h \
-annotate.h sim-regno.h dictionary.h dfp.h main.h frame-unwind.h	\
-remote-fileio.h i386-linux-tdep.h vax-tdep.h objc-lang.h \
-sentinel-frame.h bcache.h symfile.h windows-tdep.h linux-tdep.h \
-gdb_usleep.h jit.h xml-syscall.h microblaze-tdep.h \
-psymtab.h psympriv.h progspace.h bfin-tdep.h \
-amd64-darwin-tdep.h charset-list.h \
-config/djgpp/langinfo.h config/djgpp/nl_types.h darwin-nat.h \
-dicos-tdep.h filesystem.h gcore.h gdb_wchar.h hppabsd-tdep.h \
-i386-darwin-tdep.h x86-nat.h linux-record.h moxie-tdep.h nios2-tdep.h \
-ft32-tdep.h nds32-tdep.h \
-osdata.h procfs.h python/py-event.h python/py-events.h python/py-stopevent.h \
-python/python-internal.h python/python.h ravenscar-thread.h record.h \
-record-full.h solib-aix.h \
-solib-darwin.h solib-spu.h windows-nat.h xcoffread.h \
-gnulib/import/extra/snippet/arg-nonnull.h gnulib/import/extra/snippet/c++defs.h \
-gnulib/import/extra/snippet/warn-on-use.h \
-gnulib/import/stddef.in.h gnulib/import/inttypes.in.h inline-frame.h skip.h \
-common/common-utils.h common/xml-utils.h common/buffer.h common/ptid.h \
-common/format.h common/host-defs.h utils.h common/queue.h \
-nat/linux-osdata.h gdb-dlfcn.h auto-load.h probe.h stap-probe.h \
-gdb_bfd.h sparc-ravenscar-thread.h ppc-ravenscar-thread.h nat/linux-btrace.h \
-nat/ppc-linux.h ctf.h nat/x86-cpuid.h nat/x86-gcc-cpuid.h target/resume.h \
-target/wait.h target/waitstatus.h nat/linux-nat.h nat/linux-waitpid.h \
-common/print-utils.h common/rsp-low.h nat/x86-dregs.h x86-linux-nat.h \
-i386-linux-nat.h common/common-defs.h common/errors.h common/common-types.h \
-common/common-debug.h common/cleanups.h common/gdb_setjmp.h \
-common/common-exceptions.h target/target.h common/symbol.h \
-common/common-regcache.h fbsd-tdep.h nat/linux-personality.h \
-common/fileio.h nat/x86-linux.h nat/x86-linux-dregs.h nat/amd64-linux-siginfo.h\
-nat/linux-namespaces.h arch/arm.h common/gdb_sys_time.h arch/aarch64-insn.h \
-tid-parse.h ser-event.h \
-common/signals-state-save-restore.h
+	aarch64-tdep.h \
+	ada-lang.h \
+	addrmap.h \
+	alpha-bsd-tdep.h \
+	alpha-tdep.h \
+	amd64-darwin-tdep.h \
+	amd64-linux-tdep.h \
+	amd64-nat.h \
+	amd64-tdep.h \
+	annotate.h \
+	arc-tdep.h \
+	arch-utils.h \
+	arm-linux-tdep.h \
+	arm-tdep.h \
+	auto-load.h \
+	auxv.h \
+	ax.h \
+	ax-gdb.h \
+	bcache.h \
+	bfd-target.h \
+	bfin-tdep.h \
+	block.h \
+	breakpoint.h \
+	bsd-kvm.h \
+	bsd-uthread.h \
+	build-id.h \
+	buildsym.h \
+	c-lang.h \
+	charset.h \
+	charset-list.h \
+	cli-out.h \
+	coff-pe-read.h \
+	command.h \
+	complaints.h \
+	completer.h \
+	cp-abi.h \
+	cp-support.h \
+	ctf.h \
+	d-lang.h \
+	darwin-nat.h \
+	dcache.h \
+	defs.h \
+	dfp.h \
+	dicos-tdep.h \
+	dictionary.h \
+	disasm.h \
+	doublest.h \
+	dummy-frame.h \
+	dwarf2-frame.h \
+	dwarf2-frame-tailcall.h \
+	dwarf2expr.h \
+	dwarf2loc.h \
+	event-loop.h \
+	event-top.h \
+	exceptions.h \
+	exec.h \
+	expression.h \
+	extension.h \
+	extension-priv.h \
+	f-lang.h \
+	fbsd-nat.h \
+	fbsd-tdep.h \
+	filesystem.h \
+	frame.h \
+	frame-base.h \
+	frame-unwind.h \
+	frv-tdep.h \
+	ft32-tdep.h \
+	gcore.h \
+	gdb.h \
+	gdb_bfd.h \
+	gdb_curses.h \
+	gdb-dlfcn.h \
+	gdb_expat.h \
+	gdb_obstack.h \
+	gdb_proc_service.h \
+	gdb_regex.h \
+	gdb_select.h \
+	gdb-stabs.h \
+	gdb_usleep.h \
+	gdb_vfork.h \
+	gdb_wchar.h \
+	gdbarch.h \
+	gdbcmd.h \
+	gdbcore.h \
+	gdbthread.h \
+	gdbtypes.h \
+	glibc-tdep.h \
+	gnu-nat.h \
+	go-lang.h \
+	gregset.h \
+	hppa-bsd-tdep.h \
+	hppa-linux-offsets.h \
+	hppa-tdep.h \
+	i386-bsd-nat.h \
+	i386-darwin-tdep.h \
+	i386-linux-nat.h \
+	i386-linux-tdep.h \
+	i386-tdep.h \
+	i387-tdep.h \
+	ia64-libunwind-tdep.h \
+	ia64-tdep.h \
+	inf-child.h \
+	inf-loop.h \
+	inf-ptrace.h \
+	infcall.h \
+	inferior.h \
+	inflow.h \
+	inline-frame.h \
+	interps.h \
+	jit.h \
+	language.h \
+	linespec.h \
+	linux-fork.h \
+	linux-nat.h \
+	linux-record.h \
+	linux-tdep.h \
+	location.h \
+	m2-lang.h \
+	m32r-tdep.h \
+	m68k-tdep.h \
+	m88k-tdep.h \
+	macroexp.h \
+	macroscope.h \
+	macrotab.h \
+	main.h \
+	mdebugread.h \
+	memattr.h \
+	memory-map.h \
+	memrange.h \
+	microblaze-tdep.h \
+	mips-linux-tdep.h \
+	mips-nbsd-tdep.h \
+	mips-tdep.h \
+	mn10300-tdep.h \
+	moxie-tdep.h \
+	nbsd-nat.h \
+	nbsd-tdep.h \
+	nds32-tdep.h \
+	nios2-tdep.h \
+	nto-tdep.h \
+	objc-lang.h \
+	objfiles.h \
+	obsd-nat.h \
+	obsd-tdep.h \
+	osabi.h \
+	osdata.h \
+	p-lang.h \
+	parser-defs.h \
+	ppc-fbsd-tdep.h \
+	ppc-linux-tdep.h \
+	ppc-nbsd-tdep.h \
+	ppc-obsd-tdep.h \
+	ppc-ravenscar-thread.h \
+	ppc-tdep.h \
+	ppc64-tdep.h \
+	probe.h \
+	proc-utils.h \
+	procfs.h \
+	progspace.h \
+	prologue-value.h \
+	psympriv.h \
+	psymtab.h \
+	ravenscar-thread.h \
+	record.h \
+	record-full.h \
+	regcache.h \
+	reggroups.h \
+	regset.h \
+	remote.h \
+	remote-fileio.h \
+	remote-notif.h \
+	rs6000-aix-tdep.h \
+	rs6000-tdep.h \
+	s390-linux-tdep.h \
+	score-tdep.h \
+	selftest-arch.h \
+	sentinel-frame.h \
+	ser-base.h \
+	ser-event.h \
+	ser-tcp.h \
+	ser-unix.h \
+	serial.h \
+	sh-tdep.h \
+	sh64-tdep.h \
+	sim-regno.h \
+	skip.h \
+	sol2-tdep.h \
+	solib.h \
+	solib-aix.h \
+	solib-darwin.h \
+	solib-spu.h \
+	solib-svr4.h \
+	solib-target.h \
+	solist.h \
+	source.h \
+	sparc-nat.h \
+	sparc-ravenscar-thread.h \
+	sparc-tdep.h \
+	sparc64-tdep.h \
+	spu-tdep.h \
+	stabsread.h \
+	stack.h \
+	stap-probe.h \
+	symfile.h \
+	symtab.h \
+	target.h \
+	target-dcache.h \
+	target-descriptions.h \
+	terminal.h \
+	tid-parse.h \
+	top.h \
+	tracefile.h \
+	tracepoint.h \
+	trad-frame.h \
+	tramp-frame.h \
+	typeprint.h \
+	ui-file.h \
+	ui-out.h \
+	user-regs.h \
+	utils.h \
+	valprint.h \
+	value.h \
+	varobj.h \
+	varobj-iter.h \
+	vax-tdep.h \
+	windows-nat.h \
+	windows-tdep.h \
+	x86-bsd-nat.h \
+	x86-linux-nat.h \
+	x86-nat.h \
+	xcoffread.h \
+	xml-support.h \
+	xml-syscall.h \
+	xml-tdesc.h \
+	xtensa-tdep.h \
+	arch/aarch64-insn.h \
+	arch/arm.h \
+	cli/cli-cmds.h \
+	cli/cli-decode.h \
+	cli/cli-script.h \
+	cli/cli-setshow.h \
+	cli/cli-utils.h \
+	common/buffer.h \
+	common/cleanups.h \
+	common/common-debug.h \
+	common/common-defs.h \
+	common/common-exceptions.h \
+	common/common-regcache.h \
+	common/common-types.h \
+	common/common-utils.h \
+	common/errors.h \
+	common/environ.h \
+	common/fileio.h \
+	common/format.h \
+	common/gdb_assert.h \
+	common/gdb_locale.h \
+	common/gdb_setjmp.h \
+	common/gdb_signals.h \
+	common/gdb_sys_time.h \
+	common/gdb_termios.h \
+	common/gdb_vecs.h \
+	common/gdb_wait.h \
+	common/host-defs.h \
+	common/print-utils.h \
+	common/ptid.h \
+	common/queue.h \
+	common/rsp-low.h \
+	common/run-time-clock.h \
+	common/signals-state-save-restore.h \
+	common/symbol.h \
+	common/vec.h \
+	common/version.h \
+	common/x86-xstate.h \
+	common/xml-utils.h \
+	compile/compile.h \
+	config/nm-linux.h \
+	config/nm-nto.h \
+	config/djgpp/langinfo.h \
+	config/djgpp/nl_types.h \
+	config/i386/nm-fbsd.h \
+	config/i386/nm-i386gnu.h \
+	config/sparc/nm-sol2.h \
+	gnulib/import/inttypes.in.h \
+	gnulib/import/stddef.in.h \
+	gnulib/import/stdint.in.h \
+	gnulib/import/str-two-way.h \
+	gnulib/import/string.in.h \
+	gnulib/import/extra/snippet/arg-nonnull.h \
+	gnulib/import/extra/snippet/c++defs.h \
+	gnulib/import/extra/snippet/warn-on-use.h \
+	mi/mi-cmds.h \
+	mi/mi-common.h \
+	mi/mi-console.h \
+	mi/mi-getopt.h \
+	mi/mi-main.h \
+	mi/mi-out.h \
+	mi/mi-parse.h \
+	nat/aarch64-linux.h \
+	nat/aarch64-linux-hw-point.h \
+	nat/amd64-linux-siginfo.h \
+	nat/gdb_ptrace.h \
+	nat/gdb_thread_db.h \
+	nat/linux-btrace.h \
+	nat/linux-namespaces.h \
+	nat/linux-nat.h \
+	nat/linux-osdata.h \
+	nat/linux-personality.h \
+	nat/linux-ptrace.h \
+	nat/linux-waitpid.h \
+	nat/mips-linux-watch.h \
+	nat/ppc-linux.h \
+	nat/x86-cpuid.h \
+	nat/x86-dregs.h \
+	nat/x86-gcc-cpuid.h \
+	nat/x86-linux.h \
+	nat/x86-linux-dregs.h \
+	python/py-event.h \
+	python/py-events.h \
+	python/py-stopevent.h \
+	python/python.h \
+	python/python-internal.h \
+	regformats/regdef.h \
+	target/resume.h \
+	target/target.h \
+	target/wait.h \
+	target/waitstatus.h \
+	tui/tui.h \
+	tui/tui-command.h \
+	tui/tui-data.h \
+	tui/tui-disasm.h \
+	tui/tui-file.h \
+	tui/tui-hooks.h \
+	tui/tui-io.h \
+	tui/tui-layout.h \
+	tui/tui-regs.h \
+	tui/tui-source.h \
+	tui/tui-stack.h \
+	tui/tui-win.h \
+	tui/tui-windata.h \
+	tui/tui-wingeneral.h \
+	tui/tui-winsource.h
 
 # Header files that already have srcdir in them, or which are in objdir.
 
-HFILES_WITH_SRCDIR = ../bfd/bfd.h jit-reader.h
-
+HFILES_WITH_SRCDIR = \
+	../bfd/bfd.h \
+	jit-reader.h
 
 # GDB "info" files, which should be included in their entirety
 INFOFILES = gdb.info*
@@ -1018,81 +1608,211 @@ TAGFILES_NO_SRCDIR = $(SFILES) $(HFILES_NO_SRCDIR) $(ALLDEPFILES) \
 TAGFILES_WITH_SRCDIR = $(HFILES_WITH_SRCDIR)
 
 COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
-	version.o \
-	annotate.o \
+	ada-lang.o \
+	ada-tasks.o \
+	ada-typeprint.o \
+	ada-valprint.o \
+	ada-varobj.o \
 	addrmap.o \
-	auto-load.o auxv.o \
 	agent.o \
+	annotate.o \
+	arch-utils.o \
+	auto-load.o \
+	auxv.o \
+	bcache.o \
 	bfd-target.o \
-	blockframe.o breakpoint.o break-catch-sig.o break-catch-throw.o \
+	block.o \
+	blockframe.o \
+	break-catch-sig.o \
 	break-catch-syscall.o \
-	findvar.o regcache.o cleanups.o \
-	charset.o continuations.o corelow.o disasm.o dummy-frame.o dfp.o \
-	source.o value.o eval.o valops.o valarith.o valprint.o printcmd.o \
-	block.o symtab.o psymtab.o symfile.o symfile-debug.o symmisc.o \
-	linespec.o dictionary.o namespace.o \
-	location.o infcall.o \
-	infcmd.o infrun.o \
-	expprint.o environ.o stack.o tid-parse.o thread.o thread-fsm.o \
+	break-catch-throw.o \
+	breakpoint.o \
+	btrace.o \
+	btrace-common.o \
+	buffer.o \
+	build-id.o \
+	buildsym.o \
+	c-lang.o \
+	c-typeprint.o \
+	c-valprint.o \
+	c-varobj.o \
+	charset.o \
+	cleanups.o \
+	cli-out.o \
+	coff-pe-read.o \
+	coffread.o \
+	common-agent.o \
+	common-debug.o \
+	common-exceptions.o \
+	common-regcache.o \
+	common-utils.o \
+	complaints.o \
+	completer.o \
+	continuations.o \
+	copying.o \
+	corefile.o \
+	corelow.o \
+	cp-abi.o \
+	cp-namespace.o \
+	cp-support.o \
+	cp-valprint.o \
+	d-lang.o \
+	d-namespace.o \
+	d-valprint.o \
+	dbxread.o \
+	debug.o \
+	demangle.o \
+	dfp.o \
+	dictionary.o \
+	disasm.o \
+	disasm-selftests.o \
+	doublest.o \
+	dummy-frame.o \
+	dwarf2-frame.o \
+	dwarf2-frame-tailcall.o \
+	dwarf2expr.o \
+	dwarf2loc.o \
+	dwarf2read.o \
+	environ.o \
+	errors.o \
+	eval.o \
+	event-loop.o \
+	event-top.o \
 	exceptions.o \
+	exec.o \
+	expprint.o \
 	extension.o \
-	filesystem.o \
+	f-lang.o \
+	f-typeprint.o \
+	f-valprint.o \
+	fileio.o \
 	filestuff.o \
-	inf-child.o \
-	interps.o \
-	minidebug.o \
-	main.o \
-	macrotab.o macrocmd.o macroexp.o macroscope.o \
-	mi-common.o \
-	event-loop.o event-top.o inf-loop.o completer.o \
-	gdbarch.o arch-utils.o gdbtypes.o gdb_bfd.o gdb_obstack.o \
-	osabi.o copying.o \
-	memattr.o mem-break.o target.o target-dcache.o parse.o language.o \
-	build-id.o buildsym.o \
+	filesystem.o \
 	findcmd.o \
-	std-regs.o \
-	signals-state-save-restore.o \
-	signals.o \
-	exec.o reverse.o \
-	bcache.o objfiles.o observer.o minsyms.o maint.o demangle.o \
-	dbxread.o coffread.o coff-pe-read.o \
-	dwarf2read.o mipsread.o stabsread.o corefile.o \
-	dwarf2expr.o dwarf2loc.o dwarf2-frame.o dwarf2-frame-tailcall.o \
-	ada-lang.o c-lang.o d-lang.o f-lang.o objc-lang.o \
-	ada-tasks.o ada-varobj.o c-varobj.o \
-	ui-out.o cli-out.o \
-	varobj.o vec.o \
-	go-lang.o go-valprint.o go-typeprint.o \
-	jv-lang.o jv-valprint.o jv-typeprint.o jv-varobj.o \
-	m2-lang.o opencl-lang.o p-lang.o p-typeprint.o p-valprint.o \
-	selftest.o sentinel-frame.o \
-	complaints.o typeprint.o \
-	ada-typeprint.o c-typeprint.o f-typeprint.o m2-typeprint.o \
-	ada-valprint.o c-valprint.o cp-valprint.o d-valprint.o f-valprint.o \
-	m2-valprint.o \
-	ser-event.o serial.o mdebugread.o top.o utils.o \
-	ui-file.o \
-	user-regs.o \
-	frame.o frame-unwind.o doublest.o \
+	findvar.o \
+	format.o \
+	frame.o \
 	frame-base.o \
+	frame-unwind.o \
+	gcore.o \
+	gdb_bfd.o \
+	gdb-dlfcn.o \
+	gdb_obstack.o \
+	gdb_usleep.o \
+	gdb_vecs.o \
+	gdbarch.o \
+	gdbtypes.o \
+	gnu-v2-abi.o \
+	gnu-v3-abi.o \
+	go-lang.o \
+	go-typeprint.o \
+	go-valprint.o \
+	inf-child.o \
+	inf-loop.o \
+	infcall.o \
+	infcmd.o \
+	inferior.o \
+	infrun.o \
 	inline-frame.o \
-	gnu-v2-abi.o gnu-v3-abi.o cp-abi.o cp-support.o \
-	cp-namespace.o d-namespace.o \
+	interps.o \
+	jit.o \
+	language.o \
+	linespec.o \
+	location.o \
+	m2-lang.o \
+	m2-typeprint.o \
+	m2-valprint.o \
+	macrocmd.o \
+	macroexp.o \
+	macroscope.o \
+	macrotab.o \
+	main.o \
+	maint.o \
+	mdebugread.o \
+	mem-break.o \
+	memattr.o \
+	memory-map.o \
+	memrange.o \
+	mi-common.o \
+	minidebug.o \
+	minsyms.o \
+	mipsread.o \
+	namespace.o \
+	new-op.o \
+	objc-lang.o \
+	objfiles.o \
+	observer.o \
+	opencl-lang.o \
+	osabi.o \
+	osdata.o \
+	p-lang.o \
+	p-typeprint.o \
+	p-valprint.o \
+	parse.o \
+	print-utils.o \
+	printcmd.o \
+	probe.o \
+	progspace.o \
+	prologue-value.o \
+	psymtab.o \
+	ptid.o \
+	record.o \
+	record-btrace.o \
+	record-full.o \
+	regcache.o \
 	reggroups.o \
+	registry.o \
+	reverse.o \
+	rsp-low.o \
+	run-time-clock.o \
 	rust-lang.o \
+	selftest.o \
+	selftest-arch.o \
+	sentinel-frame.o \
+	ser-event.o \
+	serial.o \
+	signals.o \
+	signals-state-save-restore.o \
+	skip.o \
+	solib.o \
+	solib-target.o \
+	source.o \
+	stabsread.o \
+	stack.o \
+	std-regs.o \
+	symfile.o \
+	symfile-debug.o \
+	symmisc.o \
+	symtab.o \
+	target.o \
+	target-dcache.o \
+	target-descriptions.o \
+	target-memory.o \
+	thread.o \
+	thread-fsm.o \
+	tid-parse.o \
+	top.o \
 	trad-frame.o \
 	tramp-frame.o \
-	solib.o solib-target.o \
-	prologue-value.o memory-map.o memrange.o \
-	xml-support.o xml-syscall.o xml-utils.o \
-	target-descriptions.o target-memory.o xml-tdesc.o xml-builtin.o \
-	inferior.o osdata.o gdb_usleep.o record.o record-full.o gcore.o \
-	gdb_vecs.o jit.o progspace.o skip.o probe.o \
-	common-utils.o buffer.o ptid.o gdb-dlfcn.o common-agent.o \
-	format.o registry.o btrace.o record-btrace.o waitstatus.o \
-	print-utils.o rsp-low.o errors.o common-debug.o debug.o \
-	common-exceptions.o btrace-common.o fileio.o \
-	common-regcache.o \
+	typeprint.o \
+	ui-file.o \
+	ui-out.o \
+	user-regs.o \
+	utils.o \
+	utils-selftests.o \
+	valarith.o \
+	valops.o \
+	valprint.o \
+	value.o \
+	varobj.o \
+	vec.o \
+	version.o \
+	waitstatus.o \
+	xml-builtin.o \
+	xml-support.o \
+	xml-syscall.o \
+	xml-tdesc.o \
+	xml-utils.o \
 	$(SUBDIR_GCC_COMPILE_OBS)
 
 TSOBS = inflow.o
@@ -1107,17 +1827,28 @@ CLEANDIRS = $(SUBDIRS)
 REQUIRED_SUBDIRS = doc | testsuite | $(GNULIB_BUILDDIR) | data-directory
 
 # For now, shortcut the "configure GDB for fewer languages" stuff.
-YYFILES = c-exp.c \
-	cp-name-parser.c \
-	ada-lex.c \
+YYFILES = \
 	ada-exp.c \
-	jv-exp.c \
-	d-exp.c f-exp.c go-exp.c m2-exp.c p-exp.c rust-exp.c
-YYOBJ = c-exp.o \
-	cp-name-parser.o \
+	ada-lex.c \
+	c-exp.c \
+	cp-name-parser.c \
+	d-exp.c \
+	f-exp.c \
+	go-exp.c \
+	m2-exp.c \
+	p-exp.c \
+	rust-exp.c
+
+YYOBJ = \
 	ada-exp.o \
-	jv-exp.o \
-	d-exp.o f-exp.o go-exp.o m2-exp.o p-exp.o rust-exp.o
+	c-exp.o \
+	cp-name-parser.o \
+	d-exp.o \
+	f-exp.o \
+	go-exp.o \
+	m2-exp.o \
+	p-exp.o \
+	rust-exp.o
 
 # Things which need to be built when making a distribution.
 
@@ -1125,15 +1856,81 @@ DISTSTUFF = $(YYFILES)
 
 
 # All generated files which can be included by another file.
-generated_files = config.h observer.h observer.inc ada-lex.c jit-reader.h \
-	$(GNULIB_H) $(NAT_GENERATED_FILES) gcore
+generated_files = \
+	ada-lex.c \
+	config.h \
+	gcore \
+	jit-reader.h \
+	observer.h \
+	observer.inc \
+	$(GNULIB_H) \
+	$(NAT_GENERATED_FILES)
 
-.c.o:
-	$(COMPILE) $<
-	$(POSTCOMPILE)
+# Flags needed to compile Python code
+PYTHON_CFLAGS = @PYTHON_CFLAGS@
 
 all: gdb$(EXEEXT) $(CONFIG_ALL)
 	@$(MAKE) $(FLAGS_TO_PASS) DO=all "DODIRS=`echo $(SUBDIRS) | sed 's/testsuite//'`" subdir_do
+
+# Rule for compiling .c files in the top-level gdb directory.
+%.o: %.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+# Rules for compiling .c files in the various source subdirectories.
+%.o: ${srcdir}/arch/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: $(srcdir)/cli/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: ${srcdir}/common/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: $(srcdir)/compile/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: $(srcdir)/gdbtk/generic/%.c
+	$(COMPILE) $(all_gdbtk_cflags) $<
+	$(POSTCOMPILE)
+
+%.o: $(srcdir)/guile/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: $(srcdir)/mi/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: ${srcdir}/nat/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: $(srcdir)/python/%.c
+	$(COMPILE) $(PYTHON_CFLAGS) $<
+	$(POSTCOMPILE)
+
+%.o: ${srcdir}/target/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: $(srcdir)/tui/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+%.o: ${srcdir}/unittests/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+# Specify an explicit rule for gdb/common/agent.c, to avoid a clash with the
+# object file generate by gdb/agent.c.
+common-agent.o: $(srcdir)/common/agent.c
+	$(COMPILE) $(srcdir)/common/agent.c
+	$(POSTCOMPILE)
 
 installcheck:
 
@@ -1219,8 +2016,8 @@ CHECK_HEADERS = $(HFILES_NO_SRCDIR)
 check-headers:
 	@echo Checking headers.
 	for i in $(CHECK_HEADERS) ; do \
-		$(CC) -x c -c -fsyntax-only $(INTERNAL_CFLAGS) \
-			-include defs.h $(srcdir)/$$i ; \
+		$(CXX) $(CXX_DIALECT) -x c++-header -c -fsyntax-only \
+		$(INTERNAL_CFLAGS) -include defs.h $(srcdir)/$$i ; \
 	done
 .PHONY: check-headers
 
@@ -1398,7 +2195,7 @@ init.c: $(INIT_FILES)
 # against that.
 #
 # init.o is very important.  It pulls in the rest of GDB.
-LIBGDB_OBS= $(COMMON_OBS) $(TSOBS) $(ADD_FILES) init.o
+LIBGDB_OBS = $(COMMON_OBS) $(TSOBS) $(ADD_FILES) init.o
 libgdb.a: $(LIBGDB_OBS)
 	-rm -f libgdb.a
 	$(AR) q libgdb.a $(LIBGDB_OBS)
@@ -1488,7 +2285,6 @@ local-maintainer-clean:
 	rm -f c-exp.c \
 		cp-name-parser.c \
 		ada-lex.c ada-exp.c \
-		jv-exp.tab \
 		d-exp.c f-exp.c go-exp.c m2-exp.c p-exp.c rust-exp.c
 	rm -f TAGS $(INFOFILES)
 	rm -f $(YYFILES)
@@ -1659,116 +2455,215 @@ force_update:
 # GNU Make 3.63 has a different problem: it keeps tacking command line
 # overrides onto the definition of $(MAKE).  This variable setting
 # will remove them.
-MAKEOVERRIDES=
+MAKEOVERRIDES =
 
 ALLDEPFILES = \
-	aarch64-tdep.c aarch64-linux-tdep.c aarch64-newlib-tdep.c \
 	aarch64-linux-nat.c \
+	aarch64-linux-tdep.c \
+	aarch64-newlib-tdep.c \
+	aarch64-tdep.c \
 	aix-thread.c \
-	alphabsd-nat.c alpha-linux-nat.c \
-	alpha-tdep.c alpha-mdebug-tdep.c \
+	alpha-bsd-nat.c \
+	alpha-bsd-tdep.c \
+	alpha-linux-nat.c \
 	alpha-linux-tdep.c \
-	alphabsd-tdep.c alphafbsd-tdep.c alphanbsd-tdep.c alphaobsd-tdep.c \
-	amd64-nat.c amd64-tdep.c \
-	amd64bsd-nat.c amd64fbsd-nat.c amd64fbsd-tdep.c \
-	amd64nbsd-nat.c amd64nbsd-tdep.c \
-	amd64obsd-nat.c amd64obsd-tdep.c \
+	alpha-mdebug-tdep.c \
+	alpha-nbsd-tdep.c \
+	alpha-obsd-tdep.c \
+	alpha-tdep.c \
+	amd64-bsd-nat.c \
 	amd64-darwin-tdep.c \
 	amd64-dicos-tdep.c \
-	amd64-linux-nat.c amd64-linux-tdep.c \
+	amd64-fbsd-nat.c \
+	amd64-fbsd-tdep.c \
+	amd64-linux-nat.c \
+	amd64-linux-tdep.c \
+	amd64-nat.c \
+	amd64-nbsd-nat.c \
+	amd64-nbsd-tdep.c \
+	amd64-obsd-nat.c \
+	amd64-obsd-tdep.c \
 	amd64-sol2-tdep.c \
-	arm.c arm-get-next-pcs.c \
-	arm-linux.c arm-linux-nat.c arm-linux-tdep.c \
-	arm-symbian-tdep.c arm-tdep.c \
-	armnbsd-nat.c armbsd-tdep.c armnbsd-tdep.c armobsd-tdep.c \
+	amd64-tdep.c \
+	arc-tdep.c \
+	arm.c \
+	arm-bsd-tdep.c \
+	arm-get-next-pcs.c \
+	arm-linux.c \
+	arm-linux-nat.c \
+	arm-linux-tdep.c \
+	arm-nbsd-nat.c \
+	arm-nbsd-tdep.c \
+	arm-obsd-tdep.c \
+	arm-symbian-tdep.c \
+	arm-tdep.c \
 	avr-tdep.c \
-	bfin-linux-tdep.c bfin-tdep.c \
-	bsd-uthread.c bsd-kvm.c \
+	bfin-linux-tdep.c \
+	bfin-tdep.c \
+	bsd-kvm.c \
+	bsd-uthread.c \
 	core-regset.c \
-	dcache.c dicos-tdep.c darwin-nat.c \
+	darwin-nat.c \
+	dcache.c \
+	dcache.c \
+	dicos-tdep.c \
 	exec.c \
 	fbsd-nat.c \
 	fbsd-tdep.c \
 	fork-child.c \
 	ft32-tdep.c \
 	glibc-tdep.c \
-	go32-nat.c h8300-tdep.c \
+	go32-nat.c \
+	h8300-tdep.c \
+	hppa-bsd-tdep.c \
+	hppa-linux-nat.c \
+	hppa-linux-tdep.c \
+	hppa-nbsd-nat.c \
+	hppa-nbsd-tdep.c \
+	hppa-obsd-nat.c \
+	hppa-obsd-tdep.c \
 	hppa-tdep.c \
-	hppa-linux-tdep.c hppa-linux-nat.c \
-	hppabsd-tdep.c \
-	hppanbsd-nat.c hppanbsd-tdep.c \
-	hppaobsd-nat.c hppaobsd-tdep.c \
-	i386-tdep.c i386-linux-nat.c \
-	i386v4-nat.c i386-cygwin-tdep.c \
-	i386bsd-nat.c i386bsd-tdep.c i386fbsd-nat.c i386fbsd-tdep.c \
-	i386nbsd-nat.c i386nbsd-tdep.c i386obsd-nat.c i386obsd-tdep.c \
-	i387-tdep.c \
-	i386-darwin-tdep.c i386-darwin-nat.c \
+	i386-bsd-nat.c \
+	i386-bsd-tdep.c \
+	i386-cygwin-tdep.c \
+	i386-darwin-nat.c \
+	i386-darwin-tdep.c \
 	i386-dicos-tdep.c \
-	i386-linux-tdep.c x86-nat.c \
-	i386-sol2-nat.c i386-sol2-tdep.c \
-	i386gnu-nat.c i386gnu-tdep.c \
-	ia64-linux-nat.c ia64-linux-tdep.c ia64-tdep.c ia64-vms-tdep.c \
-	inf-ptrace.c \
+	i386-fbsd-nat.c \
+	i386-fbsd-tdep.c \
+	i386-gnu-nat.c \
+	i386-gnu-tdep.c \
+	i386-linux-nat.c \
+	i386-linux-tdep.c \
+	i386-nbsd-nat.c \
+	i386-nbsd-tdep.c \
+	i386-obsd-nat.c \
+	i386-obsd-tdep.c \
+	i386-sol2-nat.c \
+	i386-sol2-tdep.c \
+	i386-tdep.c \
+	i386-v4-nat.c \
+	i387-tdep.c \
 	ia64-libunwind-tdep.c \
+	ia64-linux-nat.c \
+	ia64-linux-tdep.c \
+	ia64-tdep.c \
+	ia64-vms-tdep.c \
+	inf-ptrace.c \
 	linux-fork.c \
-	linux-tdep.c \
 	linux-record.c \
+	linux-tdep.c \
 	lm32-tdep.c \
-	m68hc11-tdep.c \
+	m32r-linux-nat.c \
+	m32r-linux-tdep.c \
 	m32r-tdep.c \
-	m32r-linux-nat.c m32r-linux-tdep.c \
+	m68hc11-tdep.c \
+	m68k-bsd-nat.c \
+	m68k-bsd-tdep.c \
+	m68k-linux-nat.c \
+	m68k-linux-tdep.c \
 	m68k-tdep.c \
-	m68kbsd-nat.c m68kbsd-tdep.c \
-	m68klinux-nat.c m68klinux-tdep.c \
-	m88k-tdep.c m88kbsd-nat.c \
-	microblaze-tdep.c microblaze-linux-tdep.c \
-	mingw-hdep.c common/mingw-strerror.c \
-	mips-linux-nat.c mips-linux-tdep.c \
+	m88k-bsd-nat.c \
+	m88k-tdep.c \
+	microblaze-linux-tdep.c \
+	microblaze-tdep.c \
+	mingw-hdep.c \
+	mips-fbsd-nat.c \
+	mips-fbsd-tdep.c \
+	mips-linux-nat.c \
+	mips-linux-tdep.c \
+	mips-nbsd-nat.c \
+	mips-nbsd-tdep.c \
 	mips-sde-tdep.c \
 	mips-tdep.c \
-	mipsnbsd-nat.c mipsnbsd-tdep.c \
-	mips64obsd-nat.c mips64obsd-tdep.c \
+	mips64-obsd-nat.c \
+	mips64-obsd-tdep.c \
 	msp430-tdep.c \
+	nbsd-nat.c \
+	nbsd-tdep.c \
 	nds32-tdep.c \
-	nios2-tdep.c nios2-linux-tdep.c \
-	nbsd-nat.c nbsd-tdep.c obsd-nat.c obsd-tdep.c \
-	posix-hdep.c common/posix-strerror.c \
-	ppc-sysv-tdep.c ppc-linux-nat.c ppc-linux-tdep.c ppc64-tdep.c \
-	ppcfbsd-nat.c ppcfbsd-tdep.c \
-	ppcnbsd-nat.c ppcnbsd-tdep.c \
-	ppcobsd-nat.c ppcobsd-tdep.c \
+	nios2-linux-tdep.c \
+	nios2-tdep.c \
+	obsd-nat.c \
+	obsd-tdep.c \
+	posix-hdep.c \
+	ppc-fbsd-nat.c \
+	ppc-fbsd-tdep.c \
+	ppc-linux-nat.c \
+	ppc-linux-tdep.c \
+	ppc-nbsd-nat.c \
+	ppc-nbsd-tdep.c \
+	ppc-obsd-nat.c \
+	ppc-obsd-tdep.c \
+	ppc-ravenscar-thread.c \
+	ppc-sysv-tdep.c \
+	ppc64-tdep.c \
 	procfs.c \
 	ravenscar-thread.c \
 	remote-sim.c \
-	dcache.c \
 	rl78-tdep.c \
-	rs6000-nat.c rs6000-tdep.c solib-aix.c ppc-ravenscar-thread.c \
 	rs6000-lynx178-tdep.c \
+	rs6000-nat.c \
+	rs6000-tdep.c \
 	rx-tdep.c \
-	s390-linux-tdep.c s390-linux-nat.c \
+	s390-linux-nat.c \
+	s390-linux-tdep.c \
 	score-tdep.c \
-	ser-go32.c ser-pipe.c ser-tcp.c ser-mingw.c \
-	sh-tdep.c sh64-tdep.c shnbsd-tdep.c shnbsd-nat.c \
+	ser-go32.c \
+	ser-mingw.c \
+	ser-pipe.c \
+	ser-tcp.c \
+	sh-nbsd-nat.c \
+	sh-nbsd-tdep.c \
+	sh-tdep.c \
+	sh64-tdep.c \
 	sol2-tdep.c \
+	solib-aix.c \
+	solib-spu.c \
 	solib-svr4.c \
-	sparc-linux-nat.c sparc-linux-tdep.c \
-	sparc-sol2-nat.c sparc-sol2-tdep.c sparc64-sol2-tdep.c \
-	sparc-nat.c sparc-tdep.c sparc64-linux-nat.c sparc64-linux-tdep.c \
-	sparc64-nat.c sparc64-tdep.c sparc64fbsd-nat.c sparc64fbsd-tdep.c \
-	sparc64nbsd-nat.c sparc64nbsd-tdep.c \
-	sparc64obsd-nat.c sparc64obsd-tdep.c \
-	sparcnbsd-nat.c sparcnbsd-tdep.c sparcobsd-tdep.c \
+	sparc-linux-nat.c \
+	sparc-linux-tdep.c \
+	sparc-nat.c \
+	sparc-nbsd-nat.c \
+	sparc-nbsd-tdep.c \
+	sparc-obsd-tdep.c \
 	sparc-ravenscar-thread.c \
-	spu-linux-nat.c spu-tdep.c spu-multiarch.c solib-spu.c \
-	tilegx-linux-nat.c tilegx-tdep.c tilegx-linux-tdep.c \
+	sparc-sol2-nat.c \
+	sparc-sol2-tdep.c \
+	sparc-tdep.c \
+	sparc64-fbsd-nat.c \
+	sparc64-fbsd-tdep.c \
+	sparc64-linux-nat.c \
+	sparc64-linux-tdep.c \
+	sparc64-nat.c \
+	sparc64-nbsd-nat.c \
+	sparc64-nbsd-tdep.c \
+	sparc64-obsd-nat.c \
+	sparc64-obsd-tdep.c \
+	sparc64-sol2-tdep.c \
+	sparc64-tdep.c \
+	spu-linux-nat.c \
+	spu-multiarch.c \
+	spu-tdep.c \
+	tilegx-linux-nat.c \
+	tilegx-linux-tdep.c \
+	tilegx-tdep.c \
 	v850-tdep.c \
-	vax-tdep.c vaxbsd-nat.c vaxnbsd-tdep.c \
-	windows-nat.c windows-tdep.c \
+	vax-bsd-nat.c \
+	vax-nbsd-tdep.c \
+	vax-tdep.c \
+	windows-nat.c \
+	windows-tdep.c \
+	x86-nat.c \
 	xcoffread.c \
 	xstormy16-tdep.c \
-	xtensa-tdep.c xtensa-config.c \
-	xtensa-linux-tdep.c xtensa-linux-nat.c xtensa-xtregs.c
+	xtensa-config.c \
+	xtensa-linux-nat.c \
+	xtensa-linux-tdep.c \
+	xtensa-tdep.c \
+	xtensa-xtregs.c \
+	common/mingw-strerror.c \
+	common/posix-strerror.c
 
 # Some files need explicit build rules (due to -Werror problems) or due
 # to sub-directory fun 'n' games.
@@ -1807,7 +2702,6 @@ ada-exp.o: ada-exp.c
 # Rules for generating translated message descriptions.  Disabled by
 # autoconf if the tools are not available.
 
-.SUFFIXES: .po .gmo .pox .pot
 .PHONY: all-po install-po uninstall-po clean-po update-po $(PACKAGE).pot
 
 all-po: $(CATALOGS)
@@ -1818,14 +2712,14 @@ update-po: $(CATALOGS:.gmo=.pox)
 
 # N.B. We do not attempt to copy these into $(srcdir).  The snapshot
 # script does that.
-.po.gmo:
+%.gmo: %.po
 	-test -d po || mkdir po
 	$(GMSGFMT) --statistics -o $@ $<
 
 # The new .po has to be gone over by hand, so we deposit it into
 # build/po with a different extension.  If build/po/$(PACKAGE).pot
 # exists, use it (it was just created), else use the one in srcdir.
-.po.pox:
+%.pox: %.po
 	-test -d po || mkdir po
 	$(MSGMERGE) $< `if test -f po/$(PACKAGE).pot; \
 			then echo po/$(PACKAGE).pot; \
@@ -1886,8 +2780,7 @@ po/$(PACKAGE).pot: force
 # Strictly speaking c-exp.c should therefore depend on
 # Makefile.in, but that was a pretty big annoyance.
 
-.SUFFIXES: .y .l
-.y.c:
+%.c: %.y
 	rm -f $@ $@.tmp
 	$(SHELL) $(YLWRAP) $< y.tab.c $@ -- $(YACC) $(YFLAGS) && mv $@ $@.tmp \
 		|| (rm -f $@; false)
@@ -1900,9 +2793,10 @@ po/$(PACKAGE).pot: force
 	     -e 's/\([ \t;,(]\)free\([ \t]*[&(),]\)/\1xfree\2/g' \
 	     -e 's/\([ \t;,(]\)free$$/\1xfree/g' \
 	     -e '/^#line.*y.tab.c/d' \
+	     -e 's/YY_NULL/YY_NULLPTR/g' \
 	  < $@.tmp > $@
 	rm -f $@.tmp
-.l.c:
+%.c: %.l
 	if [ "$(FLEX)" ] && $(FLEX) --version >/dev/null 2>&1; then \
 	    $(FLEX) -o$@ $< && \
 	    rm -f $@.new && \
@@ -1941,82 +2835,8 @@ stamp-xml: $(srcdir)/features/feature_to_c.sh Makefile $(XMLFILES)
 .PRECIOUS: xml-builtin.c
 
 #
-# gdb/cli/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-cli-cmds.o: $(srcdir)/cli/cli-cmds.c
-	$(COMPILE) $(srcdir)/cli/cli-cmds.c
-	$(POSTCOMPILE)
-
-cli-decode.o: $(srcdir)/cli/cli-decode.c
-	$(COMPILE) $(srcdir)/cli/cli-decode.c
-	$(POSTCOMPILE)
-
-cli-dump.o: $(srcdir)/cli/cli-dump.c
-	$(COMPILE) $(srcdir)/cli/cli-dump.c
-	$(POSTCOMPILE)
-
-cli-interp.o: $(srcdir)/cli/cli-interp.c
-	$(COMPILE) $(srcdir)/cli/cli-interp.c
-	$(POSTCOMPILE)
-
-cli-logging.o: $(srcdir)/cli/cli-logging.c
-	$(COMPILE) $(srcdir)/cli/cli-logging.c
-	$(POSTCOMPILE)
-
-cli-script.o: $(srcdir)/cli/cli-script.c
-	$(COMPILE) $(srcdir)/cli/cli-script.c
-	$(POSTCOMPILE)
-
-cli-setshow.o: $(srcdir)/cli/cli-setshow.c
-	$(COMPILE) $(srcdir)/cli/cli-setshow.c
-	$(POSTCOMPILE)
-
-cli-utils.o: $(srcdir)/cli/cli-utils.c
-	$(COMPILE) $(srcdir)/cli/cli-utils.c
-	$(POSTCOMPILE)
-
-# GCC Compile support dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-compile.o: $(srcdir)/compile/compile.c
-	$(COMPILE) $(srcdir)/compile/compile.c
-	$(POSTCOMPILE)
-
-compile-c-types.o: $(srcdir)/compile/compile-c-types.c
-	$(COMPILE) $(srcdir)/compile/compile-c-types.c
-	$(POSTCOMPILE)
-
-compile-c-symbols.o: $(srcdir)/compile/compile-c-symbols.c
-	$(COMPILE) $(srcdir)/compile/compile-c-symbols.c
-	$(POSTCOMPILE)
-
-compile-object-load.o: $(srcdir)/compile/compile-object-load.c
-	$(COMPILE) $(srcdir)/compile/compile-object-load.c
-	$(POSTCOMPILE)
-
-compile-object-run.o: $(srcdir)/compile/compile-object-run.c
-	$(COMPILE) $(srcdir)/compile/compile-object-run.c
-	$(POSTCOMPILE)
-
-compile-loc2c.o: $(srcdir)/compile/compile-loc2c.c
-	$(COMPILE) $(srcdir)/compile/compile-loc2c.c
-	$(POSTCOMPILE)
-
-compile-c-support.o: $(srcdir)/compile/compile-c-support.c
-	$(COMPILE) $(srcdir)/compile/compile-c-support.c
-	$(POSTCOMPILE)
-
-
-#
 # GDBTK sub-directory
 #
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the mi directory.
 
 all-gdbtk: insight$(EXEEXT)
 
@@ -2081,680 +2901,25 @@ all_gdbtk_cflags = $(IDE_CFLAGS) $(ITCL_CFLAGS) \
 		-DGDBTK_LIBRARY=\"$(GDBTK_LIBRARY)\" \
 		-DSRC_DIR=\"$(GDBTK_SRC_DIR)\"
 
-gdbtk.o: $(srcdir)/gdbtk/generic/gdbtk.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk.c
-	$(POSTCOMPILE)
-
-gdbtk-bp.o: $(srcdir)/gdbtk/generic/gdbtk-bp.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-bp.c
-	$(POSTCOMPILE)
-
-gdbtk-cmds.o: $(srcdir)/gdbtk/generic/gdbtk-cmds.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-cmds.c
-	$(POSTCOMPILE)
-
-gdbtk-hooks.o: $(srcdir)/gdbtk/generic/gdbtk-hooks.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-hooks.c
-	$(POSTCOMPILE)
-
-gdbtk-interp.o: $(srcdir)/gdbtk/generic/gdbtk-interp.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-interp.c
-	$(POSTCOMPILE)
-
-gdbtk-main.o: $(srcdir)/gdbtk/generic/gdbtk-main.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-main.c
-	$(POSTCOMPILE)
-
-gdbtk-register.o: $(srcdir)/gdbtk/generic/gdbtk-register.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-register.c
-	$(POSTCOMPILE)
-
-gdbtk-stack.o: $(srcdir)/gdbtk/generic/gdbtk-stack.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-stack.c
-	$(POSTCOMPILE)
-
-gdbtk-varobj.o: $(srcdir)/gdbtk/generic/gdbtk-varobj.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-varobj.c
-	$(POSTCOMPILE)
-
-gdbtk-wrapper.o: $(srcdir)/gdbtk/generic/gdbtk-wrapper.c
-	$(COMPILE) $(all_gdbtk_cflags) $(srcdir)/gdbtk/generic/gdbtk-wrapper.c
-	$(POSTCOMPILE)
-
-
 #
-# gdb/mi/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-mi-cmd-break.o: $(srcdir)/mi/mi-cmd-break.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-break.c
-	$(POSTCOMPILE)
-
-mi-cmd-catch.o: $(srcdir)/mi/mi-cmd-catch.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-catch.c
-	$(POSTCOMPILE)
-
-mi-cmd-disas.o: $(srcdir)/mi/mi-cmd-disas.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-disas.c
-	$(POSTCOMPILE)
-
-mi-cmd-env.o: $(srcdir)/mi/mi-cmd-env.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-env.c
-	$(POSTCOMPILE)
-
-mi-cmd-file.o: $(srcdir)/mi/mi-cmd-file.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-file.c
-	$(POSTCOMPILE)
-
-mi-cmd-info.o: $(srcdir)/mi/mi-cmd-info.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-info.c
-	$(POSTCOMPILE)
-
-mi-cmds.o: $(srcdir)/mi/mi-cmds.c
-	$(COMPILE) $(srcdir)/mi/mi-cmds.c
-	$(POSTCOMPILE)
-
-mi-cmd-stack.o: $(srcdir)/mi/mi-cmd-stack.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-stack.c
-	$(POSTCOMPILE)
-
-mi-cmd-target.o: $(srcdir)/mi/mi-cmd-target.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-target.c
-	$(POSTCOMPILE)
-
-mi-cmd-var.o: $(srcdir)/mi/mi-cmd-var.c
-	$(COMPILE) $(srcdir)/mi/mi-cmd-var.c
-	$(POSTCOMPILE)
-
-mi-console.o: $(srcdir)/mi/mi-console.c
-	$(COMPILE) $(srcdir)/mi/mi-console.c
-	$(POSTCOMPILE)
-
-mi-getopt.o: $(srcdir)/mi/mi-getopt.c
-	$(COMPILE) $(srcdir)/mi/mi-getopt.c
-	$(POSTCOMPILE)
-
-mi-interp.o: $(srcdir)/mi/mi-interp.c
-	$(COMPILE) $(srcdir)/mi/mi-interp.c
-	$(POSTCOMPILE)
-
-mi-main.o: $(srcdir)/mi/mi-main.c
-	$(COMPILE) $(srcdir)/mi/mi-main.c
-	$(POSTCOMPILE)
-
-mi-out.o: $(srcdir)/mi/mi-out.c
-	$(COMPILE) $(srcdir)/mi/mi-out.c
-	$(POSTCOMPILE)
-
-mi-parse.o: $(srcdir)/mi/mi-parse.c
-	$(COMPILE) $(srcdir)/mi/mi-parse.c
-	$(POSTCOMPILE)
-
-mi-symbol-cmds.o: $(srcdir)/mi/mi-symbol-cmds.c
-	$(COMPILE) $(srcdir)/mi/mi-symbol-cmds.c
-	$(POSTCOMPILE)
-
-mi-common.o: $(srcdir)/mi/mi-common.c
-	$(COMPILE) $(srcdir)/mi/mi-common.c
-	$(POSTCOMPILE)
-
-# gdb/common/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-signals.o: $(srcdir)/common/signals.c
-	$(COMPILE) $(srcdir)/common/signals.c
-	$(POSTCOMPILE)
-
-common-utils.o: ${srcdir}/common/common-utils.c
-	$(COMPILE) $(srcdir)/common/common-utils.c
-	$(POSTCOMPILE)
-
-gdb_vecs.o: ${srcdir}/common/gdb_vecs.c
-	$(COMPILE) $(srcdir)/common/gdb_vecs.c
-	$(POSTCOMPILE)
-
-xml-utils.o: ${srcdir}/common/xml-utils.c
-	$(COMPILE) $(srcdir)/common/xml-utils.c
-	$(POSTCOMPILE)
-
-ptid.o: ${srcdir}/common/ptid.c
-	$(COMPILE) $(srcdir)/common/ptid.c
-	$(POSTCOMPILE)
-
-buffer.o: ${srcdir}/common/buffer.c
-	$(COMPILE) $(srcdir)/common/buffer.c
-	$(POSTCOMPILE)
-
-filestuff.o: $(srcdir)/common/filestuff.c
-	$(COMPILE) $(srcdir)/common/filestuff.c
-	$(POSTCOMPILE)
-
-format.o: ${srcdir}/common/format.c
-	$(COMPILE) $(srcdir)/common/format.c
-	$(POSTCOMPILE)
-
-common-agent.o: $(srcdir)/common/agent.c
-	$(COMPILE) $(srcdir)/common/agent.c
-	$(POSTCOMPILE)
-
-vec.o: ${srcdir}/common/vec.c
-	$(COMPILE) $(srcdir)/common/vec.c
-	$(POSTCOMPILE)
-
-print-utils.o: ${srcdir}/common/print-utils.c
-	$(COMPILE) $(srcdir)/common/print-utils.c
-	$(POSTCOMPILE)
-
-rsp-low.o: ${srcdir}/common/rsp-low.c
-	$(COMPILE) $(srcdir)/common/rsp-low.c
-	$(POSTCOMPILE)
-
-errors.o: ${srcdir}/common/errors.c
-	$(COMPILE) $(srcdir)/common/errors.c
-	$(POSTCOMPILE)
-
-common-debug.o: ${srcdir}/common/common-debug.c
-	$(COMPILE) $(srcdir)/common/common-debug.c
-	$(POSTCOMPILE)
-
-cleanups.o: ${srcdir}/common/cleanups.c
-	$(COMPILE) $(srcdir)/common/cleanups.c
-	$(POSTCOMPILE)
-
-common-exceptions.o: ${srcdir}/common/common-exceptions.c
-	$(COMPILE) $(srcdir)/common/common-exceptions.c
-	$(POSTCOMPILE)
-
-posix-strerror.o: ${srcdir}/common/posix-strerror.c
-	$(COMPILE) $(srcdir)/common/posix-strerror.c
-	$(POSTCOMPILE)
-
-mingw-strerror.o: ${srcdir}/common/mingw-strerror.c
-	$(COMPILE) $(srcdir)/common/mingw-strerror.c
-	$(POSTCOMPILE)
-
-btrace-common.o: ${srcdir}/common/btrace-common.c
-	$(COMPILE) $(srcdir)/common/btrace-common.c
-	$(POSTCOMPILE)
-
-fileio.o: ${srcdir}/common/fileio.c
-	$(COMPILE) $(srcdir)/common/fileio.c
-	$(POSTCOMPILE)
-
-common-regcache.o: ${srcdir}/common/common-regcache.c
-	$(COMPILE) $(srcdir)/common/common-regcache.c
-	$(POSTCOMPILE)
-
-signals-state-save-restore.o: $(srcdir)/common/signals-state-save-restore.c
-	$(COMPILE) $(srcdir)/common/signals-state-save-restore.c
-	$(POSTCOMPILE)
-
-#
-# gdb/target/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-waitstatus.o: ${srcdir}/target/waitstatus.c
-	$(COMPILE) $(srcdir)/target/waitstatus.c
-	$(POSTCOMPILE)
-
-#
-# gdb/arch/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-arm.o: ${srcdir}/arch/arm.c
-	$(COMPILE) $(srcdir)/arch/arm.c
-	$(POSTCOMPILE)
-
-arm-linux.o: ${srcdir}/arch/arm-linux.c
-	$(COMPILE) $(srcdir)/arch/arm-linux.c
-	$(POSTCOMPILE)
-
-arm-get-next-pcs.o: ${srcdir}/arch/arm-get-next-pcs.c
-	$(COMPILE) $(srcdir)/arch/arm-get-next-pcs.c
-	$(POSTCOMPILE)
-
-# gdb/nat/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-x86-dregs.o: ${srcdir}/nat/x86-dregs.c
-	$(COMPILE) $(srcdir)/nat/x86-dregs.c
-	$(POSTCOMPILE)
-
-linux-btrace.o: ${srcdir}/nat/linux-btrace.c
-	$(COMPILE) $(srcdir)/nat/linux-btrace.c
-	$(POSTCOMPILE)
-
-linux-osdata.o: ${srcdir}/nat/linux-osdata.c
-	$(COMPILE) $(srcdir)/nat/linux-osdata.c
-	$(POSTCOMPILE)
-
-linux-procfs.o: $(srcdir)/nat/linux-procfs.c
-	$(COMPILE) $(srcdir)/nat/linux-procfs.c
-	$(POSTCOMPILE)
-
-linux-ptrace.o: $(srcdir)/nat/linux-ptrace.c
-	$(COMPILE) $(srcdir)/nat/linux-ptrace.c
-	$(POSTCOMPILE)
-
-linux-waitpid.o: ${srcdir}/nat/linux-waitpid.c
-	$(COMPILE) $(srcdir)/nat/linux-waitpid.c
-	$(POSTCOMPILE)
-
-mips-linux-watch.o: ${srcdir}/nat/mips-linux-watch.c
-	$(COMPILE) $(srcdir)/nat/mips-linux-watch.c
-	$(POSTCOMPILE)
-
-ppc-linux.o: ${srcdir}/nat/ppc-linux.c
-	$(COMPILE) $(srcdir)/nat/ppc-linux.c
-	$(POSTCOMPILE)
-
-linux-personality.o: ${srcdir}/nat/linux-personality.c
-	$(COMPILE) $(srcdir)/nat/linux-personality.c
-	$(POSTCOMPILE)
-
-x86-linux.o: ${srcdir}/nat/x86-linux.c
-	$(COMPILE) $(srcdir)/nat/x86-linux.c
-	$(POSTCOMPILE)
-
-x86-linux-dregs.o: ${srcdir}/nat/x86-linux-dregs.c
-	$(COMPILE) $(srcdir)/nat/x86-linux-dregs.c
-	$(POSTCOMPILE)
-
-amd64-linux-siginfo.o: ${srcdir}/nat/amd64-linux-siginfo.c
-	$(COMPILE) $(srcdir)/nat/amd64-linux-siginfo.c
-	$(POSTCOMPILE)
-
-linux-namespaces.o: ${srcdir}/nat/linux-namespaces.c
-	$(COMPILE) $(srcdir)/nat/linux-namespaces.c
-	$(POSTCOMPILE)
-
-aarch64-linux-hw-point.o: ${srcdir}/nat/aarch64-linux-hw-point.c
-	$(COMPILE) $(srcdir)/nat/aarch64-linux-hw-point.c
-	$(POSTCOMPILE)
-
-aarch64-linux.o: ${srcdir}/nat/aarch64-linux.c
-	$(COMPILE) $(srcdir)/nat/aarch64-linux.c
-	$(POSTCOMPILE)
-
-# gdb/arch/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-aarch64-insn.o: ${srcdir}/arch/aarch64-insn.c
-	$(COMPILE) $(srcdir)/arch/aarch64-insn.c
-	$(POSTCOMPILE)
-
-#
-# gdb/tui/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-tui.o: $(srcdir)/tui/tui.c
-	$(COMPILE) $(srcdir)/tui/tui.c
-	$(POSTCOMPILE)
-
-tui-command.o: $(srcdir)/tui/tui-command.c
-	$(COMPILE) $(srcdir)/tui/tui-command.c
-	$(POSTCOMPILE)
-
-tui-data.o: $(srcdir)/tui/tui-data.c
-	$(COMPILE) $(srcdir)/tui/tui-data.c
-	$(POSTCOMPILE)
-
-tui-disasm.o: $(srcdir)/tui/tui-disasm.c
-	$(COMPILE) $(srcdir)/tui/tui-disasm.c
-	$(POSTCOMPILE)
-
-tui-file.o: $(srcdir)/tui/tui-file.c
-	$(COMPILE) $(srcdir)/tui/tui-file.c
-	$(POSTCOMPILE)
-
-tui-hooks.o: $(srcdir)/tui/tui-hooks.c
-	$(COMPILE) $(srcdir)/tui/tui-hooks.c
-	$(POSTCOMPILE)
-
-tui-interp.o: $(srcdir)/tui/tui-interp.c
-	$(COMPILE) $(srcdir)/tui/tui-interp.c
-	$(POSTCOMPILE)
-
-tui-io.o: $(srcdir)/tui/tui-io.c
-	$(COMPILE) $(srcdir)/tui/tui-io.c
-	$(POSTCOMPILE)
-
-tui-layout.o: $(srcdir)/tui/tui-layout.c
-	$(COMPILE) $(srcdir)/tui/tui-layout.c
-	$(POSTCOMPILE)
-
-tui-out.o: $(srcdir)/tui/tui-out.c
-	$(COMPILE) $(srcdir)/tui/tui-out.c
-	$(POSTCOMPILE)
-
-tui-regs.o: $(srcdir)/tui/tui-regs.c
-	$(COMPILE) $(srcdir)/tui/tui-regs.c
-	$(POSTCOMPILE)
-
-tui-source.o: $(srcdir)/tui/tui-source.c
-	$(COMPILE) $(srcdir)/tui/tui-source.c
-	$(POSTCOMPILE)
-
-tui-stack.o: $(srcdir)/tui/tui-stack.c
-	$(COMPILE) $(srcdir)/tui/tui-stack.c
-	$(POSTCOMPILE)
-
-tui-win.o: $(srcdir)/tui/tui-win.c
-	$(COMPILE) $(srcdir)/tui/tui-win.c
-	$(POSTCOMPILE)
-
-tui-windata.o: $(srcdir)/tui/tui-windata.c
-	$(COMPILE) $(srcdir)/tui/tui-windata.c
-	$(POSTCOMPILE)
-
-tui-wingeneral.o: $(srcdir)/tui/tui-wingeneral.c
-	$(COMPILE) $(srcdir)/tui/tui-wingeneral.c
-	$(POSTCOMPILE)
-
-tui-winsource.o: $(srcdir)/tui/tui-winsource.c
-	$(COMPILE) $(srcdir)/tui/tui-winsource.c
-	$(POSTCOMPILE)
-
-# gdb/guile dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-guile.o: $(srcdir)/guile/guile.c
-	$(COMPILE) $(srcdir)/guile/guile.c
-	$(POSTCOMPILE)
-
-scm-arch.o: $(srcdir)/guile/scm-arch.c
-	$(COMPILE) $(srcdir)/guile/scm-arch.c
-	$(POSTCOMPILE)
-
-scm-auto-load.o: $(srcdir)/guile/scm-auto-load.c
-	$(COMPILE) $(srcdir)/guile/scm-auto-load.c
-	$(POSTCOMPILE)
-
-scm-block.o: $(srcdir)/guile/scm-block.c
-	$(COMPILE) $(srcdir)/guile/scm-block.c
-	$(POSTCOMPILE)
-
-scm-breakpoint.o: $(srcdir)/guile/scm-breakpoint.c
-	$(COMPILE) $(srcdir)/guile/scm-breakpoint.c
-	$(POSTCOMPILE)
-
-scm-cmd.o: $(srcdir)/guile/scm-cmd.c
-	$(COMPILE) $(srcdir)/guile/scm-cmd.c
-	$(POSTCOMPILE)
-
-scm-disasm.o: $(srcdir)/guile/scm-disasm.c
-	$(COMPILE) $(srcdir)/guile/scm-disasm.c
-	$(POSTCOMPILE)
-
-scm-exception.o: $(srcdir)/guile/scm-exception.c
-	$(COMPILE) $(srcdir)/guile/scm-exception.c
-	$(POSTCOMPILE)
-
-scm-frame.o: $(srcdir)/guile/scm-frame.c
-	$(COMPILE) $(srcdir)/guile/scm-frame.c
-	$(POSTCOMPILE)
-
-scm-gsmob.o: $(srcdir)/guile/scm-gsmob.c
-	$(COMPILE) $(srcdir)/guile/scm-gsmob.c
-	$(POSTCOMPILE)
-
-scm-iterator.o: $(srcdir)/guile/scm-iterator.c
-	$(COMPILE) $(srcdir)/guile/scm-iterator.c
-	$(POSTCOMPILE)
-
-scm-lazy-string.o: $(srcdir)/guile/scm-lazy-string.c
-	$(COMPILE) $(srcdir)/guile/scm-lazy-string.c
-	$(POSTCOMPILE)
-
-scm-math.o: $(srcdir)/guile/scm-math.c
-	$(COMPILE) $(srcdir)/guile/scm-math.c
-	$(POSTCOMPILE)
-
-scm-objfile.o: $(srcdir)/guile/scm-objfile.c
-	$(COMPILE) $(srcdir)/guile/scm-objfile.c
-	$(POSTCOMPILE)
-
-scm-param.o: $(srcdir)/guile/scm-param.c
-	$(COMPILE) $(srcdir)/guile/scm-param.c
-	$(POSTCOMPILE)
-
-scm-ports.o: $(srcdir)/guile/scm-ports.c
-	$(COMPILE) $(srcdir)/guile/scm-ports.c
-	$(POSTCOMPILE)
-
-scm-pretty-print.o: $(srcdir)/guile/scm-pretty-print.c
-	$(COMPILE) $(srcdir)/guile/scm-pretty-print.c
-	$(POSTCOMPILE)
-
-scm-progspace.o: $(srcdir)/guile/scm-progspace.c
-	$(COMPILE) $(srcdir)/guile/scm-progspace.c
-	$(POSTCOMPILE)
-
-scm-safe-call.o: $(srcdir)/guile/scm-safe-call.c
-	$(COMPILE) $(srcdir)/guile/scm-safe-call.c
-	$(POSTCOMPILE)
-
-scm-string.o: $(srcdir)/guile/scm-string.c
-	$(COMPILE) $(srcdir)/guile/scm-string.c
-	$(POSTCOMPILE)
-
-scm-symbol.o: $(srcdir)/guile/scm-symbol.c
-	$(COMPILE) $(srcdir)/guile/scm-symbol.c
-	$(POSTCOMPILE)
-
-scm-symtab.o: $(srcdir)/guile/scm-symtab.c
-	$(COMPILE) $(srcdir)/guile/scm-symtab.c
-	$(POSTCOMPILE)
-
-scm-type.o: $(srcdir)/guile/scm-type.c
-	$(COMPILE) $(srcdir)/guile/scm-type.c
-	$(POSTCOMPILE)
-
-scm-utils.o: $(srcdir)/guile/scm-utils.c
-	$(COMPILE) $(srcdir)/guile/scm-utils.c
-	$(POSTCOMPILE)
-
-scm-value.o: $(srcdir)/guile/scm-value.c
-	$(COMPILE) $(srcdir)/guile/scm-value.c
-	$(POSTCOMPILE)
-
-# gdb/python/ dependencies
-#
-# Need to explicitly specify the compile rule as make will do nothing
-# or try to compile the object file into the sub-directory.
-
-# Flags needed to compile Python code
-PYTHON_CFLAGS=@PYTHON_CFLAGS@
-
-python.o: $(srcdir)/python/python.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/python.c
-	$(POSTCOMPILE)
-
-py-arch.o: $(srcdir)/python/py-arch.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-arch.c
-	$(POSTCOMPILE)
-
-py-auto-load.o: $(srcdir)/python/py-auto-load.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-auto-load.c
-	$(POSTCOMPILE)
-
-py-block.o: $(srcdir)/python/py-block.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-block.c
-	$(POSTCOMPILE)
-
-py-bpevent.o: $(srcdir)/python/py-bpevent.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-bpevent.c
-	$(POSTCOMPILE)
-
-py-breakpoint.o: $(srcdir)/python/py-breakpoint.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-breakpoint.c
-	$(POSTCOMPILE)
-
-py-cmd.o: $(srcdir)/python/py-cmd.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-cmd.c
-	$(POSTCOMPILE)
-
-py-continueevent.o: $(srcdir)/python/py-continueevent.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-continueevent.c
-	$(POSTCOMPILE)
-
-py-xmethods.o: $(srcdir)/python/py-xmethods.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-xmethods.c
-	$(POSTCOMPILE)
-
-py-event.o: $(srcdir)/python/py-event.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-event.c
-	$(POSTCOMPILE)
-
-py-evtregistry.o: $(srcdir)/python/py-evtregistry.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-evtregistry.c
-	$(POSTCOMPILE)
-
-py-evts.o: $(srcdir)/python/py-evts.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-evts.c
-	$(POSTCOMPILE)
-
-py-exitedevent.o: $(srcdir)/python/py-exitedevent.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-exitedevent.c
-	$(POSTCOMPILE)
-
-py-finishbreakpoint.o: $(srcdir)/python/py-finishbreakpoint.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-finishbreakpoint.c
-	$(POSTCOMPILE)
-
-py-frame.o: $(srcdir)/python/py-frame.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-frame.c
-	$(POSTCOMPILE)
-
-py-framefilter.o: $(srcdir)/python/py-framefilter.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-framefilter.c
-	$(POSTCOMPILE)
-
-py-function.o: $(srcdir)/python/py-function.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-function.c
-	$(POSTCOMPILE)
-
-py-gdb-readline.o: $(srcdir)/python/py-gdb-readline.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-gdb-readline.c
-	$(POSTCOMPILE)
-
-py-inferior.o: $(srcdir)/python/py-inferior.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-inferior.c
-	$(POSTCOMPILE)
-
-py-infevents.o: $(srcdir)/python/py-infevents.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-infevents.c
-	$(POSTCOMPILE)
-
-py-infthread.o: $(srcdir)/python/py-infthread.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-infthread.c
-	$(POSTCOMPILE)
-
-py-lazy-string.o: $(srcdir)/python/py-lazy-string.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-lazy-string.c
-	$(POSTCOMPILE)
-
-py-linetable.o: $(srcdir)/python/py-linetable.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-linetable.c
-	$(POSTCOMPILE)
-
-py-newobjfileevent.o: $(srcdir)/python/py-newobjfileevent.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-newobjfileevent.c
-	$(POSTCOMPILE)
-
-py-objfile.o: $(srcdir)/python/py-objfile.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-objfile.c
-	$(POSTCOMPILE)
-
-py-param.o: $(srcdir)/python/py-param.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-param.c
-	$(POSTCOMPILE)
-
-py-prettyprint.o: $(srcdir)/python/py-prettyprint.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-prettyprint.c
-	$(POSTCOMPILE)
-
-py-progspace.o: $(srcdir)/python/py-progspace.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-progspace.c
-	$(POSTCOMPILE)
-
-py-signalevent.o: $(srcdir)/python/py-signalevent.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-signalevent.c
-	$(POSTCOMPILE)
-
-py-stopevent.o: $(srcdir)/python/py-stopevent.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-stopevent.c
-	$(POSTCOMPILE)
-
-py-symbol.o: $(srcdir)/python/py-symbol.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-symbol.c
-	$(POSTCOMPILE)
-
-py-symtab.o: $(srcdir)/python/py-symtab.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-symtab.c
-	$(POSTCOMPILE)
-
-py-threadevent.o: $(srcdir)/python/py-threadevent.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-threadevent.c
-	$(POSTCOMPILE)
-
-py-type.o: $(srcdir)/python/py-type.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-type.c
-	$(POSTCOMPILE)
-
-py-unwind.o: $(srcdir)/python/py-unwind.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-unwind.c
-	$(POSTCOMPILE)
-
-py-utils.o: $(srcdir)/python/py-utils.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-utils.c
-	$(POSTCOMPILE)
-
-py-value.o: $(srcdir)/python/py-value.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-value.c
-	$(POSTCOMPILE)
-
-py-varobj.o: $(srcdir)/python/py-varobj.c
-	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-varobj.c
-	$(POSTCOMPILE)
-
-#
-# Dependency tracking.  Most of this is conditional on GNU Make being
-# found by configure; if GNU Make is not found, we fall back to a
-# simpler scheme.
+# Dependency tracking.
 #
 
-@GMAKE_TRUE@ifeq ($(DEPMODE),depmode=gcc3)
+ifeq ($(DEPMODE),depmode=gcc3)
 # Note that we put the dependencies into a .Tpo file, then move them
 # into place if the compile succeeds.  We need this because gcc does
 # not atomically write the dependency output file.
-@GMAKE_TRUE@override COMPILE.post = -c -o $@ -MT $@ -MMD -MP \
-@GMAKE_TRUE@	-MF $(DEPDIR)/$(basename $(@F)).Tpo
-@GMAKE_TRUE@override POSTCOMPILE = @mv $(DEPDIR)/$(basename $(@F)).Tpo \
-@GMAKE_TRUE@	$(DEPDIR)/$(basename $(@F)).Po
-@GMAKE_TRUE@else
-@GMAKE_TRUE@override COMPILE.pre = source='$<' object='$@' libtool=no \
-@GMAKE_TRUE@	DEPDIR=$(DEPDIR) $(DEPMODE) $(depcomp) $(CC)
+override COMPILE.post = -c -o $@ -MT $@ -MMD -MP \
+	-MF $(DEPDIR)/$(basename $(@F)).Tpo
+override POSTCOMPILE = @mv $(DEPDIR)/$(basename $(@F)).Tpo \
+	$(DEPDIR)/$(basename $(@F)).Po
+else
+override COMPILE.pre = source='$<' object='$@' libtool=no \
+	DEPDIR=$(DEPDIR) $(DEPMODE) $(depcomp) $(CC)
 # depcomp handles atomicity for us, so we don't need a postcompile
 # step.
-@GMAKE_TRUE@override POSTCOMPILE =
-@GMAKE_TRUE@endif
+override POSTCOMPILE =
+endif
 
 # A list of all the objects we might care about in this build, for
 # dependency tracking.
@@ -2764,13 +2929,16 @@ all_object_files = gdb.o $(LIBGDB_OBS) gdbtk-main.o \
 # Ensure that generated files are created early.  Use order-only
 # dependencies if available.  They require GNU make 3.80 or newer,
 # and the .VARIABLES variable was introduced at the same time.
-@GMAKE_TRUE@ifdef .VARIABLES
-@GMAKE_TRUE@$(all_object_files): | $(generated_files)
-@GMAKE_TRUE@else
+ifdef .VARIABLES
+$(all_object_files): | $(generated_files)
+else
 $(all_object_files) : $(generated_files)
-@GMAKE_TRUE@endif
+endif
 
 # Dependencies.
-@GMAKE_TRUE@-include $(patsubst %.o, $(DEPDIR)/%.Po, $(all_object_files))
+-include $(patsubst %.o, $(DEPDIR)/%.Po, $(all_object_files))
+
+# Disable implicit make rules.
+include $(srcdir)/disable-implicit-rules.mk
 
 ### end of the gdb Makefile.in.

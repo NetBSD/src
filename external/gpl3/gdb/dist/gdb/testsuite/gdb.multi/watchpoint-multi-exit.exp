@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ proc do_test {dispose} {
     gdb_test_no_output "set detach-on-fork off"
 
     if ![runto "child_function"] {
-	fail "Can't run to child_function"
+	fail "can't run to child_function"
 	return
     }
 

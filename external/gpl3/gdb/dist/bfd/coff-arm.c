@@ -1,5 +1,5 @@
 /* BFD back-end for ARM COFF files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1362,7 +1362,7 @@ coff_arm_relocate_section (bfd *output_bfd,
 			      /* xgettext:c-format */
 			      (_("%B(%s): warning: interworking not enabled.\n"
 				 "  first occurrence: %B: arm call to thumb"),
-			       h_sec->owner, input_bfd, name);
+			       h_sec->owner, name, input_bfd);
 
 			  --my_offset;
 			  myh->root.u.def.value = my_offset;
@@ -1453,7 +1453,7 @@ coff_arm_relocate_section (bfd *output_bfd,
 			      (_("%B(%s): warning: interworking not enabled.\n"
 				 "  first occurrence: %B: thumb call to arm\n"
 				 "  consider relinking with --support-old-code enabled"),
-			       h_sec->owner, input_bfd, name);
+			       h_sec->owner, name, input_bfd);
 
 			  -- my_offset;
 			  myh->root.u.def.value = my_offset;
@@ -1741,9 +1741,10 @@ coff_arm_relocate_section (bfd *output_bfd,
 	case bfd_reloc_ok:
 	  break;
 	case bfd_reloc_outofrange:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B: bad reloc address 0x%lx in section `%A'"),
-	     input_bfd, input_section, (unsigned long) rel->r_vaddr);
+	     input_bfd, (unsigned long) rel->r_vaddr, input_section);
 	  return FALSE;
 	case bfd_reloc_overflow:
 	  {
@@ -2066,6 +2067,7 @@ bfd_arm_process_before_allocation (bfd *                   abfd,
 	  /* If the index is outside of the range of our table, something has gone wrong.  */
 	  if (symndx >= obj_conv_table_size (abfd))
 	    {
+	      /* xgettext:c-format */
 	      _bfd_error_handler (_("%B: illegal symbol index in reloc: %d"),
 				  abfd, symndx);
 	      continue;
@@ -2168,8 +2170,9 @@ coff_arm_adjust_symndx (bfd *obfd ATTRIBUTE_UNUSED,
    targets, eg different CPUs or different APCS's.     */
 
 static bfd_boolean
-coff_arm_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
+coff_arm_merge_private_bfd_data (bfd * ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   BFD_ASSERT (ibfd != NULL && obfd != NULL);
 
   if (ibfd == obfd)
@@ -2198,9 +2201,8 @@ coff_arm_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	      _bfd_error_handler
 		/* xgettext: c-format */
 		(_("error: %B is compiled for APCS-%d, whereas %B is compiled for APCS-%d"),
-		 ibfd, obfd,
-		 APCS_26_FLAG (ibfd) ? 26 : 32,
-		 APCS_26_FLAG (obfd) ? 26 : 32
+		 ibfd, APCS_26_FLAG (ibfd) ? 26 : 32,
+		 obfd, APCS_26_FLAG (obfd) ? 26 : 32
 		 );
 
 	      bfd_set_error (bfd_error_wrong_format);
@@ -2209,16 +2211,16 @@ coff_arm_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 
 	  if (APCS_FLOAT_FLAG (obfd) != APCS_FLOAT_FLAG (ibfd))
 	    {
-	      const char *msg;
-
 	      if (APCS_FLOAT_FLAG (ibfd))
 		/* xgettext: c-format */
-		msg = _("error: %B passes floats in float registers, whereas %B passes them in integer registers");
+		_bfd_error_handler (_("\
+error: %B passes floats in float registers, whereas %B passes them in integer registers"),
+				    ibfd, obfd);
 	      else
 		/* xgettext: c-format */
-		msg = _("error: %B passes floats in integer registers, whereas %B passes them in float registers");
-
-	      _bfd_error_handler (msg, ibfd, obfd);
+		_bfd_error_handler (_("\
+error: %B passes floats in integer registers, whereas %B passes them in float registers"),
+				    ibfd, obfd);
 
 	      bfd_set_error (bfd_error_wrong_format);
 	      return FALSE;
@@ -2226,15 +2228,16 @@ coff_arm_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 
 	  if (PIC_FLAG (obfd) != PIC_FLAG (ibfd))
 	    {
-	      const char * msg;
-
 	      if (PIC_FLAG (ibfd))
 		/* xgettext: c-format */
-		msg = _("error: %B is compiled as position independent code, whereas target %B is absolute position");
+		_bfd_error_handler (_("\
+error: %B is compiled as position independent code, whereas target %B is absolute position"),
+                                    ibfd, obfd);
 	      else
 		/* xgettext: c-format */
-		msg = _("error: %B is compiled as absolute position code, whereas target %B is position independent");
-	      _bfd_error_handler (msg, ibfd, obfd);
+		_bfd_error_handler (_("\
+error: %B is compiled as absolute position code, whereas target %B is position independent"),
+                                    ibfd, obfd);
 
 	      bfd_set_error (bfd_error_wrong_format);
 	      return FALSE;
@@ -2257,16 +2260,16 @@ coff_arm_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	  /* If the src and dest differ in their interworking issue a warning.  */
 	  if (INTERWORK_FLAG (obfd) != INTERWORK_FLAG (ibfd))
 	    {
-	      const char * msg;
-
 	      if (INTERWORK_FLAG (ibfd))
 		/* xgettext: c-format */
-		msg = _("Warning: %B supports interworking, whereas %B does not");
+		_bfd_error_handler (_("\
+Warning: %B supports interworking, whereas %B does not"),
+				    ibfd, obfd);
 	      else
 		/* xgettext: c-format */
-		msg = _("Warning: %B does not support interworking, whereas %B does");
-
-	      _bfd_error_handler (msg, ibfd, obfd);
+		_bfd_error_handler (_("\
+Warning: %B does not support interworking, whereas %B does"),
+				    ibfd, obfd);
 	    }
 	}
       else
@@ -2287,7 +2290,6 @@ coff_arm_print_private_bfd_data (bfd * abfd, void * ptr)
 
   BFD_ASSERT (abfd != NULL && ptr != NULL);
 
-  /* xgettext:c-format */
   fprintf (file, _("private flags = %x:"), coff_data (abfd)->flags);
 
   if (APCS_SET (abfd))
@@ -2356,11 +2358,9 @@ _bfd_coff_arm_set_private_flags (bfd * abfd, flagword flags)
   if (INTERWORK_SET (abfd) && (INTERWORK_FLAG (abfd) != flag))
     {
       if (flag)
-	/* xgettext: c-format */
 	_bfd_error_handler (_("Warning: Not setting interworking flag of %B since it has already been specified as non-interworking"),
 			    abfd);
       else
-	/* xgettext: c-format */
 	_bfd_error_handler (_("Warning: Clearing the interworking flag of %B due to outside request"),
 			    abfd);
       flag = 0;
@@ -2418,7 +2418,7 @@ coff_arm_copy_private_bfd_data (bfd * src, bfd * dest)
 	      if (INTERWORK_FLAG (dest))
 		{
 		  /* xgettext:c-format */
-		  _bfd_error_handler (("\
+		  _bfd_error_handler (_("\
 Warning: Clearing the interworking flag of %B because non-interworking code in %B has been linked with it"),
 				      dest, src);
 		}

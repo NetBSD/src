@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@ if { [skip_go_tests] } { continue }
 
 standard_testfile .go
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug go}] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug go}] } {
     return -1
 }
 
 if { [go_runto_main] < 0 } {
-    untested $testfile
+    untested "could not run to main"
     return -1
 }
 

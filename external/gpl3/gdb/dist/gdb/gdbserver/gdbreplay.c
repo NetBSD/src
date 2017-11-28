@@ -1,5 +1,5 @@
 /* Replay a remote debug session logfile for GDB.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Written by Fred Fish (fnf@cygnus.com) from pieces of gdbserver.
 
    This file is part of GDB.
@@ -142,7 +142,7 @@ perror_with_name (const char *string)
 }
 
 static void
-sync_error (FILE *fp, char *desc, int expect, int got)
+sync_error (FILE *fp, const char *desc, int expect, int got)
 {
   fprintf (stderr, "\n%s\n", desc);
   fprintf (stderr, "At logfile offset %ld, expected '0x%x' got '0x%x'\n",
@@ -407,7 +407,7 @@ static void
 gdbreplay_version (void)
 {
   printf ("GNU gdbreplay %s%s\n"
-	  "Copyright (C) 2016 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2017 Free Software Foundation, Inc.\n"
 	  "gdbreplay is free software, covered by "
 	  "the GNU General Public License.\n"
 	  "This gdbreplay was configured as \"%s\"\n",

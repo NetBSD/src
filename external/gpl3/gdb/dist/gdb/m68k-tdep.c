@@ -1,6 +1,6 @@
 /* Target-dependent code for the Motorola 68000 series.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,14 +57,9 @@
 #define BPT_VECTOR 0xf
 #endif
 
-static const gdb_byte *
-m68k_local_breakpoint_from_pc (struct gdbarch *gdbarch,
-			       CORE_ADDR *pcptr, int *lenptr)
-{
-  static gdb_byte break_insn[] = {0x4e, (0x40 | BPT_VECTOR)};
-  *lenptr = sizeof (break_insn);
-  return break_insn;
-}
+constexpr gdb_byte m68k_break_insn[] = {0x4e, (0x40 | BPT_VECTOR)};
+
+typedef BP_MANIPULATION (m68k_break_insn) m68k_breakpoint;
 
 
 /* Construct types for ISA-specific registers.  */
@@ -1196,7 +1191,8 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_long_double_bit (gdbarch, long_double_format[0]->totalsize);
 
   set_gdbarch_skip_prologue (gdbarch, m68k_skip_prologue);
-  set_gdbarch_breakpoint_from_pc (gdbarch, m68k_local_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, m68k_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, m68k_breakpoint::bp_from_kind);
 
   /* Stack grows down.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);

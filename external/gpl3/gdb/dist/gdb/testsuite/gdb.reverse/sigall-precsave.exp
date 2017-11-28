@@ -1,4 +1,4 @@
-#   Copyright 2009-2016 Free Software Foundation, Inc.
+#   Copyright 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -154,7 +154,7 @@ runto gen_ABRT
 
 if [supports_process_record] {
     # Activate process record/replay
-    gdb_test_no_output "record" "Turn on process record"
+    gdb_test_no_output "record" "turn on process record"
 }
 
 # Run until end, then save execution log. 
@@ -162,7 +162,7 @@ if [supports_process_record] {
 set breakloc [gdb_get_line_number "end of main" "$srcfile"]
 gdb_test "break $breakloc" \
     "Breakpoint $decimal at .*$srcfile, line $breakloc\." \
-    "BP at end of main"
+    "breakpoint at end of main"
 
 # Signal handlers must be disabled
 gdb_test "handle all nostop noprint"
@@ -274,7 +274,7 @@ gdb_test "record save $precsave" \
     "Saved core file $precsave with execution log\."  \
     "save process recfile"
 
-gdb_test "kill" "" "Kill process, prepare to debug log file" \
+gdb_test "kill" "" "kill process, prepare to debug log file" \
     "Kill the program being debugged\\? \\(y or n\\) " "y"
 
 gdb_test "record restore $precsave" \

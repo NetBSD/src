@@ -1,6 +1,6 @@
 /* Test PC adjustment from Thumb-mode "bx pc" instruction.
 
-   Copyright 2012-2016 Free Software Foundation, Inc.
+   Copyright 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

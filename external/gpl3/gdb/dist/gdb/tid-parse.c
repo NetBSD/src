@@ -1,6 +1,6 @@
 /* TID parsing for GDB, the GNU debugger.
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -113,29 +113,36 @@ parse_thread_id (const char *tidstr, const char **end)
 
 /* See tid-parse.h.  */
 
-void
-tid_range_parser_init (struct tid_range_parser *parser, const char *tidlist,
-		       int default_inferior)
+tid_range_parser::tid_range_parser (const char *tidlist,
+				    int default_inferior)
 {
-  parser->state = TID_RANGE_STATE_INFERIOR;
-  parser->string = tidlist;
-  parser->inf_num = 0;
-  parser->qualified = 0;
-  parser->default_inferior = default_inferior;
+  init (tidlist, default_inferior);
 }
 
 /* See tid-parse.h.  */
 
-int
-tid_range_parser_finished (struct tid_range_parser *parser)
+void
+tid_range_parser::init (const char *tidlist, int default_inferior)
 {
-  switch (parser->state)
+  m_state = STATE_INFERIOR;
+  m_cur_tok = tidlist;
+  m_inf_num = 0;
+  m_qualified = false;
+  m_default_inferior = default_inferior;
+}
+
+/* See tid-parse.h.  */
+
+bool
+tid_range_parser::finished () const
+{
+  switch (m_state)
     {
-    case TID_RANGE_STATE_INFERIOR:
-      return *parser->string == '\0';
-    case TID_RANGE_STATE_THREAD_RANGE:
-    case TID_RANGE_STATE_STAR_RANGE:
-      return parser->range_parser.finished;
+    case STATE_INFERIOR:
+      return *m_cur_tok == '\0';
+    case STATE_THREAD_RANGE:
+    case STATE_STAR_RANGE:
+      return m_range_parser.finished ();
     }
 
   gdb_assert_not_reached (_("unhandled state"));
@@ -144,57 +151,54 @@ tid_range_parser_finished (struct tid_range_parser *parser)
 /* See tid-parse.h.  */
 
 const char *
-tid_range_parser_string (struct tid_range_parser *parser)
+tid_range_parser::cur_tok () const
 {
-  switch (parser->state)
+  switch (m_state)
     {
-    case TID_RANGE_STATE_INFERIOR:
-      return parser->string;
-    case TID_RANGE_STATE_THREAD_RANGE:
-    case TID_RANGE_STATE_STAR_RANGE:
-      return parser->range_parser.string;
+    case STATE_INFERIOR:
+      return m_cur_tok;
+    case STATE_THREAD_RANGE:
+    case STATE_STAR_RANGE:
+      return m_range_parser.cur_tok ();
     }
 
   gdb_assert_not_reached (_("unhandled state"));
 }
 
-/* See tid-parse.h.  */
-
 void
-tid_range_parser_skip (struct tid_range_parser *parser)
+tid_range_parser::skip_range ()
 {
-  gdb_assert ((parser->state == TID_RANGE_STATE_THREAD_RANGE
-	       || parser->state == TID_RANGE_STATE_STAR_RANGE)
-	      && parser->range_parser.in_range);
+  gdb_assert (m_state == STATE_THREAD_RANGE
+	      || m_state == STATE_STAR_RANGE);
 
-  tid_range_parser_init (parser, parser->range_parser.end_ptr,
-			 parser->default_inferior);
+  m_range_parser.skip_range ();
+  init (m_range_parser.cur_tok (), m_default_inferior);
 }
 
 /* See tid-parse.h.  */
 
-int
-tid_range_parser_qualified (struct tid_range_parser *parser)
+bool
+tid_range_parser::tid_is_qualified () const
 {
-  return parser->qualified;
+  return m_qualified;
 }
 
-/* Helper for tid_range_parser_get_tid and
-   tid_range_parser_get_tid_range.  Return the next range if THR_END
+/* Helper for tid_range_parser::get_tid and
+   tid_range_parser::get_tid_range.  Return the next range if THR_END
    is non-NULL, return a single thread ID otherwise.  */
 
-static int
-get_tid_or_range (struct tid_range_parser *parser, int *inf_num,
-		  int *thr_start, int *thr_end)
+bool
+tid_range_parser::get_tid_or_range (int *inf_num,
+				    int *thr_start, int *thr_end)
 {
-  if (parser->state == TID_RANGE_STATE_INFERIOR)
+  if (m_state == STATE_INFERIOR)
     {
       const char *p;
       const char *space;
 
-      space = skip_to_space (parser->string);
+      space = skip_to_space (m_cur_tok);
 
-      p = parser->string;
+      p = m_cur_tok;
       while (p < space && *p != '.')
 	p++;
       if (p < space)
@@ -202,56 +206,53 @@ get_tid_or_range (struct tid_range_parser *parser, int *inf_num,
 	  const char *dot = p;
 
 	  /* Parse number to the left of the dot.  */
-	  p = parser->string;
-	  parser->inf_num
-	    = get_positive_number_trailer (&p, '.', parser->string);
-	  if (parser->inf_num == 0)
+	  p = m_cur_tok;
+	  m_inf_num = get_positive_number_trailer (&p, '.', m_cur_tok);
+	  if (m_inf_num == 0)
 	    return 0;
 
-	  parser->qualified = 1;
+	  m_qualified = true;
 	  p = dot + 1;
 
 	  if (isspace (*p))
-	    return 0;
+	    return false;
 	}
       else
 	{
-	  parser->inf_num = parser->default_inferior;
-	  parser->qualified = 0;
-	  p = parser->string;
+	  m_inf_num = m_default_inferior;
+	  m_qualified = false;
+	  p = m_cur_tok;
 	}
 
-      init_number_or_range (&parser->range_parser, p);
+      m_range_parser.init (p);
       if (p[0] == '*' && (p[1] == '\0' || isspace (p[1])))
 	{
 	  /* Setup the number range parser to return numbers in the
 	     whole [1,INT_MAX] range.  */
-	  number_range_setup_range (&parser->range_parser, 1, INT_MAX,
-				    skip_spaces_const (p + 1));
-	  parser->state = TID_RANGE_STATE_STAR_RANGE;
+	  m_range_parser.setup_range (1, INT_MAX, skip_spaces_const (p + 1));
+	  m_state = STATE_STAR_RANGE;
 	}
       else
-	parser->state = TID_RANGE_STATE_THREAD_RANGE;
+	m_state = STATE_THREAD_RANGE;
     }
 
-  *inf_num = parser->inf_num;
-  *thr_start = get_number_or_range (&parser->range_parser);
+  *inf_num = m_inf_num;
+  *thr_start = m_range_parser.get_number ();
   if (*thr_start < 0)
-    error (_("negative value: %s"), parser->string);
+    error (_("negative value: %s"), m_cur_tok);
   if (*thr_start == 0)
     {
-      parser->state = TID_RANGE_STATE_INFERIOR;
-      return 0;
+      m_state = STATE_INFERIOR;
+      return false;
     }
 
   /* If we successfully parsed a thread number or finished parsing a
      thread range, switch back to assuming the next TID is
      inferior-qualified.  */
-  if (parser->range_parser.end_ptr == NULL
-      || parser->range_parser.string == parser->range_parser.end_ptr)
+  if (!m_range_parser.in_range ())
     {
-      parser->state = TID_RANGE_STATE_INFERIOR;
-      parser->string = parser->range_parser.string;
+      m_state = STATE_INFERIOR;
+      m_cur_tok = m_range_parser.cur_tok ();
 
       if (thr_end != NULL)
 	*thr_end = *thr_start;
@@ -260,11 +261,12 @@ get_tid_or_range (struct tid_range_parser *parser, int *inf_num,
   /* If we're midway through a range, and the caller wants the end
      value, return it and skip to the end of the range.  */
   if (thr_end != NULL
-      && (parser->state == TID_RANGE_STATE_THREAD_RANGE
-	  || parser->state == TID_RANGE_STATE_STAR_RANGE))
+      && (m_state == STATE_THREAD_RANGE
+	  || m_state == STATE_STAR_RANGE))
     {
-      *thr_end = parser->range_parser.end_value;
-      tid_range_parser_skip (parser);
+      *thr_end = m_range_parser.end_value ();
+
+      skip_range ();
     }
 
   return (*inf_num != 0 && *thr_start != 0);
@@ -272,32 +274,31 @@ get_tid_or_range (struct tid_range_parser *parser, int *inf_num,
 
 /* See tid-parse.h.  */
 
-int
-tid_range_parser_get_tid_range (struct tid_range_parser *parser, int *inf_num,
-				int *thr_start, int *thr_end)
+bool
+tid_range_parser::get_tid_range (int *inf_num,
+				 int *thr_start, int *thr_end)
 {
   gdb_assert (inf_num != NULL && thr_start != NULL && thr_end != NULL);
 
-  return get_tid_or_range (parser, inf_num, thr_start, thr_end);
+  return get_tid_or_range (inf_num, thr_start, thr_end);
 }
 
 /* See tid-parse.h.  */
 
-int
-tid_range_parser_get_tid (struct tid_range_parser *parser,
-			  int *inf_num, int *thr_num)
+bool
+tid_range_parser::get_tid (int *inf_num, int *thr_num)
 {
   gdb_assert (inf_num != NULL && thr_num != NULL);
 
-  return get_tid_or_range (parser, inf_num, thr_num, NULL);
+  return get_tid_or_range (inf_num, thr_num, NULL);
 }
 
 /* See tid-parse.h.  */
 
-int
-tid_range_parser_star_range (struct tid_range_parser *parser)
+bool
+tid_range_parser::in_star_range () const
 {
-  return parser->state == TID_RANGE_STATE_STAR_RANGE;
+  return m_state == STATE_STAR_RANGE;
 }
 
 /* See gdbthread.h.  */
@@ -306,19 +307,16 @@ int
 tid_is_in_list (const char *list, int default_inferior,
 		int inf_num, int thr_num)
 {
-  struct tid_range_parser parser;
-
   if (list == NULL || *list == '\0')
     return 1;
 
-  tid_range_parser_init (&parser, list, default_inferior);
-  while (!tid_range_parser_finished (&parser))
+  tid_range_parser parser (list, default_inferior);
+  while (!parser.finished ())
     {
       int tmp_inf, tmp_thr_start, tmp_thr_end;
 
-      if (!tid_range_parser_get_tid_range (&parser, &tmp_inf,
-					   &tmp_thr_start, &tmp_thr_end))
-	invalid_thread_id_error (parser.string);
+      if (!parser.get_tid_range (&tmp_inf, &tmp_thr_start, &tmp_thr_end))
+	invalid_thread_id_error (parser.cur_tok ());
       if (tmp_inf == inf_num
 	  && tmp_thr_start <= thr_num && thr_num <= tmp_thr_end)
 	return 1;

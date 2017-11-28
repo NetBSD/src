@@ -1,6 +1,6 @@
 /* Support for printing Fortran types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C version by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -52,7 +52,6 @@ f_print_type (struct type *type, const char *varstring, struct ui_file *stream,
 	      int show, int level, const struct type_print_options *flags)
 {
   enum type_code code;
-  int demangled_args;
 
   if (type_not_associated (type))
     {
@@ -81,12 +80,15 @@ f_print_type (struct type *type, const char *varstring, struct ui_file *stream,
 
   if (varstring != NULL)
     {
+      int demangled_args;
+
       fputs_filtered (varstring, stream);
 
       /* For demangled function names, we have the arglist as part of the name,
          so don't print an additional pair of ()'s.  */
 
-      demangled_args = varstring[strlen (varstring) - 1] == ')'; 
+      demangled_args = (*varstring != '\0'
+			&& varstring[strlen (varstring) - 1] == ')');
       f_type_print_varspec_suffix (type, stream, show, 0, demangled_args, 0);
    }
 }

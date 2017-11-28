@@ -1,6 +1,6 @@
 /* General window behavior.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -101,7 +101,7 @@ box_win (struct tui_gen_win_info *win_info,
       box (win, tui_border_vline, tui_border_hline);
 #endif
       if (win_info->title)
-        mvwaddstr (win, 0, 3, win_info->title);
+        mvwaddstr (win, 0, 3, (char *) win_info->title);
       wattroff (win, attrs);
     }
 }

@@ -1,6 +1,6 @@
 /* Python interface to inferior threads.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -80,7 +80,7 @@ static int
 thpy_set_name (PyObject *self, PyObject *newvalue, void *ignore)
 {
   thread_object *thread_obj = (thread_object *) self;
-  char *name;
+  gdb::unique_xmalloc_ptr<char> name;
 
   if (! thread_obj->thread)
     {
@@ -95,7 +95,9 @@ thpy_set_name (PyObject *self, PyObject *newvalue, void *ignore)
       return -1;
     }
   else if (newvalue == Py_None)
-    name = NULL;
+    {
+      /* Nothing.  */
+    }
   else if (! gdbpy_is_string (newvalue))
     {
       PyErr_SetString (PyExc_TypeError,
@@ -110,7 +112,7 @@ thpy_set_name (PyObject *self, PyObject *newvalue, void *ignore)
     }
 
   xfree (thread_obj->thread->name);
-  thread_obj->thread->name = name;
+  thread_obj->thread->name = name.release ();
 
   return 0;
 }
@@ -302,7 +304,7 @@ gdbpy_initialize_thread (void)
 				 (PyObject *) &thread_object_type);
 }
 
-static PyGetSetDef thread_object_getset[] =
+static gdb_PyGetSetDef thread_object_getset[] =
 {
   { "name", thpy_get_name, thpy_set_name,
     "The name of the thread, as set by the user or the OS.", NULL },

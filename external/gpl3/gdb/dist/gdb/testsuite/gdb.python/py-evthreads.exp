@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2016 Free Software Foundation, Inc.
+# Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ clean_restart $testfile
 
 if { [skip_python_tests] } { continue }
 
-gdb_test_no_output "python exec (open ('${pyfile}').read ())" ""
+gdb_test_no_output "source ${pyfile}" "load python file"
 
 gdb_test "test-events" "Event testers registered."
 gdb_test_no_output "set non-stop on"
@@ -46,7 +46,7 @@ gdb_breakpoint "thread2"
 gdb_breakpoint "thread3"
 
 gdb_run_cmd
-set test "Run to breakpoint 1"
+set test "run to breakpoint 1"
 gdb_test_multiple "" $test {
     -re "event type: stop\r\nstop reason: breakpoint\r\nfirst breakpoint number: 1\r\nbreakpoint number: 1\r\nthread num: 1\r\n.*$gdb_prompt $" {
         pass $test

@@ -1,6 +1,6 @@
 /* Internal header for GDB/Scheme code.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,8 +50,6 @@ typedef struct
 
 #define END_VARIABLES { NULL, SCM_BOOL_F, NULL }
 
-#ifdef __cplusplus
-
 /* Although scm_t_subr is meant to hold a function pointer, at least
    in some versions of guile, it is actually a typedef to "void *".
    That means that in C++, an explicit cast is necessary to convert
@@ -88,12 +86,6 @@ as_a_scm_t_subr (SCM (*func) (SCM, SCM, SCM))
   return (scm_t_subr) func;
 }
 
-#else
-
-/* In C, just do an implicit conversion.  */
-#define as_a_scm_t_subr(func) func
-
-#endif
 /* Scheme functions to define during initialization.  */
 
 typedef struct
@@ -569,6 +561,8 @@ extern SCM tyscm_scm_from_type (struct type *type);
 extern type_smob *tyscm_get_type_smob_arg_unsafe (SCM type_scm, int arg_pos,
 						  const char *func_name);
 
+extern struct type *tyscm_scm_to_type (SCM t_scm);
+
 extern struct type *tyscm_type_smob_type (type_smob *t_smob);
 
 extern SCM tyscm_scm_from_field (SCM type_scm, int field_num);
@@ -605,10 +599,10 @@ extern void gdbscm_preserve_values
 
 extern enum ext_lang_rc gdbscm_apply_val_pretty_printer
   (const struct extension_language_defn *,
-   struct type *type, const gdb_byte *valaddr,
+   struct type *type,
    LONGEST embedded_offset, CORE_ADDR address,
    struct ui_file *stream, int recurse,
-   const struct value *val,
+   struct value *val,
    const struct value_print_options *options,
    const struct language_defn *language);
 

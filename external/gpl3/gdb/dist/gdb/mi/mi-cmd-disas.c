@@ -1,5 +1,5 @@
 /* MI Command Set - disassemble commands.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -51,7 +51,7 @@
          5 -- disassembly, source (pc-centric) and opcodes.  */
 
 void
-mi_cmd_disassemble (char *command, char **argv, int argc)
+mi_cmd_disassemble (const char *command, char **argv, int argc)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   struct ui_out *uiout = current_uiout;
@@ -187,7 +187,6 @@ mi_cmd_disassemble (char *command, char **argv, int argc)
     }
 
   gdb_disassembly (gdbarch, uiout,
-  		   file_string,
   		   disasm_flags,
 		   how_many, low, high);
 

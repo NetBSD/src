@@ -1,6 +1,6 @@
 /* Python interface to blocks.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -461,7 +461,7 @@ Return true if this block is valid, false if not." },
   {NULL}  /* Sentinel */
 };
 
-static PyGetSetDef block_object_getset[] = {
+static gdb_PyGetSetDef block_object_getset[] = {
   { "start", blpy_get_start, NULL, "Start address of the block.", NULL },
   { "end", blpy_get_end, NULL, "End address of the block.", NULL },
   { "function", blpy_get_function, NULL,

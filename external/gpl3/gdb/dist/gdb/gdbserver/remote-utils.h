@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,8 +35,8 @@ int putpkt (char *buf);
 int putpkt_binary (char *buf, int len);
 int putpkt_notif (char *buf);
 int getpkt (char *buf);
-void remote_prepare (char *name);
-void remote_open (char *name);
+void remote_prepare (const char *name);
+void remote_open (const char *name);
 void remote_close (void);
 void write_ok (char *buf);
 void write_enn (char *buf);

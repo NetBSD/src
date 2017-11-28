@@ -1,6 +1,6 @@
 /* Target-dependent code for Atmel AVR, for GDB.
 
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,6 +36,7 @@
 #include "regcache.h"
 #include "dis-asm.h"
 #include "objfiles.h"
+#include <algorithm>
 
 /* AVR Background:
 
@@ -882,7 +883,7 @@ avr_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 
   post_prologue_pc = skip_prologue_using_sal (gdbarch, func_addr);
   if (post_prologue_pc != 0)
-    return max (pc, post_prologue_pc);
+    return std::max (pc, post_prologue_pc);
 
   {
     CORE_ADDR prologue_end = pc;
@@ -912,14 +913,9 @@ avr_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
    it as a NOP.  Thus, it should be ok.  Since the avr is currently a remote
    only target, this shouldn't be a problem (I hope).  TRoth/2003-05-14  */
 
-static const unsigned char *
-avr_breakpoint_from_pc (struct gdbarch *gdbarch,
-			CORE_ADDR *pcptr, int *lenptr)
-{
-    static const unsigned char avr_break_insn [] = { 0x98, 0x95 };
-    *lenptr = sizeof (avr_break_insn);
-    return avr_break_insn;
-}
+constexpr gdb_byte avr_break_insn [] = { 0x98, 0x95 };
+
+typedef BP_MANIPULATION (avr_break_insn) avr_breakpoint;
 
 /* Determine, for architecture GDBARCH, how a return value of TYPE
    should be returned.  If it is supposed to be returned in registers,
@@ -1466,9 +1462,8 @@ avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
      be defined.  */
   tdep->void_type = arch_type (gdbarch, TYPE_CODE_VOID, 1, "void");
   tdep->func_void_type = make_function_type (tdep->void_type, NULL);
-  tdep->pc_type = arch_type (gdbarch, TYPE_CODE_PTR, 4, NULL);
-  TYPE_TARGET_TYPE (tdep->pc_type) = tdep->func_void_type;
-  TYPE_UNSIGNED (tdep->pc_type) = 1;
+  tdep->pc_type = arch_pointer_type (gdbarch, 4 * TARGET_CHAR_BIT, NULL,
+				     tdep->func_void_type);
 
   set_gdbarch_short_bit (gdbarch, 2 * TARGET_CHAR_BIT);
   set_gdbarch_int_bit (gdbarch, 2 * TARGET_CHAR_BIT);
@@ -1476,6 +1471,9 @@ avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_long_long_bit (gdbarch, 8 * TARGET_CHAR_BIT);
   set_gdbarch_ptr_bit (gdbarch, 2 * TARGET_CHAR_BIT);
   set_gdbarch_addr_bit (gdbarch, 32);
+
+  set_gdbarch_wchar_bit (gdbarch, 2 * TARGET_CHAR_BIT);
+  set_gdbarch_wchar_signed (gdbarch, 1);
 
   set_gdbarch_float_bit (gdbarch, 4 * TARGET_CHAR_BIT);
   set_gdbarch_double_bit (gdbarch, 4 * TARGET_CHAR_BIT);
@@ -1514,7 +1512,8 @@ avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_skip_prologue (gdbarch, avr_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
 
-  set_gdbarch_breakpoint_from_pc (gdbarch, avr_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, avr_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, avr_breakpoint::bp_from_kind);
 
   frame_unwind_append_unwinder (gdbarch, &avr_frame_unwind);
   frame_base_set_default (gdbarch, &avr_frame_base);

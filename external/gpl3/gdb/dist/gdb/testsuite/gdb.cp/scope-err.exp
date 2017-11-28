@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@ if {[skip_cplus_tests]} {
 standard_testfile .cc
 set exefile $testfile
 
-if {[prepare_for_testing $testfile $exefile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $exefile $srcfile {debug c++}]} {
     return -1
 }
 
 if {![runto_main]} {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 

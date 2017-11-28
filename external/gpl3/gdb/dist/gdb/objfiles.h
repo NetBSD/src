@@ -1,6 +1,6 @@
 /* Definitions for symbol file management in GDB.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 
 #include "hashtab.h"
 #include "gdb_obstack.h"	/* For obstack internals.  */
+#include "objfile-flags.h"
 #include "symfile.h"		/* For struct psymbol_allocation_list.  */
 #include "progspace.h"
 #include "registry.h"
@@ -288,10 +289,9 @@ struct objfile
 
   CORE_ADDR addr_low;
 
-  /* Some flag bits for this objfile.
-     The values are defined by OBJF_*.  */
+  /* Some flag bits for this objfile.  */
 
-  unsigned short flags;
+  objfile_flags flags;
 
   /* The program space associated with this objfile.  */
 
@@ -444,54 +444,10 @@ struct objfile
   htab_t static_links;
 };
 
-/* Defines for the objfile flag word.  */
-
-/* When an object file has its functions reordered (currently Irix-5.2
-   shared libraries exhibit this behaviour), we will need an expensive
-   algorithm to locate a partial symtab or symtab via an address.
-   To avoid this penalty for normal object files, we use this flag,
-   whose setting is determined upon symbol table read in.  */
-
-#define OBJF_REORDERED	(1 << 0)	/* Functions are reordered */
-
-/* Distinguish between an objfile for a shared library and a "vanilla"
-   objfile.  This may come from a target's implementation of the solib
-   interface, from add-symbol-file, or any other mechanism that loads
-   dynamic objects.  */
-
-#define OBJF_SHARED     (1 << 1)	/* From a shared library */
-
-/* User requested that this objfile be read in it's entirety.  */
-
-#define OBJF_READNOW	(1 << 2)	/* Immediate full read */
-
-/* This objfile was created because the user explicitly caused it
-   (e.g., used the add-symbol-file command).  This bit offers a way
-   for run_command to remove old objfile entries which are no longer
-   valid (i.e., are associated with an old inferior), but to preserve
-   ones that the user explicitly loaded via the add-symbol-file
-   command.  */
-
-#define OBJF_USERLOADED	(1 << 3)	/* User loaded */
-
-/* Set if we have tried to read partial symtabs for this objfile.
-   This is used to allow lazy reading of partial symtabs.  */
-
-#define OBJF_PSYMTABS_READ (1 << 4)
-
-/* Set if this is the main symbol file
-   (as opposed to symbol file for dynamically loaded code).  */
-
-#define OBJF_MAINLINE (1 << 5)
-
-/* ORIGINAL_NAME and OBFD->FILENAME correspond to text description unrelated to
-   filesystem names.  It can be for example "<image in memory>".  */
-
-#define OBJF_NOT_FILENAME (1 << 6)
-
 /* Declarations for functions defined in objfiles.c */
 
-extern struct objfile *allocate_objfile (bfd *, const char *name, int);
+extern struct objfile *allocate_objfile (bfd *, const char *name,
+					 objfile_flags);
 
 extern struct gdbarch *get_objfile_arch (const struct objfile *);
 
@@ -500,8 +456,6 @@ extern int entry_point_address_query (CORE_ADDR *entry_p);
 extern CORE_ADDR entry_point_address (void);
 
 extern void build_objfile_section_table (struct objfile *);
-
-extern void terminate_minimal_symbol_table (struct objfile *objfile);
 
 extern struct objfile *objfile_separate_debug_iterate (const struct objfile *,
                                                        const struct objfile *);
@@ -560,7 +514,7 @@ extern int have_minimal_symbols (void);
 extern struct obj_section *find_pc_section (CORE_ADDR pc);
 
 /* Return non-zero if PC is in a section called NAME.  */
-extern int pc_in_section (CORE_ADDR, char *);
+extern int pc_in_section (CORE_ADDR, const char *);
 
 /* Return non-zero if PC is in a SVR4-style procedure linkage table
    section.  */

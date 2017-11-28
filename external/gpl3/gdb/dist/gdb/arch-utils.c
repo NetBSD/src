@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -241,6 +241,34 @@ legacy_virtual_frame_pointer (struct gdbarch *gdbarch,
   *frame_offset = 0;
 }
 
+/* Return a floating-point format for a floating-point variable of
+   length LEN in bits.  If non-NULL, NAME is the name of its type.
+   If no suitable type is found, return NULL.  */
+
+const struct floatformat **
+default_floatformat_for_type (struct gdbarch *gdbarch,
+			      const char *name, int len)
+{
+  const struct floatformat **format = NULL;
+
+  if (len == gdbarch_half_bit (gdbarch))
+    format = gdbarch_half_format (gdbarch);
+  else if (len == gdbarch_float_bit (gdbarch))
+    format = gdbarch_float_format (gdbarch);
+  else if (len == gdbarch_double_bit (gdbarch))
+    format = gdbarch_double_format (gdbarch);
+  else if (len == gdbarch_long_double_bit (gdbarch))
+    format = gdbarch_long_double_format (gdbarch);
+  /* On i386 the 'long double' type takes 96 bits,
+     while the real number of used bits is only 80,
+     both in processor and in memory.
+     The code below accepts the real bit size.  */
+  else if (gdbarch_long_double_format (gdbarch) != NULL
+	   && len == gdbarch_long_double_format (gdbarch)[0]->totalsize)
+    format = gdbarch_long_double_format (gdbarch);
+
+  return format;
+}
 
 int
 generic_convert_register_p (struct gdbarch *gdbarch, int regnum,
@@ -812,12 +840,22 @@ default_fast_tracepoint_valid_at (struct gdbarch *gdbarch, CORE_ADDR addr,
   return 1;
 }
 
-void
-default_remote_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-				   int *kindptr)
+const gdb_byte *
+default_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
+			    int *lenptr)
 {
-  gdbarch_breakpoint_from_pc (gdbarch, pcptr, kindptr);
+  int kind = gdbarch_breakpoint_kind_from_pc (gdbarch, pcptr);
+
+  return gdbarch_sw_breakpoint_from_kind (gdbarch, kind, lenptr);
 }
+int
+default_breakpoint_kind_from_current_state (struct gdbarch *gdbarch,
+					    struct regcache *regcache,
+					    CORE_ADDR *pcptr)
+{
+  return gdbarch_breakpoint_kind_from_pc (gdbarch, pcptr);
+}
+
 
 void
 default_gen_return_address (struct gdbarch *gdbarch,
@@ -924,6 +962,24 @@ default_guess_tracepoint_registers (struct gdbarch *gdbarch,
   store_unsigned_integer (regs, register_size (gdbarch, pc_regno),
 			  gdbarch_byte_order (gdbarch), addr);
   regcache_raw_supply (regcache, pc_regno, regs);
+}
+
+/* See arch-utils.h.  */
+
+CORE_ADDR
+gdbarch_skip_prologue_noexcept (gdbarch *gdbarch, CORE_ADDR pc) noexcept
+{
+  CORE_ADDR new_pc = pc;
+
+  TRY
+    {
+      new_pc = gdbarch_skip_prologue (gdbarch, pc);
+    }
+  CATCH (ex, RETURN_MASK_ALL)
+    {}
+  END_CATCH
+
+  return new_pc;
 }
 
 /* -Wmissing-prototypes */

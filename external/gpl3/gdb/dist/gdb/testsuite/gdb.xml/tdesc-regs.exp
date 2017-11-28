@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,12 @@ switch -glob -- [istarget] {
     "aarch64*-*-*" {
 	set core-regs {aarch64-core.xml}
     }
+    "arc*-*-*" {
+	set architecture "arc:ARCv2"
+	set core-regs {arc-v2.xml}
+    }
     "arm*-*-*" {
+	set regdir "arm/"
         set core-regs {arm-core.xml}
     }
     "*m68k-*-*" {
@@ -51,6 +56,15 @@ switch -glob -- [istarget] {
     }
     "s390*-*-*" {
 	set core-regs {s390-core32.xml s390-acr.xml s390-fpr.xml}
+    }
+    "sparc-*-*" {
+	set regdir "sparc/"
+        set core-regs {sparc32-cpu.xml sparc32-fpu.xml sparc32-cp0.xml}
+    }
+    "sparc64-*-*" {
+	set architecture "sparc:v9"
+	set regdir "sparc/"
+        set core-regs {sparc64-cpu.xml sparc64-fpu.xml sparc64-cp0.xml}
     }
     "spu*-*-*" {
 	# This may be either the spu-linux-nat target, or the Cell/B.E.

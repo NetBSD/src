@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -158,7 +158,7 @@ proc gdb_compile_pascal {source destfile type options} {
     } elseif { $pascal_compiler_is_gpc == 1 } {
         set result [gpc_compile $source $destfile $type $options]
     } else {
-	unsupported "No pascal compiler found"
+	unsupported "no pascal compiler found"
 	return "No pascal compiler. Compilation failed."
     }
 

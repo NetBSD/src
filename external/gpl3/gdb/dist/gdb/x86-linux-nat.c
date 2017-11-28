@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -204,12 +204,17 @@ x86_linux_read_description (struct target_ops *ops)
 #ifdef __x86_64__
       switch (xcr0_features_bits)
 	{
-	case X86_XSTATE_MPX_AVX512_MASK:
-	case X86_XSTATE_AVX512_MASK:
+	case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
 	  if (is_x32)
-	    return tdesc_x32_avx512_linux;
+	    /* No MPX, PKU on x32, fall back to AVX-AVX512.  */
+	    return tdesc_x32_avx_avx512_linux;
 	  else
-	    return tdesc_amd64_avx512_linux;
+	    return tdesc_amd64_avx_mpx_avx512_pku_linux;
+	case X86_XSTATE_AVX_AVX512_MASK:
+	  if (is_x32)
+	    return tdesc_x32_avx_avx512_linux;
+	  else
+	    return tdesc_amd64_avx_avx512_linux;
 	case X86_XSTATE_MPX_MASK:
 	  if (is_x32)
 	    return tdesc_x32_avx_linux; /* No MPX on x32 using AVX.  */
@@ -237,9 +242,10 @@ x86_linux_read_description (struct target_ops *ops)
     {
       switch (xcr0_features_bits)
 	{
-	case X86_XSTATE_MPX_AVX512_MASK:
-	case X86_XSTATE_AVX512_MASK:
-	  return tdesc_i386_avx512_linux;
+	case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
+	  return tdesc_i386_avx_mpx_avx512_pku_linux;
+	case X86_XSTATE_AVX_AVX512_MASK:
+	  return tdesc_i386_avx_avx512_linux;
 	case X86_XSTATE_MPX_MASK:
 	  return tdesc_i386_mpx_linux;
 	case X86_XSTATE_AVX_MPX_MASK:

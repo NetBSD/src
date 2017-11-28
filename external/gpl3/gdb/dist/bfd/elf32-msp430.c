@@ -1,5 +1,5 @@
 /*  MSP430-specific support for 32-bit ELF
-    Copyright (C) 2002-2016 Free Software Foundation, Inc.
+    Copyright (C) 2002-2017 Free Software Foundation, Inc.
     Contributed by Dmitry Diky <diwil@mail.ru>
 
     This file is part of BFD, the Binary File Descriptor library.
@@ -644,6 +644,7 @@ msp430_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
     {
       if (r_type >= (unsigned int) R_MSP430x_max)
 	{
+	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%B: invalid MSP430X reloc number: %d"), abfd, r_type);
 	  r_type = 0;
 	}
@@ -653,6 +654,7 @@ msp430_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
 
   if (r_type >= (unsigned int) R_MSP430_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid MSP430 reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -2348,6 +2350,7 @@ static bfd_boolean
 elf32_msp430_obj_attrs_handle_unknown (bfd *abfd, int tag)
 {
   _bfd_error_handler
+    /* xgettext:c-format */
     (_("Warning: %B: Unknown MSPABI object attribute %d"),
      abfd, tag);
   return TRUE;
@@ -2406,8 +2409,9 @@ data_model (int model)
    Raise an error if there are conflicting attributes.  */
 
 static bfd_boolean
-elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
+elf32_msp430_merge_mspabi_attributes (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   obj_attribute *in_attr;
   obj_attribute *out_attr;
   bfd_boolean result = TRUE;
@@ -2439,10 +2443,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
   if (in_attr[OFBA_MSPABI_Tag_ISA].i != out_attr[OFBA_MSPABI_Tag_ISA].i)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses %s instructions but %B uses %s"),
-	 ibfd, first_input_bfd,
-	 isa_type (in_attr[OFBA_MSPABI_Tag_ISA].i),
-	 isa_type (out_attr[OFBA_MSPABI_Tag_ISA].i));
+	 ibfd, isa_type (in_attr[OFBA_MSPABI_Tag_ISA].i),
+	 first_input_bfd, isa_type (out_attr[OFBA_MSPABI_Tag_ISA].i));
       result = FALSE;
     }
 
@@ -2451,10 +2455,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       out_attr[OFBA_MSPABI_Tag_Code_Model].i)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the %s code model whereas %B uses the %s code model"),
-	 ibfd, first_input_bfd,
-	 code_model (in_attr[OFBA_MSPABI_Tag_Code_Model].i),
-	 code_model (out_attr[OFBA_MSPABI_Tag_Code_Model].i));
+	 ibfd, code_model (in_attr[OFBA_MSPABI_Tag_Code_Model].i),
+	 first_input_bfd, code_model (out_attr[OFBA_MSPABI_Tag_Code_Model].i));
       result = FALSE;
     }
 
@@ -2463,6 +2467,7 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       && out_attr[OFBA_MSPABI_Tag_ISA].i != 2)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the large code model but %B uses MSP430 instructions"),
 	 ibfd, first_input_bfd);
       result = FALSE;
@@ -2473,10 +2478,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       out_attr[OFBA_MSPABI_Tag_Data_Model].i)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the %s data model whereas %B uses the %s data model"),
-	 ibfd, first_input_bfd,
-	 data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
-	 data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
+	 ibfd, data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
+	 first_input_bfd, data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
       result = FALSE;
     }
 
@@ -2485,6 +2490,7 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       && out_attr[OFBA_MSPABI_Tag_Data_Model].i != 1)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the small code model but %B uses the %s data model"),
 	 ibfd, first_input_bfd,
 	 data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
@@ -2496,9 +2502,10 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
       && out_attr[OFBA_MSPABI_Tag_ISA].i != 2)
     {
       _bfd_error_handler
+	/* xgettext:c-format */
 	(_("error: %B uses the %s data model but %B only uses MSP430 instructions"),
-	 ibfd, first_input_bfd,
-	 data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i));
+	 ibfd, data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
+	 first_input_bfd);
       result = FALSE;
     }
 
@@ -2509,8 +2516,9 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, bfd *obfd)
    object file when linking.  */
 
 static bfd_boolean
-elf32_msp430_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
+elf32_msp430_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   /* Make sure that the machine number reflects the most
      advanced version of the MSP architecture required.  */
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -2519,7 +2527,7 @@ elf32_msp430_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 			       max (bfd_get_mach (ibfd), bfd_get_mach (obfd)));
 #undef max
 
-  return elf32_msp430_merge_mspabi_attributes (ibfd, obfd);
+  return elf32_msp430_merge_mspabi_attributes (ibfd, info);
 }
 
 static bfd_boolean

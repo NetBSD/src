@@ -1,4 +1,4 @@
-# Copyright 2006-2016 Free Software Foundation, Inc.
+# Copyright 2006-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@
 
 standard_testfile
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
-    untested $testfile.exp
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
@@ -33,7 +32,7 @@ proc test_delete_alias { alias } {
     # First of all, remove all previous breakpoints if there were any,
     # and then verify that we do not have any breakpoint lying around.
     gdb_test_no_output "delete" \
-             "Remove all breakpoints ($alias)"
+             "remove all breakpoints ($alias)"
 
     gdb_test "info break" \
              "No breakpoints or watchpoints." \

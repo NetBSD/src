@@ -1,6 +1,6 @@
 /* Simulate breakpoints by patching locations in the target system, for GDB.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -37,19 +37,14 @@ int
 default_memory_insert_breakpoint (struct gdbarch *gdbarch,
 				  struct bp_target_info *bp_tgt)
 {
-  CORE_ADDR addr = bp_tgt->reqstd_address;
+  CORE_ADDR addr = bp_tgt->placed_address;
   const unsigned char *bp;
   gdb_byte *readbuf;
   int bplen;
   int val;
 
   /* Determine appropriate breakpoint contents and size for this address.  */
-  bp = gdbarch_breakpoint_from_pc (gdbarch, &addr, &bplen);
-  if (bp == NULL)
-    error (_("Software breakpoints not implemented for this target."));
-
-  bp_tgt->placed_address = addr;
-  bp_tgt->placed_size = bplen;
+  bp = gdbarch_sw_breakpoint_from_kind (gdbarch, bp_tgt->kind, &bplen);
 
   /* Save the memory contents in the shadow_contents buffer and then
      write the breakpoint instruction.  */
@@ -79,8 +74,12 @@ int
 default_memory_remove_breakpoint (struct gdbarch *gdbarch,
 				  struct bp_target_info *bp_tgt)
 {
+  int bplen;
+
+  gdbarch_sw_breakpoint_from_kind (gdbarch, bp_tgt->kind, &bplen);
+
   return target_write_raw_memory (bp_tgt->placed_address, bp_tgt->shadow_contents,
-				  bp_tgt->placed_size);
+				  bplen);
 }
 
 
@@ -115,7 +114,7 @@ memory_validate_breakpoint (struct gdbarch *gdbarch,
      address.  */
   bp = gdbarch_breakpoint_from_pc (gdbarch, &addr, &bplen);
 
-  if (bp == NULL || bp_tgt->placed_size != bplen)
+  if (bp == NULL)
     return 0;
 
   /* Make sure we see the memory breakpoints.  */

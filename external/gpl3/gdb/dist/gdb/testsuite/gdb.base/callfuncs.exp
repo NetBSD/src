@@ -1,4 +1,4 @@
-# Copyright 1992-2016 Free Software Foundation, Inc.
+# Copyright 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,9 +26,11 @@ if [support_complex_tests] {
 # Some targets can't do function calls, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
-    unsupported "This target can not call functions"
+    unsupported "this target can not call functions"
     continue
 }
+
+set skip_float_test [gdb_skip_float_test]
 
 # FIXME:  Before calling this proc, we should probably verify that
 # we can call inferior functions and get a valid integral value
@@ -38,7 +40,7 @@ if [target_info exists gdb,cannot_call_functions] {
 # (computed in the inferior) is 1 for true and 0 for false.
 
 proc do_function_calls {} {
-    global gdb_prompt
+    global gdb_prompt skip_float_test
 
     # We need to up this because this can be really slow on some boards.
     set timeout 60
@@ -71,7 +73,7 @@ proc do_function_calls {} {
     gdb_test "p t_long_values(789,long_val2)" " = 1"
     gdb_test "p t_long_values(long_val1,-321)" " = 1"
 
-    if ![target_info exists gdb,skip_float_tests] {
+    if {!$skip_float_test} {
 	gdb_test "p t_float_values(0.0,0.0)" " = 0"
 
 	# These next four tests fail on the mn10300.
@@ -99,7 +101,7 @@ proc do_function_calls {} {
 
 	gdb_test "p t_float_values2(3.14159,float_val2)" " = 1"
 
-	gdb_test "p t_float_many_args (float_val1, float_val2, float_val3, float_val4, float_val5, float_val6, float_val7, float_val8, float_val9, float_val10, float_val11, float_val12, float_val13, float_val14, float_val15)" " = 1" "Call function with many float arguments."
+	gdb_test "p t_float_many_args (float_val1, float_val2, float_val3, float_val4, float_val5, float_val6, float_val7, float_val8, float_val9, float_val10, float_val11, float_val12, float_val13, float_val14, float_val15)" " = 1" "call function with many float arguments."
 
 	gdb_test "p t_small_values(1,2,3,4,5,6,7,8,9,10)" " = 55"
 
@@ -109,7 +111,7 @@ proc do_function_calls {} {
 	gdb_test "p t_double_values(45.654,double_val2)" " = 1"
 	gdb_test "p t_double_values(double_val1,-67.66)" " = 1"
 
-	gdb_test "p t_double_many_args (double_val1, double_val2, double_val3, double_val4, double_val5, double_val6, double_val7, double_val8, double_val9, double_val10, double_val11, double_val12, double_val13, double_val14, double_val15)" " = 1" "Call function with many double arguments."
+	gdb_test "p t_double_many_args (double_val1, double_val2, double_val3, double_val4, double_val5, double_val6, double_val7, double_val8, double_val9, double_val10, double_val11, double_val12, double_val13, double_val14, double_val15)" " = 1" "call function with many double arguments."
 
 	gdb_test "p t_double_int(99.0, 1)" " = 0"
 	gdb_test "p t_double_int(99.0, 99)" " = 1"
@@ -199,7 +201,7 @@ proc do_function_calls {} {
     gdb_test "p t_structs_l(struct_val1)" "= 51" \
 	"call inferior func with struct - returns long"
 
-    if ![target_info exists gdb,skip_float_tests] {
+    if {!$skip_float_test} {
 	gdb_test "p t_structs_f(struct_val1)" "= 2.12.*" \
 	    "call inferior func with struct - returns float"
 	gdb_test "p t_structs_d(struct_val1)" "= 9.87.*" \
@@ -497,10 +499,10 @@ proc perform_all_tests {} {
 
 # Perform all tests with and without function prototypes.
 
-if { ![prepare_for_testing ${testfile}.exp $testfile $srcfile "$compile_flags additional_flags=-DPROTOTYPES"] } {
+if { ![prepare_for_testing "failed to prepare" $testfile $srcfile "$compile_flags additional_flags=-DPROTOTYPES"] } {
     perform_all_tests
 }
 
-if { ![prepare_for_testing ${testfile}.exp $testfile $srcfile "$compile_flags additional_flags=-DNO_PROTOTYPES"] } {
+if { ![prepare_for_testing "failed to prepare" $testfile $srcfile "$compile_flags additional_flags=-DNO_PROTOTYPES"] } {
     with_test_prefix "noproto" perform_all_tests
 }

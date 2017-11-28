@@ -1,6 +1,6 @@
 /* A substitute for ISO C99 <wchar.h>, for platforms that have issues.
 
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,10 +31,11 @@
 @PRAGMA_COLUMNS@
 
 #if (((defined __need_mbstate_t || defined __need_wint_t)               \
-      && !defined __MINGW32__)                                          \
+      && !defined __MINGW32__ && !defined __KLIBC__)                    \
      || (defined __hpux                                                 \
          && ((defined _INTTYPES_INCLUDED && !defined strtoimax)         \
              || defined _GL_JUST_INCLUDE_SYSTEM_WCHAR_H))               \
+     || (defined __MINGW32__ && defined __STRING_H_SOURCED__)           \
      || defined _GL_ALREADY_INCLUDING_WCHAR_H)
 /* Special invocation convention:
    - Inside glibc and uClibc header files, but not MinGW.
@@ -44,6 +45,8 @@
      and once directly.  In both situations 'wint_t' is not yet defined,
      therefore we cannot provide the function overrides; instead include only
      the system's <wchar.h>.
+   - With MinGW 3.22, when <string.h> includes <wchar.h>, only some part of
+     <wchar.h> is actually processed, and that doesn't include 'mbstate_t'.
    - On IRIX 6.5, similarly, we have an include <wchar.h> -> <wctype.h>, and
      the latter includes <wchar.h>.  But here, we have no way to detect whether
      <wctype.h> is completely included or is still being included.  */
@@ -445,6 +448,11 @@ _GL_CXXALIAS_RPL (wcwidth, int, (wchar_t));
 #  if !@HAVE_DECL_WCWIDTH@
 /* wcwidth exists but is not declared.  */
 _GL_FUNCDECL_SYS (wcwidth, int, (wchar_t) _GL_ATTRIBUTE_PURE);
+#  elif defined __KLIBC__
+/* On OS/2 kLIBC, wcwidth is a macro that expands to the name of a
+   static inline function.  The implementation of wcwidth in wcwidth.c
+   causes a "conflicting types" error. */
+#   undef wcwidth
 #  endif
 _GL_CXXALIAS_SYS (wcwidth, int, (wchar_t));
 # endif

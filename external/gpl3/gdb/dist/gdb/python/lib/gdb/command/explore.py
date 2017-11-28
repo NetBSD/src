@@ -1,5 +1,5 @@
 # GDB 'explore' command.
-# Copyright (C) 2012-2016 Free Software Foundation, Inc.
+# Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,6 +132,7 @@ class Explorer(object):
             gdb.TYPE_CODE_UNION : CompoundExplorer,
             gdb.TYPE_CODE_PTR : PointerExplorer,
             gdb.TYPE_CODE_REF : ReferenceExplorer,
+            gdb.TYPE_CODE_RVALUE_REF : ReferenceExplorer,
             gdb.TYPE_CODE_TYPEDEF : TypedefExplorer,
             gdb.TYPE_CODE_ARRAY : ArrayExplorer
         }
@@ -317,7 +318,6 @@ class ReferenceExplorer(object):
         target_type = datatype.target()
         Explorer.explore_type(name, target_type, is_child)
         return False
-
 
 class ArrayExplorer(object):
     """Internal class used to explore arrays."""

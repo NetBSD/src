@@ -444,3 +444,39 @@ Return TRUE.
 This is an internal function.  It should not be called from
 outside the BFD library.
 
+@findex bfd_merge_private_bfd_data
+@subsubsection @code{bfd_merge_private_bfd_data}
+@strong{Synopsis}
+@example
+bfd_boolean bfd_merge_private_bfd_data
+   (bfd *ibfd, struct bfd_link_info *info);
+@end example
+@strong{Description}@*
+Merge private BFD information from the BFD @var{ibfd} to the
+the output file BFD when linking.  Return @code{TRUE} on success,
+@code{FALSE} on error.  Possible error returns are:
+
+@itemize @bullet
+
+@item
+@code{bfd_error_no_memory} -
+Not enough memory exists to create private data for @var{obfd}.
+@end itemize
+@example
+#define bfd_merge_private_bfd_data(ibfd, info) \
+     BFD_SEND ((info)->output_bfd, _bfd_merge_private_bfd_data, \
+               (ibfd, info))
+@end example
+
+@findex _bfd_generic_verify_endian_match
+@subsubsection @code{_bfd_generic_verify_endian_match}
+@strong{Synopsis}
+@example
+bfd_boolean _bfd_generic_verify_endian_match
+   (bfd *ibfd, struct bfd_link_info *info);
+@end example
+@strong{Description}@*
+Can be used from / for bfd_merge_private_bfd_data to check that
+endianness matches between input and output file.  Returns
+TRUE for a match, otherwise returns FALSE and emits an error.
+

@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl Copyright (C) 2015-2016 Free Software Foundation, Inc.
+dnl Copyright (C) 2015-2017 Free Software Foundation, Inc.
 dnl
 dnl Contributed by Red Hat.
 dnl

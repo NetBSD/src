@@ -1,5 +1,5 @@
 /* BFD library support routines for the Renesas / SuperH SH architecture.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -495,51 +495,4 @@ sh_get_bfd_mach_from_arch_set (unsigned int arch_set)
   BFD_ASSERT (result != 0);
 
   return result;
-}
-
-
-/* Merge the architecture type of two BFD files, such that the
-   resultant architecture supports all the features required
-   by the two input BFDs.
-   If the input BFDs are multually incompatible - i.e. one uses
-   DSP while the other uses FPU - or there is no known architecture
-   that fits the requirements then an error is emitted.  */
-
-bfd_boolean
-sh_merge_bfd_arch (bfd *ibfd, bfd *obfd)
-{
-  unsigned int old_arch, new_arch, merged_arch;
-
-  if (! _bfd_generic_verify_endian_match (ibfd, obfd))
-    return FALSE;
-
-  old_arch = sh_get_arch_up_from_bfd_mach (bfd_get_mach (obfd));
-  new_arch = sh_get_arch_up_from_bfd_mach (bfd_get_mach (ibfd));
-
-  merged_arch = SH_MERGE_ARCH_SET (old_arch, new_arch);
-
-  if (!SH_VALID_CO_ARCH_SET (merged_arch))
-    {
-      (*_bfd_error_handler)
-	("%B: uses %s instructions while previous modules use %s instructions",
-	 ibfd,
-	 SH_ARCH_SET_HAS_DSP (new_arch) ? "dsp" : "floating point",
-	 SH_ARCH_SET_HAS_DSP (new_arch) ? "floating point" : "dsp");
-      bfd_set_error (bfd_error_bad_value);
-      return FALSE;
-    }
-  else if (!SH_VALID_ARCH_SET (merged_arch))
-    {
-      (*_bfd_error_handler)
-	("internal error: merge of architecture '%s' with architecture '%s' produced unknown architecture\n",
-	 bfd_printable_name (obfd),
-	 bfd_printable_name (ibfd));
-      bfd_set_error (bfd_error_bad_value);
-      return FALSE;
-    }
-
-  bfd_default_set_arch_mach (obfd, bfd_arch_sh,
-			     sh_get_bfd_mach_from_arch_set (merged_arch));
-
-  return TRUE;
 }

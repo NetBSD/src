@@ -1,6 +1,6 @@
 /* Target-dependent definitions for AMD64.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -76,13 +76,16 @@ enum amd64_regnum
   AMD64_K0_REGNUM,
   AMD64_K7_REGNUM = AMD64_K0_REGNUM + 7,
   AMD64_ZMM0H_REGNUM,
-  AMD64_ZMM31H_REGNUM = AMD64_ZMM0H_REGNUM + 31
+  AMD64_ZMM31H_REGNUM = AMD64_ZMM0H_REGNUM + 31,
+  AMD64_PKRU_REGNUM,
+  AMD64_FSBASE_REGNUM,
+  AMD64_GSBASE_REGNUM
 };
 
 /* Number of general purpose registers.  */
 #define AMD64_NUM_GREGS		24
 
-#define AMD64_NUM_REGS		(AMD64_ZMM31H_REGNUM + 1)
+#define AMD64_NUM_REGS		(AMD64_GSBASE_REGNUM + 1)
 
 extern struct target_desc *tdesc_amd64;
 
@@ -128,13 +131,13 @@ extern const struct regset amd64_fpregset;
 /* Variables exported from amd64-linux-tdep.c.  */
 extern int amd64_linux_gregset_reg_offset[];
 
-/* Variables exported from amd64nbsd-tdep.c.  */
+/* Variables exported from amd64-nbsd-tdep.c.  */
 extern int amd64nbsd_r_reg_offset[];
 
-/* Variables exported from amd64obsd-tdep.c.  */
+/* Variables exported from amd64-obsd-tdep.c.  */
 extern int amd64obsd_r_reg_offset[];
 
-/* Variables exported from amd64fbsd-tdep.c.  */
+/* Variables exported from amd64-fbsd-tdep.c.  */
 extern CORE_ADDR amd64fbsd_sigtramp_start_addr;
 extern CORE_ADDR amd64fbsd_sigtramp_end_addr;
 extern int amd64fbsd_sc_reg_offset[];

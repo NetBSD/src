@@ -90,7 +90,8 @@ BFD.  It can be accessed via the bfd_get_filename() macro.
 @subsubsection @code{bfd_openstreamr}
 @strong{Synopsis}
 @example
-bfd *bfd_openstreamr (const char * filename, const char * target, void * stream);
+bfd *bfd_openstreamr (const char * filename, const char * target,
+    void * stream);
 @end example
 @strong{Description}@*
 Open a BFD for read access on an existing stdio stream.  When
@@ -309,6 +310,29 @@ and adding in the crc32 for @var{len} bytes of @var{buf}.
 @strong{Returns}@*
 Return the updated CRC32 value.
 
+@findex bfd_get_debug_link_info_1
+@subsubsection @code{bfd_get_debug_link_info_1}
+@strong{Synopsis}
+@example
+char *bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out);
+@end example
+@strong{Description}@*
+Extracts the filename and CRC32 value for any separate debug
+information file associated with @var{abfd}.
+
+The @var{crc32_out} parameter is an untyped pointer because
+this routine is used as a @code{get_func_type} function, but it
+is expected to be an unsigned long pointer.
+
+@strong{Returns}@*
+The filename of the associated debug information file, or NULL
+if there is no such file.  If the filename was found then the
+contents of @var{crc32_out} are updated to hold the corresponding
+CRC32 value for the file.
+
+The returned filename is allocated with @code{malloc}; freeing
+it is the responsibility of the caller.
+
 @findex bfd_get_debug_link_info
 @subsubsection @code{bfd_get_debug_link_info}
 @strong{Synopsis}
@@ -316,11 +340,17 @@ Return the updated CRC32 value.
 char *bfd_get_debug_link_info (bfd *abfd, unsigned long *crc32_out);
 @end example
 @strong{Description}@*
-Fetch the filename and CRC32 value for any separate debuginfo
-associated with @var{abfd}.  Return NULL if no such info found,
-otherwise return filename and update @var{crc32_out}.  The
-returned filename is allocated with @code{malloc}; freeing it
-is the responsibility of the caller.
+Extracts the filename and CRC32 value for any separate debug
+information file associated with @var{abfd}.
+
+@strong{Returns}@*
+The filename of the associated debug information file, or NULL
+if there is no such file.  If the filename was found then the
+contents of @var{crc32_out} are updated to hold the corresponding
+CRC32 value for the file.
+
+The returned filename is allocated with @code{malloc}; freeing
+it is the responsibility of the caller.
 
 @findex bfd_get_alt_debug_link_info
 @subsubsection @code{bfd_get_alt_debug_link_info}
@@ -335,46 +365,60 @@ Fetch the filename and BuildID value for any alternate debuginfo
 associated with @var{abfd}.  Return NULL if no such info found,
 otherwise return filename and update @var{buildid_len} and
 @var{buildid_out}.  The returned filename and build_id are
-allocated with @code{malloc}; freeing them is the
-responsibility of the caller.
+allocated with @code{malloc}; freeing them is the responsibility
+of the caller.
 
 @findex separate_debug_file_exists
 @subsubsection @code{separate_debug_file_exists}
 @strong{Synopsis}
 @example
 bfd_boolean separate_debug_file_exists
-   (char *name, unsigned long crc32);
+   (char *name, void *crc32_p);
 @end example
 @strong{Description}@*
 Checks to see if @var{name} is a file and if its contents
-match @var{crc32}.
+match @var{crc32}, which is a pointer to an @code{unsigned
+long} containing a CRC32.
+
+The @var{crc32_p} parameter is an untyped pointer because
+this routine is used as a @code{check_func_type} function.
 
 @findex separate_alt_debug_file_exists
 @subsubsection @code{separate_alt_debug_file_exists}
 @strong{Synopsis}
 @example
 bfd_boolean separate_alt_debug_file_exists
-   (char *name, unsigned long crc32);
+   (char *name, void *unused);
 @end example
 @strong{Description}@*
-Checks to see if @var{name} is a file and if its BuildID
-matches @var{buildid}.
+Checks to see if @var{name} is a file.
 
 @findex find_separate_debug_file
 @subsubsection @code{find_separate_debug_file}
 @strong{Synopsis}
 @example
-char *find_separate_debug_file (bfd *abfd);
+char *find_separate_debug_file
+   (bfd *abfd, const char *dir, bfd_boolean include_dirs,
+    get_func_type get, check_func_type check, void *data);
 @end example
 @strong{Description}@*
-Searches @var{abfd} for a section called @var{section_name} which
-is expected to contain a reference to a file containing separate
-debugging information.  The function scans various locations in
-the filesystem, including the file tree rooted at
-@var{debug_file_directory}, and returns the first matching
-filename that it finds.  If @var{check_crc} is TRUE then the
-contents of the file must also match the CRC value contained in
-@var{section_name}.  Returns NULL if no valid file could be found.
+Searches for a debug information file corresponding to @var{abfd}.
+
+The name of the separate debug info file is returned by the
+@var{get} function.  This function scans various fixed locations
+in the filesystem, including the file tree rooted at @var{dir}.
+If the @var{include_dirs} parameter is true then the directory
+components of @var{abfd}'s filename will be included in the
+searched locations.
+
+@var{data} is passed unmodified to the @var{get} and @var{check}
+functions.  It is generally used to implement build-id-like
+matching in the callback functions.
+
+@strong{Returns}@*
+Returns the filename of the first file to be found which
+receives a TRUE result from the @var{check} function.
+Returns NULL if no valid file could be found.
 
 @findex bfd_follow_gnu_debuglink
 @subsubsection @code{bfd_follow_gnu_debuglink}
@@ -390,9 +434,8 @@ then searches the filesystem for this .debug file in some standard
 locations, including the directory tree rooted at @var{dir}, and if
 found returns the full filename.
 
-If @var{dir} is NULL, it will search a default path configured into
-libbfd at build time.  [XXX this feature is not currently
-implemented].
+If @var{dir} is NULL, the search will take place starting at
+the current directory.
 
 @strong{Returns}@*
 @code{NULL} on any errors or failure to locate the .debug file,
@@ -413,9 +456,8 @@ filesystem for this file in a set of standard locations, including
 the directory tree rooted at @var{dir}, and if found returns the
 full filename.
 
-If @var{dir} is NULL, it will search a default path configured into
-libbfd at build time.  [FIXME: This feature is not currently
-implemented].
+If @var{dir} is NULL, the search will take place starting at
+the current directory.
 
 @strong{Returns}@*
 @code{NULL} on any errors or failure to locate the debug file,
@@ -430,12 +472,13 @@ struct bfd_section *bfd_create_gnu_debuglink_section
    (bfd *abfd, const char *filename);
 @end example
 @strong{Description}@*
-Takes a @var{BFD} and adds a .gnu_debuglink section to it.  The section is sized
-to be big enough to contain a link to the specified @var{filename}.
+Takes a @var{BFD} and adds a .gnu_debuglink section to it.  The
+section is sized to be big enough to contain a link to the specified
+@var{filename}.
 
 @strong{Returns}@*
-A pointer to the new section is returned if all is ok.  Otherwise @code{NULL} is
-returned and bfd_error is set.
+A pointer to the new section is returned if all is ok.  Otherwise
+@code{NULL} is returned and bfd_error is set.
 
 @findex bfd_fill_in_gnu_debuglink_section
 @subsubsection @code{bfd_fill_in_gnu_debuglink_section}
@@ -453,4 +496,81 @@ current directory.
 @strong{Returns}@*
 @code{TRUE} is returned if all is ok.  Otherwise @code{FALSE} is returned
 and bfd_error is set.
+
+@findex get_build_id
+@subsubsection @code{get_build_id}
+@strong{Synopsis}
+@example
+struct bfd_build_id * get_build_id (bfd *abfd);
+@end example
+@strong{Description}@*
+Finds the build-id associated with @var{abfd}.  If the build-id is
+extracted from the note section then a build-id structure is built
+for it, using memory allocated to @var{abfd}, and this is then
+attached to the @var{abfd}.
+
+@strong{Returns}@*
+Returns a pointer to the build-id structure if a build-id could be
+found.  If no build-id is found NULL is returned and error code is
+set.
+
+@findex get_build_id_name
+@subsubsection @code{get_build_id_name}
+@strong{Synopsis}
+@example
+char * get_build_id_name (bfd *abfd, void *build_id_out_p)
+@end example
+@strong{Description}@*
+Searches @var{abfd} for a build-id, and then constructs a pathname
+from it.  The path is computed as .build-id/NN/NN+NN.debug where
+NNNN+NN is the build-id value as a hexadecimal string.
+
+@strong{Returns}@*
+Returns the constructed filename or NULL upon error.
+It is the caller's responsibility to free the memory used to hold the
+filename.
+If a filename is returned then the @var{build_id_out_p}
+parameter (which points to a @code{struct bfd_build_id}
+pointer) is set to a pointer to the build_id structure.
+
+@findex check_build_id_file
+@subsubsection @code{check_build_id_file}
+@strong{Synopsis}
+@example
+bfd_boolean check_build_id_file (char *name, void *buildid_p);
+@end example
+@strong{Description}@*
+Checks to see if @var{name} is a readable file and if its build-id
+matches @var{buildid}.
+
+@strong{Returns}@*
+Returns TRUE if the file exists, is readable, and contains a
+build-id which matches the build-id pointed at by
+@var{build_id_p} (which is really a @code{struct bfd_build_id **}).
+
+@findex bfd_follow_build_id_debuglink
+@subsubsection @code{bfd_follow_build_id_debuglink}
+@strong{Synopsis}
+@example
+char *bfd_follow_build_id_debuglink (bfd *abfd, const char *dir);
+@end example
+@strong{Description}@*
+Takes @var{abfd} and searches it for a .note.gnu.build-id section.
+If this section is found, it extracts the value of the NT_GNU_BUILD_ID
+note, which should be a hexadecimal value @var{NNNN+NN} (for
+32+ hex digits).  It then searches the filesystem for a file named
+@var{.build-id/NN/NN+NN.debug} in a set of standard locations,
+including the directory tree rooted at @var{dir}.  The filename
+of the first matching file to be found is returned.  A matching
+file should contain a .note.gnu.build-id section with the same
+@var{NNNN+NN} note as @var{abfd}, although this check is currently
+not implemented.
+
+If @var{dir} is NULL, the search will take place starting at
+the current directory.
+
+@strong{Returns}@*
+@code{NULL} on any errors or failure to locate the debug file,
+otherwise a pointer to a heap-allocated string containing the
+filename.  The caller is responsible for freeing this string.
 

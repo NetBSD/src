@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2016 Free Software Foundation, Inc.
+# Copyright (C) 2003-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,13 +59,13 @@ if [test_compiler_info "xlc-*"] {
 }
 
 if { [gdb_compile_shlib $lib1src $lib1_sl $lib_opts] != ""} {
-    untested "Could not build $lib1_sl."
+    untested "could not build $lib1_sl."
     return -1
 } elseif { [gdb_compile_shlib $lib2src $lib2_sl $lib_opts] != ""} {
-    untested "Could not build $lib1_s2."
+    untested "could not build $lib1_s2."
     return -1
 } elseif { [gdb_compile $srcfile $binfile executable $exec_opts] != ""} {
-    untested "Could not build $binfile."
+    untested "could not build $binfile."
     return -1
 }
 
@@ -77,30 +77,8 @@ gdb_load_shlib $lib2_sl
 
 # Load up the shared objects
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
-}
-
-proc get_var_address { var } {
-    global gdb_prompt hex
-
-    # Match output like:
-    # $1 = (int *) 0x0
-    # $5 = (int (*)()) 0
-    # $6 = (int (*)()) 0x24 <function_bar>
-
-    gdb_test_multiple "print &${var}" "get address of ${var}" {
-	-re "\\\$\[0-9\]+ = \\(.*\\) (0|$hex)( <${var}>)?\[\r\n\]+${gdb_prompt} $"
-	{
-	    pass "get address of ${var}"
-	    if { $expect_out(1,string) == "0" } {
-		return "0x0"
-	    } else {
-		return $expect_out(1,string)
-	    }
-	}
-    }
-    return ""
 }
 
 #
@@ -257,8 +235,8 @@ if {([istarget "*pc-cygwin"] || [istarget "*pc-mingw32"]) } {
     # A better approach would be include absolute symbols via the assembler.
     #
     if {[check_same "_minor_os_version__" "${msymfile}"]} {
-	pass "Absolute symbols not relocated"
+	pass "absolute symbols not relocated"
     } else {
-	fail "Absolute symbols not relocated"
+	fail "absolute symbols not relocated"
     }
 }

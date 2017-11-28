@@ -2,7 +2,7 @@
 
 # Architecture commands for GDB, the GNU debugger.
 #
-# Copyright (C) 1998-2016 Free Software Foundation, Inc.
+# Copyright (C) 1998-2017 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -383,6 +383,17 @@ v:const struct floatformat **:double_format:::::floatformats_ieee_double::pforma
 v:int:long_double_bit:::8 * sizeof (long double):8*TARGET_CHAR_BIT::0
 v:const struct floatformat **:long_double_format:::::floatformats_ieee_double::pformat (gdbarch->long_double_format)
 
+# The ABI default bit-size for "wchar_t".  wchar_t is a built-in type
+# starting with C++11.
+v:int:wchar_bit:::8 * sizeof (wchar_t):4*TARGET_CHAR_BIT::0
+# One if \`wchar_t' is signed, zero if unsigned.
+v:int:wchar_signed:::1:-1:1
+
+# Returns the floating-point format to be used for values of length LENGTH.
+# NAME, if non-NULL, is the type name, which may be used to distinguish
+# different target formats of the same length.
+m:const struct floatformat **:floatformat_for_type:const char *name, int length:name, length:0:default_floatformat_for_type::0
+
 # For most targets, a pointer on the target and its representation as an
 # address in GDB have the same size and "look the same".  For such a
 # target, you need only set gdbarch_ptr_bit and gdbarch_addr_bit
@@ -554,11 +565,21 @@ M:CORE_ADDR:skip_main_prologue:CORE_ADDR ip:ip
 M:CORE_ADDR:skip_entrypoint:CORE_ADDR ip:ip
 
 f:int:inner_than:CORE_ADDR lhs, CORE_ADDR rhs:lhs, rhs:0:0
-m:const gdb_byte *:breakpoint_from_pc:CORE_ADDR *pcptr, int *lenptr:pcptr, lenptr::0:
-# Return the adjusted address and kind to use for Z0/Z1 packets.
-# KIND is usually the memory length of the breakpoint, but may have a
-# different target-specific meaning.
-m:void:remote_breakpoint_from_pc:CORE_ADDR *pcptr, int *kindptr:pcptr, kindptr:0:default_remote_breakpoint_from_pc::0
+m:const gdb_byte *:breakpoint_from_pc:CORE_ADDR *pcptr, int *lenptr:pcptr, lenptr:0:default_breakpoint_from_pc::0
+
+# Return the breakpoint kind for this target based on *PCPTR.
+m:int:breakpoint_kind_from_pc:CORE_ADDR *pcptr:pcptr::0:
+
+# Return the software breakpoint from KIND.  KIND can have target
+# specific meaning like the Z0 kind parameter.
+# SIZE is set to the software breakpoint's length in memory.
+m:const gdb_byte *:sw_breakpoint_from_kind:int kind, int *size:kind, size::NULL::0
+
+# Return the breakpoint kind for this target based on the current
+# processor state (e.g. the current instruction mode on ARM) and the
+# *PCPTR.  In default, it is gdbarch->breakpoint_kind_from_pc.
+m:int:breakpoint_kind_from_current_state:struct regcache *regcache, CORE_ADDR *pcptr:regcache, pcptr:0:default_breakpoint_kind_from_current_state::0
+
 M:CORE_ADDR:adjust_breakpoint_address:CORE_ADDR bpaddr:bpaddr
 m:int:memory_insert_breakpoint:struct bp_target_info *bp_tgt:bp_tgt:0:default_memory_insert_breakpoint::0
 m:int:memory_remove_breakpoint:struct bp_target_info *bp_tgt:bp_tgt:0:default_memory_remove_breakpoint::0
@@ -611,14 +632,15 @@ m:CORE_ADDR:addr_bits_remove:CORE_ADDR addr:addr::core_addr_identity::0
 # FIXME/cagney/2001-01-18: The logic is backwards.  It should be asking if the
 # target can single step.  If not, then implement single step using breakpoints.
 #
-# A return value of 1 means that the software_single_step breakpoints
-# were inserted; 0 means they were not.  Multiple breakpoints may be
-# inserted for some instructions such as conditional branch.  However,
-# each implementation must always evaluate the condition and only put
-# the breakpoint at the branch destination if the condition is true, so
-# that we ensure forward progress when stepping past a conditional
-# branch to self.
-F:int:software_single_step:struct frame_info *frame:frame
+# Return a vector of addresses on which the software single step
+# breakpoints should be inserted.  NULL means software single step is
+# not used.
+# Multiple breakpoints may be inserted for some instructions such as
+# conditional branch.  However, each implementation must always evaluate
+# the condition and only put the breakpoint at the branch destination if
+# the condition is true, so that we ensure forward progress when stepping
+# past a conditional branch to self.
+F:VEC (CORE_ADDR) *:software_single_step:struct regcache *regcache:regcache
 
 # Return non-zero if the processor is executing a delay slot and a
 # further single-step is needed before the instruction finishes.
@@ -729,7 +751,7 @@ M:ULONGEST:core_xfer_shared_libraries:gdb_byte *readbuf, ULONGEST offset, ULONGE
 M:ULONGEST:core_xfer_shared_libraries_aix:gdb_byte *readbuf, ULONGEST offset, ULONGEST len:readbuf, offset, len
 
 # How the core target converts a PTID from a core file to a string.
-M:char *:core_pid_to_str:ptid_t ptid:ptid
+M:const char *:core_pid_to_str:ptid_t ptid:ptid
 
 # How the core target extracts the name of a thread from a core file.
 M:const char *:core_thread_name:struct thread_info *thr:thr
@@ -1147,6 +1169,10 @@ m:const char *:gnu_triplet_regexp:void:::default_gnu_triplet_regexp::0
 # each address in memory.
 m:int:addressable_memory_unit_size:void:::default_addressable_memory_unit_size::0
 
+# Functions for allowing a target to modify its disassembler options.
+v:char **:disassembler_options:::0:0::0:pstring_ptr (gdbarch->disassembler_options)
+v:const disasm_options_t *:valid_disassembler_options:::0:0::0:host_address_to_string (gdbarch->valid_disassembler_options)
+
 EOF
 }
 
@@ -1200,7 +1226,7 @@ cat <<EOF
 
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1243,6 +1269,7 @@ cat <<EOF
 #define GDBARCH_H
 
 #include "frame.h"
+#include "dis-asm.h"
 
 struct floatformat;
 struct ui_file;
@@ -1657,10 +1684,18 @@ pstring (const char *string)
   return string;
 }
 
+static const char *
+pstring_ptr (char **string)
+{
+  if (string == NULL || *string == NULL)
+    return "(null)";
+  return *string;
+}
+
 /* Helper function to print a list of strings, represented as "const
    char *const *".  The list is printed comma-separated.  */
 
-static char *
+static const char *
 pstring_list (const char *const *list)
 {
   static char ret[100];
@@ -1859,18 +1894,13 @@ cat <<EOF
 static void
 verify_gdbarch (struct gdbarch *gdbarch)
 {
-  struct ui_file *log;
-  struct cleanup *cleanups;
-  long length;
-  char *buf;
+  string_file log;
 
-  log = mem_fileopen ();
-  cleanups = make_cleanup_ui_file_delete (log);
   /* fundamental */
   if (gdbarch->byte_order == BFD_ENDIAN_UNKNOWN)
-    fprintf_unfiltered (log, "\n\tbyte-order");
+    log.puts ("\n\tbyte-order");
   if (gdbarch->bfd_arch_info == NULL)
-    fprintf_unfiltered (log, "\n\tbfd_arch_info");
+    log.puts ("\n\tbfd_arch_info");
   /* Check those that need to be defined for the given multi-arch level.  */
 EOF
 function_list | while do_read
@@ -1899,22 +1929,19 @@ do
 	elif [ -n "${invalid_p}" ]
 	then
 	    printf "  if (${invalid_p})\n"
-	    printf "    fprintf_unfiltered (log, \"\\\\n\\\\t${function}\");\n"
+	    printf "    log.puts (\"\\\\n\\\\t${function}\");\n"
 	elif [ -n "${predefault}" ]
 	then
 	    printf "  if (gdbarch->${function} == ${predefault})\n"
-	    printf "    fprintf_unfiltered (log, \"\\\\n\\\\t${function}\");\n"
+	    printf "    log.puts (\"\\\\n\\\\t${function}\");\n"
 	fi
     fi
 done
 cat <<EOF
-  buf = ui_file_xstrdup (log, &length);
-  make_cleanup (xfree, buf);
-  if (length > 0)
+  if (!log.empty ())
     internal_error (__FILE__, __LINE__,
                     _("verify_gdbarch: the following are invalid ...%s"),
-                    buf);
-  do_cleanups (cleanups);
+                    log.c_str ());
 }
 EOF
 

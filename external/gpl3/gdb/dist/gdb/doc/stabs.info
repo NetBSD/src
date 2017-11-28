@@ -1,6 +1,6 @@
-This is stabs.info, produced by makeinfo version 6.0 from stabs.texinfo.
+This is stabs.info, produced by makeinfo version 6.3 from stabs.texinfo.
 
-Copyright (C) 1992-2016 Free Software Foundation, Inc.  Contributed by
+Copyright (C) 1992-2017 Free Software Foundation, Inc.  Contributed by
 Cygnus Support.  Written by Julia Menapace, Jim Kingdon, and David
 MacKenzie.
 
@@ -17,7 +17,7 @@ END-INFO-DIR-ENTRY
 
    This document describes the stabs debugging symbol tables.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.  Contributed
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.  Contributed
 by Cygnus Support.  Written by Julia Menapace, Jim Kingdon, and David
 MacKenzie.
 

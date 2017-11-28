@@ -1,6 +1,6 @@
 /* Target-machine dependent code for Renesas H8/300, for GDB.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -954,7 +954,7 @@ h8300_register_name (struct gdbarch *gdbarch, int regno)
 {
   /* The register names change depending on which h8300 processor
      type is selected.  */
-  static char *register_names[] = {
+  static const char *register_names[] = {
     "r0", "r1", "r2", "r3", "r4", "r5", "r6",
     "sp", "", "pc", "cycles", "tick", "inst",
     "ccr",			/* pseudo register */
@@ -971,7 +971,7 @@ h8300_register_name (struct gdbarch *gdbarch, int regno)
 static const char *
 h8300s_register_name (struct gdbarch *gdbarch, int regno)
 {
-  static char *register_names[] = {
+  static const char *register_names[] = {
     "er0", "er1", "er2", "er3", "er4", "er5", "er6",
     "sp", "", "pc", "cycles", "", "tick", "inst",
     "mach", "macl",
@@ -989,7 +989,7 @@ h8300s_register_name (struct gdbarch *gdbarch, int regno)
 static const char *
 h8300sx_register_name (struct gdbarch *gdbarch, int regno)
 {
-  static char *register_names[] = {
+  static const char *register_names[] = {
     "er0", "er1", "er2", "er3", "er4", "er5", "er6",
     "sp", "", "pc", "cycles", "", "tick", "inst",
     "mach", "macl", "sbr", "vbr",
@@ -1242,16 +1242,10 @@ h8300s_dbg_reg_to_regnum (struct gdbarch *gdbarch, int regno)
   return regno;
 }
 
-static const unsigned char *
-h8300_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-			  int *lenptr)
-{
-  /*static unsigned char breakpoint[] = { 0x7A, 0xFF }; *//* ??? */
-  static unsigned char breakpoint[] = { 0x01, 0x80 };	/* Sleep */
+/*static unsigned char breakpoint[] = { 0x7A, 0xFF }; *//* ??? */
+constexpr gdb_byte h8300_break_insn[] = { 0x01, 0x80 };	/* Sleep */
 
-  *lenptr = sizeof (breakpoint);
-  return breakpoint;
-}
+typedef BP_MANIPULATION (h8300_break_insn) h8300_breakpoint;
 
 static struct gdbarch *
 h8300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
@@ -1377,13 +1371,20 @@ h8300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Stack grows up.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
 
-  set_gdbarch_breakpoint_from_pc (gdbarch, h8300_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       h8300_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       h8300_breakpoint::bp_from_kind);
   set_gdbarch_push_dummy_call (gdbarch, h8300_push_dummy_call);
 
   set_gdbarch_char_signed (gdbarch, 0);
   set_gdbarch_int_bit (gdbarch, 2 * TARGET_CHAR_BIT);
   set_gdbarch_long_bit (gdbarch, 4 * TARGET_CHAR_BIT);
   set_gdbarch_long_long_bit (gdbarch, 8 * TARGET_CHAR_BIT);
+
+  set_gdbarch_wchar_bit (gdbarch, 2 * TARGET_CHAR_BIT);
+  set_gdbarch_wchar_signed (gdbarch, 0);
+
   set_gdbarch_double_bit (gdbarch, 4 * TARGET_CHAR_BIT);
   set_gdbarch_double_format (gdbarch, floatformats_ieee_single);
   set_gdbarch_long_double_bit (gdbarch, 4 * TARGET_CHAR_BIT);

@@ -1,5 +1,5 @@
 /* SPARC ELF support for BFD.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    By Doug Evans, Cygnus Support, <dje@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.

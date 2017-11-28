@@ -1,7 +1,7 @@
 #ifndef MICROBLAZE_H
 #define MICROBLAZE_H
 
-/* Copyright 2009-2016 Free Software Foundation, Inc.
+/* Copyright 2009-2017 Free Software Foundation, Inc.
 
    This file is part of the Xilinx MicroBlaze simulator.
 

@@ -1,5 +1,5 @@
 /* Native debugging support for Intel x86 running DJGPP.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of GDB.
@@ -631,8 +631,9 @@ go32_kill_inferior (struct target_ops *ops)
 }
 
 static void
-go32_create_inferior (struct target_ops *ops, char *exec_file,
-		      char *args, char **env, int from_tty)
+go32_create_inferior (struct target_ops *ops,
+		      const char *exec_file,
+		      const std::string &allargs, char **env, int from_tty)
 {
   extern char **environ;
   jmp_buf start_state;
@@ -641,6 +642,7 @@ go32_create_inferior (struct target_ops *ops, char *exec_file,
   size_t cmdlen;
   struct inferior *inf;
   int result;
+  const char *args = allargs.c_str ();
 
   /* If no exec file handed to us, get it from the exec-file command -- with
      a good, common error message if none is specified.  */
@@ -938,10 +940,10 @@ go32_terminal_ours (struct target_ops *self)
 static int
 go32_thread_alive (struct target_ops *ops, ptid_t ptid)
 {
-  return !ptid_equal (inferior_ptid, null_ptid);
+  return !ptid_equal (ptid, null_ptid);
 }
 
-static char *
+static const char *
 go32_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   return normal_pid_to_str (ptid);
@@ -1126,7 +1128,7 @@ go32_sysinfo (char *arg, int from_tty)
   /* CPUID with EAX = 1 returns processor signature and features.  */
   if (cpuid_max >= 1)
     {
-      static char *brand_name[] = {
+      static const char *brand_name[] = {
 	"",
 	" Celeron",
 	" III",

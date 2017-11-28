@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define GDB_BFD_H
 
 #include "registry.h"
+#include "common/gdb_ref_ptr.h"
 
 DECLARE_REGISTRY (bfd);
 
@@ -39,6 +40,34 @@ int is_target_filename (const char *name);
 
 int gdb_bfd_has_target_filename (struct bfd *abfd);
 
+/* Increment the reference count of ABFD.  It is fine for ABFD to be
+   NULL; in this case the function does nothing.  */
+
+void gdb_bfd_ref (struct bfd *abfd);
+
+/* Decrement the reference count of ABFD.  If this is the last
+   reference, ABFD will be freed.  If ABFD is NULL, this function does
+   nothing.  */
+
+void gdb_bfd_unref (struct bfd *abfd);
+
+/* A policy class for gdb::ref_ptr for BFD reference counting.  */
+struct gdb_bfd_ref_policy
+{
+  static void incref (struct bfd *abfd)
+  {
+    gdb_bfd_ref (abfd);
+  }
+
+  static void decref (struct bfd *abfd)
+  {
+    gdb_bfd_unref (abfd);
+  }
+};
+
+/* A gdb::ref_ptr that has been specialized for BFD objects.  */
+typedef gdb::ref_ptr<struct bfd, gdb_bfd_ref_policy> gdb_bfd_ref_ptr;
+
 /* Open a read-only (FOPEN_RB) BFD given arguments like bfd_fopen.
    If NAME starts with TARGET_SYSROOT_PREFIX then the BFD will be
    opened using target fileio operations if necessary.  Returns NULL
@@ -51,18 +80,7 @@ int gdb_bfd_has_target_filename (struct bfd *abfd);
    not be exactly NAME but rather NAME with TARGET_SYSROOT_PREFIX
    stripped.  */
 
-struct bfd *gdb_bfd_open (const char *name, const char *target, int fd);
-
-/* Increment the reference count of ABFD.  It is fine for ABFD to be
-   NULL; in this case the function does nothing.  */
-
-void gdb_bfd_ref (struct bfd *abfd);
-
-/* Decrement the reference count of ABFD.  If this is the last
-   reference, ABFD will be freed.  If ABFD is NULL, this function does
-   nothing.  */
-
-void gdb_bfd_unref (struct bfd *abfd);
+gdb_bfd_ref_ptr gdb_bfd_open (const char *name, const char *target, int fd);
 
 /* Mark the CHILD BFD as being a member of PARENT.  Also, increment
    the reference count of CHILD.  Calling this function ensures that
@@ -110,45 +128,46 @@ int gdb_bfd_crc (struct bfd *abfd, unsigned long *crc_out);
 /* A wrapper for bfd_fopen that initializes the gdb-specific reference
    count.  */
 
-bfd *gdb_bfd_fopen (const char *, const char *, const char *, int);
+gdb_bfd_ref_ptr gdb_bfd_fopen (const char *, const char *, const char *, int);
 
 /* A wrapper for bfd_openr that initializes the gdb-specific reference
    count.  */
 
-bfd *gdb_bfd_openr (const char *, const char *);
+gdb_bfd_ref_ptr gdb_bfd_openr (const char *, const char *);
 
 /* A wrapper for bfd_openw that initializes the gdb-specific reference
    count.  */
 
-bfd *gdb_bfd_openw (const char *, const char *);
+gdb_bfd_ref_ptr gdb_bfd_openw (const char *, const char *);
 
 /* A wrapper for bfd_openr_iovec that initializes the gdb-specific
    reference count.  */
 
-bfd *gdb_bfd_openr_iovec (const char *filename, const char *target,
-			  void *(*open_func) (struct bfd *nbfd,
-					      void *open_closure),
-			  void *open_closure,
-			  file_ptr (*pread_func) (struct bfd *nbfd,
-						  void *stream,
-						  void *buf,
-						  file_ptr nbytes,
-						  file_ptr offset),
-			  int (*close_func) (struct bfd *nbfd,
-					     void *stream),
-			  int (*stat_func) (struct bfd *abfd,
-					    void *stream,
-					    struct stat *sb));
+gdb_bfd_ref_ptr gdb_bfd_openr_iovec (const char *filename, const char *target,
+				     void *(*open_func) (struct bfd *nbfd,
+							 void *open_closure),
+				     void *open_closure,
+				     file_ptr (*pread_func) (struct bfd *nbfd,
+							     void *stream,
+							     void *buf,
+							     file_ptr nbytes,
+							     file_ptr offset),
+				     int (*close_func) (struct bfd *nbfd,
+							void *stream),
+				     int (*stat_func) (struct bfd *abfd,
+						       void *stream,
+						       struct stat *sb));
 
 /* A wrapper for bfd_openr_next_archived_file that initializes the
    gdb-specific reference count.  */
 
-bfd *gdb_bfd_openr_next_archived_file (bfd *archive, bfd *previous);
+gdb_bfd_ref_ptr gdb_bfd_openr_next_archived_file (bfd *archive, bfd *previous);
 
 /* A wrapper for bfd_fdopenr that initializes the gdb-specific
    reference count.  */
 
-bfd *gdb_bfd_fdopenr (const char *filename, const char *target, int fd);
+gdb_bfd_ref_ptr gdb_bfd_fdopenr (const char *filename, const char *target,
+				 int fd);
 
 
 

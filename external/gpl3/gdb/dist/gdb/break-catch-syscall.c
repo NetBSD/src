@@ -1,6 +1,6 @@
 /* Everything about syscall catchpoints, for GDB.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -257,30 +257,30 @@ print_it_catch_syscall (bpstat bs)
   maybe_print_thread_hit_breakpoint (uiout);
 
   if (b->disposition == disp_del)
-    ui_out_text (uiout, "Temporary catchpoint ");
+    uiout->text ("Temporary catchpoint ");
   else
-    ui_out_text (uiout, "Catchpoint ");
-  if (ui_out_is_mi_like_p (uiout))
+    uiout->text ("Catchpoint ");
+  if (uiout->is_mi_like_p ())
     {
-      ui_out_field_string (uiout, "reason",
+      uiout->field_string ("reason",
 			   async_reason_lookup (last.kind == TARGET_WAITKIND_SYSCALL_ENTRY
 						? EXEC_ASYNC_SYSCALL_ENTRY
 						: EXEC_ASYNC_SYSCALL_RETURN));
-      ui_out_field_string (uiout, "disp", bpdisp_text (b->disposition));
+      uiout->field_string ("disp", bpdisp_text (b->disposition));
     }
-  ui_out_field_int (uiout, "bkptno", b->number);
+  uiout->field_int ("bkptno", b->number);
 
   if (last.kind == TARGET_WAITKIND_SYSCALL_ENTRY)
-    ui_out_text (uiout, " (call to syscall ");
+    uiout->text (" (call to syscall ");
   else
-    ui_out_text (uiout, " (returned from syscall ");
+    uiout->text (" (returned from syscall ");
 
-  if (s.name == NULL || ui_out_is_mi_like_p (uiout))
-    ui_out_field_int (uiout, "syscall-number", last.value.syscall_number);
+  if (s.name == NULL || uiout->is_mi_like_p ())
+    uiout->field_int ("syscall-number", last.value.syscall_number);
   if (s.name != NULL)
-    ui_out_field_string (uiout, "syscall-name", s.name);
+    uiout->field_string ("syscall-name", s.name);
 
-  ui_out_text (uiout, "), ");
+  uiout->text ("), ");
 
   return PRINT_SRC_AND_LOC;
 }
@@ -302,14 +302,14 @@ print_one_catch_syscall (struct breakpoint *b,
      line up too nicely with the headers, but the effect is relatively
      readable).  */
   if (opts.addressprint)
-    ui_out_field_skip (uiout, "addr");
+    uiout->field_skip ("addr");
   annotate_field (5);
 
   if (c->syscalls_to_be_caught
       && VEC_length (int, c->syscalls_to_be_caught) > 1)
-    ui_out_text (uiout, "syscalls \"");
+    uiout->text ("syscalls \"");
   else
-    ui_out_text (uiout, "syscall \"");
+    uiout->text ("syscall \"");
 
   if (c->syscalls_to_be_caught)
     {
@@ -336,14 +336,14 @@ print_one_catch_syscall (struct breakpoint *b,
         }
       /* Remove the last comma.  */
       text[strlen (text) - 2] = '\0';
-      ui_out_field_string (uiout, "what", text);
+      uiout->field_string ("what", text);
     }
   else
-    ui_out_field_string (uiout, "what", "<any syscall>");
-  ui_out_text (uiout, "\" ");
+    uiout->field_string ("what", "<any syscall>");
+  uiout->text ("\" ");
 
-  if (ui_out_is_mi_like_p (uiout))
-    ui_out_field_string (uiout, "catch-type", "syscall");
+  if (uiout->is_mi_like_p ())
+    uiout->field_string ("catch-type", "syscall");
 }
 
 /* Implement the "print_mention" breakpoint_ops method for syscall
@@ -433,7 +433,7 @@ create_syscall_event_catchpoint (int tempflag, VEC(int) *filter,
   struct syscall_catchpoint *c;
   struct gdbarch *gdbarch = get_current_arch ();
 
-  c = XNEW (struct syscall_catchpoint);
+  c = new syscall_catchpoint ();
   init_catchpoint (&c->base, gdbarch, tempflag, NULL, ops);
   c->syscalls_to_be_caught = filter;
 

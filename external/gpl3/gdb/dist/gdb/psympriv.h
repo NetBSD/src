@@ -1,6 +1,6 @@
 /* Private partial symbol table definitions.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define PSYMPRIV_H
 
 #include "psymtab.h"
+#include "objfiles.h"
 
 struct psymbol_allocation_list;
 
@@ -225,7 +226,40 @@ extern struct partial_symtab *allocate_psymtab (const char *,
 
 extern void discard_psymtab (struct objfile *, struct partial_symtab *);
 
-extern struct cleanup *make_cleanup_discard_psymtabs (struct objfile *);
+/* Used when recording partial symbol tables.  On destruction,
+   discards any partial symbol tables that have been built.  However,
+   the tables can be kept by calling the "keep" method.  */
+class psymtab_discarder
+{
+ public:
+
+  psymtab_discarder (struct objfile *objfile)
+    : m_objfile (objfile),
+      m_psymtab (objfile->psymtabs)
+  {
+  }
+
+  ~psymtab_discarder ()
+  {
+    if (m_objfile != NULL)
+      while (m_objfile->psymtabs != m_psymtab)
+	discard_psymtab (m_objfile, m_objfile->psymtabs);
+  }
+
+  /* Keep any partial symbol tables that were built.  */
+  void keep ()
+  {
+    m_objfile = NULL;
+  }
+
+ private:
+
+  /* The objfile.  If NULL this serves as a sentinel to indicate that
+     the psymtabs should be kept.  */
+  struct objfile *m_objfile;
+  /* How far back to free.  */
+  struct partial_symtab *m_psymtab;
+};
 
 /* Traverse all psymtabs in one objfile.  */
 

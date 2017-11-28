@@ -1,5 +1,5 @@
 /* Simulator cache routines for CGEN simulators (and maybe others).
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.

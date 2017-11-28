@@ -1,6 +1,6 @@
 /* D language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,7 +58,7 @@ struct builtin_d_type
 
 extern int d_parse (struct parser_state *);
 
-extern void d_yyerror (char *);
+extern void d_yyerror (const char *);
 
 /* Defined in d-lang.c  */
 
@@ -80,10 +80,10 @@ extern struct block_symbol d_lookup_nested_symbol (struct type *, const char *,
 
 /* Defined in d-valprint.c  */
 
-extern void d_val_print (struct type *type, const gdb_byte *valaddr,
+extern void d_val_print (struct type *type,
 			 int embedded_offset, CORE_ADDR address,
 			 struct ui_file *stream, int recurse,
-			 const struct value *val,
+			 struct value *val,
 			 const struct value_print_options *options);
 
 #endif /* !defined (D_LANG_H) */

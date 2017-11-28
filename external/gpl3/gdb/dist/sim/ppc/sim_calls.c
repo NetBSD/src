@@ -386,6 +386,16 @@ sim_io_error (SIM_DESC sd, const char *fmt, ...)
 
 /****/
 
+void NORETURN
+error (const char *msg, ...)
+{
+  va_list ap;
+  va_start(ap, msg);
+  callbacks->evprintf_filtered (callbacks, msg, ap);
+  va_end(ap);
+  callbacks->error (callbacks, "");
+}
+
 void *
 zalloc(long size)
 {

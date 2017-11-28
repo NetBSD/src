@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2016 Free Software Foundation, Inc.
+# Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,14 @@ if ![info exists SKIP_PROLOGUE_COUNT] {
 PerfTest::assemble {
     global srcdir subdir srcfile binfile
 
-    if { [gdb_compile "$srcdir/$subdir/$srcfile" ${binfile} executable {debug}] != "" } {
+    if [info exists COMPILE] {
+	set opts {debug}
+    } else {
+	set opts {nodebug}
+    }
+
+    if { [gdb_compile "$srcdir/$subdir/$srcfile" ${binfile} executable $opts] != "" } {
+	untested "failed to compile"
 	return -1
     }
 
@@ -49,7 +56,7 @@ PerfTest::assemble {
     clean_restart $binfile
 
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
     return 0

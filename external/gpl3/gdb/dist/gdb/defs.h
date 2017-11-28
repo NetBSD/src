@@ -1,7 +1,7 @@
 /* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
 		      for now.  */
 /* Basic, host-specific, and target-specific definitions for GDB.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -103,13 +103,6 @@ enum compile_i_scope_types
 
 #include "hashtab.h"
 
-#ifndef min
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
-#ifndef max
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
 /* * Enable dbx commands if set.  */
 extern int dbx_commands;
 
@@ -203,9 +196,9 @@ extern void quit_serial_event_clear (void);
    Note that there's ambiguity between the mangling schemes of some of
    these languages, so some symbols could be successfully demangled by
    several languages.  For that reason, the constants here are sorted
-   in the order we'll attempt demangling them.  For example: Java and
-   Rust use C++ mangling, so must come after C++; Ada must come last
-   (see ada_sniff_from_mangled_name).  */
+   in the order we'll attempt demangling them.  For example: Rust uses
+   C++ mangling, so must come after C++; Ada must come last (see
+   ada_sniff_from_mangled_name).  */
 
 enum language
   {
@@ -214,7 +207,6 @@ enum language
     language_c,			/* C */
     language_objc,		/* Objective-C */
     language_cplus,		/* C++ */
-    language_java,		/* Java */
     language_d,			/* D */
     language_go,		/* Go */
     language_fortran,		/* Fortran */
@@ -311,27 +303,13 @@ extern void symbol_file_command (char *, int);
 /* * Remote targets may wish to use this as their load function.  */
 extern void generic_load (const char *name, int from_tty);
 
-/* * Report on STREAM the performance of memory transfer operation,
-   such as 'load'.
-   @param DATA_COUNT is the number of bytes transferred.
-   @param WRITE_COUNT is the number of separate write operations, or 0,
-   if that information is not available.
-   @param START_TIME is the time at which an operation was started.
-   @param END_TIME is the time at which an operation ended.  */
-struct timeval;
-extern void print_transfer_performance (struct ui_file *stream,
-					unsigned long data_count,
-					unsigned long write_count,
-					const struct timeval *start_time,
-					const struct timeval *end_time);
-
 /* From top.c */
 
 typedef void initialize_file_ftype (void);
 
 extern char *gdb_readline_wrapper (const char *);
 
-extern char *command_line_input (const char *, int, char *);
+extern char *command_line_input (const char *, int, const char *);
 
 extern void print_prompt (void);
 
@@ -346,7 +324,8 @@ extern int info_verbose;
 extern void set_next_address (struct gdbarch *, CORE_ADDR);
 
 extern int print_address_symbolic (struct gdbarch *, CORE_ADDR,
-				   struct ui_file *, int, char *);
+				   struct ui_file *, int,
+				   const char *);
 
 extern int build_address_symbolic (struct gdbarch *,
 				   CORE_ADDR addr,
@@ -466,14 +445,28 @@ struct command_line
     struct command_line **body_list;
   };
 
-extern struct command_line *read_command_lines (char *, int, int,
-						void (*)(char *, void *),
-						void *);
-extern struct command_line *read_command_lines_1 (char * (*) (void), int,
-						  void (*)(char *, void *),
-						  void *);
-
 extern void free_command_lines (struct command_line **);
+
+/* A deleter for command_line that calls free_command_lines.  */
+
+struct command_lines_deleter
+{
+  void operator() (command_line *lines) const
+  {
+    free_command_lines (&lines);
+  }
+};
+
+/* A unique pointer to a command_line.  */
+
+typedef std::unique_ptr<command_line, command_lines_deleter> command_line_up;
+
+extern command_line_up read_command_lines (char *, int, int,
+					   void (*)(char *, void *),
+					   void *);
+extern command_line_up read_command_lines_1 (char * (*) (void), int,
+					     void (*)(char *, void *),
+					     void *);
 
 /* * Parameters of the "info proc" command.  */
 
@@ -596,16 +589,11 @@ enum gdb_osabi
   GDB_OSABI_HURD,
   GDB_OSABI_SOLARIS,
   GDB_OSABI_LINUX,
-  GDB_OSABI_FREEBSD_AOUT,
-  GDB_OSABI_FREEBSD_ELF,
-  GDB_OSABI_NETBSD_AOUT,
-  GDB_OSABI_NETBSD_ELF,
-  GDB_OSABI_OPENBSD_ELF,
+  GDB_OSABI_FREEBSD,
+  GDB_OSABI_NETBSD,
+  GDB_OSABI_OPENBSD,
   GDB_OSABI_WINCE,
   GDB_OSABI_GO32,
-  GDB_OSABI_IRIX,
-  GDB_OSABI_HPUX_ELF,
-  GDB_OSABI_HPUX_SOM,
   GDB_OSABI_QNXNTO,
   GDB_OSABI_CYGWIN,
   GDB_OSABI_AIX,
@@ -619,16 +607,6 @@ enum gdb_osabi
 
   GDB_OSABI_INVALID		/* keep this last */
 };
-
-/* Global functions from other, non-gdb GNU thingies.
-   Libiberty thingies are no longer declared here.  We include libiberty.h
-   above, instead.  */
-
-/* From other system libraries */
-
-#ifndef atof
-extern double atof (const char *);	/* X3.159-1989  4.10.1.1 */
-#endif
 
 /* Enumerate the requirements a symbol has in order to be evaluated.
    These are listed in order of "strength" -- a later entry subsumes
@@ -685,6 +663,10 @@ extern void store_typed_address (gdb_byte *buf, struct type *type,
 
 extern int watchdog;
 
+/* From dwarf2read.c */
+
+ULONGEST read_unsigned_leb128 (bfd *, const gdb_byte *, unsigned int *);
+
 /* Hooks for alternate command interfaces.  */
 
 /* * The name of the interpreter if specified on the command line.  */
@@ -711,7 +693,7 @@ extern int (*deprecated_query_hook) (const char *, va_list)
 extern void (*deprecated_warning_hook) (const char *, va_list)
      ATTRIBUTE_FPTR_PRINTF(1,0);
 extern void (*deprecated_interactive_hook) (void);
-extern void (*deprecated_readline_begin_hook) (char *, ...)
+extern void (*deprecated_readline_begin_hook) (const char *, ...)
      ATTRIBUTE_FPTR_PRINTF_1;
 extern char *(*deprecated_readline_hook) (const char *);
 extern void (*deprecated_readline_end_hook) (void);

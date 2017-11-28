@@ -1,6 +1,6 @@
 /* Interface between gdb and its extension languages.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -478,11 +478,11 @@ free_ext_lang_type_printers (struct ext_lang_type_printers *printers)
   xfree (printers);
 }
 
-/* Try to pretty-print a value of type TYPE located at VALADDR
-   + EMBEDDED_OFFSET, which came from the inferior at address ADDRESS
-   + EMBEDDED_OFFSET, onto stdio stream STREAM according to OPTIONS.
-   VAL is the whole object that came from ADDRESS.  VALADDR must point to
-   the head of VAL's contents buffer.
+/* Try to pretty-print a value of type TYPE located at VAL's contents
+   buffer + EMBEDDED_OFFSET, which came from the inferior at address
+   ADDRESS + EMBEDDED_OFFSET, onto stdio stream STREAM according to
+   OPTIONS.
+   VAL is the whole object that came from ADDRESS.
    Returns non-zero if the value was successfully pretty-printed.
 
    Extension languages are tried in the order specified by
@@ -496,10 +496,10 @@ free_ext_lang_type_printers (struct ext_lang_type_printers *printers)
    errors that trigger an exception in the extension language.  */
 
 int
-apply_ext_lang_val_pretty_printer (struct type *type, const gdb_byte *valaddr,
+apply_ext_lang_val_pretty_printer (struct type *type,
 				   LONGEST embedded_offset, CORE_ADDR address,
 				   struct ui_file *stream, int recurse,
-				   const struct value *val,
+				   struct value *val,
 				   const struct value_print_options *options,
 				   const struct language_defn *language)
 {
@@ -512,7 +512,7 @@ apply_ext_lang_val_pretty_printer (struct type *type, const gdb_byte *valaddr,
 
       if (extlang->ops->apply_val_pretty_printer == NULL)
 	continue;
-      rc = extlang->ops->apply_val_pretty_printer (extlang, type, valaddr,
+      rc = extlang->ops->apply_val_pretty_printer (extlang, type,
 						   embedded_offset, address,
 						   stream, recurse, val,
 						   options, language);

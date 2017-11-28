@@ -1,3 +1,14 @@
+2016-11-11  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/20808
+	* dv-tx3904cpu.c (deliver_tx3904cpu_interrupt): Define CPU to cpu
+	and SD to sd.
+
+2016-11-11  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/20809
+	* mips.igen (check_u64): Enable for `r3900'.
+
 2016-02-05  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure.ac (sim_engine_run): Change sd->base.prog_bfd to

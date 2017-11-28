@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2016 Free Software Foundation, Inc.
+# Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,6 +103,6 @@ gdb_py_test_multiple "input command-calling function" \
   "CallCommand ()" "" \
   "end" ""
 
-gdb_test_no_output "set var \$foo = \$call_command()" "Setting a value from a function which executes a command."
+gdb_test_no_output "set var \$foo = \$call_command()" "setting a value from a function which executes a command."
 # There was a bug where GDB would segfault in the second call, so try calling again.
-gdb_test_no_output "set var \$foo = \$call_command()" "Setting a value from a function which executes a command, again."
+gdb_test_no_output "set var \$foo = \$call_command()" "setting a value from a function which executes a command, again."

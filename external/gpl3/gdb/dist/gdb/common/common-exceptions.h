@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define COMMON_EXCEPTIONS_H
 
 #include <setjmp.h>
+#include <new>
 
 /* Reasons for calling throw_exceptions().  NOTE: all reason values
    must be less than zero.  enum value 0 is reserved for internal use
@@ -86,7 +87,7 @@ enum errors {
      means the register was not saved in the frame.  */
   OPTIMIZED_OUT_ERROR,
 
-  /* DW_OP_GNU_entry_value resolving failed.  */
+  /* DW_OP_entry_value resolving failed.  */
   NO_ENTRY_VALUE_ERROR,
 
   /* Target throwing an error has been closed.  Current command should be
@@ -118,8 +119,7 @@ struct gdb_exception
 
 /* The different exception mechanisms that TRY/CATCH can map to.  */
 
-/* Make GDB exceptions use setjmp/longjmp behind the scenes.  This is
-   the only mode supported when GDB is built as a C program.  */
+/* Make GDB exceptions use setjmp/longjmp behind the scenes.  */
 #define GDB_XCPT_SJMP 1
 
 /* Make GDB exceptions use try/catch behind the scenes.  */
@@ -131,11 +131,7 @@ struct gdb_exception
    spurious code between the TRY and the CATCH block.  */
 #define GDB_XCPT_RAW_TRY 3
 
-#ifdef __cplusplus
-# define GDB_XCPT GDB_XCPT_TRY
-#else
-# define GDB_XCPT GDB_XCPT_SJMP
-#endif
+#define GDB_XCPT GDB_XCPT_TRY
 
 /* Functions to drive the sjlj-based exceptions state machine.  Though
    declared here by necessity, these functions should be considered
@@ -283,20 +279,37 @@ struct gdb_exception_RETURN_MASK_QUIT : public gdb_exception_RETURN_MASK_ALL
 
 #endif /* GDB_XCPT_TRY || GDB_XCPT_RAW_TRY */
 
+/* An exception type that inherits from both std::bad_alloc and a gdb
+   exception.  This is necessary because operator new can only throw
+   std::bad_alloc, and OTOH, we want exceptions thrown due to memory
+   allocation error to be caught by all the CATCH/RETURN_MASK_ALL
+   spread around the codebase.  */
+
+struct gdb_quit_bad_alloc
+  : public gdb_exception_RETURN_MASK_QUIT,
+    public std::bad_alloc
+{
+  explicit gdb_quit_bad_alloc (gdb_exception ex)
+    : std::bad_alloc ()
+  {
+    gdb_exception *self = this;
+
+    *self = ex;
+  }
+};
+
 /* *INDENT-ON* */
 
-/* Throw an exception (as described by "struct gdb_exception").  When
-   GDB is built as a C program, executes a LONG JUMP to the inner most
-   containing exception handler established using TRY/CATCH.  When
-   built as a C++ program, throws a C++ exception, using "throw".  */
+/* Throw an exception (as described by "struct gdb_exception"),
+   landing in the inner most containing exception handler established
+   using TRY/CATCH.  */
 extern void throw_exception (struct gdb_exception exception)
      ATTRIBUTE_NORETURN;
 
 /* Throw an exception by executing a LONG JUMP to the inner most
-   containing exception handler established using TRY_SJLJ.  Works the
-   same regardless of whether GDB is built as a C program or a C++
-   program.  Necessary in some cases where we need to throw GDB
-   exceptions across third-party library code (e.g., readline).  */
+   containing exception handler established using TRY_SJLJ.  Necessary
+   in some cases where we need to throw GDB exceptions across
+   third-party library code (e.g., readline).  */
 extern void throw_exception_sjlj (struct gdb_exception exception)
      ATTRIBUTE_NORETURN;
 

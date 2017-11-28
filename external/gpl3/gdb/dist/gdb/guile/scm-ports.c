@@ -1,7 +1,7 @@
 /* Support for connecting Guile's stdio to GDB's.
    as well as r/w memory via ports.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,11 +37,18 @@
 
 /* A ui-file for sending output to Guile.  */
 
-typedef struct
+class ioscm_file_port : public ui_file
 {
-  int *magic;
-  SCM port;
-} ioscm_file_port;
+public:
+  /* Return a ui_file that writes to PORT.  */
+  explicit ioscm_file_port (SCM port);
+
+  void flush () override;
+  void write (const char *buf, long length_buf) override;
+
+private:
+  SCM m_port;
+};
 
 /* Data for a memory port.  */
 
@@ -431,74 +438,21 @@ gdbscm_error_port (void)
 
 /* Support for sending GDB I/O to Guile ports.  */
 
-static void
-ioscm_file_port_delete (struct ui_file *file)
-{
-  ioscm_file_port *stream = (ioscm_file_port *) ui_file_data (file);
+ioscm_file_port::ioscm_file_port (SCM port)
+  : m_port (port)
+{}
 
-  if (stream->magic != &file_port_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("ioscm_file_port_delete: bad magic number"));
-  xfree (stream);
+void
+ioscm_file_port::flush ()
+{
 }
 
-static void
-ioscm_file_port_rewind (struct ui_file *file)
+void
+ioscm_file_port::write (const char *buffer, long length_buffer)
 {
-  ioscm_file_port *stream = (ioscm_file_port *) ui_file_data (file);
-
-  if (stream->magic != &file_port_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("ioscm_file_port_rewind: bad magic number"));
-
-  scm_truncate_file (stream->port, 0);
+  scm_c_write (m_port, buffer, length_buffer);
 }
 
-static void
-ioscm_file_port_put (struct ui_file *file,
-		     ui_file_put_method_ftype *write,
-		     void *dest)
-{
-  ioscm_file_port *stream = (ioscm_file_port *) ui_file_data (file);
-
-  if (stream->magic != &file_port_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("ioscm_file_port_put: bad magic number"));
-
-  /* This function doesn't meld with ports very well.  */
-}
-
-static void
-ioscm_file_port_write (struct ui_file *file,
-		       const char *buffer,
-		       long length_buffer)
-{
-  ioscm_file_port *stream = (ioscm_file_port *) ui_file_data (file);
-
-  if (stream->magic != &file_port_magic)
-    internal_error (__FILE__, __LINE__,
-		    _("ioscm_pot_file_write: bad magic number"));
-
-  scm_c_write (stream->port, buffer, length_buffer);
-}
-
-/* Return a ui_file that writes to PORT.  */
-
-static struct ui_file *
-ioscm_file_port_new (SCM port)
-{
-  ioscm_file_port *stream = XCNEW (ioscm_file_port);
-  struct ui_file *file = ui_file_new ();
-
-  set_ui_file_data (file, stream, ioscm_file_port_delete);
-  set_ui_file_rewind (file, ioscm_file_port_rewind);
-  set_ui_file_put (file, ioscm_file_port_put);
-  set_ui_file_write (file, ioscm_file_port_write);
-  stream->magic = &file_port_magic;
-  stream->port = port;
-
-  return file;
-}
 
 /* Helper routine for with-{output,error}-to-port.  */
 
@@ -506,7 +460,6 @@ static SCM
 ioscm_with_output_to_port_worker (SCM port, SCM thunk, enum oport oport,
 				  const char *func_name)
 {
-  struct ui_file *port_file;
   struct cleanup *cleanups;
   SCM result;
 
@@ -517,28 +470,21 @@ ioscm_with_output_to_port_worker (SCM port, SCM thunk, enum oport oport,
 
   cleanups = set_batch_flag_and_make_cleanup_restore_page_info ();
 
-  make_cleanup_restore_integer (&current_ui->async);
-  current_ui->async = 0;
+  scoped_restore restore_async = make_scoped_restore (&current_ui->async, 0);
 
-  port_file = ioscm_file_port_new (port);
+  ui_file_up port_file (new ioscm_file_port (port));
 
-  make_cleanup_ui_file_delete (port_file);
+  scoped_restore save_file = make_scoped_restore (oport == GDB_STDERR
+						  ? &gdb_stderr : &gdb_stdout);
 
   if (oport == GDB_STDERR)
-    {
-      make_cleanup_restore_ui_file (&gdb_stderr);
-      gdb_stderr = port_file;
-    }
+    gdb_stderr = port_file.get ();
   else
     {
-      make_cleanup_restore_ui_file (&gdb_stdout);
+      current_uiout->redirect (port_file.get ());
+      make_cleanup_ui_out_redirect_pop (current_uiout);
 
-      if (ui_out_redirect (current_uiout, port_file) < 0)
-	warning (_("Current output protocol does not support redirection"));
-      else
-	make_cleanup_ui_out_redirect_pop (current_uiout);
-
-      gdb_stdout = port_file;
+      gdb_stdout = port_file.get ();
     }
 
   result = gdbscm_safe_call_0 (thunk, NULL);

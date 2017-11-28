@@ -1,6 +1,6 @@
 /* Simulator Floating-point support.
 
-   Copyright 1997-2016 Free Software Foundation, Inc.
+   Copyright 1997-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 

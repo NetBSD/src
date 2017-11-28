@@ -1,5 +1,5 @@
 /* Linux-specific ptrace manipulation routines.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,9 @@
 #include "buffer.h"
 #include "gdb_wait.h"
 #include "gdb_ptrace.h"
+#ifdef HAVE_SYS_PROCFS_H
 #include <sys/procfs.h>
+#endif
 
 /* Stores the ptrace options supported by the running kernel.
    A value of -1 means we did not check for features yet.  A value

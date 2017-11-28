@@ -1,6 +1,6 @@
 /* TUI data manipulation routines.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -371,7 +371,7 @@ tui_prev_win (struct tui_win_info *cur_win)
 
 /* Answer the window represented by name.  */
 struct tui_win_info *
-tui_partial_win_by_name (char *name)
+tui_partial_win_by_name (const char *name)
 {
   struct tui_win_info *win_info = NULL;
 

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2016 Free Software Foundation, Inc.
+   Copyright 2012-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,8 +53,13 @@ struct funcs
 static void
 m1 (void)
 {
+  /* m1 and m2 are equivalent, but because of some compiler
+     optimizations we have to make each of them unique.  This is why
+     we have this dummy variable here.  */
+  volatile int dummy = 0;
+
   if (TEST2)
-    STAP_PROBE (test, two);
+    STAP_PROBE1 (test, two, dummy);
 }
 
 static void

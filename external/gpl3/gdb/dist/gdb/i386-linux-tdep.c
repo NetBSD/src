@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux i386.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,7 +50,8 @@
 #include "features/i386/i386-mpx-linux.c"
 #include "features/i386/i386-avx-mpx-linux.c"
 #include "features/i386/i386-avx-linux.c"
-#include "features/i386/i386-avx512-linux.c"
+#include "features/i386/i386-avx-avx512-linux.c"
+#include "features/i386/i386-avx-mpx-avx512-pku-linux.c"
 
 /* Return non-zero, when the register is in the corresponding register
    group.  Put the LINUX_ORIG_EAX register in the system group.  */
@@ -429,27 +430,22 @@ i386_linux_handle_segmentation_fault (struct gdbarch *gdbarch,
 
   is_upper = (access > upper_bound ? 1 : 0);
 
-  ui_out_text (uiout, "\n");
+  uiout->text ("\n");
   if (is_upper)
-    ui_out_field_string (uiout, "sigcode-meaning",
-			 _("Upper bound violation"));
+    uiout->field_string ("sigcode-meaning", _("Upper bound violation"));
   else
-    ui_out_field_string (uiout, "sigcode-meaning",
-			 _("Lower bound violation"));
+    uiout->field_string ("sigcode-meaning", _("Lower bound violation"));
 
-  ui_out_text (uiout, _(" while accessing address "));
-  ui_out_field_fmt (uiout, "bound-access", "%s",
-		    paddress (gdbarch, access));
+  uiout->text (_(" while accessing address "));
+  uiout->field_fmt ("bound-access", "%s", paddress (gdbarch, access));
 
-  ui_out_text (uiout, _("\nBounds: [lower = "));
-  ui_out_field_fmt (uiout, "lower-bound", "%s",
-		    paddress (gdbarch, lower_bound));
+  uiout->text (_("\nBounds: [lower = "));
+  uiout->field_fmt ("lower-bound", "%s", paddress (gdbarch, lower_bound));
 
-  ui_out_text (uiout, _(", upper = "));
-  ui_out_field_fmt (uiout, "upper-bound", "%s",
-		    paddress (gdbarch, upper_bound));
+  uiout->text (_(", upper = "));
+  uiout->field_fmt ("upper-bound", "%s", paddress (gdbarch, upper_bound));
 
-  ui_out_text (uiout, _("]"));
+  uiout->text (_("]"));
 }
 
 /* Parse the arguments of current system call instruction and record
@@ -617,6 +613,7 @@ int i386_linux_gregset_reg_offset[] =
   -1, -1,			  /* MPX registers BNDCFGU, BNDSTATUS.  */
   -1, -1, -1, -1, -1, -1, -1, -1, /* k0 ... k7 (AVX512)  */
   -1, -1, -1, -1, -1, -1, -1, -1, /* zmm0 ... zmm7 (AVX512)  */
+  -1,				  /* PKRU register  */
   11 * 4,			  /* "orig_eax"  */
 };
 
@@ -693,9 +690,10 @@ i386_linux_core_read_description (struct gdbarch *gdbarch,
 
   switch ((xcr0 & X86_XSTATE_ALL_MASK))
     {
-    case X86_XSTATE_MPX_AVX512_MASK:
-    case X86_XSTATE_AVX512_MASK:
-      return tdesc_i386_avx512_linux;
+    case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
+      return tdesc_i386_avx_mpx_avx512_pku_linux;
+    case X86_XSTATE_AVX_AVX512_MASK:
+      return tdesc_i386_avx_avx512_linux;
     case X86_XSTATE_MPX_MASK:
       return tdesc_i386_mpx_linux;
     case X86_XSTATE_AVX_MPX_MASK:
@@ -1091,5 +1089,6 @@ _initialize_i386_linux_tdep (void)
   initialize_tdesc_i386_avx_linux ();
   initialize_tdesc_i386_mpx_linux ();
   initialize_tdesc_i386_avx_mpx_linux ();
-  initialize_tdesc_i386_avx512_linux ();
+  initialize_tdesc_i386_avx_avx512_linux ();
+  initialize_tdesc_i386_avx_mpx_avx512_pku_linux ();
 }

@@ -1,5 +1,5 @@
 /* nds32.h -- Header file for nds32 opcode table
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This program is free software; you can redistribute it and/or modify

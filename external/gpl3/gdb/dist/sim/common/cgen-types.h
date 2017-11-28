@@ -1,5 +1,5 @@
 /* Types for Cpu tools GENerated simulators.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -56,7 +56,7 @@ typedef enum mode_type {
 #define MAX_TARGET_MODES ((int) MODE_TARGET_MAX)
 #define MAX_MODES ((int) MODE_MAX)
 
-extern const char *mode_names[];
+extern const char * const mode_names[];
 #define MODE_NAME(m) (mode_names[m])
 
 typedef void VOID;

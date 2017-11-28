@@ -1,4 +1,4 @@
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@
 
 standard_testfile .c
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
-    untested ${testfile}.exp
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
 
@@ -30,7 +29,7 @@ if [target_info exists gdb,no_hardware_watchpoints] {
 }
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return
 }
 
@@ -50,7 +49,7 @@ if [target_info exists gdb,no_hardware_watchpoints] {
 }
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return
 }
 
@@ -70,7 +69,7 @@ if [target_info exists gdb,no_hardware_watchpoints] {
 }
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return
 }
 

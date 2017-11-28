@@ -1,4 +1,4 @@
-# Copyright 2009-2016 Free Software Foundation, Inc.
+# Copyright 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ if [istarget "s390*-*-*"] {
     set march2 "-m32"
 }
 
-if { [prepare_for_testing ${testfile}.exp ${exec1} "${srcfile1}" \
+if { [prepare_for_testing "failed to prepare" ${exec1} "${srcfile1}" \
 	  [list debug additional_flags=${march1}]] } {
     return -1
 }
@@ -70,7 +70,7 @@ if [istarget "aarch64*-*-*"] {
     lappend options "additional_flags=${march2}"
 }
 
-if { [prepare_for_testing ${testfile}.exp ${exec2} "${srcfile2}" \
+if { [prepare_for_testing "failed to prepare" ${exec2} "${srcfile2}" \
 	 $options]} {
     return -1
 }

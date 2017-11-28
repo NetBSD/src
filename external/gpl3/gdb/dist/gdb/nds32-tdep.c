@@ -1,6 +1,6 @@
 /* Target-dependent code for the NDS32 architecture, for GDB.
 
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GDB.
@@ -41,6 +41,8 @@
 #include "nds32-tdep.h"
 #include "elf/nds32.h"
 #include "opcode/nds32.h"
+#include <algorithm>
+
 #include "features/nds32.c"
 
 /* Simple macros for instruction analysis.  */
@@ -279,24 +281,10 @@ nds32_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
   return align_down (sp, 8);
 }
 
-/* Implement the "breakpoint_from_pc" gdbarch method.
+/* The same insn machine code is used for little-endian and big-endian.  */
+constexpr gdb_byte nds32_break_insn[] = { 0xEA, 0x00 };
 
-   Use the program counter to determine the contents and size of a
-   breakpoint instruction.  Return a pointer to a string of bytes that
-   encode a breakpoint instruction, store the length of the string in
-   *LENPTR and optionally adjust *PCPTR to point to the correct memory
-   location for inserting the breakpoint.  */
-
-static const gdb_byte *
-nds32_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-			  int *lenptr)
-{
-  /* The same insn machine code is used for little-endian and big-endian.  */
-  static const gdb_byte break_insn[] = { 0xEA, 0x00 };
-
-  *lenptr = sizeof (break_insn);
-  return break_insn;
-}
+typedef BP_MANIPULATION (nds32_break_insn) nds32_breakpoint;
 
 /* Implement the "dwarf2_reg_to_regnum" gdbarch method.  */
 
@@ -894,7 +882,7 @@ nds32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       CORE_ADDR post_prologue_pc
 	= skip_prologue_using_sal (gdbarch, func_addr);
       if (post_prologue_pc != 0)
-	return max (pc, post_prologue_pc);
+	return std::max (pc, post_prologue_pc);
     }
 
   /* Can't determine prologue from the symbol table, need to examine
@@ -2081,6 +2069,9 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   gdbarch = gdbarch_alloc (&info, tdep);
 
+  set_gdbarch_wchar_bit (gdbarch, 16);
+  set_gdbarch_wchar_signed (gdbarch, 0);
+
   if (fpu_freg == -1)
     num_regs = NDS32_NUM_REGS;
   else if (use_pseudo_fsrs == 1)
@@ -2155,7 +2146,10 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, nds32_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_breakpoint_from_pc (gdbarch, nds32_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       nds32_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       nds32_breakpoint::bp_from_kind);
 
   set_gdbarch_frame_align (gdbarch, nds32_frame_align);
   frame_base_set_default (gdbarch, &nds32_frame_base);

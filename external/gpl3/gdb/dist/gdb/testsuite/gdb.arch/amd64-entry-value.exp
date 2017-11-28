@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016 Free Software Foundation, Inc.
+# Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ if [info exists COMPILE] {
     return
 }
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} $opts] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {
     return -1
 }
 
@@ -159,7 +159,7 @@ gdb_test_no_output "set print entry-values default" "entry_invalid: set print en
 gdb_test "frame" {\(inv=<optimized out>\).*} "entry_invalid: frame: default"
 
 
-# Test @entry values for DW_AT_GNU_call_site_data_value parameters.
+# Test @entry values for DW_AT_call_data_value parameters.
 
 gdb_continue_to_breakpoint "entry_reference: reference"
 
@@ -188,7 +188,7 @@ gdb_test "p regparam@entry" " = \\(int &\\) @$addr: 1" "entry_reference: p regpa
 gdb_test "p &regparam@entry" " = \\(int \\*\\) $addr" "entry_reference: p &regparam@entry"
 gdb_test "p regcopy" " = 1" "entry_reference: p regcopy"
 gdb_test "p nodataparam" " = \\(int &\\) @0x\[0-9a-f\]+: 22" "entry_reference: p nodataparam"
-gdb_test "p nodataparam@entry" "Cannot resolve DW_AT_GNU_call_site_data_value" "entry_reference: p nodataparam@entry"
+gdb_test "p nodataparam@entry" "Cannot resolve DW_AT_call_data_value" "entry_reference: p nodataparam@entry"
 
 
 # Test virtual tail call frames.
@@ -249,5 +249,5 @@ gdb_test "bt" "^bt\r\n#0 +d \\(i=<optimized out>, j=<optimized out>\\)\[^\r\n\]*
 	 "self: bt"
 
 gdb_test_no_output "set debug entry-values 1"
-gdb_test "bt" "DW_OP_GNU_entry_value resolving has found function \"self\\(int\\)\" at 0x\[0-9a-f\]+ can call itself via tail calls\r\n.*" \
+gdb_test "bt" "DW_OP_entry_value resolving has found function \"self\\(int\\)\" at 0x\[0-9a-f\]+ can call itself via tail calls\r\n.*" \
 	 "self: bt debug entry-values"

@@ -1,6 +1,6 @@
 /* Skipping uninteresting files and functions while stepping.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -373,11 +373,10 @@ skip_info (char *arg, int from_tty)
   if (num_printable_entries == 0)
     {
       if (arg == NULL)
-	ui_out_message (current_uiout, 0, _("\
-Not skipping any files or functions.\n"));
+	current_uiout->message (_("Not skipping any files or functions.\n"));
       else
-	ui_out_message (current_uiout, 0,
-			_("No skiplist entries found with number %s.\n"), arg);
+	current_uiout->message (
+	  _("No skiplist entries found with number %s.\n"), arg);
 
       return;
     }
@@ -386,14 +385,13 @@ Not skipping any files or functions.\n"));
 						   num_printable_entries,
 						   "SkiplistTable");
 
-  ui_out_table_header (current_uiout, 5, ui_left, "number", "Num");   /* 1 */
-  ui_out_table_header (current_uiout, 3, ui_left, "enabled", "Enb");  /* 2 */
-  ui_out_table_header (current_uiout, 4, ui_right, "regexp", "Glob"); /* 3 */
-  ui_out_table_header (current_uiout, 20, ui_left, "file", "File");   /* 4 */
-  ui_out_table_header (current_uiout, 2, ui_right, "regexp", "RE");   /* 5 */
-  ui_out_table_header (current_uiout, 40, ui_noalign,
-		       "function", "Function"); /* 6 */
-  ui_out_table_body (current_uiout);
+  current_uiout->table_header (5, ui_left, "number", "Num");   /* 1 */
+  current_uiout->table_header (3, ui_left, "enabled", "Enb");  /* 2 */
+  current_uiout->table_header (4, ui_right, "regexp", "Glob"); /* 3 */
+  current_uiout->table_header (20, ui_left, "file", "File");   /* 4 */
+  current_uiout->table_header (2, ui_right, "regexp", "RE");   /* 5 */
+  current_uiout->table_header (40, ui_noalign, "function", "Function"); /* 6 */
+  current_uiout->table_body ();
 
   ALL_SKIPLIST_ENTRIES (e)
     {
@@ -405,29 +403,29 @@ Not skipping any files or functions.\n"));
 
       entry_chain = make_cleanup_ui_out_tuple_begin_end (current_uiout,
 							 "blklst-entry");
-      ui_out_field_int (current_uiout, "number", e->number); /* 1 */
+      current_uiout->field_int ("number", e->number); /* 1 */
 
       if (e->enabled)
-	ui_out_field_string (current_uiout, "enabled", "y"); /* 2 */
+	current_uiout->field_string ("enabled", "y"); /* 2 */
       else
-	ui_out_field_string (current_uiout, "enabled", "n"); /* 2 */
+	current_uiout->field_string ("enabled", "n"); /* 2 */
 
       if (e->file_is_glob)
-	ui_out_field_string (current_uiout, "regexp", "y"); /* 3 */
+	current_uiout->field_string ("regexp", "y"); /* 3 */
       else
-	ui_out_field_string (current_uiout, "regexp", "n"); /* 3 */
+	current_uiout->field_string ("regexp", "n"); /* 3 */
 
-      ui_out_field_string (current_uiout, "file",
+      current_uiout->field_string ("file",
 			   e->file ? e->file : "<none>"); /* 4 */
       if (e->function_is_regexp)
-	ui_out_field_string (current_uiout, "regexp", "y"); /* 5 */
+	current_uiout->field_string ("regexp", "y"); /* 5 */
       else
-	ui_out_field_string (current_uiout, "regexp", "n"); /* 5 */
+	current_uiout->field_string ("regexp", "n"); /* 5 */
 
-      ui_out_field_string (current_uiout, "function", 
-			   e->function ? e->function : "<none>"); /* 6 */
+      current_uiout->field_string (
+	"function", e->function ? e->function : "<none>"); /* 6 */
 
-      ui_out_text (current_uiout, "\n");
+      current_uiout->text ("\n");
       do_cleanups (entry_chain);
     }
 

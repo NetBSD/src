@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -166,7 +166,7 @@ switch -glob -- [istarget] {
 }
 
 if { "${asm-arch}" == "" } {
-    untested asm-source.exp
+    untested "skipping tests due to no asm architecture"
     return -1
 }
 
@@ -196,7 +196,7 @@ set dest [target_info name]
 if [board_info $dest exists multilib_flags] {
 	set multilib_flags [board_info $dest multilib_flags]
 	if { "${multilib_flags}" != "" } {
-	   untested asm-source.exp
+	   untested "failed to compile"
 	   return -1
 	   return
 	 }
@@ -249,11 +249,11 @@ set asm1obj [standard_output_file asmrc1.o]
 set asm2obj [standard_output_file asmrc2.o]
 
 if {[target_assemble ${srcdir}/${subdir}/${srcfile} $asm1obj "${asm-flags} ${debug-flags}"] != ""} then {
-     untested asm-source.exp
+     untested "failed to assemble"
      return -1
 }
 if {[target_assemble ${srcdir}/${subdir}/${srcfile2} $asm2obj "${asm-flags} ${debug-flags}"] != ""} then {
-     untested asm-source.exp
+     untested "failed to assemble"
      return -1
 }
 
@@ -264,7 +264,7 @@ if {[target_assemble ${srcdir}/${subdir}/${srcfile2} $asm2obj "${asm-flags} ${de
 # also avoids a lot of problems on many systems, most notably on
 # *-*-*bsd* and *-*-solaris2*.
 if {[target_link [list $asm1obj $asm2obj] "${binfile}" ${link-flags}] != "" } then {
-     untested asm-source.exp
+     untested "failed to link"
      return -1
 }
 

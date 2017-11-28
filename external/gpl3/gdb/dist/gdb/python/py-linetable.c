@@ -1,6 +1,6 @@
 /* Python interface to line tables.
 
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "defs.h"
 #include "python-internal.h"
+#include "py-ref.h"
 
 typedef struct {
   PyObject_HEAD
@@ -114,49 +115,37 @@ build_linetable_entry (int line, CORE_ADDR address)
   return (PyObject *) obj;
 }
 
-/* Internal helper function to build a Python Tuple from a GDB Vector.
+/* Internal helper function to build a Python Tuple from a vector.
    A line table entry can have multiple PCs for a given source line.
    Construct a Tuple of all entries for the given source line, LINE
-   from the line table VEC.  Construct one line table entry object per
+   from the line table PCS.  Construct one line table entry object per
    address.  */
 
 static PyObject *
-build_line_table_tuple_from_pcs (int line, VEC (CORE_ADDR) *vec)
+build_line_table_tuple_from_pcs (int line, const std::vector<CORE_ADDR> &pcs)
 {
-  int vec_len = 0;
-  PyObject *tuple;
-  CORE_ADDR pc;
   int i;
 
-  vec_len = VEC_length (CORE_ADDR, vec);
-  if (vec_len < 1)
+  if (pcs.size () < 1)
     Py_RETURN_NONE;
 
-  tuple = PyTuple_New (vec_len);
+  gdbpy_ref<> tuple (PyTuple_New (pcs.size ()));
 
   if (tuple == NULL)
     return NULL;
 
-  for (i = 0; VEC_iterate (CORE_ADDR, vec, i, pc); ++i)
+  for (i = 0; i < pcs.size (); ++i)
     {
-      PyObject *obj = build_linetable_entry (line, pc);
+      CORE_ADDR pc = pcs[i];
+      gdbpy_ref<> obj (build_linetable_entry (line, pc));
 
       if (obj == NULL)
-	{
-	  Py_DECREF (tuple);
-	  tuple = NULL;
-	  break;
-	}
-      else if (PyTuple_SetItem (tuple, i, obj) != 0)
-	{
-	  Py_DECREF (obj);
-	  Py_DECREF (tuple);
-	  tuple = NULL;
-	  break;
-	}
+	return NULL;
+      else if (PyTuple_SetItem (tuple.get (), i, obj.release ()) != 0)
+	return NULL;
     }
 
-  return tuple;
+  return tuple.release ();
 }
 
 /* Implementation of gdb.LineTable.line (self) -> Tuple.  Returns a
@@ -169,8 +158,7 @@ ltpy_get_pcs_for_line (PyObject *self, PyObject *args)
   struct symtab *symtab;
   gdb_py_longest py_line;
   struct linetable_entry *best_entry = NULL;
-  VEC (CORE_ADDR) *pcs = NULL;
-  PyObject *tuple;
+  std::vector<CORE_ADDR> pcs;
 
   LTPY_REQUIRE_VALID (self, symtab);
 
@@ -187,10 +175,7 @@ ltpy_get_pcs_for_line (PyObject *self, PyObject *args)
     }
   END_CATCH
 
-  tuple = build_line_table_tuple_from_pcs (py_line, pcs);
-  VEC_free (CORE_ADDR, pcs);
-
-  return tuple;
+  return build_line_table_tuple_from_pcs (py_line, pcs);
 }
 
 /* Implementation of gdb.LineTable.has_line (self, line) -> Boolean.
@@ -236,7 +221,6 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
 {
   struct symtab *symtab;
   Py_ssize_t index;
-  PyObject *source_list, *source_dict, *line;
   struct linetable_entry *item;
 
   LTPY_REQUIRE_VALID (self, symtab);
@@ -248,7 +232,7 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
       return NULL;
     }
 
-  source_dict = PyDict_New ();
+  gdbpy_ref<> source_dict (PyDict_New ());
   if (source_dict == NULL)
     return NULL;
 
@@ -260,30 +244,17 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
 	 include in the source set. */
       if (item->line > 0)
 	{
-	  line = gdb_py_object_from_longest (item->line);
+	  gdbpy_ref<> line (gdb_py_object_from_longest (item->line));
 
 	  if (line == NULL)
-	    {
-	      Py_DECREF (source_dict);
-	      return NULL;
-	    }
+	    return NULL;
 
-	  if (PyDict_SetItem (source_dict, line, Py_None) == -1)
-	    {
-	      Py_DECREF (line);
-	      Py_DECREF (source_dict);
-	      return NULL;
-	    }
-
-	  Py_DECREF (line);
+	  if (PyDict_SetItem (source_dict.get (), line.get (), Py_None) == -1)
+	    return NULL;
 	}
     }
 
-
-  source_list = PyDict_Keys (source_dict);
-  Py_DECREF (source_dict);
-
-  return source_list;
+  return PyDict_Keys (source_dict.get ());
 }
 
 /* Implementation of gdb.LineTable.is_valid (self) -> Boolean.
@@ -430,7 +401,10 @@ ltpy_iternext (PyObject *self)
   LTPY_REQUIRE_VALID (iter_obj->source, symtab);
 
   if (iter_obj->current_index >= SYMTAB_LINETABLE (symtab)->nitems)
-    goto stop_iteration;
+    {
+      PyErr_SetNone (PyExc_StopIteration);
+      return NULL;
+    }
 
   item = &(SYMTAB_LINETABLE (symtab)->item[iter_obj->current_index]);
 
@@ -442,7 +416,10 @@ ltpy_iternext (PyObject *self)
 
       /* Exit if the internal value is the last item in the line table.  */
       if (iter_obj->current_index >= SYMTAB_LINETABLE (symtab)->nitems)
-	goto stop_iteration;
+	{
+	  PyErr_SetNone (PyExc_StopIteration);
+	  return NULL;
+	}
       item = &(SYMTAB_LINETABLE (symtab)->item[iter_obj->current_index]);
     }
 
@@ -450,10 +427,6 @@ ltpy_iternext (PyObject *self)
   iter_obj->current_index++;
 
   return obj;
-
- stop_iteration:
-  PyErr_SetNone (PyExc_StopIteration);
-  return NULL;
 }
 
 /* Implementation of gdb.LineTableIterator.is_valid (self) -> Boolean.
@@ -571,7 +544,7 @@ PyTypeObject ltpy_iterator_object_type = {
 };
 
 
-static PyGetSetDef linetable_entry_object_getset[] = {
+static gdb_PyGetSetDef linetable_entry_object_getset[] = {
   { "line", ltpy_entry_get_line, NULL,
     "The line number in the source file.", NULL },
   { "pc", ltpy_entry_get_pc, NULL,
