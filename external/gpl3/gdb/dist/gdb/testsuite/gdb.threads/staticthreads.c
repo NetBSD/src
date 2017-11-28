@@ -1,6 +1,6 @@
 /* This test program is part of GDB, The GNU debugger.
 
-   Copyright 2004-2016 Free Software Foundation, Inc.
+   Copyright 2004-2017 Free Software Foundation, Inc.
 
    Originally written by Jeff Johnston <jjohnstn@redhat.com>,
    contributed by Red Hat

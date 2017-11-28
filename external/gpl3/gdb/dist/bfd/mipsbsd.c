@@ -1,5 +1,5 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
    This file is part of BFD, the Binary File Descriptor library.

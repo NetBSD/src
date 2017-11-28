@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

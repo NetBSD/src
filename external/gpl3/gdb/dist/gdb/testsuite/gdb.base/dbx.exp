@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ standard_testfile average.c sum.c
 
 if {[build_executable $testfile.exp $testfile \
 	 [list $srcfile $srcfile2] debug] == -1} {
-    untested $testfile.exp
+    untested "failed to compile"
     return -1
 }
 

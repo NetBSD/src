@@ -1,4 +1,4 @@
-#   Copyright 1988-2016 Free Software Foundation, Inc.
+#   Copyright 1988-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # the number available.
 
 
-if { [prepare_for_testing hbreak2.exp "hbreak2" {break.c break1.c} {debug nowarnings}] } {
+if { [prepare_for_testing "failed to prepare" "hbreak2" {break.c break1.c} {debug nowarnings}] } {
     return -1
 }
 set srcfile break.c
@@ -510,7 +510,7 @@ test_next_with_recursion
 # Build a new file with optimization enabled so that we can try breakpoints
 # on targets with optimized prologues.
 
-if { [prepare_for_testing hbreak2.exp "hbreak2o2" {break.c break1.c} {debug nowarnings optimize=-O2}] } {
+if { [prepare_for_testing "failed to prepare" "hbreak2o2" {break.c break1.c} {debug nowarnings optimize=-O2}] } {
     return -1
 }
 

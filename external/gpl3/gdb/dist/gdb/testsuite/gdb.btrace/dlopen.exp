@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_btrace_tests] } { return -1 }
-if { [skip_shlib_tests]  } { return -1 }
+if { [skip_btrace_tests] } {
+    unsupported "target does not support record-btrace"
+    return -1
+}
+
+if { [skip_shlib_tests]  } {
+    unsupported "target does not support shared library tests"
+    return -1
+}
 
 standard_testfile
 
@@ -26,17 +33,18 @@ set binfile_lib [standard_output_file $basename_lib.so]
 
 if { [gdb_compile_shlib $srcfile_lib $binfile_lib \
 	  [list additional_flags=-fPIC]] != "" } {
-    untested "Could not compile $binfile_lib."
+    untested "failed to prepare shlib"
     return -1
 }
 
-if { [prepare_for_testing $testfile.exp $testfile $srcfile \
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
 	  [list additional_flags=-DDSO_NAME=\"$binfile_lib\" libs=-ldl]] } {
     return -1
 }
 
 if ![runto_main] {
-    return 0
+    untested "failed to run to main"
+    return -1
 }
 
 # Trace the test function

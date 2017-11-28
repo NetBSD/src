@@ -1,5 +1,5 @@
 /* Morpho Technologies MT specific support for 32-bit ELF
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -238,6 +238,7 @@ mt_info_to_howto_rela
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_MT_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid MT reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -502,13 +503,14 @@ mt_elf_set_private_flags (bfd *    abfd,
    object file when linking.  */
 
 static bfd_boolean
-mt_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
+mt_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword     old_flags, new_flags;
   bfd_boolean  ok = TRUE;
 
   /* Check if we have the same endianness.  */
-  if (_bfd_generic_verify_endian_match (ibfd, obfd) == FALSE)
+  if (!_bfd_generic_verify_endian_match (ibfd, info))
     return FALSE;
 
   /* If they're not both mt, then merging is meaningless, so just

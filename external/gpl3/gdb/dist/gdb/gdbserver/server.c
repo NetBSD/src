@@ -1,5 +1,5 @@
 /* Main code for remote server for GDB.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,7 @@
 #include "tracepoint.h"
 #include "dll.h"
 #include "hostio.h"
+#include <vector>
 
 /* The thread set with an `Hc' packet.  `Hc' is deprecated in favor of
    `vCont'.  Note the multi-process extensions made `vCont' a
@@ -78,7 +79,8 @@ static int vCont_supported;
    space randomization feature before starting an inferior.  */
 int disable_randomization = 1;
 
-static char **program_argv, **wrapper_argv;
+static std::vector<char *> program_argv;
+static std::vector<char *> wrapper_argv;
 
 int pass_signals[GDB_SIGNAL_LAST];
 int program_signals[GDB_SIGNAL_LAST];
@@ -193,6 +195,38 @@ vstop_notif_reply (struct notif_event *event, char *own_buf)
   prepare_resume_reply (own_buf, vstop->ptid, &vstop->status);
 }
 
+/* QUEUE_iterate callback helper for in_queued_stop_replies.  */
+
+static int
+in_queued_stop_replies_ptid (QUEUE (notif_event_p) *q,
+			     QUEUE_ITER (notif_event_p) *iter,
+			     struct notif_event *event,
+			     void *data)
+{
+  ptid_t filter_ptid = *(ptid_t *) data;
+  struct vstop_notif *vstop_event = (struct vstop_notif *) event;
+
+  if (ptid_match (vstop_event->ptid, filter_ptid))
+    return 0;
+
+  /* Don't resume fork children that GDB does not know about yet.  */
+  if ((vstop_event->status.kind == TARGET_WAITKIND_FORKED
+       || vstop_event->status.kind == TARGET_WAITKIND_VFORKED)
+      && ptid_match (vstop_event->status.value.related_pid, filter_ptid))
+    return 0;
+
+  return 1;
+}
+
+/* See server.h.  */
+
+int
+in_queued_stop_replies (ptid_t ptid)
+{
+  return !QUEUE_iterate (notif_event_p, notif_stop.queue,
+			 in_queued_stop_replies_ptid, &ptid);
+}
+
 struct notif_server notif_stop =
 {
   "vStopped", "Stop", NULL, vstop_notif_reply,
@@ -207,29 +241,21 @@ target_running (void)
 static int
 start_inferior (char **argv)
 {
-  char **new_argv = argv;
+  std::vector<char *> new_argv;
 
-  if (wrapper_argv != NULL)
-    {
-      int i, count = 1;
+  if (!wrapper_argv.empty ())
+    new_argv.insert (new_argv.begin (),
+		     wrapper_argv.begin (),
+		     wrapper_argv.end ());
 
-      for (i = 0; wrapper_argv[i] != NULL; i++)
-	count++;
-      for (i = 0; argv[i] != NULL; i++)
-	count++;
-      new_argv = XALLOCAVEC (char *, count);
-      count = 0;
-      for (i = 0; wrapper_argv[i] != NULL; i++)
-	new_argv[count++] = wrapper_argv[i];
-      for (i = 0; argv[i] != NULL; i++)
-	new_argv[count++] = argv[i];
-      new_argv[count] = NULL;
-    }
+  for (int i = 0; argv[i] != NULL; ++i)
+    new_argv.push_back (argv[i]);
+
+  new_argv.push_back (NULL);
 
   if (debug_threads)
     {
-      int i;
-      for (i = 0; new_argv[i]; ++i)
+      for (int i = 0; i < new_argv.size (); ++i)
 	debug_printf ("new_argv[%d] = \"%s\"\n", i, new_argv[i]);
       debug_flush ();
     }
@@ -239,7 +265,7 @@ start_inferior (char **argv)
   signal (SIGTTIN, SIG_DFL);
 #endif
 
-  signal_pid = create_inferior (new_argv[0], new_argv);
+  signal_pid = create_inferior (new_argv[0], &new_argv[0]);
 
   /* FIXME: we don't actually know at this point that the create
      actually succeeded.  We won't know that until we wait.  */
@@ -256,14 +282,9 @@ start_inferior (char **argv)
   atexit (restore_old_foreground_pgrp);
 #endif
 
-  if (wrapper_argv != NULL)
+  if (!wrapper_argv.empty ())
     {
-      struct thread_resume resume_info;
-
-      memset (&resume_info, 0, sizeof (resume_info));
-      resume_info.thread = pid_to_ptid (signal_pid);
-      resume_info.kind = resume_continue;
-      resume_info.sig = 0;
+      ptid_t ptid = pid_to_ptid (signal_pid);
 
       last_ptid = mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
 
@@ -271,7 +292,7 @@ start_inferior (char **argv)
 	{
 	  do
 	    {
-	      (*the_target->resume) (&resume_info, 1);
+	      target_continue_no_signal (ptid);
 
 	      last_ptid = mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
 	      if (last_status.kind != TARGET_WAITKIND_STOPPED)
@@ -290,16 +311,19 @@ start_inferior (char **argv)
      (assuming success).  */
   last_ptid = mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
 
-  target_post_create_inferior ();
-
+  /* At this point, the target process, if it exits, is stopped.  Do not call
+     the function target_post_create_inferior if the process has already
+     exited, as the target implementation of the routine may rely on the
+     process being live. */
   if (last_status.kind != TARGET_WAITKIND_EXITED
       && last_status.kind != TARGET_WAITKIND_SIGNALLED)
     {
+      target_post_create_inferior ();
       current_thread->last_resume_kind = resume_stop;
       current_thread->last_status = last_status;
     }
   else
-    mourn_inferior (find_process_pid (ptid_get_pid (last_ptid)));
+    target_mourn_inferior (last_ptid);
 
   return signal_pid;
 }
@@ -676,8 +700,8 @@ handle_general_set (char *own_buf)
     {
       if (remote_debug)
 	{
-	  fprintf (stderr, "[noack mode enabled]\n");
-	  fflush (stderr);
+	  debug_printf ("[noack mode enabled]\n");
+	  debug_flush ();
 	}
 
       noack_mode = 1;
@@ -716,7 +740,7 @@ handle_general_set (char *own_buf)
       non_stop = req;
 
       if (remote_debug)
-	fprintf (stderr, "[%s mode enabled]\n", req_str);
+	debug_printf ("[%s mode enabled]\n", req_str);
 
       write_ok (own_buf);
       return;
@@ -732,10 +756,9 @@ handle_general_set (char *own_buf)
 
       if (remote_debug)
 	{
-	  if (disable_randomization)
-	    fprintf (stderr, "[address space randomization disabled]\n");
-	  else
-	    fprintf (stderr, "[address space randomization enabled]\n");
+	  debug_printf (disable_randomization
+			? "[address space randomization disabled]\n"
+			: "[address space randomization enabled]\n");
 	}
 
       write_ok (own_buf);
@@ -765,7 +788,7 @@ handle_general_set (char *own_buf)
       /* Update the flag.  */
       use_agent = req;
       if (remote_debug)
-	fprintf (stderr, "[%s agent]\n", req ? "Enable" : "Disable");
+	debug_printf ("[%s agent]\n", req ? "Enable" : "Disable");
       write_ok (own_buf);
       return;
     }
@@ -802,7 +825,7 @@ handle_general_set (char *own_buf)
 	{
 	  const char *req_str = report_thread_events ? "enabled" : "disabled";
 
-	  fprintf (stderr, "[thread events are now %s]\n", req_str);
+	  debug_printf ("[thread events are now %s]\n", req_str);
 	}
 
       write_ok (own_buf);
@@ -2625,7 +2648,7 @@ handle_v_cont (char *own_buf)
   char *p, *q;
   int n = 0, i = 0;
   struct thread_resume *resume_info;
-  struct thread_resume default_action = {{0}};
+  struct thread_resume default_action { null_ptid };
 
   /* Count the number of semicolons in the packet.  There should be one
      for every action.  */
@@ -2781,7 +2804,7 @@ resume (struct thread_resume *actions, size_t num_actions)
 
       if (last_status.kind == TARGET_WAITKIND_EXITED
           || last_status.kind == TARGET_WAITKIND_SIGNALLED)
-        mourn_inferior (find_process_pid (ptid_get_pid (last_ptid)));
+        target_mourn_inferior (last_ptid);
     }
 }
 
@@ -2823,7 +2846,8 @@ handle_v_attach (char *own_buf)
 static int
 handle_v_run (char *own_buf)
 {
-  char *p, *next_p, **new_argv;
+  char *p, *next_p;
+  std::vector<char *> new_argv;
   int i, new_argc;
 
   new_argc = 0;
@@ -2833,62 +2857,51 @@ handle_v_run (char *own_buf)
       new_argc++;
     }
 
-  new_argv = (char **) calloc (new_argc + 2, sizeof (char *));
-  if (new_argv == NULL)
-    {
-      write_enn (own_buf);
-      return 0;
-    }
-
-  i = 0;
-  for (p = own_buf + strlen ("vRun;"); *p; p = next_p)
+  for (i = 0, p = own_buf + strlen ("vRun;"); *p; p = next_p, ++i)
     {
       next_p = strchr (p, ';');
       if (next_p == NULL)
 	next_p = p + strlen (p);
 
       if (i == 0 && p == next_p)
-	new_argv[i] = NULL;
+	{
+	  /* No program specified.  */
+	  new_argv.push_back (NULL);
+	}
       else
 	{
-	  /* FIXME: Fail request if out of memory instead of dying.  */
-	  new_argv[i] = (char *) xmalloc (1 + (next_p - p) / 2);
-	  hex2bin (p, (gdb_byte *) new_argv[i], (next_p - p) / 2);
-	  new_argv[i][(next_p - p) / 2] = '\0';
+	  size_t len = (next_p - p) / 2;
+	  char *arg = (char *) xmalloc (len + 1);
+
+	  hex2bin (p, (gdb_byte *) arg, len);
+	  arg[len] = '\0';
+	  new_argv.push_back (arg);
 	}
 
       if (*next_p)
 	next_p++;
-      i++;
     }
-  new_argv[i] = NULL;
+  new_argv.push_back (NULL);
 
   if (new_argv[0] == NULL)
     {
       /* GDB didn't specify a program to run.  Use the program from the
 	 last run with the new argument list.  */
-
-      if (program_argv == NULL)
+      if (program_argv.empty ())
 	{
 	  write_enn (own_buf);
-	  freeargv (new_argv);
+	  free_vector_argv (new_argv);
 	  return 0;
 	}
 
-      new_argv[0] = strdup (program_argv[0]);
-      if (new_argv[0] == NULL)
-	{
-	  write_enn (own_buf);
-	  freeargv (new_argv);
-	  return 0;
-	}
+      new_argv.push_back (xstrdup (program_argv[0]));
     }
 
   /* Free the old argv and install the new one.  */
-  freeargv (program_argv);
+  free_vector_argv (program_argv);
   program_argv = new_argv;
 
-  start_inferior (program_argv);
+  start_inferior (&program_argv[0]);
   if (last_status.kind == TARGET_WAITKIND_STOPPED)
     {
       prepare_resume_reply (own_buf, last_ptid, &last_status);
@@ -2949,7 +2962,6 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
 
       if (startswith (own_buf, "vCont;"))
 	{
-	  require_running (own_buf);
 	  handle_v_cont (own_buf);
 	  return;
 	}
@@ -3272,7 +3284,7 @@ static void
 gdbserver_version (void)
 {
   printf ("GNU gdbserver %s%s\n"
-	  "Copyright (C) 2016 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2017 Free Software Foundation, Inc.\n"
 	  "gdbserver is free software, covered by the "
 	  "GNU General Public License.\n"
 	  "This gdbserver was configured as \"%s\"\n",
@@ -3483,7 +3495,8 @@ captured_main (int argc, char *argv[])
 {
   int bad_attach;
   int pid;
-  char *arg_end, *port;
+  char *arg_end;
+  const char *port = NULL;
   char **next_arg = &argv[1];
   volatile int multi_mode = 0;
   volatile int attach = 0;
@@ -3507,13 +3520,18 @@ captured_main (int argc, char *argv[])
 	multi_mode = 1;
       else if (strcmp (*next_arg, "--wrapper") == 0)
 	{
+	  char **tmp;
+
 	  next_arg++;
 
-	  wrapper_argv = next_arg;
+	  tmp = next_arg;
 	  while (*next_arg != NULL && strcmp (*next_arg, "--") != 0)
-	    next_arg++;
+	    {
+	      wrapper_argv.push_back (*next_arg);
+	      next_arg++;
+	    }
 
-	  if (next_arg == wrapper_argv || *next_arg == NULL)
+	  if (next_arg == tmp || *next_arg == NULL)
 	    {
 	      gdbserver_usage (stderr);
 	      exit (1);
@@ -3580,7 +3598,8 @@ captured_main (int argc, char *argv[])
 	{
 	  /* "-" specifies a stdio connection and is a form of port
 	     specification.  */
-	  *next_arg = STDIO_CONNECTION_NAME;
+	  port = STDIO_CONNECTION_NAME;
+	  next_arg++;
 	  break;
 	}
       else if (strcmp (*next_arg, "--disable-randomization") == 0)
@@ -3599,8 +3618,11 @@ captured_main (int argc, char *argv[])
       continue;
     }
 
-  port = *next_arg;
-  next_arg++;
+  if (port == NULL)
+    {
+      port = *next_arg;
+      next_arg++;
+    }
   if (port == NULL || (!attach && !multi_mode && *next_arg == NULL))
     {
       gdbserver_usage (stderr);
@@ -3659,13 +3681,12 @@ captured_main (int argc, char *argv[])
       int i, n;
 
       n = argc - (next_arg - argv);
-      program_argv = XNEWVEC (char *, n + 1);
       for (i = 0; i < n; i++)
-	program_argv[i] = xstrdup (next_arg[i]);
-      program_argv[i] = NULL;
+	program_argv.push_back (xstrdup (next_arg[i]));
+      program_argv.push_back (NULL);
 
       /* Wait till we are at first instruction in program.  */
-      start_inferior (program_argv);
+      start_inferior (&program_argv[0]);
 
       /* We are now (hopefully) stopped at the first instruction of
 	 the target process.  This assumes that the target process was
@@ -3929,7 +3950,6 @@ process_serial_event (void)
 
       if ((tracing && disconnected_tracing) || any_persistent_commands ())
 	{
-	  struct thread_resume resume_info;
 	  struct process_info *process = find_process_pid (pid);
 
 	  if (process == NULL)
@@ -3965,10 +3985,7 @@ process_serial_event (void)
 	  process->gdb_detached = 1;
 
 	  /* Detaching implicitly resumes all threads.  */
-	  resume_info.thread = minus_one_ptid;
-	  resume_info.kind = resume_continue;
-	  resume_info.sig = 0;
-	  (*the_target->resume) (&resume_info, 1);
+	  target_continue_no_signal (minus_one_ptid);
 
 	  write_ok (own_buf);
 	  break; /* from switch/case */
@@ -4284,9 +4301,9 @@ process_serial_event (void)
 	  fprintf (stderr, "GDBserver restarting\n");
 
 	  /* Wait till we are at 1st instruction in prog.  */
-	  if (program_argv != NULL)
+	  if (!program_argv.empty ())
 	    {
-	      start_inferior (program_argv);
+	      start_inferior (&program_argv[0]);
 	      if (last_status.kind == TARGET_WAITKIND_STOPPED)
 		{
 		  /* Stopped at the first instruction of the target
@@ -4398,7 +4415,7 @@ handle_target_event (int err, gdb_client_data client_data)
 	  || last_status.kind == TARGET_WAITKIND_SIGNALLED)
 	{
 	  mark_breakpoints_out (process);
-	  mourn_inferior (process);
+	  target_mourn_inferior (last_ptid);
 	}
       else if (last_status.kind == TARGET_WAITKIND_THREAD_EXITED)
 	;
@@ -4428,7 +4445,7 @@ handle_target_event (int err, gdb_client_data client_data)
 	      /* A thread stopped with a signal, but gdb isn't
 		 connected to handle it.  Pass it down to the
 		 inferior, as if it wasn't being traced.  */
-	      struct thread_resume resume_info;
+	      enum gdb_signal signal;
 
 	      if (debug_threads)
 		debug_printf ("GDB not connected; forwarding event %d for"
@@ -4436,13 +4453,11 @@ handle_target_event (int err, gdb_client_data client_data)
 			      (int) last_status.kind,
 			      target_pid_to_str (last_ptid));
 
-	      resume_info.thread = last_ptid;
-	      resume_info.kind = resume_continue;
 	      if (last_status.kind == TARGET_WAITKIND_STOPPED)
-		resume_info.sig = gdb_signal_to_host (last_status.value.sig);
+		signal = last_status.value.sig;
 	      else
-		resume_info.sig = 0;
-	      (*the_target->resume) (&resume_info, 1);
+		signal = GDB_SIGNAL_0;
+	      target_continue (last_ptid, signal);
 	    }
 	}
       else

@@ -1,5 +1,5 @@
 /* alpha-opc.c -- Alpha AXP opcode list
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@cygnus.com>,
    patterned after the PPC opcode handling written by Ian Lance Taylor.
 

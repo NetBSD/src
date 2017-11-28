@@ -1,4 +1,4 @@
-#   Copyright 1998-2016 Free Software Foundation, Inc.
+#   Copyright 1998-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ gdb_start
 standard_testfile actions.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
-    untested passc-dyn.exp
+    untested "failed to compile"
     return -1
 }
 gdb_load $binfile
@@ -33,7 +33,7 @@ runto_main
 gdb_reinitialize_dir $srcdir/$subdir
 
 if { ![gdb_target_supports_trace] } then {
-    unsupported "Current target does not support trace"
+    unsupported "current target does not support trace"
     return 1
 
 }
@@ -49,7 +49,7 @@ if { ![gdb_target_supports_trace] } then {
 set baseline [gdb_find_recursion_test_baseline $srcfile]
 
 if { $baseline == -1 } then {
-    fail "Could not find gdb_recursion_test function"
+    fail "could not find gdb_recursion_test function"
     return
 }
 
@@ -94,37 +94,37 @@ gdb_test "tstop" ".*" ""
 
 gdb_test "tfind none" ".*" ""
 if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x -1 x" ""] {
-    untested passc-dyn.exp
+    untested "skipping further tests due to print failure"
     return -1
 }
 
 gdb_test "tfind tracepoint $tdp2" ".*" ""
 if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 0 x" ""] {
-    untested passc-dyn.exp
+    untested "skipping further tests due to print failure"
     return -1
 }
 
 gdb_test "tfind tracepoint $tdp3" ".*" ""
 if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 1 x" ""] {
-    untested passc-dyn.exp
+    untested "skipping further tests due to print failure"
     return -1
 }
 
 gdb_test "tfind tracepoint $tdp4" ".*" ""
 if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 2 x" ""] {
-    untested passc-dyn.exp
+    untested "skipping further tests due to print failure"
     return -1
 }
 
 gdb_test "tfind tracepoint $tdp2" ".*" ""
 if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 3 x" ""] {
-    untested passc-dyn.exp
+    untested "skipping further tests due to print failure"
     return -1
 }
 
 gdb_test "tfind tracepoint $tdp3" ".*" ""
 if [gdb_test "printf \"x \%d x\\n\", \$trace_frame" "x 4 x" ""] {
-    untested passc-dyn.exp
+    untested "skipping further tests due to print failure"
     return -1
 }
 

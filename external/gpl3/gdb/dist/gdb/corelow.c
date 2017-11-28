@@ -1,6 +1,6 @@
 /* Core dump and executable file functions below target vector, for GDB.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -275,7 +275,6 @@ core_open (const char *arg, int from_tty)
   int siggy;
   struct cleanup *old_chain;
   char *temp;
-  bfd *temp_bfd;
   int scratch_chan;
   int flags;
   char *filename;
@@ -310,20 +309,19 @@ core_open (const char *arg, int from_tty)
   if (scratch_chan < 0)
     perror_with_name (filename);
 
-  temp_bfd = gdb_bfd_fopen (filename, gnutarget, 
-			    write_files ? FOPEN_RUB : FOPEN_RB,
-			    scratch_chan);
+  gdb_bfd_ref_ptr temp_bfd (gdb_bfd_fopen (filename, gnutarget,
+					   write_files ? FOPEN_RUB : FOPEN_RB,
+					   scratch_chan));
   if (temp_bfd == NULL)
     perror_with_name (filename);
 
-  if (!bfd_check_format (temp_bfd, bfd_core)
-      && !gdb_check_format (temp_bfd))
+  if (!bfd_check_format (temp_bfd.get (), bfd_core)
+      && !gdb_check_format (temp_bfd.get ()))
     {
       /* Do it after the err msg */
       /* FIXME: should be checking for errors from bfd_close (for one
          thing, on error it does not free all the storage associated
          with the bfd).  */
-      make_cleanup_bfd_unref (temp_bfd);
       error (_("\"%s\" is not a core dump: %s"),
 	     filename, bfd_errmsg (bfd_get_error ()));
     }
@@ -333,7 +331,7 @@ core_open (const char *arg, int from_tty)
 
   do_cleanups (old_chain);
   unpush_target (&core_ops);
-  core_bfd = temp_bfd;
+  core_bfd = temp_bfd.release ();
   old_chain = make_cleanup (core_close_cleanup, 0 /*ignore*/);
 
   core_gdbarch = gdbarch_from_bfd (core_bfd);
@@ -491,11 +489,11 @@ core_detach (struct target_ops *ops, const char *args, int from_tty)
    them to core_vec->core_read_registers, as the register set numbered
    WHICH.
 
-   If inferior_ptid's lwp member is zero, do the single-threaded
-   thing: look for a section named NAME.  If inferior_ptid's lwp
+   If ptid's lwp member is zero, do the single-threaded
+   thing: look for a section named NAME.  If ptid's lwp
    member is non-zero, do the multi-threaded thing: look for a section
    named "NAME/LWP", where LWP is the shortest ASCII decimal
-   representation of inferior_ptid's lwp member.
+   representation of ptid's lwp member.
 
    HUMAN_NAME is a human-readable name for the kind of registers the
    NAME section contains, for use in error messages.
@@ -517,12 +515,15 @@ get_core_register_section (struct regcache *regcache,
   struct bfd_section *section;
   bfd_size_type size;
   char *contents;
+  bool variable_size_section = (regset != NULL
+				&& regset->flags & REGSET_VARIABLE_SIZE);
+  ptid_t ptid = regcache_get_ptid (regcache);
 
   xfree (section_name);
 
-  if (ptid_get_lwp (inferior_ptid))
+  if (ptid_get_lwp (ptid))
     section_name = xstrprintf ("%s/%ld", name,
-			       ptid_get_lwp (inferior_ptid));
+			       ptid_get_lwp (ptid));
   else
     section_name = xstrdup (name);
 
@@ -541,7 +542,7 @@ get_core_register_section (struct regcache *regcache,
       warning (_("Section `%s' in core file too small."), section_name);
       return;
     }
-  if (size != min_size && !(regset->flags & REGSET_VARIABLE_SIZE))
+  if (size != min_size && !variable_size_section)
     {
       warning (_("Unexpected size of section `%s' in core file."),
 	       section_name);
@@ -964,7 +965,7 @@ core_read_description (struct target_ops *target)
   return target->beneath->to_read_description (target->beneath);
 }
 
-static char *
+static const char *
 core_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[64];

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2016 Free Software Foundation, Inc.
+# Copyright 1997-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 standard_testfile
 
-if { [prepare_for_testing ${testfile}.exp $testfile] } {
+if { [prepare_for_testing "failed to prepare" $testfile] } {
     return -1
 }
 remote_exec build "rm -f core"
@@ -74,8 +74,8 @@ gdb_test_multiple "info line ending-run.c:$break1_line" "" {
     -re ".*address (0x\[0-9a-fA-F]*).*$gdb_prompt $" {
         set line_nine $expect_out(1,string)
         gdb_test "b ending-run.c:$break1_line" ".*Breakpoint 6.*ending-run.c, line $break1_line.*"
-        gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 7.*" "Breakpoint 7 at *ending-run.c:$break1_line"
-        gdb_test "cle" ".*Deleted breakpoints 4 6 7.*" "Clear 2 by default"
+        gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 7.*" "breakpoint 7 at *ending-run.c:$break1_line"
+        gdb_test "cle" ".*Deleted breakpoints 4 6 7.*" "clear 2 by default"
     }
     -re ".*$gdb_prompt $" {
         fail "need to fix test for new compile outcome"
@@ -270,7 +270,7 @@ if {!$use_gdb_stub
     set exec_output [remote_exec host "ls core"]
 
     if [ regexp "core not found" $exec_output]  {
-	pass "No core dumped on quit"
+	pass "no core dumped on quit"
     } else {
 	if [ regexp "No such file or directory" $exec_output] {
 	    pass "ls: core (No core dumped on quit)"

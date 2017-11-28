@@ -1,6 +1,6 @@
 /* Dump-to-file commands, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -103,45 +103,40 @@ fopen_with_cleanup (const char *filename, const char *mode)
   return file;
 }
 
-static bfd *
-bfd_openr_with_cleanup (const char *filename, const char *target)
+static gdb_bfd_ref_ptr
+bfd_openr_or_error (const char *filename, const char *target)
 {
-  bfd *ibfd;
-
-  ibfd = gdb_bfd_openr (filename, target);
+  gdb_bfd_ref_ptr ibfd (gdb_bfd_openr (filename, target));
   if (ibfd == NULL)
-    error (_("Failed to open %s: %s."), filename, 
+    error (_("Failed to open %s: %s."), filename,
 	   bfd_errmsg (bfd_get_error ()));
 
-  make_cleanup_bfd_unref (ibfd);
-  if (!bfd_check_format (ibfd, bfd_object))
+  if (!bfd_check_format (ibfd.get (), bfd_object))
     error (_("'%s' is not a recognized file format."), filename);
 
   return ibfd;
 }
 
-static bfd *
-bfd_openw_with_cleanup (const char *filename, const char *target,
-			const char *mode)
+static gdb_bfd_ref_ptr
+bfd_openw_or_error (const char *filename, const char *target, const char *mode)
 {
-  bfd *obfd;
+  gdb_bfd_ref_ptr obfd;
 
   if (*mode == 'w')	/* Write: create new file */
     {
       obfd = gdb_bfd_openw (filename, target);
       if (obfd == NULL)
-	error (_("Failed to open %s: %s."), filename, 
+	error (_("Failed to open %s: %s."), filename,
 	       bfd_errmsg (bfd_get_error ()));
-      make_cleanup_bfd_unref (obfd);
-      if (!bfd_set_format (obfd, bfd_object))
-	error (_("bfd_openw_with_cleanup: %s."), bfd_errmsg (bfd_get_error ()));
+      if (!bfd_set_format (obfd.get (), bfd_object))
+	error (_("bfd_openw_or_error: %s."), bfd_errmsg (bfd_get_error ()));
     }
   else if (*mode == 'a')	/* Append to existing file.  */
     {	/* FIXME -- doesn't work...  */
       error (_("bfd_openw does not work with append."));
     }
   else
-    error (_("bfd_openw_with_cleanup: unknown mode %s."), mode);
+    error (_("bfd_openw_or_error: unknown mode %s."), mode);
 
   return obfd;
 }
@@ -187,20 +182,19 @@ dump_bfd_file (const char *filename, const char *mode,
 	       const char *target, CORE_ADDR vaddr, 
 	       const bfd_byte *buf, ULONGEST len)
 {
-  bfd *obfd;
   asection *osection;
 
-  obfd = bfd_openw_with_cleanup (filename, target, mode);
-  osection = bfd_make_section_anyway (obfd, ".newsec");
-  bfd_set_section_size (obfd, osection, len);
-  bfd_set_section_vma (obfd, osection, vaddr);
-  bfd_set_section_alignment (obfd, osection, 0);
-  bfd_set_section_flags (obfd, osection, (SEC_HAS_CONTENTS
-					  | SEC_ALLOC
-					  | SEC_LOAD));
+  gdb_bfd_ref_ptr obfd (bfd_openw_or_error (filename, target, mode));
+  osection = bfd_make_section_anyway (obfd.get (), ".newsec");
+  bfd_set_section_size (obfd.get (), osection, len);
+  bfd_set_section_vma (obfd.get (), osection, vaddr);
+  bfd_set_section_alignment (obfd.get (), osection, 0);
+  bfd_set_section_flags (obfd.get (), osection, (SEC_HAS_CONTENTS
+						 | SEC_ALLOC
+						 | SEC_LOAD));
   osection->entsize = 0;
-  if (!bfd_set_section_contents (obfd, osection, buf, 0, len))
-    warning (_("writing dump file '%s' (%s)"), filename, 
+  if (!bfd_set_section_contents (obfd.get (), osection, buf, 0, len))
+    warning (_("writing dump file '%s' (%s)"), filename,
 	     bfd_errmsg (bfd_get_error ()));
 }
 
@@ -212,7 +206,6 @@ dump_memory_to_file (const char *cmd, const char *mode, const char *file_format)
   CORE_ADDR hi;
   ULONGEST count;
   const char *filename;
-  gdb_byte *buf;
   const char *lo_exp;
   const char *hi_exp;
 
@@ -237,25 +230,24 @@ dump_memory_to_file (const char *cmd, const char *mode, const char *file_format)
 
   /* FIXME: Should use read_memory_partial() and a magic blocking
      value.  */
-  buf = (gdb_byte *) xmalloc (count);
-  make_cleanup (xfree, buf);
-  read_memory (lo, buf, count);
+  std::unique_ptr<gdb_byte[]> buf (new gdb_byte[count]);
+  read_memory (lo, buf.get (), count);
   
   /* Have everything.  Open/write the data.  */
   if (file_format == NULL || strcmp (file_format, "binary") == 0)
     {
-      dump_binary_file (filename, mode, buf, count);
+      dump_binary_file (filename, mode, buf.get (), count);
     }
   else
     {
-      dump_bfd_file (filename, mode, file_format, lo, buf, count);
+      dump_bfd_file (filename, mode, file_format, lo, buf.get (), count);
     }
 
   do_cleanups (old_cleanups);
 }
 
 static void
-dump_memory_command (char *cmd, char *mode)
+dump_memory_command (char *cmd, const char *mode)
 {
   dump_memory_to_file (cmd, mode, "binary");
 }
@@ -306,7 +298,7 @@ dump_value_to_file (const char *cmd, const char *mode, const char *file_format)
 }
 
 static void
-dump_value_command (char *cmd, char *mode)
+dump_value_command (char *cmd, const char *mode)
 {
   dump_value_to_file (cmd, mode, "binary");
 }
@@ -385,8 +377,8 @@ append_binary_value (char *args, int from_tty)
 
 struct dump_context
 {
-  void (*func) (char *cmd, char *mode);
-  char *mode;
+  void (*func) (char *cmd, const char *mode);
+  const char *mode;
 };
 
 static void
@@ -398,8 +390,9 @@ call_dump_func (struct cmd_list_element *c, char *args, int from_tty)
 }
 
 static void
-add_dump_command (char *name, void (*func) (char *args, char *mode),
-		  char *descr)
+add_dump_command (const char *name,
+		  void (*func) (char *args, const char *mode),
+		  const char *descr)
 
 {
   struct cmd_list_element *c;
@@ -518,7 +511,6 @@ restore_binary_file (const char *filename, struct callback_data *data)
 {
   struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
   FILE *file = fopen_with_cleanup (filename, FOPEN_RB);
-  gdb_byte *buf;
   long len;
 
   /* Get the file size for reading.  */
@@ -553,13 +545,13 @@ restore_binary_file (const char *filename, struct callback_data *data)
     perror_with_name (filename);
 
   /* Now allocate a buffer and read the file contents.  */
-  buf = (gdb_byte *) xmalloc (len);
-  make_cleanup (xfree, buf);
-  if (fread (buf, 1, len, file) != len)
+  std::unique_ptr<gdb_byte[]> buf (new gdb_byte[len]);
+  if (fread (buf.get (), 1, len, file) != len)
     perror_with_name (filename);
 
   /* Now write the buffer into target memory.  */
-  len = target_write_memory (data->load_start + data->load_offset, buf, len);
+  len = target_write_memory (data->load_start + data->load_offset,
+			     buf.get (), len);
   if (len != 0)
     warning (_("restore: memory write failed (%s)."), safe_strerror (len));
   do_cleanups (cleanup);
@@ -585,7 +577,7 @@ restore_command (char *args_in, int from_tty)
   filename = scan_filename_with_cleanup (&args, NULL);
   if (args != NULL && *args != '\0')
     {
-      char *binary_string = "binary";
+      static const char binary_string[] = "binary";
 
       /* Look for optional "binary" flag.  */
       if (startswith (args, binary_string))
@@ -627,12 +619,11 @@ restore_command (char *args_in, int from_tty)
   else
     {
       /* Open the file for loading.  */
-      ibfd = bfd_openr_with_cleanup (filename, NULL);
+      gdb_bfd_ref_ptr ibfd (bfd_openr_or_error (filename, NULL));
 
       /* Process the sections.  */
-      bfd_map_over_sections (ibfd, restore_section_callback, &data);
+      bfd_map_over_sections (ibfd.get (), restore_section_callback, &data);
     }
-  return;
 }
 
 static void

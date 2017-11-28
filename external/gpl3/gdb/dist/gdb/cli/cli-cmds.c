@@ -1,6 +1,6 @@
 /* GDB CLI commands.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 #include "defs.h"
 #include "arch-utils.h"
-#include "dyn-string.h"
 #include "readline/readline.h"
 #include "readline/tilde.h"
 #include "completer.h"
@@ -56,6 +55,8 @@
 #endif
 
 #include <fcntl.h>
+#include <algorithm>
+#include <string>
 
 /* Prototypes for local command functions */
 
@@ -81,7 +82,7 @@ static void show_user (char *, int);
 
 static void make_command (char *, int);
 
-static void shell_escape (char *, int);
+static void shell_escape (const char *, int);
 
 static void edit_command (char *, int);
 
@@ -241,10 +242,11 @@ help_command (char *command, int from_tty)
    [Is that why this function writes output with *_unfiltered?]  */
 
 static void
-complete_command (char *arg, int from_tty)
+complete_command (char *arg_entry, int from_tty)
 {
+  const char *arg = arg_entry;
   int argpoint;
-  char *point, *arg_prefix;
+  char *arg_prefix;
   VEC (char_ptr) *completions;
 
   dont_repeat ();
@@ -253,7 +255,7 @@ complete_command (char *arg, int from_tty)
     {
       /* Only print this for non-mi frontends.  An MI frontend may not
 	 be able to handle this.  */
-      if (!ui_out_is_mi_like_p (current_uiout))
+      if (!current_uiout->is_mi_like_p ())
 	{
 	  printf_unfiltered (_("max-completions is zero,"
 			       " completion is disabled.\n"));
@@ -269,7 +271,7 @@ complete_command (char *arg, int from_tty)
      within, and except for filenames at the beginning of, the word to
      be completed.  The following crude imitation of readline's
      word-breaking tries to accomodate this.  */
-  point = arg + argpoint;
+  const char *point = arg + argpoint;
   while (point > arg)
     {
       if (strchr (rl_completer_word_break_characters, point[-1]) != 0)
@@ -343,12 +345,23 @@ show_configuration (char *args, int from_tty)
 void
 quit_command (char *args, int from_tty)
 {
+  int exit_code = 0;
+
+  /* An optional expression may be used to cause gdb to terminate with
+     the value of that expression.  */
+  if (args)
+    {
+      struct value *val = parse_and_eval (args);
+
+      exit_code = (int) value_as_long (val);
+    }
+
   if (!quit_confirm ())
     error (_("Not confirmed."));
 
   query_if_trace_running (from_tty);
 
-  quit_force (args, from_tty);
+  quit_force (args ? &exit_code : NULL, from_tty);
 }
 
 static void
@@ -380,10 +393,7 @@ cd_command (char *dir, int from_tty)
      repeat might be useful but is more likely to be a mistake.  */
   dont_repeat ();
 
-  if (dir == 0)
-    dir = "~";
-
-  dir = tilde_expand (dir);
+  dir = tilde_expand (dir != NULL ? dir : "~");
   cleanup = make_cleanup (xfree, dir);
 
   if (chdir (dir) < 0)
@@ -723,7 +733,7 @@ echo_command (char *text, int from_tty)
 }
 
 static void
-shell_escape (char *arg, int from_tty)
+shell_escape (const char *arg, int from_tty)
 {
 #if defined(CANT_FORK) || \
       (!defined(HAVE_WORKING_VFORK) && !defined(HAVE_WORKING_FORK))
@@ -783,13 +793,21 @@ shell_escape (char *arg, int from_tty)
 #endif /* Can fork.  */
 }
 
+/* Implementation of the "shell" command.  */
+
+static void
+shell_command (char *arg, int from_tty)
+{
+  shell_escape (arg, from_tty);
+}
+
 static void
 edit_command (char *arg, int from_tty)
 {
   struct symtabs_and_lines sals;
   struct symtab_and_line sal;
   struct symbol *sym;
-  char *editor;
+  const char *editor;
   char *p;
   const char *fn;
 
@@ -810,28 +828,25 @@ edit_command (char *arg, int from_tty)
     }
   else
     {
-      struct cleanup *cleanup;
-      struct event_location *location;
       char *arg1;
 
       /* Now should only be one argument -- decode it in SAL.  */
       arg1 = arg;
-      location = string_to_event_location (&arg1, current_language);
-      cleanup = make_cleanup_delete_event_location (location);
-      sals = decode_line_1 (location, DECODE_LINE_LIST_MODE, NULL, NULL, 0);
+      event_location_up location = string_to_event_location (&arg1,
+							     current_language);
+      sals = decode_line_1 (location.get (), DECODE_LINE_LIST_MODE,
+			    NULL, NULL, 0);
 
       filter_sals (&sals);
       if (! sals.nelts)
 	{
 	  /*  C++  */
-	  do_cleanups (cleanup);
 	  return;
 	}
       if (sals.nelts > 1)
 	{
 	  ambiguous_line_spec (&sals);
 	  xfree (sals.sals);
-	  do_cleanups (cleanup);
 	  return;
 	}
 
@@ -873,7 +888,6 @@ edit_command (char *arg, int from_tty)
 
       if (sal.symtab == 0)
         error (_("No line number known for %s."), arg);
-      do_cleanups (cleanup);
     }
 
   if ((editor = (char *) getenv ("EDITOR")) == NULL)
@@ -902,9 +916,6 @@ list_command (char *arg, int from_tty)
   int dummy_beg = 0;
   int linenum_beg = 0;
   char *p;
-  struct cleanup *cleanup;
-
-  cleanup = make_cleanup (null_cleanup, NULL);
 
   /* Pull in the current default source line if necessary.  */
   if (arg == NULL || ((arg[0] == '+' || arg[0] == '-') && arg[1] == '\0'))
@@ -918,7 +929,7 @@ list_command (char *arg, int from_tty)
 	{
 	  int first;
 
-	  first = max (cursal.line - get_lines_to_list () / 2, 1);
+	  first = std::max (cursal.line - get_lines_to_list () / 2, 1);
 
 	  /* A small special case --- if listing backwards, and we
 	     should list only one line, list the preceding line,
@@ -945,8 +956,8 @@ list_command (char *arg, int from_tty)
 	    error (_("Already at the start of %s."),
 		   symtab_to_filename_for_display (cursal.symtab));
 	  print_source_lines (cursal.symtab,
-			      max (get_first_line_listed ()
-				   - get_lines_to_list (), 1),
+			      std::max (get_first_line_listed ()
+					- get_lines_to_list (), 1),
 			      get_first_line_listed (), 0);
 	}
 
@@ -967,24 +978,21 @@ list_command (char *arg, int from_tty)
     dummy_beg = 1;
   else
     {
-      struct event_location *location;
-
-      location = string_to_event_location (&arg1, current_language);
-      make_cleanup_delete_event_location (location);
-      sals = decode_line_1 (location, DECODE_LINE_LIST_MODE, NULL, NULL, 0);
+      event_location_up location = string_to_event_location (&arg1,
+							     current_language);
+      sals = decode_line_1 (location.get (), DECODE_LINE_LIST_MODE,
+			    NULL, NULL, 0);
 
       filter_sals (&sals);
       if (!sals.nelts)
 	{
 	  /*  C++  */
-	  do_cleanups (cleanup);
 	  return;
 	}
       if (sals.nelts > 1)
 	{
 	  ambiguous_line_spec (&sals);
 	  xfree (sals.sals);
-	  do_cleanups (cleanup);
 	  return;
 	}
 
@@ -1009,28 +1017,22 @@ list_command (char *arg, int from_tty)
 	dummy_end = 1;
       else
 	{
-	  struct event_location *location;
-
-	  location = string_to_event_location (&arg1, current_language);
-	  make_cleanup_delete_event_location (location);
+	  event_location_up location
+	    = string_to_event_location (&arg1, current_language);
 	  if (dummy_beg)
-	    sals_end = decode_line_1 (location,
+	    sals_end = decode_line_1 (location.get (),
 				      DECODE_LINE_LIST_MODE, NULL, NULL, 0);
 	  else
-	    sals_end = decode_line_1 (location, DECODE_LINE_LIST_MODE,
+	    sals_end = decode_line_1 (location.get (), DECODE_LINE_LIST_MODE,
 				      NULL, sal.symtab, sal.line);
 
 	  filter_sals (&sals_end);
 	  if (sals_end.nelts == 0)
-	    {
-	      do_cleanups (cleanup);
-	      return;
-	    }
+	    return;
 	  if (sals_end.nelts > 1)
 	    {
 	      ambiguous_line_spec (&sals_end);
 	      xfree (sals_end.sals);
-	      do_cleanups (cleanup);
 	      return;
 	    }
 	  sal_end = sals_end.sals[0];
@@ -1090,7 +1092,7 @@ list_command (char *arg, int from_tty)
     error (_("No default source file yet.  Do \"help list\"."));
   if (dummy_beg)
     print_source_lines (sal_end.symtab,
-			max (sal_end.line - (get_lines_to_list () - 1), 1),
+			std::max (sal_end.line - (get_lines_to_list () - 1), 1),
 			sal_end.line + 1, 0);
   else if (sal.symtab == 0)
     error (_("No default source file yet.  Do \"help list\"."));
@@ -1111,7 +1113,6 @@ list_command (char *arg, int from_tty)
 			 ? sal.line + get_lines_to_list ()
 			 : sal_end.line + 1),
 			0);
-  do_cleanups (cleanup);
 }
 
 /* Subroutine of disassemble_command to simplify it.
@@ -1136,7 +1137,7 @@ print_disassembly (struct gdbarch *gdbarch, const char *name,
 			 paddress (gdbarch, low), paddress (gdbarch, high));
 
       /* Dump the specified range.  */
-      gdb_disassembly (gdbarch, current_uiout, 0, flags, -1, low, high);
+      gdb_disassembly (gdbarch, current_uiout, flags, -1, low, high);
 
       printf_filtered ("End of assembler dump.\n");
       gdb_flush (gdb_stdout);
@@ -1294,18 +1295,14 @@ disassemble_command (char *arg, int from_tty)
 static void
 make_command (char *arg, int from_tty)
 {
-  char *p;
-
   if (arg == 0)
-    p = "make";
+    shell_escape ("make", from_tty);
   else
     {
-      p = (char *) xmalloc (sizeof ("make ") + strlen (arg));
-      strcpy (p, "make ");
-      strcpy (p + sizeof ("make ") - 1, arg);
-    }
+      std::string cmd = std::string ("make ") + arg;
 
-  shell_escape (p, from_tty);
+      shell_escape (cmd.c_str (), from_tty);
+    }
 }
 
 static void
@@ -1370,11 +1367,11 @@ apropos_command (char *searchstr, int from_tty)
    This does not take care of quoting elements in case they contain spaces
    on purpose.  */
 
-static dyn_string_t
-argv_to_dyn_string (char **argv, int n)
+static std::string
+argv_to_string (char **argv, int n)
 {
   int i;
-  dyn_string_t result = dyn_string_new (10);
+  std::string result;
 
   gdb_assert (argv != NULL);
   gdb_assert (n >= 0 && n <= countargv (argv));
@@ -1382,8 +1379,8 @@ argv_to_dyn_string (char **argv, int n)
   for (i = 0; i < n; ++i)
     {
       if (i > 0)
-	dyn_string_append_char (result, ' ');
-      dyn_string_append_cstr (result, argv[i]);
+	result += " ";
+      result += argv[i];
     }
 
   return result;
@@ -1425,9 +1422,9 @@ alias_command (char *args, int from_tty)
 {
   int i, alias_argc, command_argc;
   int abbrev_flag = 0;
-  char *args2, *equals, *alias, *command;
+  char *args2, *equals;
+  const char *alias, *command;
   char **alias_argv, **command_argv;
-  dyn_string_t alias_dyn_string, command_dyn_string;
   struct cleanup *cleanup;
 
   if (args == NULL || strchr (args, '=') == NULL)
@@ -1479,16 +1476,14 @@ alias_command (char *args, int from_tty)
   /* COMMAND must exist.
      Reconstruct the command to remove any extraneous spaces,
      for better error messages.  */
-  command_dyn_string = argv_to_dyn_string (command_argv, command_argc);
-  make_cleanup_dyn_string_delete (command_dyn_string);
-  command = dyn_string_buf (command_dyn_string);
+  std::string command_string (argv_to_string (command_argv, command_argc));
+  command = command_string.c_str ();
   if (! valid_command_p (command))
     error (_("Invalid command to alias to: %s"), command);
 
   /* ALIAS must not exist.  */
-  alias_dyn_string = argv_to_dyn_string (alias_argv, alias_argc);
-  make_cleanup_dyn_string_delete (alias_dyn_string);
-  alias = dyn_string_buf (alias_dyn_string);
+  std::string alias_string (argv_to_string (alias_argv, alias_argc));
+  alias = alias_string.c_str ();
   if (valid_command_p (alias))
     error (_("Alias already exists: %s"), alias);
 
@@ -1509,7 +1504,6 @@ alias_command (char *args, int from_tty)
     }
   else
     {
-      dyn_string_t alias_prefix_dyn_string, command_prefix_dyn_string;
       const char *alias_prefix, *command_prefix;
       struct cmd_list_element *c_alias, *c_command;
 
@@ -1518,14 +1512,12 @@ alias_command (char *args, int from_tty)
 
       /* Create copies of ALIAS and COMMAND without the last word,
 	 and use that to verify the leading elements match.  */
-      alias_prefix_dyn_string =
-	argv_to_dyn_string (alias_argv, alias_argc - 1);
-      make_cleanup_dyn_string_delete (alias_prefix_dyn_string);
-      command_prefix_dyn_string =
-	argv_to_dyn_string (alias_argv, command_argc - 1);
-      make_cleanup_dyn_string_delete (command_prefix_dyn_string);
-      alias_prefix = dyn_string_buf (alias_prefix_dyn_string);
-      command_prefix = dyn_string_buf (command_prefix_dyn_string);
+      std::string alias_prefix_string (argv_to_string (alias_argv,
+						       alias_argc - 1));
+      std::string command_prefix_string (argv_to_string (alias_argv,
+							 command_argc - 1));
+      alias_prefix = alias_prefix_string.c_str ();
+      command_prefix = command_prefix_string.c_str ();
 
       c_command = lookup_cmd_1 (& command_prefix, cmdlist, NULL, 1);
       /* We've already tried to look up COMMAND.  */
@@ -1874,7 +1866,7 @@ from the target."),
 		  _("Generic command for showing gdb debugging flags"),
 		  &showdebuglist, "show debug ", 0, &showlist);
 
-  c = add_com ("shell", class_support, shell_escape, _("\
+  c = add_com ("shell", class_support, shell_command, _("\
 Execute the rest of the line as a shell command.\n\
 With no arguments, run an inferior shell."));
   set_cmd_completer (c, filename_completer);

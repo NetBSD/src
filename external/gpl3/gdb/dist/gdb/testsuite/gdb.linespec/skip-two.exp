@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,11 @@ set baseone base/one/thefile.cc
 set basetwo base/two/thefile.cc
 
 if {[skip_cplus_tests]} {
-    unsupported ${testfile}.exp
+    unsupported "skipping C++ tests"
     return
 }
 
-if {[prepare_for_testing ${testfile}.exp $execfile \
+if {[prepare_for_testing "failed to prepare" $execfile \
 	 [list $srcfile $baseone $basetwo] \
 	 {debug nowarnings c++}]} {
     return -1

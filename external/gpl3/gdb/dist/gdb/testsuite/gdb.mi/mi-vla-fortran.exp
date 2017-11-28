@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ standard_testfile vla.f90
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
      {debug f90}] != "" } {
-     untested mi-vla-fortran.exp
+     untested "failed to compile"
      return -1
 }
 

@@ -1,4 +1,4 @@
-# Copyright 2000-2016 Free Software Foundation, Inc.
+# Copyright 2000-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -356,12 +356,16 @@ proc close_gdbserver {} {
     unset server_spawn_id
 }
 
-# Hook into GDB exit, and close GDBserver.
+# Hook into GDB exit, and close GDBserver.  We must load this
+# explicitly here, and rename the procedures we want to override.
+load_lib mi-support.exp
 
-if { [info procs gdbserver_gdb_exit] == "" } {
+if { [info procs gdbserver_orig_gdb_exit] == "" } {
     rename gdb_exit gdbserver_orig_gdb_exit
+    rename mi_gdb_exit gdbserver_orig_mi_gdb_exit
 }
-proc gdb_exit {} {
+
+proc gdbserver_gdb_exit { is_mi } {
     global gdb_spawn_id server_spawn_id
     global gdb_prompt
     global gdbserver_reconnect_p
@@ -369,7 +373,11 @@ proc gdb_exit {} {
     # Leave GDBserver running if we're exiting GDB in order to
     # reconnect to the same instance of GDBserver again.
     if {[info exists gdbserver_reconnect_p] && $gdbserver_reconnect_p} {
-	gdbserver_orig_gdb_exit
+	if { $is_mi } {
+	    gdbserver_orig_mi_gdb_exit
+	} else {
+	    gdbserver_orig_gdb_exit
+	}
 	return
     }
 
@@ -378,7 +386,12 @@ proc gdb_exit {} {
 	# but DejaGNU doesn't know that, so gdb_spawn_id isn't unset.
 	# Catch the exceptions.
 	catch {
-	    send_gdb "monitor exit\n";
+	    if { $is_mi } {
+		set monitor_exit "-interpreter-exec console \"monitor exit\""
+	    } else {
+		set monitor_exit "monitor exit"
+	    }
+	    send_gdb "$monitor_exit\n";
 	    # We use expect rather than gdb_expect because
 	    # we want to suppress printing exception messages, otherwise,
 	    # remote_expect, invoked by gdb_expect, prints the exceptions.
@@ -395,7 +408,19 @@ proc gdb_exit {} {
     }
     close_gdbserver
 
-    gdbserver_orig_gdb_exit
+    if { $is_mi } {
+	gdbserver_orig_mi_gdb_exit
+    } else {
+	gdbserver_orig_gdb_exit
+    }
+}
+
+proc gdb_exit {} {
+    gdbserver_gdb_exit 0
+}
+
+proc mi_gdb_exit {} {
+    gdbserver_gdb_exit 1
 }
 
 # Start a gdbserver process running HOST_EXEC and pass CHILD_ARGS

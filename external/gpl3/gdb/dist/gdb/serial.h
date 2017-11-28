@@ -1,5 +1,5 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -250,11 +250,6 @@ struct serial
 				   buffer.  -ve for sticky errors.  */
     unsigned char *bufp;	/* Current byte */
     unsigned char buf[BUFSIZ];	/* Da buffer itself */
-    int current_timeout;	/* (ser-unix.c termio{,s} only), last
-				   value of VTIME */
-    int timeout_remaining;	/* (ser-unix.c termio{,s} only), we
-				   still need to wait for this many
-				   more seconds.  */
     struct serial *next;	/* Pointer to the next `struct serial *' */
     int debug_p;		/* Trace this serial devices operation.  */
     int async_state;		/* Async internal state.  */
@@ -264,7 +259,7 @@ struct serial
 
 struct serial_ops
   {
-    char *name;
+    const char *name;
     int (*open) (struct serial *, const char *name);
     void (*close) (struct serial *);
     int (*fdopen) (struct serial *, int fd);

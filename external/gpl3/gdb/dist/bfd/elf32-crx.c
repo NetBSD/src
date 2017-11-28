@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CRX ELF
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Written by Tomer Levi, NSC, Israel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -425,8 +425,9 @@ elf_crx_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= R_CRX_MAX)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised CRX reloc number: %d"),
-			     abfd, r_type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: unrecognised CRX reloc number: %d"),
+			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
       r_type = R_CRX_NONE;
     }

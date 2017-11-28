@@ -1,5 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2017 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -334,13 +334,15 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **          list_p,
 			       ? 4 : 0));
 
 		ARC_DEBUG ("arc_info: FIXED -> %s value = %#lx "
-			   "@ %p, for symbol %s\n",
+			   "@ %lx, for symbol %s\n",
 			   (entry->type == GOT_TLS_GD ? "GOT_TLS_GD" :
 			    "GOT_TLS_IE"),
 			   (long) (sym_value - sec_vma),
-			   htab->sgot->contents + entry->offset
-			   + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
-			      ? 4 : 0),
+			   (long) (htab->sgot->output_section->vma
+			      + htab->sgot->output_offset->vma
+			      + entry->offset
+			      + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+				 ? 4 : 0)),
 			   symbol_name);
 	      }
 	      break;
@@ -351,14 +353,22 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **          list_p,
 		bfd_vma ATTRIBUTE_UNUSED sec_vma
 		  = tls_sec->output_section->vma;
 
+		bfd_put_32 (output_bfd,
+			    sym_value - sec_vma,
+			    htab->sgot->contents + entry->offset
+			    + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+			       ? 4 : 0));
+
 		ARC_DEBUG ("arc_info: FIXED -> %s value = %#lx "
 			   "@ %p, for symbol %s\n",
 			   (entry->type == GOT_TLS_GD ? "GOT_TLS_GD" :
 			    "GOT_TLS_IE"),
 			   (long) (sym_value - sec_vma),
-			   htab->sgot->contents + entry->offset
-			   + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
-			      ? 4 : 0),
+			   (long) (htab->sgot->output_section->vma
+			      + htab->sgot->output_offset->vma
+			      + entry->offset
+			      + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+				 ? 4 : 0)),
 			   symbol_name);
 	      }
 	      break;

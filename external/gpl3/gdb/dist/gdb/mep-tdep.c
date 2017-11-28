@@ -1,6 +1,6 @@
 /* Target-dependent code for the Toshiba MeP for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -305,7 +305,7 @@ register_set_keyword_table (const CGEN_HW_ENTRY *hw)
 /* Given a keyword table KEYWORD and a register number REGNUM, return
    the name of the register, or "" if KEYWORD contains no register
    whose number is REGNUM.  */
-static char *
+static const char *
 register_name_from_keyword (CGEN_KEYWORD *keyword_table, int regnum)
 {
   const CGEN_KEYWORD_ENTRY *entry
@@ -1266,13 +1266,12 @@ mep_pseudo_register_write (struct gdbarch *gdbarch,
 
 /* Disassembly.  */
 
-/* The mep disassembler needs to know about the section in order to
-   work correctly.  */
 static int
 mep_gdb_print_insn (bfd_vma pc, disassemble_info * info)
 {
   struct obj_section * s = find_pc_section (pc);
 
+  info->arch = bfd_arch_mep;
   if (s)
     {
       /* The libopcodes disassembly code uses the section to find the
@@ -1280,12 +1279,9 @@ mep_gdb_print_insn (bfd_vma pc, disassemble_info * info)
          the me_module index, and the me_module index to select the
          right instructions to print.  */
       info->section = s->the_bfd_section;
-      info->arch = bfd_arch_mep;
-	
-      return print_insn_mep (pc, info);
     }
-  
-  return 0;
+
+  return print_insn_mep (pc, info);
 }
 
 
@@ -1918,15 +1914,9 @@ mep_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 
 
 /* Breakpoints.  */
+constexpr gdb_byte mep_break_insn[] = { 0x70, 0x32 };
 
-static const unsigned char *
-mep_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR * pcptr, int *lenptr)
-{
-  static unsigned char breakpoint[] = { 0x70, 0x32 };
-  *lenptr = sizeof (breakpoint);
-  return breakpoint;
-}
-
+typedef BP_MANIPULATION (mep_break_insn) mep_breakpoint;
 
 
 /* Frames and frame unwinding.  */
@@ -2490,7 +2480,8 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_print_insn (gdbarch, mep_gdb_print_insn); 
 
   /* Breakpoints.  */
-  set_gdbarch_breakpoint_from_pc (gdbarch, mep_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, mep_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, mep_breakpoint::bp_from_kind);
   set_gdbarch_decr_pc_after_break (gdbarch, 0);
   set_gdbarch_skip_prologue (gdbarch, mep_skip_prologue);
 

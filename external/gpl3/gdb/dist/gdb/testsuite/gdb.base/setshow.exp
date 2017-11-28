@@ -1,4 +1,4 @@
-# Copyright 1992-2016 Free Software Foundation, Inc.
+# Copyright 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 standard_testfile .c
 
 if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable {debug}] != "" } {
-     untested setshow.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -211,10 +211,10 @@ gdb_test "show history size" "The size of the command history is 100..*" "show h
 gdb_test "set language asm" ".*" "set language asm" 
 #test show language asm
 gdb_test "show language" "The current source language is \"asm\"..*" "show language (asm)" 
-#test set language java, with a trailing space
-gdb_test_no_output "set language java " "set language java"
-#test show language java
-gdb_test "show language" "The current source language is \"java\"..*" "show language (java)" 
+#test set language rust, with a trailing space
+gdb_test_no_output "set language rust " "set language rust"
+#test show language rust
+gdb_test "show language" "The current source language is \"rust\"..*" "show language (rust)" 
 #test completion for set language.
 gdb_test "complete set language min" "set language minimal" \
   "complete set language minimal"

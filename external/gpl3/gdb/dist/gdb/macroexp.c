@@ -1,5 +1,5 @@
 /* C preprocessor macro expansion for GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -53,8 +53,9 @@ struct macro_buffer
 
   /* Zero if TEXT can be safely realloc'ed (i.e., it's its own malloc
      block).  Non-zero if TEXT is actually pointing into the middle of
-     some other block, and we shouldn't reallocate it.  */
-  int shared;
+     some other block, or to a string literal, and we shouldn't
+     reallocate it.  */
+  bool shared;
 
   /* For detecting token splicing. 
 
@@ -85,19 +86,22 @@ init_buffer (struct macro_buffer *b, int n)
   else
     b->text = NULL;
   b->len = 0;
-  b->shared = 0;
+  b->shared = false;
   b->last_token = -1;
 }
 
 
 /* Set the macro buffer *BUF to refer to the LEN bytes at ADDR, as a
    shared substring.  */
+
 static void
-init_shared_buffer (struct macro_buffer *buf, char *addr, int len)
+init_shared_buffer (struct macro_buffer *buf, const char *addr, int len)
 {
-  buf->text = addr;
+  /* The function accept a "const char *" addr so that clients can
+     pass in string literals without casts.  */
+  buf->text = (char *) addr;
   buf->len = len;
-  buf->shared = 1;
+  buf->shared = true;
   buf->size = 0;
   buf->last_token = -1;
 }
@@ -166,7 +170,7 @@ appendc (struct macro_buffer *b, int c)
 
 /* Append the LEN bytes at ADDR to the buffer B.  */
 static void
-appendmem (struct macro_buffer *b, char *addr, int len)
+appendmem (struct macro_buffer *b, const char *addr, int len)
 {
   int new_len = b->len + len;
 
@@ -980,7 +984,7 @@ substitute_args (struct macro_buffer *dest,
      lexed.  */
   char *lookahead_rl_start;
 
-  init_shared_buffer (&replacement_list, (char *) def->replacement,
+  init_shared_buffer (&replacement_list, def->replacement,
                       strlen (def->replacement));
 
   gdb_assert (dest->len == 0);
@@ -1199,7 +1203,7 @@ expand (const char *id,
     {
       struct macro_buffer replacement_list;
 
-      init_shared_buffer (&replacement_list, (char *) def->replacement,
+      init_shared_buffer (&replacement_list, def->replacement,
                           strlen (def->replacement));
 
       scan (dest, &replacement_list, &new_no_loop, lookup_func, lookup_baton);
@@ -1236,7 +1240,7 @@ expand (const char *id,
 		     substitution parameter is the name of the formal
 		     argument without the "...".  */
 		  init_shared_buffer (&va_arg_name,
-				      (char *) def->argv[def->argc - 1],
+				      def->argv[def->argc - 1],
 				      len - 3);
 		  is_varargs = 1;
 		}
@@ -1415,7 +1419,7 @@ macro_expand (const char *source,
   struct macro_buffer src, dest;
   struct cleanup *back_to;
 
-  init_shared_buffer (&src, (char *) source, strlen (source));
+  init_shared_buffer (&src, source, strlen (source));
 
   init_buffer (&dest, 0);
   dest.last_token = 0;
@@ -1448,7 +1452,7 @@ macro_expand_next (const char **lexptr,
   struct cleanup *back_to;
 
   /* Set up SRC to refer to the input text, pointed to by *lexptr.  */
-  init_shared_buffer (&src, (char *) *lexptr, strlen (*lexptr));
+  init_shared_buffer (&src, *lexptr, strlen (*lexptr));
 
   /* Set up DEST to receive the expansion, if there is one.  */
   init_buffer (&dest, 0);

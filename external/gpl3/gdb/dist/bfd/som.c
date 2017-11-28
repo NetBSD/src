@@ -1,5 +1,5 @@
 /* bfd back-end for HP PA-RISC SOM objects.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah.
@@ -5779,7 +5779,7 @@ static int
 som_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 		    struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-  (*_bfd_error_handler) (_("som_sizeof_headers unimplemented"));
+  _bfd_error_handler (_("som_sizeof_headers unimplemented"));
   abort ();
   return 0;
 }

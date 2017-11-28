@@ -23,6 +23,7 @@
 
 #include "config.h"
 #include "ansidecl.h"
+#include "libiberty.h"
 
 #include <time.h>
 #include <errno.h>
@@ -260,7 +261,7 @@ SWIopen (ARMul_State * state, ARMword name, ARMword SWIflags)
     return;
 
   /* Now we need to decode the Demon open mode.  */
-  if (SWIflags >= sizeof (translate_open_mode) / sizeof (translate_open_mode[0]))
+  if (SWIflags >= ARRAY_SIZE (translate_open_mode))
     flags = 0;
   else
     flags = translate_open_mode[SWIflags];

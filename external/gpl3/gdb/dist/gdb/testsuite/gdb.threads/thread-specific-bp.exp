@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2016 Free Software Foundation, Inc.
+# Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,9 +87,12 @@ proc check_thread_specific_breakpoint {mode} {
 	} else {
 	    set cmd "continue"
 	}
-	gdb_test "$cmd" \
-	    "Breakpoint .* end .* at .*" \
-	    "continue to end"
+	set test "continue to end"
+	gdb_test_multiple "$cmd" $test {
+	    -re "Breakpoint .* end .* at .*\r\n$gdb_prompt " {
+		pass $test
+	    }
+	}
 
 	set test "thread-specific breakpoint was deleted"
 	gdb_test_multiple "info breakpoint" $test {

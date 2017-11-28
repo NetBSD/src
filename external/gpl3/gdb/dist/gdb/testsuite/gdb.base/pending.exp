@@ -1,4 +1,4 @@
-#   Copyright 2003-2016 Free Software Foundation, Inc.
+#   Copyright 2003-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ if [get_compiler_info] {
 
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != ""} {
-    untested "Could not compile either $libsrc or $srcdir/$subdir/$srcfile."
+    untested "failed to compile"
     return -1
 }
 
@@ -167,7 +167,7 @@ gdb_test "info break" \
 #
 
 set bp2_loc [gdb_get_line_number "y = x + 4" ${libfile}.c]
-gdb_test_multiple "break pendshr.c:$bp2_loc if x > 3" "Set pending breakpoint 2" {
+gdb_test_multiple "break pendshr.c:$bp2_loc if x > 3" "set pending breakpoint 2" {
      -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
 	    gdb_test "y" "Breakpoint.*pendshr.c:$bp2_loc.*pending." \
 		"Set pending breakpoint 2"
@@ -189,7 +189,7 @@ gdb_test "info break" \
 #
 
 set bp3_loc [gdb_get_line_number "printf" ${libfile}.c]
-gdb_test_multiple "break pendshr.c:$bp3_loc" "Set pending breakpoint 3" {
+gdb_test_multiple "break pendshr.c:$bp3_loc" "set pending breakpoint 3" {
      -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
 	    gdb_test "y" "Breakpoint.*pendshr.c:$bp3_loc.*pending." \
 		"Set pending breakpoint 3"
@@ -244,8 +244,8 @@ gdb_test "continue" \
 # be 3 then.
 #
 
-gdb_test "disable 7" "" "Disable other breakpoints"
-gdb_test "disable 5" "" "Disable other breakpoints"
+gdb_test "disable 7" "" "disable other breakpoints"
+gdb_test "disable 5" "" "disable other breakpoints"
 
 gdb_test "continue" \
 	 ".*Breakpoint.*pendfunc1.*\\\(x=3\\\) at.*pendshr.c:$bp3_loc.*printf.*;" \

@@ -1147,15 +1147,15 @@ convert_to_solaris_stat(unsigned_word addr,
   target.st_mtim.tv_sec  = H2T_4(host->st_mtime);
   target.st_mtim.tv_usec = 0;
 
-  for (i = 0; i < sizeof (target.st_pad1) / sizeof (target.st_pad1[0]); i++)
+  for (i = 0; i < ARRAY_SIZE (target.st_pad1); i++)
     target.st_pad1[i] = 0;
 
-  for (i = 0; i < sizeof (target.st_pad2) / sizeof (target.st_pad2[0]); i++)
+  for (i = 0; i < ARRAY_SIZE (target.st_pad2); i++)
     target.st_pad2[i] = 0;
 
   target.st_pad3 = 0;
 
-  for (i = 0; i < sizeof (target.st_pad4) / sizeof (target.st_pad4[0]); i++)
+  for (i = 0; i < ARRAY_SIZE (target.st_pad4); i++)
     target.st_pad4[i] = 0;
 
   /* For now, just punt and always say it is a ufs file */
@@ -1945,11 +1945,11 @@ static char *(solaris_signal_names[]) = {
 
 static emul_syscall emul_solaris_syscalls = {
   solaris_descriptors,
-  sizeof(solaris_descriptors) / sizeof(solaris_descriptors[0]),
+  ARRAY_SIZE (solaris_descriptors),
   solaris_error_names,
-  sizeof(solaris_error_names) / sizeof(solaris_error_names[0]),
+  ARRAY_SIZE (solaris_error_names),
   solaris_signal_names,
-  sizeof(solaris_signal_names) / sizeof(solaris_signal_names[0]),
+  ARRAY_SIZE (solaris_signal_names),
 };
 
 
@@ -2824,11 +2824,11 @@ static char *(linux_signal_names[]) = {
 
 static emul_syscall emul_linux_syscalls = {
   linux_descriptors,
-  sizeof(linux_descriptors) / sizeof(linux_descriptors[0]),
+  ARRAY_SIZE (linux_descriptors),
   linux_error_names,
-  sizeof(linux_error_names) / sizeof(linux_error_names[0]),
+  ARRAY_SIZE (linux_error_names),
   linux_signal_names,
-  sizeof(linux_signal_names) / sizeof(linux_signal_names[0]),
+  ARRAY_SIZE (linux_signal_names),
 };
 
 

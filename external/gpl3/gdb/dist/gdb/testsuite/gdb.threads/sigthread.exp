@@ -1,5 +1,5 @@
 # sigthread.exp -- Expect script to test thread and signal interaction
-# Copyright (C) 2007-2016 Free Software Foundation, Inc.
+# Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 clean_restart ${binfile}
 
 if ![runto_main] then {
-   fail "Can't run to main"
+   fail "can't run to main"
    return 0
 }
 

@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ set pattern  0123456789012345678901234567890123456789012345678901234567890123456
 append binfile -${pattern}
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested ${testfile}.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -32,10 +32,10 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 clean_restart ${binfile}
 
 gdb_test_no_output "set args ${pattern}"	\
-    "Set buffer exceeding arguments"
+    "set buffer exceeding arguments"
 
 if { ! [ runto_main ] } then {
-    untested gcore-buffer-overflow.exp
+    untested "could not run to main"
     return -1
 }
 
