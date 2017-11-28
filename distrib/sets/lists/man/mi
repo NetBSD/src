@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1563 2017/10/26 07:29:53 maya Exp $
+# $NetBSD: mi,v 1.1564 2017/11/28 11:59:16 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1586,6 +1586,7 @@
 ./usr/share/man/cat4/pxg.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qec.0			man-sys-catman		.cat
+./usr/share/man/cat4/qemufwcfg.0		man-sys-catman		.cat
 ./usr/share/man/cat4/qsphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/r128drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/radeondrm.0		man-sys-catman		.cat
@@ -2736,6 +2737,7 @@
 ./usr/share/man/cat8/mount_psshfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_ptyfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_puffs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_qemufwcfg.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_smbfs.0		man-smbfs-catman	.cat
 ./usr/share/man/cat8/mount_sysctlfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_sysvbfs.0		man-sysutil-catman	.cat
@@ -4641,6 +4643,7 @@
 ./usr/share/man/html4/pxg.html			man-sys-htmlman		html
 ./usr/share/man/html4/qe.html			man-sys-htmlman		html
 ./usr/share/man/html4/qec.html			man-sys-htmlman		html
+./usr/share/man/html4/qemufwcfg.html		man-sys-htmlman		html
 ./usr/share/man/html4/qsphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/r128drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/radeondrm.html		man-sys-htmlman		html
@@ -5651,6 +5654,7 @@
 ./usr/share/man/html8/mount_psshfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/mount_ptyfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_puffs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/mount_qemufwcfg.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_smbfs.html		man-smbfs-htmlman	html
 ./usr/share/man/html8/mount_sysctlfs.html	man-puffs-htmlman	html
 ./usr/share/man/html8/mount_sysvbfs.html	man-sysutil-htmlman	html
@@ -7598,6 +7602,7 @@
 ./usr/share/man/man4/pxg.4			man-sys-man		.man
 ./usr/share/man/man4/qe.4			man-sys-man		.man
 ./usr/share/man/man4/qec.4			man-sys-man		.man
+./usr/share/man/man4/qemufwcfg.4		man-sys-man		.man
 ./usr/share/man/man4/qsphy.4			man-sys-man		.man
 ./usr/share/man/man4/r128drm.4			man-sys-man		.man
 ./usr/share/man/man4/radeondrm.4		man-sys-man		.man
@@ -8748,6 +8753,7 @@
 ./usr/share/man/man8/mount_psshfs.8		man-puffs-man		.man
 ./usr/share/man/man8/mount_ptyfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_puffs.8		man-sysutil-man		.man
+./usr/share/man/man8/mount_qemufwcfg.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_smbfs.8		man-smbfs-man		.man
 ./usr/share/man/man8/mount_sysctlfs.8		man-puffs-man		.man
 ./usr/share/man/man8/mount_sysvbfs.8		man-sysutil-man		.man
