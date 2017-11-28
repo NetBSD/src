@@ -1,4 +1,4 @@
-/* $NetBSD: _setjmp.S,v 1.1 2014/08/10 05:47:36 matt Exp $ */
+/* $NetBSD: _setjmp.S,v 1.2 2017/11/28 09:06:25 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@ ENTRY(_setjmp)
 	stp	d12, d13, [x0, #_JB_D12]
 	stp	d14, d15, [x0, #_JB_D14]
 
-        mov	x0, xzr
-        ret
+	mov	x0, xzr
+	ret
 END(_setjmp)
 
 ENTRY(_longjmp)
@@ -106,8 +106,8 @@ ENTRY(_longjmp)
 	mov	x29, x4
 	mov	x30, x5
 
-        mov	x0, x1
-        ret
+	mov	x0, x1
+	ret
 
 	/* validation failed, die die die. */
 .Lbotch:
