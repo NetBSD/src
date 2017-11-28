@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -959,7 +959,9 @@ proc gdb_test_multiple { command message user_code } {
 # COMMAND is the command to execute, send to GDB with send_gdb.  If
 #   this is the null string no command is sent.
 # PATTERN is the pattern to match for a PASS, and must NOT include
-#   the \r\n sequence immediately before the gdb prompt.
+#   the \r\n sequence immediately before the gdb prompt.  This argument
+#   may be omitted to just match the prompt, ignoring whatever output 
+#   precedes it.
 # MESSAGE is an optional message to be printed.  If this is
 #   omitted, then the pass/fail messages use the command string as the
 #   message.  (If this is the empty string, then sometimes we don't
@@ -974,9 +976,7 @@ proc gdb_test_multiple { command message user_code } {
 #   -1 if there was an internal error.
 #  
 proc gdb_test { args } {
-    global verbose
     global gdb_prompt
-    global GDB
     upvar timeout timeout
 
     if [llength $args]>2 then {
@@ -1230,6 +1230,73 @@ proc gdb_test_list_exact { cmd name elm_find_regexp elm_extract_regexp result_ma
 	}
     }
 }
+
+# gdb_test_stdio COMMAND INFERIOR_PATTERN GDB_PATTERN MESSAGE
+# Send a command to gdb; expect inferior and gdb output.
+#
+# See gdb_test_multiple for a description of the COMMAND and MESSAGE
+# parameters.
+#
+# INFERIOR_PATTERN is the pattern to match against inferior output.
+#
+# GDB_PATTERN is the pattern to match against gdb output, and must NOT
+# include the \r\n sequence immediately before the gdb prompt, nor the
+# prompt.  The default is empty.
+#
+# Both inferior and gdb patterns must match for a PASS.
+#
+# If MESSAGE is ommitted, then COMMAND will be used as the message.
+#
+# Returns:
+#    1 if the test failed,
+#    0 if the test passes,
+#   -1 if there was an internal error.
+#
+
+proc gdb_test_stdio {command inferior_pattern {gdb_pattern ""} {message ""}} {
+    global inferior_spawn_id gdb_spawn_id
+    global gdb_prompt
+
+    if {$message == ""} {
+	set message $command
+    }
+
+    set inferior_matched 0
+    set gdb_matched 0
+
+    # Use an indirect spawn id list, and remove the inferior spawn id
+    # from the expected output as soon as it matches, in case
+    # $inferior_pattern happens to be a prefix of the resulting full
+    # gdb pattern below (e.g., "\r\n").
+    global gdb_test_stdio_spawn_id_list
+    set gdb_test_stdio_spawn_id_list "$inferior_spawn_id"
+
+    # Note that if $inferior_spawn_id and $gdb_spawn_id are different,
+    # then we may see gdb's output arriving before the inferior's
+    # output.
+    set res [gdb_test_multiple $command $message {
+	-i gdb_test_stdio_spawn_id_list -re "$inferior_pattern" {
+	    set inferior_matched 1
+	    if {!$gdb_matched} {
+		set gdb_test_stdio_spawn_id_list ""
+		exp_continue
+	    }
+	}
+	-i $gdb_spawn_id -re "$gdb_pattern\r\n$gdb_prompt $" {
+	    set gdb_matched 1
+	    if {!$inferior_matched} {
+		exp_continue
+	    }
+	}
+    }]
+    if {$res == 0} {
+	pass $message
+    } else {
+	verbose -log "inferior_matched=$inferior_matched, gdb_matched=$gdb_matched"
+    }
+    return $res
+}
+
 
 
 # Issue a PASS and return true if evaluating CONDITION in the caller's
@@ -1292,7 +1359,7 @@ proc default_gdb_exit {} {
     global GDB
     global INTERNAL_GDBFLAGS GDBFLAGS
     global verbose
-    global gdb_spawn_id
+    global gdb_spawn_id inferior_spawn_id
     global inotify_log_file
 
     gdb_stop_suppressing_tests
@@ -1333,6 +1400,7 @@ proc default_gdb_exit {} {
 	remote_close host
     }
     unset gdb_spawn_id
+    unset inferior_spawn_id
 }
 
 # Load a file into the debugger.
@@ -1666,42 +1734,56 @@ proc skip_d_tests {} {
     return 0
 }
 
-# Return a 1 for configurations that do not support Python scripting.
+# Return 1 to skip Rust tests, 0 to try them.
+proc skip_rust_tests {} {
+    return [expr {![isnative]}]
+}
 
-proc skip_python_tests {} {
-    global gdb_prompt
+# Return a 1 for configurations that do not support Python scripting.
+# PROMPT_REGEXP is the expected prompt.
+
+proc skip_python_tests_prompt { prompt_regexp } {
     global gdb_py_is_py3k
     global gdb_py_is_py24
 
     gdb_test_multiple "python print ('test')" "verify python support" {
-	-re "not supported.*$gdb_prompt $"	{
+	-re "not supported.*$prompt_regexp" {
 	    unsupported "Python support is disabled."
 	    return 1
 	}
-	-re "$gdb_prompt $"	{}
+	-re "$prompt_regexp" {}
     }
 
     set gdb_py_is_py24 0
     gdb_test_multiple "python print (sys.version_info\[0\])" "check if python 3" {
-	-re "3.*$gdb_prompt $"	{
+	-re "3.*$prompt_regexp" {
             set gdb_py_is_py3k 1
         }
-	-re ".*$gdb_prompt $"	{
+	-re ".*$prompt_regexp" {
             set gdb_py_is_py3k 0
         }
     }
     if { $gdb_py_is_py3k == 0 } {
         gdb_test_multiple "python print (sys.version_info\[1\])" "check if python 2.4" {
-	    -re "\[45\].*$gdb_prompt $" {
+	    -re "\[45\].*$prompt_regexp" {
                 set gdb_py_is_py24 1
             }
-	    -re ".*$gdb_prompt $" {
+	    -re ".*$prompt_regexp" {
                 set gdb_py_is_py24 0
             }
         }
     }
 
     return 0
+}
+
+# Return a 1 for configurations that do not support Python scripting.
+# Note: This also sets various globals that specify which version of Python
+# is in use.  See skip_python_tests_prompt.
+
+proc skip_python_tests {} {
+    global gdb_prompt
+    return [skip_python_tests_prompt "$gdb_prompt $"]
 }
 
 # Return a 1 if we should skip shared library tests.
@@ -1830,6 +1912,85 @@ proc with_test_prefix { prefix body } {
   }
 }
 
+# Wrapper for foreach that calls with_test_prefix on each iteration,
+# including the iterator's name and current value in the prefix.
+
+proc foreach_with_prefix {var list body} {
+    upvar 1 $var myvar
+    foreach myvar $list {
+	with_test_prefix "$var=$myvar" {
+	    uplevel 1 $body
+	}
+    }
+}
+
+# Run BODY in the context of the caller.  After BODY is run, the variables
+# listed in VARS will be reset to the values they had before BODY was run.
+#
+# This is useful for providing a scope in which it is safe to temporarily
+# modify global variables, e.g.
+#
+#   global INTERNAL_GDBFLAGS
+#   global env
+#
+#   set foo GDBHISTSIZE
+#
+#   save_vars { INTERNAL_GDBFLAGS env($foo) env(HOME) } {
+#       append INTERNAL_GDBFLAGS " -nx"
+#       unset -nocomplain env(GDBHISTSIZE)
+#       gdb_start
+#       gdb_test ...
+#   }
+#
+# Here, although INTERNAL_GDBFLAGS, env(GDBHISTSIZE) and env(HOME) may be
+# modified inside BODY, this proc guarantees that the modifications will be
+# undone after BODY finishes executing.
+
+proc save_vars { vars body } {
+    array set saved_scalars { }
+    array set saved_arrays { }
+    set unset_vars { }
+
+    foreach var $vars {
+	# First evaluate VAR in the context of the caller in case the variable
+	# name may be a not-yet-interpolated string like env($foo)
+	set var [uplevel 1 list $var]
+
+	if [uplevel 1 [list info exists $var]] {
+	    if [uplevel 1 [list array exists $var]] {
+		set saved_arrays($var) [uplevel 1 [list array get $var]]
+	    } else {
+		set saved_scalars($var) [uplevel 1 [list set $var]]
+	    }
+	} else {
+	    lappend unset_vars $var
+	}
+    }
+
+    set code [catch {uplevel 1 $body} result]
+
+    foreach {var value} [array get saved_scalars] {
+	uplevel 1 [list set $var $value]
+    }
+
+    foreach {var value} [array get saved_arrays] {
+	uplevel 1 [list unset $var]
+	uplevel 1 [list array set $var $value]
+    }
+
+    foreach var $unset_vars {
+	uplevel 1 [list unset -nocomplain $var]
+    }
+
+    if {$code == 1} {
+	global errorInfo errorCode
+	return -code $code -errorinfo $errorInfo -errorcode $errorCode $result
+    } else {
+	return -code $code $result
+    }
+}
+
+
 # Run tests in BODY with GDB prompt and variable $gdb_prompt set to
 # PROMPT.  When BODY is finished, restore GDB prompt and variable
 # $gdb_prompt.
@@ -1905,6 +2066,56 @@ proc with_target_charset { target_charset body } {
     set code [catch {uplevel 1 $body} result]
 
     gdb_test_no_output "set target-charset $saved" ""
+
+    if {$code == 1} {
+	global errorInfo errorCode
+	return -code $code -errorinfo $errorInfo -errorcode $errorCode $result
+    } else {
+	return -code $code $result
+    }
+}
+
+# Switch the default spawn id to SPAWN_ID, so that gdb_test,
+# mi_gdb_test etc. default to using it.
+
+proc switch_gdb_spawn_id {spawn_id} {
+    global gdb_spawn_id
+    global board board_info
+
+    set gdb_spawn_id $spawn_id
+    set board [host_info name]
+    set board_info($board,fileid) $spawn_id
+}
+
+# Clear the default spawn id.
+
+proc clear_gdb_spawn_id {} {
+    global gdb_spawn_id
+    global board board_info
+
+    unset -nocomplain gdb_spawn_id
+    set board [host_info name]
+    unset -nocomplain board_info($board,fileid)
+}
+
+# Run BODY with SPAWN_ID as current spawn id.
+
+proc with_spawn_id { spawn_id body } {
+    global gdb_spawn_id
+
+    if [info exists gdb_spawn_id] {
+	set saved_spawn_id $gdb_spawn_id
+    }
+
+    switch_gdb_spawn_id $spawn_id
+
+    set code [catch {uplevel 1 $body} result]
+
+    if [info exists saved_spawn_id] {
+	switch_gdb_spawn_id $saved_spawn_id
+    } else {
+	clear_gdb_spawn_id
+    }
 
     if {$code == 1} {
 	global errorInfo errorCode
@@ -2007,15 +2218,10 @@ proc supports_get_siginfo_type {} {
     }
 }
 
-# Return 1 if target hardware or OS supports single stepping to signal
-# handler, otherwise, return 0.
+# Return 1 if the target supports hardware single stepping.
 
-proc can_single_step_to_signal_handler {} {
+proc can_hardware_single_step {} {
 
-    # Targets don't have hardware single step.  On these targets, when
-    # a signal is delivered during software single step, gdb is unable
-    # to determine the next instruction addresses, because start of signal
-    # handler is one of them.
     if { [istarget "arm*-*-*"] || [istarget "mips*-*-*"]
 	 || [istarget "tic6x-*-*"] || [istarget "sparc*-*-linux*"]
 	 || [istarget "nios2-*-*"] } {
@@ -2023,6 +2229,17 @@ proc can_single_step_to_signal_handler {} {
     }
 
     return 1
+}
+
+# Return 1 if target hardware or OS supports single stepping to signal
+# handler, otherwise, return 0.
+
+proc can_single_step_to_signal_handler {} {
+    # Targets don't have hardware single step.  On these targets, when
+    # a signal is delivered during software single step, gdb is unable
+    # to determine the next instruction addresses, because start of signal
+    # handler is one of them.
+    return [can_hardware_single_step]
 }
 
 # Return 1 if target supports process record, otherwise return 0.
@@ -2036,7 +2253,8 @@ proc supports_process_record {} {
     if { [istarget "arm*-*-linux*"] || [istarget "x86_64-*-linux*"]
          || [istarget "i\[34567\]86-*-linux*"]
          || [istarget "aarch64*-*-linux*"]
-         || [istarget "powerpc*-*-linux*"] } {
+         || [istarget "powerpc*-*-linux*"]
+         || [istarget "s390*-*-linux*"] } {
 	return 1
     }
 
@@ -2054,7 +2272,8 @@ proc supports_reverse {} {
     if { [istarget "arm*-*-linux*"] || [istarget "x86_64-*-linux*"]
          || [istarget "i\[34567\]86-*-linux*"]
          || [istarget "aarch64*-*-linux*"]
-         || [istarget "powerpc*-*-linux*"] } {
+         || [istarget "powerpc*-*-linux*"]
+         || [istarget "s390*-*-linux*"] } {
 	return 1
     }
 
@@ -2271,12 +2490,60 @@ proc is_x86_like_target {} {
     return [expr [is_ilp32_target] && ![is_amd64_regs_target]]
 }
 
+# Return 1 if this target is an arm or aarch32 on aarch64.
+
+gdb_caching_proc is_aarch32_target {
+    if { [istarget "arm*-*-*"] } {
+	return 1
+    }
+
+    if { ![istarget "aarch64*-*-*"] } {
+	return 0
+    }
+
+    set me "is_aarch32_target"
+
+    set src [standard_temp_file aarch32[pid].s]
+    set obj [standard_temp_file aarch32[pid].o]
+
+    set list {}
+    foreach reg \
+	{r0 r1 r2 r3} {
+	    lappend list "\tmov $reg, $reg"
+	}
+    gdb_produce_source $src [join $list \n]
+
+    verbose "$me:  compiling testfile $src" 2
+    set lines [gdb_compile $src $obj object {quiet}]
+    file delete $src
+    file delete $obj
+
+    if ![string match "" $lines] then {
+	verbose "$me:  testfile compilation failed, returning 0" 2
+	return 0
+    }
+
+    verbose "$me:  returning 1" 2
+    return 1
+}
+
+# Return 1 if this target is an aarch64, either lp64 or ilp32.
+
+proc is_aarch64_target {} {
+    if { ![istarget "aarch64*-*-*"] } {
+	return 0
+    }
+
+    return [expr ![is_aarch32_target]]
+}
+
 # Return 1 if displaced stepping is supported on target, otherwise, return 0.
 proc support_displaced_stepping {} {
 
     if { [istarget "x86_64-*-linux*"] || [istarget "i\[34567\]86-*-linux*"]
 	 || [istarget "arm*-*-linux*"] || [istarget "powerpc-*-linux*"]
-	 || [istarget "powerpc64-*-linux*"] || [istarget "s390*-*-*"] } {
+	 || [istarget "powerpc64-*-linux*"] || [istarget "s390*-*-*"]
+	 || [istarget "aarch64*-*-linux*"] } {
 	return 1
     }
 
@@ -2448,6 +2715,63 @@ gdb_caching_proc skip_vsx_tests {
     return $skip_vsx_tests
 }
 
+# Run a test on the target to see if it supports TSX hardware.  Return 0 if so,
+# 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
+
+gdb_caching_proc skip_tsx_tests {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    set me "skip_tsx_tests"
+
+    set src [standard_temp_file tsx[pid].c]
+    set exe [standard_temp_file tsx[pid].x]
+
+    gdb_produce_source $src {
+    int main() {
+        asm volatile ("xbegin .L0");
+        asm volatile ("xend");
+        asm volatile (".L0: nop");
+        return 0;
+    }
+    }
+
+    verbose "$me:  compiling testfile $src" 2
+    set lines [gdb_compile $src $exe executable {nowarnings quiet}]
+    file delete $src
+
+    if ![string match "" $lines] then {
+        verbose "$me:  testfile compilation failed." 2
+        return 1
+    }
+
+    # No error message, compilation succeeded so now run it via gdb.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load "$exe"
+    gdb_run_cmd
+    gdb_expect {
+        -re ".*Illegal instruction.*${gdb_prompt} $" {
+            verbose -log "$me:  TSX hardware not detected."
+            set skip_tsx_tests 1
+        }
+        -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
+            verbose -log "$me:  TSX hardware detected."
+            set skip_tsx_tests 0
+        }
+        default {
+            warning "\n$me:  default case taken."
+            set skip_tsx_tests 1
+        }
+    }
+    gdb_exit
+    remote_file build delete $exe
+
+    verbose "$me:  returning $skip_tsx_tests" 2
+    return $skip_tsx_tests
+}
+
 # Run a test on the target to see if it supports btrace hardware.  Return 0 if so,
 # 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
 
@@ -2514,13 +2838,74 @@ gdb_caching_proc skip_btrace_tests {
     return $skip_btrace_tests
 }
 
-# Skip all the tests in the file if you are not on an hppa running
-# hpux target.
+# Run a test on the target to see if it supports btrace pt hardware.
+# Return 0 if so, 1 if it does not.  Based on 'check_vmx_hw_available'
+# from the GCC testsuite.
 
-proc skip_hp_tests {} {
-    eval set skip_hp [ expr ![isnative] || ![istarget "hppa*-*-hpux*"] ]
-    verbose "Skip hp tests is $skip_hp"
-    return $skip_hp
+gdb_caching_proc skip_btrace_pt_tests {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    set me "skip_btrace_tests"
+    if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } {
+        verbose "$me:  target does not support btrace, returning 1" 2
+        return 1
+    }
+
+    # Set up, compile, and execute a test program.
+    # Include the current process ID in the file names to prevent conflicts
+    # with invocations for multiple testsuites.
+    set src [standard_temp_file btrace[pid].c]
+    set exe [standard_temp_file btrace[pid].x]
+
+    gdb_produce_source $src {
+	int main(void) { return 0; }
+    }
+
+    verbose "$me:  compiling testfile $src" 2
+    set compile_flags {debug nowarnings quiet}
+    set lines [gdb_compile $src $exe executable $compile_flags]
+
+    if ![string match "" $lines] then {
+        verbose "$me:  testfile compilation failed, returning 1" 2
+	file delete $src
+        return 1
+    }
+
+    # No error message, compilation succeeded so now run it via gdb.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load $exe
+    if ![runto_main] {
+	file delete $src
+        return 1
+    }
+    file delete $src
+    # In case of an unexpected output, we return 2 as a fail value.
+    set skip_btrace_tests 2
+    gdb_test_multiple "record btrace pt" "check btrace support" {
+        -re "You can't do that when your target is.*\r\n$gdb_prompt $" {
+            set skip_btrace_tests 1
+        }
+        -re "Target does not support branch tracing.*\r\n$gdb_prompt $" {
+            set skip_btrace_tests 1
+        }
+        -re "Could not enable branch tracing.*\r\n$gdb_prompt $" {
+            set skip_btrace_tests 1
+        }
+        -re "GDB does not support.*\r\n$gdb_prompt $" {
+            set skip_btrace_tests 1
+        }
+        -re "^record btrace pt\r\n$gdb_prompt $" {
+            set skip_btrace_tests 0
+        }
+    }
+    gdb_exit
+    remote_file build delete $exe
+
+    verbose "$me:  returning $skip_btrace_tests" 2
+    return $skip_btrace_tests
 }
 
 # Return whether we should skip tests for showing inlined functions in
@@ -2697,23 +3082,51 @@ proc skip_compile_feature_tests {} {
     return $result
 }
 
+# Helper for gdb_is_target_remote.  PROMPT_REGEXP is the expected
+# prompt.
+
+proc gdb_is_target_remote_prompt { prompt_regexp } {
+
+    set test "probe for target remote"
+    gdb_test_multiple "maint print target-stack" $test {
+	-re ".*emote serial target in gdb-specific protocol.*$prompt_regexp" {
+	    pass $test
+	    return 1
+	}
+	-re "$prompt_regexp" {
+	    pass $test
+	}
+    }
+    return 0
+}
+
 # Check whether we're testing with the remote or extended-remote
 # targets.
 
 proc gdb_is_target_remote {} {
     global gdb_prompt
 
-    set test "probe for target remote"
-    gdb_test_multiple "maint print target-stack" $test {
-	-re ".*emote serial target in gdb-specific protocol.*$gdb_prompt $" {
-	    pass $test
-	    return 1
-	}
-	-re "$gdb_prompt $" {
-	    pass $test
-	}
-    }
-    return 0
+    return [gdb_is_target_remote_prompt "$gdb_prompt $"]
+}
+
+# Return the effective value of use_gdb_stub.
+#
+# If the use_gdb_stub global has been set (it is set when the gdb process is
+# spawned), return that.  Otherwise, return the value of the use_gdb_stub
+# property from the board file.
+#
+# This is the preferred way of checking use_gdb_stub, since it allows to check
+# the value before the gdb has been spawned and it will return the correct value
+# even when it was overriden by the test.
+
+proc use_gdb_stub {} {
+  global use_gdb_stub
+
+  if [info exists use_gdb_stub] {
+     return $use_gdb_stub
+  }
+
+  return [target_info exists use_gdb_stub]
 }
 
 # Return 1 if the current remote target is an instance of our GDBserver, 0
@@ -2741,12 +3154,18 @@ gdb_caching_proc target_is_gdbserver {
     return $is_gdbserver
 }
 
-set compiler_info		"unknown"
+# N.B. compiler_info is intended to be local to this file.
+# Call test_compiler_info with no arguments to fetch its value.
+# Yes, this is counterintuitive when there's get_compiler_info,
+# but that's the current API.
+if [info exists compiler_info] {
+    unset compiler_info
+}
+
 set gcc_compiled		0
-set hp_cc_compiler		0
-set hp_aCC_compiler		0
 
 # Figure out what compiler I am using.
+# The result is cached so only the first invocation runs the compiler.
 #
 # ARG can be empty or "C++".  If empty, "C" is assumed.
 #
@@ -2810,8 +3229,11 @@ proc get_compiler_info {{arg ""}} {
 
     # Legacy global data symbols.
     global gcc_compiled
-    global hp_cc_compiler
-    global hp_aCC_compiler
+
+    if [info exists compiler_info] {
+	# Already computed.
+	return 0
+    }
 
     # Choose which file to preprocess.
     set ifile "${srcdir}/lib/compiler.c"
@@ -2854,22 +3276,24 @@ proc get_compiler_info {{arg ""}} {
 	}
     }
 
-    # Reset to unknown compiler if any diagnostics happened.
+    # Set to unknown if for some reason compiler_info didn't get defined.
+    if ![info exists compiler_info] {
+	verbose -log "get_compiler_info: compiler_info not provided"
+	set compiler_info "unknown"
+    }
+    # Also set to unknown compiler if any diagnostics happened.
     if { $unknown } {
+	verbose -log "get_compiler_info: got unexpected diagnostics"
 	set compiler_info "unknown"
     }
 
     # Set the legacy symbols.
     set gcc_compiled     0
-    set hp_cc_compiler   0
-    set hp_aCC_compiler  0
     if { [regexp "^gcc-1-" "$compiler_info" ] } { set gcc_compiled 1 }
     if { [regexp "^gcc-2-" "$compiler_info" ] } { set gcc_compiled 2 }
     if { [regexp "^gcc-3-" "$compiler_info" ] } { set gcc_compiled 3 }
     if { [regexp "^gcc-4-" "$compiler_info" ] } { set gcc_compiled 4 }
     if { [regexp "^gcc-5-" "$compiler_info" ] } { set gcc_compiled 5 }
-    if { [regexp "^hpcc-"  "$compiler_info" ] } { set hp_cc_compiler 1 }
-    if { [regexp "^hpacc-" "$compiler_info" ] } { set hp_aCC_compiler 1 }
 
     # Log what happened.
     verbose -log "get_compiler_info: $compiler_info"
@@ -2879,28 +3303,21 @@ proc get_compiler_info {{arg ""}} {
     uplevel \#0 { set true 1 }
     uplevel \#0 { set false 0 }
 
-    # Use of aCC results in boolean results being displayed as
-    # "true" or "false"
-    if { $hp_aCC_compiler } {
-      uplevel \#0 { set true true }
-      uplevel \#0 { set false false }
-    }
-
     return 0
 }
 
+# Return the compiler_info string if no arg is provided.
+# Otherwise the argument is a glob-style expression to match against
+# compiler_info.
+
 proc test_compiler_info { {compiler ""} } {
     global compiler_info
+    get_compiler_info
 
-     # if no arg, return the compiler_info string
-
-     if [string match "" $compiler] {
-         if [info exists compiler_info] {
-             return $compiler_info
-         } else {
-             perror "No compiler info found."
-         }
-     }
+    # If no arg, return the compiler_info string.
+    if [string match "" $compiler] {
+	return $compiler_info
+    }
 
     return [string match $compiler $compiler_info]
 }
@@ -2944,6 +3361,40 @@ proc gdb_wrapper_init { args } {
 global gdb_saved_set_unbuffered_mode_obj
 set gdb_saved_set_unbuffered_mode_obj ""
 
+# Compile source files specified by SOURCE into a binary of type TYPE at path
+# DEST.  gdb_compile is implemented using DejaGnu's target_compile, so the type
+# parameter and most options are passed directly to it.
+#
+# The type can be one of the following:
+#
+#   - object: Compile into an object file.
+#   - executable: Compile and link into an executable.
+#   - preprocess: Preprocess the source files.
+#   - assembly: Generate assembly listing.
+#
+# The following options are understood and processed by gdb_compile:
+#
+#   - shlib=so_path: Add SO_PATH to the sources, and enable some target-specific
+#     quirks to be able to use shared libraries.
+#   - shlib_load: Link with appropriate libraries to allow the test to
+#     dynamically load libraries at runtime.  For example, on Linux, this adds
+#     -ldl so that the test can use dlopen.
+#   - nowarnings:  Inhibit all compiler warnings.
+#
+# And here are some of the not too obscure options understood by DejaGnu that
+# influence the compilation:
+#
+#   - additional_flags=flag: Add FLAG to the compiler flags.
+#   - libs=library: Add LIBRARY to the libraries passed to the linker.  The
+#     argument can be a file, in which case it's added to the sources, or a
+#     linker flag.
+#   - ldflags=flag: Add FLAG to the linker flags.
+#   - incdir=path: Add PATH to the searched include directories.
+#   - libdir=path: Add PATH to the linker searched directories.
+#   - ada, c++, f77: Compile the file as Ada, C++ or Fortran.
+#   - debug: Build with debug information.
+#   - optimize: Build with optimization.
+
 proc gdb_compile {source dest type options} {
     global GDB_TESTCASE_OPTIONS
     global gdb_wrapper_file
@@ -2979,6 +3430,13 @@ proc gdb_compile {source dest type options} {
 		      || [istarget *-*-cygwin*]) } {
 		    lappend new_options "additional_flags=-Wl,--enable-auto-import"
 		}
+		if { [test_compiler_info "gcc-*"] || [test_compiler_info "clang-*"] } {
+		    # Undo debian's change in the default.
+		    # Put it at the front to not override any user-provided
+		    # value, and to make sure it appears in front of all the
+		    # shlibs!
+		    lappend new_options "early_flags=-Wl,--no-as-needed"
+		}
             }
 	} elseif { $opt == "shlib_load" } {
 	    set shlib_load 1
@@ -2987,16 +3445,13 @@ proc gdb_compile {source dest type options} {
         }
     }
 
-    # We typically link to shared libraries using an absolute path, and
-    # that's how they are found at runtime.  If we are going to
-    # dynamically load one by basename, we must specify rpath.  If we
-    # are using a remote host, DejaGNU will link to the shared library
-    # using a relative path, so again we must specify an rpath.
-    if { $shlib_load || ($shlib_found && [is_remote target]) } {
+    # Because we link with libraries using their basename, we may need
+    # (depending on the platform) to set a special rpath value, to allow
+    # the executable to find the libraries it depends on.
+    if { $shlib_load || $shlib_found } {
 	if { ([istarget "*-*-mingw*"]
 	      || [istarget *-*-cygwin*]
-	      || [istarget *-*-pe*]
-	      || [istarget hppa*-*-hpux*])} {
+	      || [istarget *-*-pe*]) } {
 	    # Do not need anything.
 	} elseif { [istarget *-*-freebsd*] || [istarget *-*-openbsd*] } {
 	    lappend new_options "ldflags=-Wl,-rpath,${outdir}"
@@ -3174,15 +3629,11 @@ proc gdb_compile_shlib {sources dest options} {
                 lappend obj_options "additional_flags=-fpic"
             }
         }
+        "icc-*" {
+                lappend obj_options "additional_flags=-fpic"
+        }
         default {
-            switch -glob [istarget] {
-                "hppa*-hp-hpux*" {
-                    lappend obj_options "additional_flags=+z"
-                }
-                default {
-                    # don't know what the compiler is...
-                }
-            }
+	    # don't know what the compiler is...
         }
     }
 
@@ -3196,49 +3647,48 @@ proc gdb_compile_shlib {sources dest options} {
        lappend objects ${outdir}/${sourcebase}.o
     }
 
-    if [istarget "hppa*-*-hpux*"] {
-       remote_exec build "ld -b ${objects} -o ${dest}"
+    set link_options $options
+    if [test_compiler_info "xlc-*"] {
+	lappend link_options "additional_flags=-qmkshrobj"
     } else {
-       set link_options $options
-       if [test_compiler_info "xlc-*"] {
-          lappend link_options "additional_flags=-qmkshrobj"
-       } else {
-          lappend link_options "additional_flags=-shared"
+	lappend link_options "additional_flags=-shared"
 
-	   if { ([istarget "*-*-mingw*"]
-		 || [istarget *-*-cygwin*]
-		 || [istarget *-*-pe*]) } {
-	       if { [is_remote host] } {
-		   set name [file tail ${dest}]
-	       } else {
-		   set name ${dest}
-	       }
-	       lappend link_options "additional_flags=-Wl,--out-implib,${name}.a"
-	   } elseif [is_remote target] {
-	     # By default, we do not set the soname.  This causes the linker
-	     # on ELF systems to create a DT_NEEDED entry in the executable
-	     # refering to the full path name of the library.  This is a
-	     # problem in remote testing if the library is in a different
-	     # directory there.  To fix this, we set a soname of just the
-	     # base filename for the library, and add an appropriate -rpath
-	     # to the main executable (in gdb_compile).
-             set destbase [file tail $dest]
-             lappend link_options "additional_flags=-Wl,-soname,$destbase"
-           }
-       }
-       if {[gdb_compile "${objects}" "${dest}" executable $link_options] != ""} {
-           return -1
-       }
-	if { [is_remote host]
-	     && ([istarget "*-*-mingw*"]
-		 || [istarget *-*-cygwin*]
-		 || [istarget *-*-pe*]) } {
-	    set dest_tail_name [file tail ${dest}]
-	    remote_upload host $dest_tail_name.a ${dest}.a
-	    remote_file host delete $dest_tail_name.a
+	if { ([istarget "*-*-mingw*"]
+	      || [istarget *-*-cygwin*]
+	      || [istarget *-*-pe*]) } {
+	    if { [is_remote host] } {
+		set name [file tail ${dest}]
+	    } else {
+		set name ${dest}
+	    }
+	    lappend link_options "additional_flags=-Wl,--out-implib,${name}.a"
+	} else {
+	    # Set the soname of the library.  This causes the linker on ELF
+	    # systems to create the DT_NEEDED entry in the executable referring
+	    # to the soname of the library, and not its absolute path.  This
+	    # (using the absolute path) would be problem when testing on a
+	    # remote target.
+	    #
+	    # In conjunction with setting the soname, we add the special
+	    # rpath=$ORIGIN value when building the executable, so that it's
+	    # able to find the library in its own directory.
+	    set destbase [file tail $dest]
+	    lappend link_options "additional_flags=-Wl,-soname,$destbase"
 	}
     }
-  return ""
+    if {[gdb_compile "${objects}" "${dest}" executable $link_options] != ""} {
+	return -1
+    }
+    if { [is_remote host]
+	 && ([istarget "*-*-mingw*"]
+	     || [istarget *-*-cygwin*]
+	     || [istarget *-*-pe*]) } {
+	set dest_tail_name [file tail ${dest}]
+	remote_upload host $dest_tail_name.a ${dest}.a
+	remote_file host delete $dest_tail_name.a
+    }
+
+    return ""
 }
 
 # This is just like gdb_compile_shlib, above, except that it tries compiling
@@ -3566,7 +4016,9 @@ proc gdb_exit { } {
 # it.
 
 proc can_spawn_for_attach { } {
-    # We use TCL's exec to get the inferior's pid.
+    # We use exp_pid to get the inferior's pid, assuming that gives
+    # back the pid of the program.  On remote boards, that would give
+    # us instead the PID of e.g., the ssh client, etc.
     if [is_remote target] then {
 	return 0
     }
@@ -3582,12 +4034,50 @@ proc can_spawn_for_attach { } {
     return 1
 }
 
+# Kill a progress previously started with spawn_wait_for_attach, and
+# reap its wait status.  PROC_SPAWN_ID is the spawn id associated with
+# the process.
+
+proc kill_wait_spawned_process { proc_spawn_id } {
+    set pid [exp_pid -i $proc_spawn_id]
+
+    verbose -log "killing ${pid}"
+    remote_exec build "kill -9 ${pid}"
+
+    verbose -log "closing ${proc_spawn_id}"
+    catch "close -i $proc_spawn_id"
+    verbose -log "waiting for ${proc_spawn_id}"
+
+    # If somehow GDB ends up still attached to the process here, a
+    # blocking wait hangs until gdb is killed (or until gdb / the
+    # ptracer reaps the exit status too, but that won't happen because
+    # something went wrong.)  Passing -nowait makes expect tell Tcl to
+    # wait for the PID in the background.  That's fine because we
+    # don't care about the exit status.  */
+    wait -nowait -i $proc_spawn_id
+}
+
+# Returns the process id corresponding to the given spawn id.
+
+proc spawn_id_get_pid { spawn_id } {
+    set testpid [exp_pid -i $spawn_id]
+
+    if { [istarget "*-*-cygwin*"] } {
+	# testpid is the Cygwin PID, GDB uses the Windows PID, which
+	# might be different due to the way fork/exec works.
+	set testpid [ exec ps -e | gawk "{ if (\$1 == $testpid) print \$4; }" ]
+    }
+
+    return $testpid
+}
+
 # Start a set of programs running and then wait for a bit, to be sure
-# that they can be attached to.  Return a list of the processes' PIDs.
-# It's a test error to call this when [can_spawn_for_attach] is false.
+# that they can be attached to.  Return a list of processes spawn IDs,
+# one element for each process spawned.  It's a test error to call
+# this when [can_spawn_for_attach] is false.
 
 proc spawn_wait_for_attach { executable_list } {
-    set pid_list {}
+    set spawn_id_list {}
 
     if ![can_spawn_for_attach] {
 	# The caller should have checked can_spawn_for_attach itself
@@ -3596,22 +4086,16 @@ proc spawn_wait_for_attach { executable_list } {
     }
 
     foreach {executable} $executable_list {
-	lappend pid_list [eval exec $executable &]
+	# Note we use Expect's spawn, not Tcl's exec, because with
+	# spawn we control when to wait for/reap the process.  That
+	# allows killing the process by PID without being subject to
+	# pid-reuse races.
+	lappend spawn_id_list [remote_spawn target $executable]
     }
 
     sleep 2
 
-    if { [istarget "*-*-cygwin*"] } {
-	for {set i 0} {$i < [llength $pid_list]} {incr i} {
-	    # testpid is the Cygwin PID, GDB uses the Windows PID,
-	    # which might be different due to the way fork/exec works.
-	    set testpid [lindex $pid_list $i]
-	    set testpid [ exec ps -e | gawk "{ if (\$1 == $testpid) print \$4; }" ]
-	    set pid_list [lreplace $pid_list $i $i $testpid]
-	}
-    }
-
-    return $pid_list
+    return $spawn_id_list
 }
 
 #
@@ -3778,52 +4262,67 @@ proc gdb_touch_execfile { binfile } {
     }
 }
 
-# Like remote_download but provides a gdb-specific behavior.  If DEST
-# is "host", and the host is not remote, and TOFILE is not specified,
-# then the [file tail] of FROMFILE is passed through
-# standard_output_file to compute the destination.
+# Like remote_download but provides a gdb-specific behavior.
+#
+# If the destination board is remote, the local file FROMFILE is transferred as
+# usual with remote_download to TOFILE on the remote board.  The destination
+# filename is added to the CLEANFILES global, so it can be cleaned up at the
+# end of the test.
+#
+# If the destination board is local, the destination path TOFILE is passed
+# through standard_output_file, and FROMFILE is copied there.
+#
+# In both cases, if TOFILE is omitted, it defaults to the [file tail] of
+# FROMFILE.
 
 proc gdb_remote_download {dest fromfile {tofile {}}} {
-    if {$dest == "host" && ![is_remote host] && $tofile == ""} {
-	set tofile [standard_output_file [file tail $fromfile]]
+    # If TOFILE is not given, default to the same filename as FROMFILE.
+    if {[string length $tofile] == 0} {
+	set tofile [file tail $fromfile]
     }
 
-    if { $tofile == "" } {
-	return [remote_download $dest $fromfile]
+    if {[is_remote $dest]} {
+	# When the DEST is remote, we simply send the file to DEST.
+	global cleanfiles
+
+	set destname [remote_download $dest $fromfile $tofile]
+	lappend cleanfiles $destname
+
+	return $destname
     } else {
-	return [remote_download $dest $fromfile $tofile]
+	# When the DEST is local, we copy the file to the test directory (where
+	# the executable is).
+	#
+	# Note that we pass TOFILE through standard_output_file, regardless of
+	# whether it is absolute or relative, because we don't want the tests
+	# to be able to write outside their standard output directory.
+
+	set tofile [standard_output_file $tofile]
+
+	file copy -force $fromfile $tofile
+
+	return $tofile
     }
 }
 
-# gdb_download
+# gdb_load_shlib LIB...
 #
-# Copy a file to the remote target and return its target filename.
-# Schedule the file to be deleted at the end of this test.
+# Copy the listed library to the target.
 
-proc gdb_download { filename } {
-    global cleanfiles
+proc gdb_load_shlib { file } {
+    set dest [gdb_remote_download target [shlib_target_file $file]]
 
-    set destname [remote_download target $filename]
-    lappend cleanfiles $destname
-    return $destname
-}
-
-# gdb_load_shlibs LIB...
-#
-# Copy the listed libraries to the target.
-
-proc gdb_load_shlibs { args } {
-    if {![is_remote target]} {
-	return
+    if {[is_remote target]} {
+	# If the target is remote, we need to tell gdb where to find the
+	# libraries.
+	#
+	# We could set this even when not testing remotely, but a user
+	# generally won't set it unless necessary.  In order to make the tests
+	# more like the real-life scenarios, we don't set it for local testing.
+	gdb_test "set solib-search-path [file dirname $file]" "" ""
     }
 
-    foreach file $args {
-	gdb_download [shlib_target_file $file]
-    }
-
-    # Even if the target supplies full paths for shared libraries,
-    # they may not be paths for this system.
-    gdb_test "set solib-search-path [file dirname [lindex $args 0]]" "" ""
+    return $dest
 }
 
 #
@@ -3899,32 +4398,47 @@ proc default_gdb_init { test_file_name } {
     }
 }
 
+# Return a path using GDB_PARALLEL.
+# ARGS is a list of path elements to append to "$objdir/$GDB_PARALLEL".
+# GDB_PARALLEL must be defined, the caller must check.
+#
+# The default value for GDB_PARALLEL is, canonically, ".".
+# The catch is that tests don't expect an additional "./" in file paths so
+# omit any directory for the default case.
+# GDB_PARALLEL is written as "yes" for the default case in Makefile.in to mark
+# its special handling.
+
+proc make_gdb_parallel_path { args } {
+    global GDB_PARALLEL objdir
+    set joiner [list "file" "join" $objdir]
+    if { [info exists GDB_PARALLEL] && $GDB_PARALLEL != "yes" } {
+	lappend joiner $GDB_PARALLEL
+    }
+    set joiner [concat $joiner $args]
+    return [eval $joiner]
+}
+
 # Turn BASENAME into a full file name in the standard output
 # directory.  It is ok if BASENAME is the empty string; in this case
 # the directory is returned.
 
 proc standard_output_file {basename} {
-    global objdir subdir gdb_test_file_name GDB_PARALLEL
+    global objdir subdir gdb_test_file_name
 
-    if {[info exists GDB_PARALLEL]} {
-	set dir [file join $objdir outputs $subdir $gdb_test_file_name]
-	file mkdir $dir
-	return [file join $dir $basename]
-    } else {
-	return [file join $objdir $subdir $basename]
-    }
+    set dir [make_gdb_parallel_path outputs $subdir $gdb_test_file_name]
+    file mkdir $dir
+    return [file join $dir $basename]
 }
 
 # Return the name of a file in our standard temporary directory.
 
 proc standard_temp_file {basename} {
-    global objdir GDB_PARALLEL
-
-    if {[info exists GDB_PARALLEL]} {
-	return [file join $objdir temp $basename]
-    } else {
-	return $basename
-    }
+    # Since a particular runtest invocation is only executing a single test
+    # file at any given time, we can use the runtest pid to build the
+    # path of the temp directory.
+    set dir [make_gdb_parallel_path temp [pid]]
+    file mkdir $dir
+    return [file join $dir $basename]
 }
 
 # Set 'testfile', 'srcfile', and 'binfile'.
@@ -4481,24 +4995,44 @@ gdb_caching_proc gdb_has_argv0 {
 	    }
 	}
 
+	set old_elements "200"
+	set test "show print elements"
+	gdb_test_multiple $test $test {
+	    -re "Limit on string chars or array elements to print is (\[^\r\n\]+)\\.\r\n$gdb_prompt $" {
+		set old_elements $expect_out(1,string)
+	    }
+	}
+	set old_repeats "200"
+	set test "show print repeats"
+	gdb_test_multiple $test $test {
+	    -re "Threshold for repeated print elements is (\[^\r\n\]+)\\.\r\n$gdb_prompt $" {
+		set old_repeats $expect_out(1,string)
+	    }
+	}
+	gdb_test_no_output "set print elements unlimited" ""
+	gdb_test_no_output "set print repeats unlimited" ""
+
+	set retval 0
 	# Check whether argc is 1.
 	gdb_test_multiple "p argc" "p argc" {
 	    -re " = 1\r\n${gdb_prompt} $" {
 
 		gdb_test_multiple "p argv\[0\]" "p argv\[0\]" {
 		    -re " = $hex \".*[file tail $exe]\"\r\n${gdb_prompt} $" {
-			return 1
+			set retval 1
 		    }
 		    -re "${gdb_prompt} $" {
-			return 0
 		    }
 		}
 	    }
 	    -re "${gdb_prompt} $" {
-		return 0
 	    }
 	}
-	return 0
+	
+	gdb_test_no_output "set print elements $old_elements" ""
+	gdb_test_no_output "set print repeats $old_repeats" ""
+
+	return $retval
     }
 
     set result [gdb_has_argv0_1 $exe]
@@ -4521,7 +5055,6 @@ gdb_caching_proc gdb_has_argv0 {
 	  || [istarget *-wince-pe] || [istarget *-*-mingw32ce*]
 	  || [istarget *-*-symbianelf*]
 	  || [istarget *-*-osf*]
-	  || [istarget *-*-hpux*]
 	  || [istarget *-*-dicos*]
 	  || [istarget *-*-nto*]
 	  || [istarget *-*-*vms*]
@@ -4781,6 +5314,16 @@ proc build_executable_from_specs {testname executable options args} {
 	    }
 	}
 	set ret [$func $sources_path "${binfile}" $options]
+    } elseif {[lsearch -exact $options rust] != -1} {
+	set sources_path {}
+	foreach {s local_options} $args {
+	    if { [regexp "^/" "$s"] } then {
+		lappend sources_path "$s"
+	    } else {
+		lappend sources_path "$srcdir/$subdir/$s"
+	    }
+	}
+	set ret [gdb_compile_rust $sources_path "${binfile}" $options]
     } else {
 	set objects {}
 	set i 0
@@ -4822,18 +5365,27 @@ proc build_executable { testname executable {sources ""} {options {debug}} } {
     return [eval build_executable_from_specs $arglist]
 }
 
-# Starts fresh GDB binary and loads EXECUTABLE into GDB. EXECUTABLE is
-# the basename of the binary.
-# The return value is 0 for success, -1 for failure.
-proc clean_restart { executable } {
+# Starts fresh GDB binary and loads an optional executable into GDB.
+# Usage: clean_restart [executable]
+# EXECUTABLE is the basename of the binary.
+
+proc clean_restart { args } {
     global srcdir
     global subdir
-    set binfile [standard_output_file ${executable}]
+
+    if { [llength $args] > 1 } {
+	error "bad number of args: [llength $args]"
+    }
 
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    return [gdb_load ${binfile}]
+
+    if { [llength $args] >= 1 } {
+	set executable [lindex $args 0]
+	set binfile [standard_output_file ${executable}]
+	gdb_load ${binfile}
+    }
 }
 
 # Prepares for testing by calling build_executable_full, then
@@ -4901,18 +5453,23 @@ proc get_integer_valueof { exp default } {
     return ${val}
 }
 
-proc get_hexadecimal_valueof { exp default } {
+# Retrieve the value of EXP in the inferior, as an hexadecimal value
+# (using "print /x").  DEFAULT is used as fallback if print fails.
+# TEST is the test message to use.  If can be ommitted, in which case
+# a test message is built from EXP.
+
+proc get_hexadecimal_valueof { exp default {test ""} } {
     global gdb_prompt
-    send_gdb "print /x ${exp}\n"
-    set test "get hexadecimal valueof \"${exp}\""
-    gdb_expect {
+
+    if {$test == ""} {
+	set test "get hexadecimal valueof \"${exp}\""
+    }
+
+    set val ${default}
+    gdb_test_multiple "print /x ${exp}" $test {
 	-re "\\$\[0-9\]* = (0x\[0-9a-zA-Z\]+).*$gdb_prompt $" {
 	    set val $expect_out(1,string)
 	    pass "$test"
-	}
-	timeout {
-	    set val ${default}
-	    fail "$test (timeout)"
 	}
     }
     return ${val}
@@ -5037,7 +5594,10 @@ if {[info exists GDB_PARALLEL]} {
     if {[is_remote host]} {
 	unset GDB_PARALLEL
     } else {
-	file mkdir outputs temp cache
+	file mkdir \
+	    [make_gdb_parallel_path outputs] \
+	    [make_gdb_parallel_path temp] \
+	    [make_gdb_parallel_path cache]
     }
 }
 
@@ -5108,18 +5668,96 @@ proc core_find {binfile {deletefiles {}} {arg ""}} {
     return $destcore
 }
 
-# gdb_target_symbol_prefix_flags returns a string that can be added
-# to gdb_compile options to define SYMBOL_PREFIX macro value
-# symbol_prefix_flags returns a string that can be added
-# for targets that use underscore as symbol prefix.
-# TODO: find out automatically if the target needs this.
+# gdb_target_symbol_prefix compiles a test program and then examines
+# the output from objdump to determine the prefix (such as underscore)
+# for linker symbol prefixes.
+
+gdb_caching_proc gdb_target_symbol_prefix {
+    # Set up and compile a simple test program...
+    set src [standard_temp_file main[pid].c]
+    set exe [standard_temp_file main[pid].x]
+
+    gdb_produce_source $src {
+	int main() {
+	    return 0;
+	}
+    }
+
+    verbose "compiling testfile $src" 2
+    set compile_flags {debug nowarnings quiet}
+    set lines [gdb_compile $src $exe executable $compile_flags]
+
+    set prefix ""
+
+    if ![string match "" $lines] then {
+        verbose "gdb_target_symbol_prefix: testfile compilation failed, returning null prefix" 2
+    } else {
+	set objdump_program [gdb_find_objdump]
+	set result [catch "exec $objdump_program --syms $exe" output]
+
+	if { $result == 0 \
+	     && ![regexp -lineanchor \
+	          { ([^ a-zA-Z0-9]*)main$} $output dummy prefix] } {
+	    verbose "gdb_target_symbol_prefix: Could not find main in objdump output; returning null prefix" 2
+	}
+    }
+
+    file delete $src
+    file delete $exe
+
+    return $prefix
+}
+
+# gdb_target_symbol returns the provided symbol with the correct prefix
+# prepended.  (See gdb_target_symbol_prefix, above.)
+
+proc gdb_target_symbol { symbol } {
+  set prefix [gdb_target_symbol_prefix]
+  return "${prefix}${symbol}"
+}
+
+# gdb_target_symbol_prefix_flags_asm returns a string that can be
+# added to gdb_compile options to define the C-preprocessor macro
+# SYMBOL_PREFIX with a value that can be prepended to symbols
+# for targets which require a prefix, such as underscore.
+#
+# This version (_asm) defines the prefix without double quotes
+# surrounding the prefix.  It is used to define the macro
+# SYMBOL_PREFIX for assembly language files.  Another version, below,
+# is used for symbols in inline assembler in C/C++ files.
+# 
+# The lack of quotes in this version (_asm) makes it possible to
+# define supporting macros in the .S file.  (The version which
+# uses quotes for the prefix won't work for such files since it's
+# impossible to define a quote-stripping macro in C.)
+#
+# It's possible to use this version (_asm) for C/C++ source files too,
+# but a string is usually required in such files; providing a version
+# (no _asm) which encloses the prefix with double quotes makes it
+# somewhat easier to define the supporting macros in the test case.
+
+proc gdb_target_symbol_prefix_flags_asm {} {
+    set prefix [gdb_target_symbol_prefix]
+    if {$prefix ne ""} {
+	return "additional_flags=-DSYMBOL_PREFIX=$prefix"
+    } else {
+	return "";
+    }
+}
+
+# gdb_target_symbol_prefix_flags returns the same string as
+# gdb_target_symbol_prefix_flags_asm, above, but with the prefix
+# enclosed in double quotes if there is a prefix.
+#
+# See the comment for gdb_target_symbol_prefix_flags_asm for an
+# extended discussion.
 
 proc gdb_target_symbol_prefix_flags {} {
-    if { [istarget "i?86-*-cygwin*"] || [istarget "i?86-*-mingw*"]
-	 || [istarget "*-*-msdosdjgpp*"] || [istarget "*-*-go32*"] } {
-	return "additional_flags=-DSYMBOL_PREFIX=\"_\""
+    set prefix [gdb_target_symbol_prefix]
+    if {$prefix ne ""} {
+	return "additional_flags=-DSYMBOL_PREFIX=\"$prefix\""
     } else {
-	return ""
+	return "";
     }
 }
 
@@ -5222,14 +5860,16 @@ proc parse_args { argset } {
     # number of items expected to be passed into the procedure...
 }
 
-# Capture the output of COMMAND in a string ignoring PREFIX; return that string.
+# Capture the output of COMMAND in a string ignoring PREFIX (a regexp);
+# return that string.
+
 proc capture_command_output { command prefix } {
     global gdb_prompt
     global expect_out
 
     set output_string ""
     gdb_test_multiple "$command" "capture_command_output for $command" {
-	-re "${command}\[\r\n\]+${prefix}(.*)\[\r\n\]+$gdb_prompt $" {
+	-re "[string_to_regexp ${command}]\[\r\n\]+${prefix}(.*)\[\r\n\]+$gdb_prompt $" {
 	    set output_string $expect_out(1,string)
 	}
     }

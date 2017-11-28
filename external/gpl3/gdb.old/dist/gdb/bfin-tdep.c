@@ -1,6 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -292,7 +292,7 @@ bfin_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct bfin_frame_cache *) *this_cache;
 
   cache = bfin_alloc_frame_cache ();
   *this_cache = cache;
@@ -500,13 +500,9 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
 		      CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  gdb_byte buf[4];
   int i;
   long reg_r0, reg_r1, reg_r2;
   int total_len = 0;
-  enum bfin_abi abi = bfin_abi (gdbarch);
-  CORE_ADDR func_addr = find_function_addr (function, NULL);
 
   for (i = nargs - 1; i >= 0; i--)
     {
@@ -531,7 +527,7 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
       int container_len = (TYPE_LENGTH (value_type) + 3) & ~3;
 
       sp -= container_len;
-      write_memory (sp, value_contents_writeable (args[i]), container_len);
+      write_memory (sp, value_contents (args[i]), container_len);
     }
 
   /* Initialize R0, R1, and R2 to the first 3 words of parameters.  */
@@ -566,8 +562,8 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
 static int
 bfin_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 {
-  if (reg > ARRAY_SIZE (map_gcc_gdb))
-    return 0;
+  if (reg < 0 || reg >= ARRAY_SIZE (map_gcc_gdb))
+    return -1;
 
   return map_gcc_gdb[reg];
 }
@@ -794,14 +790,7 @@ bfin_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch_tdep *tdep;
   struct gdbarch *gdbarch;
-  int elf_flags;
   enum bfin_abi abi;
-
-  /* Extract the ELF flags, if available.  */
-  if (info.abfd && bfd_get_flavour (info.abfd) == bfd_target_elf_flavour)
-    elf_flags = elf_elfheader (info.abfd)->e_flags;
-  else
-    elf_flags = 0;
 
   abi = BFIN_ABI_FLAT;
 

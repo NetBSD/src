@@ -1,4 +1,4 @@
-#   Copyright 1997-2015 Free Software Foundation, Inc.
+#   Copyright 1997-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,38 +18,16 @@
 # either execs or exits --- since those events take somewhat different
 # code paths in GDB, both variants are exercised.
 
-if { [is_remote target] || ![isnative] } then {
-    continue
-}
-
 # Until "set follow-fork-mode" and "catch vfork" are implemented on
 # other targets...
 #
-if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
+if {![istarget "*-linux*"]} then {
     continue
 }
-
-# Test to see if we are on an HP-UX 10.20 and if so,
-# do not run these tests as catching vfork is disabled for
-# 10.20.
-
-if [istarget "hppa*-hp-hpux10.20"] then {
-    return 0
-}
-
-# NOTE drow/2002-12-06: I don't know what the referenced kernel problem
-# is, but it appears to be fixed in recent HP/UX versions.
-
-##if [istarget "hppa2.0w-hp-hpux*"] {
-##  warning "Don't run gdb.base/foll-vfork.exp until JAGaa43495 kernel problem is fixed."
-##  return 0
-##}
 
 standard_testfile
 
 set compile_options debug
-set dirname [relative_filename [pwd] [file dirname $binfile]]
-lappend compile_options "additional_flags=-DBASEDIR=\"$dirname\""
 
 if {[build_executable $testfile.exp $testfile $srcfile $compile_options] == -1} {
     untested "failed to compile $testfile"
@@ -73,7 +51,7 @@ set timeout [expr "$timeout + 10"]
 # error, behave as "return", so we don't try to continue testing with
 # a borked session.
 proc setup_gdb {} {
-    global testfile
+    global testfile srcfile
 
     clean_restart $testfile
 
@@ -84,6 +62,10 @@ proc setup_gdb {} {
     if ![runto_main] {
 	return -code return
     }
+
+    set tbreak_line [gdb_get_line_number " VFORK " $srcfile]
+    gdb_test "tbreak ${tbreak_line}"
+    gdb_continue_to_breakpoint ".*"
 }
 
 proc check_vfork_catchpoints {} {
@@ -211,46 +193,18 @@ proc vfork_and_exec_child_follow_through_step {} {
    global gdb_prompt
    global srcfile2
 
-   if { [istarget "hppa*-*-hpux*"] && ![istarget "hppa*-*-hpux11.*"] } {
-      # This test cannot be performed prior to HP-UX 10.30, because
-      # ptrace-based debugging of a vforking program basically doesn't
-      # allow the child to do things like hit a breakpoint between a
-      # vfork and exec.  This means that saying "set follow-fork
-      # child; next" at a vfork() call won't work, because the
-      # implementation of "next" sets a "step resume" breakpoint at
-      # the return from the vfork(), which the child will hit on its
-      # way to exec'ing.
-      #
-      verbose "vfork child-following next test ignored for pre-HP/UX-10.30 targets."
-      return 0
-   }
-
    setup_gdb
 
    gdb_test_no_output "set follow-fork child"
 
    set test "step over vfork"
-   if { [istarget "hppa*-*-hpux*"]} {
-       # Since the child cannot be debugged until after it has exec'd,
-       # and since there's a bp on "main" in the parent, and since the
-       # bp's for the parent are recomputed in the exec'd child, the
-       # step through a vfork should land us in the "main" for the
-       # exec'd child, too.
-       #
-       set linenum [gdb_get_line_number "printf(\"Hello from vforked-prog" ${srcfile2}]
-       gdb_test_multiple "next" $test {
-	   -re "Attaching after vfork to.*Executing new program.*Breakpoint.*vforked-prog.c:${linenum}.*$gdb_prompt " {
-	       pass "$test"
-	   }
-       }
-   } else {
-       # The ideal support is to be able to debug the child even
-       # before it execs.  Thus, "next" lands on the next line after
-       # the vfork.
-       gdb_test_multiple "next" $test {
-	   -re "Attaching after .* vfork to child.*if \\(pid == 0\\).*$gdb_prompt " {
-	       pass "$test"
-	   }
+
+   # The ideal support is to be able to debug the child even
+   # before it execs.  Thus, "next" lands on the next line after
+   # the vfork.
+   gdb_test_multiple "next" $test {
+       -re "Attaching after .* vfork to child.*if \\(pid == 0\\).*$gdb_prompt " {
+	   pass "$test"
        }
    }
    # The parent has been detached; allow time for any output it might
@@ -259,6 +213,21 @@ proc vfork_and_exec_child_follow_through_step {} {
    #
    exec sleep 1
 }}
+
+proc continue_to_vfork {} {
+   global gdb_prompt
+
+   # A vfork catchpoint may stop in either "vfork" or "_vfork".
+   set test "continue to vfork"
+   gdb_test_multiple "continue" $test {
+      -re "vfork \\(\\) at .*$gdb_prompt $" {
+	  pass $test
+      }
+      -re "0x\[0-9a-fA-F\]*.*(vfork|__kernel_v?syscall).*$gdb_prompt " {
+	  pass $test
+      }
+   }
+}
 
 proc tcatch_vfork_then_parent_follow {} {
   with_test_prefix "vfork parent follow, finish after tcatch vfork" {
@@ -271,17 +240,7 @@ proc tcatch_vfork_then_parent_follow {} {
 
    gdb_test "tcatch vfork" "Catchpoint .*(vfork).*"
 
-   # HP-UX 10.20 seems to stop you in "vfork", while more recent
-   # HP-UXs stop you in "_vfork".
-   set test "continue to vfork"
-   gdb_test_multiple "continue" $test {
-      -re "0x\[0-9a-fA-F\]*.*(vfork|__kernel_v?syscall).*$gdb_prompt " {
-	  pass $test
-      }
-      -re "vfork \\(\\) at.*$gdb_prompt " {
-	  pass $test
-      }
-   }
+   continue_to_vfork
 
    set linenum [gdb_get_line_number "pid = vfork ();"]
    set test "finish"
@@ -313,17 +272,7 @@ proc tcatch_vfork_then_child_follow_exec {} {
 
    gdb_test "tcatch vfork" "Catchpoint .*(vfork).*"
 
-   # HP-UX 10.20 seems to stop you in "vfork", while more recent HP-UXs
-   # stop you in "_vfork".
-   set test "continue to vfork"
-   gdb_test_multiple "continue" $test {
-      -re "vfork \\(\\) at .*$gdb_prompt $" {
-	  pass $test
-      }
-      -re "0x\[0-9a-fA-F\]*.*(vfork|__kernel_v?syscall).*$gdb_prompt " {
-	  pass $test
-      }
-   }
+   continue_to_vfork
 
    set linenum1 [gdb_get_line_number "pid = vfork ();"]
    set linenum2 [gdb_get_line_number "printf(\"Hello from vforked-prog" ${srcfile2}]
@@ -359,17 +308,7 @@ proc tcatch_vfork_then_child_follow_exit {} {
 
    gdb_test "tcatch vfork" "Catchpoint .*(vfork).*"
 
-   # HP-UX 10.20 seems to stop you in "vfork", while more recent HP-UXs
-   # stop you in "_vfork".
-   set test "continue to vfork"
-   gdb_test_multiple "continue" $test {
-      -re "vfork \\(\\) at .*$gdb_prompt $" {
-	  pass $test
-      }
-      -re "0x\[0-9a-fA-F\]*.*(vfork|__kernel_v?syscall).*$gdb_prompt " {
-	  pass $test
-      }
-   }
+   continue_to_vfork
 
    set test "finish"
    gdb_test_multiple "finish" $test {
@@ -408,7 +347,7 @@ proc vfork_relations_in_info_inferiors { variant } {
    }
 
    gdb_test "info inferiors" \
-       ".*is vfork child of inferior 1.*is vfork parent of inferior 2" \
+       ".*is vfork parent of inferior 2.*is vfork child of inferior 1" \
        "info inferiors shows vfork parent/child relation"
 
    if { $variant == "exec" } {
@@ -524,23 +463,18 @@ with_test_prefix "check vfork support" {
     check_vfork_catchpoints
 }
 
-# There is no support for exec events in the RSP yet.
-if { ![gdb_is_target_remote] } {
-    # Follow parent and follow child vfork tests with a child that execs.
-    with_test_prefix "exec" {
-	# These are tests of gdb's ability to follow the parent of a Unix
-	# vfork system call.  The child will subsequently call a variant
-	# of the Unix exec system call.
-	do_vfork_and_follow_parent_tests
+# Follow parent and follow child vfork tests with a child that execs.
+with_test_prefix "exec" {
+    # These are tests of gdb's ability to follow the parent of a Unix
+    # vfork system call.  The child will subsequently call a variant
+    # of the Unix exec system call.
+    do_vfork_and_follow_parent_tests
 
-	# These are tests of gdb's ability to follow the child of a Unix
-	# vfork system call.  The child will subsequently call a variant
-	# of a Unix exec system call.
-	#
-	do_vfork_and_follow_child_tests_exec
-    }
-} else {
-    unsupported "vfork with exec: exec events not supported for remote"
+    # These are tests of gdb's ability to follow the child of a Unix
+    # vfork system call.  The child will subsequently call a variant
+    # of a Unix exec system call.
+    #
+    do_vfork_and_follow_child_tests_exec
 }
 
 # Switch to test the case of the child exiting.  We can't use

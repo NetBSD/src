@@ -1,6 +1,6 @@
 # This test code is part of GDB, the GNU debugger.
 
-# Copyright 2003-2015 Free Software Foundation, Inc.
+# Copyright 2003-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -175,8 +175,6 @@ proc cp_check_errata { expected_string actual_string errata_table } {
 # Tagless structs.
 #
 # "A*" versus "A *" and "A&" versus "A &" in user methods.
-#
-# Test with hp ACC.
 #
 # -- chastain 2004-08-07
 

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2015 Free Software Foundation, Inc.
+   Copyright 2014-2016 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -24,7 +24,7 @@ main (void)
 {
   struct timeval tv;
 
-  gettimeofday (&tv, 0); /* main.1.  */
+  gettimeofday (&tv, 0);
 
-  return 0; /* main.2.  */
+  return 0;
 }

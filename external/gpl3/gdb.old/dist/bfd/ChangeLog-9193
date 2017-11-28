@@ -231,7 +231,7 @@ Sun Dec  5 19:32:08 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
 	(som_hppa_howto_talbe): Add R_DLT_REL, R_AUX_UNWIND, and R_SEC_STMT
 	now that they're safe.  Delete bogus R_STATEMENT relocations.
 
-	* som.c (som_hppa_howto_table): Add missing R_END_TRY.  Delete 
+	* som.c (som_hppa_howto_table): Add missing R_END_TRY.  Delete
 	extra R_DATA_OVERRIDE.
 	(hppa_som_gen_reloc_type): Generate a relocation for the rounding
 	mode selector if needed.
@@ -261,7 +261,7 @@ Sat Dec  4 19:40:32 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
 	relocations are not pc-relative.
 
 	* hppa_stubs.h: (BLE_N_XXX_0_31):  New instruction used in
-	linker stub code. 
+	linker stub code.
 	(COPY_2_31):  Likewise.
 
 Fri Dec  3 18:40:58 1993  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
@@ -637,7 +637,7 @@ Sun Nov 14 23:33:01 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
 Sat Nov 13 15:27:15 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
 
 	* som.c (som_bfd_reloc_type_lookup): Add missing prototype.  Returns
-	a pointer to constant data.  Delete bogus #define which made the 
+	a pointer to constant data.  Delete bogus #define which made the
 	function useless.
 
 	* som.c (som_prep_for_fixups): New function.
@@ -730,7 +730,7 @@ Thu Nov 11 15:16:28 1993  Jeffrey A. Law  (law@snake.cs.utah.edu)
 
 	* hppa_stubs.h: Add new instructions to deal with %r31 lossage
 	problems.  Delete unused instructions.
-	
+
 Tue Nov  9 11:40:27 1993  Stan Shebs  (shebs@rtl.cygnus.com)
 
 	* m68klynx.c (TARGET_IS_BIG_ENDIAN_P): Define.
@@ -1033,14 +1033,14 @@ Tue Oct 26 10:16:54 1993  Ken Raeburn  (raeburn@cygnus.com)
 	* elf32-hppa.c (hppa_elf_get_section_contents): Add new comments
 	and clarify existing comments.  Do not use DEFUN to declare this
 	function.  Fix numerous indention problems.  Correctly handle cases
-	where symbol extension section may need to be read from disk, 
+	where symbol extension section may need to be read from disk,
 	read from memory, or built then read from memory.
 
 	* elf32-hppa.h: Reformat with gnu-indent and hand fix numerous
 	formatting and indention problems gnu-indent can not handle.
 	Clarify some comments about relocation types.  Comment basic
 	relocation "classes".  Group PARAM declarations together.
-	(HPPA_SXT_{NULL, SYMNDX, RG_RELOC}): Make members of a new 
+	(HPPA_SXT_{NULL, SYMNDX, RG_RELOC}): Make members of a new
 	enumerated type rather than #defines.
 
 Tue Oct 26 02:40:46 1993  Stu Grossman  (grossman at cygnus.com)
@@ -1054,7 +1054,7 @@ Mon Oct 25 16:05:23 1993  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 	* coffgen.c (coff_print_symbol): Use %lx and cast n_value to
 	unsigned long.  Use %ld for tagndx.  Use %lx for offset + vma and
 	cast it to unsigned long.
-	* ecoff.c (ecoff_emit_aggregate): Use %ld.	
+	* ecoff.c (ecoff_emit_aggregate): Use %ld.
 	(ecoff_print_symbol): Use %ld, and cast indx and sym_base to long.
 	* coffcode.h (dummy_reloc16_estimate): Specify return type.
 
@@ -1130,7 +1130,7 @@ Thu Oct 21 12:16:26 1993  Ken Raeburn  (raeburn@cygnus.com)
 	* som.h (som_section_data): Add new "subspace_index" field.
 
 	* som.c (setup_sections): Save the original SOM subspace index
-	in the BFD section associated with that subspace.  
+	in the BFD section associated with that subspace.
 	(som_get_symtab_upper_bound): Implement.
 	(som_get_symtab): Implement.
 	(som_print_symbol): Implement.

@@ -1,5 +1,5 @@
 # sigthread.exp -- Expect script to test thread and signal interaction
-# Copyright (C) 2007-2015 Free Software Foundation, Inc.
+# Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,10 +37,16 @@ gdb_test_multiple "continue" "continue" {
     }
 }
 
+# This test requires sending ^C to interrupt the running target.
+if [target_info exists gdb,nointerrupts] {
+    verbose "Skipping sigthread.exp because of nointerrupts."
+    return
+}
+
 # For this to work we must be sure to consume the "Continuing."
 # message first, or GDB's signal handler may not be in place.
 after 500 {send_gdb "\003"}
 
 # Make sure we do not get an internal error from hitting Control-C
 # while many signals are flying back and forth.
-gdb_test "" "Program received signal SIGINT.*" "stop with control-c"
+gdb_test "" "Thread .* received signal SIGINT.*" "stop with control-c"

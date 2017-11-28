@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,9 @@
 #include "auxv.h"
 #include "xml-syscall.h"
 
+#include "arch/arm.h"
+#include "arch/arm-get-next-pcs.h"
+#include "arch/arm-linux.h"
 #include "arm-tdep.h"
 #include "arm-linux-tdep.h"
 #include "linux-tdep.h"
@@ -257,6 +260,23 @@ static const gdb_byte arm_linux_thumb2_le_breakpoint[] = { 0xf0, 0xf7, 0x00, 0xa
 #define ARM_LDR_PC_SP_12		0xe49df00c
 #define ARM_LDR_PC_SP_4			0xe49df004
 
+/* Syscall number for sigreturn.  */
+#define ARM_SIGRETURN 119
+/* Syscall number for rt_sigreturn.  */
+#define ARM_RT_SIGRETURN 173
+
+static CORE_ADDR
+  arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self);
+
+/* Operation function pointers for get_next_pcs.  */
+static struct arm_get_next_pcs_ops arm_linux_get_next_pcs_ops = {
+  arm_get_next_pcs_read_memory_unsigned_integer,
+  arm_linux_get_next_pcs_syscall_next_pc,
+  arm_get_next_pcs_addr_bits_remove,
+  arm_get_next_pcs_is_thumb,
+  arm_linux_get_next_pcs_fixup,
+};
+
 static void
 arm_linux_sigtramp_cache (struct frame_info *this_frame,
 			  struct trad_frame_cache *this_cache,
@@ -278,51 +298,7 @@ arm_linux_sigtramp_cache (struct frame_info *this_frame,
   trad_frame_set_id (this_cache, frame_id_build (sp, func));
 }
 
-/* There are a couple of different possible stack layouts that
-   we need to support.
-
-   Before version 2.6.18, the kernel used completely independent
-   layouts for non-RT and RT signals.  For non-RT signals the stack
-   began directly with a struct sigcontext.  For RT signals the stack
-   began with two redundant pointers (to the siginfo and ucontext),
-   and then the siginfo and ucontext.
-
-   As of version 2.6.18, the non-RT signal frame layout starts with
-   a ucontext and the RT signal frame starts with a siginfo and then
-   a ucontext.  Also, the ucontext now has a designated save area
-   for coprocessor registers.
-
-   For RT signals, it's easy to tell the difference: we look for
-   pinfo, the pointer to the siginfo.  If it has the expected
-   value, we have an old layout.  If it doesn't, we have the new
-   layout.
-
-   For non-RT signals, it's a bit harder.  We need something in one
-   layout or the other with a recognizable offset and value.  We can't
-   use the return trampoline, because ARM usually uses SA_RESTORER,
-   in which case the stack return trampoline is not filled in.
-   We can't use the saved stack pointer, because sigaltstack might
-   be in use.  So for now we guess the new layout...  */
-
-/* There are three words (trap_no, error_code, oldmask) in
-   struct sigcontext before r0.  */
-#define ARM_SIGCONTEXT_R0 0xc
-
-/* There are five words (uc_flags, uc_link, and three for uc_stack)
-   in the ucontext_t before the sigcontext.  */
-#define ARM_UCONTEXT_SIGCONTEXT 0x14
-
-/* There are three elements in an rt_sigframe before the ucontext:
-   pinfo, puc, and info.  The first two are pointers and the third
-   is a struct siginfo, with size 128 bytes.  We could follow puc
-   to the ucontext, but it's simpler to skip the whole thing.  */
-#define ARM_OLD_RT_SIGFRAME_SIGINFO 0x8
-#define ARM_OLD_RT_SIGFRAME_UCONTEXT 0x88
-
-#define ARM_NEW_RT_SIGFRAME_UCONTEXT 0x80
-
-#define ARM_NEW_SIGFRAME_MAGIC 0x5ac3c35a
-
+/* See arm-linux.h for stack layout details.  */
 static void
 arm_linux_sigreturn_init (const struct tramp_frame *self,
 			  struct frame_info *this_frame,
@@ -506,7 +482,7 @@ arm_linux_supply_gregset (const struct regset *regset,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  const gdb_byte *gregs = gregs_buf;
+  const gdb_byte *gregs = (const gdb_byte *) gregs_buf;
   int regno;
   CORE_ADDR reg_pc;
   gdb_byte pc_buf[INT_REGISTER_SIZE];
@@ -542,7 +518,7 @@ arm_linux_collect_gregset (const struct regset *regset,
 			   const struct regcache *regcache,
 			   int regnum, void *gregs_buf, size_t len)
 {
-  gdb_byte *gregs = gregs_buf;
+  gdb_byte *gregs = (gdb_byte *) gregs_buf;
   int regno;
 
   for (regno = ARM_A1_REGNUM; regno < ARM_PC_REGNUM; regno++)
@@ -649,7 +625,7 @@ arm_linux_supply_nwfpe (const struct regset *regset,
 			struct regcache *regcache,
 			int regnum, const void *regs_buf, size_t len)
 {
-  const gdb_byte *regs = regs_buf;
+  const gdb_byte *regs = (const gdb_byte *) regs_buf;
   int regno;
 
   if (regnum == ARM_FPS_REGNUM || regnum == -1)
@@ -666,7 +642,7 @@ arm_linux_collect_nwfpe (const struct regset *regset,
 			 const struct regcache *regcache,
 			 int regnum, void *regs_buf, size_t len)
 {
-  gdb_byte *regs = regs_buf;
+  gdb_byte *regs = (gdb_byte *) regs_buf;
   int regno;
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
@@ -687,7 +663,7 @@ arm_linux_supply_vfp (const struct regset *regset,
 		      struct regcache *regcache,
 		      int regnum, const void *regs_buf, size_t len)
 {
-  const gdb_byte *regs = regs_buf;
+  const gdb_byte *regs = (const gdb_byte *) regs_buf;
   int regno;
 
   if (regnum == ARM_FPSCR_REGNUM || regnum == -1)
@@ -704,7 +680,7 @@ arm_linux_collect_vfp (const struct regset *regset,
 			 const struct regcache *regcache,
 			 int regnum, void *regs_buf, size_t len)
 {
-  gdb_byte *regs = regs_buf;
+  gdb_byte *regs = (gdb_byte *) regs_buf;
   int regno;
 
   if (regnum == ARM_FPSCR_REGNUM || regnum == -1)
@@ -805,6 +781,42 @@ arm_linux_sigreturn_return_addr (struct frame_info *frame,
   return 0;
 }
 
+/* Find the value of the next PC after a sigreturn or rt_sigreturn syscall
+   based on current processor state.  In addition, set IS_THUMB depending
+   on whether we will return to ARM or Thumb code.  */
+
+static CORE_ADDR
+arm_linux_sigreturn_next_pc (struct regcache *regcache,
+			     unsigned long svc_number, int *is_thumb)
+{
+  ULONGEST sp;
+  unsigned long sp_data;
+  CORE_ADDR next_pc = 0;
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  int pc_offset = 0;
+  int is_sigreturn = 0;
+  CORE_ADDR cpsr;
+
+  gdb_assert (svc_number == ARM_SIGRETURN
+	      || svc_number == ARM_RT_SIGRETURN);
+
+  is_sigreturn = (svc_number == ARM_SIGRETURN);
+  regcache_cooked_read_unsigned (regcache, ARM_SP_REGNUM, &sp);
+  sp_data = read_memory_unsigned_integer (sp, 4, byte_order);
+
+  pc_offset = arm_linux_sigreturn_next_pc_offset (sp, sp_data, svc_number,
+						  is_sigreturn);
+
+  next_pc = read_memory_unsigned_integer (sp + pc_offset, 4, byte_order);
+
+  /* Set IS_THUMB according the CPSR saved on the stack.  */
+  cpsr = read_memory_unsigned_integer (sp + pc_offset + 4, 4, byte_order);
+  *is_thumb = ((cpsr & arm_psr_thumb_bit (gdbarch)) != 0);
+
+  return next_pc;
+}
+
 /* At a ptrace syscall-stop, return the syscall number.  This either
    comes from the SWI instruction (OABI) or from r7 (EABI).
 
@@ -815,7 +827,6 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
 			      ptid_t ptid)
 {
   struct regcache *regs = get_thread_regcache (ptid);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   ULONGEST pc;
   ULONGEST cpsr;
@@ -858,25 +869,22 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
   return svc_number;
 }
 
-/* When FRAME is at a syscall instruction, return the PC of the next
-   instruction to be executed.  */
-
 static CORE_ADDR
-arm_linux_syscall_next_pc (struct frame_info *frame)
+arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
 {
-  CORE_ADDR pc = get_frame_pc (frame);
-  CORE_ADDR return_addr = 0;
-  int is_thumb = arm_frame_is_thumb (frame);
+  CORE_ADDR next_pc = 0;
+  CORE_ADDR pc = regcache_read_pc (self->regcache);
+  int is_thumb = arm_is_thumb (self->regcache);
   ULONGEST svc_number = 0;
 
   if (is_thumb)
     {
-      svc_number = get_frame_register_unsigned (frame, 7);
-      return_addr = pc + 2;
+      svc_number = regcache_raw_get_unsigned (self->regcache, 7);
+      next_pc = pc + 2;
     }
   else
     {
-      struct gdbarch *gdbarch = get_frame_arch (frame);
+      struct gdbarch *gdbarch = get_regcache_arch (self->regcache);
       enum bfd_endian byte_order_for_code = 
 	gdbarch_byte_order_for_code (gdbarch);
       unsigned long this_instr = 
@@ -889,19 +897,25 @@ arm_linux_syscall_next_pc (struct frame_info *frame)
 	}
       else /* EABI.  */
 	{
-	  svc_number = get_frame_register_unsigned (frame, 7);
+	  svc_number = regcache_raw_get_unsigned (self->regcache, 7);
 	}
 
-      return_addr = pc + 4;
+      next_pc = pc + 4;
     }
 
-  arm_linux_sigreturn_return_addr (frame, svc_number, &return_addr, &is_thumb);
+  if (svc_number == ARM_SIGRETURN || svc_number == ARM_RT_SIGRETURN)
+    {
+      /* SIGRETURN or RT_SIGRETURN may affect the arm thumb mode, so
+	 update IS_THUMB.   */
+      next_pc = arm_linux_sigreturn_next_pc (self->regcache, svc_number,
+					     &is_thumb);
+    }
 
   /* Addresses for calling Thumb functions have the bit 0 set.  */
   if (is_thumb)
-    return_addr |= 1;
+    next_pc = MAKE_THUMB_ADDR (next_pc);
 
-  return return_addr;
+  return next_pc;
 }
 
 
@@ -910,24 +924,35 @@ arm_linux_syscall_next_pc (struct frame_info *frame)
 static int
 arm_linux_software_single_step (struct frame_info *frame)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
-  CORE_ADDR next_pc;
+  struct regcache *regcache = get_current_regcache ();
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct address_space *aspace = get_regcache_aspace (regcache);
+  struct arm_get_next_pcs next_pcs_ctx;
+  CORE_ADDR pc;
+  int i;
+  VEC (CORE_ADDR) *next_pcs = NULL;
+  struct cleanup *old_chain;
 
-  if (arm_deal_with_atomic_sequence (frame))
-    return 1;
+  /* If the target does have hardware single step, GDB doesn't have
+     to bother software single step.  */
+  if (target_can_do_single_step () == 1)
+    return 0;
 
-  next_pc = arm_get_next_pc (frame, get_frame_pc (frame));
+  old_chain = make_cleanup (VEC_cleanup (CORE_ADDR), &next_pcs);
 
-  /* The Linux kernel offers some user-mode helpers in a high page.  We can
-     not read this page (as of 2.6.23), and even if we could then we couldn't
-     set breakpoints in it, and even if we could then the atomic operations
-     would fail when interrupted.  They are all called as functions and return
-     to the address in LR, so step to there instead.  */
-  if (next_pc > 0xffff0000)
-    next_pc = get_frame_register_unsigned (frame, ARM_LR_REGNUM);
+  arm_get_next_pcs_ctor (&next_pcs_ctx,
+			 &arm_linux_get_next_pcs_ops,
+			 gdbarch_byte_order (gdbarch),
+			 gdbarch_byte_order_for_code (gdbarch),
+			 1,
+			 regcache);
 
-  arm_insert_single_step_breakpoint (gdbarch, aspace, next_pc);
+  next_pcs = arm_get_next_pcs (&next_pcs_ctx);
+
+  for (i = 0; VEC_iterate (CORE_ADDR, next_pcs, i, pc); i++)
+    arm_insert_single_step_breakpoint (gdbarch, aspace, pc);
+
+  do_cleanups (old_chain);
 
   return 1;
 }
@@ -1092,16 +1117,14 @@ arm_catch_kernel_helper_return (struct gdbarch *gdbarch, CORE_ADDR from,
 
 /* Linux-specific displaced step instruction copying function.  Detects when
    the program has stepped into a Linux kernel helper routine (which must be
-   handled as a special case), falling back to arm_displaced_step_copy_insn()
-   if it hasn't.  */
+   handled as a special case).  */
 
 static struct displaced_step_closure *
 arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 				    CORE_ADDR from, CORE_ADDR to,
 				    struct regcache *regs)
 {
-  struct displaced_step_closure *dsc
-    = xmalloc (sizeof (struct displaced_step_closure));
+  struct displaced_step_closure *dsc = XNEW (struct displaced_step_closure);
 
   /* Detect when we enter an (inaccessible by GDB) Linux kernel helper, and
      stop at the return location.  */
@@ -1175,7 +1198,7 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
 	return 0;
 
       len = tmp - start;
-      regname = alloca (len + 2);
+      regname = (char *) alloca (len + 2);
 
       offset = 0;
       if (isdigit (*start))
@@ -1258,16 +1281,371 @@ struct linux_record_tdep arm_linux_record_tdep;
 static enum gdb_syscall
 arm_canonicalize_syscall (int syscall)
 {
-  enum { sys_process_vm_writev = 377 };
-
-  if (syscall <= gdb_sys_sched_getaffinity)
-    return syscall;
-  else if (syscall >= 243 && syscall <= 247)
-    return syscall + 2;
-  else if (syscall >= 248 && syscall <= 253)
-    return syscall + 4;
-
-  return -1;
+  switch (syscall)
+    {
+    case 0: return gdb_sys_restart_syscall;
+    case 1: return gdb_sys_exit;
+    case 2: return gdb_sys_fork;
+    case 3: return gdb_sys_read;
+    case 4: return gdb_sys_write;
+    case 5: return gdb_sys_open;
+    case 6: return gdb_sys_close;
+    case 8: return gdb_sys_creat;
+    case 9: return gdb_sys_link;
+    case 10: return gdb_sys_unlink;
+    case 11: return gdb_sys_execve;
+    case 12: return gdb_sys_chdir;
+    case 13: return gdb_sys_time;
+    case 14: return gdb_sys_mknod;
+    case 15: return gdb_sys_chmod;
+    case 16: return gdb_sys_lchown16;
+    case 19: return gdb_sys_lseek;
+    case 20: return gdb_sys_getpid;
+    case 21: return gdb_sys_mount;
+    case 22: return gdb_sys_oldumount;
+    case 23: return gdb_sys_setuid16;
+    case 24: return gdb_sys_getuid16;
+    case 25: return gdb_sys_stime;
+    case 26: return gdb_sys_ptrace;
+    case 27: return gdb_sys_alarm;
+    case 29: return gdb_sys_pause;
+    case 30: return gdb_sys_utime;
+    case 33: return gdb_sys_access;
+    case 34: return gdb_sys_nice;
+    case 36: return gdb_sys_sync;
+    case 37: return gdb_sys_kill;
+    case 38: return gdb_sys_rename;
+    case 39: return gdb_sys_mkdir;
+    case 40: return gdb_sys_rmdir;
+    case 41: return gdb_sys_dup;
+    case 42: return gdb_sys_pipe;
+    case 43: return gdb_sys_times;
+    case 45: return gdb_sys_brk;
+    case 46: return gdb_sys_setgid16;
+    case 47: return gdb_sys_getgid16;
+    case 49: return gdb_sys_geteuid16;
+    case 50: return gdb_sys_getegid16;
+    case 51: return gdb_sys_acct;
+    case 52: return gdb_sys_umount;
+    case 54: return gdb_sys_ioctl;
+    case 55: return gdb_sys_fcntl;
+    case 57: return gdb_sys_setpgid;
+    case 60: return gdb_sys_umask;
+    case 61: return gdb_sys_chroot;
+    case 62: return gdb_sys_ustat;
+    case 63: return gdb_sys_dup2;
+    case 64: return gdb_sys_getppid;
+    case 65: return gdb_sys_getpgrp;
+    case 66: return gdb_sys_setsid;
+    case 67: return gdb_sys_sigaction;
+    case 70: return gdb_sys_setreuid16;
+    case 71: return gdb_sys_setregid16;
+    case 72: return gdb_sys_sigsuspend;
+    case 73: return gdb_sys_sigpending;
+    case 74: return gdb_sys_sethostname;
+    case 75: return gdb_sys_setrlimit;
+    case 76: return gdb_sys_getrlimit;
+    case 77: return gdb_sys_getrusage;
+    case 78: return gdb_sys_gettimeofday;
+    case 79: return gdb_sys_settimeofday;
+    case 80: return gdb_sys_getgroups16;
+    case 81: return gdb_sys_setgroups16;
+    case 82: return gdb_sys_select;
+    case 83: return gdb_sys_symlink;
+    case 85: return gdb_sys_readlink;
+    case 86: return gdb_sys_uselib;
+    case 87: return gdb_sys_swapon;
+    case 88: return gdb_sys_reboot;
+    case 89: return gdb_old_readdir;
+    case 90: return gdb_old_mmap;
+    case 91: return gdb_sys_munmap;
+    case 92: return gdb_sys_truncate;
+    case 93: return gdb_sys_ftruncate;
+    case 94: return gdb_sys_fchmod;
+    case 95: return gdb_sys_fchown16;
+    case 96: return gdb_sys_getpriority;
+    case 97: return gdb_sys_setpriority;
+    case 99: return gdb_sys_statfs;
+    case 100: return gdb_sys_fstatfs;
+    case 102: return gdb_sys_socketcall;
+    case 103: return gdb_sys_syslog;
+    case 104: return gdb_sys_setitimer;
+    case 105: return gdb_sys_getitimer;
+    case 106: return gdb_sys_stat;
+    case 107: return gdb_sys_lstat;
+    case 108: return gdb_sys_fstat;
+    case 111: return gdb_sys_vhangup;
+    case 113: /* sys_syscall */
+      return gdb_sys_no_syscall;
+    case 114: return gdb_sys_wait4;
+    case 115: return gdb_sys_swapoff;
+    case 116: return gdb_sys_sysinfo;
+    case 117: return gdb_sys_ipc;
+    case 118: return gdb_sys_fsync;
+    case 119: return gdb_sys_sigreturn;
+    case 120: return gdb_sys_clone;
+    case 121: return gdb_sys_setdomainname;
+    case 122: return gdb_sys_uname;
+    case 124: return gdb_sys_adjtimex;
+    case 125: return gdb_sys_mprotect;
+    case 126: return gdb_sys_sigprocmask;
+    case 128: return gdb_sys_init_module;
+    case 129: return gdb_sys_delete_module;
+    case 131: return gdb_sys_quotactl;
+    case 132: return gdb_sys_getpgid;
+    case 133: return gdb_sys_fchdir;
+    case 134: return gdb_sys_bdflush;
+    case 135: return gdb_sys_sysfs;
+    case 136: return gdb_sys_personality;
+    case 138: return gdb_sys_setfsuid16;
+    case 139: return gdb_sys_setfsgid16;
+    case 140: return gdb_sys_llseek;
+    case 141: return gdb_sys_getdents;
+    case 142: return gdb_sys_select;
+    case 143: return gdb_sys_flock;
+    case 144: return gdb_sys_msync;
+    case 145: return gdb_sys_readv;
+    case 146: return gdb_sys_writev;
+    case 147: return gdb_sys_getsid;
+    case 148: return gdb_sys_fdatasync;
+    case 149: return gdb_sys_sysctl;
+    case 150: return gdb_sys_mlock;
+    case 151: return gdb_sys_munlock;
+    case 152: return gdb_sys_mlockall;
+    case 153: return gdb_sys_munlockall;
+    case 154: return gdb_sys_sched_setparam;
+    case 155: return gdb_sys_sched_getparam;
+    case 156: return gdb_sys_sched_setscheduler;
+    case 157: return gdb_sys_sched_getscheduler;
+    case 158: return gdb_sys_sched_yield;
+    case 159: return gdb_sys_sched_get_priority_max;
+    case 160: return gdb_sys_sched_get_priority_min;
+    case 161: return gdb_sys_sched_rr_get_interval;
+    case 162: return gdb_sys_nanosleep;
+    case 163: return gdb_sys_mremap;
+    case 164: return gdb_sys_setresuid16;
+    case 165: return gdb_sys_getresuid16;
+    case 168: return gdb_sys_poll;
+    case 169: return gdb_sys_nfsservctl;
+    case 170: return gdb_sys_setresgid;
+    case 171: return gdb_sys_getresgid;
+    case 172: return gdb_sys_prctl;
+    case 173: return gdb_sys_rt_sigreturn;
+    case 174: return gdb_sys_rt_sigaction;
+    case 175: return gdb_sys_rt_sigprocmask;
+    case 176: return gdb_sys_rt_sigpending;
+    case 177: return gdb_sys_rt_sigtimedwait;
+    case 178: return gdb_sys_rt_sigqueueinfo;
+    case 179: return gdb_sys_rt_sigsuspend;
+    case 180: return gdb_sys_pread64;
+    case 181: return gdb_sys_pwrite64;
+    case 182: return gdb_sys_chown;
+    case 183: return gdb_sys_getcwd;
+    case 184: return gdb_sys_capget;
+    case 185: return gdb_sys_capset;
+    case 186: return gdb_sys_sigaltstack;
+    case 187: return gdb_sys_sendfile;
+    case 190: return gdb_sys_vfork;
+    case 191: return gdb_sys_getrlimit;
+    case 192: return gdb_sys_mmap2;
+    case 193: return gdb_sys_truncate64;
+    case 194: return gdb_sys_ftruncate64;
+    case 195: return gdb_sys_stat64;
+    case 196: return gdb_sys_lstat64;
+    case 197: return gdb_sys_fstat64;
+    case 198: return gdb_sys_lchown;
+    case 199: return gdb_sys_getuid;
+    case 200: return gdb_sys_getgid;
+    case 201: return gdb_sys_geteuid;
+    case 202: return gdb_sys_getegid;
+    case 203: return gdb_sys_setreuid;
+    case 204: return gdb_sys_setregid;
+    case 205: return gdb_sys_getgroups;
+    case 206: return gdb_sys_setgroups;
+    case 207: return gdb_sys_fchown;
+    case 208: return gdb_sys_setresuid;
+    case 209: return gdb_sys_getresuid;
+    case 210: return gdb_sys_setresgid;
+    case 211: return gdb_sys_getresgid;
+    case 212: return gdb_sys_chown;
+    case 213: return gdb_sys_setuid;
+    case 214: return gdb_sys_setgid;
+    case 215: return gdb_sys_setfsuid;
+    case 216: return gdb_sys_setfsgid;
+    case 217: return gdb_sys_getdents64;
+    case 218: return gdb_sys_pivot_root;
+    case 219: return gdb_sys_mincore;
+    case 220: return gdb_sys_madvise;
+    case 221: return gdb_sys_fcntl64;
+    case 224: return gdb_sys_gettid;
+    case 225: return gdb_sys_readahead;
+    case 226: return gdb_sys_setxattr;
+    case 227: return gdb_sys_lsetxattr;
+    case 228: return gdb_sys_fsetxattr;
+    case 229: return gdb_sys_getxattr;
+    case 230: return gdb_sys_lgetxattr;
+    case 231: return gdb_sys_fgetxattr;
+    case 232: return gdb_sys_listxattr;
+    case 233: return gdb_sys_llistxattr;
+    case 234: return gdb_sys_flistxattr;
+    case 235: return gdb_sys_removexattr;
+    case 236: return gdb_sys_lremovexattr;
+    case 237: return gdb_sys_fremovexattr;
+    case 238: return gdb_sys_tkill;
+    case 239: return gdb_sys_sendfile64;
+    case 240: return gdb_sys_futex;
+    case 241: return gdb_sys_sched_setaffinity;
+    case 242: return gdb_sys_sched_getaffinity;
+    case 243: return gdb_sys_io_setup;
+    case 244: return gdb_sys_io_destroy;
+    case 245: return gdb_sys_io_getevents;
+    case 246: return gdb_sys_io_submit;
+    case 247: return gdb_sys_io_cancel;
+    case 248: return gdb_sys_exit_group;
+    case 249: return gdb_sys_lookup_dcookie;
+    case 250: return gdb_sys_epoll_create;
+    case 251: return gdb_sys_epoll_ctl;
+    case 252: return gdb_sys_epoll_wait;
+    case 253: return gdb_sys_remap_file_pages;
+    case 256: return gdb_sys_set_tid_address;
+    case 257: return gdb_sys_timer_create;
+    case 258: return gdb_sys_timer_settime;
+    case 259: return gdb_sys_timer_gettime;
+    case 260: return gdb_sys_timer_getoverrun;
+    case 261: return gdb_sys_timer_delete;
+    case 262: return gdb_sys_clock_settime;
+    case 263: return gdb_sys_clock_gettime;
+    case 264: return gdb_sys_clock_getres;
+    case 265: return gdb_sys_clock_nanosleep;
+    case 266: return gdb_sys_statfs64;
+    case 267: return gdb_sys_fstatfs64;
+    case 268: return gdb_sys_tgkill;
+    case 269: return gdb_sys_utimes;
+      /*
+    case 270: return gdb_sys_arm_fadvise64_64;
+    case 271: return gdb_sys_pciconfig_iobase;
+    case 272: return gdb_sys_pciconfig_read;
+    case 273: return gdb_sys_pciconfig_write;
+      */
+    case 274: return gdb_sys_mq_open;
+    case 275: return gdb_sys_mq_unlink;
+    case 276: return gdb_sys_mq_timedsend;
+    case 277: return gdb_sys_mq_timedreceive;
+    case 278: return gdb_sys_mq_notify;
+    case 279: return gdb_sys_mq_getsetattr;
+    case 280: return gdb_sys_waitid;
+    case 281: return gdb_sys_socket;
+    case 282: return gdb_sys_bind;
+    case 283: return gdb_sys_connect;
+    case 284: return gdb_sys_listen;
+    case 285: return gdb_sys_accept;
+    case 286: return gdb_sys_getsockname;
+    case 287: return gdb_sys_getpeername;
+    case 288: return gdb_sys_socketpair;
+    case 289: /* send */ return gdb_sys_no_syscall;
+    case 290: return gdb_sys_sendto;
+    case 291: return gdb_sys_recv;
+    case 292: return gdb_sys_recvfrom;
+    case 293: return gdb_sys_shutdown;
+    case 294: return gdb_sys_setsockopt;
+    case 295: return gdb_sys_getsockopt;
+    case 296: return gdb_sys_sendmsg;
+    case 297: return gdb_sys_recvmsg;
+    case 298: return gdb_sys_semop;
+    case 299: return gdb_sys_semget;
+    case 300: return gdb_sys_semctl;
+    case 301: return gdb_sys_msgsnd;
+    case 302: return gdb_sys_msgrcv;
+    case 303: return gdb_sys_msgget;
+    case 304: return gdb_sys_msgctl;
+    case 305: return gdb_sys_shmat;
+    case 306: return gdb_sys_shmdt;
+    case 307: return gdb_sys_shmget;
+    case 308: return gdb_sys_shmctl;
+    case 309: return gdb_sys_add_key;
+    case 310: return gdb_sys_request_key;
+    case 311: return gdb_sys_keyctl;
+    case 312: return gdb_sys_semtimedop;
+    case 313: /* vserver */ return gdb_sys_no_syscall;
+    case 314: return gdb_sys_ioprio_set;
+    case 315: return gdb_sys_ioprio_get;
+    case 316: return gdb_sys_inotify_init;
+    case 317: return gdb_sys_inotify_add_watch;
+    case 318: return gdb_sys_inotify_rm_watch;
+    case 319: return gdb_sys_mbind;
+    case 320: return gdb_sys_get_mempolicy;
+    case 321: return gdb_sys_set_mempolicy;
+    case 322: return gdb_sys_openat;
+    case 323: return gdb_sys_mkdirat;
+    case 324: return gdb_sys_mknodat;
+    case 325: return gdb_sys_fchownat;
+    case 326: return gdb_sys_futimesat;
+    case 327: return gdb_sys_fstatat64;
+    case 328: return gdb_sys_unlinkat;
+    case 329: return gdb_sys_renameat;
+    case 330: return gdb_sys_linkat;
+    case 331: return gdb_sys_symlinkat;
+    case 332: return gdb_sys_readlinkat;
+    case 333: return gdb_sys_fchmodat;
+    case 334: return gdb_sys_faccessat;
+    case 335: return gdb_sys_pselect6;
+    case 336: return gdb_sys_ppoll;
+    case 337: return gdb_sys_unshare;
+    case 338: return gdb_sys_set_robust_list;
+    case 339: return gdb_sys_get_robust_list;
+    case 340: return gdb_sys_splice;
+    /*case 341: return gdb_sys_arm_sync_file_range;*/
+    case 342: return gdb_sys_tee;
+    case 343: return gdb_sys_vmsplice;
+    case 344: return gdb_sys_move_pages;
+    case 345: return gdb_sys_getcpu;
+    case 346: return gdb_sys_epoll_pwait;
+    case 347: return gdb_sys_kexec_load;
+      /*
+    case 348: return gdb_sys_utimensat;
+    case 349: return gdb_sys_signalfd;
+    case 350: return gdb_sys_timerfd_create;
+    case 351: return gdb_sys_eventfd;
+      */
+    case 352: return gdb_sys_fallocate;
+      /*
+    case 353: return gdb_sys_timerfd_settime;
+    case 354: return gdb_sys_timerfd_gettime;
+    case 355: return gdb_sys_signalfd4;
+      */
+    case 356: return gdb_sys_eventfd2;
+    case 357: return gdb_sys_epoll_create1;
+    case 358: return gdb_sys_dup3;
+    case 359: return gdb_sys_pipe2;
+    case 360: return gdb_sys_inotify_init1;
+      /*
+    case 361: return gdb_sys_preadv;
+    case 362: return gdb_sys_pwritev;
+    case 363: return gdb_sys_rt_tgsigqueueinfo;
+    case 364: return gdb_sys_perf_event_open;
+    case 365: return gdb_sys_recvmmsg;
+    case 366: return gdb_sys_accept4;
+    case 367: return gdb_sys_fanotify_init;
+    case 368: return gdb_sys_fanotify_mark;
+    case 369: return gdb_sys_prlimit64;
+    case 370: return gdb_sys_name_to_handle_at;
+    case 371: return gdb_sys_open_by_handle_at;
+    case 372: return gdb_sys_clock_adjtime;
+    case 373: return gdb_sys_syncfs;
+    case 374: return gdb_sys_sendmmsg;
+    case 375: return gdb_sys_setns;
+    case 376: return gdb_sys_process_vm_readv;
+    case 377: return gdb_sys_process_vm_writev;
+    case 378: return gdb_sys_kcmp;
+    case 379: return gdb_sys_finit_module;
+      */
+    case 983041: /* ARM_breakpoint */ return gdb_sys_no_syscall;
+    case 983042: /* ARM_cacheflush */ return gdb_sys_no_syscall;
+    case 983043: /* ARM_usr26 */ return gdb_sys_no_syscall;
+    case 983044: /* ARM_usr32 */ return gdb_sys_no_syscall;
+    case 983045: /* ARM_set_tls */ return gdb_sys_no_syscall;
+    default: return gdb_sys_no_syscall;
+    }
 }
 
 /* Record all registers but PC register for process-record.  */
@@ -1299,7 +1677,7 @@ arm_linux_syscall_record (struct regcache *regcache, unsigned long svc_number)
 
   syscall_gdb = arm_canonicalize_syscall (svc_number);
 
-  if (syscall_gdb < 0)
+  if (syscall_gdb == gdb_sys_no_syscall)
     {
       printf_unfiltered (_("Process record and replay target doesn't "
                            "support syscall number %s\n"),
@@ -1463,8 +1841,6 @@ arm_linux_init_abi (struct gdbarch_info info,
   set_gdbarch_stap_parse_special_token (gdbarch,
 					arm_stap_parse_special_token);
 
-  tdep->syscall_next_pc = arm_linux_syscall_next_pc;
-
   /* `catch syscall' */
   set_xml_syscall_file_name (gdbarch, "syscalls/arm-linux.xml");
   set_gdbarch_get_syscall_number (gdbarch, arm_linux_get_syscall_number);
@@ -1483,8 +1859,8 @@ arm_linux_init_abi (struct gdbarch_info info,
   arm_linux_record_tdep.size_flock = 16;
   arm_linux_record_tdep.size_oldold_utsname = 45;
   arm_linux_record_tdep.size_ustat = 20;
-  arm_linux_record_tdep.size_old_sigaction = 140;
-  arm_linux_record_tdep.size_old_sigset_t = 128;
+  arm_linux_record_tdep.size_old_sigaction = 16;
+  arm_linux_record_tdep.size_old_sigset_t = 4;
   arm_linux_record_tdep.size_rlimit = 8;
   arm_linux_record_tdep.size_rusage = 72;
   arm_linux_record_tdep.size_timeval = 8;
@@ -1492,8 +1868,7 @@ arm_linux_init_abi (struct gdbarch_info info,
   arm_linux_record_tdep.size_old_gid_t = 2;
   arm_linux_record_tdep.size_old_uid_t = 2;
   arm_linux_record_tdep.size_fd_set = 128;
-  arm_linux_record_tdep.size_dirent = 268;
-  arm_linux_record_tdep.size_dirent64 = 276;
+  arm_linux_record_tdep.size_old_dirent = 268;
   arm_linux_record_tdep.size_statfs = 64;
   arm_linux_record_tdep.size_statfs64 = 84;
   arm_linux_record_tdep.size_sockaddr = 16;
@@ -1520,15 +1895,15 @@ arm_linux_init_abi (struct gdbarch_info info,
   arm_linux_record_tdep.size_NFS_FHSIZE = 32;
   arm_linux_record_tdep.size_knfsd_fh = 132;
   arm_linux_record_tdep.size_TASK_COMM_LEN = 16;
-  arm_linux_record_tdep.size_sigaction = 140;
+  arm_linux_record_tdep.size_sigaction = 20;
   arm_linux_record_tdep.size_sigset_t = 8;
   arm_linux_record_tdep.size_siginfo_t = 128;
   arm_linux_record_tdep.size_cap_user_data_t = 12;
   arm_linux_record_tdep.size_stack_t = 12;
   arm_linux_record_tdep.size_off_t = arm_linux_record_tdep.size_long;
   arm_linux_record_tdep.size_stat64 = 96;
-  arm_linux_record_tdep.size_gid_t = 2;
-  arm_linux_record_tdep.size_uid_t = 2;
+  arm_linux_record_tdep.size_gid_t = 4;
+  arm_linux_record_tdep.size_uid_t = 4;
   arm_linux_record_tdep.size_PAGE_SIZE = 4096;
   arm_linux_record_tdep.size_flock64 = 24;
   arm_linux_record_tdep.size_user_desc = 16;
@@ -1538,7 +1913,6 @@ arm_linux_init_abi (struct gdbarch_info info,
   arm_linux_record_tdep.size_itimerspec
     = arm_linux_record_tdep.size_timespec * 2;
   arm_linux_record_tdep.size_mq_attr = 32;
-  arm_linux_record_tdep.size_siginfo = 128;
   arm_linux_record_tdep.size_termios = 36;
   arm_linux_record_tdep.size_termios2 = 44;
   arm_linux_record_tdep.size_pid_t = 4;
@@ -1548,6 +1922,7 @@ arm_linux_init_abi (struct gdbarch_info info,
   arm_linux_record_tdep.size_hayes_esp_config = 12;
   arm_linux_record_tdep.size_size_t = 4;
   arm_linux_record_tdep.size_iovec = 8;
+  arm_linux_record_tdep.size_time_t = 4;
 
   /* These values are the second argument of system call "sys_ioctl".
      They are obtained from Linux Kernel source.  */
@@ -1624,10 +1999,13 @@ arm_linux_init_abi (struct gdbarch_info info,
   arm_linux_record_tdep.fcntl_F_SETLK64 = 13;
   arm_linux_record_tdep.fcntl_F_SETLKW64 = 14;
 
-  arm_linux_record_tdep.arg1 = ARM_A1_REGNUM + 1;
-  arm_linux_record_tdep.arg2 = ARM_A1_REGNUM + 2;
-  arm_linux_record_tdep.arg3 = ARM_A1_REGNUM + 3;
+  arm_linux_record_tdep.arg1 = ARM_A1_REGNUM;
+  arm_linux_record_tdep.arg2 = ARM_A1_REGNUM + 1;
+  arm_linux_record_tdep.arg3 = ARM_A1_REGNUM + 2;
   arm_linux_record_tdep.arg4 = ARM_A1_REGNUM + 3;
+  arm_linux_record_tdep.arg5 = ARM_A1_REGNUM + 4;
+  arm_linux_record_tdep.arg6 = ARM_A1_REGNUM + 5;
+  arm_linux_record_tdep.arg7 = ARM_A1_REGNUM + 6;
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

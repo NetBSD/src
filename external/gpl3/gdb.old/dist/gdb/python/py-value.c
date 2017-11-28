@@ -1,6 +1,6 @@
 /* Python interface to values.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -356,7 +356,7 @@ valpy_get_dynamic_type (PyObject *self, void *closure)
       struct cleanup *cleanup = make_cleanup_value_free_to_mark (value_mark ());
 
       type = value_type (val);
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
 
       if (((TYPE_CODE (type) == TYPE_CODE_PTR)
 	   || (TYPE_CODE (type) == TYPE_CODE_REF))
@@ -858,7 +858,7 @@ valpy_call (PyObject *self, PyObject *args, PyObject *keywords)
     {
       int i;
 
-      vargs = alloca (sizeof (struct value *) * args_count);
+      vargs = XALLOCAVEC (struct value *, args_count);
       for (i = 0; i < args_count; i++)
 	{
 	  PyObject *item = PyTuple_GetItem (args, i);
@@ -1018,6 +1018,136 @@ enum valpy_opcode
 #define STRIP_REFERENCE(TYPE) \
   ((TYPE_CODE (TYPE) == TYPE_CODE_REF) ? (TYPE_TARGET_TYPE (TYPE)) : (TYPE))
 
+/* Helper for valpy_binop.  Returns a value object which is the result
+   of applying the operation specified by OPCODE to the given
+   arguments.  Throws a GDB exception on error.  */
+
+static PyObject *
+valpy_binop_throw (enum valpy_opcode opcode, PyObject *self, PyObject *other)
+{
+  PyObject *result = NULL;
+
+  struct value *arg1, *arg2;
+  struct cleanup *cleanup = make_cleanup_value_free_to_mark (value_mark ());
+  struct value *res_val = NULL;
+  enum exp_opcode op = OP_NULL;
+  int handled = 0;
+
+  /* If the gdb.Value object is the second operand, then it will be
+     passed to us as the OTHER argument, and SELF will be an entirely
+     different kind of object, altogether.  Because of this, we can't
+     assume self is a gdb.Value object and need to convert it from
+     python as well.  */
+  arg1 = convert_value_from_python (self);
+  if (arg1 == NULL)
+    {
+      do_cleanups (cleanup);
+      return NULL;
+    }
+
+  arg2 = convert_value_from_python (other);
+  if (arg2 == NULL)
+    {
+      do_cleanups (cleanup);
+      return NULL;
+    }
+
+  switch (opcode)
+    {
+    case VALPY_ADD:
+      {
+	struct type *ltype = value_type (arg1);
+	struct type *rtype = value_type (arg2);
+
+	ltype = check_typedef (ltype);
+	ltype = STRIP_REFERENCE (ltype);
+	rtype = check_typedef (rtype);
+	rtype = STRIP_REFERENCE (rtype);
+
+	handled = 1;
+	if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+	    && is_integral_type (rtype))
+	  res_val = value_ptradd (arg1, value_as_long (arg2));
+	else if (TYPE_CODE (rtype) == TYPE_CODE_PTR
+		 && is_integral_type (ltype))
+	  res_val = value_ptradd (arg2, value_as_long (arg1));
+	else
+	  {
+	    handled = 0;
+	    op = BINOP_ADD;
+	  }
+      }
+      break;
+    case VALPY_SUB:
+      {
+	struct type *ltype = value_type (arg1);
+	struct type *rtype = value_type (arg2);
+
+	ltype = check_typedef (ltype);
+	ltype = STRIP_REFERENCE (ltype);
+	rtype = check_typedef (rtype);
+	rtype = STRIP_REFERENCE (rtype);
+
+	handled = 1;
+	if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+	    && TYPE_CODE (rtype) == TYPE_CODE_PTR)
+	  /* A ptrdiff_t for the target would be preferable here.  */
+	  res_val = value_from_longest (builtin_type_pyint,
+					value_ptrdiff (arg1, arg2));
+	else if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+		 && is_integral_type (rtype))
+	  res_val = value_ptradd (arg1, - value_as_long (arg2));
+	else
+	  {
+	    handled = 0;
+	    op = BINOP_SUB;
+	  }
+      }
+      break;
+    case VALPY_MUL:
+      op = BINOP_MUL;
+      break;
+    case VALPY_DIV:
+      op = BINOP_DIV;
+      break;
+    case VALPY_REM:
+      op = BINOP_REM;
+      break;
+    case VALPY_POW:
+      op = BINOP_EXP;
+      break;
+    case VALPY_LSH:
+      op = BINOP_LSH;
+      break;
+    case VALPY_RSH:
+      op = BINOP_RSH;
+      break;
+    case VALPY_BITAND:
+      op = BINOP_BITWISE_AND;
+      break;
+    case VALPY_BITOR:
+      op = BINOP_BITWISE_IOR;
+      break;
+    case VALPY_BITXOR:
+      op = BINOP_BITWISE_XOR;
+      break;
+    }
+
+  if (!handled)
+    {
+      if (binop_user_defined_p (op, arg1, arg2))
+	res_val = value_x_binop (arg1, arg2, op, OP_NULL, EVAL_NORMAL);
+      else
+	res_val = value_binop (arg1, arg2, op);
+    }
+
+  if (res_val)
+    result = value_to_value_object (res_val);
+
+  do_cleanups (cleanup);
+  return result;
+}
+
 /* Returns a value object which is the result of applying the operation
    specified by OPCODE to the given arguments.  Returns NULL on error, with
    a python exception set.  */
@@ -1028,123 +1158,7 @@ valpy_binop (enum valpy_opcode opcode, PyObject *self, PyObject *other)
 
   TRY
     {
-      struct value *arg1, *arg2;
-      struct cleanup *cleanup = make_cleanup_value_free_to_mark (value_mark ());
-      struct value *res_val = NULL;
-      enum exp_opcode op = OP_NULL;
-      int handled = 0;
-
-      /* If the gdb.Value object is the second operand, then it will be passed
-	 to us as the OTHER argument, and SELF will be an entirely different
-	 kind of object, altogether.  Because of this, we can't assume self is
-	 a gdb.Value object and need to convert it from python as well.  */
-      arg1 = convert_value_from_python (self);
-      if (arg1 == NULL)
-	{
-	  do_cleanups (cleanup);
-	  break;
-	}
-
-      arg2 = convert_value_from_python (other);
-      if (arg2 == NULL)
-	{
-	  do_cleanups (cleanup);
-	  break;
-	}
-
-      switch (opcode)
-	{
-	case VALPY_ADD:
-	  {
-	    struct type *ltype = value_type (arg1);
-	    struct type *rtype = value_type (arg2);
-
-	    CHECK_TYPEDEF (ltype);
-	    ltype = STRIP_REFERENCE (ltype);
-	    CHECK_TYPEDEF (rtype);
-	    rtype = STRIP_REFERENCE (rtype);
-
-	    handled = 1;
-	    if (TYPE_CODE (ltype) == TYPE_CODE_PTR
-		&& is_integral_type (rtype))
-	      res_val = value_ptradd (arg1, value_as_long (arg2));
-	    else if (TYPE_CODE (rtype) == TYPE_CODE_PTR
-		     && is_integral_type (ltype))
-	      res_val = value_ptradd (arg2, value_as_long (arg1));
-	    else
-	      {
-		handled = 0;
-		op = BINOP_ADD;
-	      }
-	  }
-	  break;
-	case VALPY_SUB:
-	  {
-	    struct type *ltype = value_type (arg1);
-	    struct type *rtype = value_type (arg2);
-
-	    CHECK_TYPEDEF (ltype);
-	    ltype = STRIP_REFERENCE (ltype);
-	    CHECK_TYPEDEF (rtype);
-	    rtype = STRIP_REFERENCE (rtype);
-
-	    handled = 1;
-	    if (TYPE_CODE (ltype) == TYPE_CODE_PTR
-		&& TYPE_CODE (rtype) == TYPE_CODE_PTR)
-	      /* A ptrdiff_t for the target would be preferable here.  */
-	      res_val = value_from_longest (builtin_type_pyint,
-					    value_ptrdiff (arg1, arg2));
-	    else if (TYPE_CODE (ltype) == TYPE_CODE_PTR
-		     && is_integral_type (rtype))
-	      res_val = value_ptradd (arg1, - value_as_long (arg2));
-	    else
-	      {
-		handled = 0;
-		op = BINOP_SUB;
-	      }
-	  }
-	  break;
-	case VALPY_MUL:
-	  op = BINOP_MUL;
-	  break;
-	case VALPY_DIV:
-	  op = BINOP_DIV;
-	  break;
-	case VALPY_REM:
-	  op = BINOP_REM;
-	  break;
-	case VALPY_POW:
-	  op = BINOP_EXP;
-	  break;
-	case VALPY_LSH:
-	  op = BINOP_LSH;
-	  break;
-	case VALPY_RSH:
-	  op = BINOP_RSH;
-	  break;
-	case VALPY_BITAND:
-	  op = BINOP_BITWISE_AND;
-	  break;
-	case VALPY_BITOR:
-	  op = BINOP_BITWISE_IOR;
-	  break;
-	case VALPY_BITXOR:
-	  op = BINOP_BITWISE_XOR;
-	  break;
-	}
-
-      if (!handled)
-	{
-	  if (binop_user_defined_p (op, arg1, arg2))
-	    res_val = value_x_binop (arg1, arg2, op, OP_NULL, EVAL_NORMAL);
-	  else
-	    res_val = value_binop (arg1, arg2, op);
-	}
-
-      if (res_val)
-	result = value_to_value_object (res_val);
-
-      do_cleanups (cleanup);
+      result = valpy_binop_throw (opcode, self, other);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -1351,6 +1365,63 @@ valpy_xor (PyObject *self, PyObject *other)
   return valpy_binop (VALPY_BITXOR, self, other);
 }
 
+/* Helper for valpy_richcompare.  Implements comparison operations for
+   value objects.  Returns true/false on success.  Returns -1 with a
+   Python exception set if a Python error is detected.  Throws a GDB
+   exception on other errors (memory error, etc.).  */
+
+static int
+valpy_richcompare_throw (PyObject *self, PyObject *other, int op)
+{
+  int result;
+  struct value *value_other;
+  struct value *value_self;
+  struct value *mark = value_mark ();
+  struct cleanup *cleanup;
+
+  value_other = convert_value_from_python (other);
+  if (value_other == NULL)
+    return -1;
+
+  cleanup = make_cleanup_value_free_to_mark (mark);
+
+  value_self = ((value_object *) self)->value;
+
+  switch (op)
+    {
+    case Py_LT:
+      result = value_less (value_self, value_other);
+      break;
+    case Py_LE:
+      result = value_less (value_self, value_other)
+	|| value_equal (value_self, value_other);
+      break;
+    case Py_EQ:
+      result = value_equal (value_self, value_other);
+      break;
+    case Py_NE:
+      result = !value_equal (value_self, value_other);
+      break;
+    case Py_GT:
+      result = value_less (value_other, value_self);
+      break;
+    case Py_GE:
+      result = (value_less (value_other, value_self)
+		|| value_equal (value_self, value_other));
+      break;
+    default:
+      /* Can't happen.  */
+      PyErr_SetString (PyExc_NotImplementedError,
+		       _("Invalid operation on gdb.Value."));
+      result = -1;
+      break;
+    }
+
+  do_cleanups (cleanup);
+  return result;
+}
+
+
 /* Implements comparison operations for value objects.  Returns NULL on error,
    with a python exception set.  */
 static PyObject *
@@ -1379,48 +1450,7 @@ valpy_richcompare (PyObject *self, PyObject *other, int op)
 
   TRY
     {
-      struct value *value_other, *mark = value_mark ();
-      struct cleanup *cleanup;
-
-      value_other = convert_value_from_python (other);
-      if (value_other == NULL)
-	{
-	  result = -1;
-	  break;
-	}
-
-      cleanup = make_cleanup_value_free_to_mark (mark);
-
-      switch (op) {
-        case Py_LT:
-	  result = value_less (((value_object *) self)->value, value_other);
-	  break;
-	case Py_LE:
-	  result = value_less (((value_object *) self)->value, value_other)
-	    || value_equal (((value_object *) self)->value, value_other);
-	  break;
-	case Py_EQ:
-	  result = value_equal (((value_object *) self)->value, value_other);
-	  break;
-	case Py_NE:
-	  result = !value_equal (((value_object *) self)->value, value_other);
-	  break;
-        case Py_GT:
-	  result = value_less (value_other, ((value_object *) self)->value);
-	  break;
-	case Py_GE:
-	  result = value_less (value_other, ((value_object *) self)->value)
-	    || value_equal (((value_object *) self)->value, value_other);
-	  break;
-	default:
-	  /* Can't happen.  */
-	  PyErr_SetString (PyExc_NotImplementedError,
-			   _("Invalid operation on gdb.Value."));
-	  result = -1;
-	  break;
-      }
-
-      do_cleanups (cleanup);
+      result = valpy_richcompare_throw (self, other, op);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -1474,7 +1504,7 @@ valpy_long (PyObject *self)
 
   TRY
     {
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
 
       if (!is_integral_type (type)
 	  && TYPE_CODE (type) != TYPE_CODE_PTR)
@@ -1501,7 +1531,7 @@ valpy_float (PyObject *self)
 
   TRY
     {
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
 
       if (TYPE_CODE (type) != TYPE_CODE_FLT)
 	error (_("Cannot convert value to float."));
@@ -1797,6 +1827,9 @@ static PyNumberMethods value_object_as_number = {
   NULL,                       /* nb_inplace_add */
   NULL,                       /* nb_inplace_subtract */
   NULL,                       /* nb_inplace_multiply */
+#ifndef IS_PY3K
+  NULL,                       /* nb_inplace_divide */
+#endif
   NULL,                       /* nb_inplace_remainder */
   NULL,                       /* nb_inplace_power */
   NULL,                       /* nb_inplace_lshift */
@@ -1805,7 +1838,13 @@ static PyNumberMethods value_object_as_number = {
   NULL,                       /* nb_inplace_xor */
   NULL,                       /* nb_inplace_or */
   NULL,                       /* nb_floor_divide */
-  valpy_divide                /* nb_true_divide */
+  valpy_divide,               /* nb_true_divide */
+  NULL,			      /* nb_inplace_floor_divide */
+  NULL,			      /* nb_inplace_true_divide */
+#ifndef HAVE_LIBPYTHON2_4
+  /* This was added in Python 2.5.  */
+  valpy_long,		      /* nb_index */
+#endif /* HAVE_LIBPYTHON2_4 */
 };
 
 static PyMappingMethods value_object_as_mapping = {

@@ -1,6 +1,6 @@
 /* Scheme interface to architecture.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -495,11 +495,11 @@ gdbscm_arch_uint64_type (SCM self)
 
 static const scheme_function arch_functions[] =
 {
-  { "arch?", 1, 0, 0, gdbscm_arch_p,
+  { "arch?", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_p),
     "\
 Return #t if the object is a <gdb:arch> object." },
 
-  { "current-arch", 0, 0, 0, gdbscm_current_arch,
+  { "current-arch", 0, 0, 0, as_a_scm_t_subr (gdbscm_current_arch),
     "\
 Return the <gdb:arch> object representing the architecture of the\n\
 currently selected stack frame, if there is one, or the architecture of the\n\
@@ -507,135 +507,136 @@ current target if there isn't.\n\
 \n\
   Arguments: none" },
 
-  { "arch-name", 1, 0, 0, gdbscm_arch_name,
+  { "arch-name", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_name),
     "\
 Return the name of the architecture." },
 
-  { "arch-charset", 1, 0, 0, gdbscm_arch_charset,
+  { "arch-charset", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_charset),
   "\
 Return name of target character set as a string." },
 
-  { "arch-wide-charset", 1, 0, 0, gdbscm_arch_wide_charset,
+  { "arch-wide-charset", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_wide_charset),
   "\
 Return name of target wide character set as a string." },
 
-  { "arch-void-type", 1, 0, 0, gdbscm_arch_void_type,
+  { "arch-void-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_void_type),
     "\
 Return the <gdb:type> object for the \"void\" type\n\
 of the architecture." },
 
-  { "arch-char-type", 1, 0, 0, gdbscm_arch_char_type,
+  { "arch-char-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_char_type),
     "\
 Return the <gdb:type> object for the \"char\" type\n\
 of the architecture." },
 
-  { "arch-short-type", 1, 0, 0, gdbscm_arch_short_type,
+  { "arch-short-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_short_type),
     "\
 Return the <gdb:type> object for the \"short\" type\n\
 of the architecture." },
 
-  { "arch-int-type", 1, 0, 0, gdbscm_arch_int_type,
+  { "arch-int-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_int_type),
     "\
 Return the <gdb:type> object for the \"int\" type\n\
 of the architecture." },
 
-  { "arch-long-type", 1, 0, 0, gdbscm_arch_long_type,
+  { "arch-long-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_long_type),
     "\
 Return the <gdb:type> object for the \"long\" type\n\
 of the architecture." },
 
-  { "arch-schar-type", 1, 0, 0, gdbscm_arch_schar_type,
+  { "arch-schar-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_schar_type),
     "\
 Return the <gdb:type> object for the \"signed char\" type\n\
 of the architecture." },
 
-  { "arch-uchar-type", 1, 0, 0, gdbscm_arch_uchar_type,
+  { "arch-uchar-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_uchar_type),
     "\
 Return the <gdb:type> object for the \"unsigned char\" type\n\
 of the architecture." },
 
-  { "arch-ushort-type", 1, 0, 0, gdbscm_arch_ushort_type,
+  { "arch-ushort-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_ushort_type),
     "\
 Return the <gdb:type> object for the \"unsigned short\" type\n\
 of the architecture." },
 
-  { "arch-uint-type", 1, 0, 0, gdbscm_arch_uint_type,
+  { "arch-uint-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_uint_type),
     "\
 Return the <gdb:type> object for the \"unsigned int\" type\n\
 of the architecture." },
 
-  { "arch-ulong-type", 1, 0, 0, gdbscm_arch_ulong_type,
+  { "arch-ulong-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_ulong_type),
     "\
 Return the <gdb:type> object for the \"unsigned long\" type\n\
 of the architecture." },
 
-  { "arch-float-type", 1, 0, 0, gdbscm_arch_float_type,
+  { "arch-float-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_float_type),
     "\
 Return the <gdb:type> object for the \"float\" type\n\
 of the architecture." },
 
-  { "arch-double-type", 1, 0, 0, gdbscm_arch_double_type,
+  { "arch-double-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_double_type),
     "\
 Return the <gdb:type> object for the \"double\" type\n\
 of the architecture." },
 
-  { "arch-longdouble-type", 1, 0, 0, gdbscm_arch_longdouble_type,
+  { "arch-longdouble-type", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_arch_longdouble_type),
     "\
 Return the <gdb:type> object for the \"long double\" type\n\
 of the architecture." },
 
-  { "arch-bool-type", 1, 0, 0, gdbscm_arch_bool_type,
+  { "arch-bool-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_bool_type),
     "\
 Return the <gdb:type> object for the \"bool\" type\n\
 of the architecture." },
 
-  { "arch-longlong-type", 1, 0, 0, gdbscm_arch_longlong_type,
+  { "arch-longlong-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_longlong_type),
     "\
 Return the <gdb:type> object for the \"long long\" type\n\
 of the architecture." },
 
   { "arch-ulonglong-type", 1, 0, 0,
-    gdbscm_arch_ulonglong_type,
+    as_a_scm_t_subr (gdbscm_arch_ulonglong_type),
     "\
 Return the <gdb:type> object for the \"unsigned long long\" type\n\
 of the architecture." },
 
-  { "arch-int8-type", 1, 0, 0, gdbscm_arch_int8_type,
+  { "arch-int8-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_int8_type),
     "\
 Return the <gdb:type> object for the \"int8\" type\n\
 of the architecture." },
 
-  { "arch-uint8-type", 1, 0, 0, gdbscm_arch_uint8_type,
+  { "arch-uint8-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_uint8_type),
     "\
 Return the <gdb:type> object for the \"uint8\" type\n\
 of the architecture." },
 
-  { "arch-int16-type", 1, 0, 0, gdbscm_arch_int16_type,
+  { "arch-int16-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_int16_type),
     "\
 Return the <gdb:type> object for the \"int16\" type\n\
 of the architecture." },
 
-  { "arch-uint16-type", 1, 0, 0, gdbscm_arch_uint16_type,
+  { "arch-uint16-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_uint16_type),
     "\
 Return the <gdb:type> object for the \"uint16\" type\n\
 of the architecture." },
 
-  { "arch-int32-type", 1, 0, 0, gdbscm_arch_int32_type,
+  { "arch-int32-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_int32_type),
     "\
 Return the <gdb:type> object for the \"int32\" type\n\
 of the architecture." },
 
-  { "arch-uint32-type", 1, 0, 0, gdbscm_arch_uint32_type,
+  { "arch-uint32-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_uint32_type),
     "\
 Return the <gdb:type> object for the \"uint32\" type\n\
 of the architecture." },
 
-  { "arch-int64-type", 1, 0, 0, gdbscm_arch_int64_type,
+  { "arch-int64-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_int64_type),
     "\
 Return the <gdb:type> object for the \"int64\" type\n\
 of the architecture." },
 
-  { "arch-uint64-type", 1, 0, 0, gdbscm_arch_uint64_type,
+  { "arch-uint64-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_arch_uint64_type),
     "\
 Return the <gdb:type> object for the \"uint64\" type\n\
 of the architecture." },

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #include <sim-config.h>
 #include <stdint.h>
 
-#if WITH_HOST_BYTE_ORDER == BIG_ENDIAN
+#if HOST_BYTE_ORDER == BIG_ENDIAN
 #define HOST_BIG_ENDIAN
 #define EBT 0
 #else

@@ -8,6 +8,11 @@
    sim-basics.h and cgen-types.h needs config.h.  */
 #include "config.h"
 
+/* This is a global setting.  Different cpu families can't mix-n-match -scache
+   and -pbb.  However some cpu families may use -simple while others use
+   one of -scache/-pbb. ???? */
+#define WITH_SCACHE_PBB 1
+
 #include "symcat.h"
 #include "sim-basics.h"
 #include "cgen-types.h"
@@ -20,7 +25,6 @@
 
 #include "sim-base.h"
 #include "cgen-sim.h"
-#include "iq2000-sim.h"
 
 /* The _sim_cpu struct.  */
 
