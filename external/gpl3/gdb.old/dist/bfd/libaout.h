@@ -1,5 +1,5 @@
 /* BFD back-end data structures for a.out (and similar) files.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -291,48 +291,48 @@ enum machine_type
   M_CRIS = 255		  /* Axis CRIS binary.  */
 };
 
-#define N_DYNAMIC(exec) ((exec).a_info & 0x80000000)
+#define N_DYNAMIC(execp) ((execp)->a_info & 0x80000000)
 
 #ifndef N_MAGIC
-# define N_MAGIC(exec) ((exec).a_info & 0xffff)
+# define N_MAGIC(execp) ((execp)->a_info & 0xffff)
 #endif
 
 #ifndef N_MACHTYPE
-# define N_MACHTYPE(exec) ((enum machine_type)(((exec).a_info >> 16) & 0xff))
+# define N_MACHTYPE(execp) ((enum machine_type)(((execp)->a_info >> 16) & 0xff))
 #endif
 
 #ifndef N_FLAGS
-# define N_FLAGS(exec) (((exec).a_info >> 24) & 0xff)
+# define N_FLAGS(execp) (((execp)->a_info >> 24) & 0xff)
 #endif
 
 #ifndef N_SET_INFO
-# define N_SET_INFO(exec, magic, type, flags) \
-((exec).a_info = ((magic) & 0xffff) \
+# define N_SET_INFO(execp, magic, type, flags) \
+((execp)->a_info = ((magic) & 0xffff) \
  | (((int)(type) & 0xff) << 16) \
  | (((flags) & 0xff) << 24))
 #endif
 
 #ifndef N_SET_DYNAMIC
-# define N_SET_DYNAMIC(exec, dynamic) \
-((exec).a_info = (dynamic) ? (long) ((exec).a_info | 0x80000000) : \
-((exec).a_info & 0x7fffffff))
+# define N_SET_DYNAMIC(execp, dynamic) \
+((execp)->a_info = (dynamic) ? (long) ((execp)->a_info | 0x80000000) : \
+((execp)->a_info & 0x7fffffff))
 #endif
 
 #ifndef N_SET_MAGIC
-# define N_SET_MAGIC(exec, magic) \
-((exec).a_info = (((exec).a_info & 0xffff0000) | ((magic) & 0xffff)))
+# define N_SET_MAGIC(execp, magic) \
+((execp)->a_info = (((execp)->a_info & 0xffff0000) | ((magic) & 0xffff)))
 #endif
 
 #ifndef N_SET_MACHTYPE
-# define N_SET_MACHTYPE(exec, machtype) \
-((exec).a_info = \
- ((exec).a_info&0xff00ffff) | ((((int)(machtype))&0xff) << 16))
+# define N_SET_MACHTYPE(execp, machtype) \
+((execp)->a_info = \
+ ((execp)->a_info & 0xff00ffff) | ((((int) (machtype)) &0xff) << 16))
 #endif
 
 #ifndef N_SET_FLAGS
-# define N_SET_FLAGS(exec, flags) \
-((exec).a_info = \
- ((exec).a_info&0x00ffffff) | (((flags) & 0xff) << 24))
+# define N_SET_FLAGS(execp, flags) \
+((execp)->a_info = \
+ ((execp)->a_info & 0x00ffffff) | (((flags) & 0xff) << 24))
 #endif
 
 typedef struct aout_symbol
@@ -564,7 +564,7 @@ extern int NAME (aout, sizeof_headers)
   (bfd *, struct bfd_link_info *);
 
 extern bfd_boolean NAME (aout, adjust_sizes_and_vmas)
-  (bfd *, bfd_size_type *, file_ptr *);
+  (bfd *);
 
 extern void NAME (aout, swap_exec_header_in)
   (bfd *, struct external_exec *, struct internal_exec *);
@@ -624,11 +624,8 @@ extern bfd_boolean NAME (aout, bfd_free_cached_info)
 #ifndef WRITE_HEADERS
 #define WRITE_HEADERS(abfd, execp)					      \
       {									      \
-	bfd_size_type text_size; /* Dummy vars.  */			      \
-	file_ptr text_end;						      \
-       									      \
 	if (adata(abfd).magic == undecided_magic)			      \
-	  NAME (aout, adjust_sizes_and_vmas) (abfd, & text_size, & text_end); \
+	  NAME (aout, adjust_sizes_and_vmas) (abfd);			      \
     									      \
 	execp->a_syms = bfd_get_symcount (abfd) * EXTERNAL_NLIST_SIZE;	      \
 	execp->a_entry = bfd_get_start_address (abfd);			      \
@@ -648,19 +645,19 @@ extern bfd_boolean NAME (aout, bfd_free_cached_info)
 	if (bfd_get_outsymbols (abfd) != NULL				      \
 	    && bfd_get_symcount (abfd) != 0) 				      \
 	  {								      \
-	    if (bfd_seek (abfd, (file_ptr) (N_SYMOFF(*execp)), SEEK_SET) != 0)\
+	    if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (execp)), SEEK_SET) != 0)\
 	      return FALSE;						      \
 									      \
 	    if (! NAME (aout, write_syms) (abfd))			      \
 	      return FALSE;						      \
 	  }								      \
 									      \
-	if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (*execp)), SEEK_SET) != 0)  \
+	if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (execp)), SEEK_SET) != 0)   \
 	  return FALSE;						      	      \
 	if (!NAME (aout, squirt_out_relocs) (abfd, obj_textsec (abfd)))       \
 	  return FALSE;						      	      \
 									      \
-	if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (*execp)), SEEK_SET) != 0)  \
+	if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (execp)), SEEK_SET) != 0)   \
 	  return FALSE;						      	      \
 	if (!NAME (aout, squirt_out_relocs) (abfd, obj_datasec (abfd)))       \
 	  return FALSE;						      	      \

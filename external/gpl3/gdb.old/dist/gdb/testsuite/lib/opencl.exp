@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 proc gdb_compile_opencl_hostapp {clsource executable options} {
     global srcdir objdir subdir
     set src "${srcdir}/lib/cl_util.c ${srcdir}/lib/opencl_hostapp.c"
-    set binfile ${objdir}/${subdir}/${executable}
+    set binfile [standard_output_file ${executable}]
     set compile_flags [concat additional_flags=-I${srcdir}/lib/ additional_flags=-DCL_SOURCE=$clsource]
     set options_opencl [concat {debug} $compile_flags $options [list libs=-lOpenCL]]
     return [gdb_compile ${src} ${binfile} "executable" ${options_opencl}]

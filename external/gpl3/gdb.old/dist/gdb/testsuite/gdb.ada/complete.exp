@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Free Software Foundation, Inc.
+# Copyright 2005-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -140,6 +140,7 @@ test_gdb_complete "external_ident" \
 test_gdb_complete "pck" \
                   [multi_line "(p pck\\.ad\[sb\])?" \
                               "(p pck\\.ad\[sb\])?" \
+                              "p pck.ambiguous_func" \
                               "p pck.external_identical_one" \
                               "p pck.inner.inside_variable" \
                               "p pck.local_identical_one" \
@@ -151,6 +152,7 @@ test_gdb_complete "pck" \
 test_gdb_complete "pck." \
                   [multi_line "(p pck\\.ad\[sb\])?" \
                               "(p pck\\.ad\[sb\])?" \
+                              "p pck.ambiguous_func" \
                               "p pck.external_identical_one" \
                               "p pck.inner.inside_variable" \
                               "p pck.local_identical_one" \
@@ -181,3 +183,14 @@ if { [readline_is_used] } {
 	}
     }
 }
+
+# Usually, parsing a function name that is ambiguous yields a menu through
+# which users can select a specific function.  This should not happen during
+# completion, though.
+test_gdb_complete "ambig" \
+                  [multi_line "p ambiguous_func" \
+                              "p ambiguous_proc" ]
+test_gdb_complete "ambiguous_f" \
+                  "p ambiguous_func"
+test_gdb_complete "ambiguous_func" \
+                  "p ambiguous_func"

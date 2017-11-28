@@ -2273,8 +2273,6 @@ else
       fi ;;
     darwin* | rhapsody*)
       RPATH_ENVVAR=DYLD_LIBRARY_PATH ;;
-    hpux*)
-      RPATH_ENVVAR=SHLIB_PATH ;;
   esac
 fi
 
@@ -3513,8 +3511,8 @@ program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
 ac_config_files="$ac_config_files lib/pdtrace"
 
+ac_config_files="$ac_config_files Makefile"
 
-ac_config_files="$ac_config_files Makefile gdb.ada/Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.btrace/Makefile gdb.cell/Makefile gdb.compile/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile gdb.dlang/Makefile gdb.fortran/Makefile gdb.gdb/Makefile gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile gdb.guile/Makefile gdb.linespec/Makefile gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4216,38 +4214,6 @@ do
   case $ac_config_target in
     "lib/pdtrace") CONFIG_FILES="$CONFIG_FILES lib/pdtrace" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "gdb.ada/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.ada/Makefile" ;;
-    "gdb.arch/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.arch/Makefile" ;;
-    "gdb.asm/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.asm/Makefile" ;;
-    "gdb.base/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.base/Makefile" ;;
-    "gdb.btrace/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.btrace/Makefile" ;;
-    "gdb.cell/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.cell/Makefile" ;;
-    "gdb.compile/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.compile/Makefile" ;;
-    "gdb.cp/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.cp/Makefile" ;;
-    "gdb.disasm/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.disasm/Makefile" ;;
-    "gdb.dwarf2/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.dwarf2/Makefile" ;;
-    "gdb.dlang/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.dlang/Makefile" ;;
-    "gdb.fortran/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.fortran/Makefile" ;;
-    "gdb.gdb/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.gdb/Makefile" ;;
-    "gdb.go/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.go/Makefile" ;;
-    "gdb.server/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.server/Makefile" ;;
-    "gdb.java/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.java/Makefile" ;;
-    "gdb.guile/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.guile/Makefile" ;;
-    "gdb.linespec/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.linespec/Makefile" ;;
-    "gdb.mi/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.mi/Makefile" ;;
-    "gdb.modula2/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.modula2/Makefile" ;;
-    "gdb.multi/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.multi/Makefile" ;;
-    "gdb.objc/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.objc/Makefile" ;;
-    "gdb.opencl/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.opencl/Makefile" ;;
-    "gdb.opt/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.opt/Makefile" ;;
-    "gdb.pascal/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.pascal/Makefile" ;;
-    "gdb.perf/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.perf/Makefile" ;;
-    "gdb.python/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.python/Makefile" ;;
-    "gdb.reverse/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.reverse/Makefile" ;;
-    "gdb.stabs/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.stabs/Makefile" ;;
-    "gdb.threads/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.threads/Makefile" ;;
-    "gdb.trace/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.trace/Makefile" ;;
-    "gdb.xml/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.xml/Makefile" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

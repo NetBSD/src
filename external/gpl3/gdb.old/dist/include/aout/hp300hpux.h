@@ -1,5 +1,5 @@
 /* Special version of <a.out.h> for use under HP-UX.
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -113,18 +113,18 @@ struct hp300hpux_header_extension
 #undef N_STROFF
 
 #define N_DATOFF(x)	( N_TXTOFF(x) + N_TXTSIZE(x) )
-#define N_PASOFF(x)     ( N_DATOFF(x) + (x).a_data)
-#define N_SYMOFF(x)	( N_PASOFF(x)   /* + (x).a_passize*/ )
-#define N_SUPOFF(x)     ( N_SYMOFF(x) + (x).a_syms )
-#define N_TRELOFF(x)	( N_SUPOFF(x)    /* + 0 (x).a_supsize*/ )
-#define N_DRELOFF(x)	( N_TRELOFF(x) + (x).a_trsize )
-#define N_EXTHOFF(x)    ( N_DRELOFF(x)   /*  + 0 (x).a_drsize */)
+#define N_PASOFF(x)     ( N_DATOFF(x) + (x)->a_data)
+#define N_SYMOFF(x)	( N_PASOFF(x)   /* + (x)->a_passize*/ )
+#define N_SUPOFF(x)     ( N_SYMOFF(x) + (x)->a_syms )
+#define N_TRELOFF(x)	( N_SUPOFF(x)    /* + (x)->a_supsize*/ )
+#define N_DRELOFF(x)	( N_TRELOFF(x) + (x)->a_trsize )
+#define N_EXTHOFF(x)    ( N_DRELOFF(x)   /*  + (x)->a_drsize */)
 #define N_STROFF(x)	( 0 /* no string table */ )
 
 /* use these when the file has gnu symbol tables */
-#define N_GNU_TRELOFF(x) (N_DATOFF(x) + (x).a_data)
-#define N_GNU_DRELOFF(x) (N_GNU_TRELOFF(x) + (x).a_trsize)
-#define N_GNU_SYMOFF(x)  (N_GNU_DRELOFF(x) + (x).a_drsize)
+#define N_GNU_TRELOFF(x) (N_DATOFF(x) + (x)->a_data)
+#define N_GNU_DRELOFF(x) (N_GNU_TRELOFF(x) + (x)->a_trsize)
+#define N_GNU_SYMOFF(x)  (N_GNU_DRELOFF(x) + (x)->a_drsize)
 
 #define TARGET_PAGE_SIZE 0x1000
 #define SEGMENT_SIZE 0x1000

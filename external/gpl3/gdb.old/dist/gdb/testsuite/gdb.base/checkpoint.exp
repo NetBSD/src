@@ -1,4 +1,4 @@
-#   Copyright 2005-2015 Free Software Foundation, Inc.
+#   Copyright 2005-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,8 +24,10 @@ if {![istarget "*-*-linux*"]} then {
     continue
 }
 
-
-standard_testfile .c
+# Must name the source file explicitly, otherwise when driven by
+# checkpoints-ns.exp, we'd try compiling checkpoints-ns.c, which
+# doesn't exist.
+standard_testfile checkpoint.c
 
 set pi_txt [gdb_remote_download host ${srcdir}/${subdir}/pi.txt]
 if {[is_remote host]} {
@@ -85,7 +87,7 @@ gdb_test "continue 10" "breakpoint 1.*" "break1 ten"
 gdb_test "checkpoint" ".*" ""
 
 gdb_test "info checkpoints" \
-    " 10 .* 9 .* 8 .* 7 .* 6 .* 5 .* 4 .* 3 .* 2 .* 1 .*" \
+    " 1 .* 2 .* 3 .* 4 .* 5 .* 6 .* 7 .* 8 .* 9 .* 10 .*" \
     "info checkpoints one"
 
 delete_breakpoints
@@ -292,7 +294,7 @@ gdb_test "continue" \
 # There should be still at least five forks left
 # 
 
-gdb_test "info checkpoints" " 5 .* 4 .* 3 .* 2 .* 1 .*" \
+gdb_test "info checkpoints" " 1 .* 2 .* 3 .* 4 .* 5 .*" \
     "info checkpoints two"
 
 #

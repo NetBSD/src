@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/arm.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,9 +19,10 @@
 
 #include "defs.h"
 #include "osabi.h"
-#include "objfiles.h"
 
+#include "arch/arm.h"
 #include "arm-tdep.h"
+#include "nbsd-tdep.h"
 #include "solib-svr4.h"
 
 /* Description of the longjmp buffer.  */
@@ -34,19 +35,6 @@ static const gdb_byte arm_nbsd_arm_le_breakpoint[] = {0x11, 0x00, 0x00, 0xe6};
 static const gdb_byte arm_nbsd_arm_be_breakpoint[] = {0xe6, 0x00, 0x00, 0x11};
 static const gdb_byte arm_nbsd_thumb_le_breakpoint[] = {0xfe, 0xde};
 static const gdb_byte arm_nbsd_thumb_be_breakpoint[] = {0xde, 0xfe};
-
-/* from obsd-tdep.c with symbol name adjusted to ours */
-static CORE_ADDR
-armnbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
-{
-  struct bound_minimal_symbol msym;
-
-  msym = lookup_minimal_symbol("_rtld_bind", NULL, NULL);
-  if (msym.minsym && BMSYMBOL_VALUE_ADDRESS (msym) == pc)
-    return frame_unwind_caller_pc (get_current_frame ());
-  else
-    return find_solib_trampoline_target (get_current_frame (), pc);
-}
 
 static void
 arm_netbsd_init_abi_common (struct gdbarch_info info,
@@ -81,10 +69,14 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
 
   /* Single stepping.  */
   set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
+  /* Core support */
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, armbsd_iterate_over_regset_sections);
+
 }
-  
+
 static void
-arm_netbsd_aout_init_abi (struct gdbarch_info info, 
+arm_netbsd_aout_init_abi (struct gdbarch_info info,
 			  struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -109,7 +101,7 @@ arm_netbsd_elf_init_abi (struct gdbarch_info info,
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
   /* for single stepping; see PR/50773 */
-  set_gdbarch_skip_solib_resolver (gdbarch, armnbsd_skip_solib_resolver);
+  set_gdbarch_skip_solib_resolver (gdbarch, nbsd_skip_solib_resolver);
 }
 
 static enum gdb_osabi

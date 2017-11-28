@@ -1,4 +1,4 @@
-! Copyright 2013-2015 Free Software Foundation, Inc.
+! Copyright 2013-2016 Free Software Foundation, Inc.
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -21,8 +21,33 @@ program type
     real    :: t1_r
   end type t1
 
+  type :: t2
+    integer :: t2_i
+    type (t1) :: t1_n
+  end type t2
+
+  type :: t3
+    integer :: t3_i
+    type (t2) :: t2_n
+  end type t3
+
   type (t1) :: t1v
+  type (t2) :: t2v
+  type (t3), target :: t3v
+  type(t3), pointer :: t3p
+
+  nullify (t3p)
 
   t1v%t1_i = 42
-  t1v%t1_r = 42.24    ! bp1
+  t1v%t1_r = 42.24
+
+  t2v%t2_i = 2
+  t2v%t1_n%t1_i = 21
+  t3v%t3_i = 3
+  t3v%t2_n%t2_i = 32
+  t3v%t2_n%t1_n%t1_i = 321
+
+  t3p => t3v
+  nullify (t3p)    ! bp1
+
 end program type

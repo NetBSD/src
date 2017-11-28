@@ -1,5 +1,5 @@
 /* Internal interfaces for the GNU/Linux specific target code for gdbserver.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,6 +37,11 @@ enum regset_type {
   FP_REGS,
   EXTENDED_REGS,
 };
+
+/* The arch's regsets array initializer must be terminated with a NULL
+   regset.  */
+#define NULL_REGSET \
+  { 0, 0, 0, -1, (enum regset_type) -1, NULL, NULL }
 
 struct regset_info
 {
@@ -115,11 +120,6 @@ struct process_info_private
 
   /* &_r_debug.  0 if not yet determined.  -1 if no PT_DYNAMIC in Phdrs.  */
   CORE_ADDR r_debug;
-
-  /* This flag is true iff we've just created or attached to the first
-     LWP of this process but it has not stopped yet.  As soon as it
-     does, we need to call the low target's arch_setup callback.  */
-  int new_inferior;
 };
 
 struct lwp_info;
@@ -146,9 +146,15 @@ struct linux_target_ops
 
   CORE_ADDR (*get_pc) (struct regcache *regcache);
   void (*set_pc) (struct regcache *regcache, CORE_ADDR newpc);
-  const unsigned char *breakpoint;
-  int breakpoint_len;
-  CORE_ADDR (*breakpoint_reinsert_addr) (void);
+
+  /* See target.h for details.  */
+  int (*breakpoint_kind_from_pc) (CORE_ADDR *pcptr);
+
+  /* See target.h for details.  */
+  const gdb_byte *(*sw_breakpoint_from_kind) (int kind, int *size);
+
+  /* Find the next possible PCs after the current instruction executes.  */
+  VEC (CORE_ADDR) *(*get_next_pcs) (struct regcache *regcache);
 
   int decr_pc_after_break;
   int (*breakpoint_at) (CORE_ADDR pc);
@@ -175,7 +181,7 @@ struct linux_target_ops
      Returns true if any conversion was done; false otherwise.
      If DIRECTION is 1, then copy from INF to NATIVE.
      If DIRECTION is 0, copy from NATIVE to INF.  */
-  int (*siginfo_fixup) (siginfo_t *native, void *inf, int direction);
+  int (*siginfo_fixup) (siginfo_t *native, gdb_byte *inf, int direction);
 
   /* Hook to call when a new process is created or attached to.
      If extra per-process architecture-specific data is needed,
@@ -194,7 +200,7 @@ struct linux_target_ops
   void (*prepare_to_resume) (struct lwp_info *);
 
   /* Hook to support target specific qSupported.  */
-  void (*process_qsupported) (const char *);
+  void (*process_qsupported) (char **, int count);
 
   /* Returns true if the low target supports tracepoints.  */
   int (*supports_tracepoints) (void);
@@ -228,6 +234,19 @@ struct linux_target_ops
 
   /* Returns true if the low target supports range stepping.  */
   int (*supports_range_stepping) (void);
+
+  /* See target.h.  */
+  int (*breakpoint_kind_from_current_state) (CORE_ADDR *pcptr);
+
+  /* See target.h.  */
+  int (*supports_hardware_single_step) (void);
+
+  /* Fill *SYSNO with the syscall nr trapped.  Only to be called when
+     inferior is stopped due to SYSCALL_SIGTRAP.  */
+  void (*get_syscall_trapinfo) (struct regcache *regcache, int *sysno);
+
+  /* See target.h.  */
+  int (*get_ipa_tdesc_idx) (void);
 };
 
 extern struct linux_target_ops the_low_target;
@@ -265,6 +284,13 @@ struct lwp_info
   /* If this flag is set, the lwp is known to be stopped right now (stop
      event already received in a wait()).  */
   int stopped;
+
+  /* Signal whether we are in a SYSCALL_ENTRY or
+     in a SYSCALL_RETURN event.
+     Values:
+     - TARGET_WAITKIND_SYSCALL_ENTRY
+     - TARGET_WAITKIND_SYSCALL_RETURN */
+  enum target_waitkind syscall_state;
 
   /* When stopped is set, the last wait status recorded for this lwp.  */
   int last_status;
@@ -337,10 +363,6 @@ struct lwp_info
      a exit-jump-pad-quickly breakpoint.  This is it.  */
   struct breakpoint *exit_jump_pad_bkpt;
 
-  /* True if the LWP was seen stop at an internal breakpoint and needs
-     stepping over later when it is resumed.  */
-  int need_step_over;
-
 #ifdef USE_THREAD_DB
   int thread_known;
   /* The thread handle, used for e.g. TLS access.  Only valid if
@@ -367,11 +389,19 @@ void initialize_regsets_info (struct regsets_info *regsets_info);
 
 void initialize_low_arch (void);
 
+void linux_set_pc_32bit (struct regcache *regcache, CORE_ADDR pc);
+CORE_ADDR linux_get_pc_32bit (struct regcache *regcache);
+
+void linux_set_pc_64bit (struct regcache *regcache, CORE_ADDR pc);
+CORE_ADDR linux_get_pc_64bit (struct regcache *regcache);
+
 /* From thread-db.c  */
-int thread_db_init (int use_events);
+int thread_db_init (void);
 void thread_db_detach (struct process_info *);
 void thread_db_mourn (struct process_info *);
 int thread_db_handle_monitor_command (char *);
 int thread_db_get_tls_address (struct thread_info *thread, CORE_ADDR offset,
 			       CORE_ADDR load_module, CORE_ADDR *address);
 int thread_db_look_up_one_symbol (const char *name, CORE_ADDR *addrp);
+
+extern int have_ptrace_getregset;
