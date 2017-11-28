@@ -1,5 +1,5 @@
 /* Support for printing Pascal types for GDB, the GNU debugger.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -55,7 +55,7 @@ pascal_print_type (struct type *type, const char *varstring,
   code = TYPE_CODE (type);
 
   if (show > 0)
-    CHECK_TYPEDEF (type);
+    type = check_typedef (type);
 
   if ((code == TYPE_CODE_FUNC
        || code == TYPE_CODE_METHOD))
@@ -96,7 +96,7 @@ void
 pascal_print_typedef (struct type *type, struct symbol *new_symbol,
 		      struct ui_file *stream)
 {
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
   fprintf_filtered (stream, "type ");
   fprintf_filtered (stream, "%s = ", SYMBOL_PRINT_NAME (new_symbol));
   type_print (type, "", stream, 0);
@@ -479,7 +479,7 @@ pascal_type_print_base (struct type *type, struct ui_file *stream, int show,
       return;
     }
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   switch (TYPE_CODE (type))
     {

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2015 Free Software Foundation, Inc.
+Copyright 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -56,8 +56,8 @@ This file is part of the GNU simulators.
 #include "decodev32.h"
 #endif
 
-extern const MACH crisv10_mach;
-extern const MACH crisv32_mach;
+extern const SIM_MACH crisv10_mach;
+extern const SIM_MACH crisv32_mach;
 
 #ifndef WANT_CPU
 /* The ARGBUF struct.  */

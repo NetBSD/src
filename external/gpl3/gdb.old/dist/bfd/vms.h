@@ -1,5 +1,5 @@
 /* vms.h -- Header file for VMS (Alpha and Vax) support.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    Main header file.
 

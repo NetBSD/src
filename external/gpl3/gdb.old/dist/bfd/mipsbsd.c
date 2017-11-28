@@ -1,5 +1,5 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,7 +23,7 @@
 /* #define ENTRY_CAN_BE_ZERO */
 #define N_HEADER_IN_TEXT(x) 1
 #define N_TXTADDR(x) \
-    (N_MAGIC(x) != ZMAGIC ? (x).a_entry :	/* object file or NMAGIC */\
+    (N_MAGIC(x) != ZMAGIC ? (x)->a_entry :	/* object file or NMAGIC */\
 	    TEXT_START_ADDR + EXEC_BYTES_SIZE	/* no padding */\
     )
 #define N_DATADDR(x) (N_TXTADDR(x)+N_TXTSIZE(x))
@@ -45,8 +45,8 @@
 #include "libbfd.h"
 #include "libaout.h"
 
-#define SET_ARCH_MACH(ABFD, EXEC) \
-  MY(set_arch_mach) (ABFD, N_MACHTYPE (EXEC)); \
+#define SET_ARCH_MACH(ABFD, EXECP) \
+  MY(set_arch_mach) (ABFD, N_MACHTYPE (EXECP)); \
   MY(choose_reloc_size) (ABFD);
 static void MY(set_arch_mach) (bfd *, unsigned long);
 static void MY(choose_reloc_size) (bfd *);
@@ -137,34 +137,34 @@ MY (write_object_contents) (bfd *abfd)
       switch (bfd_get_mach (abfd))
 	{
 	case bfd_mach_m68010:
-	  N_SET_MACHTYPE (*execp, M_68010);
+	  N_SET_MACHTYPE (execp, M_68010);
 	  break;
 	default:
 	case bfd_mach_m68020:
-	  N_SET_MACHTYPE (*execp, M_68020);
+	  N_SET_MACHTYPE (execp, M_68020);
 	  break;
 	}
       break;
     case bfd_arch_sparc:
-      N_SET_MACHTYPE (*execp, M_SPARC);
+      N_SET_MACHTYPE (execp, M_SPARC);
       break;
     case bfd_arch_i386:
-      N_SET_MACHTYPE (*execp, M_386);
+      N_SET_MACHTYPE (execp, M_386);
       break;
     case bfd_arch_mips:
       switch (bfd_get_mach (abfd))
 	{
 	case bfd_mach_mips4000:
 	case bfd_mach_mips6000:
-	  N_SET_MACHTYPE (*execp, M_MIPS2);
+	  N_SET_MACHTYPE (execp, M_MIPS2);
 	  break;
 	default:
-	  N_SET_MACHTYPE (*execp, M_MIPS1);
+	  N_SET_MACHTYPE (execp, M_MIPS1);
 	  break;
 	}
       break;
     default:
-      N_SET_MACHTYPE (*execp, M_UNKNOWN);
+      N_SET_MACHTYPE (execp, M_UNKNOWN);
     }
 
   MY (choose_reloc_size) (abfd);

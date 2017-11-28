@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 2011-2015 Free Software Foundation, Inc.
+   Copyright 2011-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 /* ElfW is coming from linux. On other platforms it does not exist.
    Let us define it here. */
@@ -116,104 +117,120 @@ update_locations (const void *const addr, int idx)
     }
 }
 
+/* Defined by the .exp file if testing attach.  */
+#ifndef ATTACH
+#define ATTACH 0
+#endif
+
 #ifndef MAIN
 #define MAIN main
 #endif
+
+/* Used to spin waiting for GDB.  */
+volatile int wait_for_gdb = ATTACH;
+#define WAIT_FOR_GDB while (wait_for_gdb)
+
+/* The current process's PID.  GDB retrieves this.  */
+int mypid;
 
 int
 MAIN (int argc, char *argv[])
 {
   /* These variables are here so they can easily be set from jit.exp.  */
   const char *libname = NULL;
-  int count = 0;
+  int count = 0, i, fd;
+  struct stat st;
+
+  alarm (300);
+
+  mypid = getpid ();
 
   count = count;  /* gdb break here 0  */
 
   if (argc < 2)
-    usage (argv[0]);
-  else
     {
-      int i, fd;
-      struct stat st;
-
-      if (libname == NULL)
-        /* Only set if not already set from GDB.  */
-        libname = argv[1];
-
-      if (argc > 2 && count == 0)
-        /* Only set if not already set from GDB.  */
-        count = atoi (argv[2]);
-
-      printf ("%s:%d: libname = %s, count = %d\n", __FILE__, __LINE__,
-              libname, count);
-
-      if ((fd = open (libname, O_RDONLY)) == -1)
-        {
-          fprintf (stderr, "open (\"%s\", O_RDONLY): %s\n", libname,
-                   strerror (errno));
-          exit (1);
-        }
-
-      if (fstat (fd, &st) != 0)
-        {
-          fprintf (stderr, "fstat (\"%d\"): %s\n", fd, strerror (errno));
-          exit (1);
-        }
-
-      for (i = 0; i < count; ++i)
-        {
-          const void *const addr = mmap (0, st.st_size, PROT_READ|PROT_WRITE,
-                                         MAP_PRIVATE, fd, 0);
-          struct jit_code_entry *const entry = calloc (1, sizeof (*entry));
-
-          if (addr == MAP_FAILED)
-            {
-              fprintf (stderr, "mmap: %s\n", strerror (errno));
-              exit (1);
-            }
-
-          update_locations (addr, i);
-
-          /* Link entry at the end of the list.  */
-          entry->symfile_addr = (const char *)addr;
-          entry->symfile_size = st.st_size;
-          entry->prev_entry = __jit_debug_descriptor.relevant_entry;
-          __jit_debug_descriptor.relevant_entry = entry;
-
-          if (entry->prev_entry != NULL)
-            entry->prev_entry->next_entry = entry;
-          else
-            __jit_debug_descriptor.first_entry = entry;
-
-          /* Notify GDB.  */
-          __jit_debug_descriptor.action_flag = JIT_REGISTER_FN;
-          __jit_debug_register_code ();
-        }
-
-      i = 0;  /* gdb break here 1 */
-
-      /* Now unregister them all in reverse order.  */
-      while (__jit_debug_descriptor.relevant_entry != NULL)
-        {
-          struct jit_code_entry *const entry =
-            __jit_debug_descriptor.relevant_entry;
-          struct jit_code_entry *const prev_entry = entry->prev_entry;
-
-          if (prev_entry != NULL)
-            {
-              prev_entry->next_entry = NULL;
-              entry->prev_entry = NULL;
-            }
-          else
-            __jit_debug_descriptor.first_entry = NULL;
-
-          /* Notify GDB.  */
-          __jit_debug_descriptor.action_flag = JIT_UNREGISTER_FN;
-          __jit_debug_register_code ();
-
-          __jit_debug_descriptor.relevant_entry = prev_entry;
-          free (entry);
-        }
+      usage (argv[0]);
+      exit (1);
     }
-  return 0;  /* gdb break here 2  */
+
+  if (libname == NULL)
+    /* Only set if not already set from GDB.  */
+    libname = argv[1];
+
+  if (argc > 2 && count == 0)
+    /* Only set if not already set from GDB.  */
+    count = atoi (argv[2]);
+
+  printf ("%s:%d: libname = %s, count = %d\n", __FILE__, __LINE__,
+	  libname, count);
+
+  if ((fd = open (libname, O_RDONLY)) == -1)
+    {
+      fprintf (stderr, "open (\"%s\", O_RDONLY): %s\n", libname,
+	       strerror (errno));
+      exit (1);
+    }
+
+  if (fstat (fd, &st) != 0)
+    {
+      fprintf (stderr, "fstat (\"%d\"): %s\n", fd, strerror (errno));
+      exit (1);
+    }
+
+  for (i = 0; i < count; ++i)
+    {
+      const void *const addr = mmap (0, st.st_size, PROT_READ|PROT_WRITE,
+				     MAP_PRIVATE, fd, 0);
+      struct jit_code_entry *const entry = calloc (1, sizeof (*entry));
+
+      if (addr == MAP_FAILED)
+	{
+	  fprintf (stderr, "mmap: %s\n", strerror (errno));
+	  exit (1);
+	}
+
+      update_locations (addr, i);
+
+      /* Link entry at the end of the list.  */
+      entry->symfile_addr = (const char *)addr;
+      entry->symfile_size = st.st_size;
+      entry->prev_entry = __jit_debug_descriptor.relevant_entry;
+      __jit_debug_descriptor.relevant_entry = entry;
+
+      if (entry->prev_entry != NULL)
+	entry->prev_entry->next_entry = entry;
+      else
+	__jit_debug_descriptor.first_entry = entry;
+
+      /* Notify GDB.  */
+      __jit_debug_descriptor.action_flag = JIT_REGISTER_FN;
+      __jit_debug_register_code ();
+    }
+
+  WAIT_FOR_GDB; i = 0;  /* gdb break here 1 */
+
+  /* Now unregister them all in reverse order.  */
+  while (__jit_debug_descriptor.relevant_entry != NULL)
+    {
+      struct jit_code_entry *const entry =
+	__jit_debug_descriptor.relevant_entry;
+      struct jit_code_entry *const prev_entry = entry->prev_entry;
+
+      if (prev_entry != NULL)
+	{
+	  prev_entry->next_entry = NULL;
+	  entry->prev_entry = NULL;
+	}
+      else
+	__jit_debug_descriptor.first_entry = NULL;
+
+      /* Notify GDB.  */
+      __jit_debug_descriptor.action_flag = JIT_UNREGISTER_FN;
+      __jit_debug_register_code ();
+
+      __jit_debug_descriptor.relevant_entry = prev_entry;
+      free (entry);
+    }
+
+  WAIT_FOR_GDB; return 0;  /* gdb break here 2  */
 }

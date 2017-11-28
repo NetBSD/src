@@ -13,6 +13,7 @@ Mike Frysinger			vapier@gentoo.org
 	
 	Maintainers for particular sims:
 
+aarch64	        Nick Clifton <nickc@redhat.com>
 arm	        Nick Clifton <nickc@redhat.com>
 bfin		Mike Frysinger <vapier@gentoo.org>
 cr16	        M R Swami Reddy <MR.Swami.Reddy@nsc.com>
@@ -41,5 +42,6 @@ v850		DJ Delorie <dj@redhat.com>
 common		Ben Elliston <bje@gnu.org>
 mips		Andrew Cagney <ac131313@redhat.com>
 mips		Chris Demetriou <cgd@netbsd.org>
+mips		Thiemo Seufer <ths@networkno.de>
 ppc		Geoff Keating <geoffk@geoffk.org>
 ppc		Andrew Cagney <cagney@gnu.org>

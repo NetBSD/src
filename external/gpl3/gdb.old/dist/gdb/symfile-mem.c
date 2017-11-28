@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -180,7 +180,8 @@ struct symbol_file_add_from_memory_args
 static int
 symbol_file_add_from_memory_wrapper (struct ui_out *uiout, void *data)
 {
-  struct symbol_file_add_from_memory_args *args = data;
+  struct symbol_file_add_from_memory_args *args
+    = (struct symbol_file_add_from_memory_args *) data;
 
   symbol_file_add_from_memory (args->bfd, args->sysinfo_ehdr, args->size,
 			       args->name, args->from_tty);
@@ -213,8 +214,7 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
 	  format should fix this.  */
 	{
 	  warning (_("Could not load vsyscall page "
-		     "because no executable was specified\n"
-		     "try using the \"file\" command first."));
+		     "because no executable was specified"));
 	  return;
 	}
       args.bfd = bfd;

@@ -1,5 +1,5 @@
 @c This summary of BFD is shared by the BFD and LD docs.
-@c Copyright (C) 2012-2015 Free Software Foundation, Inc.
+@c Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
 When an object file is opened, BFD subroutines automatically determine
 the format of the input object file.  They then build a descriptor in

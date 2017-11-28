@@ -1,5 +1,5 @@
 /* BFD back-end for RISC iX (Acorn, arm) binaries.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -63,11 +63,11 @@
 /* Sl which uses another.  */
 #define SLPZMAGIC       (MF_USES_SL | SLZMAGIC)
 
-#define N_SHARED_LIB(x) ((x).a_info & MF_USES_SL)
+#define N_SHARED_LIB(x) ((x)->a_info & MF_USES_SL)
 
 /* Only a pure OMAGIC file has the minimal header.  */
 #define N_TXTOFF(x)		\
- ((x).a_info == OMAGIC		\
+ ((x)->a_info == OMAGIC		\
   ? 32				\
   : (N_MAGIC(x) == ZMAGIC	\
      ? TARGET_PAGE_SIZE		\
@@ -81,13 +81,13 @@
       up we can't know exactly what the address will be.  A reasonable guess \
       is that a_entry will be in the first page of the executable.  */	     \
    : (N_SHARED_LIB(x)							     \
-      ? ((x).a_entry & ~(bfd_vma) (TARGET_PAGE_SIZE - 1))		     \
+      ? ((x)->a_entry & ~(bfd_vma) (TARGET_PAGE_SIZE - 1))		     \
       : (bfd_vma) TEXT_START_ADDR))
 
 #define N_SYMOFF(x) \
-  (N_TXTOFF (x) + (x).a_text + (x).a_data + (x).a_trsize + (x).a_drsize)
+  (N_TXTOFF (x) + (x)->a_text + (x)->a_data + (x)->a_trsize + (x)->a_drsize)
 
-#define N_STROFF(x) (N_SYMOFF (x) + (x).a_syms)
+#define N_STROFF(x) (N_SYMOFF (x) + (x)->a_syms)
 
 #define TEXT_START_ADDR   32768
 #define TARGET_PAGE_SIZE  32768
@@ -99,10 +99,10 @@
    the tokens.  */
 #define MY(OP) CONCAT2 (arm_aout_riscix_,OP)
 #define TARGETNAME "a.out-riscix"
-#define N_BADMAG(x) ((((x).a_info & ~007200) != ZMAGIC) \
-                  && (((x).a_info & ~006000) != OMAGIC) \
-                  && ((x).a_info != NMAGIC))
-#define N_MAGIC(x) ((x).a_info & ~07200)
+#define N_BADMAG(x) ((((x)->a_info & ~007200) != ZMAGIC) \
+                  && (((x)->a_info & ~006000) != OMAGIC) \
+                  && ((x)->a_info != NMAGIC))
+#define N_MAGIC(x) ((x)->a_info & ~07200)
 
 #include "sysdep.h"
 #include "bfd.h"
@@ -110,11 +110,8 @@
 
 #define WRITE_HEADERS(abfd, execp)					    \
   {									    \
-    bfd_size_type text_size; /* Dummy vars.  */				    \
-    file_ptr text_end;							    \
-    									    \
     if (adata (abfd).magic == undecided_magic)				    \
-      NAME (aout, adjust_sizes_and_vmas) (abfd, & text_size, & text_end);   \
+      NAME (aout, adjust_sizes_and_vmas) (abfd);			    \
     									    \
     execp->a_syms = bfd_get_symcount (abfd) * EXTERNAL_NLIST_SIZE;	    \
     execp->a_entry = bfd_get_start_address (abfd);			    \
@@ -134,18 +131,18 @@
     if (bfd_get_outsymbols (abfd) != NULL			    	    \
 	&& bfd_get_symcount (abfd) != 0)				    \
       {									    \
-	if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (* execp)), SEEK_SET) != 0)\
+	if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (execp)), SEEK_SET) != 0)  \
 	  return FALSE;							    \
 									    \
 	if (! NAME (aout, write_syms) (abfd))				    \
           return FALSE;							    \
 									    \
-	if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (* execp)), SEEK_SET) != 0)\
+	if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (execp)), SEEK_SET) != 0) \
 	  return FALSE;							    \
 									    \
 	if (! riscix_squirt_out_relocs (abfd, obj_textsec (abfd)))	    \
 	  return FALSE;							    \
-	if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (* execp)), SEEK_SET) != 0)\
+	if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (execp)), SEEK_SET) != 0) \
 	  return FALSE;							    \
 									    \
 	if (!NAME (aout, squirt_out_relocs) (abfd, obj_datasec (abfd)))	    \
@@ -517,7 +514,7 @@ riscix_some_aout_object_p (bfd *abfd,
   /* Setting of EXEC_P has been deferred to the bottom of this function.  */
   if (execp->a_syms)
     abfd->flags |= HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS;
-  if (N_DYNAMIC(*execp))
+  if (N_DYNAMIC (execp))
     abfd->flags |= DYNAMIC;
 
  /* Squeezed files aren't supported (yet)!  */
@@ -532,17 +529,17 @@ riscix_some_aout_object_p (bfd *abfd,
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
-  else if (N_MAGIC (*execp) == ZMAGIC)
+  else if (N_MAGIC (execp) == ZMAGIC)
     {
       abfd->flags |= D_PAGED | WP_TEXT;
       adata (abfd).magic = z_magic;
     }
-  else if (N_MAGIC (*execp) == NMAGIC)
+  else if (N_MAGIC (execp) == NMAGIC)
     {
       abfd->flags |= WP_TEXT;
       adata (abfd).magic = n_magic;
     }
-  else if (N_MAGIC (*execp) == OMAGIC)
+  else if (N_MAGIC (execp) == OMAGIC)
     adata (abfd).magic = o_magic;
   else
     /* Should have been checked with N_BADMAG before this routine
@@ -637,11 +634,11 @@ MY (object_p) (bfd *abfd)
 
   exec.a_info = H_GET_32 (abfd, exec_bytes.e_info);
 
-  if (N_BADMAG (exec))
+  if (N_BADMAG (&exec))
     return NULL;
 
 #ifdef MACHTYPE_OK
-  if (!(MACHTYPE_OK (N_MACHTYPE (exec))))
+  if (!(MACHTYPE_OK (N_MACHTYPE (&exec))))
     return NULL;
 #endif
 

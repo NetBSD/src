@@ -1,5 +1,5 @@
 /* GNU/Linux/ARM specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,14 +18,20 @@
 
 #include "server.h"
 #include "linux-low.h"
+#include "arch/arm.h"
+#include "arch/arm-linux.h"
+#include "arch/arm-get-next-pcs.h"
+#include "linux-aarch32-low.h"
 
+#include <sys/uio.h>
 /* Don't include elf.h if linux/elf.h got included by gdb_proc_service.h.
    On Bionic elf.h and linux/elf.h have conflicting definitions.  */
 #ifndef ELFMAG0
 #include <elf.h>
 #endif
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include <signal.h>
+#include <sys/syscall.h>
 
 /* Defined in auto-generated files.  */
 void init_registers_arm (void);
@@ -39,9 +45,6 @@ extern const struct target_desc *tdesc_arm_with_vfpv2;
 
 void init_registers_arm_with_vfpv3 (void);
 extern const struct target_desc *tdesc_arm_with_vfpv3;
-
-void init_registers_arm_with_neon (void);
-extern const struct target_desc *tdesc_arm_with_neon;
 
 #ifndef PTRACE_GET_THREAD_AREA
 #define PTRACE_GET_THREAD_AREA 22
@@ -116,8 +119,6 @@ struct arch_lwp_info
   CORE_ADDR stopped_data_address;
 };
 
-static unsigned long arm_hwcap;
-
 /* These are in <asm/elf.h> in current kernels.  */
 #define HWCAP_VFP       64
 #define HWCAP_IWMMXT    512
@@ -138,6 +139,27 @@ static int arm_regmap[] = {
   64
 };
 
+/* Forward declarations needed for get_next_pcs ops.  */
+static ULONGEST get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr,
+							   int len,
+							   int byte_order);
+
+static CORE_ADDR get_next_pcs_addr_bits_remove (struct arm_get_next_pcs *self,
+						CORE_ADDR val);
+
+static CORE_ADDR get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self);
+
+static int get_next_pcs_is_thumb (struct arm_get_next_pcs *self);
+
+/* get_next_pcs operations.  */
+static struct arm_get_next_pcs_ops get_next_pcs_ops = {
+  get_next_pcs_read_memory_unsigned_integer,
+  get_next_pcs_syscall_next_pc,
+  get_next_pcs_addr_bits_remove,
+  get_next_pcs_is_thumb,
+  arm_linux_get_next_pcs_fixup,
+};
+
 static int
 arm_cannot_store_register (int regno)
 {
@@ -151,35 +173,11 @@ arm_cannot_fetch_register (int regno)
 }
 
 static void
-arm_fill_gregset (struct regcache *regcache, void *buf)
-{
-  int i;
-
-  for (i = 0; i < arm_num_regs; i++)
-    if (arm_regmap[i] != -1)
-      collect_register (regcache, i, ((char *) buf) + arm_regmap[i]);
-}
-
-static void
-arm_store_gregset (struct regcache *regcache, const void *buf)
-{
-  int i;
-  char zerobuf[8];
-
-  memset (zerobuf, 0, 8);
-  for (i = 0; i < arm_num_regs; i++)
-    if (arm_regmap[i] != -1)
-      supply_register (regcache, i, ((char *) buf) + arm_regmap[i]);
-    else
-      supply_register (regcache, i, zerobuf);
-}
-
-static void
 arm_fill_wmmxregset (struct regcache *regcache, void *buf)
 {
   int i;
 
-  if (!(arm_hwcap & HWCAP_IWMMXT))
+  if (regcache->tdesc != tdesc_arm_with_iwmmxt)
     return;
 
   for (i = 0; i < 16; i++)
@@ -196,7 +194,7 @@ arm_store_wmmxregset (struct regcache *regcache, const void *buf)
 {
   int i;
 
-  if (!(arm_hwcap & HWCAP_IWMMXT))
+  if (regcache->tdesc != tdesc_arm_with_iwmmxt)
     return;
 
   for (i = 0; i < 16; i++)
@@ -211,130 +209,68 @@ arm_store_wmmxregset (struct regcache *regcache, const void *buf)
 static void
 arm_fill_vfpregset (struct regcache *regcache, void *buf)
 {
-  int i, num, base;
+  int num;
 
-  if (!(arm_hwcap & HWCAP_VFP))
+  if (regcache->tdesc == tdesc_arm_with_neon
+      || regcache->tdesc == tdesc_arm_with_vfpv3)
+    num = 32;
+  else if (regcache->tdesc == tdesc_arm_with_vfpv2)
+    num = 16;
+  else
     return;
 
-  if ((arm_hwcap & (HWCAP_VFPv3 | HWCAP_VFPv3D16)) == HWCAP_VFPv3)
-    num = 32;
-  else
-    num = 16;
+  arm_fill_vfpregset_num (regcache, buf, num);
+}
 
-  base = find_regno (regcache->tdesc, "d0");
-  for (i = 0; i < num; i++)
-    collect_register (regcache, base + i, (char *) buf + i * 8);
-
-  collect_register_by_name (regcache, "fpscr", (char *) buf + 32 * 8);
+/* Wrapper of UNMAKE_THUMB_ADDR for get_next_pcs.  */
+static CORE_ADDR
+get_next_pcs_addr_bits_remove (struct arm_get_next_pcs *self, CORE_ADDR val)
+{
+  return UNMAKE_THUMB_ADDR (val);
 }
 
 static void
 arm_store_vfpregset (struct regcache *regcache, const void *buf)
 {
-  int i, num, base;
+  int num;
 
-  if (!(arm_hwcap & HWCAP_VFP))
+  if (regcache->tdesc == tdesc_arm_with_neon
+      || regcache->tdesc == tdesc_arm_with_vfpv3)
+    num = 32;
+  else if (regcache->tdesc == tdesc_arm_with_vfpv2)
+    num = 16;
+  else
     return;
 
-  if ((arm_hwcap & (HWCAP_VFPv3 | HWCAP_VFPv3D16)) == HWCAP_VFPv3)
-    num = 32;
-  else
-    num = 16;
-
-  base = find_regno (regcache->tdesc, "d0");
-  for (i = 0; i < num; i++)
-    supply_register (regcache, base + i, (char *) buf + i * 8);
-
-  supply_register_by_name (regcache, "fpscr", (char *) buf + 32 * 8);
+  arm_store_vfpregset_num (regcache, buf, num);
 }
 
-extern int debug_threads;
-
-static CORE_ADDR
-arm_get_pc (struct regcache *regcache)
-{
-  unsigned long pc;
-  collect_register_by_name (regcache, "pc", &pc);
-  if (debug_threads)
-    debug_printf ("stop pc is %08lx\n", pc);
-  return pc;
-}
-
-static void
-arm_set_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  unsigned long newpc = pc;
-  supply_register_by_name (regcache, "pc", &newpc);
-}
-
-/* Correct in either endianness.  */
-static const unsigned long arm_breakpoint = 0xef9f0001;
-#define arm_breakpoint_len 4
-static const unsigned short thumb_breakpoint = 0xde01;
-static const unsigned short thumb2_breakpoint[] = { 0xf7f0, 0xa000 };
-
-/* For new EABI binaries.  We recognize it regardless of which ABI
-   is used for gdbserver, so single threaded debugging should work
-   OK, but for multi-threaded debugging we only insert the current
-   ABI's breakpoint instruction.  For now at least.  */
-static const unsigned long arm_eabi_breakpoint = 0xe7f001f0;
-
+/* Wrapper of arm_is_thumb_mode for get_next_pcs.  */
 static int
-arm_breakpoint_at (CORE_ADDR where)
+get_next_pcs_is_thumb (struct arm_get_next_pcs *self)
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 1);
-  unsigned long cpsr;
-
-  collect_register_by_name (regcache, "cpsr", &cpsr);
-
-  if (cpsr & 0x20)
-    {
-      /* Thumb mode.  */
-      unsigned short insn;
-
-      (*the_target->read_memory) (where, (unsigned char *) &insn, 2);
-      if (insn == thumb_breakpoint)
-	return 1;
-
-      if (insn == thumb2_breakpoint[0])
-	{
-	  (*the_target->read_memory) (where + 2, (unsigned char *) &insn, 2);
-	  if (insn == thumb2_breakpoint[1])
-	    return 1;
-	}
-    }
-  else
-    {
-      /* ARM mode.  */
-      unsigned long insn;
-
-      (*the_target->read_memory) (where, (unsigned char *) &insn, 4);
-      if (insn == arm_breakpoint)
-	return 1;
-
-      if (insn == arm_eabi_breakpoint)
-	return 1;
-    }
-
-  return 0;
+  return arm_is_thumb_mode ();
 }
 
-/* We only place breakpoints in empty marker functions, and thread locking
-   is outside of the function.  So rather than importing software single-step,
-   we can just run until exit.  */
-static CORE_ADDR
-arm_reinsert_addr (void)
+/* Read memory from the inferiror.
+   BYTE_ORDER is ignored and there to keep compatiblity with GDB's
+   read_memory_unsigned_integer. */
+static ULONGEST
+get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr,
+					   int len,
+					   int byte_order)
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 1);
-  unsigned long pc;
-  collect_register_by_name (regcache, "lr", &pc);
-  return pc;
+  ULONGEST res;
+
+  res = 0;
+  (*the_target->read_memory) (memaddr, (unsigned char *) &res, len);
+  return res;
 }
 
 /* Fetch the thread-local storage pointer for libthread_db.  */
 
 ps_err_e
-ps_get_thread_area (const struct ps_prochandle *ph,
+ps_get_thread_area (struct ps_prochandle *ph,
 		    lwpid_t lwpid, int idx, void **base)
 {
   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
@@ -441,7 +377,7 @@ arm_linux_hw_breakpoint_equal (const struct arm_linux_hw_breakpoint *p1,
 
 /* Convert a raw breakpoint type to an enum arm_hwbp_type.  */
 
-static int
+static arm_hwbp_type
 raw_bkpt_type_to_arm_hwbp_type (enum raw_bkpt_type raw_type)
 {
   switch (raw_type)
@@ -560,6 +496,7 @@ arm_supports_z_point_type (char z_type)
 {
   switch (z_type)
     {
+    case Z_PACKET_SW_BP:
     case Z_PACKET_HW_BP:
     case Z_PACKET_WRITE_WP:
     case Z_PACKET_READ_WP:
@@ -698,7 +635,7 @@ arm_stopped_data_address (void)
 static struct arch_process_info *
 arm_new_process (void)
 {
-  struct arch_process_info *info = xcalloc (1, sizeof (*info));
+  struct arch_process_info *info = XCNEW (struct arch_process_info);
   return info;
 }
 
@@ -706,7 +643,7 @@ arm_new_process (void)
 static void
 arm_new_thread (struct lwp_info *lwp)
 {
-  struct arch_lwp_info *info = xcalloc (1, sizeof (*info));
+  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
   int i;
 
   for (i = 0; i < MAX_BPTS; i++)
@@ -720,8 +657,8 @@ arm_new_thread (struct lwp_info *lwp)
 static void
 arm_new_fork (struct process_info *parent, struct process_info *child)
 {
-  struct arch_process_info *parent_proc_info = parent->priv->arch_private;
-  struct arch_process_info *child_proc_info = child->priv->arch_private;
+  struct arch_process_info *parent_proc_info;
+  struct arch_process_info *child_proc_info;
   struct lwp_info *child_lwp;
   struct arch_lwp_info *child_lwp_info;
   int i;
@@ -731,6 +668,9 @@ arm_new_fork (struct process_info *parent, struct process_info *child)
 	      && parent->priv->arch_private != NULL);
   gdb_assert (child->priv != NULL
 	      && child->priv->arch_private != NULL);
+
+  parent_proc_info = parent->priv->arch_private;
+  child_proc_info = child->priv->arch_private;
 
   /* Linux kernel before 2.6.33 commit
      72f674d203cd230426437cdcf7dd6f681dad8b0d
@@ -811,11 +751,93 @@ arm_prepare_to_resume (struct lwp_info *lwp)
       }
 }
 
+/* Find the next pc for a sigreturn or rt_sigreturn syscall.  In
+   addition, set IS_THUMB depending on whether we will return to ARM
+   or Thumb code.
+   See arm-linux.h for stack layout details.  */
+static CORE_ADDR
+arm_sigreturn_next_pc (struct regcache *regcache, int svc_number,
+		       int *is_thumb)
+{
+  unsigned long sp;
+  unsigned long sp_data;
+  /* Offset of PC register.  */
+  int pc_offset = 0;
+  CORE_ADDR next_pc = 0;
+  uint32_t cpsr;
+
+  gdb_assert (svc_number == __NR_sigreturn || svc_number == __NR_rt_sigreturn);
+
+  collect_register_by_name (regcache, "sp", &sp);
+  (*the_target->read_memory) (sp, (unsigned char *) &sp_data, 4);
+
+  pc_offset = arm_linux_sigreturn_next_pc_offset
+    (sp, sp_data, svc_number, __NR_sigreturn == svc_number ? 1 : 0);
+
+  (*the_target->read_memory) (sp + pc_offset, (unsigned char *) &next_pc, 4);
+
+  /* Set IS_THUMB according the CPSR saved on the stack.  */
+  (*the_target->read_memory) (sp + pc_offset + 4, (unsigned char *) &cpsr, 4);
+  *is_thumb = ((cpsr & CPSR_T) != 0);
+
+  return next_pc;
+}
+
+/* When PC is at a syscall instruction, return the PC of the next
+   instruction to be executed.  */
+static CORE_ADDR
+get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
+{
+  CORE_ADDR next_pc = 0;
+  CORE_ADDR pc = regcache_read_pc (self->regcache);
+  int is_thumb = arm_is_thumb_mode ();
+  ULONGEST svc_number = 0;
+  struct regcache *regcache = self->regcache;
+
+  if (is_thumb)
+    {
+      collect_register (regcache, 7, &svc_number);
+      next_pc = pc + 2;
+    }
+  else
+    {
+      unsigned long this_instr;
+      unsigned long svc_operand;
+
+      (*the_target->read_memory) (pc, (unsigned char *) &this_instr, 4);
+      svc_operand = (0x00ffffff & this_instr);
+
+      if (svc_operand)  /* OABI.  */
+	{
+	  svc_number = svc_operand - 0x900000;
+	}
+      else /* EABI.  */
+	{
+	  collect_register (regcache, 7, &svc_number);
+	}
+
+      next_pc = pc + 4;
+    }
+
+  /* This is a sigreturn or sigreturn_rt syscall.  */
+  if (svc_number == __NR_sigreturn || svc_number == __NR_rt_sigreturn)
+    {
+      /* SIGRETURN or RT_SIGRETURN may affect the arm thumb mode, so
+	 update IS_THUMB.   */
+      next_pc = arm_sigreturn_next_pc (regcache, svc_number, &is_thumb);
+    }
+
+  /* Addresses for calling Thumb functions have the bit 0 set.  */
+  if (is_thumb)
+    next_pc = MAKE_THUMB_ADDR (next_pc);
+
+  return next_pc;
+}
 
 static int
 arm_get_hwcap (unsigned long *valp)
 {
-  unsigned char *data = alloca (8);
+  unsigned char *data = (unsigned char *) alloca (8);
   int offset = 0;
 
   while ((*the_target->read_auxv) (offset, data, 8) == 8)
@@ -838,11 +860,11 @@ static const struct target_desc *
 arm_read_description (void)
 {
   int pid = lwpid_of (current_thread);
+  unsigned long arm_hwcap = 0;
 
   /* Query hardware watchpoint/breakpoint capabilities.  */
   arm_linux_init_hwbp_cap (pid);
 
-  arm_hwcap = 0;
   if (arm_get_hwcap (&arm_hwcap) == 0)
     return tdesc_arm;
 
@@ -866,13 +888,11 @@ arm_read_description (void)
       /* Now make sure that the kernel supports reading these
 	 registers.  Support was added in 2.6.30.  */
       errno = 0;
-      buf = xmalloc (32 * 8 + 4);
+      buf = (char *) xmalloc (32 * 8 + 4);
       if (ptrace (PTRACE_GETVFPREGS, pid, 0, buf) < 0
 	  && errno == EIO)
-	{
-	  arm_hwcap = 0;
-	  result = tdesc_arm;
-	}
+	result = tdesc_arm;
+
       free (buf);
 
       return result;
@@ -886,8 +906,86 @@ arm_read_description (void)
 static void
 arm_arch_setup (void)
 {
+  int tid = lwpid_of (current_thread);
+  int gpregs[18];
+  struct iovec iov;
+
   current_process ()->tdesc = arm_read_description ();
+
+  iov.iov_base = gpregs;
+  iov.iov_len = sizeof (gpregs);
+
+  /* Check if PTRACE_GETREGSET works.  */
+  if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, &iov) == 0)
+    have_ptrace_getregset = 1;
+  else
+    have_ptrace_getregset = 0;
 }
+
+/* Fetch the next possible PCs after the current instruction executes.  */
+
+static VEC (CORE_ADDR) *
+arm_gdbserver_get_next_pcs (struct regcache *regcache)
+{
+  struct arm_get_next_pcs next_pcs_ctx;
+  VEC (CORE_ADDR) *next_pcs = NULL;
+
+  arm_get_next_pcs_ctor (&next_pcs_ctx,
+			 &get_next_pcs_ops,
+			 /* Byte order is ignored assumed as host.  */
+			 0,
+			 0,
+			 1,
+			 regcache);
+
+  next_pcs = arm_get_next_pcs (&next_pcs_ctx);
+
+  return next_pcs;
+}
+
+/* Support for hardware single step.  */
+
+static int
+arm_supports_hardware_single_step (void)
+{
+  return 0;
+}
+
+/* Implementation of linux_target_ops method "get_syscall_trapinfo".  */
+
+static void
+arm_get_syscall_trapinfo (struct regcache *regcache, int *sysno)
+{
+  if (arm_is_thumb_mode ())
+    collect_register_by_name (regcache, "r7", sysno);
+  else
+    {
+      unsigned long pc;
+      unsigned long insn;
+
+      collect_register_by_name (regcache, "pc", &pc);
+
+      if ((*the_target->read_memory) (pc - 4, (unsigned char *) &insn, 4))
+	*sysno = UNKNOWN_SYSCALL;
+      else
+	{
+	  unsigned long svc_operand = (0x00ffffff & insn);
+
+	  if (svc_operand)
+	    {
+	      /* OABI */
+	      *sysno = svc_operand - 0x900000;
+	    }
+	  else
+	    {
+	      /* EABI */
+	      collect_register_by_name (regcache, "r7", sysno);
+	    }
+	}
+    }
+}
+
+/* Register sets without using PTRACE_GETREGSET.  */
 
 static struct regset_info arm_regsets[] = {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, 18 * 4,
@@ -899,7 +997,7 @@ static struct regset_info arm_regsets[] = {
   { PTRACE_GETVFPREGS, PTRACE_SETVFPREGS, 0, 32 * 8 + 4,
     EXTENDED_REGS,
     arm_fill_vfpregset, arm_store_vfpregset },
-  { 0, 0, 0, -1, -1, NULL, NULL }
+  NULL_REGSET
 };
 
 static struct regsets_info arm_regsets_info =
@@ -915,7 +1013,7 @@ static struct usrregs_info arm_usrregs_info =
     arm_regmap,
   };
 
-static struct regs_info regs_info =
+static struct regs_info regs_info_arm =
   {
     NULL, /* regset_bitmap */
     &arm_usrregs_info,
@@ -925,7 +1023,13 @@ static struct regs_info regs_info =
 static const struct regs_info *
 arm_regs_info (void)
 {
-  return &regs_info;
+  const struct target_desc *tdesc = current_process ()->tdesc;
+
+  if (have_ptrace_getregset == 1
+      && (tdesc == tdesc_arm_with_neon || tdesc == tdesc_arm_with_vfpv3))
+    return &regs_info_aarch32;
+  else
+    return &regs_info_arm;
 }
 
 struct linux_target_ops the_low_target = {
@@ -934,21 +1038,11 @@ struct linux_target_ops the_low_target = {
   arm_cannot_fetch_register,
   arm_cannot_store_register,
   NULL, /* fetch_register */
-  arm_get_pc,
-  arm_set_pc,
-
-  /* Define an ARM-mode breakpoint; we only set breakpoints in the C
-     library, which is most likely to be ARM.  If the kernel supports
-     clone events, we will never insert a breakpoint, so even a Thumb
-     C library will work; so will mixing EABI/non-EABI gdbserver and
-     application.  */
-#ifndef __ARM_EABI__
-  (const unsigned char *) &arm_breakpoint,
-#else
-  (const unsigned char *) &arm_eabi_breakpoint,
-#endif
-  arm_breakpoint_len,
-  arm_reinsert_addr,
+  linux_get_pc_32bit,
+  linux_set_pc_32bit,
+  arm_breakpoint_kind_from_pc,
+  arm_sw_breakpoint_from_kind,
+  arm_gdbserver_get_next_pcs,
   0,
   arm_breakpoint_at,
   arm_supports_z_point_type,
@@ -963,6 +1057,16 @@ struct linux_target_ops the_low_target = {
   arm_new_thread,
   arm_new_fork,
   arm_prepare_to_resume,
+  NULL, /* process_qsupported */
+  NULL, /* supports_tracepoints */
+  NULL, /* get_thread_area */
+  NULL, /* install_fast_tracepoint_jump_pad */
+  NULL, /* emit_ops */
+  NULL, /* get_min_fast_tracepoint_insn_len */
+  NULL, /* supports_range_stepping */
+  arm_breakpoint_kind_from_current_state,
+  arm_supports_hardware_single_step,
+  arm_get_syscall_trapinfo,
 };
 
 void
@@ -973,7 +1077,8 @@ initialize_low_arch (void)
   init_registers_arm_with_iwmmxt ();
   init_registers_arm_with_vfpv2 ();
   init_registers_arm_with_vfpv3 ();
-  init_registers_arm_with_neon ();
+
+  initialize_low_arch_aarch32 ();
 
   initialize_regsets_info (&arm_regsets_info);
 }

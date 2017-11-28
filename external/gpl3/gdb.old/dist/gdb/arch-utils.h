@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -107,6 +107,9 @@ extern int generic_in_solib_return_trampoline (struct gdbarch *gdbarch,
 extern int generic_stack_frame_destroyed_p (struct gdbarch *gdbarch,
 					    CORE_ADDR pc);
 
+extern int default_code_of_frame_writable (struct gdbarch *gdbarch,
+					   struct frame_info *frame);
+
 /* By default, registers are not convertible.  */
 extern int generic_convert_register_p (struct gdbarch *gdbarch, int regnum,
 				       struct type *type);
@@ -161,8 +164,7 @@ extern struct gdbarch *get_current_arch (void);
 extern int default_has_shared_address_space (struct gdbarch *);
 
 extern int default_fast_tracepoint_valid_at (struct gdbarch *gdbarch,
-					     CORE_ADDR addr,
-					     int *isize, char **msg);
+					     CORE_ADDR addr, char **msg);
 
 extern void default_remote_breakpoint_from_pc (struct gdbarch *,
 					       CORE_ADDR *pcptr, int *kindptr);
@@ -204,5 +206,9 @@ extern void default_infcall_munmap (CORE_ADDR addr, CORE_ADDR size);
 extern char *default_gcc_target_options (struct gdbarch *gdbarch);
 extern const char *default_gnu_triplet_regexp (struct gdbarch *gdbarch);
 extern int default_addressable_memory_unit_size (struct gdbarch *gdbarch);
+
+extern void default_guess_tracepoint_registers (struct gdbarch *gdbarch,
+						struct regcache *regcache,
+						CORE_ADDR addr);
 
 #endif

@@ -607,12 +607,6 @@ CGEN_MAINT
 REPORT_BUGS_TEXI
 REPORT_BUGS_TO
 PKGVERSION
-sim_profile
-sim_trace
-sim_stdio
-sim_debug
-sim_cflags
-sim_bswap
 MAINT
 MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
@@ -687,12 +681,7 @@ CFLAGS
 CC
 WERROR_CFLAGS
 WARN_CFLAGS
-sim_xor_endian
-sim_stdcall
-sim_smp
 sim_reserved_bits
-sim_regparm
-sim_packages
 sim_inline
 sim_hw
 sim_hw_objs
@@ -700,12 +689,9 @@ sim_hw_cflags
 sim_default_model
 sim_scache
 sim_float
-sim_hostendian
 sim_endian
 sim_bitsize
-sim_assert
 sim_alignment
-sim_environment
 target_alias
 host_alias
 build_alias
@@ -756,20 +742,19 @@ enable_fast_install
 with_gnu_ld
 enable_libtool_lock
 enable_maintainer_mode
-enable_sim_bswap
-enable_sim_cflags
 enable_sim_debug
 enable_sim_stdio
 enable_sim_trace
 enable_sim_profile
+enable_sim_assert
+enable_sim_environment
+enable_sim_inline
 with_pkgversion
 with_bugurl
 enable_sim_endian
 enable_sim_alignment
-enable_sim_hostendian
 enable_sim_scache
 enable_sim_default_model
-enable_sim_environment
 enable_cgen_maint
 enable_sim_hardware
 '
@@ -1408,9 +1393,6 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
-  --enable-sim-bswap      Use Host specific BSWAP instruction
-  --enable-sim-cflags=opts
-                          Extra CFLAGS for use in building simulator
   --enable-sim-debug=opts Enable debugging flags (for developers of the sim
                           itself)
   --enable-sim-stdio      Specify whether to use stdio for console
@@ -1418,20 +1400,21 @@ Optional Features:
   --enable-sim-trace=opts Enable tracing of simulated programs
   --enable-sim-profile=opts
                           Enable profiling flags
+  --enable-sim-assert     Specify whether to perform random assertions
+  --enable-sim-environment=environment
+                          Specify mixed, user, virtual or operating
+                          environment
+  --enable-sim-inline=inlines
+                          Specify which functions should be inlined
   --enable-sim-endian=endian
                           Specify target byte endian orientation
   --enable-sim-alignment=align
                           Specify strict, nonstrict or forced alignment of
                           memory accesses
-  --enable-sim-hostendian=end
-                          Specify host byte endian orientation
   --enable-sim-scache=size
                           Specify simulator execution cache size
   --enable-sim-default-model=model
                           Specify default model to simulate
-  --enable-sim-environment=environment
-                          Specify mixed, user, virtual or operating
-                          environment
   --enable-cgen-maint=DIR build cgen generated files
   --enable-sim-hardware=LIST
                           Specify the hardware to be included in the build.
@@ -1883,6 +1866,117 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
 
 } # ac_fn_c_check_func
+
+# ac_fn_c_check_member LINENO AGGR MEMBER VAR INCLUDES
+# ----------------------------------------------------
+# Tries to find if the field MEMBER exists in type AGGR, after including
+# INCLUDES, setting cache variable VAR accordingly.
+ac_fn_c_check_member ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2.$3" >&5
+$as_echo_n "checking for $2.$3... " >&6; }
+if { as_var=$4; eval "test \"\${$as_var+set}\" = set"; }; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main ()
+{
+static $2 ac_aggr;
+if (ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$4=yes"
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main ()
+{
+static $2 ac_aggr;
+if (sizeof ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$4=yes"
+else
+  eval "$4=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$4
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+
+} # ac_fn_c_check_member
+
+# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
+# -------------------------------------------
+# Tests whether TYPE exists after having included INCLUDES, setting cache
+# variable VAR accordingly.
+ac_fn_c_check_type ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if { as_var=$3; eval "test \"\${$as_var+set}\" = set"; }; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=no"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof ($2))
+	 return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof (($2)))
+	    return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  eval "$3=yes"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+
+} # ac_fn_c_check_type
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -3900,27 +3994,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sim_inline="-DDEFAULT_INLINE=0"
 
 
 
@@ -8195,6 +8268,230 @@ ac_config_headers="$ac_config_headers config.h:config.in"
 
 
 
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
+$as_echo_n "checking whether byte ordering is bigendian... " >&6; }
+if test "${ac_cv_c_bigendian+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_c_bigendian=unknown
+    # See if we're dealing with a universal compiler.
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __APPLE_CC__
+	       not a universal capable compiler
+	     #endif
+	     typedef int dummy;
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+	# Check for potential -arch flags.  It is not universal unless
+	# there are at least two -arch flags with different values.
+	ac_arch=
+	ac_prev=
+	for ac_word in $CC $CFLAGS $CPPFLAGS $LDFLAGS; do
+	 if test -n "$ac_prev"; then
+	   case $ac_word in
+	     i?86 | x86_64 | ppc | ppc64)
+	       if test -z "$ac_arch" || test "$ac_arch" = "$ac_word"; then
+		 ac_arch=$ac_word
+	       else
+		 ac_cv_c_bigendian=universal
+		 break
+	       fi
+	       ;;
+	   esac
+	   ac_prev=
+	 elif test "x$ac_word" = "x-arch"; then
+	   ac_prev=arch
+	 fi
+       done
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    if test $ac_cv_c_bigendian = unknown; then
+      # See if sys/param.h defines the BYTE_ORDER macro.
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+	     #include <sys/param.h>
+
+int
+main ()
+{
+#if ! (defined BYTE_ORDER && defined BIG_ENDIAN \
+		     && defined LITTLE_ENDIAN && BYTE_ORDER && BIG_ENDIAN \
+		     && LITTLE_ENDIAN)
+	      bogus endian macros
+	     #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  # It does; now see whether it defined to BIG_ENDIAN or not.
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+		#include <sys/param.h>
+
+int
+main ()
+{
+#if BYTE_ORDER != BIG_ENDIAN
+		 not big endian
+		#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_bigendian=yes
+else
+  ac_cv_c_bigendian=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    fi
+    if test $ac_cv_c_bigendian = unknown; then
+      # See if <limits.h> defines _LITTLE_ENDIAN or _BIG_ENDIAN (e.g., Solaris).
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <limits.h>
+
+int
+main ()
+{
+#if ! (defined _LITTLE_ENDIAN || defined _BIG_ENDIAN)
+	      bogus endian macros
+	     #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  # It does; now see whether it defined to _BIG_ENDIAN or not.
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <limits.h>
+
+int
+main ()
+{
+#ifndef _BIG_ENDIAN
+		 not big endian
+		#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_bigendian=yes
+else
+  ac_cv_c_bigendian=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    fi
+    if test $ac_cv_c_bigendian = unknown; then
+      # Compile a test program.
+      if test "$cross_compiling" = yes; then :
+  # Try to guess by grepping values from an object file.
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+short int ascii_mm[] =
+		  { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
+		short int ascii_ii[] =
+		  { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
+		int use_ascii (int i) {
+		  return ascii_mm[i] + ascii_ii[i];
+		}
+		short int ebcdic_ii[] =
+		  { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
+		short int ebcdic_mm[] =
+		  { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
+		int use_ebcdic (int i) {
+		  return ebcdic_mm[i] + ebcdic_ii[i];
+		}
+		extern int foo;
+
+int
+main ()
+{
+return use_ascii (foo) == use_ebcdic (foo);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  if grep BIGenDianSyS conftest.$ac_objext >/dev/null; then
+	      ac_cv_c_bigendian=yes
+	    fi
+	    if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
+	      if test "$ac_cv_c_bigendian" = unknown; then
+		ac_cv_c_bigendian=no
+	      else
+		# finding both strings is unlikely to happen, but who knows?
+		ac_cv_c_bigendian=unknown
+	      fi
+	    fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+
+	     /* Are we little or big endian?  From Harbison&Steele.  */
+	     union
+	     {
+	       long int l;
+	       char c[sizeof (long int)];
+	     } u;
+	     u.l = 1;
+	     return u.c[sizeof (long int) - 1] == 1;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  ac_cv_c_bigendian=no
+else
+  ac_cv_c_bigendian=yes
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+    fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_bigendian" >&5
+$as_echo "$ac_cv_c_bigendian" >&6; }
+ case $ac_cv_c_bigendian in #(
+   yes)
+     $as_echo "#define WORDS_BIGENDIAN 1" >>confdefs.h
+;; #(
+   no)
+      ;; #(
+   universal)
+
+$as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
+
+     ;; #(
+   *)
+     as_fn_error "unknown endianness
+ presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
+ esac
+
 
 
 
@@ -8301,8 +8598,6 @@ esac
 else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
-
-
 
 
 # Some of the common include files depend on bfd.h, and bfd.h checks
@@ -8564,7 +8859,7 @@ fi
 
 done
 
-for ac_header in sys/time.h sys/resource.h
+for ac_header in sys/time.h sys/times.h sys/resource.h sys/mman.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -8618,6 +8913,228 @@ _ACEOF
 
 fi
 done
+
+for ac_func in mmap munmap lstat truncate ftruncate posix_fallocate
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+eval as_val=\$$as_ac_var
+   if test "x$as_val" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+ac_fn_c_check_member "$LINENO" "struct stat" "st_dev" "ac_cv_member_struct_stat_st_dev" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_dev" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_DEV 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_ino" "ac_cv_member_struct_stat_st_ino" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_ino" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_INO 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_mode" "ac_cv_member_struct_stat_st_mode" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_mode" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_MODE 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_nlink" "ac_cv_member_struct_stat_st_nlink" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_nlink" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_NLINK 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_uid" "ac_cv_member_struct_stat_st_uid" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_uid" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_UID 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_gid" "ac_cv_member_struct_stat_st_gid" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_gid" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_GID 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_rdev" "ac_cv_member_struct_stat_st_rdev" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_rdev" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_RDEV 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_size" "ac_cv_member_struct_stat_st_size" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_size" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_SIZE 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_blksize" "ac_cv_member_struct_stat_st_blksize" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_blksize" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_BLKSIZE 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_blocks" "ac_cv_member_struct_stat_st_blocks" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_blocks" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_BLOCKS 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_atime" "ac_cv_member_struct_stat_st_atime" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_atime" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_ATIME 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_mtime" "ac_cv_member_struct_stat_st_mtime" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_mtime" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_MTIME 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct stat" "st_ctime" "ac_cv_member_struct_stat_st_ctime" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+"
+if test "x$ac_cv_member_struct_stat_st_ctime" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STAT_ST_CTIME 1
+_ACEOF
+
+
+fi
+
+ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "#include <sys/types.h>
+#include <sys/socket.h>
+
+"
+if test "x$ac_cv_type_socklen_t" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SOCKLEN_T 1
+_ACEOF
+
+
+fi
 
 
 # Check for socket libraries
@@ -12320,7 +12837,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12323 "configure"
+#line 12840 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12426,7 +12943,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12429 "configure"
+#line 12946 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12694,121 +13211,192 @@ fi
 
 
 
-# Check whether --enable-sim-bswap was given.
-if test "${enable_sim_bswap+set}" = set; then :
-  enableval=$enable_sim_bswap; case "${enableval}" in
-  yes)	sim_bswap="-DWITH_BSWAP=1 -DUSE_BSWAP=1";;
-  no)	sim_bswap="-DWITH_BSWAP=0";;
-  *)	as_fn_error "\"--enable-sim-bswap does not take a value\"" "$LINENO" 5; sim_bswap="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_bswap" != x""; then
-  echo "Setting bswap flags = $sim_bswap" 6>&1
-fi
-else
-  sim_bswap=""
-fi
-
-
-
-# Check whether --enable-sim-cflags was given.
-if test "${enable_sim_cflags+set}" = set; then :
-  enableval=$enable_sim_cflags; case "${enableval}" in
-  yes)	 sim_cflags="-O2 -fomit-frame-pointer";;
-  trace) as_fn_error "\"Please use --enable-sim-debug instead.\"" "$LINENO" 5; sim_cflags="";;
-  no)	 sim_cflags="";;
-  *)	 sim_cflags=`echo "${enableval}" | sed -e "s/,/ /g"`;;
-esac
-if test x"$silent" != x"yes" && test x"$sim_cflags" != x""; then
-  echo "Setting sim cflags = $sim_cflags" 6>&1
-fi
-else
-  sim_cflags=""
-fi
-
-
-
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim debug setting" >&5
+$as_echo_n "checking for sim debug setting... " >&6; }
+sim_debug="0"
 # Check whether --enable-sim-debug was given.
 if test "${enable_sim_debug+set}" = set; then :
   enableval=$enable_sim_debug; case "${enableval}" in
-  yes) sim_debug="-DDEBUG=7 -DWITH_DEBUG=7";;
-  no)  sim_debug="-DDEBUG=0 -DWITH_DEBUG=0";;
-  *)   sim_debug="-DDEBUG='(${enableval})' -DWITH_DEBUG='(${enableval})'";;
+  yes) sim_debug="7";;
+  no)  sim_debug="0";;
+  *)   sim_debug="($enableval)";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_debug" != x""; then
-  echo "Setting sim debug = $sim_debug" 6>&1
 fi
-else
-  sim_debug=""
+if test "$sim_debug" != "0"; then
+
+cat >>confdefs.h <<_ACEOF
+#define DEBUG $sim_debug
+_ACEOF
+
 fi
 
+cat >>confdefs.h <<_ACEOF
+#define WITH_DEBUG $sim_debug
+_ACEOF
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_debug" >&5
+$as_echo "$sim_debug" >&6; }
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim stdio debug behavior" >&5
+$as_echo_n "checking for sim stdio debug behavior... " >&6; }
+sim_stdio="0"
 # Check whether --enable-sim-stdio was given.
 if test "${enable_sim_stdio+set}" = set; then :
   enableval=$enable_sim_stdio; case "${enableval}" in
-  yes)	sim_stdio="-DWITH_STDIO=DO_USE_STDIO";;
-  no)	sim_stdio="-DWITH_STDIO=DONT_USE_STDIO";;
-  *)	as_fn_error "\"Unknown value $enableval passed to --enable-sim-stdio\"" "$LINENO" 5; sim_stdio="";;
+  yes)	sim_stdio="DO_USE_STDIO";;
+  no)	sim_stdio="DONT_USE_STDIO";;
+  *)	as_fn_error "Unknown value $enableval passed to --enable-sim-stdio" "$LINENO" 5;;
 esac
-if test x"$silent" != x"yes" && test x"$sim_stdio" != x""; then
-  echo "Setting stdio flags = $sim_stdio" 6>&1
-fi
-else
-  sim_stdio=""
 fi
 
+cat >>confdefs.h <<_ACEOF
+#define WITH_STDIO $sim_stdio
+_ACEOF
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_stdio" >&5
+$as_echo "$sim_stdio" >&6; }
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim trace settings" >&5
+$as_echo_n "checking for sim trace settings... " >&6; }
+sim_trace="~TRACE_debug"
 # Check whether --enable-sim-trace was given.
 if test "${enable_sim_trace+set}" = set; then :
   enableval=$enable_sim_trace; case "${enableval}" in
-  yes)	sim_trace="-DWITH_TRACE=-1";;
-  no)	sim_trace="-DWITH_TRACE=0";;
+  yes)	sim_trace="-1";;
+  no)	sim_trace="0";;
   [-0-9]*)
-	sim_trace="-DWITH_TRACE='(${enableval})'";;
+	sim_trace="'(${enableval})'";;
   [[:lower:]]*)
 	sim_trace=""
 	for x in `echo "$enableval" | sed -e "s/,/ /g"`; do
 	  if test x"$sim_trace" = x; then
-	    sim_trace="-DWITH_TRACE='(TRACE_$x"
+	    sim_trace="(TRACE_$x"
 	  else
 	    sim_trace="${sim_trace}|TRACE_$x"
 	  fi
 	done
-	sim_trace="$sim_trace)'" ;;
+	sim_trace="$sim_trace)" ;;
 esac
-if test x"$silent" != x"yes" && test x"$sim_trace" != x""; then
-  echo "Setting sim trace = $sim_trace" 6>&1
-fi
-else
-  sim_trace=""
 fi
 
+cat >>confdefs.h <<_ACEOF
+#define WITH_TRACE $sim_trace
+_ACEOF
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_trace" >&5
+$as_echo "$sim_trace" >&6; }
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim profile settings" >&5
+$as_echo_n "checking for sim profile settings... " >&6; }
+profile="1"
+sim_profile="-1"
 # Check whether --enable-sim-profile was given.
 if test "${enable_sim_profile+set}" = set; then :
   enableval=$enable_sim_profile; case "${enableval}" in
-  yes)	sim_profile="-DPROFILE=1 -DWITH_PROFILE=-1";;
-  no)	sim_profile="-DPROFILE=0 -DWITH_PROFILE=0";;
+  yes)	profile="1" sim_profile="-1";;
+  no)	profile="0" sim_profile="0";;
   [-0-9]*)
-	sim_profile="-DPROFILE='(${enableval})' -DWITH_PROFILE='(${enableval})'";;
+	profile="(${enableval})" sim_profile="(${enableval})";;
   [a-z]*)
+    profile="1"
 	sim_profile=""
 	for x in `echo "$enableval" | sed -e "s/,/ /g"`; do
 	  if test x"$sim_profile" = x; then
-	    sim_profile="-DWITH_PROFILE='(PROFILE_$x"
+	    sim_profile="(PROFILE_$x"
 	  else
 	    sim_profile="${sim_profile}|PROFILE_$x"
 	  fi
 	done
-	sim_profile="$sim_profile)'" ;;
+	sim_profile="$sim_profile)" ;;
 esac
-if test x"$silent" != x"yes" && test x"$sim_profile" != x""; then
-  echo "Setting sim profile = $sim_profile" 6>&1
 fi
-else
-  sim_profile="-DPROFILE=1 -DWITH_PROFILE=-1"
+
+cat >>confdefs.h <<_ACEOF
+#define PROFILE $profile
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define WITH_PROFILE $sim_profile
+_ACEOF
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_profile" >&5
+$as_echo "$sim_profile" >&6; }
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable sim asserts" >&5
+$as_echo_n "checking whether to enable sim asserts... " >&6; }
+sim_assert="1"
+# Check whether --enable-sim-assert was given.
+if test "${enable_sim_assert+set}" = set; then :
+  enableval=$enable_sim_assert; case "${enableval}" in
+  yes)	sim_assert="1";;
+  no)	sim_assert="0";;
+  *)	as_fn_error "--enable-sim-assert does not take a value" "$LINENO" 5;;
+esac
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define WITH_ASSERT $sim_assert
+_ACEOF
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_assert" >&5
+$as_echo "$sim_assert" >&6; }
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking default sim environment setting" >&5
+$as_echo_n "checking default sim environment setting... " >&6; }
+sim_environment="ALL_ENVIRONMENT"
+# Check whether --enable-sim-environment was given.
+if test "${enable_sim_environment+set}" = set; then :
+  enableval=$enable_sim_environment; case "${enableval}" in
+  all | ALL)             sim_environment="ALL_ENVIRONMENT";;
+  user | USER)           sim_environment="USER_ENVIRONMENT";;
+  virtual | VIRTUAL)     sim_environment="VIRTUAL_ENVIRONMENT";;
+  operating | OPERATING) sim_environment="OPERATING_ENVIRONMENT";;
+  *)   as_fn_error "Unknown value $enableval passed to --enable-sim-environment" "$LINENO" 5;;
+esac
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define WITH_ENVIRONMENT $sim_environment
+_ACEOF
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_environment" >&5
+$as_echo "$sim_environment" >&6; }
+
+
+sim_inline="-DDEFAULT_INLINE=0"
+# Check whether --enable-sim-inline was given.
+if test "${enable_sim_inline+set}" = set; then :
+  enableval=$enable_sim_inline; sim_inline=""
+case "$enableval" in
+  no)		sim_inline="-DDEFAULT_INLINE=0";;
+  0)		sim_inline="-DDEFAULT_INLINE=0";;
+  yes | 2)	sim_inline="-DDEFAULT_INLINE=ALL_C_INLINE";;
+  1)		sim_inline="-DDEFAULT_INLINE=INLINE_LOCALS";;
+  *) for x in `echo "$enableval" | sed -e "s/,/ /g"`; do
+       new_flag=""
+       case "$x" in
+	 *_INLINE=*)	new_flag="-D$x";;
+	 *=*)		new_flag=`echo "$x" | sed -e "s/=/_INLINE=/" -e "s/^/-D/"`;;
+	 *_INLINE)	new_flag="-D$x=ALL_C_INLINE";;
+	 *)		new_flag="-D$x""_INLINE=ALL_C_INLINE";;
+       esac
+       if test x"$sim_inline" = x""; then
+	 sim_inline="$new_flag"
+       else
+	 sim_inline="$sim_inline $new_flag"
+       fi
+     done;;
+esac
+if test x"$silent" != x"yes" && test x"$sim_inline" != x""; then
+  echo "Setting inline flags = $sim_inline" 6>&1
+fi
 fi
 
 
@@ -12904,44 +13492,34 @@ _ACEOF
 
 
 
-sim_link_files=
-sim_link_links=
-
-# targ-vals.def points to the libc macro description file.
-case "${target}" in
-*-*-*) TARG_VALS_DEF=../common/nltvals.def ;;
-esac
-sim_link_files="${sim_link_files} ${TARG_VALS_DEF}"
-sim_link_links="${sim_link_links} targ-vals.def"
 
 
 
-
-wire_endian="BIG_ENDIAN"
+wire_endian="BIG"
 default_endian=""
 # Check whether --enable-sim-endian was given.
 if test "${enable_sim_endian+set}" = set; then :
   enableval=$enable_sim_endian; case "${enableval}" in
-  b*|B*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BIG_ENDIAN";;
-  l*|L*) sim_endian="-DWITH_TARGET_BYTE_ORDER=LITTLE_ENDIAN";;
+  b*|B*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BFD_ENDIAN_BIG";;
+  l*|L*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BFD_ENDIAN_LITTLE";;
   yes)	 if test x"$wire_endian" != x; then
-	   sim_endian="-DWITH_TARGET_BYTE_ORDER=${wire_endian}"
+	   sim_endian="-DWITH_TARGET_BYTE_ORDER=BFD_ENDIAN_${wire_endian}"
 	 else
-           if test x"$default_endian" != x; then
-	     sim_endian="-DWITH_TARGET_BYTE_ORDER=${default_endian}"
+	  if test x"$default_endian" != x; then
+	     sim_endian="-DWITH_TARGET_BYTE_ORDER=BFD_ENDIAN_${default_endian}"
 	   else
 	     echo "No hard-wired endian for target $target" 1>&6
-	     sim_endian="-DWITH_TARGET_BYTE_ORDER=0"
+	     sim_endian="-DWITH_TARGET_BYTE_ORDER=BFD_ENDIAN_UNKNOWN"
 	   fi
 	 fi;;
   no)	 if test x"$default_endian" != x; then
-	   sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=${default_endian}"
+	   sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=BFD_ENDIAN_${default_endian}"
 	 else
 	   if test x"$wire_endian" != x; then
-	     sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=${wire_endian}"
+	     sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=BFD_ENDIAN_${wire_endian}"
 	   else
 	     echo "No default endian for target $target" 1>&6
-	     sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=0"
+	     sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=BFD_ENDIAN_UNKNOWN"
 	   fi
 	 fi;;
   *)	 as_fn_error "\"Unknown value $enableval for --enable-sim-endian\"" "$LINENO" 5; sim_endian="";;
@@ -12951,10 +13529,10 @@ if test x"$silent" != x"yes" && test x"$sim_endian" != x""; then
 fi
 else
   if test x"$default_endian" != x; then
-  sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=${default_endian}"
+  sim_endian="-DWITH_DEFAULT_TARGET_BYTE_ORDER=BFD_ENDIAN_${default_endian}"
 else
   if test x"$wire_endian" != x; then
-    sim_endian="-DWITH_TARGET_BYTE_ORDER=${wire_endian}"
+    sim_endian="-DWITH_TARGET_BYTE_ORDER=BFD_ENDIAN_${wire_endian}"
   else
     sim_endian=
   fi
@@ -13008,255 +13586,6 @@ fi
 fi
 
 
-# Check whether --enable-sim-hostendian was given.
-if test "${enable_sim_hostendian+set}" = set; then :
-  enableval=$enable_sim_hostendian; case "${enableval}" in
-  no)	 sim_hostendian="-DWITH_HOST_BYTE_ORDER=0";;
-  b*|B*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=BIG_ENDIAN";;
-  l*|L*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=LITTLE_ENDIAN";;
-  *)	 as_fn_error "\"Unknown value $enableval for --enable-sim-hostendian\"" "$LINENO" 5; sim_hostendian="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_hostendian" != x""; then
-  echo "Setting hostendian flags = $sim_hostendian" 6>&1
-fi
-else
-
-if test "x$cross_compiling" = "xno"; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
-$as_echo_n "checking whether byte ordering is bigendian... " >&6; }
-if test "${ac_cv_c_bigendian+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_c_bigendian=unknown
-    # See if we're dealing with a universal compiler.
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifndef __APPLE_CC__
-	       not a universal capable compiler
-	     #endif
-	     typedef int dummy;
-
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-	# Check for potential -arch flags.  It is not universal unless
-	# there are at least two -arch flags with different values.
-	ac_arch=
-	ac_prev=
-	for ac_word in $CC $CFLAGS $CPPFLAGS $LDFLAGS; do
-	 if test -n "$ac_prev"; then
-	   case $ac_word in
-	     i?86 | x86_64 | ppc | ppc64)
-	       if test -z "$ac_arch" || test "$ac_arch" = "$ac_word"; then
-		 ac_arch=$ac_word
-	       else
-		 ac_cv_c_bigendian=universal
-		 break
-	       fi
-	       ;;
-	   esac
-	   ac_prev=
-	 elif test "x$ac_word" = "x-arch"; then
-	   ac_prev=arch
-	 fi
-       done
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    if test $ac_cv_c_bigendian = unknown; then
-      # See if sys/param.h defines the BYTE_ORDER macro.
-      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-	     #include <sys/param.h>
-
-int
-main ()
-{
-#if ! (defined BYTE_ORDER && defined BIG_ENDIAN \
-		     && defined LITTLE_ENDIAN && BYTE_ORDER && BIG_ENDIAN \
-		     && LITTLE_ENDIAN)
-	      bogus endian macros
-	     #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  # It does; now see whether it defined to BIG_ENDIAN or not.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-		#include <sys/param.h>
-
-int
-main ()
-{
-#if BYTE_ORDER != BIG_ENDIAN
-		 not big endian
-		#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_bigendian=yes
-else
-  ac_cv_c_bigendian=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    fi
-    if test $ac_cv_c_bigendian = unknown; then
-      # See if <limits.h> defines _LITTLE_ENDIAN or _BIG_ENDIAN (e.g., Solaris).
-      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <limits.h>
-
-int
-main ()
-{
-#if ! (defined _LITTLE_ENDIAN || defined _BIG_ENDIAN)
-	      bogus endian macros
-	     #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  # It does; now see whether it defined to _BIG_ENDIAN or not.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <limits.h>
-
-int
-main ()
-{
-#ifndef _BIG_ENDIAN
-		 not big endian
-		#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_bigendian=yes
-else
-  ac_cv_c_bigendian=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    fi
-    if test $ac_cv_c_bigendian = unknown; then
-      # Compile a test program.
-      if test "$cross_compiling" = yes; then :
-  # Try to guess by grepping values from an object file.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-short int ascii_mm[] =
-		  { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
-		short int ascii_ii[] =
-		  { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
-		int use_ascii (int i) {
-		  return ascii_mm[i] + ascii_ii[i];
-		}
-		short int ebcdic_ii[] =
-		  { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
-		short int ebcdic_mm[] =
-		  { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
-		int use_ebcdic (int i) {
-		  return ebcdic_mm[i] + ebcdic_ii[i];
-		}
-		extern int foo;
-
-int
-main ()
-{
-return use_ascii (foo) == use_ebcdic (foo);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  if grep BIGenDianSyS conftest.$ac_objext >/dev/null; then
-	      ac_cv_c_bigendian=yes
-	    fi
-	    if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
-	      if test "$ac_cv_c_bigendian" = unknown; then
-		ac_cv_c_bigendian=no
-	      else
-		# finding both strings is unlikely to happen, but who knows?
-		ac_cv_c_bigendian=unknown
-	      fi
-	    fi
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main ()
-{
-
-	     /* Are we little or big endian?  From Harbison&Steele.  */
-	     union
-	     {
-	       long int l;
-	       char c[sizeof (long int)];
-	     } u;
-	     u.l = 1;
-	     return u.c[sizeof (long int) - 1] == 1;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_c_bigendian=no
-else
-  ac_cv_c_bigendian=yes
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-    fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_bigendian" >&5
-$as_echo "$ac_cv_c_bigendian" >&6; }
- case $ac_cv_c_bigendian in #(
-   yes)
-     $as_echo "#define WORDS_BIGENDIAN 1" >>confdefs.h
-;; #(
-   no)
-      ;; #(
-   universal)
-
-$as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
-
-     ;; #(
-   *)
-     as_fn_error "unknown endianness
- presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
- esac
-
-  if test $ac_cv_c_bigendian = yes; then
-    sim_hostendian="-DWITH_HOST_BYTE_ORDER=BIG_ENDIAN"
-  else
-    sim_hostendian="-DWITH_HOST_BYTE_ORDER=LITTLE_ENDIAN"
-  fi
-else
-  sim_hostendian="-DWITH_HOST_BYTE_ORDER=0"
-fi
-fi
-
-
 default_sim_scache="16384"
 # Check whether --enable-sim-scache was given.
 if test "${enable_sim_scache+set}" = set; then :
@@ -13290,24 +13619,6 @@ else
   sim_default_model="-DWITH_DEFAULT_MODEL='\"${default_sim_default_model}\"'"
 fi
 
-
-
-# Check whether --enable-sim-environment was given.
-if test "${enable_sim_environment+set}" = set; then :
-  enableval=$enable_sim_environment; case "${enableval}" in
-  all | ALL)             sim_environment="-DWITH_ENVIRONMENT=ALL_ENVIRONMENT";;
-  user | USER)           sim_environment="-DWITH_ENVIRONMENT=USER_ENVIRONMENT";;
-  virtual | VIRTUAL)     sim_environment="-DWITH_ENVIRONMENT=VIRTUAL_ENVIRONMENT";;
-  operating | OPERATING) sim_environment="-DWITH_ENVIRONMENT=OPERATING_ENVIRONMENT";;
-  *)   as_fn_error "\"Unknown value $enableval passed to --enable-sim-environment\"" "$LINENO" 5;
-       sim_environment="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_environment" != x""; then
-  echo "Setting sim environment = $sim_environment" 6>&1
-fi
-else
-  sim_environment="-DWITH_ENVIRONMENT=ALL_ENVIRONMENT"
-fi
 
 
 cgen_maint=no
@@ -13445,15 +13756,6 @@ fi
 
 
 
-ac_sources="$sim_link_files"
-ac_dests="$sim_link_links"
-while test -n "$ac_sources"; do
-  set $ac_dests; ac_dest=$1; shift; ac_dests=$*
-  set $ac_sources; ac_source=$1; shift; ac_sources=$*
-  ac_config_links_1="$ac_config_links_1 $ac_dest:$ac_source"
-done
-ac_config_links="$ac_config_links $ac_config_links_1"
-
 cgen_breaks=""
 if grep CGEN_MAINT $srcdir/Makefile.in >/dev/null; then
 cgen_breaks="break cgen_rtx_error";
@@ -13566,6 +13868,7 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
+
 if test -z "${GMAKE_TRUE}" && test -z "${GMAKE_FALSE}"; then
   as_fn_error "conditional \"GMAKE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -13578,7 +13881,6 @@ if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
   as_fn_error "conditional \"MAINTAINER_MODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-
 
 : ${CONFIG_STATUS=./config.status}
 ac_write_fail=0
@@ -14014,7 +14316,6 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 # Files that config.status was made for.
 config_files="$ac_config_files"
 config_headers="$ac_config_headers"
-config_links="$ac_config_links"
 config_commands="$ac_config_commands"
 
 _ACEOF
@@ -14043,9 +14344,6 @@ $config_files
 
 Configuration headers:
 $config_headers
-
-Configuration links:
-$config_links
 
 Configuration commands:
 $config_commands
@@ -14438,7 +14736,6 @@ do
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h:config.in" ;;
     "depdir") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
-    "$ac_config_links_1") CONFIG_LINKS="$CONFIG_LINKS $ac_config_links_1" ;;
     "Makefile.sim") CONFIG_FILES="$CONFIG_FILES Makefile.sim:Makefile.in" ;;
     "Make-common.sim") CONFIG_FILES="$CONFIG_FILES Make-common.sim:../common/Make-common.in" ;;
     ".gdbinit") CONFIG_FILES="$CONFIG_FILES .gdbinit:../common/gdbinit.in" ;;
@@ -14457,7 +14754,6 @@ done
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
   test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
-  test "${CONFIG_LINKS+set}" = set || CONFIG_LINKS=$config_links
   test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
@@ -14745,7 +15041,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 fi # test -n "$CONFIG_HEADERS"
 
 
-eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS  :L $CONFIG_LINKS  :C $CONFIG_COMMANDS"
+eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    :C $CONFIG_COMMANDS"
 shift
 for ac_tag
 do
@@ -14981,38 +15277,7 @@ $as_echo "$as_me: $ac_file is unchanged" >&6;}
       || as_fn_error "could not create -" "$LINENO" 5
   fi
  ;;
-  :L)
-  #
-  # CONFIG_LINK
-  #
 
-  if test "$ac_source" = "$ac_file" && test "$srcdir" = '.'; then
-    :
-  else
-    # Prefer the file from the source tree if names are identical.
-    if test "$ac_source" = "$ac_file" || test ! -r "$ac_source"; then
-      ac_source=$srcdir/$ac_source
-    fi
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: linking $ac_source to $ac_file" >&5
-$as_echo "$as_me: linking $ac_source to $ac_file" >&6;}
-
-    if test ! -r "$ac_source"; then
-      as_fn_error "$ac_source: file not found" "$LINENO" 5
-    fi
-    rm -f "$ac_file"
-
-    # Try a relative symlink, then a hard link, then a copy.
-    case $srcdir in
-    [\\/$]* | ?:[\\/]* ) ac_rel_source=$ac_source ;;
-	*) ac_rel_source=$ac_top_build_prefix$ac_source ;;
-    esac
-    ln -s "$ac_rel_source" "$ac_file" 2>/dev/null ||
-      ln "$ac_source" "$ac_file" 2>/dev/null ||
-      cp -p "$ac_source" "$ac_file" ||
-      as_fn_error "cannot link or copy $ac_source to $ac_file" "$LINENO" 5
-  fi
- ;;
   :C)  { $as_echo "$as_me:${as_lineno-$LINENO}: executing $ac_file commands" >&5
 $as_echo "$as_me: executing $ac_file commands" >&6;}
  ;;

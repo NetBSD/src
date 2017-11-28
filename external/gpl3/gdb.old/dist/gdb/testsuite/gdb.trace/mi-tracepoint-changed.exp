@@ -1,4 +1,4 @@
-# Copyright 2012-2015 Free Software Foundation, Inc.
+# Copyright 2012-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,8 +63,8 @@ proc test_reconnect { } {
 	}
 
 	clean_restart $executable
-	gdb_load_shlibs $lib_sl1
-	gdb_load_shlibs $lib_sl2
+	gdb_load_shlib $lib_sl1
+	gdb_load_shlib $lib_sl2
 	if ![runto_main] then {
 	    fail "Can't run to main"
 	    return 0
@@ -243,8 +243,8 @@ proc test_pending_resolved { } {
 
 clean_restart $executable
 
-gdb_load_shlibs $lib_sl1
-gdb_load_shlibs $lib_sl2
+gdb_load_shlib $lib_sl1
+gdb_load_shlib $lib_sl2
 
 if ![runto_main] {
     fail "Can't run to main to check for trace support"

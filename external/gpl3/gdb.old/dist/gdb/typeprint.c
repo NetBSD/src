@@ -1,6 +1,6 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -87,7 +87,7 @@ struct typedef_hash_table
 static hashval_t
 hash_typedef_field (const void *p)
 {
-  const struct typedef_field *tf = p;
+  const struct typedef_field *tf = (const struct typedef_field *) p;
   struct type *t = check_typedef (tf->type);
 
   return htab_hash_string (TYPE_SAFE_NAME (t));
@@ -98,8 +98,8 @@ hash_typedef_field (const void *p)
 static int
 eq_typedef_field (const void *a, const void *b)
 {
-  const struct typedef_field *tfa = a;
-  const struct typedef_field *tfb = b;
+  const struct typedef_field *tfa = (const struct typedef_field *) a;
+  const struct typedef_field *tfb = (const struct typedef_field *) b;
 
   return types_equal (tfa->type, tfb->type);
 }
@@ -195,7 +195,7 @@ free_typedef_hash (struct typedef_hash_table *table)
 static void
 do_free_typedef_hash (void *arg)
 {
-  free_typedef_hash (arg);
+  free_typedef_hash ((struct typedef_hash_table *) arg);
 }
 
 /* Return a new cleanup that frees TABLE.  */
@@ -211,7 +211,7 @@ make_cleanup_free_typedef_hash (struct typedef_hash_table *table)
 static int
 copy_typedef_hash_element (void **slot, void *nt)
 {
-  htab_t new_table = nt;
+  htab_t new_table = (htab_t) nt;
   void **new_slot;
 
   new_slot = htab_find_slot (new_table, *slot, INSERT);
@@ -242,7 +242,7 @@ copy_typedef_hash (struct typedef_hash_table *table)
 static void
 do_free_global_table (void *arg)
 {
-  struct type_print_options *flags = arg;
+  struct type_print_options *flags = (struct type_print_options *) arg;
 
   free_typedef_hash (flags->global_typedefs);
   free_ext_lang_type_printers (flags->global_printers);
@@ -281,7 +281,7 @@ find_global_typedef (const struct type_print_options *flags,
   slot = htab_find_slot (flags->global_typedefs->table, &tf, INSERT);
   if (*slot != NULL)
     {
-      new_tf = *slot;
+      new_tf = (struct typedef_field *) *slot;
       return new_tf->name;
     }
 
@@ -297,8 +297,9 @@ find_global_typedef (const struct type_print_options *flags,
 
   if (applied != NULL)
     {
-      new_tf->name = obstack_copy0 (&flags->global_typedefs->storage, applied,
-				    strlen (applied));
+      new_tf->name
+	= (const char *) obstack_copy0 (&flags->global_typedefs->storage,
+					applied, strlen (applied));
       xfree (applied);
     }
 
@@ -319,7 +320,8 @@ find_typedef_in_hash (const struct type_print_options *flags, struct type *t)
 
       tf.name = NULL;
       tf.type = t;
-      found = htab_find (flags->local_typedefs->table, &tf);
+      found = (struct typedef_field *) htab_find (flags->local_typedefs->table,
+						  &tf);
 
       if (found != NULL)
 	return found->name;
@@ -404,7 +406,7 @@ whatis_exp (char *exp, int show)
   struct type *real_type = NULL;
   struct type *type;
   int full = 0;
-  int top = -1;
+  LONGEST top = -1;
   int using_enc = 0;
   struct value_print_options opts;
   struct type_print_options flags = default_ptype_flags;
@@ -524,7 +526,7 @@ print_type_scalar (struct type *type, LONGEST val, struct ui_file *stream)
   unsigned int i;
   unsigned len;
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   switch (TYPE_CODE (type))
     {
@@ -725,3 +727,20 @@ Show printing of typedefs defined in classes."), NULL,
 			   show_print_type_typedefs,
 			   &setprinttypelist, &showprinttypelist);
 }
+
+/* Print <not allocated> status to stream STREAM.  */
+
+void
+val_print_not_allocated (struct ui_file *stream)
+{
+  fprintf_filtered (stream, _("<not allocated>"));
+}
+
+/* Print <not associated> status to stream STREAM.  */
+
+void
+val_print_not_associated (struct ui_file *stream)
+{
+  fprintf_filtered (stream, _("<not associated>"));
+}
+

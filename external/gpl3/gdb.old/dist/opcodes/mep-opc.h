@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2015 Free Software Foundation, Inc.
+Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -87,7 +87,7 @@ extern CGEN_ATTR_VALUE_BITSET_TYPE mep_all_core_isas_mask;
 )
 
 /* A mask for all ISAs executed by a VLIW coprocessor.  */
-#define MEP_ALL_COP_ISAS_MASK mep_all_cop_isas_mask 
+#define MEP_ALL_COP_ISAS_MASK mep_all_cop_isas_mask
 extern CGEN_ATTR_VALUE_BITSET_TYPE mep_all_cop_isas_mask;
 
 #define MEP_INSN_COP_P(insn) ( \

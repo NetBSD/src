@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
 
-Copyright (C) 1988-2015 Free Software Foundation, Inc.
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.10.1.
+Source-Level Debugger' for GDB (GDB) Version 7.12.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -44,9 +44,9 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Tenth Edition, for GDB (GDB) Version 7.10.1.
+   This is the Tenth Edition, for GDB (GDB) Version 7.12.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This edition of the GDB manual is dedicated to the memory of Fred
 Fish.  Fred was a long-standing contributor to GDB and to Free software
@@ -491,7 +491,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 7.10.1, Copyright 1999 Free Software Foundation, Inc...
+     GDB 7.12, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -2060,8 +2060,10 @@ inferior-tty'.
 the name of the terminal that will be used for future runs of your
 program.
 
-'set inferior-tty /dev/ttyb'
-     Set the tty for the program being debugged to /dev/ttyb.
+'set inferior-tty [ TTY ]'
+     Set the tty for the program being debugged to TTY.  Omitting TTY
+     restores the default behavior, which is to use the same terminal as
+     GDB.
 
 'show inferior-tty'
      Show the current tty for the program being debugged.
@@ -2196,6 +2198,12 @@ Each inferior may in turn have multiple threads running in it.
      INFNO is the inferior number assigned by GDB, as shown in the first
      field of the 'info inferiors' display.
 
+   The debugger convenience variable '$_inferior' contains the number of
+the current inferior.  You may find this useful in writing breakpoint
+conditional expressions, command scripts, and so forth.  *Note
+Convenience Variables: Convenience Vars, for general information on
+convenience variables.
+
    You can get multiple executables into a debugging session via the
 'add-inferior' and 'clone-inferior' commands.  On some systems GDB can
 add inferiors to the debug session automatically by following calls to
@@ -2234,9 +2242,9 @@ the 'remove-inferiors' command.
      use the 'kill' or 'detach' command first.
 
    To quit debugging one of the running inferiors that is not the
-current inferior, you can either detach from it by using the 'detach inferior'
-command (allowing it to run independently), or kill it using the 'kill inferiors'
-command:
+current inferior, you can either detach from it by using the
+'detach inferior' command (allowing it to run independently), or kill it
+using the 'kill inferiors' command:
 
 'detach inferior INFNO...'
      Detach from the inferior or inferiors identified by GDB inferior
@@ -2298,9 +2306,9 @@ command.
 
           (gdb) maint info program-spaces
             Id   Executable
+          * 1    hello
             2    goodbye
                   Bound inferiors: ID 1 (process 21561)
-          * 1    hello
 
      Here we can see that no inferior is running the program 'hello',
      while 'process 21561' is running the program 'goodbye'.  On some
@@ -2324,38 +2332,28 @@ File: gdb.info,  Node: Threads,  Next: Forks,  Prev: Inferiors and Programs,  Up
 4.10 Debugging Programs with Multiple Threads
 =============================================
 
-In some operating systems, such as HP-UX and Solaris, a single program
-may have more than one "thread" of execution.  The precise semantics of
-threads differ from one operating system to another, but in general the
-threads of a single program are akin to multiple processes--except that
-they share one address space (that is, they can all examine and modify
-the same variables).  On the other hand, each thread has its own
-registers and execution stack, and perhaps private memory.
+In some operating systems, such as GNU/Linux and Solaris, a single
+program may have more than one "thread" of execution.  The precise
+semantics of threads differ from one operating system to another, but in
+general the threads of a single program are akin to multiple
+processes--except that they share one address space (that is, they can
+all examine and modify the same variables).  On the other hand, each
+thread has its own registers and execution stack, and perhaps private
+memory.
 
    GDB provides these facilities for debugging multi-thread programs:
 
    * automatic notification of new threads
-   * 'thread THREADNO', a command to switch among threads
+   * 'thread THREAD-ID', a command to switch among threads
    * 'info threads', a command to inquire about existing threads
-   * 'thread apply [THREADNO] [ALL] ARGS', a command to apply a command
-     to a list of threads
+   * 'thread apply [THREAD-ID-LIST] [ALL] ARGS', a command to apply a
+     command to a list of threads
    * thread-specific breakpoints
    * 'set print thread-events', which controls printing of messages on
      thread start and exit.
    * 'set libthread-db-search-path PATH', which lets the user specify
      which 'libthread_db' to use if the default choice isn't compatible
      with the program.
-
-     _Warning:_ These facilities are not yet available on every GDB
-     configuration where the operating system supports threads.  If your
-     GDB does not support threads, these commands have no effect.  For
-     example, a system without thread support shows no output from 'info
-     threads', and always rejects the 'thread' command, like this:
-
-          (gdb) info threads
-          (gdb) thread 1
-          Thread ID 1 not known.  Use the "info threads" command to
-          see the IDs of currently known threads.
 
    The GDB thread debugging facility allows you to observe all threads
 while your program runs--but whenever GDB takes control, one thread in
@@ -2371,28 +2369,99 @@ might see
 
      [New Thread 0x41e02940 (LWP 25582)]
 
-when GDB notices a new thread.  In contrast, on an SGI system, the
+when GDB notices a new thread.  In contrast, on other systems, the
 SYSTAG is simply something like 'process 368', with no further
 qualifier.
 
-   For debugging purposes, GDB associates its own thread number--always
-a single integer--with each thread in your program.
+   For debugging purposes, GDB associates its own thread number --always
+a single integer--with each thread of an inferior.  This number is
+unique between all threads of an inferior, but not unique between
+threads of different inferiors.
 
-'info threads [ID...]'
-     Display a summary of all threads currently in your program.
-     Optional argument ID... is one or more thread ids separated by
-     spaces, and means to print information only about the specified
-     thread or threads.  GDB displays for each thread (in this order):
+   You can refer to a given thread in an inferior using the qualified
+INFERIOR-NUM.THREAD-NUM syntax, also known as "qualified thread ID",
+with INFERIOR-NUM being the inferior number and THREAD-NUM being the
+thread number of the given inferior.  For example, thread '2.3' refers
+to thread number 3 of inferior 2.  If you omit INFERIOR-NUM (e.g.,
+'thread 3'), then GDB infers you're referring to a thread of the current
+inferior.
 
-       1. the thread number assigned by GDB
+   Until you create a second inferior, GDB does not show the
+INFERIOR-NUM part of thread IDs, even though you can always use the full
+INFERIOR-NUM.THREAD-NUM form to refer to threads of inferior 1, the
+initial inferior.
 
-       2. the target system's thread identifier (SYSTAG)
+   Some commands accept a space-separated "thread ID list" as argument.
+A list element can be:
 
-       3. the thread's name, if one is known.  A thread can either be
+  1. A thread ID as shown in the first field of the 'info threads'
+     display, with or without an inferior qualifier.  E.g., '2.1' or
+     '1'.
+
+  2. A range of thread numbers, again with or without an inferior
+     qualifier, as in INF.THR1-THR2 or THR1-THR2.  E.g., '1.2-4' or
+     '2-4'.
+
+  3. All threads of an inferior, specified with a star wildcard, with or
+     without an inferior qualifier, as in INF.'*' (e.g., '1.*') or '*'.
+     The former refers to all threads of the given inferior, and the
+     latter form without an inferior qualifier refers to all threads of
+     the current inferior.
+
+   For example, if the current inferior is 1, and inferior 7 has one
+thread with ID 7.1, the thread list '1 2-3 4.5 6.7-9 7.*' includes
+threads 1 to 3 of inferior 1, thread 5 of inferior 4, threads 7 to 9 of
+inferior 6 and all threads of inferior 7.  That is, in expanded
+qualified form, the same as '1.1 1.2 1.3 4.5 6.7 6.8 6.9 7.1'.
+
+   In addition to a _per-inferior_ number, each thread is also assigned
+a unique _global_ number, also known as "global thread ID", a single
+integer.  Unlike the thread number component of the thread ID, no two
+threads have the same global ID, even when you're debugging multiple
+inferiors.
+
+   From GDB's perspective, a process always has at least one thread.  In
+other words, GDB assigns a thread number to the program's "main thread"
+even if the program is not multi-threaded.
+
+   The debugger convenience variables '$_thread' and '$_gthread'
+contain, respectively, the per-inferior thread number and the global
+thread number of the current thread.  You may find this useful in
+writing breakpoint conditional expressions, command scripts, and so
+forth.  *Note Convenience Variables: Convenience Vars, for general
+information on convenience variables.
+
+   If GDB detects the program is multi-threaded, it augments the usual
+message about stopping at a breakpoint with the ID and name of the
+thread that hit the breakpoint.
+
+     Thread 2 "client" hit Breakpoint 1, send_message () at client.c:68
+
+   Likewise when the program receives a signal:
+
+     Thread 1 "main" received signal SIGINT, Interrupt.
+
+'info threads [THREAD-ID-LIST]'
+
+     Display information about one or more threads.  With no arguments
+     displays information about all threads.  You can specify the list
+     of threads that you want to display using the thread ID list syntax
+     (*note thread ID lists::).
+
+     GDB displays for each thread (in this order):
+
+       1. the per-inferior thread number assigned by GDB
+
+       2. the global thread number assigned by GDB, if the '-gid' option
+          was specified
+
+       3. the target system's thread identifier (SYSTAG)
+
+       4. the thread's name, if one is known.  A thread can either be
           named by the user (see 'thread name', below), or, in some
           cases, by the program itself.
 
-       4. the current stack frame summary for that thread
+       5. the current stack frame summary for that thread
 
      An asterisk '*' to the left of the GDB thread number indicates the
      current thread.
@@ -2401,10 +2470,24 @@ a single integer--with each thread in your program.
 
      (gdb) info threads
        Id   Target Id         Frame
-       3    process 35 thread 27  0x34e5 in sigpause ()
-       2    process 35 thread 23  0x34e5 in sigpause ()
      * 1    process 35 thread 13  main (argc=1, argv=0x7ffffff8)
+       2    process 35 thread 23  0x34e5 in sigpause ()
+       3    process 35 thread 27  0x34e5 in sigpause ()
          at threadtest.c:68
+
+   If you're debugging multiple inferiors, GDB displays thread IDs using
+the qualified INFERIOR-NUM.THREAD-NUM format.  Otherwise, only
+THREAD-NUM is shown.
+
+   If you specify the '-gid' option, GDB displays a column indicating
+each thread's global thread ID:
+
+     (gdb) info threads
+       Id   GId  Target Id             Frame
+       1.1  1    process 35 thread 13  main (argc=1, argv=0x7ffffff8)
+       1.2  3    process 35 thread 23  0x34e5 in sigpause ()
+       1.3  4    process 35 thread 27  0x34e5 in sigpause ()
+     * 2.1  2    process 65 thread 1   main (argc=1, argv=0x7ffffff8)
 
    On Solaris, you can display more information about user threads with
 a Solaris-specific command:
@@ -2412,12 +2495,14 @@ a Solaris-specific command:
 'maint info sol-threads'
      Display info on Solaris user threads.
 
-'thread THREADNO'
-     Make thread number THREADNO the current thread.  The command
-     argument THREADNO is the internal GDB thread number, as shown in
-     the first field of the 'info threads' display.  GDB responds by
-     displaying the system identifier of the thread you selected, and
-     its current stack frame summary:
+'thread THREAD-ID'
+     Make thread ID THREAD-ID the current thread.  The command argument
+     THREAD-ID is the GDB thread ID, as shown in the first field of the
+     'info threads' display, with or without an inferior qualifier
+     (e.g., '2.1' or '1').
+
+     GDB responds by displaying the system identifier of the thread you
+     selected, and its current stack frame summary:
 
           (gdb) thread 2
           [Switching to thread 2 (Thread 0xb7fdab70 (LWP 12747))]
@@ -2428,22 +2513,14 @@ a Solaris-specific command:
      'Switching to' depends on your system's conventions for identifying
      threads.
 
-     The debugger convenience variable '$_thread' contains the number of
-     the current thread.  You may find this useful in writing breakpoint
-     conditional expressions, command scripts, and so forth.  See *Note
-     Convenience Variables: Convenience Vars, for general information on
-     convenience variables.
-
-'thread apply [THREADNO | all [-ascending]] COMMAND'
+'thread apply [THREAD-ID-LIST | all [-ascending]] COMMAND'
      The 'thread apply' command allows you to apply the named COMMAND to
-     one or more threads.  Specify the numbers of the threads that you
-     want affected with the command argument THREADNO.  It can be a
-     single thread number, one of the numbers shown in the first field
-     of the 'info threads' display; or it could be a range of thread
-     numbers, as in '2-4'.  To apply a command to all threads in
-     descending order, type 'thread apply all COMMAND'.  To apply a
-     command to all threads in ascending order, type 'thread apply all
-     -ascending COMMAND'.
+     one or more threads.  Specify the threads that you want affected
+     using the thread ID list syntax (*note thread ID lists::), or
+     specify 'all' to apply to all threads.  To apply a command to all
+     threads in descending order, type 'thread apply all COMMAND'.  To
+     apply a command to all threads in ascending order, type 'thread
+     apply all -ascending COMMAND'.
 
 'thread name [NAME]'
      This command assigns a name to the current thread.  If no argument
@@ -2559,12 +2636,13 @@ Attach::).  From that point on you can debug the child process just like
 any other process which you attached to.
 
    On some systems, GDB provides support for debugging programs that
-create additional processes using the 'fork' or 'vfork' functions.
-Currently, the only platforms with this feature are HP-UX (11.x and
-later only?)  and GNU/Linux (kernel version 2.5.60 and later).
+create additional processes using the 'fork' or 'vfork' functions.  On
+GNU/Linux platforms, this feature is supported with kernel version
+2.5.46 and later.
 
-   The fork debugging commands are supported in both native mode and
-when connected to 'gdbserver' using 'target extended-remote'.
+   The fork debugging commands are supported in native mode and when
+connected to 'gdbserver' in either 'target remote' mode or 'target
+extended-remote' mode.
 
    By default, when a program forks, GDB will continue to debug the
 parent process and the child process will run unimpeded.
@@ -2611,10 +2689,10 @@ use the command 'set detach-on-fork'.
 
    If you choose to set 'detach-on-fork' mode off, then GDB will retain
 control of all forked processes (including nested forks).  You can list
-the forked processes under the control of GDB by using the 'info inferiors'
-command, and switch from one fork to another by using the 'inferior'
-command (*note Debugging Multiple Inferiors and Programs: Inferiors and
-Programs.).
+the forked processes under the control of GDB by using the
+'info inferiors' command, and switch from one fork to another by using
+the 'inferior' command (*note Debugging Multiple Inferiors and Programs:
+Inferiors and Programs.).
 
    To quit debugging one of the forked processes, you can either detach
 from it by using the 'detach inferiors' command (allowing it to run
@@ -2633,8 +2711,8 @@ cannot debug the child or parent until an 'exec' call completes.
 the new target restarts.  To restart the parent process, use the 'file'
 command with the parent executable name as its argument.  By default,
 after an 'exec' call executes, GDB discards the symbols of the previous
-executable image.  You can change this behaviour with the 'set follow-exec-mode'
-command.
+executable image.  You can change this behaviour with the
+'set follow-exec-mode' command.
 
 'set follow-exec-mode MODE'
 
@@ -2660,8 +2738,8 @@ command.
                Program exited normally.
                (gdb) info inferiors
                  Id   Description   Executable
-               * 2    <null>        prog2
                  1    <null>        prog1
+               * 2    <null>        prog2
 
      'same'
           GDB keeps the process bound to the same inferior.  The new
@@ -2682,6 +2760,9 @@ command.
                (gdb) info inferiors
                  Id   Description   Executable
                * 1    <null>        prog2
+
+   'follow-exec-mode' is supported in native mode and 'target
+extended-remote' mode.
 
    You can use the 'catch' command to make GDB stop whenever a 'fork',
 'vfork', or 'exec' call is made.  *Note Setting Catchpoints: Set
@@ -2834,10 +2915,7 @@ should stop by line number, function name or exact address in the
 program.
 
    On some systems, you can set breakpoints in shared libraries before
-the executable is run.  There is a minor limitation on HP-UX systems:
-you must wait until the executable is run in order to set breakpoints in
-shared library routines that are not called directly by the program (for
-example, routines that are arguments in a 'pthread_create' call).
+the executable is run.
 
    A "watchpoint" is a special breakpoint that stops your program when
 the value of an expression changes.  The expression may be a value of a
@@ -3300,11 +3378,11 @@ times slower than normal execution.  (But this may still be worth it, to
 catch errors where you have no clue what part of your program is the
 culprit.)
 
-   On some systems, such as HP-UX, PowerPC, GNU/Linux and most other
-x86-based targets, GDB includes support for hardware watchpoints, which
-do not slow down the running of your program.
+   On some systems, such as most PowerPC or x86-based targets, GDB
+includes support for hardware watchpoints, which do not slow down the
+running of your program.
 
-'watch [-l|-location] EXPR [thread THREADNUM] [mask MASKVALUE]'
+'watch [-l|-location] EXPR [thread THREAD-ID] [mask MASKVALUE]'
      Set a watchpoint for an expression.  GDB will break when the
      expression EXPR is written into by the program and its value
      changes.  The simplest (and the most popular) use of this command
@@ -3312,8 +3390,8 @@ do not slow down the running of your program.
 
           (gdb) watch foo
 
-     If the command includes a '[thread THREADNUM]' argument, GDB breaks
-     only when the thread identified by THREADNUM changes the value of
+     If the command includes a '[thread THREAD-ID]' argument, GDB breaks
+     only when the thread identified by THREAD-ID changes the value of
      EXPR.  If any other threads change the value of EXPR, GDB will not
      break.  Note that watchpoints restricted to a single thread in this
      way only work with Hardware Watchpoints.
@@ -3341,11 +3419,11 @@ do not slow down the running of your program.
           (gdb) watch foo mask 0xffff00ff
           (gdb) watch *0xdeadbeef mask 0xffffff00
 
-'rwatch [-l|-location] EXPR [thread THREADNUM] [mask MASKVALUE]'
+'rwatch [-l|-location] EXPR [thread THREAD-ID] [mask MASKVALUE]'
      Set a watchpoint that will break when the value of EXPR is read by
      the program.
 
-'awatch [-l|-location] EXPR [thread THREADNUM] [mask MASKVALUE]'
+'awatch [-l|-location] EXPR [thread THREAD-ID] [mask MASKVALUE]'
      Set a watchpoint that will break when EXPR is either read from or
      written into by the program.
 
@@ -3546,11 +3624,10 @@ shared library.  Use the 'catch' command to set a catchpoint.
           A failed Ada assertion.
 
      'exec'
-          A call to 'exec'.  This is currently only available for HP-UX
-          and GNU/Linux.
+          A call to 'exec'.
 
      'syscall'
-     'syscall [NAME | NUMBER] ...'
+     'syscall [NAME | NUMBER | group:GROUPNAME | g:GROUPNAME] ...'
           A call to or return from a system call, a.k.a. "syscall".  A
           syscall is a mechanism for application programs to request a
           service from the operating system (OS) or one of the OS system
@@ -3577,6 +3654,15 @@ shared library.  Use the 'catch' command to set a catchpoint.
           directly may be useful if GDB's database does not have the
           complete list of syscalls on your system (e.g., because GDB
           lags behind the OS upgrades).
+
+          You may specify a group of related syscalls to be caught at
+          once using the 'group:' syntax ('g:' is a shorter equivalent).
+          For instance, on some platforms GDB allows you to catch all
+          network related syscalls, by passing the argument
+          'group:network' to 'catch syscall'.  Note that not all syscall
+          groups are available in every system.  You can use the command
+          completion facilities (*note command completion: Completion.)
+          to list the syscall groups available on your environment.
 
           The example below illustrates how this command works if you
           don't provide arguments to it:
@@ -3628,6 +3714,21 @@ shared library.  Use the 'catch' command to set a catchpoint.
                Program exited normally.
                (gdb)
 
+          Here is an example of catching a syscall group:
+
+               (gdb) catch syscall group:process
+               Catchpoint 1 (syscalls 'exit' [1] 'fork' [2] 'waitpid' [7]
+               'execve' [11] 'wait4' [114] 'clone' [120] 'vfork' [190]
+               'exit_group' [252] 'waitid' [284] 'unshare' [310])
+               (gdb) r
+               Starting program: /tmp/catch-syscall
+
+               Catchpoint 1 (call to syscall fork), 0x00007ffff7df4e27 in open64 ()
+                  from /lib64/ld-linux-x86-64.so.2
+
+               (gdb) c
+               Continuing.
+
           However, there can be situations when there is no
           corresponding name in XML file for that syscall number.  In
           this case, GDB prints a warning message saying that it was not
@@ -3668,12 +3769,10 @@ shared library.  Use the 'catch' command to set a catchpoint.
           names.
 
      'fork'
-          A call to 'fork'.  This is currently only available for HP-UX
-          and GNU/Linux.
+          A call to 'fork'.
 
      'vfork'
-          A call to 'vfork'.  This is currently only available for HP-UX
-          and GNU/Linux.
+          A call to 'vfork'.
 
      'load [regexp]'
      'unload [regexp]'
@@ -4557,8 +4656,9 @@ File: gdb.info,  Node: Skipping Over Functions and Files,  Next: Signals,  Prev:
 =====================================
 
 The program you are debugging may contain some functions which are
-uninteresting to debug.  The 'skip' comand lets you tell GDB to skip a
-function or all functions in a file when stepping.
+uninteresting to debug.  The 'skip' command lets you tell GDB to skip a
+function, all functions in a file or a particular function in a
+particular file when stepping.
 
    For example, consider the following C function:
 
@@ -4581,10 +4681,63 @@ called from many places.
 GDB never to step into 'boring'.  Now when you execute 'step' at line
 103, you'll step over 'boring' and directly into 'foo'.
 
-   You can also instruct GDB to skip all functions in a file, with, for
-example, 'skip file boring.c'.
+   Functions may be skipped by providing either a function name,
+linespec (*note Specify Location::), regular expression that matches the
+function's name, file name or a 'glob'-style pattern that matches the
+file name.
 
-'skip [LINESPEC]'
+   On Posix systems the form of the regular expression is "Extended
+Regular Expressions".  See for example 'man 7 regex' on GNU/Linux
+systems.  On non-Posix systems the form of the regular expression is
+whatever is provided by the 'regcomp' function of the underlying system.
+See for example 'man 7 glob' on GNU/Linux systems for a description of
+'glob'-style patterns.
+
+'skip [OPTIONS]'
+     The basic form of the 'skip' command takes zero or more options
+     that specify what to skip.  The OPTIONS argument is any useful
+     combination of the following:
+
+     '-file FILE'
+     '-fi FILE'
+          Functions in FILE will be skipped over when stepping.
+
+     '-gfile FILE-GLOB-PATTERN'
+     '-gfi FILE-GLOB-PATTERN'
+          Functions in files matching FILE-GLOB-PATTERN will be skipped
+          over when stepping.
+
+               (gdb) skip -gfi utils/*.c
+
+     '-function LINESPEC'
+     '-fu LINESPEC'
+          Functions named by LINESPEC or the function containing the
+          line named by LINESPEC will be skipped over when stepping.
+          *Note Specify Location::.
+
+     '-rfunction REGEXP'
+     '-rfu REGEXP'
+          Functions whose name matches REGEXP will be skipped over when
+          stepping.
+
+          This form is useful for complex function names.  For example,
+          there is generally no need to step into C++ 'std::string'
+          constructors or destructors.  Plus with C++ templates it can
+          be hard to write out the full name of the function, and often
+          it doesn't matter what the template arguments are.  Specifying
+          the function to be skipped as a regular expression makes this
+          easier.
+
+               (gdb) skip -rfu ^std::(allocator|basic_string)<.*>::~?\1 *\(
+
+          If you want to skip every templated C++ constructor and
+          destructor in the 'std' namespace you can do:
+
+               (gdb) skip -rfu ^std::([a-zA-z0-9_]+)<.*>::~?\1 *\(
+
+     If no options are specified, the function you're currently
+     debugging will be skipped.
+
 'skip function [LINESPEC]'
      After running this command, the function named by LINESPEC or the
      function containing the line named by LINESPEC will be skipped over
@@ -4600,6 +4753,9 @@ example, 'skip file boring.c'.
      After running this command, any function whose source lives in
      FILENAME will be skipped over when stepping.
 
+          (gdb) skip file boring.c
+          File boring.c will be skipped when stepping.
+
      If you do not specify FILENAME, functions whose source lives in the
      file you're currently debugging will be skipped.
 
@@ -4614,23 +4770,21 @@ breakpoints.  These are the commands for managing your list of skips:
 
      _Identifier_
           A number identifying this skip.
-     _Type_
-          The type of this skip, either 'function' or 'file'.
      _Enabled or Disabled_
           Enabled skips are marked with 'y'.  Disabled skips are marked
           with 'n'.
-     _Address_
-          For function skips, this column indicates the address in
-          memory of the function being skipped.  If you've set a
-          function skip on a function which has not yet been loaded,
-          this field will contain '<PENDING>'.  Once a shared library
-          which has the function is loaded, 'info skip' will show the
-          function's address here.
-     _What_
-          For file skips, this field contains the filename being
-          skipped.  For functions skips, this field contains the
-          function name and its line number in the file where it is
-          defined.
+     _Glob_
+          If the file name is a 'glob' pattern this is 'y'.  Otherwise
+          it is 'n'.
+     _File_
+          The name or 'glob' pattern of the file to be skipped.  If no
+          file is specified this is '<none>'.
+     _RE_
+          If the function name is a 'regular expression' this is 'y'.
+          Otherwise it is 'n'.
+     _Function_
+          The name or regular expression of the function to skip.  If no
+          function is specified this is '<none>'.
 
 'skip delete [RANGE]'
      Delete the specified skip(s).  If RANGE is not specified, delete
@@ -4841,6 +4995,26 @@ referenced address that raised a segmentation fault.
 
    Depending on target support, '$_siginfo' may also be writable.
 
+   On some targets, a 'SIGSEGV' can be caused by a boundary violation,
+i.e., accessing an address outside of the allowed range.  In those cases
+GDB may displays additional information, depending on how GDB has been
+told to handle the signal.  With 'handle stop SIGSEGV', GDB displays the
+violation kind: "Upper" or "Lower", the memory address accessed and the
+bounds, while with 'handle nostop SIGSEGV' no additional information is
+displayed.
+
+   The usual output of a segfault is:
+     Program received signal SIGSEGV, Segmentation fault
+     0x0000000000400d7c in upper () at i386-mpx-sigsegv.c:68
+     68        value = *(p + len);
+
+   While a bound violation is presented as:
+     Program received signal SIGSEGV, Segmentation fault
+     Upper bound violation while accessing address 0x7fffffffc3b3
+     Bounds: [lower = 0x7fffffffc390, upper = 0x7fffffffc3a3]
+     0x0000000000400d7c in upper () at i386-mpx-sigsegv.c:68
+     68        value = *(p + len);
+
 
 File: gdb.info,  Node: Thread Stops,  Prev: Signals,  Up: Stopping
 
@@ -4902,7 +5076,8 @@ happened.  GDB alerts you to the context switch with a message such as
 scheduler to allow only a single thread to run.
 
 'set scheduler-locking MODE'
-     Set the scheduler locking mode.  If it is 'off', then there is no
+     Set the scheduler locking mode.  It applies to normal execution,
+     record mode, and replay mode.  If it is 'off', then there is no
      locking and any thread may run at any time.  If 'on', then only the
      current thread may run when the inferior is resumed.  The 'step'
      mode optimizes for single-stepping; it prevents other threads from
@@ -4912,7 +5087,8 @@ scheduler to allow only a single thread to run.
      free to run when you use commands like 'continue', 'until', or
      'finish'.  However, unless another thread hits a breakpoint during
      its timeslice, GDB does not change the current thread away from the
-     thread that you are debugging.
+     thread that you are debugging.  The 'replay' mode behaves like
+     'off' in record mode and like 'on' in replay mode.
 
 'show scheduler-locking'
      Display the current scheduler locking mode.
@@ -4927,8 +5103,8 @@ instance, it doesn't run to exit), while you debug the child.  In other
 situations, you may not be interested in inspecting the current state of
 any of the processes GDB is attached to, and you may want to resume them
 all until some breakpoint is hit.  In the latter case, you can instruct
-GDB to allow all threads of all the inferiors to run with the 'set schedule-multiple'
-command.
+GDB to allow all threads of all the inferiors to run with the
+'set schedule-multiple' command.
 
 'set schedule-multiple'
      Set the mode for allowing threads of multiple processes to be
@@ -5094,23 +5270,23 @@ When your program has multiple threads (*note Debugging Programs with
 Multiple Threads: Threads.), you can choose whether to set breakpoints
 on all threads, or on a particular thread.
 
-'break LINESPEC thread THREADNO'
-'break LINESPEC thread THREADNO if ...'
-     LINESPEC specifies source lines; there are several ways of writing
+'break LOCATION thread THREAD-ID'
+'break LOCATION thread THREAD-ID if ...'
+     LOCATION specifies source lines; there are several ways of writing
      them (*note Specify Location::), but the effect is always to
      specify some source line.
 
-     Use the qualifier 'thread THREADNO' with a breakpoint command to
+     Use the qualifier 'thread THREAD-ID' with a breakpoint command to
      specify that you only want GDB to stop the program when a
-     particular thread reaches this breakpoint.  The THREADNO specifier
-     is one of the numeric thread identifiers assigned by GDB, shown in
-     the first column of the 'info threads' display.
+     particular thread reaches this breakpoint.  The THREAD-ID specifier
+     is one of the thread identifiers assigned by GDB, shown in the
+     first column of the 'info threads' display.
 
-     If you do not specify 'thread THREADNO' when you set a breakpoint,
+     If you do not specify 'thread THREAD-ID' when you set a breakpoint,
      the breakpoint applies to _all_ threads of your program.
 
      You can use the 'thread' qualifier on conditional breakpoints as
-     well; in this case, place 'thread THREADNO' before or after the
+     well; in this case, place 'thread THREAD-ID' before or after the
      breakpoint condition, like this:
 
           (gdb) break frik.c:13 thread 28 if bartab > lim
@@ -5421,7 +5597,10 @@ GDB provides the following commands:
           not record data.  Further, the data is collected in a ring
           buffer so old data will be overwritten when the buffer is
           full.  It allows limited reverse execution.  Variables and
-          registers are not available during reverse execution.
+          registers are not available during reverse execution.  In
+          remote debugging, recording continues on disconnect.  Recorded
+          data can be inspected after reconnecting.  The recording may
+          be stopped using 'record stop'.
 
           The recording format can be specified as parameter.  Without a
           parameter the command chooses the recording format.  The
@@ -5433,7 +5612,7 @@ GDB provides the following commands:
                each executed branch in the btrace ring buffer.
 
           'pt'
-               Use the "Intel(R) Processor Trace" recording format.  In
+               Use the "Intel Processor Trace" recording format.  In
                this format, the processor stores the execution trace in
                a compressed form that is afterwards decoded by GDB.
 
@@ -5606,15 +5785,15 @@ GDB provides the following commands:
 
 'set record btrace pt buffer-size SIZE'
 'set record btrace pt buffer-size unlimited'
-     Set the requested ring buffer size for branch tracing in Intel(R)
+     Set the requested ring buffer size for branch tracing in Intel
      Processor Trace format.  Default is 16KB.
 
      If SIZE is a positive number, then GDB will try to allocate a
      buffer of at least SIZE bytes for each new thread that uses the
-     btrace recording method and the Intel(R) Processor Trace format.
-     The actually obtained buffer size may differ from the requested
-     SIZE.  Use the 'info record' command to see the actual buffer size
-     for each thread.
+     btrace recording method and the Intel Processor Trace format.  The
+     actually obtained buffer size may differ from the requested SIZE.
+     Use the 'info record' command to see the actual buffer size for
+     each thread.
 
      If LIMIT is 'unlimited' or zero, GDB will try to allocate a buffer
      of 4MB.
@@ -5625,7 +5804,7 @@ GDB provides the following commands:
 
 'show record btrace pt buffer-size SIZE'
      Show the current setting of the requested ring buffer size for
-     branch tracing in Intel(R) Processor Trace format.
+     branch tracing in Intel Processor Trace format.
 
 'info record'
      Show various statistics about the recording depending on the
@@ -5671,8 +5850,27 @@ GDB provides the following commands:
      Disassembles instructions from the recorded execution log.  By
      default, ten instructions are disassembled.  This can be changed
      using the 'set record instruction-history-size' command.
-     Instructions are printed in execution order.  There are several
-     ways to specify what part of the execution log to disassemble:
+     Instructions are printed in execution order.
+
+     It can also print mixed source+disassembly if you specify the the
+     '/m' or '/s' modifier, and print the raw instructions in hex as
+     well as in symbolic form by specifying the '/r' modifier.
+
+     The current position marker is printed for the instruction at the
+     current program counter value.  This instruction can appear
+     multiple times in the trace and the current position marker will be
+     printed every time.  To omit the current position marker, specify
+     the '/p' modifier.
+
+     To better align the printed instructions when the trace contains
+     instructions from more than one function, the function name may be
+     omitted by specifying the '/f' modifier.
+
+     Speculatively executed instructions are prefixed with '?'.  This
+     feature is not available for all recording formats.
+
+     There are several ways to specify what part of the execution log to
+     disassemble:
 
      'record instruction-history INSN'
           Disassembles ten instructions starting from instruction number
@@ -5691,7 +5889,7 @@ GDB provides the following commands:
           Disassembles ten more instructions before the last
           disassembly.
 
-     'record instruction-history BEGIN END'
+     'record instruction-history BEGIN, END'
           Disassembles instructions beginning with instruction number
           BEGIN until instruction number END.  The instruction number
           END is included.
@@ -5754,7 +5952,7 @@ GDB provides the following commands:
      'record function-call-history -'
           Prints ten more functions before the last ten-line print.
 
-     'record function-call-history BEGIN END'
+     'record function-call-history BEGIN, END'
           Prints functions beginning with function number BEGIN until
           function number END.  The function number END is included.
 
@@ -5803,9 +6001,9 @@ executing frame and describes it briefly, similar to the 'frame' command
 
 * Frames::                      Stack frames
 * Backtrace::                   Backtraces
-* Frame Filter Management::     Managing frame filters
 * Selection::                   Selecting a frame
 * Frame Info::                  Information on a frame
+* Frame Filter Management::     Managing frame filters
 
 
 File: gdb.info,  Node: Frames,  Next: Backtrace,  Up: Stack
@@ -5852,19 +6050,8 @@ regards it as though it had a separate frame, which is numbered zero as
 usual, allowing correct tracing of the function call chain.  However,
 GDB has no provision for frameless functions elsewhere in the stack.
 
-'frame [FRAMESPEC]'
-     The 'frame' command allows you to move from one stack frame to
-     another, and to print the stack frame you select.  The FRAMESPEC
-     may be either the address of the frame or the stack frame number.
-     Without an argument, 'frame' prints the current stack frame.
-
-'select-frame'
-     The 'select-frame' command allows you to move from one stack frame
-     to another without printing the frame.  This is the silent version
-     of 'frame'.
-
 
-File: gdb.info,  Node: Backtrace,  Next: Frame Filter Management,  Prev: Frames,  Up: Stack
+File: gdb.info,  Node: Backtrace,  Next: Selection,  Prev: Frames,  Up: Stack
 
 8.2 Backtraces
 ==============
@@ -6034,9 +6221,132 @@ environment) are not required to have a 'main' function as the entry
 point.  They could even have multiple entry points.
 
 
-File: gdb.info,  Node: Frame Filter Management,  Next: Selection,  Prev: Backtrace,  Up: Stack
+File: gdb.info,  Node: Selection,  Next: Frame Info,  Prev: Backtrace,  Up: Stack
 
-8.3 Management of Frame Filters.
+8.3 Selecting a Frame
+=====================
+
+Most commands for examining the stack and other data in your program
+work on whichever stack frame is selected at the moment.  Here are the
+commands for selecting a stack frame; all of them finish by printing a
+brief description of the stack frame just selected.
+
+'frame N'
+'f N'
+     Select frame number N.  Recall that frame zero is the innermost
+     (currently executing) frame, frame one is the frame that called the
+     innermost one, and so on.  The highest-numbered frame is the one
+     for 'main'.
+
+'frame STACK-ADDR [ PC-ADDR ]'
+'f STACK-ADDR [ PC-ADDR ]'
+     Select the frame at address STACK-ADDR.  This is useful mainly if
+     the chaining of stack frames has been damaged by a bug, making it
+     impossible for GDB to assign numbers properly to all frames.  In
+     addition, this can be useful when your program has multiple stacks
+     and switches between them.  The optional PC-ADDR can also be given
+     to specify the value of PC for the stack frame.
+
+'up N'
+     Move N frames up the stack; N defaults to 1.  For positive numbers
+     N, this advances toward the outermost frame, to higher frame
+     numbers, to frames that have existed longer.
+
+'down N'
+     Move N frames down the stack; N defaults to 1.  For positive
+     numbers N, this advances toward the innermost frame, to lower frame
+     numbers, to frames that were created more recently.  You may
+     abbreviate 'down' as 'do'.
+
+   All of these commands end by printing two lines of output describing
+the frame.  The first line shows the frame number, the function name,
+the arguments, and the source file and line number of execution in that
+frame.  The second line shows the text of that source line.
+
+   For example:
+
+     (gdb) up
+     #1  0x22f0 in main (argc=1, argv=0xf7fffbf4, env=0xf7fffbfc)
+         at env.c:10
+     10              read_input_file (argv[i]);
+
+   After such a printout, the 'list' command with no arguments prints
+ten lines centered on the point of execution in the frame.  You can also
+edit the program at the point of execution with your favorite editing
+program by typing 'edit'.  *Note Printing Source Lines: List, for
+details.
+
+'select-frame'
+     The 'select-frame' command is a variant of 'frame' that does not
+     display the new frame after selecting it.  This command is intended
+     primarily for use in GDB command scripts, where the output might be
+     unnecessary and distracting.
+
+'up-silently N'
+'down-silently N'
+     These two commands are variants of 'up' and 'down', respectively;
+     they differ in that they do their work silently, without causing
+     display of the new frame.  They are intended primarily for use in
+     GDB command scripts, where the output might be unnecessary and
+     distracting.
+
+
+File: gdb.info,  Node: Frame Info,  Next: Frame Filter Management,  Prev: Selection,  Up: Stack
+
+8.4 Information About a Frame
+=============================
+
+There are several other commands to print information about the selected
+stack frame.
+
+'frame'
+'f'
+     When used without any argument, this command does not change which
+     frame is selected, but prints a brief description of the currently
+     selected stack frame.  It can be abbreviated 'f'.  With an
+     argument, this command is used to select a stack frame.  *Note
+     Selecting a Frame: Selection.
+
+'info frame'
+'info f'
+     This command prints a verbose description of the selected stack
+     frame, including:
+
+        * the address of the frame
+        * the address of the next frame down (called by this frame)
+        * the address of the next frame up (caller of this frame)
+        * the language in which the source code corresponding to this
+          frame is written
+        * the address of the frame's arguments
+        * the address of the frame's local variables
+        * the program counter saved in it (the address of execution in
+          the caller frame)
+        * which registers were saved in the frame
+
+     The verbose description is useful when something has gone wrong
+     that has made the stack format fail to fit the usual conventions.
+
+'info frame ADDR'
+'info f ADDR'
+     Print a verbose description of the frame at address ADDR, without
+     selecting that frame.  The selected frame remains unchanged by this
+     command.  This requires the same kind of address (more than one for
+     some architectures) that you specify in the 'frame' command.  *Note
+     Selecting a Frame: Selection.
+
+'info args'
+     Print the arguments of the selected frame, each on a separate line.
+
+'info locals'
+     Print the local variables of the selected frame, each on a separate
+     line.  These are all variables (declared either static or
+     automatic) accessible at the point of execution of the selected
+     frame.
+
+
+File: gdb.info,  Node: Frame Filter Management,  Prev: Frame Info,  Up: Stack
+
+8.5 Management of Frame Filters.
 ================================
 
 Frame filters are Python based utilities to manage and decorate the
@@ -6164,123 +6474,6 @@ within GDB, detailed here.
             999       No       BuildProgramFilter
 
 
-File: gdb.info,  Node: Selection,  Next: Frame Info,  Prev: Frame Filter Management,  Up: Stack
-
-8.4 Selecting a Frame
-=====================
-
-Most commands for examining the stack and other data in your program
-work on whichever stack frame is selected at the moment.  Here are the
-commands for selecting a stack frame; all of them finish by printing a
-brief description of the stack frame just selected.
-
-'frame N'
-'f N'
-     Select frame number N.  Recall that frame zero is the innermost
-     (currently executing) frame, frame one is the frame that called the
-     innermost one, and so on.  The highest-numbered frame is the one
-     for 'main'.
-
-'frame STACK-ADDR [ PC-ADDR ]'
-'f STACK-ADDR [ PC-ADDR ]'
-     Select the frame at address STACK-ADDR.  This is useful mainly if
-     the chaining of stack frames has been damaged by a bug, making it
-     impossible for GDB to assign numbers properly to all frames.  In
-     addition, this can be useful when your program has multiple stacks
-     and switches between them.  The optional PC-ADDR can also be given
-     to specify the value of PC for the stack frame.
-
-'up N'
-     Move N frames up the stack; N defaults to 1.  For positive numbers
-     N, this advances toward the outermost frame, to higher frame
-     numbers, to frames that have existed longer.
-
-'down N'
-     Move N frames down the stack; N defaults to 1.  For positive
-     numbers N, this advances toward the innermost frame, to lower frame
-     numbers, to frames that were created more recently.  You may
-     abbreviate 'down' as 'do'.
-
-   All of these commands end by printing two lines of output describing
-the frame.  The first line shows the frame number, the function name,
-the arguments, and the source file and line number of execution in that
-frame.  The second line shows the text of that source line.
-
-   For example:
-
-     (gdb) up
-     #1  0x22f0 in main (argc=1, argv=0xf7fffbf4, env=0xf7fffbfc)
-         at env.c:10
-     10              read_input_file (argv[i]);
-
-   After such a printout, the 'list' command with no arguments prints
-ten lines centered on the point of execution in the frame.  You can also
-edit the program at the point of execution with your favorite editing
-program by typing 'edit'.  *Note Printing Source Lines: List, for
-details.
-
-'up-silently N'
-'down-silently N'
-     These two commands are variants of 'up' and 'down', respectively;
-     they differ in that they do their work silently, without causing
-     display of the new frame.  They are intended primarily for use in
-     GDB command scripts, where the output might be unnecessary and
-     distracting.
-
-
-File: gdb.info,  Node: Frame Info,  Prev: Selection,  Up: Stack
-
-8.5 Information About a Frame
-=============================
-
-There are several other commands to print information about the selected
-stack frame.
-
-'frame'
-'f'
-     When used without any argument, this command does not change which
-     frame is selected, but prints a brief description of the currently
-     selected stack frame.  It can be abbreviated 'f'.  With an
-     argument, this command is used to select a stack frame.  *Note
-     Selecting a Frame: Selection.
-
-'info frame'
-'info f'
-     This command prints a verbose description of the selected stack
-     frame, including:
-
-        * the address of the frame
-        * the address of the next frame down (called by this frame)
-        * the address of the next frame up (caller of this frame)
-        * the language in which the source code corresponding to this
-          frame is written
-        * the address of the frame's arguments
-        * the address of the frame's local variables
-        * the program counter saved in it (the address of execution in
-          the caller frame)
-        * which registers were saved in the frame
-
-     The verbose description is useful when something has gone wrong
-     that has made the stack format fail to fit the usual conventions.
-
-'info frame ADDR'
-'info f ADDR'
-     Print a verbose description of the frame at address ADDR, without
-     selecting that frame.  The selected frame remains unchanged by this
-     command.  This requires the same kind of address (more than one for
-     some architectures) that you specify in the 'frame' command.  *Note
-     Selecting a Frame: Selection.
-
-'info args'
-     Print the arguments of the selected frame, each on a separate line.
-
-'info locals'
-     Print the local variables of the selected frame, each on a separate
-     line.  These are all variables (declared either static or
-     automatic) accessible at the point of execution of the selected
-     frame.
-
-
 File: gdb.info,  Node: Source,  Next: Data,  Prev: Stack,  Up: Top
 
 9 Examining Source Files
@@ -6356,20 +6549,20 @@ argument is preserved in repetition so that each repetition moves up in
 the source file.
 
    In general, the 'list' command expects you to supply zero, one or two
-"linespecs".  Linespecs specify source lines; there are several ways of
+"locations".  Locations specify source lines; there are several ways of
 writing them (*note Specify Location::), but the effect is always to
 specify some source line.
 
    Here is a complete description of the possible arguments for 'list':
 
-'list LINESPEC'
-     Print lines centered around the line specified by LINESPEC.
+'list LOCATION'
+     Print lines centered around the line specified by LOCATION.
 
 'list FIRST,LAST'
-     Print lines from FIRST to LAST.  Both arguments are linespecs.
-     When a 'list' command has two linespecs, and the source file of the
-     second linespec is omitted, this refers to the same source file as
-     the first linespec.
+     Print lines from FIRST to LAST.  Both arguments are locations.
+     When a 'list' command has two locations, and the source file of the
+     second location is omitted, this refers to the same source file as
+     the first location.
 
 'list ,LAST'
      Print lines ending with LAST.
@@ -6392,13 +6585,27 @@ File: gdb.info,  Node: Specify Location,  Next: Edit,  Prev: List,  Up: Source
 9.2 Specifying a Location
 =========================
 
+* Menu:
+
+* Linespec Locations::                Linespec locations
+* Explicit Locations::                Explicit locations
+* Address Locations::                 Address locations
+
 Several GDB commands accept arguments that specify a location of your
 program's code.  Since GDB is a source-level debugger, a location
-usually specifies some line in the source code; for that reason,
-locations are also known as "linespecs".
+usually specifies some line in the source code.  Locations may be
+specified using three different formats: linespec locations, explicit
+locations, or address locations.
 
-   Here are all the different ways of specifying a code location that
-GDB understands:
+
+File: gdb.info,  Node: Linespec Locations,  Next: Explicit Locations,  Up: Specify Location
+
+9.2.1 Linespec Locations
+------------------------
+
+A "linespec" is a colon-separated list of source location parameters
+such as file name, function name, etc.  Here are all the different ways
+of specifying a linespec:
 
 'LINENUM'
      Specifies the line number LINENUM of the current source file.
@@ -6435,47 +6642,10 @@ GDB understands:
      in different source files.
 
 'LABEL'
-     Specifies the line at which the label named LABEL appears.  GDB
-     searches for the label in the function corresponding to the
-     currently selected stack frame.  If there is no current selected
-     stack frame (for instance, if the inferior is not running), then
-     GDB will not search for a label.
-
-'*ADDRESS'
-     Specifies the program address ADDRESS.  For line-oriented commands,
-     such as 'list' and 'edit', this specifies a source line that
-     contains ADDRESS.  For 'break' and other breakpoint oriented
-     commands, this can be used to set breakpoints in parts of your
-     program which do not have debugging information or source files.
-
-     Here ADDRESS may be any expression valid in the current working
-     language (*note working language: Languages.) that specifies a code
-     address.  In addition, as a convenience, GDB extends the semantics
-     of expressions used in locations to cover the situations that
-     frequently happen during debugging.  Here are the various forms of
-     ADDRESS:
-
-     'EXPRESSION'
-          Any expression valid in the current working language.
-
-     'FUNCADDR'
-          An address of a function or procedure derived from its name.
-          In C, C++, Java, Objective-C, Fortran, minimal, and assembly,
-          this is simply the function's name FUNCTION (and actually a
-          special case of a valid expression).  In Pascal and Modula-2,
-          this is '&FUNCTION'.  In Ada, this is 'FUNCTION'Address'
-          (although the Pascal form also works).
-
-          This form specifies the address of the function's first
-          instruction, before the stack frame and arguments have been
-          set up.
-
-     ''FILENAME':FUNCADDR'
-          Like FUNCADDR above, but also specifies the name of the source
-          file explicitly.  This is useful if the name of the function
-          does not specify the function unambiguously, e.g., if there
-          are several functions with identical names in different source
-          files.
+     Specifies the line at which the label named LABEL appears in the
+     function corresponding to the currently selected stack frame.  If
+     there is no current selected stack frame (for instance, if the
+     inferior is not running), then GDB will not search for a label.
 
 '-pstap|-probe-stap [OBJFILE:[PROVIDER:]]NAME'
      The GNU/Linux tool 'SystemTap' provides a way for applications to
@@ -6488,6 +6658,100 @@ GDB understands:
      If PROVIDER is given, then only probes from that provider are
      considered.  If several probes match the spec, GDB will insert a
      breakpoint at each one of those probes.
+
+
+File: gdb.info,  Node: Explicit Locations,  Next: Address Locations,  Prev: Linespec Locations,  Up: Specify Location
+
+9.2.2 Explicit Locations
+------------------------
+
+"Explicit locations" allow the user to directly specify the source
+location's parameters using option-value pairs.
+
+   Explicit locations are useful when several functions, labels, or file
+names have the same name (base name for files) in the program's sources.
+In these cases, explicit locations point to the source line you meant
+more accurately and unambiguously.  Also, using explicit locations might
+be faster in large programs.
+
+   For example, the linespec 'foo:bar' may refer to a function 'bar'
+defined in the file named 'foo' or the label 'bar' in a function named
+'foo'.  GDB must search either the file system or the symbol table to
+know.
+
+   The list of valid explicit location options is summarized in the
+following table:
+
+'-source FILENAME'
+     The value specifies the source file name.  To differentiate between
+     files with the same base name, prepend as many directories as is
+     necessary to uniquely identify the desired file, e.g.,
+     'foo/bar/baz.c'.  Otherwise GDB will use the first file it finds
+     with the given base name.  This option requires the use of either
+     '-function' or '-line'.
+
+'-function FUNCTION'
+     The value specifies the name of a function.  Operations on function
+     locations unmodified by other options (such as '-label' or '-line')
+     refer to the line that begins the body of the function.  In C, for
+     example, this is the line with the open brace.
+
+'-label LABEL'
+     The value specifies the name of a label.  When the function name is
+     not specified, the label is searched in the function of the
+     currently selected stack frame.
+
+'-line NUMBER'
+     The value specifies a line offset for the location.  The offset may
+     either be absolute ('-line 3') or relative ('-line +3'), depending
+     on the command.  When specified without any other options, the line
+     offset is relative to the current line.
+
+   Explicit location options may be abbreviated by omitting any
+non-unique trailing characters from the option name, e.g., 'break -s
+main.c -li 3'.
+
+
+File: gdb.info,  Node: Address Locations,  Prev: Explicit Locations,  Up: Specify Location
+
+9.2.3 Address Locations
+-----------------------
+
+"Address locations" indicate a specific program address.  They have the
+generalized form *ADDRESS.
+
+   For line-oriented commands, such as 'list' and 'edit', this specifies
+a source line that contains ADDRESS.  For 'break' and other
+breakpoint-oriented commands, this can be used to set breakpoints in
+parts of your program which do not have debugging information or source
+files.
+
+   Here ADDRESS may be any expression valid in the current working
+language (*note working language: Languages.) that specifies a code
+address.  In addition, as a convenience, GDB extends the semantics of
+expressions used in locations to cover several situations that
+frequently occur during debugging.  Here are the various forms of
+ADDRESS:
+
+'EXPRESSION'
+     Any expression valid in the current working language.
+
+'FUNCADDR'
+     An address of a function or procedure derived from its name.  In C,
+     C++, Java, Objective-C, Fortran, minimal, and assembly, this is
+     simply the function's name FUNCTION (and actually a special case of
+     a valid expression).  In Pascal and Modula-2, this is '&FUNCTION'.
+     In Ada, this is 'FUNCTION'Address' (although the Pascal form also
+     works).
+
+     This form specifies the address of the function's first
+     instruction, before the stack frame and arguments have been set up.
+
+''FILENAME':FUNCADDR'
+     Like FUNCADDR above, but also specifies the name of the source file
+     explicitly.  This is useful if the name of the function does not
+     specify the function unambiguously, e.g., if there are several
+     functions with identical names in different source files.
 
 
 File: gdb.info,  Node: Edit,  Next: Search,  Prev: Specify Location,  Up: Source
@@ -6693,9 +6957,9 @@ being moved together.
      For example, if the file '/foo/bar/baz.c' was moved to
      '/mnt/cross/baz.c', then the command
 
-          (gdb) set substitute-path /usr/src /mnt/cross
+          (gdb) set substitute-path /foo/bar /mnt/cross
 
-     will tell GDB to replace '/usr/src' with '/mnt/cross', which will
+     will tell GDB to replace '/foo/bar' with '/mnt/cross', which will
      allow GDB to find the file 'baz.c' even though it was moved.
 
      In the case when more than one substitution rule have been defined,
@@ -6738,345 +7002,4 @@ versions of source.  You can correct the situation as follows:
   2. Use 'directory' with suitable arguments to reinstall the
      directories you want in the source path.  You can add all the
      directories in one command.
-
-
-File: gdb.info,  Node: Machine Code,  Prev: Source Path,  Up: Source
-
-9.6 Source and Machine Code
-===========================
-
-You can use the command 'info line' to map source lines to program
-addresses (and vice versa), and the command 'disassemble' to display a
-range of addresses as machine instructions.  You can use the command
-'set disassemble-next-line' to set whether to disassemble next source
-line when execution stops.  When run under GNU Emacs mode, the 'info
-line' command causes the arrow to point to the line specified.  Also,
-'info line' prints addresses in symbolic form as well as hex.
-
-'info line LINESPEC'
-     Print the starting and ending addresses of the compiled code for
-     source line LINESPEC.  You can specify source lines in any of the
-     ways documented in *note Specify Location::.
-
-   For example, we can use 'info line' to discover the location of the
-object code for the first line of function 'm4_changequote':
-
-     (gdb) info line m4_changequote
-     Line 895 of "builtin.c" starts at pc 0x634c and ends at 0x6350.
-
-We can also inquire (using '*ADDR' as the form for LINESPEC) what source
-line covers a particular address:
-     (gdb) info line *0x63ff
-     Line 926 of "builtin.c" starts at pc 0x63e4 and ends at 0x6404.
-
-   After 'info line', the default address for the 'x' command is changed
-to the starting address of the line, so that 'x/i' is sufficient to
-begin examining the machine code (*note Examining Memory: Memory.).
-Also, this address is saved as the value of the convenience variable
-'$_' (*note Convenience Variables: Convenience Vars.).
-
-'disassemble'
-'disassemble /m'
-'disassemble /r'
-     This specialized command dumps a range of memory as machine
-     instructions.  It can also print mixed source+disassembly by
-     specifying the '/m' modifier and print the raw instructions in hex
-     as well as in symbolic form by specifying the '/r'.  The default
-     memory range is the function surrounding the program counter of the
-     selected frame.  A single argument to this command is a program
-     counter value; GDB dumps the function surrounding this value.  When
-     two arguments are given, they should be separated by a comma,
-     possibly surrounded by whitespace.  The arguments specify a range
-     of addresses to dump, in one of two forms:
-
-     'START,END'
-          the addresses from START (inclusive) to END (exclusive)
-     'START,+LENGTH'
-          the addresses from START (inclusive) to 'START+LENGTH'
-          (exclusive).
-
-     When 2 arguments are specified, the name of the function is also
-     printed (since there could be several functions in the given
-     range).
-
-     The argument(s) can be any expression yielding a numeric value,
-     such as '0x32c4', '&main+10' or '$pc - 8'.
-
-     If the range of memory being disassembled contains current program
-     counter, the instruction at that location is shown with a '=>'
-     marker.
-
-   The following example shows the disassembly of a range of addresses
-of HP PA-RISC 2.0 code:
-
-     (gdb) disas 0x32c4, 0x32e4
-     Dump of assembler code from 0x32c4 to 0x32e4:
-        0x32c4 <main+204>:      addil 0,dp
-        0x32c8 <main+208>:      ldw 0x22c(sr0,r1),r26
-        0x32cc <main+212>:      ldil 0x3000,r31
-        0x32d0 <main+216>:      ble 0x3f8(sr4,r31)
-        0x32d4 <main+220>:      ldo 0(r31),rp
-        0x32d8 <main+224>:      addil -0x800,dp
-        0x32dc <main+228>:      ldo 0x588(r1),r26
-        0x32e0 <main+232>:      ldil 0x3000,r31
-     End of assembler dump.
-
-   Here is an example showing mixed source+assembly for Intel x86, when
-the program is stopped just after function prologue:
-
-     (gdb) disas /m main
-     Dump of assembler code for function main:
-     5       {
-        0x08048330 <+0>:    push   %ebp
-        0x08048331 <+1>:    mov    %esp,%ebp
-        0x08048333 <+3>:    sub    $0x8,%esp
-        0x08048336 <+6>:    and    $0xfffffff0,%esp
-        0x08048339 <+9>:    sub    $0x10,%esp
-
-     6         printf ("Hello.\n");
-     => 0x0804833c <+12>:   movl   $0x8048440,(%esp)
-        0x08048343 <+19>:   call   0x8048284 <puts@plt>
-
-     7         return 0;
-     8       }
-        0x08048348 <+24>:   mov    $0x0,%eax
-        0x0804834d <+29>:   leave
-        0x0804834e <+30>:   ret
-
-     End of assembler dump.
-
-   Here is another example showing raw instructions in hex for AMD
-x86-64,
-
-     (gdb) disas /r 0x400281,+10
-     Dump of assembler code from 0x400281 to 0x40028b:
-        0x0000000000400281:  38 36  cmp    %dh,(%rsi)
-        0x0000000000400283:  2d 36 34 2e 73 sub    $0x732e3436,%eax
-        0x0000000000400288:  6f     outsl  %ds:(%rsi),(%dx)
-        0x0000000000400289:  2e 32 00       xor    %cs:(%rax),%al
-     End of assembler dump.
-
-   Addresses cannot be specified as a linespec (*note Specify
-Location::).  So, for example, if you want to disassemble function 'bar'
-in file 'foo.c', you must type 'disassemble 'foo.c'::bar' and not
-'disassemble foo.c:bar'.
-
-   Some architectures have more than one commonly-used set of
-instruction mnemonics or other syntax.
-
-   For programs that were dynamically linked and use shared libraries,
-instructions that call functions or branch to locations in the shared
-libraries might show a seemingly bogus location--it's actually a
-location of the relocation table.  On some architectures, GDB might be
-able to resolve these to actual function names.
-
-'set disassembly-flavor INSTRUCTION-SET'
-     Select the instruction set to use when disassembling the program
-     via the 'disassemble' or 'x/i' commands.
-
-     Currently this command is only defined for the Intel x86 family.
-     You can set INSTRUCTION-SET to either 'intel' or 'att'.  The
-     default is 'att', the AT&T flavor used by default by Unix
-     assemblers for x86-based targets.
-
-'show disassembly-flavor'
-     Show the current setting of the disassembly flavor.
-
-'set disassemble-next-line'
-'show disassemble-next-line'
-     Control whether or not GDB will disassemble the next source line or
-     instruction when execution stops.  If ON, GDB will display
-     disassembly of the next source line when execution of the program
-     being debugged stops.  This is _in addition_ to displaying the
-     source line itself, which GDB always does if possible.  If the next
-     source line cannot be displayed for some reason (e.g., if GDB
-     cannot find the source file, or there's no line info in the debug
-     info), GDB will display disassembly of the next _instruction_
-     instead of showing the next source line.  If AUTO, GDB will display
-     disassembly of next instruction only if the source line cannot be
-     displayed.  This setting causes GDB to display some feedback when
-     you step through a function with no line info or whose source file
-     is unavailable.  The default is OFF, which means never display the
-     disassembly of the next line or instruction.
-
-
-File: gdb.info,  Node: Data,  Next: Optimized Code,  Prev: Source,  Up: Top
-
-10 Examining Data
-*****************
-
-The usual way to examine data in your program is with the 'print'
-command (abbreviated 'p'), or its synonym 'inspect'.  It evaluates and
-prints the value of an expression of the language your program is
-written in (*note Using GDB with Different Languages: Languages.).  It
-may also print the expression using a Python-based pretty-printer (*note
-Pretty Printing::).
-
-'print EXPR'
-'print /F EXPR'
-     EXPR is an expression (in the source language).  By default the
-     value of EXPR is printed in a format appropriate to its data type;
-     you can choose a different format by specifying '/F', where F is a
-     letter specifying the format; see *note Output Formats: Output
-     Formats.
-
-'print'
-'print /F'
-     If you omit EXPR, GDB displays the last value again (from the
-     "value history"; *note Value History: Value History.).  This allows
-     you to conveniently inspect the same value in an alternative
-     format.
-
-   A more low-level way of examining data is with the 'x' command.  It
-examines data in memory at a specified address and prints it in a
-specified format.  *Note Examining Memory: Memory.
-
-   If you are interested in information about types, or about how the
-fields of a struct or a class are declared, use the 'ptype EXP' command
-rather than 'print'.  *Note Examining the Symbol Table: Symbols.
-
-   Another way of examining values of expressions and type information
-is through the Python extension command 'explore' (available only if the
-GDB build is configured with '--with-python').  It offers an interactive
-way to start at the highest level (or, the most abstract level) of the
-data type of an expression (or, the data type itself) and explore all
-the way down to leaf scalar values/fields embedded in the higher level
-data types.
-
-'explore ARG'
-     ARG is either an expression (in the source language), or a type
-     visible in the current context of the program being debugged.
-
-   The working of the 'explore' command can be illustrated with an
-example.  If a data type 'struct ComplexStruct' is defined in your C
-program as
-
-     struct SimpleStruct
-     {
-       int i;
-       double d;
-     };
-
-     struct ComplexStruct
-     {
-       struct SimpleStruct *ss_p;
-       int arr[10];
-     };
-
-followed by variable declarations as
-
-     struct SimpleStruct ss = { 10, 1.11 };
-     struct ComplexStruct cs = { &ss, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 } };
-
-then, the value of the variable 'cs' can be explored using the 'explore'
-command as follows.
-
-     (gdb) explore cs
-     The value of `cs' is a struct/class of type `struct ComplexStruct' with
-     the following fields:
-
-       ss_p = <Enter 0 to explore this field of type `struct SimpleStruct *'>
-        arr = <Enter 1 to explore this field of type `int [10]'>
-
-     Enter the field number of choice:
-
-Since the fields of 'cs' are not scalar values, you are being prompted
-to chose the field you want to explore.  Let's say you choose the field
-'ss_p' by entering '0'.  Then, since this field is a pointer, you will
-be asked if it is pointing to a single value.  From the declaration of
-'cs' above, it is indeed pointing to a single value, hence you enter
-'y'.  If you enter 'n', then you will be asked if it were pointing to an
-array of values, in which case this field will be explored as if it were
-an array.
-
-     `cs.ss_p' is a pointer to a value of type `struct SimpleStruct'
-     Continue exploring it as a pointer to a single value [y/n]: y
-     The value of `*(cs.ss_p)' is a struct/class of type `struct
-     SimpleStruct' with the following fields:
-
-       i = 10 .. (Value of type `int')
-       d = 1.1100000000000001 .. (Value of type `double')
-
-     Press enter to return to parent value:
-
-If the field 'arr' of 'cs' was chosen for exploration by entering '1'
-earlier, then since it is as array, you will be prompted to enter the
-index of the element in the array that you want to explore.
-
-     `cs.arr' is an array of `int'.
-     Enter the index of the element you want to explore in `cs.arr': 5
-
-     `(cs.arr)[5]' is a scalar value of type `int'.
-
-     (cs.arr)[5] = 4
-
-     Press enter to return to parent value:
-
-   In general, at any stage of exploration, you can go deeper towards
-the leaf values by responding to the prompts appropriately, or hit the
-return key to return to the enclosing data structure (the higher level
-data structure).
-
-   Similar to exploring values, you can use the 'explore' command to
-explore types.  Instead of specifying a value (which is typically a
-variable name or an expression valid in the current context of the
-program being debugged), you specify a type name.  If you consider the
-same example as above, your can explore the type 'struct ComplexStruct'
-by passing the argument 'struct ComplexStruct' to the 'explore' command.
-
-     (gdb) explore struct ComplexStruct
-
-By responding to the prompts appropriately in the subsequent interactive
-session, you can explore the type 'struct ComplexStruct' in a manner
-similar to how the value 'cs' was explored in the above example.
-
-   The 'explore' command also has two sub-commands, 'explore value' and
-'explore type'.  The former sub-command is a way to explicitly specify
-that value exploration of the argument is being invoked, while the
-latter is a way to explicitly specify that type exploration of the
-argument is being invoked.
-
-'explore value EXPR'
-     This sub-command of 'explore' explores the value of the expression
-     EXPR (if EXPR is an expression valid in the current context of the
-     program being debugged).  The behavior of this command is identical
-     to that of the behavior of the 'explore' command being passed the
-     argument EXPR.
-
-'explore type ARG'
-     This sub-command of 'explore' explores the type of ARG (if ARG is a
-     type visible in the current context of program being debugged), or
-     the type of the value/expression ARG (if ARG is an expression valid
-     in the current context of the program being debugged).  If ARG is a
-     type, then the behavior of this command is identical to that of the
-     'explore' command being passed the argument ARG.  If ARG is an
-     expression, then the behavior of this command will be identical to
-     that of the 'explore' command being passed the type of ARG as the
-     argument.
-
-* Menu:
-
-* Expressions::                 Expressions
-* Ambiguous Expressions::       Ambiguous Expressions
-* Variables::                   Program variables
-* Arrays::                      Artificial arrays
-* Output Formats::              Output formats
-* Memory::                      Examining memory
-* Auto Display::                Automatic display
-* Print Settings::              Print settings
-* Pretty Printing::             Python pretty printing
-* Value History::               Value history
-* Convenience Vars::            Convenience variables
-* Convenience Funs::            Convenience functions
-* Registers::                   Registers
-* Floating Point Hardware::     Floating point hardware
-* Vector Unit::                 Vector Unit
-* OS Information::              Auxiliary data provided by operating system
-* Memory Region Attributes::    Memory region attributes
-* Dump/Restore Files::          Copy between memory and a file
-* Core File Generation::        Cause a program dump its core
-* Character Sets::              Debugging programs that use a different
-                                character set than GDB does
-* Caching Target Data::         Data caching for targets
-* Searching Memory::            Searching memory for a sequence of bytes
 

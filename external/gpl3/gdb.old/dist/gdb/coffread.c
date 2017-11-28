@@ -1,5 +1,5 @@
 /* Read coff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
    Contributed by David D. Johnson, Brown University (ddj@cs.brown.edu).
 
    This file is part of GDB.
@@ -253,8 +253,7 @@ coff_locate_sections (bfd *abfd, asection *sectp, void *csip)
 	{
 	  struct stab_section_list *n, **pn;
 
-	  n = ((struct stab_section_list *)
-	       xmalloc (sizeof (struct stab_section_list)));
+	  n = XNEW (struct stab_section_list);
 	  n->section = sectp;
 	  n->next = NULL;
 	  for (pn = &csi->stabsects; *pn != NULL; pn = &(*pn)->next)
@@ -562,7 +561,6 @@ static void
 coff_symfile_read (struct objfile *objfile, int symfile_flags)
 {
   struct coff_symfile_info *info;
-  struct dbx_symfile_info *dbxinfo;
   bfd *abfd = objfile->obfd;
   coff_data_type *cdata = coff_data (abfd);
   char *name = bfd_get_filename (abfd);
@@ -573,8 +571,8 @@ coff_symfile_read (struct objfile *objfile, int symfile_flags)
   struct cleanup *back_to, *cleanup_minimal_symbols;
   int stabstrsize;
   
-  info = objfile_data (objfile, coff_objfile_data_key);
-  dbxinfo = DBX_SYMFILE_INFO (objfile);
+  info = (struct coff_symfile_info *) objfile_data (objfile,
+						    coff_objfile_data_key);
   symfile_bfd = abfd;		/* Kludge for swap routines.  */
 
 /* WARNING WILL ROBINSON!  ACCESSING BFD-PRIVATE DATA HERE!  FIXME!  */
@@ -841,9 +839,7 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
   if (type_vector)		/* Get rid of previous one.  */
     xfree (type_vector);
   type_vector_length = INITIAL_TYPE_VECTOR_LENGTH;
-  type_vector = (struct type **)
-    xmalloc (type_vector_length * sizeof (struct type *));
-  memset (type_vector, 0, type_vector_length * sizeof (struct type *));
+  type_vector = XCNEWVEC (struct type *, type_vector_length);
 
   coff_start_symtab (objfile, "");
 
@@ -1144,8 +1140,8 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 		enter_linenos (fcn_line_ptr, fcn_first_line,
 			       fcn_last_line, objfile);
 
-	      finish_block (newobj->name, &local_symbols,
-			    newobj->old_blocks, newobj->start_addr,
+	      finish_block (newobj->name, &local_symbols, newobj->old_blocks,
+			    NULL, newobj->start_addr,
 			    fcn_cs_saved.c_value
 			    + fcn_aux_saved.x_sym.x_misc.x_fsize
 			    + ANOFFSET (objfile->section_offsets,
@@ -1188,7 +1184,7 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 		    cs->c_value + ANOFFSET (objfile->section_offsets,
 					    SECT_OFF_TEXT (objfile));
 		  /* Make a block for the local symbols within.  */
-		  finish_block (0, &local_symbols, newobj->old_blocks,
+		  finish_block (0, &local_symbols, newobj->old_blocks, NULL,
 				newobj->start_addr, tmpaddr);
 		}
 	      /* Now pop locals of block just finished.  */
@@ -2102,12 +2098,13 @@ coff_read_struct_type (int index, int length, int lastsym,
 	case C_MOU:
 
 	  /* Get space to record the next field's data.  */
-	  newobj = (struct nextfield *) alloca (sizeof (struct nextfield));
+	  newobj = XALLOCA (struct nextfield);
 	  newobj->next = list;
 	  list = newobj;
 
 	  /* Save the data.  */
-	  list->field.name = obstack_copy0 (&objfile->objfile_obstack,
+	  list->field.name
+	    = (const char *) obstack_copy0 (&objfile->objfile_obstack,
 					    name, strlen (name));
 	  FIELD_TYPE (list->field) = decode_type (ms, ms->c_type,
 						  &sub_aux, objfile);
@@ -2119,12 +2116,13 @@ coff_read_struct_type (int index, int length, int lastsym,
 	case C_FIELD:
 
 	  /* Get space to record the next field's data.  */
-	  newobj = (struct nextfield *) alloca (sizeof (struct nextfield));
+	  newobj = XALLOCA (struct nextfield);
 	  newobj->next = list;
 	  list = newobj;
 
 	  /* Save the data.  */
-	  list->field.name = obstack_copy0 (&objfile->objfile_obstack,
+	  list->field.name
+	    = (const char *) obstack_copy0 (&objfile->objfile_obstack,
 					    name, strlen (name));
 	  FIELD_TYPE (list->field) = decode_type (ms, ms->c_type,
 						  &sub_aux, objfile);
@@ -2195,9 +2193,9 @@ coff_read_enum_type (int index, int length, int lastsym,
 	case C_MOE:
 	  sym = allocate_symbol (objfile);
 
-	  SYMBOL_SET_LINKAGE_NAME (sym,
-				   obstack_copy0 (&objfile->objfile_obstack,
-						  name, strlen (name)));
+	  name = (char *) obstack_copy0 (&objfile->objfile_obstack, name,
+					 strlen (name));
+	  SYMBOL_SET_LINKAGE_NAME (sym, name);
 	  SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 	  SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
 	  SYMBOL_VALUE (sym) = ms->c_value;

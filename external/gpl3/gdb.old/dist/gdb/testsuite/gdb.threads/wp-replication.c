@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2015 Free Software Foundation, Inc.
+   Copyright 2009-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -47,11 +47,6 @@ int test_ready = 0;
    watchpoint triggers.  */
 int can_terminate = 0;
 
-/* Used to push the program out of the waiting loop after the
-   testcase is done counting the number of hardware watchpoints
-   available for our target.  */
-int watch_count_done = 0;
-
 /* Number of watchpoints GDB is capable of using (this is provided
    by GDB during the test run).  */
 int hw_watch_count = 0;
@@ -60,31 +55,12 @@ int hw_watch_count = 0;
 static int watched_data[NR_THREADS];
 pthread_mutex_t data_mutex;
 
-/* Wait function to keep threads busy while the testcase does
-   what it needs to do.  */
-void
-empty_cycle (void)
-{
-  usleep (1);
-}
-
 int
 main ()
 {
   int res;
   pthread_t threads[NR_THREADS];
   int i;
-
-  /* Something to ensure that the breakpoint used to run to main
-     is only hit once.  */
-  empty_cycle ();
-
-  while (watch_count_done == 0)
-    {
-      /* GDB will modify the value of "watch_count_done" at runtime and we
-	 will get past this point.  */
-      empty_cycle ();
-    }
 
   pthread_mutex_init (&data_mutex, NULL);
 

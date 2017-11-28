@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@ static const struct address_space_data *target_dcache_aspace_key;
 static void
 target_dcache_cleanup (struct address_space *aspace, void *arg)
 {
-  dcache_free (arg);
+  dcache_free ((DCACHE *) arg);
 }
 
 /* Target dcache is initialized or not.  */
@@ -39,8 +39,9 @@ target_dcache_cleanup (struct address_space *aspace, void *arg)
 int
 target_dcache_init_p (void)
 {
-  DCACHE *dcache = address_space_data (current_program_space->aspace,
-				       target_dcache_aspace_key);
+  DCACHE *dcache
+    = (DCACHE *) address_space_data (current_program_space->aspace,
+				     target_dcache_aspace_key);
 
   return (dcache != NULL);
 }
@@ -50,8 +51,9 @@ target_dcache_init_p (void)
 void
 target_dcache_invalidate (void)
 {
-  DCACHE *dcache = address_space_data (current_program_space->aspace,
-				       target_dcache_aspace_key);
+  DCACHE *dcache
+    = (DCACHE *) address_space_data (current_program_space->aspace,
+				     target_dcache_aspace_key);
 
   if (dcache != NULL)
     dcache_invalidate (dcache);
@@ -63,8 +65,9 @@ target_dcache_invalidate (void)
 DCACHE *
 target_dcache_get (void)
 {
-  DCACHE *dcache = address_space_data (current_program_space->aspace,
-				       target_dcache_aspace_key);
+  DCACHE *dcache
+    = (DCACHE *) address_space_data (current_program_space->aspace,
+				     target_dcache_aspace_key);
 
   return dcache;
 }
@@ -75,8 +78,9 @@ target_dcache_get (void)
 DCACHE *
 target_dcache_get_or_init (void)
 {
-  DCACHE *dcache = address_space_data (current_program_space->aspace,
-				       target_dcache_aspace_key);
+  DCACHE *dcache
+    = (DCACHE *) address_space_data (current_program_space->aspace,
+				     target_dcache_aspace_key);
 
   if (dcache == NULL)
     {

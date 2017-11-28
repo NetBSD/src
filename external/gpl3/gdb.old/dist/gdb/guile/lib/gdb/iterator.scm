@@ -1,7 +1,7 @@
 ;; Iteration utilities.
 ;; Anything in this file can change or disappear.
 ;;
-;; Copyright (C) 2014-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GDB.
 ;;

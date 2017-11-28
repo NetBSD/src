@@ -1,6 +1,6 @@
 /* Read MiniDebugInfo data from an objfile.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -76,7 +76,7 @@ struct gdb_lzma_stream
 static void *
 lzma_open (struct bfd *nbfd, void *open_closure)
 {
-  asection *section = open_closure;
+  asection *section = (asection *) open_closure;
   bfd_size_type size, offset;
   lzma_stream_flags options;
   gdb_byte footer[LZMA_STREAM_HEADER_SIZE];
@@ -101,7 +101,7 @@ lzma_open (struct bfd *nbfd, void *open_closure)
     }
 
   offset -= options.backward_size;
-  indexdata = xmalloc (options.backward_size);
+  indexdata = (gdb_byte *) xmalloc (options.backward_size);
   index = NULL;
   pos = 0;
   if (bfd_seek (section->owner, offset, SEEK_SET) != 0
@@ -118,7 +118,7 @@ lzma_open (struct bfd *nbfd, void *open_closure)
     }
   xfree (indexdata);
 
-  lstream = xzalloc (sizeof (struct gdb_lzma_stream));
+  lstream = XCNEW (struct gdb_lzma_stream);
   lstream->section = section;
   lstream->index = index;
 
@@ -133,7 +133,7 @@ static file_ptr
 lzma_pread (struct bfd *nbfd, void *stream, void *buf, file_ptr nbytes,
 	    file_ptr offset)
 {
-  struct gdb_lzma_stream *lstream = stream;
+  struct gdb_lzma_stream *lstream = (struct gdb_lzma_stream *) stream;
   bfd_size_type chunk_size;
   lzma_index_iter iter;
   gdb_byte *compressed, *uncompressed;
@@ -155,7 +155,7 @@ lzma_pread (struct bfd *nbfd, void *stream, void *buf, file_ptr nbytes,
 	  if (lzma_index_iter_locate (&iter, offset))
 	    break;
 
-	  compressed = xmalloc (iter.block.total_size);
+	  compressed = (gdb_byte *) xmalloc (iter.block.total_size);
 	  block_offset = section->filepos + iter.block.compressed_file_offset;
 	  if (bfd_seek (section->owner, block_offset, SEEK_SET) != 0
 	      || bfd_bread (compressed, iter.block.total_size, section->owner)
@@ -165,7 +165,7 @@ lzma_pread (struct bfd *nbfd, void *stream, void *buf, file_ptr nbytes,
 	      break;
 	    }
 
-	  uncompressed = xmalloc (iter.block.uncompressed_size);
+	  uncompressed = (gdb_byte *) xmalloc (iter.block.uncompressed_size);
 
 	  memset (&block, 0, sizeof (block));
 	  block.filters = filters;
@@ -220,7 +220,7 @@ static int
 lzma_close (struct bfd *nbfd,
 	    void *stream)
 {
-  struct gdb_lzma_stream *lstream = stream;
+  struct gdb_lzma_stream *lstream = (struct gdb_lzma_stream *) stream;
 
   lzma_index_end (lstream->index, &gdb_lzma_allocator);
   xfree (lstream->data);
@@ -239,7 +239,7 @@ lzma_stat (struct bfd *abfd,
 	   void *stream,
 	   struct stat *sb)
 {
-  struct gdb_lzma_stream *lstream = stream;
+  struct gdb_lzma_stream *lstream = (struct gdb_lzma_stream *) stream;
 
   memset (sb, 0, sizeof (struct stat));
   sb->st_size = lzma_index_uncompressed_size (lstream->index);
