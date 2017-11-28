@@ -1,4 +1,4 @@
-# Copyright 1988-2015 Free Software Foundation, Inc.
+# Copyright 1988-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -110,7 +110,7 @@ gdb_test "ptype boolean" "type = enum (boolean |)\{FALSE, TRUE\}.*" "ptype unnam
 # GDB's behavior is correct; the type which the variable is defined
 # as (51) doesn't have a name.  Only 55 has a name.
 
-if {!$gcc_compiled && !$hp_aCC_compiler} {
+if {!$gcc_compiled} {
     setup_xfail "rs6000-*-*" "i*86-*-sysv4*"
     setup_xfail "hppa*-*-*" CLLbs14773
 }
@@ -350,7 +350,6 @@ gdb_test "ptype v_int" "type = int.*" "ptype int"
 #
 
 if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" "i*86-*-sysv4*" }
-if {$hp_aCC_compiler} {setup_xfail "hppa*-*-*"}
 gdb_test "ptype t_char_array" "type = (|unsigned )char \\\[0?\\\]"
 
 gdb_test "ptype pv_char_array" "type = (|unsigned )char \\(\\*\\)\\\[0?\\\]"
@@ -476,34 +475,25 @@ gdb_test "ptype pv_char_array" "type = (|unsigned )char \\(\\*\\)\\\[0?\\\]"
 #
 # test ptype command with nested structure and union
 #
-if {$hp_aCC_compiler} {
-    set outer "outer_struct::"
-    set struct ""
-    set union ""
-} else {
-    set outer ""
-    set struct "struct"
-    set union "union"
-}
 gdb_test "ptype struct outer_struct" "type = struct outer_struct \{.*\[\r\n\]+\
 .*int outer_int;.*\[\r\n\]+\
-.*(struct|) ${outer}inner_struct inner_struct_instance;.*\[\r\n\]+\
-.*(union|) ${outer}inner_union inner_union_instance;.*\[\r\n\]+\
-.*(long|long int|int) outer_long;.*\[\r\n\]\}.*" "ptype outer structure" 
+.*(struct|) inner_struct inner_struct_instance;.*\[\r\n\]+\
+.*(union|) inner_union inner_union_instance;.*\[\r\n\]+\
+.*(long|long int|int) outer_long;.*\[\r\n\]\}.*" "ptype outer structure"
 
-gdb_test "ptype ${struct} ${outer}inner_struct" "type = struct ${outer}inner_struct \{.*\[\r\n\]    int inner_int;.*\[\r\n\]    (long|long int|int) inner_long;.*\[\r\n\]\}.*" "ptype inner structure" 
+gdb_test "ptype struct inner_struct" "type = struct inner_struct \{.*\[\r\n\]    int inner_int;.*\[\r\n\]    (long|long int|int) inner_long;.*\[\r\n\]\}.*" "ptype inner structure"
 
-gdb_test "ptype ${union} ${outer}inner_union" "type = union ${outer}inner_union \{.*\[\r\n\]    int inner_union_int;.*\[\r\n\]    (long|long int|int) inner_union_long;.*\[\r\n\]\}.*" "ptype inner union" 
+gdb_test "ptype union inner_union" "type = union inner_union \{.*\[\r\n\]    int inner_union_int;.*\[\r\n\]    (long|long int|int) inner_union_long;.*\[\r\n\]\}.*" "ptype inner union"
 
-gdb_test "ptype nested_su" "type = struct outer_struct \{.*\[\r\n\]    int outer_int;.*\[\r\n\]    (struct |)${outer}inner_struct inner_struct_instance;.*\[\r\n\]    (union |)${outer}inner_union inner_union_instance;.*\[\r\n\]    (long|long int|int) outer_long;.*\[\r\n\]\}.*" "ptype nested structure" 
+gdb_test "ptype nested_su" "type = struct outer_struct \{.*\[\r\n\]    int outer_int;.*\[\r\n\]    (struct |)inner_struct inner_struct_instance;.*\[\r\n\]    (union |)inner_union inner_union_instance;.*\[\r\n\]    (long|long int|int) outer_long;.*\[\r\n\]\}.*" "ptype nested structure"
 
-gdb_test "ptype nested_su.outer_int" "type = int.*" "ptype outer int" 
+gdb_test "ptype nested_su.outer_int" "type = int.*" "ptype outer int"
 
-gdb_test "ptype nested_su.inner_struct_instance" "type = struct ${outer}inner_struct \{.*\[\r\n\]    int inner_int;.*\[\r\n\]    (long|long int|int) inner_long;.*\[\r\n\]\}.*" "ptype nested structure #2" 
+gdb_test "ptype nested_su.inner_struct_instance" "type = struct inner_struct \{.*\[\r\n\]    int inner_int;.*\[\r\n\]    (long|long int|int) inner_long;.*\[\r\n\]\}.*" "ptype nested structure #2"
 
-gdb_test "ptype nested_su.inner_struct_instance.inner_int" "type = int.*" "ptype inner int" 
+gdb_test "ptype nested_su.inner_struct_instance.inner_int" "type = int.*" "ptype inner int"
 
-gdb_test "ptype nested_su.inner_union_instance" "type = union ${outer}inner_union \{.*\[\r\n\]    int inner_union_int;.*\[\r\n\]    (long|long int|int) inner_union_long;.*\[\r\n\]\}.*" "ptype nested union" 
+gdb_test "ptype nested_su.inner_union_instance" "type = union inner_union \{.*\[\r\n\]    int inner_union_int;.*\[\r\n\]    (long|long int|int) inner_union_long;.*\[\r\n\]\}.*" "ptype nested union"
 
 # Print the type description of variable the_highest, and verify that
 # the type description for the fields whose type is anonymous are
@@ -598,14 +588,10 @@ gdb_test "ptype foo" "type = char" "ptype foo typedef after second list of charf
 # requires a running process.  These call malloc, and can take a long
 # time to execute over a slow serial link, so increase the timeout.
 
-# UDI can't do this (PR 2416).  XFAIL is not suitable, because attempting
-# the operation causes a slow painful death rather than a nice simple failure.
-
 if [runto_main] then {
 
   if [target_info exists gdb,cannot_call_functions] {
-    setup_xfail "*-*-*" 2416
-    fail "This target can not call functions"
+    unsupported "This target can not call functions"
     continue
   }
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -111,6 +111,7 @@ proc test_d_demangling {} {
     test_demangling "_D8demangle4testFaXv" "demangle.test(char...)"
     test_demangling "_D8demangle4testFaYv" "demangle.test(char, ...)"
     test_demangling "_D8demangle4testFaaYv" "demangle.test(char, char, ...)"
+    test_demangling "_D8demangle4testFYv" "demangle.test(...)"
     test_demangling "_D8demangle4testFaaZv" "demangle.test(char, char)"
 
     test_demangling "_D8demangle4testFDFZaZv" "demangle.test(char() delegate)"
@@ -118,12 +119,14 @@ proc test_d_demangling {} {
     test_demangling "_D8demangle4testFDWZaZv" "demangle.test(extern(Windows) char() delegate)"
     test_demangling "_D8demangle4testFDVZaZv" "demangle.test(extern(Pascal) char() delegate)"
     test_demangling "_D8demangle4testFDRZaZv" "demangle.test(extern(C++) char() delegate)"
+    test_demangling "_D8demangle4testFDYZaZv" "demangle.test(extern(Objective-C) char() delegate)"
 
-    test_demangling "_D8demangle4testFFZaZv" "demangle.test(char() function)"
-    test_demangling "_D8demangle4testFUZaZv" "demangle.test(extern(C) char() function)"
-    test_demangling "_D8demangle4testFWZaZv" "demangle.test(extern(Windows) char() function)"
-    test_demangling "_D8demangle4testFVZaZv" "demangle.test(extern(Pascal) char() function)"
-    test_demangling "_D8demangle4testFRZaZv" "demangle.test(extern(C++) char() function)"
+    test_demangling "_D8demangle4testFPFZaZv" "demangle.test(char() function)"
+    test_demangling "_D8demangle4testFPUZaZv" "demangle.test(extern(C) char() function)"
+    test_demangling "_D8demangle4testFPWZaZv" "demangle.test(extern(Windows) char() function)"
+    test_demangling "_D8demangle4testFPVZaZv" "demangle.test(extern(Pascal) char() function)"
+    test_demangling "_D8demangle4testFPRZaZv" "demangle.test(extern(C++) char() function)"
+    test_demangling "_D8demangle4testFPYZaZv" "demangle.test(extern(Objective-C) char() function)"
 
     test_demangling "_D8demangle4testFDFNaZaZv" "demangle.test(char() pure delegate)"
     test_demangling "_D8demangle4testFDFNbZaZv" "demangle.test(char() nothrow delegate)"
@@ -132,15 +135,15 @@ proc test_d_demangling {} {
     test_demangling "_D8demangle4testFDFNeZaZv" "demangle.test(char() @trusted delegate)"
     test_demangling "_D8demangle4testFDFNfZaZv" "demangle.test(char() @safe delegate)"
 
-    test_demangling "_D8demangle4testFFNaZaZv" "demangle.test(char() pure function)"
-    test_demangling "_D8demangle4testFFNbZaZv" "demangle.test(char() nothrow function)"
-    test_demangling "_D8demangle4testFFNcZaZv" "demangle.test(char() ref function)"
-    test_demangling "_D8demangle4testFFNdZaZv" "demangle.test(char() @property function)"
-    test_demangling "_D8demangle4testFFNeZaZv" "demangle.test(char() @trusted function)"
-    test_demangling "_D8demangle4testFFNfZaZv" "demangle.test(char() @safe function)"
-    test_demangling "_D8demangle4testFFNaNbZaZv" "demangle.test(char() pure nothrow function)"
-    test_demangling "_D8demangle4testFFNbNaZaZv" "demangle.test(char() nothrow pure function)"
-    test_demangling "_D8demangle4testFFNdNfNaZaZv" "demangle.test(char() @property @safe pure function)"
+    test_demangling "_D8demangle4testFPFNaZaZv" "demangle.test(char() pure function)"
+    test_demangling "_D8demangle4testFPFNbZaZv" "demangle.test(char() nothrow function)"
+    test_demangling "_D8demangle4testFPFNcZaZv" "demangle.test(char() ref function)"
+    test_demangling "_D8demangle4testFPFNdZaZv" "demangle.test(char() @property function)"
+    test_demangling "_D8demangle4testFPFNeZaZv" "demangle.test(char() @trusted function)"
+    test_demangling "_D8demangle4testFPFNfZaZv" "demangle.test(char() @safe function)"
+    test_demangling "_D8demangle4testFPFNaNbZaZv" "demangle.test(char() pure nothrow function)"
+    test_demangling "_D8demangle4testFPFNbNaZaZv" "demangle.test(char() nothrow pure function)"
+    test_demangling "_D8demangle4testFPFNdNfNaZaZv" "demangle.test(char() @property @safe pure function)"
 
     test_demangling "_D8demangle4test6__vtblZ" "vtable for demangle.test"
     test_demangling "_D8demangle4test6__initZ" "demangle.test.init$"
@@ -186,7 +189,7 @@ proc test_d_demangling {} {
     test_demangling "_D3std7process18escapeShellCommandFxAAaXAya" "std.process.escapeShellCommand(const(char\[\]\[\])...)"
     test_demangling "_D4core4sync5mutex5Mutex6__ctorMFC6ObjectZC4core4sync5mutex5Mutex" "core.sync.mutex.Mutex.this(Object)"
     test_demangling "_D6object14TypeInfo_Array8argTypesMFNbNfJC8TypeInfoJC8TypeInfoZi" "object.TypeInfo_Array.argTypes(out TypeInfo, out TypeInfo)"
-    test_demangling "_D2rt6dmain211_d_run_mainUiPPaPUAAaZiZ7tryExecMFMDFZvZv" "rt.dmain2._d_run_main(int, char**, extern(C) int(char\[\]\[\]) function*).tryExec(scope void() delegate)"
+    test_demangling "_D2rt6dmain211_d_run_mainUiPPaPUAAaZiZ7tryExecMFMDFZvZv" "rt.dmain2._d_run_main(int, char**, extern(C) int(char\[\]\[\]) function).tryExec(scope void() delegate)"
     test_demangling "_D6object9Exception6__ctorMFNaNbNfAyaAyamC6object9ThrowableZC9Exception" "object.Exception.this(immutable(char)\[\], immutable(char)\[\], ulong, object.Throwable)"
     test_demangling "_D3gcc3deh17parse_lsda_headerFPS3gcc6unwind7generic15_Unwind_ContextPhPS3gcc3deh16lsda_header_infoZPh" "gcc.deh.parse_lsda_header(gcc.unwind.generic._Unwind_Context*, ubyte*, gcc.deh.lsda_header_info*)"
     test_demangling "_D3std6socket23UnknownAddressReference6__ctorMFPS4core3sys5posix3sys6socket8sockaddrkZC3std6socket23UnknownAddressReference" "std.socket.UnknownAddressReference.this(core.sys.posix.sys.socket.sockaddr*, uint)"

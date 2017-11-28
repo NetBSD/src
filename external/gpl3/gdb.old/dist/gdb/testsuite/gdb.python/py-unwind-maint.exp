@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Free Software Foundation, Inc.
+# Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,11 @@ if ![runto_main ] then {
     return -1
 }
 
-gdb_test "source ${pyfile}" "Python script imported" "import python scripts"
+gdb_test_sequence "source ${pyfile}" "import python scripts" {
+    "Python script imported"
+    "py_unwind_maint_ps_unwinder called"
+    "global_unwinder called"
+}
 
 gdb_test_sequence "info unwinder" "Show all unwinders" {
     "Global:"
@@ -50,7 +54,10 @@ gdb_test_sequence "continue" "Unwinders called" {
     "global_unwinder called"
 }
 
-gdb_test "disable unwinder global .*" "1 unwinder disabled" "Unwinder disabled"
+gdb_test_sequence "disable unwinder global .*" "Unwinder disabled" {
+    "1 unwinder disabled"
+    "py_unwind_maint_ps_unwinder called"
+}
 
 gdb_test_sequence "info unwinder" "Show with global unwinder disabled" {
     "Global:"

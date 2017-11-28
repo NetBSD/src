@@ -1,6 +1,6 @@
 /* Python interface to inferior function events.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,8 +36,6 @@ static PyObject *
 create_inferior_call_event_object (inferior_call_kind flag, ptid_t ptid,
 				   CORE_ADDR addr)
 {
-  int pid;
-  long tid, lwp;
   PyObject *event;
   PyObject *ptid_obj = NULL;
   PyObject *addr_obj = NULL;

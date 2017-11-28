@@ -1,7 +1,7 @@
 /* Target-dependent code for PowerPC systems using the SVR4 ABI
    for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -608,7 +608,7 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 }
 
 /* Handle the return-value conventions for Decimal Floating Point values.  */
-static int
+static enum return_value_convention
 get_decimal_float_return_value (struct gdbarch *gdbarch, struct type *valtype,
 				struct regcache *regcache, gdb_byte *readbuf,
 				const gdb_byte *writebuf)

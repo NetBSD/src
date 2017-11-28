@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the CRIS.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -81,10 +81,6 @@ static int cris_program_offset = 0;
 enum cris_unknown_syscall_action_type cris_unknown_syscall_action
   = CRIS_USYSC_MSG_STOP;
 
-/* Records simulator descriptor so utilities like cris_dump_regs can be
-   called from gdb.  */
-SIM_DESC current_state;
-
 /* CRIS-specific options.  */
 typedef enum {
   OPTION_CRIS_STATS = OPTION_START,
@@ -127,17 +123,6 @@ static const OPTION cris_options[] =
   { {NULL, no_argument, NULL, 0}, '\0', NULL, NULL, NULL, NULL }
 };
 
-/* Add the CRIS-specific option list to the simulator.  */
-
-SIM_RC
-cris_option_install (SIM_DESC sd)
-{
-  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
-  if (sim_add_option_table (sd, NULL, cris_options) != SIM_RC_OK)
-    return SIM_RC_FAIL;
-  return SIM_RC_OK;
-}
-
 /* Handle CRIS-specific options.  */
 
 static SIM_RC
@@ -244,32 +229,6 @@ cris_option_handler (SIM_DESC sd, sim_cpu *cpu ATTRIBUTE_UNUSED, int opt,
   return sim_profile_set_option (sd, "-model", PROFILE_MODEL_IDX, "on");
 }
 
-/* FIXME: Remove these, globalize those in sim-load.c, move elsewhere.  */
-
-static void
-xprintf  (host_callback *callback, const char *fmt, ...)
-{
-  va_list ap;
-
-  va_start (ap, fmt);
-
-  (*callback->vprintf_filtered) (callback, fmt, ap);
-
-  va_end (ap);
-}
-
-static void
-eprintf (host_callback *callback, const char *fmt, ...)
-{
-  va_list ap;
-
-  va_start (ap, fmt);
-
-  (*callback->evprintf_filtered) (callback, fmt, ap);
-
-  va_end (ap);
-}
-
 /* An ELF-specific simplified ../common/sim-load.c:sim_load_file,
    using the program headers, not sections, in order to make sure that
    the program headers themeselves are also loaded.  The caller is
@@ -282,7 +241,6 @@ cris_load_elf_file (SIM_DESC sd, struct bfd *abfd, sim_write_fn do_write)
   int n_hdrs;
   int i;
   bfd_boolean verbose = STATE_OPEN_KIND (sd) == SIM_OPEN_DEBUG;
-  host_callback *callback = STATE_CALLBACK (sd);
 
   phdr = elf_tdata (abfd)->phdr;
   n_hdrs = elf_elfheader (abfd)->e_phnum;
@@ -301,24 +259,24 @@ cris_load_elf_file (SIM_DESC sd, struct bfd *abfd, sim_write_fn do_write)
       buf = xmalloc (phdr[i].p_filesz);
 
       if (verbose)
-	xprintf (callback, "Loading segment at 0x%lx, size 0x%lx\n",
-		 lma, phdr[i].p_filesz);
+	sim_io_printf (sd, "Loading segment at 0x%lx, size 0x%lx\n",
+		       lma, phdr[i].p_filesz);
 
       if (bfd_seek (abfd, phdr[i].p_offset, SEEK_SET) != 0
 	  || (bfd_bread (buf, phdr[i].p_filesz, abfd) != phdr[i].p_filesz))
 	{
-	  eprintf (callback,
-		   "%s: could not read segment at 0x%lx, size 0x%lx\n",
-		   STATE_MY_NAME (sd), lma, phdr[i].p_filesz);
+	  sim_io_eprintf (sd,
+			  "%s: could not read segment at 0x%lx, size 0x%lx\n",
+			  STATE_MY_NAME (sd), lma, phdr[i].p_filesz);
 	  free (buf);
 	  return FALSE;
 	}
 
       if (do_write (sd, lma, buf, phdr[i].p_filesz) != phdr[i].p_filesz)
 	{
-	  eprintf (callback,
-		   "%s: could not load segment at 0x%lx, size 0x%lx\n",
-		   STATE_MY_NAME (sd), lma, phdr[i].p_filesz);
+	  sim_io_eprintf (sd,
+			  "%s: could not load segment at 0x%lx, size 0x%lx\n",
+			  STATE_MY_NAME (sd), lma, phdr[i].p_filesz);
 	  free (buf);
 	  return FALSE;
 	}
@@ -327,52 +285,6 @@ cris_load_elf_file (SIM_DESC sd, struct bfd *abfd, sim_write_fn do_write)
     }
 
   return TRUE;
-}
-
-/* Helper for sim_load (needed just for ELF files): like sim_write,
-   but offset load at cris_program_offset offset.  */
-
-static int
-cris_program_offset_write (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf,
-			   int length)
-{
-  return sim_write (sd, mem + cris_program_offset, buf, length);
-}
-
-/* Replacement for ../common/sim-hload.c:sim_load, so we can treat ELF
-   files differently.  */
-
-SIM_RC
-sim_load (SIM_DESC sd, const char *prog_name, struct bfd *prog_bfd,
-	  int from_tty ATTRIBUTE_UNUSED)
-{
-  bfd *result_bfd;
-
-  if (bfd_get_flavour (prog_bfd) != bfd_target_elf_flavour)
-    {
-      SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
-      if (sim_analyze_program (sd, prog_name, prog_bfd) != SIM_RC_OK)
-	return SIM_RC_FAIL;
-      SIM_ASSERT (STATE_PROG_BFD (sd) != NULL);
-
-      result_bfd = sim_load_file (sd, STATE_MY_NAME (sd),
-				  STATE_CALLBACK (sd),
-				  prog_name,
-				  STATE_PROG_BFD (sd),
-				  STATE_OPEN_KIND (sd) == SIM_OPEN_DEBUG,
-				  STATE_LOAD_AT_LMA_P (sd),
-				  sim_write);
-      if (result_bfd == NULL)
-	{
-	  bfd_close (STATE_PROG_BFD (sd));
-	  STATE_PROG_BFD (sd) = NULL;
-	  return SIM_RC_FAIL;
-	}
-      return SIM_RC_OK;
-    }
-
-  return cris_load_elf_file (sd, prog_bfd, cris_program_offset_write)
-    ? SIM_RC_OK : SIM_RC_FAIL;
 }
 
 /* Cover function of sim_state_free to free the cpu buffers as well.  */
@@ -705,7 +617,7 @@ cris_handle_interpreter (SIM_DESC sd, struct bfd *abfd)
 
 SIM_DESC
 sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
-	  char **argv)
+	  char * const *argv)
 {
   char c;
   int i;
@@ -761,20 +673,19 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
       return 0;
     }
 
-  /* getopt will print the error message so we just have to exit if this fails.
-     FIXME: Hmmm...  in the case of gdb we need getopt to call
-     print_filtered.  */
-  if (sim_parse_args (sd, argv) != SIM_RC_OK)
+  /* Add the CRIS-specific option list to the simulator.  */
+  if (sim_add_option_table (sd, NULL, cris_options) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
     }
 
-  /* If we have a binary program, endianness-setting would not be taken
-     from elsewhere unfortunately, so set it here.  At the time of this
-     writing, it isn't used until sim_config, but that might change so
-     set it here before memory is defined or touched.  */
-  current_target_byte_order = LITTLE_ENDIAN;
+  /* The parser will print an error message for us, so we silently return.  */
+  if (sim_parse_args (sd, argv) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
 
   /* check for/establish the reference program image */
   if (sim_analyze_program (sd,
@@ -849,8 +760,6 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
       int i;
       char **prog_argv = STATE_PROG_ARGV (sd);
       int my_argc = 0;
-      /* All CPU:s have the same memory map, apparently.  */
-      SIM_CPU *cpu = STATE_CPU (sd, 0);
       USI csp;
       bfd_byte buf[4];
 
@@ -914,7 +823,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
      USI data_ = data;							\
      USI addr_ = addr;							\
      bfd_putl32 (data_, buf);						\
-     if (sim_core_write_buffer (sd, cpu, 0, buf, addr_, 4) != 4)	\
+     if (sim_core_write_buffer (sd, NULL, NULL_CIA, buf, addr_, 4) != 4)\
 	goto abandon_chip;						\
    }									\
  while (0)
@@ -926,7 +835,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
 	{
 	  size_t strln = strlen (prog_argv[i]) + 1;
 
-	  if (sim_core_write_buffer (sd, cpu, 0, prog_argv[i], epp, strln)
+	  if (sim_core_write_buffer (sd, NULL, NULL_CIA, prog_argv[i], epp,
+				     strln)
 	      != strln)
 	  goto abandon_chip;
 
@@ -941,7 +851,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
 	{
 	  unsigned int strln = strlen (my_environ[i]) + 1;
 
-	  if (sim_core_write_buffer (sd, cpu, 0, my_environ[i], epp, strln)
+	  if (sim_core_write_buffer (sd, NULL, NULL_CIA, my_environ[i], epp,
+				     strln)
 	      != strln)
 	    goto abandon_chip;
 
@@ -981,18 +892,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
 
   /* Allocate simulator I/O managed memory if none specified by user.  */
   if (cris_have_900000xxif)
-    {
-      if (sim_core_read_buffer (sd, NULL, read_map, &c, 0x90000000, 1) == 0)
-	sim_core_attach (sd, NULL, 0, access_write, 0, 0x90000000, 0x100,
-			 0, &cris_devices, NULL);
-      else
-	{
-	  (*callback->
-	   printf_filtered) (callback,
-			     "Seeing --cris-900000xx with memory defined there\n");
-	  goto abandon_chip;
-	}
-    }
+    sim_hw_parse (sd, "/core/%s/reg %#x %i", "cris_900000xx", 0x90000000, 0x100);
 
   /* Establish any remaining configuration options.  */
   if (sim_config (sd) != SIM_RC_OK)
@@ -1052,26 +952,15 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
      Must be done after cris_cgen_cpu_open.  */
   cgen_init (sd);
 
-  /* Store in a global so things like cris_dump_regs can be invoked
-     from the gdb command line.  */
-  current_state = sd;
-
   cris_set_callbacks (callback);
 
   return sd;
 }
-
-void
-sim_close (SIM_DESC sd, int quitting ATTRIBUTE_UNUSED)
-{
-  cris_cgen_cpu_close (CPU_CPU_DESC (STATE_CPU (sd, 0)));
-  sim_module_uninstall (sd);
-}
 
 SIM_RC
 sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
-		     char **argv ATTRIBUTE_UNUSED,
-		     char **envp ATTRIBUTE_UNUSED)
+		     char * const *argv ATTRIBUTE_UNUSED,
+		     char * const *envp ATTRIBUTE_UNUSED)
 {
   SIM_CPU *current_cpu = STATE_CPU (sd, 0);
   SIM_ADDR addr;
@@ -1086,11 +975,15 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
     addr = 0;
   sim_pc_set (current_cpu, addr);
 
-  /* Other simulators have #if 0:d code that says
-      STATE_ARGV (sd) = sim_copy_argv (argv);
-      STATE_ENVP (sd) = sim_copy_argv (envp);
-     Enabling that gives you not-found link-errors for sim_copy_argv.
-     FIXME: Do archaeology to find out more.  */
+  /* Standalone mode (i.e. `run`) will take care of the argv for us in
+     sim_open() -> sim_parse_args().  But in debug mode (i.e. 'target sim'
+     with `gdb`), we need to handle it because the user can change the
+     argv on the fly via gdb's 'run'.  */
+  if (STATE_PROG_ARGV (sd) != argv)
+    {
+      freeargv (STATE_PROG_ARGV (sd));
+      STATE_PROG_ARGV (sd) = dupargv (argv);
+    }
 
   return SIM_RC_OK;
 }

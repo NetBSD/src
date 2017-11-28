@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1037,7 +1037,7 @@ safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
     *length_return = num_read;
 
   if (sign && (shift < 8 * sizeof (result)) && (byte & 0x40))
-    result |= (bfd_vma) -1 << shift;
+    result |= -((bfd_vma) 1 << shift);
 
   return result;
 }

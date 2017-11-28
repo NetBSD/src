@@ -1,6 +1,6 @@
 /* Scheme interface to architecture.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -76,12 +76,14 @@ dascm_make_insn (CORE_ADDR pc, const char *assembly, int insn_len)
    Scheme port.  Called via gdbscm_call_guile.
    The result is a statically allocated error message or NULL if success.  */
 
-static void *
+static const char *
 gdbscm_disasm_read_memory_worker (void *datap)
 {
-  struct gdbscm_disasm_read_data *data = datap;
+  struct gdbscm_disasm_read_data *data
+    = (struct gdbscm_disasm_read_data *) datap;
   struct disassemble_info *dinfo = data->dinfo;
-  struct gdbscm_disasm_data *disasm_data = dinfo->application_data;
+  struct gdbscm_disasm_data *disasm_data
+    = (struct gdbscm_disasm_data *) dinfo->application_data;
   SCM seekto, newpos, port = disasm_data->port;
   size_t bytes_read;
 
@@ -107,7 +109,7 @@ gdbscm_disasm_read_memory (bfd_vma memaddr, bfd_byte *myaddr,
 			   struct disassemble_info *dinfo)
 {
   struct gdbscm_disasm_read_data data;
-  void *status;
+  const char *status;
 
   data.memaddr = memaddr;
   data.myaddr = myaddr;
@@ -117,9 +119,8 @@ gdbscm_disasm_read_memory (bfd_vma memaddr, bfd_byte *myaddr,
   status = gdbscm_with_guile (gdbscm_disasm_read_memory_worker, &data);
 
   /* TODO: IWBN to distinguish problems reading target memory versus problems
-     with the port (e.g., EOF).
-     We return TARGET_XFER_E_IO here as that's what memory_error looks for.  */
-  return status != NULL ? TARGET_XFER_E_IO : 0;
+     with the port (e.g., EOF).  */
+  return status != NULL ? -1 : 0;
 }
 
 /* disassemble_info.memory_error_func for gdbscm_print_insn_from_port.
@@ -131,7 +132,7 @@ static void
 gdbscm_disasm_memory_error (int status, bfd_vma memaddr,
 			    struct disassemble_info *info)
 {
-  memory_error (status, memaddr);
+  memory_error (TARGET_XFER_E_IO, memaddr);
 }
 
 /* disassemble_info.print_address_func for gdbscm_print_insn_from_port.
@@ -141,10 +142,11 @@ gdbscm_disasm_memory_error (int status, bfd_vma memaddr,
 static void
 gdbscm_disasm_print_address (bfd_vma addr, struct disassemble_info *info)
 {
-  struct gdbscm_disasm_data *data = info->application_data;
+  struct gdbscm_disasm_data *data
+    = (struct gdbscm_disasm_data *) info->application_data;
   struct gdbarch *gdbarch = data->gdbarch;
 
-  print_address (gdbarch, addr, info->stream);
+  print_address (gdbarch, addr, (struct ui_file *) info->stream);
 }
 
 /* Subroutine of gdbscm_arch_disassemble to simplify it.
@@ -318,7 +320,7 @@ gdbscm_arch_disassemble (SCM self, SCM start_scm, SCM rest)
 
 static const scheme_function disasm_functions[] =
 {
-  { "arch-disassemble", 2, 0, 1, gdbscm_arch_disassemble,
+  { "arch-disassemble", 2, 0, 1, as_a_scm_t_subr (gdbscm_arch_disassemble),
     "\
 Return list of disassembled instructions in memory.\n\
 \n\

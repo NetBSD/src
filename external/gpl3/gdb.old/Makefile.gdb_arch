@@ -1,0 +1,3 @@
+#	$NetBSD: Makefile.gdb_arch,v 1.1.1.1 2017/11/28 17:51:23 christos Exp $
+
+GDB_MACHINE_ARCH=	${MACHINE_ARCH:C/^e//:C/e?armv?[4-7]?h?f?/arm/}

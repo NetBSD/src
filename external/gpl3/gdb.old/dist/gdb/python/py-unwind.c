@@ -1,6 +1,6 @@
 /* Python frame unwinder interface.
 
-   Copyright (C) 2015 Free Software Foundation, Inc.
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -177,7 +177,6 @@ pyuw_object_attribute_to_pointer (PyObject *pyo, const char *attr_name,
   if (PyObject_HasAttrString (pyo, attr_name))
     {
       PyObject *pyo_value = PyObject_GetAttrString (pyo, attr_name);
-      struct value *value;
 
       if (pyo_value != NULL && pyo_value != Py_None)
         {
@@ -201,8 +200,6 @@ unwind_infopy_str (PyObject *self)
 {
   struct ui_file *strfile = mem_fileopen ();
   unwind_info_object *unwind_info = (unwind_info_object *) self;
-  pending_frame_object *pending_frame
-      = (pending_frame_object *) (unwind_info->pending_frame);
   PyObject *result;
 
   fprintf_unfiltered (strfile, "Frame ID: ");
@@ -498,7 +495,7 @@ static struct value *
 pyuw_prev_register (struct frame_info *this_frame, void **cache_ptr,
                     int regnum)
 {
-  cached_frame_info *cached_frame = *cache_ptr;
+  cached_frame_info *cached_frame = (cached_frame_info *) *cache_ptr;
   struct reg_info *reg_info = cached_frame->reg;
   struct reg_info *reg_info_end = reg_info + cached_frame->reg_count;
 
@@ -537,8 +534,8 @@ pyuw_sniffer (const struct frame_unwind *self, struct frame_info *this_frame,
     goto error;
   ((pending_frame_object *) pyo_pending_frame)->gdbarch = gdbarch;
   ((pending_frame_object *) pyo_pending_frame)->frame_info = this_frame;
-  make_cleanup (pending_frame_invalidate, (void *) pyo_pending_frame);
   make_cleanup_py_decref (pyo_pending_frame);
+  make_cleanup (pending_frame_invalidate, (void *) pyo_pending_frame);
 
   /* Run unwinders.  */
   if (gdb_python_module == NULL
@@ -572,8 +569,10 @@ pyuw_sniffer (const struct frame_unwind *self, struct frame_info *this_frame,
     saved_reg *reg;
     int i;
 
-    cached_frame = xmalloc (sizeof (*cached_frame) +
-                            reg_count * sizeof (cached_frame->reg[0]));
+    cached_frame
+      = ((cached_frame_info *)
+	 xmalloc (sizeof (*cached_frame)
+		  + reg_count * sizeof (cached_frame->reg[0])));
     cached_frame->gdbarch = gdbarch;
     cached_frame->frame_id = unwind_info->frame_id;
     cached_frame->reg_count = reg_count;
@@ -634,8 +633,9 @@ pyuw_gdbarch_data_init (struct gdbarch *gdbarch)
 static void
 pyuw_on_new_gdbarch (struct gdbarch *newarch)
 {
-  struct pyuw_gdbarch_data_type *data =
-      gdbarch_data (newarch, pyuw_gdbarch_data);
+  struct pyuw_gdbarch_data_type *data
+    = (struct pyuw_gdbarch_data_type *) gdbarch_data (newarch,
+						      pyuw_gdbarch_data);
 
   if (!data->unwinder_registered)
     {
@@ -646,7 +646,7 @@ pyuw_on_new_gdbarch (struct gdbarch *newarch)
       unwinder->stop_reason = default_frame_unwind_stop_reason;
       unwinder->this_id = pyuw_this_id;
       unwinder->prev_register = pyuw_prev_register;
-      unwinder->unwind_data = (void *) newarch;
+      unwinder->unwind_data = (const struct frame_data *) newarch;
       unwinder->sniffer = pyuw_sniffer;
       unwinder->dealloc_cache = pyuw_dealloc_cache;
       frame_unwind_prepend_unwinder (newarch, unwinder);

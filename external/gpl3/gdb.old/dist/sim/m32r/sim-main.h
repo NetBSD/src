@@ -3,6 +3,11 @@
 #ifndef SIM_MAIN_H
 #define SIM_MAIN_H
 
+/* This is a global setting.  Different cpu families can't mix-n-match -scache
+   and -pbb.  However some cpu families may use -simple while others use
+   one of -scache/-pbb.  */
+#define WITH_SCACHE_PBB 1
+
 #include "symcat.h"
 #include "sim-basics.h"
 #include "cgen-types.h"

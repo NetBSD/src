@@ -1,5 +1,5 @@
 /* frv simulator support code
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -303,7 +303,7 @@ frvbf_h_fr_double_get_handler (SIM_CPU *current_cpu, UINT fr)
   /* Check the register alignment.  */
   fr = check_fr_register_alignment (current_cpu, fr, 1);
 
-  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN)
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_LITTLE)
     {
       value.as_sf[1] = GET_H_FR (fr);
       value.as_sf[0] = GET_H_FR (fr + 1);
@@ -329,7 +329,7 @@ frvbf_h_fr_double_set_handler (SIM_CPU *current_cpu, UINT fr, DF newval)
   fr = check_fr_register_alignment (current_cpu, fr, 1);
 
   value.as_df = newval;
-  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN)
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_LITTLE)
     {
       SET_H_FR (fr    , value.as_sf[1]);
       SET_H_FR (fr + 1, value.as_sf[0]);

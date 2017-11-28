@@ -1,6 +1,6 @@
 /* Character set conversion support for GDB.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -77,9 +77,13 @@
    arrange for there to be a single available character set.  */
 
 #undef GDB_DEFAULT_HOST_CHARSET
-#define GDB_DEFAULT_HOST_CHARSET "ISO-8859-1"
-#define GDB_DEFAULT_TARGET_CHARSET "ISO-8859-1"
-#define GDB_DEFAULT_TARGET_WIDE_CHARSET "ISO-8859-1"
+#ifdef USE_WIN32API
+# define GDB_DEFAULT_HOST_CHARSET "CP1252"
+#else
+# define GDB_DEFAULT_HOST_CHARSET "ISO-8859-1"
+#endif
+#define GDB_DEFAULT_TARGET_CHARSET GDB_DEFAULT_HOST_CHARSET 
+#define GDB_DEFAULT_TARGET_WIDE_CHARSET "UTF-32"
 #undef DEFAULT_CHARSET_NAMES
 #define DEFAULT_CHARSET_NAMES GDB_DEFAULT_HOST_CHARSET ,
 
@@ -95,20 +99,27 @@
 #undef ICONV_CONST
 #define ICONV_CONST const
 
+/* We allow conversions from UTF-32, wchar_t, and the host charset.
+   We allow conversions to wchar_t and the host charset.
+   Return 1 if we are converting from UTF-32BE, 2 if from UTF32-LE,
+   0 otherwise.  This is used as a flag in calls to iconv.  */
+
 static iconv_t
 phony_iconv_open (const char *to, const char *from)
 {
-  /* We allow conversions from UTF-32BE, wchar_t, and the host charset.
-     We allow conversions to wchar_t and the host charset.  */
-  if (strcmp (from, "UTF-32BE") && strcmp (from, "wchar_t")
-      && strcmp (from, GDB_DEFAULT_HOST_CHARSET))
-    return -1;
   if (strcmp (to, "wchar_t") && strcmp (to, GDB_DEFAULT_HOST_CHARSET))
     return -1;
 
-  /* Return 1 if we are converting from UTF-32BE, 0 otherwise.  This is
-     used as a flag in calls to iconv.  */
-  return !strcmp (from, "UTF-32BE");
+  if (!strcmp (from, "UTF-32BE") || !strcmp (from, "UTF-32"))
+    return 1;
+
+  if (!strcmp (from, "UTF-32LE"))
+    return 2;
+
+  if (strcmp (from, "wchar_t") && strcmp (from, GDB_DEFAULT_HOST_CHARSET))
+    return -1;
+
+  return 0;
 }
 
 static int
@@ -123,31 +134,33 @@ phony_iconv (iconv_t utf_flag, const char **inbuf, size_t *inbytesleft,
 {
   if (utf_flag)
     {
+      enum bfd_endian endian
+	= utf_flag == 1 ? BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE;
       while (*inbytesleft >= 4)
 	{
-	  size_t j;
-	  unsigned long c = 0;
-
-	  for (j = 0; j < 4; ++j)
-	    {
-	      c <<= 8;
-	      c += (*inbuf)[j] & 0xff;
-	    }
+	  unsigned long c
+	    = extract_unsigned_integer ((const gdb_byte *)*inbuf, 4, endian);
 
 	  if (c >= 256)
 	    {
 	      errno = EILSEQ;
 	      return -1;
 	    }
+	  if (*outbytesleft < 1)
+	    {
+	      errno = E2BIG;
+	      return -1;
+	    }
 	  **outbuf = c & 0xff;
 	  ++*outbuf;
 	  --*outbytesleft;
 
-	  ++*inbuf;
+	  *inbuf += 4;
 	  *inbytesleft -= 4;
 	}
-      if (*inbytesleft < 4)
+      if (*inbytesleft)
 	{
+	  /* Partial sequence on input.  */
 	  errno = EINVAL;
 	  return -1;
 	}
@@ -165,12 +178,11 @@ phony_iconv (iconv_t utf_flag, const char **inbuf, size_t *inbytesleft,
       *outbuf += amt;
       *inbytesleft -= amt;
       *outbytesleft -= amt;
-    }
-
-  if (*inbytesleft)
-    {
-      errno = E2BIG;
-      return -1;
+      if (*inbytesleft)
+	{
+	  errno = E2BIG;
+	  return -1;
+	}
     }
 
   /* The number of non-reversible conversions -- but they were all
@@ -290,6 +302,11 @@ set_be_le_names (struct gdbarch *gdbarch)
     return;
   be_le_arch = gdbarch;
 
+#ifdef PHONY_ICONV
+  /* Match the wide charset names recognized by phony_iconv_open.  */
+  target_wide_charset_le_name = "UTF-32LE";
+  target_wide_charset_be_name = "UTF-32BE";
+#else
   target_wide_charset_le_name = NULL;
   target_wide_charset_be_name = NULL;
 
@@ -313,6 +330,7 @@ set_be_le_names (struct gdbarch *gdbarch)
 	    target_wide_charset_le_name = charset_enum[i];
 	}
     }
+# endif  /* PHONY_ICONV */
 }
 
 /* 'Set charset', 'set host-charset', 'set target-charset', 'set
@@ -468,7 +486,7 @@ host_hex_value (char c)
 static void
 cleanup_iconv (void *p)
 {
-  iconv_t *descp = p;
+  iconv_t *descp = (iconv_t *) p;
   iconv_close (*descp);
 }
 
@@ -617,7 +635,7 @@ make_wchar_iterator (const gdb_byte *input, size_t bytes,
 static void
 do_cleanup_iterator (void *p)
 {
-  struct wchar_iterator *iter = p;
+  struct wchar_iterator *iter = (struct wchar_iterator *) p;
 
   iconv_close (iter->desc);
   xfree (iter->out);
@@ -687,8 +705,7 @@ wchar_iterate (struct wchar_iterator *iter,
 	      if (out_request > iter->out_size)
 		{
 		  iter->out_size = out_request;
-		  iter->out = xrealloc (iter->out,
-					out_request * sizeof (gdb_wchar_t));
+		  iter->out = XRESIZEVEC (gdb_wchar_t, iter->out, out_request);
 		}
 	      continue;
 

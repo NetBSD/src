@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,8 +23,7 @@ set testfile "dlopen-libpthread"
 set srcmainfile ${testfile}.c
 set srclibfile ${testfile}-lib.c
 set executable ${testfile}
-set binfile_lib ${objdir}/${subdir}/${executable}.so
-set binfile ${objdir}/${subdir}/${executable}
+set binfile_lib [standard_output_file ${executable}.so]
 set lib_dlopen [shlib_target_file ${executable}.so]
 
 # Use build_executable_own_libs as prelinked libpthread.so can produce false
@@ -35,7 +34,7 @@ if {$relink_args == "" || ![prelink_no $relink_args]
     || [prepare_for_testing ${testfile}.exp ${executable} ${srcmainfile} {debug shlib_load}] } {
     return -1
 }
-gdb_load_shlibs $binfile_lib
+gdb_load_shlib $binfile_lib
 
 if { ![runto_main] } {
     return -1

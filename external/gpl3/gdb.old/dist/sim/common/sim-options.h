@@ -1,5 +1,5 @@
 /* Header file for simulator argument handling.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -135,7 +135,7 @@ SIM_RC sim_add_option_table (SIM_DESC sd, sim_cpu *cpu, const OPTION *table);
 MODULE_INSTALL_FN standard_install;
 
 /* Called by sim_open to parse the arguments.  */
-SIM_RC sim_parse_args (SIM_DESC sd, char **argv);
+SIM_RC sim_parse_args (SIM_DESC sd, char * const *argv);
 
 /* Print help messages for the options.  IS_COMMAND is non-zero when
    this function is called from the command line interpreter. */

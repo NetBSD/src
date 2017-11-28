@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,8 +69,6 @@ proc set_listsize { arg } {
 
 proc test_listsize {} {
     global gdb_prompt
-    global hp_cc_compiler
-    global hp_aCC_compiler
     global last_line_re
 
     # Show default size
@@ -244,6 +242,10 @@ proc test_list_forward {} {
     }
 
     pass "successive list commands to page forward ($testcnt tests)"
+
+    gdb_test "list" "Line number 44 out of range; \[^\r\n\]+ has 43 lines\." \
+	"end of file error after \"list\" command"
+
     gdb_stop_suppressing_tests
 }
 
@@ -287,6 +289,10 @@ proc test_repeat_list_command {} {
     }
 
     pass "repeat list commands to page forward using 'return' ($testcnt tests)"
+
+    gdb_test "list" "Line number 44 out of range; \[^\r\n\]+ has 43 lines\." \
+	"end of file error after using 'return' to repeat the list command"
+
     gdb_stop_suppressing_tests
 }
 
@@ -324,6 +330,10 @@ proc test_list_backwards {} {
     }
 
     pass "$testcnt successive \"list -\" commands to page backwards"
+
+    gdb_test "list -" "Already at the start of .*\." \
+	"beginning of file error after \"list -\" command"
+
     gdb_stop_suppressing_tests
 }
 
@@ -505,6 +515,24 @@ proc test_only_end {} {
     gdb_test "list ,5" "list ,5\r\n4\[ \t\]\[^\r\n\]*\r\n5\[ \t\]\[^\r\n\]*"
 }
 
+proc test_list_invalid_args {} {
+    global binfile
+
+    clean_restart ${binfile}
+    gdb_test "list -INVALID" \
+	"invalid explicit location argument, \"-INVALID\"" \
+	"first use of \"list -INVALID\""
+    gdb_test "list -INVALID" \
+	"invalid explicit location argument, \"-INVALID\"" \
+	"second use of \"list -INVALID\""
+
+    clean_restart ${binfile}
+    gdb_test "list +INVALID" "Function \"\\+INVALID\" not defined." \
+	"first use of \"list +INVALID\""
+    gdb_test "list +INVALID" "Function \"\\+INVALID\" not defined." \
+	"second use of \"list +INVALID\""
+}
+
 # Start with a fresh gdb.
 
 gdb_exit
@@ -527,6 +555,7 @@ if [ set_listsize 10 ] then {
     test_list_filename_and_function
     test_forward_search
     test_only_end
+    test_list_invalid_args
 }
 
 # Follows tests that require execution.
@@ -578,9 +607,13 @@ proc test_list {command listsize1 listsize2 linerange1 linerange2} {
 	# Test changing the listsize both before nexting, and after
 	# stopping, but before listing.  Only the second listsize
 	# change should affect which lines are listed.
-	gdb_test_no_output "set listsize $listsize1"
+	with_test_prefix "before next" {
+	    gdb_test_no_output "set listsize $listsize1"
+	}
 	gdb_test "next" "foo \\(.*"
-	gdb_test_no_output "set listsize $listsize2"
+	with_test_prefix "after next" {
+	    gdb_test_no_output "set listsize $listsize2"
+	}
 
 	set pattern1 [build_pattern $linerange1]
 	set pattern2 [build_pattern $linerange2]

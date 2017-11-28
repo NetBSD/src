@@ -1,5 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ enum decode_line_flags
 
 struct linespec_sals
 {
-  /* This is the linespec corresponding to the sals contained in this
+  /* This is the location corresponding to the sals contained in this
      object.  It can be passed as the FILTER argument to future calls
      to decode_line_full.  This is freed by
      destroy_linespec_result.  */
@@ -71,9 +71,9 @@ struct linespec_result
      object.  */
   int pre_expanded;
 
-  /* If PRE_EXPANDED is non-zero, this is set to the linespec entered
+  /* If PRE_EXPANDED is non-zero, this is set to the location entered
      by the user.  This will be freed by destroy_linespec_result.  */
-  char *addr_string;
+  struct event_location *location;
 
   /* The sals.  The vector will be freed by
      destroy_linespec_result.  */
@@ -96,15 +96,19 @@ extern struct cleanup *
 /* Decode a linespec using the provided default symtab and line.  */
 
 extern struct symtabs_and_lines
-	decode_line_1 (char **argptr, int flags,
+	decode_line_1 (const struct event_location *location, int flags,
+		       struct program_space *search_pspace,
 		       struct symtab *default_symtab, int default_line);
 
-/* Parse *ARGPTR as a linespec and return results.  This is the "full"
+/* Parse LOCATION and return results.  This is the "full"
    interface to this module, which handles multiple results
    properly.
 
    For FLAGS, see decode_line_flags.  DECODE_LINE_LIST_MODE is not
    valid for this function.
+
+   If SEARCH_PSPACE is not NULL, symbol search is restricted to just
+   that program space.
 
    DEFAULT_SYMTAB and DEFAULT_LINE describe the default location.
    DEFAULT_SYMTAB can be NULL, in which case the current symtab and
@@ -135,7 +139,8 @@ extern struct symtabs_and_lines
    strcmp sense) to FILTER will be returned; all others will be
    filtered out.  */
 
-extern void decode_line_full (char **argptr, int flags,
+extern void decode_line_full (const struct event_location *location, int flags,
+			      struct program_space *search_pspace,
 			      struct symtab *default_symtab, int default_line,
 			      struct linespec_result *canonical,
 			      const char *select_mode,
@@ -156,4 +161,34 @@ extern struct symtabs_and_lines decode_line_with_last_displayed (char *, int);
    the keyword.  If not, return NULL.  */
 
 extern const char *linespec_lexer_lex_keyword (const char *p);
+
+/* Parse a line offset from STRING.  */
+
+extern struct line_offset linespec_parse_line_offset (const char *string);
+
+/* Return the quote characters permitted by the linespec parser.  */
+
+extern const char *get_gdb_linespec_parser_quote_characters (void);
+
+/* Does STRING represent an Ada operator?  If so, return the length
+   of the decoded operator name.  If not, return 0.  */
+
+extern int is_ada_operator (const char *string);
+
+/* Find an instance of the character C in the string S that is outside
+   of all parenthesis pairs, single-quoted strings, and double-quoted
+   strings.  Also, ignore the char within a template name, like a ','
+   within foo<int, int>.  */
+
+extern const char *find_toplevel_char (const char *s, char c);
+
+/* Find the end of the (first) linespec pointed to by *STRINGP.
+   STRINGP will be advanced to this point.  */
+
+extern void linespec_lex_to_end (char **stringp);
+
+/* Evaluate the expression pointed to by EXP_PTR into a CORE_ADDR,
+   advancing EXP_PTR past any parsed text.  */
+
+extern CORE_ADDR linespec_expression_to_pc (const char **exp_ptr);
 #endif /* defined (LINESPEC_H) */

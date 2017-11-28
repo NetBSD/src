@@ -2138,7 +2138,7 @@ Thu Aug 31 11:49:21 1995  Ian Lance Taylor  <ian@cygnus.com>
 	against an absolute symbol into a reloc against a section.
 
 Thu Aug 31 08:00:14 1995  steve chamberlain  <sac@slash.cygnus.com>
-	
+
 	* coff-arm.c (coff_arm_reloc): Fix common size problem.
 	(i3coff_object_p): Delete.
 
@@ -3096,7 +3096,7 @@ Fri Jun  2 18:54:59 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 
 Thu Jun  1 13:51:49 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 
-	* coffcode.h (sec_to_styp_flags, styp_to_sec_flags, 
+	* coffcode.h (sec_to_styp_flags, styp_to_sec_flags,
 	coff_new_section_hook):  Any section that starts ".stab"
 	is now marked as debugging.
 
@@ -3189,7 +3189,7 @@ Thu May 18 04:24:01 1995  Ken Raeburn  <raeburn@kr-laptop.cygnus.com>
 	(MY(swap_std_reloc_{in,out})): New functions.
 	Use RELOC_ARM_BITS_NEG_{BIG,LITTLE} to extract negative reloc bit.
 	(aoutarm_squirt_out_relocs): Delete.
- 
+
 	From: David Taylor (dtaylor@armltd.co.uk)
 	* config/arm[lb]-aout.mt: New files.
 	* aout-arm.c: New file.
@@ -3216,12 +3216,12 @@ Thu May 11 16:43:14 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 Thu May 11 16:43:14 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 
 	* coff-i960.c (optcall_callback): don't try and optimize
-	undefined refs. 
+	undefined refs.
 	(coff_write_relocs): Search for broken relocs on the way
 	out and fix them up.
 	(coff_renumber_symbols): Calculate and return index of
 	first undefined symbol.
-	(coff_write_object_contents): Call coff_renumber_symbols 
+	(coff_write_object_contents): Call coff_renumber_symbols
 	and coff_write_relocs with the new args.
 	* libcoff.h: (coff_renumber_symbols, coff_renumber_symbols):
 	Modified prototypes.
@@ -3229,8 +3229,8 @@ Thu May 11 16:43:14 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 Thu May 11 16:43:14 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 			  Tom Griest <griest@cs.yale.edu>
 
-	Initial support for PE format. 
-	
+	Initial support for PE format.
+
 	* Makefile.in, targets.c, configure.in, config.bfd:
 	Add support for i386-*-winnt and i386-*-pe.
 	* archive.c (do_slurp_coff_armap):  Understand NTPE format
@@ -3248,7 +3248,7 @@ Thu May 11 16:43:14 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 	(coff_slurp_symbol_table): PE uses C_SECTION class.
 	* cofflink.c (_bfd_coff_final_link): Keep PE info up to date.
 	(_bfd_coff_generic_relocate_section): Cope with PE relocs.
-	* coffswap.h (coff_swap_{aout/file/scn/sym}hdr_{in/out}): 
+	* coffswap.h (coff_swap_{aout/file/scn/sym}hdr_{in/out}):
 	New code for PE headers.
 
 Tue May  9 17:01:38 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
@@ -3936,7 +3936,7 @@ Wed Feb  1 01:32:14 1995  Jeff Law  (law@snake.cs.utah.edu)
 	(som_write_fixups): Ignore the addend in a R_DATA_ONE_SYMBOL fixup.
 
 	* som.c (som_object_setup): More heruistics to detect the
-	braindamaged HP OSF1 linker. 
+	braindamaged HP OSF1 linker.
 	(setup_sections): Don't forget to free subspace_sections if we get
 	an error.
 	(som_slurp_string_table): Allocate strings on this bfd's obstack
@@ -4475,14 +4475,14 @@ Sat Oct 29 12:18:10 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 
 Fri Oct 28 10:08:41 1994  J.T. Conklin  (jtc@rtl.cygnus.com)
 
-        NetBSD/m68k support, based on work by mikeb@snow.datametrics.com: 
+        NetBSD/m68k support, based on work by mikeb@snow.datametrics.com:
 	* config.bfd (m68*-*-netbsd*): Use m68k-nbsd as bfd_name.
 	* configure.in (m68knetbsd_vec): Added.
 	* targets.c (bfd_m68knetbsd_vec): Added.
 	* hosts/m68knbsd.h, config/m68k-nbsd.mt, m68knetbsd.c: New files.
 	* Makefile.in (BFD32_BACKENDS, CFILES): Add m68knetbsd.c.
 
-	miscellaneous cleanup required by all netbsd targets, based on work 
+	miscellaneous cleanup required by all netbsd targets, based on work
 	by Andrew Cagney <cagney@highland.com.au>:
 	* netbsd.h (N_MAGIC, N_SET_MAGIC, N_GETMAGIC, N_GETMAGIC2, N_TXTADDR,
 	  N_TXTOFF, N_ALIGN, N_DATADDR, N_DATOFF): Removed.  Generic a.out
@@ -5150,7 +5150,7 @@ Tue Sep 13 11:09:39 1994  J.T. Conklin  (jtc@rtl.cygnus.com)
 	  file/variable naming conventions.
 	* i386netbsd.c: New file, renamed from netbsd386.c.
 	* ns32knetbsd.c: New file, renamed from netbsd532.c.
-	
+
 Mon Sep 12 21:56:20 1994  Jeff Law  (law@snake.cs.utah.edu)
 
 	* som.c (som_reloc_skip): Correct off-by-one error for 4-byte
@@ -6011,7 +6011,7 @@ Thu Jul 14 15:12:24 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 	* config/ns32k-netbsd.mt: New file. Support for netbsd532 target.
 
 	* aout-ns32k.c, aout-ns32k.h: New files supporting aout format for
-	ns32k series. 
+	ns32k series.
 
 	* targets.c: Add netbsd532_vec and pc532machaout_vec into
 	bfd_target_vector array. Move netbsd386_vec to alphabetic order
@@ -6044,11 +6044,11 @@ Thu Jul 14 15:12:24 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 	* bfd-in2.h: Add entry bfd_arch_ns32k to bfd_architecture enum.
 
 	* archures.c: Add bfd_ns32k_arch prototype, and entry in
-	archures_init_table. 
+	archures_init_table.
 
 	* aoutx.h (aout_link_reloc_link_order): Allow for target dependent
 	MY_put_reloc macro. Allow for target dependent special_function1
-	to apply the relocation. 
+	to apply the relocation.
 
 	* aoutx.h (aout_link_input_section_std): Allow for target
 	dependent determination of reloc howto. Allow for target dependent
@@ -6124,7 +6124,7 @@ Thu Jul  7 10:10:34 1994  Peter Schauer  (pes@regent.e-technik.tu-muenchen.de)
 
 Thu Jul  7 10:19:20 1994  Jeff Law  (law@snake.cs.utah.edu)
 
-	* som.h (R_HPPA_COMPLEX): Fix dumb typo. 
+	* som.h (R_HPPA_COMPLEX): Fix dumb typo.
 
 Wed Jul  6 19:21:57 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
 
@@ -6204,7 +6204,7 @@ Fri Jul  1 12:07:41 1994  Jeff Law  (law@snake.cs.utah.edu)
 	a default definition.
 	(elf32_bed): Add elf_backend_link_output_symbol_hook.
 	* elf64-target.h: Likewise.
-	
+
 	* Major rework of the PA ELF code.  Uses the new style BFD
 	linker, major cleanups.
 	* hppa_stubs.h: Rewrite from scratch.  Much smaller and simpler.
@@ -6261,7 +6261,7 @@ Fri Jul  1 12:07:41 1994  Jeff Law  (law@snake.cs.utah.edu)
 	Handle being called from the BFD backend linker.
 	(elf32_hppa_final_write_processing): Likewise.
 	(elf_hppa_tc_make_sections): No longer call stub_finish.
-	
+
 Mon Jun 27 18:07:06 1994  Steve Chamberlain  (sac@cirdan.cygnus.com)
 
 	* section.c (bfd_get_section_contents): Put in parens to get
@@ -7000,7 +7000,7 @@ Thu May 19 11:37:11 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 	(_bfd_elf_link_hash_table_create): Initialize dynobj, dynsymcount,
 	dynstr and bucketcount fields.
 	* elf32-target.h: Initialize new dynamic linking fields.
-	* elf64-target.h: Likewise.  
+	* elf64-target.h: Likewise.
 	* elf32-i386.c: New functions for dynamic linking support.
 	* elf32-sparc.c: Likewise.
 	* bfd-in.h (bfd_elf32_record_link_assignment): Declare.
@@ -7048,7 +7048,7 @@ Mon May 16 10:09:22 1994  Jeff Law  (law@snake.cs.utah.edu)
 	(hppa_elf_reloc): Likewise.
 	(hppa_look_for_stubs_in_section): Likewise
 	(ELF_MACHINE_CODE): Change to EM_PARISC.
-	* elf32-hppa.h: Include "elf/hppa.h".  Change relocation tags 
+	* elf32-hppa.h: Include "elf/hppa.h".  Change relocation tags
 	appropriately throughout elf32-hppa.h.
 	(elf32_hppa_reloc_type): New table based on 94-02-02 draft PA ELF
 	spec.
@@ -7576,7 +7576,7 @@ Thu Apr  7 11:10:51 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
 	* elf{32,64}-target.h (elf_backend_begin_write_processing): Provide
 	a default definition.
 	(elf{32,64}_bed): Add elf_backend_begin_write_processing.
-	
+
 	* elf32-hppa.h (elf_hppa_tc_symbol): Delete extern declaration.
 	(elf_hppa_tc_make_sections): Likewise.
 
@@ -8052,7 +8052,7 @@ Wed Mar 30 00:31:49 1994  Peter Schauer  (pes@regent.e-technik.tu-muenchen.de)
 	* i386dynix.c, config/i386-dynix.mt:  New files, handling Dynix
 	variant of a.out.
 	* configure.in, config.bfd:  Use them for Dynix.
-	* Makefile.in:  Add dependencies for i386dynix.o. 
+	* Makefile.in:  Add dependencies for i386dynix.o.
 	* targets.c:  Add definition for i386dynix_vec.
 	* hosts/symmetry.h:  Do not define TRAD_CORE_USER_OFFSET for Dynix.
 	Define HOST_DATA_START_ADDR and TRAD_UNIX_CORE_FILE_FAILING_SIGNAL
@@ -8359,7 +8359,7 @@ Fri Mar 18 18:13:49 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
 	to be copied from input section to output section during
 	objcopy or strip.
 	(som_section_data_struct): Remove several fields now in
-	som_copyable_section_data_struct.  Make the space and 
+	som_copyable_section_data_struct.  Make the space and
 	subspace dictionaries be pointers (to save space when
 	only reading objects).
 
@@ -8488,7 +8488,7 @@ Tue Mar 15 22:58:28 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
 	and bfd_is_local_label.
 
 	* targets.c: Add new entries to the bfd_target structure.
-	
+
 	* bfd.c (bfd_copy_private_bfd_data): New definition.
 
 	* section.c (bfd_copy_private_section_data): New definition.
@@ -8753,7 +8753,7 @@ Fri Feb 25 16:35:57 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
 	in many places.  Use default case when possible instead of listing
 	each case separately.  Abort for bad errors until we get error
 	code propogation working.  Work on spacing and indention problems.
-	Add FIXMEs for some unresolved problems.  Delete hopelessly broken 
+	Add FIXMEs for some unresolved problems.  Delete hopelessly broken
 	COMPLEX relocation support (it's never used anyway).
 	(hppa_elf_rebuild_insn): Delete.  Moved into libhppa.h.
 	(elf_hppa_tc_symbol): Accept and use new arguments (symext chains).
@@ -8897,17 +8897,17 @@ Thu Feb 17 08:30:53 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	(bfd_error_type): Renamed from bfd_ec.  Prepend "bfd_error_" to
 	all values.
 	* bfd-in2.h: Regenerated.
-	* aix386-core.c, aout-adobe.c, aout-encap.c, aout-target.h, 
-	aoutf1.h, aoutx.h, archive.c, archures.c, 
-	bfd.c, bout.c, cache.c, coff-alpha.c, coff-mips.c, 
-	coff-rs6000.c, coffcode.h, coffgen.c, core.c, ctor.c, 
-	ecoff.c, ecofflink.c, elf.c, elf32-hppa.c, elf32-mips.c, 
-	elfcode.h, format.c, hash.c, hp300hpux.c, hppabsd-core.c, 
-	i386lynx.c, ieee.c, libbfd.c, libelf.h, linker.c, 
-	lynx-core.c, nlm.c, nlm32-alpha.c, nlm32-i386.c, 
-	nlm32-sparc.c, nlmcode.h, oasys.c, opncls.c, osf-core.c, 
-	ptrace-core.c, reloc16.c, rs6000-core.c, section.c, som.c, 
-	srec.c, sunos.c, syms.c, targets.c, tekhex.c, 
+	* aix386-core.c, aout-adobe.c, aout-encap.c, aout-target.h,
+	aoutf1.h, aoutx.h, archive.c, archures.c,
+	bfd.c, bout.c, cache.c, coff-alpha.c, coff-mips.c,
+	coff-rs6000.c, coffcode.h, coffgen.c, core.c, ctor.c,
+	ecoff.c, ecofflink.c, elf.c, elf32-hppa.c, elf32-mips.c,
+	elfcode.h, format.c, hash.c, hp300hpux.c, hppabsd-core.c,
+	i386lynx.c, ieee.c, libbfd.c, libelf.h, linker.c,
+	lynx-core.c, nlm.c, nlm32-alpha.c, nlm32-i386.c,
+	nlm32-sparc.c, nlmcode.h, oasys.c, opncls.c, osf-core.c,
+	ptrace-core.c, reloc16.c, rs6000-core.c, section.c, som.c,
+	srec.c, sunos.c, syms.c, targets.c, tekhex.c,
 	trad-core.c: Change callers.
 
 Tue Feb 15 22:27:27 1994  Jeffrey A. Law  (law@snake.cs.utah.edu)
@@ -9038,7 +9038,7 @@ Tue Feb  8 08:57:31 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	* srec.c: Indent.
 	(fillup_symbols): Check bfd_alloc.  FIXME void
 	(srec_mkobject srec_get_section_contents
-	srec_set_section_contents): Check bfd_alloc. 
+	srec_set_section_contents): Check bfd_alloc.
 	(srec_make_empty_symbol): Check bfd_zalloc.
 
 	* som.c (hppa_som_gen_reloc_type): Check bfd_alloc_by_size_t.
@@ -9102,7 +9102,7 @@ Tue Feb  8 08:57:31 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	(bfd_section_from_phdr): Ditto.
 	(write_relocs): Ditto.  FIXME void
 	(elf_map_symbols assign_section_numbers map_program_segments):
-	Ditto.  Return a boolean. 
+	Ditto.  Return a boolean.
 	(swap_out_syms): Ditto.  Check elf_map_symbols.
 	(elf_slurp_symbol_table): Check bfd_zalloc.
 	(elf_slurp_reloca_table): Check bfd_alloc.
@@ -9115,7 +9115,7 @@ Tue Feb  8 08:57:31 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	* elf32-mips.c (mips_elf_final_link): Check bfd_alloc.
 
 	* elf32-hppa.c (hppa_elf_stub_branch_reloc): Check bfd_zmalloc and
-	realloc. 
+	realloc.
 	(hppa_elf_stub_reloc): Ditto.
 	(hppa_elf_build_arg_reloc_stub): Check bfd_zalloc.
 	(hppa_elf_build_long_branch_stub): Ditto.
@@ -9126,7 +9126,7 @@ Tue Feb  8 08:57:31 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	(ecoff_slurp_armap): Check bfd_alloc.
 	(ecoff_write_armap): Check bfd_zalloc.
 	(ecoff_link_hash_newfunc): Check bfd_hash_allocate and
-	_bfd_link_hash_newfunc. 
+	_bfd_link_hash_newfunc.
 	(ecoff_link_add_externals): Check bfd_alloc.
 
 	* ctor.c (bfd_constructor_entry): Check bfd_alloc.
@@ -9146,7 +9146,7 @@ Tue Feb  8 08:57:31 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 
 	* coffcode.h: Indent.
 	(coff_add_missing_symbols): Check bfd_alloc_by_size_t.  Return a
-	boolean. 
+	boolean.
 	(coff_write_object_contents): Check it.
 
 	* coff-alpha.c (alpha_relocate_section): Check bfd_alloc.
@@ -9171,35 +9171,35 @@ Tue Feb  8 08:57:31 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	* opncls.c (bfd_zalloc bfd_realloc): Check result of bfd_alloc.
 
 	* opncls.c (obstack_chunk_alloc): Define as malloc, not
-	bfd_xmalloc_by_size_t. 
+	bfd_xmalloc_by_size_t.
 	(_bfd_new_bfd): Check obstack_begin for 0 return.
 
 	* ieee.c (obstack_chunk_alloc): Define as malloc, not
-	bfd_xmalloc_by_size_t. 
+	bfd_xmalloc_by_size_t.
 	(ieee_archive_p): Check obstack_begin for 0 return and
 	obstack_finish for NULL return.
 
 	* hash.c (obstack_chunk_alloc): Define as malloc, not
-	bfd_xmalloc_by_size_t. 
+	bfd_xmalloc_by_size_t.
 	(bfd_hash_table_init_n): Check obstack_begin for 0 return and
 	obstack_finish for NULL return.
 	(bfd_hash_lookup): Check obstack_alloc for NULL return.
 
 	* ecofflink.c (obstack_chunk_alloc): Define as malloc, not
-	bfd_xmalloc_by_size_t. 
+	bfd_xmalloc_by_size_t.
 	bfd_ecoff_debug_accumulate
 	bfd_ecoff_debug_accumulate_other): Check obstack_alloc.
 	(add_file_shuffle add_memory_shuffle): Check obstack_alloc for
 	NULL return.  Return boolean, not void.
 	(bfd_ecoff_debug_init): Check obstack_begin for 0 return.
 	(bfd_ecoff_debug_accumulate): Check add_file_shuffle
-	and add_memory_shuffle return. 
+	and add_memory_shuffle return.
 	(string_hash_newfunc): Check bfd_hash_allocate and bfd_hash_newfunc.
 	(bfd_ecoff_debug_accumulate): Check bfd_alloc.
 	(ecoff_add_string): Check add_memory_shuffle return.
 
 	* libbfd-in.h (xmalloc, bfd_xmalloc, bfd_xmalloc_by_size_t):
-	Remove decls. 
+	Remove decls.
 	* libbfd.h: Rebuilt.
 
 Fri Feb 11 15:35:32 1994  Stu Grossman  (grossman at cygnus.com)
@@ -9309,33 +9309,33 @@ Mon Feb  7 15:02:06 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 Sun Feb  6 20:04:10 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 
 	* elfcode.h (prep_headers, swap_out_syms): Check for NULL return
-	from bfd_new_strtab. 
+	from bfd_new_strtab.
 	(elf_compute_section_file_positions): Check for false return from
-	swap_out_syms. 
+	swap_out_syms.
 
 	* linker.c (default_indirect_link_order): Check for NULL return
 	from bfd_get_relocated_section_contents.
 
 	* syms.c: Make example application in doc call xmalloc, not
-	bfd_xmalloc. 
+	bfd_xmalloc.
 
 	* aoutx.h (NAME(aout,slurp_symbol_table),
 	aout_link_get_symbols, NAME(aout,link_hash_table_create)):
 	* bout.c (b_out_slurp_reloc_table, b_out_squirt_out_relocs):
-	* ecoff.c (ecoff_bfd_link_hash_table_create): 
-	* ecofflink.c (bfd_ecoff_debug_init): 
-	* format.c (bfd_check_format_matches): 
-	* linker.c (_bfd_generic_link_hash_table_create): 
-	(_bfd_generic_final_link): 
-	* reloc16.c (bfd_coff_reloc16_relax_section): 
-	(bfd_coff_reloc16_get_relocated_section_contents): 
-	* elf32-hppa.c (hppa_elf_build_arg_reloc_stub): 
-	* elf32-mips.c (mips_elf_final_link): 
-	* elfcode.h (bfd_new_strtab): 
-	(bfd_add_2_to_strtab): 
-	(elf_slurp_symbol_table): 
-	(elf_corefile_note): 
-	* libbfd.c (bfd_zmalloc): 
+	* ecoff.c (ecoff_bfd_link_hash_table_create):
+	* ecofflink.c (bfd_ecoff_debug_init):
+	* format.c (bfd_check_format_matches):
+	* linker.c (_bfd_generic_link_hash_table_create):
+	(_bfd_generic_final_link):
+	* reloc16.c (bfd_coff_reloc16_relax_section):
+	(bfd_coff_reloc16_get_relocated_section_contents):
+	* elf32-hppa.c (hppa_elf_build_arg_reloc_stub):
+	* elf32-mips.c (mips_elf_final_link):
+	* elfcode.h (bfd_new_strtab):
+	(bfd_add_2_to_strtab):
+	(elf_slurp_symbol_table):
+	(elf_corefile_note):
+	* libbfd.c (bfd_zmalloc):
 	Use malloc and check the result, instead of bfd_xmalloc.
 
 Sat Feb  5 12:39:28 1994  Jim Kingdon  (kingdon@lioth.cygnus.com)
@@ -9364,7 +9364,7 @@ Fri Feb  4 23:55:44 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 	(RTYPE2HOWTO): Defined to use rs6000coff_rtype2howto.
 	(rs6000coff_rtype2howto): New function.
 	(coff_bfd_reloc_type_lookup): Defined to use
-	rs6000coff_reloc_type_lookup. 
+	rs6000coff_reloc_type_lookup.
 	(rs6000coff_reloc_type_lookup): New function.
 	(SELECT_RELOC): Defined to set r_type and r_size fields.
 	(COFF_LONG_FILENAMES): Defined.
@@ -9408,7 +9408,7 @@ Fri Feb  4 17:28:32 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	* libbfd.c (bfd_zmalloc): Call bfd_xmalloc instead of malloc.
 	(bfd_xmalloc, bfd_xmalloc_by_size_t): Functions deleted.
 	* libbfd-in.h: Define them as macros calling xmalloc and declare
-	xmalloc. 
+	xmalloc.
 	* libbfd.h: Rebuilt.
 
 Thu Feb  3 16:49:35 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
@@ -9538,7 +9538,7 @@ Mon Jan 24 14:41:23 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 	* libbfd.h: Regenerated.
 
 	* archive.c (_bfd_look_for_bfd_in_cache): Add "_bfd_" to name.
-	(_bfd_get_elt_at_filepos), 
+	(_bfd_get_elt_at_filepos),
 	coff-rs6000.c (rs6000coff_get_elt_at_filepos), libbfd-in.h:
 	Change callers.
 

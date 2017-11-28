@@ -1,5 +1,5 @@
 /* OpenCL language support for GDB, the GNU debugger.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    Contributed by Ken Werner <ken.werner@de.ibm.com>.
 
@@ -69,7 +69,7 @@ static struct gdbarch_data *opencl_type_data;
 static struct type **
 builtin_opencl_type (struct gdbarch *gdbarch)
 {
-  return gdbarch_data (gdbarch, opencl_type_data);
+  return (struct type **) gdbarch_data (gdbarch, opencl_type_data);
 }
 
 /* Returns the corresponding OpenCL vector type from the given type code,
@@ -172,8 +172,8 @@ lval_func_read (struct value *v)
   struct lval_closure *c = (struct lval_closure *) value_computed_closure (v);
   struct type *type = check_typedef (value_type (v));
   struct type *eltype = TYPE_TARGET_TYPE (check_typedef (value_type (c->val)));
-  int offset = value_offset (v);
-  int elsize = TYPE_LENGTH (eltype);
+  LONGEST offset = value_offset (v);
+  LONGEST elsize = TYPE_LENGTH (eltype);
   int n, i, j = 0;
   LONGEST lowb = 0;
   LONGEST highb = 0;
@@ -201,8 +201,8 @@ lval_func_write (struct value *v, struct value *fromval)
   struct lval_closure *c = (struct lval_closure *) value_computed_closure (v);
   struct type *type = check_typedef (value_type (v));
   struct type *eltype = TYPE_TARGET_TYPE (check_typedef (value_type (c->val)));
-  int offset = value_offset (v);
-  int elsize = TYPE_LENGTH (eltype);
+  LONGEST offset = value_offset (v);
+  LONGEST elsize = TYPE_LENGTH (eltype);
   int n, i, j = 0;
   LONGEST lowb = 0;
   LONGEST highb = 0;
@@ -243,7 +243,7 @@ lval_func_write (struct value *v, struct value *fromval)
 
 static int
 lval_func_check_synthetic_pointer (const struct value *v,
-				   int offset, int length)
+				   LONGEST offset, int length)
 {
   struct lval_closure *c = (struct lval_closure *) value_computed_closure (v);
   /* Size of the target type in bits.  */
@@ -984,7 +984,7 @@ Cannot perform conditional operation on vectors with different sizes"));
 						"structure");
 
 	    if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	      v = value_zero (value_type (v), not_lval);
+	      v = value_zero (value_type (v), VALUE_LVAL (v));
 	    return v;
 	  }
       }
@@ -1007,7 +1007,7 @@ opencl_print_type (struct type *type, const char *varstring,
      be printed using their TYPE_NAME.  */
   if (show > 0)
     {
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
       if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type)
 	  && TYPE_NAME (type) != NULL)
 	show = 0;
@@ -1052,9 +1052,10 @@ const struct language_defn opencl_language_defn =
   case_sensitive_on,
   array_row_major,
   macro_expansion_c,
+  NULL,
   &exp_descriptor_opencl,
   c_parse,
-  c_error,
+  c_yyerror,
   null_post_parser,
   c_printchar,			/* Print a character constant */
   c_printstr,			/* Function to print string constant */
@@ -1069,6 +1070,7 @@ const struct language_defn opencl_language_defn =
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   NULL,				/* Language specific symbol demangler */
+  NULL,
   NULL,				/* Language specific
 				   class_name_from_physname */
   c_op_print_tab,		/* expression operators for printing */

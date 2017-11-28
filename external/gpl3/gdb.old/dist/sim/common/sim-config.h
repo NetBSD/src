@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -29,216 +29,39 @@
    The CPP below defines information about the compilation host.  In
    particular it defines the macro's:
 
-   	WITH_HOST_BYTE_ORDER	The byte order of the host. Could
-				be any of LITTLE_ENDIAN, BIG_ENDIAN
-				or 0 (unknown).  Those macro's also
-				need to be defined.
+   HOST_BYTE_ORDER	The byte order of the host. Could be BFD_ENDIAN_LITTLE
+			or BFD_ENDIAN_BIG.
 
  */
 
-
-/* NetBSD:
-
-   NetBSD is easy, everything you could ever want is in a header file
-   (well almost :-) */
-
-#if defined(__NetBSD__)
-# include <machine/endian.h>
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER BYTE_ORDER
-# endif
-# if (BYTE_ORDER != WITH_HOST_BYTE_ORDER)
-#  error "host endian incorrectly configured, check config.h"
-# endif
-#endif
-
-/* Linux is similarly easy.  */
-
-#if defined(__linux__)
-# include <endian.h>
-# if defined(__LITTLE_ENDIAN) && !defined(LITTLE_ENDIAN)
-#  define LITTLE_ENDIAN __LITTLE_ENDIAN
-# endif
-# if defined(__BIG_ENDIAN) && !defined(BIG_ENDIAN)
-#  define BIG_ENDIAN __BIG_ENDIAN
-# endif
-# if defined(__BYTE_ORDER) && !defined(BYTE_ORDER)
-#  define BYTE_ORDER __BYTE_ORDER
-# endif
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER BYTE_ORDER
-# endif
-# if (BYTE_ORDER != WITH_HOST_BYTE_ORDER)
-#  error "host endian incorrectly configured, check config.h"
-# endif
-#endif
-
-/* INSERT HERE - hosts that have available LITTLE_ENDIAN and
-   BIG_ENDIAN macro's */
-
-
-/* Some hosts don't define LITTLE_ENDIAN or BIG_ENDIAN, help them out */
-
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN 1234
-#endif
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN 4321
+#ifdef WORDS_BIGENDIAN
+# define HOST_BYTE_ORDER BFD_ENDIAN_BIG
+#else
+# define HOST_BYTE_ORDER BFD_ENDIAN_LITTLE
 #endif
 
 
-/* SunOS on SPARC:
-
-   Big endian last time I looked */
-
-#if defined(sparc) || defined(__sparc__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER BIG_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != BIG_ENDIAN)
-#  error "sun was big endian last time I looked ..."
-# endif
-#endif
-
-
-/* Random x86
-
-   Little endian last time I looked */
-
-#if defined(i386) || defined(i486) || defined(i586) || defined (i686) || defined(__i386__) || defined(__i486__) || defined(__i586__) || defined (__i686__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER LITTLE_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != LITTLE_ENDIAN)
-#  error "x86 was little endian last time I looked ..."
-# endif
-#endif
-
-#if (defined (__i486__) || defined (__i586__) || defined (__i686__)) && defined(__GNUC__) && WITH_BSWAP
-#undef  htonl
-#undef  ntohl
-#define htonl(IN) __extension__ ({ int _out; __asm__ ("bswap %0" : "=r" (_out) : "0" (IN)); _out; })
-#define ntohl(IN) __extension__ ({ int _out; __asm__ ("bswap %0" : "=r" (_out) : "0" (IN)); _out; })
-#endif
-
-/* Power or PowerPC running AIX  */
-#if defined(_POWER) && defined(_AIX)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER BIG_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != BIG_ENDIAN)
-#  error "Power/PowerPC AIX was big endian last time I looked ..."
-# endif
-#endif
-
-/* Solaris running PowerPC */
-#if defined(__PPC) && defined(__sun__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER LITTLE_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != LITTLE_ENDIAN)
-#  error "Solaris on PowerPCs was little endian last time I looked ..."
-# endif
-#endif
-
-/* HP/PA */
-#if defined(__hppa__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER BIG_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != BIG_ENDIAN)
-#  error "HP/PA was big endian last time I looked ..."
-# endif
-#endif
-
-/* Big endian MIPS */
-#if defined(__MIPSEB__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER BIG_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != BIG_ENDIAN)
-#  error "MIPSEB was big endian last time I looked ..."
-# endif
-#endif
-
-/* Little endian MIPS */
-#if defined(__MIPSEL__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER LITTLE_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != LITTLE_ENDIAN)
-#  error "MIPSEL was little endian last time I looked ..."
-# endif
-#endif
-
-/* Windows NT */
-#if defined(__WIN32__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER LITTLE_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != LITTLE_ENDIAN)
-#  error "Windows NT was little endian last time I looked ..."
-# endif
-#endif
-
-/* Alpha running DEC unix */
-#if defined(__osf__) && defined(__alpha__)
-# if (WITH_HOST_BYTE_ORDER == 0)
-#  undef WITH_HOST_BYTE_ORDER
-#  define WITH_HOST_BYTE_ORDER LITTLE_ENDIAN
-# endif
-# if (WITH_HOST_BYTE_ORDER != LITTLE_ENDIAN)
-#  error "AXP running DEC unix was little endian last time I looked ..."
-# endif
-#endif
-
-
-/* INSERT HERE - additional hosts that do not have LITTLE_ENDIAN and
-   BIG_ENDIAN definitions available.  */
-
 /* Until devices and tree properties are sorted out, tell sim-config.c
    not to call the tree_find_foo fns.  */
 #define WITH_TREE_PROPERTIES 0
 
 
-/* endianness of the host/target:
+/* Endianness of the target.
 
-   If the build process is aware (at compile time) of the endianness
-   of the host/target it is able to eliminate slower generic endian
-   handling code.
-
-   Possible values are 0 (unknown), LITTLE_ENDIAN, BIG_ENDIAN */
-
-#ifndef WITH_HOST_BYTE_ORDER
-#define WITH_HOST_BYTE_ORDER		0 /*unknown*/
-#endif
+   Possible values are BFD_ENDIAN_UNKNOWN, BFD_ENDIAN_LITTLE, or BFD_ENDIAN_BIG.  */
 
 #ifndef WITH_TARGET_BYTE_ORDER
-#define WITH_TARGET_BYTE_ORDER		0 /*unknown*/
+#define WITH_TARGET_BYTE_ORDER		BFD_ENDIAN_UNKNOWN
 #endif
 
 #ifndef WITH_DEFAULT_TARGET_BYTE_ORDER
-#define WITH_DEFAULT_TARGET_BYTE_ORDER 0 /* fatal */
+#define WITH_DEFAULT_TARGET_BYTE_ORDER	BFD_ENDIAN_UNKNOWN
 #endif
 
-extern int current_host_byte_order;
-#define CURRENT_HOST_BYTE_ORDER (WITH_HOST_BYTE_ORDER \
-				 ? WITH_HOST_BYTE_ORDER \
-				 : current_host_byte_order)
-extern int current_target_byte_order;
-#define CURRENT_TARGET_BYTE_ORDER (WITH_TARGET_BYTE_ORDER \
-				   ? WITH_TARGET_BYTE_ORDER \
-				   : current_target_byte_order)
+extern enum bfd_endian current_target_byte_order;
+#define CURRENT_TARGET_BYTE_ORDER \
+  (WITH_TARGET_BYTE_ORDER != BFD_ENDIAN_UNKNOWN \
+   ? WITH_TARGET_BYTE_ORDER : current_target_byte_order)
 
 
 
@@ -253,16 +76,6 @@ extern int current_target_byte_order;
 
 #ifndef WITH_XOR_ENDIAN
 #define WITH_XOR_ENDIAN		0
-#endif
-
-
-
-/* Intel host BSWAP support:
-
-   Whether to use bswap on the 486 and pentiums rather than the 386
-   sequence that uses xchgb/rorl/xchgb */
-#ifndef WITH_BSWAP
-#define	WITH_BSWAP 0
 #endif
 
 
@@ -354,21 +167,6 @@ enum sim_environment {
   OPERATING_ENVIRONMENT
 };
 
-/* If the simulator specified SIM_AC_OPTION_ENVIRONMENT, indicate so.  */
-#ifdef WITH_ENVIRONMENT
-#define SIM_HAVE_ENVIRONMENT
-#endif
-
-/* If the simulator doesn't specify SIM_AC_OPTION_ENVIRONMENT in its
-   configure.ac, the only supported environment is the user environment.  */
-#ifndef WITH_ENVIRONMENT
-#define WITH_ENVIRONMENT USER_ENVIRONMENT
-#endif
-
-#define DEFAULT_ENVIRONMENT (WITH_ENVIRONMENT != ALL_ENVIRONMENT \
-			     ? WITH_ENVIRONMENT \
-			     : USER_ENVIRONMENT)
-
 /* To be prepended to simulator calls with absolute file paths and
    chdir:ed at startup.  */
 extern char *simulator_sysroot;
@@ -393,15 +191,6 @@ extern char *simulator_sysroot;
    profiling has shown that there is a biger win (at least for the
    x86) in eliminating a function call for the most common
    (raw_memory) case. */
-
-#ifndef WITH_CALLBACK_MEMORY
-#define WITH_CALLBACK_MEMORY		1
-#endif
-
-#ifndef WITH_MODULO_MEMORY
-#define WITH_MODULO_MEMORY              0
-#endif
-
 
 
 /* Alignment:
@@ -463,52 +252,6 @@ extern int current_floating_point;
 #endif
 
 
-
-/* Engine module.
-
-   Use the common start/stop/restart framework (sim-engine).
-   Simulators using the other modules but not the engine should define
-   WITH_ENGINE=0. */
-
-#ifndef WITH_ENGINE
-#define WITH_ENGINE			1
-#endif
-
-
-
-/* Debugging:
-
-   Control the inclusion of debugging code.
-   Debugging is only turned on in rare circumstances [say during development]
-   and is not intended to be turned on otherwise.  */
-
-#ifndef WITH_DEBUG
-#define WITH_DEBUG			0
-#endif
-
-/* Include the tracing code.  Disabling this eliminates all tracing
-   code.  Default to all tracing but internal debug.  */
-
-#ifndef WITH_TRACE
-#define WITH_TRACE			(~TRACE_debug)
-#endif
-
-/* Include the profiling code.  Disabling this eliminates all profiling
-   code.  */
-
-#ifndef WITH_PROFILE
-#define WITH_PROFILE			(-1)
-#endif
-
-
-/* include code that checks assertions scattered through out the
-   program */
-
-#ifndef WITH_ASSERT
-#define WITH_ASSERT			1
-#endif
-
-
 /* Whether to check instructions for reserved bits being set */
 
 /* #define WITH_RESERVED_BITS		1 */
@@ -533,10 +276,6 @@ extern int current_floating_point;
 		       ? WITH_MODEL	\
 		       : current_model)
 
-#ifndef WITH_DEFAULT_MODEL
-#define WITH_DEFAULT_MODEL		DEFAULT_MODEL
-#endif
-
 #define MODEL_ISSUE_IGNORE		(-1)
 #define MODEL_ISSUE_PROCESS		1
 
@@ -557,29 +296,11 @@ extern int current_model_issue;
 #define DONT_USE_STDIO			2
 #define DO_USE_STDIO			1
 
-#ifndef WITH_STDIO
-#define WITH_STDIO			0
-#endif
-
 extern int current_stdio;
 #define CURRENT_STDIO (WITH_STDIO	\
 		       ? WITH_STDIO     \
 		       : current_stdio)
 
-
-
-/* Specify that configured calls pass parameters in registers when the
-   convention is that they are placed on the stack */
-
-#ifndef WITH_REGPARM
-#define WITH_REGPARM                   0
-#endif
-
-/* Specify that configured calls use an alternative calling mechanism */
-
-#ifndef WITH_STDCALL
-#define WITH_STDCALL                   0
-#endif
 
 
 /* Set the default state configuration, before parsing argv.  */

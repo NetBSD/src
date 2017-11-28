@@ -1,4 +1,4 @@
-#   Copyright 2013-2015 Free Software Foundation, Inc.
+#   Copyright 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,14 +41,8 @@ with_test_prefix "without format" {
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
 
-    gdb_test \
-	"dprintf pendfunc" \
-	"Dprintf.*pendfunc.*pending." \
-	"set pending dprintf" \
-	".*Make dprintf pending.*y or \\\[n\\\]. $" \
-	"y"
-
-    gdb_test "file ${binfile}" ".*Error in re-setting breakpoint.*" "resolved dprintf fails to be re-set"
+    gdb_test "dprintf pendfunc" "Format string required" "missing ,FMT"
+    gdb_test "dprintf pendfunc," "Format string required" "missing FMT"
 }
 
 with_test_prefix "without symbols" {
@@ -69,7 +63,7 @@ with_test_prefix "without symbols" {
 	"single pending dprintf info"
 
     gdb_load ${binfile}
-    gdb_load_shlibs $lib_sl
+    gdb_load_shlib $lib_sl
 
     gdb_run_cmd
 
@@ -77,7 +71,7 @@ with_test_prefix "without symbols" {
 }
 
 clean_restart ${binfile}
-gdb_load_shlibs $lib_sl
+gdb_load_shlib $lib_sl
 
 #
 # Test setting, querying, and modifying pending breakpoints

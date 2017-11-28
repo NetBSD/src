@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $exec_opt
 
 # Start with a fresh gdb.
 clean_restart $testfile
-gdb_load_shlibs ${library}
+gdb_load_shlib ${library}
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
@@ -66,3 +66,7 @@ gdb_test "python print (gdb.solib_name(long(func1)))" "py-shared-sl.sl" "test fu
 gdb_test "p &main" "" "main address"
 gdb_py_test_silent_cmd "python main = gdb.history(0)" "Aquire main address" 1
 gdb_test "python print (gdb.solib_name(long(main)))" "None" "test main solib location"
+
+if {[is_lp64_target]} {
+    gdb_test "python print (len(\[gdb.solib_name(0xffffffffffffffff)\]))" "1"
+}

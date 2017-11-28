@@ -1,6 +1,6 @@
 /* Read a symbol table in ECOFF format (Third-Eye).
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    Original version contributed by Alessandro Forin (af@cs.cmu.edu) at
    CMU.  Major work by Per Bothner, John Gilmore and Ian Lance Taylor
@@ -359,7 +359,7 @@ mdebug_build_psymtabs (struct objfile *objfile,
       info->fdr = (FDR *) obstack_alloc (&objfile->objfile_obstack,
 					 (info->symbolic_header.ifdMax
 					  * sizeof (FDR)));
-      fdr_src = info->external_fdr;
+      fdr_src = (char *) info->external_fdr;
       fdr_end = (fdr_src
 		 + info->symbolic_header.ifdMax * swap->external_fdr_size);
       fdr_ptr = info->fdr;
@@ -436,7 +436,7 @@ push_parse_stack (void)
   if (top_stack && top_stack->prev)
     newobj = top_stack->prev;
   else
-    newobj = (struct parse_stack *) xzalloc (sizeof (struct parse_stack));
+    newobj = XCNEW (struct parse_stack);
   /* Initialize new frame with previous content.  */
   if (top_stack)
     {
@@ -521,6 +521,14 @@ add_pending (FDR *fh, char *sh, struct type *t)
 
 /* Parsing Routines proper.  */
 
+static void
+reg_value_complaint (int regnum, int num_regs, const char *sym)
+{
+  complaint (&symfile_complaints,
+	     _("bad register number %d (max %d) in symbol %s"),
+             regnum, num_regs - 1, sym);
+}
+
 /* Parse a single symbol.  Mostly just make up a GDB symbol for it.
    For blocks, procedures and types we open a new lexical context.
    This is basically just a big switch on the symbol's type.  Argument
@@ -533,7 +541,21 @@ add_pending (FDR *fh, char *sh, struct type *t)
 static int
 mdebug_reg_to_regnum (struct symbol *sym, struct gdbarch *gdbarch)
 {
-  return gdbarch_ecoff_reg_to_regnum (gdbarch, SYMBOL_VALUE (sym));
+  int regno = gdbarch_ecoff_reg_to_regnum (gdbarch, SYMBOL_VALUE (sym));
+
+  if (regno < 0
+      || regno >= (gdbarch_num_regs (gdbarch)
+		   + gdbarch_num_pseudo_regs (gdbarch)))
+    {
+      reg_value_complaint (regno,
+			   gdbarch_num_regs (gdbarch)
+			     + gdbarch_num_pseudo_regs (gdbarch),
+			   SYMBOL_PRINT_NAME (sym));
+
+      regno = gdbarch_sp_regnum (gdbarch); /* Known safe, though useless.  */
+    }
+
+  return regno;
 }
 
 static const struct symbol_register_ops mdebug_register_funcs = {
@@ -544,6 +566,26 @@ static const struct symbol_register_ops mdebug_register_funcs = {
 
 static int mdebug_register_index;
 static int mdebug_regparm_index;
+
+/* Common code for symbols describing data.  */
+
+static void
+add_data_symbol (SYMR *sh, union aux_ext *ax, int bigend,
+		 struct symbol *s, int aclass_index, struct block *b,
+		 struct objfile *objfile, char *name)
+{
+  SYMBOL_DOMAIN (s) = VAR_DOMAIN;
+  SYMBOL_ACLASS_INDEX (s) = aclass_index;
+  add_symbol (s, top_stack->cur_st, b);
+
+  /* Type could be missing if file is compiled without debugging info.  */
+  if (SC_IS_UNDEF (sh->sc)
+      || sh->sc == scNil || sh->index == indexNil)
+    SYMBOL_TYPE (s) = objfile_type (objfile)->nodebug_data_symbol;
+  else
+    SYMBOL_TYPE (s) = parse_type (cur_fd, ax, sh->index, 0, bigend, name);
+  /* Value of a data symbol is its memory address.  */
+}
 
 static int
 parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
@@ -559,7 +601,6 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
   struct type *t;
   struct field *f;
   int count = 1;
-  enum address_class theclass;
   TIR tir;
   long svalue = sh->value;
   int bitsize;
@@ -600,15 +641,14 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
       break;
 
     case stGlobal:		/* External symbol, goes into global block.  */
-      theclass = LOC_STATIC;
       b = BLOCKVECTOR_BLOCK (SYMTAB_BLOCKVECTOR (top_stack->cur_st),
 			     GLOBAL_BLOCK);
       s = new_symbol (name);
       SYMBOL_VALUE_ADDRESS (s) = (CORE_ADDR) sh->value;
-      goto data;
+      add_data_symbol (sh, ax, bigend, s, LOC_STATIC, b, objfile, name);
+      break;
 
     case stStatic:		/* Static data, goes into current block.  */
-      theclass = LOC_STATIC;
       b = top_stack->cur_block;
       s = new_symbol (name);
       if (SC_IS_COMMON (sh->sc))
@@ -622,29 +662,19 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 	}
       else
 	SYMBOL_VALUE_ADDRESS (s) = (CORE_ADDR) sh->value;
-      goto data;
+      add_data_symbol (sh, ax, bigend, s, LOC_STATIC, b, objfile, name);
+      break;
 
     case stLocal:		/* Local variable, goes into current block.  */
       b = top_stack->cur_block;
       s = new_symbol (name);
       SYMBOL_VALUE (s) = svalue;
       if (sh->sc == scRegister)
-	theclass = mdebug_register_index;
+	add_data_symbol (sh, ax, bigend, s, mdebug_register_index,
+			 b, objfile, name);
       else
-	theclass = LOC_LOCAL;
-
-    data:			/* Common code for symbols describing data.  */
-      SYMBOL_DOMAIN (s) = VAR_DOMAIN;
-      SYMBOL_ACLASS_INDEX (s) = theclass;
-      add_symbol (s, top_stack->cur_st, b);
-
-      /* Type could be missing if file is compiled without debugging info.  */
-      if (SC_IS_UNDEF (sh->sc)
-	  || sh->sc == scNil || sh->index == indexNil)
-	SYMBOL_TYPE (s) = objfile_type (objfile)->nodebug_data_symbol;
-      else
-	SYMBOL_TYPE (s) = parse_type (cur_fd, ax, sh->index, 0, bigend, name);
-      /* Value of a data symbol is its memory address.  */
+	add_data_symbol (sh, ax, bigend, s, LOC_LOCAL,
+			 b, objfile, name);
       break;
 
     case stParam:		/* Arg to procedure, goes into current
@@ -1050,8 +1080,8 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 		enum_sym = allocate_symbol (mdebugread_objfile);
 		SYMBOL_SET_LINKAGE_NAME
 		  (enum_sym,
-		   obstack_copy0 (&mdebugread_objfile->objfile_obstack,
-				  f->name, strlen (f->name)));
+		   (char *) obstack_copy0 (&mdebugread_objfile->objfile_obstack,
+					   f->name, strlen (f->name)));
 		SYMBOL_ACLASS_INDEX (enum_sym) = LOC_CONST;
 		SYMBOL_TYPE (enum_sym) = t;
 		SYMBOL_DOMAIN (enum_sym) = VAR_DOMAIN;
@@ -1348,7 +1378,8 @@ static struct type *
 basic_type (int bt, struct objfile *objfile)
 {
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
-  struct type **map_bt = objfile_data (objfile, basic_type_data);
+  struct type **map_bt
+    = (struct type **) objfile_data (objfile, basic_type_data);
   struct type *tp;
 
   if (bt >= btMax)
@@ -1696,8 +1727,9 @@ parse_type (int fd, union aux_ext *ax, unsigned int aux_index, int *bs,
 	  else if (TYPE_TAG_NAME (tp) == NULL
 		   || strcmp (TYPE_TAG_NAME (tp), name) != 0)
 	    TYPE_TAG_NAME (tp)
-	      = obstack_copy0 (&mdebugread_objfile->objfile_obstack,
-			       name, strlen (name));
+	      = ((const char *)
+		 obstack_copy0 (&mdebugread_objfile->objfile_obstack,
+				name, strlen (name)));
 	}
     }
 
@@ -1733,8 +1765,9 @@ parse_type (int fd, union aux_ext *ax, unsigned int aux_index, int *bs,
 	  if (TYPE_NAME (tp) == NULL
 	      || strcmp (TYPE_NAME (tp), name) != 0)
 	    TYPE_NAME (tp)
-	      = obstack_copy0 (&mdebugread_objfile->objfile_obstack,
-			       name, strlen (name));
+	      = ((const char *)
+		 obstack_copy0 (&mdebugread_objfile->objfile_obstack,
+				name, strlen (name)));
 	}
     }
   if (t->bt == btTypedef)
@@ -2335,7 +2368,6 @@ parse_partial_symbols (struct objfile *objfile)
   SYMR sh;
   struct partial_symtab *pst;
   int textlow_not_set = 1;
-  int past_first_source_file = 0;
 
   /* List of current psymtab's include files.  */
   const char **psymtab_include_list;
@@ -2395,8 +2427,7 @@ parse_partial_symbols (struct objfile *objfile)
   /* Allocate the map FDR -> PST.
      Minor hack: -O3 images might claim some global data belongs
      to FDR -1.  We`ll go along with that.  */
-  fdr_to_pst = (struct pst_map *)
-    xzalloc ((hdr->ifdMax + 1) * sizeof *fdr_to_pst);
+  fdr_to_pst = XCNEWVEC (struct pst_map, hdr->ifdMax + 1);
   old_chain = make_cleanup (xfree, fdr_to_pst);
   fdr_to_pst++;
   {
@@ -2415,7 +2446,7 @@ parse_partial_symbols (struct objfile *objfile)
 	  hdr->ifdMax * sizeof (struct mdebug_pending *));
 
   /* Pass 0 over external syms: swap them in.  */
-  ext_block = (EXTR *) xmalloc (hdr->iextMax * sizeof (EXTR));
+  ext_block = XNEWVEC (EXTR, hdr->iextMax);
   make_cleanup (xfree, ext_block);
 
   ext_out = (char *) debug_info->external_ext;
@@ -2827,10 +2858,11 @@ parse_partial_symbols (struct objfile *objfile)
 		    /* Concatinate stabstring2 with stabstring1.  */
 		    if (stabstring
 		     && stabstring != debug_info->ss + fh->issBase + sh.iss)
-		      stabstring = xrealloc (stabstring, len + len2 + 1);
+		      stabstring
+			= (char *) xrealloc (stabstring, len + len2 + 1);
 		    else
 		      {
-			stabstring = xmalloc (len + len2 + 1);
+			stabstring = (char *) xmalloc (len + len2 + 1);
 			strcpy (stabstring, stabstring1);
 		      }
 		    strcpy (stabstring + len, stabstring2);
@@ -2924,36 +2956,21 @@ parse_partial_symbols (struct objfile *objfile)
 
 		  case N_SO:
 		    {
-		      CORE_ADDR valu;
 		      static int prev_so_symnum = -10;
-		      static int first_so_symnum;
 		      const char *p;
-		      int prev_textlow_not_set;
-
-		      valu = sh.value + ANOFFSET (objfile->section_offsets,
-						  SECT_OFF_TEXT (objfile));
-
-		      prev_textlow_not_set = textlow_not_set;
 
 		      /* A zero value is probably an indication for the
-			 SunPRO 3.0 compiler.  end_psymtab explicitly tests
+			 SunPRO 3.0 compiler.  dbx_end_psymtab explicitly tests
 			 for zero, so don't relocate it.  */
 
 		      if (sh.value == 0
 			  && gdbarch_sofun_address_maybe_missing (gdbarch))
-			{
-			  textlow_not_set = 1;
-			  valu = 0;
-			}
+			textlow_not_set = 1;
 		      else
 			textlow_not_set = 0;
 
-		      past_first_source_file = 1;
-
 		      if (prev_so_symnum != symnum - 1)
 			{		/* Here if prev stab wasn't N_SO.  */
-			  first_so_symnum = symnum;
-
 			  if (pst)
 			    {
 			      pst = (struct partial_symtab *) 0;
@@ -3110,7 +3127,7 @@ parse_partial_symbols (struct objfile *objfile)
 			add_psymbol_to_list (namestring, p - namestring, 1,
 					     VAR_DOMAIN, LOC_STATIC,
 					     &objfile->static_psymbols,
-					     0, sh.value,
+					     sh.value,
 					     psymtab_language, objfile);
 			continue;
 		      case 'G':
@@ -3122,7 +3139,7 @@ parse_partial_symbols (struct objfile *objfile)
 			add_psymbol_to_list (namestring, p - namestring, 1,
 					     VAR_DOMAIN, LOC_STATIC,
 					     &objfile->global_psymbols,
-					     0, sh.value,
+					     sh.value,
 					     psymtab_language, objfile);
 			continue;
 
@@ -3140,8 +3157,7 @@ parse_partial_symbols (struct objfile *objfile)
 			    add_psymbol_to_list (namestring, p - namestring, 1,
 						 STRUCT_DOMAIN, LOC_TYPEDEF,
 						 &objfile->static_psymbols,
-						 sh.value, 0,
-						 psymtab_language, objfile);
+						 0, psymtab_language, objfile);
 			    if (p[2] == 't')
 			      {
 				/* Also a typedef with the same name.  */
@@ -3149,8 +3165,7 @@ parse_partial_symbols (struct objfile *objfile)
 						     p - namestring, 1,
 						     VAR_DOMAIN, LOC_TYPEDEF,
 						     &objfile->static_psymbols,
-						     sh.value, 0,
-						     psymtab_language,
+						     0, psymtab_language,
 						     objfile);
 				p += 1;
 			      }
@@ -3163,8 +3178,7 @@ parse_partial_symbols (struct objfile *objfile)
 			    add_psymbol_to_list (namestring, p - namestring, 1,
 						 VAR_DOMAIN, LOC_TYPEDEF,
 						 &objfile->static_psymbols,
-						 sh.value, 0,
-						 psymtab_language, objfile);
+						 0, psymtab_language, objfile);
 			  }
 		      check_enum:
 			/* If this is an enumerated type, we need to add
@@ -3228,7 +3242,7 @@ parse_partial_symbols (struct objfile *objfile)
 				add_psymbol_to_list (p, q - p, 1,
 						     VAR_DOMAIN, LOC_CONST,
 						     &objfile->static_psymbols,
-						     0, 0, psymtab_language,
+						     0, psymtab_language,
 						     objfile);
 				/* Point past the name.  */
 				p = q;
@@ -3246,15 +3260,14 @@ parse_partial_symbols (struct objfile *objfile)
 			add_psymbol_to_list (namestring, p - namestring, 1,
 					     VAR_DOMAIN, LOC_CONST,
 					     &objfile->static_psymbols,
-					     sh.value, 0, psymtab_language,
-					     objfile);
+					     0, psymtab_language, objfile);
 			continue;
 
 		      case 'f':
 			if (! pst)
 			  {
 			    int name_len = p - namestring;
-			    char *name = xmalloc (name_len + 1);
+			    char *name = (char *) xmalloc (name_len + 1);
 
 			    memcpy (name, namestring, name_len);
 			    name[name_len] = '\0';
@@ -3266,7 +3279,7 @@ parse_partial_symbols (struct objfile *objfile)
 			add_psymbol_to_list (namestring, p - namestring, 1,
 					     VAR_DOMAIN, LOC_BLOCK,
 					     &objfile->static_psymbols,
-					     0, sh.value,
+					     sh.value,
 					     psymtab_language, objfile);
 			continue;
 
@@ -3278,7 +3291,7 @@ parse_partial_symbols (struct objfile *objfile)
 			if (! pst)
 			  {
 			    int name_len = p - namestring;
-			    char *name = xmalloc (name_len + 1);
+			    char *name = (char *) xmalloc (name_len + 1);
 
 			    memcpy (name, namestring, name_len);
 			    name[name_len] = '\0';
@@ -3290,7 +3303,7 @@ parse_partial_symbols (struct objfile *objfile)
 			add_psymbol_to_list (namestring, p - namestring, 1,
 					     VAR_DOMAIN, LOC_BLOCK,
 					     &objfile->global_psymbols,
-					     0, sh.value,
+					     sh.value,
 					     psymtab_language, objfile);
 			continue;
 
@@ -3347,7 +3360,7 @@ parse_partial_symbols (struct objfile *objfile)
 
 		  case N_ENDM:
 		    /* Solaris 2 end of module, finish current partial
-		       symbol table.  END_PSYMTAB will set
+		       symbol table.  dbx_end_psymtab will set
 		       pst->texthigh to the proper value, which is
 		       necessary if a module compiled without
 		       debugging info follows this module.  */
@@ -3533,12 +3546,12 @@ parse_partial_symbols (struct objfile *objfile)
 		    add_psymbol_to_list (name, strlen (name), 1,
 					 VAR_DOMAIN, LOC_BLOCK,
 					 &objfile->global_psymbols,
-				    0, sh.value, psymtab_language, objfile);
+					 sh.value, psymtab_language, objfile);
 		  else
 		    add_psymbol_to_list (name, strlen (name), 1,
 					 VAR_DOMAIN, LOC_BLOCK,
 					 &objfile->static_psymbols,
-				    0, sh.value, psymtab_language, objfile);
+					 sh.value, psymtab_language, objfile);
 
 		  procaddr = sh.value;
 
@@ -3605,8 +3618,7 @@ parse_partial_symbols (struct objfile *objfile)
 		      add_psymbol_to_list (name, strlen (name), 1,
 					   STRUCT_DOMAIN, LOC_TYPEDEF,
 					   &objfile->static_psymbols,
-					   0, (CORE_ADDR) 0,
-					   psymtab_language, objfile);
+					   0, psymtab_language, objfile);
 		    }
 		  handle_psymbol_enumerators (objfile, fh, sh.st, sh.value);
 
@@ -3646,7 +3658,7 @@ parse_partial_symbols (struct objfile *objfile)
 	      add_psymbol_to_list (name, strlen (name), 1,
 				   VAR_DOMAIN, theclass,
 				   &objfile->static_psymbols,
-				   0, sh.value, psymtab_language, objfile);
+				   sh.value, psymtab_language, objfile);
 	    skip:
 	      cur_sdx++;	/* Go to next file symbol.  */
 	    }
@@ -3726,17 +3738,18 @@ parse_partial_symbols (struct objfile *objfile)
 	      add_psymbol_to_list (name, strlen (name), 1,
 				   VAR_DOMAIN, theclass,
 				   &objfile->global_psymbols,
-				   0, svalue,
-				   psymtab_language, objfile);
+				   svalue, psymtab_language, objfile);
 	    }
 	}
 
-      /* Link pst to FDR.  end_psymtab returns NULL if the psymtab was
+      /* Link pst to FDR.  dbx_end_psymtab returns NULL if the psymtab was
          empty and put on the free list.  */
-      fdr_to_pst[f_idx].pst = end_psymtab (objfile, save_pst,
-					psymtab_include_list, includes_used,
-					   -1, save_pst->texthigh,
-		       dependency_list, dependencies_used, textlow_not_set);
+      fdr_to_pst[f_idx].pst
+	= dbx_end_psymtab (objfile, save_pst,
+			   psymtab_include_list, includes_used,
+			   -1, save_pst->texthigh,
+			   dependency_list, dependencies_used,
+			   textlow_not_set);
       includes_used = 0;
       dependencies_used = 0;
 
@@ -3889,8 +3902,8 @@ handle_psymbol_enumerators (struct objfile *objfile, FDR *fh, int stype,
          in psymtabs, just in symtabs.  */
       add_psymbol_to_list (name, strlen (name), 1,
 			   VAR_DOMAIN, LOC_CONST,
-			   &objfile->static_psymbols, 0,
-			   (CORE_ADDR) 0, psymtab_language, objfile);
+			   &objfile->static_psymbols,
+			   0, psymtab_language, objfile);
       ext_sym += external_sym_size;
     }
 }
@@ -4139,7 +4152,7 @@ psymtab_to_symtab_1 (struct objfile *objfile,
 	  PDR *pdr_in;
 	  PDR *pdr_in_end;
 
-	  pr_block = (PDR *) xmalloc (fh->cpd * sizeof (PDR));
+	  pr_block = XNEWVEC (PDR, fh->cpd);
 	  old_chain = make_cleanup (xfree, pr_block);
 
 	  pdr_ptr = ((char *) debug_info->external_pdr
@@ -4242,7 +4255,7 @@ psymtab_to_symtab_1 (struct objfile *objfile,
 	      PDR *pdr_in;
 	      PDR *pdr_in_end;
 
-	      pr_block = (PDR *) xmalloc (fh->cpd * sizeof (PDR));
+	      pr_block = XNEWVEC (PDR, fh->cpd);
 
 	      old_chain = make_cleanup (xfree, pr_block);
 
@@ -4283,10 +4296,10 @@ psymtab_to_symtab_1 (struct objfile *objfile,
       if (size > 1)
 	--size;
       SYMTAB_LINETABLE (COMPUNIT_FILETABS (cust))
-	= obstack_copy (&mdebugread_objfile->objfile_obstack,
-			lines,
-			(sizeof (struct linetable)
-			 + size * sizeof (lines->item)));
+	= ((struct linetable *)
+	   obstack_copy (&mdebugread_objfile->objfile_obstack,
+			 lines, (sizeof (struct linetable)
+				 + size * sizeof (lines->item))));
       xfree (lines);
 
       /* .. and our share of externals.
@@ -4381,7 +4394,7 @@ cross_ref (int fd, union aux_ext *ax, struct type **tpp,
   int xref_fd;
   struct mdebug_pending *pend;
 
-  *tpp = (struct type *) NULL;
+  *tpp = NULL;
 
   (*debug_swap->swap_rndx_in) (bigend, &ax->a_rndx, rn);
 
@@ -4835,7 +4848,7 @@ new_block (enum block_type type)
   /* FIXME: carlton/2003-09-11: This should use allocate_block to
      allocate the block.  Which, in turn, suggests that the block
      should be allocated on an obstack.  */
-  struct block *retval = xzalloc (sizeof (struct block));
+  struct block *retval = XCNEW (struct block);
 
   if (type == FUNCTION_BLOCK)
     BLOCK_DICT (retval) = dict_create_linear_expandable ();

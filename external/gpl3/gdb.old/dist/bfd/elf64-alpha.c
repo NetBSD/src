@@ -1,5 +1,5 @@
 /* Alpha specific support for 64-bit ELF
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1227,7 +1227,7 @@ elf64_alpha_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 			     asection **secp, bfd_vma *valp)
 {
   if (sym->st_shndx == SHN_COMMON
-      && !info->relocatable
+      && !bfd_link_relocatable (info)
       && sym->st_size <= elf_gp_size (abfd))
     {
       /* Common symbols less than or equal to -G nn bytes are
@@ -1757,6 +1757,18 @@ elf64_alpha_want_plt (struct alpha_elf_link_hash_entry *ah)
 	  && (ah->flags & ~ALPHA_ELF_LINK_HASH_LU_PLT) == 0);
 }
 
+/* Whether to sort relocs output by ld -r or ld --emit-relocs, by r_offset.
+   Don't do so for code sections.  We want to keep ordering of LITERAL/LITUSE
+   as is.  On the other hand, elf-eh-frame.c processing requires .eh_frame
+   relocs to be sorted.  */
+
+static bfd_boolean
+elf64_alpha_sort_relocs_p (asection *sec)
+{
+  return (sec->flags & SEC_CODE) == 0;
+}
+
+
 /* Handle dynamic relocations when doing an Alpha ELF link.  */
 
 static bfd_boolean
@@ -1770,7 +1782,7 @@ elf64_alpha_check_relocs (bfd *abfd, struct bfd_link_info *info,
   const Elf_Internal_Rela *rel, *relend;
   bfd_size_type amt;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   /* Don't do anything special with non-loaded, non-alloced sections.
@@ -1830,7 +1842,7 @@ elf64_alpha_check_relocs (bfd *abfd, struct bfd_link_info *info,
          have yet been processed.  Do something with what we know, as
          this may help reduce memory usage and processing time later.  */
       maybe_dynamic = FALSE;
-      if (h && ((info->shared
+      if (h && ((bfd_link_pic (info)
 		 && (!info->symbolic
 		     || info->unresolved_syms_in_shared_libs == RM_IGNORE))
 		|| !h->root.def_regular
@@ -1871,7 +1883,7 @@ elf64_alpha_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
 	case R_ALPHA_REFLONG:
 	case R_ALPHA_REFQUAD:
-	  if (info->shared || maybe_dynamic)
+	  if (bfd_link_pic (info) || maybe_dynamic)
 	    need = NEED_DYNREL;
 	  break;
 
@@ -1891,12 +1903,12 @@ elf64_alpha_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_ALPHA_GOTTPREL:
 	  need = NEED_GOT | NEED_GOT_ENTRY;
 	  gotent_flags = ALPHA_ELF_LINK_HASH_TLS_IE;
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    info->flags |= DF_STATIC_TLS;
 	  break;
 
 	case R_ALPHA_TPREL64:
-	  if (info->shared && !info->pie)
+	  if (bfd_link_dll (info))
 	    {
 	      info->flags |= DF_STATIC_TLS;
 	      need = NEED_DYNREL;
@@ -1988,7 +2000,7 @@ elf64_alpha_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      else
 		rent->count++;
 	    }
-	  else if (info->shared)
+	  else if (bfd_link_pic (info))
 	    {
 	      /* If this is a shared library, and the section is to be
 		 loaded into memory, we need a RELATIVE reloc.  */
@@ -2033,7 +2045,7 @@ elf64_alpha_gc_sweep_hook (bfd *abfd, struct bfd_link_info *info,
   struct alpha_elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel, *relend;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   symtab_hdr = &elf_symtab_hdr (abfd);
@@ -2644,7 +2656,7 @@ elf64_alpha_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   bfd *i;
   struct alpha_elf_link_hash_table * htab;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   htab = alpha_elf_hash_table (info);
@@ -2735,14 +2747,15 @@ elf64_alpha_calc_dynrel_sizes (struct alpha_elf_link_hash_entry *h,
 
   /* If the symbol is a hidden undefined weak, then we never have any
      relocations.  Avoid the loop which may want to add RELATIVE relocs
-     based on info->shared.  */
+     based on bfd_link_pic (info).  */
   if (h->root.root.type == bfd_link_hash_undefweak && !dynamic)
     return TRUE;
 
   for (relent = h->reloc_entries; relent; relent = relent->next)
     {
       entries = alpha_dynamic_entries_for_reloc (relent->rtype, dynamic,
-						 info->shared, info->pie);
+						 bfd_link_pic (info),
+						 bfd_link_pie (info));
       if (entries)
 	{
 	  relent->srel->size +=
@@ -2778,7 +2791,7 @@ elf64_alpha_size_rela_got_1 (struct alpha_elf_link_hash_entry *h,
 
   /* If the symbol is a hidden undefined weak, then we never have any
      relocations.  Avoid the loop which may want to add RELATIVE relocs
-     based on info->shared.  */
+     based on bfd_link_pic (info).  */
   if (h->root.root.type == bfd_link_hash_undefweak && !dynamic)
     return TRUE;
 
@@ -2786,7 +2799,8 @@ elf64_alpha_size_rela_got_1 (struct alpha_elf_link_hash_entry *h,
   for (gotent = h->got_entries; gotent ; gotent = gotent->next)
     if (gotent->use_count > 0)
       entries += alpha_dynamic_entries_for_reloc (gotent->reloc_type, dynamic,
-						  info->shared, info->pie);
+						  bfd_link_pic (info),
+						  bfd_link_pie (info));
 
   if (entries > 0)
     {
@@ -2836,7 +2850,8 @@ elf64_alpha_size_rela_got_section (struct bfd_link_info *info)
 		 gotent ; gotent = gotent->next)
 	      if (gotent->use_count > 0)
 		entries += (alpha_dynamic_entries_for_reloc
-			    (gotent->reloc_type, 0, info->shared, info->pie));
+			    (gotent->reloc_type, 0, bfd_link_pic (info),
+			     bfd_link_pie (info)));
 	}
     }
 
@@ -2875,7 +2890,7 @@ elf64_alpha_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -2961,7 +2976,7 @@ elf64_alpha_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (info->executable)
+      if (bfd_link_executable (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -3069,7 +3084,7 @@ elf64_alpha_relax_got_load (struct alpha_relax_info *info, bfd_vma symval,
 
   /* Can't use local-exec relocations in shared libraries.  */
   if (r_type == R_ALPHA_GOTTPREL
-      && (info->link_info->shared && !info->link_info->pie))
+      && bfd_link_dll (info->link_info))
     return TRUE;
 
   if (r_type == R_ALPHA_LITERAL)
@@ -3077,7 +3092,7 @@ elf64_alpha_relax_got_load (struct alpha_relax_info *info, bfd_vma symval,
       /* Look for nice constant addresses.  This includes the not-uncommon
 	 special case of 0 for undefweak symbols.  */
       if ((info->h && info->h->root.root.type == bfd_link_hash_undefweak)
-	  || (!info->link_info->shared
+	  || (!bfd_link_pic (info->link_info)
 	      && (symval >= (bfd_vma)-0x8000 || symval < 0x8000)))
 	{
 	  disp = 0;
@@ -3540,12 +3555,12 @@ elf64_alpha_relax_tls_get_addr (struct alpha_relax_info *info, bfd_vma symval,
 
   /* If the symbol is local, and we've already committed to DF_STATIC_TLS,
      then we might as well relax to IE.  */
-  else if (info->link_info->shared && !dynamic
+  else if (bfd_link_pic (info->link_info) && !dynamic
 	   && (info->link_info->flags & DF_STATIC_TLS))
     ;
 
   /* Otherwise we must be building an executable to do anything.  */
-  else if (info->link_info->shared)
+  else if (bfd_link_pic (info->link_info))
     return TRUE;
 
   /* The TLSGD/TLSLDM relocation must be followed by a LITERAL and
@@ -3646,7 +3661,7 @@ elf64_alpha_relax_tls_get_addr (struct alpha_relax_info *info, bfd_vma symval,
 
   /* Some compilers warn about a Boolean-looking expression being
      used in a switch.  The explicit cast silences them.  */
-  switch ((int) (!dynamic && !info->link_info->shared))
+  switch ((int) (!dynamic && !bfd_link_pic (info->link_info)))
     {
     case 1:
       {
@@ -3789,7 +3804,7 @@ elf64_alpha_relax_section (bfd *abfd, asection *sec,
   /* There's nothing to change, yet.  */
   *again = FALSE;
 
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || ((sec->flags & (SEC_CODE | SEC_RELOC | SEC_ALLOC))
 	  != (SEC_CODE | SEC_RELOC | SEC_ALLOC))
       || sec->reloc_count == 0)
@@ -4206,7 +4221,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
   BFD_ASSERT (is_alpha_elf (input_bfd));
 
   /* Handle relocatable links with a smaller loop.  */
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return elf64_alpha_relocate_section_r (output_bfd, info, input_bfd,
 					   input_section, contents, relocs,
 					   local_syms, local_sections);
@@ -4431,7 +4446,9 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      /* If the symbol has been forced local, output a
 		 RELATIVE reloc, otherwise it will be handled in
 		 finish_dynamic_symbol.  */
-	      if (info->shared && !dynamic_symbol_p && !undef_weak_ref)
+	      if (bfd_link_pic (info)
+		  && !dynamic_symbol_p
+		  && !undef_weak_ref)
 		elf64_alpha_emit_dynrel (output_bfd, info, sgot, srelgot,
 					 gotent->got_offset, 0,
 					 R_ALPHA_RELATIVE, value);
@@ -4581,7 +4598,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    else if (r_type == R_ALPHA_TPREL64)
 	      {
 		BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
-		if (!info->shared || info->pie)
+		if (!bfd_link_dll (info))
 		  {
 		    value -= tp_base;
 		    goto default_reloc;
@@ -4589,7 +4606,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		dynindx = 0;
 		dynaddend = value - dtp_base;
 	      }
-	    else if (info->shared
+	    else if (bfd_link_pic (info)
 		     && r_symndx != STN_UNDEF
 		     && (input_section->flags & SEC_ALLOC)
 		     && !undef_weak_ref
@@ -4631,7 +4648,8 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
                  input_bfd, h->root.root.root.string);
               ret_val = FALSE;
             }
-	  else if ((info->shared || info->pie) && undef_weak_ref)
+	  else if (bfd_link_pic (info)
+		   && undef_weak_ref)
             {
               (*_bfd_error_handler)
                 (_("%B: pc-relative relocation against undefined weak symbol %s"),
@@ -4664,13 +4682,14 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      gotent->reloc_done = 1;
 
 	      /* Note that the module index for the main program is 1.  */
-	      bfd_put_64 (output_bfd, !info->shared && !dynamic_symbol_p,
+	      bfd_put_64 (output_bfd,
+			  !bfd_link_pic (info) && !dynamic_symbol_p,
 			  sgot->contents + gotent->got_offset);
 
 	      /* If the symbol has been forced local, output a
 		 DTPMOD64 reloc, otherwise it will be handled in
 		 finish_dynamic_symbol.  */
-	      if (info->shared && !dynamic_symbol_p)
+	      if (bfd_link_pic (info) && !dynamic_symbol_p)
 		elf64_alpha_emit_dynrel (output_bfd, info, sgot, srelgot,
 					 gotent->got_offset, 0,
 					 R_ALPHA_DTPMOD64, 0);
@@ -4711,7 +4730,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	case R_ALPHA_TPRELHI:
 	case R_ALPHA_TPRELLO:
 	case R_ALPHA_TPREL16:
-	  if (info->shared && !info->pie)
+	  if (bfd_link_dll (info))
 	    {
 	      (*_bfd_error_handler)
 		(_("%B: TLS local exec code cannot be linked into shared objects"),
@@ -4749,7 +4768,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 		  if (r_type == R_ALPHA_GOTDTPREL)
 		    value -= dtp_base;
-		  else if (!info->shared)
+		  else if (!bfd_link_pic (info))
 		    value -= tp_base;
 		  else
 		    {
@@ -4806,11 +4825,9 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		if (*name == '\0')
 		  name = bfd_section_name (input_bfd, sec);
 	      }
-	    if (! ((*info->callbacks->reloc_overflow)
-		   (info, (h ? &h->root.root : NULL), name, howto->name,
-		    (bfd_vma) 0, input_bfd, input_section,
-		    rel->r_offset)))
-	      ret_val = FALSE;
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root.root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  }
 	  break;
 
@@ -4992,7 +5009,7 @@ elf64_alpha_finish_dynamic_sections (bfd *output_bfd,
       bfd_vma plt_vma, gotplt_vma;
 
       splt = bfd_get_linker_section (dynobj, ".plt");
-      srelaplt = bfd_get_linker_section (output_bfd, ".rela.plt");
+      srelaplt = bfd_get_linker_section (dynobj, ".rela.plt");
       BFD_ASSERT (splt != NULL && sdyn != NULL);
 
       plt_vma = splt->output_section->vma + splt->output_offset;
@@ -5024,7 +5041,8 @@ elf64_alpha_finish_dynamic_sections (bfd *output_bfd,
 	      dyn.d_un.d_val = srelaplt ? srelaplt->size : 0;
 	      break;
 	    case DT_JMPREL:
-	      dyn.d_un.d_ptr = srelaplt ? srelaplt->vma : 0;
+	      dyn.d_un.d_ptr = srelaplt ? (srelaplt->output_section->vma
+					   + srelaplt->output_offset) : 0;
 	      break;
 
 	    case DT_RELASZ:
@@ -5518,6 +5536,8 @@ static const struct elf_size_info alpha_elf_size_info =
   elf64_alpha_add_symbol_hook
 #define elf_backend_relocs_compatible \
   _bfd_elf_relocs_compatible
+#define elf_backend_sort_relocs_p \
+  elf64_alpha_sort_relocs_p
 #define elf_backend_check_relocs \
   elf64_alpha_check_relocs
 #define elf_backend_create_dynamic_sections \

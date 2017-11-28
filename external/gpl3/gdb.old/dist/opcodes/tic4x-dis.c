@@ -1,6 +1,6 @@
 /* Print instructions for the Texas TMS320C[34]X, for GDB and GNU Binutils.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -120,7 +120,7 @@ tic4x_print_char (struct disassemble_info * info, char ch)
 }
 
 static int
-tic4x_print_str (struct disassemble_info *info, char *str)
+tic4x_print_str (struct disassemble_info *info, const char *str)
 {
   if (info != NULL)
     (*info->fprintf_func) (info->stream, "%s", str);
@@ -294,7 +294,7 @@ tic4x_print_indirect (struct disassemble_info *info,
   unsigned int aregno;
   unsigned int modn;
   unsigned int disp;
-  char *a;
+  const char *a;
 
   aregno = 0;
   modn = 0;
@@ -357,8 +357,8 @@ tic4x_print_op (struct disassemble_info *info,
 		unsigned long pc)
 {
   int val;
-  char *s;
-  char *parallel = NULL;
+  const char *s;
+  const char *parallel = NULL;
 
   /* Print instruction name.  */
   s = p->name;

@@ -1,5 +1,5 @@
 /* Types for Cpu tools GENerated simulators.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -25,10 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Miscellaneous cgen configury defined here as this file gets
    included soon enough.  */
-
-/* Indicate we support --profile-model.  */
-#undef SIM_HAVE_MODEL
-#define SIM_HAVE_MODEL
 
 /* Indicate we support --{profile,trace}-{range,function}.  */
 #undef SIM_HAVE_ADDR_RANGE

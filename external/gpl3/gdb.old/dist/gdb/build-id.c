@@ -1,6 +1,6 @@
 /* build-id-related functions.
 
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -75,10 +75,13 @@ build_id_to_debug_bfd (size_t build_id_len, const bfd_byte *build_id)
   struct cleanup *back_to;
   int ix;
   bfd *abfd = NULL;
+  int alloc_len;
 
   /* DEBUG_FILE_DIRECTORY/.build-id/ab/cdef */
-  link = alloca (strlen (debug_file_directory) + (sizeof "/.build-id/" - 1) + 1
-		 + 2 * build_id_len + (sizeof ".debug" - 1) + 1);
+  alloc_len = (strlen (debug_file_directory)
+	       + (sizeof "/.build-id/" - 1) + 1
+	       + 2 * build_id_len + (sizeof ".debug" - 1) + 1);
+  link = (char *) alloca (alloc_len);
 
   /* Keep backward compatibility so that DEBUG_FILE_DIRECTORY being "" will
      cause "/.build-id/..." lookups.  */

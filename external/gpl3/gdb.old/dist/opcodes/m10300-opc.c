@@ -1,5 +1,5 @@
 /* Assemble Matsushita MN10300 instructions.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -26,7 +26,7 @@
 
 const struct mn10300_operand mn10300_operands[] = {
 #define UNUSED	0
-  {0, 0, 0}, 
+  {0, 0, 0},
 
 /* dn register in the first register operand position.  */
 #define DN0      (UNUSED+1)
@@ -97,7 +97,7 @@ const struct mn10300_operand mn10300_operands[] = {
   {16, 0, MN10300_OPERAND_PROMOTE | MN10300_OPERAND_MEMADDR},
 
 /* 32bit immediate, high 16 bits in the main instruction
-   word, 16bits in the extension word. 
+   word, 16bits in the extension word.
 
    The "bits" field indicates how many bits are in the
    main instruction word for MN10300_OPERAND_SPLIT!  */
@@ -114,7 +114,7 @@ const struct mn10300_operand mn10300_operands[] = {
 
 /* 32bit immediate, high 16 bits in the main instruction
    word, 16bits in the extension word, low 16bits are left
-   shifted 8 places. 
+   shifted 8 places.
 
    The "bits" field indicates how many bits are in the
    main instruction word for MN10300_OPERAND_SPLIT!  */
@@ -131,7 +131,7 @@ const struct mn10300_operand mn10300_operands[] = {
 
 /* 32bit immediate, high 24 bits in the main instruction
    word, 8 in the extension word, low 8 bits are left
-   shifted 16 places. 
+   shifted 16 places.
 
    The "bits" field indicates how many bits are in the
    main instruction word for MN10300_OPERAND_SPLIT!  */
@@ -184,7 +184,7 @@ const struct mn10300_operand mn10300_operands[] = {
 
 /* Either an open paren or close paren.  */
 #define PAREN	(SIMM16+1)
-  {0, 0, MN10300_OPERAND_PAREN}, 
+  {0, 0, MN10300_OPERAND_PAREN},
 
 /* dn register that appears in the first and second register positions.  */
 #define DN01     (PAREN+1)
@@ -270,7 +270,7 @@ const struct mn10300_operand mn10300_operands[] = {
 
 /* + for autoincrement */
 #define PLUS	(XRM2+1)
-  {0, 0, MN10300_OPERAND_PLUS}, 
+  {0, 0, MN10300_OPERAND_PLUS},
 
 #define XRN02      (PLUS+1)
   {4, 0, MN10300_OPERAND_XRREG | MN10300_OPERAND_REPEATED},
@@ -420,12 +420,12 @@ const struct mn10300_operand mn10300_operands[] = {
 #define FDN3      (FDN2+1)
   {5, -12, MN10300_OPERAND_FDREG },
 
-} ; 
+} ;
 
-#define MEM(ADDR) PAREN, ADDR, PAREN 
-#define MEMINC(ADDR) PAREN, ADDR, PLUS, PAREN 
-#define MEMINC2(ADDR,INC) PAREN, ADDR, PLUS, INC, PAREN 
-#define MEM2(ADDR1,ADDR2) PAREN, ADDR1, ADDR2, PAREN 
+#define MEM(ADDR) PAREN, ADDR, PAREN
+#define MEMINC(ADDR) PAREN, ADDR, PLUS, PAREN
+#define MEMINC2(ADDR,INC) PAREN, ADDR, PLUS, INC, PAREN
+#define MEM2(ADDR1,ADDR2) PAREN, ADDR1, ADDR2, PAREN
 
 /* The opcode table.
 
@@ -1666,7 +1666,7 @@ const struct mn10300_opcode mn10300_opcodes[] = {
 { "leq_mov",	0xf7e00008,  0xffff000f,  0x22, FMT_D10, AM33,	 {MEMINC2 (RN4,SIMM4_2), RM6}},
 { "lne_mov",	0xf7e00009,  0xffff000f,  0x22, FMT_D10, AM33,	 {MEMINC2 (RN4,SIMM4_2), RM6}},
 { "lra_mov",	0xf7e0000a,  0xffff000f,  0x22, FMT_D10, AM33,	 {MEMINC2 (RN4,SIMM4_2), RM6}},
- 
+
 { 0, 0, 0, 0, 0, 0, {0}},
 
 } ;

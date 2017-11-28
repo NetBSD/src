@@ -1,5 +1,5 @@
 /* aarch64-asm.c -- AArch64 assembler support.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -667,6 +667,19 @@ aarch64_ins_prfop (const aarch64_operand *self ATTRIBUTE_UNUSED,
   return NULL;
 }
 
+/* Encode the hint number for instructions that alias HINT but take an
+   operand.  */
+
+const char *
+aarch64_ins_hint (const aarch64_operand *self ATTRIBUTE_UNUSED,
+		  const aarch64_opnd_info *info, aarch64_insn *code,
+		  const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  /* CRm:op2.  */
+  insert_fields (code, info->hint_option->value, 0, 2, FLD_op2, FLD_CRm);
+  return NULL;
+}
+
 /* Encode the extended register operand for e.g.
      STR <Qt>, [<Xn|SP>, <R><m>{, <extend> {<amount>}}].  */
 const char *
@@ -1039,6 +1052,37 @@ convert_bfi_to_bfm (aarch64_inst *inst)
 }
 
 /* The instruction written:
+     BFC <Xd>, #<lsb>, #<width>
+   is equivalent to:
+     BFM <Xd>, XZR, #((64-<lsb>)&0x3f), #(<width>-1).  */
+
+static void
+convert_bfc_to_bfm (aarch64_inst *inst)
+{
+  int64_t lsb, width;
+
+  /* Insert XZR.  */
+  copy_operand_info (inst, 3, 2);
+  copy_operand_info (inst, 2, 1);
+  copy_operand_info (inst, 2, 0);
+  inst->operands[1].reg.regno = 0x1f;
+
+  /* Convert the immedate operand.  */
+  lsb = inst->operands[2].imm.value;
+  width = inst->operands[3].imm.value;
+  if (inst->operands[2].qualifier == AARCH64_OPND_QLF_imm_0_31)
+    {
+      inst->operands[2].imm.value = (32 - lsb) & 0x1f;
+      inst->operands[3].imm.value = width - 1;
+    }
+  else
+    {
+      inst->operands[2].imm.value = (64 - lsb) & 0x3f;
+      inst->operands[3].imm.value = width - 1;
+    }
+}
+
+/* The instruction written:
      LSL <Xd>, <Xn>, #<shift>
    is equivalent to:
      UBFM <Xd>, <Xn>, #((64-<shift>)&0x3f), #(63-<shift>).  */
@@ -1170,6 +1214,9 @@ convert_to_real (aarch64_inst *inst, const aarch64_opcode *real)
     case OP_BFI:
     case OP_UBFIZ:
       convert_bfi_to_bfm (inst);
+      break;
+    case OP_BFC:
+      convert_bfc_to_bfm (inst);
       break;
     case OP_MOV_V:
       convert_mov_to_orr (inst);

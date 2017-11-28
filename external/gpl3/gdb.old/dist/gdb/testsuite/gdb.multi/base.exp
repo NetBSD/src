@@ -1,4 +1,4 @@
-# Copyright 2009-2015 Free Software Foundation, Inc.
+# Copyright 2009-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,36 +30,40 @@ set exec3 "goodbye"
 set srcfile3 ${exec3}.c
 set binfile3 [standard_output_file ${exec3}]
 
-if { [build_executable ${testfile}.exp ${exec1} "${srcfile1}" {debug nowarnings}] == -1 } {
+if { [build_executable ${testfile}.exp ${exec1} "${srcfile1}" {debug}] == -1 } {
     return -1
 }
 
-if { [build_executable ${testfile}.exp ${exec2} "${srcfile2}" {debug nowarnings}] == -1} {
+if { [build_executable ${testfile}.exp ${exec2} "${srcfile2}" {debug}] == -1} {
     return -1
 }
 
-if { [build_executable ${testfile}.exp ${exec3} "${srcfile3}" {debug nowarnings}] == -1 } {
+if { [build_executable ${testfile}.exp ${exec3} "${srcfile3}" {debug}] == -1 } {
     return -1
 }
 
 clean_restart ${exec1}
 
-# Add an empty inferior space, switch to it, and load a main
-# executable into it.
+gdb_test {print $_inferior} " = 1"
+
+# Add an empty inferior, switch to it, and load a main executable into
+# it.
 gdb_test "add-inferior" "Added inferior 2.*" "add empty inferior 2"
 gdb_test "inferior 2" "Switching to inferior 2.*" "switch to inferior 2"
 gdb_test "file ${binfile2}" ".*" "load ${exec2} file in inferior 2"
 
-# Add a new inferior space and load a main executable into it in one
+gdb_test {print $_inferior} " = 2" "print \$_inferior after switching"
+
+# Add a new inferior and load a main executable into it in one
 # command.
 gdb_test "add-inferior -exec ${binfile3}" \
     "Added inferior 3.*" \
     "add inferior 3 with -exec ${exec3}"
 
-# Check that we have multiple spaces.
+# Check that we have multiple inferiors.
 
 gdb_test "info inferiors" \
-    "Executable.*${exec3}.*${exec2}.*${exec1}.*"
+    "Executable.*${exec1}.*${exec2}.*${exec3}.*"
 
 # Test info inferiors with args
 
@@ -68,16 +72,16 @@ set see2 0
 set see3 0
 
 gdb_test_multiple "info inferior 2 3" "info inferior 2 3" {
-    -re ". 3 \[^\r\n\]*${exec3}" {
-	set see3 1
+    -re ". 1 \[^\r\n\]*${exec1}" {
+	set see1 1
 	exp_continue
     }
     -re ". 2 \[^\r\n\]*${exec2}" {
 	set see2 1
 	exp_continue
     }
-    -re ". 1 \[^\r\n\]*${exec1}" {
-	set see1 1
+    -re ". 3 \[^\r\n\]*${exec3}" {
+	set see3 1
 	exp_continue
     }
     -re "$gdb_prompt $" {
@@ -94,16 +98,16 @@ set see2 0
 set see3 0
 
 gdb_test_multiple "info inferior 1-2" "info inferior 1-2" {
-    -re ". 3 \[^\r\n\]*${exec3}" {
-	set see3 1
+    -re ". 1 \[^\r\n\]*${exec1}" {
+	set see1 1
 	exp_continue
     }
     -re ". 2 \[^\r\n\]*${exec2}" {
 	set see2 1
 	exp_continue
     }
-    -re ". 1 \[^\r\n\]*${exec1}" {
-	set see1 1
+    -re ". 3 \[^\r\n\]*${exec3}" {
+	set see3 1
 	exp_continue
     }
     -re "$gdb_prompt $" {

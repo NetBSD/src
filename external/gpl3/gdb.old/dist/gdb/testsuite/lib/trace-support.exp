@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2015 Free Software Foundation, Inc.
+# Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,37 @@
 # Support procedures for trace testing
 #
 
+
+#
+# Program counter / stack pointer / frame pointer for supported targets.
+# Used in many tests, kept here to avoid duplication.
+#
+
+if [is_amd64_regs_target] {
+    set fpreg "rbp"
+    set spreg "rsp"
+    set pcreg "rip"
+} elseif [is_x86_like_target] {
+    set fpreg "ebp"
+    set spreg "esp"
+    set pcreg "eip"
+} elseif [is_aarch64_target] {
+    set fpreg "x29"
+    set spreg "sp"
+    set pcreg "pc"
+} elseif [istarget "powerpc*-*-*"] {
+    set fpreg "r31"
+    set spreg "r1"
+    set pcreg "pc"
+} elseif { [istarget "s390*-*-*"] } {
+    set fpreg "r11"
+    set spreg "r15"
+    set pcreg "pc"
+} else {
+    set fpreg "fp"
+    set spreg "sp"
+    set pcreg "pc"
+}
 
 #
 # Procedure: gdb_target_supports_trace

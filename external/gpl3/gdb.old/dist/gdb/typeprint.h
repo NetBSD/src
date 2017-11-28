@@ -1,5 +1,5 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -73,5 +73,9 @@ void c_type_print_varspec_suffix (struct type *, struct ui_file *, int,
 
 void c_type_print_args (struct type *, struct ui_file *, int, enum language,
 			const struct type_print_options *);
+
+extern void val_print_not_allocated (struct ui_file *stream);
+
+extern void val_print_not_associated (struct ui_file *stream);
 
 #endif

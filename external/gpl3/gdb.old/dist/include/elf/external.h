@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -144,7 +144,8 @@ typedef struct {
 } Elf32_External_Chdr;
 
 typedef struct {
-  unsigned char	ch_type[8];		/* Type of compression */
+  unsigned char	ch_type[4];		/* Type of compression */
+  unsigned char	ch_reserved[4];		/* Padding */
   unsigned char	ch_size[8];		/* Size of uncompressed data in bytes */
   unsigned char	ch_addralign[8];	/* Alignment of uncompressed data  */
 } Elf64_External_Chdr;

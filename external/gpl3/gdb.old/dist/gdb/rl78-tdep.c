@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RL78 for GDB, the GNU debugger.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -851,7 +851,8 @@ opc_reg_to_gdb_regnum (int opcreg)
 static int
 rl78_get_opcode_byte (void *handle)
 {
-  struct rl78_get_opcode_byte_handle *opcdata = handle;
+  struct rl78_get_opcode_byte_handle *opcdata
+    = (struct rl78_get_opcode_byte_handle *) handle;
   int status;
   gdb_byte byte;
 
@@ -1104,10 +1105,11 @@ rl78_analyze_frame_prologue (struct frame_info *this_frame,
       if (!func_start)
 	stop_addr = func_start;
 
-      rl78_analyze_prologue (func_start, stop_addr, *this_prologue_cache);
+      rl78_analyze_prologue (func_start, stop_addr,
+			     (struct rl78_prologue *) *this_prologue_cache);
     }
 
-  return *this_prologue_cache;
+  return (struct rl78_prologue *) *this_prologue_cache;
 }
 
 /* Given a frame and a prologue cache, return this frame's base.  */
@@ -1215,9 +1217,7 @@ rl78_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
   else if (reg == 37)
     return RL78_PC_REGNUM;
   else
-    internal_error (__FILE__, __LINE__,
-                    _("Undefined dwarf2 register mapping of reg %d"),
-		    reg);
+    return -1;
 }
 
 /* Implement the `register_sim_regno' gdbarch method.  */
@@ -1396,7 +1396,7 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = (struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));
+  tdep = XNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
 

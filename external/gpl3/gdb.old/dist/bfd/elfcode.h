@@ -1,5 +1,5 @@
 /* ELF executable support for BFD.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -605,13 +605,10 @@ elf_object_p (bfd *abfd)
 
   if (i_ehdrp->e_shoff != 0)
     {
-      bfd_signed_vma where = i_ehdrp->e_shoff;
-
-      if (where != (file_ptr) where)
-	goto got_wrong_format_error;
+      file_ptr where = (file_ptr) i_ehdrp->e_shoff;
 
       /* Seek to the section header table in the file.  */
-      if (bfd_seek (abfd, (file_ptr) where, SEEK_SET) != 0)
+      if (bfd_seek (abfd, where, SEEK_SET) != 0)
 	goto got_no_match;
 
       /* Read the first section header at index 0, and convert to internal
@@ -657,19 +654,17 @@ elf_object_p (bfd *abfd)
 	    goto got_wrong_format_error;
 
 	  where += (i_ehdrp->e_shnum - 1) * sizeof (x_shdr);
-	  if (where != (file_ptr) where)
-	    goto got_wrong_format_error;
 	  if ((bfd_size_type) where <= i_ehdrp->e_shoff)
 	    goto got_wrong_format_error;
 
-	  if (bfd_seek (abfd, (file_ptr) where, SEEK_SET) != 0)
+	  if (bfd_seek (abfd, where, SEEK_SET) != 0)
 	    goto got_no_match;
 	  if (bfd_bread (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
 	    goto got_no_match;
 
 	  /* Back to where we were.  */
 	  where = i_ehdrp->e_shoff + sizeof (x_shdr);
-	  if (bfd_seek (abfd, (file_ptr) where, SEEK_SET) != 0)
+	  if (bfd_seek (abfd, where, SEEK_SET) != 0)
 	    goto got_no_match;
 	}
     }
@@ -681,6 +676,10 @@ elf_object_p (bfd *abfd)
       Elf_Internal_Shdr *shdrp;
       unsigned int num_sec;
 
+#ifndef BFD64
+      if (i_ehdrp->e_shnum > ((bfd_size_type) -1) / sizeof (*i_shdrp))
+	goto got_wrong_format_error;
+#endif
       amt = sizeof (*i_shdrp) * i_ehdrp->e_shnum;
       i_shdrp = (Elf_Internal_Shdr *) bfd_alloc (abfd, amt);
       if (!i_shdrp)
@@ -771,7 +770,11 @@ elf_object_p (bfd *abfd)
       Elf_Internal_Phdr *i_phdr;
       unsigned int i;
 
-      amt = i_ehdrp->e_phnum * sizeof (Elf_Internal_Phdr);
+#ifndef BFD64
+      if (i_ehdrp->e_phnum > ((bfd_size_type) -1) / sizeof (*i_phdr))
+	goto got_wrong_format_error;
+#endif
+      amt = i_ehdrp->e_phnum * sizeof (*i_phdr);
       elf_tdata (abfd)->phdr = (Elf_Internal_Phdr *) bfd_alloc (abfd, amt);
       if (elf_tdata (abfd)->phdr == NULL)
 	goto got_no_match;
@@ -1299,6 +1302,7 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
 	    case STT_COMMON:
 	      /* FIXME: Do we have to put the size field into the value field
 		 as we do with symbols in SHN_COMMON sections (see above) ?  */
+	      sym->symbol.flags |= BSF_ELF_COMMON;
 	      /* Fall through.  */
 	    case STT_OBJECT:
 	      sym->symbol.flags |= BSF_OBJECT;

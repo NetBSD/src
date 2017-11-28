@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,6 +44,7 @@
 #include <signal.h>
 #include "event-top.h"
 #include "infrun.h"
+#include "signals-state-save-restore.h"
 
 /* The selected interpreter.  This will be used as a set command
    variable, so it should always be malloc'ed - since
@@ -68,10 +69,6 @@ static int gdb_datadir_provided = 0;
    the possibly relocated path to python's lib directory.  */
 char *python_libdir = 0;
 
-struct ui_file *gdb_stdout;
-struct ui_file *gdb_stderr;
-struct ui_file *gdb_stdlog;
-struct ui_file *gdb_stdin;
 /* Target IO streams.  */
 struct ui_file *gdb_stdtargin;
 struct ui_file *gdb_stdtarg;
@@ -232,7 +229,7 @@ get_init_files (const char **system_gdbinit,
 	      for (p = tmp_sys_gdbinit; IS_DIR_SEPARATOR (*p); ++p)
 		continue;
 	      relocated_sysgdbinit = concat (gdb_datadir, SLASH_STRING, p,
-					     NULL);
+					     (char *) NULL);
 	      xfree (tmp_sys_gdbinit);
 	    }
 	  else
@@ -297,7 +294,9 @@ setup_alternate_signal_stack (void)
 #ifdef HAVE_SIGALTSTACK
   stack_t ss;
 
-  ss.ss_sp = xmalloc (SIGSTKSZ);
+  /* FreeBSD versions older than 11.0 use char * for ss_sp instead of
+     void *.  This cast works with both types.  */
+  ss.ss_sp = (char *) xmalloc (SIGSTKSZ);
   ss.ss_size = SIGSTKSZ;
   ss.ss_flags = 0;
 
@@ -311,11 +310,19 @@ setup_alternate_signal_stack (void)
 static int
 captured_command_loop (void *data)
 {
+  struct ui *ui = current_ui;
+
   /* Top-level execution commands can be run in the background from
      here on.  */
-  interpreter_async = 1;
+  current_ui->async = 1;
 
-  current_interp_command_loop ();
+  /* Give the interpreter a chance to print a prompt, if necessary  */
+  if (ui->prompt_state != PROMPT_BLOCKED)
+    interp_pre_command_loop (top_level_interpreter ());
+
+  /* Now it's time to start the event loop.  */
+  start_event_loop ();
+
   /* FIXME: cagney/1999-11-05: A correct command_loop() implementaton
      would clean things up (restoring the cleanup chain) to the state
      they were just prior to the call.  Technically, this means that
@@ -328,7 +335,7 @@ captured_command_loop (void *data)
      error) we try to quit.  If the quit is aborted, catch_errors()
      which called this catch the signal and restart the command
      loop.  */
-  quit_command (NULL, instream == stdin);
+  quit_command (NULL, ui->instream == ui->stdin_stream);
   return 1;
 }
 
@@ -363,7 +370,7 @@ catch_command_errors (catch_command_errors_ftype *command,
 {
   TRY
     {
-      int was_sync = sync_execution;
+      int was_sync = current_ui->prompt_state == PROMPT_BLOCKED;
 
       command (arg, from_tty);
 
@@ -390,7 +397,7 @@ catch_command_errors_const (catch_command_errors_const_ftype *command,
 {
   TRY
     {
-      int was_sync = sync_execution;
+      int was_sync = current_ui->prompt_state == PROMPT_BLOCKED;
 
       command (arg, from_tty);
 
@@ -437,7 +444,7 @@ DEF_VEC_O (cmdarg_s);
 static int
 captured_main (void *data)
 {
-  struct captured_main_args *context = data;
+  struct captured_main_args *context = (struct captured_main_args *) data;
   int argc = context->argc;
   char **argv = context->argv;
   static int quiet = 0;
@@ -499,16 +506,14 @@ captured_main (void *data)
 
   bfd_init ();
   notice_open_fds ();
+  save_original_signals_state ();
 
   make_cleanup (VEC_cleanup (cmdarg_s), &cmdarg_vec);
   dirsize = 1;
   dirarg = (char **) xmalloc (dirsize * sizeof (*dirarg));
   ndir = 0;
 
-  clear_quit_flag ();
-  saved_command_line = (char *) xmalloc (saved_command_line_size);
-  saved_command_line[0] = '\0';
-  instream = stdin;
+  saved_command_line = (char *) xstrdup ("");
 
 #ifdef __MINGW32__
   /* Ensure stderr is unbuffered.  A Cygwin pty or pipe is implemented
@@ -516,12 +521,9 @@ captured_main (void *data)
   setvbuf (stderr, NULL, _IONBF, BUFSIZ);
 #endif
 
-  gdb_stdout = stdio_fileopen (stdout);
-  gdb_stderr = stderr_fileopen ();
+  main_ui = new_ui (stdin, stdout, stderr);
+  current_ui = main_ui;
 
-  gdb_stdlog = gdb_stderr;	/* for moment */
-  gdb_stdtarg = gdb_stderr;	/* for moment */
-  gdb_stdin = stdio_fileopen (stdin);
   gdb_stdtargerr = gdb_stderr;	/* for moment */
   gdb_stdtargin = gdb_stdin;	/* for moment */
 
@@ -560,7 +562,7 @@ captured_main (void *data)
 #ifdef WITH_PYTHON_PATH
   {
     /* For later use in helping Python find itself.  */
-    char *tmp = concat (WITH_PYTHON_PATH, SLASH_STRING, "lib", NULL);
+    char *tmp = concat (WITH_PYTHON_PATH, SLASH_STRING, "lib", (char *) NULL);
 
     python_libdir = relocate_gdb_directory (tmp, PYTHON_PATH_RELOCATABLE);
     xfree (tmp);
@@ -963,17 +965,7 @@ captured_main (void *data)
 
   /* Install the default UI.  All the interpreters should have had a
      look at things by now.  Initialize the default interpreter.  */
-
-  {
-    /* Find it.  */
-    struct interp *interp = interp_lookup (interpreter_p);
-
-    if (interp == NULL)
-      error (_("Interpreter `%s' unrecognized"), interpreter_p);
-    /* Install it.  */
-    if (!interp_set (interp, 1))
-      error (_("Interpreter `%s' failed to initialize."), interpreter_p);
-  }
+  set_top_level_interpreter (interpreter_p);
 
   /* FIXME: cagney/2003-02-03: The big hack (part 2 of 2) that lets
      GDB retain the old MI1 interpreter startup behavior.  Output the
@@ -1162,7 +1154,16 @@ captured_main (void *data)
 int
 gdb_main (struct captured_main_args *args)
 {
-  catch_errors (captured_main, args, "", RETURN_MASK_ALL);
+  TRY
+    {
+      captured_main (args);
+    }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      exception_print (gdb_stderr, ex);
+    }
+  END_CATCH
+
   /* The only way to end up here is by an error (normal exit is
      handled by quit_force()), hence always return an error status.  */
   return 1;

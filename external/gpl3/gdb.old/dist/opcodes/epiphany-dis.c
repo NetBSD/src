@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -69,15 +69,16 @@ epiphany_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
   int status;
 
   info->bytes_per_chunk = 2;
+  info->bytes_per_line = 4;
 
   /* Attempt to read the base part of the insn.  */
-  info->bytes_per_line = buflen = cd->base_insn_bitsize / 8;
+  buflen = cd->base_insn_bitsize / 8;
   status = (*info->read_memory_func) (pc, buf, buflen, info);
 
   /* Try again with the minimum part, if min < base.  */
   if (status != 0 && (cd->min_insn_bitsize < cd->base_insn_bitsize))
     {
-      info->bytes_per_line = buflen = cd->min_insn_bitsize / 8;
+      buflen = cd->min_insn_bitsize / 8;
       status = (*info->read_memory_func) (pc, buf, buflen, info);
     }
 
@@ -279,7 +280,7 @@ epiphany_cgen_print_operand (CGEN_CPU_DESC cd,
   }
 }
 
-cgen_print_fn * const epiphany_cgen_print_handlers[] = 
+cgen_print_fn * const epiphany_cgen_print_handlers[] =
 {
   print_insn_normal,
 };
@@ -469,7 +470,7 @@ print_insn (CGEN_CPU_DESC cd,
       int length;
       unsigned long insn_value_cropped;
 
-#ifdef CGEN_VALIDATE_INSN_SUPPORTED 
+#ifdef CGEN_VALIDATE_INSN_SUPPORTED
       /* Not needed as insn shouldn't be in hash lists if not supported.  */
       /* Supported by this cpu?  */
       if (! epiphany_cgen_insn_supported (cd, insn))
@@ -487,7 +488,7 @@ print_insn (CGEN_CPU_DESC cd,
          relevant part from the buffer. */
       if ((unsigned) (CGEN_INSN_BITSIZE (insn) / 8) < buflen &&
 	  (unsigned) (CGEN_INSN_BITSIZE (insn) / 8) <= sizeof (unsigned long))
-	insn_value_cropped = bfd_get_bits (buf, CGEN_INSN_BITSIZE (insn), 
+	insn_value_cropped = bfd_get_bits (buf, CGEN_INSN_BITSIZE (insn),
 					   info->endian == BFD_ENDIAN_BIG);
       else
 	insn_value_cropped = insn_value;
@@ -606,7 +607,7 @@ print_insn_epiphany (bfd_vma pc, disassemble_info *info)
   arch = info->arch;
   if (arch == bfd_arch_unknown)
     arch = CGEN_BFD_ARCH;
-   
+
   /* There's no standard way to compute the machine or isa number
      so we leave it to the target.  */
 #ifdef CGEN_COMPUTE_MACH
@@ -647,7 +648,7 @@ print_insn_epiphany (bfd_vma pc, disassemble_info *info)
 	      break;
 	    }
 	}
-    } 
+    }
 
   /* If we haven't initialized yet, initialize the opcode table.  */
   if (! cd)

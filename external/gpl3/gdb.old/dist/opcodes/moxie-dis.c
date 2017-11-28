@@ -1,5 +1,5 @@
 /* Disassemble moxie instructions.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -210,7 +210,7 @@ print_insn_moxie (bfd_vma addr, struct disassemble_info * info)
 	{
 	case MOXIE_F3_PCREL:
 	  fpr (stream, "%s\t", opcode->name);
-	  info->print_address_func ((bfd_vma) (addr + INST2OFFSET(iword) + 2), 
+	  info->print_address_func ((bfd_vma) (addr + INST2OFFSET(iword) + 2),
 				    info);
 	  break;
         case MOXIE_BAD:

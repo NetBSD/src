@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -684,7 +684,6 @@ sparc_skip_stack_check (const CORE_ADDR start_pc)
 {
   CORE_ADDR pc = start_pc;
   unsigned long insn;
-  int offset_stack_checking_sequence = 0;
   int probing_loop = 0;
 
   /* With GCC, all stack checking sequences begin with the same two
@@ -1100,7 +1099,7 @@ sparc_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct sparc_frame_cache *cache;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_alloc_frame_cache ();
   *this_cache = cache;
@@ -1158,7 +1157,7 @@ sparc32_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct symbol *sym;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_frame_cache (this_frame, this_cache);
 
@@ -1605,7 +1604,7 @@ sparc_step_trap (struct frame_info *frame, unsigned long insn)
   return 0;
 }
 
-int
+static int
 sparc_software_single_step (struct frame_info *frame)
 {
   struct gdbarch *arch = get_frame_arch (frame);
@@ -1895,7 +1894,7 @@ sparc32_supply_gregset (const struct sparc_gregmap *gregmap,
 			struct regcache *regcache,
 			int regnum, const void *gregs)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   gdb_byte zero[4] = { 0 };
   int i;
 
@@ -1960,7 +1959,7 @@ sparc32_collect_gregset (const struct sparc_gregmap *gregmap,
 			 const struct regcache *regcache,
 			 int regnum, void *gregs)
 {
-  gdb_byte *regs = gregs;
+  gdb_byte *regs = (gdb_byte *) gregs;
   int i;
 
   if (regnum == SPARC32_PSR_REGNUM || regnum == -1)
@@ -2015,7 +2014,7 @@ sparc32_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 			 struct regcache *regcache,
 			 int regnum, const void *fpregs)
 {
-  const gdb_byte *regs = fpregs;
+  const gdb_byte *regs = (const gdb_byte *) fpregs;
   int i;
 
   for (i = 0; i < 32; i++)
@@ -2035,7 +2034,7 @@ sparc32_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 			  const struct regcache *regcache,
 			  int regnum, void *fpregs)
 {
-  gdb_byte *regs = fpregs;
+  gdb_byte *regs = (gdb_byte *) fpregs;
   int i;
 
   for (i = 0; i < 32; i++)

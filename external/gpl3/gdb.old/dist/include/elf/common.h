@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -194,7 +194,7 @@
 #define EM_MN10200	 90	/* Matsushita MN10200 */
 #define EM_PJ		 91	/* picoJava */
 #define EM_OR1K		 92	/* OpenRISC 1000 32-bit embedded processor */
-#define EM_ARC_A5	 93	/* ARC Cores Tangent-A5 */
+#define EM_ARC_COMPACT	 93	/* ARC International ARCompact processor */
 #define EM_XTENSA	 94	/* Tensilica Xtensa Architecture */
 #define EM_VIDEOCORE	 95	/* Alphamosaic VideoCore processor */
 #define EM_TMM_GPP	 96	/* Thompson Multimedia General Purpose Processor */
@@ -295,6 +295,7 @@
 #define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
 #define EM_CUDA		190	/* NVIDIA CUDA architecture */
 #define EM_TILEGX	191	/* Tilera TILE-Gx multicore architecture family */
+#define EM_ARC_COMPACT2 195	/* Synopsys ARCompact V2 */
 #define EM_RL78		197	/* Renesas RL78 family.  */
 #define EM_78K0R	199	/* Renesas 78K0R.  */
 #define EM_INTEL205	205	/* Reserved by Intel */
@@ -594,6 +595,20 @@
 /* Note segment for SystemTap probes.  */
 #define NT_STAPSDT	3
 
+/* Note segments for core files on FreeBSD systems.  Note name is
+   "FreeBSD".  */
+
+#define	NT_FREEBSD_THRMISC	7	/* Thread miscellaneous info. */
+#define	NT_FREEBSD_PROCSTAT_PROC	8	/* Procstat proc data. */
+#define	NT_FREEBSD_PROCSTAT_FILES	9	/* Procstat files data. */
+#define	NT_FREEBSD_PROCSTAT_VMMAP	10	/* Procstat vmmap data. */
+#define	NT_FREEBSD_PROCSTAT_GROUPS	11	/* Procstat groups data. */
+#define	NT_FREEBSD_PROCSTAT_UMASK	12	/* Procstat umask data. */
+#define	NT_FREEBSD_PROCSTAT_RLIMIT	13	/* Procstat rlimit data. */
+#define	NT_FREEBSD_PROCSTAT_OSREL	14	/* Procstat osreldate data. */
+#define	NT_FREEBSD_PROCSTAT_PSSTRINGS	15	/* Procstat ps_strings data. */
+#define	NT_FREEBSD_PROCSTAT_AUXV	16	/* Procstat auxv data. */
+
 /* Note segments for core files on NetBSD systems.  Note name
    must start with "NetBSD-CORE".  */
 
@@ -642,6 +657,7 @@
 /* Values for NetBSD .note.netbsd.ident notes.  Note name is "NetBSD".  */
 
 #define NT_NETBSD_IDENT		1
+#define NT_NETBSD_MARCH		5
 
 /* Values for OpenBSD .note.openbsd.ident notes.  Note name is "OpenBSD".  */
 
@@ -868,6 +884,8 @@
 #define	DF_1_SYMINTPOSE	0x00800000
 #define	DF_1_GLOBAUDIT	0x01000000
 #define	DF_1_SINGLETON	0x02000000
+#define	DF_1_STUB	0x04000000
+#define	DF_1_PIE	0x08000000
 
 /* Flag values for the DT_FLAGS entry.	*/
 #define DF_ORIGIN	(1 << 0)
@@ -995,6 +1013,16 @@
 #define AT_L2_CACHESHAPE  36
 #define AT_L3_CACHESHAPE  37
 
+#define AT_FREEBSD_EXECPATH     15      /* Path to the executable. */
+#define AT_FREEBSD_CANARY       16      /* Canary for SSP. */
+#define AT_FREEBSD_CANARYLEN    17      /* Length of the canary. */
+#define AT_FREEBSD_OSRELDATE    18      /* OSRELDATE. */
+#define AT_FREEBSD_NCPUS        19      /* Number of CPUs. */
+#define AT_FREEBSD_PAGESIZES    20      /* Pagesizes. */
+#define AT_FREEBSD_PAGESIZESLEN 21      /* Number of pagesizes. */
+#define AT_FREEBSD_TIMEKEEP     22      /* Pointer to timehands. */
+#define AT_FREEBSD_STACKPROT    23      /* Initial stack protection. */
+
 #define AT_SUN_UID      2000    /* Effective user ID.  */
 #define AT_SUN_RUID     2001    /* Real user ID.  */
 #define AT_SUN_GID      2002    /* Effective group ID.  */
@@ -1004,6 +1032,7 @@
 #define AT_SUN_LDNAME   2006    /* String giving name of dynamic linker.  */
 #define AT_SUN_LPAGESZ  2007    /* Large pagesize.   */
 #define AT_SUN_PLATFORM 2008    /* Platform name string.  */
+#undef AT_SUN_HWCAP
 #define AT_SUN_HWCAP    2009	/* Machine dependent hints about
 				   processor capabilities.  */
 #define AT_SUN_IFLUSH   2010    /* Should flush icache? */
