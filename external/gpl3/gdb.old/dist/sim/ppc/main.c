@@ -270,13 +270,13 @@ main(int argc, char **argv)
   device *root = psim_tree();
 
   /* parse the arguments */
-  argv = psim_options(root, argv + 1);
+  argv = psim_options (root, argv + 1, SIM_OPEN_STANDALONE);
   if (argv[0] == NULL) {
     if (ppc_trace[trace_opts]) {
       print_options ();
       return 0;
     } else {
-      psim_usage(0, 0);
+      psim_usage (0, 0, SIM_OPEN_STANDALONE);
     }
   }
   name_of_file = argv[0];

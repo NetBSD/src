@@ -43,9 +43,6 @@ m4_define([SIM_ARCH], [
 if test "${enable_sim}" != no; then
    sinclude(configure.tgt)
    AC_CONFIG_SUBDIRS(testsuite)
-   if test "$sim_common" = yes; then
-      AC_CONFIG_SUBDIRS(common)
-   fi
    if test "$sim_igen" = yes; then
       AC_CONFIG_SUBDIRS(igen)
    fi

@@ -1,6 +1,6 @@
 /* General utility routines for GDB/Python.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 static void
 py_decref (void *p)
 {
-  PyObject *py = p;
+  PyObject *py = (PyObject *) p;
 
   Py_DECREF (py);
 }
@@ -50,7 +50,7 @@ make_cleanup_py_decref (PyObject *py)
 static void
 py_xdecref (void *p)
 {
-  PyObject *py = p;
+  PyObject *py = (PyObject *) p;
 
   Py_XDECREF (py);
 }
@@ -219,6 +219,14 @@ python_string_to_host_string (PyObject *obj)
   result = unicode_to_encoded_string (str, host_charset ());
   Py_DECREF (str);
   return result;
+}
+
+/* Convert a host string to a python string.  */
+
+PyObject *
+host_string_to_python_string (const char *str)
+{
+  return PyString_Decode (str, strlen (str), host_charset (), NULL);
 }
 
 /* Return true if OBJ is a Python string or unicode object, false
@@ -420,7 +428,7 @@ PyObject *
 gdb_py_generic_dict (PyObject *self, void *closure)
 {
   PyObject *result;
-  PyTypeObject *type_obj = closure;
+  PyTypeObject *type_obj = (PyTypeObject *) closure;
   char *raw_ptr;
 
   raw_ptr = (char *) self + type_obj->tp_dictoffset;

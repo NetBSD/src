@@ -1,5 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -51,65 +51,10 @@
 #define parse_type(ps) builtin_type (parse_gdbarch (ps))
 #define parse_m2_type(ps) builtin_m2_type (parse_gdbarch (ps))
 
-/* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
-   as well as gratuitiously global symbol names, so we can have multiple
-   yacc generated parsers in gdb.  Note that these are only the variables
-   produced by yacc.  If other parser generators (bison, byacc, etc) produce
-   additional global names that conflict at link time, then those parser
-   generators need to be fixed instead of adding those names to this list.  */
-
-#define	yymaxdepth m2_maxdepth
-#define	yyparse	m2_parse_internal
-#define	yylex	m2_lex
-#define	yyerror	m2_error
-#define	yylval	m2_lval
-#define	yychar	m2_char
-#define	yydebug	m2_debug
-#define	yypact	m2_pact
-#define	yyr1	m2_r1
-#define	yyr2	m2_r2
-#define	yydef	m2_def
-#define	yychk	m2_chk
-#define	yypgo	m2_pgo
-#define	yyact	m2_act
-#define	yyexca	m2_exca
-#define	yyerrflag m2_errflag
-#define	yynerrs	m2_nerrs
-#define	yyps	m2_ps
-#define	yypv	m2_pv
-#define	yys	m2_s
-#define	yy_yys	m2_yys
-#define	yystate	m2_state
-#define	yytmp	m2_tmp
-#define	yyv	m2_v
-#define	yy_yyv	m2_yyv
-#define	yyval	m2_val
-#define	yylloc	m2_lloc
-#define	yyreds	m2_reds		/* With YYDEBUG defined */
-#define	yytoks	m2_toks		/* With YYDEBUG defined */
-#define yyname	m2_name		/* With YYDEBUG defined */
-#define yyrule	m2_rule		/* With YYDEBUG defined */
-#define yylhs	m2_yylhs
-#define yylen	m2_yylen
-#define yydefred m2_yydefred
-#define yydgoto	m2_yydgoto
-#define yysindex m2_yysindex
-#define yyrindex m2_yyrindex
-#define yygindex m2_yygindex
-#define yytable	 m2_yytable
-#define yycheck	 m2_yycheck
-#define yyss	m2_yyss
-#define yysslim	m2_yysslim
-#define yyssp	m2_yyssp
-#define yystacksize m2_yystacksize
-#define yyvs	m2_yyvs
-#define yyvsp	m2_yyvsp
-
-#ifndef YYDEBUG
-#define	YYDEBUG 1		/* Default to yydebug support */
-#endif
-
-#define YYFPRINTF parser_fprintf
+/* Remap normal yacc parser interface names (yyparse, yylex, yyerror,
+   etc).  */
+#define GDB_YY_REMAP_PREFIX m2_
+#include "yy-remap.h"
 
 /* The state of the parser, used internally when we are parsing the
    expression.  */
@@ -564,7 +509,7 @@ fblock	:	BLOCKNAME
 			{ struct symbol *sym
 			    = lookup_symbol (copy_name ($1),
 					     expression_context_block,
-					     VAR_DOMAIN, 0);
+					     VAR_DOMAIN, 0).symbol;
 			  $$ = sym;}
 	;
 			     
@@ -573,7 +518,7 @@ fblock	:	BLOCKNAME
 fblock	:	block COLONCOLON BLOCKNAME
 			{ struct symbol *tem
 			    = lookup_symbol (copy_name ($3), $1,
-					     VAR_DOMAIN, 0);
+					     VAR_DOMAIN, 0).symbol;
 			  if (!tem || SYMBOL_CLASS (tem) != LOC_BLOCK)
 			    error (_("No function \"%s\" in specified context."),
 				   copy_name ($3));
@@ -595,52 +540,50 @@ variable:	INTERNAL_VAR
 
 /* GDB scope operator */
 variable:	block COLONCOLON NAME
-			{ struct symbol *sym;
-			  sym = lookup_symbol (copy_name ($3), $1,
-					       VAR_DOMAIN, 0);
-			  if (sym == 0)
+			{ struct block_symbol sym
+			    = lookup_symbol (copy_name ($3), $1,
+					     VAR_DOMAIN, 0);
+
+			  if (sym.symbol == 0)
 			    error (_("No symbol \"%s\" in specified context."),
 				   copy_name ($3));
-			  if (symbol_read_needs_frame (sym))
+			  if (symbol_read_needs_frame (sym.symbol))
 			    {
 			      if (innermost_block == 0
-				  || contained_in (block_found,
+				  || contained_in (sym.block,
 						   innermost_block))
-				innermost_block = block_found;
+				innermost_block = sym.block;
 			    }
 
 			  write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			  /* block_found is set by lookup_symbol.  */
-			  write_exp_elt_block (pstate, block_found);
-			  write_exp_elt_sym (pstate, sym);
+			  write_exp_elt_block (pstate, sym.block);
+			  write_exp_elt_sym (pstate, sym.symbol);
 			  write_exp_elt_opcode (pstate, OP_VAR_VALUE); }
 	;
 
 /* Base case for variables.  */
 variable:	NAME
-			{ struct symbol *sym;
+			{ struct block_symbol sym;
 			  struct field_of_this_result is_a_field_of_this;
 
- 			  sym = lookup_symbol (copy_name ($1),
+			  sym = lookup_symbol (copy_name ($1),
 					       expression_context_block,
 					       VAR_DOMAIN,
 					       &is_a_field_of_this);
-			  if (sym)
+
+			  if (sym.symbol)
 			    {
-			      if (symbol_read_needs_frame (sym))
+			      if (symbol_read_needs_frame (sym.symbol))
 				{
 				  if (innermost_block == 0 ||
-				      contained_in (block_found, 
+				      contained_in (sym.block,
 						    innermost_block))
-				    innermost_block = block_found;
+				    innermost_block = sym.block;
 				}
 
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			      /* We want to use the selected frame, not
-				 another more inner frame which happens to
-				 be in the same block.  */
-			      write_exp_elt_block (pstate, NULL);
-			      write_exp_elt_sym (pstate, sym);
+			      write_exp_elt_block (pstate, sym.block);
+			      write_exp_elt_sym (pstate, sym.symbol);
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			    }
 			  else
@@ -1028,7 +971,7 @@ yylex (void)
 
     if (lookup_symtab (tmp))
       return BLOCKNAME;
-    sym = lookup_symbol (tmp, expression_context_block, VAR_DOMAIN, 0);
+    sym = lookup_symbol (tmp, expression_context_block, VAR_DOMAIN, 0).symbol;
     if (sym && SYMBOL_CLASS (sym) == LOC_BLOCK)
       return BLOCKNAME;
     if (lookup_typename (parse_language (pstate), parse_gdbarch (pstate),

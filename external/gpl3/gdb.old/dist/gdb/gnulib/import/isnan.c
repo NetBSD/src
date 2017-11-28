@@ -1,5 +1,5 @@
 /* Test for NaN that does not need libm.
-   Copyright (C) 2007-2012 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -79,10 +79,21 @@ extern int rpl_isnanf (float x);
   ((sizeof (DOUBLE) + sizeof (unsigned int) - 1) / sizeof (unsigned int))
 typedef union { DOUBLE value; unsigned int word[NWORDS]; } memory_double;
 
+/* Most hosts nowadays use IEEE floating point, so they use IEC 60559
+   representations, have infinities and NaNs, and do not trap on
+   exceptions.  Define IEEE_FLOATING_POINT if this host is one of the
+   typical ones.  The C11 macro __STDC_IEC_559__ is close to what is
+   wanted here, but is not quite right because this file does not require
+   all the features of C11 Annex F (and does not require C11 at all,
+   for that matter).  */
+
+#define IEEE_FLOATING_POINT (FLT_RADIX == 2 && FLT_MANT_DIG == 24 \
+                             && FLT_MIN_EXP == -125 && FLT_MAX_EXP == 128)
+
 int
 FUNC (DOUBLE x)
 {
-#ifdef KNOWN_EXPBIT0_LOCATION
+#if defined KNOWN_EXPBIT0_LOCATION && IEEE_FLOATING_POINT
 # if defined USE_LONG_DOUBLE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   /* Special CPU dependent code is needed to treat bit patterns outside the
      IEEE 754 specification (such as Pseudo-NaNs, Pseudo-Infinities,
@@ -153,8 +164,9 @@ FUNC (DOUBLE x)
   }
 # endif
 #else
-  /* The configuration did not find sufficient information.  Give up about
-     the signaling NaNs, handle only the quiet NaNs.  */
+  /* The configuration did not find sufficient information, or does
+     not use IEEE floating point.  Give up about the signaling NaNs;
+     handle only the quiet NaNs.  */
   if (x == x)
     {
 # if defined USE_LONG_DOUBLE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE

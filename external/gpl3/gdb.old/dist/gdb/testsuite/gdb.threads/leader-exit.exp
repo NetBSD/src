@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2015 Free Software Foundation, Inc.
+# Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if [target_info exists gdb,nointerrupts] {
+    verbose "Skipping leader-exit.exp because of nointerrupts."
+    return
+}
 
 # Exit of the thread group leader should not break GDB.
 
@@ -50,7 +55,7 @@ send_gdb "\003"
 
 set test "caught interrupt"
 gdb_test_multiple "" $test {
-    -re "Program received signal SIGINT.*$gdb_prompt $" {
+    -re "Thread .* received signal SIGINT.*$gdb_prompt $" {
 	pass $test
     }
 }

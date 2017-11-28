@@ -17,6 +17,23 @@ initialize_tdesc_aarch64 (void)
   set_tdesc_architecture (result, bfd_scan_arch ("aarch64"));
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.aarch64.core");
+  type = tdesc_create_flags (feature, "cpsr_flags", 4);
+  tdesc_add_flag (type, 0, "SP");
+  tdesc_add_flag (type, 1, "");
+  tdesc_add_bitfield (type, "EL", 2, 3);
+  tdesc_add_flag (type, 4, "nRW");
+  tdesc_add_flag (type, 5, "");
+  tdesc_add_flag (type, 6, "F");
+  tdesc_add_flag (type, 7, "I");
+  tdesc_add_flag (type, 8, "A");
+  tdesc_add_flag (type, 9, "D");
+  tdesc_add_flag (type, 20, "IL");
+  tdesc_add_flag (type, 21, "SS");
+  tdesc_add_flag (type, 28, "V");
+  tdesc_add_flag (type, 29, "C");
+  tdesc_add_flag (type, 30, "Z");
+  tdesc_add_flag (type, 31, "N");
+
   tdesc_create_reg (feature, "x0", 0, 1, NULL, 64, "int");
   tdesc_create_reg (feature, "x1", 1, 1, NULL, 64, "int");
   tdesc_create_reg (feature, "x2", 2, 1, NULL, 64, "int");
@@ -50,7 +67,7 @@ initialize_tdesc_aarch64 (void)
   tdesc_create_reg (feature, "x30", 30, 1, NULL, 64, "int");
   tdesc_create_reg (feature, "sp", 31, 1, NULL, 64, "data_ptr");
   tdesc_create_reg (feature, "pc", 32, 1, NULL, 64, "code_ptr");
-  tdesc_create_reg (feature, "cpsr", 33, 1, NULL, 32, "int");
+  tdesc_create_reg (feature, "cpsr", 33, 1, NULL, 32, "cpsr_flags");
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.aarch64.fpu");
   field_type = tdesc_named_type (feature, "ieee_double");

@@ -3,6 +3,6 @@
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
 #include "version.h"
-const char version[] = "7.10.1";
+const char version[] = "7.12";
 const char host_name[] = "sparc64--netbsd";
 const char target_name[] = "sparc64--netbsd";

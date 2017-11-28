@@ -1,6 +1,6 @@
 /* General Compile and inject code
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "interps.h"
+#include "top.h"
 #include "ui-out.h"
 #include "command.h"
 #include "cli/cli-script.h"
@@ -91,8 +91,8 @@ compile_file_command (char *arg, int from_tty)
   char *buffer;
   struct cleanup *cleanup;
 
-  cleanup = make_cleanup_restore_integer (&interpreter_async);
-  interpreter_async = 0;
+  cleanup = make_cleanup_restore_integer (&current_ui->async);
+  current_ui->async = 0;
 
   /* Check the user did not just <enter> after command.  */
   if (arg == NULL)
@@ -133,8 +133,8 @@ compile_code_command (char *arg, int from_tty)
   struct cleanup *cleanup;
   enum compile_i_scope_types scope = COMPILE_I_SIMPLE_SCOPE;
 
-  cleanup = make_cleanup_restore_integer (&interpreter_async);
-  interpreter_async = 0;
+  cleanup = make_cleanup_restore_integer (&current_ui->async);
+  current_ui->async = 0;
 
   if (arg != NULL && check_raw_argument (&arg))
     {
@@ -169,7 +169,7 @@ compile_code_command (char *arg, int from_tty)
 void
 compile_print_value (struct value *val, void *data_voidp)
 {
-  const struct format_data *fmtp = data_voidp;
+  const struct format_data *fmtp = (const struct format_data *) data_voidp;
 
   print_value (val, fmtp);
 }
@@ -187,8 +187,8 @@ compile_print_command (char *arg_param, int from_tty)
   enum compile_i_scope_types scope = COMPILE_I_PRINT_ADDRESS_SCOPE;
   struct format_data fmt;
 
-  cleanup = make_cleanup_restore_integer (&interpreter_async);
-  interpreter_async = 0;
+  cleanup = make_cleanup_restore_integer (&current_ui->async);
+  current_ui->async = 0;
 
   /* Passing &FMT as SCOPE_DATA is safe as do_module_cleanup will not
      touch the stale pointer if compile_object_run has already quit.  */
@@ -214,7 +214,7 @@ compile_print_command (char *arg_param, int from_tty)
 static void
 do_rmdir (void *arg)
 {
-  const char *dir = arg;
+  const char *dir = (const char *) arg;
   char *zap;
   int wstat;
 
@@ -338,7 +338,7 @@ append_args (int *argcp, char ***argvp, int argc, char **argv)
 {
   int argi;
 
-  *argvp = xrealloc (*argvp, (*argcp + argc + 1) * sizeof (**argvp));
+  *argvp = XRESIZEVEC (char *, *argvp, (*argcp + argc + 1));
 
   for (argi = 0; argi < argc; argi++)
     (*argvp)[(*argcp)++] = xstrdup (argv[argi]);
@@ -431,7 +431,7 @@ get_args (const struct compile_instance *compiler, struct gdbarch *gdbarch,
 static void
 cleanup_compile_instance (void *arg)
 {
-  struct compile_instance *inst = arg;
+  struct compile_instance *inst = (struct compile_instance *) arg;
 
   inst->destroy (inst);
 }
@@ -441,7 +441,7 @@ cleanup_compile_instance (void *arg)
 static void
 cleanup_unlink_file (void *arg)
 {
-  const char *filename = arg;
+  const char *filename = (const char *) arg;
 
   unlink (filename);
 }
@@ -491,7 +491,8 @@ compile_to_object (struct command_line *cmd, const char *cmd_string,
 
   /* Set up instance and context for the compiler.  */
   if (current_language->la_get_compile_instance == NULL)
-    error (_("No compiler support for this language."));
+    error (_("No compiler support for language %s."),
+	   current_language->la_name);
   compiler = current_language->la_get_compile_instance ();
   cleanup = make_cleanup (cleanup_compile_instance, compiler);
 

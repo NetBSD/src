@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,7 +45,7 @@ update_debug_registers_callback (struct inferior_list_entry *entry,
 				 void *pid_p)
 {
   struct thread_info *thr = (struct thread_info *) entry;
-  win32_thread_info *th = inferior_target_data (thr);
+  win32_thread_info *th = (win32_thread_info *) inferior_target_data (thr);
   int pid = *(int *) pid_p;
 
   /* Only update the threads of this process.  */
@@ -89,7 +89,8 @@ x86_dr_low_set_control (unsigned long control)
 static DWORD64
 win32_get_current_dr (int dr)
 {
-  win32_thread_info *th = inferior_target_data (current_thread);
+  win32_thread_info *th
+    = (win32_thread_info *) inferior_target_data (current_thread);
 
   win32_require_context (th);
 

@@ -1,3 +1,281 @@
+2016-08-13  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/20438
+	* machs.h (MODEL_TYPE, MACH_ATTR, BFIN_INSN_*): Move ...
+	* arch.h: ... to this new header file.
+	* sim-main.h (SIM_CPU): Delete.
+	Include arch.h before sim-base.h, and move sim-base.h before
+	bfin-sim.h.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (bfin_syscall): Remove first const from argv.
+	(sim_open): Mark argv const.
+	(simple_env): Remove first const.
+	(bfin_user_init): Remove first const from argv and and env
+	(bfin_os_init): Remove first const from argv.
+	(sim_create_inferior): Mark argv and env const.
+	Drop casts from bfin_user_init and bfin_os_init calls.
+
+2016-01-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (step_once): Call TRACE_DISASM.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32shift_0): Change MIN to min.
+	* dv-bfin_dma.c (bfin_dma_hw_event_callback): Likewise.
+	* dv-bfin_ebiu_amc.c (bfin_ebiu_amc_write_amgctl): Likewise.
+	* dv-bfin_emac.c (bfin_emac_dma_read_buffer): Change MAX to max.
+	* dv-bfin_mmu.c (_mmu_check_addr): Change MIN to min.
+	* dv-bfin_trace.c (bfin_trace_io_read_buffer): Likewise.
+	* interp.c (bfin_fdpic_load): Change MAX to max.
+	(bfin_fdpic_load): Likewise.
+	* sim-main.h (MIN, MAX): Delete.
+	(CLAMP): Change MIN to min and MAX to max.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* TODO: Delete file.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (count_argc): Delete.
+	(bfin_syscall): Change count_argc to countargv.
+	(bfin_user_init): Likewise.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change LITTLE_ENDIAN to
+	LITTLE.
+	* configure: Regenerate.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* devices.c (bfin_mmr_invalid): Delete cpu arg and add missing arg.
+	Add cpu, rw, and reason local vars.  Rewrite error messages.  Add
+	more todo comments.
+	(dv_bfin_mmr_invalid): Update bfin_mmr_invalid call.
+	(dv_bfin_mmr_require): Likewise.  Change return to bool.  Check
+	alignment of the addr variable.
+	(bfin_mmr_check, dv_bfin_mmr_check, device_io_read_buffer,
+	device_io_write_buffer): Delete.
+	(dv_bfin_mmr_require_16_32): Define.
+	* devices.h (dv_bfin_mmr_require): Change return to bool.
+	(dv_bfin_mmr_check): Delete.
+	(dv_bfin_mmr_require_16_32): Define.
+	Add a few comments.
+	* dv-bfin_cec.c (bfin_cec_io_write_buffer): Call
+	dv_bfin_mmr_require_32.
+	(bfin_cec_io_read_buffer): Likewise.
+	* dv-bfin_ctimer.c (bfin_ctimer_io_write_buffer): Likewise.
+	(bfin_ctimer_io_read_buffer): Likewise.
+	* dv-bfin_dma.c (bfin_dma_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32.  Return 0 in the default case.
+	(bfin_dma_io_read_buffer): Call dv_bfin_mmr_require_16_32.
+	* dv-bfin_ebiu_amc.c (bf50x_ebiu_amc_io_write_buffer): Return 0
+	when dv_bfin_mmr_require_16 fails and in the default case.
+	(bf53x_ebiu_amc_io_write_buffer): Likewise.
+	(bf54x_ebiu_amc_io_write_buffer): Likewise.
+	(bfin_ebiu_amc_io_write_buffer): Call dv_bfin_mmr_require_16_32.
+	(bf50x_ebiu_amc_io_read_buffer): Return 0 when
+	dv_bfin_mmr_require_16 fails and in the default case.
+	(bf53x_ebiu_amc_io_read_buffer): Likewise.
+	(bf54x_ebiu_amc_io_read_buffer): Likewise.
+	(bfin_ebiu_amc_io_read_buffer): Call dv_bfin_mmr_require_16_32.
+	* dv-bfin_ebiu_ddrc.c (bfin_ebiu_ddrc_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32.  Return 0 when dv_bfin_mmr_require_16 or
+	dv_bfin_mmr_require_32 fails.
+	(bfin_ebiu_ddrc_io_read_buffer): Likewise.
+	* dv-bfin_ebiu_sdc.c (bfin_ebiu_sdc_io_write_buffer): Likewise.
+	(bfin_ebiu_sdc_io_read_buffer): Likewise.
+	* dv-bfin_emac.c (bfin_emac_io_write_buffer): Return 0 when
+	dv_bfin_mmr_require_32 fails and in the default case.
+	(bfin_emac_io_read_buffer): Likewise.
+	* dv-bfin_eppi.c (bfin_eppi_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32 and return 0 when dv_bfin_mmr_require_16
+	or dv_bfin_mmr_require_32 fails and in the default case.
+	(bfin_eppi_io_read_buffer): Likewise.
+	* dv-bfin_evt.c (bfin_evt_io_write_buffer): Call
+	dv_bfin_mmr_require_32.
+	(bfin_evt_io_read_buffer): Likewise.
+	* dv-bfin_gpio.c (bfin_gpio_io_write_buffer): Move call to
+	dv_bfin_mmr_require_16 to earlier in the func.  Return 0 when it
+	fails and in the default case.
+	(bfin_gpio_io_read_buffer): Likewise.
+	* dv-bfin_gpio2.c (bfin_gpio_io_write_buffer): Move call to
+	dv_bfin_mmr_require_16 and dv_bfin_mmr_require_32 to earlier in the
+	func.  Return 0 when it fails and in the default case.
+	(bfin_gpio_io_read_buffer): Likewise.
+	* dv-bfin_gptimer.c (bfin_gptimer_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32.  Return 0 when dv_bfin_mmr_require_16 or
+	dv_bfin_mmr_require_32 fails and in the default case.
+	(bfin_gptimer_io_read_buffer): Likewise.
+	* dv-bfin_jtag.c (bfin_jtag_io_write_buffer): Call
+	dv_bfin_mmr_require_32.  Return 0 in the default case.
+	(bfin_jtag_io_read_buffer): Likewise.  Delete while(1) loop.
+	* dv-bfin_mmu.c (bfin_mmu_io_write_buffer): Call
+	dv_bfin_mmr_require_32.  Return 0 in the default case.
+	(bfin_mmu_io_read_buffer): Likewise.  Delete while(1) loop.
+	* dv-bfin_nfc.c (bfin_nfc_io_write_buffer): Move call to
+	dv_bfin_mmr_require_16 to earlier in the func.  Return 0 when it
+	fails and in the default case.
+	(bfin_nfc_io_read_buffer): Likewise.
+	* dv-bfin_otp.c (bfin_otp_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32.  Return 0 when dv_bfin_mmr_require_16
+	or dv_bfin_mmr_require_32 fails and in the default case.
+	(bfin_otp_io_read_buffer): Likewise.
+	* dv-bfin_pfmon.c (bfin_pfmon_io_write_buffer): Call
+	dv_bfin_mmr_require_32.  Return 0 in the default case.
+	(bfin_pfmon_io_read_buffer): Likewise.  Delete while(1) loop.
+	* dv-bfin_pint.c (bfin_pint_io_write_buffer): Move call to
+	dv_bfin_mmr_require_32 to earlier in the func.  Return 0 when it
+	fails and in the default case.
+	(bfin_pint_io_read_buffer): Likewise.
+	* dv-bfin_pll.c (bfin_pll_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32.  Return 0 when dv_bfin_mmr_require_16
+	fails.
+	(bfin_pll_io_read_buffer): Likewise.
+	* dv-bfin_ppi.c (bfin_ppi_io_write_buffer): Move call to
+	dv_bfin_mmr_require_16 to earlier in the func.  Return 0 when it
+	fails and in the default case.
+	9bfin_ppi_io_read_buffer): Likewise.
+	* dv-bfin_rtc.c (bfin_rtc_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32.
+	(bfin_rtc_io_read_buffer): Likewise.
+	* dv-bfin_sic.c (bfin_sic_52x_io_write_buffer): Likewise.
+	(bfin_sic_52x_io_read_buffer, bfin_sic_537_io_write_buffer,
+	bfin_sic_537_io_read_buffer, bfin_sic_54x_io_write_buffer,
+	bfin_sic_54x_io_read_buffer, bfin_sic_561_io_write_buffer,
+	bfin_sic_561_io_read_buffer): Likewise.
+	* dv-bfin_spi.c (bfin_spi_io_write_buffer): Move call to
+	dv_bfin_mmr_require_16 to earlier in the func.  Return 0 when it
+	fails and in the default case.
+	(bfin_spi_io_read_buffer): Likewise.
+	* dv-bfin_trace.c (bfin_trace_io_write_buffer): Call
+	dv_bfin_mmr_require_32.  Return 0 in the default case.
+	(bfin_trace_io_read_buffer): Likewise.  Delete while(1) loop.
+	* dv-bfin_twi.c (bfin_twi_io_write_buffer): Move call to
+	dv_bfin_mmr_require_16 to earlier in the func.  Return 0 when it
+	fails and in the default case.
+	(bfin_twi_io_read_buffer): Likewise.
+	* dv-bfin_uart.c (bfin_uart_io_write_buffer): Likewise.
+	(bfin_uart_io_read_buffer): Likewise.
+	* dv-bfin_uart2.c (bfin_uart_io_write_buffer): Likewise.
+	(bfin_uart_io_read_buffer): Likewise.
+	* dv-bfin_wdog.c (bfin_wdog_io_write_buffer): Call
+	dv_bfin_mmr_require_16_32.
+	(bfin_wdog_io_read_buffer): Likewise.  Return 0 when
+	dv_bfin_mmr_require_16 fails.
+	* dv-bfin_wp.c (bfin_wp_io_write_buffer): Call
+	dv_bfin_mmr_require_32.  Return 0 in the default case.
+	(bfin_wp_io_read_buffer): Likewise.  Delete while(1) loop.
+	* tconfig.h: Delete file.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_LDST_0): Add 4th element to posts array.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_create_inferior): Update comment and argv check.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-model.o.
+	* tconfig.h (SIM_HAVE_MODEL): Delete.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* machs.c: Rename MACH to SIM_MACH, MACH_IMP_PROPERTIES to
+	SIM_MACH_IMP_PROPERTIES, and MODEL to SIM_MODEL.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* devices.c (device_error): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HANDLES_LMA): Delete.
+
+2015-11-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (WITH_MODULO_MEMORY): Delete.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Delete.
+
+2015-10-11  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/18407
+	* bfin-sim.c (decode_dsp32shiftimm_0): Call ashiftrt when count
+	is less than 0.
+
 2015-06-24  Mike Frysinger  <vapier@gentoo.org>
 
 	* interp.c (trace_register): Delete.

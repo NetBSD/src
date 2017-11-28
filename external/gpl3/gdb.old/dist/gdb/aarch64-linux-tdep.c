@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -21,6 +21,7 @@
 #include "defs.h"
 
 #include "gdbarch.h"
+#include "arch-utils.h"
 #include "glibc-tdep.h"
 #include "linux-tdep.h"
 #include "aarch64-tdep.h"
@@ -142,7 +143,6 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
-  struct gdbarch *gdbarch = get_frame_arch (this_frame);
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, AARCH64_SP_REGNUM);
   CORE_ADDR sigcontext_addr =
     sp
@@ -279,7 +279,7 @@ aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
 	return 0;
 
       len = tmp - start;
-      regname = alloca (len + 2);
+      regname = (char *) alloca (len + 2);
 
       strncpy (regname, start, len);
       regname[len] = '\0';
@@ -408,12 +408,12 @@ enum aarch64_syscall {
   aarch64_sys_ioprio_set = 30,
   aarch64_sys_ioprio_get = 31,
   aarch64_sys_flock = 32,
-  aarch64_sys_mknod = 33,
-  aarch64_sys_mkdir = 34,
-  aarch64_sys_unlink = 35,
-  aarch64_sys_symlink = 36,
-  aarch64_sys_link = 37,
-  aarch64_sys_rename = 38,
+  aarch64_sys_mknodat = 33,
+  aarch64_sys_mkdirat = 34,
+  aarch64_sys_unlinkat = 35,
+  aarch64_sys_symlinkat = 36,
+  aarch64_sys_linkat = 37,
+  aarch64_sys_renameat = 38,
   aarch64_sys_umount2 = 39,
   aarch64_sys_mount = 40,
   aarch64_sys_pivot_root = 41,
@@ -423,7 +423,7 @@ enum aarch64_syscall {
   aarch64_sys_truncate = 45,
   aarch64_sys_ftruncate = 46,
   aarch64_sys_fallocate = 47,
-  aarch64_sys_faccess = 48,
+  aarch64_sys_faccessat = 48,
   aarch64_sys_chdir = 49,
   aarch64_sys_fchdir = 50,
   aarch64_sys_chroot = 51,
@@ -431,7 +431,7 @@ enum aarch64_syscall {
   aarch64_sys_fchmodat = 53,
   aarch64_sys_fchownat = 54,
   aarch64_sys_fchown = 55,
-  aarch64_sys_open = 56,
+  aarch64_sys_openat = 56,
   aarch64_sys_close = 57,
   aarch64_sys_vhangup = 58,
   aarch64_sys_pipe2 = 59,
@@ -453,8 +453,8 @@ enum aarch64_syscall {
   aarch64_sys_vmsplice = 75,
   aarch64_sys_splice = 76,
   aarch64_sys_tee = 77,
-  aarch64_sys_readlink = 78,
-  aarch64_sys_fstatat = 79,
+  aarch64_sys_readlinkat = 78,
+  aarch64_sys_newfstatat = 79,
   aarch64_sys_fstat = 80,
   aarch64_sys_sync = 81,
   aarch64_sys_fsync = 82,
@@ -647,6 +647,9 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
 #define SYSCALL_MAP(SYSCALL) case aarch64_sys_##SYSCALL: \
   return gdb_sys_##SYSCALL
 
+#define UNSUPPORTED_SYSCALL_MAP(SYSCALL) case aarch64_sys_##SYSCALL: \
+  return gdb_sys_no_syscall
+
   switch (syscall_number)
     {
       SYSCALL_MAP (io_setup);
@@ -669,33 +672,45 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       SYSCALL_MAP (fremovexattr);
       SYSCALL_MAP (getcwd);
       SYSCALL_MAP (lookup_dcookie);
-
-    case aarch64_sys_epoll_create1:
-      return gdb_sys_epoll_create;
-
+      SYSCALL_MAP (eventfd2);
+      SYSCALL_MAP (epoll_create1);
       SYSCALL_MAP (epoll_ctl);
       SYSCALL_MAP (epoll_pwait);
       SYSCALL_MAP (dup);
+      SYSCALL_MAP (dup3);
       SYSCALL_MAP (fcntl);
+      SYSCALL_MAP (inotify_init1);
       SYSCALL_MAP (inotify_add_watch);
       SYSCALL_MAP (inotify_rm_watch);
       SYSCALL_MAP (ioctl);
       SYSCALL_MAP (ioprio_set);
       SYSCALL_MAP (ioprio_get);
       SYSCALL_MAP (flock);
+      SYSCALL_MAP (mknodat);
+      SYSCALL_MAP (mkdirat);
+      SYSCALL_MAP (unlinkat);
+      SYSCALL_MAP (symlinkat);
+      SYSCALL_MAP (linkat);
+      SYSCALL_MAP (renameat);
+      UNSUPPORTED_SYSCALL_MAP (umount2);
       SYSCALL_MAP (mount);
+      SYSCALL_MAP (pivot_root);
       SYSCALL_MAP (nfsservctl);
       SYSCALL_MAP (statfs);
       SYSCALL_MAP (truncate);
       SYSCALL_MAP (ftruncate);
+      SYSCALL_MAP (fallocate);
+      SYSCALL_MAP (faccessat);
       SYSCALL_MAP (fchdir);
       SYSCALL_MAP (chroot);
       SYSCALL_MAP (fchmod);
       SYSCALL_MAP (fchmodat);
       SYSCALL_MAP (fchownat);
       SYSCALL_MAP (fchown);
+      SYSCALL_MAP (openat);
       SYSCALL_MAP (close);
       SYSCALL_MAP (vhangup);
+      SYSCALL_MAP (pipe2);
       SYSCALL_MAP (quotactl);
       SYSCALL_MAP (getdents64);
       SYSCALL_MAP (lseek);
@@ -705,17 +720,27 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       SYSCALL_MAP (writev);
       SYSCALL_MAP (pread64);
       SYSCALL_MAP (pwrite64);
+      UNSUPPORTED_SYSCALL_MAP (preadv);
+      UNSUPPORTED_SYSCALL_MAP (pwritev);
       SYSCALL_MAP (sendfile);
       SYSCALL_MAP (pselect6);
       SYSCALL_MAP (ppoll);
+      UNSUPPORTED_SYSCALL_MAP (signalfd4);
       SYSCALL_MAP (vmsplice);
       SYSCALL_MAP (splice);
       SYSCALL_MAP (tee);
+      SYSCALL_MAP (readlinkat);
+      SYSCALL_MAP (newfstatat);
+
       SYSCALL_MAP (fstat);
       SYSCALL_MAP (sync);
       SYSCALL_MAP (fsync);
       SYSCALL_MAP (fdatasync);
       SYSCALL_MAP (sync_file_range);
+      UNSUPPORTED_SYSCALL_MAP (timerfd_create);
+      UNSUPPORTED_SYSCALL_MAP (timerfd_settime);
+      UNSUPPORTED_SYSCALL_MAP (timerfd_gettime);
+      UNSUPPORTED_SYSCALL_MAP (utimensat);
       SYSCALL_MAP (acct);
       SYSCALL_MAP (capget);
       SYSCALL_MAP (capset);
@@ -795,6 +820,7 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       SYSCALL_MAP (getrusage);
       SYSCALL_MAP (umask);
       SYSCALL_MAP (prctl);
+      SYSCALL_MAP (getcpu);
       SYSCALL_MAP (gettimeofday);
       SYSCALL_MAP (settimeofday);
       SYSCALL_MAP (adjtimex);
@@ -869,9 +895,30 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       SYSCALL_MAP (set_mempolicy);
       SYSCALL_MAP (migrate_pages);
       SYSCALL_MAP (move_pages);
+      UNSUPPORTED_SYSCALL_MAP (rt_tgsigqueueinfo);
+      UNSUPPORTED_SYSCALL_MAP (perf_event_open);
+      UNSUPPORTED_SYSCALL_MAP (accept4);
+      UNSUPPORTED_SYSCALL_MAP (recvmmsg);
 
+      SYSCALL_MAP (wait4);
+
+      UNSUPPORTED_SYSCALL_MAP (prlimit64);
+      UNSUPPORTED_SYSCALL_MAP (fanotify_init);
+      UNSUPPORTED_SYSCALL_MAP (fanotify_mark);
+      UNSUPPORTED_SYSCALL_MAP (name_to_handle_at);
+      UNSUPPORTED_SYSCALL_MAP (open_by_handle_at);
+      UNSUPPORTED_SYSCALL_MAP (clock_adjtime);
+      UNSUPPORTED_SYSCALL_MAP (syncfs);
+      UNSUPPORTED_SYSCALL_MAP (setns);
+      UNSUPPORTED_SYSCALL_MAP (sendmmsg);
+      UNSUPPORTED_SYSCALL_MAP (process_vm_readv);
+      UNSUPPORTED_SYSCALL_MAP (process_vm_writev);
+      UNSUPPORTED_SYSCALL_MAP (kcmp);
+      UNSUPPORTED_SYSCALL_MAP (finit_module);
+      UNSUPPORTED_SYSCALL_MAP (sched_setattr);
+      UNSUPPORTED_SYSCALL_MAP (sched_getattr);
   default:
-    return -1;
+    return gdb_sys_no_syscall;
   }
 }
 
@@ -901,7 +948,8 @@ aarch64_linux_syscall_record (struct regcache *regcache,
   int ret = 0;
   enum gdb_syscall syscall_gdb;
 
-  syscall_gdb = aarch64_canonicalize_syscall (svc_number);
+  syscall_gdb =
+    aarch64_canonicalize_syscall ((enum aarch64_syscall) svc_number);
 
   if (syscall_gdb < 0)
     {
@@ -961,6 +1009,7 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Shared library handling.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
+  set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
 
   tramp_frame_prepend_unwinder (gdbarch, &aarch64_linux_rt_sigframe);
 
@@ -997,8 +1046,8 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   aarch64_linux_record_tdep.size_flock = 32;
   aarch64_linux_record_tdep.size_oldold_utsname = 45;
   aarch64_linux_record_tdep.size_ustat = 32;
-  aarch64_linux_record_tdep.size_old_sigaction = 152;
-  aarch64_linux_record_tdep.size_old_sigset_t = 128;
+  aarch64_linux_record_tdep.size_old_sigaction = 32;
+  aarch64_linux_record_tdep.size_old_sigset_t = 8;
   aarch64_linux_record_tdep.size_rlimit = 16;
   aarch64_linux_record_tdep.size_rusage = 144;
   aarch64_linux_record_tdep.size_timeval = 16;
@@ -1006,8 +1055,7 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   aarch64_linux_record_tdep.size_old_gid_t = 2;
   aarch64_linux_record_tdep.size_old_uid_t = 2;
   aarch64_linux_record_tdep.size_fd_set = 128;
-  aarch64_linux_record_tdep.size_dirent = 280;
-  aarch64_linux_record_tdep.size_dirent64 = 280;
+  aarch64_linux_record_tdep.size_old_dirent = 280;
   aarch64_linux_record_tdep.size_statfs = 120;
   aarch64_linux_record_tdep.size_statfs64 = 120;
   aarch64_linux_record_tdep.size_sockaddr = 16;
@@ -1034,8 +1082,8 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   aarch64_linux_record_tdep.size_NFS_FHSIZE = 32;
   aarch64_linux_record_tdep.size_knfsd_fh = 132;
   aarch64_linux_record_tdep.size_TASK_COMM_LEN = 16;
-  aarch64_linux_record_tdep.size_sigaction = 152;
-  aarch64_linux_record_tdep.size_sigset_t = 128;
+  aarch64_linux_record_tdep.size_sigaction = 32;
+  aarch64_linux_record_tdep.size_sigset_t = 8;
   aarch64_linux_record_tdep.size_siginfo_t = 128;
   aarch64_linux_record_tdep.size_cap_user_data_t = 8;
   aarch64_linux_record_tdep.size_stack_t = 24;
@@ -1051,8 +1099,7 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   aarch64_linux_record_tdep.size_epoll_event = 12;
   aarch64_linux_record_tdep.size_itimerspec = 32;
   aarch64_linux_record_tdep.size_mq_attr = 64;
-  aarch64_linux_record_tdep.size_siginfo = 128;
-  aarch64_linux_record_tdep.size_termios = 60;
+  aarch64_linux_record_tdep.size_termios = 36;
   aarch64_linux_record_tdep.size_termios2 = 44;
   aarch64_linux_record_tdep.size_pid_t = 4;
   aarch64_linux_record_tdep.size_winsize = 8;
@@ -1061,6 +1108,7 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   aarch64_linux_record_tdep.size_hayes_esp_config = 12;
   aarch64_linux_record_tdep.size_size_t = 8;
   aarch64_linux_record_tdep.size_iovec = 16;
+  aarch64_linux_record_tdep.size_time_t = 8;
 
   /* These values are the second argument of system call "sys_ioctl".
      They are obtained from Linux Kernel source.  */
@@ -1150,6 +1198,17 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* `catch syscall' */
   set_xml_syscall_file_name (gdbarch, "syscalls/aarch64-linux.xml");
   set_gdbarch_get_syscall_number (gdbarch, aarch64_linux_get_syscall_number);
+
+  /* Displaced stepping.  */
+  set_gdbarch_max_insn_length (gdbarch, 4 * DISPLACED_MODIFIED_INSNS);
+  set_gdbarch_displaced_step_copy_insn (gdbarch,
+					aarch64_displaced_step_copy_insn);
+  set_gdbarch_displaced_step_fixup (gdbarch, aarch64_displaced_step_fixup);
+  set_gdbarch_displaced_step_free_closure (gdbarch,
+					   simple_displaced_step_free_closure);
+  set_gdbarch_displaced_step_location (gdbarch, linux_displaced_step_location);
+  set_gdbarch_displaced_step_hw_singlestep (gdbarch,
+					    aarch64_displaced_step_hw_singlestep);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

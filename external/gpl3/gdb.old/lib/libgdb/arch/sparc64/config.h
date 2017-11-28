@@ -70,6 +70,9 @@
 /* Define to the default OS ABI for this configuration. */
 /* #undef GDB_OSABI_DEFAULT */
 
+/* Define if self-testing features should be enabled */
+/* #undef GDB_SELF_TEST */
+
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
 
@@ -219,7 +222,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if your system has the kinfo_getvmmap function. */
-/* #undef HAVE_KINFO_GETVMMAP */
+#define HAVE_KINFO_GETVMMAP 1
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #define HAVE_LANGINFO_CODESET 1
@@ -455,6 +458,12 @@
 /* Define to 1 if your system has struct lwp. */
 #define HAVE_STRUCT_LWP 1
 
+/* Define to 1 if `struct ptrace_lwpinfo' is a member of `pl_tdname'. */
+/* #undef HAVE_STRUCT_PTRACE_LWPINFO_PL_TDNAME */
+
+/* Define to 1 if `struct ptrace_lwpinfo' is a member of `pl_syscall_code'. */
+/* #undef HAVE_STRUCT_PTRACE_LWPINFO_PL_SYSCALL_CODE */
+
 /* Define to 1 if your system has struct reg in <machine/reg.h>. */
 #define HAVE_STRUCT_REG 1
 
@@ -553,9 +562,6 @@
 
 /* Define if using Solaris thread debugging. */
 /* #undef HAVE_THREAD_DB_LIB */
-
-/* Define if you support the tkill syscall. */
-/* #undef HAVE_TKILL_SYSCALL */
 
 /* Define to 1 if you have the `ttrace' function. */
 /* #undef HAVE_TTRACE */
@@ -658,6 +664,9 @@
    assorted other type changes. */
 /* #undef PROC_SERVICE_IS_OLD */
 
+/* Define to the type of arg 1 for ptrace. */
+#define PTRACE_TYPE_ARG1 int
+
 /* Define to the type of arg 3 for ptrace. */
 #define PTRACE_TYPE_ARG3 void *
 
@@ -678,9 +687,6 @@
 
 /* Bug reporting address */
 #define REPORT_BUGS_TO "<http://www.gnu.org/software/gdb/bugs/>"
-
-/* Define as the return type of signal handlers (`int' or `void'). */
-#define RETSIGTYPE void
 
 /* Define to 1 if the "%Lg" format works to scan long doubles. */
 /* #undef SCANF_HAS_LONG_DOUBLE */
@@ -765,6 +771,9 @@
    Windows, we use the Windows API when building for MinGW, but the POSIX API
    when building for Cygwin. */
 /* #undef USE_WIN32API */
+
+/* Define if the PPC simulator is being linked in. */
+/* #undef WITH_PPC_SIM */
 
 /* Define if --with-python provides a path, either directly or via
    python-config.py --exec-prefix. */

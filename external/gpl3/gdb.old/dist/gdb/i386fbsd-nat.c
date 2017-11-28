@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,7 @@
 #include "fbsd-nat.h"
 #include "i386-tdep.h"
 #include "x86-nat.h"
+#include "x86bsd-nat.h"
 #include "i386bsd-nat.h"
 
 /* Resume execution of the inferior process.  If STEP is nonzero,
@@ -132,13 +133,13 @@ i386fbsd_read_description (struct target_ops *ops)
       if (ptrace (PT_GETXSTATE_INFO, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
 	{
-	  i386bsd_xsave_len = info.xsave_len;
+	  x86bsd_xsave_len = info.xsave_len;
 	  xcr0 = info.xsave_mask;
 	}
       xsave_probed = 1;
     }
 
-  if (i386bsd_xsave_len != 0)
+  if (x86bsd_xsave_len != 0)
     {
       return i386_target_description (xcr0);
     }
@@ -157,19 +158,6 @@ _initialize_i386fbsd_nat (void)
 
   /* Add some extra features to the common *BSD/i386 target.  */
   t = i386bsd_target ();
-
-#ifdef HAVE_PT_GETDBREGS
-
-  x86_use_watchpoints (t);
-
-  x86_dr_low.set_control = i386bsd_dr_set_control;
-  x86_dr_low.set_addr = i386bsd_dr_set_addr;
-  x86_dr_low.get_addr = i386bsd_dr_get_addr;
-  x86_dr_low.get_status = i386bsd_dr_get_status;
-  x86_dr_low.get_control = i386bsd_dr_get_control;
-  x86_set_debug_register_length (4);
-
-#endif /* HAVE_PT_GETDBREGS */
 
 #ifdef PT_GETXSTATE_INFO
   t->to_read_description = i386fbsd_read_description;

@@ -1,5 +1,5 @@
 /* BFD back-end for raw ARM a.out binaries.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,7 +34,7 @@
    : ((N_MAGIC (x) != ZMAGIC)					\
       ? (bfd_vma) 0						\
       : ((N_SHARED_LIB (x))					\
-	 ? ((x).a_entry & ~(bfd_vma) (TARGET_PAGE_SIZE - 1))	\
+	 ? ((x)->a_entry & ~(bfd_vma) (TARGET_PAGE_SIZE - 1))	\
 	 : (bfd_vma) TEXT_START_ADDR)))
 
 #define TEXT_START_ADDR 0x8000
@@ -43,10 +43,10 @@
 #define DEFAULT_ARCH bfd_arch_arm
 
 #define MY(OP) CONCAT2 (arm_aout_,OP)
-#define N_BADMAG(x) ((((x).a_info & ~007200) != ZMAGIC) && \
-                     (((x).a_info & ~006000) != OMAGIC) && \
-                     ((x).a_info != NMAGIC))
-#define N_MAGIC(x) ((x).a_info & ~07200)
+#define N_BADMAG(x) ((((x)->a_info & ~007200) != ZMAGIC) && \
+                     (((x)->a_info & ~006000) != OMAGIC) && \
+                     ((x)->a_info != NMAGIC))
+#define N_MAGIC(x) ((x)->a_info & ~07200)
 
 #define MY_bfd_reloc_type_lookup arm_aout_bfd_reloc_type_lookup
 #define MY_bfd_reloc_name_lookup arm_aout_bfd_reloc_name_lookup
