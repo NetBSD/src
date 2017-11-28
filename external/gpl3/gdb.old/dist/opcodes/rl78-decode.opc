@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -208,7 +208,7 @@ rl78_decode_opcode (unsigned long pc AU,
 
 /** 0000 1110			add	%0, %ea1			*/
   ID(add); DR(A); SM(HL, IMMU(1)); Fzac;
-  
+
 /** 0110 0001 1000 0010		add	%0, %e1				*/
   ID(add); DR(A); SM2(HL, C, 0); Fzac;
 
@@ -614,10 +614,10 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1001 1001			mov	%e0, %1				*/
   ID(mov); DM(DE, 0); SR(A);
 
-/** 1100 1010			mov	%e0, #%1			*/
+/** 1100 1010			mov	%ea0, #%1			*/
   ID(mov); DM(DE, IMMU(1)); SC(IMMU(1));
 
-/** 1001 1010			mov	%e0, %1				*/
+/** 1001 1010			mov	%ea0, %1				*/
   ID(mov); DM(DE, IMMU(1)); SR(A);
 
 /** 1001 1011			mov	%e0, %1				*/
@@ -635,10 +635,10 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 0110 0001 1111 1001		mov	%e0, %1				*/
   ID(mov); DM2(HL, C, 0); SR(A);
 
-/** 1100 1000			mov	%0, #%1				*/
+/** 1100 1000			mov	%a0, #%1			*/
   ID(mov); DM(SP, IMMU(1)); SC(IMMU(1));
 
-/** 1001 1000			mov	%0, %1				*/
+/** 1001 1000			mov	%a0, %1				*/
   ID(mov); DM(SP, IMMU(1)); SR(A);
 
 /** 1000 1111			mov	%0, %e!1			*/
@@ -647,7 +647,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1000 1001			mov	%0, %e1				*/
   ID(mov); DR(A); SM(DE, 0);
 
-/** 1000 1010			mov	%0, %e1				*/
+/** 1000 1010			mov	%0, %ea1			*/
   ID(mov); DR(A); SM(DE, IMMU(1));
 
 /** 1000 1011			mov	%0, %e1				*/
@@ -662,7 +662,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 0110 0001 1110 1001		mov	%0, %e1				*/
   ID(mov); DR(A); SM2(HL, C, 0);
 
-/** 1000 1000			mov	%0, %e1				*/
+/** 1000 1000			mov	%0, %ea1			*/
   ID(mov); DR(A); SM(SP, IMMU(1));
 
 /** 0101 0reg			mov	%0, #%1				*/
@@ -714,28 +714,28 @@ rl78_decode_opcode (unsigned long pc AU,
   ID(mov); DR(CS); SR(A);
 
 /** 0100 0001			mov	%0, #%1				*/
-  ID(mov); DR(ES); SC(IMMU(1));	
+  ID(mov); DR(ES); SC(IMMU(1));
 
 /** 1001 1110 1111 1101		mov	%0, %1				*/
-  ID(mov); DR(ES); SR(A);	
+  ID(mov); DR(ES); SR(A);
 
 /** 0110 0001 1011 1000		mov	%0, %1				*/
-  ID(mov); DR(ES); SM(None, SADDR);	
+  ID(mov); DR(ES); SM(None, SADDR);
 
 /** 0001 1001			mov	%e0, #%1			*/
-  ID(mov); DM(B, IMMU(2)); SC(IMMU(1));	
+  ID(mov); DM(B, IMMU(2)); SC(IMMU(1));
 
 /** 0001 1000			mov	%e0, %1				*/
-  ID(mov); DM(B, IMMU(2)); SR(A);	
+  ID(mov); DM(B, IMMU(2)); SR(A);
 
 /** 0011 1001			mov	%e0, #%1			*/
-  ID(mov); DM(BC, IMMU(2)); SC(IMMU(1));	
+  ID(mov); DM(BC, IMMU(2)); SC(IMMU(1));
 
 /** 0100 1000			mov	%e0, %1				*/
-  ID(mov); DM(BC, IMMU(2)); SR(A);	
+  ID(mov); DM(BC, IMMU(2)); SR(A);
 
 /** 0011 1000			mov	%e0, #%1			*/
-  ID(mov); DM(C, IMMU(2)); SC(IMMU(1));	
+  ID(mov); DM(C, IMMU(2)); SC(IMMU(1));
 
 /** 0010 1000			mov	%e0, %1				*/
   ID(mov); DM(C, IMMU(2)); SR(A);
@@ -776,7 +776,7 @@ rl78_decode_opcode (unsigned long pc AU,
 	break;
       }
 
-/** 1001 1110			mov	%0, %1				*/
+/** 1001 1110			mov	%s0, %1				*/
   ID(mov); DM(None, SFR); SR(A);
 
 /*----------------------------------------------------------------------*/
@@ -818,7 +818,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1011 1001			movw	%e0, %1				*/
   ID(mov); W(); DM(DE, 0); SR(AX);
 
-/** 1011 1010			movw	%e0, %1				*/
+/** 1011 1010			movw	%ea0, %1				*/
   ID(mov); W(); DM(DE, IMMU(1)); SR(AX);
 
 /** 1011 1011			movw	%e0, %1				*/
@@ -827,7 +827,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1011 1100			movw	%ea0, %1			*/
   ID(mov); W(); DM(HL, IMMU(1)); SR(AX);
 
-/** 1011 1000			movw	%0, %1				*/
+/** 1011 1000			movw	%a0, %1				*/
   ID(mov); W(); DM(SP, IMMU(1)); SR(AX);
 
 /** 1010 1111			movw	%0, %e!1			*/
@@ -837,7 +837,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1010 1001			movw	%0, %e1				*/
   ID(mov); W(); DR(AX); SM(DE, 0);
 
-/** 1010 1010			movw	%0, %e1				*/
+/** 1010 1010			movw	%0, %ea1				*/
   ID(mov); W(); DR(AX); SM(DE, IMMU(1));
 
 /** 1010 1011			movw	%0, %e1				*/
@@ -846,7 +846,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1010 1100			movw	%0, %ea1			*/
   ID(mov); W(); DR(AX); SM(HL, IMMU(1));
 
-/** 1010 1000			movw	%0, %1				*/
+/** 1010 1000			movw	%0, %a1				*/
   ID(mov); W(); DR(AX); SM(SP, IMMU(1));
 
 /** 0011 0rg0			movw	%0, #%1				*/
@@ -882,7 +882,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1010 1110			movw	%0, %s1				*/
   ID(mov); W(); DR(AX); SM(None, SFR);
 
-/** 11ra 1011			movw	%0, %e!1			*/
+/** 11ra 1011			movw	%0, %es!1			*/
   ID(mov); W(); DRW(ra); SM(None, IMMU(2));
 
 /** 11ra 1010			movw	%0, %1				*/
@@ -894,17 +894,16 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 1011 1101			movw	%0, %1				*/
   ID(mov); W(); DM(None, SADDR); SR(AX);
 
-/** 1100 1011			movw	%0, #%1				*/
+/** 1100 1011			movw	%s0, #%1			*/
   ID(mov); W(); DM(None, SFR); SC(IMMU(2));
 
-/** 1011 1110			movw	%0, %1				*/
+/** 1011 1110			movw	%s0, %1				*/
   ID(mov); W(); DM(None, SFR); SR(AX);
 
 /*----------------------------------------------------------------------*/
 
 /** 1101 0110			mulu	x				*/
-  if (isa == RL78_ISA_G14)
-    ID(mulu);
+  ID(mulu);
 
 /*----------------------------------------------------------------------*/
 
@@ -1206,7 +1205,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 0110 0001 1010 1110		xch	%0, %e1				*/
   ID(xch); DR(A); SM(DE, 0);
 
-/** 0110 0001 1010 1111		xch	%0, %e1				*/
+/** 0110 0001 1010 1111		xch	%0, %ea1				*/
   ID(xch); DR(A); SM(DE, IMMU(1));
 
 /** 0110 0001 1010 1100		xch	%0, %e1				*/
@@ -1228,7 +1227,7 @@ rl78_decode_opcode (unsigned long pc AU,
 /** 0110 0001 1010 1000	       	xch	%0, %1				*/
   ID(xch); DR(A); SM(None, SADDR);
 
-/** 0110 0001 1010 1011	       	xch	%0, %1				*/
+/** 0110 0001 1010 1011	       	xch	%0, %s1				*/
   ID(xch); DR(A); SM(None, SFR);
 
 /** 0000 1000			xch	a, x				*/

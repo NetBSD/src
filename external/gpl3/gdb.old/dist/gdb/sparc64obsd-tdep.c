@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -155,7 +155,7 @@ sparc64obsd_frame_cache (struct frame_info *this_frame, void **this_cache)
   CORE_ADDR addr;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_frame_cache (this_frame, this_cache);
   gdb_assert (cache == *this_cache);
@@ -239,7 +239,7 @@ sparc64obsd_trapframe_cache (struct frame_info *this_frame, void **this_cache)
   int regnum;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_frame_cache (this_frame, this_cache);
   gdb_assert (cache == *this_cache);

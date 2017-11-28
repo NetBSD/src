@@ -7,6 +7,14 @@ if [istarget cr16*-*-*] {
     # all machines
     set all_machs "cr16"
 
+    global global_sim_options
+    if ![info exists global_sim_options] {
+	set global_sim_options ""
+    }
+    set saved_global_sim_options $global_sim_options
+    # The cr16 linker sets the default LMA base to 0, and all the code
+    # expects the VMA when running, so use that when running the tests.
+    set global_sim_options "$saved_global_sim_options --load-vma"
 
     # The .ms suffix is for "miscellaneous .s".
     foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.ms]] {
@@ -18,4 +26,6 @@ if [istarget cr16*-*-*] {
 
 	run_sim_test $src $all_machs
     }
+
+    set global_sim_options $saved_global_sim_options
 }

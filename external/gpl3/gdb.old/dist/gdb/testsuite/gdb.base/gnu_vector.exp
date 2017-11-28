@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,11 +25,19 @@ standard_testfile .c
 # without a CPU option.  If all variants fail, assume that the
 # compiler can not handle GNU vectors.
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} executable {debug quiet additional_flags=-mcpu=native}] != ""
-     && [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} executable {debug quiet additional_flags=-march=native}] != ""
-     && [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} executable {debug quiet}] != ""} {
-    untested "compiler can't handle the vector_size attribute?"
-    return -1
+proc do_compile { {opts {}} } {
+    global srcdir subdir srcfile binfile
+    set ccopts {debug quiet}
+    foreach opt $opts {lappend ccopts "additional_flags=$opt"}
+    gdb_compile "${srcdir}/${subdir}/${srcfile}" "$binfile" executable $ccopts
+}
+
+if { [do_compile {-mcpu=native}] != ""
+     && [do_compile {-mcpu=native -Wno-psabi}] != ""
+     && [do_compile {-march=native}] != ""
+     && [do_compile] != ""} {
+	untested "compiler can't handle vector_size attribute?"
+	return -1
 }
 
 clean_restart ${binfile}
@@ -177,31 +185,74 @@ gdb_test "ptype struct_with_vector_1" "type = struct {\r\n\[\t \]+int i;\r\n\[\t
 
 # Test inferior function calls with vector arguments and/or vector
 # return values.
-setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
+if { [istarget "i?86-*-*"] || [istarget "x86_64-*-*" ] } {
+    # These platforms don't support infcalls with vector arguments
+    # and/or vector return values, so skip the remaining tests.
+    # See also PR exp/18537.
+    unsupported "skip remaining vector ABI tests on this arch"
+    return
+}
 gdb_test "print add_some_intvecs(i4a, i4b, 3 * i4a)" "= \\{17, 34, 72, 132\\}" \
     "call add_some_intvecs"
-setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
 gdb_test "print add_many_charvecs(c4, c4, c4, c4, c4, c4, c4, c4, c4, c4)" \
     "= \\{10, 20, 30, 40\\}" "call add_many_charvecs"
-setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
 gdb_test "print add_various_floatvecs(2, f4a, f4b)" "= \\{3, 6, 16, 20\\}" \
     "call add_various_floatvecs"
-setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
 gdb_test "print add_structvecs(i2, (struct just_int2)\{2*i2\}, (struct two_int2)\{3*i2, 4*i2\})" \
     "= \\{i = \\{10, 20\\}\\}" "call add_structvecs"
 gdb_test "print add_singlevecs((char1) \{6\}, (int1) \{12\}, (double1) \{24\})" "= \\{42\\}" \
     "call add_singlevecs"
 
-# Test vector return value handling with "finish" and "return".
+# Test "finish" from vector-valued function.
 gdb_breakpoint "add_some_intvecs"
 gdb_continue "add_some_intvecs"
-setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
-gdb_test "finish" "Value returned is .* = \\{10, 20, 48, 72\\}" \
-    "finish shows vector return value"
+set test "finish shows vector return value"
+gdb_test_multiple "finish" $test {
+    -re "Value returned is .* = \\{10, 20, 48, 72\\}.*$gdb_prompt $" {
+	pass $test
+    }
+    -re "Value returned has type: .* Cannot determine contents.*$gdb_prompt $" {
+	kfail "gdb/8549" $test
+    }
+}
+
 gdb_continue "add_some_intvecs"
-gdb_test "return (int4) \{4, 2, 7, 6\}" \
-    "#0 .* main .*" \
-    "set vector return value" \
-    "Make add_some_intvecs return now. .y or n.*" "y"
-setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
-gdb_test "continue" "4 2 7 6\r\n.*" "verify vector return value"
+gdb_test "up" ""
+gdb_test "p res" "\\{10, 20, 48, 72\\}.*"
+gdb_test "down" ""
+
+
+# Test "return" from vector-valued function.
+set test "return from vector-valued function"
+set should_kfail 0
+gdb_test_multiple "return (int4) \{4, 2, 7, 6\}" $test {
+    -re "#0 .* main .*$gdb_prompt $" {
+	pass $test
+    }
+    -re "The location .* is unknown.\r\n.* return value .* will be ignored.\r\n" {
+	# This happens, e.g., on s390x unless using the vector ABI.
+	set should_kfail 1
+	exp_continue
+    }
+    -re "Make add_some_intvecs return now. .y or n. $" {
+	send_gdb "y\n"
+	exp_continue
+    }
+}
+
+gdb_test "next" ""
+set test "verify vector return value"
+gdb_test_multiple "p res" $test {
+    -re ".*= \\{4, 2, 7, 6\\}\r\n.*$gdb_prompt $" {
+	pass $test
+    }
+    -re ".*= \\{.*\\}\r\n.*$gdb_prompt $" {
+	if { $should_kfail } {
+	    # GDB had not actually set the return value, likely due to
+	    # PR 8549.  So accept any return value and emit a KFAIL.
+	    kfail "gdb/8549" $test
+	} else {
+	    fail $test
+	}
+    }
+}

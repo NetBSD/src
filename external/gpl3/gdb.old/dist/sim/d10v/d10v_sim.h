@@ -45,7 +45,7 @@ struct simops
   int cycles;
   int unit;
   int exec_type;
-  void (*func)();
+  void (*func)(SIM_DESC, SIM_CPU *);
   int numops;
   int operands[9];
 };
@@ -226,7 +226,6 @@ struct d10v_memory
   uint8 *insn[IMEM_SEGMENTS];
   uint8 *data[DMEM_SEGMENTS];
   uint8 *unif[UMEM_SEGMENTS];
-  uint8 fault[16];
 };
 
 struct _state
@@ -241,8 +240,8 @@ struct _state
 
   reg_t cregs[16];		/* control registers */
 #define CREG(N) (State.cregs[(N)] + 0)
-#define SET_CREG(N,VAL) move_to_cr ((N), 0, (VAL), 0)
-#define SET_HW_CREG(N,VAL) move_to_cr ((N), 0, (VAL), 1)
+#define SET_CREG(N,VAL) move_to_cr (sd, cpu, (N), 0, (VAL), 0)
+#define SET_HW_CREG(N,VAL) move_to_cr (sd, cpu, (N), 0, (VAL), 1)
 
   reg_t sp[2];                  /* holding area for SPI(0)/SPU(1) */
 #define HELD_SP(N) (State.sp[(N)] + 0)
@@ -262,7 +261,6 @@ struct _state
   } trace;
 
   uint8 exe;
-  int	exception;
   int	pc_changed;
 
   /* NOTE: everything below this line is not reset by
@@ -275,7 +273,6 @@ struct _state
 } State;
 
 
-extern host_callback *d10v_callback;
 extern uint16 OP[4];
 extern struct simops Simops[];
 
@@ -314,7 +311,7 @@ enum
 #define PSW CREG (PSW_CR)
 #define SET_PSW(VAL) SET_CREG (PSW_CR, (VAL))
 #define SET_HW_PSW(VAL) SET_HW_CREG (PSW_CR, (VAL))
-#define SET_PSW_BIT(MASK,VAL) move_to_cr (PSW_CR, ~((reg_t) MASK), (VAL) ? (MASK) : 0, 1)
+#define SET_PSW_BIT(MASK,VAL) move_to_cr (sd, cpu, PSW_CR, ~((reg_t) MASK), (VAL) ? (MASK) : 0, 1)
 
 #define PSW_SM ((PSW & PSW_SM_BIT) != 0)
 #define SET_PSW_SM(VAL) SET_PSW_BIT (PSW_SM_BIT, (VAL))
@@ -443,11 +440,11 @@ do \
   } \
 while (0)
 
-extern uint8 *dmem_addr (uint16 offset);
-extern uint8 *imem_addr (uint32);
+extern uint8 *dmem_addr (SIM_DESC, SIM_CPU *, uint16 offset);
+extern uint8 *imem_addr (SIM_DESC, SIM_CPU *, uint32);
 extern bfd_vma decode_pc (void);
 
-#define	RB(x)	(*(dmem_addr(x)))
+#define	RB(x)	(*(dmem_addr (sd, cpu, x)))
 #define SB(addr,data)	( RB(addr) = (data & 0xff))
 
 #if defined(__GNUC__) && defined(__OPTIMIZE__) && !defined(NO_ENDIAN_INLINE)
@@ -464,10 +461,10 @@ extern void write_longword (uint8 *addr, uint32 data);
 extern void write_longlong (uint8 *addr, int64 data);
 #endif
 
-#define SW(addr,data)		write_word(dmem_addr(addr),data)
-#define RW(x)			get_word(dmem_addr(x))
-#define SLW(addr,data)  	write_longword(dmem_addr(addr),data)
-#define RLW(x)			get_longword(dmem_addr(x))
+#define SW(addr,data)		write_word (dmem_addr (sd, cpu, addr), data)
+#define RW(x)			get_word (dmem_addr (sd, cpu, x))
+#define SLW(addr,data)  	write_longword (dmem_addr (sd, cpu, addr), data)
+#define RLW(x)			get_longword (dmem_addr (sd, cpu, x))
 #define READ_16(x)		get_word(x)
 #define WRITE_16(addr,data)	write_word(addr,data)
 #define READ_64(x)		get_longlong(x)
@@ -486,4 +483,4 @@ extern void write_longlong (uint8 *addr, int64 data);
    (VAL & ~MASK)).  In addition, unless PSW_HW_P, a VAL intended for
    PSW is masked for zero bits. */
 
-extern reg_t move_to_cr (int cr, reg_t mask, reg_t val, int psw_hw_p);
+extern reg_t move_to_cr (SIM_DESC, SIM_CPU *, int cr, reg_t mask, reg_t val, int psw_hw_p);

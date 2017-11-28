@@ -2,7 +2,7 @@
 
 # Convert text files to compilable C arrays.
 #
-# Copyright (C) 2007-2015 Free Software Foundation, Inc.
+# Copyright (C) 2007-2016 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -19,13 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-output=$1
-shift
-
-if test -z "$output" || test -z "$1"; then
+if test -z "$1" || test -z "$2"; then
   echo "Usage: $0 OUTPUTFILE INPUTFILE..."
   exit 1
 fi
+
+output=$1
+shift
 
 if test -e "$output"; then
   echo "Output file \"$output\" already exists; refusing to overwrite."

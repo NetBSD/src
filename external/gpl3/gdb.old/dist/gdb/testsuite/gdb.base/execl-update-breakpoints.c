@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2015 Free Software Foundation, Inc.
+   Copyright 2014-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+void
+some_function (void)
+{
+}
+
 int
 main (int argc, char **argv)
 {
@@ -34,5 +39,6 @@ main (int argc, char **argv)
 
   execl (bin, bin, (char *) NULL);
   perror ("execl failed");
+  some_function ();
   exit (1);
 }

@@ -1,6 +1,6 @@
 /* This file defines the interface between the d10v simulator and gdb.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,6 @@
 
 #if !defined (SIM_D10V_H)
 #define SIM_D10V_H
-
-#ifdef __cplusplus
-extern "C" { // }
-#endif
 
 /* GDB interprets addresses as:
 
@@ -52,29 +48,6 @@ enum
     SIM_D10V_MEMORY_DMAP = 0x10000000,
     SIM_D10V_MEMORY_IMAP = 0x11000000
   };
-
-extern unsigned long sim_d10v_translate_dmap_addr
-  (unsigned long offset,
-   int nr_bytes,
-   unsigned long *phys,
-   void *regcache,
-   unsigned long (*dmap_register) (void *regcache, int reg_nr));
-
-extern unsigned long sim_d10v_translate_imap_addr
-  (unsigned long offset,
-   int nr_bytes,
-   unsigned long *phys,
-   void *regcache,
-   unsigned long (*imap_register) (void *regcache, int reg_nr));
-
-extern unsigned long sim_d10v_translate_addr
-  (unsigned long vaddr,
-   int nr_bytes,
-   unsigned long *phys,
-   void *regcache,
-   unsigned long (*dmap_register) (void *regcache, int reg_nr),
-   unsigned long (*imap_register) (void *regcache, int reg_nr));
-
 
 /* The simulator makes use of the following register information. */
 
@@ -133,9 +106,5 @@ enum
   SIM_D10V_NR_DMAP_REGS = 4,
   SIM_D10V_NR_CR_REGS = 16
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

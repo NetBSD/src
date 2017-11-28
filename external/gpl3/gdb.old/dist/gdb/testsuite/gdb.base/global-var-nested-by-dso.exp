@@ -1,4 +1,4 @@
-# Copyright 2014-2015 Free Software Foundation, Inc.
+# Copyright 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,6 +45,8 @@ if { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable \
 }
 
 clean_restart $binfile
+gdb_load_shlib $binfile_lib1
+gdb_load_shlib $binfile_lib2
 
 if { ![runto_main] } {
   return -1

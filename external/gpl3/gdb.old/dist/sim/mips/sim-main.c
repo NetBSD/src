@@ -30,81 +30,6 @@
 
 /* Description from page A-22 of the "MIPS IV Instruction Set" manual
    (revision 3.1) */
-/* Translate a virtual address to a physical address and cache
-   coherence algorithm describing the mechanism used to resolve the
-   memory reference. Given the virtual address vAddr, and whether the
-   reference is to Instructions ot Data (IorD), find the corresponding
-   physical address (pAddr) and the cache coherence algorithm (CCA)
-   used to resolve the reference. If the virtual address is in one of
-   the unmapped address spaces the physical address and the CCA are
-   determined directly by the virtual address. If the virtual address
-   is in one of the mapped address spaces then the TLB is used to
-   determine the physical address and access type; if the required
-   translation is not present in the TLB or the desired access is not
-   permitted the function fails and an exception is taken.
-
-   NOTE: Normally (RAW == 0), when address translation fails, this
-   function raises an exception and does not return. */
-
-INLINE_SIM_MAIN
-(int)
-address_translation (SIM_DESC sd,
-		     sim_cpu * cpu,
-		     address_word cia,
-		     address_word vAddr,
-		     int IorD,
-		     int LorS,
-		     address_word * pAddr,
-		     int *CCA,
-		     int raw)
-{
-  int res = -1;			/* TRUE : Assume good return */
-
-#ifdef DEBUG
-  sim_io_printf (sd, "AddressTranslation(0x%s,%s,%s,...);\n", pr_addr (vAddr), (IorD ? "isDATA" : "isINSTRUCTION"), (LorS ? "iSTORE" : "isLOAD"));
-#endif
-
-  /* Check that the address is valid for this memory model */
-
-  /* For a simple (flat) memory model, we simply pass virtual
-     addressess through (mostly) unchanged. */
-  vAddr &= 0xFFFFFFFF;
-
-  *pAddr = vAddr;		/* default for isTARGET */
-  *CCA = Uncached;		/* not used for isHOST */
-
-  return (res);
-}
-
-
-
-/* Description from page A-23 of the "MIPS IV Instruction Set" manual
-   (revision 3.1) */
-/* Prefetch data from memory. Prefetch is an advisory instruction for
-   which an implementation specific action is taken. The action taken
-   may increase performance, but must not change the meaning of the
-   program, or alter architecturally-visible state. */
-
-INLINE_SIM_MAIN (void)
-prefetch (SIM_DESC sd,
-	  sim_cpu *cpu,
-	  address_word cia,
-	  int CCA,
-	  address_word pAddr,
-	  address_word vAddr,
-	  int DATA,
-	  int hint)
-{
-#ifdef DEBUG
-  sim_io_printf(sd,"Prefetch(%d,0x%s,0x%s,%d,%d);\n",CCA,pr_addr(pAddr),pr_addr(vAddr),DATA,hint);
-#endif /* DEBUG */
-
-  /* For our simple memory model we do nothing */
-  return;
-}
-
-/* Description from page A-22 of the "MIPS IV Instruction Set" manual
-   (revision 3.1) */
 /* Load a value from memory. Use the cache and main memory as
    specified in the Cache Coherence Algorithm (CCA) and the sort of
    access (IorD) to find the contents of AccessLength memory bytes
@@ -337,15 +262,13 @@ ifetch32 (SIM_DESC SD,
   address_word reverseendian = (ReverseEndian ? (mask ^ access) : 0);
   address_word bigendiancpu = (BigEndianCPU ? (mask ^ access) : 0);
   unsigned int byte;
-  address_word paddr;
-  int uncached;
+  address_word paddr = vaddr;
   unsigned64 memval;
 
   if ((vaddr & access) != 0)
     SignalExceptionInstructionFetch ();
-  AddressTranslation (vaddr, isINSTRUCTION, isLOAD, &paddr, &uncached, isTARGET, isREAL);
   paddr = ((paddr & ~mask) | ((paddr & mask) ^ reverseendian));
-  LoadMemory (&memval, NULL, uncached, access, paddr, vaddr, isINSTRUCTION, isREAL);
+  LoadMemory (&memval, NULL, access, paddr, vaddr, isINSTRUCTION, isREAL);
   byte = ((vaddr & mask) ^ bigendiancpu);
   return (memval >> (8 * byte));
 }
@@ -363,15 +286,13 @@ ifetch16 (SIM_DESC SD,
   address_word reverseendian = (ReverseEndian ? (mask ^ access) : 0);
   address_word bigendiancpu = (BigEndianCPU ? (mask ^ access) : 0);
   unsigned int byte;
-  address_word paddr;
-  int uncached;
+  address_word paddr = vaddr;
   unsigned64 memval;
 
   if ((vaddr & access) != 0)
     SignalExceptionInstructionFetch ();
-  AddressTranslation (vaddr, isINSTRUCTION, isLOAD, &paddr, &uncached, isTARGET, isREAL);
   paddr = ((paddr & ~mask) | ((paddr & mask) ^ reverseendian));
-  LoadMemory (&memval, NULL, uncached, access, paddr, vaddr, isINSTRUCTION, isREAL);
+  LoadMemory (&memval, NULL, access, paddr, vaddr, isINSTRUCTION, isREAL);
   byte = ((vaddr & mask) ^ bigendiancpu);
   return (memval >> (8 * byte));
 }

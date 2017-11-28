@@ -1,4 +1,4 @@
-#   Copyright 2007-2015 Free Software Foundation, Inc.
+#   Copyright 2007-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
-gdb_load_shlibs $lib_sl
+gdb_load_shlib $lib_sl
 
 runto_main
 

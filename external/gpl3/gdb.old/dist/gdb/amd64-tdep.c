@@ -1,6 +1,6 @@
 /* Target-dependent code for AMD64.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    Contributed by Jiri Smid, SuSE Labs.
 
@@ -44,6 +44,7 @@
 #include "features/i386/amd64.c"
 #include "features/i386/amd64-avx.c"
 #include "features/i386/amd64-mpx.c"
+#include "features/i386/amd64-avx-mpx.c"
 #include "features/i386/amd64-avx512.c"
 
 #include "features/i386/x32.c"
@@ -252,9 +253,7 @@ amd64_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
   if (reg >= 0 && reg < amd64_dwarf_regmap_len)
     regnum = amd64_dwarf_regmap[reg];
 
-  if (regnum == -1)
-    warning (_("Unmapped DWARF Register #%d encountered."), reg);
-  else if (ymm0_regnum >= 0
+  if (ymm0_regnum >= 0
 	   && i386_xmm_regnum_p (gdbarch, regnum))
     regnum += ymm0_regnum - I387_XMM0_REGNUM (tdep);
 
@@ -455,6 +454,35 @@ amd64_pseudo_register_write (struct gdbarch *gdbarch,
     }
   else
     i386_pseudo_register_write (gdbarch, regcache, regnum, buf);
+}
+
+/* Implement the 'ax_pseudo_register_collect' gdbarch method.  */
+
+static int
+amd64_ax_pseudo_register_collect (struct gdbarch *gdbarch,
+				  struct agent_expr *ax, int regnum)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (i386_byte_regnum_p (gdbarch, regnum))
+    {
+      int gpnum = regnum - tdep->al_regnum;
+
+      if (gpnum >= AMD64_NUM_LOWER_BYTE_REGS)
+	ax_reg_mask (ax, gpnum - AMD64_NUM_LOWER_BYTE_REGS);
+      else
+	ax_reg_mask (ax, gpnum);
+      return 0;
+    }
+  else if (i386_dword_regnum_p (gdbarch, regnum))
+    {
+      int gpnum = regnum - tdep->eax_regnum;
+
+      ax_reg_mask (ax, gpnum);
+      return 0;
+    }
+  else
+    return i386_ax_pseudo_register_collect (gdbarch, ax, regnum);
 }
 
 
@@ -850,7 +878,7 @@ amd64_push_arguments (struct regcache *regcache, int nargs,
     AMD64_XMM0_REGNUM + 4, AMD64_XMM0_REGNUM + 5,
     AMD64_XMM0_REGNUM + 6, AMD64_XMM0_REGNUM + 7,
   };
-  struct value **stack_args = alloca (nargs * sizeof (struct value *));
+  struct value **stack_args = XALLOCAVEC (struct value *, nargs);
   int num_stack_args = 0;
   int num_elements = 0;
   int element = 0;
@@ -1274,12 +1302,10 @@ static void
 fixup_riprel (struct gdbarch *gdbarch, struct displaced_step_closure *dsc,
 	      CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   const struct amd64_insn *insn_details = &dsc->insn_details;
   int modrm_offset = insn_details->modrm_offset;
   gdb_byte *insn = insn_details->raw_insn + modrm_offset;
   CORE_ADDR rip_base;
-  int32_t disp;
   int insn_length;
   int arch_tmp_regno, tmp_regno;
   ULONGEST orig_value;
@@ -1288,7 +1314,6 @@ fixup_riprel (struct gdbarch *gdbarch, struct displaced_step_closure *dsc,
   ++insn;
 
   /* Compute the rip-relative address.	*/
-  disp = extract_signed_integer (insn, sizeof (int32_t), byte_order);
   insn_length = gdb_buffered_insn_length (gdbarch, dsc->insn_buf,
 					  dsc->max_len, from);
   rip_base = from + insn_length;
@@ -1351,8 +1376,9 @@ amd64_displaced_step_copy_insn (struct gdbarch *gdbarch,
   /* Extra space for sentinels so fixup_{riprel,displaced_copy} don't have to
      continually watch for running off the end of the buffer.  */
   int fixup_sentinel_space = len;
-  struct displaced_step_closure *dsc =
-    xmalloc (sizeof (*dsc) + len + fixup_sentinel_space);
+  struct displaced_step_closure *dsc
+    = ((struct displaced_step_closure *)
+       xmalloc (sizeof (*dsc) + len + fixup_sentinel_space));
   gdb_byte *buf = &dsc->insn_buf[0];
   struct amd64_insn *details = &dsc->insn_details;
 
@@ -1514,7 +1540,7 @@ amd64_classify_insn_at (struct gdbarch *gdbarch, CORE_ADDR addr,
   int len, classification;
 
   len = gdbarch_max_insn_length (gdbarch);
-  buf = alloca (len);
+  buf = (gdb_byte *) alloca (len);
 
   read_code (addr, buf, len);
   amd64_get_insn_details (buf, &details);
@@ -1711,7 +1737,7 @@ amd64_relocate_instruction (struct gdbarch *gdbarch,
   int len = gdbarch_max_insn_length (gdbarch);
   /* Extra space for sentinels.  */
   int fixup_sentinel_space = len;
-  gdb_byte *buf = xmalloc (len + fixup_sentinel_space);
+  gdb_byte *buf = (gdb_byte *) xmalloc (len + fixup_sentinel_space);
   struct amd64_insn insn_details;
   int offset = 0;
   LONGEST rel32, newrel;
@@ -1738,15 +1764,47 @@ amd64_relocate_instruction (struct gdbarch *gdbarch,
      the user program would return to.  */
   if (insn[0] == 0xe8)
     {
-      gdb_byte push_buf[16];
-      unsigned int ret_addr;
+      gdb_byte push_buf[32];
+      CORE_ADDR ret_addr;
+      int i = 0;
 
       /* Where "ret" in the original code will return to.  */
       ret_addr = oldloc + insn_length;
-      push_buf[0] = 0x68; /* pushq $...  */
-      store_unsigned_integer (&push_buf[1], 4, byte_order, ret_addr);
+
+      /* If pushing an address higher than or equal to 0x80000000,
+	 avoid 'pushq', as that sign extends its 32-bit operand, which
+	 would be incorrect.  */
+      if (ret_addr <= 0x7fffffff)
+	{
+	  push_buf[0] = 0x68; /* pushq $...  */
+	  store_unsigned_integer (&push_buf[1], 4, byte_order, ret_addr);
+	  i = 5;
+	}
+      else
+	{
+	  push_buf[i++] = 0x48; /* sub    $0x8,%rsp */
+	  push_buf[i++] = 0x83;
+	  push_buf[i++] = 0xec;
+	  push_buf[i++] = 0x08;
+
+	  push_buf[i++] = 0xc7; /* movl    $imm,(%rsp) */
+	  push_buf[i++] = 0x04;
+	  push_buf[i++] = 0x24;
+	  store_unsigned_integer (&push_buf[i], 4, byte_order,
+				  ret_addr & 0xffffffff);
+	  i += 4;
+
+	  push_buf[i++] = 0xc7; /* movl    $imm,4(%rsp) */
+	  push_buf[i++] = 0x44;
+	  push_buf[i++] = 0x24;
+	  push_buf[i++] = 0x04;
+	  store_unsigned_integer (&push_buf[i], 4, byte_order,
+				  ret_addr >> 32);
+	  i += 4;
+	}
+      gdb_assert (i <= sizeof (push_buf));
       /* Push the push.  */
-      append_insns (to, 5, push_buf);
+      append_insns (to, i, push_buf);
 
       /* Convert the relative call to a relative jump.  */
       insn[0] = 0xe9;
@@ -2470,7 +2528,7 @@ amd64_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct amd64_frame_cache *cache;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct amd64_frame_cache *) *this_cache;
 
   cache = amd64_alloc_frame_cache ();
   *this_cache = cache;
@@ -2589,7 +2647,7 @@ amd64_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct amd64_frame_cache *) *this_cache;
 
   cache = amd64_alloc_frame_cache ();
 
@@ -2765,7 +2823,7 @@ amd64_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
   gdb_byte buf[8];
 
   if (*this_cache)
-    return *this_cache;
+    return (struct amd64_frame_cache *) *this_cache;
 
   cache = amd64_alloc_frame_cache ();
   *this_cache = cache;
@@ -2998,6 +3056,8 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					  amd64_pseudo_register_read_value);
   set_gdbarch_pseudo_register_write (gdbarch,
 				     amd64_pseudo_register_write);
+  set_gdbarch_ax_pseudo_register_collect (gdbarch,
+					  amd64_ax_pseudo_register_collect);
 
   set_tdesc_pseudo_register_name (gdbarch, amd64_pseudo_register_name);
 
@@ -3133,6 +3193,8 @@ amd64_target_description (uint64_t xcr0)
       return tdesc_amd64_avx512;
     case X86_XSTATE_MPX_MASK:
       return tdesc_amd64_mpx;
+    case X86_XSTATE_AVX_MPX_MASK:
+      return tdesc_amd64_avx_mpx;
     case X86_XSTATE_AVX_MASK:
       return tdesc_amd64_avx;
     default:
@@ -3149,6 +3211,7 @@ _initialize_amd64_tdep (void)
   initialize_tdesc_amd64 ();
   initialize_tdesc_amd64_avx ();
   initialize_tdesc_amd64_mpx ();
+  initialize_tdesc_amd64_avx_mpx ();
   initialize_tdesc_amd64_avx512 ();
 
   initialize_tdesc_x32 ();
@@ -3181,7 +3244,7 @@ amd64_supply_fxsave (struct regcache *regcache, int regnum,
   if (fxsave
       && gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 64)
     {
-      const gdb_byte *regs = fxsave;
+      const gdb_byte *regs = (const gdb_byte *) fxsave;
 
       if (regnum == -1 || regnum == I387_FISEG_REGNUM (tdep))
 	regcache_raw_supply (regcache, I387_FISEG_REGNUM (tdep), regs + 12);
@@ -3204,7 +3267,7 @@ amd64_supply_xsave (struct regcache *regcache, int regnum,
   if (xsave
       && gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 64)
     {
-      const gdb_byte *regs = xsave;
+      const gdb_byte *regs = (const gdb_byte *) xsave;
 
       if (regnum == -1 || regnum == I387_FISEG_REGNUM (tdep))
 	regcache_raw_supply (regcache, I387_FISEG_REGNUM (tdep),
@@ -3226,7 +3289,7 @@ amd64_collect_fxsave (const struct regcache *regcache, int regnum,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  gdb_byte *regs = fxsave;
+  gdb_byte *regs = (gdb_byte *) fxsave;
 
   i387_collect_fxsave (regcache, regnum, fxsave);
 
@@ -3247,7 +3310,7 @@ amd64_collect_xsave (const struct regcache *regcache, int regnum,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  gdb_byte *regs = xsave;
+  gdb_byte *regs = (gdb_byte *) xsave;
 
   i387_collect_xsave (regcache, regnum, xsave, gcore);
 

@@ -351,11 +351,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	      {
 		n = (val1 >> i) & 0xFFFF;
 		if (n & 0x8000)
-		  n |= -1 << 16;
+		  n |= -(1 << 16);
 
 		m = (val2 >> i) & 0xFFFF;
 		if (m & 0x8000)
-		  m |= -1 << 16;
+		  m |= -(1 << 16);
 
 		r = n + m;
 
@@ -371,11 +371,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	  case 0xF3: /* QASX<c> <Rd>,<Rn>,<Rm>.  */
 	    n = val1 & 0xFFFF;
 	    if (n & 0x8000)
-	      n |= -1 << 16;
+	      n |= -(1 << 16);
 
 	    m = (val2 >> 16) & 0xFFFF;
 	    if (m & 0x8000)
-	      m |= -1 << 16;
+	      m |= -(1 << 16);
 
 	    r = n - m;
 
@@ -388,11 +388,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 
 	    n = (val1 >> 16) & 0xFFFF;
 	    if (n & 0x8000)
-	      n |= -1 << 16;
+	      n |= -(1 << 16);
 
 	    m = val2 & 0xFFFF;
 	    if (m & 0x8000)
-	      m |= -1 << 16;
+	      m |= -(1 << 16);
 
 	    r = n + m;
 
@@ -407,11 +407,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	  case 0xF5: /* QSAX<c> <Rd>,<Rn>,<Rm>.  */
 	    n = val1 & 0xFFFF;
 	    if (n & 0x8000)
-	      n |= -1 << 16;
+	      n |= -(1 << 16);
 
 	    m = (val2 >> 16) & 0xFFFF;
 	    if (m & 0x8000)
-	      m |= -1 << 16;
+	      m |= -(1 << 16);
 
 	    r = n + m;
 
@@ -424,11 +424,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 
 	    n = (val1 >> 16) & 0xFFFF;
 	    if (n & 0x8000)
-	      n |= -1 << 16;
+	      n |= -(1 << 16);
 
 	    m = val2 & 0xFFFF;
 	    if (m & 0x8000)
-	      m |= -1 << 16;
+	      m |= -(1 << 16);
 
 	    r = n - m;
 
@@ -447,11 +447,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	      {
 		n = (val1 >> i) & 0xFFFF;
 		if (n & 0x8000)
-		  n |= -1 << 16;
+		  n |= -(1 << 16);
 
 		m = (val2 >> i) & 0xFFFF;
 		if (m & 0x8000)
-		  m |= -1 << 16;
+		  m |= -(1 << 16);
 
 		r = n - m;
 
@@ -471,11 +471,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	      {
 		n = (val1 >> i) & 0xFF;
 		if (n & 0x80)
-		  n |= -1 << 8;
+		  n |= - (1 << 8);
 
 		m = (val2 >> i) & 0xFF;
 		if (m & 0x80)
-		  m |= -1 << 8;
+		  m |= - (1 << 8);
 
 		r = n + m;
 
@@ -495,11 +495,11 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	      {
 		n = (val1 >> i) & 0xFF;
 		if (n & 0x80)
-		  n |= -1 << 8;
+		  n |= - (1 << 8);
 
 		m = (val2 >> i) & 0xFF;
 		if (m & 0x80)
-		  m |= -1 << 8;
+		  m |= - (1 << 8);
 
 		r = n - m;
 
@@ -951,14 +951,14 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	    state->Emulate = FALSE;
 	  }
 
-	mask = -1 << lsb;
-	mask &= ~(-1 << (msb + 1));
+	mask = -(1 << lsb);
+	mask &= ~(-(1 << (msb + 1)));
 	state->Reg[Rd] &= ~ mask;
 
 	Rn = BITS (0, 3);
 	if (Rn != 0xF)
 	  {
-	    ARMword val = state->Reg[Rn] & ~(-1 << ((msb + 1) - lsb));
+	    ARMword val = state->Reg[Rn] & ~(-(1 << ((msb + 1) - lsb)));
 	    state->Reg[Rd] |= val << lsb;
 	  }
 	return 1;
@@ -1036,7 +1036,7 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 
 	val = state->Reg[Rn];
 	val >>= lsb;
-	val &= ~(-1 << (widthm1 + 1));
+	val &= ~(-(1 << (widthm1 + 1)));
 
 	state->Reg[Rd] = val;
 	
@@ -1293,7 +1293,6 @@ ARMul_Emulate26 (ARMul_State * state)
 
       if (state->CallDebug > 0)
 	{
-	  instr = ARMul_Debug (state, pc, instr);
 	  if (state->Emulate < ONCE)
 	    {
 	      state->NextInstr = RESUME;
@@ -5951,10 +5950,10 @@ Multiply64 (ARMul_State * state, ARMword instr, int msigned, int scc)
 	;
       else
 #endif
-	if (nRdHi == nRm || nRdLo == nRm)
+	/* BAD code can trigger this result.  So only complain if debugging.  */
+	if (state->Debug && (nRdHi == nRm || nRdLo == nRm))
 	  fprintf (stderr, "sim: MULTIPLY64 - INVALID ARGUMENTS: %d %d %d\n",
 		   nRdHi, nRdLo, nRm);
-
       if (msigned)
 	{
 	  /* Compute sign of result and adjust operands if necessary.  */
@@ -5999,7 +5998,7 @@ Multiply64 (ARMul_State * state, ARMword instr, int msigned, int scc)
       state->Reg[nRdLo] = RdLo;
       state->Reg[nRdHi] = RdHi;
     }
-  else
+  else if (state->Debug)
     fprintf (stderr, "sim: MULTIPLY64 - INVALID ARGUMENTS\n");
 
   if (scc)

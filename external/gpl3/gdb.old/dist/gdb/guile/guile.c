@@ -1,6 +1,6 @@
 /* General GDB/Guile code.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
 #include "cli/cli-utils.h"
 #include "command.h"
 #include "gdbcmd.h"
-#include "interps.h"
+#include "top.h"
 #include "extension-priv.h"
 #include "utils.h"
 #include "version.h"
@@ -155,7 +155,6 @@ const struct extension_language_ops guile_extension_ops =
   gdbscm_breakpoint_cond_says_stop,
 
   NULL, /* gdbscm_check_quit_flag, */
-  NULL, /* gdbscm_clear_quit_flag, */
   NULL, /* gdbscm_set_quit_flag, */
 };
 
@@ -166,8 +165,8 @@ guile_repl_command (char *arg, int from_tty)
 {
   struct cleanup *cleanup;
 
-  cleanup = make_cleanup_restore_integer (&interpreter_async);
-  interpreter_async = 0;
+  cleanup = make_cleanup_restore_integer (&current_ui->async);
+  current_ui->async = 0;
 
   arg = skip_spaces (arg);
 
@@ -199,8 +198,8 @@ guile_command (char *arg, int from_tty)
 {
   struct cleanup *cleanup;
 
-  cleanup = make_cleanup_restore_integer (&interpreter_async);
-  interpreter_async = 0;
+  cleanup = make_cleanup_restore_integer (&current_ui->async);
+  current_ui->async = 0;
 
   arg = skip_spaces (arg);
 
@@ -241,7 +240,7 @@ compute_scheme_string (struct command_line *l)
   for (iter = l; iter; iter = iter->next)
     size += strlen (iter->line) + 1;
 
-  script = xmalloc (size + 1);
+  script = (char *) xmalloc (size + 1);
   here = 0;
   for (iter = l; iter; iter = iter->next)
     {
@@ -329,8 +328,8 @@ gdbscm_execute_gdb_command (SCM command_scm, SCM rest)
     {
       struct cleanup *inner_cleanups;
 
-      inner_cleanups = make_cleanup_restore_integer (&interpreter_async);
-      interpreter_async = 0;
+      inner_cleanups = make_cleanup_restore_integer (&current_ui->async);
+      current_ui->async = 0;
 
       prevent_dont_repeat ();
       if (to_string)
@@ -478,7 +477,7 @@ info_guile_command (char *args, int from_tty)
 
 static const scheme_function misc_guile_functions[] =
 {
-  { "execute", 1, 0, 1, gdbscm_execute_gdb_command,
+  { "execute", 1, 0, 1, as_a_scm_t_subr (gdbscm_execute_gdb_command),
   "\
 Execute the given GDB command.\n\
 \n\
@@ -491,23 +490,24 @@ Execute the given GDB command.\n\
   Returns: The result of the command if #:to-string is true.\n\
     Otherwise returns unspecified." },
 
-  { "data-directory", 0, 0, 0, gdbscm_data_directory,
+  { "data-directory", 0, 0, 0, as_a_scm_t_subr (gdbscm_data_directory),
     "\
 Return the name of GDB's data directory." },
 
-  { "guile-data-directory", 0, 0, 0, gdbscm_guile_data_directory,
+  { "guile-data-directory", 0, 0, 0,
+    as_a_scm_t_subr (gdbscm_guile_data_directory),
     "\
 Return the name of the Guile directory within GDB's data directory." },
 
-  { "gdb-version", 0, 0, 0, gdbscm_gdb_version,
+  { "gdb-version", 0, 0, 0, as_a_scm_t_subr (gdbscm_gdb_version),
     "\
 Return GDB's version string." },
 
-  { "host-config", 0, 0, 0, gdbscm_host_config,
+  { "host-config", 0, 0, 0, as_a_scm_t_subr (gdbscm_host_config),
     "\
 Return the name of the host configuration." },
 
-  { "target-config", 0, 0, 0, gdbscm_target_config,
+  { "target-config", 0, 0, 0, as_a_scm_t_subr (gdbscm_target_config),
     "\
 Return the name of the target configuration." },
 
@@ -628,9 +628,9 @@ initialize_scheme_side (void)
   char *boot_scm_path;
   char *msg;
 
-  guile_datadir = concat (gdb_datadir, SLASH_STRING, "guile", NULL);
+  guile_datadir = concat (gdb_datadir, SLASH_STRING, "guile", (char *) NULL);
   boot_scm_path = concat (guile_datadir, SLASH_STRING, "gdb",
-			  SLASH_STRING, boot_scm_filename, NULL);
+			  SLASH_STRING, boot_scm_filename, (char *) NULL);
 
   scm_c_catch (SCM_BOOL_T, boot_guile_support, boot_scm_path,
 	       handle_boot_error, boot_scm_path, NULL, NULL);

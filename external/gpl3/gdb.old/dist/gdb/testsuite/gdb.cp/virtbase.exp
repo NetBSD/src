@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ gdb_continue_to_breakpoint "first breakpoint"
 
 # In PR 11226, we failed to print x correctly in the "print *this"
 # case.
-gdb_test "print *this" " = {<mc::Base> = {x = 2}, _vptr.Middle = $hex, y = 3}"
+gdb_test "print *this" " = {<mc::Base> = {x = 2}, _vptr.Middle = ${hex}( <\[^>]*>)?, y = 3}"
 gdb_test "print x" " = 2" "print x in get_y"
 
 gdb_breakpoint [gdb_get_line_number "breakpoint 2"]
@@ -46,7 +46,7 @@ gdb_breakpoint [gdb_get_line_number "breakpoint 3"]
 gdb_continue_to_breakpoint "third breakpoint"
 
 # In PR 9629, we failed to print v correctly here.
-gdb_test "print *(D *) e" " = {<C> = {v = 11}, _vptr.D = $hex}"
+gdb_test "print *(D *) e" " = {<C> = {v = 11}, _vptr.D = ${hex}( <\[^>]*>)?}"
 
 # A regression test reported to Red Hat bugzilla, see:
 # https://bugzilla.redhat.com/show_bug.cgi?id=560741
@@ -70,5 +70,5 @@ gdb_test "print $" \
     " = \\(Virtual \\*\\) $hex <virtual_o>" \
     "print same pointer from history value"
 gdb_test "print *$$" \
-    " = \\(Virtual\\) {<VirtualMiddleA> = {<VirtualBase> = {_vptr.VirtualBase = ${hex}( <vtable for Virtual.*>)?, x = 0}, _vptr.VirtualMiddleA = ${hex}( <vtable for Virtual.*>)?, y = \\{0 <repeats 300 times>\\}}, <VirtualMiddleB> = {_vptr.VirtualMiddleB = ${hex}( <vtable for Virtual.*>)?, y = 0}, _vptr.Virtual = ${hex}( <vtable for Virtual.*>)?, z = 0}" \
+    " = \\(Virtual\\) {<VirtualMiddleA> = {<VirtualBase> = {_vptr.VirtualBase = ${hex}( <\[^>]*>)?, x = 0}, _vptr.VirtualMiddleA = ${hex}( <\[^>]*>)?, y = \\{0 <repeats 300 times>\\}}, <VirtualMiddleB> = {_vptr.VirtualMiddleB = ${hex}( <\[^>]*>)?, y = 0}, _vptr.Virtual = ${hex}( <\[^>]*>)?, z = 0}" \
     "print whole pointed-to object, starting from the virtual base pointer"

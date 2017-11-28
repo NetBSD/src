@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -113,7 +113,7 @@ py_varobj_iter_next (struct varobj_iter *self)
       error (_("Invalid item from the child list"));
     }
 
-  vitem = xmalloc (sizeof *vitem);
+  vitem = XNEW (struct varobj_item);
   vitem->value = convert_value_from_python (py_v);
   if (vitem->value == NULL)
     gdbpy_print_stack ();
@@ -168,7 +168,6 @@ struct varobj_iter *
 py_varobj_get_iterator (struct varobj *var, PyObject *printer)
 {
   PyObject *children;
-  int i;
   PyObject *iter;
   struct py_varobj_iter *py_iter;
   struct cleanup *back_to = varobj_ensure_python_env (var);

@@ -1,3 +1,124 @@
+2016-04-10  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	* interp.c (dmul): Split into dmul_s and dmul_u.  Use explicit integer
+	width types and simplify implementation.
+	* gencode.c (dmuls.l, dmulu.l): Use new functions dmul_s and dmul_u.
+
+2016-04-09  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	* interp.c (sim_memory_size): Default init to 30.
+	(parse_and_set_memory_size): Adjust upper bound to 31.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (count_argc): Delete.
+	(trap): Change count_argc to countargv.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+	* interp.c (host_little_endian): Change CURRENT_HOST_BYTE_ORDER
+	to HOST_BYTE_ORDER.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* interp.c (target_little_endian): Change LITTLE_ENDIAN to
+	BFD_ENDIAN_LITTLE.
+	(host_little_endian): Likewise.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_store_register): Rename to ...
+	(sh_reg_store): ... this.
+	(sim_fetch_register): Rename to ...
+	(sh_reg_fetch): ... this.
+	(sim_open): Call CPU_REG_FETCH/CPU_REG_STORE.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* gencode.c (tab): Pass sd into trap calls.
+	* interp.c (prog_argv, callback): Delete.
+	(parse_and_set_memory_size): Add SIM_DESC arg.
+	(trap): Declare callback and prog_argv.
+	(sim_resume): Declare callback.
+	(sim_info): Change callback->printf_filtered calls to sim_io_printf.
+	(sim_open): Delete callback assignment.  Pass sd to
+	parse_and_set_memory_size.
+	(parse_and_set_memory_size): Change callback->printf_filtered call
+	to sim_io_printf.
+	(sim_create_inferior): Delete prog_argv assignment.
+	(sim_do_command): Change callback->printf_filtered calls to
+	sim_io_printf.  Pass sd to parse_and_set_memory_size.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Delete.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -247,8 +368,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -395,7 +516,7 @@
 	* gencode.c: (op tab): Some refs and defs fixes.
 	"fsrra" -> "fsrra <FREG_N>".
 	"sleep": replace array ref with array addr.
-	"trapa": ditto.	
+	"trapa": ditto.
 	Comment and whitespace clean-ups.
 
 2004-01-07  Michael Snyder  <msnyder@redhat.com>
@@ -407,7 +528,7 @@
 	(op tab): Add new instructions for sh4a, DBR, SBR.
 	(expand_opcode): Add handling for new movxy combinations.
 	(gensym_caselist): Ditto.
-	(expand_ppi_movxy): Remove movx/movy expansions, 
+	(expand_ppi_movxy): Remove movx/movy expansions,
 	now handled in expand_opcode.
 	(gensym): Add some helpful macros.
 	(expand_ppi_code): Flatten loop for simplicity, tweak for 12-bit
@@ -418,7 +539,7 @@
 	(union saved_state_type): Add dbr, sgr, ldst.
 	(get_loop_bounds_ext): New function.
 	(init_dsp): Add bfd_mach_sh4al_dsp.
-	(sim_resume): Handle extended loop bounds.	
+	(sim_resume): Handle extended loop bounds.
 
 2003-12-18  Michael Snyder  <msnyder@redhat.com>
 
@@ -443,10 +564,10 @@
 	* syscall.h (SYS_truncate, SYS_ftruncate): Define.
 	* interp.c (trap): Add support for SYS_ftruncate and SYS_truncate.
 
-2003-08-11  Shrinivas Atre  <shrinivasa@KPITCummins.com>	
-	* sim/sh/gencode.c ( tab[] ): Addition of MAC.L handler and 
+2003-08-11  Shrinivas Atre  <shrinivasa@KPITCummins.com>
+	* sim/sh/gencode.c ( tab[] ): Addition of MAC.L handler and
 	correction for MAC.W handler
-	* sim/sh/interp.c ( macl ): New Function. Implementation of 
+	* sim/sh/interp.c ( macl ): New Function. Implementation of
 	MAC.L handler.
 
 2003-08-07  Michael Snyder  <msnyder@redhat.com>
@@ -457,7 +578,7 @@
 
 	* gencode.c (pshl): Change < to <= (shift by 16 is allowed).
 	Cast argument of >> to unsigned to prevent sign extension.
-	(psha): Change < to <= (shift by 32 is allowed).	
+	(psha): Change < to <= (shift by 32 is allowed).
 
 2003-07-24  Michael Snyder  <msnyder@redhat.com>
 
@@ -721,7 +842,7 @@ Wed Aug 25 07:55:23 1999  Brendan Kehoe  <brendan@cygnus.com>
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 1999-04-02  Keith Seitz  <keiths@cygnus.com>
 
 	* interp.c (POLL_QUIT_INTERVAL): Define. Used to tweak the
@@ -742,7 +863,7 @@ Mon Jun 29 19:35:24 1998  Jason Molenda  (crash@bugshack.cygnus.com)
 
 Tue Apr 28 18:33:31 1998  Geoffrey Noer  <noer@cygnus.com>
 
-        * configure: Regenerated to track ../common/aclocal.m4 changes.
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
 
 Sun Apr 26 15:31:55 1998  Tom Tromey  <tromey@creche>
 
@@ -873,20 +994,20 @@ Mon Jun 23 15:49:14 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* interp.c (get_dr): Avoid SIGFPE by moving integers instead of
  	FP's around.
 	(set_dr): Ditto.
-	
+
 Mon Jun 23 15:02:40 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* interp.c (XD, SET_XD): Delete.
   	(XF, SET_XF, XD_TO_XF): Define, move around registers in either
  	FP bank.
-	
+
 	* gencode.c (fmov): Update.
 
 Sun Jun 22 19:33:33 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* interp.c (set_fpscr1): From J"orn Rennecke
  	<amylaar@cygnus.co.uk>, Fix typo. Ditto for comment.
-	
+
 Tue Aug 12 00:19:11 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
 
 	* interp.c (special_address): New function.
@@ -918,7 +1039,7 @@ Mon Jun 16 14:01:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	endian problems.
 
 	* gencode.c (tab): Update.
-	
+
 Sun Jun 15 15:22:52 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gencode.c (main): Perform basic checks on tab entries.
@@ -937,7 +1058,7 @@ Sat Jun 14 13:45:09 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(Delay_Slot): Rename from SL.
 
 	* gencode.c (tab): Update/simplify.
-	
+
 	* gencode.c (gensim): Better formatting of output code.
 	(gensim): Replace 10 with constant MAX_NR_STUFF- define as 15.
 	(tab): Sort alphabetically.  Break `stuff' into multiple lines.
@@ -959,13 +1080,13 @@ Thu Jun  5 12:56:08 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
 
 Wed May 28 23:42:35 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
 
-        * gencode.c (swap.b): Fix treatment of high word.
+	* gencode.c (swap.b): Fix treatment of high word.
 
 Wed May 28 23:42:35 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
 
-        * sh/gencode.c,
-        * interp.c: experimental SH4 support.
-        DFmode moves are probaly broken for target little endian.
+	* sh/gencode.c,
+	* interp.c: experimental SH4 support.
+	DFmode moves are probaly broken for target little endian.
 
 Tue May 20 10:23:28 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
@@ -1086,7 +1207,7 @@ Wed Nov 20 02:04:32 1996  Doug Evans  <dje@canuck.cygnus.com>
 	* interp.c: #include "config.h".  #include <unistd.h> if present.
 	(trap): Fetch errno value with callback->get_errno.
 
-Tue Nov 12 13:34:00 1996  Dawn Perchik  <dawn@cygnus.com>   
+Tue Nov 12 13:34:00 1996  Dawn Perchik  <dawn@cygnus.com>
 
 	* interp.c: Don't include windows polling code if inside simluator.
 
@@ -1099,12 +1220,12 @@ Fri Sep 20 14:57:50 1996  Stan Shebs  <shebs@andros.cygnus.com>
 
 Wed Jun 26 12:29:22 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
-        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
-        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
-        (docdir): Removed.
-        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
-        (AC_PROG_INSTALL): Added.
-        * configure: Rebuilt.
+	* Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+	(docdir): Removed.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	(AC_PROG_INSTALL): Added.
+	* configure: Rebuilt.
 
 Thu May 16 15:44:29 1996  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -1158,7 +1279,7 @@ Sat Oct 21 13:01:18 1995  Jim Wilson  <wilson@chestnut.cygnus.com>
 	* sh/interp.c (sim_stop_reason): Catch SIGQUIT and indicate
 	program exited.
 	(sim_get_quit_code): Delete.
-	
+
 	* gencode.c (gensim): Indicate SIGILL instead of calling abort for
 	default case.
 
@@ -1175,10 +1296,10 @@ Fri Oct  6 12:08:18 1995  Jim Wilson  <wilson@chestnut.cygnus.com>
 
 	* interp.c (trap, case SYS_utime): Cast second arg of utime to
 	void * to avoid compiler error.
-	
+
 	* interp.c (callback): Remove last change.  It is initialized by
 	a sim_set_callbacks call.
-	
+
 Thu Oct  5 14:13:29 1995  steve chamberlain  <sac@slash.cygnus.com>
 
 	* interp.c (callback): Initialize to default callback.
@@ -1281,7 +1402,7 @@ Tue Jul 18 23:33:10 1995  Fred Fish  <fnf@fishbowl>
 Wed Jul  5 14:32:54 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
 
 	* Makefile.in (clean): Remove run, libsim.a.
-	  (distclean, mostlyclean, realclean): Remove Makefile and 
+	  (distclean, mostlyclean, realclean): Remove Makefile and
 	  autoconf files.
 
 	* sh.mt: Removed.
@@ -1323,7 +1444,7 @@ Wed May 24 14:07:11 1995  Steve Chamberlain  <sac@slash.cygnus.com>
 
 Mon Apr 24 15:09:49 1995  Jason Molenda  (crash@cygnus.com)
 
-	* configure.in: use ../../bfd/hosts/std-host.h, not 
+	* configure.in: use ../../bfd/hosts/std-host.h, not
 	../bfd/hosts/std-host.h (which doesn't exist).
 
 Mon Mar 27 10:32:34 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
@@ -1392,7 +1513,7 @@ Thu Sep  8 17:35:07 1994  Steve Chamberlain  (sac@jonny.cygnus.com)
 	* interp.c (RSBAT): Sign extend the arg.
 	(ACE_FAST): New macro.
 	(sim_resume): Remove obsolete test of sim_timeout.
-	
+
 Fri Aug  5 14:12:31 1994  Steve Chamberlain  (sac@jonny.cygnus.com)
 
 	* interp.c (IOMEM): New function, simulates very basic I/O area of
@@ -1424,15 +1545,15 @@ Wed May 18 14:18:53 1994  Doug Evans  (dje@canuck.cygnus.com)
 Wed Apr 27 12:03:48 1994  Steve Chamberlain  (sac@cygnus.com)
 
 	* gencode.c (table): Get direction of some opcodes right.
-        (trapa, rte): Implement fully.
+	(trapa, rte): Implement fully.
 	* interp.c (trap): Make stat call more portable.
 
 Fri Feb 11 21:59:38 1994  Steve Chamberlain  (sac@sphagnum.cygnus.com)
 
 	* gencode.c (main, gendefines): New -d option prints table of defines.
-	* interp.c (trap): Add a load of system calls. 
+	* interp.c (trap): Add a load of system calls.
 	(sim_memory_size): Now default to 8Mbyte.
-        (PARANOID): Keep vector of registers with undefined contents.
+	(PARANOID): Keep vector of registers with undefined contents.
 
 Mon Nov 15 14:37:18 1993  Steve Chamberlain  (sac@jonny.cygnus.com)
 
@@ -1489,7 +1610,7 @@ Tue Jul  6 10:30:46 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
 Thu Jun 24 13:29:57 1993  david d `zoo' zuhn  (zoo at rtl.cygnus.com)
 
 	* Makefile.in: don't run indent everytime; also add a space in the
-	includes 
+	includes
 
 Thu Jun 17 18:30:42 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
 
@@ -1504,7 +1625,7 @@ Wed May  5 13:17:22 1993  Steve Chamberlain  (sac@cygnus.com)
 
 Mon May  3 15:25:33 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
 
-	* run.c (main): Support for resizing simulated RAM.	
+	* run.c (main): Support for resizing simulated RAM.
 	* Makefile.in: Support for broken makes.
 	* interp.c, gencode.c: Lint.
 
