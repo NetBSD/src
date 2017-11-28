@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.124 2017/10/17 07:13:19 ozaki-r Exp $	*/
+/*	$NetBSD: inetd.c,v 1.125 2017/11/28 11:51:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.124 2017/10/17 07:13:19 ozaki-r Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.125 2017/11/28 11:51:11 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ __RCSID("$NetBSD: inetd.c,v 1.124 2017/10/17 07:13:19 ozaki-r Exp $");
  *	wait/nowait[:max]		single-threaded/multi-threaded, max #
  *	user[:group]			user/group to run daemon as
  *	server program			full path name
- *	server program arguments	maximum of MAXARGS (20)
+ *	server program arguments	maximum of MAXARGV (64)
  *
  * For RPC services
  *      service name/version            must be in /etc/rpc
@@ -110,7 +110,7 @@ __RCSID("$NetBSD: inetd.c,v 1.124 2017/10/17 07:13:19 ozaki-r Exp $");
  *	wait/nowait[:max]		single-threaded/multi-threaded
  *	user[:group]			user to run daemon as
  *	server program			full path name
- *	server program arguments	maximum of MAXARGS (20)
+ *	server program arguments	maximum of MAXARGV (64)
  *
  * For non-RPC services, the "service name" can be of the form
  * hostaddress:servicename, in which case the hostaddress is used
@@ -298,7 +298,7 @@ struct	servtab {
 	char	*se_group;		/* group name to run as */
 	struct	biltin *se_bi;		/* if built-in, description */
 	char	*se_server;		/* server program */
-#define	MAXARGV 20
+#define	MAXARGV 64
 	char	*se_argv[MAXARGV+1];	/* program arguments */
 #ifdef IPSEC
 	char	*se_policy;		/* IPsec poilcy string */
