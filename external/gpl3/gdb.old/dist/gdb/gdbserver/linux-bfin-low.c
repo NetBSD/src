@@ -1,6 +1,6 @@
 /* GNU/Linux/BFIN specific low level interface, for the remote server for GDB.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -54,26 +54,17 @@ bfin_cannot_fetch_register (int regno)
   return (regno >= bfin_num_regs);
 }
 
-static CORE_ADDR
-bfin_get_pc (struct regcache *regcache)
-{
-  unsigned long pc;
-
-  collect_register_by_name (regcache, "pc", &pc);
-
-  return pc;
-}
-
-static void
-bfin_set_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  unsigned long newpc = pc;
-
-  supply_register_by_name (regcache, "pc", &newpc);
-}
-
 #define bfin_breakpoint_len 2
-static const unsigned char bfin_breakpoint[bfin_breakpoint_len] = {0xa1, 0x00};
+static const gdb_byte bfin_breakpoint[bfin_breakpoint_len] = {0xa1, 0x00};
+
+/* Implementation of linux_target_ops method "sw_breakpoint_from_kind".  */
+
+static const gdb_byte *
+bfin_sw_breakpoint_from_kind (int kind, int *size)
+{
+  *size = bfin_breakpoint_len;
+  return bfin_breakpoint;
+}
 
 static int
 bfin_breakpoint_at (CORE_ADDR where)
@@ -94,6 +85,14 @@ static void
 bfin_arch_setup (void)
 {
   current_process ()->tdesc = tdesc_bfin;
+}
+
+/* Support for hardware single step.  */
+
+static int
+bfin_supports_hardware_single_step (void)
+{
+  return 1;
 }
 
 static struct usrregs_info bfin_usrregs_info =
@@ -120,13 +119,34 @@ struct linux_target_ops the_low_target = {
   bfin_cannot_fetch_register,
   bfin_cannot_store_register,
   NULL, /* fetch_register */
-  bfin_get_pc,
-  bfin_set_pc,
-  bfin_breakpoint,
-  bfin_breakpoint_len,
-  NULL, /* breakpoint_reinsert_addr */
+  linux_get_pc_32bit,
+  linux_set_pc_32bit,
+  NULL, /* breakpoint_kind_from_pc */
+  bfin_sw_breakpoint_from_kind,
+  NULL, /* get_next_pcs */
   2,
   bfin_breakpoint_at,
+  NULL, /* supports_z_point_type */
+  NULL, /* insert_point */
+  NULL, /* remove_point */
+  NULL, /* stopped_by_watchpoint */
+  NULL, /* stopped_data_address */
+  NULL, /* collect_ptrace_register */
+  NULL, /* supply_ptrace_register */
+  NULL, /* siginfo_fixup */
+  NULL, /* new_process */
+  NULL, /* new_thread */
+  NULL, /* new_fork */
+  NULL, /* prepare_to_resume */
+  NULL, /* process_qsupported */
+  NULL, /* supports_tracepoints */
+  NULL, /* get_thread_area */
+  NULL, /* install_fast_tracepoint_jump_pad */
+  NULL, /* emit_ops */
+  NULL, /* get_min_fast_tracepoint_insn_len */
+  NULL, /* supports_range_stepping */
+  NULL, /* breakpoint_kind_from_current_state */
+  bfin_supports_hardware_single_step,
 };
 
 

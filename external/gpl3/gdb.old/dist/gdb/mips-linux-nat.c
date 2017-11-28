@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 #include "gregset.h"
 
 #include <sgidefs.h>
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include <asm/ptrace.h>
 
 #include "nat/mips-linux-watch.h"
@@ -152,7 +152,7 @@ mips64_linux_register_addr (struct gdbarch *gdbarch, int regno, int store)
 /* Fetch the thread-local storage pointer for libthread_db.  */
 
 ps_err_e
-ps_get_thread_area (const struct ps_prochandle *ph,
+ps_get_thread_area (struct ps_prochandle *ph,
                     lwpid_t lwpid, int idx, void **base)
 {
   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
@@ -509,7 +509,8 @@ mips_show_dr (const char *func, CORE_ADDR addr,
 
 static int
 mips_linux_can_use_hw_breakpoint (struct target_ops *self,
-				  int type, int cnt, int ot)
+				  enum bptype type,
+				  int cnt, int ot)
 {
   int i;
   uint32_t wanted_mask, irw_mask;
@@ -614,7 +615,7 @@ write_watchpoint_regs (void)
   ALL_LWPS (lp)
     {
       tid = ptid_get_lwp (lp->ptid);
-      if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror) == -1)
+      if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror, NULL) == -1)
 	perror_with_name (_("Couldn't write debug register"));
     }
   return 0;
@@ -634,7 +635,7 @@ mips_linux_new_thread (struct lwp_info *lp)
     return;
 
   tid = ptid_get_lwp (lp->ptid);
-  if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror) == -1)
+  if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror, NULL) == -1)
     perror_with_name (_("Couldn't write debug register"));
 }
 
@@ -643,7 +644,8 @@ mips_linux_new_thread (struct lwp_info *lp)
 
 static int
 mips_linux_insert_watchpoint (struct target_ops *self,
-			      CORE_ADDR addr, int len, int type,
+			      CORE_ADDR addr, int len,
+			      enum target_hw_bp_type type,
 			      struct expression *cond)
 {
   struct pt_watch_regs regs;
@@ -671,8 +673,7 @@ mips_linux_insert_watchpoint (struct target_ops *self,
     return -1;
 
   /* It fit.  Stick it on the end of the list.  */
-  new_watch = (struct mips_watchpoint *)
-    xmalloc (sizeof (struct mips_watchpoint));
+  new_watch = XNEW (struct mips_watchpoint);
   new_watch->addr = addr;
   new_watch->len = len;
   new_watch->type = type;
@@ -697,7 +698,8 @@ mips_linux_insert_watchpoint (struct target_ops *self,
 
 static int
 mips_linux_remove_watchpoint (struct target_ops *self,
-			      CORE_ADDR addr, int len, int type,
+			      CORE_ADDR addr, int len,
+			      enum target_hw_bp_type type,
 			      struct expression *cond)
 {
   int retval;

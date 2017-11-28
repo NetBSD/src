@@ -1,6 +1,6 @@
 /* Inline frame unwinder for GDB.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -283,7 +283,7 @@ block_starting_point_at (CORE_ADDR pc, const struct block *block)
   if (BLOCKVECTOR_MAP (bv) == NULL)
     return 0;
 
-  new_block = addrmap_find (BLOCKVECTOR_MAP (bv), pc - 1);
+  new_block = (struct block *) addrmap_find (BLOCKVECTOR_MAP (bv), pc - 1);
   if (new_block == NULL)
     return 1;
 

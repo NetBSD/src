@@ -114,10 +114,10 @@ typedef struct bfd_section
   const char *name;
 
   /* A unique sequence number.  */
-  int id;
+  unsigned int id;
 
   /* Which section in the bfd; 0..n-1 as sections are created in a bfd.  */
-  int index;
+  unsigned int index;
 
   /* The next section in the list belonging to the BFD, or NULL.  */
   struct bfd_section *next;
@@ -320,6 +320,9 @@ typedef struct bfd_section
      when memory read flag isn't set. */
 #define SEC_COFF_NOREAD 0x40000000
 
+  /* Indicate that section has the purecode flag set.  */
+#define SEC_ELF_PURECODE 0x80000000
+
   /*  End of section flags.  */
 
   /* Some internal packed boolean fields.  */
@@ -386,7 +389,7 @@ typedef struct bfd_section
       information.  */
   bfd_vma lma;
 
-  /* The size of the section in octets, as it will be output.
+  /* The size of the section in *octets*, as it will be output.
      Contains a value even if the section has no contents (e.g., the
      size of @code{.bss}).  */
   bfd_size_type size;
@@ -724,12 +727,14 @@ named @var{name}.  Return NULL if no such section exists.
 @subsubsection @code{bfd_get_next_section_by_name}
 @strong{Synopsis}
 @example
-asection *bfd_get_next_section_by_name (asection *sec);
+asection *bfd_get_next_section_by_name (bfd *ibfd, asection *sec);
 @end example
 @strong{Description}@*
 Given @var{sec} is a section returned by @code{bfd_get_section_by_name},
 return the next most recently created section attached to the same
-BFD with the same name.  Return NULL if no such section exists.
+BFD with the same name, or if no such section exists in the same BFD and
+IBFD is non-NULL, the next section with the same name in any input
+BFD following IBFD.  Return NULL on finding no section.
 
 @findex bfd_get_linker_section
 @subsubsection @code{bfd_get_linker_section}
@@ -872,6 +877,15 @@ Like @code{bfd_make_section_anyway}, but return @code{NULL} (without calling
 bfd_set_error ()) without changing the section chain if there is already a
 section named @var{name}.  If there is an error, return @code{NULL} and set
 @code{bfd_error}.
+
+@findex bfd_get_next_section_id
+@subsubsection @code{bfd_get_next_section_id}
+@strong{Synopsis}
+@example
+int bfd_get_next_section_id (void);
+@end example
+@strong{Description}@*
+Returns the id that the next section created will have.
 
 @findex bfd_set_section_flags
 @subsubsection @code{bfd_set_section_flags}

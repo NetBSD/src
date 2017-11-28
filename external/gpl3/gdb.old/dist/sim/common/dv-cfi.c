@@ -2,7 +2,7 @@
    http://www.spansion.com/Support/AppNotes/CFI_Spec_AN_03.pdf
    http://www.spansion.com/Support/AppNotes/cfi_100_20011201.pdf
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -22,7 +22,7 @@
 
 /* TODO: support vendor query tables.  */
 
-#include "cconfig.h"
+#include "config.h"
 
 #include <math.h>
 #include <errno.h>

@@ -1,5 +1,5 @@
 /* MI Command Set - MI Command Parser.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -20,7 +20,7 @@
 #ifndef MI_PARSE_H
 #define MI_PARSE_H
 
-#include <sys/time.h>
+#include "gdb_sys_time.h"
 
 /* MI parser */
 

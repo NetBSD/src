@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -164,19 +164,8 @@ sim_core_read_aligned_N(sim_cpu *cpu,
   mapping = sim_core_find_mapping (core, map, addr, N, read_transfer, 1 /*abort*/, cpu, cia);
   do
     {
-#if (WITH_DEVICES)
-      if (WITH_CALLBACK_MEMORY && mapping->device != NULL)
-	{
-	  unsigned_M data;
-	  if (device_io_read_buffer (mapping->device, &data, mapping->space, addr, N, CPU_STATE (cpu), cpu, cia) != N)
-	    device_error (mapping->device, "internal error - %s - io_read_buffer should not fail",
-			  XSTRING (sim_core_read_aligned_N));
-	  val = T2H_M (data);
-	  break;
-	}
-#endif
 #if (WITH_HW)
-      if (WITH_CALLBACK_MEMORY && mapping->device != NULL)
+      if (mapping->device != NULL)
 	{
 	  unsigned_M data;
 	  sim_cpu_hw_io_read_buffer (cpu, cia, mapping->device, &data, mapping->space, addr, N);
@@ -259,9 +248,9 @@ sim_core_read_misaligned_N(sim_cpu *cpu,
   if (sim_core_xor_read_buffer (CPU_STATE (cpu), cpu, map, &val, addr, N) != N)
     SIM_CORE_SIGNAL (CPU_STATE (cpu), cpu, cia, map, N, addr,
 		     read_transfer, sim_core_unaligned_signal);
-  if (CURRENT_HOST_BYTE_ORDER != CURRENT_TARGET_BYTE_ORDER)
+  if (HOST_BYTE_ORDER != CURRENT_TARGET_BYTE_ORDER)
     val = SWAP_M (val);
-  if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
     val >>= (M - N) * 8;
   PROFILE_COUNT_CORE (cpu, addr, N, map);
   if (TRACE_P (cpu, TRACE_CORE_IDX))
@@ -295,18 +284,8 @@ sim_core_write_aligned_N(sim_cpu *cpu,
   mapping = sim_core_find_mapping (core, map, addr, N, write_transfer, 1 /*abort*/, cpu, cia);
   do
     {
-#if (WITH_DEVICES)
-      if (WITH_CALLBACK_MEMORY && mapping->device != NULL)
-	{
-	  unsigned_M data = H2T_M (val);
-	  if (device_io_write_buffer (mapping->device, &data, mapping->space, addr, N, CPU_STATE (cpu), cpu, cia) != N)
-	    device_error (mapping->device, "internal error - %s - io_write_buffer should not fail",
-			  XSTRING (sim_core_write_aligned_N));
-	  break;
-	}
-#endif
 #if (WITH_HW)
-      if (WITH_CALLBACK_MEMORY && mapping->device != NULL)
+      if (mapping->device != NULL)
 	{
 	  unsigned_M data = H2T_M (val);
 	  sim_cpu_hw_io_write_buffer (cpu, cia, mapping->device, &data, mapping->space, addr, N);
@@ -387,9 +366,9 @@ sim_core_write_misaligned_N(sim_cpu *cpu,
 			   unsigned_M val)
 {
   unsigned_M data = val;
-  if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
     data <<= (M - N) * 8;
-  if (CURRENT_HOST_BYTE_ORDER != CURRENT_TARGET_BYTE_ORDER)
+  if (HOST_BYTE_ORDER != CURRENT_TARGET_BYTE_ORDER)
     data = SWAP_M (data);
   if (sim_core_xor_write_buffer (CPU_STATE (cpu), cpu, map, &data, addr, N) != N)
     SIM_CORE_SIGNAL (CPU_STATE (cpu), cpu, cia, map, N, addr,

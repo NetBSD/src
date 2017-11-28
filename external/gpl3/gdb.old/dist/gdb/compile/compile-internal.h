@@ -1,5 +1,5 @@
 /* Header file for GDB compile command and supporting functions.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
 
 #include "hashtab.h"
 #include "gcc-c-interface.h"
+#include "common/enum-flags.h"
+
+/* enum-flags wrapper.  */
+DEF_ENUM_FLAGS_TYPE (enum gcc_qualifiers, gcc_qualifiers_flags);
 
 /* Debugging flag for the "compile" family of commands.  */
 

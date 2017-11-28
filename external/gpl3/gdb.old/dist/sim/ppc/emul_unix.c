@@ -195,6 +195,30 @@ struct	unix_rusage {
 };
 
 
+/* File descriptors 0, 1, and 2 should not be closed.  fd_closed[]
+   tracks whether these descriptors have been closed in do_close()
+   below.  */
+
+static int fd_closed[3];
+
+/* Check for some occurrences of bad file descriptors.  We only check
+   whether fd 0, 1, or 2 are "closed".  By "closed" we mean that these
+   descriptors aren't actually closed, but are considered to be closed
+   by this layer.
+
+   Other checks are performed by the underlying OS call.  */
+
+static int
+fdbad (int fd)
+{
+  if (fd >=0 && fd <= 2 && fd_closed[fd])
+    {
+      errno = EBADF;
+      return -1;
+    }
+  return 0;
+}
+
 static void
 do_unix_exit(os_emul_data *emul,
 	     unsigned call,
@@ -232,8 +256,10 @@ do_unix_read(os_emul_data *emul,
   /* check if buffer exists by reading it */
   emul_read_buffer(scratch_buffer, buf, nbytes, processor, cia);
 
+  status = fdbad (d);
   /* read */
-  status = read (d, scratch_buffer, nbytes);
+  if (status == 0)
+    status = read (d, scratch_buffer, nbytes);
 
   emul_write_status(processor, status, errno);
   if (status > 0)
@@ -266,8 +292,10 @@ do_unix_write(os_emul_data *emul,
   emul_read_buffer(scratch_buffer, buf, nbytes,
 		   processor, cia);
 
+  status = fdbad (d);
   /* write */
-  status = write(d, scratch_buffer, nbytes);
+  if (status == 0)
+    status = write(d, scratch_buffer, nbytes);
   emul_write_status(processor, status, errno);
   free(scratch_buffer);
 
@@ -310,7 +338,20 @@ do_unix_close(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d", d);
 
-  status = close(d);
+  status = fdbad (d);
+  if (status == 0)
+    {
+      /* Do not close stdin, stdout, or stderr. GDB may still need access to
+	 these descriptors.  */
+      if (d == 0 || d == 1 || d == 2)
+	{
+	  fd_closed[d] = 1;
+	  status = 0;
+	}
+      else
+	status = close(d);
+    }
+
   emul_write_status(processor, status, errno);
 }
 
@@ -490,7 +531,7 @@ do_unix_dup(os_emul_data *emul,
 	    unsigned_word cia)
 {
   int oldd = cpu_registers(processor)->gpr[arg0];
-  int status = dup(oldd);
+  int status = (fdbad (oldd) < 0) ? -1 : dup(oldd);
   int err = errno;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
@@ -512,7 +553,7 @@ do_unix_dup2(os_emul_data *emul,
 {
   int oldd = cpu_registers(processor)->gpr[arg0];
   int newd = cpu_registers(processor)->gpr[arg0+1];
-  int status = dup2(oldd, newd);
+  int status = (fdbad (oldd) < 0) ? -1 : dup2(oldd, newd);
   int err = errno;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
@@ -540,7 +581,9 @@ do_unix_lseek(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d %ld %d", fildes, (long)offset, whence);
 
-  status = lseek(fildes, offset, whence);
+  status = fdbad (fildes);
+  if (status == 0)
+    status = lseek(fildes, offset, whence);
   emul_write_status(processor, (int)status, errno);
 }
 #endif
@@ -1196,7 +1239,9 @@ do_solaris_fstat(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx", fildes, (long)stat_pkt);
 
-  status = fstat (fildes, &buf);
+  status = fdbad (fildes);
+  if (status == 0)
+    status = fstat (fildes, &buf);
   if (status == 0)
     convert_to_solaris_stat (stat_pkt, &buf, processor, cia);
 
@@ -1433,6 +1478,10 @@ do_solaris_ioctl(os_emul_data *emul,
 #endif
 #endif
 
+  status = fdbad (fildes);
+  if (status != 0)
+    goto done;
+
   switch (request)
     {
     case 0:					/* make sure we have at least one case */
@@ -1474,6 +1523,7 @@ do_solaris_ioctl(os_emul_data *emul,
 #endif /* HAVE_TERMIOS_STRUCTURE */
     }
 
+done:
   emul_write_status(processor, status, errno);
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
@@ -1925,7 +1975,9 @@ static void
 emul_solaris_init(os_emul_data *emul_data,
 		  int nr_cpus)
 {
-  /* nothing yet */
+  fd_closed[0] = 0;
+  fd_closed[1] = 0;
+  fd_closed[2] = 0;
 }
 
 static void
@@ -2124,7 +2176,9 @@ do_linux_fstat(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx", fildes, (long)stat_pkt);
 
-  status = fstat (fildes, &buf);
+  status = fdbad (fildes);
+  if (status == 0)
+    status = fstat (fildes, &buf);
   if (status == 0)
     convert_to_linux_stat (stat_pkt, &buf, processor, cia);
 
@@ -2388,6 +2442,10 @@ do_linux_ioctl(os_emul_data *emul,
 #endif
 #endif
 
+  status = fdbad (fildes);
+  if (status != 0)
+    goto done;
+
   switch (request)
     {
     case 0:					/* make sure we have at least one case */
@@ -2429,6 +2487,7 @@ do_linux_ioctl(os_emul_data *emul,
 #endif /* HAVE_TERMIOS_STRUCTURE */
     }
 
+done:
   emul_write_status(processor, status, errno);
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
@@ -2795,7 +2854,9 @@ static void
 emul_linux_init(os_emul_data *emul_data,
 		int nr_cpus)
 {
-  /* nothing yet */
+  fd_closed[0] = 0;
+  fd_closed[1] = 0;
+  fd_closed[2] = 0;
 }
 
 static void

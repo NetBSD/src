@@ -1,5 +1,5 @@
 /* SPU native-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -30,7 +30,7 @@
 #include "gdbthread.h"
 #include "gdb_bfd.h"
 
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include <asm/ptrace.h>
 #include <sys/types.h>
 
@@ -296,7 +296,7 @@ spu_bfd_iovec_pread (struct bfd *abfd, void *stream, void *buf,
 {
   ULONGEST addr = *(ULONGEST *)stream;
 
-  if (fetch_ppc_memory (addr + offset, buf, nbytes) != 0)
+  if (fetch_ppc_memory (addr + offset, (gdb_byte *)buf, nbytes) != 0)
     {
       bfd_set_error (bfd_error_invalid_operation);
       return -1;
@@ -324,7 +324,7 @@ spu_bfd_open (ULONGEST addr)
   struct bfd *nbfd;
   asection *spu_name;
 
-  ULONGEST *open_closure = xmalloc (sizeof (ULONGEST));
+  ULONGEST *open_closure = XNEW (ULONGEST);
   *open_closure = addr;
 
   nbfd = gdb_bfd_openr_iovec ("<in-memory>", "elf32-spu",
@@ -347,7 +347,7 @@ spu_bfd_open (ULONGEST addr)
       int sect_size = bfd_section_size (nbfd, spu_name);
       if (sect_size > 20)
 	{
-	  char *buf = alloca (sect_size - 20 + 1);
+	  char *buf = (char *)alloca (sect_size - 20 + 1);
 	  bfd_get_section_contents (nbfd, spu_name, buf, 20, sect_size - 20);
 	  buf[sect_size - 20] = '\0';
 
@@ -625,7 +625,7 @@ spu_xfer_partial (struct target_ops *ops,
 /* Override the to_can_use_hw_breakpoint routine.  */
 static int
 spu_can_use_hw_breakpoint (struct target_ops *self,
-			   int type, int cnt, int othertype)
+			   enum bptype type, int cnt, int othertype)
 {
   return 0;
 }

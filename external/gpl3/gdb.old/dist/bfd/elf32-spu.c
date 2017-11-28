@@ -1,6 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -4729,7 +4729,7 @@ spu_elf_final_link (bfd *output_bfd, struct bfd_link_info *info)
   return bfd_elf_final_link (output_bfd, info);
 }
 
-/* Called when not normally emitting relocs, ie. !info->relocatable
+/* Called when not normally emitting relocs, ie. !bfd_link_relocatable (info)
    and !info->emitrelocations.  Returns a count of special relocs
    that need to be emitted.  */
 
@@ -4902,18 +4902,17 @@ spu_elf_relocate_section (bfd *output_bfd,
 	  else if (info->unresolved_syms_in_objects == RM_IGNORE
 		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    ;
-	  else if (!info->relocatable
+	  else if (!bfd_link_relocatable (info)
 		   && !(r_type == R_SPU_PPU32 || r_type == R_SPU_PPU64))
 	    {
 	      bfd_boolean err;
 	      err = (info->unresolved_syms_in_objects == RM_GENERATE_ERROR
 		     || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT);
-	      if (!info->callbacks->undefined_symbol (info,
-						      h->root.root.string,
-						      input_bfd,
-						      input_section,
-						      rel->r_offset, err))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol) (info,
+						    h->root.root.string,
+						    input_bfd,
+						    input_section,
+						    rel->r_offset, err);
 	    }
 	  sym_name = h->root.root.string;
 	}
@@ -4922,7 +4921,7 @@ spu_elf_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       /* Change "a rt,ra,rb" to "ai rt,ra,0". */
@@ -4990,7 +4989,7 @@ spu_elf_relocate_section (bfd *output_bfd,
 	    }
 	}
 
-      if (htab->params->emit_fixups && !info->relocatable
+      if (htab->params->emit_fixups && !bfd_link_relocatable (info)
 	  && (input_section->flags & SEC_ALLOC) != 0
 	  && r_type == R_SPU_ADDR32)
 	{
@@ -5050,17 +5049,14 @@ spu_elf_relocate_section (bfd *output_bfd,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      if (!((*info->callbacks->reloc_overflow)
-		    (info, (h ? &h->root : NULL), sym_name, howto->name,
-		     (bfd_vma) 0, input_bfd, input_section, rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), sym_name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, sym_name, input_bfd, input_section,
-		     rel->r_offset, TRUE)))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, sym_name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -5081,10 +5077,8 @@ spu_elf_relocate_section (bfd *output_bfd,
 
 	    common_error:
 	      ret = FALSE;
-	      if (!((*info->callbacks->warning)
-		    (info, msg, sym_name, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->warning) (info, msg, sym_name, input_bfd,
+					   input_section, rel->r_offset);
 	      break;
 	    }
 	}
@@ -5135,7 +5129,7 @@ spu_elf_output_symbol_hook (struct bfd_link_info *info,
 {
   struct spu_link_hash_table *htab = spu_hash_table (info);
 
-  if (!info->relocatable
+  if (!bfd_link_relocatable (info)
       && htab->stub_sec != NULL
       && h != NULL
       && (h->root.type == bfd_link_hash_defined

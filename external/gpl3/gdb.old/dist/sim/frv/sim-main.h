@@ -1,5 +1,5 @@
 /* frv simulator support code
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -23,6 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    sim-basics.h and cgen-types.h needs config.h.  */
 #include "config.h"
 
+/* This is a global setting.  Different cpu families can't mix-n-match -scache
+   and -pbb.  However some cpu families may use -simple while others use
+   one of -scache/-pbb. ???? */
+#define WITH_SCACHE_PBB 0
+
 #include "symcat.h"
 #include "sim-basics.h"
 #include "cgen-types.h"
@@ -43,6 +48,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "profile.h"
 
 void frv_sim_engine_halt_hook (SIM_DESC, SIM_CPU *, sim_cia);
+
+extern void frv_sim_close (SIM_DESC sd, int quitting);
+#define SIM_CLOSE_HOOK(...) frv_sim_close (__VA_ARGS__)
 
 /* The _sim_cpu struct.  */
 

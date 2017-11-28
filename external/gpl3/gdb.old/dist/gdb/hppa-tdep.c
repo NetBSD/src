@@ -1,6 +1,6 @@
 /* Target-dependent code for the HP PA-RISC architecture.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -104,7 +104,7 @@ static const struct objfile_data *hppa_objfile_priv_data = NULL;
 static int
 hppa_sign_extend (unsigned val, unsigned bits)
 {
-  return (int) (val >> (bits - 1) ? (-1 << bits) | val : val);
+  return (int) (val >> (bits - 1) ? (-(1 << bits)) | val : val);
 }
 
 /* For many immediate values the sign bit is the low bit!  */
@@ -112,7 +112,7 @@ hppa_sign_extend (unsigned val, unsigned bits)
 static int
 hppa_low_hppa_sign_extend (unsigned val, unsigned bits)
 {
-  return (int) ((val & 0x1 ? (-1 << (bits - 1)) : 0) | val >> 1);
+  return (int) ((val & 0x1 ? (-(1 << (bits - 1))) : 0) | val >> 1);
 }
 
 /* Extract the bits at positions between FROM and TO, using HP's numbering
@@ -223,8 +223,8 @@ hppa_init_objfile_priv_data (struct objfile *objfile)
 static int
 compare_unwind_entries (const void *arg1, const void *arg2)
 {
-  const struct unwind_table_entry *a = arg1;
-  const struct unwind_table_entry *b = arg2;
+  const struct unwind_table_entry *a = (const struct unwind_table_entry *) arg1;
+  const struct unwind_table_entry *b = (const struct unwind_table_entry *) arg2;
 
   if (a->region_start > b->region_start)
     return 1;
@@ -261,7 +261,7 @@ internalize_unwinds (struct objfile *objfile, struct unwind_table_entry *table,
       struct gdbarch *gdbarch = get_objfile_arch (objfile);
       unsigned long tmp;
       unsigned i;
-      char *buf = alloca (size);
+      char *buf = (char *) alloca (size);
       CORE_ADDR low_text_segment_address;
 
       /* For ELF targets, then unwinds are supposed to
@@ -434,7 +434,7 @@ read_unwind_info (struct objfile *objfile)
   if (stub_unwind_size > 0)
     {
       unsigned int i;
-      char *buf = alloca (stub_unwind_size);
+      char *buf = (char *) alloca (stub_unwind_size);
 
       /* Read in the stub unwind entries.  */
       bfd_get_section_contents (objfile->obfd, stub_unwind_sec, buf,
@@ -504,14 +504,16 @@ find_unwind_entry (CORE_ADDR pc)
   {
     struct hppa_unwind_info *ui;
     ui = NULL;
-    priv = objfile_data (objfile, hppa_objfile_priv_data);
+    priv = ((struct hppa_objfile_private *)
+	    objfile_data (objfile, hppa_objfile_priv_data));
     if (priv)
       ui = ((struct hppa_objfile_private *) priv)->unwind_info;
 
     if (!ui)
       {
 	read_unwind_info (objfile);
-        priv = objfile_data (objfile, hppa_objfile_priv_data);
+        priv = ((struct hppa_objfile_private *)
+		objfile_data (objfile, hppa_objfile_priv_data));
 	if (priv == NULL)
 	  error (_("Internal error reading unwind information."));
         ui = ((struct hppa_objfile_private *) priv)->unwind_info;
@@ -694,14 +696,13 @@ static int
 hppa64_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 {
   /* The general registers and the sar are the same in both sets.  */
-  if (reg <= 32)
+  if (reg >= 0 && reg <= 32)
     return reg;
 
   /* fr4-fr31 are mapped from 72 in steps of 2.  */
   if (reg >= 72 && reg < 72 + 28 * 2 && !(reg & 1))
     return HPPA64_FP4_REGNUM + (reg - 72) / 2;
 
-  warning (_("Unmapped DWARF DBX Register #%d encountered."), reg);
   return -1;
 }
 
@@ -728,10 +729,6 @@ hppa32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   CORE_ADDR struct_end = 0;
   /* Stack base address at which the first parameter is stored.  */
   CORE_ADDR param_end = 0;
-
-  /* The inner most end of the stack after all the parameters have
-     been pushed.  */
-  CORE_ADDR new_sp = 0;
 
   /* Two passes.  First pass computes the location of everything,
      second pass writes the bytes out.  */
@@ -1356,7 +1353,7 @@ prologue_inst_adjust_sp (unsigned long inst)
 
   /* std,ma X,D(sp) */
   if ((inst & 0xffe00008) == 0x73c00008)
-    return (inst & 0x1 ? -1 << 13 : 0) | (((inst >> 4) & 0x3ff) << 3);
+    return (inst & 0x1 ? -(1 << 13) : 0) | (((inst >> 4) & 0x3ff) << 3);
 
   /* addil high21,%r30; ldo low11,(%r1),%r30)
      save high bits in save_high21 for later use.  */
@@ -1904,7 +1901,7 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
       if (hppa_debug)
         fprintf_unfiltered (gdb_stdlog, "base=%s (cached) }",
           paddress (gdbarch, ((struct hppa_frame_cache *)*this_cache)->base));
-      return (*this_cache);
+      return (struct hppa_frame_cache *) (*this_cache);
     }
   cache = FRAME_OBSTACK_ZALLOC (struct hppa_frame_cache);
   (*this_cache) = cache;
@@ -1916,7 +1913,7 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
     {
       if (hppa_debug)
         fprintf_unfiltered (gdb_stdlog, "base=NULL (no unwind entry) }");
-      return (*this_cache);
+      return (struct hppa_frame_cache *) (*this_cache);
     }
 
   /* Turn the Entry_GR field into a bitmask.  */
@@ -2006,7 +2003,7 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
 	  {
 	    error (_("Cannot read instruction at %s."),
 		   paddress (gdbarch, pc));
-	    return (*this_cache);
+	    return (struct hppa_frame_cache *) (*this_cache);
 	  }
 
 	inst = extract_unsigned_integer (buf4, sizeof buf4, byte_order);
@@ -2065,7 +2062,7 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
 		CORE_ADDR offset;
 		
 		if ((inst >> 26) == 0x1c)
-		  offset = (inst & 0x1 ? -1 << 13 : 0)
+		  offset = (inst & 0x1 ? -(1 << 13) : 0)
 		    | (((inst >> 4) & 0x3ff) << 3);
 		else if ((inst >> 26) == 0x03)
 		  offset = hppa_low_hppa_sign_extend (inst & 0x1f, 5);
@@ -2279,7 +2276,7 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
   if (hppa_debug)
     fprintf_unfiltered (gdb_stdlog, "base=%s }",
       paddress (gdbarch, ((struct hppa_frame_cache *)*this_cache)->base));
-  return (*this_cache);
+  return (struct hppa_frame_cache *) (*this_cache);
 }
 
 static void
@@ -2287,7 +2284,6 @@ hppa_frame_this_id (struct frame_info *this_frame, void **this_cache,
 		    struct frame_id *this_id)
 {
   struct hppa_frame_cache *info;
-  CORE_ADDR pc = get_frame_pc (this_frame);
   struct unwind_table_entry *u;
 
   info = hppa_frame_cache (this_frame, this_cache);
@@ -2453,7 +2449,7 @@ hppa_stub_frame_unwind_cache (struct frame_info *this_frame,
   struct unwind_table_entry *u;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct hppa_stub_unwind_cache *) *this_cache;
 
   info = FRAME_OBSTACK_ZALLOC (struct hppa_stub_unwind_cache);
   *this_cache = info;
@@ -3223,8 +3219,6 @@ extern initialize_file_ftype _initialize_hppa_tdep;
 void
 _initialize_hppa_tdep (void)
 {
-  struct cmd_list_element *c;
-
   gdbarch_register (bfd_arch_hppa, hppa_gdbarch_init, hppa_dump_tdep);
 
   hppa_objfile_priv_data = register_objfile_data ();

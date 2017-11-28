@@ -1,3 +1,155 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* TODO: Delete file.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+	* frv.c (frvbf_h_fr_double_get_handler): Change
+	CURRENT_HOST_BYTE_ORDER to HOST_BYTE_ORDER.
+	(frvbf_h_fr_double_set_handler): Likewise.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.h (TARGET_BIG_ENDIAN): Delete.
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change BIG_ENDIAN to BIG.
+	* configure: Regenerate.
+	* frv.c (frvbf_h_fr_double_get_handler): Change LITTLE_ENDIAN to
+	BFD_ENDIAN_LITTLE.
+	(frvbf_h_fr_double_set_handler): Likewise.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* reset.c (frv_term): Change current_state to sd.
+	* sim-if.c (current_state): Delete.
+	(sim_open): Delete current_state assignment.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_create_inferior): Replace old #if 0 code with dupargv.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* devices.c: Delete file.
+	* frv-sim.h (MCCR_ADDR, MCCR_CP, MCCR_CM0, MCCR_CM1, frv_devices,
+	struct _device): Delete.
+	* Makefile.in (SIM_OBJS): Delete devices.o.
+	* sim-if.c (sim_open): Delete #if 0 code.
+	* tconfig.h: Delete file.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-model.o.
+	* tconfig.h (SIM_HAVE_MODEL): Delete.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.c: Rename MACH to SIM_MACH.
+	* cpuall.h: Likewise.
+	* model.c: Rename MACH to SIM_MACH, MACH_IMP_PROPERTIES to
+	SIM_MACH_IMP_PROPERTIES, and MODEL to SIM_MODEL.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_SCACHE_PBB): Move from ...
+	* tconfig.h (WITH_SCACHE_PBB): ... here.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* devices.c (device_error): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HANDLES_LMA): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HAVE_BREAKPOINTS, SIM_BREAKPOINT,
+	SIM_BREAKPOINT_SIZE): Delete.
+	* traps.c [SIM_HAVE_BREAKPOINTS] (frv_itrap): Delete sim breakpoint
+	code.
+	[SIM_HAVE_BREAKPOINTS] (frv_break): Likewise.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (WITH_WATCHPOINTS): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HAVE_MEM_SIZE): Delete.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Rename to ...
+	(frv_sim_close): ... this.  Delete calls to frv_cgen_cpu_close and
+	sim_module_uninstall.
+	* sim-main.h (frv_sim_close): Declare.
+	(SIM_CLOSE_HOOK): Define.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure.ac (AC_ARG_ENABLE(sim-trapdump)): Call AS_HELP_STRING.
@@ -237,8 +389,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -261,7 +413,7 @@
 2005-10-28  Dave Brolley  <brolley@redhat.com>
 
 	* cpu.c,cpu.h,decode.c,decode.h,model.c,sem.c: Regenerate.
-	
+
 	Contribute the following changes:
 	2003-09-29  Dave Brolley  <brolley@redhat.com>
 
@@ -879,7 +1031,7 @@
 
 2000-09-01  Dave Brolley  <brolley@redhat.com>
 
-        * interrupts.c (frv_queue_break_interrupt): Call sim_handle_breakpoint
+	* interrupts.c (frv_queue_break_interrupt): Call sim_handle_breakpoint
 	before queuing an interrupt in order to allow 'break' to be used as
 	the breakpoint insn.
 
@@ -932,7 +1084,7 @@ Thu Jul  6 13:51:12 2000  Dave Brolley  <brolley@topaz>
 	(@cpu@_simulate_insn_prefetch): Monitoring of fetch buffer moved to
 	run_caches.  Use cache directly if not counting cycles.  Don't use
 	cache at all if not counting cycles and cache not enabled.
-	* frv.c (frv_insn_fetch_buffer): New global variable. 
+	* frv.c (frv_insn_fetch_buffer): New global variable.
 	(run_caches): Monitor the status of insn prefetch requests.
 	* frv-sim.h (FRV_INSN_FETCH_BUFFER): New struct type.
 	(frv_insn_fetch_buffer): New global variable.
@@ -1857,24 +2009,24 @@ Wed May 24 14:40:34 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	Call sim_queue_fn_mem_xi_write.
 	(frvbf_load_quad_CPR): Call frvbf_read_mem_SI.
 	Call sim_queue_fn_mem_xi_write.
-	(frvbf_insn_cache_preload): New function. 
-	(frvbf_data_cache_preload): New function. 
-	(frvbf_insn_cache_unlock): New function. 
-	(frvbf_data_cache_unlock): New function. 
-	(frvbf_insn_cache_invalidate): New function. 
-	(frvbf_data_cache_invalidate): New function. 
-	(frvbf_data_cache_flush): New function. 
+	(frvbf_insn_cache_preload): New function.
+	(frvbf_data_cache_preload): New function.
+	(frvbf_insn_cache_unlock): New function.
+	(frvbf_data_cache_unlock): New function.
+	(frvbf_insn_cache_invalidate): New function.
+	(frvbf_data_cache_invalidate): New function.
+	(frvbf_data_cache_flush): New function.
 	* frv-sim.h (sim-options.h): Include it.
 	(GET_HSR0): New macro.
-	(SET_HSR0): New macro. 
-	(GET_HSR0_ICE): New macro. 
-	(SET_HSR0_ICE): New macro. 
-	(GET_HSR0_DCE): New macro. 
-	(SET_HSR0_DCE): New macro. 
-	(GET_HSR0_CBM): New macro. 
-	(GET_HSR0_RME): New macro. 
-	(GET_IHSR8): New macro. 
-	(GET_IHSR8_NBC): New macro. 
+	(SET_HSR0): New macro.
+	(GET_HSR0_ICE): New macro.
+	(SET_HSR0_ICE): New macro.
+	(GET_HSR0_DCE): New macro.
+	(SET_HSR0_DCE): New macro.
+	(GET_HSR0_CBM): New macro.
+	(GET_HSR0_RME): New macro.
+	(GET_IHSR8): New macro.
+	(GET_IHSR8_NBC): New macro.
 	(frvbf_insn_cache_preload): New function.
 	(frvbf_data_cache_preload): New function.
 	(frvbf_insn_cache_unlock): New function.
