@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -37,9 +37,29 @@ set bp_2 [gdb_get_line_number "bp.2" $srcfile]
 set bp_3 [gdb_get_line_number "bp.3" $srcfile]
 
 proc gdb_cont_to_line { line } {
-	gdb_breakpoint $line
-	gdb_continue_to_breakpoint "cont to $line" ".*$line\r\n.*"
-	delete_breakpoints
+    gdb_breakpoint $line
+    gdb_continue_to_breakpoint "cont to $line" ".*$line\r\n.*"
+    delete_breakpoints
+}
+
+proc check_replay_insn { thread insn } {
+    gdb_test "thread apply $thread info record" \
+        "Replay in progress\.  At instruction $insn\."
+}
+
+proc check_not_replaying { thread } {
+    global gdb_prompt
+
+    set test "thread $thread not replaying"
+
+    gdb_test_multiple "thread apply $thread info record" $test {
+        -re "Replay in progress" {
+            fail $test
+        }
+        -re "$gdb_prompt $" {
+            pass $test
+        }
+    }
 }
 
 # trace the code between the two breakpoints
@@ -50,86 +70,145 @@ gdb_test "info threads" ".*"
 gdb_test_no_output "record btrace"
 gdb_cont_to_line $srcfile:$bp_2
 
-# navigate in the trace history for both threads
-with_test_prefix "navigate" {
-  gdb_test "thread 1" ".*"
-  with_test_prefix "thread 1" {
-    gdb_test "record goto begin" ".*"
-    gdb_test "info record" ".*Replay in progress\.  At instruction 1\."
-  }
-  gdb_test "thread 2" ".*"
-  with_test_prefix "thread 2" {
-    gdb_test "record goto begin" ".*"
-    gdb_test "info record" ".*Replay in progress\.  At instruction 1\."
-  }
+proc test_navigate {} {
+    with_test_prefix "navigate" {
+        gdb_test "thread 1" ".*"
+        with_test_prefix "thread 1" {
+            gdb_test "record goto begin" ".*"
+
+            check_replay_insn 1 1
+            check_not_replaying 2
+        }
+        gdb_test "thread 2" ".*"
+        with_test_prefix "thread 2" {
+            gdb_test "record goto begin" ".*"
+
+            check_replay_insn 1 1
+            check_replay_insn 2 1
+        }
+    }
 }
 
-# step both threads
-with_test_prefix "step" {
-  gdb_test "thread 1" ".*"
-  with_test_prefix "thread 1" {
-    gdb_test "info record" ".*Replay in progress\.  At instruction 1\."
-    gdb_test "stepi" ".*"
-    gdb_test "info record" ".*Replay in progress\.  At instruction 2\."
-  }
-  gdb_test "thread 2" ".*"
-  with_test_prefix "thread 2" {
-    gdb_test "info record" ".*Replay in progress\.  At instruction 1\."
-    gdb_test "stepi" ".*"
-    gdb_test "info record" ".*Replay in progress\.  At instruction 2\."
-  }
+proc test_step {} {
+    with_test_prefix "step" {
+        gdb_test "thread 1" ".*"
+        with_test_prefix "thread 1" {
+            gdb_test "stepi" ".*"
+
+            check_replay_insn 1 2
+            check_replay_insn 2 1
+        }
+        gdb_test "thread 2" ".*"
+        with_test_prefix "thread 2" {
+            gdb_test "stepi" ".*"
+
+            check_replay_insn 1 2
+            check_replay_insn 2 2
+        }
+    }
 }
 
-# run to the end of the history for both threads
-with_test_prefix "cont" {
-  gdb_test "thread 1" ".*"
-  with_test_prefix "thread 1" {
-    gdb_test "info record" ".*Replay in progress\.  At instruction 2\."
-    gdb_test "continue" "No more reverse-execution history.*"
-  }
-  gdb_test "thread 2" ".*"
-  with_test_prefix "thread 2" {
-    gdb_test "info record" ".*Replay in progress\.  At instruction 2\."
-    gdb_test "continue" "No more reverse-execution history.*"
-  }
+proc test_cont {} {
+    with_test_prefix "cont" {
+        gdb_test "thread 1" ".*"
+        with_test_prefix "thread 1" {
+            gdb_test "continue" "No more reverse-execution history.*"
+
+            check_not_replaying 1
+            check_replay_insn 2 2
+        }
+        gdb_test "thread 2" ".*"
+        with_test_prefix "thread 2" {
+            gdb_test "continue" "No more reverse-execution history.*"
+
+            check_not_replaying 1
+            check_not_replaying 2
+        }
+    }
 }
 
-# reverse-step both threads
-with_test_prefix "reverse-step" {
-  gdb_test "thread 1" ".*"
-  with_test_prefix "thread 1" {
-    gdb_test "reverse-stepi" ".*"
-    gdb_test "info record" ".*Replay in progress\..*"
-  }
-  gdb_test "thread 2" ".*"
-  with_test_prefix "thread 2" {
-    gdb_test "reverse-stepi" ".*"
-    gdb_test "info record" ".*Replay in progress\..*"
-  }
+proc test_cont_all {} {
+    with_test_prefix "cont-all" {
+        gdb_test "continue" "No more reverse-execution history.*"
+
+        # this works because we're lock-stepping threads that executed exactly
+        # the same code starting from the same instruction.
+
+        check_not_replaying 1
+        check_not_replaying 2
+    }
 }
 
-# both threads are still replaying
-with_test_prefix "check" {
-  gdb_test "thread 1" ".*"
-  with_test_prefix "thread 1" {
-    gdb_test "info record" ".*Replay in progress\..*"
-  }
-  gdb_test "thread 2" ".*"
-  with_test_prefix "thread 2" {
-    gdb_test "info record" ".*Replay in progress\..*"
-  }
+proc test_rstep {} {
+    with_test_prefix "reverse-step" {
+        gdb_test "thread apply all record goto 3"
+
+        gdb_test "thread 1" ".*"
+        with_test_prefix "thread 1" {
+            gdb_test "reverse-stepi" ".*"
+
+            check_replay_insn 1 2
+            check_replay_insn 2 3
+        }
+        gdb_test "thread 2" ".*"
+        with_test_prefix "thread 2" {
+            gdb_test "reverse-stepi" ".*"
+
+            check_replay_insn 1 2
+            check_replay_insn 2 2
+        }
+    }
 }
+
+proc test_goto_end {} {
+    with_test_prefix "goto-end" {
+        gdb_test "thread apply all record goto end"
+
+        check_not_replaying 1
+        check_not_replaying 2
+    }
+}
+
+foreach schedlock { "replay" "on" "step" } {
+    with_test_prefix "schedlock-$schedlock" {
+        gdb_test_no_output "set scheduler-locking $schedlock"
+
+        test_navigate
+        test_step
+        if { $schedlock == "step" } {
+            test_cont_all
+        } else {
+            test_cont
+        }
+        test_rstep
+        test_goto_end
+    }
+}
+
+# schedlock-off is difficult to test since we can't really say where the other
+# thread will be when the resumed thread stops.
 
 # navigate back into the history for thread 1 and continue thread 2
-with_test_prefix "cont" {
-  gdb_test "thread 1" ".*"
-  with_test_prefix "thread 1" {
-    gdb_test "record goto begin" ".*"
-    gdb_test "info record" ".*Replay in progress\.  At instruction 1\."
-  }
-  gdb_test "thread 2" ".*"
-  with_test_prefix "thread 2" {
-    gdb_test "record goto end" ".*"
-    gdb_cont_to_line $srcfile:$bp_3
-  }
+with_test_prefix "cont-to-end" {
+    # this test only works for scheduler-locking replay
+    gdb_test_no_output "set scheduler-locking replay"
+
+    gdb_test "thread 1" ".*"
+    with_test_prefix "thread 1" {
+        gdb_test "record goto begin" ".*"
+
+        check_replay_insn 1 1
+    }
+    gdb_test "thread 2" ".*"
+    with_test_prefix "thread 2" {
+        gdb_test "record goto end" ".*"
+
+        check_not_replaying 2
+
+        # if we reach the breakpoint, thread 2 terminated...
+        gdb_cont_to_line $srcfile:$bp_3
+
+        # and thread 1 stopped replaying
+        check_not_replaying 1
+    }
 }

@@ -1,5 +1,5 @@
 /* mmix.h -- Header file for MMIX opcode table
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
    This file is part of GDB, GAS, and the GNU binutils.

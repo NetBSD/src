@@ -1,6 +1,6 @@
 /* Test step/next in a shared library
 
-   Copyright 2004-2015 Free Software Foundation, Inc.
+   Copyright 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

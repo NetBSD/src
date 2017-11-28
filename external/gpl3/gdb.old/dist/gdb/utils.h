@@ -1,7 +1,7 @@
 /* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
 		      for now.  */
 /* I/O, string, cleanup, and other random utilities for GDB.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -135,6 +135,10 @@ extern void substitute_path_component (char **stringp, const char *from,
 				       const char *to);
 
 char *ldirname (const char *filename);
+
+extern int count_path_elements (const char *path);
+
+extern const char *strip_leading_path_elements (const char *path, int n);
 
 /* GDB output, ui_file utilities.  */
 
@@ -152,18 +156,27 @@ extern void reinitialize_more_filter (void);
 
 extern int pagination_enabled;
 
-/* Global ui_file streams.  These are all defined in main.c.  */
+extern struct ui_file **current_ui_gdb_stdout_ptr (void);
+extern struct ui_file **current_ui_gdb_stdin_ptr (void);
+extern struct ui_file **current_ui_gdb_stderr_ptr (void);
+extern struct ui_file **current_ui_gdb_stdlog_ptr (void);
+
+/* The current top level's ui_file streams.  */
+
 /* Normal results */
-extern struct ui_file *gdb_stdout;
+#define gdb_stdout (*current_ui_gdb_stdout_ptr ())
 /* Input stream */
-extern struct ui_file *gdb_stdin;
+#define gdb_stdin (*current_ui_gdb_stdin_ptr ())
 /* Serious error notifications */
-extern struct ui_file *gdb_stderr;
+#define gdb_stderr (*current_ui_gdb_stderr_ptr ())
 /* Log/debug/trace messages that should bypass normal stdout/stderr
    filtering.  For moment, always call this stream using
    *_unfiltered.  In the very near future that restriction shall be
    removed - either call shall be unfiltered.  (cagney 1999-06-13).  */
-extern struct ui_file *gdb_stdlog;
+#define gdb_stdlog (*current_ui_gdb_stdlog_ptr ())
+
+/* Truly global ui_file streams.  These are all defined in main.c.  */
+
 /* Target output that should bypass normal stdout/stderr filtering.
    For moment, always call this stream using *_unfiltered.  In the
    very near future that restriction shall be removed - either call
@@ -246,7 +259,11 @@ extern void fputstrn_unfiltered (const char *str, int n, int quotr,
 extern int filtered_printing_initialized (void);
 
 /* Display the host ADDR on STREAM formatted as ``0x%x''.  */
-extern void gdb_print_host_address (const void *addr, struct ui_file *stream);
+extern void gdb_print_host_address_1 (const void *addr, struct ui_file *stream);
+
+/* Wrapper that avoids adding a pointless cast to all callers.  */
+#define gdb_print_host_address(ADDR, STREAM) \
+  gdb_print_host_address_1 ((const void *) ADDR, STREAM)
 
 /* Convert CORE_ADDR to string in platform-specific manner.
    This is usually formatted similar to 0x%lx.  */

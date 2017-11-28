@@ -1,4 +1,4 @@
-#   Copyright 1998-2015 Free Software Foundation, Inc.
+#   Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,16 +19,10 @@
 
 standard_testfile
 
-# Test depends on printf, which the sparclet stub doesn't support.  
-if { [istarget "sparclet-*-*"] } {
-    return 0
-}
-
 # Some targets can't call functions, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
-    setup_xfail "*-*-*" 2416
-    fail "This target can not call functions"
+    unsupported "This target can not call functions"
     continue
 }
 
@@ -73,26 +67,30 @@ gdb_test continue \
 #call print_double_array(double_array)
 if {![gdb_skip_float_test "print print_double_array(double_array)"] && \
     ![gdb_skip_stdio_test "print print_double_array(double_array)"] } {
-    gdb_test_sequence "print print_double_array(double_array)" "" {
-	"\[ \t\r\n\]+array_d :"
-	"\[ \t\r\n\]+========="
-	"\[ \t\r\n\]+0.000000"
-	"\[ \t\r\n\]+23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]"
-	"\[ \t\r\n\]+"
-    }
+
+    gdb_test_stdio "print print_double_array(double_array)" \
+	[multi_line \
+	     "array_d :" \
+	     "=========" \
+	     "" \
+	     "0.000000 *" \
+	     "23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]"]
 }
 
 #call print_char_array(char_array)
 
+set array_c_re \
+    [multi_line \
+	 "array_c :" \
+	 "=========" \
+	 "" \
+	 "Z" \
+	 "aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ" \
+	 "aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ" \
+	 "aZaZaZaZaZaZaZaZaZa"]
+
 if ![gdb_skip_stdio_test "print_char_array(char_array)"] {
-    gdb_test_sequence "print print_char_array(char_array)" "" {
-	"\[ \t\r\n\]+array_c :"
-	"\[ \t\r\n\]+========="
-	"\[ \t\r\n\]+\[ \t\r\n\]+Z"
-	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ"
-	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ"
-	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZa\[ \t\r\n\]+\[ \t\r\n\]+"
-    }
+    gdb_test_stdio "print print_char_array(char_array)" $array_c_re
 }
 
 set stop_line [gdb_get_line_number "-tbreak2-"]
@@ -101,16 +99,11 @@ gdb_test "tbreak $stop_line" \
 "tbreakpoint at tbreak2"
 
 if ![gdb_skip_stdio_test "continue to tbreak2"] {
-    gdb_test_sequence "continue" "continue to tbreak2" {
-	"\[ \t\r\n\]+array_c :"
-	"\[ \t\r\n\]+========="
-	"\[ \t\r\n\]+\[ \t\r\n\]+Z"
-	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ"
-	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ"
-	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZa"
-	"\[ \t\r\n\]+main.*at.*:\[0-9\]+"
-	"\[ \t\r\n\]+\[0-9\]+.*print_double_array\\(double_array\\)"
-    }
+    set gdb_re \
+	[multi_line \
+	     "main.*at.*:\[0-9\]+" \
+	     "\[0-9\]+.*print_double_array\\(double_array\\).*"]
+    gdb_test_stdio "continue" $array_c_re $gdb_re "continue to tbreak2"
 } else {
     gdb_test "continue" ".*" ""
 }
@@ -135,18 +128,24 @@ gdb_test "tbreak $stop_line" \
 
 if {![gdb_skip_float_test "continuing to tbreak3"] && \
     ![gdb_skip_stdio_test "continuing to tbreak3"] } {
-    gdb_test_sequence "continue" "continuing to tbreak3" {
-	"Continuing\\."
-	"\[ \t\r\n\]+array_d :"
-	"\[ \t\r\n\]+========="
-	"\[ \t\r\n\]+0.000000"
-	"\[ \t\r\n\]+23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]*"
-	"\[ \t\r\n\]+"
-	"array_f :"
-	"student id :\[\t \]+.*YELLOW"
-	"array_i :"
-	"main \\(\\) at .*call-ar-st.c:\[0-9\]+\[ \t\r\n\]+.*print_all_arrays\\(integer_array, char_array, float_array, double_array\\)."
-    }
+
+    gdb_test_stdio "continue" \
+	[multi_line \
+	     "array_d :" \
+	     "=========" \
+	     "" \
+	     "0.000000 *" \
+	     "23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]* *" \
+	     "" \
+	     "" \
+	     "array_f :" \
+	     ".*" \
+	     "student id :\[\t \]+.*YELLOW" \
+	     "array_i :" \
+	    ] \
+	"main \\(\\) at .*call-ar-st.c:\[0-9\]+\[ \t\r\n\]+.*print_all_arrays\\(integer_array, char_array, float_array, double_array\\)..*" \
+	"continuing to tbreak3"
+
 } else {
     gdb_test "continue" ".*" ""
 }
@@ -160,8 +159,9 @@ gdb_test "step" \
 #step -over
 if ![gdb_skip_stdio_test "next over print_int_array in print_all_arrays"] {
     set stop_line [gdb_get_line_number "-next1-"]
-    gdb_test "next" \
-	"array_i :.*$stop_line.*print_char_array.*" \
+    gdb_test_stdio "next" \
+	"array_i :" \
+	"$stop_line.*print_char_array.*" \
 	"next over print_int_array in print-all_arrays"
 } else {
     gdb_test "next" ".*" ""
@@ -170,13 +170,15 @@ if ![gdb_skip_stdio_test "next over print_int_array in print_all_arrays"] {
 #call print_double_array(array_d)
 if {![gdb_skip_float_test "print print_double_array(array_d)"] && \
     ![gdb_skip_stdio_test "print print_double_array(array_d)"] } {
-    gdb_test_sequence "print print_double_array(array_d)" "" {
-	"array_d :"
-	"\[ \t\r\n\]+========="
-	"\[ \t\r\n\]+\[ \t\r\n\]+0.000000"
-	"\[ \t\r\n\]+23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]*"
-	"\[ \t\r\n\]+"
-    }
+
+    gdb_test_stdio "print print_double_array(array_d)" \
+	[multi_line \
+	     "array_d :" \
+	     "=========" \
+	     "" \
+	     "0.000000 *" \
+	     "23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]*" \
+	    ]
 }
 
 set stop_line [gdb_get_line_number "-tbreak4-"]
@@ -186,15 +188,17 @@ gdb_test "tbreak $stop_line" \
 
 if {![gdb_skip_float_test "continuing to tbreak4"] && \
     ![gdb_skip_stdio_test "continuing to tbreak4"] } {
-    gdb_test_sequence "continue" "continuing to tbreak4" {
-	"Continuing\\..*array_c"
-	"array_f"
-	"\[ \t\r\n\]+array_d :"
-	"\[ \t\r\n\]+========="
-	"\[ \t\r\n\]+0.000000"
-	"\[ \t\r\n\]+23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]*"
-	"\[ \t\r\n\]+.*HELLO WORLD.*main \\(\\) at .*call-ar-st.c:\[0-9\]+.*printf\\(.BYE BYE FOR NOW.n.\\)."
-    }
+
+    gdb_test_stdio "continue" \
+	[multi_line \
+	     "array_d :" \
+	     "=========" \
+	     "" \
+	     "0.000000 *" \
+	     "23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]*" \
+	    ] \
+	"" \
+	"continuing to tbreak4"
 } else {
     gdb_test "continue" ".*" ""
 }
@@ -203,16 +207,34 @@ if {![gdb_skip_float_test "continuing to tbreak4"] && \
 #call sum_array_print(10, *list1, *list2, *list3, *list4)
 
 if ![gdb_skip_stdio_test "print sum_array_print(...)"] {
-    gdb_test "print sum_array_print(10, *list1, *list2, *list3, *list4)" \
-	".*Sum of 4 arrays, by element \\(add in seed as well\\):\[ \t\r\n\]+Seed: 10\[ \t\r\n\]+Element Index . Sum\[ \t\r\n\]+-------------------------\[ \t\r\n\]+.*\[ \t\]+0\[ \t\]+52\[ \t\r\n\]+1\[ \t\]+60\[ \t\r\n\]+2\[ \t\]+68\[ \t\r\n\]+3\[ \t\]+76\[ \t\r\n\]+4\[ \t\]+84\[ \t\r\n\]+5\[ \t\]+92\[ \t\r\n\]+6\[ \t\]+100\[ \t\r\n\]+7\[ \t\]+108\[ \t\r\n\]+8\[ \t\]+116\[ \t\r\n\]+9\[ \t\]+124\[ \t\r\n\]+.*" \
-	"print sum_array_print(10, *list1, *list2, *list3, *list4)"
+
+    gdb_test_stdio "print sum_array_print(10, *list1, *list2, *list3, *list4)" \
+	[multi_line \
+	     "Sum of 4 arrays, by element \\(add in seed as well\\): " \
+	     "" \
+	     "Seed: 10" \
+	     "Element Index . Sum " \
+	     "-------------------------" \
+	     ".*" \
+	     "\[ \t\]+0\[ \t\]+52" \
+	     "\[ \t\]+1\[ \t\]+60" \
+	     "\[ \t\]+2\[ \t\]+68" \
+	     "\[ \t\]+3\[ \t\]+76" \
+	     "\[ \t\]+4\[ \t\]+84" \
+	     "\[ \t\]+5\[ \t\]+92" \
+	     "\[ \t\]+6\[ \t\]+100" \
+	     "\[ \t\]+7\[ \t\]+108" \
+	     "\[ \t\]+8\[ \t\]+116" \
+	     "\[ \t\]+9\[ \t\]+124" \
+	    ]
 }
 
 #step over
 set stop_line [gdb_get_line_number "-next2-"]
 if ![gdb_skip_stdio_test "next to next2"] {
-    gdb_test "next" \
-	"BYE BYE FOR NOW.*$stop_line.*printf\\(.VERY GREEN GRASS.n.\\);.*" \
+    gdb_test_stdio "next" \
+	"BYE BYE FOR NOW" \
+	"$stop_line.*printf\\(.VERY GREEN GRASS.n.\\);.*" \
 	"next to next2"
 } else {
     gdb_test "next" ".*" ""
@@ -221,9 +243,8 @@ if ![gdb_skip_stdio_test "next to next2"] {
 #call print_array_rep(\*list1, \*list2, \*list3)
 
 if ![gdb_skip_stdio_test "print print_array_rep(...)"] {
-    gdb_test "print print_array_rep(\*list1, \*list2, \*list3)" \
-	"Contents of linked list3:.*" \
-	"print print_array_rep(*list1, *list2, *list3)"
+    gdb_test_stdio "print print_array_rep(\*list1, \*list2, \*list3)" \
+	"Contents of linked list3:"
 }
 
 set stop_line [gdb_get_line_number "-tbreak5-"]
@@ -272,8 +293,9 @@ gdb_test "tbreak $stop_line" \
     "tbreakpoint at tbreak6"
 
 if ![gdb_skip_stdio_test "continuing to tbreak6"] {
-    gdb_test "continue" \
-	"Continuing\\..*Sum of 4 arrays.*Contents of linked list1.*Contents of two_floats_t.*main \\(\\) at .*$srcfile:$stop_line.*c = 0.*" \
+    gdb_test_stdio "continue" \
+	"Sum of 4 arrays.*Contents of linked list1.*Contents of two_floats_t" \
+	"main \\(\\) at .*$srcfile:$stop_line.*c = 0.*" \
 	"continue to tbreak6"
 } else {
     gdb_test "continue" ".*" ""
@@ -285,41 +307,57 @@ if ![gdb_skip_stdio_test "continuing to tbreak6"] {
 
 if {![gdb_skip_float_test "print print_small_structs(...)"] && \
     ![gdb_skip_stdio_test "print print_small_structs(...)"] } {
-    gdb_test_sequence "print print_small_structs(*struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)" "print print_small_structs" {
-	"\[\t\r\n \]+alpha"
-	"\[\t\r\n \]+gamma"
-	"\[\t\r\n \]+epsilon"
-	"\[\t\r\n \]+alpha"
-	"\[\t\r\n \]+gamma"
-	"\[\t\r\n \]+epsilon"
-	"\[\t\r\n \]+ch1: y[ \t]*ch2: n"
-	"\[\t\r\n \]+Contents of three_char_t:"
-	"\[\t\r\n \]+a[ \t]*b[ \t]*c"
-	"\[\t\r\n \]+Contents of five_char_t:"
-	"\[\t\r\n \]+l[ \t]*m[ \t]*n[ \t]*o[ \t]*p"
-	"\[\t\r\n \]+Contents of int_char_combo_t:"
-	"\[\t\r\n \]+123[ \t]*z"
-	"\[\t\r\n \]+Sum of the 4 struct values and seed :"
-	"\[\t\r\n \]+52"
-	"\[\t\r\n \]+Contents of struct1:"
-	"\[\t\r\n \]+6[ \t]*0"
-	"\[\t\r\n \]+Contents of struct2:"
-	"\[\t\r\n \]+10[ \t]*0"
-	"\[\t\r\n \]+Contents of struct3:"
-	"\[\t\r\n \]+12[ \t]*0"
-	"\[\t\r\n \]+Contents of one_double_t:"
-	"\[\t\r\n \]+10.500000"
-	"\[\t\r\n \]+Contents of one_double_t:"
-	"\[\t\r\n \]+-3.375000"
-	"\[\t\r\n \]+Contents of one_double_t:"
-	"\[\t\r\n \]+675.093750"
-	"\[\t\r\n \]+Contents of two_floats_t:"
-	"\[\t\r\n \]+45.234001[ \t]*43.599998"
-	"\[\t\r\n \]+Contents of two_floats_t:"
-	"\[\t\r\n \]+78.010002[ \t]*122.099998"
-	"\[\t\r\n \]+Contents of two_floats_t:"
-	"\[\t\r\n \]+-1232.344971[ \t]*-199.210007"
-    }
+    gdb_test_stdio "print print_small_structs(*struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)" \
+	[multi_line \
+	     "alpha" \
+	     "gamma" \
+	     "epsilon" \
+	     "alpha" \
+	     "gamma" \
+	     "epsilon" \
+	     "ch1: y\[ \t\]*ch2: n" \
+	     "Contents of three_char_t: " \
+	     "" \
+	     "a\[ \t\]*b\[ \t\]*c" \
+	     "Contents of five_char_t: " \
+	     "" \
+	     "l\[ \t\]*m\[ \t\]*n\[ \t\]*o\[ \t\]*p" \
+	     "Contents of int_char_combo_t: " \
+	     "" \
+	     "123\[ \t\]*z" \
+	     "Sum of the 4 struct values and seed : " \
+	     "" \
+	     "\[ \t\]*52" \
+	     "Contents of struct1: " \
+	     "" \
+	     "\[ \t\]*6\[ \t\]*0" \
+	     "Contents of struct2: " \
+	     "" \
+	     "\[ \t\]*10\[ \t\]*0" \
+	     "Contents of struct3: " \
+	     "" \
+	     "\[ \t\]*12\[ \t\]*0" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "10.500000" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "-3.375000" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "675.093750" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "\[ \t\]*45.234001\[ \t\]*43.599998" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "\[ \t\]*78.010002\[ \t\]*122.099998" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "-1232.344971\[ \t\]*-199.210007" \
+	    ] \
+	"" \
+	"print print_small_structs"
 }
 
 #call compute_with_small_structs(20)
@@ -333,13 +371,14 @@ gdb_test "print compute_with_small_structs(20)" \
 
 if {![gdb_skip_float_test "print print_ten_doubles(...)"] && \
     ![gdb_skip_stdio_test "print print_ten_doubles(...)"]} {
-    gdb_test_sequence "print print_ten_doubles(123.456, 123.456, -0.12, -1.23, 343434.8, 89.098, 3.14, -5678.12345, -0.11111111, 216.97065)" "print print_ten_doubles" {
-	"\[\t\r\n \]+Two Doubles : 123.45\[0-9\]*.*123.45\[0-9\]*"
-	"\[\t\r\n \]+Two Doubles : -0.1200\[0-9\]*.*-1.2300\[0-9\]*"
-	"\[\t\r\n \]+Two Doubles : 343434.\[0-9\]*.*89.09\[0-9\]*"
-	"\[\t\r\n \]+Two Doubles : 3.1400\[0-9\]*.*-5678.123\[0-9\]*"
-	"\[\t\r\n \]+Two Doubles : -0.1111\[0-9\]*.*216.97\[0-9\]*"
-    }
+    gdb_test_stdio "print print_ten_doubles(123.456, 123.456, -0.12, -1.23, 343434.8, 89.098, 3.14, -5678.12345, -0.11111111, 216.97065)" \
+	[multi_line \
+	     "Two Doubles : 123.45\[0-9\]*.*123.45\[0-9\]*" \
+	     "Two Doubles : -0.1200\[0-9\]*.*-1.2300\[0-9\]*" \
+	     "Two Doubles : 343434.\[0-9\]*.*89.09\[0-9\]*" \
+	     "Two Doubles : 3.1400\[0-9\]*.*-5678.123\[0-9\]*" \
+	     "Two Doubles : -0.1111\[0-9\]*.*216.97\[0-9\]*" \
+	     ]
 }
 
 set stop_line [gdb_get_line_number "-tbreak7-"]
@@ -350,46 +389,28 @@ gdb_test "tbreak $stop_line" \
 gdb_test continue "Continuing\\..*main \\(.*\\) at.*$srcfile:$stop_line\[\t\r\n \]+$stop_line.*print_long_arg_list \\( a, b, c, d, e, f, .struct1, .struct2, .struct3, .struct4,.*" "continue to tbreak7"
 
 set stop_line [gdb_get_line_number "-step2-"]
-if { [istarget "hppa*-*-hpux*"] } {
-    #
-    # NOTE:(FIXME)
-    # the aCC demangler cannot demangle the name of a function with >10 args.
-    # so I added a .* after the name of the function, to match the
-    # incredibly long mangled name 
-    # (getting aCC's libdemangle.a bundled w/ the system?)
-    # DTS CLLbs16994  coulter 990114
-    # 
-    # FIXME: use step for hppa* testing for now
-    # guo 990621
-    #
-    gdb_test "step" \
-	"print_long_arg_list.*\\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);" \
-	"step into print_long_arg_list"
-} else {
-
-    # We can't just assume that a "step" will get us into
-    # print_long_arg_list here,either.
-    gdb_test "tbreak print_long_arg_list" \
-	"Temporary breakpoint .* file .*$srcfile, line .*" \
-	"tbreak in print_long_arg_list after stepping into memcpy"
-    # The short match case below handles cases where a buffer
-    # overflows or something, and expect can't deal with the full
-    # line.  Perhaps a more elegant solution exists... -sts 1999-08-17
-    if {![gdb_skip_float_test "step into print_long_arg_list"]} {
-	gdb_test_multiple "continue" "step into print_long_arg_list" {
-	    -re ".*print_long_arg_list \\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
-		pass "step into print_long_arg_list"
-	    }
-	    -re ".*print_long_arg_list.*\\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}.*\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
-		pass "step into print_long_arg_list (short match)"
-	    }
+# We can't just assume that a "step" will get us into
+# print_long_arg_list here,either.
+gdb_test "tbreak print_long_arg_list" \
+    "Temporary breakpoint .* file .*$srcfile, line .*" \
+    "tbreak in print_long_arg_list after stepping into memcpy"
+# The short match case below handles cases where a buffer
+# overflows or something, and expect can't deal with the full
+# line.  Perhaps a more elegant solution exists... -sts 1999-08-17
+if {![gdb_skip_float_test "step into print_long_arg_list"]} {
+    gdb_test_multiple "continue" "step into print_long_arg_list" {
+	-re ".*print_long_arg_list \\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
+	    pass "step into print_long_arg_list"
 	}
-    } else {
-	# If skipping float tests, don't expect anything in arg list.
-	gdb_test "continue" \
-	    "print_long_arg_list \\(.*\\).*" \
-	    "step into print_long_arg_list"
+	-re ".*print_long_arg_list.*\\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}.*\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
+	    pass "step into print_long_arg_list (short match)"
+	}
     }
+} else {
+    # If skipping float tests, don't expect anything in arg list.
+    gdb_test "continue" \
+	"print_long_arg_list \\(.*\\).*" \
+	"step into print_long_arg_list"
 }
 
 set ws "\[\n\r\t \]+"
@@ -408,43 +429,59 @@ if {![gdb_skip_float_test "print_small_structs from print_long_arg_list"] && \
 	setup_kfail "gdb/1539" "sparc-*-*"
     }
 
-    gdb_test_sequence "print print_small_structs(struct1, struct2, struct3, struct4, flags, flags_combo, three_char, five_char, int_char_combo, d1, d2, d3, f1, f2, f3)" "print print_small_structs from print_long_arg_list" {
-	"\[\t\r\n \]+alpha"
-	"\[\t\r\n \]+gamma"
-	"\[\t\r\n \]+epsilon"
-	"\[\t\r\n \]+alpha"
-	"\[\t\r\n \]+gamma"
-	"\[\t\r\n \]+epsilon"
-	"\[\t\r\n \]+ch1: y[ \t]*ch2: n"
-	"\[\t\r\n \]+Contents of three_char_t:"
-	"\[\t\r\n \]+a\[ \t\]*b\[ \t\]*c"
-	"\[\t\r\n \]+Contents of five_char_t:"
-	"\[\t\r\n \]+l\[ \t\]*m\[ \t\]*n\[ \t\]*o\[ \t\]*p"
-	"\[\t\r\n \]+Contents of int_char_combo_t:"
-	"\[\t\r\n \]+123\[ \t\]*z"
-	"\[\t\r\n \]+Sum of the 4 struct values and seed :"
-	"\[\t\r\n \]+52"
-	"\[\t\r\n \]+Contents of struct1:"
-	"\[\t\r\n \]+6\[ \t\]*0"
-	"\[\t\r\n \]+Contents of struct2:"
-	"\[\t\r\n \]+10\[ \t\]*0"
-	"\[\t\r\n \]+Contents of struct3:"
-	"\[\t\r\n \]+12\[ \t\]*0"
-	"\[\t\r\n \]+Contents of one_double_t:"
-	"\[\t\r\n \]+10.500000"
-	"\[\t\r\n \]+Contents of one_double_t:"
-	"\[\t\r\n \]+-3.375000"
-	"\[\t\r\n \]+Contents of one_double_t:"
-	"\[\t\r\n \]+675.093750"
-	"\[\t\r\n \]+Contents of two_floats_t:"
-	"\[\t\r\n \]+45.234001\[ \t\]*43.599998"
-	"\[\t\r\n \]+Contents of two_floats_t:"
-	"\[\t\r\n \]+78.010002\[ \t\]*122.099998"
-	"\[\t\r\n \]+Contents of two_floats_t:"
-	"\[\t\r\n \]+-1232.344971\[ \t\]*-199.210007"
-    }
-}
 
+    gdb_test_stdio "print print_small_structs(struct1, struct2, struct3, struct4, flags, flags_combo, three_char, five_char, int_char_combo, d1, d2, d3, f1, f2, f3)" \
+	[multi_line \
+	     "alpha" \
+	     "gamma" \
+	     "epsilon" \
+	     "alpha" \
+	     "gamma" \
+	     "epsilon" \
+	     "ch1: y\[ \t\]*ch2: n" \
+	     "Contents of three_char_t: " \
+	     "" \
+	     "a\[ \t\]*b\[ \t\]*c" \
+	     "Contents of five_char_t: " \
+	     "" \
+	     "l\[ \t\]*m\[ \t\]*n\[ \t\]*o\[ \t\]*p" \
+	     "Contents of int_char_combo_t: " \
+	     "" \
+	     "123\[ \t\]*z" \
+	     "Sum of the 4 struct values and seed : " \
+	     "" \
+	     "\[ \t\]*52" \
+	     "Contents of struct1: " \
+	     "" \
+	     "\[ \t\]*6\[ \t\]*0" \
+	     "Contents of struct2: " \
+	     "" \
+	     "\[ \t\]*10\[ \t\]*0" \
+	     "Contents of struct3: " \
+	     "" \
+	     "\[ \t\]*12\[ \t\]*0" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "10.500000" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "-3.375000" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "675.093750" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "\[ \t\]*45.234001\[ \t\]*43.599998" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "\[ \t\]*78.010002\[ \t\]*122.099998" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "-1232.344971\[ \t\]*-199.210007" \
+	    ] \
+	"" \
+	"print print_small_structs from print_long_arg_list"
+}
 
 set stop_line [gdb_get_line_number "-tbreak8-"]
 gdb_test "tbreak $stop_line" \
@@ -452,8 +489,10 @@ gdb_test "tbreak $stop_line" \
     "tbreakpoint at tbreak8"
 
 if ![gdb_skip_stdio_test "continuing to tbreak8"] {
-    gdb_test "continue" "Continuing\\..*Contents of two_floats_t:.*main \\(\\) at.*$srcfile:$stop_line.*$stop_line.*init_bit_flags_combo\\(flags_combo, \\(unsigned\\)1, \\(unsigned\\)0, .y.,.*" \
-	    "continue to tbreak8"
+    gdb_test_stdio "continue" \
+	"Contents of two_floats_t:" \
+	".*main \\(\\) at.*$srcfile:$stop_line.*$stop_line.*init_bit_flags_combo\\(flags_combo, \\(unsigned\\)1, \\(unsigned\\)0, .y.,.*" \
+	"continue to tbreak8"
 } else {
     gdb_test "continue" ".*" ""
 }
@@ -466,9 +505,8 @@ gdb_test "step" \
 
 #call print_bit_flags_combo(*bit_flags_combo)
 if ![gdb_skip_stdio_test "continuing at step3"] {
-    gdb_test "print print_bit_flags_combo(*bit_flags_combo)" \
-	"alpha.*gamma.*epsilon.*ch1: y.*ch2: n.*" \
-	"print print_bit_flags_combo from init_bit_flags_combo"
+    gdb_test_stdio "print print_bit_flags_combo(*bit_flags_combo)" \
+	"alpha.*gamma.*epsilon.*ch1: y.*ch2: n"
 }
 
 
@@ -482,52 +520,66 @@ gdb_test continue "Continuing\\..*main \\(\\) at .*$srcfile:$stop_line\[\r\n\t \
 
 #call print_long_arg_list(a, b, c, d, e, f, *struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)
 
-# FIXME:
-# HP aCC demangler currently does not handle hp aCC functions with >10 args
-# DTS CLLbs16994  coulter 990114
-
-if {$hp_aCC_compiler} {setup_xfail "hppa*-*-*" CLLbs16994}
-
 if {![gdb_skip_float_test "print print_long_arg_list"] && \
     ![gdb_skip_stdio_test "print print_long_arg_list"] } {
-    gdb_test_sequence "print print_long_arg_list(a, b, c, d, e, f, *struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)" "print print_long_arg_list" {
-	"\[ \n\r\t\]+double : 22.250000"
-	"\[ \n\r\t\]+double : 33.375000"
-	"\[ \n\r\t\]+int : 0"
-	"\[ \n\r\t\]+int : -25"
-	"\[ \n\r\t\]+int : 100"
-	"\[ \n\r\t\]+int : 2345"
-	"\[ \n\r\t\]+alpha"
-	"\[ \n\r\t\]+gamma"
-	"\[ \n\r\t\]+epsilon"
-	"\[ \n\r\t\]+ch1: y\[ \t\]+ch2: n"
-	"\[ \n\r\t\]+Contents of three_char_t:"
-	"\[ \n\r\t\]+x\[ \t\]+y\[ \t\]+z"
-	"\[ \n\r\t\]+Contents of five_char_t:"
-	"\[ \n\r\t\]+h\[ \t\]+e\[ \t\]+l\[ \t\]+l\[ \t\]+o"
-	"\[ \n\r\t\]+Contents of int_char_combo_t:"
-	"\[ \n\r\t\]+123\[ \t\]+z"
-	"\[ \n\r\t\]+Sum of the 4 struct values and seed :"
-	"\[ \n\r\t\]+52"
-	"\[ \n\r\t\]+Contents of struct1:"
-	"\[ \n\r\t\]+6\[ \t\]+0"
-	"\[ \n\r\t\]+Contents of struct2:"
-	"\[ \n\r\t\]+10\[ \t\]+0"
-	"\[ \n\r\t\]+Contents of struct3:"
-	"\[ \n\r\t\]+12\[ \t\]+0"
-	"\[ \n\r\t\]+Contents of one_double_t:"
-	"\[ \n\r\t\]+1.111110"
-	"\[ \n\r\t\]+Contents of one_double_t:"
-	"\[ \n\r\t\]+-345.340000"
-	"\[ \n\r\t\]+Contents of one_double_t:"
-	"\[ \n\r\t\]+546464.200000"
-	"\[ \n\r\t\]+Contents of two_floats_t:"
-	"\[ \n\r\t\]+0.234000\[ \t\]+453.100006"
-	"\[ \n\r\t\]+Contents of two_floats_t:"
-	"\[ \n\r\t\]+78.345001\[ \t\]+23.090000"
-	"\[ \n\r\t\]+Contents of two_floats_t:"
-	"\[ \n\r\t\]+-2.345000\[ \t\]+1.000000"
-    }
+
+    gdb_test_stdio "print print_long_arg_list(a, b, c, d, e, f, *struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)" \
+	[multi_line \
+	     "double : 22.250000" \
+	     "double : 33.375000" \
+	     "int : 0" \
+	     "int : -25" \
+	     "int : 100" \
+	     "int : 2345" \
+	     "alpha" \
+	     "gamma" \
+	     "epsilon" \
+	     "alpha" \
+	     "gamma" \
+	     "epsilon" \
+	     "ch1: y\[ \t\]*ch2: n" \
+	     "Contents of three_char_t: " \
+	     "" \
+	     "x\[ \t\]*y\[ \t\]*z" \
+	     "Contents of five_char_t: " \
+	     "" \
+	     "h\[ \t\]*e\[ \t\]*l\[ \t\]*l\[ \t\]*o" \
+	     "Contents of int_char_combo_t: " \
+	     "" \
+	     "123\[ \t\]*z" \
+	     "Sum of the 4 struct values and seed : " \
+	     "" \
+	     "\[ \t\]*52" \
+	     "Contents of struct1: " \
+	     "" \
+	     "\[ \t\]*6\[ \t\]*0" \
+	     "Contents of struct2: " \
+	     "" \
+	     "\[ \t\]*10\[ \t\]*0" \
+	     "Contents of struct3: " \
+	     "" \
+	     "\[ \t\]*12\[ \t\]*0" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "1.111110" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "-345.340000" \
+	     "Contents of one_double_t: " \
+	     "" \
+	     "546464.200000" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "0.234000\[ \t\]*453.100006" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "78.345001\[ \t\]*23.090000" \
+	     "Contents of two_floats_t: " \
+	     "" \
+	     "-2.345000\[ \t\]*1.000000" \
+	    ] \
+	"" \
+	"print print_long_arg_list"
 }
 
 
@@ -542,29 +594,30 @@ gdb_test continue "Continuing\\..*main \\(\\) at .*$srcfile:$stop_line\[ \t\n\r\
 
 #call sum_struct_print(10, *struct1, *struct2, *struct3, *struct4)
 if ![gdb_skip_stdio_test "print sum_struct_print(...)"] {
-    gdb_test "print sum_struct_print(10,*struct1,*struct2,*struct3,*struct4)" \
-	"Sum of the 4 struct values and seed :\[ \t\n\r\]+218.*" \
-	"print sum_struct_print(10, *struct1, *struct2, *struct3, *struct4)"
+    gdb_test_stdio "print sum_struct_print(10,*struct1,*struct2,*struct3,*struct4)" \
+	"Sum of the 4 struct values and seed :\[ \t\n\r\]+218"
 }
 
 
 #call print_struct_rep(*struct1, *struct2, *struct3)
 if ![gdb_skip_stdio_test "print print_struct_rep(...)"] {
-    gdb_test_sequence "print print_struct_rep(*struct1, *struct2, *struct3)" \
-	"print print_struct_rep(*struct1, *struct2, *struct3)" {
-	"\[ \t\n\r\]+Contents of struct1:"
-	"\[ \t\n\r\]+        22         0"
-	"\[ \t\n\r\]+Contents of struct2:"
-	"\[ \t\n\r\]+        42         0"
-	"\[ \t\n\r\]+Contents of struct3:"
-	"\[ \t\n\r\]+        62         0"
-    }
+    gdb_test_stdio "print print_struct_rep(*struct1, *struct2, *struct3)" \
+	[multi_line \
+	     "Contents of struct1: " \
+	     "" \
+	     "        22         0" \
+	     "Contents of struct2: " \
+	     "" \
+	     "        42         0" \
+	     "Contents of struct3: " \
+	     "" \
+	     "        62         0" \
+	    ]
 }
 
 if ![gdb_skip_stdio_test "print print_one_large_struct(...)"] {
-    gdb_test "print print_one_large_struct(*list1)" \
-	"         4         1.*" \
-	"print print_one_large_struct(*list1)"
+    gdb_test_stdio "print print_one_large_struct(*list1)" \
+	"         4         1"
 }
 
 set timeout $oldtimeout

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on Tilera TILE-Gx processors.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +37,6 @@ tilegx_linux_sigframe_init (const struct tramp_frame *self,
 			    struct trad_frame_cache *this_cache,
 			    CORE_ADDR func)
 {
-  CORE_ADDR pc = get_frame_register_unsigned (this_frame, 64);
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, 54);
 
   /* Base address of register save area.  */

@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -38,7 +38,7 @@ if ![gdb_target_supports_trace] {
 }
 
 set libipa [get_in_proc_agent]
-gdb_load_shlibs $libipa
+set remote_libipa [gdb_load_shlib $libipa]
 
 # Can't use prepare_for_testing, because that splits compiling into
 # building objects and then linking, and we'd fail with "linker input
@@ -84,103 +84,99 @@ proc test_fast_tracepoints {} {
 
     gdb_test "print gdb_agent_gdb_trampoline_buffer_error" ".*" ""
 
-    if { [istarget "x86_64-*-*"] || [istarget "i\[34567\]86-*-*"] } {
+    gdb_test "ftrace set_point" "Fast tracepoint .*" \
+        "fast tracepoint at a long insn"
 
-	gdb_test "ftrace set_point" "Fast tracepoint .*" \
-	    "fast tracepoint at a long insn"
+    gdb_trace_setactions "collect at set_point: define actions" \
+        "" \
+        "collect globvar, anarg" "^$"
 
-	gdb_trace_setactions "collect at set_point: define actions" \
-	    "" \
-	    "collect globvar, anarg" "^$"
+    # Make a test of shorter fast tracepoints, 32-bit x86 only
 
-	# Make a test of shorter fast tracepoints, 32-bit x86 only
+    if { [istarget "i?86-*-*"] } {
 
-	if { [istarget "i?86-*-*"] } {
+        # A Linux target needs to be able to allocate trampolines in the
+        # 16-bit range, check mmap_min_addr so we can warn testers.
+        if { [istarget "i?86-*-linux*"] } {
 
-	    # A Linux target needs to be able to allocate trampolines in the
-	    # 16-bit range, check mmap_min_addr so we can warn testers.
-	    if { [istarget "i?86-*-linux*"] } {
+            set minaddr [exec sh -c "cat /proc/sys/vm/mmap_min_addr"]
 
-		set minaddr [exec sh -c "cat /proc/sys/vm/mmap_min_addr"]
+            if { [expr $minaddr > 64512] } {
+                warning "mmap_min_addr > 64512, fast tracepoint will fail"
+                warning "do \"sudo sysctl -w vm.mmap_min_addr=32768\" to adjust"
+            }
+        }
 
-		if { [expr $minaddr > 64512] } {
-		    warning "mmap_min_addr > 64512, fast tracepoint will fail"
-		    warning "do \"sudo sysctl -w vm.mmap_min_addr=32768\" to adjust"
-		}
-	    }
+        gdb_test_multiple "ftrace four_byter" "set 4-byte fast tracepoint" {
+            -re "May not have a fast tracepoint at .*\r\n$gdb_prompt $" {
+                pass "4-byte fast tracepoint could not be set"
+            }
+            -re "Fast tracepoint .*\r\n$gdb_prompt $" {
+                pass "4-byte fast tracepoint is set"
+                set fourgood 1
+            }
+        }
 
-	    gdb_test_multiple "ftrace four_byter" "set 4-byte fast tracepoint" {
-		-re "May not have a fast tracepoint at .*\r\n$gdb_prompt $" {
-		    pass "4-byte fast tracepoint could not be set"
-		}
-		-re "Fast tracepoint .*\r\n$gdb_prompt $" {
-		    pass "4-byte fast tracepoint is set"
-		    set fourgood 1
-		}
-	    }
+        if { $fourgood } {
 
-	    if { $fourgood } {
+            gdb_trace_setactions "collect at four_byter: define actions" \
+            "" \
+            "collect globvar, anarg" "^$"
+        }
+    }
 
-		gdb_trace_setactions "collect at four_byter: define actions" \
-		"" \
-		"collect globvar, anarg" "^$"
-	    }
-	}
+    run_trace_experiment
 
-	run_trace_experiment
+    gdb_test "tfind pc *set_point" "Found trace frame .*" \
+        "tfind set_point frame, first time"
 
-	gdb_test "tfind pc *set_point" "Found trace frame .*" \
-	    "tfind set_point frame, first time"
+    gdb_test "print globvar" " = 1"
 
-	setup_kfail "gdb/13808" "x86_64-*-linux*"
-	gdb_test "print globvar" " = 1"
+    gdb_test "tfind pc *set_point" "Found trace frame .*" \
+        "tfind set_point frame, second time"
 
-	gdb_test "tfind pc *set_point" "Found trace frame .*" \
-	    "tfind set_point frame, second time"
+    setup_kfail "gdb/13808" "x86_64-*-linux*"
+    gdb_test "print anarg" " = 200"
 
-	setup_kfail "gdb/13808" "x86_64-*-linux*"
-	gdb_test "print anarg" " = 200"
+    gdb_test "tfind start" "Found trace frame .*" \
+        "reset tfinding"
 
-	gdb_test "tfind start" "Found trace frame .*" \
-	    "reset tfinding"
+    if { $fourgood } {
 
-	if { $fourgood } {
+        gdb_test "tfind pc *four_byter" "Found trace frame .*" \
+            "tfind four_byter frame, first time"
 
-	    gdb_test "tfind pc *four_byter" "Found trace frame .*" \
-		"tfind four_byter frame, first time"
+        gdb_test "print anarg" " = 101" \
+            "look at collected local, first time"
 
-	    gdb_test "print anarg" " = 101" \
-		"look at collected local, first time"
+        gdb_test "tfind pc *four_byter" "Found trace frame .*" \
+            "tfind four_byter frame, second time"
 
-	    gdb_test "tfind pc *four_byter" "Found trace frame .*" \
-		"tfind four_byter frame, second time"
+        gdb_test "print anarg" " = 201" \
+            "look at collected local, second time"
 
-	    gdb_test "print anarg" " = 201" \
-		"look at collected local, second time"
+    }
 
-	}
+    # If debugging with the remote target, try force disabling the
+    # fast tracepoints RSP feature, and confirm fast tracepoints
+    # can no longer be downloaded.
+    set test "fast tracepoint could not be downloaded with the feature disabled"
+    if [gdb_is_target_remote] {
+        gdb_test "set remote fast-tracepoints-packet off"
 
-	# If debugging with the remote target, try force disabling the
-	# fast tracepoints RSP feature, and confirm fast tracepoints
-	# can no longer be downloaded.
-	set test "fast tracepoint could not be downloaded with the feature disabled"
-	if [gdb_is_target_remote] {
-	    gdb_test "set remote fast-tracepoints-packet off"
-
-	    gdb_test_multiple "tstart" $test {
-		-re "warning: Target does not support fast tracepoints, downloading .* as regular tracepoint.*\r\n$gdb_prompt $" {
-		    pass $test
-		}
-	    }
-	} else {
-	    unsupported $test
-	}
+        gdb_test_multiple "tstart" $test {
+            -re "warning: Target does not support fast tracepoints, downloading .* as regular tracepoint.*\r\n$gdb_prompt $" {
+                pass $test
+            }
+        }
+    } else {
+        unsupported $test
     }
 }
 
 gdb_reinitialize_dir $srcdir/$subdir
 
-if { [gdb_test "info sharedlibrary" ".*${libipa}.*" "IPA loaded"] != 0 } {
+if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
     untested "Could not find IPA lib loaded"
     return 1
 }

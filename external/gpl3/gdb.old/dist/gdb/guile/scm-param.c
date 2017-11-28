@@ -1,6 +1,6 @@
 /* GDB parameters implemented in Guile.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -503,8 +503,7 @@ compute_enum_list (SCM enum_values_scm, int arg_pos, const char *func_name)
 				 _("enumeration list is empty"));
     }
 
-  enum_values = xmalloc ((size + 1) * sizeof (char *));
-  memset (enum_values, 0, (size + 1) * sizeof (char *));
+  enum_values = XCNEWVEC (char *, size + 1);
 
   i = 0;
   while (!scm_is_eq (enum_values_scm, SCM_EOL))
@@ -939,7 +938,7 @@ gdbscm_make_parameter (SCM name_scm, SCM rest)
   /* These are all stored in GC space so that we don't have to worry about
      freeing them if we throw an exception.  */
   p_smob->name = name;
-  p_smob->cmd_class = cmd_class;
+  p_smob->cmd_class = (enum command_class) cmd_class;
   p_smob->type = (enum var_types) param_type;
   p_smob->doc = doc;
   p_smob->set_doc = set_doc;
@@ -957,7 +956,7 @@ gdbscm_make_parameter (SCM name_scm, SCM rest)
 	  if (gdbscm_is_exception (initial_value_scm))
 	    gdbscm_throw (initial_value_scm);
 	}
-      pascm_set_param_value_x (param_type, &p_smob->value, enum_list,
+      pascm_set_param_value_x (p_smob->type, &p_smob->value, enum_list,
 			       initial_value_scm,
 			       initial_value_arg_pos, FUNC_NAME);
     }
@@ -1118,7 +1117,7 @@ gdbscm_set_parameter_value_x (SCM self, SCM value)
 
 static const scheme_function parameter_functions[] =
 {
-  { "make-parameter", 1, 0, 1, gdbscm_make_parameter,
+  { "make-parameter", 1, 0, 1, as_a_scm_t_subr (gdbscm_make_parameter),
     "\
 Make a GDB parameter object.\n\
 \n\
@@ -1150,20 +1149,22 @@ Make a GDB parameter object.\n\
     show-doc: The \"doc string\" when showing the parameter.\n\
     initial-value: The initial value of the parameter." },
 
-  { "register-parameter!", 1, 0, 0, gdbscm_register_parameter_x,
+  { "register-parameter!", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_register_parameter_x),
     "\
 Register a <gdb:parameter> object with GDB." },
 
-  { "parameter?", 1, 0, 0, gdbscm_parameter_p,
+  { "parameter?", 1, 0, 0, as_a_scm_t_subr (gdbscm_parameter_p),
     "\
 Return #t if the object is a <gdb:parameter> object." },
 
-  { "parameter-value", 1, 0, 0, gdbscm_parameter_value,
+  { "parameter-value", 1, 0, 0, as_a_scm_t_subr (gdbscm_parameter_value),
     "\
 Return the value of a <gdb:parameter> object\n\
 or any gdb parameter if param is a string naming the parameter." },
 
-  { "set-parameter-value!", 2, 0, 0, gdbscm_set_parameter_value_x,
+  { "set-parameter-value!", 2, 0, 0,
+    as_a_scm_t_subr (gdbscm_set_parameter_value_x),
     "\
 Set the value of a <gdb:parameter> object.\n\
 \n\

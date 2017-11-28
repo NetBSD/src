@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ foreach schedlock {"off" "step" "on" } {
 
 	gdb_breakpoint [gdb_get_line_number "set wait-thread breakpoint here"]
 	gdb_continue_to_breakpoint "run to wait-thread breakpoint"
-	gdb_test "info threads" "2 .*\\\* 1.*" "info threads shows all threads"
+	gdb_test "info threads" "\\\* 1 .*  2 .*" "info threads shows all threads"
 
 	delete_breakpoints
 

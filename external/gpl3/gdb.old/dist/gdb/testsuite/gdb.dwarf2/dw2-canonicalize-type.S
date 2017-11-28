@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Free Software Foundation, Inc.
+/* Copyright 2012-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,9 +13,18 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#define CONCAT1(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a ## b
+
+#ifdef SYMBOL_PREFIX
+# define SYMBOL(str)     CONCAT1(SYMBOL_PREFIX, str)
+#else
+# define SYMBOL(str)     str
+#endif
+
 	.text
-	.globl main
-main:
+	.globl SYMBOL(main)
+SYMBOL(main):
 	.4byte	0
 .Lmain_end:
 	.section	.debug_info
@@ -29,12 +38,12 @@ debug_start:
 	.ascii "GNU C 4.4.3\0"	/* DW_AT_producer */
 	.byte	0x4	/* DW_AT_language = DW_LANG_C_plus_plus */
 	.ascii "1.c\0"	/* DW_AT_name */
-	.4byte	main		/* DW_AT_low_pc */
+	.4byte	SYMBOL(main)		/* DW_AT_low_pc */
 	.4byte	.Lmain_end	/* DW_AT_high_pc */
 	.uleb128 0x4	/* (DIE (0x3c) DW_TAG_subprogram) */
 	.ascii "f\0"	/* DW_AT_name */
 /* Value 0 would require has_section_at_zero != 0 (which is true, though).  */
-	.4byte	main		/* DW_AT_low_pc */
+	.4byte	SYMBOL(main)		/* DW_AT_low_pc */
 	.4byte	.Lmain_end	/* DW_AT_high_pc */
 	.byte	0x1	/* DW_AT_prototyped */
 

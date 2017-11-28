@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1997-2015 Free Software Foundation, Inc.
+   Copyright 1997-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,10 @@ main ()
 {
   int pid;
 
-  pid = vfork ();
+  /* A statement before vfork to make sure a breakpoint on main isn't
+     set on vfork below.  */
+  pid = 1;
+  pid = vfork (); /* VFORK */
   if (pid == 0)
     {
       printf ("I'm the child!\n");

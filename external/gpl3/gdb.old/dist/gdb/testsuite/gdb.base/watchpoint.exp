@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -464,12 +464,11 @@ proc test_complex_watchpoint {} {
 		pass $test
 	    }
 	    -re "can't compute CFA for this frame.*\r\n$gdb_prompt $" {
-		global compiler_info no_hw
+		global no_hw
 
 		# GCC < 4.5.0 does not get LOCATIONS_VALID set by dwarf2read.c.
 		# Therefore epilogue unwinder gets applied which is
 		# incompatible with dwarf2_frame_cfa.
-		verbose -log "compiler_info: $compiler_info"
 		if {$no_hw && ([test_compiler_info {gcc-[0-3]-*}]
 			       || [test_compiler_info {gcc-4-[0-4]-*}])} {
 		    xfail "$test (old GCC has broken watchpoints in epilogues)"

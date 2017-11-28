@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,7 +40,7 @@ init_target_desc (struct target_desc *tdesc)
 
 #ifndef IN_PROCESS_AGENT
 
-static const struct target_desc default_description;
+static const struct target_desc default_description = { 0 };
 
 void
 copy_target_description (struct target_desc *dest,

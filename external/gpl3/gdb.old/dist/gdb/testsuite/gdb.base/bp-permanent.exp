@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,8 +123,21 @@ proc test {always_inserted sw_watchpoint} {
     with_test_prefix "basics" {
 	# Run to the permanent breakpoint, just to make sure we've inserted it
 	# correctly.
-	gdb_test "continue" "Program received signal SIGTRAP.*" \
-	    "permanent breakpoint causes random signal"
+	# If the target fails to stop, the remainder of the test will not work
+	# so just return.  This can happen on some simulator targets where
+	# the running program doesn't see breakpoints that are visible to
+	# the execution engine, or where writes to the .text section are
+	# quietly ignored.
+	set test "permanent breakpoint causes random signal"
+	gdb_test_multiple "continue" $test {
+	    -re "exited normally.*$gdb_prompt $" {
+	        unsupported "failed to stop at permanent breakpoint"
+		return
+	    }
+	    -re "Program received signal SIGTRAP.*$gdb_prompt $" {
+	    	pass $test
+	    }
+	}
 
 	# Now set a breakpoint on top, thus creating a permanent breakpoint.
 	gdb_breakpoint "$line_bp"

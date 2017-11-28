@@ -1,5 +1,5 @@
 /* Moxie Simulator definition.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 This file is part of GDB, the GNU debugger.
 
@@ -21,18 +21,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "sim-basics.h"
 
-extern unsigned int pc;
-
 #include "sim-base.h"
 
 struct _sim_cpu {
+  /* The only real register.  */
+  uint32_t pc;
+
+  /* We update a cycle counter.  */
+  uint32_t cycles;
 
   sim_cpu_base base;
 };
 
 struct sim_state {
-
   sim_cpu *cpu[MAX_NR_PROCESSORS];
+
+  /* If true, the pc needs more than 2 bytes.  */
+  int avr_pc22;
 
   sim_state_base base;
 };

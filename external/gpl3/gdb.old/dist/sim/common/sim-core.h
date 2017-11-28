@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -57,11 +57,7 @@ struct _sim_core_mapping {
   void *free_buffer;
   void *buffer;
   /* callback map */
-#if (WITH_HW)
   struct hw *device;
-#else
-  device *device;
-#endif
   /* tracing */
   int trace;
   /* growth */
@@ -119,10 +115,9 @@ extern SIM_RC sim_core_install (SIM_DESC sd);
    translated into ADDRESS_SPACE:OFFSET before being passed to the
    client device.
 
-   MODULO - when the simulator has been configured WITH_MODULO support
-   and is greater than zero, specifies that accesses to the region
-   [ADDR .. ADDR+NR_BYTES) should be mapped onto the sub region [ADDR
-   .. ADDR+MODULO).  The modulo value must be a power of two.
+   MODULO - Specifies that accesses to the region [ADDR .. ADDR+NR_BYTES)
+   should be mapped onto the sub region [ADDR .. ADDR+MODULO).  The modulo
+   value must be a power of two.
 
    DEVICE - When non NULL, indicates that this is a callback memory
    space and specified device's memory callback handler should be
@@ -145,11 +140,7 @@ extern void sim_core_attach
  address_word addr,
  address_word nr_bytes,
  unsigned modulo,
-#if (WITH_HW)
  struct hw *client,
-#else
- device *client,
-#endif
  void *optional_buffer);
 
 
@@ -347,15 +338,5 @@ DECLARE_SIM_CORE_READ_N(misaligned,7,8)
 #define sim_core_read_word XCONCAT2(sim_core_read_,WITH_TARGET_WORD_BITSIZE)
 
 #undef DECLARE_SIM_CORE_READ_N
-
-
-#if (WITH_DEVICES)
-/* TODO: create sim/common/device.h */
-/* These are defined with each particular cpu.  */
-void device_error (device *me, const char *message, ...) __attribute__((format (printf, 2, 3)));
-int device_io_read_buffer(device *me, void *dest, int space, address_word addr, unsigned nr_bytes, SIM_DESC sd, sim_cpu *processor, sim_cia cia);
-int device_io_write_buffer(device *me, const void *source, int space, address_word addr, unsigned nr_bytes, SIM_DESC sd, sim_cpu *processor, sim_cia cia);
-#endif
-
 
 #endif

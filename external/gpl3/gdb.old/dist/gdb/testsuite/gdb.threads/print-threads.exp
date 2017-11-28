@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ proc test_all_threads { name kill } {
 		fail "all threads ran once ($name) (total $i threads ran)"
 	    }
 	}
-	-re "Program received signal SIGTRAP.*(Thread \[-0-9a-fx\]* \\(zombie\\)|0x00000000 in ).*$gdb_prompt $" {
+	-re " received signal SIGTRAP.*(Thread \[-0-9a-fx\]* \\(zombie\\)|0x00000000 in ).*$gdb_prompt $" {
 	    if { $kill == 1 } {
 		kfail "gdb/1265" "Running threads ($name) (zombie thread)"
 	    } else {

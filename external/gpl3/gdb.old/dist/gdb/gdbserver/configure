@@ -615,6 +615,7 @@ DEPDIR
 am__leading_dot
 host_noncanonical
 target_noncanonical
+COMPILER_CFLAGS
 COMPILER
 RANLIB
 AR
@@ -698,6 +699,8 @@ with_ust
 with_ust_include
 with_ust_lib
 enable_werror
+enable_build_warnings
+enable_gdb_build_warnings
 with_pkgversion
 with_bugurl
 with_libthread_db
@@ -1336,9 +1339,14 @@ Optional Features:
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
   --disable-largefile     omit support for large files
-  --enable-build-with-cxx build with C++ compiler instead of C compiler
+  --disable-build-with-cxx
+                          build with C compiler instead of C++ compiler
   --enable-libmcheck      Try linking with -lmcheck if available
   --enable-werror         treat compile warnings as errors
+  --enable-build-warnings enable build-time compiler warnings if gcc is used
+  --enable-gdb-build-warnings
+                          enable GDB specific build-time compiler warnings if
+                          gcc is used
   --enable-inprocess-agent
                           inprocess agent
 
@@ -1766,6 +1774,60 @@ fi
 
 } # ac_fn_c_try_link
 
+# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
+# -------------------------------------------
+# Tests whether TYPE exists after having included INCLUDES, setting cache
+# variable VAR accordingly.
+ac_fn_c_check_type ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if { as_var=$3; eval "test \"\${$as_var+set}\" = set"; }; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=no"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof ($2))
+	 return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof (($2)))
+	    return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  eval "$3=yes"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+
+} # ac_fn_c_check_type
+
 # ac_fn_c_check_func LINENO FUNC VAR
 # ----------------------------------
 # Tests whether FUNC exists, setting the cache variable VAR accordingly
@@ -1877,60 +1939,6 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
 
 } # ac_fn_c_check_decl
-
-# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
-# -------------------------------------------
-# Tests whether TYPE exists after having included INCLUDES, setting cache
-# variable VAR accordingly.
-ac_fn_c_check_type ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if { as_var=$3; eval "test \"\${$as_var+set}\" = set"; }; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=no"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-if (sizeof ($2))
-	 return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-if (sizeof (($2)))
-	    return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  eval "$3=yes"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-
-} # ac_fn_c_check_type
 
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
@@ -4777,16 +4785,18 @@ if test "${enable_build_with_cxx+set}" = set; then :
 	  as_fn_error "bad value $enableval for --enable-build-with-cxx" "$LINENO" 5 ;;
     esac
 else
-  enable_build_with_cxx=no
+  enable_build_with_cxx=yes
 fi
 
 
   if test "$enable_build_with_cxx" = "yes"; then
-    # We're using -fpermissive as shortcut for now.
-    COMPILER='$(CXX) -fpermissive'
+    COMPILER='$(CXX)'
+    COMPILER_CFLAGS='$(CXXFLAGS)'
    else
     COMPILER='$(CC)'
+    COMPILER_CFLAGS='$(CFLAGS)'
   fi
+
 
 
 
@@ -5310,6 +5320,231 @@ fi
 
 done
 
+ac_fn_c_check_type "$LINENO" "pid_t" "ac_cv_type_pid_t" "$ac_includes_default"
+if test "x$ac_cv_type_pid_t" = x""yes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define pid_t int
+_ACEOF
+
+fi
+
+for ac_header in vfork.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "vfork.h" "ac_cv_header_vfork_h" "$ac_includes_default"
+if test "x$ac_cv_header_vfork_h" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_VFORK_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_func in fork vfork
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+eval as_val=\$$as_ac_var
+   if test "x$as_val" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+if test "x$ac_cv_func_fork" = xyes; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for working fork" >&5
+$as_echo_n "checking for working fork... " >&6; }
+if test "${ac_cv_func_fork_works+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "$cross_compiling" = yes; then :
+  ac_cv_func_fork_works=cross
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+
+	  /* By Ruediger Kuhlmann. */
+	  return fork () < 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  ac_cv_func_fork_works=yes
+else
+  ac_cv_func_fork_works=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_fork_works" >&5
+$as_echo "$ac_cv_func_fork_works" >&6; }
+
+else
+  ac_cv_func_fork_works=$ac_cv_func_fork
+fi
+if test "x$ac_cv_func_fork_works" = xcross; then
+  case $host in
+    *-*-amigaos* | *-*-msdosdjgpp*)
+      # Override, as these systems have only a dummy fork() stub
+      ac_cv_func_fork_works=no
+      ;;
+    *)
+      ac_cv_func_fork_works=yes
+      ;;
+  esac
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: result $ac_cv_func_fork_works guessed because of cross compilation" >&5
+$as_echo "$as_me: WARNING: result $ac_cv_func_fork_works guessed because of cross compilation" >&2;}
+fi
+ac_cv_func_vfork_works=$ac_cv_func_vfork
+if test "x$ac_cv_func_vfork" = xyes; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for working vfork" >&5
+$as_echo_n "checking for working vfork... " >&6; }
+if test "${ac_cv_func_vfork_works+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "$cross_compiling" = yes; then :
+  ac_cv_func_vfork_works=cross
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+/* Thanks to Paul Eggert for this test.  */
+$ac_includes_default
+#include <sys/wait.h>
+#ifdef HAVE_VFORK_H
+# include <vfork.h>
+#endif
+/* On some sparc systems, changes by the child to local and incoming
+   argument registers are propagated back to the parent.  The compiler
+   is told about this with #include <vfork.h>, but some compilers
+   (e.g. gcc -O) don't grok <vfork.h>.  Test for this by using a
+   static variable whose address is put into a register that is
+   clobbered by the vfork.  */
+static void
+#ifdef __cplusplus
+sparc_address_test (int arg)
+# else
+sparc_address_test (arg) int arg;
+#endif
+{
+  static pid_t child;
+  if (!child) {
+    child = vfork ();
+    if (child < 0) {
+      perror ("vfork");
+      _exit(2);
+    }
+    if (!child) {
+      arg = getpid();
+      write(-1, "", 0);
+      _exit (arg);
+    }
+  }
+}
+
+int
+main ()
+{
+  pid_t parent = getpid ();
+  pid_t child;
+
+  sparc_address_test (0);
+
+  child = vfork ();
+
+  if (child == 0) {
+    /* Here is another test for sparc vfork register problems.  This
+       test uses lots of local variables, at least as many local
+       variables as main has allocated so far including compiler
+       temporaries.  4 locals are enough for gcc 1.40.3 on a Solaris
+       4.1.3 sparc, but we use 8 to be safe.  A buggy compiler should
+       reuse the register of parent for one of the local variables,
+       since it will think that parent can't possibly be used any more
+       in this routine.  Assigning to the local variable will thus
+       munge parent in the parent process.  */
+    pid_t
+      p = getpid(), p1 = getpid(), p2 = getpid(), p3 = getpid(),
+      p4 = getpid(), p5 = getpid(), p6 = getpid(), p7 = getpid();
+    /* Convince the compiler that p..p7 are live; otherwise, it might
+       use the same hardware register for all 8 local variables.  */
+    if (p != p1 || p != p2 || p != p3 || p != p4
+	|| p != p5 || p != p6 || p != p7)
+      _exit(1);
+
+    /* On some systems (e.g. IRIX 3.3), vfork doesn't separate parent
+       from child file descriptors.  If the child closes a descriptor
+       before it execs or exits, this munges the parent's descriptor
+       as well.  Test for this by closing stdout in the child.  */
+    _exit(close(fileno(stdout)) != 0);
+  } else {
+    int status;
+    struct stat st;
+
+    while (wait(&status) != child)
+      ;
+    return (
+	 /* Was there some problem with vforking?  */
+	 child < 0
+
+	 /* Did the child fail?  (This shouldn't happen.)  */
+	 || status
+
+	 /* Did the vfork/compiler bug occur?  */
+	 || parent != getpid()
+
+	 /* Did the file descriptor bug occur?  */
+	 || fstat(fileno(stdout), &st) != 0
+	 );
+  }
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  ac_cv_func_vfork_works=yes
+else
+  ac_cv_func_vfork_works=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_vfork_works" >&5
+$as_echo "$ac_cv_func_vfork_works" >&6; }
+
+fi;
+if test "x$ac_cv_func_fork_works" = xcross; then
+  ac_cv_func_vfork_works=$ac_cv_func_vfork
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: result $ac_cv_func_vfork_works guessed because of cross compilation" >&5
+$as_echo "$as_me: WARNING: result $ac_cv_func_vfork_works guessed because of cross compilation" >&2;}
+fi
+
+if test "x$ac_cv_func_vfork_works" = xyes; then
+
+$as_echo "#define HAVE_WORKING_VFORK 1" >>confdefs.h
+
+else
+
+$as_echo "#define vfork fork" >>confdefs.h
+
+fi
+if test "x$ac_cv_func_fork_works" = xyes; then
+
+$as_echo "#define HAVE_WORKING_FORK 1" >>confdefs.h
+
+fi
+
 for ac_func in getauxval pread pwrite pread64 setns
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -5678,7 +5913,7 @@ fi
 done
 
 
-  for ac_func in fdwalk getrlimit pipe pipe2 socketpair
+  for ac_func in fdwalk getrlimit pipe pipe2 socketpair sigaction
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -5744,6 +5979,209 @@ $as_echo "$gdb_cv_func_sigsetjmp" >&6; }
 if test $gdb_cv_func_sigsetjmp = yes; then
 
 $as_echo "#define HAVE_SIGSETJMP 1" >>confdefs.h
+
+fi
+
+
+# Check the return and argument types of ptrace.
+
+
+for ac_header in sys/ptrace.h ptrace.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+eval as_val=\$$as_ac_Header
+   if test "x$as_val" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+
+gdb_ptrace_headers='
+#include <sys/types.h>
+#if HAVE_SYS_PTRACE_H
+# include <sys/ptrace.h>
+#endif
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+'
+# There is no point in checking if we don't have a prototype.
+ac_fn_c_check_decl "$LINENO" "ptrace" "ac_cv_have_decl_ptrace" "$gdb_ptrace_headers
+"
+if test "x$ac_cv_have_decl_ptrace" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PTRACE $ac_have_decl
+_ACEOF
+if test $ac_have_decl = 1; then :
+
+else
+
+  : ${gdb_cv_func_ptrace_ret='int'}
+  : ${gdb_cv_func_ptrace_args='int,int,long,long'}
+
+fi
+
+# Check return type.  Varargs (used on GNU/Linux) conflict with the
+# empty argument list, so check for that explicitly.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking return type of ptrace" >&5
+$as_echo_n "checking return type of ptrace... " >&6; }
+if test "${gdb_cv_func_ptrace_ret+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$gdb_ptrace_headers
+int
+main ()
+{
+extern long ptrace (enum __ptrace_request, ...);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gdb_cv_func_ptrace_ret='long'
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$gdb_ptrace_headers
+int
+main ()
+{
+extern int ptrace ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gdb_cv_func_ptrace_ret='int'
+else
+  gdb_cv_func_ptrace_ret='long'
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gdb_cv_func_ptrace_ret" >&5
+$as_echo "$gdb_cv_func_ptrace_ret" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define PTRACE_TYPE_RET $gdb_cv_func_ptrace_ret
+_ACEOF
+
+# Check argument types.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking types of arguments for ptrace" >&5
+$as_echo_n "checking types of arguments for ptrace... " >&6; }
+if test "${gdb_cv_func_ptrace_args+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$gdb_ptrace_headers
+int
+main ()
+{
+extern long ptrace (enum __ptrace_request, ...);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gdb_cv_func_ptrace_args='enum __ptrace_request,int,long,long'
+else
+
+for gdb_arg1 in 'int' 'long'; do
+ for gdb_arg2 in 'pid_t' 'int' 'long'; do
+  for gdb_arg3 in 'int *' 'caddr_t' 'int' 'long' 'void *'; do
+   for gdb_arg4 in 'int' 'long' 'void *'; do
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$gdb_ptrace_headers
+int
+main ()
+{
+
+extern $gdb_cv_func_ptrace_ret
+  ptrace ($gdb_arg1, $gdb_arg2, $gdb_arg3, $gdb_arg4);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gdb_cv_func_ptrace_args="$gdb_arg1,$gdb_arg2,$gdb_arg3,$gdb_arg4";
+    break 4;
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    for gdb_arg5 in 'int *' 'int' 'long'; do
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$gdb_ptrace_headers
+int
+main ()
+{
+
+extern $gdb_cv_func_ptrace_ret
+  ptrace ($gdb_arg1, $gdb_arg2, $gdb_arg3, $gdb_arg4, $gdb_arg5);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+gdb_cv_func_ptrace_args="$gdb_arg1,$gdb_arg2,$gdb_arg3,$gdb_arg4,$gdb_arg5";
+    break 5;
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    done
+   done
+  done
+ done
+done
+# Provide a safe default value.
+: ${gdb_cv_func_ptrace_args='int,int,long,long'}
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gdb_cv_func_ptrace_args" >&5
+$as_echo "$gdb_cv_func_ptrace_args" >&6; }
+ac_save_IFS=$IFS; IFS=','
+set dummy `echo "$gdb_cv_func_ptrace_args" | sed 's/\*/\*/g'`
+IFS=$ac_save_IFS
+shift
+
+cat >>confdefs.h <<_ACEOF
+#define PTRACE_TYPE_ARG1 $1
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define PTRACE_TYPE_ARG3 $3
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define PTRACE_TYPE_ARG4 $4
+_ACEOF
+
+if test -n "$5"; then
+
+cat >>confdefs.h <<_ACEOF
+#define PTRACE_TYPE_ARG5 $5
+_ACEOF
 
 fi
 
@@ -5828,6 +6266,8 @@ fi
 
 
 
+
+
 # Check whether --enable-werror was given.
 if test "${enable_werror+set}" = set; then :
   enableval=$enable_werror; case "${enableval}" in
@@ -5838,11 +6278,8 @@ if test "${enable_werror+set}" = set; then :
 fi
 
 
-# Enable -Werror by default when using gcc in C mode.  Leave it off
-# for C++ until we're warning clean.  Turn it off for releases.
-if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" \
-   && test x"$enable_build_with_cxx" != x"yes" \
-   && $development; then
+# Enable -Werror by default when using gcc.  Turn it off for releases.
+if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" && $development; then
     ERROR_ON_WARNING=yes
 fi
 
@@ -5851,15 +6288,58 @@ if test "${ERROR_ON_WARNING}" = yes ; then
     WERROR_CFLAGS="-Werror"
 fi
 
+# These options work in either C or C++ modes.
 build_warnings="-Wall -Wpointer-arith \
--Wformat-nonliteral -Wno-char-subscripts -Wempty-body"
+-Wno-unused -Wunused-value -Wunused-function \
+-Wno-switch -Wno-char-subscripts \
+-Wempty-body -Wunused-but-set-parameter -Wunused-but-set-variable"
 
 # Now add in C and C++ specific options, depending on mode.
 if test "$enable_build_with_cxx" = "yes"; then
    build_warnings="$build_warnings -Wno-sign-compare -Wno-write-strings \
 -Wno-narrowing"
 else
-   build_warnings="$build_warnings -Wdeclaration-after-statement"
+   build_warnings="$build_warnings -Wpointer-sign -Wmissing-prototypes \
+-Wdeclaration-after-statement -Wmissing-parameter-type \
+-Wold-style-declaration -Wold-style-definition"
+fi
+
+# Enable -Wno-format by default when using gcc on mingw since many
+# GCC versions complain about %I64.
+case "${host}" in
+  *-*-mingw32*) build_warnings="$build_warnings -Wno-format" ;;
+  *) build_warnings="$build_warnings -Wformat-nonliteral" ;;
+esac
+
+# Check whether --enable-build-warnings was given.
+if test "${enable_build_warnings+set}" = set; then :
+  enableval=$enable_build_warnings; case "${enableval}" in
+  yes)	;;
+  no)	build_warnings="-w";;
+  ,*)   t=`echo "${enableval}" | sed -e "s/,/ /g"`
+        build_warnings="${build_warnings} ${t}";;
+  *,)   t=`echo "${enableval}" | sed -e "s/,/ /g"`
+        build_warnings="${t} ${build_warnings}";;
+  *)    build_warnings=`echo "${enableval}" | sed -e "s/,/ /g"`;;
+esac
+if test x"$silent" != x"yes" && test x"$build_warnings" != x""; then
+  echo "Setting compiler warning flags = $build_warnings" 6>&1
+fi
+fi
+# Check whether --enable-gdb-build-warnings was given.
+if test "${enable_gdb_build_warnings+set}" = set; then :
+  enableval=$enable_gdb_build_warnings; case "${enableval}" in
+  yes)	;;
+  no)	build_warnings="-w";;
+  ,*)   t=`echo "${enableval}" | sed -e "s/,/ /g"`
+        build_warnings="${build_warnings} ${t}";;
+  *,)   t=`echo "${enableval}" | sed -e "s/,/ /g"`
+        build_warnings="${t} ${build_warnings}";;
+  *)    build_warnings=`echo "${enableval}" | sed -e "s/,/ /g"`;;
+esac
+if test x"$silent" != x"yes" && test x"$build_warnings" != x""; then
+  echo "Setting GDB specific compiler warning flags = $build_warnings" 6>&1
+fi
 fi
 
 # The set of warnings supported by a C++ compiler is not the same as
@@ -5874,23 +6354,31 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 fi
 
 WARN_CFLAGS=""
-if test "x$GCC" = xyes
+if test "x${build_warnings}" != x -a "x$GCC" = xyes
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler warning flags" >&5
 $as_echo_n "checking compiler warning flags... " >&6; }
     # Separate out the -Werror flag as some files just cannot be
     # compiled with it enabled.
     for w in ${build_warnings}; do
+	# GCC does not complain about -Wno-unknown-warning.  Invert
+	# and test -Wunknown-warning instead.
+	case $w in
+	-Wno-*)
+		wtest=`echo $w | sed 's/-Wno-/-W/g'` ;;
+	*)
+		wtest=$w ;;
+	esac
+
 	case $w in
 	-Werr*) WERROR_CFLAGS=-Werror ;;
 	*)
 	    # Check whether GCC accepts it.
 	    saved_CFLAGS="$CFLAGS"
-	    CFLAGS="$CFLAGS $w"
+	    CFLAGS="$CFLAGS $wtest"
 	    saved_CXXFLAGS="$CXXFLAGS"
-	    CXXFLAGS="$CXXFLAGS $w"
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	    CXXFLAGS="$CXXFLAGS $wtest"
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -5923,6 +6411,12 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
+
+case " $WARN_CFLAGS " in
+*" -Wmissing-prototypes "*)
+  WARN_CFLAGS="$WARN_CFLAGS -Wno-missing-prototypes"
+  ;;
+esac
 
 old_LIBS="$LIBS"
 LIBS="$LIBS -ldl"
@@ -6176,7 +6670,20 @@ _ACEOF
 fi
 
 
-ac_fn_c_check_type "$LINENO" "Elf32_auxv_t" "ac_cv_type_Elf32_auxv_t" "#include <elf.h>
+case "${target}" in
+  *-android*)
+    # Starting with NDK version 9, <elf.h> actually includes definitions
+    # of Elf32_auxv_t and Elf64_auxv_t. But sadly, <elf.h> includes
+    # <sys/exec_elf.h> which defines some of the ELF types incorrectly,
+    # leading to conflicts with the defintions from <linux/elf.h>.
+    # This makes it impossible for us to include both <elf.h> and
+    # <linux/elf.h>, which means that, in practice, we do not have
+    # access to Elf32_auxv_t and Elf64_auxv_t on this platform.
+    # Therefore, do not try to auto-detect availability, as it would
+    # get it wrong on this platform.
+    ;;
+  *)
+    ac_fn_c_check_type "$LINENO" "Elf32_auxv_t" "ac_cv_type_Elf32_auxv_t" "#include <elf.h>
 
 "
 if test "x$ac_cv_type_Elf32_auxv_t" = x""yes; then :
@@ -6199,6 +6706,7 @@ _ACEOF
 
 fi
 
+esac
 
 
 
@@ -6288,6 +6796,37 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gdb_cv_i386_is_x86_64" >&5
 $as_echo "$gdb_cv_i386_is_x86_64" >&6; }
     ;;
+
+  x86_64-*-linux*)
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if building for x32" >&5
+$as_echo_n "checking if building for x32... " >&6; }
+if test "${gdb_cv_x86_is_x32+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  save_CPPFLAGS="$CPPFLAGS"
+		    CPPFLAGS="$CPPFLAGS $CFLAGS"
+		    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if __x86_64__ && __ILP32__
+got it
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "got it" >/dev/null 2>&1; then :
+  gdb_cv_x86_is_x32=yes
+else
+  gdb_cv_x86_is_x32=no
+fi
+rm -f conftest*
+
+		    CPPFLAGS="$save_CPPFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gdb_cv_x86_is_x32" >&5
+$as_echo "$gdb_cv_x86_is_x32" >&6; }
+    ;;
+
   m68k-*-*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking if building for Coldfire" >&5
 $as_echo_n "checking if building for Coldfire... " >&6; }
@@ -7039,7 +7578,6 @@ fi
 
 ac_config_files="$ac_config_files Makefile"
 
-ac_config_commands="$ac_config_commands default"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7740,7 +8278,6 @@ do
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h:config.in" ;;
     "depdir") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "default") CONFIG_COMMANDS="$CONFIG_COMMANDS default" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -8286,7 +8823,7 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
 
   case $ac_file$ac_mode in
     "depdir":C) $SHELL $ac_aux_dir/mkinstalldirs $DEPDIR ;;
-    "default":C) case x$CONFIG_HEADERS in
+    "Makefile":F) case x$CONFIG_HEADERS in
 xconfig.h:config.in)
 echo > stamp-h ;;
 esac

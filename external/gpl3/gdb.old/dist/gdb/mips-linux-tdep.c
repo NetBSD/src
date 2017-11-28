@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -120,7 +120,8 @@ supply_32bit_reg (struct regcache *regcache, int regnum, const void *addr)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[MAX_REGISTER_SIZE];
   store_signed_integer (buf, register_size (gdbarch, regnum), byte_order,
-			extract_signed_integer (addr, 4, byte_order));
+			extract_signed_integer ((const gdb_byte *) addr, 4,
+						byte_order));
   regcache_raw_supply (regcache, regnum, buf);
 }
 
@@ -334,7 +335,8 @@ mips64_linux_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
   CORE_ADDR jb_addr;
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  void *buf = alloca (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+  gdb_byte *buf
+    = (gdb_byte *) alloca (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
   int element_size = gdbarch_ptr_bit (gdbarch) == 32 ? 4 : 8;
 
   jb_addr = get_frame_register_unsigned (frame, MIPS_A0_REGNUM);
@@ -475,7 +477,7 @@ mips64_fill_gregset (const struct regcache *regcache,
       val = extract_signed_integer (buf, register_size (gdbarch, regno),
 				    byte_order);
       dst = regp + regaddr;
-      store_signed_integer (dst, 8, byte_order, val);
+      store_signed_integer ((gdb_byte *) dst, 8, byte_order, val);
     }
 }
 
@@ -737,15 +739,17 @@ mips_linux_in_dynsym_stub (CORE_ADDR pc)
   insn = extract_unsigned_integer (p + 4, 4, byte_order);
   if (n64)
     {
-      /* daddu t7,ra */
-      if (insn != 0x03e0782d)
+      /* 'daddu t7,ra' or 'or t7, ra, zero'*/
+      if (insn != 0x03e0782d || insn != 0x03e07825)
 	return 0;
+
     }
   else
     {
-      /* addu t7,ra */
-      if (insn != 0x03e07821)
+      /* 'addu t7,ra'  or 'or t7, ra, zero'*/
+      if (insn != 0x03e07821 || insn != 0x03e07825)
 	return 0;
+
     }
 
   insn = extract_unsigned_integer (p + 8, 4, byte_order);
@@ -1642,7 +1646,8 @@ mips_linux_init_abi (struct gdbarch_info info,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum mips_abi abi = mips_abi (gdbarch);
-  struct tdesc_arch_data *tdesc_data = (void *) info.tdep_info;
+  struct tdesc_arch_data *tdesc_data
+    = (struct tdesc_arch_data *) info.tdep_info;
 
   linux_init_abi (info, gdbarch);
 
