@@ -1,6 +1,6 @@
 /* Everything about syscall catchpoints, for GDB.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,7 +85,8 @@ get_catch_syscall_inferior_data (struct inferior *inf)
 {
   struct catch_syscall_inferior_data *inf_data;
 
-  inf_data = inferior_data (inf, catch_syscall_inferior_data);
+  inf_data = ((struct catch_syscall_inferior_data *)
+	      inferior_data (inf, catch_syscall_inferior_data));
   if (inf_data == NULL)
     {
       inf_data = XCNEW (struct catch_syscall_inferior_data);
@@ -157,7 +158,7 @@ insert_catch_syscall (struct bp_location *bl)
    catchpoints.  */
 
 static int
-remove_catch_syscall (struct bp_location *bl)
+remove_catch_syscall (struct bp_location *bl, enum remove_bp_reason reason)
 {
   struct syscall_catchpoint *c = (struct syscall_catchpoint *) bl->owner;
   struct inferior *inf = current_inferior ();
@@ -253,11 +254,12 @@ print_it_catch_syscall (bpstat bs)
   get_syscall_by_number (gdbarch, last.value.syscall_number, &s);
 
   annotate_catchpoint (b->number);
+  maybe_print_thread_hit_breakpoint (uiout);
 
   if (b->disposition == disp_del)
-    ui_out_text (uiout, "\nTemporary catchpoint ");
+    ui_out_text (uiout, "Temporary catchpoint ");
   else
-    ui_out_text (uiout, "\nCatchpoint ");
+    ui_out_text (uiout, "Catchpoint ");
   if (ui_out_is_mi_like_p (uiout))
     {
       ui_out_field_string (uiout, "reason",
@@ -462,10 +464,38 @@ catch_syscall_split_args (char *arg)
       cur_name[i] = '\0';
       arg += i;
 
-      /* Check if the user provided a syscall name or a number.  */
+      /* Check if the user provided a syscall name, group, or a number.  */
       syscall_number = (int) strtol (cur_name, &endptr, 0);
       if (*endptr == '\0')
-	get_syscall_by_number (gdbarch, syscall_number, &s);
+	{
+	  get_syscall_by_number (gdbarch, syscall_number, &s);
+	  VEC_safe_push (int, result, s.number);
+	}
+      else if (startswith (cur_name, "g:")
+	       || startswith (cur_name, "group:"))
+	{
+	  /* We have a syscall group.  Let's expand it into a syscall
+	     list before inserting.  */
+	  struct syscall *syscall_list;
+	  const char *group_name;
+
+	  /* Skip over "g:" and "group:" prefix strings.  */
+	  group_name = strchr (cur_name, ':') + 1;
+
+	  syscall_list = get_syscalls_by_group (gdbarch, group_name);
+
+	  if (syscall_list == NULL)
+	    error (_("Unknown syscall group '%s'."), group_name);
+
+	  for (i = 0; syscall_list[i].name != NULL; i++)
+	    {
+	      /* Insert each syscall that are part of the group.  No
+		 need to check if it is valid.  */
+	      VEC_safe_push (int, result, syscall_list[i].number);
+	    }
+
+	  xfree (syscall_list);
+	}
       else
 	{
 	  /* We have a name.  Let's check if it's valid and convert it
@@ -477,10 +507,10 @@ catch_syscall_split_args (char *arg)
 	       because GDB cannot do anything useful if there's no
 	       syscall number to be caught.  */
 	    error (_("Unknown syscall name '%s'."), cur_name);
-	}
 
-      /* Ok, it's valid.  */
-      VEC_safe_push (int, result, s.number);
+	  /* Ok, it's valid.  */
+	  VEC_safe_push (int, result, s.number);
+	}
     }
 
   discard_cleanups (cleanup);
@@ -595,11 +625,58 @@ static VEC (char_ptr) *
 catch_syscall_completer (struct cmd_list_element *cmd,
                          const char *text, const char *word)
 {
-  const char **list = get_syscall_names (get_current_arch ());
-  VEC (char_ptr) *retlist
-    = (list == NULL) ? NULL : complete_on_enum (list, word, word);
+  struct gdbarch *gdbarch = get_current_arch ();
+  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  VEC (char_ptr) *group_retlist = NULL;
+  VEC (char_ptr) *syscall_retlist = NULL;
+  VEC (char_ptr) *retlist = NULL;
+  const char **group_list = NULL;
+  const char **syscall_list = NULL;
+  const char *prefix;
+  int i;
 
-  xfree (list);
+  /* Completion considers ':' to be a word separator, so we use this to
+     verify whether the previous word was a group prefix.  If so, we
+     build the completion list using group names only.  */
+  for (prefix = word; prefix != text && prefix[-1] != ' '; prefix--)
+    ;
+
+  if (startswith (prefix, "g:") || startswith (prefix, "group:"))
+    {
+      /* Perform completion inside 'group:' namespace only.  */
+      group_list = get_syscall_group_names (gdbarch);
+      retlist = (group_list == NULL
+		 ? NULL : complete_on_enum (group_list, word, word));
+    }
+  else
+    {
+      /* Complete with both, syscall names and groups.  */
+      syscall_list = get_syscall_names (gdbarch);
+      group_list = get_syscall_group_names (gdbarch);
+
+      /* Append "group:" prefix to syscall groups.  */
+      for (i = 0; group_list[i] != NULL; i++)
+	{
+	  char *prefixed_group = xstrprintf ("group:%s", group_list[i]);
+
+	  group_list[i] = prefixed_group;
+	  make_cleanup (xfree, prefixed_group);
+	}
+
+      syscall_retlist = ((syscall_list == NULL)
+			 ? NULL : complete_on_enum (syscall_list, word, word));
+      group_retlist = ((group_list == NULL)
+		       ? NULL : complete_on_enum (group_list, word, word));
+
+      retlist = VEC_merge (char_ptr, syscall_retlist, group_retlist);
+    }
+
+  VEC_free (char_ptr, syscall_retlist);
+  VEC_free (char_ptr, group_retlist);
+  xfree (syscall_list);
+  xfree (group_list);
+  do_cleanups (cleanups);
+
   return retlist;
 }
 
@@ -647,11 +724,11 @@ _initialize_break_catch_syscall (void)
 					   catch_syscall_inferior_data_cleanup);
 
   add_catch_command ("syscall", _("\
-Catch system calls by their names and/or numbers.\n\
-Arguments say which system calls to catch.  If no arguments\n\
-are given, every system call will be caught.\n\
-Arguments, if given, should be one or more system call names\n\
-(if your system supports that), or system call numbers."),
+Catch system calls by their names, groups and/or numbers.\n\
+Arguments say which system calls to catch.  If no arguments are given,\n\
+every system call will be caught.  Arguments, if given, should be one\n\
+or more system call names (if your system supports that), system call\n\
+groups or system call numbers."),
 		     catch_syscall_command_1,
 		     catch_syscall_completer,
 		     CATCH_PERMANENT,
