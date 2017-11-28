@@ -1,4 +1,4 @@
-dnl Copyright (C) 2014-2015 Free Software Foundation, Inc.
+dnl Copyright (C) 2014-2016 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -22,20 +22,22 @@ dnl allowing a user to build with a C++ compiler.
 AC_DEFUN([GDB_AC_BUILD_WITH_CXX],
 [
   AC_ARG_ENABLE(build-with-cxx,
-  AS_HELP_STRING([--enable-build-with-cxx], [build with C++ compiler instead of C compiler]),
+  AS_HELP_STRING([--disable-build-with-cxx], [build with C compiler instead of C++ compiler]),
     [case $enableval in
       yes | no)
 	  ;;
       *)
 	  AC_MSG_ERROR([bad value $enableval for --enable-build-with-cxx]) ;;
     esac],
-    [enable_build_with_cxx=no])
+    [enable_build_with_cxx=yes])
 
   if test "$enable_build_with_cxx" = "yes"; then
-    # We're using -fpermissive as shortcut for now.
-    COMPILER='$(CXX) -fpermissive'
+    COMPILER='$(CXX)'
+    COMPILER_CFLAGS='$(CXXFLAGS)'
    else
     COMPILER='$(CC)'
+    COMPILER_CFLAGS='$(CFLAGS)'
   fi
   AC_SUBST(COMPILER)
+  AC_SUBST(COMPILER_CFLAGS)
 ])

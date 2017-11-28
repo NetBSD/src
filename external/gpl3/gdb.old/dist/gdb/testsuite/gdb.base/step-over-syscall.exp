@@ -1,0 +1,286 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2011-2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set syscall_insn ""
+
+# Define the syscall instruction for each target.
+
+if { [istarget "i\[34567\]86-*-linux*"] || [istarget "x86_64-*-linux*"] } {
+    set syscall_insn "\[ \t\](int|syscall|sysenter)\[ \t\]"
+} elseif { [istarget "aarch64*-*-linux*"] || [istarget "arm*-*-linux*"] } {
+    set syscall_insn "\[ \t\](swi|svc)\[ \t\]"
+} else {
+    return -1
+}
+
+proc check_pc_after_cross_syscall { syscall syscall_insn_next_addr } {
+    set syscall_insn_next_addr_found [get_hexadecimal_valueof "\$pc" "0"]
+
+    set test "single step over $syscall final pc"
+    if {$syscall_insn_next_addr != 0
+	&& $syscall_insn_next_addr == $syscall_insn_next_addr_found} {
+	pass $test
+    } else {
+	fail $test
+    }
+}
+
+# Restart GDB and set up the test.  Return a list in which the first one
+# is the address of syscall instruction and the second one is the address
+# of the next instruction address of syscall instruction.  If anything
+# wrong, the two elements of list are -1.
+
+proc setup { syscall } {
+    global gdb_prompt syscall_insn
+
+    set testfile "step-over-$syscall"
+
+    clean_restart $testfile
+
+    if { ![runto main] } then {
+	fail "run to main ($syscall)"
+	return -1
+    }
+
+    # Delete the breakpoint on main.
+    gdb_test_no_output "delete break 1"
+
+    gdb_test_no_output "set displaced-stepping off"
+
+    gdb_test "break $syscall" "Breakpoint \[0-9\]* at .*"
+
+    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, (.* in |__libc_|)$syscall \\(\\).*" \
+	"continue to $syscall (1st time)"
+    # Hit the breakpoint on $syscall for the first time.  In this time,
+    # we will let PLT resolution done, and the number single steps we will
+    # do later will be reduced.
+
+    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, (.* in |__libc_|)$syscall \\(\\).*" \
+	"continue to $syscall (2nd time)"
+    # Hit the breakpoint on $syscall for the second time.  In this time,
+    # the address of syscall insn and next insn of syscall are recorded.
+
+    gdb_test "display/i \$pc" ".*"
+
+    # Single step until we see a syscall insn or we reach the
+    # upper bound of loop iterations.
+    set msg "find syscall insn in $syscall"
+    set steps 0
+    set max_steps 1000
+    gdb_test_multiple "stepi" $msg {
+	-re ".*$syscall_insn.*$gdb_prompt $" {
+	    pass $msg
+	}
+	-re "x/i .*=>.*\r\n$gdb_prompt $" {
+	    incr steps
+	    if {$steps == $max_steps} {
+		fail $msg
+	    } else {
+		send_gdb "stepi\n"
+		exp_continue
+	    }
+	}
+    }
+
+    if {$steps == $max_steps} {
+	return { -1, -1 }
+    }
+
+    set syscall_insn_addr [get_hexadecimal_valueof "\$pc" "0"]
+    if {[gdb_test "stepi" "x/i .*=>.*" "stepi $syscall insn"] != 0} {
+	return { -1, -1 }
+    }
+    return [list $syscall_insn_addr [get_hexadecimal_valueof "\$pc" "0"]]
+}
+
+proc step_over_syscall { syscall } {
+    with_test_prefix "$syscall" {
+	global syscall_insn
+	global gdb_prompt
+
+	set testfile "step-over-$syscall"
+
+	if [build_executable ${testfile}.exp ${testfile} ${testfile}.c {debug}] {
+	    untested ${testfile}.exp
+	    return -1
+	}
+
+	foreach_with_prefix displaced {"off" "on"} {
+	    if {$displaced == "on" && ![support_displaced_stepping]} {
+		continue
+	    }
+
+	    if { $displaced == "on" && $syscall == "clone" } {
+		# GDB doesn't support stepping over clone syscall with
+		# displaced stepping.
+		kfail "gdb/19675" "single step over clone"
+		continue
+	    }
+
+	    set ret [setup $syscall]
+
+	    set syscall_insn_addr [lindex $ret 0]
+	    set syscall_insn_next_addr [lindex $ret 1]
+	    if { $syscall_insn_addr == -1 } {
+		return -1
+	    }
+
+	    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, (.* in |__libc_|)$syscall \\(\\).*" \
+		"continue to $syscall (3rd time)"
+
+	    # Hit the breakpoint on $syscall for the third time.  In this time, we'll set
+	    # breakpoint on the syscall insn we recorded previously, and single step over it.
+
+	    set syscall_insn_bp 0
+	    gdb_test_multiple "break \*$syscall_insn_addr"  "break on syscall insn" {
+		-re "Breakpoint (\[0-9\]*) at .*$gdb_prompt $" {
+		    set syscall_insn_bp $expect_out(1,string)
+		    pass "break on syscall insns"
+		}
+	    }
+
+	    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, .*" \
+		"continue to syscall insn $syscall"
+
+	    gdb_test_no_output "set displaced-stepping $displaced"
+
+	    # Check the address of next instruction of syscall.
+	    if {[gdb_test "stepi" "x/i .*=>.*" "single step over $syscall"] != 0} {
+		return -1
+	    }
+	    check_pc_after_cross_syscall $syscall $syscall_insn_next_addr
+
+	    # Delete breakpoint syscall insns to avoid interference to other syscalls.
+	    delete_breakpoints
+
+	    gdb_test "break marker" "Breakpoint.*at.* file .*${testfile}.c, line.*"
+	    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, marker \\(\\) at.*" \
+		"continue to marker ($syscall)"
+	}
+    }
+}
+
+# Set a breakpoint with a condition that evals false on syscall
+# instruction.  In fact, it tests GDBserver steps over syscall
+# instruction.  SYSCALL is the syscall the program calls.
+# FOLLOW_FORK is either "parent" or "child".  DETACH_ON_FORK is
+# "on" or "off".
+
+proc break_cond_on_syscall { syscall follow_fork detach_on_fork } {
+    with_test_prefix "break cond on target : $syscall" {
+	set testfile "step-over-$syscall"
+
+	set ret [setup $syscall]
+
+	set syscall_insn_addr [lindex $ret 0]
+	set syscall_insn_next_addr [lindex $ret 1]
+	if { $syscall_insn_addr == -1 } {
+	    return -1
+	}
+
+	gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, (.* in |__libc_|)$syscall \\(\\).*" \
+	    "continue to $syscall"
+	# Delete breakpoint syscall insns to avoid interference with other syscalls.
+	delete_breakpoints
+
+	gdb_test "set follow-fork-mode $follow_fork"
+	gdb_test "set detach-on-fork $detach_on_fork"
+
+	# Create a breakpoint with a condition that evals false.
+	gdb_test "break \*$syscall_insn_addr if main == 0" \
+	    "Breakpoint \[0-9\]* at .*"
+
+	if { $syscall == "clone" } {
+	    # Create a breakpoint in the child with the condition that
+	    # evals false, so that GDBserver can get the event from the
+	    # child but GDB doesn't see it.  In this way, we don't have
+	    # to adjust the test flow for "clone".
+	    # This is a regression test for PR server/19736.  In this way,
+	    # we can test that GDBserver gets an event from the child and
+	    # set suspend count correctly while the parent is stepping over
+	    # the breakpoint.
+	    gdb_test "break clone_fn if main == 0"
+	}
+
+	if { $syscall == "clone" } {
+	    # follow-fork and detach-on-fork only make sense to
+	    # fork and vfork.
+	    gdb_test "break marker" "Breakpoint.*at.* file .*${testfile}.c, line.*"
+	    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, marker \\(\\) at.*" \
+		"continue to marker"
+	} else {
+	    if { $follow_fork == "child" } {
+		gdb_test "continue" "exited normally.*" "continue to end of inf 2"
+		if { $detach_on_fork == "off" } {
+		    gdb_test "inferior 1"
+		    gdb_test "break marker" "Breakpoint.*at.*"
+		    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, marker \\(\\) at.*" \
+			"continue to marker"
+		}
+	    } else {
+		gdb_test "break marker" "Breakpoint.*at.* file .*${testfile}.c, line.*"
+		gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, marker \\(\\) at.*" \
+		    "continue to marker"
+	    }
+	}
+    }
+}
+
+step_over_syscall "fork"
+step_over_syscall "vfork"
+step_over_syscall "clone"
+
+set testfile "step-over-fork"
+clean_restart $testfile
+if { ![runto main] } then {
+    fail "run to main"
+    return -1
+}
+
+set cond_bp_target 1
+
+set test "set breakpoint condition-evaluation target"
+gdb_test_multiple $test $test {
+    -re "warning: Target does not support breakpoint condition evaluation.\r\nUsing host evaluation mode instead.\r\n$gdb_prompt $" {
+	# Target doesn't support breakpoint condition
+	# evaluation on its side.
+	set cond_bp_target 0
+    }
+    -re "^$test\r\n$gdb_prompt $" {
+    }
+}
+
+if { $cond_bp_target } {
+
+    foreach_with_prefix detach-on-fork {"on" "off"} {
+	foreach_with_prefix follow-fork {"parent" "child"} {
+	    foreach syscall { "fork" "vfork" "clone" } {
+
+		if { $syscall == "vfork"
+		     && ${follow-fork} == "parent"
+		     && ${detach-on-fork} == "off" } {
+		    # Both vforked child process and parent process are
+		    # under GDB's control, but GDB follows the parent
+		    # process only, which can't be run until vforked child
+		    # finishes.  Skip the test in this scenario.
+		    continue
+		}
+		break_cond_on_syscall $syscall ${follow-fork} ${detach-on-fork}
+	    }
+	}
+    }
+}
