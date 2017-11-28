@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,7 +40,7 @@ sol2_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 /* This is how we want PTIDs from Solaris core files to be
    printed.  */
 
-char *
+const char *
 sol2_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
 {
   static char buf[80];

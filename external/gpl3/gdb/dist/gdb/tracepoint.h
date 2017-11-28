@@ -1,5 +1,5 @@
 /* Data structures associated with tracepoints in GDB.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,9 @@
 #include "target.h"
 #include "memrange.h"
 #include "gdb_vecs.h"
+
+#include <vector>
+#include <string>
 
 /* An object describing the contents of a traceframe.  */
 
@@ -74,7 +77,7 @@ enum trace_stop_reason
   {
     trace_stop_reason_unknown,
     trace_never_run,
-    tstop_command,
+    trace_stop_command,
     trace_buffer_full,
     trace_disconnected,
     tracepoint_passcount,
@@ -222,6 +225,13 @@ struct static_tracepoint_marker
 
 struct memrange
 {
+  memrange (int type_, bfd_signed_vma start_, bfd_signed_vma end_)
+    : type (type_), start (start_), end (end_)
+  {}
+
+  memrange ()
+  {}
+
   /* memrange_absolute for absolute memory range, else basereg
      number.  */
   int type;
@@ -229,27 +239,59 @@ struct memrange
   bfd_signed_vma end;
 };
 
-struct collection_list
+class collection_list
 {
-  /* room for up to 256 regs */
-  unsigned char regs_mask[32];
-  long listsize;
-  long next_memrange;
-  struct memrange *list;
+public:
+  collection_list ();
 
-  /* size of array pointed to by expr_list elt.  */
-  long aexpr_listsize;
-  long next_aexpr_elt;
-  struct agent_expr **aexpr_list;
+  void add_wholly_collected (const char *print_name);
+
+  void append_exp (struct expression *exp);
+
+  /* Add AEXPR to the list, taking ownership.  */
+  void add_aexpr (agent_expr_up aexpr);
+
+  void add_register (unsigned int regno);
+  void add_memrange (struct gdbarch *gdbarch,
+		     int type, bfd_signed_vma base,
+		     unsigned long len);
+  void collect_symbol (struct symbol *sym,
+		       struct gdbarch *gdbarch,
+		       long frame_regno, long frame_offset,
+		       CORE_ADDR scope,
+		       int trace_string);
+
+  void add_local_symbols (struct gdbarch *gdbarch, CORE_ADDR pc,
+			  long frame_regno, long frame_offset, int type,
+			  int trace_string);
+  void add_static_trace_data ();
+
+  void finish ();
+
+  char **stringify ();
+
+  const std::vector<std::string> &wholly_collected ()
+  { return m_wholly_collected; }
+
+  const std::vector<std::string> &computed ()
+  { return m_computed; }
+
+private:
+  /* room for up to 256 regs */
+  unsigned char m_regs_mask[32];
+
+  std::vector<memrange> m_memranges;
+
+  std::vector<agent_expr_up> m_aexprs;
 
   /* True is the user requested a collection of "$_sdata", "static
      tracepoint data".  */
-  int strace_data;
+  bool m_strace_data;
 
   /* A set of names of wholly collected objects.  */
-  VEC(char_ptr) *wholly_collected;
+  std::vector<std::string> m_wholly_collected;
   /* A set of computed expressions.  */
-  VEC(char_ptr) *computed;
+  std::vector<std::string> m_computed;
 };
 
 extern void parse_static_tracepoint_marker_definition
@@ -280,10 +322,9 @@ void free_actions (struct breakpoint *);
 
 extern const char *decode_agent_options (const char *exp, int *trace_string);
 
-extern struct cleanup *
-  encode_actions_and_make_cleanup (struct bp_location *tloc,
-				   struct collection_list *tracepoint_list,
-				   struct collection_list *stepping_list);
+extern void encode_actions (struct bp_location *tloc,
+			    struct collection_list *tracepoint_list,
+			    struct collection_list *stepping_list);
 
 extern void encode_actions_rsp (struct bp_location *tloc,
 				char ***tdp_actions, char ***stepping_actions);
@@ -298,7 +339,7 @@ extern struct trace_state_variable *
 extern struct trace_state_variable *create_trace_state_variable (const char *name);
 
 extern int encode_source_string (int num, ULONGEST addr,
-				 char *srctype, const char *src,
+				 const char *srctype, const char *src,
 				 char *buf, int buf_size);
 
 extern void parse_trace_status (char *line, struct trace_status *ts);

@@ -54,7 +54,7 @@ END-INFO-DIR-ENTRY
 This file documents Texinfo, a documentation system that uses a single
 source file to produce both on-line information and a printed manual.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
 This is the second edition of the Texinfo documentation,@*
 and is consistent with version 2 of @file{texinfo.tex}.

@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux TILE-Gx.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 #include "gdbcore.h"
 #include "regcache.h"
 #include "linux-nat.h"
+#include "inf-ptrace.h"
 
 #include "nat/gdb_ptrace.h"
 
@@ -126,11 +127,7 @@ fetch_inferior_registers (struct target_ops *ops,
 			  struct regcache *regcache, int regnum)
 {
   elf_gregset_t regs;
-  int tid;
-
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid);
+  pid_t tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (ptrace (PTRACE_GETREGS, tid, 0, (PTRACE_TYPE_ARG3) &regs) < 0)
     perror_with_name (_("Couldn't get registers"));
@@ -146,11 +143,7 @@ store_inferior_registers (struct target_ops *ops,
 			  struct regcache *regcache, int regnum)
 {
   elf_gregset_t regs;
-  int tid;
-
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid);
+  pid_t tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (ptrace (PTRACE_GETREGS, tid, 0, (PTRACE_TYPE_ARG3) &regs) < 0)
     perror_with_name (_("Couldn't get registers"));

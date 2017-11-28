@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded scripts.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1174,7 +1174,8 @@ auto_load_section_scripts (struct objfile *objfile, const char *section_name)
   bfd_byte *data = NULL;
 
   scripts_sect = bfd_get_section_by_name (abfd, section_name);
-  if (scripts_sect == NULL)
+  if (scripts_sect == NULL
+      || (bfd_get_section_flags (abfd, scripts_sect) & SEC_HAS_CONTENTS) == 0)
     return;
 
   if (!bfd_get_full_section_contents (abfd, scripts_sect, &data))
@@ -1271,17 +1272,17 @@ print_script (struct loaded_script *script)
 
   chain = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
 
-  ui_out_field_string (uiout, "loaded", script->loaded ? "Yes" : "No");
-  ui_out_field_string (uiout, "script", script->name);
-  ui_out_text (uiout, "\n");
+  uiout->field_string ("loaded", script->loaded ? "Yes" : "No");
+  uiout->field_string ("script", script->name);
+  uiout->text ("\n");
 
   /* If the name isn't the full path, print it too.  */
   if (script->full_path != NULL
       && strcmp (script->name, script->full_path) != 0)
     {
-      ui_out_text (uiout, "\tfull name: ");
-      ui_out_field_string (uiout, "full_path", script->full_path);
-      ui_out_text (uiout, "\n");
+      uiout->text ("\tfull name: ");
+      uiout->field_string ("full_path", script->full_path);
+      uiout->text ("\n");
     }
 
   do_cleanups (chain);
@@ -1382,15 +1383,15 @@ auto_load_info_scripts (char *pattern, int from_tty,
   /* Table header shifted right by preceding "gdb-scripts:  " would not match
      its columns.  */
   if (nr_scripts > 0 && pattern == auto_load_info_scripts_pattern_nl)
-    ui_out_text (uiout, "\n");
+    uiout->text ("\n");
 
   /* Note: This creates a cleanup to output the table end marker.  */
   make_cleanup_ui_out_table_begin_end (uiout, 2, nr_scripts,
 				       "AutoLoadedScriptsTable");
 
-  ui_out_table_header (uiout, 7, ui_left, "loaded", "Loaded");
-  ui_out_table_header (uiout, 70, ui_left, "script", "Script");
-  ui_out_table_body (uiout);
+  uiout->table_header (7, ui_left, "loaded", "Loaded");
+  uiout->table_header (70, ui_left, "script", "Script");
+  uiout->table_body ();
 
   print_scripts (script_files);
   print_scripts (script_texts);
@@ -1401,10 +1402,9 @@ auto_load_info_scripts (char *pattern, int from_tty,
   if (nr_scripts == 0)
     {
       if (pattern && *pattern)
-	ui_out_message (uiout, 0, "No auto-load scripts matching %s.\n",
-			pattern);
+	uiout->message ("No auto-load scripts matching %s.\n", pattern);
       else
-	ui_out_message (uiout, 0, "No auto-load scripts.\n");
+	uiout->message ("No auto-load scripts.\n");
     }
 }
 
@@ -1571,8 +1571,8 @@ info_auto_load_cmd (char *args, int from_tty)
       gdb_assert (!list->prefixlist);
       gdb_assert (list->type == not_set_cmd);
 
-      ui_out_field_string (uiout, "name", list->name);
-      ui_out_text (uiout, ":  ");
+      uiout->field_string ("name", list->name);
+      uiout->text (":  ");
       cmd_func (list, auto_load_info_scripts_pattern_nl, from_tty);
 
       /* Close the tuple.  */

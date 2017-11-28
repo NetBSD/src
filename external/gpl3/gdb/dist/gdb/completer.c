@@ -1,5 +1,5 @@
 /* Line completion stuff for GDB, the GNU debugger.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -84,29 +84,30 @@ char *line_completion_function (const char *text, int matches,
    readline library sees one in any of the current completion strings,
    it thinks that the string needs to be quoted and automatically
    supplies a leading quote.  */
-static char *gdb_completer_command_word_break_characters =
+static const char gdb_completer_command_word_break_characters[] =
 " \t\n!@#$%^&*()+=|~`}{[]\"';:?/>.<,";
 
 /* When completing on file names, we remove from the list of word
    break characters any characters that are commonly used in file
    names, such as '-', '+', '~', etc.  Otherwise, readline displays
    incorrect completion candidates.  */
-#ifdef HAVE_DOS_BASED_FILE_SYSTEM
 /* MS-DOS and MS-Windows use colon as part of the drive spec, and most
    programs support @foo style response files.  */
-static char *gdb_completer_file_name_break_characters = " \t\n*|\"';?><@";
+static const char gdb_completer_file_name_break_characters[] =
+#ifdef HAVE_DOS_BASED_FILE_SYSTEM
+  " \t\n*|\"';?><@";
 #else
-static char *gdb_completer_file_name_break_characters = " \t\n*|\"';:?><";
+  " \t\n*|\"';:?><";
 #endif
 
 /* Characters that can be used to quote completion strings.  Note that
    we can't include '"' because the gdb C parser treats such quoted
    sequences as strings.  */
-static char *gdb_completer_quote_characters = "'";
+static const char gdb_completer_quote_characters[] = "'";
 
 /* Accessor for some completer data that may interest other files.  */
 
-char *
+const char *
 get_gdb_completer_quote_characters (void)
 {
   return gdb_completer_quote_characters;
@@ -506,17 +507,13 @@ location_completer (struct cmd_list_element *ignore,
 {
   VEC (char_ptr) *matches = NULL;
   const char *copy = text;
-  struct event_location *location;
 
-  location = string_to_explicit_location (&copy, current_language, 1);
+  event_location_up location = string_to_explicit_location (&copy,
+							    current_language,
+							    1);
   if (location != NULL)
-    {
-      struct cleanup *cleanup;
-
-      cleanup = make_cleanup_delete_event_location (location);
-      matches = explicit_location_completer (ignore, location, text, word);
-      do_cleanups (cleanup);
-    }
+    matches = explicit_location_completer (ignore, location.get (),
+					   text, word);
   else
     {
       /* This is an address or linespec location.
@@ -611,8 +608,7 @@ expression_completer (struct cmd_list_element *ignore,
       for (;;)
 	{
 	  type = check_typedef (type);
-	  if (TYPE_CODE (type) != TYPE_CODE_PTR
-	      && TYPE_CODE (type) != TYPE_CODE_REF)
+	  if (TYPE_CODE (type) != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
 	    break;
 	  type = TYPE_TARGET_TYPE (type);
 	}
@@ -653,16 +649,26 @@ expression_completer (struct cmd_list_element *ignore,
 /* See definition in completer.h.  */
 
 void
+set_rl_completer_word_break_characters (const char *break_chars)
+{
+  rl_completer_word_break_characters = (char *) break_chars;
+}
+
+/* See definition in completer.h.  */
+
+void
 set_gdb_completion_word_break_characters (completer_ftype *fn)
 {
+  const char *break_chars;
+
   /* So far we are only interested in differentiating filename
      completers from everything else.  */
   if (fn == filename_completer)
-    rl_completer_word_break_characters
-      = gdb_completer_file_name_break_characters;
+    break_chars = gdb_completer_file_name_break_characters;
   else
-    rl_completer_word_break_characters
-      = gdb_completer_command_word_break_characters;
+    break_chars = gdb_completer_command_word_break_characters;
+
+  set_rl_completer_word_break_characters (break_chars);
 }
 
 /* Here are some useful test cases for completion.  FIXME: These
@@ -744,8 +750,8 @@ complete_line_internal (const char *text,
      then we will switch to the special word break set for command
      strings, which leaves out the '-' character used in some
      commands.  */
-  rl_completer_word_break_characters =
-    current_language->la_word_break_characters();
+  set_rl_completer_word_break_characters
+    (current_language->la_word_break_characters());
 
   /* Decide whether to complete on a list of gdb commands or on
      symbols.  */
@@ -822,8 +828,8 @@ complete_line_internal (const char *text,
 	    }
 	  /* Ensure that readline does the right thing with respect to
 	     inserting quotes.  */
-	  rl_completer_word_break_characters =
-	    gdb_completer_command_word_break_characters;
+	  set_rl_completer_word_break_characters
+	    (gdb_completer_command_word_break_characters);
 	}
     }
   else
@@ -849,8 +855,8 @@ complete_line_internal (const char *text,
 
 		  /* Ensure that readline does the right thing
 		     with respect to inserting quotes.  */
-		  rl_completer_word_break_characters =
-		    gdb_completer_command_word_break_characters;
+		  set_rl_completer_word_break_characters
+		    (gdb_completer_command_word_break_characters);
 		}
 	      else if (reason == handle_help)
 		list = NULL;
@@ -858,8 +864,8 @@ complete_line_internal (const char *text,
 		{
 		  if (reason != handle_brkchars)
 		    list = complete_on_enum (c->enums, p, word);
-		  rl_completer_word_break_characters =
-		    gdb_completer_command_word_break_characters;
+		  set_rl_completer_word_break_characters
+		    (gdb_completer_command_word_break_characters);
 		}
 	      else
 		{
@@ -880,8 +886,8 @@ complete_line_internal (const char *text,
 			     && strchr (gdb_completer_file_name_break_characters, p[-1]) == NULL;
 			   p--)
 			;
-		      rl_completer_word_break_characters =
-			gdb_completer_file_name_break_characters;
+		      set_rl_completer_word_break_characters
+			(gdb_completer_file_name_break_characters);
 		    }
 		  if (reason == handle_brkchars
 		      && c->completer_handle_brkchars != NULL)
@@ -914,8 +920,8 @@ complete_line_internal (const char *text,
 
 	      /* Ensure that readline does the right thing
 		 with respect to inserting quotes.  */
-	      rl_completer_word_break_characters =
-		gdb_completer_command_word_break_characters;
+	      set_rl_completer_word_break_characters
+		(gdb_completer_command_word_break_characters);
 	    }
 	}
       else if (reason == handle_help)
@@ -948,8 +954,8 @@ complete_line_internal (const char *text,
 				    p[-1]) == NULL;
 		       p--)
 		    ;
-		  rl_completer_word_break_characters =
-		    gdb_completer_file_name_break_characters;
+		  set_rl_completer_word_break_characters
+		    (gdb_completer_file_name_break_characters);
 		}
 	      if (reason == handle_brkchars
 		  && c->completer_handle_brkchars != NULL)
@@ -1674,7 +1680,8 @@ gdb_print_filename (char *to_print, char *full_pathname, int prefix_bytes,
 		    const struct match_list_displayer *displayer)
 {
   int printed_len, extension_char, slen, tlen;
-  char *s, c, *new_full_pathname, *dn;
+  char *s, c, *new_full_pathname;
+  const char *dn;
   extern int _rl_complete_mark_directories;
 
   extension_char = 0;

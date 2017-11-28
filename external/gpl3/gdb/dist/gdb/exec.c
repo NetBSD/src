@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB. 
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,6 +43,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include "solist.h"
+#include <algorithm>
 
 void (*deprecated_file_changed_hook) (char *);
 
@@ -135,73 +136,16 @@ exec_file_clear (int from_tty)
     printf_unfiltered (_("No executable file now.\n"));
 }
 
-/* Returns non-zero if exceptions E1 and E2 are equal.  Returns zero
-   otherwise.  */
-
-static int
-exception_print_same (struct gdb_exception e1, struct gdb_exception e2)
-{
-  const char *msg1 = e1.message;
-  const char *msg2 = e2.message;
-
-  if (msg1 == NULL)
-    msg1 = "";
-  if (msg2 == NULL)
-    msg2 = "";
-
-  return (e1.reason == e2.reason
-	  && e1.error == e2.error
-	  && strcmp (e1.message, e2.message) == 0);
-}
-
-/* See gdbcore.h.  */
+/* See exec.h.  */
 
 void
-exec_file_locate_attach (int pid, int defer_bp_reset, int from_tty)
+try_open_exec_file (const char *exec_file_host, struct inferior *inf,
+		    symfile_add_flags add_flags)
 {
-  char *exec_file, *full_exec_path = NULL;
   struct cleanup *old_chain;
   struct gdb_exception prev_err = exception_none;
 
-  /* Do nothing if we already have an executable filename.  */
-  exec_file = (char *) get_exec_file (0);
-  if (exec_file != NULL)
-    return;
-
-  /* Try to determine a filename from the process itself.  */
-  exec_file = target_pid_to_exec_file (pid);
-  if (exec_file == NULL)
-    {
-      warning (_("No executable has been specified and target does not "
-		 "support\n"
-		 "determining executable automatically.  "
-		 "Try using the \"file\" command."));
-      return;
-    }
-
-  /* If gdb_sysroot is not empty and the discovered filename
-     is absolute then prefix the filename with gdb_sysroot.  */
-  if (*gdb_sysroot != '\0' && IS_ABSOLUTE_PATH (exec_file))
-    {
-      full_exec_path = exec_file_find (exec_file, NULL);
-      if (full_exec_path == NULL)
-	return;
-    }
-  else
-    {
-      /* It's possible we don't have a full path, but rather just a
-	 filename.  Some targets, such as HP-UX, don't provide the
-	 full path, sigh.
-
-	 Attempt to qualify the filename against the source path.
-	 (If that fails, we'll just fall back on the original
-	 filename.  Not much more we can do...)  */
-      if (!source_full_path_of (exec_file, &full_exec_path))
-	full_exec_path = xstrdup (exec_file);
-    }
-
-  old_chain = make_cleanup (xfree, full_exec_path);
-  make_cleanup (free_current_contents, &prev_err.message);
+  old_chain = make_cleanup (free_current_contents, &prev_err.message);
 
   /* exec_file_attach and symbol_file_add_main may throw an error if the file
      cannot be opened either locally or remotely.
@@ -216,7 +160,9 @@ exec_file_locate_attach (int pid, int defer_bp_reset, int from_tty)
      errors/exceptions in the following code.  */
   TRY
     {
-      exec_file_attach (full_exec_path, from_tty);
+      /* We must do this step even if exec_file_host is NULL, so that
+	 exec_file_attach will clear state.  */
+      exec_file_attach (exec_file_host, add_flags & SYMFILE_VERBOSE);
     }
   CATCH (err, RETURN_MASK_ERROR)
     {
@@ -226,24 +172,63 @@ exec_file_locate_attach (int pid, int defer_bp_reset, int from_tty)
       prev_err = err;
 
       /* Save message so it doesn't get trashed by the catch below.  */
-      prev_err.message = xstrdup (err.message);
+      if (err.message != NULL)
+	prev_err.message = xstrdup (err.message);
     }
   END_CATCH
 
-  TRY
+  if (exec_file_host != NULL)
     {
-      if (defer_bp_reset)
-	current_inferior ()->symfile_flags |= SYMFILE_DEFER_BP_RESET;
-      symbol_file_add_main (full_exec_path, from_tty);
+      TRY
+	{
+	  symbol_file_add_main (exec_file_host, add_flags);
+	}
+      CATCH (err, RETURN_MASK_ERROR)
+	{
+	  if (!exception_print_same (prev_err, err))
+	    warning ("%s", err.message);
+	}
+      END_CATCH
     }
-  CATCH (err, RETURN_MASK_ERROR)
-    {
-      if (!exception_print_same (prev_err, err))
-	warning ("%s", err.message);
-    }
-  END_CATCH
-  current_inferior ()->symfile_flags &= ~SYMFILE_DEFER_BP_RESET;
 
+  do_cleanups (old_chain);
+}
+
+/* See gdbcore.h.  */
+
+void
+exec_file_locate_attach (int pid, int defer_bp_reset, int from_tty)
+{
+  char *exec_file_target, *exec_file_host;
+  struct cleanup *old_chain;
+  symfile_add_flags add_flags = 0;
+
+  /* Do nothing if we already have an executable filename.  */
+  if (get_exec_file (0) != NULL)
+    return;
+
+  /* Try to determine a filename from the process itself.  */
+  exec_file_target = target_pid_to_exec_file (pid);
+  if (exec_file_target == NULL)
+    {
+      warning (_("No executable has been specified and target does not "
+		 "support\n"
+		 "determining executable automatically.  "
+		 "Try using the \"file\" command."));
+      return;
+    }
+
+  exec_file_host = exec_file_find (exec_file_target, NULL);
+  old_chain = make_cleanup (xfree, exec_file_host);
+
+  if (defer_bp_reset)
+    add_flags |= SYMFILE_DEFER_BP_RESET;
+
+  if (from_tty)
+    add_flags |= SYMFILE_VERBOSE;
+
+  /* Attempt to open the exec file.  */
+  try_open_exec_file (exec_file_host, current_inferior (), add_flags);
   do_cleanups (old_chain);
 }
 
@@ -273,7 +258,9 @@ exec_file_attach (const char *filename, int from_tty)
      this at the end of the function; but acquiring it now lets the
      BFD cache return it if this call refers to the same file.  */
   gdb_bfd_ref (exec_bfd);
-  cleanups = make_cleanup_bfd_unref (exec_bfd);
+  gdb_bfd_ref_ptr exec_bfd_holder (exec_bfd);
+
+  cleanups = make_cleanup (null_cleanup, NULL);
 
   /* Remove any previous exec file.  */
   exec_close ();
@@ -348,11 +335,13 @@ exec_file_attach (const char *filename, int from_tty)
 	  make_cleanup (xfree, canonical_pathname);
 	}
 
+      gdb_bfd_ref_ptr temp;
       if (write_files && !load_via_target)
-	exec_bfd = gdb_bfd_fopen (canonical_pathname, gnutarget,
-				  FOPEN_RUB, scratch_chan);
+	temp = gdb_bfd_fopen (canonical_pathname, gnutarget,
+			      FOPEN_RUB, scratch_chan);
       else
-	exec_bfd = gdb_bfd_open (canonical_pathname, gnutarget, scratch_chan);
+	temp = gdb_bfd_open (canonical_pathname, gnutarget, scratch_chan);
+      exec_bfd = temp.release ();
 
       if (!exec_bfd)
 	{
@@ -761,8 +750,8 @@ section_table_available_memory (VEC(mem_range_s) *memory,
 
 	  r = VEC_safe_push (mem_range_s, memory, NULL);
 
-	  r->start = max (lo1, lo2);
-	  r->length = min (hi1, hi2) - r->start;
+	  r->start = std::max (lo1, lo2);
+	  r->length = std::min (hi1, hi2) - r->start;
 	}
     }
 
@@ -800,7 +789,7 @@ section_table_read_available_memory (gdb_byte *readbuf, ULONGEST offset,
 	  enum target_xfer_status status;
 
 	  /* Get the intersection window.  */
-	  end = min (offset + len, r->start + r->length);
+	  end = std::min<CORE_ADDR> (offset + len, r->start + r->length);
 
 	  gdb_assert (end - offset <= len);
 

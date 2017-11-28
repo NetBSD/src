@@ -1,6 +1,6 @@
 /* Handle SVR4 shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1022,6 +1022,10 @@ open_symbol_file_object (void *from_ttyp)
   gdb_byte *l_name_buf = (gdb_byte *) xmalloc (l_name_size);
   struct cleanup *cleanups = make_cleanup (xfree, l_name_buf);
   struct svr4_info *info = get_svr4_info ();
+  symfile_add_flags add_flags = 0;
+
+  if (from_tty)
+    add_flags |= SYMFILE_VERBOSE;
 
   if (symfile_objfile)
     if (!query (_("Attempt to reload symbols from process? ")))
@@ -1071,7 +1075,7 @@ open_symbol_file_object (void *from_ttyp)
     }
 
   /* Have a pathname: read the symbol file.  */
-  symbol_file_add_main (filename, from_tty);
+  symbol_file_add_main (filename, add_flags);
 
   do_cleanups (cleanups);
   return 1;
@@ -1614,7 +1618,7 @@ svr4_fetch_objfile_link_map (struct objfile *objfile)
 
   /* Cause svr4_current_sos() to be run if it hasn't been already.  */
   if (info->main_lm_addr == 0)
-    solib_add (NULL, 0, &current_target, auto_solib_add);
+    solib_add (NULL, 0, auto_solib_add);
 
   /* svr4_current_sos() will set main_lm_addr for the main executable.  */
   if (objfile == symfile_objfile)
@@ -2273,7 +2277,7 @@ enable_break (struct svr4_info *info, int from_tty)
      mean r_brk has already been relocated.  Assume the dynamic linker
      is the object containing r_brk.  */
 
-  solib_add (NULL, from_tty, &current_target, auto_solib_add);
+  solib_add (NULL, from_tty, auto_solib_add);
   sym_addr = 0;
   if (info->debug_base && solib_svr4_r_map (info) != 0)
     sym_addr = solib_svr4_r_brk (info);
@@ -2351,7 +2355,6 @@ enable_break (struct svr4_info *info, int from_tty)
       int load_addr_found = 0;
       int loader_found_in_list = 0;
       struct so_list *so;
-      bfd *tmp_bfd = NULL;
       struct target_ops *tmp_bfd_target;
 
       sym_addr = 0;
@@ -2365,6 +2368,7 @@ enable_break (struct svr4_info *info, int from_tty)
          be trivial on GNU/Linux).  Therefore, we have to try an alternate
          mechanism to find the dynamic linker's base address.  */
 
+      gdb_bfd_ref_ptr tmp_bfd;
       TRY
         {
 	  tmp_bfd = solib_bfd_open (interp_name);
@@ -2378,11 +2382,9 @@ enable_break (struct svr4_info *info, int from_tty)
 	goto bkpt_at_symbol;
 
       /* Now convert the TMP_BFD into a target.  That way target, as
-         well as BFD operations can be used.  */
-      tmp_bfd_target = target_bfd_reopen (tmp_bfd);
-      /* target_bfd_reopen acquired its own reference, so we can
-         release ours now.  */
-      gdb_bfd_unref (tmp_bfd);
+         well as BFD operations can be used.  target_bfd_reopen
+         acquires its own reference.  */
+      tmp_bfd_target = target_bfd_reopen (tmp_bfd.get ());
 
       /* On a running target, we can get the dynamic linker's base
          address from the shared library table.  */
@@ -2393,7 +2395,7 @@ enable_break (struct svr4_info *info, int from_tty)
 	    {
 	      load_addr_found = 1;
 	      loader_found_in_list = 1;
-	      load_addr = lm_addr_check (so, tmp_bfd);
+	      load_addr = lm_addr_check (so, tmp_bfd.get ());
 	      break;
 	    }
 	  so = so->next;
@@ -2414,7 +2416,7 @@ enable_break (struct svr4_info *info, int from_tty)
 	    if (addr_bit < (sizeof (CORE_ADDR) * HOST_CHAR_BIT))
 	      {
 		CORE_ADDR space_size = (CORE_ADDR) 1 << addr_bit;
-		CORE_ADDR tmp_entry_point = exec_entry_point (tmp_bfd,
+		CORE_ADDR tmp_entry_point = exec_entry_point (tmp_bfd.get (),
 							      tmp_bfd_target);
 
 		gdb_assert (load_addr < space_size);
@@ -2443,7 +2445,7 @@ enable_break (struct svr4_info *info, int from_tty)
 	    = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
 	  load_addr = (regcache_read_pc (regcache)
-		       - exec_entry_point (tmp_bfd, tmp_bfd_target));
+		       - exec_entry_point (tmp_bfd.get (), tmp_bfd_target));
 	}
 
       if (!loader_found_in_list)
@@ -2451,34 +2453,35 @@ enable_break (struct svr4_info *info, int from_tty)
 	  info->debug_loader_name = xstrdup (interp_name);
 	  info->debug_loader_offset_p = 1;
 	  info->debug_loader_offset = load_addr;
-	  solib_add (NULL, from_tty, &current_target, auto_solib_add);
+	  solib_add (NULL, from_tty, auto_solib_add);
 	}
 
       /* Record the relocated start and end address of the dynamic linker
          text and plt section for svr4_in_dynsym_resolve_code.  */
-      interp_sect = bfd_get_section_by_name (tmp_bfd, ".text");
+      interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".text");
       if (interp_sect)
 	{
 	  info->interp_text_sect_low =
-	    bfd_section_vma (tmp_bfd, interp_sect) + load_addr;
+	    bfd_section_vma (tmp_bfd.get (), interp_sect) + load_addr;
 	  info->interp_text_sect_high =
 	    info->interp_text_sect_low
-	    + bfd_section_size (tmp_bfd, interp_sect);
+	    + bfd_section_size (tmp_bfd.get (), interp_sect);
 	}
-      interp_sect = bfd_get_section_by_name (tmp_bfd, ".plt");
+      interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".plt");
       if (interp_sect)
 	{
 	  info->interp_plt_sect_low =
-	    bfd_section_vma (tmp_bfd, interp_sect) + load_addr;
+	    bfd_section_vma (tmp_bfd.get (), interp_sect) + load_addr;
 	  info->interp_plt_sect_high =
 	    info->interp_plt_sect_low
-	    + bfd_section_size (tmp_bfd, interp_sect);
+	    + bfd_section_size (tmp_bfd.get (), interp_sect);
 	}
 
       /* Now try to set a breakpoint in the dynamic linker.  */
       for (bkpt_namep = solib_break_names; *bkpt_namep != NULL; bkpt_namep++)
 	{
-	  sym_addr = gdb_bfd_lookup_symbol (tmp_bfd, cmp_name_and_sec_flags,
+	  sym_addr = gdb_bfd_lookup_symbol (tmp_bfd.get (),
+					    cmp_name_and_sec_flags,
 					    *bkpt_namep);
 	  if (sym_addr != 0)
 	    break;
@@ -2550,14 +2553,6 @@ enable_break (struct svr4_info *info, int from_tty)
 	}
     }
   return 0;
-}
-
-/* Implement the "special_symbol_handling" target_so_ops method.  */
-
-static void
-svr4_special_symbol_handling (void)
-{
-  /* Nothing to do.  */
 }
 
 /* Read the ELF program headers from ABFD.  Return the contents and
@@ -3327,7 +3322,6 @@ _initialize_svr4_solib (void)
   svr4_so_ops.clear_so = svr4_clear_so;
   svr4_so_ops.clear_solib = svr4_clear_solib;
   svr4_so_ops.solib_create_inferior_hook = svr4_solib_create_inferior_hook;
-  svr4_so_ops.special_symbol_handling = svr4_special_symbol_handling;
   svr4_so_ops.current_sos = svr4_current_sos;
   svr4_so_ops.open_symbol_file_object = open_symbol_file_object;
   svr4_so_ops.in_dynsym_resolve_code = svr4_in_dynsym_resolve_code;

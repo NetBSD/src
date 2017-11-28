@@ -1,6 +1,6 @@
 /* OS ABI variant handling for GDB.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,16 +64,11 @@ static const struct osabi_names gdb_osabi_names[] =
   { "GNU/Hurd", NULL },
   { "Solaris", NULL },
   { "GNU/Linux", "linux(-gnu)?" },
-  { "FreeBSD/a.out", NULL },
-  { "FreeBSD/ELF", NULL },
-  { "NetBSD/a.out", NULL },
-  { "NetBSD/ELF", NULL },
-  { "OpenBSD/ELF", NULL },
+  { "FreeBSD", NULL },
+  { "NetBSD", NULL },
+  { "OpenBSD", NULL },
   { "WindowsCE", NULL },
   { "DJGPP", NULL },
-  { "Irix", NULL },
-  { "HP-UX/ELF", NULL },
-  { "HP-UX/SOM", NULL },
   { "QNX-Neutrino", NULL },
   { "Cygwin", NULL },
   { "AIX", NULL },
@@ -483,11 +478,11 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect, void *obj)
 	      break;
 
 	    case GNU_ABI_TAG_FREEBSD:
-	      *osabi = GDB_OSABI_FREEBSD_ELF;
+	      *osabi = GDB_OSABI_FREEBSD;
 	      break;
 
 	    case GNU_ABI_TAG_NETBSD:
-	      *osabi = GDB_OSABI_NETBSD_ELF;
+	      *osabi = GDB_OSABI_NETBSD;
 	      break;
 
 	    default:
@@ -502,7 +497,7 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect, void *obj)
 		      NT_FREEBSD_ABI_TAG))
 	{
 	  /* There is no need to check the version yet.  */
-	  *osabi = GDB_OSABI_FREEBSD_ELF;
+	  *osabi = GDB_OSABI_FREEBSD;
 	  return;
 	}
 
@@ -514,7 +509,7 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect, void *obj)
       && check_note (abfd, sect, note, &sectsize, "NetBSD", 4, NT_NETBSD_IDENT))
     {
       /* There is no need to check the version yet.  */
-      *osabi = GDB_OSABI_NETBSD_ELF;
+      *osabi = GDB_OSABI_NETBSD;
       return;
     }
 
@@ -524,14 +519,14 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect, void *obj)
 		     NT_OPENBSD_IDENT))
     {
       /* There is no need to check the version yet.  */
-      *osabi = GDB_OSABI_OPENBSD_ELF;
+      *osabi = GDB_OSABI_OPENBSD;
       return;
     }
 
   /* .note.netbsdcore.procinfo notes, used by NetBSD.  */
   if (strcmp (name, ".note.netbsdcore.procinfo") == 0)
     {
-      *osabi = GDB_OSABI_NETBSD_ELF;
+      *osabi = GDB_OSABI_NETBSD;
       return;
     }
 }
@@ -548,6 +543,7 @@ generic_elf_osabi_sniffer (bfd *abfd)
     {
     case ELFOSABI_NONE:
     case ELFOSABI_GNU:
+    case ELFOSABI_HPUX:
       /* When the EI_OSABI field in the ELF header is ELFOSABI_NONE
 	 (0), then the ELF structures in the file are conforming to
 	 the base specification for that machine (there are no
@@ -556,32 +552,25 @@ generic_elf_osabi_sniffer (bfd *abfd)
 
 	 The same applies for ELFOSABI_GNU: this can mean GNU/Hurd,
 	 GNU/Linux, and possibly more.  */
+
+      /* And likewise ELFOSABI_HPUX.  For some reason the default
+	 value for the EI_OSABI field is ELFOSABI_HPUX for all PA-RISC
+	 targets (with the exception of GNU/Linux).  */
       bfd_map_over_sections (abfd,
 			     generic_elf_osabi_sniff_abi_tag_sections,
 			     &osabi);
       break;
 
     case ELFOSABI_FREEBSD:
-      osabi = GDB_OSABI_FREEBSD_ELF;
+      osabi = GDB_OSABI_FREEBSD;
       break;
 
     case ELFOSABI_NETBSD:
-      osabi = GDB_OSABI_NETBSD_ELF;
+      osabi = GDB_OSABI_NETBSD;
       break;
 
     case ELFOSABI_SOLARIS:
       osabi = GDB_OSABI_SOLARIS;
-      break;
-
-    case ELFOSABI_HPUX:
-      /* For some reason the default value for the EI_OSABI field is
-	 ELFOSABI_HPUX for all PA-RISC targets (with the exception of
-	 GNU/Linux).  We use HP-UX ELF as the default, but let any
-	 OS-specific notes override this.  */
-      osabi = GDB_OSABI_HPUX_ELF;
-      bfd_map_over_sections (abfd,
-			     generic_elf_osabi_sniff_abi_tag_sections,
-			     &osabi);
       break;
 
     case ELFOSABI_OPENVMS:
@@ -596,7 +585,7 @@ generic_elf_osabi_sniffer (bfd *abfd)
 	 header to "brand" their ELF binaries in FreeBSD 3.x.  */
       if (memcmp (&elf_elfheader (abfd)->e_ident[8],
 		  "FreeBSD", sizeof ("FreeBSD")) == 0)
-	osabi = GDB_OSABI_FREEBSD_ELF;
+	osabi = GDB_OSABI_FREEBSD;
     }
 
   return osabi;

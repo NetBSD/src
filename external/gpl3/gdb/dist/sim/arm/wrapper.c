@@ -1,5 +1,5 @@
 /* run front end support for arm
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
    This file is part of ARM SIM.
 
@@ -740,7 +740,7 @@ sim_target_parse_command_line (int argc, char ** argv)
 	{
 	  int i;
 
-	  for (i = sizeof options / sizeof options[0]; i--;)
+	  for (i = ARRAY_SIZE (options); i--;)
 	    if (strncmp (ptr, options[i].swi_option,
 			 strlen (options[i].swi_option)) == 0)
 	      {

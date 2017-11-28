@@ -1,5 +1,5 @@
 /*  dv-nvram.c -- Generic driver for a non volatile ram (battery saved)
-    Copyright (C) 1999-2016 Free Software Foundation, Inc.
+    Copyright (C) 1999-2017 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@worldnet.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     
@@ -186,7 +186,7 @@ attach_nvram_regs (struct hw *me, struct nvram *controller)
 
     case NVRAM_SAVE_MODIFIED:
     case NVRAM_SAVE_ALL:
-      controller->data = (char*) hw_malloc (me, attach_size);
+      controller->data = hw_malloc (me, attach_size);
       if (controller->data == 0)
         hw_abort (me, "Not enough memory, try to use the mode 'map'");
 

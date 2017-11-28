@@ -1,4 +1,4 @@
-# Copyright 2008-2016 Free Software Foundation, Inc.
+# Copyright 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ if ![supports_process_record] {
 standard_testfile machinestate.c ms1.c
 set precsave [standard_output_file machinestate.precsave]
 
-if { [prepare_for_testing $testfile.exp $testfile \
+if { [prepare_for_testing "failed to prepare" $testfile \
 	  [list $srcfile $srcfile2]] } {
     return -1
 }
@@ -59,12 +59,12 @@ runto main
 
 if [supports_process_record] {
     # Activate process record/replay
-    gdb_test_no_output "record" "Turn on process record"
+    gdb_test_no_output "record" "turn on process record"
 }
 
 gdb_test "break $endmain" \
     "Breakpoint $decimal at .*$srcfile, line $endmain\." \
-    "BP at end of main"
+    "breakpoint at end of main"
 
 gdb_test "continue" "Breakpoint .* end main .*" "run to end of main"
 
@@ -72,7 +72,7 @@ gdb_test "record save $precsave" \
     "Saved core file $precsave with execution log\."  \
     "save process recfile"
 
-gdb_test "kill" "" "Kill process, prepare to debug log file" \
+gdb_test "kill" "" "kill process, prepare to debug log file" \
     "Kill the program being debugged\\? \\(y or n\\) " "y"
 
 gdb_test "record restore $precsave" \

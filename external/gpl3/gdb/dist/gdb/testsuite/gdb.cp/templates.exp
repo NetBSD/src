@@ -1,4 +1,4 @@
-# Copyright 1992-2016 Free Software Foundation, Inc.
+# Copyright 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if [get_compiler_info "c++"] {
     return -1
 }
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
@@ -46,16 +46,16 @@ proc test_ptype_of_templates {} {
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}T5<int> & operator=\\(T5<int> const ?&\\);${ws}\}\r\n$gdb_prompt $" {
 	    xfail "ptype T5<int> -- new without size_t"
 	}
-	-re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(int\\);${ws}static void \\* new \\(unsigned int\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}${ws}$gdb_prompt $" {
+	-re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(()\\);${ws}static void \\* new \\(unsigned int\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}${ws}$gdb_prompt $" {
 	    xfail "ptype T5<int> -- new with unsigned int"
 	}
-	-re "type = class T5<int> \\{.*public:.*static int X;.*int x;.*int val;.*T5 \\(int\\);.*T5 \\(const class T5<int> &\\);.*void ~T5 \\(int\\);.*static void \\* new \\(unsigned long\\);.*static void delete \\(void ?\\*\\);.*int value \\((void|)\\);.*\\}\r\n$gdb_prompt $" {
+	-re "type = class T5<int> \\{.*public:.*static int X;.*int x;.*int val;.*T5 \\(int\\);.*T5 \\(const class T5<int> &\\);.*void ~T5 \\(\\);.*static void \\* new \\(unsigned long\\);.*static void delete \\(void ?\\*\\);.*int value \\((void|)\\);.*\\}\r\n$gdb_prompt $" {
 	    xfail "ptype T5<int> -- new with unsigned long"
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;((${ws}T5<int> & operator=\\(T5<int> const ?&\\);)|(${ws}T5\\(int\\);)|(${ws}T5\\((T5<int> const|const T5<int>) ?&\\);)|(${ws}~T5\\((void|)\\);)|(${ws}static void \\* operator new\\(unsigned( int| long)?\\);)|(${ws}static void operator delete\\(void ?\\*\\);)|(${ws}int value\\((void|)\\);))*${ws}\}\r\n$gdb_prompt $" {
 	    xfail "ptype T5<int> (obsolescent gcc or gdb)"
 	}
-	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
 	    # This also triggers gdb/1113...
 	    kfail "gdb/1111" "ptype T5<int>"
 	    # Add here a PASS case when PR gdb/1111 gets fixed.
@@ -68,19 +68,22 @@ proc test_ptype_of_templates {} {
 	    # The destructor has an argument type.
 	    kfail "gdb/8218" "ptype T5<int>"
 	}
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	    pass "ptype T5<int>"
+	}
     }
 
     gdb_test_multiple "ptype/r t5i" "ptype t5i" {
         -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5\\(int\\);${ws}T5\\(T5<int> const ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
 	    xfail "ptype T5<int> -- with several fixes from 4.17 -- without size_t"
 	}
-        -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(int\\);${ws}static void \\* new \\(unsigned int\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
+        -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(\\);${ws}static void \\* new \\(unsigned int\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
 	    xfail "ptype t5i<int> -- new with unsigned int -- without size_t"
 	}
-        -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(int\\);${ws}static void \\* new \\(unsigned long\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
+        -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(\\);${ws}static void \\* new \\(unsigned long\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
 	    xfail "ptype t5i<int> -- new with unsigned long -- without size_t"
 	}
-        -re "type = class T5<int> \{.*public:.*static int X;.*int x;.*int val;.*.*T5 \\(int\\);.*.*void ~T5 \\(int\\).*.*.*int value \\((void|)\\);.*\}.*$gdb_prompt $" { 
+        -re "type = class T5<int> \{.*public:.*static int X;.*int x;.*int val;.*.*T5 \\(int\\);.*.*void ~T5 \\(\\).*.*.*int value \\((void|)\\);.*\}.*$gdb_prompt $" {
             xfail "ptype t5i -- without size_t"
         }
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5<int> & operator=\\(T5<int> const ?&\\);${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
@@ -92,9 +95,9 @@ proc test_ptype_of_templates {} {
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;((${ws}T5<int> & operator=\\(T5<int> const ?&\\);)|(${ws}T5\\(int\\);)|(${ws}T5\\(T5<int> const ?&\\);)|(${ws}~T5\\((void|)\\);)|(${ws}static void \\* operator new\\(unsigned( int| long)?\\);)|(${ws}static void operator delete\\(void ?\\*\\);)|(${ws}int value\\((void|)\\);))*${ws}\}\r\n$gdb_prompt $" {
 	    xfail "ptype t5i (obsolescent gcc or gdb) -- without size_t"
 	}
-	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
 	    # This also triggers gdb/1113...
-	    kfail "gdb/1111" "ptype T5<int>"
+	    kfail "gdb/1111" "ptype t5i"
 	    # Add here a PASS case when PR gdb/1111 gets fixed.
 	    # These are really:
 	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8216
@@ -103,7 +106,10 @@ proc test_ptype_of_templates {} {
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
 	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8218
 	    # The destructor has an argument type.
-	    kfail "gdb/8218" "ptype T5<int>"
+	    kfail "gdb/8218" "ptype t5i"
+	}
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	    pass "ptype t5i"
 	}
     }
 }
@@ -184,7 +190,7 @@ proc test_template_calls {} {
     global gdb_prompt
 
     if [target_info exists gdb,cannot_call_functions] {
-	unsupported "This target can not call functions"
+	unsupported "this target can not call functions"
 	return
     }
 

@@ -1,6 +1,6 @@
 /* Definitions for expressions stored in reversed prefix form, for GDB.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,6 +85,8 @@ struct expression
     union exp_element elts[1];
   };
 
+typedef gdb::unique_xmalloc_ptr<expression> expression_up;
+
 /* Macros for converting between number of expression elements and bytes
    to store that many expression elements.  */
 
@@ -95,16 +97,16 @@ struct expression
 
 /* From parse.c */
 
-extern struct expression *parse_expression (const char *);
+extern expression_up parse_expression (const char *);
 
-extern struct expression *parse_expression_with_language (const char *string,
-							  enum language lang);
+extern expression_up parse_expression_with_language (const char *string,
+						     enum language lang);
 
 extern struct type *parse_expression_for_completion (const char *, char **,
 						     enum type_code *);
 
-extern struct expression *parse_exp_1 (const char **, CORE_ADDR pc,
-				       const struct block *, int);
+extern expression_up parse_exp_1 (const char **, CORE_ADDR pc,
+				  const struct block *, int);
 
 /* For use by parsers; set if we want to parse an expression and
    attempt completion.  */
@@ -144,12 +146,12 @@ extern struct value *evaluate_subexp_standard
 
 extern void print_expression (struct expression *, struct ui_file *);
 
-extern char *op_name (struct expression *exp, enum exp_opcode opcode);
+extern const char *op_name (struct expression *exp, enum exp_opcode opcode);
 
-extern char *op_string (enum exp_opcode);
+extern const char *op_string (enum exp_opcode);
 
 extern void dump_raw_expression (struct expression *,
-				 struct ui_file *, char *);
+				 struct ui_file *, const char *);
 extern void dump_prefix_expression (struct expression *, struct ui_file *);
 
 /* In an OP_RANGE expression, either bound could be empty, indicating

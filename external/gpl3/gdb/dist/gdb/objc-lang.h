@@ -1,6 +1,6 @@
 /* Objective-C language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -29,9 +29,9 @@ struct block;
 struct parser_state;
 
 extern CORE_ADDR lookup_objc_class     (struct gdbarch *gdbarch,
-					char *classname);
+					const char *classname);
 extern CORE_ADDR lookup_child_selector (struct gdbarch *gdbarch,
-					char *methodname);
+					const char *methodname);
 
 extern char *objc_demangle (const char *mangled, int options);
 
@@ -48,7 +48,8 @@ extern void start_msglist (void);
 extern void add_msglist (struct stoken *str, int addcolon);
 extern int end_msglist (struct parser_state *);
 
-struct symbol *lookup_struct_typedef (char *name, const struct block *block,
+struct symbol *lookup_struct_typedef (const char *name,
+				      const struct block *block,
 				      int noerr);
 
 #endif

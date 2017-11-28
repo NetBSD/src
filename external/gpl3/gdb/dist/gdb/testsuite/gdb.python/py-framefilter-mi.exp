@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2016 Free Software Foundation, Inc.
+# Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ standard_testfile py-framefilter-mi.c
 set pyfile py-framefilter.py
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DMI}] != "" } {
-    untested ${testfile}.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -46,8 +46,7 @@ mi_runto main
 
 set remote_python_file [gdb_remote_download host ${srcdir}/${subdir}/${pyfile}]
 
-mi_gdb_test "python exec (open ('${remote_python_file}').read ())" ".*\\^done." \
-    "Load python file"
+mi_gdb_test "source ${remote_python_file}" ".*\\^done." "load python file"
 
 # Multiple blocks test
 mi_continue_to_line [gdb_get_line_number {Inner test breakpoint} ${srcfile}] \

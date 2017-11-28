@@ -1,0 +1,35 @@
+# Copyright (C) 2016-2017 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check the "quit" command.
+
+clean_restart
+
+# Test that a syntax error causes quit to abort.
+# Regression test for PR gdb/20604.
+gdb_test "quit()" "A syntax error in expression, near .*" \
+    "quit with syntax error"
+
+# Test that an expression can be used to set the error code.
+send_gdb "quit 22+1\n"
+set result [wait -i $gdb_spawn_id]
+verbose $result
+if {[lindex $result 2] == 0 && [lindex $result 3] == 23} {
+    pass "quit with expression"
+} else {
+    fail "quit with expression"
+}
+close $gdb_spawn_id
+clear_gdb_spawn_id

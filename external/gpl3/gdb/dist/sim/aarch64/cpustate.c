@@ -1,6 +1,6 @@
 /* cpustate.h -- Prototypes for AArch64 simulator functions.
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -20,6 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
+#include <math.h>
 
 #include "sim-main.h"
 #include "cpustate.h"
@@ -369,7 +370,9 @@ aarch64_set_FP_half (sim_cpu *cpu, VReg reg, float val)
 void
 aarch64_set_FP_float (sim_cpu *cpu, VReg reg, float val)
 {
-  if (val != cpu->fr[reg].s)
+  if (val != cpu->fr[reg].s
+      /* Handle +/- zero.  */
+      || signbit (val) != signbit (cpu->fr[reg].s))
     {
       FRegister v;
 
@@ -385,7 +388,9 @@ aarch64_set_FP_float (sim_cpu *cpu, VReg reg, float val)
 void
 aarch64_set_FP_double (sim_cpu *cpu, VReg reg, double val)
 {
-  if (val != cpu->fr[reg].d)
+  if (val != cpu->fr[reg].d
+      /* Handle +/- zero.  */
+      || signbit (val) != signbit (cpu->fr[reg].d))
     {
       FRegister v;
 

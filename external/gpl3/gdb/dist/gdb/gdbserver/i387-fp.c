@@ -1,5 +1,5 @@
 /* i387-specific utility functions, for the remote server for GDB.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,7 @@ static const int num_avx512_zmmh_low_registers = 16;
 static const int num_avx512_zmmh_high_registers = 16;
 static const int num_avx512_ymmh_registers = 16;
 static const int num_avx512_xmm_registers = 16;
+static const int num_pkeys_registers = 1;
 
 /* Note: These functions preserve the reserved bits in control registers.
    However, gdbserver promptly throws away that information.  */
@@ -136,6 +137,10 @@ struct i387_xsave {
 
   /* Space for 16 512-bit zmm16-31 values.  */
   unsigned char zmmh_high_space[1024];
+
+  /* Space for 1 32-bit PKRU register.  The HW XSTATE size for this feature is
+     actually 64 bits, but WRPKRU/RDPKRU instructions ignore upper 32 bits.  */
+  unsigned char pkru_space[8];
 };
 
 void
@@ -273,14 +278,14 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
   struct i387_xsave *fp = (struct i387_xsave *) buf;
   int i;
   unsigned long val, val2;
-  unsigned int clear_bv;
   unsigned long long xstate_bv = 0;
+  unsigned long long clear_bv = 0;
   char raw[64];
   char *p;
   /* Amd64 has 16 xmm regs; I386 has 8 xmm regs.  */
   int num_xmm_registers = register_size (regcache->tdesc, 0) == 8 ? 16 : 8;
 
-  /* The supported bits in `xstat_bv' are 1 byte.  Clear part in
+  /* The supported bits in `xstat_bv' are 8 bytes.  Clear part in
      vector registers if its bit in xstat_bv is zero.  */
   clear_bv = (~fp->xstate_bv) & x86_xcr0;
 
@@ -325,6 +330,10 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
 	  for (i = 0; i < num_avx512_ymmh_registers; i++)
 	    memset (((char *) &fp->zmmh_high_space[0]) + 16 + i * 64, 0, 16);
 	}
+
+      if ((clear_bv & X86_XSTATE_PKRU))
+	for (i = 0; i < num_pkeys_registers; i++)
+	  memset (((char *) &fp->pkru_space[0]) + i * 4, 0, 4);
     }
 
   /* Check if any x87 registers are changed.  */
@@ -497,6 +506,23 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
 	}
     }
 
+  /* Check if any PKEYS registers are changed.  */
+  if ((x86_xcr0 & X86_XSTATE_PKRU))
+    {
+      int pkru_regnum = find_regno (regcache->tdesc, "pkru");
+
+      for (i = 0; i < num_pkeys_registers; i++)
+	{
+	  collect_register (regcache, i + pkru_regnum, raw);
+	  p = ((char *) &fp->pkru_space[0]) + i * 4;
+	  if (memcmp (raw, p, 4) != 0)
+	    {
+	      xstate_bv |= X86_XSTATE_PKRU;
+	      memcpy (p, raw, 4);
+	    }
+	}
+    }
+
   /* Update the corresponding bits in xstate_bv if any SSE/AVX
      registers are changed.  */
   fp->xstate_bv |= xstate_bv;
@@ -643,12 +669,12 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
   struct i387_fxsave *fxp = (struct i387_fxsave *) buf;
   int i, top;
   unsigned long val;
-  unsigned int clear_bv;
+  unsigned long long clear_bv;
   gdb_byte *p;
   /* Amd64 has 16 xmm regs; I386 has 8 xmm regs.  */
   int num_xmm_registers = register_size (regcache->tdesc, 0) == 8 ? 16 : 8;
 
-  /* The supported bits in `xstat_bv' are 1 byte.  Clear part in
+  /* The supported bits in `xstat_bv' are 8 bytes.  Clear part in
      vector registers if its bit in xstat_bv is zero.  */
   clear_bv = (~fp->xstate_bv) & x86_xcr0;
 
@@ -798,6 +824,23 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 	    supply_register (regcache, i + ymm16h_regnum, p + 16 + i * 64);
 	  for (i = 0; i < num_avx512_xmm_registers; i++)
 	    supply_register (regcache, i + xmm16_regnum, p + i * 64);
+	}
+    }
+
+  if ((x86_xcr0 & X86_XSTATE_PKRU) != 0)
+    {
+      int pkru_regnum = find_regno (regcache->tdesc, "pkru");
+
+      if ((clear_bv & X86_XSTATE_PKRU) != 0)
+	{
+	  for (i = 0; i < num_pkeys_registers; i++)
+	    supply_register_zeroed (regcache, i + pkru_regnum);
+	}
+      else
+	{
+	  p = (gdb_byte *) &fp->pkru_space[0];
+	  for (i = 0; i < num_pkeys_registers; i++)
+	    supply_register (regcache, i + pkru_regnum, p + i * 4);
 	}
     }
 

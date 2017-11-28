@@ -1,5 +1,5 @@
 /* MI Command Set - target commands.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 /* Get a file from the target.  */
 
 void
-mi_cmd_target_file_get (char *command, char **argv, int argc)
+mi_cmd_target_file_get (const char *command, char **argv, int argc)
 {
   int oind = 0;
   char *oarg;
@@ -48,7 +48,7 @@ mi_cmd_target_file_get (char *command, char **argv, int argc)
 /* Send a file to the target.  */
 
 void
-mi_cmd_target_file_put (char *command, char **argv, int argc)
+mi_cmd_target_file_put (const char *command, char **argv, int argc)
 {
   int oind = 0;
   char *oarg;
@@ -72,7 +72,7 @@ mi_cmd_target_file_put (char *command, char **argv, int argc)
 /* Delete a file on the target.  */
 
 void
-mi_cmd_target_file_delete (char *command, char **argv, int argc)
+mi_cmd_target_file_delete (const char *command, char **argv, int argc)
 {
   int oind = 0;
   char *oarg;

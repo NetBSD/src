@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -25,7 +25,7 @@ if [prepare_for_testing "failed to prepare for dprintf with next" \
 }
 
 if ![runto_main] {
-    fail "Can't run to main"
+    fail "can't run to main"
     return -1
 }
 

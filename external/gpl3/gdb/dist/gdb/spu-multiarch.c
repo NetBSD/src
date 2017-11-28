@@ -1,5 +1,5 @@
 /* Cell SPU GNU/Linux multi-architecture debugging support.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -149,6 +149,11 @@ spu_fetch_registers (struct target_ops *ops,
   int spufs_fd;
   CORE_ADDR spufs_addr;
 
+  /* Since we use functions that rely on inferior_ptid, we need to set and
+     restore it.  */
+  scoped_restore save_ptid
+    = make_scoped_restore (&inferior_ptid, regcache_get_ptid (regcache));
+
   /* This version applies only if we're currently in spu_run.  */
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_spu)
     {
@@ -202,6 +207,11 @@ spu_store_registers (struct target_ops *ops,
   struct target_ops *ops_beneath = find_target_beneath (ops);
   int spufs_fd;
   CORE_ADDR spufs_addr;
+
+  /* Since we use functions that rely on inferior_ptid, we need to set and
+     restore it.  */
+  scoped_restore save_ptid
+    = make_scoped_restore (&inferior_ptid, regcache_get_ptid (regcache));
 
   /* This version applies only if we're currently in spu_run.  */
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_spu)

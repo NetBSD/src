@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -548,14 +548,6 @@ solib_aix_solib_create_inferior_hook (int from_tty)
     }
 }
 
-/* Implement the "special_symbol_handling" target_so_ops method.  */
-
-static void
-solib_aix_special_symbol_handling (void)
-{
-  /* Nothing needed.  */
-}
-
 /* Implement the "current_sos" target_so_ops method.  */
 
 static struct so_list *
@@ -632,7 +624,7 @@ solib_aix_in_dynsym_resolve_code (CORE_ADDR pc)
 
 /* Implement the "bfd_open" target_so_ops method.  */
 
-static bfd *
+static gdb_bfd_ref_ptr
 solib_aix_bfd_open (char *pathname)
 {
   /* The pathname is actually a synthetic filename with the following
@@ -643,11 +635,9 @@ solib_aix_bfd_open (char *pathname)
      to the solib's lm_info here?  */
   const int path_len = strlen (pathname);
   char *sep;
-  char *filename;
   int filename_len;
-  char *member_name;
-  bfd *archive_bfd, *object_bfd;
-  struct cleanup *cleanup;
+  int found_file;
+  char *found_pathname;
 
   if (pathname[path_len - 1] != ')')
     return solib_bfd_open (pathname);
@@ -664,75 +654,69 @@ solib_aix_bfd_open (char *pathname)
     }
   filename_len = sep - pathname;
 
-  filename = xstrprintf ("%.*s", filename_len, pathname);
-  cleanup = make_cleanup (xfree, filename);
-  member_name = xstrprintf ("%.*s", path_len - filename_len - 2, sep + 1);
-  make_cleanup (xfree, member_name);
+  std::string filename (string_printf ("%.*s", filename_len, pathname));
+  std::string member_name (string_printf ("%.*s", path_len - filename_len - 2,
+					  sep + 1));
 
-  archive_bfd = gdb_bfd_open (filename, gnutarget, -1);
+  /* Calling solib_find makes certain that sysroot path is set properly
+     if program has a dependency on .a archive and sysroot is set via
+     set sysroot command.  */
+  found_pathname = solib_find (filename.c_str (), &found_file);
+  if (found_pathname == NULL)
+      perror_with_name (pathname);
+  gdb_bfd_ref_ptr archive_bfd (solib_bfd_fopen (found_pathname, found_file));
   if (archive_bfd == NULL)
     {
       warning (_("Could not open `%s' as an executable file: %s"),
-	       filename, bfd_errmsg (bfd_get_error ()));
-      do_cleanups (cleanup);
+	       filename.c_str (), bfd_errmsg (bfd_get_error ()));
       return NULL;
     }
 
-  if (bfd_check_format (archive_bfd, bfd_object))
-    {
-      do_cleanups (cleanup);
-      return archive_bfd;
-    }
+  if (bfd_check_format (archive_bfd.get (), bfd_object))
+    return archive_bfd;
 
-  if (! bfd_check_format (archive_bfd, bfd_archive))
+  if (! bfd_check_format (archive_bfd.get (), bfd_archive))
     {
       warning (_("\"%s\": not in executable format: %s."),
-	       filename, bfd_errmsg (bfd_get_error ()));
-      gdb_bfd_unref (archive_bfd);
-      do_cleanups (cleanup);
+	       filename.c_str (), bfd_errmsg (bfd_get_error ()));
       return NULL;
     }
 
-  object_bfd = gdb_bfd_openr_next_archived_file (archive_bfd, NULL);
+  gdb_bfd_ref_ptr object_bfd
+    (gdb_bfd_openr_next_archived_file (archive_bfd.get (), NULL));
   while (object_bfd != NULL)
     {
-      bfd *next;
-
-      if (strcmp (member_name, object_bfd->filename) == 0)
+      if (member_name == object_bfd->filename)
 	break;
 
-      next = gdb_bfd_openr_next_archived_file (archive_bfd, object_bfd);
-      gdb_bfd_unref (object_bfd);
-      object_bfd = next;
+      object_bfd = gdb_bfd_openr_next_archived_file (archive_bfd.get (),
+						     object_bfd.get ());
     }
 
   if (object_bfd == NULL)
     {
-      warning (_("\"%s\": member \"%s\" missing."), filename, member_name);
-      gdb_bfd_unref (archive_bfd);
-      do_cleanups (cleanup);
+      warning (_("\"%s\": member \"%s\" missing."), filename.c_str (),
+	       member_name.c_str ());
       return NULL;
     }
 
-  if (! bfd_check_format (object_bfd, bfd_object))
+  if (! bfd_check_format (object_bfd.get (), bfd_object))
     {
       warning (_("%s(%s): not in object format: %s."),
-	       filename, member_name, bfd_errmsg (bfd_get_error ()));
-      gdb_bfd_unref (archive_bfd);
-      gdb_bfd_unref (object_bfd);
-      do_cleanups (cleanup);
+	       filename.c_str (), member_name.c_str (),
+	       bfd_errmsg (bfd_get_error ()));
       return NULL;
     }
 
-  /* Override the returned bfd's name with our synthetic name in order
-     to allow commands listing all shared libraries to display that
-     synthetic name.  Otherwise, we would only be displaying the name
-     of the archive member object.  */
-  xfree (bfd_get_filename (object_bfd));
-  object_bfd->filename = xstrdup (pathname);
+  /* Override the returned bfd's name with the name returned from solib_find
+     along with appended parenthesized member name in order to allow commands
+     listing all shared libraries to display.  Otherwise, we would only be
+     displaying the name of the archive member object.  */
+  xfree (bfd_get_filename (object_bfd.get ()));
+  object_bfd->filename = xstrprintf ("%s%s",
+                                     bfd_get_filename (archive_bfd.get ()),
+				     sep);
 
-  gdb_bfd_unref (archive_bfd);
-  do_cleanups (cleanup);
   return object_bfd;
 }
 
@@ -823,8 +807,6 @@ _initialize_solib_aix (void)
   solib_aix_so_ops.clear_solib = solib_aix_clear_solib;
   solib_aix_so_ops.solib_create_inferior_hook
     = solib_aix_solib_create_inferior_hook;
-  solib_aix_so_ops.special_symbol_handling
-    = solib_aix_special_symbol_handling;
   solib_aix_so_ops.current_sos = solib_aix_current_sos;
   solib_aix_so_ops.open_symbol_file_object
     = solib_aix_open_symbol_file_object;

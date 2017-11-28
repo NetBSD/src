@@ -1,7 +1,7 @@
 /* GNU/Linux/AArch64 specific low level interface, for the remote server for
    GDB.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -1536,7 +1536,7 @@ append_insns (CORE_ADDR *to, size_t len, const uint32_t *buf)
 {
   size_t byte_len = len * sizeof (uint32_t);
 #if (__BYTE_ORDER == __BIG_ENDIAN)
-  uint32_t *le_buf = xmalloc (byte_len);
+  uint32_t *le_buf = (uint32_t *) xmalloc (byte_len);
   size_t i;
 
   for (i = 0; i < len; i++)

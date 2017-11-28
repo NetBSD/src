@@ -1,4 +1,4 @@
-#   Copyright 2009-2016 Free Software Foundation, Inc.
+#   Copyright 2009-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,30 +21,34 @@ gdb_start
 standard_testfile actions.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
-    untested tsv.exp
+    untested "failed to compile"
     return -1
 }
 gdb_load $binfile
 
+# PR gdb/21352: Command tsave does not support -r argument
+gdb_test "tsave -r" "Argument required \\\(file in which to save trace data\\\)\." \
+    "tsave command properly supports -r argument"
+
 gdb_test "tvariable \$tvar1" \
   "Trace state variable \\\$tvar1 created, with initial value 0." \
-  "Create a trace state variable"
+  "create a trace state variable"
 
 gdb_test "tvariable \$tvar2 = 45" \
   "Trace state variable \\\$tvar2 created, with initial value 45." \
-  "Create a trace state variable with initial value"
+  "create a trace state variable with initial value"
 
 gdb_test "tvariable \$tvar2 = -92" \
   "Trace state variable \\\$tvar2 now has initial value -92." \
-  "Change initial value of a trace state variable"
+  "change initial value of a trace state variable"
 
 gdb_test "tvariable \$tvar3 = 2 + 3" \
   "Trace state variable \\\$tvar3 created, with initial value 5." \
-  "Create a trace state variable with expression"
+  "create a trace state variable with expression"
 
 gdb_test "tvariable \$tvar3 = 1234567000000" \
   "Trace state variable \\\$tvar3 now has initial value 1234567000000." \
-  "Init trace state variable to a 64-bit value"
+  "init trace state variable to a 64-bit value"
 
 gdb_test "tvariable $" \
   "Must supply a non-empty variable name" \
@@ -97,7 +101,7 @@ gdb_test "delete tvariable" \
 
 gdb_test "info tvariables" \
   "No trace state variables.*" \
-  "List tvariables after deleting all"
+  "list tvariables after deleting all"
 
 # Now try running a trace.
 
@@ -106,7 +110,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 # The rest of the testing needs actual tracing to work.
 if { ![gdb_target_supports_trace] } then {
-    unsupported "Current target does not support trace"
+    unsupported "current target does not support trace"
     return 1
 }
 
@@ -120,7 +124,7 @@ if { $trcpt1 <= 0 } then {
 
 gdb_test "tvariable \$tvar5 = 15" \
   "Trace state variable \\\$tvar5 created, with initial value 15." \
-  "Create a trace state variable tvar5"
+  "create a trace state variable tvar5"
 
 gdb_trace_setactions "collect tsv for first tracepoint" \
 	"$trcpt1" \
@@ -193,7 +197,7 @@ gdb_test_multiple "target ctf ${tracefile}.ctf" "" {
 clean_restart ${binfile}
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return
 }
 
