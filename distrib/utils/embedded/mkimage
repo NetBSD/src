@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.67 2017/11/28 00:14:30 kre Exp $
+# $NetBSD: mkimage,v 1.68 2017/11/28 00:24:08 kre Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,7 +74,7 @@ trap "cleanup" 0 1 2 3 15
 
 cleanup() {
 	case "$tmp" in
-	/tmp/$PROG.*)	rm -fr "$tmp";;
+	"${TMPDIR:-/tmp}/$PROG."*)	rm -fr "$tmp";;
 	esac
 }
 
