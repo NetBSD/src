@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,9 +51,16 @@ proc run_print_on_each_thing { things } {
     }
 }
 
-# By default the option is set to 0.
 gdb_exit
 gdb_start
+
+# These tests require readline support.
+if { ![readline_is_used] } {
+    unsupported "readline isn't used."
+    return -1
+}
+
+# By default the option is set to 0.
 gdb_test "show history remove-duplicates" "is 0\\."
 
 # Test the "unlimited" setting.

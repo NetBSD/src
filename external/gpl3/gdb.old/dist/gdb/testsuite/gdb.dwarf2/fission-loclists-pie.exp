@@ -1,0 +1,61 @@
+# Copyright 2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This testcase exercises PR symtab/19999.
+# For Fission, while we shouldn't add the DWARF base address to addresses
+# coming from .debug_addr, will still need to add the base offset in case
+# we're debugging a PIE executable.
+
+load_lib dwarf.exp
+
+# We run objcopy locally to split out the .dwo file.
+if [is_remote host] {
+    return 0
+}
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+if ![dwarf2_support] {
+    return 0  
+}
+
+# This test can only be run on x86-64 targets.
+if {![istarget x86_64-*] || ![is_lp64_target]} {
+    return 0
+}
+
+standard_testfile .S
+
+if [build_executable_from_fission_assembler \
+	"$testfile.exp" "$binfile" "$srcfile" \
+	[list "nodebug" "ldflags=-pie"]] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+# Make sure we can find the .dwo file, regardless of whether we're
+# running in parallel mode.
+gdb_test_no_output "set debug-file-directory [file dirname $binfile]" \
+    "set debug-file-directory"
+gdb_load $binfile
+
+if ![runto_main] {
+    return -1
+}
+
+# Verify gdb can find argc.
+
+gdb_test "p argc" " = 1"

@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,14 @@
 
 # Test the setting of "history size" via $HOME/.gdbinit
 
+# This test depends on being able to set $HOME and $GDBHISTSIZE.
+# We cannot expect remote hosts to see environment variables set on the
+# local machine.
+
+if { [is_remote host] } {
+    unsupported "can't set environment variables on remote host"
+    return -1
+}
 
 # Check that the history size is properly set to SIZE when reading the .gdbinit
 # file located in HOME with the environment variable GDBHISTSIZE optionally
@@ -28,44 +36,39 @@ proc test_gdbinit_history_setting { home size { gdbhistsize_val "-" } } {
     global srcdir
     global subdir
 
-    array set old_env [array get env]
+    save_vars { INTERNAL_GDBFLAGS env(GDBHISTFILE) env(GDBHISTSIZE) env(HOME) } {
+	set env(HOME) "$srcdir/$subdir/$home"
 
-    set env(HOME) "$srcdir/$subdir/$home"
+	# These environment variables take precedence over whatever
+	# history size is set in .gdbinit.  Make sure the former is not
+	# set.
+	unset -nocomplain env(GDBHISTFILE)
+	unset -nocomplain env(GDBHISTSIZE)
 
-    # The GDBHISTSIZE environment variable takes precedence over whatever
-    # history size is set in .gdbinit.  Make sure the former is not
-    # set.
-    unset -nocomplain env(GDBHISTSIZE)
+	if { $gdbhistsize_val != "-" } {
+	    set env(GDBHISTSIZE) $gdbhistsize_val
+	}
 
-    if { $gdbhistsize_val != "-" } {
-	set env(GDBHISTSIZE) $gdbhistsize_val
-    }
+	set INTERNAL_GDBFLAGS [string map {"-nx" ""} $INTERNAL_GDBFLAGS]
 
-    set saved_internal_gdbflags $INTERNAL_GDBFLAGS
-    set INTERNAL_GDBFLAGS [string map {"-nx" ""} $INTERNAL_GDBFLAGS]
+	set prefix "home=$home"
+	if { $gdbhistsize_val != "-" } {
+	    append prefix " gdbhistsize=$gdbhistsize_val"
+	}
 
-    set prefix "home=$home"
-    if { $gdbhistsize_val != "-" } {
-	append prefix " gdbhistsize=$gdbhistsize_val"
-    }
+	with_test_prefix $prefix {
+	    gdb_exit
+	    gdb_start
 
-    with_test_prefix $prefix {
-	gdb_exit
-	gdb_start
+	    gdb_test "show history size" "The size of the command history is $size."
 
-	gdb_test "show history size" "The size of the command history is $size."
-
-	if { $size == "0" } {
-	    gdb_test_no_output "show commands"
-	} elseif { $size != "1" } {
-	    gdb_test "show commands" "    .  show history size\r\n    .  show commands"
+	    if { $size == "0" } {
+		gdb_test_no_output "show commands"
+	    } elseif { $size != "1" } {
+		gdb_test "show commands" "    .  show history size\r\n    .  show commands"
+	    }
 	}
     }
-
-    set INTERNAL_GDBFLAGS $saved_internal_gdbflags
-
-    unset -nocomplain env(GDBHISTSIZE)
-    array set env [array get old_env]
 }
 
 # Check that the history file does not get truncated to zero when a gdbinit
@@ -75,53 +78,48 @@ proc test_no_truncation_of_unlimited_history_file { } {
     global env
     global INTERNAL_GDBFLAGS
 
-    array set old_env [array get env]
+    save_vars { INTERNAL_GDBFLAGS env(GDBHISTFILE) env(GDBHISTSIZE) } {
+	# These environment variables take precedence over whatever
+	# history size is set in .gdbinit.  Make sure the former is not
+	# set.
+	unset -nocomplain env(GDBHISTFILE)
+	unset -nocomplain env(GDBHISTSIZE)
 
-    # The GDBHISTSIZE environment variable takes precedence over whatever
-    # history size is set in .gdbinit.  Make sure the former is not
-    # set.
-    unset -nocomplain env(GDBHISTSIZE)
+	set temp_gdbinit [standard_output_file "gdbinit-history.gdbinit"]
+	set temp_histfile [standard_output_file "gdbinit-history.gdb_history"]
+	file delete $temp_gdbinit
+	file delete $temp_histfile
 
-    set saved_internal_gdbflags $INTERNAL_GDBFLAGS
+	set fd [open $temp_gdbinit "w"]
+	puts $fd "set history size unlimited\n"
+	puts $fd "set history filename $temp_histfile\n"
+	puts $fd "set history save\n"
+	close $fd
 
-    set temp_gdbinit [standard_output_file "gdbinit-history.gdbinit"]
-    set temp_histfile [standard_output_file "gdbinit-history.gdb_history"]
-    file delete $temp_gdbinit
-    file delete $temp_histfile
+	append INTERNAL_GDBFLAGS " -x $temp_gdbinit"
 
-    set fd [open $temp_gdbinit "w"]
-    puts $fd "set history size unlimited\n"
-    puts $fd "set history filename $temp_histfile\n"
-    puts $fd "set history save\n"
-    close $fd
+	# We have to start then exit GDB twice: the first time to test the creation
+	# of the initial history file, and the second time to test appending to it.
+	# In either case the initial "print 1" command should persist through the
+	# history file.
+	with_test_prefix "truncation" {
+	    gdb_exit
+	    gdb_start
+	    gdb_test "print 1"
 
-    append INTERNAL_GDBFLAGS " -x $temp_gdbinit"
-
-    # We have to start then exit GDB twice: the first time to test the creation
-    # of the initial history file, and the second time to test appending to it.
-    # In either case the initial "print 1" command should persist through the
-    # history file.
-    with_test_prefix "truncation" {
-	gdb_exit
-	gdb_start
-	gdb_test "print 1"
-
-	with_test_prefix "creating" {
+	    with_test_prefix "creating" {
 		gdb_exit
 		gdb_start
 		gdb_test "server show commands" "    .  print 1.*"
-	}
+	    }
 
-	with_test_prefix "appending" {
+	    with_test_prefix "appending" {
 		gdb_exit
 		gdb_start
 		gdb_test "server show commands" "    .  print 1.*"
-	}
+	    }
+        }
     }
-
-    set INTERNAL_GDBFLAGS $saved_internal_gdbflags
-
-    array set env [array get old_env]
 }
 
 test_gdbinit_history_setting "gdbinit-history/unlimited" "unlimited"
