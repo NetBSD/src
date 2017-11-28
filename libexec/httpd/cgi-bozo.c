@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.38 2017/10/05 04:22:41 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.39 2017/11/28 10:33:51 martin Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -586,6 +586,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sv) == -1)
 		bozoerr(httpd, 1, "child socketpair failed: %s",
 				strerror(errno));
+
+	*curenvp = 0;
 
 	/*
 	 * We create 2 procs: one to become the CGI, one read from
