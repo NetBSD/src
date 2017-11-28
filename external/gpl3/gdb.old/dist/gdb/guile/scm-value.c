@@ -1,6 +1,6 @@
 /* Scheme interface to values.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -581,7 +581,7 @@ gdbscm_value_dynamic_type (SCM self)
 	= make_cleanup_value_free_to_mark (value_mark ());
 
       type = value_type (value);
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
 
       if (((TYPE_CODE (type) == TYPE_CODE_PTR)
 	   || (TYPE_CODE (type) == TYPE_CODE_REF))
@@ -851,7 +851,7 @@ gdbscm_value_call (SCM self, SCM args)
       SCM except_scm;
       long i;
 
-      vargs = alloca (sizeof (struct value *) * args_count);
+      vargs = XALLOCAVEC (struct value *, args_count);
       for (i = 0; i < args_count; i++)
 	{
 	  SCM arg = scm_car (args);
@@ -906,7 +906,7 @@ gdbscm_value_to_bytevector (SCM self)
 
   TRY
     {
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
       length = TYPE_LENGTH (type);
       contents = value_contents (value);
     }
@@ -950,7 +950,7 @@ gdbscm_value_to_bool (SCM self)
 
   TRY
     {
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -993,7 +993,7 @@ gdbscm_value_to_integer (SCM self)
 
   TRY
     {
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -1039,7 +1039,7 @@ gdbscm_value_to_real (SCM self)
 
   TRY
     {
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -1158,7 +1158,7 @@ gdbscm_value_to_string (SCM self, SCM rest)
      Make sure we don't leak.  This is done via scm_dynwind_begin, et.al.  */
   discard_cleanups (cleanups);
 
-  scm_dynwind_begin (0);
+  scm_dynwind_begin ((scm_t_dynwind_flags) 0);
 
   gdbscm_dynwind_xfree (encoding);
   gdbscm_dynwind_xfree (buffer);
@@ -1410,11 +1410,11 @@ gdbscm_history_append_x (SCM value)
 
 static const scheme_function value_functions[] =
 {
-  { "value?", 1, 0, 0, gdbscm_value_p,
+  { "value?", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_p),
     "\
 Return #t if the object is a <gdb:value> object." },
 
-  { "make-value", 1, 0, 1, gdbscm_make_value,
+  { "make-value", 1, 0, 1, as_a_scm_t_subr (gdbscm_make_value),
     "\
 Create a <gdb:value> representing object.\n\
 Typically this is used to convert numbers and strings to\n\
@@ -1422,47 +1422,50 @@ Typically this is used to convert numbers and strings to\n\
 \n\
   Arguments: object [#:type <gdb:type>]" },
 
-  { "value-optimized-out?", 1, 0, 0, gdbscm_value_optimized_out_p,
+  { "value-optimized-out?", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_value_optimized_out_p),
     "\
 Return #t if the value has been optimizd out." },
 
-  { "value-address", 1, 0, 0, gdbscm_value_address,
+  { "value-address", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_address),
     "\
 Return the address of the value." },
 
-  { "value-type", 1, 0, 0, gdbscm_value_type,
+  { "value-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_type),
     "\
 Return the type of the value." },
 
-  { "value-dynamic-type", 1, 0, 0, gdbscm_value_dynamic_type,
+  { "value-dynamic-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_dynamic_type),
     "\
 Return the dynamic type of the value." },
 
-  { "value-cast", 2, 0, 0, gdbscm_value_cast,
+  { "value-cast", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_cast),
     "\
 Cast the value to the supplied type.\n\
 \n\
   Arguments: <gdb:value> <gdb:type>" },
 
-  { "value-dynamic-cast", 2, 0, 0, gdbscm_value_dynamic_cast,
+  { "value-dynamic-cast", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_dynamic_cast),
     "\
 Cast the value to the supplied type, as if by the C++\n\
 dynamic_cast operator.\n\
 \n\
   Arguments: <gdb:value> <gdb:type>" },
 
-  { "value-reinterpret-cast", 2, 0, 0, gdbscm_value_reinterpret_cast,
+  { "value-reinterpret-cast", 2, 0, 0,
+    as_a_scm_t_subr (gdbscm_value_reinterpret_cast),
     "\
 Cast the value to the supplied type, as if by the C++\n\
 reinterpret_cast operator.\n\
 \n\
   Arguments: <gdb:value> <gdb:type>" },
 
-  { "value-dereference", 1, 0, 0, gdbscm_value_dereference,
+  { "value-dereference", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_dereference),
     "\
 Return the result of applying the C unary * operator to the value." },
 
-  { "value-referenced-value", 1, 0, 0, gdbscm_value_referenced_value,
+  { "value-referenced-value", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_value_referenced_value),
     "\
 Given a value of a reference type, return the value referenced.\n\
 The difference between this function and value-dereference is that\n\
@@ -1472,19 +1475,19 @@ For example, for a value which is a reference to an 'int' pointer ('int *'),\n\
 value-dereference will result in a value of type 'int' while\n\
 value-referenced-value will result in a value of type 'int *'." },
 
-  { "value-field", 2, 0, 0, gdbscm_value_field,
+  { "value-field", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_field),
     "\
 Return the specified field of the value.\n\
 \n\
   Arguments: <gdb:value> string" },
 
-  { "value-subscript", 2, 0, 0, gdbscm_value_subscript,
+  { "value-subscript", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_subscript),
     "\
 Return the value of the array at the specified index.\n\
 \n\
   Arguments: <gdb:value> integer" },
 
-  { "value-call", 2, 0, 0, gdbscm_value_call,
+  { "value-call", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_call),
     "\
 Perform an inferior function call taking the value as a pointer to the\n\
 function to call.\n\
@@ -1494,27 +1497,27 @@ The result is the value returned by the function.\n\
 \n\
   Arguments: <gdb:value> arg-list" },
 
-  { "value->bool", 1, 0, 0, gdbscm_value_to_bool,
+  { "value->bool", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_to_bool),
     "\
 Return the Scheme boolean representing the GDB value.\n\
 The value must be \"integer like\".  Pointers are ok." },
 
-  { "value->integer", 1, 0, 0, gdbscm_value_to_integer,
+  { "value->integer", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_to_integer),
     "\
 Return the Scheme integer representing the GDB value.\n\
 The value must be \"integer like\".  Pointers are ok." },
 
-  { "value->real", 1, 0, 0, gdbscm_value_to_real,
+  { "value->real", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_to_real),
     "\
 Return the Scheme real number representing the GDB value.\n\
 The value must be a number." },
 
-  { "value->bytevector", 1, 0, 0, gdbscm_value_to_bytevector,
+  { "value->bytevector", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_to_bytevector),
     "\
 Return a Scheme bytevector with the raw contents of the GDB value.\n\
 No transformation, endian or otherwise, is performed." },
 
-  { "value->string", 1, 0, 1, gdbscm_value_to_string,
+  { "value->string", 1, 0, 1, as_a_scm_t_subr (gdbscm_value_to_string),
     "\
 Return the Unicode string of the value's contents.\n\
 If ENCODING is not given, the string is assumed to be encoded in\n\
@@ -1528,7 +1531,8 @@ If LENGTH is provided, only fetch string to the length provided.\n\
              [#:encoding encoding] [#:errors \"error\"|\"substitute\"]\n\
              [#:length length]" },
 
-  { "value->lazy-string", 1, 0, 1, gdbscm_value_to_lazy_string,
+  { "value->lazy-string", 1, 0, 1,
+    as_a_scm_t_subr (gdbscm_value_to_lazy_string),
     "\
 Return a Scheme object representing a lazily fetched Unicode string\n\
 of the value's contents.\n\
@@ -1538,36 +1542,36 @@ If LENGTH is provided, only fetch string to the length provided.\n\
 \n\
   Arguments: <gdb:value> [#:encoding encoding] [#:length length]" },
 
-  { "value-lazy?", 1, 0, 0, gdbscm_value_lazy_p,
+  { "value-lazy?", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_lazy_p),
     "\
 Return #t if the value is lazy (not fetched yet from the inferior).\n\
 A lazy value is fetched when needed, or when the value-fetch-lazy! function\n\
 is called." },
 
-  { "make-lazy-value", 2, 0, 0, gdbscm_make_lazy_value,
+  { "make-lazy-value", 2, 0, 0, as_a_scm_t_subr (gdbscm_make_lazy_value),
     "\
 Create a <gdb:value> that will be lazily fetched from the target.\n\
 \n\
   Arguments: <gdb:type> address" },
 
-  { "value-fetch-lazy!", 1, 0, 0, gdbscm_value_fetch_lazy_x,
+  { "value-fetch-lazy!", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_fetch_lazy_x),
     "\
 Fetch the value from the inferior, if it was lazy.\n\
 The result is \"unspecified\"." },
 
-  { "value-print", 1, 0, 0, gdbscm_value_print,
+  { "value-print", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_print),
     "\
 Return the string representation (print form) of the value." },
 
-  { "parse-and-eval", 1, 0, 0, gdbscm_parse_and_eval,
+  { "parse-and-eval", 1, 0, 0, as_a_scm_t_subr (gdbscm_parse_and_eval),
     "\
 Evaluates string in gdb and returns the result as a <gdb:value> object." },
 
-  { "history-ref", 1, 0, 0, gdbscm_history_ref,
+  { "history-ref", 1, 0, 0, as_a_scm_t_subr (gdbscm_history_ref),
     "\
 Return the specified value from GDB's value history." },
 
-  { "history-append!", 1, 0, 0, gdbscm_history_append_x,
+  { "history-append!", 1, 0, 0, as_a_scm_t_subr (gdbscm_history_append_x),
     "\
 Append the specified value onto GDB's value history." },
 

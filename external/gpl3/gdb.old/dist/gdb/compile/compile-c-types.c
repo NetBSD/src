@@ -1,6 +1,6 @@
 /* Convert types from GDB to GCC
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@ struct type_map_instance
 
   /* The corresponding gcc type handle.  */
 
-  gcc_type gcc_type;
+  gcc_type gcc_type_handle;
 };
 
 /* Hash a type_map_instance.  */
@@ -39,7 +39,7 @@ struct type_map_instance
 static hashval_t
 hash_type_map_instance (const void *p)
 {
-  const struct type_map_instance *inst = p;
+  const struct type_map_instance *inst = (const struct type_map_instance *) p;
 
   return htab_hash_pointer (inst->type);
 }
@@ -49,8 +49,8 @@ hash_type_map_instance (const void *p)
 static int
 eq_type_map_instance (const void *a, const void *b)
 {
-  const struct type_map_instance *insta = a;
-  const struct type_map_instance *instb = b;
+  const struct type_map_instance *insta = (const struct type_map_instance *) a;
+  const struct type_map_instance *instb = (const struct type_map_instance *) b;
 
   return insta->type == instb->type;
 }
@@ -72,13 +72,13 @@ insert_type (struct compile_c_instance *context, struct type *type,
   void **slot;
 
   inst.type = type;
-  inst.gcc_type = gcc_type;
+  inst.gcc_type_handle = gcc_type;
   slot = htab_find_slot (context->type_map, &inst, INSERT);
 
-  add = *slot;
+  add = (struct type_map_instance *) *slot;
   /* The type might have already been inserted in order to handle
      recursive types.  */
-  if (add != NULL && add->gcc_type != gcc_type)
+  if (add != NULL && add->gcc_type_handle != gcc_type)
     error (_("Unexpected type id from GCC, check you use recent enough GCC."));
 
   if (add == NULL)
@@ -293,7 +293,7 @@ convert_qualified (struct compile_c_instance *context, struct type *type)
 {
   struct type *unqual = make_unqualified_type (type);
   gcc_type unqual_converted;
-  int quals = 0;
+  gcc_qualifiers_flags quals = 0;
 
   unqual_converted = convert_type (context, unqual);
 
@@ -383,12 +383,12 @@ convert_type (struct compile_c_instance *context, struct type *type)
 
   /* We don't ever have to deal with typedefs in this code, because
      those are only needed as symbols by the C compiler.  */
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   inst.type = type;
-  found = htab_find (context->type_map, &inst);
+  found = (struct type_map_instance *) htab_find (context->type_map, &inst);
   if (found != NULL)
-    return found->gcc_type;
+    return found->gcc_type_handle;
 
   result = convert_type_basic (context, type);
   insert_type (context, type, result);

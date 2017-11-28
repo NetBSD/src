@@ -1,5 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -135,8 +135,8 @@ extern struct ui_file *mem_fileopen (void);
 /* Open/create a STDIO based UI_FILE using the already open FILE.  */
 extern struct ui_file *stdio_fileopen (FILE *file);
 
-/* Create a ui_file from stderr.  */
-extern struct ui_file *stderr_fileopen (void);
+/* Likewise, for stderr-like streams.  */
+extern struct ui_file *stderr_fileopen (FILE *file);
 
 
 /* Open NAME returning an STDIO based UI_FILE.  */

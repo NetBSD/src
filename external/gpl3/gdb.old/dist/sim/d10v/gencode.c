@@ -30,7 +30,7 @@ write_header (void)
 
   for (opcode = (struct d10v_opcode *)d10v_opcodes; opcode->name; opcode++)
     if (opcode->format != OPCODE_FAKE)
-      printf("void OP_%lX (void);\t\t/* %s */\n", opcode->opcode, opcode->name);
+      printf ("void OP_%lX (SIM_DESC, SIM_CPU *);\t\t/* %s */\n", opcode->opcode, opcode->name);
 }
 
 
@@ -43,7 +43,7 @@ write_template (void)
   struct d10v_opcode *opcode;
   int i,j;
 
-  printf ("#include \"d10v_sim.h\"\n");
+  printf ("#include \"sim-main.h\"\n");
   printf ("#include \"simops.h\"\n");
 
   for (opcode = (struct d10v_opcode *)d10v_opcodes; opcode->name; opcode++)
@@ -103,7 +103,7 @@ write_opcodes (void)
   int i, j;
   
   /* write out opcode table */
-  printf ("#include \"d10v_sim.h\"\n");
+  printf ("#include \"sim-main.h\"\n");
   printf ("#include \"simops.h\"\n\n");
   printf ("struct simops Simops[] = {\n");
   
@@ -150,5 +150,5 @@ write_opcodes (void)
 	  printf ("},\n");
 	}
     }
-  printf ("{ 0,0,0,0,0,0,0,(void (*)(void))0,0,{0,0,0}},\n};\n");
+  printf ("{ 0,0,0,0,0,0,0,(void (*)())0,0,{0,0,0}},\n};\n");
 }

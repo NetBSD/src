@@ -1,6 +1,6 @@
 /* Target-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,7 +59,7 @@ m68kbsd_supply_fpregset (const struct regset *regset,
 			 int regnum, const void *fpregs, size_t len)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  const gdb_byte *regs = fpregs;
+  const gdb_byte *regs = (const gdb_byte *) fpregs;
   int i;
 
   gdb_assert (len >= M68KBSD_SIZEOF_FPREGS);
@@ -81,7 +81,7 @@ m68kbsd_supply_gregset (const struct regset *regset,
 			struct regcache *regcache,
 			int regnum, const void *gregs, size_t len)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   int i;
 
   gdb_assert (len >= M68KBSD_SIZEOF_GREGS);

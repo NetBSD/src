@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/hppa.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,8 +60,7 @@ hppanbsd_fpregset_supplies_p (int regnum)
 static void
 hppanbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  const char *regs = gregs;
-  const int *r = gregs;
+  const char *regs = (const char *) gregs;
   int regnum;
 
   for (regnum = HPPA_R1_REGNUM; regnum <= HPPA_R31_REGNUM; regnum++)
@@ -85,7 +84,7 @@ hppanbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 static void
 hppanbsd_supply_fpregset (struct regcache *regcache, const void *fpregs)
 {
-  const char *regs = fpregs;
+  const char *regs = (const char *) fpregs;
   int regnum;
 
   for (regnum = HPPA_FP0_REGNUM; regnum <= HPPA_FP31R_REGNUM;
@@ -103,8 +102,7 @@ static void
 hppanbsd_collect_gregset (const struct regcache *regcache,
 			  void *gregs, int regnum)
 {
-  char *regs = gregs;
-  int *r = gregs;
+  char *regs = (char *) gregs;
   int i;
 
   for (i = HPPA_R1_REGNUM; i <= HPPA_R31_REGNUM; i++)
@@ -151,7 +149,7 @@ static void
 hppanbsd_collect_fpregset (const struct regcache *regcache,
 			  void *fpregs, int regnum)
 {
-  char *regs = fpregs;
+  char *regs = (char *) fpregs;
   int i;
 
   for (i = HPPA_FP0_REGNUM; i <= HPPA_FP31R_REGNUM; i += 2, regs += 8)

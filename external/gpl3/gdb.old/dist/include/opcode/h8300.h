@@ -1,5 +1,5 @@
 /* Opcode table for the H8/300
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>.
    
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.
@@ -261,7 +261,7 @@ struct h8_opcode
   int how;
   enum h8_model available;
   int time;
-  char *name;
+  const char *name;
   struct arg args;
   struct code data;
 };

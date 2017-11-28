@@ -1,6 +1,6 @@
 # Reply server mig-output massager
 #
-#   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+#   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 #
 #   Written by Miles Bader <miles@gnu.ai.mit.edu>
 #
@@ -95,7 +95,7 @@ parse_phase == 4 {
   print; next;
 }
 
-parse_phase == 5 && /^[ \t]*(auto |static |)const mach_msg_type_t/ {
+parse_phase == 5 && /^[ \t]*(auto |static )?const mach_msg_type_t/ {
   # The type check structure for an argument.
   arg_check_name[num_checks] = $(NF - 2);
   num_checks++;

@@ -1,6 +1,6 @@
 /* UI_FILE - a generic STDIO like output stream.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,7 +56,7 @@ int ui_file_magic;
 struct ui_file *
 ui_file_new (void)
 {
-  struct ui_file *file = xmalloc (sizeof (struct ui_file));
+  struct ui_file *file = XNEW (struct ui_file);
 
   file->magic = &ui_file_magic;
   set_ui_file_data (file, NULL, null_file_delete);
@@ -225,7 +225,7 @@ ui_file_write (struct ui_file *file,
 void
 ui_file_write_for_put (void *data, const char *buffer, long length_buffer)
 {
-  ui_file_write (data, buffer, length_buffer);
+  ui_file_write ((struct ui_file *) data, buffer, length_buffer);
 }
 
 void
@@ -330,12 +330,12 @@ struct accumulated_ui_file
 static void
 do_ui_file_xstrdup (void *context, const char *buffer, long length)
 {
-  struct accumulated_ui_file *acc = context;
+  struct accumulated_ui_file *acc = (struct accumulated_ui_file *) context;
 
   if (acc->buffer == NULL)
-    acc->buffer = xmalloc (length + 1);
+    acc->buffer = (char *) xmalloc (length + 1);
   else
-    acc->buffer = xrealloc (acc->buffer, acc->length + length + 1);
+    acc->buffer = (char *) xrealloc (acc->buffer, acc->length + length + 1);
   memcpy (acc->buffer + acc->length, buffer, length);
   acc->length += length;
   acc->buffer[acc->length] = '\0';
@@ -371,7 +371,7 @@ ui_file_obsavestring (struct ui_file *file, struct obstack *obstack,
   ui_file_put (file, do_ui_file_obsavestring, obstack);
   *length = obstack_object_size (obstack);
   obstack_1grow (obstack, '\0');
-  return obstack_finish (obstack);
+  return (char *) obstack_finish (obstack);
 }
 
 /* A pure memory based ``struct ui_file'' that can be used an output
@@ -413,7 +413,7 @@ mem_file_new (void)
 static void
 mem_file_delete (struct ui_file *file)
 {
-  struct mem_file *stream = ui_file_data (file);
+  struct mem_file *stream = (struct mem_file *) ui_file_data (file);
 
   if (stream->magic != &mem_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -432,7 +432,7 @@ mem_fileopen (void)
 static void
 mem_file_rewind (struct ui_file *file)
 {
-  struct mem_file *stream = ui_file_data (file);
+  struct mem_file *stream = (struct mem_file *) ui_file_data (file);
 
   if (stream->magic != &mem_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -445,7 +445,7 @@ mem_file_put (struct ui_file *file,
 	      ui_file_put_method_ftype *write,
 	      void *dest)
 {
-  struct mem_file *stream = ui_file_data (file);
+  struct mem_file *stream = (struct mem_file *) ui_file_data (file);
 
   if (stream->magic != &mem_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -459,7 +459,7 @@ mem_file_write (struct ui_file *file,
 		const char *buffer,
 		long length_buffer)
 {
-  struct mem_file *stream = ui_file_data (file);
+  struct mem_file *stream = (struct mem_file *) ui_file_data (file);
 
   if (stream->magic != &mem_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -468,7 +468,7 @@ mem_file_write (struct ui_file *file,
     {
       stream->length_buffer = length_buffer;
       stream->sizeof_buffer = length_buffer;
-      stream->buffer = xmalloc (stream->sizeof_buffer);
+      stream->buffer = (char *) xmalloc (stream->sizeof_buffer);
       memcpy (stream->buffer, buffer, length_buffer);
     }
   else
@@ -478,7 +478,8 @@ mem_file_write (struct ui_file *file,
       if (new_length >= stream->sizeof_buffer)
 	{
 	  stream->sizeof_buffer = new_length;
-	  stream->buffer = xrealloc (stream->buffer, stream->sizeof_buffer);
+	  stream->buffer
+	    = (char *) xrealloc (stream->buffer, stream->sizeof_buffer);
 	}
       memcpy (stream->buffer + stream->length_buffer, buffer, length_buffer);
       stream->length_buffer = new_length;
@@ -514,7 +515,7 @@ static struct ui_file *
 stdio_file_new (FILE *file, int close_p)
 {
   struct ui_file *ui_file = ui_file_new ();
-  struct stdio_file *stdio = xmalloc (sizeof (struct stdio_file));
+  struct stdio_file *stdio = XNEW (struct stdio_file);
 
   stdio->magic = &stdio_file_magic;
   stdio->file = file;
@@ -534,7 +535,7 @@ stdio_file_new (FILE *file, int close_p)
 static void
 stdio_file_delete (struct ui_file *file)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -549,7 +550,7 @@ stdio_file_delete (struct ui_file *file)
 static void
 stdio_file_flush (struct ui_file *file)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -560,20 +561,20 @@ stdio_file_flush (struct ui_file *file)
 static long
 stdio_file_read (struct ui_file *file, char *buf, long length_buf)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     internal_error (__FILE__, __LINE__,
 		    _("stdio_file_read: bad magic number"));
 
-  /* For the benefit of Windows, call gdb_select before reading from
-     the file.  Wait until at least one byte of data is available.
-     Control-C can interrupt gdb_select, but not read.  */
+  /* Wait until at least one byte of data is available, or we get
+     interrupted with Control-C.  */
   {
     fd_set readfds;
+
     FD_ZERO (&readfds);
     FD_SET (stdio->fd, &readfds);
-    if (gdb_select (stdio->fd + 1, &readfds, NULL, NULL, NULL) == -1)
+    if (interruptible_select (stdio->fd + 1, &readfds, NULL, NULL, NULL) == -1)
       return -1;
   }
 
@@ -583,7 +584,7 @@ stdio_file_read (struct ui_file *file, char *buf, long length_buf)
 static void
 stdio_file_write (struct ui_file *file, const char *buf, long length_buf)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -599,7 +600,7 @@ static void
 stdio_file_write_async_safe (struct ui_file *file,
 			     const char *buf, long length_buf)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     {
@@ -622,7 +623,7 @@ stdio_file_write_async_safe (struct ui_file *file,
 static void
 stdio_file_fputs (const char *linebuffer, struct ui_file *file)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -637,7 +638,7 @@ stdio_file_fputs (const char *linebuffer, struct ui_file *file)
 static int
 stdio_file_isatty (struct ui_file *file)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -648,7 +649,7 @@ stdio_file_isatty (struct ui_file *file)
 static int
 stdio_file_fseek (struct ui_file *file, long offset, int whence)
 {
-  struct stdio_file *stdio = ui_file_data (file);
+  struct stdio_file *stdio = (struct stdio_file *) ui_file_data (file);
 
   if (stdio->magic != &stdio_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -680,9 +681,9 @@ stderr_file_fputs (const char *linebuffer, struct ui_file *file)
 #endif
 
 struct ui_file *
-stderr_fileopen (void)
+stderr_fileopen (FILE *stream)
 {
-  struct ui_file *ui_file = stdio_fileopen (stderr);
+  struct ui_file *ui_file = stdio_fileopen (stream);
 
 #ifdef __MINGW32__
   /* There is no real line-buffering on Windows, see
@@ -751,7 +752,7 @@ tee_file_new (struct ui_file *one, int close_one,
 	      struct ui_file *two, int close_two)
 {
   struct ui_file *ui_file = ui_file_new ();
-  struct tee_file *tee = xmalloc (sizeof (struct tee_file));
+  struct tee_file *tee = XNEW (struct tee_file);
 
   tee->magic = &tee_file_magic;
   tee->one = one;
@@ -769,7 +770,7 @@ tee_file_new (struct ui_file *one, int close_one,
 static void
 tee_file_delete (struct ui_file *file)
 {
-  struct tee_file *tee = ui_file_data (file);
+  struct tee_file *tee = (struct tee_file *) ui_file_data (file);
 
   if (tee->magic != &tee_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -785,7 +786,7 @@ tee_file_delete (struct ui_file *file)
 static void
 tee_file_flush (struct ui_file *file)
 {
-  struct tee_file *tee = ui_file_data (file);
+  struct tee_file *tee = (struct tee_file *) ui_file_data (file);
 
   if (tee->magic != &tee_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -797,7 +798,7 @@ tee_file_flush (struct ui_file *file)
 static void
 tee_file_write (struct ui_file *file, const char *buf, long length_buf)
 {
-  struct tee_file *tee = ui_file_data (file);
+  struct tee_file *tee = (struct tee_file *) ui_file_data (file);
 
   if (tee->magic != &tee_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -809,7 +810,7 @@ tee_file_write (struct ui_file *file, const char *buf, long length_buf)
 static void
 tee_file_fputs (const char *linebuffer, struct ui_file *file)
 {
-  struct tee_file *tee = ui_file_data (file);
+  struct tee_file *tee = (struct tee_file *) ui_file_data (file);
 
   if (tee->magic != &tee_file_magic)
     internal_error (__FILE__, __LINE__,
@@ -821,7 +822,7 @@ tee_file_fputs (const char *linebuffer, struct ui_file *file)
 static int
 tee_file_isatty (struct ui_file *file)
 {
-  struct tee_file *tee = ui_file_data (file);
+  struct tee_file *tee = (struct tee_file *) ui_file_data (file);
 
   if (tee->magic != &tee_file_magic)
     internal_error (__FILE__, __LINE__,

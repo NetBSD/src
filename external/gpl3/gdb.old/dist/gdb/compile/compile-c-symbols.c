@@ -1,6 +1,6 @@
 /* Convert symbols from GDB to GCC
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,7 +51,7 @@ struct symbol_error
 static hashval_t
 hash_symbol_error (const void *a)
 {
-  const struct symbol_error *se = a;
+  const struct symbol_error *se = (const struct symbol_error *) a;
 
   return htab_hash_pointer (se->sym);
 }
@@ -61,8 +61,8 @@ hash_symbol_error (const void *a)
 static int
 eq_symbol_error (const void *a, const void *b)
 {
-  const struct symbol_error *sea = a;
-  const struct symbol_error *seb = b;
+  const struct symbol_error *sea = (const struct symbol_error *) a;
+  const struct symbol_error *seb = (const struct symbol_error *) b;
 
   return sea->sym == seb->sym;
 }
@@ -72,7 +72,7 @@ eq_symbol_error (const void *a, const void *b)
 static void
 del_symbol_error (void *a)
 {
-  struct symbol_error *se = a;
+  struct symbol_error *se = (struct symbol_error *) a;
 
   xfree (se->message);
   xfree (se);
@@ -113,7 +113,7 @@ error_symbol_once (struct compile_c_instance *context,
     return;
 
   search.sym = sym;
-  err = htab_find (context->symbol_err_map, &search);
+  err = (struct symbol_error *) htab_find (context->symbol_err_map, &search);
   if (err == NULL || err->message == NULL)
     return;
 
@@ -143,26 +143,26 @@ symbol_substitution_name (struct symbol *sym)
 
 static void
 convert_one_symbol (struct compile_c_instance *context,
-		    struct symbol *sym,
+		    struct block_symbol sym,
 		    int is_global,
 		    int is_local)
 {
   gcc_type sym_type;
-  const char *filename = symbol_symtab (sym)->filename;
-  unsigned short line = SYMBOL_LINE (sym);
+  const char *filename = symbol_symtab (sym.symbol)->filename;
+  unsigned short line = SYMBOL_LINE (sym.symbol);
 
-  error_symbol_once (context, sym);
+  error_symbol_once (context, sym.symbol);
 
-  if (SYMBOL_CLASS (sym) == LOC_LABEL)
+  if (SYMBOL_CLASS (sym.symbol) == LOC_LABEL)
     sym_type = 0;
   else
-    sym_type = convert_type (context, SYMBOL_TYPE (sym));
+    sym_type = convert_type (context, SYMBOL_TYPE (sym.symbol));
 
-  if (SYMBOL_DOMAIN (sym) == STRUCT_DOMAIN)
+  if (SYMBOL_DOMAIN (sym.symbol) == STRUCT_DOMAIN)
     {
       /* Binding a tag, so we don't need to build a decl.  */
       C_CTX (context)->c_ops->tagbind (C_CTX (context),
-				       SYMBOL_NATURAL_NAME (sym),
+				       SYMBOL_NATURAL_NAME (sym.symbol),
 				       sym_type, filename, line);
     }
   else
@@ -172,7 +172,7 @@ convert_one_symbol (struct compile_c_instance *context,
       CORE_ADDR addr = 0;
       char *symbol_name = NULL;
 
-      switch (SYMBOL_CLASS (sym))
+      switch (SYMBOL_CLASS (sym.symbol))
 	{
 	case LOC_TYPEDEF:
 	  kind = GCC_C_SYMBOL_TYPEDEF;
@@ -180,45 +180,46 @@ convert_one_symbol (struct compile_c_instance *context,
 
 	case LOC_LABEL:
 	  kind = GCC_C_SYMBOL_LABEL;
-	  addr = SYMBOL_VALUE_ADDRESS (sym);
+	  addr = SYMBOL_VALUE_ADDRESS (sym.symbol);
 	  break;
 
 	case LOC_BLOCK:
 	  kind = GCC_C_SYMBOL_FUNCTION;
-	  addr = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
-	  if (is_global && TYPE_GNU_IFUNC (SYMBOL_TYPE (sym)))
+	  addr = BLOCK_START (SYMBOL_BLOCK_VALUE (sym.symbol));
+	  if (is_global && TYPE_GNU_IFUNC (SYMBOL_TYPE (sym.symbol)))
 	    addr = gnu_ifunc_resolve_addr (target_gdbarch (), addr);
 	  break;
 
 	case LOC_CONST:
-	  if (TYPE_CODE (SYMBOL_TYPE (sym)) == TYPE_CODE_ENUM)
+	  if (TYPE_CODE (SYMBOL_TYPE (sym.symbol)) == TYPE_CODE_ENUM)
 	    {
 	      /* Already handled by convert_enum.  */
 	      return;
 	    }
-	  C_CTX (context)->c_ops->build_constant (C_CTX (context), sym_type,
-						  SYMBOL_NATURAL_NAME (sym),
-						  SYMBOL_VALUE (sym),
-						  filename, line);
+	  C_CTX (context)->c_ops->build_constant
+	    (C_CTX (context),
+	     sym_type, SYMBOL_NATURAL_NAME (sym.symbol),
+	     SYMBOL_VALUE (sym.symbol),
+	     filename, line);
 	  return;
 
 	case LOC_CONST_BYTES:
 	  error (_("Unsupported LOC_CONST_BYTES for symbol \"%s\"."),
-		 SYMBOL_PRINT_NAME (sym));
+		 SYMBOL_PRINT_NAME (sym.symbol));
 
 	case LOC_UNDEF:
 	  internal_error (__FILE__, __LINE__, _("LOC_UNDEF found for \"%s\"."),
-			  SYMBOL_PRINT_NAME (sym));
+			  SYMBOL_PRINT_NAME (sym.symbol));
 
 	case LOC_COMMON_BLOCK:
 	  error (_("Fortran common block is unsupported for compilation "
 		   "evaluaton of symbol \"%s\"."),
-		 SYMBOL_PRINT_NAME (sym));
+		 SYMBOL_PRINT_NAME (sym.symbol));
 
 	case LOC_OPTIMIZED_OUT:
 	  error (_("Symbol \"%s\" cannot be used for compilation evaluation "
 		   "as it is optimized out."),
-		 SYMBOL_PRINT_NAME (sym));
+		 SYMBOL_PRINT_NAME (sym.symbol));
 
 	case LOC_COMPUTED:
 	  if (is_local)
@@ -227,7 +228,7 @@ convert_one_symbol (struct compile_c_instance *context,
 	  warning (_("Symbol \"%s\" is thread-local and currently can only "
 		     "be referenced from the current thread in "
 		     "compiled code."),
-		   SYMBOL_PRINT_NAME (sym));
+		   SYMBOL_PRINT_NAME (sym.symbol));
 	  /* FALLTHROUGH */
 	case LOC_UNRESOLVED:
 	  /* 'symbol_name' cannot be used here as that one is used only for
@@ -238,20 +239,20 @@ convert_one_symbol (struct compile_c_instance *context,
 	    struct value *val;
 	    struct frame_info *frame = NULL;
 
-	    if (symbol_read_needs_frame (sym))
+	    if (symbol_read_needs_frame (sym.symbol))
 	      {
 		frame = get_selected_frame (NULL);
 		if (frame == NULL)
 		  error (_("Symbol \"%s\" cannot be used because "
 			   "there is no selected frame"),
-			 SYMBOL_PRINT_NAME (sym));
+			 SYMBOL_PRINT_NAME (sym.symbol));
 	      }
 
-	    val = read_var_value (sym, frame);
+	    val = read_var_value (sym.symbol, sym.block, frame);
 	    if (VALUE_LVAL (val) != lval_memory)
 	      error (_("Symbol \"%s\" cannot be used for compilation "
 		       "evaluation as its address has not been found."),
-		     SYMBOL_PRINT_NAME (sym));
+		     SYMBOL_PRINT_NAME (sym.symbol));
 
 	    kind = GCC_C_SYMBOL_VARIABLE;
 	    addr = value_address (val);
@@ -266,12 +267,12 @@ convert_one_symbol (struct compile_c_instance *context,
 	case LOC_LOCAL:
 	substitution:
 	  kind = GCC_C_SYMBOL_VARIABLE;
-	  symbol_name = symbol_substitution_name (sym);
+	  symbol_name = symbol_substitution_name (sym.symbol);
 	  break;
 
 	case LOC_STATIC:
 	  kind = GCC_C_SYMBOL_VARIABLE;
-	  addr = SYMBOL_VALUE_ADDRESS (sym);
+	  addr = SYMBOL_VALUE_ADDRESS (sym.symbol);
 	  break;
 
 	case LOC_FINAL_VALUE:
@@ -284,12 +285,13 @@ convert_one_symbol (struct compile_c_instance *context,
       if (context->base.scope != COMPILE_I_RAW_SCOPE
 	  || symbol_name == NULL)
 	{
-	  decl = C_CTX (context)->c_ops->build_decl (C_CTX (context),
-						     SYMBOL_NATURAL_NAME (sym),
-						     kind,
-						     sym_type,
-						     symbol_name, addr,
-						     filename, line);
+	  decl = C_CTX (context)->c_ops->build_decl
+	    (C_CTX (context),
+	     SYMBOL_NATURAL_NAME (sym.symbol),
+	     kind,
+	     sym_type,
+	     symbol_name, addr,
+	     filename, line);
 
 	  C_CTX (context)->c_ops->bind (C_CTX (context), decl, is_global);
 	}
@@ -304,12 +306,10 @@ convert_one_symbol (struct compile_c_instance *context,
 
 static void
 convert_symbol_sym (struct compile_c_instance *context, const char *identifier,
-		    struct symbol *sym, domain_enum domain)
+		    struct block_symbol sym, domain_enum domain)
 {
-  const struct block *static_block, *found_block;
+  const struct block *static_block;
   int is_local_symbol;
-
-  found_block = block_found;
 
   /* If we found a symbol and it is not in the  static or global
      scope, then we should first convert any static or global scope
@@ -323,18 +323,18 @@ convert_symbol_sym (struct compile_c_instance *context, const char *identifier,
      }
   */
 
-  static_block = block_static_block (found_block);
+  static_block = block_static_block (sym.block);
   /* STATIC_BLOCK is NULL if FOUND_BLOCK is the global block.  */
-  is_local_symbol = (found_block != static_block && static_block != NULL);
+  is_local_symbol = (sym.block != static_block && static_block != NULL);
   if (is_local_symbol)
     {
-      struct symbol *global_sym;
+      struct block_symbol global_sym;
 
       global_sym = lookup_symbol (identifier, NULL, domain, NULL);
       /* If the outer symbol is in the static block, we ignore it, as
 	 it cannot be referenced.  */
-      if (global_sym != NULL
-	  && block_found != block_static_block (block_found))
+      if (global_sym.symbol != NULL
+	  && global_sym.block != block_static_block (global_sym.block))
 	{
 	  if (compile_debug)
 	    fprintf_unfiltered (gdb_stdlog,
@@ -421,7 +421,7 @@ gcc_convert_symbol (void *datum,
 		    enum gcc_c_oracle_request request,
 		    const char *identifier)
 {
-  struct compile_c_instance *context = datum;
+  struct compile_c_instance *context = (struct compile_c_instance *) datum;
   domain_enum domain;
   int found = 0;
 
@@ -444,10 +444,10 @@ gcc_convert_symbol (void *datum,
      is to simply emit a gcc error.  */
   TRY
     {
-      struct symbol *sym;
+      struct block_symbol sym;
 
       sym = lookup_symbol (identifier, context->base.block, domain, NULL);
-      if (sym != NULL)
+      if (sym.symbol != NULL)
 	{
 	  convert_symbol_sym (context, identifier, sym, domain);
 	  found = 1;
@@ -484,7 +484,7 @@ gcc_address
 gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
 		    const char *identifier)
 {
-  struct compile_c_instance *context = datum;
+  struct compile_c_instance *context = (struct compile_c_instance *) datum;
   gcc_address result = 0;
   int found = 0;
 
@@ -495,7 +495,7 @@ gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
       struct symbol *sym;
 
       /* We only need global functions here.  */
-      sym = lookup_symbol (identifier, NULL, VAR_DOMAIN, NULL);
+      sym = lookup_symbol (identifier, NULL, VAR_DOMAIN, NULL).symbol;
       if (sym != NULL && SYMBOL_CLASS (sym) == LOC_BLOCK)
 	{
 	  if (compile_debug)
@@ -547,7 +547,7 @@ gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
 static hashval_t
 hash_symname (const void *a)
 {
-  const struct symbol *sym = a;
+  const struct symbol *sym = (const struct symbol *) a;
 
   return htab_hash_string (SYMBOL_NATURAL_NAME (sym));
 }
@@ -558,8 +558,8 @@ hash_symname (const void *a)
 static int
 eq_symname (const void *a, const void *b)
 {
-  const struct symbol *syma = a;
-  const struct symbol *symb = b;
+  const struct symbol *syma = (const struct symbol *) a;
+  const struct symbol *symb = (const struct symbol *) b;
 
   return strcmp (SYMBOL_NATURAL_NAME (syma), SYMBOL_NATURAL_NAME (symb)) == 0;
 }

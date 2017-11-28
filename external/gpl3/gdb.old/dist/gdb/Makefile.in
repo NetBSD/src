@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2015 Free Software Foundation, Inc.
+# Copyright (C) 1989-2016 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -81,6 +81,8 @@ CATALOGS = @CATALOGS@
 
 # The name of the compiler to use.
 COMPILER = @COMPILER@
+# Set to CFLAGS or CXXFLAGS, depending on compiler/language.
+COMPILER_CFLAGS = @COMPILER_CFLAGS@
 
 # If you are compiling with GCC, make sure that either 1) You have the
 # fixed include files where GCC can reach them, or 2) You use the
@@ -193,6 +195,9 @@ RDYNAMIC = @RDYNAMIC@
 INTL = @LIBINTL@
 INTL_DEPS = @LIBINTL_DEP@
 INTL_CFLAGS = @INCINTL@
+
+# Where is the ICONV library?  This will be empty if in libc or not available.
+LIBICONV = @LIBICONV@
 
 # Did the user give us a --with-gdb-datadir option?
 GDB_DATADIR = @GDB_DATADIR@
@@ -548,9 +553,10 @@ GLOBAL_CFLAGS = $(MH_CFLAGS)
 
 PROFILE_CFLAGS = @PROFILE_CFLAGS@
 
-# CFLAGS is specifically reserved for setting from the command line
-# when running make.  I.E.  "make CFLAGS=-Wmissing-prototypes".
+# These are specifically reserved for setting from the command line
+# when running make.  I.E.: "make CFLAGS=-Wmissing-prototypes".
 CFLAGS = @CFLAGS@
+CXXFLAGS = @CXXFLAGS@
 
 # Set by configure, for e.g. expat.  Python installations are such that
 # C headers are included using their basename (for example, we #include
@@ -560,14 +566,9 @@ CFLAGS = @CFLAGS@
 # a bit the consequences by putting the Python includes last in the list.
 INTERNAL_CPPFLAGS = @CPPFLAGS@ @GUILE_CPPFLAGS@ @PYTHON_CPPFLAGS@
 
-# Need to pass this to testsuite for "make check".  Probably should be
-# consistent with top-level Makefile.in and gdb/testsuite/Makefile.in
-# so "make check" has the same result no matter where it is run.
-CXXFLAGS = -g -O
-
 # INTERNAL_CFLAGS is the aggregate of all other *CFLAGS macros.
 INTERNAL_CFLAGS_BASE = \
-	$(CFLAGS) $(GLOBAL_CFLAGS) $(PROFILE_CFLAGS) \
+	$(COMPILER_CFLAGS) $(GLOBAL_CFLAGS) $(PROFILE_CFLAGS) \
 	$(GDB_CFLAGS) $(OPCODES_CFLAGS) $(READLINE_CFLAGS) $(ZLIBINC) \
 	$(BFD_CFLAGS) $(INCLUDE_CFLAGS) $(LIBDECNUMBER_CFLAGS) \
 	$(INTL_CFLAGS) $(INCGNU) $(ENABLE_CFLAGS) $(INTERNAL_CPPFLAGS)
@@ -582,7 +583,9 @@ LDFLAGS = @LDFLAGS@
 # I think it's perfectly reasonable for a user to set -pg in CFLAGS
 # and have it work; that's why CFLAGS is here.
 # PROFILE_CFLAGS is _not_ included, however, because we use monstartup.
-INTERNAL_LDFLAGS = $(CFLAGS) $(GLOBAL_CFLAGS) $(MH_LDFLAGS) $(LDFLAGS) $(CONFIG_LDFLAGS)
+INTERNAL_LDFLAGS = \
+	$(COMPILER_CFLAGS) $(GLOBAL_CFLAGS) $(MH_LDFLAGS) \
+	$(LDFLAGS) $(CONFIG_LDFLAGS)
 
 # If your system is missing alloca(), or, more likely, it's there but
 # it doesn't work, then refer to libiberty.
@@ -594,7 +597,7 @@ CLIBS = $(SIM) $(READLINE) $(OPCODES) $(BFD) $(ZLIB) $(INTL) $(LIBIBERTY) $(LIBD
 	$(XM_CLIBS) $(NAT_CLIBS) $(GDBTKLIBS) \
 	@LIBS@ @GUILE_LIBS@ @PYTHON_LIBS@ \
 	$(LIBEXPAT) $(LIBLZMA) $(LIBBABELTRACE) $(LIBIPT) \
-	$(LIBIBERTY) $(WIN32LIBS) $(LIBGNU)
+	$(LIBIBERTY) $(WIN32LIBS) $(LIBGNU) $(LIBICONV)
 CDEPS = $(XM_CDEPS) $(NAT_CDEPS) $(SIM) $(BFD) $(READLINE_DEPS) \
 	$(OPCODES) $(INTL_DEPS) $(LIBIBERTY) $(CONFIG_DEPS) $(LIBGNU)
 
@@ -641,7 +644,7 @@ TARGET_OBS = @TARGET_OBS@
 # All target-dependent objects files that require 64-bit CORE_ADDR
 # (used with --enable-targets=all --enable-64-bit-bfd).
 ALL_64_TARGET_OBS = \
-	aarch64-tdep.o aarch64-linux-tdep.o aarch64-newlib-tdep.o \
+	aarch64-tdep.o aarch64-linux-tdep.o aarch64-newlib-tdep.o aarch64-insn.o \
 	alphabsd-tdep.o alphafbsd-tdep.o alpha-linux-tdep.o alpha-mdebug-tdep.o \
 	alphanbsd-tdep.o alphaobsd-tdep.o alpha-tdep.o \
 	amd64fbsd-tdep.o amd64-darwin-tdep.o amd64-dicos-tdep.o \
@@ -654,7 +657,8 @@ ALL_64_TARGET_OBS = \
 
 # All other target-dependent objects files (used with --enable-targets=all).
 ALL_TARGET_OBS = \
-	armbsd-tdep.o arm-linux-tdep.o arm-symbian-tdep.o \
+	armbsd-tdep.o arm.o arm-linux.o arm-linux-tdep.o \
+	arm-get-next-pcs.o arm-symbian-tdep.o \
 	armnbsd-tdep.o armobsd-tdep.o \
 	arm-tdep.o arm-wince-tdep.o \
 	avr-tdep.o \
@@ -687,6 +691,7 @@ ALL_TARGET_OBS = \
 	moxie-tdep.o \
 	msp430-tdep.o \
 	mt-tdep.o \
+	nds32-tdep.o \
 	nios2-tdep.o nios2-linux-tdep.o \
 	nto-tdep.o \
 	ppc-linux-tdep.o ppcfbsd-tdep.o ppcnbsd-tdep.o ppcobsd-tdep.o  \
@@ -712,8 +717,6 @@ ALL_TARGET_OBS = \
 	sol2-tdep.o \
 	solib-frv.o solib-svr4.o \
 	solib-darwin.o solib-dsbt.o \
-	dbug-rom.o dink32-rom.o ppcbug-rom.o m32r-rom.o dsrec.o monitor.o \
-	remote-m32r-sdi.o remote-mips.o \
 	xcoffread.o \
 	symfile-mem.o \
 	windows-tdep.o \
@@ -835,7 +838,7 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	charset.c common/cleanups.c cli-out.c coffread.c coff-pe-read.c \
 	complaints.c completer.c continuations.c corefile.c corelow.c \
 	cp-abi.c cp-support.c cp-namespace.c cp-valprint.c \
-	d-exp.y d-lang.c d-valprint.c \
+	d-exp.y d-lang.c d-namespace.c d-valprint.c \
 	cp-name-parser.y \
 	dbxread.c demangle.c dictionary.c disasm.c doublest.c \
 	dtrace-probe.c dummy-frame.c \
@@ -854,11 +857,12 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	inline-frame.c \
 	interps.c \
 	jv-exp.y jv-lang.c jv-valprint.c jv-typeprint.c jv-varobj.c \
-	language.c linespec.c minidebug.c \
+	language.c linespec.c location.c minidebug.c \
 	m2-exp.y m2-lang.c m2-typeprint.c m2-valprint.c \
 	macrotab.c macroexp.c macrocmd.c macroscope.c main.c maint.c \
 	mdebugread.c memattr.c mem-break.c minsyms.c mipsread.c memory-map.c \
 	memrange.c mi/mi-common.c \
+	namespace.c \
 	objc-lang.c \
 	objfiles.c osabi.c observer.c osdata.c \
 	opencl-lang.c \
@@ -866,13 +870,14 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	proc-service.list progspace.c \
 	prologue-value.c psymtab.c \
 	regcache.c reggroups.c remote.c remote-fileio.c remote-notif.c reverse.c \
-	sentinel-frame.c \
-	serial.c ser-base.c ser-unix.c skip.c \
+	rust-exp.y rust-lang.c \
+	selftest.c sentinel-frame.c \
+	serial.c ser-base.c ser-unix.c ser-event.c skip.c \
 	solib.c solib-target.c source.c \
 	stabsread.c stack.c probe.c stap-probe.c std-regs.c \
 	symfile.c symfile-debug.c symfile-mem.c symmisc.c symtab.c \
 	target.c target-dcache.c target-descriptions.c target-memory.c \
-	thread.c top.c tracepoint.c \
+	tid-parse.c thread.c top.c tracepoint.c \
 	trad-frame.c \
 	tramp-frame.c \
 	typeprint.c \
@@ -891,7 +896,8 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	common/format.c common/filestuff.c btrace.c record-btrace.c ctf.c \
 	target/waitstatus.c common/print-utils.c common/rsp-low.c \
 	common/errors.c common/common-debug.c common/common-exceptions.c \
-	common/btrace-common.c common/fileio.c \
+	common/btrace-common.c common/fileio.c common/common-regcache.c \
+	common/signals-state-save-restore.c \
 	$(SUBDIR_GCC_COMPILE_SRCS)
 
 LINTFILES = $(SFILES) $(YYFILES) $(CONFIG_SRCS) init.c
@@ -907,7 +913,7 @@ common/gdb_signals.h nat/gdb_thread_db.h common/gdb_vecs.h \
 common/x86-xstate.h nat/linux-ptrace.h nat/mips-linux-watch.h \
 proc-utils.h aarch64-tdep.h arm-tdep.h ax-gdb.h ppcfbsd-tdep.h \
 ppcnbsd-tdep.h cli-out.h gdb_expat.h breakpoint.h infcall.h obsd-tdep.h \
-exec.h m32r-tdep.h osabi.h gdbcore.h amd64bsd-nat.h \
+exec.h m32r-tdep.h osabi.h gdbcore.h x86bsd-nat.h \
 i386bsd-nat.h xml-support.h xml-tdesc.h alphabsd-tdep.h gdb_obstack.h \
 ia64-tdep.h ada-lang.h varobj.h varobj-iter.h frv-tdep.h \
 nto-tdep.h serial.h \
@@ -933,15 +939,15 @@ tui/tui-windata.h tui/tui-data.h tui/tui-win.h tui/tui-stack.h \
 tui/tui-winsource.h tui/tui-regs.h tui/tui-io.h tui/tui-layout.h \
 tui/tui-source.h sol2-tdep.h gregset.h sh-tdep.h sh64-tdep.h \
 expression.h score-tdep.h gdb_select.h ser-tcp.h \
-extension.h extension-priv.h \
-build-id.h buildsym.h valprint.h \
+extension.h extension-priv.h nat/aarch64-linux-hw-point.h \
+build-id.h buildsym.h valprint.h nat/aarch64-linux.h \
 typeprint.h mi/mi-getopt.h mi/mi-parse.h mi/mi-console.h \
 mi/mi-out.h mi/mi-main.h mi/mi-common.h mi/mi-cmds.h linux-nat.h \
 complaints.h gdb_proc_service.h gdb_regex.h xtensa-tdep.h inf-loop.h \
 common/gdb_wait.h common/gdb_assert.h solib.h ppc-tdep.h cp-support.h glibc-tdep.h \
 interps.h auxv.h gdbcmd.h tramp-frame.h mipsnbsd-tdep.h	\
-amd64-linux-tdep.h linespec.h i387-tdep.h mn10300-tdep.h \
-sparc64-tdep.h monitor.h ppcobsd-tdep.h srec.h \
+amd64-linux-tdep.h linespec.h location.h i387-tdep.h mn10300-tdep.h \
+sparc64-tdep.h ppcobsd-tdep.h \
 coff-pe-read.h parser-defs.h gdb_ptrace.h mips-linux-tdep.h \
 m68k-tdep.h spu-tdep.h jv-lang.h environ.h amd64-tdep.h \
 doublest.h regset.h hppa-tdep.h ppc-linux-tdep.h ppc64-tdep.h \
@@ -962,8 +968,8 @@ psymtab.h psympriv.h progspace.h bfin-tdep.h \
 amd64-darwin-tdep.h charset-list.h \
 config/djgpp/langinfo.h config/djgpp/nl_types.h darwin-nat.h \
 dicos-tdep.h filesystem.h gcore.h gdb_wchar.h hppabsd-tdep.h \
-i386-darwin-tdep.h i386-nat.h linux-record.h moxie-tdep.h nios2-tdep.h \
-ft32-tdep.h \
+i386-darwin-tdep.h x86-nat.h linux-record.h moxie-tdep.h nios2-tdep.h \
+ft32-tdep.h nds32-tdep.h \
 osdata.h procfs.h python/py-event.h python/py-events.h python/py-stopevent.h \
 python/python-internal.h python/python.h ravenscar-thread.h record.h \
 record-full.h solib-aix.h \
@@ -982,8 +988,10 @@ i386-linux-nat.h common/common-defs.h common/errors.h common/common-types.h \
 common/common-debug.h common/cleanups.h common/gdb_setjmp.h \
 common/common-exceptions.h target/target.h common/symbol.h \
 common/common-regcache.h fbsd-tdep.h nat/linux-personality.h \
-common/fileio.h nat/x86-linux.h nat/x86-linux-dregs.h \
-nat/linux-namespaces.h
+common/fileio.h nat/x86-linux.h nat/x86-linux-dregs.h nat/amd64-linux-siginfo.h\
+nat/linux-namespaces.h arch/arm.h common/gdb_sys_time.h arch/aarch64-insn.h \
+tid-parse.h ser-event.h \
+common/signals-state-save-restore.h
 
 # Header files that already have srcdir in them, or which are in objdir.
 
@@ -992,8 +1000,6 @@ HFILES_WITH_SRCDIR = ../bfd/bfd.h jit-reader.h
 
 # GDB "info" files, which should be included in their entirety
 INFOFILES = gdb.info*
-
-REMOTE_EXAMPLES = m68k-stub.c i386-stub.c sparc-stub.c rem-multi.shar
 
 # {X,T,NAT}DEPFILES are something of a pain in that it's hard to
 # default their values the way we do for SER_HARDWIRE; in the future
@@ -1024,10 +1030,10 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	charset.o continuations.o corelow.o disasm.o dummy-frame.o dfp.o \
 	source.o value.o eval.o valops.o valarith.o valprint.o printcmd.o \
 	block.o symtab.o psymtab.o symfile.o symfile-debug.o symmisc.o \
-	linespec.o dictionary.o \
-	infcall.o \
+	linespec.o dictionary.o namespace.o \
+	location.o infcall.o \
 	infcmd.o infrun.o \
-	expprint.o environ.o stack.o thread.o \
+	expprint.o environ.o stack.o tid-parse.o thread.o thread-fsm.o \
 	exceptions.o \
 	extension.o \
 	filesystem.o \
@@ -1045,6 +1051,7 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	build-id.o buildsym.o \
 	findcmd.o \
 	std-regs.o \
+	signals-state-save-restore.o \
 	signals.o \
 	exec.o reverse.o \
 	bcache.o objfiles.o observer.o minsyms.o maint.o demangle.o \
@@ -1058,20 +1065,21 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	go-lang.o go-valprint.o go-typeprint.o \
 	jv-lang.o jv-valprint.o jv-typeprint.o jv-varobj.o \
 	m2-lang.o opencl-lang.o p-lang.o p-typeprint.o p-valprint.o \
-	sentinel-frame.o \
+	selftest.o sentinel-frame.o \
 	complaints.o typeprint.o \
 	ada-typeprint.o c-typeprint.o f-typeprint.o m2-typeprint.o \
 	ada-valprint.o c-valprint.o cp-valprint.o d-valprint.o f-valprint.o \
 	m2-valprint.o \
-	serial.o mdebugread.o top.o utils.o \
+	ser-event.o serial.o mdebugread.o top.o utils.o \
 	ui-file.o \
 	user-regs.o \
 	frame.o frame-unwind.o doublest.o \
 	frame-base.o \
 	inline-frame.o \
 	gnu-v2-abi.o gnu-v3-abi.o cp-abi.o cp-support.o \
-	cp-namespace.o \
+	cp-namespace.o d-namespace.o \
 	reggroups.o \
+	rust-lang.o \
 	trad-frame.o \
 	tramp-frame.o \
 	solib.o solib-target.o \
@@ -1084,6 +1092,7 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	format.o registry.o btrace.o record-btrace.o waitstatus.o \
 	print-utils.o rsp-low.o errors.o common-debug.o debug.o \
 	common-exceptions.o btrace-common.o fileio.o \
+	common-regcache.o \
 	$(SUBDIR_GCC_COMPILE_OBS)
 
 TSOBS = inflow.o
@@ -1103,12 +1112,12 @@ YYFILES = c-exp.c \
 	ada-lex.c \
 	ada-exp.c \
 	jv-exp.c \
-	d-exp.c f-exp.c go-exp.c m2-exp.c p-exp.c
+	d-exp.c f-exp.c go-exp.c m2-exp.c p-exp.c rust-exp.c
 YYOBJ = c-exp.o \
 	cp-name-parser.o \
 	ada-exp.o \
 	jv-exp.o \
-	d-exp.o f-exp.o go-exp.o m2-exp.o p-exp.o
+	d-exp.o f-exp.o go-exp.o m2-exp.o p-exp.o rust-exp.o
 
 # Things which need to be built when making a distribution.
 
@@ -1152,6 +1161,14 @@ check-read1: force
 	  rootsrc=`cd $(srcdir); pwd`; export rootsrc; \
 	  cd testsuite; \
 	  $(MAKE) $(TARGET_FLAGS_TO_PASS) check-read1; \
+	else true; fi
+
+check-parallel: force
+	@if [ -f testsuite/Makefile ]; then \
+	  rootme=`pwd`; export rootme; \
+	  rootsrc=`cd $(srcdir); pwd`; export rootsrc; \
+	  cd testsuite; \
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS) check-parallel; \
 	else true; fi
 
 # The idea is to parallelize testing of multilibs, for example:
@@ -1349,6 +1366,7 @@ init.c: $(INIT_FILES)
 	    -e '/version.[co]$$/d' \
 	    -e '/^[a-z0-9A-Z_]*_[SU].[co]$$/d' \
 	    -e '/[a-z0-9A-Z_]*-exp.tab.[co]$$/d' \
+	    -e 's/-exp\.o$$/-exp.y/' \
 	    -e 's/\.[co]$$/.c/' \
 	    -e 's,signals\.c,common/signals\.c,' \
 	    -e 's|^\([^  /][^     ]*\)|$(srcdir)/\1|g' | \
@@ -1471,7 +1489,7 @@ local-maintainer-clean:
 		cp-name-parser.c \
 		ada-lex.c ada-exp.c \
 		jv-exp.tab \
-		d-exp.c f-exp.c go-exp.c m2-exp.c p-exp.c
+		d-exp.c f-exp.c go-exp.c m2-exp.c p-exp.c rust-exp.c
 	rm -f TAGS $(INFOFILES)
 	rm -f $(YYFILES)
 	rm -f nm.h config.status
@@ -1659,7 +1677,9 @@ ALLDEPFILES = \
 	amd64-dicos-tdep.c \
 	amd64-linux-nat.c amd64-linux-tdep.c \
 	amd64-sol2-tdep.c \
-	arm-linux-nat.c arm-linux-tdep.c arm-symbian-tdep.c arm-tdep.c \
+	arm.c arm-get-next-pcs.c \
+	arm-linux.c arm-linux-nat.c arm-linux-tdep.c \
+	arm-symbian-tdep.c arm-tdep.c \
 	armnbsd-nat.c armbsd-tdep.c armnbsd-tdep.c armobsd-tdep.c \
 	avr-tdep.c \
 	bfin-linux-tdep.c bfin-tdep.c \
@@ -1710,6 +1730,7 @@ ALLDEPFILES = \
 	mipsnbsd-nat.c mipsnbsd-tdep.c \
 	mips64obsd-nat.c mips64obsd-tdep.c \
 	msp430-tdep.c \
+	nds32-tdep.c \
 	nios2-tdep.c nios2-linux-tdep.c \
 	nbsd-nat.c nbsd-tdep.c obsd-nat.c obsd-tdep.c \
 	posix-hdep.c common/posix-strerror.c \
@@ -1719,7 +1740,6 @@ ALLDEPFILES = \
 	ppcobsd-nat.c ppcobsd-tdep.c \
 	procfs.c \
 	ravenscar-thread.c \
-	remote-m32r-sdi.c remote-mips.c \
 	remote-sim.c \
 	dcache.c \
 	rl78-tdep.c \
@@ -2264,6 +2284,15 @@ btrace-common.o: ${srcdir}/common/btrace-common.c
 fileio.o: ${srcdir}/common/fileio.c
 	$(COMPILE) $(srcdir)/common/fileio.c
 	$(POSTCOMPILE)
+
+common-regcache.o: ${srcdir}/common/common-regcache.c
+	$(COMPILE) $(srcdir)/common/common-regcache.c
+	$(POSTCOMPILE)
+
+signals-state-save-restore.o: $(srcdir)/common/signals-state-save-restore.c
+	$(COMPILE) $(srcdir)/common/signals-state-save-restore.c
+	$(POSTCOMPILE)
+
 #
 # gdb/target/ dependencies
 #
@@ -2272,6 +2301,24 @@ fileio.o: ${srcdir}/common/fileio.c
 
 waitstatus.o: ${srcdir}/target/waitstatus.c
 	$(COMPILE) $(srcdir)/target/waitstatus.c
+	$(POSTCOMPILE)
+
+#
+# gdb/arch/ dependencies
+#
+# Need to explicitly specify the compile rule as make will do nothing
+# or try to compile the object file into the sub-directory.
+
+arm.o: ${srcdir}/arch/arm.c
+	$(COMPILE) $(srcdir)/arch/arm.c
+	$(POSTCOMPILE)
+
+arm-linux.o: ${srcdir}/arch/arm-linux.c
+	$(COMPILE) $(srcdir)/arch/arm-linux.c
+	$(POSTCOMPILE)
+
+arm-get-next-pcs.o: ${srcdir}/arch/arm-get-next-pcs.c
+	$(COMPILE) $(srcdir)/arch/arm-get-next-pcs.c
 	$(POSTCOMPILE)
 
 # gdb/nat/ dependencies
@@ -2323,8 +2370,29 @@ x86-linux-dregs.o: ${srcdir}/nat/x86-linux-dregs.c
 	$(COMPILE) $(srcdir)/nat/x86-linux-dregs.c
 	$(POSTCOMPILE)
 
+amd64-linux-siginfo.o: ${srcdir}/nat/amd64-linux-siginfo.c
+	$(COMPILE) $(srcdir)/nat/amd64-linux-siginfo.c
+	$(POSTCOMPILE)
+
 linux-namespaces.o: ${srcdir}/nat/linux-namespaces.c
 	$(COMPILE) $(srcdir)/nat/linux-namespaces.c
+	$(POSTCOMPILE)
+
+aarch64-linux-hw-point.o: ${srcdir}/nat/aarch64-linux-hw-point.c
+	$(COMPILE) $(srcdir)/nat/aarch64-linux-hw-point.c
+	$(POSTCOMPILE)
+
+aarch64-linux.o: ${srcdir}/nat/aarch64-linux.c
+	$(COMPILE) $(srcdir)/nat/aarch64-linux.c
+	$(POSTCOMPILE)
+
+# gdb/arch/ dependencies
+#
+# Need to explicitly specify the compile rule as make will do nothing
+# or try to compile the object file into the sub-directory.
+
+aarch64-insn.o: ${srcdir}/arch/aarch64-insn.c
+	$(COMPILE) $(srcdir)/arch/aarch64-insn.c
 	$(POSTCOMPILE)
 
 #

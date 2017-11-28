@@ -1,6 +1,6 @@
 /* PPC GNU/Linux native support.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,7 +33,7 @@
 #include "gdb_wait.h"
 #include <fcntl.h>
 #include <sys/procfs.h>
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 
 /* Prototypes for supply_gregset etc.  */
 #include "gregset.h"
@@ -1391,7 +1391,7 @@ have_ptrace_hwdebug_interface (void)
 
 static int
 ppc_linux_can_use_hw_breakpoint (struct target_ops *self,
-				 int type, int cnt, int ot)
+				 enum bptype type, int cnt, int ot)
 {
   int total_hw_wp, total_hw_bp;
 
@@ -1528,9 +1528,8 @@ hwdebug_find_thread_points_by_tid (int tid, int alloc_new)
      if the wanted one does not exist?  */
   if (alloc_new)
     {
-      t = xmalloc (sizeof (struct thread_points));
-      t->hw_breaks
-	= xzalloc (max_slots_number * sizeof (struct hw_break_tuple));
+      t = XNEW (struct thread_points);
+      t->hw_breaks = XCNEWVEC (struct hw_break_tuple, max_slots_number);
       t->tid = tid;
       VEC_safe_push (thread_points_p, ppc_threads, t);
     }
@@ -1546,7 +1545,7 @@ hwdebug_insert_point (struct ppc_hw_breakpoint *b, int tid)
 {
   int i;
   long slot;
-  struct ppc_hw_breakpoint *p = xmalloc (sizeof (struct ppc_hw_breakpoint));
+  struct ppc_hw_breakpoint *p = XNEW (struct ppc_hw_breakpoint);
   struct hw_break_tuple *hw_breaks;
   struct cleanup *c = make_cleanup (xfree, p);
   struct thread_points *t;
@@ -1699,13 +1698,13 @@ ppc_linux_remove_hw_breakpoint (struct target_ops *self,
 }
 
 static int
-get_trigger_type (int rw)
+get_trigger_type (enum target_hw_bp_type type)
 {
   int t;
 
-  if (rw == hw_read)
+  if (type == hw_read)
     t = PPC_BREAKPOINT_TRIGGER_READ;
-  else if (rw == hw_write)
+  else if (type == hw_write)
     t = PPC_BREAKPOINT_TRIGGER_WRITE;
   else
     t = PPC_BREAKPOINT_TRIGGER_READ | PPC_BREAKPOINT_TRIGGER_WRITE;
@@ -1720,7 +1719,7 @@ get_trigger_type (int rw)
 
 static int
 ppc_linux_insert_mask_watchpoint (struct target_ops *ops, CORE_ADDR addr,
-				  CORE_ADDR mask, int rw)
+				  CORE_ADDR mask, enum target_hw_bp_type rw)
 {
   struct lwp_info *lp;
   struct ppc_hw_breakpoint p;
@@ -1748,7 +1747,7 @@ ppc_linux_insert_mask_watchpoint (struct target_ops *ops, CORE_ADDR addr,
 
 static int
 ppc_linux_remove_mask_watchpoint (struct target_ops *ops, CORE_ADDR addr,
-				  CORE_ADDR mask, int rw)
+				  CORE_ADDR mask, enum target_hw_bp_type rw)
 {
   struct lwp_info *lp;
   struct ppc_hw_breakpoint p;
@@ -1984,8 +1983,8 @@ ppc_linux_can_accel_watchpoint_condition (struct target_ops *self,
 
 static void
 create_watchpoint_request (struct ppc_hw_breakpoint *p, CORE_ADDR addr,
-			   int len, int rw, struct expression *cond,
-			   int insert)
+			   int len, enum target_hw_bp_type type,
+			   struct expression *cond, int insert)
 {
   if (len == 1
       || !(hwdebug_info.features & PPC_DEBUG_FEATURE_DATA_BP_RANGE))
@@ -2024,13 +2023,13 @@ create_watchpoint_request (struct ppc_hw_breakpoint *p, CORE_ADDR addr,
     }
 
   p->version = PPC_DEBUG_CURRENT_VERSION;
-  p->trigger_type = get_trigger_type (rw);
+  p->trigger_type = get_trigger_type (type);
   p->addr = (uint64_t) addr;
 }
 
 static int
-ppc_linux_insert_watchpoint (struct target_ops *self,
-			     CORE_ADDR addr, int len, int rw,
+ppc_linux_insert_watchpoint (struct target_ops *self, CORE_ADDR addr, int len,
+			     enum target_hw_bp_type type,
 			     struct expression *cond)
 {
   struct lwp_info *lp;
@@ -2040,7 +2039,7 @@ ppc_linux_insert_watchpoint (struct target_ops *self,
     {
       struct ppc_hw_breakpoint p;
 
-      create_watchpoint_request (&p, addr, len, rw, cond, 1);
+      create_watchpoint_request (&p, addr, len, type, cond, 1);
 
       ALL_LWPS (lp)
 	hwdebug_insert_point (&p, ptid_get_lwp (lp->ptid));
@@ -2068,7 +2067,7 @@ ppc_linux_insert_watchpoint (struct target_ops *self,
 	}
 
       dabr_value = addr & ~(read_mode | write_mode);
-      switch (rw)
+      switch (type)
 	{
 	  case hw_read:
 	    /* Set read and translate bits.  */
@@ -2098,8 +2097,8 @@ ppc_linux_insert_watchpoint (struct target_ops *self,
 }
 
 static int
-ppc_linux_remove_watchpoint (struct target_ops *self,
-			     CORE_ADDR addr, int len, int rw,
+ppc_linux_remove_watchpoint (struct target_ops *self, CORE_ADDR addr, int len,
+			     enum target_hw_bp_type type,
 			     struct expression *cond)
 {
   struct lwp_info *lp;
@@ -2109,7 +2108,7 @@ ppc_linux_remove_watchpoint (struct target_ops *self,
     {
       struct ppc_hw_breakpoint p;
 
-      create_watchpoint_request (&p, addr, len, rw, cond, 0);
+      create_watchpoint_request (&p, addr, len, type, cond, 0);
 
       ALL_LWPS (lp)
 	hwdebug_remove_point (&p, ptid_get_lwp (lp->ptid));
@@ -2420,7 +2419,8 @@ ppc_linux_read_description (struct target_ops *ops)
 	perror_with_name (_("Unable to fetch SPE registers"));
     }
 
-  if (have_ptrace_getsetvsxregs)
+  if (have_ptrace_getsetvsxregs
+      && (ppc_linux_get_hwcap () & PPC_FEATURE_HAS_VSX))
     {
       gdb_vsxregset_t vsxregset;
 
@@ -2433,7 +2433,8 @@ ppc_linux_read_description (struct target_ops *ops)
 	perror_with_name (_("Unable to fetch VSX registers"));
     }
 
-  if (have_ptrace_getvrregs)
+  if (have_ptrace_getvrregs
+      && (ppc_linux_get_hwcap () & PPC_FEATURE_HAS_ALTIVEC))
     {
       gdb_vrregset_t vrregset;
 

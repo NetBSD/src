@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ proc do_test { displaced with_bp } {
 
 		gdb_breakpoint [gdb_get_line_number "set wait-thread breakpoint here"]
 		gdb_continue_to_breakpoint "run to wait-thread breakpoint"
-		gdb_test "info threads" "2 .*\\\* 1.*" "info threads shows all threads"
+		gdb_test "info threads" "\\\* 1 .*  2 .*" "info threads shows all threads"
 
 		gdb_test_no_output "set scheduler-locking on"
 
@@ -115,11 +115,10 @@ proc do_test { displaced with_bp } {
 		gdb_test "thread 1" "Switching to .*"
 		gdb_test_no_output "set scheduler-locking off"
 
-		# Thread 2 is still stopped at a breakpoint that needs to be
-		# stepped over before proceeding thread 1.  However, the
-		# instruction that is under the breakpoint triggers a
-		# watchpoint, which should trap and be reported to the
-		# user.
+		# Thread 2 is still stopped at a breakpoint that needs
+		# to be stepped over.  However, the instruction that
+		# is under the breakpoint triggers a watchpoint, which
+		# should trap and be reported to the user.
 		gdb_test "$command" "Hardware watchpoint.*: watch_me.*New value = 1.*"
 	    }
 	}

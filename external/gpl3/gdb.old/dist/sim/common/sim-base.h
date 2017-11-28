@@ -1,6 +1,6 @@
 /* Simulator pseudo baseclass.
 
-   Copyright 1997-2015 Free Software Foundation, Inc.
+   Copyright 1997-2016 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -82,36 +82,12 @@ typedef struct _sim_cpu sim_cpu;
 #include "sim-core.h"
 #include "sim-events.h"
 #include "sim-profile.h"
-#ifdef SIM_HAVE_MODEL
 #include "sim-model.h"
-#endif
 #include "sim-io.h"
 #include "sim-engine.h"
 #include "sim-watch.h"
 #include "sim-memopt.h"
 #include "sim-cpu.h"
-
-/* Global pointer to current state while sim_resume is running.
-   On a machine with lots of registers, it might be possible to reserve
-   one of them for current_state.  However on a machine with few registers
-   current_state can't permanently live in one and indirecting through it
-   will be slower [in which case one can have sim_resume set globals from
-   current_state for faster access].
-   If CURRENT_STATE_REG is defined, it means current_state is living in
-   a global register.  */
-
-
-#ifdef CURRENT_STATE_REG
-/* FIXME: wip */
-#else
-extern struct sim_state *current_state;
-#endif
-
-
-/* The simulator may provide different (and faster) definition.  */
-#ifndef CURRENT_STATE
-#define CURRENT_STATE current_state
-#endif
 
 
 /* We require all sims to dynamically allocate cpus.  See comment up top about
@@ -201,16 +177,6 @@ typedef struct {
      to process instructions.  */
   unsigned int scache_size;
 #define STATE_SCACHE_SIZE(sd) ((sd)->base.scache_size)
-
-  /* FIXME: Move to top level sim_state struct (as some struct)?  */
-#ifdef SIM_HAVE_FLATMEM
-  unsigned int mem_size;
-#define STATE_MEM_SIZE(sd) ((sd)->base.mem_size)
-  unsigned int mem_base;
-#define STATE_MEM_BASE(sd) ((sd)->base.mem_base)
-  unsigned char *memory;
-#define STATE_MEMORY(sd) ((sd)->base.memory)
-#endif
 
   /* core memory bus */
 #define STATE_CORE(sd) (&(sd)->base.core)

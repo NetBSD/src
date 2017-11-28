@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/alpha.
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

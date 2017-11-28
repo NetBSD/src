@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015 Free Software Foundation, Inc.
+# Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,8 +45,10 @@ gdb_test "python print (objfile.filename)" "${testfile}" \
 gdb_test "python print (objfile.username)" "${testfile}" \
   "Get objfile user name"
 
+gdb_test_no_output "python dir(objfile)"
+
 gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").filename)" \
-    "${testfile}"
+    "${testfile}" "print lookup_objfile filename"
 gdb_test "python print (gdb.lookup_objfile (\"junk\"))" \
     "Objfile not found\\.\r\n${python_error_text}"
 
@@ -56,7 +58,7 @@ if [string compare $binfile_build_id ""] {
     gdb_test "python print (objfile.build_id)" "$binfile_build_id" \
     "Get objfile build id"
     gdb_test "python print (gdb.lookup_objfile (\"$binfile_build_id\", by_build_id=True).filename)" \
-	"${testfile}"
+	"${testfile}" "print lookup_objfile filename by build-id"
 } else {
     unsupported "build-id is not supported by the compiler"
 }
@@ -64,9 +66,11 @@ if [string compare $binfile_build_id ""] {
 # Other lookup_objfile_by_build_id tests we can do, even if compiler doesn't
 # support them.
 gdb_test "python print (gdb.lookup_objfile (\"foo\", by_build_id=True))" \
-    "Not a valid build id\\.\r\n${python_error_text}"
+    "Not a valid build id\\.\r\n${python_error_text}" \
+    "print invalid file lookup_objfile by build-id"
 gdb_test "python print (gdb.lookup_objfile (\"1234abcdef\", by_build_id=True))" \
-    "Objfile not found\\.\r\n${python_error_text}"
+    "Objfile not found\\.\r\n${python_error_text}" \
+    "print invalid file lookup_objfile by build-id 2"
 
 gdb_test "python print (objfile.progspace)" "<gdb\.Progspace object at .*>" \
   "Get objfile program space"
@@ -131,7 +135,8 @@ gdb_test "p main" "= {int \\(\\)} $hex <main>" \
 # Separate debug files are not findable.
 if { [get_python_valueof "sep_objfile.build_id" "None"] != "None" } {
     gdb_test "python print (gdb.lookup_objfile (sep_objfile.build_id, by_build_id=True))" \
-	"Objfile not found\\.\r\n${python_error_text}"
+	"Objfile not found\\.\r\n${python_error_text}" \
+	"print lookup_objfile of separate debug file"
 }
 
 # An objfile that was a symlink to a differently named file is still

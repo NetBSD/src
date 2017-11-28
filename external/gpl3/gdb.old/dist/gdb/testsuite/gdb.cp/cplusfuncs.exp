@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -443,7 +443,6 @@ proc test_lookup_operator_functions {} {
 
 proc test_paddr_operator_functions {} {
     global hex
-    global hp_aCC_compiler
     global dm_operator_comma
     global dm_type_char_star
     global dm_type_foo_ref
@@ -496,13 +495,9 @@ proc test_paddr_operator_functions {} {
 	" = .* $hex <foo::operator new\\(.*\\)(| static)>"
     gdb_test "print &foo::operator new\[\]" \
 	" = .* $hex <foo::operator new\\\[\\\]\\(.*\\)(| static)>"    
-    if { !$hp_aCC_compiler } {
-	print_addr "foo::operator delete($dm_type_void_star)"
-	print_addr "foo::operator delete[]($dm_type_void_star)"
-    } else {
-	gdb_test "print &'foo::operator delete($dm_type_void_star) static'" \
-	    " = .*(0x\[0-9a-f\]+|) <foo::operator delete.*>"
-    }
+
+    print_addr "foo::operator delete($dm_type_void_star)"
+    print_addr "foo::operator delete[]($dm_type_void_star)"
 
     print_addr "foo::operator int($dm_type_void)"
     print_addr "foo::operator $dm_operator_char_star\($dm_type_void)"
