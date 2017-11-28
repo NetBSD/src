@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2008-2017 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -151,6 +151,7 @@ optional arguments while skipping others.  Example:
 * Inferiors In Python::         Python representation of inferiors (processes)
 * Events In Python::            Listening for events from @value{GDBN}.
 * Threads In Python::           Accessing inferior threads from Python.
+* Recordings In Python::        Accessing recordings from Python.
 * Commands In Python::          Implementing new commands in Python.
 * Parameters In Python::        Adding new @value{GDBN} parameters.
 * Functions In Python::         Writing new convenience functions.
@@ -949,7 +950,7 @@ Each field is a @code{gdb.Field} object, with some pre-defined attributes:
 @table @code
 @item bitpos
 This attribute is not available for @code{enum} or @code{static}
-(as in C@t{++} or Java) fields.  The value is the position, counting
+(as in C@t{++}) fields.  The value is the position, counting
 in bits, from the start of the containing type.
 
 @item enumval
@@ -1147,7 +1148,7 @@ An unknown or erroneous type.
 
 @vindex TYPE_CODE_METHOD
 @item gdb.TYPE_CODE_METHOD
-A method type, as found in C@t{++} or Java.
+A method type, as found in C@t{++}.
 
 @vindex TYPE_CODE_METHODPTR
 @item gdb.TYPE_CODE_METHODPTR
@@ -1160,6 +1161,10 @@ A pointer-to-member.
 @vindex TYPE_CODE_REF
 @item gdb.TYPE_CODE_REF
 A reference type.
+
+@vindex TYPE_CODE_RVALUE_REF
+@item gdb.TYPE_CODE_RVALUE_REF
+A C@t{++}11 rvalue reference type.
 
 @vindex TYPE_CODE_CHAR
 @item gdb.TYPE_CODE_CHAR
@@ -2755,7 +2760,7 @@ return an empty tuple.
 Read @var{length} addressable memory units from the inferior, starting at
 @var{address}.  Returns a buffer object, which behaves much like an array
 or a string.  It can be modified and given to the
-@code{Inferior.write_memory} function.  In @code{Python} 3, the return
+@code{Inferior.write_memory} function.  In Python 3, the return
 value is a @code{memoryview} object.
 @end defun
 
@@ -2858,7 +2863,7 @@ has returned.  (The exit code could be unavailable if, for example,
 @value{GDBN} detaches from the inferior.) If the exit code is unavailable,
 the attribute does not exist.
 @end defvar
-@defvar ExitedEvent inferior
+@defvar ExitedEvent.inferior
 A reference to the inferior which triggered the @code{exited} event.
 @end defvar
 
@@ -2980,6 +2985,10 @@ emitted, the @code{gdb.Breakpoint} object will already be in its
 invalid state; that is, the @code{is_valid} method will return
 @code{False}.
 
+@item events.before_prompt
+This event carries no payload.  It is emitted each time @value{GDBN}
+presents a prompt to the user.
+
 @end table
 
 @node Threads In Python
@@ -3061,6 +3070,247 @@ Return a Boolean indicating whether the thread is running.
 @defun InferiorThread.is_exited ()
 Return a Boolean indicating whether the thread is exited.
 @end defun
+
+@node Recordings In Python
+@subsubsection Recordings In Python
+@cindex recordings in python
+
+The following recordings-related functions
+(@pxref{Process Record and Replay}) are available in the @code{gdb}
+module:
+
+@defun gdb.start_recording (@r{[}method@r{]}, @r{[}format@r{]})
+Start a recording using the given @var{method} and @var{format}.  If
+no @var{format} is given, the default format for the recording method
+is used.  If no @var{method} is given, the default method will be used.
+Returns a @code{gdb.Record} object on success.  Throw an exception on
+failure.
+
+The following strings can be passed as @var{method}:
+
+@itemize @bullet
+@item
+@code{"full"}
+@item
+@code{"btrace"}: Possible values for @var{format}: @code{"pt"},
+@code{"bts"} or leave out for default format.
+@end itemize
+@end defun
+
+@defun gdb.current_recording ()
+Access a currently running recording.  Return a @code{gdb.Record}
+object on success.  Return @code{None} if no recording is currently
+active.
+@end defun
+
+@defun gdb.stop_recording ()
+Stop the current recording.  Throw an exception if no recording is
+currently active.  All record objects become invalid after this call.
+@end defun
+
+A @code{gdb.Record} object has the following attributes:
+
+@defvar Record.method
+A string with the current recording method, e.g.@: @code{full} or
+@code{btrace}.
+@end defvar
+
+@defvar Record.format
+A string with the current recording format, e.g.@: @code{bt}, @code{pts} or
+@code{None}.
+@end defvar
+
+@defvar Record.begin
+A method specific instruction object representing the first instruction
+in this recording.
+@end defvar
+
+@defvar Record.end
+A method specific instruction object representing the current
+instruction, that is not actually part of the recording.
+@end defvar
+
+@defvar Record.replay_position
+The instruction representing the current replay position.  If there is
+no replay active, this will be @code{None}.
+@end defvar
+
+@defvar Record.instruction_history
+A list with all recorded instructions.
+@end defvar
+
+@defvar Record.function_call_history
+A list with all recorded function call segments.
+@end defvar
+
+A @code{gdb.Record} object has the following methods:
+
+@defun Record.goto (instruction)
+Move the replay position to the given @var{instruction}.
+@end defun
+
+The common @code{gdb.Instruction} class that recording method specific
+instruction objects inherit from, has the following attributes:
+
+@defvar Instruction.pc
+An integer representing this instruction's address.
+@end defvar
+
+@defvar Instruction.data
+A buffer with the raw instruction data.  In Python 3, the return value is a
+@code{memoryview} object.
+@end defvar
+
+@defvar Instruction.decoded
+A human readable string with the disassembled instruction.
+@end defvar
+
+@defvar Instruction.size
+The size of the instruction in bytes.
+@end defvar
+
+Additionally @code{gdb.RecordInstruction} has the following attributes:
+
+@defvar RecordInstruction.number
+An integer identifying this instruction.  @code{number} corresponds to
+the numbers seen in @code{record instruction-history}
+(@pxref{Process Record and Replay}).
+@end defvar
+
+@defvar RecordInstruction.sal
+A @code{gdb.Symtab_and_line} object representing the associated symtab
+and line of this instruction.  May be @code{None} if no debug information is
+available.
+@end defvar
+
+@defvar RecordInstruction.is_speculative
+A boolean indicating whether the instruction was executed speculatively.
+@end defvar
+
+If an error occured during recording or decoding a recording, this error is
+represented by a @code{gdb.RecordGap} object in the instruction list.  It has
+the following attributes:
+
+@defvar RecordGap.number
+An integer identifying this gap.  @code{number} corresponds to the numbers seen
+in @code{record instruction-history} (@pxref{Process Record and Replay}).
+@end defvar
+
+@defvar RecordGap.error_code
+A numerical representation of the reason for the gap.  The value is specific to
+the current recording method.
+@end defvar
+
+@defvar RecordGap.error_string
+A human readable string with the reason for the gap.
+@end defvar
+
+A @code{gdb.RecordFunctionSegment} object has the following attributes:
+
+@defvar RecordFunctionSegment.number
+An integer identifying this function segment.  @code{number} corresponds to
+the numbers seen in @code{record function-call-history}
+(@pxref{Process Record and Replay}).
+@end defvar
+
+@defvar RecordFunctionSegment.symbol
+A @code{gdb.Symbol} object representing the associated symbol.  May be
+@code{None} if no debug information is available.
+@end defvar
+
+@defvar RecordFunctionSegment.level
+An integer representing the function call's stack level.  May be
+@code{None} if the function call is a gap.
+@end defvar
+
+@defvar RecordFunctionSegment.instructions
+A list of @code{gdb.RecordInstruction} or @code{gdb.RecordGap} objects
+associated with this function call.
+@end defvar
+
+@defvar RecordFunctionSegment.up
+A @code{gdb.RecordFunctionSegment} object representing the caller's
+function segment.  If the call has not been recorded, this will be the
+function segment to which control returns.  If neither the call nor the
+return have been recorded, this will be @code{None}.
+@end defvar
+
+@defvar RecordFunctionSegment.prev
+A @code{gdb.RecordFunctionSegment} object representing the previous
+segment of this function call.  May be @code{None}.
+@end defvar
+
+@defvar RecordFunctionSegment.next
+A @code{gdb.RecordFunctionSegment} object representing the next segment of
+this function call.  May be @code{None}.
+@end defvar
+
+The following example demonstrates the usage of these objects and
+functions to create a function that will rewind a record to the last
+time a function in a different file was executed.  This would typically
+be used to track the execution of user provided callback functions in a
+library which typically are not visible in a back trace.
+
+@smallexample
+def bringback ():
+    rec = gdb.current_recording ()
+    if not rec:
+        return
+
+    insn = rec.instruction_history
+    if len (insn) == 0:
+        return
+
+    try:
+        position = insn.index (rec.replay_position)
+    except:
+        position = -1
+    try:
+        filename = insn[position].sal.symtab.fullname ()
+    except:
+        filename = None
+
+    for i in reversed (insn[:position]):
+	try:
+            current = i.sal.symtab.fullname ()
+	except:
+            current = None
+
+        if filename == current:
+            continue
+
+        rec.goto (i)
+        return
+@end smallexample
+
+Another possible application is to write a function that counts the
+number of code executions in a given line range.  This line range can
+contain parts of functions or span across several functions and is not
+limited to be contiguous.
+
+@smallexample
+def countrange (filename, linerange):
+    count = 0
+
+    def filter_only (file_name):
+        for call in gdb.current_recording ().function_call_history:
+            try:
+                if file_name in call.symbol.symtab.fullname ():
+                    yield call
+            except:
+                pass
+
+    for c in filter_only (filename):
+        for i in c.instructions:
+            try:
+                if i.sal.line in linerange:
+                    count += 1
+                    break;
+            except:
+                    pass
+
+    return count
+@end smallexample
 
 @node Commands In Python
 @subsubsection Commands In Python
@@ -4884,7 +5134,7 @@ is not writable.
 
 @defvar LazyString.type
 This attribute holds the type that is represented by the lazy string's
-type.  For a lazy string this will always be a pointer type.  To
+type.  For a lazy string this is a pointer or array type.  To
 resolve this to the lazy string's character type, use the type's
 @code{target} method.  @xref{Types In Python}.  This attribute is not
 writable.

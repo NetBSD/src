@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "libiberty.h"
 
 #define MAX_NR_STUFF 42
 
@@ -2595,7 +2596,7 @@ conflict_warn (int val, int i)
   fprintf (stderr, "Warning: opcode table conflict: 0x%04x (idx %d && %d)\n",
 	   val, i, table[val]);
 
-  for (ix = sizeof (tab) / sizeof (tab[0]); ix >= 0; ix--)
+  for (ix = ARRAY_SIZE (tab); ix >= 0; ix--)
     if (tab[ix].index == i || tab[ix].index == j)
       {
 	key = ((tab[ix].code[0] - '0') << 3) + 
@@ -2607,7 +2608,7 @@ conflict_warn (int val, int i)
 	  fprintf (stderr, "  %s -- %s\n", tab[ix].code, tab[ix].name);
       }
 
-  for (ix = sizeof (movsxy_tab) / sizeof (movsxy_tab[0]); ix >= 0; ix--)
+  for (ix = ARRAY_SIZE (movsxy_tab); ix >= 0; ix--)
     if (movsxy_tab[ix].index == i || movsxy_tab[ix].index == j)
       {
 	key = ((movsxy_tab[ix].code[0] - '0') << 3) + 
@@ -2620,7 +2621,7 @@ conflict_warn (int val, int i)
 		   movsxy_tab[ix].code, movsxy_tab[ix].name);
       }
 
-  for (ix = sizeof (ppi_tab) / sizeof (ppi_tab[0]); ix >= 0; ix--)
+  for (ix = ARRAY_SIZE (ppi_tab); ix >= 0; ix--)
     if (ppi_tab[ix].index == i || ppi_tab[ix].index == j)
       {
 	key = ((ppi_tab[ix].code[0] - '0') << 3) + 

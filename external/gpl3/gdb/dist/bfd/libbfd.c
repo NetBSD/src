@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -785,7 +785,8 @@ _bfd_generic_get_section_contents (bfd *abfd,
 
   if (section->compress_status != COMPRESS_SECTION_NONE)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
 	(_("%B: unable to get decompressed section %A"),
 	 abfd, section);
       bfd_set_error (bfd_error_invalid_operation);
@@ -922,40 +923,14 @@ bfd_generic_is_local_label_name (bfd *abfd, const char *name)
   return name[0] == locals_prefix;
 }
 
-/*  Can be used from / for bfd_merge_private_bfd_data to check that
-    endianness matches between input and output file.  Returns
-    TRUE for a match, otherwise returns FALSE and emits an error.  */
-bfd_boolean
-_bfd_generic_verify_endian_match (bfd *ibfd, bfd *obfd)
-{
-  if (ibfd->xvec->byteorder != obfd->xvec->byteorder
-      && ibfd->xvec->byteorder != BFD_ENDIAN_UNKNOWN
-      && obfd->xvec->byteorder != BFD_ENDIAN_UNKNOWN)
-    {
-      const char *msg;
-
-      if (bfd_big_endian (ibfd))
-	msg = _("%B: compiled for a big endian system and target is little endian");
-      else
-	msg = _("%B: compiled for a little endian system and target is big endian");
-
-      (*_bfd_error_handler) (msg, ibfd);
-
-      bfd_set_error (bfd_error_wrong_format);
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
 /* Give a warning at runtime if someone compiles code which calls
    old routines.  */
 
 void
-warn_deprecated (const char *what,
-		 const char *file,
-		 int line,
-		 const char *func)
+_bfd_warn_deprecated (const char *what,
+		      const char *file,
+		      int line,
+		      const char *func)
 {
   /* Poor man's tracking of functions we've already warned about.  */
   static size_t mask = 0;
@@ -966,6 +941,7 @@ warn_deprecated (const char *what,
       /* Note: separate sentences in order to allow
 	 for translation into other languages.  */
       if (func)
+	/* xgettext:c-format */
 	fprintf (stderr, _("Deprecated %s called at %s line %d in %s\n"),
 		 what, file, line, func);
       else
@@ -978,9 +954,9 @@ warn_deprecated (const char *what,
 /* Helper function for reading uleb128 encoded data.  */
 
 bfd_vma
-read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
-		      bfd_byte *buf,
-		      unsigned int *bytes_read_ptr)
+_bfd_read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+			   bfd_byte *buf,
+			   unsigned int *bytes_read_ptr)
 {
   bfd_vma result;
   unsigned int num_read;
@@ -1009,11 +985,11 @@ read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
    No bytes will be read at address END or beyond.  */
 
 bfd_vma
-safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
-		  bfd_byte *data,
-		  unsigned int *length_return,
-		  bfd_boolean sign,
-		  const bfd_byte * const end)
+_bfd_safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+		       bfd_byte *data,
+		       unsigned int *length_return,
+		       bfd_boolean sign,
+		       const bfd_byte * const end)
 {
   bfd_vma result = 0;
   unsigned int num_read = 0;
@@ -1045,9 +1021,9 @@ safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
 /* Helper function for reading sleb128 encoded data.  */
 
 bfd_signed_vma
-read_signed_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
-		    bfd_byte *buf,
-		    unsigned int *bytes_read_ptr)
+_bfd_read_signed_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+			 bfd_byte *buf,
+			 unsigned int *bytes_read_ptr)
 {
   bfd_vma result;
   unsigned int shift;

@@ -1,3 +1,10 @@
+2016-07-19  Pitchumani Sivanupandi  <pitchumani.s@atmel.com>
+
+	PR target/19401
+	* interp.c (step_once): Pass break instruction address to
+	sim_engine_halt function which writes that to PC. Remove code that
+	follows that function call as it is unreachable.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

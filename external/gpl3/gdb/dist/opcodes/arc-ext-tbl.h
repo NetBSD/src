@@ -1,5 +1,5 @@
 /* ARC instruction defintions.
-   Copyright (C) 2016 Free Software Foundation, Inc.
+   Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -55,19 +55,22 @@
 #define ARG_32BIT_ZALIMM { ZA, LIMM }
 
 /* Macro to generate 2 operand extension instruction.  */
-#define EXTINSN2OP(NAME, CPU, CLASS, SCLASS, MOP, SOP)		 \
+#define EXTINSN2OPF(NAME, CPU, CLASS, SCLASS, MOP, SOP, FL)	 \
   { NAME, INSN2OP_BC (MOP,SOP), MINSN2OP_BC, CPU, CLASS, SCLASS, \
-      ARG_32BIT_RBRC,   FLAGS_F },				 \
+      ARG_32BIT_RBRC,   FL },					 \
   { NAME, INSN2OP_0C (MOP,SOP), MINSN2OP_0C, CPU, CLASS, SCLASS, \
-      ARG_32BIT_ZARC,   FLAGS_F },				 \
+      ARG_32BIT_ZARC,   FL },					 \
   { NAME, INSN2OP_BU (MOP,SOP), MINSN2OP_BU, CPU, CLASS, SCLASS, \
-      ARG_32BIT_RBU6,   FLAGS_F },				 \
+      ARG_32BIT_RBU6,   FL },					 \
   { NAME, INSN2OP_0U (MOP,SOP), MINSN2OP_0U, CPU, CLASS, SCLASS, \
-      ARG_32BIT_ZAU6,   FLAGS_F },				 \
+      ARG_32BIT_ZAU6,   FL },					 \
   { NAME, INSN2OP_BL (MOP,SOP), MINSN2OP_BL, CPU, CLASS, SCLASS, \
-      ARG_32BIT_RBLIMM, FLAGS_F },				 \
+      ARG_32BIT_RBLIMM, FL },					 \
   { NAME, INSN2OP_0L (MOP,SOP), MINSN2OP_0L, CPU, CLASS, SCLASS, \
-      ARG_32BIT_ZALIMM, FLAGS_F },
+      ARG_32BIT_ZALIMM, FL },
+
+#define EXTINSN2OP(NAME, CPU, CLASS, SCLASS, MOP, SOP)		 \
+  EXTINSN2OPF(NAME, CPU, CLASS, SCLASS, MOP, SOP, FLAGS_F)
 
 /* Macro to generate 3 operand extesion instruction.  */
 #define EXTINSN3OP(NAME, CPU, CLASS, SCLASS, MOP, SOP)			\
@@ -120,3 +123,9 @@ EXTINSN2OP ("dsp_fp_sqrt",   ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 45)
 EXTINSN3OP ("dsp_fp_div", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 42)
 EXTINSN3OP ("dsp_fp_cmp", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 43)
 
+/* Bitstream extensions.  */
+EXTINSN2OP ("bspeek", ARC_OPCODE_ARCv2EM, BITSTREAM, NONE, 0x05, 0x2E)
+EXTINSN2OP ("bspop", ARC_OPCODE_ARCv2EM, BITSTREAM, NONE, 0x05, 0x2F)
+
+/* Special XY.  */
+EXTINSN2OPF ("modapp", ARC_OPCODE_ARCv2EM, XY, NONE, 0x05, 0x3E, FLAGS_NONE)

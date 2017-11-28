@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 # test running programs
 #
 
-if { [prepare_for_testing whatis-exp.exp whatis-exp int-type.c {debug nowarnings}] } {
+if { [prepare_for_testing "failed to prepare" whatis-exp int-type.c {debug nowarnings}] } {
     return -1
 }
 

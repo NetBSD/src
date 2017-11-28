@@ -1,4 +1,4 @@
-# Copyright 2003-2016 Free Software Foundation, Inc.
+# Copyright 2003-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ proc selftest_setup { executable function } {
     }
 
     if { $gdb_file_cmd_debug_info != "debug" } then {
-	untested "No debug information, skipping testcase."
+	untested "no debug information, skipping testcase."
 	return -1
     }
 

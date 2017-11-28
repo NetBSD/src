@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2016 Free Software Foundation, Inc.
+# Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,14 +57,14 @@ gdb_py_test_multiple "Simple gdb booleanparameter" \
    "test_param = TestParam ('print test-param')" ""\
    "end"
 
-gdb_test "python print (test_param.value)" "True" "Test parameter value"
-gdb_test "show print test-param" "The state of the Test Parameter is on.*" "Show parameter on"
-gdb_test "set print test-param off" "Test Parameter has been set to off" "Turn off parameter"
-gdb_test "show print test-param" "The state of the Test Parameter is off.*" "Show parameter off"
-gdb_test "python print (test_param.value)" "False" "Test parameter value"
-gdb_test "help show print test-param" "Show the state of the boolean test-param.*" "Test show help"
-gdb_test "help set print test-param" "Set the state of the boolean test-param.*" "Test set help"
-gdb_test "help set print" "set print test-param -- Set the state of the boolean test-param.*" "Test general help"
+gdb_test "python print (test_param.value)" "True" "test parameter value"
+gdb_test "show print test-param" "The state of the Test Parameter is on.*" "show parameter on"
+gdb_test "set print test-param off" "Test Parameter has been set to off" "turn off parameter"
+gdb_test "show print test-param" "The state of the Test Parameter is off.*" "show parameter off"
+gdb_test "python print (test_param.value)" "False" "test parameter value"
+gdb_test "help show print test-param" "Show the state of the boolean test-param.*" "test show help"
+gdb_test "help set print test-param" "Set the state of the boolean test-param.*" "test set help"
+gdb_test "help set print" "set print test-param -- Set the state of the boolean test-param.*" "test general help"
 
 
 # Test an enum parameter.
@@ -84,12 +84,12 @@ gdb_py_test_multiple "enum gdb parameter" \
    "test_enum_param = TestEnumParam ('print test-enum-param')" ""\
    "end"
 
-gdb_test "python print (test_enum_param.value)" "one" "Test enum parameter value"
-gdb_test "show print test-enum-param" "The state of the enum is one.*" "Show parameter is initial value"
-gdb_test "set print test-enum-param two" "The state of the enum has been set to two" "Set enum to two"
-gdb_test "show print test-enum-param" "The state of the enum is two.*" "Show parameter is new value"
-gdb_test "python print (test_enum_param.value)" "two" "Test enum parameter value"
-gdb_test "set print test-enum-param three" "Undefined item: \"three\".*" "Set invalid enum parameter" 
+gdb_test "python print (test_enum_param.value)" "one" "test enum parameter value"
+gdb_test "show print test-enum-param" "The state of the enum is one.*" "show parameter is initial value"
+gdb_test "set print test-enum-param two" "The state of the enum has been set to two" "set enum to two"
+gdb_test "show print test-enum-param" "The state of the enum is two.*" "show parameter is new value"
+gdb_test "python print (test_enum_param.value)" "two" "test enum parameter value"
+gdb_test "set print test-enum-param three" "Undefined item: \"three\".*" "set invalid enum parameter"
 
 # Test a file parameter.
 gdb_py_test_multiple "file gdb parameter" \
@@ -108,11 +108,11 @@ gdb_py_test_multiple "file gdb parameter" \
    "test_file_param = TestFileParam ('test-file-param')" ""\
    "end"
 
-gdb_test "python print (test_file_param.value)" "foo.txt" "Test file parameter value"
-gdb_test "show test-file-param" "The name of the file is foo.txt.*" "Show initial file value"
-gdb_test "set test-file-param bar.txt" "The name of the file has been changed to bar.txt" "Set new file parameter" 1
-gdb_test "show test-file-param" "The name of the file is bar.txt.*" "Show new file value"
-gdb_test "python print (test_file_param.value)" "bar.txt" "Test new file parameter value"
+gdb_test "python print (test_file_param.value)" "foo.txt" "test file parameter value"
+gdb_test "show test-file-param" "The name of the file is foo.txt.*" "show initial file value"
+gdb_test "set test-file-param bar.txt" "The name of the file has been changed to bar.txt" "set new file parameter" 1
+gdb_test "show test-file-param" "The name of the file is bar.txt.*" "show new file value"
+gdb_test "python print (test_file_param.value)" "bar.txt" "test new file parameter value"
 gdb_test "set test-file-param" "Argument required.*" 
 
 # Test a parameter that is not documented.
@@ -132,13 +132,13 @@ gdb_py_test_multiple "Simple gdb booleanparameter" \
    "test_undoc_param = TestUndocParam ('print test-undoc-param')" ""\
    "end"
 
-gdb_test "show print test-undoc-param" "The state of the Test Parameter is on.*" "Show parameter on"
-gdb_test "set print test-undoc-param off" "Test Parameter has been set to off" "Turn off parameter"
-gdb_test "show print test-undoc-param" "The state of the Test Parameter is off.*" "Show parameter off"
-gdb_test "python print (test_undoc_param.value)" "False" "Test parameter value"
-gdb_test "help show print test-undoc-param" "This command is not documented.*" "Test show help"
-gdb_test "help set print test-undoc-param" "This command is not documented.*" "Test set help"
-gdb_test "help set print" "set print test-undoc-param -- This command is not documented.*" "Test general help"
+gdb_test "show print test-undoc-param" "The state of the Test Parameter is on.*" "show parameter on"
+gdb_test "set print test-undoc-param off" "Test Parameter has been set to off" "turn off parameter"
+gdb_test "show print test-undoc-param" "The state of the Test Parameter is off.*" "show parameter off"
+gdb_test "python print (test_undoc_param.value)" "False" "test parameter value"
+gdb_test "help show print test-undoc-param" "This command is not documented.*" "test show help"
+gdb_test "help set print test-undoc-param" "This command is not documented.*" "test set help"
+gdb_test "help set print" "set print test-undoc-param -- This command is not documented.*" "test general help"
 
 # Test a parameter that is not documented in any way..
 gdb_py_test_multiple "Simple gdb booleanparameter" \
@@ -150,13 +150,13 @@ gdb_py_test_multiple "Simple gdb booleanparameter" \
    "test_nodoc_param = TestNodocParam ('print test-nodoc-param')" ""\
    "end"
 
-gdb_test "show print test-nodoc-param" "This command is not documented.*" "Show parameter on"
-gdb_test "set print test-nodoc-param off" "This command is not documented.*" "Turn off parameter"
-gdb_test "show print test-nodoc-param" "This command is not documented.*.*" "Show parameter off"
-gdb_test "python print (test_nodoc_param.value)" "False" "Test parameter value"
-gdb_test "help show print test-nodoc-param" "This command is not documented.*" "Test show help"
-gdb_test "help set print test-nodoc-param" "This command is not documented.*" "Test set help"
-gdb_test "help set print" "set print test-nodoc-param -- This command is not documented.*" "Test general help"
+gdb_test "show print test-nodoc-param" "This command is not documented.*" "show parameter on"
+gdb_test "set print test-nodoc-param off" "This command is not documented.*" "turn off parameter"
+gdb_test "show print test-nodoc-param" "This command is not documented.*.*" "show parameter off"
+gdb_test "python print (test_nodoc_param.value)" "False" "test parameter value"
+gdb_test "help show print test-nodoc-param" "This command is not documented.*" "test show help"
+gdb_test "help set print test-nodoc-param" "This command is not documented.*" "test set help"
+gdb_test "help set print" "set print test-nodoc-param -- This command is not documented.*" "test general help"
 
 # Test deprecated API. Do not use in your own implementations.
 gdb_py_test_multiple "Simple gdb booleanparameter" \
@@ -171,11 +171,11 @@ gdb_py_test_multiple "Simple gdb booleanparameter" \
    "test_param = TestParam ('print test-param')" ""\
    "end"
 
-gdb_test "python print (test_param.value)" "True" "Test parameter value"
-gdb_test "show print test-param" "State of the Test Parameter on.*" "Show parameter on"
-gdb_test "set print test-param off" "Set the state of the Test Parameter.*" "Turn off parameter"
-gdb_test "show print test-param" "State of the Test Parameter off.*" "Show parameter off"
-gdb_test "python print (test_param.value)" "False" "Test parameter value"
-gdb_test "help show print test-param" "State of the Test Parameter.*" "Test show help"
-gdb_test "help set print test-param" "Set the state of the Test Parameter.*" "Test set help"
-gdb_test "help set print" "set print test-param -- Set the state of the Test Parameter.*" "Test general help"
+gdb_test "python print (test_param.value)" "True" "test parameter value"
+gdb_test "show print test-param" "State of the Test Parameter on.*" "show parameter on"
+gdb_test "set print test-param off" "Set the state of the Test Parameter.*" "turn off parameter"
+gdb_test "show print test-param" "State of the Test Parameter off.*" "show parameter off"
+gdb_test "python print (test_param.value)" "False" "test parameter value"
+gdb_test "help show print test-param" "State of the Test Parameter.*" "test show help"
+gdb_test "help set print test-param" "Set the state of the Test Parameter.*" "test set help"
+gdb_test "help set print" "set print test-param -- Set the state of the Test Parameter.*" "test general help"

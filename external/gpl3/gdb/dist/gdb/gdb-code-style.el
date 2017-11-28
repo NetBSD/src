@@ -1,6 +1,6 @@
 ;;; gdb-code-style.el --- code style checker for GDB contributors
 
-;; Copyright (C) 2012-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 ;; Author: Yao Qi <yao@codesourcery.com>
 ;; Created: 17 April 2012
@@ -74,4 +74,9 @@
   )
 (add-hook 'c-mode-common-hook 'gdb-comment-hook)
 
+;; Set c-set-offset 'innamespace as a safe value to be used in .dir-locals.el.
+(setq safe-local-variable-values
+      (cons safe-local-variable-values
+	    '((eval c-set-offset 'innamespace 0)
+	      (c-offsets-alist (innamespace . 0)))))
 ;;; gdb-code-style.el ends here

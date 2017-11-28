@@ -1,4 +1,4 @@
-# Copyright 2009-2016 Free Software Foundation, Inc.
+# Copyright 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ standard_testfile .S
 set additional_flags "-Wa,-g"
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug $additional_flags]] != "" } {
-    untested amd64-disp-step.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -45,7 +45,7 @@ gdb_test "set displaced-stepping on" ""
 gdb_test "show displaced-stepping" ".* displaced stepping .* is on.*"
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 

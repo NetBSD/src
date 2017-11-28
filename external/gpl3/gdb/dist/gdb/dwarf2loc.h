@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,6 +56,8 @@ int dwarf2_per_cu_offset_size (struct dwarf2_per_cu_data *cu);
    offset in the parent objfile.  */
 CORE_ADDR dwarf2_per_cu_text_offset (struct dwarf2_per_cu_data *cu);
 
+short dwarf2_version (struct dwarf2_per_cu_data *per_cu);
+
 /* Find a particular location expression from a location list.  */
 const gdb_byte *dwarf2_find_location_expression
   (struct dwarf2_loclist_baton *baton,
@@ -76,6 +78,9 @@ extern const gdb_byte *dwarf2_fetch_constant_bytes (sect_offset,
 						    struct dwarf2_per_cu_data *,
 						    struct obstack *,
 						    LONGEST *);
+
+struct type *dwarf2_fetch_die_type_sect_off (sect_offset,
+					     struct dwarf2_per_cu_data *);
 
 struct type *dwarf2_get_die_type (cu_offset die_offset,
 				  struct dwarf2_per_cu_data *per_cu);
@@ -151,7 +156,7 @@ int dwarf2_evaluate_property (const struct dynamic_prop *prop,
    evaluated.
    SYM the originating symbol, used for error reporting.  */
 
-void dwarf2_compile_property_to_c (struct ui_file *stream,
+void dwarf2_compile_property_to_c (string_file &stream,
 				   const char *result_name,
 				   struct gdbarch *gdbarch,
 				   unsigned char *registers_used,

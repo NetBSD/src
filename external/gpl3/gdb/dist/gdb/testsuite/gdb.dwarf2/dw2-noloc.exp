@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-if { [prepare_for_testing dw2-noloc.exp "dw2-noloc" {dw2-noloc-main.c dw2-noloc.S} {nodebug}] } {
+if { [prepare_for_testing "failed to prepare" "dw2-noloc" {dw2-noloc-main.c dw2-noloc.S} {nodebug}] } {
     return -1
 }
 

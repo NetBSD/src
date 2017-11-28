@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -1690,8 +1690,7 @@ parse_scrolling_args (char *arg,
       /* Process the window name if one is specified.  */
       if (buf_ptr != (char *) NULL)
 	{
-	  char *wname;
-	  int i;
+	  const char *wname;
 
 	  if (*buf_ptr == ' ')
 	    while (*(++buf_ptr) == ' ')
@@ -1699,11 +1698,11 @@ parse_scrolling_args (char *arg,
 
 	  if (*buf_ptr != (char) 0)
 	    {
-	      wname = buf_ptr;
-
 	      /* Validate the window name.  */
-	      for (i = 0; i < strlen (wname); i++)
-		wname[i] = tolower (wname[i]);
+	      for (char *p = buf_ptr; *p != '\0'; p++)
+		*p = tolower (*p);
+
+	      wname = buf_ptr;
 	    }
 	  else
 	    wname = "?";

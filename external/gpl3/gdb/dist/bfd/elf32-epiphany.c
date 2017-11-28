@@ -1,5 +1,5 @@
 /* Adapteva epiphany specific support for 32-bit ELF
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -372,6 +372,7 @@ epiphany_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_EPIPHANY_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid Epiphany reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -420,9 +421,10 @@ epiphany_final_link_relocate (reloc_howto_type *  howto,
       relocation += rel->r_addend;
       if ((unsigned int) relocation > 0x7ff)
 	return bfd_reloc_outofrange;
+      /* Fall through.  */
     disp11:
-      relocation = ((relocation & 7) << 5)
-	|| ((relocation & 0x7f8 )  << 13);
+      relocation = (((relocation & 7) << 5)
+		    | ((relocation & 0x7f8 ) << 13));
       return _bfd_relocate_contents (howto, input_bfd, relocation,
 				     contents + rel->r_offset);
 

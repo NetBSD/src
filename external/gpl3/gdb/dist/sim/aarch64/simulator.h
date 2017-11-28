@@ -1,6 +1,6 @@
 /* simulator.h -- Prototypes for AArch64 simulator functions.
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -46,9 +46,7 @@ extern void         aarch64_init (sim_cpu *, uint64_t);
    hit an error.  */
 
 extern void         aarch64_run (SIM_DESC);
-
-extern const char * aarch64_get_func (uint64_t);
-extern uint64_t     aarch64_get_sym_value (const char *);
+extern const char * aarch64_get_func (SIM_DESC, uint64_t);
 extern void         aarch64_init_LIT_table (void);
 
 #endif /* _SIMULATOR_H */

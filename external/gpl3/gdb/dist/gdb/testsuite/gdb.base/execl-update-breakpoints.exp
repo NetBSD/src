@@ -1,4 +1,4 @@
-# Copyright 2014-2016 Free Software Foundation, Inc.
+# Copyright 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ set exec2 ${binfile}2
 
 if { [gdb_compile [file join $srcdir $subdir $srcfile] $objfile \
 	  object [list debug]] != "" } {
-    untested "compile failed"
+    untested "failed to compile"
     return -1
 }
 
@@ -55,7 +55,7 @@ if { [gdb_compile $objfile $exec1 executable $opts1_ld] != "" } {
 
 clean_restart ${exec1}
 if ![runto_main] then {
-    fail "Couldn't run to main"
+    fail "couldn't run to main"
     return -1
 }
 
@@ -70,7 +70,7 @@ gdb_test_multiple "p/x &main" $test {
 
 clean_restart ${exec2}
 if ![runto_main] then {
-    fail "Couldn't run to main"
+    fail "couldn't run to main"
     return -1
 }
 
@@ -103,7 +103,7 @@ proc test { always_inserted } {
     gdb_test_no_output "set breakpoint always-inserted $always_inserted"
 
     if ![runto_main] then {
-	fail "Couldn't run to main"
+	fail "couldn't run to main"
 	return -1
     }
 

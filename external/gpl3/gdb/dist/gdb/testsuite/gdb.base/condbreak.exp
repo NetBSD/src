@@ -1,4 +1,4 @@
-# Copyright 1997-2016 Free Software Foundation, Inc.
+# Copyright 1997-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 standard_testfile break.c break1.c
 
-if {[prepare_for_testing ${testfile}.exp $testfile [list $srcfile $srcfile2] \
+if {[prepare_for_testing "failed to prepare" $testfile [list $srcfile $srcfile2] \
 	 {debug nowarnings}]} {
     return -1
 }

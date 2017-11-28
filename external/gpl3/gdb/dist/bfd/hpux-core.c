@@ -1,5 +1,5 @@
 /* BFD back-end for HP/UX core files.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus SUpport
 
@@ -336,9 +336,11 @@ hpux_core_core_file_p (bfd *abfd)
      built.
      */
   if ((unknown_sections > 0) && (good_sections > 0))
-    (*_bfd_error_handler)
-      ("%s appears to be a core file,\nbut contains unknown sections.  It may have been created on an incompatible\nversion of HP-UX.  As a result, some information may be unavailable.\n",
-       abfd->filename);
+    _bfd_error_handler
+      ("%B appears to be a core file,\nbut contains unknown sections."
+       "  It may have been created on an incompatible\nversion of HP-UX."
+       "  As a result, some information may be unavailable.\n",
+       abfd);
 
   return abfd->xvec;
 
