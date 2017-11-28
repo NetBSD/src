@@ -298,7 +298,7 @@
 #define PACKAGE_NAME "bfd"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "bfd 2.27.51"
+#define PACKAGE_STRING "bfd 2.28.51"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bfd"
@@ -307,7 +307,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.27.51"
+#define PACKAGE_VERSION "2.28.51"
 
 /* The size of `char', as computed by sizeof. */
 /* #undef SIZEOF_CHAR */
@@ -342,7 +342,7 @@
 /* Name of host specific header file to include in trad-core.c. */
 /* #undef TRAD_HEADER */
 
-/* Define if we should use 64-bit archives. */
+/* Define if 64-bit archives should always be used. */
 /* #undef USE_64_BIT_ARCHIVE */
 
 /* Use b modifier when opening binary files? */
@@ -380,7 +380,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.27.51"
+#define VERSION "2.28.51"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
