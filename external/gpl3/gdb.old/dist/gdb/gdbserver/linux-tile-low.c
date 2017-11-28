@@ -1,6 +1,6 @@
 /* GNU/Linux/TILE-Gx specific low level interface, GDBserver.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "linux-low.h"
 
 #include <arch/abi.h>
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 
 /* Defined in auto-generated file reg-tilegx.c.  */
 void init_registers_tilegx (void);
@@ -68,25 +68,17 @@ tile_cannot_store_register (int regno)
     return 1;
 }
 
-static CORE_ADDR
-tile_get_pc (struct regcache *regcache)
-{
-  unsigned long pc;
-
-  collect_register_by_name (regcache, "pc", &pc);
-  return pc;
-}
-
-static void
-tile_set_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  unsigned long newpc = pc;
-
-  supply_register_by_name (regcache, "pc", &newpc);
-}
-
 static uint64_t tile_breakpoint = 0x400b3cae70166000ULL;
 #define tile_breakpoint_len 8
+
+/* Implementation of linux_target_ops method "sw_breakpoint_from_kind".  */
+
+static const gdb_byte *
+tile_sw_breakpoint_from_kind (int kind, int *size)
+{
+  *size = tile_breakpoint_len;
+  return (const gdb_byte *) &tile_breakpoint;
+}
 
 static int
 tile_breakpoint_at (CORE_ADDR where)
@@ -126,7 +118,7 @@ static struct regset_info tile_regsets[] =
 {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, tile_num_regs * 8,
     GENERAL_REGS, tile_fill_gregset, tile_store_gregset },
-  { 0, 0, 0, -1, -1, NULL, NULL }
+  NULL_REGSET
 };
 
 static struct regsets_info tile_regsets_info =
@@ -172,6 +164,14 @@ tile_arch_setup (void)
     current_process ()->tdesc = tdesc_tilegx;
 }
 
+/* Support for hardware single step.  */
+
+static int
+tile_supports_hardware_single_step (void)
+{
+  return 1;
+}
+
 
 struct linux_target_ops the_low_target =
 {
@@ -180,13 +180,34 @@ struct linux_target_ops the_low_target =
   tile_cannot_fetch_register,
   tile_cannot_store_register,
   NULL,
-  tile_get_pc,
-  tile_set_pc,
-  (const unsigned char *) &tile_breakpoint,
-  tile_breakpoint_len,
+  linux_get_pc_64bit,
+  linux_set_pc_64bit,
+  NULL, /* breakpoint_kind_from_pc */
+  tile_sw_breakpoint_from_kind,
   NULL,
   0,
   tile_breakpoint_at,
+  NULL, /* supports_z_point_type */
+  NULL, /* insert_point */
+  NULL, /* remove_point */
+  NULL, /* stopped_by_watchpoint */
+  NULL, /* stopped_data_address */
+  NULL, /* collect_ptrace_register */
+  NULL, /* supply_ptrace_register */
+  NULL, /* siginfo_fixup */
+  NULL, /* new_process */
+  NULL, /* new_thread */
+  NULL, /* new_fork */
+  NULL, /* prepare_to_resume */
+  NULL, /* process_qsupported */
+  NULL, /* supports_tracepoints */
+  NULL, /* get_thread_area */
+  NULL, /* install_fast_tracepoint_jump_pad */
+  NULL, /* emit_ops */
+  NULL, /* get_min_fast_tracepoint_insn_len */
+  NULL, /* supports_range_stepping */
+  NULL, /* breakpoint_kind_from_current_state */
+  tile_supports_hardware_single_step,
 };
 
 void

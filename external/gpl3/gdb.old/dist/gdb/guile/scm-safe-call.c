@@ -1,6 +1,6 @@
 /* GDB/Scheme support for safe calls into the Guile interpreter.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,10 +28,10 @@
 
 struct c_data
 {
-  void *(*func) (void *);
+  const char *(*func) (void *);
   void *data;
   /* An error message or NULL for success.  */
-  void *result;
+  const char *result;
 };
 
 /* Struct to marshall args through gdbscm_with_catch.  */
@@ -97,7 +97,7 @@ scscm_nop_unwind_handler (void *data, SCM key, SCM args)
 static SCM
 scscm_recording_pre_unwind_handler (void *datap, SCM key, SCM args)
 {
-  struct with_catch_data *data = datap;
+  struct with_catch_data *data = (struct with_catch_data *) datap;
   excp_matcher_func *matcher = data->excp_matcher;
 
   if (matcher != NULL && matcher (key))
@@ -126,7 +126,7 @@ scscm_recording_pre_unwind_handler (void *datap, SCM key, SCM args)
 static SCM
 scscm_recording_unwind_handler (void *datap, SCM key, SCM args)
 {
-  struct with_catch_data *data = datap;
+  struct with_catch_data *data = (struct with_catch_data *) datap;
 
   /* We need to record the stack in the exception since we're about to
      throw and lose the location that got the exception.  We do this by
@@ -147,7 +147,7 @@ scscm_recording_unwind_handler (void *datap, SCM key, SCM args)
 static void *
 gdbscm_with_catch (void *data)
 {
-  struct with_catch_data *d = data;
+  struct with_catch_data *d = (struct with_catch_data *) data;
 
   d->catch_result
     = scm_c_catch (SCM_BOOL_T,
@@ -167,8 +167,8 @@ gdbscm_with_catch (void *data)
    The result if NULL if no exception occurred, otherwise it is a statically
    allocated error message (caller must *not* free).  */
 
-void *
-gdbscm_with_guile (void *(*func) (void *), void *data)
+const char *
+gdbscm_with_guile (const char *(*func) (void *), void *data)
 {
   struct c_data c_data;
   struct with_catch_data catch_data;
@@ -230,7 +230,7 @@ gdbscm_call_guile (SCM (*func) (void *), void *data,
 static SCM
 scscm_call_0_body (void *argsp)
 {
-  SCM *args = argsp;
+  SCM *args = (SCM *) argsp;
 
   return scm_call_0 (args[0]);
 }
@@ -248,7 +248,7 @@ gdbscm_safe_call_0 (SCM proc, excp_matcher_func *ok_excps)
 static SCM
 scscm_call_1_body (void *argsp)
 {
-  SCM *args = argsp;
+  SCM *args = (SCM *) argsp;
 
   return scm_call_1 (args[0], args[1]);
 }
@@ -266,7 +266,7 @@ gdbscm_safe_call_1 (SCM proc, SCM arg0, excp_matcher_func *ok_excps)
 static SCM
 scscm_call_2_body (void *argsp)
 {
-  SCM *args = argsp;
+  SCM *args = (SCM *) argsp;
 
   return scm_call_2 (args[0], args[1], args[2]);
 }
@@ -284,7 +284,7 @@ gdbscm_safe_call_2 (SCM proc, SCM arg0, SCM arg1, excp_matcher_func *ok_excps)
 static SCM
 scscm_call_3_body (void *argsp)
 {
-  SCM *args = argsp;
+  SCM *args = (SCM *) argsp;
 
   return scm_call_3 (args[0], args[1], args[2], args[3]);
 }
@@ -303,7 +303,7 @@ gdbscm_safe_call_3 (SCM proc, SCM arg1, SCM arg2, SCM arg3,
 static SCM
 scscm_call_4_body (void *argsp)
 {
-  SCM *args = argsp;
+  SCM *args = (SCM *) argsp;
 
   return scm_call_4 (args[0], args[1], args[2], args[3], args[4]);
 }
@@ -322,7 +322,7 @@ gdbscm_safe_call_4 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4,
 static SCM
 scscm_apply_1_body (void *argsp)
 {
-  SCM *args = argsp;
+  SCM *args = (SCM *) argsp;
 
   return scm_apply_1 (args[0], args[1], args[2]);
 }
@@ -369,10 +369,11 @@ struct eval_scheme_string_data
 /* Wrapper to eval a C string in the Guile interpreter.
    This is passed to gdbscm_with_guile.  */
 
-static void *
+static const char *
 scscm_eval_scheme_string (void *datap)
 {
-  struct eval_scheme_string_data *data = datap;
+  struct eval_scheme_string_data *data
+    = (struct eval_scheme_string_data *) datap;
   SCM result = scm_c_eval_string (data->string);
 
   if (data->display_result && !scm_is_eq (result, SCM_UNSPECIFIED))
@@ -397,7 +398,7 @@ char *
 gdbscm_safe_eval_string (const char *string, int display_result)
 {
   struct eval_scheme_string_data data = { string, display_result };
-  void *result;
+  const char *result;
 
   result = gdbscm_with_guile (scscm_eval_scheme_string, (void *) &data);
 
@@ -410,10 +411,10 @@ gdbscm_safe_eval_string (const char *string, int display_result)
 
 /* Helper function for gdbscm_safe_source_scheme_script.  */
 
-static void *
+static const char *
 scscm_source_scheme_script (void *data)
 {
-  const char *filename = data;
+  const char *filename = (const char *) data;
 
   /* The Guile docs don't specify what the result is.
      Maybe it's SCM_UNSPECIFIED, but the docs should specify that. :-) */
@@ -438,7 +439,7 @@ gdbscm_safe_source_script (const char *filename)
      by default.  This function is invoked by the "source" GDB command which
      already has its own path search support.  */
   char *abs_filename = NULL;
-  void *result;
+  const char *result;
 
   if (!IS_ABSOLUTE_PATH (filename))
     {

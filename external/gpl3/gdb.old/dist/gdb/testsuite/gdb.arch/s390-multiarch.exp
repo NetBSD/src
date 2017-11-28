@@ -1,4 +1,4 @@
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,9 +28,8 @@ if { ![isnative] || ![istarget s390x-*-* ] } {
     return
 }
 
-set testfile "s390-multiarch"
-set srcfile "${srcdir}/${subdir}/${testfile}.c"
-set binprefix "${objdir}/${subdir}/${testfile}"
+standard_testfile
+set binprefix $binfile
 
 gdb_exit
 
@@ -39,13 +38,13 @@ if { [get_compiler_info] } {
 }
 
 proc compile_and_dump {variant ccopts binfile} {
-    global srcfile
+    global srcdir subdir srcfile
     set compile_flags {debug}
     foreach opt $ccopts {
 	lappend compile_flags "additional_flags=$opt"
     }
     set test "compile ($variant)"
-    if { [gdb_compile $srcfile $binfile executable $compile_flags] != "" } {
+    if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "$binfile" executable $compile_flags] != "" } {
 	fail $test
 	return {}
     }

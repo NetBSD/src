@@ -3,6 +3,8 @@
 #include "ss.h"
 #include <stdio.h>
 
+#include "../lib/unbuffer_output.c"
+
 extern int structarg(struct s);
 extern int pstructarg(struct s*);
 extern int shr1(int);
@@ -31,6 +33,9 @@ int mainshr1(int g)
 int main()
 {
   struct s y;
+
+  gdb_unbuffer_output ();
+
   g = 1;
   g = shr1(g);
   g = shr2(g);

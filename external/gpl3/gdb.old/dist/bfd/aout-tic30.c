@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C30 a.out binaries.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -339,32 +339,32 @@ tic30_aout_callback (bfd *abfd)
   unsigned long arch_align;
 
   /* Calculate the file positions of the parts of a newly read aout header.  */
-  obj_textsec (abfd)->size = N_TXTSIZE (*execp);
+  obj_textsec (abfd)->size = N_TXTSIZE (execp);
 
   /* The virtual memory addresses of the sections.  */
-  obj_textsec (abfd)->vma = N_TXTADDR (*execp);
-  obj_datasec (abfd)->vma = N_DATADDR (*execp);
-  obj_bsssec (abfd)->vma = N_BSSADDR (*execp);
+  obj_textsec (abfd)->vma = N_TXTADDR (execp);
+  obj_datasec (abfd)->vma = N_DATADDR (execp);
+  obj_bsssec (abfd)->vma = N_BSSADDR (execp);
 
   obj_textsec (abfd)->lma = obj_textsec (abfd)->vma;
   obj_datasec (abfd)->lma = obj_datasec (abfd)->vma;
   obj_bsssec (abfd)->lma = obj_bsssec (abfd)->vma;
 
   /* The file offsets of the sections.  */
-  obj_textsec (abfd)->filepos = N_TXTOFF (*execp);
-  obj_datasec (abfd)->filepos = N_DATOFF (*execp);
+  obj_textsec (abfd)->filepos = N_TXTOFF (execp);
+  obj_datasec (abfd)->filepos = N_DATOFF (execp);
 
   /* The file offsets of the relocation info.  */
-  obj_textsec (abfd)->rel_filepos = N_TRELOFF (*execp);
-  obj_datasec (abfd)->rel_filepos = N_DRELOFF (*execp);
+  obj_textsec (abfd)->rel_filepos = N_TRELOFF (execp);
+  obj_datasec (abfd)->rel_filepos = N_DRELOFF (execp);
 
   /* The file offsets of the string table and symbol table.  */
-  obj_sym_filepos (abfd) = N_SYMOFF (*execp);
-  obj_str_filepos (abfd) = N_STROFF (*execp);
+  obj_sym_filepos (abfd) = N_SYMOFF (execp);
+  obj_str_filepos (abfd) = N_STROFF (execp);
 
   /* Determine the architecture and machine type of the object file.  */
 #ifdef SET_ARCH_MACH
-  SET_ARCH_MACH (abfd, *execp);
+  SET_ARCH_MACH (abfd, execp);
 #else
   bfd_default_set_arch_mach (abfd, DEFAULT_ARCH, 0L);
 #endif
@@ -568,10 +568,10 @@ tic30_aout_object_p (bfd *abfd)
   exec.a_info = H_GET_32 (abfd, exec_bytes.e_info);
 #endif /* SWAP_MAGIC */
 
-  if (N_BADMAG (exec))
+  if (N_BADMAG (&exec))
     return 0;
 #ifdef MACHTYPE_OK
-  if (!(MACHTYPE_OK (N_MACHTYPE (exec))))
+  if (!(MACHTYPE_OK (N_MACHTYPE (&exec))))
     return 0;
 #endif
 
@@ -636,11 +636,8 @@ tic30_aout_write_object_contents (bfd *abfd)
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
 
   {
-    bfd_size_type text_size;	/* Dummy vars.  */
-    file_ptr text_end;
-
     if (adata (abfd).magic == undecided_magic)
-      NAME (aout, adjust_sizes_and_vmas) (abfd, &text_size, &text_end);
+      NAME (aout, adjust_sizes_and_vmas) (abfd);
 
     execp->a_syms = bfd_get_symcount (abfd) * EXTERNAL_NLIST_SIZE;
     execp->a_entry = bfd_get_start_address (abfd);
@@ -664,19 +661,19 @@ tic30_aout_write_object_contents (bfd *abfd)
     if (bfd_get_outsymbols (abfd) != (asymbol **) NULL
 	&& bfd_get_symcount (abfd) != 0)
       {
-	if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (*execp)), SEEK_SET) != 0)
+	if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (execp)), SEEK_SET) != 0)
 	  return FALSE;
 
 	if (!NAME (aout, write_syms) (abfd))
 	  return FALSE;
       }
 
-    if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (*execp)), SEEK_SET) != 0)
+    if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (execp)), SEEK_SET) != 0)
       return FALSE;
     if (!NAME (aout, squirt_out_relocs) (abfd, obj_textsec (abfd)))
       return FALSE;
 
-    if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (*execp)), SEEK_SET) != 0)
+    if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (execp)), SEEK_SET) != 0)
       return FALSE;
     if (!NAME (aout, squirt_out_relocs) (abfd, obj_datasec (abfd)))
       return FALSE;
@@ -998,6 +995,10 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 #ifndef MY_bfd_link_split_section
 #define MY_bfd_link_split_section  _bfd_generic_link_split_section
+#endif
+
+#ifndef MY_bfd_link_check_relocs
+#define MY_bfd_link_check_relocs   _bfd_generic_link_check_relocs
 #endif
 
 #ifndef MY_bfd_copy_private_bfd_data

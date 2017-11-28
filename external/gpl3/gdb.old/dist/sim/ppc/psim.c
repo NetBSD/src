@@ -118,7 +118,7 @@ find_arg(char *err_msg,
 
 INLINE_PSIM\
 (void)
-psim_usage(int verbose, int help)
+psim_usage (int verbose, int help, SIM_OPEN_KIND kind)
 {
   printf_filtered("Usage:\n");
   printf_filtered("\n");
@@ -217,9 +217,12 @@ psim_usage(int verbose, int help)
     print_options();
   }
 
-  if (REPORT_BUGS_TO[0])
-    printf ("Report bugs to %s\n", REPORT_BUGS_TO);
-  exit (help ? 0 : 1);
+  if (kind == SIM_OPEN_STANDALONE)
+    {
+      if (REPORT_BUGS_TO[0])
+	printf ("Report bugs to %s\n", REPORT_BUGS_TO);
+      exit (help ? 0 : 1);
+    }
 }
 
 /* Test "string" for containing a string of digits that form a number
@@ -247,7 +250,8 @@ int is_num( char *string, int min, int max, int err)
 INLINE_PSIM\
 (char **)
 psim_options(device *root,
-	     char **argv)
+	     char **argv,
+	     SIM_OPEN_KIND kind)
 {
   device *current = root;
   int argp;
@@ -261,9 +265,8 @@ psim_options(device *root,
       switch (*p) {
       default:
 	printf_filtered ("Invalid Option: %s\n", argv[argp]);
-	psim_usage(0, 0);
-	error ("");
-	break;
+	psim_usage (0, 0, kind);
+	return NULL;
       case 'c':
 	param = find_arg("Missing <count> option for -c (max-iterations)\n", &argp, argv);
 	tree_parse(root, "/openprom/options/max-iterations %s", param);
@@ -282,7 +285,8 @@ psim_options(device *root,
 	else
 	  {
 	    printf_filtered ("Invalid <endian> option for -E (target-endian)\n");
-	    psim_usage (0, 0);
+	    psim_usage (0, 0, kind);
+	    return NULL;
 	  }
 	break;
       case 'f':
@@ -291,11 +295,11 @@ psim_options(device *root,
 	break;
       case 'h':
       case '?':
-	psim_usage(1, 1);
-	break;
+	psim_usage (1, 1, kind);
+	return NULL;
       case 'H':
-	psim_usage(2, 1);
-	break;
+	psim_usage (2, 1, kind);
+	return NULL;
       case 'i':
 	if (isdigit(p[1])) {
 	  tree_parse(root, "/openprom/trace/print-info %c", p[1]);
@@ -356,7 +360,10 @@ psim_options(device *root,
 	  printf_filtered("Warning - architecture parameter ignored\n");
         }
 	else if (strcmp (argv[argp], "--help") == 0)
-	  psim_usage (0, 1);
+	  {
+	    psim_usage (0, 1, kind);
+	    return NULL;
+	  }
 	else if (strncmp (argv[argp], "--sysroot=",
 			  sizeof ("--sysroot=") - 1) == 0)
 	  /* Ignore this option.  */
@@ -365,13 +372,16 @@ psim_options(device *root,
 	  {
 	    extern const char version[];
 	    printf ("GNU simulator %s%s\n", PKGVERSION, version);
-	    exit (0);
+	    if (kind == SIM_OPEN_STANDALONE)
+	      exit (0);
+	    else
+	      return NULL;
 	  }
 	else
 	  {
 	    printf_filtered ("Invalid option: %s\n", argv[argp]);
-	    psim_usage (0, 0);
-	    error ("");
+	    psim_usage (0, 0, kind);
+	    return NULL;
 	  }
 	break;
       }

@@ -1,5 +1,5 @@
 /* SuperH SH64-specific support for 32-bit ELF
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -397,7 +397,7 @@ sh64_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	 right, and tweak the name when it's output.  Otherwise, we make
 	 an indirect symbol of it.  */
       flagword flags
-	= info->relocatable || info->emitrelocations
+	= bfd_link_relocatable (info) || info->emitrelocations
 	? BSF_GLOBAL : BSF_GLOBAL | BSF_INDIRECT;
 
       char *dl_name
@@ -441,9 +441,9 @@ sh64_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	free (dl_name);
 
       if (h->type != STT_DATALABEL
-	  || ((info->relocatable || info->emitrelocations)
+	  || ((bfd_link_relocatable (info) || info->emitrelocations)
 	      && h->root.type != bfd_link_hash_undefined)
-	  || (! info->relocatable && !info->emitrelocations
+	  || (! bfd_link_relocatable (info) && !info->emitrelocations
 	      && h->root.type != bfd_link_hash_indirect))
 	{
 	  /* Make sure we don't get confused on invalid input.  */
@@ -487,7 +487,7 @@ sh64_elf_link_output_symbol_hook (struct bfd_link_info *info,
 {
   char *name = (char *) cname;
 
-  if (info->relocatable || info->emitrelocations)
+  if (bfd_link_relocatable (info) || info->emitrelocations)
     {
       if (ELF_ST_TYPE (sym->st_info) == STT_DATALABEL)
 	name[strlen (name) - strlen (DATALABEL_SUFFIX)] = 0;
@@ -530,11 +530,9 @@ shmedia_prepare_reloc (struct bfd_link_info *info, bfd *abfd,
 		     && ((*relocation + rel->r_addend) & 1) == 0)
 	      msg = _("PTA mismatch: a SHcompact address (bit 0 == 0)");
 
-	    if (msg != NULL
-		&& ! ((*info->callbacks->reloc_dangerous)
-		      (info, msg, abfd, input_section,
-		       rel->r_offset)))
-	      return FALSE;
+	    if (msg != NULL)
+	      (*info->callbacks->reloc_dangerous)
+		(info, msg, abfd, input_section, rel->r_offset);
 	  }
 	else
 	  {

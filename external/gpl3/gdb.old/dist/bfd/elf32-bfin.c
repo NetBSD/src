@@ -1,5 +1,5 @@
 /* ADI Blackfin BFD support for 32-bit ELF.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1165,7 +1165,7 @@ bfin_check_relocs (bfd * abfd,
   asection *sgot;
   asection *srelgot;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -1232,7 +1232,7 @@ bfin_check_relocs (bfd * abfd,
 	      BFD_ASSERT (sgot != NULL);
 	    }
 
-	  if (srelgot == NULL && (h != NULL || info->shared))
+	  if (srelgot == NULL && (h != NULL || bfd_link_pic (info)))
 	    {
 	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 	      if (srelgot == NULL)
@@ -1285,7 +1285,7 @@ bfin_check_relocs (bfd * abfd,
 	      if (local_got_refcounts[r_symndx] == 0)
 		{
 		  sgot->size += 4;
-		  if (info->shared)
+		  if (bfd_link_pic (info))
 		    {
 		      /* If we are generating a shared object, we need to
 		         output a R_68K_RELATIVE reloc so that the dynamic
@@ -1455,7 +1455,7 @@ bfin_relocate_section (bfd * output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       address = rel->r_offset;
@@ -1502,8 +1502,10 @@ bfin_relocate_section (bfd * output_bfd,
 		BFD_ASSERT (off != (bfd_vma) - 1);
 		dyn = elf_hash_table (info)->dynamic_sections_created;
 
-		if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-		    || (info->shared
+		if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
+						      bfd_link_pic (info),
+						      h)
+		    || (bfd_link_pic (info)
 			&& (info->symbolic
 			    || h->dynindx == -1
 			    || h->forced_local)
@@ -1548,7 +1550,7 @@ bfin_relocate_section (bfd * output_bfd,
 		  {
 		    bfd_put_32 (output_bfd, relocation, sgot->contents + off);
 
-		    if (info->shared)
+		    if (bfd_link_pic (info))
 		      {
 			asection *s;
 			Elf_Internal_Rela outrel;
@@ -1621,12 +1623,9 @@ bfin_relocate_section (bfd * output_bfd,
 	    }
 
 	  if (r == bfd_reloc_overflow)
-	    {
-	      if (!(info->callbacks->reloc_overflow
-		    (info, (h ? &h->root : NULL), name, howto->name,
-		     (bfd_vma) 0, input_bfd, input_section, rel->r_offset)))
-		return FALSE;
-	    }
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  else
 	    {
 	      (*_bfd_error_handler)
@@ -1719,7 +1718,7 @@ bfin_gc_sweep_hook (bfd * abfd,
 		    {
 		      /* We don't need the .got entry any more.  */
 		      sgot->size -= 4;
-		      if (info->shared)
+		      if (bfd_link_pic (info))
 			srelgot->size -= sizeof (Elf32_External_Rela);
 		    }
 		}
@@ -2213,7 +2212,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
       /* If we're linking an executable at a fixed address, we can
 	 omit the dynamic relocation as long as the symbol is local to
 	 this module.  */
-      if (info->executable && !info->pie
+      if (bfd_link_pde (info)
 	  && (entry->symndx != -1
 	      || BFINFDPIC_SYM_LOCAL (info, entry->d.h)))
 	{
@@ -2268,7 +2267,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
 	  if (entry->symndx == -1
 	      && ! BFINFDPIC_FUNCDESC_LOCAL (info, entry->d.h)
 	      && BFINFDPIC_SYM_LOCAL (info, entry->d.h)
-	      && !(info->executable && !info->pie))
+	      && !bfd_link_pde (info))
 	    {
 	      reloc = R_BFIN_FUNCDESC;
 	      idx = elf_section_data (entry->d.h->root.u.def.section
@@ -2304,7 +2303,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
 	     dynamic symbol entry for the got section, so idx will be
 	     zero, which means we can and should compute the address
 	     of the private descriptor ourselves.  */
-	  if (info->executable && !info->pie
+	  if (bfd_link_pde (info)
 	      && (entry->symndx != -1
 		  || BFINFDPIC_FUNCDESC_LOCAL (info, entry->d.h)))
 	    {
@@ -2367,7 +2366,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
       /* If we're linking an executable at a fixed address, we can
 	 omit the dynamic relocation as long as the symbol is local to
 	 this module.  */
-      if (info->executable && !info->pie
+      if (bfd_link_pde (info)
 	  && (entry->symndx != -1 || BFINFDPIC_SYM_LOCAL (info, entry->d.h)))
 	{
 	  if (sec)
@@ -2415,7 +2414,9 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
 
       /* If we've omitted the dynamic relocation, just emit the fixed
 	 addresses of the symbol and of the local GOT base offset.  */
-      if (info->executable && !info->pie && sec && sec->output_section)
+      if (bfd_link_pde (info)
+	  && sec
+	  && sec->output_section)
 	{
 	  lowword = ad;
 	  highword = bfinfdpic_got_section (info)->output_section->vma
@@ -2595,7 +2596,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
   Elf_Internal_Rela *relend;
   unsigned isec_segment, got_segment, plt_segment,
     check_segment[2];
-  int silence_segment_error = !(info->shared || info->pie);
+  int silence_segment_error = !bfd_link_pic (info);
 
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
@@ -2675,7 +2676,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       if (h != NULL
@@ -2829,7 +2830,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		   section+offset.  */
 		if (h && ! BFINFDPIC_FUNCDESC_LOCAL (info, h)
 		    && BFINFDPIC_SYM_LOCAL (info, h)
-		    && !(info->executable && !info->pie))
+		    && !bfd_link_pde (info))
 		  {
 		    dynindx = elf_section_data (h->root.u.def.section
 						->output_section)->dynindx;
@@ -2866,7 +2867,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		   dynamic symbol entry for the got section, so idx will
 		   be zero, which means we can and should compute the
 		   address of the private descriptor ourselves.  */
-		if (info->executable && !info->pie
+		if (bfd_link_pde (info)
 		    && (!h || BFINFDPIC_FUNCDESC_LOCAL (info, h)))
 		  {
 		    bfd_vma offset;
@@ -2989,7 +2990,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	       can omit the dynamic relocation as long as the symbol
 	       is defined in the current link unit (which is implied
 	       by its output section not being NULL).  */
-	    if (info->executable && !info->pie
+	    if (bfd_link_pde (info)
 		&& (!h || BFINFDPIC_SYM_LOCAL (info, h)))
 	      {
 		if (osec)
@@ -3069,7 +3070,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		/* If we've omitted the dynamic relocation, just emit
 		   the fixed addresses of the symbol and of the local
 		   GOT base offset.  */
-		if (info->executable && !info->pie
+		if (bfd_link_pde (info)
 		    && (!h || BFINFDPIC_SYM_LOCAL (info, h)))
 		  bfd_put_32 (output_bfd,
 			      bfinfdpic_got_section (info)->output_section->vma
@@ -3127,11 +3128,11 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		   && picrel->d.h->root.type == bfd_link_hash_undefined))
 	    info->callbacks->warning
 	      (info,
-	       (info->shared || info->pie)
+	       bfd_link_pic (info)
 	       ? _("relocations between different segments are not supported")
 	       : _("warning: relocation references a different segment"),
 	       name, input_bfd, input_section, rel->r_offset);
-	  if (!silence_segment_error && (info->shared || info->pie))
+	  if (!silence_segment_error && bfd_link_pic (info))
 	    return FALSE;
 	  elf_elfheader (output_bfd)->e_flags |= EF_BFIN_PIC;
 	}
@@ -3205,13 +3206,13 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      r = info->callbacks->reloc_overflow
+	      (*info->callbacks->reloc_overflow)
 		(info, (h ? &h->root : NULL), name, howto->name,
 		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      r = info->callbacks->undefined_symbol
+	      (*info->callbacks->undefined_symbol)
 		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
@@ -3233,11 +3234,8 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	    }
 
 	  if (msg)
-	    r = info->callbacks->warning
-	      (info, msg, name, input_bfd, input_section, rel->r_offset);
-
-	  if (! r)
-	    return FALSE;
+	    (*info->callbacks->warning) (info, msg, name, input_bfd,
+					 input_section, rel->r_offset);
 	}
     }
 
@@ -3497,7 +3495,7 @@ _bfin_create_got_section (bfd *abfd, struct bfd_link_info *info)
       h->def_regular = 1;
       h->type = STT_OBJECT;
 
-      if (! info->executable
+      if (! bfd_link_executable (info)
 	  && ! bfd_elf_link_record_dynamic_symbol (info, h))
 	return FALSE;
     }
@@ -3566,7 +3564,7 @@ elf32_bfinfdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 	 be needed, we can discard it later.  We will never need this
 	 section when generating a shared object, since they do not use
 	 copy relocs.  */
-      if (! info->shared)
+      if (! bfd_link_pic (info))
 	{
 	  s = bfd_make_section_anyway_with_flags (abfd,
 						  ".rela.bss",
@@ -3649,7 +3647,7 @@ _bfinfdpic_count_relocs_fixups (struct bfinfdpic_relocs_info *entry,
 {
   bfd_vma relocs = 0, fixups = 0;
 
-  if (!dinfo->info->executable || dinfo->info->pie)
+  if (!bfd_link_pde (dinfo->info))
     relocs = entry->relocs32 + entry->relocsfd + entry->relocsfdv;
   else
     {
@@ -4251,7 +4249,7 @@ elf32_bfinfdpic_size_dynamic_sections (bfd *output_bfd,
   if (htab->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -4318,7 +4316,7 @@ static bfd_boolean
 elf32_bfinfdpic_always_size_sections (bfd *output_bfd,
 				     struct bfd_link_info *info)
 {
-  if (!info->relocatable
+  if (!bfd_link_relocatable (info)
       && !bfd_elf_stack_segment_size (output_bfd, info,
 				      "__stacksize", DEFAULT_STACK_SIZE))
     return FALSE;
@@ -4453,7 +4451,13 @@ elf32_bfinfdpic_finish_dynamic_sections (bfd *output_bfd,
   if (bfinfdpic_got_section (info))
     {
       BFD_ASSERT (bfinfdpic_gotrel_section (info)->size
-		  == (bfinfdpic_gotrel_section (info)->reloc_count
+		  /* PR 17334: It appears that the GOT section can end up
+		     being bigger than the number of relocs.  Presumably
+		     because some relocs have been deleted.  A test case has
+		     yet to be generated for verify this, but in the meantime
+		     the test below has been changed from == to >= so that
+		     applications can continue to be built.  */
+		  >= (bfinfdpic_gotrel_section (info)->reloc_count
 		      * sizeof (Elf32_External_Rel)));
 
       if (bfinfdpic_gotfixup_section (info))
@@ -4735,7 +4739,7 @@ bfinfdpic_check_relocs (bfd *abfd, struct bfd_link_info *info,
   bfd *dynobj;
   struct bfinfdpic_relocs_info *picrel;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -5145,7 +5149,7 @@ bfin_finish_dynamic_symbol (bfd * output_bfd,
          the symbol was forced to be local because of a version file.
          The entry in the global offset table will already have been
          initialized in the relocate_section function.  */
-      if (info->shared
+      if (bfd_link_pic (info)
 	  && (info->symbolic
 	      || h->dynindx == -1 || h->forced_local) && h->def_regular)
 	{
@@ -5232,7 +5236,7 @@ bfin_adjust_dynamic_symbol (struct bfd_link_info *info,
      only references to the symbol are via the global offset table.
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     return TRUE;
 
   /* We must allocate the symbol in our .dynbss section, which will
@@ -5248,7 +5252,8 @@ bfin_adjust_dynamic_symbol (struct bfd_link_info *info,
   s = bfd_get_linker_section (dynobj, ".dynbss");
   BFD_ASSERT (s != NULL);
 
-  /* We must generate a R_68K_COPY reloc to tell the dynamic linker to
+#if 0 /* Bfin does not currently have a COPY reloc.  */
+  /* We must generate a R_BFIN_COPY reloc to tell the dynamic linker to
      copy the initial value out of the dynamic object and into the
      runtime process image.  We need to remember the offset into the
      .rela.bss section we are going to use.  */
@@ -5261,7 +5266,13 @@ bfin_adjust_dynamic_symbol (struct bfd_link_info *info,
       srel->size += sizeof (Elf32_External_Rela);
       h->needs_copy = 1;
     }
-
+#else
+  if ((h->root.u.def.section->flags & SEC_ALLOC) != 0)
+    {
+      (*_bfd_error_handler) (_("the bfin target does not currently support the generation of copy relocations"));
+      return FALSE;
+    }
+#endif
   /* We need to figure out the alignment required for this symbol.  I
      have no idea how ELF linkers handle this.  */
   power_of_two = bfd_log2 (h->size);
@@ -5362,7 +5373,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info))
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -5388,7 +5399,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
      against symbols that have become local due to visibility changes.
      We allocated space for them in the check_relocs routine, but we
      will not fill them in in the relocate_section routine.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     elf_link_hash_traverse (elf_hash_table (info),
 			    bfin_discard_copies, info);
 
@@ -5467,7 +5478,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (!info->shared)
+      if (!bfd_link_pic (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -5515,7 +5526,7 @@ bfd_bfin_elf32_create_embedded_relocs (bfd *abfd,
   bfd_byte *p;
   bfd_size_type amt;
 
-  BFD_ASSERT (! info->relocatable);
+  BFD_ASSERT (! bfd_link_relocatable (info));
 
   *errmsg = NULL;
 

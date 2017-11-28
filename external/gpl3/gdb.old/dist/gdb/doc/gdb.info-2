@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
 
-Copyright (C) 1988-2015 Free Software Foundation, Inc.
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.10.1.
+Source-Level Debugger' for GDB (GDB) Version 7.12.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,432 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Machine Code,  Prev: Source Path,  Up: Source
+
+9.6 Source and Machine Code
+===========================
+
+You can use the command 'info line' to map source lines to program
+addresses (and vice versa), and the command 'disassemble' to display a
+range of addresses as machine instructions.  You can use the command
+'set disassemble-next-line' to set whether to disassemble next source
+line when execution stops.  When run under GNU Emacs mode, the 'info
+line' command causes the arrow to point to the line specified.  Also,
+'info line' prints addresses in symbolic form as well as hex.
+
+'info line LOCATION'
+     Print the starting and ending addresses of the compiled code for
+     source line LOCATION.  You can specify source lines in any of the
+     ways documented in *note Specify Location::.
+
+   For example, we can use 'info line' to discover the location of the
+object code for the first line of function 'm4_changequote':
+
+     (gdb) info line m4_changequote
+     Line 895 of "builtin.c" starts at pc 0x634c and ends at 0x6350.
+
+We can also inquire (using '*ADDR' as the form for LOCATION) what source
+line covers a particular address:
+     (gdb) info line *0x63ff
+     Line 926 of "builtin.c" starts at pc 0x63e4 and ends at 0x6404.
+
+   After 'info line', the default address for the 'x' command is changed
+to the starting address of the line, so that 'x/i' is sufficient to
+begin examining the machine code (*note Examining Memory: Memory.).
+Also, this address is saved as the value of the convenience variable
+'$_' (*note Convenience Variables: Convenience Vars.).
+
+'disassemble'
+'disassemble /m'
+'disassemble /s'
+'disassemble /r'
+     This specialized command dumps a range of memory as machine
+     instructions.  It can also print mixed source+disassembly by
+     specifying the '/m' or '/s' modifier and print the raw instructions
+     in hex as well as in symbolic form by specifying the '/r' modifier.
+     The default memory range is the function surrounding the program
+     counter of the selected frame.  A single argument to this command
+     is a program counter value; GDB dumps the function surrounding this
+     value.  When two arguments are given, they should be separated by a
+     comma, possibly surrounded by whitespace.  The arguments specify a
+     range of addresses to dump, in one of two forms:
+
+     'START,END'
+          the addresses from START (inclusive) to END (exclusive)
+     'START,+LENGTH'
+          the addresses from START (inclusive) to 'START+LENGTH'
+          (exclusive).
+
+     When 2 arguments are specified, the name of the function is also
+     printed (since there could be several functions in the given
+     range).
+
+     The argument(s) can be any expression yielding a numeric value,
+     such as '0x32c4', '&main+10' or '$pc - 8'.
+
+     If the range of memory being disassembled contains current program
+     counter, the instruction at that location is shown with a '=>'
+     marker.
+
+   The following example shows the disassembly of a range of addresses
+of HP PA-RISC 2.0 code:
+
+     (gdb) disas 0x32c4, 0x32e4
+     Dump of assembler code from 0x32c4 to 0x32e4:
+        0x32c4 <main+204>:      addil 0,dp
+        0x32c8 <main+208>:      ldw 0x22c(sr0,r1),r26
+        0x32cc <main+212>:      ldil 0x3000,r31
+        0x32d0 <main+216>:      ble 0x3f8(sr4,r31)
+        0x32d4 <main+220>:      ldo 0(r31),rp
+        0x32d8 <main+224>:      addil -0x800,dp
+        0x32dc <main+228>:      ldo 0x588(r1),r26
+        0x32e0 <main+232>:      ldil 0x3000,r31
+     End of assembler dump.
+
+   Here is an example showing mixed source+assembly for Intel x86 with
+'/m' or '/s', when the program is stopped just after function prologue
+in a non-optimized function with no inline code.
+
+     (gdb) disas /m main
+     Dump of assembler code for function main:
+     5       {
+        0x08048330 <+0>:    push   %ebp
+        0x08048331 <+1>:    mov    %esp,%ebp
+        0x08048333 <+3>:    sub    $0x8,%esp
+        0x08048336 <+6>:    and    $0xfffffff0,%esp
+        0x08048339 <+9>:    sub    $0x10,%esp
+
+     6         printf ("Hello.\n");
+     => 0x0804833c <+12>:   movl   $0x8048440,(%esp)
+        0x08048343 <+19>:   call   0x8048284 <puts@plt>
+
+     7         return 0;
+     8       }
+        0x08048348 <+24>:   mov    $0x0,%eax
+        0x0804834d <+29>:   leave
+        0x0804834e <+30>:   ret
+
+     End of assembler dump.
+
+   The '/m' option is deprecated as its output is not useful when there
+is either inlined code or re-ordered code.  The '/s' option is the
+preferred choice.  Here is an example for AMD x86-64 showing the
+difference between '/m' output and '/s' output.  This example has one
+inline function defined in a header file, and the code is compiled with
+'-O2' optimization.  Note how the '/m' output is missing the disassembly
+of several instructions that are present in the '/s' output.
+
+   'foo.h':
+
+     int
+     foo (int a)
+     {
+       if (a < 0)
+         return a * 2;
+       if (a == 0)
+         return 1;
+       return a + 10;
+     }
+
+   'foo.c':
+
+     #include "foo.h"
+     volatile int x, y;
+     int
+     main ()
+     {
+       x = foo (y);
+       return 0;
+     }
+
+     (gdb) disas /m main
+     Dump of assembler code for function main:
+     5	{
+
+     6	  x = foo (y);
+        0x0000000000400400 <+0>:	mov    0x200c2e(%rip),%eax # 0x601034 <y>
+        0x0000000000400417 <+23>:	mov    %eax,0x200c13(%rip) # 0x601030 <x>
+
+     7	  return 0;
+     8	}
+        0x000000000040041d <+29>:	xor    %eax,%eax
+        0x000000000040041f <+31>:	retq
+        0x0000000000400420 <+32>:	add    %eax,%eax
+        0x0000000000400422 <+34>:	jmp    0x400417 <main+23>
+
+     End of assembler dump.
+     (gdb) disas /s main
+     Dump of assembler code for function main:
+     foo.c:
+     5	{
+     6	  x = foo (y);
+        0x0000000000400400 <+0>:	mov    0x200c2e(%rip),%eax # 0x601034 <y>
+
+     foo.h:
+     4	  if (a < 0)
+        0x0000000000400406 <+6>:	test   %eax,%eax
+        0x0000000000400408 <+8>:	js     0x400420 <main+32>
+
+     6	  if (a == 0)
+     7	    return 1;
+     8	  return a + 10;
+        0x000000000040040a <+10>:	lea    0xa(%rax),%edx
+        0x000000000040040d <+13>:	test   %eax,%eax
+        0x000000000040040f <+15>:	mov    $0x1,%eax
+        0x0000000000400414 <+20>:	cmovne %edx,%eax
+
+     foo.c:
+     6	  x = foo (y);
+        0x0000000000400417 <+23>:	mov    %eax,0x200c13(%rip) # 0x601030 <x>
+
+     7	  return 0;
+     8	}
+        0x000000000040041d <+29>:	xor    %eax,%eax
+        0x000000000040041f <+31>:	retq
+
+     foo.h:
+     5	    return a * 2;
+        0x0000000000400420 <+32>:	add    %eax,%eax
+        0x0000000000400422 <+34>:	jmp    0x400417 <main+23>
+     End of assembler dump.
+
+   Here is another example showing raw instructions in hex for AMD
+x86-64,
+
+     (gdb) disas /r 0x400281,+10
+     Dump of assembler code from 0x400281 to 0x40028b:
+        0x0000000000400281:  38 36  cmp    %dh,(%rsi)
+        0x0000000000400283:  2d 36 34 2e 73 sub    $0x732e3436,%eax
+        0x0000000000400288:  6f     outsl  %ds:(%rsi),(%dx)
+        0x0000000000400289:  2e 32 00       xor    %cs:(%rax),%al
+     End of assembler dump.
+
+   Addresses cannot be specified as a location (*note Specify
+Location::).  So, for example, if you want to disassemble function 'bar'
+in file 'foo.c', you must type 'disassemble 'foo.c'::bar' and not
+'disassemble foo.c:bar'.
+
+   Some architectures have more than one commonly-used set of
+instruction mnemonics or other syntax.
+
+   For programs that were dynamically linked and use shared libraries,
+instructions that call functions or branch to locations in the shared
+libraries might show a seemingly bogus location--it's actually a
+location of the relocation table.  On some architectures, GDB might be
+able to resolve these to actual function names.
+
+'set disassembly-flavor INSTRUCTION-SET'
+     Select the instruction set to use when disassembling the program
+     via the 'disassemble' or 'x/i' commands.
+
+     Currently this command is only defined for the Intel x86 family.
+     You can set INSTRUCTION-SET to either 'intel' or 'att'.  The
+     default is 'att', the AT&T flavor used by default by Unix
+     assemblers for x86-based targets.
+
+'show disassembly-flavor'
+     Show the current setting of the disassembly flavor.
+
+'set disassemble-next-line'
+'show disassemble-next-line'
+     Control whether or not GDB will disassemble the next source line or
+     instruction when execution stops.  If ON, GDB will display
+     disassembly of the next source line when execution of the program
+     being debugged stops.  This is _in addition_ to displaying the
+     source line itself, which GDB always does if possible.  If the next
+     source line cannot be displayed for some reason (e.g., if GDB
+     cannot find the source file, or there's no line info in the debug
+     info), GDB will display disassembly of the next _instruction_
+     instead of showing the next source line.  If AUTO, GDB will display
+     disassembly of next instruction only if the source line cannot be
+     displayed.  This setting causes GDB to display some feedback when
+     you step through a function with no line info or whose source file
+     is unavailable.  The default is OFF, which means never display the
+     disassembly of the next line or instruction.
+
+
+File: gdb.info,  Node: Data,  Next: Optimized Code,  Prev: Source,  Up: Top
+
+10 Examining Data
+*****************
+
+The usual way to examine data in your program is with the 'print'
+command (abbreviated 'p'), or its synonym 'inspect'.  It evaluates and
+prints the value of an expression of the language your program is
+written in (*note Using GDB with Different Languages: Languages.).  It
+may also print the expression using a Python-based pretty-printer (*note
+Pretty Printing::).
+
+'print EXPR'
+'print /F EXPR'
+     EXPR is an expression (in the source language).  By default the
+     value of EXPR is printed in a format appropriate to its data type;
+     you can choose a different format by specifying '/F', where F is a
+     letter specifying the format; see *note Output Formats: Output
+     Formats.
+
+'print'
+'print /F'
+     If you omit EXPR, GDB displays the last value again (from the
+     "value history"; *note Value History: Value History.).  This allows
+     you to conveniently inspect the same value in an alternative
+     format.
+
+   A more low-level way of examining data is with the 'x' command.  It
+examines data in memory at a specified address and prints it in a
+specified format.  *Note Examining Memory: Memory.
+
+   If you are interested in information about types, or about how the
+fields of a struct or a class are declared, use the 'ptype EXP' command
+rather than 'print'.  *Note Examining the Symbol Table: Symbols.
+
+   Another way of examining values of expressions and type information
+is through the Python extension command 'explore' (available only if the
+GDB build is configured with '--with-python').  It offers an interactive
+way to start at the highest level (or, the most abstract level) of the
+data type of an expression (or, the data type itself) and explore all
+the way down to leaf scalar values/fields embedded in the higher level
+data types.
+
+'explore ARG'
+     ARG is either an expression (in the source language), or a type
+     visible in the current context of the program being debugged.
+
+   The working of the 'explore' command can be illustrated with an
+example.  If a data type 'struct ComplexStruct' is defined in your C
+program as
+
+     struct SimpleStruct
+     {
+       int i;
+       double d;
+     };
+
+     struct ComplexStruct
+     {
+       struct SimpleStruct *ss_p;
+       int arr[10];
+     };
+
+followed by variable declarations as
+
+     struct SimpleStruct ss = { 10, 1.11 };
+     struct ComplexStruct cs = { &ss, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 } };
+
+then, the value of the variable 'cs' can be explored using the 'explore'
+command as follows.
+
+     (gdb) explore cs
+     The value of `cs' is a struct/class of type `struct ComplexStruct' with
+     the following fields:
+
+       ss_p = <Enter 0 to explore this field of type `struct SimpleStruct *'>
+        arr = <Enter 1 to explore this field of type `int [10]'>
+
+     Enter the field number of choice:
+
+Since the fields of 'cs' are not scalar values, you are being prompted
+to chose the field you want to explore.  Let's say you choose the field
+'ss_p' by entering '0'.  Then, since this field is a pointer, you will
+be asked if it is pointing to a single value.  From the declaration of
+'cs' above, it is indeed pointing to a single value, hence you enter
+'y'.  If you enter 'n', then you will be asked if it were pointing to an
+array of values, in which case this field will be explored as if it were
+an array.
+
+     `cs.ss_p' is a pointer to a value of type `struct SimpleStruct'
+     Continue exploring it as a pointer to a single value [y/n]: y
+     The value of `*(cs.ss_p)' is a struct/class of type `struct
+     SimpleStruct' with the following fields:
+
+       i = 10 .. (Value of type `int')
+       d = 1.1100000000000001 .. (Value of type `double')
+
+     Press enter to return to parent value:
+
+If the field 'arr' of 'cs' was chosen for exploration by entering '1'
+earlier, then since it is as array, you will be prompted to enter the
+index of the element in the array that you want to explore.
+
+     `cs.arr' is an array of `int'.
+     Enter the index of the element you want to explore in `cs.arr': 5
+
+     `(cs.arr)[5]' is a scalar value of type `int'.
+
+     (cs.arr)[5] = 4
+
+     Press enter to return to parent value:
+
+   In general, at any stage of exploration, you can go deeper towards
+the leaf values by responding to the prompts appropriately, or hit the
+return key to return to the enclosing data structure (the higher level
+data structure).
+
+   Similar to exploring values, you can use the 'explore' command to
+explore types.  Instead of specifying a value (which is typically a
+variable name or an expression valid in the current context of the
+program being debugged), you specify a type name.  If you consider the
+same example as above, your can explore the type 'struct ComplexStruct'
+by passing the argument 'struct ComplexStruct' to the 'explore' command.
+
+     (gdb) explore struct ComplexStruct
+
+By responding to the prompts appropriately in the subsequent interactive
+session, you can explore the type 'struct ComplexStruct' in a manner
+similar to how the value 'cs' was explored in the above example.
+
+   The 'explore' command also has two sub-commands, 'explore value' and
+'explore type'.  The former sub-command is a way to explicitly specify
+that value exploration of the argument is being invoked, while the
+latter is a way to explicitly specify that type exploration of the
+argument is being invoked.
+
+'explore value EXPR'
+     This sub-command of 'explore' explores the value of the expression
+     EXPR (if EXPR is an expression valid in the current context of the
+     program being debugged).  The behavior of this command is identical
+     to that of the behavior of the 'explore' command being passed the
+     argument EXPR.
+
+'explore type ARG'
+     This sub-command of 'explore' explores the type of ARG (if ARG is a
+     type visible in the current context of program being debugged), or
+     the type of the value/expression ARG (if ARG is an expression valid
+     in the current context of the program being debugged).  If ARG is a
+     type, then the behavior of this command is identical to that of the
+     'explore' command being passed the argument ARG.  If ARG is an
+     expression, then the behavior of this command will be identical to
+     that of the 'explore' command being passed the type of ARG as the
+     argument.
+
+* Menu:
+
+* Expressions::                 Expressions
+* Ambiguous Expressions::       Ambiguous Expressions
+* Variables::                   Program variables
+* Arrays::                      Artificial arrays
+* Output Formats::              Output formats
+* Memory::                      Examining memory
+* Auto Display::                Automatic display
+* Print Settings::              Print settings
+* Pretty Printing::             Python pretty printing
+* Value History::               Value history
+* Convenience Vars::            Convenience variables
+* Convenience Funs::            Convenience functions
+* Registers::                   Registers
+* Floating Point Hardware::     Floating point hardware
+* Vector Unit::                 Vector Unit
+* OS Information::              Auxiliary data provided by operating system
+* Memory Region Attributes::    Memory region attributes
+* Dump/Restore Files::          Copy between memory and a file
+* Core File Generation::        Cause a program dump its core
+* Character Sets::              Debugging programs that use a different
+                                character set than GDB does
+* Caching Target Data::         Data caching for targets
+* Searching Memory::            Searching memory for a sequence of bytes
+* Value Sizes::                 Managing memory allocated for values
 
 
 File: gdb.info,  Node: Expressions,  Next: Ambiguous Expressions,  Up: Data
@@ -441,9 +867,9 @@ are:
      The character representation is replaced with the octal escape
      '\nnn' for characters outside the 7-bit ASCII range.
 
-     Without this format, GDB displays 'char', 'unsigned char', and 'signed char'
-     data as character constants.  Single-byte members of vectors are
-     displayed as integer data.
+     Without this format, GDB displays 'char', 'unsigned char', and
+     'signed char' data as character constants.  Single-byte members of
+     vectors are displayed as integer data.
 
 'f'
      Regard the bits of the value as a floating point number and print
@@ -511,7 +937,9 @@ convenient defaults for ADDR.
 
 N, the repeat count
      The repeat count is a decimal integer; the default is 1.  It
-     specifies how much memory (counting by units U) to display.
+     specifies how much memory (counting by units U) to display.  If a
+     negative number is specified, memory is examined backward from
+     ADDR.
 
 F, the display format
      The display format is one of the formats used by 'print' ('x', 'd',
@@ -560,6 +988,10 @@ at address '0x54320'.  'x/4xw $sp' prints the four words ('w') of memory
 above the stack pointer (here, '$sp'; *note Registers: Registers.) in
 hexadecimal ('x').
 
+   You can also specify a negative repeat count to examine memory
+backward from the given address.  For example, 'x/-3uh 0x54320' prints
+three halfwords ('h') at '0x54314', '0x54328', and '0x5431c'.
+
    Since the letters indicating unit sizes are all distinct from the
 letters specifying output formats, you do not have to remember whether
 unit size or format comes first; either order works.  The output
@@ -575,6 +1007,14 @@ count specified, which immediately follow the last instruction that is
 within the count.  The command 'disassemble' gives an alternative way of
 inspecting machine instructions; see *note Source and Machine Code:
 Machine Code.
+
+   If a negative repeat count is specified for the formats 's' or 'i',
+the command displays null-terminated strings or instructions before the
+given address as many as the absolute value of the given number.  For
+the 'i' format, we use line number information in the debug info to
+accurately locate instruction boundaries while disassembling backward.
+If line info is not available, the command stops examining memory with
+an error message.
 
    All the defaults for the arguments to 'x' are designed to make it
 easy to continue scanning memory with minimal specifications each time
@@ -1632,9 +2072,16 @@ values likely to be useful.
      Query Packets::.  This variable contains the address of the thread
      information block.
 
-   On HP-UX systems, if you refer to a function or variable name that
-begins with a dollar sign, GDB searches for a user or system name first,
-before it searches for a convenience variable.
+'$_inferior'
+     The number of the current inferior.  *Note Debugging Multiple
+     Inferiors and Programs: Inferiors and Programs.
+
+'$_thread'
+     The thread number of the current thread.  *Note thread numbers::.
+
+'$_gthread'
+     The global number of the current thread.  *Note global thread
+     numbers::.
 
 
 File: gdb.info,  Node: Convenience Funs,  Next: Registers,  Prev: Convenience Vars,  Up: Data
@@ -1769,6 +2216,16 @@ support, which means that they are always available.
      checks all stack frames from the immediate caller to the frame
      specified by NUMBER_OF_FRAMES, whereas '$_caller_matches' only
      checks the frame specified by NUMBER_OF_FRAMES.
+
+'$_as_string(VALUE)'
+     Return the string representation of VALUE.
+
+     This function is useful to obtain the textual label (enumerator) of
+     an enumeration value.  For example, assuming the variable NODE is
+     of an enumerated type:
+
+          (gdb) printf "Visiting node of type %s\n", $_as_string(node)
+          Visiting node of type NODE_INTEGER
 
    GDB provides the ability to list and get help on convenience
 functions.
@@ -2578,7 +3035,7 @@ a backtrace, and caching of stack reads provides a significant speed up
 of remote backtraces.
 
 
-File: gdb.info,  Node: Searching Memory,  Prev: Caching Target Data,  Up: Data
+File: gdb.info,  Node: Searching Memory,  Next: Value Sizes,  Prev: Caching Target Data,  Up: Data
 
 10.22 Search Memory
 ===================
@@ -2663,6 +3120,46 @@ you get during debugging:
      $1 = 1
      (gdb) print $_
      $2 = (void *) 0x8049560
+
+
+File: gdb.info,  Node: Value Sizes,  Prev: Searching Memory,  Up: Data
+
+10.23 Value Sizes
+=================
+
+Whenever GDB prints a value memory will be allocated within GDB to hold
+the contents of the value.  It is possible in some languages with
+dynamic typing systems, that an invalid program may indicate a value
+that is incorrectly large, this in turn may cause GDB to try and
+allocate an overly large ammount of memory.
+
+'set max-value-size BYTES'
+'set max-value-size unlimited'
+     Set the maximum size of memory that GDB will allocate for the
+     contents of a value to BYTES, trying to display a value that
+     requires more memory than that will result in an error.
+
+     Setting this variable does not effect values that have already been
+     allocated within GDB, only future allocations.
+
+     There's a minimum size that 'max-value-size' can be set to in order
+     that GDB can still operate correctly, this minimum is currently 16
+     bytes.
+
+     The limit applies to the results of some subexpressions as well as
+     to complete expressions.  For example, an expression denoting a
+     simple integer component, such as 'x.y.z', may fail if the size of
+     X.Y is dynamic and exceeds BYTES.  On the other hand, GDB is
+     sometimes clever; the expression 'A[i]', where A is an array
+     variable with non-constant size, will generally succeed regardless
+     of the bounds on A, as long as the component size is less than
+     BYTES.
+
+     The default value of 'max-value-size' is currently 64k.
+
+'show max-value-size'
+     Show the maximum size of memory, in bytes, that GDB will allocate
+     for the contents of a value.
 
 
 File: gdb.info,  Node: Optimized Code,  Next: Macros,  Prev: Data,  Up: Top
@@ -2944,9 +3441,9 @@ commands for working with macros explicitly.
      signify the end of argument processing and the beginning of MACRO
      for non C-like macros where the macro may begin with a hyphen.
 
-'info macros LINESPEC'
+'info macros LOCATION'
      Show all macro definitions that are in effect at the location
-     specified by LINESPEC, and describe the source location or compiler
+     specified by LOCATION, and describe the source location or compiler
      command-line where those definitions were established.
 
 'macro define MACRO REPLACEMENT-LIST'
@@ -3221,18 +3718,17 @@ File: gdb.info,  Node: Create and Delete Tracepoints,  Next: Enable and Disable 
 
 'trace LOCATION'
      The 'trace' command is very similar to the 'break' command.  Its
-     argument LOCATION can be a source line, a function name, or an
-     address in the target program.  *Note Specify Location::.  The
-     'trace' command defines a tracepoint, which is a point in the
-     target program where the debugger will briefly stop, collect some
-     data, and then allow the program to continue.  Setting a tracepoint
-     or changing its actions takes effect immediately if the remote stub
-     supports the 'InstallInTrace' feature (*note install tracepoint in
-     tracing::).  If remote stub doesn't support the 'InstallInTrace'
-     feature, all these changes don't take effect until the next
-     'tstart' command, and once a trace experiment is running, further
-     changes will not have any effect until the next trace experiment
-     starts.  In addition, GDB supports "pending
+     argument LOCATION can be any valid location.  *Note Specify
+     Location::.  The 'trace' command defines a tracepoint, which is a
+     point in the target program where the debugger will briefly stop,
+     collect some data, and then allow the program to continue.  Setting
+     a tracepoint or changing its actions takes effect immediately if
+     the remote stub supports the 'InstallInTrace' feature (*note
+     install tracepoint in tracing::).  If remote stub doesn't support
+     the 'InstallInTrace' feature, all these changes don't take effect
+     until the next 'tstart' command, and once a trace experiment is
+     running, further changes will not have any effect until the next
+     trace experiment starts.  In addition, GDB supports "pending
      tracepoints"--tracepoints whose address is not yet resolved.  (This
      is similar to pending breakpoints.)  Pending tracepoints are not
      downloaded to the target and not installed until they are resolved.
@@ -3556,6 +4052,14 @@ File: gdb.info,  Node: Tracepoint Actions,  Next: Listing Tracepoints,  Prev: Tr
      '$_ret'
           Collect the return address.  This is helpful if you want to
           see more of a backtrace.
+
+          _Note:_ The return address location can not always be reliably
+          determined up front, and the wrong address / registers may end
+          up collected instead.  On some architectures the reliability
+          is higher for tracepoints at function entry, while on others
+          it's the opposite.  When this happens, backtracing will stop
+          because the return address is found unavailable (unless
+          another collect rule happened to match it).
 
      '$_probe_argc'
           Collects the number of arguments from the static probe at
@@ -3978,7 +4482,8 @@ no argument N is given, the next snapshot is selected.
      Same as 'tfind none'.
 
 'tfind'
-     No argument means find the next trace snapshot.
+     No argument means find the next trace snapshot or find the first
+     one if no trace snapshot is selected.
 
 'tfind -'
      Find the previous trace snapshot before the current one.  This
@@ -4145,8 +4650,8 @@ File: gdb.info,  Node: save tracepoints,  Prev: tdump,  Up: Analyze Collected Da
 This command saves all current tracepoint definitions together with
 their actions and passcounts, into a file 'FILENAME' suitable for use in
 a later debugging session.  To read the saved tracepoint definitions,
-use the 'source' command (*note Command Files::).  The 'save-tracepoints'
-command is a deprecated alias for 'save tracepoints'
+use the 'source' command (*note Command Files::).  The
+'save-tracepoints' command is a deprecated alias for 'save tracepoints'
 
 
 File: gdb.info,  Node: Tracepoint Variables,  Next: Trace Files,  Prev: Analyze Collected Data,  Up: Tracepoints
@@ -4899,9 +5404,9 @@ File: gdb.info,  Node: Supported Languages,  Next: Unsupported Languages,  Prev:
 ========================
 
 GDB supports C, C++, D, Go, Objective-C, Fortran, Java, OpenCL C,
-Pascal, assembly, Modula-2, and Ada.  Some GDB features may be used in
-expressions regardless of the language you use: the GDB '@' and '::'
-operators, and the '{type}addr' construct (*note Expressions:
+Pascal, Rust, assembly, Modula-2, and Ada.  Some GDB features may be
+used in expressions regardless of the language you use: the GDB '@' and
+'::' operators, and the '{type}addr' construct (*note Expressions:
 Expressions.) can be used with the constructs of any supported language.
 
    The following sections detail to what degree each source language is
@@ -4921,6 +5426,7 @@ tutorial.
 * OpenCL C::                    OpenCL C
 * Fortran::                     Fortran
 * Pascal::                      Pascal
+* Rust::                        Rust
 * Modula-2::                    Modula-2
 * Ada::                         Ada
 
@@ -5631,7 +6137,7 @@ displaying common blocks.
      printed.
 
 
-File: gdb.info,  Node: Pascal,  Next: Modula-2,  Prev: Fortran,  Up: Supported Languages
+File: gdb.info,  Node: Pascal,  Next: Rust,  Prev: Fortran,  Up: Supported Languages
 
 15.4.7 Pascal
 -------------
@@ -5645,9 +6151,84 @@ controls whether static members of Pascal objects are displayed.  *Note
 pascal_static-members: Print Settings.
 
 
-File: gdb.info,  Node: Modula-2,  Next: Ada,  Prev: Pascal,  Up: Supported Languages
+File: gdb.info,  Node: Rust,  Next: Modula-2,  Prev: Pascal,  Up: Supported Languages
 
-15.4.8 Modula-2
+15.4.8 Rust
+-----------
+
+GDB supports the Rust Programming Language (https://www.rust-lang.org/).
+Type- and value-printing, and expression parsing, are reasonably
+complete.  However, there are a few peculiarities and holes to be aware
+of.
+
+   * Linespecs (*note Specify Location::) are never relative to the
+     current crate.  Instead, they act as if there were a global
+     namespace of crates, somewhat similar to the way 'extern crate'
+     behaves.
+
+     That is, if GDB is stopped at a breakpoint in a function in crate
+     'A', module 'B', then 'break B::f' will attempt to set a breakpoint
+     in a function named 'f' in a crate named 'B'.
+
+     As a consequence of this approach, linespecs also cannot refer to
+     items using 'self::' or 'super::'.
+
+   * Because GDB implements Rust name-lookup semantics in expressions,
+     it will sometimes prepend the current crate to a name.  For
+     example, if GDB is stopped at a breakpoint in the crate 'K', then
+     'print ::x::y' will try to find the symbol 'K::x::y'.
+
+     However, since it is useful to be able to refer to other crates
+     when debugging, GDB provides the 'extern' extension to circumvent
+     this.  To use the extension, just put 'extern' before a path
+     expression to refer to the otherwise unavailable "global" scope.
+
+     In the above example, if you wanted to refer to the symbol 'y' in
+     the crate 'x', you would use 'print extern x::y'.
+
+   * The Rust expression evaluator does not support "statement-like"
+     expressions such as 'if' or 'match', or lambda expressions.
+
+   * Tuple expressions are not implemented.
+
+   * The Rust expression evaluator does not currently implement the
+     'Drop' trait.  Objects that may be created by the evaluator will
+     never be destroyed.
+
+   * GDB does not implement type inference for generics.  In order to
+     call generic functions or otherwise refer to generic items, you
+     will have to specify the type parameters manually.
+
+   * GDB currently uses the C++ demangler for Rust.  In most cases this
+     does not cause any problems.  However, in an expression context,
+     completing a generic function name will give syntactically invalid
+     results.  This happens because Rust requires the '::' operator
+     between the function name and its generic arguments.  For example,
+     GDB might provide a completion like 'crate::f<u32>', where the
+     parser would require 'crate::f::<u32>'.
+
+   * As of this writing, the Rust compiler (version 1.8) has a few holes
+     in the debugging information it generates.  These holes prevent
+     certain features from being implemented by GDB:
+
+        * Method calls cannot be made via traits.
+
+        * Trait objects cannot be created or inspected.
+
+        * Operator overloading is not implemented.
+
+        * When debugging in a monomorphized function, you cannot use the
+          generic type names.
+
+        * The type 'Self' is not available.
+
+        * 'use' statements are not available, so some names may not be
+          available in the crate.
+
+
+File: gdb.info,  Node: Modula-2,  Next: Ada,  Prev: Rust,  Up: Supported Languages
+
+15.4.9 Modula-2
 ---------------
 
 The extensions made to GDB to support Modula-2 only support output from
@@ -5671,7 +6252,7 @@ reads in the executable's symbol table.
 
 File: gdb.info,  Node: M2 Operators,  Next: Built-In Func/Proc,  Up: Modula-2
 
-15.4.8.1 Operators
+15.4.9.1 Operators
 ..................
 
 Operators must be defined on values of specific types.  For instance,
@@ -5780,7 +6361,7 @@ precedence:
 
 File: gdb.info,  Node: Built-In Func/Proc,  Next: M2 Constants,  Prev: M2 Operators,  Up: Modula-2
 
-15.4.8.2 Built-in Functions and Procedures
+15.4.9.2 Built-in Functions and Procedures
 ..........................................
 
 Modula-2 also makes available several built-in procedures and functions.
@@ -5895,7 +6476,7 @@ below.
 
 File: gdb.info,  Node: M2 Constants,  Next: M2 Types,  Prev: Built-In Func/Proc,  Up: Modula-2
 
-15.4.8.3 Constants
+15.4.9.3 Constants
 ..................
 
 GDB allows you to express the constants of Modula-2 in the following
@@ -5934,7 +6515,7 @@ ways:
 
 File: gdb.info,  Node: M2 Types,  Next: M2 Defaults,  Prev: M2 Constants,  Up: Modula-2
 
-15.4.8.4 Modula-2 Types
+15.4.9.4 Modula-2 Types
 .......................
 
 Currently GDB can print the following data types in Modula-2 syntax:
@@ -6061,7 +6642,7 @@ and you can ask GDB to describe the type of 's' as shown below.
 
 File: gdb.info,  Node: M2 Defaults,  Next: Deviations,  Prev: M2 Types,  Up: Modula-2
 
-15.4.8.5 Modula-2 Defaults
+15.4.9.5 Modula-2 Defaults
 ..........................
 
 If type and range checking are set automatically by GDB, they both
@@ -6076,7 +6657,7 @@ Automatically, for further details.
 
 File: gdb.info,  Node: Deviations,  Next: M2 Checks,  Prev: M2 Defaults,  Up: Modula-2
 
-15.4.8.6 Deviations from Standard Modula-2
+15.4.9.6 Deviations from Standard Modula-2
 ..........................................
 
 A few changes have been made to make Modula-2 programs easier to debug.
@@ -6102,7 +6683,7 @@ This is done primarily via loosening its type strictness:
 
 File: gdb.info,  Node: M2 Checks,  Next: M2 Scope,  Prev: Deviations,  Up: Modula-2
 
-15.4.8.7 Modula-2 Type and Range Checks
+15.4.9.7 Modula-2 Type and Range Checks
 .......................................
 
      _Warning:_ in this release, GDB does not yet perform type or range
@@ -6126,7 +6707,7 @@ array index bounds, and all built-in functions and procedures.
 
 File: gdb.info,  Node: M2 Scope,  Next: GDB/M2,  Prev: M2 Checks,  Up: Modula-2
 
-15.4.8.8 The Scope Operators '::' and '.'
+15.4.9.8 The Scope Operators '::' and '.'
 .........................................
 
 There are a few subtle differences between the Modula-2 scope operator
@@ -6153,7 +6734,7 @@ is not an identifier in MODULE.
 
 File: gdb.info,  Node: GDB/M2,  Prev: M2 Scope,  Up: Modula-2
 
-15.4.8.9 GDB and Modula-2
+15.4.9.9 GDB and Modula-2
 .........................
 
 Some GDB commands have little use when debugging Modula-2 programs.
@@ -6174,8 +6755,8 @@ as the beginning of a comment.  Use '<>' instead.
 
 File: gdb.info,  Node: Ada,  Prev: Modula-2,  Up: Supported Languages
 
-15.4.9 Ada
-----------
+15.4.10 Ada
+-----------
 
 The extensions made to GDB for Ada only support output from the GNU Ada
 (GNAT) compiler.  Other Ada compilers are not currently supported, and
@@ -6189,6 +6770,8 @@ difficult.
                                    in GDB.
 * Omissions from Ada::          Restrictions on the Ada expression syntax.
 * Additions to Ada::            Extensions of the Ada expression syntax.
+* Overloading support for Ada:: Support for expressions involving overloaded
+                                   subprograms.
 * Stopping Before Main Program:: Debugging the program during elaboration.
 * Ada Exceptions::              Ada Exceptions
 * Ada Tasks::                   Listing and setting breakpoints in tasks.
@@ -6200,8 +6783,8 @@ difficult.
 
 File: gdb.info,  Node: Ada Mode Intro,  Next: Omissions from Ada,  Up: Ada
 
-15.4.9.1 Introduction
-.....................
+15.4.10.1 Introduction
+......................
 
 The Ada mode of GDB supports a fairly large subset of Ada expression
 syntax, with some extensions.  The philosophy behind the design of this
@@ -6233,18 +6816,11 @@ mostly for documenting command files.  The standard GDB comment ('#')
 still works at the beginning of a line in Ada mode, but not in the
 middle (to allow based literals).
 
-   The debugger supports limited overloading.  Given a subprogram call
-in which the function symbol has multiple definitions, it will use the
-number of actual parameters and some information about their types to
-attempt to narrow the set of definitions.  It also makes very limited
-use of context, preferring procedures to functions in the context of the
-'call' command, and functions to procedures elsewhere.
-
 
 File: gdb.info,  Node: Omissions from Ada,  Next: Additions to Ada,  Prev: Ada Mode Intro,  Up: Ada
 
-15.4.9.2 Omissions from Ada
-...........................
+15.4.10.2 Omissions from Ada
+............................
 
 Here are the notable omissions from the subset:
 
@@ -6347,10 +6923,10 @@ Here are the notable omissions from the subset:
      fully qualified names to access their new definitions.
 
 
-File: gdb.info,  Node: Additions to Ada,  Next: Stopping Before Main Program,  Prev: Omissions from Ada,  Up: Ada
+File: gdb.info,  Node: Additions to Ada,  Next: Overloading support for Ada,  Prev: Omissions from Ada,  Up: Ada
 
-15.4.9.3 Additions to Ada
-.........................
+15.4.10.3 Additions to Ada
+..........................
 
 As it does for other languages, GDB makes certain generic extensions to
 Ada (*note Expressions::):
@@ -6437,10 +7013,51 @@ additions specific to Ada:
      specific type of the object.
 
 
-File: gdb.info,  Node: Stopping Before Main Program,  Next: Ada Exceptions,  Prev: Additions to Ada,  Up: Ada
+File: gdb.info,  Node: Overloading support for Ada,  Next: Stopping Before Main Program,  Prev: Additions to Ada,  Up: Ada
 
-15.4.9.4 Stopping at the Very Beginning
-.......................................
+15.4.10.4 Overloading support for Ada
+.....................................
+
+The debugger supports limited overloading.  Given a subprogram call in
+which the function symbol has multiple definitions, it will use the
+number of actual parameters and some information about their types to
+attempt to narrow the set of definitions.  It also makes very limited
+use of context, preferring procedures to functions in the context of the
+'call' command, and functions to procedures elsewhere.
+
+   If, after narrowing, the set of matching definitions still contains
+more than one definition, GDB will display a menu to query which one it
+should use, for instance:
+
+     (gdb) print f(1)
+     Multiple matches for f
+     [0] cancel
+     [1] foo.f (integer) return boolean at foo.adb:23
+     [2] foo.f (foo.new_integer) return boolean at foo.adb:28
+     >
+
+   In this case, just select one menu entry either to cancel expression
+evaluation (type '0' and press <RET>) or to continue evaluation with a
+specific instance (type the corresponding number and press <RET>).
+
+   Here are a couple of commands to customize GDB's behavior in this
+case:
+
+'set ada print-signatures'
+     Control whether parameter types and return types are displayed in
+     overloads selection menus.  It is 'on' by default.  *Note
+     Overloading support for Ada::.
+
+'show ada print-signatures'
+     Show the current setting for displaying parameter types and return
+     types in overloads selection menu.  *Note Overloading support for
+     Ada::.
+
+
+File: gdb.info,  Node: Stopping Before Main Program,  Next: Ada Exceptions,  Prev: Overloading support for Ada,  Up: Ada
+
+15.4.10.5 Stopping at the Very Beginning
+........................................
 
 It is sometimes necessary to debug the program during elaboration, and
 before reaching the main procedure.  As defined in the Ada Reference
@@ -6451,8 +7068,8 @@ simply use the following two commands: 'tbreak adainit' and 'run'.
 
 File: gdb.info,  Node: Ada Exceptions,  Next: Ada Tasks,  Prev: Stopping Before Main Program,  Up: Ada
 
-15.4.9.5 Ada Exceptions
-.......................
+15.4.10.6 Ada Exceptions
+........................
 
 A command is provided to list all Ada exceptions:
 
@@ -6485,8 +7102,8 @@ an exception is raised.  For more details, see *note Set Catchpoints::.
 
 File: gdb.info,  Node: Ada Tasks,  Next: Ada Tasks and Core Files,  Prev: Ada Exceptions,  Up: Ada
 
-15.4.9.6 Extensions for Ada Tasks
-.................................
+15.4.10.7 Extensions for Ada Tasks
+..................................
 
 Support for Ada tasks is analogous to that for threads (*note
 Threads::).  GDB provides the following task-related commands:
@@ -6596,7 +7213,7 @@ Threads::).  GDB provides the following task-related commands:
           [Current task is 2]
 
 'task TASKNO'
-     This command is like the 'thread THREADNO' command (*note
+     This command is like the 'thread THREAD-ID' command (*note
      Threads::).  It switches the context of debugging from the current
      task to the given task.
 
@@ -6614,10 +7231,10 @@ Threads::).  GDB provides the following task-related commands:
           #3  0x806153e in system.tasking.stages.activate_tasks ()
           #4  0x804aacc in un () at un.adb:5
 
-'break LINESPEC task TASKNO'
-'break LINESPEC task TASKNO if ...'
+'break LOCATION task TASKNO'
+'break LOCATION task TASKNO if ...'
      These commands are like the 'break ... thread ...' command (*note
-     Thread Stops::).  The LINESPEC argument specifies source lines, as
+     Thread Stops::).  The LOCATION argument specifies source lines, as
      described in *note Specify Location::.
 
      Use the qualifier 'task TASKNO' with a breakpoint command to
@@ -6660,8 +7277,8 @@ Threads::).  GDB provides the following task-related commands:
 
 File: gdb.info,  Node: Ada Tasks and Core Files,  Next: Ravenscar Profile,  Prev: Ada Tasks,  Up: Ada
 
-15.4.9.7 Tasking Support when Debugging Core Files
-..................................................
+15.4.10.8 Tasking Support when Debugging Core Files
+...................................................
 
 When inspecting a core file, as opposed to debugging a live program,
 tasking support may be limited or even unavailable, depending on the
@@ -6678,8 +7295,8 @@ file before inspecting it with GDB.
 
 File: gdb.info,  Node: Ravenscar Profile,  Next: Ada Glitches,  Prev: Ada Tasks and Core Files,  Up: Ada
 
-15.4.9.8 Tasking Support when using the Ravenscar Profile
-.........................................................
+15.4.10.9 Tasking Support when using the Ravenscar Profile
+..........................................................
 
 The "Ravenscar Profile" is a subset of the Ada tasking features,
 specifically designed for systems with safety-critical real-time
@@ -6704,8 +7321,8 @@ requirements.
 
 File: gdb.info,  Node: Ada Glitches,  Prev: Ravenscar Profile,  Up: Ada
 
-15.4.9.9 Known Peculiarities of Ada Mode
-........................................
+15.4.10.10 Known Peculiarities of Ada Mode
+..........................................
 
 Besides the omissions listed previously (*note Omissions from Ada::), we
 know of several problems with and limitations of Ada mode in GDB, some
@@ -7234,6 +7851,12 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
           }
           (gdb)
 
+'maint info line-table [ REGEXP ]'
+
+     List the 'struct linetable' from all 'struct symtab' instances
+     whose name matches REGEXP.  If REGEXP is not given, list the
+     'struct linetable' from all 'struct symtab'.
+
 'maint set symbol-cache-size SIZE'
      Set the size of the symbol cache to SIZE.  The default size is
      intended to be good enough for debugging most applications.  This
@@ -7254,161 +7877,4 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
      Flush the contents of the symbol cache, all entries are removed.
      This command is useful when debugging the symbol cache.  It is also
      useful when collecting performance data.
-
-
-File: gdb.info,  Node: Altering,  Next: GDB Files,  Prev: Symbols,  Up: Top
-
-17 Altering Execution
-*********************
-
-Once you think you have found an error in your program, you might want
-to find out for certain whether correcting the apparent error would lead
-to correct results in the rest of the run.  You can find the answer by
-experiment, using the GDB features for altering execution of the
-program.
-
-   For example, you can store new values into variables or memory
-locations, give your program a signal, restart it at a different
-address, or even return prematurely from a function.
-
-* Menu:
-
-* Assignment::                  Assignment to variables
-* Jumping::                     Continuing at a different address
-* Signaling::                   Giving your program a signal
-* Returning::                   Returning from a function
-* Calling::                     Calling your program's functions
-* Patching::                    Patching your program
-* Compiling and Injecting Code:: Compiling and injecting code in GDB
-
-
-File: gdb.info,  Node: Assignment,  Next: Jumping,  Up: Altering
-
-17.1 Assignment to Variables
-============================
-
-To alter the value of a variable, evaluate an assignment expression.
-*Note Expressions: Expressions.  For example,
-
-     print x=4
-
-stores the value 4 into the variable 'x', and then prints the value of
-the assignment expression (which is 4).  *Note Using GDB with Different
-Languages: Languages, for more information on operators in supported
-languages.
-
-   If you are not interested in seeing the value of the assignment, use
-the 'set' command instead of the 'print' command.  'set' is really the
-same as 'print' except that the expression's value is not printed and is
-not put in the value history (*note Value History: Value History.).  The
-expression is evaluated only for its effects.
-
-   If the beginning of the argument string of the 'set' command appears
-identical to a 'set' subcommand, use the 'set variable' command instead
-of just 'set'.  This command is identical to 'set' except for its lack
-of subcommands.  For example, if your program has a variable 'width',
-you get an error if you try to set a new value with just 'set width=13',
-because GDB has the command 'set width':
-
-     (gdb) whatis width
-     type = double
-     (gdb) p width
-     $4 = 13
-     (gdb) set width=47
-     Invalid syntax in expression.
-
-The invalid expression, of course, is '=47'.  In order to actually set
-the program's variable 'width', use
-
-     (gdb) set var width=47
-
-   Because the 'set' command has many subcommands that can conflict with
-the names of program variables, it is a good idea to use the 'set
-variable' command instead of just 'set'.  For example, if your program
-has a variable 'g', you run into problems if you try to set a new value
-with just 'set g=4', because GDB has the command 'set gnutarget',
-abbreviated 'set g':
-
-     (gdb) whatis g
-     type = double
-     (gdb) p g
-     $1 = 1
-     (gdb) set g=4
-     (gdb) p g
-     $2 = 1
-     (gdb) r
-     The program being debugged has been started already.
-     Start it from the beginning? (y or n) y
-     Starting program: /home/smith/cc_progs/a.out
-     "/home/smith/cc_progs/a.out": can't open to read symbols:
-                                      Invalid bfd target.
-     (gdb) show g
-     The current BFD target is "=4".
-
-The program variable 'g' did not change, and you silently set the
-'gnutarget' to an invalid value.  In order to set the variable 'g', use
-
-     (gdb) set var g=4
-
-   GDB allows more implicit conversions in assignments than C; you can
-freely store an integer value into a pointer variable or vice versa, and
-you can convert any structure to any other structure that is the same
-length or shorter.
-
-   To store values into arbitrary places in memory, use the '{...}'
-construct to generate a value of specified type at a specified address
-(*note Expressions: Expressions.).  For example, '{int}0x83040' refers
-to memory location '0x83040' as an integer (which implies a certain size
-and representation in memory), and
-
-     set {int}0x83040 = 4
-
-stores the value 4 into that memory location.
-
-
-File: gdb.info,  Node: Jumping,  Next: Signaling,  Prev: Assignment,  Up: Altering
-
-17.2 Continuing at a Different Address
-======================================
-
-Ordinarily, when you continue your program, you do so at the place where
-it stopped, with the 'continue' command.  You can instead continue at an
-address of your own choosing, with the following commands:
-
-'jump LINESPEC'
-'j LINESPEC'
-'jump LOCATION'
-'j LOCATION'
-     Resume execution at line LINESPEC or at address given by LOCATION.
-     Execution stops again immediately if there is a breakpoint there.
-     *Note Specify Location::, for a description of the different forms
-     of LINESPEC and LOCATION.  It is common practice to use the
-     'tbreak' command in conjunction with 'jump'.  *Note Setting
-     Breakpoints: Set Breaks.
-
-     The 'jump' command does not change the current stack frame, or the
-     stack pointer, or the contents of any memory location or any
-     register other than the program counter.  If line LINESPEC is in a
-     different function from the one currently executing, the results
-     may be bizarre if the two functions expect different patterns of
-     arguments or of local variables.  For this reason, the 'jump'
-     command requests confirmation if the specified line is not in the
-     function currently executing.  However, even bizarre results are
-     predictable if you are well acquainted with the machine-language
-     code of your program.
-
-   On many systems, you can get much the same effect as the 'jump'
-command by storing a new value into the register '$pc'.  The difference
-is that this does not start your program running; it only changes the
-address of where it _will_ run when you continue.  For example,
-
-     set $pc = 0x485
-
-makes the next 'continue' command or stepping command execute at address
-'0x485', rather than at the address where your program stopped.  *Note
-Continuing and Stepping: Continuing and Stepping.
-
-   The most common occasion to use the 'jump' command is to back
-up--perhaps with more breakpoints set--over a portion of a program that
-has already executed, in order to examine its execution in more detail.
 

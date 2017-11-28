@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Free Software Foundation, Inc.
+# Copyright 1999-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ for {set i 0} {$i < 5} {incr i} {
 	-re "^ *Id.*Frame *\[\r\n\]+" {
 	    exp_continue
 	}
-	-re "^. +(\[0-9\]+ *Thread \[-0-9a-fx\]+) \[^\n\]*\n" {
+	-re "^. +(\[0-9\]+ *Thread \[-0-9a-fx.\]+) \[^\n\]*\n" {
 	    verbose -log "found thread $expect_out(1,string)" 2
 	    lappend threads_before $expect_out(1,string)
 	    exp_continue
@@ -94,7 +94,7 @@ for {set i 0} {$i < 5} {incr i} {
 	}
 	-re "^$gdb_prompt $" {
 	}
-	-re "Program received signal.*(Unknown signal|SIGUSR|Real-time event).*$gdb_prompt $" {
+	-re " received signal.*(Unknown signal|SIGUSR|Real-time event).*$gdb_prompt $" {
 	    # It would be nice if we could catch the message that GDB prints
 	    # when it first notices that the thread library doesn't support
 	    # debugging, or if we could explicitly ask GDB somehow.
@@ -126,7 +126,7 @@ for {set i 0} {$i < 5} {incr i} {
 	-re "^ *Id.*Frame *\[\r\n\]+" {
 	    exp_continue
 	}
-	-re "^. +(\[0-9\]+ *Thread \[-0-9a-fx\]+) \[^\n\]*\n" {
+	-re "^. +(\[0-9\]+ *Thread \[-0-9a-fx.\]+) \[^\n\]*\n" {
 	    set name $expect_out(1,string)
 	    for {set j 0} {$j != [llength $threads_before] } {incr j} {
 		if {$name == [lindex $threads_before $j]} {
@@ -168,7 +168,7 @@ set nthreads 6
 gdb_breakpoint [gdb_get_line_number "linuxthreads.exp: info threads 2"]
 gdb_continue_to_breakpoint "main thread's sleep"
 set info_threads_ptn ".*"
-for {set i $nthreads} {$i > 0} {incr i -1} {
+for {set i 1} {$i <  $nthreads} {incr i} {
     append info_threads_ptn "$i *Thread .*"
 }
 append info_threads_ptn "\[\r\n\]+$gdb_prompt $"

@@ -1,5 +1,5 @@
 /* Disassemble V850 instructions.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -152,7 +152,7 @@ get_operand_value (const struct v850_operand *operand,
 	  if (operand->flags & V850E_IMMEDIATE16HI)
 	    value <<= 16;
 	  else if (value & 0x8000)
-	    value |= (-1L << 16);
+	    value |= (-1UL << 16);
 
 	  return value;
 	}

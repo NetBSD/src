@@ -1,7 +1,7 @@
 # Makefile template for Configure for the CRIS simulator, based on a mix
 # of the ones for m32r and i960.
 #
-# Copyright (C) 2004-2015 Free Software Foundation, Inc.
+# Copyright (C) 2004-2016 Free Software Foundation, Inc.
 # Contributed by Axis Communications.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,14 +24,12 @@ CRISV32F_OBJS = crisv32f.o cpuv32.o decodev32.o modelv32.o mloopv32f.o
 
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-model.o \
-	sim-reg.o \
 	cgen-utils.o cgen-trace.o cgen-scache.o \
-	cgen-run.o sim-reason.o sim-stop.o \
+	cgen-run.o \
 	sim-if.o arch.o \
 	$(CRISV10F_OBJS) \
 	$(CRISV32F_OBJS) \
-	traps.o devices.o \
+	traps.o \
 	cris-desc.o
 
 # Extra headers included by sim-main.h.
@@ -74,7 +72,7 @@ check: rvdummy$(EXEEXT)
 rvdummy$(EXEEXT): rvdummy.o $(EXTRA_LIBDEPS)
 	$(CC) $(ALL_CFLAGS) -o rvdummy$(EXEEXT) rvdummy.o $(EXTRA_LIBS)
 
-rvdummy.o: rvdummy.c config.h tconfig.h $(remote_sim_h) $(callback_h)
+rvdummy.o: rvdummy.c config.h $(remote_sim_h) $(callback_h)
 
 # CRISV10 objs
 

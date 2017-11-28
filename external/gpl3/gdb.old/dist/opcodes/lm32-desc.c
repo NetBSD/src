@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2015 Free Software Foundation, Inc.
+Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -274,75 +274,75 @@ const CGEN_OPERAND lm32_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", LM32_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_NIL] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* r0: register 0 */
   { "r0", LM32_OPERAND_R0, HW_H_GR, 25, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R0] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R0] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* r1: register 1 */
   { "r1", LM32_OPERAND_R1, HW_H_GR, 20, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R1] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* r2: register 2 */
   { "r2", LM32_OPERAND_R2, HW_H_GR, 15, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R2] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* shift: shift amout */
   { "shift", LM32_OPERAND_SHIFT, HW_H_UINT, 4, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_SHIFT] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_SHIFT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm: signed immediate */
   { "imm", LM32_OPERAND_IMM, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm: unsigned immediate */
   { "uimm", LM32_OPERAND_UIMM, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* branch: branch offset */
   { "branch", LM32_OPERAND_BRANCH, HW_H_IADDR, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_BRANCH] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_BRANCH] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* call: call offset */
   { "call", LM32_OPERAND_CALL, HW_H_IADDR, 25, 26,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_CALL] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_CALL] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* csr: csr */
   { "csr", LM32_OPERAND_CSR, HW_H_CSR, 25, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_CSR] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_CSR] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* user: user */
   { "user", LM32_OPERAND_USER, HW_H_UINT, 10, 11,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_USER] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_USER] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* exception: exception */
   { "exception", LM32_OPERAND_EXCEPTION, HW_H_UINT, 25, 26,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_EXCEPTION] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_EXCEPTION] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* hi16: high 16-bit immediate */
   { "hi16", LM32_OPERAND_HI16, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* lo16: low 16-bit immediate */
   { "lo16", LM32_OPERAND_LO16, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* gp16: gp relative 16-bit immediate */
   { "gp16", LM32_OPERAND_GP16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* got16: got 16-bit immediate */
   { "got16", LM32_OPERAND_GOT16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* gotoffhi16: got offset high 16-bit immediate */
   { "gotoffhi16", LM32_OPERAND_GOTOFFHI16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* gotofflo16: got offset low 16-bit immediate */
   { "gotofflo16", LM32_OPERAND_GOTOFFLO16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } }, 
+    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
@@ -1105,7 +1105,7 @@ lm32_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 
   /* Default to not allowing signed overflow.  */
   cd->signed_overflow_ok_p = 0;
-  
+
   return (CGEN_CPU_DESC) cd;
 }
 
@@ -1145,7 +1145,7 @@ lm32_cgen_cpu_close (CGEN_CPU_DESC cd)
       for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
 	if (CGEN_INSN_RX (insns))
 	  regfree (CGEN_INSN_RX (insns));
-    }  
+    }
 
   if (cd->macro_insn_table.init_entries)
     free ((CGEN_INSN *) cd->macro_insn_table.init_entries);

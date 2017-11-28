@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +20,18 @@
 #ifndef CLI_UTILS_H
 #define CLI_UTILS_H
 
-/* *PP is a string denoting a number.  Get the number of the.  Advance
-   *PP after the string and any trailing whitespace.
+/* *PP is a string denoting a number.  Get the number.  Advance *PP
+   after the string and any trailing whitespace.
 
-   Currently the string can either be a number,  or "$" followed by the
-   name of a convenience variable, or ("$" or "$$") followed by digits.  */
+   The string can either be a number, or "$" followed by the name of a
+   convenience variable, or ("$" or "$$") followed by digits.
+
+   TRAILER is a character which can be found after the number; most
+   commonly this is `-'.  If you don't want a trailer, use \0.  */
+
+extern int get_number_trailer (const char **pp, int trailer);
+
+/* Convenience.  Like get_number_trailer, but with no TRAILER.  */
 
 extern int get_number_const (const char **);
 
@@ -82,6 +89,14 @@ extern void init_number_or_range (struct get_number_or_range_state *state,
    the pointer past <number2>.  */
 
 extern int get_number_or_range (struct get_number_or_range_state *state);
+
+/* Setups STATE such that get_number_or_range returns numbers in range
+   START_VALUE to END_VALUE.  When get_number_or_range returns
+   END_VALUE, the STATE string is advanced to END_PTR.  */
+
+extern void number_range_setup_range (struct get_number_or_range_state *state,
+				      int start_value, int end_value,
+				      const char *end_ptr);
 
 /* Accept a number and a string-form list of numbers such as is 
    accepted by get_number_or_range.  Return TRUE if the number is
