@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2017 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -26,6 +26,7 @@
 #include "opcode/arm.h"
 #include "opintl.h"
 #include "safe-ctype.h"
+#include "libiberty.h"
 #include "floatformat.h"
 
 /* FIXME: This shouldn't be done here.  */
@@ -39,10 +40,6 @@
 /* FIXME: Belongs in global header.  */
 #ifndef strneq
 #define strneq(a,b,n)	(strncmp ((a), (b), (n)) == 0)
-#endif
-
-#ifndef NUM_ELEM
-#define NUM_ELEM(a)     (sizeof (a) / sizeof (a)[0])
 #endif
 
 /* Cached mapping symbol state.  */
@@ -116,6 +113,7 @@ struct opcode16
    %<bitfield>G         print as an iWMMXt general purpose or control register
    %<bitfield>D		print as a NEON D register
    %<bitfield>Q		print as a NEON Q register
+   %<bitfield>V		print as a NEON D or Q register
    %<bitfield>E		print a quarter-float immediate value
 
    %y<code>		print a single precision VFP reg.
@@ -882,6 +880,28 @@ static const struct opcode32 coprocessor_opcodes[] =
     0xfc400000, 0xfff00000,
     "mcrr2%c\t%8-11d, %4-7d, %12-15R, %16-19R, cr%0-3d"},
 
+  /* ARMv8.3 AdvSIMD instructions in the space of coprocessor 8.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfc800800, 0xfeb00f10, "vcadd%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%24?29%24'70"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfc900800, 0xfeb00f10, "vcadd%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%24?29%24'70"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfc200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%23'90"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfd200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%23?21%23?780"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfc300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%23'90"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfd300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%23?21%23?780"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfe000800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3D[%5?10], #%20'90"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfe200800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3D[%5?10], #%20?21%20?780"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfe800800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20'90"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0xfea00800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20?21%20?780"},
+
   /* V5 coprocessor instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
     0xfc100000, 0xfe100000, "ldc2%22'l%c\t%8-11d, cr%12-15d, %A"},
@@ -970,6 +990,10 @@ static const struct opcode32 coprocessor_opcodes[] =
     0x0eb109c0, 0x0fbf0fd0, "vsqrt%c.f16\t%y1, %y0"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e300940, 0x0fb00f50, "vsub%c.f16\t%y1, %y2, %y0"},
+
+  /* ARMv8.3 javascript conversion instruction.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+    0x0eb90bc0, 0x0fbf0fd0, "vjcvt%c.s32.f64\t%y1, %z0"},
 
   {ARM_FEATURE_CORE_LOW (0), 0, 0, 0}
 };
@@ -3171,18 +3195,20 @@ arm_regname;
 
 static const arm_regname regnames[] =
 {
-  { "raw" , "Select raw register names",
+  { "reg-names-raw", N_("Select raw register names"),
     { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"}},
-  { "gcc",  "Select register names used by GCC",
+  { "reg-names-gcc", N_("Select register names used by GCC"),
     { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "sl",  "fp",  "ip",  "sp",  "lr",  "pc" }},
-  { "std",  "Select register names used in ARM's ISA documentation",
+  { "reg-names-std", N_("Select register names used in ARM's ISA documentation"),
     { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "sp",  "lr",  "pc" }},
-  { "apcs", "Select register names used in the APCS",
+  { "force-thumb", N_("Assume all insns are Thumb insns"), {NULL} },
+  { "no-force-thumb", N_("Examine preceding label to determine an insn's type"), {NULL} },
+  { "reg-names-apcs", N_("Select register names used in the APCS"),
     { "a1", "a2", "a3", "a4", "v1", "v2", "v3", "v4", "v5", "v6", "sl",  "fp",  "ip",  "sp",  "lr",  "pc" }},
-  { "atpcs", "Select register names used in the ATPCS",
+  { "reg-names-atpcs", N_("Select register names used in the ATPCS"),
     { "a1", "a2", "a3", "a4", "v1", "v2", "v3", "v4", "v5", "v6", "v7",  "v8",  "IP",  "SP",  "LR",  "PC" }},
-  { "special-atpcs", "Select special register names used in the ATPCS",
-    { "a1", "a2", "a3", "a4", "v1", "v2", "v3", "WR", "v5", "SB", "SL",  "FP",  "IP",  "SP",  "LR",  "PC" }},
+  { "reg-names-special-atpcs", N_("Select special register names used in the ATPCS"),
+    { "a1", "a2", "a3", "a4", "v1", "v2", "v3", "WR", "v5", "SB", "SL",  "FP",  "IP",  "SP",  "LR",  "PC" }}
 };
 
 static const char *const iwmmxt_wwnames[] =
@@ -3208,7 +3234,7 @@ static const char *const iwmmxt_cregnames[] =
 /* Default to GCC register name set.  */
 static unsigned int regname_selected = 1;
 
-#define NUM_ARM_REGNAMES  NUM_ELEM (regnames)
+#define NUM_ARM_OPTIONS   ARRAY_SIZE (regnames)
 #define arm_regnames      regnames[regname_selected].reg_names
 
 static bfd_boolean force_thumb = FALSE;
@@ -3227,31 +3253,6 @@ static bfd_vma ifthen_address;
 
 
 /* Functions.  */
-int
-get_arm_regname_num_options (void)
-{
-  return NUM_ARM_REGNAMES;
-}
-
-int
-set_arm_regname_option (int option)
-{
-  int old = regname_selected;
-  regname_selected = option;
-  return old;
-}
-
-int
-get_arm_regnames (int option,
-		  const char **setname,
-		  const char **setdescription,
-		  const char *const **register_names)
-{
-  *setname = regnames[option].name;
-  *setdescription = regnames[option].description;
-  *register_names = regnames[option].reg_names;
-  return 16;
-}
 
 /* Decode a bitfield of the form matching regexp (N(-N)?,)*N(-N)?.
    Returns pointer to following character of the format string and
@@ -3669,10 +3670,15 @@ print_insn_coprocessor (bfd_vma pc,
 			  }
 			func (stream, "%s", arm_regnames[value]);
 			break;
+		      case 'V':
+			if (given & (1 << 6))
+			  goto Q;
+			/* FALLTHROUGH */
 		      case 'D':
 			func (stream, "d%ld", value);
 			break;
 		      case 'Q':
+		      Q:
 			if (value & 1)
 			  func (stream, "<illegal reg q%ld.5>", value >> 1);
 			else
@@ -4686,6 +4692,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    case 'S':
 		      allow_unpredictable = TRUE;
+		      /* Fall through.  */
 		    case 's':
                       if ((given & 0x004f0000) == 0x004f0000)
 			{
@@ -5427,22 +5434,31 @@ psr_name (int regno)
 {
   switch (regno)
     {
-    case 0: return "APSR";
-    case 1: return "IAPSR";
-    case 2: return "EAPSR";
-    case 3: return "PSR";
-    case 5: return "IPSR";
-    case 6: return "EPSR";
-    case 7: return "IEPSR";
-    case 8: return "MSP";
-    case 9: return "PSP";
-    case 16: return "PRIMASK";
-    case 17: return "BASEPRI";
-    case 18: return "BASEPRI_MAX";
-    case 19: return "FAULTMASK";
-    case 20: return "CONTROL";
+    case 0x0: return "APSR";
+    case 0x1: return "IAPSR";
+    case 0x2: return "EAPSR";
+    case 0x3: return "PSR";
+    case 0x5: return "IPSR";
+    case 0x6: return "EPSR";
+    case 0x7: return "IEPSR";
+    case 0x8: return "MSP";
+    case 0x9: return "PSP";
+    case 0xa: return "MSPLIM";
+    case 0xb: return "PSPLIM";
+    case 0x10: return "PRIMASK";
+    case 0x11: return "BASEPRI";
+    case 0x12: return "BASEPRI_MAX";
+    case 0x13: return "FAULTMASK";
+    case 0x14: return "CONTROL";
     case 0x88: return "MSP_NS";
     case 0x89: return "PSP_NS";
+    case 0x8a: return "MSPLIM_NS";
+    case 0x8b: return "PSPLIM_NS";
+    case 0x90: return "PRIMASK_NS";
+    case 0x91: return "BASEPRI_NS";
+    case 0x93: return "FAULTMASK_NS";
+    case 0x94: return "CONTROL_NS";
+    case 0x98: return "SP_NS";
     default: return "<unknown>";
     }
 }
@@ -5717,7 +5733,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      if (off || !U)
 			{
 			  func (stream, ", #%c%u", U ? '+' : '-', off * 4);
-			  value_in_comment = off * 4 * U ? 1 : -1;
+			  value_in_comment = (off && U) ? 1 : -1;
 			}
 		      func (stream, "]");
 		      if (W)
@@ -5729,7 +5745,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      if (W)
 			{
 			  func (stream, "#%c%u", U ? '+' : '-', off * 4);
-			  value_in_comment = off * 4 * U ? 1 : -1;
+			  value_in_comment = (off && U) ? 1 : -1;
 			}
 		      else
 			{
@@ -6082,62 +6098,37 @@ arm_symbol_is_valid (asymbol * sym,
   return (name && *name != '$' && strncmp (name, "__tagsym$$", 10));
 }
 
-/* Parse an individual disassembler option.  */
-
-void
-parse_arm_disassembler_option (char *option)
-{
-  if (option == NULL)
-    return;
-
-  if (CONST_STRNEQ (option, "reg-names-"))
-    {
-      int i;
-
-      option += 10;
-
-      for (i = NUM_ARM_REGNAMES; i--;)
-	if (strneq (option, regnames[i].name, strlen (regnames[i].name)))
-	  {
-	    regname_selected = i;
-	    break;
-	  }
-
-      if (i < 0)
-	/* XXX - should break 'option' at following delimiter.  */
-	fprintf (stderr, _("Unrecognised register name set: %s\n"), option);
-    }
-  else if (CONST_STRNEQ (option, "force-thumb"))
-    force_thumb = 1;
-  else if (CONST_STRNEQ (option, "no-force-thumb"))
-    force_thumb = 0;
-  else
-    /* XXX - should break 'option' at following delimiter.  */
-    fprintf (stderr, _("Unrecognised disassembler option: %s\n"), option);
-
-  return;
-}
-
-/* Parse the string of disassembler options, spliting it at whitespaces
-   or commas.  (Whitespace separators supported for backwards compatibility).  */
+/* Parse the string of disassembler options.  */
 
 static void
-parse_disassembler_options (char *options)
+parse_arm_disassembler_options (const char *options)
 {
-  if (options == NULL)
-    return;
+  const char *opt;
 
-  while (*options)
+  FOR_EACH_DISASSEMBLER_OPTION (opt, options)
     {
-      parse_arm_disassembler_option (options);
+      if (CONST_STRNEQ (opt, "reg-names-"))
+	{
+	  unsigned int i;
+	  for (i = 0; i < NUM_ARM_OPTIONS; i++)
+	    if (disassembler_options_cmp (opt, regnames[i].name) == 0)
+	      {
+		regname_selected = i;
+		break;
+	      }
 
-      /* Skip forward to next seperator.  */
-      while ((*options) && (! ISSPACE (*options)) && (*options != ','))
-	++ options;
-      /* Skip forward past seperators.  */
-      while (ISSPACE (*options) || (*options == ','))
-	++ options;
+	  if (i >= NUM_ARM_OPTIONS)
+	    fprintf (stderr, _("Unrecognised register name set: %s\n"), opt);
+	}
+      else if (CONST_STRNEQ (opt, "force-thumb"))
+	force_thumb = 1;
+      else if (CONST_STRNEQ (opt, "no-force-thumb"))
+	force_thumb = 0;
+      else
+	fprintf (stderr, _("Unrecognised disassembler option: %s\n"), opt);
     }
+
+  return;
 }
 
 static bfd_boolean
@@ -6431,7 +6422,7 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 
   if (info->disassembler_options)
     {
-      parse_disassembler_options (info->disassembler_options);
+      parse_arm_disassembler_options (info->disassembler_options);
 
       /* To avoid repeated parsing of these options, we remove them here.  */
       info->disassembler_options = NULL;
@@ -6800,21 +6791,51 @@ print_insn_little_arm (bfd_vma pc, struct disassemble_info *info)
   return print_insn (pc, info, TRUE);
 }
 
+const disasm_options_t *
+disassembler_options_arm (void)
+{
+  static disasm_options_t *opts = NULL;
+
+  if (opts == NULL)
+    {
+      unsigned int i;
+      opts = XNEW (disasm_options_t);
+      opts->name = XNEWVEC (const char *, NUM_ARM_OPTIONS + 1);
+      opts->description = XNEWVEC (const char *, NUM_ARM_OPTIONS + 1);
+      for (i = 0; i < NUM_ARM_OPTIONS; i++)
+	{
+	  opts->name[i] = regnames[i].name;
+	  if (regnames[i].description != NULL)
+	    opts->description[i] = _(regnames[i].description);
+	  else
+	    opts->description[i] = NULL;
+	}
+      /* The array we return must be NULL terminated.  */
+      opts->name[i] = NULL;
+      opts->description[i] = NULL;
+    }
+
+  return opts;
+}
+
 void
 print_arm_disassembler_options (FILE *stream)
 {
-  int i;
-
+  unsigned int i, max_len = 0;
   fprintf (stream, _("\n\
 The following ARM specific disassembler options are supported for use with\n\
 the -M switch:\n"));
 
-  for (i = NUM_ARM_REGNAMES; i--;)
-    fprintf (stream, "  reg-names-%s %*c%s\n",
-	     regnames[i].name,
-	     (int)(14 - strlen (regnames[i].name)), ' ',
-	     regnames[i].description);
+  for (i = 0; i < NUM_ARM_OPTIONS; i++)
+    {
+      unsigned int len = strlen (regnames[i].name);
+      if (max_len < len)
+	max_len = len;
+    }
 
-  fprintf (stream, "  force-thumb              Assume all insns are Thumb insns\n");
-  fprintf (stream, "  no-force-thumb           Examine preceding label to determine an insn's type\n\n");
+  for (i = 0, max_len++; i < NUM_ARM_OPTIONS; i++)
+    fprintf (stream, "  %s%*c %s\n",
+	     regnames[i].name,
+	     (int)(max_len - strlen (regnames[i].name)), ' ',
+	     _(regnames[i].description));
 }
