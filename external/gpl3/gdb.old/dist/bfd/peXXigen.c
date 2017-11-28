@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI; the common executable parts.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -62,6 +62,7 @@
 #include "libbfd.h"
 #include "coff/internal.h"
 #include "bfdver.h"
+#include "libiberty.h"
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
 #endif
@@ -119,7 +120,7 @@ _bfd_XXi_swap_sym_in (bfd * abfd, void * ext1, void * in1)
     memcpy (in->_n._n_name, ext->e.e_name, SYMNMLEN);
 
   in->n_value = H_GET_32 (abfd, ext->e_value);
-  in->n_scnum = H_GET_16 (abfd, ext->e_scnum);
+  in->n_scnum = (short) H_GET_16 (abfd, ext->e_scnum);
 
   if (sizeof (ext->e_type) == 2)
     in->n_type = H_GET_16 (abfd, ext->e_type);
@@ -257,7 +258,7 @@ _bfd_XXi_swap_sym_out (bfd * abfd, void * inp, void * extp)
 	 as the worst that can happen is that some absolute symbols are
 	 needlessly converted into section relative symbols.  */
       && in->n_value > ((1ULL << (sizeof (in->n_value) > 4 ? 32 : 31)) - 1)
-      && in->n_scnum == -1)
+      && in->n_scnum == N_ABS)
     {
       asection * sec;
 
@@ -1060,8 +1061,8 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
   }
 
   if (coff_data (abfd)->link_info
-      && ! coff_data (abfd)->link_info->relocatable
-      && ! coff_data (abfd)->link_info->shared
+      && ! bfd_link_relocatable (coff_data (abfd)->link_info)
+      && ! bfd_link_pic (coff_data (abfd)->link_info)
       && strcmp (scnhdr_int->s_name, ".text") == 0)
     {
       /* By inference from looking at MS output, the 32 bit field
@@ -1195,13 +1196,15 @@ _bfd_XXi_slurp_codeview_record (bfd * abfd, file_ptr where, unsigned long length
 unsigned int
 _bfd_XXi_write_codeview_record (bfd * abfd, file_ptr where, CODEVIEW_INFO *cvinfo)
 {
-  unsigned int size = sizeof (CV_INFO_PDB70) + 1;
+  const bfd_size_type size = sizeof (CV_INFO_PDB70) + 1;
+  bfd_size_type written;
   CV_INFO_PDB70 *cvinfo70;
-  char buffer[size];
+  char * buffer;
 
   if (bfd_seek (abfd, where, SEEK_SET) != 0)
     return 0;
 
+  buffer = xmalloc (size);
   cvinfo70 = (CV_INFO_PDB70 *) buffer;
   H_PUT_32 (abfd, CVINFO_PDB70_CVSIGNATURE, cvinfo70->CvSignature);
 
@@ -1215,10 +1218,11 @@ _bfd_XXi_write_codeview_record (bfd * abfd, file_ptr where, CODEVIEW_INFO *cvinf
   H_PUT_32 (abfd, cvinfo->Age, cvinfo70->Age);
   cvinfo70->PdbFileName[0] = '\0';
 
-  if (bfd_bwrite (buffer, size, abfd) != size)
-    return 0;
+  written = bfd_bwrite (buffer, size, abfd);
 
-  return size;
+  free (buffer);
+
+  return written == size ? size : 0;
 }
 
 static char * dir_names[IMAGE_NUMBEROF_DIRECTORY_ENTRIES] =
@@ -2566,7 +2570,7 @@ rsrc_print_section (bfd * abfd, void * vfile)
   if (regions.resource_start != NULL)
     fprintf (file, " Resources start at offset: %#03x\n",
 	     (int) (regions.resource_start - regions.section_start));
-  
+
   free (regions.section_start);
   return TRUE;
 }
@@ -3470,7 +3474,7 @@ rsrc_compute_region_sizes (rsrc_directory * dir)
       sizeof_tables_and_entries += 8;
 
       sizeof_strings += (entry->name_id.name.len + 1) * 2;
-	  
+
       if (entry->is_dir)
 	rsrc_compute_region_sizes (entry->value.directory);
       else

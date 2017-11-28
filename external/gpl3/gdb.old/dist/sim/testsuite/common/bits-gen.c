@@ -1,5 +1,5 @@
 /* Miscellaneous simulator utilities.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -233,7 +233,7 @@ main (int argc, char *argv[])
   printf ("#define WITH_TARGET_WORD_BITSIZE %d\n", bitsize);
   printf ("#define WITH_TARGET_WORD_MSB %d\n", msb);
   printf ("#define WITH_HOST_WORD_BITSIZE %d\n", sizeof (int) * 8);
-  printf ("#define WITH_TARGET_BYTE_ORDER %s\n", big_endian ? "BIG_ENDIAN" : "LITTLE_ENDIAN");
+  printf ("#define WITH_TARGET_BYTE_ORDER %s\n", big_endian ? "BFD_ENDIAN_BIG" : "BFD_ENDIAN_LITTLE");
   printf ("\n");
   printf ("#define SIM_BITS_INLINE (ALL_H_INLINE)\n");
   printf ("\n");

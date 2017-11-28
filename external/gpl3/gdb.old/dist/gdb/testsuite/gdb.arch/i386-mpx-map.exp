@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <walfred.tedeschi@intel.com>,
 #                            <mircea.gherzan@intel.com>
@@ -23,7 +23,7 @@ if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
 
 standard_testfile
 
-set comp_flags "-fmpx -I${srcdir}/../nat/"
+set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat/"
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
  [list debug nowarnings additional_flags=${comp_flags}]] } {

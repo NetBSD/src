@@ -1,5 +1,5 @@
 /* .eh_frame section optimization.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -833,8 +833,7 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 
 	  /* For shared libraries, try to get rid of as many RELATIVE relocs
 	     as possible.  */
-	  if (info->shared
-	      && !info->relocatable
+	  if (bfd_link_pic (info)
 	      && (get_elf_backend_data (abfd)
 		  ->elf_backend_can_make_relative_eh_frame
 		  (abfd, info, sec)))
@@ -871,7 +870,7 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 	  buf += initial_insn_length;
 	  ENSURE_NO_RELOCS (buf);
 
-	  if (!info->relocatable)
+	  if (!bfd_link_relocatable (info))
 	    {
 	      /* Keep info for merging cies.  */
 	      this_inf->u.cie.u.full_cie = cie;
@@ -903,7 +902,8 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 	      REQUIRE (GET_RELOC (buf));
 
 	      /* Chain together the FDEs for each section.  */
-	      rsec = _bfd_elf_gc_mark_rsec (info, sec, gc_mark_hook, cookie);
+	      rsec = _bfd_elf_gc_mark_rsec (info, sec, gc_mark_hook,
+					    cookie, NULL);
 	      /* RSEC will be NULL if FDE was cleared out as it was belonging to
 		 a discarded SHT_GROUP.  */
 	      if (rsec)
@@ -1018,7 +1018,7 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 
   elf_section_data (sec)->sec_info = sec_info;
   sec->sec_info_type = SEC_INFO_TYPE_EH_FRAME;
-  if (!info->relocatable)
+  if (!bfd_link_relocatable (info))
     {
       /* Keep info for merging cies.  */
       sec_info->cies = local_cies;
@@ -1264,8 +1264,7 @@ find_merged_cie (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	}
 
       if (per_binds_local
-	  && info->shared
-	  && !info->relocatable
+	  && bfd_link_pic (info)
 	  && (cie->per_encoding & 0x70) == DW_EH_PE_absptr
 	  && (get_elf_backend_data (abfd)
 	      ->elf_backend_can_make_relative_eh_frame (abfd, info, sec)))
@@ -1365,19 +1364,31 @@ _bfd_elf_discard_section_eh_frame
 	  }
 	if (keep)
 	  {
-	    if (info->shared
+	    if (bfd_link_pic (info)
 		&& (((ent->fde_encoding & 0x70) == DW_EH_PE_absptr
 		     && ent->make_relative == 0)
 		    || (ent->fde_encoding & 0x70) == DW_EH_PE_aligned))
 	      {
+		static int num_warnings_issued = 0;
+
 		/* If a shared library uses absolute pointers
 		   which we cannot turn into PC relative,
 		   don't create the binary search table,
 		   since it is affected by runtime relocations.  */
 		hdr_info->u.dwarf.table = FALSE;
-		(*info->callbacks->einfo)
-		  (_("%P: FDE encoding in %B(%A) prevents .eh_frame_hdr"
-		     " table being created.\n"), abfd, sec);
+		if (num_warnings_issued < 10)
+		  {
+		    (*info->callbacks->einfo)
+		      (_("%P: FDE encoding in %B(%A) prevents .eh_frame_hdr"
+			 " table being created.\n"), abfd, sec);
+		    num_warnings_issued ++;
+		  }
+		else if (num_warnings_issued == 10)
+		  {
+		    (*info->callbacks->einfo)
+		      (_("%P: Further warnings about FDE encoding preventing .eh_frame_hdr generation dropped.\n"));
+		    num_warnings_issued ++;
+		  }
 	      }
 	    ent->removed = 0;
 	    hdr_info->u.dwarf.fde_count++;
@@ -1907,7 +1918,7 @@ _bfd_elf_write_section_eh_frame (bfd *abfd,
 	  value = ((ent->new_offset + sec->output_offset + 4)
 		   - (cie->new_offset + cie->u.cie.u.sec->output_offset));
 	  bfd_put_32 (abfd, value, buf);
-	  if (info->relocatable)
+	  if (bfd_link_relocatable (info))
 	    continue;
 	  buf += 4;
 	  width = get_DW_EH_PE_width (ent->fde_encoding, ptr_size);

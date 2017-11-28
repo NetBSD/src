@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 1992-2015 Free Software Foundation, Inc.
+   Copyright 1992-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -135,7 +135,7 @@ struct t_struct {
 #endif
     float	v_float_member;
     double	v_double_member;
-} v_struct1;
+} v_struct1, *v_struct_ptr1;
 
 struct {
     char	v_char_member;
@@ -147,7 +147,7 @@ struct {
 #endif
     float	v_float_member;
     double	v_double_member;
-} v_struct2;
+} v_struct2, *v_struct_ptr2;
 
 /**** unions *******/
 
@@ -161,7 +161,7 @@ union t_union {
 #endif
     float	v_float_member;
     double	v_double_member;
-} v_union;
+} v_union, *v_union_ptr;
 
 union {
     char	v_char_member;
@@ -173,7 +173,7 @@ union {
 #endif
     float	v_float_member;
     double	v_double_member;
-} v_union2;
+} v_union2, *v_union_ptr2;
 
 /*** Functions returning type ********/
 

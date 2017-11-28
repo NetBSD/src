@@ -1,7 +1,7 @@
 /* GNU/Linux/x86-64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include <sys/mman.h>
 #include "tracepoint.h"
+#include "linux-x86-tdesc.h"
 
 /* Defined in auto-generated file amd64-linux.c.  */
 void init_registers_amd64_linux (void);
@@ -68,8 +70,8 @@ supply_fast_tracepoint_registers (struct regcache *regcache,
 		     ((char *) buf) + x86_64_ft_collect_regmap[i]);
 }
 
-IP_AGENT_EXPORT_FUNC ULONGEST
-gdb_agent_get_raw_reg (const unsigned char *raw_regs, int regnum)
+ULONGEST
+get_raw_reg (const unsigned char *raw_regs, int regnum)
 {
   if (regnum >= X86_64_NUM_FT_COLLECT_GREGS)
     return 0;
@@ -166,9 +168,117 @@ supply_static_tracepoint_registers (struct regcache *regcache,
 
 #endif /* HAVE_UST */
 
+/* Return target_desc to use for IPA, given the tdesc index passed by
+   gdbserver.  */
+
+const struct target_desc *
+get_ipa_tdesc (int idx)
+{
+#if defined __ILP32__
+  switch (idx)
+    {
+    case X86_TDESC_SSE:
+      return tdesc_x32_linux;
+    case X86_TDESC_AVX:
+      return tdesc_x32_avx_linux;
+    case X86_TDESC_AVX512:
+      return tdesc_x32_avx512_linux;
+    default:
+      break;
+    }
+#else
+  switch (idx)
+    {
+    case X86_TDESC_SSE:
+      return tdesc_amd64_linux;
+    case X86_TDESC_AVX:
+      return tdesc_amd64_avx_linux;
+    case X86_TDESC_MPX:
+      return tdesc_amd64_mpx_linux;
+    case X86_TDESC_AVX_MPX:
+      return tdesc_amd64_avx_mpx_linux;
+    case X86_TDESC_AVX512:
+      return tdesc_amd64_avx512_linux;
+    }
+#endif
+
+  internal_error (__FILE__, __LINE__,
+		  "unknown ipa tdesc index: %d", idx);
+}
+
+/* Allocate buffer for the jump pads.  The branch instruction has a
+   reach of +/- 31-bit, and the executable is loaded at low addresses.
+
+   64-bit: Use MAP_32BIT to allocate in the first 2GB.  Shared
+   libraries, being allocated at the top, are unfortunately out of
+   luck.
+
+   x32: Since MAP_32BIT is 64-bit only, do the placement manually.
+   Try allocating at '0x80000000 - SIZE' initially, decreasing until
+   we hit a free area.  This ensures the executable is fully covered,
+   and is as close as possible to the shared libraries, which are
+   usually mapped at the top of the first 4GB of the address space.
+*/
+
+void *
+alloc_jump_pad_buffer (size_t size)
+{
+#if __ILP32__
+  uintptr_t addr;
+  int pagesize;
+
+  pagesize = sysconf (_SC_PAGE_SIZE);
+  if (pagesize == -1)
+    perror_with_name ("sysconf");
+
+  addr = 0x80000000 - size;
+
+  /* size should already be page-aligned, but this can't hurt.  */
+  addr &= ~(pagesize - 1);
+
+  /* Search for a free area.  If we hit 0, we're out of luck.  */
+  for (; addr; addr -= pagesize)
+    {
+      void *res;
+
+      /* No MAP_FIXED - we don't want to zap someone's mapping.  */
+      res = mmap ((void *) addr, size,
+		  PROT_READ | PROT_WRITE | PROT_EXEC,
+		  MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+      /* If we got what we wanted, return.  */
+      if ((uintptr_t) res == addr)
+	return res;
+
+      /* If we got a mapping, but at a wrong address, undo it.  */
+      if (res != MAP_FAILED)
+	munmap (res, size);
+    }
+
+  return NULL;
+#else
+  void *res = mmap (NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+		    MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0);
+
+  if (res == MAP_FAILED)
+    return NULL;
+
+  return res;
+#endif
+}
+
 void
 initialize_low_tracepoint (void)
 {
+#if defined __ILP32__
+  init_registers_x32_linux ();
+  init_registers_x32_avx_linux ();
+  init_registers_x32_avx512_linux ();
+#else
   init_registers_amd64_linux ();
-  ipa_tdesc = tdesc_amd64_linux;
+  init_registers_amd64_avx_linux ();
+  init_registers_amd64_avx_mpx_linux ();
+  init_registers_amd64_mpx_linux ();
+  init_registers_amd64_avx512_linux ();
+#endif
 }

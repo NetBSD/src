@@ -1,5 +1,5 @@
 /* Intel i860 specific support for 32-bit ELF.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    Full i860 support contributed by Jason Eckhardt <jle@cygnus.com>.
 
@@ -74,7 +74,7 @@ i860_howto_pc26_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 
   /* Check for target out of range.  */
   if ((bfd_signed_vma)relocation > (0x3ffffff << 2)
-      || (bfd_signed_vma)relocation < (-0x4000000 << 2))
+      || (bfd_signed_vma)relocation < (-0x4000000 * 4))
     return bfd_reloc_outofrange;
 
   addr = (bfd_byte *) data + reloc_entry->address;
@@ -137,7 +137,7 @@ i860_howto_pc16_reloc (bfd *abfd,
 
   /* Check for target out of range.  */
   if ((bfd_signed_vma)relocation > (0x7fff << 2)
-      || (bfd_signed_vma)relocation < (-0x8000 << 2))
+      || (bfd_signed_vma)relocation < (-0x8000 * 4))
     return bfd_reloc_outofrange;
 
   addr = (bfd_byte *) data + reloc_entry->address;
@@ -1131,7 +1131,7 @@ elf32_i860_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       switch (r_type)
@@ -1196,13 +1196,13 @@ elf32_i860_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      r = info->callbacks->reloc_overflow
+	      (*info->callbacks->reloc_overflow)
 		(info, (h ? &h->root : NULL), name, howto->name,
 		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      r = info->callbacks->undefined_symbol
+	      (*info->callbacks->undefined_symbol)
 		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
@@ -1224,11 +1224,8 @@ elf32_i860_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    }
 
 	  if (msg)
-	    r = info->callbacks->warning
-	      (info, msg, name, input_bfd, input_section, rel->r_offset);
-
-	  if (! r)
-	    return FALSE;
+	    (*info->callbacks->warning) (info, msg, name, input_bfd,
+					 input_section, rel->r_offset);
 	}
     }
 

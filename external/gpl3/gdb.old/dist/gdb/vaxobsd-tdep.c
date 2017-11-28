@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/vax.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,7 +69,7 @@ vaxobsd_sigtramp_sniffer (const struct frame_unwind *self,
   if (name)
     return 0;
 
-  buf = alloca(sizeof vaxobsd_sigreturn);
+  buf = (gdb_byte *) alloca (sizeof vaxobsd_sigreturn);
   if (!safe_frame_unwind_memory (this_frame, sigreturn_addr,
 				 buf, sizeof vaxobsd_sigreturn))
     return 0;
@@ -87,7 +87,7 @@ vaxobsd_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
   CORE_ADDR addr, base, func;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct trad_frame_cache *) *this_cache;
 
   cache = trad_frame_cache_zalloc (this_frame);
   *this_cache = cache;

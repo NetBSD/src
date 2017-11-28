@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2015 Free Software Foundation, Inc.
+Copyright 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -1115,7 +1115,7 @@ lm32_model_init (SIM_CPU *cpu)
 #define TIMING_DATA(td) 0
 #endif
 
-static const MODEL lm32_models[] =
+static const SIM_MODEL lm32_models[] =
 {
   { "lm32", & lm32_mach, MODEL_LM32, TIMING_DATA (& lm32_timing[0]), lm32_model_init },
   { 0 }
@@ -1123,7 +1123,7 @@ static const MODEL lm32_models[] =
 
 /* The properties of this cpu's implementation.  */
 
-static const MACH_IMP_PROPERTIES lm32bf_imp_properties =
+static const SIM_MACH_IMP_PROPERTIES lm32bf_imp_properties =
 {
   sizeof (SIM_CPU),
 #if WITH_SCACHE
@@ -1165,7 +1165,7 @@ lm32_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH lm32_mach =
+const SIM_MACH lm32_mach =
 {
   "lm32", "lm32", MACH_LM32,
   32, 32, & lm32_models[0], & lm32bf_imp_properties,

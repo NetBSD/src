@@ -1,4 +1,4 @@
-# Copyright 2002-2015 Free Software Foundation, Inc.
+# Copyright 2002-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,8 +23,12 @@ load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
 gdb_exit
-if {[mi_gdb_start]} {
-    continue
+
+save_vars { GDBFLAGS } {
+    append GDBFLAGS " -ex \"set non-stop on\""
+    if {[mi_gdb_start]} {
+	continue
+    }
 }
 
 proc mi_nonstop_resume { command test } {
@@ -49,7 +53,6 @@ if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $option
 mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load $binfile
 
-mi_gdb_test "-gdb-set non-stop 1" ".*"
 mi_gdb_test "-gdb-set mi-async 1" ".*"
 mi_detect_async
 
@@ -94,7 +97,7 @@ mi_expect_interrupt "got interrupt"
 sleep 1
 mi_check_thread_states {"stopped" "stopped" "stopped"} "thread state, stop 4"
 
-mi_gdb_test "-exec-continue --all" ".*\\*running,thread-id=\"3\"\r\n\\*running,thread-id=\"2\"\r\n\\*running,thread-id=\"1\"" \
+mi_gdb_test "-exec-continue --all" ".*\\*running,thread-id=\"1\"\r\n\\*running,thread-id=\"2\"\r\n\\*running,thread-id=\"3\"" \
     "resume all"
 
 mi_expect_stop "breakpoint-hit" "break_at_me" "\[^\n\]*" "non-stop.c" "\[0-9\]*" {"" "disp=\"keep\""} "w0,i2 stop"
@@ -132,7 +135,7 @@ mi_gdb_test "-thread-select 2" "\\^done.*" "select first worker thread"
 mi_gdb_test "-gdb-set --thread 3 variable exit_first_thread=1" ".*\\^done" "ask the second thread to exit"
 
 set test "wait for thread exit"
-if { [is_remote target] } {
+if { [mi_is_target_remote] } {
     # The remote protocol doesn't have support for thread exit
     # notifications.
     unsupported $test

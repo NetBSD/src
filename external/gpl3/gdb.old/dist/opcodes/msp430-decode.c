@@ -1,6 +1,6 @@
 #line 1 "msp430-decode.opc"
 /* -*- c -*- */
-/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -375,7 +375,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SM (srcr, 0); DR (dstr);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x10:
@@ -399,7 +399,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SI (srcr); DR (dstr);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x20:
@@ -423,7 +423,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SA ((srcr << 16) + IMMU(2)); DR (dstr);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x30:
@@ -447,7 +447,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SM (srcr, IMMS(2)); DR (dstr);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x40:
@@ -477,7 +477,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = w ? 16 : 20;
                 msp430->ofs_430x = 1;
                 F_0NZC;
-              
+
               }
             break;
           case 0x60:
@@ -501,7 +501,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SR (srcr); DA ((dstr << 16) + IMMU(2));
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x70:
@@ -525,7 +525,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SR (srcr); DM (dstr, IMMS(2));
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x80:
@@ -549,7 +549,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SC ((srcr << 16) + IMMU(2)); DR (dstr);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x90:
@@ -574,7 +574,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
                 F_VNZC;
-              
+
               }
             break;
           case 0xa0:
@@ -599,7 +599,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
                 F_VNZC;
-              
+
               }
             break;
           case 0xb0:
@@ -624,7 +624,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
                 F_VNZC;
-              
+
               }
             break;
           case 0xc0:
@@ -648,7 +648,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_mov); SR (srcr); DR (dstr);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0xd0:
@@ -673,7 +673,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
                 F_VNZC;
-              
+
               }
             break;
           case 0xe0:
@@ -698,7 +698,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
                 F_VNZC;
-              
+
               }
             break;
           case 0xf0:
@@ -723,7 +723,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
                 F_VNZC;
-              
+
               }
             break;
         }
@@ -771,7 +771,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = w ? 16 : 20;
                 msp430->ofs_430x = 1;
                 F_0NZC;
-              
+
               }
             break;
           case 0x60:
@@ -849,7 +849,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = w ? 16 : 20;
                 msp430->ofs_430x = 1;
                 F_0NZC;
-              
+
               }
             break;
           case 0x60:
@@ -927,7 +927,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = w ? 16 : 20;
                 msp430->ofs_430x = 1;
                 F_0NZC;
-              
+
               }
             break;
           case 0x60:
@@ -1617,20 +1617,20 @@ msp430_decode_opcode (unsigned long pc,
                   }
                 SYNTAX("%S%b	%1");
 #line 394 "msp430-decode.opc"
-              
+
                 ID (sopc_to_id (so,c)); ASX (dreg, ad, srxt_bits); ABW (al_bit, b);
-              
+
                 if (ad == 0)
                   REPZC (srxt_bits, dsxt_bits);
-              
+
                 /* The helper functions encode for source, but it's
                    both source and dest, with a few documented exceptions.  */
                 msp430->op[0] = msp430->op[1];
-              
+
                 /* RETI ignores the operand.  */
                 if (msp430->id == MSO_reti)
                   msp430->syntax = "%S";
-              
+
                 switch (msp430->id)
                   {
                   case MSO_rrc:	F_VNZC; break;
@@ -1642,7 +1642,7 @@ msp430_decode_opcode (unsigned long pc,
                   case MSO_reti:	F_VNZC; break;
                   default: break;
                   }
-              
+
                 /* 20xx 0010 0000 ---- ----
                    3cxx 0011 1100 ---- ----
                         001j mp-- ---- ----.  */
@@ -1686,7 +1686,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_reti);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x01:
@@ -1917,7 +1917,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_call); AS (dstr, as);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x80:
@@ -1952,7 +1952,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_call); SA (IMMU(2) | (extb << 16));
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0x90:
@@ -1990,7 +1990,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_call); SA (pc + raddr + msp430->n_bytes);
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
           case 0xb0:
@@ -2025,7 +2025,7 @@ msp430_decode_opcode (unsigned long pc,
                 ID (MSO_call); SC (IMMU(2) | (extb << 16));
                 msp430->size = 20;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
         }
@@ -2059,7 +2059,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = w ? 16 : 20;
                 msp430->repeats = bits;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
         }
@@ -2102,7 +2102,7 @@ msp430_decode_opcode (unsigned long pc,
                 msp430->size = w ? 16 : 20;
                 msp430->repeats = bits;
                 msp430->ofs_430x = 1;
-              
+
               }
             break;
         }
@@ -2144,25 +2144,25 @@ msp430_decode_opcode (unsigned long pc,
                   }
                 SYNTAX("430x");
 #line 350 "msp430-decode.opc"
-              
+
                 al_bit = l;
                 srxt_bits = srx * 2 + t;
                 dsxt_bits = dsxt;
                 op = op_buf + lds.op_ptr;
                 msp430->ofs_430x = 1;
                 goto post_extension_word;
-              
+
               /* double-op insns:
                  opcode:4 sreg:4 Ad:1 BW:1 As:2 Dreg:4
-              
+
                  single-op insn:
                  opcode:9 BW:1 Ad:2 DSreg:4
-              
+
                  jumps:
                  opcode:3 Cond:3  pcrel:10. */
-              
+
               /* Double-Operand "opcode" fields.  */
-              
+
               }
             break;
           default: UNSUPPORTED(); break;
@@ -2263,7 +2263,7 @@ msp430_decode_opcode (unsigned long pc,
                   }
                 SYNTAX("%J	%1");
 #line 424 "msp430-decode.opc"
-              
+
                 raddr = (aa << 9) | (addrlsbs << 1);
                 if (raddr & 0x400)
                   raddr = raddr - 0x800;
@@ -2273,9 +2273,9 @@ msp430_decode_opcode (unsigned long pc,
                    data at that address.  */
                 ID (MSO_jmp); SC (pc + raddr + msp430->n_bytes);
                 msp430->cond = jmp;
-              
+
                 /* Extended instructions.  */
-              
+
               }
             break;
         }
@@ -2593,11 +2593,11 @@ msp430_decode_opcode (unsigned long pc,
                   }
                 SYNTAX("%D%b	%1,%0");
 #line 371 "msp430-decode.opc"
-              
+
                 ID (dopc_to_id (dopc)); ASX (sreg, as, srxt_bits); ADX (dreg, a, dsxt_bits); ABW (al_bit, b);
                 if (a == 0 && as == 0)
                   REPZC (srxt_bits, dsxt_bits);
-              
+
                 switch (msp430->id)
                   {
                   case MSO_mov:	F_____; break;
@@ -2614,7 +2614,7 @@ msp430_decode_opcode (unsigned long pc,
                   case MSO_and:	F_0NZC; break;
                   default: break;
                   }
-              
+
               }
             break;
         }

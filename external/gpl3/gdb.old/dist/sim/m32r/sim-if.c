@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the M32R.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB, the GNU debugger.
@@ -33,12 +33,10 @@
 #include <stdlib.h>
 #endif
 
+#include "dv-m32r_uart.h"
+
 static void free_state (SIM_DESC);
 static void print_m32r_misc_cpu (SIM_CPU *cpu, int verbose);
-
-/* Records simulator descriptor so utilities like m32r_dump_regs can be
-   called from gdb.  */
-SIM_DESC current_state;
 
 /* Cover function of sim_state_free to free the cpu buffers as well.  */
 
@@ -58,7 +56,7 @@ sim_open (kind, callback, abfd, argv)
      SIM_OPEN_KIND kind;
      host_callback *callback;
      struct bfd *abfd;
-     char **argv;
+     char * const *argv;
 {
   SIM_DESC sd = sim_state_alloc (kind, callback);
   char c;
@@ -86,17 +84,7 @@ sim_open (kind, callback, abfd, argv)
       return 0;
     }
 
-#if 0 /* FIXME: 'twould be nice if we could do this */
-  /* These options override any module options.
-     Obviously ambiguity should be avoided, however the caller may wish to
-     augment the meaning of an option.  */
-  if (extra_options != NULL)
-    sim_add_option_table (sd, extra_options);
-#endif
-
-  /* getopt will print the error message so we just have to exit if this fails.
-     FIXME: Hmmm...  in the case of gdb we need getopt to call
-     print_filtered.  */
+  /* The parser will print an error message for us, so we silently return.  */
   if (sim_parse_args (sd, argv) != SIM_RC_OK)
     {
       free_state (sd);
@@ -106,16 +94,10 @@ sim_open (kind, callback, abfd, argv)
   /* Allocate a handler for the control registers and other devices
      if no memory for that range has been allocated by the user.
      All are allocated in one chunk to keep things from being
-     unnecessarily complicated.  */
-  if (sim_core_read_buffer (sd, NULL, read_map, &c, M32R_DEVICE_ADDR, 1) == 0)
-    sim_core_attach (sd, NULL,
-		     0 /*level*/,
-		     access_read_write,
-		     0 /*space ???*/,
-		     M32R_DEVICE_ADDR, M32R_DEVICE_LEN /*nr_bytes*/,
-		     0 /*modulo*/,
-		     &m32r_devices,
-		     NULL /*buffer*/);
+     unnecessarily complicated.
+     TODO: Move these to the sim-model framework.  */
+  sim_hw_parse (sd, "/core/%s/reg %#x %i", "m32r_uart", UART_BASE_ADDR, 0x100);
+  sim_hw_parse (sd, "/core/%s/reg %#x %i", "m32r_cache", 0xfffffff0, 0x10);
 
   /* Allocate core managed memory if none specified by user.
      Use address 4 here in case the user wanted address 0 unmapped.  */
@@ -173,28 +155,15 @@ sim_open (kind, callback, abfd, argv)
 	= print_m32r_misc_cpu;
     }
 
-  /* Store in a global so things like sparc32_dump_regs can be invoked
-     from the gdb command line.  */
-  current_state = sd;
-
   return sd;
-}
-
-void
-sim_close (sd, quitting)
-     SIM_DESC sd;
-     int quitting;
-{
-  m32r_cgen_cpu_close (CPU_CPU_DESC (STATE_CPU (sd, 0)));
-  sim_module_uninstall (sd);
 }
 
 SIM_RC
 sim_create_inferior (sd, abfd, argv, envp)
      SIM_DESC sd;
      struct bfd *abfd;
-     char **argv;
-     char **envp;
+     char * const *argv;
+     char * const *envp;
 {
   SIM_CPU *current_cpu = STATE_CPU (sd, 0);
   SIM_ADDR addr;
@@ -212,10 +181,15 @@ sim_create_inferior (sd, abfd, argv, envp)
                     m32r_decode_gdb_ctrl_regnum(SPU_REGNUM), 0x1f00000);
 #endif
 
-#if 0
-  STATE_ARGV (sd) = sim_copy_argv (argv);
-  STATE_ENVP (sd) = sim_copy_argv (envp);
-#endif
+  /* Standalone mode (i.e. `run`) will take care of the argv for us in
+     sim_open() -> sim_parse_args().  But in debug mode (i.e. 'target sim'
+     with `gdb`), we need to handle it because the user can change the
+     argv on the fly via gdb's 'run'.  */
+  if (STATE_PROG_ARGV (sd) != argv)
+    {
+      freeargv (STATE_PROG_ARGV (sd));
+      STATE_PROG_ARGV (sd) = dupargv (argv);
+    }
 
   return SIM_RC_OK;
 }

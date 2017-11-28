@@ -1,5 +1,5 @@
 /* s390-mkopc.c -- Generates opcode table out of s390-opc.txt
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -401,6 +401,14 @@ main (void)
 		&& (str[7] == 0 || str[7] == ',')) {
 	      flag_bits |= S390_INSTR_FLAG_OPTPARM;
 	      str += 7;
+	    } else if (strncmp (str, "htm", 3) == 0
+		&& (str[3] == 0 || str[3] == ',')) {
+	      flag_bits |= S390_INSTR_FLAG_HTM;
+	      str += 3;
+	    } else if (strncmp (str, "vx", 2) == 0
+		&& (str[2] == 0 || str[2] == ',')) {
+	      flag_bits |= S390_INSTR_FLAG_VX;
+	      str += 2;
 	    } else {
 	      fprintf (stderr, "Couldn't parse flags string %s\n",
 		       flags_string);

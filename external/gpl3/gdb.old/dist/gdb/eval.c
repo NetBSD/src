@@ -1,6 +1,6 @@
 /* Evaluate expressions for GDB.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -406,7 +406,8 @@ value_f90_subarray (struct value *array,
   int pc = (*pos) + 1;
   LONGEST low_bound, high_bound;
   struct type *range = check_typedef (TYPE_INDEX_TYPE (value_type (array)));
-  enum f90_range_type range_type = longest_to_int (exp->elts[pc].longconst);
+  enum range_type range_type
+    = (enum range_type) longest_to_int (exp->elts[pc].longconst);
  
   *pos += 3;
 
@@ -997,7 +998,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	  return set;
 	}
 
-      argvec = (struct value **) alloca (sizeof (struct value *) * nargs);
+      argvec = XALLOCAVEC (struct value *, nargs);
       for (tem = 0; tem < nargs; tem++)
 	{
 	  /* Ensure that array expressions are coerced into pointer
@@ -1063,7 +1064,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	CORE_ADDR selector = 0;
 
 	int struct_return = 0;
-	int sub_no_side = 0;
+	enum noside sub_no_side = EVAL_NORMAL;
 
 	struct value *msg_send = NULL;
 	struct value *msg_send_stret = NULL;
@@ -1081,8 +1082,7 @@ evaluate_subexp_standard (struct type *expect_type,
 
 	selector = exp->elts[pc + 1].longconst;
 	nargs = exp->elts[pc + 2].longconst;
-	argvec = (struct value **) alloca (sizeof (struct value *) 
-					   * (nargs + 5));
+	argvec = XALLOCAVEC (struct value *, nargs + 5);
 
 	(*pos) += 3;
 
@@ -1226,7 +1226,7 @@ evaluate_subexp_standard (struct type *expect_type,
 
 	    block_for_pc (funaddr);
 
-	    CHECK_TYPEDEF (val_type);
+	    val_type = check_typedef (val_type);
 	  
 	    if ((val_type == NULL) 
 		|| (TYPE_CODE(val_type) == TYPE_CODE_ERROR))
@@ -1492,7 +1492,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	      function = cp_lookup_symbol_namespace (TYPE_TAG_NAME (type),
 						     name,
 						     get_selected_block (0),
-						     VAR_DOMAIN);
+						     VAR_DOMAIN).symbol;
 	      if (function == NULL)
 		error (_("No symbol \"%s\" in namespace \"%s\"."), 
 		       name, TYPE_TAG_NAME (type));
@@ -1810,13 +1810,13 @@ evaluate_subexp_standard (struct type *expect_type,
       switch (code)
 	{
 	case TYPE_CODE_ARRAY:
-	  if (exp->elts[*pos].opcode == OP_F90_RANGE)
+	  if (exp->elts[*pos].opcode == OP_RANGE)
 	    return value_f90_subarray (arg1, exp, pos, noside);
 	  else
 	    goto multi_f77_subscript;
 
 	case TYPE_CODE_STRING:
-	  if (exp->elts[*pos].opcode == OP_F90_RANGE)
+	  if (exp->elts[*pos].opcode == OP_RANGE)
 	    return value_f90_subarray (arg1, exp, pos, noside);
 	  else
 	    {
@@ -1862,7 +1862,7 @@ evaluate_subexp_standard (struct type *expect_type,
       arg3 = value_struct_elt (&arg1, NULL, &exp->elts[pc + 2].string,
 			       NULL, "structure");
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	arg3 = value_zero (value_type (arg3), not_lval);
+	arg3 = value_zero (value_type (arg3), VALUE_LVAL (arg3));
       return arg3;
 
     case STRUCTOP_PTR:
@@ -1900,7 +1900,8 @@ evaluate_subexp_standard (struct type *expect_type,
       {
         struct type *type = value_type (arg1);
         struct type *real_type;
-        int full, top, using_enc;
+        int full, using_enc;
+        LONGEST top;
 	struct value_print_options opts;
 
 	get_user_print_options (&opts);
@@ -1917,7 +1918,7 @@ evaluate_subexp_standard (struct type *expect_type,
       arg3 = value_struct_elt (&arg1, NULL, &exp->elts[pc + 2].string,
 			       NULL, "structure pointer");
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	arg3 = value_zero (value_type (arg3), not_lval);
+	arg3 = value_zero (value_type (arg3), VALUE_LVAL (arg3));
       return arg3;
 
     case STRUCTOP_MEMBER:
@@ -2427,7 +2428,8 @@ evaluate_subexp_standard (struct type *expect_type,
       if (noside == EVAL_SKIP)
 	goto nosideret;
       type = check_typedef (value_type (arg2));
-      if (TYPE_CODE (type) != TYPE_CODE_INT)
+      if (TYPE_CODE (type) != TYPE_CODE_INT
+          && TYPE_CODE (type) != TYPE_CODE_ENUM)
 	error (_("Non-integral right operand for \"@\" operator."));
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	{
@@ -3089,7 +3091,7 @@ evaluate_subexp_for_sizeof (struct expression *exp, int *pos,
   /* $5.3.3/2 of the C++ Standard (n3290 draft) says of sizeof:
      "When applied to a reference or a reference type, the result is
      the size of the referenced type."  */
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
   if (exp->language_defn->la_language == language_cplus
       && TYPE_CODE (type) == TYPE_CODE_REF)
     type = check_typedef (TYPE_TARGET_TYPE (type));

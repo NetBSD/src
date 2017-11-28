@@ -1,5 +1,5 @@
 /* Vector API for GDB.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 
    This file is part of GDB.
@@ -90,7 +90,7 @@ vec_p_reserve (void *vec, int reserve)
 void *
 vec_o_reserve (void *vec, int reserve, size_t vec_offset, size_t elt_size)
 {
-  struct vec_prefix *pfx = vec;
+  struct vec_prefix *pfx = (struct vec_prefix *) vec;
   unsigned alloc = calculate_allocation (pfx, reserve);
 
   if (!alloc)

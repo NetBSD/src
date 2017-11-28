@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define _RECORD_H_
 
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
+#include "common/enum-flags.h"
 
 struct cmd_list_element;
 
@@ -48,6 +49,7 @@ enum record_print_flag
   /* Indent based on call stack depth (if applicable).  */
   RECORD_PRINT_INDENT_CALLS = (1 << 2)
 };
+DEF_ENUM_FLAGS_TYPE (enum record_print_flag, record_print_flags);
 
 /* Determined whether the target is stopped at a software or hardware
    breakpoint, based on PC and the breakpoint tables.  The breakpoint

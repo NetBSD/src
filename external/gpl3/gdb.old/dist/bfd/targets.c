@@ -1,5 +1,5 @@
 /* Generic target-file-type support for the BFD library.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -144,6 +144,7 @@ DESCRIPTION
 
 .enum bfd_flavour
 .{
+.  {* N.B. Update bfd_flavour_name if you change this.  *}
 .  bfd_target_unknown_flavour,
 .  bfd_target_aout_flavour,
 .  bfd_target_coff_flavour,
@@ -451,6 +452,7 @@ BFD_JUMP_TABLE macros.
 .  NAME##_bfd_copy_link_hash_symbol_type, \
 .  NAME##_bfd_final_link, \
 .  NAME##_bfd_link_split_section, \
+.  NAME##_bfd_link_check_relocs, \
 .  NAME##_bfd_gc_sections, \
 .  NAME##_bfd_lookup_section_flags, \
 .  NAME##_bfd_merge_sections, \
@@ -491,6 +493,9 @@ BFD_JUMP_TABLE macros.
 .
 .  {* Should this section be split up into smaller pieces during linking.  *}
 .  bfd_boolean (*_bfd_link_split_section) (bfd *, struct bfd_section *);
+.
+.  {* Check the relocations in the bfd for validity.  *}
+.  bfd_boolean (* _bfd_link_check_relocs)(bfd *, struct bfd_link_info *);
 .
 .  {* Remove sections that are not referenced from the output.  *}
 .  bfd_boolean (*_bfd_gc_sections) (bfd *, struct bfd_link_info *);
@@ -567,7 +572,10 @@ to find an alternative output format that is suitable.
 extern const bfd_target aarch64_elf32_be_vec;
 extern const bfd_target aarch64_elf32_le_vec;
 extern const bfd_target aarch64_elf64_be_vec;
+extern const bfd_target aarch64_elf64_be_cloudabi_vec;
 extern const bfd_target aarch64_elf64_le_vec;
+extern const bfd_target aarch64_elf64_le_cloudabi_vec;
+extern const bfd_target aarch64_mach_o_vec;
 extern const bfd_target alpha_ecoff_le_vec;
 extern const bfd_target alpha_elf64_vec;
 extern const bfd_target alpha_elf64_fbsd_vec;
@@ -595,6 +603,7 @@ extern const bfd_target arm_elf32_symbian_be_vec;
 extern const bfd_target arm_elf32_symbian_le_vec;
 extern const bfd_target arm_elf32_vxworks_be_vec;
 extern const bfd_target arm_elf32_vxworks_le_vec;
+extern const bfd_target arm_mach_o_vec;
 extern const bfd_target arm_pe_be_vec;
 extern const bfd_target arm_pe_le_vec;
 extern const bfd_target arm_pe_epoc_be_vec;
@@ -947,7 +956,10 @@ static const bfd_target * const _bfd_target_vector[] =
 	&aarch64_elf32_be_vec,
 	&aarch64_elf32_le_vec,
 	&aarch64_elf64_be_vec,
+	&aarch64_elf64_be_cloudabi_vec,
 	&aarch64_elf64_le_vec,
+	&aarch64_elf64_le_cloudabi_vec,
+	&aarch64_mach_o_vec,
 #endif
 
 #ifdef BFD64
@@ -993,6 +1005,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&arm_elf32_symbian_le_vec,
 	&arm_elf32_vxworks_be_vec,
 	&arm_elf32_vxworks_le_vec,
+	&arm_mach_o_vec,
 	&arm_pe_be_vec,
 	&arm_pe_le_vec,
 	&arm_pe_epoc_be_vec,
@@ -1802,30 +1815,76 @@ bfd_target_list (void)
 
 /*
 FUNCTION
-	bfd_seach_for_target
+	bfd_iterate_over_targets
 
 SYNOPSIS
-	const bfd_target *bfd_search_for_target
-	  (int (*search_func) (const bfd_target *, void *),
-	   void *);
+	const bfd_target *bfd_iterate_over_targets
+	  (int (*func) (const bfd_target *, void *),
+	   void *data);
 
 DESCRIPTION
-	Return a pointer to the first transfer vector in the list of
-	transfer vectors maintained by BFD that produces a non-zero
-	result when passed to the function @var{search_func}.  The
-	parameter @var{data} is passed, unexamined, to the search
-	function.
+	Call @var{func} for each target in the list of BFD target
+	vectors, passing @var{data} to @var{func}.  Stop iterating if
+	@var{func} returns a non-zero result, and return that target
+	vector.  Return NULL if @var{func} always returns zero.
 */
 
 const bfd_target *
-bfd_search_for_target (int (*search_func) (const bfd_target *, void *),
-		       void *data)
+bfd_iterate_over_targets (int (*func) (const bfd_target *, void *),
+			  void *data)
 {
-  const bfd_target * const *target;
+  const bfd_target *const *target;
 
-  for (target = bfd_target_vector; *target != NULL; target ++)
-    if (search_func (*target, data))
+  for (target = bfd_target_vector; *target != NULL; ++target)
+    if (func (*target, data))
       return *target;
 
   return NULL;
+}
+
+/*
+FUNCTION
+	bfd_flavour_name
+
+SYNOPSIS
+	const char *bfd_flavour_name (enum bfd_flavour flavour);
+
+DESCRIPTION
+	Return the string form of @var{flavour}.
+*/
+
+const char *
+bfd_flavour_name (enum bfd_flavour flavour)
+{
+  switch (flavour)
+    {
+    case bfd_target_unknown_flavour: return "unknown file format";
+    case bfd_target_aout_flavour: return "a.out";
+    case bfd_target_coff_flavour: return "COFF";
+    case bfd_target_ecoff_flavour: return "ECOFF";
+    case bfd_target_xcoff_flavour: return "XCOFF";
+    case bfd_target_elf_flavour: return "ELF";
+    case bfd_target_ieee_flavour: return "IEEE";
+    case bfd_target_nlm_flavour: return "NLM";
+    case bfd_target_oasys_flavour: return "Oasys";
+    case bfd_target_tekhex_flavour: return "Tekhex";
+    case bfd_target_srec_flavour: return "Srec";
+    case bfd_target_verilog_flavour: return "Verilog";
+    case bfd_target_ihex_flavour: return "Ihex";
+    case bfd_target_som_flavour: return "SOM";
+    case bfd_target_os9k_flavour: return "OS9K";
+    case bfd_target_versados_flavour: return "Versados";
+    case bfd_target_msdos_flavour: return "MSDOS";
+    case bfd_target_ovax_flavour: return "Ovax";
+    case bfd_target_evax_flavour: return "Evax";
+    case bfd_target_mmo_flavour: return "mmo";
+    case bfd_target_mach_o_flavour: return "MACH_O";
+    case bfd_target_pef_flavour: return "PEF";
+    case bfd_target_pef_xlib_flavour: return "PEF_XLIB";
+    case bfd_target_sym_flavour: return "SYM";
+    /* There is no "default" case here so that -Wswitch (part of -Wall)
+       catches missing entries.  */
+    }
+
+  abort ();
 }

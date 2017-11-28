@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2015 Free Software Foundation, Inc.
+# Copyright 1997-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ gdb_test "step" ".*${decimal}.*myglob.*"   "step into"
 # to the restoration of the global pointer (which is a caller-save).
 # Similarly on MIPS PIC targets.
 set test "step out"
-if { [istarget "hppa2.0w-hp-hpux*"] || [istarget "ia64-*-*"] || [istarget "mips*-*-*"]} {
+if { [istarget "ia64-*-*"] || [istarget "mips*-*-*"]} {
     gdb_test_multiple "finish" "$test" {
         -re ".*${decimal}.*a.*5.*= a.*3.*$gdb_prompt $" {
 	    pass "$test"
@@ -157,7 +157,7 @@ gdb_test_multiple "finish" "$test" {
 	# On IA-64, we end up on callee instead of on the following line due
 	# to the restoration of the global pointer.
 	# Similarly on MIPS PIC targets.
-	if { [istarget "hppa2.0w-hp-hpux*"] || [istarget "ia64-*-*"] || [istarget "mips*-*-*"] } {
+	if { [istarget "ia64-*-*"] || [istarget "mips*-*-*"] } {
 	    test_i "$test" "stepi" \
 		".*${decimal}.*callee.*STEPI"  ".*${decimal}.*callee.*NEXTI"
 	} else {
