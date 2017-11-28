@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.3 2017/10/28 00:37:13 pgoyette Exp $ */
+/* $NetBSD: usbroothub.c,v 1.4 2017/11/28 07:36:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -169,6 +169,24 @@ static const struct usb_roothub_descriptors usbroothub_confd1 = {
 	},
 };
 
+/* USB 3.0 10.15.1 */
+static const usb_device_descriptor_t usbroothub_devd3 = {
+	.bLength = sizeof(usb_device_descriptor_t),
+	.bDescriptorType = UDESC_DEVICE,
+	.bcdUSB = {0x00, 0x03},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = UDPROTO_SSHUB,
+	.bMaxPacketSize = 9,
+	.idVendor = {0},
+	.idProduct = {0},
+	.bcdDevice = {0x00, 0x01},
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 0,
+	.bNumConfigurations = 1
+};
+
 static const usb_device_descriptor_t usbroothub_devd2 = {
 	.bLength = sizeof(usb_device_descriptor_t),
 	.bDescriptorType = UDESC_DEVICE,
@@ -226,6 +244,82 @@ static const struct usb_roothub_descriptors usbroothub_confd2 = {
 		.bmAttributes = UE_INTERRUPT,
 		.wMaxPacketSize = USETWD(8),			/* max packet */
 		.bInterval = 12,
+	},
+};
+
+static const struct usb3_roothub_descriptors usbroothub_confd3 = {
+	.urh_confd = {
+		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_CONFIG,
+		.wTotalLength = USETWD(sizeof(usbroothub_confd3)),
+		.bNumInterface = 1,
+		.bConfigurationValue = 1,
+		.iConfiguration = 0,
+		.bmAttributes = UC_SELF_POWERED,		/* 10.13.1 */
+		.bMaxPower = 0,
+	},
+	.urh_ifcd = {
+		.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_INTERFACE,
+		.bInterfaceNumber = 0,
+		.bAlternateSetting = 0,
+		.bNumEndpoints = 1,
+		.bInterfaceClass = UICLASS_HUB,
+		.bInterfaceSubClass = UISUBCLASS_HUB,
+		.bInterfaceProtocol = 0,			/* UIPROTO_SSHUB ??? */
+		.iInterface = 0
+	},
+	.urh_endpd = {
+		.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_ENDPOINT,
+		.bEndpointAddress = UE_DIR_IN | USBROOTHUB_INTR_ENDPT,
+		.bmAttributes = UE_INTERRUPT,
+		.wMaxPacketSize = USETWD(2),			/* max packet */
+		.bInterval = 8,
+	},
+	.urh_endpssd = {
+		.bLength = USB_ENDPOINT_SS_COMP_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_ENDPOINT_SS_COMP,
+		.bMaxBurst = 0,
+		.bmAttributes = 0,
+		.wBytesPerInterval = USETWD(2)
+	},
+};
+
+static const struct usb3_roothub_bos_descriptors usbroothub_bosd3 = {
+	.urh_bosd = {
+		.bLength = USB_BOS_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_BOS,
+		.wTotalLength = USETWD(sizeof(usbroothub_bosd3)),
+		.bNumDeviceCaps = 3,
+	},
+	/* 9.6.2.1 USB 2.0 Extension */
+	.urh_usb2extd = {
+		.bLength = USB_DEVCAP_USB2EXT_DESCRIPTOR_SIZE,
+		.bDescriptorType = 1,
+		.bDevCapabilityType = 2,
+		.bmAttributes[0] = 2,
+	},
+	/* 9.6.2.2 Superspeed device capability */
+	.urh_ssd = {
+		.bLength = USB_DEVCAP_SS_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_DEVICE_CAPABILITY,
+		.bDevCapabilityType = USB_DEVCAP_SUPER_SPEED,
+		.bmAttributes = 0,	/* USB_DEVCAP_SS_LTM */
+		.wSpeedsSupported = USETWD(
+		    USB_DEVCAP_SS_SPEED_LS | USB_DEVCAP_SS_SPEED_FS |
+		    USB_DEVCAP_SS_SPEED_HS | USB_DEVCAP_SS_SPEED_SS),
+		.bFunctionalitySupport = 8,		/* SS is 3, i.e. 1 << 3? */
+		.bU1DevExitLat = 255,		/* Dummy... 0? */
+		.wU2DevExitLat = USETWD(8),	/* Also dummy... 0? */
+	},
+	/* 9.6.2.3 Container ID  - see RFC 4122 */
+	.urh_containerd = {
+		.bLength = USB_DEVCAP_CONTAINER_ID_DESCRIPTOR_SIZE,
+		.bDescriptorType = 1,
+		.bDevCapabilityType = 4,
+		.bReserved = 0,
+		// ContainerID will be zero
 	},
 };
 
@@ -310,7 +404,10 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 			break;
 		switch (value) {
 		case C(0, UDESC_DEVICE):
-			if (bus->ub_revision == USBREV_2_0) {
+			if (bus->ub_revision >= USBREV_3_0) {
+				buflen = min(len, sizeof(usbroothub_devd3));
+				memcpy(buf, &usbroothub_devd3, buflen);
+			} else if (bus->ub_revision == USBREV_2_0) {
 				buflen = min(len, sizeof(usbroothub_devd2));
 				memcpy(buf, &usbroothub_devd2, buflen);
 			} else {
@@ -319,7 +416,10 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 			}
 			break;
 		case C(0, UDESC_CONFIG):
-			if (bus->ub_revision == USBREV_2_0) {
+			if (bus->ub_revision >= USBREV_3_0) {
+				buflen = min(len, sizeof(usbroothub_confd3));
+				memcpy(buf, &usbroothub_confd3, buflen);
+			} else if (bus->ub_revision == USBREV_2_0) {
 				buflen = min(len, sizeof(usbroothub_confd2));
 				memcpy(buf, &usbroothub_confd2, buflen);
 			} else {
@@ -351,6 +451,13 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 				confd.urh_confd.bDescriptorType =
 				    UDESC_OTHER_SPEED_CONFIGURATION;
 				memcpy(buf, &confd, buflen);
+			} else
+				goto fail;
+			break;
+		case C(0, UDESC_BOS):
+			if (bus->ub_revision >= USBREV_3_0) {
+				buflen = min(len, sizeof(usbroothub_bosd3));
+				memcpy(buf, &usbroothub_bosd3, buflen);
 			} else
 				goto fail;
 			break;
