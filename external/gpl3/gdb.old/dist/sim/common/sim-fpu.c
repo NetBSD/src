@@ -2,7 +2,7 @@
    of the floating point routines in libgcc1.c for targets without
    hardware floating point.  */
 
-/* Copyright 1994-2015 Free Software Foundation, Inc.
+/* Copyright 1994-2016 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -65,16 +65,18 @@ print_bits (unsigned64 x,
 	print (arg, "0");
       bit >>= 1;
 
-      if (digits > 0) digits--;
+      if (digits > 0)
+	digits--;
       i = (i + 1) % 4;
     }
 }
 
 
 
-/* Quick and dirty conversion between a host double and host 64bit int */
+/* Quick and dirty conversion between a host double and host 64bit int.  */
 
-typedef union {
+typedef union
+{
   double d;
   unsigned64 i;
 } sim_fpu_map;
@@ -173,7 +175,7 @@ typedef union {
 #define MAX_UINT  (is_64bit ? MAX_UINT64 : MAX_UINT32)
 #define NR_INTBITS (is_64bit ? 64 : 32)
 
-/* Squeese an unpacked sim_fpu struct into a 32/64 bit integer */
+/* Squeeze an unpacked sim_fpu struct into a 32/64 bit integer.  */
 STATIC_INLINE_SIM_FPU (unsigned64)
 pack_fpu (const sim_fpu *src,
 	  int is_double)
@@ -185,11 +187,11 @@ pack_fpu (const sim_fpu *src,
 
   switch (src->class)
     {
-      /* create a NaN */
+      /* Create a NaN.  */
     case sim_fpu_class_qnan:
       sign = src->sign;
       exp = EXPMAX;
-      /* force fraction to correct class */
+      /* Force fraction to correct class.  */
       fraction = src->fraction;
       fraction >>= NR_GUARDS;
 #ifdef SIM_QUIET_NAN_NEGATED
@@ -201,7 +203,7 @@ pack_fpu (const sim_fpu *src,
     case sim_fpu_class_snan:
       sign = src->sign;
       exp = EXPMAX;
-      /* force fraction to correct class */
+      /* Force fraction to correct class.  */
       fraction = src->fraction;
       fraction >>= NR_GUARDS;
 #ifdef SIM_QUIET_NAN_NEGATED
@@ -233,7 +235,7 @@ pack_fpu (const sim_fpu *src,
 	  int nr_shift = NORMAL_EXPMIN - src->normal_exp;
 	  if (nr_shift > NR_FRACBITS)
 	    {
-	      /* underflow, just make the number zero */
+	      /* Underflow, just make the number zero.  */
 	      sign = src->sign;
 	      exp = 0;
 	      fraction = 0;
@@ -242,7 +244,7 @@ pack_fpu (const sim_fpu *src,
 	    {
 	      sign = src->sign;
 	      exp = 0;
-	      /* Shift by the value */
+	      /* Shift by the value.  */
 	      fraction = src->fraction;
 	      fraction >>= NR_GUARDS;
 	      fraction >>= nr_shift;
@@ -261,7 +263,7 @@ pack_fpu (const sim_fpu *src,
 	  sign = src->sign;
 	  fraction = src->fraction;
 	  /* FIXME: Need to round according to WITH_SIM_FPU_ROUNDING
-             or some such */
+             or some such.  */
 	  /* Round to nearest: If the guard bits are the all zero, but
 	     the first, then we're half way between two numbers,
 	     choose the one which makes the lsb of the answer 0.  */
@@ -272,17 +274,17 @@ pack_fpu (const sim_fpu *src,
 	    }
 	  else
 	    {
-	      /* Add a one to the guards to force round to nearest */
+	      /* Add a one to the guards to force round to nearest.  */
 	      fraction += GUARDROUND;
 	    }
-	  if ((fraction & IMPLICIT_2)) /* rounding resulted in carry */
+	  if ((fraction & IMPLICIT_2)) /* Rounding resulted in carry.  */
 	    {
 	      exp += 1;
 	      fraction >>= 1;
 	    }
 	  fraction >>= NR_GUARDS;
 	  /* When exp == EXPMAX (overflow from carry) fraction must
-	     have been made zero */
+	     have been made zero.  */
 	  ASSERT ((exp == EXPMAX) <= ((fraction & ~IMPLICIT_1) == 0));
 	}
       break;
@@ -294,7 +296,7 @@ pack_fpu (const sim_fpu *src,
 	     | (exp << NR_FRACBITS)
 	     | LSMASKED64 (fraction, NR_FRACBITS - 1, 0));
 
-  /* trace operation */
+  /* Trace operation.  */
 #if 0
   if (is_double)
     {
@@ -313,7 +315,7 @@ pack_fpu (const sim_fpu *src,
 }
 
 
-/* Unpack a 32/64 bit integer into a sim_fpu structure */
+/* Unpack a 32/64 bit integer into a sim_fpu structure.  */
 STATIC_INLINE_SIM_FPU (void)
 unpack_fpu (sim_fpu *dst, unsigned64 packed, int is_double)
 {
@@ -326,7 +328,7 @@ unpack_fpu (sim_fpu *dst, unsigned64 packed, int is_double)
       /* Hmm.  Looks like 0 */
       if (fraction == 0)
 	{
-	  /* tastes like zero */
+	  /* Tastes like zero.  */
 	  dst->class = sim_fpu_class_zero;
 	  dst->sign = sign;
 	  dst->normal_exp = 0;
@@ -353,7 +355,7 @@ unpack_fpu (sim_fpu *dst, unsigned64 packed, int is_double)
       /* Huge exponent*/
       if (fraction == 0)
 	{
-	  /* Attached to a zero fraction - means infinity */
+	  /* Attached to a zero fraction - means infinity.  */
 	  dst->class = sim_fpu_class_infinity;
 	  dst->sign = sign;
 	  /* dst->normal_exp = EXPBIAS; */
@@ -363,7 +365,7 @@ unpack_fpu (sim_fpu *dst, unsigned64 packed, int is_double)
 	{
 	  int qnan;
 
-	  /* Non zero fraction, means NaN */
+	  /* Non zero fraction, means NaN.  */
 	  dst->sign = sign;
 	  dst->fraction = (fraction << NR_GUARDS);
 #ifdef SIM_QUIET_NAN_NEGATED
@@ -379,14 +381,14 @@ unpack_fpu (sim_fpu *dst, unsigned64 packed, int is_double)
     }
   else
     {
-      /* Nothing strange about this number */
+      /* Nothing strange about this number.  */
       dst->class = sim_fpu_class_number;
       dst->sign = sign;
       dst->fraction = ((fraction << NR_GUARDS) | IMPLICIT_1);
       dst->normal_exp = exp - EXPBIAS;
     }
 
-  /* trace operation */
+  /* Trace operation.  */
 #if 0
   if (is_double)
     {
@@ -418,7 +420,7 @@ unpack_fpu (sim_fpu *dst, unsigned64 packed, int is_double)
 }
 
 
-/* Convert a floating point into an integer */
+/* Convert a floating point into an integer.  */
 STATIC_INLINE_SIM_FPU (int)
 fpu2i (signed64 *i,
        const sim_fpu *s,
@@ -443,13 +445,13 @@ fpu2i (signed64 *i,
       *i = MIN_INT; /* FIXME */
       return sim_fpu_status_invalid_cvi;
     }
-  /* map infinity onto MAX_INT... */
+  /* Map infinity onto MAX_INT...  */
   if (sim_fpu_is_infinity (s))
     {
       *i = s->sign ? MIN_INT : MAX_INT;
       return sim_fpu_status_invalid_cvi;
     }
-  /* it is a number, but a small one */
+  /* It is a number, but a small one.  */
   if (s->normal_exp < 0)
     {
       *i = 0;
@@ -464,7 +466,7 @@ fpu2i (signed64 *i,
 	return 0; /* exact */
       if (is_64bit) /* can't round */
 	return sim_fpu_status_invalid_cvi; /* must be overflow */
-      /* For a 32bit with MAX_INT, rounding is possible */
+      /* For a 32bit with MAX_INT, rounding is possible.  */
       switch (round)
 	{
 	case sim_fpu_round_default:
@@ -500,7 +502,7 @@ fpu2i (signed64 *i,
       *i = s->sign ? MIN_INT : MAX_INT;
       return sim_fpu_status_invalid_cvi;
     }
-  /* normal number shift it into place */
+  /* Normal number, shift it into place.  */
   tmp = s->fraction;
   shift = (s->normal_exp - (NR_FRAC_GUARD));
   if (shift > 0)
@@ -518,7 +520,7 @@ fpu2i (signed64 *i,
   return status;
 }
 
-/* convert an integer into a floating point */
+/* Convert an integer into a floating point.  */
 STATIC_INLINE_SIM_FPU (int)
 i2fpu (sim_fpu *f, signed64 i, int is_64bit)
 {
@@ -538,7 +540,7 @@ i2fpu (sim_fpu *f, signed64 i, int is_64bit)
       if (f->sign)
 	{
 	  /* Special case for minint, since there is no corresponding
-	     +ve integer representation for it */
+	     +ve integer representation for it.  */
 	  if (i == MIN_INT)
 	    {
 	      f->fraction = IMPLICIT_1;
@@ -591,7 +593,7 @@ i2fpu (sim_fpu *f, signed64 i, int is_64bit)
 }
 
 
-/* Convert a floating point into an integer */
+/* Convert a floating point into an integer.  */
 STATIC_INLINE_SIM_FPU (int)
 fpu2u (unsigned64 *u, const sim_fpu *s, int is_64bit)
 {
@@ -608,19 +610,19 @@ fpu2u (unsigned64 *u, const sim_fpu *s, int is_64bit)
       *u = 0;
       return 0;
     }
-  /* it is a negative number */
+  /* It is a negative number.  */
   if (s->sign)
     {
       *u = 0;
       return 0;
     }
-  /* get reasonable MAX_USI_INT... */
+  /* Get reasonable MAX_USI_INT...  */
   if (sim_fpu_is_infinity (s))
     {
       *u = MAX_UINT;
       return 0;
     }
-  /* it is a number, but a small one */
+  /* It is a number, but a small one.  */
   if (s->normal_exp < 0)
     {
       *u = 0;
@@ -648,7 +650,7 @@ fpu2u (unsigned64 *u, const sim_fpu *s, int is_64bit)
   return 0;
 }
 
-/* Convert an unsigned integer into a floating point */
+/* Convert an unsigned integer into a floating point.  */
 STATIC_INLINE_SIM_FPU (int)
 u2fpu (sim_fpu *f, unsigned64 u, int is_64bit)
 {
@@ -737,7 +739,7 @@ sim_fpu_fractionto (sim_fpu *f,
   f->class = sim_fpu_class_number;
   f->sign = sign;
   f->normal_exp = normal_exp;
-  /* shift the fraction to where sim-fpu expects it */
+  /* Shift the fraction to where sim-fpu expects it.  */
   if (shift >= 0)
     f->fraction = (fraction << shift);
   else
@@ -750,7 +752,7 @@ INLINE_SIM_FPU (unsigned64)
 sim_fpu_tofraction (const sim_fpu *d,
 		    int precision)
 {
-  /* we have NR_FRAC_GUARD bits, we want only PRECISION bits */
+  /* We have NR_FRAC_GUARD bits, we want only PRECISION bits.  */
   int shift = (NR_FRAC_GUARD - precision);
   unsigned64 fraction = (d->fraction & ~IMPLICIT_1);
   if (shift >= 0)
@@ -822,7 +824,7 @@ do_normal_underflow (sim_fpu *f,
 
 
 /* Round a number using NR_GUARDS.
-   Will return the rounded number or F->FRACTION == 0 when underflow */
+   Will return the rounded number or F->FRACTION == 0 when underflow.  */
 
 STATIC_INLINE_SIM_FPU (int)
 do_normal_round (sim_fpu *f,
@@ -864,7 +866,7 @@ do_normal_round (sim_fpu *f,
 	  break;
 	}
       f->fraction &= ~guardmask;
-      /* round if needed, handle resulting overflow */
+      /* Round if needed, handle resulting overflow.  */
       if ((status & sim_fpu_status_rounded))
 	{
 	  f->fraction += fraclsb;
@@ -895,7 +897,7 @@ do_round (sim_fpu *f,
       return 0;
       break;
     case sim_fpu_class_snan:
-      /* Quieten a SignalingNaN */
+      /* Quieten a SignalingNaN.  */
       f->class = sim_fpu_class_qnan;
       return sim_fpu_status_invalid_snan;
       break;
@@ -917,7 +919,7 @@ do_round (sim_fpu *f,
 		&& !(denorm & sim_fpu_denorm_zero))
 	      {
 		status = do_normal_round (f, shift + NR_GUARDS, round);
-		if (f->fraction == 0) /* rounding underflowed */
+		if (f->fraction == 0) /* Rounding underflowed.  */
 		  {
 		    status |= do_normal_underflow (f, is_double, round);
 		  }
@@ -929,7 +931,7 @@ do_round (sim_fpu *f,
 		       before rounding, some after! */
 		    if (status & sim_fpu_status_inexact)
 		      status |= sim_fpu_status_underflow;
-		    /* Flag that resultant value has been denormalized */
+		    /* Flag that resultant value has been denormalized.  */
 		    f->class = sim_fpu_class_denorm;
 		  }
 		else if ((denorm & sim_fpu_denorm_underflow_inexact))
@@ -955,7 +957,7 @@ do_round (sim_fpu *f,
 	      /* f->class = sim_fpu_class_zero; */
 	      status |= do_normal_underflow (f, is_double, round);
 	    else if (f->normal_exp > NORMAL_EXPMAX)
-	      /* oops! rounding caused overflow */
+	      /* Oops! rounding caused overflow.  */
 	      status |= do_normal_overflow (f, is_double, round);
 	  }
 	ASSERT ((f->class == sim_fpu_class_number
@@ -1054,13 +1056,13 @@ sim_fpu_add (sim_fpu *f,
     /* use exp of larger */
     if (shift >= NR_FRAC_GUARD)
       {
-	/* left has much bigger magnitute */
+	/* left has much bigger magnitude */
 	*f = *l;
 	return sim_fpu_status_inexact;
       }
     if (shift <= - NR_FRAC_GUARD)
       {
-	/* right has much bigger magnitute */
+	/* right has much bigger magnitude */
 	*f = *r;
 	return sim_fpu_status_inexact;
       }
@@ -1072,7 +1074,7 @@ sim_fpu_add (sim_fpu *f,
 	if (rfraction & LSMASK64 (shift - 1, 0))
 	  {
 	    status |= sim_fpu_status_inexact;
-	    rfraction |= LSBIT64 (shift); /* stick LSBit */
+	    rfraction |= LSBIT64 (shift); /* Stick LSBit.  */
 	  }
 	rfraction >>= shift;
       }
@@ -1082,7 +1084,7 @@ sim_fpu_add (sim_fpu *f,
 	if (lfraction & LSMASK64 (- shift - 1, 0))
 	  {
 	    status |= sim_fpu_status_inexact;
-	    lfraction |= LSBIT64 (- shift); /* stick LSBit */
+	    lfraction |= LSBIT64 (- shift); /* Stick LSBit.  */
 	  }
 	lfraction >>= -shift;
       }
@@ -1091,7 +1093,7 @@ sim_fpu_add (sim_fpu *f,
 	f->normal_exp = r->normal_exp;
       }
 
-    /* perform the addition */
+    /* Perform the addition.  */
     if (l->sign)
       lfraction = - lfraction;
     if (r->sign)
@@ -1115,7 +1117,7 @@ sim_fpu_add (sim_fpu *f,
 	f->fraction = - f->fraction;
       }
 
-    /* normalize it */
+    /* Normalize it.  */
     if ((f->fraction & IMPLICIT_2))
       {
 	f->fraction = (f->fraction >> 1) | (f->fraction & 1);
@@ -1207,13 +1209,13 @@ sim_fpu_sub (sim_fpu *f,
     /* use exp of larger */
     if (shift >= NR_FRAC_GUARD)
       {
-	/* left has much bigger magnitute */
+	/* left has much bigger magnitude */
 	*f = *l;
 	return sim_fpu_status_inexact;
       }
     if (shift <= - NR_FRAC_GUARD)
       {
-	/* right has much bigger magnitute */
+	/* right has much bigger magnitude */
 	*f = *r;
 	f->sign = !r->sign;
 	return sim_fpu_status_inexact;
@@ -1226,7 +1228,7 @@ sim_fpu_sub (sim_fpu *f,
 	if (rfraction & LSMASK64 (shift - 1, 0))
 	  {
 	    status |= sim_fpu_status_inexact;
-	    rfraction |= LSBIT64 (shift); /* stick LSBit */
+	    rfraction |= LSBIT64 (shift); /* Stick LSBit.  */
 	  }
 	rfraction >>= shift;
       }
@@ -1236,7 +1238,7 @@ sim_fpu_sub (sim_fpu *f,
 	if (lfraction & LSMASK64 (- shift - 1, 0))
 	  {
 	    status |= sim_fpu_status_inexact;
-	    lfraction |= LSBIT64 (- shift); /* stick LSBit */
+	    lfraction |= LSBIT64 (- shift); /* Stick LSBit.  */
 	  }
 	lfraction >>= -shift;
       }
@@ -1245,7 +1247,7 @@ sim_fpu_sub (sim_fpu *f,
 	f->normal_exp = r->normal_exp;
       }
 
-    /* perform the subtraction */
+    /* Perform the subtraction.  */
     if (l->sign)
       lfraction = - lfraction;
     if (!r->sign)
@@ -1269,7 +1271,7 @@ sim_fpu_sub (sim_fpu *f,
 	f->fraction = - f->fraction;
       }
 
-    /* normalize it */
+    /* Normalize it.  */
     if ((f->fraction & IMPLICIT_2))
       {
 	f->fraction = (f->fraction >> 1) | (f->fraction & 1);
@@ -1346,7 +1348,7 @@ sim_fpu_mul (sim_fpu *f,
       return 0;
     }
   /* Calculate the mantissa by multiplying both 64bit numbers to get a
-     128 bit number */
+     128 bit number.  */
   {
     unsigned64 low;
     unsigned64 high;
@@ -1389,7 +1391,7 @@ sim_fpu_mul (sim_fpu *f,
     ASSERT (high >= LSBIT64 ((NR_FRAC_GUARD * 2) - 64));
     ASSERT (LSBIT64 (((NR_FRAC_GUARD + 1) * 2) - 64) < IMPLICIT_1);
 
-    /* normalize */
+    /* Normalize.  */
     do
       {
 	f->normal_exp--;
@@ -1486,7 +1488,7 @@ sim_fpu_div (sim_fpu *f,
     }
 
   /* Calculate the mantissa by multiplying both 64bit numbers to get a
-     128 bit number */
+     128 bit number.  */
   {
     /* quotient =  ( ( numerator / denominator)
                       x 2^(numerator exponent -  denominator exponent)
@@ -1511,7 +1513,7 @@ sim_fpu_div (sim_fpu *f,
       }
     ASSERT (numerator >= denominator);
 
-    /* Gain extra precision, already used one spare bit */
+    /* Gain extra precision, already used one spare bit.  */
     numerator <<=    NR_SPARE;
     denominator <<=  NR_SPARE;
 
@@ -1529,7 +1531,7 @@ sim_fpu_div (sim_fpu *f,
 	numerator <<= 1;
       }
 
-    /* discard (but save) the extra bits */
+    /* Discard (but save) the extra bits.  */
     if ((quotient & LSMASK64 (NR_SPARE -1, 0)))
       quotient = (quotient >> NR_SPARE) | 1;
     else
@@ -1539,7 +1541,7 @@ sim_fpu_div (sim_fpu *f,
     ASSERT (f->fraction >= IMPLICIT_1 && f->fraction < IMPLICIT_2);
     if (numerator != 0)
       {
-	f->fraction |= 1; /* stick remaining bits */
+	f->fraction |= 1; /* Stick remaining bits.  */
 	return sim_fpu_status_inexact;
       }
     else
@@ -1586,7 +1588,7 @@ sim_fpu_max (sim_fpu *f,
       if (l->sign)
 	*f = *r; /* -inf < anything */
       else
-	*f = *l; /* +inf > anthing */
+	*f = *l; /* +inf > anything */
       return 0;
     }
   if (sim_fpu_is_infinity (r))
@@ -1594,7 +1596,7 @@ sim_fpu_max (sim_fpu *f,
       if (r->sign)
 	*f = *l; /* anything > -inf */
       else
-	*f = *r; /* anthing < +inf */
+	*f = *r; /* anything < +inf */
       return 0;
     }
   if (l->sign > r->sign)
@@ -1609,8 +1611,8 @@ sim_fpu_max (sim_fpu *f,
     }
   ASSERT (l->sign == r->sign);
   if (l->normal_exp > r->normal_exp
-      || (l->normal_exp == r->normal_exp &&
-	  l->fraction > r->fraction))
+      || (l->normal_exp == r->normal_exp
+	  && l->fraction > r->fraction))
     {
       /* |l| > |r| */
       if (l->sign)
@@ -1692,8 +1694,8 @@ sim_fpu_min (sim_fpu *f,
     }
   ASSERT (l->sign == r->sign);
   if (l->normal_exp > r->normal_exp
-      || (l->normal_exp == r->normal_exp &&
-	  l->fraction > r->fraction))
+      || (l->normal_exp == r->normal_exp
+	  && l->fraction > r->fraction))
     {
       /* |l| > |r| */
       if (l->sign)
@@ -1851,7 +1853,7 @@ sim_fpu_sqrt (sim_fpu *f,
    *	If (2) is false, then q   = q ; otherwise q   = q  + 2      .
    *		 	       i+1   i             i+1   i
    *
-   *	With some algebric manipulation, it is not difficult to see
+   *	With some algebraic manipulation, it is not difficult to see
    *	that (2) is equivalent to
    *                             -(i+1)
    *			s  +  2       <= y			(3)
@@ -1896,14 +1898,14 @@ sim_fpu_sqrt (sim_fpu *f,
    *	sqrt(+-0) = +-0 	... exact
    *	sqrt(inf) = inf
    *	sqrt(-ve) = NaN		... with invalid signal
-   *	sqrt(NaN) = NaN		... with invalid signal for signaling NaN
+   *	sqrt(NaN) = NaN		... with invalid signal for signalling NaN
    *
    * Other methods : see the appended file at the end of the program below.
    *---------------
    */
 
   {
-    /* generate sqrt(x) bit by bit */
+    /* Generate sqrt(x) bit by bit.  */
     unsigned64 y;
     unsigned64 q;
     unsigned64 s;
@@ -1914,7 +1916,7 @@ sim_fpu_sqrt (sim_fpu *f,
     y = r->fraction;
     f->normal_exp = (r->normal_exp >> 1);	/* exp = [exp/2] */
 
-    /* odd exp, double x to make it even */
+    /* Odd exp, double x to make it even.  */
     ASSERT (y >= IMPLICIT_1 && y < IMPLICIT_4);
     if ((r->normal_exp & 1))
       {
@@ -1944,7 +1946,7 @@ sim_fpu_sqrt (sim_fpu *f,
     f->fraction = q;
     if (y != 0)
       {
-	f->fraction |= 1; /* stick remaining bits */
+	f->fraction |= 1; /* Stick remaining bits.  */
 	return sim_fpu_status_inexact;
       }
     else

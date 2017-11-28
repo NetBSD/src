@@ -1,5 +1,5 @@
 /* New version of run front end support for simulators.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Need to be before general includes, to pick up e.g. _GNU_SOURCE.  */
 #ifdef HAVE_CONFIG_H
-#include "cconfig.h"
+#include "config.h"
 #endif
 
 #include <signal.h>
@@ -47,7 +47,7 @@ static void usage (void);
 
 extern host_callback default_callback;
 
-static char *myname;
+static const char *myname;
 
 static SIM_DESC sd;
 
@@ -64,7 +64,7 @@ cntrl_c (int sig)
 int
 main (int argc, char **argv)
 {
-  char *name;
+  const char *name;
   char **prog_argv = NULL;
   struct bfd *prog_bfd;
   enum sim_stop reason;
@@ -72,9 +72,7 @@ main (int argc, char **argv)
   int single_step = 0;
   RETSIGTYPE (*prev_sigint) ();
 
-  myname = argv[0] + strlen (argv[0]);
-  while (myname > argv[0] && myname[-1] != '/')
-    --myname;
+  myname = lbasename (argv[0]);
 
   /* INTERNAL: When MYNAME is `step', single step the simulator
      instead of allowing it to run free.  The sole purpose of this
@@ -99,7 +97,7 @@ main (int argc, char **argv)
   /* We can't set the endianness in the callback structure until
      sim_config is called, which happens in sim_open.  */
   default_callback.target_endian
-    = (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN
+    = (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG
        ? BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE);
 
   /* Was there a program to run?  */

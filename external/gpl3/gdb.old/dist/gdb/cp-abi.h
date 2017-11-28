@@ -3,7 +3,7 @@
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -135,7 +135,7 @@ extern struct value *value_virtual_fn_field (struct value **valuep,
    FULL, TOP, and USING_ENC can each be zero, in which case we don't
    provide the corresponding piece of information.  */
 extern struct type *value_rtti_type (struct value *value,
-                                     int *full, int *top,
+                                     int *full, LONGEST *top,
 				     int *using_enc);
 
 /* Compute the offset of the baseclass which is the INDEXth baseclass
@@ -146,7 +146,7 @@ extern struct type *value_rtti_type (struct value *value,
 
 extern int baseclass_offset (struct type *type,
 			     int index, const gdb_byte *valaddr,
-			     int embedded_offset,
+			     LONGEST embedded_offset,
 			     CORE_ADDR address,
 			     const struct value *val);
 
@@ -229,9 +229,9 @@ struct cp_abi_ops
 				     int j, struct type * type,
 				     int offset);
   struct type *(*rtti_type) (struct value *v, int *full,
-			     int *top, int *using_enc);
+			     LONGEST *top, int *using_enc);
   int (*baseclass_offset) (struct type *type, int index,
-			   const bfd_byte *valaddr, int embedded_offset,
+			   const bfd_byte *valaddr, LONGEST embedded_offset,
 			   CORE_ADDR address, const struct value *val);
   void (*print_method_ptr) (const gdb_byte *contents,
 			    struct type *type,

@@ -1,5 +1,5 @@
 /* collection of junk waiting time to sort out
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Red Hat
 
 This file is part of the GNU Simulators.
@@ -121,24 +121,6 @@ extern void frvbf_force_update (SIM_CPU *);
 
 /* Hardware/device support.
    ??? Will eventually want to move device stuff to config files.  */
-
-/* Support for the MCCR register (Cache Control Register) is needed in order
-   for overlays to work correctly with the scache: cached instructions need
-   to be flushed when the instruction space is changed at runtime.  */
-
-/* These were just copied from another port and are necessary to build, but
-   but don't appear to be used.  */
-#define MCCR_ADDR 0xffffffff
-#define MCCR_CP 0x80
-/* not supported */
-#define MCCR_CM0 2
-#define MCCR_CM1 1
-
-/* sim_core_attach device argument.  */
-extern device frv_devices;
-
-/* FIXME: Temporary, until device support ready.  */
-struct _device { int foo; };
 
 /* maintain the address of the start of the previous VLIW insn sequence.  */
 extern IADDR previous_vliw_pc;

@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,6 +22,10 @@
 
 #ifndef NDS32_ASM_H
 #define NDS32_ASM_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Constant values for assembler.  */
 enum
@@ -293,5 +297,9 @@ extern void nds32_asm_init (nds32_asm_desc_t *, int);
 #define FPU_MEM(sub)	(OP6 (COP) | N32_FPU_ ## sub)
 #define FPU_MEMBI(sub)	(OP6 (COP) | N32_FPU_ ## sub | 0x1 << 7)
 #define AUDIO(sub)	(OP6 (AEXT) | (N32_AEXT_ ## sub << 20))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

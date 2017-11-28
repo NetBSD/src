@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -98,8 +98,8 @@ mem_region_lessthan (const struct mem_region *lhs,
 int
 mem_region_cmp (const void *untyped_lhs, const void *untyped_rhs)
 {
-  const struct mem_region *lhs = untyped_lhs;
-  const struct mem_region *rhs = untyped_rhs;
+  const struct mem_region *lhs = (const struct mem_region *) untyped_lhs;
+  const struct mem_region *rhs = (const struct mem_region *) untyped_rhs;
 
   if (lhs->lo < rhs->lo)
     return -1;

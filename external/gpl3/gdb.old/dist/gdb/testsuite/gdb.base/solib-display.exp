@@ -1,4 +1,4 @@
-# Copyright 2009-2015 Free Software Foundation, Inc.
+# Copyright 2009-2016 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -28,7 +28,24 @@
 # (and thus aren't affected by shared library unloading) are not
 # disabled prematurely.
 
-if { [skip_shlib_tests] || [is_remote target] } {
+if { [skip_shlib_tests] } {
+    return 0
+}
+
+# This test is currently not supported for stub targets, because it uses the
+# start command (through gdb_start_cmd).  In theory, it could be changed to
+# use something else (kill + gdb_run_cmd with a manual breakpoint at main).
+# However, when we try that with the native-gdbserver board, we see that the
+# test fails and gdb outputs this upon connection:
+#
+#   warning: Unable to display "a_global": No symbol "a_global" in current context.
+#   warning: Unable to display "b_global": No symbol "b_global" in current context.
+#   warning: Unable to display "c_global": No symbol "c_global" in current context.
+#
+# This is because the initial stop is done before the shared libraries are
+# loaded.
+
+if { [use_gdb_stub] } {
     return 0
 }
 
@@ -86,7 +103,11 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 	continue
     }
 
-    gdb_test "" "3: c_global = 43\\r\\n2: b_global = 42\\r\\n1: a_global = 41" "after rerun"
+    gdb_test "" [multi_line \
+		     "1: a_global = 41" \
+		     "2: b_global = 42"  \
+		     "3: c_global = 43" \
+		    ] "after rerun"
 
     # Now rebuild the library without b_global
     if { [gdb_compile_shlib ${srcfile_lib} ${binfile_lib} \
@@ -109,7 +130,12 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 	continue
     }
 
-    gdb_test "" "3: c_global = 43\\r\\nwarning: .*b_global.*\\r\\n1: a_global = 41" "after rerun (2)"
+
+    gdb_test "" [multi_line \
+		     "1: a_global = 41" \
+		     "warning: .*b_global.*"  \
+		     "3: c_global = 43" \
+		    ] "after rerun (2)"
 
     # Now verify that displays which are not in the shared library
     # are not cleared permaturely.
@@ -130,5 +156,9 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     gdb_test "" "6: a_static = 46\\r\\n4: main_global = 44\\r\\n.*"
     gdb_test "break [gdb_get_line_number "break here" ${testfile}.c]" \
 	    ".*Breakpoint.* at .*" 
-    gdb_test "continue" "6: a_static = 46\\r\\n5: a_local = 45\\r\\n4: main_global = 44\\r\\n.*"
+    gdb_test "continue" [multi_line \
+			     "4: main_global = 44" \
+			     "5: a_local = 45" \
+			     "6: a_static = 46" \
+			    ]
 }}

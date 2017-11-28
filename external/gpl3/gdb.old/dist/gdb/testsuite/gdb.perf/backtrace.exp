@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,9 +58,12 @@ PerfTest::assemble {
 
     gdb_breakpoint "fun2"
     gdb_continue_to_breakpoint "fun2"
+
+    return 0
 } {
     global BACKTRACE_DEPTH
 
     gdb_test "python BackTrace\($BACKTRACE_DEPTH\).run()"
 
+    return 0
 }

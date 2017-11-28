@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../lib/unbuffer_output.c"
+
 int callee (int x)
 {
     int y = x * x;		/* -break1- */
@@ -15,6 +17,8 @@ int main()
 
     int *p;
     int i;
+
+    gdb_unbuffer_output ();
 
     p = (int *) malloc( 4 );
 

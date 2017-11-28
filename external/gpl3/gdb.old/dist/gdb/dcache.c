@@ -1,6 +1,6 @@
 /* Caching code for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -370,8 +370,9 @@ dcache_alloc (DCACHE *dcache, CORE_ADDR addr)
       if (db)
 	remove_block (&dcache->freelist, db);
       else
-	db = xmalloc (offsetof (struct dcache_block, data) +
-		      dcache->line_size);
+	db = ((struct dcache_block *)
+	      xmalloc (offsetof (struct dcache_block, data)
+		       + dcache->line_size));
 
       dcache->size++;
     }
@@ -444,9 +445,7 @@ dcache_splay_tree_compare (splay_tree_key a, splay_tree_key b)
 DCACHE *
 dcache_init (void)
 {
-  DCACHE *dcache;
-
-  dcache = (DCACHE *) xmalloc (sizeof (*dcache));
+  DCACHE *dcache = XNEW (DCACHE);
 
   dcache->tree = splay_tree_new (dcache_splay_tree_compare,
 				 NULL,

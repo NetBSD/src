@@ -1,6 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "terminal.h"
 #include "gdbcore.h"
 #include "regcache.h"
-#include "gdb_ptrace.h"
+#include "nat/gdb_ptrace.h"
 #include "gdb_wait.h"
 #include <signal.h>
 
@@ -240,15 +240,7 @@ inf_ptrace_detach (struct target_ops *ops, const char *args, int from_tty)
   pid_t pid = ptid_get_pid (inferior_ptid);
   int sig = 0;
 
-  if (from_tty)
-    {
-      char *exec_file = get_exec_file (0);
-      if (exec_file == 0)
-	exec_file = "";
-      printf_unfiltered (_("Detaching from program: %s, %s\n"), exec_file,
-			 target_pid_to_str (pid_to_ptid (pid)));
-      gdb_flush (gdb_stdout);
-    }
+  target_announce_detach (from_tty);
   if (args)
     sig = atoi (args);
 
@@ -264,6 +256,16 @@ inf_ptrace_detach (struct target_ops *ops, const char *args, int from_tty)
 #else
   error (_("This system does not support detaching from a process"));
 #endif
+
+  inf_ptrace_detach_success (ops);
+}
+
+/* See inf-ptrace.h.  */
+
+void
+inf_ptrace_detach_success (struct target_ops *ops)
+{
+  pid_t pid = ptid_get_pid (inferior_ptid);
 
   inferior_ptid = null_ptid;
   detach_inferior (pid);
@@ -288,10 +290,10 @@ inf_ptrace_kill (struct target_ops *ops)
   target_mourn_inferior ();
 }
 
-/* Stop the inferior.  */
+/* Interrupt the inferior.  */
 
 static void
-inf_ptrace_stop (struct target_ops *self, ptid_t ptid)
+inf_ptrace_interrupt (struct target_ops *self, ptid_t ptid)
 {
   /* Send a SIGINT to the process group.  This acts just like the user
      typed a ^C on the controlling terminal.  Note that using a
@@ -304,7 +306,7 @@ inf_ptrace_stop (struct target_ops *self, ptid_t ptid)
 /* Return which PID to pass to ptrace in order to observe/control the
    tracee identified by PTID.  */
 
-static pid_t
+pid_t
 get_ptrace_pid (ptid_t ptid)
 {
   pid_t pid;
@@ -496,6 +498,15 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 	/* If the PT_IO request is somehow not supported, fallback on
 	   using PT_WRITE_D/PT_READ_D.  Otherwise we will return zero
 	   to indicate failure.  */
+	if (errno == EACCES)
+	  {
+	    fprintf_unfiltered (gdb_stderr, "Cannot %s process at %p (%s). "
+				"Is PaX MPROTECT active? See security(7), "
+				"sysctl(7), paxctl(8)\n", writebuf ? "write to" :
+				"read from", piod.piod_offs,
+				strerror(errno));
+	    return TARGET_XFER_E_IO;	/* Some other error perhaps? */
+	  }
 	if (errno != EINVAL)
 	  return TARGET_XFER_EOF;
       }
@@ -698,7 +709,7 @@ inf_ptrace_target (void)
   t->to_mourn_inferior = inf_ptrace_mourn_inferior;
   t->to_thread_alive = inf_ptrace_thread_alive;
   t->to_pid_to_str = inf_ptrace_pid_to_str;
-  t->to_stop = inf_ptrace_stop;
+  t->to_interrupt = inf_ptrace_interrupt;
   t->to_xfer_partial = inf_ptrace_xfer_partial;
 #if defined (PT_IO) && defined (PIOD_READ_AUXV)
   t->to_auxv_parse = inf_ptrace_auxv_parse;
@@ -740,7 +751,7 @@ inf_ptrace_fetch_register (struct regcache *regcache, int regnum)
 
   size = register_size (gdbarch, regnum);
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
-  buf = alloca (size);
+  buf = (PTRACE_TYPE_RET *) alloca (size);
 
   /* Read the register contents from the inferior a chunk at a time.  */
   for (i = 0; i < size / sizeof (PTRACE_TYPE_RET); i++)
@@ -798,7 +809,7 @@ inf_ptrace_store_register (const struct regcache *regcache, int regnum)
 
   size = register_size (gdbarch, regnum);
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
-  buf = alloca (size);
+  buf = (PTRACE_TYPE_RET *) alloca (size);
 
   /* Write the register contents into the inferior a chunk at a time.  */
   regcache_raw_collect (regcache, regnum, buf);

@@ -1,6 +1,6 @@
 /* nto-tdep.c - general QNX Neutrino target functionality.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -32,6 +32,9 @@
 #include "gdbcore.h"
 #include "objfiles.h"
 
+#define QNX_NOTE_NAME	"QNX"
+#define QNX_INFO_SECT_NAME "QNX_info"
+
 #ifdef __CYGWIN__
 #include <sys/cygwin.h>
 #endif
@@ -45,6 +48,8 @@ static char default_nto_target[] = "";
 #endif
 
 struct nto_target_ops current_nto_target;
+
+static const struct inferior_data *nto_inferior_data_reg;
 
 static char *
 nto_target (void)
@@ -118,11 +123,11 @@ nto_find_and_open_solib (char *solib, unsigned o_flags, char **temp_pathname)
 
   arch_len = (strlen (nto_root) + strlen (arch) + strlen (endian) + 2
 	      + strlen (solib));
-  arch_path = alloca (arch_len);
+  arch_path = (char *) alloca (arch_len);
   xsnprintf (arch_path, arch_len, "%s/%s%s", nto_root, arch, endian);
 
   len = strlen (PATH_FMT) + strlen (arch_path) * 5 + 1;
-  buf = alloca (len);
+  buf = (char *) alloca (len);
   xsnprintf (buf, len, PATH_FMT, arch_path, arch_path, arch_path, arch_path,
 	     arch_path);
 
@@ -194,7 +199,7 @@ nto_parse_redirection (char *pargv[], const char **pin, const char **pout,
   out = "";
   err = "";
 
-  argv = xcalloc (n + 1, sizeof argv[0]);
+  argv = XCNEWVEC (char *, n + 1);
   argc = n;
   for (i = 0, n = 0; n < argc; n++)
     {
@@ -330,12 +335,51 @@ nto_dummy_supply_regset (struct regcache *regcache, char *regs)
   /* Do nothing.  */
 }
 
+static void
+nto_sniff_abi_note_section (bfd *abfd, asection *sect, void *obj)
+{
+  const char *sectname;
+  unsigned int sectsize;
+  /* Buffer holding the section contents.  */
+  char *note;
+  unsigned int namelen;
+  const char *name;
+  const unsigned sizeof_Elf_Nhdr = 12;
+
+  sectname = bfd_get_section_name (abfd, sect);
+  sectsize = bfd_section_size (abfd, sect);
+
+  if (sectsize > 128)
+    sectsize = 128;
+
+  if (sectname != NULL && strstr (sectname, QNX_INFO_SECT_NAME) != NULL)
+    *(enum gdb_osabi *) obj = GDB_OSABI_QNXNTO;
+  else if (sectname != NULL && strstr (sectname, "note") != NULL
+	   && sectsize > sizeof_Elf_Nhdr)
+    {
+      note = XNEWVEC (char, sectsize);
+      bfd_get_section_contents (abfd, sect, note, 0, sectsize);
+      namelen = (unsigned int) bfd_h_get_32 (abfd, note);
+      name = note + sizeof_Elf_Nhdr;
+      if (sectsize >= namelen + sizeof_Elf_Nhdr
+	  && namelen == sizeof (QNX_NOTE_NAME)
+	  && 0 == strcmp (name, QNX_NOTE_NAME))
+        *(enum gdb_osabi *) obj = GDB_OSABI_QNXNTO;
+
+      XDELETEVEC (note);
+    }
+}
+
 enum gdb_osabi
 nto_elf_osabi_sniffer (bfd *abfd)
 {
-  if (nto_is_nto_target)
-    return nto_is_nto_target (abfd);
-  return GDB_OSABI_UNKNOWN;
+  enum gdb_osabi osabi = GDB_OSABI_UNKNOWN;
+
+  bfd_map_over_sections (abfd,
+			 nto_sniff_abi_note_section,
+			 &osabi);
+
+  return osabi;
 }
 
 static const char *nto_thread_state_str[] =
@@ -393,4 +437,138 @@ nto_initialize_signals (void)
   signal_print_update (SIGPHOTON, 0);
   signal_pass_update (SIGPHOTON, 1);
 #endif
+}
+
+/* Read AUXV from initial_stack.  */
+LONGEST
+nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
+                                  LONGEST len, size_t sizeof_auxv_t)
+{
+  gdb_byte targ32[4]; /* For 32 bit target values.  */
+  gdb_byte targ64[8]; /* For 64 bit target values.  */
+  CORE_ADDR data_ofs = 0;
+  ULONGEST anint;
+  LONGEST len_read = 0;
+  gdb_byte *buff;
+  enum bfd_endian byte_order;
+  int ptr_size;
+
+  if (sizeof_auxv_t == 16)
+    ptr_size = 8;
+  else
+    ptr_size = 4;
+
+  /* Skip over argc, argv and envp... Comment from ldd.c:
+
+     The startup frame is set-up so that we have:
+     auxv
+     NULL
+     ...
+     envp2
+     envp1 <----- void *frame + (argc + 2) * sizeof(char *)
+     NULL
+     ...
+     argv2
+     argv1
+     argc  <------ void * frame
+
+     On entry to ldd, frame gives the address of argc on the stack.  */
+  /* Read argc. 4 bytes on both 64 and 32 bit arches and luckily little
+   * endian. So we just read first 4 bytes.  */
+  if (target_read_memory (initial_stack + data_ofs, targ32, 4) != 0)
+    return 0;
+
+  byte_order = gdbarch_byte_order (target_gdbarch ());
+
+  anint = extract_unsigned_integer (targ32, sizeof (targ32), byte_order);
+
+  /* Size of pointer is assumed to be 4 bytes (32 bit arch.) */
+  data_ofs += (anint + 2) * ptr_size; /* + 2 comes from argc itself and
+                                                NULL terminating pointer in
+                                                argv.  */
+
+  /* Now loop over env table:  */
+  anint = 0;
+  while (target_read_memory (initial_stack + data_ofs, targ64, ptr_size)
+         == 0)
+    {
+      if (extract_unsigned_integer (targ64, ptr_size, byte_order) == 0)
+	anint = 1; /* Keep looping until non-null entry is found.  */
+      else if (anint)
+	break;
+      data_ofs += ptr_size;
+    }
+  initial_stack += data_ofs;
+
+  memset (readbuf, 0, len);
+  buff = readbuf;
+  while (len_read <= len-sizeof_auxv_t)
+    {
+      if (target_read_memory (initial_stack + len_read, buff, sizeof_auxv_t)
+	  == 0)
+        {
+	  /* Both 32 and 64 bit structures have int as the first field.  */
+          const ULONGEST a_type
+	    = extract_unsigned_integer (buff, sizeof (targ32), byte_order);
+
+          if (a_type == AT_NULL)
+	    break;
+	  buff += sizeof_auxv_t;
+	  len_read += sizeof_auxv_t;
+        }
+      else
+        break;
+    }
+  return len_read;
+}
+
+/* Allocate new nto_inferior_data object.  */
+
+static struct nto_inferior_data *
+nto_new_inferior_data (void)
+{
+  struct nto_inferior_data *const inf_data
+    = XCNEW (struct nto_inferior_data);
+
+  return inf_data;
+}
+
+/* Free inferior data.  */
+
+static void
+nto_inferior_data_cleanup (struct inferior *const inf, void *const dat)
+{
+  xfree (dat);
+}
+
+/* Return nto_inferior_data for the given INFERIOR.  If not yet created,
+   construct it.  */
+
+struct nto_inferior_data *
+nto_inferior_data (struct inferior *const inferior)
+{
+  struct inferior *const inf = inferior ? inferior : current_inferior ();
+  struct nto_inferior_data *inf_data;
+
+  gdb_assert (inf != NULL);
+
+  inf_data
+    = (struct nto_inferior_data *) inferior_data (inf, nto_inferior_data_reg);
+  if (inf_data == NULL)
+    {
+      set_inferior_data (inf, nto_inferior_data_reg,
+			 (inf_data = nto_new_inferior_data ()));
+    }
+
+  return inf_data;
+}
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+extern initialize_file_ftype _initialize_nto_tdep;
+
+void
+_initialize_nto_tdep (void)
+{
+  nto_inferior_data_reg
+    = register_inferior_data_with_cleanup (NULL, nto_inferior_data_cleanup);
 }

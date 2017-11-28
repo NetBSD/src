@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,14 +42,13 @@ namespace eval PerfTest {
     # actual compilation.  Return zero if compilation is successful,
     # otherwise return non-zero.
     proc compile {body} {
-	global GDB_PERFTEST_MODE
+	return [uplevel 2 $body]
+    }
 
-	if { [info exists GDB_PERFTEST_MODE]
-	     && [string compare $GDB_PERFTEST_MODE "run"] } {
-	    return [uplevel 2 $body]
-	}
-
-	return 0
+    # Run the startup code.  Return zero if startup is successful,
+    # otherwise return non-zero.
+    proc startup {body} {
+	return [uplevel 2 $body]
     }
 
     # Start up GDB.
@@ -57,7 +56,8 @@ namespace eval PerfTest {
 	uplevel 2 $body
     }
 
-    # Run the performance test.
+    # Run the performance test.  Return zero if the run is successful,
+    # otherwise return non-zero.
     proc run {body} {
 	global timeout
 	global GDB_PERFTEST_TIMEOUT
@@ -68,36 +68,56 @@ namespace eval PerfTest {
 	} else {
 	    set timeout 3000
 	}
-	uplevel 2 $body
+	set result [uplevel 2 $body]
 
 	set timeout $oldtimeout
+	return $result
     }
 
     # The top-level interface to PerfTest.
     # COMPILE is the tcl code to generate and compile source files.
-    # Return zero if compilation is successful,  otherwise return
-    # non-zero.
     # STARTUP is the tcl code to start up GDB.
     # RUN is the tcl code to drive GDB to do some operations.
+    # Each of COMPILE, STARTUP, and RUN return zero if successful, and
+    # non-zero if there's a failure.
+
     proc assemble {compile startup run} {
 	global GDB_PERFTEST_MODE
 
-	if { [eval compile {$compile}] } {
-	    untested "Could not compile source files."
+	if ![info exists GDB_PERFTEST_MODE] {
 	    return
+	}
+
+	if { [string compare $GDB_PERFTEST_MODE "run"] != 0 } {
+	    if { [eval compile {$compile}] } {
+		untested "Could not compile source files."
+		return
+	    }
 	}
 
 	# Don't execute the run if GDB_PERFTEST_MODE=compile.
-	if { [info exists GDB_PERFTEST_MODE]
-	     && [string compare $GDB_PERFTEST_MODE "compile"] == 0} {
+	if { [string compare $GDB_PERFTEST_MODE "compile"] == 0} {
 	    return
 	}
 
-	eval $startup
+	verbose -log "PerfTest::assemble, startup ..."
+
+	if [eval startup {$startup}] {
+	    fail "startup"
+	    return
+	}
+
+	verbose -log "PerfTest::assemble, done startup"
 
 	_setup_perftest
 
-	eval run {$run}
+	verbose -log "PerfTest::assemble, run ..."
+
+	if [eval run {$run}] {
+	    fail "run"
+	}
+
+	verbose -log "PerfTest::assemble, run complete."
 
 	_teardown_perftest
     }
@@ -109,11 +129,9 @@ proc skip_perf_tests { } {
     global GDB_PERFTEST_MODE
 
     if [info exists GDB_PERFTEST_MODE] {
-
 	if { "$GDB_PERFTEST_MODE" != "compile"
 	     && "$GDB_PERFTEST_MODE" != "run"
 	     && "$GDB_PERFTEST_MODE" != "both" } {
-	    # GDB_PERFTEST_MODE=compile|run|both is allowed.
 	    error "Unknown value of GDB_PERFTEST_MODE."
 	    return 1
 	}
@@ -122,4 +140,18 @@ proc skip_perf_tests { } {
     }
 
     return 1
+}
+
+# Given a list of tcl strings, return the same list as the text form of a
+# python list.
+
+proc tcl_string_list_to_python_list { l } {
+    proc quote { text } {
+	return "\"$text\""
+    }
+    set quoted_list ""
+    foreach elm $l {
+	lappend quoted_list [quote $elm]
+    }
+    return "([join $quoted_list {, }])"
 }

@@ -1,4 +1,4 @@
-# Copyright 2004-2015 Free Software Foundation, Inc.
+# Copyright 2004-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -109,6 +109,10 @@ proc advance { enter_cmd in_handler_prefix in_handler exit_cmd } {
 		setup_kfail gdb/8841 "sparc*-*-openbsd*"
 		fail "$test (could not insert single-step breakpoint)"
 	    }
+	    -re "Cannot insert breakpoint.*Cannot access memory.*$gdb_prompt $" {
+		setup_kfail gdb/8841 "nios2*-*-linux*"
+		fail "$test (could not insert single-step breakpoint)"
+	    }
 	    -re "done = 1;.*${gdb_prompt} $" {
 		send_gdb "$exit_cmd\n"
 		exp_continue -continue_timer
@@ -203,6 +207,7 @@ proc advancei { cmd } {
 		# don't gracefully fall back to single-stepping.
 		setup_kfail gdb/8841 "i?86-*-linux*"
 		setup_kfail gdb/8841 "*-*-openbsd*"
+		setup_kfail gdb/8841 "nios2-*-linux*"
 		fail "$test (could not set breakpoint)"
 		return
 	    }

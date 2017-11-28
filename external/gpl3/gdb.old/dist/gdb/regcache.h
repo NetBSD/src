@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,24 +47,6 @@ extern struct gdbarch *get_regcache_arch (const struct regcache *regcache);
 
 extern struct address_space *get_regcache_aspace (const struct regcache *);
 
-enum register_status
-  {
-    /* The register value is not in the cache, and we don't know yet
-       whether it's available in the target (or traceframe).  */
-    REG_UNKNOWN = 0,
-
-    /* The register value is valid and cached.  */
-    REG_VALID = 1,
-
-    /* The register value is unavailable.  E.g., we're inspecting a
-       traceframe, and this register wasn't collected.  Note that this
-       is different a different "unavailable" from saying the register
-       does not exist in the target's architecture --- in that case,
-       the target should have given us a target description that does
-       not include the register in the first place.  */
-    REG_UNAVAILABLE = -1
-  };
-
 enum register_status regcache_register_status (const struct regcache *regcache,
 					       int regnum);
 
@@ -78,13 +60,19 @@ void regcache_raw_write (struct regcache *regcache, int rawnum,
 extern enum register_status
   regcache_raw_read_signed (struct regcache *regcache,
 			    int regnum, LONGEST *val);
-extern enum register_status
-  regcache_raw_read_unsigned (struct regcache *regcache,
-			      int regnum, ULONGEST *val);
+
 extern void regcache_raw_write_signed (struct regcache *regcache,
 				       int regnum, LONGEST val);
 extern void regcache_raw_write_unsigned (struct regcache *regcache,
 					 int regnum, ULONGEST val);
+
+/* Set a raw register's value in the regcache's buffer.  Unlike
+   regcache_raw_write, this is not write-through.  The intention is
+   allowing to change the buffer contents of a read-only regcache
+   allocated with regcache_xmalloc.  */
+
+extern void regcache_raw_set_cached_value
+  (struct regcache *regcache, int regnum, const gdb_byte *buf);
 
 /* Partial transfer of raw registers.  These perform read, modify,
    write style operations.  The read variant returns the status of the

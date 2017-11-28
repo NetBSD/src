@@ -87,8 +87,8 @@ extern int ppc_trace[nr_trace_options];
 do { \
   if (WITH_TRACE) { \
     if (ppc_trace[OBJECT]) { \
-      printf_filtered("%s:%d: ", filter_filename(__FILE__), __LINE__); \
-      printf_filtered ARGS; \
+      sim_io_printf_filtered("%s:%d: ", filter_filename(__FILE__), __LINE__); \
+      sim_io_printf_filtered ARGS; \
     } \
   } \
 } while (0)
@@ -98,8 +98,8 @@ do { \
 do { \
   if (WITH_TRACE) { \
     if (ppc_trace[OBJECT]) { \
-      printf_filtered("%s:%d:0x%08lx:%s ", itable[MY_INDEX].file, itable[MY_INDEX].line_nr, (long)cia, itable[MY_INDEX].name); \
-      printf_filtered ARGS; \
+      sim_io_printf_filtered("%s:%d:0x%08lx:%s ", itable[MY_INDEX].file, itable[MY_INDEX].line_nr, (long)cia, itable[MY_INDEX].name); \
+      sim_io_printf_filtered ARGS; \
     } \
   } \
 } while (0)
@@ -112,11 +112,11 @@ do { \
     if (ppc_trace[trace_devices] \
 	|| ppc_trace[trace_##OBJECT##_device] \
 	|| trace_device) { \
-      printf_filtered("%s:%d:%s:%s%s ", \
-		      filter_filename(__FILE__), __LINE__, #OBJECT, \
-		      trace_device ? device_path(me) : "", \
-		      trace_device ? ":" : ""); \
-      printf_filtered ARGS; \
+      sim_io_printf_filtered("%s:%d:%s:%s%s ",					\
+			     filter_filename(__FILE__), __LINE__, #OBJECT, \
+			     trace_device ? device_path(me) : "",	\
+			     trace_device ? ":" : "");			\
+      sim_io_printf_filtered ARGS; \
     } \
   } \
 } while (0)
@@ -130,11 +130,11 @@ do { \
     if (ppc_trace[trace_devices] \
 	|| ppc_trace[trace_##OBJECT##_device] \
 	|| trace_device) { \
-      printf_filtered("%s:%d:%s:%s%s ", \
-		      filter_filename(__FILE__), __LINE__, #OBJECT, \
-		      trace_device ? device_path(me) : "", \
-		      trace_device ? ":" : ""); \
-      printf_filtered ARGS; \
+      sim_io_printf_filtered("%s:%d:%s:%s%s ", \
+			     filter_filename(__FILE__), __LINE__, #OBJECT, \
+			     trace_device ? device_path(me) : "",	\
+			     trace_device ? ":" : "");			\
+      sim_io_printf_filtered ARGS; \
     } \
   } \
 } while (0)
@@ -144,8 +144,8 @@ do { \
 do { \
   if (WITH_TRACE) { \
     if (ppc_trace[trace_##OBJECT##_package]) { \
-      printf_filtered("%s:%d:%s: ", filter_filename(__FILE__), __LINE__, #OBJECT); \
-      printf_filtered ARGS; \
+      sim_io_printf_filtered("%s:%d:%s: ", filter_filename(__FILE__), __LINE__, #OBJECT); \
+      sim_io_printf_filtered ARGS; \
     } \
   } \
 } while (0)

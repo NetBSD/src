@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,14 +26,6 @@
 #include "readline/readline.h"
 
 #include <windows.h>
-
-/* This event is signalled whenever an asynchronous SIGINT handler
-   needs to perform an action in the main thread.  */
-static HANDLE sigint_event;
-
-/* When SIGINT_EVENT is signalled, gdb_select will call this
-   function.  */
-struct async_signal_handler *sigint_handler;
 
 /* Return an absolute file name of the running GDB, if possible, or
    ARGV0 if not.  The return value is in malloc'ed storage.  */
@@ -120,8 +112,7 @@ gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	}
     }
 
-  gdb_assert (num_handles < MAXIMUM_WAIT_OBJECTS);
-  handles[num_handles++] = sigint_event;
+  gdb_assert (num_handles <= MAXIMUM_WAIT_OBJECTS);
 
   event = WaitForMultipleObjects (num_handles,
 				  handles,
@@ -184,46 +175,5 @@ gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
   while (RL_ISSTATE (RL_STATE_SIGHANDLER))
     Sleep (1);
 
-  if (h == sigint_event
-      || WaitForSingleObject (sigint_event, 0) == WAIT_OBJECT_0)
-    {
-      if (sigint_handler != NULL)
-	call_async_signal_handler (sigint_handler);
-
-      if (num_ready == 0)
-	{
-	  errno = EINTR;
-	  return -1;
-	}
-    }
-
   return num_ready;
-}
-
-/* Wrapper for the body of signal handlers.  On Windows systems, a
-   SIGINT handler runs in its own thread.  We can't longjmp from
-   there, and we shouldn't even prompt the user.  Delay HANDLER
-   until the main thread is next in gdb_select.  */
-
-void
-gdb_call_async_signal_handler (struct async_signal_handler *handler,
-			       int immediate_p)
-{
-  if (immediate_p)
-    sigint_handler = handler;
-  else
-    {
-      mark_async_signal_handler (handler);
-      sigint_handler = NULL;
-    }
-  SetEvent (sigint_event);
-}
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_mingw_hdep;
-
-void
-_initialize_mingw_hdep (void)
-{
-  sigint_event = CreateEvent (0, FALSE, FALSE, 0);
 }

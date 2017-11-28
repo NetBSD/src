@@ -1,4 +1,4 @@
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,24 +14,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Execute command CMD and check that GDB sends the expected number of
-# vCont;s and vCont;r packets.  Returns 0 if the test passes,
-# otherwise returns 1.
+# vCont;r packet.  Returns 0 if the test passes, otherwise returns 1.
 
-proc exec_cmd_expect_vCont_count { cmd exp_vCont_s exp_vCont_r } {
+proc exec_cmd_expect_vCont_count { cmd exp_vCont_r } {
     global gdb_prompt
 
     gdb_test_no_output "set debug remote 1" ""
 
-    set test "${cmd}: vCont;s=${exp_vCont_s} vCont;r=${exp_vCont_r}"
+    set test "${cmd}: vCont;r=${exp_vCont_r}"
     set r_counter 0
     set s_counter 0
     set ret 1
+    # We either get a stop reply in all-stop mode, or an OK in
+    # non-stop mode.
+    set vcont_reply "(T\[\[:xdigit:\]\]\[\[:xdigit:\]\]|OK)"
     gdb_test_multiple $cmd $test {
-	-re "vCont;s\[^\r\n\]*Packet received: T\[\[:xdigit:\]\]\[\[:xdigit:\]\]" {
+	-re "vCont;s\[^\r\n\]*Packet received: $vcont_reply" {
 	    incr s_counter
 	    exp_continue
 	}
-	-re "vCont;r\[^\r\n\]*Packet received: T\[\[:xdigit:\]\]\[\[:xdigit:\]\]" {
+	-re "vCont;r\[^\r\n\]*Packet received: $vcont_reply" {
 	    incr r_counter
 	    exp_continue
 	}
@@ -40,7 +42,7 @@ proc exec_cmd_expect_vCont_count { cmd exp_vCont_s exp_vCont_r } {
 	    exp_continue
 	}
 	-re "$gdb_prompt $" {
-	    if { $r_counter == ${exp_vCont_r} && $s_counter == ${exp_vCont_s} } {
+	    if { $r_counter == ${exp_vCont_r} } {
 		pass $test
 		set ret 0
 	    } else {
@@ -51,4 +53,25 @@ proc exec_cmd_expect_vCont_count { cmd exp_vCont_s exp_vCont_r } {
 
     gdb_test_no_output "set debug remote 0" ""
     return $ret
+}
+
+# Check whether range stepping is supported by the target.
+
+proc gdb_range_stepping_enabled { } {
+    global gdb_prompt
+
+    set command "set range-stepping on"
+    set message "probe range-stepping support"
+    gdb_test_multiple $command $message {
+        -re "Range stepping is not supported.*\r\n$gdb_prompt $" {
+	    pass $message
+	    return 0
+	}
+        -re "^$command\r\n$gdb_prompt $" {
+	    pass $message
+	    return 1
+	}
+    }
+
+    return 0
 }

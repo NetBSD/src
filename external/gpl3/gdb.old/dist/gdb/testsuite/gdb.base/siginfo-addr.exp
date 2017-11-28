@@ -1,4 +1,4 @@
-# Copyright 2004-2015 Free Software Foundation, Inc.
+# Copyright 2004-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,11 +26,6 @@ if [target_info exists gdb,nosignals] {
     continue
 }
 
-if [gdb_skip_stdio_test "siginfo-addr.exp"] {
-    continue
-}
-
-
 standard_testfile
 if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
     untested "Couldn't compile ${srcfile}.c"
@@ -47,13 +42,7 @@ if { ![runto_main] } then {
 # Run to the signal.
 gdb_test "continue" ".*Program received signal SIGSEGV.*" "continue to signal"
 
+gdb_breakpoint "pass"
+
 # Check for correct si_addr.
-set test "program exit"
-gdb_test_multiple "continue" "${test}" {
-    -re "Correct si_addr" {
-	pass "si_addr value"
-    }
-    -re "Got si_addr" {
-	fail "si_addr value"
-    }
-}
+gdb_test "continue" "Breakpoint .* pass .*" "correct si_addr"

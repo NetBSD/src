@@ -1,5 +1,5 @@
 /* d30v-opc.c -- D30V opcode list
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support
 
    This file is part of the GNU opcodes library.
@@ -194,7 +194,7 @@ const struct pd_reg pre_defined_registers[] =
   { "va", NULL, OPERAND_FLAG + 6 },
 };
 
-int 
+int
 reg_name_cnt (void)
 {
   return sizeof (pre_defined_registers) / sizeof (struct pd_reg);

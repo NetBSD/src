@@ -2,7 +2,7 @@
 /* Generated from: NetBSD: mknative-gdb,v 1.6 2013/10/03 18:58:37 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
-#define BFD_VERSION_DATE 20151205
-#define BFD_VERSION 225510000
-#define BFD_VERSION_STRING  "(GNU Binutils)" "2.25.51"
+#define BFD_VERSION_DATE 20161007
+#define BFD_VERSION 227510000
+#define BFD_VERSION_STRING  "(GNU Binutils)" "2.27.51"
 #define REPORT_BUGS_TO "<http://www.sourceware.org/bugzilla/>"

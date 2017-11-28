@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ proc build_executable_from_fission_assembler { testname executable sources optio
 	return -1
     }
 
-    set result [gdb_compile $object_file $executable executable {nodebug}]
+    set result [gdb_compile $object_file $executable executable $options]
     if { "$result" != "" } {
 	return -1
     }
@@ -302,6 +302,15 @@ namespace eval Dwarf {
 
     # Whether a file_name entry was seen.
     variable _line_saw_file
+
+    # Whether a line table program has been seen.
+    variable _line_saw_program
+
+    # A Label for line table header generation.
+    variable _line_header_end_label
+
+    # The address size for debug ranges section.
+    variable _debug_ranges_64_bit
 
     proc _process_one_constant {name value} {
 	variable _constants
@@ -621,7 +630,18 @@ namespace eval Dwarf {
 
 	foreach attr $attrs {
 	    set attr_name [_map_name [lindex $attr 0] _AT]
-	    set attr_value [uplevel 2 [list subst [lindex $attr 1]]]
+
+	    # When the length of ATTR is greater than 2, the last
+	    # element of the list must be a form.  The second through
+	    # the penultimate elements are joined together and
+	    # evaluated using subst.  This allows constructs such as
+	    # [gdb_target_symbol foo] to be used.
+
+	    if {[llength $attr] > 2} {
+	        set attr_value [uplevel 2 [list subst [join [lrange $attr 1 end-1]]]]
+	    } else {
+	        set attr_value [uplevel 2 [list subst [lindex $attr 1]]]
+	    }
 
 	    if { [string equal "MACRO_AT_func" $attr_name] } {
 		_handle_macro_at_func $attr_value
@@ -629,7 +649,7 @@ namespace eval Dwarf {
 		_handle_macro_at_range $attr_value
 	    } else {
 		if {[llength $attr] > 2} {
-		    set attr_form [lindex $attr 2]
+		    set attr_form [lindex $attr end]
 		} else {
 		    # If the value looks like an integer, a form is required.
 		    if [string is integer $attr_value] {
@@ -836,6 +856,10 @@ namespace eval Dwarf {
 		    _op .${_cu_addr_size}byte [lindex $line 1]
 		}
 
+		DW_OP_regx {
+		    _op .uleb128 [lindex $line 1]
+		}
+
 		DW_OP_pick -
 		DW_OP_const1u -
 		DW_OP_const1s {
@@ -899,6 +923,11 @@ namespace eval Dwarf {
 		    }
 
 		    _op .byte [lindex $line 1]
+		}
+
+		DW_OP_bregx {
+		    _op .uleb128 [lindex $line 1]
+		    _op .sleb128 [lindex $line 2]
 		}
 
 		default {
@@ -972,7 +1001,7 @@ namespace eval Dwarf {
 	set _cu_label [_compute_label "cu${cu_num}_begin"]
 	set start_label [_compute_label "cu${cu_num}_start"]
 	set end_label [_compute_label "cu${cu_num}_end"]
-	
+
 	define_label $_cu_label
 	if {$is_64} {
 	    _op .4byte 0xffffffff
@@ -1109,6 +1138,78 @@ namespace eval Dwarf {
 	define_label $end_label
     }
 
+    # Emit a DWARF .debug_ranges unit.
+    # OPTIONS is a list with an even number of elements containing
+    # option-name and option-value pairs.
+    # Current options are:
+    # is_64 0|1    - boolean indicating if you want to emit 64-bit DWARF
+    #                default = 0 (32-bit)
+    #
+    # BODY is Tcl code that emits the content of the .debug_ranges
+    # unit, it is evaluated in the caller's context.
+    proc ranges {options body} {
+	variable _debug_ranges_64_bit
+
+	foreach { name value } $options {
+	    switch -exact -- $name {
+		is_64 { set _debug_ranges_64_bit [subst $value] }
+		default { error "unknown option $name" }
+	    }
+	}
+
+	set section ".debug_ranges"
+	_section $section
+
+	proc sequence {{ranges {}}} {
+	    variable _debug_ranges_64_bit
+
+	    # Emit the sequence of addresses.
+	    set base ""
+	    foreach range $ranges {
+		set range [uplevel 1 "subst \"$range\""]
+		set type [lindex $range 0]
+		switch -exact -- $type {
+		    base {
+			set base [lrange $range 1 end]
+
+			if { $_debug_ranges_64_bit } then {
+			    _op .8byte 0xffffffffffffffff "Base Marker"
+			    _op .8byte $base "Base Address"
+			} else {
+			    _op .4byte 0xffffffff "Base Marker"
+			    _op .4byte $base "Base Address"
+			}
+		    }
+		    range {
+			set start [lindex $range 1]
+			set end [lrange $range 2 end]
+
+			if { $_debug_ranges_64_bit } then {
+			    _op .8byte $start "Start Address"
+			    _op .8byte $end "End Address"
+			} else {
+			    _op .4byte $start "Start Address"
+			    _op .4byte $end "End Address"
+			}
+		    }
+		    default { error "unknown range type: $type " }
+		}
+	    }
+
+	    # End of the sequence.
+	    if { $_debug_ranges_64_bit } then {
+		_op .8byte 0x0 "End of Sequence Marker (Part 1)"
+		_op .8byte 0x0 "End of Sequence Marker (Part 2)"
+	    } else {
+		_op .4byte 0x0 "End of Sequence Marker (Part 1)"
+		_op .4byte 0x0 "End of Sequence Marker (Part 2)"
+	    }
+	}
+
+	uplevel $body
+    }
+
+
     # Emit a DWARF .debug_line unit.
     # OPTIONS is a list with an even number of elements containing
     # option-name and option-value pairs.
@@ -1137,6 +1238,8 @@ namespace eval Dwarf {
     proc lines {options label body} {
 	variable _line_count
 	variable _line_saw_file
+	variable _line_saw_program
+	variable _line_header_end_label
 
 	# Establish the defaults.
 	set is_64 0
@@ -1172,7 +1275,7 @@ namespace eval Dwarf {
 	set unit_len_label [_compute_label "line${_line_count}_start"]
 	set unit_end_label [_compute_label "line${_line_count}_end"]
 	set header_len_label [_compute_label "line${_line_count}_header_start"]
-	set header_end_label [_compute_label "line${_line_count}_header_end"]
+	set _line_header_end_label [_compute_label "line${_line_count}_header_end"]
 
 	if {$is_64} {
 	    _op .4byte 0xffffffff
@@ -1186,20 +1289,34 @@ namespace eval Dwarf {
 	_op .2byte $_unit_version version
 
 	if {$is_64} {
-	    _op .8byte "$header_end_label - $header_len_label" "header_length"
+	    _op .8byte "$_line_header_end_label - $header_len_label" "header_length"
 	} else {
-	    _op .4byte "$header_end_label - $header_len_label" "header_length"
+	    _op .4byte "$_line_header_end_label - $header_len_label" "header_length"
 	}
 
 	define_label $header_len_label
 
 	_op .byte 1 "minimum_instruction_length"
-	_op .byte 0 "default_is_stmt"
+	_op .byte 1 "default_is_stmt"
 	_op .byte 1 "line_base"
 	_op .byte 1 "line_range"
-	_op .byte 1 "opcode_base"
-	# Since we emit opcode_base==1, we skip
-	# standard_opcode_length table altogether.
+	_op .byte 10 "opcode_base"
+
+	# The standard_opcode_lengths table.  The number of arguments
+	# for each of the standard opcodes.  Generating 9 entries here
+	# matches the use of 10 in the opcode_base above.  These 9
+	# entries match the 9 standard opcodes for DWARF2, making use
+	# of only 9 should be fine, even if we are generating DWARF3
+	# or DWARF4.
+	_op .byte 0 "standard opcode 1"
+	_op .byte 1 "standard opcode 2"
+	_op .byte 1 "standard opcode 3"
+	_op .byte 1 "standard opcode 4"
+	_op .byte 1 "standard opcode 5"
+	_op .byte 0 "standard opcode 6"
+	_op .byte 0 "standard opcode 7"
+	_op .byte 0 "standard opcode 8"
+	_op .byte 1 "standard opcode 9"
 
 	proc include_dir {dirname} {
 	    _op .ascii [_quote $dirname]
@@ -1219,6 +1336,57 @@ namespace eval Dwarf {
 	    _op .sleb128 0 "length"
 	}
 
+	proc program {statements} {
+	    variable _line_saw_program
+	    variable _line_header_end_label
+
+	    if "! $_line_saw_program" {
+		# Terminate the file list.
+		_op .byte 0 "Terminator."
+		define_label $_line_header_end_label
+		set _line_saw_program 1
+	    }
+
+	    proc DW_LNE_set_address {addr} {
+		_op .byte 0
+		set start [new_label "set_address_start"]
+		set end [new_label "set_address_end"]
+		_op .uleb128 "${end} - ${start}"
+		define_label ${start}
+		_op .byte 2
+		if {[is_64_target]} {
+		    _op .8byte ${addr}
+		} else {
+		    _op .4byte ${addr}
+		}
+		define_label ${end}
+	    }
+
+	    proc DW_LNE_end_sequence {} {
+		_op .byte 0
+		_op .uleb128 1
+		_op .byte 1
+	    }
+
+	    proc DW_LNS_copy {} {
+		_op .byte 1
+	    }
+
+	    proc DW_LNS_advance_pc {offset} {
+		_op .byte 2
+		_op .uleb128 ${offset}
+	    }
+
+	    proc DW_LNS_advance_line {offset} {
+		_op .byte 3
+		_op .sleb128 ${offset}
+	    }
+
+	    foreach statement $statements {
+		uplevel 1 $statement
+	    }
+	}
+
 	uplevel $body
 
 	rename include_dir ""
@@ -1230,9 +1398,11 @@ namespace eval Dwarf {
 	}
 
 	# Terminate the file list.
-	_op .byte 0 "Terminator."
+	if "! $_line_saw_program" {
+	    _op .byte 0 "Terminator."
+	    define_label $_line_header_end_label
+	}
 
-	define_label $header_end_label
 	define_label $unit_end_label
     }
 
@@ -1269,7 +1439,7 @@ namespace eval Dwarf {
 	_op .ascii [_quote $name]
 	# Alignment.
 	set align 2
-	set total [expr {($namelen + (1 << $align) - 1) & (-1 << $align)}]
+	set total [expr {($namelen + (1 << $align) - 1) & -(1 << $align)}]
 	for {set i $namelen} {$i < $total} {incr i} {
 	    _op .byte 0
 	}
@@ -1317,6 +1487,9 @@ namespace eval Dwarf {
 	variable _cu_count
 	variable _line_count
 	variable _line_saw_file
+	variable _line_saw_program
+	variable _line_header_end_label
+	variable _debug_ranges_64_bit
 
 	if {!$_initialized} {
 	    _read_constants
@@ -1332,6 +1505,8 @@ namespace eval Dwarf {
 
 	set _line_count 0
 	set _line_saw_file 0
+	set _line_saw_program 0
+	set _debug_ranges_64_bit [is_64_target]
 
 	# Not "uplevel" here, because we want to evaluate in this
 	# namespace.  This is somewhat bad because it means we can't

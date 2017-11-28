@@ -1,5 +1,5 @@
 /* Simulator for Motorola's MCore processor
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 This file is part of GDB, the GNU debugger.
 
@@ -27,9 +27,43 @@ typedef unsigned long int  uword;
 #include "sim-base.h"
 #include "bfd.h"
 
+/* The machine state.
+   This state is maintained in host byte order.  The
+   fetch/store register functions must translate between host
+   byte order and the target processor byte order.
+   Keeping this data in target byte order simplifies the register
+   read/write functions.  Keeping this data in native order improves
+   the performance of the simulator.  Simulation speed is deemed more
+   important.  */
+
+/* The ordering of the mcore_regset structure is matched in the
+   gdb/config/mcore/tm-mcore.h file in the REGISTER_NAMES macro.  */
+struct mcore_regset
+{
+  word gregs[16];	/* primary registers */
+  word alt_gregs[16];	/* alt register file */
+  word cregs[32];	/* control registers */
+  word pc;
+};
+#define LAST_VALID_CREG	32		/* only 0..12 implemented */
+#define NUM_MCORE_REGS	(16 + 16 + LAST_VALID_CREG + 1)
+
 struct _sim_cpu {
 
-  word pc;
+  union
+  {
+    struct mcore_regset regs;
+    /* Used by the fetch/store reg helpers to access registers linearly.  */
+    word asints[NUM_MCORE_REGS];
+  };
+
+  /* Used to switch between gregs/alt_gregs based on the control state.  */
+  word *active_gregs;
+
+  int ticks;
+  int stalls;
+  int cycles;
+  int insts;
 
   sim_cpu_base base;
 };

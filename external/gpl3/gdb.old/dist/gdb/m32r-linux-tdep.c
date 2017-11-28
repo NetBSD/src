@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -230,7 +230,7 @@ m32r_linux_sigtramp_frame_cache (struct frame_info *this_frame,
   int regnum;
 
   if ((*this_cache) != NULL)
-    return (*this_cache);
+    return (struct m32r_frame_cache *) (*this_cache);
   cache = FRAME_OBSTACK_ZALLOC (struct m32r_frame_cache);
   (*this_cache) = cache;
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
@@ -351,7 +351,7 @@ m32r_linux_supply_gregset (const struct regset *regset,
 			   struct regcache *regcache, int regnum,
 			   const void *gregs, size_t size)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   enum bfd_endian byte_order =
     gdbarch_byte_order (get_regcache_arch (regcache));
   ULONGEST psw, bbpsw;
@@ -394,7 +394,7 @@ m32r_linux_collect_gregset (const struct regset *regset,
 			    const struct regcache *regcache,
 			    int regnum, void *gregs, size_t size)
 {
-  gdb_byte *regs = gregs;
+  gdb_byte *regs = (gdb_byte *) gregs;
   int i;
   enum bfd_endian byte_order =
     gdbarch_byte_order (get_regcache_arch (regcache));
@@ -447,7 +447,6 @@ m32r_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static void
 m32r_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   linux_init_abi (info, gdbarch);
 

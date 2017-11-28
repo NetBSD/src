@@ -1,7 +1,7 @@
 /* Target-dependent code for the IQ2000 architecture, for GDB, the GNU
    Debugger.
 
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -206,8 +206,6 @@ iq2000_scan_prologue (struct gdbarch *gdbarch,
   struct symtab_and_line sal;
   CORE_ADDR pc;
   CORE_ADDR loop_end;
-  int found_store_lr = 0;
-  int found_decr_sp = 0;
   int srcreg;
   int tgtreg;
   signed short offset;
@@ -250,8 +248,6 @@ iq2000_scan_prologue (struct gdbarch *gdbarch,
 	  if (tgtreg >= 0 && tgtreg < E_NUM_REGS)
 	    cache->saved_regs[tgtreg] = -((signed short) (insn & 0xffff));
 
-	  if (tgtreg == E_LR_REGNUM)
-	    found_store_lr = 1;
 	  continue;
 	}
 
@@ -259,7 +255,6 @@ iq2000_scan_prologue (struct gdbarch *gdbarch,
 	{
 	  /* addi %1, %1, -N == addi %sp, %sp, -N */
 	  /* LEGACY -- from assembly-only port.  */
-	  found_decr_sp = 1;
 	  cache->framesize = -((signed short) (insn & 0xffff));
 	  continue;
 	}
@@ -372,7 +367,7 @@ iq2000_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct iq2000_frame_cache *) *this_cache;
 
   cache = FRAME_OBSTACK_ZALLOC (struct iq2000_frame_cache);
   iq2000_init_frame_cache (cache);
@@ -537,7 +532,7 @@ iq2000_use_struct_convention (struct type *type)
 
 static void
 iq2000_extract_return_value (struct type *type, struct regcache *regcache,
-			     void *valbuf)
+			     gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -564,7 +559,7 @@ iq2000_extract_return_value (struct type *type, struct regcache *regcache,
 	  regcache_cooked_read_unsigned (regcache, regno++, &tmp);
 	  store_unsigned_integer (valbuf, size, byte_order, tmp);
 	  len -= size;
-	  valbuf = ((char *) valbuf) + size;
+	  valbuf += size;
 	}
     }
   else

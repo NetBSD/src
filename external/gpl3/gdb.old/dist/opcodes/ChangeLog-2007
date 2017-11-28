@@ -1071,7 +1071,7 @@
 	* s390-mkopc.c (struct s390_cond_ext_format): New global struct.
 	(s390_cond_ext_format): New global variable.
 	(expandConditionalJump): New function.
-	(main): Invoke expandConditionalJump for mnemonics containing '*'.	
+	(main): Invoke expandConditionalJump for mnemonics containing '*'.
 	* s390-opc.txt: Replace mnemonics with conditional
 	mask extensions with instructions using the newly introduced '*' tag.
 
@@ -1096,7 +1096,7 @@
 	* ia64-gen.c: (main): Add missing newline to copyright message.
 	* ia64-ic.tbl (fp-non-arith): Add xmpy.
 	* ia64-asmtab.c: Regenerate.
-	
+
 2007-08-01  Michael Snyder  <msnyder@access-company.com>
 
 	* i386-dis.c (print_insn): Guard against NULL.

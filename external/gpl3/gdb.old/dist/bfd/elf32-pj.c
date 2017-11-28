@@ -1,5 +1,5 @@
 /* picoJava specific support for 32-bit ELF
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by Steve Chamberlan of Transmeta (sac@pobox.com).
 
    This file is part of BFD, the Binary File Descriptor library.

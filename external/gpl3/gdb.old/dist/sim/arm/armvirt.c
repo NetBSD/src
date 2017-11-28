@@ -1,28 +1,27 @@
 /*  armvirt.c -- ARMulator virtual memory interace:  ARM6 Instruction Emulator.
     Copyright (C) 1994 Advanced RISC Machines Ltd.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, see <http://www.gnu.org/licenses/>. */
 
 /* This file contains a complete ARMulator memory model, modelling a
-"virtual memory" system. A much simpler model can be found in armfast.c,
-and that model goes faster too, but has a fixed amount of memory. This
-model's memory has 64K pages, allocated on demand from a 64K entry page
-table. The routines PutWord and GetWord implement this. Pages are never
-freed as they might be needed again. A single area of memory may be
-defined to generate aborts. */
+   "virtual memory" system. A much simpler model can be found in armfast.c,
+   and that model goes faster too, but has a fixed amount of memory. This
+   model's memory has 64K pages, allocated on demand from a 64K entry page
+   table. The routines PutWord and GetWord implement this. Pages are never
+   freed as they might be needed again. A single area of memory may be
+   defined to generate aborts.  */
 
-#include "armopts.h"
 #include "armos.h"
 #include "armdefs.h"
 #include "ansidecl.h"
@@ -216,13 +215,6 @@ ARMul_ReLoadInstr (ARMul_State * state, ARMword address, ARMword isize)
 ARMword ARMul_LoadInstrS (ARMul_State * state, ARMword address, ARMword isize)
 {
   state->NumScycles++;
-
-#ifdef HOURGLASS
-  if ((state->NumScycles & HOURGLASS_RATE) == 0)
-    {
-      HOURGLASS;
-    }
-#endif
 
   return ARMul_ReLoadInstr (state, address, isize);
 }

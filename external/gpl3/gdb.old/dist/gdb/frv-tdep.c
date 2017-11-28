@@ -1,6 +1,6 @@
 /* Target-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -136,9 +136,8 @@ new_variant (void)
   struct gdbarch_tdep *var;
   int r;
 
-  var = xmalloc (sizeof (*var));
-  memset (var, 0, sizeof (*var));
-  
+  var = XCNEW (struct gdbarch_tdep);
+
   var->frv_abi = FRV_ABI_EABI;
   var->num_gprs = 64;
   var->num_fprs = 64;
@@ -1100,7 +1099,7 @@ frv_frame_unwind_cache (struct frame_info *this_frame,
   struct frv_unwind_cache *info;
 
   if ((*this_prologue_cache))
-    return (*this_prologue_cache);
+    return (struct frv_unwind_cache *) (*this_prologue_cache);
 
   info = FRAME_OBSTACK_ZALLOC (struct frv_unwind_cache);
   (*this_prologue_cache) = info;
@@ -1482,6 +1481,7 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     {
     case bfd_mach_frv:
     case bfd_mach_frvsimple:
+    case bfd_mach_fr300:
     case bfd_mach_fr500:
     case bfd_mach_frvtomcat:
     case bfd_mach_fr550:
@@ -1563,6 +1563,7 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     {
     case bfd_mach_frv:
     case bfd_mach_frvsimple:
+    case bfd_mach_fr300:
     case bfd_mach_fr500:
     case bfd_mach_frvtomcat:
       /* fr500-style hardware debugging support.  */

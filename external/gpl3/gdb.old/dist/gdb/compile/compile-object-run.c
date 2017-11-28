@@ -1,6 +1,6 @@
 /* Call module for 'compile' command.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,7 +61,7 @@ static dummy_frame_dtor_ftype do_module_cleanup;
 static void
 do_module_cleanup (void *arg, int registers_valid)
 {
-  struct do_module_cleanup *data = arg;
+  struct do_module_cleanup *data = (struct do_module_cleanup *) arg;
   struct objfile *objfile;
 
   if (data->executedp != NULL)
@@ -125,7 +125,8 @@ compile_object_run (struct compile_module *module)
   CORE_ADDR regs_addr = module->regs_addr;
   struct objfile *objfile = module->objfile;
 
-  data = xmalloc (sizeof (*data) + strlen (objfile_name_s));
+  data = (struct do_module_cleanup *) xmalloc (sizeof (*data)
+					       + strlen (objfile_name_s));
   data->executedp = &executed;
   data->source_file = xstrdup (module->source_file);
   strcpy (data->objfile_name_string, objfile_name_s);
@@ -155,7 +156,7 @@ compile_object_run (struct compile_module *module)
       func_val = value_from_pointer (lookup_pointer_type (func_type),
 				   BLOCK_START (SYMBOL_BLOCK_VALUE (func_sym)));
 
-      vargs = alloca (sizeof (*vargs) * TYPE_NFIELDS (func_type));
+      vargs = XALLOCAVEC (struct value *, TYPE_NFIELDS (func_type));
       if (TYPE_NFIELDS (func_type) >= 1)
 	{
 	  gdb_assert (regs_addr != 0);

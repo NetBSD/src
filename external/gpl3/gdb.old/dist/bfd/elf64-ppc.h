@@ -1,5 +1,5 @@
 /* PowerPC64-specific support for 64-bit ELF.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,7 +34,7 @@ struct ppc64_elf_params
   bfd_signed_vma group_size;
 
   /* Whether to use a special call stub for __tls_get_addr.  */
-  int no_tls_get_addr_opt;
+  int tls_get_addr_opt;
 
   /* Whether to allow multiple toc sections.  */
   int no_multi_toc;

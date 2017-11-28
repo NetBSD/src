@@ -1,5 +1,5 @@
 /* RX ELF support for BFD.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -119,11 +119,11 @@ END_RELOC_NUMBERS (R_RX_max)
 #define E_FLAG_RX_DSP			(1 << 1) /* Defined in the RX CPU Object file specification, but not explained. */
 #define E_FLAG_RX_PID			(1 << 2) /* Unofficial - DJ */
 #define E_FLAG_RX_ABI			(1 << 3) /* Binary passes stacked arguments using natural alignment.  Unofficial - NC.  */
-
 #define E_FLAG_RX_SINSNS_SET		(1 << 6) /* Set if bit-5 is significant.  */
 #define E_FLAG_RX_SINSNS_YES		(1 << 7) /* Set if string instructions are used in the binary.  */
 #define E_FLAG_RX_SINSNS_NO		0        /* Bit-5 if this binary must not be linked with a string instruction using binary.  */
 #define E_FLAG_RX_SINSNS_MASK		(3 << 6) /* Mask of bits used to determine string instruction use.  */
+#define E_FLAG_RX_V2			(1 << 8) /* RX v2 instructions */
 
 /* These define the addend field of R_RX_RH_RELAX relocations.  */
 #define	RX_RELAXA_IMM6	0x00000010	/* Imm8/16/24/32 at bit offset 6.  */

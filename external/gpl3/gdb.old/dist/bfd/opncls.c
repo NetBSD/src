@@ -1,5 +1,5 @@
 /* opncls.c -- open and close a BFD.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -1378,7 +1378,7 @@ find_separate_debug_file (bfd *           abfd,
     }
 
   base = get_func (abfd, & crc32);
-    
+
   if (base == NULL)
     return NULL;
 

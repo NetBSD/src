@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2015 Free Software Foundation, Inc.
+   Copyright 2009-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,20 @@
 
 #include <stdlib.h>
 
+#define CONCAT1(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a ## b
+
+#ifdef SYMBOL_PREFIX
+# define SYMBOL1(str)     CONCAT1(SYMBOL_PREFIX, str)
+#else
+# define SYMBOL1(str)     str
+#endif
+
+#define STR1(s) #s
+#define STR(s) STR1(s)
+
+#define SYMBOL(str)     STR(SYMBOL1(str))
+
 asm (".globl cu_text_start");
 asm ("cu_text_start:");
 
@@ -31,12 +45,12 @@ main (void)
     extern unsigned char var;
 
     /* Do not rely on the `extern' DIE output by GCC (GCC PR debug/39563).  */
-asm (".globl extern_block_start");
-asm ("extern_block_start:");
+asm (".globl " SYMBOL(extern_block_start));
+asm (SYMBOL(extern_block_start) ":");
     if (var != 2)
       abort ();
-asm (".globl extern_block_end");
-asm ("extern_block_end:");
+asm (".globl " SYMBOL(extern_block_end));
+asm (SYMBOL(extern_block_end) ":");
   }
 
   return 0;

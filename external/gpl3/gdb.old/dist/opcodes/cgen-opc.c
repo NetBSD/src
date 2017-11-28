@@ -1,6 +1,6 @@
 /* CGEN generic opcode support.
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -127,7 +127,7 @@ cgen_keyword_add (CGEN_KEYWORD *kt, CGEN_KEYWORD_ENTRY *ke)
 	&& ! strchr (kt->nonalpha_chars, ke->name[i]))
       {
 	size_t idx = strlen (kt->nonalpha_chars);
-	
+
 	/* If you hit this limit, please don't just
 	   increase the size of the field, instead
 	   look for a better algorithm.  */
@@ -369,7 +369,7 @@ cgen_get_insn_value (CGEN_CPU_DESC cd, unsigned char *buf, int length)
 	 segments, and endian-convert them, one at a time. */
       int i;
 
-      /* Enforce divisibility. */ 
+      /* Enforce divisibility. */
       if ((length % insn_chunk_bitsize) != 0)
 	abort ();
 
@@ -408,7 +408,7 @@ cgen_put_insn_value (CGEN_CPU_DESC cd,
 	 segments, and endian-convert them, one at a time. */
       int i;
 
-      /* Enforce divisibility. */ 
+      /* Enforce divisibility. */
       if ((length % insn_chunk_bitsize) != 0)
 	abort ();
 
@@ -460,9 +460,10 @@ cgen_lookup_insn (CGEN_CPU_DESC cd,
   if (cd->int_insn_p)
     {
       info = NULL;
-      buf = (unsigned char *) alloca (cd->max_insn_bitsize / 8);
+      buf = (unsigned char *) xmalloc (cd->max_insn_bitsize / 8);
       cgen_put_insn_value (cd, buf, length, insn_int_value);
       base_insn = insn_int_value;
+      free (buf);
     }
   else
     {

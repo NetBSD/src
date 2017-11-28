@@ -1,6 +1,6 @@
 /* Support routines for decoding "stabs" debugging information format.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -169,7 +169,7 @@ static void
 reg_value_complaint (int regnum, int num_regs, const char *sym)
 {
   complaint (&symfile_complaints,
-	     _("register number %d too large (max %d) in symbol %s"),
+	     _("bad register number %d (max %d) in symbol %s"),
              regnum, num_regs - 1, sym);
 }
 
@@ -277,8 +277,7 @@ dbx_lookup_type (int typenums[2], struct objfile *objfile)
 	  if (old_len == 0)
 	    {
 	      type_vector_length = INITIAL_TYPE_VECTOR_LENGTH;
-	      type_vector = (struct type **)
-		xmalloc (type_vector_length * sizeof (struct type *));
+	      type_vector = XNEWVEC (struct type *, type_vector_length);
 	    }
 	  while (index >= type_vector_length)
 	    {
@@ -399,8 +398,8 @@ patch_block_stabs (struct pending *symbols, struct pending_stabs *stabs,
 	      SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
 	      SYMBOL_ACLASS_INDEX (sym) = LOC_OPTIMIZED_OUT;
 	      SYMBOL_SET_LINKAGE_NAME
-		(sym, obstack_copy0 (&objfile->objfile_obstack,
-				     name, pp - name));
+		(sym, (char *) obstack_copy0 (&objfile->objfile_obstack,
+					      name, pp - name));
 	      pp += 2;
 	      if (*(pp - 1) == 'F' || *(pp - 1) == 'f')
 		{
@@ -598,8 +597,9 @@ stab_reg_to_regnum (struct symbol *sym, struct gdbarch *gdbarch)
 {
   int regno = gdbarch_stab_reg_to_regnum (gdbarch, SYMBOL_VALUE (sym));
 
-  if (regno >= gdbarch_num_regs (gdbarch)
-		+ gdbarch_num_pseudo_regs (gdbarch))
+  if (regno < 0
+      || regno >= (gdbarch_num_regs (gdbarch)
+		   + gdbarch_num_pseudo_regs (gdbarch)))
     {
       reg_value_complaint (regno,
 			   gdbarch_num_regs (gdbarch)
@@ -717,7 +717,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     normal:
       if (SYMBOL_LANGUAGE (sym) == language_cplus)
 	{
-	  char *name = alloca (p - string + 1);
+	  char *name = (char *) alloca (p - string + 1);
 
 	  memcpy (name, string, p - string);
 	  name[p - string] = '\0';
@@ -785,9 +785,9 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	       probably has the necessary code.  */
 
 	    dbl_type = objfile_type (objfile)->builtin_double;
-	    dbl_valu =
-	      obstack_alloc (&objfile->objfile_obstack,
-			     TYPE_LENGTH (dbl_type));
+	    dbl_valu
+	      = (gdb_byte *) obstack_alloc (&objfile->objfile_obstack,
+					    TYPE_LENGTH (dbl_type));
 	    store_typed_floating (dbl_valu, dbl_type, d);
 
 	    SYMBOL_TYPE (sym) = dbl_type;
@@ -869,7 +869,8 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	    SYMBOL_TYPE (sym) = create_array_type (NULL,
 				  objfile_type (objfile)->builtin_char,
 				  range_type);
-	    string_value = obstack_alloc (&objfile->objfile_obstack, ind + 1);
+	    string_value
+	      = (gdb_byte *) obstack_alloc (&objfile->objfile_obstack, ind + 1);
 	    memcpy (string_value, string_local, ind + 1);
 	    p++;
 
@@ -1623,15 +1624,16 @@ again:
 	  type_name = NULL;
 	  if (current_subfile->language == language_cplus)
 	    {
-	      char *new_name, *name = alloca (p - *pp + 1);
+	      char *new_name, *name = (char *) alloca (p - *pp + 1);
 
 	      memcpy (name, *pp, p - *pp);
 	      name[p - *pp] = '\0';
 	      new_name = cp_canonicalize_string (name);
 	      if (new_name != NULL)
 		{
-		  type_name = obstack_copy0 (&objfile->objfile_obstack,
-					     new_name, strlen (new_name));
+		  type_name
+		    = (char *) obstack_copy0 (&objfile->objfile_obstack,
+					      new_name, strlen (new_name));
 		  xfree (new_name);
 		}
 	    }
@@ -1809,7 +1811,7 @@ again:
         while (**pp && **pp != '#')
           {
             struct type *arg_type = read_type (pp, objfile);
-            struct type_list *newobj = alloca (sizeof (*newobj));
+            struct type_list *newobj = XALLOCA (struct type_list);
             newobj->type = arg_type;
             newobj->next = arg_types;
             arg_types = newobj;
@@ -2056,8 +2058,8 @@ static const struct objfile_data *rs6000_builtin_type_data;
 static struct type *
 rs6000_builtin_type (int typenum, struct objfile *objfile)
 {
-  struct type **negative_types = objfile_data (objfile,
-					       rs6000_builtin_type_data);
+  struct type **negative_types
+    = (struct type **) objfile_data (objfile, rs6000_builtin_type_data);
 
   /* We recognize types numbered from -NUMBER_RECOGNIZED to -1.  */
 #define NUMBER_RECOGNIZED 34
@@ -2304,10 +2306,8 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
       look_ahead_type = NULL;
       length = 0;
 
-      new_fnlist = (struct next_fnfieldlist *)
-	xmalloc (sizeof (struct next_fnfieldlist));
+      new_fnlist = XCNEW (struct next_fnfieldlist);
       make_cleanup (xfree, new_fnlist);
-      memset (new_fnlist, 0, sizeof (struct next_fnfieldlist));
 
       if ((*pp)[0] == 'o' && (*pp)[1] == 'p' && is_cplus_marker ((*pp)[2]))
 	{
@@ -2346,10 +2346,8 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 
       do
 	{
-	  new_sublist =
-	    (struct next_fnfield *) xmalloc (sizeof (struct next_fnfield));
+	  new_sublist = XCNEW (struct next_fnfield);
 	  make_cleanup (xfree, new_sublist);
-	  memset (new_sublist, 0, sizeof (struct next_fnfield));
 
 	  /* Check for and handle cretinous dbx symbol name continuation!  */
 	  if (look_ahead_type == NULL)
@@ -2637,17 +2635,16 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 
 	      /* Create a new fn_fieldlist for the destructors.  */
 
-	      destr_fnlist = (struct next_fnfieldlist *)
-		xmalloc (sizeof (struct next_fnfieldlist));
+	      destr_fnlist = XCNEW (struct next_fnfieldlist);
 	      make_cleanup (xfree, destr_fnlist);
-	      memset (destr_fnlist, 0, sizeof (struct next_fnfieldlist));
+
 	      destr_fnlist->fn_fieldlist.name
 		= obconcat (&objfile->objfile_obstack, "~",
 			    new_fnlist->fn_fieldlist.name, (char *) NULL);
 
-	      destr_fnlist->fn_fieldlist.fn_fields = (struct fn_field *)
-		obstack_alloc (&objfile->objfile_obstack,
-			       sizeof (struct fn_field) * has_destructor);
+	      destr_fnlist->fn_fieldlist.fn_fields =
+		XOBNEWVEC (&objfile->objfile_obstack,
+			   struct fn_field, has_destructor);
 	      memset (destr_fnlist->fn_fieldlist.fn_fields, 0,
 		  sizeof (struct fn_field) * has_destructor);
 	      tmp_sublist = sublist;
@@ -2717,8 +2714,9 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 					     dem_opname, 0);
 	      if (ret)
 		new_fnlist->fn_fieldlist.name
-		  = obstack_copy0 (&objfile->objfile_obstack,
-				   dem_opname, strlen (dem_opname));
+		  = ((const char *)
+		     obstack_copy0 (&objfile->objfile_obstack, dem_opname,
+				    strlen (dem_opname)));
 	      xfree (main_fn_name);
 	    }
 
@@ -2859,8 +2857,8 @@ read_one_struct_field (struct field_info *fip, char **pp, char *p,
 {
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
 
-  fip->list->field.name =
-    obstack_copy0 (&objfile->objfile_obstack, *pp, p - *pp);
+  fip->list->field.name
+    = (const char *) obstack_copy0 (&objfile->objfile_obstack, *pp, p - *pp);
   *pp = p + 1;
 
   /* This means we have a visibility for a field coming.  */
@@ -3017,9 +3015,9 @@ read_struct_fields (struct field_info *fip, char **pp, struct type *type,
     {
       STABS_CONTINUE (pp, objfile);
       /* Get space to record the next field's data.  */
-      newobj = (struct nextfield *) xmalloc (sizeof (struct nextfield));
+      newobj = XCNEW (struct nextfield);
       make_cleanup (xfree, newobj);
-      memset (newobj, 0, sizeof (struct nextfield));
+
       newobj->next = fip->list;
       fip->list = newobj;
 
@@ -3139,9 +3137,9 @@ read_baseclasses (struct field_info *fip, char **pp, struct type *type,
 
   for (i = 0; i < TYPE_N_BASECLASSES (type); i++)
     {
-      newobj = (struct nextfield *) xmalloc (sizeof (struct nextfield));
+      newobj = XCNEW (struct nextfield);
       make_cleanup (xfree, newobj);
-      memset (newobj, 0, sizeof (struct nextfield));
+
       newobj->next = fip->list;
       fip->list = newobj;
       FIELD_BITSIZE (newobj->field) = 0;	/* This should be an unpacked
@@ -3682,7 +3680,7 @@ read_enum_type (char **pp, struct type *type,
       p = *pp;
       while (*p != ':')
 	p++;
-      name = obstack_copy0 (&objfile->objfile_obstack, *pp, p - *pp);
+      name = (char *) obstack_copy0 (&objfile->objfile_obstack, *pp, p - *pp);
       *pp = p + 1;
       n = read_huge_number (pp, ',', &nbits, 0);
       if (nbits != 0)
@@ -4299,8 +4297,7 @@ read_args (char **pp, int end, struct objfile *objfile, int *nargsp,
       *varargsp = 0;
     }
 
-  rval = (struct field *) xmalloc (n * sizeof (struct field));
-  memset (rval, 0, n * sizeof (struct field));
+  rval = XCNEWVEC (struct field, n);
   for (i = 0; i < n; i++)
     rval[i].type = types[i];
   *nargsp = n;
@@ -4336,8 +4333,8 @@ common_block_start (char *name, struct objfile *objfile)
     }
   common_block = local_symbols;
   common_block_i = local_symbols ? local_symbols->nsyms : 0;
-  common_block_name = obstack_copy0 (&objfile->objfile_obstack,
-				     name, strlen (name));
+  common_block_name = (char *) obstack_copy0 (&objfile->objfile_obstack, name,
+					      strlen (name));
 }
 
 /* Process a N_ECOMM symbol.  */
@@ -4844,13 +4841,11 @@ _initialize_stabsread (void)
 
   undef_types_allocated = 20;
   undef_types_length = 0;
-  undef_types = (struct type **)
-    xmalloc (undef_types_allocated * sizeof (struct type *));
+  undef_types = XNEWVEC (struct type *, undef_types_allocated);
 
   noname_undefs_allocated = 20;
   noname_undefs_length = 0;
-  noname_undefs = (struct nat *)
-    xmalloc (noname_undefs_allocated * sizeof (struct nat));
+  noname_undefs = XNEWVEC (struct nat, noname_undefs_allocated);
 
   stab_register_index = register_symbol_register_impl (LOC_REGISTER,
 						       &stab_register_funcs);

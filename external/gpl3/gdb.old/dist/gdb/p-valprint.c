@@ -1,6 +1,6 @@
 /* Support for printing Pascal values for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,7 +49,9 @@ static const struct generic_val_print_decorations p_decorations =
   " * I",
   "true",
   "false",
-  "void"
+  "void",
+  "{",
+  "}"
 };
 
 /* See val_print for a description of the various parameters of this
@@ -74,7 +76,7 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
   CORE_ADDR addr;
   int want_space = 0;
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_ARRAY:
@@ -203,11 +205,11 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
 	  && addr != 0)
 	{
 	  ULONGEST string_length;
-	  void *buffer;
+	  gdb_byte *buffer;
 
 	  if (want_space)
 	    fputs_filtered (" ", stream);
-	  buffer = xmalloc (length_size);
+	  buffer = (gdb_byte *) xmalloc (length_size);
 	  read_memory (addr + length_pos, buffer, length_size);
 	  string_length = extract_unsigned_integer (buffer, length_size,
 						    byte_order);
@@ -239,9 +241,9 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
 	  if (vt_address && options->vtblprint)
 	    {
 	      struct value *vt_val;
-	      struct symbol *wsym = (struct symbol *) NULL;
+	      struct symbol *wsym = NULL;
 	      struct type *wtype;
-	      struct block *block = (struct block *) NULL;
+	      struct block *block = NULL;
 	      struct field_of_this_result is_this_fld;
 
 	      if (want_space)
@@ -250,7 +252,7 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
 	      if (msymbol.minsym != NULL)
 		wsym = lookup_symbol (MSYMBOL_LINKAGE_NAME (msymbol.minsym),
 				      block,
-				      VAR_DOMAIN, &is_this_fld);
+				      VAR_DOMAIN, &is_this_fld).symbol;
 
 	      if (wsym)
 		{
@@ -336,7 +338,7 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
 
     case TYPE_CODE_SET:
       elttype = TYPE_INDEX_TYPE (type);
-      CHECK_TYPEDEF (elttype);
+      elttype = check_typedef (elttype);
       if (TYPE_STUB (elttype))
 	{
 	  fprintf_filtered (stream, "<incomplete type>");
@@ -467,7 +469,7 @@ static void pascal_object_print_static_field (struct value *,
 					      const struct value_print_options *);
 
 static void pascal_object_print_value (struct type *, const gdb_byte *,
-				       int,
+				       LONGEST,
 				       CORE_ADDR, struct ui_file *, int,
 				       const struct value *,
 				       const struct value_print_options *,
@@ -526,7 +528,7 @@ pascal_object_is_vtbl_member (struct type *type)
 
 void
 pascal_object_print_value_fields (struct type *type, const gdb_byte *valaddr,
-				  int offset,
+				  LONGEST offset,
 				  CORE_ADDR address, struct ui_file *stream,
 				  int recurse,
 				  const struct value *val,
@@ -535,9 +537,10 @@ pascal_object_print_value_fields (struct type *type, const gdb_byte *valaddr,
 				  int dont_print_statmem)
 {
   int i, len, n_baseclasses;
-  char *last_dont_print = obstack_next_free (&dont_print_statmem_obstack);
+  char *last_dont_print
+    = (char *) obstack_next_free (&dont_print_statmem_obstack);
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   fprintf_filtered (stream, "{");
   len = TYPE_NFIELDS (type);
@@ -697,7 +700,7 @@ pascal_object_print_value_fields (struct type *type, const gdb_byte *valaddr,
 
 static void
 pascal_object_print_value (struct type *type, const gdb_byte *valaddr,
-			   int offset,
+			   LONGEST offset,
 			   CORE_ADDR address, struct ui_file *stream,
 			   int recurse,
 			   const struct value *val,
@@ -720,11 +723,11 @@ pascal_object_print_value (struct type *type, const gdb_byte *valaddr,
 
   for (i = 0; i < n_baseclasses; i++)
     {
-      int boffset = 0;
+      LONGEST boffset = 0;
       struct type *baseclass = check_typedef (TYPE_BASECLASS (type, i));
       const char *basename = type_name_no_tag (baseclass);
       const gdb_byte *base_valaddr = NULL;
-      int thisoffset;
+      LONGEST thisoffset;
       int skip = 0;
 
       if (BASETYPE_VIA_VIRTUAL (type, i))
@@ -768,7 +771,7 @@ pascal_object_print_value (struct type *type, const gdb_byte *valaddr,
 	      gdb_byte *buf;
 	      struct cleanup *back_to;
 
-	      buf = xmalloc (TYPE_LENGTH (baseclass));
+	      buf = (gdb_byte *) xmalloc (TYPE_LENGTH (baseclass));
 	      back_to = make_cleanup (xfree, buf);
 
 	      base_valaddr = buf;
@@ -872,7 +875,7 @@ pascal_object_print_static_field (struct value *val,
       obstack_grow (&dont_print_statmem_obstack, (char *) &addr,
 		    sizeof (CORE_ADDR));
 
-      CHECK_TYPEDEF (type);
+      type = check_typedef (type);
       pascal_object_print_value_fields (type,
 					value_contents_for_printing (val),
 					value_embedded_offset (val),

@@ -1,5 +1,5 @@
 /* Definitions for decoding the ft32 opcode table.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
 This program is free software; you can redistribute it and/or modify
@@ -95,6 +95,12 @@ typedef struct ft32_opc_info_t
 #define FT32_FLD_AL (1 << 16)
 #define FT32_FLD_AL_BIT 0
 #define FT32_FLD_AL_SIZ 4
+
+#define FT32_IS_CALL(inst)   (((inst) & 0xfffc0000) == 0x00340000)
+#define FT32_IS_PUSH(inst)   (((inst) & 0xfff00000) == 0x84000000)
+#define FT32_PUSH_REG(inst)  (((inst) >> 15) & 0x1f)
+#define FT32_IS_LINK(inst)   (((inst) & 0xffff0000) == 0x95d00000)
+#define FT32_LINK_SIZE(inst) ((inst) & 0xffff)
 
 #define FT32_FLD_R_D_POST (1 << 17)
 #define FT32_FLD_R_1_POST (1 << 18)

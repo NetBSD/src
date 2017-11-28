@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,6 @@ proc test_at_main {} {
     global det_file
     global srcdir
     global subdir
-    global hp_cc_compiler
 
     # skip past init0.
     # This used to do an extra "next" if the first one didn't get us
@@ -106,7 +105,6 @@ proc test_at_main {} {
     # Print scope1.c::filelocal_ro, which is 202
 
     if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
-    if {$hp_cc_compiler} then { setup_xfail "hppa2.0w-*-*" 11747CLLbs}
     if [gdb_test "print 'scope1.c'::filelocal_ro" "\\\$$decimal = 202" "print 'scope1.c'::filelocal_ro"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal_ro"] { 
       gdb_suppress_tests
     }

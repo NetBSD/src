@@ -1,6 +1,6 @@
 /* Blackfin Trace (TBUF) model.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -80,6 +80,10 @@ bfin_trace_io_write_buffer (struct hw *me, const void *source,
   bu32 mmr_off;
   bu32 value;
 
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, true))
+    return 0;
+
   value = dv_load_4 (source);
   mmr_off = addr - trace->base;
 
@@ -96,7 +100,7 @@ bfin_trace_io_write_buffer (struct hw *me, const void *source,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -109,6 +113,10 @@ bfin_trace_io_read_buffer (struct hw *me, void *dest,
   struct bfin_trace *trace = hw_data (me);
   bu32 mmr_off;
   bu32 value;
+
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, false))
+    return 0;
 
   mmr_off = addr - trace->base;
 
@@ -123,7 +131,7 @@ bfin_trace_io_read_buffer (struct hw *me, void *dest,
       /* Hardware is limited to 16 entries, so to stay compatible with
          software, limit the value to 16.  For software algorithms that
          keep reading while (TBUFSTAT != 0), they'll get all of it.  */
-      value = MIN (TBUF_LEN (trace), 16);
+      value = min (TBUF_LEN (trace), 16);
       break;
     case mmr_offset(tbuf):
       {
@@ -148,9 +156,8 @@ bfin_trace_io_read_buffer (struct hw *me, void *dest,
 	break;
       }
     default:
-      while (1) /* Core MMRs -> exception -> doesn't return.  */
-	dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
-      break;
+      dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
+      return 0;
     }
 
   dv_store_4 (dest, value);

@@ -113,6 +113,7 @@
 @V@/gdb/ChangeLog-2012 @V@/gdb/ChangeLog.012
 @V@/gdb/ChangeLog-2013 @V@/gdb/ChangeLog.013
 @V@/gdb/ChangeLog-2014 @V@/gdb/ChangeLog.014
+@V@/gdb/ChangeLog-2015 @V@/gdb/ChangeLog.015
 @V@/gdb/ChangeLog-3.x @V@/gdb/ChangeLog.3-x
 @V@/gdb/ada-exp.tab.c @V@/gdb/ada-exp_tab.c
 @V@/gdb/amd64-windows-nat.c @V@/gdb/a64w-nat.c
@@ -406,6 +407,8 @@
 @V@/gdb/testsuite/gdb.base/bitfields2.c @V@/gdb/testsuite/gdb.base/bitfiel2.c
 @V@/gdb/testsuite/gdb.base/bitfields2.exp @V@/gdb/testsuite/gdb.base/bitfiel2.exp
 @V@/gdb/testsuite/gdb.base/break-entry.exp @V@/gdb/testsuite/gdb.base/brkentry.exp
+@V@/gdb/testsuite/gdb.base/break-fun-addr1.c @V@/gdb/testsuite/gdb.base/b-f-a1.c
+@V@/gdb/testsuite/gdb.base/break-fun-addr2.c @V@/gdb/testsuite/gdb.base/b-f-a2.c
 @V@/gdb/testsuite/gdb.base/coremaker2.c @V@/gdb/testsuite/gdb.base/core2maker.c
 @V@/gdb/testsuite/gdb.base/hashline1.exp @V@/gdb/testsuite/gdb.base/hash1line.exp
 @V@/gdb/testsuite/gdb.base/hashline2.exp @V@/gdb/testsuite/gdb.base/hash2line.exp

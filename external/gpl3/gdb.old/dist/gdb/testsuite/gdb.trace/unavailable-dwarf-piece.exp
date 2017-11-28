@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ Dwarf::assemble $asm_file {
 	    DW_TAG_subprogram {
 		{name foo}
 		{decl_file 1 sdata}
-		{low_pc foo addr}
+		{low_pc foo_start_lbl addr}
 		{high_pc foo_end_lbl addr}
 	    } {
 		DW_TAG_formal_parameter {
@@ -220,7 +220,7 @@ Dwarf::assemble $asm_file {
 	    DW_TAG_subprogram {
 		{name bar}
 		{decl_file 1 sdata}
-		{low_pc bar addr}
+		{low_pc bar_start_lbl addr}
 		{high_pc bar_end_lbl addr}
 	    } {
 		DW_TAG_formal_parameter {
@@ -306,7 +306,7 @@ if ![gdb_target_supports_trace] {
 gdb_breakpoint "end"
 
 with_test_prefix "tracing foo" {
-    gdb_test "trace foo" ".*"
+    gdb_test "trace *foo_start_lbl" ".*"
     gdb_test_no_output "tstart"
     gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*"
     gdb_test_no_output "tstop"
@@ -320,15 +320,29 @@ with_test_prefix "tracing foo" {
 }
 
 with_test_prefix "tracing bar" {
-    gdb_test "trace bar" ".*"
+    gdb_test "trace *bar_start_lbl" ".*"
     gdb_test_no_output "tstart"
     gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*"
     gdb_test_no_output "tstop"
 
+    set endian ""
+    gdb_test_multiple "show endian" "show endian" {
+	-re ".* (big|little) endian.*$gdb_prompt $" {
+	    set endian $expect_out(1,string)
+	    pass "endianness: $endian"
+	}
+    }
+
     gdb_test "tfind 0" "Found trace frame 0, tracepoint .*"
-    gdb_test "p/d x" "\\\$${decimal} = {a = 0, b = <unavailable>, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, i = 0, j = 0}"
-    gdb_test "p/d y" "\\\$${decimal} = {a = 0, b = 0, c = 0, d = 0, e = <unavailable>, f = 0, g = 0, h = 0, i = 0, j = 0}"
-    gdb_test "p/d z" "\\\$${decimal} = {a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, i = <unavailable>, j = 0}"
+    if { $endian == "little" } {
+        gdb_test "p/d x" "\\\$${decimal} = {a = 0, b = <unavailable>, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, i = 0, j = 0}"
+        gdb_test "p/d y" "\\\$${decimal} = {a = 0, b = 0, c = 0, d = 0, e = <unavailable>, f = 0, g = 0, h = 0, i = 0, j = 0}"
+        gdb_test "p/d z" "\\\$${decimal} = {a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, i = <unavailable>, j = 0}"
+    } else {
+        gdb_test "p/d x" "\\\$${decimal} = {a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, i = <unavailable>, j = 0}"
+        gdb_test "p/d y" "\\\$${decimal} = {a = 0, b = 0, c = 0, d = 0, e = 0, f = <unavailable>, g = 0, h = 0, i = 0, j = 0}"
+        gdb_test "p/d z" "\\\$${decimal} = {a = 0, b = <unavailable>, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, i = 0, j = 0}"
+    }
 
     gdb_test "tfind none" "No longer looking at any trace frame.*"
 }

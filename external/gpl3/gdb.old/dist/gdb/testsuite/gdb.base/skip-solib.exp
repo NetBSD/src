@@ -1,4 +1,4 @@
-#   Copyright 2011-2015 Free Software Foundation, Inc.
+#   Copyright 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,8 +73,8 @@ Ignore file pending future shared library load.*" \
 # Checkinfo skip list.
 #
 gdb_test "info skip" \
-  "Num\\s+Type\\s+Enb\\s+What\\s*
-1\\s+file\\s+y\\s+${srcfile_lib}\\s*" \
+  "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
+1\\s+y\\s+n\\s+${srcfile_lib}\\s+n\\s+<none>\\s*" \
   "info skip with pending file"
 
 if ![runto_main] { fail "skip tests suppressed" }
@@ -108,8 +108,8 @@ gdb_test "step" "square.*"
 # Now our entry should no longer be pending.
 #
 gdb_test "info skip" \
-  "Num\\s+Type\\s+Enb\\s+What\\s*
-1\\s+function\\s+y\\s+multiply\\s*" \
+  "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
+1\\s+y\\s+n\\s+<none>\\s+n\\s+multiply\\s*" \
   "info skip for function multiply"
 
 #

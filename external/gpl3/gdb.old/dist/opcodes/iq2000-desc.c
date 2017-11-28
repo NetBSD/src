@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2015 Free Software Foundation, Inc.
+Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -316,131 +316,131 @@ const CGEN_OPERAND iq2000_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", IQ2000_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_NIL] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rs: register Rs */
   { "rs", IQ2000_OPERAND_RS, HW_H_GR, 25, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rt: register Rt */
   { "rt", IQ2000_OPERAND_RT, HW_H_GR, 20, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rd: register Rd */
   { "rd", IQ2000_OPERAND_RD, HW_H_GR, 15, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RD] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RD] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rd-rs: register Rd from Rs */
   { "rd-rs", IQ2000_OPERAND_RD_RS, HW_H_GR, 15, 10,
-    { 2, { (const PTR) &IQ2000_F_RD_RS_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &IQ2000_F_RD_RS_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rd-rt: register Rd from Rt */
   { "rd-rt", IQ2000_OPERAND_RD_RT, HW_H_GR, 15, 10,
-    { 2, { (const PTR) &IQ2000_F_RD_RT_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &IQ2000_F_RD_RT_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rt-rs: register Rt from Rs */
   { "rt-rs", IQ2000_OPERAND_RT_RS, HW_H_GR, 20, 10,
-    { 2, { (const PTR) &IQ2000_F_RT_RS_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &IQ2000_F_RT_RS_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* shamt: shift amount */
   { "shamt", IQ2000_OPERAND_SHAMT, HW_H_UINT, 10, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_SHAMT] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_SHAMT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm: immediate */
   { "imm", IQ2000_OPERAND_IMM, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* offset: pc-relative offset */
   { "offset", IQ2000_OPERAND_OFFSET, HW_H_IADDR, 15, 16,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_OFFSET] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_OFFSET] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* baseoff: base register offset */
   { "baseoff", IQ2000_OPERAND_BASEOFF, HW_H_IADDR, 15, 16,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* jmptarg: jump target */
   { "jmptarg", IQ2000_OPERAND_JMPTARG, HW_H_IADDR, 15, 16,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_JTARG] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_JTARG] } },
     { 0|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* mask: mask */
   { "mask", IQ2000_OPERAND_MASK, HW_H_UINT, 9, 4,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASK] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASK] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* maskq10: iq10 mask */
   { "maskq10", IQ2000_OPERAND_MASKQ10, HW_H_UINT, 10, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASKQ10] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASKQ10] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* maskl: mask left */
   { "maskl", IQ2000_OPERAND_MASKL, HW_H_UINT, 4, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASKL] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_MASKL] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* count: count */
   { "count", IQ2000_OPERAND_COUNT, HW_H_UINT, 15, 7,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_COUNT] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_COUNT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* _index: index */
   { "_index", IQ2000_OPERAND__INDEX, HW_H_UINT, 8, 9,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_INDEX] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_INDEX] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* execode: execcode */
   { "execode", IQ2000_OPERAND_EXECODE, HW_H_UINT, 25, 20,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_EXCODE] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_EXCODE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bytecount: byte count */
   { "bytecount", IQ2000_OPERAND_BYTECOUNT, HW_H_UINT, 7, 8,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_BYTECOUNT] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_BYTECOUNT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cam-y: cam global opn y */
   { "cam-y", IQ2000_OPERAND_CAM_Y, HW_H_UINT, 2, 3,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CAM_Y] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CAM_Y] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cam-z: cam global mask z */
   { "cam-z", IQ2000_OPERAND_CAM_Z, HW_H_UINT, 5, 3,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CAM_Z] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CAM_Z] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cm-3func: CM 3 bit fn field */
   { "cm-3func", IQ2000_OPERAND_CM_3FUNC, HW_H_UINT, 5, 3,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_3FUNC] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_3FUNC] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cm-4func: CM 4 bit fn field */
   { "cm-4func", IQ2000_OPERAND_CM_4FUNC, HW_H_UINT, 5, 4,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_4FUNC] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_4FUNC] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cm-3z: CM 3 bit Z field */
   { "cm-3z", IQ2000_OPERAND_CM_3Z, HW_H_UINT, 1, 2,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_3Z] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_3Z] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cm-4z: CM 4 bit Z field */
   { "cm-4z", IQ2000_OPERAND_CM_4Z, HW_H_UINT, 2, 3,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_4Z] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_CM_4Z] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* base: base register */
   { "base", IQ2000_OPERAND_BASE, HW_H_GR, 25, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* maskr: mask right */
   { "maskr", IQ2000_OPERAND_MASKR, HW_H_UINT, 25, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RS] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bitnum: bit number */
   { "bitnum", IQ2000_OPERAND_BITNUM, HW_H_UINT, 20, 5,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_RT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* hi16: high 16 bit immediate */
   { "hi16", IQ2000_OPERAND_HI16, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* lo16: 16 bit signed immediate, for low */
   { "lo16", IQ2000_OPERAND_LO16, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* mlo16: negated 16 bit signed immediate */
   { "mlo16", IQ2000_OPERAND_MLO16, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* jmptargq10: iq10 21-bit jump offset */
   { "jmptargq10", IQ2000_OPERAND_JMPTARGQ10, HW_H_IADDR, 20, 21,
-    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_JTARGQ10] } }, 
+    { 0, { (const PTR) &iq2000_cgen_ifld_table[IQ2000_F_JTARGQ10] } },
     { 0|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
@@ -2123,7 +2123,7 @@ iq2000_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 
   /* Default to not allowing signed overflow.  */
   cd->signed_overflow_ok_p = 0;
-  
+
   return (CGEN_CPU_DESC) cd;
 }
 
@@ -2163,7 +2163,7 @@ iq2000_cgen_cpu_close (CGEN_CPU_DESC cd)
       for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
 	if (CGEN_INSN_RX (insns))
 	  regfree (CGEN_INSN_RX (insns));
-    }  
+    }
 
   if (cd->macro_insn_table.init_entries)
     free ((CGEN_INSN *) cd->macro_insn_table.init_entries);

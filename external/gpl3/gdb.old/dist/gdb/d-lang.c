@@ -1,6 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -55,6 +55,15 @@ d_demangle (const char *symbol, int options)
   return gdb_demangle (symbol, options | DMGL_DLANG);
 }
 
+/* la_sniff_from_mangled_name implementation for D.  */
+
+static int
+d_sniff_from_mangled_name (const char *mangled, char **demangled)
+{
+  *demangled = d_demangle (mangled, 0);
+  return *demangled != NULL;
+}
+
 /* Table mapping opcodes into strings for printing operators
    and precedences of the operators.  */
 static const struct op_print d_op_print_tab[] =
@@ -90,7 +99,7 @@ static const struct op_print d_op_print_tab[] =
   {"sizeof ", UNOP_SIZEOF, PREC_PREFIX, 0},
   {"++", UNOP_PREINCREMENT, PREC_PREFIX, 0},
   {"--", UNOP_PREDECREMENT, PREC_PREFIX, 0},
-  {NULL, 0, 0, 0}
+  {NULL, OP_NULL, PREC_PREFIX, 0}
 };
 
 /* Mapping of all D basic data types into the language vector.  */
@@ -190,6 +199,11 @@ d_language_arch_info (struct gdbarch *gdbarch,
   lai->bool_type_default = builtin->builtin_bool;
 }
 
+static const char *d_extensions[] =
+{
+  ".d", NULL
+};
+
 static const struct language_defn d_language_defn =
 {
   "d",
@@ -199,9 +213,10 @@ static const struct language_defn d_language_defn =
   case_sensitive_on,
   array_row_major,
   macro_expansion_no,
+  d_extensions,
   &exp_descriptor_c,
   d_parse,
-  d_error,
+  d_yyerror,
   null_post_parser,
   c_printchar,			/* Print a character constant.  */
   c_printstr,			/* Function to print string constant.  */
@@ -214,9 +229,10 @@ static const struct language_defn d_language_defn =
   default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline.  */
   "this",
-  basic_lookup_symbol_nonlocal, 
+  d_lookup_symbol_nonlocal,
   basic_lookup_transparent_type,
   d_demangle,			/* Language specific symbol demangler.  */
+  d_sniff_from_mangled_name,
   NULL,				/* Language specific
 				   class_name_from_physname.  */
   d_op_print_tab,		/* Expression operators for printing.  */
@@ -322,7 +338,7 @@ static struct gdbarch_data *d_type_data;
 const struct builtin_d_type *
 builtin_d_type (struct gdbarch *gdbarch)
 {
-  return gdbarch_data (gdbarch, d_type_data);
+  return (const struct builtin_d_type *) gdbarch_data (gdbarch, d_type_data);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
