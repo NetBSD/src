@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2017/11/29 03:58:17 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2017/11/29 21:22:36 christos Exp $
 NOCTF=
 .include "../Makefile.inc"
 
@@ -26,9 +26,9 @@ NOMAN=		# defined
 .include <bsd.prog.mk>
 
 # Force c++
-HOST_CC:=       ${HOST_CXX} -std=gnu++11 -Wno-error=stack-protector
-CC:=            ${CXX} -std=gnu++11 -Wno-error=stack-protector
-CFLAGS:=        ${CXXFLAGS}
+HOST_CC:=       ${HOST_CXX}
+CC:=            ${CXX}
+CFLAGS:=        ${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 LIBOPCODESDIR!=   cd ${.CURDIR}/../../lib/libopcodes   && ${PRINTOBJDIR}
 LIBBFDDIR!=       cd ${.CURDIR}/../../lib/libbfd       && ${PRINTOBJDIR}
