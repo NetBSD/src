@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.20 2008/11/19 22:59:56 cegger Exp $	*/
+/*	$NetBSD: signal.h,v 1.21 2017/11/29 17:36:16 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,7 @@
 typedef int sig_atomic_t;
 
 #if defined(_NETBSD_SOURCE)
+#include <sys/sigtypes.h>
 #include <machine/frame.h>
 
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
