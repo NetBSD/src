@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2017/11/28 22:04:52 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2017/11/29 21:22:36 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -89,9 +89,9 @@ DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM
 .include <bsd.prog.mk>
 
 # Force c++
-HOST_CC:=       ${HOST_CXX} -std=gnu++11 -Wno-error=stack-protector
-CC:=            ${CXX} -std=gnu++11 -Wno-error=stack-protector
-CFLAGS:=        ${CXXFLAGS}
+HOST_CC:=       ${HOST_CXX}
+CC:=            ${CXX}
+CFLAGS:=        ${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
