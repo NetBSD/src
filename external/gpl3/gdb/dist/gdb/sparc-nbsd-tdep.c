@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -290,7 +290,7 @@ static const struct regset sparc32nbsd_fpregset =
     NULL, sparc32nbsd_supply_fpregset, NULL
   };
 
-void
+static void
 sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -309,9 +309,39 @@ sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->step_trap = sparcnbsd_step_trap;
 
   frame_unwind_append_unwinder (gdbarch, &sparc32nbsd_sigcontext_frame_unwind);
+}
+
+static void
+sparc32nbsd_aout_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  sparc32nbsd_init_abi (info, gdbarch);
+}
+
+void
+sparc32nbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  sparc32nbsd_init_abi (info, gdbarch);
 
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+}
+
+/* OpenBSD uses the traditional NetBSD core file format, even for
+   ports that use ELF.  Therefore, if the default OS ABI is OpenBSD
+   ELF, we return that instead of NetBSD a.out.  This is mainly for
+   the benfit of OpenBSD/sparc64, which inherits the sniffer below
+   since we include this file for an OpenBSD/sparc64 target.  For
+   OpenBSD/sparc, the NetBSD a.out OS ABI is probably similar enough
+   to both the OpenBSD a.out and the OpenBSD ELF OS ABI.  */
+#define GDB_OSABI_NETBSD_CORE GDB_OSABI_NETBSD
+
+static enum gdb_osabi
+sparcnbsd_core_osabi_sniffer (bfd *abfd)
+{
+  if (strcmp (bfd_get_target (abfd), "netbsd-core") == 0)
+    return GDB_OSABI_NETBSD_CORE;
+
+  return GDB_OSABI_UNKNOWN;
 }
 
 
@@ -321,6 +351,13 @@ void _initialize_sparcnbsd_tdep (void);
 void
 _initialize_sparcnbsd_tdep (void)
 {
+  gdbarch_register_osabi_sniffer (bfd_arch_sparc, bfd_target_aout_flavour,
+				  sparcnbsd_aout_osabi_sniffer);
+
+  /* BFD doesn't set a flavour for NetBSD style a.out core files.  */
+  gdbarch_register_osabi_sniffer (bfd_arch_sparc, bfd_target_unknown_flavour,
+                                  sparcnbsd_core_osabi_sniffer);
+
   gdbarch_register_osabi (bfd_arch_sparc, 0, GDB_OSABI_NETBSD,
-			  sparc32nbsd_init_abi);
+			  sparc32nbsd_elf_init_abi);
 }
