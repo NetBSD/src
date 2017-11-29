@@ -133,6 +133,8 @@ libintl.h: $(srcdir)/libgnuintl.h
 	$(COMPILE) $<
 
 .y.c:
+	@echo "Not rebuilding yacc output"
+	cp -p $(srcdir)/$@ $@
 #	$(YACC) $(YFLAGS) --output $@ $<
 #	rm -f $*.h
 
