@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.272 2017/11/25 23:29:43 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.273 2017/11/29 09:34:01 wiz Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./sbin/mount_qemufwcfg				base-sysutil-root
@@ -68,3 +68,6 @@
 ./usr/mdec/pxeboot_ia32_com0.bin		base-obsolete		obsolete
 ./usr/sbin/acpidump				base-sysutil-bin
 ./usr/sbin/amldb				base-sysutil-bin
+./usr/share/man/cat8/mount_qemufwcfg.0		man-sysutil-catman	.cat
+./usr/share/man/html8/mount_qemufwcfg.html	man-sysutil-htmlman	html
+./usr/share/man/man8/mount_qemufwcfg.8		man-sysutil-man		.man
