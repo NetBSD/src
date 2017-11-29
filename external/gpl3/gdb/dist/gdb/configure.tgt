@@ -116,7 +116,7 @@ arm*-*-linux*)
 	;;
 arm*-*-netbsd* | arm*-*-knetbsd*-gnu)
 	# Target: NetBSD/arm
-	gdb_target_obs="arm.o arm-get-next-pcs.o arm-tdep.o armbsd-tdep.o \
+	gdb_target_obs="arm.o arm-get-next-pcs.o arm-tdep.o arm-bsd-tdep.o \
 			arm-nbsd-tdep.o nbsd-tdep.o solib-svr4.o"
 	;;
 arm*-*-openbsd*)
