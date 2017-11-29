@@ -1,5 +1,5 @@
 # Host: NetBSD/alpha
-NATDEPFILES= fork-child.o inf-ptrace.o alphabsd-nat.o bsd-kvm.o nbsd-nat.o \
+NATDEPFILES= fork-child.o inf-ptrace.o alpha-bsd-nat.o bsd-kvm.o nbsd-nat.o \
 	nbsd-thread.o
 
 LOADLIBES= -lkvm

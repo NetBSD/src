@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -28,7 +28,7 @@
 #include "tramp-frame.h"
 
 #include "ppc-tdep.h"
-#include "ppc-nbsd-tdep.h"
+#include "ppcnbsd-tdep.h"
 #include "solib-svr4.h"
 
 /* Register offsets from <machine/reg.h>.  */
@@ -199,7 +199,7 @@ _initialize_ppcnbsd_tdep (void)
 			  ppcnbsd_init_abi);
 
   /* Avoid initializing the register offsets again if they were
-     already initialized by ppcnbsd-nat.c.  */
+     already initailized by ppcnbsd-nat.c.  */
   if (ppcnbsd_reg_offsets.pc_offset == 0)
     {
       /* General-purpose registers.  */

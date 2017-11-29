@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "regcache.h"
 #include "target.h"
 
+#include "nbsd-nat.h"
 #include "sparc-tdep.h"
 #include "sparc-nat.h"
 
@@ -28,8 +29,42 @@
 
 #include <sys/types.h>
 #include <machine/pcb.h>
+#include <machine/reg.h>
 
 #include "bsd-kvm.h"
+
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+#include "gregset.h"
+ 
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregs)
+{
+  sparc_supply_gregset (sparc_gregmap, regcache, -1, gregs);
+}
+
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
+{
+  sparc_supply_fpregset (sparc_fpregmap, regcache, -1, fpregs);
+}
+
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
+{
+  sparc_collect_gregset (sparc_gregmap, regcache, regnum, gregs);
+}
+
+void
+fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
+{
+  sparc_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
+}
 
 static int
 sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
@@ -62,11 +97,14 @@ void _initialize_sparcnbsd_nat (void);
 void
 _initialize_sparcnbsd_nat (void)
 {
+  struct target_ops *t;
   sparc_gregmap = &sparc32nbsd_gregmap;
   sparc_fpregmap = &sparc32_bsd_fpregmap;
 
-  /* We've got nothing to add to the generic SPARC target.  */
-  add_target (sparc_target ());
+  /* Add some extra features to the generic SPARC target.  */
+  t = sparc_target ();
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+  add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc32nbsd_supply_pcb);

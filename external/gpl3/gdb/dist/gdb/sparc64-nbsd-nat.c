@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,9 +22,21 @@
 #include "regcache.h"
 #include "target.h"
 
+#include "nbsd-nat.h"
 #include "sparc64-tdep.h"
 #include "sparc-nat.h"
 
+#include <machine/reg.h>
+
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+#include "gregset.h"
+ 
 /* NetBSD is different from the other OSes that support both SPARC and
    UltraSPARC in that the result of ptrace(2) depends on whether the
    traced process is 32-bit or 64-bit.  */
@@ -126,7 +138,29 @@ sparc64nbsd_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
   return 0;
 }
 
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregs)
+{
+  sparc64nbsd_supply_gregset (sparc_gregmap, regcache, -1, gregs);
+}
 
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
+{
+  sparc64nbsd_supply_fpregset (sparc_fpregmap, regcache, -1, fpregs);
+}
+
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
+{
+  sparc64nbsd_collect_gregset (sparc_gregmap, regcache, regnum, gregs);
+}
+
+void
+fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
+{
+  sparc64nbsd_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
+}
 /* Support for debugging kernel virtual memory images.  */
 
 #include <sys/types.h>
@@ -174,6 +208,8 @@ void _initialize_sparc64nbsd_nat (void);
 void
 _initialize_sparc64nbsd_nat (void)
 {
+  struct target_ops *t;
+
   sparc_supply_gregset = sparc64nbsd_supply_gregset;
   sparc_collect_gregset = sparc64nbsd_collect_gregset;
   sparc_supply_fpregset = sparc64nbsd_supply_fpregset;
@@ -181,8 +217,10 @@ _initialize_sparc64nbsd_nat (void)
   sparc_gregset_supplies_p = sparc64nbsd_gregset_supplies_p;
   sparc_fpregset_supplies_p = sparc64nbsd_fpregset_supplies_p;
 
-  /* We've got nothing to add to the generic SPARC target.  */
-  add_target (sparc_target ());
+  /* Add some extra features to the generic SPARC target.  */
+  t = sparc_target ();
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+  add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc64nbsd_supply_pcb);

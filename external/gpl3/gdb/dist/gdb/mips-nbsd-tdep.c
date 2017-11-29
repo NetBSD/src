@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/mips.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -28,7 +28,7 @@
 #include "osabi.h"
 
 #include "nbsd-tdep.h"
-#include "mips-nbsd-tdep.h"
+#include "mipsnbsd-tdep.h"
 #include "mips-tdep.h"
 
 #include "solib-svr4.h"
@@ -79,15 +79,23 @@ mipsnbsd_supply_gregset (const struct regset *regset,
 			 const void *gregs, size_t len)
 {
   size_t regsize = mips_isa_regsize (get_regcache_arch (regcache));
+  char zerobuf[MAX_REGISTER_SIZE];
   const char *regs = (const char *) gregs;
   int i;
+
+  memset (zerobuf, 0, MAX_REGISTER_SIZE);
 
   gdb_assert (len >= MIPSNBSD_NUM_GREGS * regsize);
 
   for (i = 0; i <= MIPS_PC_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + i * regsize);
+        {
+          if (i == MIPS_ZERO_REGNUM || i == MIPS_UNUSED_REGNUM)
+            regcache_raw_supply (regcache, i, zerobuf);
+          else
+	    regcache_raw_supply (regcache, i, regs + i * regsize);
+	}
     }
 
   if (len >= (MIPSNBSD_NUM_GREGS + MIPSNBSD_NUM_FPREGS) * regsize)
@@ -138,13 +146,18 @@ void
 mipsnbsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  char zerobuf[MAX_REGISTER_SIZE];
   int i;
+
+  memset (zerobuf, 0, MAX_REGISTER_SIZE);
 
   for (i = 0; i <= gdbarch_pc_regnum (gdbarch); i++)
     {
       if (regno == i || regno == -1)
 	{
-	  if (gdbarch_cannot_fetch_register (gdbarch, i))
+          if (i == MIPS_ZERO_REGNUM || i == MIPS_UNUSED_REGNUM)
+            regcache_raw_supply (regcache, i, zerobuf);
+	  else if (gdbarch_cannot_fetch_register (gdbarch, i))
 	    regcache_raw_supply (regcache, i, NULL);
 	  else
             regcache_raw_supply (regcache, i,
