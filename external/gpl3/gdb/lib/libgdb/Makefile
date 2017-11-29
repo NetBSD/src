@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2017/11/28 22:04:55 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2017/11/29 03:58:17 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -55,7 +55,8 @@ CFLAGS:=        ${CXXFLAGS}
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/arch ${DIST}/gdb/mi ${DIST}/gdb/cli  \
     ${DIST}/gdb/tui ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
-    ${DIST}/gdb/guile ${DIST}/gdb/compile ${DIST}/gdb/doc ${GDBARCHDIR}
+    ${DIST}/gdb/nat ${DIST}/gdb/guile ${DIST}/gdb/compile ${DIST}/gdb/doc \
+    ${GDBARCHDIR}
 
 #
 
