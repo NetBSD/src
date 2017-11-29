@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1170 2017/11/06 02:57:18 rin Exp $
+# $NetBSD: GENERIC,v 1.1171 2017/11/29 16:10:01 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1170 $"
+#ident		"GENERIC-$Revision: 1.1171 $"
 
 maxusers	64		# estimated number of users
 
@@ -1595,10 +1595,12 @@ geodecntr* at geodegcb? 		# AMD Geode SC1100 high res. counter
 weasel* at pci?
 
 # Virtio devices
-virtio*	at pci? dev ? function ?	# Virtio PCI device
-viomb*	at virtio?			# Virtio memory balloon device
-ld*	at virtio?			# Virtio disk device
-vioif*	at virtio?			# Virtio network device
+virtio* at pci? dev ? function ?	# Virtio PCI device
+viomb* at virtio?			# Virtio memory balloon device
+ld* at virtio?				# Virtio disk device
+vioif* at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
 
 
 # Pull in optional local configuration
