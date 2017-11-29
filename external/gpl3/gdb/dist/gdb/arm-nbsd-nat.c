@@ -1,6 +1,6 @@
 /* Native-dependent code for BSD Unix running on ARM's, for GDB.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,20 +17,86 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef _KERNTYPES
+#define _KERNTYPES
+#endif
 #include "defs.h"
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
 #include "target.h"
+
+#include "nbsd-nat.h"
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <arm/arm32/frame.h>
+
+/* Support for debugging kernel virtual memory images.  */
+#include <machine/pcb.h>
 
 #include "arm-tdep.h"
 #include "inf-ptrace.h"
+#include "bsd-kvm.h"
+
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
 
 extern int arm_apcs_32;
+
+static int
+armnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct switchframe sf;
+
+  /* The following is true for NetBSD/arm32 in 5.0 and after:
+
+     The pcb contains r8-r13 (sp) at the point of context switch in
+     cpu_switchto() or call of dumpsys(). At that point we have a
+     stack frame as described by `struct switchframe', which for
+     NetBSD/arm32 has the following layout:
+
+	r4   ascending.
+	r5        |
+	r6        |
+	r7       \|/
+	old sp
+	pc
+
+     we reconstruct the register state as it would look when we just
+     returned from cpu_switchto() or dumpsys().  */
+
+  if (!arm_apcs_32)
+    return 0;
+
+  /* The stack pointer shouldn't be zero.  */
+  if (pcb->pcb_un.un_32.pcb32_sp == 0)
+    return 0;
+
+  read_memory (pcb->pcb_un.un_32.pcb32_sp, (gdb_byte *) &sf, sizeof sf);
+
+  regcache_raw_supply (regcache, ARM_PC_REGNUM, &sf.sf_pc);
+  regcache_raw_supply (regcache, ARM_SP_REGNUM, &pcb->pcb_un.un_32.pcb32_sp);
+  regcache_raw_supply (regcache, 12, &pcb->pcb_un.un_32.pcb32_r12);
+  regcache_raw_supply (regcache, 11, &pcb->pcb_un.un_32.pcb32_r11);
+  regcache_raw_supply (regcache, 10, &pcb->pcb_un.un_32.pcb32_r10);
+  regcache_raw_supply (regcache, 9, &pcb->pcb_un.un_32.pcb32_r9);
+  regcache_raw_supply (regcache, 8, &pcb->pcb_un.un_32.pcb32_r8);
+  regcache_raw_supply (regcache, 7, &sf.sf_r7);
+  regcache_raw_supply (regcache, 6, &sf.sf_r6);
+  regcache_raw_supply (regcache, 5, &sf.sf_r5);
+  regcache_raw_supply (regcache, 4, &sf.sf_r4);
+
+  return 1;
+}
 
 static void
 arm_supply_gregset (struct regcache *regcache, struct reg *gregset)
@@ -59,16 +125,77 @@ arm_supply_gregset (struct regcache *regcache, struct reg *gregset)
 }
 
 static void
-arm_supply_fparegset (struct regcache *regcache, struct fpreg *fparegset)
+arm_supply_vfpregset (struct regcache *regcache, struct fpreg *vfpregset)
 {
   int regno;
 
-  for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache_raw_supply (regcache, regno,
-			 (char *) &fparegset->fpr[regno - ARM_F0_REGNUM]);
+  for (regno = 0; regno < 16; regno++)
+    regcache_raw_supply (regcache, regno + ARM_D0_REGNUM,
+			 (char *) vfpregset->fpr_vfp.vfp_regs + 8*regno);
 
-  regcache_raw_supply (regcache, ARM_FPS_REGNUM,
-		       (char *) &fparegset->fpr_fpsr);
+  regcache_raw_supply (regcache, ARM_FPSCR_REGNUM,
+		       (char *) &vfpregset->fpr_vfp.vfp_fpscr);
+}
+
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregsetp, int regno)
+{
+  if (-1 == regno)
+    {
+      int regnum;
+      for (regnum = ARM_A1_REGNUM; regnum < ARM_SP_REGNUM; regnum++) 
+	regcache_raw_collect (regcache, regnum, (char *) &gregsetp->r[regnum]);
+    }
+  else if (regno >= ARM_A1_REGNUM && regno < ARM_SP_REGNUM)
+    regcache_raw_collect (regcache, regno, (char *) &gregsetp->r[regno]);
+
+  if (ARM_SP_REGNUM == regno || -1 == regno)
+    regcache_raw_collect (regcache, ARM_SP_REGNUM, (char *) &gregsetp->r_sp);
+
+  if (ARM_LR_REGNUM == regno || -1 == regno)
+    regcache_raw_collect (regcache, ARM_LR_REGNUM, (char *) &gregsetp->r_lr);
+
+  if (ARM_PC_REGNUM == regno || -1 == regno)
+    regcache_raw_collect (regcache, ARM_PC_REGNUM, (char *) &gregsetp->r_pc);
+
+  if (ARM_PS_REGNUM == regno || -1 == regno)
+    {
+      if (arm_apcs_32)
+	regcache_raw_collect (regcache, ARM_PS_REGNUM, (char *) &gregsetp->r_cpsr);
+      else
+	regcache_raw_collect (regcache, ARM_PS_REGNUM, (char *) &gregsetp->r_pc);
+    }
+ }
+ 
+void
+fill_fpregset (const struct regcache *regcache, fpregset_t *vfpregsetp, int regno)
+{
+  if (-1 == regno)
+    {
+       int regnum;
+       for (regnum = 0; regnum <= 15; regnum++)
+         regcache_raw_collect(regcache, regnum + ARM_D0_REGNUM,
+			      (char *) vfpregsetp->fpr_vfp.vfp_regs + 8*regnum);
+    }
+  else if (regno >= ARM_D0_REGNUM && regno <= ARM_D0_REGNUM + 15)
+    regcache_raw_collect(regcache, regno,
+			 (char *) vfpregsetp->fpr_vfp.vfp_regs + 8 * (regno - ARM_D0_REGNUM));
+
+  if (ARM_FPSCR_REGNUM == regno || -1 == regno)
+    regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
+			  (char *) &vfpregsetp->fpr_vfp.vfp_fpscr);
+}
+
+void
+supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregsetp)
+{
+  arm_supply_gregset (regcache, (struct reg *)gregsetp);
+}
+
+void
+supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregsetp)
+{
+  arm_supply_vfpregset (regcache, (struct fpreg *)fpregsetp);
 }
 
 static void
@@ -77,8 +204,8 @@ fetch_register (struct regcache *regcache, int regno)
   struct reg inferior_registers;
   int ret;
 
-  ret = ptrace (PT_GETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+  ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -130,8 +257,8 @@ fetch_regs (struct regcache *regcache)
   int ret;
   int regno;
 
-  ret = ptrace (PT_GETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+  ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -148,8 +275,8 @@ fetch_fp_register (struct regcache *regcache, int regno)
   struct fpreg inferior_fp_registers;
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+  ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -159,14 +286,14 @@ fetch_fp_register (struct regcache *regcache, int regno)
 
   switch (regno)
     {
-    case ARM_FPS_REGNUM:
-      regcache_raw_supply (regcache, ARM_FPS_REGNUM,
-			   (char *) &inferior_fp_registers.fpr_fpsr);
+    case ARM_FPSCR_REGNUM:
+      regcache_raw_supply (regcache, ARM_FPSCR_REGNUM,
+			   (char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
       break;
 
     default:
       regcache_raw_supply (regcache, regno,
-			   (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+			   (char *) inferior_fp_registers.fpr_vfp.vfp_regs + 8 * (regno - ARM_D0_REGNUM));
       break;
     }
 }
@@ -178,16 +305,16 @@ fetch_fp_regs (struct regcache *regcache)
   int ret;
   int regno;
 
-  ret = ptrace (PT_GETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+  ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
-      warning (_("unable to fetch general registers"));
+      warning (_("unable to fetch floating-point registers"));
       return;
     }
 
-  arm_supply_fparegset (regcache, &inferior_fp_registers);
+  arm_supply_vfpregset (regcache, &inferior_fp_registers);
 }
 
 static void
@@ -196,10 +323,10 @@ armnbsd_fetch_registers (struct target_ops *ops,
 {
   if (regno >= 0)
     {
-      if (regno < ARM_F0_REGNUM || regno > ARM_FPS_REGNUM)
-	fetch_register (regcache, regno);
-      else
+      if (regno >= ARM_D0_REGNUM && regno <= ARM_FPSCR_REGNUM)
 	fetch_fp_register (regcache, regno);
+      else
+	fetch_register (regcache, regno);
     }
   else
     {
@@ -216,8 +343,8 @@ store_register (const struct regcache *regcache, int regno)
   struct reg inferior_registers;
   int ret;
 
-  ret = ptrace (PT_GETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+  ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -279,8 +406,8 @@ store_register (const struct regcache *regcache, int regno)
       break;
     }
 
-  ret = ptrace (PT_SETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+  ret = ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -327,8 +454,8 @@ store_regs (const struct regcache *regcache)
       inferior_registers.r_pc = pc_val | psr_val;
     }
 
-  ret = ptrace (PT_SETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+  ret = ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store general registers"));
@@ -340,8 +467,8 @@ store_fp_register (const struct regcache *regcache, int regno)
   struct fpreg inferior_fp_registers;
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+  ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -351,19 +478,20 @@ store_fp_register (const struct regcache *regcache, int regno)
 
   switch (regno)
     {
-    case ARM_FPS_REGNUM:
+    case ARM_FPSCR_REGNUM:
       regcache_raw_collect (regcache, ARM_FPS_REGNUM,
-			    (char *) &inferior_fp_registers.fpr_fpsr);
+			    (char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
       break;
 
     default:
       regcache_raw_collect (regcache, regno,
-			    (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+			    (char *) inferior_fp_registers.fpr_vfp.vfp_regs
+			    + 8 * (regno - ARM_D0_REGNUM));
       break;
     }
 
-  ret = ptrace (PT_SETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+  ret = ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -377,15 +505,16 @@ store_fp_regs (const struct regcache *regcache)
   int regno;
 
 
-  for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache_raw_collect (regcache, regno,
-			  (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+  for (regno = 0; regno <= 15; regno++)
+    regcache_raw_collect (regcache, regno + ARM_D0_REGNUM,
+			  (char *) inferior_fp_registers.fpr_vfp.vfp_regs
+				   + 8 * regno);
 
-  regcache_raw_collect (regcache, ARM_FPS_REGNUM,
-			(char *) &inferior_fp_registers.fpr_fpsr);
+  regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
+			(char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
 
-  ret = ptrace (PT_SETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+  ret = ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store floating-point registers"));
@@ -397,10 +526,10 @@ armnbsd_store_registers (struct target_ops *ops,
 {
   if (regno >= 0)
     {
-      if (regno < ARM_F0_REGNUM || regno > ARM_FPS_REGNUM)
-	store_register (regcache, regno);
-      else
+      if (regno >= ARM_D0_REGNUM && regno <= ARM_FPSCR_REGNUM)
 	store_fp_register (regcache, regno);
+      else
+	store_register (regcache, regno);
     }
   else
     {
@@ -409,13 +538,32 @@ armnbsd_store_registers (struct target_ops *ops,
     }
 }
 
+struct md_core
+{
+  struct reg intreg;
+  struct fpreg freg;
+};
+
+static void
+fetch_core_registers (struct regcache *regcache,
+		      char *core_reg_sect, unsigned core_reg_size,
+		      int which, CORE_ADDR ignore)
+{
+  struct md_core *core_reg = (struct md_core *) core_reg_sect;
+  int regno;
+  CORE_ADDR r_pc;
+
+  arm_supply_gregset (regcache, &core_reg->intreg);
+  arm_supply_vfpregset (regcache, &core_reg->freg);
+}
+
 static void
 fetch_elfcore_registers (struct regcache *regcache,
 			 char *core_reg_sect, unsigned core_reg_size,
 			 int which, CORE_ADDR ignore)
 {
   struct reg gregset;
-  struct fpreg fparegset;
+  struct fpreg vfpregset;
 
   switch (which)
     {
@@ -438,8 +586,8 @@ fetch_elfcore_registers (struct regcache *regcache,
 	{
 	  /* The memcpy may be unnecessary, but we can't really be sure
 	     of the alignment of the data in the core file.  */
-	  memcpy (&fparegset, core_reg_sect, sizeof (fparegset));
-	  arm_supply_fparegset (regcache, &fparegset);
+	  memcpy (&vfpregset, core_reg_sect, sizeof (vfpregset));
+	  arm_supply_vfpregset (regcache, &vfpregset);
 	}
       break;
 
@@ -448,6 +596,15 @@ fetch_elfcore_registers (struct regcache *regcache,
       break;
     }
 }
+
+static struct core_fns arm_netbsd_core_fns =
+{
+  bfd_target_unknown_flavour,		/* core_flovour.  */
+  default_check_format,			/* check_format.  */
+  default_core_sniffer,			/* core_sniffer.  */
+  fetch_core_registers,			/* core_read_registers.  */
+  NULL
+};
 
 static struct core_fns arm_netbsd_elfcore_fns =
 {
@@ -466,7 +623,12 @@ _initialize_arm_netbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = armnbsd_fetch_registers;
   t->to_store_registers = armnbsd_store_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
 
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (armnbsd_supply_pcb);
+
+  deprecated_add_core_fns (&arm_netbsd_core_fns);
   deprecated_add_core_fns (&arm_netbsd_elfcore_fns);
 }
