@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2017/11/29 03:33:01 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2017/11/29 04:24:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ BUILD_MAKE=${TOOL_GMAKE}
 BINENV=		/usr/bin/env -i
 
 
-MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
+MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*:Nam_cv_func_iconv*} \
 			CC_FOR_BUILD=${HOST_CC:Q} \
 			CXX_FOR_BUILD=${HOST_CXX:Q} \
 			CFLAGS_FOR_BUILD="-I${TOOLDIR}/include" \
@@ -64,7 +64,7 @@ MKNATIVE_CONFIGURE_PRESET= \
 	bash_cv_func_strcoll_broken=no \
 	bash_cv_must_reinstall_sighandlers=no
 
-#CONFIGURE_ENV+=	am_cv_func_iconv=no
+CONFIGURE_ENV+=	am_cv_func_iconv=no
 
 # Recent versions of Solaris have ncurses, but they hide the lib in an
 # odd directory. Prevent configure from finding the ncurses headers,
