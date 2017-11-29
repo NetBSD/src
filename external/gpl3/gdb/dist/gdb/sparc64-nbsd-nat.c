@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 
 #include "nbsd-nat.h"
 #include "sparc64-tdep.h"
+#include "sparc-nbsd-tdep.h"
 #include "sparc-nat.h"
 
 #include <machine/reg.h>
