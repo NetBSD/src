@@ -171,7 +171,7 @@
 #define HAVE_DLFCN_H 1
 
 /* Define if ELF support should be included. */
-/* #undef HAVE_ELF */
+#define HAVE_ELF 1
 
 /* Define to 1 if you have the <elf_hp.h> header file. */
 /* #undef HAVE_ELF_HP_H */
