@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2017/11/28 22:25:16 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2017/11/29 03:33:01 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -27,13 +27,15 @@ BINENV=		/usr/bin/env -i
 
 MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			CC_FOR_BUILD=${HOST_CC:Q} \
+			CXX_FOR_BUILD=${HOST_CXX:Q} \
+			CFLAGS_FOR_BUILD="-I${TOOLDIR}/include" \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
-			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
-			CPP=${CPP:Q}' '-isystem' '${DESTDIR}/usr/include \
-			MAKE=${BUILD_MAKE:Q} \
-			CFLAGS= CPPFLAGS= CXXFLAGS=${CXXADDFLAGS:Q} \
-			LDFLAGS=${LDADDFLAGS:Q} \
+			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
+			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
+			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
+			AS=${AS:Q} AWK=${TOOL_AWK:Q} LD=${LD:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
+			NM=${NM:Q} OBJDUMP=${OBJDUMP:Q} \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
 			${MKNATIVE_CONFIGURE_PRESET}
@@ -62,7 +64,7 @@ MKNATIVE_CONFIGURE_PRESET= \
 	bash_cv_func_strcoll_broken=no \
 	bash_cv_must_reinstall_sighandlers=no
 
-CONFIGURE_ENV+=	am_cv_func_iconv=no
+#CONFIGURE_ENV+=	am_cv_func_iconv=no
 
 # Recent versions of Solaris have ncurses, but they hide the lib in an
 # odd directory. Prevent configure from finding the ncurses headers,
