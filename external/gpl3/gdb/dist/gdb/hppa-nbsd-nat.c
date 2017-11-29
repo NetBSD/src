@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/hppa.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,16 @@
 
 #include "nbsd-nat.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
+
 static int
 hppanbsd_gregset_supplies_p (int regnum)
 {
@@ -50,8 +60,7 @@ hppanbsd_fpregset_supplies_p (int regnum)
 static void
 hppanbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  const char *regs = gregs;
-  const int *r = gregs;
+  const char *regs = (const char *) gregs;
   int regnum;
 
   for (regnum = HPPA_R1_REGNUM; regnum <= HPPA_R31_REGNUM; regnum++)
@@ -75,7 +84,7 @@ hppanbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 static void
 hppanbsd_supply_fpregset (struct regcache *regcache, const void *fpregs)
 {
-  const char *regs = fpregs;
+  const char *regs = (const char *) fpregs;
   int regnum;
 
   for (regnum = HPPA_FP0_REGNUM; regnum <= HPPA_FP31R_REGNUM;
@@ -93,8 +102,7 @@ static void
 hppanbsd_collect_gregset (const struct regcache *regcache,
 			  void *gregs, int regnum)
 {
-  char *regs = gregs;
-  int *r = gregs;
+  char *regs = (char *) gregs;
   int i;
 
   for (i = HPPA_R1_REGNUM; i <= HPPA_R31_REGNUM; i++)
@@ -138,10 +146,10 @@ hppanbsd_collect_gregset (const struct regcache *regcache,
    in FPREGS.  */
 
 static void
-hppanbsd_collect_fpregset (struct regcache *regcache,
+hppanbsd_collect_fpregset (const struct regcache *regcache,
 			  void *fpregs, int regnum)
 {
-  char *regs = fpregs;
+  char *regs = (char *) fpregs;
   int i;
 
   for (i = HPPA_FP0_REGNUM; i <= HPPA_FP31R_REGNUM; i += 2, regs += 8)
@@ -163,13 +171,12 @@ hppanbsd_fetch_registers (struct target_ops *ops,
 			  struct regcache *regcache, int regnum)
 
 {
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
-
   if (regnum == -1 || hppanbsd_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       hppanbsd_supply_gregset (regcache, &regs);
@@ -179,7 +186,8 @@ hppanbsd_fetch_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       hppanbsd_supply_fpregset (regcache, &fpregs);
@@ -193,18 +201,18 @@ static void
 hppanbsd_store_registers (struct target_ops *ops,
 			  struct regcache *regcache, int regnum)
 {
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
-
   if (regnum == -1 || hppanbsd_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+                  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       hppanbsd_collect_gregset (regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+	          (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't write registers"));
     }
 
@@ -212,16 +220,56 @@ hppanbsd_store_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       hppanbsd_collect_fpregset (regcache, &fpregs, regnum);
 
-      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
 
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregsetp)
+{
+  hppanbsd_supply_gregset (regcache, gregsetp);
+}
+
+/* Fill register REGNUM (if it is a general-purpose register) in
+   *GREGSETP with the value in GDB's register cache.  If REGNUM is -1,
+   do this for all registers.  */
+
+void
+fill_gregset (const struct regcache *regcache,
+              gregset_t *gregsetp, int regnum)
+{
+  hppanbsd_collect_gregset (regcache, gregsetp, regnum);
+}
+
+/* Transfering floating-point registers between GDB, inferiors and cores.  */
+
+/* Fill GDB's register cache with the floating-point and SSE register
+   values in *FPREGSETP.  */
+
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
+{
+  hppanbsd_supply_fpregset (regcache, fpregsetp);
+}
+
+/* Fill register REGNUM (if it is a floating-point or SSE register) in
+   *FPREGSETP with the value in GDB's register cache.  If REGNUM is
+   -1, do this for all registers.  */
+
+void
+fill_fpregset (const struct regcache *regcache,
+               fpregset_t *fpregsetp, int regnum)
+{
+  hppanbsd_collect_fpregset (regcache, fpregsetp, regnum);
+}
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_hppanbsd_nat (void);
