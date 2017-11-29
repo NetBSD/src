@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.5 2014/09/05 05:46:54 matt Exp $	*/
+/*	$NetBSD: spawn.h,v 1.6 2017/11/29 20:15:21 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -90,7 +90,7 @@ typedef struct posix_spawn_file_actions	posix_spawn_file_actions_t;
  * maximize parallelism, but instead the parent will wait for the child
  * process to complete all file/scheduler actions and report back errors
  * from that via the return value of the posix_spawn syscall. This is
- * usefull for testing, as it can verify the generated error codes and
+ * useful for testing, as it can verify the generated error codes and
  * match to the supposedly triggered failures.
  * In general, the kernel will return from the posix_spawn syscall as
  * early as possible, as soon as creating the new process is known to
