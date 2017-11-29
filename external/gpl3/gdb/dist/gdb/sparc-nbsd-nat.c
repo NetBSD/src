@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 
 #include "nbsd-nat.h"
 #include "sparc-tdep.h"
+#include "sparc-nbsd-tdep.h"
 #include "sparc-nat.h"
 
 /* Support for debugging kernel virtual memory images.  */

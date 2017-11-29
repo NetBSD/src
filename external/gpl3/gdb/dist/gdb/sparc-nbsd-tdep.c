@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -31,6 +31,7 @@
 #include "trad-frame.h"
 
 #include "sparc-tdep.h"
+#include "sparc-nbsd-tdep.h"
 #include "nbsd-tdep.h"
 
 /* Macros to extract fields from SPARC instructions.  */
@@ -311,12 +312,6 @@ sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_unwind_append_unwinder (gdbarch, &sparc32nbsd_sigcontext_frame_unwind);
 }
 
-static void
-sparc32nbsd_aout_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
-{
-  sparc32nbsd_init_abi (info, gdbarch);
-}
-
 void
 sparc32nbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -351,9 +346,6 @@ void _initialize_sparcnbsd_tdep (void);
 void
 _initialize_sparcnbsd_tdep (void)
 {
-  gdbarch_register_osabi_sniffer (bfd_arch_sparc, bfd_target_aout_flavour,
-				  sparcnbsd_aout_osabi_sniffer);
-
   /* BFD doesn't set a flavour for NetBSD style a.out core files.  */
   gdbarch_register_osabi_sniffer (bfd_arch_sparc, bfd_target_unknown_flavour,
                                   sparcnbsd_core_osabi_sniffer);

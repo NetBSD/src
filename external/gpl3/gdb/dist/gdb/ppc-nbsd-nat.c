@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -36,7 +36,7 @@
 
 #include "nbsd-nat.h"
 #include "ppc-tdep.h"
-#include "ppcnbsd-tdep.h"
+#include "ppc-nbsd-tdep.h"
 #include "bsd-kvm.h"
 #include "inf-ptrace.h"
 

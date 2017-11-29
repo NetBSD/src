@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -28,7 +28,6 @@
 #include "value.h"
 
 #include "alpha-tdep.h"
-#include "alphabsd-tdep.h"
 #include "nbsd-tdep.h"
 #include "solib-svr4.h"
 #include "trad-frame.h"

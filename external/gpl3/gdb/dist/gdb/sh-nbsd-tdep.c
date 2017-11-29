@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -37,7 +37,7 @@
 #include "solib-svr4.h"
 
 #include "sh-tdep.h"
-#include "shnbsd-tdep.h"
+#include "sh-nbsd-tdep.h"
 #include "nbsd-tdep.h"
 
 /* Convert a register number into an offset into a ptrace

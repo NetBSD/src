@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/mips.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -28,7 +28,7 @@
 #include "osabi.h"
 
 #include "nbsd-tdep.h"
-#include "mipsnbsd-tdep.h"
+#include "mips-nbsd-tdep.h"
 #include "mips-tdep.h"
 
 #include "solib-svr4.h"

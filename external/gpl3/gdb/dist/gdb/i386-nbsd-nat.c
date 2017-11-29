@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/i386.
 
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 
 #include "i386-tdep.h"
 #include "i387-tdep.h"
-#include "i386bsd-nat.h"
+#include "i386-bsd-nat.h"
 
 /* Support for debugging kernel virtual memory images.  */
 
@@ -106,23 +106,6 @@ i386nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     }
 
   return 1;
-}
-
-void
-supply_gregset (struct regcache *regcache, const gregset_t *gregsetp)
-{
-  i386bsd_supply_gregset (regcache, gregsetp);
-}
-
-/* Fill register REGNUM (if it is a general-purpose register) in
-   *GREGSETP with the value in GDB's register cache.  If REGNUM is -1,
-   do this for all registers.  */
-
-void
-fill_gregset (const struct regcache *regcache,
-              gregset_t *gregsetp, int regnum)
-{
-  i386bsd_collect_gregset (regcache, gregsetp, regnum);
 }
 
 /* Transfering floating-point registers between GDB, inferiors and cores.  */

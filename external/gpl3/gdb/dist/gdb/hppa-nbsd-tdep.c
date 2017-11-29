@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/hppa
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,8 +25,8 @@
 #include "trad-frame.h"
 #include "tramp-frame.h"
 
+#include "hppa-bsd-tdep.h"
 #include "hppa-tdep.h"
-#include "hppabsd-tdep.h"
 
 /* From <machine/mcontext.h>.  */
 static int hppanbsd_mc_reg_offset[] =
