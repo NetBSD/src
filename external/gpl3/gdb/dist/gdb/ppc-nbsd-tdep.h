@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PPCNBSD_TDEP_H
-#define PPCNBSD_TDEP_H
+#ifndef PPC_NBSD_TDEP_H
+#define PPC_NBSD_TDEP_H
 
 struct regset;
 
@@ -29,4 +29,4 @@ extern struct ppc_reg_offsets ppcnbsd_reg_offsets;
 extern const struct regset ppcnbsd_gregset;
 extern const struct regset ppcnbsd_fpregset;
 
-#endif /* ppcnbsd-tdep.h */
+#endif /* PPC_NBSD_TDEP_H */
