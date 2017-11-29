@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/11/29 03:58:17 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2017/11/29 21:21:50 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -49,9 +49,9 @@ CWARNFLAGS.clang+=	-Wno-switch
 .include <bsd.lib.mk>
 
 # Force c++
-HOST_CC:=       ${HOST_CXX} -std=gnu++11 -Wno-error=stack-protector
-CC:=            ${CXX} -std=gnu++11 -Wno-error=stack-protector
-CFLAGS:=        ${CXXFLAGS}
+HOST_CC:=       ${HOST_CXX}
+CC:=            ${CXX}
+CFLAGS:=        ${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/arch ${DIST}/gdb/mi ${DIST}/gdb/cli  \
     ${DIST}/gdb/tui ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
