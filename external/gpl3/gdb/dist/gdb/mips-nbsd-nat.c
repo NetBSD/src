@@ -1,6 +1,6 @@
 /* Native-dependent code for MIPS systems running NetBSD.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,7 +39,7 @@ typedef struct fpreg fpregset_t;
 #include "gregset.h"
 
 #include "mips-tdep.h"
-#include "mipsnbsd-tdep.h"
+#include "mips-nbsd-tdep.h"
 #include "inf-ptrace.h"
 #include "bsd-kvm.h"
 
