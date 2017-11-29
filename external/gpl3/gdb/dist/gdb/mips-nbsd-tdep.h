@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on MIPS systems running NetBSD.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MIPSNBSD_TDEP_H
-#define MIPSNBSD_TDEP_H
+#ifndef MIPS_NBSD_TDEP_H
+#define MIPS_NBSD_TDEP_H
 
 void mipsnbsd_supply_reg (struct regcache *, const char *, int);
 void mipsnbsd_fill_reg (const struct regcache *, char *, int);
@@ -26,4 +26,4 @@ void mipsnbsd_fill_reg (const struct regcache *, char *, int);
 void mipsnbsd_supply_fpreg (struct regcache *, const char *, int);
 void mipsnbsd_fill_fpreg (const struct regcache *, char *, int);
 
-#endif /* MIPSNBSD_TDEP_H */
+#endif /* MIPS_NBSD_TDEP_H */
