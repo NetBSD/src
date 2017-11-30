@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.85 2017/11/27 14:18:21 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.86 2017/11/30 16:13:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -7951,4 +7951,85 @@ sys/dev/pci/mlyreg.h				1.6
 
 	Fix a typo, pack the structure correctly.
 	[maxv, ticket #399]
+
+sys/compat/linux/common/linux_sg.c		1.14
+
+	Use "linux_sg_version", and not "version".
+	[maxv, ticket #400]
+
+sys/arch/amd64/amd64/machdep.c			1.267
+
+	Do not leak GDT slots during context switches.
+	[maxv, ticket #401]
+
+sys/arch/x86/x86/lapic.c			1.61
+
+	Use the correct default LAPIC base address.
+	[maxv, ticket #402]
+
+sys/arch/x86/x86/lapic.c			1.63
+
+	Fix a stack overflow in the LAPIC code.
+	[maxv, ticket #403]
+
+sys/kern/subr_localcount.c			1.7
+sys/sys/localcount.h				1.5
+
+	Implement a debugging facility (overflow/underflow detection)
+	for localcount(9).
+	[ozaki-r, ticket #404]
+
+sys/kern/kern_lock.c				1.160
+sys/kern/subr_pserialize.c			1.9
+sys/rump/librump/rumpkern/emul.c		1.184-1.185
+sys/rump/librump/rumpkern/rump.c		1.330
+sys/sys/pserialize.h				1.2
+
+	Implement debugging feature for pserialize(9).
+	[ozaki-r, ticket #405]
+
+sys/netipsec/ipsec.c				1.123
+sys/netipsec/key.c				1.236-1.242
+sys/netipsec/key.h				1.33
+
+	Provide a function to call MGETHDR and MCLGET.
+	Fix error handling of MCLGET in key_alloc_mbuf.
+	Add missing splx to key_spdexpire.
+	Use M_WAITOK to allocate mbufs wherever sleepable.
+	Get rid of unnecessary NULL checks that are obsoleted by M_WAITOK.
+	Simplify the code by avoiding unnecessary error checks.
+	Call key_sendup_mbuf immediately unless key_acquire is called in
+	softint.
+	[ozaki-r, ticket #406]
+
+sys/compat/common/uipc_syscalls_40.c		1.14
+sys/compat/linux/common/linux_socket.c		1.139
+sys/compat/linux32/common/linux32_socket.c	1.28
+sys/net/if.c					1.400
+sys/net/if_spppsubr.c				1.173-1.174
+sys/netinet/ip_carp.c				1.93
+sys/netinet6/in6.c				1.252-1.254
+sys/netipsec/key.c				1.243
+
+	Protect IFADDR_READER_FOREACH and obtained ifa with psz/psref.
+	Fix and make consistently use psz/psref in ifconf variants.
+	Tweak a condition; we don't need to care ifacount to be negative.
+	Fix a race condition of in6_ifinit. Cleanup.
+	[ozaki-r, ticket #407]
+
+sys/arch/arm/broadcom/bcm2835_space.c		1.12-1.13
+
+	Sync with armv7_generic_space.c
+	- big endian support (probably not needed)
+	- a4x subreagion/mmap support
+	- fix some a4x stream methods
+	- add UVM_KMF_COLORMATCH in bs_map when allocating KVA
+	- support BUS_SPACE_MAP_PREFETCHABLE
+	[skrll, ticket #408]
+
+lib/libc/gen/vis.c				1.74
+
+	Use 16x instead of 4x the amount of space since each wint_t
+	can result in 4 bytes of 4 characters ("\ooo") each.
+	[maya, ticket #411]
 
