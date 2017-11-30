@@ -1,4 +1,4 @@
-/* $NetBSD: fwcfg.c,v 1.4 2017/11/30 03:31:08 christos Exp $ */
+/* $NetBSD: fwcfg.c,v 1.5 2017/11/30 15:42:18 wiz Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fwcfg.c,v 1.4 2017/11/30 03:31:08 christos Exp $");
+__RCSID("$NetBSD: fwcfg.c,v 1.5 2017/11/30 15:42:18 wiz Exp $");
 
 #include <sys/ioctl.h>
 
@@ -212,8 +212,8 @@ build_tree(virtdir_t *v)
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-F <path>] [-g <gid>] [-m <file-mode>] "
-	    "[-M <dir-mode>] [-u <uid>] [<fuse-options>]", getprogname());
+	fprintf(stderr, "Usage: %s [-F path] [-g gid] [-M dir-mode] "
+	    "[-m file-mode] [-u uid] [fuse-options]", getprogname());
 	exit(EXIT_FAILURE);
 }
 #endif
