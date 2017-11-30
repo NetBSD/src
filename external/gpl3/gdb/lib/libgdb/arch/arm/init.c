@@ -15,7 +15,6 @@ extern initialize_file_ftype _initialize_ser_pipe;
 extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_fork_child;
 extern initialize_file_ftype _initialize_arm_netbsd_nat;
-extern initialize_file_ftype _initialize_nbsd_thread;
 extern initialize_file_ftype _initialize_ax_gdb;
 extern initialize_file_ftype _initialize_ctf;
 extern initialize_file_ftype _initialize_dcache;
@@ -172,7 +171,6 @@ initialize_all_files (void)
   _initialize_ser_tcp ();
   _initialize_fork_child ();
   _initialize_arm_netbsd_nat ();
-  _initialize_nbsd_thread ();
   _initialize_ax_gdb ();
   _initialize_ctf ();
   _initialize_dcache ();
