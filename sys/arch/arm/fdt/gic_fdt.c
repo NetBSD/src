@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.7 2017/07/02 21:59:14 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.8 2017/11/30 14:42:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.7 2017/07/02 21:59:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.8 2017/11/30 14:42:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -190,26 +190,38 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		firq->intr_level = level;
 		firq->intr_mpsafe = mpsafe;
 		TAILQ_INIT(&firq->intr_handlers);
-		firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
-		    gic_fdt_intr, firq);
+		if (arg == NULL) {
+			firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
+			    func, NULL);
+		} else {
+			firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
+			    gic_fdt_intr, firq);
+		}
 		if (firq->intr_ih == NULL) {
 			kmem_free(firq, sizeof(*firq));
 			return NULL;
 		}
 		sc->sc_irq[irq] = firq;
-	}
-
-	if (firq->intr_ipl != ipl) {
-		device_printf(dev, "cannot share irq with different ipl\n");
-		return NULL;
-	}
-	if (firq->intr_level != level) {
-		device_printf(dev, "cannot share edge and level interrupts\n");
-		return NULL;
-	}
-	if (firq->intr_mpsafe != mpsafe) {
-		device_printf(dev, "cannot share between mpsafe/non-mpsafe\n");
-		return NULL;
+	} else {
+		if (arg) {
+			device_printf(dev, "cannot share irq with NULL arg\n");
+			return NULL;
+		}
+		if (firq->intr_ipl != ipl) {
+			device_printf(dev, "cannot share irq with different "
+			    "ipl\n");
+			return NULL;
+		}
+		if (firq->intr_level != level) {
+			device_printf(dev, "cannot share edge and level "
+			    "interrupts\n");
+			return NULL;
+		}
+		if (firq->intr_mpsafe != mpsafe) {
+			device_printf(dev, "cannot share between "
+			    "mpsafe/non-mpsafe\n");
+			return NULL;
+		}
 	}
 
 	firq->intr_refcnt++;
