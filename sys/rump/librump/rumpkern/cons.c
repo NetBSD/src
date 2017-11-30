@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.6 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: cons.c,v 1.7 2017/11/30 20:25:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.6 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.7 2017/11/30 20:25:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -60,6 +60,7 @@ static int rumpcons_stat(struct file *, struct stat *);
 static int rumpcons_poll(struct file *, int events);
 
 static const struct fileops rumpcons_fileops = {
+	.fo_name = "rumpcons",
 	.fo_read = (void *)nullop,
 	.fo_write = rumpcons_write,
 	.fo_ioctl = rumpcons_ioctl,

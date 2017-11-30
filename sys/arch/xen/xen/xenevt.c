@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.47 2017/07/16 14:02:48 cherry Exp $      */
+/*      $NetBSD: xenevt.c,v 1.48 2017/11/30 20:25:54 christos Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.47 2017/07/16 14:02:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.48 2017/11/30 20:25:54 christos Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -74,6 +74,7 @@ static int	xenevt_fclose(struct file *);
 /* static int	xenevt_fkqfilter(struct file *, struct knote *); */
 
 static const struct fileops xenevt_fileops = {
+	.fo_name = "xenevt",
 	.fo_read = xenevt_fread,
 	.fo_write = xenevt_fwrite,
 	.fo_ioctl = xenevt_fioctl,

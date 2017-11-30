@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.103 2017/11/29 19:27:52 jmcneill Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.104 2017/11/30 20:25:55 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.103 2017/11/29 19:27:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.104 2017/11/30 20:25:55 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -148,6 +148,7 @@ static int	tap_fops_stat(file_t *, struct stat *);
 static int	tap_fops_kqfilter(file_t *, struct knote *);
 
 static const struct fileops tap_fileops = {
+	.fo_name = "tap",
 	.fo_read = tap_fops_read,
 	.fo_write = tap_fops_write,
 	.fo_ioctl = tap_fops_ioctl,

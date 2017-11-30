@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.141 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.142 2017/11/30 20:25:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.141 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.142 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ static int	pipe_ioctl(file_t *, u_long, void *);
 static void	pipe_restart(file_t *);
 
 static const struct fileops pipeops = {
+	.fo_name = "pipe",
 	.fo_read = pipe_read,
 	.fo_write = pipe_write,
 	.fo_ioctl = pipe_ioctl,

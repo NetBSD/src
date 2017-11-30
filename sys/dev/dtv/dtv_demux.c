@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.7 2017/06/01 02:45:10 chs Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.8 2017/11/30 20:25:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.7 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.8 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,6 +75,7 @@ static int	dtv_demux_poll(struct file *, int);
 static int	dtv_demux_close(struct file *);
 
 static const struct fileops dtv_demux_fileops = {
+	.fo_name = "dtv_demux",
 	.fo_read = dtv_demux_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = dtv_demux_ioctl,

@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.36 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: putter.c,v 1.37 2017/11/30 20:25:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.36 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.37 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,7 @@ static int putter_fop_kqfilter(file_t *, struct knote *);
 
 
 static const struct fileops putter_fileops = {
+	.fo_name = "putter",
 	.fo_read = putter_fop_read,
 	.fo_write = putter_fop_write,
 	.fo_ioctl = putter_fop_ioctl,

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.82 2017/07/01 23:31:19 nat Exp $	*/
+/*	$NetBSD: file.h,v 1.83 2017/11/30 20:25:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ struct knote;
 struct uvm_object;
 
 struct fileops {
+	const char *fo_name;
 	int	(*fo_read)	(struct file *, off_t *, struct uio *,
 				    kauth_cred_t, int);
 	int	(*fo_write)	(struct file *, off_t *, struct uio *,
