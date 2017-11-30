@@ -623,8 +623,7 @@ _initialize_arm_netbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = armnbsd_fetch_registers;
   t->to_store_registers = armnbsd_store_registers;
-  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
-  add_target (t);
+  nbsd_nat_add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (armnbsd_supply_pcb);

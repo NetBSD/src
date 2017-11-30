@@ -161,7 +161,7 @@ mipsnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 0;
 }
 
-/* Wrapper functions.  These are only used by nbsd-thread.  */
+/* Wrapper functions. */
 void
 supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregsetp)
 {
@@ -199,7 +199,7 @@ _initialize_mipsnbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = mipsnbsd_fetch_inferior_registers;
   t->to_store_registers = mipsnbsd_store_inferior_registers;
-  add_target (t);
+  nbsd_nat_add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (mipsnbsd_supply_pcb);
