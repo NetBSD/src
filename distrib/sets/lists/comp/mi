@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2160 2017/11/25 16:31:03 jmcneill Exp $
+#	$NetBSD: mi,v 1.2161 2017/11/30 08:14:03 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2947,6 +2947,7 @@
 ./usr/include/sys/semaphore.h			comp-c-include
 ./usr/include/sys/sha1.h			comp-c-include
 ./usr/include/sys/sha2.h			comp-c-include
+./usr/include/sys/sha3.h			comp-c-include
 ./usr/include/sys/shm.h				comp-c-include
 ./usr/include/sys/siginfo.h			comp-c-include
 ./usr/include/sys/signal.h			comp-c-include
