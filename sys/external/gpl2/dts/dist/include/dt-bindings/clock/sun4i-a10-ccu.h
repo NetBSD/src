@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i-a10-ccu.h,v 1.1.1.1 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: sun4i-a10-ccu.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2017 Priit Laes <plaes@plaes.org>
@@ -45,6 +45,8 @@
 #define _DT_BINDINGS_CLK_SUN4I_A10_H_
 
 #define CLK_HOSC		1
+#define CLK_PLL_VIDEO0_2X	9
+#define CLK_PLL_VIDEO1_2X	18
 #define CLK_CPU			20
 
 /* AHB Gates */

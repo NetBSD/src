@@ -1,5 +1,6 @@
-/*	$NetBSD: tegra210-car.h,v 1.1.1.2 2017/07/27 18:10:51 jmcneill Exp $	*/
+/*	$NetBSD: tegra210-car.h,v 1.1.1.3 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides constants for binding nvidia,tegra210-car.
  *
@@ -311,6 +312,7 @@
 #define TEGRA210_CLK_BLINK 280
 /* 281 */
 #define TEGRA210_CLK_SOR1_SRC 282
+#define TEGRA210_CLK_SOR1_OUT 282
 /* 283 */
 #define TEGRA210_CLK_XUSB_HOST_SRC 284
 #define TEGRA210_CLK_XUSB_FALCON_SRC 285
