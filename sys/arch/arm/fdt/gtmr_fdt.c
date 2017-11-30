@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.6 2017/11/30 14:50:34 skrll Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.7 2017/11/30 14:51:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.6 2017/11/30 14:50:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.7 2017/11/30 14:51:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ static void	gtmr_fdt_cpu_hatch(void *, struct cpu_info *);
 
 CFATTACH_DECL_NEW(gtmr_fdt, 0, gtmr_fdt_match, gtmr_fdt_attach, NULL, NULL);
 
-/* The vritual timer list entry */
+/* The virtual timer list entry */
 #define GTMR_VTIMER 2
 
 static int
