@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.138 2017/03/14 09:03:08 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.138.6.1 2017/11/30 15:57:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138 2017/03/14 09:03:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.1 2017/11/30 15:57:37 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1144,6 +1144,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	IFNET_READER_FOREACH(ifp) {
 		struct ifaddr *ifa;
 		if_acquire(ifp, &psref);
+		pserialize_read_exit(s);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -1152,6 +1153,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 			goto release_exit;
 		}
 
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			struct psref psref_ifa;
 			ifa_acquire(ifa, &psref_ifa);
@@ -1167,7 +1169,6 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0) {
-					s = pserialize_read_enter();
 					ifa_release(ifa, &psref_ifa);
 					goto release_exit;
 				}
@@ -1179,6 +1180,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 			ifa_release(ifa, &psref_ifa);
 		}
 
+		s = pserialize_read_enter();
 		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
@@ -1192,7 +1194,6 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	return copyout(&ifc, data, sizeof(ifc));
 
 release_exit:
-	pserialize_read_exit(s);
 	if_release(ifp, &psref);
 	curlwp_bindx(bound);
 	return error;

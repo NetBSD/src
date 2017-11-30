@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394.2.1 2017/07/01 08:56:06 snj Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.2 2017/11/30 15:57:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.1 2017/07/01 08:56:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.2 2017/11/30 15:57:37 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3138,7 +3138,7 @@ ifconf(u_long cmd, void *data)
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (!docopy) {
 				space += sz;
-				continue;
+				goto next;
 			}
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
@@ -3149,6 +3149,7 @@ ifconf(u_long cmd, void *data)
 			}
 		}
 
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
 			/* all sockaddrs must fit in sockaddr_storage */
@@ -3159,14 +3160,19 @@ ifconf(u_long cmd, void *data)
 				continue;
 			}
 			memcpy(&ifr.ifr_space, sa, sa->sa_len);
+			pserialize_read_exit(s);
+
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0)
 					goto release_exit;
 				ifrp++; space -= sz;
 			}
+			s = pserialize_read_enter();
 		}
+		pserialize_read_exit(s);
 
+        next:
 		s = pserialize_read_enter();
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}

@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.13 2017/03/14 09:03:08 ozaki-r Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.13.6.1 2017/11/30 15:57:37 martin Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.13 2017/03/14 09:03:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.13.6.1 2017/11/30 15:57:37 martin Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -53,6 +53,7 @@ compat_ifconf(u_long cmd, void *data)
 		struct ifaddr *ifa;
 
 		if_acquire(ifp, &psref);
+		pserialize_read_exit(s);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -69,9 +70,10 @@ compat_ifconf(u_long cmd, void *data)
 				ifrp++;
 			}
 			space -= sizeof(ifr);
-			continue;
+			goto next;
 		}
 
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
 			struct psref psref_ifa;
@@ -85,11 +87,8 @@ compat_ifconf(u_long cmd, void *data)
 				/*
 				 * If it does not fit, we don't bother with it
 				 */
-				if (sa->sa_len > sizeof(*osa)) {
-					s = pserialize_read_enter();
-					ifa_release(ifa, &psref_ifa);
-					continue;
-				}
+				if (sa->sa_len > sizeof(*osa))
+					goto next_ifa;
 				memcpy(&ifr.ifr_addr, sa, sa->sa_len);
 				osa->sa_family = sa->sa_family;
 				if (space >= sz) {
@@ -119,13 +118,20 @@ compat_ifconf(u_long cmd, void *data)
 						 (char *)&ifrp->ifr_addr);
 				}
 			}
+			if (error != 0) {
+				ifa_release(ifa, &psref_ifa);
+				goto release_exit;
+			}
+			space -= sz;
+
+		next_ifa:
 			s = pserialize_read_enter();
 			ifa_release(ifa, &psref_ifa);
-			if (error != 0)
-				goto release_exit;
-			space -= sz;
 		}
+		pserialize_read_exit(s);
 
+	next:
+		s = pserialize_read_enter();
 		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
@@ -138,7 +144,6 @@ compat_ifconf(u_long cmd, void *data)
 	return (0);
 
 release_exit:
-	pserialize_read_exit(s);
 	if_release(ifp, &psref);
 	curlwp_bindx(bound);
 	return error;
