@@ -104,8 +104,7 @@ _initialize_sparcnbsd_nat (void)
 
   /* Add some extra features to the generic SPARC target.  */
   t = sparc_target ();
-  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
-  add_target (t);
+  nbsd_nat_add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc32nbsd_supply_pcb);
