@@ -69,7 +69,7 @@ m88kbsd_fetch_inferior_registers (struct target_ops *ops,
   struct reg regs;
 
   if (ptrace (PT_GETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   m88kbsd_supply_gregset (regcache, &regs);
@@ -85,13 +85,13 @@ m88kbsd_store_inferior_registers (struct target_ops *ops,
   struct reg regs;
 
   if (ptrace (PT_GETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   m88kbsd_collect_gregset (regcache, &regs, regnum);
 
   if (ptrace (PT_SETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
 
