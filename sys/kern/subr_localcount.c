@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.4.2.1 2017/11/30 14:31:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.4.2.1 2017/11/30 14:31:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -54,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp 
 #include <sys/mutex.h>
 #include <sys/percpu.h>
 #include <sys/xcall.h>
+#if defined(DEBUG) && defined(LOCKDEBUG)
+#include <sys/atomic.h>
+#endif
 
 /*
  * localcount_init(lc)
@@ -203,6 +206,10 @@ localcount_acquire(struct localcount *lc)
 
 	KASSERT(lc->lc_totalp == NULL);
 	localcount_adjust(lc, +1);
+#if defined(DEBUG) && defined(LOCKDEBUG)
+	if (atomic_inc_32_nv(&lc->lc_refcnt) == 0)
+		panic("counter overflow");
+#endif
 }
 
 /*
@@ -247,5 +254,26 @@ localcount_release(struct localcount *lc, kcondvar_t *cv, kmutex_t *interlock)
 	}
 
 	localcount_adjust(lc, -1);
+#if defined(DEBUG) && defined(LOCKDEBUG)
+	if (atomic_dec_32_nv(&lc->lc_refcnt) == UINT_MAX)
+		panic("counter underflow");
+#endif
  out:	kpreempt_enable();
+}
+
+/*
+ * localcount_debug_refcnt(lc)
+ *
+ *	Return a total reference count of lc.  It returns a correct value
+ *	only if DEBUG and LOCKDEBUG enabled.  Otherwise always return 0.
+ */
+uint32_t
+localcount_debug_refcnt(const struct localcount *lc)
+{
+
+#if defined(DEBUG) && defined(LOCKDEBUG)
+	return lc->lc_refcnt;
+#else
+	return 0;
+#endif
 }
