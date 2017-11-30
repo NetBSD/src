@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.28 2016/01/11 01:37:36 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.29 2017/11/30 20:25:55 christos Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.28 2016/01/11 01:37:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.29 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,6 +70,7 @@ static int filemon_ioctl(struct file *, u_long, void *);
 static int filemon_close(struct file *);
 
 static const struct fileops filemon_fileops = {
+	.fo_name = "filemon",
 	.fo_ioctl = filemon_ioctl,
 	.fo_close = filemon_close,
 	.fo_read = fbadop_read,
