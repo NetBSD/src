@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.9 2017/11/16 03:07:17 ozaki-r Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.10 2017/11/30 21:36:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.9 2017/11/16 03:07:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.10 2017/11/30 21:36:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,23 +97,24 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.9 2017/11/16 03:07:17 ozaki-r Exp $
 #define	PAUSE_TIME_DEFAULT	0x400
 
 /* syscon EMAC clock register */
-#define	EMAC_CLK_EPHY_ADDR	(0x1f << 20)	/* H3 */
-#define	EMAC_CLK_EPHY_ADDR_SHIFT 20
-#define	EMAC_CLK_EPHY_LED_POL	(1 << 17)	/* H3 */
-#define	EMAC_CLK_EPHY_SHUTDOWN	(1 << 16)	/* H3 */
-#define	EMAC_CLK_EPHY_SELECT	(1 << 15)	/* H3 */
-#define	EMAC_CLK_RMII_EN	(1 << 13)
-#define	EMAC_CLK_ETXDC		(0x7 << 10)
-#define	EMAC_CLK_ETXDC_SHIFT	10
-#define	EMAC_CLK_ERXDC		(0x1f << 5)
-#define	EMAC_CLK_ERXDC_SHIFT	5
-#define	EMAC_CLK_PIT		(0x1 << 2)
-#define	 EMAC_CLK_PIT_MII	(0 << 2)
-#define	 EMAC_CLK_PIT_RGMII	(1 << 2)
-#define	EMAC_CLK_SRC		(0x3 << 0)
-#define	 EMAC_CLK_SRC_MII	(0 << 0)
-#define	 EMAC_CLK_SRC_EXT_RGMII	(1 << 0)
-#define	 EMAC_CLK_SRC_RGMII	(2 << 0)
+#define	EMAC_CLK_REG		0x30
+#define	 EMAC_CLK_EPHY_ADDR		(0x1f << 20)	/* H3 */
+#define	 EMAC_CLK_EPHY_ADDR_SHIFT	20
+#define	 EMAC_CLK_EPHY_LED_POL		(1 << 17)	/* H3 */
+#define	 EMAC_CLK_EPHY_SHUTDOWN		(1 << 16)	/* H3 */
+#define	 EMAC_CLK_EPHY_SELECT		(1 << 15)	/* H3 */
+#define	 EMAC_CLK_RMII_EN		(1 << 13)
+#define	 EMAC_CLK_ETXDC			(0x7 << 10)
+#define	 EMAC_CLK_ETXDC_SHIFT		10
+#define	 EMAC_CLK_ERXDC			(0x1f << 5)
+#define	 EMAC_CLK_ERXDC_SHIFT		5
+#define	 EMAC_CLK_PIT			(0x1 << 2)
+#define	  EMAC_CLK_PIT_MII		(0 << 2)
+#define	  EMAC_CLK_PIT_RGMII		(1 << 2)
+#define	 EMAC_CLK_SRC			(0x3 << 0)
+#define	  EMAC_CLK_SRC_MII		(0 << 0)
+#define	  EMAC_CLK_SRC_EXT_RGMII	(1 << 0)
+#define	  EMAC_CLK_SRC_RGMII		(2 << 0)
 
 /* Burst length of RX and TX DMA transfers */
 static int sunxi_emac_burst_len = BURST_LEN_DEFAULT;
@@ -889,6 +890,27 @@ sunxi_emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
+static bool
+sunxi_emac_has_internal_phy(struct sunxi_emac_softc *sc)
+{
+	const char * mdio_internal_compat[] = {
+		"allwinner,sun8i-h3-mdio-internal",
+		NULL
+	};
+	int phy;
+
+	/* Non-standard property, for compatible with old dts files */
+	if (of_hasprop(sc->phandle, "allwinner,use-internal-phy"))
+		return true;
+
+	phy = fdtbus_get_phandle(sc->phandle, "phy-handle");
+	if (phy == -1)
+		return false;
+
+	/* For internal PHY, check compatible string of parent node */
+	return of_compatible(OF_parent(phy), mdio_internal_compat) >= 0;
+}
+
 static int
 sunxi_emac_setup_phy(struct sunxi_emac_softc *sc)
 {
@@ -921,7 +943,7 @@ sunxi_emac_setup_phy(struct sunxi_emac_softc *sc)
 	}
 
 	if (sc->type == EMAC_H3) {
-		if (of_hasprop(sc->phandle, "allwinner,use-internal-phy")) {
+		if (sunxi_emac_has_internal_phy(sc)) {
 			reg |= EMAC_CLK_EPHY_SELECT;
 			reg &= ~EMAC_CLK_EPHY_SHUTDOWN;
 			if (of_hasprop(sc->phandle,
@@ -1262,15 +1284,31 @@ sunxi_emac_get_resources(struct sunxi_emac_softc *sc)
 {
 	const int phandle = sc->phandle;
 	bus_addr_t addr, size;
-	u_int n;
 
-	/* Map registers */
-	for (n = 0; n < _RES_NITEMS; n++) {
-		if (fdtbus_get_reg(phandle, n, &addr, &size) != 0)
+	/* Map EMAC registers */
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0)
+		return ENXIO;
+	if (bus_space_map(sc->bst, addr, size, 0, &sc->bsh[_RES_EMAC]) != 0)
+		return ENXIO;
+
+	/* Map SYSCON registers */
+	if (of_hasprop(phandle, "syscon")) {
+		const int syscon_phandle = fdtbus_get_phandle(phandle,
+		    "syscon");
+		if (syscon_phandle == -1)
 			return ENXIO;
-		if (bus_space_map(sc->bst, addr, size, 0, &sc->bsh[n]) != 0)
+		if (fdtbus_get_reg(syscon_phandle, 0, &addr, &size) != 0)
+			return ENXIO;
+		if (size < EMAC_CLK_REG + 4)
+			return ENXIO;
+		addr += EMAC_CLK_REG;
+		size -= EMAC_CLK_REG;
+	} else {
+		if (fdtbus_get_reg(phandle, 1, &addr, &size) != 0)
 			return ENXIO;
 	}
+	if (bus_space_map(sc->bst, addr, size, 0, &sc->bsh[_RES_SYSCON]) != 0)
+		return ENXIO;
 
 	/* Get clocks and resets. "ahb" is required, "ephy" is optional. */
 
