@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.1 2017/10/20 22:29:15 jmcneill Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.2 2017/11/30 18:29:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.1 2017/10/20 22:29:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.2 2017/11/30 18:29:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -345,6 +345,9 @@ sun4i_emac_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = sun4i_emac_ifstop;
 	ifp->if_watchdog = sun4i_emac_ifwatchdog;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	/* 802.1Q VLAN-sized frames are supported */
+	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
