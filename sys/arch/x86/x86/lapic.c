@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.58.2.2 2017/07/14 08:41:18 martin Exp $	*/
+/*	$NetBSD: lapic.c,v 1.58.2.3 2017/11/30 14:21:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.58.2.2 2017/07/14 08:41:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.58.2.3 2017/11/30 14:21:48 martin Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -367,7 +367,7 @@ lapic_map(paddr_t lapic_base)
 	if (CPUID_TO_FAMILY(curcpu()->ci_signature) >= 6) {
 		lapic_base = (paddr_t)rdmsr(MSR_APICBASE);
 		if ((lapic_base & APICBASE_PHYSADDR) == 0) {
-			lapic_base |= APICBASE_PHYSADDR;
+			lapic_base |= LAPIC_BASE;
 		}
 		wrmsr(MSR_APICBASE, lapic_base | APICBASE_EN);
 		lapic_base &= APICBASE_PHYSADDR;
