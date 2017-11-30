@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.544 2017/11/22 02:36:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.545 2017/11/30 03:53:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.544 2017/11/22 02:36:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.545 2017/11/30 03:53:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1853,7 +1853,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocation settings */
 	max_type = PCI_INTR_TYPE_MSIX;
-	counts[PCI_INTR_TYPE_MSIX] = sc->sc_nqueues + 1;
+	/*
+	 * 82583 has a MSI-X capability in the PCI configuration space but
+	 * it doesn't support it. At least the document doesn't say anything
+	 * about MSI-X.
+	 */
+	counts[PCI_INTR_TYPE_MSIX]
+	    = (sc->sc_type == WM_T_82583) ? 0 : sc->sc_nqueues + 1;
 	counts[PCI_INTR_TYPE_MSI] = 1;
 	counts[PCI_INTR_TYPE_INTX] = 1;
 	/* overridden by disable flags */
