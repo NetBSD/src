@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.58.2.3 2017/11/30 14:21:48 martin Exp $	*/
+/*	$NetBSD: lapic.c,v 1.58.2.4 2017/11/30 14:23:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.58.2.3 2017/11/30 14:21:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.58.2.4 2017/11/30 14:23:12 martin Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -250,7 +250,7 @@ lapic_is_x2apic(void)
 static void
 lapic_setup_bsp(paddr_t lapic_base)
 {
-	u_int regs[4];
+	u_int regs[6];
 	const char *reason = NULL;
 	const char *hw_vendor;
 	bool bios_x2apic;
