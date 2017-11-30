@@ -1,5 +1,6 @@
-/*	$NetBSD: meson8b-clkc.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: meson8b-clkc.h,v 1.1.1.3 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Meson8b clock tree IDs
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: phy.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: phy.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  *
@@ -17,5 +17,6 @@
 #define PHY_TYPE_PCIE		2
 #define PHY_TYPE_USB2		3
 #define PHY_TYPE_USB3		4
+#define PHY_TYPE_UFS		5
 
 #endif /* _DT_BINDINGS_PHY */

@@ -1,5 +1,6 @@
-/*	$NetBSD: jz4780-cgu.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: jz4780-cgu.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides clock numbers for the ingenic,jz4780-cgu DT binding.
  *

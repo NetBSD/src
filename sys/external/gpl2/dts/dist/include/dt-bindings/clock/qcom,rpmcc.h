@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,rpmcc.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: qcom,rpmcc.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  * Copyright 2015 Linaro Limited
@@ -39,6 +39,9 @@
 #define RPM_SYS_FABRIC_A_CLK			19
 #define RPM_SFPB_CLK				20
 #define RPM_SFPB_A_CLK				21
+#define RPM_SMI_CLK				22
+#define RPM_SMI_A_CLK				23
+#define RPM_PLL4_CLK				24
 
 /* SMD RPM clocks */
 #define RPM_SMD_XO_CLK_SRC				0
@@ -103,5 +106,19 @@
 #define RPM_SMD_CXO_A1_A_PIN			59
 #define RPM_SMD_CXO_A2_PIN			60
 #define RPM_SMD_CXO_A2_A_PIN			61
+#define RPM_SMD_AGGR1_NOC_CLK			62
+#define RPM_SMD_AGGR1_NOC_A_CLK			63
+#define RPM_SMD_AGGR2_NOC_CLK			64
+#define RPM_SMD_AGGR2_NOC_A_CLK			65
+#define RPM_SMD_MMAXI_CLK			66
+#define RPM_SMD_MMAXI_A_CLK			67
+#define RPM_SMD_IPA_CLK				68
+#define RPM_SMD_IPA_A_CLK			69
+#define RPM_SMD_CE1_CLK				70
+#define RPM_SMD_CE1_A_CLK			71
+#define RPM_SMD_DIV_CLK3			72
+#define RPM_SMD_DIV_A_CLK3			73
+#define RPM_SMD_LN_BB_CLK			74
+#define RPM_SMD_LN_BB_A_CLK			75
 
 #endif

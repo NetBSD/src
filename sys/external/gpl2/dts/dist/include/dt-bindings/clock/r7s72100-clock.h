@@ -1,4 +1,4 @@
-/*	$NetBSD: r7s72100-clock.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: r7s72100-clock.h,v 1.1.1.4 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2014 Renesas Solutions Corp.
@@ -13,6 +13,8 @@
 #define __DT_BINDINGS_CLOCK_R7S72100_H__
 
 #define R7S72100_CLK_PLL	0
+#define R7S72100_CLK_I		1
+#define R7S72100_CLK_G		2
 
 /* MSTP2 */
 #define R7S72100_CLK_CORESIGHT	0

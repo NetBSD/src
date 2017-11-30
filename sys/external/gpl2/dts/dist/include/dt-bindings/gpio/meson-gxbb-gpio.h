@@ -1,4 +1,4 @@
-/*	$NetBSD: meson-gxbb-gpio.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: meson-gxbb-gpio.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  * GPIO definitions for Amlogic Meson GXBB SoCs
@@ -31,6 +31,7 @@
 #define	GPIOAO_11	11
 #define	GPIOAO_12	12
 #define	GPIOAO_13	13
+#define	GPIO_TEST_N	14
 
 #define	GPIOZ_0		0
 #define	GPIOZ_1		1
@@ -151,6 +152,5 @@
 #define	GPIOCLK_1	116
 #define	GPIOCLK_2	117
 #define	GPIOCLK_3	118
-#define	GPIO_TEST_N	119
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: meson-gxl-gpio.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: meson-gxl-gpio.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  * GPIO definitions for Amlogic Meson GXL SoCs
@@ -27,6 +27,7 @@
 #define	GPIOAO_7	7
 #define	GPIOAO_8	8
 #define	GPIOAO_9	9
+#define	GPIO_TEST_N	10
 
 #define	GPIOZ_0		0
 #define	GPIOZ_1		1
@@ -128,6 +129,5 @@
 #define	GPIOX_18	97
 #define	GPIOCLK_0	98
 #define	GPIOCLK_1	99
-#define	GPIO_TEST_N	100
 
 #endif

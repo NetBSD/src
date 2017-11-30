@@ -1,5 +1,6 @@
-/*	$NetBSD: gpio.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: gpio.h,v 1.1.1.4 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides constants for most GPIO bindings.
  *
@@ -32,6 +33,6 @@
 
 /* Bit 3 express GPIO suspend/resume persistence */
 #define GPIO_SLEEP_MAINTAIN_VALUE 0
-#define GPIO_SLEEP_MAY_LOOSE_VALUE 8
+#define GPIO_SLEEP_MAY_LOSE_VALUE 8
 
 #endif

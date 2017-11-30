@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3368-cru.h,v 1.1.1.2 2017/07/27 18:10:51 jmcneill Exp $	*/
+/*	$NetBSD: rk3368-cru.h,v 1.1.1.3 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015 Heiko Stuebner <heiko@sntech.de>
@@ -158,6 +158,7 @@
 #define PCLK_ISP		366
 #define PCLK_VIP		367
 #define PCLK_WDT		368
+#define PCLK_EFUSE256		369
 
 /* hclk gates */
 #define HCLK_SFC		448

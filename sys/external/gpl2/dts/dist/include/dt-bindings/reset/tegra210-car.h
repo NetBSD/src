@@ -1,5 +1,6 @@
-/*	$NetBSD: tegra210-car.h,v 1.1.1.1 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: tegra210-car.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides Tegra210-specific constants for binding
  * nvidia,tegra210-car.

@@ -1,5 +1,6 @@
-/*	$NetBSD: stm32f7-rcc.h,v 1.1.1.1 2017/07/27 18:10:51 jmcneill Exp $	*/
+/*	$NetBSD: stm32f7-rcc.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides constants for the STM32F7 RCC IP
  */

@@ -1,5 +1,6 @@
-/*	$NetBSD: rockchip,boot-mode.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: rockchip,boot-mode.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __ROCKCHIP_BOOT_MODE_H
 #define __ROCKCHIP_BOOT_MODE_H
 
