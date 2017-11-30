@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.5 2017/08/24 13:06:23 jmcneill Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.6 2017/11/30 14:50:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.5 2017/08/24 13:06:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.6 2017/11/30 14:50:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,9 @@ static void	gtmr_fdt_cpu_hatch(void *, struct cpu_info *);
 
 CFATTACH_DECL_NEW(gtmr_fdt, 0, gtmr_fdt_match, gtmr_fdt_attach, NULL, NULL);
 
+/* The vritual timer list entry */
+#define GTMR_VTIMER 2
+
 static int
 gtmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -72,8 +75,24 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 
 	struct mpcore_attach_args mpcaa = {
 		.mpcaa_name = "armgtmr",
-		.mpcaa_irq = IRQ_GTMR_PPI_VTIMER
+		.mpcaa_irq = -1		/* setup handler locally */
 	};
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, GTMR_VTIMER, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+
+	void *ih = fdtbus_intr_establish(phandle, GTMR_VTIMER, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, gtmr_intr, NULL);
+	if (ih == NULL) {
+		aprint_error_dev(self, "couldn't install interrupt handler\n");
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	config_found(self, &mpcaa, NULL);
 
