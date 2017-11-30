@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.188 2017/10/22 01:57:33 riastradh Exp $	*/
+/*	$NetBSD: namespace.h,v 1.189 2017/11/30 05:47:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -165,6 +165,19 @@
 #define SHA256_Init		_SHA256_Init
 #define SHA256_Transform	_SHA256_Transform
 #define SHA256_Update		_SHA256_Update
+#define SHA3_224_Init		_SHA3_224_Init
+#define SHA3_224_Update		_SHA3_224_Update
+#define SHA3_224_Final		_SHA3_224_Final
+#define SHA3_256_Init		_SHA3_256_Init
+#define SHA3_256_Update		_SHA3_256_Update
+#define SHA3_256_Final		_SHA3_256_Final
+#define SHA3_384_Init		_SHA3_284_Init
+#define SHA3_384_Update		_SHA3_284_Update
+#define SHA3_384_Final		_SHA3_284_Final
+#define SHA3_512_Init		_SHA3_512_Init
+#define SHA3_512_Update		_SHA3_512_Update
+#define SHA3_512_Final		_SHA3_512_Final
+#define	SHA3_Selftest		_SHA3_Selftest
 #define SHA384_Data		_SHA384_Data
 #define SHA384_End		_SHA384_End
 #define SHA384_FileChunk	_SHA384_FileChunk
@@ -181,6 +194,12 @@
 #define SHA512_Init		_SHA512_Init
 #define SHA512_Transform	_SHA512_Transform
 #define SHA512_Update		_SHA512_Update
+#define	SHAKE128_Init		_SHAKE128_Init
+#define	SHAKE128_Update		_SHAKE128_Update
+#define	SHAKE128_Final		_SHAKE128_Final
+#define	SHAKE256_Init		_SHAKE256_Init
+#define	SHAKE256_Update		_SHAKE256_Update
+#define	SHAKE256_Final		_SHAKE256_Final
 #define a64l			_a64l
 #define adjtime			_adjtime
 #define alarm			_alarm
