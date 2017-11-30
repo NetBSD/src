@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.208 2017/11/07 19:44:04 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.209 2017/11/30 18:44:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.208 2017/11/07 19:44:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209 2017/11/30 18:44:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2463,16 +2463,19 @@ proc_getauxv(struct proc *p, void **buf, size_t *len)
 	struct ps_strings pss;
 	int error;
 	void *uauxv, *kauxv;
+	size_t size;
 
 	if ((error = copyin_psstrings(p, &pss)) != 0)
 		return error;
-
 	if (pss.ps_envstr == NULL)
+		return EIO;
+
+	size = p->p_execsw->es_arglen;
+	if (size == 0)
 		return EIO;
 
 	size_t ptrsz = PROC_PTRSZ(p);
 	uauxv = (void *)((char *)pss.ps_envstr + (pss.ps_nenvstr + 1) * ptrsz);
-	size_t size = p->p_execsw->es_arglen;
 
 	kauxv = kmem_alloc(size, KM_SLEEP);
 
