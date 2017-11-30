@@ -1,5 +1,6 @@
-/*	$NetBSD: linux-event-codes.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: linux-event-codes.h,v 1.1.1.4 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Input event codes
  *
@@ -408,6 +409,7 @@
 #define BTN_TOOL_MOUSE		0x146
 #define BTN_TOOL_LENS		0x147
 #define BTN_TOOL_QUINTTAP	0x148	/* Five fingers on trackpad */
+#define BTN_STYLUS3		0x149
 #define BTN_TOUCH		0x14a
 #define BTN_STYLUS		0x14b
 #define BTN_STYLUS2		0x14c

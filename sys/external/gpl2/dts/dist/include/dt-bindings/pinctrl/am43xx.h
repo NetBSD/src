@@ -1,5 +1,6 @@
-/*	$NetBSD: am43xx.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: am43xx.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides constants specific to AM43XX pinctrl bindings.
  */
@@ -23,8 +24,20 @@
 #define INPUT_EN		(1 << 18)
 #define SLEWCTRL_SLOW		(1 << 19)
 #define SLEWCTRL_FAST		0
+#define DS0_FORCE_OFF_MODE	(1 << 24)
+#define DS0_INPUT		(1 << 25)
+#define DS0_FORCE_OUT_HIGH	(1 << 26)
 #define DS0_PULL_UP_DOWN_EN	(1 << 27)
+#define DS0_PULL_UP_SEL		(1 << 28)
 #define WAKEUP_ENABLE		(1 << 29)
+
+#define DS0_PIN_OUTPUT		(DS0_FORCE_OFF_MODE)
+#define DS0_PIN_OUTPUT_HIGH	(DS0_FORCE_OFF_MODE | DS0_FORCE_OUT_HIGH)
+#define DS0_PIN_OUTPUT_PULLUP	(DS0_FORCE_OFF_MODE | DS0_PULL_UP_DOWN_EN | DS0_PULL_UP_SEL)
+#define DS0_PIN_OUTPUT_PULLDOWN	(DS0_FORCE_OFF_MODE | DS0_PULL_UP_DOWN_EN)
+#define DS0_PIN_INPUT		(DS0_FORCE_OFF_MODE | DS0_INPUT)
+#define DS0_PIN_INPUT_PULLUP	(DS0_FORCE_OFF_MODE | DS0_INPUT | DS0_PULL_UP_DOWN_EN | DS0_PULL_UP_SEL)
+#define DS0_PIN_INPUT_PULLDOWN	(DS0_FORCE_OFF_MODE | DS0_INPUT | DS0_PULL_UP_DOWN_EN)
 
 #define PIN_OUTPUT		(PULL_DISABLE)
 #define PIN_OUTPUT_PULLUP	(PULL_UP)

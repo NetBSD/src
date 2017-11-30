@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2443.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: s3c2443.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Heiko Stuebner <heiko@sntech.de>
@@ -28,6 +28,8 @@
 #define ARMCLK			4
 #define HCLK			5
 #define PCLK			6
+#define MPLL			7
+#define EPLL			8
 
 /* Special clocks */
 #define SCLK_HSSPI0		16
