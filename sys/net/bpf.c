@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.219 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.220 2017/11/30 20:25:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.219 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.220 2017/11/30 20:25:55 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -271,6 +271,7 @@ static int	bpf_kqfilter(struct file *, struct knote *);
 static void	bpf_softintr(void *);
 
 static const struct fileops bpf_fileops = {
+	.fo_name = "bpf",
 	.fo_read = bpf_read,
 	.fo_write = bpf_write,
 	.fo_ioctl = bpf_ioctl,

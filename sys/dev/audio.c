@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.441 2017/11/28 07:35:27 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.442 2017/11/30 20:25:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.441 2017/11/28 07:35:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.442 2017/11/30 20:25:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -437,6 +437,7 @@ const struct cdevsw audio_cdevsw = {
 };
 
 const struct fileops audio_fileops = {
+	.fo_name = "audio",
 	.fo_read = audioread,
 	.fo_write = audiowrite,
 	.fo_ioctl = audioioctl,

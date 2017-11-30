@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.47 2016/10/31 15:08:45 maxv Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.47 2016/10/31 15:08:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.48 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,6 +106,7 @@ static int		ksem_read_fop(file_t *, off_t *, struct uio *,
     kauth_cred_t, int);
 
 static const struct fileops semops = {
+	.fo_name = "sem",
 	.fo_read = ksem_read_fop,
 	.fo_write = fbadop_write,
 	.fo_ioctl = fbadop_ioctl,

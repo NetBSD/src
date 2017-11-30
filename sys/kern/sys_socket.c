@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.75 2017/11/22 03:03:18 ozaki-r Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.76 2017/11/30 20:25:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.75 2017/11/22 03:03:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.76 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.75 2017/11/22 03:03:18 ozaki-r Exp 
 #include <net/route.h>
 
 const struct fileops socketops = {
+	.fo_name = "socket",
 	.fo_read = soo_read,
 	.fo_write = soo_write,
 	.fo_ioctl = soo_ioctl,

@@ -204,6 +204,7 @@ static int	vchiq_close(struct file *);
 static int	vchiq_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 
 static const struct fileops vchiq_fileops = {
+	.fo_name = "vchiq",
 	.fo_read = vchiq_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = vchiq_ioctl,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.96 2017/11/14 14:29:33 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.97 2017/11/30 20:25:55 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.96 2017/11/14 14:29:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.97 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ static int 	cryptof_poll(struct file *, int);
 static int 	cryptof_stat(struct file *, struct stat *);
 
 static const struct fileops cryptofops = {
+	.fo_name = "cryptof",
 	.fo_read = cryptof_read,
 	.fo_write = cryptof_write,
 	.fo_ioctl = cryptof_ioctl,

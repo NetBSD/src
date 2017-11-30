@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.100 2017/11/30 14:19:27 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.101 2017/11/30 20:25:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.100 2017/11/30 14:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.101 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,7 @@ static void	filt_timerdetach(struct knote *);
 static int	filt_timer(struct knote *, long hint);
 
 static const struct fileops kqueueops = {
+	.fo_name = "kqueue",
 	.fo_read = (void *)enxio,
 	.fo_write = (void *)enxio,
 	.fo_ioctl = kqueue_ioctl,
@@ -1064,10 +1065,11 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			if (error != 0) {
 #ifdef DEBUG
-				printf("%s: event type %d not supported for "
-				    "file type %d (error %d)\n", __func__,
-				    kn->kn_filter, kn->kn_obj ?
-				    ((file_t *)kn->kn_obj)->f_type : -1, error);
+				const file_t *ft = kn->kn_obj;
+				uprintf("%s: event type %d not supported for "
+				    "file type %d/%s (error %d)\n", __func__,
+				    kn->kn_filter, ft ? ft->f_type : -1,
+				    ft ? ft->f_ops->fo_name : "?", error);
 #endif
 
 				/* knote_detach() drops fdp->fd_lock */

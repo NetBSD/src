@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.18 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.19 2017/11/30 20:25:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.18 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -238,6 +238,7 @@ const struct cdevsw drm_cdevsw = {
 };
 
 static const struct fileops drm_fileops = {
+	.fo_name = "drm",
 	.fo_read = drm_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = drm_ioctl,

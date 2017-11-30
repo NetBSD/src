@@ -85,6 +85,7 @@ static dev_type_open(iscsiopen);
 static int iscsiclose(struct file *);
 
 static const struct fileops iscsi_fileops = {
+	.fo_name = "iscsi",
 	.fo_ioctl = iscsiioctl,
 	.fo_close = iscsiclose,
 };

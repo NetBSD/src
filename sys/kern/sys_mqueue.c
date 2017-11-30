@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.39 2015/06/29 15:44:45 christos Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.40 2017/11/30 20:25:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.39 2015/06/29 15:44:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.40 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -91,6 +91,7 @@ static int	mq_stat_fop(file_t *, struct stat *);
 static int	mq_close_fop(file_t *);
 
 static const struct fileops mqops = {
+	.fo_name = "mq",
 	.fo_read = fbadop_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = fbadop_ioctl,
