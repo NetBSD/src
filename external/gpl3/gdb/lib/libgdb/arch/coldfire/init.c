@@ -15,7 +15,6 @@ extern initialize_file_ftype _initialize_ser_pipe;
 extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_m68kbsd_nat;
 extern initialize_file_ftype _initialize_fork_child;
-extern initialize_file_ftype _initialize_nbsd_thread;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
 extern initialize_file_ftype _initialize_tracepoint;
@@ -171,7 +170,6 @@ initialize_all_files (void)
   _initialize_ser_tcp ();
   _initialize_m68kbsd_nat ();
   _initialize_fork_child ();
-  _initialize_nbsd_thread ();
   _initialize_remote ();
   _initialize_dcache ();
   _initialize_tracepoint ();
