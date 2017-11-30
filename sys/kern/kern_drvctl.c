@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.42 2017/06/01 02:45:13 chs Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.43 2017/11/30 20:25:55 christos Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.42 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.43 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ static int	drvctl_stat(struct file *, struct stat *);
 static int	drvctl_close(struct file *);
 
 static const struct fileops drvctl_fileops = {
+	.fo_name = "drvctl",
 	.fo_read = drvctl_read,
 	.fo_write = drvctl_write,
 	.fo_ioctl = drvctl_ioctl,
