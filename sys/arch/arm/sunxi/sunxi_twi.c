@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.6 2017/10/29 15:00:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.7 2017/11/30 20:41:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.6 2017/10/29 15:00:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.7 2017/11/30 20:41:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,14 +52,22 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.6 2017/10/29 15:00:00 jmcneill Exp $
 #define	 TWI_CCR_CLK_M	__BITS(6,3)
 #define	 TWI_CCR_CLK_N	__BITS(2,0)
 
-static uint8_t sunxi_twi_regmap[] = {
-	[TWSI_SLAVEADDR]	= 0x00,
-	[TWSI_EXTEND_SLAVEADDR]	= 0x04,
-	[TWSI_DATA]		= 0x08,
-	[TWSI_CONTROL]		= 0x0c,
-	[TWSI_STATUS]		= 0x10,
-	[TWSI_BAUDRATE]		= 0x14,
-	[TWSI_SOFTRESET]	= 0x18,
+static uint8_t sunxi_twi_regmap_rd[] = {
+	[TWSI_SLAVEADDR/4]		= 0x00,
+	[TWSI_EXTEND_SLAVEADDR/4]	= 0x04,
+	[TWSI_DATA/4]			= 0x08,
+	[TWSI_CONTROL/4]		= 0x0c,
+	[TWSI_STATUS/4]			= 0x10,
+	[TWSI_SOFTRESET/4]		= 0x18,
+};
+
+static uint8_t sunxi_twi_regmap_wr[] = {
+	[TWSI_SLAVEADDR/4]		= 0x00,
+	[TWSI_EXTEND_SLAVEADDR/4]	= 0x04,
+	[TWSI_DATA/4]			= 0x08,
+	[TWSI_CONTROL/4]		= 0x0c,
+	[TWSI_BAUDRATE/4]		= 0x14,
+	[TWSI_SOFTRESET/4]		= 0x18,
 };
 
 static int sunxi_twi_match(device_t, cfdata_t, void *);
@@ -101,13 +109,42 @@ const struct fdtbus_i2c_controller_func sunxi_twi_funcs = {
 static uint32_t
 sunxi_twi_reg_read(struct gttwsi_softc *sc, uint32_t reg)
 {
-	return bus_space_read_4(sc->sc_bust, sc->sc_bush, sunxi_twi_regmap[reg]);
+	return bus_space_read_4(sc->sc_bust, sc->sc_bush, sunxi_twi_regmap_rd[reg/4]);
 }
 
 static void
 sunxi_twi_reg_write(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
 {
-	bus_space_write_4(sc->sc_bust, sc->sc_bush, sunxi_twi_regmap[reg], val);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, sunxi_twi_regmap_wr[reg/4], val);
+}
+
+static u_int
+sunxi_twi_calc_rate(u_int parent_rate, u_int n, u_int m)
+{
+	return parent_rate / (10 * (m + 1) * (1 << n));
+}
+
+static void
+sunxi_twi_set_clock(struct gttwsi_softc *sc, u_int parent_rate, u_int rate)
+{
+	uint32_t baud;
+	u_int n, m, best_rate;
+
+	baud = sunxi_twi_reg_read(sc, TWSI_BAUDRATE);
+
+	for (best_rate = 0, n = 0; n < 8; n++) {
+		for (m = 0; m < 16; m++) {
+			const u_int tmp_rate = sunxi_twi_calc_rate(parent_rate, n, m);
+			if (tmp_rate <= rate && tmp_rate > best_rate) {
+				best_rate = tmp_rate;
+				baud = __SHIFTIN(n, TWI_CCR_CLK_N) |
+				       __SHIFTIN(m, TWI_CCR_CLK_M);
+			}
+		}
+	}
+
+	sunxi_twi_reg_write(sc, TWSI_BAUDRATE, baud);
+	delay(10000);
 }
 
 static int
@@ -152,11 +189,11 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if ((clk = fdtbus_clock_get_index(phandle, 0)) != NULL)
-		if (clk_enable(clk) != 0) {
-			aprint_error(": couldn't enable clock\n");
-			return;
-		}
+	clk = fdtbus_clock_get_index(phandle, 0);
+	if (clk == NULL || clk_enable(clk) != 0) {
+		aprint_error(": couldn't enable clock\n");
+		return;
+	}
 	if ((rst = fdtbus_reset_get_index(phandle, 0)) != NULL)
 		if (fdtbus_reset_deassert(rst) != 0) {
 			aprint_error(": couldn't de-assert reset\n");
@@ -167,20 +204,15 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_bool(device_properties(self), "iflg-rwc",
 	    conf->iflg_rwc);
 
-	/*
-	 * Set clock rate to 100kHz. From the datasheet:
-	 *   For 100Khz standard speed 2Wire, CLK_N=2, CLK_M=11
-	 *   F0=48M/2^2=12Mhz, F1=F0/(10*(11+1)) = 0.1Mhz
-	 */
-	const u_int m = 11, n = 2;
-	const uint32_t ccr = __SHIFTIN(n, TWI_CCR_CLK_N) |
-			     __SHIFTIN(m, TWI_CCR_CLK_M); 
-	bus_space_write_4(bst, bsh, TWI_CCR_REG, ccr);
-
+	/* Attach gttwsi core */
 	sc->sc_reg_read = sunxi_twi_reg_read;
 	sc->sc_reg_write = sunxi_twi_reg_write;
-
 	gttwsi_attach_subr(self, bst, bsh);
+
+	/*
+	 * Set clock rate to 100kHz.
+	 */
+	sunxi_twi_set_clock(sc, clk_get_rate(clk), 100000);
 
 	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, gttwsi_intr, sc);
 	if (ih == NULL) {
