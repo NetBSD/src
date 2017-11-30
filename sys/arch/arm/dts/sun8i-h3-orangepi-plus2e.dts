@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.2 2017/10/02 22:51:15 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.3 2017/11/30 21:36:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,18 +30,6 @@
 #include "sun8i-h3.dtsi"
 
 / {
-	reg_gmac_3v3: gmac-3v3 {
-		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&emac_phy_reset_pin>;
-		regulator-name = "gmac-3v3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		startup-delay-us = <100000>;
-		enable-active-high;
-		gpio = <&pio 3 6 GPIO_ACTIVE_HIGH>;
-	};
-
 	cpus {
 		cpu@0 {
 			cpu-supply = <&vdd_cpu>;
@@ -54,21 +42,6 @@
 				648000	1040000
 				>;
 		};
-	};
-};
-
-&emac {
-	pinctrl-names = "default";
-	pinctrl-0 = <&emac_pins_rgmii_a>;
-	phy-supply = <&reg_gmac_3v3>;
-	phy-mode = "rgmii";
-	phy = <&phy1>;
-
-	allwinner,leds-active-low;
-	status = "okay";
-
-	phy1: ethernet-phy@1 {
-		reg = <1>;
 	};
 };
 
