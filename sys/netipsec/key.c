@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.243 2017/11/22 05:43:28 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.244 2017/11/30 02:43:49 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.243 2017/11/22 05:43:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.244 2017/11/30 02:43:49 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -837,7 +837,7 @@ key_unlink_sp(struct secpolicy *sp)
 	ipsec_invalpcbcacheall();
 
 #ifdef NET_MPSAFE
-	KASSERT(mutex_ownable(softnet_lock));
+	KDASSERT(mutex_ownable(softnet_lock));
 	key_spd_pserialize_perform();
 #endif
 
@@ -1526,7 +1526,7 @@ key_unlink_sav(struct secasvar *sav)
 	SAVLIST_WRITER_REMOVE(sav);
 
 #ifdef NET_MPSAFE
-	KASSERT(mutex_ownable(softnet_lock));
+	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
 #endif
 
@@ -1568,7 +1568,7 @@ key_destroy_sav_with_ref(struct secasvar *sav)
 
 	mutex_enter(&key_sad.lock);
 #ifdef NET_MPSAFE
-	KASSERT(mutex_ownable(softnet_lock));
+	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
 #endif
 	localcount_drain(&sav->localcount, &key_sad.cv_lc, &key_sad.lock);
@@ -3049,7 +3049,7 @@ key_unlink_sah(struct secashead *sah)
 	SAHLIST_WRITER_REMOVE(sah);
 
 #ifdef NET_MPSAFE
-	KASSERT(mutex_ownable(softnet_lock));
+	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
 #endif
 
