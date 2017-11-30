@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.22 2017/10/25 16:09:46 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.23 2017/11/30 14:50:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.22 2017/10/25 16:09:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23 2017/11/30 14:50:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,12 +129,14 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
 
-	sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
-	    IST_LEVEL | IST_MPSAFE, gtmr_intr, NULL);
-	if (sc->sc_global_ih == NULL)
-		panic("%s: unable to register timer interrupt", __func__);
-	aprint_normal_dev(self, "interrupting on irq %d\n",
-	    mpcaa->mpcaa_irq);
+	if (mpcaa->mpcaa_irq != -1) {
+		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
+		    IST_LEVEL | IST_MPSAFE, gtmr_intr, NULL);
+		if (sc->sc_global_ih == NULL)
+			panic("%s: unable to register timer interrupt", __func__);
+		aprint_normal_dev(self, "interrupting on irq %d\n",
+		    mpcaa->mpcaa_irq);
+	}
 
 	const uint32_t cnt_frq = armreg_cnt_frq_read();
 	if (cnt_frq == 0) {
