@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1487 2017/11/29 04:09:01 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1488 2017/11/30 19:49:31 jmcneill Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1717,8 +1717,8 @@ Notes:
 external/gpl2/dtc/dtc2netbsd should be used to create directories to import
 
 Package:	dts
-Version:	4.14-rc6
-Current Vers:	4.14-rc6
+Version:	4.15-rc1
+Current Vers:	4.15-rc1
 Maintainer:	https://www.kernel.org/
 Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
 Home Page:	https://www.kernel.org/
