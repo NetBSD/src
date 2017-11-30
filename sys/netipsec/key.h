@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.19.2.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: key.h,v 1.19.2.2 2017/11/30 14:57:34 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -101,7 +101,7 @@ int key_checkrequest(const struct ipsecrequest *, const struct secasindex *,
     struct secasvar **);
 
 struct secpolicy *key_msg2sp (const struct sadb_x_policy *, size_t, int *);
-struct mbuf *key_sp2msg (const struct secpolicy *);
+struct mbuf *key_sp2msg(const struct secpolicy *, int);
 int key_ismyaddr (const struct sockaddr *);
 int key_spdacquire (const struct secpolicy *);
 u_long key_random (void);
