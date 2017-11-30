@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.163.2.2 2017/11/21 11:11:20 martin Exp $	*/
+/*	$NetBSD: key.c,v 1.163.2.3 2017/11/30 14:57:34 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163.2.2 2017/11/21 11:11:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163.2.3 2017/11/30 14:57:34 martin Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -601,23 +601,18 @@ key_msghdr_get_sockaddr(const struct sadb_msghdr *mhp, int idx)
 	return PFKEY_ADDR_SADDR(mhp->ext[idx]);
 }
 
-static struct mbuf *
+static void
 key_fill_replymsg(struct mbuf *m, int seq)
 {
 	struct sadb_msg *msg;
 
-	if (m->m_len < sizeof(*msg)) {
-		m = m_pullup(m, sizeof(*msg));
-		if (m == NULL)
-			return NULL;
-	}
+	KASSERT(m->m_len >= sizeof(*msg));
+
 	msg = mtod(m, struct sadb_msg *);
 	msg->sadb_msg_errno = 0;
 	msg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
 	if (seq != 0)
 		msg->sadb_msg_seq = seq;
-
-	return m;
 }
 
 #if 0
@@ -684,17 +679,17 @@ static struct mbuf *key_setsadbxfrag (u_int16_t);
 static void key_porttosaddr (union sockaddr_union *, u_int16_t);
 static int key_checksalen (const union sockaddr_union *);
 static struct mbuf *key_setsadbmsg (u_int8_t, u_int16_t, u_int8_t,
-	u_int32_t, pid_t, u_int16_t);
+	u_int32_t, pid_t, u_int16_t, int);
 static struct mbuf *key_setsadbsa (struct secasvar *);
-static struct mbuf *key_setsadbaddr (u_int16_t,
-	const struct sockaddr *, u_int8_t, u_int16_t);
+static struct mbuf *key_setsadbaddr(u_int16_t,
+	const struct sockaddr *, u_int8_t, u_int16_t, int);
 #if 0
 static struct mbuf *key_setsadbident (u_int16_t, u_int16_t, void *,
 	int, u_int64_t);
 #endif
 static struct mbuf *key_setsadbxsa2 (u_int8_t, u_int32_t, u_int16_t);
 static struct mbuf *key_setsadbxpolicy (u_int16_t, u_int8_t,
-	u_int32_t);
+	u_int32_t, int);
 static void *key_newbuf (const void *, u_int);
 #ifdef INET6
 static int key_ismyaddr6 (const struct sockaddr_in6 *);
@@ -748,12 +743,13 @@ static int key_api_get(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 
 static void key_getcomb_setlifetime (struct sadb_comb *);
-static struct mbuf *key_getcomb_esp (void);
-static struct mbuf *key_getcomb_ah (void);
-static struct mbuf *key_getcomb_ipcomp (void);
-static struct mbuf *key_getprop (const struct secasindex *);
+static struct mbuf *key_getcomb_esp(int);
+static struct mbuf *key_getcomb_ah(int);
+static struct mbuf *key_getcomb_ipcomp(int);
+static struct mbuf *key_getprop(const struct secasindex *, int);
 
-static int key_acquire(const struct secasindex *, const struct secpolicy *);
+static int key_acquire(const struct secasindex *, const struct secpolicy *,
+	    int);
 static int key_acquire_sendup_mbuf_later(struct mbuf *);
 static void key_acquire_sendup_pending_mbuf(void);
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -787,7 +783,8 @@ static const char *key_getuserfqdn (void);
 #endif
 static void key_sa_chgstate (struct secasvar *, u_int8_t);
 
-static struct mbuf *key_alloc_mbuf (int);
+static struct mbuf *key_alloc_mbuf(int, int);
+static struct mbuf *key_alloc_mbuf_simple(int, int);
 
 static void key_timehandler(void *);
 static void key_timehandler_work(struct work *, void *);
@@ -1025,7 +1022,7 @@ key_checkrequest(const struct ipsecrequest *isr, const struct secasindex *saidx,
 	}
 
 	/* there is no SA */
-	error = key_acquire(saidx, isr->sp);
+	error = key_acquire(saidx, isr->sp, M_NOWAIT);
 	if (error != 0) {
 		/* XXX What should I do ? */
 		IPSECLOG(LOG_DEBUG, "error %d returned from key_acquire.\n",
@@ -1969,7 +1966,7 @@ key_newreqid(void)
  * copy secpolicy struct to sadb_x_policy structure indicated.
  */
 struct mbuf *
-key_sp2msg(const struct secpolicy *sp)
+key_sp2msg(const struct secpolicy *sp, int mflag)
 {
 	struct sadb_x_policy *xpl;
 	int tlen;
@@ -1980,7 +1977,7 @@ key_sp2msg(const struct secpolicy *sp)
 
 	tlen = key_getspreqmsglen(sp);
 
-	m = key_alloc_mbuf(tlen);
+	m = key_alloc_mbuf(tlen, mflag);
 	if (!m || m->m_next) {	/*XXX*/
 		if (m)
 			m_freem(m);
@@ -2029,7 +2026,11 @@ key_sp2msg(const struct secpolicy *sp)
 	return m;
 }
 
-/* m will not be freed nor modified */
+/*
+ * m will not be freed nor modified. It never return NULL.
+ * If it returns a mbuf of M_PKTHDR, the mbuf ensures to have
+ * contiguous length at least sizeof(struct sadb_msg).
+ */
 static struct mbuf *
 key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 		int ndeep, int nitem, ...)
@@ -2042,12 +2043,13 @@ key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
+	KASSERT(!cpu_softintr_p());
 
 	va_start(ap, nitem);
 	for (i = 0; i < nitem; i++) {
 		idx = va_arg(ap, int);
-		if (idx < 0 || idx > SADB_EXT_MAX)
-			goto fail;
+		KASSERT(idx >= 0);
+		KASSERT(idx <= SADB_EXT_MAX);
 		/* don't attempt to pull empty extension */
 		if (idx == SADB_EXT_RESERVED && mhp->msg == NULL)
 			continue;
@@ -2058,29 +2060,22 @@ key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 		if (idx == SADB_EXT_RESERVED) {
 			CTASSERT(PFKEY_ALIGN8(sizeof(struct sadb_msg)) <= MHLEN);
 			len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
-			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			if (!n)
-				goto fail;
+			MGETHDR(n, M_WAITOK, MT_DATA);
 			n->m_len = len;
 			n->m_next = NULL;
 			m_copydata(m, 0, sizeof(struct sadb_msg),
 			    mtod(n, void *));
 		} else if (i < ndeep) {
 			len = mhp->extlen[idx];
-			n = key_alloc_mbuf(len);
-			if (!n || n->m_next) {	/*XXX*/
-				if (n)
-					m_freem(n);
-				goto fail;
-			}
+			n = key_alloc_mbuf(len, M_WAITOK);
+			KASSERT(n->m_next == NULL);
 			m_copydata(m, mhp->extoff[idx], mhp->extlen[idx],
 			    mtod(n, void *));
 		} else {
 			n = m_copym(m, mhp->extoff[idx], mhp->extlen[idx],
-			    M_DONTWAIT);
+			    M_WAITOK);
 		}
-		if (n == NULL)
-			goto fail;
+		KASSERT(n != NULL);
 
 		if (result)
 			m_cat(result, n);
@@ -2089,18 +2084,15 @@ key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 	}
 	va_end(ap);
 
-	if (result && (result->m_flags & M_PKTHDR) != 0) {
+	KASSERT(result != NULL);
+	if ((result->m_flags & M_PKTHDR) != 0) {
 		result->m_pkthdr.len = 0;
 		for (n = result; n; n = n->m_next)
 			result->m_pkthdr.len += n->m_len;
+		KASSERT(result->m_len >= sizeof(struct sadb_msg));
 	}
 
 	return result;
-
-fail:
-	va_end(ap);
-	m_freem(result);
-	return NULL;
 }
 
 /*
@@ -2278,13 +2270,8 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 		    SADB_X_EXT_POLICY,
 		    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
 	}
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
 
-	n = key_fill_replymsg(n, 0);
-	if (n == NULL)
-		return key_senderror(so, m, ENOBUFS);
-
+	key_fill_replymsg(n, 0);
 	off = 0;
 	mpolicy = m_pulldown(n, PFKEY_ALIGN8(sizeof(struct sadb_msg)),
 	    sizeof(*xpl), &off);
@@ -2404,16 +2391,28 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 4, SADB_EXT_RESERVED,
 	    SADB_X_EXT_POLICY, SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
-
-	n = key_fill_replymsg(n, 0);
-	if (n == NULL)
-		return key_senderror(so, m, ENOBUFS);
-
+	key_fill_replymsg(n, 0);
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
+}
+
+static struct mbuf *
+key_alloc_mbuf_simple(int len, int mflag)
+{
+	struct mbuf *n;
+
+	KASSERT(mflag == M_NOWAIT || (mflag == M_WAITOK && !cpu_softintr_p()));
+
+	MGETHDR(n, mflag, MT_DATA);
+	if (n && len > MHLEN) {
+		MCLGET(n, mflag);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			n = NULL;
+		}
+	}
+	return n;
 }
 
 /*
@@ -2465,17 +2464,7 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 	/* create new sadb_msg to reply. */
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
-	MGETHDR(n, M_DONTWAIT, MT_DATA);
-	if (n && len > MHLEN) {
-		MCLGET(n, M_DONTWAIT);
-		if ((n->m_flags & M_EXT) == 0) {
-			m_freem(n);
-			n = NULL;
-		}
-	}
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
-
+	n = key_alloc_mbuf_simple(len, M_WAITOK);
 	n->m_len = len;
 	n->m_next = NULL;
 	off = 0;
@@ -2486,20 +2475,13 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 	KASSERTMSG(off == len, "length inconsistency");
 
 	n->m_next = m_copym(m, mhp->extoff[SADB_X_EXT_POLICY],
-	    mhp->extlen[SADB_X_EXT_POLICY], M_DONTWAIT);
-	if (!n->m_next) {
-		m_freem(n);
-		return key_senderror(so, m, ENOBUFS);
-	}
+	    mhp->extlen[SADB_X_EXT_POLICY], M_WAITOK);
 
 	n->m_pkthdr.len = 0;
 	for (nn = n; nn; nn = nn->m_next)
 		n->m_pkthdr.len += nn->m_len;
 
-	n = key_fill_replymsg(n, 0);
-	if (n == NULL)
-		return key_senderror(so, m, ENOBUFS);
-
+	key_fill_replymsg(n, 0);
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
@@ -2545,11 +2527,8 @@ key_api_spdget(struct socket *so, struct mbuf *m,
 	n = key_setdumpsp(sp, SADB_X_SPDGET, mhp->msg->sadb_msg_seq,
 	    mhp->msg->sadb_msg_pid);
 	KEY_SP_UNREF(&sp); /* ref gained by key_getspbyid */
-	if (n != NULL) {
-		m_freem(m);
-		return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
-	} else
-		return key_senderror(so, m, ENOBUFS);
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
 }
 
 #ifdef notyet
@@ -2718,13 +2697,6 @@ key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
 			--cnt;
 			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
-			if (!n) {
-				*errorp = ENOBUFS;
-				if (m)
-					m_freem(m);
-				return (NULL);
-			}
-
 			totlen += n->m_pkthdr.len;
 			if (!m) {
 				m = n;
@@ -2871,42 +2843,33 @@ key_api_nat_map(struct socket *so, struct mbuf *m,
 	return 0;
 }
 
+/*
+ * Never return NULL.
+ */
 static struct mbuf *
 key_setdumpsp(struct secpolicy *sp, u_int8_t type, u_int32_t seq, pid_t pid)
 {
 	struct mbuf *result = NULL, *m;
 
+	KASSERT(!cpu_softintr_p());
+
 	m = key_setsadbmsg(type, 0, SADB_SATYPE_UNSPEC, seq, pid,
-	    key_sp_refcnt(sp));
-	if (!m)
-		goto fail;
+	    key_sp_refcnt(sp), M_WAITOK);
 	result = m;
 
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
-	    &sp->spidx.src.sa, sp->spidx.prefs, sp->spidx.ul_proto);
-	if (!m)
-		goto fail;
+	    &sp->spidx.src.sa, sp->spidx.prefs, sp->spidx.ul_proto, M_WAITOK);
 	m_cat(result, m);
 
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
-	    &sp->spidx.dst.sa, sp->spidx.prefd, sp->spidx.ul_proto);
-	if (!m)
-		goto fail;
+	    &sp->spidx.dst.sa, sp->spidx.prefd, sp->spidx.ul_proto, M_WAITOK);
 	m_cat(result, m);
 
-	m = key_sp2msg(sp);
-	if (!m)
-		goto fail;
+	m = key_sp2msg(sp, M_WAITOK);
 	m_cat(result, m);
 
-	if ((result->m_flags & M_PKTHDR) == 0)
-		goto fail;
-
-	if (result->m_len < sizeof(struct sadb_msg)) {
-		result = m_pullup(result, sizeof(struct sadb_msg));
-		if (result == NULL)
-			goto fail;
-	}
+	KASSERT(result->m_flags & M_PKTHDR);
+	KASSERT(result->m_len >= sizeof(struct sadb_msg));
 
 	result->m_pkthdr.len = 0;
 	for (m = result; m; m = m->m_next)
@@ -2916,10 +2879,6 @@ key_setdumpsp(struct secpolicy *sp, u_int8_t type, u_int32_t seq, pid_t pid)
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
 	return result;
-
-fail:
-	m_freem(result);
-	return NULL;
 }
 
 /*
@@ -2976,22 +2935,14 @@ key_spdexpire(struct secpolicy *sp)
 	KASSERT(sp != NULL);
 
 	/* set msg header */
-	m = key_setsadbmsg(SADB_X_SPDEXPIRE, 0, 0, 0, 0, 0);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	m = key_setsadbmsg(SADB_X_SPDEXPIRE, 0, 0, 0, 0, 0, M_WAITOK);
 	result = m;
 
 	/* create lifetime extension (current and hard) */
 	len = PFKEY_ALIGN8(sizeof(*lt)) * 2;
-	m = key_alloc_mbuf(len);
-	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
-		error = ENOBUFS;
-		goto fail;
-	}
+	m = key_alloc_mbuf(len, M_WAITOK);
+	KASSERT(m->m_next == NULL);
+
 	memset(mtod(m, void *), 0, len);
 	lt = mtod(m, struct sadb_lifetime *);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
@@ -3011,42 +2962,20 @@ key_spdexpire(struct secpolicy *sp)
 
 	/* set sadb_address for source */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC, &sp->spidx.src.sa,
-	    sp->spidx.prefs, sp->spidx.ul_proto);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	    sp->spidx.prefs, sp->spidx.ul_proto, M_WAITOK);
 	m_cat(result, m);
 
 	/* set sadb_address for destination */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST, &sp->spidx.dst.sa,
-	    sp->spidx.prefd, sp->spidx.ul_proto);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	    sp->spidx.prefd, sp->spidx.ul_proto, M_WAITOK);
 	m_cat(result, m);
 
 	/* set secpolicy */
-	m = key_sp2msg(sp);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	m = key_sp2msg(sp, M_WAITOK);
 	m_cat(result, m);
 
-	if ((result->m_flags & M_PKTHDR) == 0) {
-		error = EINVAL;
-		goto fail;
-	}
-
-	if (result->m_len < sizeof(struct sadb_msg)) {
-		result = m_pullup(result, sizeof(struct sadb_msg));
-		if (result == NULL) {
-			error = ENOBUFS;
-			goto fail;
-		}
-	}
+	KASSERT(result->m_flags & M_PKTHDR);
+	KASSERT(result->m_len >= sizeof(struct sadb_msg));
 
 	result->m_pkthdr.len = 0;
 	for (m = result; m; m = m->m_next)
@@ -3055,11 +2984,7 @@ key_spdexpire(struct secpolicy *sp)
 	mtod(result, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
-	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
-
- fail:
-	if (result)
-		m_freem(result);
+	error = key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 	splx(s);
 	return error;
 }
@@ -3707,7 +3632,7 @@ key_init_xform(struct secasvar *sav)
 }
 
 /*
- * subroutine for SADB_GET and SADB_DUMP.
+ * subroutine for SADB_GET and SADB_DUMP. It never return NULL.
  */
 static struct mbuf *
 key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
@@ -3732,9 +3657,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 
 	};
 
-	m = key_setsadbmsg(type, 0, satype, seq, pid, key_sa_refcnt(sav));
-	if (m == NULL)
-		goto fail;
+	m = key_setsadbmsg(type, 0, satype, seq, pid, key_sa_refcnt(sav), M_WAITOK);
 	result = m;
 
 	for (i = __arraycount(dumporder) - 1; i >= 0; i--) {
@@ -3754,13 +3677,13 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 		case SADB_EXT_ADDRESS_SRC:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
 			    &sav->sah->saidx.src.sa,
-			    FULLMASK, IPSEC_ULPROTO_ANY);
+			    FULLMASK, IPSEC_ULPROTO_ANY, M_WAITOK);
 			break;
 
 		case SADB_EXT_ADDRESS_DST:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
 			    &sav->sah->saidx.dst.sa,
-			    FULLMASK, IPSEC_ULPROTO_ANY);
+			    FULLMASK, IPSEC_ULPROTO_ANY, M_WAITOK);
 			break;
 
 		case SADB_EXT_KEY_AUTH:
@@ -3843,19 +3766,14 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 		}
 
 		KASSERT(!(m && p));
-		if (!m && !p)
-			goto fail;
+		KASSERT(m != NULL || p != NULL);
 		if (p && tres) {
-			M_PREPEND(tres, l, M_DONTWAIT);
-			if (!tres)
-				goto fail;
+			M_PREPEND(tres, l, M_WAITOK);
 			memcpy(mtod(tres, void *), p, l);
 			continue;
 		}
 		if (p) {
-			m = key_alloc_mbuf(l);
-			if (!m)
-				goto fail;
+			m = key_alloc_mbuf(l, M_WAITOK);
 			m_copyback(m, 0, l, p);
 		}
 
@@ -3867,11 +3785,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 	m_cat(result, tres);
 	tres = NULL; /* avoid free on error below */
 
-	if (result->m_len < sizeof(struct sadb_msg)) {
-		result = m_pullup(result, sizeof(struct sadb_msg));
-		if (result == NULL)
-			goto fail;
-	}
+	KASSERT(result->m_len >= sizeof(struct sadb_msg));
 
 	result->m_pkthdr.len = 0;
 	for (m = result; m; m = m->m_next)
@@ -3881,11 +3795,6 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
 	return result;
-
-fail:
-	m_freem(result);
-	m_freem(tres);
-	return NULL;
 }
 
 
@@ -3901,12 +3810,8 @@ key_setsadbxtype(u_int16_t type)
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_x_nat_t_type));
 
-	m = key_alloc_mbuf(len);
-	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
-		return NULL;
-	}
+	m = key_alloc_mbuf(len, M_WAITOK);
+	KASSERT(m->m_next == NULL);
 
 	p = mtod(m, struct sadb_x_nat_t_type *);
 
@@ -3929,12 +3834,8 @@ key_setsadbxport(u_int16_t port, u_int16_t type)
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_x_nat_t_port));
 
-	m = key_alloc_mbuf(len);
-	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
-		return NULL;
-	}
+	m = key_alloc_mbuf(len, M_WAITOK);
+	KASSERT(m->m_next == NULL);
 
 	p = mtod(m, struct sadb_x_nat_t_port *);
 
@@ -3958,12 +3859,8 @@ key_setsadbxfrag(u_int16_t flen)
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_x_nat_t_frag));
 
-	m = key_alloc_mbuf(len);
-	if (!m || m->m_next) {  /*XXX*/
-		if (m)
-			m_freem(m);
-		return NULL;
-	}
+	m = key_alloc_mbuf(len, M_WAITOK);
+	KASSERT(m->m_next == NULL);
 
 	p = mtod(m, struct sadb_x_nat_t_frag *);
 
@@ -4062,7 +3959,7 @@ key_checksalen(const union sockaddr_union *saddr)
  */
 static struct mbuf *
 key_setsadbmsg(u_int8_t type,  u_int16_t tlen, u_int8_t satype,
-	       u_int32_t seq, pid_t pid, u_int16_t reserved)
+	       u_int32_t seq, pid_t pid, u_int16_t reserved, int mflag)
 {
 	struct mbuf *m;
 	struct sadb_msg *p;
@@ -4072,14 +3969,7 @@ key_setsadbmsg(u_int8_t type,  u_int16_t tlen, u_int8_t satype,
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m && len > MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_freem(m);
-			m = NULL;
-		}
-	}
+	m = key_alloc_mbuf_simple(len, mflag);
 	if (!m)
 		return NULL;
 	m->m_pkthdr.len = m->m_len = len;
@@ -4111,12 +4001,8 @@ key_setsadbsa(struct secasvar *sav)
 	int len;
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_sa));
-	m = key_alloc_mbuf(len);
-	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
-		return NULL;
-	}
+	m = key_alloc_mbuf(len, M_WAITOK);
+	KASSERT(m->m_next == NULL);
 
 	p = mtod(m, struct sadb_sa *);
 
@@ -4138,7 +4024,7 @@ key_setsadbsa(struct secasvar *sav)
  */
 static struct mbuf *
 key_setsadbaddr(u_int16_t exttype, const struct sockaddr *saddr,
-		u_int8_t prefixlen, u_int16_t ul_proto)
+		u_int8_t prefixlen, u_int16_t ul_proto, int mflag)
 {
 	struct mbuf *m;
 	struct sadb_address *p;
@@ -4146,7 +4032,7 @@ key_setsadbaddr(u_int16_t exttype, const struct sockaddr *saddr,
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_address)) +
 	    PFKEY_ALIGN8(saddr->sa_len);
-	m = key_alloc_mbuf(len);
+	m = key_alloc_mbuf(len, mflag);
 	if (!m || m->m_next) {	/*XXX*/
 		if (m)
 			m_freem(m);
@@ -4227,12 +4113,8 @@ key_setsadbxsa2(u_int8_t mode, u_int32_t seq, u_int16_t reqid)
 	size_t len;
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_x_sa2));
-	m = key_alloc_mbuf(len);
-	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
-		return NULL;
-	}
+	m = key_alloc_mbuf(len, M_WAITOK);
+	KASSERT(m->m_next == NULL);
 
 	p = mtod(m, struct sadb_x_sa2 *);
 
@@ -4252,14 +4134,15 @@ key_setsadbxsa2(u_int8_t mode, u_int32_t seq, u_int16_t reqid)
  * set data into sadb_x_policy
  */
 static struct mbuf *
-key_setsadbxpolicy(const u_int16_t type, const u_int8_t dir, const u_int32_t id)
+key_setsadbxpolicy(const u_int16_t type, const u_int8_t dir, const u_int32_t id,
+    int mflag)
 {
 	struct mbuf *m;
 	struct sadb_x_policy *p;
 	size_t len;
 
 	len = PFKEY_ALIGN8(sizeof(struct sadb_x_policy));
-	m = key_alloc_mbuf(len);
+	m = key_alloc_mbuf(len, mflag);
 	if (!m || m->m_next) {	/*XXX*/
 		if (m)
 			m_freem(m);
@@ -5257,17 +5140,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg)) +
 	    PFKEY_ALIGN8(sizeof(struct sadb_sa));
 
-	MGETHDR(n, M_DONTWAIT, MT_DATA);
-	if (len > MHLEN) {
-		MCLGET(n, M_DONTWAIT);
-		if ((n->m_flags & M_EXT) == 0) {
-			m_freem(n);
-			n = NULL;
-		}
-	}
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
-
+	n = key_alloc_mbuf_simple(len, M_WAITOK);
 	n->m_len = len;
 	n->m_next = NULL;
 	off = 0;
@@ -5285,23 +5158,14 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 
 	n->m_next = key_gather_mbuf(m, mhp, 0, 2, SADB_EXT_ADDRESS_SRC,
 	    SADB_EXT_ADDRESS_DST);
-	if (!n->m_next) {
-		m_freem(n);
-		return key_senderror(so, m, ENOBUFS);
-	}
 
-	if (n->m_len < sizeof(struct sadb_msg)) {
-		n = m_pullup(n, sizeof(struct sadb_msg));
-		if (n == NULL)
-			return key_sendup_mbuf(so, m, KEY_SENDUP_ONE);
-	}
+	KASSERT(n->m_len >= sizeof(struct sadb_msg));
 
 	n->m_pkthdr.len = 0;
 	for (nn = n; nn; nn = nn->m_next)
 		n->m_pkthdr.len += nn->m_len;
 
 	key_fill_replymsg(n, newsav->seq);
-
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
     }
@@ -5970,7 +5834,7 @@ key_setident(struct secashead *sah, struct mbuf *m,
 }
 
 /*
- * m will not be freed on return.
+ * m will not be freed on return. It never return NULL.
  * it is caller's responsibility to free the result.
  */
 static struct mbuf *
@@ -5991,14 +5855,9 @@ key_getmsgbuf_x1(struct mbuf *m, const struct sadb_msghdr *mhp)
 	    SADB_X_EXT_NAT_T_TYPE, SADB_X_EXT_NAT_T_SPORT,
 	    SADB_X_EXT_NAT_T_DPORT, SADB_X_EXT_NAT_T_OAI,
 	    SADB_X_EXT_NAT_T_OAR, SADB_X_EXT_NAT_T_FRAG);
-	if (!n)
-		return NULL;
 
-	if (n->m_len < sizeof(struct sadb_msg)) {
-		n = m_pullup(n, sizeof(struct sadb_msg));
-		if (n == NULL)
-			return NULL;
-	}
+	KASSERT(n->m_len >= sizeof(struct sadb_msg));
+
 	mtod(n, struct sadb_msg *)->sadb_msg_errno = 0;
 	mtod(n, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(n->m_pkthdr.len);
@@ -6098,13 +5957,8 @@ key_api_delete(struct socket *so, struct mbuf *m,
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 4, SADB_EXT_RESERVED,
 	    SADB_EXT_SA, SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
 
-	n = key_fill_replymsg(n, 0);
-	if (n == NULL)
-		return key_senderror(so, m, ENOBUFS);
-
+	key_fill_replymsg(n, 0);
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
@@ -6160,13 +6014,8 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 3, SADB_EXT_RESERVED,
 	    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
 
-	n = key_fill_replymsg(n, 0);
-	if (n == NULL)
-		return key_senderror(so, m, ENOBUFS);
-
+	key_fill_replymsg(n, 0);
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
@@ -6259,9 +6108,6 @@ key_api_get(struct socket *so, struct mbuf *m,
 	n = key_setdumpsa(sav, SADB_GET, satype, mhp->msg->sadb_msg_seq,
 	    mhp->msg->sadb_msg_pid);
 	KEY_SA_UNREF(&sav);
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
-
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
     }
@@ -6287,7 +6133,7 @@ key_getcomb_setlifetime(struct sadb_comb *comb)
  * XXX no idea if the user wants ESP authentication or not
  */
 static struct mbuf *
-key_getcomb_esp(void)
+key_getcomb_esp(int mflag)
 {
 	struct sadb_comb *comb;
 	const struct enc_xform *algo;
@@ -6312,11 +6158,11 @@ key_getcomb_esp(void)
 			encmin = _BITS(algo->minkey);
 
 		if (ipsec_esp_auth)
-			m = key_getcomb_ah();
+			m = key_getcomb_ah(mflag);
 		else {
 			KASSERTMSG(l <= MLEN,
 			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
-			MGET(m, M_DONTWAIT, MT_DATA);
+			MGET(m, mflag, MT_DATA);
 			if (m) {
 				M_ALIGN(m, l);
 				m->m_len = l;
@@ -6385,7 +6231,7 @@ key_getsizes_ah(const struct auth_hash *ah, int alg,
  * XXX reorder combinations by preference
  */
 static struct mbuf *
-key_getcomb_ah(void)
+key_getcomb_ah(int mflag)
 {
 	struct sadb_comb *comb;
 	const struct auth_hash *algo;
@@ -6416,14 +6262,14 @@ key_getcomb_ah(void)
 		if (!m) {
 			KASSERTMSG(l <= MLEN,
 			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
-			MGET(m, M_DONTWAIT, MT_DATA);
+			MGET(m, mflag, MT_DATA);
 			if (m) {
 				M_ALIGN(m, l);
 				m->m_len = l;
 				m->m_next = NULL;
 			}
 		} else
-			M_PREPEND(m, l, M_DONTWAIT);
+			M_PREPEND(m, l, mflag);
 		if (!m)
 			return NULL;
 
@@ -6449,7 +6295,7 @@ key_getcomb_ah(void)
  * XXX reorder combinations by preference
  */
 static struct mbuf *
-key_getcomb_ipcomp(void)
+key_getcomb_ipcomp(int mflag)
 {
 	struct sadb_comb *comb;
 	const struct comp_algo *algo;
@@ -6466,14 +6312,14 @@ key_getcomb_ipcomp(void)
 		if (!m) {
 			KASSERTMSG(l <= MLEN,
 			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
-			MGET(m, M_DONTWAIT, MT_DATA);
+			MGET(m, mflag, MT_DATA);
 			if (m) {
 				M_ALIGN(m, l);
 				m->m_len = l;
 				m->m_next = NULL;
 			}
 		} else
-			M_PREPEND(m, l, M_DONTWAIT);
+			M_PREPEND(m, l, mflag);
 		if (!m)
 			return NULL;
 
@@ -6499,7 +6345,7 @@ key_getcomb_ipcomp(void)
  * XXX sysctl interface to ipsec_{ah,esp}_keymin
  */
 static struct mbuf *
-key_getprop(const struct secasindex *saidx)
+key_getprop(const struct secasindex *saidx, int mflag)
 {
 	struct sadb_prop *prop;
 	struct mbuf *m, *n;
@@ -6508,13 +6354,13 @@ key_getprop(const struct secasindex *saidx)
 
 	switch (saidx->proto)  {
 	case IPPROTO_ESP:
-		m = key_getcomb_esp();
+		m = key_getcomb_esp(mflag);
 		break;
 	case IPPROTO_AH:
-		m = key_getcomb_ah();
+		m = key_getcomb_ah(mflag);
 		break;
 	case IPPROTO_IPCOMP:
-		m = key_getcomb_ipcomp();
+		m = key_getcomb_ipcomp(mflag);
 		break;
 	default:
 		return NULL;
@@ -6522,7 +6368,7 @@ key_getprop(const struct secasindex *saidx)
 
 	if (!m)
 		return NULL;
-	M_PREPEND(m, l, M_DONTWAIT);
+	M_PREPEND(m, l, mflag);
 	if (!m)
 		return NULL;
 
@@ -6560,7 +6406,7 @@ key_getprop(const struct secasindex *saidx)
  *    others: error number
  */
 static int
-key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
+key_acquire(const struct secasindex *saidx, const struct secpolicy *sp, int mflag)
 {
 	struct mbuf *result = NULL, *m;
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -6612,7 +6458,7 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 #else
 	seq = (acq_seq = (acq_seq == ~0 ? 1 : ++acq_seq));
 #endif
-	m = key_setsadbmsg(SADB_ACQUIRE, 0, satype, seq, 0, 0);
+	m = key_setsadbmsg(SADB_ACQUIRE, 0, satype, seq, 0, 0, mflag);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -6621,7 +6467,7 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 
 	/* set sadb_address for saidx's. */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC, &saidx->src.sa, FULLMASK,
-	    IPSEC_ULPROTO_ANY);
+	    IPSEC_ULPROTO_ANY, mflag);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -6629,7 +6475,7 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 	m_cat(result, m);
 
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST, &saidx->dst.sa, FULLMASK,
-	    IPSEC_ULPROTO_ANY);
+	    IPSEC_ULPROTO_ANY, mflag);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -6640,7 +6486,8 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 
 	/* set sadb_x_policy */
 	if (sp) {
-		m = key_setsadbxpolicy(sp->policy, sp->spidx.dir, sp->id);
+		m = key_setsadbxpolicy(sp->policy, sp->spidx.dir, sp->id,
+		    mflag);
 		if (!m) {
 			error = ENOBUFS;
 			goto fail;
@@ -6692,7 +6539,7 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 	/* XXX sensitivity (optional) */
 
 	/* create proposal/combination extension */
-	m = key_getprop(saidx);
+	m = key_getprop(saidx, mflag);
 #if 0
 	/*
 	 * spec conformant: always attach proposal/combination extension,
@@ -6712,18 +6559,8 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 		m_cat(result, m);
 #endif
 
-	if ((result->m_flags & M_PKTHDR) == 0) {
-		error = EINVAL;
-		goto fail;
-	}
-
-	if (result->m_len < sizeof(struct sadb_msg)) {
-		result = m_pullup(result, sizeof(struct sadb_msg));
-		if (result == NULL) {
-			error = ENOBUFS;
-			goto fail;
-		}
-	}
+	KASSERT(result->m_flags & M_PKTHDR);
+	KASSERT(result->m_len >= sizeof(struct sadb_msg));
 
 	result->m_pkthdr.len = 0;
 	for (m = result; m; m = m->m_next)
@@ -6732,6 +6569,12 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp)
 	mtod(result, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
+	/*
+	 * Called from key_api_acquire that must come from userland, so
+	 * we can call key_sendup_mbuf immediately.
+	 */
+	if (mflag == M_WAITOK)
+		return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 	/*
 	 * XXX we cannot call key_sendup_mbuf directly here because
 	 * it can cause a deadlock:
@@ -7017,7 +6860,7 @@ key_api_acquire(struct socket *so, struct mbuf *m,
 	pserialize_read_exit(s);
     }
 
-	error = key_acquire(&saidx, NULL);
+	error = key_acquire(&saidx, NULL, M_WAITOK);
 	if (error != 0) {
 		IPSECLOG(LOG_DEBUG, "error %d returned from key_acquire.\n",
 		    error);
@@ -7105,25 +6948,13 @@ key_api_register(struct socket *so, struct mbuf *m,
 	if (len > MCLBYTES)
 		return key_senderror(so, m, ENOBUFS);
 
-	MGETHDR(n, M_DONTWAIT, MT_DATA);
-	if (len > MHLEN) {
-		MCLGET(n, M_DONTWAIT);
-		if ((n->m_flags & M_EXT) == 0) {
-			m_freem(n);
-			n = NULL;
-		}
-	}
-	if (!n)
-		return key_senderror(so, m, ENOBUFS);
-
+	n = key_alloc_mbuf_simple(len, M_WAITOK);
 	n->m_pkthdr.len = n->m_len = len;
 	n->m_next = NULL;
 	off = 0;
 
 	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, char *) + off);
-	n = key_fill_replymsg(n, 0);
-	if (n == NULL)
-		return key_senderror(so, m, ENOBUFS);
+	key_fill_replymsg(n, 0);
 
 	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
@@ -7243,39 +7074,24 @@ key_expire(struct secasvar *sav)
 	KASSERTMSG(satype != 0, "invalid proto is passed");
 
 	/* set msg header */
-	m = key_setsadbmsg(SADB_EXPIRE, 0, satype, sav->seq, 0, key_sa_refcnt(sav));
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	m = key_setsadbmsg(SADB_EXPIRE, 0, satype, sav->seq, 0, key_sa_refcnt(sav),
+	    M_WAITOK);
 	result = m;
 
 	/* create SA extension */
 	m = key_setsadbsa(sav);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
 	m_cat(result, m);
 
 	/* create SA extension */
 	m = key_setsadbxsa2(sav->sah->saidx.mode,
 	    sav->replay ? sav->replay->count : 0, sav->sah->saidx.reqid);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
 	m_cat(result, m);
 
 	/* create lifetime extension (current and soft) */
 	len = PFKEY_ALIGN8(sizeof(*lt)) * 2;
-	m = key_alloc_mbuf(len);
-	if (!m || m->m_next) {	/*XXX*/
-		if (m)
-			m_freem(m);
-		error = ENOBUFS;
-		goto fail;
-	}
+	m = key_alloc_mbuf(len, M_WAITOK);
+	KASSERT(m->m_next == NULL);
+
 	memset(mtod(m, void *), 0, len);
 	lt = mtod(m, struct sadb_lifetime *);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
@@ -7292,20 +7108,12 @@ key_expire(struct secasvar *sav)
 
 	/* set sadb_address for source */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC, &sav->sah->saidx.src.sa,
-	    FULLMASK, IPSEC_ULPROTO_ANY);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	    FULLMASK, IPSEC_ULPROTO_ANY, M_WAITOK);
 	m_cat(result, m);
 
 	/* set sadb_address for destination */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST, &sav->sah->saidx.dst.sa,
-	    FULLMASK, IPSEC_ULPROTO_ANY);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	    FULLMASK, IPSEC_ULPROTO_ANY, M_WAITOK);
 	m_cat(result, m);
 
 	if ((result->m_flags & M_PKTHDR) == 0) {
@@ -7476,12 +7284,6 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
-				if (!n) {
-					m_freem(m);
-					*errorp = ENOBUFS;
-					return (NULL);
-				}
-
 				if (!m)
 					m = n;
 				else
@@ -7728,18 +7530,8 @@ key_parse(struct mbuf *m, struct socket *so)
 	if (m->m_next) {
 		struct mbuf *n;
 
-		MGETHDR(n, M_DONTWAIT, MT_DATA);
-		if (n && m->m_pkthdr.len > MHLEN) {
-			MCLGET(n, M_DONTWAIT);
-			if ((n->m_flags & M_EXT) == 0) {
-				m_free(n);
-				n = NULL;
-			}
-		}
-		if (!n) {
-			m_freem(m);
-			return ENOBUFS;
-		}
+		n = key_alloc_mbuf_simple(m->m_pkthdr.len, M_WAITOK);
+
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(n, void *));
 		n->m_pkthdr.len = n->m_len = m->m_pkthdr.len;
 		n->m_next = NULL;
@@ -8362,16 +8154,23 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 
 /* XXX too much? */
 static struct mbuf *
-key_alloc_mbuf(int l)
+key_alloc_mbuf(int l, int mflag)
 {
 	struct mbuf *m = NULL, *n;
 	int len, t;
 
+	KASSERT(mflag == M_NOWAIT || (mflag == M_WAITOK && !cpu_softintr_p()));
+
 	len = l;
 	while (len > 0) {
-		MGET(n, M_DONTWAIT, MT_DATA);
-		if (n && len > MLEN)
-			MCLGET(n, M_DONTWAIT);
+		MGET(n, mflag, MT_DATA);
+		if (n && len > MLEN) {
+			MCLGET(n, mflag);
+			if ((n->m_flags & M_EXT) == 0) {
+				m_freem(n);
+				n = NULL;
+			}
+		}
 		if (!n) {
 			m_freem(m);
 			return NULL;
@@ -8456,12 +8255,6 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
-				if (!n) {
-					m_freem(m);
-					*errorp = ENOBUFS;
-					return (NULL);
-				}
-
 				if (!m)
 					m = n;
 				else
@@ -8514,11 +8307,6 @@ key_setspddump(int *errorp, pid_t pid)
 			--cnt;
 			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
-			if (!n) {
-				*errorp = ENOBUFS;
-				m_freem(m);
-				return (NULL);
-			}
 			if (!m)
 				m = n;
 			else {

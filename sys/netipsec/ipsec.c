@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.99.2.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.99.2.2 2017/11/30 14:57:34 martin Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.99.2.1 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.99.2.2 2017/11/30 14:57:34 martin Exp $");
 
 /*
  * IPsec controller part.
@@ -1422,7 +1422,7 @@ ipsec_get_policy(struct secpolicy *policy, struct mbuf **mp)
 	if (policy == NULL || mp == NULL)
 		return EINVAL;
 
-	*mp = key_sp2msg(policy);
+	*mp = key_sp2msg(policy, M_NOWAIT);
 	if (!*mp) {
 		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return ENOBUFS;
