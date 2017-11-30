@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1171 2017/11/29 16:10:01 martin Exp $
+# $NetBSD: GENERIC,v 1.1172 2017/11/30 11:56:45 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1171 $"
+#ident		"GENERIC-$Revision: 1.1172 $"
 
 maxusers	64		# estimated number of users
 
@@ -351,6 +351,7 @@ joy*		at acpi?		# Joystick/Game port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
+qemufwcfg*	at acpi?		# QEMU Firmware Configuration device
 sdhc*		at acpi?		# SD Host Controller
 sony*		at acpi?		# Sony Miscellaneous Controller
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
