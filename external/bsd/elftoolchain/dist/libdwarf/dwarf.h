@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf.h,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: dwarf.h,v 1.4 2017/11/30 19:45:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -436,22 +436,42 @@
 #define	DW_OP_GNU_addr_index		0xfb
 #define	DW_OP_GNU_const_index		0xfc
 
-#define DW_ATE_address		 	0x1
-#define DW_ATE_boolean		 	0x2
-#define DW_ATE_complex_float	 	0x3
-#define DW_ATE_float		 	0x4
-#define DW_ATE_signed		 	0x5
-#define DW_ATE_signed_char	 	0x6
-#define DW_ATE_unsigned		 	0x7
-#define DW_ATE_unsigned_char	 	0x8
-#define DW_ATE_imaginary_float	 	0x9
-#define DW_ATE_packed_decimal	 	0xa
-#define DW_ATE_numeric_string	 	0xb
-#define DW_ATE_edited		 	0xc
-#define DW_ATE_signed_fixed	 	0xd
-#define DW_ATE_unsigned_fixed	 	0xe
-#define DW_ATE_decimal_float	 	0xf
-#define DW_ATE_lo_user		 	0x80
+#define	DW_ATE_address			0x01
+#define	DW_ATE_boolean			0x02
+#define	DW_ATE_complex_float		0x03
+#define	DW_ATE_float			0x04
+#define	DW_ATE_signed			0x05
+#define	DW_ATE_signed_char		0x06
+#define	DW_ATE_unsigned			0x07
+#define	DW_ATE_unsigned_char		0x08
+#define	DW_ATE_imaginary_float		0x09
+#define	DW_ATE_packed_decimal		0x0a
+#define	DW_ATE_numeric_string		0x0b
+#define	DW_ATE_edited			0x0c
+#define	DW_ATE_signed_fixed		0x0d
+#define	DW_ATE_unsigned_fixed		0x0e
+#define	DW_ATE_decimal_float		0x0f
+#define	DW_ATE_UTF			0x10
+
+#define	DW_ATE_lo_user			0x80
+
+#define	DW_ATE_HP_float80		0x80	/* FP (80 bit) */
+#define	DW_ATE_HP_complex_float80	0x81	/* Complex FP (80 bit) */
+#define	DW_ATE_HP_float128		0x82	/* FP (128 bit) */
+#define	DW_ATE_HP_complex_float128	0x83	/* Complex FP (128 bit) */
+#define	DW_ATE_HP_floathpintel		0x84	/* FP (82 bit IA64) */
+#define	DW_ATE_HP_imaginary_float80	0x85	
+#define	DW_ATE_HP_imaginary_float128	0x86	
+#define	DW_ATE_HP_VAX_float		0x88	/* FP (F, G) */
+#define	DW_ATE_HP_VAX_float_d		0x89	/* FP (D) */
+#define	DW_ATE_HP_packed_decimal	0x8a	/* Cobol */
+#define	DW_ATE_HP_zoned_decimal		0x8b	/* Cobol */
+#define	DW_ATE_HP_edited		0x8c	/* Cobol */
+#define	DW_ATE_HP_signed_fixed		0x8d	/* Cobol */
+#define	DW_ATE_HP_unsigned_fixed	0x8e	/* Cobol */
+#define	DW_ATE_HP_VAX_complex_float	0x8f	/* Complex FP (F, G) */
+#define	DW_ATE_HP_VAX_complex_float_d	0x90	/* Complex FP (D) */
+
 #define DW_ATE_hi_user		 	0xff
 
 #define DW_ACCESS_public		0x01
