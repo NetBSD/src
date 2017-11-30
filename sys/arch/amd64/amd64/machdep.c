@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255.6.1 2017/09/04 20:41:28 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255.6.2 2017/11/30 14:03:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.6.1 2017/09/04 20:41:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.6.2 2017/11/30 14:03:41 martin Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -427,6 +427,7 @@ x86_64_tls_switch(struct lwp *l)
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = l->l_md.md_regs;
+	uint64_t zero = 0;
 
 	/*
 	 * Raise the IPL to IPL_HIGH.
@@ -449,6 +450,8 @@ x86_64_tls_switch(struct lwp *l)
 		setfs(tf->tf_fs);
 		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
 	} else {
+		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
+		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
 		setfs(0);
 		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
 		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
