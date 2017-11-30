@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3.dtsi,v 1.5 2017/10/05 01:32:46 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3.dtsi,v 1.6 2017/11/30 21:36:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -48,20 +48,6 @@
 	};
 
 	soc {
-		emac: ethernet@1c30000 {
-			compatible = "allwinner,sun8i-h3-emac";
-			reg = <0x01c30000 0x104>, <0x01c00030 0x4>;
-			reg-names = "emac", "syscon";
-			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
-			resets = <&ccu RST_BUS_EMAC>, <&ccu RST_BUS_EPHY>;
-			reset-names = "ahb", "ephy";
-			clocks = <&ccu CLK_BUS_EMAC>, <&ccu CLK_BUS_EPHY>;
-			clock-names = "ahb", "ephy";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
-		};
-
 		r_i2c: i2c@1f02400 {
 			compatible = "allwinner,sun6i-a31-i2c";
 			reg = <0x01f02400 0x400>;
@@ -85,21 +71,5 @@
 			resets = <&ccu RST_BUS_THS>;
 			#thermal-sensor-cells = <0>;
 		};
-	};
-};
-
-&pio {
-	emac_pins_rgmii_a: emac_rgmii@0 {
-		pins = "PD0", "PD1", "PD2", "PD3", "PD4", "PD5",
-		       "PD7", "PD8", "PD9", "PD10", "PD12", "PD13",
-		       "PD15", "PD16", "PD17";
-		function = "emac";
-		drive-strength = <40>;
-	};
-
-	emac_phy_reset_pin: emac_phy_reset_pin@0 {
-		pins = "PD6";
-		function = "emac";
-		drive-strength = <10>;
 	};
 };
