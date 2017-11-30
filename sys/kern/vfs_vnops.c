@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.196 2017/11/09 20:30:01 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.197 2017/11/30 20:25:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.196 2017/11/09 20:30:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.197 2017/11/30 20:25:55 christos Exp $");
 
 #include "veriexec.h"
 
@@ -123,6 +123,7 @@ static int vn_mmap(struct file *, off_t *, size_t, int, int *, int *,
 		   struct uvm_object **, int *);
 
 const struct fileops vnops = {
+	.fo_name = "vn",
 	.fo_read = vn_read,
 	.fo_write = vn_write,
 	.fo_ioctl = vn_ioctl,

@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.42 2017/07/30 00:50:52 nat Exp $ */
+/* $NetBSD: pad.c,v 1.43 2017/11/30 20:25:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.42 2017/07/30 00:50:52 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.43 2017/11/30 20:25:55 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,6 +172,7 @@ const struct cdevsw pad_cdevsw = {
 };
 
 const struct fileops pad_fileops = {
+	.fo_name = "pad",
 	.fo_read = fops_pad_read,
 	.fo_write = pad_write,
 	.fo_ioctl = pad_ioctl,
