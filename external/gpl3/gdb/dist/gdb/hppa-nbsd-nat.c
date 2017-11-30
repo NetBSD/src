@@ -285,7 +285,5 @@ _initialize_hppanbsd_nat (void)
   t->to_fetch_registers = hppanbsd_fetch_registers;
   t->to_store_registers = hppanbsd_store_registers;
 
-  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
-
-  add_target (t);
+  nbsd_nat_add_target (t);
 }

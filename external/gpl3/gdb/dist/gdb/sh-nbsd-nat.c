@@ -126,6 +126,5 @@ _initialize_shnbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = shnbsd_fetch_inferior_registers;
   t->to_store_registers = shnbsd_store_inferior_registers;
-  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
-  add_target (t);
+  nbsd_nat_add_target (t);
 }

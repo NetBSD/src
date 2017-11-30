@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2017/11/29 21:22:36 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2017/11/30 15:26:54 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -83,8 +83,8 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
 
-LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm 
-DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
+LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm -lutil
+DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM} ${LIBUTIL}
 
 .include <bsd.prog.mk>
 
