@@ -137,7 +137,7 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       i386bsd_supply_gregset (regcache, &regs);
@@ -159,7 +159,7 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
 
 	  xstateregs = alloca (x86bsd_xsave_len);
 	  if (ptrace (PT_GETXSTATE, pid,
-		      (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+		      (PTRACE_TYPE_ARG3) xstateregs,  ptid_get_lwp (inferior_ptid)) == -1)
 	    perror_with_name (_("Couldn't get extended state status"));
 
 	  i387_supply_xsave (regcache, -1, xstateregs);
@@ -169,7 +169,7 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
       
 #ifdef HAVE_PT_GETXMMREGS
       if (have_ptrace_xmmregs != 0
-	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, 0) == 0)
+	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs,  ptid_get_lwp (inferior_ptid)) == 0)
 	{
 	  have_ptrace_xmmregs = 1;
 	  i387_supply_fxsave (regcache, -1, xmmregs);
@@ -178,7 +178,7 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
 	{
 	  have_ptrace_xmmregs = 0;
 #endif
-          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
 	    perror_with_name (_("Couldn't get floating point status"));
 
 	  i387_supply_fsave (regcache, -1, &fpregs);
@@ -201,12 +201,12 @@ i386bsd_store_inferior_registers (struct target_ops *ops,
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       i386bsd_collect_gregset (regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't write registers"));
 
       if (regnum != -1)
@@ -227,10 +227,10 @@ i386bsd_store_inferior_registers (struct target_ops *ops,
 
 	  xstateregs = alloca (x86bsd_xsave_len);
 	  if (ptrace (PT_GETXSTATE, pid,
-		      (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+		      (PTRACE_TYPE_ARG3) xstateregs,  ptid_get_lwp (inferior_ptid)) == -1)
 	    perror_with_name (_("Couldn't get extended state status"));
 
-	  i387_collect_xsave (regcache, -1, xstateregs, 0);
+	  i387_collect_xsave (regcache, -1, xstateregs,  ptid_get_lwp (inferior_ptid));
 
 	  if (ptrace (PT_SETXSTATE, pid,
 		      (PTRACE_TYPE_ARG3) xstateregs, x86bsd_xsave_len) == -1)
@@ -241,25 +241,25 @@ i386bsd_store_inferior_registers (struct target_ops *ops,
 
 #ifdef HAVE_PT_GETXMMREGS
       if (have_ptrace_xmmregs != 0
-	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, 0) == 0)
+	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs,  ptid_get_lwp (inferior_ptid)) == 0)
 	{
 	  have_ptrace_xmmregs = 1;
 
 	  i387_collect_fxsave (regcache, regnum, xmmregs);
 
-	  if (ptrace (PT_SETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, 0) == -1)
+	  if (ptrace (PT_SETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs,  ptid_get_lwp (inferior_ptid)) == -1)
             perror_with_name (_("Couldn't write XMM registers"));
 	}
       else
 	{
 	  have_ptrace_xmmregs = 0;
 #endif
-          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
 	    perror_with_name (_("Couldn't get floating point status"));
 
           i387_collect_fsave (regcache, regnum, &fpregs);
 
-          if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+          if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
 	    perror_with_name (_("Couldn't write floating point status"));
 #ifdef HAVE_PT_GETXMMREGS
         }
