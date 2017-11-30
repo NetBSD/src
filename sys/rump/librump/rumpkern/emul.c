@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.181.6.1 2017/06/04 20:35:01 bouyer Exp $	*/
+/*	$NetBSD: emul.c,v 1.181.6.2 2017/11/30 14:40:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.181.6.1 2017/06/04 20:35:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.181.6.2 2017/11/30 14:40:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.181.6.1 2017/06/04 20:35:01 bouyer Exp $"
 #include <sys/module.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#include <sys/pserialize.h>
 #ifdef LOCKDEBUG
 #include <sys/sleepq.h>
 #endif
@@ -165,11 +166,23 @@ calc_cache_size(vsize_t vasz, int pct, int va_pct)
 	return t;
 }
 
+#define	RETURN_ADDRESS	(uintptr_t)__builtin_return_address(0)
+
 void
 assert_sleepable(void)
 {
+	const char *reason = NULL;
 
 	/* always sleepable, although we should improve this */
+
+	if (!pserialize_not_in_read_section()) {
+		reason = "pserialize";
+	}
+
+	if (reason) {
+		panic("%s: %s caller=%p", __func__, reason,
+		    (void *)RETURN_ADDRESS);
+	}
 }
 
 void

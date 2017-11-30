@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.158 2017/01/26 04:11:56 christos Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.158.6.1 2017/11/30 14:40:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.158 2017/01/26 04:11:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.158.6.1 2017/11/30 14:40:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.158 2017/01/26 04:11:56 christos Exp
 #include <sys/syslog.h>
 #include <sys/atomic.h>
 #include <sys/lwp.h>
+#include <sys/pserialize.h>
 
 #include <machine/lock.h>
 
@@ -87,6 +88,9 @@ assert_sleepable(void)
 	}
 	if (cpu_softintr_p()) {
 		reason = "softint";
+	}
+	if (!pserialize_not_in_read_section()) {
+		reason = "pserialize";
 	}
 
 	if (reason) {
