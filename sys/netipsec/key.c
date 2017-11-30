@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.244 2017/11/30 02:43:49 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.245 2017/11/30 02:45:12 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.244 2017/11/30 02:43:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.245 2017/11/30 02:45:12 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -800,7 +800,6 @@ key_sp_refcnt(const struct secpolicy *sp)
 	return 0;
 }
 
-#ifdef NET_MPSAFE
 static void
 key_spd_pserialize_perform(void)
 {
@@ -818,7 +817,6 @@ key_spd_pserialize_perform(void)
 	key_spd.psz_performing = false;
 	cv_broadcast(&key_spd.cv_psz);
 }
-#endif
 
 /*
  * Remove the sp from the key_spd.splist and wait for references to the sp
@@ -836,10 +834,8 @@ key_unlink_sp(struct secpolicy *sp)
 	/* Invalidate all cached SPD pointers in the PCBs. */
 	ipsec_invalpcbcacheall();
 
-#ifdef NET_MPSAFE
 	KDASSERT(mutex_ownable(softnet_lock));
 	key_spd_pserialize_perform();
-#endif
 
 	localcount_drain(&sp->localcount, &key_spd.cv_lc, &key_spd.lock);
 }
@@ -1493,7 +1489,6 @@ key_freesp_so(struct secpolicy **sp)
 }
 #endif
 
-#ifdef NET_MPSAFE
 static void
 key_sad_pserialize_perform(void)
 {
@@ -1511,7 +1506,6 @@ key_sad_pserialize_perform(void)
 	key_sad.psz_performing = false;
 	cv_broadcast(&key_sad.cv_psz);
 }
-#endif
 
 /*
  * Remove the sav from the savlist of its sah and wait for references to the sav
@@ -1525,10 +1519,8 @@ key_unlink_sav(struct secasvar *sav)
 
 	SAVLIST_WRITER_REMOVE(sav);
 
-#ifdef NET_MPSAFE
 	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
-#endif
 
 	localcount_drain(&sav->localcount, &key_sad.cv_lc, &key_sad.lock);
 }
@@ -1567,10 +1559,8 @@ key_destroy_sav_with_ref(struct secasvar *sav)
 	KEY_SA_UNREF(&sav);
 
 	mutex_enter(&key_sad.lock);
-#ifdef NET_MPSAFE
 	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
-#endif
 	localcount_drain(&sav->localcount, &key_sad.cv_lc, &key_sad.lock);
 	mutex_exit(&key_sad.lock);
 
@@ -3048,10 +3038,8 @@ key_unlink_sah(struct secashead *sah)
 	/* Remove from the sah list */
 	SAHLIST_WRITER_REMOVE(sah);
 
-#ifdef NET_MPSAFE
 	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
-#endif
 
 	localcount_drain(&sah->localcount, &key_sad.cv_lc, &key_sad.lock);
 }
@@ -4862,12 +4850,9 @@ static void
 key_timehandler_work(struct work *wk, void *arg)
 {
 	time_t now = time_uptime;
-	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	/* We can allow enqueuing another work at this point */
 	atomic_swap_uint(&key_timehandler_work_enqueued, 0);
-
-	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
 	key_timehandler_spd(now);
 	key_timehandler_sad(now);
@@ -4879,7 +4864,6 @@ key_timehandler_work(struct work *wk, void *arg)
 	/* do exchange to tick time !! */
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
 
-	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return;
 }
 
