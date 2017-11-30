@@ -1,5 +1,6 @@
-/*	$NetBSD: mvebu-icu.h,v 1.1.1.1 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: mvebu-icu.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides constants for the MVEBU ICU driver.
  */
