@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.7 2017/09/29 17:08:00 maxv Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.8 2017/12/01 22:14:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.7 2017/09/29 17:08:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.8 2017/12/01 22:14:52 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -119,7 +119,7 @@ static struct execsw linux_execsw[] = {
 #endif
 };
 
-int linux_enabled = 0;
+int linux_enabled = 1;
 
 int
 linux_sysctl_enable(SYSCTLFN_ARGS)
