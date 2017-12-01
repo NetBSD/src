@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.10 2017/11/30 21:36:11 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.11 2017/12/01 17:47:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.10 2017/11/30 21:36:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.11 2017/12/01 17:47:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1310,15 +1310,27 @@ sunxi_emac_get_resources(struct sunxi_emac_softc *sc)
 	if (bus_space_map(sc->bst, addr, size, 0, &sc->bsh[_RES_SYSCON]) != 0)
 		return ENXIO;
 
-	/* Get clocks and resets. "ahb" is required, "ephy" is optional. */
-
-	if ((sc->clk_ahb = fdtbus_clock_get(phandle, "ahb")) == NULL)
+	/* The "ahb"/"stmmaceth" clock and reset is required */
+	if ((sc->clk_ahb = fdtbus_clock_get(phandle, "ahb")) == NULL &&
+	    (sc->clk_ahb = fdtbus_clock_get(phandle, "stmmaceth")) == NULL)
 		return ENXIO;
+	if ((sc->rst_ahb = fdtbus_reset_get(phandle, "ahb")) == NULL &&
+	    (sc->rst_ahb = fdtbus_reset_get(phandle, "stmmaceth")) == NULL)
+		return ENXIO;
+
+	/* Internal PHY clock and reset are optional properties. */
 	sc->clk_ephy = fdtbus_clock_get(phandle, "ephy");
-
-	if ((sc->rst_ahb = fdtbus_reset_get(phandle, "ahb")) == NULL)
-		return ENXIO;
+	if (sc->clk_ephy == NULL) {
+		int phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");
+		if (phy_phandle != -1)
+			sc->clk_ephy = fdtbus_clock_get_index(phy_phandle, 0);
+	}
 	sc->rst_ephy = fdtbus_reset_get(phandle, "ephy");
+	if (sc->rst_ephy == NULL) {
+		int phy_phandle = fdtbus_get_phandle(phandle, "phy-phandle");
+		if (phy_phandle != -1)
+			sc->rst_ephy = fdtbus_reset_get_index(phy_phandle, 0);
+	}
 
 	/* Regulator is optional */
 	sc->reg_phy = fdtbus_regulator_acquire(phandle, "phy-supply");
@@ -1334,8 +1346,11 @@ static int
 sunxi_emac_get_phyid(struct sunxi_emac_softc *sc)
 {
 	bus_addr_t addr;
+	int phy_phandle;
 
-	const int phy_phandle = fdtbus_get_phandle(sc->phandle, "phy");
+	phy_phandle = fdtbus_get_phandle(sc->phandle, "phy");
+	if (phy_phandle == -1)
+		phy_phandle = fdtbus_get_phandle(sc->phandle, "phy-handle");
 	if (phy_phandle == -1)
 		return MII_PHY_ANY;
 
