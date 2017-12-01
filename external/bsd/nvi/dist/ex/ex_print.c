@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_print.c,v 1.5 2017/11/12 15:27:53 rin Exp $ */
+/*	$NetBSD: ex_print.c,v 1.6 2017/12/01 18:39:49 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex_print.c,v 10.24 2001/07/29 19:07:29 skimo Exp  (Berkeley) Date: 2001/07/29 19:07:29 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_print.c,v 1.5 2017/11/12 15:27:53 rin Exp $");
+__RCSID("$NetBSD: ex_print.c,v 1.6 2017/12/01 18:39:49 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -264,7 +264,7 @@ intr:	*colp = col;
  * ex_printf --
  *	Ex's version of printf.
  *
- * PUBLIC: int ex_printf __P((SCR *, const char *, ...));
+ * PUBLIC: int ex_printf __P((SCR *, const char *, ...)) __printflike(2, 3);
  */
 int
 #ifdef __STDC__
