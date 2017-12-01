@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.245 2017/11/30 02:45:12 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.246 2017/12/01 06:34:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.245 2017/11/30 02:45:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.246 2017/12/01 06:34:14 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -2112,6 +2112,7 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 	struct secpolicyindex spidx;
 	struct secpolicy *newsp;
 	int error;
+	uint32_t sadb_x_policy_id;
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
@@ -2216,9 +2217,16 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 
 	key_init_sp(newsp);
 
+	sadb_x_policy_id = newsp->id;
+
 	mutex_enter(&key_spd.lock);
 	SPLIST_WRITER_INSERT_TAIL(newsp->spidx.dir, newsp);
 	mutex_exit(&key_spd.lock);
+	/*
+	 * We don't have a reference to newsp, so we must not touch newsp from
+	 * now on.  If you want to do, you must take a reference beforehand.
+	 */
+	newsp = NULL;
 
 #ifdef notyet
 	/* delete the entry in key_misc.spacqlist */
@@ -2274,7 +2282,7 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 		m_freem(n);
 		return key_senderror(so, m, EINVAL);
 	}
-	xpl->sadb_x_policy_id = newsp->id;
+	xpl->sadb_x_policy_id = sadb_x_policy_id;
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
