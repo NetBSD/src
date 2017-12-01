@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.37 2017/11/27 09:18:01 maxv Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.38 2017/12/01 21:22:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.37 2017/11/27 09:18:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.38 2017/12/01 21:22:45 maxv Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -125,17 +125,17 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	regs->regs[_REG_RBP] = tf->tf_rbp;
 	regs->regs[_REG_RBX] = tf->tf_rbx;
 	regs->regs[_REG_RAX] = tf->tf_rax;
-	regs->regs[_REG_GS]  = tf->tf_gs & 0xFFFF;
-	regs->regs[_REG_FS]  = tf->tf_fs & 0xFFFF;
-	regs->regs[_REG_ES]  = tf->tf_es & 0xFFFF;
-	regs->regs[_REG_DS]  = tf->tf_ds & 0xFFFF;
+	regs->regs[_REG_GS]  = 0;
+	regs->regs[_REG_FS]  = 0;
+	regs->regs[_REG_ES]  = GSEL(GUDATA_SEL, SEL_UPL);
+	regs->regs[_REG_DS]  = GSEL(GUDATA_SEL, SEL_UPL);
 	regs->regs[_REG_TRAPNO] = tf->tf_trapno;
 	regs->regs[_REG_ERR] = tf->tf_err;
 	regs->regs[_REG_RIP] = tf->tf_rip;
-	regs->regs[_REG_CS]  = tf->tf_cs & 0xFFFF;
+	regs->regs[_REG_CS]  = LSEL(LUCODE_SEL, SEL_UPL);
 	regs->regs[_REG_RFLAGS] = tf->tf_rflags;
 	regs->regs[_REG_RSP] = tf->tf_rsp;
-	regs->regs[_REG_SS]  = tf->tf_ss & 0xFFFF;
+	regs->regs[_REG_SS]  = LSEL(LUDATA_SEL, SEL_UPL);
 
 	return 0;
 }
@@ -204,16 +204,16 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	tf->tf_rbp  = regs[_REG_RBP];
 	tf->tf_rbx  = regs[_REG_RBX];
 	tf->tf_rax  = regs[_REG_RAX];
-	tf->tf_gs   = regs[_REG_GS] & 0xFFFF;
-	tf->tf_fs   = regs[_REG_FS] & 0xFFFF;
-	tf->tf_es   = regs[_REG_ES] & 0xFFFF;
-	tf->tf_ds   = regs[_REG_DS] & 0xFFFF;
+	tf->tf_gs   = 0;
+	tf->tf_fs   = 0;
+	tf->tf_es   = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds   = GSEL(GUDATA_SEL, SEL_UPL);
 	/* trapno, err not touched */
 	tf->tf_rip  = regs[_REG_RIP];
-	tf->tf_cs   = regs[_REG_CS] & 0xFFFF;
+	tf->tf_cs   = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_rflags = regs[_REG_RFLAGS];
 	tf->tf_rsp  = regs[_REG_RSP];
-	tf->tf_ss   = regs[_REG_SS] & 0xFFFF;
+	tf->tf_ss   = LSEL(LUDATA_SEL, SEL_UPL);
 
 #ifdef XEN
 	/* see comment in cpu_setmcontext */
