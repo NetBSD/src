@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.86 2017/11/30 16:13:35 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.87 2017/12/01 09:50:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8033,3 +8033,57 @@ lib/libc/gen/vis.c				1.74
 	can result in 4 bytes of 4 characters ("\ooo") each.
 	[maya, ticket #411]
 
+sys/netipsec/key.c				1.244-1.245
+
+	Make a mutex_ownable assertion DEBUG only, it is not cheap.
+	Fix a deadlock happening if !NET_MPSAFE.
+	[christos, ticket #415]
+
+xsrc/external/mit/libXfont/dist/ChangeLog 1.1.1.11
+xsrc/external/mit/libXfont/dist/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/aclocal.m4 1.1.1.11
+xsrc/external/mit/libXfont/dist/config.guess 1.1.1.9
+xsrc/external/mit/libXfont/dist/config.sub 1.1.1.9
+xsrc/external/mit/libXfont/dist/configure 1.1.1.11
+xsrc/external/mit/libXfont/dist/configure.ac 1.1.1.11
+xsrc/external/mit/libXfont/dist/install-sh 1.1.1.7
+xsrc/external/mit/libXfont/dist/ltmain.sh 1.1.1.8
+xsrc/external/mit/libXfont/dist/doc/Makefile.in 1.1.1.6
+xsrc/external/mit/libXfont/dist/src/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/src/FreeType/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/src/bitmap/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/src/bitmap/pcfread.c 1.5
+xsrc/external/mit/libXfont/dist/src/builtins/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/src/fc/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/src/fontfile/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/src/fontfile/dirfile.c 1.5
+xsrc/external/mit/libXfont/dist/src/fontfile/fileio.c 1.3
+xsrc/external/mit/libXfont/dist/src/fontfile/fontdir.c 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/stubs/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/dist/src/util/Makefile.in 1.1.1.10
+xsrc/external/mit/libXfont/include/config.h 1.9
+xsrc/external/mit/libXcursor/dist/compile 1.1.1.1
+xsrc/external/mit/libXcursor/dist/ChangeLog 1.1.1.6
+xsrc/external/mit/libXcursor/dist/INSTALL 1.1.1.3
+xsrc/external/mit/libXcursor/dist/Makefile.in 1.1.1.6
+xsrc/external/mit/libXcursor/dist/aclocal.m4 1.1.1.6
+xsrc/external/mit/libXcursor/dist/config.guess 1.1.1.5
+xsrc/external/mit/libXcursor/dist/config.h.in 1.1.1.5
+xsrc/external/mit/libXcursor/dist/config.sub 1.1.1.5
+xsrc/external/mit/libXcursor/dist/configure 1.1.1.6
+xsrc/external/mit/libXcursor/dist/configure.ac 1.1.1.6
+xsrc/external/mit/libXcursor/dist/depcomp 1.1.1.5
+xsrc/external/mit/libXcursor/dist/install-sh 1.1.1.5
+xsrc/external/mit/libXcursor/dist/ltmain.sh 1.1.1.6
+xsrc/external/mit/libXcursor/dist/missing 1.1.1.4
+xsrc/external/mit/libXcursor/dist/include/X11/Xcursor/Xcursor.h 1.1.1.3
+xsrc/external/mit/libXcursor/dist/man/Makefile.in 1.1.1.6
+xsrc/external/mit/libXcursor/dist/src/Makefile.in 1.1.1.6
+xsrc/external/mit/libXcursor/dist/src/cursor.c 1.1.1.5
+xsrc/external/mit/libXcursor/dist/src/display.c 1.1.1.5
+xsrc/external/mit/libXcursor/dist/src/file.c 1.1.1.5
+xsrc/external/mit/libXcursor/dist/src/library.c 1.1.1.4
+xsrc/external/mit/libXcursor/include/config.h 1.4
+
+	Fixes for CVEs 2017-13722, 2017-13720, 2017-16611, and 2017-16612.
+	[mrg, #414]
