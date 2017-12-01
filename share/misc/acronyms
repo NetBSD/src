@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.262 2017/11/01 15:34:28 khorben Exp $
+$NetBSD: acronyms,v 1.263 2017/12/01 17:19:01 ginsbach Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -123,6 +123,7 @@ DTRT	do the right thing
 DTWT	do the wrong thing
 DWIM	do what I mean
 DYK	do you know?
+EA	eary adopter
 ECR	electronic cash register
 EDS	eternal downward spiral
 EFT	electronic funds transfer
@@ -334,6 +335,8 @@ MOTAS	member of the appropriate sex
 MOTOS	member of the opposite sex
 MOTSS	member of the same sex
 MTF	more to follow
+MVP	minimum viable product
+MVP	most valuable player
 MYOB	mind your own business
 N/A	not {applicable,available}
 N/M	never mind
