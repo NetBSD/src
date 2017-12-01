@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.18 2017/04/01 17:19:40 martin Exp $ */
+/* $NetBSD: t_mutex.c,v 1.19 2017/12/01 13:25:29 kre Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.18 2017/04/01 17:19:40 martin Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.19 2017/12/01 13:25:29 kre Exp $");
 
 #include <sys/time.h> /* For timespecadd */
 #include <inttypes.h> /* For UINT16_MAX */
@@ -371,131 +371,6 @@ ATF_TC_BODY(mutex5, tc)
 	PTHREAD_REQUIRE(pthread_join(child, NULL));
 }
 
-static int start = 0;
-static uintmax_t high_cnt = 0, low_cnt = 0, MAX_LOOP = 100000000;
-
-static void *
-high_prio(void* arg)
-{
-	struct sched_param param;
-	int policy;
-	param.sched_priority = min_fifo_prio + 10;
-	pthread_t childid = pthread_self();
-
-	PTHREAD_REQUIRE(pthread_setschedparam(childid, 1, &param));
-	PTHREAD_REQUIRE(pthread_getschedparam(childid, &policy, &param));
-	printf("high protect = %d, prio = %d\n",
-	    _sched_protect(-2), param.sched_priority);
-	ATF_REQUIRE_EQ(policy, 1);
-	printf("high prio = %d\n", param.sched_priority);
-	sleep(1);
-	long tmp = 0;
-	for (int i = 0; i < 20; i++) {
-		while (high_cnt < MAX_LOOP) {
-			tmp += (123456789 % 1234) * (987654321 % 54321);
-			high_cnt += 1;
-		}
-		high_cnt = 0;
-		sleep(1);
-	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
-	if (start == 0) start = 2;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
-
-	return 0;
-}
-
-static void *
-low_prio(void* arg)
-{
-	struct sched_param param;
-	int policy;
-	param.sched_priority = min_fifo_prio;
-	pthread_t childid = pthread_self();
-	int res = _sched_protect(max_fifo_prio);
-	ATF_REQUIRE_EQ(res, 0);
-	PTHREAD_REQUIRE(pthread_setschedparam(childid, 1, &param));
-	PTHREAD_REQUIRE(pthread_getschedparam(childid, &policy, &param));
-	printf("low protect = %d, prio = %d\n", _sched_protect(-2),
-	    param.sched_priority);
-	ATF_REQUIRE_EQ(policy, 1);
-	printf("low prio = %d\n", param.sched_priority);
-	sleep(1);
-	long tmp = 0;
-	for (int i = 0; i < 20; i++) {
-		while (low_cnt < MAX_LOOP) {
-			tmp += (123456789 % 1234) * (987654321 % 54321);
-			low_cnt += 1;
-		}
-		low_cnt = 0;
-		sleep(1);
-	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
-	if (start == 0)
-		start = 1;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
-
-	return 0;
-}
-
-ATF_TC(mutex6);
-ATF_TC_HEAD(mutex6, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Checks scheduling for priority ceiling");
-	atf_tc_set_md_var(tc, "require.user", "root");
-}
-
-/*
- * 1. main thread sets itself to be a realtime task and launched two tasks,
- *    one has higher priority and the other has lower priority.
- * 2. each child thread(low and high priority thread) sets its scheduler and
- *    priority.
- * 3. each child thread did several rounds of computation, after each round it
- *    sleep 1 second.
- * 4. the child thread with low priority will call _sched_protect to increase
- *    its protect priority.
- * 5. We verify the thread with low priority runs first.
- *
- * Why does it work? From the main thread, we launched the high
- * priority thread first. This gives this thread the benefit of
- * starting first. The low priority thread did not call _sched_protect(2).
- * The high priority thread should finish the task first. After each
- * round of computation, we call sleep, to put the task into the
- * sleep queue, and wake up again after the timer expires. This
- * gives the scheduler the chance to decide which task to run. So,
- * the thread with real high priority will always block the thread
- * with real low priority.
- * 
- */
-ATF_TC_BODY(mutex6, tc)
-{
-	struct sched_param param;
-	int res;
-	pthread_t high, low;
-
-	min_fifo_prio = sched_get_priority_min(SCHED_FIFO);
-	max_fifo_prio = sched_get_priority_max(SCHED_FIFO);
-	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
-	printf("min_fifo_prio = %d, max_fifo_info = %d\n", min_fifo_prio,
-	    max_fifo_prio);
-
-	param.sched_priority = min_fifo_prio;
-	res = sched_setscheduler(getpid(), SCHED_FIFO, &param);
-	printf("previous policy used = %d\n", res);
-
-	res = sched_getscheduler(getpid());
-	ATF_REQUIRE_EQ(res, 1);
-	PTHREAD_REQUIRE(pthread_create(&high, NULL, high_prio, NULL));
-	PTHREAD_REQUIRE(pthread_create(&low, NULL, low_prio, NULL));
-	sleep(5);
-	PTHREAD_REQUIRE(pthread_join(low, NULL));
-	PTHREAD_REQUIRE(pthread_join(high, NULL));
-	
-	ATF_REQUIRE_EQ_MSG(start, 1, "start = %d, low_cnt =%ju, "
-	    "high_cnt = %ju\n", start, high_cnt, low_cnt);
-}
-
 ATF_TC(mutexattr1);
 ATF_TC_HEAD(mutexattr1, tc)
 {
@@ -680,7 +555,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mutex3);
 	ATF_TP_ADD_TC(tp, mutex4);
 	ATF_TP_ADD_TC(tp, mutex5);
-	ATF_TP_ADD_TC(tp, mutex6);
 	ATF_TP_ADD_TC(tp, mutexattr1);
 	ATF_TP_ADD_TC(tp, mutexattr2);
 
