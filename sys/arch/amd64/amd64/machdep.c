@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.278 2017/11/27 09:18:01 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.279 2017/12/01 21:22:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278 2017/11/27 09:18:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.279 2017/12/01 21:22:45 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1892,17 +1892,17 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	mcp->__gregs[_REG_RBP] = tf->tf_rbp;
 	mcp->__gregs[_REG_RBX] = tf->tf_rbx;
 	mcp->__gregs[_REG_RAX] = tf->tf_rax;
-	mcp->__gregs[_REG_GS]  = tf->tf_gs & 0xFFFF;
-	mcp->__gregs[_REG_FS]  = tf->tf_fs & 0xFFFF;
-	mcp->__gregs[_REG_ES]  = tf->tf_es & 0xFFFF;
-	mcp->__gregs[_REG_DS]  = tf->tf_ds & 0xFFFF;
+	mcp->__gregs[_REG_GS]  = 0;
+	mcp->__gregs[_REG_FS]  = 0;
+	mcp->__gregs[_REG_ES]  = GSEL(GUDATA_SEL, SEL_UPL);
+	mcp->__gregs[_REG_DS]  = GSEL(GUDATA_SEL, SEL_UPL);
 	mcp->__gregs[_REG_TRAPNO] = tf->tf_trapno;
 	mcp->__gregs[_REG_ERR] = tf->tf_err;
 	mcp->__gregs[_REG_RIP] = tf->tf_rip;
-	mcp->__gregs[_REG_CS]  = tf->tf_cs & 0xFFFF;
+	mcp->__gregs[_REG_CS]  = LSEL(LUCODE_SEL, SEL_UPL);
 	mcp->__gregs[_REG_RFLAGS] = tf->tf_rflags;
 	mcp->__gregs[_REG_RSP] = tf->tf_rsp;
-	mcp->__gregs[_REG_SS]  = tf->tf_ss & 0xFFFF;
+	mcp->__gregs[_REG_SS]  = LSEL(LUDATA_SEL, SEL_UPL);
 
 	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
 	    (void *) mcp->__gregs[_REG_RIP])) != -1)
@@ -1949,18 +1949,18 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_rbp  = gr[_REG_RBP];
 		tf->tf_rbx  = gr[_REG_RBX];
 		tf->tf_rax  = gr[_REG_RAX];
-		tf->tf_gs   = gr[_REG_GS] & 0xFFFF;
-		tf->tf_fs   = gr[_REG_FS] & 0xFFFF;
-		tf->tf_es   = gr[_REG_ES] & 0xFFFF;
-		tf->tf_ds   = gr[_REG_DS] & 0xFFFF;
+		tf->tf_gs   = 0;
+		tf->tf_fs   = 0;
+		tf->tf_es   = GSEL(GUDATA_SEL, SEL_UPL);
+		tf->tf_ds   = GSEL(GUDATA_SEL, SEL_UPL);
 		/* trapno, err not touched */
 		tf->tf_rip  = gr[_REG_RIP];
-		tf->tf_cs   = gr[_REG_CS] & 0xFFFF;
+		tf->tf_cs   = LSEL(LUCODE_SEL, SEL_UPL);
 		rflags = tf->tf_rflags;
 		rflags &= ~PSL_USER;
 		tf->tf_rflags = rflags | (gr[_REG_RFLAGS] & PSL_USER);
 		tf->tf_rsp  = gr[_REG_RSP];
-		tf->tf_ss   = gr[_REG_SS] & 0xFFFF;
+		tf->tf_ss   = LSEL(LUDATA_SEL, SEL_UPL);
 
 #ifdef XEN
 		/*
