@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.43 2017/11/16 13:54:00 skrll Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.44 2017/12/01 22:47:06 mrg Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.43 2017/11/16 13:54:00 skrll Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.44 2017/12/01 22:47:06 mrg Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -276,19 +276,19 @@ __RCSID("$NetBSD: jemalloc.c,v 1.43 2017/11/16 13:54:00 skrll Exp $");
 #  define USE_BRK
 #endif
 #if defined(__mips__) || defined(__riscv__)
-# ifdef _LP64
-#  define SIZEOF_PTR_2POW	3
-#  define TINY_MIN_2POW		3
-# else
-#  define SIZEOF_PTR_2POW	2
-# endif
-# define QUANTUM_2POW_MIN	4
-# define USE_BRK
+#  ifdef _LP64
+#    define SIZEOF_PTR_2POW	3
+#    define TINY_MIN_2POW	3
+#  else
+#    define SIZEOF_PTR_2POW	2
+#  endif
+#  define QUANTUM_2POW_MIN	4
+#  define USE_BRK
 #endif
 #ifdef __hppa__                                                                                                                                         
-#  define QUANTUM_2POW_MIN     4                                                                                                                        
-#  define TINY_MIN_2POW        4
-#  define SIZEOF_PTR_2POW      2                                                                                                                        
+#  define QUANTUM_2POW_MIN	4                                                                                                                        
+#  define TINY_MIN_2POW		4
+#  define SIZEOF_PTR_2POW	2                                                                                                                        
 #  define USE_BRK                                                                                                                                       
 #endif           
 
