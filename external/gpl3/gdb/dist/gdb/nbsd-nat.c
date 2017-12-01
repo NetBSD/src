@@ -556,7 +556,12 @@ nbsd_resume (struct target_ops *ops,
 			ptid_get_tid (ptid));
   if (ptid_lwp_p (ptid))
     {
-      /* If ptid is a specific LWP, suspend all other LWPs in the process.  */
+      /* FreeBSD: If ptid is a specific LWP, suspend all other LWPs in the
+       * process.
+       */
+      /* NetBSD, this function is about resuming so we only deal with
+       * the thread we've been asked to work with
+       */
       struct thread_info *tp;
       int request;
 
@@ -567,8 +572,10 @@ nbsd_resume (struct target_ops *ops,
 
 	  if (ptid_get_lwp (tp->ptid) == ptid_get_lwp (ptid))
 	    request = PT_RESUME;
+#ifndef __NetBSD__
 	  else
 	    request = PT_SUSPEND;
+#endif
 
 	  if (ptrace (request, ptid_get_pid (tp->ptid), NULL,
 	      ptid_get_lwp (tp->ptid)) == -1)
