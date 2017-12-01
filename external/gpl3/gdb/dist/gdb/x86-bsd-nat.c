@@ -82,7 +82,7 @@ x86bsd_dr_set (int regnum, unsigned long value)
   struct dbreg dbregs;
 
   if (ptrace (PT_GETDBREGS, get_ptrace_pid (inferior_ptid),
-              (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
+              (PTRACE_TYPE_ARG3) &dbregs, ptid_get_lwp (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't get debug registers"));
 
   /* For some mysterious reason, some of the reserved bits in the
@@ -96,7 +96,7 @@ x86bsd_dr_set (int regnum, unsigned long value)
     if (thread->inf == current_inferior ())
       {
 	if (ptrace (PT_SETDBREGS, get_ptrace_pid (thread->ptid),
-		    (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
+		    (PTRACE_TYPE_ARG3) &dbregs, ptid_get_lwp (inferior_ptid)) == -1)
 	  perror_with_name (_("Couldn't write debug registers"));
       }
 }
