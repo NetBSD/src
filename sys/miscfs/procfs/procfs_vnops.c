@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.200 2017/11/08 00:51:47 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.201 2017/12/01 19:01:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.200 2017/11/08 00:51:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.201 2017/12/01 19:01:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,8 @@ int	procfs_setattr(void *);
 #define	procfs_fcntl	genfs_fcntl
 #define	procfs_ioctl	genfs_enoioctl
 #define	procfs_poll	genfs_poll
-#define procfs_revoke	genfs_revoke
+#define	procfs_kqfilter	genfs_kqfilter
+#define	procfs_revoke	genfs_revoke
 #define	procfs_fsync	genfs_nullop
 #define	procfs_seek	genfs_nullop
 #define	procfs_remove	genfs_eopnotsupp
@@ -265,6 +266,7 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, procfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, procfs_poll },		/* poll */
+	{ &vop_kqfilter_desc, procfs_kqfilter },	/* kqfilter */
 	{ &vop_revoke_desc, procfs_revoke },		/* revoke */
 	{ &vop_fsync_desc, procfs_fsync },		/* fsync */
 	{ &vop_seek_desc, procfs_seek },		/* seek */
