@@ -353,7 +353,7 @@ inf_ptrace_resume (struct target_ops *ops,
          all possible successor instructions), so we don't have to
          worry about that here.  */
       request = PT_STEP;
-#ifdef __NetBSD__
+#if 0
       /*
        * On NetBSD the data field of PT_STEP contains the thread
        * to be stepped; all other threads are continued if this value is > 0
