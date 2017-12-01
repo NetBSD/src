@@ -1,4 +1,4 @@
-/* $NetBSD: t_sprintf.c,v 1.6 2017/11/28 23:26:01 kre Exp $ */
+/* $NetBSD: t_sprintf.c,v 1.7 2017/12/01 01:08:35 kre Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sprintf.c,v 1.6 2017/11/28 23:26:01 kre Exp $");
+__RCSID("$NetBSD: t_sprintf.c,v 1.7 2017/12/01 01:08:35 kre Exp $");
 
 #include <locale.h>
 #include <math.h>
@@ -133,16 +133,44 @@ h_strto(const struct test *t)
 	ATF_REQUIRE(setlocale(LC_NUMERIC, t->locale) != NULL);
 
 	ATF_REQUIRE_EQ((int)strtol(t->int_input, NULL, 10), t->int_value);
-	d = strtod(t->double_input, NULL);
+
+	/*
+	 * Note that the C standard permits function values to be
+	 * returned with more precision than is expected by (floating)
+	 * data types, and on i386 (and potentially other implementations)
+	 * that is exactly what happens, meaning that the result from
+	 * strtod() is not identical to the expected value - it turns out
+	 * that it is the same if the value is constrained to the number
+	 * of mantissa bits in a double (so the %a values printed below
+	 * show the exact same bit patterns) and on i386 -ffloat-store
+	 * will cause gcc to constrain the result that way, but nothing
+	 * demands that be true, so instead, we simply test that the
+	 * value returned is very very close to that expected.
+	 *
+	 * 1e-12 is chosen as the allowable delta, as we know (from
+	 * the data in the "struct test" earlier in this file) that
+	 * its magnitude is ~ 10^5, with values of that magnitude,
+	 * 10^-12 difference is a 10^-17 relative difference, and
+	 * with a 56 bit mantissa (standard IEEE "double") a difference
+	 * that small vanishes (requires at least 57 mantissa bits to
+	 * be representable).   If the data values were to change, then
+	 * so might this delta (if they were not all the same, we would
+	 * move the delta into the struct rather than having it a constant
+	 * here.).
+	 *
+	 * Finally, note that our purpose here is not to test floating
+	 * point arithmetic, we're testing locale dependent string to
+	 * binary conversions.
+	 */
+
+	d = (double)strtod(t->double_input, NULL);
 	diff = fabs(d - t->double_value);
-#if 0
-	if (diff >= 1e-7)
-#endif
-		ATF_REQUIRE_EQ_MSG(d, t->double_value, "In %s:"
-		    " d=strtod(t->double_input[%s], NULL)[%.12g = %a] !="
-		    " t->double_value[%.12g = %a]: diff=%g",
-		    t->locale, t->double_input, d, d,
-		    t->double_value, t->double_value, diff);
+	if (diff >= 1e-12)
+		ATF_REQUIRE_EQ_MSG(d, t->double_value, "In %s: " 
+		    "d=strtod(t->double_input[%s], NULL)[%.12g = %a] != "
+		    "t->double_value[%.12g = %a]: diff=%g", t->locale,
+		    t->double_input, d, d, t->double_value, t->double_value,
+		    diff);
 }
 
 static void
