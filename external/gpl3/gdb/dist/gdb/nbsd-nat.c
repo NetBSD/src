@@ -368,48 +368,6 @@ nbsd_enable_proc_events (pid_t pid)
 static void
 nbsd_add_threads (pid_t pid)
 {
-#ifdef PT_GETNUMLWPS
-  struct cleanup *cleanup;
-  lwpid_t *lwps;
-  int i, nlwps;
-
-  gdb_assert (!in_thread_list (pid_to_ptid (pid)));
-  nlwps = ptrace (PT_GETNUMLWPS, pid, NULL, 0);
-  if (nlwps == -1)
-    perror_with_name (("ptrace"));
-
-  lwps = XCNEWVEC (lwpid_t, nlwps);
-  cleanup = make_cleanup (xfree, lwps);
-
-  nlwps = ptrace (PT_GETLWPLIST, pid, (caddr_t) lwps, nlwps);
-  if (nlwps == -1)
-    perror_with_name (("ptrace"));
-
-  for (i = 0; i < nlwps; i++)
-    {
-      ptid_t ptid = ptid_build (pid, lwps[i], 0);
-
-      if (!in_thread_list (ptid))
-	{
-#ifdef PT_LWP_EVENTS
-	  struct ptrace_lwpinfo pl;
-
-	  /* Don't add exited threads.  Note that this is only called
-	     when attaching to a multi-threaded process.  */
-	  if (ptrace (PT_LWPINFO, lwps[i], (caddr_t) &pl, sizeof pl) == -1)
-	    perror_with_name (("ptrace"));
-	  if (pl.pl_flags & PL_FLAG_EXITED)
-	    continue;
-#endif
-	  if (debug_nbsd_lwp)
-	    fprintf_unfiltered (gdb_stdlog,
-				"FLWP: adding thread for LWP %u\n",
-				lwps[i]);
-	  add_thread (ptid);
-	}
-    }
-  do_cleanups (cleanup);
-#else
   int val;
   struct ptrace_lwpinfo pl;
 
@@ -422,7 +380,6 @@ nbsd_add_threads (pid_t pid)
       if (!in_thread_list (ptid))
 	add_thread (ptid);
     }
-#endif
 }
 
 /* Implement the "to_update_thread_list" target_ops method.  */
@@ -594,7 +551,7 @@ nbsd_resume (struct target_ops *ops,
 
   if (debug_nbsd_lwp)
     fprintf_unfiltered (gdb_stdlog,
-			"FLWP: nbsd_resume for ptid (%d, %ld, %ld)\n",
+			"NLWP: nbsd_resume for ptid (%d, %ld, %ld)\n",
 			ptid_get_pid (ptid), ptid_get_lwp (ptid),
 			ptid_get_tid (ptid));
   if (ptid_lwp_p (ptid))
@@ -684,7 +641,7 @@ nbsd_wait (struct target_ops *ops,
 		{
 		  if (debug_nbsd_lwp)
 		    fprintf_unfiltered (gdb_stdlog,
-					"FLWP: deleting thread for LWP %u\n",
+					"NLWP: deleting thread for LWP %u\n",
 					pl.pl_lwpid);
 		  if (print_thread_events)
 		    printf_unfiltered (_("[%s exited]\n"), target_pid_to_str
@@ -707,7 +664,7 @@ nbsd_wait (struct target_ops *ops,
 	    {
 	      if (debug_nbsd_lwp)
 		fprintf_unfiltered (gdb_stdlog,
-				    "FLWP: using LWP %u for first thread\n",
+				    "NLWP: using LWP %u for first thread\n",
 				    pl.pl_lwpid);
 	      thread_change_ptid (pid_to_ptid (pid), wptid);
 	    }
@@ -723,7 +680,7 @@ nbsd_wait (struct target_ops *ops,
 		{
 		  if (debug_nbsd_lwp)
 		    fprintf_unfiltered (gdb_stdlog,
-					"FLWP: adding thread for LWP %u\n",
+					"NLWP: adding thread for LWP %u\n",
 					pl.pl_lwpid);
 		  add_thread (wptid);
 		}
@@ -1023,8 +980,8 @@ _initialize_nbsd_nat (void)
 #ifdef PT_LWPINFO
   add_setshow_boolean_cmd ("nbsd-lwp", class_maintenance,
 			   &debug_nbsd_lwp, _("\
-Set debugging of FreeBSD lwp module."), _("\
-Show debugging of FreeBSD lwp module."), _("\
+Set debugging of NetBSD lwp module."), _("\
+Show debugging of NetBSD lwp module."), _("\
 Enables printf debugging output."),
 			   NULL,
 			   &show_nbsd_lwp_debug,
