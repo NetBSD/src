@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1024 2017/11/29 22:40:45 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1025 2017/12/01 22:48:00 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -81,9 +81,9 @@ MKGCCCMDS?=	no
 # set to the relevant subdirectory in src/external/gpl3 for his HAVE_GCC.
 #
 .if ${HAVE_GCC} == 53
-EXTERNAL_GCC_SUBDIR=	gcc.old
+EXTERNAL_GCC_SUBDIR?=	gcc.old
 .else
-EXTERNAL_GCC_SUBDIR=	/does/not/exist
+EXTERNAL_GCC_SUBDIR=?	/does/not/exist
 .endif
 .else
 MKGCCCMDS?=	no
