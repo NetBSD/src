@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_usage.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: ex_usage.c,v 1.4 2017/12/01 20:01:31 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex_usage.c,v 10.15 2001/06/25 15:19:21 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:21 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_usage.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ex_usage.c,v 1.4 2017/12/01 20:01:31 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 		} else
 			newscreen = 0;
 		for (cp = cmds; cp->name != NULL &&
-		    memcmp(ap->bp, cp->name, ap->len); ++cp);
+		    MEMCMP(ap->bp, cp->name, ap->len); ++cp);
 		if (cp->name == NULL ||
 		    (newscreen && !F_ISSET(cp, E_NEWSCREEN))) {
 			const char *nstr;
