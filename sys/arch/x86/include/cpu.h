@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2017/11/27 09:10:12 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.83 2017/12/02 21:04:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -526,6 +526,7 @@ void x86_bus_space_mallocok(void);
 
 struct disklist {
 	int dl_nbiosdisks;			   /* number of bios disks */
+	int dl_unused;
 	struct biosdisk_info {
 		int bi_dev;			   /* BIOS device # (0x80 ..) */
 		int bi_cyl;			   /* cylinders on disk */
@@ -535,6 +536,7 @@ struct disklist {
 #define BIFLAG_INVALID		0x01
 #define BIFLAG_EXTINT13		0x02
 		int bi_flags;
+		int bi_unused;
 	} dl_biosdisks[MAX_BIOSDISKS];
 
 	int dl_nnativedisks;			   /* number of native disks */
