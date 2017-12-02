@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.181 2016/10/31 15:05:05 maxv Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.182 2017/12/02 08:22:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.181 2016/10/31 15:05:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.182 2017/12/02 08:22:04 mrg Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
