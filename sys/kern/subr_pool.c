@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.216 2017/11/14 15:02:06 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.217 2017/12/02 08:15:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.216 2017/11/14 15:02:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.217 2017/12/02 08:15:42 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1450,6 +1450,27 @@ pool_drain(struct pool **ppp)
 		*ppp = pp;
 
 	return reclaimed;
+}
+
+/*
+ * Calculate the total number of pages consumed by pools.
+ */
+int
+pool_totalpages(void)
+{
+	struct pool *pp;
+	int total = 0;
+
+	mutex_enter(&pool_head_lock);
+	TAILQ_FOREACH(pp, &pool_head, pr_poollist)
+		/*
+		 * XXXMRG
+		if ((pp->pr_roflags & PR_RECURSIVE) == 0)
+		 */
+			total += pp->pr_npages;
+	mutex_exit(&pool_head_lock);
+
+	return total;
 }
 
 /*
