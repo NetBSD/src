@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.7 2017/11/30 20:41:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.8 2017/12/02 18:56:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.7 2017/11/30 20:41:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.8 2017/12/02 18:56:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -189,11 +189,11 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	clk = fdtbus_clock_get_index(phandle, 0);
-	if (clk == NULL || clk_enable(clk) != 0) {
-		aprint_error(": couldn't enable clock\n");
-		return;
-	}
+	if ((clk = fdtbus_clock_get_index(phandle, 0)) != NULL)
+		if (clk_enable(clk) != 0) {
+			aprint_error(": couldn't enable clock\n");
+			return;
+		}
 	if ((rst = fdtbus_reset_get_index(phandle, 0)) != NULL)
 		if (fdtbus_reset_deassert(rst) != 0) {
 			aprint_error(": couldn't de-assert reset\n");
@@ -212,7 +212,8 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set clock rate to 100kHz.
 	 */
-	sunxi_twi_set_clock(sc, clk_get_rate(clk), 100000);
+	if (clk != NULL)
+		sunxi_twi_set_clock(sc, clk_get_rate(clk), 100000);
 
 	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, gttwsi_intr, sc);
 	if (ih == NULL) {
