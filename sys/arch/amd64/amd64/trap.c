@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104 2017/10/21 08:08:26 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.105 2017/12/02 12:40:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,14 +64,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2017/10/21 08:08:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2017/12/02 12:40:03 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,11 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2017/10/21 08:08:26 maxv Exp $");
 #include <sys/ucontext.h>
 
 #include <uvm/uvm_extern.h>
-
-#ifdef COMPAT_NETBSD32
-#include <sys/exec.h>
-#include <compat/netbsd32/netbsd32_exec.h>
-#endif
 
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
@@ -414,28 +407,7 @@ trap(struct trapframe *frame)
 		trap_user_kernelmode(frame, type, l, p);
 		goto we_re_toast;
 
-	case T_PROTFLT|T_USER:		/* protection fault */
-#if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
-	{
-		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
-		const size_t sz = sizeof(lcall);
-		char tmp[sz];
-
-		/* Check for the oosyscall lcall instruction. */
-		if (p->p_emul == &emul_netbsd32 &&
-		    frame->tf_rip < VM_MAXUSER_ADDRESS32 - sz &&
-		    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
-		    memcmp(tmp, lcall, sz) == 0) {
-
-			/* Advance past the lcall. */
-			frame->tf_rip += sz;
-
-			/* Do the syscall. */
-			p->p_md.md_syscall(frame);
-			goto out;
-		}
-	}
-#endif
+	case T_PROTFLT|T_USER:
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
