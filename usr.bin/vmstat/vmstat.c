@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.220 2017/11/03 22:45:14 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.221 2017/12/02 08:15:43 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.220 2017/11/03 22:45:14 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.221 2017/12/02 08:15:43 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -892,6 +892,10 @@ dosum(void)
 			warn("sysctl vm.uvmexp2 failed");
 	} else {
 		struct uvmexp uvmexp_kernel;
+		struct pool pool, *pp = &pool;
+		TAILQ_HEAD(,pool) pool_head;
+		void *addr;
+
 		kread(namelist, X_UVMEXP, &uvmexp_kernel, sizeof(uvmexp_kernel));
 #define COPY(field) uvmexp.field = uvmexp_kernel.field
 		COPY(pagesize);
@@ -955,7 +959,18 @@ dosum(void)
 		COPY(pdbusy);
 		COPY(pdpending);
 		COPY(pddeact);
+		COPY(bootpages);
 #undef COPY
+		kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
+		addr = TAILQ_FIRST(&pool_head);
+		for (; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist)) {
+			deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
+			/*
+			 * XXXMRG
+			if ((pp->pr_roflags & PR_RECURSIVE) == 0)
+			 */
+				uvmexp.poolpages += pp->pr_npages;
+		}
 	}
 
 
@@ -976,6 +991,8 @@ dosum(void)
 	(void)printf("%9" PRIu64 " reserve pagedaemon pages\n",
 	    uvmexp.reserve_pagedaemon);
 	(void)printf("%9" PRIu64 " reserve kernel pages\n", uvmexp.reserve_kernel);
+	(void)printf("%9" PRIu64 " boot kernel pages\n", uvmexp.bootpages);
+	(void)printf("%9" PRIu64 " kernel pool pages\n", uvmexp.poolpages);
 	(void)printf("%9" PRIu64 " anonymous pages\n", uvmexp.anonpages);
 	(void)printf("%9" PRIu64 " cached file pages\n", uvmexp.filepages);
 	(void)printf("%9" PRIu64 " cached executable pages\n", uvmexp.execpages);
@@ -2251,9 +2268,9 @@ hist_traverse_sysctl(int todo, const char *histname)
  /*
   * Actually dump the history buffer at the specified KVA.
   */
- void
+void
 hist_dodump_sysctl(int mib[], unsigned int miblen)
- {
+{
 	struct sysctl_history *hist;
 	struct timeval tv;
 	struct sysctl_history_event *e;

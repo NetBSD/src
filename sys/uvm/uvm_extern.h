@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.206 2017/05/20 07:27:15 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.207 2017/12/02 08:15:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -408,6 +408,8 @@ struct uvmexp {
 	int pdreanon;	/* anon pages reactivated due to thresholds */
 	int pdrefile;	/* file pages reactivated due to thresholds */
 	int pdreexec;	/* executable pages reactivated due to thresholds */
+
+	int bootpages;  /* number of pages stolen at boot */
 };
 
 /*
@@ -493,6 +495,8 @@ struct uvmexp_sysctl {
 	int64_t colorhit;
 	int64_t colormiss;
 	int64_t ncolors;
+	int64_t bootpages;
+	int64_t poolpages;
 };
 
 #ifdef _KERNEL
