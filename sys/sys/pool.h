@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.80 2017/10/28 19:19:10 riastradh Exp $	*/
+/*	$NetBSD: pool.h,v 1.81 2017/12/02 08:15:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -307,6 +307,7 @@ void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
 bool		pool_drain(struct pool **);
+int		pool_totalpages(void);
 
 /*
  * Debugging and diagnostic aides.
