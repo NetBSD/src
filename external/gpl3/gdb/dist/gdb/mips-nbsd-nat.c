@@ -39,6 +39,7 @@ typedef struct fpreg fpregset_t;
 #include "gregset.h"
 
 #include "mips-tdep.h"
+#include "nbsd-nat.h"
 #include "mips-nbsd-tdep.h"
 #include "inf-ptrace.h"
 #include "bsd-kvm.h"
