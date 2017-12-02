@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.194 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.195 2017/12/02 08:15:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.194 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.195 2017/12/02 08:15:43 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -538,6 +538,7 @@ uvm_pageboot_alloc(vsize_t size)
 
 	/* round to page size */
 	size = round_page(size);
+	uvmexp.bootpages += atop(size);
 
 #if defined(PMAP_STEAL_MEMORY)
 

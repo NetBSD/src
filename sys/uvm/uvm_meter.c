@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.66 2017/07/02 16:41:33 joerg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.67 2017/12/02 08:15:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.66 2017/07/02 16:41:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.67 2017/12/02 08:15:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,8 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.colorhit = uvmexp.colorhit;
 	u.colormiss = uvmexp.colormiss;
 	u.ncolors = uvmexp.ncolors;
+	u.bootpages = uvmexp.bootpages;
+	u.poolpages = pool_totalpages();
 
 	node = *rnode;
 	node.sysctl_data = &u;
