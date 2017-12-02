@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.69 2017/11/05 21:08:24 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.70 2017/12/02 10:53:23 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5099,4 +5099,22 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	patch
 
 	apply fixes for CVEs 2017-12176 to 2017-12187
 	[mrg, ticket #1523]
+
+xsrc/external/mit/libXcursor/dist/src/file.c	patch
+xsrc/external/mit/libXcursor/dist/src/library.c	patch
+xsrc/external/mit/libXfont/dist/src/bitmap/pcfread.c patch
+xsrc/external/mit/libXfont/dist/src/fontfile/dirfile.c patch
+xsrc/external/mit/libXfont/dist/src/fontfile/fileio.c patch
+xsrc/external/mit/libXfont/dist/src/fontfile/fontdir.c patch
+xsrc/xfree/xc/lib/Xcursor/file.c		patch
+xsrc/xfree/xc/lib/Xcursor/library.c		patch
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		patch
+xsrc/xfree/xc/lib/font/fontfile/dirfile.c	patch
+xsrc/xfree/xc/lib/font/fontfile/fileio.c	patch
+xsrc/xfree/xc/lib/font/fontfile/fontdir.c	patch
+
+	Pull up fixes to libXfont and libXcurses for CVEs
+	2017-13722, 2017-13720, 2017-16611, and 2017-16612.
+	[mrg, ticket #1535]
+
 
