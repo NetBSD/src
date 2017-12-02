@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.100 2017/10/27 12:25:15 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.101 2017/12/02 17:29:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.100 2017/10/27 12:25:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.101 2017/12/02 17:29:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -239,10 +239,9 @@ struct wapbl {
 		(wapbl_allow_dpofua && ISSET((wl)->wl_dkcache, DKCACHE_FUA))
 #define WAPBL_JFLAGS(wl)	\
 		(WAPBL_USE_FUA(wl) ? (wl)->wl_jwrite_flags : 0)
-#define WAPBL_MFLAGS(wl)	\
-		(WAPBL_USE_FUA(wl) ? (wl)->wl_mwrite_flags : 0)
+#define WAPBL_JDATA_FLAGS(wl)	\
+		(WAPBL_JFLAGS(wl) & B_MEDIA_DPO)	/* only DPO */
 	int wl_jwrite_flags;	/* r: 	journal write flags */
-	int wl_mwrite_flags;	/* r:	metadata write flags */
 };
 
 #ifdef WAPBL_DEBUG_PRINT
@@ -444,10 +443,8 @@ wapbl_dkcache_init(struct wapbl *wl)
 	}
 
 	/* Use FUA instead of cache flush if available */
-	if (ISSET(wl->wl_dkcache, DKCACHE_FUA)) {
+	if (ISSET(wl->wl_dkcache, DKCACHE_FUA))
 		wl->wl_jwrite_flags |= B_MEDIA_FUA;
-		wl->wl_mwrite_flags |= B_MEDIA_FUA;
-	}
 
 	/* Use DPO for journal writes if available */
 	if (ISSET(wl->wl_dkcache, DKCACHE_DPO))
@@ -998,7 +995,7 @@ wapbl_buffered_write_async(struct wapbl *wl, struct buf *bp)
 	KASSERT(TAILQ_FIRST(&wl->wl_iobufs) == bp);
 	TAILQ_REMOVE(&wl->wl_iobufs, bp, b_wapbllist);
 
-	bp->b_flags = B_WRITE | WAPBL_JFLAGS(wl);
+	bp->b_flags |= B_WRITE;
 	bp->b_cflags = BC_BUSY;	/* mandatory, asserted by biowait() */
 	bp->b_oflags = 0;
 	bp->b_bcount = bp->b_resid;
@@ -1043,7 +1040,7 @@ again:
 		error = biowait(bp);
 
 		/* reset for reuse */
-		bp->b_blkno = bp->b_resid = 0;
+		bp->b_blkno = bp->b_resid = bp->b_flags = 0;
 		TAILQ_INSERT_TAIL(&wl->wl_iobufs, bp, b_wapbllist);
 		found = true;
 
@@ -1067,7 +1064,8 @@ again:
  *	wapbl_buffered_flush.
  */
 static int
-wapbl_buffered_write(void *data, size_t len, struct wapbl *wl, daddr_t pbn)
+wapbl_buffered_write(void *data, size_t len, struct wapbl *wl, daddr_t pbn,
+    int bflags)
 {
 	size_t resid;
 	struct buf *bp;
@@ -1096,8 +1094,10 @@ again:
 	 * If this write goes to an empty buffer we have to
 	 * save the disk block address first.
 	 */
-	if (bp->b_blkno == 0)
+	if (bp->b_blkno == 0) {
 		bp->b_blkno = pbn;
+		bp->b_flags |= bflags;
+	}
 
 	/*
 	 * Remaining space so this buffer ends on a buffer size boundary.
@@ -1164,7 +1164,8 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 #ifdef _KERNEL
 		pbn = btodb(pbn << wl->wl_log_dev_bshift);
 #endif
-		error = wapbl_buffered_write(data, slen, wl, pbn);
+		error = wapbl_buffered_write(data, slen, wl, pbn,
+		    WAPBL_JDATA_FLAGS(wl));
 		if (error)
 			return error;
 		data = (uint8_t *)data + slen;
@@ -1175,7 +1176,8 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 #ifdef _KERNEL
 	pbn = btodb(pbn << wl->wl_log_dev_bshift);
 #endif
-	error = wapbl_buffered_write(data, len, wl, pbn);
+	error = wapbl_buffered_write(data, len, wl, pbn,
+	    WAPBL_JDATA_FLAGS(wl));
 	if (error)
 		return error;
 	off += len;
@@ -1925,9 +1927,6 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 		bp->b_iodone = wapbl_biodone;
 		bp->b_private = we;
 
-		/* make sure the block is saved sync when FUA in use */
-		bp->b_flags |= WAPBL_MFLAGS(wl);
-
 		bremfree(bp);
 		wapbl_remove_buf_locked(wl, bp);
 		mutex_exit(&wl->wl_mtx);
@@ -2399,8 +2398,8 @@ wapbl_cache_sync(struct wapbl *wl, const char *msg)
 	int force = 1;
 	int error;
 
-	/* Skip full cache sync if disabled, or when using FUA */
-	if (!wapbl_flush_disk_cache || WAPBL_USE_FUA(wl)) {
+	/* Skip full cache sync if disabled */
+	if (!wapbl_flush_disk_cache) {
 		return 0;
 	}
 	if (verbose) {
@@ -2459,8 +2458,10 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	if (error)
 		return error;
 	/*
-	 * flush disk cache to ensure that blocks we've written are actually
+	 * Flush disk cache to ensure that blocks we've written are actually
 	 * written to the stable storage before the commit header.
+	 * This flushes to disk not only journal blocks, but also all
+	 * metadata blocks, written asynchronously since previous commit.
 	 *
 	 * XXX Calc checksum here, instead we do this for now
 	 */
@@ -2489,7 +2490,7 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 #ifdef _KERNEL
 	pbn = btodb(pbn << wc->wc_log_dev_bshift);
 #endif
-	error = wapbl_buffered_write(wc, wc->wc_len, wl, pbn);
+	error = wapbl_buffered_write(wc, wc->wc_len, wl, pbn, WAPBL_JFLAGS(wl));
 	if (error)
 		return error;
 	error = wapbl_buffered_flush(wl, true);
@@ -2497,10 +2498,12 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 		return error;
 
 	/*
-	 * flush disk cache to ensure that the commit header is actually
-	 * written before meta data blocks.
+	 * Flush disk cache to ensure that the commit header is actually
+	 * written before meta data blocks. Commit block is written using
+	 * FUA when enabled, in that case this flush is not needed.
 	 */
-	wapbl_cache_sync(wl, "2");
+	if (!WAPBL_USE_FUA(wl))
+		wapbl_cache_sync(wl, "2");
 
 	/*
 	 * If the generation number was zero, write it out a second time.
