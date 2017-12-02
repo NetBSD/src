@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.163 2017/11/06 15:21:23 cherry Exp $
+#	$NetBSD: files.xen,v 1.164 2017/12/02 13:03:15 maxv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -330,7 +330,6 @@ include	"compat/freebsd/files.freebsd"
 elifdef amd64
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/amd64/amd64/compat_13_machdep.c	compat_13
 file	arch/amd64/amd64/compat_16_machdep.c	compat_16
 
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)

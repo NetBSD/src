@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.470 2017/12/02 12:40:03 maxv Exp $
+# $NetBSD: GENERIC,v 1.471 2017/12/02 13:03:15 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.470 $"
+#ident		"GENERIC-$Revision: 1.471 $"
 
 maxusers	64		# estimated number of users
 
@@ -117,7 +117,7 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # Compatibility options
 #options 	EXEC_AOUT	# required by binaries from before 1.5
 
-# NetBSD backward compatibility. Support goes from COMPAT_11 up until
+# NetBSD backward compatibility. Support goes from COMPAT_15 up until
 # the latest release. Note that really old compat (< COMPAT_16) is only
 # useful for 32-bit binaries.
 include 	"conf/compat_netbsd15.config"
