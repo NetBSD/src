@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.72 2017/11/25 16:32:48 jmcneill Exp $
+# $NetBSD: ALL,v 1.73 2017/12/02 09:59:02 maxv Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.72 $"
+#ident		"ALL-$Revision: 1.73 $"
 
 maxusers	64		# estimated number of users
 
@@ -139,13 +139,7 @@ options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_NETBSD32 # NetBSD 32-bit
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_LINUX32	# binary compatibility with Linux 32-bit
-options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_NDIS	# NDIS network driver
-options 	COMPAT_OSF1	# OSF1 binary compatibility
-#options 	COMPAT_SVR4	# SVR4 binary compatibility (no amd64)
-#options 	COMPAT_SVR4_32	# SVR4 32-bit binary compatibility (no amd64)
-options 	COMPAT_ULTRIX	# DEC Ultrix binary compatibility
-options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
