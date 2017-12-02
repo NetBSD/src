@@ -16,6 +16,7 @@ extern initialize_file_ftype _initialize_ser_hardwire;
 extern initialize_file_ftype _initialize_ser_pipe;
 extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_fork_child;
+extern initialize_file_ftype _initialize_nbsd_nat;
 extern initialize_file_ftype _initialize_sparc64nbsd_nat;
 extern initialize_file_ftype _initialize_sparc_nat;
 extern initialize_file_ftype _initialize_ax_gdb;
@@ -175,6 +176,7 @@ initialize_all_files (void)
   _initialize_ser_pipe ();
   _initialize_ser_tcp ();
   _initialize_fork_child ();
+  _initialize_nbsd_nat ();
   _initialize_sparc64nbsd_nat ();
   _initialize_sparc_nat ();
   _initialize_ax_gdb ();
