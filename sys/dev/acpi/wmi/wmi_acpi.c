@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.15 2017/06/01 02:45:09 chs Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.16 2017/12/03 17:34:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.15 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.16 2017/12/03 17:34:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -323,7 +323,7 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
 	struct wmi_t *wmi;
 	struct guid_t *guid;
 	char bin[16];
-	char hex[2];
+	char hex[3];
 	const char *ptr;
 	uint8_t i;
 
@@ -336,6 +336,7 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
 			ptr++;
 
 		(void)memcpy(hex, ptr, 2);
+		hex[2] = '\0';
 
 		if (HEXCHAR(hex[0]) == 0 || HEXCHAR(hex[1]) == 0)
 			return AE_BAD_HEX_CONSTANT;
@@ -613,8 +614,10 @@ acpi_wmi_enable_collection(ACPI_HANDLE hdl, const char *oid, bool flag)
 static bool
 acpi_wmi_input(struct wmi_t *wmi, uint8_t flag, uint8_t idx)
 {
-
-	if ((wmi->guid.flags & flag) == 0)
+	/* A data block may have no flags at all */
+	if ((wmi->guid.flags & flag) == 0 &&
+	    (flag == ACPI_WMI_FLAG_DATA  &&
+	     (wmi->guid.flags & ~ACPI_WMI_FLAG_EXPENSIVE) != 0))
 		return false;
 
 	if (wmi->guid.count == 0x00)
