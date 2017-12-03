@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.14 2013/11/26 20:47:26 rmind Exp $
+.\"	$NetBSD: kmem.9,v 1.14.4.1 2017/12/03 10:25:02 snj Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd November 26, 2013
+.Dd October 31, 2017
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -75,6 +75,9 @@ Either of the following:
 .It KM_SLEEP
 If the allocation cannot be satisfied immediately, sleep until enough
 memory is available.
+If
+.Dv KM_SLEEP
+is specified, then the allocation cannot fail.
 .It KM_NOSLEEP
 Don't sleep.
 Immediately return
