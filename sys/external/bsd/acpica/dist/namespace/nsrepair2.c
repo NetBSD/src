@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __NSREPAIR2_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -123,7 +121,7 @@ AcpiNsCheckSortedList (
     UINT32                  ExpectedCount,
     UINT32                  SortIndex,
     UINT8                   SortDirection,
-    char                    *SortKeyName);
+    const char              *SortKeyName);
 
 /* Values for SortDirection above */
 
@@ -256,6 +254,7 @@ AcpiNsMatchComplexRepair (
         {
             return (ThisName);
         }
+
         ThisName++;
     }
 
@@ -288,7 +287,7 @@ AcpiNsRepair_ALR (
 
 
     Status = AcpiNsCheckSortedList (Info, ReturnObject, 0, 2, 1,
-                ACPI_SORT_ASCENDING, __UNCONST("AmbientIlluminance"));
+        ACPI_SORT_ASCENDING, "AmbientIlluminance");
 
     return (Status);
 }
@@ -341,7 +340,8 @@ AcpiNsRepair_FDE (
 
         if (ReturnObject->Buffer.Length != ACPI_FDE_BYTE_BUFFER_SIZE)
         {
-            ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
+            ACPI_WARN_PREDEFINED ((AE_INFO,
+                Info->FullPathname, Info->NodeFlags,
                 "Incorrect return buffer length %u, expected %u",
                 ReturnObject->Buffer.Length, ACPI_FDE_DWORD_BUFFER_SIZE));
 
@@ -350,7 +350,8 @@ AcpiNsRepair_FDE (
 
         /* Create the new (larger) buffer object */
 
-        BufferObject = AcpiUtCreateBufferObject (ACPI_FDE_DWORD_BUFFER_SIZE);
+        BufferObject = AcpiUtCreateBufferObject (
+            ACPI_FDE_DWORD_BUFFER_SIZE);
         if (!BufferObject)
         {
             return (AE_NO_MEMORY);
@@ -359,7 +360,8 @@ AcpiNsRepair_FDE (
         /* Expand each byte to a DWORD */
 
         ByteBuffer = ReturnObject->Buffer.Pointer;
-        DwordBuffer = ACPI_CAST_PTR (UINT32, BufferObject->Buffer.Pointer);
+        DwordBuffer = ACPI_CAST_PTR (UINT32,
+            BufferObject->Buffer.Pointer);
 
         for (i = 0; i < ACPI_FDE_FIELD_COUNT; i++)
         {
@@ -446,16 +448,12 @@ AcpiNsRepair_CID (
             return (Status);
         }
 
-        /* Take care with reference counts */
-
         if (OriginalElement != *ElementPtr)
         {
-            /* Element was replaced */
+            /* Update reference count of new object */
 
             (*ElementPtr)->Common.ReferenceCount =
                 OriginalRefCount;
-
-            AcpiUtRemoveReference (OriginalElement);
         }
 
         ElementPtr++;
@@ -478,8 +476,8 @@ AcpiNsRepair_CID (
  * DESCRIPTION: Repair for the _CST object:
  *              1. Sort the list ascending by C state type
  *              2. Ensure type cannot be zero
- *              3. A sub-package count of zero means _CST is meaningless
- *              4. Count must match the number of C state sub-packages
+ *              3. A subpackage count of zero means _CST is meaningless
+ *              4. Count must match the number of C state subpackages
  *
  *****************************************************************************/
 
@@ -512,7 +510,8 @@ AcpiNsRepair_CST (
 
         if ((*OuterElements)->Package.Count == 0)
         {
-            ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
+            ACPI_WARN_PREDEFINED ((AE_INFO,
+                Info->FullPathname, Info->NodeFlags,
                 "SubPackage[%u] - removing entry due to zero count", i));
             Removing = TRUE;
             goto RemoveElement;
@@ -521,7 +520,8 @@ AcpiNsRepair_CST (
         ObjDesc = (*OuterElements)->Package.Elements[1]; /* Index1 = Type */
         if ((UINT32) ObjDesc->Integer.Value == 0)
         {
-            ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
+            ACPI_WARN_PREDEFINED ((AE_INFO,
+                Info->FullPathname, Info->NodeFlags,
                 "SubPackage[%u] - removing entry due to invalid Type(0)", i));
             Removing = TRUE;
         }
@@ -548,7 +548,7 @@ RemoveElement:
      * C-state type, in ascending order.
      */
     Status = AcpiNsCheckSortedList (Info, ReturnObject, 1, 4, 1,
-                ACPI_SORT_ASCENDING, __UNCONST("C-State Type"));
+        ACPI_SORT_ASCENDING, "C-State Type");
     if (ACPI_FAILURE (Status))
     {
         return (Status);
@@ -596,7 +596,8 @@ AcpiNsRepair_HID (
 
     if (ReturnObject->String.Length == 0)
     {
-        ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
+        ACPI_WARN_PREDEFINED ((AE_INFO,
+            Info->FullPathname, Info->NodeFlags,
             "Invalid zero-length _HID or _CID string"));
 
         /* Return AE_OK anyway, let driver handle it */
@@ -639,7 +640,7 @@ AcpiNsRepair_HID (
      */
     for (Dest = NewString->String.Pointer; *Source; Dest++, Source++)
     {
-        *Dest = (char) ACPI_TOUPPER (*Source);
+        *Dest = (char) toupper ((int) *Source);
     }
 
     AcpiUtRemoveReference (ReturnObject);
@@ -672,6 +673,7 @@ AcpiNsRepair_PRT (
     ACPI_OPERAND_OBJECT     **TopObjectList;
     ACPI_OPERAND_OBJECT     **SubObjectList;
     ACPI_OPERAND_OBJECT     *ObjDesc;
+    ACPI_OPERAND_OBJECT     *SubPackage;
     UINT32                  ElementCount;
     UINT32                  Index;
 
@@ -681,9 +683,19 @@ AcpiNsRepair_PRT (
     TopObjectList = PackageObject->Package.Elements;
     ElementCount = PackageObject->Package.Count;
 
-    for (Index = 0; Index < ElementCount; Index++)
+    /* Examine each subpackage */
+
+    for (Index = 0; Index < ElementCount; Index++, TopObjectList++)
     {
-        SubObjectList = (*TopObjectList)->Package.Elements;
+        SubPackage = *TopObjectList;
+        SubObjectList = SubPackage->Package.Elements;
+
+        /* Check for minimum required element count */
+
+        if (SubPackage->Package.Count < 4)
+        {
+            continue;
+        }
 
         /*
          * If the BIOS has erroneously reversed the _PRT SourceName (index 2)
@@ -698,14 +710,11 @@ AcpiNsRepair_PRT (
             SubObjectList[2] = ObjDesc;
             Info->ReturnFlags |= ACPI_OBJECT_REPAIRED;
 
-            ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
+            ACPI_WARN_PREDEFINED ((AE_INFO,
+                Info->FullPathname, Info->NodeFlags,
                 "PRT[%X]: Fixed reversed SourceName and SourceIndex",
                 Index));
         }
-
-        /* Point to the next ACPI_OPERAND_OBJECT in the top level package */
-
-        TopObjectList++;
     }
 
     return (AE_OK);
@@ -745,13 +754,13 @@ AcpiNsRepair_PSS (
 
 
     /*
-     * Entries (sub-packages) in the _PSS Package must be sorted by power
+     * Entries (subpackages) in the _PSS Package must be sorted by power
      * dissipation, in descending order. If it appears that the list is
      * incorrectly sorted, sort it. We sort by CpuFrequency, since this
      * should be proportional to the power.
      */
-    Status =AcpiNsCheckSortedList (Info, ReturnObject, 0, 6, 0,
-                ACPI_SORT_DESCENDING, __UNCONST("CpuFrequency"));
+    Status = AcpiNsCheckSortedList (Info, ReturnObject, 0, 6, 0,
+        ACPI_SORT_DESCENDING, "CpuFrequency");
     if (ACPI_FAILURE (Status))
     {
         return (Status);
@@ -772,7 +781,8 @@ AcpiNsRepair_PSS (
 
         if ((UINT32) ObjDesc->Integer.Value > PreviousValue)
         {
-            ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
+            ACPI_WARN_PREDEFINED ((AE_INFO,
+                Info->FullPathname, Info->NodeFlags,
                 "SubPackage[%u,%u] - suspicious power dissipation values",
                 i-1, i));
         }
@@ -826,7 +836,7 @@ AcpiNsRepair_TSS (
     }
 
     Status = AcpiNsCheckSortedList (Info, ReturnObject, 0, 5, 1,
-                ACPI_SORT_DESCENDING, __UNCONST("PowerDissipation"));
+        ACPI_SORT_DESCENDING, "PowerDissipation");
 
     return (Status);
 }
@@ -838,9 +848,9 @@ AcpiNsRepair_TSS (
  *
  * PARAMETERS:  Info                - Method execution information block
  *              ReturnObject        - Pointer to the top-level returned object
- *              StartIndex          - Index of the first sub-package
- *              ExpectedCount       - Minimum length of each sub-package
- *              SortIndex           - Sub-package entry to sort on
+ *              StartIndex          - Index of the first subpackage
+ *              ExpectedCount       - Minimum length of each subpackage
+ *              SortIndex           - Subpackage entry to sort on
  *              SortDirection       - Ascending or descending
  *              SortKeyName         - Name of the SortIndex field
  *
@@ -860,7 +870,7 @@ AcpiNsCheckSortedList (
     UINT32                  ExpectedCount,
     UINT32                  SortIndex,
     UINT8                   SortDirection,
-    char                    *SortKeyName)
+    const char              *SortKeyName)
 {
     UINT32                  OuterElementCount;
     ACPI_OPERAND_OBJECT     **OuterElements;
@@ -881,7 +891,7 @@ AcpiNsCheckSortedList (
     }
 
     /*
-     * NOTE: assumes list of sub-packages contains no NULL elements.
+     * NOTE: assumes list of subpackages contains no NULL elements.
      * Any NULL elements should have been removed by earlier call
      * to AcpiNsRemoveNullElements.
      */
@@ -911,7 +921,7 @@ AcpiNsCheckSortedList (
             return (AE_AML_OPERAND_TYPE);
         }
 
-        /* Each sub-package must have the minimum length */
+        /* Each subpackage must have the minimum length */
 
         if ((*OuterElements)->Package.Count < ExpectedCount)
         {
@@ -1058,6 +1068,7 @@ AcpiNsRemoveElement (
             *Dest = *Source;
             Dest++;
         }
+
         Source++;
     }
 

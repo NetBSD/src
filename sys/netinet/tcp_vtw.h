@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_vtw.h,v 1.5.12.1 2013/02/25 00:30:05 tls Exp $	*/
+/*	$NetBSD: tcp_vtw.h,v 1.5.12.2 2017/12/03 11:39:04 jdolecek Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,7 +126,6 @@
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -144,7 +143,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
 
 #define	VTW_NCLASS	(1+3)		/* # different classes */
 

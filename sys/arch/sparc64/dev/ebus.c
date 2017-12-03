@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.60.6.1 2012/11/20 03:01:45 tls Exp $	*/
+/*	$NetBSD: ebus.c,v 1.60.6.2 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.60.6.1 2012/11/20 03:01:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.60.6.2 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -133,7 +133,7 @@ ebus_match(device_t parent, cfdata_t match, void *aux)
 }
 
 /*
- * attach an ebus and all it's children.  this code is modeled
+ * attach an ebus and all its children.  this code is modeled
  * after the sbus code which does similar things.
  */
 void
@@ -299,7 +299,7 @@ ebus_print(void *aux, const char *p)
 /*
  * find the INO values for each interrupt and fill them in.
  *
- * for each "reg" property of this device, mask it's hi and lo
+ * for each "reg" property of this device, mask its hi and lo
  * values with the "interrupt-map-mask"'s hi/lo values, and also
  * mask the interrupt number with the interrupt mask.  search the
  * "interrupt-map" list for matching values of hi, lo and interrupt

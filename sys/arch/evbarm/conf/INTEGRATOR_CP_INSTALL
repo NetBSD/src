@@ -1,0 +1,10 @@
+#	$NetBSD: INTEGRATOR_CP_INSTALL,v 1.1.18.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	INTEGRATOR_CP_INSTALL -- INTEGRATOR_CP kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/INTEGRATOR_CP"
+include "arch/evbarm/conf/INSTALL"
+no config netbsd-sm0
+no config netbsd-ld0

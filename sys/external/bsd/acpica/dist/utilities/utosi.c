@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,14 +41,40 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#define __UTOSI_C__
-
 #include "acpi.h"
 #include "accommon.h"
 
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utosi")
+
+
+/******************************************************************************
+ *
+ * ACPICA policy for new _OSI strings:
+ *
+ * It is the stated policy of ACPICA that new _OSI strings will be integrated
+ * into this module as soon as possible after they are defined. It is strongly
+ * recommended that all ACPICA hosts mirror this policy and integrate any
+ * changes to this module as soon as possible. There are several historical
+ * reasons behind this policy:
+ *
+ * 1) New BIOSs tend to test only the case where the host responds TRUE to
+ *    the latest version of Windows, which would respond to the latest/newest
+ *    _OSI string. Not responding TRUE to the latest version of Windows will
+ *    risk executing untested code paths throughout the DSDT and SSDTs.
+ *
+ * 2) If a new _OSI string is recognized only after a significant delay, this
+ *    has the potential to cause problems on existing working machines because
+ *    of the possibility that a new and different path through the ASL code
+ *    will be executed.
+ *
+ * 3) New _OSI strings are tending to come out about once per year. A delay
+ *    in recognizing a new string for a significant amount of time risks the
+ *    release of another string which only compounds the initial problem.
+ *
+ *****************************************************************************/
+
 
 /*
  * Strings supported by the _OSI predefined control method (which is
@@ -78,6 +104,8 @@ static ACPI_INTERFACE_INFO    AcpiDefaultSupportedInterfaces[] =
     {__UNCONST("Windows 2006 SP2"),    NULL, 0, ACPI_OSI_WIN_VISTA_SP2},    /* Windows Vista SP2 - Added 09/2010 */
     {__UNCONST("Windows 2009"),        NULL, 0, ACPI_OSI_WIN_7},            /* Windows 7 and Server 2008 R2 - Added 09/2009 */
     {__UNCONST("Windows 2012"),        NULL, 0, ACPI_OSI_WIN_8},            /* Windows 8 and Server 2012 - Added 08/2012 */
+    {__UNCONST("Windows 2013"),        NULL, 0, ACPI_OSI_WIN_8},            /* Windows 8.1 and Server 2012 R2 - Added 01/2014 */
+    {__UNCONST("Windows 2015"),        NULL, 0, ACPI_OSI_WIN_10},           /* Windows 10 - Added 03/2015 */
 
 	/* Feature Group Strings */
 
@@ -128,7 +156,9 @@ AcpiUtInitializeInterfaces (
 
     /* Link the static list of supported interfaces */
 
-    for (i = 0; i < (ACPI_ARRAY_LENGTH (AcpiDefaultSupportedInterfaces) - 1); i++)
+    for (i = 0;
+        i < (ACPI_ARRAY_LENGTH (AcpiDefaultSupportedInterfaces) - 1);
+        i++)
     {
         AcpiDefaultSupportedInterfaces[i].Next =
             &AcpiDefaultSupportedInterfaces[(ACPI_SIZE) i + 1];
@@ -228,7 +258,7 @@ AcpiUtInstallInterface (
         return (AE_NO_MEMORY);
     }
 
-    InterfaceInfo->Name = ACPI_ALLOCATE_ZEROED (ACPI_STRLEN (InterfaceName) + 1);
+    InterfaceInfo->Name = ACPI_ALLOCATE_ZEROED (strlen (InterfaceName) + 1);
     if (!InterfaceInfo->Name)
     {
         ACPI_FREE (InterfaceInfo);
@@ -237,7 +267,7 @@ AcpiUtInstallInterface (
 
     /* Initialize new info and insert at the head of the global list */
 
-    ACPI_STRCPY (InterfaceInfo->Name, InterfaceName);
+    strcpy (InterfaceInfo->Name, InterfaceName);
     InterfaceInfo->Flags = ACPI_OSI_DYNAMIC;
     InterfaceInfo->Next = AcpiGbl_SupportedInterfaces;
 
@@ -270,10 +300,12 @@ AcpiUtRemoveInterface (
     PreviousInterface = NextInterface = AcpiGbl_SupportedInterfaces;
     while (NextInterface)
     {
-        if (!ACPI_STRCMP (InterfaceName, NextInterface->Name))
+        if (!strcmp (InterfaceName, NextInterface->Name))
         {
-            /* Found: name is in either the static list or was added at runtime */
-
+            /*
+             * Found: name is in either the static list
+             * or was added at runtime
+             */
             if (NextInterface->Flags & ACPI_OSI_DYNAMIC)
             {
                 /* Interface was added dynamically, remove and free it */
@@ -293,8 +325,8 @@ AcpiUtRemoveInterface (
             else
             {
                 /*
-                 * Interface is in static list. If marked invalid, then it
-                 * does not actually exist. Else, mark it invalid.
+                 * Interface is in static list. If marked invalid, then
+                 * it does not actually exist. Else, mark it invalid.
                  */
                 if (NextInterface->Flags & ACPI_OSI_INVALID)
                 {
@@ -391,7 +423,7 @@ AcpiUtGetInterface (
     NextInterface = AcpiGbl_SupportedInterfaces;
     while (NextInterface)
     {
-        if (!ACPI_STRCMP (InterfaceName, NextInterface->Name))
+        if (!strcmp (InterfaceName, NextInterface->Name))
         {
             return (NextInterface);
         }
@@ -410,10 +442,21 @@ AcpiUtGetInterface (
  * PARAMETERS:  WalkState           - Current walk state
  *
  * RETURN:      Status
+ *              Integer: TRUE (0) if input string is matched
+ *                       FALSE (-1) if string is not matched
  *
  * DESCRIPTION: Implementation of the _OSI predefined control method. When
  *              an invocation of _OSI is encountered in the system AML,
  *              control is transferred to this function.
+ *
+ * (August 2016)
+ * Note:  _OSI is now defined to return "Ones" to indicate a match, for
+ * compatibility with other ACPI implementations. On a 32-bit DSDT, Ones
+ * is 0xFFFFFFFF. On a 64-bit DSDT, Ones is 0xFFFFFFFFFFFFFFFF
+ * (ACPI_UINT64_MAX).
+ *
+ * This function always returns ACPI_UINT64_MAX for TRUE, and later code
+ * will truncate this to 32 bits if necessary.
  *
  ******************************************************************************/
 
@@ -426,7 +469,7 @@ AcpiUtOsiImplementation (
     ACPI_INTERFACE_INFO     *InterfaceInfo;
     ACPI_INTERFACE_HANDLER  InterfaceHandler;
     ACPI_STATUS             Status;
-    UINT32                  ReturnValue;
+    UINT64                  ReturnValue;
 
 
     ACPI_FUNCTION_TRACE (UtOsiImplementation);
@@ -475,7 +518,7 @@ AcpiUtOsiImplementation (
             AcpiGbl_OsiData = InterfaceInfo->Value;
         }
 
-        ReturnValue = ACPI_UINT32_MAX;
+        ReturnValue = ACPI_UINT64_MAX;
     }
 
     AcpiOsReleaseMutex (AcpiGbl_OsiMutex);
@@ -488,8 +531,11 @@ AcpiUtOsiImplementation (
     InterfaceHandler = AcpiGbl_InterfaceHandler;
     if (InterfaceHandler)
     {
-        ReturnValue = InterfaceHandler (
-            StringDesc->String.Pointer, ReturnValue);
+        if (InterfaceHandler (
+            StringDesc->String.Pointer, (UINT32) ReturnValue))
+        {
+            ReturnValue = ACPI_UINT64_MAX;
+        }
     }
 
     ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INFO,

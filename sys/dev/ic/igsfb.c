@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.52 2012/01/11 20:41:28 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.52.6.1 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.52 2012/01/11 20:41:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.52.6.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 	vcons_init_screen(&dc->dc_vd, &dc->dc_console, 1, &defattr);
 	dc->dc_console.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-	printf("%s: %dMB, %s%dx%d, %dbpp\n",
+	aprint_normal("%s: %dMB, %s%dx%d, %dbpp\n",
 	       device_xname(sc->sc_dev),
 	       (uint32_t)(dc->dc_vmemsz >> 20),
 	       (dc->dc_hwflags & IGSFB_HW_BSWAP)
@@ -201,7 +201,7 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 		       ? "hardware bswap, " : "software bswap, "
 		   : "",
 	       dc->dc_width, dc->dc_height, dc->dc_depth);
-	printf("%s: using %dbpp for X\n", device_xname(sc->sc_dev),
+	aprint_normal("%s: using %dbpp for X\n", device_xname(sc->sc_dev),
 	       dc->dc_maxdepth);
 	ri = &dc->dc_console.scr_ri;
 	ri->ri_ops.eraserows(ri, 0, ri->ri_rows, defattr);
@@ -279,6 +279,20 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 		}
 	}
 
+	/*
+	 * Map graphic coprocessor for mode setting and accelerated rasops.
+	 */
+	if (dc->dc_id >= 0x2000) { /* XXX */
+		if (bus_space_map(dc->dc_iot,
+				  dc->dc_iobase + IGS_COP_BASE_B, IGS_COP_SIZE,
+				  dc->dc_ioflags,
+				  &dc->dc_coph) != 0)
+		{
+			printf("unable to map COP registers\n");
+			return 1;
+		}
+	}
+
 	igsfb_hw_setup(dc);
 
 	/*
@@ -289,6 +303,9 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &dc->dc_fbh) != 0)
 	{
+		if (dc->dc_id >= 0x2000) { /* XXX */
+			bus_space_unmap(dc->dc_iot, dc->dc_coph, IGS_COP_SIZE);
+		}
 		bus_space_unmap(dc->dc_iot, dc->dc_ioh, IGS_REG_SIZE);
 		printf("unable to map framebuffer\n");
 		return 1;
@@ -305,6 +322,9 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &dc->dc_crh) != 0)
 	{
+		if (dc->dc_id >= 0x2000) { /* XXX */
+			bus_space_unmap(dc->dc_iot, dc->dc_coph, IGS_COP_SIZE);
+		}
 		bus_space_unmap(dc->dc_iot, dc->dc_ioh, IGS_REG_SIZE);
 		bus_space_unmap(dc->dc_memt, dc->dc_fbh, dc->dc_fbsz);
 		printf("unable to map cursor sprite region\n");
@@ -336,19 +356,9 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 	dc->dc_curenb = 0;
 
 	/*
-	 * Map and init graphic coprocessor for accelerated rasops.
+	 * Init graphic coprocessor for accelerated rasops.
 	 */
 	if (dc->dc_id >= 0x2000) { /* XXX */
-		if (bus_space_map(dc->dc_iot,
-				  dc->dc_iobase + IGS_COP_BASE_B, IGS_COP_SIZE,
-				  dc->dc_ioflags,
-				  &dc->dc_coph) != 0)
-		{
-			printf("unable to map COP registers\n");
-			return 1;
-		}
-
-		/* XXX: hardcoded 8bpp */
 		bus_space_write_2(dc->dc_iot, dc->dc_coph,
 				  IGS_COP_SRC_MAP_WIDTH_REG,
 				  dc->dc_width - 1);
@@ -358,7 +368,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 
 		bus_space_write_1(dc->dc_iot, dc->dc_coph,
 				  IGS_COP_MAP_FMT_REG,
-				  IGS_COP_MAP_8BPP);
+				  howmany(dc->dc_depth, NBBY) - 1);
 	}
 
 	/* make sure screen is not blanked */
@@ -389,10 +399,11 @@ igsfb_init_cmap(struct igsfb_devconfig *dc)
 	/* propagate to the device */
 	igsfb_update_cmap(dc, 0, IGS_CMAP_SIZE);
 
-	/* set overscan color (XXX: use defattr's background?) */
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_RED,   0);
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_GREEN, 0);
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_BLUE,  0);
+	/* set overscan color */
+	p = &rasops_cmap[WSDISPLAY_BORDER_COLOR * 3];
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_RED,   p[0]);
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_GREEN, p[1]);
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_BLUE,  p[2]);
 }
 
 
@@ -623,7 +634,7 @@ igsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(int *)data = dc->dc_width * (dc->dc_maxdepth >> 3);
+		*(int *)data = dc->dc_width * howmany(dc->dc_maxdepth, NBBY);
 		return 0;
 
 	case WSDISPLAYIO_SMODE:
@@ -1180,7 +1191,8 @@ igsfb_accel_wait(struct igsfb_devconfig *dc)
 	int timo = 100000;
 	uint8_t reg;
 
-	bus_space_write_1(t, h, IGS_COP_MAP_FMT_REG, (dc->dc_depth >> 3) - 1);
+	bus_space_write_1(t, h, IGS_COP_MAP_FMT_REG,
+	    howmany(dc->dc_depth, NBBY) - 1);
 	while (timo--) {
 		reg = bus_space_read_1(t, h, IGS_COP_CTL_REG);
 		if ((reg & IGS_COP_CTL_BUSY) == 0)

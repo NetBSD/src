@@ -1,4 +1,4 @@
-/*	$NetBSD: getsecs.c,v 1.1.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.1.6.3 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
+
+#include <dev/clock_subr.h>
 
 #include <luna68k/dev/timekeeper.h>
 #include <luna68k/stand/boot/samachdep.h>

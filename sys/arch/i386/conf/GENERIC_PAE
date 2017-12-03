@@ -1,0 +1,5 @@
+# $NetBSD: GENERIC_PAE,v 1.1.18.2 2017/12/03 11:36:17 jdolecek Exp $
+
+include "arch/i386/conf/GENERIC"
+
+options 	PAE		# PAE mode (36 bits physical addressing)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.14 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: tod.c,v 1.14.40.1 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.14 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.14.40.1 2017/12/03 11:36:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ tod_vme_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
-	vme_am_t		mod; 
+	vme_am_t		mod;
 	vme_addr_t		vme_addr;
 
 	/* Make sure there is something there... */

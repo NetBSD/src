@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.21 2009/12/12 15:10:34 tsutsui Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.21.22.1 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,34 +32,38 @@
 #ifndef _DEV_CLOCK_SUBR_H_
 #define _DEV_CLOCK_SUBR_H_
 
+#include <sys/clock.h>
+
 /*
  * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
  */
 struct clock_ymdhms {
-	u_short dt_year;
-	u_char dt_mon;
-	u_char dt_day;
-	u_char dt_wday;	/* Day of week */
-	u_char dt_hour;
-	u_char dt_min;
-	u_char dt_sec;
+	uint64_t dt_year;
+	uint8_t dt_mon;
+	uint8_t dt_day;
+	uint8_t dt_wday;	/* Day of week */
+	uint8_t dt_hour;
+	uint8_t dt_min;
+	uint8_t dt_sec;
 };
 
 time_t	clock_ymdhms_to_secs(struct clock_ymdhms *);
-void	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
+int	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
 /*
  * BCD to binary and binary to BCD.
  */
-#define	FROMBCD(x)	bcdtobin((x))
-#define	TOBCD(x)	bintobcd((x))
+static inline unsigned int
+bcdtobin(unsigned int bcd)
+{
+        return ((bcd >> 4) & 0x0f) * 10 + (bcd & 0x0f);
+}
 
-/* Some handy constants. */
-#define SECDAY		(24 * 60 * 60)
-#define SECYR		(SECDAY * 365)
-
-/* Traditional POSIX base year */
-#define	POSIX_BASE_YEAR	1970
+static inline unsigned int
+bintobcd(unsigned int bin)
+{
+	return (((bin / 10) << 4) & 0xf0) | (bin % 10);
+}
 
 /*
  * Interface to time-of-day clock devices.
@@ -72,6 +76,7 @@ void	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
  *		function which takes one boolean argument:
  *			1 to enable writes; 0 to disable writes.
  */
+struct timeval;
 struct todr_chip_handle {
 	void	*cookie;	/* Device specific data */
 	void	*bus_cookie;	/* Bus specific data */
@@ -94,8 +99,8 @@ typedef struct todr_chip_handle *todr_chip_handle_t;
 /*
  * Probably these should evolve into internal routines in kern_todr.c.
  */
-extern int todr_gettime(todr_chip_handle_t tch, struct timeval *);
-extern int todr_settime(todr_chip_handle_t tch, struct timeval *);
+extern int todr_gettime(todr_chip_handle_t, struct timeval *);
+extern int todr_settime(todr_chip_handle_t, struct timeval *);
 
 /*
  * Machine-dependent function that machine-independent RTC drivers can

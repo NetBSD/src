@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.1.2.4 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.1.2.5 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -419,12 +419,12 @@ bcmpax_conf_addr_write(struct bcmpax_softc *sc, pcitag_t tag)
 		bcmpax_write_4(sc, PCIE_CFG_IND_ADDR,
 		    __SHIFTIN(func, CFG_IND_ADDR_FUNC)
 		    | __SHIFTIN(reg, CFG_IND_ADDR_REG));
-		__asm __volatile("dsb");
+		arm_dsb();
 		return PCIE_CFG_IND_DATA;
 	}
 	if (sc->sc_linkup) {
 		bcmpax_write_4(sc, PCIE_CFG_ADDR, tag);
-		__asm __volatile("dsb");
+		arm_dsb();
 		return PCIE_CFG_DATA;
 	} 
 	return 0;
@@ -434,6 +434,9 @@ static pcireg_t
 bcmpax_conf_read(void *v, pcitag_t tag, int reg)
 {
 	struct bcmpax_softc * const sc = v;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return 0xffffffff;
 
 	/*
 	 * Even in RC mode, the PCI Express Root Complex return itself
@@ -470,6 +473,9 @@ static void
 bcmpax_conf_write(void *v, pcitag_t tag, int reg, pcireg_t val)
 {
 	struct bcmpax_softc * const sc = v;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	mutex_enter(sc->sc_cfg_lock);
 	bus_size_t data_reg = bcmpax_conf_addr_write(sc, tag | reg);

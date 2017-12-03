@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.99.6.1 2013/06/23 06:20:08 tls Exp $
+#	$NetBSD: files.macppc,v 1.99.6.2 2017/12/03 11:36:24 jdolecek Exp $
 #
 # macppc-specific configuration info
 
@@ -133,7 +133,7 @@ attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
 
 # PCI-Host bridge chipsets
-device pchb: agpbus, agp_apple
+device pchb: agpbus
 attach pchb at pci
 file arch/powerpc/pci/pchb.c			pchb
 
@@ -179,6 +179,22 @@ file arch/macppc/dev/zs_kgdb.c			zsc & kgdb
 device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
+
+define smu {}
+device smu: smu, obio
+attach smu at mainbus
+file arch/macppc/dev/smu.c			smu needs-flag
+defflag	opt_smu.h	SMU_DEBUG
+
+define smuiic {}
+device smuiic: smuiic, i2cbus
+attach smuiic at smu
+file arch/macppc/dev/smuiic.c			smuiic
+
+device smusat
+attach smusat at smuiic
+file arch/macppc/dev/smusat.c			smusat
+defflag	opt_smusat.h	SMUSAT_DEBUG
 
 include "dev/adb/files.adb"
 
@@ -290,12 +306,9 @@ file arch/macppc/dev/snapper.c			snapper
 
 include "arch/powerpc/conf/majors.powerpc"
 
-attach dbcool at ki2c with dbcool_ki2c
-file arch/macppc/dev/dbcool_ki2c.c		dbcool
-
 define deq {}
 device deq
-attach deq at ki2c
+attach deq at iic
 file arch/macppc/dev/deq.c				deq
 
 device videopll
@@ -307,3 +320,7 @@ device valkyriefb: wsemuldisplaydev, rasops8, vcons, videomode
 attach valkyriefb at mainbus
 file arch/macppc/dev/valkyriefb.c			valkyriefb
 defflag opt_valkyriefb.h VALKYRIEFB_DEBUG
+
+device platinumfb: wsemuldisplaydev, rasops8, vcons, videomode
+attach platinumfb at mainbus
+file arch/macppc/dev/platinumfb.c			platinumfb

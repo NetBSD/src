@@ -1,0 +1,72 @@
+#	$NetBSD: files.amlogic,v 1.13.16.2 2017/12/03 11:35:51 jdolecek Exp $
+#
+# Configuration info for Amlogic ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/amlogic/amlogic_board.c
+file	arch/arm/amlogic/amlogic_cpufreq.c
+
+# On-board I/O
+device	amlogicio { [port=-1] } : bus_space_generic
+attach	amlogicio at mainbus with amlogic_io
+file	arch/arm/amlogic/amlogic_io.c		amlogic_io
+
+# UART
+device	amlogiccom
+attach	amlogiccom at amlogicio with amlogic_com
+file	arch/arm/amlogic/amlogic_com.c		amlogic_com needs-flag
+
+# GPIO
+device	amlogicgpio: gpiobus
+attach	amlogicgpio at amlogicio with amlogic_gpio
+file	arch/arm/amlogic/amlogic_gpio.c		amlogic_gpio
+
+# Framebuffer console
+attach	genfb at amlogicio with amlogic_genfb
+file	arch/arm/amlogic/amlogic_genfb.c	amlogic_genfb needs-flag
+
+# SDIO
+device	amlogicsdio: sdmmcbus
+attach	amlogicsdio at amlogicio with amlogic_sdio
+file	arch/arm/amlogic/amlogic_sdio.c		amlogic_sdio
+
+# SDHC
+device	amlogicsdhc: sdmmcbus
+attach	amlogicsdhc at amlogicio with amlogic_sdhc
+file	arch/arm/amlogic/amlogic_sdhc.c		amlogic_sdhc
+
+# usb otg
+attach	dwctwo at amlogicio with amlogic_dwctwo
+file	arch/arm/amlogic/amlogic_dwctwo.c	amlogic_dwctwo
+
+# ethernet mac
+attach	awge at amlogicio with amlogic_gmac
+file	arch/arm/amlogic/amlogic_gmac.c		amlogic_gmac
+
+# Hardware random number generator
+device	amlogicrng
+attach	amlogicrng at amlogicio with amlogic_rng
+file	arch/arm/amlogic/amlogic_rng.c		amlogic_rng
+
+# RTC
+device	amlogicrtc
+attach	amlogicrtc at amlogicio with amlogic_rtc
+file	arch/arm/amlogic/amlogic_rtc.c		amlogic_rtc
+
+# Console parameters
+defparam opt_amlogic.h			CONADDR
+defparam opt_amlogic.h			CONSPEED
+defparam opt_amlogic.h			CONMODE
+
+# Memory parameters
+defparam opt_amlogic.h			MEMSIZE

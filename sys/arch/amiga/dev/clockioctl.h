@@ -1,4 +1,4 @@
-/*	$NetBSD: clockioctl.h,v 1.5 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: clockioctl.h,v 1.5.14.1 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989 University of Utah.
@@ -37,6 +37,8 @@
  *
  *	@(#)clockioctl.h	7.2 (Berkeley) 11/2/90
  */
+
+#include <sys/ioccom.h>
 
 #define	CLOCKMAP	_IOWR('C', 1, int)
 #define	CLOCKUNMAP	_IOW('C', 2, int)

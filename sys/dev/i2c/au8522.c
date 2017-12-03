@@ -1,4 +1,4 @@
-/* $NetBSD: au8522.c,v 1.6 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: au8522.c,v 1.6.12.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.6 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.6.12.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,8 +219,6 @@ au8522_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr, unsigned int if_fre
 	struct au8522 *au;
 
 	au = kmem_alloc(sizeof(*au), KM_SLEEP);
-	if (au == NULL)
-		return NULL;
 	au->parent = parent;
 	au->i2c = i2c;
 	au->i2c_addr = addr;
@@ -419,7 +417,7 @@ au8522_get_snr(struct au8522 *au)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, au8522, "iic");
+MODULE(MODULE_CLASS_DRIVER, au8522, "i2cexec");
 
 static int
 au8522_modcmd(modcmd_t cmd, void *opaque)

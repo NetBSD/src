@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.29.54.1 2013/02/25 00:30:04 tls Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.29.54.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,14 +36,16 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.29.54.1 2013/02/25 00:30:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.29.54.2 2017/12/03 11:39:03 jdolecek Exp $");
 #endif
 
 /*
  * IEEE 802.11 protocol support.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.29.54.1 2013/02/25 00:30:04 tl
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -256,7 +259,7 @@ ieee80211_aclator_get(const char *name)
 void
 ieee80211_print_essid(const u_int8_t *essid, int len)
 {
-	const u_int8_t *p; 
+	const u_int8_t *p;
 	int i;
 
 	if (len > IEEE80211_NWID_LEN)
@@ -558,9 +561,9 @@ ieee80211_set11gbasicrates(struct ieee80211_rateset *rs, enum ieee80211_phymode 
  * WME protocol support.  The following parameters come from the spec.
  */
 typedef struct phyParamType {
-	u_int8_t aifsn; 
+	u_int8_t aifsn;
 	u_int8_t logcwmin;
-	u_int8_t logcwmax; 
+	u_int8_t logcwmax;
 	u_int16_t txopLimit;
 	u_int8_t acm;
 } paramType;
@@ -665,15 +668,15 @@ ieee80211_wme_initparams(struct ieee80211com *ic)
 		wmep = &wme->wme_wmeChanParams.cap_wmeParams[i];
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			wmep->wmep_acm = pPhyParam->acm;
-			wmep->wmep_aifsn = pPhyParam->aifsn;	
-			wmep->wmep_logcwmin = pPhyParam->logcwmin;	
-			wmep->wmep_logcwmax = pPhyParam->logcwmax;		
+			wmep->wmep_aifsn = pPhyParam->aifsn;
+			wmep->wmep_logcwmin = pPhyParam->logcwmin;
+			wmep->wmep_logcwmax = pPhyParam->logcwmax;
 			wmep->wmep_txopLimit = pPhyParam->txopLimit;
 		} else {
 			wmep->wmep_acm = pBssPhyParam->acm;
-			wmep->wmep_aifsn = pBssPhyParam->aifsn;	
-			wmep->wmep_logcwmin = pBssPhyParam->logcwmin;	
-			wmep->wmep_logcwmax = pBssPhyParam->logcwmax;		
+			wmep->wmep_aifsn = pBssPhyParam->aifsn;
+			wmep->wmep_logcwmin = pBssPhyParam->logcwmin;
+			wmep->wmep_logcwmax = pBssPhyParam->logcwmax;
 			wmep->wmep_txopLimit = pBssPhyParam->txopLimit;
 
 		}	
@@ -690,9 +693,9 @@ ieee80211_wme_initparams(struct ieee80211com *ic)
 
 		wmep = &wme->wme_wmeBssChanParams.cap_wmeParams[i];
 		wmep->wmep_acm = pBssPhyParam->acm;
-		wmep->wmep_aifsn = pBssPhyParam->aifsn;	
-		wmep->wmep_logcwmin = pBssPhyParam->logcwmin;	
-		wmep->wmep_logcwmax = pBssPhyParam->logcwmax;		
+		wmep->wmep_aifsn = pBssPhyParam->aifsn;
+		wmep->wmep_logcwmin = pBssPhyParam->logcwmin;
+		wmep->wmep_logcwmax = pBssPhyParam->logcwmax;
 		wmep->wmep_txopLimit = pBssPhyParam->txopLimit;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_WME,
 			"%s: %s  bss [acm %u aifsn %u log2(cwmin) %u "
@@ -780,7 +783,7 @@ ieee80211_wme_updateparams_locked(struct ieee80211com *ic)
 			phyParam[ic->ic_curmode].logcwmax;
 		chanp->wmep_txopLimit = bssp->wmep_txopLimit =
 			(ic->ic_caps & IEEE80211_C_BURST) ?
-				phyParam[ic->ic_curmode].txopLimit : 0;		
+				phyParam[ic->ic_curmode].txopLimit : 0;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_WME,
 			"%s: %s [acm %u aifsn %u log2(cwmin) %u "
 			"log2(cwmax) %u txpoLimit %u]\n", __func__
@@ -915,6 +918,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
+
+	KASSERT(!cpu_intr_p());
 
 	ostate = ic->ic_state;
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_STATE, "%s: %s -> %s\n", __func__,
@@ -1119,7 +1124,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			if (ic->ic_opmode == IEEE80211_M_STA)
 				ieee80211_notify_node_join(ic, ni, 
 					arg == IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
-			(*ifp->if_start)(ifp);	/* XXX not authorized yet */
+			if_start_lock(ifp);	/* XXX not authorized yet */
 			break;
 		}
 		/*

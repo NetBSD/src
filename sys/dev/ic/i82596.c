@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.29.18.1 2014/08/20 00:03:38 tls Exp $ */
+/* $NetBSD: i82596.c,v 1.29.18.2 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.29.18.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.29.18.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -256,7 +256,7 @@ iee_intr(void *intarg)
 		    BUS_DMASYNC_POSTREAD);
 		rx_mbuf->m_pkthdr.len = rx_mbuf->m_len =
 		    count & IEE_RBD_COUNT;
-		rx_mbuf->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(rx_mbuf, ifp);
 		MGETHDR(new_mbuf, M_DONTWAIT, MT_DATA);
 		if (new_mbuf == NULL) {
 			printf("%s: iee_intr: can't allocate mbuf\n",
@@ -280,9 +280,7 @@ iee_intr(void *intarg)
 			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0,
 		    rx_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-		bpf_mtap(ifp, rx_mbuf);
-		(*ifp->if_input)(ifp, rx_mbuf);
-		ifp->if_ipackets++;
+		if_percpuq_enqueue(ifp->if_percpuq, rx_mbuf);
 		sc->sc_rx_mbuf[sc->sc_rx_done] = new_mbuf;
 		rbd->rbd_count = 0;
 		rbd->rbd_size = IEE_RBD_EL | rx_map->dm_segs[0].ds_len;
@@ -385,7 +383,7 @@ iee_intr(void *intarg)
 				(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
 			} else
 				/* Try to get deferred packets going. */
-				iee_start(ifp);
+				if_schedule_deferred_start(ifp);
 		}
 	}
 	if (IEE_SWAP32(SC_SCB(sc)->scb_crc_err) != sc->sc_crc_err) {
@@ -513,10 +511,10 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 				break;
 			}
 			memcpy(__UNVOLATILE(&cb->cb_mcast.mc_addrs[
-			    cb->cb_mcast.mc_size * ETHER_ADDR_LEN]),
+			    cb->cb_mcast.mc_size]),
 			    enm->enm_addrlo, ETHER_ADDR_LEN);
 			ETHER_NEXT_MULTI(step, enm);
-			cb->cb_mcast.mc_size++;
+			cb->cb_mcast.mc_size += ETHER_ADDR_LEN;
 		}
 		if (cb->cb_mcast.mc_size == 0) {
 			/* Can't do exact mcast filtering, do ALLMULTI mode. */
@@ -665,6 +663,7 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eth_addr);
 
 	aprint_normal(": Intel 82596%s address %s\n",
@@ -754,6 +753,7 @@ iee_start(struct ifnet *ifp)
 				printf("%s: iee_start: can't allocate mbuf\n",
 				    device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
+				sc->sc_tx_mbuf[t] = NULL;
 				t--;
 				continue;
 			}
@@ -763,6 +763,7 @@ iee_start(struct ifnet *ifp)
 				printf("%s: iee_start: can't allocate mbuf "
 				    "cluster\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
+				sc->sc_tx_mbuf[t] = NULL;
 				m_freem(m);
 				t--;
 				continue;
@@ -778,6 +779,7 @@ iee_start(struct ifnet *ifp)
 				printf("%s: iee_start: can't load TX DMA map\n",
 				    device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
+				sc->sc_tx_mbuf[t] = NULL;
 				t--;
 				continue;
 			}
@@ -927,6 +929,7 @@ iee_init(struct ifnet *ifp)
 				printf("%s: iee_init: can't allocate mbuf"
 				    " cluster\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_rx_mbuf[r]);
+				sc->sc_rx_mbuf[r] = NULL;
 				err = 1;
 				break;
 			}
@@ -940,6 +943,7 @@ iee_init(struct ifnet *ifp)
 				printf("%s: iee_init: can't create RX "
 				    "DMA map\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_rx_mbuf[r]);
+				sc->sc_rx_mbuf[r] = NULL;
 				err = 1;
 				break;
 			}
@@ -949,6 +953,7 @@ iee_init(struct ifnet *ifp)
 			    device_xname(sc->sc_dev));
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_map[r]);
 			m_freem(sc->sc_rx_mbuf[r]);
+			sc->sc_rx_mbuf[r] = NULL;
 			err = 1;
 			break;
 		}

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,9 +75,14 @@ AcpiNsCheckArgumentTypes (
     UINT32                      i;
 
 
-    /* If not a predefined name, cannot typecheck args */
-
-    if (!Info->Predefined)
+    /*
+     * If not a predefined name, cannot typecheck args, because
+     * we have no idea what argument types are expected.
+     * Also, ignore typecheck if warnings/errors if this method
+     * has already been evaluated at least once -- in order
+     * to suppress repetitive messages.
+     */
+    if (!Info->Predefined || (Info->Node->Flags & ANOBJ_EVALUATED))
     {
         return;
     }
@@ -99,6 +104,10 @@ AcpiNsCheckArgumentTypes (
                 "Found [%s], ACPI requires [%s]", (i + 1),
                 AcpiUtGetTypeName (UserArgType),
                 AcpiUtGetTypeName (ArgType)));
+
+            /* Prevent any additional typechecking for this method */
+
+            Info->Node->Flags |= ANOBJ_EVALUATED;
         }
     }
 }
@@ -130,14 +139,15 @@ AcpiNsCheckAcpiCompliance (
     UINT32                      RequiredParamCount;
 
 
-    if (!Predefined)
+    if (!Predefined || (Node->Flags & ANOBJ_EVALUATED))
     {
         return;
     }
 
     /* Get the ACPI-required arg count from the predefined info table */
 
-    RequiredParamCount = METHOD_GET_ARG_COUNT (Predefined->Info.ArgumentList);
+    RequiredParamCount =
+        METHOD_GET_ARG_COUNT (Predefined->Info.ArgumentList);
 
     /*
      * If this object is not a control method, we can check if the ACPI
@@ -223,6 +233,11 @@ AcpiNsCheckArgumentCount (
     UINT32                      RequiredParamCount;
 
 
+    if (Node->Flags & ANOBJ_EVALUATED)
+    {
+        return;
+    }
+
     if (!Predefined)
     {
         /*
@@ -283,7 +298,8 @@ AcpiNsCheckArgumentCount (
      * Some methods are allowed to have a "minimum" number of args (_SCP)
      * because their definition in ACPI has changed over time.
      */
-    RequiredParamCount = METHOD_GET_ARG_COUNT (Predefined->Info.ArgumentList);
+    RequiredParamCount =
+        METHOD_GET_ARG_COUNT (Predefined->Info.ArgumentList);
 
     if (UserParamCount < RequiredParamCount)
     {

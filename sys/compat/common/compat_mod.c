@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.14.12.3 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.14.12.4 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.12.3 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.12.4 2017/12/03 11:36:53 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -59,15 +59,17 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.12.3 2014/08/20 00:03:31 tls Exp
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
+#include <compat/common/if_43.h>
 
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
 static struct sysctllog *compat_clog = NULL;
 #endif
- 
+
 MODULE(MODULE_CLASS_EXEC, compat, NULL);
 
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
+#ifdef _MODULE
 #ifdef COMPAT_16
 #if !defined(__amd64__) || defined(COMPAT_NETBSD32)
 #define COMPAT_SIGCONTEXT
@@ -75,6 +77,7 @@ extern char sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
 #endif
 #endif
+#endif /* _MODULE */
 
 extern krwlock_t exec_lock;
 extern krwlock_t ttcompat_lock;
@@ -122,18 +125,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_09_ouname, 0, (sy_call_t *)compat_09_sys_uname },
 #endif
 
-#if defined(COMPAT_10) && !defined(_LP64)
-# if defined(SYSVMSG)
-	{ SYS_compat_10_omsgsys, 0, (sy_call_t *)compat_10_sys_msgsys },
-# endif
-# if defined(SYSVSEM)
-	{ SYS_compat_10_osemsys, 0, (sy_call_t *)compat_10_sys_semsys },
-# endif
-# if defined(SYSVSHM)
-	{ SYS_compat_10_oshmsys, 0, (sy_call_t *)compat_10_sys_shmsys },
-# endif
-#endif	/* defined(COMPAT_10) && !defined(_LP64) */
-
 #if defined(COMPAT_12)
 	{ SYS_compat_12_fstat12, 0, (sy_call_t *)compat_12_sys_fstat },
 	{ SYS_compat_12_getdirentries, 0, (sy_call_t *)compat_12_sys_getdirentries },
@@ -151,18 +142,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_13_sigprocmask13, 0, (sy_call_t *)compat_13_sys_sigprocmask },
 	{ SYS_compat_13_sigreturn13, 0, (sy_call_t *)compat_13_sys_sigreturn },
 	{ SYS_compat_13_sigsuspend13, 0, (sy_call_t *)compat_13_sys_sigsuspend },
-#endif
-
-#if defined(COMPAT_14)
-# if defined(SYSVSEM)
-	{ SYS_compat_14___semctl, 0, (sy_call_t *)compat_14_sys___semctl },
-# endif
-# if defined(SYSVMSG)
-	{ SYS_compat_14_msgctl, 0, (sy_call_t *)compat_14_sys_msgctl },
-# endif
-# if defined(SYSVSHM)
-	{ SYS_compat_14_shmctl, 0, (sy_call_t *)compat_14_sys_shmctl },
-# endif
 #endif
 
 #if defined(COMPAT_16)
@@ -220,15 +199,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_50_mq_timedsend, 0, (sy_call_t *)compat_50_sys_mq_timedsend },
 	{ SYS_compat_50_mq_timedreceive, 0, (sy_call_t *)compat_50_sys_mq_timedreceive },
 	{ SYS_compat_50_lutimes, 0, (sy_call_t *)compat_50_sys_lutimes },
-# if defined(SYSVSEM)
-	{ SYS_compat_50_____semctl13, 0, (sy_call_t *)compat_50_sys_____semctl13 },
-# endif
-# if defined(SYSVMSG)
-	{ SYS_compat_50___msgctl13, 0, (sy_call_t *)compat_50_sys___msgctl13 },
-# endif
-# if defined(SYSVSHM)
-	{ SYS_compat_50___shmctl13, 0, (sy_call_t *)compat_50_sys___shmctl13 },
-# endif
 	{ SYS_compat_50__lwp_park, 0, (sy_call_t *)compat_50_sys__lwp_park },
 	{ SYS_compat_50_kevent, 0, (sy_call_t *)compat_50_sys_kevent },
 	{ SYS_compat_50_pselect, 0, (sy_call_t *)compat_50_sys_pselect },
@@ -266,6 +236,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 #ifdef COMPAT_43
 		KASSERT(ttcompatvec == NULL);
 		ttcompatvec = ttcompat;
+		if_43_init();
 #endif
 #ifdef COMPAT_16
 #if defined(COMPAT_SIGCONTEXT)
@@ -362,5 +333,8 @@ compat_sysctl_fini(void)
  
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
         sysctl_teardown(&compat_clog);
+#endif
+#if defined(COMPAT_43)
+	if_43_fini();
 #endif
 }

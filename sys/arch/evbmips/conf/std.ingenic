@@ -1,0 +1,15 @@
+# $NetBSD: std.ingenic,v 1.2.16.2 2017/12/03 11:36:09 jdolecek Exp $
+
+machine evbmips mips
+include		"conf/std"	# MI standard options
+
+options		EXEC_ELF32	# exec ELF32 binaries
+options		EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	CPUFLAGS+="-mips32r2"
+makeoptions	DEFTEXTADDR="0x80020000"
+makeoptions	BOARDTYPE="ingenic"
+
+include 	"arch/evbmips/conf/files.ingenic"
+include 	"arch/mips/conf/files.ingenic"
+include 	"dev/sdmmc/files.sdmmc"			# SD/MMC devices

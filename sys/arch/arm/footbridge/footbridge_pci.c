@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.22.6.2 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.22.6.3 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.22.6.2 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.22.6.3 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,23 +77,21 @@ void		footbridge_pci_intr_disestablish(void *, void *);
 const struct evcnt *footbridge_pci_intr_evcnt(void *, pci_intr_handle_t);
 
 struct arm32_pci_chipset footbridge_pci_chipset = {
-	NULL,	/* conf_v */
 #ifdef netwinder
-	netwinder_pci_attach_hook,
+	.pc_attach_hook = netwinder_pci_attach_hook,
 #else
-	footbridge_pci_attach_hook,
+	.pc_attach_hook = footbridge_pci_attach_hook,
 #endif
-	footbridge_pci_bus_maxdevs,
-	footbridge_pci_make_tag,
-	footbridge_pci_decompose_tag,
-	footbridge_pci_conf_read,
-	footbridge_pci_conf_write,
-	NULL,	/* intr_v */
-	footbridge_pci_intr_map,
-	footbridge_pci_intr_string,
-	footbridge_pci_intr_evcnt,
-	footbridge_pci_intr_establish,
-	footbridge_pci_intr_disestablish
+	.pc_bus_maxdevs = footbridge_pci_bus_maxdevs,
+	.pc_make_tag = footbridge_pci_make_tag,
+	.pc_decompose_tag = footbridge_pci_decompose_tag,
+	.pc_conf_read = footbridge_pci_conf_read,
+	.pc_conf_write = footbridge_pci_conf_write,
+	.pc_intr_map = footbridge_pci_intr_map,
+	.pc_intr_string = footbridge_pci_intr_string,
+	.pc_intr_evcnt = footbridge_pci_intr_evcnt,
+	.pc_intr_establish = footbridge_pci_intr_establish,
+	.pc_intr_disestablish = footbridge_pci_intr_disestablish
 };
 
 struct arm32_dma_range footbridge_dma_ranges[1];
@@ -180,6 +178,9 @@ footbridge_pci_conf_read(void *pcv, pcitag_t tag, int reg)
 	u_int address;
 	pcireg_t data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return ((pcireg_t) -1);
+
 	footbridge_pci_decompose_tag(pcv, tag, &bus, &device, &function);
 	if (bus == 0)
 		/* Limited to 12 devices or we exceed type 0 config space */
@@ -203,6 +204,9 @@ footbridge_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 {
 	int bus, device, function;
 	u_int address;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	footbridge_pci_decompose_tag(pcv, tag, &bus, &device, &function);
 	if (bus == 0)

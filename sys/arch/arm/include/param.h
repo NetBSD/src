@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17.2.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: param.h,v 1.17.2.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -180,7 +180,7 @@
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #ifndef NMBCLUSTERS_MAX
-#define	NMBCLUSTERS_MAX	(0x2000000 / MCLBYTES)	/* Limit to 64MB for clusters */
+#define	NMBCLUSTERS_MAX	(0x4000000 / MCLBYTES)	/* Limit to 64MB for clusters */
 #endif
 
 /*

@@ -1,7 +1,8 @@
-#	$NetBSD: files.puffs,v 1.5 2010/07/06 16:13:57 pooka Exp $
+#	$NetBSD: files.puffs,v 1.5.18.1 2017/12/03 11:38:43 jdolecek Exp $
 
 deffs	PUFFS
 
+define	puffs: vfs
 file	fs/puffs/puffs_compat.c		puffs
 file	fs/puffs/puffs_msgif.c		puffs
 file	fs/puffs/puffs_node.c		puffs

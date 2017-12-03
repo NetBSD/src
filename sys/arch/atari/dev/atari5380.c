@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.59.6.1 2014/08/20 00:02:48 tls Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.59.6.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.59.6.1 2014/08/20 00:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.59.6.2 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -445,7 +445,7 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 	if (dmastat & SD_BUSERR) {
 		/*
 		 * The DMA-controller seems to access 8 bytes beyond
-		 * it's limits on output. Therefore check also the byte
+		 * its limits on output. Therefore check also the byte
 		 * count. If it's zero, ignore the bus error.
 		 */
 		if (leftover != 0) {
@@ -794,7 +794,7 @@ falcon_claimed_dma(void)
 			return 0;
 		}
 		if (st_dmagrab((dma_farg)ncr_ctrl_intr, (dma_farg)run_main,
-		    cur_softc, &falcon_lock, 1) == 0)
+		    cur_softc, &falcon_lock, 1, NULL) == 0)
 			return 0;
 	}
 	return 1;
@@ -819,7 +819,7 @@ falcon_reconsider_dma(void)
 		 * waiting in the issue queue.
 		 */
 		st_dmagrab((dma_farg)ncr_ctrl_intr, (dma_farg)run_main,
-		    cur_softc, &falcon_lock, 0);
+		    cur_softc, &falcon_lock, 0, NULL);
 	}
 }
 

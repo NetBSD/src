@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.55.6.2 2014/08/20 00:04:40 tls Exp $	*/
+/*	$NetBSD: locks.c,v 1.55.6.3 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55.6.2 2014/08/20 00:04:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55.6.3 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 #ifdef LOCKDEBUG
 const int rump_lockdebug = 1;
@@ -61,22 +61,29 @@ static lockops_t rw_lockops = {
 	NULL
 };
 
-#define ALLOCK(lock, ops)		\
-    lockdebug_alloc(lock, ops, (uintptr_t)__builtin_return_address(0))
+#define ALLOCK(lock, ops)				\
+    lockdebug_alloc(__func__, __LINE__, lock, ops,	\
+    (uintptr_t)__builtin_return_address(0))
 #define FREELOCK(lock)			\
-    lockdebug_free(lock)
-#define WANTLOCK(lock, shar)	\
-    lockdebug_wantlock(lock, (uintptr_t)__builtin_return_address(0), shar)
-#define LOCKED(lock, shar)		\
-    lockdebug_locked(lock, NULL, (uintptr_t)__builtin_return_address(0), shar)
+    lockdebug_free(__func__, __LINE__, lock)
+#define WANTLOCK(lock, shar)				\
+    lockdebug_wantlock(__func__, __LINE__, lock,	\
+    (uintptr_t)__builtin_return_address(0), shar)
+#define LOCKED(lock, shar)				\
+    lockdebug_locked(__func__, __LINE__, lock, NULL,	\
+    (uintptr_t)__builtin_return_address(0), shar)
 #define UNLOCKED(lock, shar)		\
-    lockdebug_unlocked(lock, (uintptr_t)__builtin_return_address(0), shar)
+    lockdebug_unlocked(__func__, __LINE__, lock,	\
+    (uintptr_t)__builtin_return_address(0), shar)
+#define BARRIER(lock, slp)		\
+    lockdebug_barrier(__func__, __LINE__, lock, slp)
 #else
 #define ALLOCK(a, b)
 #define FREELOCK(a)
 #define WANTLOCK(a, b)
 #define LOCKED(a, b)
 #define UNLOCKED(a, b)
+#define BARRIER(a, b)
 #endif
 
 /*
@@ -91,7 +98,7 @@ static lockops_t rw_lockops = {
  * penalty.
  */
 
-#define RUMPMTX(mtx) (*(struct rumpuser_mtx **)(mtx))
+#define RUMPMTX(mtx) (*(struct rumpuser_mtx *const*)(mtx))
 
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
@@ -138,6 +145,7 @@ mutex_enter(kmutex_t *mtx)
 {
 
 	WANTLOCK(mtx, 0);
+	BARRIER(mtx, 1);
 	rumpuser_mutex_enter(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -147,6 +155,7 @@ mutex_spin_enter(kmutex_t *mtx)
 {
 
 	WANTLOCK(mtx, 0);
+	BARRIER(mtx, 1);
 	rumpuser_mutex_enter_nowrap(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -174,14 +183,24 @@ mutex_exit(kmutex_t *mtx)
 __strong_alias(mutex_spin_exit,mutex_exit);
 
 int
-mutex_owned(kmutex_t *mtx)
+mutex_ownable(const kmutex_t *mtx)
+{
+
+#ifdef LOCKDEBUG
+	WANTLOCK(mtx, -1);
+#endif
+	return 1;
+}
+
+int
+mutex_owned(const kmutex_t *mtx)
 {
 
 	return mutex_owner(mtx) == curlwp;
 }
 
-struct lwp *
-mutex_owner(kmutex_t *mtx)
+lwp_t *
+mutex_owner(const kmutex_t *mtx)
 {
 	struct lwp *l;
 
@@ -229,8 +248,8 @@ void
 rw_enter(krwlock_t *rw, const krw_t op)
 {
 
-
 	WANTLOCK(rw, op == RW_READER);
+	BARRIER(rw, 1);
 	rumpuser_rw_enter(krw2rumprw(op), RUMPRW(rw));
 	LOCKED(rw, op == RW_READER);
 }
@@ -368,7 +387,6 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 	if (__predict_false(l->l_flag & LW_RUMP_QEXIT)) {
 		struct proc *p = l->l_proc;
 
-		UNLOCKED(mtx, false);
 		mutex_exit(mtx); /* drop and retake later */
 
 		mutex_enter(p->p_lock);
@@ -383,7 +401,6 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 		/* ok, we can exit and remove "reference" to l->private */
 
 		mutex_enter(mtx);
-		LOCKED(mtx, false);
 		rv = EINTR;
 	}
 	l->l_private = NULL;

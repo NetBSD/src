@@ -1,4 +1,4 @@
-/*	$NetBSD: hpacel_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $ */
+/*	$NetBSD: hpacel_acpi.c,v 1.4.2.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.4.2.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -574,7 +574,7 @@ hpacel_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, hpacel, NULL);
+MODULE(MODULE_CLASS_DRIVER, hpacel, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

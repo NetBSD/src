@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_runtime.h,v 1.2.6.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: pm_runtime.h,v 1.2.6.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,6 +52,11 @@ pm_runtime_get_sync(struct device *dev __unused)
 
 static inline void
 pm_runtime_mark_last_busy(struct device *dev __unused)
+{
+}
+
+static inline void
+pm_runtime_put(struct device *dev __unused)
 {
 }
 

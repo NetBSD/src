@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,14 +41,15 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#define __NSACCESS_C__
-
 #include "acpi.h"
 #include "accommon.h"
 #include "amlcode.h"
 #include "acnamesp.h"
 #include "acdispat.h"
 
+#ifdef ACPI_ASL_COMPILER
+    #include "acdisasm.h"
+#endif
 
 #define _COMPONENT          ACPI_NAMESPACE
         ACPI_MODULE_NAME    ("nsaccess")
@@ -113,14 +114,14 @@ AcpiNsRootInitialize (
     {
         /* _OSI is optional for now, will be permanent later */
 
-        if (!ACPI_STRCMP (InitVal->Name, "_OSI") && !AcpiGbl_CreateOsiMethod)
+        if (!strcmp (InitVal->Name, "_OSI") && !AcpiGbl_CreateOsiMethod)
         {
             continue;
         }
 
-        Status = AcpiNsLookup (NULL, __UNCONST(InitVal->Name), InitVal->Type,
-                        ACPI_IMODE_LOAD_PASS2, ACPI_NS_NO_UPSEARCH,
-                        NULL, &NewNode);
+        Status = AcpiNsLookup (NULL, ACPI_CAST_PTR (char, InitVal->Name),
+            InitVal->Type, ACPI_IMODE_LOAD_PASS2, ACPI_NS_NO_UPSEARCH,
+            NULL, &NewNode);
         if (ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
@@ -193,7 +194,7 @@ AcpiNsRootInitialize (
 
                 /* Build an object around the static string */
 
-                ObjDesc->String.Length = (UINT32) ACPI_STRLEN (Val);
+                ObjDesc->String.Length = (UINT32) strlen (Val);
                 ObjDesc->String.Pointer = Val;
                 ObjDesc->Common.Flags |= AOPOBJ_STATIC_POINTER;
                 break;
@@ -214,14 +215,14 @@ AcpiNsRootInitialize (
 
                 /* Special case for ACPI Global Lock */
 
-                if (ACPI_STRCMP (InitVal->Name, "_GL_") == 0)
+                if (strcmp (InitVal->Name, "_GL_") == 0)
                 {
                     AcpiGbl_GlobalLockMutex = ObjDesc;
 
                     /* Create additional counting semaphore for global lock */
 
                     Status = AcpiOsCreateSemaphore (
-                                1, 0, &AcpiGbl_GlobalLockSemaphore);
+                        1, 0, &AcpiGbl_GlobalLockSemaphore);
                     if (ACPI_FAILURE (Status))
                     {
                         AcpiUtRemoveReference (ObjDesc);
@@ -242,7 +243,7 @@ AcpiNsRootInitialize (
             /* Store pointer to value descriptor in the Node */
 
             Status = AcpiNsAttachObject (NewNode, ObjDesc,
-                        ObjDesc->Common.Type);
+                ObjDesc->Common.Type);
 
             /* Remove local reference to the object */
 
@@ -259,7 +260,7 @@ UnlockAndExit:
     if (ACPI_SUCCESS (Status))
     {
         Status = AcpiNsGetNode (NULL, "\\_GPE", ACPI_NS_NO_UPSEARCH,
-                    &AcpiGbl_FadtGpeDevice);
+            &AcpiGbl_FadtGpeDevice);
     }
 
     return_ACPI_STATUS (Status);
@@ -301,6 +302,7 @@ AcpiNsLookup (
 {
     ACPI_STATUS             Status;
     char                    *Path = Pathname;
+    char                    *ExternalPath;
     ACPI_NAMESPACE_NODE     *PrefixNode;
     ACPI_NAMESPACE_NODE     *CurrentNode = NULL;
     ACPI_NAMESPACE_NODE     *ThisNode = NULL;
@@ -321,7 +323,9 @@ AcpiNsLookup (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    LocalFlags = Flags & ~(ACPI_NS_ERROR_IF_FOUND | ACPI_NS_SEARCH_PARENT);
+    LocalFlags = Flags &
+        ~(ACPI_NS_ERROR_IF_FOUND | ACPI_NS_OVERRIDE_IF_FOUND |
+          ACPI_NS_SEARCH_PARENT);
     *ReturnNode = ACPI_ENTRY_NOT_FOUND;
     AcpiGbl_NsLookupCount++;
 
@@ -445,11 +449,21 @@ AcpiNsLookup (
                 ThisNode = ThisNode->Parent;
                 if (!ThisNode)
                 {
-                    /* Current scope has no parent scope */
+                    /*
+                     * Current scope has no parent scope. Externalize
+                     * the internal path for error message.
+                     */
+                    Status = AcpiNsExternalizeName (ACPI_UINT32_MAX, Pathname,
+                        NULL, &ExternalPath);
+                    if (ACPI_SUCCESS (Status))
+                    {
+                        ACPI_ERROR ((AE_INFO,
+                            "%s: Path has too many parent prefixes (^)",
+                            ExternalPath));
 
-                    ACPI_ERROR ((AE_INFO,
-                        "%s: Path has too many parent prefixes (^) "
-                        "- reached beyond root node", Pathname));
+                        ACPI_FREE (ExternalPath);
+                    }
+
                     return_ACPI_STATUS (AE_NOT_FOUND);
                 }
             }
@@ -505,7 +519,7 @@ AcpiNsLookup (
                 "Dual Pathname (2 segments, Flags=%X)\n", Flags));
             break;
 
-        case AML_MULTI_NAME_PREFIX_OP:
+        case AML_MULTI_NAME_PREFIX:
 
             /* More than one NameSeg, search rules do not apply */
 
@@ -573,6 +587,13 @@ AcpiNsLookup (
             {
                 LocalFlags |= ACPI_NS_ERROR_IF_FOUND;
             }
+
+            /* Set override flag according to caller */
+
+            if (Flags & ACPI_NS_OVERRIDE_IF_FOUND)
+            {
+                LocalFlags |= ACPI_NS_OVERRIDE_IF_FOUND;
+            }
         }
 
         /* Extract one ACPI name from the front of the pathname */
@@ -582,7 +603,7 @@ AcpiNsLookup (
         /* Try to find the single (4 character) ACPI name */
 
         Status = AcpiNsSearchAndEnter (SimpleName, WalkState, CurrentNode,
-                    InterpreterMode, ThisSearchType, LocalFlags, &ThisNode);
+            InterpreterMode, ThisSearchType, LocalFlags, &ThisNode);
         if (ACPI_FAILURE (Status))
         {
             if (Status == AE_NOT_FOUND)
@@ -594,6 +615,30 @@ AcpiNsLookup (
                     (char *) &SimpleName, (char *) &CurrentNode->Name,
                     CurrentNode));
             }
+
+#ifdef ACPI_ASL_COMPILER
+            /*
+             * If this ACPI name already exists within the namespace as an
+             * external declaration, then mark the external as a conflicting
+             * declaration and proceed to process the current node as if it did
+             * not exist in the namespace. If this node is not processed as
+             * normal, then it could cause improper namespace resolution
+             * by failing to open a new scope.
+             */
+            if (AcpiGbl_DisasmFlag &&
+                (Status == AE_ALREADY_EXISTS) &&
+                ((ThisNode->Flags & ANOBJ_IS_EXTERNAL) ||
+                    (WalkState && WalkState->Opcode == AML_EXTERNAL_OP)))
+            {
+                ThisNode->Flags &= ~ANOBJ_IS_EXTERNAL;
+                ThisNode->Type = (UINT8)ThisSearchType;
+                if (WalkState->Opcode != AML_EXTERNAL_OP)
+                {
+                    AcpiDmMarkExternalConflict (ThisNode);
+                }
+                break;
+            }
+#endif
 
             *ReturnNode = ThisNode;
             return_ACPI_STATUS (Status);
@@ -628,6 +673,13 @@ AcpiNsLookup (
 
         else
         {
+#ifdef ACPI_ASL_COMPILER
+            if (!AcpiGbl_DisasmFlag && (ThisNode->Flags & ANOBJ_IS_EXTERNAL))
+            {
+                ThisNode->Flags &= ~IMPLICIT_EXTERNAL;
+            }
+#endif
+
             /*
              * Sanity typecheck of the target object:
              *

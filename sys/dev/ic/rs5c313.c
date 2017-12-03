@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.9 2010/04/06 15:29:19 nonaka Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.9.18.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.9 2010/04/06 15:29:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.9.18.1 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ rs5c313_todr_settime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 
 #define	RTCSET(x, y)							     \
 	do {								     \
-		t = TOBCD(dt->dt_ ## y) & 0xff;				     \
+		t = bintobcd(dt->dt_ ## y) & 0xff;				     \
 		rs5c313_write_reg(sc, RS5C313_ ## x ## 1, t & 0x0f);	     \
 		rs5c313_write_reg(sc, RS5C313_ ## x ## 10, (t >> 4) & 0x0f); \
 	} while (/* CONSTCOND */0)
@@ -243,7 +243,7 @@ rs5c313_todr_settime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 #undef	RTCSET
 
 	t = dt->dt_year % 100;
-	t = TOBCD(t);
+	t = bintobcd(t);
 	rs5c313_write_reg(sc, RS5C313_YEAR1, t & 0x0f);
 	rs5c313_write_reg(sc, RS5C313_YEAR10, (t >> 4) & 0x0f);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.2.4.5 2014/08/20 00:02:56 tls Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.2.4.6 2017/12/03 11:36:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@ struct vcprop_tag {
 #define	VCPROPTAG_SET_CLOCKRATE		0x00038002
 #define	VCPROPTAG_GET_MIN_CLOCKRATE	0x00030007
 #define	VCPROPTAG_GET_MAX_CLOCKRATE	0x00030004
+#define	VCPROPTAG_GET_TURBO		0x00030009
+#define	VCPROPTAG_SET_TURBO		0x00038009
 
 #define VCPROPTAG_GET_VOLTAGE		0x00030003
 #define VCPROPTAG_SET_VOLTAGE		0x00038003
@@ -88,6 +90,17 @@ struct vcprop_tag {
 
 #define	VCPROPTAG_GET_EDID_BLOCK	0x00030020
 
+#define	VCPROPTAG_ALLOCMEM		0x0003000c
+#define	VCPROPTAG_LOCKMEM		0x0003000d
+#define	VCPROPTAG_UNLOCKMEM		0x0003000e
+#define	VCPROPTAG_RELEASEMEM		0x0003000f
+#define	VCPROPTAG_EXECUTE_CODE		0x00030010
+#define	VCPROPTAG_EXECUTE_QPU		0x00030011
+#define	VCPROPTAG_SET_ENABLE_QPU	0x00030012
+#define	VCPROPTAG_GET_DISPMANX_HANDLE	0x00030014
+
+#define	VCPROPTAG_SET_CURSOR_INFO	0x00008010
+#define	VCPROPTAG_SET_CURSOR_STATE	0x00008011
 
 	uint32_t vpt_len;
 	uint32_t vpt_rcode;
@@ -123,6 +136,28 @@ struct vcprop_tag_boardrev {
 	struct vcprop_tag tag;
 	uint32_t rev;
 } ;
+
+#define	VCPROP_REV_PCBREV	__BITS(3,0)
+#define	VCPROP_REV_MODEL	__BITS(11,4)
+#define	 RPI_MODEL_A		0
+#define	 RPI_MODEL_B		1
+#define	 RPI_MODEL_A_PLUS	2
+#define	 RPI_MODEL_B_PLUS	3
+#define	 RPI_MODEL_B_PI2	4
+#define	 RPI_MODEL_ALPHA	5
+#define	 RPI_MODEL_COMPUTE	6
+#define	 RPI_MODEL_ZERO		7
+#define	 RPI_MODEL_B_PI3	8
+#define	 RPI_MODEL_COMPUTE_PI3	9
+#define	 RPI_MODEL_ZERO_W	10
+#define	VCPROP_REV_PROCESSOR	__BITS(15,12)
+#define	 RPI_PROCESSOR_BCM2835	0
+#define	 RPI_PROCESSOR_BCM2836	1
+#define	 RPI_PROCESSOR_BCM2837	2
+#define	VCPROP_REV_MANUF	__BITS(19,16)
+#define	VCPROP_REV_MEMSIZE	__BITS(22,20)
+#define	VCPROP_REV_ENCFLAG	__BIT(23)
+#define	VCPROP_REV_WARRANTY	__BITS(25,24)
 
 struct vcprop_tag_macaddr {
 	struct vcprop_tag tag;
@@ -179,6 +214,7 @@ struct vcprop_tag_clockrate {
 	struct vcprop_tag tag;
 	uint32_t id;
 	uint32_t rate;
+	uint32_t noturbo;
 };
 
 #define VCPROP_VOLTAGE_CORE	1
@@ -276,6 +312,49 @@ struct vcprop_tag_edidblock {
 	uint8_t data[128];
 };
 
+struct vcprop_tag_cursorinfo {
+	struct vcprop_tag tag;
+	uint32_t width;
+	uint32_t height;
+	uint32_t format;
+	uint32_t pixels;	/* bus address in VC memory */
+	uint32_t hotspot_x;
+	uint32_t hotspot_y;
+};
+
+struct vcprop_tag_cursorstate {
+	struct vcprop_tag tag;
+	uint32_t enable;	/* 1 - visible */
+	uint32_t x;
+	uint32_t y;
+	uint32_t flags;		/* 0 - display coord. 1 - fb coord. */
+};
+
+struct vcprop_tag_allocmem {
+	struct vcprop_tag tag;
+	uint32_t size;	/* handle returned here */
+	uint32_t align;
+	uint32_t flags;
+/*
+ * flag definitions from
+ * https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
+ */
+#define MEM_FLAG_DISCARDABLE	(1 << 0) /* can be resized to 0 at any time. Use for cached data */
+#define MEM_FLAG_NORMAL		(0 << 2) /* normal allocating alias. Don't use from ARM */
+#define MEM_FLAG_DIRECT		(1 << 2) /* 0xC alias uncached */
+#define MEM_FLAG_COHERENT	(2 << 2) /* 0x8 alias. Non-allocating in L2 but coherent */
+#define MEM_FLAG_L1_NONALLOCATING (MEM_FLAG_DIRECT | MEM_FLAG_COHERENT) /* Allocating in L2 */
+#define MEM_FLAG_ZERO		(1 << 4)  /* initialise buffer to all zeros */
+#define MEM_FLAG_NO_INIT	(1 << 5) /* don't initialise (default is initialise to all ones */
+#define MEM_FLAG_HINT_PERMALOCK	(1 << 6) /* Likely to be locked for long periods of time. */
+};
+
+/* also for unlock and release */
+struct vcprop_tag_lockmem {
+	struct vcprop_tag tag;
+	uint32_t handle;	/* bus address returned here */
+};
+
 struct vcprop_buffer_hdr {
 	uint32_t vpb_len;
 	uint32_t vpb_rcode;
@@ -306,3 +385,13 @@ vcprop_tag_resplen(struct vcprop_tag *vpbt)
 }
 
 #endif	/* _EVBARM_RPI_VCPROP_H_ */
+
+uint32_t rpi_alloc_mem(uint32_t, uint32_t, uint32_t);
+bus_addr_t rpi_lock_mem(uint32_t);
+int rpi_unlock_mem(uint32_t);
+int rpi_release_mem(uint32_t);
+
+int rpi_fb_set_video(int);
+
+int rpi_fb_movecursor(int, int, int);
+int rpi_fb_initcursor(bus_addr_t, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.21 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.21.22.1 2017/12/03 11:35:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -48,7 +48,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.21 $";
+const char version[] = "$Revision: 1.21.22.1 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Find the kernel to boot and read it's exec-header
+	 * Find the kernel to boot and read its exec-header
 	 */
 	if ((fd = open(kname, O_RDONLY)) < 0)
 		fatal(-1, "Cannot open kernel '%s'", kname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: head/sys/fs/nfs/nfsm_subs.h 249592 2013-04-17 21:00:22Z ken 
- * $NetBSD: nfsm_subs.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $
+ * FreeBSD: head/sys/fs/nfs/nfsm_subs.h 276780 2015-01-07 17:22:56Z rwatson 
+ * $NetBSD: nfsm_subs.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $
  */
 
 #ifndef _NFS_NFSM_SUBS_H_
@@ -48,16 +48,6 @@
 /*
  * First define what the actual subs. return
  */
-#define	M_HASCL(m)	((m)->m_flags & M_EXT)
-#define	NFSMINOFF(m) 							\
-		if (M_HASCL(m)) 					\
-			(m)->m_data = (m)->m_ext.ext_buf; 		\
-		else if ((m)->m_flags & M_PKTHDR) 			\
-			(m)->m_data = (m)->m_pktdat; 			\
-				else 					\
-			(m)->m_data = (m)->m_dat
-#define	NFSMSIZ(m)	((M_HASCL(m))?MCLBYTES: 			\
-				(((m)->m_flags & M_PKTHDR)?MHLEN:MLEN))
 #define	NFSM_DATAP(m, s)	(m)->m_data += (s)
 
 /*
@@ -79,7 +69,7 @@ nfsm_build(struct nfsrv_descript *nd, int siz)
 		if (siz > MLEN)
 			panic("build > MLEN");
 		mbuf_setlen(mb2, 0);
-		nd->nd_bpos = NFSMTOD(mb2, caddr_t);
+		nd->nd_bpos = NFSMTOD(mb2, char *);
 		nd->nd_mb->m_next = mb2;
 		nd->nd_mb = mb2;
 	}
@@ -94,15 +84,15 @@ nfsm_build(struct nfsrv_descript *nd, int siz)
 static __inline void *
 nfsm_dissect(struct nfsrv_descript *nd, int siz)
 {
-	int tt1; 
+	int tt1;
 	void *retp;
 
-	tt1 = NFSMTOD(nd->nd_md, caddr_t) + nd->nd_md->m_len - nd->nd_dpos; 
+	tt1 = NFSMTOD(nd->nd_md, char *) + nd->nd_md->m_len - nd->nd_dpos;
 	if (tt1 >= siz) { 
-		retp = (void *)nd->nd_dpos; 
-		nd->nd_dpos += siz; 
+		retp = (void *)nd->nd_dpos;
+		nd->nd_dpos += siz;
 	} else { 
-		retp = nfsm_dissct(nd, siz, M_WAITOK); 
+		retp = nfsm_dissct(nd, siz, M_WAITOK);
 	}
 	return (retp);
 }
@@ -110,15 +100,15 @@ nfsm_dissect(struct nfsrv_descript *nd, int siz)
 static __inline void *
 nfsm_dissect_nonblock(struct nfsrv_descript *nd, int siz)
 {
-	int tt1; 
+	int tt1;
 	void *retp;
 
-	tt1 = NFSMTOD(nd->nd_md, caddr_t) + nd->nd_md->m_len - nd->nd_dpos; 
+	tt1 = NFSMTOD(nd->nd_md, char *) + nd->nd_md->m_len - nd->nd_dpos;
 	if (tt1 >= siz) { 
-		retp = (void *)nd->nd_dpos; 
-		nd->nd_dpos += siz; 
+		retp = (void *)nd->nd_dpos;
+		nd->nd_dpos += siz;
 	} else { 
-		retp = nfsm_dissct(nd, siz, M_NOWAIT); 
+		retp = nfsm_dissct(nd, siz, M_NOWAIT);
 	}
 	return (retp);
 }

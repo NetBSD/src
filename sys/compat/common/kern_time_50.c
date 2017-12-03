@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.22.6.4 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.22.6.5 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.4 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.5 2017/12/03 11:36:53 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.4 2014/08/20 00:03:31 tls Ex
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/dirent.h>
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/time.h>
 #include <sys/timex.h>
@@ -124,7 +123,7 @@ compat_50_sys_clock_getres(struct lwp *l,
 	} */
 	struct timespec50 ats50;
 	struct timespec ats;
-	int error = 0;
+	int error;
 
 	error = clock_getres1(SCARG(uap, clock_id), &ats);
 	if (error != 0)
@@ -294,7 +293,7 @@ compat_50_sys_setitimer(struct lwp *l,
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp &&
-	    (error = copyin(itvp, &aitv50, sizeof(aitv50)) != 0))
+	    (error = copyin(itvp, &aitv50, sizeof(aitv50))) != 0)
 		return (error);
 	itimerval50_to_itimerval(&aitv50, &aitv);
 	if (SCARG(uap, oitv) != NULL) {
@@ -542,71 +541,6 @@ compat_50_sys___ntp_gettime30(struct lwp *l,
 #else
 	return ENOSYS;
 #endif
-}
-int
-compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
-    struct lwp *l)
-{
-	int error = 0;
-	const struct cdevsw *cd = cdevsw_lookup(dev);
-
-	if (cd == NULL || cd->d_ioctl == NULL)
-		return ENXIO;
-
-	switch (cmd) {
-	case CLOCKCTL_OSETTIMEOFDAY: {
-		struct timeval50 tv50;
-		struct timeval tv;
-		struct clockctl50_settimeofday *args = data;
-
-		error = copyin(args->tv, &tv50, sizeof(tv50));
-		if (error)
-			return (error);
-		timeval50_to_timeval(&tv50, &tv);
-		error = settimeofday1(&tv, false, args->tzp, l, false);
-		break;
-	}
-	case CLOCKCTL_OADJTIME: {
-		struct timeval atv, oldatv;
-		struct timeval50 atv50;
-		struct clockctl50_adjtime *args = data;
-
-		if (args->delta) {
-			error = copyin(args->delta, &atv50, sizeof(atv50));
-			if (error)
-				return (error);
-			timeval50_to_timeval(&atv50, &atv);
-		}
-		adjtime1(args->delta ? &atv : NULL,
-		    args->olddelta ? &oldatv : NULL, l->l_proc);
-		if (args->olddelta) {
-			timeval_to_timeval50(&oldatv, &atv50);
-			error = copyout(&atv50, args->olddelta, sizeof(atv50));
-		}
-		break;
-	}
-	case CLOCKCTL_OCLOCK_SETTIME: {
-		struct timespec50 tp50;
-		struct timespec tp;
-		struct clockctl50_clock_settime *args = data;
-
-		error = copyin(args->tp, &tp50, sizeof(tp50));
-		if (error)
-			return (error);
-		timespec50_to_timespec(&tp50, &tp);
-		error = clock_settime1(l->l_proc, args->clock_id, &tp, true);
-		break;
-	}
-	case CLOCKCTL_ONTP_ADJTIME:
-		/* The ioctl number changed but the data did not change. */
-		error = (cd->d_ioctl)(dev, CLOCKCTL_NTP_ADJTIME,
-		    data, flags, l);
-		break;
-	default:
-		error = EINVAL;
-	}
-
-	return (error);
 }
 
 void

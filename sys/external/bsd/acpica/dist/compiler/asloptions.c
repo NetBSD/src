@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ AslDoResponseFile (
 
 
 #define ASL_TOKEN_SEPARATORS    " \t\n"
-#define ASL_SUPPORTED_OPTIONS   "@:b|c|d^D:e:f^gh^i|I:l^m:no|p:P^r:s|t|T+G^v^w|x:z"
+#define ASL_SUPPORTED_OPTIONS   "@:a:b|c|d^D:e:f^gh^i|I:l^m:no|p:P^q^r:s|t|T+G^v^w|x:z"
 
 
 /*******************************************************************************
@@ -96,7 +96,6 @@ AslCommandLine (
 
     if (argc < 2)
     {
-        printf (ACPI_COMMON_SIGNON (ASL_COMPILER_NAME));
         Usage ();
         exit (1);
     }
@@ -107,7 +106,7 @@ AslCommandLine (
 
     if (Gbl_DoTemplates)
     {
-        Status = DtCreateTemplates (Gbl_TemplateSignature);
+        Status = DtCreateTemplates (argv);
         if (ACPI_FAILURE (Status))
         {
             exit (-1);
@@ -118,8 +117,7 @@ AslCommandLine (
     /* Next parameter must be the input filename */
 
     if (!argv[AcpiGbl_Optind] &&
-        !Gbl_DisasmFlag &&
-        !Gbl_GetAllTables)
+        !AcpiGbl_DisasmFlag)
     {
         printf ("Missing input filename\n");
         BadCommandLine = TRUE;
@@ -169,7 +167,7 @@ AslDoOptions (
 
     /* Get the command line options */
 
-    while ((j = AcpiGetopt (argc, argv, ASL_SUPPORTED_OPTIONS)) != EOF) switch (j)
+    while ((j = AcpiGetopt (argc, argv, ASL_SUPPORTED_OPTIONS)) != ACPI_OPT_END) switch (j)
     {
     case '@':   /* Begin a response file */
 
@@ -185,19 +183,83 @@ AslDoOptions (
         }
         break;
 
-    case 'b':   /* Debug output options */
+    case 'a':   /* Debug options */
 
         switch (AcpiGbl_Optarg[0])
         {
+        case 'r':
+
+            Gbl_EnableReferenceTypechecking = TRUE;
+            break;
+
+        default:
+
+            printf ("Unknown option: -a%s\n", AcpiGbl_Optarg);
+            return (-1);
+        }
+
+        break;
+
+
+    case 'b':   /* Debug options */
+
+        switch (AcpiGbl_Optarg[0])
+        {
+
+        case 'c':
+
+            printf ("Debug ASL to ASL+ conversion\n");
+
+            Gbl_DoAslConversion = TRUE;
+            Gbl_FoldConstants = FALSE;
+            Gbl_IntegerOptimizationFlag = FALSE;
+            Gbl_ReferenceOptimizationFlag = FALSE;
+            Gbl_OptimizeTrivialParseNodes = FALSE;
+            Gbl_CaptureComments = TRUE;
+            AcpiGbl_DoDisassemblerOptimizations = FALSE;
+            AcpiGbl_DebugAslConversion = TRUE;
+            AcpiGbl_DmEmitExternalOpcodes = TRUE;
+            Gbl_DoExternalsInPlace = TRUE;
+
+            return (0);
+
         case 'f':
 
             AslCompilerdebug = 1; /* same as yydebug */
             DtParserdebug = 1;
             PrParserdebug = 1;
+            Gbl_DebugFlag = TRUE;
+            Gbl_KeepPreprocessorTempFile = TRUE;
+            break;
+
+        case 'p':   /* Prune ASL parse tree */
+
+            /* Get the required argument */
+
+            if (AcpiGetoptArgument (argc, argv))
+            {
+                return (-1);
+            }
+
+            Gbl_PruneParseTree = TRUE;
+            Gbl_PruneDepth = (UINT8) strtoul (AcpiGbl_Optarg, NULL, 0);
+            break;
+
+        case 's':
+
+            Gbl_DebugFlag = TRUE;
             break;
 
         case 't':
 
+            /* Get the required argument */
+
+            if (AcpiGetoptArgument (argc, argv))
+            {
+                return (-1);
+            }
+
+            Gbl_PruneType = (UINT8) strtoul (AcpiGbl_Optarg, NULL, 0);
             break;
 
         default:
@@ -206,15 +268,28 @@ AslDoOptions (
             return (-1);
         }
 
-        /* Produce debug output file */
-
-        Gbl_DebugFlag = TRUE;
         break;
 
     case 'c':
 
         switch (AcpiGbl_Optarg[0])
         {
+
+        case 'a':
+
+            printf ("Convert ASL to ASL+ with comments\n");
+            Gbl_DoAslConversion = TRUE;
+            Gbl_FoldConstants = FALSE;
+            Gbl_IntegerOptimizationFlag = FALSE;
+            Gbl_ReferenceOptimizationFlag = FALSE;
+            Gbl_OptimizeTrivialParseNodes = FALSE;
+            Gbl_CaptureComments = TRUE;
+            AcpiGbl_DoDisassemblerOptimizations = FALSE;
+            AcpiGbl_DmEmitExternalOpcodes = TRUE;
+            Gbl_DoExternalsInPlace = TRUE;
+
+            return (0);
+
         case 'r':
 
             Gbl_NoResourceChecking = TRUE;
@@ -233,10 +308,24 @@ AslDoOptions (
         {
         case '^':
 
+            /* Get the required argument */
+
+            if (AcpiGetoptArgument (argc, argv))
+            {
+                return (-1);
+            }
+
             Gbl_DoCompile = FALSE;
             break;
 
         case 'a':
+
+            /* Get the required argument */
+
+            if (AcpiGetoptArgument (argc, argv))
+            {
+                return (-1);
+            }
 
             Gbl_DoCompile = FALSE;
             Gbl_DisassembleAll = TRUE;
@@ -251,13 +340,24 @@ AslDoOptions (
 
             break;
 
+        case 'f':
+
+            AcpiGbl_ForceAmlDisassembly = TRUE;
+            break;
+
+        case 'l':   /* Use legacy ASL code (not ASL+) for disassembly */
+
+            Gbl_DoCompile = FALSE;
+            AcpiGbl_CstyleDisassembly = FALSE;
+            break;
+
         default:
 
             printf ("Unknown option: -d%s\n", AcpiGbl_Optarg);
             return (-1);
         }
 
-        Gbl_DisasmFlag = TRUE;
+        AcpiGbl_DisasmFlag = TRUE;
         break;
 
     case 'D':   /* Define a symbol */
@@ -270,6 +370,7 @@ AslDoOptions (
         /* Get entire list of external files */
 
         AcpiGbl_Optind--;
+        argv[AcpiGbl_Optind] = AcpiGbl_Optarg;
 
         while (argv[AcpiGbl_Optind] &&
               (argv[AcpiGbl_Optind][0] != '-'))
@@ -277,7 +378,8 @@ AslDoOptions (
             Status = AcpiDmAddToExternalFileList (argv[AcpiGbl_Optind]);
             if (ACPI_FAILURE (Status))
             {
-                printf ("Could not add %s to external list\n", argv[AcpiGbl_Optind]);
+                printf ("Could not add %s to external list\n",
+                    argv[AcpiGbl_Optind]);
                 return (-1);
             }
 
@@ -318,9 +420,8 @@ AslDoOptions (
 
     case 'g':   /* Get all ACPI tables */
 
-        Gbl_GetAllTables = TRUE;
-        Gbl_DoCompile = FALSE;
-        break;
+        printf ("-g option is deprecated, use acpidump utility instead\n");
+        exit (1);
 
     case 'h':
 
@@ -334,6 +435,11 @@ AslDoOptions (
         case 'c':
 
             UtDisplayConstantOpcodes ();
+            exit (0);
+
+        case 'd':
+
+            AslDisassemblyHelp ();
             exit (0);
 
         case 'f':
@@ -405,6 +511,7 @@ AslDoOptions (
             /* Produce listing file (Mixed source/aml) */
 
             Gbl_ListingFlag = TRUE;
+            AcpiGbl_DmOpt_Listing = TRUE;
             break;
 
         case 'i':
@@ -412,6 +519,13 @@ AslDoOptions (
             /* Produce preprocessor output file */
 
             Gbl_PreprocessorOutputFlag = TRUE;
+            break;
+
+        case 'm':
+
+            /* Produce hardware map summary file */
+
+            Gbl_MapfileFlag = TRUE;
             break;
 
         case 'n':
@@ -426,6 +540,13 @@ AslDoOptions (
             /* Produce combined source file */
 
             Gbl_SourceOutputFlag = TRUE;
+            break;
+
+        case 'x':
+
+            /* Produce cross-reference file */
+
+            Gbl_CrossReferenceOutput = TRUE;
             break;
 
         default:
@@ -461,6 +582,39 @@ AslDoOptions (
             Gbl_FoldConstants = FALSE;
             Gbl_IntegerOptimizationFlag = FALSE;
             Gbl_ReferenceOptimizationFlag = FALSE;
+            Gbl_OptimizeTrivialParseNodes = FALSE;
+
+            break;
+
+        case 'c':
+
+            /* Display compile time(s) */
+
+            Gbl_CompileTimesFlag = TRUE;
+            break;
+
+        case 'd':
+
+            /* Disable disassembler code optimizations */
+
+            AcpiGbl_DoDisassemblerOptimizations = FALSE;
+            break;
+
+        case 'e':
+
+            /* Disassembler: Emit embedded external operators */
+
+            AcpiGbl_DmEmitExternalOpcodes = TRUE;
+            break;
+
+        case 'E':
+
+            /*
+             * iASL: keep External opcodes in place.
+             * No affect if Gbl_DoExternals is false.
+             */
+
+            Gbl_DoExternalsInPlace = TRUE;
             break;
 
         case 'f':
@@ -486,9 +640,9 @@ AslDoOptions (
 
         case 't':
 
-            /* Display compile time(s) */
+            /* Disable heavy typechecking */
 
-            Gbl_CompileTimesFlag = TRUE;
+            Gbl_DoTypechecking = FALSE;
             break;
 
         default:
@@ -524,9 +678,19 @@ AslDoOptions (
 
         Gbl_OutputFilenamePrefix = AcpiGbl_Optarg;
         UtConvertBackslashes (Gbl_OutputFilenamePrefix);
-
         Gbl_UseDefaultAmlFilename = FALSE;
         break;
+
+    case 'q':   /* ASL/ASl+ converter: compile only and leave badaml. */
+
+        printf ("Convert ASL to ASL+ with comments\n");
+        Gbl_FoldConstants = FALSE;
+        Gbl_IntegerOptimizationFlag = FALSE;
+        Gbl_ReferenceOptimizationFlag = FALSE;
+        Gbl_OptimizeTrivialParseNodes = FALSE;
+        Gbl_CaptureComments = TRUE;
+        Gbl_DoExternalsInPlace = TRUE;
+        return (0);
 
     case 'r':   /* Override revision found in table header */
 
@@ -594,7 +758,6 @@ AslDoOptions (
     case 'T':   /* Create a ACPI table template file */
 
         Gbl_DoTemplates = TRUE;
-        Gbl_TemplateSignature = AcpiGbl_Optarg;
         break;
 
     case 'v':   /* Version and verbosity settings */
@@ -612,6 +775,12 @@ AslDoOptions (
 
             Gbl_NoErrors = TRUE;
             break;
+
+        case 'd':
+
+            printf (ACPI_COMMON_SIGNON (ASL_COMPILER_NAME));
+            printf (ACPI_COMMON_BUILD_TIME);
+            exit (0);
 
         case 'e':
 
@@ -666,6 +835,22 @@ AslDoOptions (
             }
 
             Status = AslDisableException (AcpiGbl_Optarg);
+            if (ACPI_FAILURE (Status))
+            {
+                return (-1);
+            }
+            break;
+
+        case 'x':
+
+            /* Get the required argument */
+
+            if (AcpiGetoptArgument (argc, argv))
+            {
+                return (-1);
+            }
+
+            Status = AslExpectException (AcpiGbl_Optarg);
             if (ACPI_FAILURE (Status))
             {
                 return (-1);

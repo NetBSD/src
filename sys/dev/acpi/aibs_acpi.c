@@ -1,4 +1,4 @@
-/* $NetBSD: aibs_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $ */
+/* $NetBSD: aibs_acpi.c,v 1.4.2.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.4.2.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -464,11 +464,6 @@ aibs_sensor_add(device_t self, ACPI_OBJECT *obj)
 
 	as = kmem_zalloc(sizeof(*as), KM_SLEEP);
 
-	if (as == NULL) {
-		rv = AE_NO_MEMORY;
-		goto out;
-	}
-
 	name = obj->Package.Elements[1].String.Pointer;
 
 	as->as_type = obj->Package.Elements[0].Integer.Value;
@@ -743,7 +738,7 @@ aibs_sensor_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, aibs, NULL);
+MODULE(MODULE_CLASS_DRIVER, aibs, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.31.22.1 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.31.22.2 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.31.22.1 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.31.22.2 2017/12/03 11:36:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -86,8 +86,9 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	register struct sunos_sigframe *fp;
 	register struct trapframe64 *tf;
-	register int addr, onstack; 
+	register int addr, onstack;
 	struct rwindow32 *oldsp, *newsp;
+	register32_t sp;
 	int sig = ksi->ksi_signo, error;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sunos_sigframe sf;
@@ -160,9 +161,11 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sunos_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
+	sp = (register32_t)(uintptr_t)oldsp;
 	error = (rwindow_save(l) || 
 	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
-	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
+	    copyout(&sp, &(((struct rwindow32 *)newsp)->rw_in[6]),
+	        sizeof(sp)));
 	mutex_enter(p->p_lock);
 
 	if (error) {

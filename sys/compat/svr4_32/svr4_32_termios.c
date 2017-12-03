@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.17 2008/04/28 20:23:46 martin Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.17.44.1 2017/12/03 11:36:57 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.17 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.17.44.1 2017/12/03 11:36:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -183,7 +183,7 @@ bsd_to_svr4_32_speed(u_long sp, u_long mask)
 {
 	switch (sp) {
 #undef getval
-#define getval(a,b)	case __CONCAT(a,b):	sp = __CONCAT3(SVR4_,a,b)
+#define getval(a,b)	case __CONCAT(a,b): sp = __CONCAT3(SVR4_,a,b); break
 	getval(B,0);
 	getval(B,50);
 	getval(B,75);

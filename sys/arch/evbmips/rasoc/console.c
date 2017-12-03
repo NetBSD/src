@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2 2011/07/28 15:50:13 matt Exp $	*/
+/*	$NetBSD: console.c,v 1.2.12.1 2017/12/03 11:36:10 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.2 2011/07/28 15:50:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.2.12.1 2017/12/03 11:36:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.2 2011/07/28 15:50:13 matt Exp $");
 #include <mips/ralink/ralink_reg.h>
 #include <mips/ralink/ralink_var.h>
 
+#ifndef RALINK_CONADDR
+#define RALINK_CONADDR	RA_UART_LITE_BASE	/* default console is UART_LITE */
+#endif
 
 static inline uint32_t
 sysctl_read(const u_int offset)
@@ -54,13 +57,13 @@ sysctl_write(const u_int offset, uint32_t val)
 static inline uint32_t
 uart_read(const u_int offset)
 {
-	return *RA_IOREG_VADDR(RA_UART_LITE_BASE, offset);
+	return *RA_IOREG_VADDR(RALINK_CONADDR, offset);
 }
 
 static inline void
 uart_write(const u_int offset, const uint32_t val)
 {
-	*RA_IOREG_VADDR(RA_UART_LITE_BASE, offset) = val;
+	*RA_IOREG_VADDR(RALINK_CONADDR, offset) = val;
 }
 
 #ifdef RA_CONSOLE_EARLY 

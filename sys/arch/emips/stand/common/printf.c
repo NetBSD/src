@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.3.12.1 2014/08/20 00:02:52 tls Exp $	*/
+/*	$NetBSD: printf.c,v 1.3.12.2 2017/12/03 11:36:01 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
@@ -73,8 +73,9 @@ printf(const char *fmt,...)
 					*s++ = hex[u & 0xfu];
 				while (u >>= 4);
 				goto dumpbuf;
-            case 0:
-                return;
+			case 0:
+				va_end(ap);
+				return;
 			}
 		}
 		xputchar(c);

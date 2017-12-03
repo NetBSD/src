@@ -1,9 +1,17 @@
-# $NetBSD: Makefile,v 1.4.4.2 2014/08/20 00:04:33 tls Exp $
+# $NetBSD: Makefile,v 1.4.4.3 2017/12/03 11:38:52 jdolecek Exp $
+
+#
+# At some point this needs to turn into linux.kmod and a proper home for it
+# found.  For now pickup the linux_work.c from the (increasingly poorly
+# named) common area.
+#
 
 .include "../Makefile.inc"
 
 .PATH: ${S}/external/bsd/drm2/linux
+.PATH: ${S}/external/bsd/common/linux
 
+CPPFLAGS+=	-I${S}/external/bsd/common/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/include
 
 # XXX Kludge!
@@ -19,5 +27,6 @@ SRCS+=	linux_list_sort.c
 SRCS+=	linux_module.c
 SRCS+=	linux_work.c
 SRCS+=	linux_writecomb.c
+SRCS+=	linux_ww_mutex.c
 
 .include <bsd.kmodule.mk>

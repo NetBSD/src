@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.8 2011/07/01 16:56:52 dyoung Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.8.12.1 2017/12/03 11:36:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.8 2011/07/01 16:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.8.12.1 2017/12/03 11:36:38 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,6 +109,17 @@ prep_pci_get_chipset_tag_direct(pci_chipset_tag_t pc)
 	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
+	pc->pc_intr_type = genppc_pci_intr_type;
+	pc->pc_intr_alloc = genppc_pci_intr_alloc;
+	pc->pc_intr_release = genppc_pci_intr_release;
+	pc->pc_intx_alloc = genppc_pci_intx_alloc;
+
+	pc->pc_msi_v = NULL;
+	genppc_pci_chipset_msi_init(pc);
+
+	pc->pc_msix_v = NULL;
+	genppc_pci_chipset_msix_init(pc);
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = prep_pci_direct_decompose_tag;
@@ -158,6 +169,9 @@ prep_pci_direct_conf_read(void *v, pcitag_t tag, int reg)
 	int bus, device, function;
 	int s;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) ~0;
+
 	prep_pci_direct_decompose_tag(v, tag, &bus, &device, &function);
 
 	if (bus == 0) {
@@ -185,6 +199,9 @@ prep_pci_direct_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 	DPRINTF(("prep_pci_direct_conf_write(0x%lx, 0x%x, 0x%02x, 0x%08lx) ",
 	    (unsigned long)v, tag, reg, (unsigned long)data));
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	prep_pci_direct_decompose_tag(v, tag, &bus, &device, &function);
 

@@ -1,0 +1,82 @@
+#	$NetBSD: files.riscv,v 1.1.18.2 2017/12/03 11:36:38 jdolecek Exp $
+#
+
+maxpartitions	16
+maxusers	8 32 64
+
+defflag	opt_ddb.h		DDB_TRACE
+
+#file	arch/riscv/riscv/locore.S
+file	arch/riscv/riscv/spl.S
+
+file	arch/riscv/riscv/autoconf.c
+file	arch/riscv/riscv/cpu_subr.c
+file	arch/riscv/riscv/db_disasm.c		ddb
+file	arch/riscv/riscv/db_trace.c		ddb
+file	arch/riscv/riscv/fixup.c
+file	arch/riscv/riscv/fpu.c
+file	arch/riscv/riscv/ipifuncs.c		multiprocessor
+file	arch/riscv/riscv/stubs.c
+file	arch/riscv/riscv/syscall.c		# syscall handler
+file	arch/riscv/riscv/trap.c			# trap handlers
+
+file	arch/riscv/riscv/core_machdep.c		coredump
+file	arch/riscv/riscv/clock_machdep.c	coredump
+file	arch/riscv/riscv/db_machdep.c		ddb | kgdb
+file	arch/riscv/riscv/exec_machdep.c
+file	arch/riscv/riscv/kgdb_machdep.c		kgdb
+file	arch/riscv/riscv/kobj_machdep.c		modular
+file	arch/riscv/riscv/pmap_machdep.c
+file	arch/riscv/riscv/process_machdep.c
+file	arch/riscv/riscv/procfs_machdep.c	procfs
+file	arch/riscv/riscv/riscv_machdep.c
+file	arch/riscv/riscv/sig_machdep.c		# signal delivery
+file	arch/riscv/riscv/softint_machdep.c
+file	arch/riscv/riscv/sys_machdep.c
+file	arch/riscv/riscv/vm_machdep.c
+
+file	dev/cons.c
+file	dev/md_root.c				memory_disk_hooks
+
+file	kern/subr_disk_mbr.c			disk
+
+file	uvm/pmap/pmap.c
+file	uvm/pmap/pmap_pv.c
+file	uvm/pmap/pmap_segtab.c
+file	uvm/pmap/pmap_tlb.c
+
+# Binary compatibility with 32bit NetBSD (COMPAT_NETBSD32)
+file	arch/riscv/riscv/core32_machdep.c	compat_netbsd32 & coredump
+file	arch/riscv/riscv/netbsd32_machdep.c	compat_netbsd32
+file	arch/riscv/riscv/sig32_machdep.c	compat_netbsd32
+include "compat/netbsd32/files.netbsd32"
+
+# Linux compatibility (COMPAT_LINUX)	XXX Highly experimental
+#include "compat/ossaudio/files.ossaudio"
+#include "compat/linux/files.linux"
+#include "compat/linux/arch/riscv/files.linux_riscv"
+#file	arch/riscv/riscv/linux_trap.c		compat_linux
+#file	arch/riscv/riscv/linux_syscall.c	compat_linux
+
+device	mainbus { [instance=-1] }
+attach	mainbus at root
+file	arch/riscv/riscv/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus with cpu_mainbus
+file	arch/riscv/riscv/cpu_mainbus.c		cpu_mainbus
+
+device	htif { }
+attach	htif at mainbus with htif_mainbus
+file	arch/riscv/htif/htif.c			htif_mainbus
+
+device	htifcons { } : tty
+attach	htifcons at htif with htif_cons
+file	arch/riscv/htif/htif_cons.c		htif_cons
+
+device	htifdisk { } : disk
+attach	htifdisk at htif with htif_disk
+attach	ld at htifdisk with ld_htifdisk
+file	arch/riscv/htif/htif_disk.c		htif_disk
+
+include "arch/riscv/conf/majors.riscv"

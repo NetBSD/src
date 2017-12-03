@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.8.8.3 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.8.8.4 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -44,6 +44,8 @@
 #define __DEV_PCI_HIFN7751VAR_H__
 
 #ifdef _KERNEL
+
+#include <sys/rndsource.h>
 
 /*
  *  Some configurable values for the driver

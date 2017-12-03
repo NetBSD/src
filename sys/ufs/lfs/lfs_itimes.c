@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.12.44.1 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.12.44.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.12.44.1 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.12.44.2 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -50,35 +50,36 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.12.44.1 2013/06/23 06:18:39 tls Exp
 #endif
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 
 void
 lfs_itimes(struct inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
+	struct lfs *fs = ip->i_lfs;
 #ifdef _KERNEL
 	struct timespec now;
 
-	KASSERT(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
+	KASSERT(ip->i_state & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
 
 	vfs_timestamp(&now);
 #endif
 
-	if (ip->i_flag & IN_ACCESS) {
+	if (ip->i_state & IN_ACCESS) {
 #ifdef _KERNEL
 		if (acc == NULL)
 			acc = &now;
 #endif
-		ip->i_ffs1_atime = acc->tv_sec;
-		ip->i_ffs1_atimensec = acc->tv_nsec;
-		if (ip->i_lfs->lfs_version > 1) {
-			struct lfs *fs = ip->i_lfs;
+		lfs_dino_setatime(fs, ip->i_din, acc->tv_sec);
+		lfs_dino_setatimensec(fs, ip->i_din, acc->tv_nsec);
+		if (fs->lfs_is64 || lfs_sb_getversion(fs) > 1) {
 			struct buf *ibp;
 			IFILE *ifp;
 
-			LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);
-			ifp->if_atime_sec = acc->tv_sec;
-			ifp->if_atime_nsec = acc->tv_nsec;
+			LFS_IENTRY(ifp, fs, ip->i_number, ibp);
+			lfs_if_setatime_sec(fs, ifp, acc->tv_sec);
+			lfs_if_setatime_nsec(fs, ifp, acc->tv_nsec);
 			LFS_BWRITE_LOG(ibp);
 			mutex_enter(&lfs_lock);
 			fs->lfs_flags |= LFS_IFDIRTY;
@@ -89,30 +90,30 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			mutex_exit(&lfs_lock);
 		}
 	}
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {
-		if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
+	if (ip->i_state & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {
+		if (ip->i_state & (IN_UPDATE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (mod == NULL)
 				mod = &now;
 #endif
-			ip->i_ffs1_mtime = mod->tv_sec;
-			ip->i_ffs1_mtimensec = mod->tv_nsec;
+			lfs_dino_setmtime(fs, ip->i_din, mod->tv_sec);
+			lfs_dino_setmtimensec(fs, ip->i_din, mod->tv_nsec);
 			ip->i_modrev++;
 		}
-		if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
+		if (ip->i_state & (IN_CHANGE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (cre == NULL)
 				cre = &now;
 #endif
-			ip->i_ffs1_ctime = cre->tv_sec;
-			ip->i_ffs1_ctimensec = cre->tv_nsec;
+			lfs_dino_setctime(fs, ip->i_din, cre->tv_sec);
+			lfs_dino_setctimensec(fs, ip->i_din, cre->tv_nsec);
 		}
 		mutex_enter(&lfs_lock);
-		if (ip->i_flag & (IN_CHANGE | IN_UPDATE))
+		if (ip->i_state & (IN_CHANGE | IN_UPDATE))
 			LFS_SET_UINO(ip, IN_MODIFIED);
-		if (ip->i_flag & IN_MODIFY)
+		if (ip->i_state & IN_MODIFY)
 			LFS_SET_UINO(ip, IN_ACCESSED);
 		mutex_exit(&lfs_lock);
 	}
-	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
+	ip->i_state &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
 }

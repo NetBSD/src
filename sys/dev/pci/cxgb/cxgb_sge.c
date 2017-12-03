@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.2 2011/05/18 01:01:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.2.14.1 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1198,8 +1198,8 @@ t3_encap(struct port_info *p, struct mbuf **m, int *free_it)
      * XXX need to add VLAN support for 6.x
      */
 #ifdef VLAN_SUPPORTED
-    if (m0->m_flags & M_VLANTAG)
-        cntrl |= F_TXPKT_VLAN_VLD | V_TXPKT_VLAN(m0->m_pkthdr.ether_vtag);
+    if (vlan_has_tag(m0))
+        cntrl |= F_TXPKT_VLAN_VLD | V_TXPKT_VLAN(vlan_get_tag(m0));
     if  (m0->m_pkthdr.csum_flags & (CSUM_TSO))
         tso_info = V_LSO_MSS(m0->m_pkthdr.tso_segsz);
 #endif
@@ -1222,7 +1222,7 @@ t3_encap(struct port_info *p, struct mbuf **m, int *free_it)
         }
 
 #ifdef VLAN_SUPPORTED
-        if (__predict_false(m0->m_flags & M_VLANTAG)) {
+        if (vlan_has_tag(m0)) {
             eth_type = CPL_ETH_II_VLAN;
             ip = (struct ip *)(pkthdr + ETHER_HDR_LEN +
                 ETHER_VLAN_ENCAP_LEN);
@@ -2163,20 +2163,19 @@ t3_rx_eth(struct adapter *adap, struct sge_rspq *rq, struct mbuf *m, int ethpad)
      * XXX need to add VLAN support for 6.x
      */
 #ifdef VLAN_SUPPORTED
-    if (__predict_false(cpl->vlan_valid)) {
-        m->m_pkthdr.ether_vtag = ntohs(cpl->vlan);
-        m->m_flags |= M_VLANTAG;
+    if (cpl->vlan_valid) {
+        vlan_set_tag(ntohs(cpl->vlan));
     }
 #endif
 
-    m->m_pkthdr.rcvif = ifp;
+    m_set_rcvif(m, ifp);
     m_explode(m);
     /*
      * adjust after conversion to mbuf chain
      */
     m_adj(m, sizeof(*cpl) + ethpad);
 
-    (*ifp->if_input)(ifp, m);
+    if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /**

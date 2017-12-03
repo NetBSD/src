@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.59.2.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: bpf.h,v 1.59.2.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -40,6 +40,7 @@
 #ifndef _NET_BPF_H_
 #define _NET_BPF_H_
 
+#include <sys/ioccom.h>
 #include <sys/time.h>
 
 /* BSD style release date */
@@ -222,6 +223,7 @@ struct bpf_hdr32 {
 #define		BPF_W		0x00
 #define		BPF_H		0x08
 #define		BPF_B		0x10
+/*				0x18	reserved; used by BSD/OS */
 #define BPF_MODE(code)	((code) & 0xe0)
 #define		BPF_IMM 	0x00
 #define		BPF_ABS		0x20
@@ -229,6 +231,8 @@ struct bpf_hdr32 {
 #define		BPF_MEM		0x60
 #define		BPF_LEN		0x80
 #define		BPF_MSH		0xa0
+/*				0xc0	reserved; used by BSD/OS */
+/*				0xe0	reserved; used by BSD/OS */
 
 /* alu/jmp fields */
 #define BPF_OP(code)	((code) & 0xf0)
@@ -241,11 +245,29 @@ struct bpf_hdr32 {
 #define		BPF_LSH		0x60
 #define		BPF_RSH		0x70
 #define		BPF_NEG		0x80
+#define		BPF_MOD		0x90
+#define		BPF_XOR		0xa0
+/*				0xb0	reserved */
+/*				0xc0	reserved */
+/*				0xd0	reserved */
+/*				0xe0	reserved */
+/*				0xf0	reserved */
 #define		BPF_JA		0x00
 #define		BPF_JEQ		0x10
 #define		BPF_JGT		0x20
 #define		BPF_JGE		0x30
 #define		BPF_JSET	0x40
+/*				0x50	reserved; used by BSD/OS */
+/*				0x60	reserved */
+/*				0x70	reserved */
+/*				0x80	reserved */
+/*				0x90	reserved */
+/*				0xa0	reserved */
+/*				0xb0	reserved */
+/*				0xc0	reserved */
+/*				0xd0	reserved */
+/*				0xe0	reserved */
+/*				0xf0	reserved */
 #define BPF_SRC(code)	((code) & 0x08)
 #define		BPF_K		0x00
 #define		BPF_X		0x08
@@ -253,13 +275,41 @@ struct bpf_hdr32 {
 /* ret - BPF_K and BPF_X also apply */
 #define BPF_RVAL(code)	((code) & 0x18)
 #define		BPF_A		0x10
+/*				0x18	reserved */
 
 /* misc */
 #define BPF_MISCOP(code) ((code) & 0xf8)
 #define		BPF_TAX		0x00
+/*				0x10	reserved */
+/*				0x18	reserved */
 #define		BPF_COP		0x20
-#define		BPF_COPX	0x40
+/*				0x28	reserved */
+/*				0x30	reserved */
+/*				0x38	reserved */
+#define		BPF_COPX	0x40	/* XXX: also used by BSD/OS */
+/*				0x48	reserved */
+/*				0x50	reserved */
+/*				0x58	reserved */
+/*				0x60	reserved */
+/*				0x68	reserved */
+/*				0x70	reserved */
+/*				0x78	reserved */
 #define		BPF_TXA		0x80
+/*				0x88	reserved */
+/*				0x90	reserved */
+/*				0x98	reserved */
+/*				0xa0	reserved */
+/*				0xa8	reserved */
+/*				0xb0	reserved */
+/*				0xb8	reserved */
+/*				0xc0	reserved; used by BSD/OS */
+/*				0xc8	reserved */
+/*				0xd0	reserved */
+/*				0xd8	reserved */
+/*				0xe0	reserved */
+/*				0xe8	reserved */
+/*				0xf0	reserved */
+/*				0xf8	reserved */
 
 /*
  * The instruction data structure.
@@ -373,6 +423,9 @@ struct bpf_ops {
 	void (*bpf_mtap_af)(struct bpf_if *, uint32_t, struct mbuf *);
 	void (*bpf_mtap_sl_in)(struct bpf_if *, u_char *, struct mbuf **);
 	void (*bpf_mtap_sl_out)(struct bpf_if *, u_char *, struct mbuf *);
+
+	void (*bpf_mtap_softint_init)(struct ifnet *);
+	void (*bpf_mtap_softint)(struct ifnet *, struct mbuf *);
 };
 
 extern struct bpf_ops *bpf_ops;
@@ -448,6 +501,20 @@ bpf_mtap_sl_out(struct ifnet *_ifp, u_char *_hdr, struct mbuf *_m)
 		bpf_ops->bpf_mtap_sl_out(_ifp->if_bpf, _hdr, _m);
 }
 
+static inline void
+bpf_mtap_softint_init(struct ifnet *_ifp)
+{
+
+	bpf_ops->bpf_mtap_softint_init(_ifp);
+}
+
+static inline void
+bpf_mtap_softint(struct ifnet *_ifp, struct mbuf *_m)
+{
+
+	if (_ifp->if_bpf)
+		bpf_ops->bpf_mtap_softint(_ifp, _m);
+}
 
 void	bpf_setops(void);
 

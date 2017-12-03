@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16.12.1 2014/08/20 00:02:58 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16.12.2 2017/12/03 11:36:09 jdolecek Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.12.1 2014/08/20 00:02:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.12.2 2017/12/03 11:36:09 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -221,7 +221,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	 * #ifdef orgy
 	 */
 	i = 0;
-	while ((eptrs[i] != 0) && (i < 128)) {
+	while (i < 128 && eptrs[i] != 0) {
 		envp[i] = (char *)(intptr_t)eptrs[i];	/* sign extend */
 		i++;
 	}
@@ -235,8 +235,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	 */
 	mips_vector_init(NULL, false);
 
-	/* set the VM page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	memsize = 256*1024*1024;
 	physmem = btoc(memsize);
@@ -255,7 +254,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	/*
 	 * Disable the 2nd PCI window since we don't need it.
 	 */
-	mips3_sd((uint64_t *)MIPS_PHYS_TO_KSEG1(BONITO_REGBASE + 0x158), 0xe);
+	mips3_sd(MIPS_PHYS_TO_KSEG1(BONITO_REGBASE + 0x158), 0xe);
 	pci_conf_write(&gc->gc_pc, pci_make_tag(&gc->gc_pc, 0, 0, 0), 18, 0);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.3.4.2 2012/11/20 03:01:53 tls Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.3.4.3 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.3.4.2 2012/11/20 03:01:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.3.4.3 2017/12/03 11:36:53 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -97,6 +97,7 @@ compat_60_ttioctl(struct tty *tp, u_long cmd, void *data, int flag,
 {
 
 	switch (cmd) {
+	case COMPAT_60_TIOCPTMGET:
 	case COMPAT_60_TIOCPTSNAME:
 		return compat_60_ptmget_ioctl(tp->t_dev, cmd, data, flag, l);
 	default:

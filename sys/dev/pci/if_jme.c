@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.21.2.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.21.2.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.21.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.21.2.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.21.2.2 2014/08/20 00:03:42 tls Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -949,6 +949,7 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 			error = 0;
 		else if (error != 0) {
 			aprint_error_dev(sc->jme_dev, "could not set media\n");
+			splx(s);
 			return error;
 		}
 	}
@@ -1143,7 +1144,7 @@ jme_intr_rx(jme_softc_t *sc) {
 		}
 
 		/* build mbuf chain: head, then remaining segments */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = JME_RX_BYTES(buflen) - JME_RX_PAD_BYTES;
 		m->m_len = (nsegs > 1) ? (MCLBYTES - JME_RX_PAD_BYTES) :
 		    m->m_pkthdr.len;
@@ -1169,9 +1170,7 @@ jme_intr_rx(jme_softc_t *sc) {
 			m->m_len =
 			    JME_RX_BYTES(buflen) - (MCLBYTES * (nsegs - 1));
 		}
-		ifp->if_ipackets++;
 		ipackets++;
-		bpf_mtap(ifp, mhead);
 
 		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) &&
 		    (flags & JME_RD_IPV4)) {
@@ -1209,10 +1208,9 @@ jme_intr_rx(jme_softc_t *sc) {
 		}
 		if (flags & JME_RD_VLAN_TAG) {
 			/* pass to vlan_input() */
-			VLAN_INPUT_TAG(ifp, mhead,
-			    (flags & JME_RD_VLAN_MASK), continue);
+			vlan_set_tag(mhead, (flags & JME_RD_VLAN_MASK));
 		}
-		(*ifp->if_input)(ifp, mhead);
+		if_percpuq_enqueue(ifp->if_percpuq, mhead);
 	}
 	if (ipackets)
 		rnd_add_uint32(&sc->rnd_source, ipackets);
@@ -1348,7 +1346,6 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 {
 	struct jme_desc *desc;
 	struct mbuf *m;
-	struct m_tag *mtag;
 	int error, i, prod, headdsc, nsegs;
 	uint32_t cflags, tso_segsz;
 
@@ -1491,8 +1488,8 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 			cflags |= JME_TD_UDPCSUM;
 	}
 	/* Configure VLAN. */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->jme_ec, m)) != NULL) {
-		cflags |= (VLAN_TAG_VALUE(mtag) & JME_TD_VLAN_MASK);
+	if (vlan_has_tag(m)) {
+		cflags |= (vlan_get_tag(m) & JME_TD_VLAN_MASK);
 		cflags |= JME_TD_VLAN_TAG;
 	}
 

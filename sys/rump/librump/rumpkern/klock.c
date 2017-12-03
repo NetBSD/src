@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.4.2.2 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: klock.c,v 1.4.2.3 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,15 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.4.2.2 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.4.2.3 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/evcnt.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 /*
  * giant lock
@@ -68,7 +68,7 @@ rump_kernel_bigwrap(int *nlocks)
 {
 
 	KASSERT(giantcnt > 0 && curlwp == giantowner);
-	giantowner = NULL; 
+	giantowner = NULL;
 	*nlocks = giantcnt;
 	giantcnt = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.20 2010/01/19 22:06:23 pooka Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.20.22.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.20 2010/01/19 22:06:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.20.22.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -194,7 +194,7 @@ le_dec_writereg(volatile uint16_t *regptr, uint16_t val)
  * by am7990.c, because of the LE_NEED_BUF_* macros defined above.
  * Unfortunately, CPU addressing of these buffers is done in one of
  * 3 ways:
- * - contiguous (for the 3max and turbochannel option card)
+ * - contiguous (for the 3max and TURBOchannel option card)
  * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
  *   spaces (for the pmax, vax 3400, and ioasic LANCE descriptors)
  * - gap16, which means 16bytes interspersed with 16byte spaces

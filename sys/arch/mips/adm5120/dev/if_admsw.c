@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.10.12.2 2014/08/20 00:03:12 tls Exp $ */
+/* $NetBSD: if_admsw.c,v 1.10.12.3 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.10.12.2 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.10.12.3 2017/12/03 11:36:26 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -480,6 +480,7 @@ admsw_attach(device_t parent, device_t self, void *aux)
 
 		/* Attach the interface. */
 		if_attach(ifp);
+		if_deferred_start_init(ifp, NULL);
 		ether_ifattach(ifp, enaddr);
 		enaddr[5]++;
 	}
@@ -886,7 +887,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 		ifp = &sc->sc_ethercom[0].ec_if;
 
 		/* Try to queue more packets. */
-		admsw_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 		/*
 		 * If there are no more pending transmissions,
@@ -991,19 +992,16 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 			continue;
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		if ((stat & ADM5120_DMA_TYPE) == ADM5120_DMA_TYPE_IP) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (stat & ADM5120_DMA_CSUMFAIL)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
-		/* Pass this up to any BPF listeners. */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
-		ifp->if_ipackets++;
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 #ifdef ADMSW_EVENT_COUNTERS
 	if (pkts)

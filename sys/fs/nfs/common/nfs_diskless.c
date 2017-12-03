@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_diskless.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfs_diskless.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/nfs/nfs_diskless.c 221436 2011-05-04 13:27:45Z ru "); */
-__RCSID("$NetBSD: nfs_diskless.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/nfs/nfs_diskless.c 297086 2016-03-20 21:48:26Z ian "); */
+__RCSID("$NetBSD: nfs_diskless.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
-#include "opt_bootp.h"
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,14 +52,18 @@ __RCSID("$NetBSD: nfs_diskless.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
 #include <net/if_var.h>
 #include <net/ethernet.h>
 #include <net/vnet.h>
 
 #include <netinet/in.h>
-#include <nfs/nfsproto.h>
-#include <nfsclient/nfs.h>
-#include <nfs/nfsdiskless.h>
+
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/common/nfsdiskless.h>
+
+#define	NFS_IFACE_TIMEOUT_SECS	10 /* Timeout for interface to appear. */
 
 static int inaddr_to_sockaddr(char *ev, struct sockaddr_in *sa);
 static int hwaddr_to_sockaddr(char *ev, struct sockaddr_dl *sa);
@@ -154,6 +160,7 @@ nfs_parse_options(const char *envopts, struct nfs_args *nd)
  * boot.netif.netmask		netmask on boot interface
  * boot.netif.gateway		default gateway (optional)
  * boot.netif.hwaddr		hardware address of boot interface
+ * boot.netif.mtu		interface mtu from bootp/dhcp (optional)
  * boot.nfsroot.server		IP address of root filesystem server
  * boot.nfsroot.path		path of the root filesystem on server
  * boot.nfsroot.nfshandle	NFS handle for root filesystem on server
@@ -172,12 +179,13 @@ nfs_setup_diskless(void)
 	char *cp;
 	int cnt, fhlen, is_nfsv3;
 	uint32_t len;
+	time_t timeout_at;
 
 	if (nfs_diskless_valid != 0)
 		return;
 
 	/* get handle size. If this succeeds, it's an NFSv3 setup. */
-	if ((cp = getenv("boot.nfsroot.nfshandlelen")) != NULL) {
+	if ((cp = kern_getenv("boot.nfsroot.nfshandlelen")) != NULL) {
 		cnt = sscanf(cp, "%d", &len);
 		freeenv(cp);
 		if (cnt != 1 || len == 0 || len > NFSX_V3FHMAX) {
@@ -216,6 +224,8 @@ nfs_setup_diskless(void)
 		return;
 	}
 	ifa = NULL;
+	timeout_at = time_uptime + NFS_IFACE_TIMEOUT_SECS;
+retry:
 	CURVNET_SET(TD_TO_VNET(curthread));
 	IFNET_RLOCK();
 	TAILQ_FOREACH(ifp, &V_ifnet, if_link) {
@@ -236,10 +246,14 @@ nfs_setup_diskless(void)
 	}
 	IFNET_RUNLOCK();
 	CURVNET_RESTORE();
+	if (time_uptime < timeout_at) {
+		pause("nfssdl", hz / 5);
+		goto retry;
+	}
 	printf("nfs_diskless: no interface\n");
 	return;	/* no matching interface */
 match_done:
-	setenv("boot.netif.name", ifp->if_xname);
+	kern_setenv("boot.netif.name", ifp->if_xname);
 	if (is_nfsv3 != 0) {
 		strlcpy(nd3->myif.ifra_name, ifp->if_xname,
 		    sizeof(nd3->myif.ifra_name));
@@ -269,11 +283,11 @@ match_done:
 			printf("nfs_diskless: bad NFS handle len=%d\n", fhlen);
 			return;
 		}
-		if ((cp = getenv("boot.nfsroot.path")) != NULL) {
+		if ((cp = kern_getenv("boot.nfsroot.path")) != NULL) {
 			strncpy(nd3->root_hostnam, cp, MNAMELEN - 1);
 			freeenv(cp);
 		}
-		if ((cp = getenv("boot.nfsroot.options")) != NULL) {
+		if ((cp = kern_getenv("boot.nfsroot.options")) != NULL) {
 			nfs_parse_options(cp, &nd3->root_args);
 			freeenv(cp);
 		}
@@ -303,11 +317,11 @@ match_done:
 			printf("nfs_diskless: no NFS handle\n");
 			return;
 		}
-		if ((cp = getenv("boot.nfsroot.path")) != NULL) {
+		if ((cp = kern_getenv("boot.nfsroot.path")) != NULL) {
 			strncpy(nd->root_hostnam, cp, MNAMELEN - 1);
 			freeenv(cp);
 		}
-		if ((cp = getenv("boot.nfsroot.options")) != NULL) {
+		if ((cp = kern_getenv("boot.nfsroot.options")) != NULL) {
 			struct nfs_args args;
 	
 			/*
@@ -341,7 +355,7 @@ inaddr_to_sockaddr(char *ev, struct sockaddr_in *sa)
 	sa->sin_len = sizeof(*sa);
 	sa->sin_family = AF_INET;
 
-	if ((cp = getenv(ev)) == NULL)
+	if ((cp = kern_getenv(ev)) == NULL)
 		return (1);
 	count = sscanf(cp, "%d.%d.%d.%d", &a[0], &a[1], &a[2], &a[3]);
 	freeenv(cp);
@@ -364,7 +378,7 @@ hwaddr_to_sockaddr(char *ev, struct sockaddr_dl *sa)
 	sa->sdl_family = AF_LINK;
 	sa->sdl_type = IFT_ETHER;
 	sa->sdl_alen = ETHER_ADDR_LEN;
-	if ((cp = getenv(ev)) == NULL)
+	if ((cp = kern_getenv(ev)) == NULL)
 		return (1);
 	count = sscanf(cp, "%x:%x:%x:%x:%x:%x",
 	    &a[0], &a[1], &a[2], &a[3], &a[4], &a[5]);
@@ -386,7 +400,7 @@ decode_nfshandle(char *ev, u_char *fh, int maxfh)
 	u_char *cp, *ep;
 	int len, val;
 
-	ep = cp = getenv(ev);
+	ep = cp = kern_getenv(ev);
 	if (cp == NULL)
 		return (0);
 	if ((strlen(cp) < 2) || (*cp != 'X')) {
@@ -414,7 +428,7 @@ decode_nfshandle(char *ev, u_char *fh, int maxfh)
 	}
 }
 
-#if !defined(BOOTP_NFSROOT)
+#if !defined(NEW_NFS_BOOT_BOOTP)
 static void
 nfs_rootconf(void)
 {

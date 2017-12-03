@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.40.18.1 2014/08/20 00:03:36 tls Exp $ */
+/*	$NetBSD: if_ni.c,v 1.40.18.2 2017/12/03 11:36:59 jdolecek Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.40.18.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.40.18.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -599,7 +599,7 @@ niintr(void *arg)
 			m = (void *)data->nd_cmdref;
 			m->m_pkthdr.len = m->m_len =
 			    data->bufs[0]._len - ETHER_CRC_LEN;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			if (ni_add_rxbuf(sc, data, idx)) {
 				bd->nb_len = (m->m_ext.ext_size - 2);
 				bd->nb_pte =
@@ -617,8 +617,7 @@ niintr(void *arg)
 			if (m == (void *)data->nd_cmdref)
 				break; /* Out of mbufs */
 
-			bpf_mtap(ifp, m);
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 			break;
 
 		case BVP_DGRAM:

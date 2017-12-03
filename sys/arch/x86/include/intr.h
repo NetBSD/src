@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.43.12.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: intr.h,v 1.43.12.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,10 @@
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
 
+#if !defined(XEN)
 #define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_PREEMPTION
+#endif /*  !defined(XEN) */
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -42,6 +44,7 @@
 #endif
 
 #include <sys/evcnt.h>
+#include <sys/queue.h>
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
@@ -66,9 +69,16 @@
  */
 
 struct intrstub {
+#if !defined(XEN)
 	void *ist_entry;
-	void *ist_recurse; 
+#endif
+	void *ist_recurse;
 	void *ist_resume;
+};
+
+struct percpu_evcnt {
+	cpuid_t cpuid;
+	uint64_t count;
 };
 
 struct intrsource {
@@ -80,12 +90,21 @@ struct intrsource {
 	void *is_recurse;		/* entry for spllower */
 	void *is_resume;		/* entry for doreti */
 	lwp_t *is_lwp;			/* for soft interrupts */
-	struct evcnt is_evcnt;		/* interrupt counter */
+#if defined(XEN)
+	u_long ipl_evt_mask1;	/* pending events for this IPL */
+	u_long ipl_evt_mask2[NR_EVENT_CHANNELS];
+#endif
+	struct evcnt is_evcnt;		/* interrupt counter per cpu */
 	int is_flags;			/* see below */
 	int is_type;			/* level, edge */
 	int is_idtvec;
 	int is_minlevel;
 	char is_evname[32];		/* event counter name */
+	char is_intrid[INTRIDBUF];	/* intrid created by create_intrid() */
+	char is_xname[INTRDEVNAMEBUF];	/* device names */
+	cpuid_t is_active_cpu;		/* active cpuid */
+	struct percpu_evcnt *is_saved_evcnt;	/* interrupt count of deactivated cpus */
+	SIMPLEQ_ENTRY(intrsource) is_list;	/* link of intrsources */
 };
 
 #define IS_LEGACY	0x0001		/* legacy ISA irq source */
@@ -98,6 +117,18 @@ struct intrsource {
  */
 
 struct intrhand {
+#if defined(XEN)
+	/*
+	 * Note: This is transitional and will go away.
+	 *
+	 * We ought to use a union here, but too much effort.
+	 * We use this field to tear down the cookie handed to us
+	 * via x86/intr.c:intr_disestablish();
+	 * Interestingly, the intr_establish_xname() function returns
+	 * a "void *" - so we abuse this for now.
+	 */
+	int	pic_type; /* Overloading wrt struct pintrhand */
+#endif
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_level;
@@ -107,6 +138,9 @@ struct intrhand {
 	struct	intrhand **ih_prevp;
 	int	ih_pin;
 	int	ih_slot;
+#if defined(XEN)
+	struct	intrhand *ih_evt_next;
+#endif
 	struct cpu_info *ih_cpu;
 };
 
@@ -166,27 +200,38 @@ void Xpreemptresume(void);
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
 extern struct intrstub ioapic_level_stubs[];
+extern struct intrstub x2apic_edge_stubs[];
+extern struct intrstub x2apic_level_stubs[];
 
 struct cpu_info;
 
 struct pcibus_attach_args;
 
+typedef uint64_t intr_handle_t;
+
 void intr_default_setup(void);
 void x86_nmi(void);
+void *intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *),
+			   void *, bool, const char *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);
-const char *intr_string(int, char *, size_t);
+const char *intr_string(intr_handle_t, char *, size_t);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int, int, int *);
+int intr_find_mpmapping(int, int, intr_handle_t *);
 struct pic *intr_findpic(int);
 void intr_printconfig(void);
+
+struct intrsource *intr_allocate_io_intrsource(const char *);
+void intr_free_io_intrsource(const char *);
 
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
 
+#ifndef XEN
 extern void (* const ipifunc[X86_NIPI])(struct cpu_info *);
+#endif
 
 #endif /* _KERNEL */
 

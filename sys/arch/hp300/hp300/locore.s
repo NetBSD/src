@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.165.6.1 2014/08/20 00:03:00 tls Exp $	*/
+/*	$NetBSD: locore.s,v 1.165.6.2 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -97,6 +97,7 @@
 #include <hp300/hp300/leds.h>
 #endif
 
+#include "audio.h"
 #include "ksyms.h"
 
 #define MMUADDR(ar)	movl	_C_LABEL(MMUbase),ar
@@ -951,6 +952,12 @@ Lrecheck:
 	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
+#if NAUDIO >0
+	movw	%sp@(22),%sp@-		| push exception vector info
+	clrw	%sp@-
+	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
+	addql	#4,%sp
+#endif
 	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
 	jra	_ASM_LABEL(rei)		| all done

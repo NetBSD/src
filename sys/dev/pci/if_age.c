@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.41.2.2 2014/08/20 00:03:42 tls Exp $ */
+/*	$NetBSD: if_age.c,v 1.41.2.3 2017/12/03 11:37:07 jdolecek Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.41.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.41.2.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "vlan.h"
 
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.41.2.2 2014/08/20 00:03:42 tls Exp $");
 #include <net/if_vlanvar.h>
 
 #include <net/bpf.h>
-
-#include <sys/rnd.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -287,6 +285,7 @@ age_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	if (pmf_device_register1(self, NULL, age_resume, age_shutdown))
@@ -537,7 +536,7 @@ age_intr(void *arg)
 				age_init(ifp);
 			}
 
-			age_start(ifp);
+			if_schedule_deferred_start(ifp);
 
 			if (status & INTR_SMB)
 				age_stats_update(sc);
@@ -1191,9 +1190,6 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, nsegs, prod;
-#if NVLAN > 0
-	struct m_tag *mtag;
-#endif
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -1261,8 +1257,8 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 
 #if NVLAN > 0
 	/* Configure VLAN hardware tag insertion. */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ec, m))) {
-		vtag = AGE_TX_VLAN_TAG(htons(VLAN_TAG_VALUE(mtag)));
+	if (vlan_has_tag(m)) {
+		vtag = AGE_TX_VLAN_TAG(htons(vlan_get_tag(m)));
 		vtag = ((vtag << AGE_TD_VLAN_SHIFT) & AGE_TD_VLAN_MASK);
 		cflags |= AGE_TD_INSERT_VLAN_TAG;
 	}
@@ -1464,7 +1460,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 
 			m = sc->age_cdata.age_rxhead;
 			m->m_flags |= M_PKTHDR;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = sc->age_cdata.age_rxlen;
 			/* Set the first mbuf length. */
 			m->m_len = sc->age_cdata.age_rxlen - pktlen;
@@ -1500,14 +1496,12 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			/* Check for VLAN tagged frames. */
 			if (status & AGE_RRD_VLAN) {
 				uint32_t vtag = AGE_RX_VLAN(le32toh(rxrd->vtags));
-				VLAN_INPUT_TAG(ifp, m, AGE_RX_VLAN_TAG(vtag),
-					continue);
+				vlan_set_tag(m, AGE_RX_VLAN_TAG(vtag));
 			}
 #endif
 
-			bpf_mtap(ifp, m);
 			/* Pass it on. */
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 
 			/* Reset mbuf chains. */
 			AGE_RXCHAIN_RESET(sc);
@@ -2224,13 +2218,6 @@ age_newbuf(struct age_softc *sc, struct age_rxdesc *rxd, int init)
 	    sc->age_cdata.age_rx_sparemap, m, BUS_DMA_NOWAIT);
 
 	if (error != 0) {
-		if (!error) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->age_cdata.age_rx_sparemap);
-			error = EFBIG;
-			printf("%s: too many segments?!\n",
-			    device_xname(sc->sc_dev));
-		}
 		m_freem(m);
 
 		if (init)

@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.68 2009/01/21 14:22:46 jnemeth Exp $
+$NetBSD: isapnpdevs,v 1.68.24.1 2017/12/03 11:37:05 jdolecek Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@ devlogic	le	TKN0010		0	Lance Ethernet on TEKNOR board
 devlogic	le	ATK1500		0	Lance Ethernet on Allied Telesyn board
 devlogic	le	CSI2203		0	Cabletron E22xx
 devlogic	le	BUF0001		0	Melco Inc. LGY-IV
+devlogic	le	SKD8000		0	SysKonnect SK-NET Flash
 
 /*
  * mpu

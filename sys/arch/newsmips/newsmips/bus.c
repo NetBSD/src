@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.31.14.1 2012/11/20 03:01:36 tls Exp $	*/
+/*	$NetBSD: bus.c,v 1.31.14.2 2017/12/03 11:36:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.31.14.1 2012/11/20 03:01:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.31.14.2 2017/12/03 11:36:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -705,7 +705,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 {
 	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags,
-	    mips_avail_start /*low*/, mips_avail_end - PAGE_SIZE /*high*/));
+	    pmap_limits.avail_start /*low*/,
+	    pmap_limits.avail_end - PAGE_SIZE /*high*/));
 }
 
 /*

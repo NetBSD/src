@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.20 2012/04/17 12:06:25 macallan Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.20.2.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.20 2012/04/17 12:06:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.20.2.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include "opt_rasops.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.20 2012/04/17 12:06:25 macallan Exp $
 #include <dev/rasops/rasops.h>
 
 static void 	rasops15_putchar(void *, int, int, u_int, long attr);
+static void 	rasops15_putchar_aa(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
 static void 	rasops15_putchar8(void *, int, int, u_int, long attr);
 static void 	rasops15_putchar12(void *, int, int, u_int, long attr);
@@ -78,23 +79,27 @@ void
 rasops15_init(struct rasops_info *ri)
 {
 
-	switch (ri->ri_font->fontwidth) {
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = rasops15_putchar_aa;
+	} else {
+		switch (ri->ri_font->fontwidth) {
 #ifndef RASOPS_SMALL
-	case 8:
-		ri->ri_ops.putchar = rasops15_putchar8;
-		break;
+		case 8:
+			ri->ri_ops.putchar = rasops15_putchar8;
+			break;
 
-	case 12:
-		ri->ri_ops.putchar = rasops15_putchar12;
-		break;
+		case 12:
+			ri->ri_ops.putchar = rasops15_putchar12;
+			break;
 
-	case 16:
-		ri->ri_ops.putchar = rasops15_putchar16;
-		break;
+		case 16:
+			ri->ri_ops.putchar = rasops15_putchar16;
+			break;
 #endif	/* !RASOPS_SMALL */
-	default:
-		ri->ri_ops.putchar = rasops15_putchar;
-		break;
+		default:
+			ri->ri_ops.putchar = rasops15_putchar;
+			break;
+		}
 	}
 
 	if (ri->ri_rnum == 0) {
@@ -200,6 +205,98 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				hrp += 2;
 			}
 		}
+	}
+}
+
+static void
+rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
+{
+	int width, height, cnt, clr[2];
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, uc);
+	int16_t *dp, *rp;
+	uint8_t *rrp;
+	u_char *fr;
+	uint16_t buffer[64]; /* XXX */
+	int x, y, r, g, b, aval;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+
+
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
+	if ((unsigned)row >= (unsigned)ri->ri_rows)
+		return;
+
+	if ((unsigned)col >= (unsigned)ri->ri_cols)
+		return;
+#endif
+
+	/* check if character fits into font limits */
+	if (!CHAR_IN_FONT(uc, font))
+		return;
+
+	rrp = (ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = (int16_t *)rrp;
+
+	height = font->fontheight;
+	width = font->fontwidth;
+
+	clr[0] = ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
+
+	if (uc == ' ') {
+	        for (cnt = 0; cnt < width; cnt++)
+	                buffer[cnt] = clr[0];
+		while (height--) {
+			dp = rp;
+			DELTA(rp, ri->ri_stride, int16_t *);
+			memcpy(dp, buffer, width << 1);
+		}
+	} else {
+		fr = WSFONT_GLYPH(uc, font);
+
+		fgo = ((attr >> 24) & 0xf) * 3;
+		bgo = ((attr >> 16) & 0xf) * 3;
+
+		r0 = rasops_cmap[bgo];
+		r1 = rasops_cmap[fgo];
+		g0 = rasops_cmap[bgo + 1];
+		g1 = rasops_cmap[fgo + 1];
+		b0 = rasops_cmap[bgo + 2];
+		b1 = rasops_cmap[fgo + 2];
+
+		for (y = 0; y < height; y++) {
+			dp = (uint16_t *)(rrp + ri->ri_stride * y);
+			for (x = 0; x < width; x++) {
+				aval = *fr;
+				if (aval == 0) {
+					buffer[x] = clr[0];
+				} else if (aval == 255) {
+					buffer[x] = clr[1];
+				} else {
+					r = aval * r1 + (255 - aval) * r0;
+					g = aval * g1 + (255 - aval) * g0;
+					b = aval * b1 + (255 - aval) * b0;
+					buffer[x] =
+					    ((r >> (16 - ri->ri_rnum)) <<
+						ri->ri_rpos) |
+					    ((g >> (16 - ri->ri_gnum)) <<
+					        ri->ri_gpos) |
+					    ((b >> (16 - ri->ri_bnum)) <<
+						ri->ri_bpos);
+				}
+				fr++;
+			}
+			memcpy(dp, buffer, width << 1);
+		}
+	}
+
+	/* Do underline */
+	if ((attr & 1) != 0) {
+	        rp = (uint16_t *)rrp;
+		DELTA(rp, (ri->ri_stride * (height - 2)), int16_t *);
+		while (width--)
+			*rp++ = clr[1];
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.64.2.3 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.64.2.4 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.64.2.3 2014/08/20 00:04:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.64.2.4 2017/12/03 11:38:41 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -214,7 +214,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (error)
 		goto fail;
 	parp = &dl.d_partitions[DISKPART(devvp->v_rdev)];
-	if (dl.d_type == DTYPE_FLOPPY) {
+	if (dl.d_type == DKTYPE_FLOPPY) {
 		amp->bsize = secsize;
 		secsperblk = 1;
 		resvblks   = 2;
@@ -232,7 +232,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* The filesytem variant ('dostype') is stored in the boot block */
 	bp = NULL;
 	if ((error = bread(devvp, (daddr_t)BBOFF,
-			   amp->bsize, NOCRED, 0, &bp)) != 0) {
+			   amp->bsize, 0, &bp)) != 0) {
 		goto fail;
 	}
 	amp->dostype = adoswordn(bp, 0);
@@ -269,9 +269,8 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* allocate and load bitmap, set free space */
 	bitmap_sz = ((amp->numblks + 31) / 32) * sizeof(*amp->bitmap);
 	amp->bitmap = kmem_alloc(bitmap_sz, KM_SLEEP);
-	if (amp->bitmap)
-		adosfs_loadbitmap(amp);
-	if (mp->mnt_flag & MNT_RDONLY && amp->bitmap) {
+	adosfs_loadbitmap(amp);
+	if (mp->mnt_flag & MNT_RDONLY) {
 		/*
 		 * Don't need the bitmap any more if it's read-only.
 		 */
@@ -364,14 +363,17 @@ adosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 
 /*
  * lookup an anode, if not found, create
- * return locked and referenced al la vget(vp, LK_EXCLUSIVE);
+ * return locked and referenced
  */
 int
 adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 {
+	u_long block;
 	int error;
 
-	error = vcache_get(mp, &an, sizeof(an), vpp);
+	block = an;
+	KASSERT(block == an);
+	error = vcache_get(mp, &block, sizeof(block), vpp);
 	if (error)
 		return error;
 	error = vn_lock(*vpp, LK_EXCLUSIVE);
@@ -394,7 +396,7 @@ adosfs_loadvnode(struct mount *mp, struct vnode *vp,
 	struct adosfsmount *amp;
 	struct anode *ap;
 	struct buf *bp;
-	ino_t an;
+	u_long an;
 	char *nam, *tmp;
 	int namlen, error;
 
@@ -403,7 +405,7 @@ adosfs_loadvnode(struct mount *mp, struct vnode *vp,
 	amp = VFSTOADOSFS(mp);
 
 	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
-			   amp->bsize, NOCRED, 0, &bp)) != 0)
+			   amp->bsize, 0, &bp)) != 0)
 		return error;
 
 	ap = pool_get(&adosfs_node_pool, PR_WAITOK);
@@ -525,7 +527,7 @@ adosfs_loadvnode(struct mount *mp, struct vnode *vp,
 		brelse(bp, 0);
 		bp = NULL;
 		error = bread(amp->devvp, ap->linkto * amp->bsize / DEV_BSIZE,
-		    amp->bsize, NOCRED, 0, &bp);
+		    amp->bsize, 0, &bp);
 		if (error)
 			goto bad;
 		ap->fsize = adoswordn(bp, ap->nwords - 47);
@@ -609,7 +611,7 @@ adosfs_loadbitmap(struct adosfsmount *amp)
 	bp = mapbp = NULL;
 	bn = amp->rootb;
 	if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE, amp->bsize,
-	    NOCRED, 0, &bp)) != 0) {
+	    0, &bp)) != 0) {
 		return (error);
 	}
 	blkix = amp->nwords - 49;
@@ -626,7 +628,7 @@ adosfs_loadbitmap(struct adosfsmount *amp)
 			brelse(mapbp, 0);
 		if ((error = bread(amp->devvp,
 		    adoswordn(bp, blkix) * amp->bsize / DEV_BSIZE, amp->bsize,
-		     NOCRED, 0, &mapbp)) != 0)
+		     0, &mapbp)) != 0)
 			break;
 		if (adoscksum(mapbp, amp->nwords)) {
 #ifdef DIAGNOSTIC
@@ -653,7 +655,7 @@ adosfs_loadbitmap(struct adosfsmount *amp)
 			bn = adoswordn(bp, blkix);
 			brelse(bp, 0);
 			if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE,
-			    amp->bsize, NOCRED, 0, &bp)) != 0)
+			    amp->bsize, 0, &bp)) != 0)
 				break;
 			/*
 			 * Why is there no checksum on these blocks?
@@ -801,7 +803,7 @@ struct vfsops adosfs_vfsops = {
 	.vfs_done = adosfs_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

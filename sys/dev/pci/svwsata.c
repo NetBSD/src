@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.16.2.3 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.16.2.4 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.16.2.3 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.16.2.4 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ svwsata_mapchan(struct pciide_channel *cp)
 			goto bad;
 		}
 	}
-	wdc_init_shadow_regs(wdc_cp);
+	wdc_init_shadow_regs(wdr);
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
 

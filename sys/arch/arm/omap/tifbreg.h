@@ -1,4 +1,4 @@
-/* $NetBSD: tifbreg.h,v 1.1.6.2 2014/08/20 00:02:47 tls Exp $ */
+/* $NetBSD: tifbreg.h,v 1.1.6.3 2017/12/03 11:35:55 jdolecek Exp $ */
 /*-
  * Copyright 2013 Oleksandr Tymoshenko <gonzo@freebsd.org>
  * All rights reserved.
@@ -43,32 +43,31 @@
 #define		RASTER_CTRL_TFT24_UNPACKED	(1 << 26)
 #define		RASTER_CTRL_TFT24		(1 << 25)
 #define		RASTER_CTRL_STN565		(1 << 24)
-#define		RASTER_CTRL_TFTPMAP		(1 << 23)
+#define		RASTER_CTRL_TFTMAP		(1 << 23)
 #define		RASTER_CTRL_NIBMODE		(1 << 22)
-#define		RASTER_CTRL_PALMODE_SHIFT	20
-#define		PALETTE_PALETTE_AND_DATA	0x00
-#define		PALETTE_PALETTE_ONLY		0x01
-#define		PALETTE_DATA_ONLY		0x02
-#define		RASTER_CTRL_REQDLY_SHIFT	12
+#define		RASTER_CTRL_PALMODE_PALETTE_AND_DATA (0 << 20)
+#define		RASTER_CTRL_PALMODE_PALETTE_ONLY (1 << 20)
+#define		RASTER_CTRL_PALMODE_DATA_ONLY	(2 << 20)
+#define		RASTER_CTRL_REQDLY(v)		((v) << 12)
 #define		RASTER_CTRL_MONO8B		(1 << 9)
-#define		RASTER_CTRL_RBORDER		(1 << 8)
+#define		RASTER_CTRL_RDORDER		(1 << 8)
 #define		RASTER_CTRL_LCDTFT		(1 << 7)
 #define		RASTER_CTRL_LCDBW		(1 << 1)
 #define		RASTER_CTRL_LCDEN		(1 << 0)
 #define	LCD_RASTER_TIMING_0	0x2C
-#define		RASTER_TIMING_0_HBP_SHIFT	24
-#define		RASTER_TIMING_0_HFP_SHIFT	16
-#define		RASTER_TIMING_0_HSW_SHIFT	10
-#define		RASTER_TIMING_0_PPLLSB_SHIFT	4
-#define		RASTER_TIMING_0_PPLMSB_SHIFT	3
+#define		RASTER_TIMING_0_HBP(v)		((((v) - 1) & 0xff) << 24)
+#define		RASTER_TIMING_0_HFP(v)		((((v) - 1) & 0xff) << 16)
+#define		RASTER_TIMING_0_HSW(v)		((((v) - 1) & 0x3f) << 10)
+#define		RASTER_TIMING_0_PPL(w) \
+		(((((w) - 1) >> 7) & 0x8) | ((((w) - 1) >> 0) & 0x3f0))
 #define	LCD_RASTER_TIMING_1	0x30
-#define		RASTER_TIMING_1_VBP_SHIFT	24
-#define		RASTER_TIMING_1_VFP_SHIFT	16
-#define		RASTER_TIMING_1_VSW_SHIFT	10
-#define		RASTER_TIMING_1_LPP_SHIFT	0
+#define		RASTER_TIMING_1_VBP(v)		(((v) & 0xff) << 24)
+#define		RASTER_TIMING_1_VFP(v)		(((v) & 0xff) << 16)
+#define		RASTER_TIMING_1_VSW(v)		((((v) - 1) & 0x3f) << 10)
+#define		RASTER_TIMING_1_LPP(h)		((((h) - 1) & 0x3ff) << 0)
 #define	LCD_RASTER_TIMING_2	0x34
-#define		RASTER_TIMING_2_HSWHI_SHIFT	27
-#define		RASTER_TIMING_2_LPP_B10_SHIFT	26
+#define		RASTER_TIMING_2_HSW(v)		(((((v) - 1) >> 6) & 0xf) << 27)
+#define		RASTER_TIMING_2_LPP(h)		(((h) & 0x400) ? (1 << 26) : 0)
 #define		RASTER_TIMING_2_PHSVS		(1 << 25)
 #define		RASTER_TIMING_2_PHSVS_RISE	(1 << 24)
 #define		RASTER_TIMING_2_PHSVS_FALL	(0 << 24)
@@ -76,10 +75,10 @@
 #define		RASTER_TIMING_2_IPC		(1 << 22)
 #define		RASTER_TIMING_2_IHS		(1 << 21)
 #define		RASTER_TIMING_2_IVS		(1 << 20)
-#define		RASTER_TIMING_2_ACBI_SHIFT	16
-#define		RASTER_TIMING_2_ACB_SHIFT	8
-#define		RASTER_TIMING_2_HBPHI_SHIFT	4
-#define		RASTER_TIMING_2_HFPHI_SHIFT	0
+#define		RASTER_TIMING_2_ACBI(x)		((x) << 16)
+#define		RASTER_TIMING_2_ACB(x)		((x) << 8)
+#define		RASTER_TIMING_2_HBP(v)		((((v) - 1) >> 4) & 0x30)
+#define		RASTER_TIMING_2_HFP(v)		((((v) - 1) >> 8) & 0x3)
 #define	LCD_RASTER_SUBPANEL	0x38
 #define	LCD_RASTER_SUBPANEL2	0x3C
 #define	LCD_LCDDMA_CTRL		0x40
@@ -88,8 +87,8 @@
 #define		LCDDMA_CTRL_BURST_SIZE_SHIFT	4
 #define		LCDDMA_CTRL_BYTES_SWAP		(1 << 3)
 #define		LCDDMA_CTRL_BE			(1 << 1)
-#define		LCDDMA_CTRL_FB0_ONLY		0
 #define		LCDDMA_CTRL_FB0_FB1		(1 << 0)
+#define		LCDDMA_CTRL_FB0_ONLY		(0 << 0)
 #define	LCD_LCDDMA_FB0_BASE	0x44
 #define	LCD_LCDDMA_FB0_CEILING	0x48
 #define	LCD_LCDDMA_FB1_BASE	0x4C
@@ -115,10 +114,23 @@
 #define		IRQ_FRAME_DONE		(1 << 0)
 #define	LCD_CLKC_ENABLE		0x6C
 #define		CLKC_ENABLE_DMA		(1 << 2)
-#define		CLKC_ENABLE_LDID	(1 << 1)
+#define		CLKC_ENABLE_LIDD	(1 << 1)
 #define		CLKC_ENABLE_CORE	(1 << 0)
 #define	LCD_CLKC_RESET		0x70
 #define		CLKC_RESET_MAIN		(1 << 3)
 #define		CLKC_RESET_DMA		(1 << 2)
-#define		CLKC_RESET_LDID		(1 << 1)
+#define		CLKC_RESET_LIDD		(1 << 1)
 #define		CLKC_RESET_CORE		(1 << 0)
+
+/* 16-Entry Palette/Buffer Format */
+#define PALETTE_BPP_1			(0 << 12)
+#define PALETTE_BPP_2			(1 << 12)
+#define PALETTE_BPP_4			(2 << 12)
+#define PALETTE_BPP_8			(3 << 12)
+#define PALETTE_BPP_XX			(4 << 12)
+#define PALETTE_MONO(v)			((v) & 0xf)
+#define PALETTE_RED(r)			(((r) & 0xf) << 8)
+#define PALETTE_GREEN(g)		(((g) & 0xf) << 4)
+#define PALETTE_BLUE(b)			(((b) & 0xf) << 0)
+#define PALETTE_COLOR(r, g, b) \
+			(PALETTE_RED(r) | PALETTE_GREEN(g) | PALETTE_BLUE(b))

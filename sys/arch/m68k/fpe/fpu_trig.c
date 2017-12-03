@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.6.12.1 2013/06/23 06:20:08 tls Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.6.12.2 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.6.12.1 2013/06/23 06:20:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.6.12.2 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include "fpu_emulate.h"
 
@@ -229,11 +229,10 @@ fpu_cos(struct fpemu *fe)
 	if (ISINF(&fe->fe_f2))
 		return fpu_newnan(fe);
 
-	CPYFPN(&x, &fe->fe_f2);
-
 	/* x = abs(input) */
-	x.fp_sign = 0;
 	sign = 0;
+	CPYFPN(&x, &fe->fe_f2);
+	x.fp_sign = 0;
 
 	/* p <- 2*pi */
 	fpu_const(&p, FPU_CONST_PI);
@@ -334,10 +333,9 @@ fpu_sin(struct fpemu *fe)
 	if (ISZERO(&fe->fe_f2))
 		return &fe->fe_f2;
 
-	CPYFPN(&x, &fe->fe_f2);
-
 	/* x = abs(input) */
-	sign = x.fp_sign;
+	sign = fe->fe_f2.fp_sign;
+	CPYFPN(&x, &fe->fe_f2);
 	x.fp_sign = 0;
 
 	/* p <- 2*pi */
@@ -440,7 +438,7 @@ fpu_sincos(struct fpemu *fe, int regc)
 	__fpu_sincos_cordic(fe, &fe->fe_f2);
 
 	/* cos(x) */
-	fpu_implode(fe, &fe->fe_f2, FTYPE_EXT, &fe->fe_fpframe->fpf_regs[regc]);
+	fpu_implode(fe, &fe->fe_f2, FTYPE_EXT, &fe->fe_fpframe->fpf_regs[regc * 3]);
 
 	/* sin(x) */
 	return &fe->fe_f1;

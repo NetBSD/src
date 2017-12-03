@@ -1,9 +1,10 @@
-/* $NetBSD: spdmem_i2c.c,v 1.6.2.1 2014/08/20 00:03:37 tls Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.6.2.2 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
  * Copyright (c) 2007 Paul Goyette
  * Copyright (c) 2007 Tobias Nygren
+ * Copyright (c) 2015 Michael van Elst
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,10 +33,14 @@
 
 /*
  * Serial Presence Detect (SPD) memory identification
+ *
+ * JEDEC standard No. 21-C
+ * JEDEC document 4_01_06R24
+ * - Definitions of the EE1004-v 4 Kbit Serial Presence Detect EEPROM [...]
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6.2.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6.2.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,15 +54,41 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6.2.1 2014/08/20 00:03:37 tls Exp $
 #include <dev/ic/spdmemvar.h>
 
 /* Constants for matching i2c bus address */
-#define SPDMEM_I2C_ADDRMASK 0x3f8
+#define SPDMEM_I2C_ADDRMASK 0xfff8
 #define SPDMEM_I2C_ADDR     0x50
+#define SPDCTL_I2C_ADDR     0x30
+
+/* set write protection */
+#define SPDCTL_SWP0         (SPDCTL_I2C_ADDR + 1)
+#define SPDCTL_SWP1         (SPDCTL_I2C_ADDR + 4)
+#define SPDCTL_SWP2         (SPDCTL_I2C_ADDR + 5)
+#define SPDCTL_SWP3         (SPDCTL_I2C_ADDR + 0)
+
+/* clear write protections */
+#define SPDCTL_CWP          (SPDCTL_I2C_ADDR + 3)
+
+/* read protection status */
+#define SPDCTL_RPS0         (SPDCTL_I2C_ADDR + 1)
+#define SPDCTL_RPS1         (SPDCTL_I2C_ADDR + 4)
+#define SPDCTL_RPS2         (SPDCTL_I2C_ADDR + 5)
+#define SPDCTL_RPS3         (SPDCTL_I2C_ADDR + 0)
+
+/* select page address */
+#define SPDCTL_SPA0         (SPDCTL_I2C_ADDR + 6)
+#define SPDCTL_SPA1         (SPDCTL_I2C_ADDR + 7)
+
+/* read page address */
+#define SPDCTL_RPA          (SPDCTL_I2C_ADDR + 6)
 
 struct spdmem_i2c_softc {
 	struct spdmem_softc sc_base;
 	i2c_tag_t sc_tag;
-	i2c_addr_t sc_addr;
+	i2c_addr_t sc_addr; /* EEPROM */
+	i2c_addr_t sc_page0;
+	i2c_addr_t sc_page1;
 };
 
+static int  spdmem_reset_page(struct spdmem_i2c_softc *);
 static int  spdmem_i2c_match(device_t, cfdata_t, void *);
 static void spdmem_i2c_attach(device_t, device_t, void *);
 static int  spdmem_i2c_detach(device_t, int);
@@ -65,7 +96,80 @@ static int  spdmem_i2c_detach(device_t, int);
 CFATTACH_DECL_NEW(spdmem_iic, sizeof(struct spdmem_i2c_softc),
     spdmem_i2c_match, spdmem_i2c_attach, spdmem_i2c_detach, NULL);
 
-static uint8_t spdmem_i2c_read(struct spdmem_softc *, uint8_t);
+static int spdmem_i2c_read(struct spdmem_softc *, uint16_t, uint8_t *);
+
+static int
+spdmem_reset_page(struct spdmem_i2c_softc *sc)
+{
+	uint8_t reg, byte0, byte2;
+	int rv;
+
+	reg = 0;
+
+	iic_acquire_bus(sc->sc_tag, 0);
+
+	/*
+	 * Try to read byte 0 and 2. If it failed, it's not spdmem or a device
+	 * doesn't exist at the address.
+	 */
+	rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
+	    &byte0, 1, I2C_F_POLL);
+	rv |= iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
+	    &byte2, 1, I2C_F_POLL);
+	if (rv != 0)
+		goto error;
+
+	/*
+	 * Quirk for BIOSes that leave page 1 of a 4kbit EEPROM selected.
+	 *
+	 * byte0 is the length, byte2 is the memory type. Both of them should
+	 * not be zero. If zero, the current page might be 1 (DDR4 and newer).
+	 * If page 1 is selected, offset 0 can be 0 (Module Characteristics
+	 * (Energy backup is not available)) and also offset 2 can be 0
+	 * (Megabytes, and a part of Capacity digits).
+	 *
+	 * Note: The encoding of byte0 is vary in memory type, so we check
+	 * just with zero to be simple.
+	 *
+	 * Try to see if we are not at page 0. If it's not, select page 0.
+	 */
+	if ((byte0 == 0) || (byte2 == 0)) {
+		/*
+		 * Note that SDCTL_RPA is the same as sc->sc_page0(SPDCTL_SPA0)
+		 * Write is SPA0, read is RPA.
+		 *
+		 * This call returns 0 on page 0 and returns -1 on page 1.
+		 * I don't know whether our icc_exec()'s API is good or not.
+		 */
+		rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_page0,
+		    &reg, 1, NULL, 0, I2C_F_POLL);
+		if (rv != 0) {
+			/*
+			 * The possibilities are:
+			 * a) page 1 is selected.
+			 * b) The device doesn't support page select and
+			 *    it's not a SPD ROM.
+			 * Is there no way to distinguish them now?
+			 */
+			rv = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+			    sc->sc_page0, &reg, 1, NULL, 0, I2C_F_POLL);
+			if (rv == 0) {
+				aprint_debug("Page 1 was selected. Page 0 is "
+				    "selected now.\n");
+			} else {
+				aprint_debug("Failed to select page 0. This "
+				    "device isn't SPD ROM\n");
+			}
+		} else {
+			/* This device isn't SPD ROM */
+			rv = -1;
+		}
+	}
+error:
+	iic_release_bus(sc->sc_tag, 0);
+
+	return rv;
+}
 
 static int
 spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
@@ -88,7 +192,13 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
+	sc.sc_page0 = SPDCTL_SPA0;
+	sc.sc_page1 = SPDCTL_SPA1;
 	sc.sc_base.sc_read = spdmem_i2c_read;
+
+	/* Check the bank and reset to the page 0 */
+	if (spdmem_reset_page(&sc) != 0)
+		return 0;
 
 	return spdmem_common_probe(&sc.sc_base);
 }
@@ -101,6 +211,8 @@ spdmem_i2c_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+	sc->sc_page0 = SPDCTL_SPA0;
+	sc->sc_page1 = SPDCTL_SPA1;
 	sc->sc_base.sc_read = spdmem_i2c_read;
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -119,21 +231,36 @@ spdmem_i2c_detach(device_t self, int flags)
 	return spdmem_common_detach(&sc->sc_base, self);
 }
 
-static uint8_t
-spdmem_i2c_read(struct spdmem_softc *softc, uint8_t reg)
+static int
+spdmem_i2c_read(struct spdmem_softc *softc, uint16_t addr, uint8_t *val)
 {
-	uint8_t val;
+	uint8_t reg;
 	struct spdmem_i2c_softc *sc = (struct spdmem_i2c_softc *)softc;
+	static uint8_t dummy = 0;
+	int rv;
+
+	reg = addr & 0xff;
 
 	iic_acquire_bus(sc->sc_tag, 0);
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
-		 &val, 1, I2C_F_POLL);
+
+	if (addr & 0x100) {
+		rv = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_page1,
+		    &dummy, 1, NULL, 0, I2C_F_POLL);
+		rv |= iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &reg, 1, val, 1, I2C_F_POLL);
+		rv |= iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_page0, &dummy, 1, NULL, 0, I2C_F_POLL);
+	} else {
+		rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &reg, 1, val, 1, I2C_F_POLL);
+	}
+
 	iic_release_bus(sc->sc_tag, 0);
 
-	return val;
+	return rv;
 }
 
-MODULE(MODULE_CLASS_DRIVER, spdmem, "iic");
+MODULE(MODULE_CLASS_DRIVER, spdmem, "i2cexec");
 
 #ifdef _MODULE
 #include "ioconf.c"

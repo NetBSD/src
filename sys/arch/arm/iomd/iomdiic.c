@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.7 2012/05/14 10:38:08 skrll Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.7.2.1 2017/12/03 11:35:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -147,6 +147,7 @@ iomdiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_read_byte = iomdiic_read_byte;
 	sc->sc_i2c.ic_write_byte = iomdiic_write_byte;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }

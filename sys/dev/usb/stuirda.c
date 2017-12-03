@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.15 2012/06/12 20:25:58 joerg Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.15.2.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.15 2012/06/12 20:25:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.15.2.1 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 
@@ -73,7 +77,7 @@ struct stuirda_softc {
 
 int stuirda_fwload(struct uirda_softc *sc);
 
-/* 
+/*
  * These devices need firmware download.
  */
 Static const struct usb_devno stuirda_devs[] = {
@@ -96,29 +100,30 @@ struct irframe_methods stuirda_methods = {
 #define stuirda_activate uirda_activate
 #define stuirda_detach uirda_detach
 
-int             stuirda_match(device_t, cfdata_t, void *);
-void            stuirda_attach(device_t, device_t, void *);
-int             stuirda_detach(device_t, int);
-int             stuirda_activate(device_t, enum devact);
+int	stuirda_match(device_t, cfdata_t, void *);
+void	stuirda_attach(device_t, device_t, void *);
+int	stuirda_detach(device_t, int);
+int	stuirda_activate(device_t, enum devact);
 extern struct cfdriver stuirda_cd;
-CFATTACH_DECL_NEW(stuirda, sizeof(struct stuirda_softc), stuirda_match, stuirda_attach, stuirda_detach, stuirda_activate);
+CFATTACH_DECL_NEW(stuirda, sizeof(struct stuirda_softc), stuirda_match,
+    stuirda_attach, stuirda_detach, stuirda_activate);
 
-int 
+int
 stuirda_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	DPRINTFN(50,("stuirda_match\n"));
 
-	if (stuirda_lookup(uaa->vendor, uaa->product) != NULL)
-		return (UMATCH_VENDOR_PRODUCT);
+	if (stuirda_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL)
+		return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void uirda_attach(device_t, device_t, void *);
 
-void 
+void
 stuirda_attach(device_t parent, device_t self, void *aux)
 {
 	struct stuirda_softc *sc = device_private(self);
@@ -131,22 +136,23 @@ stuirda_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-stuirda_fwload(struct uirda_softc *sc) {
+stuirda_fwload(struct uirda_softc *sc)
+{
 
 
 	int rc;
 	firmware_handle_t fh;
 	off_t fwsize;
 	usb_device_descriptor_t usbddsc;
-	usbd_xfer_handle	fwxfer;
-	usbd_pipe_handle	fwpipe;
+	struct usbd_xfer *	fwxfer;
+	struct usbd_pipe *	fwpipe;
 	usbd_status status;
 	usb_device_request_t req;
 	char *buffer;
 	char *p;
 	char fwname[12];
 	int n;
-	u_int8_t *usbbuf;
+	uint8_t *usbbuf;
 	/* size_t bsize; */
 
 	printf("%s: needing to download firmware\n",
@@ -169,13 +175,12 @@ stuirda_fwload(struct uirda_softc *sc) {
 
 	printf("%s: Attempting to load firmware %s\n",
 		device_xname(sc->sc_dev), fwname);
-	
+
 	rc = firmware_open("stuirda", fwname, &fh);
 
 	if (rc) {
 		printf("%s: Cannot load firmware\n",
 			device_xname(sc->sc_dev));
-		return 0;
 		return rc;
 	}
 	fwsize = firmware_get_size(fh);
@@ -231,24 +236,21 @@ stuirda_fwload(struct uirda_softc *sc) {
 		    device_xname(sc->sc_dev), rc);
 		goto giveup3;
 	}
-	fwxfer = usbd_alloc_xfer(sc->sc_udev);
-	if (fwxfer == NULL) {
+
+	int err = usbd_create_xfer(fwpipe, 1024, USBD_FORCE_SHORT_XFER, 0,
+	    &fwxfer);
+	if (err) {
 		printf("%s: Cannot alloc xfer\n", device_xname(sc->sc_dev));
 		goto giveup4;
 	}
-	usbbuf = usbd_alloc_buffer(fwxfer, 1024);
-	if (usbbuf == NULL) {
-		printf("%s: Cannot alloc usb buf\n", device_xname(sc->sc_dev));
-		goto giveup5;
-	}
+	usbbuf = usbd_get_buffer(fwxfer);
 	n = (buffer + fwsize - p);
 	while (n > 0) {
 		if (n > 1023)
 			n = 1023;
 		memcpy(usbbuf, p, n);
-		rc = usbd_bulk_transfer(fwxfer, fwpipe,
-		    USBD_SYNCHRONOUS|USBD_FORCE_SHORT_XFER,
-		    5000, usbbuf, &n, "uirda-fw-wr");
+		rc = usbd_bulk_transfer(fwxfer, fwpipe, USBD_FORCE_SHORT_XFER,
+		    5000, usbbuf, &n);
 		printf("%s: write: rc=%d, %d left\n",
 		    device_xname(sc->sc_dev), rc, n);
 		if (rc) {
@@ -257,21 +259,20 @@ stuirda_fwload(struct uirda_softc *sc) {
 			goto giveup4;
 		}
 		printf("%s: written %d\n", device_xname(sc->sc_dev), n);
-		p += n; 
+		p += n;
 		n = (buffer + fwsize - p);
 	}
 	delay(100000);
 	/* TODO: more code here */
 	rc = 0;
-	usbd_free_buffer(fwxfer);
+	usbd_destroy_xfer(fwxfer);
 
-	giveup5: usbd_free_xfer(fwxfer);	
 	giveup4: usbd_close_pipe(fwpipe);
 	giveup3: firmware_free(buffer, fwsize);
 	giveup2: firmware_close(fh);
 
 	return rc;
-		
+
 }
 
 int
@@ -279,22 +280,22 @@ stuirda_write(void *h, struct uio *uio, int flag)
 {
 	struct uirda_softc *sc = h;
 	usbd_status err;
-	u_int32_t n;
+	uint32_t n;
 	int error = 0;
 
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_wr_buf == NULL)
-		return (EINVAL);
+		return EINVAL;
 #endif
 
 	n = uio->uio_resid;
 	if (n > sc->sc_params.maxsize)
-		return (EINVAL);
+		return EINVAL;
 
 	sc->sc_refcnt++;
 	mutex_enter(&sc->sc_wr_buf_lk);
@@ -308,29 +309,29 @@ stuirda_write(void *h, struct uio *uio, int flag)
 	}
 
 	error = uiomove(sc->sc_wr_buf + STUIRDA_HEADER_SIZE, n, uio);
-	if (!error) {
-		DPRINTFN(1, ("uirdawrite: transfer %d bytes\n", n));
+	if (error)
+		goto done;
 
-		n += STUIRDA_HEADER_SIZE + sc->sc_wr_buf[1];
-		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-			  USBD_FORCE_SHORT_XFER|USBD_NO_COPY,
-			  UIRDA_WR_TIMEOUT,
-			  sc->sc_wr_buf, &n, "uirdawr");
-		DPRINTFN(2, ("uirdawrite: err=%d\n", err));
-		if (err) {
-			if (err == USBD_INTERRUPTED)
-				error = EINTR;
-			else if (err == USBD_TIMEOUT)
-				error = ETIMEDOUT;
-			else
-				error = EIO;
-		}
+	DPRINTFN(1, ("uirdawrite: transfer %d bytes\n", n));
+
+	n += STUIRDA_HEADER_SIZE + sc->sc_wr_buf[1];
+
+	err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
+	    USBD_FORCE_SHORT_XFER, UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n);
+	DPRINTFN(2, ("uirdawrite: err=%d\n", err));
+	if (err) {
+		if (err == USBD_INTERRUPTED)
+			error = EINTR;
+		else if (err == USBD_TIMEOUT)
+			error = ETIMEDOUT;
+		else
+			error = EIO;
 	}
-
+done:
 	mutex_exit(&sc->sc_wr_buf_lk);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(1,("%s: sc=%p done\n", __func__, sc));
-	return (error);
+	return error;
 }

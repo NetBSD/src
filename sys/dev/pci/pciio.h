@@ -1,4 +1,4 @@
-/*	$NetBSD: pciio.h,v 1.3.22.1 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: pciio.h,v 1.3.22.2 2017/12/03 11:37:28 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -97,17 +97,24 @@ struct pciio_businfo {
  * pciio_drvname:
  *
  *      Driver info for a PCI device (autoconfiguration node) instance.
- *      Must be run on the correct bus.
  */
 
+/* The old drvname must be run on the correct bus. */
 #define PCI_IO_DRVNAME_LEN	16
 struct pciio_drvname {
 	u_int	device;				/* in: device number */
 	u_int	function;			/* in: function number */
 	char	name[PCI_IO_DRVNAME_LEN];
 };
-
 #define	PCI_IOC_DRVNAME		_IOWR('P', 5, struct pciio_drvname)
+
+struct pciio_drvnameonbus {
+	u_int	bus;				/* in: (autoconf) bus number */
+	u_int	device;				/* in: device number */
+	u_int	function;			/* in: function number */
+	char	name[PCI_IO_DRVNAME_LEN];
+};
+#define	PCI_IOC_DRVNAMEONBUS	_IOWR('P', 5, struct pciio_drvnameonbus)
 
 
 #endif /* _DEV_PCI_PCIIO_H_ */

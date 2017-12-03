@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.c,v 1.5.18.1 2014/08/20 00:04:42 tls Exp $	*/
+/*	$NetBSD: netisr.c,v 1.5.18.2 2017/12/03 11:39:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.5.18.1 2014/08/20 00:04:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.5.18.2 2017/12/03 11:39:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
 
 #include <net/netisr.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/net.h>
 
-#include "rump_net_private.h"
+#include <rump/rumpuser.h>
 
 static void *netisrs[NETISR_MAX];
 

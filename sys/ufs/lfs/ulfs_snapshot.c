@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_snapshot.c,v 1.2.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_snapshot.c,v 1.2.2.3 2017/12/03 11:39:22 jdolecek Exp $	*/
 /*  from ffs_snapshot.c,v 1.122 2013/05/07 09:40:54 hannken Exp  */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_snapshot.c,v 1.2.2.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_snapshot.c,v 1.2.2.3 2017/12/03 11:39:22 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_snapshot.c,v 1.2.2.2 2013/06/23 06:18:39 tls Ex
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
-#include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
 

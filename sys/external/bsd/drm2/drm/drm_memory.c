@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.6.4.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.6.4.3 2017/12/03 11:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.6.4.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.6.4.3 2017/12/03 11:37:58 jdolecek Exp $");
 
-#ifdef _KERNEL_OPT
-#include "agp_i810.h"
-#include "genfb.h"
+#if defined(__i386__) || defined(__x86_64__)
+
+# ifdef _KERNEL_OPT
+#  include "agp.h"
+#  if NAGP > 0
+#   include "agp_i810.h"
+#  else
+#   define NAGP_I810	0
+#  endif
+#  include "genfb.h"
+# else
+#  define NAGP_I810	1
+#  define NGENFB	0
+# endif
+
 #else
-#define	NAGP_I810	1	/* XXX WTF?  */
-#define	NGENFB		0	/* XXX WTF?  */
+
+# ifdef _KERNEL_OPT
+#  define NAGP_I810	0
+#  include "genfb.h"
+# else
+#  define NAGP_I810	0
+#  define NGENFB	0
+# endif
+
 #endif
 
 #include <sys/bus.h>
@@ -74,8 +93,8 @@ drm_bus_borrow(bus_addr_t base, bus_size_t size, bus_space_handle_t *handlep)
 	return false;
 }
 
-void *
-drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
+void
+drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
 {
 	const bus_space_tag_t bst = dev->bst;
 	unsigned int unit;
@@ -125,19 +144,20 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 	}
 
 	/* Failure!  */
-	return NULL;
+	return;
 
 win:	map->lm_data.bus_space.bst = bst;
-	return bus_space_vaddr(bst, map->lm_data.bus_space.bsh);
+	map->handle = bus_space_vaddr(bst, map->lm_data.bus_space.bsh);
 }
 
 void
-drm_iounmap(struct drm_device *dev, struct drm_local_map *map)
+drm_core_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
 {
 	if (map->lm_data.bus_space.bus_map != NULL) {
 		bus_space_unmap(map->lm_data.bus_space.bst,
 		    map->lm_data.bus_space.bsh, map->size);
 		map->lm_data.bus_space.bus_map = NULL;
+		map->handle = NULL;
 	}
 }
 

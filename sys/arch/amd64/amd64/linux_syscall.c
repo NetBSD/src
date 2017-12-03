@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.31 2010/12/20 00:25:24 matt Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.31.18.1 2017/12/03 11:35:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31.18.1 2017/12/03 11:35:47 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -97,8 +97,8 @@ linux_syscall(struct trapframe *frame)
 	 * already adjacent in the syscall trapframe.
 	 */
 
-	if (__predict_false(p->p_trace_enabled)
-	    && (error = trace_enter(code, args, callp->sy_narg)) != 0)
+	if (__predict_false(p->p_trace_enabled || KDTRACE_ENTRY(callp->sy_entry))
+	    && (error = trace_enter(code, callp, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -126,8 +126,8 @@ out:
 		break;
 	}
 
-	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled || KDTRACE_ENTRY(callp->sy_return)))
+		trace_exit(code, callp, args, rval, error);
 
 	userret(l);
 }

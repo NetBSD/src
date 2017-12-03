@@ -1,4 +1,4 @@
-/*	$NetBSD: vadvise.h,v 1.10 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: vadvise.h,v 1.10.120.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _SYS_VADVISE_H_
 #define _SYS_VADVISE_H_
+
+#include <sys/cdefs.h>
 
 /*
  * Parameters to vadvise() to tell system of particular paging

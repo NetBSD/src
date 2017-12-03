@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 2011/08/26 09:26:14 reinoud Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12.12.1 2017/12/03 11:35:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -79,20 +79,14 @@
 #define KVM_SIZE		0x00800000 /* 8Mb */
 
 /* User VM range */
-#define	VM_MIN_ADDRESS		((vm_offset_t)0x00008000)
-#define	VM_MAX_ADDRESS		((vm_offset_t)0x02000000 - KVM_SIZE)
+#define	VM_MIN_ADDRESS		((vaddr_t)0x00008000)
+#define	VM_MAX_ADDRESS		((vaddr_t)0x02000000 - KVM_SIZE)
 #define	VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
 
 /* Kernel VM range */
 #define	VM_MIN_KERNEL_ADDRESS	VM_MAX_ADDRESS
-#define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x02000000)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x02000000)
 #define	VM_MAXKERN_ADDRESS	VM_MAX_KERNEL_ADDRESS
-
-/* XXX max. amount of KVM to be used by buffers. */
-#ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF \
-	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 4)
-#endif
 
 /* Physical memory parameters */
 

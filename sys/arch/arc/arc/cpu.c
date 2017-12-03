@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2011/03/06 14:58:42 tsutsui Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19.14.1 2017/12/03 11:35:49 jdolecek Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/03/06 14:58:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19.14.1 2017/12/03 11:35:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/03/06 14:58:42 tsutsui Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <mips/locore.h>
+
 #include <machine/autoconf.h>
 
 #include "ioconf.h"

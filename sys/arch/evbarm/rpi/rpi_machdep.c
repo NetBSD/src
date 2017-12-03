@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.7.2.4 2014/08/20 00:02:56 tls Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.7.2.5 2017/12/03 11:36:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,19 +30,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.4 2014/08/20 00:02:56 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.5 2017/12/03 11:36:06 jdolecek Exp $");
 
-#include "opt_evbarm_boardtype.h"
-#include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_arm_debug.h"
+#include "opt_bcm283x.h"
+#include "opt_cpuoptions.h"
+#include "opt_ddb.h"
+#include "opt_evbarm_boardtype.h"
+#include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
+#include "opt_rpi.h"
 #include "opt_vcprop.h"
 
 #include "sdhc.h"
+#include "bcmsdhost.h"
 #include "bcmdwctwo.h"
 #include "bcmspi.h"
 #include "bsciic.h"
 #include "plcom.h"
+#include "com.h"
 #include "genfb.h"
 #include "ukbd.h"
 
@@ -71,12 +77,16 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.4 2014/08/20 00:02:56 tls Exp 
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_pmvar.h>
 #include <arm/broadcom/bcm2835_mbox.h>
+#include <arm/broadcom/bcm2835_gpio_subr.h>
+#include <arm/broadcom/bcm_amba.h>
 
 #include <evbarm/rpi/vcio.h>
 #include <evbarm/rpi/vcpm.h>
 #include <evbarm/rpi/vcprop.h>
 
 #include <evbarm/rpi/rpi.h>
+
+#include <arm/cortex/gtmr_var.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -89,16 +99,19 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.4 2014/08/20 00:02:56 tls Exp 
 #include <evbarm/dev/plcomvar.h>
 #endif
 
+#if NCOM > 0
+#include <dev/ic/comvar.h>
+#endif
+
 #if NGENFB > 0
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
+#include <dev/wscons/wsconsio.h>
 #endif
 
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
 #endif
-
-#include "ksyms.h"
 
 extern int KERNEL_BASE_phys[];
 extern int KERNEL_BASE_virt[];
@@ -115,9 +128,9 @@ static void rpi_device_register(device_t, void *);
  * kernel address space.  *Not* for general use.
  */
 
-#define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + KERN_VTOPDIFF))
-#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - KERN_VTOPDIFF))
+#define KERN_VTOPDIFF	KERNEL_BASE_VOFFSET
+#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va - KERN_VTOPDIFF))
+#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa + KERN_VTOPDIFF))
 
 #ifndef RPI_FB_WIDTH
 #define RPI_FB_WIDTH	1280
@@ -126,7 +139,9 @@ static void rpi_device_register(device_t, void *);
 #define RPI_FB_HEIGHT	720
 #endif
 
-#define	PLCONADDR 0x20201000
+int uart_clk = BCM2835_UART0_CLK;
+
+#define	PLCONADDR BCM2835_UART0_BASE
 
 #ifndef CONSDEVNAME
 #define CONSDEVNAME "plcom"
@@ -172,18 +187,58 @@ static struct plcom_instance rpi_pi = {
 
 static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
+	struct vcprop_tag_clockrate	vbt_uartclockrate;
+	struct vcprop_tag_clockrate	vbt_coreclockrate;
+	struct vcprop_tag_boardrev	vbt_boardrev;
+	struct vcprop_tag end;
+} vb_uart = {
+	.vb_hdr = {
+		.vpb_len = sizeof(vb_uart),
+		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+	},
+	.vbt_uartclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_uartclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_UART
+	},
+	.vbt_coreclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_coreclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_CORE
+	},
+	.vbt_boardrev = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_BOARDREVISION,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_boardrev),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.end = {
+		.vpt_tag = VCPROPTAG_NULL
+	}
+};
+
+static struct __aligned(16) {
+	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fwrev		vbt_fwrev;
 	struct vcprop_tag_boardmodel	vbt_boardmodel;
 	struct vcprop_tag_boardrev	vbt_boardrev;
 	struct vcprop_tag_macaddr	vbt_macaddr;
 	struct vcprop_tag_memory	vbt_memory;
 	struct vcprop_tag_boardserial	vbt_serial;
+	struct vcprop_tag_dmachan	vbt_dmachan;
 	struct vcprop_tag_cmdline	vbt_cmdline;
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
+	struct vcprop_tag_clockrate	vbt_coreclockrate;
 	struct vcprop_tag end;
-} vb =
-{
+} vb = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -230,6 +285,13 @@ static struct __aligned(16) {
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 	},
+	.vbt_dmachan = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_DMACHAN,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_dmachan),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
 	.vbt_cmdline = {
 		.tag = {
 			.vpt_tag = VCPROPTAG_GET_CMDLINE,
@@ -253,6 +315,14 @@ static struct __aligned(16) {
 		},
 		.id = VCPROP_CLK_ARM
 	},
+	.vbt_coreclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_coreclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_CORE
+	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
 	}
@@ -263,8 +333,7 @@ static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_edidblock	vbt_edid;
 	struct vcprop_tag end;
-} vb_edid =
-{
+} vb_edid = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_edid),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -287,14 +356,12 @@ static struct __aligned(16) {
 	struct vcprop_tag_fbres		vbt_res;
 	struct vcprop_tag_fbres		vbt_vres;
 	struct vcprop_tag_fbdepth	vbt_depth;
-	struct vcprop_tag_fbpixelorder	vbt_pixelorder;
 	struct vcprop_tag_fbalpha	vbt_alpha;
 	struct vcprop_tag_allocbuf	vbt_allocbuf;
 	struct vcprop_tag_blankscreen	vbt_blank;
 	struct vcprop_tag_fbpitch	vbt_pitch;
 	struct vcprop_tag end;
-} vb_setfb =
-{
+} vb_setfb = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_setfb),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -324,14 +391,6 @@ static struct __aligned(16) {
 			.vpt_rcode = VCPROPTAG_REQUEST,
 		},
 		.bpp = 32,
-	},
-	.vbt_pixelorder = {
-		.tag = {
-			.vpt_tag = VCPROPTAG_SET_FB_PIXEL_ORDER,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_pixelorder),
-			.vpt_rcode = VCPROPTAG_REQUEST,
-		},
-		.state = VCPROP_PIXEL_BGR,
 	},
 	.vbt_alpha = {
 		.tag = {
@@ -370,14 +429,122 @@ static struct __aligned(16) {
 };
 
 extern void bcmgenfb_set_console_dev(device_t dev);
+void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *));
 extern void bcmgenfb_ddb_trap_callback(int where);
+static int rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
+
+static int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
+
+#if defined(RPI_HWCURSOR)
+#define CURSOR_BITMAP_SIZE	(64 * 8)
+#define CURSOR_ARGB_SIZE	(64 * 64 * 4)
+static uint32_t hcursor = 0;
+static bus_addr_t pcursor = 0;
+static uint32_t *cmem = NULL;
+static int cursor_x = 0, cursor_y = 0, hot_x = 0, hot_y = 0, cursor_on = 0;
+static uint32_t cursor_cmap[4];
+static uint8_t cursor_mask[8 * 64], cursor_bitmap[8 * 64];
 #endif
+#endif
+
+/*
+ * Return true if this model Raspberry Pi has Bluetooth/Wi-Fi support
+ */
+static bool
+rpi_rev_has_btwifi(uint32_t rev)
+{
+	if ((rev & VCPROP_REV_ENCFLAG) == 0)
+		return false;
+
+	switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
+	case RPI_MODEL_B_PI3:
+	case RPI_MODEL_ZERO_W:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static void
+rpi_uartinit(void)
+{
+	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2835_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
+	uint32_t res;
+
+	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC, KERN_VTOPHYS(&vb_uart));
+
+	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
+
+	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag)) {
+		if (rpi_rev_has_btwifi(vb_uart.vbt_boardrev.rev)) {
+#if NCOM > 0
+			/* Enable AUX UART on GPIO header */
+			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT5);
+			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT5);
+#else
+			/* Enable UART0 (PL011) on GPIO header */
+			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT0);
+			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT0);
+#endif
+		}
+	}
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
+		uart_clk = vb_uart.vbt_uartclockrate.rate;
+}
+
+
+static void
+rpi_pinctrl(void)
+{
+#if NBCMSDHOST > 0
+	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+		/*
+		 * If the sdhost driver is present, map the SD card slot to the
+		 * SD host controller and the sdhci driver to the SDIO pins.
+		 */
+		for (int pin = 48; pin <= 53; pin++) {
+			/* Enable SDHOST on SD card slot */
+			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
+		}
+		for (int pin = 34; pin <= 39; pin++) {
+			/* Enable SDHCI on SDIO */
+			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT3);
+			bcm2835gpio_function_setpull(pin,
+			    pin == 34 ? BCM2835_GPIO_GPPUD_PULLOFF :
+			    BCM2835_GPIO_GPPUD_PULLUP);
+		}
+	}
+#endif
+
+	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+#if NCOM > 0
+		/* Enable UART0 (PL011) on BT */
+		bcm2835gpio_function_select(32, BCM2835_GPIO_ALT3);
+		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT3);
+#else
+		/* Enable AUX UART on BT */
+		bcm2835gpio_function_select(32, BCM2835_GPIO_ALT5);
+		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT5);
+#endif
+		bcm2835gpio_function_setpull(32, BCM2835_GPIO_GPPUD_PULLOFF);
+		bcm2835gpio_function_setpull(33, BCM2835_GPIO_GPPUD_PULLUP);
+		bcm2835gpio_function_select(43, BCM2835_GPIO_ALT0);
+		bcm2835gpio_function_setpull(43, BCM2835_GPIO_GPPUD_PULLOFF);
+	}
+}
+
 
 static void
 rpi_bootparams(void)
 {
-	bus_space_tag_t iot = &bcm2835_bs_tag;
-	bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(BCM2835_ARMMBOX_BASE);
+	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2835_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
 	uint32_t res;
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANPM, (
@@ -403,13 +570,7 @@ rpi_bootparams(void)
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
-	/*
-	 * No need to invalid the cache as the memory has never been referenced
-	 * by the ARM.
-	 *
-	 * cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
-	 *
-	 */
+	cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
 
 	if (!vcprop_buffer_success_p(&vb.vb_hdr)) {
 		bootconfig.dramblocks = 1;
@@ -424,7 +585,7 @@ rpi_bootparams(void)
 		size_t n = vcprop_tag_resplen(&vptp_mem->tag) /
 		    sizeof(struct vcprop_memory);
 
-    		bootconfig.dramblocks = 0;
+		bootconfig.dramblocks = 0;
 
 		for (int i = 0; i < n && i < DRAM_BLOCKS; i++) {
 			bootconfig.dram[i].address = vptp_mem->mem[i].base;
@@ -452,11 +613,80 @@ rpi_bootparams(void)
 	if (vcprop_tag_success_p(&vb.vbt_serial.tag))
 		printf("%s: board serial %llx\n", __func__,
 		    vb.vbt_serial.sn);
+	if (vcprop_tag_success_p(&vb.vbt_dmachan.tag))
+		printf("%s: DMA channel mask 0x%08x\n", __func__,
+		    vb.vbt_dmachan.mask);
 
 	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
 		printf("%s: cmdline      %s\n", __func__,
 		    vb.vbt_cmdline.cmdline);
 #endif
+}
+
+
+static void
+rpi_bootstrap(void)
+{
+#ifdef BCM2836
+#define RPI_CPU_MAX	4
+
+#ifdef MULTIPROCESSOR
+	extern int cortex_mmuinfo;
+
+	arm_cpu_max = RPI_CPU_MAX;
+	cortex_mmuinfo = armreg_ttbr_read();
+
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
+	printf("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
+#endif
+#endif /* MULTIPROCESSOR */
+
+	/*
+	 * Even if no options MULTIPROCESSOR,
+	 * It is need to initialize the secondary CPU,
+	 * and go into wfi loop (cortex_mpstart),
+	 * otherwise system would be freeze...
+	 */
+	extern void cortex_mpstart(void);
+
+	for (size_t i = 1; i < RPI_CPU_MAX; i++) {
+		bus_space_tag_t iot = &bcm2835_bs_tag;
+		bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
+
+		bus_space_write_4(iot, ioh,
+		    BCM2836_LOCAL_MAILBOX3_SETN(i),
+		    (uint32_t)cortex_mpstart);
+
+		int timeout = 20;
+		while (timeout-- > 0) {
+			uint32_t val;
+
+			val = bus_space_read_4(iot, ioh,
+			    BCM2836_LOCAL_MAILBOX3_CLRN(i));
+			if (val == 0)
+				break;
+		}
+	}
+#endif /* BCM2836 */
+
+#ifdef MULTIPROCESSOR
+	/* Wake up APs in case firmware has placed them in WFE state */
+	__asm __volatile("sev");
+
+	for (int loop = 0; loop < 16; loop++) {
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		gtmr_delay(10000);
+	}
+
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & (1 << i)) == 0) {
+			printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+#endif /* MULTIPROCESSOR */
 }
 
 /*
@@ -479,12 +709,21 @@ rpi_bootparams(void)
 
 static const struct pmap_devmap rpi_devmap[] = {
 	{
-		_A(RPI_KERNEL_IO_VBASE),	/* 0xf2000000 */
-		_A(RPI_KERNEL_IO_PBASE),	/* 0x20000000 */
+		_A(RPI_KERNEL_IO_VBASE),
+		_A(RPI_KERNEL_IO_PBASE),
 		_S(RPI_KERNEL_IO_VSIZE),	/* 16Mb */
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
+#if defined(BCM2836)
+	{
+		_A(RPI_KERNEL_LOCAL_VBASE),
+		_A(RPI_KERNEL_LOCAL_PBASE),
+		_S(RPI_KERNEL_LOCAL_VSIZE),
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+#endif
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -519,6 +758,8 @@ initarm(void *arg)
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
+	rpi_uartinit();
+
 	consinit();
 
 	/* Talk to the user */
@@ -526,7 +767,13 @@ initarm(void *arg)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
+#ifdef CORTEX_PMC
+	cortex_pmc_ccnt_init();
+#endif
+
 	rpi_bootparams();
+
+	rpi_bootstrap();
 
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
@@ -601,19 +848,15 @@ initarm(void *arg)
 	/* we've a specific device_register routine */
 	evbarm_device_register = rpi_device_register;
 
+	/* Change pinctrl settings */
+	rpi_pinctrl();
+
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
 
-void
-consinit(void)
+static void
+consinit_plcom(void)
 {
-	static int consinit_called = 0;
-
-	if (consinit_called != 0)
-		return;
-
-	consinit_called = 1;
-
 #if (NPLCOM > 0 && defined(PLCONSOLE))
 	/*
 	 * Initialise the diagnostic serial console
@@ -621,10 +864,50 @@ consinit(void)
 	 */
 	rpi_pi.pi_iobase = consaddr;
 
-	plcomcnattach(&rpi_pi, plcomcnspeed, BCM2835_UART0_CLK,
+	plcomcnattach(&rpi_pi, plcomcnspeed, uart_clk,
 	    plcomcnmode, PLCOMCNUNIT);
-
 #endif
+}
+
+static void
+consinit_com(void)
+{
+#if NCOM > 0
+	bus_space_tag_t iot = &bcm2835_a4x_bs_tag;
+	const bus_addr_t addr = BCM2835_AUX_UART_BASE;
+	const int speed = B115200;
+	u_int freq = 0;
+	const u_int flags = TTYDEF_CFLAG;
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_coreclockrate.tag))
+		freq = vb.vbt_coreclockrate.rate * 2;
+
+	comcnattach(iot, addr, speed, freq, COM_TYPE_BCMAUXUART, flags);
+#endif
+}
+
+void
+consinit(void)
+{
+	static int consinit_called = 0;
+	bool use_auxuart = false;
+
+	if (consinit_called != 0)
+		return;
+
+	consinit_called = 1;
+
+#if NCOM > 0
+	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag) &&
+	    rpi_rev_has_btwifi(vb_uart.vbt_boardrev.rev)) {
+		use_auxuart = true;
+	}
+#endif
+
+	if (use_auxuart)
+		consinit_com();
+	else
+		consinit_plcom();
 }
 
 #ifdef KGDB
@@ -645,7 +928,7 @@ static kgdb_port_init(void)
 
 	rpi_pi.pi_iobase = consaddr;
 
-	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, BCM2835_UART0_CLK,
+	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, uart_clk,
 	    KGDB_CONMODE, KGDB_PLCOMUNIT);
 	if (res)
 		panic("KGDB uart can not be initialized, err=%d.", res);
@@ -715,13 +998,14 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
  *  - If "console=fb" is present, attach framebuffer to console.
  */
 static bool
-rpi_fb_init(prop_dictionary_t dict)
+rpi_fb_init(prop_dictionary_t dict, void *aux)
 {
 	uint32_t width = 0, height = 0;
 	uint32_t res;
 	char *ptr;
 	int integer;
 	int error;
+	bool is_bgr = true;
 
 	if (get_bootconf_option(boot_args, "fb",
 			      BOOTOPT_TYPE_STRING, &ptr)) {
@@ -751,7 +1035,6 @@ rpi_fb_init(prop_dictionary_t dict)
 	    !vcprop_tag_success_p(&vb_setfb.vbt_res.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_vres.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_depth.tag) ||
-	    !vcprop_tag_success_p(&vb_setfb.vbt_pixelorder.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_allocbuf.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_blank.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_pitch.tag)) {
@@ -770,8 +1053,6 @@ rpi_fb_init(prop_dictionary_t dict)
 	    vb_setfb.vbt_res.width, vb_setfb.vbt_res.height);
 	printf("%s: vwidth = %d vheight = %d\n", __func__,
 	    vb_setfb.vbt_vres.width, vb_setfb.vbt_vres.height);
-	printf("%s: pixelorder = %d\n", __func__,
-	    vb_setfb.vbt_pixelorder.state);
 #endif
 
 	if (vb_setfb.vbt_allocbuf.address == 0 ||
@@ -793,8 +1074,20 @@ rpi_fb_init(prop_dictionary_t dict)
 	    vb_setfb.vbt_pitch.linebytes);
 	prop_dictionary_set_uint32(dict, "address",
 	    vb_setfb.vbt_allocbuf.address);
-	if (vb_setfb.vbt_pixelorder.state == VCPROP_PIXEL_BGR)
-		prop_dictionary_set_bool(dict, "is_bgr", true);
+
+	/*
+	 * Old firmware uses BGR. New firmware uses RGB. The get and set
+	 * pixel order mailbox properties don't seem to work. The firmware
+	 * adds a kernel cmdline option bcm2708_fb.fbswap=<0|1>, so use it
+	 * to determine pixel order. 0 means BGR, 1 means RGB.
+	 *
+	 * See https://github.com/raspberrypi/linux/issues/514
+	 */
+	if (get_bootconf_option(boot_args, "bcm2708_fb.fbswap",
+				BOOTOPT_TYPE_INT, &integer)) {
+		is_bgr = integer == 0;
+	}
+	prop_dictionary_set_bool(dict, "is_bgr", is_bgr);
 
 	/* if "genfb.type=<n>" is passed in cmdline, override wsdisplay type */
 	if (get_bootconf_option(boot_args, "genfb.type",
@@ -802,8 +1095,178 @@ rpi_fb_init(prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "wsdisplay_type", integer);
 	}
 
+#if defined(RPI_HWCURSOR)
+	struct amba_attach_args *aaa = aux;
+	bus_space_handle_t hc;
+
+	hcursor = rpi_alloc_mem(CURSOR_ARGB_SIZE, PAGE_SIZE,
+	    MEM_FLAG_L1_NONALLOCATING | MEM_FLAG_HINT_PERMALOCK);
+	pcursor = rpi_lock_mem(hcursor);
+#ifdef RPI_IOCTL_DEBUG
+	printf("hcursor: %08x\n", hcursor);
+	printf("pcursor: %08x\n", (uint32_t)pcursor);
+	printf("fb: %08x\n", (uint32_t)vb_setfb.vbt_allocbuf.address);
+#endif
+	if (bus_space_map(aaa->aaa_iot, pcursor, CURSOR_ARGB_SIZE,
+	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE, &hc) != 0) {
+		printf("couldn't map cursor memory\n");
+	} else {
+		int i, j, k;
+
+		cmem = bus_space_vaddr(aaa->aaa_iot, hc);
+		k = 0;
+		for (j = 0; j < 64; j++) {
+			for (i = 0; i < 64; i++) {
+				cmem[i + k] =
+				 ((i & 8) ^ (j & 8)) ? 0xa0ff0000 : 0xa000ff00;
+			}
+			k += 64;
+		}
+		cpu_dcache_wb_range((vaddr_t)cmem, CURSOR_ARGB_SIZE);
+		rpi_fb_initcursor(pcursor, 0, 0);
+#ifdef RPI_IOCTL_DEBUG
+		rpi_fb_movecursor(600, 400, 1);
+#else
+		rpi_fb_movecursor(cursor_x, cursor_y, cursor_on);
+#endif
+	}
+#endif
+
 	return true;
 }
+
+
+#if defined(RPI_HWCURSOR)
+static int
+rpi_fb_do_cursor(struct wsdisplay_cursor *cur)
+{
+	int pos = 0;
+	int shape = 0;
+
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+		if (cursor_on != cur->enable) {
+			cursor_on = cur->enable;
+			pos = 1;
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		hot_x = cur->hot.x;
+		hot_y = cur->hot.y;
+		pos = 1;
+		shape = 1;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		cursor_x = cur->pos.x;
+		cursor_y = cur->pos.y;
+		pos = 1;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+		uint32_t val;
+
+		for (i = 0; i < min(cur->cmap.count, 3); i++) {
+			val = (cur->cmap.red[i] << 16 ) |
+			      (cur->cmap.green[i] << 8) |
+			      (cur->cmap.blue[i] ) |
+			      0xff000000;
+			cursor_cmap[i + cur->cmap.index + 2] = val;
+		}
+		shape = 1;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		int err;
+
+		err = copyin(cur->mask, cursor_mask, CURSOR_BITMAP_SIZE);
+		err += copyin(cur->image, cursor_bitmap, CURSOR_BITMAP_SIZE);
+		if (err != 0)
+			return EFAULT;
+		shape = 1;
+	}
+	if (shape) {
+		int i, j, idx;
+		uint8_t mask;
+
+		for (i = 0; i < CURSOR_BITMAP_SIZE; i++) {
+			mask = 0x01;
+			for (j = 0; j < 8; j++) {
+				idx = ((cursor_mask[i] & mask) ? 2 : 0) |
+				    ((cursor_bitmap[i] & mask) ? 1 : 0);
+				cmem[i * 8 + j] = cursor_cmap[idx];
+				mask = mask << 1;
+			}
+		}
+		/* just in case */
+		cpu_dcache_wb_range((vaddr_t)cmem, CURSOR_ARGB_SIZE);
+		rpi_fb_initcursor(pcursor, hot_x, hot_y);
+	}
+	if (pos) {
+		rpi_fb_movecursor(cursor_x, cursor_y, cursor_on);
+	}
+	return 0;
+}
+#endif
+
+static int
+rpi_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
+{
+
+	switch (cmd) {
+	case WSDISPLAYIO_SVIDEO:
+		{
+			int d = *(int *)data;
+			if (d == rpi_video_on)
+				return 0;
+			rpi_video_on = d;
+			rpi_fb_set_video(d);
+#if defined(RPI_HWCURSOR)
+			rpi_fb_movecursor(cursor_x, cursor_y,
+			                  d ? cursor_on : 0);
+#endif
+		}
+		return 0;
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = rpi_video_on;
+		return 0;
+#if defined(RPI_HWCURSOR)
+	case WSDISPLAYIO_GCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			cp->x = cursor_x;
+			cp->y = cursor_y;
+		}
+		return 0;
+	case WSDISPLAYIO_SCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			cursor_x = cp->x;
+			cursor_y = cp->y;
+			rpi_fb_movecursor(cursor_x, cursor_y, cursor_on);
+		}
+		return 0;
+	case WSDISPLAYIO_GCURMAX:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			cp->x = 64;
+			cp->y = 64;
+		}
+		return 0;
+	case WSDISPLAYIO_SCURSOR:
+		{
+			struct wsdisplay_cursor *cursor = (void *)data;
+
+			return rpi_fb_do_cursor(cursor);
+		}
+#endif
+	default:
+		return EPASSTHROUGH;
+	}
+}
+
 #endif
 
 static void
@@ -811,12 +1274,49 @@ rpi_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
 
-#if NSDHC > 0
+#if defined(BCM2836)
+	if (device_is_a(dev, "armgtmr")) {
+		/*
+		 * The frequency of the generic timer is the reference
+		 * frequency.
+		 */
+		prop_dictionary_set_uint32(dict, "frequency", RPI_REF_FREQ);
+		return;
+	}
+#endif
+
+	if (device_is_a(dev, "plcom") &&
+	    vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag) &&
+	    vb_uart.vbt_uartclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb_uart.vbt_uartclockrate.rate);
+	}
+	if (device_is_a(dev, "com") &&
+	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
+	    vb.vbt_coreclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb.vbt_coreclockrate.rate);
+	}
+	if (device_is_a(dev, "bcmdmac") &&
+	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
+		prop_dictionary_set_uint32(dict,
+		    "chanmask", vb.vbt_dmachan.mask);
+	}
 	if (device_is_a(dev, "sdhc") &&
 	    vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag) &&
 	    vb.vbt_emmcclockrate.rate > 0) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb.vbt_emmcclockrate.rate);
+	}
+	if (device_is_a(dev, "sdhost") &&
+	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
+	    vb.vbt_coreclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb.vbt_coreclockrate.rate);
+		if (!rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+			/* No btwifi and sdhost driver is present */
+			prop_dictionary_set_bool(dict, "disable", true);
+		}
 	}
 	if (booted_device == NULL &&
 	    device_is_a(dev, "ld") &&
@@ -824,7 +1324,6 @@ rpi_device_register(device_t dev, void *aux)
 		booted_partition = 0;
 		booted_device = dev;
 	}
-#endif
 	if (device_is_a(dev, "usmsc") &&
 	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
 		const uint8_t enaddr[ETHER_ADDR_LEN] = {
@@ -851,11 +1350,12 @@ rpi_device_register(device_t dev, void *aux)
 		char *ptr;
 
 		bcmgenfb_set_console_dev(dev);
+		bcmgenfb_set_ioctl(&rpi_ioctl);
 #ifdef DDB
 		db_trap_callback = bcmgenfb_ddb_trap_callback;
 #endif
 
-		if (rpi_fb_init(dict) == false)
+		if (rpi_fb_init(dict, aux) == false)
 			return;
 		if (get_bootconf_option(boot_args, "console",
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
@@ -869,6 +1369,14 @@ rpi_device_register(device_t dev, void *aux)
 		}
 	}
 #endif
+
+	/* BSC0 is used internally on some boards */
+	if (device_is_a(dev, "bsciic") &&
+	    ((struct amba_attach_args *)aux)->aaa_addr == BCM2835_BSC0_BASE) {
+		if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+			prop_dictionary_set_bool(dict, "disable", true);
+		}
+	}
 }
 
 SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
@@ -876,6 +1384,21 @@ SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "firmware_revision", NULL, NULL, 0,
+	    &vb.vbt_fwrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "board_model", NULL, NULL, 0,
+	    &vb.vbt_boardmodel.model, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "board_revision", NULL, NULL, 0,
+	    &vb.vbt_boardrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.62.6.1 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.62.6.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.62.6.1 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.62.6.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -252,8 +252,7 @@ dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align, int nsegs)
 	struct dmamem	*mem;
 
 	/* Allocate memory for structure */
-	if ((mem = kmem_alloc(sizeof(*mem), KM_SLEEP)) == NULL)
-		return NULL;
+	mem = kmem_alloc(sizeof(*mem), KM_SLEEP);
 	mem->dmat = dmat;
 	mem->size = size;
 	mem->align = align;
@@ -261,10 +260,6 @@ dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align, int nsegs)
 	mem->bound = 0;
 
 	mem->segs = kmem_alloc(mem->nsegs * sizeof(*(mem->segs)), KM_SLEEP);
-	if (mem->segs == NULL) {
-		kmem_free(mem, sizeof(*mem));
-		return NULL;
-	}
 
 	if (bus_dmamem_alloc(dmat, mem->size, mem->align, mem->bound,
 			     mem->segs, mem->nsegs, &(mem->rsegs),
@@ -456,9 +451,11 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 		sc->sc_type = EMUXKI_AUDIGY;
 		if (PCI_REVISION(pa->pa_class) == 0x04) {
 			sc->sc_type |= EMUXKI_AUDIGY2;
-			strlcpy(sc->sc_audv.name, "Audigy2", sizeof sc->sc_audv.name);
+			strlcpy(sc->sc_audv.name, "Audigy2",
+			    sizeof sc->sc_audv.name);
 		} else {
-			strlcpy(sc->sc_audv.name, "Audigy", sizeof sc->sc_audv.name);
+			strlcpy(sc->sc_audv.name, "Audigy",
+			    sizeof sc->sc_audv.name);
 		}
 	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {
@@ -966,9 +963,7 @@ emuxki_mem_new(struct emuxki_softc *sc, int ptbidx, size_t size)
 {
 	struct emuxki_mem *mem;
 
-	if ((mem = kmem_alloc(sizeof(*mem), KM_SLEEP)) == NULL)
-		return NULL;
-
+	mem = kmem_alloc(sizeof(*mem), KM_SLEEP);
 	mem->ptbidx = ptbidx;
 	if ((mem->dmamem = dmamem_alloc(sc->sc_dmat, size, EMU_DMA_ALIGN,
 	    EMU_DMAMEM_NSEG)) == NULL) {
@@ -1485,8 +1480,6 @@ emuxki_voice_new(struct emuxki_softc *sc, uint8_t use)
 		mutex_exit(&sc->sc_intr_lock);
 		voice = kmem_alloc(sizeof(*voice), KM_SLEEP);
 		mutex_enter(&sc->sc_intr_lock);
-		if (!voice)
-			return NULL;
 	} else if (voice->use != use) {
 		mutex_exit(&sc->sc_intr_lock);
 		emuxki_voice_dataloc_destroy(voice);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.14.22.2 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: mii.h,v 1.14.22.3 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -35,6 +35,8 @@
  */
 
 #define	MII_NPHY	32	/* max # of PHYs per MII */
+#define	MII_ADDRBITS	5	/* Register address bits (0x00..0x1f) */
+#define	MII_ADDRMASK	0x1f	/* Address mask */
 
 /*
  * MII commands, used if a device must drive the MII lines
@@ -56,6 +58,7 @@
 #define	BMCR_FDX	0x0100	/* Set duplex mode */
 #define	BMCR_CTEST	0x0080	/* collision test */
 #define	BMCR_SPEED1	0x0040	/* speed selection (MSB) */
+#define	BMCR_UNIDIR	0x0020	/* Unidirectional enable */
 
 #define	BMCR_S10	0x0000		/* 10 Mb/s */
 #define	BMCR_S100	BMCR_SPEED0	/* 100 Mb/s */
@@ -72,6 +75,7 @@
 #define	BMSR_100T2FDX	0x0400	/* 100 base T2 full duplex capable */
 #define	BMSR_100T2HDX	0x0200	/* 100 base T2 half duplex capable */
 #define	BMSR_EXTSTAT	0x0100	/* Extended status in register 15 */
+#define	BMSR_UNIDIR	0x0080	/* Unidirectional ability */
 #define	BMSR_MFPS	0x0040	/* MII Frame Preamble Suppression */
 #define	BMSR_ACOMP	0x0020	/* Autonegotiation complete */
 #define	BMSR_RFAULT	0x0010	/* Link partner fault */
@@ -107,6 +111,7 @@
 #define ANAR_NP		0x8000	/* Next page (ro) */
 #define	ANAR_ACK	0x4000	/* link partner abilities acknowledged (ro) */
 #define ANAR_RF		0x2000	/* remote fault (ro) */
+#define ANAR_ENP	0x1000	/* Extended Next Page */
 		/* Annex 28B.2 */
 #define	ANAR_FC		0x0400	/* local device supports PAUSE */
 #define ANAR_T4		0x0200	/* local device supports 100bT4 */
@@ -128,7 +133,7 @@
 #define	ANAR_X_PAUSE_ASYM	(2 << 7)
 #define	ANAR_X_PAUSE_TOWARDS	(3 << 7)
 
-#define	MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
+#define	MII_ANLPAR	0x05	/* ANEG Link Partner Base Page abilities (rw)*/
 		/* section 28.2.4.1 and 37.2.6.1 */
 #define ANLPAR_NP	0x8000	/* Next page (ro) */
 #define	ANLPAR_ACK	0x4000	/* link partner accepted ACK (ro) */
@@ -156,13 +161,15 @@
 
 #define	MII_ANER	0x06	/* Autonegotiation expansion (ro) */
 		/* section 28.2.4.1 and 37.2.6.1 */
+#define ANER_RNPLA	0x0040	/* Receive Next Page Location Able */
+#define ANER_RNPSL	0x0020	/* Received Next Page Storage Location */
 #define ANER_MLF	0x0010	/* multiple link detection fault */
-#define ANER_LPNP	0x0008	/* link parter next page-able */
+#define ANER_LPNP	0x0008	/* link partner next page-able */
 #define ANER_NP		0x0004	/* next page-able */
 #define ANER_PAGE_RX	0x0002	/* Page received */
-#define ANER_LPAN	0x0001	/* link parter autoneg-able */
+#define ANER_LPAN	0x0001	/* link partner autoneg-able */
 
-#define	MII_ANNP	0x07	/* Autonegotiation next page */
+#define	MII_ANNP	0x07	/* Autonegotiation next page (rw) */
 		/* section 28.2.4.1 and 37.2.6.1 */
 
 #define	MII_ANLPRNP	0x08	/* Autonegotiation link partner rx next page */
@@ -189,29 +196,38 @@
 #define	GTSR_IDLE_ERR	0x00ff	/* IDLE error count */
 
 #define	MII_PSECR	0x0b	/* PSE control register */
+#define	PSECR_DLLC	0x0020	/* Data Link Layer Classification capability */
+#define	PSECR_EPLC	0x0010	/* Enable Physical Layer Classification */
 #define	PSECR_PACTLMASK	0x000c	/* pair control mask */
-#define	PSECR_PSEENMASK	0x0003	/* PSE enable mask */
 #define	PSECR_PINOUTB	0x0008	/* PSE pinout Alternative B */
 #define	PSECR_PINOUTA	0x0004	/* PSE pinout Alternative A */
+#define	PSECR_PSEENMASK	0x0003	/* PSE enable mask */
 #define	PSECR_FOPOWTST	0x0002	/* Force Power Test Mode */
 #define	PSECR_PSEEN	0x0001	/* PSE Enabled */
 #define	PSECR_PSEDIS	0x0000	/* PSE Disabled */
 
 #define	MII_PSESR	0x0c	/* PSE status register */
-#define	PSESR_PWRDENIED	0x1000	/* Power Deined */
+#define	PSESR_PWRDENIED	0x1000	/* Power Denied */
 #define	PSESR_VALSIG	0x0800	/* Valid PD signature detected */
-#define	PSESR_INVALSIG	0x0400	/* Inalid PD signature detected */
+#define	PSESR_INVALSIG	0x0400	/* Invalid PD signature detected */
 #define	PSESR_SHORTCIRC	0x0200	/* Short circuit condition detected */
 #define	PSESR_OVERLOAD	0x0100	/* Overload condition detected */
 #define	PSESR_MPSABSENT	0x0080	/* MPS absent condition detected */
 #define	PSESR_PDCLMASK	0x0070	/* PD Class mask */
 #define	PSESR_STATMASK	0x000e	/* PSE Status mask */
 #define	PSESR_PAIRCTABL	0x0001	/* PAIR Control Ability */
+#define	PSESR_PDCL_INVALID	(5 << 4)	/* Invalid Class */
 #define	PSESR_PDCL_4		(4 << 4)	/* Class 4 */
 #define	PSESR_PDCL_3		(3 << 4)	/* Class 3 */
 #define	PSESR_PDCL_2		(2 << 4)	/* Class 2 */
 #define	PSESR_PDCL_1		(1 << 4)	/* Class 1 */
 #define	PSESR_PDCL_0		(0 << 4)	/* Class 0 */
+#define	PSESR_STAT_ISFLT	(5 << 1)	/* Implement specific fault */
+#define	PSESR_STAT_TSTERR	(4 << 1)	/* Test Error */
+#define	PSESR_STAT_TSTMODE	(3 << 1)	/* Test Mode */
+#define	PSESR_STAT_DELVPWR	(2 << 1)	/* Delivering power */
+#define	PSESR_STAT_SEARCH	(1 << 1)	/* Searching */
+#define	PSESR_STAT_DIS		(0 << 1)	/* Disabled */
 
 #define	MII_MMDACR	0x0d	/* MMD access control register */
 #define	MMDACR_FUNCMASK	0xc000	/* function */

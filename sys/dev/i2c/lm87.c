@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.4.10.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: lm87.c,v 1.4.10.3 2017/12/03 11:37:02 jdolecek Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.4.10.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.4.10.3 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,25 +28,66 @@ __KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.4.10.2 2014/08/20 00:03:37 tls Exp $");
 #include <dev/i2c/i2cvar.h>
 
 /* LM87 registers */
-#define LM87_2_5V	0x20
-#define LM87_VCCP1	0x21
-#define LM87_VCC	0x22
-#define LM87_5V		0x23
-#define LM87_12V	0x24
-#define LM87_VCCP2	0x25
-#define LM87_EXT_TEMP	0x26
-#define LM87_INT_TEMP	0x27
-#define LM87_FAN1	0x28
-#define LM87_FAN2	0x29
-#define LM87_COMPANY_ID	0x3e
-#define LM87_REVISION	0x3f
-#define LM87_CONFIG1	0x40
+#define LM87_INT_HHIGH_L	0x13	/* Hardware int high limit (lockable) */
+#define LM87_EXT_HHIGH_L	0x14	/* Hardware ext high limit (lockable) */
+#define LM87_TEST		0x15
+#define LM87_CHANNEL		0x16	/* Dual purpose pin and scaling */
+#define LM87_INT_HHIGH		0x17	/* Hardware int temp high limit */
+#define LM87_EXT_HHIGH		0x18	/* Hardware ext temp high limit */
+#define LM87_DAC_DATA		0x19	/* DAC output scaling */
+#define LM87_AIN1_LOW		0x1a	/* Analog in 1 low limit */
+#define LM87_AIN2_LOW		0x1b	/* Analog in 2 low limit */
+#define LM87_2_5V		0x20	/* +2.5V or ext temp 2 reading */
+#define LM87_VCCP1		0x21	/* Vccp1 reading */
+#define LM87_VCC		0x22	/* +Vcc reading */
+#define LM87_5V			0x23	/* +5V reading */
+#define LM87_12V		0x24	/* +12V reading */
+#define LM87_VCCP2		0x25	/* Vccp2 reading */
+#define LM87_EXT_TEMP		0x26	/* External tempurature 1 reading */
+#define LM87_INT_TEMP		0x27	/* Internal temperature reading */
+#define LM87_FAN1		0x28	/* Fan1 or AIN1 reading */
+#define LM87_FAN2		0x29	/* Fan2 or AIN2 reading */
+#define LM87_2_5V_HIGH		0x2b	/* +2.5V or ext temp 2 high limit */
+#define LM87_2_5V_LOW		0x2c	/* +2.5V or ext temp 2 low limit */
+#define LM87_VCCP1_HIGH		0x2d	/* Vccp1 high limit */
+#define LM87_VCCP1_LOW		0x2e	/* Vccp1 low limit */
+#define LM87_VCC_HIGH		0x2f	/* +3.3V (Vcc) high limit */
+#define LM87_VCC_LOW		0x30	/* +3.3V (Vcc) low limit */
+#define LM87_5V_HIGH		0x31	/* +5V high limit */
+#define LM87_5V_LOW		0x32	/* +5V low limit */
+#define LM87_12V_HIGH		0x33	/* +12V high limit */
+#define LM87_12V_LOW		0x34	/* +12V low limit */
+#define LM87_VCCP2_HIGH		0x35	/* Vccp2 high limit */
+#define LM87_VCCP2_LOW		0x36	/* Vccp2 low limit */
+#define LM87_EXT_HIGH		0x37	/* External tempurature 1 high limit */
+#define LM87_EXT_LOW		0x38	/* External tempurature low limit */
+#define LM87_INT_HIGH		0x39	/* Internal tempurature 1 high limit */
+#define LM87_INT_LOW		0x3a	/* Internal tempurature low limit */
+#define LM87_FAN1_HIGH		0x3b	/* Fan 1 count or AIN1 high limit */
+#define LM87_FAN2_HIGH		0x3c	/* Fan 2 count or AIN2 high limit */
+#define LM87_COMPANY_ID		0x3e	/* Company ID */
+#define LM87_REVISION		0x3f	/* Revision */
+#define LM87_CONFIG1		0x40	/* Configuration 1 */
+#define LM87_INT_STAT1		0x41	/* Interrupt status 1 */
+#define LM87_INT_STAT2		0x42	/* Interrupt status 2 */
+#define LM87_INT_MASK1		0x43	/* Interrupt mask 1 */
+#define LM87_INT_MASK2		0x44	/* Interrupt mask 2 */
+#define LM87_CI_CLEAR		0x46	/* Chassis intrusion */
+#define LM87_FANDIV		0x47	/* Fan divisor + VID 0-3 */
+#define LM87_VID4		0x48	/* VID4 */
+#define LM87_CONFIG2		0x4a	/* Configuration 2 */
+#define LM87_INT_MIRR1		0x4c	/* Interrupt status 1 mirror */
+#define LM87_INT_MIRR2		0x4d	/* Interrupt status 2 mirror */
+#define LM87_ALERT		0x80	/* SMB Alert enable */
+
+/* Register contents */
 #define  LM87_CONFIG1_START	0x01
 #define  LM87_CONFIG1_INTCLR	0x08
-#define LM87_CHANNEL	0x16
+
 #define  LM87_CHANNEL_AIN1	0x01
 #define  LM87_CHANNEL_AIN2	0x02
-#define LM87_FANDIV	0x47
+#define  LM87_CHANNEL_TEMP2	0x04
+#define  LM87_CHANNEL_VCC5	0x08
 
 struct lmenv_id {
 	u_int8_t id, family;
@@ -80,6 +121,7 @@ struct lmenv_softc {
 
 	int	sc_fan1_div, sc_fan2_div;
 	int	sc_family;
+	uint8_t	sc_channel;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[LMENV_NUM_SENSORS];
@@ -132,10 +174,15 @@ lmenv_match(device_t parent, cfdata_t match, void *aux)
 	} else {
 		/*
 		 * Direct config - match via the list of compatible
-		 * hardware.
+		 * hardware or simply match the device name.
 		 */
-		if (iic_compat_match(ia, lmenv_compats))
-			return 1;
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, lmenv_compats))
+				return 1;
+		} else {
+			if (strcmp(ia->ia_name, "lmenv") == 0)
+				return 1;
+		}
 	}
 
 	return 0;
@@ -146,7 +193,7 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 {
 	struct lmenv_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	u_int8_t cmd, data, data2, channel;
+	u_int8_t cmd, data, data2;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
@@ -188,14 +235,14 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_family == 87) {
 		cmd = LM87_CHANNEL;
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &channel,
-		    sizeof channel, 0)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &sc->sc_channel,
+		    sizeof sc->sc_channel, 0)) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf(", cannot read Channel register\n");
 			return;
 		}
 	} else
-		channel = 0;
+		sc->sc_channel = 0;
 
 	cmd = LM87_CONFIG1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -224,9 +271,15 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize sensor data. */
 	sc->sc_sensor[LMENV_2_5V].state = ENVSYS_SINVALID;
-	sc->sc_sensor[LMENV_2_5V].units = ENVSYS_SVOLTS_DC;
-	strlcpy(sc->sc_sensor[LMENV_2_5V].desc, "+2.5Vin",
-	    sizeof(sc->sc_sensor[LMENV_2_5V].desc));
+	if (sc->sc_channel & LM87_CHANNEL_TEMP2) {
+		sc->sc_sensor[LMENV_INT_TEMP].units = ENVSYS_STEMP;
+		strlcpy(sc->sc_sensor[LMENV_2_5V].desc, "External 2",
+		    sizeof(sc->sc_sensor[LMENV_2_5V].desc));
+	} else {
+		sc->sc_sensor[LMENV_2_5V].units = ENVSYS_SVOLTS_DC;
+		strlcpy(sc->sc_sensor[LMENV_2_5V].desc, "+2.5Vin",
+		    sizeof(sc->sc_sensor[LMENV_2_5V].desc));
+	}
 
 	sc->sc_sensor[LMENV_VCCP1].state = ENVSYS_SINVALID;
 	sc->sc_sensor[LMENV_VCCP1].units = ENVSYS_SVOLTS_DC;
@@ -249,16 +302,20 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 	    sizeof(sc->sc_sensor[LMENV_12V].desc));
 
 	sc->sc_sensor[LMENV_VCCP2].state = ENVSYS_SINVALID;
-	sc->sc_sensor[LMENV_VCCP2].units = ENVSYS_SVOLTS_DC;
-	strlcpy(sc->sc_sensor[LMENV_VCCP2].desc, "Vccp2",
-	    sizeof(sc->sc_sensor[LMENV_VCCP2].desc));
+	if (!(sc->sc_channel & LM87_CHANNEL_TEMP2)) {
+		sc->sc_sensor[LMENV_VCCP2].units = ENVSYS_SVOLTS_DC;
+		strlcpy(sc->sc_sensor[LMENV_VCCP2].desc, "Vccp2",
+		    sizeof(sc->sc_sensor[LMENV_VCCP2].desc));
+	}
 
 	sc->sc_sensor[LMENV_EXT_TEMP].state = ENVSYS_SINVALID;
 	sc->sc_sensor[LMENV_EXT_TEMP].units = ENVSYS_STEMP;
-	strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "External",
-	    sizeof(sc->sc_sensor[LMENV_EXT_TEMP].desc));
-	if (sc->sc_family == 81)
-		sc->sc_sensor[LMENV_EXT_TEMP].state = ENVSYS_SINVALID;
+	if (sc->sc_channel & LM87_CHANNEL_TEMP2)
+		strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "External 1",
+		    sizeof(sc->sc_sensor[LMENV_EXT_TEMP].desc));
+	else
+		strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "External",
+		    sizeof(sc->sc_sensor[LMENV_EXT_TEMP].desc));
 
 	sc->sc_sensor[LMENV_INT_TEMP].state = ENVSYS_SINVALID;
 	sc->sc_sensor[LMENV_INT_TEMP].units = ENVSYS_STEMP;
@@ -266,7 +323,7 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 	    sizeof(sc->sc_sensor[LMENV_INT_TEMP].desc));
 
 	sc->sc_sensor[LMENV_FAN1].state = ENVSYS_SINVALID;
-	if (channel & LM87_CHANNEL_AIN1) {
+	if (sc->sc_channel & LM87_CHANNEL_AIN1) {
 		sc->sc_sensor[LMENV_FAN1].units = ENVSYS_SVOLTS_DC;
 		strlcpy(sc->sc_sensor[LMENV_FAN1].desc, "AIN1",
 		    sizeof(sc->sc_sensor[LMENV_FAN1].desc));
@@ -277,7 +334,7 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_sensor[LMENV_FAN2].state = ENVSYS_SINVALID;
-	if (channel & LM87_CHANNEL_AIN2) {
+	if (sc->sc_channel & LM87_CHANNEL_AIN2) {
 		sc->sc_sensor[LMENV_FAN2].units = ENVSYS_SVOLTS_DC;
 		strlcpy(sc->sc_sensor[LMENV_FAN2].desc, "AIN2",
 		    sizeof(sc->sc_sensor[LMENV_FAN2].desc));
@@ -325,6 +382,17 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	switch (edata->sensor) {
 	case LMENV_2_5V:
+		/* Might be external temperature 2 */
+		if (sc->sc_channel & LM87_CHANNEL_TEMP2) {
+			if (data == 0x80)
+				edata->state = ENVSYS_SINVALID;
+			else {
+				edata->value_cur =
+				    (int8_t)data * 1000000 + 273150000;
+				edata->state = ENVSYS_SVALID;
+			}
+			break;
+		}
 		edata->value_cur = 2500000 * data / 192;
 		edata->state = ENVSYS_SVALID;
 		break;
@@ -337,12 +405,22 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SVALID;
 		break;
 	case LMENV_VCCP1:
+		edata->value_cur = 2700000 * data / 192;
+		edata->state = ENVSYS_SVALID;
+		break;
 	case LMENV_VCCP2:
+		/* If monitoring external temperature 2, this isn't monitored */
+		if (sc->sc_channel & LM87_CHANNEL_TEMP2) {
+			edata->state = ENVSYS_SINVALID;
+			break;
+		}
 		edata->value_cur = 2700000 * data / 192;
 		edata->state = ENVSYS_SVALID;
 		break;
 	case LMENV_VCC:
-		edata->value_cur = 3300000 * data / 192;
+		/* Voltage scale selectable (5V or 3.3V) */
+		edata->value_cur =
+		    (LM87_CHANNEL_VCC5 ? 5000000 : 3300000) * data / 192;
 		edata->state = ENVSYS_SVALID;
 		break;
 	case LMENV_EXT_TEMP:
@@ -360,7 +438,8 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		}
 		break;
 	case LMENV_FAN1:
-		if (edata->units == ENVSYS_SVOLTS_DC) {
+		/* Might be analogue input 1 */
+		if (sc->sc_channel & LM87_CHANNEL_AIN1) {
 			edata->value_cur = 1870000 * data / 192;
 			edata->state = ENVSYS_SVALID;
 			break;
@@ -378,7 +457,8 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		}
 		break;
 	case LMENV_FAN2:
-		if (edata->units == ENVSYS_SVOLTS_DC) {
+		/* Might be analogue input 2 */
+		if (sc->sc_channel & LM87_CHANNEL_AIN2) {
 			edata->value_cur = 1870000 * data / 192;
 			edata->state = ENVSYS_SVALID;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.53.6.2 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.53.6.3 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.53.6.2 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.53.6.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include "grfcv.h"
 #include "ite.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.53.6.2 2014/08/20 00:02:43 tls Exp $");
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/grfioctl.h>
-#include <amiga/dev/grfws.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
@@ -90,7 +89,8 @@ static unsigned short cv_compute_clock(unsigned long);
 void	cv_boardinit(struct grf_softc *);
 int	cv_getvmode(struct grf_softc *, struct grfvideo_mode *);
 int	cv_setvmode(struct grf_softc *, unsigned int);
-int	cv_blank(struct grf_softc *, int *);
+int	cv_blank(struct grf_softc *, int);
+int	cv_isblank(struct grf_softc *);
 int	cv_mode(register struct grf_softc *, u_long, void *, u_long, int);
 int	cv_ioctl(register struct grf_softc *gp, u_long cmd, void *data);
 int	cv_setmonitor(struct grf_softc *, struct grfvideo_mode *);
@@ -270,6 +270,9 @@ long cv_memclk = 50000000;
 
 #if NWSDISPLAY > 0
 /* wsdisplay acessops, emulops */
+static int	cv_wsioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	cv_get_fbinfo(struct grf_softc *, struct wsdisplayio_fbinfo *);
+
 static void	cv_wscursor(void *, int, int, int);
 static void	cv_wsputchar(void *, int, int, u_int, long);
 static void	cv_wscopycols(void *, int, int, int, int);
@@ -280,7 +283,7 @@ static int	cv_wsallocattr(void *, int, int, int, long *);
 static int	cv_wsmapchar(void *, int, unsigned int *);
 
 static struct wsdisplay_accessops cv_accessops = {
-	.ioctl		= grf_wsioctl,
+	.ioctl		= cv_wsioctl,
 	.mmap		= grf_wsmmap
 };
 
@@ -295,24 +298,21 @@ static struct wsdisplay_emulops cv_textops = {
 	.allocattr	= cv_wsallocattr
 };
 
-static struct ws_ao_ioctl cv_wsioctl = {
-	grf_wsaoginfo,
-	grf_wsaogetcmap,
-	grf_wsaoputcmap,
-	grf_wsaogvideo,
-	grf_wsaosvideo,
-	grf_wsaogmode,
-	grf_wsaosmode,
-	grf_wsaogtype
-};
-
-static struct wsscreen_descr cv_screen = {
+static struct wsscreen_descr cv_defaultscreen = {
 	.name		= "default",
 	.textops	= &cv_textops,
 	.fontwidth	= 8,
 	.fontheight	= S3FONTY,
 	.capabilities	= WSSCREEN_HILIT | WSSCREEN_BLINK |
 			  WSSCREEN_REVERSE | WSSCREEN_UNDERLINE
+};
+
+static const struct wsscreen_descr *cv_screens[] = {
+	&cv_defaultscreen,
+};
+
+static struct wsscreen_list cv_screenlist = {
+	sizeof(cv_screens) / sizeof(struct wsscreen_descr *), cv_screens
 };
 #endif  /* NWSDISPLAY > 0 */
 
@@ -441,7 +441,7 @@ cv_has_4mb(volatile void *fb)
 }
 
 int
-grfcvmatch(device_t paren, cfdata_t cf, void *aux)
+grfcvmatch(device_t parent, cfdata_t cf, void *aux)
 {
 #ifdef CV64CONSOLE
 	static int cvcons_unit = -1;
@@ -540,12 +540,13 @@ grfcvattach(device_t parent, device_t self, void *aux)
 #if NWSDISPLAY > 0
 		gp->g_accessops = &cv_accessops;
 		gp->g_emulops = &cv_textops;
-		gp->g_defaultscreen = cv_screen;
-		gp->g_screens[0] = &gp->g_defaultscreen;
-		gp->g_wsioctl = &cv_wsioctl;
+		gp->g_defaultscr = &cv_defaultscreen;
+		gp->g_scrlist = &cv_screenlist;
 #else
+#if NITE > 0
 		grfcv_iteinit(gp);
 #endif
+#endif /* NWSDISPLAY > 0 */
 		(void)cv_load_mon(gp, &cvconsole_mode);
 #endif
 	}
@@ -946,13 +947,25 @@ cv_setvmode(struct grf_softc *gp, unsigned mode)
 
 
 int
-cv_blank(struct grf_softc *gp, int *on)
+cv_blank(struct grf_softc *gp, int on)
 {
 	volatile void *ba;
 
 	ba = gp->g_regkva;
-	gfx_on_off(*on > 0 ? 0 : 1, ba);
+	gfx_on_off(on > 0 ? 0 : 1, ba);
 	return (0);
+}
+
+
+int
+cv_isblank(struct grf_softc *gp)
+{
+	volatile void *ba;
+	int r;
+
+	ba = gp->g_regkva;
+	r = RSeq(ba, SEQ_ID_CLOCKING_MODE);
+	return (r & 0x20) != 0;
 }
 
 
@@ -1055,7 +1068,7 @@ cv_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 		return (cv_setmonitor (gp, (struct grfvideo_mode *)data));
 
 	    case GRFIOCBLANK:
-		return (cv_blank (gp, (int *)data));
+		return (cv_blank (gp, *(int *)data));
 	}
 	return (EPASSTHROUGH);
 }
@@ -2376,7 +2389,7 @@ cv_wscopyrows(void *c, int srcrow, int dstrow, int nrows)
 	gp = scr->scr_cookie;
 	src = dst = gp->g_fbkva;
 	n = ri->ri_cols * nrows;
-	if (src < dst) {
+	if (srcrow < dstrow) {
 		/* need to copy backwards */
 		src += gp->g_rowoffset[srcrow + nrows] << 1;
 		dst += gp->g_rowoffset[dstrow + nrows] << 1;
@@ -2444,6 +2457,125 @@ cv_wsmapchar(void *c, int ch, unsigned int *cp)
 	return 0;
 }
 
-#endif  /* NWSDISPLAY > 0 */
+static int
+cv_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct vcons_data *vd;
+	struct grf_softc *gp;
 
-#endif  /* NGRFCV */
+	vd = v;
+	gp = vd->cookie;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GETCMAP:
+		/* Note: wsdisplay_cmap and grf_colormap have same format */
+		if (gp->g_display.gd_planes == 8)
+			return cv_getcmap(gp, (struct grf_colormap *)data);
+		return EINVAL;
+
+	case WSDISPLAYIO_PUTCMAP:
+		/* Note: wsdisplay_cmap and grf_colormap have same format */
+		if (gp->g_display.gd_planes == 8)
+			return cv_putcmap(gp, (struct grf_colormap *)data);
+		return EINVAL;
+
+	case WSDISPLAYIO_GVIDEO:
+		if (cv_isblank(gp))
+			*(u_int *)data = WSDISPLAYIO_VIDEO_OFF;
+		else
+			*(u_int *)data = WSDISPLAYIO_VIDEO_ON;
+		return 0;
+
+	case WSDISPLAYIO_SVIDEO:
+		return cv_blank(gp, *(u_int *)data == WSDISPLAYIO_VIDEO_ON);
+
+	case WSDISPLAYIO_SMODE:
+		if ((*(int *)data) != gp->g_wsmode) {
+			if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+				/* load console text mode, redraw screen */
+				(void)cv_load_mon(gp, &cvconsole_mode);
+				if (vd->active != NULL)
+					vcons_redraw_screen(vd->active);
+			} else {
+				/* switch to current graphics mode */
+				if (!cv_load_mon(gp,
+				    (struct grfcvtext_mode *)monitor_current))
+					return EINVAL;
+			}
+			gp->g_wsmode = *(int *)data;
+		} 
+		return 0;
+
+	case WSDISPLAYIO_GET_FBINFO:
+		return cv_get_fbinfo(gp, data);
+	}
+
+	/* handle this command hw-independant in grf(4) */
+	return grf_wsioctl(v, vs, cmd, data, flag, l);
+}
+
+/*
+ * Fill the wsdisplayio_fbinfo structure with information from the current
+ * graphics mode. Even when text mode is active.
+ */
+static int
+cv_get_fbinfo(struct grf_softc *gp, struct wsdisplayio_fbinfo *fbi)
+{
+	struct grfvideo_mode *md;
+	uint32_t rbits, gbits, bbits, abits;
+
+	md = monitor_current;
+	abits = 0;
+
+	switch (md->depth) {
+	case 8:
+		fbi->fbi_bitsperpixel = 8;
+		rbits = gbits = bbits = 6;  /* keep gcc happy */
+		break;
+	case 15:
+		fbi->fbi_bitsperpixel = 16;
+		rbits = gbits = bbits = 5;
+		break;
+	case 16:
+		fbi->fbi_bitsperpixel = 16;
+		rbits = bbits = 5;
+		gbits = 6;
+		break;
+	case 32:
+		abits = 8;
+	case 24:
+		fbi->fbi_bitsperpixel = 32;
+		rbits = gbits = bbits = 8;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	fbi->fbi_stride = (fbi->fbi_bitsperpixel / 8) * md->disp_width;
+	fbi->fbi_width = md->disp_width;
+	fbi->fbi_height = md->disp_height;
+
+	if (md->depth > 8) {
+		fbi->fbi_pixeltype = WSFB_RGB;
+		fbi->fbi_subtype.fbi_rgbmasks.red_offset = bbits + gbits;
+		fbi->fbi_subtype.fbi_rgbmasks.red_size = rbits;
+		fbi->fbi_subtype.fbi_rgbmasks.green_offset = bbits;
+		fbi->fbi_subtype.fbi_rgbmasks.green_size = gbits;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_size = bbits;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_offset =
+		    bbits + gbits + rbits;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_size = abits;
+	} else {
+		fbi->fbi_pixeltype = WSFB_CI;
+		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 1 << md->depth;
+	}
+
+	fbi->fbi_flags = 0;
+	fbi->fbi_fbsize = fbi->fbi_stride * fbi->fbi_height;
+	fbi->fbi_fboffset = 0;
+	return 0;
+}
+#endif	/* NWSDISPLAY > 0 */
+
+#endif	/* NGRFCV */

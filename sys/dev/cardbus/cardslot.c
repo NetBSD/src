@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.53.14.2 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.53.14.3 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.53.14.2 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.53.14.3 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include "opt_cardslot.h"
 
@@ -56,6 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.53.14.2 2014/08/20 00:03:36 tls Exp $
 #define DPRINTF(a)
 #endif
 
+int pcmcia_error(device_t);
+int
+pcmcia_error(device_t dev)
+{
+
+	return 1;
+}
+__weak_alias(pcmcia_card_attach, pcmcia_error);
+__weak_alias(pcmcia_card_deactivate, pcmcia_error);
+__weak_alias(pcmcia_card_detach, pcmcia_error);
 
 
 STATIC void cardslotchilddet(device_t, device_t);

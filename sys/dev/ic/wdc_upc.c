@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.29 2012/07/31 15:50:35 bouyer Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.29.2.1 2017/12/03 11:37:04 jdolecek Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.29 2012/07/31 15:50:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.29.2.1 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,7 +51,6 @@ struct wdc_upc_softc {
 	struct wdc_softc sc_wdc;
 	struct ata_channel *sc_chanlist[1];
 	struct ata_channel sc_channel;
-	struct ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
 };
 
@@ -88,7 +87,6 @@ wdc_upc_attach(device_t parent, device_t self, void *aux)
 	wdr->ctl_ioh = ua->ua_ioh2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdc.sc_atac;
-	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 	sc->sc_wdc.wdc_maxdrives = 2;
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(ua->ua_iot, ua->ua_ioh, i,
@@ -98,7 +96,7 @@ wdc_upc_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->sc_channel);
+	wdc_init_shadow_regs(wdr);
 
 	upc_intr_establish(ua->ua_irqhandle, IPL_BIO, wdcintr,
 			   &sc->sc_channel);

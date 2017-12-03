@@ -1,4 +1,4 @@
-/* $Id: imx23_clkctrlvar.h,v 1.1.10.2 2014/08/20 00:02:46 tls Exp $ */
+/* $Id: imx23_clkctrlvar.h,v 1.1.10.3 2017/12/03 11:35:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,5 +33,6 @@
 #define _ARM_IMX_IMX23_CLKCTRLVAR_H_
 
 void clkctrl_en_usb(void);
+void clkctrl_en_filtclk(void);
 
 #endif /* !_ARM_IMX_IMX23_CLKCTRLVAR_H_ */

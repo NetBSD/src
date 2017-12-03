@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.14.14.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.14.14.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.14.14.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.14.14.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ const struct protosw natmsw[] = {
   .pr_protocol = PROTO_NATMAAL5,
   .pr_flags = PR_CONNREQUIRED,
   .pr_input = 0,
-  .pr_output = 0,
   .pr_ctlinput = 0,
   .pr_ctloutput = 0,
   .pr_usrreqs = &natm_usrreq,
@@ -76,7 +75,6 @@ const struct protosw natmsw[] = {
   .pr_protocol = PROTO_NATMAAL5,
   .pr_flags = PR_CONNREQUIRED | PR_ATOMIC,
   .pr_input = 0,
-  .pr_output = 0,
   .pr_ctlinput = 0,
   .pr_ctloutput = 0,
   .pr_usrreqs = &natm_usrreq,
@@ -90,7 +88,6 @@ const struct protosw natmsw[] = {
   .pr_protocol = PROTO_NATMAAL0,
   .pr_flags = PR_CONNREQUIRED,
   .pr_input = 0,
-  .pr_output = 0,
   .pr_ctlinput = 0,
   .pr_ctloutput = 0,
   .pr_usrreqs = &natm_usrreqs,
@@ -108,7 +105,6 @@ struct domain natmdomain = {
 	.dom_protosw = natmsw,
 	.dom_protoswNPROTOSW = &natmsw[sizeof(natmsw)/sizeof(natmsw[0])],
 	.dom_ifqueues = { &natmintrq, NULL },
-	.dom_rtcache = LIST_HEAD_INITIALIZER(natmdomain.dom_rtcache)
 };
 #ifdef NATM_STAT
 u_int natm_sodropcnt = 0;		/* # mbufs dropped due to full sb */
@@ -120,4 +116,5 @@ u_int natm_sookbytes = 0;		/* # of bytes ok */
 void natm_init(void)
 {
 	natmintrq.ifq_maxlen = natmqmaxlen;
+	IFQ_LOCK_INIT(&natmintrq);
 }

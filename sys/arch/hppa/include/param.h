@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19.6.1 2014/08/20 00:03:05 tls Exp $	*/
+/*	$NetBSD: param.h,v 1.19.6.2 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -66,7 +66,7 @@
 #define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */
 
 #ifndef	MSGBUFSIZE
-#define	MSGBUFSIZE	2*NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	(2*NBPG)	/* default message buffer size */
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.34 2011/04/14 08:59:09 mrg Exp $ */
+/*	$NetBSD: db_trace.c,v 1.34.14.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -27,23 +27,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.34 2011/04/14 08:59:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.34.14.1 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_user.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK)
+#ifdef _KERNEL
 #define ONINTSTACK(fr)	(						\
 	(u_int)(fr) <  (u_int)ddb_cpuinfo->eintstack &&		 	\
 	(u_int)(fr) >= (u_int)ddb_cpuinfo->eintstack - INT_STACK_SIZE	\
 )
+#else
+#define ONINTSTACK(fr)	(0)
+#endif
 
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr,
@@ -58,8 +64,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	const char	*cp = modif;
 	char		c;
 
+#ifdef _KERNEL
 	if (ddb_cpuinfo == NULL)
 		ddb_cpuinfo = curcpu();
+#endif
 
 	while ((c = *cp++) != 0) {
 		if (c == 'a') {
@@ -86,6 +94,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				(*pr)("trace: pid %d ", p->p_pid);
 			} else {
 				(*pr)("trace: pid %d ", (int)addr);
+#ifdef _KERNEL
 				p = proc_find_raw(addr);
 				if (p == NULL) {
 					(*pr)("not found\n");
@@ -93,6 +102,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				}
 				l = LIST_FIRST(&p->p_lwps);
 				KASSERT(l != NULL);
+#else
+				(*pr)("no proc_find_raw() in crash\n");
+				return;
+#endif
 			}
 			(*pr)("lid %d ", l->l_lid);
 			pcb = lwp_getpcb(l);
@@ -111,9 +124,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		const char	*name;
 		db_addr_t	prevpc;
 
+#ifdef _KERNEL
 #define FR(framep,field) (INKERNEL(framep)			\
 				? (u_int)(framep)->field	\
 				: fuword(&(framep)->field))
+#else
+/* XXX fix me, this is probably wrong */
+#define FR(framep,field) ((u_int)(framep)->field)
+#endif
 
 		/* Fetch return address and arguments frame */
 		prevpc = (db_addr_t)FR(frame, fr_pc);

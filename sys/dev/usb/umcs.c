@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.7.8.2 2014/08/20 00:03:51 tls Exp $ */
+/* $NetBSD: umcs.c,v 1.7.8.3 2017/12/03 11:37:34 jdolecek Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.7.8.2 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.7.8.3 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,9 @@ struct umcs7840_softc_oneport {
 
 struct umcs7840_softc {
 	device_t sc_dev;		/* ourself */
-	usbd_interface_handle sc_iface; /* the usb interface */
-	usbd_device_handle sc_udev;	/* the usb device */
-	usbd_pipe_handle sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_interface *sc_iface; /* the usb interface */
+	struct usbd_device *sc_udev;	/* the usb device */
+	struct usbd_pipe *sc_intr_pipe;	/* interrupt pipe */
 	uint8_t *sc_intr_buf;		/* buffer for interrupt xfer */
 	unsigned int sc_intr_buflen;	/* size of buffer */
 	struct usb_task sc_change_task;	/* async status changes */
@@ -99,28 +99,28 @@ struct umcs7840_softc {
 	bool sc_dying;			/* we have been deactivated */
 };
 
-static int umcs7840_get_reg(struct umcs7840_softc *sc, uint8_t reg, uint8_t *data);
-static int umcs7840_set_reg(struct umcs7840_softc *sc, uint8_t reg, uint8_t data);
-static int umcs7840_get_UART_reg(struct umcs7840_softc *sc, uint8_t portno, uint8_t reg, uint8_t *data);
-static int umcs7840_set_UART_reg(struct umcs7840_softc *sc, uint8_t portno, uint8_t reg, uint8_t data);
-static int umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk);
-static void umcs7840_dtr(struct umcs7840_softc *sc, int portno, bool onoff);
-static void umcs7840_rts(struct umcs7840_softc *sc, int portno, bool onoff);
-static void umcs7840_break(struct umcs7840_softc *sc, int portno, bool onoff);
+static int umcs7840_get_reg(struct umcs7840_softc *, uint8_t, uint8_t *);
+static int umcs7840_set_reg(struct umcs7840_softc *, uint8_t, uint8_t);
+static int umcs7840_get_UART_reg(struct umcs7840_softc *, uint8_t, uint8_t, uint8_t *);
+static int umcs7840_set_UART_reg(struct umcs7840_softc *, uint8_t, uint8_t, uint8_t );
+static int umcs7840_calc_baudrate(uint32_t, uint16_t *, uint8_t *);
+static void umcs7840_dtr(struct umcs7840_softc *, int, bool);
+static void umcs7840_rts(struct umcs7840_softc *, int, bool);
+static void umcs7840_break(struct umcs7840_softc *, int, bool );
 
 static int umcs7840_match(device_t, cfdata_t, void *);
 static void umcs7840_attach(device_t, device_t, void *);
 static int umcs7840_detach(device_t, int);
-static void umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status);
+static void umcs7840_intr(struct usbd_xfer *, void *, usbd_status);
 static void umcs7840_change_task(void *arg);
-static int umcs7840_activate(device_t, enum devact); 
+static int umcs7840_activate(device_t, enum devact);
 static void umcs7840_childdet(device_t, device_t);
 
 static void umcs7840_get_status(void *, int, u_char *, u_char *);
 static void umcs7840_set(void *, int, int, int);
 static int umcs7840_param(void *, int, struct termios *);
-static int umcs7840_port_open(void *sc, int portno);
-static void umcs7840_port_close(void *sc, int portno);
+static int umcs7840_port_open(void *, int);
+static void umcs7840_port_close(void *, int);
 
 struct ucom_methods umcs7840_methods = {
 	.ucom_get_status = umcs7840_get_status,
@@ -174,25 +174,25 @@ umcs7840_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (umcs7840_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return umcs7840_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 static void
-umcs7840_attach(device_t parent, device_t self, void * aux)
+umcs7840_attach(device_t parent, device_t self, void *aux)
 {
 	struct umcs7840_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int error, i, intr_addr;
 	uint8_t data;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	if (usbd_set_config_index(sc->sc_udev, MCS7840_CONFIG_INDEX, 1) != 0) {
 		aprint_error(": could not set configuration no\n");
@@ -224,7 +224,7 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 		sc->sc_numports = 4;
 		/* physical port no are : 0, 1, 2, 3 */
 	} else {
-		if (uaa->product == USB_PRODUCT_MOSCHIP_MCS7810)
+		if (uaa->uaa_product == USB_PRODUCT_MOSCHIP_MCS7810)
 			sc->sc_numports = 1;
 		else {
 			sc->sc_numports = 2;
@@ -282,21 +282,20 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 	usb_init_task(&sc->sc_change_task, umcs7840_change_task, sc,
 	    USB_TASKQ_MPSAFE);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	memset(&uca, 0, sizeof uca);
-	uca.ibufsize = 256;
-	uca.obufsize = 256;
-	uca.ibufsizepad = 256;
-	uca.opkthdrlen = 0;
-	uca.device = sc->sc_udev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &umcs7840_methods;
-	uca.arg = sc;
+	memset(&ucaa, 0, sizeof(ucaa));
+	ucaa.ucaa_ibufsize = 256;
+	ucaa.ucaa_obufsize = 256;
+	ucaa.ucaa_ibufsizepad = 256;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = sc->sc_udev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &umcs7840_methods;
+	ucaa.ucaa_arg = sc;
 
 	for (i = 0; i < sc->sc_numports; i++) {
-		uca.bulkin = uca.bulkout = -1;
+		ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 		/*
 		 * On four port cards, endpoints are 0/1 for first,
@@ -313,7 +312,7 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 			    "no bulk in endpoint found for %d\n", i);
 			return;
 		}
-		uca.bulkin = ed->bEndpointAddress;
+		ucaa.ucaa_bulkin = ed->bEndpointAddress;
 
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface,
 			phyport*2 + 1);
@@ -322,14 +321,14 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 			    "no bulk out endpoint found for %d\n", i);
 			return;
 		}
-		uca.bulkout = ed->bEndpointAddress;
-		uca.portno = i;
+		ucaa.ucaa_bulkout = ed->bEndpointAddress;
+		ucaa.ucaa_portno = i;
 		DPRINTF(("port %d physical port %d bulk-in %d bulk-out %d\n",
-		    i, phyport, uca.bulkin, uca.bulkout));
+		    i, phyport, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout));
 
 		sc->sc_ports[i].sc_port_phys = phyport;
 		sc->sc_ports[i].sc_port_ucom =
-		    config_found_sm_loc(self, "ucombus", NULL, &uca,
+		    config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 	}
 }
@@ -420,7 +419,8 @@ umcs7840_set_UART_reg(struct umcs7840_softc *sc, uint8_t portno, uint8_t reg, ui
 }
 
 static int
-umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno, uint32_t rate)
+umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno,
+	uint32_t rate)
 {
 	int err;
 	uint16_t divisor;
@@ -431,11 +431,12 @@ umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno, uint32_t rate)
 
 	if (umcs7840_calc_baudrate(rate, &divisor, &clk)) {
 		DPRINTF(("Port %d bad speed: %d\n", portno, rate));
-		return (-1);
+		return -1;
 	}
 	if (divisor == 0 || (clk & MCS7840_DEV_SPx_CLOCK_MASK) != clk) {
-		DPRINTF(("Port %d bad speed calculation: %d\n", portno, rate));
-		return (-1);
+		DPRINTF(("Port %d bad speed calculation: %d\n", portno,
+		    rate));
+		return -1;
 	}
 	DPRINTF(("Port %d set speed: %d (%02x / %d)\n", portno, rate, clk, divisor));
 
@@ -467,7 +468,7 @@ umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno, uint32_t rate)
 	err = umcs7840_set_UART_reg(sc, physport, MCS7840_UART_REG_LCR, sc->sc_ports[portno].sc_port_lcr);
 	if (err)
 		return err;
-	return (0);
+	return 0;
 }
 
 static int
@@ -482,7 +483,7 @@ umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk)
 	uint8_t i = 0;
 
 	if (rate > umcs7840_baudrate_divisors[umcs7840_baudrate_divisors_len - 1])
-		return (-1);
+		return -1;
 
 	for (i = 0; i < umcs7840_baudrate_divisors_len - 1
 	     && !(rate > umcs7840_baudrate_divisors[i]
@@ -490,10 +491,10 @@ umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk)
 	*divisor = umcs7840_baudrate_divisors[i + 1] / rate;
 	/* 0x00 .. 0x70 */
 	*clk = i << MCS7840_DEV_SPx_CLOCK_SHIFT;
-	return (0);
+	return 0;
 }
 
-static int 
+static int
 umcs7840_detach(device_t self, int flags)
 {
 	struct umcs7840_softc *sc = device_private(self);
@@ -528,8 +529,7 @@ umcs7840_detach(device_t self, int flags)
 		}
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }
@@ -585,20 +585,19 @@ static void
 umcs7840_set(void *self, int portno, int reg, int onoff)
 {
 	struct umcs7840_softc *sc = self;
-	int pn = sc->sc_ports[portno].sc_port_phys;
 
 	if (sc->sc_dying)
 		return;
 
 	switch (reg) {
 	case UCOM_SET_DTR:
-		umcs7840_dtr(sc, pn, onoff);
+		umcs7840_dtr(sc, portno, onoff);
 		break;
 	case UCOM_SET_RTS:
-		umcs7840_rts(sc, pn, onoff);
+		umcs7840_rts(sc, portno, onoff);
 		break;
 	case UCOM_SET_BREAK:
-		umcs7840_break(sc, pn, onoff);
+		umcs7840_break(sc, portno, onoff);
 		break;
 	default:
 		break;
@@ -665,7 +664,7 @@ umcs7840_param(void *self, int portno, struct termios *t)
 	umcs7840_set_UART_reg(sc, pn, MCS7840_UART_REG_MCR,
 	    sc->sc_ports[pn].sc_port_mcr);
 
-	if (umcs7840_set_baudrate(sc, pn, t->c_ospeed))
+	if (umcs7840_set_baudrate(sc, portno, t->c_ospeed))
 		return EIO;
 
 	return 0;
@@ -804,7 +803,7 @@ umcs7840_port_open(void *self, int portno)
 		return EIO;
 
 	/* Set speed 9600 */
-	if (umcs7840_set_baudrate(sc, pn, 9600))
+	if (umcs7840_set_baudrate(sc, portno, 9600))
 		return EIO;
 
 
@@ -852,7 +851,7 @@ umcs7840_port_close(void *self, int portno)
 }
 
 static void
-umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+umcs7840_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct umcs7840_softc *sc = priv;

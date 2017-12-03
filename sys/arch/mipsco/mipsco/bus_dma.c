@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.27.6.1 2012/11/20 03:01:34 tls Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.27.6.2 2017/12/03 11:36:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27.6.1 2012/11/20 03:01:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27.6.2 2017/12/03 11:36:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,8 +490,9 @@ int
 _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags)
 {
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, mips_avail_start, trunc_page(mips_avail_end)));
+	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, pmap_limits.avail_start,
+	    trunc_page(pmap_limits.avail_end));
 }
 
 /*

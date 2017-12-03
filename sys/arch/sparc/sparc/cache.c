@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.97 2007/03/04 09:03:34 macallan Exp $ */
+/*	$NetBSD: cache.c,v 1.97.88.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.97 2007/03/04 09:03:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.97.88.1 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -973,8 +973,8 @@ viking_pcache_flush_page(paddr_t pa, int invalidate_only)
 		 * +-------+-+-------+-+-------+-+-----------+----------------+
 		 *
 		 * PA: bits 12-35 of the physical address
-		 * S:  line shared bit
-		 * D:  line dirty bit
+		 * S:  line shared bit (not present on SuperSPARC-II)
+		 * D:  line dirty bit (not present on SuperSPARC-II)
 		 * V:  line valid bit
 		 */
 

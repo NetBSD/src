@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.10 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.10.120.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -842,7 +842,7 @@ p_mesgin:
 
 /*
  * Pushed message loop to allow the kernel to
- * run it's own message state engine.  To avoid an
+ * run its own message state engine.  To avoid an
  * extra nop instruction after signaling the kernel,
  * we perform the phase_lock before checking to see
  * if we should exit the loop and skip the phase_lock

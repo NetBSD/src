@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.28.6.2 2014/08/20 00:03:35 tls Exp $ */
+/* $NetBSD: video.c,v 1.28.6.3 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.28.6.2 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.28.6.3 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: video.c,v 1.28.6.2 2014/08/20 00:03:35 tls Exp $");
 #include <sys/videoio.h>
 
 #include <dev/video_if.h>
+
+#include "ioconf.h"
 
 /* #define VIDEO_DEBUG 1 */
 
@@ -223,8 +225,6 @@ const struct cdevsw video_cdevsw = {
 
 CFATTACH_DECL_NEW(video, sizeof(struct video_softc),
 		  video_match, video_attach, video_detach, video_activate);
-
-extern struct cfdriver video_cd;
 
 static const char *	video_pixel_format_str(enum video_pixel_format);
 
@@ -2376,15 +2376,7 @@ video_buffer_alloc(void)
 	struct video_buffer *vb;
 
 	vb = kmem_alloc(sizeof(*vb), KM_SLEEP);
-	if (vb == NULL)
-		return NULL;
-
 	vb->vb_buf = kmem_alloc(sizeof(*vb->vb_buf), KM_SLEEP);
-	if (vb->vb_buf == NULL) {
-		kmem_free(vb, sizeof(*vb));
-		return NULL;
-	}
-
 	return vb;
 }
 
@@ -2430,12 +2422,6 @@ video_stream_realloc_bufs(struct video_stream *vs, uint8_t nbufs)
 	if (nbufs > 0) {
 		vs->vs_buf =
 		    kmem_alloc(sizeof(struct video_buffer *) * nbufs, KM_SLEEP);
-		if (vs->vs_buf == NULL) {
-			vs->vs_nbufs = oldnbufs;
-			vs->vs_buf = oldbuf;
-
-			return ENOMEM;
-		}
 	} else {
 		vs->vs_buf = NULL;
 	}
@@ -2659,11 +2645,6 @@ scatter_buf_set_size(struct scatter_buf *sb, size_t sz)
 	if (npages > 0) {
 		sb->sb_page_ary =
 		    kmem_alloc(sizeof(uint8_t *) * npages, KM_SLEEP);
-		if (sb->sb_page_ary == NULL) {
-			sb->sb_npages = oldnpages;
-			sb->sb_page_ary = old_ary;
-			return ENOMEM;
-		}
 	} else {
 		sb->sb_page_ary = NULL;
 	}
@@ -2673,17 +2654,8 @@ scatter_buf_set_size(struct scatter_buf *sb, size_t sz)
 	for (i = 0; i < minpages; ++i)
 		sb->sb_page_ary[i] = old_ary[i];
 	/* allocate any new pages */
-	for (; i < npages; ++i) {
-		sb->sb_page_ary[i] = pool_cache_get(sb->sb_pool, 0);
-		/* TODO: does pool_cache_get return NULL on
-		 * ENOMEM?  If so, we need to release or note
-		 * the pages with did allocate
-		 * successfully. */
-		if (sb->sb_page_ary[i] == NULL) {
-			DPRINTF(("video: pool_cache_get ENOMEM\n"));
-			return ENOMEM;
-		}
-	}
+	for (; i < npages; ++i)
+		sb->sb_page_ary[i] = pool_cache_get(sb->sb_pool, PR_WAITOK);
 	/* return any pages no longer needed */
 	for (; i < oldnpages; ++i)
 		pool_cache_put(sb->sb_pool, old_ary[i]);

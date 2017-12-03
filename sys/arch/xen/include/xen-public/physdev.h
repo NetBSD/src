@@ -1,4 +1,4 @@
-/* $NetBSD: physdev.h,v 1.6 2011/12/07 15:04:18 cegger Exp $ */
+/* $NetBSD: physdev.h,v 1.6.6.1 2017/12/03 11:36:51 jdolecek Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -181,7 +181,7 @@ struct physdev_manage_pci {
     /* IN */
     uint8_t bus;
     uint8_t devfn;
-}; 
+};
 
 typedef struct physdev_manage_pci physdev_manage_pci_t;
 DEFINE_XEN_GUEST_HANDLE(physdev_manage_pci_t);

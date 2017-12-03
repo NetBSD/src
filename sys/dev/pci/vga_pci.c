@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.54 2012/01/30 19:41:23 drochner Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.54.6.1 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.54 2012/01/30 19:41:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.54.6.1 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,9 +236,11 @@ vga_pci_attach(device_t parent, device_t self, void *aux)
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
 
 #ifdef VGA_POST
-	psc->sc_posth = vga_post_init(pa->pa_bus, pa->pa_device, pa->pa_function);
+	psc->sc_posth = vga_post_init(pa->pa_bus, pa->pa_device,
+	    pa->pa_function);
 	if (psc->sc_posth == NULL)
-		aprint_error_dev(self, "WARNING: could not prepare POST handler\n");
+		aprint_error_dev(self,
+		    "WARNING: could not prepare POST handler\n");
 #endif
 
 	/*

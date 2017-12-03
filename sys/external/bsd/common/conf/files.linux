@@ -1,0 +1,7 @@
+#       $NetBSD: files.linux,v 1.1.22.2 2017/12/03 11:37:45 jdolecek Exp $
+
+define	linux
+
+makeoptions 	linux	CPPFLAGS+="-I$S/external/bsd/common/include"
+
+file	external/bsd/common/linux/linux_work.c		linux

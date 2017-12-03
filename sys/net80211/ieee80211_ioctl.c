@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.57.6.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.57.6.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,15 +36,17 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.57.6.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.57.6.2 2017/12/03 11:39:03 jdolecek Exp $");
 #endif
 
 /*
  * IEEE 802.11 ioctl support (FreeBSD-specific)
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/endian.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.64.2.2 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: umodem.c,v 1.64.2.3 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.64.2.2 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.64.2.3 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,65 +71,60 @@ __KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.64.2.2 2014/08/20 00:03:51 tls Exp $");
 #include <dev/usb/umodemvar.h>
 
 Static struct ucom_methods umodem_methods = {
-	umodem_get_status,
-	umodem_set,
-	umodem_param,
-	umodem_ioctl,
-	umodem_open,
-	umodem_close,
-	NULL,
-	NULL,
+	.ucom_get_status = umodem_get_status,
+	.ucom_set = umodem_set,
+	.ucom_param = umodem_param,
+	.ucom_ioctl = umodem_ioctl,
+	.ucom_open = umodem_open,
+	.ucom_close = umodem_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
-int             umodem_match(device_t, cfdata_t, void *);
-void            umodem_attach(device_t, device_t, void *);
-int             umodem_detach(device_t, int);
-int             umodem_activate(device_t, enum devact);
+int	umodem_match(device_t, cfdata_t, void *);
+void	umodem_attach(device_t, device_t, void *);
+int	umodem_detach(device_t, int);
+int	umodem_activate(device_t, enum devact);
 
 extern struct cfdriver umodem_cd;
 
 CFATTACH_DECL_NEW(umodem, sizeof(struct umodem_softc), umodem_match,
     umodem_attach, umodem_detach, umodem_activate);
 
-int 
+int
 umodem_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	usb_interface_descriptor_t *id;
 	int cm, acm;
 
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL &&
-	    (id->bInterfaceClass == UICLASS_CDC_DATA &&
-	     id->bInterfaceSubClass == UISUBCLASS_DATA))
-		return (UMATCH_IFACECLASS_IFACESUBCLASS);
+	if (uiaa->uiaa_class != UICLASS_CDC ||
+	    uiaa->uiaa_subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
+	    !(uiaa->uiaa_proto == UIPROTO_CDC_NOCLASS || uiaa->uiaa_proto == UIPROTO_CDC_AT))
+		return UMATCH_NONE;
 
-	if (uaa->class != UICLASS_CDC ||
-	    uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
-	    !(uaa->proto == UIPROTO_CDC_NOCLASS || uaa->proto == UIPROTO_CDC_AT))
-		return (UMATCH_NONE);
+	id = usbd_get_interface_descriptor(uiaa->uiaa_iface);
+	if (umodem_get_caps(uiaa->uiaa_device, &cm, &acm, id) == -1)
+		return UMATCH_NONE;
 
-	if (umodem_get_caps(uaa->device, &cm, &acm, id) == -1)
-		return (UMATCH_NONE);
-
-	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+	return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 }
-
-void 
+//
+void
 umodem_attach(device_t parent, device_t self, void *aux)
 {
 	struct umodem_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct ucom_attach_args uca;
+	struct usbif_attach_arg *uiaa = aux;
+	struct ucom_attach_args ucaa;
 
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.methods = &umodem_methods;
-	uca.info = NULL;
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	ucaa.ucaa_methods = &umodem_methods;
+	ucaa.ucaa_info = NULL;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler");
 
-	if (umodem_common_attach(self, sc, uaa, &uca))
+	if (umodem_common_attach(self, sc, uiaa, &ucaa))
 		return;
 	return;
 }
@@ -142,7 +137,7 @@ umodem_activate(device_t self, enum devact act)
 	return umodem_common_activate(sc, act);
 }
 
-int 
+int
 umodem_detach(device_t self, int flags)
 {
 	struct umodem_softc *sc = device_private(self);

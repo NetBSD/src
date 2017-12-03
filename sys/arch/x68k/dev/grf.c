@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.40.14.1 2014/08/20 00:03:28 tls Exp $	*/
+/*	$NetBSD: grf.c,v 1.40.14.2 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40.14.1 2014/08/20 00:03:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40.14.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40.14.1 2014/08/20 00:03:28 tls Exp $");
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>
-#include <sys/mman.h>
 #include <sys/conf.h>
 
 #include <machine/cpu.h>
@@ -66,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40.14.1 2014/08/20 00:03:28 tls Exp $");
 #include <x68k/dev/itevar.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_map.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -266,9 +262,8 @@ int
 grfmap(dev_t dev, void **addrp, struct proc *p)
 {
 	struct grf_softc *gp = device_lookup_private(&grf_cd, GRFUNIT(dev));
-	int len, error;
-	struct vnode vn;
-	int flags;
+	size_t len;
+	int error;
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
@@ -276,19 +271,8 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 #endif
 
 	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
-	flags = MAP_SHARED;
-	if (*addrp)
-		flags |= MAP_FIXED;
-	else
-		*addrp = (void *)p->p_emul->e_vm_default_addr(p, 
-		    (vaddr_t)p->p_vmspace->vm_daddr, len);
 
-	vn.v_type = VCHR;			/* XXX */
-	vn.v_rdev = dev;			/* XXX */
-	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-			 (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
-			 flags, (void *)&vn, 0,
-			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	error = uvm_mmap_dev(p, addrp, len, dev, 0);
 	if (error == 0)
 		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
 

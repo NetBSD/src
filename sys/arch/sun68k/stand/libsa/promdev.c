@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.5.24.1 2014/08/20 00:03:26 tls Exp $ */
+/*	$NetBSD: promdev.c,v 1.5.24.2 2017/12/03 11:36:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -42,6 +42,16 @@
 
 int promdev_inuse;
 
+#ifdef DEBUG_PROM
+# define DPRINTF(fmt, ...) \
+	do { \
+		if (debug) \
+			printf("%s: " fmt "\n", __func__, __VA_ARGS__); \
+	} while (/*CONSTCOND*/0)
+#else
+# define DPRINTF(fmt, ...)
+#endif
+
 /*
  * Note: caller sets the fields:
  *	si->si_boottab
@@ -58,85 +68,67 @@ prom_iopen(struct saioreq *si)
 	int	ctlr, error;
 
 	if (promdev_inuse)
-		return(EMFILE);
+		return EMFILE;
 
 	ops = si->si_boottab;
 	dip = ops->b_devinfo;
 	ctlr = si->si_ctlr;
 
-#ifdef DEBUG_PROM
-	if (debug) {
-		printf("Boot device type: %s\n", ops->b_desc);
-	}
-#endif
+
+	DPRINTF("Boot device type: %s", ops->b_desc);
 
 	if (!_is2) {
 #ifdef DEBUG_PROM
 		if (debug) {
-		printf("d_devbytes=%d\n", dip->d_devbytes);
-		printf("d_dmabytes=%d\n", dip->d_dmabytes);
-		printf("d_localbytes=%d\n", dip->d_localbytes);
-		printf("d_devtype=%d\n", dip->d_devtype);
-		printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
-		printf("d_stdcount=%d\n", dip->d_stdcount);
-		for (i = 0; i < dip->d_stdcount; i++)
-			printf("d_stdaddrs[i]=0x%x\n",
-				   i, dip->d_stdaddrs[0]);
-	}
-#endif
-
-	if (dip->d_devbytes && dip->d_stdcount) {
-		if (ctlr >= dip->d_stdcount) {
-			putstr("Invalid controller number\n");
-			return(ENXIO);
+			printf("d_devbytes=%d\n", dip->d_devbytes);
+			printf("d_dmabytes=%d\n", dip->d_dmabytes);
+			printf("d_localbytes=%d\n", dip->d_localbytes);
+			printf("d_devtype=%d\n", dip->d_devtype);
+			printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
+			printf("d_stdcount=%d\n", dip->d_stdcount);
+			for (int i = 0; i < dip->d_stdcount; i++)
+				printf("d_stdaddrs[%d]=%#x\n",
+				    i, dip->d_stdaddrs[0]);
 		}
-		si->si_devaddr = dev_mapin(dip->d_devtype,
-			dip->d_stdaddrs[ctlr], dip->d_devbytes);
-#ifdef	DEBUG_PROM
-		if (debug)
-			printf("prom_iopen: devaddr=0x%x\n", si->si_devaddr);
 #endif
-	}
 
-	if (dip->d_dmabytes) {
-		si->si_dmaaddr = dvma_alloc(dip->d_dmabytes);
-#ifdef	DEBUG_PROM
-		if (debug)
-			printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
-#endif
-	}
+		if (dip->d_devbytes && dip->d_stdcount) {
+			if (ctlr >= dip->d_stdcount) {
+				putstr("Invalid controller number\n");
+				return ENXIO;
+			}
+			si->si_devaddr = dev_mapin(dip->d_devtype,
+			    dip->d_stdaddrs[ctlr], dip->d_devbytes);
+			DPRINTF("devaddr=%#x", si->si_devaddr);
+		}
 
-	if (dip->d_localbytes) {
-		si->si_devdata = alloc(dip->d_localbytes);
-#ifdef	DEBUG_PROM
-		if (debug)
-			printf("prom_iopen: devdata=0x%x\n", si->si_devdata);
-#endif
+		if (dip->d_dmabytes) {
+			si->si_dmaaddr = dvma_alloc(dip->d_dmabytes);
+			DPRINTF("dmaaddr=%#x", si->si_dmaaddr);
+		}
+
+		if (dip->d_localbytes) {
+			si->si_devdata = alloc(dip->d_localbytes);
+			DPRINTF("devdata=%#x", si->si_devdata);
 		}
 	}
 
 	/* OK, call the PROM device open routine. */
-#ifdef	DEBUG_PROM
-	if (debug)
-		printf("prom_iopen: calling prom open...\n");
-#endif
+	DPRINTF("calling prom open... %p", si);
 	error = (*ops->b_open)(si);
-#ifdef	DEBUG_PROM
-	if (debug)
-		printf("prom_iopen: prom open returned %d\n", error);
-#endif
+	DPRINTF("prom open returned %d", error);
 	if (error != 0) {
-#if 0	/* XXX: printf is too big for bootxx */
-		printf("prom_iopen: \"%s\" error=%d\n",
-			   ops->b_desc, error);
+#if 0		/* XXX: printf is too big for bootxx */
+		printf("%s: \"%s\" error=%d\n", __func__,
+		    ops->b_desc, error);
 #else
 		putstr("prom_iopen: prom open failed");
 #endif
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	promdev_inuse++;
-	return (0);
+	return 0;
 }
 
 void 
@@ -149,10 +141,7 @@ prom_iclose(struct saioreq *si)
 
 	ops = si->si_boottab;
 
-#ifdef	DEBUG_PROM
-	if (debug)
-		printf("prom_iclose: calling prom close...\n");
-#endif
+	DPRINTF("calling prom close... %p", si);
 	(*ops->b_close)(si);
 
 	promdev_inuse = 0;

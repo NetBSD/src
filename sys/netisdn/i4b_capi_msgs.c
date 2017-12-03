@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.c,v 1.7.120.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.c,v 1.7.120.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.7.120.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.7.120.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -801,8 +801,8 @@ void capi_data_b3_ind(capi_softc_t *sc, struct mbuf *m_in)
 	    /* Telephony drivers use rx_queue */
 
 	    if (!IF_QFULL(&sc->sc_bchan[bch].rx_queue)) {
-		IF_ENQUEUE(&sc->sc_bchan[bch].rx_queue, m_in->m_next);
 		sc->sc_bchan[bch].rxcount += m_in->m_next->m_len;
+		IF_ENQUEUE(&sc->sc_bchan[bch].rx_queue, m_in->m_next);
 		m_in->m_next = NULL; /* driver frees */
 	    }
 

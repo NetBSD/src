@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.74.18.1 2012/11/20 03:02:03 tls Exp $	*/
+/*	$NetBSD: bha.c,v 1.74.18.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.74.18.1 2012/11/20 03:02:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.74.18.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -354,7 +354,8 @@ bha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n", error);
+				aprint_error_dev(sc->sc_dev,
+				    "error %d loading DMA map\n", error);
  out_bad:
 				bha_free_ccb(sc, ccb);
 				scsipi_done(xs);
@@ -546,9 +547,10 @@ bha_get_xfer_mode(struct bha_softc *sc, struct scsipi_xfer_mode *xm)
 			      sizeof(hwperiod.reply_w) : 0);
 			hwperiod.cmd.opcode = BHA_INQUIRE_PERIOD;
 			hwperiod.cmd.len = rlen;
-			bha_cmd(sc->sc_iot, sc->sc_ioh, device_xname(sc->sc_dev),
-			    sizeof(hwperiod.cmd), (u_char *)&hwperiod.cmd,
-			    rlen, (u_char *)&hwperiod.reply);
+			bha_cmd(sc->sc_iot, sc->sc_ioh,
+			    device_xname(sc->sc_dev), sizeof(hwperiod.cmd),
+			    (u_char *)&hwperiod.cmd, rlen,
+			    (u_char *)&hwperiod.reply);
 
 			if (xm->xm_target > 7)
 				period = hwperiod.reply_w.period[toff];
@@ -741,8 +743,8 @@ bha_timeout(void *arg)
  *	Send a command to the Buglogic controller.
  */
 static int
-bha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, const char *name, int icnt,
-    u_char *ibuf, int ocnt, u_char *obuf)
+bha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, const char *name,
+    int icnt, u_char *ibuf, int ocnt, u_char *obuf)
 {
 	int i;
 	int wait;
@@ -1572,6 +1574,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 
 		case BHA_MBI_ABORT:
 		case BHA_MBI_UNKNOWN:
+		case BHA_MBI_BADCCB:
 			/*
 			 * Even if the CCB wasn't found, we clear it anyway.
 			 * See preceding comment.
@@ -1628,16 +1631,16 @@ bha_create_mailbox(struct bha_softc *sc)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg,
 	    1, &rseg, sc->sc_dmaflags);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate mailboxes, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate mailboxes, error = %d\n", error);
 		goto bad_0;
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (void **)&sc->sc_mbo, sc->sc_dmaflags | BUS_DMA_COHERENT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to map mailboxes, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map mailboxes, error = %d\n", error);
 		goto bad_1;
 	}
 
@@ -1647,16 +1650,15 @@ bha_create_mailbox(struct bha_softc *sc)
 	    sc->sc_dmaflags, &sc->sc_dmamap_mbox);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create mailbox DMA map, error = %d\n",
-		    error);
+		    "unable to create mailbox DMA map, error = %d\n", error);
 		goto bad_2;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mbox,
 	    sc->sc_mbo, size, NULL, 0);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to load mailbox DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load mailbox DMA map, error = %d\n", error);
 		goto bad_3;
 	}
 
@@ -1765,8 +1767,8 @@ bha_create_ccbs(struct bha_softc *sc, int count)
 	error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE,
 	    PAGE_SIZE, 0, &seg, 1, &rseg, sc->sc_dmaflags | BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate CCB group, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate CCB group, error = %d\n", error);
 		goto bad_0;
 	}
 
@@ -1774,8 +1776,8 @@ bha_create_ccbs(struct bha_softc *sc, int count)
 	    (void *)&bcg,
 	    sc->sc_dmaflags | BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to map CCB group, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map CCB group, error = %d\n", error);
 		goto bad_1;
 	}
 
@@ -1784,16 +1786,16 @@ bha_create_ccbs(struct bha_softc *sc, int count)
 	error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE,
 	    1, PAGE_SIZE, 0, sc->sc_dmaflags | BUS_DMA_NOWAIT, &ccbmap);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to create CCB group DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create CCB group DMA map, error = %d\n", error);
 		goto bad_2;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ccbmap, bcg, PAGE_SIZE, NULL,
 	    sc->sc_dmaflags | BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to load CCB group DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load CCB group DMA map, error = %d\n", error);
 		goto bad_3;
 	}
 
@@ -1869,8 +1871,8 @@ bha_init_ccb(struct bha_softc *sc, struct bha_ccb *ccb)
 	    BHA_MAXXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
 	    &ccb->dmamap_xfer);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to create CCB DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create CCB DMA map, error = %d\n", error);
 		return (error);
 	}
 

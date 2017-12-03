@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.16.2.1 2014/08/20 00:03:33 tls Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.16.2.2 2017/12/03 11:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.16.2.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.16.2.2 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -501,7 +501,7 @@ linux32_sys_signal(struct lwp *l, const struct linux32_sys_signal_args *uap, reg
 {
 	/* {
 		syscallarg(int) signum;
-		syscallarg(linux32_handler_t) handler;
+		syscallarg(linux32_handlerp_t) handler;
 	} */
         struct sigaction nbsa, obsa;
         int error, sig;

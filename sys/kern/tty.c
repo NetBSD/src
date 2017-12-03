@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.253.2.3 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: tty.c,v 1.253.2.4 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253.2.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253.2.4 2017/12/03 11:38:45 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #define TTY_ALLOW_PRIVATE
 
@@ -1238,12 +1240,14 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_spin_exit(&tty_lock);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_STI,
-		    tp) != 0) {
+		if ((error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_STI, tp)) != 0) {
 			if (!ISSET(flag, FREAD))
-				return (EPERM);
+				return EPERM;
 			if (!isctty(p, tp))
-				return (EACCES);
+				return EACCES;
+			if (tp->t_session->s_leader->p_cred != p->p_cred)
+				return error;
 		}
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
@@ -1290,7 +1294,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		pid_t pgid = *(pid_t *)data;
 		struct pgrp *pgrp;
 
-		mutex_enter(proc_lock); 
+		mutex_enter(proc_lock);
 		if (tp->t_session != NULL && !isctty(p, tp)) {
 			mutex_exit(proc_lock);
 			return (ENOTTY);
@@ -1329,7 +1333,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		if (pgid == NO_PGID)
 			return EINVAL;
 
-		mutex_enter(proc_lock); 
+		mutex_enter(proc_lock);
 		if (!isctty(p, tp)) {
 			mutex_exit(proc_lock);
 			return (ENOTTY);
@@ -1368,7 +1372,42 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		    s != tp->t_qsize)
 			error = tty_set_qsize(tp, s);
 		return error;
+
+	case TIOCSBRK:
+	case TIOCCBRK:
+	case TIOCSDTR:
+	case TIOCCDTR:
+	case TIOCSFLAGS:
+	case TIOCGFLAGS:
+	case TIOCMSET:
+	case TIOCMGET:
+	case TIOCMBIS:
+	case TIOCMBIC:
+		/* Handled by the driver layer */
+		return EPASSTHROUGH;
+
+	case TIOCEXT:
+	case TIOCPTSNAME:
+	case TIOCGRANTPT:
+	case TIOCPKT:
+	case TIOCUCNTL:
+	case TIOCREMOTE:
+	case TIOCSIG:
+		/* for ptys */
+		return EPASSTHROUGH;
+
 	default:
+		/* Pass through various console ioctls */
+		switch (IOCGROUP(cmd)) {
+		case 'c':	/* syscons console */
+		case 'v':	/* usl console, video - where one letter */
+		case 'K':	/* usl console, keyboard - aint enough */
+		case 'V':	/* pcvt compat */
+		case 'W':	/* wscons console */
+			return EPASSTHROUGH;
+		default:
+			break;
+		}
 #ifdef COMPAT_60
 		error = compat_60_ttioctl(tp, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)
@@ -1477,10 +1516,19 @@ filt_ttywrite(struct knote *kn, long hint)
 	return (canwrite);
 }
 
-static const struct filterops ttyread_filtops =
-	{ 1, NULL, filt_ttyrdetach, filt_ttyread };
-static const struct filterops ttywrite_filtops =
-	{ 1, NULL, filt_ttywdetach, filt_ttywrite };
+static const struct filterops ttyread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ttyrdetach,
+	.f_event = filt_ttyread,
+};
+
+static const struct filterops ttywrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ttywdetach,
+	.f_event = filt_ttywrite,
+};
 
 int
 ttykqfilter(dev_t dev, struct knote *kn)
@@ -1536,10 +1584,10 @@ ttnread(struct tty *tp)
 }
 
 /*
- * Wait for output to drain.
+ * Wait for output to drain, or if this times out, flush it.
  */
-int
-ttywait(struct tty *tp)
+static int
+ttywait_timo(struct tty *tp, int timo)
 {
 	int	error;
 
@@ -1549,13 +1597,24 @@ ttywait(struct tty *tp)
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
 	    CONNECTED(tp) && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
-		error = ttysleep(tp, &tp->t_outcv, true, 0);
+		error = ttysleep(tp, &tp->t_outcv, true, timo);
+		if (error == EWOULDBLOCK)
+			ttyflush(tp, FWRITE);
 		if (error)
 			break;
 	}
 	mutex_spin_exit(&tty_lock);
 
 	return (error);
+}
+
+/*
+ * Wait for output to drain.
+ */
+int
+ttywait(struct tty *tp)
+{
+	return ttywait_timo(tp, 0);
 }
 
 /*
@@ -1566,7 +1625,8 @@ ttywflush(struct tty *tp)
 {
 	int	error;
 
-	if ((error = ttywait(tp)) == 0) {
+	error = ttywait_timo(tp, 5 * hz);
+	if (error == 0 || error == EWOULDBLOCK) {
 		mutex_spin_enter(&tty_lock);
 		ttyflush(tp, FREAD);
 		mutex_spin_exit(&tty_lock);
@@ -2669,7 +2729,7 @@ out:
  * Must be called with the tty lock held.
  */
 int
-ttysleep(struct tty *tp, kcondvar_t *cv, bool catch, int timo)
+ttysleep(struct tty *tp, kcondvar_t *cv, bool catch_p, int timo)
 {
 	int	error;
 	short	gen;
@@ -2678,8 +2738,8 @@ ttysleep(struct tty *tp, kcondvar_t *cv, bool catch, int timo)
 
 	gen = tp->t_gen;
 	if (cv == NULL)
-		error = kpause("ttypause", catch, timo, &tty_lock);
-	else if (catch)
+		error = kpause("ttypause", catch_p, timo, &tty_lock);
+	else if (catch_p)
 		error = cv_timedwait_sig(cv, &tty_lock, timo);
 	else
 		error = cv_timedwait(cv, &tty_lock, timo);
@@ -2917,7 +2977,7 @@ ttysigintr(void *cookie)
 	mutex_spin_enter(&tty_lock);
 	while ((tp = TAILQ_FIRST(&tty_sigqueue)) != NULL) {
 		KASSERT(tp->t_sigcount > 0);
-		for (st = 0; st < TTYSIG_COUNT; st++) {
+		for (st = TTYSIG_PG1; st < TTYSIG_COUNT; st++) {
 			if ((sig = firstsig(&tp->t_sigs[st])) != 0)
 				break;
 		}

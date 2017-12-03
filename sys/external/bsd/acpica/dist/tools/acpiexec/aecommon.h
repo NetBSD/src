@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,38 +56,9 @@
 #include "acdebug.h"
 #include "actables.h"
 #include "acinterp.h"
+#include "amlresrc.h"
 #include "acapps.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-
-extern BOOLEAN              AcpiGbl_IgnoreErrors;
-extern UINT8                AcpiGbl_RegionFillValue;
-extern UINT8                AcpiGbl_UseHwReducedFadt;
-extern BOOLEAN              AcpiGbl_DisplayRegionAccess;
-extern BOOLEAN              AcpiGbl_DoInterfaceTests;
-
-/* Check for unexpected exceptions */
-
-#define AE_CHECK_STATUS(Name, Status, Expected) \
-    if (Status != Expected) \
-    { \
-        AcpiOsPrintf ("Unexpected %s from %s (%s-%d)\n", \
-            AcpiFormatException (Status), #Name, _AcpiModuleName, __LINE__); \
-    }
-
-/* Check for unexpected non-AE_OK errors */
-
-#define AE_CHECK_OK(Name, Status)   AE_CHECK_STATUS (Name, Status, AE_OK);
-
-typedef struct ae_table_desc
-{
-    ACPI_TABLE_HEADER       *Table;
-    struct ae_table_desc    *Next;
-
-} AE_TABLE_DESC;
 
 /*
  * Debug Regions
@@ -110,22 +81,50 @@ typedef struct ae_debug_regions
 } AE_DEBUG_REGIONS;
 
 
+extern BOOLEAN              AcpiGbl_IgnoreErrors;
+extern BOOLEAN              AcpiGbl_AbortLoopOnTimeout;
+extern UINT8                AcpiGbl_RegionFillValue;
+extern UINT8                AcpiGbl_UseHwReducedFadt;
+extern BOOLEAN              AcpiGbl_DisplayRegionAccess;
+extern BOOLEAN              AcpiGbl_DoInterfaceTests;
+extern BOOLEAN              AcpiGbl_LoadTestTables;
+extern FILE                 *AcpiGbl_NamespaceInitFile;
+extern ACPI_CONNECTION_INFO AeMyContext;
+
+extern UINT8                Ssdt2Code[];
+extern UINT8                Ssdt3Code[];
+extern UINT8                Ssdt4Code[];
+
+
 #define TEST_OUTPUT_LEVEL(lvl)          if ((lvl) & OutputLevel)
 
 #define OSD_PRINT(lvl,fp)               TEST_OUTPUT_LEVEL(lvl) {\
                                             AcpiOsPrintf PARAM_LIST(fp);}
 
+#define AE_PREFIX                       "ACPI Exec: "
+
 void ACPI_SYSTEM_XFACE
-AeCtrlCHandler (
+AeSignalHandler (
     int                     Sig);
 
 ACPI_STATUS
+AeExceptionHandler (
+    ACPI_STATUS             AmlStatus,
+    ACPI_NAME               Name,
+    UINT16                  Opcode,
+    UINT32                  AmlOffset,
+    void                    *Context);
+
+ACPI_STATUS
 AeBuildLocalTables (
-    UINT32                  TableCount,
-    AE_TABLE_DESC           *TableList);
+    ACPI_NEW_TABLE_DESC     *TableList);
 
 ACPI_STATUS
 AeInstallTables (
+    void);
+
+ACPI_STATUS
+AeLoadTables (
     void);
 
 void
@@ -161,17 +160,13 @@ ACPI_STATUS
 AeDisplayAllMethods (
     UINT32                  DisplayCount);
 
-ACPI_STATUS
-AeInstallEarlyHandlers (
-    void);
-
-ACPI_STATUS
-AeInstallLateHandlers (
-    void);
+/* aetests */
 
 void
 AeMiscellaneousTests (
     void);
+
+/* aeregion */
 
 ACPI_STATUS
 AeRegionHandler (
@@ -181,6 +176,30 @@ AeRegionHandler (
     UINT64                  *Value,
     void                    *HandlerContext,
     void                    *RegionContext);
+
+/* aeinstall */
+
+ACPI_STATUS
+AeInstallDeviceHandlers (
+    void);
+
+void
+AeInstallRegionHandlers (
+    void);
+
+void
+AeOverrideRegionHandlers (
+    void);
+
+/* aehandlers */
+
+ACPI_STATUS
+AeInstallEarlyHandlers (
+    void);
+
+ACPI_STATUS
+AeInstallLateHandlers (
+    void);
 
 UINT32
 AeGpeHandler (
@@ -194,5 +213,51 @@ AeGlobalEventHandler (
     ACPI_HANDLE             GpeDevice,
     UINT32                  EventNumber,
     void                    *Context);
+
+/* aeinitfile */
+
+int
+AeOpenInitializationFile (
+    char                    *Filename);
+
+void
+AeDoObjectOverrides (
+    void);
+
+ACPI_STATUS
+AeSetupConfiguration (
+    void                    *RegionAddr);
+
+/* aeexec */
+
+void
+AeTestBufferArgument (
+    void);
+
+void
+AeTestPackageArgument (
+    void);
+
+ACPI_STATUS
+AeGetDevices (
+    ACPI_HANDLE             ObjHandle,
+    UINT32                  NestingLevel,
+    void                    *Context,
+    void                    **ReturnValue);
+
+ACPI_STATUS
+ExecuteOSI (
+    char                    *OsiString,
+    UINT64                  ExpectedResult);
+
+void
+AeGenericRegisters (
+    void);
+
+#if (!ACPI_REDUCED_HARDWARE)
+void
+AfInstallGpeBlock (
+    void);
+#endif /* !ACPI_REDUCED_HARDWARE */
 
 #endif /* _AECOMMON */

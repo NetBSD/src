@@ -1,4 +1,4 @@
-/*	$NetBSD: boot26.c,v 1.6 2011/01/22 19:19:14 joerg Exp $	*/
+/*	$NetBSD: boot26.c,v 1.6.14.1 2017/12/03 11:35:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 Ben Harris
@@ -99,7 +99,7 @@ main(int argc, char **argv)
 	if (file == NULL) {
 		if (howto & RB_ASKNAME) {
 			printf("boot: ");
-			gets(fbuf);
+			kgets(fbuf, sizeof(fbuf));
 			file = fbuf;
 		} else
 			file = "netbsd";

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.46.2.2 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.46.2.3 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.46.2.2 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.46.2.3 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -426,7 +426,7 @@ sysvbfs_read(void *arg)
 	struct sysvbfs_node *bnode = v->v_data;
 	struct bfs_inode *inode = bnode->inode;
 	vsize_t sz, filesz = bfs_file_size(inode);
-	int err;
+	int err, uerr;
 	const int advice = IO_ADV_DECODE(a->a_ioflag);
 
 	DPRINTF("%s: type=%d\n", __func__, v->v_type);
@@ -439,6 +439,7 @@ sysvbfs_read(void *arg)
 		return EINVAL;
 	}
 
+	err = 0;
 	while (uio->uio_resid > 0) {
 		if ((sz = MIN(filesz - uio->uio_offset, uio->uio_resid)) == 0)
 			break;
@@ -450,7 +451,11 @@ sysvbfs_read(void *arg)
 		DPRINTF("%s: read %ldbyte\n", __func__, sz);
 	}
 
-	return sysvbfs_update(v, NULL, NULL, UPDATE_WAIT);
+	uerr = sysvbfs_update(v, NULL, NULL, UPDATE_WAIT);
+	if (err == 0)
+		err = uerr;
+
+	return err;
 }
 
 int
@@ -503,7 +508,7 @@ sysvbfs_write(void *arg)
 int
 sysvbfs_remove(void *arg)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
@@ -518,8 +523,10 @@ sysvbfs_remove(void *arg)
 
 	DPRINTF("%s: delete %s\n", __func__, ap->a_cnp->cn_nameptr);
 
-	if (vp->v_type == VDIR)
+	if (vp->v_type == VDIR) {
+		vrele(vp);
 		return EPERM;
+	}
 
 	if ((err = bfs_file_delete(bfs, ap->a_cnp->cn_nameptr, true)) != 0)
 		DPRINTF("%s: bfs_file_delete failed.\n", __func__);
@@ -530,7 +537,6 @@ sysvbfs_remove(void *arg)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	if (err == 0) {
 		bnode->removed = 1;
@@ -581,21 +587,23 @@ sysvbfs_rename(void *arg)
 		goto out;
 	}
 
+	/*
+	 * Remove the target if it exists.
+	 */
+	if (tvp != NULL) {
+		error = bfs_file_delete(bfs, to_name, true);
+		if (error)
+			goto out;
+	}
 	error = bfs_file_rename(bfs, from_name, to_name);
  out:
-	if (tvp) {
-		if (error == 0) {
-			struct sysvbfs_node *tbnode = tvp->v_data;
-			tbnode->removed = 1;
-		}
-		vput(tvp);
-	}
-
 	/* tdvp == tvp probably can't happen with this fs, but safety first */
 	if (tdvp == tvp)
 		vrele(tdvp);
 	else
 		vput(tdvp);
+	if (tvp)
+		vput(tvp);
 
 	vrele(fdvp);
 	vrele(fvp);
@@ -635,15 +643,18 @@ sysvbfs_readdir(void *v)
 	if ((i + n) > bfs->n_dirent)
 		n = bfs->n_dirent - i;
 
-	for (file = &bfs->dirent[i]; i < n; file++) {
-		if (file->inode == 0)
-			continue;
+	DPRINTF("%s 1: %d %d %d\n", __func__, i, n, bfs->n_dirent);
+	for (file = &bfs->dirent[i]; n > 0; file++, i++) {
 		if (i == bfs->max_dirent) {
 			DPRINTF("%s: file system inconsistent.\n",
 			    __func__);
 			break;
 		}
-		i++;
+		if (file->inode == 0)
+			continue;
+
+		/* ok, we have a live one here */
+		n--;
 		memset(dp, 0, sizeof(struct dirent));
 		dp->d_fileno = file->inode;
 		dp->d_type = file->inode == BFS_ROOT_INODE ? DT_DIR : DT_REG;
@@ -656,7 +667,7 @@ sysvbfs_readdir(void *v)
 			return error;
 		}
 	}
-	DPRINTF("%s: %d %d %d\n", __func__, i, n, bfs->n_dirent);
+	DPRINTF("%s 2: %d %d %d\n", __func__, i, n, bfs->n_dirent);
 	*ap->a_eofflag = (i == bfs->n_dirent);
 
 	free(dp, M_BFS);
@@ -666,7 +677,7 @@ sysvbfs_readdir(void *v)
 int
 sysvbfs_inactive(void *arg)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *a = arg;
@@ -678,7 +689,6 @@ sysvbfs_inactive(void *arg)
 		*a->a_recycle = true;
 	else
 		*a->a_recycle = false;
-	VOP_UNLOCK(v);
 
 	return 0;
 }
@@ -687,21 +697,21 @@ int
 sysvbfs_reclaim(void *v)
 {
 	extern struct pool sysvbfs_node_pool;
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs *bfs = bnode->bmp->bfs;
 
+	VOP_UNLOCK(vp);
+
 	DPRINTF("%s:\n", __func__);
+
 	if (bnode->removed) {
 		if (bfs_inode_delete(bfs, bnode->inode->number) != 0)
 			DPRINTF("%s: delete inode failed\n", __func__);
 	}
-	mutex_enter(&mntvnode_lock);
-	LIST_REMOVE(bnode, link);
-	mutex_exit(&mntvnode_lock);
 	genfs_node_destroy(vp);
 	pool_put(&sysvbfs_node_pool, bnode);
 	vp->v_data = NULL;

@@ -33,14 +33,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.1.2.4 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/systm.h>
 
 #include <arm/broadcom/bcm53xx_reg.h>
@@ -163,13 +163,14 @@ size_t
 bcmrng_empty(struct bcmrng_softc *sc)
 {
 	mutex_enter(sc->sc_lock);
+	uint32_t data[128];
 	size_t nwords = __SHIFTOUT(bcmrng_read_4(sc, RNG_STATUS), RNG_VAL);
 	if (nwords == 0) {
 		mutex_exit(sc->sc_lock);
 		return 0;
 	}
-
-	uint32_t data[nwords];
+	if (nwords > __arraycount(data))
+		nwords = __arraycount(data);
 
 	bcmrng_read_multi_4(sc, RNG_DATA, data, nwords);
 

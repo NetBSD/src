@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.84.2.2 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: ss.c,v 1.84.2.3 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.84.2.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.84.2.3 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ const struct cdevsw ss_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static void	ssstrategy(struct buf *);
@@ -199,25 +199,27 @@ static int
 ssdetach(device_t self, int flags)
 {
 	struct ss_softc *ss = device_private(self);
-	int s, cmaj, mn;
+	struct scsipi_periph *periph = ss->sc_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
+	int cmaj, mn;
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&ss_cdevsw);
 
 	/* kill any pending restart */
-	callout_stop(&ss->sc_callout);
+	callout_halt(&ss->sc_callout, NULL);
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/* Kill off any queued buffers. */
 	bufq_drain(ss->buf_queue);
 
-	bufq_free(ss->buf_queue);
-
 	/* Kill off any pending commands. */
-	scsipi_kill_pending(ss->sc_periph);
+	scsipi_kill_pending(periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
+
+	bufq_free(ss->buf_queue);
 
 	/* Nuke the vnodes for any open instances */
 	mn = SSUNIT(device_unit(self));
@@ -397,7 +399,7 @@ ssstrategy(struct buf *bp)
 {
 	struct ss_softc *ss = device_lookup_private(&ss_cd, SSUNIT(bp->b_dev));
 	struct scsipi_periph *periph = ss->sc_periph;
-	int s;
+	struct scsipi_channel *chan = periph->periph_channel;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
 	    ("ssstrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount,
@@ -425,7 +427,7 @@ ssstrategy(struct buf *bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/*
 	 * Place it in the queue of activities for this scanner
@@ -439,9 +441,9 @@ ssstrategy(struct buf *bp)
 	 * not doing anything, otherwise just wait for completion
 	 * (All a bit silly if we're only allowing 1 open but..)
 	 */
-	ssstart(ss->sc_periph);
+	ssstart(periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 	return;
 done:
 	/* Correctly set the buf to indicate a completed xfer */
@@ -461,7 +463,7 @@ done:
  * This routine is also called after other non-queued requests
  * have been made of the scsi driver, to ensure that the queue
  * continues to be drained.
- * ssstart() is called at splbio
+ * ssstart() is called with channel lock held.
  */
 static void
 ssstart(struct scsipi_periph *periph)
@@ -476,7 +478,7 @@ ssstart(struct scsipi_periph *periph)
 		/* if a special awaits, let it proceed first */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((void *)periph);
+			cv_broadcast(periph_cv_periph(periph));
 			return;
 		}
 
@@ -496,9 +498,12 @@ ssstart(struct scsipi_periph *periph)
 void
 ssrestart(void *v)
 {
-	int s = splbio();
-	ssstart((struct scsipi_periph *)v);
-	splx(s);
+	struct scsipi_periph *periph = v;
+	struct scsipi_channel *chan = periph->periph_channel;
+
+	mutex_enter(chan_mtx(chan));
+	ssstart(periph);
+	mutex_exit(chan_mtx(chan));
 }
 
 static void

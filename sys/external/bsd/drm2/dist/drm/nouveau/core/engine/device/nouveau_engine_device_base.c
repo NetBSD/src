@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_base.c,v 1.2.6.2 2014/08/20 00:04:11 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_device_base.c,v 1.2.6.3 2017/12/03 11:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.2.6.2 2014/08/20 00:04:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.2.6.3 2017/12/03 11:37:53 jdolecek Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -36,8 +36,27 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.2.6.2 2014/08/20 00
 
 #include "priv.h"
 
+#ifdef __NetBSD__
+static struct mutex nv_devices_mutex;
+static struct list_head nv_devices = LIST_HEAD_INIT(nv_devices);
+
+void
+nouveau_devices_init(void)
+{
+
+	linux_mutex_init(&nv_devices_mutex);
+}
+
+void
+nouveau_devices_fini(void)
+{
+
+	linux_mutex_destroy(&nv_devices_mutex);
+}
+#else
 static DEFINE_MUTEX(nv_devices_mutex);
 static LIST_HEAD(nv_devices);
+#endif
 
 struct nouveau_device *
 nouveau_device_find(u64 name)
@@ -112,7 +131,12 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 	struct nv_device_class *args = data;
 	u32 boot0, strap;
 	u64 disable, mmio_base, mmio_size;
+#ifdef __NetBSD__
+	bus_space_tag_t mmiot;
+	bus_space_handle_t mmioh;
+#else
 	void __iomem *map;
+#endif
 	int ret, i, c;
 
 	if (size < sizeof(struct nv_device_class))
@@ -136,6 +160,9 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 	if (ret)
 		return ret;
 
+#ifdef __NetBSD__
+	mmiot = nv_device_resource_tag(device, 0);
+#endif
 	mmio_base = nv_device_resource_start(device, 0);
 	mmio_size = nv_device_resource_len(device, 0);
 
@@ -149,6 +176,25 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 	/* identify the chipset, and determine classes of subdev/engines */
 	if (!(args->disable & NV_DEVICE_DISABLE_IDENTIFY) &&
 	    !device->card_type) {
+#ifdef __NetBSD__
+		if (mmio_size < 0x102000)
+			return -ENOMEM;
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_map(mmiot, mmio_base, 0x102000, 0, &mmioh);
+		if (ret)
+			return ret;
+
+#ifndef __BIG_ENDIAN
+		if (bus_space_read_4(mmiot, mmioh, 4) != 0)
+#else
+		if (bus_space_read_4(mmiot, mmioh, 4) == 0)
+#endif
+			bus_space_write_4(mmiot, mmioh, 4, 0x01000001);
+
+		boot0 = bus_space_read_4(mmiot, mmioh, 0x000000);
+		strap = bus_space_read_4(mmiot, mmioh, 0x101000);
+		bus_space_unmap(mmiot, mmioh, 0x102000);
+#else
 		map = ioremap(mmio_base, 0x102000);
 		if (map == NULL)
 			return -ENOMEM;
@@ -165,6 +211,7 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 		boot0 = ioread32_native(map + 0x000000);
 		strap = ioread32_native(map + 0x101000);
 		iounmap(map);
+#endif
 
 		/* determine chipset and derive architecture from it */
 		if ((boot0 & 0x1f000000) > 0) {
@@ -247,6 +294,20 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 		nv_debug(device, "crystal freq: %dKHz\n", device->crystal);
 	}
 
+#ifdef __NetBSD__
+	if (!(args->disable & NV_DEVICE_DISABLE_MMIO) &&
+	    !nv_subdev(device)->mmiosz) {
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh);
+		if (ret) {
+			nv_error(device, "unable to map device registers\n");
+			return ret;
+		}
+		nv_subdev(device)->mmiot = mmiot;
+		nv_subdev(device)->mmioh = mmioh;
+		nv_subdev(device)->mmiosz = mmio_size;
+	}
+#else
 	if (!(args->disable & NV_DEVICE_DISABLE_MMIO) &&
 	    !nv_subdev(device)->mmio) {
 		nv_subdev(device)->mmio  = ioremap(mmio_base, mmio_size);
@@ -255,6 +316,7 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 			return -ENOMEM;
 		}
 	}
+#endif
 
 	/* ensure requested subsystems are available for use */
 	for (i = 1, c = 1; i < NVDEV_SUBDEV_NR; i++) {
@@ -447,8 +509,14 @@ nouveau_device_dtor(struct nouveau_object *object)
 	list_del(&device->head);
 	mutex_unlock(&nv_devices_mutex);
 
+#ifdef __NetBSD__
+	if (nv_subdev(device)->mmiosz)
+		bus_space_unmap(nv_subdev(device)->mmiot,
+		    nv_subdev(device)->mmioh, nv_subdev(device)->mmiosz);
+#else
 	if (nv_subdev(device)->mmio)
 		iounmap(nv_subdev(device)->mmio);
+#endif
 
 	nouveau_engine_destroy(&device->base);
 }
@@ -465,8 +533,8 @@ nv_device_resource_tag(struct nouveau_device *device, unsigned int bar)
 		else
 			return pa->pa_iot;
 	} else {
-		/* XXX nouveau platform device */
-		panic("can't handle non-PCI nouveau devices");
+		KASSERT(bar < device->platformdev->nresource);
+		return device->platformdev->resource[bar].tag;
 	}
 }
 #endif
@@ -477,12 +545,18 @@ nv_device_resource_start(struct nouveau_device *device, unsigned int bar)
 	if (nv_device_is_pci(device)) {
 		return pci_resource_start(device->pdev, bar);
 	} else {
+#ifdef __NetBSD__
+		if (bar >= device->platformdev->nresource)
+			return 0;
+		return device->platformdev->resource[bar].start;
+#else
 		struct resource *res;
 		res = platform_get_resource(device->platformdev,
 					    IORESOURCE_MEM, bar);
 		if (!res)
 			return 0;
 		return res->start;
+#endif
 	}
 }
 
@@ -492,15 +566,22 @@ nv_device_resource_len(struct nouveau_device *device, unsigned int bar)
 	if (nv_device_is_pci(device)) {
 		return pci_resource_len(device->pdev, bar);
 	} else {
+#ifdef __NetBSD__
+		if (bar >= device->platformdev->nresource)
+			return 0;
+		return device->platformdev->resource[bar].len;
+#else
 		struct resource *res;
 		res = platform_get_resource(device->platformdev,
 					    IORESOURCE_MEM, bar);
 		if (!res)
 			return 0;
 		return resource_size(res);
+#endif
 	}
 }
 
+#ifndef __NetBSD__
 dma_addr_t
 nv_device_map_page(struct nouveau_device *device, struct page *page)
 {
@@ -536,6 +617,7 @@ nv_device_get_irq(struct nouveau_device *device, bool stall)
 					       stall ? "stall" : "nonstall");
 	}
 }
+#endif
 
 static struct nouveau_oclass
 nouveau_device_oclass = {

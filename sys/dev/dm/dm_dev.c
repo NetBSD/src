@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.8 2010/01/04 00:19:08 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.8.22.1 2017/12/03 11:37:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ dm_dev_lookup_minor(int dm_dev_minor)
 	return NULL;
 }
 /*
- * Lookup device with it's device name.
+ * Lookup device with its device name.
  */
 static dm_dev_t *
 dm_dev_lookup_name(const char *dm_dev_name)
@@ -143,7 +143,7 @@ dm_dev_lookup_name(const char *dm_dev_name)
 	return NULL;
 }
 /*
- * Lookup device with it's device uuid. Used mostly by LVM2tools.
+ * Lookup device with its device uuid. Used mostly by LVM2tools.
  */
 static dm_dev_t *
 dm_dev_lookup_uuid(const char *dm_dev_uuid)
@@ -319,10 +319,7 @@ dm_dev_alloc(void)
 	dm_dev_t *dmv;
 
 	dmv = kmem_zalloc(sizeof(dm_dev_t), KM_SLEEP);
-
-	if (dmv != NULL)
-		dmv->diskp = kmem_zalloc(sizeof(struct disk), KM_SLEEP);
-
+	dmv->diskp = kmem_zalloc(sizeof(struct disk), KM_SLEEP);
 	return dmv;
 }
 /*

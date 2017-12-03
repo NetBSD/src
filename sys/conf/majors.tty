@@ -1,0 +1,9 @@
+#	$NetBSD: majors.tty,v 1.1.18.2 2017/12/03 11:36:57 jdolecek Exp $
+#
+# MI major assignments for tty(*) devices
+#
+
+device-major	com		char 260		com
+device-major	lpt		char 261		lpt
+device-major	cy		char 262		cy
+device-major	cz		char 263		cz

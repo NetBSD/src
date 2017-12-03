@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.25 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.25.22.1 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.25 2009/11/21 03:11:00 rmind Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_vm86.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.25.22.1 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.25 2009/11/21 03:11:00 rmind
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
-
-#ifdef VM86
-#include <machine/vm86.h>
-#endif
 
 int
 compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
@@ -73,36 +65,24 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
-#ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
-		void syscall_vm86(struct trapframe *);
 
-		tf->tf_vm86_gs = context.sc_gs;
-		tf->tf_vm86_fs = context.sc_fs;
-		tf->tf_vm86_es = context.sc_es;
-		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(l, context.sc_eflags);
-		p->p_md.md_syscall = syscall_vm86;
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
-			return (EINVAL);
+	/*
+	 * Check for security violations.  If we're returning to
+	 * protected mode, the CPU will validate the segment registers
+	 * automatically and generate a trap on violations.  We handle
+	 * the trap, rather than doing all of the checking here.
+	 */
+	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(context.sc_cs))
+		return (EINVAL);
 
-		tf->tf_gs = context.sc_gs;
-		tf->tf_fs = context.sc_fs;		
-		tf->tf_es = context.sc_es;
-		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags &= ~PSL_USER;
-		tf->tf_eflags |= context.sc_eflags & PSL_USER;
-	}
+	tf->tf_gs = context.sc_gs;
+	tf->tf_fs = context.sc_fs;		
+	tf->tf_es = context.sc_es;
+	tf->tf_ds = context.sc_ds;
+	tf->tf_eflags &= ~PSL_USER;
+	tf->tf_eflags |= context.sc_eflags & PSL_USER;
+
 	tf->tf_edi = context.sc_edi;
 	tf->tf_esi = context.sc_esi;
 	tf->tf_ebp = context.sc_ebp;

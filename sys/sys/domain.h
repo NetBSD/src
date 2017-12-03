@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.31 2011/06/26 16:43:12 christos Exp $	*/
+/*	$NetBSD: domain.h,v 1.31.12.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,10 +66,16 @@ struct	domain {
 			(rtbl_t **, int);
 	int	dom_rtoffset;		/* an arg to rtattach, in bits */
 	int	dom_maxrtkey;		/* for routing layer */
+	void	(*dom_if_up)		/* ifnet brought up */
+			(struct ifnet *);
+	void	(*dom_if_down)		/* ifnet brought down */
+			(struct ifnet *);
 	void	*(*dom_ifattach)	/* attach af-dependent data on ifnet */
 			(struct ifnet *);
 	void	(*dom_ifdetach)		/* detach af-dependent data on ifnet */
 			(struct ifnet *, void *);
+	void	(*dom_if_link_state_change)
+			(struct ifnet *, int);
 	const void *(*dom_sockaddr_const_addr)(const struct sockaddr *,
 					       socklen_t *);
 	void	*(*dom_sockaddr_addr)(struct sockaddr *, socklen_t *);
@@ -84,7 +90,6 @@ struct	domain {
 	struct	mowner dom_mowner;
 	uint_fast8_t	dom_sa_cmpofs;
 	uint_fast8_t	dom_sa_cmplen;
-	struct dom_rtlist dom_rtcache;
 };
 
 STAILQ_HEAD(domainhead,domain);

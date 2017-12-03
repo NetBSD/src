@@ -1,10 +1,10 @@
-#	$NetBSD: VIRTEX_DFC,v 1.17.2.3 2014/08/20 00:02:59 tls Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.17.2.4 2017/12/03 11:36:11 jdolecek Exp $
 #
 # VIRTEX_DFC
 #
 # 	DFC's design based on GSRD2, ML403, Virtex 4 FX
 
-include		"arch/evbppc/conf/std.virtex"
+include 	"arch/evbppc/conf/std.virtex"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #ident 		"MPMC2"
@@ -49,31 +49,17 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=400000	# size for embedded symbol table
+makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 options 	MBUFTRACE 	# track mbuf leaks
-options 	KMEMSTATS
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
+include 	"conf/compat_netbsd13.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-#options 	COMPAT_43	# and 4.3BSD
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2,
-#options 	COMPAT_13	# NetBSD 1.3,
-#options 	COMPAT_14	# NetBSD 1.4,
-#options 	COMPAT_16	# NetBSD 1.6,
-#options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0,
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

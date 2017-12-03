@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.h,v 1.3 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache_r5k.h,v 1.3.122.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,35 +37,27 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-void	r5k_icache_sync_all_32(void);
-void	r5k_icache_sync_range_32(vaddr_t, vsize_t);
-void	r5k_icache_sync_range_index_32(vaddr_t, vsize_t);
+void	r5k_picache_sync_all(void);
+void	r5k_picache_sync_range(register_t, vsize_t);
+void	r5k_picache_sync_range_index(vaddr_t, vsize_t);
 
-void	r5k_pdcache_wbinv_all_16(void);
-void	r5k_pdcache_wbinv_all_32(void);
-void	r4600v1_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	r4600v2_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	vr4131v1_pdcache_wbinv_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
+void	r5k_pdcache_wbinv_all(void);
+void	r5k_pdcache_wbinv_range_index(vaddr_t, vsize_t);
+void	r4600v1_pdcache_wbinv_range_32(register_t, vsize_t);
+void	r4600v2_pdcache_wbinv_range_32(register_t, vsize_t);
+void	vr4131v1_pdcache_wbinv_range_16(register_t, vsize_t);
 
-void	r4600v1_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4600v2_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r5k_pdcache_inv_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4600v1_pdcache_wb_range_32(vaddr_t, vsize_t);
-void	r4600v2_pdcache_wb_range_32(vaddr_t, vsize_t);
-void	r5k_pdcache_wb_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wb_range_32(vaddr_t, vsize_t);
+void	r4600v1_pdcache_inv_range_32(register_t, vsize_t);
+void	r4600v2_pdcache_inv_range_32(register_t, vsize_t);
+void	r4600v1_pdcache_wb_range_32(register_t, vsize_t);
+void	r4600v2_pdcache_wb_range_32(register_t, vsize_t);
 
 void	r5k_enable_sdcache(void);
 
 void	r5k_sdcache_wbinv_all(void);
-void	r5k_sdcache_wbinv_range(vaddr_t, vsize_t);
+void	r5k_sdcache_wbinv_range(register_t, vsize_t);
 void	r5k_sdcache_wbinv_range_index(vaddr_t, vsize_t);
-void	r5k_sdcache_inv_range(vaddr_t, vsize_t);
-void	r5k_sdcache_wb_range(vaddr_t, vsize_t);
+void	r5k_sdcache_inv_range(register_t, vsize_t);
+void	r5k_sdcache_wb_range(register_t, vsize_t);
 
 #endif /* _KERNEL && !_LOCORE */

@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.39.8.1 2014/08/20 00:03:30 tls Exp $      */
+/*      $NetBSD: xenevt.c,v 1.39.8.2 2017/12/03 11:36:51 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39.8.1 2014/08/20 00:03:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39.8.2 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39.8.1 2014/08/20 00:03:30 tls Exp $");
 #include <xen/xenio3.h>
 #include <xen/xen.h>
 
+#include "ioconf.h"
+
 /*
  * Interface between the event channel and userland.
  * Each process with a xenevt device instance open can regiter events it
@@ -62,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39.8.1 2014/08/20 00:03:30 tls Exp $");
  * Processes get a device instance by opening a cloning device.
  */
 
-void		xenevtattach(int);
 static int	xenevt_fread(struct file *, off_t *, struct uio *,
     kauth_cred_t, int);
 static int	xenevt_fwrite(struct file *, off_t *, struct uio *,
@@ -73,6 +74,7 @@ static int	xenevt_fclose(struct file *);
 /* static int	xenevt_fkqfilter(struct file *, struct knote *); */
 
 static const struct fileops xenevt_fileops = {
+	.fo_name = "xenevt",
 	.fo_read = xenevt_fread,
 	.fo_write = xenevt_fwrite,
 	.fo_ioctl = xenevt_fioctl,
@@ -117,7 +119,7 @@ struct xenevt_d {
 	kcondvar_t cv;
 	STAILQ_ENTRY(xenevt_d) pendingq;
 	bool pending;
-	evtchn_port_t ring[2048]; 
+	evtchn_port_t ring[2048];
 	u_int ring_read; /* pointer of the reader */
 	u_int ring_write; /* pointer of the writer */
 	u_int flags;
@@ -171,11 +173,11 @@ xenevtattach(int n)
 	ih->ih_level = level;
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
-	ih->ih_ipl_next = NULL;
+	ih->ih_next = NULL;
 	ih->ih_cpu = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
-		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_fun = xen_intr_biglock_wrapper;
 		ih->ih_arg = ih;
 	}
 #endif /* MULTIPROCESSOR */
@@ -300,7 +302,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	switch(minor(dev)) {
 	case DEV_EVT:
-		/* falloc() will use the descriptor for us. */
+		/* falloc() will fill in the descriptor for us. */
 		if ((error = fd_allocfile(&fp, &fd)) != 0)
 			return error;
 
@@ -489,11 +491,9 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 	if (uio->uio_resid == 0)
 		return (0);
 	nentries = uio->uio_resid / sizeof(uint16_t);
-	if (nentries > NR_EVENT_CHANNELS)
+	if (nentries >= NR_EVENT_CHANNELS)
 		return EMSGSIZE;
 	chans = kmem_alloc(nentries * sizeof(uint16_t), KM_SLEEP);
-	if (chans == NULL)
-		return ENOMEM;
 	error = uiomove(chans, uio->uio_resid, uio);
 	if (error)
 		goto out;
@@ -582,7 +582,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	{
 		struct ioctl_evtchn_unbind *unbind = addr;
 		
-		if (unbind->port > NR_EVENT_CHANNELS)
+		if (unbind->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
 		if (devevent[unbind->port] != d) {
@@ -603,7 +603,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	{
 		struct ioctl_evtchn_notify *notify = addr;
 		
-		if (notify->port > NR_EVENT_CHANNELS)
+		if (notify->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
 		if (devevent[notify->port] != d) {

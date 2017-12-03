@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.18 2011/05/26 15:34:12 joerg Exp $ */
+/* $NetBSD: db_machdep.h,v 1.18.14.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -107,7 +107,6 @@ void	alpha_kgdb_init(const char **, struct alpha_bus_space *);
  * We use Elf64 symbols in DDB.
  */
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	64
 
 /*
  * Stuff for KGDB.

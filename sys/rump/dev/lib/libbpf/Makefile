@@ -1,14 +1,13 @@
-#	$NetBSD: Makefile,v 1.1.24.1 2014/08/20 00:04:37 tls Exp $
+#	$NetBSD: Makefile,v 1.1.24.2 2017/12/03 11:39:06 jdolecek Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
 
 LIB=	rumpdev_bpf
+COMMENT=Berkeley Packet Filter
 
 SRCS=	bpf.c bpf_filter.c
 SRCS+=	bpf_component.c
-
-CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

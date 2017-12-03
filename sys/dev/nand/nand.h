@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.13.16.1 2012/11/20 03:02:13 tls Exp $	*/
+/*	$NetBSD: nand.h,v 1.13.16.2 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -428,6 +428,7 @@ extern const struct nand_manufacturer nand_mfrs[];
  */
 int nand_read_parameters_micron(device_t, struct nand_chip *);
 int nand_read_parameters_samsung(device_t, struct nand_chip *);
+int nand_read_parameters_toshiba(device_t, struct nand_chip *);
 
 /* debug inlines */
 
@@ -467,6 +468,7 @@ int nand_read_oob(device_t, size_t, uint8_t *);
 
 device_t nand_attach_mi(struct nand_interface *, device_t);
 void nand_init_interface(struct nand_interface *);
+void nand_attach_mtdparts(device_t, const char *, const char *);
 
 /* controller drivers may use these functions to get info about the chip */
 void nand_read_id(device_t, uint8_t *, uint8_t *);

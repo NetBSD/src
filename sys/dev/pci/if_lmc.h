@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.20.2.1 2012/11/20 03:02:17 tls Exp $
+ * $NetBSD: if_lmc.h,v 1.20.2.2 2017/12/03 11:37:08 jdolecek Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -46,6 +46,9 @@
 
 #ifndef IF_LMC_H
 #define IF_LMC_H
+
+#include <sys/ioccom.h>
+
 
 #define DEVICE_NAME		"lmc"
 
@@ -981,8 +984,12 @@ typedef int intr_return_t;
 # define SLEEP(usecs)		tsleep(sc, PZERO, DEVICE_NAME, 1+(usecs/tick))
 # define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, 0, size, flags)
 # define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, 0, BUS_DMA_NOWAIT)
-#  define LMC_BPF_MTAP(sc, mbuf)	bpf_mtap((sc)->ifp, mbuf)
-#  define LMC_BPF_ATTACH(sc, dlt, len)	bpf_attach((sc)->ifp, dlt, len)
+#  define LMC_BPF_MTAP(sc, mbuf)	bpf_mtap_softint((sc)->ifp, mbuf)
+#  define LMC_BPF_ATTACH(sc, dlt, len)			\
+	do {						\
+		bpf_attach((sc)->ifp, dlt, len);	\
+		bpf_mtap_softint_init((sc)->ifp);	\
+	} while (0)
 #  define LMC_BPF_DETACH(sc)		bpf_detach((sc)->ifp)
 
 static int driver_announced = 0;	/* print driver info once only */
@@ -1308,7 +1315,7 @@ static int rawip_detach(softc_t *);
 #if IFNET
 static void ifnet_input(struct ifnet *, struct mbuf *);
 static int ifnet_output(struct ifnet *, struct mbuf *,
-			const struct sockaddr *, struct rtentry *);
+			const struct sockaddr *, const struct rtentry *);
 static int ifnet_ioctl(struct ifnet *, u_long, void *);
 static void ifnet_start(struct ifnet *);
 static void ifnet_watchdog(struct ifnet *);

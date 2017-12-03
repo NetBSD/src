@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_advlock.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nlm_advlock.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -27,8 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/nlm/nlm_advlock.c 239328 2012-08-16 13:01:56Z kib "); */
-__RCSID("$NetBSD: nlm_advlock.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/nlm/nlm_advlock.c 302216 2016-06-26 20:08:42Z kib "); */
+__RCSID("$NetBSD: nlm_advlock.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -48,12 +48,12 @@ __RCSID("$NetBSD: nlm_advlock.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 
-#include <nfs/nfsproto.h>
-#include <nfsclient/nfs.h>
-#include <nfsclient/nfsmount.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfsmount.h>
 
-#include <nlm/nlm_prot.h>
-#include <nlm/nlm.h>
+#include <fs/nfs/nlm/nlm_prot.h>
+#include <fs/nfs/nlm/nlm.h>
 
 /*
  * We need to keep track of the svid values used for F_FLOCK locks.
@@ -212,7 +212,7 @@ nlm_advlock_internal(struct vnode *vp, void *id, int op, struct flock *fl,
 	struct rpc_callextra ext;
 	struct nlm_feedback_arg nf;
 	AUTH *auth;
-	struct ucred *cred;
+	struct ucred *cred, *cred1;
 	struct nlm_file_svid *ns;
 	int svid;
 	int error;
@@ -242,15 +242,17 @@ nlm_advlock_internal(struct vnode *vp, void *id, int op, struct flock *fl,
 	else
 		retries = INT_MAX;
 
-	if (unlock_vp)
-		VOP_UNLOCK(vp, 0);
-
 	/*
 	 * We need to switch to mount-point creds so that we can send
-	 * packets from a privileged port.
+	 * packets from a privileged port.  Reference mnt_cred and
+	 * switch to them before unlocking the vnode, since mount
+	 * point could be unmounted right after unlock.
 	 */
 	cred = td->td_ucred;
 	td->td_ucred = vp->v_mount->mnt_cred;
+	crhold(td->td_ucred);
+	if (unlock_vp)
+		VOP_UNLOCK(vp, 0);
 
 	host = nlm_find_host_by_name(servername, sa, vers);
 	auth = authunix_create(cred);
@@ -375,7 +377,9 @@ nlm_advlock_internal(struct vnode *vp, void *id, int op, struct flock *fl,
 	if (ns)
 		nlm_free_svid(ns);
 
+	cred1 = td->td_ucred;
 	td->td_ucred = cred;
+	crfree(cred1);
 	AUTH_DESTROY(auth);
 
 	nlm_host_release(host);
@@ -695,7 +699,8 @@ nlm_record_lock(struct vnode *vp, int op, struct flock *fl,
 {
 	struct vop_advlockasync_args a;
 	struct flock newfl;
-	int error;
+	struct proc *p;
+	int error, stops_deferred;
 
 	a.a_vp = vp;
 	a.a_id = NULL;
@@ -711,7 +716,42 @@ nlm_record_lock(struct vnode *vp, int op, struct flock *fl,
 	newfl.l_pid = svid;
 	newfl.l_sysid = NLM_SYSID_CLIENT | sysid;
 
-	error = lf_advlockasync(&a, &vp->v_lockf, size);
+	for (;;) {
+		error = lf_advlockasync(&a, &vp->v_lockf, size);
+		if (error == EDEADLK) {
+			/*
+			 * Locks are associated with the processes and
+			 * not with threads.  Suppose we have two
+			 * threads A1 A2 in one process, A1 locked
+			 * file f1, A2 is locking file f2, and A1 is
+			 * unlocking f1. Then remote server may
+			 * already unlocked f1, while local still not
+			 * yet scheduled A1 to make the call to local
+			 * advlock manager. The process B owns lock on
+			 * f2 and issued the lock on f1.  Remote would
+			 * grant B the request on f1, but local would
+			 * return EDEADLK.
+			*/
+			pause("nlmdlk", 1);
+			p = curproc;
+			stops_deferred = sigdeferstop(SIGDEFERSTOP_OFF);
+			PROC_LOCK(p);
+			thread_suspend_check(0);
+			PROC_UNLOCK(p);
+			sigallowstop(stops_deferred);
+		} else if (error == EINTR) {
+			/*
+			 * lf_purgelocks() might wake up the lock
+			 * waiter and removed our lock graph edges.
+			 * There is no sense in re-trying recording
+			 * the lock to the local manager after
+			 * reclaim.
+			 */
+			error = 0;
+			break;
+		} else
+			break;
+	}
 	KASSERT(error == 0 || error == ENOENT,
 	    ("Failed to register NFS lock locally - error=%d", error));
 }

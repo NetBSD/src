@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.17.12.1 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.17.12.2 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.17.12.1 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.17.12.2 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -188,8 +188,7 @@ NENTRY(msr_onfault)
 	movl	$0, PCB_ONFAULT(%ecx)
 	movl	$EFAULT, %eax
 	ret
-
-END(rdmsr_safe)
+END(msr_onfault)
 
 ENTRY(cpu_counter)
 	rdtsc

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.70.12.2 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: sbic.c,v 1.70.12.3 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.70.12.2 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.70.12.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,8 +259,8 @@ sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 	struct sbic_acb* acb;
 
 	SBIC_TRACE(dev);
-	if( !dev->sc_cur ) return;
-	if( !(dev->sc_flags & SBICF_INDMA) ) return; /* DMA not active */
+	if (!dev->sc_cur) return;
+	if (!(dev->sc_flags & SBICF_INDMA)) return; /* DMA not active */
 
 	s = splbio();
 
@@ -268,13 +268,13 @@ sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 	count = -1;
 	do {
 		GET_SBIC_asr(regs, asr);
-		if( asr & SBIC_ASR_DBR ) {
+		if (asr & SBIC_ASR_DBR) {
 			printf("sbic_save_ptrs: asr %02x canceled!\n", asr);
 			splx(s);
 			SBIC_TRACE(dev);
 			return;
 		}
-	} while( asr & (SBIC_ASR_BSY|SBIC_ASR_CIP) );
+	} while (asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
 
 	/* Save important state */
 	/* must be done before dmastop */
@@ -287,8 +287,8 @@ sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 	SBIC_TC_PUT(regs, 0);
 
 #ifdef DEBUG
-	if(!count && sbic_debug) printf("%dcount0",target);
-	if(data_pointer_debug == -1)
+	if (!count && sbic_debug) printf("%dcount0",target);
+	if (data_pointer_debug == -1)
 		printf("SBIC saving target %d data pointers from (%p,%x)%xASR:%02x",
 		       target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
 		       acb->sc_dmacmd, asr);
@@ -302,7 +302,7 @@ sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 
 	acb->sc_tcnt = dev->sc_tcnt = count;
 #ifdef DEBUG
-	if(data_pointer_debug)
+	if (data_pointer_debug)
 		printf(" at (%p,%x):%x\n",
 		       dev->sc_cur->dc_addr, dev->sc_cur->dc_count,count);
 	sbicdma_saves++;
@@ -324,7 +324,7 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 
 	SBIC_TRACE(dev);
 	acb = dev->sc_nexus;
-	if( !acb->sc_kv.dc_count ) {
+	if (!acb->sc_kv.dc_count) {
 		/* No data to xfer */
 		SBIC_TRACE(dev);
 		return;
@@ -339,7 +339,7 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 #ifdef DEBUG
 	sbicdma_ops++;
 #endif
-	if( !dev->sc_tcnt ) {
+	if (!dev->sc_tcnt) {
 		/* sc_tcnt == 0 implies end of segment */
 
 		/* do kvm to pa mappings */
@@ -348,12 +348,12 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 
 		vaddr = acb->sc_kv.dc_addr;
 		count = acb->sc_kv.dc_count;
-		for(count = (PAGE_SIZE - ((int)vaddr & PGOFSET));
+		for (count = (PAGE_SIZE - ((int)vaddr & PGOFSET));
 		    count < acb->sc_kv.dc_count
 		    && (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
 		    count += PAGE_SIZE);
 		/* If it's all contiguous... */
-		if(count > acb->sc_kv.dc_count ) {
+		if (count > acb->sc_kv.dc_count) {
 			count = acb->sc_kv.dc_count;
 #ifdef DEBUG
 			sbicdma_hits++;
@@ -367,7 +367,7 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 		acb->sc_pa.dc_count = count >> 1;
 
 #ifdef DEBUG
-		if(data_pointer_debug)
+		if (data_pointer_debug)
 			printf("DMA recalc:kv(%p,%x)pa(%p,%lx)\n",
 			       acb->sc_kv.dc_addr,
 			       acb->sc_kv.dc_count,
@@ -377,7 +377,7 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 	}
 	splx(s);
 #ifdef DEBUG
-	if(data_pointer_debug)
+	if (data_pointer_debug)
 		printf("SBIC restoring target %d data pointers at (%p,%x)%x\n",
 		       target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
 		       dev->sc_dmacmd);
@@ -447,7 +447,7 @@ sbic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 			dev->sc_flags |= SBICF_ICMD;
 			do {
-				while(dev->sc_nexus)
+				while (dev->sc_nexus)
 					sbicpoll(dev);
 				dev->sc_nexus = acb;
 				dev->sc_stat[0] = -1;
@@ -539,14 +539,14 @@ sbic_sched(struct sbic_softc *dev)
 		sbicreset(dev);
 
 #ifdef DEBUG
-	if( data_pointer_debug > 1 )
+	if (data_pointer_debug > 1)
 		printf("sbic_sched(%d,%d)\n", periph->periph_target,
 			periph->periph_lun);
 #endif
 	dev->sc_stat[0] = -1;
 	dev->target = periph->periph_target;
 	dev->lun = periph->periph_lun;
-	if ( flags & XS_CTL_POLL || ( !sbic_parallel_operations
+	if (flags & XS_CTL_POLL || (!sbic_parallel_operations
 				   && (sbicdmaok(dev, xs) == 0)))
 		stat = sbicicmd(dev, periph->periph_target,
 			periph->periph_lun, &acb->cmd,
@@ -587,11 +587,11 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 	xs->status = stat;
 	xs->resid = 0;		/* XXXX */
 #ifdef DEBUG
-	if( data_pointer_debug > 1 )
+	if (data_pointer_debug > 1)
 		printf("scsidone: (%d,%d)->(%d,%d)%02x\n",
 		       periph->periph_target, periph->periph_lun,
 		       dev->target,  dev->lun,  stat);
-	if( periph->periph_target ==
+	if (periph->periph_target ==
 		periph->periph_channel->chan_id)
 		panic("target == hostid");
 #endif
@@ -749,14 +749,14 @@ sbicabort(struct sbic_softc *dev, sbic_regmap_t regs, const char *where)
 
 	/* Clean up chip itself */
 	if (dev->sc_flags & SBICF_SELECTED) {
-		while( asr & SBIC_ASR_DBR ) {
+		while (asr & SBIC_ASR_DBR) {
 			/* sbic is jammed w/data. need to clear it */
 			/* But we don't know what direction it needs to go */
 			GET_SBIC_data(regs, asr);
 			printf("%s: abort %s: clearing data buffer 0x%02x\n",
 			       device_xname(dev->sc_dev), where, asr);
 			GET_SBIC_asr(regs, asr);
-			if( asr & SBIC_ASR_DBR ) /* Not the read direction, then */
+			if (asr & SBIC_ASR_DBR) /* Not the read direction, then */
 				SET_SBIC_data(regs, asr);
 			GET_SBIC_asr(regs, asr);
 		}
@@ -995,7 +995,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
 		SET_SBIC_syn(regs, SBIC_SYN (0, sbic_min_period));
 
 	GET_SBIC_asr(regs, asr);
-	if( asr & (SBIC_ASR_INT|SBIC_ASR_BSY) ) {
+	if (asr & (SBIC_ASR_INT|SBIC_ASR_BSY)) {
 		/* This means we got ourselves reselected upon */
 /*		printf("sbicselectbus: INT/BSY asr %02x\n", asr);*/
 #ifdef DDB
@@ -1025,9 +1025,9 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
 		GET_SBIC_csr (regs, csr);
 		CSR_TRACE('s',csr,asr,target);
 		QPRINTF(("%02x ", csr));
-		if( csr == SBIC_CSR_RSLT_NI || csr == SBIC_CSR_RSLT_IFY) {
+		if (csr == SBIC_CSR_RSLT_NI || csr == SBIC_CSR_RSLT_IFY) {
 #ifdef DEBUG
-			if(reselect_debug)
+			if (reselect_debug)
 				printf("sbicselectbus: reselected asr %02x\n", asr);
 #endif
 			/* We need to handle this now so we don't lock up later */
@@ -1035,7 +1035,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
 			SBIC_TRACE(dev);
 			return 1;
 		}
-		if( csr == SBIC_CSR_SLT || csr == SBIC_CSR_SLT_ATN) {
+		if (csr == SBIC_CSR_SLT || csr == SBIC_CSR_SLT_ATN) {
 			panic("sbicselectbus: target issued select!");
 			return 1;
 		}
@@ -1043,7 +1043,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
 	    && csr != (SBIC_CSR_MIS_2|CMD_PHASE) && csr != SBIC_CSR_SEL_TIMEO);
 
 	/* Enable (or not) reselection */
-	if(!sbic_enable_reselect && dev->nexus_list.tqh_first == NULL)
+	if (!sbic_enable_reselect && dev->nexus_list.tqh_first == NULL)
 		SET_SBIC_rselid (regs, 0);
 	else
 		SET_SBIC_rselid (regs, SBIC_RID_ER);
@@ -1053,7 +1053,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
 		GET_SBIC_selid(regs, id);
 		dev->target = id;
 		GET_SBIC_tlun(regs,dev->lun);
-		if( dev->lun & SBIC_TLUN_VALID )
+		if (dev->lun & SBIC_TLUN_VALID)
 			dev->lun &= SBIC_TLUN_MASK;
 		else
 			dev->lun = lun;
@@ -1065,7 +1065,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
 		GET_SBIC_selid(regs, id);
 		dev->target = id;
 		GET_SBIC_tlun(regs,dev->lun);
-		if( dev->lun & SBIC_TLUN_VALID )
+		if (dev->lun & SBIC_TLUN_VALID)
 			dev->lun &= SBIC_TLUN_MASK;
 		else
 			dev->lun = lun;
@@ -1086,9 +1086,9 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
 
 
 		if (dev->sc_sync[id].state != SYNC_START){
-			if( dev->sc_xs->xs_control & XS_CTL_POLL
+			if (dev->sc_xs->xs_control & XS_CTL_POLL
 			   || (dev->sc_flags & SBICF_ICMD)
-			   || !sbic_enable_reselect )
+			   || !sbic_enable_reselect)
 				SEND_BYTE (regs, MSG_IDENTIFY | lun);
 			else
 				SEND_BYTE (regs, MSG_IDENTIFY_DR | lun);
@@ -1231,11 +1231,17 @@ int
 sbicxfin(sbic_regmap_t regs, int len, void *bp)
 {
 	int wait;
-	u_char *buf;
 	u_char orig_csr, csr, asr;
+	u_char *buf;
+#ifdef DEBUG
+	u_char *obp;
+#endif
 
 	wait = sbic_data_wait;
 	buf = bp;
+#ifdef DEBUG
+	obp = bp;
+#endif
 
 	GET_SBIC_csr (regs, orig_csr);
 	__USE(orig_csr);
@@ -1247,7 +1253,7 @@ sbicxfin(sbic_regmap_t regs, int len, void *bp)
 	SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
 	for (;len > 0; len--) {
 		GET_SBIC_asr (regs, asr);
-		if((asr & SBIC_ASR_PE)) {
+		if ((asr & SBIC_ASR_PE)) {
 #ifdef DEBUG
 			printf("sbicxfin parity error: l%d i%x w%d\n",
 			       len, asr, wait);
@@ -1334,7 +1340,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 #ifdef DEBUG
 	routine = 3;
 	debug_sbic_regs = regs; /* store this to allow debug calls */
-	if( data_pointer_debug > 1 )
+	if (data_pointer_debug > 1)
 		printf("sbicicmd(%d,%d):%d\n", target, lun,
 		       acb->sc_kv.dc_count);
 #endif
@@ -1355,7 +1361,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 		/*
 		 * select the SCSI bus (it's an error if bus isn't free)
 		 */
-		if (!( dev->sc_flags & SBICF_SELECTED )
+		if (!(dev->sc_flags & SBICF_SELECTED)
 		    && sbicselectbus(dev, regs, target, lun, dev->sc_scsiaddr)) {
 			/* printf("sbicicmd: trying to select busy bus!\n"); */
 			dev->sc_flags &= ~SBICF_ICMD;
@@ -1391,7 +1397,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 /*				break; */ /* Bypass all the state gobldygook */
 			} else {
 #ifdef DEBUG
-				if(reselect_debug>1)
+				if (reselect_debug>1)
 					printf("sbicicmd: handling disconnect\n");
 #endif
 				i = SBIC_STATE_DISCONNECT;
@@ -1411,7 +1417,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 			WAIT_CIP(regs);
 			GET_SBIC_asr(regs, asr);
 			CSR_TRACE('I',csr,asr,target);
-			if( asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP) )
+			if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP))
 				printf("next: cmd sent asr %02x, csr %02x\n",
 				       asr, csr);
 #endif
@@ -1460,7 +1466,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 			 * so do this with its hi-level commands.
 			 */
 #ifdef DEBUG
-			if(sbic_debug)
+			if (sbic_debug)
 				printf("SBICICMD status phase\n");
 #endif
 			SBIC_TC_PUT(regs, 0);
@@ -1470,7 +1476,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 
 #if THIS_IS_A_RESERVED_STATE
 		case BUS_FREE_PHASE:		/* This is not legal */
-			if( dev->sc_stat[0] != 0xff )
+			if (dev->sc_stat[0] != 0xff)
 				goto out;
 			break;
 #endif
@@ -1487,7 +1493,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 
 		/* tapes may take a loooong time.. */
 		while (asr & SBIC_ASR_BSY){
-			if(asr & SBIC_ASR_DBR) {
+			if (asr & SBIC_ASR_DBR) {
 				printf("sbicicmd: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n",
 				       csr,asr);
 #ifdef DDB
@@ -1498,7 +1504,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 				/* Try old direction */
 				GET_SBIC_data(regs,i);
 				GET_SBIC_asr(regs, asr);
-				if( asr & SBIC_ASR_DBR) /* Wants us to write */
+				if (asr & SBIC_ASR_DBR) /* Wants us to write */
 					SET_SBIC_data(regs,i);
 			}
 			GET_SBIC_asr(regs, asr);
@@ -1510,26 +1516,26 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 		if (asr & SBIC_ASR_LCI) {
 			printf("sbicicmd: last command ignored\n");
 		}
-		else if( i == 1 ) /* Bsy */
+		else if (i == 1) /* Bsy */
 			SBIC_WAIT (regs, SBIC_ASR_INT, wait);
 
 		/*
 		 * do it again
 		 */
-	} while ( i > 0 && dev->sc_stat[0] == 0xff);
+	} while (i > 0 && dev->sc_stat[0] == 0xff);
 
 	/* Sometimes we need to do an extra read of the CSR */
 	GET_SBIC_csr(regs, csr);
 	CSR_TRACE('I',csr,asr,0xff);
 
 #if CSR_LOG_BUF_SIZE
-	if(reselect_debug>1)
-		for(i=0; i<bufptr; i++)
+	if (reselect_debug>1)
+		for (i=0; i<bufptr; i++)
 			printf("CSR:%02x", csrbuf[i]);
 #endif
 
 #ifdef DEBUG
-	if(data_pointer_debug > 1)
+	if (data_pointer_debug > 1)
 		printf("sbicicmd done(%d,%d):%d =%d=\n",
 		       dev->target, lun,
 		       acb->sc_kv.dc_count,
@@ -1611,14 +1617,14 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 #ifdef DEBUG
 	routine = 1;
 	debug_sbic_regs = regs; /* store this to allow debug calls */
-	if( data_pointer_debug > 1 )
+	if (data_pointer_debug > 1)
 		printf("sbicgo(%d,%d)\n", dev->target, dev->lun);
 #endif
 
 	/*
 	 * set the sbic into DMA mode
 	 */
-	if( usedma )
+	if (usedma)
 		SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI |
 				 SBIC_MACHINE_DMA_MODE);
 	else
@@ -1672,7 +1678,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 			acb->sc_dmausrbuf = addr;
 			acb->sc_dmausrlen = count;
 			acb->sc_usrbufpa = (u_char *)kvtop(addr);
-			if(!dev->sc_tinfo[dev->target].bounce) {
+			if (!dev->sc_tinfo[dev->target].bounce) {
 				printf("sbicgo: HELP! no bounce allocated for %d\n",
 				       dev->target);
 				printf("xfer: (%p->%p,%lx)\n", acb->sc_dmausrbuf,
@@ -1694,7 +1700,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 			}
 		} else {	/* write: copy to DMA buffer */
 #ifdef DEBUG
-			if(data_pointer_debug)
+			if (data_pointer_debug)
 			printf("sbicgo: copying %x bytes to target %d bounce %x\n",
 			       count, dev->target,
 			       (unsigned)kvtop(dev->sc_tinfo[dev->target].bounce));
@@ -1741,7 +1747,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	sbic_save_ptrs(dev, regs, dev->target, dev->lun);
 
 	/*
-	 * push the data cache ( I think this won't work (EH))
+	 * push the data cache (I think this won't work (EH))
 	 */
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040 && usedma && count) {
@@ -1758,7 +1764,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	 * enintr() also enables interrupts for the sbic
 	 */
 #ifdef DEBUG
-	if( data_pointer_debug > 1 )
+	if (data_pointer_debug > 1)
 		printf("sbicgo dmago:%d(%p:%lx)\n",
 		       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
 #if 0
@@ -1791,16 +1797,16 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 #ifdef DEBUG
 		debug_asr = asr;
 #endif
-		if(asr & SBIC_ASR_LCI) printf("sbicgo: LCI asr:%02x csr:%02x\n",
+		if (asr & SBIC_ASR_LCI) printf("sbicgo: LCI asr:%02x csr:%02x\n",
 					      asr,csr);
-	} while( i == SBIC_STATE_RUNNING
-		&& asr & (SBIC_ASR_INT|SBIC_ASR_LCI) );
+	} while (i == SBIC_STATE_RUNNING
+		&& asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
 
 	CSR_TRACE('g',csr,asr,i<<4);
 	SBIC_TRACE(dev);
 if (i == SBIC_STATE_DONE && dev->sc_stat[0] == 0xff) printf("sbicgo: done & stat = 0xff\n");
 	if (i == SBIC_STATE_DONE && dev->sc_stat[0] != 0xff) {
-/*	if( i == SBIC_STATE_DONE && dev->sc_stat[0] ) { */
+/*	if (i == SBIC_STATE_DONE && dev->sc_stat[0]) { */
 		/* Did we really finish that fast? */
 		return 1;
 	}
@@ -1842,10 +1848,10 @@ sbicintr(struct sbic_softc *dev)
 		debug_asr = asr;
 #endif
 #if 0
-		if(asr & SBIC_ASR_LCI) printf("sbicintr: LCI asr:%02x csr:%02x\n",
+		if (asr & SBIC_ASR_LCI) printf("sbicintr: LCI asr:%02x csr:%02x\n",
 					      asr,csr);
 #endif
-	} while(i == SBIC_STATE_RUNNING &&
+	} while (i == SBIC_STATE_RUNNING &&
 		asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
 	CSR_TRACE('i',csr,asr,i<<4);
 	SBIC_TRACE(dev);
@@ -1884,7 +1890,7 @@ sbicpoll(struct sbic_softc *dev)
 		GET_SBIC_asr(regs, asr);
 		/* tapes may take a loooong time.. */
 		while (asr & SBIC_ASR_BSY){
-			if(asr & SBIC_ASR_DBR) {
+			if (asr & SBIC_ASR_DBR) {
 				printf("sbipoll: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n",
 				       csr,asr);
 #ifdef DDB
@@ -1895,17 +1901,17 @@ sbicpoll(struct sbic_softc *dev)
 				/* Try old direction */
 				GET_SBIC_data(regs,i);
 				GET_SBIC_asr(regs, asr);
-				if( asr & SBIC_ASR_DBR) /* Wants us to write */
+				if (asr & SBIC_ASR_DBR) /* Wants us to write */
 					SET_SBIC_data(regs,i);
 			}
 			GET_SBIC_asr(regs, asr);
 		}
 
-		if(asr & SBIC_ASR_LCI) printf("sbicpoll: LCI asr:%02x csr:%02x\n",
+		if (asr & SBIC_ASR_LCI) printf("sbicpoll: LCI asr:%02x csr:%02x\n",
 					      asr,csr);
-		else if( i == 1 ) /* BSY */
+		else if (i == 1) /* BSY */
 			SBIC_WAIT(regs, SBIC_ASR_INT, sbic_cmd_wait);
-	} while(i == SBIC_STATE_RUNNING);
+	} while (i == SBIC_STATE_RUNNING);
 	CSR_TRACE('p',csr,asr,i<<4);
 	SBIC_TRACE(dev);
 	return(1);
@@ -1929,7 +1935,7 @@ sbicmsgin(struct sbic_softc *dev)
 
 	GET_SBIC_asr(regs, asr);
 #ifdef DEBUG
-	if(reselect_debug>1)
+	if (reselect_debug>1)
 		printf("sbicmsgin asr=%02x\n", asr);
 #endif
 
@@ -1942,7 +1948,7 @@ sbicmsgin(struct sbic_softc *dev)
 	tmpaddr = dev->sc_msg;
 	recvlen = 1;
 	do {
-		while( recvlen-- ) {
+		while (recvlen--) {
 			GET_SBIC_asr(regs, asr);
 			GET_SBIC_csr(regs, csr);
 			QPRINTF(("sbicmsgin ready to go (csr,asr)=(%02x,%02x)\n",
@@ -1965,17 +1971,17 @@ sbicmsgin(struct sbic_softc *dev)
 				csr = 0xff;
 				GET_SBIC_csr(regs, csr);
 				CSR_TRACE('X',csr,asr,dev->target);
-				if( csr == 0xff )
+				if (csr == 0xff)
 					printf("sbicmsgin waiting: csr %02x asr %02x\n", csr, asr);
-			} while( csr == 0xff );
+			} while (csr == 0xff);
 #endif
 #ifdef DEBUG
-			if(reselect_debug>1)
+			if (reselect_debug>1)
 				printf("sbicmsgin: got %02x csr %02x asr %02x\n",
 				       *tmpaddr, csr, asr);
 #endif
 #if do_parity_check
-			if( asr & SBIC_ASR_PE ) {
+			if (asr & SBIC_ASR_PE) {
 				printf ("Parity error");
 				/* This code simply does not work. */
 				WAIT_CIP(regs);
@@ -1985,20 +1991,20 @@ sbicmsgin(struct sbic_softc *dev)
 				WAIT_CIP(regs);
 				SET_SBIC_cmd(regs, SBIC_CMD_CLR_ACK);
 				WAIT_CIP(regs);
-				if( !(asr & SBIC_ASR_LCI) )
+				if (!(asr & SBIC_ASR_LCI))
 					/* Target wants to send garbled msg*/
 					continue;
 				printf("--fixing\n");
 				/* loop until a msgout phase occurs on target */
-				while(csr & 0x07 != MESG_OUT_PHASE) {
-					while( asr & SBIC_ASR_BSY &&
-					      !(asr & SBIC_ASR_DBR|SBIC_ASR_INT) )
+				while ((csr & 0x07) != MESG_OUT_PHASE) {
+					while ((asr & SBIC_ASR_BSY) &&
+					      !(asr & SBIC_ASR_DBR|SBIC_ASR_INT))
 						GET_SBIC_asr(regs, asr);
-					if( asr & SBIC_ASR_DBR )
+					if (asr & SBIC_ASR_DBR)
 						panic("msgin: jammed again!");
 					GET_SBIC_csr(regs, csr);
 					CSR_TRACE('e',csr,asr,dev->target);
-					if( csr & 0x07 != MESG_OUT_PHASE ) {
+					if ((csr & 0x07) != MESG_OUT_PHASE) {
 						sbicnextstate(dev, csr, asr);
 						sbic_save_ptrs(dev, regs,
 							       dev->target,
@@ -2012,7 +2018,7 @@ sbicmsgin(struct sbic_softc *dev)
 #endif
 				tmpaddr++;
 
-			if(recvlen) {
+			if (recvlen) {
 				/* Clear ACK */
 				WAIT_CIP(regs);
 				GET_SBIC_asr(regs, asr);
@@ -2026,7 +2032,7 @@ sbicmsgin(struct sbic_softc *dev)
 
 		};
 
-		if(dev->sc_msg[0] == 0xff) {
+		if (dev->sc_msg[0] == 0xff) {
 			printf("sbicmsgin: sbic swallowed our message\n");
 			break;
 		}
@@ -2073,17 +2079,17 @@ sbicmsgin(struct sbic_softc *dev)
 		} else if (dev->sc_msg[0] == MSG_DISCONNECT) {
 			QPRINTF(("DISCONNECT"));
 #ifdef DEBUG
-			if( reselect_debug>1 && dev->sc_msg[0] == MSG_DISCONNECT )
+			if (reselect_debug>1 && dev->sc_msg[0] == MSG_DISCONNECT)
 				printf("sbicmsgin: got disconnect msg %s\n",
 				       (dev->sc_flags & SBICF_ICMD)?"rejecting":"");
 #endif
-			if( dev->sc_flags & SBICF_ICMD ) {
+			if (dev->sc_flags & SBICF_ICMD) {
 				/* We're in immediate mode. Prevent disconnects. */
 				/* prepare to reject the message, NACK */
 				SET_SBIC_cmd(regs, SBIC_CMD_SET_ATN);
 				WAIT_CIP(regs);
 			}
-		} else if (dev->sc_msg[0] == MSG_CMD_COMPLETE ) {
+		} else if (dev->sc_msg[0] == MSG_CMD_COMPLETE) {
 			QPRINTF(("CMD_COMPLETE"));
 			/* !! KLUDGE ALERT !! quite a few drives don't seem to
 			 * really like the current way of sending the
@@ -2109,7 +2115,7 @@ sbicmsgin(struct sbic_softc *dev)
 #endif
 			/* Check to see if sbic is handling this */
 			GET_SBIC_asr(regs, asr);
-			if(asr & SBIC_ASR_BSY)
+			if (asr & SBIC_ASR_BSY)
 				return SBIC_STATE_RUNNING;
 
 			/* Let's try this: Assume it works and set status to 00 */
@@ -2166,7 +2172,7 @@ sbicmsgin(struct sbic_softc *dev)
 		SBIC_WAIT(regs, SBIC_ASR_INT, 0);
 	}
 #if 0
-	while((csr == SBIC_CSR_MSGIN_W_ACK)
+	while ((csr == SBIC_CSR_MSGIN_W_ACK)
 	      || (SBIC_PHASE(csr) == MESG_IN_PHASE));
 #else
 	while (recvlen>0);
@@ -2239,7 +2245,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		}
 #endif
 #ifdef DEBUG
-		if( data_pointer_debug > 1 )
+		if (data_pointer_debug > 1)
 			printf("next dmastop: %d(%p:%lx)\n",
 			       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
 		dev->sc_dmatimo = 0;
@@ -2251,7 +2257,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 				    device_xname(dev->sc_dev), acb->sc_usrbufpa,
 				    (unsigned)kvtop(acb->sc_dmausrbuf));
 #ifdef DEBUG
-			if(data_pointer_debug)
+			if (data_pointer_debug)
 			printf("sbicgo:copying %lx bytes from target %d bounce %x\n",
 			       acb->sc_dmausrlen,
 			       dev->target,
@@ -2274,8 +2280,8 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 	case SBIC_CSR_MIS_1|DATA_IN_PHASE:
 	case SBIC_CSR_MIS_2|DATA_OUT_PHASE:
 	case SBIC_CSR_MIS_2|DATA_IN_PHASE:
-		if( dev->sc_xs->xs_control & XS_CTL_POLL || dev->sc_flags & SBICF_ICMD
-		   || acb->sc_dmacmd == 0 ) {
+		if ((dev->sc_xs->xs_control & XS_CTL_POLL) ||
+		    (dev->sc_flags & SBICF_ICMD) || acb->sc_dmacmd == 0) {
 			/* Do PIO */
 			SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
 			if (acb->sc_kv.dc_count <= 0) {
@@ -2284,10 +2290,10 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 				goto abort;
 			}
 			wait = sbic_data_wait;
-			if( sbicxfstart(regs,
+			if (sbicxfstart(regs,
 					acb->sc_kv.dc_count,
 					SBIC_PHASE(csr), wait)) {
-				if( SBIC_PHASE(csr) == DATA_IN_PHASE )
+				if (SBIC_PHASE(csr) == DATA_IN_PHASE)
 					/* data in? */
 					i=sbicxfin(regs,
 						   acb->sc_kv.dc_count,
@@ -2326,7 +2332,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			sbic_load_ptrs(dev, regs, dev->target, dev->lun);
 #endif
 #ifdef DEBUG
-			if( data_pointer_debug > 1 )
+			if (data_pointer_debug > 1)
 				printf("next dmanext: %d(%p:%lx)\n",
 				       dev->target,dev->sc_cur->dc_addr,
 				       dev->sc_tcnt);
@@ -2368,7 +2374,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		 */
 		SEND_BYTE(regs, MSG_REJECT);
 		WAIT_CIP(regs);
-		if( asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP) )
+		if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP))
 			printf("next: REJECT sent asr %02x\n", asr);
 		SBIC_TRACE(dev);
 		return SBIC_STATE_RUNNING;
@@ -2379,7 +2385,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 
 		/* Try to schedule another target */
 #ifdef DEBUG
-		if(reselect_debug>1)
+		if (reselect_debug>1)
 			printf("sbicnext target %d disconnected\n", dev->target);
 #endif
 		TAILQ_INSERT_HEAD(&dev->nexus_list, acb, chain);
@@ -2387,9 +2393,9 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 
-		if( acb->xs->xs_control & XS_CTL_POLL
+		if ((acb->xs->xs_control & XS_CTL_POLL)
 		   || (dev->sc_flags & SBICF_ICMD)
-		   || !sbic_parallel_operations ) {
+		   || !sbic_parallel_operations) {
 			SBIC_TRACE(dev);
 			return SBIC_STATE_DISCONNECT;
 		}
@@ -2437,7 +2443,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			}
 		}
 #ifdef DEBUG
-		if(reselect_debug>1 || (reselect_debug && csr==SBIC_CSR_RSLT_NI))
+		if (reselect_debug>1 || (reselect_debug && csr==SBIC_CSR_RSLT_NI))
 			printf("sbicnext: reselect %s from targ %d lun %d\n",
 			    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY",
 			    newtarget, newlun);
@@ -2497,7 +2503,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		Debugger();
 #endif
 #ifdef DEBUG
-		if( data_pointer_debug > 1 )
+		if (data_pointer_debug > 1)
 			printf("next dmastop: %d(%p:%lx)\n",
 			       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
 		dev->sc_dmatimo = 0;
@@ -2522,7 +2528,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			dev->sc_flags &=
 				~(SBICF_INDMA | SBICF_DCFLUSH);
 #ifdef DEBUG
-			if( data_pointer_debug > 1 )
+			if (data_pointer_debug > 1)
 				printf("next dmastop: %d(%p:%lx)\n",
 				    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
 			dev->sc_dmatimo = 0;
@@ -2636,7 +2642,7 @@ sbictimeout(struct sbic_softc *dev)
 			printf("%s: DMA timeout #%d\n",
 			    device_xname(dev->sc_dev), dev->sc_dmatimo - 1);
 			GET_SBIC_asr(dev->sc_sbic, asr);
-			if( asr & SBIC_ASR_INT ) {
+			if (asr & SBIC_ASR_INT) {
 				/* We need to service a missed IRQ */
 				printf("Servicing a missed int:(%02x,%02x)->(%02x,?)\n",
 				    debug_asr, debug_csr, asr);

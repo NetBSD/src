@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitExecAllocator.c,v 1.1.1.1.4.3 2014/08/20 00:04:25 tls Exp $	*/
+/*	$NetBSD: sljitExecAllocator.c,v 1.1.1.1.4.4 2017/12/03 11:38:03 jdolecek Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -145,10 +145,10 @@ struct free_block {
 };
 
 #define AS_BLOCK_HEADER(base, offset) \
-	((struct block_header*)(((sljit_ub*)base) + offset))
+	((struct block_header*)(((sljit_u8*)base) + offset))
 #define AS_FREE_BLOCK(base, offset) \
-	((struct free_block*)(((sljit_ub*)base) + offset))
-#define MEM_START(base)		((void*)(((sljit_ub*)base) + sizeof(struct block_header)))
+	((struct free_block*)(((sljit_u8*)base) + offset))
+#define MEM_START(base)		((void*)(((sljit_u8*)base) + sizeof(struct block_header)))
 #define ALIGN_SIZE(size)	(((size) + sizeof(struct block_header) + 7) & ~7)
 
 static struct free_block* free_blocks;
@@ -161,7 +161,7 @@ static SLJIT_INLINE void sljit_insert_free_block(struct free_block *free_block, 
 	free_block->size = size;
 
 	free_block->next = free_blocks;
-	free_block->prev = 0;
+	free_block->prev = NULL;
 	if (free_blocks)
 		free_blocks->prev = free_block;
 	free_blocks = free_block;

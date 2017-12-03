@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.h,v 1.4.42.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: tsc.h,v 1.4.42.2 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,3 +31,5 @@ void	tsc_tc_init(void);
 void	tsc_sync_ap(struct cpu_info *);
 void	tsc_sync_bp(struct cpu_info *);
 void	tsc_sync_drift(int64_t);
+void	tsc_user_enable(void);
+void	tsc_user_disable(void);

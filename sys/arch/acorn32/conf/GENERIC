@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.103.2.4 2014/08/20 00:02:40 tls Exp $
+# 	$NetBSD: GENERIC,v 1.103.2.5 2017/12/03 11:35:44 jdolecek Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/acorn32/conf/std.acorn32"
+include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.103.2.4 $"
+#ident		"GENERIC-$Revision: 1.103.2.5 $"
 
 # estimated number of users
 maxusers	32
@@ -73,6 +73,7 @@ options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 
@@ -104,23 +105,8 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options		COMPAT_20	# NetBSD 2.0 compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
-options		COMPAT_15	# NetBSD 1.5 compatibility.
-options 	COMPAT_14	# NetBSD 1.4 compatibility.
-options 	COMPAT_13	# NetBSD 1.3 compatibility.
-options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd12.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Shared memory options
 
@@ -137,7 +123,6 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -247,6 +232,8 @@ lpt*	at pioc? offset 0x0278 irq 0	# Old driver
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
 
+spkr*	at audio?			# PC speaker (synthesized)
+
 # Podule bus device
 podulebus0	at root
 
@@ -351,12 +338,9 @@ pseudo-device   accf_http		# "httpready" accept filter
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 # If the standard modes don't work for your monitor, you can specify
 # a RISC-OS-format monitor definition file and a list of modes here.

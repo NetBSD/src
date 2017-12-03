@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.9 2012/07/27 16:25:11 jakllsch Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.9.2.1 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@ struct amr_softc {
 	int	(*amr_get_work)(struct amr_softc *, struct amr_mailbox_resp *);
 	int	(*amr_submit)(struct amr_softc *sc, struct amr_ccb *);
 
+	kmutex_t		amr_mutex;
+
 	int			amr_numdrives;
 	struct amr_logdrive	amr_drive[AMR_MAX_UNITS];
 };
@@ -122,6 +124,8 @@ struct amr_ccb {
 	void 		*ac_context;
 	device_t	ac_dv;
 	struct amr_mailbox_cmd	ac_cmd;
+	kmutex_t	ac_mutex;
+	kcondvar_t	ac_cv;
 };
 #define	AC_XFER_IN	0x01	/* Map describes inbound xfer */
 #define	AC_XFER_OUT	0x02	/* Map describes outbound xfer */

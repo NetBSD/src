@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.58.6.1 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: esa.c,v 1.58.6.2 2017/12/03 11:37:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.58.6.1 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.58.6.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -463,8 +463,6 @@ esa_malloc(void *hdl, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 	vc = hdl;
 	sc = device_private(vc->parent);
 	error = esa_allocmem(sc, size, 16, p);
@@ -1092,13 +1090,6 @@ esa_attach(device_t parent, device_t self, void *aux)
 	sc->savememsz = sizeof(uint16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
 	sc->savemem = kmem_zalloc(sc->savememsz, KM_SLEEP);
-	if (sc->savemem == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate suspend buffer\n");
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
-		return;
-	}
 
 	/*
 	 * Every card I've seen has had their channels swapped with respect

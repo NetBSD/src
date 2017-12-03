@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.8.2.2 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.8.2.3 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -68,12 +68,10 @@ ENTRY(arm11_context_switch)
 	 * We can assume that the caches will only contain kernel addresses
 	 * at this point.  So no need to flush them again.
 	 */
-#ifdef ARM_MMU_EXTENDED
-	cmp	r1, #0
-#endif
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTBR0 */
 #ifdef ARM_MMU_EXTENDED
+	cmp	r1, #0
 	mcreq	p15, 0, r0, c2, c0, 1	/* set the new TTBR1 */
 #else
 	mcr	p15, 0, r0, c8, c7, 0	/* and flush the I+D tlbs */
@@ -99,7 +97,8 @@ END(arm11_tlb_flushI)
 
 ENTRY(arm11_tlb_flushI_SE)
 #ifdef ARM_MMU_EXTENDED
-	orr	r0, r0, r1		/* insert ASID into MVA */
+	bic	r0, r0, #0xff
+	bic	r0, r0, #0xf00		/* Always KERNEL_PID, i.e. 0 */
 #endif
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
 #if PAGE_SIZE == 2 * L2_S_SIZE
@@ -121,7 +120,8 @@ END(arm11_tlb_flushD)
 
 ENTRY(arm11_tlb_flushD_SE)
 #ifdef ARM_MMU_EXTENDED
-	orr	r0, r0, r1		/* insert ASID into MVA */
+	bic	r0, r0, #0xff
+	bic	r0, r0, #0xf00		/* Always KERNEL_PID, i.e. 0 */
 #endif
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 #if PAGE_SIZE == 2 * L2_S_SIZE
@@ -142,7 +142,8 @@ END(arm11_tlb_flushID)
 
 ENTRY(arm11_tlb_flushID_SE)
 #ifdef ARM_MMU_EXTENDED
-	orr	r0, r0, r1		/* insert ASID into MVA */
+	bic	r0, r0, #0xff
+	bic	r0, r0, #0xf00		/* Always KERNEL_PID, i.e. 0 */
 #endif
 	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
 #if PAGE_SIZE == 2 * L2_S_SIZE

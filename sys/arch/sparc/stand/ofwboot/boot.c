@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29.2.1 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: boot.c,v 1.29.2.2 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -141,7 +141,7 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 		}
 		end1 = ap;
 
-		while (*ap != '\0' && *ap == ' ') {
+		while (*ap == ' ') {
 			ap++;
 		}
 
@@ -284,6 +284,9 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw,
 	bi_add(&bi_kend, BTINFO_KERNEND, sizeof(bi_kend));
 	bi_howto.boothowto = boothowto;
 	bi_add(&bi_howto, BTINFO_BOOTHOWTO, sizeof(bi_howto));
+	if (bootinfo_pass_bootunit)
+		bi_add(&bi_unit, BTINFO_BOOTDEV_UNIT,
+		    sizeof(bi_unit));
 	if (bootinfo_pass_bootdev) {
 		struct {
 			struct btinfo_common common;
@@ -364,8 +367,9 @@ start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy,
 	int boothowto)
 {
 	int fd;
-	u_long marks[MARK_MAX];
+	u_long marks[MARK_MAX] = {0};
 	int flags = LOAD_ALL;
+
 	if (isfloppy)
 		flags &= ~LOAD_BACKWARDS;
 
@@ -463,7 +467,7 @@ main(void *ofw)
 			char cmdline[PROM_MAX_PATH];
 
 			printf("Boot: ");
-			gets(cmdline);
+			kgets(cmdline, sizeof(cmdline));
 
 			if (!strcmp(cmdline,"exit") ||
 			    !strcmp(cmdline,"halt")) {

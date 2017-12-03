@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.3.2.2 2017/12/03 11:38:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -17,7 +17,13 @@
 #include <sys/param.h>
 #if defined(__NetBSD__)
 # if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
-#  include "opt_ipfilter.h"
+#  if (__NetBSD_Version__ >= 799003000)
+#   if defined(_KERNEL_OPT)
+#    include "opt_ipfilter.h"
+#   endif
+#  else
+#   include "opt_ipfilter.h"
+#  endif
 # endif
 #endif
 #include <sys/errno.h>
@@ -68,7 +74,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.3.2.2 2017/12/03 11:38:02 jdolecek Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_lookup.c,v 1.1.1.2 2012/07/22 13:45:21 darrenr Exp";
 #endif

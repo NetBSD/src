@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/04/04 19:46:40 dyoung Exp $
+#	$NetBSD: Makefile,v 1.8.14.1 2017/12/03 11:36:08 jdolecek Exp $
 
 # Makefile for evbmips tags file and boot blocks
 
@@ -16,7 +16,9 @@ SEVBMIPS+=	${SYSDIR}/arch/evbmips/include/*.h
 SEVBMIPS+=	${SYSDIR}/arch/evbmips/isa/*.[ch]
 SEVBMIPS+=	${SYSDIR}/arch/evbmips/malta/*.[ch]
 SEVBMIPS+=	${SYSDIR}/arch/evbmips/rmixl/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/sbmips/*.[ch]
 AEVBMIPS=	${SYSDIR}/arch/evbmips/evbmips/*.S
+AEVBMIPS+=	${SYSDIR}/arch/evbmips/sbmips/*.S
 
 # Directories in which to place tags links
 DEVBMIPS= evbmips include isa pci
@@ -38,6 +40,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	compile include
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

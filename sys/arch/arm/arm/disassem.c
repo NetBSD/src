@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.19.2.2 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: disassem.c,v 1.19.2.3 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.2 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.3 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/systm.h>
 
@@ -71,15 +71,21 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.2 2014/08/20 00:02:44 tls Exp $"
  * the instruction. The only exception is the writeback flag which
  * follows a operand.
  *
- *
+ * !c - cps flags and mode
+ * !d - debug option (bit 0-3)
+ * !l - dmb/dsb limitation
+ * !m - mode
  * 2 - print Operand 2 of a data processing instruction
  * a - address operand of ldr/str instruction
  * b - branch address
  * c - comment field bits(0-23)
  * d - destination register (bits 12-15)
+ * e - address operand of ldrx/strx instruction
  * f - 1st fp operand (register) (bits 12-14)
  * g - 2nd fp operand (register) (bits 16-18)
  * h - 3rd fp operand (register/immediate) (bits 0-4)
+ * i - lsb operand (bits 7-11)
+ * j - msb operand (bits 6,7,12-14)
  * k - breakpoint comment (bits 0-3, 8-19)
  * l - register list for ldm/stm instruction
  * m - m register (bits 0-3)
@@ -87,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.2 2014/08/20 00:02:44 tls Exp $"
  * o - indirect register rn (bits 16-19) (used by swap)
  * p - saved or current status register
  * q - neon N register (7, 19-16)
+ * r - width minus 1 (bits 16-20)
  * s - s register (bits 8-11)
  * t - thumb branch address (bits 24, 0-23)
  * u - neon M register (5, 3-0)
@@ -95,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.2 2014/08/20 00:02:44 tls Exp $"
  * x - instruction in hex
  * y - co-processor data processing registers
  * z - co-processor register transfer registers
+ * C - cps effect
  * D - destination-is-r15 (P) flag on TST, TEQ, CMP, CMN
  * F - PSR transfer fields
  * I - NEON operand size
@@ -120,35 +128,131 @@ struct arm32_insn {
 };
 
 static const struct arm32_insn arm32_i[] = {
-    { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
-    { 0x0fffffff, 0x0ff00001, "imbrange",	"c" },	/* Before swi */
-    { 0x0fffffff, 0x0320f003, "yield",	"" },	/* Before swi */
-    { 0x0fffffff, 0x0320f002, "wfe",	"" },	/* Before swi */
-    { 0x0fffffff, 0x0320f003, "wfi",	"" },	/* Before swi */
-    { 0x0f000000, 0x0f000000, "swi",	"c" },
+    /* A5.7 Unconditional instructions */
+    /*
+     * A5.7.1 Memory hints, Advanced SIMD instructions, and
+     * miscellaneous instructions
+     */
+    { 0xfff10020, 0xf1000000, "cps",	"C!c" },
+    { 0xfff100f0, 0xf1010000, "setend\tle", "" },
+    { 0xfff102f0, 0xf1010200, "setend\tbe", "" },
+/* pli */
+/* pld */
+    { 0xffffffff, 0xf57ff01f, "clrex",  "" },
+    { 0xfffffff0, 0xf57ff040, "dsb",    "!l" },
+    { 0xfffffff0, 0xf57ff050, "dmb",    "!l" },
+    { 0xfffffff0, 0xf57ff060, "isb",    "" },
+/* pli */
+/* pld */
+
+    //{ 0x0e100000, 0x08000000, "stm",	"XnWl" },
+    { 0xfe5fffe0, 0xf84d0500, "srs",	"XnW!m" },
+    { 0xfe50ffff, 0xf8100a00, "rfe",	"XnW" },
     { 0xfe000000, 0xfa000000, "blx",	"t" },		/* Before b and bl */
-    { 0x0f000000, 0x0a000000, "b",	"b" },
-    { 0x0f000000, 0x0b000000, "bl",	"b" },
-    { 0x0fe000f0, 0x00000090, "mul",	"Snms" },
-    { 0x0fe000f0, 0x00200090, "mla",	"Snmsd" },
-    { 0x0fe000f0, 0x00800090, "umull",	"Sdnms" },
-    { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
-    { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
-    { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
+    { 0x0ff00000, 0x0c400000, "mcrr",	"#&" },
+    { 0x0ff00000, 0x0c500000, "mrrc",	"#&" },
+    { 0xfe100090, 0xfc000000, "stc2",	"L#v" },
+    { 0x0e100090, 0x0c000000, "stc",	"L#v" },
+    { 0xfe100090, 0xfc100000, "ldc2",	"L#v" },
+    { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
+    { 0xff000010, 0xfe000000, "cdp2",	"#y" },
+    { 0x0f000010, 0x0e000000, "cdp",	"#y" },
+    { 0xff100010, 0xfe000010, "mcr2",	"#z" },
+    { 0x0f100010, 0x0e000010, "mcr",	"#z" },
+    { 0xff100010, 0xfe100010, "mrc2",	"#z" },
+    { 0x0f100010, 0x0e100010, "mrc",	"#z" },
+
+    /* A5.4 Media instructions  */
+    { 0x0fe00070, 0x07c00050, "sbfx",	"dmir" },
+    { 0x0fe0007f, 0x07c0001f, "bfc",    "dij" },
+    { 0x0fe00070, 0x07c00010, "bfi",    "dmij" },
+    { 0x0fe00070, 0x07e00050, "ubfx",	"dmir" },
+    { 0xfff000f0, 0xe70000f0, "und",	"x" },		/* Special immediate? */
+
+    { 0x0e000010, 0x06000010, "und",	"x" },		/* Remove when done with media */
+
     { 0x0d700000, 0x04200000, "strt",	"daW" },
     { 0x0d700000, 0x04300000, "ldrt",	"daW" },
     { 0x0d700000, 0x04600000, "strbt",	"daW" },
     { 0x0d700000, 0x04700000, "ldrbt",	"daW" },
+
     { 0x0c500000, 0x04000000, "str",	"daW" },
     { 0x0c500000, 0x04100000, "ldr",	"daW" },
     { 0x0c500000, 0x04400000, "strb",	"daW" },
     { 0x0c500000, 0x04500000, "ldrb",	"daW" },
+
+
+    /* A5.5 Branch, branch with link, and block data transfer */
     { 0x0fff0000, 0x092d0000, "push",	"l" },	/* separate out r13 base */
     { 0x0fff0000, 0x08bd0000, "pop",	"l" },	/* separate out r13 base */
     { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
-    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
+    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
-    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
+    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },
+    { 0x0f000000, 0x0a000000, "b",	"b" },
+    { 0x0f000000, 0x0b000000, "bl",	"b" },
+
+    { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
+    { 0x0fffffff, 0x0ff00001, "imbrange", "c" },	/* Before swi */
+    { 0x0f000000, 0x0f000000, "swi",	"c" },
+
+    /*
+     * A5.2 Data-process and miscellaneous instructions
+     */
+
+    /* A5.2 exceptions */
+
+    /* A5.2.7 Halfword multiply and multiply accumulate */
+
+    /* A5.2.9 Extra load/store instructions, unprivileged */
+
+    { 0x0f3000f0, 0x002000b0, "strht",	"de" },
+    { 0x0f3000f0, 0x003000b0, "ldrht",	"de" },
+    { 0x0f3000f0, 0x003000d0, "ldrsbt",	"de" },
+    { 0x0f3000f0, 0x003000f0, "ldrsht",	"de" },
+
+    /* A5.2.8 Extra load/store instructions */
+
+    { 0x0e1000f0, 0x000000b0, "strh",	"de" },
+    { 0x0e1000f0, 0x001000b0, "ldrh",	"de" },
+
+    { 0x0e1000f0, 0x000000d0, "ldrd",	"de" },
+    { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
+
+    { 0x0e1000f0, 0x000000f0, "strd",	"de" },
+    { 0x0e1000f0, 0x001000f0, "ldrsh",	"de" },
+
+    /* A5.2.11 MSR (immediate), and hints */
+    { 0x0fffffff, 0x0320f000, "nop",	"" },
+    { 0x0fffffff, 0x0320f001, "yield",	"" },
+    { 0x0fffffff, 0x0320f002, "wfe",	"" },
+    { 0x0fffffff, 0x0320f003, "wfi",	"" },
+    { 0x0fffffff, 0x0320f004, "sev",	"" },
+    { 0x0ffffff0, 0x0320f0f0, "dbg",	"!d" },
+
+    /* A5.2.12 Miscellaneous instructions - before data processing */
+
+    { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },	/* A8.8.109, B9.3.8 */
+    { 0x0fb00eff, 0x01000200, "mrs",	"c" },	/* XXXNH: B9.3.9 */
+    { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },
+    { 0x0fe0f000, 0x0320f000, "msr",	"pF2" },
+
+    { 0x0ffffff0, 0x012fff10, "bx",	"m" },
+    { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
+/* bxj */
+    { 0x0ffffff0, 0x012fff30, "blx",	"m" },
+/* saturating */
+/* eret */
+    { 0xfff000f0, 0xe1200070, "bkpt",	"k" },
+/* hvc */
+/* smc */
+
+    { 0x0ff00000, 0x03000000, "movw", 	"dZ" },
+    { 0x0ff00000, 0x03400000, "movt", 	"dZ" },
+
+    /* A5.2.10 Synchronisation primitives */
+    { 0x0ff00ff0, 0x01000090, "swp",	"dmo" },
+    { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
     { 0x0ff00fff, 0x01900f9f, "ldrex",	"da" },
     { 0x0ff00fff, 0x01b00f9f, "ldrexd",	"da" },
     { 0x0ff00fff, 0x01d00f9f, "ldrexb",	"da" },
@@ -157,41 +261,36 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0ff00ff0, 0x01a00f90, "strexd",	"dma" },
     { 0x0ff00ff0, 0x01c00f90, "strexb",	"dma" },
     { 0x0ff00ff0, 0x01e00f90, "strexh",	"dma" },
-    { 0x0e1000f0, 0x00100090, "ldrb",	"de" },
-    { 0x0e1000f0, 0x00000090, "strb",	"de" },
-    { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
-    { 0x0e1000f0, 0x001000b0, "ldrh",	"de" },
-    { 0x0e1000f0, 0x000000b0, "strh",	"de" },
-    { 0x0e1000f0, 0x001000f0, "ldrsh",	"de" },
-    { 0x0f200090, 0x00200090, "und",	"x" },	/* Before data processing */
-    { 0x0e1000d0, 0x000000d0, "und",	"x" },	/* Before data processing */
-    { 0x0ff00ff0, 0x01000090, "swp",	"dmo" },
-    { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
-    { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },	/* Before data processing */
-    { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },/* Before data processing */
-    { 0x0fe0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
-    { 0x0ffffff0, 0x012fff10, "bx",	"m" },
-    { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
-    { 0x0ffffff0, 0x012fff30, "blx",	"m" },
-    { 0xfff000f0, 0xe1200070, "bkpt",	"k" },
-    { 0x0fe00000, 0x02000000, "and",	"Sdn2" },
-    { 0x0fe00000, 0x02200000, "eor",	"Sdn2" },
-    { 0x0fe00000, 0x02400000, "sub",	"Sdn2" },
-    { 0x0fe00000, 0x02600000, "rsb",	"Sdn2" },
-    { 0x0fe00000, 0x02800000, "add",	"Sdn2" },
-    { 0x0fe00000, 0x02a00000, "adc",	"Sdn2" },
-    { 0x0fe00000, 0x02c00000, "sbc",	"Sdn2" },
-    { 0x0fe00000, 0x02e00000, "rsc",	"Sdn2" },
-    { 0x0ff00000, 0x03000000, "movw", 	"dZ" },
-    { 0x0ff00000, 0x03100000, "tst",	"Dn2" },
-    { 0x0ff00000, 0x03300000, "teq",	"Dn2" },
-    { 0x0ff00000, 0x03400000, "movt", 	"dZ" },
-    { 0x0ff00000, 0x03500000, "cmp",	"Dn2" },
-    { 0x0ff00000, 0x03700000, "cmn",	"Dn2" },
-    { 0x0fe00000, 0x03800000, "orr",	"Sdn2" },
+
+    /* A5.2 non-exceptions */
+
+    /* A5.2.1, A5.2.2, and A5.2.3 Data-processing */
+    { 0x0de00000, 0x00000000, "and",	"Sdn2" },
+    { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
+    { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
+    { 0x0de00000, 0x00600000, "rsb",	"Sdn2" },
+    { 0x0de00000, 0x00800000, "add",	"Sdn2" },
+    { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
+    { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
+    { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
+    { 0x0df00000, 0x01100000, "tst",	"Dn2" },
+    { 0x0df00000, 0x01300000, "teq",	"Dn2" },
+    { 0x0df00000, 0x01500000, "cmp",	"Dn2" },
+    { 0x0df00000, 0x01700000, "cmn",	"Dn2" },
+    { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
     { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
-    { 0x0fe00000, 0x03c00000, "bic",	"Sdn2" },
-    { 0x0fe00000, 0x03e00000, "mvn",	"Sd2" },
+    { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
+    { 0x0de00000, 0x01e00000, "mvn",	"Sd2" },
+
+    /* A5.2.5 Multiply and multiply accumulate */
+    { 0x0fe000f0, 0x00000090, "mul",	"Snms" },
+    { 0x0fe000f0, 0x00200090, "mla",	"Snmsd" },
+    { 0x0fe000f0, 0x00800090, "umull",	"Sdnms" },
+    { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
+    { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
+    { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
+
+    /* */
     { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },
     { 0x0ff08f10, 0x0e100100, "muf",	"PRfgh" },
     { 0x0ff08f10, 0x0e200100, "suf",	"PRfgh" },
@@ -233,19 +332,7 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0ff0ff10, 0x0eb0f110, "cnf",	"PRgh" },
     { 0x0ff0ff10, 0x0ed0f110, "cmfe",	"PRgh" },
     { 0x0ff0ff10, 0x0ef0f110, "cnfe",	"PRgh" },
-    { 0xff100010, 0xfe000010, "mcr2",	"#z" },
-    { 0x0f100010, 0x0e000010, "mcr",	"#z" },
-    { 0xff100010, 0xfe100010, "mrc2",	"#z" },
-    { 0x0f100010, 0x0e100010, "mrc",	"#z" },
-    { 0xff000010, 0xfe000000, "cdp2",	"#y" },
-    { 0x0f000010, 0x0e000000, "cdp",	"#y" },
-    { 0x0f100010, 0x0e000010, "mcr",	"#z" },
-    { 0x0ff00000, 0x0c400000, "mcrr",	"#&" },
-    { 0x0ff00000, 0x0c500000, "mrrc",	"#&" },
-    { 0xfe100090, 0xfc100000, "ldc2",	"L#v" },
-    { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
-    { 0xfe100090, 0xfc000000, "stc2",	"L#v" },
-    { 0x0e100090, 0x0c000000, "stc",	"L#v" },
+
     { 0xffb00f10, 0xf2000110, "vand",	"Nuqw" },
     { 0xffb00f10, 0xf2100110, "vbic",	"Nuqw" },
     { 0xffb00f10, 0xf2200110, "vorr",	"Nuqw" },
@@ -276,11 +363,31 @@ static char const insn_block_transfers[][4] = {
 };
 
 static char const insn_stack_block_transfers[][4] = {
-	"ed", "ea", "fd", "fa"
+	"ed", "ea", "fd", "fa",	/* stm */
+	"fa", "fd", "ea", "ed",	/* ldm */
 };
 
 static char const op_shifts[][4] = {
 	"lsl", "lsr", "asr", "ror"
+};
+
+static char const *insn_barrier_limiation[] = {
+	"",
+	"",
+	"oshst",	/* 0b0010 */
+	"osh",		/* 0b0011 */
+	"",
+	"",
+	"nshst",	/* 0b0110 */
+	"nsh",		/* 0b0111 */
+	"",
+	"",
+	"ishst",	/* 0b1010 */
+	"ish",		/* 0b1011 */
+	"",
+	"",
+	"st",		/* 0b1110 */
+	"sy",		/* 0b1111 */
 };
 
 static char const insn_fpa_rounding[][2] = {
@@ -298,7 +405,8 @@ static char const insn_fpaconstants[][8] = {
 
 #define insn_condition(x)	arm32_insn_conditions[(x >> 28) & 0x0f]
 #define insn_blktrans(x)	insn_block_transfers[(x >> 23) & 3]
-#define insn_stkblktrans(x)	insn_stack_block_transfers[(x >> 23) & 3]
+#define insn_stkblktrans(x)	insn_stack_block_transfers[((x >> (20 - 2)) & 4)|((x >> 23) & 3)]
+#define insn_limitation(x)	insn_barrier_limiation[x & 0xf]
 #define op2_shift(x)		op_shifts[(x >> 5) & 3]
 #define insn_fparnd(x)		insn_fpa_rounding[(x >> 5) & 0x03]
 #define insn_fpaprec(x)		insn_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 1]
@@ -306,21 +414,23 @@ static char const insn_fpaconstants[][8] = {
 #define insn_fpaimm(x)		insn_fpaconstants[x & 0x07]
 
 /* Local prototypes */
-static void disasm_register_shift(const disasm_interface_t *di, u_int insn);
-static void disasm_print_reglist(const disasm_interface_t *di, u_int insn);
-static void disasm_insn_ldrstr(const disasm_interface_t *di, u_int insn,
-    u_int loc);
-static void disasm_insn_ldrhstrh(const disasm_interface_t *di, u_int insn,
-    u_int loc);
-static void disasm_insn_ldcstc(const disasm_interface_t *di, u_int insn,
-    u_int loc);
-static u_int disassemble_readword(u_int address);
-static void disassemble_printaddr(u_int address);
+static void disasm_cps(const disasm_interface_t *, u_int);
+static void disasm_register_print(const disasm_interface_t *,u_int);
+static void disasm_register_shift(const disasm_interface_t *, u_int);
+static void disasm_print_reglist(const disasm_interface_t *, u_int);
+static void disasm_insn_ldrstr(const disasm_interface_t *, u_int,
+    u_int);
+static void disasm_insn_ldrxstrx(const disasm_interface_t *, u_int,
+    u_int);
+static void disasm_insn_ldcstc(const disasm_interface_t *, u_int,
+    u_int);
+static u_int disassemble_readword(u_int);
+static void disassemble_printaddr(u_int);
 
 vaddr_t
 disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 {
-	struct arm32_insn *i_ptr = (struct arm32_insn *)&arm32_i;
+	const struct arm32_insn *i_ptr = (const struct arm32_insn *)&arm32_i;
 
 	u_int insn;
 	int matchp;
@@ -375,21 +485,42 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 
 	while (*f_ptr) {
 		switch (*f_ptr) {
+		case '!':
+			f_ptr++;
+			switch (*f_ptr) {
+			/* !c - cps flags and mode */
+			case 'c':
+				disasm_cps(di, insn);
+				break;
+			/* !d - debug option */
+			case 'd':
+				di->di_printf("#%d", insn & 0xf);
+				break;
+ 			/* !l - barrier dmb/dsb limitation */
+			case 'l':
+				di->di_printf("%s", insn_limitation(insn));
+				break;
+			/* !m - mode */
+			case 'm':
+				di->di_printf(", #%d", insn & 0x1f);
+				break;
+			}
+			break;
 		/* 2 - print Operand 2 of a data processing instruction */
 		case '2':
 			if (insn & 0x02000000) {
-				int rotate= ((insn >> 7) & 0x1e);
-
-				di->di_printf("#0x%08x",
-					      (insn & 0xff) << (32 - rotate) |
-					      (insn & 0xff) >> rotate);
-			} else {  
+				int rotate = ((insn >> 7) & 0x1e);
+				int imm = (insn & 0xff) << (32 - rotate) |
+					      (insn & 0xff) >> rotate;
+				di->di_printf("#%d		; #0x%x",
+					      imm, imm);
+			} else {
 				disasm_register_shift(di, insn);
 			}
 			break;
 		/* d - destination register (bits 12-15) */
 		case 'd':
-			di->di_printf("r%d", ((insn >> 12) & 0x0f));
+			disasm_register_print(di, (insn >> 12) & 0x0f);
 			break;
 		/* u - neon destination register (bits 22, 12-15) */
 		case 'u':
@@ -403,7 +534,7 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 			break;
 		/* n - n register (bits 16-19) */
 		case 'n':
-			di->di_printf("r%d", ((insn >> 16) & 0x0f));
+			disasm_register_print(di, (insn >> 16) & 0x0f);
 			break;
 		/* q - neon n register (bits 7, 16-19) */
 		case 'q':
@@ -431,9 +562,9 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 		case 'a':
 			disasm_insn_ldrstr(di, insn, loc);
 			break;
-		/* e - address operand of ldrh/strh instruction */
+		/* e - address operand of ldrx/strx instruction */
 		case 'e':
-			disasm_insn_ldrhstrh(di, insn, loc);
+			disasm_insn_ldrxstrx(di, insn, loc);
 			break;
 		/* l - register list for ldm/stm instruction */
 		case 'l':
@@ -453,6 +584,19 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 				di->di_printf("#%s", insn_fpaimm(insn));
 			else
 				di->di_printf("f%d", insn & 7);
+			break;
+		/* i - lsb operand (bits 7-11) */
+		case 'i':
+			di->di_printf("#%d", (insn >> 7) & 0x1f);
+			break;
+		/* j - msb operand (bits 16-20) as width */
+		case 'j':
+			di->di_printf("#%d",
+			    ((insn >> 16) & 0x1f) - ((insn >> 7) & 0x1f) + 1);
+			break;
+ 		/* r - width minus 1 (bits 16-20) */
+		case 'r':
+			di->di_printf("#%d", ((insn >> 16) & 0x1f) + 1);
 			break;
 		/* b - branch address */
 		case 'b':
@@ -509,6 +653,13 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 				di->di_printf("spsr");
 			else
 				di->di_printf("cpsr");
+			break;
+		/* C - cps effect */
+		case 'C':
+			if ((insn & 0x000c0000) == 0x000c0000)
+				di->di_printf("id");
+			else if ((insn & 0x000c0000) == 0x00080000)
+				di->di_printf("ie");
 			break;
 		/* F - PSR transfer fields */
 		case 'F':
@@ -610,6 +761,42 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 	return(loc + INSN_SIZE);
 }
 
+static void
+disasm_register_print(const disasm_interface_t *di, u_int r)
+{
+	switch (r) {
+	case 13:
+		di->di_printf("sp");
+		break;
+	case 14:
+		di->di_printf("lr");
+		break;
+	case 15:
+		di->di_printf("pc");
+		break;
+	default:
+		di->di_printf("r%d", r);
+		break;
+	}
+}
+
+static void
+disasm_cps(const disasm_interface_t *di, u_int insn)
+{
+	if ((insn & 0x000c0000) == 0x000c0000 ||
+	    (insn & 0x000c0000) == 0x00080000) {
+		if (insn & (1 << 8))
+			di->di_printf("a");
+		if (insn & (1 << 7))
+			di->di_printf("i");
+		if (insn & (1 << 6))
+			di->di_printf("f");
+		if ((insn & (1 << 17)) && ((insn & 0x1f) != 0))
+			di->di_printf(", ");
+	}
+	if ((insn & (1 << 17)) && ((insn & 0x1f) != 0))
+		di->di_printf("#%d", insn & 0x1f);
+}
 
 static void
 disasm_register_shift(const disasm_interface_t *di, u_int insn)
@@ -696,7 +883,7 @@ disasm_insn_ldrstr(const disasm_interface_t *di, u_int insn, u_int loc)
 }
 
 static void
-disasm_insn_ldrhstrh(const disasm_interface_t *di, u_int insn, u_int loc)
+disasm_insn_ldrxstrx(const disasm_interface_t *di, u_int insn, u_int loc)
 {
 	int offset;
 
@@ -712,15 +899,17 @@ disasm_insn_ldrhstrh(const disasm_interface_t *di, u_int insn, u_int loc)
 		di->di_printf("[r%d", (insn >> 16) & 0x0f);
 		if ((insn & 0x01400f0f) != 0x01400000) {
 			di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
-			if (!(insn & 0x00800000))
-				di->di_printf("-");
+			char const *sign = (insn & 0x00800000) ? "" : "-";
 			if (insn & (1 << 22))
-				di->di_printf("#0x%02x", offset);
+				di->di_printf("#%s0x%02x", sign, offset);
 			else
-				di->di_printf("r%d", (insn & 0x0f));
+				di->di_printf("%sr%d", sign, (insn & 0x0f));
 		}
-		if (insn & (1 << 24))
+		if (insn & (1 << 24)) {
 			di->di_printf("]");
+			if (__SHIFTOUT(insn, __BIT(21)))
+				di->di_printf("!");
+		}
 	}
 }
 

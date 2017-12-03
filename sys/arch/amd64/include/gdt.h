@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.7 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: gdt.h,v 1.7.18.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,17 +35,14 @@ struct pmap;
 
 void gdt_init(void);
 void gdt_init_cpu(struct cpu_info *);
-void gdt_reload_cpu(struct cpu_info *);
 void gdt_alloc_cpu(struct cpu_info *);
 
 struct x86_64_tss;
 int tss_alloc(struct x86_64_tss *);
 void tss_free(int);
 
-void ldt_alloc(struct pmap *, char *, size_t);
-void ldt_free(struct pmap *);
-
-void set_sys_gdt(int, void *, size_t, int, int, int);
+int ldt_alloc(void *, size_t);
+void ldt_free(int);
 #endif
 
 #define MINGDTSIZ       PAGE_SIZE

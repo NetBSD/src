@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.4.6.2 2014/08/20 00:04:10 tls Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.4.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.4.6.2 2014/08/20 00:04:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.4.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <core/engine.h>
 #include <linux/swiotlb.h>
@@ -1401,8 +1401,10 @@ static int
 nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 {
 	struct ttm_dma_tt *ttm_dma = (void *)ttm;
-#ifndef __NetBSD__
+#if defined(__OS_HAS_AGP) || !defined(__NetBSD__)
 	struct nouveau_drm *drm;
+#endif
+#ifndef __NetBSD__
 	struct nouveau_device *device;
 	struct drm_device *dev;
 	unsigned i;
@@ -1425,8 +1427,10 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 	}
 #endif
 
-#ifndef __NetBSD__
+#if defined(__OS_HAS_AGP) || !defined(__NetBSD__)
 	drm = nouveau_bdev(ttm->bdev);
+#endif
+#ifndef __NetBSD__
 	device = nv_device(drm->device);
 	dev = drm->dev;
 #endif
@@ -1472,8 +1476,10 @@ static void
 nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 {
 	struct ttm_dma_tt *ttm_dma = (void *)ttm;
-#ifndef __NetBSD__
+#if defined(__OS_HAS_AGP) || !defined(__NetBSD__)
 	struct nouveau_drm *drm;
+#endif
+#ifndef __NetBSD__
 	struct nouveau_device *device;
 	struct drm_device *dev;
 	unsigned i;
@@ -1483,8 +1489,10 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	if (slave)
 		return;
 
-#ifndef __NetBSD__
+#if defined(__OS_HAS_AGP) || !defined(__NetBSD__)
 	drm = nouveau_bdev(ttm->bdev);
+#endif
+#ifndef __NetBSD__
 	device = nv_device(drm->device);
 	dev = drm->dev;
 #endif
@@ -1515,6 +1523,16 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	ttm_pool_unpopulate(ttm);
 #endif
 }
+
+#ifdef __NetBSD__
+static void
+nouveau_ttm_tt_swapout(struct ttm_tt *ttm)
+{
+	struct ttm_dma_tt *ttm_dma = container_of(ttm, struct ttm_dma_tt, ttm);
+
+	ttm_bus_dma_swapout(ttm_dma);
+}
+#endif
 
 void
 nouveau_bo_fence(struct nouveau_bo *nvbo, struct nouveau_fence *fence)
@@ -1560,10 +1578,22 @@ nouveau_bo_fence_flush(void *sync_obj)
 	return 0;
 }
 
+#ifdef __NetBSD__
+static const struct uvm_pagerops nouveau_uvm_ops = {
+	.pgo_reference = &ttm_bo_uvm_reference,
+	.pgo_detach = &ttm_bo_uvm_detach,
+	.pgo_fault = &ttm_bo_uvm_fault,
+};
+#endif
+
 struct ttm_bo_driver nouveau_bo_driver = {
 	.ttm_tt_create = &nouveau_ttm_tt_create,
 	.ttm_tt_populate = &nouveau_ttm_tt_populate,
 	.ttm_tt_unpopulate = &nouveau_ttm_tt_unpopulate,
+#ifdef __NetBSD__
+	.ttm_tt_swapout = &nouveau_ttm_tt_swapout,
+	.ttm_uvm_ops = &nouveau_uvm_ops,
+#endif
 	.invalidate_caches = nouveau_bo_invalidate_caches,
 	.init_mem_type = nouveau_bo_init_mem_type,
 	.evict_flags = nouveau_bo_evict_flags,

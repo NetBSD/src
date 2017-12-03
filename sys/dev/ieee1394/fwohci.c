@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.133.2.2 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.133.2.3 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.133.2.2 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.133.2.3 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -439,6 +439,8 @@ fwohci_attach(struct fwohci_softc *sc)
 		sc->ir[i].off = OHCI_IROFF(i);
 	}
 
+	fw_init_isodma(&sc->fc);
+
 	sc->fc.config_rom = fwdma_alloc_setup(sc->fc.dev, sc->fc.dmat,
 	    CROMSIZE, &sc->crom_dma, CROMSIZE, BUS_DMA_NOWAIT);
 	if (sc->fc.config_rom == NULL) {
@@ -532,6 +534,7 @@ fwohci_detach(struct fwohci_softc *sc, int flags)
 		fwohci_db_free(sc, &sc->ir[i]);
 	}
 
+	fw_destroy_isodma(&sc->fc);
 	fw_destroy(&sc->fc);
 
 	return 0;
@@ -2226,9 +2229,9 @@ fwohci_tbuf_update(struct fwohci_softc *sc, int dmach)
 		STAILQ_INSERT_TAIL(&it->stfree, chunk, link);
 		w++;
 	}
-	mutex_exit(&fc->fc_mtx);
 	if (w)
-		wakeup(it);
+		cv_broadcast(&it->cv);
+	mutex_exit(&fc->fc_mtx);
 }
 
 static void
@@ -2283,14 +2286,15 @@ fwohci_rbuf_update(struct fwohci_softc *sc, int dmach)
 		}
 		w++;
 	}
-	if ((ir->flag & FWXFERQ_HANDLER) == 0)
+	if ((ir->flag & FWXFERQ_HANDLER) == 0) {
+		if (w)
+			cv_broadcast(&ir->cv);
 		mutex_exit(&fc->fc_mtx);
+	}
 	if (w == 0)
 		return;
 	if (ir->flag & FWXFERQ_HANDLER)
 		ir->hand(ir);
-	else
-		wakeup(ir);
 }
 
 static void
@@ -2504,7 +2508,7 @@ fwohci_txbufdb(struct fwohci_softc *sc, int dmach, struct fw_bulkxfer *bulkxfer)
 	unsigned short chtag;
 	int idb;
 
-	KASSERT(mutex_owner(&sc->fc.fc_mtx));
+	KASSERT(mutex_owned(&sc->fc.fc_mtx));
 
 	dbch = &sc->it[dmach];
 	chtag = sc->it[dmach].xferq.flag & 0xff;

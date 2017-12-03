@@ -12,6 +12,7 @@ struct nouveau_fifo_chan {
 #ifdef __NetBSD__
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+	bool mapped;
 #else
 	void __iomem *user;
 #endif
@@ -114,6 +115,7 @@ extern struct nouveau_oclass *nv50_fifo_oclass;
 extern struct nouveau_oclass *nv84_fifo_oclass;
 extern struct nouveau_oclass *nvc0_fifo_oclass;
 extern struct nouveau_oclass *nve0_fifo_oclass;
+extern struct nouveau_oclass *gk20a_fifo_oclass;
 extern struct nouveau_oclass *nv108_fifo_oclass;
 
 void nv04_fifo_intr(struct nouveau_subdev *);

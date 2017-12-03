@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.20.14.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.20.14.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20.14.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20.14.2 2017/12/03 11:39:03 jdolecek Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -348,84 +348,6 @@ hci_cmdwait_flush(struct socket *so)
 	}
 }
 
-/*
- * HCI send packet
- *     This came from userland, so check it out.
- */
-static int
-hci_send_pcb(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
-{
-	struct hci_unit *unit;
-	struct mbuf *m0;
-	hci_cmd_hdr_t hdr;
-	int err;
-
-	KASSERT(m != NULL);
-	KASSERT(addr != NULL);
-
-	/* wants at least a header to start with */
-	if (m->m_pkthdr.len < sizeof(hdr)) {
-		err = EMSGSIZE;
-		goto bad;
-	}
-	m_copydata(m, 0, sizeof(hdr), &hdr);
-	hdr.opcode = le16toh(hdr.opcode);
-
-	/* only allows CMD packets to be sent */
-	if (hdr.type != HCI_CMD_PKT) {
-		err = EINVAL;
-		goto bad;
-	}
-
-	/* validates packet length */
-	if (m->m_pkthdr.len != sizeof(hdr) + hdr.length) {
-		err = EMSGSIZE;
-		goto bad;
-	}
-
-	/* finds destination */
-	unit = hci_unit_lookup(addr);
-	if (unit == NULL) {
-		err = ENETDOWN;
-		goto bad;
-	}
-
-	/* security checks for unprivileged users */
-	if (pcb->hp_cred != NULL
-	    && kauth_authorize_device(pcb->hp_cred,
-	    KAUTH_DEVICE_BLUETOOTH_SEND,
-	    unit, &hdr, NULL, NULL) != 0) {
-		err = EPERM;
-		goto bad;
-	}
-
-	/* makess a copy for precious to keep */
-	m0 = m_copypacket(m, M_DONTWAIT);
-	if (m0 == NULL) {
-		err = ENOMEM;
-		goto bad;
-	}
-	sbappendrecord(&pcb->hp_socket->so_snd, m0);
-	M_SETCTX(m, pcb->hp_socket);	/* enable drop callback */
-
-	DPRINTFN(2, "(%s) opcode (%03x|%04x)\n", device_xname(unit->hci_dev),
-		HCI_OGF(hdr.opcode), HCI_OCF(hdr.opcode));
-
-	/* Sendss it */
-	if (unit->hci_num_cmd_pkts == 0)
-		MBUFQ_ENQUEUE(&unit->hci_cmdwait, m);
-	else
-		hci_output_cmd(unit, m);
-
-	return 0;
-
-bad:
-	DPRINTF("packet (%d bytes) not sent (error %d)\n",
-			m->m_pkthdr.len, err);
-	if (m) m_freem(m);
-	return err;
-}
-
 static int
 hci_attach(struct socket *so, int proto)
 {
@@ -484,7 +406,7 @@ hci_detach(struct socket *so)
 }
 
 static int
-hci_accept(struct socket *so, struct mbuf *nam)
+hci_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -492,16 +414,15 @@ hci_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-hci_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+hci_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct hci_pcb *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	if (sa->bt_len != sizeof(struct sockaddr_bt))
 		return EINVAL;
 
@@ -527,16 +448,15 @@ hci_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-hci_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+hci_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct hci_pcb *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	if (sa->bt_len != sizeof(struct sockaddr_bt))
 		return EINVAL;
 
@@ -617,18 +537,16 @@ hci_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-hci_peeraddr(struct socket *so, struct mbuf *nam)
+hci_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	memset(sa, 0, sizeof(struct sockaddr_bt));
-	nam->m_len =
 	sa->bt_len = sizeof(struct sockaddr_bt);
 	sa->bt_family = AF_BLUETOOTH;
 	bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_raddr);
@@ -636,18 +554,16 @@ hci_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-hci_sockaddr(struct socket *so, struct mbuf *nam)
+hci_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	memset(sa, 0, sizeof(struct sockaddr_bt));
-	nam->m_len =
 	sa->bt_len = sizeof(struct sockaddr_bt);
 	sa->bt_family = AF_BLUETOOTH;
 	bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_laddr);
@@ -671,36 +587,98 @@ hci_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-hci_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+hci_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct hci_pcb *pcb = so->so_pcb;
-	struct sockaddr_bt * sa = NULL;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
+	struct hci_unit *unit;
+	struct mbuf *m0;
+	hci_cmd_hdr_t hdr;
 	int err = 0;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
+	KASSERT(m != NULL);
 
 	if (control) /* have no use for this */
 		m_freem(control);
 
-	if (nam) {
-		sa = mtod(nam, struct sockaddr_bt *);
-
+	if (sa) {
 		if (sa->bt_len != sizeof(struct sockaddr_bt)) {
 			err = EINVAL;
-			goto release;
+			goto bad;
 		}
 
 		if (sa->bt_family != AF_BLUETOOTH) {
 			err = EAFNOSUPPORT;
-			goto release;
+			goto bad;
 		}
 	}
 
-	return hci_send_pcb(pcb, m, (sa ? &sa->bt_bdaddr : &pcb->hp_raddr));
+ 	/*
+	 * this came from userland, so we check it out first
+	 */
 
-release:
+	/* wants at least a header to start with */
+	if (m->m_pkthdr.len < sizeof(hdr)) {
+		err = EMSGSIZE;
+		goto bad;
+	}
+	m_copydata(m, 0, sizeof(hdr), &hdr);
+	hdr.opcode = le16toh(hdr.opcode);
+
+	/* only allows CMD packets to be sent */
+	if (hdr.type != HCI_CMD_PKT) {
+		err = EINVAL;
+		goto bad;
+	}
+
+	/* validates packet length */
+	if (m->m_pkthdr.len != sizeof(hdr) + hdr.length) {
+		err = EMSGSIZE;
+		goto bad;
+	}
+
+	/* finds destination */
+	unit = hci_unit_lookup((sa ? &sa->bt_bdaddr : &pcb->hp_raddr));
+	if (unit == NULL) {
+		err = ENETDOWN;
+		goto bad;
+	}
+
+	/* security checks for unprivileged users */
+	if (pcb->hp_cred != NULL
+	    && kauth_authorize_device(pcb->hp_cred,
+	    KAUTH_DEVICE_BLUETOOTH_SEND,
+	    unit, &hdr, NULL, NULL) != 0) {
+		err = EPERM;
+		goto bad;
+	}
+
+	/* makess a copy for precious to keep */
+	m0 = m_copypacket(m, M_DONTWAIT);
+	if (m0 == NULL) {
+		err = ENOMEM;
+		goto bad;
+	}
+	sbappendrecord(&pcb->hp_socket->so_snd, m0);
+	M_SETCTX(m, pcb->hp_socket);	/* enable drop callback */
+
+	DPRINTFN(2, "(%s) opcode (%03x|%04x)\n", device_xname(unit->hci_dev),
+		HCI_OGF(hdr.opcode), HCI_OCF(hdr.opcode));
+
+	/* Sendss it */
+	if (unit->hci_num_cmd_pkts == 0)
+		MBUFQ_ENQUEUE(&unit->hci_cmdwait, m);
+	else
+		hci_output_cmd(unit, m);
+
+	return 0;
+
+bad:
+	DPRINTF("packet (%d bytes) not sent (error %d)\n",
+			m->m_pkthdr.len, err);
 	if (m)
 		m_freem(m);
 
@@ -725,72 +703,6 @@ hci_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
 	return EOPNOTSUPP;
-}
-
-/*
- * User Request.
- * up is socket
- * m is optional mbuf chain containing message
- * nam is optional mbuf chain containing an address
- * ctl is optional mbuf chain containing socket options
- * l is pointer to process requesting action (if any)
- *
- * we are responsible for disposing of m and ctl
- */
-static int
-hci_usrreq(struct socket *up, int req, struct mbuf *m,
-		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
-{
-	struct hci_pcb *pcb = up->so_pcb;
-	int err = 0;
-
-	DPRINTFN(2, "%s\n", prurequests[req]);
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	/* anything after here *requires* a pcb */
-	if (pcb == NULL) {
-		err = EINVAL;
-		goto release;
-	}
-
-	switch(req) {
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		err = EOPNOTSUPP;
-		break;
-
-	default:
-		UNKNOWN(req);
-		err = EOPNOTSUPP;
-		break;
-	}
-
-release:
-	if (m)
-		m_freem(m);
-	if (ctl)
-		m_freem(ctl);
-	return err;
 }
 
 /*
@@ -1018,7 +930,6 @@ PR_WRAP_USRREQS(hci)
 #define	hci_send		hci_send_wrapper
 #define	hci_sendoob		hci_sendoob_wrapper
 #define	hci_purgeif		hci_purgeif_wrapper
-#define	hci_usrreq		hci_usrreq_wrapper
 
 const struct pr_usrreqs hci_usrreqs = {
 	.pr_attach	= hci_attach,
@@ -1040,5 +951,4 @@ const struct pr_usrreqs hci_usrreqs = {
 	.pr_send	= hci_send,
 	.pr_sendoob	= hci_sendoob,
 	.pr_purgeif	= hci_purgeif,
-	.pr_generic	= hci_usrreq,
 };

@@ -1,0 +1,64 @@
+# Configuration file for PogoPlug version 4, Pink and Mobile
+
+include "arch/evbarm/conf/SHEEVAPLUG"
+
+no options	COMPAT_OSSAUDIO
+no options	COMPAT_LINUX
+no options	DIAGNOSTIC
+no options	DEBUG
+no uaudio*
+#no umidi*
+no uberry*
+no urio*
+no uvisor*
+no ukyopon*
+#no uscanner*
+no usscanner*
+no utoppy*
+no uyap*
+no udsbr*
+no radio*
+no sbt*
+no ubt*
+no uep*
+no aubtfwl*
+no bthub*
+no bthidev*
+no btms*
+no wsmouse*
+no ukbd*
+no ums*
+no btkbd*
+no wskbd*
+no btmagic*
+no btsco*
+no audio*
+no spkr* at audio?
+no config netbsd
+
+# Use ld0a for SD slot in Mobile and v4 or sd0a for USB disk
+config netbsd root on ld0a type ffs
+
+# Uncomment these for PogoPlug v4. Note that MVSDIO_MAX_CLOCK is mandatory
+options 	MVSDIO_MAX_CLOCK="(19 * 1000)"
+xhci*		at pci? dev ? function ?	# eXtensible Host Controller
+usb*		at xhci?
+
+# If you plan to use your PogoPlug to do NAT / firewalling, uncomment this
+#   and either the ipfilter or the npf section.
+
+options	GATEWAY		# packet forwarding
+
+# Uncomment for ipfilter
+#options		IPFILTER_LOG		# ipmon(8) log support
+#options		IPFILTER_LOOKUP		# ippool(8) support
+#options		IPFILTER_COMPAT		# Compat for IP-Filter
+
+# Uncomment for npf
+no pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device		npf			# NPF packet filter
+options 		BPFJIT
+
+pseudo-device		tun			# network tunneling over tty
+pseudo-device		gre			# generic L3 over IP tunnel
+pseudo-device		gif			# IPv[46] over IPv[46] tunnel (RFC 1933)

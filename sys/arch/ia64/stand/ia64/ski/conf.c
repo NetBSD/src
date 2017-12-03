@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.22.1 2017/12/03 11:36:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: conf.c,v 1.2 2009/07/20 04:59:04 kiyohara Exp $	 
+ *	$NetBSD: conf.c,v 1.2.22.1 2017/12/03 11:36:21 jdolecek Exp $	 
  */
 
 #include <sys/cdefs.h>
@@ -75,6 +75,10 @@ struct devsw devsw[] = {
 };
 
 int ndevs = sizeof(devsw) / sizeof(struct devsw);
+
+/* XXX fix netif for ski if needed */
+struct netif_drvier *netif_drivers[] = {};
+int n_netif_drivers = 0;
 
 struct fs_ops file_system[] = {
 	FS_OPS(skifs),

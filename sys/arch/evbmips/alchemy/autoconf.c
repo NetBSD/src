@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.18.2.1 2012/11/20 03:01:18 tls Exp $ */
+/* $NetBSD: autoconf.c,v 1.18.2.2 2017/12/03 11:36:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.1 2012/11/20 03:01:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.2 2017/12/03 11:36:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.1 2012/11/20 03:01:18 tls Exp $"
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
+
+#include <dev/ata/atavar.h>
 
 /*
  * Configure all devices on system
@@ -80,8 +82,6 @@ cpu_rootconf(void)
 void
 device_register(device_t dev, void *aux)
 {
-	struct aubus_attach_args *aa = aux;
-
 	/*
 	 * We don't ever know the boot device.  But that's because the
 	 * firmware only loads from the network.
@@ -89,6 +89,7 @@ device_register(device_t dev, void *aux)
 
 	/* Fetch the MAC addresses from YAMON. */
 	if (device_is_a(dev, "aumac")) {
+		struct aubus_attach_args *aa = aux;
 		prop_data_t pd;
 		const char *cp;
 		char *cp0;
@@ -124,6 +125,20 @@ device_register(device_t dev, void *aux)
 				    "property for %s\n", device_xname(dev));
 			}
 			prop_object_release(pd);
+		}
+	}
+	if (device_is_a(dev, "atabus")) {
+		device_t p1 = device_parent(dev);
+		device_t p2 = device_parent(p1);
+		device_t p3 = device_parent(p2);
+
+		if (device_is_a(p1, "wdc") &&
+		    device_is_a(p2, "pcmcia") &&
+		    device_is_a(p3, "aupcmcia")) {
+			struct ata_channel *chp = aux;
+
+			/* 32-bit transfers are not supported. */
+			chp->ch_atac->atac_cap &= ~ATAC_CAP_DATA32;
 		}
 	}
 }

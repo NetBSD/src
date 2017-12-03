@@ -1,4 +1,4 @@
-/*	$NetBSD: dfsqrt.c,v 1.5 2012/02/04 17:03:09 skrll Exp $	*/
+/*	$NetBSD: dfsqrt.c,v 1.5.6.1 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: dfsqrt.c,v 1.5 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfsqrt.c,v 1.5 2012/02/04 17:03:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfsqrt.c,v 1.5.6.1 2017/12/03 11:36:16 jdolecek Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -158,7 +158,7 @@ dbl_fsqrt(dbl_floating_point *srcptr, dbl_floating_point *dstptr,
 
 	/* check for inexact */
 	if (Dbl_isnotzero(srcp1,srcp2)) {
-		if (!even_exponent & Dbl_islessthan(resultp1,resultp2,srcp1,srcp2)) {
+		if (!even_exponent && Dbl_islessthan(resultp1,resultp2,srcp1,srcp2)) {
 			Dbl_increment(resultp1,resultp2);
 		}
 		guardbit = Dbl_lowmantissap2(resultp2);

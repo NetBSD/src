@@ -1,7 +1,9 @@
-/* $NetBSD: wsdisplay_usl_io.h,v 1.3 2001/05/15 15:06:23 lukem Exp $ */
+/* $NetBSD: wsdisplay_usl_io.h,v 1.3.170.1 2017/12/03 11:37:37 jdolecek Exp $ */
 
 #ifndef _DEV_WSCONS_WSDISPLAY_USL_IO_H_
 #define _DEV_WSCONS_WSDISPLAY_USL_IO_H_
+
+#include <sys/ioccom.h>
 
 #define VT_OPENQRY	_IOR('v', 1, int)
 #define VT_SETMODE	_IOW('v', 2, vtmode_t)

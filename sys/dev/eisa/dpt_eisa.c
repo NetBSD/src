@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.20.22.2 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.20.22.3 2017/12/03 11:37:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.20.22.2 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.20.22.3 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ dpt_eisa_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    DPT_EISA_SLOT_OFFSET, DPT_EISA_IOSIZE, 0, &ioh)) {
-		printf("can't map i/o space\n");
+		aprint_error("can't map i/o space\n");
 		return;
 	}
 
@@ -150,12 +150,12 @@ dpt_eisa_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (dpt_eisa_irq(iot, ioh, &irq)) {
-		printf("HBA on invalid IRQ\n");
+		aprint_error("HBA on invalid IRQ\n");
 		return;
 	}
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("can't map interrupt (%d)\n", irq);
+		aprint_error("can't map interrupt (%d)\n", irq);
 		return;
 	}
 
@@ -163,10 +163,10 @@ dpt_eisa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    dpt_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("can't establish interrupt");
+		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 

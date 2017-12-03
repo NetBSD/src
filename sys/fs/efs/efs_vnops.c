@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.26.2.4 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.26.2.5 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26.2.4 2014/08/20 00:04:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26.2.5 2017/12/03 11:38:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ efs_getattr(void *v)
 	struct vop_getattr_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		struct vattr *a_vap; 
+		struct vattr *a_vap;
 		struct ucred *a_cred;
 	} */ *ap = v;
 
@@ -237,7 +237,7 @@ efs_read(void *v)
 	struct vop_read_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		struct uio *a_uio; 
+		struct uio *a_uio;
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
@@ -294,8 +294,8 @@ efs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp; 
-		struct uio *a_uio; 
+		struct vnode *a_vp;
+		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
@@ -420,7 +420,7 @@ efs_readdir(void *v)
 				err = uiomove(dp, s, uio);
 				if (err) {
 					brelse(bp, 0);
-					goto exit_err;	
+					goto exit_err;
 				}
 
 				offset += s;
@@ -560,7 +560,7 @@ efs_readlink(void *v)
 static int
 efs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		bool *a_recycle
@@ -568,7 +568,6 @@ efs_inactive(void *v)
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 
 	*ap->a_recycle = (eip->ei_mode == 0);
-	VOP_UNLOCK(ap->a_vp);
 
 	return (0);
 }
@@ -576,14 +575,15 @@ efs_inactive(void *v)
 static int
 efs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct efs_inode *eip = EFS_VTOI(vp);
 
-	vcache_remove(vp->v_mount, &eip->ei_number, sizeof(eip->ei_number));
+	VOP_UNLOCK(vp);
+
 	genfs_node_destroy(vp);
 	pool_put(&efs_inode_pool, eip);
 	vp->v_data = NULL;
@@ -622,7 +622,7 @@ efs_bmap(void *v)
 		}
 	}
 
-	KASSERT(!found || (found && ret == 0));
+	KASSERT(!found || ret == 0);
 
 	if (!found) {
 		EFS_DPRINTF(("efs_bmap: ap->a_bn not in extents\n"));
@@ -736,7 +736,7 @@ efs_pathconf(void *v)
 	/* IRIX 4 values */
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
-		*ap->a_retval = 30000; 
+		*ap->a_retval = 30000;
 		break;
 	case _PC_NAME_MAX:
 		*ap->a_retval = 255;

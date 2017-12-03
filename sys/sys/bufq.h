@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq.h,v 1.10 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: bufq.h,v 1.10.24.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
@@ -90,6 +90,7 @@ struct bufq_state;
 
 #define	BUFQ_EXACT		0x0010	/* Don't fall back to other strategy */
 
+void	bufq_init(void);
 int	bufq_alloc(struct bufq_state **, const char *, int);
 void	bufq_drain(struct bufq_state *);
 void	bufq_free(struct bufq_state *);

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.18.6.1 2014/08/20 00:03:20 tls Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.18.6.2 2017/12/03 11:36:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.18.6.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.18.6.2 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -406,7 +406,7 @@ genofw_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		    "ofw-pcibus-rawdevnum");
 		dev = prop_number_integer_value(pbus);
 
-		/* now that we know the parent bus, we need to find it's pbi */
+		/* now that we know the parent bus, we need to find its pbi */
 		pbi = SIMPLEQ_FIRST(&pa->pa_pc->pc_pbi);
 		while (busno--)
 			pbi = SIMPLEQ_NEXT(pbi, next);
@@ -518,7 +518,6 @@ genofw_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI) {
 		pbi = kmem_alloc(sizeof(*pbi), KM_SLEEP);
-		KASSERT(pbi != NULL);
 		pbi->pbi_properties = prop_dictionary_create();
 		KASSERT(pbi->pbi_properties != NULL);
 		node = genofw_find_node_by_devfunc(pct->pc_node, bus, dev,

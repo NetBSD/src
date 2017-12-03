@@ -1,4 +1,4 @@
-/*	$NetBSD: scanio.h,v 1.2 1998/02/10 00:25:44 perry Exp $	*/
+/*	$NetBSD: scanio.h,v 1.2.196.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -36,6 +36,8 @@
 #ifndef _SYS_SCANIO_H_
 #define _SYS_SCANIO_H_
 
+#include <sys/ioccom.h>
+
 /*
  * XXX scancap make this sort of obsolete:
  *
@@ -55,28 +57,28 @@
  */
 
 struct scan_io {
-	u_long	scan_width;		 /* width in 1/1200ths of an inch */
-	u_long	scan_height;		 /* height in 1/1200ths of an inch */
+	unsigned long	scan_width;	 /* width in 1/1200ths of an inch */
+	unsigned long	scan_height;	 /* height in 1/1200ths of an inch */
 #ifdef SCAN_BC
 # define scan_window_width scan_width
 # define scan_window_length scan_height
 #endif
-	u_short	scan_x_resolution;	/* horizontal resolution in dots-per-inch */
-	u_short	scan_y_resolution;	/* vertical resolution in dots-per-inch */
-	u_long	scan_x_origin;		/* horizontal coordinate of upper left corner */
-	u_long	scan_y_origin;		/* vertical coordinate of upper left corner */
-	u_char	scan_image_mode;	/* type of image data sent by scanner */
-	u_char	scan_brightness;	/* brightness control for those to can do it */
-	u_char	scan_contrast;		/* contrast control for those to can do it */
-	u_char	scan_quality;		/* speed of scan for instance */
+	unsigned short scan_x_resolution;/* horizontal resolution in dots-per-inch */
+	unsigned short scan_y_resolution;/* vertical resolution in dots-per-inch */
+	unsigned long scan_x_origin;	/* horizontal coordinate of upper left corner */
+	unsigned long scan_y_origin;	/* vertical coordinate of upper left corner */
+	unsigned char scan_image_mode;	/* type of image data sent by scanner */
+	unsigned char scan_brightness;	/* brightness control for those to can do it */
+	unsigned char scan_contrast;	/* contrast control for those to can do it */
+	unsigned char scan_quality;	/* speed of scan for instance */
 #ifdef SCAN_BC
 # define scan_velocity scan_quality
 #endif
-	u_long	scan_window_size;	/* size of window in bytes (ro) */
-	u_long	scan_lines;		/* number of pixels per column (ro) */
-	u_long	scan_pixels_per_line;	/* number of pixels per line (ro) */
-	u_short	scan_bits_per_pixel;	/* number of bits per pixel (ro) */
-	u_char	scan_scanner_type;	/* type of scanner (ro) */
+	unsigned long scan_window_size;	/* size of window in bytes (ro) */
+	unsigned long scan_lines;	/* number of pixels per column (ro) */
+	unsigned long scan_pixels_per_line;	/* number of pixels per line (ro) */
+	unsigned short scan_bits_per_pixel;	/* number of bits per pixel (ro) */
+	unsigned char scan_scanner_type;	/* type of scanner (ro) */
 };
 
 /*

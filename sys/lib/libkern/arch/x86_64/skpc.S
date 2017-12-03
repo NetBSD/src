@@ -1,6 +1,6 @@
-/*	$NetBSD: skpc.S,v 1.2 2008/04/28 20:24:06 martin Exp $	*/
+/*	$NetBSD: skpc.S,v 1.2.44.1 2017/12/03 11:38:46 jdolecek Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -47,3 +47,4 @@ ENTRY(skpc)
 1:
 	movl	%ecx,%eax
 	ret
+END(skpc)

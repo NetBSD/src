@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.14.44.1 2012/11/20 03:02:06 tls Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.14.44.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ struct mlx_attach_args {
 int	mlx_flush(struct mlx_softc *, int);
 void	mlx_init(struct mlx_softc *, const char *);
 int	mlx_intr(void *);
+int	mlx_configure(struct mlx_softc *, int);
 
 int	mlx_ccb_alloc(struct mlx_softc *, struct mlx_ccb **, int);
 const char *mlx_ccb_diagnose(struct mlx_ccb *);

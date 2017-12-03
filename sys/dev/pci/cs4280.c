@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.64.6.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.64.6.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.64.6.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.64.6.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "midi.h"
 
@@ -112,7 +112,8 @@ static bool cs4280_resume(device_t, const pmf_qual_t *);
 static bool cs4280_suspend(device_t, const pmf_qual_t *);
 
 /* Internal functions */
-static const struct cs4280_card_t * cs4280_identify_card(const struct pci_attach_args *);
+static const struct cs4280_card_t * cs4280_identify_card(
+	const struct pci_attach_args *);
 static int  cs4280_piix4_match(const struct pci_attach_args *);
 static void cs4280_clkrun_hack(struct cs428x_softc *, int);
 static void cs4280_clkrun_hack_init(struct cs428x_softc *);
@@ -241,10 +242,11 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc;
 	const struct cs4280_card_t *cs_card;
 	char const *intrstr;
-	const char *vendor, *product;
 	pcireg_t reg;
 	uint32_t mem;
 	int error;
+	char vendor[PCI_VENDORSTR_LEN];
+	char product[PCI_PRODUCTSTR_LEN];
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
@@ -256,19 +258,10 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 
 	cs_card = cs4280_identify_card(pa);
 	if (cs_card != NULL) {
-		vendor = pci_findvendor(cs_card->id);
-		product = pci_findproduct(cs_card->id); 
-		if (vendor == NULL)
-			aprint_normal_dev(sc->sc_dev,
-					  "vendor 0x%04x product 0x%04x\n",
-					  PCI_VENDOR(cs_card->id),
-					  PCI_PRODUCT(cs_card->id));
-		else if (product == NULL)
-			aprint_normal_dev(sc->sc_dev, "%s product 0x%04x\n",
-					  vendor, PCI_PRODUCT(cs_card->id));
-		else
-			aprint_normal_dev(sc->sc_dev, "%s %s\n",
-					  vendor, product);
+		pci_findvendor(vendor, sizeof(vendor), PCI_VENDOR(cs_card->id));
+		pci_findproduct(product, sizeof(product),
+		    PCI_VENDOR(cs_card->id), PCI_PRODUCT(cs_card->id)); 
+		aprint_normal_dev(sc->sc_dev, "%s %s\n", vendor, product);
 		sc->sc_flags = cs_card->flags;
 	} else {
 		sc->sc_flags = CS428X_FLAG_NONE;

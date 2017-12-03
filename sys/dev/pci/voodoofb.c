@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.41.2.2 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.41.2.3 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -25,14 +25,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
- * A console driver for 3Dfx Voodoo3 graphics boards 
- * Thanks to Andreas Drewke (andreas_dr@gmx.de) for his Voodoo3 driver for BeOS 
+/*
+ * A console driver for 3Dfx Voodoo3 graphics boards
+ * Thanks to Andreas Drewke (andreas_dr@gmx.de) for his Voodoo3 driver for BeOS
  * which I used as reference / documentation
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.41.2.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.41.2.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,12 +72,12 @@ struct voodoofb_softc {
 
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_memh;	
+	bus_space_handle_t sc_memh;
 
 	bus_space_tag_t sc_regt;
 	bus_space_tag_t sc_ioregt;
 	bus_space_handle_t sc_regh;
-	bus_space_handle_t sc_ioregh;	
+	bus_space_handle_t sc_ioregh;
 	bus_addr_t sc_regs, sc_fb, sc_ioreg;
 	bus_size_t sc_regsize, sc_fbsize, sc_ioregsize;
 
@@ -87,7 +87,7 @@ struct voodoofb_softc {
 #define MAX_CLOCK_V3	300000	/* Voodoo3 */
 #define MAX_CLOCK_V45	350000	/* Voodoo4/5 (not yet) */
 	uint32_t sc_max_clock;
-	
+
 	size_t sc_memsize;
 	int sc_memtype;
 
@@ -113,10 +113,10 @@ struct voodoofb_softc {
 
 	int sc_mode;
 	uint32_t sc_bg;
-		
+
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
-	u_char sc_cmap_blue[256];	
+	u_char sc_cmap_blue[256];
 	int sc_dacw;
 
 	struct vcons_data vd;
@@ -128,7 +128,7 @@ struct voodoo_regs {
 	uint8_t vr_attr[21];
 	uint8_t vr_seq[5];
 };
-	
+
 static struct vcons_screen voodoofb_console_screen;
 
 static int	voodoofb_match(device_t, cfdata_t, void *);
@@ -138,11 +138,11 @@ static int	voodoofb_drm_print(void *, const char *);
 static int	voodoofb_drm_unmap(struct voodoofb_softc *);
 static int	voodoofb_drm_map(struct voodoofb_softc *);
 
-CFATTACH_DECL_NEW(voodoofb, sizeof(struct voodoofb_softc), voodoofb_match, 
+CFATTACH_DECL_NEW(voodoofb, sizeof(struct voodoofb_softc), voodoofb_match,
     voodoofb_attach, NULL, NULL);
 
 static bool	voodoofb_is_console(struct voodoofb_softc *);
-static void 	voodoofb_init(struct voodoofb_softc *);	
+static void 	voodoofb_init(struct voodoofb_softc *);
 
 static void	voodoofb_cursor(void *, int, int, int);
 static void	voodoofb_putchar(void *, int, int, u_int, long);
@@ -169,9 +169,9 @@ static void	voodoofb_bitblt(struct voodoofb_softc *, int, int, int, int,
 static void	voodoofb_rectfill(struct voodoofb_softc *, int, int, int, int,
 			    int);
 static void	voodoofb_rectinvert(struct voodoofb_softc *, int, int, int,
-			    int); 
+			    int);
 static void	voodoofb_setup_mono(struct voodoofb_softc *, int, int, int,
-			    int, uint32_t, uint32_t); 
+			    int, uint32_t, uint32_t);
 static void	voodoofb_feed_line(struct voodoofb_softc *, int, uint8_t *);
 
 static void	voodoofb_wait_idle(struct voodoofb_softc *);
@@ -268,7 +268,7 @@ voodoo3_write32s(struct voodoofb_softc *sc, uint32_t reg, uint32_t val)
 	bus_space_write_stream_4(sc->sc_regt, sc->sc_regh, reg, val);
 }
 static inline uint32_t
-voodoo3_read32(struct voodoofb_softc *sc, uint32_t reg) 
+voodoo3_read32(struct voodoofb_softc *sc, uint32_t reg)
 {
 	return bus_space_read_4(sc->sc_regt, sc->sc_regh, reg);
 }
@@ -298,7 +298,7 @@ static inline void
 voodoo3_write_attr(struct voodoofb_softc *sc, uint8_t reg, uint8_t val)
 {
 	uint8_t index;
-	
+
 	(void)bus_space_read_1(sc->sc_ioregt, sc->sc_ioregh, IS1_R - 0x300);
 	index = bus_space_read_1(sc->sc_ioregt, sc->sc_ioregh, ATT_IW - 0x300);
 	bus_space_write_1(sc->sc_ioregt, sc->sc_ioregh, ATT_IW - 0x300, reg);
@@ -308,13 +308,13 @@ voodoo3_write_attr(struct voodoofb_softc *sc, uint8_t reg, uint8_t val)
 
 static inline void
 vga_outb(struct voodoofb_softc *sc, uint32_t reg,  uint8_t val)
-{ 
-	bus_space_write_1(sc->sc_ioregt, sc->sc_ioregh, reg - 0x300, val); 
+{
+	bus_space_write_1(sc->sc_ioregt, sc->sc_ioregh, reg - 0x300, val);
 }
 
 /* wait until there's room for len bytes in the FIFO */
 static inline void
-voodoo3_make_room(struct voodoofb_softc *sc, int len) 
+voodoo3_make_room(struct voodoofb_softc *sc, int len)
 {
 	while ((voodoo3_read32(sc, STATUS) & 0x1f) < len);
 }
@@ -341,11 +341,11 @@ voodoofb_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
 		return 0;
-	if ((PCI_VENDOR(pa->pa_id)==PCI_VENDOR_3DFX) && 
+	if ((PCI_VENDOR(pa->pa_id)==PCI_VENDOR_3DFX) &&
 	    (PCI_PRODUCT(pa->pa_id)>=PCI_PRODUCT_3DFX_VOODOO3))
 		return 100;
 
-	if ((PCI_VENDOR(pa->pa_id)==PCI_VENDOR_3DFX) && 
+	if ((PCI_VENDOR(pa->pa_id)==PCI_VENDOR_3DFX) &&
 	    (PCI_PRODUCT(pa->pa_id)>=PCI_PRODUCT_3DFX_BANSHEE))
 		return 100;
 	return 0;
@@ -354,7 +354,7 @@ voodoofb_match(device_t parent, cfdata_t match, void *aux)
 static void
 voodoofb_attach(device_t parent, device_t self, void *aux)
 {
-	struct voodoofb_softc *sc = device_private(self);	
+	struct voodoofb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
@@ -386,8 +386,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_max_clock = MAX_CLOCK_V3;
 
 	/* the framebuffer */
-	if (pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, 0x14, PCI_MAPREG_TYPE_MEM,
-	    &sc->sc_fb, &sc->sc_fbsize, &flags)) {
+	if (pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, 0x14,
+	    PCI_MAPREG_TYPE_MEM, &sc->sc_fb, &sc->sc_fbsize, &flags)) {
 		aprint_error_dev(self, "failed to map the frame buffer.\n");
 	}
 	sc->sc_memsize = sc->sc_fbsize >> 1;	/* VRAM aperture is 2x VRAM */
@@ -395,7 +395,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	/* memory-mapped registers */
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
-		aprint_error_dev(self, "failed to map memory-mapped registers.\n");
+		aprint_error_dev(self,
+		    "failed to map memory-mapped registers.\n");
 	}
 
 	/* IO-mapped registers */
@@ -406,10 +407,10 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_is_mapped = TRUE;
 	voodoofb_init(sc);
-	
+
 	/* we should read these from the chip instead of depending on OF */
 	width = height = -1;
-	
+
 	dict = device_properties(self);
 	if (!prop_dictionary_get_uint32(dict, "width", &width)) {
 		aprint_error_dev(self, "no width property\n");
@@ -474,12 +475,12 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 
 	printf("%s: %d MB aperture at 0x%08x, %d MB registers at 0x%08x\n",
 	    device_xname(self), (u_int)(sc->sc_fbsize >> 20),
-	    (u_int)sc->sc_fb, (u_int)(sc->sc_regsize >> 20), 
+	    (u_int)sc->sc_fb, (u_int)(sc->sc_regsize >> 20),
 	    (u_int)sc->sc_regs);
 #ifdef VOODOOFB_DEBUG
 	printf("fb: %08lx\n", (ulong)ri->ri_bits);
 #endif
-	
+
 	if (sc->sc_bits_per_pixel == 8) {
 		uint8_t tmp;
 		for (i = 0; i < 256; i++) {
@@ -524,7 +525,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr, 
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt");
@@ -573,7 +574,7 @@ voodoofb_drm_unmap(struct voodoofb_softc *sc)
 	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsize);
 
 	sc->sc_is_mapped = FALSE;
- 
+
 	return 0;
 }
 
@@ -609,11 +610,11 @@ voodoofb_drm_map(struct voodoofb_softc *sc)
 }
 
 static int
-voodoofb_putpalreg(struct voodoofb_softc *sc, uint8_t index, uint8_t r, 
+voodoofb_putpalreg(struct voodoofb_softc *sc, uint8_t index, uint8_t r,
     uint8_t g, uint8_t b)
 {
 	uint32_t color;
-	
+
 	sc->sc_cmap_red[index] = r;
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
@@ -637,7 +638,7 @@ voodoofb_putcmap(struct voodoofb_softc *sc, struct wsdisplay_cmap *cm)
 
 #ifdef VOODOOFB_DEBUG
 	printf("putcmap: %d %d\n",index, count);
-#endif	
+#endif
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
@@ -658,7 +659,7 @@ voodoofb_putcmap(struct voodoofb_softc *sc, struct wsdisplay_cmap *cm)
 	r = &sc->sc_cmap_red[index];
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
-	
+
 	for (i = 0; i < count; i++) {
 		voodoofb_putpalreg(sc, index, *r, *g, *b);
 		index++;
@@ -676,7 +677,7 @@ voodoofb_getcmap(struct voodoofb_softc *sc, struct wsdisplay_cmap *cm)
 
 	if (index >= 255 || count > 256 || index + count > 256)
 		return EINVAL;
-	
+
 	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
 	if (error)
 		return error;
@@ -694,7 +695,7 @@ static bool
 voodoofb_is_console(struct voodoofb_softc *sc)
 {
 	prop_dictionary_t dict;
-	bool console;
+	bool console = FALSE;
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &console);
@@ -718,10 +719,10 @@ voodoofb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voodoofb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -779,9 +780,9 @@ voodoofb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			voodoofb_rectfill(sc, x, y, wi, he, bg);
 		} else {
 			uc = c - font->firstchar;
-			data = (uint8_t *)font->data + uc * 
+			data = (uint8_t *)font->data + uc *
 			    ri->ri_fontscale;
-				voodoofb_setup_mono(sc, x, y, wi, he, fg, bg);		
+				voodoofb_setup_mono(sc, x, y, wi, he, fg, bg);
 			for (i = 0; i < he; i++) {
 				voodoofb_feed_line(sc, font->stride, data);
 				data += font->stride;
@@ -827,12 +828,13 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			voodoo3_write32(sc, SRCBASE, offset);
 			voodoo3_write32(sc, DSTBASE, 0);
 			voodoo3_write32(sc, SRCFORMAT,	sc->sc_fmt);
-			voodoo3_write32(sc, DSTFORMAT,	sc->sc_linebytes | FMT_8BIT);
+			voodoo3_write32(sc, DSTFORMAT,
+			    sc->sc_linebytes | FMT_8BIT);
 			voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
 			voodoo3_write32(sc, DSTXY,	x | (y << 16));
 			voodoo3_write32(sc, SRCXY,	0);
-			voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_S2S_BITBLT | 
-			    (ROP_COPY << 24) | SST_2D_GO);
+			voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_S2S_BITBLT
+			    | (ROP_COPY << 24) | SST_2D_GO);
 			return;
 		} else {
 			int slot = sc->sc_usedglyphs;
@@ -850,7 +852,7 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
 	voodoo3_write32(sc, DSTXY,	x | (y << 16));
 	voodoo3_write32(sc, SRCXY,	0);
-	voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_H2S_BITBLT | 
+	voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_H2S_BITBLT |
 	    (ROP_COPY << 24) | SST_2D_GO);
 
 	/*
@@ -889,8 +891,8 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		if ((i & 3) == 3) {
 			voodoo3_write32s(sc, LAUNCH_2D, latch);
 			/*
-			 * not strictly necessary, old data should be shifted 
-			 * out 
+			 * not strictly necessary, old data should be shifted
+			 * out
 			 */
 			latch = 0;
 			/*
@@ -909,7 +911,7 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	}
 	/* if we have pixels left in latch write them out */
 	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
+		latch = latch << ((4 - (i & 3)) << 3);
 		voodoo3_write32s(sc, LAUNCH_2D, latch);
 	}
 	if (save_offset != 0) {
@@ -922,7 +924,7 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
 		voodoo3_write32(sc, DSTXY,	0);
 		voodoo3_write32(sc, SRCXY,	x | (y << 16));
-		voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_S2S_BITBLT | 
+		voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_S2S_BITBLT |
 			    (ROP_COPY << 24) | SST_2D_GO);
 	}
 }
@@ -934,33 +936,33 @@ voodoofb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voodoofb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 		width = ri->ri_font->fontwidth * ncols;
-		height = ri->ri_font->fontheight;		
+		height = ri->ri_font->fontheight;
 		voodoofb_bitblt(sc, xs, y, xd, y, width, height);
 	}
 }
 
 static void
-voodoofb_erasecols(void *cookie, int row, int startcol, int ncols, 
+voodoofb_erasecols(void *cookie, int row, int startcol, int ncols,
     long fillattr)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voodoofb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 		width = ri->ri_font->fontwidth * ncols;
-		height = ri->ri_font->fontheight;		
+		height = ri->ri_font->fontheight;
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
-	
+
 		voodoofb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
 }
@@ -978,7 +980,7 @@ voodoofb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
 		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
 		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;		
+		height = ri->ri_font->fontheight * nrows;
 		voodoofb_bitblt(sc, x, ys, x, yd, width, height);
 	}
 }
@@ -1001,7 +1003,7 @@ voodoofb_eraserows(void *cookie, int row, int nrows, long fillattr)
 			x = ri->ri_xorigin;
 			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 			width = ri->ri_emuwidth;
-			height = ri->ri_font->fontheight * nrows;		
+			height = ri->ri_font->fontheight * nrows;
 			voodoofb_rectfill(sc, x, y, width, height,
 			    ri->ri_devcmap[bg]);
 		}
@@ -1009,18 +1011,19 @@ voodoofb_eraserows(void *cookie, int row, int nrows, long fillattr)
 }
 
 static void
-voodoofb_bitblt(struct voodoofb_softc *sc, int xs, int ys, int xd, int yd, int width, int height) 
+voodoofb_bitblt(struct voodoofb_softc *sc, int xs, int ys, int xd, int yd,
+    int width, int height)
 {
 	uint32_t fmt, blitcmd;
-	
-	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+
+	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel +
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 	blitcmd = COMMAND_2D_S2S_BITBLT | (ROP_COPY << 24);
 
 	if (xs <= xd) {
 	        blitcmd |= BIT(14);
-		xs += (width - 1); 
-		xd += (width - 1); 
+		xs += (width - 1);
+		xd += (width - 1);
 	}
 	if (ys <= yd) {
 		blitcmd |= BIT(15);
@@ -1028,24 +1031,24 @@ voodoofb_bitblt(struct voodoofb_softc *sc, int xs, int ys, int xd, int yd, int w
 		yd += (height - 1);
 	}
 	voodoo3_make_room(sc, 8);
-	
+
 	voodoo3_write32(sc, SRCBASE, 0);
 	voodoo3_write32(sc, DSTBASE, 0);
 	voodoo3_write32(sc, SRCFORMAT, fmt);
 	voodoo3_write32(sc, DSTFORMAT, fmt);
 	voodoo3_write32(sc, DSTSIZE,   width | (height << 16));
 	voodoo3_write32(sc, DSTXY,     xd | (yd << 16));
-	voodoo3_write32(sc, SRCXY, xs | (ys << 16)); 
-	voodoo3_write32(sc, COMMAND_2D, blitcmd | SST_2D_GO); 
+	voodoo3_write32(sc, SRCXY, xs | (ys << 16));
+	voodoo3_write32(sc, COMMAND_2D, blitcmd | SST_2D_GO);
 }
- 
+
 static void
-voodoofb_rectfill(struct voodoofb_softc *sc, int x, int y, int width, 
-    int height, int colour) 
+voodoofb_rectfill(struct voodoofb_softc *sc, int x, int y, int width,
+    int height, int colour)
 {
 	uint32_t fmt;
-	
-	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+
+	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel +
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
 	voodoo3_make_room(sc, 7);
@@ -1059,32 +1062,32 @@ voodoofb_rectfill(struct voodoofb_softc *sc, int x, int y, int width,
 }
 
 static void
-voodoofb_rectinvert(struct voodoofb_softc *sc, int x, int y, int width, 
-    int height) 
+voodoofb_rectinvert(struct voodoofb_softc *sc, int x, int y, int width,
+    int height)
 {
 	uint32_t fmt;
-	
-	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+
+	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel +
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
 	voodoo3_make_room(sc, 8);
 	voodoo3_write32(sc, SRCBASE, 0);
 	voodoo3_write32(sc, DSTBASE, 0);
 	voodoo3_write32(sc, DSTFORMAT,	fmt);
-	voodoo3_write32(sc, COMMAND_2D,	COMMAND_2D_FILLRECT | 
+	voodoo3_write32(sc, COMMAND_2D,	COMMAND_2D_FILLRECT |
 	    (ROP_INVERT << 24));
 	voodoo3_write32(sc, DSTSIZE,	width | (height << 16));
 	voodoo3_write32(sc, DSTXY,	x | (y << 16));
 	voodoo3_write32(sc, LAUNCH_2D,	x | (y << 16));
 }
 
-static void 
-voodoofb_setup_mono(struct voodoofb_softc *sc, int xd, int yd, int width, int height, uint32_t fg,
-					uint32_t bg) 
+static void
+voodoofb_setup_mono(struct voodoofb_softc *sc, int xd, int yd, int width,
+    int height, uint32_t fg, uint32_t bg)
 {
 	uint32_t dfmt, sfmt = sc->sc_linebytes;
-	
-	dfmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+
+	dfmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel +
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
 	voodoo3_make_room(sc, 10);
@@ -1096,19 +1099,19 @@ voodoofb_setup_mono(struct voodoofb_softc *sc, int xd, int yd, int width, int he
 	voodoo3_write32(sc, DSTSIZE,	width | (height << 16));
 	voodoo3_write32(sc, DSTXY,	xd | (yd << 16));
 	voodoo3_write32(sc, SRCXY,	0);
-	voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_H2S_BITBLT | 
+	voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_H2S_BITBLT |
 	    (ROP_COPY << 24) | SST_2D_GO);
-	
+
 	/* now feed the data into the chip */
 }
 
-static void 
+static void
 voodoofb_feed_line(struct voodoofb_softc *sc, int count, uint8_t *data)
 {
 	int i;
 	uint32_t latch = 0, bork;
 	int shift = 0;
-	
+
 	voodoo3_make_room(sc, count);
 	for (i = 0; i < count; i++) {
 		bork = data[i];
@@ -1122,7 +1125,7 @@ voodoofb_feed_line(struct voodoofb_softc *sc, int count, uint8_t *data)
 		}
 	if (shift != 24)
 		voodoo3_write32(sc, LAUNCH_2D, latch);
-}	
+}
 
 #if 0
 static int
@@ -1158,7 +1161,7 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		wdf->depth = ms->scr_ri.ri_depth;
 		wdf->cmsize = 256;
 		return 0;
-		
+
 	case WSDISPLAYIO_GETCMAP:
 		return voodoofb_getcmap(sc,
 		    (struct wsdisplay_cmap *)data);
@@ -1184,12 +1187,12 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
 				voodoofb_drm_map(sc);
 				int i;
-				
+
 				/* restore the palette */
 				for (i = 0; i < 256; i++) {
-					voodoofb_putpalreg(sc, 
-					   i, 
-					   sc->sc_cmap_red[i], 
+					voodoofb_putpalreg(sc,
+					   i,
+					   sc->sc_cmap_red[i],
 					   sc->sc_cmap_green[i],
 					   sc->sc_cmap_blue[i]);
 				}
@@ -1225,13 +1228,13 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct voodoofb_softc *sc = vd->cookie;
 	paddr_t pa;
-		
+
 	/* 'regular' framebuffer mmap()ing */
 	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
 		if (offset < sc->sc_fbsize) {
 			pa = bus_space_mmap(sc->sc_memt, sc->sc_fb, offset,
-			    prot, 
-			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);	
+			    prot,
+			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 			return pa;
 		}
 	} else if (sc->sc_mode == WSDISPLAYIO_MODE_MAPPED) {
@@ -1246,21 +1249,21 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 		    (offset < 0xb0000)) {
 			pa = bus_space_mmap(sc->sc_memt,
 			    sc->sc_fb, offset - 0xa0000,
-			    prot, BUS_SPACE_MAP_LINEAR);	
+			    prot, BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}
 
 		if ((offset >= sc->sc_fb) &&
 		    (offset < (sc->sc_fb + sc->sc_fbsize))) {
-			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);	
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 			return pa;
 		}
 
-		if ((offset >= sc->sc_regs) && (offset < (sc->sc_regs + 
+		if ((offset >= sc->sc_regs) && (offset < (sc->sc_regs +
 		    sc->sc_regsize))) {
-			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-			    BUS_SPACE_MAP_LINEAR);	
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+			    BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}
 
@@ -1271,15 +1274,15 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 			pa = bus_space_mmap(sc->sc_iot,
 			    offset - PCI_MAGIC_IO_RANGE, 0, prot, 0);
 			return pa;
-		}		
+		}
 #endif
 
 #ifdef OFB_ALLOW_OTHERS
 		if (offset >= 0x80000000) {
-			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-			    BUS_SPACE_MAP_LINEAR);	
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+			    BUS_SPACE_MAP_LINEAR);
 			return pa;
-		}		
+		}
 #endif
 	}
 	return -1;
@@ -1291,13 +1294,13 @@ voodoofb_init_screen(void *cookie, struct vcons_screen *scr,
 {
 	struct voodoofb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
-	
+
 	ri->ri_depth = sc->sc_bits_per_pixel;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_linebytes;
 	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
-	
+
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
@@ -1361,7 +1364,7 @@ voodoofb_calc_pll(int freq, int *f_out, int isBanshee)
 		maxm = 24;
 	} else {
 		minm = 1;
-		maxm = 57; 
+		maxm = 57;
 		/* This used to be 64, alas it seems the last 8 (funny that ?)
 		 * values cause jittering at lower resolutions. I've not done
 		 * any calculations to what the adjustment affects clock ranges,
@@ -1406,11 +1409,11 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	uint32_t horizontal_display_end, horizontal_sync_start,
 		horizontal_sync_end, horizontal_total,
 		horizontal_blanking_start, horizontal_blanking_end;
-	
+
 	uint32_t vertical_display_enable_end, vertical_sync_start,
 		vertical_sync_end, vertical_total, vertical_blanking_start,
 		vertical_blanking_end;
-		
+
 	uint32_t wd; // CRTC offset
 
 	int i;
@@ -1418,9 +1421,9 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	uint8_t misc;
 
 	memset(&mod, 0, sizeof(mod));
-	
+
 	mode = &mod;
-	
+
 	wd = (vm->hdisplay >> 3) - 1;
 	horizontal_display_end	= (vm->hdisplay >> 3) - 1;
 	horizontal_sync_start	= (vm->hsync_start >> 3) - 1;
@@ -1435,7 +1438,7 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	vertical_total		= vm->vtotal - 2;
 	vertical_blanking_start	= vertical_display_enable_end;
 	vertical_blanking_end	= vertical_total;
-	
+
 #if 0
 	misc = 0x0f |
 	    (vm->hdisplay < 400 ? 0xa0 :
@@ -1450,20 +1453,20 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 #ifdef VOODOOFB_DEBUG
 	printf("misc: %02x\n", misc);
 #endif
-#endif	
+#endif
 	mode->vr_seq[0] = 3;
 	mode->vr_seq[1] = 1;
 	mode->vr_seq[2] = 8;
 	mode->vr_seq[3] = 0;
 	mode->vr_seq[4] = 6;
-    
+
 	/* crtc regs start */
 	mode->vr_crtc[0] = horizontal_total - 4;
 	mode->vr_crtc[1] = horizontal_display_end;
 	mode->vr_crtc[2] = horizontal_blanking_start;
 	mode->vr_crtc[3] = 0x80 | (horizontal_blanking_end & 0x1f);
 	mode->vr_crtc[4] = horizontal_sync_start;
-    
+
 	mode->vr_crtc[5] = ((horizontal_blanking_end & 0x20) << 2) |
 	    (horizontal_sync_end & 0x1f);
 	mode->vr_crtc[6] = vertical_total;
@@ -1475,18 +1478,18 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	    ((vertical_sync_start  & 0x100) >> 6) |
 	    ((vertical_display_enable_end  & 0x100) >> 7) |
 	    ((vertical_total  & 0x100) >> 8);
-    
+
 	mode->vr_crtc[8] = 0;
 	mode->vr_crtc[9] = 0x40 |
 	    ((vertical_blanking_start & 0x200) >> 4);
-    
+
 	mode->vr_crtc[10] = 0;
 	mode->vr_crtc[11] = 0;
 	mode->vr_crtc[12] = 0;
 	mode->vr_crtc[13] = 0;
 	mode->vr_crtc[14] = 0;
 	mode->vr_crtc[15] = 0;
- 
+
 	mode->vr_crtc[16] = vertical_sync_start;
 	mode->vr_crtc[17] = (vertical_sync_end & 0x0f) | 0x20;
 	mode->vr_crtc[18] = vertical_display_enable_end;
@@ -1500,18 +1503,18 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	/* overflow registers */
 	mode->vr_crtc[CRTC_HDISP_EXT] =
 	    (horizontal_total&0x100) >> 8 |
-	    (horizontal_display_end & 0x100) >> 6 | 
+	    (horizontal_display_end & 0x100) >> 6 |
 	    (horizontal_blanking_start & 0x100) >> 4 |
 	    (horizontal_blanking_end & 0x40) >> 1 |
 	    (horizontal_sync_start & 0x100) >> 2 |
 	    (horizontal_sync_end & 0x20) << 2;
-	    
+
 	mode->vr_crtc[CRTC_VDISP_EXT] =
 	    (vertical_total & 0x400) >> 10 |
 	    (vertical_display_enable_end & 0x400) >> 8 | /* the manual is contradictory here */
 	    (vertical_blanking_start & 0x400) >> 6 |
 	    (vertical_blanking_end & 0x400) >> 4;
-    
+
 	/* attr regs start */
 	mode->vr_attr[0] = 0;
 	mode->vr_attr[1] = 0;
@@ -1547,7 +1550,7 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	mode->vr_graph[8] = 0;
 
 	vga_outb(sc, MISC_W, misc | 0x01);
-    
+
 	for(i = 0; i < 5; i++)
 		voodoo3_write_seq(sc, i, mode->vr_seq[i]);
 	for (i = 0; i < CRTC_PCI_READBACK; i ++)
@@ -1559,7 +1562,7 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 }
 
 static void
-voodoofb_set_videomode(struct voodoofb_softc *sc, 
+voodoofb_set_videomode(struct voodoofb_softc *sc,
     const struct videomode *vm)
 {
 	uint32_t miscinit0 = 0;
@@ -1572,13 +1575,13 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	sc->sc_width = vm->hdisplay;
 	sc->sc_height = vm->vdisplay;
 	sc->sc_linebytes = bytes_per_row;
-	
+
 	voodoofb_setup_monitor(sc, vm);
-	
+
 	vidproc &= ~(0x1c0000); /* clear bits 18 to 20, bpp in vidproccfg */
 	/* enable bits 18 to 20 to the required bpp */
 	vidproc |= ((bpp - 1) << VIDCFG_PIXFMT_SHIFT);
-	
+
 	vidpll = voodoofb_calc_pll(vm->dot_clock, &fout, 0);
 
 #ifdef VOODOOFB_DEBUG
@@ -1588,7 +1591,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	printf("pll: %08x %d\n", vidpll, fout);
 #endif
 	/* bit 10 of vidproccfg, is enabled or disabled as needed */
-	switch (bpp) { 
+	switch (bpp) {
 		case 1:
 			/*
 			 * bit 10 off for palettized modes only, off means
@@ -1607,7 +1610,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 		case 4:
 			#if __POWERPC__
 				miscinit0 = 0x40000000;
-			#endif			
+			#endif
 			vidproc |= (1 << 10); /* Same for 32bit modes */
 			break;
 #endif
@@ -1615,9 +1618,9 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 			printf("We support only 8 bit for now\n");
 			return;
 	}
-	
+
 	voodoofb_wait_idle(sc);
-	
+
 	voodoo3_write32(sc, MISCINIT1, voodoo3_read32(sc, MISCINIT1) | 0x01);
 
 	voodoo3_make_room(sc, 4);
@@ -1625,7 +1628,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	voodoo3_write32(sc, DACMODE, 0);
 	voodoo3_write32(sc, VIDDESKSTRIDE, bytes_per_row);
 	voodoo3_write32(sc, PLLCTRL0, vidpll);
-	
+
 	voodoo3_make_room(sc, 5);
 	voodoo3_write32(sc, VIDSCREENSIZE, sc->sc_width |
 	    (sc->sc_height << 12));
@@ -1662,8 +1665,8 @@ voodoofb_init(struct voodoofb_softc *sc)
 	uint32_t vidcfg = 0;
 
 #ifdef VOODOOFB_DEBUG
-	printf("initializing engine...");	
-#endif	
+	printf("initializing engine...");
+#endif
 	vgainit0 = voodoo3_read32(sc, VGAINIT0);
 #ifdef VOODOOFB_DEBUG
 	printf("vga: %08x", vgainit0);
@@ -1674,7 +1677,7 @@ voodoofb_init(struct voodoofb_softc *sc)
 	    VGAINIT0_WAKEUP_3C3   |
 	    VGAINIT0_ALT_READBACK |
 	    VGAINIT0_EXTSHIFTOUT;
-	
+
 	vidcfg = voodoo3_read32(sc, VIDPROCCFG);
 #ifdef VOODOOFB_DEBUG
 	printf(" vidcfg: %08x\n", vidcfg);
@@ -1683,7 +1686,7 @@ voodoofb_init(struct voodoofb_softc *sc)
 	    VIDCFG_VIDPROC_ENABLE |
 	    VIDCFG_DESK_ENABLE;
 	vidcfg &= ~VIDCFG_HWCURSOR_ENABLE;
-	
+
 	voodoo3_make_room(sc, 2);
 
 	voodoo3_write32(sc, VGAINIT0, vgainit0);
@@ -1778,7 +1781,7 @@ voodoofb_setup_i2c(struct voodoofb_softc *sc)
 				    sc->sc_edid_info.edid_nmodes);
 				while ((sc->sc_videomode == NULL) &&
 				       (n < sc->sc_edid_info.edid_nmodes)) {
-					if (MODE_IS_VALID(&m[n], 
+					if (MODE_IS_VALID(&m[n],
 					    sc->sc_max_clock)) {
 						sc->sc_videomode = &m[n];
 					}
@@ -1846,7 +1849,7 @@ static int
 voodoofb_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
 
-	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, 
+	return (i2c_bitbang_initiate_xfer(cookie, addr, flags,
 	    &voodoofb_i2cbb_ops));
 }
 

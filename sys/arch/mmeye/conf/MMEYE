@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.41 2011/02/19 10:46:27 kiyohara Exp $
+#	$NetBSD: MMEYE,v 1.41.14.1 2017/12/03 11:36:29 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -42,16 +42,9 @@ options 	USERCONF	# userconf(4) support
 #options 	SYSCALL_DEBUG
 
 # Compatibility options
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
+include 	"conf/compat_netbsd14.config"
 options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables

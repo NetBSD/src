@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.21.38.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.21.38.2 2017/12/03 11:39:04 jdolecek Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -120,9 +120,6 @@ struct ip6protosw {
 /* protocol-protocol hooks */
 	int	(*pr_input)		/* input to protocol (from below) */
 			(struct mbuf **, int *, int);
-	int	(*pr_output)		/* output to protocol (from above) */
-			(struct mbuf *, struct socket *, struct sockaddr_in6 *,
-			 struct mbuf *);
 	void	*(*pr_ctlinput)		/* control input (from below) */
 			(int, const struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
@@ -142,6 +139,19 @@ struct ip6protosw {
 	void	(*pr_drain)		/* flush any excess space possible */
 			(void);
 };
+
+#ifdef _KERNEL
+#define	PR_WRAP_INPUT6(name)				\
+static int						\
+name##_wrapper(struct mbuf **mp, int *offp, int proto)	\
+{							\
+	int rv;						\
+	mutex_enter(softnet_lock);			\
+	rv = name(mp, offp, proto);			\
+	mutex_exit(softnet_lock);			\
+	return rv;					\
+}
+#endif
 
 extern const struct ip6protosw inet6sw[];
 

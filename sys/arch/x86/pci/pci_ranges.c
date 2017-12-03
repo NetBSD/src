@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.3.12.1 2012/11/20 03:01:51 tls Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.3.12.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.3.12.1 2012/11/20 03:01:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.3.12.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,11 +92,8 @@ pci_alloc_dup(const pci_alloc_t *pal)
 {
 	pci_alloc_t *npal;
 
-	if ((npal = kmem_alloc(sizeof(*npal), KM_SLEEP)) == NULL)
-		return NULL;
-
+	npal = kmem_alloc(sizeof(*npal), KM_SLEEP);
 	*npal = *pal;
-
 	return npal;
 }
 
@@ -243,8 +240,10 @@ io_range_extend_by_win(struct range_infer_ctx *ric,
 		r[1].r_ofs = ofshigh;
 		r[1].r_val = iohigh;
 
-		baseh = (iohigh >> PCI_BRIDGE_IOHIGH_BASE_SHIFT) & PCI_BRIDGE_IOHIGH_BASE_MASK;
-		limith = (iohigh >> PCI_BRIDGE_IOHIGH_LIMIT_SHIFT) & PCI_BRIDGE_IOHIGH_LIMIT_MASK;
+		baseh = (iohigh >> PCI_BRIDGE_IOHIGH_BASE_SHIFT)
+		    & PCI_BRIDGE_IOHIGH_BASE_MASK;
+		limith = (iohigh >> PCI_BRIDGE_IOHIGH_LIMIT_SHIFT)
+		    & PCI_BRIDGE_IOHIGH_LIMIT_MASK;
 
 		baser |= baseh << 4;
 		limitr |= limith << 4;
@@ -385,8 +384,8 @@ mmio_range_extend(struct range_infer_ctx *ric, const pci_alloc_t *pal)
 }
 
 static bool
-mmio_range_extend_by_bar(struct range_infer_ctx *ric, int bus, int dev, int fun,
-    int ofs, pcireg_t curbar, pcireg_t sizebar)
+mmio_range_extend_by_bar(struct range_infer_ctx *ric, int bus, int dev,
+    int fun, int ofs, pcireg_t curbar, pcireg_t sizebar)
 {
 	int type;
 	bool prefetchable;
@@ -893,11 +892,11 @@ pci_ranges_infer(pci_chipset_tag_t pc, int minbus, int maxbus,
 	aprint_verbose("%s: inferred %" PRIuMAX
 	    " bytes of memory-mapped PCI space at 0x%" PRIxMAX "\n", __func__,
 	    (uintmax_t)(ric.ric_mmio_top - ric.ric_mmio_bottom),
-	    (uintmax_t)ric.ric_mmio_bottom); 
+	    (uintmax_t)ric.ric_mmio_bottom);
 	aprint_verbose("%s: inferred %" PRIuMAX
 	    " bytes of PCI I/O space at 0x%" PRIxMAX "\n", __func__,
 	    (uintmax_t)(ric.ric_io_top - ric.ric_io_bottom),
-	    (uintmax_t)ric.ric_io_bottom); 
+	    (uintmax_t)ric.ric_io_bottom);
 	TAILQ_FOREACH(pal, &ric.ric_pals, pal_link)
 		pci_alloc_print(pc, pal);
 

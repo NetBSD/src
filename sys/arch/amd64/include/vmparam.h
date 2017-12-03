@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31.2.2 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31.2.3 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,6 @@
 
 #ifdef __x86_64__
 
-#include <sys/tree.h>
 #include <sys/mutex.h>
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -56,6 +55,12 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * Default pager_map of 16MB is awfully small.  There is plenty
+ * of VA so use it.
+ */
+#define	PAGER_MAP_DEFAULT_SIZE (512 * 1024 * 1024)
 
 /*
  * USRSTACK is the top (end) of the user stack. Immediately above the
@@ -109,22 +114,24 @@
  */
 #define	USRIOSIZE 	300
 
-/*
- * Mach derived constants
- */
-
-/* user/kernel map constants */
+/* User map constants */
 #define VM_MIN_ADDRESS		0
-#define VM_MAXUSER_ADDRESS	0x00007f8000000000
+#define VM_MAXUSER_ADDRESS	(0x00007f8000000000 - PAGE_SIZE)
+#define VM_MAXUSER_ADDRESS32	0xfffff000
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
+
+/*
+ * Kernel map constants.
+ * MIN = VA_SIGN_NEG(L4_SLOT_KERN * NBPD_L4)
+ * MAX = MIN + NKL4_MAX_ENTRIES * NBPD_L4
+ */
 #ifndef XEN
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
-#else /* XEN */
+#define VM_MAX_KERNEL_ADDRESS	0xffffa00000000000
+#else
 #define VM_MIN_KERNEL_ADDRESS	0xffffa00000000000
+#define VM_MAX_KERNEL_ADDRESS	0xffffc00000000000
 #endif
-#define VM_MAX_KERNEL_ADDRESS	0xfffffe8000000000
-
-#define VM_MAXUSER_ADDRESS32	0xfffff000
 
 /*
  * The address to which unspecified mapping requests default
@@ -134,22 +141,13 @@
 #endif
 #define __USE_TOPDOWN_VM
 
-#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
-    trunc_page(USRSTACK - MAXSSIZ - (sz))
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 
 #define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
-	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz) - user_stack_guard_size)
 #define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
-
-/*
- * XXXfvdl we have plenty of KVM now, remove this.
- */
-#ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF	(384 * 1024 * 1024)
-#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

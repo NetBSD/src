@@ -1,28 +1,23 @@
-/*	$NetBSD: ldscript.elf,v 1.2 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: ldscript.elf,v 1.2.124.1 2017/12/03 11:35:59 jdolecek Exp $	*/
 
-OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
-  KERNEL_BASE_phys = 0xF0000000;
-  KERNEL_BASE_virt = 0xF0000000;
-
   /* Kernel start: */
-  .start (KERNEL_BASE_phys) :
+  .start :
   {
     *(.start)
-  } =0
+  }
 
   /* Read-only sections, merged into text segment: */
-  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
-  AT (LOADADDR(.start) + SIZEOF(.start))
+  .text :
   {
     *(.text)
     *(.text.*)
     *(.stub)
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
-  } =0
+  }
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -30,16 +25,14 @@ SECTIONS
      boundary.  */
   . = ALIGN(0x8000);
   .data    :
-  AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
   {
     __data_start = . ;
     *(.data)
     *(.data.*)
   }
-  .sdata     : 
-  AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
+  .sdata     :
   {
-    *(.sdata) 
+    *(.sdata)
     *(.sdata.*)
   }
   _edata = .;
@@ -59,17 +52,33 @@ SECTIONS
   }
   .bss       :
   {
-   *(.dynbss)
-   *(.bss)
-   *(.bss.*)
-   *(COMMON)
-   /* Align here to ensure that the .bss section occupies space up to
-      _end.  Align after .bss to ensure correct alignment even if the
-      .bss section disappears because there are no input sections.  */
-   . = ALIGN(32 / 8);
+    *(.dynbss)
+    *(.bss)
+    *(.bss.*)
+    *(COMMON)
+    /* Align here to ensure that the .bss section occupies space up to
+       _end.  Align after .bss to ensure correct alignment even if the
+       .bss section disappears because there are no input sections.  */
+    . = ALIGN(32 / 8);
   }
   . = ALIGN(32 / 8);
   _end = .;
   _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
   PROVIDE (end = .);
+}
+SECTIONS
+{
+  KERNEL_BASE_phys = 0xF0000000;
+  KERNEL_BASE_virt = 0xF0000000;
+
+  .start (KERNEL_BASE_phys) :
+  {
+    *(.start)
+  } =0
+
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
+  {
+    *(.text)
+  } =0
 }

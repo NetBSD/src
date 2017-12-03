@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.12 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.12.6.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
  */
 #ifndef _IF_GFEVAR_H_
 #define _IF_GFEVAR_H_
+
+#include <sys/rndsource.h>
 
 #define	GE_RXDESC_MEMSIZE		(1 * PAGE_SIZE)
 #define	GE_RXDESC_MAX			64

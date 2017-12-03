@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.41.2.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.41.2.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.41.2.1 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.41.2.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.41.2.1 2014/08/20 00:03:39 tls Exp $");
 #include <netinet/if_inarp.h>
 #endif
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -816,7 +816,7 @@ gfe_rx_rxqinit(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 	ds = rxq->rxq_buf_mem.gdm_map->dm_segs;
 	nxtaddr = rxq->rxq_desc_busaddr + sizeof(*rxd);
 	for (idx = 0, rxd = rxq->rxq_descs; idx < GE_RXDESC_MAX;
-	    idx++, nxtaddr += sizeof(*(++rxd))) {
+	    idx++, rxd++, nxtaddr += sizeof(*rxd)) {
 		rxd->ed_lencnt = htogt32(GE_RXBUF_SIZE << 16);
 		rxd->ed_cmdsts = htogt32(RX_CMD_F|RX_CMD_L|RX_CMD_O|RX_CMD_EI);
 		rxd->ed_bufptr = htogt32(ds->ds_addr + boff);
@@ -933,7 +933,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		m->m_data += 2;
 		m->m_len = 0;
 		m->m_pkthdr.len = 0;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		rxq->rxq_cmdsts = cmdsts;
 		--rxq->rxq_active;
 
@@ -945,9 +945,6 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		m->m_len = buflen;
 		m->m_pkthdr.len = buflen;
 
-		ifp->if_ipackets++;
-		bpf_mtap(ifp, m);
-
 		eh = (const struct ether_header *) m->m_data;
 		if ((ifp->if_flags & IFF_PROMISC) ||
 		    (rxq->rxq_cmdsts & RX_STS_M) == 0 ||
@@ -955,7 +952,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (eh->ether_dhost[0] & 1) != 0 ||
 		    memcmp(eh->ether_dhost, CLLADDR(ifp->if_sadl),
 							ETHER_ADDR_LEN) == 0) {
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 			m = NULL;
 			GE_DPRINTF(sc, (">"));
 		} else {
@@ -2018,9 +2015,10 @@ gfe_hash_fill(struct gfe_softc *sc)
 
 	error = gfe_hash_entry_op(sc, GE_HASH_ADD, GE_RXPRIO_HI,
 	    CLLADDR(sc->sc_ec.ec_if.if_sadl));
-	if (error)
+	if (error) {
 		GE_FUNC_EXIT(sc, "!");
 		return error;
+	}
 
 	sc->sc_flags &= ~GE_ALLMULTI;
 	if ((sc->sc_ec.ec_if.if_flags & IFF_PROMISC) == 0)

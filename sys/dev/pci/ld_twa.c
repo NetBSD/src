@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.15.6.1 2014/08/20 00:03:43 tls Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.15.6.2 2017/12/03 11:37:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.15.6.1 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.15.6.2 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.15.6.1 2014/08/20 00:03:43 tls Exp $");
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/proc.h>
-#include <sys/rnd.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/ldvar.h>
@@ -65,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.15.6.1 2014/08/20 00:03:43 tls Exp $");
 #include <dev/pci/twareg.h>
 #include <dev/pci/twavar.h>
 
+#include "ioconf.h"
+
 struct ld_twa_softc {
 	struct	ld_softc sc_ld;
 	int	sc_hwunit;
@@ -75,7 +76,8 @@ static int	ld_twa_detach(device_t, int);
 static int	ld_twa_dobio(struct ld_twa_softc *, void *, size_t, daddr_t,
 			     struct buf *);
 static int	ld_twa_dump(struct ld_softc *, void *, int, int);
-static int	ld_twa_flush(struct ld_softc *, int);
+static int	ld_twa_flush(struct ld_softc *, bool);
+static int	ld_twa_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_twa_handler(struct twa_request *);
 static int	ld_twa_match(device_t, cfdata_t, void *);
 static int	ld_twa_start(struct ld_softc *, struct buf *);
@@ -119,8 +121,8 @@ ld_twa_attach(device_t parent, device_t self, void *aux)
 	ld->sc_maxqueuecnt = twa->sc_units[sc->sc_hwunit].td_openings;
 	ld->sc_start = ld_twa_start;
 	ld->sc_dump = ld_twa_dump;
-	ld->sc_flush = ld_twa_flush;
-	ldattach(ld);
+	ld->sc_ioctl = ld_twa_ioctl;
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 static int
@@ -234,7 +236,7 @@ ld_twa_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 
 static int
-ld_twa_flush(struct ld_softc *ld, int flags)
+ld_twa_flush(struct ld_softc *ld, bool poll)
 {
 	int s, rv = 0;
 	struct twa_request *tr;
@@ -275,6 +277,24 @@ ld_twa_flush(struct ld_softc *ld, int flags)
 	return (rv);
 }
 
+static int
+ld_twa_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
+{
+        int error;
+
+        switch (cmd) {
+        case DIOCCACHESYNC:
+		error = ld_twa_flush(ld, poll);
+		break;
+
+	default:
+		error = EPASSTHROUGH;
+		break;
+	}
+
+	return error;
+}
+
 static void
 ld_twa_adjqparam(device_t self, int openings)
 {
@@ -306,4 +326,47 @@ ld_twa_scsicmd(struct ld_twa_softc *sc,
 	tr->tr_command->command.cmd_pkt_9k.cdb[15] = 0;
 
 	return (0);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_twa, "ld,twa");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL 
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+
+static int
+ld_twa_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_twa, cfdata_ioconf_ld_twa);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_twa, cfdata_ioconf_ld_twa);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

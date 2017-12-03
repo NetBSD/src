@@ -212,6 +212,10 @@ void radeon_dp_aux_init(struct radeon_connector *radeon_connector)
 	radeon_connector->ddc_bus->rec.hpd = radeon_connector->hpd.hpd;
 	radeon_connector->ddc_bus->aux.dev = radeon_connector->base.kdev;
 	radeon_connector->ddc_bus->aux.transfer = radeon_dp_aux_transfer;
+#ifdef __NetBSD__
+	/* XXX dervied from sysfs/i2c on linux. */
+	radeon_connector->ddc_bus->aux.name = "radeon_dp_aux";
+#endif
 	ret = drm_dp_aux_register_i2c_bus(&radeon_connector->ddc_bus->aux);
 	if (!ret)
 		radeon_connector->ddc_bus->has_aux = true;
@@ -367,11 +371,11 @@ static void radeon_dp_probe_oui(struct radeon_connector *radeon_connector)
 		return;
 
 	if (drm_dp_dpcd_read(&radeon_connector->ddc_bus->aux, DP_SINK_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Sink OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Sink OUI: %02hhx%02hhx%02hhx\n",
 			      buf[0], buf[1], buf[2]);
 
 	if (drm_dp_dpcd_read(&radeon_connector->ddc_bus->aux, DP_BRANCH_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Branch OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Branch OUI: %02hhx%02hhx%02hhx\n",
 			      buf[0], buf[1], buf[2]);
 }
 

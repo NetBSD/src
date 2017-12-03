@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: time.c,v 1.3.22.1 2017/12/03 11:36:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -175,4 +175,10 @@ time(time_t *tloc)
 	ssc((u_int64_t) &time, 0, 0, 0, SSC_GET_RTC);
 
 	return *tloc = EfiTimeToUnixTime(&time);
+}
+
+time_t
+getsecs(void)
+{
+    return time(0);
 }

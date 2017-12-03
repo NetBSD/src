@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.44.18.1 2013/06/23 06:20:13 tls Exp $ */
+/*	$NetBSD: ka750.c,v 1.44.18.2 2017/12/03 11:36:48 jdolecek Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -43,13 +43,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -63,12 +56,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ka750.c	7.4 (Berkeley) 5/9/91
- *	@(#)autoconf.c	7.20 (Berkeley) 5/9/91
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.44.18.1 2013/06/23 06:20:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.44.18.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +261,7 @@ ka750_mchk(void *cmcf)
 	int mcsr = mfpr(PR_MCSR);
 
 	printf("machine check %x: %s%s\n", type, mc750[type&0xf],
-	    (type&0xf0) ? " abort" : " fault"); 
+	    (type&0xf0) ? " abort" : " fault");
 	printf(
 "\tva %x errpc %x mdr %x smr %x rdtimo %x tbgpar %x cacherr %x\n",
 	    mcf->mc5_va, mcf->mc5_errpc, mcf->mc5_mdr, mcf->mc5_svmode,

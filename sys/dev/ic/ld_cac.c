@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.27 2012/02/24 18:04:51 mhitch Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.27.2.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.27 2012/02/24 18:04:51 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.27.2.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,14 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.27 2012/02/24 18:04:51 mhitch Exp $");
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#include <sys/rnd.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/ldvar.h>
 
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
+
+#include "ioconf.h"
 
 struct ld_cac_softc {
 	struct	ld_softc sc_ld;
@@ -130,8 +131,8 @@ ld_cac_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s array\n", type);
 
 	/* XXX We should verify this... */
-	ld->sc_flags = LDF_ENABLED;
-	ldattach(ld);
+	ld->sc_flags = LDF_ENABLED | LDF_MPSAFE;
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 int
@@ -215,4 +216,47 @@ ld_cac_done(device_t dv, void *context, int error)
 	mutex_exit(sc->sc_mutex);
 	lddone(&sc->sc_ld, bp);
 	mutex_enter(sc->sc_mutex);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_cac, "ld,cac");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+        
+static int
+ld_cac_modcmd(modcmd_t cmd, void *opaque)
+{               
+	int error = 0;
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_cac, cfdata_ioconf_ld_cac);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_cac, cfdata_ioconf_ld_cac);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.14 2009/12/10 14:13:54 matt Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.14.22.1 2017/12/03 11:36:57 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
 
 #undef SVR4_COMPAT_SOLARIS2
 #ifdef SVR4_COMPAT_SOLARIS2
-# define SVR4_32_AUX_ARGSIZ howmany((sizeof(Aux32Info) * 15) + 256, \
-				sizeof(netbsd32_charp))
+# define SVR4_32_AUX_ARGSIZ (sizeof(Aux32Info) * 15 + 256)
 #else
-# define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(netbsd32_charp))
+# define SVR4_32_AUX_ARGSIZ (sizeof(Aux32Info) * 8)
 #endif
 
 int svr4_32_copyargs(struct lwp *, struct exec_package *, struct ps_strings *,
@@ -63,7 +62,7 @@ int svr4_32_copyargs(struct lwp *, struct exec_package *, struct ps_strings *,
 extern struct emul emul_svr4_32;
 
 void svr4_32_setregs(struct lwp *, struct exec_package *, vaddr_t);
-vaddr_t svr4_32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
+vaddr_t svr4_32_vm_default_addr(struct proc *, vaddr_t, vsize_t, int);
 int svr4_32_elf32_probe(struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *);
 

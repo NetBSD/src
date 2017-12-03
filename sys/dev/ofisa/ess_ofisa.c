@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.25 2010/05/22 16:35:00 tsutsui Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.25.18.1 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.25 2010/05/22 16:35:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.25.18.1 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ ess_ofisa_attach(device_t parent, device_t self, void *aux)
 	struct ofisa_intr_desc intr[2];
 	struct ofisa_dma_desc dma[2];
 	int n, ndrq;
-	char *model;
 
 	sc->sc_dev = self;
 
@@ -162,14 +161,7 @@ ess_ofisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	n = OF_getproplen(aa->oba.oba_phandle, "model");
-	if (n > 0) {
-		model = alloca(n);
-		if (OF_getprop(aa->oba.oba_phandle, "model", model, n) == n) {
-			aprint_normal(": %s\n", model);
-			aprint_normal_dev(self, "");
-		}
-	}
+	ofisa_print_model(self, aa->oba.oba_phandle);
 
 	essattach(sc, 0);
 }

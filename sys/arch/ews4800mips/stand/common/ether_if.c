@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_if.c,v 1.5 2009/01/12 11:32:43 tsutsui Exp $	*/
+/*	$NetBSD: ether_if.c,v 1.5.24.1 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootp.h>
 #include <lib/libsa/dev_net.h>
+
+#include <dev/clock_subr.h>
 
 #include <machine/sbd.h>
 #define	_SBD_TR2A_PRIVATE

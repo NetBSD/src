@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_iicreg.h,v 1.1.4.2 2013/06/23 06:20:01 tls Exp $	*/
+/*	$NetBSD: ti_iicreg.h,v 1.1.4.3 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -36,6 +36,8 @@
 #define		I2C_REVNB_LO_MAJOR(x)		(((x) >>  8) & 0x007)
 #define		I2C_REVNB_LO_CUSTOM(x)		(((x) >>  6) & 0x003)
 #define		I2C_REVNB_LO_MINOR(x)		(((x) >>  0) & 0x01f)
+#define		I2C_REV_SCHEME_0_MAJOR(r)	(((r) >> 4) && 0xf)
+#define		I2C_REV_SCHEME_0_MINOR(r)	(((r) >> 0) && 0xf)
 #define OMAP2_I2C_REVNB_HI		0x04
 #define		I2C_REVNB_HI_SCHEME(x)		(((x) >> 14) & 0x003)
 #define		I2C_REVNB_HI_FUNC(x)		(((x) >>  0) & 0xfff)

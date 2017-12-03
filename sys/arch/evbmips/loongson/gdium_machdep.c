@@ -25,6 +25,7 @@
 #include <sys/device.h>
 #include <sys/types.h>
 
+#include <mips/cpuregs.h>
 #include <evbmips/loongson/autoconf.h>
 #include <evbmips/loongson/loongson_intr.h>
 
@@ -284,7 +285,7 @@ gdium_device_register(device_t dev, void *aux)
 	case 5:	/* umass at uhub port 3 */
 		if (device_is_a(dev, "umass")) {
 			struct usb_attach_arg *uaa = aux;
-			if (uaa->port == 3)
+			if (uaa->uaa_port == 3)
 				goto advance;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.101.2.1 2013/02/25 00:29:11 tls Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.101.2.2 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.101.2.1 2013/02/25 00:29:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.101.2.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -103,15 +103,16 @@ extern int wdcdebug_wd_mask; /* inited in wd.c */
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
-static int	wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*);
-static void	wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
-static void	_wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
+static int	wdc_ata_bio(struct ata_drive_datas*, struct ata_xfer *);
+static int	wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
+static int	_wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
+static void	wdc_ata_bio_poll(struct ata_channel *,struct ata_xfer *);
 static int	wdc_ata_bio_intr(struct ata_channel *, struct ata_xfer *,
 				 int);
 static void	wdc_ata_bio_kill_xfer(struct ata_channel *,
 				      struct ata_xfer *, int);
 static void	wdc_ata_bio_done(struct ata_channel *, struct ata_xfer *);
-static int	wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
+static int	wdc_ata_err(struct ata_drive_datas *, struct ata_bio *, int);
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
 #define WDC_ATA_RECOV 0x01 /* There was a recovered error */
 #define WDC_ATA_ERR   0x02 /* Drive reports an error */
@@ -135,15 +136,12 @@ const struct ata_bustype wdc_ata_bustype = {
  * ATACMD_TRY_AGAIN. Must be called at splbio().
  */
 static int
-wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
+wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
-	struct ata_xfer *xfer;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 
-	xfer = ata_get_xfer(ATAXF_NOSLEEP);
-	if (xfer == NULL)
-		return ATACMD_TRY_AGAIN;
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
 		ata_bio->flags |= ATA_POLL;
 	if (ata_bio->flags & ATA_POLL)
@@ -161,25 +159,26 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 		xfer->c_flags |= C_PIOBM;
 #endif
 	xfer->c_drive = drvp->drive;
-	xfer->c_cmd = ata_bio;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = wdc_ata_bio_start;
+	xfer->c_poll = wdc_ata_bio_poll;
+	xfer->c_abort = wdc_ata_bio_done;
 	xfer->c_intr = wdc_ata_bio_intr;
 	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
-static void
+static int
 wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int wait_flags;
+	int wait_flags, tfd;
 	const char *errstring;
 #ifdef WDC_NO_IDS
 	wait_flags = AT_POLL;
@@ -193,6 +192,8 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    drvp->state, drvp->drive_flags, xfer->c_flags, chp->ch_flags),
 	    DEBUG_XFERS);
 
+	ata_channel_lock_owned(chp);
+
 	/* Do control operations specially. */
 	if (__predict_false(drvp->state < READY)) {
 		/*
@@ -203,9 +204,7 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* If it's not a polled command, we need the kernel thread */
 		if ((xfer->c_flags & C_POLL) == 0 &&
 		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
-			chp->ch_queue->queue_freeze++;
-			wakeup(&chp->ch_thread);
-			return;
+			return ATASTART_TH;
 		}
 		/*
 		 * disable interrupts, all commands here should be quick
@@ -220,15 +219,17 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		    WDSD_IBM | (xfer->c_drive << 4));
 		DELAY(10);
 		errstring = "wait";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags,
+		    &tfd))
 			goto ctrltimeout;
 		wdccommandshort(chp, xfer->c_drive, WDCC_RECAL);
 		/* Wait for at last 400ns for status bit to be valid */
 		DELAY(1);
 		errstring = "recal";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags,
+		    &tfd))
 			goto ctrltimeout;
-		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
+		if (ATACH_ST(tfd) & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
 		/* Don't try to set modes if controller can't be adjusted */
 		if (atac->atac_set_modes == NULL)
@@ -239,9 +240,10 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 		errstring = "piomode";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags,
+		    &tfd))
 			goto ctrltimeout;
-		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
+		if (ATACH_ST(tfd) & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
 #if NATA_DMA
 #if NATA_UDMA
@@ -257,33 +259,36 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			goto geometry;
 		}
 		errstring = "dmamode";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags,
+		    &tfd))
 			goto ctrltimeout;
-		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
+		if (ATACH_ST(tfd) & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
 #endif	/* NATA_DMA */
 geometry:
 		if (ata_bio->flags & ATA_LBA)
 			goto multimode;
 		wdccommand(chp, xfer->c_drive, WDCC_IDP,
-		    ata_bio->lp->d_ncylinders,
-		    ata_bio->lp->d_ntracks - 1, 0, ata_bio->lp->d_nsectors,
-		    (ata_bio->lp->d_type == DTYPE_ST506) ?
-			ata_bio->lp->d_precompcyl / 4 : 0);
+		    drvp->lp->d_ncylinders,
+		    drvp->lp->d_ntracks - 1, 0, drvp->lp->d_nsectors,
+		    (drvp->lp->d_type == DKTYPE_ST506) ?
+			drvp->lp->d_precompcyl / 4 : 0);
 		errstring = "geometry";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags,
+		    &tfd))
 			goto ctrltimeout;
-		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
+		if (ATACH_ST(tfd) & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
 multimode:
-		if (ata_bio->multi == 1)
+		if (drvp->multi == 1)
 			goto ready;
 		wdccommand(chp, xfer->c_drive, WDCC_SETMULTI, 0, 0, 0,
-		    ata_bio->multi, 0);
+		    drvp->multi, 0);
 		errstring = "setmulti";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags,
+		    &tfd))
 			goto ctrltimeout;
-		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
+		if (ATACH_ST(tfd) & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
 ready:
 		drvp->state = READY;
@@ -296,8 +301,7 @@ ready:
 		delay(10); /* some drives need a little delay here */
 	}
 
-	_wdc_ata_bio_start(chp, xfer);
-	return;
+	return _wdc_ata_bio_start(chp, xfer);
 ctrltimeout:
 	printf("%s:%d:%d: %s timed out\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
@@ -308,36 +312,35 @@ ctrlerror:
 	printf("%s:%d:%d: %s ",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 	    errstring);
-	if (chp->ch_status & WDCS_DWF) {
+	if (ATACH_ST(tfd) & WDCS_DWF) {
 		printf("drive fault\n");
 		ata_bio->error = ERR_DF;
 	} else {
-		printf("error (%x)\n", chp->ch_error);
-		ata_bio->r_error = chp->ch_error;
+		ata_bio->r_error = ATACH_ERR(tfd);
 		ata_bio->error = ERROR;
+		printf("error (%x)\n", ata_bio->r_error);
 	}
 ctrldone:
 	drvp->state = 0;
-	wdc_ata_bio_done(chp, xfer);
 
 	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
 		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr, 
 		    WDCTL_4BIT);
-	return;
+	return ATASTART_ABORT;
 }
 
-static void
+static int
 _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
-	u_int16_t cyl;
-	u_int8_t head, sect, cmd = 0;
-	int nblks;
+	uint16_t cyl;
+	uint8_t head, sect, cmd = 0;
+	int nblks, tfd;
 #if NATA_DMA || NATA_PIOBM
 	int error, dma_flags = 0;
 #endif
@@ -357,7 +360,6 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			dma_flags |= WDC_DMA_LBA48;
 	}
 #endif
-again:
 	/*
 	 *
 	 * When starting a multi-sector transfer, or doing single-sector
@@ -367,12 +369,12 @@ again:
 		if (ata_bio->flags & ATA_SINGLE)
 			nblks = 1;
 		else
-			nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
+			nblks = xfer->c_bcount / drvp->lp->d_secsize;
 		/* Check for bad sectors and adjust transfer, if necessary. */
-		if ((ata_bio->lp->d_flags & D_BADSECT) != 0) {
+		if ((drvp->lp->d_flags & D_BADSECT) != 0) {
 			long blkdiff;
 			int i;
-			for (i = 0; (blkdiff = ata_bio->badsect[i]) != -1;
+			for (i = 0; (blkdiff = drvp->badsect[i]) != -1;
 			    i++) {
 				blkdiff -= ata_bio->blkno;
 				if (blkdiff < 0)
@@ -380,8 +382,8 @@ again:
 				if (blkdiff == 0) {
 					/* Replace current block of transfer. */
 					ata_bio->blkno =
-					    ata_bio->lp->d_secperunit -
-					    ata_bio->lp->d_nsectors - i - 1;
+					    drvp->lp->d_secperunit -
+					    drvp->lp->d_nsectors - i - 1;
 				}
 				if (blkdiff < nblks) {
 					/* Bad block inside transfer. */
@@ -403,16 +405,18 @@ again:
 			head |= WDSD_LBA;
 		} else {
 			int blkno = ata_bio->blkno;
-			sect = blkno % ata_bio->lp->d_nsectors;
+			sect = blkno % drvp->lp->d_nsectors;
 			sect++;    /* Sectors begin with 1, not 0. */
-			blkno /= ata_bio->lp->d_nsectors;
-			head = blkno % ata_bio->lp->d_ntracks;
-			blkno /= ata_bio->lp->d_ntracks;
+			blkno /= drvp->lp->d_nsectors;
+			head = blkno % drvp->lp->d_ntracks;
+			blkno /= drvp->lp->d_ntracks;
 			cyl = blkno;
 			head |= WDSD_CHS;
 		}
 #if NATA_DMA
 		if (xfer->c_flags & C_DMA) {
+			uint16_t count = nblks, features = 0;
+
 			ata_bio->nblks = nblks;
 			ata_bio->nbytes = xfer->c_bcount;
 			cmd = (ata_bio->flags & ATA_READ) ?
@@ -435,28 +439,34 @@ again:
 				}
 				ata_bio->error = ERR_DMA;
 				ata_bio->r_error = 0;
-				wdc_ata_bio_done(chp, xfer);
-				return;
+				return ATASTART_ABORT;
 			}
 			/* Initiate command */
 			if (wdc->select)
 				wdc->select(chp, xfer->c_drive);
 			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
 			    0, WDSD_IBM | (xfer->c_drive << 4));
-			switch(wdc_wait_for_ready(chp, ATA_DELAY, wait_flags)) {
+			switch(wdc_wait_for_ready(chp, ATA_DELAY, wait_flags,
+			    &tfd)) {
 			case WDCWAIT_OK:
 				break;
 			case WDCWAIT_TOUT:
 				goto timeout;
 			case WDCWAIT_THR:
-				return;
+				return ATASTART_TH;
 			}
 			if (ata_bio->flags & ATA_LBA48) {
-			    wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
-				ata_bio->blkno, nblks, 0, WDSD_LBA);
+			    uint8_t device = WDSD_LBA;
+			    cmd = atacmd_to48(cmd);
+
+			    atacmd_toncq(xfer, &cmd, &count, &features,
+			        &device);
+
+			    wdccommandext(chp, xfer->c_drive, cmd,
+				ata_bio->blkno, count, features, device);
 			} else {
 			    wdccommand(chp, xfer->c_drive, cmd, cyl,
-				head, sect, nblks, 0);
+				head, sect, count, features);
 			}
 			/* start the DMA channel */
 			(*wdc->dma_start)(wdc->dma_arg,
@@ -464,8 +474,8 @@ again:
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
 			if ((xfer->c_flags & C_POLL) == 0)
-				callout_reset(&chp->ch_callout,
-				    ATA_DELAY / 1000 * hz, wdctimeout, chp);
+				callout_reset(&xfer->c_timo_callout,
+				    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -495,15 +505,14 @@ again:
 					} else {
 						ata_bio->error = ERR_DMA;
 						ata_bio->r_error = 0;
-						wdc_ata_bio_done(chp, xfer);
-						return;
+						return ATASTART_ABORT;
 					}
 				}
 			}
 		}
 #endif
-		ata_bio->nblks = min(nblks, ata_bio->multi);
-		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
+		ata_bio->nblks = min(nblks, drvp->multi);
+		ata_bio->nbytes = ata_bio->nblks * drvp->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
 		if (ata_bio->nblks > 1) {
 			cmd = (ata_bio->flags & ATA_READ) ?
@@ -517,13 +526,13 @@ again:
 			wdc->select(chp, xfer->c_drive);
 		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (xfer->c_drive << 4));
-		switch(wdc_wait_for_ready(chp, ATA_DELAY, wait_flags)) {
+		switch(wdc_wait_for_ready(chp, ATA_DELAY, wait_flags, &tfd)) {
 		case WDCWAIT_OK:
 			break;
 		case WDCWAIT_TOUT:
 			goto timeout;
 		case WDCWAIT_THR:
-			return;
+			return ATASTART_TH;
 		}
 		if (ata_bio->flags & ATA_LBA48) {
 		    wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
@@ -531,16 +540,16 @@ again:
 		} else {
 		    wdccommand(chp, xfer->c_drive, cmd, cyl,
 			head, sect, nblks,
-			(ata_bio->lp->d_type == DTYPE_ST506) ?
-			ata_bio->lp->d_precompcyl / 4 : 0);
+			(drvp->lp->d_type == DKTYPE_ST506) ?
+			drvp->lp->d_precompcyl / 4 : 0);
 		}
 		/* start timeout machinery */
 		if ((xfer->c_flags & C_POLL) == 0)
-			callout_reset(&chp->ch_callout,
-			    ATA_DELAY / 1000 * hz, wdctimeout, chp);
+			callout_reset(&xfer->c_timo_callout,
+			    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
-		nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
+		nblks = xfer->c_bcount / drvp->lp->d_secsize;
 		if (ata_bio->nblks > nblks) {
 		ata_bio->nblks = nblks;
 		ata_bio->nbytes = xfer->c_bcount;
@@ -552,19 +561,18 @@ again:
 		 * we have to busy-wait here, we can't rely on running in
 		 * thread context.
 		 */
-		if (wdc_wait_for_drq(chp, ATA_DELAY, AT_POLL) != 0) {
+		if (wdc_wait_for_drq(chp, ATA_DELAY, AT_POLL, &tfd) != 0) {
 			printf("%s:%d:%d: timeout waiting for DRQ, "
 			    "st=0x%02x, err=0x%02x\n",
 			    device_xname(atac->atac_dev), chp->ch_channel,
-			    xfer->c_drive, chp->ch_status, chp->ch_error);
-			if (wdc_ata_err(drvp, ata_bio) != WDC_ATA_ERR)
+			    xfer->c_drive,
+			    ATACH_ST(tfd), ATACH_ERR(tfd));
+			if (wdc_ata_err(drvp, ata_bio, tfd) != WDC_ATA_ERR)
 				ata_bio->error = TIMEOUT;
-			wdc_ata_bio_done(chp, xfer);
-			return;
+			return ATASTART_ABORT;
 		}
-		if (wdc_ata_err(drvp, ata_bio) == WDC_ATA_ERR) {
-			wdc_ata_bio_done(chp, xfer);
-			return;
+		if (wdc_ata_err(drvp, ata_bio, tfd) == WDC_ATA_ERR) {
+			return ATASTART_ABORT;
 		}
 #if NATA_PIOBM
 		if (xfer->c_flags & C_PIOBM) {
@@ -586,28 +594,32 @@ intr:
 	/* Wait for IRQ (either real or polled) */
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT;
+		return ATASTART_STARTED;
 	} else {
-		/* Wait for at last 400ns for status bit to be valid */
-		delay(1);
-#if NATA_DMA
-		if (chp->ch_flags & ATACH_DMA_WAIT) {
-			wdc_dmawait(chp, xfer, ATA_DELAY);
-			chp->ch_flags &= ~ATACH_DMA_WAIT;
-		}
-#endif
-		wdc_ata_bio_intr(chp, xfer, 0);
-		if ((ata_bio->flags & ATA_ITSDONE) == 0)
-			goto again;
+		return ATASTART_POLL;
 	}
-	return;
+
 timeout:
 	printf("%s:%d:%d: not ready, st=0x%02x, err=0x%02x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
-	    chp->ch_status, chp->ch_error);
-	if (wdc_ata_err(drvp, ata_bio) != WDC_ATA_ERR)
+	    ATACH_ST(tfd), ATACH_ERR(tfd));
+	if (wdc_ata_err(drvp, ata_bio, tfd) != WDC_ATA_ERR)
 		ata_bio->error = TIMEOUT;
-	wdc_ata_bio_done(chp, xfer);
-	return;
+	return ATASTART_ABORT;
+}
+
+static void
+wdc_ata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	/* Wait for at last 400ns for status bit to be valid */
+	delay(1);
+#if NATA_DMA
+	if (chp->ch_flags & ATACH_DMA_WAIT) {
+		wdc_dmawait(chp, xfer, ATA_DELAY);
+		chp->ch_flags &= ~ATACH_DMA_WAIT;
+	}
+#endif
+	wdc_ata_bio_intr(chp, xfer, 0);
 }
 
 static int
@@ -615,14 +627,15 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int drv_err;
+	int drv_err, tfd;
 
 	ATADEBUG_PRINT(("wdc_ata_bio_intr %s:%d:%d\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive),
 	    DEBUG_INTR | DEBUG_XFERS);
 
+	ata_channel_lock(chp);
 
 	/* Is it not a transfer, but a control operation? */
 	if (drvp->state < READY) {
@@ -638,8 +651,7 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	 */
 	if ((xfer->c_flags & (C_TIMEOU | C_DMA)) == C_TIMEOU) {
 		ata_bio->error = TIMEOUT;
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
+		goto err;
 	}
 
 #if NATA_PIOBM
@@ -651,20 +663,22 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 #endif
 
 	/* Ack interrupt done by wdc_wait_for_unbusy */
-	if (wdc_wait_for_unbusy(chp, (irq == 0) ? ATA_DELAY : 0, AT_POLL) < 0) {
-		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
+	if (wdc_wait_for_unbusy(chp,
+	    (irq == 0) ? ATA_DELAY : 0, AT_POLL, &tfd) < 0) {
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
+			ata_channel_unlock(chp);
 			return 0; /* IRQ was not for us */
+		}
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
-		    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
-		    xfer->c_bcount, xfer->c_skip);
+		    device_xname(atac->atac_dev), chp->ch_channel,
+		    xfer->c_drive, xfer->c_bcount, xfer->c_skip);
 		ata_bio->error = TIMEOUT;
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
+		goto err;
 	}
 	if (wdc->irqack)
 		wdc->irqack(chp);
 
-	drv_err = wdc_ata_err(drvp, ata_bio);
+	drv_err = wdc_ata_err(drvp, ata_bio, tfd);
 
 #if NATA_DMA
 	/* If we were using DMA, Turn off the DMA channel and check for error */
@@ -677,12 +691,12 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 			 * asserted for DMA transfers, so poll for DRDY.
 			 */
 			if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY,
-			    ATA_DELAY, ATA_POLL) == WDCWAIT_TOUT) {
+			    ATA_DELAY, ATA_POLL, &tfd) == WDCWAIT_TOUT) {
 				printf("%s:%d:%d: polled transfer timed out "
 				    "(st=0x%x)\n",
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel, xfer->c_drive,
-				    chp->ch_status);
+				    ATACH_ST(tfd));
 				ata_bio->error = TIMEOUT;
 				drv_err = WDC_ATA_ERR;
 			}
@@ -693,38 +707,40 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 				drv_err = WDC_ATA_ERR;
 			}
 		}
-		if (chp->ch_status & WDCS_DRQ) {
+		if (ATACH_ST(tfd) & WDCS_DRQ) {
 			if (drv_err != WDC_ATA_ERR) {
 				printf("%s:%d:%d: intr with DRQ (st=0x%x)\n",
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel,
-				    xfer->c_drive, chp->ch_status);
+				    xfer->c_drive, ATACH_ST(tfd));
 				ata_bio->error = TIMEOUT;
 				drv_err = WDC_ATA_ERR;
 			}
 		}
 		if (drv_err != WDC_ATA_ERR)
 			goto end;
-		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA)
-			ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA) {
+			ata_channel_unlock(chp);
+			ata_dmaerr(drvp,
+			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			ata_channel_lock(chp);
+			goto err;
+		}
 	}
 #endif	/* NATA_DMA */
 
 	/* if we had an error, end */
-	if (drv_err == WDC_ATA_ERR) {
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
-	}
+	if (drv_err == WDC_ATA_ERR)
+		goto err;
 
 	/* If this was a read and not using DMA, fetch the data. */
 	if ((ata_bio->flags & ATA_READ) != 0) {
-		if ((chp->ch_status & WDCS_DRQ) != WDCS_DRQ) {
+		if ((ATACH_ST(tfd) & WDCS_DRQ) != WDCS_DRQ) {
 			printf("%s:%d:%d: read intr before drq\n",
 			    device_xname(atac->atac_dev), chp->ch_channel,
 			    xfer->c_drive);
 			ata_bio->error = TIMEOUT;
-			wdc_ata_bio_done(chp, xfer);
-			return 1;
+			goto err;
 		}
 #if NATA_PIOBM
 		if (xfer->c_flags & C_PIOBM) {
@@ -733,9 +749,10 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 			    chp->ch_channel, xfer->c_drive,
 			    xfer->c_skip, ata_bio->nbytes,
 			    WDC_PIOBM_XFER_IRQ);
-			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT;
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT;
+			ata_channel_unlock(chp);
 			return 1;
-		} else
+		}
 #endif
 		wdc->datain_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
@@ -748,19 +765,23 @@ end:
 	ata_bio->blkdone += ata_bio->nblks;
 	xfer->c_skip += ata_bio->nbytes;
 	xfer->c_bcount -= ata_bio->nbytes;
+
 	/* See if this transfer is complete. */
 	if (xfer->c_bcount > 0) {
 		if ((ata_bio->flags & ATA_POLL) == 0) {
 			/* Start the next operation */
-			_wdc_ata_bio_start(chp, xfer);
+			ata_xfer_start(xfer);
 		} else {
 			/* Let _wdc_ata_bio_start do the loop */
-			return 1;
 		}
-	} else { /* Done with this transfer */
-		ata_bio->error = NOERROR;
-		wdc_ata_bio_done(chp, xfer);
+		ata_channel_unlock(chp);
+		return 1;
 	}
+
+	/* Done with this transfer */
+	ata_bio->error = NOERROR;
+err:	ata_channel_unlock(chp);
+	wdc_ata_bio_done(chp, xfer);
 	return 1;
 }
 
@@ -768,13 +789,15 @@ static void
 wdc_ata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
-
-	ata_free_xfer(chp, xfer);
+	bool deactivate = true;
 
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
+	case KILL_GONE_INACTIVE:
+		deactivate = false;
+		/* FALLTHROUGH */
 	case KILL_GONE:
 		ata_bio->error = ERR_NODEV;
 		break;
@@ -787,14 +810,18 @@ wdc_ata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		panic("wdc_ata_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
+
+	if (deactivate)
+		ata_deactivate_xfer(chp, xfer);
+
 	ATADEBUG_PRINT(("wdc_ata_bio_kill_xfer: drv_done\n"), DEBUG_XFERS);
-	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
+	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
 
 static void
 wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
 
 	ATADEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
@@ -802,53 +829,47 @@ wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	    xfer->c_drive, (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 
-	callout_stop(&chp->ch_callout);
+	if (ata_waitdrain_xfer_check(chp, xfer))
+		return;
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;
 
 	/* mark controller inactive and free xfer */
-	chp->ch_queue->active_xfer = NULL;
-	ata_free_xfer(chp, xfer);
+	ata_deactivate_xfer(chp, xfer);
 
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
-		ata_bio->error = ERR_NODEV;
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
-	}
 	ata_bio->flags |= ATA_ITSDONE;
 	ATADEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
-	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
+	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 	ATADEBUG_PRINT(("atastart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	atastart(chp);
 }
 
 static int
-wdc_ata_err(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
+wdc_ata_err(struct ata_drive_datas *drvp, struct ata_bio *ata_bio, int tfd)
 {
-	struct ata_channel *chp = drvp->chnl_softc;
 	ata_bio->error = 0;
-	if (chp->ch_status & WDCS_BSY) {
+	if (ATACH_ST(tfd) & WDCS_BSY) {
 		ata_bio->error = TIMEOUT;
 		return WDC_ATA_ERR;
 	}
 
-	if (chp->ch_status & WDCS_DWF) {
+	if (ATACH_ST(tfd) & WDCS_DWF) {
 		ata_bio->error = ERR_DF;
 		return WDC_ATA_ERR;
 	}
 
-	if (chp->ch_status & WDCS_ERR) {
+	if (ATACH_ST(tfd) & WDCS_ERR) {
 		ata_bio->error = ERROR;
-		ata_bio->r_error = chp->ch_error;
+		ata_bio->r_error = ATACH_ERR(tfd);
 		if (ata_bio->r_error & (WDCE_BBK | WDCE_UNC | WDCE_IDNF |
 		    WDCE_ABRT | WDCE_TK0NF | WDCE_AMNF))
 			return WDC_ATA_ERR;
 		return WDC_ATA_NOERR;
 	}
 
-	if (chp->ch_status & WDCS_CORR)
+	if (ATACH_ST(tfd) & WDCS_CORR)
 		ata_bio->flags |= ATA_CORR;
 	return WDC_ATA_NOERR;
 }

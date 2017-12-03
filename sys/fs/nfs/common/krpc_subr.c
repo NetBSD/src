@@ -43,12 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/nfs/krpc_subr.c 248207 2013-03-12 13:42:47Z glebius "); */
-__RCSID("$NetBSD: krpc_subr.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/nfs/krpc_subr.c 298788 2016-04-29 16:07:25Z pfg "); */
+__RCSID("$NetBSD: krpc_subr.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/jail.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
@@ -57,15 +56,11 @@ __RCSID("$NetBSD: krpc_subr.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
 #include <sys/uio.h>
 
 #include <net/if.h>
-#include <net/vnet.h>
 
 #include <netinet/in.h>
 
-#include <rpc/types.h>
-#include <rpc/auth.h>
-#include <rpc/rpc_msg.h>
-#include <nfs/krpc.h>
-#include <nfs/xdr_subs.h>
+#include <fs/nfs/common/krpc.h>
+#include <fs/nfs/common/xdr_subs.h>
 
 /*
  * Kernel support for Sun RPC
@@ -169,7 +164,7 @@ krpc_portmap(struct sockaddr_in *sin, u_int prog, u_int vers, u_int16_t *portp,
 	error = krpc_call(sin, PMAPPROG, PMAPVERS,
 					  PMAPPROC_GETPORT, &m, NULL, td);
 	if (error)
-		return error;
+		goto out;
 
 	if (m->m_len < sizeof(*rdata)) {
 		m = m_pullup(m, sizeof(*rdata));
@@ -179,8 +174,9 @@ krpc_portmap(struct sockaddr_in *sin, u_int prog, u_int vers, u_int16_t *portp,
 	rdata = mtod(m, struct rdata *);
 	*portp = rdata->port;
 
+out:
 	m_freem(m);
-	return 0;
+	return error;
 }
 
 /*
@@ -218,10 +214,10 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	from = NULL;
 
 	/*
-	 * Create socket and set its recieve timeout.
+	 * Create socket and set its receive timeout.
 	 */
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, td->td_ucred, td)))
-		goto out;
+		return error;
 
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
@@ -278,6 +274,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	 */
 	mhead = m_gethdr(M_WAITOK, MT_DATA);
 	mhead->m_next = *data;
+	*data = NULL;
 	call = mtod(mhead, struct krpc_call *);
 	mhead->m_len = sizeof(*call);
 	bzero((caddr_t)call, sizeof(*call));
@@ -300,7 +297,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	 * Setup packet header
 	 */
 	m_fixhdr(mhead);
-	mhead->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(mhead);
 
 	/*
 	 * Send it, repeatedly, until a reply is received,

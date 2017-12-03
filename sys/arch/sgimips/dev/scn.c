@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.3.14.2 2014/08/20 00:03:22 tls Exp $ */
+/*	$NetBSD: scn.c,v 1.3.14.3 2017/12/03 11:36:41 jdolecek Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.3.14.2 2014/08/20 00:03:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.3.14.3 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -815,7 +815,6 @@ scn_attach(device_t parent, device_t self, void *aux)
 	u_char mr1, mr2;
 	enum scntype scntype = SCNUNK;
 	const char *duart_type = "Unknown";
-	char *intrname;
 	bool console, first;
 	devmajor_t major;
 
@@ -905,9 +904,6 @@ scn_attach(device_t parent, device_t self, void *aux)
 		ch_base[CH_MR] = mr1;
 		ch_base[CH_MR] = mr2;
 		splx(s);
-
-		intrname = malloc(sizeof("scnXX"), M_DEVBUF, M_NOWAIT);
-		snprintf(intrname, sizeof("scnXX"), "scn%d", unit);
 
 		/*
 		 * On IP6 the console chip is duart1. The keyboard/mouse

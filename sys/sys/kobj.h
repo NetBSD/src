@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.16 2011/08/13 21:04:07 christos Exp $	*/
+/*	$NetBSD: kobj.h,v 1.16.12.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,10 @@
 #ifndef _SYS_KOBJ_H_
 #define	_SYS_KOBJ_H_
 
-#define ELFSIZE ARCH_ELFSIZE
+#if !defined(ELFSIZE) && !defined(_RUMPKERNEL)
+#define ELFSIZE KERN_ELFSIZE
+#endif
+
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
@@ -44,7 +47,7 @@ int		kobj_stat(kobj_t, vaddr_t *, size_t *);
 int		kobj_find_section(kobj_t, const char *, void **, size_t *);
 
 /* MI-MD interface. */
-uintptr_t	kobj_sym_lookup(kobj_t, uintptr_t);
+int		kobj_sym_lookup(kobj_t, uintptr_t, Elf_Addr *);
 int		kobj_reloc(kobj_t, uintptr_t, const void *, bool, bool);
 int		kobj_machdep(kobj_t, void *, size_t, bool);
 

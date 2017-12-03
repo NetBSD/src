@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25.2.1 2014/08/20 00:03:00 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25.2.2 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25.2.1 2014/08/20 00:03:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25.2.2 2017/12/03 11:36:12 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25.2.1 2014/08/20 00:03:00 tls Exp $")
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define	ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 
@@ -110,7 +106,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	option(argc, argv, bi);
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* Fill mem_clusters and mem_cluster_cnt */
 	(*platform.mem_init)(kernel_text,

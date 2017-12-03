@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.218.6.2 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.218.6.3 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.218.6.2 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.218.6.3 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,7 +492,7 @@ fd_getvnode(unsigned fd, file_t **fpp)
 		fd_putfile(fd);
 		return EINVAL;
 	}
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (__predict_false(vp->v_type == VBAD)) {
 		/* XXX Is this case really necessary? */
 		fd_putfile(fd);
@@ -517,7 +517,7 @@ fd_getsock1(unsigned fd, struct socket **sop, file_t **fp)
 		fd_putfile(fd);
 		return ENOTSOCK;
 	}
-	*sop = (*fp)->f_data;
+	*sop = (*fp)->f_socket;
 	return 0;
 }
 
@@ -704,7 +704,7 @@ fd_close(unsigned fd)
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
 		mutex_exit(&fdp->fd_lock);
-		(void)VOP_ADVLOCK(fp->f_data, p, F_UNLCK, &lf, F_POSIX);
+		(void)VOP_ADVLOCK(fp->f_vnode, p, F_UNLCK, &lf, F_POSIX);
 		mutex_enter(&fdp->fd_lock);
 	}
 
@@ -741,7 +741,7 @@ fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
  * dup2 operation.
  */
 int
-fd_dup2(file_t *fp, unsigned new, int flags)
+fd_dup2(file_t *fp, unsigned newfd, int flags)
 {
 	filedesc_t *fdp = curlwp->l_fd;
 	fdfile_t *ff;
@@ -753,7 +753,7 @@ fd_dup2(file_t *fp, unsigned new, int flags)
 	 * Ensure there are enough slots in the descriptor table,
 	 * and allocate an fdfile_t up front in case we need it.
 	 */
-	while (new >= fdp->fd_dt->dt_nfiles) {
+	while (newfd >= fdp->fd_dt->dt_nfiles) {
 		fd_tryexpand(curproc);
 	}
 	ff = pool_cache_get(fdfile_cache, PR_WAITOK);
@@ -764,10 +764,10 @@ fd_dup2(file_t *fp, unsigned new, int flags)
 	 * XXX Potential for deadlock here?
 	 */
 	mutex_enter(&fdp->fd_lock);
-	while (fd_isused(fdp, new)) {
+	while (fd_isused(fdp, newfd)) {
 		mutex_exit(&fdp->fd_lock);
-		if (fd_getfile(new) != NULL) {
-			(void)fd_close(new);
+		if (fd_getfile(newfd) != NULL) {
+			(void)fd_close(newfd);
 		} else {
 			/*
 			 * Crummy, but unlikely to happen.
@@ -779,18 +779,18 @@ fd_dup2(file_t *fp, unsigned new, int flags)
 		mutex_enter(&fdp->fd_lock);
 	}
 	dt = fdp->fd_dt;
-	if (dt->dt_ff[new] == NULL) {
-		KASSERT(new >= NDFDFILE);
-		dt->dt_ff[new] = ff;
+	if (dt->dt_ff[newfd] == NULL) {
+		KASSERT(newfd >= NDFDFILE);
+		dt->dt_ff[newfd] = ff;
 		ff = NULL;
 	}
-	fd_used(fdp, new);
+	fd_used(fdp, newfd);
 	mutex_exit(&fdp->fd_lock);
 
-	dt->dt_ff[new]->ff_exclose = (flags & O_CLOEXEC) != 0;
+	dt->dt_ff[newfd]->ff_exclose = (flags & O_CLOEXEC) != 0;
 	fp->f_flag |= flags & FNONBLOCK;
 	/* Slot is now allocated.  Insert copy of the file. */
-	fd_affix(curproc, fp, new);
+	fd_affix(curproc, fp, newfd);
 	if (ff != NULL) {
 		pool_cache_put(fdfile_cache, ff);
 	}
@@ -825,7 +825,7 @@ closef(file_t *fp)
 		lf.l_start = 0;
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
-		(void)VOP_ADVLOCK(fp->f_data, fp, F_UNLCK, &lf, F_FLOCK);
+		(void)VOP_ADVLOCK(fp->f_vnode, fp, F_UNLCK, &lf, F_FLOCK);
 	}
 	if (fp->f_ops != NULL) {
 		error = (*fp->f_ops->fo_close)(fp);
@@ -846,8 +846,8 @@ int
 fd_alloc(proc_t *p, int want, int *result)
 {
 	filedesc_t *fdp = p->p_fd;
-	int i, lim, last, error;
-	u_int off, new;
+	int i, lim, last, error, hi;
+	u_int off;
 	fdtab_t *dt;
 
 	KASSERT(p == curproc || p == &proc0);
@@ -866,21 +866,21 @@ fd_alloc(proc_t *p, int want, int *result)
 		if ((i = want) < fdp->fd_freefile)
 			i = fdp->fd_freefile;
 		off = i >> NDENTRYSHIFT;
-		new = fd_next_zero(fdp, fdp->fd_himap, off,
+		hi = fd_next_zero(fdp, fdp->fd_himap, off,
 		    (last + NDENTRIES - 1) >> NDENTRYSHIFT);
-		if (new == -1)
+		if (hi == -1)
 			break;
-		i = fd_next_zero(fdp, &fdp->fd_lomap[new],
-		    new > off ? 0 : i & NDENTRYMASK, NDENTRIES);
+		i = fd_next_zero(fdp, &fdp->fd_lomap[hi],
+		    hi > off ? 0 : i & NDENTRYMASK, NDENTRIES);
 		if (i == -1) {
 			/*
 			 * Free file descriptor in this block was
 			 * below want, try again with higher want.
 			 */
-			want = (new + 1) << NDENTRYSHIFT;
+			want = (hi + 1) << NDENTRYSHIFT;
 			continue;
 		}
-		i += (new << NDENTRYSHIFT);
+		i += (hi << NDENTRYSHIFT);
 		if (i >= last) {
 			break;
 		}
@@ -1255,9 +1255,7 @@ fgetdummy(void)
 	file_t *fp;
 
 	fp = kmem_zalloc(sizeof(*fp), KM_SLEEP);
-	if (fp != NULL) {
-		mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
-	}
+	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
 	return fp;
 }
 
@@ -1457,7 +1455,7 @@ fd_copy(void)
 	ffp = fdp->fd_dt->dt_ff;
 	nffp = newdt->dt_ff;
 	newlast = -1;
-	for (i = 0; i <= (int)lastfile; i++, ffp++, nffp++) {
+	for (i = 0; i <= lastfile; i++, ffp++, nffp++) {
 		KASSERT(i >= NDFDFILE ||
 		    *nffp == (fdfile_t *)newfdp->fd_dfdfile[i]);
 		ff = *ffp;
@@ -1644,7 +1642,7 @@ filedescopen(dev_t dev, int mode, int type, lwp_t *l)
  * Duplicate the specified descriptor to a free descriptor.
  */
 int
-fd_dupopen(int old, int *new, int mode, int error)
+fd_dupopen(int old, int *newp, int mode, int error)
 {
 	filedesc_t *fdp;
 	fdfile_t *ff;
@@ -1682,12 +1680,12 @@ fd_dupopen(int old, int *new, int mode, int error)
 		}
 
 		/* Copy it. */
-		error = fd_dup(fp, 0, new, ff->ff_exclose);
+		error = fd_dup(fp, 0, newp, ff->ff_exclose);
 		break;
 
 	case EMOVEFD:
 		/* Copy it. */
-		error = fd_dup(fp, 0, new, ff->ff_exclose);
+		error = fd_dup(fp, 0, newp, ff->ff_exclose);
 		if (error != 0) {
 			break;
 		}
@@ -1861,8 +1859,14 @@ int
 fd_clone(file_t *fp, unsigned fd, int flag, const struct fileops *fops,
 	 void *data)
 {
+	fdfile_t *ff;
+	filedesc_t *fdp;
 
-	fp->f_flag = flag;
+	fp->f_flag = flag & FMASK;
+	fdp = curproc->p_fd;
+	ff = fdp->fd_dt->dt_ff[fd];
+	KASSERT(ff != NULL);
+	ff->ff_exclose = (flag & O_CLOEXEC) != 0;
 	fp->f_type = DTYPE_MISC;
 	fp->f_ops = fops;
 	fp->f_data = data;
@@ -2301,7 +2305,7 @@ fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 
 	/* vnode information to glue this file to something */
 	if (fp->f_type == DTYPE_VNODE) {
-		struct vnode *vp = (struct vnode *)fp->f_data;
+		struct vnode *vp = fp->f_vnode;
 
 		kp->ki_vun =	PTRTOUINT64(vp->v_un.vu_socket);
 		kp->ki_vsize =	vp->v_size;

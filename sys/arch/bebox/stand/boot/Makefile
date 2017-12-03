@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32.2.1 2014/08/20 00:02:50 tls Exp $
+#	$NetBSD: Makefile,v 1.32.2.2 2017/12/03 11:35:59 jdolecek Exp $
 
 NOMAN= # defined
 
@@ -23,7 +23,7 @@ NEWVERSWHAT=	"BOOT"
 SRCS= srt0.s
 SRCS+= boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
 SRCS+= fd.c filesystem.c inkernel.c io.c kbd.c monitor.c ns16550.c
-SRCS+= pci.c prf.c sd.c siop.c tgets.c vers.c vga.c video.c vreset.c wdc.c wd.c
+SRCS+= pci.c prf.c sd.c siop.c tgets.c vga.c video.c vreset.c wdc.c wd.c
 SRCS+= setjmp.S
 
 CFLAGS= -Wno-main -ffreestanding
@@ -57,19 +57,17 @@ LIBCRTEND=
 
 RELOC= 0x700000
 
-CLEANFILES+= vers.c ${PROG}.elf
+CLEANFILES+= ${PROG}.elf
 
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
-
-vers.c: ${.CURDIR}/../boot/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/../boot/version "bebox" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
 	${LD} -o ${PROG}.elf -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 	${STRIP} -o ${PROG} ${PROG}.elf
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>

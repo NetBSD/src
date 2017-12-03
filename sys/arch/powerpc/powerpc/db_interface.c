@@ -1,19 +1,21 @@
-/*	$NetBSD: db_interface.c,v 1.51.2.1 2014/08/20 00:03:20 tls Exp $ */
+/*	$NetBSD: db_interface.c,v 1.51.2.2 2017/12/03 11:36:38 jdolecek Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.2.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.2.2 2017/12/03 11:36:38 jdolecek Exp $");
 
 #define USERACC
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <dev/cons.h>
 
@@ -48,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.2.1 2014/08/20 00:03:20 tls Ex
 #include <ddb/db_access.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
+#include <ddb/db_run.h>	/* for db_continue_cmd() proto */
 #include <ddb/ddbvar.h>
 #endif
 
@@ -57,6 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.2.1 2014/08/20 00:03:20 tls Ex
 #endif
 
 #include <dev/ofw/openfirm.h>
+
+#define NOCPU   ~0
+volatile u_int ddb_cpu = NOCPU;
 
 int	db_active = 0;
 
@@ -88,6 +94,10 @@ static void db_ppcbooke_splhist(db_expr_t, bool, db_expr_t, const char *);
 static void db_ppcbooke_tf(db_expr_t, bool, db_expr_t, const char *);
 static void db_ppcbooke_dumptlb(db_expr_t, bool, db_expr_t, const char *);
 #endif
+
+#ifdef MULTIPROCESSOR
+static void db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
+#endif	/* MULTIPROCESSOR */
 
 #ifdef DDB
 const struct db_command db_machine_command_table[] = {
@@ -138,6 +148,12 @@ const struct db_command db_machine_command_table[] = {
 	  "Display instruction translation storage buffer information.",
 	  NULL,NULL) },
 #endif /* PPC_BOOKE */
+
+#ifdef MULTIPROCESSOR
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
+	  "switch to another cpu", "cpu-no", NULL) },
+#endif	/* MULTIPROCESSOR */
+
 	{ DDB_ADD_CMD(NULL,	NULL,			0,
 	  NULL,NULL,NULL) }
 };
@@ -183,6 +199,8 @@ int
 kdb_trap(int type, void *v)
 {
 	struct trapframe *tf = v;
+	int rv = 1;
+	int s;
 
 #ifdef DDB
 	if (db_recover != 0 && (type != -1 && type != T_BREAKPOINT)) {
@@ -193,6 +211,24 @@ kdb_trap(int type, void *v)
 
 	/* XXX Should switch to kdb's own stack here. */
 
+#ifdef MULTIPROCESSOR
+	bool first_in_ddb = false;
+	const u_int cpu_me = cpu_number();
+	const u_int old_ddb_cpu = atomic_cas_uint(&ddb_cpu, NOCPU, cpu_me);
+	if (old_ddb_cpu == NOCPU) {
+		first_in_ddb = true;
+		cpu_pause_others();
+	} else {
+		if (old_ddb_cpu != cpu_me) {
+			KASSERT(cpu_is_paused(cpu_me));
+			cpu_pause(tf);
+			return 1;
+		}
+	}
+	KASSERT(!cpu_is_paused(cpu_me));
+#endif	/* MULTIPROCESSOR */
+
+	s = splhigh();
 	memcpy(DDB_REGS->r, tf->tf_fixreg, 32 * sizeof(u_int32_t));
 	DDB_REGS->iar = tf->tf_srr0;
 	DDB_REGS->msr = tf->tf_srr1;
@@ -215,8 +251,10 @@ kdb_trap(int type, void *v)
 	cnpollc(0);
 	db_active--;
 #elif defined(KGDB)
-	if (!kgdb_trap(type, DDB_REGS))
-		return 0;
+	if (!kgdb_trap(type, DDB_REGS)) {
+		rv = 0;
+		goto out;
+	}
 #endif
 
 	/* KGDB isn't smart about advancing PC if we
@@ -246,8 +284,22 @@ kdb_trap(int type, void *v)
 	tf->tf_esr = DDB_REGS->esr;
 	tf->tf_pid = DDB_REGS->pid;
 #endif
+#ifdef KGDB
+ out:
+#endif	/* KGDB */
+	splx(s);
 
-	return 1;
+#ifdef MULTIPROCESSOR
+	if (atomic_cas_uint(&ddb_cpu, cpu_me, NOCPU) == cpu_me) {
+		cpu_resume_others();
+	} else {
+		cpu_resume(ddb_cpu);
+		if (first_in_ddb)
+			cpu_pause(tf);
+	}
+#endif	/* MULTIPROCESSOR */
+
+	return rv;
 }
 
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
@@ -789,3 +841,64 @@ db_ppcbooke_dumptlb(db_expr_t addr, bool have_addr, db_expr_t count,
 	tlb_dump(db_printf);
 }
 #endif /* PPC_BOOKE */
+
+#ifdef MULTIPROCESSOR
+bool
+ddb_running_on_this_cpu_p(void)
+{
+
+	return ddb_cpu == cpu_number();
+}
+
+bool
+ddb_running_on_any_cpu_p(void)
+{
+
+	return ddb_cpu != NOCPU;
+}
+
+void
+db_resume_others(void)
+{
+	u_int cpu_me = cpu_number();
+
+	if (atomic_cas_uint(&ddb_cpu, cpu_me, NOCPU) == cpu_me)
+		cpu_resume_others();
+}
+
+static void
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	bool found = false;
+
+	if (!have_addr) {
+		cpu_debug_dump();
+		return;
+	}
+
+	if (addr < 0) {
+		db_printf("%ld: CPU out of range\n", addr);
+		return;
+	}
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (cpu_index(ci) == addr) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		db_printf("CPU %ld not configured\n", addr);
+		return;
+	}
+	if (ci != curcpu()) {
+		if (!cpu_is_paused(cpu_index(ci))) {
+			db_printf("CPU %ld not paused\n", (long)addr);
+			return;
+		}
+		(void)atomic_cas_uint(&ddb_cpu, cpu_number(), cpu_index(ci));
+		db_continue_cmd(0, false, 0, "");
+	}
+}
+#endif	/* MULTIPROCESSOR */

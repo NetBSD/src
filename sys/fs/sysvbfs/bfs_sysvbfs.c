@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.10 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.10.42.1 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.10 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.10.42.1 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,7 +103,7 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 	struct bc_io_ops *bio = self;
 	struct buf *bp = NULL;
 
-	if (bread(bio->vp, block, DEV_BSIZE, bio->cred, 0, &bp) != 0)
+	if (bread(bio->vp, block, DEV_BSIZE, 0, &bp) != 0)
 		goto error_exit;
 	memcpy(buf, bp->b_data, DEV_BSIZE);
 	brelse(bp, 0);

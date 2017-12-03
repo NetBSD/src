@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.16.2.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: bfs.c,v 1.16.2.2 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.16.2.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.16.2.2 2017/12/03 11:38:43 jdolecek Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -344,7 +344,6 @@ bfs_file_rename(struct bfs *bfs, const char *from_name, const char *to_name)
 		goto out;
 	}
 
-	bfs_file_delete(bfs, to_name, false);
 	strncpy(dirent->name, to_name, BFS_FILENAME_MAXLEN);
 	bfs_writeback_dirent(bfs, dirent, false);
 

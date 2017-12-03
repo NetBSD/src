@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.22.2.3 2014/08/20 00:02:53 tls Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.22.2.4 2017/12/03 11:36:03 jdolecek Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22.2.3 2014/08/20 00:02:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22.2.4 2017/12/03 11:36:03 jdolecek Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -189,7 +189,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22.2.3 2014/08/20 00:02:53 tls 
 #  error no prcm device configured.
 # endif
 # include <arm/omap/am335x_prcm.h>
-# include <dev/i2c/tps65217pmicvar.h>
+# include <arm/omap/tifbvar.h>
 # if NSDHC > 0
 #  include <arm/omap/omap2_obiovar.h>
 #  include <arm/omap/omap3_sdmmcreg.h>
@@ -238,9 +238,6 @@ int use_fb_console = true;
 
 #ifdef CPU_CORTEXA15
 uint32_t omap5_cnt_frq;
-#endif
-#if defined(TI_AM335X)
-device_t pmic_dev = NULL;
 #endif
 
 /*
@@ -421,6 +418,7 @@ beagle_db_trap(int where)
 }
 #endif
 
+#ifdef VERBOSE_INIT_ARM
 void beagle_putchar(char c);
 void
 beagle_putchar(char c)
@@ -442,6 +440,9 @@ beagle_putchar(char c)
 	}
 #endif
 }
+#else
+#define beagle_putchar(c)	((void)0)
+#endif
 
 /*
  * u_int initarm(...)
@@ -492,7 +493,13 @@ initarm(void *arg)
 
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
+
+	if (get_bootconf_option(bootargs, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+		use_fb_console = true;
+	}
 	consinit();
+
 #ifdef CPU_CORTEXA15
 #ifdef MULTIPROCESSOR
 	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
@@ -613,11 +620,6 @@ initarm(void *arg)
 
 	db_trap_callback = beagle_db_trap;
 
-	if (get_bootconf_option(boot_args, "console",
-		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
-		use_fb_console = true;
-	}
-	
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 }
@@ -683,7 +685,8 @@ consinit(void)
 #endif
 
 #if NUKBD > 0
-	ukbd_cnattach();	/* allow USB keyboard to become console */
+	if (use_fb_console)
+		ukbd_cnattach(); /* allow USB keyboard to become console */
 #endif
 
 	beagle_putchar('f');
@@ -697,7 +700,6 @@ beagle_reset(void)
 	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP_L4_WAKEUP_BASE - OMAP_L4_CORE_BASE) + OMAP4_PRM_RSTCTRL) = OMAP4_PRM_RSTCTRL_WARM;
 #elif defined(OMAP_5XXX)
 	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP_L4_WAKEUP_BASE - OMAP_L4_CORE_BASE) + OMAP5_PRM_RSTCTRL) = OMAP4_PRM_RSTCTRL_COLD;
-#elif defined(OMAP_5XXX)
 #elif defined(TI_AM335X)
 	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP2_CM_BASE - OMAP_L4_CORE_BASE) + AM335X_PRCM_PRM_DEVICE + PRM_RSTCTRL) = RST_GLOBAL_WARM_SW;
 #else
@@ -967,7 +969,7 @@ beagle_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore regisers (which armperiph uses). 
+		 * bus space used for the armcore registers (which armperiph uses). 
 		 */
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = &omap_bs_tag;
@@ -1084,7 +1086,7 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "clkmask", 0);
 		prop_dictionary_set_bool(dict, "8bit", true);
 #endif
-#if defined(TI_AM335X) && 0	// doesn't work
+#if defined(TI_AM335X)
 		struct obio_attach_args * const obio = aux;
 		if (obio->obio_addr == SDMMC2_BASE_TIAM335X)
 			prop_dictionary_set_bool(dict, "8bit", true);
@@ -1102,30 +1104,55 @@ beagle_device_register(device_t self, void *aux)
 			prop_dictionary_set_bool(dict, "is_console", true);
 		return;
 	}
+#if defined(TI_AM335X)
 	if (device_is_a(self, "tifb")) {
+		static const struct tifb_panel_info default_panel_info = {
+			.panel_tft = 1,
+			.panel_mono = false,
+			.panel_bpp = 24,
+
+			.panel_pxl_clk = 30000000,
+			.panel_width = 800,
+			.panel_height = 600,
+			.panel_hfp = 0,
+			.panel_hbp = 47,
+			.panel_hsw = 47,
+			.panel_vfp = 0,
+			.panel_vbp = 10,
+			.panel_vsw = 2,
+			.panel_invert_hsync = 1,
+			.panel_invert_vsync = 1,
+
+			.panel_ac_bias = 255,
+			.panel_ac_bias_intrpt = 0,
+			.panel_dma_burst_sz = 16,
+			.panel_fdd = 0x80,
+			.panel_sync_edge = 0,
+			.panel_sync_ctrl = 1,
+			.panel_invert_pxl_clk = 0,
+		};
+		prop_data_t panel_info;
+
+		panel_info = prop_data_create_data_nocopy(&default_panel_info,
+		    sizeof(struct tifb_panel_info));
+		KASSERT(panel_info != NULL);
+		prop_dictionary_set(dict, "panel-info", panel_info);
+		prop_object_release(panel_info);
+
 		if (use_fb_console)
 			prop_dictionary_set_bool(dict, "is_console", true);
 		return;
 	}
+#endif
 	if (device_is_a(self, "com")) {
 		if (use_fb_console)
 			prop_dictionary_set_bool(dict, "is_console", false);
 	}
 #if defined(TI_AM335X)
 	if (device_is_a(self, "tps65217pmic")) {
-		pmic_dev = self;
+		extern const char *mpu_supply;
+
+		mpu_supply = "DCDC2";
 	}
 #endif
 }
-
-#if defined(TI_AM335X)
-int
-set_mpu_volt(int mvolt)
-{
-	if (pmic_dev == NULL)
-		return ENODEV;
-
-	/* MPU voltage is on vdcd2 */
-	return tps65217pmic_set_volt(pmic_dev, "DCDC2", mvolt);
-}
-#endif

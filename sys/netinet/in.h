@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.87.2.2 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: in.h,v 1.87.2.3 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,6 +85,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
+#define	IPPROTO_DCCP		33		/* DCCP */
 #define	IPPROTO_IPV6		41		/* IP6 header */
 #define	IPPROTO_ROUTING		43		/* IP6 routing header */
 #define	IPPROTO_FRAGMENT	44		/* IP6 fragmentation header */
@@ -104,6 +105,8 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
 #define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
+#define	IPPROTO_L2TP		115		/* L2TPv3 */
+#define	IPPROTO_SCTP		132		/* SCTP */
 #define IPPROTO_PFSYNC      240     /* PFSYNC */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
@@ -276,6 +279,7 @@ struct ip_opts {
 #define	IP_MULTICAST_IF		9    /* in_addr; set/get IP multicast i/f  */
 #define	IP_MULTICAST_TTL	10   /* u_char; set/get IP multicast ttl */
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
+/* The add and drop membership option numbers need to match with the v6 ones */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
 #define	IP_PORTALGO		18   /* int; port selection algo (rfc6056) */
@@ -465,7 +469,8 @@ struct ip_mreq {
 #define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
-#define	IPCTL_MAXID	       25
+#define	IPCTL_DAD_COUNT        25	/* DAD packets to send */
+#define	IPCTL_MAXID	       26
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -493,6 +498,7 @@ struct ip_mreq {
 	{ "random_id", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
+	{ "dad_count", CTLTYPE_INT }, \
 }
 #endif /* _NETBSD_SOURCE */
 
@@ -502,6 +508,8 @@ struct ip_mreq {
 #undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifdef _KERNEL
+#include <sys/psref.h>
+
 /*
  * in_cksum_phdr:
  *
@@ -554,6 +562,7 @@ extern	u_char	ip_protox[];
 extern const struct sockaddr_in in_any;
 
 int	in_broadcast(struct in_addr, struct ifnet *);
+int	in_direct(struct in_addr, struct ifnet *);
 int	in_canforward(struct in_addr);
 int	cpu_in_cksum(struct mbuf *, int, int, uint32_t);
 int	in_cksum(struct mbuf *, int);
@@ -562,11 +571,17 @@ void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
 
+void	in_if_link_up(struct ifnet *);
+void	in_if_link_down(struct ifnet *);
+void	in_if_up(struct ifnet *);
+void	in_if_down(struct ifnet *);
+void	in_if_link_state_change(struct ifnet *, int);
+
 struct route;
 struct ip_moptions;
 
-struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
-	struct route *, int, struct ip_moptions *, int *);
+struct in_ifaddr *in_selectsrc(struct sockaddr_in *,
+	struct route *, int, struct ip_moptions *, int *, struct psref *);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
@@ -614,5 +629,11 @@ sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
 	return sa;
 }
 #endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_TEST)
+int	in_print(char *, size_t, const struct in_addr *);
+#define IN_PRINT(b, a)	(in_print((b), sizeof(b), a), (b))
+int	sin_print(char *, size_t, const void *);
+#endif
 
 #endif /* !_NETINET_IN_H_ */

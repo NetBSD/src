@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.13.18.2 2014/08/20 00:04:42 tls Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.13.18.3 2017/12/03 11:39:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.13.18.2 2014/08/20 00:04:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.13.18.3 2017/12/03 11:39:17 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -35,11 +35,11 @@ __KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.13.18.2 2014/08/20 00:04:42 tls Exp $
 #include <sys/socketvar.h>
 
 #include <net/bpf.h>
-#include <net/radix.h>
+#include <net/pfil.h>
 #include <net/route.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/net.h>
 
 RUMP_COMPONENT(RUMP__FACTION_NET)
 {
@@ -48,6 +48,7 @@ RUMP_COMPONENT(RUMP__FACTION_NET)
 
 	mbinit();
 	soinit();
+	pfil_init();
 
 	domaininit(false);
 

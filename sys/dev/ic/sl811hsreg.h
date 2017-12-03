@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsreg.h,v 1.2.70.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: sl811hsreg.h,v 1.2.70.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -76,8 +76,21 @@
 #define SL11_EPSTAT_OVERFLOW	(0x20)
 #define SL11_EPSTAT_NAK		(0x40)
 #define SL11_EPSTAT_STALL	(0x80)
-#define SL11_EPSTAT_STATBITS	(0xf7)
-#define SL11_EPSTAT_ERRBITS	(0xf6)
+#define SL11_EPSTAT_STATBITS	( \
+    SL11_EPSTAT_ACK | \
+    SL11_EPSTAT_ERROR | \
+    SL11_EPSTAT_TIMEOUT | \
+    SL11_EPSTAT_SETUP | \
+    SL11_EPSTAT_OVERFLOW | \
+    SL11_EPSTAT_NAK | \
+    SL11_EPSTAT_STALL \
+    )
+#define SL11_EPSTAT_ERRBITS	( \
+    SL11_EPSTAT_ERROR | \
+    SL11_EPSTAT_TIMEOUT | \
+    SL11_EPSTAT_NAK | \
+    SL11_EPSTAT_STALL \
+    )
 
 #define SL11_CTRL_ENABLESOF	(0x01)
 /* #define SL11_CTRL_EOF2		(0x04) XXX ? Reserved in 1.5 */

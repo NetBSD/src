@@ -1,4 +1,4 @@
-/*	$NetBSD: epoc32.cpp,v 1.1.4.2 2013/06/23 06:20:03 tls Exp $	*/
+/*	$NetBSD: epoc32.cpp,v 1.1.4.3 2017/12/03 11:36:02 jdolecek Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -55,6 +55,11 @@ AllowAllDomains(void)
 
 	domains = ALL_DOMAINS(0xf);
 	__asm("mcr	p15, 0, %0, c3, c0" : : "r"(domains));
+}
+
+EPOC32::EPOC32(const EPOC32& c)
+{
+	cpu = c.cpu;
 }
 
 EPOC32::EPOC32(void)

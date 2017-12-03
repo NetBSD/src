@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.7 2011/11/23 23:07:31 jmcneill Exp $ */
+/* $NetBSD: midictl.c,v 1.7.8.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.7 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.7.8.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -177,16 +177,8 @@ midictl_open(midictl *mc)
 	if (NULL == mc->notify)
 		mc->notify = notify_no_one;
 	s = kmem_zalloc(sizeof(*s), KM_SLEEP);
-	if (s == NULL) {
-		return ENOMEM;
-	}
 	s->lgcapacity = INITIALLGCAPACITY;
 	s->table = kmem_zalloc(sizeof(*s->table)<<s->lgcapacity, KM_SLEEP);
-	if (s->table == NULL) {
-		kmem_free(s->table, sizeof(*s->table)<<s->lgcapacity);
-		kmem_free(s, sizeof(*s));
-		return ENOMEM;
-	}
 	s->lock = mc->lock;
 	cv_init(&s->cv, "midictlv");
 	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, store_thread, 
@@ -260,7 +252,7 @@ midictl_change(midictl *mc, uint_fast8_t chan, uint8_t *ctlval)
 		mc->nrpn &= ~PN_SET;
 		return;
 	case MIDI_CTRL_RPN_MSB:
-		mc-> rpn &= ~0x7f<<7;
+		mc-> rpn &= ~0x7fU<<7;
 		mc-> rpn |=  PN_SET | (0x7f & ctlval[1])<<7;
 		mc->nrpn &= ~PN_SET;
 		return;
@@ -270,7 +262,7 @@ midictl_change(midictl *mc, uint_fast8_t chan, uint8_t *ctlval)
 		mc-> rpn &= ~PN_SET;
 		return;
 	case MIDI_CTRL_NRPN_MSB:
-		mc->nrpn &= ~0x7f<<7;
+		mc->nrpn &= ~0x7fU<<7;
 		mc->nrpn |=  PN_SET | (0x7f & ctlval[1])<<7;
 		mc-> rpn &= ~PN_SET;
 		return;
@@ -692,10 +684,6 @@ store_rehash(midictl_store *s)
 	newtbl = kmem_zalloc(sizeof(*newtbl) << newlgcap, KM_SLEEP);
 	mutex_enter(s->lock);
 
-	if (newtbl == NULL) {
-		kpause("midictls", false, hz, s->lock);
-		return;
-	}
 	/*
 	 * If s->lgcapacity is changed from what we saved int oldlgcap
 	 * then someone else has already done this for us.

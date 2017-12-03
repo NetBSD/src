@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12 2007/03/04 06:00:08 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.12.88.1 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,7 +51,6 @@ void	setconf(void);
 
 /* machdep.c */
 void	mac68k_set_io_offsets(vaddr_t);
-void	dumpconf(void);
 int	badbaddr(void *);
 int	badwaddr(void *);
 int	badladdr(void *);

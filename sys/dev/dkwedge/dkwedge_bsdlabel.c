@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.17.2.1 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.17.2.2 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.17.2.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.17.2.2 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -137,6 +137,7 @@ typedef struct mbr_args {
 	struct vnode	*vp;
 	void		*buf;
 	int		error;
+	uint32_t	secsize;
 } mbr_args_t;
 
 static const char *
@@ -144,21 +145,15 @@ bsdlabel_fstype_to_str(uint8_t fstype)
 {
 	const char *str;
 
+	/*
+	 * For each type known to FSTYPE_DEFN (from <sys/disklabel.h>),
+	 * a suitable case branch will convert the type number to a string.
+	 */
 	switch (fstype) {
-	case FS_UNUSED:		str = DKW_PTYPE_UNUSED;		break;
-	case FS_SWAP:		str = DKW_PTYPE_SWAP;		break;
-	case FS_BSDFFS:		str = DKW_PTYPE_FFS;		break;
-	case FS_MSDOS:		str = DKW_PTYPE_FAT;		break;
-	case FS_BSDLFS:		str = DKW_PTYPE_LFS;		break;
-	case FS_ISO9660:	str = DKW_PTYPE_ISO9660;	break;
-	case FS_ADOS:		str = DKW_PTYPE_AMIGADOS;	break;
-	case FS_HFS:		str = DKW_PTYPE_APPLEHFS;	break;
-	case FS_FILECORE:	str = DKW_PTYPE_FILECORE;	break;
-	case FS_EX2FS:		str = DKW_PTYPE_EXT2FS;		break;
-	case FS_NTFS:		str = DKW_PTYPE_NTFS;		break;
-	case FS_RAID:		str = DKW_PTYPE_RAIDFRAME;	break;
-	case FS_CCD:		str = DKW_PTYPE_CCD;		break;
-	case FS_APPLEUFS:	str = DKW_PTYPE_APPLEUFS;	break;
+#define FSTYPE_TO_STR_CASE(tag, number, name, fsck, mount) \
+	case __CONCAT(FS_,tag):	str = __CONCAT(DKW_PTYPE_,tag);			break;
+	FSTYPE_DEFN(FSTYPE_TO_STR_CASE)
+#undef FSTYPE_TO_STR_CASE
 	default:		str = NULL;			break;
 	}
 
@@ -232,18 +227,15 @@ addwedges(const mbr_args_t *a, const struct disklabel *lp)
 
 		if (p->p_fstype == FS_UNUSED)
 			continue;
-		if ((ptype = bsdlabel_fstype_to_str(p->p_fstype)) == NULL) {
-			/*
-			 * XXX Should probably just add these...
-			 * XXX maybe just have an empty ptype?
-			 */
-			aprint_verbose("%s: skipping partition %d, type %d\n",
-			    a->pdk->dk_name, i, p->p_fstype);
-			continue;
-		}
-		strcpy(dkw.dkw_ptype, ptype);
+		ptype = bsdlabel_fstype_to_str(p->p_fstype);
+		if (ptype == NULL)
+			snprintf(dkw.dkw_ptype, sizeof(dkw.dkw_ptype),
+			    "unknown#%u", p->p_fstype);
+		else
+			strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 
-		strcpy(dkw.dkw_parent, a->pdk->dk_name);
+		strlcpy(dkw.dkw_parent, a->pdk->dk_name,
+		    sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = p->p_offset;
 		dkw.dkw_size = p->p_size;
 
@@ -283,7 +275,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	int error, swapped;
 	uint16_t npartitions;
 
-	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, DEV_BSIZE);
+	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, a->secsize);
 	if (error) {
 		aprint_error("%s: unable to read BSD disklabel @ %" PRId64
 		    ", error = %d\n", a->pdk->dk_name, label_sector, error);
@@ -297,7 +289,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	 * in the sector.
 	 */
 	lp = a->buf;
-	lp_lim = (char *)a->buf + DEV_BSIZE - DISKLABEL_MINSIZE;
+	lp_lim = (char *)a->buf + a->secsize - DISKLABEL_MINSIZE;
 	for (;; lp = (void *)((char *)lp + sizeof(uint32_t))) {
 		if ((char *)lp > (char *)lp_lim)
 			return (SCAN_CONTINUE);
@@ -316,7 +308,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 
 		/* Validate label length. */
 		if ((char *)lp + DISKLABEL_SIZE(npartitions) >
-		    (char *)a->buf + DEV_BSIZE) {
+		    (char *)a->buf + a->secsize) {
 			aprint_error("%s: BSD disklabel @ "
 			    "%" PRId64 "+%zd has bogus partition count (%u)\n",
 			    a->pdk->dk_name, label_sector, label_offset,
@@ -360,7 +352,7 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *,
 	this_ext = 0;
 	for (;;) {
 		a->error = dkwedge_read(a->pdk, a->vp, this_ext, a->buf,
-					DEV_BSIZE);
+					a->secsize);
 		if (a->error) {
 			aprint_error("%s: unable to read MBR @ %u, "
 			    "error = %d\n", a->pdk->dk_name, this_ext,
@@ -456,8 +448,9 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 	int rval;
 
 	a.pdk = pdk;
+	a.secsize = DEV_BSIZE << pdk->dk_blkshift;
 	a.vp = vp;
-	a.buf = DKW_MALLOC(DEV_BSIZE);
+	a.buf = DKW_MALLOC(a.secsize);
 	a.error = 0;
 
 	/* MBR search. */

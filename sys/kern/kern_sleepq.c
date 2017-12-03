@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.47.2.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.47.2.3 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.47.2.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.47.2.3 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -230,7 +230,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
  *	timo is a timeout in ticks.  timo = 0 specifies an infinite timeout.
  */
 int
-sleepq_block(int timo, bool catch)
+sleepq_block(int timo, bool catch_p)
 {
 	int error = 0, sig;
 	struct proc *p;
@@ -244,7 +244,7 @@ sleepq_block(int timo, bool catch)
 	 * If sleeping interruptably, check for pending signals, exits or
 	 * core dump events.
 	 */
-	if (catch) {
+	if (catch_p) {
 		l->l_flag |= LW_SINTR;
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
@@ -274,7 +274,7 @@ sleepq_block(int timo, bool catch)
 		}
 	}
 
-	if (catch && error == 0) {
+	if (catch_p && error == 0) {
 		p = l->l_proc;
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
@@ -479,5 +479,6 @@ sleepq_lendpri(lwp_t *l, pri_t pri)
 	KASSERT(lwp_locked(l, NULL));
 
 	l->l_inheritedprio = pri;
+	l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
 	sleepq_reinsert(sq, l);
 }

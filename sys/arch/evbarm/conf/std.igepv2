@@ -1,4 +1,4 @@
-#	$NetBSD: std.igepv2,v 1.4.2.2 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: std.igepv2,v 1.4.2.3 2017/12/03 11:36:03 jdolecek Exp $
 #
 # standard NetBSD/evbarm for IGEPV2 options
 
@@ -8,6 +8,9 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in BEAGLEBOARD config definitions.
 include		"arch/evbarm/conf/files.beagle"
 
+options 	KDTRACE_HOOKS
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	CORTEX_PMC
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h

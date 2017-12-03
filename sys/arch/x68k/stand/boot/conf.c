@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9.2.1 2012/11/20 03:01:49 tls Exp $	*/
+/*	$NetBSD: conf.c,v 1.9.2.2 2017/12/03 11:36:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -33,12 +33,17 @@
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/ustarfs.h>
 
+#include <netinet/in.h>
+#include <lib/libsa/nfs.h>
+#include <lib/libsa/dev_net.h>
+
 #include "libx68k.h"
 
 struct devsw devsw[] = {
 	{ "sd",	sdstrategy, sdopen, sdclose, noioctl },
 	{ "cd",	cdstrategy, cdopen, cdclose, noioctl },
 	{ "fd",	fdstrategy, fdopen, fdclose, noioctl },
+	{ "nfs", net_strategy, net_open, net_close, net_ioctl },
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -48,7 +53,15 @@ const struct devspec devspec[] = {
 	{ "sd", 0, 7, 0 },
 	{ "cd", 1, 7, 0 },
 	{ "fd", 2, 3, 0 },
+	{ "nfs", 3, 1, 1 },
 	{ NULL, 0, 0, 0 }
+};
+
+struct fs_ops file_system_ustarfs[] = {
+	FS_OPS(ustarfs),
+};
+struct fs_ops file_system_nfs[] = {
+	FS_OPS(nfs),
 };
 
 struct fs_ops file_system[] = {
@@ -57,9 +70,19 @@ struct fs_ops file_system[] = {
 	FS_OPS(lfsv1),
 	FS_OPS(lfsv2),
 	FS_OPS(cd9660),
-	FS_OPS(ustarfs),
+	{ 0 },	/* ustarfs or nfs, see doboot() in boot.c */
 };
 
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
+
+struct fs_ops file_system_net = FS_OPS(nfs);
+
+extern struct netif_driver ne_netif_driver;
+
+struct netif_driver *netif_drivers[] = {
+	&ne_netif_driver,
+};
+
+int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
 
 struct open_file files[SOPEN_MAX];

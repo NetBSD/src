@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.50.18.3 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: if_lmc.c,v 1.50.18.4 2017/12/03 11:37:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.50.18.3 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.50.18.4 2017/12/03 11:37:08 jdolecek Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3355,7 +3355,7 @@ ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
  */
 static int  /* context: process */
 ifnet_output(struct ifnet *ifp, struct mbuf *m,
- const struct sockaddr *dst, struct rtentry *rt)
+ const struct sockaddr *dst, const struct rtentry *rt)
   {
   softc_t *sc = IFP2SC(ifp);
   int error = 0;
@@ -3375,7 +3375,7 @@ ifnet_output(struct ifnet *ifp, struct mbuf *m,
   /* Some BSD QUEUE routines are not interrupt-safe. */
   {
   DISABLE_INTR; /* noop in FreeBSD */
-  IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+  IFQ_ENQUEUE(&ifp->if_snd, m, error);
   ENABLE_INTR; /* noop in FreeBSD */
   }
 
@@ -3510,7 +3510,7 @@ ifnet_setup(struct ifnet *ifp)
   ifp->if_flags    = IFF_POINTOPOINT;
   ifp->if_flags   |= IFF_SIMPLEX;
   ifp->if_flags   |= IFF_NOARP;
-  ifp->if_input    = ifnet_input;
+  ifp->_if_input    = ifnet_input;
   ifp->if_output   = ifnet_output;
   ifp->if_start    = ifnet_start;
   ifp->if_ioctl    = ifnet_ioctl;
@@ -3570,8 +3570,6 @@ ifnet_detach(softc_t *sc)
 # endif
 
   IFQ_PURGE(&sc->ifp->if_snd);
-
-  if_free_sadl(sc->ifp);
 
   if_detach(sc->ifp);
 
@@ -4250,9 +4248,9 @@ rxintr_cleanup(softc_t *sc)
       first_mbuf = new_mbuf;
       first_mbuf->m_pkthdr.len   = pkt_len; /* total pkt length */
 # if IFNET
-      first_mbuf->m_pkthdr.rcvif = sc->ifp; /* how it got here */
+      m_set_rcvif(first_mbuf, sc->ifp); /* how it got here */
 # else
-      first_mbuf->m_pkthdr.rcvif = NULL;
+      m_reset_rcvif(first_mbuf);
 # endif
       }
     else /* 2) link mbufs. */
@@ -4281,7 +4279,7 @@ rxintr_cleanup(softc_t *sc)
       MGETHDR(new_mbuf, M_DONTWAIT, MT_DATA);
       if (new_mbuf)
         {
-        new_mbuf->m_pkthdr.rcvif = first_mbuf->m_pkthdr.rcvif;
+        m_copy_rcvif(new_mbuf, first_mbuf);
         new_mbuf->m_pkthdr.len   = first_mbuf->m_pkthdr.len;
         new_mbuf->m_len          = first_mbuf->m_len;
         memcpy(new_mbuf->m_data,   first_mbuf->m_data,

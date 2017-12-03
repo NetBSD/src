@@ -1,4 +1,5 @@
-/* $NetBSD */
+/*	$NetBSD: exynos_reg.h,v 1.7.6.3 2017/12/03 11:35:56 jdolecek Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -96,10 +97,10 @@
 #define EXYNOS_BLOCK_SIZE		0x00010000
 
 
-#if defined(EXYNOS5)
+#if defined(SOC_EXYNOS5)
 #include <arm/samsung/exynos5_reg.h>
 #endif
-#if defined(EXYNOS4)
+#if defined(SOC_EXYNOS4)
 #include <arm/samsung/exynos4_reg.h>
 #endif
 
@@ -110,6 +111,26 @@
 
 #define EXYNOS_F_IN_FREQ		(24*1000*1000)	/* 24 Mhz */
 #define EXYNOS_USB_FREQ			EXYNOS_F_IN_FREQ/* 24 Mhz */
+
+
+/* PLLs */
+#define PLL_LOCK_OFFSET			0x000
+#define PLL_CON0_OFFSET			0x100
+#define PLL_CON1_OFFSET			0x104
+
+#define PLL_CON0_ENABLE			__BIT(31)
+#define PLL_CON0_LOCKED			__BIT(29)	/* has the PLL locked on */
+#define PLL_CON0_M			__BITS(16,25)	/* PLL M divide value */
+#define PLL_CON0_P			__BITS( 8,13)	/* PLL P divide value */
+#define PLL_CON0_S			__BITS( 0, 2)	/* PLL S divide value */
+
+#define PLL_PMS2FREQ(F, M, P, S) \
+	((P) == 0 ? 0 : (((M)*(F))/((P)*(1<<(S)))))
+#define PLL_FREQ(f, v) PLL_PMS2FREQ( \
+	(f),\
+	__SHIFTOUT((v), PLL_CON0_M),\
+	__SHIFTOUT((v), PLL_CON0_P),\
+	__SHIFTOUT((v), PLL_CON0_S))
 
 
 /* Watchdog register definitions */
@@ -159,32 +180,23 @@
 #define EXYNOS_PMU_USB_HSIC_1_PHY_CTRL	0x708
 #define EXYNOS_PMU_USB_HSIC_2_PHY_CTRL	0x70C
 
-#define PMU_PHY_ENABLE			(1<< 0)
-#define PMU_PHY_DISABLE			(0)
+#define   PMU_PHY_ENABLE		(1 << 0)
+#define   PMU_PHY_DISABLE		(0)
 
+#define EXYNOS_PMU_DEBUG_CLKOUT		0x0A00
 
 /* used SYSREG registers */
 #define EXYNOS5_SYSREG_USB20_PHY_TYPE	0x230
+#define   USB20_PHY_HOST_LINK_EN	(1 << 0)
 
 
-/* used USB PHY registers */
-#define USB_PHYPWR			0x00
-#define   PHYPWR_FORCE_SUSPEND		__BIT(1)
-#define   PHYPWR_ANALOG_POWERDOWN	__BIT(3)
-#define   PHYPWR_OTG_DISABLE		__BIT(4)
-#define   PHYPWR_SLEEP_PHY0		__BIT(5)
-#define   PHYPWR_NORMAL_MASK		0x19
-#define   PHYPWR_NORMAL_MASK_PHY0	(__BITS(3,3) | 1)
-#define   PHYPWR_NORMAL_MASK_PHY1	__BITS(6,3)
-#define   PHYPWR_NORMAL_MASK_HSIC0	__BITS(9,3)
-#define   PHYPWR_NORMAL_MASK_HSIC1	__BITS(12,3)
-#define USB_PHYCLK			0x04
-#define USB_RSTCON			0x08
-#define   RSTCON_SWRST			__BIT(0)
-#define   RSTCON_HLINK_RWRST		__BIT(1)
-#define   RSTCON_DEVPHYLINK_SWRST	__BIT(2)
-#define   RSTCON_DEVPHY_SWRST		__BITS(0,3)
-#define   RSTCON_HOSTPHY_SWRST		__BITS(3,4)
-#define   RSTCON_HOSTPHYLINK_SWRST	__BITS(7,4)
+/* Generic USB registers/constants */
+#define FSEL_CLKSEL_50M			7
+#define FSEL_CLKSEL_24M			5
+#define FSEL_CLKSEL_20M			4
+#define FSEL_CLKSEL_19200K		3
+#define FSEL_CLKSEL_12M			2
+#define FSEL_CLKSEL_10M			1
+#define FSEL_CLKSEL_9600K		0
 
 #endif /* _ARM_SAMSUNG_EXYNOS_REG_H_ */

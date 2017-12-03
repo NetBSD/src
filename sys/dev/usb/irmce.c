@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.1 2011/07/19 12:23:04 jmcneill Exp $ */
+/* $NetBSD: irmce.c,v 1.1.14.1 2017/12/03 11:37:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1 2011/07/19 12:23:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.14.1 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,19 +62,19 @@ struct irmce_softc {
 	device_t		sc_dev;
 	device_t		sc_cirdev;
 
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	int			sc_bulkin_ep;
 	uint16_t		sc_bulkin_maxpktsize;
-	usbd_pipe_handle	sc_bulkin_pipe;
-	usbd_xfer_handle	sc_bulkin_xfer;
+	struct usbd_pipe *	sc_bulkin_pipe;
+	struct usbd_xfer *	sc_bulkin_xfer;
 	uint8_t *		sc_bulkin_buffer;
 
 	int			sc_bulkout_ep;
 	uint16_t		sc_bulkout_maxpktsize;
-	usbd_pipe_handle	sc_bulkout_pipe;
-	usbd_xfer_handle	sc_bulkout_xfer;
+	struct usbd_pipe *	sc_bulkout_pipe;
+	struct usbd_xfer *	sc_bulkout_xfer;
 	uint8_t *		sc_bulkout_buffer;
 
 	bool			sc_raw;
@@ -132,8 +132,8 @@ irmce_match(device_t parent, cfdata_t match, void *opaque)
 	unsigned int i;
 
 	for (i = 0; i < __arraycount(irmce_devices); i++) {
-		if (irmce_devices[i].vendor == uiaa->vendor &&
-		    irmce_devices[i].product == uiaa->product)
+		if (irmce_devices[i].vendor == uiaa->uiaa_vendor &&
+		    irmce_devices[i].product == uiaa->uiaa_product)
 			return UMATCH_VENDOR_PRODUCT;
 	}
 
@@ -150,17 +150,18 @@ irmce_attach(device_t parent, device_t self, void *opaque)
 	unsigned int i;
 	uint8_t nep;
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	aprint_naive("\n");
 
-	devinfop = usbd_devinfo_alloc(uiaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal(": %s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
-	sc->sc_udev = uiaa->device;
-	sc->sc_iface = uiaa->iface;
+	sc->sc_udev = uiaa->uiaa_device;
+	sc->sc_iface = uiaa->uiaa_iface;
 
 	nep = 0;
 	usbd_endpoint_count(sc->sc_iface, &nep);
@@ -203,23 +204,49 @@ irmce_attach(device_t parent, device_t self, void *opaque)
 		aprint_error_dev(self, "bad maxpktsize\n");
 		return;
 	}
+	usbd_status err;
 
-	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
-	sc->sc_bulkout_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkin_xfer == NULL || sc->sc_bulkout_xfer == NULL) {
-		aprint_error_dev(self, "couldn't alloc xfer\n");
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_ep,
+	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
+	if (err) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't open bulk-in pipe: %s\n", usbd_errstr(err));
 		return;
 	}
-	sc->sc_bulkin_buffer = usbd_alloc_buffer(sc->sc_bulkin_xfer,
-	    sc->sc_bulkin_maxpktsize);
-	sc->sc_bulkout_buffer = usbd_alloc_buffer(sc->sc_bulkout_xfer,
-	    sc->sc_bulkout_maxpktsize);
-	if (sc->sc_bulkin_buffer == NULL || sc->sc_bulkout_buffer == NULL) {
-		aprint_error_dev(self, "couldn't alloc xfer buffer\n");
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_ep,
+	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+	if (err) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't open bulk-out pipe: %s\n", usbd_errstr(err));
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
 		return;
 	}
+
+	int error;
+	error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_bulkin_maxpktsize,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	if (error) {
+		goto fail;
+	}
+
+	error = usbd_create_xfer(sc->sc_bulkout_pipe,
+	    sc->sc_bulkout_maxpktsize, USBD_FORCE_SHORT_XFER, 0,
+	    &sc->sc_bulkout_xfer);
+	if (error) {
+		goto fail;
+	}
+	sc->sc_bulkin_buffer = usbd_get_buffer(sc->sc_bulkin_xfer);
+	sc->sc_bulkout_buffer = usbd_get_buffer(sc->sc_bulkout_xfer);
 
 	irmce_rescan(self, NULL, NULL);
+	return;
+
+fail:
+	if (sc->sc_bulkin_xfer)
+		usbd_destroy_xfer(sc->sc_bulkin_xfer);
+	if (sc->sc_bulkout_xfer)
+		usbd_destroy_xfer(sc->sc_bulkout_xfer);
 }
 
 static int
@@ -234,15 +261,29 @@ irmce_detach(device_t self, int flags)
 			return error;
 	}
 
+	if (sc->sc_bulkin_pipe) {
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	}
+	if (sc->sc_bulkout_pipe) {
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
+	}
 	if (sc->sc_bulkin_xfer) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
+		usbd_destroy_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_buffer = NULL;
 		sc->sc_bulkin_xfer = NULL;
 	}
 	if (sc->sc_bulkout_xfer) {
-		usbd_free_xfer(sc->sc_bulkout_xfer);
+		usbd_destroy_xfer(sc->sc_bulkout_xfer);
 		sc->sc_bulkout_buffer = NULL;
 		sc->sc_bulkout_xfer = NULL;
+	}
+	if (sc->sc_bulkin_pipe) {
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe) {
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
 	}
 
 	pmf_device_deregister(self);
@@ -304,10 +345,9 @@ irmce_reset(struct irmce_softc *sc)
 		*p++ = reset_cmd[n];
 
 	wlen = sizeof(reset_cmd);
-	err = usbd_bulk_transfer(sc->sc_bulkin_xfer,
-	    sc->sc_bulkout_pipe, USBD_NO_COPY|USBD_FORCE_SHORT_XFER,
-	    USBD_DEFAULT_TIMEOUT, sc->sc_bulkout_buffer, &wlen,
-	    "irmcereset");
+	err = usbd_bulk_transfer(sc->sc_bulkout_xfer, sc->sc_bulkout_pipe,
+	    USBD_FORCE_SHORT_XFER, USBD_DEFAULT_TIMEOUT,
+	    sc->sc_bulkout_buffer, &wlen);
 	if (err != USBD_NORMAL_COMPLETION) {
 		if (err == USBD_INTERRUPTED)
 			return EINTR;
@@ -324,33 +364,10 @@ static int
 irmce_open(void *priv, int flag, int mode, struct proc *p)
 {
 	struct irmce_softc *sc = priv;
-	usbd_status err;
-
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_ep,
-	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
-	if (err) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't open bulk-in pipe: %s\n", usbd_errstr(err));
-		return ENXIO;
-	}
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_ep,
-	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-	if (err) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't open bulk-out pipe: %s\n", usbd_errstr(err));
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
-		return ENXIO;
-	}
-
-	err = irmce_reset(sc);
+	int err = irmce_reset(sc);
 	if (err) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't reset device: %s\n", usbd_errstr(err));
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
-		usbd_close_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
 	}
 	sc->sc_ir_state = IRMCE_STATE_HEADER;
 	sc->sc_rc6_nhb = 0;
@@ -365,13 +382,9 @@ irmce_close(void *priv, int flag, int mode, struct proc *p)
 
 	if (sc->sc_bulkin_pipe) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
 	}
 	if (sc->sc_bulkout_pipe) {
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
-		usbd_close_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
 	}
 
 	return 0;
@@ -552,9 +565,8 @@ irmce_read(void *priv, struct uio *uio, int flag)
 	while (uio->uio_resid > 0) {
 		rlen = sc->sc_bulkin_maxpktsize;
 		err = usbd_bulk_transfer(sc->sc_bulkin_xfer,
-		    sc->sc_bulkin_pipe, USBD_NO_COPY|USBD_SHORT_XFER_OK,
-		    USBD_DEFAULT_TIMEOUT, sc->sc_bulkin_buffer, &rlen,
-		    "irmcerd");
+		    sc->sc_bulkin_pipe, USBD_SHORT_XFER_OK,
+		    USBD_DEFAULT_TIMEOUT, sc->sc_bulkin_buffer, &rlen);
 		if (err != USBD_NORMAL_COMPLETION) {
 			if (err == USBD_INTERRUPTED)
 				return EINTR;

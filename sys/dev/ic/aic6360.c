@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.99 2009/11/23 02:13:46 rmind Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.99.22.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.99 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.99.22.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -140,6 +140,8 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.99 2009/11/23 02:13:46 rmind Exp $");
 
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
+
+#include "ioconf.h"
 
 #ifndef DDB
 #define	Debugger() panic("should call debugger here (aic6360.c)")
@@ -279,7 +281,7 @@ aicattach(struct aic_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");
@@ -2149,7 +2151,6 @@ aic_print_acb(struct aic_acb *acb)
 void
 aic_print_active_acb(void)
 {
-	extern struct cfdriver aic_cd;
 	struct aic_acb *acb;
 	struct aic_softc *sc = device_lookup_private(&aic_cd, 0);
 

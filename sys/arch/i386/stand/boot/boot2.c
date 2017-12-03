@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.58.2.1 2014/08/20 00:03:07 tls Exp $	*/
+/*	$NetBSD: boot2.c,v 1.58.2.2 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ static int default_unit, default_partition;
 static const char *default_filename;
 
 char *sprint_bootsel(const char *);
-void bootit(const char *, int, int);
+static void bootit(const char *, int);
 void print_banner(void);
 void boot2(int, uint64_t);
 
@@ -121,6 +121,7 @@ void	command_ls(char *);
 #endif
 void	command_quit(char *);
 void	command_boot(char *);
+void	command_pkboot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
 #ifndef SMALL
@@ -137,6 +138,7 @@ const struct bootblk_command commands[] = {
 #endif
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
+	{ "pkboot",	command_pkboot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
 #ifndef SMALL
@@ -244,16 +246,12 @@ clearit(void)
 		clear_pc_screen();
 }
 
-void
-bootit(const char *filename, int howto, int tell)
+static void
+bootit(const char *filename, int howto)
 {
-
-	if (tell) {
-		printf("booting %s", sprint_bootsel(filename));
-		if (howto)
-			printf(" (howto 0x%x)", howto);
-		printf("\n");
-	}
+	if (howto & AB_VERBOSE)
+		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
+		    howto);
 
 	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
@@ -270,8 +268,8 @@ print_banner(void)
 #ifndef SMALL
 	int n;
 	if (bootcfg_info.banner[0]) {
-		for (n = 0; bootcfg_info.banner[n]
-		    && n < BOOTCFG_MAXBANNER; n++) 
+		for (n = 0; n < BOOTCFG_MAXBANNER && bootcfg_info.banner[n];
+		    n++) 
 			printf("%s\n", bootcfg_info.banner[n]);
 	} else {
 #endif /* !SMALL */
@@ -389,9 +387,9 @@ boot2(int biosdev, uint64_t biossector)
 		 * try pairs of names[] entries, foo and foo.gz
 		 */
 		/* don't print "booting..." again */
-		bootit(names[currname][0], 0, 0);
+		bootit(names[currname][0], 0);
 		/* since it failed, try compressed bootfile. */
-		bootit(names[currname][1], 0, 1);
+		bootit(names[currname][1], AB_VERBOSE);
 	}
 
 	bootmenu();	/* does not return */
@@ -404,7 +402,8 @@ command_help(char *arg)
 
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
-	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+	       "     (ex. \"hd0a:netbsd.old -s\")\n"
+	       "pkboot [xdNx:][filename] [-12acdqsvxz]\n"
 #if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
 #endif
@@ -417,6 +416,7 @@ command_help(char *arg)
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "splash {path_to_image_file}\n"
 	       "userconf {command}\n"
 	       "rndseed {path_to_rndseed_file}\n"
 	       "help|?\n"
@@ -451,25 +451,34 @@ void
 command_boot(char *arg)
 {
 	char *filename;
-	int howto, tell;
+	int howto;
 
 	if (!parseboot(arg, &filename, &howto))
 		return;
 
-	tell = ((howto & AB_VERBOSE) != 0);
 	if (filename != NULL) {
-		bootit(filename, howto, tell);
+		bootit(filename, howto);
 	} else {
 		int i;
 
 #ifndef SMALL
-		bootdefault();
+		if (howto == 0)
+			bootdefault();
 #endif
 		for (i = 0; i < NUMNAMES; i++) {
-			bootit(names[i][0], howto, tell);
-			bootit(names[i][1], howto, tell);
+			bootit(names[i][0], howto);
+			bootit(names[i][1], howto);
 		}
 	}
+}
+
+void
+command_pkboot(char *arg)
+{
+	extern int has_prekern;
+	has_prekern = 1;
+	command_boot(arg);
+	has_prekern = 0;
 }
 
 void

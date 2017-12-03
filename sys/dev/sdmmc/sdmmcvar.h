@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.14.2.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.14.2.2 2017/12/03 11:37:32 jdolecek Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -27,6 +27,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/callout.h>
+#include <sys/evcnt.h>
 
 #include <sys/bus.h>
 
@@ -46,6 +47,12 @@ struct sdmmc_csd {
 	int	tran_speed;	/* transfer speed (kbit/s) */
 	int	ccc;		/* Card Command Class for SD */
 	/* ... */
+};
+
+struct sdmmc_ext_csd {
+	uint8_t	rev;
+	uint8_t	rst_n_function;	/* RST_n_FUNCTION */
+	uint32_t cache_size;
 };
 
 struct sdmmc_cid {
@@ -114,6 +121,11 @@ struct sdmmc_command {
 #define SCF_RSP_SPI_S2	(1U << 11)
 #define SCF_RSP_SPI_B4	(1U << 12)
 #define SCF_RSP_SPI_BSY	(1U << 13)
+/* Probing */
+#define SCF_TOUT_OK	(1U << 14)	/* command timeout expected */
+/* Command hints */
+#define SCF_XFER_SDHC	(1U << 15)	/* card is SDHC */
+#define SCF_POLL	(1U << 16)	/* polling required */
 /* response types */
 #define SCF_RSP_R0	0	/* none */
 #define SCF_RSP_R1	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
@@ -175,6 +187,7 @@ struct sdmmc_function {
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
 #define SFF_SDHC		0x0002	/* SD High Capacity card */
+#define SFF_CACHE_ENABLED	0x0004	/* cache enabled */
 	SIMPLEQ_ENTRY(sdmmc_function) sf_list;
 	/* SD card I/O function members */
 	int number;			/* I/O function number or -1 */
@@ -182,6 +195,7 @@ struct sdmmc_function {
 	struct sdmmc_cis cis;		/* decoded CIS */
 	/* SD/MMC memory card members */
 	struct sdmmc_csd csd;		/* decoded CSD value */
+	struct sdmmc_ext_csd ext_csd;	/* decoded EXT_CSD value */
 	struct sdmmc_cid cid;		/* decoded CID value */
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
@@ -189,6 +203,7 @@ struct sdmmc_function {
 
 	void *bbuf;			/* bounce buffer */
 	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
+	bus_dmamap_t sseg_dmap;		/* DMA map for single segment */
 };
 
 /*
@@ -215,18 +230,29 @@ struct sdmmc_softc {
 #define SMF_MEM_MODE		0x0008	/* host in memory mode (SD or MMC) */
 #define SMF_CARD_PRESENT	0x4000	/* card presence noticed */
 #define SMF_CARD_ATTACHED	0x8000	/* card driver(s) attached */
+#define SMF_UHS_MODE		0x10000	/* host in UHS mode */
 
 	uint32_t sc_caps;		/* host capability */
-#define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automagically by host */
-#define SMC_CAPS_4BIT_MODE	0x0002	/* 4-bits data bus width */
-#define SMC_CAPS_DMA		0x0004	/* DMA transfer */
-#define SMC_CAPS_SPI_MODE	0x0008	/* SPI mode */
-#define SMC_CAPS_POLL_CARD_DET	0x0010	/* Polling card detect */
-#define SMC_CAPS_SINGLE_ONLY	0x0020	/* only single read/write */
-#define SMC_CAPS_8BIT_MODE	0x0040	/* 8-bits data bus width */
-#define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
-#define SMC_CAPS_SD_HIGHSPEED	0x0100	/* SD high-speed timing */
-#define SMC_CAPS_MMC_HIGHSPEED	0x0200	/* MMC high-speed timing */
+#define SMC_CAPS_AUTO_STOP	__BIT(0)	/* send CMD12 automagically by host */
+#define SMC_CAPS_4BIT_MODE	__BIT(1)	/* 4-bits data bus width */
+#define SMC_CAPS_DMA		__BIT(2)	/* DMA transfer */
+#define SMC_CAPS_SPI_MODE	__BIT(3)	/* SPI mode */
+#define SMC_CAPS_POLL_CARD_DET	__BIT(4)	/* Polling card detect */
+#define SMC_CAPS_SINGLE_ONLY	__BIT(5)	/* only single read/write */
+#define SMC_CAPS_8BIT_MODE	__BIT(6)	/* 8-bits data bus width */
+#define SMC_CAPS_MULTI_SEG_DMA	__BIT(7)	/* multiple segment DMA transfer */
+#define SMC_CAPS_SD_HIGHSPEED	__BIT(8)	/* SD high-speed timing */
+#define SMC_CAPS_MMC_HIGHSPEED	__BIT(9)	/* MMC high-speed timing */
+#define SMC_CAPS_MMC_DDR52	__BIT(10)	/* MMC HS DDR52 timing */
+/*				__BIT(11)	*/
+#define SMC_CAPS_UHS_SDR50	__BIT(12)	/* UHS SDR50 timing */
+#define SMC_CAPS_UHS_SDR104	__BIT(13)	/* UHS SDR104 timing */
+#define SMC_CAPS_UHS_DDR50	__BIT(14)	/* UHS DDR50 timing */
+#define SMC_CAPS_UHS_MASK	(SMC_CAPS_UHS_SDR50 \
+				    | SMC_CAPS_UHS_SDR104 \
+				    | SMC_CAPS_UHS_DDR50)
+#define SMC_CAPS_MMC_HS200	__BIT(15)	/* eMMC HS200 timing */
+#define SMC_CAPS_POLLING	__BIT(30)	/* driver supports cmd polling */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
@@ -252,9 +278,17 @@ struct sdmmc_softc {
 	u_int sc_clkmin;		/* host min bus clock */
 	u_int sc_clkmax;		/* host max bus clock */
 	u_int sc_busclk;		/* host bus clock */
+	bool sc_busddr;			/* host bus clock is in DDR mode */
 	int sc_buswidth;		/* host bus width */
+	const char *sc_transfer_mode;	/* current transfer mode */
 
 	callout_t sc_card_detect_ch;	/* polling card insert/remove */
+
+	/* event counters */
+	struct evcnt sc_ev_xfer;	/* xfer count */
+	struct evcnt sc_ev_xfer_aligned[8]; /* aligned xfer counts */
+	struct evcnt sc_ev_xfer_unaligned; /* unaligned xfer count */
+	struct evcnt sc_ev_xfer_error;	/* error xfer count */
 };
 
 /*
@@ -297,6 +331,7 @@ int	sdmmc_set_bus_power(struct sdmmc_softc *, uint32_t, uint32_t);
 int	sdmmc_mmc_command(struct sdmmc_softc *, struct sdmmc_command *);
 int	sdmmc_app_command(struct sdmmc_softc *, struct sdmmc_function *,
 	    struct sdmmc_command *);
+void	sdmmc_stop_transmission(struct sdmmc_softc *);
 void	sdmmc_go_idle_state(struct sdmmc_softc *);
 int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_set_relative_addr(struct sdmmc_softc *, struct sdmmc_function *);
@@ -346,5 +381,7 @@ int	sdmmc_mem_read_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
+int	sdmmc_mem_discard(struct sdmmc_function *, uint32_t, uint32_t);
+int	sdmmc_mem_flush_cache(struct sdmmc_function *, bool);
 
 #endif	/* _SDMMCVAR_H_ */

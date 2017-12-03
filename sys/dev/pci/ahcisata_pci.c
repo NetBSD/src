@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.30.2.3 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.30.2.4 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30.2.3 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30.2.4 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -178,9 +178,9 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_QUIRK_BADPMPRESET },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID5,
 	    AHCI_QUIRK_BADPMPRESET },
-	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_FC,
-	    AHCI_QUIRK_BADPMPRESET },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_AHCI2,
+	    AHCI_QUIRK_BADPMPRESET },
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_STORAGE,
 	    AHCI_QUIRK_BADPMPRESET },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237R_SATA,
 	    AHCI_QUIRK_BADPMP },
@@ -294,7 +294,8 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle,
 	    intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO, ahci_intr, sc);
+	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_BIO,
+	    ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;

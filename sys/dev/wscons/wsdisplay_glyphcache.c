@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.3.2.2 2014/08/20 00:03:52 tls Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.3.2.3 2017/12/03 11:37:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -27,23 +27,28 @@
 
 /* 
  * a simple glyph cache in offscreen memory
- * For now it only caches glyphs with the default attribute ( assuming they're
- * the most commonly used glyphs ) but the API should at least not prevent
- * more sophisticated caching algorithms
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_glyphcache.h"
+#endif
  
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/errno.h>
 #include <sys/kmem.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
 #include <dev/wscons/wsdisplay_glyphcachevar.h>
-#include "opt_glyphcache.h"
 
 #ifdef GLYPHCACHE_DEBUG
 #define DPRINTF aprint_normal
 #else
 #define DPRINTF while (0) printf
 #endif
+
+#define NBUCKETS 32
 
 static inline int
 attr2idx(long attr)
@@ -59,18 +64,44 @@ int
 glyphcache_init(glyphcache *gc, int first, int lines, int width,
     int cellwidth, int cellheight, long attr)
 {
+
+	/* first the geometry stuff */
+	if (lines < 0) lines = 0;
+	gc->gc_width = width;
+	gc->gc_cellwidth = -1;
+	gc->gc_cellheight = -1;
+	gc->gc_firstline = first;
+	gc->gc_lines = lines;
+	gc->gc_buckets = NULL;
+	gc->gc_numbuckets = 0;
+	// XXX: Never free?
+	gc->gc_buckets = kmem_alloc(sizeof(*gc->gc_buckets) * NBUCKETS,
+	    KM_SLEEP);
+	gc->gc_nbuckets = NBUCKETS;
+	return glyphcache_reconfig(gc, cellwidth, cellheight, attr);
+
+}
+
+int
+glyphcache_reconfig(glyphcache *gc, int cellwidth, int cellheight, long attr)
+{
 	int cache_lines, buckets, i, usedcells = 0, idx;
 	gc_bucket *b;
 
-	/* first the geometry stuff */
+	/* see if we actually need to reconfigure anything */
+	if ((gc->gc_cellwidth == cellwidth) &&
+	    (gc->gc_cellheight == cellheight) &&
+	    ((gc->gc_buckets != NULL) &&
+	     (gc->gc_buckets[0].gb_index == attr2idx(attr)))) {
+		return 0;
+	}
+
 	gc->gc_cellwidth = cellwidth;
 	gc->gc_cellheight = cellheight;
-	gc->gc_firstline = first;
-	gc->gc_cellsperline = width / cellwidth;
-	gc->gc_buckets = NULL;
-	gc->gc_numbuckets = 0;
-	if (lines < 0) lines = 0;
-	cache_lines = lines / cellheight;
+
+	gc->gc_cellsperline = gc->gc_width / cellwidth;
+
+	cache_lines = gc->gc_lines / cellheight;
 	gc->gc_numcells = cache_lines * gc->gc_cellsperline;
 
 	/* now allocate buckets */
@@ -85,11 +116,7 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 	if (buckets < 1)
 		return ENOMEM;
 
-	gc->gc_buckets = kmem_alloc(sizeof(gc_bucket) * buckets, KM_SLEEP);
-	if (gc->gc_buckets == NULL) {
-		aprint_error("%s: can't allocate memory\n", __func__);
-		return ENOMEM;
-	}
+	buckets = min(buckets, gc->gc_nbuckets);
 	gc->gc_numbuckets = buckets;
 
 	DPRINTF("%s: using %d buckets\n", __func__, buckets);
@@ -119,6 +146,21 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 	    gc->gc_numcells, gc->gc_firstline, gc->gc_cellsperline);
 	return 0;
 }
+
+void
+glyphcache_adapt(struct vcons_screen *scr, void *cookie)
+{
+	glyphcache *gc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
+
+	if (ri->ri_wsfcookie != gc->gc_fontcookie) {
+		glyphcache_wipe(gc);
+		gc->gc_fontcookie = ri->ri_wsfcookie;
+	}
+
+	glyphcache_reconfig(gc, ri->ri_font->fontwidth,
+			        ri->ri_font->fontheight, scr->scr_defattr);
+} 
 
 void
 glyphcache_wipe(glyphcache *gc)

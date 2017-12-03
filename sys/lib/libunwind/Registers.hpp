@@ -12,6 +12,7 @@
 #ifndef __REGISTERS_HPP__
 #define __REGISTERS_HPP__
 
+#include <sys/endian.h>
 #include <cassert>
 #include <cstdint>
 
@@ -35,6 +36,7 @@ public:
     LAST_REGISTER = REGNO_X86_EIP,
     LAST_RESTORE_REG = REGNO_X86_EIP,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_x86();
@@ -100,6 +102,7 @@ public:
     LAST_REGISTER = REGNO_X86_64_RIP,
     LAST_RESTORE_REG = REGNO_X86_64_RIP,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_x86_64();
@@ -168,6 +171,7 @@ public:
     LAST_REGISTER = REGNO_PPC32_V31,
     LAST_RESTORE_REG = REGNO_PPC32_V31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_ppc32();
@@ -258,6 +262,7 @@ public:
     LAST_RESTORE_REG = REGNO_AARCH64_V31,
     LAST_REGISTER = REGNO_AARCH64_V31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_aarch64();
@@ -319,8 +324,8 @@ enum {
   DWARF_ARM32_R0 = 0,
   DWARF_ARM32_R15 = 15,
   DWARF_ARM32_SPSR = 128,
-  DWARF_ARM32_OLD_S0 = 64,
-  DWARF_ARM32_OLD_S31 = 91,
+  DWARF_ARM32_S0 = 64,
+  DWARF_ARM32_S31 = 91,
   DWARF_ARM32_D0 = 256,
   DWARF_ARM32_D31 = 287,
   REGNO_ARM32_R0 = 0,
@@ -330,6 +335,8 @@ enum {
   REGNO_ARM32_D0 = 17,
   REGNO_ARM32_D15 = 32,
   REGNO_ARM32_D31 = 48,
+  REGNO_ARM32_S0 = 49,
+  REGNO_ARM32_S31 = 70,
 };
 
 class Registers_arm32 {
@@ -338,6 +345,7 @@ public:
     LAST_REGISTER = REGNO_ARM32_D31,
     LAST_RESTORE_REG = REGNO_ARM32_D31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_arm32();
@@ -349,9 +357,8 @@ public:
       return REGNO_ARM32_SPSR;
     if (num >= DWARF_ARM32_D0 && num <= DWARF_ARM32_D31)
       return REGNO_ARM32_D0 + (num - DWARF_ARM32_D0);
-    if (num >= DWARF_ARM32_OLD_S0 && num <= DWARF_ARM32_OLD_S31) {
-      assert(num % 2 == 0);
-      return REGNO_ARM32_D0 + (num - DWARF_ARM32_OLD_S0) / 2;
+    if (num >= DWARF_ARM32_S0 && num <= DWARF_ARM32_S31) {
+      return REGNO_ARM32_S0 + (num - DWARF_ARM32_S0);
     }
     return LAST_REGISTER + 1;
   }
@@ -379,10 +386,28 @@ public:
   void setSP(uint64_t value) { reg[REGNO_ARM32_SP] = value; }
 
   bool validFloatVectorRegister(int num) const {
-    return (num >= REGNO_ARM32_D0 && num <= REGNO_ARM32_D31);
+    return (num >= REGNO_ARM32_D0 && num <= REGNO_ARM32_S31);
   }
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
+    const void *addr = reinterpret_cast<const void *>(addr_);
+    if (num >= REGNO_ARM32_S0 && num <= REGNO_ARM32_S31) {
+      if ((flags & 1) == 0) {
+        lazyVFP1();
+        flags |= 1;
+      }
+      /*
+       * Emulate single precision register as half of the
+       * corresponding double register.
+       */
+      int dnum = (num - REGNO_ARM32_S0) / 2;
+      int part = (num - REGNO_ARM32_S0) % 2;
+#if _BYTE_ORDER == _BIG_ENDIAN
+      part = 1 - part;
+#endif
+      memcpy(fpreg + dnum + part * sizeof(fpreg[0]) / 2,
+        addr, sizeof(fpreg[0]) / 2);
+    }
     if (num <= REGNO_ARM32_D15) {
       if ((flags & 1) == 0) {
         lazyVFP1();
@@ -394,7 +419,6 @@ public:
         flags |= 2;
       }
     }
-    const void *addr = reinterpret_cast<const void *>(addr_);
     memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
   }
 
@@ -425,6 +449,7 @@ public:
     LAST_REGISTER = REGNO_VAX_PSW,
     LAST_RESTORE_REG = REGNO_VAX_PSW,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_vax();
@@ -496,6 +521,7 @@ public:
     LAST_REGISTER = REGNO_M68K_FP7,
     LAST_RESTORE_REG = REGNO_M68K_FP7,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_M68K();
@@ -572,6 +598,7 @@ public:
     LAST_REGISTER = REGNO_SH3_PR,
     LAST_RESTORE_REG = REGNO_SH3_PR,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_SH3();
@@ -636,6 +663,7 @@ public:
     LAST_REGISTER = REGNO_SPARC64_PC,
     LAST_RESTORE_REG = REGNO_SPARC64_PC,
     RETURN_OFFSET = 8,
+    RETURN_MASK = 0,
   };
   typedef uint64_t reg_t;
 
@@ -699,6 +727,7 @@ public:
     LAST_REGISTER = REGNO_SPARC_PC,
     LAST_RESTORE_REG = REGNO_SPARC_PC,
     RETURN_OFFSET = 8,
+    RETURN_MASK = 0,
   };
   typedef uint32_t reg_t;
 
@@ -764,6 +793,7 @@ public:
     LAST_REGISTER = REGNO_ALPHA_F30,
     LAST_RESTORE_REG = REGNO_ALPHA_F30,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
   typedef uint32_t reg_t;
 
@@ -830,7 +860,8 @@ public:
   enum {
     LAST_REGISTER = REGNO_HPPA_FR31H,
     LAST_RESTORE_REG = REGNO_HPPA_FR31H,
-    RETURN_OFFSET = -3, // strictly speaking, this is a mask
+    RETURN_OFFSET = 0,
+    RETURN_MASK = 3,
   };
 
   __dso_hidden Registers_HPPA();
@@ -902,6 +933,7 @@ public:
     LAST_REGISTER = REGNO_MIPS_F31,
     LAST_RESTORE_REG = REGNO_MIPS_F31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_MIPS();
@@ -973,6 +1005,7 @@ public:
     LAST_REGISTER = REGNO_MIPS64_F31,
     LAST_RESTORE_REG = REGNO_MIPS64_F31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_MIPS64();
@@ -1024,6 +1057,74 @@ private:
   uint64_t fpreg[32];
 };
 
+enum {
+  DWARF_OR1K_R0 = 0,
+  DWARF_OR1K_SP = 1,
+  DWARF_OR1K_LR = 9,
+  DWARF_OR1K_R31 = 31,
+  DWARF_OR1K_FPCSR = 32,
+
+  REGNO_OR1K_R0 = 0,
+  REGNO_OR1K_SP = 1,
+  REGNO_OR1K_LR = 9,
+  REGNO_OR1K_R31 = 31,
+  REGNO_OR1K_FPCSR = 32,
+};
+
+class Registers_or1k {
+public:
+  enum {
+    LAST_REGISTER = REGNO_OR1K_FPCSR,
+    LAST_RESTORE_REG = REGNO_OR1K_FPCSR,
+    RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
+  };
+
+  __dso_hidden Registers_or1k();
+
+  static int dwarf2regno(int num) {
+    if (num >= DWARF_OR1K_R0 && num <= DWARF_OR1K_R31)
+      return REGNO_OR1K_R0 + (num - DWARF_OR1K_R0);
+    if (num == DWARF_OR1K_FPCSR)
+      return REGNO_OR1K_FPCSR;
+    return LAST_REGISTER + 1;
+  }
+
+  bool validRegister(int num) const {
+    return num >= 0 && num <= LAST_RESTORE_REG;
+  }
+
+  uint64_t getRegister(int num) const {
+    assert(validRegister(num));
+    return reg[num];
+  }
+
+  void setRegister(int num, uint64_t value) {
+    assert(validRegister(num));
+    reg[num] = value;
+  }
+
+  uint64_t getIP() const { return reg[REGNO_OR1K_LR]; }
+
+  void setIP(uint64_t value) { reg[REGNO_OR1K_LR] = value; }
+
+  uint64_t getSP() const { return reg[REGNO_OR1K_SP]; }
+
+  void setSP(uint64_t value) { reg[REGNO_OR1K_SP] = value; }
+
+  bool validFloatVectorRegister(int num) const {
+    return false;
+  }
+
+  void copyFloatVectorRegister(int num, uint64_t addr_) {
+  }
+
+  __dso_hidden void jumpto() const __dead;
+
+private:
+  uint32_t reg[REGNO_OR1K_FPCSR + 1];
+};
+
 #if __i386__
 typedef Registers_x86 NativeUnwindRegisters;
 #elif __x86_64__
@@ -1052,6 +1153,8 @@ typedef Registers_SPARC NativeUnwindRegisters;
 typedef Registers_Alpha NativeUnwindRegisters;
 #elif __hppa__
 typedef Registers_HPPA NativeUnwindRegisters;
+#elif __or1k__
+typedef Registers_or1k NativeUnwindRegisters;
 #endif
 } // namespace _Unwind
 

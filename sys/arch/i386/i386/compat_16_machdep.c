@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.22.2.1 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.22.2.2 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,12 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22.2.1 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22.2.2 2017/12/03 11:36:17 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_ibcs2.h"
 #endif
 
 #include <sys/param.h>
@@ -47,17 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22.2.1 2014/08/20 00:03:06 t
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#ifdef VM86
-#include <machine/mcontext.h>
-#include <machine/vm86.h>
-#endif
 #include <uvm/uvm_extern.h>
 
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
 #include <x86/fpu.h>
 
-#if defined(COMPAT_16) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_16)
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
@@ -94,36 +88,24 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
-#ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
-		void syscall_vm86(struct trapframe *);
 
-		tf->tf_vm86_gs = context.sc_gs;
-		tf->tf_vm86_fs = context.sc_fs;
-		tf->tf_vm86_es = context.sc_es;
-		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(l, context.sc_eflags);
-		p->p_md.md_syscall = syscall_vm86;
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
-			return (EINVAL);
+	/*
+	 * Check for security violations.  If we're returning to
+	 * protected mode, the CPU will validate the segment registers
+	 * automatically and generate a trap on violations.  We handle
+	 * the trap, rather than doing all of the checking here.
+	 */
+	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(context.sc_cs))
+		return (EINVAL);
 
-		tf->tf_gs = context.sc_gs;
-		tf->tf_fs = context.sc_fs;
-		tf->tf_es = context.sc_es;
-		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags &= ~PSL_USER;
-		tf->tf_eflags |= context.sc_eflags & PSL_USER;
-	}
+	tf->tf_gs = context.sc_gs;
+	tf->tf_fs = context.sc_fs;
+	tf->tf_es = context.sc_es;
+	tf->tf_ds = context.sc_ds;
+	tf->tf_eflags &= ~PSL_USER;
+	tf->tf_eflags |= context.sc_eflags & PSL_USER;
+
 	tf->tf_edi = context.sc_edi;
 	tf->tf_esi = context.sc_esi;
 	tf->tf_ebp = context.sc_ebp;
@@ -199,23 +181,12 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_scp = &fp->sf_sc;
 
 	/* Save register context. */
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
-		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
-		frame.sf_sc.sc_es = tf->tf_vm86_es;
-		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(l);
-		(*p->p_emul->e_syscall_intern)(p);
-	} else
-#endif
-	{
-		frame.sf_sc.sc_gs = tf->tf_gs;
-		frame.sf_sc.sc_fs = tf->tf_fs;
-		frame.sf_sc.sc_es = tf->tf_es;
-		frame.sf_sc.sc_ds = tf->tf_ds;
-		frame.sf_sc.sc_eflags = tf->tf_eflags;
-	}
+	frame.sf_sc.sc_gs = tf->tf_gs;
+	frame.sf_sc.sc_fs = tf->tf_fs;
+	frame.sf_sc.sc_es = tf->tf_es;
+	frame.sf_sc.sc_ds = tf->tf_ds;
+	frame.sf_sc.sc_eflags = tf->tf_eflags;
+
 	frame.sf_sc.sc_edi = tf->tf_edi;
 	frame.sf_sc.sc_esi = tf->tf_esi;
 	frame.sf_sc.sc_ebp = tf->tf_ebp;

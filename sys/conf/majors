@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.61.6.4 2014/08/20 00:03:34 tls Exp $
+# $NetBSD: majors,v 1.61.6.5 2017/12/03 11:36:57 jdolecek Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -7,7 +7,7 @@
 #
 # Majors 144-159 are reserved for local/vendor use.
 #
-# Majors 160-255 are used for the MI drivers.
+# Majors 160-511 are used for the MI drivers.
 
 device-major crypto    char 160		   crypto	single
 device-major pf        char 161		   pf		single
@@ -55,3 +55,24 @@ device-major seeprom   char 206		   seeprom
 device-major dtrace    char 207		   dtrace
 device-major spiflash  char 208 block 208  spiflash
 device-major lua       char 209            lua
+
+# NOTE:
+# The following ranges are reserved for devices that have historical MD
+# definition, but are for "partially" MI use.
+# 
+# Any new port should use these "previously not" MI definitions instead of
+# separate MD values.
+# 
+# New MI devices should go to this file instead of majors.*
+#
+# 210-219 reserved for previously not MI ws devices
+# 220-239 reserved for previously not MI usb devices
+# 240-259 reserved for previously not MI "std" devices
+# 260-269 reserved for previously not MI tty devices
+# 310-339 reserved for previously not MI storage devices
+
+device-major spkr      char 240		   spkr
+
+device-major hdmicec   char 340            hdmicec
+device-major nvme      char 341		   nvme
+device-major qemufwcfg char 342		   qemufwcfg

@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.24.2.1 2014/08/20 00:03:35 tls Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.24.2.2 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.24.2.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.24.2.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -409,7 +409,7 @@ asus_get_fan_speed(struct asus_softc *sc, uint32_t *speed)
 	return true;
 }
 
-MODULE(MODULE_CLASS_DRIVER, asus, NULL);
+MODULE(MODULE_CLASS_DRIVER, asus, "sysmon_envsys,sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

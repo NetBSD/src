@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #include "acpi.h"
 #include "accommon.h"
@@ -83,7 +82,7 @@ AcpiDmParseDeferredOps (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_ENTRY ();
+    ACPI_FUNCTION_TRACE (DmParseDeferredOps);
 
 
     /* Traverse the entire parse tree */
@@ -104,12 +103,13 @@ AcpiDmParseDeferredOps (
         case AML_METHOD_OP:
         case AML_BUFFER_OP:
         case AML_PACKAGE_OP:
-        case AML_VAR_PACKAGE_OP:
+        case AML_VARIABLE_PACKAGE_OP:
 
-            Status = AcpiDmDeferredParse (Op, Op->Named.Data, Op->Named.Length);
+            Status = AcpiDmDeferredParse (
+                Op, Op->Named.Data, Op->Named.Length);
             if (ACPI_FAILURE (Status))
             {
-                return (Status);
+                return_ACPI_STATUS (Status);
             }
             break;
 
@@ -137,7 +137,7 @@ AcpiDmParseDeferredOps (
         Op = AcpiPsGetDepthNext (Root, Op);
     }
 
-    return (AE_OK);
+    return_ACPI_STATUS (AE_OK);
 }
 
 
@@ -166,7 +166,6 @@ AcpiDmDeferredParse (
     ACPI_STATUS             Status;
     ACPI_PARSE_OBJECT       *SearchOp;
     ACPI_PARSE_OBJECT       *StartOp;
-    UINT32                  BaseAmlOffset;
     ACPI_PARSE_OBJECT       *NewRootOp;
     ACPI_PARSE_OBJECT       *ExtraOp;
 
@@ -203,19 +202,10 @@ AcpiDmDeferredParse (
     WalkState->ParseFlags |= ACPI_PARSE_DISASSEMBLE;
     Status = AcpiPsParseAml (WalkState);
 
-    /*
-     * We need to update all of the AML offsets, since the parser thought
-     * that the method began at offset zero. In reality, it began somewhere
-     * within the ACPI table, at the BaseAmlOffset. Walk the entire tree that
-     * was just created and update the AmlOffset in each Op.
-     */
-    BaseAmlOffset = (Op->Common.Value.Arg)->Common.AmlOffset + 1;
     StartOp = (Op->Common.Value.Arg)->Common.Next;
     SearchOp = StartOp;
-
     while (SearchOp)
     {
-        SearchOp->Common.AmlOffset += BaseAmlOffset;
         SearchOp = AcpiPsGetDepthNext (StartOp, SearchOp);
     }
 
@@ -227,7 +217,7 @@ AcpiDmDeferredParse (
     {
     case AML_BUFFER_OP:
     case AML_PACKAGE_OP:
-    case AML_VAR_PACKAGE_OP:
+    case AML_VARIABLE_PACKAGE_OP:
 
         switch (Op->Common.AmlOpcode)
         {
@@ -238,7 +228,7 @@ AcpiDmDeferredParse (
             ACPI_FREE (ExtraOp);
             break;
 
-        case AML_VAR_PACKAGE_OP:
+        case AML_VARIABLE_PACKAGE_OP:
         case AML_BUFFER_OP:
         default:
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.31.14.2 2014/08/20 00:03:03 tls Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.31.14.3 2017/12/03 11:36:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.31.14.2 2014/08/20 00:03:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.31.14.3 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -315,7 +315,7 @@ TX_INTR(int ppl, vaddr_t pc, uint32_t status)
 	tc = tx_conf_get_tag();
 	sc = tc->tc_intrt;
 	/*
-	 * Read regsiter ASAP
+	 * Read register ASAP
 	 */
 	regs = sc->sc_regs;
 	regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
@@ -395,7 +395,7 @@ TX_INTR(int ppl, vaddr_t pc, uint32_t status)
 			}
 		}
 		/*
-		 * Read regsiter again
+		 * Read register again
 		 */
 		regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
 		regs[1] = tx_conf_read(tc, TX39_INTRSTATUS1_REG);
@@ -634,11 +634,9 @@ tx39_poll_establish(tx_chipset_tag_t tc, int interval, int level,
 	s = splhigh();
 	sc = tc->tc_intrt;
 
-	if (!(p = malloc(sizeof(struct txpoll_entry), 
-	    M_DEVBUF, M_NOWAIT))) {
+	if (!(p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		panic ("tx39_poll_establish: no memory.");
 	}
-	memset(p, 0, sizeof(struct txpoll_entry));
 
 	p->p_fun = ih_fun;
 	p->p_arg = ih_arg;
@@ -647,13 +645,13 @@ tx39_poll_establish(tx_chipset_tag_t tc, int interval, int level,
 	if (!sc->sc_polling) {
 		tx39clock_alarm_set(tc, 33); /* 33 msec */
 		
-		if (!(sc->sc_poll_ih = 
-		    tx_intr_establish(
-			    tc, MAKEINTR(5, TX39_INTRSTATUS5_ALARMINT),
-			    IST_EDGE, level, tx39_poll_intr, sc)))  {
+		if (!(sc->sc_poll_ih = tx_intr_establish(
+		    tc, MAKEINTR(5, TX39_INTRSTATUS5_ALARMINT),
+		    IST_EDGE, level, tx39_poll_intr, sc)))  {
 			printf("tx39_poll_establish: can't hook\n");
 
 			splx(s);
+			free(p, M_DEVBUF);
 			return (0);
 		}
 	}

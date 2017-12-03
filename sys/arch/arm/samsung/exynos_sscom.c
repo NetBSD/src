@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.5.10.2 2014/08/20 00:02:47 tls Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.5.10.3 2017/12/03 11:35:56 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.5.10.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.5.10.3 2017/12/03 11:35:56 jdolecek Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -66,19 +66,30 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.5.10.2 2014/08/20 00:02:47 tls Ex
 #include <arm/samsung/exynos_var.h>
 #include <sys/termios.h>
 
+#include <dev/fdt/fdtvar.h>
+
+#include <evbarm/exynos/platform.h>
+
+extern int num_exynos_uarts_entries;
+extern int exynos_uarts[];
+
 static int sscom_match(device_t, cfdata_t, void *);
 static void sscom_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(exynos_sscom, sizeof(struct sscom_softc), sscom_match,
     sscom_attach, NULL, NULL);
 
+static const char * const compatible[] = {
+	"samsung,exynos4210-uart",
+	NULL
+};
+
 static int
 sscom_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct exyo_attach_args *exyoaa = aux;
-	int port = exyoaa->exyo_loc.loc_port;
+	struct fdt_attach_args * const faa = aux;
 
-	return port >= 0 && port <= 4;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -139,17 +150,47 @@ static void
 sscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct sscom_softc *sc = device_private(self);
-	struct exyo_attach_args *exyo = aux;
-	int unit = exyo->exyo_loc.loc_port;
+	struct fdt_attach_args *faa = aux;
+	const int phandle = faa->faa_phandle;
+	bus_space_tag_t bst = faa->faa_bst;
+	bus_space_handle_t bsh;
+	struct clk *clk_uart, *clk_uart_baud0;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
 
-	/* debug */
-//	bus_addr_t iobase = exyo->exyo_loc.loc_offset;
-//	aprint_normal( ": UART%d addr=%lx", unit, iobase );
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	if (bus_space_map(bst, addr, size, 0, &bsh) != 0) {
+		aprint_error(": couldn't map registers\n");
+		return;
+	}
+
+	clk_uart = fdtbus_clock_get(phandle, "uart");
+	if (clk_uart != NULL) {
+		if (clk_enable(clk_uart) != 0) {
+			aprint_error(": couldn't enable uart clock\n");
+			return;
+		}
+	}
+	clk_uart_baud0 = fdtbus_clock_get(phandle, "clk_uart_baud0");
+	if (clk_uart_baud0 == NULL) {
+		aprint_error(": couldn't get baud clock\n");
+		return;
+	}
+	if (clk_enable(clk_uart_baud0) != 0) {
+		aprint_error(": couldn't enable baud clock\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_iot = exyo->exyo_core_bst;
-	sc->sc_unit = unit;
-	sc->sc_frequency = EXYNOS_UART_FREQ;
+	sc->sc_iot = bst = faa->faa_bst;
+	sc->sc_ioh = bsh;
+	sc->sc_unit = phandle;
+	sc->sc_frequency = clk_get_rate(clk_uart_baud0);
 
 	sc->sc_change_txrx_interrupts = exynos_change_txrx_interrupts;
 	sc->sc_clear_interrupts = exynos_clear_interrupts;
@@ -158,22 +199,25 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rx_irqno = 0;
 	sc->sc_tx_irqno = 0;
 
-	if (!sscom_is_console(sc->sc_iot, unit, &sc->sc_ioh)
-	    && bus_space_subregion(sc->sc_iot, exyo->exyo_core_bsh,
-		    exyo->exyo_loc.loc_offset, SSCOM_SIZE, &sc->sc_ioh)) {
-		printf( ": failed to map registers\n" );
+	if (sscom_is_console(sc->sc_iot, phandle, &sc->sc_ioh))
+		aprint_normal(" (console)");
+
+	aprint_normal("\n");
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
 
-	printf("\n");
+	void *ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, sscomintr, sc);
+	if (ih == NULL)
+		aprint_error_dev(self, "failed to establish interrupt\n");
 
-	void *ih = intr_establish(exyo->exyo_loc.loc_intr, IPL_SCHED,
-	    IST_LEVEL, sscomintr, sc);
-	if (ih != NULL) {
-		aprint_normal_dev(self, "interrupting at irq %d\n",
-		    exyo->exyo_loc.loc_intr);
-	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
 	sscom_attach_subr(sc);
+
 }
 
 
@@ -196,3 +240,56 @@ exynos_sscom_kgdb_attach(bus_space_tag_t iot, int unit, int rate,
 }
 #endif /* KGDB */
 #endif
+
+
+/*
+ * Console support
+ */
+
+static int
+exynos_sscom_console_match(int phandle)
+{
+	return of_match_compatible(phandle, compatible);
+}
+
+static void
+exynos_sscom_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
+{
+	const struct sscom_uart_info info = {
+		.iobase = 0,	/* Offset from bsh */
+		.unit = faa->faa_phandle
+	};
+	const int phandle = faa->faa_phandle;
+	bus_space_tag_t bst = faa->faa_bst;
+	bus_space_handle_t bsh;
+	bus_addr_t addr;
+	bus_size_t size;
+	tcflag_t flags;
+	int speed;
+
+	fdtbus_get_reg(phandle, 0, &addr, &size);
+	speed = fdtbus_get_stdout_speed();
+	if (speed < 0)
+		speed = 115200;	/* default */
+	flags = fdtbus_get_stdout_flags();
+
+	if (bus_space_map(bst, addr, size, 0, &bsh) != 0)
+		panic("cannot map console UART");
+
+	/* Calculate UART frequency from bootloader (XXX) */
+	uint32_t freq = speed
+	    * (16 * (bus_space_read_4(bst, bsh, SSCOM_UBRDIV) + 1)
+		  + bus_space_read_4(bst, bsh, SSCOM_UFRACVAL));
+	freq = (freq + speed / 2) / 1000;
+	freq *= 1000;
+
+	if (sscom_cnattach(bst, bsh, &info, speed, freq, flags) != 0)
+		panic("cannot attach console UART");
+}
+
+static const struct fdt_console exynos_sscom_console = {
+	.match = exynos_sscom_console_match,
+	.consinit = exynos_sscom_console_consinit,
+};
+
+FDT_CONSOLE(exynos_sscom, &exynos_sscom_console);

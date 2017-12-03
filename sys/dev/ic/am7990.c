@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.74 2012/02/02 19:43:02 tls Exp $	*/
+/*	$NetBSD: am7990.c,v 1.74.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.74 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.74.6.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.74 2012/02/02 19:43:02 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -114,6 +114,7 @@ am7990_config(struct am7990_softc *sc)
 	sc->lsc.sc_start = am7990_start;
 
 	lance_config(&sc->lsc);
+	if_deferred_start_init(&sc->lsc.sc_ethercom.ec_if, NULL);
 
 	mem = 0;
 	sc->lsc.sc_initaddr = mem;
@@ -356,7 +357,7 @@ am7990_tint(struct lance_softc *sc)
 
 	sc->sc_first_td = bix;
 
-	am7990_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	if (sc->sc_no_td == 0)
 		ifp->if_timer = 0;

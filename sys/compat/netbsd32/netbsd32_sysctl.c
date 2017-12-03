@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.33.6.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.33.6.2 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.33.6.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.33.6.2 2017/12/03 11:36:56 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -104,11 +104,24 @@ netbsd32_sysctl_vm_loadavg(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+static int
+sysctl_hw_machine_arch32(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+#ifndef PROC_MACHINE_ARCH32
+	extern const char machine_arch32[];
+#define PROC_MACHINE_ARCH32(P)	__UNCONST(machine_arch32)
+#endif
+
+	node.sysctl_data = PROC_MACHINE_ARCH32(l->l_proc);
+	node.sysctl_size = strlen(node.sysctl_data) + 1;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
 void
 netbsd32_sysctl_init(void)
 {
 	const struct sysctlnode *_root = &netbsd32_sysctl_root;
-	extern const char machine_arch32[];
 	extern const char machine32[];
 
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
@@ -151,9 +164,9 @@ netbsd32_sysctl_init(void)
 		       NULL, 0, __UNCONST(&machine32), 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRING, "machine_arch", NULL,
-		       NULL, 0, __UNCONST(&machine_arch32), 0,
+		       sysctl_hw_machine_arch32, 0, NULL, 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }
 

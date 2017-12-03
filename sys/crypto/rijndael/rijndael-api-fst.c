@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.24 2011/05/14 16:46:55 jmmv Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.24.14.1 2017/12/03 11:36:57 jdolecek Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.24 2011/05/14 16:46:55 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.24.14.1 2017/12/03 11:36:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.24 2011/05/14 16:46:55 jmmv E
 #include <crypto/rijndael/rijndael-alg-fst.h>
 #include <crypto/rijndael/rijndael-api-fst.h>
 
+#define XTS_ALPHA 0x87
+
 static void xor16(uint8_t *d, const uint8_t *a, const uint8_t* b)
 {
 	for (size_t i = 0; i < 4; i++) {
@@ -60,6 +62,22 @@ static void xor16(uint8_t *d, const uint8_t *a, const uint8_t* b)
 		*d++ = *a++ ^ *b++;
 		*d++ = *a++ ^ *b++;
 	}
+}
+
+static void
+xts_exponentiate(uint8_t *iv)
+{
+	unsigned int carry = 0;
+
+	for (size_t i = 0; i < 16; i++) {
+		unsigned int msb = iv[i] >> 7;
+
+		iv[i] = (iv[i] << 1) | carry;
+		carry = msb;
+	}
+
+	if (carry != 0)
+		iv[0] ^= XTS_ALPHA;
 }
 
 int
@@ -102,7 +120,8 @@ rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen,
 int
 rijndael_cipherInit(cipherInstance *cipher, BYTE mode, const char *IV)
 {
-	if ((mode == MODE_ECB) || (mode == MODE_CBC) || (mode == MODE_CFB1)) {
+	if ((mode == MODE_ECB) || (mode == MODE_CBC) ||
+	    (mode == MODE_XTS) || (mode == MODE_CFB1)) {
 		cipher->mode = mode;
 	} else {
 		return BAD_CIPHER_MODE;
@@ -148,6 +167,18 @@ rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 			xor16(block, input, iv);
 			rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 			iv = outBuffer;
+			input += 16;
+			outBuffer += 16;
+		}
+		break;
+
+	case MODE_XTS:
+		iv = (u_int8_t *)cipher->IV;
+		for (i = numBlocks; i > 0; i--) {
+			xor16(block, input, iv);
+			rijndaelEncrypt(key->rk, key->Nr, block, block);
+			xor16(outBuffer, block, iv);
+			xts_exponentiate(iv);
 			input += 16;
 			outBuffer += 16;
 		}
@@ -284,7 +315,19 @@ rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 		}
 		break;
 
-    case MODE_CFB1:
+	case MODE_XTS:
+		iv = (u_int8_t *)cipher->IV;
+		for (i = numBlocks; i > 0; i--) {
+			xor16(block, input, iv);
+			rijndaelDecrypt(key->rk, key->Nr, block, block);
+			xor16(outBuffer, block, iv);
+			xts_exponentiate(iv);
+			input += 16;
+			outBuffer += 16;
+		}
+		break;
+
+	case MODE_CFB1:
 		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
 			memcpy(outBuffer, input, 16);

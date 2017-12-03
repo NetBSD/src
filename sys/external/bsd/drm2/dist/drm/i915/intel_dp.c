@@ -274,7 +274,7 @@ intel_dp_init_panel_power_sequencer_registers(struct drm_device *dev,
 					      struct intel_dp *intel_dp,
 					      struct edp_power_seq *out);
 
-static enum pipe
+static enum i915_pipe
 vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 {
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
@@ -282,7 +282,7 @@ vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 	struct drm_device *dev = intel_dig_port->base.base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	enum port port = intel_dig_port->port;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	/* modeset should have pipe */
 	if (crtc)
@@ -371,10 +371,16 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp, bool has_aux_irq)
 	if (has_aux_irq && !cold) {
 		int ret;
 		spin_lock(&dev_priv->gmbus_wait_lock);
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
-		    &dev_priv->gmbus_wait_lock, msecs_to_jiffies_timeout(10),
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
+		    &dev_priv->gmbus_wait_queue, &dev_priv->gmbus_wait_lock,
+		    msecs_to_jiffies_timeout(10),
 		    C);
-		done = ret;	/* XXX ugh */
+		if (ret < 0)	/* Failure: pretend same as done.  */
+			done = true;
+		else if (ret == 0) /* Timed out: not done.  */
+			done = false;
+		else		/* Succeeded (ret > 0): done.  */
+			done = true;
 		spin_unlock(&dev_priv->gmbus_wait_lock);
 	} else {
 		done = wait_for_atomic(C, 10) == 0;
@@ -1441,7 +1447,7 @@ void intel_dp_sink_dpms(struct intel_dp *intel_dp, int mode)
 }
 
 static bool intel_dp_get_hw_state(struct intel_encoder *encoder,
-				  enum pipe *pipe)
+				  enum i915_pipe *pipe)
 {
 	struct intel_dp *intel_dp = enc_to_intel_dp(&encoder->base);
 	enum port port = dp_to_dig_port(intel_dp)->port;
@@ -2907,11 +2913,11 @@ intel_dp_probe_oui(struct intel_dp *intel_dp)
 	intel_edp_panel_vdd_on(intel_dp);
 
 	if (intel_dp_dpcd_read_wake(&intel_dp->aux, DP_SINK_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Sink OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Sink OUI: %02hhx%02hhx%02hhx\n",
 			      buf[0], buf[1], buf[2]);
 
 	if (intel_dp_dpcd_read_wake(&intel_dp->aux, DP_BRANCH_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Branch OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Branch OUI: %02hhx%02hhx%02hhx\n",
 			      buf[0], buf[1], buf[2]);
 
 	edp_panel_vdd_off(intel_dp, false);
@@ -3530,7 +3536,7 @@ intel_dp_init_panel_power_sequencer(struct drm_device *dev,
 		pp_off_reg = PCH_PP_OFF_DELAYS;
 		pp_div_reg = PCH_PP_DIVISOR;
 	} else {
-		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 
 		pp_ctrl_reg = VLV_PIPE_PP_CONTROL(pipe);
 		pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
@@ -3629,7 +3635,7 @@ intel_dp_init_panel_power_sequencer_registers(struct drm_device *dev,
 		pp_off_reg = PCH_PP_OFF_DELAYS;
 		pp_div_reg = PCH_PP_DIVISOR;
 	} else {
-		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 
 		pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
 		pp_off_reg = VLV_PIPE_PP_OFF_DELAYS(pipe);

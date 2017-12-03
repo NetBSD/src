@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.5 2009/03/14 14:46:09 dsl Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.5.22.1 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -98,8 +98,6 @@ struct filecore_node {
 	struct	filecore_direntry i_dirent; /* directory entry */
 };
 
-#define	i_forw		i_chain[0]
-#define	i_back		i_chain[1]
 #define i_size		i_dirent.len
 
 /* flags */
@@ -134,10 +132,6 @@ int	filecore_strategy(void *);
 int	filecore_print(void *);
 int	filecore_pathconf(void *);
 int	filecore_blkatoff(void *);
-
-struct	vnode *filecore_ihashget(dev_t, ino_t);
-void	filecore_ihashins(struct filecore_node *);
-void	filecore_ihashrem(struct filecore_node *);
 
 mode_t	filecore_mode(struct filecore_node *);
 struct timespec	filecore_time(struct filecore_node *);

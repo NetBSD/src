@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.10.22.1 2012/11/20 03:01:34 tls Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.10.22.2 2017/12/03 11:36:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10.22.1 2012/11/20 03:01:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10.22.2 2017/12/03 11:36:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,14 +100,14 @@ mk_read(struct mkclock_softc *sc, int reg)
 	u_int8_t val;
 
 	val = bus_space_read_1(sc->sc_bst, sc->sc_bsh, DATA_PORT + reg*4);
-	return FROMBCD(val);
+	return bcdtobin(val);
 }
 
 static void
 mk_write(struct mkclock_softc *sc, int reg, int val)
 {
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh,
-			  DATA_PORT + reg*4, TOBCD(val));
+			  DATA_PORT + reg*4, bintobcd(val));
 }
 
 int

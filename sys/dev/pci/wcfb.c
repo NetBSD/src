@@ -1,33 +1,26 @@
-/*	$NetBSD: wcfb.c,v 1.11.2.1 2012/11/20 03:02:30 tls Exp $ */
+/*	$NetBSD: wcfb.c,v 1.11.2.2 2017/12/03 11:37:29 jdolecek Exp $ */
 
-/*-
- * Copyright (c) 2010 Michael Lorenz
- * All rights reserved.
+/*
+ * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
+ *               2010 Michael Lorenz
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.11.2.1 2012/11/20 03:02:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.11.2.2 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +72,10 @@ struct wcfb_softc {
 	bus_space_tag_t sc_regt, sc_wtft;
 	bus_space_tag_t sc_iot;
 
-	bus_space_handle_t sc_fbh, sc_wtfh;
+	bus_space_handle_t sc_fbh;
 	bus_space_handle_t sc_regh;
-	bus_addr_t sc_fb, sc_reg, sc_wtf;
-	bus_size_t sc_fbsize, sc_regsize, sc_wtfsize;
+	bus_addr_t sc_fb, sc_reg;
+	bus_size_t sc_fbsize, sc_regsize;
 
 	int sc_width, sc_height, sc_stride;
 	int sc_locked;
@@ -92,11 +85,11 @@ struct wcfb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_dpms;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
-	uint32_t sc_fb0off, sc_fb1off;
+	uint32_t sc_fb0off, sc_fb1off, sc_fb8size;
 
 	void (*copycols)(void *, int, int, int, int);
 	void (*erasecols)(void *, int, int, int, long);
@@ -142,9 +135,9 @@ static void 	wcfb_putpalreg(struct wcfb_softc *, int, int, int, int);
 static void	wcfb_bitblt(struct wcfb_softc *, int, int, int, int, int,
 			int, uint32_t);
 static void	wcfb_rectfill(struct wcfb_softc *, int, int, int, int, int);
-static void	wcfb_rop_common(struct wcfb_softc *, bus_addr_t, int, int, int, 
+static void	wcfb_rop_common(struct wcfb_softc *, bus_addr_t, int, int, int,
 			int, int, int, uint32_t, int32_t);
-static void	wcfb_rop_jfb(struct wcfb_softc *, int, int, int, int, int, int, 
+static void	wcfb_rop_jfb(struct wcfb_softc *, int, int, int, int, int, int,
 			uint32_t, int32_t);
 static int	wcfb_rop_wait(struct wcfb_softc *);
 
@@ -172,7 +165,6 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	uint32_t		reg;
 	unsigned long		defattr;
 	bool			is_console = 0;
-	void 			*wtf;
 	uint32_t		sub;
 
 	sc->sc_dev = self;
@@ -185,7 +177,7 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	if (!is_console) return;
 #endif
 	sc->sc_memt = pa->pa_memt;
-	sc->sc_iot = pa->pa_iot;	
+	sc->sc_iot = pa->pa_iot;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
@@ -195,33 +187,29 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 		    device_xname(sc->sc_dev));
 	}
 
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, BUS_SPACE_MAP_LINEAR,
+	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
 	    &sc->sc_memt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
 		aprint_error("%s: failed to map framebuffer.\n",
 		    device_xname(sc->sc_dev));
 	}
 
-	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_MEM, BUS_SPACE_MAP_LINEAR,
-	    &sc->sc_wtft, &sc->sc_wtfh, &sc->sc_wtf, &sc->sc_wtfsize)) {
-		aprint_error("%s: failed to map wtf.\n",
-		    device_xname(sc->sc_dev));
-	}
-	wtf = bus_space_vaddr(sc->sc_wtft, sc->sc_wtfh);
-	memset(wtf, 0, 0x100000);
-
 	sc->sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
-
+#ifdef DEBUG
+	memset(sc->sc_fbaddr, 0, sc->sc_fbsize);
+#endif
 	sc->sc_fb0off =
 	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
 	        WC_FB8_ADDR0) - sc->sc_fb;
 	sc->sc_fb0 = sc->sc_fbaddr + sc->sc_fb0off;
-	sc->sc_fb1off = 
+	sc->sc_fb1off =
 	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
 	        WC_FB8_ADDR1) - sc->sc_fb;
 	sc->sc_fb1 = sc->sc_fbaddr + sc->sc_fb1off;
+	sc->sc_fb8size = 2 * (sc->sc_fb1off - sc->sc_fb0off);
 
 	sub = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_SUBSYS_ID_REG);
-	printf("subsys: %08x\n", sub);
+	aprint_normal("subsys: %08x\n", sub);
 	switch (sub) {
 		case WC_XVR1200:
 			sc->sc_is_jfb = 1;
@@ -239,31 +227,39 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_stride = 1 <<
 	    ((bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_CONFIG) &
 	      0x00ff0000) >> 16);
-	printf("%s: %d x %d, %d\n", device_xname(sc->sc_dev), 
+	aprint_normal_dev(self, "%d x %d, %d\n",
 	    sc->sc_width, sc->sc_height, sc->sc_stride);
 
 	if (sc->sc_is_jfb == 0) {
 		sc->sc_shadow = kmem_alloc(sc->sc_stride * sc->sc_height,
 		    KM_SLEEP);
-		if (sc->sc_shadow == NULL) {
-			printf("%s: failed to allocate shadow buffer\n",
-			    device_xname(self));
-			return;
-		}
 	}
 
 	for (i = 0x40; i < 0x100; i += 16) {
-		printf("%04x:", i);
+		aprint_normal("%04x:", i);
 		for (j = 0; j < 16; j += 4) {
-			printf(" %08x", bus_space_read_4(sc->sc_regt,
+			aprint_normal(" %08x", bus_space_read_4(sc->sc_regt,
 			    sc->sc_regh, 0x8000 + i + j));
 		}
-		printf("\n");
+		aprint_normal("\n");
 	}
 
 	/* make sure video output is on */
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_DPMS_STATE, WC_DPMS_ON);
+	sc->sc_dpms = WSDISPLAYIO_VIDEO_ON;
 
+#if 0
+	/* testing & debugging voodoo */
+	memset(sc->sc_fb0, 0x01, 0x00100000);
+	memset(sc->sc_fb1, 0x00, 0x00100000);
+	wcfb_rop_wait(sc);
+	wcfb_rop_jfb(sc, 0, 0, 0, 0, 600, 600, WC_ROP_SET, 0xffffffff);
+	wcfb_rop_wait(sc);
+	delay(4000000);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR1,
+	    bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR0));
+	delay(8000000);
+#endif
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
 		0, 0,
@@ -343,10 +339,72 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
+wcfb_putcmap(struct wcfb_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_char *r, *g, *b;
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+
+	for (i = 0; i < count; i++) {
+		wcfb_putpalreg(sc, index, *r, *g, *b);
+		index++;
+		r++, g++, b++;
+	}
+	return 0;
+}
+
+static int
+wcfb_getcmap(struct wcfb_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+
+	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_blue[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
+}
+
+static int
 wcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
-	struct wcfb_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct wcfb_softc *sc = vd->cookie;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -363,39 +421,72 @@ wcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
 		    sc->sc_pcitag, data);
 
-	case WSDISPLAYIO_SMODE: {
-		/*int new_mode = *(int*)data, i;*/
+	case WSDISPLAYIO_SVIDEO: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_dpms) {
+			sc->sc_dpms = new_mode;
+			bus_space_write_4(sc->sc_regt, sc->sc_regh,
+			     WC_DPMS_STATE,
+			     (new_mode == WSDISPLAYIO_VIDEO_ON) ?
+			      WC_DPMS_ON : WC_DPMS_STANDBY);
+		}
 		}
 		return 0;
-	}
 
+	case WSDISPLAYIO_GVIDEO:
+		*(int*)data = sc->sc_dpms;
+		return 0;
+
+	case WSDISPLAYIO_GETCMAP:
+		return wcfb_getcmap(sc,
+		    (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_PUTCMAP:
+		return wcfb_putcmap(sc,
+		    (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+
+		fbi->fbi_fbsize = sc->sc_fb8size;
+		fbi->fbi_fboffset = 0;
+		fbi->fbi_width = sc->sc_width;
+		fbi->fbi_height = sc->sc_height;
+		fbi->fbi_bitsperpixel = 8;
+		fbi->fbi_stride = sc->sc_stride;
+		fbi->fbi_pixeltype = WSFB_CI;
+		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 256;
+		fbi->fbi_flags = WSFB_VRAM_IS_SPLIT;
+		return 0;
+		}
+	}
 	return EPASSTHROUGH;
 }
 
 static paddr_t
 wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	struct wcfb_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct wcfb_softc *sc = vd->cookie;
 
-	/* no point in allowing a wsfb map if we can't provide one */
+	/* XXX in theory the order is not fixed... */
+
+	if (offset < sc->sc_fb8size)
+		return bus_space_mmap(sc->sc_memt, sc->sc_fb + sc->sc_fb0off,
+		    offset, prot,
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 	/*
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), 
+	if (kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
 	}
 
-#ifdef WSFB_FAKE_VGA_FB
-	if ((offset >= 0xa0000) && (offset < 0xbffff)) {
-
-		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
-		   offset - 0xa0000, prot, BUS_SPACE_MAP_LINEAR);
-	}
-#endif
+	/* may want to mmap() registers at some point */
 
 	return -1;
 }
@@ -474,7 +565,7 @@ wcfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		to1 += sc->sc_stride;
 		from += sc->sc_stride;
 	}
-}	
+}
 
 static void
 wcfb_putpalreg(struct wcfb_softc *sc, int i, int r, int g, int b)
@@ -493,7 +584,7 @@ wcfb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int coffset;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 
 		if (ri->ri_flg & RI_CURSOR) {
@@ -502,8 +593,8 @@ wcfb_cursor(void *cookie, int on, int row, int col)
 #ifdef WSDISPLAY_SCROLLSUPPORT
 			coffset += scr->scr_offset_to_zero;
 #endif
-			wcfb_putchar(cookie, ri->ri_crow, 
-			    ri->ri_ccol, scr->scr_chars[coffset], 
+			wcfb_putchar(cookie, ri->ri_crow,
+			    ri->ri_ccol, scr->scr_chars[coffset],
 			    scr->scr_attrs[coffset]);
 			ri->ri_flg &= ~RI_CURSOR;
 		}
@@ -633,7 +724,7 @@ wcfb_bitblt(struct wcfb_softc *sc, int sx, int sy, int dx, int dy, int w,
 		 int h, uint32_t rop)
 {
 	wcfb_rop_wait(sc);
-	wcfb_rop_jfb(sc, sx, sy, dx, dy, w, h, rop, 0xff);
+	wcfb_rop_jfb(sc, sx, sy, dx, dy, w, h, rop, 0x0f);
 }
 
 static void
@@ -641,19 +732,17 @@ wcfb_rectfill(struct wcfb_softc *sc, int x, int y, int w, int h, int bg)
 {
 	int32_t mask;
 
+	/* clear everything just in case... */
+	wcfb_rop_wait(sc);
+	wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_CLEAR, 0xffffffff);
+
 	/* pixels to set... */
-	mask = 0xff & bg;
+	mask = 0x0f & bg;
 	if (mask != 0) {
 		wcfb_rop_wait(sc);
 		wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_SET, mask);
 	}
 
-	/* pixels to clear... */
-	mask = 0xff & ~bg;
-	if (mask != 0) {
-		wcfb_rop_wait(sc);
-		wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_CLEAR, mask);
-	}
 }
 
 void
@@ -718,7 +807,7 @@ wcfb_rop_jfb(struct wcfb_softc *sc, int sx, int sy, int dx, int dy,
 	if (sc->sc_comm != NULL) {
 		spr = sc->sc_comm[IFB_SHARED_TERM8_SPR >> 2];
 		splr = sc->sc_comm[IFB_SHARED_TERM8_SPLR >> 2];
-	} else 
+	} else
 #endif
 	{
 		/* supposedly sane defaults */
@@ -778,7 +867,7 @@ wcfb_acc_putchar(void *cookie, int row, int col, u_int c, long attr)
 	sc->putchar(ri, row, col, c, attr);
 	/* ... and then blit it into buffer 1 */
 	wcfb_bitblt(sc, x, y, x, y, wi, he, WC_ROP_COPY);
-}	
+}
 
 static void
 wcfb_acc_cursor(void *cookie, int on, int row, int col)
@@ -787,10 +876,10 @@ wcfb_acc_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -821,7 +910,7 @@ wcfb_acc_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -840,7 +929,7 @@ wcfb_acc_erasecols(void *cookie, int row, int startcol, int ncols,
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -877,7 +966,7 @@ wcfb_acc_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;

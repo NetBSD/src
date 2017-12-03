@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.26.18.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.26.18.2 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.26.18.1 2014/08/20 00:03:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.26.18.2 2017/12/03 11:36:54 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -182,10 +181,10 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	mutex_enter(proc_lock);
 	if ((t = proc_find(SCARG(uap, pid))) == NULL) {
 		mutex_exit(proc_lock);
-		return ESRCH;
+		error = ESRCH;
+		goto out;
 	}
 	mutex_enter(t->p_lock);
-	mutex_exit(proc_lock);
 
 	/*
 	 * You cannot do what you want to the process if:
@@ -193,21 +192,21 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	 */
 	if (!ISSET(t->p_slflag, PSL_TRACED)) {
 		mutex_exit(t->p_lock);
+		mutex_exit(proc_lock);
 		error = EPERM;
 		goto out;
 	}
 	/*
-	 * 2. It is being traced by procfs (which has different signal
-	 *    delivery semantics),
-	 * 3. It is not being traced by _you_, or
-	 * 4. It is not currently stopped.
+	 * 2. It is not being traced by _you_, or
+	 * 3. It is not currently stopped.
 	 */
-	if (ISSET(t->p_slflag, PSL_FSTRACE) || t->p_pptr != p ||
-	    t->p_stat != SSTOP || !t->p_waited) {
+	if (t->p_pptr != p || t->p_stat != SSTOP || !t->p_waited) {
 		mutex_exit(t->p_lock);
+		mutex_exit(proc_lock);
 		error = EBUSY;
 		goto out;
 	}
+	mutex_exit(proc_lock);
 	/* XXX: ptrace needs revamp for multi-threading support. */
 	if (t->p_nlwps > 1) {
 		mutex_exit(t->p_lock);

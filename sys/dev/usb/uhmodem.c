@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13 2011/12/23 00:51:46 jakllsch Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.6.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,12 +71,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13 2011/12/23 00:51:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.6.1 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -120,35 +124,35 @@ Static int	uhmodemdebug = 0;
 #define DPRINTF(x) DPRINTFN(0, x)
 
 Static int uhmodem_open(void *, int);
-Static  usbd_status e220_modechange_request(usbd_device_handle);
+Static  usbd_status e220_modechange_request(struct usbd_device *);
 Static	usbd_status uhmodem_endpointhalt(struct ubsa_softc *, int);
-Static	usbd_status uhmodem_regwrite(usbd_device_handle, uint8_t *, size_t);
-Static	usbd_status uhmodem_regread(usbd_device_handle, uint8_t *, size_t);
-Static  usbd_status a2502_init(usbd_device_handle);
+Static	usbd_status uhmodem_regwrite(struct usbd_device *, uint8_t *, size_t);
+Static	usbd_status uhmodem_regread(struct usbd_device *, uint8_t *, size_t);
+Static  usbd_status a2502_init(struct usbd_device *);
 #if 0
-Static	usbd_status uhmodem_regsetup(usbd_device_handle, uint16_t);
-Static  usbd_status e220_init(usbd_device_handle);
+Static	usbd_status uhmodem_regsetup(struct usbd_device *, uint16_t);
+Static  usbd_status e220_init(struct usbd_device *);
 #endif
 
 struct	uhmodem_softc {
-	struct ubsa_softc	sc_ubsa;	
+	struct ubsa_softc	sc_ubsa;
 };
 
 struct	ucom_methods uhmodem_methods = {
-	ubsa_get_status,
-	ubsa_set,
-	ubsa_param,
-	NULL,
-	uhmodem_open,
-	ubsa_close,
-	NULL,
-	NULL
+	.ucom_get_status = ubsa_get_status,
+	.ucom_set = ubsa_set,
+	.ucom_param = ubsa_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = uhmodem_open,
+	.ucom_close = ubsa_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL
 };
 
 struct uhmodem_type {
 	struct usb_devno	uhmodem_dev;
-	u_int16_t		uhmodem_coms;	/* number of serial interfaces on the device */
-	u_int16_t		uhmodem_flags;
+	uint16_t		uhmodem_coms;	/* number of serial interfaces on the device */
+	uint16_t		uhmodem_flags;
 #define	E220	0x0001
 #define	A2502	0x0002
 #define	E620	0x0004		/* XXX */
@@ -174,31 +178,31 @@ extern struct cfdriver uhmodem_cd;
 CFATTACH_DECL2_NEW(uhmodem, sizeof(struct uhmodem_softc), uhmodem_match,
     uhmodem_attach, uhmodem_detach, uhmodem_activate, NULL, uhmodem_childdet);
 
-int 
+int
 uhmodem_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
-	if (uhmodem_lookup(uaa->vendor, uaa->product) != NULL)
+	if (uhmodem_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL)
 		/* XXX interface# 0,1 provide modem function, but this driver
 		   handles all modem in single device.  */
-		if (uaa->ifaceno == 0)
-			return (UMATCH_VENDOR_PRODUCT);
-	return (UMATCH_NONE);
+		if (uiaa->uiaa_ifaceno == 0)
+			return UMATCH_VENDOR_PRODUCT;
+	return UMATCH_NONE;
 }
 
-void 
+void
 uhmodem_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhmodem_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	usbd_status err;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int i;
 	int j;
 	char comname[16];
@@ -211,15 +215,15 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_ubsa.sc_dev = self;
-        sc->sc_ubsa.sc_udev = dev;
+	sc->sc_ubsa.sc_udev = dev;
 	sc->sc_ubsa.sc_config_index = UBSA_DEFAULT_CONFIG_INDEX;
 	sc->sc_ubsa.sc_numif = 1; /* defaut device has one interface */
 
 	/* Hauwei E220 need special request to change its mode to modem */
-	if ((uaa->ifaceno == 0) && (uaa->class != 255)) {
+	if ((uiaa->uiaa_ifaceno == 0) && (uiaa->uiaa_class != 255)) {
 		err = e220_modechange_request(dev);
 		if (err) {
-			aprint_error_dev(self, "failed to change mode: %s\n", 
+			aprint_error_dev(self, "failed to change mode: %s\n",
 				usbd_errstr(err));
 			sc->sc_ubsa.sc_dying = 1;
 			goto error;
@@ -239,8 +243,8 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ubsa.sc_quadumts = 1;
 	sc->sc_ubsa.sc_config_index = 0;
-	sc->sc_ubsa.sc_numif = uhmodem_lookup(uaa->vendor, uaa->product)->uhmodem_coms;
-	sc->sc_ubsa.sc_devflags = uhmodem_lookup(uaa->vendor, uaa->product)->uhmodem_flags;
+	sc->sc_ubsa.sc_numif = uhmodem_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product)->uhmodem_coms;
+	sc->sc_ubsa.sc_devflags = uhmodem_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product)->uhmodem_flags;
 
 	DPRINTF(("uhmodem attach: sc = %p\n", sc));
 
@@ -283,7 +287,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ubsa.sc_iface_number[i] = id->bInterfaceNumber;
 
 		/* initialize endpoints */
-		uca.bulkin = uca.bulkout = -1;
+		ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 		for (j = 0; j < id->bNumEndpoints; j++) {
 			ed = usbd_interface2endpoint_descriptor(
@@ -301,10 +305,10 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 				sc->sc_ubsa.sc_isize = UGETW(ed->wMaxPacketSize);
 			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 			    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-				uca.bulkin = ed->bEndpointAddress;
+				ucaa.ucaa_bulkin = ed->bEndpointAddress;
 			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 			    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-				uca.bulkout = ed->bEndpointAddress;
+				ucaa.ucaa_bulkout = ed->bEndpointAddress;
 			}
 		} /* end of Endpoint loop */
 
@@ -318,14 +322,14 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 			} else
 				break;
 		}
-		if (uca.bulkin == -1) {
+		if (ucaa.ucaa_bulkin == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk in\n");
 			sc->sc_ubsa.sc_dying = 1;
 			goto error;
 		}
 
-		if (uca.bulkout == -1) {
+		if (ucaa.ucaa_bulkout == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk out\n");
 			sc->sc_ubsa.sc_dying = 1;
@@ -347,25 +351,26 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 			break;
 		}
 
-		uca.portno = i;
-		/* bulkin, bulkout set above */
-		uca.ibufsize = UHMODEMIBUFSIZE;
-		uca.obufsize = UHMODEMOBUFSIZE;
-		uca.ibufsizepad = UHMODEMIBUFSIZE;
-		uca.opkthdrlen = 0;
-		uca.device = dev;
-		uca.iface = sc->sc_ubsa.sc_iface[i];
-		uca.methods = &uhmodem_methods;
-		uca.arg = &sc->sc_ubsa;
-		uca.info = comname;
+		ucaa.ucaa_portno = i;
+		/* ucaa_bulkin, ucaa_bulkout set above */
+		ucaa.ucaa_ibufsize = UHMODEMIBUFSIZE;
+		ucaa.ucaa_obufsize = UHMODEMOBUFSIZE;
+		ucaa.ucaa_ibufsizepad = UHMODEMIBUFSIZE;
+		ucaa.ucaa_opkthdrlen = 0;
+		ucaa.ucaa_device = dev;
+		ucaa.ucaa_iface = sc->sc_ubsa.sc_iface[i];
+		ucaa.ucaa_methods = &uhmodem_methods;
+		ucaa.ucaa_arg = &sc->sc_ubsa;
+		ucaa.ucaa_info = comname;
 		DPRINTF(("uhmodem: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
-	    		i, uca.bulkin, uca.bulkout, sc->sc_ubsa.sc_intr_number));
+		    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
+		    sc->sc_ubsa.sc_intr_number));
 		sc->sc_ubsa.sc_subdevs[i] = config_found_sm_loc(self, "ucombus", NULL,
-				 &uca, ucomprint, ucomsubmatch);
+				 &ucaa, ucomprint, ucomsubmatch);
 
 		/* issue endpoint halt to each interface */
 		err = uhmodem_endpointhalt(&sc->sc_ubsa, i);
-		if (err) 
+		if (err)
 			aprint_error("%s: endpointhalt fail\n", __func__);
 		else
 			usbd_delay_ms(sc->sc_ubsa.sc_udev, 50);
@@ -394,7 +399,7 @@ uhmodem_childdet(device_t self, device_t child)
 	sc->sc_ubsa.sc_subdevs[i] = NULL;
 }
 
-int 
+int
 uhmodem_detach(device_t self, int flags)
 {
 	struct uhmodem_softc *sc = device_private(self);
@@ -406,7 +411,7 @@ uhmodem_detach(device_t self, int flags)
 	if (sc->sc_ubsa.sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_ubsa.sc_intr_pipe);
 		usbd_close_pipe(sc->sc_ubsa.sc_intr_pipe);
-		free(sc->sc_ubsa.sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_ubsa.sc_intr_buf, sc->sc_ubsa.sc_isize);
 		sc->sc_ubsa.sc_intr_pipe = NULL;
 	}
 
@@ -419,7 +424,7 @@ uhmodem_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_ubsa.sc_udev,
 			   sc->sc_ubsa.sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -443,12 +448,12 @@ uhmodem_open(void *addr, int portno)
 	usbd_status err;
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	DPRINTF(("%s: sc = %p\n", __func__, sc));
 
 	err = uhmodem_endpointhalt(sc, 0);
-	if (err) 
+	if (err)
 		aprint_error("%s: endpointhalt fail\n", __func__);
 	else
 		usbd_delay_ms(sc->sc_udev, 50);
@@ -470,7 +475,7 @@ uhmodem_open(void *addr, int portno)
 	}
 #endif
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 		/* XXX only iface# = 0 has intr line */
 		/* XXX E220 specific? need to check */
 		err = usbd_open_pipe_intr(sc->sc_iface[0],
@@ -486,19 +491,19 @@ uhmodem_open(void *addr, int portno)
 			aprint_error_dev(sc->sc_dev,
 			    "cannot open interrupt pipe (addr %d)\n",
 			    sc->sc_intr_number);
-			return (EIO);
+			return EIO;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
  * Hauwei E220 needs special request to enable modem function.
  * -- DEVICE_REMOTE_WAKEUP ruquest to endpoint 2.
  */
-Static  usbd_status 
-e220_modechange_request(usbd_device_handle dev)
+Static  usbd_status
+e220_modechange_request(struct usbd_device *dev)
 {
 #define E220_MODE_CHANGE_REQUEST 0x2
 	usb_device_request_t req;
@@ -514,14 +519,14 @@ e220_modechange_request(usbd_device_handle dev)
 	err = usbd_do_request(dev, &req, 0);
 	if (err) {
 		DPRINTF(("%s: E220 mode change fail\n", __func__));
-		return (EIO);
+		return EIO;
 	}
 
-	return (0);
+	return 0;
 #undef E220_MODE_CHANGE_REQUEST
 }
 
-Static  usbd_status 
+Static  usbd_status
 uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 {
 	usb_device_request_t req;
@@ -535,8 +540,8 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface[iface], i);
-		if (ed == NULL)	
-			return (EIO);
+		if (ed == NULL)
+			return EIO;
 
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			/* issue ENDPOINT_HALT request */
@@ -547,19 +552,19 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 			USETW(req.wLength, 0);
 			err = usbd_do_request(sc->sc_udev, &req, 0);
 			if (err) {
-				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n", 
+				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n",
 					__func__, ed->bEndpointAddress));
-				return (EIO);
+				return EIO;
 			}
 
 		}
 	} /* end of Endpoint loop */
 
-	return (0);
+	return 0;
 }
 
 Static usbd_status
-uhmodem_regwrite(usbd_device_handle dev, uint8_t *data, size_t len)
+uhmodem_regwrite(struct usbd_device *dev, uint8_t *data, size_t len)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -570,14 +575,14 @@ uhmodem_regwrite(usbd_device_handle dev, uint8_t *data, size_t len)
 	USETW(req.wIndex, 0x0000);
 	USETW(req.wLength, len);
 	err = usbd_do_request(dev, &req, data);
-	if (err) 
+	if (err)
 		return err;
 
 	return 0;
 }
 
 Static usbd_status
-uhmodem_regread(usbd_device_handle dev, uint8_t *data, size_t len)
+uhmodem_regread(struct usbd_device *dev, uint8_t *data, size_t len)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -597,7 +602,7 @@ uhmodem_regread(usbd_device_handle dev, uint8_t *data, size_t len)
 
 #if 0
 Static usbd_status
-uhmodem_regsetup(usbd_device_handle dev, uint16_t cmd)
+uhmodem_regsetup(struct usbd_device *dev, uint16_t cmd)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -616,8 +621,8 @@ uhmodem_regsetup(usbd_device_handle dev, uint16_t cmd)
 }
 #endif
 
-Static  usbd_status 
-a2502_init(usbd_device_handle dev)
+Static  usbd_status
+a2502_init(struct usbd_device *dev)
 {
 	uint8_t data[8];
 	static uint8_t init_cmd[] = {0x00, 0xE1, 0x00, 0x00, 0x00, 0x00, 0x08};
@@ -638,7 +643,7 @@ a2502_init(usbd_device_handle dev)
 		return EIO;
 	}
 
-	if (uhmodem_regread(dev, data, 7)) { 
+	if (uhmodem_regread(dev, data, 7)) {
 		DPRINTF(("%s: read fail\n", __func__));
 		return EIO;
 	}
@@ -654,13 +659,13 @@ a2502_init(usbd_device_handle dev)
 
 
 #if 0
-/* 
+/*
  * Windows device driver send these sequens of USB requests.
  * However currently I can't understand what the messege is,
  * disable this code when I get more information about it.
- */ 
-Static  usbd_status 
-e220_init(usbd_device_handle dev)
+ */
+Static  usbd_status
+e220_init(struct usbd_device *dev)
 {
 	uint8_t data[8];
 	usb_device_request_t req;
@@ -678,7 +683,7 @@ e220_init(usbd_device_handle dev)
 		goto error;
 
 	/* vendor specific unknown sequence */
-	if(uhmodem_regsetup(dev, 0x1)) 
+	if(uhmodem_regsetup(dev, 0x1))
 		goto error;
 
 	if (uhmodem_regread(dev, data, 7))
@@ -696,10 +701,10 @@ e220_init(usbd_device_handle dev)
 	if (uhmodem_regsetup(dev, 0x3))
 		goto error;
 
-	return (0);
+	return 0;
 error:
 	DPRINTF(("%s: E220 init request fail\n", __func__));
-	return (EIO);
+	return EIO;
 }
 #endif
 

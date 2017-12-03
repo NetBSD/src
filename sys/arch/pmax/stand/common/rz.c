@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.26 2011/07/17 20:54:45 joerg Exp $	*/
+/*	$NetBSD: rz.c,v 1.26.12.1 2017/12/03 11:36:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,11 +123,11 @@ rzopen(struct open_file *f, ...)
 		return (ENXIO);
 	device[5] = '0' + unit;
 	/* NOTE: only support reads for now */
-	/* Another NOTE: bootinit on the TurboChannel doesn't look at
+	/* Another NOTE: bootinit on the TURBOchannel doesn't look at
 	   the device string - it's provided for compatibility with
 	   the DS3100 PROMs.   As a consequence, it may be possible to
 	   boot from some other drive with these bootblocks on the 3100,
-	   but will not be possible on any TurboChannel machine. */
+	   but will not be possible on any TURBOchannel machine. */
 
 	if (callv == &callvec)
 		i = prom_open(device, 0);

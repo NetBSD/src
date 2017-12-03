@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.39.2.1 2014/08/20 00:02:41 tls Exp $	*/
+/*	$NetBSD: boot32.c,v 1.39.2.2 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -1038,7 +1038,7 @@ process_args(int argc, char **argv, int *howto, char *file, int *start_args)
 	if (*file == NULL) {
 		if (*howto & RB_ASKNAME) {
 			printf("boot: ");
-			gets(filename);
+			kgets(filename, sizeof(filename));
 			strcpy(file, filename);
 		} else
 			strcpy(file, "netbsd");

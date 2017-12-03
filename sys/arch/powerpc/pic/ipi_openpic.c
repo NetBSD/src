@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_openpic.c,v 1.7 2012/02/01 09:54:03 matt Exp $ */
+/* $NetBSD: ipi_openpic.c,v 1.7.6.1 2017/12/03 11:36:37 jdolecek Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.7 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.7.6.1 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
@@ -103,15 +103,7 @@ openpic_send_ipi(cpuid_t target, uint32_t mesg)
 static void
 openpic_establish_ipi(int type, int level, void *ih_args)
 {
-/*
- * XXX
- * for now we catch IPIs early in pic_handle_intr() so no need to do anything
- * here
- */
-#if 0
-	intr_establish(ipiops.ppc_ipi_vector, type, level, ppcipi_intr,
-	    ih_args);
-#endif
+	intr_establish(ipiops.ppc_ipi_vector, type, level, ipi_intr, ih_args);
 }
 
 #endif /*MULTIPROCESSOR*/

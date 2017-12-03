@@ -1,4 +1,4 @@
-/*	$NetBSD: zl10353.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $ */
+/*	$NetBSD: zl10353.c,v 1.3.12.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.3.12.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -75,10 +75,6 @@ zl10353_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr)
 	struct zl10353 *zl;
 
 	zl = kmem_zalloc(sizeof(*zl), KM_SLEEP);
-
-	if (zl == NULL)
-		return NULL;
-
 	zl->zl_i2c = i2c;
 	zl->zl_i2c_addr = addr;
 	zl->zl_parent = parent;
@@ -650,7 +646,7 @@ zl10353_get_snr(struct zl10353 *zl)
 	return (val << 8) | val;
 }
 
-MODULE(MODULE_CLASS_DRIVER, zl10353, "iic");
+MODULE(MODULE_CLASS_DRIVER, zl10353, "i2cexec");
 
 static int
 zl10353_modcmd(modcmd_t cmd, void *aux)

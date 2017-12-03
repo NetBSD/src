@@ -1,9 +1,10 @@
-# $NetBSD: Makefile.booters,v 1.21.14.1 2014/08/20 00:03:23 tls Exp $
+# $NetBSD: Makefile.booters,v 1.21.14.2 2017/12/03 11:36:42 jdolecek Exp $
 
 # PROG set by parent.
 NOMAN=		# defined
+NOPIE=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
@@ -48,17 +49,7 @@ CPPFLAGS+=	-Dsgimips
 LOAD_ADDRESS?=		0x88002000
 LOAD_ADDRESS_IP32?=	0x80002000
 
-# if there is a 'version' file, add rule for vers.c and add it to SRCS
-# and CLEANFILES
-.if exists(version)
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "sgimips"
-
-SRCS+=	vers.c
-CLEANFILES+= vers.c
-.endif
+.include "${S}/conf/newvers_stand.mk"
 
 ### find out what to use for libkern
 KERN_AS=	library

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.30 2012/02/24 06:48:24 mrg Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.30.2.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,12 +54,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30 2012/02/24 06:48:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.2.1 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -95,14 +99,14 @@ int		ubsadebug = 0;
 #define	DPRINTF(x) DPRINTFN(0, x)
 
 struct	ucom_methods ubsa_methods = {
-	ubsa_get_status,
-	ubsa_set,
-	ubsa_param,
-	NULL,
-	ubsa_open,
-	ubsa_close,
-	NULL,
-	NULL
+	.ucom_get_status = ubsa_get_status,
+	.ucom_set = ubsa_set,
+	.ucom_param = ubsa_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = ubsa_open,
+	.ucom_close = ubsa_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL
 };
 
 Static const struct usb_devno ubsa_devs[] = {
@@ -136,27 +140,27 @@ extern struct cfdriver ubsa_cd;
 CFATTACH_DECL2_NEW(ubsa, sizeof(struct ubsa_softc),
     ubsa_match, ubsa_attach, ubsa_detach, ubsa_activate, NULL, ubsa_childdet);
 
-int 
+int
 ubsa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (ubsa_lookup(uaa->vendor, uaa->product) != NULL ?
+	return (ubsa_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 ubsa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ubsa_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	usbd_status err;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int i;
 
 	sc->sc_dev = self;
@@ -184,8 +188,8 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 	 * control com settings and only some.
 	 */
 	sc->sc_quadumts = 0;
-	if (uaa->vendor == USB_VENDOR_OPTIONNV) {
-		switch (uaa->product) {
+	if (uaa->uaa_vendor == USB_VENDOR_OPTIONNV) {
+		switch (uaa->uaa_product) {
 		case USB_PRODUCT_OPTIONNV_QUADUMTS:
 		case USB_PRODUCT_OPTIONNV_QUADUMTS2:
 			sc->sc_quadumts = 1;
@@ -232,7 +236,7 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iface_number[0] = id->bInterfaceNumber;
 
 	/* initialize endpoints */
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface[0], i);
@@ -248,12 +252,12 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 			sc->sc_isize = UGETW(ed->wMaxPacketSize);
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkin = ed->bEndpointAddress;
-			uca.ibufsize = UGETW(ed->wMaxPacketSize);
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_ibufsize = UGETW(ed->wMaxPacketSize);
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkout = ed->bEndpointAddress;
-			uca.obufsize = UGETW(ed->wMaxPacketSize);
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_obufsize = UGETW(ed->wMaxPacketSize);
 		}
 	} /* end of Endpoint loop */
 
@@ -263,34 +267,33 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 		goto error;
 	}
 
-	if (uca.bulkin == -1) {
+	if (ucaa.ucaa_bulkin == -1) {
 		aprint_error_dev(self, "Could not find data bulk in\n");
 		sc->sc_dying = 1;
 		goto error;
 	}
 
-	if (uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "Could not find data bulk out\n");
 		sc->sc_dying = 1;
 		goto error;
 	}
 
-	uca.portno = 0;
+	ucaa.ucaa_portno = 0;
 	/* bulkin, bulkout set above */
-	uca.ibufsizepad = uca.ibufsize;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = sc->sc_iface[0];
-	uca.methods = &ubsa_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_ibufsizepad = ucaa.ucaa_ibufsize;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = sc->sc_iface[0];
+	ucaa.ucaa_methods = &ubsa_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 	DPRINTF(("ubsa: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
-    		i, uca.bulkin, uca.bulkout, sc->sc_intr_number));
-	sc->sc_subdevs[0] = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
+	sc->sc_subdevs[0] = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 				    ucomprint, ucomsubmatch);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	return;
 
@@ -313,7 +316,7 @@ ubsa_childdet(device_t self, device_t child)
 		sc->sc_subdevs[i] = NULL;
 }
 
-int 
+int
 ubsa_detach(device_t self, int flags)
 {
 	struct ubsa_softc *sc = device_private(self);
@@ -326,7 +329,7 @@ ubsa_detach(device_t self, int flags)
 	if (sc->sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 
@@ -336,8 +339,7 @@ ubsa_detach(device_t self, int flags)
 			rv |= config_detach(sc->sc_subdevs[i], flags);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return (rv);
 }

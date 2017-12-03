@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.8.22.1 2012/11/20 03:01:34 tls Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8.22.2 2017/12/03 11:36:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,8 @@ int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
 const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
 void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg);
+void	*isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type,
+	    int level, int (*ih_fun)(void *), void *ih_arg, const char *xname);
 void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 int	isa_mem_alloc(bus_space_tag_t, bus_size_t, bus_size_t,
 	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);

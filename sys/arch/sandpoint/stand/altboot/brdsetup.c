@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.31.2.2 2014/08/20 00:03:22 tls Exp $ */
+/* $NetBSD: brdsetup.c,v 1.31.2.3 2017/12/03 11:36:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static void send_iomega(int, int, int, int, int, int);
 static inline uint32_t mfmsr(void);
 static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
-static inline u_quad_t mftb(void);
+static inline uint64_t mftb(void);
 static void init_uart(unsigned, unsigned, uint8_t);
 static void send_sat(char *);
 static unsigned mpc107memsize(void);
@@ -111,7 +111,14 @@ static unsigned mpc107memsize(void);
 #define IOMEGA_PACKETSIZE	8
 
 /* NH230/231 GPIO */
-#define NHGPIO_WRITE(x)		*((uint8_t *)0x70000000) = x
+#define NHGPIO_WRITE(x)		*((volatile uint8_t *)0x70000000) = (x)
+
+/* Synology CPLD (2007 and newer models) */
+#define SYNOCPLD_READ(r)	*((volatile uint8_t *)0xff000000 + (r))
+#define SYNOCPLD_WRITE(r,x)	do { \
+    *((volatile uint8_t *)0xff000000 + (r)) = (x); \
+    delay(10); \
+    } while(0)
 
 static struct brdprop brdlist[] = {
     {
@@ -253,12 +260,17 @@ brdsetup(void)
 	}
 	else if (PCI_CLASS(pcicfgread(dev11, PCI_CLASS_REG)) == PCI_CLASS_ETH) {
 		/* ADMtek AN985 (tlp) or RealTek 8169S (re) at dev 11 */
-		if (PCI_VENDOR(pcicfgread(dev12, PCI_ID_REG)) != 0x1095)
+		if (PCI_VENDOR(pcicfgread(dev11, PCI_ID_REG)) == 0x1317)
 			brdtype = BRD_KUROBOX;
-		else
-			brdtype = BRD_KUROBOXT4;
+		else if (PCI_VENDOR(pcicfgread(dev11, PCI_ID_REG)) == 0x10ec) {
+			if (PCI_PRODUCT(pcicfgread(dev12,PCI_ID_REG)) != 0x3512)
+				brdtype = BRD_KUROBOX;
+			else
+				brdtype = BRD_KUROBOXT4;
+		}
 	}
-	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x1148
+	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
 		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
@@ -719,47 +731,186 @@ synobrdfix(struct brdprop *brd)
 	send_sat("247");
 }
 
+#define SYNO_FAN_TIMEOUT	500	/* 500ms to turn the fan off */
+#define SYNO_DISK_DELAY		30	/* 30 seconds to power up 2nd disk */
+
 void
 synopcifix(struct brdprop *brd)
 {
-	static const char csmodel[4][7] = {
-		"CS406e", "CS406", "RS406", "CS407e"
+	static const char models207[4][7] = {
+		"???", "DS107e", "DS107", "DS207"
 	};
-	volatile uint8_t *cpld = (volatile uint8_t *)0xff000000;
-	uint8_t pwrstate;
+	static const char models209[2][7] = {
+		"DS109j", "DS209j"
+	};
+	static const char models406[3][7] = {
+		"CS406e", "CS406", "RS406"
+	};
+	static const char models407[4][7] = {
+		"???", "CS407e", "CS407", "RS407"
+	};
+	extern struct btinfo_model bi_model;
+	const char *model_name;
+	unsigned cpld, version, flags;
+	uint8_t v, status;
+	int i;
 
-	if (nata > 1) {
+	/*
+	 * Determine if a CPLD is present and whether is has 4-bit
+	 * (models 107, 207, 209)  or 8-bit (models 406, 407) registers.
+	 * The register set repeats every 16 bytes.
+	 */
+	cpld = 0;
+	flags = 0;
+	version = 0;
+	model_name = NULL;
+
+	SYNOCPLD_WRITE(0, 0x00);	/* LEDs blinking yellow (default) */
+	v = SYNOCPLD_READ(0);
+
+	if (v != 0x00) {
+		v &= 0xf0;
+		if (v != 0x00 || (SYNOCPLD_READ(16 + 0) & 0xf0) != v)
+			goto cpld_done;
+
+  cpld4bits:
+		/* 4-bit registers assumed, make LEDs solid yellow */
+		SYNOCPLD_WRITE(0, 0x50);
+		v = SYNOCPLD_READ(0) & 0xf0;
+		if (v != 0x50 || (SYNOCPLD_READ(32 + 0) & 0xf0) != v)
+			goto cpld_done;
+
+		v = SYNOCPLD_READ(2) & 0xf0;
+		if ((SYNOCPLD_READ(48 + 2) & 0xf0) != v)
+			goto cpld_done;
+		version = (v >> 4) & 7;
+
+		/*
+		 * Try to determine whether it is a 207-style or 209-style
+		 * CPLD register set, by turning the fan off and check if
+		 * either bit 5 or bit 4 changes from 0 to 1 to indicate
+		 * the fan is stopped.
+		 */
+		status = SYNOCPLD_READ(3) & 0xf0;
+		SYNOCPLD_WRITE(3, 0x00);	/* fan off */
+
+		for (i = 0; i < SYNO_FAN_TIMEOUT * 100; i++) {
+			delay(10);
+			v = SYNOCPLD_READ(3) & 0xf0;
+			if ((status & 0x20) == 0 && (v & 0x20) != 0) {
+				/* set x07 model */
+				v = SYNOCPLD_READ(1) >> 6;
+				model_name = models207[v];
+				cpld = BI_MODEL_CPLD207;
+				/* XXXX DS107v2/v3 have no thermal sensor */
+				flags |= BI_MODEL_THERMAL;
+				break;
+			}
+			if ((status & 0x10) == 0 && (v & 0x10) != 0) {
+				/* set x09 model */
+				v = SYNOCPLD_READ(1) >> 7;
+				model_name = models209[v];
+				cpld = BI_MODEL_CPLD209;
+				if (v == 1)	/* DS209j */
+					flags |= BI_MODEL_THERMAL;
+				break;
+			}
+			/* XXX What about DS108j? Does it have a CPLD? */
+		}
+
+		/* turn the fan on again */
+		SYNOCPLD_WRITE(3, status);
+
+		if (i >= SYNO_FAN_TIMEOUT * 100)
+			goto cpld_done;		/* timeout: no valid CPLD */
+	} else {
+		if (SYNOCPLD_READ(16 + 0) != v)
+			goto cpld4bits;
+
+		/* 8-bit registers assumed, make LEDs solid yellow */
+		SYNOCPLD_WRITE(0, 0x55);
+		v = SYNOCPLD_READ(0);
+		if (v != 0x55)
+			goto cpld4bits;		/* try 4 bits instead */
+		if (SYNOCPLD_READ(32 + 0) != v)
+			goto cpld_done;
+
+		v = SYNOCPLD_READ(2);
+		if (SYNOCPLD_READ(48 + 2) != v)
+			goto cpld_done;
+		version = v & 3;
+
+		if ((v & 0x0c) != 0x0c) {
+			/* set 406 model */
+			model_name = models406[(v >> 2) & 3];
+			cpld = BI_MODEL_CPLD406;
+		} else {
+			/* set 407 model */
+			model_name = models407[v >> 6];
+			cpld = BI_MODEL_CPLD407;
+			flags |= BI_MODEL_THERMAL;
+		}
+	}
+
+	printf("CPLD V%s%u detected for model %s\n",
+	    cpld < BI_MODEL_CPLD406 ? "" : "1.",
+	    version, model_name);
+
+	if (cpld ==  BI_MODEL_CPLD406 || cpld ==  BI_MODEL_CPLD407) {
 		/*
 		 * CS/RS stations power-up their disks one after another.
 		 * We have to watch over the current power state in a CPLD
 		 * register, until all disks become available.
 		 */
-		printf("CPLD V1.%d for model %s\n", cpld[2] & 3,
-		    csmodel[(cpld[2] & 0x0c) >> 2]);
-		cpld[0] = 0x00; /* all drive LEDs blinking yellow */
 		do {
 			delay(1000 * 1000);
-			pwrstate = cpld[1];
-			printf("Power state: %02x\r", pwrstate);
-		} while (pwrstate != 0xff);
+			v = SYNOCPLD_READ(1);
+			printf("Power state: %02x\r", v);
+		} while (v != 0xff);
 		putchar('\n');
+	} else if (model_name != NULL && model_name[2] == '2') {
+		/*
+		 * DS207 and DS209 have a second SATA disk, which is started
+		 * with several seconds delay, but no CPLD register to
+		 * monitor the power state. So all we can do is to
+		 * wait some more seconds during SATA-init.
+		 * Also wait some seconds now, to make sure the first
+		 * disk is ready after a cold start.
+		 */
+		sata_delay[1] = SYNO_DISK_DELAY;
+		delay(10 * 1024 * 1024);
 	}
+
+  cpld_done:
+	if (model_name != NULL) {
+		snprintf(bi_model.name, sizeof(bi_model.name), "%s", model_name);
+		bi_model.flags = cpld | version | flags;
+	} else
+		printf("No CPLD found. DS101/DS106.\n");
 }
 
 void
 synolaunch(struct brdprop *brd)
 {
-	volatile uint8_t *cpld = (volatile uint8_t *)0xff000000;
+	extern struct btinfo_model bi_model;
 	struct dkdev_ata *sata1, *sata2;
+	unsigned cpld;
 
-	if (nata > 1) {
-		/* enable drive LEDs for active disk drives on CS/RS models */
+	cpld = bi_model.flags & BI_MODEL_CPLD_MASK;
+
+	if (cpld ==  BI_MODEL_CPLD406 || cpld ==  BI_MODEL_CPLD407) {
+		/* set drive LEDs for active disk drives on CS/RS models */
 		sata1 = lata[0].drv;
 		sata2 = lata[1].drv;
-		cpld[0] = (sata1->presense[0] ? 0x80 : 0xc0) |
+		SYNOCPLD_WRITE(0, (sata1->presense[0] ? 0x80 : 0xc0) |
 		    (sata1->presense[1] ? 0x20 : 0x30) |
 		    (sata2->presense[0] ? 0x08 : 0x0c) |
-		    (sata2->presense[1] ? 0x02 : 0x03);
+		    (sata2->presense[1] ? 0x02 : 0x03));
+	} else if (cpld ==  BI_MODEL_CPLD207 || cpld ==  BI_MODEL_CPLD209) {
+		/* set drive LEDs for DS207 and DS209 models */
+		sata1 = lata[0].drv;
+		SYNOCPLD_WRITE(0, (sata1->presense[0] ? 0x80 : 0xc0) |
+		    (sata1->presense[1] ? 0x20 : 0x30));
 	}
 }
 
@@ -865,7 +1016,7 @@ _rtt(void)
 satime_t
 getsecs(void)
 {
-	u_quad_t tb = mftb();
+	uint64_t tb = mftb();
 
 	return (tb / ticks_per_sec);
 }
@@ -874,13 +1025,13 @@ getsecs(void)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(u_int n)
+delay(unsigned n)
 {
-	u_quad_t tb;
-	u_long scratch, tbh, tbl;
+	uint64_t tb;
+	uint32_t scratch, tbh, tbl;
 
 	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+	tb += ((uint64_t)n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:" : "=&r"(scratch) : "r"(tbh), "r"(tbl));
@@ -966,11 +1117,11 @@ cputype(void)
 	return pvr >> 16;
 }
 
-static inline u_quad_t
+static inline uint64_t
 mftb(void)
 {
-	u_long scratch;
-	u_quad_t tb;
+	uint32_t scratch;
+	uint64_t tb;
 
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));

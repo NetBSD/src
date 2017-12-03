@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.6 2011/07/10 23:13:23 matt Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.6.12.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.6 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.6.12.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
@@ -265,7 +265,7 @@ adm5120_intr_disestablish(void *cookie)
 	free(ih, M_DEVBUF);
 }
 void
-evbmips_iointr(int ipl, uint32_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 	struct evbmips_intrhand *ih;
 	uint32_t irqmask, irqstat;

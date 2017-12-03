@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.5.18.1 2014/08/20 00:04:38 tls Exp $
+#	$NetBSD: Makefile,v 1.5.18.2 2017/12/03 11:39:09 jdolecek Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/sysmon
 
 LIB=	rumpdev_sysmon
+COMMENT=System monitoring and power management
+
 IOCONF=	SYSMON.ioconf
 
 SRCS=	sysmon_taskq.c sysmon_power.c sysmon_envsys.c sysmon_envsys_events.c \
@@ -11,8 +13,6 @@ SRCS=	sysmon_taskq.c sysmon_power.c sysmon_envsys.c sysmon_envsys_events.c \
 	swsensor.c swwdog.c
 
 SRCS+=	sysmon_component.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs -I${.CURDIR}/opt
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_var.h,v 1.1 2010/06/26 14:24:29 kefren Exp $ */
+/*	$NetBSD: mpls_var.h,v 1.1.24.1 2017/12/03 11:39:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
 #error This file should NOT be included anywhere else than kernel
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
+#endif
 
 #include "netmpls/mpls.h"
 

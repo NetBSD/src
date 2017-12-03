@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: vchi_bsd.c,v 1.2.4.3 2014/08/20 00:04:25 tls Exp $
+ * $Id: vchi_bsd.c,v 1.2.4.4 2017/12/03 11:38:04 jdolecek Exp $
  */
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ int
 del_timer_sync(struct timer_list *t)
 {
 	spin_lock(&t->mtx);
-	callout_stop(&t->callout);
+	callout_halt(&t->callout, &t->mtx);
 	spin_unlock(&t->mtx);
 
 	spin_lock_destroy(&t->mtx);
@@ -314,8 +314,8 @@ vchiq_thread_create(int (*threadfn)(void *data),
 	va_end(ap);
 
 	newt = NULL;
-	if (kthread_create(PRI_NONE, 0, NULL, kthread_wrapper, slot, &newt,
-	    "%s", name) != 0) {
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, kthread_wrapper,
+	    slot, &newt, "%s", name) != 0) {
 		/* Just to be sure */
 		newt = NULL;
 	} else {

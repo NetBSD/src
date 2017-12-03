@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.3.8.2 2014/08/20 00:04:38 tls Exp $
+#	$NetBSD: Makefile,v 1.3.8.3 2017/12/03 11:39:08 jdolecek Exp $
 #
 
 RUMPTOP= ${TOPRUMP}
 
+.include <bsd.own.mk>
+
 .PATH:	${RUMPTOP}/../dev/pci
 
 LIB=	rumpdev_pci
+COMMENT=PCI bus support
+
 IOCONF=	PCI.ioconf
 
 SRCS+=	pci.c pci_map.c pci_quirks.c pci_subr.c pci_stub.c pci_usrreq.c
@@ -20,14 +24,39 @@ SRCS+=	rumpdev_bus_dma.c
 
 SRCS+=	pci_at_mainbus.c
 
-CPPFLAGS+= -I${.CURDIR}/opt -I${RUMPTOP}/librump/rumpkern
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpvfs
-
-.if defined(RUMP_PCI_USER)
-RUMPCOMP_USER_SRCS=	${RUMP_PCI_USER}
-RUMPCOMP_INCS_DIR:=	${.PARSEDIR}
-RUMPCOMP_USER_CPPFLAGS=-I${RUMPCOMP_INCS_DIR}
+.if ${RUMP_PCI_IOSPACE:Uno} == "yes"
+.error RUMP_PCI_IOSPACE defined in Makefile.  Use userfeatures.h instead.
 .endif
+
+RUMPCOMP_USER_CPPFLAGS:=-I${.PARSEDIR}
+
+# current state-of-the-art interface (remains to be seen if it's "good enuf")
+.ifdef RUMPCOMP_MAKEFILEINC_rumpdev_pci
+.include "${RUMPCOMP_MAKEFILEINC_rumpdev_pci}"
+.endif
+
+# old-style ("compat") interfaces.  will go away some day or year.
+# why?  the "protocol" requires passing variables via the env, and
+# the names include dots which POSIX does not, strictly speaking,
+# allow in env names.  There is at least one shell (dash >= 0.58)
+# which refuses to pass variables with dots.
+.if defined(RUMPCOMP_USER_SRCS.rumpdev_pci) \
+    || defined(RUMPCOMP_MAKEFILEINC.rumpdev_pci)
+.warning Use new style RUMPCOMP_MAKEFILEINC_rumpdev_pci
+.endif
+.ifdef RUMPCOMP_USER_PATH.rumpdev_pci
+.PATH:			${RUMPCOMP_USER_PATH.rumpdev_pci}
+RUMPCOMP_USER_SRCS=	${RUMPCOMP_USER_SRCS.rumpdev_pci}
+RUMPCOMP_USER_CPPFLAGS+=${RUMPCOMP_USER_CPPFLAGS.rumpdev_pci}
+RUMPCOMP_USER_CFLAGS=	${RUMPCOMP_USER_CFLAGS.rumpdev_pci}
+CPPFLAGS+=		${RUMPCOMP_CPPFLAGS.rumpdev_pci}
+.endif
+.ifdef RUMPCOMP_MAKEFILEINC.rumpdev_pci
+.include "${RUMPCOMP_MAKEFILEINC.rumpdev_pci}"
+.endif
+
+# XXX: messy
+.undef RUMPKERN_ONLY
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>

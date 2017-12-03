@@ -1,9 +1,25 @@
-# $NetBSD: std,v 1.14 2011/11/22 21:25:42 tls Exp $
+# $NetBSD: std,v 1.14.8.1 2017/12/03 11:36:57 jdolecek Exp $
 #
 # standard MI 'options'
 #
 # this file is for options which can't be off-by-default for some reasons.
 # "it's commonly used" is NOT a good reason to enable options here.
+
+#
+# Always include "kern" attribute (module).  Other attributes don't need to
+# depend on "kern".
+#
+select	kern
+
+# Always include the "vfs" attribute (module).  Although all of the
+# ufs/xxx file systems depend on the vfs attribute, it is not required
+# that any file system actually be built-in to the kernel.  (At least
+# on some architectures, file system modules can be loaded at boot
+# time.)
+
+select vfs
+
+select	net		# XXX Clean up dependency
 
 # the following options are on-by-default to keep
 # kernel config file compatibility.
@@ -11,7 +27,8 @@ options	VMSWAP		# Swap device/file support
 options	BUFQ_FCFS	# First-come First-serve strategy
 options	BUFQ_DISKSORT	# Traditional min seek sort strategy
 options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
-options	PTRACE		# Include ptrace(2)
+options	PTRACE		# Include ptrace(2) syscall
+options	PTRACE_HOOKS	# Include ptrace hooks
 options	COREDUMP	# allow processes to coredump.
 options	AIO		# POSIX asynchronous I/O
 options	MQUEUE		# POSIX message queues

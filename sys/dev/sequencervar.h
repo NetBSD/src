@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.14.8.2 2013/06/23 06:20:16 tls Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.14.8.3 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@ struct midi_dev {
 	int	instr_bank_size;
 	int	unit;
 	struct	sequencer_softc *seq;
-	struct	midi_softc *msc;
 	char	doingsysex;	/* doing a SEQ_SYSEX */
 	vnode_t *vp;
 };

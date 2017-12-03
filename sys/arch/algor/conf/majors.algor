@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.22 2011/06/30 20:09:17 wiz Exp $
+#	$NetBSD: majors.algor,v 1.22.12.1 2017/12/03 11:35:45 jdolecek Exp $
 #
 # Device majors for algor
 #
@@ -37,7 +37,6 @@ device-major	se		char 37			se
 device-major	satlink		char 38			satlink
 device-major	rnd		char 39			rnd
 
-device-major	spkr		char 41			spkr
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid
 device-major	esh		char 44			esh

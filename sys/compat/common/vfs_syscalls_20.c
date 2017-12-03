@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.35.18.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.35.18.2 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.35.18.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.35.18.2 2017/12/03 11:36:53 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -90,7 +90,7 @@ static int
 vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
 {
 	struct statfs12 ofs;
-	int i = 0;
+	int i;
 	ofs.f_type = 0;
 	ofs.f_oflags = (short)fs->f_flag;
 
@@ -139,7 +139,7 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 	} */
 	struct mount *mp;
 	struct statvfs *sbuf;
-	int error = 0;
+	int error;
 	struct vnode *vp;
 
 	error = namei_simple_user(SCARG(uap, path),
@@ -179,7 +179,7 @@ compat_20_sys_fstatfs(struct lwp *l, const struct compat_20_sys_fstatfs_args *ua
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	mp = ((struct vnode *)fp->f_data)->v_mount;
+	mp = fp->f_vnode->v_mount;
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = dostatvfs(mp, sbuf, l, 0, 1)) != 0)
 		goto out;
@@ -203,7 +203,8 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 		syscallarg(int) flags;
 	} */
 	int root = 0;
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 	struct statvfs *sbuf;
 	struct statfs12 *sfsp;
 	size_t count, maxcount;
@@ -212,30 +213,21 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	maxcount = (size_t)SCARG(uap, bufsize) / sizeof(struct statfs12);
 	sfsp = SCARG(uap, buf);
-	mutex_enter(&mountlist_lock);
 	count = 0;
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
-			continue;
-		}
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 0);
-			if (error) {
-				vfs_unbusy(mp, false, &nmp);
+			if (error) 
 				continue;
-			}
 			error = vfs2fs(sfsp, sbuf);
-			if (error) {
-				vfs_unbusy(mp, false, NULL);
+			if (error)
 				goto out;
-			}
 			sfsp++;
 			root |= strcmp(sbuf->f_mntonname, "/") == 0;
 		}
 		count++;
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
 	if (root == 0 && l->l_proc->p_cwdi->cwdi_rdir) {
 		/*
 		 * fake a root entry
@@ -252,6 +244,7 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 	else
 		*retval = count;
 out:
+	mountlist_iterator_destroy(iter);
 	free(sbuf, M_TEMP);
 	return error;
 }

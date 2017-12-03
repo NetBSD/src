@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.167.6.2 2014/08/20 00:03:26 tls Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167.6.3 2017/12/03 11:36:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167.6.2 2014/08/20 00:03:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167.6.3 2017/12/03 11:36:46 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1730,7 +1730,7 @@ pmap_bootstrap(vaddr_t nextva)
 	avail_next = avail_start;
 
 	uvmexp.pagesize = PAGE_SIZE;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* after setting up some structures */
 

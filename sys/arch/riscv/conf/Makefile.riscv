@@ -1,0 +1,142 @@
+#	$NetBSD: Makefile.riscv,v 1.2.18.2 2017/12/03 11:36:38 jdolecek Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/<machine>/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/riscv/conf/Makefile.riscv
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+##
+## (1) port identification
+##
+.ifndef S
+S=		../../../..
+.endif
+THISRISCV=	$S/arch/${MACHINE}
+RISCV=		$S/arch/riscv
+GENASSYM_CONF=	${RISCV}/riscv/genassym.cf
+.-include "${THISRISCV}/conf/Makefile.${MACHINE}.inc"
+
+##
+## (2) compile settings
+##
+## Note: -ffixed-?? must be kept in sync with cpu.h.
+##
+CPPFLAGS+=	-D${MACHINE}
+CFLAGS+=	-mcmodel=medany
+CFLAGS+=	-msoft-float
+.if !defined(LP64) || ${LP64} == "no"
+CFLAGS+=	-m32
+AFLAGS+=	-m32
+LDFLAGS+=	-m elf32lriscv
+LINKFORMAT+=	-m elf32lriscv
+SYSTEM_LD_TAIL_EXTRA+= \
+		;echo ${OBJCOPY} -O elf32-littleriscv $@ $@.elf32; \
+		${OBJCOPY} -O elf32-littleriscv $@ $@.elf32
+.endif # LP64=no
+AFLAGS+=	-x assembler-with-cpp ${AOPTS}
+
+##
+## (3) libkern and compat
+##
+OPT_MODULAR=	%MODULAR%
+.if !empty(OPT_MODULAR)
+KERN_AS=	obj
+.else
+KERN_AS=	library
+.endif
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+MD_OBJS=	locore.o
+MD_CFILES=
+MD_SFILES=	${RISCV}/riscv/locore.S
+
+locore.o: ${RISCV}/riscv/locore.S assym.h
+	${NORMAL_S}
+
+##
+## (5) link settings
+##
+.if ${MACHINE_ARCH} == "riscv64" && ${LP64:Uyes} == "yes"
+TEXTADDR?=              0xFFFFFFFF80002000
+.else   
+TEXTADDR?=		0xC0001000
+.endif
+KERNLDSCRIPT?=		${RISCV}/conf/kern.ldscript
+LINKFORMAT+=		-T ${KERNLDSCRIPT}
+EXTRA_LINKFLAGS=	${LDOPTS} --relax
+LINKFLAGS_NORMAL=	-X
+STRIPFLAGS=		-g -X
+
+##
+## (6) port specific target dependencies
+##
+
+# depend on CPU configuration
+machdep.o mainbus.o trap.o: Makefile
+
+# depend on System V IPC/shmem options
+riscv_machdep.o pmap.o: Makefile
+
+# various assembly files that depend on assym.h
+locore.o: assym.h
+
+##
+## (7) misc settings
+##
+RAMDISKDIR!=    cd ${NETBSDSRCDIR}/distrib/riscv/ramdisk && ${PRINTOBJDIR}
+
+.if defined(NEED_MDSETIMAGE) && ${NEED_MDSETIMAGE} != "no" \
+    && defined(RAMDISKDIR) && exists(${RAMDISKDIR}/ramdisk.fs)
+SYSTEM_DEP+=    ${RAMDISKDIR}/ramdisk.fs 
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
+	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
+.if !empty(DEBUG:M-g*)
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_MDSETIMAGE} -s $@.gdb ${RAMDISKDIR}/ramdisk.fs; \
+	${TOOL_MDSETIMAGE} -s $@.gdb ${RAMDISKDIR}/ramdisk.fs
+.endif
+.endif
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

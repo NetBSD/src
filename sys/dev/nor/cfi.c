@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.c,v 1.7 2011/12/17 19:42:41 phx Exp $	*/
+/*	$NetBSD: cfi.c,v 1.7.8.1 2017/12/03 11:37:06 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_cfi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.7 2011/12/17 19:42:41 phx Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.7.8.1 2017/12/03 11:37:06 jdolecek Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,8 @@ cfi_scan_media(device_t self, struct nor_chip *chip)
 	 */
 	chip->nc_num_luns = 1;
 	chip->nc_lun_blocks = cfi->cfi_qry_data.erase_blk_info[0].y + 1;
-	chip->nc_block_size = cfi->cfi_qry_data.erase_blk_info[0].z * 256;
+	chip->nc_block_size = cfi->cfi_qry_data.erase_blk_info[0].z ?
+	    cfi->cfi_qry_data.erase_blk_info[0].z * 256 : 128;
 
 	switch (cfi->cfi_qry_data.id_pri) {
 	case 0x0002:
@@ -880,7 +881,8 @@ cfi_print(device_t self, struct cfi * const cfi)
 	aprint_normal_dev(self, "%d Erase Block Region(s)\n",
 		qryp->erase_blk_regions);
 	for (u_int r=0; r < qryp->erase_blk_regions; r++) {
-		size_t sz = qryp->erase_blk_info[r].z * 256;
+		size_t sz = qryp->erase_blk_info[r].z ?
+		    qryp->erase_blk_info[r].z * 256 : 128;
 		format_bytes(pbuf, sizeof(pbuf), sz);
 		aprint_normal("    %d: %d blocks, size %s\n", r,
 			qryp->erase_blk_info[r].y + 1, pbuf);

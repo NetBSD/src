@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.21 2012/03/13 18:41:01 elad Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.21.2.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -128,5 +128,6 @@ int  smb_put_asunistring(struct smb_rq *rqp, const char *src);
 #endif
 
 struct sockaddr *dup_sockaddr(struct sockaddr *, int);
+int dup_sockaddr_copyin(struct sockaddr **, struct sockaddr *, size_t);
 
 #endif /* !_NETSMB_SMB_SUBR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.21.22.1 2012/11/20 03:01:57 tls Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.21.22.2 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.21.22.1 2012/11/20 03:01:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.21.22.2 2017/12/03 11:36:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,74 @@ netbsd32___wait450(struct lwp *l, const struct netbsd32___wait450_args *uap,
 	return error;
 }
 
+int
+netbsd32_wait6(struct lwp *l, const struct netbsd32_wait6_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(idtype_t) idtype;
+		syscallarg(id_t) id;
+		syscallarg(netbsd32_intp) status;
+		syscallarg(int) options;
+		syscallarg(netbsd32_wrusagep_t) wru;
+		syscallarg(netbsd32_siginfop_t) info;
+	} */
+	idtype_t idtype = SCARG(uap, idtype);
+	id_t id = SCARG(uap, id);
+	struct wrusage wru, *wrup;
+	siginfo_t si, *sip;
+	int status;
+	int pid;
+
+	if (SCARG_P32(uap, wru) != NULL)
+		wrup = &wru;
+	else
+		wrup = NULL;
+
+	if (SCARG_P32(uap, info) != NULL)
+		sip = &si;
+	else
+		sip = NULL;
+
+	/*
+	 *  We expect all callers of wait6() to know about WEXITED and
+	 *  WTRAPPED.
+	 */
+	int error = do_sys_waitid(idtype, id, &pid, &status,
+	    SCARG(uap, options), wrup, sip);
+
+	retval[0] = pid; 	/* tell userland who it was */
+
+#if 0
+	/*
+	 * should we copyout if there was no process, hence no useful data?
+	 * We don't for an old sytle wait4() (etc) but I believe
+	 * FreeBSD does for wait6(), so a tossup...  Go with FreeBSD for now.
+	 */
+	if (pid == 0)
+		return error;
+#endif
+
+
+	if (error == 0 && SCARG_P32(uap, status))
+		error = copyout(&status, SCARG_P32(uap, status),
+		    sizeof(status));
+	if (wrup != NULL && error == 0) {
+		struct netbsd32_wrusage wru32;
+
+		netbsd32_from_rusage(&wrup->wru_self, &wru32.wru_self);
+		netbsd32_from_rusage(&wrup->wru_children, &wru32.wru_children);
+		error = copyout(&wru32, SCARG_P32(uap, wru), sizeof(wru32));
+	}
+	if (sip != NULL && error == 0) {
+	    	siginfo32_t si32;
+
+		netbsd32_si_to_si32(&si32, sip);
+		error = copyout(&si32, SCARG_P32(uap, info), sizeof(si32));
+	}
+
+	return error;
+}
 
 int
 netbsd32___getrusage50(struct lwp *l,

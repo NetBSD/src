@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.221.2.1 2014/08/20 00:03:50 tls Exp $ */
+/*	$NetBSD: st.c,v 1.221.2.2 2017/12/03 11:37:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,9 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.221.2.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.221.2.2 2017/12/03 11:37:32 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_scsi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +114,7 @@ const struct bdevsw st_bdevsw = {
 	.d_dump = stdump,
 	.d_psize = nosize,
 	.d_discard = nodiscard,
-	.d_flag = D_TAPE
+	.d_flag = D_TAPE | D_MPSAFE
 };
 
 const struct cdevsw st_cdevsw = {
@@ -127,7 +129,7 @@ const struct cdevsw st_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_TAPE
+	.d_flag = D_TAPE | D_MPSAFE
 };
 
 /*
@@ -399,22 +401,22 @@ stattach(device_t parent, device_t self, void *aux)
 	 * Any steps needed to bring it into line
 	 */
 	st_identify_drive(st, &sa->sa_inqbuf);
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 	/* Use the subdriver to request information regarding the drive.  */
-	printf("%s : %s", device_xname(st->sc_dev), st->quirkdata
-	    ? "quirks apply, " : "");
+	aprint_normal_dev(self, "%s", st->quirkdata ? "quirks apply, " : "");
 	if (scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE) ||
 	    st->ops(st, ST_OPS_MODESENSE,
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE))
-		printf("drive empty\n");
+		aprint_normal("drive empty\n");
 	else {
-		printf("density code %d, ", st->media_density);
+		aprint_normal("density code %d, ", st->media_density);
 		if (st->media_blksize > 0)
-			printf("%d-byte", st->media_blksize);
+			aprint_normal("%d-byte", st->media_blksize);
 		else
-			printf("variable");
-		printf(" blocks, write-%s\n",
+			aprint_normal("variable");
+		aprint_normal(" blocks, write-%s\n",
 		    (st->flags & ST_READONLY) ? "protected" : "enabled");
 	}
 
@@ -429,26 +431,28 @@ int
 stdetach(device_t self, int flags)
 {
 	struct st_softc *st = device_private(self);
-	int s, bmaj, cmaj, mn;
+	struct scsipi_periph *periph = st->sc_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
+	int bmaj, cmaj, mn;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&st_bdevsw);
 	cmaj = cdevsw_lookup_major(&st_cdevsw);
 
 	/* kill any pending restart */
-	callout_stop(&st->sc_callout);
+	callout_halt(&st->sc_callout, NULL);
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/* Kill off any queued buffers. */
 	bufq_drain(st->buf_queue);
 
-	bufq_free(st->buf_queue);
-
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(st->sc_periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
+
+	bufq_free(st->buf_queue);
 
 	/* Nuke the vnodes for any open instances */
 	mn = STUNIT(device_unit(self));
@@ -1040,9 +1044,10 @@ static void
 ststrategy(struct buf *bp)
 {
 	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(bp->b_dev));
-	int s;
+	struct scsipi_periph *periph = st->sc_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
 
-	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
+	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("ststrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount,
 	        bp->b_blkno));
 	/* If it's a null transfer, return immediately */
@@ -1072,7 +1077,7 @@ ststrategy(struct buf *bp)
 		bp->b_error = EIO;
 		goto abort;
 	}
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/*
 	 * Place it in the queue of activities for this tape
@@ -1086,9 +1091,9 @@ ststrategy(struct buf *bp)
 	 * not doing anything, otherwise just wait for completion
 	 * (All a bit silly if we're only allowing 1 open but..)
 	 */
-	ststart(st->sc_periph);
+	ststart(periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 	return;
 abort:
 	/*
@@ -1112,7 +1117,7 @@ abort:
  * This routine is also called after other non-queued requests
  * have been made of the scsi driver, to ensure that the queue
  * continues to be drained.
- * ststart() is called at splbio
+ * ststart() is called with channel lock held
  */
 static void
 ststart(struct scsipi_periph *periph)
@@ -1129,7 +1134,7 @@ ststart(struct scsipi_periph *periph)
 		/* if a special awaits, let it proceed first */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((void *)periph);
+			cv_broadcast(periph_cv_periph(periph));
 			return;
 		}
 
@@ -1228,7 +1233,7 @@ ststart(struct scsipi_periph *periph)
 		st->flags &= ~ST_POSUPDATED;
 
 		/* go ask the adapter to do all this for us */
-		xs = scsipi_make_xs(periph,
+		xs = scsipi_make_xs_locked(periph,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    0, ST_IO_TIME, bp, flags);
@@ -1261,9 +1266,12 @@ ststart(struct scsipi_periph *periph)
 static void
 strestart(void *v)
 {
-	int s = splbio();
+	struct scsipi_periph *periph = (struct scsipi_periph *)v;
+	struct scsipi_channel *chan = periph->periph_channel;
+
+	mutex_enter(chan_mtx(chan));
 	ststart((struct scsipi_periph *)v);
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_sbdio.c,v 1.10.44.1 2014/08/20 00:03:00 tls Exp $	*/
+/*	$NetBSD: zs_sbdio.c,v 1.10.44.2 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.10.44.1 2014/08/20 00:03:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.10.44.2 2017/12/03 11:36:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.10.44.1 2014/08/20 00:03:00 tls Exp $
 
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
+
+#include <mips/locore.h>
 
 #include <machine/sbdiovar.h>
 #include <machine/z8530var.h>

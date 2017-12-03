@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_40.c,v 1.3 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: vfs_syscalls_40.c,v 1.3.16.1 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.3 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.3.16.1 2017/12/03 11:36:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,6 @@ compat_40_sys_mount(struct lwp *l, const struct compat_40_sys_mount_args *uap, r
 	} */
 	register_t dummy;
 
-	return do_sys_mount(l, NULL, SCARG(uap, type), SCARG(uap, path),
+	return do_sys_mount(l, SCARG(uap, type), UIO_USERSPACE, SCARG(uap, path),
 	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE, 0, &dummy);
 }

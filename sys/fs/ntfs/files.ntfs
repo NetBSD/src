@@ -1,9 +1,10 @@
-#	$NetBSD: files.ntfs,v 1.2 2010/03/02 16:43:48 pooka Exp $
+#	$NetBSD: files.ntfs,v 1.2.20.1 2017/12/03 11:38:43 jdolecek Exp $
 
 deffs	NTFS
 
 defflag	opt_ntfs.h		NTFS_DEBUG
 
+define	ntfs: vfs
 file	fs/ntfs/ntfs_compr.c	ntfs
 file	fs/ntfs/ntfs_conv.c	ntfs
 file	fs/ntfs/ntfs_ihash.c	ntfs

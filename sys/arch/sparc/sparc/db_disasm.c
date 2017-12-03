@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.20 2011/04/14 08:59:09 mrg Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.20.14.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2011/04/14 08:59:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20.14.1 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -900,7 +900,7 @@ db_disasm(vaddr_t loc, bool altfmt)
 
 		if (((bitmask>>30) & 0x3) == 0x1) {
 			/* Call */
-			you_lose = ((~0x1)<<30);
+			you_lose = ((~0x1U)<<30);
 		} else if (((bitmask>>30) & 0x3) == 0x0) {
 			if (((bitmask>>22) & 0x7) == 0x4) {
 				/* Sethi */
@@ -995,12 +995,12 @@ db_disasm(vaddr_t loc, bool altfmt)
 		case 'i':
 			/* simm13 -- signed */
 			val = SIGNEX(insn, 13);
-			db_printf("%s0x%x", SIGN(val), (int)abs(val));
+			db_printf("%s0x%x", SIGN(val), abs((int)val));
 			break;
 		case 'j':
 			/* simm11 -- signed */
 			val = SIGNEX(insn, 11);
-			db_printf("%s0x%x", SIGN(val), (int)abs(val));
+			db_printf("%s0x%x", SIGN(val), abs((int)val));
 			break;
 		case 'l':
 			val = (((insn>>20)&0x3)<<13)|(insn & 0x1fff);
@@ -1043,7 +1043,7 @@ db_disasm(vaddr_t loc, bool altfmt)
 			db_printf("[%%%s %c 0x%x]",
 				regs[((insn >> 14) & 0x1f)],
 				(int)((val<0)?'-':'+'),
-				(int)abs(val));
+				abs((int)val));
 			if (*f_ptr == '8')
 				db_printf(" %%asi");
 			break;

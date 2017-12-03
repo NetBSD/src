@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.8 2008/07/03 14:02:25 drochner Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.8.40.1 2017/12/03 11:36:18 jdolecek Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -9,7 +9,14 @@
 #endif
 
 #define ioapic_asm_ack(num) \
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	_C_LABEL(local_apic_va),%eax	; \
+	movl	$0,LAPIC_EOI(%eax)
+
+#define x2apic_asm_ack(num) \
+	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx ; \
+	xorl	%eax,%eax			; \
+	xorl	%edx,%edx			; \
+	wrmsr
 
 #ifdef MULTIPROCESSOR
 
@@ -41,6 +48,7 @@
 	movl	IOAPIC_SC_DATA(%edi),%ebx			;\
 	movl	(%ebx),%esi					;\
 	orl	$IOAPIC_REDLO_MASK,%esi				;\
+	andl	$~IOAPIC_REDLO_RIRR,%esi			;\
 	movl	%esi,(%ebx)					;\
 	movl	IS_PIC(%ebp),%edi				;\
 	ioapic_asm_unlock(num)
@@ -64,7 +72,7 @@
 	movl	IOAPIC_SC_DATA(%edi),%eax			;\
 	movl	%esi, (%ebx)					;\
 	movl	(%eax),%edx					;\
-	andl	$~IOAPIC_REDLO_MASK,%edx			;\
+	andl	$~(IOAPIC_REDLO_MASK|IOAPIC_REDLO_RIRR),%edx	;\
 	movl	%esi, (%ebx)					;\
 	movl	%edx,(%eax)					;\
 	movl	IS_PIC(%ebp),%edi				;\

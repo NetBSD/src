@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kernel.h,v 1.1.10.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: lfs_kernel.h,v 1.1.10.3 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.157 2013/06/28 16:14:06 matt Exp  */
 
@@ -81,7 +81,7 @@ struct lfs_cluster {
 #define LFS_CL_MALLOC	0x00000001
 #define LFS_CL_SHIFT	0x00000002
 #define LFS_CL_SYNC	0x00000004
-	u_int32_t flags;       /* Flags */
+	uint32_t flags;        /* Flags */
 	struct lfs *fs;	       /* LFS that this belongs to */
 	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
 };
@@ -100,6 +100,11 @@ struct lbnentry {
  */
 #include <compat/sys/time_types.h>
 
+struct lfs_fcntl_markv_70 {
+	BLOCK_INFO_70 *blkiov;	/* blocks to relocate */
+	int blkcnt;		/* number of blocks (limited to 65536) */
+};
+
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval50)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval50)
 #define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
@@ -108,6 +113,8 @@ struct lbnentry {
 #define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
 #define LFCNSEGWAITALL_COMPAT_50 _FCNR_FSPRIV('L', 0, struct timeval50)
 #define LFCNSEGWAIT_COMPAT_50	 _FCNR_FSPRIV('L', 1, struct timeval50)
+#define LFCNBMAPV_COMPAT_70	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv_70)
+#define LFCNMARKV_COMPAT_70	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv_70)
 
 
 #endif /* _UFS_LFS_LFS_KERNEL_H_ */

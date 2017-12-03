@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.2.10.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.2.10.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.2.10.2 2014/08/20 00:02:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.2.10.3 2017/12/03 11:35:53 jdolecek Exp $");
 
 #include "opt_imx.h"
 #include "opt_imxspi.h"
@@ -256,7 +256,7 @@ imxspi_send(struct imxspi_softc *sc)
 		while (chunk->chunk_wresid) {
 			/* transmit fifo full? */
 			if (READ_REG(sc, STATREG) & IMXSPI(STAT_TF))
-				return;
+				goto out;
 
 			if (chunk->chunk_wptr) {
 				data = *chunk->chunk_wptr;
@@ -271,7 +271,7 @@ imxspi_send(struct imxspi_softc *sc)
 		/* advance to next transfer */
 		sc->sc_wchunk = sc->sc_wchunk->chunk_next;
 	}
-
+out:
 	if (!(READ_REG(sc, STATREG) & IMXSPI(INTR_TE_EN)))
 		WRITE_REG(sc, CONREG, READ_REG(sc, CONREG) | IMXSPI(CON_XCH));
 }
@@ -321,7 +321,7 @@ imxspi_sched(struct imxspi_softc *sc)
 			sc->sc_tag->spi_cs_enable(sc->sc_tag->cookie,
 			    st->st_slave);
 
-		/*chip slect*/
+		/* chip slect */
 		chipselect = READ_REG(sc, CONREG);
 		chipselect &= ~IMXSPI(CON_CS);
 		chipselect |= __SHIFTIN(st->st_slave, IMXSPI(CON_CS));
@@ -382,17 +382,17 @@ imxspi_intr(void *arg)
 		return 0;
 	}
 
-	/* Transfer Conplete? */
-	if (sr & IMXSPI(INTR_TC_EN)) {
-		/* complete TX */
-		imxspi_send(sc);
-	}
-
-	/* RXFIFO ready */
+	/* RXFIFO ready? */
 	if (sr & IMXSPI(INTR_RR_EN)) {
 		imxspi_recv(sc);
 		if (sc->sc_wchunk == NULL && sc->sc_rchunk == NULL)
 			imxspi_done(sc, err);
+	}
+
+	/* Transfer Conplete? */
+	if (sr & IMXSPI(INTR_TC_EN)) {
+		/* complete TX */
+		imxspi_send(sc);
 	}
 
 	/* status register clear */

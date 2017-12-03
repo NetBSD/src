@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.84.6.2 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: if_se.c,v 1.84.6.3 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,10 +59,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.84.6.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.84.6.3 2017/12/03 11:37:32 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_atalk.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +203,9 @@ static void	sedone(struct scsipi_xfer *, int);
 static int	se_ioctl(struct ifnet *, u_long, void *);
 static void	sewatchdog(struct ifnet *);
 
+#if 0
 static inline u_int16_t ether_cmp(void *, void *);
+#endif
 static void	se_recv(void *);
 static struct mbuf *se_get(struct se_softc *, char *, int);
 static int	se_read(struct se_softc *, char *, int);
@@ -265,6 +269,7 @@ const struct scsipi_inquiry_pattern se_patterns[] = {
 	 "Cabletrn",         "EA412",                 ""},
 };
 
+#if 0
 /*
  * Compare two Ether/802 addresses for equality, inlined and
  * unrolled for speed.
@@ -283,6 +288,7 @@ ether_cmp(void *one, void *two)
 }
 
 #define ETHER_CMP	ether_cmp
+#endif
 
 static int
 sematch(device_t parent, cfdata_t match, void *aux)
@@ -308,6 +314,7 @@ seattach(device_t parent, device_t self, void *aux)
 	struct scsipi_periph *periph = sa->sa_periph;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+	int rv;
 
 	sc->sc_dev = self;
 
@@ -357,8 +364,15 @@ seattach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
-	if_attach(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		free(sc->sc_tbuf, M_DEVBUF);
+		callout_destroy(&sc->sc_ifstart_ch);
+		callout_destroy(&sc->sc_recv_ch);
+		return; /* Error */
+	}
 	ether_ifattach(ifp, myaddr);
+	if_register(ifp);
 }
 
 
@@ -368,11 +382,9 @@ se_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     struct buf *bp, int flags)
 {
 	int error;
-	int s = splbio();
 
 	error = scsipi_command(periph, cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags);
-	splx(s);
 	return (error);
 }
 
@@ -441,8 +453,7 @@ se_ifstart(struct ifnet *ifp)
 	for (m = m0; m != NULL; ) {
 		memcpy(cp, mtod(m, u_char *), m->m_len);
 		cp += m->m_len;
-		MFREE(m, m0);
-		m = m0;
+		m = m0 = m_free(m);
 	}
 	if (len < SEMINSIZE) {
 #ifdef SEDEBUG
@@ -574,7 +585,7 @@ se_get(struct se_softc *sc, char *data, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;
@@ -663,16 +674,9 @@ se_read(struct se_softc *sc, char *data, int datalen)
 		if ((ifp->if_flags & IFF_PROMISC) != 0) {
 			m_adj(m, SE_PREFIX);
 		}
-		ifp->if_ipackets++;
-
-		/*
-		 * Check if there's a BPF listener on this interface.
-		 * If so, hand off the raw packet to BPF.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass the packet up. */
-		(*ifp->if_input)(ifp, m);
+		if_input(ifp, m);
 
 	next_packet:
 		data += len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.50.12.2 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.50.12.3 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.50.12.2 2014/08/20 00:04:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.50.12.3 2017/12/03 11:38:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.50.12.2 2014/08/20 00:04:31 tls Ex
 #include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/kauth.h>
+#include <sys/fcntl.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
@@ -491,7 +493,8 @@ layer_access(void *v)
 }
 
 /*
- * We must handle open to be able to catch MNT_NODEV and friends.
+ * We must handle open to be able to catch MNT_NODEV and friends
+ * and increment the lower v_writecount.
  */
 int
 layer_open(void *v)
@@ -503,12 +506,43 @@ layer_open(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	enum vtype lower_type = LAYERVPTOLOWERVP(vp)->v_type;
+	struct vnode *lvp = LAYERVPTOLOWERVP(vp);
+	int error;
 
-	if (((lower_type == VBLK) || (lower_type == VCHR)) &&
+	if (((lvp->v_type == VBLK) || (lvp->v_type == VCHR)) &&
 	    (vp->v_mount->mnt_flag & MNT_NODEV))
 		return ENXIO;
 
+	error = LAYERFS_DO_BYPASS(vp, ap);
+	if (error == 0 && (ap->a_mode & FWRITE)) {
+		mutex_enter(lvp->v_interlock);
+		lvp->v_writecount++;
+		mutex_exit(lvp->v_interlock);
+	}
+	return error;
+}
+
+/*
+ * We must handle close to decrement the lower v_writecount.
+ */
+int
+layer_close(void *v)
+{
+	struct vop_close_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		int a_fflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *lvp = LAYERVPTOLOWERVP(vp);
+
+	if ((ap->a_fflag & FWRITE)) {
+		mutex_enter(lvp->v_interlock);
+		KASSERT(lvp->v_writecount > 0);
+		lvp->v_writecount--;
+		mutex_exit(lvp->v_interlock);
+	}
 	return LAYERFS_DO_BYPASS(vp, ap);
 }
 
@@ -546,7 +580,7 @@ layer_fsync(void *v)
 int
 layer_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -569,15 +603,15 @@ layer_inactive(void *v)
 	 * like they do in the name lookup cache code.
 	 * That's too much work for now.
 	 */
-	VOP_UNLOCK(vp);
+
 	return 0;
 }
 
 int
 layer_remove(void *v)
 {
-	struct vop_remove_args /* {
-		struct vonde		*a_dvp;
+	struct vop_remove_v2_args /* {
+		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
 	} */ *ap = v;
@@ -627,7 +661,7 @@ layer_rename(void *v)
 int
 layer_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
@@ -671,7 +705,7 @@ layer_revoke(void *v)
 int
 layer_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
@@ -679,6 +713,8 @@ layer_reclaim(void *v)
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(vp->v_mount);
 	struct layer_node *xp = VTOLAYER(vp);
 	struct vnode *lowervp = xp->layer_lowervp;
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Note: in vop_reclaim, the node's struct lock has been
@@ -694,7 +730,12 @@ layer_reclaim(void *v)
 		 */
 		lmp->layerm_rootvp = NULL;
 	}
-	vcache_remove(vp->v_mount, &lowervp, sizeof(lowervp));
+
+	mutex_enter(vp->v_interlock);
+	KASSERT(vp->v_interlock == lowervp->v_interlock);
+	lowervp->v_writecount -= vp->v_writecount;
+	mutex_exit(vp->v_interlock);
+
 	/* After this assignment, this node will not be re-used. */
 	xp->layer_lowervp = NULL;
 	kmem_free(vp->v_data, lmp->layerm_size);
@@ -702,48 +743,6 @@ layer_reclaim(void *v)
 	vrele(lowervp);
 
 	return 0;
-}
-
-int
-layer_lock(void *v)
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct vnode *lowervp = LAYERVPTOLOWERVP(vp);
-	int flags = ap->a_flags;
-	int error;
-
-	if (ISSET(flags, LK_NOWAIT)) {
-		error = VOP_LOCK(lowervp, flags);
-		if (error)
-			return error;
-		if (mutex_tryenter(vp->v_interlock)) {
-			error = vdead_check(vp, VDEAD_NOWAIT);
-			mutex_exit(vp->v_interlock);
-		} else
-			error = EBUSY;
-		if (error)
-			VOP_UNLOCK(lowervp);
-		return error;
-	}
-
-	error = VOP_LOCK(lowervp, flags);
-	if (error)
-		return error;
-
-	mutex_enter(vp->v_interlock);
-	error = vdead_check(vp, VDEAD_NOWAIT);
-	if (error) {
-		VOP_UNLOCK(lowervp);
-		error = vdead_check(vp, 0);
-		KASSERT(error == ENOENT);
-	}
-	mutex_exit(vp->v_interlock);
-
-	return error;
 }
 
 /*
@@ -794,6 +793,8 @@ layer_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
+	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -804,7 +805,19 @@ layer_getpages(void *v)
 	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
 
 	/* Just pass the request on to the underlying layer. */
-	return VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	mutex_exit(vp->v_interlock);
+	fstrans_start(mp);
+	mutex_enter(vp->v_interlock);
+	if (mp == vp->v_mount) {
+		/* Will release the interlock. */
+		error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	} else {
+		mutex_exit(vp->v_interlock);
+		error = ENOENT;
+	}
+	fstrans_done(mp);
+
+	return error;
 }
 
 int

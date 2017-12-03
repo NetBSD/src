@@ -1,4 +1,4 @@
-/* $NetBSD: tc_sgmap.h,v 1.4 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: tc_sgmap.h,v 1.4.6.1 2017/12/03 11:35:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define	SGMAP_PTE_SPACING	2
 
 /*
- * A TurboChannel SGMAP page table entry looks like this:
+ * A TURBOchannel SGMAP page table entry looks like this:
  *
  * 31                    23  22  21 20           4 3    0
  * |     Discarded     | V | F | P | Page address | UNP |

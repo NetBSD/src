@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ntoskrnl.c,v 1.22.6.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: subr_ntoskrnl.c,v 1.22.6.2 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.22.6.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.22.6.2 2017/12/03 11:36:55 jdolecek Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -433,9 +433,10 @@ IoGetDriverObjectExtension(driver_object *drv, void *clid)
 	e = drv->dro_driverext->dre_usrext.nle_flink;
 	while (e != &drv->dro_driverext->dre_usrext) {
 		ce = (custom_extension *)e;
-		if (ce->ce_clid == clid)
+		if (ce->ce_clid == clid) {
 			printf("found\n");
 			return((void *)(ce + 1));
+		}
 		e = e->nle_flink;
 	}
 	printf("not found\n");

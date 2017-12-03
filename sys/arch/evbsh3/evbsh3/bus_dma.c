@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2011/07/19 15:44:52 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3.12.1 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2011/07/19 15:44:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3.12.1 2017/12/03 11:36:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,11 +544,6 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		case BUS_DMASYNC_PREWRITE:
 			if (SH_HAS_WRITEBACK_CACHE)
 				sh_dcache_wb_range(naddr, minlen);
-			break;
-
-		case BUS_DMASYNC_POSTREAD:
-		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
-			sh_dcache_inv_range(naddr, minlen);
 			break;
 		}
 		offset = 0;

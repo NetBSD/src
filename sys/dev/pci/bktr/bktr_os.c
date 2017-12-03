@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.60.12.2 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.60.12.3 2017/12/03 11:37:29 jdolecek Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.60.12.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.60.12.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1466,7 +1466,8 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	unit = device_unit(bktr->bktr_dev);
         bktr->dmat = pa->pa_dmat;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* Enable Bus Master
 	   XXX: check if all old DMA is stopped first (e.g. after warm
@@ -1486,7 +1487,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	DPR(("pci_mapreg_map: size %lx\n",
 	     (unsigned long)bktr->obmemsz));
 	if (retval) {
-		printf("%s: couldn't map memory\n", bktr_name(bktr));
+		aprint_error("%s: couldn't map memory\n", bktr_name(bktr));
 		return;
 	}
 
@@ -1500,7 +1501,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	 * map interrupt
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n",
+		aprint_error("%s: couldn't map interrupt\n",
 		       bktr_name(bktr));
 		return;
 	}
@@ -1508,16 +1509,16 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
 				      bktr_intr, bktr);
 	if (bktr->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		       bktr_name(bktr));
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", bktr_name(bktr),
-		       intrstr);
+		aprint_normal("%s: interrupting at %s\n", bktr_name(bktr),
+		    intrstr);
 	selinit(&bktr->vbi_select);
 #endif /* __NetBSD__ */
 

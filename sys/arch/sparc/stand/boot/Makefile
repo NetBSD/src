@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.38 2011/08/28 08:03:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.38.12.1 2017/12/03 11:36:44 jdolecek Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
-		mmu.c prompatch.c vers.c
+		mmu.c prompatch.c
 NEWVERSWHAT=	"Secondary Boot"
 FILES=		boot.net bootjs.net ${RELOCS:S/^/boot./g}
-CLEANFILES:=	vers.c ${FILES}
+CLEANFILES:=	${FILES}
 LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
 
 CPPFLAGS+=	-DBOOT_AOUT -DBOOT_ELF32 -DSUPPORT_DHCP
@@ -31,20 +31,6 @@ LINKFLAGS=-N -e start -Map $@.map
 .MAIN: all
 realall: ${FILES}
 
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "sparc" ${NEWVERSWHAT}
-
-.for RELOC in ${RELOCS}
-boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -o ${.TARGET}.tmp ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
-	    ${LIBSA} ${LIBZ} ${LIBKERN}
-	${SIZE} ${.TARGET}.tmp
-	${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
-	rm -f ${.TARGET}.tmp
-CLEANFILES+=	boot.${RELOC}.map
-.endfor
 
 # conjure up a magic header that is accepted by all Sun PROMS;
 # see installboot.c for details.
@@ -54,10 +40,23 @@ SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\
 boot.net: boot.${RELOC_DEFAULT}
 	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
 
+
+.include "${S}/conf/newvers_stand.mk"
+
+.include <bsd.prog.mk>
+
 bootjs.net: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext 300000 ${OBJS} \
+	${LD} -S -o ${.TARGET} ${LINKFLAGS} -Ttext 300000 ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${.TARGET}
 CLEANFILES+=	bootjs.net.map
 
-.include <bsd.prog.mk>
+.for RELOC in ${RELOCS}
+boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -S -o ${.TARGET}.tmp ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
+	    ${LIBSA} ${LIBZ} ${LIBKERN}
+	${SIZE} ${.TARGET}.tmp
+	${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
+	rm -f ${.TARGET}.tmp
+CLEANFILES+=	boot.${RELOC}.map
+.endfor

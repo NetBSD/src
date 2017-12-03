@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2011/04/06 05:48:35 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.14.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,22 +31,16 @@
 
 #include "opt_multiprocessor.h"	/* MP kernel? */
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
+#include "opt_ddb.h"
 
 #include <sys/cdefs.h>
 
-#include <machine/param.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.5 2011/04/06 05:48:35 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.5.14.1 2017/12/03 11:36:28 jdolecek Exp $")
 
 #include "assym.h"
-
-#if (MIPS1 + MIPS2) > 0
-#define	NOP_L	nop
-#else
-#define	NOP_L	/* nothing */
-#endif
 
 	.data
 	.globl	_C_LABEL(ipl_sr_map)
@@ -82,11 +76,17 @@ _splraise:
 	bnez	v1, 1f				# yes, don't change.
 	 nop					#  branch delay
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
-	NOP_L					# load delay
+	MFC0_HAZARD				# load delay
 	or	v1, MIPS_INT_MASK		# enable all interrupts
 	xor	a0, v1				# disable ipl's masked bits
 	DYNAMIC_STATUS_MASK(a0,v0)		# machine dependent masking
+#if !defined(__mips_o32)
+	or	v1, MIPS_SR_INT_IE		#
+	xor	v1, MIPS_SR_INT_IE		# clear interrupt enable bit
+	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 #ifdef MULTIPROCESSOR
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
@@ -102,7 +102,7 @@ _splraise:
 1:
 #ifdef PARANOIA
 	mfc0	v1, MIPS_COP_0_STATUS
-	NOP_L					# load delay
+	MFC0_HAZARD				# load delay
 	and	a0, v1				# a1 contains bit that MBZ
 3:	bnez	a0, 3b				# loop forever
 	 nop					#  branch delay
@@ -134,11 +134,16 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	INT_L	a1, (v1)			# load SR bits for this IPL
 1:
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
-	NOP_L					# load delay
-	or	v1, MIPS_INT_MASK		# set all INT bits
-	xor	v1, a1				# clear any bits for this IPL
+	xor	a1, MIPS_INT_MASK		# invert SR bits
+	or	v1, a1				# set any bits for this IPL
 	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
+#if !defined(__mips_o32)
+	or	v0, v1, MIPS_SR_INT_IE		#
+	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
+	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 	INT_S	a0, CPU_INFO_CPL(a3)		## save IPL in cpu_info (KSEG0)
 	mtc0	v1, MIPS_COP_0_STATUS		## store back
@@ -154,6 +159,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	PTR_ADDU v1, a2				# add to table addr
 	INT_L	a1, (v1)			# load SR bits for this IPL
 	mfc0	v1, MIPS_COP_0_STATUS
+	MFC0_HAZARD				# load delay
 	and	v1, MIPS_INT_MASK
 	xor	a1, MIPS_INT_MASK
 3:	bne	a1, v1, 3b
@@ -166,14 +172,19 @@ END(_splsw_splx)
 STATIC_LEAF(_splsw_spl0)
 	INT_L	v1, _C_LABEL(ipl_sr_map) + 4*IPL_NONE
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
-	xor	v1, MIPS_INT_MASK | MIPS_SR_INT_IE # invert and or in IE
-	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
-	COP0_SYNC
+	or	v1, MIPS_SR_INT_IE		# mask sure interrupts are on
+	xor	v1, MIPS_INT_MASK		# invert
 	mfc0	a0, MIPS_COP_0_STATUS
-	NOP_L					# load delay
+	MFC0_HAZARD				# load delay
 	or	v0, a0, v1
 	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
+#if !defined(__mips_o32)
+	or	v1, v0, MIPS_SR_INT_IE		#
+	xor	v1, MIPS_SR_INT_IE		# clear interrupt enable bit
+	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 #if IPL_NONE == 0
 	INT_S	zero, CPU_INFO_CPL(a3)		## set ipl to 0
@@ -186,10 +197,17 @@ END(_splsw_spl0)
 
 STATIC_LEAF(_splsw_setsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+#if !defined(__mips_o32)
+	MFC0_HAZARD				# load delay
+	or	v0, v1, MIPS_SR_INT_IE		#
+	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
+	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
+#else
+	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	NOP_L					# load delay
+	MFC0_HAZARD				# load delay
 	or	v0, v0, a0			# set soft intr. bits
 	mtc0	v0, MIPS_COP_0_CAUSE		# store back
 	COP0_SYNC
@@ -199,7 +217,14 @@ END(_splsw_setsoftintr)
 
 STATIC_LEAF(_splsw_clrsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+#if !defined(__mips_o32)
+	MFC0_HAZARD				# load delay
+	or	v0, v1, MIPS_SR_INT_IE		#
+	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
+	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
+#else
+	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
 	nor	a0, zero, a0			# bitwise inverse of A0
@@ -211,6 +236,9 @@ STATIC_LEAF(_splsw_clrsoftintr)
 END(_splsw_clrsoftintr)
 
 STATIC_LEAF(_splsw_splraise)
+#if defined(DDB) && __mips >= 32
+	tgeiu	a0, IPL_HIGH+1
+#endif
 	move	a1, a0
 	PTR_LA	v1, _C_LABEL(ipl_sr_map)
 	sll	a2, a0, INT_SCALESHIFT
@@ -228,7 +256,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	beq	v0, a1, 1f			# don't do anything if IPL_HIGH
 	 nop					# branch delay
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
-	NOP_L					# load delay
+	MFC0_HAZARD				# load delay
 	and	a0, v1, MIPS_INT_MASK		# select all interrupts
 	xor	a0, v1				# clear all interrupts
 	DYNAMIC_STATUS_MASK(a0,a2)		# machine dependent masking
@@ -246,6 +274,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 1:
 #ifdef PARANOIA
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
+	MFC0_HAZARD				# load delay
 	and	v1, MIPS_INT_MASK		# any int bits set?
 2:	bnez	v1, 2b				# loop forever.
 	 nop					# branch delay
@@ -306,7 +335,7 @@ END(_splsw_splsoftclock)
 
 STATIC_LEAF(_splsw_splintr)
 	mfc0	ta1, MIPS_COP_0_CAUSE		# get active interrupts
-	NOP_L					# load delay
+	MFC0_HAZARD				# load delay
 						# restrict to hard int bits
 	and	v1, ta1, MIPS_HARD_INT_MASK	# now have pending interrupts
 	li	v0, IPL_NONE			#  return IPL_NONE
@@ -345,6 +374,7 @@ STATIC_LEAF(_splsw_splcheck)
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
 
 	mfc0	t0, MIPS_COP_0_STATUS		# get current status
+	MFC0_HAZARD				# load delay
 	and	t0, MIPS_INT_MASK		# just want INT bits
 
 	PTR_LA	t2, _C_LABEL(ipl_sr_map)

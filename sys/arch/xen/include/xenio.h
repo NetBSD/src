@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.9 2011/01/10 11:13:03 cegger Exp $	*/
+/*	$NetBSD: xenio.h,v 1.9.18.1 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -32,6 +32,9 @@
 
 /* Interface to /proc/xen/privcmd */
 
+#include <sys/ioccom.h>
+
+
 typedef struct privcmd_hypercall
 {
     unsigned long op;
@@ -43,20 +46,20 @@ typedef struct privcmd_mmap_entry {
     unsigned long va;
     unsigned long mfn;
     unsigned long npages;
-} privcmd_mmap_entry_t; 
+} privcmd_mmap_entry_t;
 
 typedef struct privcmd_mmap {
     int num;
     domid_t dom; /* target domain */
     privcmd_mmap_entry_t *entry;
-} privcmd_mmap_t; 
+} privcmd_mmap_t;
 
 typedef struct privcmd_mmapbatch {
     int num;     /* number of pages to populate */
     domid_t dom; /* target domain */
     unsigned long addr;  /* virtual address */
     unsigned long *arr; /* array of mfns - top nibble set on err */
-} privcmd_mmapbatch_t; 
+} privcmd_mmapbatch_t;
 
 typedef struct privcmd_mmapbatch_v2 {
     int num;     /* number of pages to populate */
@@ -64,7 +67,7 @@ typedef struct privcmd_mmapbatch_v2 {
     uint64_t addr;  /* virtual address */
     const xen_pfn_t *arr; /* array of mfns */
     int *err; /* array of error codes */
-} privcmd_mmapbatch_v2_t; 
+} privcmd_mmapbatch_v2_t;
 
 typedef struct privcmd_blkmsg
 {

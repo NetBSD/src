@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.4.122.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,8 +76,28 @@ extern int cputyp;
  * Step 1: Count the number of CPU types configured into the kernel.
  */
 #if defined(_KERNEL_OPT)
-#define	CPU_NTYPES	(defined(SUN4) + defined(SUN4C) + \
-			 defined(SUN4M) + defined(SUN4D))
+#ifdef SUN4
+#define	_CPU_NTYPES_SUN4 1
+#else
+#define	_CPU_NTYPES_SUN4 0
+#endif
+#ifdef SUN4C
+#define	_CPU_NTYPES_SUN4C 1
+#else
+#define	_CPU_NTYPES_SUN4C 0
+#endif
+#ifdef SUN4M
+#define	_CPU_NTYPES_SUN4M 1
+#else
+#define	_CPU_NTYPES_SUN4M 0
+#endif
+#ifdef SUN4D
+#define	_CPU_NTYPES_SUN4D 1
+#else
+#define	_CPU_NTYPES_SUN4D 0
+#endif
+#define	CPU_NTYPES	(_CPU_NTYPES_SUN4 + _CPU_NTYPES_SUN4C + \
+			 _CPU_NTYPES_SUN4M + _CPU_NTYPES_SUN4D)
 #else
 #define	CPU_NTYPES	0
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.44.38.1 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: protosw.h,v 1.44.38.2 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -77,8 +77,6 @@ struct protosw {
 /* protocol-protocol hooks */
 	void	(*pr_input)		/* input to protocol (from below) */
 			(struct mbuf *, ...);
-	int	(*pr_output)		/* output to protocol (from above) */
-			(struct mbuf *, ...);
 	void	*(*pr_ctlinput)		/* control input (from below) */
 			(int, const struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
@@ -119,6 +117,8 @@ struct protosw {
 #define PR_PURGEIF	0x100		/* might store struct ifnet pointer;
 					   pr_purgeif() must be called on ifnet
 					   deletion */
+#define	PR_ADDR_OPT	0x200		/* Allow address during delivery */
+
 
 /*
  * The arguments to usrreq are:
@@ -238,26 +238,24 @@ static const char * const prcorequests[] = {
 struct pr_usrreqs {
 	int	(*pr_attach)(struct socket *, int);
 	void	(*pr_detach)(struct socket *);
-	int	(*pr_accept)(struct socket *, struct mbuf *);
-	int	(*pr_connect)(struct socket *, struct mbuf *, struct lwp *);
+	int	(*pr_accept)(struct socket *, struct sockaddr *);
+	int	(*pr_connect)(struct socket *, struct sockaddr *, struct lwp *);
 	int	(*pr_connect2)(struct socket *, struct socket *);
-	int	(*pr_bind)(struct socket *, struct mbuf *, struct lwp *);
+	int	(*pr_bind)(struct socket *, struct sockaddr *, struct lwp *);
 	int	(*pr_listen)(struct socket *, struct lwp *);
 	int	(*pr_disconnect)(struct socket *);
 	int	(*pr_shutdown)(struct socket *);
 	int	(*pr_abort)(struct socket *);
 	int	(*pr_ioctl)(struct socket *, u_long, void *, struct ifnet *);
 	int	(*pr_stat)(struct socket *, struct stat *);
-	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
-	int	(*pr_sockaddr)(struct socket *, struct mbuf *);
+	int	(*pr_peeraddr)(struct socket *, struct sockaddr *);
+	int	(*pr_sockaddr)(struct socket *, struct sockaddr *);
 	int	(*pr_rcvd)(struct socket *, int, struct lwp *);
 	int	(*pr_recvoob)(struct socket *, struct mbuf *, int);
-	int	(*pr_send)(struct socket *, struct mbuf *, struct mbuf *,
+	int	(*pr_send)(struct socket *, struct mbuf *, struct sockaddr *,
 	    struct mbuf *, struct lwp *);
 	int	(*pr_sendoob)(struct socket *, struct mbuf *, struct mbuf *);
 	int	(*pr_purgeif)(struct socket *, struct ifnet *);
-	int	(*pr_generic)(struct socket *, int, struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct lwp *);
 };
 
 /*
@@ -308,7 +306,8 @@ name##_detach_wrapper(struct socket *a)			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 }							\
 static int						\
-name##_accept_wrapper(struct socket *a, struct mbuf *b)	\
+name##_accept_wrapper(struct socket *a,			\
+    struct sockaddr *b)					\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -317,8 +316,8 @@ name##_accept_wrapper(struct socket *a, struct mbuf *b)	\
 	return rv;					\
 }							\
 static int						\
-name##_bind_wrapper(struct socket *a, struct mbuf *b,	\
-    struct lwp *c)					\
+name##_bind_wrapper(struct socket *a,			\
+    struct sockaddr *b,	struct lwp *c)			\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -328,7 +327,7 @@ name##_bind_wrapper(struct socket *a, struct mbuf *b,	\
 }							\
 static int						\
 name##_connect_wrapper(struct socket *a,		\
-    struct mbuf *b, struct lwp *c)			\
+    struct sockaddr *b, struct lwp *c)			\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -402,7 +401,8 @@ name##_stat_wrapper(struct socket *a, struct stat *b)	\
 	return rv;					\
 }							\
 static int						\
-name##_peeraddr_wrapper(struct socket *a, struct mbuf *b)	\
+name##_peeraddr_wrapper(struct socket *a,		\
+    struct sockaddr *b)					\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -411,7 +411,8 @@ name##_peeraddr_wrapper(struct socket *a, struct mbuf *b)	\
 	return rv;					\
 }							\
 static int						\
-name##_sockaddr_wrapper(struct socket *a, struct mbuf *b)	\
+name##_sockaddr_wrapper(struct socket *a,		\
+    struct sockaddr *b)					\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -441,7 +442,7 @@ name##_recvoob_wrapper(struct socket *a,		\
 }							\
 static int						\
 name##_send_wrapper(struct socket *a, struct mbuf *b,	\
-    struct mbuf *c, struct mbuf *d, struct lwp *e)	\
+    struct sockaddr *c, struct mbuf *d, struct lwp *e)	\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -468,17 +469,6 @@ name##_purgeif_wrapper(struct socket *a,		\
 	rv = name##_purgeif(a, b);			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
-}							\
-static int						\
-name##_usrreq_wrapper(struct socket *a, int b,		\
-    struct mbuf *c, struct mbuf *d, struct mbuf *e,	\
-    struct lwp *f)					\
-{							\
-	int rv;						\
-	KERNEL_LOCK(1, NULL);				\
-	rv = name##_usrreq(a, b, c, d, e, f);		\
-	KERNEL_UNLOCK_ONE(NULL);			\
-	return rv;					\
 }
 
 #define	PR_WRAP_CTLOUTPUT(name)				\
@@ -502,6 +492,24 @@ name##_wrapper(int a, const struct sockaddr *b, void *c)\
 	rv = name(a, b, c);				\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
+}
+
+#include <sys/socketvar.h> /* for softnet_lock */
+
+#define	PR_WRAP_INPUT(name)				\
+static void						\
+name##_wrapper(struct mbuf *m, ...)			\
+{							\
+	va_list args;					\
+	int off, nxt;					\
+	/* XXX just passing args doesn't work on rump kernels */\
+	va_start(args, m);				\
+	off = va_arg(args, int);			\
+	nxt = va_arg(args, int);			\
+	va_end(args);					\
+	mutex_enter(softnet_lock);			\
+	name(m, off, nxt);				\
+	mutex_exit(softnet_lock);			\
 }
 
 #endif /* _KERNEL */

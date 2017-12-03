@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.9 2012/04/12 12:52:58 nakayama Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.9.2.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -529,6 +529,7 @@ struct bwi_softc {
 #define sc_if sc_ec.ec_if
 	uint32_t		 sc_flags;	/* BWI_F_ */
 	void			*sc_ih;		/* [TRC: interrupt handler] */
+	void			*sc_soft_ih;
 
 	uint32_t		 sc_cap;	/* BWI_CAP_ */
 	uint16_t		 sc_bbp_id;	/* BWI_BBPID_ */

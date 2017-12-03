@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.3.4.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.3.4.3 2017/12/03 11:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,40 +30,46 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3.4.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3.4.3 2017/12/03 11:37:58 jdolecek Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpufunc.h>
-
 #include <linux/mm_types.h>
 
 #include <drm/drmP.h>
 
+#if !defined(__arm__)
+#define DRM_CLFLUSH	1
+#endif
+
+#if defined(DRM_CLFLUSH)
 static bool		drm_md_clflush_finegrained_p(void);
 static void		drm_md_clflush_all(void);
 static void		drm_md_clflush_page(struct page *);
 static void		drm_md_clflush_virt_range(const void *, size_t);
+#endif
 
 void
 drm_clflush_pages(struct page **pages, unsigned long npages)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
 		while (npages--)
 			drm_md_clflush_page(pages[npages]);
 	} else {
 		drm_md_clflush_all();
 	}
+#endif
 }
 
 void
 drm_clflush_pglist(struct pglist *list)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
 		struct vm_page *page;
 
@@ -73,40 +79,39 @@ drm_clflush_pglist(struct pglist *list)
 	} else {
 		drm_md_clflush_all();
 	}
+#endif
 }
 
 void
 drm_clflush_page(struct page *page)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p())
 		drm_md_clflush_page(page);
 	else
 		drm_md_clflush_all();
+#endif
 }
 
 void
 drm_clflush_virt_range(const void *vaddr, size_t nbytes)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p())
 		drm_md_clflush_virt_range(vaddr, nbytes);
 	else
 		drm_md_clflush_all();
+#endif
 }
 
 #if defined(__i386__) || defined(__x86_64__)
+
+#include <machine/cpufunc.h>
 
 static bool
 drm_md_clflush_finegrained_p(void)
 {
 	return ISSET(cpu_info_primary.ci_feat_val[0], CPUID_CFLUSH);
-}
-
-static void
-drm_x86_clflush_cpu(void)
-{
-	asm volatile ("wbinvd");
 }
 
 static void
@@ -125,7 +130,7 @@ drm_x86_clflush_size(void)
 static void
 drm_x86_clflush_xc(void *arg0 __unused, void *arg1 __unused)
 {
-	drm_x86_clflush_cpu();
+	wbinvd();
 }
 
 static void
@@ -146,15 +151,20 @@ drm_md_clflush_page(struct page *page)
 
 static void
 drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
-
 {
-	const char *const start = vaddr, *const end = (start + nbytes);
+	const unsigned clflush_size = drm_x86_clflush_size();
+	const vaddr_t va = (vaddr_t)vaddr;
+	const char *const start = (const void *)rounddown(va, clflush_size);
+	const char *const end = (const void *)roundup(va + nbytes,
+	    clflush_size);
 	const char *p;
-	const unsigned int clflush_size = drm_x86_clflush_size();
 
+	/* Support for CLFLUSH implies support for MFENCE.  */
 	KASSERT(drm_md_clflush_finegrained_p());
+	x86_mfence();
 	for (p = start; p < end; p += clflush_size)
 		drm_x86_clflush(p);
+	x86_mfence();
 }
 
 #endif	/* defined(__i386__) || defined(__x86_64__) */

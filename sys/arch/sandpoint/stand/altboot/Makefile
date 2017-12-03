@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.12.1 2014/08/20 00:03:22 tls Exp $
+#	$NetBSD: Makefile,v 1.12.12.2 2017/12/03 11:36:40 jdolecek Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -8,8 +8,8 @@ NOMAN=		# defined
 SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c memfs.c
 SRCS+=		nif.c fxp.c tlp.c rge.c skg.c stg.c
 SRCS+=		dsk.c pciide.c siisata.c
-SRCS+=		exception.c vers.c
-CLEANFILES+=	vers.c ${PROG} ${PROG}.bin ${PROG}.img
+SRCS+=		exception.c
+CLEANFILES+=	${PROG} ${PROG}.bin ${PROG}.img
 CFLAGS+=	-Wall -Wno-main -ffreestanding
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msoft-float :}
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
@@ -51,11 +51,6 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -K \
-	    ${${MKREPRO} == "yes" :?:-D} ${.CURDIR}/version "sandpoint"
-
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
@@ -63,5 +58,8 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${PROG} ${PROG}.bin
 	${TOOL_MKUBOOTIMAGE} -A powerpc -T kernel -C none -O linux \
 	    -a 0x${RELOC} -n ${PROG} ${PROG}.bin ${PROG}.img
+
+VERSIONFLAGS+=-k
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>

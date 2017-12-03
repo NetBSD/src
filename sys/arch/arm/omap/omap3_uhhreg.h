@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_uhhreg.h,v 1.1.6.4 2014/08/20 00:02:47 tls Exp $ */
+/* $NetBSD: omap3_uhhreg.h,v 1.1.6.5 2017/12/03 11:35:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	UHH_REVISION				0x00
 #define	 UHH_REVISION_MAJOR(x)			(((x) >> 4) & 0xf)
 #define	 UHH_REVISION_MINOR(x)			((x) & 0xf)
-#define  UHH_REVISION_VERS2			2
+#define  UHH_REVISION_VERS2			0
 
 #define UHH_HWINFO				0x04
 #define  UHH_HWINFO_SAR_CNTX_SIZE		 __BITS(9,0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.31 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.31.120.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -236,6 +236,27 @@ struct scsi_read_defect_data_data {
 
 union scsi_disk_pages {
 #define	DISK_PGCODE	0x3F	/* only 6 bits valid */
+	struct page_err_recov {
+		u_int8_t pg_code;	/* page code (should be 1) */
+		u_int8_t pg_length;	/* page length (should be 0x0a) */
+		u_int8_t flags;		/* error recovery flags */
+#define	ERR_RECOV_DCR	0x01		/* disable correction */
+#define	ERR_RECOV_DTE	0x02		/* disable transfer on error */
+#define	ERR_RECOV_PER	0x04		/* post error */
+#define	ERR_RECOV_EER	0x08		/* enable early recovery */
+#define	ERR_RECOV_RC	0x10		/* read continuous */
+#define	ERR_RECOV_TB	0x20		/* transfer block */
+#define	ERR_RECOV_ARRE	0x40		/* autom. read reallocation enable */
+#define	ERR_RECOV_AWRE	0x80		/* autom. write reallocation enable */
+		u_int8_t rd_retry_ct;	/* read retry count */
+		u_int8_t corr_span;	/* correction span */
+		u_int8_t hd_off_ct;	/* head offset count */
+		u_int8_t dat_strb_off_ct; /* data strobe offset count */
+		u_int8_t reserved1;
+		u_int8_t wr_retry_ct;	/* write retry count */
+		u_int8_t reserved2;
+		u_int8_t recov_tm_lim[2]; /* recovery time limit */
+	} err_recov_params;
 	struct page_disk_format {
 		u_int8_t pg_code;	/* page code (should be 3) */
 		u_int8_t pg_length;	/* page length (should be 0x16) */
@@ -253,6 +274,7 @@ union scsi_disk_pages {
 #define	DISK_FMT_RMB	0x20
 #define	DISK_FMT_HSEC	0x40
 #define	DISK_FMT_SSEC	0x80
+		u_int8_t reserved1;
 		u_int8_t reserved2;
 		u_int8_t reserved3;
 	} disk_format;
@@ -303,8 +325,8 @@ union scsi_disk_pages {
 		u_int8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
 		u_int8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
 		u_int8_t rpm[2];	/* rotational rate */
-		u_int8_t reserved3;
-		u_int8_t reserved4;
+		u_int8_t reserved1;
+		u_int8_t reserved2;
 	} flex_geometry;
 	struct page_caching {
 		u_int8_t pg_code;	/* page code (should be 8) */

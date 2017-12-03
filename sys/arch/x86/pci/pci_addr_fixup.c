@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.9 2012/01/27 18:53:06 para Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.9.6.1 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.9 2012/01/27 18:53:06 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.9.6.1 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/extent.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.13.2.1 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.13.2.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,20 +31,20 @@
  */
 
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct uhidev_softc {
 	device_t sc_dev;		/* base device */
-	usbd_device_handle sc_udev;
-	usbd_interface_handle sc_iface;	/* interface */
-	usbd_pipe_handle sc_ipipe;	/* input interrupt pipe */
+	struct usbd_device *sc_udev;
+	struct usbd_interface *sc_iface;	/* interface */
+	struct usbd_pipe *sc_ipipe;	/* input interrupt pipe */
 	int sc_iep_addr;
 
 	u_char *sc_ibuf;
 	u_int sc_isize;
 
-	usbd_pipe_handle sc_opipe;	/* output interrupt pipe */
-	usbd_xfer_handle sc_oxfer;	/* write request */
+	struct usbd_pipe *sc_opipe;	/* output interrupt pipe */
+	struct usbd_xfer *sc_oxfer;	/* write request */
 	int sc_oep_addr;
 
 	void *sc_repdesc;
@@ -57,21 +57,24 @@ struct uhidev_softc {
 	u_char sc_dying;
 
 	kmutex_t sc_lock;		/* protects writes to sc_state */
+
+	u_int sc_flags;
+#define UHIDEV_F_XB1	0x0001	/* Xbox 1 controller */
 };
 
 struct uhidev {
 	device_t sc_dev;		/* base device */
 	struct uhidev_softc *sc_parent;
 	uByte sc_report_id;
-	u_int8_t sc_state;
+	uint8_t sc_state;
 	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
-        krndsource_t     rnd_source;
+	krndsource_t     rnd_source;
 };
 
 struct uhidev_attach_arg {
-	struct usbif_attach_arg *uaa;
+	struct usbif_attach_arg *uiaa;
 	struct uhidev_softc *parent;
 	int reportid;
 	int reportsize;
@@ -79,7 +82,10 @@ struct uhidev_attach_arg {
 
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
 int uhidev_open(struct uhidev *);
+void uhidev_stop(struct uhidev *);
 void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_get_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_write(struct uhidev_softc *, void *, int);
+
+#define	UHIDEV_OSIZE	64

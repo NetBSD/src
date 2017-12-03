@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.13 2011/11/19 17:34:41 christos Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.13.10.1 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.13 2011/11/19 17:34:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.13.10.1 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ cn_set_magic(const char *smagic)
 }
 
 /*
- * Translatea state machine table back to
+ * Translate a state machine table back to
  * a magic string.
  */
 int
@@ -166,4 +166,3 @@ finish:
 	ADD_CHAR('\0');
 	return 0;
 }
-

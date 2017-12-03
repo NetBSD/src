@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.37.14.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.37.14.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.37.14.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.37.14.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -192,8 +192,6 @@ aio_procinit(struct proc *p)
 
 	/* Allocate and initialize AIO structure */
 	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
-	if (aio == NULL)
-		return EAGAIN;
 
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -211,7 +209,7 @@ aio_procinit(struct proc *p)
 		return EAGAIN;
 	}
 	error = lwp_create(curlwp, p, uaddr, 0, NULL, 0, aio_worker,
-	    NULL, &l, curlwp->l_class);
+	    NULL, &l, curlwp->l_class, &curlwp->l_sigmask, &curlwp->l_sigstk);
 	if (error != 0) {
 		uvm_uarea_free(uaddr);
 		aio_exit(p, aio);
@@ -430,7 +428,7 @@ aio_process(struct aio_job *a_job)
 		struct vnode *vp;
 
 		if ((error = fd_getvnode(fd, &fp)) != 0)
-			goto done; 
+			goto done;
 
 		if ((fp->f_flag & FWRITE) == 0) {
 			fd_putfile(fd);
@@ -438,7 +436,7 @@ aio_process(struct aio_job *a_job)
 			goto done;
 		}
 
-		vp = (struct vnode *)fp->f_data;
+		vp = fp->f_vnode;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if (a_job->aio_op & AIO_DSYNC) {
 			error = VOP_FSYNC(vp, fp->f_cred,

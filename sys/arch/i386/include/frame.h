@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.35 2012/02/19 21:06:11 rmind Exp $	*/
+/*	$NetBSD: frame.h,v 1.35.2.1 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,11 +100,6 @@ struct trapframe {
 	/* below used when transitting rings (e.g. user to kernel) */
 	int	tf_esp;
 	int	tf_ss;
-	/* below used when switching out of VM86 mode */
-	int	tf_vm86_es;
-	int	tf_vm86_ds;
-	int	tf_vm86_fs;
-	int	tf_vm86_gs;
 };
 
 /*
@@ -173,6 +168,7 @@ struct sigframe_siginfo {
 void *getframe(struct lwp *, int, int *);
 void buildcontext(struct lwp *, int, void *, void *);
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#define lwp_trapframe(l)	((l)->l_md.md_regs)
 #endif
 
 #endif  /* _I386_FRAME_H_ */

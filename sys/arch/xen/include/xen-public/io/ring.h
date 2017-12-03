@@ -1,4 +1,4 @@
-/* $NetBSD: ring.h,v 1.2 2011/12/07 15:40:15 cegger Exp $ */
+/* $NetBSD: ring.h,v 1.2.8.1 2017/12/03 11:36:51 jdolecek Exp $ */
 /******************************************************************************
  * ring.h
  * 
@@ -235,6 +235,20 @@ typedef struct __name##_back_ring __name##_back_ring_t
 /* Direct access to individual ring elements, by index. */
 #define RING_GET_REQUEST(_r, _idx)                                      \
     (&((_r)->sring->ring[((_idx) & (RING_SIZE(_r) - 1))].req))
+
+/*
+ * Get a local copy of a request.
+ *
+ * Use this in preference to RING_GET_REQUEST() so all processing is
+ * done on a local copy that cannot be modified by the other end.
+ *
+ * Note that https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58145 may cause this
+ * to be ineffective where _req is a struct which consists of only bitfields.
+ */
+#define RING_COPY_REQUEST(_r, _idx, _req) do {				\
+	/* Use volatile to force the copy into _req. */			\
+	*(_req) = *(volatile typeof(_req))RING_GET_REQUEST(_r, _idx);	\
+} while (0)
 
 #define RING_GET_RESPONSE(_r, _idx)                                     \
     (&((_r)->sring->ring[((_idx) & (RING_SIZE(_r) - 1))].rsp))

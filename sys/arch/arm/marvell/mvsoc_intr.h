@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.h,v 1.2.2.1 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: mvsoc_intr.h,v 1.2.2.2 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -33,6 +33,8 @@
 
 #if defined(ARMADAXP)
 #define __HAVE_PIC_SET_PRIORITY
+#define __HAVE_PIC_PENDING_INTRS
+#define PIC_MAXMAXSOURCES 256
 #endif
 #endif
 

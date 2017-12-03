@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.6 2012/04/21 22:22:48 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.6.2.1 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2012/04/21 22:22:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6.2.1 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,14 @@ typedef struct {
 	kcpuset_t *		tp_cpumask;
 } pmap_tlb_packet_t;
 
-/* No more than N seperate invlpg. */
+/*
+ * No more than N separate invlpg.
+ *
+ * Statistically, a value of six is big enough to cover the requested number
+ * of pages in ~ 95% of the TLB shootdowns we are getting. We therefore rarely
+ * reach the limit, and increasing it can actually reduce the performance due
+ * to the high cost of invlpg.
+ */
 #define	TP_MAXVA		6
 
 /*
@@ -297,7 +304,7 @@ pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
 {
 	int err = 0;
 
-	if (!kcpuset_match(target, kcpuset_running)) {
+	if (!kcpuset_match(target, kcpuset_attached)) {
 		const struct cpu_info * const self = curcpu();
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *lci;

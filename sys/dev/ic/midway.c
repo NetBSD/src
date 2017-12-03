@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.94 2012/03/13 18:40:31 elad Exp $	*/
+/*	$NetBSD: midway.c,v 1.94.2.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.94 2012/03/13 18:40:31 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.94.2.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "opt_natm.h"
 
@@ -187,6 +187,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.94 2012/03/13 18:40:31 elad Exp $");
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/ic/midwayreg.h>
 #include <dev/ic/midwayvar.h>
+#include "ioconf.h"
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
@@ -246,12 +247,6 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.94 2012/03/13 18:40:31 elad Exp $");
 #define ENOTHER_SWSL	0x08		/* in software service list */
 
 int en_dma = EN_DMA;			/* use DMA (switch off for dbg) */
-
-/*
- * autoconfig attachments
- */
-
-extern struct cfdriver en_cd;
 
 /*
  * local structures
@@ -638,7 +633,7 @@ STATIC INLINE struct mbuf *en_mget(struct en_softc *sc, u_int totlen, u_int *drq
   MGETHDR(m, M_DONTWAIT, MT_DATA);
   if (m == NULL)
     return(NULL);
-  m->m_pkthdr.rcvif = &sc->enif;
+  m_set_rcvif(m, &sc->enif);
   m->m_pkthdr.len = totlen;
   m->m_len = MHLEN;
   top = NULL;
@@ -2592,7 +2587,7 @@ EN_INTR_TYPE en_intr(void *arg)
     char sbuf[256];
 
     snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
-    printf("%s: interrupt=0x%s\n", device_xname(sc->sc_dev), sbuf);
+    printf("%s: interrupt=%s\n", device_xname(sc->sc_dev), sbuf);
   }
 #endif
 
@@ -2604,7 +2599,7 @@ EN_INTR_TYPE en_intr(void *arg)
     char sbuf[256];
 
     snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
-    printf("%s: unexpected interrupt=0x%s, resetting card\n",
+    printf("%s: unexpected interrupt=%s, resetting card\n",
            device_xname(sc->sc_dev), sbuf);
 #ifdef EN_DEBUG
 #ifdef DDB
@@ -2760,13 +2755,13 @@ EN_INTR_TYPE en_intr(void *arg)
 	  /* if there's a subinterface for this vci, override ifp. */
 	  ifp = en_vci2ifp(sc, sc->rxslot[slot].atm_vci);
 	  ifp->if_ipackets++;
-	  m->m_pkthdr.rcvif = ifp;	/* XXX */
+	  m_set_rcvif(m, ifp);	/* XXX */
 #else
 	  ifp = &sc->enif;
 	  ifp->if_ipackets++;
 #endif
 
-	  bpf_mtap(ifp, m);
+	  bpf_mtap_softint(ifp, m);
 
 	  atm_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
 	}
@@ -3318,7 +3313,7 @@ int en_dump(int unit, int level)
       continue;
 
     snprintb(sbuf, sizeof(sbuf), END_BITS, level);
-    printf("dumping device %s at level 0x%s\n", device_xname(sc->sc_dev), sbuf);
+    printf("dumping device %s at level %s\n", device_xname(sc->sc_dev), sbuf);
 
     if (sc->dtq_us == 0) {
       printf("<hasn't been en_init'd yet>\n");
@@ -3366,13 +3361,13 @@ int en_dump(int unit, int level)
       printf("resid = 0x%x\n", EN_READ(sc, MID_RESID));
 
       snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTSTAT));
-      printf("interrupt status = 0x%s\n", ybuf);
+      printf("interrupt status = %s\n", ybuf);
 
       snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTENA));
-      printf("interrupt enable = 0x%s\n", ybuf);
+      printf("interrupt enable = %s\n", ybuf);
 
       snprintb(ybuf, sizeof(ybuf), MID_MCSRBITS, EN_READ(sc, MID_MAST_CSR));
-      printf("mcsr = 0x%s\n", ybuf);
+      printf("mcsr = %s\n", ybuf);
 
       printf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),
 			MID_SL_A2REG(sc->hwslistp));
@@ -3623,6 +3618,7 @@ en_pvcattach(struct ifnet *ifp)
 	LIST_INSERT_HEAD(&sc->sif_list, (struct pvcsif *)pvc_ifp, sif_links);
 	if_attach(pvc_ifp);
 	atm_ifattach(pvc_ifp);
+	bpf_mtap_softint_init(pvc_ifp);
 
 #ifdef ATM_PVCEXT
 	rrp_add(sc, pvc_ifp);

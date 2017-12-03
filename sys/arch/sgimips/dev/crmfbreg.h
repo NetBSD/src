@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.15 2011/05/17 22:26:33 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.15.14.1 2017/12/03 11:36:41 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -68,6 +68,7 @@
 #define		CRMFB_DOTCLOCK_N_MASK		0x00003f00
 #define		CRMFB_DOTCLOCK_P_MASK		0x0000c000
 #define		CRMFB_DOTCLOCK_CLKRUN_SHIFT	20
+#define		CRMFB_DOTCLOCK_BYPASS		0x00100000 /* turn the clock off */
 #define		CRMFB_DOTCLOCK_OUT_OF_RANGE	0x00400000
 #define		CRMFB_DOTCLOCK_OUT_OF_LOCK	0x00800000
 #define		CRMFB_DOTCLOCK_TDWNI		0x01000000 /* ? */
@@ -328,6 +329,7 @@
 #define DE_MODE_TYPE_RGBA	0x00000020
 #define DE_MODE_TYPE_ABGR	0x00000030
 #define DE_MODE_TYPE_YCRCB	0x000000f0
+#define DE_MODE_TYPE_MASK	0x000000f0
 #define DE_MODE_PIXDEPTH_8	0x00000000
 #define DE_MODE_PIXDEPTH_16	0x00000004
 #define DE_MODE_PIXDEPTH_32	0x00000008
@@ -427,7 +429,12 @@
 #define CRIME_DE_BUF_START	0x0000003f
 
 #define CRIME_DE_LEVEL_SHIFT	18
-#define CRIME_DE_LEVEL_MAX	0x7f
+/*
+ * XXX
+ * The manual claims that the pipeline is 128 deep, in reality it seems to be
+ * 64, at least on my O2. Might be 128 deep on O2+
+ */ 
+#define CRIME_DE_LEVEL_MAX	0x3f
 #define CRIME_PIPE_LEVEL(x)	((x & CRIME_DE_LEVEL_MASK) >>  \
 				  CRIME_DE_LEVEL_SHIFT)
 

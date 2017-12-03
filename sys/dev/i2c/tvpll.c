@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll.c,v 1.4.12.1 2014/08/20 00:03:37 tls Exp $ */
+/* $NetBSD: tvpll.c,v 1.4.12.2 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.4.12.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.4.12.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,6 @@ tvpll_open(device_t parent, i2c_tag_t t, i2c_addr_t a, struct tvpll_data *p)
 	struct tvpll *tvpll;
 
 	tvpll = kmem_alloc(sizeof(struct tvpll), KM_SLEEP);
-        if (tvpll == NULL)
-                return NULL;
-
 	tvpll->tag = t;
 	tvpll->addr = a;
 
@@ -153,7 +150,7 @@ tvpll_tune_dtv(struct tvpll *tvpll,
 	return rv;
 }
 
-MODULE(MODULE_CLASS_DRIVER, tvpll, "iic");
+MODULE(MODULE_CLASS_DRIVER, tvpll, "i2cexec");
 
 static int
 tvpll_modcmd(modcmd_t cmd, void *opaque)

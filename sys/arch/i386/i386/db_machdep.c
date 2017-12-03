@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4.2.1 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4.2.2 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4.2.1 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4.2.2 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep, db_expr_t *offp
 		 * locations rather than on trap, since some traps
 		 * (e.g., npxdna) don't go through trap()
 		 */
-#ifdef __ELF__
 		if (!strcmp(name, "trap_tss")) {
 			*is_trap = TRAP_TSS;
 			narg = 0;
@@ -158,34 +157,6 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep, db_expr_t *offp
 				narg = 0;
 			}
 		}
-#else
-		if (!strcmp(name, "_trap_tss")) {
-			*is_trap = TRAP_TSS;
-			narg = 0;
-		} else if (!strcmp(name, "_trap")) {
-			*is_trap = TRAP;
-			narg = 0;
-		} else if (!strcmp(name, "_syscall")) {
-			*is_trap = SYSCALL;
-			narg = 0;
-		} else if (name[0] == '_' && name[1] == 'X') {
-			if (!strncmp(name, "_Xintr", 6) ||
-			    !strncmp(name, "_Xresume", 8) ||
-			    !strncmp(name, "_Xstray", 7) ||
-			    !strncmp(name, "_Xhold", 6) ||
-			    !strncmp(name, "_Xrecurse", 9) ||
-			    !strcmp(name, "_Xdoreti")) {
-				*is_trap = INTERRUPT;
-				narg = 0;
-			} else if (!strcmp(name, "_Xsoftintr")) {
-				*is_trap = SOFTINTR;
-				narg = 0;
-			} else if (!strncmp(name, "_Xtss_", 6)) {
-				*is_trap = INTERRUPT_TSS;
-				narg = 0;
-			}
-		}
-#endif /* __ELF__ */
 	}
 
 	if (offp != NULL)

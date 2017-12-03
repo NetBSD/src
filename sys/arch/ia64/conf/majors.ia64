@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ia64,v 1.9.2.1 2014/08/20 00:03:07 tls Exp $
+#	$NetBSD: majors.ia64,v 1.9.2.2 2017/12/03 11:36:20 jdolecek Exp $
 #
 # Device majors for ia64
 #
@@ -30,7 +30,6 @@ device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
 device-major	joy		char 26			joy
-device-major	spkr		char 27			spkr
 
 # next three are obsolete
 #device-major	omms		char 35			omms
@@ -65,7 +64,7 @@ device-major	esh		char 63			esh
 device-major	ugen		char 64			ugen
 device-major	wsmux		char 65			wsmux
 device-major	ucom		char 66			ucom
-device-major	sysmon		char 67			sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 67			sysmon
 
 device-major	ld		char 69  block 19	ld
 device-major	urio		char 70			urio

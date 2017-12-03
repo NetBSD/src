@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.142.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.142.2.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,13 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.142.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.142.2.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * Built-in malloc types.  Note: ought to be removed.
@@ -107,7 +105,10 @@ kern_malloc(unsigned long size, int flags)
 	void *p;
 
 	if (size >= PAGE_SIZE) {
-		allocsize = PAGE_SIZE + size; /* for page alignment */
+		if (size > (ULONG_MAX-PAGE_SIZE))
+			allocsize = ULONG_MAX;	/* this will fail later */
+		else
+			allocsize = PAGE_SIZE + size; /* for page alignment */
 		hdroffset = PAGE_SIZE - sizeof(struct malloc_header);
 	} else {
 		allocsize = sizeof(struct malloc_header) + size;
@@ -199,12 +200,4 @@ kern_realloc(void *curaddr, unsigned long newsize, int flags)
 	 */
 	free(curaddr, ksp);
 	return newaddr;
-}
-
-/*
- * Initialize the kernel memory allocator
- */
-void
-kmeminit(void)
-{
 }

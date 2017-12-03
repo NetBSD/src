@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2011/06/20 06:29:53 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.13.12.1 2017/12/03 11:35:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,3 +43,6 @@
 #endif /* _KERNEL && !_MODULE */
 
 #include <powerpc/param.h>
+
+/* We need the same btop macro in device drivers for m68k and powerpc */
+#define MD_BTOP(pa)		(pa)

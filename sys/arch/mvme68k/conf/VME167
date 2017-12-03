@@ -1,6 +1,6 @@
-#	$NetBSD: VME167,v 1.33.8.2 2014/08/20 00:03:14 tls Exp $
+#	$NetBSD: VME167,v 1.33.8.3 2017/12/03 11:36:30 jdolecek Exp $
 
-include		"arch/mvme68k/conf/std.mvme68k"
+include 	"arch/mvme68k/conf/std.mvme68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -19,7 +19,6 @@ maxusers	8
 
 #options 	SYSVSHM
 options 	KTRACE
-options 	COMPAT_43
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -43,21 +42,9 @@ options 	INET
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-#options 	COMPAT_09
-#options 	COMPAT_10
-#options 	COMPAT_11
-#options 	COMPAT_12
-#options 	COMPAT_13
-#options 	COMPAT_14
-#options 	COMPAT_15
-#options 	COMPAT_16
-#options 	COMPAT_20
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
+include 	"conf/compat_netbsd30.config"
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs

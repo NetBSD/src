@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.35.2.3 2014/08/20 00:02:43 tls Exp $
+# $NetBSD: NULL,v 1.35.2.4 2017/12/03 11:35:49 jdolecek Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.35.2.3 $"
+#ident          "GENERIC-$Revision: 1.35.2.4 $"
 
 maxusers	8
 
@@ -50,7 +50,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #
 options 	DIAGNOSTIC	# Extra kernel sanity checks
 options 	DEBUG		# Enable misc. kernel debugging code
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
@@ -61,24 +60,11 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #
 # Compatibility option
 #
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2,
-#options 	COMPAT_13	# NetBSD 1.3,
-#options 	COMPAT_14	# NetBSD 1.4,
-#options 	COMPAT_15	# NetBSD 1.5,
-#options 	COMPAT_16	# NetBSD 1.6,
-#options 	COMPAT_20	# NetBSD 2.0,
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	COMPAT_43	# and 4.3BSD
+include 	"conf/compat_netbsd40.config"
+no options 	COMPAT_43	# and 4.3BSD
+
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #
 # File systems
@@ -208,6 +194,8 @@ fd*		at fdc0 unit ?		# floppy disks on the later
 #a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 #aucc*		at mainbus0		# Amiga CC audio
 #audio*		at aucc?
+
+#spkr*		at audio?		# PC speaker (synthesized)
 
 # wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
@@ -439,12 +427,9 @@ pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?

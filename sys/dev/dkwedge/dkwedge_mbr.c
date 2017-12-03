@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.7 2012/04/07 05:09:09 christos Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.7.2.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.7 2012/04/07 05:09:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.7.2.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,16 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 	dp = mbr->mbr_parts;
 
 	for (i = 0; i < MBR_PART_COUNT; i++) {
-		/* Extended partitions are handled below. */
-		if (dp[i].mbrp_type == 0 ||
-		    MBR_IS_EXTENDED(dp[i].mbrp_type))
-		    	continue;
+		switch (dp[i].mbrp_type) {
+		case 0:			/* empty */
+		case MBR_PTYPE_PMBR:	/* Handled by GPT */
+			continue;
+		default:
+		    /* Extended partitions are handled below. */
+			if (MBR_IS_EXTENDED(dp[i].mbrp_type))
+				continue;
+			break;
+		}
 
 		if ((ptype = mbr_ptype_to_str(dp[i].mbrp_type)) == NULL) {
 			/*
@@ -118,9 +124,9 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 			    dp[i].mbrp_type);
 			continue;
 		}
-		strcpy(dkw.dkw_ptype, ptype);
+		strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 
-		strcpy(dkw.dkw_parent, a->pdk->dk_name);
+		strlcpy(dkw.dkw_parent, a->pdk->dk_name, sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = le32toh(dp[i].mbrp_start);
 		dkw.dkw_size = le32toh(dp[i].mbrp_size);
 
@@ -168,7 +174,7 @@ dkwedge_discover_mbr(struct disk *pdk, struct vnode *vp)
 	mbr_args_t a;
 
 	a.pdk = pdk;
-	a.secsize = pdk->dk_label->d_secsize;
+	a.secsize = DEV_BSIZE << pdk->dk_blkshift;  
 	a.vp = vp;
 	a.buf = malloc(a.secsize, M_DEVBUF, M_WAITOK);
 	a.error = 0;

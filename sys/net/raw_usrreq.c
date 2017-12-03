@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.37.12.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.37.12.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.37.12.1 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.37.12.2 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -53,12 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.37.12.1 2014/08/20 00:04:34 tls Exp
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/raw_cb.h>
-
-void
-raw_init(void)
-{
-	LIST_INIT(&rawcb);
-}
 
 static inline int
 equal(const struct sockaddr *a1, const struct sockaddr *a2)
@@ -79,17 +73,17 @@ raw_input(struct mbuf *m0, ...)
 	va_list ap;
 	struct sockproto *proto;
 	struct sockaddr *src, *dst;
-
-	KASSERT(mutex_owned(softnet_lock));
+	struct rawcbhead *rawcbhead;
 
 	va_start(ap, m0);
 	proto = va_arg(ap, struct sockproto *);
 	src = va_arg(ap, struct sockaddr *);
 	dst = va_arg(ap, struct sockaddr *);
+	rawcbhead = va_arg(ap, struct rawcbhead *);
 	va_end(ap);
 
 	last = NULL;
-	LIST_FOREACH(rp, &rawcb, rcb_list) {
+	LIST_FOREACH(rp, rawcbhead, rcb_list) {
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
 		if (rp->rcb_proto.sp_protocol  &&
@@ -106,6 +100,9 @@ raw_input(struct mbuf *m0, ...)
 		if (rp->rcb_laddr && !equal(rp->rcb_laddr, dst))
 			continue;
 		if (rp->rcb_faddr && !equal(rp->rcb_faddr, src))
+			continue;
+		/* Run any filtering that may have been installed. */
+		if (rp->rcb_filter != NULL && rp->rcb_filter(m, proto, rp) != 0)
 			continue;
 		if (last != NULL) {
 			struct mbuf *n;
@@ -138,24 +135,23 @@ raw_ctlinput(int cmd, const struct sockaddr *arg, void *d)
 }
 
 void
-raw_setsockaddr(struct rawcb *rp, struct mbuf *nam)
+raw_setsockaddr(struct rawcb *rp, struct sockaddr *nam)
 {
 
-	nam->m_len = rp->rcb_laddr->sa_len;
-	memcpy(mtod(nam, void *), rp->rcb_laddr, (size_t)nam->m_len);
+	memcpy(nam, rp->rcb_laddr, rp->rcb_laddr->sa_len);
 }
 
 void
-raw_setpeeraddr(struct rawcb *rp, struct mbuf *nam)
+raw_setpeeraddr(struct rawcb *rp, struct sockaddr *nam)
 {
 
-	nam->m_len = rp->rcb_faddr->sa_len;
-	memcpy(mtod(nam, void *), rp->rcb_faddr, (size_t)nam->m_len);
+	memcpy(nam, rp->rcb_faddr, rp->rcb_faddr->sa_len);
 }
 
 int
-raw_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
+raw_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
+    struct mbuf *control, struct lwp *l,
+    int (*output)(struct mbuf *, struct socket *))
 {
 	struct rawcb *rp = sotorawcb(so);
 	int error = 0;
@@ -188,7 +184,7 @@ raw_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			goto die;
 		}
 	}
-	error = (*so->so_proto->pr_output)(m, so);
+	error = (*output)(m, so);
 	if (nam)
 		raw_disconnect(rp);
 

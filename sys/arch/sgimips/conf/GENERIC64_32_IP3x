@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC64_32_IP3x,v 1.1.6.2 2014/08/20 00:03:22 tls Exp $
+#	$NetBSD: GENERIC64_32_IP3x,v 1.1.6.3 2017/12/03 11:36:41 jdolecek Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -30,16 +30,4 @@ makeoptions	TEXTADDR="0xffffffff80069000"	# entry point
 no makeoptions 	CPUFLAGS
 makeoptions	CPUFLAGS="-march=mips4 -mtune=vr5000"
 
-#ident		"GENERIC64_IP3x-$Revision: 1.1.6.2 $"
-
-# Compatibility options
-#options 	COMPAT_15	# NetBSD 1.5
-#options 	COMPAT_16	# NetBSD 1.6
-#options 	COMPAT_20	# NetBSD 2.0
-#options 	COMPAT_30	# NetBSD 3.0
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-
-no options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
-#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+#ident		"GENERIC64_IP3x-$Revision: 1.1.6.3 $"

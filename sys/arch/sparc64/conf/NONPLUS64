@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.35.2.2 2014/08/20 00:03:25 tls Exp $
+#	$NetBSD: NONPLUS64,v 1.35.2.3 2017/12/03 11:36:44 jdolecek Exp $
 
-include "arch/sparc64/conf/std.sparc64"
+include 	"arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.35.2.2 $"
+#ident		"NONPLUS64-$Revision: 1.35.2.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -35,11 +35,6 @@ config		netbsd	root on ? type ?
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
 
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
-
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
@@ -60,6 +55,7 @@ options 	NFS_BOOT_BOOTPARAM
 ## serial console break or keyboard reset, where the PROM would normally
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 options 	DDB			# kernel dynamic debugger
+pseudo-device	ksyms
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 
@@ -106,35 +102,21 @@ options 	SCSIVERBOSE
 ## additional user-level utilities or system configuration files. See
 ## compat_sunos(8) and compat_svr4(8).
 
-options 	COMPAT_43	# 4.3BSD system interfaces
-options 	COMPAT_09	# NetBSD 0.9 binary compatibility
-options 	COMPAT_10	# NetBSD 1.0 binary compatibility
-options 	COMPAT_11	# NetBSD 1.1 binary compatibility
-options 	COMPAT_12	# NetBSD 1.2 binary compatibility
-options 	COMPAT_13	# NetBSD 1.3 binary compatibility
-options 	COMPAT_14	# NetBSD 1.4 binary compatibility
-options 	COMPAT_15	# NetBSD 1.5 binary compatibility
-options 	COMPAT_16	# NetBSD 1.6 binary compatibility
-options 	COMPAT_20	# NetBSD 2.0 binary compatibility
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+include 	"conf/compat_netbsd09.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	COMPAT_SVR4_32	# 32-bit SVR4 binaries
+#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+#options 	COMPAT_SVR4_32	# 32-bit SVR4 binaries
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	EXEC_ELF32	# Exec module for NetBSD/sparc 1.5 binaries.
 #options 	SYSCALL_DEBUG
 options 	EXEC_AOUT	# Exec module for NetBSD/sparc pre-1.5 binaries.
-
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem
-file-system 	OVERLAY		# overlay file system
+file-system	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
@@ -152,6 +134,7 @@ options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -300,7 +283,7 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	
+pseudo-device	vnd
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
@@ -310,7 +293,7 @@ pseudo-device	ccd
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	
+#pseudo-device	md
 
 
 #### Network interfaces
@@ -340,17 +323,17 @@ le*		at lebuffer?				# SBus
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-#pseudo-device	sl		
+#pseudo-device	sl
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		
+pseudo-device	ppp
 
 ## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		
+#pseudo-device	strip
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		
+pseudo-device	tun
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
@@ -367,6 +350,8 @@ pseudo-device	ipfilter
 ##
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 audio*		at audiocs0
+
+spkr*		at audio?		# PC speaker (synthesized)
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m

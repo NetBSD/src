@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.41 2011/02/20 06:59:53 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.41.14.1 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.41 2011/02/20 06:59:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.41.14.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -200,7 +200,7 @@ acpibut_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpibut, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpibut, "sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

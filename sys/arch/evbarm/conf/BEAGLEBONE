@@ -1,25 +1,16 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.2.2.4 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: BEAGLEBONE,v 1.2.2.5 2017/12/03 11:36:03 jdolecek Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
 
 include	"arch/evbarm/conf/std.beagle"
-
-# estimated number of users
-
-maxusers	32
-
-# Standard system options
-
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+include "arch/evbarm/conf/GENERIC.common"
 
 # CPU options
 
 options 	CPU_CORTEXA8
 options 	TI_AM335X
-options 	PMAPCOUNTERS
 
 # XXX The Cortex PMC delay() doesn't seem to work.
 #no options	CORTEX_PMC
@@ -27,117 +18,11 @@ options 	PMAPCOUNTERS
 # Architecture options
 #makeoptions	CPUFLAGS+="-mthumb"
 
-# File systems
-
-file-system	FFS		# UFS
-#file-system	LFS		# log-structured file system
-file-system	MFS		# memory file system
-file-system	NFS		# Network file system
-#file-system 	ADOSFS		# AmigaDOS-compatible file system
-file-system 	EXT2FS		# second extended file system (linux)
-#file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	MSDOSFS		# MS-DOS file system
-#file-system	FDESC		# /dev/fd
-#file-system	KERNFS		# /kern
-#file-system	NULLFS		# loopback file system
-#file-system	PROCFS		# /proc
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-#file-system	UMAPFS		# NULLFS + uid and gid remapping
-#file-system	UNION		# union file system
-file-system	TMPFS		# memory file system
-file-system	PTYFS		# /dev/pts/N support
-
-# File system options
-#options 	QUOTA		# legacy UFS quotas
-#options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
-#options 	NFSSERVER
-options 	WAPBL		# File system journaling support
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-
-# Networking options
-
-#options 	GATEWAY		# packet forwarding
-options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_DEBUG	# debug for IP security
-#options 	MROUTING	# IP multicast routing
-#options 	PIM		# Protocol Independent Multicast
-#options 	NETATALK	# AppleTalk networking
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-
-options 	NFS_BOOT_BOOTP
-options 	NFS_BOOT_DHCP
-#options		NFS_BOOT_BOOTSTATIC
-#options		NFS_BOOTSTATIC_MYIP="\"192.168.1.4\""
-#options		NFS_BOOTSTATIC_GWIP="\"192.168.1.1\""
-#options		NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
-#options		NFS_BOOTSTATIC_SERVADDR="\"192.168.1.1\""
-#options		NFS_BOOTSTATIC_SERVER="\"192.168.1.1:/nfs/sdp2430\""
-
-options		NFS_BOOT_RWSIZE=1024
-
-# Compatibility options
-
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_20	# NetBSD 2.0 compatibility.
-#options 	COMPAT_16	# NetBSD 1.6 compatibility.
-#options 	COMPAT_15	# NetBSD 1.5 compatibility.
-#options 	COMPAT_14	# NetBSD 1.4 compatibility.
-#options 	COMPAT_13	# NetBSD 1.3 compatibility.
-#options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-#options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-
-# Shared memory options
-
-options 	SYSVMSG		# System V-like message queues
-options 	SYSVSEM		# System V-like semaphores
-options 	SYSVSHM		# System V-like memory sharing
-
-# Device options
-
-#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
-#options 	MEMORY_DISK_DYNAMIC
-#options 	MINIROOTSIZE=1000	# Size in blocks
-#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
-
-# Miscellaneous kernel options
-options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
-#options 	SCSIVERBOSE	# Verbose SCSI errors
-#options 	MIIVERBOSE	# Verbose MII autoconfuration messages
-#options 	DDB_KEYCODE=0x40
-#options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
-
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-options 	DDB		# in-kernel debugger
-options		DDB_ONPANIC=1
-options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-#options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=530000
+makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
 options USB_DEBUG
@@ -171,18 +56,18 @@ cpu0		at mainbus?
 #L3i0		at mainbus?
 
 # OBIO
-obio0		at mainbus? base 0x44000000 size 0x0c000000
-#obio0		at mainbus? base 0x44c00000 size 0x00400000	# L4_WKUP
-#obio1		at mainbus? base 0x48000000 size 0x01000000	# L4_PER
-#obio2		at mainbus? base 0x4a000000 size 0x01000000	# L4_FAST
+obio0		at mainbus? base 0x44c00000 size 0x00400000	# L4_WKUP
+obio1		at mainbus? base 0x48000000 size 0x01000000	# L4_PER
+obio2		at mainbus? base 0x4a000000 size 0x01000000	# L4_FAST
 
-
+# Enhanced Direct Memory Access controller
+edma0		at mainbus? base 0x49000000 size 0x100000 intrbase 12
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x50000000
 
 # Interrupt Controller
-omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
+omapicu0	at obio1 addr 0x48200000 size 0x1000 intrbase 0
 
 # Power, Reset and Clock Management
 prcm0		at obio0 addr 0x44e00000 size 0x2000	# PRM Module
@@ -191,16 +76,13 @@ prcm0		at obio0 addr 0x44e00000 size 0x2000	# PRM Module
 sitaracm0	at obio0 addr 0x44e10000 size 0x2000
 
 # SDHC controllers
-# XXX Kludge -- the am335x's mmc registers start at an offset of #x100
-# from other omap3.  (What about omap4?)  Need to adapt the omap sdhc
-# driver to handle this.
-sdhc0		at obio0 addr 0x48060100 size 0x0f00 intr 64
+sdhc0		at obio1 addr 0x48060000 size 0x1000 intr 64 edmabase 24
 sdmmc0		at sdhc0
 ld0		at sdmmc0
-sdhc1		at obio0 addr 0x481d8100 size 0x0f00 intr 28 # BB Black
+sdhc1		at obio1 addr 0x481d8000 size 0x1000 intr 28 edmabase 2 # BB Black
 sdmmc1		at sdhc1
 ld1		at sdmmc1
-#sdhc2		at obio0 addr 0x47810100 size 0xff00 intr 29
+#sdhc2		at obio0 addr 0x47810000 size 0x1000 intr 29
 #sdmmc2		at sdhc2
 #ld2		at sdmmc2
 sdmmc*		at sdhc?		# SD/MMC bus
@@ -209,13 +91,15 @@ ld*		at sdmmc?
 #options SDHC_DEBUG
 
 # General-purpose I/O pins
-# XXX These are the GPIO v2 in the AM335x, not v1 as in the OMAP35xx.
-#omapgpio0	at obio0 addr 0x44e07000 size 0x1000 intrbase 128 intr 29
-#omapgpio1	at obio0 addr 0x4804c000 size 0x1000 intrbase 160 intr 30
-#omapgpio2	at obio0 addr 0x481ac000 size 0x1000 intrbase 192 intr 32
-#omapgpio3	at obio0 addr 0x481ae000 size 0x1000 intrbase 224 intr 32
-
-#gpio*		at omapgpio?
+omapgpio0	at obio0 addr 0x44e07000 size 0x1000 # intrbase 128 intr 29
+gpio0		at omapgpio0
+omapgpio1	at obio1 addr 0x4804c000 size 0x1000 # intrbase 160 intr 30
+gpio1		at omapgpio1
+omapgpio2	at obio1 addr 0x481ac000 size 0x1000 # intrbase 192 intr 32
+gpio2		at omapgpio2
+omapgpio3	at obio1 addr 0x481ae000 size 0x1000 # intrbase 224 intr 32
+gpio3		at omapgpio3
+gpio* 		at gpiobus?
 
 # I2C Controller
 tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
@@ -233,42 +117,45 @@ options 	CONSADDR=0x44e09000, CONSPEED=115200
 # choice.
 
 # Hardclock timer
-omapdmtimer0	at obio0 addr 0x48040000 size 0x1000 intr 68	# DM Timer 2
+omapdmtimer0	at obio1 addr 0x48040000 size 0x1000 intr 68	# DM Timer 2
 
 # Time counter
 omapdmtimer1	at obio0 addr 0x44e31000 size 0x1000 intr 67	# DM Timer 1ms
 
 # Statclock timer
-omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
+omapdmtimer2	at obio1 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
 
 # Watchdog timers
 omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
 
+# Random number generator
+trng*		at obio1 addr 0x48310000 size 0x2000 intr 111	# TRNG
+
 # onboard video, experimental. Video mode is hardcoded in the driver
-#tifb* 	at obio0 addr 0x4830E000 size 0x1000 intr 36
+#tifb* 	at obio1 addr 0x4830E000 size 0x1000 intr 36
 
 # make sure the console display is always wsdisplay0
 #wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-options 	WSEMUL_VT100
-options 	WSDISPLAY_COMPAT_PCVT
-options 	WSDISPLAY_COMPAT_SYSCONS
-options 	WSDISPLAY_COMPAT_USL
-options 	WSDISPLAY_SCROLLSUPPORT
-options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_PCVT
+#options 	WSDISPLAY_COMPAT_SYSCONS
+#options 	WSDISPLAY_COMPAT_USL
+#options 	WSDISPLAY_SCROLLSUPPORT
+#options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
-options 	FONT_GALLANT12x22
-options 	FONT_BOLD8x16
+#options 	FONT_GALLANT12x22
+#options 	FONT_BOLD8x16
 # compatibility to other console drivers
-options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
+#options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # On-board USB. Experimental
-tiotg* 	at obio0 addr 0x47400000 size 0x5000 intrbase 17
+tiotg* 	at mainbus? base 0x47400000 size 0x5000 intrbase 17
 motg*	at tiotg? port ?
 usb*		at motg?
 uhub*		at usb?
@@ -324,32 +211,14 @@ scsibus*	at scsi?
 # SCSI devices
 sd*		at scsibus? target ? lun ?      # SCSI disk drives
 
+# USB Ethernet adapters
 axe*		at uhub? port ? configuration ? interface ?
 
 # Ethernet
-cpsw*		at obio0 addr 0x4a100000 size 0x8000 intrbase 40
+cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 40
 ukphy*		at mii?
 
 # Pseudo-Devices
-
-# disk/mass storage pseudo-devices
-#pseudo-device	md			# memory disk device (ramdisk)
-#pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss			# file system snapshot device
-#pseudo-device	putter			# for puffs and pud
-pseudo-device	drvctl			# driver control
-
-# network pseudo-devices
-pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	loop			# network loopback
-#pseudo-device	kttcp			# network loopback
-
-# miscellaneous pseudo-devices
-pseudo-device	pty			# pseudo-terminals
-#options	RND_COM
-#pseudo-device	clockctl		# user control of clock subsystem
-pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	lockstat		# lock profiling
 
 # local configuration
 cinclude "arch/evbarm/conf/BEAGLEBONE.local"

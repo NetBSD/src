@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.71.6.2 2014/08/20 00:03:29 tls Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.71.6.3 2017/12/03 11:36:50 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.6.2 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.6.3 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -223,6 +223,7 @@ acpicpu_md_flags(void)
 
 			if ((regs[0] & CPUID_DSPM_ARAT) != 0)
 				val &= ~ACPICPU_FLAG_C_APIC;
+
 		}
 
 		break;

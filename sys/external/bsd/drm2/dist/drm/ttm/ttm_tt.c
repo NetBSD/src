@@ -203,6 +203,9 @@ int ttm_tt_init(struct ttm_tt *ttm, struct ttm_bo_device *bdev,
 	ttm->dummy_read_page = dummy_read_page;
 	ttm->state = tt_unpopulated;
 #ifdef __NetBSD__
+	WARN(size == 0, "zero-size allocation in %s, please file a NetBSD PR",
+	    __func__);	/* paranoia -- can't prove in five minutes */
+	size = MAX(size, 1);
 	ttm->swap_storage = uao_create(roundup2(size, PAGE_SIZE), 0);
 	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(bdev->dmat));
 #else
@@ -245,6 +248,9 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_bo_device *bdev,
 	ttm->dummy_read_page = dummy_read_page;
 	ttm->state = tt_unpopulated;
 #ifdef __NetBSD__
+	WARN(size == 0, "zero-size allocation in %s, please file a NetBSD PR",
+	    __func__);	/* paranoia -- can't prove in five minutes */
+	size = MAX(size, 1);
 	ttm->swap_storage = uao_create(roundup2(size, PAGE_SIZE), 0);
 	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(bdev->dmat));
 #else
@@ -278,7 +284,8 @@ fail2: __unused
 fail1:	kmem_free(ttm_dma->dma_segs, (ttm->num_pages *
 		sizeof(ttm_dma->dma_segs[0])));
 fail0:	KASSERT(error);
-	ttm_tt_destroy(ttm);
+	drm_free_large(ttm->pages);
+	uao_detach(ttm->swap_storage);
 	/* XXX errno NetBSD->Linux */
 	return -error;
     }
@@ -349,15 +356,29 @@ int ttm_tt_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 }
 EXPORT_SYMBOL(ttm_tt_bind);
 
-int ttm_tt_swapin(struct ttm_tt *ttm)
-{
 #ifdef __NetBSD__
+/*
+ * ttm_tt_wire(ttm)
+ *
+ *	Wire the uvm pages of ttm and fill the ttm page array.  ttm
+ *	must be unpopulated, and must be marked swapped.  This does not
+ *	change either state -- the caller is expected to include it
+ *	among other operations for such a state transition.
+ */
+int
+ttm_tt_wire(struct ttm_tt *ttm)
+{
 	struct uvm_object *uobj = ttm->swap_storage;
 	struct vm_page *page;
 	unsigned i;
 	int error;
 
+	KASSERTMSG((ttm->state == tt_unpopulated),
+	    "ttm_tt %p must be unpopulated for wiring, but state=%d",
+	    ttm, (int)ttm->state);
+	KASSERT(ISSET(ttm->page_flags, TTM_PAGE_FLAG_SWAPPED));
 	KASSERT(uobj != NULL);
+
 	error = uvm_obj_wirepages(uobj, 0, (ttm->num_pages << PAGE_SHIFT),
 	    &ttm->pglist);
 	if (error)
@@ -375,7 +396,37 @@ int ttm_tt_swapin(struct ttm_tt *ttm)
 
 	/* Success!  */
 	return 0;
-#else
+}
+
+/*
+ * ttm_tt_unwire(ttm)
+ *
+ *	Nullify the ttm page array and unwire the uvm pages of ttm.
+ *	ttm must be unbound and must be marked swapped.  This does not
+ *	change either state -- the caller is expected to include it
+ *	among other operations for such a state transition.
+ */
+void
+ttm_tt_unwire(struct ttm_tt *ttm)
+{
+	struct uvm_object *uobj = ttm->swap_storage;
+	unsigned i;
+
+	KASSERTMSG((ttm->state == tt_unbound),
+	    "ttm_tt %p must be unbound for unwiring, but state=%d",
+	    ttm, (int)ttm->state);
+	KASSERT(!ISSET(ttm->page_flags, TTM_PAGE_FLAG_SWAPPED));
+	KASSERT(uobj != NULL);
+
+	uvm_obj_unwirepages(uobj, 0, (ttm->num_pages << PAGE_SHIFT));
+	for (i = 0; i < ttm->num_pages; i++)
+		ttm->pages[i] = NULL;
+}
+#endif
+
+#ifndef __NetBSD__
+int ttm_tt_swapin(struct ttm_tt *ttm)
+{
 	struct address_space *swap_space;
 	struct file *swap_storage;
 	struct page *from_page;
@@ -410,35 +461,25 @@ int ttm_tt_swapin(struct ttm_tt *ttm)
 	return 0;
 out_err:
 	return ret;
-#endif
 }
+#endif
 
-#ifdef __NetBSD__
 int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
 {
-	struct uvm_object *uobj = ttm->swap_storage;
-	unsigned i;
+#ifdef __NetBSD__
 
-	KASSERT((ttm->state == tt_unbound) || (ttm->state == tt_unpopulated));
-	KASSERT(ttm->caching_state == tt_cached);
-	KASSERT(uobj != NULL);
-
-	/*
-	 * XXX Dunno what this persistent swap storage business is all
-	 * about, but I see nothing using it and it doesn't make sense.
-	 */
+	KASSERTMSG((ttm->state == tt_unpopulated || ttm->state == tt_unbound),
+	    "ttm_tt %p must be unpopulated or unbound for swapout,"
+	    " but state=%d",
+	    ttm, (int)ttm->state);
+	KASSERTMSG((ttm->caching_state == tt_cached),
+	    "ttm_tt %p must be cached for swapout, but caching_state=%d",
+	    ttm, (int)ttm->caching_state);
 	KASSERT(persistent_swap_storage == NULL);
 
-	uvm_obj_unwirepages(uobj, 0, (ttm->num_pages << PAGE_SHIFT));
-	for (i = 0; i < ttm->num_pages; i++)
-		ttm->pages[i] = NULL;
-
-	/* Success!  */
+	ttm->bdev->driver->ttm_tt_swapout(ttm);
 	return 0;
-}
 #else
-int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
-{
 	struct address_space *swap_space;
 	struct file *swap_storage;
 	struct page *from_page;
@@ -489,8 +530,8 @@ out_err:
 		fput(swap_storage);
 
 	return ret;
-}
 #endif
+}
 
 static void ttm_tt_clear_mapping(struct ttm_tt *ttm)
 {

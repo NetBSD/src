@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.12.2.2 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.12.2.3 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -33,13 +33,14 @@
  * NPF state engine to track connection.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.12.2.2 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.12.2.3 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
 #include <sys/mutex.h>
+#endif
 
 #include "npf_impl.h"
 

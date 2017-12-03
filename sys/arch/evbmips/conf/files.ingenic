@@ -1,0 +1,26 @@
+#	$NetBSD: files.ingenic,v 1.7.8.2 2017/12/03 11:36:09 jdolecek Exp $
+
+
+file	kern/subr_disk_mbr.c
+file	arch/evbmips/evbmips/interrupt.c
+
+defflag	opt_ingenic.h	INGENIC_DEBUG INGENIC_CLOCK_DEBUG
+defflag	opt_ingenic.h	INGENIC_INTR_DEBUG
+
+file	arch/evbmips/ingenic/autoconf.c
+file	arch/evbmips/ingenic/machdep.c
+file	arch/evbmips/ingenic/intr.c
+file	arch/evbmips/ingenic/clock.c
+file	arch/evbmips/ingenic/cpu_startup.S
+
+# System bus
+device	mainbus { }
+attach	mainbus at root
+file	arch/evbmips/ingenic/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/ingenic/cpu.c		cpu
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks

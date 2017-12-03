@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: proc.h,v 1.13.18.1 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,5 +59,8 @@ struct mdproc {
 #define	MDP_FIXALIGN	0x1		/* Fix unaligned memory accesses */
 
 #define netbsd32_syscall_intern syscall_intern
+
+/* Override to account for the VA hole */
+#define	PAX_ASLR_DELTA_MMAP_LEN	18
 
 #endif /* _SPARC64_PROC_H */

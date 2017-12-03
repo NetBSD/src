@@ -1,0 +1,111 @@
+/* $NetBSD: tegra_apbdmareg.h,v 1.2.12.2 2017/12/03 11:35:54 jdolecek Exp $ */
+
+/*-
+ * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _ARM_TEGRA_APBDMAREG_H
+#define _ARM_TEGRA_APBDMAREG_H
+
+/*
+ * APB DMA registers
+ */
+#define	APBDMA_COMMAND_REG		0x00
+#define	 APBDMA_COMMAND_GEN		__BIT(31)
+#define	APBDMA_STATUS_REG		0x04
+#define	APBDMA_CNTRL_REG		0x10
+#define	APBDMA_IRQ_STA_CPU_REG		0x14
+#define	APBDMA_IRQ_STA_COP_REG		0x18
+#define	APBDMA_IRQ_MASK_REG		0x1c
+#define	APBDMA_IRQ_MASK_SET_REG		0x20
+#define	APBDMA_IRQ_MASK_CLR_REG		0x24
+#define	APBDMA_TRIG_REG			0x28
+#define	APBDMA_CHANNEL_TRIG_REG		0x2c
+#define	APBDMA_DMA_STATUS_REG		0x30
+#define	APBDMA_CHANNEL_EN_REG		0x34
+#define	APBDMA_SECURITY_REG		0x38
+#define	APBDMA_CHANNEL_SWID_REG		0x3c
+#define	APBDMA_CHAN_WT_0_REG		0x44
+#define	APBDMA_CHAN_WT_1_REG		0x48
+#define	APBDMA_CHAN_WT_2_REG		0x4c
+#define	APBDMA_CHAN_WT_3_REG		0x50
+#define	APBDMA_CHANNEL_SWID1_REG	0x54
+
+/*
+ * APB DMA channel registers
+ */
+#define	APBDMACHAN_CSR_REG(n)		(0x1000 + ((n) * 0x40))
+#define	 APBDMACHAN_CSR_ENB		__BIT(31)
+#define	 APBDMACHAN_CSR_IE_EOC		__BIT(30)
+#define	 APBDMACHAN_CSR_HOLD		__BIT(29)
+#define	 APBDMACHAN_CSR_DIR		__BIT(28)
+#define	 APBDMACHAN_CSR_ONCE		__BIT(27)
+#define	 APBDMACHAN_CSR_FLOW		__BIT(21)
+#define	 APBDMACHAN_CSR_REQ_SEL		__BITS(20,16)
+#define	APBDMACHAN_STA_REG(n)		(0x1004 + ((n) * 0x40))
+#define	APBDMACHAN_DMA_BYTE_STA_REG(n)	(0x1008 + ((n) * 0x40))
+#define	APBDMACHAN_CSRE_REG(n)		(0x100c + ((n) * 0x40))
+#define	APBDMACHAN_AHB_PTR_REG(n)	(0x1010 + ((n) * 0x40))
+#define	 APBDMACHAN_AHB_PTR_MASK	__BITS(31,2)
+#define	APBDMACHAN_AHB_SEQ_REG(n)	(0x1014 + ((n) * 0x40))
+#define	 APBDMACHAN_AHB_SEQ_INTR_ENB	__BIT(31)
+#define	 APBDMACHAN_AHB_SEQ_BUS_WIDTH	__BITS(30,28)
+#define	  APBDMACHAN_AHB_SEQ_BUS_WIDTH_32	2
+#define	 APBDMACHAN_AHB_SEQ_DATA_SWAP	__BIT(27)
+#define	 APBDMACHAN_AHB_SEQ_BURST	__BITS(26,24)
+#define	  APBDMACHAN_AHB_SEQ_BURST_1		4
+#define	  APBDMACHAN_AHB_SEQ_BURST_4		5
+#define	  APBDMACHAN_AHB_SEQ_BURST_8		6
+#define	 APBDMACHAN_AHB_SEQ_DBL_BUF	__BIT(19)
+#define	 APBDMACHAN_AHB_SEQ_WRAP	__BITS(18,16)
+#define	  APBDMACHAN_AHB_SEQ_WRAP_NO_WRAP	0
+#define	  APBDMACHAN_AHB_SEQ_WRAP_32		1
+#define	  APBDMACHAN_AHB_SEQ_WRAP_64		2
+#define	  APBDMACHAN_AHB_SEQ_WRAP_128		3
+#define	  APBDMACHAN_AHB_SEQ_WRAP_256		4
+#define	  APBDMACHAN_AHB_SEQ_WRAP_512		5
+#define	  APBDMACHAN_AHB_SEQ_WRAP_1024		6
+#define	  APBDMACHAN_AHB_SEQ_WRAP_2048		7
+#define	APBDMACHAN_APB_PTR_REG(n)	(0x1018 + ((n) * 0x40))
+#define	 APBDMACHAN_APB_PTR_MASK	__BITS(31,2)
+#define	APBDMACHAN_APB_SEQ_REG(n)	(0x101c + ((n) * 0x40))
+#define	 APBDMACHAN_APB_SEQ_BUS_WIDTH	__BITS(30,28)
+#define	  APBDMACHAN_APB_SEQ_BUS_WIDTH_8	0
+#define	  APBDMACHAN_APB_SEQ_BUS_WIDTH_16	1
+#define	  APBDMACHAN_APB_SEQ_BUS_WIDTH_32	2
+#define	 APBDMACHAN_APB_SEQ_DATA_SWAP	__BIT(27)
+#define	 APBDMACHAN_APB_SEQ_WRAP	__BITS(18,16)
+#define	  APBDMACHAN_APB_SEQ_WRAP_NO_WRAP	0
+#define	  APBDMACHAN_APB_SEQ_WRAP_1		1
+#define	  APBDMACHAN_APB_SEQ_WRAP_2		2
+#define	  APBDMACHAN_APB_SEQ_WRAP_4		3
+#define	  APBDMACHAN_APB_SEQ_WRAP_8		4
+#define	  APBDMACHAN_APB_SEQ_WRAP_16		5
+#define	  APBDMACHAN_APB_SEQ_WRAP_32		6
+#define	  APBDMACHAN_APB_SEQ_WRAP_64		7
+#define	APBDMACHAN_WCOUNT_REG(n)	(0x1020 + ((n) * 0x40))
+#define	APBDMACHAN_WORD_REG(n)		(0x1024 + ((n) * 0x40))
+
+#endif /* _ARM_TEGRA_APBDMAREG_H */

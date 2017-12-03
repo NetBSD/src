@@ -1,15 +1,18 @@
-# $NetBSD: std.amd64,v 1.8.2.1 2012/11/20 03:00:56 tls Exp $
+# $NetBSD: std.amd64,v 1.8.2.2 2017/12/03 11:35:47 jdolecek Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
 machine amd64 x86
-include		"conf/std"	# MI standard options
+include 	"conf/std"	# MI standard options
 
 options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR
-options		MULTIPROCESSOR
+options 	MULTIPROCESSOR
+
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few
 
 mainbus0 at root
 cpu* at mainbus?

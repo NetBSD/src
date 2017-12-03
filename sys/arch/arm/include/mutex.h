@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.12.2.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: mutex.h,v 1.12.2.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ struct kmutex {
 		/* Spin mutex */
 		struct {
 			/*
-			 * Since the low bit of mtax_owner is used to flag this
+			 * Since the low bit of mtxa_owner is used to flag this
 			 * mutex as a spin mutex, we can't use the first byte
 			 * or the last byte to store the ipl or lock values.
 			 */
@@ -85,12 +85,12 @@ struct kmutex {
 #define	__HAVE_SIMPLE_MUTEXES		1
 
 /*
- * MUTEX_RECEIVE: no memory barrier required; we're synchronizing against
- * interrupts, not multiple processors.
+ * MUTEX_{GIVE,RECEIVE}: no memory barrier is required in the UP case;
+ * we're synchronizing against interrupts, not multiple processors.
  */
 #ifdef MULTIPROCESSOR
 #ifdef _ARM_ARCH_7
-#define	MUTEX_RECEIVE(mtx)		__asm __volatile("dmb")
+#define	MUTEX_RECEIVE(mtx)		__asm __volatile("dmb" ::: "memory")
 #else
 #define	MUTEX_RECEIVE(mtx)		membar_consumer()
 #endif
@@ -98,12 +98,9 @@ struct kmutex {
 #define	MUTEX_RECEIVE(mtx)		/* nothing */
 #endif
 
-/*
- * MUTEX_GIVE: no memory barrier required; same reason.
- */
 #ifdef MULTIPROCESSOR
 #ifdef _ARM_ARCH_7
-#define	MUTEX_GIVE(mtx)			__asm __volatile("dsb")
+#define	MUTEX_GIVE(mtx)			__asm __volatile("dsb" ::: "memory")
 #else
 #define	MUTEX_GIVE(mtx)			membar_producer()
 #endif

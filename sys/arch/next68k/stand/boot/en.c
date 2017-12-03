@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.17 2009/10/26 19:16:57 cegger Exp $        */
+/*      $NetBSD: en.c,v 1.17.22.1 2017/12/03 11:36:33 jdolecek Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -277,13 +277,17 @@ en_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	volatile struct en_regs *er;
 	volatile struct dma_dev *rxdma;
+#if 0
 	volatile struct dma_dev *txdma;
+#endif
 	int state, rxs;
 	size_t rlen;
 	char *gotpkt;
 
 	rxdma = (struct dma_dev *)P_ENETR_CSR;
+#if 0
 	txdma = (struct dma_dev *)P_ENETX_CSR;
+#endif
 	er = (struct en_regs *)P_ENET;
 
 	DPRINTF(("en_get: rxdma->dd_csr = %x\n",rxdma->dd_csr));

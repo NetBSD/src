@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.146.2.2 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.146.2.3 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.146.2.2 2014/08/20 00:04:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.146.2.3 2017/12/03 11:38:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1061,28 +1061,28 @@ kernfs_readdir(void *v)
 int
 kernfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
 	*ap->a_recycle = false;
-	VOP_UNLOCK(vp);
+
 	return (0);
 }
 
 int
 kernfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct kernfs_node *kfs = VTOKERN(vp);
 
+	VOP_UNLOCK(vp);
+
 	vp->v_data = NULL;
-	vcache_remove(vp->v_mount, &kfs->kfs_kt, sizeof(kfs->kfs_kt));
 	mutex_enter(&kfs_lock);
 	TAILQ_REMOVE(&VFSTOKERNFS(vp->v_mount)->nodelist, kfs, kfs_list);
 	mutex_exit(&kfs_lock);
@@ -1146,14 +1146,13 @@ kernfs_print(void *v)
 int
 kernfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

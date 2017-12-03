@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.12 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.12.14.1 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,6 +37,8 @@
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
  */
+
+#include <sys/ioccom.h>
 
 struct itewinsize {
 	int x;			/* leftedge offset to the right */

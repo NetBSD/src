@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.18.2.2 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: jmide.c,v 1.18.2.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.18.2.2 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.18.2.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,8 @@ static int  jmide_match(device_t, cfdata_t, void *);
 static void jmide_attach(device_t, device_t, void *);
 static int  jmide_intr(void *);
 
-static void jmpata_chip_map(struct pciide_softc*, const struct pci_attach_args*);
+static void jmpata_chip_map(struct pciide_softc*,
+    const struct pci_attach_args*);
 static void jmpata_setup_channel(struct ata_channel*);
 
 static int  jmahci_print(void *, const char *);
@@ -162,11 +163,12 @@ jmide_attach(device_t parent, device_t self, void *aux)
 
 	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
+	aprint_naive("\n");
 	sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev = self;
 
 	jp = jmide_lookup(pa->pa_id);
 	if (jp == NULL) {
-		printf("jmide_attach: WTF?\n");
+		aprint_error_dev(self, "jmide_attach: WTF?\n");
 		return;
 	}
 	sc->sc_npata = jp->jm_npata;
@@ -187,7 +189,8 @@ jmide_attach(device_t parent, device_t self, void *aux)
                 aprint_error("%s: couldn't map interrupt\n", JM_NAME(sc));
                 return;
         }
-        intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
+        intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
+	    sizeof(intrbuf));
         sc->sc_pciide.sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle,
 	    IPL_BIO, jmide_intr, sc);
         if (sc->sc_pciide.sc_pci_ih == NULL) {
@@ -288,7 +291,6 @@ jmide_attach(device_t parent, device_t self, void *aux)
 	pp->ide_name = NULL;
 	pp->chip_map = jmpata_chip_map;
 	pciide_common_attach(&sc->sc_pciide, pa, pp);
-	
 }
 
 static int

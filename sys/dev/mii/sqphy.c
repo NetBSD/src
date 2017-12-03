@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.49.22.1 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.49.22.2 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.49.22.1 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.49.22.2 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,8 @@ sqphyattach(device_t parent, device_t self, void *aux)
 	switch (MII_MODEL(ma->mii_id2)) {
 	case MII_MODEL_SEEQ_84220:
 		sc->mii_funcs = &sqphy_84220_funcs;
-		aprint_normal_dev(self, "using Seeq 84220 isolate/reset hack\n");
+		aprint_normal_dev(self,
+		    "using Seeq 84220 isolate/reset hack\n");
 		break;
 
 	default:
@@ -152,8 +153,7 @@ sqphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

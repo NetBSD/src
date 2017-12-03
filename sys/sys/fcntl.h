@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.42.6.3 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.42.6.4 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -48,9 +48,9 @@
 #ifndef _KERNEL
 #include <sys/featuretest.h>
 #include <sys/types.h>
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE)
 #include <sys/stat.h>
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE */
 #endif /* !_KERNEL */
 
 /*
@@ -120,6 +120,7 @@
 #endif
 #if defined(_NETBSD_SOURCE)
 #define	O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
+#define	O_REGULAR	0x02000000	/* fail if not a regular file */
 #endif
 
 #ifdef _KERNEL
@@ -131,7 +132,7 @@
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
 			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
-			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE)
+			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE|O_REGULAR)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
@@ -313,12 +314,21 @@ int	flock(int, int);
 int	posix_fadvise(int, off_t, off_t, int);
 
 /*
+ * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
+    defined(_NETBSD_SOURCE)
+int	 posix_fallocate(int, off_t, off_t);
+#endif
+
+/*
  * X/Open Extended API set 2 (a.k.a. C063)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
     defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 int	openat(int, const char *, int, ...);
 #endif
+
 __END_DECLS
 #endif /* !_KERNEL */
 

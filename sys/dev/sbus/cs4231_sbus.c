@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.49 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.49.8.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.49 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.49.8.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -129,7 +129,7 @@ const struct audio_hw_if audiocs_sbus_hw_if = {
 
 
 #ifdef AUDIO_DEBUG
-static void	cs4231_sbus_regdump(char *, struct cs4231_sbus_softc *);
+static void	cs4231_sbus_regdump(const char *, struct cs4231_sbus_softc *);
 #endif
 
 static int	cs4231_sbus_intr(void *);
@@ -200,30 +200,30 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 
 #ifdef AUDIO_DEBUG
 static void
-cs4231_sbus_regdump(char *label, struct cs4231_sbus_softc *sc)
+cs4231_sbus_regdump(const char *label, struct cs4231_sbus_softc *sc)
 {
 	char bits[128];
 
 	printf("cs4231regdump(%s): regs:", label);
 	printf("dmapva: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PVA));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_PVA));
 	printf("dmapc: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PC));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_PC));
 	printf("dmapnva: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PNVA));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_PNVA));
 	printf("dmapnc: 0x%x\n",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PNC));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_PNC));
 	printf("dmacva: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CVA));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_CVA));
 	printf("dmacc: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CC));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_CC));
 	printf("dmacnva: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CNVA));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_CNVA));
 	printf("dmacnc: 0x%x\n",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CNC));
+		bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_CNC));
 
 	snprintb(bits, sizeof(bits), APC_BITS,
-	    bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CSR));
+	    bus_space_read_4(sc->sc_bt, sc->sc_bh, APC_DMA_CSR));
 	printf("apc_dmacsr=%s\n", bits);
 
 	ad1848_dump_regs(&sc->sc_cs4231.sc_ad1848);

@@ -1,8 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2009/05/30 05:56:53 skrll Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.22.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
-#if !defined(_BYTE_ORDER) && !defined(HAVE_NBTOOL_CONFIG_H)
-#error Define _BYTE_ORDER!
-#endif
+#include <machine/endian_machdep.h>
 
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
@@ -19,6 +17,7 @@
 
 #define	ELF32_MACHDEP_ID	EM_SH
 
+#define	KERN_ELFSIZE		32
 #define	ARCH_ELFSIZE		32	/* MD native binary size */
 
 /*
@@ -49,6 +48,11 @@
 #define	R_SH_DIR8BP		7
 #define	R_SH_DIR8W		8
 #define	R_SH_DIR8L		9
+#define	R_SH_LOOP_START		10
+#define	R_SH_LOOP_END		11
+#define	R_SH_GNU_VTINHERIT	22
+#define	R_SH_GNU_VTENTRY	23
+#define	R_SH_SWITCH8		24
 #define	R_SH_SWITCH16		25
 #define	R_SH_SWITCH32		26
 #define	R_SH_USES		27
@@ -57,11 +61,6 @@
 #define	R_SH_CODE		30
 #define	R_SH_DATA		31
 #define	R_SH_LABEL		32
-#define	R_SH_SWITCH8		33
-#define	R_SH_GNU_VTINHERIT	34
-#define	R_SH_GNU_VTENTRY	35
-#define	R_SH_LOOP_START		36
-#define	R_SH_LOOP_END		37
 
 /* TLS relocations */
 #define	R_SH_TLS_GD_32		144

@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.6 2009/01/12 07:01:00 tsutsui Exp $ */
+/*	$NetBSD: xxboot.c,v 1.6.24.1 2017/12/03 11:36:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -133,7 +133,7 @@ xxboot_main(const char *boot_type)
 	just_ask:
 		file = kernelnames[0];
 		printf("filename? [%s]: ", file);
-		gets(line);
+		kgets(line, sizeof(line));
 		if (line[0])
 			file = line;
 

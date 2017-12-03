@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.220.12.2 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.220.12.3 2017/12/03 11:39:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.220.12.2 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.220.12.3 2017/12/03 11:39:06 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -122,7 +122,7 @@ struct vfsops nfs_vfsops = {
 	.vfs_mountroot = nfs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -380,7 +380,7 @@ nfs_mountroot(void)
 	mountlist_append(mp);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
 	vn_lock(vp, LK_SHARED | LK_RETRY);
@@ -435,8 +435,8 @@ nfs_mount_diskless(struct nfs_dlmount *ndmntp, const char *mntname, struct mount
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
 			 ndmntp->ndm_args.hostname, vpp, l);
 	if (error) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);
 	} else
@@ -841,13 +841,18 @@ bad:
 int
 nfs_unmount(struct mount *mp, int mntflags)
 {
-	struct nfsmount *nmp;
+	struct nfsmount *nmp = VFSTONFS(mp);
 	struct vnode *vp;
 	int error, flags = 0;
 
-	if (mntflags & MNT_FORCE)
+	if (mntflags & MNT_FORCE) {
+		mutex_enter(&nmp->nm_lock);
 		flags |= FORCECLOSE;
-	nmp = VFSTONFS(mp);
+		nmp->nm_iflag |= NFSMNT_DISMNTFORCE;
+		mutex_exit(&nmp->nm_lock);
+
+	}
+
 	/*
 	 * Goes something like this..
 	 * - Check for activity on the root vnode (other than ourselves).
@@ -864,17 +869,18 @@ nfs_unmount(struct mount *mp, int mntflags)
 	vp = nmp->nm_vnode;
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
-		return error;
+		goto err;
 
 	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 1) {
 		VOP_UNLOCK(vp);
-		return (EBUSY);
+		error = EBUSY;
+		goto err;
 	}
 
 	error = vflush(mp, vp, flags);
 	if (error) {
 		VOP_UNLOCK(vp);
-		return (error);
+		goto err;
 	}
 
 	/*
@@ -883,6 +889,13 @@ nfs_unmount(struct mount *mp, int mntflags)
 	 * will go away cleanly.
 	 */
 	nmp->nm_iflag |= NFSMNT_DISMNT;
+
+	/*
+	 * No new async I/O will be added, but await for pending
+	 * ones to drain.
+	 */
+	while (nfs_iodbusy(nmp))
+		kpause("nfsumnt", false, hz, NULL);
 
 	/*
 	 * Clean up the stats... note that we carefully avoid decrementing
@@ -908,6 +921,15 @@ nfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&nmp->nm_disconcv);
 	kmem_free(nmp, sizeof(*nmp));
 	return (0);
+
+err:
+	if (mntflags & MNT_FORCE) {
+		mutex_enter(&nmp->nm_lock);
+		nmp->nm_iflag &= ~NFSMNT_DISMNTFORCE;	
+		mutex_exit(&nmp->nm_lock);
+	}
+
+	return error;
 }
 
 /*
@@ -937,6 +959,8 @@ extern int syncprt;
 static bool
 nfs_sync_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	return !LIST_EMPTY(&vp->v_dirtyblkhd) || !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
 }
@@ -1147,4 +1171,5 @@ nfs_vfs_done(void)
 	nfs_node_done();
 	nfs_kqfini();
 	nfs_iodfini();
+	nfs_fini();
 }

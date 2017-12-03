@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/01/21 15:59:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.14.14.1 2017/12/03 11:36:31 jdolecek Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
@@ -13,7 +13,7 @@ SRCS=		start.s clock.c console.c etherfun.c le_poll.c \
 		oc_cksum.s sboot.c
 SRTOBJ=
 PROG=		sboot
-LIBS=		${LIBSA}
+LIBS=		${LIBSA} ${LIBKERN}
 DPADD=		${LIBS}
 CLEANFILES+=	sboot.srec
 

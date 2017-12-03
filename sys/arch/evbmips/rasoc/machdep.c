@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.2.1 2014/08/20 00:02:58 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.2.2 2017/12/03 11:36:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.1 2014/08/20 00:02:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.2 2017/12/03 11:36:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -146,10 +146,7 @@ mach_init(void)
 	 */
 	cal_timer();
 
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -162,7 +159,7 @@ mach_init(void)
 	/*
 	 * Determine the memory size.
 	 */
-#if defined(MT7620)
+#if defined(MT7620) || defined(MT7628)
 	memsize = 128 << 20;
 #else
 	memsize = *(volatile uint32_t *)
@@ -217,17 +214,7 @@ mach_init(void)
 void
 cpu_startup(void)
 {
-#ifdef DEBUG
-	extern int pmapdebug;
-	const int opmapdebug = pmapdebug;
-	pmapdebug = 0;		/* Shut up pmap debug during bootstrap */
-#endif
-
 	cpu_startup_common();
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
 }
 
 void

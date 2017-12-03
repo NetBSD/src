@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.84.6.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.84.6.3 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.84.6.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.84.6.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.84.6.2 2014/08/20 00:03:39 tls Exp $");
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -427,17 +427,18 @@ egattach(device_t parent, device_t self, void *aux)
 	}
 	memcpy(myaddr, &sc->eg_pcb[2], ETHER_ADDR_LEN);
 
-	printf("%s: ROM v%d.%02d %dk address %s\n", device_xname(self),
+	aprint_normal_dev(self, "ROM v%d.%02d %dk address %s\n",
 	    sc->eg_rom_major, sc->eg_rom_minor, sc->eg_ram,
 	    ether_sprintf(myaddr));
 
 	sc->eg_pcb[0] = EG_CMD_SETEADDR; /* Set station address */
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: can't send Set Station Address\n", device_xname(self));
+		aprint_error_dev(self, "can't send Set Station Address\n");
 		return;
 	}
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
-		aprint_error_dev(self, "can't read Set Station Address status\n");
+		aprint_error_dev(self,
+		    "can't read Set Station Address status\n");
 		egprintpcb(sc->eg_pcb);
 		return;
 	}
@@ -491,10 +492,11 @@ eginit(struct eg_softc *sc)
 		aprint_error_dev(sc->sc_dev, "can't send Configure 82586\n");
 
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't read Configure 82586 status\n");
+		aprint_error_dev(sc->sc_dev,
+		    "can't read Configure 82586 status\n");
 		egprintpcb(sc->eg_pcb);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
-		aprint_error_dev(sc->sc_dev, "configure card command failed\n");
+		aprint_error_dev(sc->sc_dev,"configure card command failed\n");
 
 	if (sc->eg_inbuf == NULL) {
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
@@ -508,7 +510,7 @@ eginit(struct eg_softc *sc)
 	if (sc->eg_outbuf == NULL) {
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_outbuf == NULL) {
-			aprint_error_dev(sc->sc_dev, "can't allocate outbuf\n");
+			aprint_error_dev(sc->sc_dev,"can't allocate outbuf\n");
 			panic("eginit");
 		}
 	}
@@ -588,7 +590,8 @@ loop:
 	sc->eg_pcb[6] = len; /* length of packet */
 	sc->eg_pcb[7] = len >> 8;
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't send Send Packet command\n");
+		aprint_error_dev(sc->sc_dev,
+		    "can't send Send Packet command\n");
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		m_freem(m0);
@@ -710,7 +713,8 @@ egread(struct eg_softc *sc, void *buf, int len)
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		aprint_error_dev(sc->sc_dev, "invalid packet size %d; dropping\n", len);
+		aprint_error_dev(sc->sc_dev,
+		    "invalid packet size %d; dropping\n", len);
 		ifp->if_ierrors++;
 		return;
 	}
@@ -722,15 +726,7 @@ egread(struct eg_softc *sc, void *buf, int len)
 		return;
 	}
 
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
-
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*
@@ -746,7 +742,7 @@ egget(struct eg_softc *sc, void *buf, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;

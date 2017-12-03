@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.1.4.2 2014/08/20 00:02:39 tls Exp $ */
+/* $NetBSD: armreg.h,v 1.1.4.3 2017/12/03 11:35:44 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -268,8 +268,8 @@ AARCH64REG_WRITE_INLINE(rmr_el1)
 AARCH64REG_READ_INLINE(rvbar_el1)	// Reset Vector Base Address Register
 AARCH64REG_WRITE_INLINE(rvbar_el1)
 
-AARCH64REG_READ_INLINE(sctrl_el1)	// System Control Register
-AARCH64REG_WRITE_INLINE(sctrl_el1)
+AARCH64REG_READ_INLINE(sctlr_el1)	// System Control Register
+AARCH64REG_WRITE_INLINE(sctlr_el1)
 
 AARCH64REG_READ_INLINE(sp_el0)		// Stack Pointer
 AARCH64REG_WRITE_INLINE(sp_el0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.43 2011/09/01 15:10:31 christos Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.43.12.1 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.43 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.43.12.1 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -311,7 +311,7 @@ mca_busprobe(void)
 		"\017KBDF"
 		"\020DMA32\n", (scp->feature2 << 8) | scp->feature1);
 
-	aprint_verbose("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, 0x%s\n",
+	aprint_verbose("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, %s\n",
 		scp->model, scp->submodel, scp->bios_rev, buf);
 
 	MCA_system = (scp->feature1 & FEATURE_MCABUS) ? 1 : 0;

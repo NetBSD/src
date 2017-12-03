@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #ifndef _ACDISPAT_H_
 #define _ACDISPAT_H_
@@ -173,12 +172,14 @@ AcpiDsInitFieldObjects (
 
 
 /*
- * dsload - Parser/Interpreter interface, pass 1 namespace load callbacks
+ * dsload - Parser/Interpreter interface
  */
 ACPI_STATUS
 AcpiDsInitCallbacks (
     ACPI_WALK_STATE         *WalkState,
     UINT32                  PassNumber);
+
+/* dsload - pass 1 namespace load callbacks */
 
 ACPI_STATUS
 AcpiDsLoad1BeginOp (
@@ -190,9 +191,8 @@ AcpiDsLoad1EndOp (
     ACPI_WALK_STATE         *WalkState);
 
 
-/*
- * dsload - Parser/Interpreter interface, pass 2 namespace load callbacks
- */
+/* dsload - pass 2 namespace load callbacks */
+
 ACPI_STATUS
 AcpiDsLoad2BeginOp (
     ACPI_WALK_STATE         *WalkState,
@@ -257,8 +257,9 @@ AcpiDsMethodDataInit (
  * dsmethod - Parser/Interpreter interface - control method parsing
  */
 ACPI_STATUS
-AcpiDsParseMethod (
-    ACPI_NAMESPACE_NODE     *Node);
+AcpiDsAutoSerializeMethod (
+    ACPI_NAMESPACE_NODE     *Node,
+    ACPI_OPERAND_OBJECT     *ObjDesc);
 
 ACPI_STATUS
 AcpiDsCallControlMethod (
@@ -300,6 +301,12 @@ AcpiDsInitializeObjects (
  * dsobject - Parser/Interpreter interface - object initialization and conversion
  */
 ACPI_STATUS
+AcpiDsBuildInternalObject (
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_PARSE_OBJECT       *Op,
+    ACPI_OPERAND_OBJECT     **ObjDescPtr);
+
+ACPI_STATUS
 AcpiDsBuildInternalBufferObj (
     ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op,
@@ -325,6 +332,17 @@ AcpiDsCreateNode (
     ACPI_WALK_STATE         *WalkState,
     ACPI_NAMESPACE_NODE     *Node,
     ACPI_PARSE_OBJECT       *Op);
+
+
+/*
+ * dspkginit - Package object initialization
+ */
+ACPI_STATUS
+AcpiDsInitPackageElement (
+    UINT8                   ObjectType,
+    ACPI_OPERAND_OBJECT     *SourceObject,
+    ACPI_GENERIC_STATE      *State,
+    void                    *Context);
 
 
 /*
@@ -459,5 +477,15 @@ ACPI_STATUS
 AcpiDsResultPush (
     ACPI_OPERAND_OBJECT     *Object,
     ACPI_WALK_STATE         *WalkState);
+
+
+/*
+ * dsdebug - parser debugging routines
+ */
+void
+AcpiDsDumpMethodStack (
+    ACPI_STATUS             Status,
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_PARSE_OBJECT       *Op);
 
 #endif /* _ACDISPAT_H_ */

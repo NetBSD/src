@@ -1,0 +1,58 @@
+#	$NetBSD: files.zynq,v 1.1.20.2 2017/12/03 11:35:57 jdolecek Exp $
+#
+# Configuration info for xilinx Zynq-7000 ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/zynq/zynq_space.c
+file	arch/arm/zynq/zynq_dma.c
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/zynq/zynq7000_board.c
+
+# Console parameters
+defflag opt_zynq.h				ZYNQ
+defflag opt_zynq.h				ZYNQ7000
+defparam opt_zynq.h				CONADDR
+defparam opt_zynq.h				CONSPEED
+defparam opt_zynq.h				CONMODE
+defparam opt_zynq.h				MEMSIZE
+
+# AXI bus interface and SoC domains
+device	axi {[addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
+attach	axi at mainbus
+file	arch/arm/zynq/zynq_axi.c		axi
+
+# System Level Control Module
+device	zynqslcr
+attach	zynqslcr at axi
+file	arch/arm/zynq/zynq_slcr.c		zynqslcr needs-flag
+
+# UART
+device	zynquart
+attach	zynquart at axi
+file	arch/arm/zynq/zynq_uart.c		zynquart needs-flag
+file	arch/arm/zynq/zynq7000_uart.c		zynquart
+defflag	opt_zynquart.h				ZYNQUARTCONSOLE
+
+# USB controller
+attach	ehci at axi with zynqusb
+file	arch/arm/zynq/zynq_usb.c		zynqusb
+file	arch/arm/zynq/zynq7000_usb.c		zynqusb
+
+# SD host controller for SD/MMC
+attach	sdhc at axi with sdhc_axi
+file	arch/arm/zynq/zynq7000_sdhc.c		sdhc_axi
+
+# Gigabit Ethernet Controller
+device	cemac: ether, ifnet, arp, mii, bus_dma_generic
+attach	cemac at axi
+file	dev/cadence/if_cemac.c			cemac
+file	arch/arm/zynq/zynq_cemac.c		cemac
+

@@ -1,13 +1,17 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.6.14.1 2014/08/20 00:04:37 tls Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.6.14.2 2017/12/03 11:39:06 jdolecek Exp $
 #
 
-RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad pud	\
-		putter raidframe rnd scsipi sysmon vnd wscons		\
+RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb		\
+		pad pud	putter raidframe rnd scsipi sysmon vnd wscons	\
 		opencrypto
 
-RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
+RUMPUSBDEVS=	ualea ubt ucom ugenhc ulpt umass usb
 
-RUMPPCIDEVS=	pci pci_if_iwn pci_if_wm
+RUMPPCIDEVS=	pci pci_if_iwn pci_if_pcn pci_if_wm
+RUMPPCIDEVS+=	pci_usbhc
+RUMPPCIDEVS+=	pci_virtio virtio_if_vioif virtio_ld virtio_viornd
+RUMPPCIDEVS+=	virtio_vioscsi
+RUMPPCIDEVS+=	audio_ac97 pci_auich pci_eap pci_hdaudio hdaudio_hdafg
 # Not really a PCI device, but ....
 RUMPPCIDEVS+=	miiphy
 
@@ -20,7 +24,8 @@ RUMPDEVLDADD+=-lrumpdev_${var}
 RUMPDEVLIBS+=lib${var}
 .endfor
 
-# Currently no NetBSD host support.
-#.for var in ${RUMPPCIDEVS}
-#RUMPDEVLIBS+=lib${var}
-#.endfor
+.if make(rumpdescribe)
+.for var in ${RUMPPCIDEVS}
+RUMPDEVLIBS+=lib${var}
+.endfor
+.endif

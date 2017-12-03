@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.6.4.2 2014/08/20 00:04:37 tls Exp $
+	$NetBSD: README.compileopts,v 1.6.4.3 2017/12/03 11:39:06 jdolecek Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -18,13 +18,15 @@ effect:	Iff "yes", build with -DDIAGNOSTIC.
 
     RUMP_DEBUG
 
-values:	defined / not defined
+values:	<defined> / <undefined>
+defval:	<undefined>
 effect:	Iff defined, build with -DDEBUG.
 
 
     RUMP_LOCKDEBUG
 
-values:	defined / not defined
+values:	<defined> / <undefined>
+defval:	<undefined>
 effect:	Iff defined, build with -DLOCKDEBUG.
 
 
@@ -42,16 +44,6 @@ defval:	no
 effect: If "yes", build rump kernel with uniprocess-optimized locking.
 	An implication of this is that RUMP_NCPU==1 is required at
 	runtime.  If "no", build with multiprocessor-capable locking.
-
-
-    RUMP_UNREAL_ALLOCATORS
-
-values: yes|no
-defval:	no
-effect: If "yes", build version of kmem_alloc, pool and pool_cache
-	that directly relegate allocation to a hypercall.  If "no",
-	build the regular NetBSD memory allocators which use
-	page-sized memory allocation hypercalls.
 
 
     RUMP_VIRTIF
@@ -77,20 +69,15 @@ effect: Control how curlwp is obtained in a rump kernel.  This is
 	register    - use a dedicated register (implies -ffixed)
 
 
-================================================================================
+    RUMP_NBCOMPAT
 
-Rumpuser options:
-
-    RUMPUSER_THREADS
-
-values: pthread/none/fiber or <undefined>
-defval: <undefined>
-effect: Define the way threading is implemented in the rumpuser hypercall
-	implmentation.
-	<undefined> - use default implementation (currently "pthread")
-	pthread     - use pthreads to implement threading
-	none        - do not support kernel threads at all
-	fiber       - user a fiber interface, cooperatively scheduled contexts
+values: comma-separated list of releases; e.g. "60,70";
+	or "all" or "default" or "none".  Currently default == all (but
+	might not be so in the future)
+defval:	all
+effect:	Builds NetBSD COMPAT_nn code for each of the elements in the list.
+	This option is useful only when building rump kernels for
+	NetBSD userspace, and an empty value may be supplied elsewhere.
 
 
 ================================================================================

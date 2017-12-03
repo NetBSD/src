@@ -1,4 +1,4 @@
-# $NetBSD: std.loongson,v 1.1 2011/08/27 13:42:44 bouyer Exp $
+# $NetBSD: std.loongson,v 1.1.12.1 2017/12/03 11:36:09 jdolecek Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -21,10 +21,7 @@ options		EXEC_ELF32	# exec ELF32 binaries
 options		EXEC_SCRIPT	# exec #! scripts
 options 	COMPAT_NETBSD32
 
-#makeoptions	AFLAGS+="-Wa,-mfix-loongson2f-jump -Wa,-mfix-loongson2f-nop"
-#makeoptions	CFLAGS+="-Wa,-mfix-loongson2f-jump -Wa,-mfix-loongson2f-nop"
-#makeoptions	CPUFLAGS="-mips3 -mdivide-breaks" # CPU codegen options
-makeoptions	CPUFLAGS="-mips3 -mdivide-breaks -Wa,-mfix-loongson2f-btb" # CPU codegen options
+makeoptions	CPUFLAGS="-mips3 -mdivide-breaks -Wa,-mfix-loongson2f-btb -Wa,-mfix-loongson2f-jump -Wa,-mfix-loongson2f-nop" # CPU codegen options
 makeoptions	DEFTEXTADDR="0x80200000"
 makeoptions	BOARDTYPE="loongson"
 

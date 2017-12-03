@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.h,v 1.3 2011/11/18 04:08:56 christos Exp $ */
+/*	$NetBSD: linux32_signal.h,v 1.3.10.1 2017/12/03 11:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -36,7 +36,7 @@
 #define native_to_linux32_signo native_to_linux_signo
 #define linux32_to_native_signo linux_to_native_signo
 
-typedef	netbsd32_pointer_t	linux32_handler_t;
+typedef	netbsd32_pointer_t	linux32_handlerp_t;
 typedef	netbsd32_pointer_t	linux32_restorer_t;
 typedef netbsd32_pointer_t 	linux32_siginfop_t;
 typedef netbsd32_pointer_t 	linux32_ucontextp_t;
@@ -85,7 +85,7 @@ typedef struct {
 } linux32_sigset_t;
 
 struct linux32_sigaction {
-	linux32_handler_t	linux_sa_handler;
+	linux32_handlerp_t	linux_sa_handler;
 	u_int32_t		linux_sa_flags;
 	linux32_restorer_t	linux_sa_restorer;
 	linux32_sigset_t	linux_sa_mask;
@@ -156,13 +156,13 @@ struct linux32_rt_sigframe {
         linux32_ucontextp_t sf_ucp;
         struct  linux32_siginfo  sf_si;
         struct  linux32_ucontext sf_uc; 
-        linux32_handler_t   sf_handler;
+        linux32_handlerp_t   sf_handler;
 }; 
 
 struct linux32_sigframe {
         int     sf_sig;
         struct  linux32_sigcontext sf_sc; 
-        linux32_handler_t   sf_handler;
+        linux32_handlerp_t   sf_handler;
 };
 
 #endif /* _AMD64_LINUX32_SIGNAL_H_ */

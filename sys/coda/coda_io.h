@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_io.h,v 1.7 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_io.h,v 1.7.120.1 2017/12/03 11:36:52 jdolecek Exp $	*/
 
 /*
  *
@@ -48,6 +48,8 @@
 #define _CODAIO_H_
 
 /* Define ioctl commands for vcioctl, /dev/cfs */
+
+#include <sys/ioccom.h>
 
 #define CODARESIZE    _IOW('c', 1, struct coda_resize ) /* Resize CODA NameCache */
 #define CODASTATS      _IO('c', 2)                      /* Collect stats */

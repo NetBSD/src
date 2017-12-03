@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 2012/05/07 17:45:29 jym Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.1.6.1 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1 2012/05/07 17:45:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1.6.1 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,15 +174,23 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-	extern int __data_start;
+	extern struct bootspace bootspace;
 	char *dst;
+	size_t i;
 
 	dst = (char *)addr;
 
-	/* If any part is in kernel text, use db_write_text() */
-	if (addr >= KERNBASE && addr < (vaddr_t)&__data_start) {
-		db_write_text(addr, size, data);
-		return;
+	/* If any part is in kernel text or rodata, use db_write_text() */
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type != BTSEG_TEXT &&
+		    bootspace.segs[i].type != BTSEG_RODATA) {
+			continue;
+		}
+		if (addr >= bootspace.segs[i].va &&
+		    addr < (bootspace.segs[i].va + bootspace.segs[i].sz)) {
+			db_write_text(addr, size, data);
+			return;
+		}
 	}
 
 	dst = (char *)addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.130.22.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.130.22.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.130.22.1 2014/08/20 00:03:37 tls Exp $
+ * $Id: aic7xxx.c,v 1.130.22.2 2017/12/03 11:37:03 jdolecek Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.130.22.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.130.22.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4372,8 +4372,10 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 			  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
 			  BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
 			  &next_scb->dmamap);
-		if (error != 0)
+		if (error != 0) {
+			free(pdata, M_DEVBUF);
 			break;
+		}
 
 		next_scb->hscb = &scb_data->hscbs[scb_data->numscbs];
 		next_scb->hscb->tag = ahc->scb_data->numscbs;

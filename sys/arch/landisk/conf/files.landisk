@@ -1,4 +1,4 @@
-#	$NetBSD: files.landisk,v 1.4 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.landisk,v 1.4.54.1 2017/12/03 11:36:22 jdolecek Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -35,8 +35,7 @@ file dev/md_root.c				memory_disk_hooks
 # System bus types
 #
 
-define	mainbus {}
-device	mainbus: pcibus, mainbus
+device	mainbus {}: pcibus
 attach	mainbus at root
 file	arch/landisk/landisk/mainbus.c		mainbus
 
@@ -85,9 +84,7 @@ file	arch/landisk/dev/rs5c313_landisk.c	rs5c313_landisk
 #
 # on-board I/O bus
 #
-define obio { [port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1] }
-
-device	obio: obio
+device	obio { [port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1] }
 attach	obio at mainbus
 file	arch/landisk/dev/obio.c		obio needs-flag
 

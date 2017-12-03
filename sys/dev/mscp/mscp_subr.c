@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.43.2.3 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.43.2.4 2017/12/03 11:37:06 jdolecek Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.43.2.3 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.43.2.4 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -211,13 +211,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < NITEMS; i++) {
 		struct mscp_work *mw;
 
-		if ((mw = kmem_zalloc(sizeof(*mw), KM_SLEEP)) == NULL) {
-			mscp_free_workitems(mi);
-			aprint_error_dev(mi->mi_dev,
-			    "failed to allocate memory for work items");
-			return;
-		}
-	
+		mw = kmem_zalloc(sizeof(*mw), KM_SLEEP);
 		SLIST_INSERT_HEAD(&mi->mi_freelist, mw, mw_list);
 	}
 

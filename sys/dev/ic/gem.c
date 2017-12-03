@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.100.2.2 2014/08/20 00:03:38 tls Exp $ */
+/*	$NetBSD: gem.c,v 1.100.2.3 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.100.2.2 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.100.2.3 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -577,6 +577,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, gem_ifflags_cb);
 
@@ -1149,8 +1150,10 @@ gem_init(struct ifnet *ifp)
 		(*sc->sc_hwreset)(sc);
 
 	/* step 3. Setup data structures in host memory */
-	if (gem_meminit(sc) != 0)
+	if (gem_meminit(sc) != 0) {
+		splx(s);
 		return 1;
+	}
 
 	/* step 4. TX MAC registers & counters */
 	gem_init_regs(sc);
@@ -1360,6 +1363,9 @@ gem_start(struct ifnet *ifp)
 	struct gem_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx = -1, lasttx = -1, ofree, seg;
+#ifdef GEM_DEBUG
+	int otxnext;
+#endif
 	uint64_t flags = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1370,10 +1376,12 @@ gem_start(struct ifnet *ifp)
 	 * the first descriptor we'll use.
 	 */
 	ofree = sc->sc_txfree;
-	firsttx = sc->sc_txnext;
+#ifdef GEM_DEBUG
+	otxnext = sc->sc_txnext;
+#endif
 
 	DPRINTF(sc, ("%s: gem_start: txfree %d, txnext %d\n",
-	    device_xname(sc->sc_dev), ofree, firsttx));
+	    device_xname(sc->sc_dev), ofree, otxnext));
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
@@ -1478,7 +1486,8 @@ gem_start(struct ifnet *ifp)
 		/*
 		 * Initialize the transmit descriptors.
 		 */
-		for (nexttx = sc->sc_txnext, seg = 0;
+		firsttx = sc->sc_txnext;
+		for (nexttx = firsttx, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = GEM_NEXTTX(nexttx)) {
 
@@ -1600,7 +1609,7 @@ gem_start(struct ifnet *ifp)
 
 	if (sc->sc_txfree != ofree) {
 		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
-		    device_xname(sc->sc_dev), lasttx, firsttx));
+		    device_xname(sc->sc_dev), lasttx, otxnext));
 		/*
 		 * The entire packet chain is set up.
 		 * Kick the transmitter.
@@ -1732,7 +1741,7 @@ gem_tint(struct gem_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_if_flags = ifp->if_flags;
 		ifp->if_timer = SIMPLEQ_EMPTY(&sc->sc_txdirtyq) ? 0 : 5;
-		gem_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 	DPRINTF(sc, ("%s: gem_tint: watchdog %d\n",
 		device_xname(sc->sc_dev), ifp->if_timer));
@@ -1797,7 +1806,6 @@ gem_rint(struct gem_softc *sc)
 		}
 
 		progress++;
-		ifp->if_ipackets++;
 
 		if (rxstat & GEM_RD_BAD_CRC) {
 			ifp->if_ierrors++;
@@ -1840,14 +1848,8 @@ gem_rint(struct gem_softc *sc)
 		}
 		m->m_data += 2; /* We're already off by two */
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 #ifdef INET
 		/* hardware checksum */
@@ -1938,7 +1940,7 @@ swcsum:
 			m->m_pkthdr.csum_flags = 0;
 #endif
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	if (progress) {

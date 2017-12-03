@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.32.12.1 2014/08/20 00:04:28 tls Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.32.12.2 2017/12/03 11:38:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.32.12.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.32.12.2 2017/12/03 11:38:43 jdolecek Exp $");
 #endif /* not lint */
 
 
@@ -1001,7 +1001,7 @@ udf_bitmap_check_trunc_free(struct udf_bitmap *bitmap, uint32_t to_trunc)
 		bitval = (1 << bit);
 		if (!(*bpos & bitval))
 			seq_free = 0;
-		offset++; to_trunc--;
+		to_trunc--;
 		bit++;
 		if (bit == 8) {
 			bpos++;
@@ -1084,11 +1084,8 @@ udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
 		DPRINTF(RESERVE, ("udf_reserve_space: issuing sync\n"));
 		mutex_exit(&ump->allocate_mutex);
 		udf_do_sync(ump, FSCRED, 0);
-		mutex_enter(&mntvnode_lock);
 		/* 1/8 second wait */
-		cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,
-			hz/8);
-		mutex_exit(&mntvnode_lock);
+		kpause("udfsync2", false, hz/8, NULL);
 		mutex_enter(&ump->allocate_mutex);
 	}
 
@@ -2954,7 +2951,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		error = 0;
 
 		/* clear the space in the descriptor */
-		KASSERT(old_size > new_size);
+		KASSERT(old_size >= new_size);
 		memset(data_pos + new_size, 0, old_size - new_size);
 
 		/* TODO zero appened space in buffer! */

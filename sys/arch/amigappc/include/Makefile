@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.23.22.1 2014/08/20 00:02:44 tls Exp $
+#	$NetBSD: Makefile,v 1.23.22.2 2017/12/03 11:35:49 jdolecek Exp $
 
 INCSDIR= /usr/include/amigappc
 
 INCS=	disklabel.h \
+	fenv.h \
 	intr.h \
 	sljit_machdep.h \
 	vmparam.h

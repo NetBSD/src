@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.83.2.4 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.83.2.5 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,11 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.83.2.4 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.83.2.5 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.83.2.4 2014/08/20 00:02:45 tls E
 
 #include <arm/locore.h>
 
-#include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
 
 #include <machine/bootconfig.h>
@@ -108,6 +108,7 @@ int cpu_simd_present;
 int cpu_simdex_present;
 int cpu_umull_present;
 int cpu_synchprim_present;
+int cpu_unaligned_sigbus;
 const char *cpu_arch = "";
 
 int cpu_instruction_set_attributes[6];
@@ -250,7 +251,7 @@ bootsync(void)
 /*
  * void cpu_startup(void)
  *
- * Machine dependent startup code. 
+ * Machine dependent startup code.
  *
  */
 void
@@ -314,10 +315,30 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
+	/*
+	 * This is actually done by initarm_common, but not all ports use it
+	 * yet so do it here to catch them as well
+	 */
 	struct lwp * const l = &lwp0;
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	/* Zero out the PCB. */
+ 	memset(pcb, 0, sizeof(*pcb));
+
 	pcb->pcb_ksp = uvm_lwp_getuarea(l) + USPACE_SVC_STACK_TOP;
-	lwp_settrapframe(l, (struct trapframe *)pcb->pcb_ksp - 1);
+	pcb->pcb_ksp -= sizeof(struct trapframe);
+
+	struct trapframe * tf = (struct trapframe *)pcb->pcb_ksp;
+
+	/* Zero out the trapframe. */
+	memset(tf, 0, sizeof(*tf));
+	lwp_settrapframe(l, tf);
+
+#if defined(__ARMEB__)
+	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
+#else
+ 	tf->tf_spsr = PSR_USR32_MODE;
+#endif
 }
 
 /*
@@ -379,15 +400,6 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 	cpu_do_powersave = newval;
 
 	return (0);
-}
-
-static int
-sysctl_hw_machine_arch(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node = *rnode;
-	node.sysctl_data = l->l_proc->p_md.md_march;
-	node.sysctl_size = strlen(l->l_proc->p_md.md_march) + 1;
-	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
@@ -504,18 +516,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "printfataltraps", NULL,
 		       NULL, 0, &cpu_printfataltraps, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-
-	/*
-	 * We need override the usual CTL_HW HW_MACHINE_ARCH so we
-	 * return the right machine_arch based on the running executable.
-	 */
+	cpu_unaligned_sigbus = !CPU_IS_ARMV6_P() && !CPU_IS_ARMV7_P();
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_STRING, "machine_arch",
-		       SYSCTL_DESCR("Machine CPU class"),
-		       sysctl_hw_machine_arch, 0, NULL, 0,
-		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
+		       CTLTYPE_INT, "unaligned_sigbus",
+		       SYSCTL_DESCR("Do SIGBUS for fixed unaligned accesses"),
+		       NULL, 0, &cpu_unaligned_sigbus, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void
@@ -567,6 +574,10 @@ parse_mi_bootargs(char *args)
 	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_VERBOSE;
+	if (get_bootconf_option(args, "debug", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-x", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= AB_DEBUG;
 }
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -668,8 +679,11 @@ module_init_md(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	if (pa >= physical_start && pa < physical_end)
+		return 0;
 
-	return (pa < ctob(physmem)) ? 0 : EFAULT;
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }
 
 #ifdef __HAVE_CPU_UAREA_ALLOC_IDLELWP
@@ -731,3 +745,17 @@ mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 	return rv;
 }
 #endif
+
+bool
+mm_md_page_color(paddr_t pa, int *colorp)
+{
+#if (ARM_MMU_V6 + ARM_MMU_V7) != 0
+	*colorp = atop(pa & arm_cache_prefer_mask);
+
+	return arm_cache_prefer_mask ? false : true;
+#else
+	*colorp = 0;
+
+	return true;
+#endif
+}

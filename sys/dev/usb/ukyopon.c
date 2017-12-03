@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.16 2012/02/24 06:48:26 mrg Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.16.2.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16 2012/02/24 06:48:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.2.1 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,51 +90,52 @@ Static void	ukyopon_get_status(void *, int, u_char *, u_char *);
 Static int	ukyopon_ioctl(void *, int, u_long, void *, int, proc_t *);
 
 Static struct ucom_methods ukyopon_methods = {
-	ukyopon_get_status,
-	umodem_set,
-	umodem_param,
-	ukyopon_ioctl,
-	umodem_open,
-	umodem_close,
-	NULL,
-	NULL,
+	.ucom_get_status = ukyopon_get_status,
+	.ucom_set = umodem_set,
+	.ucom_param = umodem_param,
+	.ucom_ioctl = ukyopon_ioctl,
+	.ucom_open = umodem_open,
+	.ucom_close = umodem_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
-int             ukyopon_match(device_t, cfdata_t, void *);
-void            ukyopon_attach(device_t, device_t, void *);
-int             ukyopon_detach(device_t, int);
-int             ukyopon_activate(device_t, enum devact);
+int		ukyopon_match(device_t, cfdata_t, void *);
+void		ukyopon_attach(device_t, device_t, void *);
+int		ukyopon_detach(device_t, int);
+int		ukyopon_activate(device_t, enum devact);
 extern struct cfdriver ukyopon_cd;
-CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match, ukyopon_attach, ukyopon_detach, ukyopon_activate);
+CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match,
+    ukyopon_attach, ukyopon_detach, ukyopon_activate);
 
-int 
+int
 ukyopon_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
-	if (uaa->vendor == USB_VENDOR_KYOCERA &&
-	    uaa->product == USB_PRODUCT_KYOCERA_AHK3001V &&
-	    (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
-	     uaa->ifaceno == UKYOPON_DATA_IFACE_INDEX))
+	if (uiaa->uiaa_vendor == USB_VENDOR_KYOCERA &&
+	    uiaa->uiaa_product == USB_PRODUCT_KYOCERA_AHK3001V &&
+	    (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
+	     uiaa->uiaa_ifaceno == UKYOPON_DATA_IFACE_INDEX))
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
 }
 
-void 
+void
 ukyopon_attach(device_t parent, device_t self, void *aux)
 {
 	struct ukyopon_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct ucom_attach_args uca;
+	struct usbif_attach_arg *uiaa = aux;
+	struct ucom_attach_args ucaa;
 
-	uca.portno = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	ucaa.ucaa_portno = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 		UKYOPON_PORT_MODEM : UKYOPON_PORT_DATA;
-	uca.methods = &ukyopon_methods;
-	uca.info = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	ucaa.ucaa_methods = &ukyopon_methods;
+	ucaa.ucaa_info = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 	    "modem port" : "data transfer port";
 
-	if (umodem_common_attach(self, &sc->sc_umodem, uaa, &uca))
+	if (umodem_common_attach(self, &sc->sc_umodem, uiaa, &ucaa))
 		return;
 	return;
 }
@@ -160,10 +165,10 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 
 	switch (cmd) {
 	case UKYOPON_IDENTIFY:
-		strncpy(arg_id->ui_name, UKYOPON_NAME, sizeof arg_id->ui_name);
+		strncpy(arg_id->ui_name, UKYOPON_NAME, sizeof(arg_id->ui_name));
 		arg_id->ui_busno =
-		    device_unit(sc->sc_umodem.sc_udev->bus->usbctl);
-		arg_id->ui_address = sc->sc_umodem.sc_udev->address;
+		    device_unit(sc->sc_umodem.sc_udev->ud_bus->ub_usbctl);
+		arg_id->ui_address = sc->sc_umodem.sc_udev->ud_addr;
 		arg_id->ui_model = UKYOPON_MODEL_UNKNOWN;
 		arg_id->ui_porttype = portno;
 		break;
@@ -184,7 +189,7 @@ ukyopon_activate(device_t self, enum devact act)
 	return umodem_common_activate(&sc->sc_umodem, act);
 }
 
-int 
+int
 ukyopon_detach(device_t self, int flags)
 {
 	struct ukyopon_softc *sc = device_private(self);

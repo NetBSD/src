@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.10.2.3 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.10.2.4 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,40 +31,41 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.3 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.4 2017/12/03 11:36:58 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
+#include <sys/atomic.h>
+#include <sys/conf.h>
+#include <sys/cprng.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/select.h>
-#include <sys/poll.h>
-#include <sys/kmem.h>
-#include <sys/atomic.h>
-#include <sys/mutex.h>
-#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
+#include <sys/kmem.h>
+#include <sys/mutex.h>
+#include <sys/percpu.h>
+#include <sys/poll.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/rnd.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
+#include <sys/select.h>
+#include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <sys/pool.h>
-#include <sys/kauth.h>
-#include <sys/cprng.h>
-#include <sys/cpu.h>
-#include <sys/stat.h>
-#include <sys/percpu.h>
-
-#include <sys/rnd.h>
-#ifdef COMPAT_50
-#include <compat/sys/rnd.h>
-#endif
 
 #include <dev/rnd_private.h>
+
+#include "ioconf.h"
 
 #if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
@@ -72,15 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.3 2014/08/20 00:03:35 tls Exp $
 
 #ifdef RND_DEBUG
 #define	DPRINTF(l,x)      if (rnd_debug & (l)) printf x
-extern int rnd_debug;
 #else
 #define	DPRINTF(l,x)
 #endif
-
-#define	RND_DEBUG_WRITE		0x0001
-#define	RND_DEBUG_READ		0x0002
-#define	RND_DEBUG_IOCTL		0x0004
-#define	RND_DEBUG_SNOOZE	0x0008
 
 /*
  * list devices attached
@@ -94,7 +89,7 @@ extern int rnd_debug;
  */
 #define	RND_TEMP_BUFFER_SIZE	512
 
-static pool_cache_t rnd_temp_buffer_cache;
+static pool_cache_t rnd_temp_buffer_cache __read_mostly;
 
 /*
  * Per-open state -- a lazily initialized CPRNG.
@@ -104,25 +99,13 @@ struct rnd_ctx {
 	bool			rc_hard;
 };
 
-static pool_cache_t rnd_ctx_cache;
+static pool_cache_t rnd_ctx_cache __read_mostly;
 
 /*
  * The per-CPU RNGs used for short requests
  */
-static percpu_t *percpu_urandom_cprng;
+static percpu_t *percpu_urandom_cprng __read_mostly;
 
-/*
- * Our random pool.  This is defined here rather than using the general
- * purpose one defined in rndpool.c.
- *
- * Samples are collected and queued into a separate mutex-protected queue
- * (rnd_samples, see above), and processed in a timeout routine; therefore,
- * the mutex protecting the random pool is at IPL_SOFTCLOCK() as well.
- */
-extern rndpool_t rnd_pool;
-extern kmutex_t  rndpool_mtx;
-
-void	rndattach(int);
 
 dev_type_open(rndopen);
 
@@ -150,6 +133,7 @@ static int rnd_close(struct file *);
 static int rnd_kqfilter(struct file *, struct knote *);
 
 const struct fileops rnd_fileops = {
+	.fo_name = "rnd",
 	.fo_read = rnd_read,
 	.fo_write = rnd_write,
 	.fo_ioctl = rnd_ioctl,
@@ -161,29 +145,38 @@ const struct fileops rnd_fileops = {
 	.fo_restart = fnullop_restart
 };
 
-void			rnd_wakeup_readers(void);	/* XXX */
-extern int		rnd_ready;		/* XXX */
-extern rndsave_t	*boot_rsp;		/* XXX */
-extern LIST_HEAD(, krndsource) rnd_sources;	/* XXX */
+static struct evcnt rndpseudo_soft = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "rndpseudo", "open soft");
+static struct evcnt rndpseudo_hard = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "rndpseudo", "open hard");
+EVCNT_ATTACH_STATIC(rndpseudo_soft);
+EVCNT_ATTACH_STATIC(rndpseudo_hard);
 
 /*
- * Generate a 32-bit counter.  This should be more machine dependent,
- * using cycle counters and the like when possible.
+ * Generate a 32-bit counter.
  */
-static inline u_int32_t
+static inline uint32_t
 rndpseudo_counter(void)
 {
-	struct timeval tv;
+	struct bintime bt;
+	uint32_t ret;
 
 #if defined(__HAVE_CPU_COUNTER)
 	if (cpu_hascounter())
 		return (cpu_counter32());
 #endif
-	microtime(&tv);
-	return (tv.tv_sec * 1000000 + tv.tv_usec);
+
+	binuptime(&bt);
+	ret = bt.sec;
+	ret ^= bt.sec >> 32;
+	ret ^= bt.frac;
+	ret ^= bt.frac >> 32;
+
+	return ret;
 }
 
 /*
+ * Used by ioconf.c to attach the rnd pseudo-device.
  * `Attach' the random device.  We use the timing of this event as
  * another potential source of initial entropy.
  */
@@ -203,9 +196,7 @@ rndattach(int num)
 
 	/* Mix in another counter.  */
 	c = rndpseudo_counter();
-	mutex_spin_enter(&rndpool_mtx);
-	rndpool_add_data(&rnd_pool, &c, sizeof(c), 1);
-	mutex_spin_exit(&rndpool_mtx);
+	rnd_add_data(NULL, &c, sizeof(c), 1);
 }
 
 int
@@ -219,10 +210,12 @@ rndopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	switch (minor(dev)) {
 	case RND_DEV_URANDOM:
 		hard = false;
+		rndpseudo_soft.ev_count++;
 		break;
 
 	case RND_DEV_RANDOM:
 		hard = true;
+		rndpseudo_hard.ev_count++;
 		break;
 
 	default:
@@ -360,7 +353,7 @@ rnd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	if (uio->uio_resid == 0)
 		return 0;
 
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 	uint8_t *const buf = pool_cache_get(rnd_temp_buffer_cache, PR_WAITOK);
 
 	/*
@@ -437,7 +430,7 @@ static int
 rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 	   kauth_cred_t cred, int flags)
 {
-	u_int8_t *bf;
+	uint8_t *bf;
 	int n, ret = 0, estimate_ok = 0, estimate = 0, added = 0;
 
 	ret = kauth_authorize_device(cred,
@@ -494,9 +487,7 @@ rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 		/*
 		 * Mix in the bytes.
 		 */
-		mutex_spin_enter(&rndpool_mtx);
-		rndpool_add_data(&rnd_pool, bf, n, estimate);
-		mutex_spin_exit(&rndpool_mtx);
+		rnd_add_data(NULL, bf, n, estimate);
 
 		added += n;
 		DPRINTF(RND_DEBUG_WRITE, ("Random: Copied in %d bytes\n", n));
@@ -505,319 +496,23 @@ rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 	return (ret);
 }
 
-static void
-krndsource_to_rndsource(krndsource_t *kr, rndsource_t *r)
-{
-	memset(r, 0, sizeof(*r));
-	strlcpy(r->name, kr->name, sizeof(r->name));
-        r->total = kr->total;
-        r->type = kr->type;
-        r->flags = kr->flags;
-}
-
-static void
-krndsource_to_rndsource_est(krndsource_t *kr, rndsource_est_t *re)
-{
-	memset(re, 0, sizeof(*re));
-	krndsource_to_rndsource(kr, &re->rt);
-	re->dt_samples = kr->time_delta.insamples;
-	re->dt_total = kr->time_delta.outbits;
-	re->dv_samples = kr->value_delta.insamples;
-	re->dv_total = kr->value_delta.outbits;
-}
-
 int
 rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 {
-	krndsource_t *kr;
-	rndstat_t *rst;
-	rndstat_name_t *rstnm;
-	rndstat_est_t *rset;
-	rndstat_est_name_t *rsetnm;
-	rndctl_t *rctl;
-	rnddata_t *rnddata;
-	u_int32_t count, start;
-	int ret = 0;
-	int estimate_ok = 0, estimate = 0;
 
 	switch (cmd) {
 	case FIONBIO:
 	case FIOASYNC:
-	case RNDGETENTCNT:
-		break;
-
-	case RNDGETPOOLSTAT:
-	case RNDGETSRCNUM:
-	case RNDGETSRCNAME:
-	case RNDGETESTNUM:
-	case RNDGETESTNAME:
-		ret = kauth_authorize_device(curlwp->l_cred,
-		    KAUTH_DEVICE_RND_GETPRIV, NULL, NULL, NULL, NULL);
-		if (ret)
-			return (ret);
-		break;
-
-	case RNDCTL:
-		ret = kauth_authorize_device(curlwp->l_cred,
-		    KAUTH_DEVICE_RND_SETPRIV, NULL, NULL, NULL, NULL);
-		if (ret)
-			return (ret);
-		break;
-
-	case RNDADDDATA:
-		ret = kauth_authorize_device(curlwp->l_cred,
-		    KAUTH_DEVICE_RND_ADDDATA, NULL, NULL, NULL, NULL);
-		if (ret)
-			return (ret);
-		estimate_ok = !kauth_authorize_device(curlwp->l_cred,
-		    KAUTH_DEVICE_RND_ADDDATA_ESTIMATE, NULL, NULL, NULL, NULL);
-		break;
-
+		return 0;
 	default:
-#ifdef COMPAT_50
-		return compat_50_rnd_ioctl(fp, cmd, addr);
-#else
-		return ENOTTY;
-#endif
+		return rnd_system_ioctl(fp, cmd, addr);
 	}
-
-	switch (cmd) {
-
-	/*
-	 * Handled in upper layer really, but we have to return zero
-	 * for it to be accepted by the upper layer.
-	 */
-	case FIONBIO:
-	case FIOASYNC:
-		break;
-
-	case RNDGETENTCNT:
-		mutex_spin_enter(&rndpool_mtx);
-		*(u_int32_t *)addr = rndpool_get_entropy_count(&rnd_pool);
-		mutex_spin_exit(&rndpool_mtx);
-		break;
-
-	case RNDGETPOOLSTAT:
-		mutex_spin_enter(&rndpool_mtx);
-		rndpool_get_stats(&rnd_pool, addr, sizeof(rndpoolstat_t));
-		mutex_spin_exit(&rndpool_mtx);
-		break;
-
-	case RNDGETSRCNUM:
-		rst = (rndstat_t *)addr;
-
-		if (rst->count == 0)
-			break;
-
-		if (rst->count > RND_MAXSTATCOUNT)
-			return (EINVAL);
-
-		mutex_spin_enter(&rndpool_mtx);
-		/*
-		 * Find the starting source by running through the
-		 * list of sources.
-		 */
-		kr = rnd_sources.lh_first;
-		start = rst->start;
-		while (kr != NULL && start >= 1) {
-			kr = kr->list.le_next;
-			start--;
-		}
-
-		/*
-		 * Return up to as many structures as the user asked
-		 * for.  If we run out of sources, a count of zero
-		 * will be returned, without an error.
-		 */
-		for (count = 0; count < rst->count && kr != NULL; count++) {
-			krndsource_to_rndsource(kr, &rst->source[count]);
-			kr = kr->list.le_next;
-		}
-
-		rst->count = count;
-
-		mutex_spin_exit(&rndpool_mtx);
-		break;
-
-	case RNDGETESTNUM:
-		rset = (rndstat_est_t *)addr;
-
-		if (rset->count == 0)
-			break;
-
-		if (rset->count > RND_MAXSTATCOUNT)
-			return (EINVAL);
-
-		mutex_spin_enter(&rndpool_mtx);
-		/*
-		 * Find the starting source by running through the
-		 * list of sources.
-		 */
-		kr = rnd_sources.lh_first;
-		start = rset->start;
-		while (kr != NULL && start > 1) {
-			kr = kr->list.le_next;
-			start--;
-		}
-
-		/* Return up to as many structures as the user asked
-		 * for.  If we run out of sources, a count of zero
-		 * will be returned, without an error.
-		 */
-		for (count = 0; count < rset->count && kr != NULL; count++) {
-			krndsource_to_rndsource_est(kr, &rset->source[count]);
-			kr = kr->list.le_next;
-		}
-
-		rset->count = count;
-
-		mutex_spin_exit(&rndpool_mtx);
-		break;
-
-	case RNDGETSRCNAME:
-		/*
-		 * Scan through the list, trying to find the name.
-		 */
-		mutex_spin_enter(&rndpool_mtx);
-		rstnm = (rndstat_name_t *)addr;
-		kr = rnd_sources.lh_first;
-		while (kr != NULL) {
-			if (strncmp(kr->name, rstnm->name,
-				    MIN(sizeof(kr->name),
-					sizeof(rstnm->name))) == 0) {
-				krndsource_to_rndsource(kr, &rstnm->source);
-				mutex_spin_exit(&rndpool_mtx);
-				return (0);
-			}
-			kr = kr->list.le_next;
-		}
-		mutex_spin_exit(&rndpool_mtx);
-
-		ret = ENOENT;		/* name not found */
-
-		break;
-
-	case RNDGETESTNAME:
-		/*
-		 * Scan through the list, trying to find the name.
-		 */
-		mutex_spin_enter(&rndpool_mtx);
-		rsetnm = (rndstat_est_name_t *)addr;
-		kr = rnd_sources.lh_first;
-		while (kr != NULL) {
-			if (strncmp(kr->name, rsetnm->name,
-				    MIN(sizeof(kr->name),
-					sizeof(rsetnm->name))) == 0) {
-				krndsource_to_rndsource_est(kr,
-							    &rsetnm->source);
-				mutex_spin_exit(&rndpool_mtx);
-				return (0);
-			}
-			kr = kr->list.le_next;
-		}
-		mutex_spin_exit(&rndpool_mtx);
-
-		ret = ENOENT;           /* name not found */
-
-		break;
-
-	case RNDCTL:
-		/*
-		 * Set flags to enable/disable entropy counting and/or
-		 * collection.
-		 */
-		mutex_spin_enter(&rndpool_mtx);
-		rctl = (rndctl_t *)addr;
-		kr = rnd_sources.lh_first;
-
-		/*
-		 * Flags set apply to all sources of this type.
-		 */
-		if (rctl->type != 0xff) {
-			while (kr != NULL) {
-				if (kr->type == rctl->type) {
-					kr->flags &= ~rctl->mask;
-
-					kr->flags |=
-					    (rctl->flags & rctl->mask);
-				}
-
-				kr = kr->list.le_next;
-			}
-			mutex_spin_exit(&rndpool_mtx);
-			return (0);
-		}
-
-		/*
-		 * scan through the list, trying to find the name
-		 */
-		while (kr != NULL) {
-			if (strncmp(kr->name, rctl->name,
-				    MIN(sizeof(kr->name),
-                                        sizeof(rctl->name))) == 0) {
-				kr->flags &= ~rctl->mask;
-				kr->flags |= (rctl->flags & rctl->mask);
-
-				mutex_spin_exit(&rndpool_mtx);
-				return (0);
-			}
-			kr = kr->list.le_next;
-		}
-
-		mutex_spin_exit(&rndpool_mtx);
-		ret = ENOENT;		/* name not found */
-		
-		break;
-
-	case RNDADDDATA:
-		/*
-		 * Don't seed twice if our bootloader has
-		 * seed loading support.
-		 */
-		if (!boot_rsp) {
-			rnddata = (rnddata_t *)addr;
-
-			if (rnddata->len > sizeof(rnddata->data))
-				return EINVAL;
-
-			if (estimate_ok) {
-				/*
-				 * Do not accept absurd entropy estimates, and
-				 * do not flood the pool with entropy such that
-				 * new samples are discarded henceforth.
-				 */
-				estimate = MIN((rnddata->len * NBBY) / 2,
-					       MIN(rnddata->entropy,
-						   RND_POOLBITS / 2));
-			} else {
-				estimate = 0;
-			}
-
-			mutex_spin_enter(&rndpool_mtx);
-			rndpool_add_data(&rnd_pool, rnddata->data,
-					 rnddata->len, estimate);
-			mutex_spin_exit(&rndpool_mtx);
-
-			rnd_wakeup_readers();
-		}
-#ifdef RND_VERBOSE
-		else {
-			printf("rnd: already seeded by boot loader\n");
-		}
-#endif
-		break;
-
-	default:
-		return ENOTTY;
-	}
-
-	return (ret);
 }
 
 static int
 rnd_poll(struct file *fp, int events)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 	int revents;
 
 	/*
@@ -846,7 +541,7 @@ rnd_poll(struct file *fp, int events)
 static int
 rnd_stat(struct file *fp, struct stat *st)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 
 	/* XXX lock, if cprng allocated?  why? */
 	memset(st, 0, sizeof(*st));
@@ -863,11 +558,11 @@ rnd_stat(struct file *fp, struct stat *st)
 static int
 rnd_close(struct file *fp)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 
 	if (ctx->rc_cprng != NULL)
 		cprng_strong_destroy(ctx->rc_cprng);
-	fp->f_data = NULL;
+	fp->f_rndctx = NULL;
 	pool_cache_put(rnd_ctx_cache, ctx);
 
 	return 0;
@@ -876,7 +571,7 @@ rnd_close(struct file *fp)
 static int
 rnd_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 
 	return cprng_strong_kqfilter(rnd_ctx_cprng(ctx), kn);
 }

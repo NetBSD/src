@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_wdc.c,v 1.2.12.2 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_wdc.c,v 1.2.12.3 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,7 +52,6 @@ struct awin_wdc_softc {
 	struct wdc_softc asc_sc;
         struct ata_channel *asc_chanlist[1];
         struct ata_channel asc_channel;
-        struct ata_queue asc_chqueue;
         struct wdc_regs asc_wdc_regs;
         void    *asc_ih;
 

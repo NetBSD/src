@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3.6.3 2014/08/20 00:03:37 tls Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.6.4 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.6.3 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.6.4 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,13 +361,13 @@ tps65950_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	RTC_READ(TPS65950_ID4_REG_WEEKS_REG, weeks_reg);
 	iic_release_bus(sc->sc_i2c, 0);
 
-	dt->dt_sec = FROMBCD(seconds_reg);
-	dt->dt_min = FROMBCD(minutes_reg);
-	dt->dt_hour = FROMBCD(hours_reg);
-	dt->dt_day = FROMBCD(days_reg);
-	dt->dt_mon = FROMBCD(months_reg);
-	dt->dt_year = FROMBCD(years_reg) + 2000;
-	dt->dt_wday = FROMBCD(weeks_reg);
+	dt->dt_sec = bcdtobin(seconds_reg);
+	dt->dt_min = bcdtobin(minutes_reg);
+	dt->dt_hour = bcdtobin(hours_reg);
+	dt->dt_day = bcdtobin(days_reg);
+	dt->dt_mon = bcdtobin(months_reg);
+	dt->dt_year = bcdtobin(years_reg) + 2000;
+	dt->dt_wday = bcdtobin(weeks_reg);
 
 	return 0;
 }
@@ -380,13 +380,13 @@ tps65950_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 
 	iic_acquire_bus(sc->sc_i2c, 0);
 	tps65950_rtc_enable(sc, false);
-	RTC_WRITE(TPS65950_ID4_REG_SECONDS_REG, TOBCD(dt->dt_sec));
-	RTC_WRITE(TPS65950_ID4_REG_MINUTES_REG, TOBCD(dt->dt_min));
-	RTC_WRITE(TPS65950_ID4_REG_HOURS_REG, TOBCD(dt->dt_hour));
-	RTC_WRITE(TPS65950_ID4_REG_DAYS_REG, TOBCD(dt->dt_day));
-	RTC_WRITE(TPS65950_ID4_REG_MONTHS_REG, TOBCD(dt->dt_mon));
-	RTC_WRITE(TPS65950_ID4_REG_YEARS_REG, TOBCD(dt->dt_year % 100));
-	RTC_WRITE(TPS65950_ID4_REG_WEEKS_REG, TOBCD(dt->dt_wday));
+	RTC_WRITE(TPS65950_ID4_REG_SECONDS_REG, bintobcd(dt->dt_sec));
+	RTC_WRITE(TPS65950_ID4_REG_MINUTES_REG, bintobcd(dt->dt_min));
+	RTC_WRITE(TPS65950_ID4_REG_HOURS_REG, bintobcd(dt->dt_hour));
+	RTC_WRITE(TPS65950_ID4_REG_DAYS_REG, bintobcd(dt->dt_day));
+	RTC_WRITE(TPS65950_ID4_REG_MONTHS_REG, bintobcd(dt->dt_mon));
+	RTC_WRITE(TPS65950_ID4_REG_YEARS_REG, bintobcd(dt->dt_year % 100));
+	RTC_WRITE(TPS65950_ID4_REG_WEEKS_REG, bintobcd(dt->dt_wday));
 	tps65950_rtc_enable(sc, true);
 	iic_release_bus(sc->sc_i2c, 0);
 

@@ -46,6 +46,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -72,23 +73,8 @@ options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_20	# NetBSD 2.0 compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
-#options 	COMPAT_15	# NetBSD 1.5 compatibility.
-#options 	COMPAT_14	# NetBSD 1.4 compatibility.
-#options 	COMPAT_13	# NetBSD 1.3 compatibility.
-#options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd16.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Shared memory options
 
@@ -106,7 +92,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
@@ -124,7 +109,7 @@ options 	DIAGNOSTIC	# internal consistency checks
 #options 	KGDB
 #options  	DEBUG_KGDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-#options 	SYMTAB_SPACE=200000
+#makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
 config		netbsd-sm0	root on sm0 type nfs
@@ -159,6 +144,8 @@ options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
 # AC97 Audio support
 pxaacu0 	at pxaip? addr 0x40500000 intr 14
 audio*		at audiobus?
+
+spkr*		at audio?			# PC speaker (synthesized)
 
 # On-board device support
 obio0		at pxaip? intr 8

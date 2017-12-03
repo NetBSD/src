@@ -1,4 +1,4 @@
-#	$NetBSD: files.integrator,v 1.9.2.1 2013/02/25 00:28:34 tls Exp $
+#	$NetBSD: files.integrator,v 1.9.2.2 2017/12/03 11:36:03 jdolecek Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
@@ -24,8 +24,12 @@ file	arch/evbarm/ifpga/ifpga_pci.c		ifpga & pci
 attach	plcom at ifpga with plcom_ifpga
 file	arch/evbarm/ifpga/plcom_ifpga.c		plcom_ifpga
 
+# Integrator MMCI host controller
+attach	plmmc at ifpga with plmmc_ifpga
+file	arch/evbarm/ifpga/plmmc_ifpga.c		plmmc_ifpga
+
 # Integrator real-time clock
-device plrtc
+# XXX: dev/ic/pl031.c
 attach plrtc at ifpga
 file	arch/evbarm/ifpga/pl030_rtc.c		plrtc
 

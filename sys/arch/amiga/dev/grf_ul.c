@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.47.6.2 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.47.6.3 2017/12/03 11:35:48 jdolecek Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.47.6.2 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.47.6.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include "grful.h"
 #include "ite.h"
@@ -522,7 +522,7 @@ grfulattach(device_t parent, device_t self, void *aux)
 		gup->gus_isr.isr_intr = ulisr;
 		gup->gus_isr.isr_arg = (void *)gp;
 		/*
-		 * To make sure ints are always catched, first add new isr
+		 * To make sure ints are always caught, first add new isr
 		 * then remove old:
 		 */
 		add_isr(&gup->gus_isr);

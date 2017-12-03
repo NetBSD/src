@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.10.14.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.10.14.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.10.14.1 2014/08/20 00:04:35 tls Exp $
+ * $Id: l2cap.h,v 1.10.14.2 2017/12/03 11:39:03 jdolecek Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -105,7 +105,7 @@
 #define L2CAP_REJ_INVALID_CID		0x0002
 /* 0x0003 - 0xffff - reserved for future use */
 
-/* Protocol/Service Multiplexor (PSM) values */
+/* Protocol/Service Multiplexer (PSM) values */
 #define L2CAP_PSM_ANY			0x0000	/* Any/Invalid PSM */
 #define L2CAP_PSM_SDP			0x0001	/* Service Discovery Protocol */
 #define L2CAP_PSM_RFCOMM		0x0003	/* RFCOMM protocol */
@@ -121,7 +121,13 @@
 						/*	Transport Protocol */
 #define L2CAP_PSM_AVDTP			0x0019	/* Audio/Visual Distribution */
 						/*	Transport Protocol */
-/* 0x0019 - 0x1000 - reserved for future use */
+#define L2CAP_PSM_UDI_C_PLANE		0x001d	/* Unrestricted Digital */
+						/*      Information Profile */
+#define L2CAP_PSM_ATT			0x001f	/* Attribute Protocol */
+#define L2CAP_PSM_3DSP			0x0021	/* 3D Synchronization Profile */
+#define L2CAP_PSM_IPSP			0x0023	/* Internet Protocol */
+						/*      Support Profile */
+/* 0x0025 - 0x1000 - reserved for future use */
 
 #define L2CAP_PSM_INVALID(psm)		(((psm) & 0x0101) != 0x0001)
 
@@ -220,7 +226,7 @@ typedef struct {
 
 /* L2CAP ConnectionLess Traffic		(dcid == L2CAP_CLT_CID) */
 typedef struct {
-	uint16_t	psm; /* Protocol/Service Multiplexor */
+	uint16_t	psm; /* Protocol/Service Multiplexer */
 } __packed l2cap_clt_hdr_t;
 
 #define L2CAP_CLT_MTU_MAXIMUM \
@@ -243,7 +249,7 @@ typedef struct {
 /* L2CAP Connection Request */
 #define L2CAP_CONNECT_REQ			0x02
 typedef struct {
-	uint16_t	psm;  /* Protocol/Service Multiplexor (PSM) */
+	uint16_t	psm;  /* Protocol/Service Multiplexer */
 	uint16_t	scid; /* source channel ID */
 } __packed l2cap_con_req_cp;
 

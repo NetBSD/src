@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.364.2.3 2014/08/20 00:03:06 tls Exp $
+#	$NetBSD: files.i386,v 1.364.2.4 2017/12/03 11:36:17 jdolecek Exp $
 #
 # new style config file for i386 architecture
 #
@@ -18,8 +18,8 @@ defparam		CPURESET_DELAY
 # Obsolete Xbox support
 obsolete defflag	XBOX
 
-# VM86 emulation
-defflag			VM86
+defflag			PMC
+defflag			KASLR
 
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
@@ -33,16 +33,10 @@ defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 # The PHYSMEM_MAX_{SIZE,ADDR} optionms
 defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
-# understand boot device passed by pre-1.3 bootblocks
-defflag			COMPAT_OLDBOOT
-
 # PCI BIOS options
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
 			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
 defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
-
-# kernel stack debug
-defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
 # splraise()/spllower() debug
 defflag	opt_spldebug.h			SPLDEBUG
@@ -63,7 +57,6 @@ file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
-file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_machdep.c	ddb
@@ -73,7 +66,6 @@ file	kern/subr_spldebug.c		spldebug
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
-file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c
@@ -83,10 +75,9 @@ file	arch/x86/x86/convert_xmm_s87.c
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 file	arch/x86/x86/fpu.c
+file	arch/x86/x86/dbregs.c
 
 file	arch/i386/i386/mptramp.S	multiprocessor
-
-file	arch/i386/i386/pmc.c		perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
@@ -125,10 +116,6 @@ include	"dev/i2o/files.i2o"
 # of certain devices/BIOS features
 define	bioscall
 file	arch/i386/i386/bioscall.S	bioscall needs-flag
-
-# BIOS32 routines
-define	bios32
-file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 # i386 specific mainbus attributes
 define	apmbus {}
@@ -324,24 +311,9 @@ include "dev/apm/files.apm"
 # Compatibility modules
 #
 
-# VM86 mode
-file	arch/i386/i386/vm86.c			vm86
-
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13
-file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
-
-# SVR4 binary compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
-file	arch/i386/i386/svr4_machdep.c		compat_svr4
-file	arch/i386/i386/svr4_sigcode.S		compat_svr4
-file	arch/i386/i386/svr4_syscall.c		compat_svr4
-
-# iBCS-2 binary compatibility (COMPAT_IBCS2)
-include	"compat/ibcs2/files.ibcs2"
-file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
-file	arch/i386/i386/ibcs2_sigcode.S		compat_ibcs2
-file	arch/i386/i386/ibcs2_syscall.c		compat_ibcs2
+file	arch/i386/i386/compat_16_machdep.c	compat_16
 
 # Linux binary compatibility (COMPAT_LINUX)
 include	"compat/linux/files.linux"
@@ -352,9 +324,6 @@ file	arch/x86/x86/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
-file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
-file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
-file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 # NDIS compatibilty (COMPAT_NDIS)
 include "compat/ndis/files.ndis"

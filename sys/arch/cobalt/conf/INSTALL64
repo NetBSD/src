@@ -1,10 +1,10 @@
-# $NetBSD: INSTALL64,v 1.1 2009/12/17 15:29:47 matt Exp $
+# $NetBSD: INSTALL64,v 1.1.24.1 2017/12/03 11:36:00 jdolecek Exp $
 
 include 	"arch/cobalt/conf/INSTALL"
 
-#ident 		"INSTALL64-$Revision: 1.1 $"
+#ident 		"INSTALL64-$Revision: 1.1.24.1 $"
 
 no makeoptions	CPUFLAGS
 makeoptions	LP64="yes"
 options 	EXEC_ELF64
-options 	COMPAT_NETBSD64
+options 	COMPAT_NETBSD32

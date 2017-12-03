@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonport.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfs_commonport.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,15 +33,15 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonport.c 249592 2013-04-17 21:00:22Z ken "); */
-__RCSID("$NetBSD: nfs_commonport.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonport.c 304026 2016-08-12 22:44:59Z rmacklem "); */
+__RCSID("$NetBSD: nfs_commonport.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 /*
  * Functions that need to be different for different versions of BSD
  * kernel should be kept here, along with any global storage specific
  * to this BSD variant.
  */
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 #include <sys/sysctl.h>
 #include <vm/vm.h>
 #include <vm/vm_object.h>
@@ -60,18 +60,20 @@ extern void (*nfsd_call_recall)(struct vnode *, int, struct ucred *,
 extern int nfsrv_useacl;
 struct mount nfsv4root_mnt;
 int newnfs_numnfsd = 0;
-struct nfsstats newnfsstats;
+struct nfsstatsv1 nfsstatsv1;
 int nfs_numnfscbd = 0;
 int nfscl_debuglevel = 0;
 char nfsv4_callbackaddr[INET6_ADDRSTRLEN];
 struct callout newnfsd_callout;
+int nfsrv_lughashsize = 100;
 void (*nfsd_call_servertimer)(void) = NULL;
 void (*ncl_call_invalcaches)(struct vnode *) = NULL;
 
 static int nfs_realign_test;
 static int nfs_realign_count;
+static struct ext_nfsstats oldnfsstats;
 
-SYSCTL_NODE(_vfs, OID_AUTO, nfs, CTLFLAG_RW, 0, "New NFS filesystem");
+SYSCTL_NODE(_vfs, OID_AUTO, nfs, CTLFLAG_RW, 0, "NFS filesystem");
 SYSCTL_INT(_vfs_nfs, OID_AUTO, realign_test, CTLFLAG_RW, &nfs_realign_test,
     0, "Number of realign tests done");
 SYSCTL_INT(_vfs_nfs, OID_AUTO, realign_count, CTLFLAG_RW, &nfs_realign_count,
@@ -80,7 +82,9 @@ SYSCTL_STRING(_vfs_nfs, OID_AUTO, callback_addr, CTLFLAG_RW,
     nfsv4_callbackaddr, sizeof(nfsv4_callbackaddr),
     "NFSv4 callback addr for server to use");
 SYSCTL_INT(_vfs_nfs, OID_AUTO, debuglevel, CTLFLAG_RW, &nfscl_debuglevel,
-    0, "Debug level for new nfs client");
+    0, "Debug level for NFS client");
+SYSCTL_INT(_vfs_nfs, OID_AUTO, userhashsize, CTLFLAG_RDTUN, &nfsrv_lughashsize,
+    0, "Size of hash tables for uid/name mapping");
 
 /*
  * Defines for malloc
@@ -102,18 +106,19 @@ MALLOC_DEFINE(M_NEWNFSCLDELEG, "NFSCL deleg", "NFSCL Delegation");
 MALLOC_DEFINE(M_NEWNFSCLCLIENT, "NFSCL client", "NFSCL Client");
 MALLOC_DEFINE(M_NEWNFSCLLOCKOWNER, "NFSCL lckown", "NFSCL Lock Owner");
 MALLOC_DEFINE(M_NEWNFSCLLOCK, "NFSCL lck", "NFSCL Lock");
-MALLOC_DEFINE(M_NEWNFSV4NODE, "NEWNFSnode", "New nfs vnode");
-MALLOC_DEFINE(M_NEWNFSDIRECTIO, "NEWdirectio", "New nfs Direct IO buffer");
+MALLOC_DEFINE(M_NEWNFSV4NODE, "NEWNFSnode", "NFS vnode");
+MALLOC_DEFINE(M_NEWNFSDIRECTIO, "NEWdirectio", "NFS Direct IO buffer");
 MALLOC_DEFINE(M_NEWNFSDIROFF, "NFSCL diroffdiroff",
-    "New NFS directory offset data");
+    "NFS directory offset data");
 MALLOC_DEFINE(M_NEWNFSDROLLBACK, "NFSD rollback",
-    "New NFS local lock rollback");
+    "NFS local lock rollback");
 MALLOC_DEFINE(M_NEWNFSLAYOUT, "NFSCL layout", "NFSv4.1 Layout");
 MALLOC_DEFINE(M_NEWNFSFLAYOUT, "NFSCL flayout", "NFSv4.1 File Layout");
 MALLOC_DEFINE(M_NEWNFSDEVINFO, "NFSCL devinfo", "NFSv4.1 Device Info");
 MALLOC_DEFINE(M_NEWNFSSOCKREQ, "NFSCL sockreq", "NFS Sock Req");
 MALLOC_DEFINE(M_NEWNFSCLDS, "NFSCL session", "NFSv4.1 Session");
 MALLOC_DEFINE(M_NEWNFSLAYRECALL, "NFSCL layrecall", "NFSv4.1 Layout Recall");
+MALLOC_DEFINE(M_NEWNFSDSESSION, "NFSD session", "NFSD Session for a client");
 
 /*
  * Definition of mutex locks.
@@ -153,7 +158,7 @@ newnfs_realign(struct mbuf **pm, int how)
  *	we cannot afford to overwrite them.
  *
  *	We would prefer to avoid this situation entirely.  The situation does
- *	not occur with NFS/UDP and is supposed to only occassionally occur
+ *	not occur with NFS/UDP and is supposed to only occasionally occur
  *	with TCP.  Use vfs.nfs.realign_count and realign_test to check this.
  *
  */
@@ -282,11 +287,11 @@ nfsvno_getfs(struct nfsfsinfo *sip, int isdgram)
 	if (isdgram)
 		pref = NFS_MAXDGRAMDATA;
 	else
-		pref = NFS_MAXDATA;
-	sip->fs_rtmax = NFS_MAXDATA;
+		pref = NFS_SRVMAXIO;
+	sip->fs_rtmax = NFS_SRVMAXIO;
 	sip->fs_rtpref = pref;
 	sip->fs_rtmult = NFS_FABLKSIZE;
-	sip->fs_wtmax = NFS_MAXDATA;
+	sip->fs_wtmax = NFS_SRVMAXIO;
 	sip->fs_wtpref = pref;
 	sip->fs_wtmult = NFS_FABLKSIZE;
 	sip->fs_dtpref = pref;
@@ -335,7 +340,7 @@ nfsvno_pathconf(struct vnode *vp, int flag, register_t *retf,
 			 */
 			*retf = 0;
 			printf("nfsrvd pathconf flag=%d not supp\n", flag);
-		};
+		}
 		error = 0;
 	}
 	NFSEXITCODE(error);
@@ -444,73 +449,186 @@ nfssvc_nfscommon(struct thread *td, struct nfssvc_args *uap)
 static int
 nfssvc_call(struct thread *p, struct nfssvc_args *uap, struct ucred *cred)
 {
-	int error = EINVAL;
+	int error = EINVAL, i, j;
 	struct nfsd_idargs nid;
+	struct nfsd_oidargs onid;
+	struct {
+		int vers;	/* Just the first field of nfsstats. */
+	} nfsstatver;
 
 	if (uap->flag & NFSSVC_IDNAME) {
-		error = copyin(uap->argp, (caddr_t)&nid, sizeof (nid));
+		if ((uap->flag & NFSSVC_NEWSTRUCT) != 0)
+			error = copyin(uap->argp, &nid, sizeof(nid));
+		else {
+			error = copyin(uap->argp, &onid, sizeof(onid));
+			if (error == 0) {
+				nid.nid_flag = onid.nid_flag;
+				nid.nid_uid = onid.nid_uid;
+				nid.nid_gid = onid.nid_gid;
+				nid.nid_usermax = onid.nid_usermax;
+				nid.nid_usertimeout = onid.nid_usertimeout;
+				nid.nid_name = onid.nid_name;
+				nid.nid_namelen = onid.nid_namelen;
+				nid.nid_ngroup = 0;
+				nid.nid_grps = NULL;
+			}
+		}
 		if (error)
 			goto out;
 		error = nfssvc_idname(&nid);
 		goto out;
 	} else if (uap->flag & NFSSVC_GETSTATS) {
-		error = copyout(&newnfsstats,
-		    CAST_USER_ADDR_T(uap->argp), sizeof (newnfsstats));
+		if ((uap->flag & NFSSVC_NEWSTRUCT) == 0) {
+			/* Copy fields to the old ext_nfsstat structure. */
+			oldnfsstats.attrcache_hits =
+			    nfsstatsv1.attrcache_hits;
+			oldnfsstats.attrcache_misses =
+			    nfsstatsv1.attrcache_misses;
+			oldnfsstats.lookupcache_hits =
+			    nfsstatsv1.lookupcache_hits;
+			oldnfsstats.lookupcache_misses =
+			    nfsstatsv1.lookupcache_misses;
+			oldnfsstats.direofcache_hits =
+			    nfsstatsv1.direofcache_hits;
+			oldnfsstats.direofcache_misses =
+			    nfsstatsv1.direofcache_misses;
+			oldnfsstats.accesscache_hits =
+			    nfsstatsv1.accesscache_hits;
+			oldnfsstats.accesscache_misses =
+			    nfsstatsv1.accesscache_misses;
+			oldnfsstats.biocache_reads =
+			    nfsstatsv1.biocache_reads;
+			oldnfsstats.read_bios =
+			    nfsstatsv1.read_bios;
+			oldnfsstats.read_physios =
+			    nfsstatsv1.read_physios;
+			oldnfsstats.biocache_writes =
+			    nfsstatsv1.biocache_writes;
+			oldnfsstats.write_bios =
+			    nfsstatsv1.write_bios;
+			oldnfsstats.write_physios =
+			    nfsstatsv1.write_physios;
+			oldnfsstats.biocache_readlinks =
+			    nfsstatsv1.biocache_readlinks;
+			oldnfsstats.readlink_bios =
+			    nfsstatsv1.readlink_bios;
+			oldnfsstats.biocache_readdirs =
+			    nfsstatsv1.biocache_readdirs;
+			oldnfsstats.readdir_bios =
+			    nfsstatsv1.readdir_bios;
+			for (i = 0; i < NFSV4_NPROCS; i++)
+				oldnfsstats.rpccnt[i] = nfsstatsv1.rpccnt[i];
+			oldnfsstats.rpcretries = nfsstatsv1.rpcretries;
+			for (i = 0; i < NFSV4OP_NOPS; i++)
+				oldnfsstats.srvrpccnt[i] =
+				    nfsstatsv1.srvrpccnt[i];
+			for (i = NFSV42_NOPS, j = NFSV4OP_NOPS;
+			    i < NFSV42_NOPS + NFSV4OP_FAKENOPS; i++, j++)
+				oldnfsstats.srvrpccnt[j] =
+				    nfsstatsv1.srvrpccnt[i];
+			oldnfsstats.srvrpc_errs = nfsstatsv1.srvrpc_errs;
+			oldnfsstats.srv_errs = nfsstatsv1.srv_errs;
+			oldnfsstats.rpcrequests = nfsstatsv1.rpcrequests;
+			oldnfsstats.rpctimeouts = nfsstatsv1.rpctimeouts;
+			oldnfsstats.rpcunexpected = nfsstatsv1.rpcunexpected;
+			oldnfsstats.rpcinvalid = nfsstatsv1.rpcinvalid;
+			oldnfsstats.srvcache_inproghits =
+			    nfsstatsv1.srvcache_inproghits;
+			oldnfsstats.srvcache_idemdonehits =
+			    nfsstatsv1.srvcache_idemdonehits;
+			oldnfsstats.srvcache_nonidemdonehits =
+			    nfsstatsv1.srvcache_nonidemdonehits;
+			oldnfsstats.srvcache_misses =
+			    nfsstatsv1.srvcache_misses;
+			oldnfsstats.srvcache_tcppeak =
+			    nfsstatsv1.srvcache_tcppeak;
+			oldnfsstats.srvcache_size = nfsstatsv1.srvcache_size;
+			oldnfsstats.srvclients = nfsstatsv1.srvclients;
+			oldnfsstats.srvopenowners = nfsstatsv1.srvopenowners;
+			oldnfsstats.srvopens = nfsstatsv1.srvopens;
+			oldnfsstats.srvlockowners = nfsstatsv1.srvlockowners;
+			oldnfsstats.srvlocks = nfsstatsv1.srvlocks;
+			oldnfsstats.srvdelegates = nfsstatsv1.srvdelegates;
+			for (i = 0; i < NFSV4OP_CBNOPS; i++)
+				oldnfsstats.cbrpccnt[i] =
+				    nfsstatsv1.cbrpccnt[i];
+			oldnfsstats.clopenowners = nfsstatsv1.clopenowners;
+			oldnfsstats.clopens = nfsstatsv1.clopens;
+			oldnfsstats.cllockowners = nfsstatsv1.cllockowners;
+			oldnfsstats.cllocks = nfsstatsv1.cllocks;
+			oldnfsstats.cldelegates = nfsstatsv1.cldelegates;
+			oldnfsstats.cllocalopenowners =
+			    nfsstatsv1.cllocalopenowners;
+			oldnfsstats.cllocalopens = nfsstatsv1.cllocalopens;
+			oldnfsstats.cllocallockowners =
+			    nfsstatsv1.cllocallockowners;
+			oldnfsstats.cllocallocks = nfsstatsv1.cllocallocks;
+			error = copyout(&oldnfsstats, uap->argp,
+			    sizeof (oldnfsstats));
+		} else {
+			error = copyin(uap->argp, &nfsstatver,
+			    sizeof(nfsstatver));
+			if (error == 0 && nfsstatver.vers != NFSSTATS_V1)
+				error = EPERM;
+			if (error == 0)
+				error = copyout(&nfsstatsv1, uap->argp,
+				    sizeof (nfsstatsv1));
+		}
 		if (error == 0) {
 			if ((uap->flag & NFSSVC_ZEROCLTSTATS) != 0) {
-				newnfsstats.attrcache_hits = 0;
-				newnfsstats.attrcache_misses = 0;
-				newnfsstats.lookupcache_hits = 0;
-				newnfsstats.lookupcache_misses = 0;
-				newnfsstats.direofcache_hits = 0;
-				newnfsstats.direofcache_misses = 0;
-				newnfsstats.accesscache_hits = 0;
-				newnfsstats.accesscache_misses = 0;
-				newnfsstats.biocache_reads = 0;
-				newnfsstats.read_bios = 0;
-				newnfsstats.read_physios = 0;
-				newnfsstats.biocache_writes = 0;
-				newnfsstats.write_bios = 0;
-				newnfsstats.write_physios = 0;
-				newnfsstats.biocache_readlinks = 0;
-				newnfsstats.readlink_bios = 0;
-				newnfsstats.biocache_readdirs = 0;
-				newnfsstats.readdir_bios = 0;
-				newnfsstats.rpcretries = 0;
-				newnfsstats.rpcrequests = 0;
-				newnfsstats.rpctimeouts = 0;
-				newnfsstats.rpcunexpected = 0;
-				newnfsstats.rpcinvalid = 0;
-				bzero(newnfsstats.rpccnt,
-				    sizeof(newnfsstats.rpccnt));
+				nfsstatsv1.attrcache_hits = 0;
+				nfsstatsv1.attrcache_misses = 0;
+				nfsstatsv1.lookupcache_hits = 0;
+				nfsstatsv1.lookupcache_misses = 0;
+				nfsstatsv1.direofcache_hits = 0;
+				nfsstatsv1.direofcache_misses = 0;
+				nfsstatsv1.accesscache_hits = 0;
+				nfsstatsv1.accesscache_misses = 0;
+				nfsstatsv1.biocache_reads = 0;
+				nfsstatsv1.read_bios = 0;
+				nfsstatsv1.read_physios = 0;
+				nfsstatsv1.biocache_writes = 0;
+				nfsstatsv1.write_bios = 0;
+				nfsstatsv1.write_physios = 0;
+				nfsstatsv1.biocache_readlinks = 0;
+				nfsstatsv1.readlink_bios = 0;
+				nfsstatsv1.biocache_readdirs = 0;
+				nfsstatsv1.readdir_bios = 0;
+				nfsstatsv1.rpcretries = 0;
+				nfsstatsv1.rpcrequests = 0;
+				nfsstatsv1.rpctimeouts = 0;
+				nfsstatsv1.rpcunexpected = 0;
+				nfsstatsv1.rpcinvalid = 0;
+				bzero(nfsstatsv1.rpccnt,
+				    sizeof(nfsstatsv1.rpccnt));
 			}
 			if ((uap->flag & NFSSVC_ZEROSRVSTATS) != 0) {
-				newnfsstats.srvrpc_errs = 0;
-				newnfsstats.srv_errs = 0;
-				newnfsstats.srvcache_inproghits = 0;
-				newnfsstats.srvcache_idemdonehits = 0;
-				newnfsstats.srvcache_nonidemdonehits = 0;
-				newnfsstats.srvcache_misses = 0;
-				newnfsstats.srvcache_tcppeak = 0;
-				newnfsstats.srvclients = 0;
-				newnfsstats.srvopenowners = 0;
-				newnfsstats.srvopens = 0;
-				newnfsstats.srvlockowners = 0;
-				newnfsstats.srvlocks = 0;
-				newnfsstats.srvdelegates = 0;
-				newnfsstats.clopenowners = 0;
-				newnfsstats.clopens = 0;
-				newnfsstats.cllockowners = 0;
-				newnfsstats.cllocks = 0;
-				newnfsstats.cldelegates = 0;
-				newnfsstats.cllocalopenowners = 0;
-				newnfsstats.cllocalopens = 0;
-				newnfsstats.cllocallockowners = 0;
-				newnfsstats.cllocallocks = 0;
-				bzero(newnfsstats.srvrpccnt,
-				    sizeof(newnfsstats.srvrpccnt));
-				bzero(newnfsstats.cbrpccnt,
-				    sizeof(newnfsstats.cbrpccnt));
+				nfsstatsv1.srvrpc_errs = 0;
+				nfsstatsv1.srv_errs = 0;
+				nfsstatsv1.srvcache_inproghits = 0;
+				nfsstatsv1.srvcache_idemdonehits = 0;
+				nfsstatsv1.srvcache_nonidemdonehits = 0;
+				nfsstatsv1.srvcache_misses = 0;
+				nfsstatsv1.srvcache_tcppeak = 0;
+				nfsstatsv1.srvclients = 0;
+				nfsstatsv1.srvopenowners = 0;
+				nfsstatsv1.srvopens = 0;
+				nfsstatsv1.srvlockowners = 0;
+				nfsstatsv1.srvlocks = 0;
+				nfsstatsv1.srvdelegates = 0;
+				nfsstatsv1.clopenowners = 0;
+				nfsstatsv1.clopens = 0;
+				nfsstatsv1.cllockowners = 0;
+				nfsstatsv1.cllocks = 0;
+				nfsstatsv1.cldelegates = 0;
+				nfsstatsv1.cllocalopenowners = 0;
+				nfsstatsv1.cllocalopens = 0;
+				nfsstatsv1.cllocallockowners = 0;
+				nfsstatsv1.cllocallocks = 0;
+				bzero(nfsstatsv1.srvrpccnt,
+				    sizeof(nfsstatsv1.srvrpccnt));
+				bzero(nfsstatsv1.cbrpccnt,
+				    sizeof(nfsstatsv1.cbrpccnt));
 			}
 		}
 		goto out;
@@ -590,7 +708,7 @@ nfscommon_modevent(module_t mod, int type, void *data)
 		mtx_init(&nfs_req_mutex, "nfs_req_mutex", NULL, MTX_DEF);
 		mtx_init(&nfsrv_nfsuserdsock.nr_mtx, "nfsuserd", NULL,
 		    MTX_DEF);
-		callout_init(&newnfsd_callout, CALLOUT_MPSAFE);
+		callout_init(&newnfsd_callout, 1);
 		newnfs_init();
 		nfsd_call_nfscommon = nfssvc_nfscommon;
 		loaded = 1;
@@ -605,6 +723,8 @@ nfscommon_modevent(module_t mod, int type, void *data)
 
 		nfsd_call_nfscommon = NULL;
 		callout_drain(&newnfsd_callout);
+		/* Clean out the name<-->id cache. */
+		nfsrv_cleanusergroup();
 		/* and get rid of the mutexes */
 		mtx_destroy(&nfs_nameid_mutex);
 		mtx_destroy(&newnfsd_mtx);

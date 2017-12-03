@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5.4.2 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5.4.3 2017/12/03 11:35:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5.4.2 2014/08/20 00:02:44 tls Exp $")
 #include <sys/intr.h>
 #include <sys/ioctl.h>
 #include <sys/mutex.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/systm.h>
 
 #include <net/if.h>
@@ -141,10 +141,8 @@ awin_eth_clear_set(struct awin_eth_softc *sc, bus_size_t o, uint32_t c,
 static int
 awin_eth_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct awinio_attach_args * const aio = aux;
-#ifdef DIAGNOSTIC
-	const struct awin_locators * const loc = &aio->aio_loc;
-#endif
+	struct awinio_attach_args * const aio __diagused = aux;
+	const struct awin_locators * const loc __diagused = &aio->aio_loc;
 	const struct awin_gpio_pinset * const pinset =
 	    &awin_eth_pinsets[cf->cf_flags & 1];
 
@@ -172,6 +170,7 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 	char enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
+	sc->sc_ec.ec_mii = mii;
 
 	awin_gpio_pinset_acquire(pinset);
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
@@ -196,7 +195,7 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": 10/100 Ethernet Controller\n");
 
 	/*
-	 * Diable and then clear all interrupts
+	 * Disable and then clear all interrupts
 	 */
 	awin_eth_write(sc, AWIN_EMAC_INT_CTL_REG, 0);
 	awin_eth_write(sc, AWIN_EMAC_INT_STA_REG,
@@ -222,13 +221,17 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 		enaddr[5] = a0 >>  0;
 	}
 
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
+	ifp->if_capabilities = 0;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = awin_eth_ifstart;
 	ifp->if_ioctl = awin_eth_ifioctl;
 	ifp->if_init = awin_eth_ifinit;
 	ifp->if_stop = awin_eth_ifstop;
 	ifp->if_watchdog = awin_eth_ifwatchdog;
 	ifp->if_drain = awin_eth_ifdrain;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
@@ -409,7 +412,7 @@ awin_eth_mgethdr(struct awin_eth_softc *sc, size_t rxlen)
 	m->m_data += 2;
 	m->m_len = rxlen;
 	m->m_pkthdr.len = rxlen;
-	m->m_pkthdr.rcvif = &sc->sc_ec.ec_if;
+	m_set_rcvif(m, &sc->sc_ec.ec_if);
 
 	return m;
 }
@@ -419,7 +422,7 @@ awin_eth_if_input(struct awin_eth_softc *sc, struct mbuf *m)
 {
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 static void

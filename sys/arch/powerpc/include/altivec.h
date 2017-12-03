@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.15.14.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: altivec.h,v 1.15.14.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,15 +60,15 @@ vec_load(void)
 }
 
 static inline void
-vec_save(void)
+vec_save(lwp_t *l)
 {
-	pcu_save(&vec_ops);
+	pcu_save(&vec_ops, l);
 }
 
 static inline void
-vec_discard(void)
+vec_discard(lwp_t *l)
 {
-	pcu_discard(&vec_ops, false);
+	pcu_discard(&vec_ops, l, false);
 }
 
 void	vec_load_from_vreg(const struct vreg *);

@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.6 2009/12/05 11:30:26 haad Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.6.22.1 2017/12/03 11:37:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef __NETBSD_DM_H__
 #define __NETBSD_DM_H__
 
+#include <sys/ioccom.h>
 #include <prop/proplib.h>
 
 #define DM_CMD_LEN 16
@@ -171,10 +172,10 @@
 
  /*
   * DM_TABLE_DEPS == "deps" 
-  * Request list active table device dependiences.
+  * Request list active table device dependencies.
   *
   * This command is also run to get dm-device
-  * dependiences for existing real block device.
+  * dependencies for existing real block device.
   *
   * eg. vgcreate calls DM_TABLE_DEPS
   *

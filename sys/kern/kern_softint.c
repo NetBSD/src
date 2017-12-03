@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.38.12.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.38.12.3 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.38.12.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.38.12.3 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -217,7 +217,7 @@ typedef struct softcpu {
 
 static void	softint_thread(void *);
 
-u_int		softint_bytes = 8192;
+u_int		softint_bytes = 32768;
 u_int		softint_timing;
 static u_int	softint_max;
 static kmutex_t	softint_lock;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.64 2011/07/10 23:21:58 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.64.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.64 2011/07/10 23:21:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.64.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.64 2011/07/10 23:21:58 matt Exp $");
 
 #include <compat/common/compat_util.h>
 
-int	mips_elf_makecmds(struct lwp *, struct exec_package *);
-
 #ifdef EXEC_ECOFF
 void
 cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
@@ -90,161 +88,6 @@ cpu_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 	return ENOEXEC;
 }
 #endif /* EXEC_ECOFF */
-
-/*
- * mips_elf_makecmds (l, epp)
- *
- * Test if an executable is a MIPS ELF executable.   If it is,
- * try to load it.
- */
-
-int
-mips_elf_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	Elf32_Ehdr *ex = (Elf32_Ehdr *)epp->ep_hdr;
-	Elf32_Phdr ph;
-	int i, error;
-	size_t resid;
-
-	/* Make sure we got enough data to check magic numbers... */
-	if (epp->ep_hdrvalid < sizeof (Elf32_Ehdr)) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_hdrlen < sizeof (Elf32_Ehdr))
-			printf ("mips_elf_makecmds: execsw hdrsize too short!\n");
-#endif
-	    return ENOEXEC;
-	}
-
-	/* See if it's got the basic elf magic number leadin... */
-	if (memcmp(ex->e_ident, ELFMAG, SELFMAG) != 0) {
-		return ENOEXEC;
-	}
-
-	/* XXX: Check other magic numbers here. */
-	if (ex->e_ident[EI_CLASS] != ELFCLASS32) {
-		return ENOEXEC;
-	}
-
-	/* See if we got any program header information... */
-	if (!ex->e_phoff || !ex->e_phnum) {
-		return ENOEXEC;
-	}
-
-	error = vn_marktext(epp->ep_vp);
-	if (error)
-		return (error);
-
-	/* Set the entry point... */
-	epp->ep_entry = ex->e_entry;
-	epp->ep_taddr = 0;
-	epp->ep_tsize = 0;
-	epp->ep_daddr = 0;
-	epp->ep_dsize = 0;
-
-	for (i = 0; i < ex->e_phnum; i++) {
-#ifdef DEBUG
-		/*printf("obsolete elf: mapping %x %x %x\n", resid);*/
-#endif
-		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (void *)&ph,
-				    sizeof ph, ex->e_phoff + i * sizeof ph,
-				    UIO_SYSSPACE, IO_NODELOCKED,
-				    l->l_cred, &resid, NULL))
-		    != 0)
-			return error;
-
-		if (resid != 0) {
-			return ENOEXEC;
-		}
-
-		/* We only care about loadable sections... */
-		if (ph.p_type == PT_LOAD) {
-			int prot = VM_PROT_READ | VM_PROT_EXECUTE;
-			int residue;
-			unsigned vaddr, offset, length;
-
-			vaddr = ph.p_vaddr;
-			offset = ph.p_offset;
-			length = ph.p_filesz;
-			residue = ph.p_memsz - ph.p_filesz;
-
-			if (ph.p_flags & PF_W) {
-				prot |= VM_PROT_WRITE;
-				if (!epp->ep_daddr || vaddr < epp->ep_daddr)
-					epp->ep_daddr = vaddr;
-				epp->ep_dsize += ph.p_memsz;
-				/* Read the data from the file... */
-				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
-					  length, vaddr,
-					  epp->ep_vp, offset, prot);
-#ifdef OLD_ELF_DEBUG
-/*XXX*/		printf(
-	"obsolete elf: NEW_VMCMD len %x va %x off %x prot %x residue %x\n",
-			length, vaddr, offset, prot, residue);
-#endif /*ELF_DEBUG*/
-
-				if (residue) {
-					vaddr &= ~(PAGE_SIZE - 1);
-					offset &= ~(PAGE_SIZE - 1);
-					length = roundup (length + ph.p_vaddr
-							  - vaddr, PAGE_SIZE);
-					residue = (ph.p_vaddr + ph.p_memsz)
-						  - (vaddr + length);
-				}
-			} else {
-				vaddr &= ~(PAGE_SIZE - 1);
-				offset &= ~(PAGE_SIZE - 1);
-				length = roundup (length + ph.p_vaddr - vaddr,
-						  PAGE_SIZE);
-				residue = (ph.p_vaddr + ph.p_memsz)
-					  - (vaddr + length);
-				if (!epp->ep_taddr || vaddr < epp->ep_taddr)
-					epp->ep_taddr = vaddr;
-				epp->ep_tsize += ph.p_memsz;
-				/* Map the data from the file... */
-				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn,
-					  length, vaddr,
-					  epp->ep_vp, offset, prot);
-			}
-			/* If part of the segment is just zeros (e.g., bss),
-			   map that. */
-			if (residue > 0) {
-#ifdef OLD_ELF_DEBUG
-/*XXX*/			printf(
-	"old elf:resid NEW_VMCMD len %x va %x off %x prot %x residue %x\n",
-				length, vaddr + length, offset, prot, residue);
-#endif /*ELF_DEBUG*/
-
-				NEW_VMCMD (&epp->ep_vmcmds, vmcmd_map_zero,
-					   residue, vaddr + length,
-					   NULLVP, 0, prot);
-			}
-		}
-	}
-
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero,
-	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE, VMCMD_STACK);
-	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE, VMCMD_STACK);
-
-	return 0;
-}
 
 #if EXEC_ELF32
 int

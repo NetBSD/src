@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.34 2011/07/17 23:48:35 dyoung Exp $	*/
+/*	$NetBSD: types.h,v 1.34.12.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,8 +44,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
 
@@ -59,12 +58,13 @@ typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif
 
 typedef int		register_t;
 #define	PRIxREGISTER	"x"
+#endif
 
-typedef	volatile unsigned char __cpu_simple_lock_t;
+typedef	unsigned char	__cpu_simple_lock_nv_t;
+typedef	int		__register_t;
 
 #define	__SIMPLELOCK_LOCKED	0x80
 #define	__SIMPLELOCK_UNLOCKED	0

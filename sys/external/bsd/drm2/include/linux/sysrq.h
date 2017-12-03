@@ -1,4 +1,4 @@
-/*	$NetBSD: sysrq.h,v 1.2.10.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: sysrq.h,v 1.2.10.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_SYSRQ_H_
 #define _LINUX_SYSRQ_H_
+
+#include <linux/kernel.h>
 
 struct sysrq_key_op {
 	char sko_blahdittyblahblah;

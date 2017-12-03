@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.6.2.2 2014/08/20 00:03:38 tls Exp $ */
+/* $NetBSD: spdmem.c,v 1.6.2.3 2017/12/03 11:37:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6.2.2 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6.2.3 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ static void decode_sdram(const struct sysctlnode *, device_t, struct spdmem *,
 static void decode_ddr(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_ddr2(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_ddr3(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_ddr4(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_fbdimm(const struct sysctlnode *, device_t, struct spdmem *);
 
 static void decode_size_speed(device_t, const struct sysctlnode *,
@@ -63,7 +64,7 @@ static void decode_voltage_refresh(device_t, struct spdmem *);
 
 #define IS_RAMBUS_TYPE (s->sm_len < 4)
 
-static const char* spdmem_basic_types[] = {
+static const char* const spdmem_basic_types[] = {
 	"unknown",
 	"FPM",
 	"EDO",
@@ -75,10 +76,34 @@ static const char* spdmem_basic_types[] = {
 	"DDR2 SDRAM",
 	"DDR2 SDRAM FB",
 	"DDR2 SDRAM FB Probe",
-	"DDR3 SDRAM"
+	"DDR3 SDRAM",
+	"DDR4 SDRAM",
+	"unknown",
+	"DDR4E SDRAM",
+	"LPDDR3 SDRAM",
+	"LPDDR4 SDRAM"
 };
 
-static const char* spdmem_superset_types[] = {
+static const char* const spdmem_ddr4_module_types[] = {
+	"DDR4 Extended",
+	"DDR4 RDIMM",
+	"DDR4 UDIMM",
+	"DDR4 SO-DIMM",
+	"DDR4 Load-Reduced DIMM",
+	"DDR4 Mini-RDIMM",
+	"DDR4 Mini-UDIMM",
+	"DDR4 Reserved",
+	"DDR4 72Bit SO-RDIMM",
+	"DDR4 72Bit SO-UDIMM",
+	"DDR4 Undefined",
+	"DDR4 Reserved",
+	"DDR4 16Bit SO-DIMM",
+	"DDR4 32Bit SO-DIMM",
+	"DDR4 Reserved",
+	"DDR4 Undefined"
+};
+
+static const char* const spdmem_superset_types[] = {
 	"unknown",
 	"ESDRAM",
 	"DDR ESDRAM",
@@ -86,7 +111,7 @@ static const char* spdmem_superset_types[] = {
 	"PEM SDRAM"
 };
 
-static const char* spdmem_voltage_types[] = {
+static const char* const spdmem_voltage_types[] = {
 	"TTL (5V tolerant)",
 	"LvTTL (not 5V tolerant)",
 	"HSTL 1.5V",
@@ -95,7 +120,7 @@ static const char* spdmem_voltage_types[] = {
 	"SSTL 1.8V"
 };
 
-static const char* spdmem_refresh_types[] = {
+static const char* const spdmem_refresh_types[] = {
 	"15.625us",
 	"3.9us",
 	"7.8us",
@@ -104,7 +129,7 @@ static const char* spdmem_refresh_types[] = {
 	"125us"
 };
 
-static const char* spdmem_parity_types[] = {
+static const char* const spdmem_parity_types[] = {
 	"no parity or ECC",
 	"data parity",
 	"data ECC",
@@ -114,6 +139,9 @@ static const char* spdmem_parity_types[] = {
 	"cmd/addr parity, data ECC",
 	"cmd/addr/data parity, data ECC"
 };
+
+int spd_rom_sizes[] = { 0, 128, 256, 384, 512 };
+
 
 /* Cycle time fractional values (units of .001 ns) for DDR2 SDRAM */
 static const uint16_t spdmem_cycle_frac[] = {
@@ -126,14 +154,15 @@ static const uint16_t spdmem_cycle_frac[] = {
 
 /* CRC functions used for certain memory types */
 
-static uint16_t spdcrc16 (struct spdmem_softc *sc, int count)
+static uint16_t
+spdcrc16(struct spdmem_softc *sc, int count)
 {
 	uint16_t crc;
 	int i, j;
 	uint8_t val;
 	crc = 0;
 	for (j = 0; j <= count; j++) {
-		val = (sc->sc_read)(sc, j);
+		(sc->sc_read)(sc, j, &val);
 		crc = crc ^ val << 8;
 		for (i = 0; i < 8; ++i)
 			if (crc & 0x8000)
@@ -152,16 +181,24 @@ spdmem_common_probe(struct spdmem_softc *sc)
 	int spd_len, spd_crc_cover;
 	uint16_t crc_calc, crc_spd;
 
-	spd_type = (sc->sc_read)(sc, 2);
+	/* Read failed means a device doesn't exist */
+	if ((sc->sc_read)(sc, 2, &spd_type) != 0)
+		return 0;
+
+	/* Memory type should not be 0 */
+	if (spd_type == 0x00)
+		return 0;
 
 	/* For older memory types, validate the checksum over 1st 63 bytes */
 	if (spd_type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
-		for (i = 0; i < 63; i++)
-			cksum += (sc->sc_read)(sc, i);
+		for (i = 0; i < 63; i++) {
+			(sc->sc_read)(sc, i, &val);
+			cksum += val;
+		}
 
-		val = (sc->sc_read)(sc, 63);
+		(sc->sc_read)(sc, 63, &val);
 
-		if (cksum == 0 || (cksum & 0xff) != val) {
+		if ((cksum & 0xff) != val) {
 			aprint_debug("spd checksum failed, calc = 0x%02x, "
 				     "spd = 0x%02x\n", cksum, val);
 			return 0;
@@ -171,7 +208,8 @@ spdmem_common_probe(struct spdmem_softc *sc)
 
 	/* For DDR3 and FBDIMM, verify the CRC */
 	else if (spd_type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
-		spd_len = (sc->sc_read)(sc, 0);
+		(sc->sc_read)(sc, 0, &val);
+		spd_len = val;
 		if (spd_len & SPDMEM_SPDCRC_116)
 			spd_crc_cover = 116;
 		else
@@ -192,14 +230,42 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		if (spd_crc_cover > spd_len)
 			return 0;
 		crc_calc = spdcrc16(sc, spd_crc_cover);
-		crc_spd = (sc->sc_read)(sc, 127) << 8;
-		crc_spd |= (sc->sc_read)(sc, 126);
+		(sc->sc_read)(sc, 127, &val);
+		crc_spd = val << 8;
+		(sc->sc_read)(sc, 126, &val);
+		crc_spd |= val;
 		if (crc_calc != crc_spd) {
 			aprint_debug("crc16 failed, covers %d bytes, "
 				     "calc = 0x%04x, spd = 0x%04x\n",
 				     spd_crc_cover, crc_calc, crc_spd);
 			return 0;
 		}
+		return 1;
+	} else if (spd_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
+		(sc->sc_read)(sc, 0, &val);
+		spd_len = val & 0x0f;
+		if ((unsigned int)spd_len >= __arraycount(spd_rom_sizes))
+			return 0;
+		spd_len = spd_rom_sizes[spd_len];
+		spd_crc_cover = 125; /* For byte 0 to 125 */
+		if (spd_crc_cover > spd_len)
+			return 0;
+		crc_calc = spdcrc16(sc, spd_crc_cover);
+		(sc->sc_read)(sc, 127, &val);
+		crc_spd = val << 8;
+		(sc->sc_read)(sc, 126, &val);
+		crc_spd |= val;
+		if (crc_calc != crc_spd) {
+			aprint_debug("crc16 failed, covers %d bytes, "
+				     "calc = 0x%04x, spd = 0x%04x\n",
+				     spd_crc_cover, crc_calc, crc_spd);
+			return 0;
+		}
+		/*
+		 * We probably could also verify the CRC for the other
+		 * "pages" of SPD data in blocks 1 and 2, but we'll do
+		 * it some other time.
+		 */
 		return 1;
 	}
 
@@ -217,15 +283,26 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	unsigned int i, spd_len, spd_size;
 	const struct sysctlnode *node = NULL;
 
-	/*
-	 * FBDIMM and DDR3 (and probably all newer) have a different
-	 * encoding of the SPD EEPROM used/total sizes
-	 */
-	s->sm_len = (sc->sc_read)(sc, 0);
-	s->sm_size = (sc->sc_read)(sc, 1);
-	s->sm_type = (sc->sc_read)(sc, 2);
+	(sc->sc_read)(sc, 0, &s->sm_len);
+	(sc->sc_read)(sc, 1, &s->sm_size);
+	(sc->sc_read)(sc, 2, &s->sm_type);
 
-	if (s->sm_type >= SPDMEM_MEMTYPE_FBDIMM) {
+	if (s->sm_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
+		/*
+		 * An even newer encoding with one byte holding both
+		 * the used-size and capacity values
+		 */
+		spd_len = s->sm_len & 0x0f;
+		spd_size = (s->sm_len >> 4) & 0x07;
+
+		spd_len = spd_rom_sizes[spd_len];
+		spd_size *= 512;
+
+	} else if (s->sm_type >= SPDMEM_MEMTYPE_FBDIMM) {
+		/*
+		 * FBDIMM and DDR3 (and probably all newer) have a different
+		 * encoding of the SPD EEPROM used/total sizes
+		 */
 		spd_size = 64 << (s->sm_len & SPDMEM_SPDSIZE_MASK);
 		switch (s->sm_len & SPDMEM_SPDLEN_MASK) {
 		case SPDMEM_SPDLEN_128:
@@ -252,7 +329,7 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	if (spd_len > sizeof(struct spdmem))
 		spd_len = sizeof(struct spdmem);
 	for (i = 3; i < spd_len; i++)
-		((uint8_t *)s)[i] = (sc->sc_read)(sc, i);
+		(sc->sc_read)(sc, i, &((uint8_t *)s)[i]);
 
 	/*
 	 * Setup our sysctl subtree, hw.spdmemN
@@ -315,9 +392,26 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 		    s->sm_sdr.sdr_superset == SPDMEM_SUPERSET_ESDRAM) {
 			type = spdmem_superset_types[SPDMEM_SUPERSET_ESDRAM];
 		}
+		if (s->sm_type == SPDMEM_MEMTYPE_DDR4SDRAM &&
+		    s->sm_ddr4.ddr4_mod_type <
+				__arraycount(spdmem_ddr4_module_types)) {
+			type = spdmem_ddr4_module_types[s->sm_ddr4.ddr4_mod_type];
+		}
 	}
 
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
+
+	if (s->sm_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
+		/*
+		 * The latest spec (DDR4 SPD Document Release 3) defines
+		 * NVDIMM Hybrid only.
+		 */
+		if ((s->sm_ddr4.ddr4_hybrid)
+		    && (s->sm_ddr4.ddr4_hybrid_media == 1))
+			strlcat(sc->sc_type, " NVDIMM hybrid",
+			    SPDMEM_TYPE_MAXLEN);
+	}
+	
 	if (node != NULL)
 		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
 		    0,
@@ -362,6 +456,9 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	case SPDMEM_MEMTYPE_FBDIMM:
 	case SPDMEM_MEMTYPE_FBDIMM_PROBE:
 		decode_fbdimm(node, self, s);
+		break;
+	case SPDMEM_MEMTYPE_DDR4SDRAM:
+		decode_ddr4(node, self, s);
 		break;
 	}
 
@@ -459,7 +556,9 @@ decode_voltage_refresh(device_t self, struct spdmem *s)
 }
 
 static void
-decode_edofpm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+decode_edofpm(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
+
 	aprint_naive("\n");
 	aprint_normal("\n");
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
@@ -472,7 +571,9 @@ decode_edofpm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 }
 
 static void
-decode_rom(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+decode_rom(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
+
 	aprint_naive("\n");
 	aprint_normal("\n");
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
@@ -484,7 +585,8 @@ decode_rom(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 
 static void
 decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s,
-	     int spd_len) {
+	     int spd_len)
+{
 	int dimm_size, cycle_time, bits, tAA, i, speed, freq;
 
 	aprint_naive("\n");
@@ -548,7 +650,8 @@ decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s,
 }
 
 static void
-decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
 	int dimm_size, cycle_time, bits, tAA, i;
 
 	aprint_naive("\n");
@@ -596,7 +699,8 @@ decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 }
 
 static void
-decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
 	int dimm_size, cycle_time, bits, tAA, i;
 
 	aprint_naive("\n");
@@ -644,11 +748,21 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 }
 
 static void
-decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+print_part(const char *part, size_t pnsize)
+{
+	const char *p = memchr(part, ' ', pnsize);
+	if (p == NULL)
+		p = part + pnsize;
+	aprint_normal(": %.*s\n", (int)(p - part), part);
+}
+
+static void
+decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
 	int dimm_size, cycle_time, bits;
 
 	aprint_naive("\n");
-	aprint_normal(": %18s\n", s->sm_ddr3.ddr3_part);
+	print_part(s->sm_ddr3.ddr3_part, sizeof(s->sm_ddr3.ddr3_part));
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 
 	if (s->sm_ddr3.ddr3_mod_type ==
@@ -696,10 +810,24 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 		    s->sm_ddr3.ddr3_tCKmin);
 
 #undef	__DDR3_CYCLES
+
+	/* For DDR3, Voltage is written in another area */
+	if (!s->sm_ddr3.ddr3_NOT15V || s->sm_ddr3.ddr3_135V
+	    || s->sm_ddr3.ddr3_125V) {
+		aprint_verbose("%s:", device_xname(self));
+		if (!s->sm_ddr3.ddr3_NOT15V)
+			aprint_verbose(" 1.5V");
+		if (s->sm_ddr3.ddr3_135V)
+			aprint_verbose(" 1.35V");
+		if (s->sm_ddr3.ddr3_125V)
+			aprint_verbose(" 1.25V");
+		aprint_verbose(" operable\n");
+	}
 }
 
 static void
-decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
 	int dimm_size, cycle_time, bits;
 
 	aprint_naive("\n");
@@ -730,11 +858,115 @@ decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 
 	aprint_verbose_dev(self, LATENCY, __FBDIMM_CYCLES(fbdimm_tAAmin),
 		__FBDIMM_CYCLES(fbdimm_tRCDmin), __FBDIMM_CYCLES(fbdimm_tRPmin), 
-		(s->sm_fbd.fbdimm_tRAS_msb * 256 +
-			s->sm_fbd.fbdimm_tRAS_lsb) /
+		(s->sm_fbd.fbdimm_tRAS_msb * 256 + s->sm_fbd.fbdimm_tRAS_lsb) /
 		    s->sm_fbd.fbdimm_tCKmin);
 
 #undef	__FBDIMM_CYCLES
 
 	decode_voltage_refresh(self, s);
+}
+
+static void
+decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
+{
+	int dimm_size, cycle_time;
+	int tAA_clocks, tRCD_clocks,tRP_clocks, tRAS_clocks;
+
+	aprint_naive("\n");
+	print_part(s->sm_ddr4.ddr4_part_number,
+	    sizeof(s->sm_ddr4.ddr4_part_number));
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
+	if (s->sm_ddr4.ddr4_mod_type < __arraycount(spdmem_ddr4_module_types))
+		aprint_normal(" (%s)", 
+		    spdmem_ddr4_module_types[s->sm_ddr4.ddr4_mod_type]);
+	aprint_normal(", %sECC, %stemp-sensor, ",
+		(s->sm_ddr4.ddr4_bus_width_extension) ? "" : "no ",
+		(s->sm_ddr4.ddr4_has_therm_sensor) ? "" : "no ");
+
+	/*
+	 * DDR4 size calculation from JEDEC spec
+	 *
+	 * Module capacity in bytes is defined as
+	 *	Chip_Capacity_in_bits / 8bits-per-byte *
+	 *	primary_bus_width / DRAM_width *
+	 *	logical_ranks_per_DIMM
+	 *
+	 * logical_ranks_per DIMM equals package_ranks, but multiply
+	 * by diecount for 3DS packages
+	 *
+	 * We further divide by 2**20 to get our answer in MB
+	 */
+	dimm_size = (s->sm_ddr4.ddr4_capacity + 28)	/* chip_capacity */
+		     - 20				/* convert to MB */
+		     - 3				/* bits --> bytes */
+		     + (s->sm_ddr4.ddr4_primary_bus_width + 3); /* bus width */
+	switch (s->sm_ddr4.ddr4_device_width) {		/* DRAM width */
+	case 0:	dimm_size -= 2;
+		break;
+	case 1: dimm_size -= 3;
+		break;
+	case 2:	dimm_size -= 4;
+		break;
+	case 4: dimm_size -= 5;
+		break;
+	default:
+		dimm_size = -1;		/* flag invalid value */
+	}
+	if (dimm_size >= 0) {				
+		dimm_size = (1 << dimm_size) *
+		    (s->sm_ddr4.ddr4_package_ranks + 1); /* log.ranks/DIMM */
+		if (s->sm_ddr4.ddr4_signal_loading == 2) {
+			dimm_size *= (s->sm_ddr4.ddr4_diecount + 1);
+		}
+	}
+
+/*
+ * Note that the ddr4_xxx_ftb fields are actually signed offsets from
+ * the corresponding mtb value, so we might have to subtract 256!
+ */
+#define	__DDR4_VALUE(field) ((s->sm_ddr4.ddr4_##field##_mtb * 125 +	\
+			     s->sm_ddr4.ddr4_##field##_ftb) - 		\
+			    ((s->sm_ddr4.ddr4_##field##_ftb > 127)?256:0))
+	/*
+	 * For now, the only value for mtb is 0 = 125ps, and ftb = 1ps 
+	 * so we don't need to figure out the time-base units - just
+	 * hard-code them for now.
+	 */
+	cycle_time = __DDR4_VALUE(tCKAVGmin);
+	decode_size_speed(self, node, dimm_size, cycle_time, 2,
+			  1 << (s->sm_ddr4.ddr4_primary_bus_width + 3),
+			  TRUE, "PC4", 0);
+
+	aprint_verbose_dev(self,
+	    "%d rows, %d cols, %d banks, %d bank groups, "
+	    "%d.%03dns cycle time\n",
+	    s->sm_ddr4.ddr4_rows + 9, s->sm_ddr4.ddr4_cols + 12,
+	    1 << (2 + s->sm_ddr4.ddr4_logbanks),
+	    1 << s->sm_ddr4.ddr4_bankgroups,
+	    cycle_time / 1000, cycle_time % 1000);
+
+
+	tAA_clocks =  __DDR4_VALUE(tAAmin)  * 1000 / cycle_time;
+	tRCD_clocks = __DDR4_VALUE(tRCDmin) * 1000 / cycle_time;
+	tRP_clocks =  __DDR4_VALUE(tRPmin)  * 1000 / cycle_time;
+	tRAS_clocks = (s->sm_ddr4.ddr4_tRASmin_msb * 256 +
+		       s->sm_ddr4.ddr4_tRASmin_lsb) * 125 * 1000 / cycle_time;
+
+/*
+ * Per JEDEC spec, rounding is done by taking the time value, dividing
+ * by the cycle time, subtracting .010 from the result, and then
+ * rounded up to the nearest integer.  Unfortunately, none of their
+ * examples say what to do when the result of the subtraction is already
+ * an integer.  For now, assume that we still round up (so an interval
+ * of exactly 12.010 clock cycles will be printed as 13).
+ */
+#define	__DDR4_ROUND(value) ((value - 10) / 1000 + 1)
+
+	aprint_verbose_dev(self, LATENCY, __DDR4_ROUND(tAA_clocks),
+			   __DDR4_ROUND(tRCD_clocks),
+			   __DDR4_ROUND(tRP_clocks),
+			   __DDR4_ROUND(tRAS_clocks));
+
+#undef	__DDR4_VALUE
+#undef	__DDR4_ROUND
 }

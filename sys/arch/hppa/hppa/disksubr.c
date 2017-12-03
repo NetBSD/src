@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1.10.2 2014/08/20 00:03:04 tls Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1.10.3 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -60,7 +60,7 @@
  */
 
 /*
- * This disksubr.c module started to take it's present form on OpenBSD/alpha
+ * This disksubr.c module started to take its present form on OpenBSD/alpha
  * but it was always thought it should be made completely MI and not need to
  * be in that alpha-specific tree at all.
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.1.10.2 2014/08/20 00:03:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.1.10.3 2017/12/03 11:36:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

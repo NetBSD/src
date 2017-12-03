@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_SKSManager.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_SKSManager.c,v 1.1.42.1 2017/12/03 11:37:30 jdolecek Exp $";
 /*****************************************************************************/
 /** @file n8_SKSManager.c
  *  @brief NSP2000 SKS Manager
@@ -136,7 +136,7 @@ N8_Status_t n8_SKSWrite(const unsigned int targetSKS,
    NspInstance_t *NSPinstance_p;
    volatile NSP2000REGS_t *nsp;
  
-   if ((targetSKS < 0) || (targetSKS >= NSPcount_g))
+   if (targetSKS >= NSPcount_g)
    {
       DBG(("Failed to get control structure: %d\n", ret));
       return N8_UNEXPECTED_ERROR;

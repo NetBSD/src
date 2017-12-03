@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.18 2011/08/18 21:04:23 matt Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.18.12.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,6 +33,9 @@
  *
  *	@(#)mips_opcode.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _MIPS_MIPS_OPCODE_H_
+#define _MIPS_MIPS_OPCODE_H_
 
 /*
  * Define the instruction formats and opcode values for the
@@ -147,6 +150,8 @@ typedef union {
 #define OP_LDR		033		/* MIPS-II, for r4000 port */
 
 #define OP_SPECIAL2	034		/* QED opcodes */
+#define OP_JALX		035
+#define OP_MDMX		036
 #define OP_SPECIAL3	037
 
 #define OP_LB		040
@@ -176,7 +181,10 @@ typedef union {
 #define OP_PREF		063
 #define OP_LLD		064		/* MIPS-II, for r4000 port */
 #define OP_LDC1		065
+#define OP_LDC2		066
 #define OP_LD		067		/* MIPS-II, for r4000 port */
+#define OP_CVM_BBIT0	OP_LWC2
+#define OP_CVM_BBIT032	OP_LDC2
 
 #define OP_SC		070
 #define OP_SWC0		OP_SC	/* backwards source compatibility */
@@ -185,7 +193,10 @@ typedef union {
 #define OP_RSVD073	073
 #define OP_SCD		074		/* MIPS-II, for r4000 port */
 #define OP_SDC1		075
+#define OP_SDC2		076
 #define OP_SD		077		/* MIPS-II, for r4000 port */
+#define OP_CVM_BBIT1	OP_SWC2
+#define OP_CVM_BBIT132	OP_SDC2
 
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL.
@@ -202,6 +213,16 @@ typedef union {
 #define OP_SYSCALL	014
 #define OP_BREAK	015
 #define OP_SYNC		017		/* MIPS-II, for r4000 port */
+
+#define SYNC_CVM_IODBDMA	0x02
+#define SYNC_WMB	0x04
+#define SYNC_CVM_W	SYNC_WMB
+#define SYNC_CVM_WS	0x05
+#define SYNC_CVM_S	0x06
+#define SYNC_MB		0x10
+#define SYNC_ACQUIRE	0x11
+#define SYNC_RELEASE	0x12
+#define SYNC_RMB	0x13
 
 #define OP_MFHI		020
 #define OP_MTHI		021
@@ -253,21 +274,67 @@ typedef union {
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL2.
  */
-#define OP_MAD		000		/* QED */
-#define OP_MADU		001		/* QED */
+#define OP_MADD		000		/* QED */
+#define OP_MADDU	001		/* QED */
 #define OP_MUL		002		/* QED */
+#define	OP_CVM_DMUL	003		/* OCTEON */
 #define OP_MSUB		004		/* MIPS32/64 */
 #define OP_MSUBU	005		/* MIPS32/64 */
+#define	OP_CVM_SAA	030		/* OCTEON */
+#define	OP_CVM_SAAD	031		/* OCTEON */
 #define OP_CLZ		040		/* MIPS32/64 */
 #define OP_CLO		041		/* MIPS32/64 */
 #define OP_DCLZ		044		/* MIPS32/64 */
 #define OP_DCLO		045		/* MIPS32/64 */
+#define	OP_CVM_BADDU	050		/* OCTEON */
+#define	OP_CVM_SEQ	052		/* OCTEON */
+#define	OP_CVM_SNE	053		/* OCTEON */
+#define	OP_CVM_SEQI	056		/* OCTEON */
+#define	OP_CVM_SNEI	057		/* OCTEON */
+#define	OP_CVM_POP	054		/* OCTEON */
+#define	OP_CVM_DPOP	055		/* OCTEON */
+#define	OP_CVM_CINS	062		/* OCTEON */
+#define	OP_CVM_CINS32	063		/* OCTEON */
+#define	OP_CVM_EXTS	072		/* OCTEON */
+#define	OP_CVM_EXTS32	073		/* OCTEON */
+#define	OP_SDBBP	077		/* MIPS32/MIPS64 */
 
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL3.
  */
+#define OP_EXT		000		/* MIPS32/64 r2 */
+#define OP_DEXTM	001		/* MIPS32/64 r2 */
+#define OP_DEXTU	002		/* MIPS32/64 r2 */
+#define OP_DEXT		003		/* MIPS32/64 r2 */
+#define OP_INS		004		/* MIPS32/64 r2 */
+#define OP_DINSM	005		/* MIPS32/64 r2 */
+#define OP_DINSU	006		/* MIPS32/64 r2 */
+#define OP_DINS		007		/* MIPS32/64 r2 */
 #define	OP_LX		012		/* DSP */
+#define OP_LWLE		031		/* EVA */
+#define OP_LWRE		032		/* EVA */
+#define OP_CACHEE	033		/* EVA */
+#define OP_SBE		034		/* EVA */
+#define OP_SHE		035		/* EVA */
+#define OP_SCE		035		/* EVA */
+#define OP_SWE		035		/* EVA */
+#define OP_BSHFL	040		/* MIPS32/64 r2 */
+#define OP_SWLE		041		/* EVA */
+#define OP_SWRE		042		/* EVA */
+#define OP_PREFE	043		/* EVA */
+#define OP_DBSHFL	044		/* MIPS32/64 r2 */
+#define OP_LBUE		050		/* EVA */
+#define OP_LHUE		051		/* EVA */
+#define OP_LBE		054		/* EVA */
+#define OP_LHE		055		/* EVA */
+#define OP_LLE		056		/* EVA */
+#define OP_LWE		057		/* EVA */
 #define OP_RDHWR	073		/* MIPS32/64 r2 */
+
+#define OP_BSHFL_SBH	002		/* swap bytes within halfwords */
+#define OP_BSHFL_SHD	005		/* swap halfworks within double */
+#define OP_BSHFL_SEB	020		/* sign extend byte */
+#define OP_BSHFL_SEH	030		/* sign extend halfword */
 
 #define	OP_LX_LWX	0		/* lwx */
 #define	OP_LX_LHX	4		/* lhx */
@@ -306,6 +373,7 @@ typedef union {
 #define OP_CT		006
 #define OP_MTH		007
 #define OP_BCx		010
+#define OP_MFM		013		/* MIPS32/64 r2 */
 #define OP_BCy		014
 
 /*
@@ -317,3 +385,14 @@ typedef union {
 #define COPz_BCL_TF_MASK	0x02		/* MIPS-II, for r4000 port */
 #define COPz_BCL_TRUE	0x02		/* MIPS-II, for r4000 port */
 #define COPz_BCL_FALSE	0x00		/* MIPS-II, for r4000 port */
+
+#define	INSN_LUI_P(insn)	(((insn) >> 26) == OP_LUI)
+#define	INSN_LW_P(insn)		(((insn) >> 26) == OP_LW)
+#define	INSN_SW_P(insn)		(((insn) >> 26) == OP_SW)
+#define	INSN_LD_P(insn)		(((insn) >> 26) == OP_LD)
+#define	INSN_SD_P(insn)		(((insn) >> 26) == OP_SD)
+
+#define INSN_LOAD_P(insn)	(INSN_LD_P(insn) || INSN_LW_P(insn))
+#define INSN_STORE_P(insn)	(INSN_SD_P(insn) || INSN_SW_P(insn))
+
+#endif /* _MIPS_MIPS_OPCODE_H_ */

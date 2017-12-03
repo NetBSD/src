@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.13 2008/11/25 18:28:05 pooka Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.13.26.1 2017/12/03 11:39:04 jdolecek Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -39,9 +39,32 @@
 #include <net/radix.h>
 #endif
 
+#include <sys/pslist.h>
+#include <sys/psref.h>
+
+struct encapsw {
+	union {
+		struct encapsw4 {
+			void	(*pr_input)	/* input to protocol (from below) */
+				(struct mbuf *, int, int, void *);
+			void	*(*pr_ctlinput)		/* control input (from below) */
+				(int, const struct sockaddr *, void *, void *);
+		} _encapsw4;
+		struct encapsw6 {
+			int	(*pr_input)	/* input to protocol (from below) */
+				(struct mbuf **, int *, int, void *);
+			void	*(*pr_ctlinput)		/* control input (from below) */
+				(int, const struct sockaddr *, void *, void *);
+		} _encapsw6;
+	} encapsw46;
+};
+
+#define encapsw4 encapsw46._encapsw4
+#define encapsw6 encapsw46._encapsw6
+
 struct encaptab {
 	struct radix_node nodes[2];
-	LIST_ENTRY(encaptab) chain;
+	struct pslist_entry chain;
 	int af;
 	int proto;			/* -1: don't care, I'll check myself */
 	struct sockaddr *addrpack;	/* malloc'ed, for radix lookup */
@@ -51,8 +74,9 @@ struct encaptab {
 	struct sockaddr *dst;		/* remote addr */
 	struct sockaddr *dstmask;
 	int (*func) (struct mbuf *, int, int, void *);
-	const struct protosw *psw;	/* only pr_input will be used */
+	const struct encapsw *esw;
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
+	struct psref_target	psref;
 };
 
 /* to lookup a pair of address using radix tree */
@@ -73,18 +97,34 @@ struct ip_pack6 {
 	struct sockaddr_in6 yours;
 };
 
+void	encapinit(void);
+
 void	encap_init(void);
 void	encap4_input(struct mbuf *, ...);
 int	encap6_input(struct mbuf **, int *, int);
 const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
-	const struct sockaddr *, const struct protosw *, void *);
+	const struct sockaddr *, const struct encapsw *, void *);
 const struct encaptab *encap_attach_func(int, int,
 	int (*)(struct mbuf *, int, int, void *),
-	const struct protosw *, void *);
+	const struct encapsw *, void *);
 void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
-void	*encap_getarg(struct mbuf *);
+
+int	encap_lock_enter(void);
+void	encap_lock_exit(void);
+bool	encap_lock_held(void);
+
+#define	ENCAP_PR_WRAP_CTLINPUT(name)				\
+static void *							\
+name##_wrapper(int a, const struct sockaddr *b, void *c, void *d) \
+{								\
+	void *rv;						\
+	KERNEL_LOCK(1, NULL);					\
+	rv = name(a, b, c, d);					\
+	KERNEL_UNLOCK_ONE(NULL);				\
+	return rv;						\
+}
 #endif
 
 #endif /* !_NETINET_IP_ENCAP_H_ */

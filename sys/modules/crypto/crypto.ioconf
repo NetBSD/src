@@ -1,0 +1,7 @@
+#	$NetBSD: crypto.ioconf,v 1.3.18.2 2017/12/03 11:38:51 jdolecek Exp $
+
+ioconf		crypto
+
+include		"conf/files"
+
+pseudo-device   crypto

@@ -9,8 +9,8 @@ int __llvm_profile_write_file(void);
 void __llvm_profile_set_filename(const char *);
 int foo(int);
 int main(int argc, const char *argv[]) {
-  // CHECK-LABEL: define i32 @main
-  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !1
+  // CHECK-LABEL: define {{.*}} @main(
+  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof ![[PD1:[0-9]+]]
   if (argc < 2)
     return 1;
 
@@ -25,10 +25,10 @@ int main(int argc, const char *argv[]) {
   return Ret;
 }
 int foo(int X) {
-  // CHECK-LABEL: define i32 @foo
+  // CHECK-LABEL: define {{.*}} @foo(
   // CHECK1: br i1 %{{.*}}, label %{{.*}}, label %{{[^,]+$}}
-  // CHECK2: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !2
+  // CHECK2: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof ![[PD2:[0-9]+]]
   return X <= 0 ? -X : X;
 }
-// CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 2}
-// CHECK2: !2 = metadata !{metadata !"branch_weights", i32 2, i32 1}
+// CHECK: ![[PD1]] = !{!"branch_weights", i32 1, i32 2}
+// CHECK2: ![[PD2]] = !{!"branch_weights", i32 2, i32 1}

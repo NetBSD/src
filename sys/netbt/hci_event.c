@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.23 2011/07/27 10:25:09 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.23.12.1 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.23 2011/07/27 10:25:09 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.23.12.1 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1085,6 +1085,10 @@ hci_cmd_read_local_extended_features(struct hci_unit *unit, struct mbuf *m)
 	    rp.page, rp.max_page);
 
 	switch (rp.page) {
+	case 2:
+		memcpy(unit->hci_feat2, rp.features, HCI_FEATURES_SIZE);
+		break;
+		
 	case 1:
 		memcpy(unit->hci_feat1, rp.features, HCI_FEATURES_SIZE);
 		break;

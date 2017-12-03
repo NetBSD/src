@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.11 2011/11/23 23:07:30 jmcneill Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.11.8.1 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -59,8 +59,12 @@
 #define VS_MAX_BUFSIZE	(65536*4) /* XXX: enough? */
 
 /* XXX: msm6258vreg.h */
-#define MSM6258_STAT	0
-#define MSM6258_DATA	1
+#define MSM6258_CMD 	0		/* W */
+#define MSM6258_CMD_STOP	(0x01)
+#define MSM6258_CMD_PLAY_START	(0x02)
+#define MSM6258_CMD_REC_START	(0x04)
+#define MSM6258_STAT	0		/* R */
+#define MSM6258_DATA	1		/* R/W */
 
 struct vs_dma {
 	bus_dma_tag_t		vd_dmat;
@@ -72,6 +76,7 @@ struct vs_dma {
 	struct vs_dma		*vd_next;
 };
 #define KVADDR(dma)	((void *)(dma)->vd_addr)
+#define KVADDR_END(dma) ((void *)((size_t)KVADDR(dma) + (dma)->vd_size)))
 #define DMAADDR(dma)	((dma)->vd_map->dm_segs[0].ds_addr)
 
 struct vs_softc {
@@ -87,13 +92,13 @@ struct vs_softc {
 	bus_dma_tag_t sc_dmat;
 	struct dmac_channel_stat *sc_dma_ch;
 	struct vs_dma *sc_dmas;
+	struct vs_dma *sc_prev_vd;
 
 	struct {
 		struct dmac_dma_xfer *xfer;
-		int prate, rrate;
-		int bufsize, blksize;
-		int dmap;
+		int rate;
 	} sc_current;
+	int sc_active;
 
 	const struct audio_hw_if *sc_hw_if;
 

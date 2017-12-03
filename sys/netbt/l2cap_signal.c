@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.15.8.1 2013/02/25 00:30:04 tls Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.15.8.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.15.8.1 2013/02/25 00:30:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.15.8.2 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,7 @@ static void l2cap_recv_disconnect_req(struct mbuf *, struct hci_link *);
 static void l2cap_recv_disconnect_rsp(struct mbuf *, struct hci_link *);
 static void l2cap_recv_info_req(struct mbuf *, struct hci_link *);
 static int l2cap_send_signal(struct hci_link *, uint8_t, uint8_t, uint16_t, void *);
-static int l2cap_send_command_rej(struct hci_link *, uint8_t, uint16_t, ...);
+static int l2cap_send_command_rej(struct hci_link *, uint8_t, int, ...);
 static void l2cap_qos_btoh(l2cap_qos_t *, void *);
 static void l2cap_qos_htob(void *, l2cap_qos_t *);
 
@@ -974,6 +974,8 @@ l2cap_recv_info_req(struct mbuf *m, struct hci_link *link)
 		 *   0   1   0x0001 L2CAP Signalling Channel (SET)
 		 *   0   2   0x0002 Connectionless Reception
 		 *   0   3   0x0003 AMP Manager Protocol Channel
+		 *   0   7   0x0007 BR/EDR Security Manager
+		 *   7   7   0x003f AMP Test Manager
 		 */
 		le16enc(rsp + 0, cp.type);
 		le16enc(rsp + 2, L2CAP_SUCCESS);
@@ -1047,7 +1049,7 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
  */
 static int
 l2cap_send_command_rej(struct hci_link *link, uint8_t ident,
-			uint16_t reason, ...)
+			int reason, ...)
 {
 	l2cap_cmd_rej_cp cp;
 	int len = 0;

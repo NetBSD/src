@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.2.1 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.2.2 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,6 +31,9 @@
 
 #ifndef _SYS_INTR_H_
 #define	_SYS_INTR_H_
+
+#define INTRIDBUF 64
+#define INTRDEVNAMEBUF 256
 
 #ifdef _KERNEL
 

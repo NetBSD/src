@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.24 2011/08/18 21:04:23 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,14 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24 2011/08/18 21:04:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/systm.h>
 
-#include <mips/reg.h>
+#include <mips/locore.h>
 #include <mips/mips_opcode.h>
+#include <mips/reg.h>
 
 #include <machine/db_machdep.h>
 
@@ -58,13 +59,18 @@ static const char * const op_name[64] = {
 /*24 */ "daddi","daddiu","ldl", "ldr",	"op34", "op35", "op36", "op37",
 /*32 */ "lb",	"lh",	"lwl",	"lw",	"lbu",	"lhu",	"lwr",	"lwu",
 /*40 */ "sb",	"sh",	"swl",	"sw",	"sdl",	"sdr",	"swr",	"cache",
+#ifdef __OCTEON__
+/*48 */ "ll",	"lwc1", "bbit0", "lwc3", "lld",	"ldc1", "bbit032", "ld",
+/*56 */ "sc",	"swc1", "bbit1", "swc3", "scd",	"sdc1", "bbit132", "sd"
+#else
 /*48 */ "ll",	"lwc1", "lwc2", "lwc3", "lld",	"ldc1", "ldc2", "ld",
 /*56 */ "sc",	"swc1", "swc2", "swc3", "scd",	"sdc1", "sdc2", "sd"
+#endif
 };
 
 static const char * const spec_name[64] = {
-/* 0 */ "sll",	"spec01","srl", "sra",	"sllv", "spec05","srlv","srav",
-/* 8 */ "jr",	"jalr", "spec12","spec13","syscall","break","spec16","sync",
+/* 0 */ "sll",	"movc1","srl", "sra",	"sllv", "spec05","srlv","srav",
+/* 8 */ "jr",	"jalr", "movz","movn","syscall","break","spec16","sync",
 /*16 */ "mfhi", "mthi", "mflo", "mtlo", "dsllv","spec25","dsrlv","dsrav",
 /*24 */ "mult", "multu","div",	"divu", "dmult","dmultu","ddiv","ddivu",
 /*32 */ "add",	"addu", "sub",	"subu", "and",	"or",	"xor",	"nor",
@@ -73,8 +79,65 @@ static const char * const spec_name[64] = {
 /*56 */ "dsll","spec71","dsrl","dsra","dsll32","spec75","dsrl32","dsra32"
 };
 
-static const char * const spec2_name[4] = {		/* QED RM4650, R5000, etc. */
-/* 0 */ "mad", "madu", "mul", "spec3"
+static const char * const spec2_name[64] = {	/* QED RM4650, R5000, etc. */
+	[OP_MADD] = "madd",
+	[OP_MADDU] = "maddu",
+	[OP_MUL] = "mul",
+#ifdef __OCTEON__
+	[OP_CVM_DMUL] = "baddu",
+#endif
+	[OP_MSUB] = "msub",
+	[OP_MSUBU] = "msubu",
+	[OP_CLZ] = "clz",
+	[OP_CLO] = "clo",
+	[OP_DCLZ] = "dclz",
+	[OP_DCLO] = "dclo",
+#ifdef __OCTEON__
+	[OP_CVM_BADDU] = "baddu",
+	[OP_CVM_POP] = "pop",
+	[OP_CVM_DPOP] = "dpop",
+	[OP_CVM_CINS] = "cins",
+	[OP_CVM_CINS32] = "cins32",
+	[OP_CVM_EXTS] = "exts",
+	[OP_CVM_EXTS32] = "exts32",
+	[OP_CVM_SEQ] = "seq",
+	[OP_CVM_SEQI] = "seqi",
+	[OP_CVM_SNE] = "sne",
+	[OP_CVM_SNEI] = "snei",
+	[OP_CVM_SAA] = "saa",
+	[OP_CVM_SAAD] = "saad",
+#endif
+	[OP_SDBBP] = "sdbbp",
+};
+
+static const char * const spec3_name[64] = {
+	[OP_EXT] = "ext",
+	[OP_DEXTM] = "dextm",
+	[OP_DEXTU] = "dextu",
+	[OP_DEXT] = "dext",
+	[OP_INS] = "ins",
+	[OP_DINSM] = "dinsm",
+	[OP_DINSU] = "dinsu",
+	[OP_DINS] = "dins",
+	[OP_LWLE] = "lwle",
+	[OP_LWRE] = "lwre",
+	[OP_CACHEE] = "cachee",
+	[OP_SBE] = "sbe",
+	[OP_SHE] = "she",
+	[OP_SCE] = "sce",
+	[OP_SWE] = "swe",
+	[OP_BSHFL] = "bshfl",
+	[OP_SWLE] = "swle",
+	[OP_SWRE] = "swre",
+	[OP_PREFE] = "prefe",
+	[OP_DBSHFL] = "dbshfl",
+	[OP_LBUE] = "lbue",
+	[OP_LHUE] = "lhue",
+	[OP_LBE] = "lbe",
+	[OP_LHE] = "lhe",
+	[OP_LLE] = "lle",
+	[OP_LWE] = "lwe",
+	[OP_RDHWR] = "rdhwr",
 };
 
 static const char * const regimm_name[32] = {
@@ -156,7 +219,7 @@ static void print_addr(db_addr_t);
 db_addr_t
 db_disasm(db_addr_t loc, bool altfmt)
 {
-	u_int32_t instr;
+	uint32_t instr;
 
 	/*
 	 * Take some care with addresses to not UTLB here as it
@@ -171,7 +234,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 		}
 	}
 	else {
-		instr =  *(u_int32_t *)loc;
+		instr =  *(uint32_t *)loc;
 	}
 
 	return (db_disasm_insn(instr, loc, altfmt));
@@ -191,28 +254,50 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	i.word = insn;
 
 	switch (i.JType.op) {
-	case OP_SPECIAL:
+	case OP_SPECIAL: {
+		const char *name = spec_name[i.RType.func];
 		if (i.word == 0) {
 			db_printf("nop");
+			break;
+		}
+		if (i.word == (1 << 6)) {
+			db_printf("ssnop");
+			break;
+		}
+		if (i.word == (3 << 6)) {
+			db_printf("ehb");
 			break;
 		}
 		/* XXX
 		 * "addu" is a "move" only in 32-bit mode.  What's the correct
 		 * answer - never decode addu/daddu as "move"?
 		 */
-		if (i.RType.func == OP_ADDU && i.RType.rt == 0) {
+		if (true
+#ifdef __mips_o32
+		    && i.RType.func == OP_ADDU
+#else
+		    && i.RType.func == OP_DADDU
+#endif
+		    && i.RType.rt == 0) {
 			db_printf("move\t%s,%s",
 			    reg_name[i.RType.rd],
 			    reg_name[i.RType.rs]);
 			break;
 		}
-		db_printf("%s", spec_name[i.RType.func]);
+		if ((i.RType.func == OP_SRL || i.RType.func == OP_SRLV)
+		    && i.RType.rs == 1) {
+			name = (i.RType.func == OP_SRL) ? "rotr" : "rotrv";
+		} else if ((i.RType.func == OP_DSRL || i.RType.func == OP_DSRLV)
+		    && i.RType.shamt == 1) {
+			name = (i.RType.func == OP_DSRL) ? "drotr" : "drotrv";
+		}
+
+		db_printf("%s", name);
 		switch (i.RType.func) {
 		case OP_SLL:
 		case OP_SRL:
 		case OP_SRA:
 		case OP_DSLL:
-
 		case OP_DSRL:
 		case OP_DSRA:
 		case OP_DSLL32:
@@ -243,7 +328,8 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 		case OP_JR:
 		case OP_JALR:
-			db_printf("\t%s", reg_name[i.RType.rs]);
+			db_printf("\t%s%s", reg_name[i.RType.rs],
+			    (insn & __BIT(10)) ? ".hb" : "");
 			bdslot = true;
 			break;
 		case OP_MTLO:
@@ -266,7 +352,10 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 
 		case OP_SYSCALL:
+			break;
 		case OP_SYNC:
+			if (i.RType.shamt != 0)
+				db_printf("\t%d", i.RType.shamt);
 			break;
 
 		case OP_BREAK:
@@ -280,25 +369,160 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			    reg_name[i.RType.rt]);
 		}
 		break;
+	}
 
 	case OP_SPECIAL2:
-		if (i.RType.func == OP_MUL)
+		if (spec_name[i.RType.func] == NULL) {
+			db_printf("spec2#%03o\t%s,%s",
+				i.RType.func,
+		    		reg_name[i.RType.rs],
+		    		reg_name[i.RType.rt]);
+			break;
+		}
+		if (i.RType.func == OP_MUL
+#ifdef __OCTEON__
+		    || i.RType.func == OP_CVM_DMUL
+		    || i.RType.func == OP_CVM_SEQ
+		    || i.RType.func == OP_CVM_SNE
+#endif
+		    || false) {
 			db_printf("%s\t%s,%s,%s",
-				spec2_name[i.RType.func & 0x3],
+				spec2_name[i.RType.func],
 		    		reg_name[i.RType.rd],
 		    		reg_name[i.RType.rs],
 		    		reg_name[i.RType.rt]);
-		else
+			break;
+		}
+#ifdef __OCTEON__
+		if (i.RType.func == OP_CVM_CINS
+		    || i.RType.func == OP_CVM_CINS32
+		    || i.RType.func == OP_CVM_EXTS
+		    || i.RType.func == OP_CVM_EXTS32) {
+			db_printf("%s\t%s,%s,%d,%d",
+				spec2_name[i.RType.func],
+		    		reg_name[i.RType.rt],
+		    		reg_name[i.RType.rs],
+				i.RType.shamt,
+				i.RType.rd);
+			break;
+		}
+		if (i.RType.func == OP_CVM_SEQI
+		    || i.RType.func == OP_CVM_SNEI) {
+			db_printf("%s\t%s,%s,%d",
+				spec2_name[i.RType.func],
+		    		reg_name[i.RType.rs],
+		    		reg_name[i.RType.rt],
+				(short)i.IType.imm >> 6);
+			break;
+		}
+		if (i.RType.func == OP_CVM_SAA
+		    || i.RType.func == OP_CVM_SAAD) {
+			db_printf("%s\t%s,(%s)",
+				spec2_name[i.RType.func],
+		    		reg_name[i.RType.rt],
+		    		reg_name[i.RType.rs]);
+			break;
+		}
+#endif
+		if (i.RType.func == OP_CLO
+		    || i.RType.func == OP_DCLO
+#ifdef __OCTEON__
+		    || i.RType.func == OP_CVM_POP
+		    || i.RType.func == OP_CVM_DPOP
+#endif
+		    || i.RType.func == OP_CLZ
+		    || i.RType.func == OP_DCLZ) {
 			db_printf("%s\t%s,%s",
-				spec2_name[i.RType.func & 0x3],
+				spec2_name[i.RType.func],
+		    		reg_name[i.RType.rs],
+		    		reg_name[i.RType.rd]);
+			break;
+		}
+		db_printf("%s\t%s,%s",
+			spec2_name[i.RType.func],
+	    		reg_name[i.RType.rs],
+	    		reg_name[i.RType.rt]);
+		break;
+
+	case OP_SPECIAL3:
+		if (spec3_name[i.RType.func] == NULL) {
+			db_printf("spec3#%03o\t%s,%s",
+				i.RType.func,
 		    		reg_name[i.RType.rs],
 		    		reg_name[i.RType.rt]);
+			break;
+		}
+		if (i.RType.func <= OP_DINS) {
+			int pos = i.RType.shamt;
+			int size = i.RType.rd - pos + 1;
+			size += (((i.RType.func & 3) == 1) ? 32 : 0);
+			pos  += (((i.RType.func & 3) == 2) ? 32 : 0);
 			
+			db_printf("%s\t%s,%s,%d,%d",
+				spec3_name[i.RType.func],
+				reg_name[i.RType.rt],
+				reg_name[i.RType.rs],
+				pos, size);
+			break;
+		}
+		if (i.RType.func == OP_RDHWR) {
+			db_printf("%s\t%s,$%d",
+				spec3_name[i.RType.func],
+				reg_name[i.RType.rt],
+				i.RType.rd);
+			break;
+		}
+		if (i.RType.func == OP_BSHFL) {
+			if (i.RType.shamt == OP_BSHFL_SBH) {
+				db_printf("wsbh\t%s,%s",
+					reg_name[i.RType.rd],
+					reg_name[i.RType.rt]);
+			} else if (i.RType.shamt == OP_BSHFL_SEB) {
+				db_printf("seb\t%s,%s",
+					reg_name[i.RType.rd],
+					reg_name[i.RType.rt]);
+			} else if (i.RType.shamt == OP_BSHFL_SEH) {
+				db_printf("seh\t%s,%s",
+					reg_name[i.RType.rd],
+					reg_name[i.RType.rt]);
+			} else {
+				db_printf("bshfl\t%s,%s,%d",
+					reg_name[i.RType.rd],
+					reg_name[i.RType.rt],
+					i.RType.shamt);
+			}
+			break;
+		}
+		if (i.RType.func == OP_DBSHFL) {
+			if (i.RType.shamt == OP_BSHFL_SBH) {
+				db_printf("dsbh\t%s,%s",
+					reg_name[i.RType.rd],
+					reg_name[i.RType.rt]);
+			} else if (i.RType.shamt == OP_BSHFL_SHD) {
+				db_printf("dshd\t%s,%s",
+					reg_name[i.RType.rd],
+					reg_name[i.RType.rt]);
+			} else {
+				db_printf("dbshfl\t%s,%s,%d",
+					reg_name[i.RType.rd],
+					reg_name[i.RType.rt],
+					i.RType.shamt);
+			}
+			break;
+		}
+		db_printf("%s\t%s,%s",
+			spec3_name[i.RType.func],
+	    		reg_name[i.RType.rs],
+	    		reg_name[i.RType.rt]);
 		break;
 
 	case OP_REGIMM:
 		db_printf("%s\t%s,", regimm_name[i.IType.rt],
 		    reg_name[i.IType.rs]);
+		if (i.IType.rt >= OP_TGEI && i.IType.rt <= OP_TNEI) {
+			db_printf("%d",(int16_t)i.IType.imm);
+			break;
+		}
 		goto pr_displ;
 
 	case OP_BLEZ:
@@ -359,6 +583,20 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			    c0_reg[i.RType.rd]);
 			break;
 
+		case OP_MFM:
+			if (i.RType.rd == MIPS_COP_0_STATUS
+			    && i.RType.shamt == 0
+			    && (i.RType.func & 31) == 0) {
+				db_printf("%s",
+				    i.RType.func & 16 ? "ei" : "di");
+				if (i.RType.rt != 0) {
+					db_printf("\t%s",
+					    reg_name[i.RType.rt]);
+				}
+				break;
+			}
+			/* FALLTHROUGH */
+
 		default:
 			db_printf("%s", c0_opname[i.FRType.func]);
 		}
@@ -385,13 +623,13 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			break;
 
 		case OP_CT:
-			db_printf("ctc1\t%s,f%d",
+			db_printf("ctc1\t%s,%d",
 			    reg_name[i.RType.rt],
 			    i.RType.rd);
 			break;
 
 		case OP_CF:
-			db_printf("cfc1\t%s,f%d",
+			db_printf("cfc1\t%s,%d",
 			    reg_name[i.RType.rt],
 			    i.RType.rd);
 			break;
@@ -494,13 +732,33 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 	case OP_J:
 	case OP_JAL:
+	case OP_JALX:
 		db_printf("%s\t", op_name[i.JType.op]);
-		print_addr((loc & 0xF0000000) | (i.JType.target << 2));
+		print_addr((loc & ~0x0FFFFFFFL) | (i.JType.target << 2));
 		bdslot = true;
 		break;
 
+#ifdef __OCTEON__
+	case OP_CVM_BBIT0:
+	case OP_CVM_BBIT032:
+	case OP_CVM_BBIT1:
+	case OP_CVM_BBIT132:
+			db_printf("%s\t%s,%d,",
+			    op_name[i.IType.op],
+			    reg_name[i.IType.rs],
+			    i.IType.rt);
+			goto pr_displ;
+#else
+	case OP_LWC2:
+	case OP_LDC2:
+	case OP_SWC2:
+	case OP_SDC2:
+#endif
+
 	case OP_LWC1:
 	case OP_SWC1:
+	case OP_LDC1:
+	case OP_SDC1:
 		db_printf("%s\tf%d,", op_name[i.IType.op],
 		    i.IType.rt);
 		goto loadstore;
@@ -595,7 +853,7 @@ print_addr(db_addr_t loc)
 		if (diff == 0)
 			db_printf("%s", symname);
 		else
-			db_printf("<%s+%lx>", symname, diff);
+			db_printf("<%s+%"DDB_EXPR_FMT"x>", symname, diff);
 		db_printf("\t[addr:%#"PRIxVADDR"]", loc);
 	} else {
 		db_printf("%#"PRIxVADDR, loc);

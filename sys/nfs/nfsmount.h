@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.51.14.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.51.14.2 2017/12/03 11:39:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -120,6 +120,7 @@ struct nfs_args {
 #define NFSMNT_SWAPCOOKIE	0x00004000  /* XDR encode dir cookies */
 #define NFSMNT_STALEWRITEVERF	0x00008000  /* Write verifier is changing */
 #define NFSMNT_WCCKLUDGE	0x00010000  /* see nfs_check_wccdata() */
+#define NFSMNT_DISMNTFORCE	0x00020000  /* force unmount requested */
 
 #if defined(_KERNEL) && !defined(NFS_ARGS_ONLY)
 /*

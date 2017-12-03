@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.2.4.4 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.2.4.5 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
  * NPF extension and rule procedure interface.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD");
 
@@ -43,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/module.h>
+#endif
 
 #include "npf_impl.h"
 
@@ -77,21 +79,18 @@ struct npf_rproc {
 	LIST_ENTRY(npf_rproc)	rp_entry;
 };
 
-static LIST_HEAD(, npf_ext)	ext_list	__cacheline_aligned;
-static kmutex_t			ext_lock	__cacheline_aligned;
-
 void
-npf_ext_sysinit(void)
+npf_ext_init(npf_t *npf)
 {
-	mutex_init(&ext_lock, MUTEX_DEFAULT, IPL_NONE);
-	LIST_INIT(&ext_list);
+	mutex_init(&npf->ext_lock, MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&npf->ext_list);
 }
 
 void
-npf_ext_sysfini(void)
+npf_ext_fini(npf_t *npf)
 {
-	KASSERT(LIST_EMPTY(&ext_list));
-	mutex_destroy(&ext_lock);
+	KASSERT(LIST_EMPTY(&npf->ext_list));
+	mutex_destroy(&npf->ext_lock);
 }
 
 /*
@@ -102,27 +101,27 @@ static const char npf_ext_prefix[] = "npf_ext_";
 #define NPF_EXT_PREFLEN (sizeof(npf_ext_prefix) - 1)
 
 static npf_ext_t *
-npf_ext_lookup(const char *name, bool autoload)
+npf_ext_lookup(npf_t *npf, const char *name, bool autoload)
 {
 	npf_ext_t *ext;
 	char modname[RPROC_NAME_LEN + NPF_EXT_PREFLEN];
 	int error;
 
-	KASSERT(mutex_owned(&ext_lock));
+	KASSERT(mutex_owned(&npf->ext_lock));
 
 again:
-	LIST_FOREACH(ext, &ext_list, ext_entry)
+	LIST_FOREACH(ext, &npf->ext_list, ext_entry)
 		if (strcmp(ext->ext_callname, name) == 0)
 			break;
 
 	if (ext != NULL || !autoload)
 		return ext;
 
-	mutex_exit(&ext_lock);
+	mutex_exit(&npf->ext_lock);
 	autoload = false;
 	snprintf(modname, sizeof(modname), "%s%s", npf_ext_prefix, name);
 	error = module_autoload(modname, MODULE_CLASS_MISC);
-	mutex_enter(&ext_lock);
+	mutex_enter(&npf->ext_lock);
 
 	if (error)
 		return NULL;
@@ -130,7 +129,7 @@ again:
 }
 
 void *
-npf_ext_register(const char *name, const npf_ext_ops_t *ops)
+npf_ext_register(npf_t *npf, const char *name, const npf_ext_ops_t *ops)
 {
 	npf_ext_t *ext;
 
@@ -138,20 +137,20 @@ npf_ext_register(const char *name, const npf_ext_ops_t *ops)
 	strlcpy(ext->ext_callname, name, EXT_NAME_LEN);
 	ext->ext_ops = ops;
 
-	mutex_enter(&ext_lock);
-	if (npf_ext_lookup(name, false)) {
-		mutex_exit(&ext_lock);
+	mutex_enter(&npf->ext_lock);
+	if (npf_ext_lookup(npf, name, false)) {
+		mutex_exit(&npf->ext_lock);
 		kmem_free(ext, sizeof(npf_ext_t));
 		return NULL;
 	}
-	LIST_INSERT_HEAD(&ext_list, ext, ext_entry);
-	mutex_exit(&ext_lock);
+	LIST_INSERT_HEAD(&npf->ext_list, ext, ext_entry);
+	mutex_exit(&npf->ext_lock);
 
 	return (void *)ext;
 }
 
 int
-npf_ext_unregister(void *extid)
+npf_ext_unregister(npf_t *npf, void *extid)
 {
 	npf_ext_t *ext = extid;
 
@@ -162,21 +161,22 @@ npf_ext_unregister(void *extid)
 		return EBUSY;
 	}
 
-	mutex_enter(&ext_lock);
+	mutex_enter(&npf->ext_lock);
 	if (ext->ext_refcnt) {
-		mutex_exit(&ext_lock);
+		mutex_exit(&npf->ext_lock);
 		return EBUSY;
 	}
-	KASSERT(npf_ext_lookup(ext->ext_callname, false));
+	KASSERT(npf_ext_lookup(npf, ext->ext_callname, false));
 	LIST_REMOVE(ext, ext_entry);
-	mutex_exit(&ext_lock);
+	mutex_exit(&npf->ext_lock);
 
 	kmem_free(ext, sizeof(npf_ext_t));
 	return 0;
 }
 
 int
-npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
+npf_ext_construct(npf_t *npf, const char *name,
+    npf_rproc_t *rp, prop_dictionary_t params)
 {
 	const npf_ext_ops_t *extops;
 	npf_ext_t *ext;
@@ -187,12 +187,12 @@ npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
 		return ENOSPC;
 	}
 
-	mutex_enter(&ext_lock);
-	ext = npf_ext_lookup(name, true);
+	mutex_enter(&npf->ext_lock);
+	ext = npf_ext_lookup(npf, name, true);
 	if (ext) {
 		atomic_inc_uint(&ext->ext_refcnt);
 	}
-	mutex_exit(&ext_lock);
+	mutex_exit(&npf->ext_lock);
 
 	if (!ext) {
 		return ENOENT;
@@ -269,6 +269,8 @@ npf_rprocset_export(const npf_rprocset_t *rpset, prop_array_t rprocs)
 
 	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
 		rpdict = prop_dictionary_create();
+		prop_array_t extcalls = prop_array_create();
+		prop_dictionary_set_and_rel(rpdict, "extcalls", extcalls);
 		prop_dictionary_set_cstring(rpdict, "name", rp->rp_name);
 		prop_dictionary_set_uint32(rpdict, "flags", rp->rp_flags);
 		prop_array_add(rprocs, rpdict);
@@ -306,6 +308,15 @@ void
 npf_rproc_acquire(npf_rproc_t *rp)
 {
 	atomic_inc_uint(&rp->rp_refcnt);
+}
+
+/*
+ * npf_rproc_getname: return the name of the given rproc
+ */
+const char *
+npf_rproc_getname(const npf_rproc_t *rp)
+{
+	return rp->rp_name;
 }
 
 /*
@@ -347,7 +358,8 @@ npf_rproc_assign(npf_rproc_t *rp, void *params)
  * => Reference on the rule procedure must be held.
  */
 bool
-npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, int *decision)
+npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, const npf_match_info_t *mi,
+    int *decision)
 {
 	const unsigned extcount = rp->rp_ext_count;
 
@@ -359,7 +371,7 @@ npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, int *decision)
 		const npf_ext_ops_t *extops = ext->ext_ops;
 
 		KASSERT(ext->ext_refcnt > 0);
-		if (!extops->proc(npc, rp->rp_ext_meta[i], decision)) {
+		if (!extops->proc(npc, rp->rp_ext_meta[i], mi, decision)) {
 			return false;
 		}
 

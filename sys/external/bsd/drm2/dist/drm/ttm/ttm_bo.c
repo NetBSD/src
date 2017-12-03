@@ -33,6 +33,7 @@
 #ifdef __NetBSD__
 #include <sys/types.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
 #endif
 
 #include <drm/ttm/ttm_module.h>
@@ -286,7 +287,21 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 		break;
 	}
 
+#ifdef __NetBSD__
+	if (ret)
+		return ret;
+
+	/*
+	 * XXX This is gross.  We ought to do it the other way around:
+	 * set the uao to have the main uvm object's lock.  However,
+	 * uvm_obj_setlock is not safe on uvm_aobjs.
+	 */
+	mutex_obj_hold(bo->ttm->swap_storage->vmobjlock);
+	uvm_obj_setlock(&bo->uvmobj, bo->ttm->swap_storage->vmobjlock);
+	return 0;
+#else
 	return ret;
+#endif
 }
 
 static int ttm_bo_handle_move_mem(struct ttm_buffer_object *bo,
@@ -1006,6 +1021,7 @@ static int ttm_bo_move_buffer(struct ttm_buffer_object *bo,
 	mem.num_pages = bo->num_pages;
 	mem.size = mem.num_pages << PAGE_SHIFT;
 	mem.page_alignment = bo->mem.page_alignment;
+	mem.bus.is_iomem = false;
 	mem.bus.io_reserved_vm = false;
 	mem.bus.io_reserved_count = 0;
 	/*
@@ -1596,17 +1612,28 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 
 #ifdef __NetBSD__
 	if (bo->mem.bus.is_iomem) {
-		/*
-		 * XXX OOPS!  NetBSD doesn't have a way to enumerate
-		 * and remove the virtual mappings for device addresses
-		 * or of a uvm object.
-		 */
+		paddr_t start, end, pa;
+
+		KASSERTMSG((bo->mem.bus.base & (PAGE_SIZE - 1)) == 0,
+		    "bo bus base addr not page-aligned: %lx",
+		    bo->mem.bus.base);
+		KASSERTMSG((bo->mem.bus.offset & (PAGE_SIZE - 1)) == 0,
+		    "bo bus offset not page-aligned: %lx",
+		    bo->mem.bus.offset);
+		start = bo->mem.bus.base + bo->mem.bus.offset;
+		KASSERT((bo->mem.bus.size & (PAGE_SIZE - 1)) == 0);
+		end = start + bo->mem.bus.size;
+
+		for (pa = start; pa < end; pa += PAGE_SIZE)
+			pmap_pv_protect(pa, VM_PROT_NONE);
 	} else if (bo->ttm != NULL) {
 		unsigned i;
 
+		mutex_enter(bo->uvmobj.vmobjlock);
 		for (i = 0; i < bo->ttm->num_pages; i++)
 			pmap_page_protect(&bo->ttm->pages[i]->p_vmp,
 			    VM_PROT_NONE);
+		mutex_exit(bo->uvmobj.vmobjlock);
 	}
 #else
 	drm_vma_node_unmap(&bo->vma_node, bdev->dev_mapping);

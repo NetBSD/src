@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.75 2011/11/21 04:36:05 christos Exp $	*/
+/*	$NetBSD: sched.h,v 1.75.8.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ int	_sched_getaffinity(pid_t, lwpid_t, size_t, cpuset_t *);
 int	_sched_setaffinity(pid_t, lwpid_t, size_t, const cpuset_t *);
 int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
 int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
+int	_sched_protect(int);
 __END_DECLS
 
 /*

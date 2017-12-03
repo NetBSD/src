@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.34.18.1 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.34.18.2 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -27,7 +27,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.34.18.1 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.34.18.2 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,12 @@ static const struct siop_product_desc siop_products[] = {
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x10,
 	"Symbios Logic 53c810a (fast scsi)",
+	SF_PCI_RL | SF_PCI_BOF | SF_CHIP_PF | SF_CHIP_LS,
+	4, 8, 3, 250, 0
+	},
+	{ PCI_PRODUCT_SYMBIOS_810AP,
+	0x00,
+	"Symbios Logic 53c810ap (fast scsi)",
 	SF_PCI_RL | SF_PCI_BOF | SF_CHIP_PF | SF_CHIP_LS,
 	4, 8, 3, 250, 0
 	},

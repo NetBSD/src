@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.4 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: kloader.h,v 1.4.44.1 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -29,3 +29,5 @@
 #include <dev/kloader.h>
 
 #define PG_VADDR(pg)	SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
+
+extern paddr_t avail_start, avail_end;

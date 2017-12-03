@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.6.6.2 2014/08/20 00:03:30 tls Exp $
+#	$NetBSD: Makefile,v 1.6.6.3 2017/12/03 11:36:52 jdolecek Exp $
 
 WARNS?=	4
+
+.include <bsd.init.mk>
 
 S=	${.CURDIR}/../../../..
 
@@ -9,6 +11,7 @@ SRCS=	zbsdmod.c
 NOMAN=	# defined
 
 realall: ${OBJS}
+	${OBJCOPY} -R .eh_frame ${.OBJDIR}/zbsdmod.o
 
 .include <bsd.klinks.mk>
 .include <bsd.prog.mk>

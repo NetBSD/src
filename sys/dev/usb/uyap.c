@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.19 2011/12/23 00:51:50 jakllsch Exp $	*/
+/*	$NetBSD: uyap.c,v 1.19.6.1 2017/12/03 11:37:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.19 2011/12/23 00:51:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.19.6.1 2017/12/03 11:37:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,32 +53,33 @@ struct uyap_softc {
 	device_t		sc_dev;		/* base device */
 };
 
-int             uyap_match(device_t, cfdata_t, void *);
-void            uyap_attach(device_t, device_t, void *);
-int             uyap_detach(device_t, int);
-int             uyap_activate(device_t, enum devact);
+int	uyap_match(device_t, cfdata_t, void *);
+void	uyap_attach(device_t, device_t, void *);
+int	uyap_detach(device_t, int);
+int	uyap_activate(device_t, enum devact);
 extern struct cfdriver uyap_cd;
-CFATTACH_DECL_NEW(uyap, sizeof(struct uyap_softc), uyap_match, uyap_attach, uyap_detach, uyap_activate);
+CFATTACH_DECL_NEW(uyap, sizeof(struct uyap_softc), uyap_match, uyap_attach,
+    uyap_detach, uyap_activate);
 
-int 
+int
 uyap_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
 	/* Match the boot device. */
-	if (uaa->vendor == USB_VENDOR_SILICONPORTALS &&
-	    uaa->product == USB_PRODUCT_SILICONPORTALS_YAPPH_NF)
+	if (uaa->uaa_vendor == USB_VENDOR_SILICONPORTALS &&
+	    uaa->uaa_product == USB_PRODUCT_SILICONPORTALS_YAPPH_NF)
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
 }
 
-void 
+void
 uyap_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyap_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status err;
 	char *devinfop;
 
@@ -105,7 +106,7 @@ uyap_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uyap_detach(device_t self, int flags)
 {
 #if 0

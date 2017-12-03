@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.14 2012/08/14 14:38:02 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.14.2.1 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.14 2012/08/14 14:38:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.14.2.1 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,7 @@ static void		acpi_wmi_childdet(device_t, device_t);
 static int		acpi_wmi_print(void *, const char *);
 static bool		acpi_wmi_init(struct acpi_wmi_softc *);
 static void		acpi_wmi_init_ec(struct acpi_wmi_softc *);
-static bool		acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
+static void		acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
 static void		acpi_wmi_del(struct acpi_wmi_softc *);
 static void		acpi_wmi_dump(struct acpi_wmi_softc *);
 static ACPI_STATUS	acpi_wmi_guid_get(struct acpi_wmi_softc *,
@@ -213,7 +213,8 @@ acpi_wmi_init(struct acpi_wmi_softc *sc)
 		goto fail;
 	}
 
-	return acpi_wmi_add(sc, obj);
+	acpi_wmi_add(sc, obj);
+	return true;
 
 fail:
 	aprint_error_dev(sc->sc_dev, "failed to evaluate _WDG: %s\n",
@@ -225,7 +226,7 @@ fail:
 	return false;
 }
 
-static bool
+static void
 acpi_wmi_add(struct acpi_wmi_softc *sc, ACPI_OBJECT *obj)
 {
 	struct wmi_t *wmi;
@@ -238,9 +239,7 @@ acpi_wmi_add(struct acpi_wmi_softc *sc, ACPI_OBJECT *obj)
 
 	for (i = offset = 0; i < n; ++i) {
 
-		if ((wmi = kmem_zalloc(sizeof(*wmi), KM_SLEEP)) == NULL)
-			goto fail;
-
+		wmi = kmem_zalloc(sizeof(*wmi), KM_SLEEP);
 		(void)memcpy(&wmi->guid, obj->Buffer.Pointer + offset, siz);
 
 		wmi->eevent = false;
@@ -250,14 +249,6 @@ acpi_wmi_add(struct acpi_wmi_softc *sc, ACPI_OBJECT *obj)
 	}
 
 	ACPI_FREE(obj);
-
-	return true;
-
-fail:
-	ACPI_FREE(obj);
-	acpi_wmi_del(sc);
-
-	return false;
 }
 
 static void

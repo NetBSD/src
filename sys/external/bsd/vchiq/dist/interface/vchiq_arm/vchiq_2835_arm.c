@@ -63,16 +63,17 @@ typedef struct vchiq_2835_state_struct {
    VCHIQ_ARM_STATE_T arm_state;
 } VCHIQ_2835_ARM_STATE_T;
 
-static char *g_slot_mem;
-static int g_slot_mem_size;
-paddr_t g_slot_phys, g_slot_phys_cpu;
 /* BSD DMA */
 static bus_dmamap_t dma_map;
-static FRAGMENTS_T *g_fragments_base;
-static FRAGMENTS_T *g_free_fragments;
-struct semaphore g_free_fragments_sema;
 
-static DEFINE_SEMAPHORE(g_free_fragments_mutex);
+static unsigned int g_cache_line_size = CACHE_LINE_SIZE;
+static unsigned int g_fragments_size;
+static char *g_fragments_base;
+static char *g_free_fragments;
+
+struct semaphore g_free_fragments_sema;
+static struct semaphore g_free_fragments_mutex;
+
 
 int __init
 vchiq_platform_init(VCHIQ_STATE_T *state)
@@ -80,19 +81,25 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	VCHIQ_SLOT_ZERO_T *vchiq_slot_zero;
 	bus_dma_segment_t dma_segs[1];
 	int dma_nsegs;
-	int frag_mem_size;
+	void *slot_mem;
+	bus_addr_t slot_phys;
+	int slot_mem_size, frag_mem_size;
 	int err;
 	int i;
 
 	_sema_init(&g_free_fragments_mutex, 1);
 
+	g_cache_line_size = 32;
+
+	g_fragments_size = 2 * g_cache_line_size;
+
 	/* Allocate space for the channels in coherent memory */
-	g_slot_mem_size = PAGE_ALIGN(TOTAL_SLOTS * VCHIQ_SLOT_SIZE);
-	frag_mem_size = PAGE_ALIGN(sizeof(FRAGMENTS_T) * MAX_FRAGMENTS);
+	slot_mem_size = PAGE_ALIGN(TOTAL_SLOTS * VCHIQ_SLOT_SIZE);
+	frag_mem_size = PAGE_ALIGN(g_fragments_size * MAX_FRAGMENTS);
 
 	dma_nsegs = __arraycount(dma_segs);
 	err = bus_dmamem_alloc(&bcm2835_bus_dma_tag,
-	    g_slot_mem_size + frag_mem_size, PAGE_SIZE, 0,
+	    slot_mem_size + frag_mem_size, PAGE_SIZE, 0,
 	    dma_segs, dma_nsegs, &dma_nsegs, BUS_DMA_WAITOK);
 	if (err) {
 		vchiq_log_error(vchiq_core_log_level, "Unable to allocate channel memory");
@@ -101,8 +108,8 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	}
 
 	err = bus_dmamem_map(&bcm2835_bus_dma_tag,
-	    dma_segs, dma_nsegs, g_slot_mem_size + frag_mem_size,
-	    (void **)&g_slot_mem, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
+	    dma_segs, dma_nsegs, slot_mem_size + frag_mem_size,
+	    (void **)&slot_mem, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
 	if (err) {
 		vchiq_log_error(vchiq_core_log_level, "Unable to map channel memory");
 		err = -ENOMEM;
@@ -110,8 +117,8 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	}
 
 	err = bus_dmamap_create(&bcm2835_bus_dma_tag,
-	    g_slot_mem_size + frag_mem_size, 1,	/* maxsize, nsegments */
-	    g_slot_mem_size + frag_mem_size, 0, /* maxsegsize, boundary */
+	    slot_mem_size + frag_mem_size, 1,	/* maxsize, nsegments */
+	    slot_mem_size + frag_mem_size, 0,	/* maxsegsize, boundary */
 	    BUS_DMA_WAITOK,
 	    &dma_map);
 	if (err) {
@@ -120,40 +127,41 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 		goto failed_alloc;
 	}
 
-	err = bus_dmamap_load(&bcm2835_bus_dma_tag, dma_map, g_slot_mem,
-	    g_slot_mem_size + frag_mem_size, NULL, BUS_DMA_WAITOK);
+	err = bus_dmamap_load(&bcm2835_bus_dma_tag, dma_map, slot_mem,
+	    slot_mem_size + frag_mem_size, NULL, BUS_DMA_WAITOK);
 	if (err) {
 		vchiq_log_error(vchiq_core_log_level, "cannot load DMA map (%d)", err);
 		err = -ENOMEM;
 		goto failed_load;
 	}
-	g_slot_phys = dma_map->dm_segs[0].ds_addr;
+	slot_phys = dma_map->dm_segs[0].ds_addr;
 
 	vchiq_log_info(vchiq_arm_log_level,
-	    "%s: g_slot_phys = %x\n", __func__, (unsigned int)g_slot_phys);
+	    "%s: slot_phys = %lx\n", __func__, slot_phys);
 
-	WARN_ON(((int)g_slot_mem & (PAGE_SIZE - 1)) != 0);
+	WARN_ON(((int)slot_mem & (PAGE_SIZE - 1)) != 0);
 
-	vchiq_slot_zero = vchiq_init_slots(g_slot_mem, g_slot_mem_size);
+	vchiq_slot_zero = vchiq_init_slots(slot_mem, slot_mem_size);
 	if (!vchiq_slot_zero) {
 		err = -EINVAL;
 		goto failed_init_slots;
 	}
 
 	vchiq_slot_zero->platform_data[VCHIQ_PLATFORM_FRAGMENTS_OFFSET_IDX] =
-		(int)g_slot_phys + g_slot_mem_size;
+		(int)slot_phys + slot_mem_size;
 	vchiq_slot_zero->platform_data[VCHIQ_PLATFORM_FRAGMENTS_COUNT_IDX] =
 		MAX_FRAGMENTS;
 
-	g_fragments_base = (FRAGMENTS_T *)(g_slot_mem + g_slot_mem_size);
-	g_slot_mem_size += frag_mem_size;
+	g_fragments_base = (char *)slot_mem + slot_mem_size;
+	slot_mem_size += frag_mem_size;
 
 	g_free_fragments = g_fragments_base;
 	for (i = 0; i < (MAX_FRAGMENTS - 1); i++) {
-		*(FRAGMENTS_T **)&g_fragments_base[i] =
-			&g_fragments_base[i + 1];
+		*(char **)&g_fragments_base[i*g_fragments_size] =
+			&g_fragments_base[(i + 1)*g_fragments_size];
 	}
-	*(FRAGMENTS_T **)&g_fragments_base[i] = NULL;
+	*(char **)&g_fragments_base[i * g_fragments_size] = NULL;
+
 	_sema_init(&g_free_fragments_sema, MAX_FRAGMENTS);
 
 	if (vchiq_init_state(state, vchiq_slot_zero, 0/*slave*/) !=
@@ -162,17 +170,20 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 		goto failed_vchiq_init;
 	}
 
-	bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map, 0, g_slot_mem_size,
-	    BUS_DMASYNC_PREWRITE);
-	bcm_mbox_write(BCM2835_MBOX_CHAN_VCHIQ, (unsigned int)g_slot_phys);
-	bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map, 0, g_slot_mem_size,
-	    BUS_DMASYNC_POSTWRITE);
+	/* Send the base address of the slots to VideoCore */
+	dsb(); /* Ensure all writes have completed */
+
+	bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map, 0, slot_mem_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bcm_mbox_write(BCM2835_MBOX_CHAN_VCHIQ, (unsigned int)slot_phys);
+	bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map, 0, slot_mem_size,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	vchiq_log_info(vchiq_arm_log_level,
 		"vchiq_init - done (slots %x, phys %x)",
-		(unsigned int)vchiq_slot_zero, (unsigned int)g_slot_phys);
+		(unsigned int)vchiq_slot_zero, (unsigned int)slot_phys);
 
-   vchiq_call_connected_callbacks();
+	vchiq_call_connected_callbacks();
 
    return 0;
 
@@ -261,20 +272,19 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	int ret;
 
 	vchiq_log_info(vchiq_arm_log_level,
-	    "%s: buf %p size %08x dir %s\n", __func__, buf, size,
+	    "%s: buf %p size %08x dir %s", __func__, buf, size,
 	    dir == VCHIQ_BULK_RECEIVE ? "read" : "write");
 
 	vaddr_t va = (vaddr_t)buf;
 	const size_t maxsegs = atop(round_page(va + size) - trunc_page(va));
- 	int uvmflags = (dir == VCHIQ_BULK_RECEIVE ? VM_PROT_READ : VM_PROT_WRITE);
-	int dmaflags = (dir == VCHIQ_BULK_RECEIVE ? BUS_DMA_READ : BUS_DMA_WRITE);
+ 	const int uvmflags = (dir == VCHIQ_BULK_RECEIVE ?
+	    VM_PROT_READ : VM_PROT_WRITE);
+	const int dmaflags = (dir == VCHIQ_BULK_RECEIVE ?
+	    BUS_DMA_READ : BUS_DMA_WRITE);
 
 	WARN_ON(memhandle != VCHI_MEM_HANDLE_INVALID);
 
 	bi = kmem_alloc(sizeof(*bi), KM_SLEEP);
-	if (bi == NULL)
-		goto fail;
-
 	bi->buf = buf;
 	bi->size = size;
 	bi->pagelist_size = sizeof(PAGELIST_T) +
@@ -294,6 +304,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		goto fail2;
 
 	pagelist = bi->pagelist;
+
 	ret = bus_dmamap_create(&bcm2835_bus_dma_tag, bi->pagelist_size,
 	    nsegs, bi->pagelist_size, 0, BUS_DMA_WAITOK, &bi->pagelist_map);
 	if (ret != 0)
@@ -303,12 +314,6 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	    bi->pagelist_size, NULL, BUS_DMA_WAITOK | BUS_DMA_WRITE);
 	if (ret != 0)
 		goto fail4;
-
-	/*
-	 * We've now got the bus_addr_t for the pagelist we want the transfer
-	 * to use.
-	 */
-	bulk->data = (void *)bi->pagelist_map->dm_segs[0].ds_addr;
 
 	/*
 	 * Need to wire the buffer pages in.
@@ -334,6 +339,11 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		goto fail7;
 
 	bulk->handle = memhandle;
+	/*
+	 * We've now got the bus_addr_t for the pagelist we want the transfer
+	 * to use.
+	 */
+	bulk->data = (void *)bi->pagelist_map->dm_segs[0].ds_addr;
 
 	pagelist->type = (dir == VCHIQ_BULK_RECEIVE) ?
 	    PAGELIST_READ : PAGELIST_WRITE;
@@ -355,9 +365,9 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 
 	/* Partial cache lines (fragments) require special measures */
 	if ((pagelist->type == PAGELIST_READ) &&
-	    ((pagelist->offset & (arm_dcache_align - 1)) ||
-	    ((pagelist->offset + pagelist->length) & (arm_dcache_align - 1)))) {
-		FRAGMENTS_T *fragments;
+	    ((pagelist->offset & (g_cache_line_size - 1)) ||
+	    ((pagelist->offset + pagelist->length) & (g_cache_line_size - 1)))) {
+		char *fragments;
 
 		if (down_interruptible(&g_free_fragments_sema) != 0) {
 			goto fail7;
@@ -366,14 +376,14 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		WARN_ON(g_free_fragments == NULL);
 
 		down(&g_free_fragments_mutex);
-		fragments = (FRAGMENTS_T *) g_free_fragments;
+		fragments = g_free_fragments;
 		WARN_ON(fragments == NULL);
-		g_free_fragments = *(FRAGMENTS_T **) g_free_fragments;
+		g_free_fragments = *(char **) g_free_fragments;
 		up(&g_free_fragments_mutex);
 		pagelist->type = PAGELIST_READ_WITH_FRAGMENTS +
-		    (fragments - g_fragments_base);
+		    (fragments - g_fragments_base) / g_fragments_size;
 		bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map,
-		    (char *)fragments - g_slot_mem, sizeof(*fragments),
+		    (char *)fragments - g_fragments_base, sizeof(*fragments),
 		    BUS_DMASYNC_PREREAD);
 	}
 
@@ -414,8 +424,6 @@ fail2:
 
 fail1:
 	kmem_free(bi, sizeof(*bi));
-
-fail:
 	return VCHIQ_ERROR;
 }
 
@@ -423,8 +431,12 @@ void
 vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 {
 	if (bulk && bulk->remote_data && bulk->actual) {
+		int actual = bulk->actual;
 		BULKINFO_T *bi = bulk->remote_data;
 		PAGELIST_T *pagelist = bi->pagelist;
+
+		vchiq_log_trace(vchiq_arm_log_level,
+			"free_pagelist - %x, %d", (unsigned int)pagelist, actual);
 
 		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
 		    bi->pagelist_size, BUS_DMASYNC_POSTWRITE);
@@ -435,31 +447,29 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 
 		/* Deal with any partial cache lines (fragments) */
 		if (pagelist->type >= PAGELIST_READ_WITH_FRAGMENTS) {
-			FRAGMENTS_T *fragments = g_fragments_base +
-				(pagelist->type - PAGELIST_READ_WITH_FRAGMENTS);
+			char *fragments = g_fragments_base +
+			    (pagelist->type - PAGELIST_READ_WITH_FRAGMENTS) *
+			    g_fragments_size;
 			int head_bytes, tail_bytes;
-			int actual = bulk->actual;
 
 			bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map,
-			    (char *)fragments - g_slot_mem, sizeof(*fragments),
+			    (char *)fragments - g_fragments_base, g_fragments_size,
 			    BUS_DMASYNC_POSTREAD);
 
-			head_bytes = (arm_dcache_align - pagelist->offset) &
-				(arm_dcache_align - 1);
+			head_bytes = (g_cache_line_size - pagelist->offset) &
+				(g_cache_line_size - 1);
 			tail_bytes = (pagelist->offset + actual) &
-				(arm_dcache_align - 1);
+				(g_cache_line_size - 1);
 
 			if ((actual >= 0) && (head_bytes != 0)) {
 				if (head_bytes > actual)
 					head_bytes = actual;
 
 				if (IS_USER_ADDRESS(bi->buf)) {
-					copyout_proc(bi->proc,
-					    fragments->headbuf, bi->buf,
-					    head_bytes);
+					copyout_proc(bi->proc, fragments,
+					    bi->buf, head_bytes);
 				} else {
-					kcopy(fragments->headbuf, bi->buf,
-					    head_bytes);
+					kcopy(fragments, bi->buf, head_bytes);
 				}
 			}
 			if ((actual >= 0) && (head_bytes < actual) &&
@@ -469,15 +479,16 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 
 				 if (IS_USER_ADDRESS(bi->buf)) {
 					copyout_proc(bi->proc,
-					    fragments->tailbuf, t, tail_bytes);
+					    fragments + g_cache_line_size, t,
+					    tail_bytes);
 				} else {
-					kcopy(fragments->tailbuf, t,
+					kcopy(fragments + g_cache_line_size, t,
 					    tail_bytes);
 				}
 			}
 
 			down(&g_free_fragments_mutex);
-			*(FRAGMENTS_T **) fragments = g_free_fragments;
+			*(char **)fragments = g_free_fragments;
 			g_free_fragments = fragments;
 			up(&g_free_fragments_mutex);
 			up(&g_free_fragments_sema);

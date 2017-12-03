@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31.6.1 2014/08/20 00:03:21 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.31.6.2 2017/12/03 11:36:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.6.1 2014/08/20 00:03:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.6.2 2017/12/03 11:36:40 jdolecek Exp $");
 
 #include "opt_pci.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.6.1 2014/08/20 00:03:21 tls Exp
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
@@ -213,6 +214,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, tag | reg);
 	data = in32rb(SANDPOINT_PCI_CONFIG_DATA);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
@@ -222,6 +226,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, tag | reg);
 	out32rb(SANDPOINT_PCI_CONFIG_DATA, data);
@@ -398,7 +405,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 }
 
 const struct evcnt *
-pci_intr_evcnt(void *v, pci_intr_handle_t ih)
+pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -419,8 +426,16 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 }
 
 void *
-pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
+{
+
+	return pci_intr_establish_xname(pc, ih, level, func, arg, NULL);
+}
+
+void *
+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *xname)
 {
 	int type;
 
@@ -433,19 +448,20 @@ pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		 * Using an edge-trigger fixes that and triggers the
 		 * interrupt only once during probing.
 		 */
-		 type = IST_EDGE;
+		type = IST_EDGE;
 	} else
 		type = IST_LEVEL;
-	
+
 	/*
 	 * ih is the value assigned in pci_intr_map(), above.
 	 * It's the EPIC IRQ #.
 	 */
-	return intr_establish(ih + I8259_ICU, type, level, func, arg);
+	return intr_establish_xname(ih + I8259_ICU, type, level, func, arg,
+	    xname);
 }
 
 void
-pci_intr_disestablish(void *v, void *cookie)
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	intr_disestablish(cookie);
@@ -480,3 +496,85 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
 	}
 }
 #endif
+
+pci_intr_type_t
+pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+{
+
+	return PCI_INTR_TYPE_INTX;
+}
+
+int
+pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *counts, pci_intr_type_t max_type)
+{
+
+	if (counts != NULL && counts[PCI_INTR_TYPE_INTX] == 0)
+		return EINVAL;
+
+	return pci_intx_alloc(pa, ihps);
+}
+
+void
+pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
+{
+
+	kmem_free(pih, sizeof(*pih));
+}
+
+int
+pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihpp)
+{
+	pci_intr_handle_t *ihp;
+
+	ihp = kmem_alloc(sizeof(*ihp), KM_SLEEP);
+	if (pci_intr_map(pa, ihp)) {
+		kmem_free(ihp, sizeof(*ihp));
+		return EINVAL;
+	}
+
+	*ihpp = ihp;
+	return 0;
+}
+
+/* experimental MSI support */
+int
+pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* experimental MSI-X support */
+int
+pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    u_int *table_indexes, int count)
+{
+
+	return EOPNOTSUPP;
+}

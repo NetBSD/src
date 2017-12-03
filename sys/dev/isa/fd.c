@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.100.6.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: fd.c,v 1.100.6.3 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100.6.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100.6.3 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100.6.2 2014/08/20 00:03:39 tls Exp $");
 #include <sys/fdio.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <prop/proplib.h>
 
@@ -253,7 +253,10 @@ void fdgetdisklabel(struct fd_softc *);
 int fd_get_parms(struct fd_softc *);
 void fdstart(struct fd_softc *);
 
-struct dkdriver fddkdriver = { fdstrategy, NULL };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy,
+	.d_minphys = minphys
+};
 
 #if defined(i386) || defined(x86_64)
 const struct fd_type *fd_nvtotype(const char *, int, int);
@@ -1398,7 +1401,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
-	struct disklabel buffer;
+	struct disklabel *lp = fd->sc_dk.dk_label;
 	int error;
 	unsigned int scratch;
 	int il[FD_MAX_NSEC + 1];
@@ -1407,38 +1410,32 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct disklabel newlabel;
 #endif
 
-	error = disk_ioctl(&fd->sc_dk, cmd, addr, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
-
 	switch (cmd) {
+	case DIOCGPARTINFO:
 	case DIOCGDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 #endif
-		memset(&buffer, 0, sizeof(buffer));
+		memset(lp, 0, sizeof(*lp));
 
-		buffer.d_type = DTYPE_FLOPPY;
-		buffer.d_secsize = FDC_BSIZE;
-		buffer.d_nsectors = fd->sc_type->sectrac;
-		buffer.d_ntracks = fd->sc_type->heads;
-		buffer.d_ncylinders = fd->sc_type->cyls;
-		buffer.d_secpercyl = fd->sc_type->seccyl;
-		buffer.d_secperunit = fd->sc_type->size;
+		lp->d_type = DKTYPE_FLOPPY;
+		lp->d_secsize = FDC_BSIZE;
+		lp->d_nsectors = fd->sc_type->sectrac;
+		lp->d_ntracks = fd->sc_type->heads;
+		lp->d_ncylinders = fd->sc_type->cyls;
+		lp->d_secpercyl = fd->sc_type->seccyl;
+		lp->d_secperunit = fd->sc_type->size;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy, lp, NULL) != NULL)
 			return EINVAL;
+		break;
+	}
 
-#ifdef __HAVE_OLD_DISKLABEL
-		if (cmd == ODIOCGDINFO) {
-			if (buffer.d_npartitions > OLDMAXPARTITIONS)
-				return ENOTTY;
-			memcpy(addr, &buffer, sizeof (struct olddisklabel));
-		} else
-#endif
-		*(struct disklabel *)addr = buffer;
-		return 0;
+	error = disk_ioctl(&fd->sc_dk, dev, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
 
+	switch (cmd) {
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1450,24 +1447,20 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case ODIOCWDINFO:
 #endif
 	{
-		struct disklabel *lp;
-
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 #ifdef __HAVE_OLD_DISKLABEL
 		if (cmd == ODIOCWDINFO) {
 			memset(&newlabel, 0, sizeof newlabel);
 			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
-			lp = &newlabel;
-		} else
+			addr = &newlabel;
+		}
 #endif
-		lp = (struct disklabel *)addr;
-
-		error = setdisklabel(&buffer, lp, 0, NULL);
+		error = setdisklabel(lp, addr, 0, NULL);
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(dev, fdstrategy, lp, NULL);
 		return error;
 	}
 

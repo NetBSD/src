@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.39.2.3 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: advnops.c,v 1.39.2.4 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.39.2.3 2014/08/20 00:04:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.39.2.4 2017/12/03 11:38:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ adosfs_read(void *v)
 		 * but not much as ados makes little attempt to
 		 * make things contigous
 		 */
-		error = bread(sp->a_vp, lbn, amp->bsize, NOCRED, 0, &bp);
+		error = bread(sp->a_vp, lbn, amp->bsize, 0, &bp);
 		if (error) {
 			goto reterr;
 		}
@@ -409,14 +409,13 @@ reterr:
 int
 adosfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -516,7 +515,7 @@ adosfs_bmap(void *v)
 			goto reterr;
 		}
 		error = bread(ap->amp->devvp, nb * ap->amp->bsize / DEV_BSIZE,
-			      ap->amp->bsize, NOCRED, 0, &flbp);
+			      ap->amp->bsize, 0, &flbp);
 		if (error) {
 			goto reterr;
 		}
@@ -844,15 +843,13 @@ adosfs_readlink(void *v)
 int
 adosfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *sp = v;
-	struct vnode *vp = sp->a_vp;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
-	VOP_UNLOCK(vp);
 	/* XXX this needs to check if file was deleted */
 	*sp->a_recycle = true;
 
@@ -869,18 +866,19 @@ adosfs_inactive(void *v)
 int
 adosfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *sp = v;
 	struct vnode *vp;
 	struct anode *ap;
+
+	VOP_UNLOCK(sp->a_vp);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("(reclaim 0)");
 #endif
 	vp = sp->a_vp;
 	ap = VTOA(vp);
-	vcache_remove(vp->v_mount, &ap->block, sizeof(ap->block));
 	if (vp->v_type == VDIR && ap->tab)
 		free(ap->tab, M_ANODE);
 	else if (vp->v_type == VLNK && ap->slinkto)

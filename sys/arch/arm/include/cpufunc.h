@@ -169,7 +169,7 @@ struct cpu_functions {
 extern struct cpu_functions cpufuncs;
 extern u_int cputype;
 
-#define cpu_id()		cpufuncs.cf_id()
+#define cpu_idnum()		cpufuncs.cf_id()
 
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
@@ -230,7 +230,6 @@ void	cpufunc_domains		(u_int);
 u_int	cpufunc_faultstatus	(void);
 u_int	cpufunc_faultaddress	(void);
 
-#define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb
 #define drain_writebuf	cpu_drain_writebuf
 
@@ -420,7 +419,9 @@ struct arm_cache_info {
 	uint8_t dcache_type;
 };
 
+#if (ARM_MMU_V6 + ARM_MMU_V7) != 0
 extern u_int arm_cache_prefer_mask;
+#endif
 extern u_int arm_dcache_align;
 extern u_int arm_dcache_align_mask;
 

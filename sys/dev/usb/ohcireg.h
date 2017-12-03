@@ -1,6 +1,5 @@
-/*	$NetBSD: ohcireg.h,v 1.23.46.1 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.23.46.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
-
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_PCI_OHCIREG_H_
-#define _DEV_PCI_OHCIREG_H_
+#ifndef _DEV_USB_OHCIREG_H_
+#define _DEV_USB_OHCIREG_H_
 
 /*** PCI config registers ***/
 
@@ -120,18 +119,18 @@
 
 #define OHCI_LES (OHCI_PLE | OHCI_IE | OHCI_CLE | OHCI_BLE)
 #define OHCI_ALL_INTRS (OHCI_SO | OHCI_WDH | OHCI_SF | OHCI_RD | OHCI_UE | \
-                        OHCI_FNO | OHCI_RHSC | OHCI_OC)
+			OHCI_FNO | OHCI_RHSC | OHCI_OC)
 #define OHCI_NORMAL_INTRS (OHCI_SO | OHCI_WDH | OHCI_RD | OHCI_UE | OHCI_RHSC)
 
 #define OHCI_FSMPS(i) (((i-210)*6/7) << 16)
 #define OHCI_PERIODIC(i) ((i)*9/10)
 
-typedef u_int32_t ohci_physaddr_t;
+typedef uint32_t ohci_physaddr_t;
 
 #define OHCI_NO_INTRS 32
 struct ohci_hcca {
 	volatile ohci_physaddr_t	hcca_interrupt_table[OHCI_NO_INTRS];
-	volatile u_int32_t	hcca_frame_number;
+	volatile uint32_t	hcca_frame_number;
 	volatile ohci_physaddr_t	hcca_done_head;
 #define OHCI_DONE_INTRS 1
 };
@@ -143,7 +142,7 @@ struct ohci_hcca {
 #define OHCI_PAGE_OFFSET(x) ((x) & 0xfff)
 
 typedef struct {
-	volatile u_int32_t	ed_flags;
+	volatile uint32_t	ed_flags;
 #define OHCI_ED_GET_FA(s)	((s) & 0x7f)
 #define OHCI_ED_ADDRMASK	0x0000007f
 #define OHCI_ED_SET_FA(s)	(s)
@@ -171,7 +170,7 @@ typedef struct {
 #define OHCI_ED_ALIGN 16
 
 typedef struct {
-	volatile u_int32_t	td_flags;
+	volatile uint32_t	td_flags;
 #define OHCI_TD_R		0x00040000		/* Buffer Rounding  */
 #define OHCI_TD_DP_MASK		0x00180000		/* Direction / PID */
 #define  OHCI_TD_SETUP		0x00000000
@@ -197,7 +196,7 @@ typedef struct {
 
 #define OHCI_ITD_NOFFSET 8
 typedef struct {
-	volatile u_int32_t	itd_flags;
+	volatile uint32_t	itd_flags;
 #define OHCI_ITD_GET_SF(x)	((x) & 0x0000ffff)
 #define OHCI_ITD_SET_SF(x)	((x) & 0xffff)
 #define OHCI_ITD_GET_DI(x)	(((x) >> 21) & 7)	/* Delay Interrupt */
@@ -210,7 +209,7 @@ typedef struct {
 	volatile ohci_physaddr_t itd_bp0;		/* Buffer Page 0 */
 	volatile ohci_physaddr_t itd_nextitd;		/* Next ITD */
 	volatile ohci_physaddr_t itd_be;			/* Buffer End */
-	volatile u_int16_t itd_offset[OHCI_ITD_NOFFSET];/* Buffer offsets */
+	volatile uint16_t itd_offset[OHCI_ITD_NOFFSET];/* Buffer offsets */
 #define itd_pswn itd_offset				/* Packet Status Word*/
 #define OHCI_ITD_PAGE_SELECT	0x00001000
 #define OHCI_ITD_MK_OFFS(len)	(0xe000 | ((len) & 0x1fff))
@@ -240,4 +239,4 @@ typedef struct {
 #define OHCI_ENABLE_POWER_DELAY	5
 #define OHCI_READ_DESC_DELAY	5
 
-#endif /* _DEV_PCI_OHCIREG_H_ */
+#endif /* _DEV_USB_OHCIREG_H_ */

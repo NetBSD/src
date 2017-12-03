@@ -1,4 +1,4 @@
-/*	$NetBSD: hw.c,v 1.1.1.1.10.2 2014/08/20 00:04:24 tls Exp $	*/
+/*	$NetBSD: hw.c,v 1.1.1.1.10.3 2017/12/03 11:38:02 jdolecek Exp $	*/
 
 /*++
 
@@ -78,7 +78,7 @@ ReadPort (
         )
 {
     UINT32       Data;
-    EFI_STATUS  Status;
+    EFI_STATUS  Status __unused;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Io.Read, 5, GlobalIoFncs, Width, (UINT64)Port, 1, &Data);
     ASSERT(!EFI_ERROR(Status));
@@ -93,7 +93,7 @@ WritePort (
         IN  UINTN                       Data
         )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS  Status __unused;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Io.Write, 5, GlobalIoFncs, Width, (UINT64)Port, 1, &Data);
     ASSERT(!EFI_ERROR(Status));
@@ -108,7 +108,7 @@ ReadPciConfig (
         )
 {
     UINT32       Data;
-    EFI_STATUS  Status;
+    EFI_STATUS  Status __unused;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Pci.Read, 5, GlobalIoFncs, Width, (UINT64)Address, 1, &Data);
     ASSERT(!EFI_ERROR(Status));
@@ -123,7 +123,7 @@ WritePciConfig (
         IN  UINTN                       Data
         )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS  Status __unused;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Pci.Write, 5, GlobalIoFncs, Width, (UINT64)Address, 1, &Data);
     ASSERT(!EFI_ERROR(Status));

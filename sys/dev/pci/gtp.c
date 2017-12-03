@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.18.6.1 2012/11/20 03:02:14 tls Exp $ */
+/* $NetBSD: gtp.c,v 1.18.6.2 2017/12/03 11:37:07 jdolecek Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.18.6.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.18.6.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.18.6.1 2012/11/20 03:02:14 tls Exp $");
 static int	gtp_match(device_t, cfdata_t, void *);
 static void	gtp_attach(device_t, device_t, void *);
 
-static int     gtp_get_info(void *, struct radio_info *);
-static int     gtp_set_info(void *, struct radio_info *);
-static int     gtp_search(void *, int);
+static int	gtp_get_info(void *, struct radio_info *);
+static int	gtp_set_info(void *, struct radio_info *);
+static int	gtp_search(void *, int);
 
 #define GEMTEK_PCI_CAPS	RADIO_CAPS_DETECT_SIGNAL |			\
 			RADIO_CAPS_DETECT_STEREO |			\

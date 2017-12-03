@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.80.2.4 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.80.2.5 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.80.2.4 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.80.2.5 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x00, COM_FREQ },
 	    },
 	},
- 
+
 	/* Lava Computers 2SP-PCI */
 	{   "Lava Computers 2SP-PCI parallel port",
 	    {	PCI_VENDOR_LAVA,	PCI_PRODUCT_LAVA_TWOSP_1P, 0, 0 },
@@ -1315,7 +1315,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	{   "SUNIX 5008 1P",
-	    {	PCI_VENDOR_SUNIX2, 	PCI_PRODUCT_SUNIX2_SER5XXXX,
+	    {	PCI_VENDOR_SUNIX2,	PCI_PRODUCT_SUNIX2_SER5XXXX,
 		0x1fd4,	0x0100 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
@@ -1469,7 +1469,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
-	 * Nanjing QinHeng Electronics 
+	 * Nanjing QinHeng Electronics
 	 * Products based on CH353 chip which can be
 	 * configured to provide various combinations
 	 * including 2 serial ports and a parallel port
@@ -1857,6 +1857,14 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel Q45 KT (again) */
+	{   "Intel Q45 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_KT_1, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
 	/* Intel 5 Series and Intel 3400 Series KT */
 	{   "Intel 5 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT, 0, 0 },
@@ -1893,6 +1901,33 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel 9 Series KT */
+	{   "Intel 9 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 100 Series KT */
+	{   "Intel 100 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 200 Series KT */
+	{   "Intel 200 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_2HS_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+	
 	/* Intel C600/X79 Series KT */
 	{   "Intel C600/X79 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_KT, 0, 0 },
@@ -2771,6 +2806,16 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x3e8, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x3f8, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, PCI_BAR0, 0x000, 0x00 },
+	    },
+	},
+
+	/* SystemBase SB16C1050 UARTs */
+	{   "SystemBase SB16C1050",
+	    {	PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1050, 0, 0 },
+	    {	0xffff, 0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ * 8},
 	    },
 	},
 

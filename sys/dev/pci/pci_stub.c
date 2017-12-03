@@ -1,10 +1,13 @@
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.1 2011/08/24 20:27:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.1.12.1 2017/12/03 11:37:08 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -43,3 +46,96 @@ default_pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
 {
 	return EOPNOTSUPP;
 }
+
+#ifndef __HAVE_PCI_MSI_MSIX
+pci_intr_type_t
+pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+{
+
+	return PCI_INTR_TYPE_INTX;
+}
+
+int
+pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *counts, pci_intr_type_t max_type)
+{
+
+	if (counts != NULL && counts[PCI_INTR_TYPE_INTX] == 0)
+		return EINVAL;
+
+	return pci_intx_alloc(pa, ihps);
+}
+
+void
+pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
+{
+
+	kmem_free(pih, sizeof(*pih));
+}
+
+void *
+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *__nouse)
+{
+
+	return pci_intr_establish(pc, ih, level, func, arg);
+}
+
+int
+pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihp)
+{
+	pci_intr_handle_t *pih;
+
+	if (ihp == NULL)
+		return EINVAL;
+
+	pih = kmem_alloc(sizeof(*pih), KM_SLEEP);
+	if (pci_intr_map(pa, pih)) {
+		kmem_free(pih, sizeof(*pih));
+		return EINVAL;
+	}
+
+	*ihp = pih;
+	return 0;
+}
+
+int
+pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    u_int *table_indexes, int count)
+{
+
+	return EOPNOTSUPP;
+}
+#endif	/* __HAVE_PCI_MSI_MSIX */

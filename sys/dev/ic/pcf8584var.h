@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.4 2010/02/28 11:47:28 martin Exp $	*/
+/*	$NetBSD: pcf8584var.h,v 1.4.20.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -33,19 +33,6 @@ struct pcfiic_softc {
 	struct i2c_controller	sc_i2c;
 	krwlock_t		sc_lock;
 };
-
-/* clock divisor settings */
-#define PCF_CLOCK_3		0x00 /* 3 MHz */
-#define PCF_CLOCK_4_43		0x10 /* 4.43 MHz */
-#define PCF_CLOCK_6		0x14 /* 6 MHz */
-#define PCF_CLOCK_8		0x18 /* 8 MHz */
-#define PCF_CLOCK_12		0x1c /* 12 MHz */
-
-/* SCL frequency settings */
-#define PCF_FREQ_90		0x00 /* 90 kHz */
-#define PCF_FREQ_45		0x01 /* 45 kHz */
-#define PCF_FREQ_11		0x02 /* 11 kHz */
-#define PCF_FREQ_1_5		0x03 /* 1.5 kHz */
 
 void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, u_int8_t, int);
 int	pcfiic_intr(void *);

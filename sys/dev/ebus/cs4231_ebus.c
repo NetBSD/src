@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.35 2011/11/23 23:07:31 jmcneill Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.35.8.1 2017/12/03 11:37:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.35 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.35.8.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -127,7 +127,7 @@ const struct audio_hw_if audiocs_ebus_hw_if = {
 };
 
 #ifdef AUDIO_DEBUG
-static void	cs4231_ebus_regdump(char *, struct cs4231_ebus_softc *);
+static void	cs4231_ebus_regdump(const char *, struct cs4231_ebus_softc *);
 #endif
 
 static int	cs4231_ebus_dma_reset(bus_space_tag_t, bus_space_handle_t);
@@ -268,15 +268,19 @@ static int
 cs4231_ebus_round_blocksize(void *addr, int blk, int mode,
 			    const audio_params_t *param)
 {
+	int sz;
 
 	/* we want to use DMA burst size of 16 words */
-	return blk & -64;
+	sz = blk & -64;
+	if (sz == 0)
+		sz = 64;	/* zero is not a good blocksize */
+	return sz;
 }
 
 
 #ifdef AUDIO_DEBUG
 static void
-cs4231_ebus_regdump(char *label, struct cs4231_ebus_softc *ebsc)
+cs4231_ebus_regdump(const char *label, struct cs4231_ebus_softc *ebsc)
 {
 	/* char bits[128]; */
 

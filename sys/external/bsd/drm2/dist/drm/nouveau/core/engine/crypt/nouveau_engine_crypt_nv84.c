@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_crypt_nv84.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_crypt_nv84.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_crypt_nv84.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_crypt_nv84.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $");
 
 #include <core/client.h>
 #include <core/os.h>
@@ -134,7 +134,7 @@ nv84_crypt_intr(struct nouveau_subdev *subdev)
 	if (stat) {
 		nv_error(priv, "%s", "");
 		nouveau_bitfield_print(nv84_crypt_intr_mask, stat);
-		pr_cont(" ch %d [0x%010llx %s] mthd 0x%04x data 0x%08x\n",
+		pr_cont(" ch %d [0x%010"PRIx64" %s] mthd 0x%04x data 0x%08x\n",
 		       chid, (u64)inst << 12, nouveau_client_name(engctx),
 		       mthd, data);
 	}

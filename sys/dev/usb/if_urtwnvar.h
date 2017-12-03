@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.2.2.3 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.2.2.4 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -66,15 +66,17 @@ struct urtwn_tx_radiotap_header {
 struct urtwn_softc;
 
 struct urtwn_rx_data {
-	struct urtwn_softc	*sc;
-	usbd_xfer_handle	xfer;
-	uint8_t			*buf;
+	struct urtwn_softc		*sc;
+	size_t				pidx;
+	struct usbd_xfer		*xfer;
+	uint8_t				*buf;
+	TAILQ_ENTRY(urtwn_rx_data)	next;
 };
 
 struct urtwn_tx_data {
 	struct urtwn_softc		*sc;
-	usbd_pipe_handle		pipe;
-	usbd_xfer_handle		xfer;
+	size_t				pidx;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(urtwn_tx_data)	next;
 };
@@ -114,8 +116,8 @@ struct urtwn_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device *		sc_udev;
+	struct usbd_interface *		sc_iface;
 	u_int				sc_flags;
 #define URTWN_FLAG_CCK_HIPWR	__BIT(0)
 #define	URTWN_FLAG_ATTACHED	__BIT(1)
@@ -129,11 +131,12 @@ struct urtwn_softc {
 	kmutex_t			sc_task_mtx;
 	kmutex_t			sc_fwcmd_mtx;
 	kmutex_t			sc_tx_mtx;
+	kmutex_t			sc_rx_mtx;
 	kmutex_t			sc_write_mtx;
 
-	usbd_pipe_handle		rx_pipe;
+	struct usbd_pipe *		rx_pipe[R92C_MAX_EPIN];
 	int				rx_npipe;
-	usbd_pipe_handle		tx_pipe[R92C_MAX_EPOUT];
+	struct usbd_pipe *		tx_pipe[R92C_MAX_EPOUT];
 	int				tx_npipe;
 	int				ac2idx[WME_NUM_AC];
 
@@ -143,6 +146,7 @@ struct urtwn_softc {
 #define URTWN_CHIP_UMC		0x04
 #define URTWN_CHIP_UMC_A_CUT	0x08
 #define URTWN_CHIP_88E		0x10
+#define URTWN_CHIP_92EU		0x20
 
 	void				(*sc_rf_write)(struct urtwn_softc *,
 					    int, uint8_t, uint32_t);
@@ -164,12 +168,13 @@ struct urtwn_softc {
 
 	struct urtwn_host_cmd_ring	cmdq;
 	int				fwcur;
-	struct urtwn_rx_data		rx_data[URTWN_RX_LIST_COUNT];
-	struct urtwn_tx_data		tx_data[URTWN_TX_LIST_COUNT];
-	TAILQ_HEAD(, urtwn_tx_data)	tx_free_list;
+	struct urtwn_rx_data		rx_data[R92C_MAX_EPIN][URTWN_RX_LIST_COUNT];
+	struct urtwn_tx_data		tx_data[R92C_MAX_EPOUT][URTWN_TX_LIST_COUNT];
+	TAILQ_HEAD(, urtwn_tx_data)	tx_free_list[R92C_MAX_EPOUT];
+	TAILQ_HEAD(, urtwn_rx_data)	rx_free_list[R92C_MAX_EPIN];
 
 	struct r92c_rom			rom;
-	uint8_t				r88e_rom[512];
+	uint8_t				r88e_rom[4096];
 	uint8_t				cck_tx_pwr[6];
 	uint8_t				ht40_tx_pwr[5];
 	int8_t				bw20_tx_pwr_diff;
@@ -190,6 +195,7 @@ struct urtwn_softc {
 	}				sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
+	bool				sc_running;
 };
 
 #endif /* _IF_URTWNVAR_H_ */

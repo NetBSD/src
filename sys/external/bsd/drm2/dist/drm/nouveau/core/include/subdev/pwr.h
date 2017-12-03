@@ -3,6 +3,8 @@
 
 #include <core/subdev.h>
 #include <core/device.h>
+#include <linux/workqueue.h>	/* XXX */
+#include <drm/drmP.h>		/* XXX */
 
 struct nouveau_pwr {
 	struct nouveau_subdev base;
@@ -29,7 +31,11 @@ struct nouveau_pwr {
 		u32 size;
 
 		struct work_struct work;
+#ifdef __NetBSD__
+		drm_waitqueue_t wait;
+#else
 		wait_queue_head_t wait;
+#endif
 		u32 process;
 		u32 message;
 		u32 data[2];
@@ -59,7 +65,11 @@ nouveau_pwr(void *obj)
 
 int nouveau_pwr_create_(struct nouveau_object *, struct nouveau_object *,
 			   struct nouveau_oclass *, int, void **);
+#ifdef __NetBSD__
+void _nouveau_pwr_dtor(struct nouveau_object *);
+#else
 #define _nouveau_pwr_dtor _nouveau_subdev_dtor
+#endif
 int _nouveau_pwr_init(struct nouveau_object *);
 int _nouveau_pwr_fini(struct nouveau_object *, bool);
 

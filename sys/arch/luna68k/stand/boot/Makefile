@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.9.6.3 2014/08/20 00:03:10 tls Exp $
+#	$NetBSD: Makefile,v 1.9.6.4 2017/12/03 11:36:23 jdolecek Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
+NOPIE= # defined
 
 .include <bsd.own.mk>
 
@@ -19,6 +20,7 @@ CPPFLAGS+=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
 #CPPFLAGS+=	-DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CPPFLAGS+=	-DLIBSA_PRINTF_WIDTH_SUPPORT
+CPPFLAGS+=	-DLIBSA_CREAD_NOCRC
 
 CFLAGS=		-Os -msoft-float
 CFLAGS+=	-ffreestanding
@@ -58,9 +60,6 @@ PROG=   boot
 
 NEWVERSWHAT=	"${PROG}"
 
-SRCS+=          vers.c
-CLEANFILES+=    vers.c
-
 ### find out what to use for libkern
 KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
@@ -76,10 +75,7 @@ SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes SA_ENABLE_LS_OP=yes
 
 LIBS=	${SALIB} ${ZLIB} ${KERNLIB}
 
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}

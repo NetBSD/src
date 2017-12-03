@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.38.2.3 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.38.2.4 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38.2.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38.2.4 2017/12/03 11:38:45 jdolecek Exp $");
+
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,6 +80,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38.2.3 2014/08/20 00:04:29 tls Exp $")
 #include <sys/wait.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/sdt.h>
+
+SDT_PROVIDER_DECLARE(proc);
+SDT_PROBE_DEFINE2(proc, kernel, , signal__clear,
+    "int", 		/* signal */
+    "ksiginfo_t *");	/* signal-info */
 
 int
 sys___sigaction_sigtramp(struct lwp *l,
@@ -211,8 +219,7 @@ sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap,
 	return 0;
 }
 
-
-static int
+int
 kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 {
 	int error;
@@ -251,7 +258,7 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(ksi->ksi_signo),
 		    NULL, NULL);
 		if (!error && ksi->ksi_signo) {
-			kpsignal2(p, ksi);
+			error = kpsignal2(p, ksi);
 		}
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
@@ -357,7 +364,7 @@ sys_setcontext(struct lwp *l, const struct sys_setcontext_args *uap,
  * of sigwaitinfo() and sigwait().
  *
  * This only handles single LWP in signal wait. libpthread provides
- * it's own sigtimedwait() wrapper to DTRT WRT individual threads.
+ * its own sigtimedwait() wrapper to DTRT WRT individual threads.
  */
 int
 sys_____sigtimedwait50(struct lwp *l,
@@ -834,7 +841,10 @@ out:
 		error = (*storeinf)(&ksi.ksi_info, SCARG(uap, info),
 		    sizeof(ksi.ksi_info));
 	}
-	if (error == 0)
+	if (error == 0) {
 		*retval = ksi.ksi_info._signo;
+		SDT_PROBE(proc, kernel, , signal__clear, *retval,
+		    &ksi, 0, 0, 0);
+	}
 	return error;
 }

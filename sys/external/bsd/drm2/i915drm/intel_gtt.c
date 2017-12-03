@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.4.4.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.4.4.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.4.4.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.4.4.3 2017/12/03 11:37:59 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -143,11 +143,23 @@ intel_gtt_insert_entries(bus_dmamap_t dmamap, unsigned va_page, unsigned flags)
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	off_t va = (va_page << PAGE_SHIFT);
 	unsigned seg;
+	int gtt_flags = 0;
 	int error;
 
 	KASSERT(0 <= va);
 	KASSERT((va >> PAGE_SHIFT) == va_page);
 	KASSERT(0 < dmamap->dm_nsegs);
+
+	gtt_flags |= AGP_I810_GTT_VALID;
+	switch (flags) {
+	case AGP_USER_MEMORY:
+		break;
+	case AGP_USER_CACHED_MEMORY:
+		gtt_flags |= AGP_I810_GTT_CACHED;
+		break;
+	default:
+		panic("invalid intel gtt flags: %x", flags);
+	}
 
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 		const bus_addr_t addr = dmamap->dm_segs[seg].ds_addr;
@@ -155,7 +167,7 @@ intel_gtt_insert_entries(bus_dmamap_t dmamap, unsigned va_page, unsigned flags)
 		KASSERT(dmamap->dm_segs[seg].ds_len == PAGE_SIZE);
 
 		/* XXX Respect flags.  */
-		error = agp_i810_write_gtt_entry(isc, va, (addr | 1));
+		error = agp_i810_write_gtt_entry(isc, va, addr, gtt_flags);
 		if (error)
 			device_printf(agp_i810_sc->as_dev,
 			    "write gtt entry"
@@ -171,6 +183,7 @@ intel_gtt_clear_range(unsigned va_page, unsigned npages)
 {
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	const bus_addr_t addr = intel_gtt.scratch_map->dm_segs[0].ds_addr;
+	const int gtt_flags = AGP_I810_GTT_VALID;
 	off_t va = (va_page << PAGE_SHIFT);
 
 	KASSERT(0 <= va);
@@ -178,7 +191,7 @@ intel_gtt_clear_range(unsigned va_page, unsigned npages)
 	KASSERT(0 < npages);
 
 	while (npages--) {
-		agp_i810_write_gtt_entry(isc, va, (addr | 1));
+		agp_i810_write_gtt_entry(isc, va, addr, gtt_flags);
 		va += PAGE_SIZE;
 	}
 	agp_i810_post_gtt_entry(isc, va - PAGE_SIZE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.1.24.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -36,5 +36,9 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 {
 	return intr_establish(irq, type, level, ih_func, ih_arg);
 }
+
+/* XXX - com_isa.c requires _xname now */
+#define isa_intr_establish_xname(ic, irq, type, level, fun, arg, xname) \
+	isa_intr_establish(ic, irq, type, level, fun, arg)
 
 #endif	/* _ISA_MACHDEP_H_ */

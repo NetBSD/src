@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.48.18.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.48.18.2 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 /* Defines for a.out executables */
 #define LINUX_AOUT_HDR_SIZE (sizeof (struct exec))
-#define	LINUX_AOUT_AUX_ARGSIZ	2
+#define	LINUX_AOUT_AUX_ARGSIZ	8
 
 #define LINUX_N_MAGIC(ep)    ((ep)->a_midmag & 0xffff)
 #define LINUX_N_MACHTYPE(ep) (((ep)->a_midmag >> 16) & 0xff)

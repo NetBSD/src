@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.18.14.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.18.14.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.18.14.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.18.14.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -88,8 +88,8 @@ CORENAME(coredump_netbsd)(struct lwp *l, struct coredump_iostate *iocookie)
 	cs.core.c_midmag = 0;
 	strncpy(cs.core.c_name, p->p_comm, MAXCOMLEN);
 	cs.core.c_nseg = 0;
-	cs.core.c_signo = p->p_sigctx.ps_signo;
-	cs.core.c_ucode = p->p_sigctx.ps_code;
+	cs.core.c_signo = p->p_sigctx.ps_info._signo;
+	cs.core.c_ucode = p->p_sigctx.ps_info._code;
 	cs.core.c_cpusize = 0;
 	cs.core.c_tsize = (u_long)ctob(vm->vm_tsize);
 	cs.core.c_dsize = (u_long)ctob(vm->vm_dsize);

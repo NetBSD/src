@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.30 2009/05/29 14:19:13 njoly Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.30.22.1 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,14 @@
 #include <compat/linux/arch/arm/linux_signal.h>
 #elif defined(__amd64__)
 #include <compat/linux/arch/amd64/linux_signal.h>
+#else
+typedef void linux_sigset_t;
 #endif
+
+typedef struct {
+	linux_sigset_t *ss;
+	size_t ss_len;
+} linux_sized_sigset_t;
 
 #ifdef _KERNEL
 extern const int native_to_linux_signo[];

@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.23.2.4 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.23.2.5 2017/12/03 11:36:03 jdolecek Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -17,9 +17,8 @@ options 	EVBARM_BOARDTYPE=sheevaplug
 
 # CPU options
 options 	CPU_SHEEVA
-#options 	MV_L2_CACHE_ENABLE
-#options 	MV_L2_CACHE_WRITE_THROUGH
-options 	MV_CACHE_RANGE_OPS
+#options 	SHEEVA_L2_CACHE
+#options 	SHEEVA_L2_CACHE_WT
 makeoptions	CPUFLAGS="-march=armv5te"
 
 # Marvell SoC options
@@ -59,6 +58,7 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
@@ -99,26 +99,11 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_13	# NetBSD 1.3 compatibility.
-#options 	COMPAT_14	# NetBSD 1.4 compatibility.
-#options 	COMPAT_15	# NetBSD 1.5 compatibility.
-#options 	COMPAT_16	# NetBSD 1.6 compatibility.
-#options 	COMPAT_20	# NetBSD 2.0 compatibility.
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+include 	"conf/compat_netbsd50.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 
@@ -134,14 +119,14 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MEMORY_DISK_ROOT_SIZE=22528	# Size in blocks
 #options 	MEMORY_RBFLAGS=RB_AUTOBOOT
 
-options 	DKWEDGE_AUTODISCOVER
-options 	DKWEDGE_METHOD_GPT
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	USBVERBOSE	# verbose USB device autoconfig messages
@@ -164,7 +149,7 @@ options 	DDB		# in-kernel debugger
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O1"
-options 	SYMTAB_SPACE=840000
+makeoptions	COPY_SYMTAB=1
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -300,7 +285,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 uaudio* at uhub? port ? configuration ?
 
 # USB MIDI
-umidi* at uhub? port ? configuration ?
+#umidi* at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
@@ -372,7 +357,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
@@ -391,7 +376,7 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 
@@ -435,6 +420,8 @@ mvsocrtc* at mvsoc? offset ? irq ?
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Pseudo-Devices
 
@@ -508,6 +495,7 @@ pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec
@@ -516,12 +504,9 @@ pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options 	VERIFIED_EXEC_FP_RMD160
 #options 	VERIFIED_EXEC_FP_SHA256
 #options 	VERIFIED_EXEC_FP_SHA384
 #options 	VERIFIED_EXEC_FP_SHA512
-#options 	VERIFIED_EXEC_FP_SHA1
-#options 	VERIFIED_EXEC_FP_MD5
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

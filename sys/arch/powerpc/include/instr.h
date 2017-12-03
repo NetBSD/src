@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.6.14.1 2014/08/20 00:03:19 tls Exp $ */
+/*	$NetBSD: instr.h,v 1.6.14.2 2017/12/03 11:36:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -405,7 +405,7 @@ union instr {
 #define	OPC_MFSPR_REG(o)	(((o) >> 21) & 0x1f)
 #define	OPC_MFSPR_P(o, spr)	(((o) & OPC_MFSPR_MASK) == OPC_MFSPR(spr))
 
-#define	OPC_MFMSR_CODE		0x7c0000a8
+#define	OPC_MFMSR_CODE		0x7c0000a6
 #define	OPC_MFMSR_MASK		0xfc1fffff
 #define	OPC_MFMSR		OPC_MFMSR_CODE
 #define	OPC_MFMSR_REG(o)	(((o) >> 21) & 0x1f)

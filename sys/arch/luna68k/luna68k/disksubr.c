@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.29.22.1 2013/02/25 00:28:47 tls Exp $ */
+/* $NetBSD: disksubr.c,v 1.29.22.2 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29.22.1 2013/02/25 00:28:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29.22.2 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +368,7 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 	lp->d_magic2 = DISKMAGIC;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
-	lp->d_type	 = DTYPE_SCSI;
+	lp->d_type	 = DKTYPE_SCSI;
 	lp->d_secsize	 = 512;
 	lp->d_nsectors   = sl->sl_nsectors;
 	lp->d_ntracks    = sl->sl_ntracks;

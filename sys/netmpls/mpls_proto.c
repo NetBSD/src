@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.3.6.1 2014/08/20 00:04:36 tls Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.3.6.2 2017/12/03 11:39:05 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.6.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.6.2 2017/12/03 11:39:05 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -73,6 +75,7 @@ void mpls_init(void)
 #endif
 	memset(&mplsintrq, 0, sizeof(mplsintrq));
 	mplsintrq.ifq_maxlen = 256;
+	IFQ_LOCK_INIT(&mplsintrq);
 
 	sysctl_net_mpls_setup(NULL);
 }
@@ -95,7 +98,7 @@ mpls_detach(struct socket *so)
 }
 
 static int
-mpls_accept(struct socket *so, struct mbuf *nam)
+mpls_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -103,7 +106,7 @@ mpls_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-mpls_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+mpls_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -119,7 +122,7 @@ mpls_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-mpls_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+mpls_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -173,7 +176,7 @@ mpls_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-mpls_peeraddr(struct socket *so, struct mbuf *nam)
+mpls_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -181,7 +184,7 @@ mpls_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-mpls_sockaddr(struct socket *so, struct mbuf *nam)
+mpls_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -205,7 +208,7 @@ mpls_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-mpls_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+mpls_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	KASSERT(solocked(so));
@@ -224,33 +227,6 @@ mpls_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 static int
 mpls_purgeif(struct socket *so, struct ifnet *ifp)
 {
-
-	return EOPNOTSUPP;
-}
-
-static int
-mpls_usrreq(struct socket *so, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
 
 	return EOPNOTSUPP;
 }
@@ -356,7 +332,6 @@ PR_WRAP_USRREQS(mpls)
 #define	mpls_send	mpls_send_wrapper
 #define	mpls_sendoob	mpls_sendoob_wrapper
 #define	mpls_purgeif	mpls_purgeif_wrapper
-#define	mpls_usrreq	mpls_usrreq_wrapper
 
 static const struct pr_usrreqs mpls_usrreqs = {
 	.pr_attach	= mpls_attach,
@@ -378,7 +353,6 @@ static const struct pr_usrreqs mpls_usrreqs = {
 	.pr_send	= mpls_send,
 	.pr_sendoob	= mpls_sendoob,
 	.pr_purgeif	= mpls_purgeif,
-	.pr_generic	= mpls_usrreq,
 };
 
 const struct protosw mplssw[] = {
@@ -417,5 +391,4 @@ struct domain mplsdomain = {
 	.dom_mowner = MOWNER_INIT("MPLS", ""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_mpls, smpls_addr),
 	.dom_sa_cmplen = sizeof(union mpls_shim),
-	.dom_rtcache = LIST_HEAD_INITIALIZER(mplsdomain.dom_rtcache)
 };

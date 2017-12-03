@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.22 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: aica.c,v 1.22.8.1 2017/12/03 11:36:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.22 2011/11/23 23:07:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.22.8.1 2017/12/03 11:36:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -774,7 +774,7 @@ int
 aica_get_props(void *addr)
 {
 
-	return 0;
+	return AUDIO_PROP_PLAYBACK;
 }
 
 void

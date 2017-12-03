@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.25.12.2 2014/08/20 00:03:37 tls Exp $ */
+/*	$NetBSD: apmdev.c,v 1.25.12.3 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.25.12.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.25.12.3 2017/12/03 11:37:02 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -925,8 +925,12 @@ filt_apmread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops apmread_filtops =
-	{ 1, NULL, filt_apmrdetach, filt_apmread };
+static const struct filterops apmread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_apmrdetach,
+	.f_event = filt_apmread,
+};
 
 int
 apmdevkqfilter(dev_t dev, struct knote *kn)

@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.7 2012/02/25 21:21:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.7.2.1 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,17 +206,19 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 	pcitag_t tag;
 	pcireg_t id, attbase, apctrl;
 	int maxdevs, i, n;
+	int error;
 
 	asc = malloc(sizeof(struct agp_amd64_softc), M_AGP, M_NOWAIT | M_ZERO);
 	if (asc == NULL) {
 		aprint_error(": can't allocate softc\n");
-		return ENOMEM;
+		error = ENOMEM;
+		goto fail0;
 	}
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE) != 0) {
 		aprint_error(": can't map aperture\n");
-		free(asc, M_AGP);
-		return ENXIO;
+		error = ENXIO;
+		goto fail1;
 	}
 
 	maxdevs = pci_bus_maxdevs(pa->pa_pc, 0);
@@ -232,7 +234,8 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 	}
 	if (n == 0) {
 		aprint_error(": No Miscellaneous Control unit found.\n");
-		return ENXIO;
+		error = ENXIO;
+		goto fail1;
 	}
 	asc->n_mctrl = n;
 
@@ -256,8 +259,8 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 		 * aperture so that the gatt size reduces.
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
-			agp_generic_detach(sc);
-			return ENOMEM;
+			error = ENOMEM;
+			goto fail1;
 		}
 	}
 	asc->gatt = gatt;
@@ -265,15 +268,21 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 	switch (PCI_VENDOR(sc->as_id)) {
 	case PCI_VENDOR_ALI:
 		agp_amd64_uli_init(sc);
-		if (agp_amd64_uli_set_aperture(sc, asc->initial_aperture))
-			return ENXIO;
+		if (agp_amd64_uli_set_aperture(sc, asc->initial_aperture)) {
+			/* XXX Back out agp_amd64_uli_init?  */
+			error = ENXIO;
+			goto fail2;
+		}
 		break;
 
 	case PCI_VENDOR_NVIDIA:
 		asc->ctrl_tag = AGP_AMD64_NVIDIA_PCITAG(pa->pa_pc);
 		agp_amd64_nvidia_init(sc);
-		if (agp_amd64_nvidia_set_aperture(sc, asc->initial_aperture))
-			return ENXIO;
+		if (agp_amd64_nvidia_set_aperture(sc, asc->initial_aperture)) {
+			/* XXX Back out agp_amd64_nvidia_init?  */
+			error = ENXIO;
+			goto fail2;
+		}
 		break;
 
 	case PCI_VENDOR_VIATECH:
@@ -282,8 +291,11 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 			asc->ctrl_tag = AGP_AMD64_VIA_PCITAG(pa->pa_pc);
 			agp_amd64_via_init(sc);
 			if (agp_amd64_via_set_aperture(sc,
-			    asc->initial_aperture))
-				return ENXIO;
+			    asc->initial_aperture)) {
+				/* XXX Back out agp_amd64_via_init?  */
+				error = ENXIO;
+				goto fail2;
+			}
 		}
 		break;
 	}
@@ -304,7 +316,14 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 
 	agp_flush_cache();
 
+	/* Success!  */
 	return 0;
+
+fail2:	agp_free_gatt(sc, gatt);
+fail1:	free(asc, M_AGP);
+fail0:	agp_generic_detach(sc);
+	KASSERT(error);
+	return error;
 }
 
 

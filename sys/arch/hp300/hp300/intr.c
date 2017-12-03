@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.40 2010/12/20 00:25:33 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.40.18.1 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2010/12/20 00:25:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40.18.1 2017/12/03 11:36:13 jdolecek Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2010/12/20 00:25:33 matt Exp $");
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+
+#include "audio.h"
 
 /*
  * The location and size of the autovectored interrupt portion
@@ -197,9 +199,12 @@ intr_dispatch(int evec /* format | vector offset */)
 
 	list = &hp300_intr_list[ipl];
 	if (LIST_FIRST(&list->hi_q) == NULL) {
-		printf("intr_dispatch: ipl %d unexpected\n", ipl);
-		if (++unexpected > 10)
-			panic("intr_dispatch: too many unexpected interrupts");
+		if (ipl != 6) {
+			printf("intr_dispatch: ipl %d unexpected\n", ipl);
+			if (++unexpected > 10)
+				panic("intr_dispatch:"
+				    " too many unexpected interrupts");
+		}
 		return;
 	}
 
@@ -208,6 +213,12 @@ intr_dispatch(int evec /* format | vector offset */)
 	for (ih = LIST_FIRST(&list->hi_q) ; ih != NULL;
 	    ih = LIST_NEXT(ih, ih_q))
 		handled |= (*ih->ih_fn)(ih->ih_arg);
+
+#if NAUDIO > 0
+	/* hardclock() on ipl 6 is already handled in locore.s */
+	if (ipl == 6)
+		return;
+#endif
 
 	if (handled)
 		straycount = 0;

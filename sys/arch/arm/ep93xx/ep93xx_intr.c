@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.17.2.2 2014/08/20 00:02:45 tls Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.17.2.3 2017/12/03 11:35:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.17.2.2 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.17.2.3 2017/12/03 11:35:52 jdolecek Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.17.2.2 2014/08/20 00:02:45 tls Exp
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/termios.h>
+#include <sys/lwp.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

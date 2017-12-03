@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.21.12.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.21.12.2 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -138,6 +138,11 @@ struct linux_msghdr {
 	void		*msg_control;
 	size_t		msg_controllen;
 	unsigned int	msg_flags;
+};
+
+struct linux_mmsghdr {
+	struct linux_msghdr msg_hdr;
+	unsigned int msg_len;
 };
 
 /*

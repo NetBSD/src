@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.67.12.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.67.12.2 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.67.12.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.67.12.2 2017/12/03 11:36:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -619,12 +619,11 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		}
 		setblocksize(fp, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat -
-		    (tmpinfo.play.seek + tmpinfo.blocksize - 1) /
+		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
+		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
 		    tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes =
-		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_GETOSPACE = %d\n",
@@ -641,12 +640,9 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		}
 		setblocksize(fp, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat -
-		    (tmpinfo.record.seek + tmpinfo.blocksize - 1) /
-		    tmpinfo.blocksize;
-                bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes =
-		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.record.seek;
+		bufinfo.fragments = tmpinfo.record.seek / tmpinfo.blocksize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_GETISPACE %d %d %d %d = %d\n",
@@ -941,7 +937,7 @@ getdevinfo(file_t *fp)
 	 * Figure out what device it is so we can check if the
 	 * cached data is valid.
 	 */
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VCHR)
 		return 0;
 	vn_lock(vp, LK_SHARED | LK_RETRY);
@@ -1046,8 +1042,8 @@ oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_
 	int l, r, n, e;
 	int (*ioctlf)(file_t *, u_long, void *);
 
-	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
-		return (EBADF);
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
+		return error;
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;

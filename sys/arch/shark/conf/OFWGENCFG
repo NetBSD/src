@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.38.8.3 2014/08/20 00:03:23 tls Exp $
+#	$NetBSD: OFWGENCFG,v 1.38.8.4 2017/12/03 11:36:42 jdolecek Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -6,8 +6,8 @@
 #	close enough to generic).
 #
 
-include	"arch/shark/conf/std.shark"
-include "arch/shark/conf/std.ofwgencfg"
+include 	"arch/shark/conf/std.shark"
+include 	"arch/shark/conf/std.ofwgencfg"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -67,17 +67,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 
 # Compatibility options
 
-options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_20	# NetBSD 2.0 compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
-options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd12.config"
 
 # Shared memory options
 
@@ -93,7 +83,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -104,6 +93,7 @@ options 	USERCONF	# userconf(4) support
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ofnet0 type nfs

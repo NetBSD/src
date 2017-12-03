@@ -1,0 +1,160 @@
+#
+#	$NetBSD: HUMMINGBOARD,v 1.3.2.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	Hummingboard -- Freescale i.MX6 Eval Board Kernel
+#
+
+include	"arch/evbarm/conf/std.nitrogen6"
+include	"arch/evbarm/conf/GENERIC.common"
+
+# Board Type
+options 	EVBARM_BOARDTYPE=hummingboard
+#options 	EVBARM_BOARDTYPE=hummingboard_edge
+options		HUMMINGBOARD
+
+# CPU options
+options 	CPU_CORTEX
+options 	CPU_CORTEXA9
+options 	IMX6
+options 	MULTIPROCESSOR
+
+# Console options.    also need IMXUARTCONSOLE
+options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x02020000
+options 	CONSPEED=115200	# Console speed
+
+#options		DIAGNOSTIC      # internal consistency checks
+options		DEBUG
+#options 	KGDB
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+# Valid options for BOOT_ARGS:
+#  single		Boot to single user only
+#  kdb			Give control to kernel debugger
+#  ask			Ask for file name to reboot from
+#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
+#  memorydisk=<n>	Set memorydisk size to <n> KB
+#  quiet		Show aprint_naive output
+#  verbose		Show aprint_normal and aprint_verbose output
+options		BOOT_ARGS="\"verbose\""
+
+# Kernel root file system and dump configuration.
+#config		netbsd		root on ? type ?
+config		netbsd-wd0	root on wd0 type ffs
+
+#
+# Device configuration
+#
+
+mainbus0	at root
+
+cpu*		at mainbus?
+
+# The MPCore interrupt controller and global timer
+armperiph0	at mainbus?		# A9 On-Chip Peripherals
+armgic0 	at armperiph?		# ARM Generic Interrupt Controller
+arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
+a9tmr0		at armperiph?		# A9 Global Timer
+#a9wdt0		at armperiph? flags 0	# A9 Watchdog Timer
+
+axi0		at mainbus?
+
+# GPIO
+imxgpio0	at axi? addr 0x0209c000 irqbase 256 irq 98
+imxgpio1	at axi? addr 0x020a0000 irqbase 288 irq 100
+imxgpio2	at axi? addr 0x020a4000 irqbase 320 irq 102
+imxgpio3	at axi? addr 0x020a8000 irqbase 352 irq 104
+imxgpio4	at axi? addr 0x020ac000 irqbase 384 irq 106
+imxgpio5	at axi? addr 0x020b0000 irqbase 416 irq 108
+imxgpio6	at axi? addr 0x020b4000 irqbase 448 irq 110
+gpio*		at imxgpio?
+options		IMX_GPIO_INTR_SPLIT
+
+# Clock Control
+imxccm0		at axi? addr 0x020c4000
+
+# On-Chip OTP Controller
+imxocotp0	at axi? addr 0x021bc000
+
+# IOMUX
+imxiomux0	at axi? addr 0x020e0000
+
+# WatchDog
+imxwdog0	at axi? addr 0x020bc000 irq 112 flags 0
+#imxwdog1	at axi? addr 0x020c0000 irq 113 flags 0
+
+# Serial
+imxuart0	at axi? addr 0x02020000 irq 58		# UART1
+#imxuart1	at axi? addr 0x021e8000 irq 59		# UART2
+#imxuart2	at axi? addr 0x021ec000 irq 60		# UART3
+#imxuart3	at axi? addr 0x021f0000 irq 61		# UART4
+#imxuart4	at axi? addr 0x021f4000 irq 62		# UART5
+options		IMXUARTCONSOLE
+
+# I2C
+imxi2c0		at axi? addr 0x021A0000 irq 68
+imxi2c1		at axi? addr 0x021A4000 irq 69
+imxi2c2		at axi? addr 0x021A8000 irq 70
+
+# IIC
+iic*		at imxi2c?
+
+# SATA
+ahcisata*	at axi? addr 0x02200000 irq 71
+atabus* 	at ahcisata? channel ?
+wd*		at atabus? drive ? flags 0x0000
+
+# ATAPI bus support
+atapibus*	at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*		at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+# Network Interfaces
+enet0		at axi? addr 0x02188000 irq 150		# iMX6 SoC Ethernet
+
+# MII/PHY support
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# SD/MMC
+#sdhc0    	at axi? addr 0x02190000 irq 54	# uSDHC1
+sdhc1   	at axi? addr 0x02194000 irq 55	# uSDHC2
+#sdhc2   	at axi? addr 0x02198000 irq 56	# uSDHC3
+#sdhc3   	at axi? addr 0x0219c000 irq 57	# uSDHC4
+sdmmc*		at sdhc?
+ld*		at sdmmc?			# MMC/SD card
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
+
+# USB
+imxusbphy0	at axi? addr 0x020c9000
+imxusbphy1	at axi? addr 0x020ca000
+imxusbc0	at axi? addr 0x02184000
+ehci0		at imxusbc0	unit 0	irq 75 # OTG
+ehci1		at imxusbc0	unit 1	irq 72 # Host1
+#ehci2		at imxusbc0	unit 2	irq 73 # Host2
+#ehci3		at imxusbc0	unit 3	irq 74 # Host3
+
+usb*		at ehci?
+
+# USB device drivers
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
+# PCIe
+imxpcie0	at axi? addr 0x01ffc000 irq 155		# PCIe
+#options PCIVERBOSE
+#options PCI_CONFIG_DUMP
+
+pci*		at imxpcie0
+ppb*		at pci? dev ? function ?
+pci*		at ppb?
+
+# local configuration
+cinclude "arch/evbarm/conf/HUMMINGBOARD.local"

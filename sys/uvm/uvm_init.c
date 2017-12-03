@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.44.2.1 2013/02/25 00:30:19 tls Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.44.2.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.44.2.1 2013/02/25 00:30:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.44.2.2 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.44.2.1 2013/02/25 00:30:19 tls Exp $"
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_physseg.h>
 #include <uvm/uvm_readahead.h>
 
 /*
@@ -67,6 +68,18 @@ kmutex_t uvm_pageqlock;
 kmutex_t uvm_fpageqlock;
 kmutex_t uvm_kentry_lock;
 kmutex_t uvm_swap_data_lock;
+
+/*
+ * uvm_md_init: Init dependant on the MD boot context.
+ *		called from MD code.
+ */
+
+void
+uvm_md_init(void)
+{
+	uvm_setpagesize(); /* initialize PAGE_SIZE-dependent variables */
+	uvm_physseg_init();
+}
 
 /*
  * uvm_init: init the VM system.   called from kern/init_main.c.
@@ -133,6 +146,9 @@ uvm_init(void)
 	 */
 
 	uvm_km_init();
+#ifdef __HAVE_PMAP_PV_TRACK
+	pmap_pv_init();
+#endif
 
 #ifdef DEBUG
 	debug_init();

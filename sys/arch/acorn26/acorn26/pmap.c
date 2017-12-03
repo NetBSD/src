@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.36 2012/05/11 15:39:17 skrll Exp $ */
+/* $NetBSD: pmap.c,v 1.36.2.1 2017/12/03 11:35:44 jdolecek Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2012/05/11 15:39:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36.2.1 2017/12/03 11:35:44 jdolecek Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/kmem.h>
@@ -293,19 +293,26 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
-	int i;
 	vaddr_t addr;
+	uvm_physseg_t bank;
+
 	UVMHIST_FUNC("pmap_steal_memory");
 
 	UVMHIST_CALLED(pmaphist);
 	addr = 0;
 	size = round_page(size);
-	for (i = 0; i < vm_nphysseg; i++) {
-		if (VM_PHYSMEM_PTR(i)->avail_start < VM_PHYSMEM_PTR(i)->avail_end) {
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+		if (uvm_physseg_get_avail_start(bank) < uvm_physseg_get_avail_end(bank)) {
+			paddr_t avail_start = uvm_physseg_get_avail_start(bank);
+
 			addr = (vaddr_t)
 			    ((char*)MEMC_PHYS_BASE +
-				ptoa(VM_PHYSMEM_PTR(i)->avail_start));
-			VM_PHYSMEM_PTR(i)->avail_start++;
+				ptoa(avail_start));
+			avail_start++;
+			uvm_physseg_set_avail_start(bank, avail_start);
+
 			break;
 		}
 	}
@@ -549,7 +556,8 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 	UVMHIST_FUNC("pv_get");
 
 	UVMHIST_CALLED(pmaphist);
-	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
+	UVMHIST_LOG(pmaphist, "(pmap=%#jx, ppn=%jd, lpn=%jd)",
+	    (uintptr_t)pmap, ppn, lpn, 0);
 	/* If the head entry's free use that. */
 	pv = &pv_table[ppn];
 	if (pv->pv_pmap == NULL) {
@@ -560,8 +568,8 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 	/* If this mapping exists already, use that. */
 	for (pv = pv; pv != NULL; pv = pv->pv_next)
 		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn) {
-			UVMHIST_LOG(pmaphist, "<-- existing (pv=%p)",
-			    pv, 0, 0, 0);
+			UVMHIST_LOG(pmaphist, "<-- existing (pv=%#jx)",
+			    (uintptr_t)pv, 0, 0, 0);
 			return pv;
 		}
 	/* Otherwise, allocate a new entry and link it in after the head. */
@@ -571,7 +579,7 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 	pv->pv_next = pv_table[ppn].pv_next;
 	pv_table[ppn].pv_next = pv;
 	pmap->pm_stats.resident_count++;
-	UVMHIST_LOG(pmaphist, "<-- new (pv=%p)", pv, 0, 0, 0);
+	UVMHIST_LOG(pmaphist, "<-- new (pv=%#jx)", (uintptr_t)pv, 0, 0, 0);
 	return pv;
 }
 
@@ -585,7 +593,8 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 	UVMHIST_FUNC("pv_release");
 
 	UVMHIST_CALLED(pmaphist);
-	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
+	UVMHIST_LOG(pmaphist, "(pmap=%#jx, ppn=%jd, lpn=%jd)",
+	    (uintptr_t)pmap, ppn, lpn, 0);
 	pv = &pv_table[ppn];
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -596,13 +605,15 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 	if (pmap == pv->pv_pmap && lpn == pv->pv_lpn) {
 		npv = pv->pv_next;
 		if (npv) {
-			UVMHIST_LOG(pmaphist, "pv=%p; pull-up", pv, 0, 0, 0);
+			UVMHIST_LOG(pmaphist, "pv=%#jx; pull-up",
+			    (uintptr_t)pv, 0, 0, 0);
 			/* Pull up first entry from chain. */
 			memcpy(pv, npv, offsetof(struct pv_entry, pv_pflags));
 			pv->pv_pmap->pm_entries[pv->pv_lpn] = pv;
 			pv_free(npv);
 		} else {
-			UVMHIST_LOG(pmaphist, "pv=%p; empty", pv, 0, 0, 0);
+			UVMHIST_LOG(pmaphist, "pv=%#jx; empty",
+			    (uintptr_t)pv, 0, 0, 0);
 			memset(pv, 0, offsetof(struct pv_entry, pv_pflags));
 		}
 	} else {
@@ -612,7 +623,7 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 			pv = npv;
 		}
 		KASSERT(npv != NULL);
-		UVMHIST_LOG(pmaphist, "pv=%p; tail", pv, 0, 0, 0);
+		UVMHIST_LOG(pmaphist, "pv=%#jx; tail", (uintptr_t)pv, 0, 0, 0);
 		pv->pv_next = npv->pv_next;
 		pv_free(npv);
 	}
@@ -651,8 +662,8 @@ pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags,
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(pa); lpn = atop(va);
 
-	UVMHIST_LOG(pmaphist, "mapping ppn %d at lpn %d in pmap %p",
-	       ppn, lpn, pmap, 0);
+	UVMHIST_LOG(pmaphist, "mapping ppn %jd at lpn %jd in pmap %#jx",
+	       ppn, lpn, (uintptr_t)pmap, 0);
 	s = splvm();
 
 	/* Remove any existing mapping at this lpn */
@@ -707,8 +718,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	UVMHIST_CALLED(pmaphist);
 	slpn = atop(sva); elpn = atop(eva);
-	UVMHIST_LOG(pmaphist, "clearing from lpn %d to lpn %d in pmap %p",
-	       slpn, elpn - 1, pmap, 0);
+	UVMHIST_LOG(pmaphist, "clearing from lpn %jd to lpn %jd in pmap %#jx",
+	       slpn, elpn - 1, (uintptr_t)pmap, 0);
 	s = splvm();
 	for (lpn = slpn; lpn < elpn; lpn++) {
 		pv = pmap->pm_entries[lpn];
@@ -883,8 +894,8 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 	ppn = pv->pv_ppn;
 	ppv = &pv_table[ppn];
  	UVMHIST_LOG(pmaphist,
-	    "pmap = %p, lpn = %d, ppn = %d, atype = 0x%x",
-	    pmap, lpn, ppn, atype);
+	    "pmap = %#jx, lpn = %jd, ppn = %jd, atype = 0x%jx",
+	    (uintptr_t)pmap, lpn, ppn, atype);
 	if (pmap != pmap_kernel()) {
 		if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
 			ppv->pv_pflags |= PV_REFERENCED;
@@ -933,7 +944,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(VM_PAGE_TO_PHYS(page));
 	if (prot == VM_PROT_NONE) {
-		UVMHIST_LOG(pmaphist, "removing ppn %d\n", ppn, 0, 0, 0);
+		UVMHIST_LOG(pmaphist, "removing ppn %jd\n", ppn, 0, 0, 0);
 		npv = pv = &pv_table[ppn];
 		while (pv != NULL && pv->pv_pmap != NULL) {
 			if (pv->pv_vflags & PV_UNMANAGED) {

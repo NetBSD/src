@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.73.2.1 2014/08/20 00:03:49 tls Exp $ */
+/*	$NetBSD: if_xi.c,v 1.73.2.2 2017/12/03 11:37:31 jdolecek Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,10 +55,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.73.2.1 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.73.2.2 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include "opt_inet.h"
-#include "opt_ipx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.73.2.1 2014/08/20 00:03:49 tls Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#endif
-
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
@@ -226,6 +219,7 @@ xi_attach(struct xi_softc *sc, u_int8_t *myea)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, myea);
 
 	/*
@@ -367,8 +361,7 @@ xi_intr(void *arg)
 	}
 
 	/* Try to start more packets transmitting. */
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		xi_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	/* Detected excessive collisions? */
 	if ((tx_status & EXCESSIVE_COLL) && ifp->if_opackets > 0) {
@@ -424,7 +417,7 @@ xi_get(struct xi_softc *sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (recvcount);
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = pktlen;
 	len = MHLEN;
 	top = NULL;
@@ -478,11 +471,7 @@ xi_get(struct xi_softc *sc)
 	/* Trim the CRC off the end of the packet. */
 	m_adj(top, -ETHER_CRC_LEN);
 
-	ifp->if_ipackets++;
-
-	bpf_mtap(ifp, top);
-
-	(*ifp->if_input)(ifp, top);
+	if_percpuq_enqueue(ifp->if_percpuq, top);
 	return (recvcount);
 }
 
@@ -818,8 +807,7 @@ xi_start(struct ifnet *ifp)
 			bus_space_write_1(bst, bsh, EDP,
 			    *(mtod(m, u_int8_t *) + m->m_len - 1));
 		}
-		MFREE(m, m0);
-		m = m0;
+		m = m0 = m_free(m);
 	}
 	DPRINTF(XID_CONFIG, ("xi: len=%d pad=%d total=%d\n", len, pad, len+pad+4));
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)

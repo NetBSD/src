@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307reg.h,v 1.5 2007/02/22 16:50:42 thorpej Exp $	*/
+/*	$NetBSD: ns87307reg.h,v 1.5.92.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -240,7 +240,7 @@
 ** Set the irq number and triggering for the currently
 ** selected logical device.  If irqNum is unknown 
 ** the number won't be set and the device will be left
-** with it's default value. 
+** with its default value. 
 **
 ** sc        pointer to nsio devices softc 
 ** irqNum    irq number to set

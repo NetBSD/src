@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52.2.2 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,7 +49,6 @@
 #include "opt_xen.h"
 #ifdef i386
 #include "opt_user_ldt.h"
-#include "opt_vm86.h"
 #endif
 #endif
 
@@ -93,8 +92,6 @@ struct cpu_info {
 	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
 	volatile struct vcpu_info *ci_vcpu; /* for XEN */
-	void	*ci_tlog_base;		/* Trap log base */
-	int32_t ci_tlog_offset;		/* Trap log current offset */
 
 	/*
 	 * Will be accessed by other CPUs.
@@ -102,18 +99,14 @@ struct cpu_info {
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	int	_unused1[2];
 	cpuid_t ci_cpuid;		/* our CPU ID */
-	int	_unused;
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
 
 	/*
 	 * Private members.
 	 */
-	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
-	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	int ci_want_pmapload;		/* pmap_load() is needed */
 	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
@@ -125,13 +118,22 @@ struct cpu_info {
 	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
 #ifdef XEN
-	struct iplsource  *ci_isources[NIPL];
 	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
-#else
-	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 #endif
+	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
+
+#ifndef __HAVE_DIRECT_MAP
+#define VPAGE_SRC 0
+#define VPAGE_DST 1
+#define VPAGE_ZER 2
+#define VPAGE_PTP 3
+#define VPAGE_MAX 4
+	vaddr_t		vpage[VPAGE_MAX];
+	pt_entry_t	*vpage_pte[VPAGE_MAX];
+#endif
 
 	/* The following must be aligned for cmpxchg8b. */
 	struct {
@@ -148,27 +150,27 @@ struct cpu_info {
 
 	uint32_t ci_flags;		/* flags; see below */
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
-	uint32_t sc_apic_version;	/* local APIC version */
 
 	uint32_t	ci_signature;	 /* X86 cpuid type (cpuid.1.%eax) */
 	uint32_t	ci_vendor[4];	 /* vendor string */
-	uint32_t	_unused2;
 	uint32_t	ci_max_cpuid;	/* cpuid.0:%eax */
 	uint32_t	ci_max_ext_cpuid; /* cpuid.80000000:%eax */
 	volatile uint32_t	ci_lapic_counter;
 
-	uint32_t	ci_feat_val[5]; /* X86 CPUID feature bits */
+	uint32_t	ci_feat_val[7]; /* X86 CPUID feature bits */
 			/* [0] basic features cpuid.1:%edx
 			 * [1] basic features cpuid.1:%ecx (CPUID2_xxx bits)
 			 * [2] extended features cpuid:80000001:%edx
 			 * [3] extended features cpuid:80000001:%ecx
 			 * [4] VIA padlock features
+			 * [5] structured extended features cpuid.7:%ebx
+			 * [6] structured extended features cpuid.7:%ecx
 			 */
 	
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	struct trapframe *ci_ddb_regs;
 
-	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
+	u_int ci_cflush_lsize;	/* CLFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	union descriptor *ci_gdt;
@@ -195,8 +197,9 @@ struct cpu_info {
 #endif /* __x86_64__ */
 #endif /* XEN et.al */
 
-	char *ci_doubleflt_stack;
-	char *ci_ddbipi_stack;
+#ifdef XEN
+	size_t		ci_xpq_idx;
+#endif
 
 #ifndef XEN
 	struct evcnt ci_ipi_events[X86_NIPI];
@@ -356,8 +359,10 @@ extern void	cpu_signotify(struct lwp *);
 extern void (*delay_func)(unsigned int);
 struct timeval;
 
+#ifndef __HIDE_DELAY
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
+#endif
 
 extern int biosbasemem;
 extern int biosextmem;
@@ -368,7 +373,7 @@ extern char cpu_brand_string[];
 extern int use_pae;
 
 #ifdef __i386__
-extern int i386_fpu_present;
+#define	i386_fpu_present	1
 int npx586bug1(int, int);
 extern int i386_fpu_fdivbug;
 extern int i386_use_fxsave;
@@ -394,13 +399,10 @@ extern void (*x86_cpu_idle)(void);
 #define	cpu_idle() (*x86_cpu_idle)()
 
 /* machdep.c */
-void	dumpconf(void);
+#ifdef i386
+void	cpu_set_tss_gates(struct cpu_info *);
+#endif
 void	cpu_reset(void);
-void	i386_proc0_tss_ldt_init(void);
-void	dumpconf(void);
-void	cpu_reset(void);
-void	x86_64_proc0_tss_ldt_init(void);
-void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
 
 /* longrun.c */
 u_int 	tmx86_get_longrun_mode(void);
@@ -410,12 +412,21 @@ void 	tmx86_init_longrun(void);
 /* identcpu.c */
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
+void	identify_hypervisor(void);
+
+typedef enum vm_guest {
+	VM_GUEST_NO = 0,
+	VM_GUEST_VM,
+	VM_GUEST_XEN,
+	VM_GUEST_HV,
+	VM_GUEST_VMWARE,
+	VM_GUEST_KVM,
+	VM_LAST
+} vm_guest_t;
+extern vm_guest_t vm_guest;
 
 /* cpu_topology.c */
 void	x86_cpu_topology(struct cpu_info *);
-
-/* vm_machdep.c */
-void	cpu_proc_fork(struct proc *, struct proc *);
 
 /* locore.s */
 struct region_descriptor;
@@ -443,10 +454,10 @@ void	i8254_initclocks(void);
 #endif
 
 /* cpu.c */
-
 void	cpu_probe_features(struct cpu_info *);
 
 /* vm_machdep.c */
+void	cpu_proc_fork(struct proc *, struct proc *);
 paddr_t	kvtop(void *);
 
 #ifdef USER_LDT
@@ -458,11 +469,6 @@ int	x86_set_ldt(struct lwp *, void *, register_t *);
 /* isa_machdep.c */
 void	isa_defaultirq(void);
 int	isa_nmi(void);
-
-#ifdef VM86
-/* vm86.c */
-void	vm86_gpfault(struct lwp *, int);
-#endif /* VM86 */
 
 /* consinit.c */
 void kgdb_port_init(void);
@@ -500,7 +506,17 @@ void x86_bus_space_mallocok(void);
 #define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
 #define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
 #define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
-#define	CPU_MAXID		15	/* number of valid machdep ids */
+#define	CPU_FPU_SAVE		15	/* int: FPU Instructions layout
+					 * to use this, CPU_OSFXSR must be true
+					 * 0: FSAVE
+					 * 1: FXSAVE
+					 * 2: XSAVE
+					 * 3: XSAVEOPT
+					 */
+#define	CPU_FPU_SAVE_SIZE	16	/* int: FPU Instruction layout size */
+#define	CPU_XSAVE_FEATURES	17	/* quad: XSAVE features */
+
+#define	CPU_MAXID		18	/* number of valid machdep ids */
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

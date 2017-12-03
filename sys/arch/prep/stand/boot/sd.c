@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1.6.1 2014/08/20 00:03:21 tls Exp $	*/
+/*	$NetBSD: sd.c,v 1.1.6.2 2017/12/03 11:36:38 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -474,7 +474,7 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 	lp->d_ncylinders = sd->sc_params.cyls;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	lp->d_type = DTYPE_SCSI;
+	lp->d_type = DKTYPE_SCSI;
 
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = sd->sc_params.disksize;

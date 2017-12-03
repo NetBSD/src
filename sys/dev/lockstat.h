@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.10 2009/01/20 14:49:00 yamt Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.10.24.1 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _SYS_LOCKSTAT_H_
 
 #ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
 #include <lockstat.h>
 #endif
 
@@ -118,6 +119,8 @@ typedef struct lsdisable {
 #define	LB_LOCK_MASK		0x0000ff00
 #define	LB_LOCK_SHIFT		8
 
+#define	LB_DTRACE		0x00010000
+
 typedef struct lsbuf {
 	union {
 		LIST_ENTRY(lsbuf) list;
@@ -178,8 +181,6 @@ do {									\
 
 void	lockstat_event(uintptr_t, uintptr_t, u_int, u_int, uint64_t);
 
-extern volatile u_int	lockstat_enabled;
-
 #else
 
 #define	LOCKSTAT_FLAG(name)					/* nothing */
@@ -193,6 +194,33 @@ extern volatile u_int	lockstat_enabled;
 #define	LOCKSTAT_STOP_TIMER(flag, void)				/* nothing */
 #define	LOCKSTAT_COUNT(name, int)				/* nothing */
 
+#endif
+
+#ifdef KDTRACE_HOOKS
+extern volatile u_int lockstat_dtrace_enabled;
+#define KDTRACE_LOCKSTAT_ENABLED lockstat_dtrace_enabled
+#define LS_COMPRESS(f) \
+    ((((f) & 0x3) | (((f) & 0x700) >> 6)) & (LS_NPROBES - 1))
+#define	LS_NPROBES	0x20	/* 5 bits */
+
+extern uint32_t	lockstat_probemap[];
+extern void	(*lockstat_probe_func)(uint32_t, uintptr_t, uintptr_t,
+    uintptr_t, uintptr_t, uintptr_t);
+
+void		lockstat_probe_stub(uint32_t, uintptr_t, uintptr_t,
+    uintptr_t, uintptr_t, uintptr_t);
+#else
+#define KDTRACE_LOCKSTAT_ENABLED 0
+#endif
+
+#if defined(_KERNEL) && NLOCKSTAT > 0
+extern volatile u_int	lockstat_enabled;
+extern volatile u_int	lockstat_dev_enabled;
+
+#define LOCKSTAT_ENABLED_UPDATE() do { \
+	lockstat_enabled = lockstat_dev_enabled | KDTRACE_LOCKSTAT_ENABLED; \
+	membar_producer(); \
+    } while (/*CONSTCOND*/0)
 #endif
 
 #endif	/* _SYS_LOCKSTAT_H_ */

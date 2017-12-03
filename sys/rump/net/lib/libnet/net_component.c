@@ -1,4 +1,4 @@
-/*	$NetBSD: net_component.c,v 1.1.10.2 2014/08/20 00:04:42 tls Exp $	*/
+/*	$NetBSD: net_component.c,v 1.1.10.3 2017/12/03 11:39:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,36 +28,42 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.1.10.2 2014/08/20 00:04:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.1.10.3 2017/12/03 11:39:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
 #include <net/if.h>
+#include <net/if_llatbl.h>
+#include <net/if_l2tp.h>
 #include <net/route.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
-
 	ifinit1();
 	ifinit();
+	lltableinit();
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_ROUTE)
 {
-	extern struct domain routedomain, compat_50_routedomain, linkdomain;
+	extern struct domain routedomain, linkdomain;
+#ifdef COMPAT_50
+	extern struct domain compat_50_routedomain;
+#endif
 
-	DOMAINADD(linkdomain);
-	DOMAINADD(routedomain);
-	DOMAINADD(compat_50_routedomain);
+	domain_attach(&linkdomain);
+	domain_attach(&routedomain);
+#ifdef COMPAT_50
+	domain_attach(&compat_50_routedomain);
+#endif
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
 
-	loopattach(1);
+	loopinit();
 }

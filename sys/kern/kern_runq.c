@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.35.2.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.35.2.3 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.35.2.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.35.2.3 2017/12/03 11:38:44 jdolecek Exp $");
+
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +80,7 @@ typedef struct {
 	uint32_t	r_bitmap[PRI_COUNT >> BITMAP_SHIFT];
 	/* Counters */
 	u_int		r_count;	/* Count of the threads */
-	u_int		r_avgcount;	/* Average count of threads */
+	u_int		r_avgcount;	/* Average count of threads (* 256) */
 	u_int		r_mcount;	/* Count of migratable threads */
 	/* Runqueues */
 	queue_t		r_rt_queue[PRI_RT_COUNT];
@@ -116,9 +118,14 @@ int		sched_kpreempt_pri = 1000;
 static u_int	cacheht_time;		/* Cache hotness time */
 static u_int	min_catch;		/* Minimal LWP count for catching */
 static u_int	balance_period;		/* Balance period */
+static u_int	average_weight;		/* Weight old thread count average */
 static struct cpu_info *worker_ci;	/* Victim CPU */
 #ifdef MULTIPROCESSOR
 static struct callout balance_ch;	/* Callout of balancer */
+#endif
+
+#ifdef KDTRACE_HOOKS
+struct lwp *curthread;
 #endif
 
 void
@@ -132,6 +139,8 @@ runq_init(void)
 
 	/* Minimal count of LWPs for catching */
 	min_catch = 1;
+	/* Weight of historical average */
+	average_weight = 50;			/*   0.5   */
 
 	/* Initialize balancing callout and run it */
 #ifdef MULTIPROCESSOR
@@ -164,9 +173,6 @@ sched_cpuattach(struct cpu_info *ci)
 	/* Allocate the run queue */
 	size = roundup2(sizeof(runqueue_t), coherency_unit) + coherency_unit;
 	rq_ptr = kmem_zalloc(size, KM_SLEEP);
-	if (rq_ptr == NULL) {
-		panic("sched_cpuattach: could not allocate the runqueue");
-	}
 	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), coherency_unit));
 
 	/* Initialize run queues */
@@ -278,7 +284,7 @@ sched_dequeue(struct lwp *l)
 	ci_rq = spc->spc_sched_info;
 	KASSERT(lwp_locked(l, spc->spc_mutex));
 
-	KASSERT(eprio <= spc->spc_maxpriority); 
+	KASSERT(eprio <= spc->spc_maxpriority);
 	KASSERT(ci_rq->r_bitmap[eprio >> BITMAP_SHIFT] != 0);
 	KASSERT(ci_rq->r_count > 0);
 
@@ -519,6 +525,10 @@ sched_balance(void *nocallout)
 	runqueue_t *ci_rq;
 	CPU_INFO_ITERATOR cii;
 	u_int highest;
+	u_int weight;
+
+	/* sanitize sysctl value */
+	weight = MIN(average_weight, 100);
 
 	hci = curcpu();
 	highest = 0;
@@ -527,8 +537,15 @@ sched_balance(void *nocallout)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci_rq = ci->ci_schedstate.spc_sched_info;
 
-		/* Average count of the threads */
-		ci_rq->r_avgcount = (ci_rq->r_avgcount + ci_rq->r_mcount) >> 1;
+		/*
+		 * Average count of the threads
+		 *
+		 * The average is computed as a fixpoint number with
+		 * 8 fractional bits.
+		 */
+		ci_rq->r_avgcount = (
+			weight * ci_rq->r_avgcount + (100 - weight) * 256 * ci_rq->r_mcount
+			) / 100;
 
 		/* Look for CPU with the highest average */
 		if (ci_rq->r_avgcount > highest) {
@@ -712,6 +729,9 @@ sched_lwp_stats(struct lwp *l)
 
 	/* Scheduler-specific hook */
 	sched_pstats_hook(l, batch);
+#ifdef KDTRACE_HOOKS
+	curthread = l;
+#endif
 }
 
 /*
@@ -828,6 +848,12 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 		CTLTYPE_INT, "balance_period",
 		SYSCTL_DESCR("Balance period (in ticks)"),
 		NULL, 0, &balance_period, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "average_weight",
+		SYSCTL_DESCR("Thread count averaging weight (in percent)"),
+		NULL, 0, &average_weight, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.4.14.2 2014/08/20 00:03:13 tls Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.4.14.3 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.4.14.2 2014/08/20 00:03:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.4.14.3 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -218,13 +218,12 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-		const u_long cpu_mask = 1L << cpu_index(ci);
 		for (size_t i=0; i < 10000; i++) {
-			if ((cpus_hatched & cpu_mask) != 0)
+			if (!kcpuset_isset(cpus_hatched, cpu_index(ci)))
 				 break;
 			DELAY(100);
 		}
-		if ((cpus_hatched & cpu_mask) == 0) {
+		if (!kcpuset_isset(cpus_hatched, cpu_index(ci))) {
 			aprint_error(": failed to hatch\n");
 			return;
 		}
@@ -321,10 +320,9 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 
 	(void)splhigh();
 
-#ifdef DEBUG
-	uint32_t ebase;
-	asm volatile("dmfc0 %0, $15, 1;" : "=r"(ebase));
-	KASSERT((ebase & __BITS(9,0)) == ci->ci_cpuid);
+#ifdef DIAGNOSTIC
+	uint32_t ebase = mipsNN_cp0_ebase_read();
+	KASSERT((ebase & MIPS_EBASE_CPUNUM) == ci->ci_cpuid);
 	KASSERT(curcpu() == ci);
 #endif
 
@@ -476,9 +474,11 @@ rmixl_cpuinfo_print(u_int cpuindex)
 		printf("ci_tlb_slot %d\n", ci->ci_tlb_slot);
 		printf("ci_pmap_asid_cur %d\n", ci->ci_pmap_asid_cur);
 		printf("ci_tlb_info %p\n", ci->ci_tlb_info);
-		printf("ci_pmap_seg0tab %p\n", ci->ci_pmap_seg0tab);
+		printf("ci_pmap_kern_segtab %p\n", ci->ci_pmap_kern_segtab);
+		printf("ci_pmap_user_segtab %p\n", ci->ci_pmap_user_segtab);
 #ifdef _LP64
-		printf("ci_pmap_segtab %p\n", ci->ci_pmap_segtab);
+		printf("ci_pmap_kern_seg0tab %p\n", ci->ci_pmap_kern_seg0tab);
+		printf("ci_pmap_user_seg0tab %p\n", ci->ci_pmap_user_seg0tab);
 #else
 		printf("ci_pmap_srcbase %#"PRIxVADDR"\n", ci->ci_pmap_srcbase);
 		printf("ci_pmap_dstbase %#"PRIxVADDR"\n", ci->ci_pmap_dstbase);

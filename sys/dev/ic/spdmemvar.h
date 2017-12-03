@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.2.12.1 2014/08/20 00:03:38 tls Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.2.12.2 2017/12/03 11:37:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -39,7 +39,19 @@
 #define SPD_BITFIELD(a, b, c, d) a; b; c; d
 #endif
 
+	/*
+	 * NOTE
+	 *
+	 * Fields with "offsets" are field widths, measured in bits,
+	 * with "offset" additional bits.  Thus, a field with value
+	 * of 2 with an offset of 14 defines a field with total width
+	 * of 16 bits.
+	 */
+
 struct spdmem_fpm {				/* FPM and EDO DIMMS */
+	uint8_t	fpm_len;
+	uint8_t fpm_size;
+	uint8_t fpm_type;
 	uint8_t fpm_rows;
 	uint8_t fpm_cols;
 	uint8_t fpm_banks;
@@ -61,6 +73,9 @@ struct spdmem_fpm {				/* FPM and EDO DIMMS */
 } __packed;
 
 struct spdmem_sdram {				/* PC66/PC100/PC133 SDRAM */
+	uint8_t	sdr_len;
+	uint8_t sdr_size;
+	uint8_t sdr_type;
 	SPD_BITFIELD(				\
 		uint8_t sdr_rows:4,		\
 		uint8_t sdr_rows2:4, ,		\
@@ -128,6 +143,9 @@ struct spdmem_sdram {				/* PC66/PC100/PC133 SDRAM */
 } __packed;
 
 struct spdmem_rom {
+	uint8_t	rom_len;
+	uint8_t rom_size;
+	uint8_t rom_type;
 	uint8_t rom_rows;
 	uint8_t rom_cols;
 	uint8_t rom_banks;
@@ -147,6 +165,9 @@ struct spdmem_rom {
 
 
 struct spdmem_ddr {				/* Dual Data Rate SDRAM */
+	uint8_t	ddr_len;
+	uint8_t ddr_size;
+	uint8_t ddr_type;
 	SPD_BITFIELD(				\
 		uint8_t ddr_rows:4,		\
 		uint8_t ddr_rows2:4, ,		\
@@ -217,6 +238,9 @@ struct spdmem_ddr {				/* Dual Data Rate SDRAM */
 } __packed;
 
 struct spdmem_ddr2 {				/* Dual Data Rate 2 SDRAM */
+	uint8_t	ddr2_len;
+	uint8_t ddr2_size;
+	uint8_t ddr2_type;
 	SPD_BITFIELD(				\
 		uint8_t ddr2_rows:5,		\
 		uint8_t ddr2_unused1:3,	,	\
@@ -304,6 +328,9 @@ struct spdmem_ddr2 {				/* Dual Data Rate 2 SDRAM */
 } __packed;
 
 struct spdmem_fbdimm {				/* Fully-buffered DIMM */
+	uint8_t	fbdimm_len;
+	uint8_t fbdimm_size;
+	uint8_t fbdimm_type;
 	SPD_BITFIELD(				\
 		uint8_t	fbdimm_ps1_voltage:4,	\
 		uint8_t	fbdimm_ps2_voltage:4, ,	\
@@ -326,7 +353,7 @@ struct spdmem_fbdimm {				/* Fully-buffered DIMM */
 	);
 	SPD_BITFIELD(				\
 		uint8_t	fbdimm_ftb_divisor:4,	\
-		uint8_t	fbdimm_ftp_dividend:4, ,\
+		uint8_t	fbdimm_ftb_dividend:4, ,\
 	);
 	uint8_t	fbdimm_mtb_dividend;
 	uint8_t	fbdimm_mtb_divisor;
@@ -381,6 +408,9 @@ struct spdmem_fbdimm {				/* Fully-buffered DIMM */
 } __packed;
 
 struct spdmem_rambus {				/* Direct Rambus DRAM */
+	uint8_t	rdr_len;
+	uint8_t rdr_size;
+	uint8_t rdr_type;
 	SPD_BITFIELD(				\
 		uint8_t	rdr_rows:4,		\
 		uint8_t	rdr_cols:4, ,		\
@@ -388,6 +418,13 @@ struct spdmem_rambus {				/* Direct Rambus DRAM */
 } __packed;
 
 struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
+	SPD_BITFIELD(				\
+		uint8_t	ddr3_ROM_used:4,	\
+		uint8_t	ddr3_ROM_size:3,	\
+		uint8_t	ddr3_crccover:1,	\
+	);
+	uint8_t	ddr3_romrev;
+	uint8_t ddr3_type;
 	uint8_t	ddr3_mod_type;
 	SPD_BITFIELD(				\
 		/* chipsize is offset by 28: 0 = 256M, 1 = 512M, ... */ \
@@ -404,7 +441,7 @@ struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 	SPD_BITFIELD(				\
 		uint8_t ddr3_NOT15V:1,		\
 		uint8_t ddr3_135V:1,		\
-		uint8_t ddr3_12XV:1,		\
+		uint8_t ddr3_125V:1,		\
 		uint8_t	ddr3_unused2:5		\
 	);
 	/* chipwidth in bits offset by 2: 0 = X4, 1 = X8, 2 = X16 */
@@ -485,10 +522,343 @@ struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 	uint8_t ddr3_vendor[26];
 } __packed;
 
+/* DDR4 info from JEDEC Standard No. 21-C, Annex L - 4.1.2.12 */
+
+/* Module-type specific bytes - bytes 0x080 thru 0x0ff */
+
+struct spdmem_ddr4_mod_unbuffered {
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_unbuf_mod_height:4,	\
+		uint8_t ddr4_unbuf_card_ext:4, ,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_unbuf_max_thick_front:4,	\
+		uint8_t	ddr4_unbuf_max_thick_back:4, ,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_unbuf_refcard:5,		\
+		uint8_t	ddr4_unbuf_refcard_rev:2,	\
+		uint8_t	ddr4_unbuf_refcard_ext:1,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_unbuf_mirror_mapping:1,	\
+		uint8_t	ddr4_unbuf_unused1:7, ,		\
+	);
+	uint8_t	ddr4_unbuf_unused2[122];
+	uint8_t	ddr4_unbuf_crc[2];
+} __packed;
+
+struct spdmem_ddr4_mod_registered {
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_mod_height:4,	\
+		uint8_t ddr4_reg_card_ext:4, ,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_max_thick_front:4,	\
+		uint8_t	ddr4_reg_max_thick_back:4, ,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_refcard:5,		\
+		uint8_t	ddr4_reg_refcard_rev:2,	\
+		uint8_t	ddr4_reg_refcard_ext:1,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_regcnt:2,		\
+		uint8_t	ddr4_reg_dram_rows:2,		\
+		uint8_t	ddr4_reg_unused1:4,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_heat_spread_char:7,	\
+		uint8_t	ddr4_reg_heat_spread_exist:1, ,	\
+	);
+	uint8_t	ddr4_reg_mfg_id_lsb;
+	uint8_t	ddr4_reg_mfg_id_msb;
+	uint8_t	ddr4_reg_revision;
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_mirror_mapping:1,	\
+		uint8_t	ddr4_reg_unused2:7, ,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_output_drive_CKE:2,	\
+		uint8_t	ddr4_reg_output_drive_ODT:2,	\
+		uint8_t	ddr4_reg_output_drive_CmdAddr:2,\
+		uint8_t	ddr4_reg_output_drive_chipsel:2	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_reg_output_drive_CK_Y0Y2:2,\
+		uint8_t	ddr4_reg_output_drive_CK_Y1Y3:2,\
+		uint8_t	ddr4_reg_unused3:4,		\
+	);
+	uint8_t	ddr4_reg_unused4[115];
+	uint8_t	ddr4_reg_crc[2];
+} __packed;
+
+struct spdmem_ddr4_mod_reduced_load {
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_mod_height:4,	\
+		uint8_t ddr4_rload_card_ext:4, ,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_max_thick_front:4,	\
+		uint8_t	ddr4_rload_max_thick_back:4, ,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_refcard:5,		\
+		uint8_t	ddr4_rload_refcard_rev:2,	\
+		uint8_t	ddr4_rload_refcard_ext:1,	\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_regcnt:2,		\
+		uint8_t	ddr4_rload_dram_rows:2,		\
+		uint8_t	ddr4_rload_unused1:4,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_unused2:7,		\
+		uint8_t	ddr4_rload_heat_spread_exist:1, , \
+	);
+	uint8_t	ddr4_rload_reg_mfg_id_lsb;
+	uint8_t	ddr4_rload_reg_mfg_id_msb;
+	uint8_t	ddr4_rload_reg_revision;
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_reg_mirror_mapping:1,\
+		uint8_t	ddr4_rload_unused3:7, ,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_output_drive_CKE:2,	\
+		uint8_t	ddr4_rload_output_drive_ODT:2,	\
+		uint8_t	ddr4_rload_output_drive_CmdAddr:2, \
+		uint8_t	ddr4_rload_output_drive_chipsel:2  \
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_output_drive_CK_Y0Y2:2, \
+		uint8_t	ddr4_rload_output_drive_CK_Y1Y3:2, \
+		uint8_t	ddr4_rload_unused4:4,		\
+	);
+	uint8_t	ddr4_rload_dbuff_revision;
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_VrefDQ_0:6,		\
+		uint8_t	ddr4_rload_unused5:2, ,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_VrefDQ_1:6,		\
+		uint8_t	ddr4_rload_unused6:2, ,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_VrefDQ_2:6,		\
+		uint8_t	ddr4_rload_unused7:2, ,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_VrefDQ_3:6,		\
+		uint8_t	ddr4_rload_unused8:2, ,		\
+	);
+	SPD_BITFIELD(					\
+		uint8_t	ddr4_rload_VrefDQ_buffer:6,	\
+		uint8_t	ddr4_rload_unused9:2, ,		\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_MDQ_Read_Term_Str_1866:3,	\
+		uint8_t	ddr4_rload_unused10:1,			\
+		uint8_t	ddr4_rload_MDQ_Drive_Str_1866:3,	\
+		uint8_t	ddr4_rload_unused11:1			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_MDQ_Read_Term_Str_2400:3,	\
+		uint8_t	ddr4_rload_unused12:1,			\
+		uint8_t	ddr4_rload_MDQ_Drive_Str_2400:3,	\
+		uint8_t	ddr4_rload_unused13:1			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_MDQ_Read_Term_Str_3200:3,	\
+		uint8_t	ddr4_rload_unused14:1,			\
+		uint8_t	ddr4_rload_MDQ_Drive_Str_3200:3,	\
+		uint8_t	ddr4_rload_unused15:1			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_DRAM_Drive_Str_1866:2,	\
+		uint8_t	ddr4_rload_DRAM_Drive_Str_2400:2,	\
+		uint8_t	ddr4_rload_DRAM_Drive_Str_3200:2,	\
+		uint8_t	ddr4_rload_unused16:2			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_NOM_1866:3,	\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_WR_1866:3,	\
+		uint8_t	ddr4_rload_unused17:2,			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_NOM_2400:3,	\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_WR_2400:3,	\
+		uint8_t	ddr4_rload_unused18:2,			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_NOM_3200:3,	\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_WR_3200:3,	\
+		uint8_t	ddr4_rload_unused19:2,			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_PARK_01_1866:3,	\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_PARK_23_1866:3,	\
+		uint8_t	ddr4_rload_unused20:2,			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_PARK_01_2400:3,	\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_PARK_23_2400:3,	\
+		uint8_t	ddr4_rload_unused21:2,			\
+	);
+	SPD_BITFIELD(						\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_PARK_01_3200:3,	\
+		uint8_t	ddr4_rload_DRAM_ODT_RTT_PARK_23_3200:3,	\
+		uint8_t	ddr4_rload_unused22:2,			\
+	);
+	uint8_t	ddr4_rload_unused23[99];
+	uint8_t	ddr4_rload_crc[2];
+} __packed;
+
+struct spdmem_ddr4 {				/* Dual Data Rate 4 SDRAM */
+	SPD_BITFIELD(				\
+		uint8_t	ddr4_ROM_used:4,	\
+		uint8_t	ddr4_ROM_size:3,	\
+		uint8_t	ddr4_unused0:1,		\
+	);
+	uint8_t	ddr4_romrev;
+	uint8_t	ddr4_type;
+	SPD_BITFIELD(				\
+		uint8_t	ddr4_mod_type:4,	\
+		uint8_t	ddr4_hybrid_media:3,	\
+		uint8_t	ddr4_hybrid:1,		\
+	);
+	SPD_BITFIELD(				\
+		/* capacity is offset by 28: 0 = 256M, 1 = 512M, ... */ \
+		uint8_t	ddr4_capacity:4,	\
+		/* logbanks is offset by 2 */	\
+		uint8_t	ddr4_logbanks:2,	\
+		/* bankgroups is offset by 0 */
+		uint8_t	ddr4_bankgroups:2,	\
+	);
+	/* cols is offset by 9, rows offset by 12 */
+	SPD_BITFIELD(				\
+		uint8_t	ddr4_cols:3,		\
+		uint8_t	ddr4_rows:3,		\
+		uint8_t	ddr4_unused2:2,		\
+	);
+	SPD_BITFIELD(				\
+		uint8_t	ddr4_signal_loading:2,	\
+		uint8_t	ddr4_unused3:2,		\
+		uint8_t	ddr4_diecount:3,	\
+		uint8_t	ddr4_non_monolithic:1	\
+	);
+	SPD_BITFIELD(				\
+		uint8_t ddr4_max_activate_count:4,	\
+		uint8_t ddr4_max_activate_window:2,	\
+		uint8_t ddr4_unused4:2,	\
+	);
+	uint8_t	ddr4_unused5;		/* SDRAM Thermal & Refresh Options */
+	SPD_BITFIELD(				\
+		uint8_t ddr4_unused6:6,		\
+		uint8_t ddr4_ppr_support:2, ,	/* post package repair */ \
+	);
+	uint8_t ddr4_unused7;
+	SPD_BITFIELD(				\
+		uint8_t	ddr4_dram_vdd_12:2,	\
+		uint8_t	ddr4_dram_vdd_tbd1:2,	\
+		uint8_t	ddr4_dram_vdd_tbd2:2,	\
+		uint8_t	ddr4_unused8:2		\
+	);
+	SPD_BITFIELD(				\
+		/* device width is 0=4, 1=8, 2=16, or 4=32 bits */ \
+		uint8_t	ddr4_device_width:3,	\
+		/* number of package ranks is field value plus 1 */ \
+		uint8_t	ddr4_package_ranks:3,	\
+		uint8_t	ddr4_unused9:2,		\
+	);
+	SPD_BITFIELD(					\
+		/* primary width is offset by 3, extension is offset by 2 */ \
+		uint8_t	ddr4_primary_bus_width:3,	\
+		uint8_t	ddr4_bus_width_extension:2,	\
+		uint8_t	ddr4_unused10:3,		\
+	);
+	SPD_BITFIELD(				\
+		uint8_t ddr4_unused11:7,	\
+		uint8_t ddr4_has_therm_sensor:1, , \
+	);
+	SPD_BITFIELD(				\
+		uint8_t ddr4_ext_mod_type:4,	\
+		uint8_t ddr4_unused12:4, ,	\
+	);
+	uint8_t	ddr4_unused13;
+	SPD_BITFIELD(				\
+		/* units = 1ps (10**-12sec) */	\
+		uint8_t	ddr4_fine_timebase:2,	\
+		/* units = 125ps	    */	\
+		uint8_t	ddr4_medium_timebase:2, ,	\
+	);
+	uint8_t	ddr4_tCKAVGmin_mtb;
+	uint8_t	ddr4_tCKAVGmax_mtb;
+	/* Bit 0 of CAS_supported[0 corresponds to CL=7 */
+	uint8_t	ddr4_CAS_supported[4];
+	uint8_t	ddr4_tAAmin_mtb;
+	uint8_t	ddr4_tRCDmin_mtb;
+	uint8_t	ddr4_tRPmin_mtb;
+	SPD_BITFIELD(				\
+		uint8_t	ddr4_tRASmin_msb:4,	\
+		uint8_t	ddr4_tRCmin_mtb_msb:4, ,	\
+	);
+	uint8_t	ddr4_tRASmin_lsb;
+	uint8_t	ddr4_tRCmin_mtb_lsb;
+	uint8_t	ddr4_tRFC1min_lsb;
+	uint8_t	ddr4_tRFC1min_msb;
+	uint8_t	ddr4_tRFC2min_lsb;
+	uint8_t	ddr4_tRFC2min_msb;
+	uint8_t	ddr4_tRFC4min_lsb;
+	uint8_t	ddr4_tRFC4min_msb;
+	SPD_BITFIELD(				\
+		uint8_t	ddr4_tFAW_mtb_msb:4,	\
+		uint8_t	ddr4_unused14:4, ,	\
+	);
+	uint8_t	ddr4_tFAWmin_mtb_lsb;
+	uint8_t	ddr4_tRRD_Smin_mtb;
+	uint8_t	ddr4_tRRD_Lmin_mtb;
+	uint8_t	ddr4_tCCD_Lmin_mtb;
+	uint8_t	ddr4_tWR_min_msb;
+	uint8_t	ddr4_tWR_min_mtb;
+	uint8_t	ddr4_tWTR_min;
+	uint8_t	ddr4_tWTR_Smin_mtb;
+	uint8_t	ddr4_tWTR_Lmin_mtb;
+	uint8_t	ddr4_unused15[14];
+	uint8_t	ddr4_connector_map[18];
+	uint8_t	ddr4_unused16[39];
+	uint8_t	ddr4_tCCD_Lmin_ftb;
+	uint8_t	ddr4_tRRD_Lmin_ftb;
+	uint8_t	ddr4_tRRD_Smin_ftb;
+	uint8_t	ddr4_tRCmin_ftb;
+	uint8_t	ddr4_tRPmin_ftb;
+	uint8_t	ddr4_tRCDmin_ftb;
+	uint8_t	ddr4_tAAmin_ftb;
+	uint8_t	ddr4_tCKAVGmax_ftb;
+	uint8_t	ddr4_tCKAVGmin_ftb;
+	uint16_t ddr4_crc;
+	union {
+		struct spdmem_ddr4_mod_unbuffered	u2_unbuf;
+		struct spdmem_ddr4_mod_registered	u2_reg;
+		struct spdmem_ddr4_mod_reduced_load	u2_red_load;
+	} ddr4_u2;
+	uint8_t	ddr4_unused17[64];
+	uint8_t	ddr4_module_mfg_lsb;
+	uint8_t	ddr4_module_mfg_msb;
+	uint8_t	ddr4_module_mfg_loc;
+	uint8_t	ddr4_module_mfg_year;
+	uint8_t	ddr4_module_mfg_week;
+	uint8_t	ddr4_serial_number[4];
+	uint8_t	ddr4_part_number[20];
+	uint8_t	ddr4_revision_code;
+	uint8_t	ddr4_dram_mfgID_lsb;
+	uint8_t	ddr4_dram_mfgID_msb;
+	uint8_t	ddr4_dram_stepping;
+	uint8_t ddr4_mfg_specific_data[29];
+	uint8_t	ddr4_unused18[2];
+	uint8_t	ddr4_user_data[128];
+} __packed;
+
 struct spdmem {
-	uint8_t	sm_len;
-	uint8_t sm_size;
-	uint8_t sm_type;
 	union {
 		struct spdmem_fbdimm	u1_fbd;
 		struct spdmem_fpm	u1_fpm;
@@ -498,6 +868,7 @@ struct spdmem {
 		struct spdmem_rambus	u1_rdr;
 		struct spdmem_rom	u1_rom;
 		struct spdmem_ddr3	u1_ddr3;
+		struct spdmem_ddr4	u1_ddr4;
 	} sm_u1;
 } __packed;
 #define	sm_fbd		sm_u1.u1_fbd
@@ -508,19 +879,23 @@ struct spdmem {
 #define	sm_rom		sm_u1.u1_rom
 #define	sm_ddr3		sm_u1.u1_ddr3
 #define	sm_sdr		sm_u1.u1_sdr
+#define	sm_ddr4		sm_u1.u1_ddr4
 
 /* some fields are in the same place for all memory types */
 
+#define sm_len		sm_fpm.fpm_len
+#define sm_size		sm_fpm.fpm_size
+#define sm_type		sm_fpm.fpm_type
 #define sm_cksum	sm_fpm.fpm_cksum
 #define sm_config	sm_fpm.fpm_config
 #define sm_voltage	sm_fpm.fpm_voltage
 #define	sm_refresh	sm_fpm.fpm_refresh
 #define	sm_selfrefresh	sm_fpm.fpm_selfrefresh
 
-#define SPDMEM_TYPE_MAXLEN 16
+#define SPDMEM_TYPE_MAXLEN 40
 
 struct spdmem_softc {
-	uint8_t		(*sc_read)(struct spdmem_softc *, uint8_t);
+	int		(*sc_read)(struct spdmem_softc *, uint16_t, uint8_t *);
 	struct spdmem	sc_spd_data;
 	struct sysctllog *sc_sysctl_log;
 	char		sc_type[SPDMEM_TYPE_MAXLEN];

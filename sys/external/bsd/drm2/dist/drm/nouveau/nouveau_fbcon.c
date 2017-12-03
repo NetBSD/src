@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.1.1.2.6.2 2014/08/20 00:04:10 tls Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.1.1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.1.1.2.6.2 2014/08/20 00:04:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.1.1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -56,11 +56,18 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.1.1.2.6.2 2014/08/20 00:04:10 tl
 
 #include "nouveau_crtc.h"
 
+#ifdef __NetBSD__
+#include "nouveaufb.h"
+#endif
+
 #include <core/client.h>
 #include <core/device.h>
 
 #include <subdev/fb.h>
 
+#ifdef __NetBSD__		/* XXX nouveau fbaccel */
+static const int nouveau_nofbaccel = 1;
+#else
 MODULE_PARM_DESC(nofbaccel, "Disable fbcon acceleration");
 static int nouveau_nofbaccel = 0;
 module_param_named(nofbaccel, nouveau_nofbaccel, int, 0400);
@@ -216,6 +223,7 @@ static struct fb_ops nouveau_fbcon_sw_ops = {
 	.fb_debug_enter = drm_fb_helper_debug_enter,
 	.fb_debug_leave = drm_fb_helper_debug_leave,
 };
+#endif	/* XXX nouveau fbaccel */
 
 static void nouveau_fbcon_gamma_set(struct drm_crtc *crtc, u16 red, u16 green,
 				    u16 blue, int regno)
@@ -240,6 +248,12 @@ static void nouveau_fbcon_gamma_get(struct drm_crtc *crtc, u16 *red, u16 *green,
 static void
 nouveau_fbcon_zfill(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 {
+#ifdef __NetBSD__		/* XXX nouveau fbaccel */
+	struct nouveau_bo *const nvbo = fbcon->nouveau_fb.nvbo;
+
+	(void)memset(__UNVOLATILE(nvbo_kmap_obj_iovirtual(nvbo)), 0,
+	    nvbo->bo.num_pages << PAGE_SHIFT);
+#else
 	struct fb_info *info = fbcon->helper.fbdev;
 	struct fb_fillrect rect;
 
@@ -253,6 +267,7 @@ nouveau_fbcon_zfill(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 	rect.color = 0;
 	rect.rop = ROP_COPY;
 	info->fbops->fb_fillrect(info, &rect);
+#endif
 }
 
 static int
@@ -263,13 +278,17 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	struct drm_device *dev = fbcon->dev;
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	struct nouveau_device *device = nv_device(drm->device);
+#ifndef __NetBSD__
 	struct fb_info *info;
+#endif
 	struct drm_framebuffer *fb;
 	struct nouveau_framebuffer *nouveau_fb;
 	struct nouveau_channel *chan;
 	struct nouveau_bo *nvbo;
 	struct drm_mode_fb_cmd2 mode_cmd;
+#ifndef __NetBSD__
 	struct pci_dev *pdev = dev->pdev;
+#endif
 	int size, ret;
 
 	mode_cmd.width = sizes->surface_width;
@@ -313,6 +332,32 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 		}
 	}
 
+#ifdef __NetBSD__
+	nouveau_framebuffer_init(dev, &fbcon->nouveau_fb, &mode_cmd, nvbo);
+	nouveau_fb = &fbcon->nouveau_fb;
+	fb = &nouveau_fb->base;
+
+	nouveau_fbcon_zfill(dev, fbcon);
+
+    {
+	static const struct nouveaufb_attach_args zero_nfa;
+	struct nouveaufb_attach_args nfa = zero_nfa;
+
+	nfa.nfa_fb_helper = helper;
+	nfa.nfa_fb_sizes = *sizes;
+	nfa.nfa_fb_ptr = nvbo_kmap_obj_iovirtual(nvbo);
+	nfa.nfa_fb_linebytes = mode_cmd.pitches[0];
+
+	helper->fbdev = config_found_ia(dev->dev, "nouveaufbbus", &nfa, NULL);
+	if (helper->fbdev == NULL) {
+		DRM_ERROR("failed to attach nouveaufb\n");
+		goto out_unlock;
+	}
+    }
+	helper->fb = fb;
+
+	return 0;
+#else
 	mutex_lock(&dev->struct_mutex);
 
 	info = framebuffer_alloc(0, &pdev->dev);
@@ -385,9 +430,12 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 
 	vga_switcheroo_client_fb_set(dev->pdev, info);
 	return 0;
+#endif	/* defined(__NetBSD__) */
 
 out_unlock:
+#ifndef __NetBSD__
 	mutex_unlock(&dev->struct_mutex);
+#endif
 	if (chan)
 		nouveau_bo_vma_del(nvbo, &fbcon->nouveau_fb.vma);
 	nouveau_bo_unmap(nvbo);
@@ -411,14 +459,26 @@ static int
 nouveau_fbcon_destroy(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 {
 	struct nouveau_framebuffer *nouveau_fb = &fbcon->nouveau_fb;
+#ifndef __NetBSD__
 	struct fb_info *info;
+#endif
 
 	if (fbcon->helper.fbdev) {
+#ifdef __NetBSD__
+		int ret;
+
+		/* XXX errno NetBSD->Linux */
+		ret = -config_detach(fbcon->helper.fbdev, DETACH_FORCE);
+		if (ret)
+			DRM_ERROR("failed to detach nouveaufb: %d\n", ret);
+		fbcon->helper.fbdev = NULL;
+#else
 		info = fbcon->helper.fbdev;
 		unregister_framebuffer(info);
 		if (info->cmap.len)
 			fb_dealloc_cmap(&info->cmap);
 		framebuffer_release(info);
+#endif
 	}
 
 	if (nouveau_fb->nvbo) {
@@ -434,6 +494,7 @@ nouveau_fbcon_destroy(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 void nouveau_fbcon_gpu_lockup(struct fb_info *info)
 {
 	struct nouveau_fbdev *fbcon = info->par;
@@ -442,6 +503,7 @@ void nouveau_fbcon_gpu_lockup(struct fb_info *info)
 	NV_ERROR(drm, "GPU lockup - switching to software fbcon\n");
 	info->flags |= FBINFO_HWACCEL_DISABLED;
 }
+#endif
 
 static struct drm_fb_helper_funcs nouveau_fbcon_helper_funcs = {
 	.gamma_set = nouveau_fbcon_gamma_set,
@@ -511,25 +573,30 @@ nouveau_fbcon_fini(struct drm_device *dev)
 void
 nouveau_fbcon_save_disable_accel(struct drm_device *dev)
 {
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
 		drm->fbcon->saved_flags = drm->fbcon->helper.fbdev->flags;
 		drm->fbcon->helper.fbdev->flags |= FBINFO_HWACCEL_DISABLED;
 	}
+#endif
 }
 
 void
 nouveau_fbcon_restore_accel(struct drm_device *dev)
 {
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
 		drm->fbcon->helper.fbdev->flags = drm->fbcon->saved_flags;
 	}
+#endif
 }
 
 void
 nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 {
+#ifndef __NetBSD__
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
 		console_lock();
@@ -540,6 +607,7 @@ nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 			nouveau_fbcon_restore_accel(dev);
 		console_unlock();
 	}
+#endif
 }
 
 void

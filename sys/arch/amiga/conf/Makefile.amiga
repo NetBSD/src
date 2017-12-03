@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.107 2011/01/21 15:59:05 joerg Exp $
+#	$NetBSD: Makefile.amiga,v 1.107.14.1 2017/12/03 11:35:48 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ GENASSYM_CONF=	${AMIGA}/amiga/genassym.cf
 CPPFLAGS+=	-Damiga -DFPCOPROC
 .if !defined(CMACHFLAGS)
 .include "$S/arch/m68k/Makefile.cmachflags"
-CMACHFLAGS+=	-Wa,-m68030 -Wa,-m68851
+CMACHFLAGS+=	-Wa,-mcpu=68030 -Wa,-m68851
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
 AFLAGS+=	-x assembler-with-cpp
@@ -53,7 +53,8 @@ KERN_AS=	obj
 # for the Motorola 68060 Software Support Package
 .include "$S/arch/m68k/060sp/Makefile.inc"
 
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	${AMIGA}/amiga/locore.s
 

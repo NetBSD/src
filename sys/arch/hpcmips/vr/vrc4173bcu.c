@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.21.22.2 2014/08/20 00:03:03 tls Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.21.22.3 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.21.22.2 2014/08/20 00:03:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.21.22.3 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,19 +344,19 @@ vrc4173bcu_attach(device_t parent, device_t self, void *aux)
 	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
-	printf("%s: SYSINT1 = 0x%s\n", device_xname(self), buf);
+	printf("%s: SYSINT1 = %s\n", device_xname(self), buf);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MKIUINT);
 	snprintb(buf, sizeof(buf),
 	    "\20\1SCANINT\2KDATRDY\3KDATLOST\4B3\5B4\6B5\7B6\10B7"
 	    "\11B8\12B9\13B10\14B11\15B12\16B13\17B14\20B15", reg);
-	printf("%s: MKIUINT = 0x%s\n", device_xname(self), buf);
+	printf("%s: MKIUINT = %s\n", device_xname(self), buf);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1);
 	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
-	printf("%s: MSYSINT1 = 0x%s\n", device_xname(self), buf);
+	printf("%s: MSYSINT1 = %s\n", device_xname(self), buf);
 
 #if 1
 	reg = VRC4173ICU_USBINTR | VRC4173ICU_PIUINTR | VRC4173ICU_KIUINTR |
@@ -367,7 +367,7 @@ vrc4173bcu_attach(device_t parent, device_t self, void *aux)
 	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
-	printf("%s: MSYSINT1 = 0x%s\n", device_xname(self), buf);
+	printf("%s: MSYSINT1 = %s\n", device_xname(self), buf);
 #endif
 #endif
 

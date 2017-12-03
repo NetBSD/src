@@ -422,6 +422,16 @@ int radeon_crtc_do_set_base(struct drm_crtc *crtc,
 	/* Pin framebuffer & get tilling informations */
 	obj = radeon_fb->obj;
 	rbo = gem_to_radeon_bo(obj);
+	if (atomic) {
+		/*
+		 * If you want to do this in atomic, better have it
+		 * pinned ahead of time.
+		 */
+		BUG_ON(rbo->pin_count == 0);
+		base = radeon_bo_gpu_offset(rbo);
+		tiling_flags = 0;
+		goto pinned;
+	}
 retry:
 	r = radeon_bo_reserve(rbo, false);
 	if (unlikely(r != 0))
@@ -444,7 +454,7 @@ retry:
 		 * We don't shutdown the display controller because new buffer
 		 * will end up in same spot.
 		 */
-		if (!atomic && fb && fb != crtc->primary->fb) {
+		if (fb && fb != crtc->primary->fb) {
 			struct radeon_bo *old_rbo;
 			unsigned long nsize, osize;
 
@@ -462,6 +472,7 @@ retry:
 	}
 	radeon_bo_get_tiling_flags(rbo, &tiling_flags, NULL);
 	radeon_bo_unreserve(rbo);
+pinned:
 	if (tiling_flags & RADEON_TILING_MICRO)
 		DRM_ERROR("trying to scanout microtiled buffer\n");
 

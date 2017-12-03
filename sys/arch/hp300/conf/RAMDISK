@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.13.18.1 2014/08/20 00:03:00 tls Exp $
+# $NetBSD: RAMDISK,v 1.13.18.2 2017/12/03 11:36:13 jdolecek Exp $
 #
 # RAMDISK machine description file
 #
@@ -16,7 +16,7 @@ no options	BUFPAGES
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
 options 	MEMORY_DISK_SERVER=0		# no mdconfig(8) support
-options 	MEMORY_DISK_ROOT_SIZE=3200	# size, in blocks (1.60MB)
+options 	MEMORY_DISK_ROOT_SIZE=3600	# size, in blocks (1.80MB)
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device 	md				# memory disk device

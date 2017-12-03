@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.47.8.2 2014/08/20 00:03:13 tls Exp $
+#	$NetBSD: MMTAROMNEW,v 1.47.8.3 2017/12/03 11:36:29 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -53,7 +53,6 @@ options 	USERCONF	# userconf(4) support
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
@@ -61,11 +60,9 @@ options 	USERCONF	# userconf(4) support
 #options 	SYSCALL_DEBUG
 
 # Compatibility options
-options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+include 	"conf/compat_netbsd70.config"
 options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.51.22.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.51.22.2 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.51.22.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.51.22.2 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ espattach_sbus(device_t parent, device_t self, void *aux)
 	 * What happens here is that if the dma driver has not been
 	 * configured, then this returns a NULL pointer. Then when the
 	 * dma actually gets configured, it does the opposing test, and
-	 * if the sc->sc_esp field in it's softc is NULL, then tries to
+	 * if the sc->sc_esp field in its softc is NULL, then tries to
 	 * find the matching esp driver.
 	 */
 	dma_dev = device_find_by_driver_unit("dma", device_unit(self));

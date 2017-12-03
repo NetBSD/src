@@ -1,0 +1,41 @@
+#	$NetBSD: Makefile.sysio,v 1.7.16.2 2017/12/03 11:36:53 jdolecek Exp $
+
+# Sources for syscall and ioctl compatibility across the versions.
+
+# Compatibility code for 4.3BSD
+SRCS+=	kern_exit_43.c kern_info_43.c kern_resource_43.c kern_sig_43.c \
+	tty_43.c uipc_syscalls_43.c vfs_syscalls_43.c vm_43.c if_43.c
+
+# Compatibility code for NetBSD 0.9
+SRCS+=	kern_info_09.c
+
+# Compatibility code for NetBSD 1.2
+SRCS+=	kern_xxx_12.c vfs_syscalls_12.c vm_12.c
+
+# Compatibility code for NetBSD 1.3
+SRCS+=	kern_sig_13.c
+
+# Compatibility code for NetBSD 1.6
+SRCS+=	kern_sig_16.c
+
+# Compatibility code for NetBSD 1.4
+SRCS+=	rtsock_14.c
+
+# Compatibility code for NetBSD 2.0
+SRCS+=	vfs_syscalls_20.c
+
+# Compatibility code for NetBSD 3.0
+SRCS+=	kern_time_30.c vfs_syscalls_30.c uipc_syscalls_30.c
+
+# Compatibility code for NetBSD 4.0
+SRCS+=	vfs_syscalls_40.c uipc_syscalls_40.c
+
+# Compatibility code for NetBSD 5.0
+SRCS+=	kern_50.c kern_time_50.c kern_select_50.c rndpseudo_50.c rtsock_50.c \
+	vfs_syscalls_50.c  uipc_syscalls_50.c
+
+# Compatibility code for NetBSD 6.0
+SRCS+=	kern_sa_60.c tty_60.c kern_time_60.c
+
+# Compatibility code for NetBSD 7.0
+SRCS+=	rtsock_70.c uipc_usrreq_70.c

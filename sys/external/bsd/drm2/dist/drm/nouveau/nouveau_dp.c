@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dp.c,v 1.1.1.2.6.2 2014/08/20 00:04:10 tls Exp $	*/
+/*	$NetBSD: nouveau_dp.c,v 1.1.1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright 2009 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dp.c,v 1.1.1.2.6.2 2014/08/20 00:04:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dp.c,v 1.1.1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_dp_helper.h>
@@ -51,11 +51,11 @@ nouveau_dp_probe_oui(struct drm_device *dev, struct nouveau_i2c_port *auxch,
 		return;
 
 	if (!nv_rdaux(auxch, DP_SINK_OUI, buf, 3))
-		NV_DEBUG(drm, "Sink OUI: %02hx%02hx%02hx\n",
+		NV_DEBUG(drm, "Sink OUI: %02"PRIx8"%02"PRIx8"%02"PRIx8"\n",
 			     buf[0], buf[1], buf[2]);
 
 	if (!nv_rdaux(auxch, DP_BRANCH_OUI, buf, 3))
-		NV_DEBUG(drm, "Branch OUI: %02hx%02hx%02hx\n",
+		NV_DEBUG(drm, "Branch OUI: %02"PRIx8"%02"PRIx8"%02"PRIx8"\n",
 			     buf[0], buf[1], buf[2]);
 
 }

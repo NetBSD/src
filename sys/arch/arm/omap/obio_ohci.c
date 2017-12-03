@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.7.2.3 2014/08/20 00:02:47 tls Exp $	*/
+/*	$Id: obio_ohci.c,v 1.7.2.4 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.7.2.3 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.7.2.4 2017/12/03 11:35:55 jdolecek Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.7.2.3 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.7.2.4 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 	struct obio_softc *psc = device_private(parent);
 	struct obioohci_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
-	usbd_status r;
 
 	KASSERT(psc->sc_obio_dev == NULL);
 	psc->sc_obio_dev = self;
@@ -118,8 +117,8 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.iot = obio->obio_iot;
 	sc->sc.sc_dev = self;
 	sc->sc.sc_size = obio->obio_size;
-	sc->sc.sc_bus.dmatag = obio->obio_dmat;
-	sc->sc.sc_bus.hci_private = &sc->sc;
+	sc->sc.sc_bus.ub_dmatag = obio->obio_dmat;
+	sc->sc.sc_bus.ub_hcpriv = &sc->sc;
 
 	/* Map I/O space */
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,
@@ -150,9 +149,9 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	strlcpy(sc->sc.sc_vendor, "OMAP", sizeof(sc->sc.sc_vendor));
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto free_intr;
 	}
 

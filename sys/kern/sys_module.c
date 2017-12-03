@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.14.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.14.2.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14.2.2 2017/12/03 11:38:45 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_modular.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,15 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14.2.1 2014/08/20 00:04:29 tls Exp 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
-#include <opt_modular.h>
-
 /*
  * Arbitrary limit to avoid DoS for excessive memory allocation.
  */
 #define MAXPROPSLEN	4096
 
-static int
-handle_modctl_load(modctl_load_t *ml)
+int
+handle_modctl_load(const char *ml_filename, int ml_flags, const char *ml_props,
+    size_t ml_propslen)
 {
 	char *path;
 	char *props;
@@ -60,30 +63,25 @@ handle_modctl_load(modctl_load_t *ml)
 	prop_dictionary_t dict;
 	size_t propslen = 0;
 
-	if ((ml->ml_props != NULL && ml->ml_propslen == 0) ||
-	    (ml->ml_props == NULL && ml->ml_propslen > 0)) {
+	if ((ml_props != NULL && ml_propslen == 0) ||
+	    (ml_props == NULL && ml_propslen > 0)) {
 		return EINVAL;
 	}
 
 	path = PNBUF_GET();
-	error = copyinstr(ml->ml_filename, path, MAXPATHLEN, NULL);
+	error = copyinstr(ml_filename, path, MAXPATHLEN, NULL);
 	if (error != 0)
 		goto out1;
 
-	if (ml->ml_props != NULL) {
-		if (ml->ml_propslen > MAXPROPSLEN) {
+	if (ml_props != NULL) {
+		if (ml_propslen > MAXPROPSLEN) {
 			error = ENOMEM;
 			goto out1;
 		}
-		propslen = ml->ml_propslen + 1;
+		propslen = ml_propslen + 1;
 
 		props = kmem_alloc(propslen, KM_SLEEP);
-		if (props == NULL) {
-			error = ENOMEM;
-			goto out1;
-		}
-
-		error = copyinstr(ml->ml_props, props, propslen, NULL);
+		error = copyinstr(ml_props, props, propslen, NULL);
 		if (error != 0)
 			goto out2;
 
@@ -97,7 +95,7 @@ handle_modctl_load(modctl_load_t *ml)
 		props = NULL;
 	}
 
-	error = module_load(path, ml->ml_flags, dict, MODULE_CLASS_ANY);
+	error = module_load(path, ml_flags, dict, MODULE_CLASS_ANY);
 
 	if (dict != NULL) {
 		prop_object_release(dict);
@@ -112,6 +110,69 @@ out1:
 	return error;
 }
 
+static int
+handle_modctl_stat(struct iovec *iov, void *arg)
+{
+	modstat_t *ms, *mso;
+	modinfo_t *mi;
+	module_t *mod;
+	vaddr_t addr;
+	size_t size;
+	size_t mslen;
+	int error;
+
+	kernconfig_lock();
+	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
+	mso = kmem_zalloc(mslen, KM_SLEEP);
+	ms = mso;
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		mi = mod->mod_info;
+		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		if (mi->mi_required != NULL) {
+			strlcpy(ms->ms_required, mi->mi_required,
+			    sizeof(ms->ms_required));
+		}
+		if (mod->mod_kobj != NULL) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			ms->ms_addr = addr;
+			ms->ms_size = size;
+		}
+		ms->ms_class = mi->mi_class;
+		ms->ms_refcnt = mod->mod_refcnt;
+		ms->ms_source = mod->mod_source;
+		ms->ms_flags = mod->mod_flags;
+		ms++;
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		mi = mod->mod_info;
+		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		if (mi->mi_required != NULL) {
+			strlcpy(ms->ms_required, mi->mi_required,
+			    sizeof(ms->ms_required));
+		}
+		if (mod->mod_kobj != NULL) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			ms->ms_addr = addr;
+			ms->ms_size = size;
+		}
+		ms->ms_class = mi->mi_class;
+		ms->ms_refcnt = -1;
+		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
+		ms->ms_source = mod->mod_source;
+		ms++;
+	}
+	kernconfig_unlock();
+	error = copyout(mso, iov->iov_base,
+	    min(mslen - sizeof(modstat_t), iov->iov_len));
+	kmem_free(mso, mslen);
+	if (error == 0) {
+		iov->iov_len = mslen - sizeof(modstat_t);
+		error = copyout(iov, arg, sizeof(*iov));
+	}
+
+	return error;
+}
+
 int
 sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	   register_t *retval)
@@ -121,12 +182,6 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 		syscallarg(void *)	arg;
 	} */
 	char buf[MAXMODNAME];
-	size_t mslen;
-	module_t *mod;
-	modinfo_t *mi;
-	modstat_t *ms, *mso;
-	vaddr_t addr;
-	size_t size;
 	struct iovec iov;
 	modctl_load_t ml;
 	int error;
@@ -142,7 +197,8 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 		error = copyin(arg, &ml, sizeof(ml));
 		if (error != 0)
 			break;
-		error = handle_modctl_load(&ml);
+		error = handle_modctl_load(ml.ml_filename, ml.ml_flags,
+		    ml.ml_props, ml.ml_propslen);
 		break;
 
 	case MODCTL_UNLOAD:
@@ -157,57 +213,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 		if (error != 0) {
 			break;
 		}
-		kernconfig_lock();
-		mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
-		mso = kmem_zalloc(mslen, KM_SLEEP);
-		if (mso == NULL) {
-			kernconfig_unlock();
-			return ENOMEM;
-		}
-		ms = mso;
-		TAILQ_FOREACH(mod, &module_list, mod_chain) {
-			mi = mod->mod_info;
-			strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
-			if (mi->mi_required != NULL) {
-				strlcpy(ms->ms_required, mi->mi_required,
-				    sizeof(ms->ms_required));
-			}
-			if (mod->mod_kobj != NULL) {
-				kobj_stat(mod->mod_kobj, &addr, &size);
-				ms->ms_addr = addr;
-				ms->ms_size = size;
-			}
-			ms->ms_class = mi->mi_class;
-			ms->ms_refcnt = mod->mod_refcnt;
-			ms->ms_source = mod->mod_source;
-			ms++;
-		}
-		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
-			mi = mod->mod_info;
-			strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
-			if (mi->mi_required != NULL) {
-				strlcpy(ms->ms_required, mi->mi_required,
-				    sizeof(ms->ms_required));
-			}
-			if (mod->mod_kobj != NULL) {
-				kobj_stat(mod->mod_kobj, &addr, &size);
-				ms->ms_addr = addr;
-				ms->ms_size = size;
-			}
-			ms->ms_class = mi->mi_class;
-			ms->ms_refcnt = -1;
-			KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
-			ms->ms_source = mod->mod_source;
-			ms++;
-		}
-		kernconfig_unlock();
-		error = copyout(mso, iov.iov_base,
-		    min(mslen - sizeof(modstat_t), iov.iov_len));
-		kmem_free(mso, mslen);
-		if (error == 0) {
-			iov.iov_len = mslen - sizeof(modstat_t);
-			error = copyout(&iov, arg, sizeof(iov));
-		}
+		error = handle_modctl_stat(&iov, arg);
 		break;
 
 	case MODCTL_EXISTS:

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.19 2009/09/22 13:22:53 tsutsui Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.19.22.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.19 2009/09/22 13:22:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.19.22.1 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,13 +97,13 @@ aha_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	if (ipa->ipa_ndrq == 0) {
 		if (apd.sc_drq != -1) {
-			printf("%s: no PnP drq, but card has one\n",
-			    device_xname(self));
+			aprint_error_dev(self,
+			    "no PnP drq, but card has one\n");
 			return;
 		}
 	} else if (apd.sc_drq != ipa->ipa_drq[0].num) {
-		printf("%s: card drq # (%d) != PnP # (%d)\n",
-		    device_xname(self), apd.sc_drq, ipa->ipa_drq[0].num);
+		aprint_error_dev(self, "card drq # (%d) != PnP # (%d)\n",
+		    apd.sc_drq, ipa->ipa_drq[0].num);
 		return;
 	} else {
 		int error = isa_dmacascade(ipa->ipa_ic, ipa->ipa_drq[0].num);
@@ -115,8 +115,8 @@ aha_isapnp_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (apd.sc_irq != ipa->ipa_irq[0].num) {
-		printf("%s: card irq # (%d) != PnP # (%d)\n",
-		    device_xname(self), apd.sc_irq, ipa->ipa_irq[0].num);
+		aprint_error_dev(self, "card irq # (%d) != PnP # (%d)\n",
+		    apd.sc_irq, ipa->ipa_irq[0].num);
 		return;
 	}
 

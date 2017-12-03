@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.38.6.2 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: necpb.c,v 1.38.6.3 2017/12/03 11:35:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.38.6.2 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.38.6.3 2017/12/03 11:35:50 jdolecek Exp $");
 
 #include "opt_pci.h"
 
@@ -314,6 +314,9 @@ necpb_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pcireg_t data;
 	int s;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	s = splhigh();
 	out32(RD94_SYS_PCI_CONFADDR, tag | reg);
 	data = in32(RD94_SYS_PCI_CONFDATA);
@@ -327,6 +330,9 @@ static void
 necpb_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	int s;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	s = splhigh();
 	out32(RD94_SYS_PCI_CONFADDR, tag | reg);

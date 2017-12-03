@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: LROUTER,v 1.46.6.2 2014/08/20 00:03:03 tls Exp $
+# 	$NetBSD: LROUTER,v 1.46.6.3 2017/12/03 11:36:14 jdolecek Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
 #
 
-include		"arch/hpcmips/conf/std.hpcmips"
+include 	"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -21,6 +21,7 @@ options 	VR4122			# NEC VR4122
 
 # Standard system options
 options 	DDB			# in-kernel debugger
+pseudo-device	ksyms
 #options 	DDB_ONPANIC=0		# don't enter debugger on panic
 #options 	KGDB			# remote debugger
 options 	DIAGNOSTIC		# extra kernel debugging checks
@@ -97,12 +98,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd16.config"
 
 options 	NFS_BOOT_DHCP
 

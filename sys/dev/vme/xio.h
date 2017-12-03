@@ -1,4 +1,4 @@
-/* $NetBSD: xio.h,v 1.5 2011/02/01 19:36:24 chuck Exp $ */
+/* $NetBSD: xio.h,v 1.5.14.1 2017/12/03 11:37:36 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -38,6 +38,9 @@
 /*
  * xylogic ioctl interface
  */
+
+#include <sys/ioccom.h>
+
 
 struct xd_iocmd {
 	u_char cmd;	/* in: command number */

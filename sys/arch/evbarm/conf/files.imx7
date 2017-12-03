@@ -1,0 +1,13 @@
+#	$NetBSD: files.imx7,v 1.1.18.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+# i.MX7
+#
+
+file	arch/evbarm/imx7/imx7_machdep.c
+file	arch/evbarm/imx7/imx7_ioconfig.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/imx/files.imx7"

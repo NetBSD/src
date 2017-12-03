@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.9.2.1 2014/08/20 00:03:52 tls Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.9.2.2 2017/12/03 11:37:37 jdolecek Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.9.2.1 2014/08/20 00:03:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.9.2.2 2017/12/03 11:37:37 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,6 +85,8 @@ extern int carp_suppress_preempt;
 
 #include <net/net_stats.h>
 
+#include "ioconf.h"
+
 percpu_t	*pfsyncstat_percpu;
 
 #define	PFSYNC_STATINC(x) _NET_STATINC(pfsyncstat_percpu, x)
@@ -106,7 +108,6 @@ extern int ifqmaxlen; /* XXX */
 
 struct pfsync_softc	*pfsyncif = NULL;
 
-void	pfsyncattach(int);
 int	pfsync_clone_create(struct if_clone *, int);
 int	pfsync_clone_destroy(struct ifnet *);
 void	pfsync_setmtu(struct pfsync_softc *, int);
@@ -115,7 +116,7 @@ int	pfsync_alloc_scrub_memory(struct pfsync_state_peer *,
 int	pfsync_insert_net_state(struct pfsync_state *, u_int8_t);
 void	pfsync_update_net_tdb(struct pfsync_tdb *);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	    struct rtentry *);
+	    const struct rtentry *);
 int	pfsyncioctl(struct ifnet *, u_long, void*);
 void	pfsyncstart(struct ifnet *);
 
@@ -373,7 +374,7 @@ pfsync_input(struct mbuf *m, ...)
 		goto done;
 
 	/* verify that the packet came in on the right interface */
-	if (sc->sc_sync_ifp != m->m_pkthdr.rcvif) {
+	if (sc->sc_sync_ifp->if_index != m->m_pkthdr.rcvif_index) {
 		PFSYNC_STATINC(PFSYNC_STAT_BADIF);
 		goto done;
 	}
@@ -855,7 +856,7 @@ done:
 
 int
 pfsyncoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-	struct rtentry *rt)
+	const struct rtentry *rt)
 {
 	m_freem(m);
 	return (0);
@@ -940,7 +941,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, void*  data)
 			}
 			if (imo->imo_num_memberships > 0) {
 				in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
-				imo->imo_multicast_ifp = NULL;
+				imo->imo_multicast_if_index = 0;
 			}
 			break;
 		}
@@ -960,7 +961,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, void*  data)
 
 		if (imo->imo_num_memberships > 0) {
 			in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
-			imo->imo_multicast_ifp = NULL;
+			imo->imo_multicast_if_index = 0;
 		}
 
 		if (sc->sc_sync_ifp &&
@@ -982,7 +983,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, void*  data)
 				return (ENOBUFS);
 			}
 			imo->imo_num_memberships++;
-			imo->imo_multicast_ifp = sc->sc_sync_ifp;
+			imo->imo_multicast_if_index = if_get_index(sc->sc_sync_ifp);
 			imo->imo_multicast_ttl = PFSYNC_DFLTTL;
 			imo->imo_multicast_loop = 0;
 		}
@@ -1090,7 +1091,7 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 	} else
 		MH_ALIGN(m, len);
 
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m->m_pkthdr.len = m->m_len = sizeof(struct pfsync_header);
 	h = mtod(m, struct pfsync_header *);
 	h->version = PFSYNC_VERSION;

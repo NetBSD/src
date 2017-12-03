@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.32.18.1 2014/08/20 00:02:48 tls Exp $	*/
+/*	$NetBSD: view.c,v 1.32.18.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.32.18.1 2014/08/20 00:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.32.18.2 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: view.c,v 1.32.18.1 2014/08/20 00:02:48 tls Exp $");
 #include <atari/dev/grfabs_reg.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
+
 #include "view.h"
+#include "ioconf.h"
 
 static void view_display(struct view_softc *);
 static void view_remove(struct view_softc *);
@@ -93,8 +95,6 @@ const struct cdevsw view_cdevsw = {
 /* 
  *  functions for probeing.
  */
-void	viewattach(int);
-
 void
 viewattach(int cnt)
 {

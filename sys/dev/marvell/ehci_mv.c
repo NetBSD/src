@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.2.22.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.2.22.3 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.2.22.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.2.22.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -198,13 +198,12 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 {
 	struct mvusb_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
-	usbd_status r;
 
 	aprint_normal(": Marvell USB 2.0 Interface\n");
 	aprint_naive("\n");
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc_model = mva->mva_model;
 	sc->sc_rev = mva->mva_revision;
@@ -226,7 +225,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc.iot = sc->sc_iot;
-	sc->sc.sc_bus.dmatag = mva->mva_dmat;
+	sc->sc.sc_bus.ub_dmatag = mva->mva_dmat;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
@@ -235,7 +234,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 
 	marvell_intr_establish(mva->mva_irq, IPL_USB, ehci_intr, sc);
 
-	sc->sc.sc_bus.usbrev = USBREV_2_0;
+	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 	/* Figure out vendor for root hub descriptor. */
 	sc->sc.sc_id_vendor = 0x0000;				/* XXXXX */
 	strcpy(sc->sc.sc_vendor, "Marvell");
@@ -243,9 +242,9 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_vendor_init = mvusb_vendor_init;
 	sc->sc.sc_vendor_port_status = mvusb_vendor_port_status;
 
-	r = ehci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 
@@ -316,7 +315,7 @@ mvusb_init(struct mvusb_softc *sc, enum marvell_tags *tags)
 		/* bits[8:9] - (DISCON_THRESHOLD ) */
 		/*
 		 * Orion1-A0/A1/B0=11, Orion2-A0=10,
-		 * Orion1-B1 and Orion2-B0 later=00 
+		 * Orion1-B1 and Orion2-B0 later=00
 		 */
 		reg &= ~(3 << 8);
 		if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 2)

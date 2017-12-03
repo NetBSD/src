@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.29 2009/09/22 13:22:53 tsutsui Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.29.22.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.29 2009/09/22 13:22:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.29.22.1 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ CFATTACH_DECL_NEW(aha_isa, sizeof(struct aha_softc),
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

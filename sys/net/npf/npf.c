@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.12.2.4 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf.c,v 1.12.2.5 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -33,232 +33,109 @@
  * NPF main: dynamic load/initialisation and unload routines.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12.2.4 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12.2.5 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
-#include <sys/atomic.h>
 #include <sys/conf.h>
-#include <sys/kauth.h>
 #include <sys/kmem.h>
-#include <sys/lwp.h>
-#include <sys/module.h>
 #include <sys/percpu.h>
-#include <sys/rwlock.h>
-#include <sys/socketvar.h>
-#include <sys/sysctl.h>
-#include <sys/uio.h>
+#endif
 
 #include "npf_impl.h"
 #include "npf_conn.h"
 
-/*
- * Module and device structures.
- */
-MODULE(MODULE_CLASS_DRIVER, npf, NULL);
+__read_mostly static npf_t *	npf_kernel_ctx = NULL;
 
-void		npfattach(int);
-
-static int	npf_fini(void);
-static int	npf_dev_open(dev_t, int, int, lwp_t *);
-static int	npf_dev_close(dev_t, int, int, lwp_t *);
-static int	npf_dev_ioctl(dev_t, u_long, void *, int, lwp_t *);
-static int	npf_dev_poll(dev_t, int, lwp_t *);
-static int	npf_dev_read(dev_t, struct uio *, int);
-
-static int	npfctl_stats(void *);
-
-static percpu_t *		npf_stats_percpu	__read_mostly;
-static struct sysctllog *	npf_sysctl		__read_mostly;
-
-const struct cdevsw npf_cdevsw = {
-	.d_open = npf_dev_open,
-	.d_close = npf_dev_close,
-	.d_read = npf_dev_read,
-	.d_write = nowrite,
-	.d_ioctl = npf_dev_ioctl,
-	.d_stop = nostop,
-	.d_tty = notty,
-	.d_poll = npf_dev_poll,
-	.d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
-	.d_flag = D_OTHER | D_MPSAFE
-};
-
-static int
-npf_init(void)
+__dso_public int
+npf_sysinit(unsigned nworkers)
 {
-#ifdef _MODULE
-	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
-#endif
-	int error = 0;
-
-	npf_stats_percpu = percpu_alloc(NPF_STATS_SIZE);
-	npf_sysctl = NULL;
-
 	npf_bpf_sysinit();
-	npf_worker_sysinit();
 	npf_tableset_sysinit();
-	npf_conn_sysinit();
 	npf_nat_sysinit();
-	npf_alg_sysinit();
-	npf_ext_sysinit();
-
-	/* Load empty configuration. */
-	npf_pfil_register(true);
-	npf_config_init();
-
-#ifdef _MODULE
-	/* Attach /dev/npf device. */
-	error = devsw_attach("npf", NULL, &bmajor, &npf_cdevsw, &cmajor);
-	if (error) {
-		/* It will call devsw_detach(), which is safe. */
-		(void)npf_fini();
-	}
-#endif
-	return error;
+	return npf_worker_sysinit(nworkers);
 }
 
-static int
-npf_fini(void)
+__dso_public void
+npf_sysfini(void)
 {
-	/* At first, detach device and remove pfil hooks. */
-#ifdef _MODULE
-	devsw_detach(NULL, &npf_cdevsw);
-#endif
-	npf_pfil_unregister(true);
-	npf_config_fini();
-
-	/* Finally, safe to destroy the subsystems. */
-	npf_ext_sysfini();
-	npf_alg_sysfini();
+	npf_worker_sysfini();
 	npf_nat_sysfini();
-	npf_conn_sysfini();
 	npf_tableset_sysfini();
 	npf_bpf_sysfini();
-
-	/* Note: worker is the last. */
-	npf_worker_sysfini();
-
-	if (npf_sysctl) {
-		sysctl_teardown(&npf_sysctl);
-	}
-	percpu_free(npf_stats_percpu, NPF_STATS_SIZE);
-
-	return 0;
 }
 
-/*
- * Module interface.
- */
-static int
-npf_modcmd(modcmd_t cmd, void *arg)
+__dso_public npf_t *
+npf_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 {
+	npf_t *npf;
 
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		return npf_init();
-	case MODULE_CMD_FINI:
-		return npf_fini();
-	case MODULE_CMD_AUTOUNLOAD:
-		if (npf_autounload_p()) {
-			return EBUSY;
-		}
-		break;
-	default:
-		return ENOTTY;
-	}
-	return 0;
+	npf = kmem_zalloc(sizeof(npf_t), KM_SLEEP);
+	npf->qsbr = pserialize_create();
+	npf->stats_percpu = percpu_alloc(NPF_STATS_SIZE);
+	npf->mbufops = mbufops;
+
+	npf_ifmap_init(npf, ifops);
+	npf_conn_init(npf, flags);
+	npf_alg_init(npf);
+	npf_ext_init(npf);
+
+	/* Load an empty configuration. */
+	npf_config_init(npf);
+	return npf;
+}
+
+__dso_public void
+npf_destroy(npf_t *npf)
+{
+	/*
+	 * Destroy the current configuration.  Note: at this point all
+	 * handlers must be deactivated; we will drain any processing.
+	 */
+	npf_config_fini(npf);
+
+	/* Finally, safe to destroy the subsystems. */
+	npf_ext_fini(npf);
+	npf_alg_fini(npf);
+	npf_conn_fini(npf);
+	npf_ifmap_fini(npf);
+
+	pserialize_destroy(npf->qsbr);
+	percpu_free(npf->stats_percpu, NPF_STATS_SIZE);
+	kmem_free(npf, sizeof(npf_t));
+}
+
+__dso_public int
+npf_load(npf_t *npf, void *ref, npf_error_t *err)
+{
+	return npfctl_load(npf, 0, ref);
+}
+
+__dso_public void
+npf_gc(npf_t *npf)
+{
+	npf_conn_worker(npf);
+}
+
+__dso_public void
+npf_thread_register(npf_t *npf)
+{
+	pserialize_register(npf->qsbr);
 }
 
 void
-npfattach(int nunits)
+npf_setkernctx(npf_t *npf)
 {
-
-	/* Void. */
+	npf_kernel_ctx = npf;
 }
 
-static int
-npf_dev_open(dev_t dev, int flag, int mode, lwp_t *l)
+npf_t *
+npf_getkernctx(void)
 {
-
-	/* Available only for super-user. */
-	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
-	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) {
-		return EPERM;
-	}
-	return 0;
-}
-
-static int
-npf_dev_close(dev_t dev, int flag, int mode, lwp_t *l)
-{
-
-	return 0;
-}
-
-static int
-npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
-{
-	int error;
-
-	/* Available only for super-user. */
-	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
-	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) {
-		return EPERM;
-	}
-
-	switch (cmd) {
-	case IOC_NPF_TABLE:
-		error = npfctl_table(data);
-		break;
-	case IOC_NPF_RULE:
-		error = npfctl_rule(cmd, data);
-		break;
-	case IOC_NPF_STATS:
-		error = npfctl_stats(data);
-		break;
-	case IOC_NPF_SAVE:
-		error = npfctl_save(cmd, data);
-		break;
-	case IOC_NPF_SWITCH:
-		error = npfctl_switch(data);
-		break;
-	case IOC_NPF_LOAD:
-		error = npfctl_load(cmd, data);
-		break;
-	case IOC_NPF_VERSION:
-		*(int *)data = NPF_VERSION;
-		error = 0;
-		break;
-	default:
-		error = ENOTTY;
-		break;
-	}
-	return error;
-}
-
-static int
-npf_dev_poll(dev_t dev, int events, lwp_t *l)
-{
-
-	return ENOTSUP;
-}
-
-static int
-npf_dev_read(dev_t dev, struct uio *uio, int flag)
-{
-
-	return ENOTSUP;
-}
-
-bool
-npf_autounload_p(void)
-{
-	return !npf_pfil_registered_p() && npf_default_pass();
+	return npf_kernel_ctx;
 }
 
 /*
@@ -266,44 +143,37 @@ npf_autounload_p(void)
  */
 
 void
-npf_stats_inc(npf_stats_t st)
+npf_stats_inc(npf_t *npf, npf_stats_t st)
 {
-	uint64_t *stats = percpu_getref(npf_stats_percpu);
+	uint64_t *stats = percpu_getref(npf->stats_percpu);
 	stats[st]++;
-	percpu_putref(npf_stats_percpu);
+	percpu_putref(npf->stats_percpu);
 }
 
 void
-npf_stats_dec(npf_stats_t st)
+npf_stats_dec(npf_t *npf, npf_stats_t st)
 {
-	uint64_t *stats = percpu_getref(npf_stats_percpu);
+	uint64_t *stats = percpu_getref(npf->stats_percpu);
 	stats[st]--;
-	percpu_putref(npf_stats_percpu);
+	percpu_putref(npf->stats_percpu);
 }
 
 static void
 npf_stats_collect(void *mem, void *arg, struct cpu_info *ci)
 {
 	uint64_t *percpu_stats = mem, *full_stats = arg;
-	int i;
 
-	for (i = 0; i < NPF_STATS_COUNT; i++) {
+	for (unsigned i = 0; i < NPF_STATS_COUNT; i++) {
 		full_stats[i] += percpu_stats[i];
 	}
 }
 
 /*
- * npfctl_stats: export collected statistics.
+ * npf_stats: export collected statistics.
  */
-static int
-npfctl_stats(void *data)
+__dso_public void
+npf_stats(npf_t *npf, uint64_t *buf)
 {
-	uint64_t *fullst, *uptr = *(uint64_t **)data;
-	int error;
-
-	fullst = kmem_zalloc(NPF_STATS_SIZE, KM_SLEEP);
-	percpu_foreach(npf_stats_percpu, npf_stats_collect, fullst);
-	error = copyout(fullst, uptr, NPF_STATS_SIZE);
-	kmem_free(fullst, NPF_STATS_SIZE);
-	return error;
+	memset(buf, 0, NPF_STATS_SIZE);
+	percpu_foreach(npf->stats_percpu, npf_stats_collect, buf);
 }

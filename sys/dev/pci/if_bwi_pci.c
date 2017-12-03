@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.12.12.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.12.12.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12.12.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12.12.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -132,10 +132,8 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (pci_mapreg_map(pa, BWI_PCI_BAR0,
-	    memtype, 0, &sc->sc_mem_bt, &sc->sc_mem_bh,
-	    NULL, &psc->psc_mapsize) != 0)
-	{
+	if (pci_mapreg_map(pa, BWI_PCI_BAR0, memtype, 0, &sc->sc_mem_bt,
+	    &sc->sc_mem_bh, NULL, &psc->psc_mapsize) != 0) {
 		aprint_error_dev(self, "could not map mem space\n");
 		return;
 	}

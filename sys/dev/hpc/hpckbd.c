@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.29.12.1 2012/11/20 03:02:00 tls Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.29.12.2 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.29.12.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.29.12.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <sys/tty.h>
 
@@ -259,6 +260,12 @@ hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 	return (1);
 }
 
+
+#ifdef hpcsh
+/*
+ * XXX: Use the old wrong code for now as hpcsh attaches console very
+ * early and it's convenient to be able to do early DDB on wscons.
+ */
 void
 hpckbd_keymap_setup(struct hpckbd_core *hc,
 		    const keysym_t *map, int mapsize)
@@ -271,9 +278,8 @@ hpckbd_keymap_setup(struct hpckbd_core *hc,
 	 * XXX The way this is done is really wrong.  The __UNCONST()
 	 * is a hint as to what is wrong.  This actually ends up modifying
 	 * initialized data which is marked "const".
-	 * The reason we get away with it here is apparently that text
-	 * and read-only data gets mapped read/write on the platforms
-	 * using this code.
+	 * The reason we get away with it here is that on sh3 kernel
+	 * is directly mapped.
 	 */
 	desc = (struct wscons_keydesc *)__UNCONST(hpckbd_keymapdata.keydesc);
 	for (i = 0; desc[i].name != 0; i++) {
@@ -285,6 +291,44 @@ hpckbd_keymap_setup(struct hpckbd_core *hc,
 
 	return;
 }
+
+#else
+
+void
+hpckbd_keymap_setup(struct hpckbd_core *hc,
+		    const keysym_t *map, int mapsize)
+{
+	int i;
+	const struct wscons_keydesc *desc;
+	static struct wscons_keydesc *ndesc = NULL;
+
+	/* 
+	 * fix keydesc table. Since it is const data, we must 
+	 * copy it once before changingg it.
+	 */
+
+	if (ndesc == NULL) {
+		size_t sz;
+
+		for (sz = 0; hpckbd_keymapdata.keydesc[sz].name != 0; sz++);
+
+		ndesc = malloc(sz * sizeof(*ndesc), M_DEVBUF, M_WAITOK);
+		memcpy(ndesc, hpckbd_keymapdata.keydesc, sz * sizeof(*ndesc));
+
+		hpckbd_keymapdata.keydesc = ndesc;
+	}
+
+	desc = hpckbd_keymapdata.keydesc;
+	for (i = 0; desc[i].name != 0; i++) {
+		if ((desc[i].name & KB_MACHDEP) && desc[i].map == NULL) {
+			ndesc[i].map = map;
+			ndesc[i].map_size = mapsize;
+		}
+	}
+
+	return;
+}
+#endif
 
 void
 hpckbd_keymap_lookup(struct hpckbd_core *hc)

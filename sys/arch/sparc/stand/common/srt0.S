@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.11 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: srt0.S,v 1.11.44.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,12 +106,20 @@ start:
 	 * Clear BSS
 	 */
 	set     _edata, %o0             ! bzero(edata, end - edata)
+1:	! check if %o0 is well aligned
+	andcc	%o0, 3, %o2
+	bz	2f
+	 nop
+	stb	%g0, [%o0]
+	b	1b
+	 add	%o0, 1, %o0
+
+2:	! now we have %o0 4 byte aligned
 	set     _end, %o1
-	/* note: bzero() expanded inline for compactness */
 	subcc	%o1, %o0, %o1
 	bz	2f			! in case there is no BSS
 
-	srl	%o1, 2, %o1		! assume _edata & _end are aligned
+	srl	%o1, 2, %o1		! we do 4 byte writes now
 1:
 	st	%g0, [%o0]		! while (n--)
 	subcc	%o1, 1, %o1		!	*p = 0; etc..

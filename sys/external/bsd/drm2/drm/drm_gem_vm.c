@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.5.4.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.5.4.3 2017/12/03 11:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.5.4.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.5.4.3 2017/12/03 11:37:58 jdolecek Exp $");
 
 #include <sys/types.h>
 
@@ -95,7 +95,7 @@ drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 static int
 drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
     size_t nbytes, int prot __unused, struct uvm_object **uobjp,
-    voff_t *uoffsetp, struct file *file __unused)
+    voff_t *uoffsetp, struct file *file)
 {
 	const unsigned long startpage = (byte_offset >> PAGE_SHIFT);
 	const unsigned long npages = (nbytes >> PAGE_SHIFT);
@@ -117,6 +117,9 @@ drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
 		*uoffsetp = (voff_t)-1;
 		return 0;
 	}
+
+	if (!drm_vma_node_is_allowed(node, file))
+		return -EACCES;
 
 	struct drm_gem_object *const obj = container_of(node,
 	    struct drm_gem_object, vma_node);

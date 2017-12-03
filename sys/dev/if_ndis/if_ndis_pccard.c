@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pccard.c,v 1.4 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pccard.c,v 1.4.22.1 2017/12/03 11:37:04 jdolecek Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pccard.c,v 1.6.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -209,7 +209,7 @@ ndis_attach_pccard(device_t dev)
 		goto fail;
 	}
 	sc->ndis_rescnt++;
-	resource_list_add(&sc->ndis_rl, SYS_RES_IOPORT, rid,
+	resource_list_add(&sc->ndis_rl, SYS_RES_IOPORT, sc->ndis_io_rid,
 	    rman_get_start(sc->ndis_res_io), rman_get_end(sc->ndis_res_io),
 	    rman_get_size(sc->ndis_res_io));
 

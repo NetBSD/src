@@ -1,4 +1,4 @@
-/*	$NetBSD: odcm.c,v 1.2.2.1 2014/08/20 00:03:29 tls Exp $ */
+/*	$NetBSD: odcm.c,v 1.2.2.2 2017/12/03 11:36:50 jdolecek Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.2.2.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.2.2.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -196,9 +196,6 @@ odcm_init(device_t self)
 
 	sc->sc_names_len = state[0].level  * (sizeof("9999 ") - 1) + 1;
 	sc->sc_names = kmem_zalloc(sc->sc_names_len, KM_SLEEP);
-
-	if (sc->sc_names == NULL)
-		return false;
 
 	for (i = len = 0; i < __arraycount(state); i++) {
 

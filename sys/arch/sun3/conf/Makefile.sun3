@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.103 2011/07/09 15:04:06 mrg Exp $
+# $NetBSD: Makefile.sun3,v 1.103.12.1 2017/12/03 11:36:46 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -33,9 +33,7 @@ GENASSYM_CONF=	${SUN3}/${MACHTYPE}/genassym.cf
 ##
 CPPFLAGS+=	-Dsun3
 CFLAGS+=	${CMACHFLAGS} -fno-defer-pop
-.if defined(HAVE_GCC) && ${HAVE_GCC} != 45
 CFLAGS+=	-msoft-float
-.endif
 AFLAGS+=	-x assembler-with-cpp
 
 ##

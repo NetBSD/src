@@ -1293,20 +1293,14 @@ int drm_wait_vblank(struct drm_device *dev, void *data,
 #ifdef __NetBSD__
     {
 	unsigned long irqflags;
+
 	spin_lock_irqsave(&dev->vbl_lock, irqflags);
-	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev->vblank[crtc].queue,
-	    &dev->vbl_lock,
-	    (3 * HZ),
+	DRM_SPIN_WAIT_ON(ret, &dev->vblank[crtc].queue, &dev->vbl_lock,
+	    3 * HZ,
 	    (((drm_vblank_count(dev, crtc) -
 		    vblwait->request.sequence) <= (1 << 23)) ||
 		!dev->irq_enabled));
 	spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
-	if (0 < ret)
-		/*
-		 * ret is ticks remaining on success in this case, but
-		 * caller just wants 0 for success.
-		 */
-		ret = 0;
     }
 #else
 	DRM_WAIT_ON(ret, dev->vblank[crtc].queue, 3 * HZ,

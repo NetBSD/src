@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.58.14.1 2013/06/23 06:20:08 tls Exp $
+#	$NetBSD: Makefile.mips,v 1.58.14.2 2017/12/03 11:36:27 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -46,6 +46,12 @@ GENASSYM_CONF=	${MIPS}/mips/genassym.cf
 CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
+
+.if ${ACTIVE_CC} == "gcc"
+COPTS.mips_fpu.c+=	-mhard-float -Wa,-mhard-float
+AFLAGS.fp.S+=		-Wa,-mhard-float
+.endif
+
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24
 .if defined(LP64) && ${LP64} == "yes"
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
@@ -102,7 +108,6 @@ TEXTADDR?=		${DEFTEXTADDR}
 .endif
 KERNLDSCRIPT?=		${MIPS}/conf/kern.ldscript
 # some mips ports specify a "magic" format
-LINKFORMAT+=		-T ${KERNLDSCRIPT}
 EXTRA_LINKFLAGS=	${GP} ${LDOPTS}
 LINKFLAGS_NORMAL=	-X
 STRIPFLAGS=		-g -X

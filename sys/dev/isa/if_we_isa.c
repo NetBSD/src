@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.22 2010/03/13 15:46:09 tsutsui Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.22.20.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.22 2010/03/13 15:46:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.22.20.1 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 	bus_space_write_1(asict, asich, WE_MSR,
 	    bus_space_read_1(asict, asich, WE_MSR) & ~WE_MSR_RST);
 
-	/* Wait in case the card is reading it's EEPROM. */
+	/* Wait in case the card is reading its EEPROM. */
 	delay(5000);
 
 	/*

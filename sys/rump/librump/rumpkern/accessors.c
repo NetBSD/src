@@ -1,4 +1,4 @@
-/*	$NetBSD: accessors.c,v 1.1.10.2 2014/08/20 00:04:40 tls Exp $	*/
+/*	$NetBSD: accessors.c,v 1.1.10.3 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -32,14 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accessors.c,v 1.1.10.2 2014/08/20 00:04:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accessors.c,v 1.1.10.3 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/uio.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 struct uio *
 rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
@@ -68,7 +68,7 @@ rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 	uio->uio_offset = offset;
 	uio->uio_resid = bufsize;
 	uio->uio_rw = uiorw;
-	UIO_SETUP_SYSSPACE(uio);
+	uio->uio_vmspace = curproc->p_vmspace;
 
 	return uio;
 }

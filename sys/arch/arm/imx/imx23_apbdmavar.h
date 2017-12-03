@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdmavar.h,v 1.1.6.2 2013/06/23 06:20:00 tls Exp $ */
+/* $Id: imx23_apbdmavar.h,v 1.1.6.3 2017/12/03 11:35:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@
 #define APBDMA_CMD_DMA_SENSE		3
 
 /* Flags. */
-#define F_AHBH_DMA			__BIT(0)
-#define F_AHBX_DMA			__BIT(1)
+#define F_APBH_DMA			__BIT(0)
+#define F_APBX_DMA			__BIT(1)
 
 /* Number of channels. */
 #define AHBH_DMA_CHANNELS		8
@@ -133,5 +133,6 @@ void apbdma_ack_intr(struct apbdma_softc *, unsigned int);
 void apbdma_ack_error_intr(struct apbdma_softc *, unsigned int);
 unsigned int apbdma_intr_status(struct apbdma_softc *, unsigned int);
 void apbdma_chan_reset(struct apbdma_softc *, unsigned int);
+void apbdma_wait(struct apbdma_softc *, unsigned int);
 
 #endif /* !_ARM_IMX_IMX23_APBDMAVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitConfig.h,v 1.6.2.3 2014/08/20 00:04:25 tls Exp $	*/
+/*	$NetBSD: sljitConfig.h,v 1.6.2.4 2017/12/03 11:38:03 jdolecek Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -60,11 +60,11 @@
 #include <machine/sljit_machdep.h>
 
 #if defined(_KERNEL) && !defined(SLJIT_MALLOC)
-#define SLJIT_MALLOC(size) malloc((size), M_TEMP, M_WAITOK)
+#define SLJIT_MALLOC(size, allocator_data) malloc((size), M_TEMP, M_WAITOK)
 #endif
 
 #if defined(_KERNEL) && !defined(SLJIT_FREE)
-#define SLJIT_FREE(ptr) free((ptr), M_TEMP)
+#define SLJIT_FREE(ptr, allocator_data) free((ptr), M_TEMP)
 #endif
 
 #if defined(_KERNEL) && !defined(SLJIT_CACHE_FLUSH)
@@ -140,13 +140,28 @@
 #define SLJIT_EXECUTABLE_ALLOCATOR 1
 #endif
 
+/* Force cdecl calling convention even if a better calling
+   convention (e.g. fastcall) is supported by the C compiler.
+   If this option is enabled, C functions without
+   SLJIT_CALL can also be called from JIT code. */
+#ifndef SLJIT_USE_CDECL_CALLING_CONVENTION
+/* Disabled by default */
+#define SLJIT_USE_CDECL_CALLING_CONVENTION 0
+#endif
+
+/* Return with error when an invalid argument is passed. */
+#ifndef SLJIT_ARGUMENT_CHECKS
+/* Disabled by default */
+#define SLJIT_ARGUMENT_CHECKS 0
+#endif
+
 /* Debug checks (assertions, etc.). */
 #ifndef SLJIT_DEBUG
 /* Enabled by default */
 #define SLJIT_DEBUG 1
 #endif
 
-/* Verbose operations */
+/* Verbose operations. */
 #ifndef SLJIT_VERBOSE
 /* Enabled by default */
 #define SLJIT_VERBOSE 1

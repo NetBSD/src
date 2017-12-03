@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.15.12.1 2012/11/20 03:01:40 tls Exp $	 */
+/*	$NetBSD: pic.c,v 1.15.12.2 2017/12/03 11:36:41 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15.12.1 2012/11/20 03:01:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15.12.2 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,8 +95,8 @@ pic_attach(device_t parent, device_t self, void *aux)
 	struct pic_attach_args iaa;
 	struct mainbus_attach_args *ma = aux;
 
-	psc.iot = SGIMIPS_BUS_SPACE_HPC;
-	if (bus_space_map(psc.iot, ma->ma_addr, 0,
+	psc.iot = normal_memt;
+	if (bus_space_map(psc.iot, ma->ma_addr, 0x20010,
 			  BUS_SPACE_MAP_LINEAR, &psc.ioh))
 		panic("pic_attach: could not allocate memory\n");
 

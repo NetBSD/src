@@ -1,4 +1,4 @@
-/* $NetBSD: omsal400.c,v 1.9 2011/07/10 00:03:52 matt Exp $ */
+/* $NetBSD: omsal400.c,v 1.9.12.1 2017/12/03 11:36:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,12 +36,14 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.9 2011/07/10 00:03:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.9.12.1 2017/12/03 11:36:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <mips/locore.h>
+#include <mips/cpuregs.h>
 
 #include <mips/alchemy/dev/augpiovar.h>
 #include <mips/alchemy/dev/aupcmciavar.h>

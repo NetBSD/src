@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __DSMTHDAT_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -112,7 +110,9 @@ AcpiDsMethodDataInit (
 
     for (i = 0; i < ACPI_METHOD_NUM_ARGS; i++)
     {
-        ACPI_MOVE_32_TO_32 (&WalkState->Arguments[i].Name, NAMEOF_ARG_NTE);
+        ACPI_MOVE_32_TO_32 (&WalkState->Arguments[i].Name,
+            NAMEOF_ARG_NTE);
+
         WalkState->Arguments[i].Name.Integer |= (i << 24);
         WalkState->Arguments[i].DescriptorType = ACPI_DESC_TYPE_NAMED;
         WalkState->Arguments[i].Type = ACPI_TYPE_ANY;
@@ -123,7 +123,8 @@ AcpiDsMethodDataInit (
 
     for (i = 0; i < ACPI_METHOD_NUM_LOCALS; i++)
     {
-        ACPI_MOVE_32_TO_32 (&WalkState->LocalVariables[i].Name, NAMEOF_LOCAL_NTE);
+        ACPI_MOVE_32_TO_32 (&WalkState->LocalVariables[i].Name,
+            NAMEOF_LOCAL_NTE);
 
         WalkState->LocalVariables[i].Name.Integer |= (i << 24);
         WalkState->LocalVariables[i].DescriptorType = ACPI_DESC_TYPE_NAMED;
@@ -165,7 +166,7 @@ AcpiDsMethodDataDeleteAll (
         if (WalkState->LocalVariables[Index].Object)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Deleting Local%u=%p\n",
-                    Index, WalkState->LocalVariables[Index].Object));
+                Index, WalkState->LocalVariables[Index].Object));
 
             /* Detach object (if present) and remove a reference */
 
@@ -180,7 +181,7 @@ AcpiDsMethodDataDeleteAll (
         if (WalkState->Arguments[Index].Object)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Deleting Arg%u=%p\n",
-                    Index, WalkState->Arguments[Index].Object));
+                Index, WalkState->Arguments[Index].Object));
 
             /* Detach object (if present) and remove a reference */
 
@@ -223,7 +224,8 @@ AcpiDsMethodDataInitArgs (
 
     if (!Params)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "No param list passed to method\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+            "No parameter list passed to method\n"));
         return_ACPI_STATUS (AE_OK);
     }
 
@@ -238,8 +240,8 @@ AcpiDsMethodDataInitArgs (
          * Store the argument in the method/walk descriptor.
          * Do not copy the arg in order to implement call by reference
          */
-        Status = AcpiDsMethodDataSetValue (ACPI_REFCLASS_ARG, Index,
-                    Params[Index], WalkState);
+        Status = AcpiDsMethodDataSetValue (
+            ACPI_REFCLASS_ARG, Index, Params[Index], WalkState);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -629,7 +631,8 @@ AcpiDsStoreObjectToLocal (
     NewObjDesc = ObjDesc;
     if (ObjDesc->Common.ReferenceCount > 1)
     {
-        Status = AcpiUtCopyIobjectToIobject (ObjDesc, &NewObjDesc, WalkState);
+        Status = AcpiUtCopyIobjectToIobject (
+            ObjDesc, &NewObjDesc, WalkState);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -666,13 +669,16 @@ AcpiDsStoreObjectToLocal (
              * If we have a valid reference object that came from RefOf(),
              * do the indirect store
              */
-            if ((ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) == ACPI_DESC_TYPE_OPERAND) &&
-                (CurrentObjDesc->Common.Type == ACPI_TYPE_LOCAL_REFERENCE) &&
-                (CurrentObjDesc->Reference.Class == ACPI_REFCLASS_REFOF))
+            if ((ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) ==
+                    ACPI_DESC_TYPE_OPERAND) &&
+                (CurrentObjDesc->Common.Type ==
+                    ACPI_TYPE_LOCAL_REFERENCE) &&
+                (CurrentObjDesc->Reference.Class ==
+                    ACPI_REFCLASS_REFOF))
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-                        "Arg (%p) is an ObjRef(Node), storing in node %p\n",
-                        NewObjDesc, CurrentObjDesc));
+                    "Arg (%p) is an ObjRef(Node), storing in node %p\n",
+                    NewObjDesc, CurrentObjDesc));
 
                 /*
                  * Store this object to the Node (perform the indirect store)
@@ -680,8 +686,8 @@ AcpiDsStoreObjectToLocal (
                  * specification rules on storing to Locals/Args.
                  */
                 Status = AcpiExStoreObjectToNode (NewObjDesc,
-                            CurrentObjDesc->Reference.Object, WalkState,
-                            ACPI_NO_IMPLICIT_CONVERSION);
+                    CurrentObjDesc->Reference.Object, WalkState,
+                    ACPI_NO_IMPLICIT_CONVERSION);
 
                 /* Remove local reference if we copied the object above */
 
@@ -689,6 +695,7 @@ AcpiDsStoreObjectToLocal (
                 {
                     AcpiUtRemoveReference (NewObjDesc);
                 }
+
                 return_ACPI_STATUS (Status);
             }
         }
@@ -721,7 +728,8 @@ AcpiDsStoreObjectToLocal (
  *
  * FUNCTION:    AcpiDsMethodDataGetType
  *
- * PARAMETERS:  Opcode              - Either AML_LOCAL_OP or AML_ARG_OP
+ * PARAMETERS:  Opcode              - Either AML_FIRST LOCAL_OP or
+ *                                    AML_FIRST_ARG_OP
  *              Index               - Which Local or Arg whose type to get
  *              WalkState           - Current walk state object
  *

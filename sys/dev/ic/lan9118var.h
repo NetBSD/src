@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118var.h,v 1.4 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: lan9118var.h,v 1.4.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
 #ifndef _LAN9118VAR_H_
 #define _LAN9118VAR_H_
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #define LAN9118_DEFAULT_TX_FIF_SZ	5 /*kB*/
 
@@ -70,6 +70,8 @@ struct lan9118_softc {
 	int sc_flags;
 #define LAN9118_FLAGS_SWAP	0x00000001
 #define LAN9118_FLAGS_NO_EEPROM	0x00000002
+#define LAN9118_FLAGS_IRQ_ACTHI	0x00000004
+#define LAN9118_FLAGS_IRQ_PP	0x00000008
 
 	krndsource_t rnd_source;
 };

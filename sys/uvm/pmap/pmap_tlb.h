@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.6.8.2 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.6.8.3 2017/12/03 11:39:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,9 +71,10 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_COMMON_PMAP_TLB_H_
-#define	_COMMON_PMAP_TLB_H_
+#ifndef	_UVM_PMAP_PMAP_TLB_H_
+#define	_UVM_PMAP_PMAP_TLB_H_
 
+#include <sys/evcnt.h>
 #include <sys/kcpuset.h>
 
 #if !defined(PMAP_TLB_MAX)
@@ -114,7 +115,7 @@ struct pmap_tlb_info {
 #define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
 	kmutex_t *ti_lock;
 	u_int ti_wired;			/* # of wired TLB entries */
-	tlb_asid_t ti_asid_hint;		/* probable next ASID to use */
+	tlb_asid_t ti_asid_hint;	/* probable next ASID to use */
 	tlb_asid_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
 #ifdef MULTIPROCESSOR
@@ -144,7 +145,7 @@ struct pmap_tlb_info {
 #ifdef	_KERNEL
 extern struct pmap_tlb_info pmap_tlb0_info;
 #ifdef MULTIPROCESSOR
-extern struct pmap_tlb_info *pmap_tlbs[MAXCPUS];
+extern struct pmap_tlb_info *pmap_tlbs[PMAP_TLB_MAX];
 extern u_int pmap_ntlbs;
 #endif
 
@@ -170,7 +171,7 @@ void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t, struct lwp *l);
 void	pmap_tlb_asid_deactivate(pmap_t);
 void	pmap_tlb_asid_release_all(pmap_t);
-int	pmap_tlb_update_addr(pmap_t, vaddr_t, uint32_t, u_int);
+int	pmap_tlb_update_addr(pmap_t, vaddr_t, pt_entry_t, u_int);
 #define	PMAP_TLB_NEED_IPI	0x01
 #define	PMAP_TLB_INSERT		0x02
 void	pmap_tlb_invalidate_addr(pmap_t, vaddr_t);
@@ -178,4 +179,4 @@ void	pmap_tlb_check(pmap_t, bool (*)(void *, vaddr_t, tlb_asid_t, pt_entry_t));
 void	pmap_tlb_asid_check(void);
 
 #endif	/* _KERNEL */
-#endif	/* _COMMON_PMAP_TLB_H_ */
+#endif	/* _UVM_PMAP_PMAP_TLB_H_ */

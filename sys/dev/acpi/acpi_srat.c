@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: acpi_srat.c,v 1.3.22.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.3.22.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -190,6 +190,8 @@ acpisrat_parse(void)
 				continue;
 
 			srat_cpu = (ACPI_SRAT_CPU_AFFINITY *)subtable;
+			if ((srat_cpu->Flags & ACPI_SRAT_CPU_ENABLED) == 0)
+				break;
 			nodeid = (srat_cpu->ProximityDomainHi[2] << 24) |
 			    (srat_cpu->ProximityDomainHi[1] << 16) |
 			    (srat_cpu->ProximityDomainHi[0] << 8) |
@@ -210,6 +212,8 @@ acpisrat_parse(void)
 		case ACPI_SRAT_TYPE_MEMORY_AFFINITY:
 			srat_mem = (ACPI_SRAT_MEM_AFFINITY *)subtable;
 			nodeid = srat_mem->ProximityDomain;
+			if ((srat_mem->Flags & ACPI_SRAT_MEM_ENABLED) == 0)
+				break;
 
 			mementry = mem_alloc();
 			if (mementry == NULL)
@@ -224,6 +228,8 @@ acpisrat_parse(void)
 
 		case ACPI_SRAT_TYPE_X2APIC_CPU_AFFINITY:
 			srat_x2apic = (ACPI_SRAT_X2APIC_CPU_AFFINITY *)subtable;
+			if ((srat_x2apic->Flags & ACPI_SRAT_CPU_ENABLED) == 0)
+				break;
 			nodeid = srat_x2apic->ProximityDomain;
 
 			/* This table entry overrides

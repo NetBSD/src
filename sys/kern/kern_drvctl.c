@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.32.12.3 2014/08/20 00:04:28 tls Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.32.12.4 2017/12/03 11:38:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.32.12.3 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.32.12.4 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.32.12.3 2014/08/20 00:04:28 tls Ex
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/lwp.h>
+#include <sys/module.h>
+
+#include "ioconf.h"
 
 struct drvctl_event {
 	TAILQ_ENTRY(drvctl_event) dce_link;
@@ -80,8 +83,6 @@ const struct cdevsw drvctl_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-void drvctlattach(int);
-
 static int	drvctl_read(struct file *, off_t *, struct uio *,
 			    kauth_cred_t, int);
 static int	drvctl_write(struct file *, off_t *, struct uio *,
@@ -92,6 +93,7 @@ static int	drvctl_stat(struct file *, struct stat *);
 static int	drvctl_close(struct file *);
 
 static const struct fileops drvctl_fileops = {
+	.fo_name = "drvctl",
 	.fo_read = drvctl_read,
 	.fo_write = drvctl_write,
 	.fo_ioctl = drvctl_ioctl,
@@ -104,6 +106,9 @@ static const struct fileops drvctl_fileops = {
 };
 
 #define MAXLOCATORS 100
+
+extern int (*devmon_insert_vec)(const char *, prop_dictionary_t);
+static int (*saved_insert_vec)(const char *, prop_dictionary_t) = NULL;
 
 static int drvctl_command(struct lwp *, struct plistref *, u_long, int);
 static int drvctl_getevent(struct lwp *, struct plistref *, u_long, int);
@@ -118,6 +123,15 @@ drvctl_init(void)
 }
 
 void
+drvctl_fini(void)
+{
+
+	seldestroy(&drvctl_rdsel);
+	cv_destroy(&drvctl_cond);
+	mutex_destroy(&drvctl_lock);
+}
+
+int
 devmon_insert(const char *event, prop_dictionary_t ev)
 {
 	struct drvctl_event *dce, *odce;
@@ -127,23 +141,17 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	if (drvctl_nopen == 0) {
 		prop_object_release(ev);
 		mutex_exit(&drvctl_lock);
-		return;
+		return 0;
 	}
 
 	/* Fill in mandatory member */
 	if (!prop_dictionary_set_cstring_nocopy(ev, "event", event)) {
 		prop_object_release(ev);
 		mutex_exit(&drvctl_lock);
-		return;
+		return 0;
 	}
 
 	dce = kmem_alloc(sizeof(*dce), KM_SLEEP);
-	if (dce == NULL) {
-		prop_object_release(ev);
-		mutex_exit(&drvctl_lock);
-		return;
-	}
-
 	dce->dce_event = ev;
 
 	if (drvctl_eventcnt == DRVCTL_EVENTQ_DEPTH) {
@@ -160,6 +168,7 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	selnotify(&drvctl_rdsel, 0, 0);
 
 	mutex_exit(&drvctl_lock);
+	return 0;
 }
 
 int
@@ -432,7 +441,7 @@ drvctl_close(struct file *fp)
 }
 
 void
-drvctlattach(int arg)
+drvctlattach(int arg __unused)
 {
 }
 
@@ -579,4 +588,67 @@ drvctl_getevent(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 	kmem_free(dce, sizeof(*dce));
 
 	return ret;
+}
+
+/*
+ * Module glue
+ */
+
+MODULE(MODULE_CLASS_DRIVER, drvctl, NULL);
+
+int
+drvctl_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+#ifdef _MODULE
+	int bmajor, cmajor;
+#endif
+
+	error = 0;
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		drvctl_init();
+
+		mutex_enter(&drvctl_lock);
+#ifdef _MODULE
+		bmajor = cmajor = -1;
+		error = devsw_attach("drvctl", NULL, &bmajor,
+		    &drvctl_cdevsw, &cmajor);
+#endif
+		if (error == 0) {
+			KASSERT(saved_insert_vec == NULL);
+			saved_insert_vec = devmon_insert_vec;
+			devmon_insert_vec = devmon_insert;
+		}
+
+		mutex_exit(&drvctl_lock);
+		break;
+
+	case MODULE_CMD_FINI:
+		mutex_enter(&drvctl_lock);
+		if (drvctl_nopen != 0 || drvctl_eventcnt != 0 ) {
+			mutex_exit(&drvctl_lock);
+			return EBUSY;
+		}
+		KASSERT(saved_insert_vec != NULL);
+		devmon_insert_vec = saved_insert_vec;
+		saved_insert_vec = NULL;
+#ifdef _MODULE
+		error = devsw_detach(NULL, &drvctl_cdevsw);
+		if (error != 0) {
+			saved_insert_vec = devmon_insert_vec;
+			devmon_insert_vec = devmon_insert;
+		}
+#endif
+		mutex_exit(&drvctl_lock);
+		if (error == 0)
+			drvctl_fini();
+
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
 }

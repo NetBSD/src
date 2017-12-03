@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.7 2011/01/22 19:19:23 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.7.14.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ chain(void (*entry)(int (*)(void *), void *, u_int), char *args, void *ssym,
 	l += sizeof(magic);
 	DPRINTF("ssym @ %p\n", args + l);
 	memcpy(args + l, &ssym, sizeof(ssym));
-	l += sizeof(ssym); 
+	l += sizeof(ssym);
 	DPRINTF("esym @ %p\n", args + l);
 	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
@@ -232,7 +232,7 @@ main(void)
 
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
-			gets(bootline);
+			kgets(bootline, sizeof(bootline));
 			parseargs(bootline, &boothowto);
 		}
 

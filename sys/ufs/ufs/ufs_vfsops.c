@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.51.2.4 2017/10/24 22:27:42 jdolecek Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.51.2.5 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.51.2.4 2017/10/24 22:27:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.51.2.5 2017/12/03 11:39:22 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -164,7 +164,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	int error;
 
 	/* Mark the mount busy, as we're passing it to kauth(9). */
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	if (error) {
 		return (error);
 	}
@@ -173,7 +173,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	error = quota_handle_cmd(mp, l, args);
 
 	mutex_exit(&mp->mnt_updating);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (error);
 #endif
 }
@@ -220,7 +220,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	}
 
 	if (error) {
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		return (error);
 	}
 
@@ -255,7 +255,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 		error = EINVAL;
 	}
 	mutex_exit(&mp->mnt_updating);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (error);
 #endif
 
@@ -271,6 +271,8 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 	int error;
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+		if (error == ENOENT)
+			error = ESTALE;
 		*vpp = NULLVP;
 		return (error);
 	}

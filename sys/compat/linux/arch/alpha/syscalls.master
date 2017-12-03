@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.76.10.2 2014/08/20 00:03:31 tls Exp $
+	$NetBSD: syscalls.master,v 1.76.10.3 2017/12/03 11:36:53 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -101,7 +101,8 @@
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
 			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
-16	NOARGS		{ int|sys||__posix_chown(const char *path, int uid, int gid); }
+16	NOARGS		{ int|sys||__posix_chown(const char *path, uid_t uid, \
+			    gid_t gid); }
 ;17	ALIAS		osf1_sys_brk
 17	STD		{ int|linux_sys||brk(char *nsize); }
 18	UNIMPL
@@ -154,7 +155,7 @@
 55	UNIMPL
 56	UNIMPL
 57	NOARGS		{ int|sys||symlink(const char *path, const char *to); }
-58	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+58	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 59	NOARGS		{ int|sys||execve(const char *path, char **argp, \
 			    char **envp); }
@@ -254,7 +255,8 @@
 				int iovcnt); }
 122	NODEF		{ int|osf1_sys||settimeofday(struct osf1_timeval *tv, \
 			    struct osf1_timezone *tzp); }
-123	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); }
+123	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
+			    gid_t gid); }
 124	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
 125	STD		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
 				int flags, struct osockaddr *from, \
@@ -380,7 +382,8 @@
 #endif
 ;207	ALIAS		osf1_sys_utsname
 207	STD		{ int|linux_sys||olduname(struct linux_old_utsname *up); }
-208	NOARGS		{ int|sys||__posix_lchown(const char *path, int uid, int gid); }
+208	NOARGS		{ int|sys||__posix_lchown(const char *path, uid_t uid, \
+			    gid_t gid); }
 #ifdef SYSVSHM
 209	NOARGS		{ int|linux_sys||shmat(int shmid, void *shmaddr, \
 			    int shmflg, u_long *raddr); }
@@ -722,14 +725,17 @@
 			    int fd2, const char *name2, int flags); }
 459	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-460	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+460	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 461	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }
 462	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
 			    int amode); }
-463	UNIMPL		pselect6
-464	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+463	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
+464	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 465	UNIMPL		unshare
@@ -750,7 +756,9 @@
 476	UNIMPL		signalfd
 477	UNIMPL		timerfd
 478	UNIMPL		eventfd
-479	UNIMPL		recvmmsg
+479	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
 480	UNIMPL		fallocate
 481	UNIMPL		timerfd_create
 482	UNIMPL		timerfd_settime
@@ -765,3 +773,24 @@
 491	UNIMPL		pwritev
 492	UNIMPL		rt_tgsigqueueinfo
 493	UNIMPL		perf_counter_open
+494	UNIMPL		fanotify_init
+495	UNIMPL		fanotify_mark
+496	UNIMPL		prlimit64
+497	UNIMPL		name_to_handle_at
+498	UNIMPL		open_by_handle_at
+499	UNIMPL		clock_adjtime
+500	UNIMPL		syncfs
+501	UNIMPL		setns
+502	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+503	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
+504	UNIMPL		process_vm_readv
+505	UNIMPL		process_vm_writev
+506	UNIMPL		kcmp
+507	UNIMPL		finit_module
+508	UNIMPL		sched_setattr
+509	UNIMPL		sched_getattr
+510	UNIMPL		renameat2

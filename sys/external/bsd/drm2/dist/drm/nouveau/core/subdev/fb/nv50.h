@@ -5,7 +5,13 @@
 
 struct nv50_fb_priv {
 	struct nouveau_fb base;
+#ifdef __NetBSD__
+	bus_dma_segment_t r100c08_seg;
+	bus_dmamap_t r100c08_map;
+	void *r100c08_kva;
+#else
 	struct page *r100c08_page;
+#endif
 	dma_addr_t r100c08;
 };
 

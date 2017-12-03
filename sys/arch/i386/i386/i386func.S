@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.17 2012/08/29 22:43:35 rmind Exp $	*/
+/*	$NetBSD: i386func.S,v 1.17.2.1 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.17 2012/08/29 22:43:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.17.2.1 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -123,6 +123,50 @@ ENTRY(tlbflush)
 	ret
 END(tlbflush)
 
+ENTRY(ldr0)
+	movl	4(%esp), %eax
+	movl	%eax, %dr0
+	ret
+END(ldr0)
+
+ENTRY(rdr0)
+	movl	%dr0, %eax
+	ret
+END(rdr0)
+
+ENTRY(ldr1)
+	movl	4(%esp), %eax
+	movl	%eax, %dr1
+	ret
+END(ldr1)
+
+ENTRY(rdr1)
+	movl	%dr1, %eax
+	ret
+END(rdr1)
+
+ENTRY(ldr2)
+	movl	4(%esp), %eax
+	movl	%eax, %dr2
+	ret
+END(ldr2)
+
+ENTRY(rdr2)
+	movl	%dr2, %eax
+	ret
+END(rdr2)
+
+ENTRY(ldr3)
+	movl	4(%esp), %eax
+	movl	%eax, %dr3
+	ret
+END(ldr3)
+
+ENTRY(rdr3)
+	movl	%dr3, %eax
+	ret
+END(rdr3)
+
 ENTRY(ldr6)
 	movl	4(%esp), %eax
 	movl	%eax, %dr6
@@ -133,6 +177,17 @@ ENTRY(rdr6)
 	movl	%dr6, %eax
 	ret
 END(rdr6)
+
+ENTRY(ldr7)
+	movl	4(%esp), %eax
+	movl	%eax, %dr7
+	ret
+END(ldr7)
+
+ENTRY(rdr7)
+	movl	%dr7, %eax
+	ret
+END(rdr7)
 
 ENTRY(rcr2)
 	movl	%cr2, %eax

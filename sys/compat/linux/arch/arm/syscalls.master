@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.48.10.3 2014/08/20 00:03:31 tls Exp $
+	$NetBSD: syscalls.master,v 1.48.10.4 2017/12/03 11:36:54 jdolecek Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -161,10 +161,10 @@
 81	STD		{ int|linux_sys||setgroups16(int gidsetsize, \
 			    linux_gid16_t *gidset); }
 82	STD		{ int|linux_sys||oldselect(struct linux_oldselect *lsp); }
-83	NOARGS		{ int|sys||symlink(const char *path, const char *to); }
+83	NOARGS		{ int|sys||symlink(const char *path, const char *link); }
 84	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
-			    struct stat43 *up); } oolstat
-85	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+			    struct stat43 *ub); } oolstat
+85	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 #ifdef EXEC_AOUT
 86	STD		{ int|linux_sys||uselib(const char *path); }
@@ -524,14 +524,17 @@
 			    int fd2, const char *name2, int flags); }
 331	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-332	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+332	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 333	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }
 334	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
 			    int amode); }
-335	UNIMPL		pselect6
-336	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+335	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
+336	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 337	UNIMPL		unshare
@@ -566,25 +569,34 @@
 362	UNIMPL		pwritev
 363	UNIMPL		rt_tgsigqueueinfo
 364	UNIMPL		perf_counter_open
-365	UNIMPL		recvmmsg
-366	UNIMPL
-367	UNIMPL
-368	UNIMPL
-369	UNIMPL
-370	UNIMPL
-371	UNIMPL
-372	UNIMPL
-373	UNIMPL
-374	UNIMPL
-375	UNIMPL
-376	UNIMPL
-377	UNIMPL
-378	UNIMPL
-379	UNIMPL
-380	UNIMPL
-381	UNIMPL
-382	UNIMPL
-383	UNIMPL
+365	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
+366	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+367	UNIMPL		fanotify_init
+368	UNIMPL		fanotify_mark
+369	UNIMPL		prlimit64
+370	UNIMPL		name_to_handle_at
+371	UNIMPL		open_by_handle_at
+372	UNIMPL		clock_adjtime
+373	UNIMPL		syncfs
+374	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
+375	UNIMPL		setns
+376	UNIMPL		process_vm_readv
+377	UNIMPL		process_vm_writev
+378	UNIMPL		kcmp
+379	UNIMPL		finit_module
+380	UNIMPL		sched_setattr
+381	UNIMPL		sched_getattr
+382	UNIMPL		renameat2
+383	UNIMPL		seccomp
+; XXX FIX-me?
+; 384	UNIMPL		getrandom
+; 385	UNIMPL		memfd_create
 
 ; ARMLinux actually has two ranges of syscalls.  Normal syscalls use
 ; SWI numbers starting at 0x900000 (__NR_SYSCALL_BASE).  Special

@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.2 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.2.44.1 2017/12/03 11:35:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.2 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.2.44.1 2017/12/03 11:35:46 jdolecek Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -72,6 +72,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	uintptr_t rtype, symidx;
 	const Elf_Rel *rel;
 	const Elf_Rela *rela;
+	int error;
 
 	if (isrela) {
 		rela = (const Elf_Rela *)data;
@@ -92,8 +93,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_ALPHA_REFQUAD:
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		addr += addend;
 		if (*where != addr)
@@ -101,8 +102,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_ALPHA_GLOB_DAT:
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		addr += addend;
 		if (*where != addr)
@@ -111,8 +112,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_ALPHA_JMP_SLOT:
 		/* No point in lazy binding for kernel modules. */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		if (*where != addr)
 			*where = addr;

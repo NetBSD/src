@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.1.6.2 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: tifb.c,v 1.1.6.3 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.1.6.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.1.6.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_omap.h"
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.1.6.2 2014/08/20 00:02:47 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -75,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.1.6.2 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/bus.h>
 #include <arm/omap/tifbreg.h>
+#include <arm/omap/tifbvar.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_obioreg.h>
@@ -91,54 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.1.6.2 2014/08/20 00:02:47 tls Exp $");
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
-#include <dev/videomode/edidvar.h>
-
 #include "locators.h"
-
-struct panel_info {
-	uint32_t panel_width;
-	uint32_t panel_height;
-	uint32_t panel_hfp;
-	uint32_t panel_hbp;
-	uint32_t panel_hsw;
-	uint32_t panel_vfp;
-	uint32_t panel_vbp;
-	uint32_t panel_vsw;
-	uint32_t ac_bias;
-	uint32_t ac_bias_intrpt;
-	uint32_t dma_burst_sz;
-	uint32_t bpp;
-	uint32_t fdd;
-	uint32_t invert_line_clock;
-	uint32_t invert_frm_clock;
-	uint32_t sync_edge;
-	uint32_t sync_ctrl;
-	uint32_t panel_pxl_clk;
-	uint32_t panel_invert_pxl_clk;
-};
-
-/* for chalk elec cape with 12" panel */
-struct panel_info default_panel_info = {
-	.panel_width = 1280,
-	.panel_height = 800,
-	.panel_hfp = 48,
-	.panel_hbp = 80,
-	.panel_hsw = 32,
-	.panel_vfp = 2,
-	.panel_vbp = 15,
-	.panel_vsw = 6,
-	.ac_bias = 255,
-	.ac_bias_intrpt = 0,
-	.dma_burst_sz = 16,
-	.bpp = 16,
-	.fdd = 16,
-	.invert_line_clock = 0,
-	.invert_frm_clock = 0,
-	.sync_edge = 0,
-	.sync_ctrl = 1,
-	.panel_pxl_clk = 69300000,
-	.panel_invert_pxl_clk = 0,
-};
 
 struct tifb_softc {
 	device_t sc_dev;
@@ -153,7 +108,6 @@ struct tifb_softc {
 	size_t sc_palettesize;
 
 	int sc_stride;
-	int sc_locked;
 	void *sc_fbaddr, *sc_vramaddr;
 
 	bus_addr_t sc_fbhwaddr;
@@ -168,14 +122,12 @@ struct tifb_softc {
 	uint8_t sc_cmap_red[256], sc_cmap_green[256], sc_cmap_blue[256];
 	void (*sc_putchar)(void *, int, int, u_int, long);
 
-	uint8_t sc_edid_data[1024];
-	size_t sc_edid_size;
-
-	struct panel_info *sc_panel;
+	struct tifb_panel_info *sc_pi;
 };
 
-#define TIFB_READ(sc, reg) bus_space_read_4(sc->sc_iot, sc->sc_regh, reg)
-#define TIFB_WRITE(sc, reg, val) bus_space_write_4(sc->sc_iot, sc->sc_regh, reg, val)
+#define TIFB_READ(sc, reg)	bus_space_read_4(sc->sc_iot, sc->sc_regh, reg)
+#define TIFB_WRITE(sc, reg, val) \
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, reg, val)
 
 static int	tifb_match(device_t, cfdata_t, void *);
 static void	tifb_attach(device_t, device_t, void *);
@@ -191,18 +143,15 @@ static int  am335x_clk_get_arm_disp_freq(unsigned int *);
 CFATTACH_DECL_NEW(tifb, sizeof(struct tifb_softc),
     tifb_match, tifb_attach, NULL, NULL);
 
-static int	tifb_ioctl(void *, void *, u_long, void *, int,
-			     struct lwp *);
+static int	tifb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	tifb_mmap(void *, void *, off_t, int);
 static void	tifb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static int	tifb_putcmap(struct tifb_softc *, struct wsdisplay_cmap *);
 static int 	tifb_getcmap(struct tifb_softc *, struct wsdisplay_cmap *);
-#if 0
-static void	tifb_restore_palette(struct tifb_softc *);
-static void 	tifb_putpalreg(struct tifb_softc *, int, uint8_t,
-			    uint8_t, uint8_t);
+static void	tifb_restore_palette(struct tifb_softc *, int, int);
 
+#if 0
 static int	tifb_set_depth(struct tifb_softc *, int);
 #endif
 static void	tifb_set_video(struct tifb_softc *, int);
@@ -226,6 +175,7 @@ static struct evcnt ev_eof0;
 static struct evcnt ev_eof1;
 static struct evcnt ev_fifo_underflow;
 static struct evcnt ev_ac_bias;
+static struct evcnt ev_frame_done;
 static struct evcnt ev_others;
 
 
@@ -236,9 +186,9 @@ am335x_lcd_calc_divisor(uint32_t reference, uint32_t freq)
 	/* Raster mode case: divisors are in range from 2 to 255 */
 	for (div = 2; div < 255; div++)
 		if (reference/div <= freq)
-			return (div);
+			return div;
 
-	return (255);
+	return 255;
 }
 
 static int
@@ -246,7 +196,8 @@ tifb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
-	if ((obio->obio_addr == -1) || (obio->obio_size == 0))
+	if ((obio->obio_addr == OBIOCF_ADDR_DEFAULT) ||
+	    (obio->obio_size == OBIOCF_SIZE_DEFAULT))
 		return 0;
 	return 1;
 }
@@ -258,12 +209,12 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	struct obio_attach_args *obio = aux;
 	struct rasops_info	*ri;
 	struct wsemuldisplaydev_attach_args aa;
-	prop_dictionary_t	dict;
-	/* prop_data_t		edid_data; XXX */
+	prop_dictionary_t	dict = device_properties(self);
+	prop_object_t		panel_info;
 	unsigned long		defattr;
 	bool			is_console = false;
 	uint32_t		reg, timing0, timing1, timing2, burst_log;
-	int			segs, i, div, ref_freq;
+	int			segs, i, j, n, div, ref_freq;
 
 #ifdef TI_AM335X
 	int ret;
@@ -307,6 +258,15 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	};
 #endif
 
+	prop_dictionary_get_bool(dict, "is_console", &is_console);
+	panel_info = prop_dictionary_get(dict, "panel-info");
+	if (panel_info == NULL) {
+		aprint_error_dev(self, "no panel-info property\n");
+		return;
+	}
+	KASSERT(prop_object_type(panel_info) == PROP_TYPE_DATA);
+	sc->sc_pi = __UNCONST(prop_data_data_nocopy(panel_info));
+
 	evcnt_attach_dynamic(&ev_sync_lost, EVCNT_TYPE_MISC, NULL,
 	    "lcd", "sync lost");
 	evcnt_attach_dynamic(&ev_palette, EVCNT_TYPE_MISC, NULL,
@@ -319,6 +279,8 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	    "lcd", "fifo underflow");
 	evcnt_attach_dynamic(&ev_ac_bias, EVCNT_TYPE_MISC, NULL,
 	    "lcd", "ac bias");
+	evcnt_attach_dynamic(&ev_frame_done, EVCNT_TYPE_MISC, NULL,
+	    "lcd", "frame_done");
 	evcnt_attach_dynamic(&ev_others, EVCNT_TYPE_MISC, NULL,
 	    "lcd", "others");
 
@@ -332,22 +294,40 @@ tifb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_panel = &default_panel_info;/* XXX */
-
-	switch(sc->sc_panel->bpp) {
-	case 16:
+	sc->sc_palettesize = 32;
+	switch (sc->sc_pi->panel_bpp) {
 	case 24:
-	case 32:
+		if (!sc->sc_pi->panel_tft) {
+			aprint_error_dev(self,
+			    "bpp 24 only support tft, not attaching\n");
+			return;
+		}
+		break;
+	case 12:
+	case 16:
+		if (sc->sc_pi->panel_mono) {
+			aprint_error_dev(self,
+			    "bpp 12/16 only support color, not attaching\n");
+			return;
+		}
+	case 8:
+		sc->sc_palettesize = 512;
+		break;
+	case 4:
+	case 2:
+	case 1:
 		break;
 	default:
-		aprint_error_dev(self, "bogus display bpp, not attaching\n");
+		aprint_error_dev(self,
+		    "bogus display bpp, not attaching: bpp %d\n",
+		    sc->sc_pi->panel_bpp);
 		return;
 	}
 
-	sc->sc_stride = sc->sc_panel->panel_width * sc->sc_panel->bpp / 8;
+	sc->sc_stride = sc->sc_pi->panel_width * sc->sc_pi->panel_bpp / 8;
 
-	if (sc->sc_panel->panel_width == 0 ||
-	    sc->sc_panel->panel_height == 0) {
+	if (sc->sc_pi->panel_width == 0 ||
+	    sc->sc_pi->panel_height == 0) {
 		aprint_error_dev(self, "bogus display size, not attaching\n");
 		return;
 	}
@@ -362,35 +342,9 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	    tifb_intr, sc);
 	KASSERT(sc->sc_ih != NULL);
 
-	dict = device_properties(self);
-	prop_dictionary_get_bool(dict, "is_console", &is_console);
-#if 0
-	edid_data = prop_dictionary_get(dict, "EDID");
-	if (edid_data != NULL) {
-		struct edid_info ei;
-
-		sc->sc_edid_size = min(prop_data_size(edid_data), 1024);
-		memset(sc->sc_edid_data, 0, sizeof(sc->sc_edid_data));
-		memcpy(sc->sc_edid_data, prop_data_data_nocopy(edid_data),
-		    sc->sc_edid_size);
-
-		edid_parse(sc->sc_edid_data, &ei);
-		edid_print(&ei);
-	}
-#endif
-
 	/* setup video DMA */
-	switch(sc->sc_panel->bpp) {
-	case 8:
-		sc->sc_palettesize = 512;
-		break;
-	default:
-		sc->sc_palettesize = 32;
-		break;
-	}
-
 	sc->sc_vramsize = sc->sc_palettesize +
-	    sc->sc_stride * sc->sc_panel->panel_height;
+	    sc->sc_stride * sc->sc_pi->panel_height;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_vramsize, 0, 0,
 	    sc->sc_dmamem, 1, &segs, BUS_DMA_NOWAIT) != 0) {
@@ -398,9 +352,8 @@ tifb_attach(device_t parent, device_t self, void *aux)
 		    "failed to allocate video memory\n");
 		return;
 	}
-
 	if (bus_dmamem_map(sc->sc_dmat, sc->sc_dmamem, 1, sc->sc_vramsize,
-	    &sc->sc_vramaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
+	    &sc->sc_vramaddr, BUS_DMA_NOWAIT | BUS_DMA_PREFETCHABLE) != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to map video RAM\n");
 		return;
 	}
@@ -420,38 +373,49 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	memset((void *)sc->sc_vramaddr, 0, sc->sc_vramsize);
-
-	sc->sc_palette[0] = 0x4000;
-#if 0 /* XXX */
-	if (sc->sc_panel->bpp == 8) {
+	switch (sc->sc_pi->panel_bpp) {
+	case 8:
 		j = 0;
-		for (i = 0; i < 256; i++) {
+		for (i = 0; i < (1 << sc->sc_pi->panel_bpp); i++) {
 			sc->sc_cmap_red[i] = rasops_cmap[j];
 			sc->sc_cmap_green[i] = rasops_cmap[j + 1];
 			sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
 			j += 3;
 		}
-	} else {
-		for (i = 0; i < 256; i++) {
-			sc->sc_cmap_red[i] = i;
-			sc->sc_cmap_green[i] = i;
-			sc->sc_cmap_blue[i] = i;
+		break;
+	case 12:
+	case 16:
+	case 24:
+		break;
+	default:
+		n = 1;
+		switch (sc->sc_pi->panel_bpp) {
+		case 1:	n = 15;	break;
+		case 2:	n =  5;	break;
+		}
+		for (i = 0; i < (1 << sc->sc_pi->panel_bpp); i++) {
+			sc->sc_cmap_red[i] = i * n;
+			sc->sc_cmap_green[i] = i * n;
+			sc->sc_cmap_blue[i] = i * n;
 		}
 	}
-	tifb_restore_palette(sc);
-#endif
+	tifb_restore_palette(sc, 0, 1 << sc->sc_pi->panel_bpp);
 
 #ifdef TI_AM335X
 	/* configure output pins */
-	for (i = 0; i < ((sc->sc_panel->bpp == 16) ? 16 : 23); i++) {
+	for (i = 0; i < ((sc->sc_pi->panel_bpp == 16) ? 16 : 24); i++) {
 		if (sitara_cm_padconf_get(tifb_padconf_data[i].padname,
 		    &mode, &state) == 0) {
 			aprint_debug(": %s mode %s state %d ",
 			    tifb_padconf_data[i].padname, mode, state);
 		}
+		if (strcmp(mode, tifb_padconf_data[i].padname) == 0)
+			continue;
 		if (sitara_cm_padconf_set(tifb_padconf_data[i].padname,
-		    tifb_padconf_data[i].padmode, 0) != 0) {
-			aprint_error(": can't switch %s pad from %s to %s\n", tifb_padconf_data[i].padname, mode, tifb_padconf_data[i].padmode);
+		    tifb_padconf_data[i].padmode, 0x08) != 0) {
+			aprint_error(": can't switch %s pad from %s to %s\n",
+			    tifb_padconf_data[i].padname, mode,
+			    tifb_padconf_data[i].padmode);
 			return;
 		}
 	}
@@ -461,9 +425,13 @@ tifb_attach(device_t parent, device_t self, void *aux)
 			aprint_debug(": %s mode %s state %d ",
 			    tifb_padconf_ctrl[i].padname, mode, state);
 		}
+		if (strcmp(mode, tifb_padconf_ctrl[i].padmode) == 0)
+			continue;
 		if (sitara_cm_padconf_set(tifb_padconf_ctrl[i].padname,
 		    tifb_padconf_ctrl[i].padmode, 0) != 0) {
-			aprint_error(": can't switch %s pad from %s to %s\n", tifb_padconf_ctrl[i].padname, mode, tifb_padconf_ctrl[i].padmode);
+			aprint_error(": can't switch %s pad from %s to %s\n",
+			    tifb_padconf_ctrl[i].padname, mode,
+			    tifb_padconf_ctrl[i].padmode);
 			return;
 		}
 	}
@@ -480,58 +448,49 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_palette);
 	/* Only raster mode is supported */
 	reg = CTRL_RASTER_MODE;
-	div = am335x_lcd_calc_divisor(ref_freq, sc->sc_panel->panel_pxl_clk);
+	div = am335x_lcd_calc_divisor(ref_freq, sc->sc_pi->panel_pxl_clk);
 	reg |= (div << CTRL_DIV_SHIFT);
 	TIFB_WRITE(sc, LCD_CTRL, reg);
 	aprint_debug_dev(self, ": ref_freq %d div %d\n", ref_freq, div);
 
 	/* Set timing */
-	timing0 = timing1 = timing2 = 0;
+	timing0 =
+	    RASTER_TIMING_0_HFP(sc->sc_pi->panel_hfp) |
+	    RASTER_TIMING_0_HBP(sc->sc_pi->panel_hbp) |
+	    RASTER_TIMING_0_HSW(sc->sc_pi->panel_hsw);
+	timing1 =
+	    RASTER_TIMING_1_VFP(sc->sc_pi->panel_vfp) |
+	    RASTER_TIMING_1_VBP(sc->sc_pi->panel_vbp) |
+	    RASTER_TIMING_1_VSW(sc->sc_pi->panel_vsw);
+	timing2 =
+	    RASTER_TIMING_2_HFP(sc->sc_pi->panel_hfp) |
+	    RASTER_TIMING_2_HBP(sc->sc_pi->panel_hbp) |
+	    RASTER_TIMING_2_HSW(sc->sc_pi->panel_hsw);
 
-	/* Horizontal back porch */
-	timing0 |= (sc->sc_panel->panel_hbp & 0xff) << RASTER_TIMING_0_HBP_SHIFT;
-	timing2 |= ((sc->sc_panel->panel_hbp >> 8) & 3) << RASTER_TIMING_2_HBPHI_SHIFT;
-	/* Horizontal front porch */
-	timing0 |= (sc->sc_panel->panel_hfp & 0xff) << RASTER_TIMING_0_HFP_SHIFT;
-	timing2 |= ((sc->sc_panel->panel_hfp >> 8) & 3) << RASTER_TIMING_2_HFPHI_SHIFT;
-	/* Horizontal sync width */   
-	timing0 |= (sc->sc_panel->panel_hsw & 0x3f) << RASTER_TIMING_0_HSW_SHIFT;
-	timing2 |= ((sc->sc_panel->panel_hsw >> 6) & 0xf) << RASTER_TIMING_2_HSWHI_SHIFT
-;
-
-	/* Vertical back porch, front porch, sync width */
-	timing1 |= (sc->sc_panel->panel_vbp & 0xff) << RASTER_TIMING_1_VBP_SHIFT;
-	timing1 |= (sc->sc_panel->panel_vfp & 0xff) << RASTER_TIMING_1_VFP_SHIFT;
-	timing1 |= (sc->sc_panel->panel_vsw & 0x3f) << RASTER_TIMING_1_VSW_SHIFT;
 	/* Pixels per line */
-	timing0 |= (((sc->sc_panel->panel_width - 1) >> 10) & 1)
-	    << RASTER_TIMING_0_PPLMSB_SHIFT;
-	timing0 |= (((sc->sc_panel->panel_width - 1) >> 4) & 0x3f)
-	    << RASTER_TIMING_0_PPLLSB_SHIFT;
+	timing0 |= RASTER_TIMING_0_PPL(sc->sc_pi->panel_width);
 
 	/* Lines per panel */
-	timing1 |= ((sc->sc_panel->panel_height - 1) & 0x3ff)
-	    << RASTER_TIMING_1_LPP_SHIFT;
-	timing2 |= (((sc->sc_panel->panel_height - 1) >> 10 ) & 1)
-	    << RASTER_TIMING_2_LPP_B10_SHIFT;
+	timing1 |= RASTER_TIMING_1_LPP(sc->sc_pi->panel_height);
+	timing2 |= RASTER_TIMING_2_LPP(sc->sc_pi->panel_height);
 
-	/* clock signal settings */   
-	if (sc->sc_panel->sync_ctrl)
+	/* clock signal settings */
+	if (sc->sc_pi->panel_sync_ctrl)
 		timing2 |= RASTER_TIMING_2_PHSVS;
-	if (sc->sc_panel->sync_edge)
+	if (sc->sc_pi->panel_sync_edge)
 		timing2 |= RASTER_TIMING_2_PHSVS_RISE;
 	else
 		timing2 |= RASTER_TIMING_2_PHSVS_FALL;
-	if (sc->sc_panel->invert_line_clock)  
+	if (sc->sc_pi->panel_invert_hsync)
 		timing2 |= RASTER_TIMING_2_IHS;
-	if (sc->sc_panel->invert_frm_clock)   
+	if (sc->sc_pi->panel_invert_vsync)
 		timing2 |= RASTER_TIMING_2_IVS;
-	if (sc->sc_panel->panel_invert_pxl_clk)
+	if (sc->sc_pi->panel_invert_pxl_clk)
 		timing2 |= RASTER_TIMING_2_IPC;
 
 	/* AC bias */
-	timing2 |= (sc->sc_panel->ac_bias << RASTER_TIMING_2_ACB_SHIFT);
-	timing2 |= (sc->sc_panel->ac_bias_intrpt << RASTER_TIMING_2_ACBI_SHIFT);
+	timing2 |= RASTER_TIMING_2_ACB(sc->sc_pi->panel_ac_bias);
+	timing2 |= RASTER_TIMING_2_ACBI(sc->sc_pi->panel_ac_bias_intrpt);
 
 	TIFB_WRITE(sc, LCD_RASTER_TIMING_0, timing0);
 	TIFB_WRITE(sc, LCD_RASTER_TIMING_1, timing1);
@@ -540,9 +499,9 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	    timing0, timing1, timing2);
 
 	/* DMA settings */
-	reg = LCDDMA_CTRL_FB0_FB1;    
+	reg = 0;
 	/* Find power of 2 for current burst size */
-	switch (sc->sc_panel->dma_burst_sz) { 
+	switch (sc->sc_pi->panel_dma_burst_sz) {
 	case 1:
 		burst_log = 0;
 		break;
@@ -563,50 +522,78 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	reg |= (burst_log << LCDDMA_CTRL_BURST_SIZE_SHIFT);
 	/* XXX: FIFO TH */
 	reg |= (0 << LCDDMA_CTRL_TH_FIFO_RDY_SHIFT);
+	reg |= LCDDMA_CTRL_FB0_ONLY;
 	TIFB_WRITE(sc, LCD_LCDDMA_CTRL, reg);
 	aprint_debug_dev(self, ": LCD_LCDDMA_CTRL 0x%x\n", reg);
 
 	TIFB_WRITE(sc, LCD_LCDDMA_FB0_BASE, sc->sc_dmamem->ds_addr);
 	TIFB_WRITE(sc, LCD_LCDDMA_FB0_CEILING,
 	    sc->sc_dmamem->ds_addr + sc->sc_vramsize - 1);
-	TIFB_WRITE(sc, LCD_LCDDMA_FB1_BASE, sc->sc_dmamem->ds_addr);
-	TIFB_WRITE(sc, LCD_LCDDMA_FB1_CEILING,
-	    sc->sc_dmamem->ds_addr + sc->sc_vramsize - 1);
 	aprint_debug_dev(self, ": LCD_LCDDMA 0x%x 0x%x\n",
-	    (u_int)sc->sc_dmamem->ds_addr, (u_int)(sc->sc_dmamem->ds_addr + sc->sc_vramsize - 1));
+	    (u_int)sc->sc_dmamem->ds_addr,
+	    (u_int)(sc->sc_dmamem->ds_addr + sc->sc_vramsize - 1));
 
-	/* Enable LCD */
-	reg = RASTER_CTRL_LCDTFT;     
-	reg |= (sc->sc_panel->fdd << RASTER_CTRL_REQDLY_SHIFT);
-	reg |= (PALETTE_DATA_ONLY << RASTER_CTRL_PALMODE_SHIFT);
-	if (sc->sc_panel->bpp >= 24)
-		reg |= RASTER_CTRL_TFT24;
-	if (sc->sc_panel->bpp == 32)
-		reg |= RASTER_CTRL_TFT24_UNPACKED;
+	reg = 0;
+	if (sc->sc_pi->panel_tft) {
+		reg |= RASTER_CTRL_LCDTFT;
+		switch (sc->sc_pi->panel_bpp) {
+		case 24:
+			reg |= RASTER_CTRL_TFT24;
+			break;
+		case 8:
+		case 4:
+		case 2:
+		case 1:
+			if (sc->sc_pi->panel_tft_alt_mode)
+				reg |= RASTER_CTRL_TFTMAP;
+			break;
+		}
+	} else {
+		if (sc->sc_pi->panel_mono) {
+			reg |= RASTER_CTRL_LCDBW;
+			if (sc->sc_pi->panel_bpp == 8)
+				reg |= RASTER_CTRL_MONO8B;
+		} else
+			if (sc->sc_pi->panel_bpp == 16)
+				reg |= RASTER_CTRL_STN565;
+	}
+	reg |= RASTER_CTRL_REQDLY(sc->sc_pi->panel_fdd);
+	switch (sc->sc_pi->panel_bpp) {
+	case 12:
+	case 16:
+	case 24:
+		reg |= RASTER_CTRL_PALMODE_DATA_ONLY;
+		break;
+	default:
+		reg |= RASTER_CTRL_PALMODE_PALETTE_AND_DATA;
+		if (sc->sc_pi->panel_rdorder)
+			reg |= RASTER_CTRL_RDORDER;
+		break;
+	}
 	TIFB_WRITE(sc, LCD_RASTER_CTRL, reg);
 	aprint_debug_dev(self, ": LCD_RASTER_CTRL 0x%x\n", reg);
 
-	TIFB_WRITE(sc, LCD_CLKC_ENABLE,
-	    CLKC_ENABLE_DMA | CLKC_ENABLE_LDID | CLKC_ENABLE_CORE);     
+	TIFB_WRITE(sc, LCD_CLKC_ENABLE, CLKC_ENABLE_DMA | CLKC_ENABLE_CORE);
 
 	TIFB_WRITE(sc, LCD_CLKC_RESET, CLKC_RESET_MAIN);
 	DELAY(100);
 	TIFB_WRITE(sc, LCD_CLKC_RESET, 0);
-	aprint_debug_dev(self, ": LCD_CLKC_ENABLE 0x%x\n", TIFB_READ(sc, LCD_CLKC_ENABLE));
+	aprint_debug_dev(self,
+	    ": LCD_CLKC_ENABLE 0x%x\n", TIFB_READ(sc, LCD_CLKC_ENABLE));
 
-	reg = IRQ_EOF1 | IRQ_EOF0 | IRQ_FUF | IRQ_PL |
-	    IRQ_ACB | IRQ_SYNC_LOST |  IRQ_RASTER_DONE |
-	    IRQ_FRAME_DONE;
+	reg = IRQ_FUF | IRQ_PL | IRQ_ACB | IRQ_SYNC_LOST;
 	TIFB_WRITE(sc, LCD_IRQENABLE_SET, reg);
 
 	reg = TIFB_READ(sc, LCD_RASTER_CTRL);
-	reg |= RASTER_CTRL_LCDEN;     
+	reg |= RASTER_CTRL_LCDEN;
 	TIFB_WRITE(sc, LCD_RASTER_CTRL, reg);
-	aprint_debug_dev(self, ": LCD_RASTER_CTRL 0x%x\n", TIFB_READ(sc, LCD_RASTER_CTRL));
+	aprint_debug_dev(self,
+	    ": LCD_RASTER_CTRL 0x%x\n", TIFB_READ(sc, LCD_RASTER_CTRL));
 
-	TIFB_WRITE(sc, LCD_SYSCONFIG, 
+	TIFB_WRITE(sc, LCD_SYSCONFIG,
 	    SYSCONFIG_STANDBY_SMART | SYSCONFIG_IDLE_SMART);
-	aprint_debug_dev(self, ": LCD_SYSCONFIG 0x%x\n", TIFB_READ(sc, LCD_SYSCONFIG));
+	aprint_debug_dev(self,
+	    ": LCD_SYSCONFIG 0x%x\n", TIFB_READ(sc, LCD_SYSCONFIG));
 
 	/* attach wscons */
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
@@ -620,7 +607,6 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-	sc->sc_locked = 0;
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &tifb_accessops);
@@ -660,7 +646,7 @@ tifb_intr(void *v)
 	TIFB_WRITE(sc, LCD_IRQSTATUS, reg);
 
 	if (reg & IRQ_SYNC_LOST) {
-		ev_sync_lost.ev_count ++;
+		ev_sync_lost.ev_count++;
 		reg = TIFB_READ(sc, LCD_RASTER_CTRL);
 		reg &= ~RASTER_CTRL_LCDEN;
 		TIFB_WRITE(sc, LCD_RASTER_CTRL, reg);
@@ -672,7 +658,7 @@ tifb_intr(void *v)
 	}
 
 	if (reg & IRQ_PL) {
-		ev_palette.ev_count ++;
+		ev_palette.ev_count++;
 		reg = TIFB_READ(sc, LCD_RASTER_CTRL);
 		reg &= ~RASTER_CTRL_LCDEN;
 		TIFB_WRITE(sc, LCD_RASTER_CTRL, reg);
@@ -683,8 +669,13 @@ tifb_intr(void *v)
 		return 0;
 	}
 
+	if (reg & IRQ_FRAME_DONE) {
+		ev_frame_done.ev_count++;
+		reg &= ~IRQ_FRAME_DONE;
+	}
+
 	if (reg & IRQ_EOF0) {
-		ev_eof0.ev_count ++;
+		ev_eof0.ev_count++;
 		TIFB_WRITE(sc, LCD_LCDDMA_FB0_BASE, sc->sc_dmamem->ds_addr);
 		TIFB_WRITE(sc, LCD_LCDDMA_FB0_CEILING,
 		    sc->sc_dmamem->ds_addr + sc->sc_vramsize - 1);
@@ -692,107 +683,127 @@ tifb_intr(void *v)
 	}
 
 	if (reg & IRQ_EOF1) {
-		ev_eof1.ev_count ++;
+		ev_eof1.ev_count++;
 		TIFB_WRITE(sc, LCD_LCDDMA_FB1_BASE, sc->sc_dmamem->ds_addr);
 		TIFB_WRITE(sc, LCD_LCDDMA_FB1_CEILING,
 		    sc->sc_dmamem->ds_addr + sc->sc_vramsize - 1);
-		reg &= ~IRQ_EOF1;     
+		reg &= ~IRQ_EOF1;
 	}
 
 	if (reg & IRQ_FUF) {
-		ev_fifo_underflow.ev_count ++;
+		ev_fifo_underflow.ev_count++;
 		/* TODO: Handle FUF */
 		reg =~ IRQ_FUF;
 	}
 
 	if (reg & IRQ_ACB) {
-		ev_ac_bias.ev_count ++;
+		ev_ac_bias.ev_count++;
 		/* TODO: Handle ACB */
 		reg =~ IRQ_ACB;
 	}
-	if (reg)
-		ev_others.ev_count ++;
+
+	if (reg) {
+		ev_others.ev_count++;
+		printf("%s: unhandled irq status 0x%x\n",
+		    device_xname(sc->sc_dev), reg);
+	}
 	return 0;
 }
 
 static int
-tifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
-	struct lwp *l)
+tifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct tifb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
+	struct wsdisplayio_fbinfo *fbi;
+	struct wsdisplay_curpos *cp;
+//	struct wsdisplay_cursor *cursor;
 	struct vcons_screen *ms = vd->active;
+	int new_mode, *on, ret;
 
 	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_GENFB;
+		return 0;
 
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_GENFB;
-			return 0;
+	case WSDISPLAYIO_GET_BUSID:
+		((struct wsdisplayio_bus_id *)data)->bus_type =
+		     WSDISPLAYIO_BUS_SOC;
+		return 0;
 
-		case WSDISPLAYIO_GET_BUSID:
-			{
-				struct wsdisplayio_bus_id *busid;
+	case WSDISPLAYIO_GINFO:
+		if (ms == NULL)
+			return ENODEV;
+		wdf = (void *)data;
+		wdf->height = ms->scr_ri.ri_height;
+		wdf->width = ms->scr_ri.ri_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
 
-				busid = data;
-				busid->bus_type = WSDISPLAYIO_BUS_SOC;
-				return 0;
-			}
+	case WSDISPLAYIO_GETCMAP:
+		return tifb_getcmap(sc, (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_GINFO:
-			if (ms == NULL)
-				return ENODEV;
-			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
+	case WSDISPLAYIO_PUTCMAP:
+		return tifb_putcmap(sc, (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_GETCMAP:
-			return tifb_getcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_stride;
+		return 0;
 
-		case WSDISPLAYIO_PUTCMAP:
-			return tifb_putcmap(sc,
-			    (struct wsdisplay_cmap *)data);
-
-		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->sc_stride;
-			return 0;
-
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
-
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
+	case WSDISPLAYIO_SMODE:
+		new_mode = *(int *)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
 #if 0
-					if (new_mode == WSDISPLAYIO_MODE_EMUL) {
-						tifb_set_depth(sc, 16);
-						vcons_redraw_screen(ms);
-					} else {
-						tifb_set_depth(sc, 32);
-					}
+			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+				tifb_set_depth(sc, 16);
+				vcons_redraw_screen(ms);
+			} else
+				tifb_set_depth(sc, 32);
 #endif
-				}
-			}
-			return 0;
+		}
+		return 0;
 
-		case WSDISPLAYIO_GVIDEO:
-			{
-				int *on = data;
-				*on = 1; /* XXX sc->sc_video_is_on; */
-			}
-			return 0;
+	case WSDISPLAYIO_GET_FBINFO:
+		fbi = data;
+		ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+		fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
+		fbi->fbi_fboffset = sc->sc_palettesize;
+		return ret;
 
-		case WSDISPLAYIO_SVIDEO:
-			{
-				int *on = data;
-				tifb_set_video(sc, *on);
-			}
-			return 0;
+	case WSDISPLAYIO_GVIDEO:
+		on = data;
+		*on = 1; /* XXX sc->sc_video_is_on; */
+		return 0;
 
+	case WSDISPLAYIO_SVIDEO:
+		on = data;
+		tifb_set_video(sc, *on);
+		return 0;
+
+	case WSDISPLAYIO_GCURPOS:
+		cp = data;
+//		cp->x = sc->sc_cursor_x;
+//		cp->y = sc->sc_cursor_y;
+		return 0;
+
+	case WSDISPLAYIO_SCURPOS:
+		cp = data;
+//		omapfb_move_cursor(sc, cp->x, cp->y);
+		return 0;
+
+	case WSDISPLAYIO_GCURMAX:
+		cp = data;
+		cp->x = 64;
+		cp->y = 64;
+		return 0;
+
+	case WSDISPLAYIO_SCURSOR:
+//		cursor = data;
+//		return omapfb_do_cursor(sc, cursor);
+		break;
 	}
 	return EPASSTHROUGH;
 }
@@ -805,7 +816,7 @@ tifb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct tifb_softc *sc = vd->cookie;
 
 	/* 'regular' framebuffer mmap()ing */
-	if (offset < sc->sc_stride * sc->sc_panel->panel_height) {
+	if (offset < sc->sc_stride * sc->sc_pi->panel_height) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dmamem, 1,
 		    offset, prot, BUS_DMA_PREFETCHABLE);
 		return pa;
@@ -820,23 +831,24 @@ tifb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct tifb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 
-	ri->ri_depth = sc->sc_panel->bpp;
-	ri->ri_width = sc->sc_panel->panel_width;
-	ri->ri_height = sc->sc_panel->panel_height;
+	ri->ri_depth = sc->sc_pi->panel_bpp;
+	ri->ri_width = sc->sc_pi->panel_width;
+	ri->ri_height = sc->sc_pi->panel_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
-
 	ri->ri_bits = (char *)sc->sc_fbaddr;
+	ri->ri_hwbits = NULL;
 
-	if (existing) {
+	if (existing)
 		ri->ri_flg |= RI_CLEAR;
-	}
 
-	rasops_init(ri, sc->sc_panel->panel_height / 8, sc->sc_panel->panel_width / 8);
+	rasops_init(ri,
+	    sc->sc_pi->panel_height / 8, sc->sc_pi->panel_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
-	rasops_reconfig(ri, sc->sc_panel->panel_height / ri->ri_font->fontheight,
-		    sc->sc_panel->panel_width / ri->ri_font->fontwidth);
+	rasops_reconfig(ri,
+	    sc->sc_pi->panel_height / ri->ri_font->fontheight,
+	    sc->sc_pi->panel_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
 }
@@ -908,31 +920,42 @@ tifb_getcmap(struct tifb_softc *sc, struct wsdisplay_cmap *cm)
 #endif
 }
 
-#if 0
 static void
-tifb_restore_palette(struct tifb_softc *sc)
+tifb_restore_palette(struct tifb_softc *sc, int index, int count)
 {
-	int i;
+	uint32_t bpp;
+	int r, g, b, i;
 
-	for (i = 0; i < 256; i++) {
-		tifb_putpalreg(sc, i, sc->sc_cmap_red[i],
-		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+	memset(&sc->sc_palette[index], 0, sizeof(*sc->sc_palette) * count);
+	switch (sc->sc_pi->panel_bpp) {
+	case 1:
+		bpp = PALETTE_BPP_1;
+		break;
+	case 2:
+		bpp = PALETTE_BPP_2;
+		break;
+	case 4:
+		bpp = PALETTE_BPP_4;
+		break;
+	case 8:
+		bpp = PALETTE_BPP_8;
+		break;
+	default:
+		bpp = PALETTE_BPP_XX;
+		count = 0;
+		break;
 	}
+	for (i = index; i < count; i++) {
+		r = sc->sc_cmap_red[i];
+		g = sc->sc_cmap_green[i];
+		b = sc->sc_cmap_blue[i];
+		sc->sc_palette[i] = PALETTE_COLOR(r, g, b);
+	}
+	if (index == 0)
+		sc->sc_palette[0] |= bpp;
 }
 
-static void
-tifb_putpalreg(struct tifb_softc *sc, int idx, uint8_t r, uint8_t g,
-    uint8_t b)
-{
-	uint32_t reg;
-
-	if ((idx < 0) || (idx > 255))
-		return;
-	/* whack the DAC */
-	reg = (r << 16) | (g << 8) | b;
-	sc->sc_clut[idx] = reg;
-}
-
+#if 0
 static int
 tifb_set_depth(struct tifb_softc *sc, int d)
 {
@@ -972,7 +995,7 @@ tifb_set_depth(struct tifb_softc *sc, int d)
 	memset(sc->sc_fbaddr, 0, sc->sc_stride * sc->sc_panel->panel_height);
 	return 0;
 }
-#endif /* 0 */
+#endif
 
 static void
 tifb_set_video(struct tifb_softc *sc, int on)
@@ -1055,14 +1078,14 @@ am335x_clk_get_arm_disp_freq(unsigned int *freq)
 #define DPLL_BYP_CLKSEL(reg)    ((reg>>23) & 1)
 #define DPLL_DIV(reg)	   ((reg & 0x7f)+1)
 #define DPLL_MULT(reg)	  ((reg>>8) & 0x7FF)
-	
+
 	reg = prcm_read_4(AM335X_PRCM_CM_WKUP, CM_WKUP_CM_CLKSEL_DPLL_DISP);
-	
+
 	/*Check if we are running in bypass */
 	if (DPLL_BYP_CLKSEL(reg))
 		return ENXIO;
-		
+
 	*freq = DPLL_MULT(reg) * (omap_sys_clk / DPLL_DIV(reg));
-	return(0);
+	return 0;
 }
 #endif

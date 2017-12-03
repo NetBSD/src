@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_cm_padconf.c,v 1.2.4.2 2013/06/23 06:20:00 tls Exp $ */
+/* $NetBSD: am335x_cm_padconf.c,v 1.2.4.3 2017/12/03 11:35:55 jdolecek Exp $ */
 /*-
  * Copyright (c) 2012 Damjan Marion <dmarion@FreeBSD.org>
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_cm_padconf.c,v 1.2.4.2 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_cm_padconf.c,v 1.2.4.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,8 +295,8 @@ const struct sitara_cm_padconf ti_padconf_devmap[] = {
 const struct sitara_cm_device sitara_cm_dev = {
 	.padconf_muxmode_mask	= 0x7,
 	.padconf_sate_mask	= 0x78,
-	.padstate		= (struct sitara_cm_padstate *) &ti_padstate_devmap,
-	.padconf		= (struct sitara_cm_padconf *) &ti_padconf_devmap,
+	.padstate		= ti_padstate_devmap,
+	.padconf		= ti_padconf_devmap,
 };
 
 int

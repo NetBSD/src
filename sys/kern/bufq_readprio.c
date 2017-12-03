@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.13 2009/01/19 14:54:28 yamt Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.13.24.1 2017/12/03 11:38:44 jdolecek Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.13 2009/01/19 14:54:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.13.24.1 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.13 2009/01/19 14:54:28 yamt Exp 
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 /*
  * Seek sort for disks.
@@ -107,7 +108,7 @@ BUFQ_DEFINE(readprio, 30, bufq_readprio_init);
 static void
 bufq_prio_put(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_prio *prio = bufq->bq_private;
+	struct bufq_prio *prio = bufq_private(bufq);
 	struct buf *bq;
 	int sortby;
 
@@ -154,7 +155,7 @@ bufq_prio_put(struct bufq_state *bufq, struct buf *bp)
 static struct buf *
 bufq_prio_get(struct bufq_state *bufq, int remove)
 {
-	struct bufq_prio *prio = bufq->bq_private;
+	struct bufq_prio *prio = bufq_private(bufq);
 	struct buf *bp;
 
 	/*
@@ -217,7 +218,7 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 static struct buf *
 bufq_prio_cancel(struct bufq_state *bufq, struct buf *buf)
 {
-	struct bufq_prio *prio = bufq->bq_private;
+	struct bufq_prio *prio = bufq_private(bufq);
 	struct buf *bq;
 
 	/* search read queue */
@@ -280,3 +281,18 @@ bufq_readprio_init(struct bufq_state *bufq)
 	TAILQ_INIT(&prio->bq_write);
 }
 
+MODULE(MODULE_CLASS_BUFQ, bufq_readprio, NULL);
+ 
+static int 
+bufq_readprio_modcmd(modcmd_t cmd, void *opaque)
+{
+ 
+        switch (cmd) {
+        case MODULE_CMD_INIT: 
+                return bufq_register(&bufq_strat_readprio);
+        case MODULE_CMD_FINI:
+                return bufq_unregister(&bufq_strat_readprio);
+        default:
+                return ENOTTY;
+        }
+}

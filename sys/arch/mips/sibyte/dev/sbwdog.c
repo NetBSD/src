@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.13 2011/07/10 23:32:03 matt Exp $ */
+/* $NetBSD: sbwdog.c,v 1.13.12.1 2017/12/03 11:36:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13 2011/07/10 23:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13.12.1 2017/12/03 11:36:29 jdolecek Exp $");
 
 #include "locators.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13 2011/07/10 23:32:03 matt Exp $");
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/dev/sbscdvar.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 #define	SBWDOG_DEFAULT_PERIOD	5	/* Default to 5 seconds. */
 
@@ -76,8 +78,8 @@ static void sbwdog_intr(void *, uint32_t, vaddr_t);
 CFATTACH_DECL_NEW(sbwdog, sizeof(struct sbwdog_softc),
     sbwdog_match, sbwdog_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((register_t)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((register_t)(rp), (val)))
 
 static int
 sbwdog_match(device_t parent, cfdata_t cf, void *aux)

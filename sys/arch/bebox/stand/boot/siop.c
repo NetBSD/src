@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.2.6.2 2014/08/20 00:02:50 tls Exp $	*/
+/*	$NetBSD: siop.c,v 1.2.6.3 2017/12/03 11:35:59 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -625,7 +625,7 @@ siop_start(struct siop_adapter *adp, struct scsi_xfer *xs)
 {
 	struct siop_xfer *siop_xfer = adp->xfer;
 	uint32_t dsa, *script = adp->script;
-	int target, lun, slot;
+	int slot;
 	void *scriptaddr = (void *)local_to_PCI((u_long)script);
 	const int siop_common_xfer_size = sizeof(struct siop_common_xfer);
 
@@ -652,8 +652,6 @@ siop_start(struct siop_adapter *adp, struct scsi_xfer *xs)
 	} else {
 		slot++;
 	}
-	target = xs->target;
-	lun = xs->lun;
 	/*
 	 * find a free scheduler slot and load it.
 	 */
@@ -995,6 +993,7 @@ scsi_interpret_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 			error = 0;
 			break;
 		case SKEY_ABORTED_COMMAND:
+			/* XXX XXX initialize 'error' */
 			break;
 		case SKEY_VOLUME_OVERFLOW:
 			error = ENOSPC;

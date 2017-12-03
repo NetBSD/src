@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.83.2.3 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: machfb.c,v 1.83.2.4 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.83.2.3 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0,
+	"$NetBSD: machfb.c,v 1.83.2.4 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0,
 
 #include "opt_wsemul.h"
 #include "opt_machfb.h"
+#include "opt_glyphcache.h"
 
 #define MACH64_REG_SIZE		0x800
 #define MACH64_REG_OFF		0x7ff800
@@ -124,6 +125,7 @@ struct mach64_softc {
 	int mem_freq;
 	int ramdac_freq;
 	int ref_freq;
+	int vclk_freq;
 
 	int ref_div;
 	int log2_vclk_post_div;
@@ -132,10 +134,12 @@ struct mach64_softc {
 	int mclk_post_div;
 	int mclk_fb_div;
 	int sc_clock;	/* which clock to use */
+	int minref, m;
 
 	struct videomode *sc_my_mode;
 	int sc_edid_size;
 	uint8_t sc_edid_data[1024];
+    	struct edid_info sc_ei;
 
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
@@ -205,39 +209,19 @@ static const char *mach64_memtype_names[] = {
 	"(unknown type)"
 };
 
-static struct videomode mach64_modes[] = {
-	/* 640x400 @ 70 Hz, 31.5 kHz */
-	{ 25175, 640, 664, 760, 800, 400, 409, 411, 450, 0, NULL, },
-	/* 640x480 @ 72 Hz, 36.5 kHz */
-	{ 25175, 640, 664, 760, 800, 480, 491, 493, 525, 0, NULL, },
-	/* 800x600 @ 72 Hz, 48.0 kHz */
-	{ 50000, 800, 856, 976, 1040, 600, 637, 643, 666,
-	  VID_PHSYNC | VID_PVSYNC, NULL, },
-	/* 1024x768 @ 70 Hz, 56.5 kHz */
-	{ 75000, 1024, 1048, 1184, 1328, 768, 771, 777, 806,
-	  VID_NHSYNC | VID_NVSYNC, NULL, },
-	/* 1152x864 @ 70 Hz, 62.4 kHz */
-	{ 92000, 1152, 1208, 1368, 1474, 864, 865, 875, 895, 0, NULL, },
-	/* 1280x1024 @ 70 Hz, 74.59 kHz */
-	{ 126500, 1280, 1312, 1472, 1696, 1024, 1032, 1040, 1068,
-	  VID_NHSYNC | VID_NVSYNC, NULL, }
-};
-
 extern const u_char rasops_cmap[768];
 
 static int	mach64_match(device_t, cfdata_t, void *);
 static void	mach64_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(machfb, sizeof(struct mach64_softc), mach64_match, mach64_attach,
-    NULL, NULL);
+CFATTACH_DECL_NEW(machfb, sizeof(struct mach64_softc), mach64_match,
+    mach64_attach, NULL, NULL);
 
 static void	mach64_init(struct mach64_softc *);
 static int	mach64_get_memsize(struct mach64_softc *);
 static int	mach64_get_max_ramdac(struct mach64_softc *);
 
-#if defined(__sparc__) || defined(__powerpc__)
 static void	mach64_get_mode(struct mach64_softc *, struct videomode *);
-#endif
 
 static int	mach64_calc_crtcregs(struct mach64_softc *,
 				     struct mach64_crtcregs *,
@@ -256,8 +240,6 @@ static void	mach64_adjust_frame(struct mach64_softc *, int, int);
 static void	mach64_init_lut(struct mach64_softc *);
 
 static void	mach64_init_screen(void *, struct vcons_screen *, int, long *);
-static int 	mach64_set_screentype(struct mach64_softc *,
-				      const struct wsscreen_descr *);
 static int	mach64_is_console(struct mach64_softc *);
 
 static void	mach64_cursor(void *, int, int, int);
@@ -293,68 +275,13 @@ static struct wsscreen_descr mach64_defaultscreen = {
 	80, 30,
 	NULL,
 	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&default_mode
-}, mach64_80x25_screen = {
-	"80x25", 80, 25,
-	NULL,
-	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[0]
-}, mach64_80x30_screen = {
-	"80x30", 80, 30,
-	NULL,
-	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[1]
-}, mach64_80x40_screen = {
-	"80x40", 80, 40,
-	NULL,
-	8, 10,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[0]
-}, mach64_80x50_screen = {
-	"80x50", 80, 50,
-	NULL,
-	8, 8,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[0]
-}, mach64_100x37_screen = {
-	"100x37", 100, 37,
-	NULL,
-	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[2]
-}, mach64_128x48_screen = {
-	"128x48", 128, 48,
-	NULL,
-	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[3]
-}, mach64_144x54_screen = {
-	"144x54", 144, 54,
-	NULL,
-	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[4]
-}, mach64_160x64_screen = {
-	"160x54", 160, 64,
-	NULL,
-	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
-	&mach64_modes[5]
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE
+	 | WSSCREEN_RESIZE ,
+	NULL
 };
 
 static const struct wsscreen_descr *_mach64_scrlist[] = {
 	&mach64_defaultscreen,
-	&mach64_80x25_screen,
-	&mach64_80x30_screen,
-	&mach64_80x40_screen,
-	&mach64_80x50_screen,
-	&mach64_100x37_screen,
-	&mach64_128x48_screen,
-	&mach64_144x54_screen,
-	&mach64_160x64_screen
 };
 
 static struct wsscreen_list mach64_screenlist = {
@@ -365,11 +292,6 @@ static struct wsscreen_list mach64_screenlist = {
 static int	mach64_ioctl(void *, void *, u_long, void *, int,
 		             struct lwp *);
 static paddr_t	mach64_mmap(void *, void *, off_t, int);
-
-#if 0
-static int	mach64_load_font(void *, void *, struct wsdisplay_font *);
-#endif
-
 
 static struct vcons_screen mach64_console_screen;
 
@@ -393,7 +315,7 @@ static inline void
 regw(struct mach64_softc *sc, uint32_t index, uint32_t data)
 {
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, index + 0x400, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 4, 
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -401,7 +323,7 @@ static inline void
 regws(struct mach64_softc *sc, uint32_t index, uint32_t data)
 {
 	bus_space_write_stream_4(sc->sc_regt, sc->sc_regh, index + 0x400, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 4, 
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -409,7 +331,7 @@ static inline void
 regwb(struct mach64_softc *sc, uint32_t index, uint8_t data)
 {
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, index + 0x400, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 1, 
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 1,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -480,15 +402,13 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct rasops_info *ri;
 	prop_data_t edid_data;
-#if defined(__sparc__) || defined(__powerpc__)
 	const struct videomode *mode = NULL;
-#endif
 	int bar, id, expected_id;
 	int is_gx;
 	const char **memtype_names;
 	struct wsemuldisplaydev_attach_args aa;
 	long defattr;
-	int setmode, width, height;
+	int setmode = 0, width, height;
 	pcireg_t screg;
 	uint32_t reg;
 	const pcireg_t enables = PCI_COMMAND_MEM_ENABLE;
@@ -511,7 +431,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 #ifdef MACHFB_DEBUG
 	printf(prop_dictionary_externalize(device_properties(self)));
 #endif
-	
+
 	/* enable memory access */
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	if ((screg & enables) != enables) {
@@ -530,7 +450,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aprint_debug_dev(sc->sc_dev, "aperture size %08x\n",
 	    (uint32_t)sc->sc_apersize);
 
-	sc->sc_rom.vb_type = PCI_MAPREG_TYPE_ROM;	
+	sc->sc_rom.vb_type = PCI_MAPREG_TYPE_ROM;
 	pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, PCI_MAPREG_ROM,
 		    sc->sc_rom.vb_type, &sc->sc_rom.vb_base,
 		    &sc->sc_rom.vb_size, &sc->sc_rom.vb_flags);
@@ -538,8 +458,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	/* use MMIO register aperture if available */
 	if ((sc->sc_regbase != 0) && (sc->sc_regbase != 0xffffffff)) {
-		if (pci_mapreg_map(pa, MACH64_BAR_MMIO,  PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_regt, &sc->sc_regh, &sc->sc_regbase, 
+		if (pci_mapreg_map(pa, MACH64_BAR_MMIO,  PCI_MAPREG_TYPE_MEM,
+		    0, &sc->sc_regt, &sc->sc_regh, &sc->sc_regbase,
 		    &sc->sc_regsize) == 0) {
 
 			/*
@@ -551,10 +471,10 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			aprint_normal_dev(sc->sc_dev, "using MMIO aperture\n");
 			use_mmio = TRUE;
 		}
-	} 
+	}
 	if (!use_mmio) {
-		if (bus_space_map(sc->sc_memt, sc->sc_aperbase, sc->sc_apersize,
-			BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
+		if (bus_space_map(sc->sc_memt, sc->sc_aperbase,
+		    sc->sc_apersize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
 			panic("%s: failed to map aperture",
 			    device_xname(sc->sc_dev));
 		}
@@ -578,19 +498,19 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_get_uint32(device_properties(self), "width", &width);
 	prop_dictionary_get_uint32(device_properties(self), "height", &height);
 
+	memset(&sc->sc_ei, 0, sizeof(sc->sc_ei));
 	if ((edid_data = prop_dictionary_get(device_properties(self), "EDID"))
 	    != NULL) {
-	    	struct edid_info ei;
 
 		sc->sc_edid_size = min(1024, prop_data_size(edid_data));
 		memset(sc->sc_edid_data, 0, sizeof(sc->sc_edid_data));
 		memcpy(sc->sc_edid_data, prop_data_data_nocopy(edid_data),
 		    sc->sc_edid_size);
 
-		edid_parse(sc->sc_edid_data, &ei);
+		edid_parse(sc->sc_edid_data, &sc->sc_ei);
 
 #ifdef MACHFB_DEBUG
-		edid_print(&ei);
+		edid_print(&sc->sc_ei);
 #endif
 	}
 
@@ -640,14 +560,19 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aprint_debug("using clock %d\n", sc->sc_clock);
 
 	sc->ref_div = regrb_pll(sc, PLL_REF_DIV);
-	aprint_debug("ref_div: %d\n", sc->ref_div);
+	aprint_error("ref_div: %d\n", sc->ref_div);
 	sc->mclk_fb_div = regrb_pll(sc, MCLK_FB_DIV);
-	aprint_debug("mclk_fb_div: %d\n", sc->mclk_fb_div);
+	aprint_error("mclk_fb_div: %d\n", sc->mclk_fb_div);
 	sc->mem_freq = (2 * sc->ref_freq * sc->mclk_fb_div) /
 	    (sc->ref_div * 2);
 	sc->mclk_post_div = (sc->mclk_fb_div * 2 * sc->ref_freq) /
 	    (sc->mem_freq * sc->ref_div);
 	sc->ramdac_freq = mach64_get_max_ramdac(sc);
+	{
+		sc->minref = sc->ramdac_freq / 510;
+		sc->m = sc->ref_freq / sc->minref;
+		aprint_error("minref: %d m: %d\n", sc->minref, sc->m);
+	}
 	aprint_normal_dev(sc->sc_dev,
 	    "%ld KB %s %d.%d MHz, maximum RAMDAC clock %d MHz\n",
 	    (u_long)sc->memsize,
@@ -676,34 +601,71 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_console = mach64_is_console(sc);
 	aprint_debug("gen_cntl: %08x\n", regr(sc, CRTC_GEN_CNTL));
-#if defined(__sparc__) || defined(__powerpc__)
-	if (sc->sc_console) {
-		if (mode != NULL) {
+
+#define MODE_IS_VALID(m) ((sc->ramdac_freq >= (m)->dot_clock) && \
+			  ((m)->hdisplay <= 11280))
+
+	/* no mode setting support on ancient chips with external clocks */
+	setmode = 0;
+	if (!is_gx) {
+		/*
+		 * Now pick a mode.
+		 */
+		if ((sc->sc_ei.edid_preferred_mode != NULL)) {
+			struct videomode *m = sc->sc_ei.edid_preferred_mode;
+			if (MODE_IS_VALID(m)) {
+				memcpy(&default_mode, m,
+				    sizeof(struct videomode));
+				setmode = 1;
+			} else {
+				aprint_error_dev(sc->sc_dev,
+				    "unable to use preferred mode\n");
+			}
+		}
+		/*
+		 * if we can't use the preferred mode go look for the
+		 * best one we can support
+		 */
+		if (setmode == 0) {
+			struct videomode *m = sc->sc_ei.edid_modes;
+
+			mode = NULL;
+			sort_modes(sc->sc_ei.edid_modes,
+			    &sc->sc_ei.edid_preferred_mode,
+			    sc->sc_ei.edid_nmodes);
+			for (int n = 0; n < sc->sc_ei.edid_nmodes; n++)
+				if (MODE_IS_VALID(&m[n])) {
+					mode = &m[n];
+					break;
+				}
+			if (mode != NULL) {
+				memcpy(&default_mode, mode,
+				    sizeof(struct videomode));
+				setmode = 1;
+			}
+		}
+		/* got nothing? try to pick one based on firmware parameters */
+		if (setmode == 0) {
+			/* no EDID data? */
+			mode = pick_mode_by_ref(width, height, 60);
 			memcpy(&default_mode, mode, sizeof(struct videomode));
 			setmode = 1;
-		} else {
-			mach64_get_mode(sc, &default_mode);
-			setmode = 0;
 		}
-		sc->sc_my_mode = &default_mode;
+		/* still nothing? Grab the default */
+		if (setmode == 0) {
+			mode = pick_mode_by_ref(1024, 768, 60);
+			memcpy(&default_mode, mode, sizeof(struct videomode));
+			setmode = 1;
+		}
 	} else {
-		/* fill in default_mode if it's empty */
+		/* make sure my_mode points at something sensible */
 		mach64_get_mode(sc, &default_mode);
 		if (default_mode.dot_clock == 0) {
-			memcpy(&default_mode, &mach64_modes[4], 
+			memcpy(&default_mode, pick_mode_by_ref(width, height, 60), 
 			    sizeof(default_mode));
 		}
-		sc->sc_my_mode = &default_mode;
-		setmode = 1;
 	}
-#else
-	if (default_mode.dot_clock == 0) {
-		memcpy(&default_mode, &mach64_modes[0], 
-		    sizeof(default_mode));
-	}
-	sc->sc_my_mode = &mach64_modes[0];
-	setmode = 1;
-#endif
+	sc->sc_my_mode = &default_mode;
 
 	sc->bits_per_pixel = 8;
 	sc->virt_x = sc->sc_my_mode->hdisplay;
@@ -725,9 +687,16 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	    sc->bits_per_pixel);
 
 	wsfont_init();
-	
+
+#ifdef GLYPHCACHE_DEBUG
+	/* shrink the screen so we can see part of the glyph cache */
+	sc->sc_my_mode->vdisplay -= 200;
+#endif
+
 	vcons_init(&sc->vd, sc, &mach64_defaultscreen, &sc->sc_accessops);
 	sc->vd.init_screen = mach64_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	sc->sc_gc.gc_bitblt = mach64_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
@@ -751,7 +720,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		    ri->ri_font->fontwidth,
 		    ri->ri_font->fontheight,
 		    defattr);
-		wsdisplay_cnattach(&mach64_defaultscreen, ri, 0, 0, defattr);	
+		wsdisplay_cnattach(&mach64_defaultscreen, ri, 0, 0, defattr);
 	} else {
 		/*
 		 * since we're not the console we can postpone the rest
@@ -782,7 +751,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		vcons_replay_msgbuf(&mach64_console_screen);
 
 	machfb_blank(sc, 0);	/* unblank the screen */
-		
+
 	aa.console = sc->sc_console;
 	aa.scrdata = &mach64_screenlist;
 	aa.accessops = &sc->sc_accessops;
@@ -795,10 +764,10 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	 * so we need to turn them off only when mapping vram in
 	 * WSDISPLAYIO_MODE_DUMB would overlap ( unlikely but far from
 	 * impossible )
-	 */ 
+	 */
 	if (use_mmio) {
 		/*
-		 * Now that we took over, turn off the aperture registers if we 
+		 * Now that we took over, turn off the aperture registers if we
 		 * don't use them. Can't do this earlier since on some hardware
 		 * we use firmware calls as early console output which may in
 		 * turn try to access these registers.
@@ -827,33 +796,26 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	struct mach64_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 
-/* XXX for now */
-#define setmode 0
-
 	ri->ri_depth = sc->bits_per_pixel;
 	ri->ri_width = sc->sc_my_mode->hdisplay;
 	ri->ri_height = sc->sc_my_mode->vdisplay;
 	ri->ri_stride = ri->ri_width;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 	if (ri->ri_depth == 8)
-		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
+		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA |
+			      RI_PREFER_ALPHA;
 
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;
 #endif
+	scr->scr_flags |= VCONS_LOADFONT;
 
-	if (existing) {
-		if (setmode && mach64_set_screentype(sc, scr->scr_type)) {
-			panic("%s: failed to switch video mode",
-			    device_xname(sc->sc_dev));
-		}
-	}
-	
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_my_mode->vdisplay / ri->ri_font->fontheight,
 		    sc->sc_my_mode->hdisplay / ri->ri_font->fontwidth);
-	
+
 	/* enable acceleration */
 	ri->ri_hw = scr;
 	ri->ri_ops.copyrows = mach64_copyrows;
@@ -919,7 +881,6 @@ mach64_get_max_ramdac(struct mach64_softc *sc)
 		return 80000;
 }
 
-#if defined(__sparc__) || defined(__powerpc__)
 static void
 mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 {
@@ -946,7 +907,6 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 	    mode->vdisplay, mode->vsync_start, mode->vsync_end, mode->vtotal);
 #endif
 }
-#endif
 
 static int
 mach64_calc_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc,
@@ -1033,7 +993,7 @@ mach64_modeswitch(struct mach64_softc *sc, struct videomode *mode)
 		return 1;
 	aprint_debug("crtc dot clock: %d\n", crtc.dot_clock);
 	if (crtc.dot_clock == 0) {
-		aprint_error("%s: preposterous dot clock (%d)\n", 
+		aprint_error("%s: preposterous dot clock (%d)\n",
 		    device_xname(sc->sc_dev), crtc.dot_clock);
 		return 1;
 	}
@@ -1073,7 +1033,7 @@ mach64_init_engine(struct mach64_softc *sc)
 
 	regw(sc, CONTEXT_MASK, 0xffffffff);
 
-	regw(sc, DST_OFF_PITCH, (pitch_value / 8) << 22);
+	regw(sc, DST_OFF_PITCH, (pitch_value >> 3) << 22);
 
 	/* make sure the visible area starts where we're going to draw */
 	regw(sc, CRTC_OFF_PITCH, (sc->virt_x >> 3) << 22);
@@ -1087,7 +1047,7 @@ mach64_init_engine(struct mach64_softc *sc)
 	regw(sc, DST_CNTL, DST_LAST_PEL | DST_X_LEFT_TO_RIGHT |
 	    DST_Y_TOP_TO_BOTTOM);
 
-	regw(sc, SRC_OFF_PITCH, (pitch_value / 8) << 22);
+	regw(sc, SRC_OFF_PITCH, (pitch_value >> 3) << 22);
 
 	regw(sc, SRC_Y_X, 0);
 	regw(sc, SRC_HEIGHT1_WIDTH1, 1);
@@ -1161,7 +1121,7 @@ mach64_set_dsp(struct mach64_softc *sc)
 {
 	uint32_t fifo_depth, page_size, dsp_precision, dsp_loop_latency;
 	uint32_t dsp_off, dsp_on, dsp_xclks_per_qw;
-	uint32_t xclks_per_qw, y;
+	uint32_t xclks_per_qw, xclks_per_qw_m, y;
 	uint32_t fifo_off, fifo_on;
 
 	aprint_normal_dev(sc->sc_dev, "initializing the DSP\n");
@@ -1180,9 +1140,15 @@ mach64_set_dsp(struct mach64_softc *sc)
 	}
 
 	dsp_precision = 0;
+
 	xclks_per_qw = (sc->mclk_fb_div * sc->vclk_post_div * 64 << 11) /
 	    (sc->vclk_fb_div * sc->mclk_post_div * sc->bits_per_pixel);
+
+	xclks_per_qw_m = (sc->mem_freq * 64 << 4) /
+		       (sc->vclk_freq * sc->bits_per_pixel);
+	printf("xclks_per_qw %d %d\n", xclks_per_qw >> 7, xclks_per_qw_m);
 	y = (xclks_per_qw * fifo_depth) >> 11;
+		       
 	while (y) {
 		y >>= 1;
 		dsp_precision++;
@@ -1206,7 +1172,6 @@ mach64_set_dsp(struct mach64_softc *sc)
 		}
 		break;
 	case SDRAM:
-	case SGRAM:
 		if (sc->memsize > 1024) {
 			page_size = 8;
 			dsp_loop_latency += 8;
@@ -1214,6 +1179,10 @@ mach64_set_dsp(struct mach64_softc *sc)
 			page_size = 10;
 			dsp_loop_latency += 9;
 		}
+		break;
+	case SGRAM:
+		page_size = 8;
+		dsp_loop_latency = 8;
 		break;
 	default:
 		page_size = 10;
@@ -1280,13 +1249,17 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 		sc->log2_vclk_post_div = 3;
 	}
 	sc->vclk_fb_div = q * sc->vclk_post_div / 100;
-	aprint_debug("post_div: %d log2_post_div: %d mclk_div: %d\n",
+	aprint_error("post_div: %d log2_post_div: %d mclk_div: %d\n",
 	    sc->vclk_post_div, sc->log2_vclk_post_div, sc->mclk_fb_div);
 
 	vclk_ctl = regrb_pll(sc, PLL_VCLK_CNTL);
 	aprint_debug("vclk_ctl: %02x\n", vclk_ctl);
 	vclk_ctl |= PLL_VCLK_RESET;
 	regwb_pll(sc, PLL_VCLK_CNTL, vclk_ctl);
+
+	aprint_error("target: %d output: %d\n", clock, 
+	    (2 * sc->ref_freq * sc->vclk_fb_div) / 
+	    (sc->ref_div * sc->vclk_post_div));
 	
 	regwb_pll(sc, MCLK_FB_DIV, sc->mclk_fb_div);
 	reg = regrb_pll(sc, VCLK_POST_DIV);
@@ -1302,6 +1275,7 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 	clockreg &= ~CLOCK_SEL;
 	clockreg |= sc->sc_clock | CLOCK_STROBE;
 	regw(sc, CLOCK_CNTL, clockreg);
+	sc->vclk_freq = clock;
 }
 
 static void
@@ -1320,16 +1294,16 @@ mach64_init_lut(struct mach64_softc *sc)
 }
 
 static int
-mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g, 
+mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g,
     uint8_t b)
 {
 	sc->sc_cmap_red[index] = r;
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
-	/* 
+	/*
 	 * writing the dac index takes a while, in theory we can poll some
 	 * register to see when it's ready - but we better avoid writing it
-	 * unnecessarily 
+	 * unnecessarily
 	 */
 	if (index != sc->sc_dacw) {
 		regwb(sc, DAC_MASK, 0xff);
@@ -1404,19 +1378,6 @@ mach64_getcmap(struct mach64_softc *sc, struct wsdisplay_cmap *cm)
 }
 
 static int
-mach64_set_screentype(struct mach64_softc *sc, const struct wsscreen_descr *des)
-{
-	struct mach64_crtcregs regs;
-
-	if (mach64_calc_crtcregs(sc, &regs,
-	    (struct videomode *)des->modecookie))
-		return 1;
-
-	mach64_set_crtcregs(sc, &regs);
-	return 0;
-}
-
-static int
 mach64_is_console(struct mach64_softc *sc)
 {
 	bool console = 0;
@@ -1437,10 +1398,10 @@ mach64_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if ((!sc->sc_locked) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -1478,7 +1439,7 @@ mach64_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		int fg, bg, uc;
 		uint8_t *data;
@@ -1496,12 +1457,14 @@ mach64_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 			mach64_rectfill(sc, x, y, wi, he, bg);
 		} else {
 			uc = c - font->firstchar;
-			data = (uint8_t *)font->data + uc * 
+			data = (uint8_t *)font->data + uc *
 			    ri->ri_fontscale;
 
 			mach64_setup_mono(sc, x, y, wi, he, fg, bg);
 			mach64_feed_bytes(sc, ri->ri_fontscale, data);
 		}
+		if (attr & 1)
+			mach64_rectfill(sc, x, y + he - 2, wi, 1, fg);
 	}
 }
 
@@ -1512,13 +1475,13 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
-	uint32_t bg, latch = 0, bg8, fg8, pixel;
+	uint32_t bg, fg, latch = 0, bg8, fg8, pixel;
 	int i, x, y, wi, he, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
 	uint8_t *data8;
 	int rv = 0, cnt = 0;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
 	if (!CHAR_IN_FONT(c, font))
@@ -1527,11 +1490,14 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	wi = font->fontwidth;
 	he = font->fontheight;
 	bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0x0f];
+	fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0x0f];
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 
 	if (c == 0x20) {
 		mach64_rectfill(sc, x, y, wi, he, bg);
+		if (attr & 1)
+			mach64_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 
@@ -1591,8 +1557,8 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 		if ((i & 3) == 3) {
 			regws(sc, HOST_DATA0, latch);
 			/*
-			 * not strictly necessary, old data should be shifted 
-			 * out 
+			 * not strictly necessary, old data should be shifted
+			 * out
 			 */
 			latch = 0;
 			cnt++;
@@ -1605,13 +1571,16 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	}
 	/* if we have pixels left in latch write them out */
 	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
+		latch = latch << ((4 - (i & 3)) << 3);
 		regws(sc, HOST_DATA0, latch);
 	}
 
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
+	} else 	if (attr & 1) {
+		mach64_rectfill(sc, x, y + he - 2, wi, 1, fg);
 	}
+
 }
 
 static void
@@ -1621,7 +1590,7 @@ mach64_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -1639,7 +1608,7 @@ mach64_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1676,10 +1645,10 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		if ((row == 0) && (nrows == ri->ri_rows)) {
-			/* clear full screen */ 
+			/* clear full screen */
 			x = 0;
 			y = 0;
 			width = sc->virt_x;
@@ -1697,12 +1666,18 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 }
 
 static void
-mach64_bitblt(void *cookie, int xs, int ys, int xd, int yd, int width, int height, int rop)
+mach64_bitblt(void *cookie, int xs, int ys, int xd, int yd, int width,
+    int height, int rop)
 {
 	struct mach64_softc *sc = cookie;
 	uint32_t dest_ctl = 0;
 	
+#if 0
+	wait_for_idle(sc);
+#else
 	wait_for_fifo(sc, 10);
+#endif
+
 	regw(sc, DP_PIX_WIDTH, DST_8BPP | SRC_8BPP | HOST_8BPP);
 	regw(sc, DP_SRC, FRGD_SRC_BLIT);
 	regw(sc, DP_MIX, (rop & 0xffff) << 16);
@@ -1732,7 +1707,7 @@ mach64_bitblt(void *cookie, int xs, int ys, int xd, int yd, int width, int heigh
 }
 
 static void
-mach64_setup_mono(struct mach64_softc *sc, int xd, int yd, int width, 
+mach64_setup_mono(struct mach64_softc *sc, int xd, int yd, int width,
      int height, uint32_t fg, uint32_t bg)
 {
 	wait_for_idle(sc);
@@ -1760,7 +1735,7 @@ mach64_feed_bytes(struct mach64_softc *sc, int count, uint8_t *data)
 	uint32_t latch = 0, bork;
 	int shift = 0;
 	int reg = 0;
-	
+
 	for (i = 0; i < count; i++) {
 		bork = data[i];
 		latch |= (bork << shift);
@@ -1778,7 +1753,7 @@ mach64_feed_bytes(struct mach64_softc *sc, int count, uint8_t *data)
 
 
 static void
-mach64_rectfill(struct mach64_softc *sc, int x, int y, int width, int height, 
+mach64_rectfill(struct mach64_softc *sc, int x, int y, int width, int height,
     int colour)
 {
 	wait_for_fifo(sc, 11);
@@ -1828,10 +1803,10 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct mach64_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
-	
+
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;	
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
@@ -1845,15 +1820,15 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		wdf->depth = sc->bits_per_pixel;
 		wdf->cmsize = 256;
 		return 0;
-		
+
 	case WSDISPLAYIO_GETCMAP:
-		return mach64_getcmap(sc, 
+		return mach64_getcmap(sc,
 		    (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_PUTCMAP:
-		return mach64_putcmap(sc, 
+		return mach64_putcmap(sc,
 		    (struct wsdisplay_cmap *)data);
-		    
+
 	/* PCI config read/write passthrough. */
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
@@ -1904,8 +1879,8 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	paddr_t pa;
 
 	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
-		/* 
-		 *'regular' framebuffer mmap()ing 
+		/*
+		 *'regular' framebuffer mmap()ing
 		 */
 		if (offset < (sc->memsize * 1024)) {
 			pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase,
@@ -1922,23 +1897,23 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 		    NULL, NULL, NULL, NULL) != 0) {
 			return -1;
 		}
-		if ((offset >= sc->sc_aperbase) && 
+		if ((offset >= sc->sc_aperbase) &&
 		    (offset < (sc->sc_aperbase + sc->sc_apersize))) {
-			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
 			    BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}
 
-		if ((offset >= sc->sc_regbase) && 
+		if ((offset >= sc->sc_regbase) &&
 		    (offset < (sc->sc_regbase + sc->sc_regsize))) {
-			pa = bus_space_mmap(sc->sc_regt, offset, 0, prot, 
+			pa = bus_space_mmap(sc->sc_regt, offset, 0, prot,
 			    BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}
 
-		if ((offset >= sc->sc_rom.vb_base) && 
+		if ((offset >= sc->sc_rom.vb_base) &&
 		    (offset < (sc->sc_rom.vb_base + sc->sc_rom.vb_size))) {
-			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
 			    BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}

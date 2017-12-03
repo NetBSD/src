@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.19.22.1 2012/11/20 03:02:03 tls Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.19.22.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ struct cac_softc {
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dmamap;
 	int			sc_nunits;
+	uint64_t		sc_unitmask;
 	void			*sc_ih;
 	void *			sc_ccbs;
 	paddr_t			sc_ccbs_paddr;
@@ -138,6 +139,7 @@ struct cac_attach_args {
 int	cac_cmd(struct cac_softc *, int, void *, int, int, int, int,
 		struct cac_context *);
 int	cac_init(struct cac_softc *, const char *, int);
+int	cac_rescan(device_t, const char *, const int *);
 int	cac_intr(void *);
 
 extern const struct	cac_linkage cac_l0;

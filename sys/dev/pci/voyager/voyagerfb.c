@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.22.2.2 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.22.2.3 2017/12/03 11:37:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.22.2.2 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.22.2.3 2017/12/03 11:37:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,18 +269,18 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_depth = 8;
 #endif
 
-	printf("%s: %d x %d, %d bit, stride %d\n", device_xname(self), 
-		sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
-
 	/*
 	 * XXX yeah, casting the fb address to uint32_t is formally wrong
 	 * but as far as I know there are no SM502 with 64bit BARs
 	 */
-	aprint_normal("%s: %d MB video memory at 0x%08x\n", device_xname(self),
+	aprint_normal_dev(self, "%d MB video memory at 0x%08x\n",
 	    (int)(sc->sc_fbsize >> 20), (uint32_t)sc->sc_fb);
 
 	/* init engine here */
 	voyagerfb_init(sc);
+
+	aprint_normal_dev(self, "%d x %d, %d bit, stride %d\n", 
+		sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
@@ -514,6 +514,12 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 			cu = (struct wsdisplay_cursor *)data;
 			return voyagerfb_scursor(sc, cu);
+		}
+
+	case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 		}
 	}
 	return EPASSTHROUGH;

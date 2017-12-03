@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2012/07/29 18:05:45 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.2.1 2017/12/03 11:36:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2012/07/29 18:05:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.2.1 2017/12/03 11:36:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,21 +55,30 @@ static struct btinfo_rootdevice *bi_rdev;
 static struct btinfo_bootpath *bi_path;
 static struct btinfo_net *bi_net;
 static struct btinfo_prodfamily *bi_pfam;
+static struct btinfo_model *bi_model;
 
-struct i2cdev {
-	const char *family;
-	const char *name;
-	int addr;
+struct i2c_dev {
+	const char	*name;
+	unsigned	addr;
+	/* only attach when one of these bits in the model flags is set */
+	uint32_t	model_mask;
 };
 
-static struct i2cdev rtcmodel[] = {
-    { "dlink",    "strtc",      0x68 },
-    { "iomega",   "dsrtc",      0x68 },
-    { "kurobox",  "rs5c372rtc", 0x32 },
-    { "kurot4",   "rs5c372rtc", 0x32 },
-    { "nhnas",    "pcf8563rtc", 0x51 },
-    { "qnap",     "s390rtc",    0x30 },
-    { "synology", "rs5c372rtc", 0x32 },
+#define MAXI2CDEVS	4
+struct model_i2c {
+	const char	*family;
+	struct i2c_dev	i2c_devs[MAXI2CDEVS];
+};
+
+static struct model_i2c model_i2c_list[] = {
+	{ "dlink",	{	{ "strtc",	0x68, 0 } } },
+	{ "iomega",	{	{ "dsrtc",	0x68, 0 } } },
+	{ "kurobox",	{	{ "rs5c372rtc", 0x32, 0 } } },
+	{ "kurot4",	{	{ "rs5c372rtc", 0x32, 0 } } },
+	{ "nhnas",	{	{ "pcf8563rtc", 0x51, 0 } } },
+	{ "qnap",	{	{ "s390rtc",    0x30, 0 } } },
+	{ "synology",	{	{ "rs5c372rtc", 0x32, 0 },
+				{ "lmtemp",	0x48, BI_MODEL_THERMAL } } },
 };
 
 static void add_i2c_child_devices(device_t, const char *);
@@ -85,6 +94,7 @@ cpu_configure(void)
 	bi_path = lookup_bootinfo(BTINFO_BOOTPATH);
 	bi_net = lookup_bootinfo(BTINFO_NET);
 	bi_pfam = lookup_bootinfo(BTINFO_PRODFAMILY);
+	bi_model = lookup_bootinfo(BTINFO_MODEL);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -167,27 +177,38 @@ device_register(device_t dev, void *aux)
 static void
 add_i2c_child_devices(device_t self, const char *family)
 {
-	struct i2cdev *rtc;
+	struct i2c_dev *model_i2c_devs;
 	prop_dictionary_t pd;
 	prop_array_t pa;
 	int i;
 
-	rtc = NULL;
-	for (i = 0; i < (int)(sizeof(rtcmodel)/sizeof(rtcmodel[0])); i++) {
-		if (strcmp(family, rtcmodel[i].family) == 0) {
-			rtc = &rtcmodel[i];
+	for (i = 0;
+	    i < (int)(sizeof(model_i2c_list) / sizeof(model_i2c_list[0]));
+	    i++) {
+		if (strcmp(family, model_i2c_list[i].family) == 0) {
+			model_i2c_devs = model_i2c_list[i].i2c_devs;
 			goto found;
 		}
 	}
 	return;
 
  found:
-	pd = prop_dictionary_create();
+	/* make an i2c-child-devices property list with for direct config. */
 	pa = prop_array_create();
-	prop_dictionary_set_cstring_nocopy(pd, "name", rtc->name);
-	prop_dictionary_set_uint32(pd, "addr", rtc->addr);
-	prop_array_add(pa, pd);
+
+	for (i = 0; i < MAXI2CDEVS && model_i2c_devs[i].name != NULL; i++) {
+		if (model_i2c_devs[i].model_mask != 0 &&
+		    !(bi_model->flags & model_i2c_devs[i].model_mask))
+			continue;
+		pd = prop_dictionary_create();
+		prop_dictionary_set_cstring_nocopy(pd, "name",
+		    model_i2c_devs[i].name);
+		prop_dictionary_set_uint32(pd, "addr",
+		    model_i2c_devs[i].addr);
+		prop_array_add(pa, pd);
+		prop_object_release(pd);
+	}
+
 	prop_dictionary_set(device_properties(self), "i2c-child-devices", pa);
-	prop_object_release(pd);
 	prop_object_release(pa);
 }

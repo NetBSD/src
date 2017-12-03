@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.18.6.1 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: uep.c,v 1.18.6.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,12 +33,12 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.18.6.1 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.18.6.2 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
@@ -54,15 +54,23 @@ __KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.18.6.1 2014/08/20 00:03:51 tls Exp $");
 #include <dev/wscons/tpcalibvar.h>
 
 #define UIDSTR	"eGalax USB SN000000"
+/* calibration - integer values, perhaps sysctls?  */
+#define X_RATIO   293 
+#define X_OFFSET  -28
+#define Y_RATIO   -348
+#define Y_OFFSET  537
+/* an X_RATIO of ``312''  means : reduce by a factor 3.12 x axis amplitude */
+/* an Y_RATIO of ``-157'' means : reduce by a factor 1.57 y axis amplitude,
+ * and reverse y motion */
 
 struct uep_softc {
 	device_t sc_dev;
-	usbd_device_handle sc_udev;	/* device */
-	usbd_interface_handle sc_iface;	/* interface */
+	struct usbd_device *sc_udev;	/* device */
+	struct usbd_interface *sc_iface;	/* interface */
 	int sc_iface_number;
 
 	int			sc_intr_number; /* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_ibuf;
 	int			sc_isize;
 
@@ -81,7 +89,7 @@ static struct wsmouse_calibcoords default_calib = {
 	.samplelen = WSMOUSE_CALIBCOORDS_RESET,
 };
 
-Static void uep_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void uep_intr(struct usbd_xfer *, void *, usbd_status);
 
 Static int	uep_enable(void *);
 Static void	uep_disable(void *);
@@ -107,13 +115,13 @@ uep_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if ((uaa->vendor == USB_VENDOR_EGALAX) && (
-		(uaa->product == USB_PRODUCT_EGALAX_TPANEL)
-		|| (uaa->product == USB_PRODUCT_EGALAX_TPANEL2)))
+	if ((uaa->uaa_vendor == USB_VENDOR_EGALAX) && (
+		(uaa->uaa_product == USB_PRODUCT_EGALAX_TPANEL)
+		|| (uaa->uaa_product == USB_PRODUCT_EGALAX_TPANEL2)))
 		return UMATCH_VENDOR_PRODUCT;
 
-	if ((uaa->vendor == USB_VENDOR_EGALAX2)
-	&&  (uaa->product == USB_PRODUCT_EGALAX2_TPANEL))
+	if ((uaa->uaa_vendor == USB_VENDOR_EGALAX2)
+	&&  (uaa->uaa_product == USB_PRODUCT_EGALAX2_TPANEL))
 		return UMATCH_VENDOR_PRODUCT;
 
 
@@ -125,7 +133,7 @@ uep_attach(device_t parent, device_t self, void *aux)
 {
 	struct uep_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -285,12 +293,12 @@ uep_enable(void *v)
 	if (sc->sc_isize == 0)
 		return 0;
 
-	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+	sc->sc_ibuf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
 		USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_ibuf,
 		sc->sc_isize, uep_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 		return EIO;
 	}
@@ -318,7 +326,7 @@ uep_disable(void *v)
 	}
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_isize);
 		sc->sc_ibuf = NULL;
 	}
 
@@ -358,13 +366,24 @@ uep_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	return EPASSTHROUGH;
 }
 
+static int
+uep_adjust(int v, int off, int rat)
+{
+	int num = 100 * v;
+	int quot = num / rat;
+	int rem = num % rat;
+	if (num >= 0 && rem < 0)
+		quot++;
+	return quot + off;
+}
+
 void
-uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+uep_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uep_softc *sc = addr;
 	u_char *p = sc->sc_ibuf;
 	u_char msk;
-	u_int32_t len;
+	uint32_t len;
 	int x = 0, y = 0, s;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
@@ -429,8 +448,8 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		default:
 			msk = 0x0f;	/* H=0, L=0 */
 		}
-		x = ((p[3] & msk) << 7) | p[4];
-		y = ((p[1] & msk) << 7) | p[2];
+		x = uep_adjust(((p[3] & msk) << 7) | p[4], X_OFFSET, X_RATIO);
+		y = uep_adjust(((p[1] & msk) << 7) | p[2], Y_OFFSET, Y_RATIO);
 
 		tpcalib_trans(&sc->sc_tpcalib, x, y, &x, &y);
 

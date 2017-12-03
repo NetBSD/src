@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox_subr.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp $	*/
+/*	$NetBSD: bcm2835_mbox_subr.c,v 1.1.2.2 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_subr.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_subr.c,v 1.1.2.2 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,12 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_subr.c,v 1.1.2.1 2012/11/20 03:01:03 tl
 #include <arm/broadcom/bcm2835_mbox.h>
 #include <arm/broadcom/bcm2835_mboxreg.h>
 #include <arm/broadcom/bcm2835reg.h>
-
-
-#define	BCM2835_MBOX_CHAN(chan) ((chan) & 0xf)
-#define	BCM2835_MBOX_DATA(data) ((data) & ~0xf)
-
-#define	BCM2835_MBOX_MSG(chan, data) (((chan) & 0xf) | ((data) & ~0xf))
 
 void
 bcm2835_mbox_read(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t chan,

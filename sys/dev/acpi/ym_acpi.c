@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.14 2011/06/02 14:12:25 tsutsui Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.14.12.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.14 2011/06/02 14:12:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.14.12.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,8 @@ ym_acpi_attach(device_t parent, device_t self, void *aux)
 	    mpu_io == NULL ||
 #endif
 	    control_io == NULL) {
-		aprint_error_dev(self, "unable to find i/o registers resource\n");
+		aprint_error_dev(self,
+		    "unable to find i/o registers resource\n");
 		goto out;
 	}
 	if (bus_space_map(sc->sc_iot, sb_io->ar_base, sb_io->ar_length,
@@ -149,7 +150,8 @@ ym_acpi_attach(device_t parent, device_t self, void *aux)
 #endif
 	if (bus_space_map(sc->sc_iot, control_io->ar_base,
 	    control_io->ar_length, 0, &sc->sc_controlioh) != 0) {
-		aprint_error_dev(self, "unable to map i/o registers (control)\n");
+		aprint_error_dev(self,
+		    "unable to map i/o registers (control)\n");
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.53.12.1 2012/11/20 03:02:03 tls Exp $	*/
+/*	$NetBSD: cac.c,v 1.53.12.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,9 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.53.12.1 2012/11/20 03:02:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.53.12.2 2017/12/03 11:37:03 jdolecek Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "bio.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.53.12.1 2012/11/20 03:02:03 tls Exp $");
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-
+#include <sys/module.h>
 #include <sys/bswap.h>
 #include <sys/bus.h>
 
@@ -59,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.53.12.1 2012/11/20 03:02:03 tls Exp $");
 #include <dev/biovar.h>
 #endif /* NBIO > 0 */
 
+#include "ioconf.h"
 #include "locators.h"
 
 static struct	cac_ccb *cac_ccb_alloc(struct cac_softc *, int);
@@ -99,16 +102,13 @@ int
 cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 {
 	struct cac_controller_info cinfo;
-	struct cac_attach_args caca;
 	int error, rseg, size, i;
 	bus_dma_segment_t seg;
 	struct cac_ccb *ccb;
-	int locs[CACCF_NLOCS];
 	char firm[8];
 
 	if (intrstr != NULL)
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-		    intrstr);
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -187,15 +187,14 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	printf("%s: %d channels, firmware <%s>\n", device_xname(sc->sc_dev),
 	    cinfo.scsi_chips, firm);
 
+	/* Limit number of units to size of our sc_unitmask */
 	sc->sc_nunits = cinfo.num_drvs;
-	for (i = 0; i < cinfo.num_drvs; i++) {
-		caca.caca_unit = i;
+	if (sc->sc_nunits > sizeof(sc->sc_unitmask) * NBBY)
+		sc->sc_nunits = sizeof(sc->sc_unitmask) * NBBY;
 
-		locs[CACCF_UNIT] = i;
-
-		config_found_sm_loc(sc->sc_dev, "cac", locs, &caca,
-		    cac_print, config_stdsubmatch);
-	}
+	/* Attach our units */
+	sc->sc_unitmask = 0;
+	cac_rescan(sc->sc_dev, "cac", 0);
 
 	/* Set our `shutdownhook' before we start any device activity. */
 	if (cac_sdh == NULL)
@@ -217,13 +216,35 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	return (0);
 }
 
+int
+cac_rescan(device_t self, const char *attr, const int *flags)
+{
+	struct cac_softc *sc;
+	struct cac_attach_args caca;
+	int locs[CACCF_NLOCS];
+	int i;
+
+	sc = device_private(self);
+	for (i = 0; i < sc->sc_nunits; i++) {
+		if (sc->sc_unitmask & (1 << i))
+			continue;
+		caca.caca_unit = i;
+
+		locs[CACCF_UNIT] = i;
+
+		if (config_found_sm_loc(self, attr, locs, &caca, cac_print,
+			    config_stdsubmatch))
+			sc->sc_unitmask |= 1 << i;
+	}
+	return 0;
+}
+
 /*
  * Shut down all `cac' controllers.
  */
 static void
 cac_shutdown(void *cookie)
 {
-	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
 	u_int8_t tbuf[512];
 	int i;
@@ -723,40 +744,37 @@ cac_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
 	s = splbio();
-	if (cac_ioctl_vol(sc, &bv)) {
-		splx(s);
-		return;
-	}
+	if (cac_ioctl_vol(sc, &bv))
+		bv.bv_status = BIOC_SVINVALID;
 	splx(s);
 
-	switch(bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVSCRUB:
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVREBUILD:
-	case BIOC_SVBUILDING:
-		edata->value_cur = ENVSYS_DRIVE_REBUILD;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVINVALID:
-		/* FALLTRHOUGH */
-	default:
-		edata->value_cur = 0; /* unknown */
-		edata->state = ENVSYS_SINVALID;
-	}
+	bio_vol_to_envsys(edata, &bv);
 }
 #endif /* NBIO > 0 */
+
+MODULE(MODULE_CLASS_DRIVER, cac, NULL);
+
+#ifdef _MODULE
+CFDRIVER_DECL(cac, DV_DISK, NULL);
+#endif
+
+static int
+cac_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_cfdriver_attach(&cac_cd);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_cfdriver_detach(&cac_cd);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+	return error;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ssp.c,v 1.6 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: kern_ssp.c,v 1.6.8.1 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.6 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.6.8.1 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,11 +35,21 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.6 2011/11/19 22:51:25 tls Exp $");
 #include <sys/cprng.h>
 
 #if defined(__SSP__) || defined(__SSP_ALL__)
-long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-void __stack_chk_fail(void);
+# ifdef _RUMPKERNEL
+__weak_alias(__stack_chk_guard, stack_chk_guard)
+__weak_alias(__stack_chk_fail, stack_chk_fail)
+# define SSP_STATIC static __used
+# else
+# define stack_chk_guard __stack_chk_guard
+# define stack_chk_fail __stack_chk_fail
+# define SSP_STATIC
+#endif 
 
-void
-__stack_chk_fail(void)
+SSP_STATIC long stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0,};
+SSP_STATIC void stack_chk_fail(void);
+
+SSP_STATIC void
+stack_chk_fail(void)
 {
 	panic("stack overflow detected; terminated");
 }
@@ -56,12 +66,12 @@ ssp_init(void)
 	 *	2. without calling a function
 	 */
 	size_t i;
-	long guard[__arraycount(__stack_chk_guard)];
+	long guard[__arraycount(stack_chk_guard)];
 
 	cprng_fast(guard, sizeof(guard));
 	s = splhigh();
 	for (i = 0; i < __arraycount(guard); i++)
-		__stack_chk_guard[i] = guard[i];
+		stack_chk_guard[i] = guard[i];
 	splx(s);
 	for (i = 0; i < __arraycount(guard); i++)
 		aprint_debug("%lx ", guard[i]);

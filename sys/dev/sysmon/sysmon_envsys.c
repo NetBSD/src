@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.125.2.2 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.125.2.3 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.125.2.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.125.2.3 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,7 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.125.2.2 2014/08/20 00:03:50 tls 
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
+#include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
@@ -101,17 +103,59 @@ static void sme_initial_refresh(void *);
 static uint32_t sme_get_max_value(struct sysmon_envsys *,
      bool (*)(const envsys_data_t*), bool);
 
+MODULE(MODULE_CLASS_DRIVER, sysmon_envsys, "sysmon,sysmon_taskq,sysmon_power");
+
+static struct sysmon_opvec sysmon_envsys_opvec = {    
+        sysmonopen_envsys, sysmonclose_envsys, sysmonioctl_envsys,
+        NULL, NULL, NULL
+};
+
+ONCE_DECL(once_envsys);
+
+static int
+sme_preinit(void)
+{
+
+	LIST_INIT(&sysmon_envsys_list);
+	mutex_init(&sme_global_mtx, MUTEX_DEFAULT, IPL_NONE);
+	sme_propd = prop_dictionary_create();
+
+	return 0;
+}
+
 /*
  * sysmon_envsys_init:
  *
  * 	+ Initialize global mutex, dictionary and the linked list.
  */
-void
+int
 sysmon_envsys_init(void)
 {
-	LIST_INIT(&sysmon_envsys_list);
-	mutex_init(&sme_global_mtx, MUTEX_DEFAULT, IPL_NONE);
-	sme_propd = prop_dictionary_create();
+	int error;
+
+	(void)RUN_ONCE(&once_envsys, sme_preinit);
+
+	error = sysmon_attach_minor(SYSMON_MINOR_ENVSYS, &sysmon_envsys_opvec);
+
+	return error;
+}
+
+int
+sysmon_envsys_fini(void)
+{
+	int error;
+
+	if ( ! LIST_EMPTY(&sysmon_envsys_list))
+		error = EBUSY;
+	else
+		error = sysmon_attach_minor(SYSMON_MINOR_ENVSYS, NULL);
+
+	if (error == 0)
+		mutex_destroy(&sme_global_mtx);
+
+	// XXX: prop_dictionary ???
+
+	return error;
 }
 
 /*
@@ -481,10 +525,13 @@ sysmon_envsys_create(void)
 {
 	struct sysmon_envsys *sme;
 
+	CTASSERT(SME_CALLOUT_INVALID == 0);
+
 	sme = kmem_zalloc(sizeof(*sme), KM_SLEEP);
 	TAILQ_INIT(&sme->sme_sensors_list);
 	LIST_INIT(&sme->sme_events_list);
 	mutex_init(&sme->sme_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sme->sme_work_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sme->sme_condvar, "sme_wait");
 
 	return sme;
@@ -508,6 +555,7 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 		TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	}
 	mutex_destroy(&sme->sme_mtx);
+	mutex_destroy(&sme->sme_work_mtx);
 	cv_destroy(&sme->sme_condvar);
 	kmem_free(sme, sizeof(*sme));
 }
@@ -579,6 +627,7 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	envsys_data_t *oedata;
 	bool found = false;
+	bool destroy = false;
 
 	KASSERT(sme != NULL || edata != NULL);
 
@@ -603,11 +652,21 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/*
 	 * remove it, unhook from rnd(4), and decrement the sensors count.
 	 */
+	if (oedata->flags & ENVSYS_FHAS_ENTROPY)
+		rnd_detach_source(&oedata->rnd_src);
 	sme_event_unregister_sensor(sme, edata);
+	if (LIST_EMPTY(&sme->sme_events_list)) {
+		if (sme->sme_callout_state == SME_CALLOUT_READY)
+			sme_events_halt_callout(sme);
+		destroy = true;
+	}
 	TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	sme->sme_nsensors--;
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
+
+	if (destroy)
+		sme_events_destroy(sme);
 
 	return 0;
 }
@@ -640,6 +699,8 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	KASSERT(sme != NULL);
 	KASSERT(sme->sme_name != NULL);
 
+	(void)RUN_ONCE(&once_envsys, sme_preinit);
+
 	/*
 	 * Check if requested sysmon_envsys device is valid
 	 * and does not exist already in the list.
@@ -647,8 +708,8 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	mutex_enter(&sme_global_mtx);
 	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
 	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
-		       mutex_exit(&sme_global_mtx);
-		       return EEXIST;
+			mutex_exit(&sme_global_mtx);
+			return EEXIST;
 	       }
 	}
 	mutex_exit(&sme_global_mtx);
@@ -739,6 +800,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	mutex_enter(&sme_global_mtx);
 	if (!prop_dictionary_set(sme_propd, sme->sme_name, array)) {
 		error = EINVAL;
+		mutex_exit(&sme_global_mtx);
 		DPRINTF(("%s: prop_dictionary_set for '%s'\n", __func__,
 		    sme->sme_name));
 		goto out;
@@ -761,7 +823,6 @@ out:
 	 */
 	if (error == 0) {
 		nevent = 0;
-		sysmon_task_queue_init();
 
 		if (sme->sme_flags & SME_INIT_REFRESH) {
 			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
@@ -914,13 +975,10 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 {
 	prop_array_t array;
 	struct sysmon_envsys *osme;
+	envsys_data_t *edata;
 
 	KASSERT(sme != NULL);
 
-	/*
-	 * Unregister all events associated with device.
-	 */
-	sme_event_unregister_all(sme);
 	/*
 	 * Decrement global sensors counter and the first_sensor index
 	 * for remaining devices in the list (only used for compatibility
@@ -934,6 +992,15 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	}
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_global_mtx);
+
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+		sysmon_envsys_sensor_detach(sme, edata);
+	}
+
+	/*
+	 * Unregister all events associated with device.
+	 */
+	sme_event_unregister_all(sme);
 
 	/*
 	 * Remove the device (and all its objects) from the global dictionary.
@@ -1205,15 +1272,23 @@ sme_remove_userprops(void)
 			}
 
 			/*
-			 * Finally, remove any old limits event, then
-			 * install a new event (which will update the
-			 * dictionary)
+			 * If the sensor is providing entropy data,
+			 * get rid of the rndsrc;  we'll provide a new
+			 * one shortly.
+			 */
+			if (edata->flags & ENVSYS_FHAS_ENTROPY)
+				rnd_detach_source(&edata->rnd_src);
+
+			/*
+			 * Remove the old limits event, if any
 			 */
 			sme_event_unregister(sme, edata->desc,
 			    PENVSYS_EVENT_LIMITS);
 
 			/*
-			 * Find the correct units for this sensor.
+			 * Create and install a new event (which will
+			 * update the dictionary) with the correct
+			 * units.
 			 */
 			sdt_units = sme_find_table_entry(SME_DESC_UNITS,
 			    edata->units);
@@ -1226,6 +1301,11 @@ sme_remove_userprops(void)
 				    &lims, props, PENVSYS_EVENT_LIMITS,
 				    sdt_units->crittype);
 			}
+
+			/* Finally, if the sensor provides entropy,
+			 * create an additional event entry and attach
+			 * the rndsrc
+			 */
 			if (edata->flags & ENVSYS_FHAS_ENTROPY) {
 				sme_event_register(sdict, edata, sme,
 				    &lims, props, PENVSYS_EVENT_NULL,
@@ -1244,8 +1324,17 @@ sme_remove_userprops(void)
 		 * Restore default timeout value.
 		 */
 		sme->sme_events_timeout = SME_EVENTS_DEFTIMEOUT;
+
+		/*
+		 * Note that we need to hold the sme_mtx while calling
+		 * sme_schedule_callout().  Thus to avoid dropping,
+		 * reacquiring, and dropping it again, we just tell
+		 * sme_envsys_release() that the mutex is already owned.
+		 */
+		mutex_enter(&sme->sme_mtx);
 		sme_schedule_callout(sme);
-		sysmon_envsys_release(sme, false);
+		sysmon_envsys_release(sme, true);
+		mutex_exit(&sme->sme_mtx);
 	}
 	mutex_exit(&sme_global_mtx);
 }
@@ -1286,7 +1375,9 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 */
 	if (sme->sme_events_timeout == 0) {
 		sme->sme_events_timeout = SME_EVENTS_DEFTIMEOUT;
+		mutex_enter(&sme->sme_mtx);
 		sme_schedule_callout(sme);
+		mutex_exit(&sme->sme_mtx);
 	}
 
 	if (!prop_dictionary_set_uint64(pdict, "refresh-timeout",
@@ -1599,8 +1690,8 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 
 	sdt = sme_find_table_entry(SME_DESC_STATES, edata->state);
 	if (sdt == NULL) {
-		printf("sme_update_sensor_dictionary: can not update sensor "
-		    "state %d unknown\n", edata->state);
+		printf("sme_update_sensor_dictionary: cannot update sensor %d "
+		    "state %d unknown\n", edata->sensor, edata->state);
 		return EINVAL;
 	}
 
@@ -1760,7 +1851,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					sme_schedule_callout(sme);
 				}
 				mutex_exit(&sme->sme_mtx);
-		}
+			}
 		}
 		return error;
 
@@ -2023,3 +2114,26 @@ sysmon_envsys_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 		rnd_add_uint32(&edata->rnd_src, edata->value_cur);
 	edata->value_prev = edata->value_cur;
 }
+
+static
+int
+sysmon_envsys_modcmd(modcmd_t cmd, void *arg)
+{
+        int ret;
+ 
+        switch (cmd) { 
+        case MODULE_CMD_INIT:
+                ret = sysmon_envsys_init();
+                break;
+ 
+        case MODULE_CMD_FINI:
+                ret = sysmon_envsys_fini();
+                break; 
+   
+        case MODULE_CMD_STAT:
+        default:
+                ret = ENOTTY;
+        }
+  
+        return ret; 
+} 

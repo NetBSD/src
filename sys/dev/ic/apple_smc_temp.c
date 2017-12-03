@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_temp.c,v 1.4.10.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: apple_smc_temp.c,v 1.4.10.3 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Apple System Management Controller: Temperature Sensors
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.4.10.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.4.10.3 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -443,7 +443,7 @@ apple_smc_bound_temp_sensors(struct apple_smc_tag *smc, uint32_t *tstart,
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, apple_smc_temp, "apple_smc");
+MODULE(MODULE_CLASS_DRIVER, apple_smc_temp, "apple_smc,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

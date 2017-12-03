@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.51.12.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.51.12.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.51.12.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.51.12.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ netexport_fini(void)
 		netexport_wrlock();
 		ne = TAILQ_FIRST(&netexport_list);
 		mp = ne->ne_mount;
-		error = vfs_busy(mp, NULL);
+		error = vfs_busy(mp);
 		netexport_wrunlock();
 		if (error != 0) {
 			kpause("nfsfini", false, hz, NULL);
@@ -220,7 +220,7 @@ netexport_fini(void)
 		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
 		netexport_unmount(mp);
 		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 	}
 	rw_destroy(&netexport_lock);
 }
@@ -284,7 +284,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 	}
 
 	/* Mark the file system busy. */
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	vput(vp);
 	if (error != 0)
 		return error;
@@ -332,7 +332,7 @@ out:
 	netexport_wrunlock();
 	if (nmp == NULL)
 		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return error;
 }
 
@@ -541,8 +541,10 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		goto out;
 	if (saddr->sa_len > argp->ex_addrlen)
 		saddr->sa_len = argp->ex_addrlen;
-	if (sacheck(saddr) == -1)
-		return EINVAL;
+	if (sacheck(saddr) == -1) {
+		error = EINVAL;
+		goto out;
+	}
 	if (argp->ex_masklen) {
 		smask = (struct sockaddr *)((char *)saddr + argp->ex_addrlen);
 		error = copyin(argp->ex_mask, smask, argp->ex_masklen);
@@ -550,10 +552,14 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 			goto out;
 		if (smask->sa_len > argp->ex_masklen)
 			smask->sa_len = argp->ex_masklen;
-		if (smask->sa_family != saddr->sa_family)
-			return EINVAL;
-		if (sacheck(smask) == -1)
-			return EINVAL;
+		if (smask->sa_family != saddr->sa_family) {
+			error = EINVAL;
+			goto out;
+		}
+		if (sacheck(smask) == -1) {
+			error = EINVAL;
+			goto out;
+		}
 	}
 	i = saddr->sa_family;
 	if ((rnh = nep->ne_rtable[i]) == 0) {

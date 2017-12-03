@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.87 2012/07/29 02:58:27 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.87.2.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.87 2012/07/29 02:58:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.87.2.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -750,8 +750,7 @@ acpitz_print_processor_list(device_t dv)
 
 		aprint_normal(" %s", device_xname(ci->ci_dev));
 
-		if (sc->sc_psl)
-			sc->sc_psl[cnt] = ci;
+		sc->sc_psl[cnt] = ci;
 		++cnt;
 	}
 
@@ -864,7 +863,7 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpitz, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpitz, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.55.2.2 2014/08/20 00:03:24 tls Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.55.2.3 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.55.2.2 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.55.2.3 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1230,8 +1230,12 @@ filt_tctrlread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops tctrlread_filtops =
-	{ 1, NULL, filt_tctrlrdetach, filt_tctrlread };
+static const struct filterops tctrlread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_tctrlrdetach,
+	.f_event = filt_tctrlread,
+};
 
 int
 tctrlkqfilter(dev_t dev, struct knote *kn)
@@ -1447,42 +1451,43 @@ tctrl_event_thread(void *v)
 {
 	struct tctrl_softc *sc = v;
 	device_t dv;
-	struct sd_softc *sd = NULL;
-	struct lance_softc *le = NULL;
-	int ticks = hz/2;
-	int rcount, wcount;
-	int s;
+	struct sd_softc *sd;
 	
-	while (sd == NULL) {
+	for (sd = NULL; sd == NULL;) {
 		dv = device_find_by_xname("sd0");
 		if (dv != NULL)
 			sd = device_private(dv);
 		else
 			tsleep(&sc->sc_events, PWAIT, "probe_disk", hz);
 	}			
+
 	dv = device_find_by_xname("le0");
-	if (dv != NULL)
-		le = device_private(dv);
-	printf("found %s\n", device_xname(sd->sc_dev));
-	rcount = sd->sc_dk.dk_stats->io_rxfer;
-	wcount = sd->sc_dk.dk_stats->io_wxfer;
+
+	struct lance_softc *le = dv != NULL ? device_private(dv) : NULL;
+	struct dk_softc *dk = &sd->sc_dksc;
+	printf("found %s\n", device_xname(dk->sc_dev));
+
+	struct io_stats *io = dk->sc_dkdev.dk_stats;
+	int rcount = io->io_rxfer;
+	int wcount = io->io_wxfer;
 
 	tctrl_read_event_status(sc);
 	
-	while (1) {
+	int ticks = hz / 2;
+	for (;;) {
 		tsleep(&sc->sc_events, PWAIT, "tctrl_event", ticks);
-		s = splhigh();
-		if ((rcount != sd->sc_dk.dk_stats->io_rxfer) || 
-		    (wcount != sd->sc_dk.dk_stats->io_wxfer)) {
-			rcount = sd->sc_dk.dk_stats->io_rxfer;
-			wcount = sd->sc_dk.dk_stats->io_wxfer;
+		int s = splhigh();
+		if ((rcount != io->io_rxfer) || (wcount != io->io_wxfer)) {
+			rcount = io->io_rxfer;
+			wcount = io->io_wxfer;
 			sc->sc_lcdwanted |= TS102_LCD_DISK_ACTIVE;
 		} else
 			sc->sc_lcdwanted &= ~TS102_LCD_DISK_ACTIVE;
+
 		if (le != NULL) {
-			if (le->sc_havecarrier != 0) {
+			if (le->sc_havecarrier != 0)
 				sc->sc_lcdwanted |= TS102_LCD_LAN_ACTIVE;
-			} else
+			else
 				sc->sc_lcdwanted &= ~TS102_LCD_LAN_ACTIVE;
 		}
 		splx(s);

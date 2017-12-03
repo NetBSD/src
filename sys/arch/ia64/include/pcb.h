@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 2008/03/20 09:09:20 kochi Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.48.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -67,8 +67,9 @@ struct pcb {
 struct trapframe;
 
 void makectx(struct trapframe *, struct pcb *);
-/*void restorectx(struct pcb *) __dead2;*/
-int swapctx(struct pcb *old, struct pcb *new);
+/* XXX not sure about the attributes, for now use equivalent to freebsd */
+void restorectx(struct pcb *) __attribute__ ((__noreturn__)); /* same as __dead2? */
+int swapctx(struct pcb *old, struct pcb *new) __returns_twice;
 
 void ia32_restorectx(struct pcb *);
 void ia32_savectx(struct pcb *);

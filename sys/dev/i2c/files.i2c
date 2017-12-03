@@ -1,14 +1,15 @@
-#	$NetBSD: files.i2c,v 1.45.10.3 2014/08/20 00:03:37 tls Exp $
+#	$NetBSD: files.i2c,v 1.45.10.4 2017/12/03 11:37:02 jdolecek Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
 define	i2cexec
 
-device	iic { [addr = -1], [size = -1] }
+device	iic { [addr = -1], [size = -1] } : i2c_bitbang
 attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
-file	dev/i2c/i2c_subr.c			iic | i2cbus
+file	dev/i2c/i2c_subr.c			i2cbus
+defparam opt_i2c.h				I2C_MAX_ADDR
 
 # Common module for bit-bang'ing an I2C bus
 define	i2c_bitbang
@@ -54,6 +55,7 @@ define	motoi2c
 file	dev/i2c/motoi2c.c			motoi2c
 define	mvi2c
 file	dev/i2c/gttwsi_core.c			mvi2c
+defflag opt_gttwsi.h				GTTWSI_ALLWINNER
 
 #
 # I2C client devices
@@ -118,7 +120,7 @@ attach	lmenv at iic
 file	dev/i2c/lm87.c				lmenv
 
 # Dallas DS1307 Real Time Clock
-device	dsrtc
+device	dsrtc: sysmon_envsys
 attach	dsrtc at iic
 file	dev/i2c/ds1307.c			dsrtc
 
@@ -174,6 +176,11 @@ device	admtemp: sysmon_envsys
 attach	admtemp at iic
 file	dev/i2c/adm1021.c		admtemp
 
+# ADM1026 hardware monitor
+device	adm1026hm: sysmon_envsys
+attach	adm1026hm at iic
+file	dev/i2c/adm1026.c		adm1026hm
+
 # SMSC LPC47M192 hardware monitor
 device	smscmon: sysmon_envsys
 attach	smscmon at iic
@@ -197,7 +204,7 @@ file	dev/i2c/tps65950.c		tps65950pm
 # TI TPS65217
 device	tps65217pmic: sysmon_envsys
 attach	tps65217pmic at iic
-file	dev/i2c/tps65217pmic.c 		tps65217pmic
+file	dev/i2c/tps65217pmic.c 		tps65217pmic	needs-flag
 
 # Microchip MCP980x
 device	mcp980x: sysmon_envsys
@@ -214,3 +221,66 @@ device  mpl115a: sysmon_envsys
 attach  mpl115a at iic
 file    dev/i2c/mpl115a.c		mpl115a
 
+# AXP20x Power Management Unit
+device	axp20x { }: sysmon_envsys
+device	axp20xreg: axp20x
+attach	axp20x at iic
+attach	axp20xreg at axp20x
+file	dev/i2c/axp20x.c			axp20x		needs-flag
+
+# AXP22x Power Management Unit
+device	axp22x: sysmon_envsys
+attach	axp22x at iic
+file	dev/i2c/axp22x.c			axp22x
+
+# AXP806 Power Management Unit
+device	axp806pm
+attach	axp806pm at iic
+file	dev/i2c/axp806.c			axp806pm	needs-flag
+
+# AXP809 Power Management Unit
+device	axp809pm
+attach	axp809pm at iic
+file	dev/i2c/axp809.c			axp809pm	needs-flag
+
+# AC100 integrated audio codec and RTC
+device	ac100ic
+attach	ac100ic at iic
+file	dev/i2c/ac100.c				ac100ic		needs-flag
+
+# ACT8846 Power Management Unit
+device	act8846pm
+attach	act8846pm at iic
+file	dev/i2c/act8846.c			act8846pm	needs-flag
+
+# Texas Instruments TMP451 Temperature Sensor
+device	titemp: sysmon_envsys
+attach	titemp at iic
+file	dev/i2c/titemp.c			titemp
+
+# AMS AS3722 Power Management IC
+device	as3722pmic { }: sysmon_wdog
+device	as3722reg: as3722pmic
+attach	as3722pmic at iic
+attach	as3722reg at as3722pmic
+file	dev/i2c/as3722.c			as3722pmic	needs-flag
+
+# Texas Instruments TCA8418 Keypad Scan IC
+device	tcakp: wskbddev, linux_keymap
+attach	tcakp at iic
+file	dev/i2c/tcakp.c				tcakp
+
+# MAXIM MAX77620 Power Management IC
+device	max77620pmic
+attach	max77620pmic at iic
+file	dev/i2c/max77620.c			max77620pmic
+
+# Texas Instruments TCA9539 I/O Expander
+device	tcagpio
+attach	tcagpio at iic
+file	dev/i2c/tcagpio.c			tcagpio
+
+# Silergy SY8106A regulator
+device	sy8106a
+attach	sy8106a at iic
+file	dev/i2c/sy8106a.c			sy8106a

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_fha.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfs_fha.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  *
@@ -23,8 +23,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* FreeBSD: head/sys/nfs/nfs_fha.h 249596 2013-04-17 22:42:43Z ken  */
-/* $NetBSD: nfs_fha.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $ */
+/* FreeBSD: head/sys/nfs/nfs_fha.h 260097 2013-12-30 20:23:15Z mav  */
+/* $NetBSD: nfs_fha.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $ */
 
 #ifndef	_NFS_FHA_H
 #define	_NFS_FHA_H 1
@@ -37,11 +37,7 @@
 #define FHA_DEF_MAX_NFSDS_PER_FH	8
 #define FHA_DEF_MAX_REQS_PER_NFSD	0  /* Unlimited */
 
-/* This is the global structure that represents the state of the fha system. */
-struct fha_global {
-	struct fha_hash_entry_list *hashtable;
-	u_long hashmask;
-};
+#define FHA_HASH_SIZE	251
 
 struct fha_ctls {
 	int	 enable;
@@ -64,6 +60,7 @@ struct fha_ctls {
  * avoid contention between threads over single files.
  */
 struct fha_hash_entry {
+	struct mtx *mtx;
 	LIST_ENTRY(fha_hash_entry) link;
 	u_int64_t fh;
 	u_int32_t num_rw;
@@ -73,6 +70,11 @@ struct fha_hash_entry {
 };
 
 LIST_HEAD(fha_hash_entry_list, fha_hash_entry);
+
+struct fha_hash_slot {
+	struct fha_hash_entry_list list;
+	struct mtx mtx;
+};
 
 /* A structure used for passing around data internally. */
 struct fha_info {
@@ -84,7 +86,7 @@ struct fha_info {
 struct fha_callbacks {
 	rpcproc_t (*get_procnum)(rpcproc_t procnum);
 	int (*realign)(struct mbuf **mb, int malloc_flags);
-	int (*get_fh)(fhandle_t *fh, int v3, struct mbuf **md, caddr_t *dpos);
+	int (*get_fh)(uint64_t *fh, int v3, struct mbuf **md, caddr_t *dpos);
 	int (*is_read)(rpcproc_t procnum);
 	int (*is_write)(rpcproc_t procnum);
 	int (*get_offset)(struct mbuf **md, caddr_t *dpos, int v3, struct
@@ -95,7 +97,7 @@ struct fha_callbacks {
 };
 
 struct fha_params {
-	struct fha_global g_fha; 
+	struct fha_hash_slot fha_hash[FHA_HASH_SIZE];
 	struct sysctl_ctx_list sysctl_ctx;
 	struct sysctl_oid *sysctl_tree;
 	struct fha_ctls ctls;

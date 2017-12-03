@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.6 2010/08/08 18:18:58 chs Exp $	*/
+/*	$NetBSD: support.S,v 1.6.18.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -769,82 +769,8 @@ ENTRY(copyoutstr, 4)
 	st8	[loc2]=r0			// kill the fault handler.
 	mov	ar.pfs=loc0			// restore ar.pfs
 	mov	rp=loc1				// restore ra.
-	br.ret.sptk.few rp			// ret0 left over from bcopy
+	br.ret.sptk.few rp			// ret0 left over from copystr
 END(copyoutstr)
-
-/*
- * Not the fastest bcopy in the world.
- */
-ENTRY(bcopy, 3)
-	mov	ret0=r0				// return zero for copy{in,out}
-	;;
-	cmp.le	p6,p0=in2,r0			// bail if len <= 0
-(p6)	br.ret.spnt.few rp
-
-	sub	r14=in1,in0 ;;			// check for overlap
-	cmp.ltu	p6,p0=r14,in2			// dst-src < len
-(p6)	br.cond.spnt.few 5f
-
-	extr.u	r14=in0,0,3			// src & 7
-	extr.u	r15=in1,0,3 ;;			// dst & 7
-	cmp.eq	p6,p0=r14,r15			// different alignment?
-(p6)	br.cond.spnt.few 2f			// branch if same alignment
-
-1:	ld1	r14=[in0],1 ;;			// copy bytewise
-	st1	[in1]=r14,1
-	add	in2=-1,in2 ;;			// len--
-	cmp.ne	p6,p0=r0,in2
-(p6)	br.cond.dptk.few 1b			// loop
-	br.ret.sptk.few rp			// done
-
-2:	cmp.eq	p6,p0=r14,r0			// aligned?
-(p6)	br.cond.sptk.few 4f
-
-3:	ld1	r14=[in0],1 ;;			// copy bytewise
-	st1	[in1]=r14,1
-	extr.u	r15=in0,0,3			// src & 7
-	add	in2=-1,in2 ;;			// len--
-	cmp.eq	p6,p0=r0,in2			// done?
-	cmp.eq	p7,p0=r0,r15 ;;			// aligned now?
-(p6)	br.ret.spnt.few rp			// return if done
-(p7)	br.cond.spnt.few 4f			// go to main copy
-	br.cond.sptk.few 3b			// more bytes to copy
-
-	// At this point, in2 is non-zero
-
-4:	mov	r14=8 ;;
-	cmp.ltu	p6,p0=in2,r14 ;;		// len < 8?
-(p6)	br.cond.spnt.few 1b			// byte copy the end
-	ld8	r15=[in0],8 ;;			// copy word
-	st8	[in1]=r15,8
-	add	in2=-8,in2 ;;			// len -= 8
-	cmp.ne	p6,p0=r0,in2			// done?
-(p6)	br.cond.spnt.few 4b			// again
-
-	br.ret.sptk.few rp			// return
-
-	// Don't bother optimising overlap case
-
-5:	add	in0=in0,in2
-	add	in1=in1,in2 ;;
-	add	in0=-1,in0
-	add	in1=-1,in1 ;;
-
-6:	ld1	r14=[in0],-1 ;;
-	st1	[in1]=r14,-1
-	add	in2=-1,in2 ;;
-	cmp.ne	p6,p0=r0,in2
-(p6)	br.cond.spnt.few 6b
-
-	br.ret.sptk.few rp
-END(bcopy)
-
-ENTRY(memcpy,3)
-	mov	r14=in0 ;;
-	mov	in0=in1 ;;
-	mov	in1=r14
-	br.cond.sptk.few bcopy
-END(memcpy)
 
 /*
  * int kcopy(const void *from, void *to, size_t len);
@@ -876,12 +802,13 @@ ENTRY(kcopy, 3)
 	mov	out0=in0
 	mov	out1=in1
 	mov	out2=in2
+	mov	ret0=r0				// XXX netbsd kcopy same as freebsd?
 	;;
 	br.call.sptk.few rp=bcopy		// do the copy.
 	st8	[loc2]=r0			// kill the fault handler.
 	mov	ar.pfs=loc0			// restore ar.pfs
 	mov	rp=loc1				// restore ra.
-	br.ret.sptk.few rp			// ret0 left over from bcopy
+	br.ret.sptk.few rp
 END(kcopy)
 
 ENTRY(copyin, 3)
@@ -914,12 +841,13 @@ ENTRY(copyin, 3)
 	mov	out0=in0
 	mov	out1=in1
 	mov	out2=in2
+	mov	ret0=r0				// return zero for copy{in,out}
 	;;
 	br.call.sptk.few rp=bcopy		// do the copy.
 	st8	[loc2]=r0			// kill the fault handler.
 	mov	ar.pfs=loc0			// restore ar.pfs
 	mov	rp=loc1				// restore ra.
-	br.ret.sptk.few rp			// ret0 left over from bcopy
+	br.ret.sptk.few rp
 END(copyin)
 
 ENTRY(copyout, 3)
@@ -952,12 +880,13 @@ ENTRY(copyout, 3)
 	mov	out0=in0
 	mov	out1=in1
 	mov	out2=in2
+	mov	ret0=r0				// return zero for copy{in,out}
 	;;
 	br.call.sptk.few rp=bcopy		// do the copy.
 	st8	[loc2]=r0			// kill the fault handler.
 	mov	ar.pfs=loc0			// restore ar.pfs
 	mov	rp=loc1				// restore ra.
-	br.ret.sptk.few rp			// ret0 left over from bcopy
+	br.ret.sptk.few rp
 END(copyout)
 
 ENTRY(copyerr, 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.238.2.2 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: cpu.c,v 1.238.2.3 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.238.2.2 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.238.2.3 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -183,7 +183,7 @@ int go_smp_cpus = 0;	/* non-primary CPUs wait for this to go */
  * This must be locked around all message transactions to ensure only
  * one CPU is generating them.
  */
-static kmutex_t xpmsg_mutex;
+kmutex_t xpmsg_mutex;
 
 #endif /* MULTIPROCESSOR */
 
@@ -367,6 +367,10 @@ cpu_init_evcnt(struct cpu_info *cpi)
 			     NULL, cpu_name(cpi), "IPI mutex_trylock fail");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail_call, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "IPI mutex_trylock fail/call");
+	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_not_held, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "IPI with mutex not held");
+	evcnt_attach_dynamic(&cpi->ci_xpmsg_bogus, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "bogus IPI");
 
 	/*
 	 * These are the per-cpu per-IPL hard & soft interrupt counters.
@@ -653,6 +657,8 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	char *bufp = errbuf;
 	size_t bufsz = sizeof errbuf, wrsz;
 
+	if (is_noop) return;
+
 	mybit = (1 << cpuinfo.ci_cpuid);
 	callself = func && (cpuset & mybit) != 0;
 	cpuset &= ~mybit;
@@ -714,7 +720,10 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 		if ((cpuset & (1 << n)) == 0)
 			continue;
 
-		cpi->msg.tag = XPMSG_FUNC;
+		/*
+		 * Write msg.tag last - if another CPU is polling above it may
+		 * end up seeing an incomplete message. Not likely but still.
+		 */ 
 		cpi->msg.complete = 0;
 		p = &cpi->msg.u.xpmsg_func;
 		p->func = func;
@@ -722,6 +731,9 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 		p->arg0 = arg0;
 		p->arg1 = arg1;
 		p->arg2 = arg2;
+		__insn_barrier();
+		cpi->msg.tag = XPMSG_FUNC;
+		__insn_barrier();
 		/* Fast cross calls use interrupt level 14 */
 		raise_ipi(cpi,13+fasttrap);/*xcall_cookie->pil*/
 	}
@@ -737,7 +749,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	 * have completed (bailing if it takes "too long", being loud about
 	 * this in the process).
 	 */
-	done = is_noop;
+	done = 0;
 	i = 1000000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
@@ -774,7 +786,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 
 	if (i >= 0 || debug_xcall == 0) {
 		if (i < 0)
-			printf_nolog("%s\n", errbuf);
+			aprint_error("%s\n", errbuf);
 		mutex_spin_exit(&xpmsg_mutex);
 		return;
 	}
@@ -1986,6 +1998,12 @@ struct cpu_conf {
 	{ CPU_SUN4M, 1, 3, 1, ANY, "CY7C611", &module_cypress },
 	{ CPU_SUN4M, 1, 0xe, 1, 7, "RT620/625", &module_hypersparc },
 	{ CPU_SUN4M, 1, 0xf, 1, 7, "RT620/625", &module_hypersparc },
+	{ CPU_SUN4M, 4, 0, 0, 1, "SuperSPARC v3", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 2, "SuperSPARC v4", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 3, "SuperSPARC v5", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 8, "SuperSPARC II v1", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 10, "SuperSPARC II v2", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 12, "SuperSPARC II v3", &module_viking },
 	{ CPU_SUN4M, 4, 0, 0, ANY, "TMS390Z50 v0 or TMS390Z55", &module_viking },
 	{ CPU_SUN4M, 4, 1, 0, ANY, "TMS390Z50 v1", &module_viking },
 	{ CPU_SUN4M, 4, 1, 4, ANY, "TMS390S10", &module_ms1 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_impl.h,v 1.9 2011/11/02 13:52:34 yamt Exp $	*/
+/*	$NetBSD: bufq_impl.h,v 1.9.12.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 /*	NetBSD: bufq.h,v 1.3 2005/03/31 11:28:53 yamt Exp	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
@@ -84,7 +84,7 @@ struct bufq_state {
 	void (*bq_fini)(struct bufq_state *);
 	void *bq_private;
 	int bq_flags;			/* Flags from bufq_alloc() */
-	const struct bufq_strat *bq_strat;
+	struct bufq_strat *bq_strat;
 };
 
 static __inline void *bufq_private(const struct bufq_state *) __unused;
@@ -128,12 +128,17 @@ struct bufq_strat {
 	const char *bs_name;
 	void (*bs_initfn)(struct bufq_state *);
 	int bs_prio;
+	int bs_refcnt;
+	SLIST_ENTRY(bufq_strat) bs_next;
 };
 
 #define	BUFQ_DEFINE(name, prio, initfn)			\
-static const struct bufq_strat bufq_strat_##name = {	\
+static struct bufq_strat bufq_strat_##name = {		\
 	.bs_name = #name,				\
-	.bs_prio = prio,					\
-	.bs_initfn = initfn				\
-};							\
-__link_set_add_rodata(bufq_strats, bufq_strat_##name)
+	.bs_prio = prio,				\
+	.bs_initfn = initfn,				\
+	.bs_refcnt = 0					\
+};
+
+int bufq_register(struct bufq_strat *);
+int bufq_unregister(struct bufq_strat *);

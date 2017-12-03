@@ -1,0 +1,100 @@
+#
+#	$NetBSD: PARALLELLA,v 1.3.2.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	Parallella -- Xilinx Zynq Eval Board Kernel
+#
+
+include	"arch/evbarm/conf/std.zynq"
+include "arch/evbarm/conf/files.parallella"
+include	"arch/evbarm/conf/GENERIC.common"
+
+# CPU options
+
+makeoptions	BOARDTYPE="parallella"
+options 	EVBARM_BOARDTYPE=parallella
+
+options 	ZYNQ7000
+options 	ZYNQ7010
+options 	MULTIPROCESSOR
+options 	CPU_CORTEX
+options 	CPU_CORTEXA9
+options		MEMSIZE=1024
+
+# Architecture options
+
+# Console options.    also need IMXUARTCONSOLE
+options 	CONSDEVNAME="\"zynquart\"",CONADDR=0xe0001000
+options 	CONSPEED=115200	# Console speed
+
+#options         DIAGNOSTIC      # internal consistency checks
+#options        DEBUG
+#options 	KGDB
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+# Valid options for BOOT_ARGS:
+#  single		Boot to single user only
+#  kdb			Give control to kernel debugger
+#  ask			Ask for file name to reboot from
+#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
+#  memorydisk=<n>	Set memorydisk size to <n> KB
+#  quiet		Show aprint_naive output
+#  verbose		Show aprint_normal and aprint_verbose output
+options		BOOT_ARGS="\"verbose\""
+
+# Kernel root file system and dump configuration.
+config		netbsd		root on ? type ?
+#config		netbsd-sd0	root on sd0 type ffs
+
+#
+# Device configuration
+#
+
+mainbus0	at root
+
+cpu*		at mainbus?
+
+# The MPCore interrupt controller and global timer
+armperiph0	at mainbus?		# A9 On-Chip Peripherals
+armgic0 	at armperiph?		# ARM Generic Interrupt Controller
+arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
+a9tmr0		at armperiph?		# A9 Global Timer
+#a9wdt0		at armperiph? flags 0	# A9 Watchdog Timer
+
+axi0		at mainbus?
+
+# System Level Control Module
+zynqslcr0	at axi? addr 0xf8000000
+
+# UART
+zynquart0	at axi? addr 0xe0000000 irq 59
+zynquart1	at axi? addr 0xe0001000 irq 82
+options		ZYNQUARTCONSOLE
+
+# SD/MMC
+#sdhc0    	at axi? addr 0xe0100000 irq 56	     # SDIO0
+sdhc1   	at axi? addr 0xe0101000 irq 79	     # SDIO1
+sdmmc*		at sdhc?
+ld*		at sdmmc?			# MMC/SD card
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
+
+# USB Host/Device/OTG
+ehci0		at axi? addr 0xe0002000 irq 53
+#ehci1		at axi? addr 0xe0003000 irq 76
+
+usb*		at ehci?
+
+# USB device drivers
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
+cemac0		at axi? addr 0xe000b000 irq 54
+#cemac1		at axi? addr 0xe000c000 irq 77
+
+# MII/PHY support
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+cinclude "arch/evbarm/conf/PARALLELLA.local"

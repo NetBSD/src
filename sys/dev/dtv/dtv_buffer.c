@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_buffer.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: dtv_buffer.c,v 1.7.12.1 2017/12/03 11:37:00 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.7.12.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,11 +150,6 @@ dtv_buffer_realloc(struct dtv_softc *sc, size_t bufsize)
 	if (nbufs > 0) {
 		ds->ds_buf = kmem_alloc(sizeof(struct dtv_buffer *) * nbufs,
 		    KM_SLEEP);
-		if (ds->ds_buf == NULL) {
-			ds->ds_nbufs = oldnbufs;
-			ds->ds_buf = oldbuf;
-			return ENOMEM;
-		}
 	} else {
 		ds->ds_buf = NULL;
 	}

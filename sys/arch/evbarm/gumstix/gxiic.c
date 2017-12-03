@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.7 2011/06/21 11:38:03 kiyohara Exp $ */
+/*	$NetBSD: gxiic.c,v 1.7.12.1 2017/12/03 11:36:04 jdolecek Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.7 2011/06/21 11:38:03 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.7.12.1 2017/12/03 11:36:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,6 +109,7 @@ gxiicattach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = gxiic_exec;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
 	config_found_ia(sc->sc_pxa_i2c.sc_dev, "i2cbus", &iba, iicbus_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2011/07/17 23:29:10 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2.12.1 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ enum bus_type {
 	PCI_IO_BUS_SPACE,
 	PCI_MEMORY_BUS_SPACE,
 	LAST_BUS_SPACE
-}; 
+};
 /* For backwards compatibility */
 #define SPARC_BUS_SPACE	UPA_BUS_SPACE
 
@@ -171,6 +171,7 @@ struct sparc_bus_space_tag {
 #define	BUS_SPACE_MAP_BUS2		0x0200
 #define	BUS_SPACE_MAP_BUS3		0x0400
 #define	BUS_SPACE_MAP_BUS4		0x0800
+#define BUS_SPACE_MAP_LITTLE		0x1000
 /* sparc uses this, it's not supposed to do anything on sparc64 */
 #define BUS_SPACE_MAP_LARGE		0
 

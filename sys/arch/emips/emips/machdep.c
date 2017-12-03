@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7.2.2 2014/08/20 00:02:51 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.2.3 2017/12/03 11:36:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.2 2014/08/20 00:02:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.3 2017/12/03 11:36:01 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.2 2014/08/20 00:02:51 tls Exp $");
 #include <ddb/db_extern.h>
 #endif
 
-extern vaddr_t iospace;
-extern vsize_t iospace_size;
+vaddr_t iospace;
+vsize_t iospace_size = 64 * 1024; /* BUGBUG make it an option? */
 
 #include "ksyms.h"
 
@@ -225,10 +225,7 @@ mach_init(int argc, char *argv[], int code, intptr_t cv, u_int bim, char *bip)
 	if (bootinfo_msg != NULL)
 		printf(bootinfo_msg);
 #endif
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
@@ -315,7 +312,8 @@ mach_init(int argc, char *argv[], int code, intptr_t cv, u_int bim, char *bip)
 	/*
 	 * Initialize the virtual memory system.
 	 */
-	iospace_size = 64*1024; /* BUGBUG make it an option? */
+	iospace = pmap_limits.virtual_start;
+	pmap_limits.virtual_start += iospace_size;
 	pmap_bootstrap();
 
 	mips_init_lwp0_uarea();

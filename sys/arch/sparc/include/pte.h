@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.31 2006/02/16 20:17:15 perry Exp $ */
+/*	$NetBSD: pte.h,v 1.31.116.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -187,32 +187,32 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
 #error "configuration error"
 #endif
 
-#define	NBPRG	(1 << 24)	/* bytes per region */
-#define	RGSHIFT	24		/* log2(NBPRG) */
-#define	RGOFSET	(NBPRG - 1)	/* mask for region offset */
+#define NBPRG	(1 << 24)	/* bytes per region */
+#define RGSHIFT	24		/* log2(NBPRG) */
+#define RGOFSET	(NBPRG - 1)	/* mask for region offset */
 #define NSEGRG	(NBPRG / NBPSG)	/* segments per region */
 
-#define	NBPSG	(1 << 18)	/* bytes per segment */
-#define	SGSHIFT	18		/* log2(NBPSG) */
-#define	SGOFSET	(NBPSG - 1)	/* mask for segment offset */
+#define NBPSG	(1 << 18)	/* bytes per segment */
+#define SGSHIFT	18		/* log2(NBPSG) */
+#define SGOFSET	(NBPSG - 1)	/* mask for segment offset */
 
 /* number of PTEs that map one segment (not number that fit in one segment!) */
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M) || defined(SUN4D))
 extern int nptesg;
-#define	NPTESG	nptesg		/* (which someone will have to initialize) */
+#define NPTESG	nptesg		/* (which someone will have to initialize) */
 #else
-#define	NPTESG	(NBPSG / NBPG)
+#define NPTESG	(NBPSG / NBPG)
 #endif
 
 /* virtual address to virtual region number */
-#define	VA_VREG(va)	(((unsigned int)(va) >> RGSHIFT) & 255)
+#define VA_VREG(va)	(((unsigned int)(va) >> RGSHIFT) & 255)
 
 /* virtual address to virtual segment number */
-#define	VA_VSEG(va)	(((unsigned int)(va) >> SGSHIFT) & 63)
+#define VA_VSEG(va)	(((unsigned int)(va) >> SGSHIFT) & 63)
 
 /* virtual address to virtual page number, for Sun-4 and Sun-4c */
-#define	VA_SUN4_VPG(va)		(((int)(va) >> 13) & 31)
-#define	VA_SUN4C_VPG(va)	(((int)(va) >> 12) & 63)
+#define VA_SUN4_VPG(va)		(((int)(va) >> 13) & 31)
+#define VA_SUN4C_VPG(va)	(((int)(va) >> 12) & 63)
 #define VA_SUN4M_VPG(va)	(((int)(va) >> 12) & 63)
 #define VA_VPG(va)	\
 	(PGSHIFT==SUN4_PGSHIFT ? VA_SUN4_VPG(va) : VA_SUN4C_VPG(va))
@@ -226,16 +226,16 @@ extern int nptesg;
 
 
 /* truncate virtual address to region base */
-#define	VA_ROUNDDOWNTOREG(va)	((int)(va) & ~RGOFSET)
+#define VA_ROUNDDOWNTOREG(va)	((int)(va) & ~RGOFSET)
 
 /* truncate virtual address to segment base */
-#define	VA_ROUNDDOWNTOSEG(va)	((int)(va) & ~SGOFSET)
+#define VA_ROUNDDOWNTOSEG(va)	((int)(va) & ~SGOFSET)
 
 /* virtual segment to virtual address (must sign extend on holy MMUs!) */
-#define	VRTOVA(vr)	((CPU_HAS_SRMMU || HASSUN4_MMU3L)	\
+#define VRTOVA(vr)	((CPU_HAS_SRMMU || HASSUN4_MMU3L)	\
 	? ((int)(vr) << RGSHIFT)				\
 	: (((int)(vr) << (RGSHIFT+2)) >> 2))
-#define	VSTOVA(vr,vs)	((CPU_HAS_SRMMU || HASSUN4_MMU3L)	\
+#define VSTOVA(vr,vs)	((CPU_HAS_SRMMU || HASSUN4_MMU3L)	\
 	? (((int)(vr) << RGSHIFT) + ((int)(vs) << SGSHIFT))	\
 	: ((((int)(vr) << (RGSHIFT+2)) >> 2) + ((int)(vs) << SGSHIFT)))
 
@@ -249,38 +249,38 @@ extern int mmu_has_hole;
 #define MMU_HOLE_END	0xe0000000
 
 /* there is no `struct pte'; we just use `int'; this is for non-4M only */
-#define	PG_V		0x80000000
-#define	PG_PROT		0x60000000	/* both protection bits */
-#define	PG_W		0x40000000	/* allowed to write */
-#define	PG_S		0x20000000	/* supervisor only */
-#define	PG_NC		0x10000000	/* non-cacheable */
-#define	PG_TYPE		0x0c000000	/* both type bits */
+#define PG_V		0x80000000
+#define PG_PROT		0x60000000	/* both protection bits */
+#define PG_W		0x40000000	/* allowed to write */
+#define PG_S		0x20000000	/* supervisor only */
+#define PG_NC		0x10000000	/* non-cacheable */
+#define PG_TYPE		0x0c000000	/* both type bits */
 
-#define	PG_OBMEM	0x00000000	/* on board memory */
-#define	PG_OBIO		0x04000000	/* on board I/O (incl. Sbus on 4c) */
-#define	PG_VME16	0x08000000	/* 16-bit-data VME space */
-#define	PG_VME32	0x0c000000	/* 32-bit-data VME space */
+#define PG_OBMEM	0x00000000	/* on board memory */
+#define PG_OBIO		0x04000000	/* on board I/O (incl. Sbus on 4c) */
+#define PG_VME16	0x08000000	/* 16-bit-data VME space */
+#define PG_VME32	0x0c000000	/* 32-bit-data VME space */
 #if defined(SUN4M) || defined(SUN4D)
 #define PG_SUN4M_OBMEM	0x0	       	/* No type bits=>obmem on 4m */
 #define PG_SUN4M_OBIO	0xf		/* obio maps to 0xf on 4M */
 #define SRMMU_PGTYPE	0xf0000000	/* Top 4 bits of pte PPN give type */
 #endif
 
-#define	PG_U		0x02000000
-#define	PG_M		0x01000000
-#define PG_IOC		0x00800000
-#define	PG_MBZ		0x00780000	/* unused; must be zero (oh really?) */
-#define	PG_PFNUM	0x0007ffff	/* n.b.: only 16 bits on sun4c */
+#define PG_U		0x02000000
+#define PG_M		0x01000000
+#define PG_MBZ		0x00780000	/* unused; must be zero (oh really?) */
+#define PG_IOC		0x00800000	/* IO cache, not used yet */
 #define PG_WIRED	0x00400000	/* S/W only; in MBZ area */
+#define PG_PFNUM	0x0007ffff	/* n.b.: only 16 bits on sun4c */
 
-#define	PG_TNC_SHIFT	26		/* shift to get PG_TYPE + PG_NC */
-#define	PG_M_SHIFT	24		/* shift to get PG_M, PG_U */
+#define PG_TNC_SHIFT	26		/* shift to get PG_TYPE + PG_NC */
+#define PG_M_SHIFT	24		/* shift to get PG_M, PG_U */
 #define PG_M_SHIFT4M	5		/* shift to get SRMMU_PG_M,R on 4m */
 /*efine	PG_NOACC	0		** XXX */
-#define	PG_KR		0x20000000
-#define	PG_KW		0x60000000
-#define	PG_URKR		0
-#define	PG_UW		0x40000000
+#define PG_KR		0x20000000
+#define PG_KW		0x60000000
+#define PG_URKR		0
+#define PG_UW		0x40000000
 
 #ifdef KGDB
 /* but we will define one for gdb anyway */
@@ -297,7 +297,7 @@ struct pte {
 };
 #if defined(SUN4M) || defined(SUN4D)
 struct srmmu_pte {
-	u_int	pg_pfnum:20,
+	u_int	pg_pfnum:24,
 		pg_c:1,
 		pg_m:1,
 		pg_u:1;
@@ -313,12 +313,12 @@ struct srmmu_pte {
  * These are needed in the register window code
  * to check the validity of (ostensible) user stack PTEs.
  */
-#define	PG_VSHIFT	29		/* (va>>vshift)==0 or -1 => valid */
+#define PG_VSHIFT	29		/* (va>>vshift)==0 or -1 => valid */
 	/* XXX fix this name, it is a va shift not a pte bit shift! */
 
-#define	PG_PROTSHIFT	29
-#define	PG_PROTUWRITE	6		/* PG_V,PG_W,!PG_S */
-#define	PG_PROTUREAD	4		/* PG_V,!PG_W,!PG_S */
+#define PG_PROTSHIFT	29
+#define PG_PROTUWRITE	6		/* PG_V,PG_W,!PG_S */
+#define PG_PROTUREAD	4		/* PG_V,!PG_W,!PG_S */
 
 /* %%%: Fix above and below for 4m? */
 
@@ -332,9 +332,10 @@ struct srmmu_pte {
  */
 		/* MMU TABLE ENTRIES */
 #define SRMMU_TEINVALID	0x0		/* invalid (serves as !valid bit) */
-#define	SRMMU_TEPTD	0x1		/* Page Table Descriptor */
+#define SRMMU_TEPTD	0x1		/* Page Table Descriptor */
 #define SRMMU_TEPTE	0x2		/* Page Table Entry */
-#define SRMMU_TERES	0x3		/* reserved */
+#define SRMMU_TEPTERBO	0x3		/* Page Table Entry with Reverse Byte
+					   Order (SS-II) */
 #define SRMMU_TETYPE	0x3		/* mask for table entry type */
 		/* PTE FIELDS */
 #define SRMMU_PPNMASK	0xFFFFFF00
@@ -404,8 +405,8 @@ struct srmmu_pte {
 					       : setcontext4(c))
 
 /* sun4/sun4c access to MMU-resident PTEs */
-#define	getpte4(va)		lda(va, ASI_PTE)
-#define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
+#define getpte4(va)		lda(va, ASI_PTE)
+#define setpte4(va, pte)	sta(va, ASI_PTE, pte)
 
 /* sun4m TLB probe */
 #define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \

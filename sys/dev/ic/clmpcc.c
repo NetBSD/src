@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.45.12.2 2014/08/20 00:03:37 tls Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.45.12.3 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45.12.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45.12.3 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45.12.2 2014/08/20 00:03:37 tls Exp $")
 #include <dev/ic/clmpccvar.h>
 #include <dev/cons.h>
 
+#include "ioconf.h"
 
 #if defined(CLMPCC_ONLY_BYTESWAP_LOW) && defined(CLMPCC_ONLY_BYTESWAP_HIGH)
 #error	"CLMPCC_ONLY_BYTESWAP_LOW and CLMPCC_ONLY_BYTESWAP_HIGH are mutually exclusive."
@@ -75,16 +76,14 @@ static void	clmpcc_set_params(struct clmpcc_chan *);
 static void	clmpcc_start(struct tty *);
 static int 	clmpcc_modem_control(struct clmpcc_chan *, int, int);
 
-#define	CLMPCCUNIT(x)		(minor(x) & 0x7fffc)
-#define CLMPCCCHAN(x)		(minor(x) & 0x00003)
-#define	CLMPCCDIALOUT(x)	(minor(x) & 0x80000)
+#define	CLMPCCUNIT(x)		(TTUNIT(x) & ~0x3)	// XXX >> 2? 
+#define	CLMPCCCHAN(x)		(TTUNIT(x) & 0x3)
+#define	CLMPCCDIALOUT(x)	TTDIALOUT(x)
 
 /*
  * These should be in a header file somewhere...
  */
 #define	ISCLR(v, f)	(((v) & (f)) == 0)
-
-extern struct cfdriver clmpcc_cd;
 
 dev_type_open(clmpccopen);
 dev_type_close(clmpccclose);
@@ -367,7 +366,7 @@ clmpcc_init(struct clmpcc_softc *sc)
 	delay(1000);
 
 	/*
-	 * The chip will set it's firmware revision register to a non-zero
+	 * The chip will set its firmware revision register to a non-zero
 	 * value to indicate completion of reset.
 	 */
 	for (i = 10000; clmpcc_rdreg(sc, CLMPCC_REG_GFRCR) == 0 && i; i--)

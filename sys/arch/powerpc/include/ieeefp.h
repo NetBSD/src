@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.3 2008/08/05 16:47:42 matt Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.3.38.1 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -12,36 +12,29 @@
 
 #if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
 
-typedef int fenv_t;
-typedef int fexcept_t;
-
-#define	FE_INEXACT	0x01	/* imprecise (loss of precision) */
-#define	FE_DIVBYZERO	0x02	/* divide-by-zero exception */
-#define	FE_OVERFLOW	0x04	/* underflow exception */
-#define	FE_UNDERFLOW	0x08	/* overflow exception */
-#define	FE_INVALID	0x10	/* invalid operation exception */
-
-#define	FE_ALL_EXCEPT	0x1f
-
-#define	FE_TONEAREST	0	/* round to nearest representable number */
-#define	FE_TOWARDZERO	1	/* round to zero (truncate) */
-#define	FE_UPWARD	2	/* round toward positive infinity */
-#define	FE_DOWNWARD	3	/* round toward negative infinity */
+#include <powerpc/fenv.h>
 
 #if !defined(_ISOC99_SOURCE)
 
 typedef int fp_except;
-#define FP_X_IMP	FE_INEXACT	/* imprecise (loss of precision) */
-#define FP_X_DZ		FE_DIVBYZERO	/* divide-by-zero exception */
-#define FP_X_UFL	FE_UNDERFLOW	/* underflow exception */
-#define FP_X_OFL	FE_OVERFLOW	/* overflow exception */
-#define FP_X_INV	FE_INVALID	/* invalid operation exception */
+
+/* adjust for FP_* and FE_* value differences */ 
+#define	__FPE(x) ((x) >> 25)
+#define	__FEE(x) ((x) << 25)
+#define	__FPR(x) ((x))
+#define	__FER(x) ((x))
+
+#define FP_X_IMP	__FPE(FE_INEXACT)	/* imprecise (loss of precision) */
+#define FP_X_DZ		__FPE(FE_DIVBYZERO)	/* divide-by-zero exception */
+#define FP_X_UFL	__FPE(FE_UNDERFLOW)	/* underflow exception */
+#define FP_X_OFL	__FPE(FE_OVERFLOW)	/* overflow exception */
+#define FP_X_INV	__FPE(FE_INVALID)	/* invalid operation exception */
 
 typedef enum {
-    FP_RN=FE_TONEAREST,		/* round to nearest representable number */
-    FP_RZ=FE_TOWARDZERO,	/* round to zero (truncate) */
-    FP_RP=FE_UPWARD,		/* round toward positive infinity */
-    FP_RM=FE_DOWNWARD		/* round toward negative infinity */
+    FP_RN=__FPR(FE_TONEAREST),	/* round to nearest representable number */
+    FP_RZ=__FPR(FE_TOWARDZERO),	/* round to zero (truncate) */
+    FP_RP=__FPR(FE_UPWARD),	/* round toward positive infinity */
+    FP_RM=__FPR(FE_DOWNWARD)	/* round toward negative infinity */
 } fp_rnd;
 
 #endif /* !_ISOC99_SOURCE */

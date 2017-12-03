@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.79.6.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.79.6.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.79.6.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.79.6.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.79.6.2 2014/08/20 00:03:42 tls Exp 
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <sys/rnd.h>
 
 #include <machine/endian.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.34 2010/12/17 13:05:29 pooka Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.34.18.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.34 2010/12/17 13:05:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.34.18.1 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,8 +343,8 @@ smb_rq_reply(struct smb_rq *rqp)
 {
 	struct mdchain *mdp = &rqp->sr_rp;
 	int error;
-	u_int8_t errclass;
-	u_int16_t serror;
+	u_int8_t errclass = 0;
+	u_int16_t serror = 0;
 
 	error = smb_iod_waitrq(rqp);
 	if (error)

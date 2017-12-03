@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.60.6.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: uk.c,v 1.60.6.2 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.60.6.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.60.6.2 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ const struct cdevsw uk_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int
@@ -114,7 +114,11 @@ ukattach(device_t parent, device_t self, void *aux)
 	uk->sc_periph = periph;
 	periph->periph_dev = uk->sc_dev;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

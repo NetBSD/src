@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.24 2011/06/30 20:09:18 wiz Exp $
+#	$NetBSD: majors.amd64,v 1.24.12.1 2017/12/03 11:35:47 jdolecek Exp $
 #
 # Device majors for amd64
 #
@@ -29,8 +29,6 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
-device-major	spkr		char 27			spkr
-
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd
 device-major	tun		char 40			tun
@@ -60,7 +58,7 @@ device-major	esh		char 63			esh
 device-major	ugen		char 64			ugen
 device-major	wsmux		char 65			wsmux
 device-major	ucom		char 66			ucom
-device-major	sysmon		char 67			sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 67			sysmon
 
 device-major	ld		char 69  block 19	ld
 device-major	urio		char 70			urio
@@ -88,11 +86,11 @@ device-major	kttcp		char 92			kttcp
 
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
-device-major	nsmb		char 98			nsmb		
+device-major	nsmb		char 98			nsmb
 
 #
 # Device majors for Xen. These are assigned here so that:
-# - we are sure there are no conflicts with plain i386 
+# - we are sure there are no conflicts with plain i386
 # - they appear in the i386 MAKEDEV
 #
 
@@ -101,5 +99,5 @@ device-major	xbd		char 142 block 142	xbd
 device-major	xencons		char 143		xencons
 
 # Majors up to 143 are reserved for machine-dependent drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.

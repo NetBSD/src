@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.35.18.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.35.18.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.35.18.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.35.18.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -212,6 +212,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -612,7 +613,7 @@ sonic_intr(void *arg)
 	if (handled) {
 		if (wantinit)
 			(void)sonic_init(ifp);
-		sonic_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	return handled;
@@ -785,8 +786,10 @@ sonic_rxintr(struct sonic_softc *sc)
 				goto dropit;
 			if (len > (MHLEN - 2)) {
 				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0)
+				if ((m->m_flags & M_EXT) == 0) {
+					m_freem(m);
 					goto dropit;
+				}
 			}
 			m->m_data += 2;
 			/*
@@ -833,17 +836,11 @@ sonic_rxintr(struct sonic_softc *sc)
 			}
 		}
 
-		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
-		/*
-		 * Pass this up to any BPF listeners.
-		 */
-		bpf_mtap(ifp, m);
-
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

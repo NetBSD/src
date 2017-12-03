@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.63.18.2 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.63.18.3 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,18 +35,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.63.18.2 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.63.18.3 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
-
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -101,7 +100,7 @@ uint8_t  arcbroadcastaddr = 0;
 #define senderr(e) { error = (e); goto bad;}
 
 static	int arc_output(struct ifnet *, struct mbuf *,
-	    const struct sockaddr *, struct rtentry *);
+	    const struct sockaddr *, const struct rtentry *);
 static	void arc_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -111,10 +110,9 @@ static	void arc_input(struct ifnet *, struct mbuf *);
  */
 static int
 arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    const struct rtentry *rt)
 {
 	struct mbuf		*m, *m1, *mcopy;
-	struct rtentry		*rt;
 	struct arccom		*ac;
 	const struct arc_header	*cah;
 	struct arc_header	*ah;
@@ -122,7 +120,6 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	int			error, newencoding;
 	uint8_t			atype, adst, myself;
 	int			tfrags, sflag, fsflag, rsflag;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		return (ENETDOWN); /* m, m1 aren't initialized yet */
@@ -134,34 +131,11 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	myself = *CLLADDR(ifp->if_sadl);
 
-	if ((rt = rt0)) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)))
-				rt->rt_refcnt--;
-			else
-				senderr(EHOSTUNREACH);
-		}
-		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_gwroute == 0)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
-					senderr(EHOSTUNREACH);
-			}
-		}
-		if (rt->rt_flags & RTF_REJECT)
-			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time_second < rt->rt_rmx.rmx_expire)
-				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
-	}
-
 	/*
 	 * if the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 #ifdef INET
@@ -174,8 +148,9 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			adst = arcbroadcastaddr; /* ARCnet broadcast address */
 		else if (ifp->if_flags & IFF_NOARP)
 			adst = ntohl(satocsin(dst)->sin_addr.s_addr) & 0xFF;
-		else if (!arpresolve(ifp, rt, m, dst, &adst))
-			return 0;	/* not resolved yet */
+		else if ((error = arpresolve(ifp, rt, m, dst, &adst,
+		    sizeof(adst))) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) &&
@@ -196,8 +171,10 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			adst = arcbroadcastaddr;
 		else {
 			uint8_t *tha = ar_tha(arph);
-			if (tha == NULL)
+			if (tha == NULL) {
+				m_freem(m);
 				return 0;
+			}
 			adst = *tha;
 		}
 
@@ -241,8 +218,14 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, &adst, sizeof(adst)))
-			return (0); /* it must be impossible, but... */
+		if (m->m_flags & M_MCAST) {
+			adst = 0;
+		} else {
+			error = nd6_resolve(ifp, rt, m, dst, &adst,
+			    sizeof(adst));
+			if (error != 0)
+				return error == EWOULDBLOCK ? 0 : error;
+		}
 		atype = htons(ARCTYPE_INET6);
 		newencoding = 1;
 		break;
@@ -296,8 +279,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
-			if ((error = ifq_enqueue(ifp, m ALTQ_COMMA
-			    ALTQ_DECL(&pktattr))) != 0)
+			if ((error = ifq_enqueue(ifp, m)) != 0)
 				return (error);
 
 			m = m1;
@@ -345,7 +327,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		ah->arc_shost = myself;
 	}
 
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m1)
@@ -529,7 +511,6 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq;
 	uint8_t atype;
 	int isr = 0;
-	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -592,22 +573,23 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splnet();
 	if (__predict_true(pktq)) {
 		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 			m_freem(m);
 		}
-		splx(s);
 		return;
 	}
+
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		schednetisr(isr);
 	}
-	splx(s);
 }
 
 /*
@@ -628,10 +610,11 @@ arc_sprintf(uint8_t *ap)
 /*
  * Perform common duties while attaching to interface list
  */
-void
+int
 arc_ifattach(struct ifnet *ifp, uint8_t lla)
 {
 	struct arccom *ac;
+	int rv;
 
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;
@@ -645,7 +628,7 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		    ifp->if_xname, arc_ipmtu, ARC_PHDS_MAXMTU);
 
 	ifp->if_output = arc_output;
-	ifp->if_input = arc_input;
+	ifp->_if_input = arc_input;
 	ac = (struct arccom *)ifp;
 	ac->ac_seqid = (time_second) & 0xFFFF; /* try to make seqid unique */
 	if (lla == 0) {
@@ -653,10 +636,15 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
 		   ifp->if_xname, ifp->if_xname);
 	}
-	if_attach(ifp);
+	rv = if_attach(ifp);
+	if (rv != 0)
+		return rv;
+
 	if_set_sadl(ifp, &lla, sizeof(lla), true);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
 
 	bpf_attach(ifp, DLT_ARCNET, ARC_HDRLEN);
+
+	return 0;
 }

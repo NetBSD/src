@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.34.8.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: syslog.h,v 1.34.8.3 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -34,6 +34,10 @@
 #ifndef _SYS_SYSLOG_H_
 #define _SYS_SYSLOG_H_
 
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+#include <sys/ansi.h>
+
 #define	_PATH_LOG	"/var/run/log"
 
 /*
@@ -64,7 +68,7 @@
 				/* mark "facility" */
 #define	INTERNAL_MARK	LOG_MAKEPRI(LOG_NFACILITIES, 0)
 typedef struct _code {
-	char	*c_name;
+	const char	*c_name;
 	int	c_val;
 } CODE;
 
@@ -78,7 +82,7 @@ CODE prioritynames[] = {
 	{ "info",	LOG_INFO },
 	{ "none",	INTERNAL_NOPRI },	/* INTERNAL */
 	{ "notice",	LOG_NOTICE },
-	{ "panic", 	LOG_EMERG },		/* DEPRECATED */
+	{ "panic",	LOG_EMERG },		/* DEPRECATED */
 	{ "warn",	LOG_WARNING },		/* DEPRECATED */
 	{ "warning",	LOG_WARNING },
 	{ NULL,		-1 }
@@ -118,13 +122,13 @@ CODE prioritynames[] = {
 CODE facilitynames[] = {
 	{ "auth",	LOG_AUTH },
 	{ "authpriv",	LOG_AUTHPRIV },
-	{ "cron", 	LOG_CRON },
+	{ "cron",	LOG_CRON },
 	{ "daemon",	LOG_DAEMON },
 	{ "ftp",	LOG_FTP },
 	{ "kern",	LOG_KERN },
 	{ "lpr",	LOG_LPR },
 	{ "mail",	LOG_MAIL },
-	{ "mark", 	INTERNAL_MARK },	/* INTERNAL */
+	{ "mark",	INTERNAL_MARK },	/* INTERNAL */
 	{ "news",	LOG_NEWS },
 	{ "security",	LOG_AUTH },		/* DEPRECATED */
 	{ "syslog",	LOG_SYSLOG },
@@ -164,6 +168,8 @@ CODE facilitynames[] = {
 #define	LOG_NDELAY	0x08	/* don't delay open */
 #define	LOG_NOWAIT	0x10	/* don't wait for console forks: DEPRECATED */
 #define	LOG_PERROR	0x20	/* log to stderr as well */
+#define LOG_PTRIM	0x40	/* trim tag and pid from messages to stderr */
+#define LOG_NLOG	0x80	/* don't write to the system log */
 
 #ifndef _KERNEL
 
@@ -175,10 +181,10 @@ struct syslog_data {
 	int	log_connected;
 	int	log_opened;
 	int	log_stat;
-	const char 	*log_tag;
+	const char	*log_tag;
 	char	log_hostname[256];	/* MAXHOSTNAMELEN */
-	int 	log_fac;
-	int 	log_mask;
+	int	log_fac;
+	int	log_mask;
 };
 
 #define SYSLOG_DATA_INIT { \
@@ -193,35 +199,31 @@ struct syslog_data {
     .log_mask = 0xff, \
 }
 
-#include <sys/cdefs.h>
-#include <sys/featuretest.h>
-#include <sys/ansi.h>
-
 __BEGIN_DECLS
 void	closelog(void);
 void	openlog(const char *, int, int);
 int	setlogmask(int);
-void	syslog(int, const char *, ...) __printflike(2, 3);
+void	syslog(int, const char *, ...) __sysloglike(2, 3);
 #if defined(_NETBSD_SOURCE)
-void	vsyslog(int, const char *, __va_list) __printflike(2, 0);
+void	vsyslog(int, const char *, __va_list) __sysloglike(2, 0);
 #ifndef __LIBC12_SOURCE__
 void	closelog_r(struct syslog_data *) __RENAME(__closelog_r60);
 void	openlog_r(const char *, int, int, struct syslog_data *)
     __RENAME(__openlog_r60);
 int	setlogmask_r(int, struct syslog_data *) __RENAME(__setlogmask_r60);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
-    __RENAME(__syslog_r60) __printflike(3, 4);
+    __RENAME(__syslog_r60) __sysloglike(3, 4);
 void	vsyslog_r(int, struct syslog_data *, const char *, __va_list)
-    __RENAME(__vsyslog_r60) __printflike(3, 0);
+    __RENAME(__vsyslog_r60) __sysloglike(3, 0);
 void	syslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, ...) __RENAME(__syslogp_r60) __printflike(5, 6);
+    const char *, ...) __RENAME(__syslogp_r60) __sysloglike(5, 6);
 void	vsyslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, __va_list) __RENAME(__vsyslogp_r60) __printflike(5, 0);
+    const char *, __va_list) __RENAME(__vsyslogp_r60) __sysloglike(5, 0);
 #endif
 void	syslogp(int, const char *, const char *, const char *, ...)
-    __printflike(4, 5);
+    __sysloglike(4, 5);
 void	vsyslogp(int, const char *, const char *, const char *, __va_list)
-    __printflike(4, 0);
+    __sysloglike(4, 0);
 #endif
 __END_DECLS
 

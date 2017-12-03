@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_var.h,v 1.6 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipcomp_var.h,v 1.6.46.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipcomp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
@@ -34,14 +34,6 @@
 #ifndef _NETIPSEC_IPCOMP_VAR_H_
 #define _NETIPSEC_IPCOMP_VAR_H_
 
-/*
- * These define the algorithm indices into the histogram.  They're
- * presently based on the PF_KEY v2 protocol values which is bogus;
- * they should be decoupled from the protocol at which time we can
- * pack them and reduce the size of the array to a minimum.
- */
-#define	IPCOMP_ALG_MAX	8
-
 #define	IPCOMP_STAT_HDROPS	0	/* packet shorter than header shows */
 #define	IPCOMP_STAT_NOPF	1	/* protocol family not supported */
 #define	IPCOMP_STAT_NOTDB	2
@@ -60,11 +52,14 @@
 #define	IPCOMP_STAT_PDROPS	15	/* packet blocked due to policy */
 #define	IPCOMP_STAT_CRYPTO	16	/* crypto processing failure */
 #define	IPCOMP_STAT_HIST	17	/* per-algorithm op count */
-		/* space for IPCOMP_ALG_MAX (8) counters */
 
-#define	IPCOMP_NSTATS		25
+/* space for SADB_CALG_STATS_NUM counters */
+#define	IPCOMP_ALG_MAX		SADB_CALG_STATS_NUM
+#define	IPCOMP_ALG_STR		SADB_CALG_STATS_STR
+#define	IPCOMP_NSTATS		(IPCOMP_STAT_HIST + IPCOMP_ALG_MAX)
 
 #ifdef _KERNEL
+extern const uint8_t ipcomp_stats[256];
 extern	int ipcomp_enable;
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_IPCOMP_VAR_H_ */

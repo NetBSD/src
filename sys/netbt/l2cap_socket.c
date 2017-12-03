@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.9.38.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.9.38.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.9.38.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.9.38.2 2017/12/03 11:39:03 jdolecek Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -117,10 +117,9 @@ l2cap_detach(struct socket *so)
 }
 
 static int
-l2cap_accept(struct socket *so, struct mbuf *nam)
+l2cap_accept(struct socket *so, struct sockaddr *nam)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
@@ -128,16 +127,14 @@ l2cap_accept(struct socket *so, struct mbuf *nam)
 	if (pcb == NULL)
 		return EINVAL;
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return l2cap_peeraddr_pcb(pcb, sa);
+	return l2cap_peeraddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int
-l2cap_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+l2cap_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
@@ -145,7 +142,6 @@ l2cap_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	if (pcb == NULL)
 		return EINVAL;
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	if (sa->bt_len != sizeof(struct sockaddr_bt))
 		return EINVAL;
 
@@ -169,10 +165,10 @@ l2cap_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-l2cap_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+l2cap_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
@@ -180,7 +176,6 @@ l2cap_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	if (pcb == NULL)
 		return EINVAL;
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	if (sa->bt_len != sizeof(struct sockaddr_bt))
 		return EINVAL;
 
@@ -256,33 +251,27 @@ l2cap_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-l2cap_peeraddr(struct socket *so, struct mbuf *nam)
+l2cap_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return l2cap_peeraddr_pcb(pcb, sa);
+	return l2cap_peeraddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int
-l2cap_sockaddr(struct socket *so, struct mbuf *nam)
+l2cap_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return l2cap_sockaddr_pcb(pcb, sa);
+	return l2cap_sockaddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int
@@ -302,7 +291,7 @@ l2cap_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-l2cap_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+l2cap_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
@@ -362,70 +351,6 @@ l2cap_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
 	return EOPNOTSUPP;
-}
-
-/*
- * User Request.
- * up is socket
- * m is optional mbuf chain containing message
- * ctl is either
- *	optional mbuf chain containing socket options
- * l is pointer to process requesting action (if any)
- *
- * we are responsible for disposing of m and ctl if
- * they are mbuf chains
- */
-static int
-l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
-{
-	struct l2cap_channel *pcb = up->so_pcb;
-	int err = 0;
-
-	DPRINTFN(2, "%s\n", prurequests[req]);
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	if (pcb == NULL) {
-		err = EINVAL;
-		goto release;
-	}
-
-	switch(req) {
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		err = EOPNOTSUPP;
-		break;
-
-	default:
-		UNKNOWN(req);
-		err = EOPNOTSUPP;
-		break;
-	}
-
-release:
-	if (m) m_freem(m);
-	if (ctl) m_freem(ctl);
-	return err;
 }
 
 /*
@@ -589,7 +514,6 @@ PR_WRAP_USRREQS(l2cap)
 #define	l2cap_send		l2cap_send_wrapper
 #define	l2cap_sendoob		l2cap_sendoob_wrapper
 #define	l2cap_purgeif		l2cap_purgeif_wrapper
-#define	l2cap_usrreq		l2cap_usrreq_wrapper
 
 const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_attach	= l2cap_attach,
@@ -611,5 +535,4 @@ const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_send	= l2cap_send,
 	.pr_sendoob	= l2cap_sendoob,
 	.pr_purgeif	= l2cap_purgeif,
-	.pr_generic	= l2cap_usrreq,
 };

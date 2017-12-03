@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.26.18.1 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: promdev.c,v 1.26.18.2 2017/12/03 11:36:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -561,6 +561,8 @@ getdevtype(int fd, char *name)
 		node = prom_instance_to_package(fd);
 		cp = mygetpropstring(node, "device_type");
 		if (strcmp(cp, "block") == 0)
+			return (DT_BLOCK);
+		if (strcmp(cp, "scsi") == 0)
 			return (DT_BLOCK);
 		else if (strcmp(cp, "network") == 0)
 			return (DT_NET);

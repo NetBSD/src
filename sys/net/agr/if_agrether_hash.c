@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether_hash.c,v 1.3 2007/05/05 18:23:23 yamt Exp $	*/
+/*	$NetBSD: if_agrether_hash.c,v 1.3.78.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether_hash.c,v 1.3 2007/05/05 18:23:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether_hash.c,v 1.3.78.1 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -77,7 +77,6 @@ agrether_hashmbuf(struct agr_softc *sc, struct mbuf *m)
 	int off = 0;
 	uint16_t tci;
 	uint16_t etype;
-	struct m_tag *mtag;
 
 	eh = agr_m_extract(m, off, sizeof(*eh), &eh_store);
 	if (eh == NULL) {
@@ -101,8 +100,8 @@ agrether_hashmbuf(struct agr_softc *sc, struct mbuf *m)
 		tci = vlanhdr->evl_tag;
 		etype = vlanhdr->evl_proto;
 		off += sizeof(*vlanhdr) - sizeof(*eh);
-	} else if ((mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
-		tci = htole16((*(u_int *)(mtag + 1)) & 0xffff);
+	} else if (vlan_has_tag(m)) {
+		tci = htole16(vlan_get_tag(m));
 	} else {
 		tci = 0;
 	}

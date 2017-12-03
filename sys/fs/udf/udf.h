@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.45.2.1 2014/08/20 00:04:28 tls Exp $ */
+/* $NetBSD: udf.h,v 1.45.2.2 2017/12/03 11:38:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -76,7 +76,7 @@ extern int udf_verbose;
 #define UDF_DEBUG_RESERVE	0x1000000
 
 /* initial value of udf_verbose */
-#define UDF_DEBUGGING		0
+#define UDF_DEBUGGING		(0)
 
 #ifdef UDF_DEBUG
 #define DPRINTF(name, arg) { \
@@ -94,6 +94,7 @@ extern int udf_verbose;
 #define DPRINTFIF(name, cond, arg) {}
 #endif
 
+VFS_PROTOS(udf);
 
 /* constants to identify what kind of identifier we are dealing with */
 #define UDF_REGID_DOMAIN		 1
@@ -127,6 +128,8 @@ extern int udf_verbose;
 
 #define UDF_DISC_SLACK		(128)			/* picked, at least 64 kb or 128 */
 #define UDF_ISO_VRS_SIZE	(32*2048)		/* 32 ISO `sectors' */
+
+#define UDF_MAX_INDIRS_FOLLOW	1024			/* picked */
 
 
 /* structure space */
@@ -249,6 +252,7 @@ struct udf_strategy {
 	int  (*read_logvol_dscr)    (struct udf_strat_args *args);
 	int  (*write_logvol_dscr)   (struct udf_strat_args *args);
 	void (*queuebuf)	    (struct udf_strat_args *args);
+	void (*sync_caches)	    (struct udf_strat_args *args);
 	void (*discstrat_init)      (struct udf_strat_args *args);
 	void (*discstrat_finish)    (struct udf_strat_args *args);
 };
@@ -336,13 +340,11 @@ struct udf_mount {
 	uint8_t			 metadata_flags;
 
 	/* rb tree for lookup icb to udf_node and sorted list for sync */
-	kmutex_t	ihash_lock;
-	kmutex_t	get_node_lock;
 	struct rb_tree	udf_node_tree;
 
 	/* syncing */
 	int		syncing;			/* are we syncing?   */
-	kcondvar_t 	dirtynodes_cv;			/* sleeping on sync  */
+	kmutex_t	sync_lock;			/* serialize syncing */
 
 	/* late allocation */
 	int32_t			 uncommitted_lbs[UDF_PARTITIONS];
@@ -416,11 +418,12 @@ struct udf_node {
 #define	IN_SYNCED		0x0200	/* node is being used by sync */
 #define	IN_CALLBACK_ULK		0x0400	/* node will be unlocked by callback */
 #define	IN_NODE_REBUILD		0x0800	/* node is rebuild */
+#define IN_NO_DELETE		0x1000	/* node is not to be deleted */
 
 
 #define IN_FLAGBITS \
 	"\10\1IN_ACCESS\2IN_CHANGE\3IN_UPDATE\4IN_MODIFY\5IN_MODIFIED" \
 	"\6IN_ACCESSED\7IN_RENAME\10IN_DELETED\11IN_LOCKED\12IN_SYNCED" \
-	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD"
+	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD\15IN_NO_DELETE"
 
 #endif /* !_FS_UDF_UDF_H_ */

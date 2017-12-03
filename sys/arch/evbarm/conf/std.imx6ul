@@ -1,0 +1,35 @@
+#	$NetBSD: std.imx6ul,v 1.1.6.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+# standard NetBSD/evbarm options for i.MX6UL
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in nitrogen6 config definitions.
+include 	"arch/evbarm/conf/files.nitrogen6"
+
+options 	NITROGEN6
+
+options 	ARM_HAS_VBAR
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	TPIDRPRW_IS_CURCPU
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#options 	PMAP_NEED_ALLOC_POOLPAGE
+
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
+
+# To support easy transit to ../arch/arm/arm32
+options 	FPU_VFP
+options 	CORTEX_PMC
+options 	CORTEX_PMC_CCNT_HZ=792000000
+
+options 	KERNEL_BASE_EXT=0x80000000
+makeoptions 	KERNEL_BASE_PHYS="0x80800000"
+makeoptions 	KERNEL_BASE_VIRT="0x80800000"
+
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx6ul"
+makeoptions	CPPFLAGS+="-I$S/../../../include"
+
+options 	ARM_INTR_IMPL="<arch/arm/imx/imx6_intr.h>"
+options		ARM_GENERIC_TODR

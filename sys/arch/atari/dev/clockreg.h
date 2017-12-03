@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.6 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.6.22.1 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -56,10 +56,6 @@ struct rtc {
 /*
  * Some useful constants/macros
  */
-#define	is_leap(x)		(!(x % 4) && ((x % 100) || !(x % 1000)))
 #define	range_test(n, l, h)	((n) < (l) || (n) > (h))
-#define	SECS_DAY		86400L
-#define	SECS_HOUR		3600L
 #define	GEMSTARTOFTIME		((machineid & ATARI_CLKBROKEN) ? 1970 : 1968)
-#define	BSDSTARTOFTIME		1970
 #endif /* _CLOCKREG_H */

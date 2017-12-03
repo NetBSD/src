@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.74 2011/09/27 00:56:14 christos Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.74.12.1 2017/12/03 11:36:57 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.74 2011/09/27 00:56:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.74.12.1 2017/12/03 11:36:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ svr4_32_sys_getdents64(struct lwp *l, const struct svr4_32_sys_getdents64_args *
 		goto out1;
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -263,8 +263,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("svr4_32_getdents64: bad reclen");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)
@@ -350,7 +352,7 @@ svr4_32_sys_getdents(struct lwp *l, const struct svr4_32_sys_getdents_args *uap,
 		goto out1;
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -490,7 +492,7 @@ svr4_32_sys_mmap(struct lwp *l, const struct svr4_32_sys_mmap_args *uap, registe
 
 	error = sys_mmap(l, &mm, retval);
 	if ((u_long)*retval > (u_long)UINT_MAX) {
-		printf("svr4_32_mmap: retval out of range: 0x%lx",
+		printf("svr4_32_mmap: retval out of range: 0x%lx\n",
 		       (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
@@ -523,7 +525,7 @@ svr4_32_sys_mmap64(struct lwp *l, const struct svr4_32_sys_mmap64_args *uap, reg
 
 	error = sys_mmap(l, &mm, retval);
 	if ((u_long)*retval > (u_long)UINT_MAX) {
-		printf("svr4_32_mmap64: retval out of range: 0x%lx",
+		printf("svr4_32_mmap64: retval out of range: 0x%lx\n",
 		       (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
@@ -1010,7 +1012,8 @@ svr4_32_setinfo(int pid, struct rusage *ru, int st, svr4_32_siginfo_tp si)
 	}
 
 	DPRINTF(("siginfo [pid %ld signo %d code %d errno %d status %d]\n",
-		 i.si_pid, i.si_signo, i.si_code, i.si_errno, i.si_status));
+		 (long)i.si_pid, i.si_signo, i.si_code, i.si_errno,
+		 i.si_status));
 
 	return copyout(&i, s, sizeof(i));
 }
@@ -1041,10 +1044,10 @@ svr4_32_sys_waitsys(struct lwp *l, const struct svr4_32_sys_waitsys_args *uap, r
 
 	DPRINTF(("waitsys(%d, %d, %p, %x)\n",
 	         SCARG(uap, grp), id,
-		 SCARG(uap, info), SCARG(uap, options)));
+		 NETBSD32PTR64(SCARG(uap, info)), SCARG(uap, options)));
 
 	/* Translate options */
-	options = WOPTSCHECKED;
+	options = 0;
 	if (SCARG(uap, options) & SVR4_WNOWAIT)
 		options |= WNOWAIT;
 	if (SCARG(uap, options) & SVR4_WNOHANG)

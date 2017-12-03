@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.269.2.3 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: machdep.c,v 1.269.2.4 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269.2.3 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269.2.4 2017/12/03 11:36:45 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -280,7 +280,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_tstate = tstate;
 	tf->tf_global[1] = l->l_proc->p_psstrp;
 	/* %g4 needs to point to the start of the data segment */
-	tf->tf_global[4] = 0; 
+	tf->tf_global[4] = 0;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
@@ -295,59 +295,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #endif
 }
 
-static char *parse_bootfile(char *);
-static char *parse_bootargs(char *);
-
-static char *
-parse_bootfile(char *args)
-{
-	char *cp;
-
-	/*
-	 * bootargs is of the form: [kernelname] [args...]
-	 * It can be the empty string if we booted from the default
-	 * kernel name.
-	 */
-	cp = args;
-	for (cp = args; *cp != 0 && *cp != ' ' && *cp != '\t'; cp++) {
-		if (*cp == '-') {
-			int c;
-			/*
-			 * If this `-' is most likely the start of boot
-			 * options, we're done.
-			 */
-			if (cp == args)
-				break;
-			if ((c = *(cp-1)) == ' ' || c == '\t')
-				break;
-		}
-	}
-	/* Now we've separated out the kernel name from the args */
-	*cp = '\0';
-	return (args);
-}
-
-static char *
-parse_bootargs(char *args)
-{
-	char *cp;
-
-	for (cp = args; *cp != '\0'; cp++) {
-		if (*cp == '-') {
-			int c;
-			/*
-			 * Looks like options start here, but check this
-			 * `-' is not part of the kernel name.
-			 */
-			if (cp == args)
-				break;
-			if ((c = *(cp-1)) == ' ' || c == '\t')
-				break;
-		}
-	}
-	return (cp);
-}
-
 /*
  * machine dependent system variables.
  */
@@ -355,31 +302,28 @@ static int
 sysctl_machdep_boot(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	u_int chosen;
-	char bootargs[256];
-	const char *cp;
-
-	if ((chosen = OF_finddevice("/chosen")) == -1)
-		return (ENOENT);
-	if (node.sysctl_num == CPU_BOOTED_DEVICE)
-		cp = "bootpath";
-	else
-		cp = "bootargs";
-	if (OF_getprop(chosen, cp, bootargs, sizeof bootargs) < 0)
-		return (ENOENT);
+	char bootpath[256];
+	const char *cp = NULL;
+	extern char ofbootpath[], *ofbootpartition, *ofbootfile, *ofbootflags;
 
 	switch (node.sysctl_num) {
 	case CPU_BOOTED_KERNEL:
-		cp = parse_bootfile(bootargs);
-                if (cp != NULL && cp[0] == '\0')
+		cp = ofbootfile;
+                if (cp == NULL || cp[0] == '\0')
                         /* Unknown to firmware, return default name */
                         cp = "netbsd";
 		break;
 	case CPU_BOOT_ARGS:
-		cp = parse_bootargs(bootargs);
+		cp = ofbootflags;
 		break;
 	case CPU_BOOTED_DEVICE:
-		cp = bootargs;
+		if (ofbootpartition) {
+			snprintf(bootpath, sizeof(bootpath), "%s:%s",
+			    ofbootpath, ofbootpartition);
+			cp = bootpath;
+		} else {
+			cp = ofbootpath;
+		}
 		break;
 	}
 
@@ -503,6 +447,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct rwindow *newsp;
+	register_t sp;
 	/* Allocate an aligned sigframe */
 	fp = (void *)((u_long)(fp - 1) & ~0x0f);
 
@@ -514,7 +459,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
-	mutex_exit(p->p_lock);	
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 	ucsz = (char *)&uc.__uc_pad - (char *)&uc;
 
@@ -528,9 +473,11 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * C stack frame.
 	 */
 	newsp = (struct rwindow *)((u_long)fp - CCFSZ);
-	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
+	sp = (register_t)(uintptr_t)tf->tf_out[6];
+	error = (copyout(&ksi->ksi_info, &fp->sf_si,
+			sizeof(ksi->ksi_info)) != 0 ||
 	    copyout(&uc, &fp->sf_uc, ucsz) != 0 ||
-	    suword(&newsp->rw_in[6], (uintptr_t)tf->tf_out[6]) != 0);
+	    copyout(&sp, &newsp->rw_in[6], sizeof(sp)) != 0);
 	mutex_enter(p->p_lock);
 
 	if (error) {
@@ -599,10 +546,13 @@ cpu_reboot(int howto, char *user_boot_string)
 	 */
 	maybe_dump(howto);
 
-	if ((howto & RB_NOSYNC) == 0 && !syncdone) {
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by syncing or unmounting the file systems.
+	 */
+	if ((howto & RB_NOSYNC) == 0 && panicstr == NULL) {
 		if (!syncdone) {
-		syncdone = true;
-		vfs_shutdown();
+			syncdone = true;
 			/* XXX used to force unmount as well, here */
 			vfs_sync_all(l);
 			/*
@@ -630,6 +580,7 @@ cpu_reboot(int howto, char *user_boot_string)
 	splhigh();
 
 haltsys:
+	doshutdownhooks();
 
 #ifdef MULTIPROCESSOR
 	/* Stop all secondary cpus */
@@ -1437,8 +1388,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 */
 	error = uvm_pglistalloc(size, low, high,
 	    alignment, boundary, pglist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
+	if (error) {
+		free(pglist, M_DEVBUF);
 		return (error);
+	}
 
 	/*
 	 * Compute the location, size, and number of segments actually
@@ -2323,20 +2276,25 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	}
 
 #ifdef _LP64
-	/* If it's not LINEAR don't bother to map it.  Use phys accesses. */
-	if ((flags & BUS_SPACE_MAP_LINEAR) == 0) {
-		hp->_ptr = addr;
-		if (map_little)
-			hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
-		else
-			hp->_asi = ASI_PHYS_NON_CACHED;
-		hp->_sasi = ASI_PHYS_NON_CACHED;
-		return (0);
+	if (!CPU_ISSUN4V) {
+		/* If it's not LINEAR don't bother to map it.  Use phys accesses. */
+		if ((flags & BUS_SPACE_MAP_LINEAR) == 0) {
+			hp->_ptr = addr;
+			if (map_little)
+				hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
+			else
+				hp->_asi = ASI_PHYS_NON_CACHED;
+			hp->_sasi = ASI_PHYS_NON_CACHED;
+			return (0);
+		}
 	}
 #endif
 
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 		pm_flags |= PMAP_NC;
+
+	if ((flags & BUS_SPACE_MAP_PREFETCHABLE))
+		pm_flags |= PMAP_WC;
 
 	if ((err = extent_alloc(io_space, size, PAGE_SIZE,
 		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))
@@ -2402,8 +2360,14 @@ paddr_t
 sparc_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	int flags)
 {
+	paddr_t pa;
 	/* Devices are un-cached... although the driver should do that */
-	return ((paddr+off)|PMAP_NC);
+	pa = (paddr + off) | PMAP_NC;
+	if (flags & BUS_SPACE_MAP_LITTLE)
+		pa |= PMAP_LITTLE;
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pa |= PMAP_WC;	
+	return pa;
 }
 
 
@@ -2413,11 +2377,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
 {
 	struct intrhand *ih;
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = intrhand_alloc();
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	intr_establish(pil, level != IPL_VM, ih);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.25 2012/07/31 15:50:37 bouyer Exp $	*/
+/*	$NetBSD: hcide.c,v 1.25.2.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.25 2012/07/31 15:50:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.25.2.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -52,7 +52,6 @@ struct hcide_softc {
 	struct wdc_softc sc_wdc;
 	struct ata_channel *sc_chp[HCIDE_NCHANNELS];/* pointers to sc_chan */
 	struct ata_channel sc_chan[HCIDE_NCHANNELS];
-	struct ata_queue sc_chq[HCIDE_NCHANNELS];
 	struct wdc_regs sc_wdc_regs[HCIDE_NCHANNELS];
 };
 
@@ -101,14 +100,13 @@ hcide_attach(device_t parent, device_t self, void *aux)
 		ch->ch_atac = &sc->sc_wdc.sc_atac;
 		wdr->cmd_iot = pa->pa_mod_t;
 		wdr->ctl_iot = pa->pa_mod_t;
-		ch->ch_queue = &sc->sc_chq[i];
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + hcide_cmdoffsets[i], 0, 8,
 		    &wdr->cmd_baseioh);
 		for (j = 0; j < WDC_NREG; j++)
 			bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 			    j, j == 0 ? 4 : 1, &wdr->cmd_iohs[j]);
-		wdc_init_shadow_regs(ch);
+		wdc_init_shadow_regs(wdr);
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + hcide_ctloffsets[i], 0, 8,
 		    &wdr->ctl_ioh);

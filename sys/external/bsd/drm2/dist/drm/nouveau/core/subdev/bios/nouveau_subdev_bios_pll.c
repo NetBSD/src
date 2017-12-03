@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_bios_pll.c,v 1.1.1.1.6.2 2014/08/20 00:04:14 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_bios_pll.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $	*/
 
 /*
  * Copyright 2005-2006 Erik Waling
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bios_pll.c,v 1.1.1.1.6.2 2014/08/20 00:04:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bios_pll.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $");
 
 #include <subdev/vga.h>
 #include <subdev/bios.h>
@@ -44,7 +44,7 @@ nv04_pll_mapping[] = {
 	{ PLL_MEMORY, 0x680504 },
 	{ PLL_VPLL0 , 0x680508 },
 	{ PLL_VPLL1 , 0x680520 },
-	{}
+	{ }
 };
 
 static struct pll_mapping
@@ -53,7 +53,7 @@ nv40_pll_mapping[] = {
 	{ PLL_MEMORY, 0x004020 },
 	{ PLL_VPLL0 , 0x680508 },
 	{ PLL_VPLL1 , 0x680520 },
-	{}
+	{ }
 };
 
 static struct pll_mapping
@@ -67,7 +67,7 @@ nv50_pll_mapping[] = {
 	{ PLL_UNK42 , 0x00e824 },
 	{ PLL_VPLL0 , 0x614100 },
 	{ PLL_VPLL1 , 0x614900 },
-	{}
+	{ }
 };
 
 static struct pll_mapping
@@ -79,7 +79,7 @@ nv84_pll_mapping[] = {
 	{ PLL_UNK41 , 0x00e818 },
 	{ PLL_VPLL0 , 0x614100 },
 	{ PLL_VPLL1 , 0x614900 },
-	{}
+	{ }
 };
 
 static u16

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.46 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.46.2.1 2017/12/03 11:37:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -39,11 +39,14 @@
  * Author: Christopher G. Demetriou, March 2, 1998.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_pciide.h"
+#endif
+
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <sys/device_if.h>
-#include "opt_pciide.h"
 
 /* options passed via the 'flags' config keyword */
 #define	PCIIDE_OPTIONS_DMA	0x01
@@ -119,6 +122,9 @@ struct pciide_softc {
 	int sc_ba5_en;
 #endif	/* NATA_DMA */
 
+	/* for CMD Technology 064x */
+	uint sc_cmd_act_channel;
+
 	/* Vendor info (for interpreting Chip description) */
 	pcireg_t sc_pci_id;
 	/* Chip description */
@@ -173,6 +179,7 @@ struct pciide_product_desc {
 
 /* Flags for ide_flags */
 #define	IDE_16BIT_IOSPACE	0x0002 /* I/O space BARS ignore upper word */
+#define	IDE_SHARED_CHANNELS	0x0004 /* channels are not independant */
 
 
 /* inlines for reading/writing 8-bit PCI registers */

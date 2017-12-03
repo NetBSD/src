@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43.10.3 2014/08/20 00:03:32 tls Exp $  
+	$NetBSD: syscalls.master,v 1.43.10.4 2017/12/03 11:36:54 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -77,8 +77,8 @@
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
 			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
-16	NOARGS		{ int|sys||__posix_lchown(const char *path, int uid, \
-			    int gid); }
+16	NOARGS		{ int|sys||__posix_lchown(const char *path, uid_t uid, \
+			    gid_t gid); }
 17	UNIMPL
 18	OBSOL		ostat
 19	NOARGS		{ long|compat_43_sys||lseek(int fd, long offset, \
@@ -164,7 +164,7 @@
 83	NOARGS		{ int|sys||symlink(const char *path, const char *to); }
 84	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
 			    struct stat43 *up); } oolstat
-85	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+85	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 86	UNIMPL		uselib
 ;86	STD		{ int|linux_sys||uselib(const char *path); }
@@ -180,7 +180,8 @@
 			    long length); }
 93	NOARGS		{ int|compat_43_sys||ftruncate(int fd, long length); }
 94	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
-95 	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); }
+95 	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
+			    gid_t gid); }
 96	STD		{ int|linux_sys||getpriority(int which, int who); }
 97	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
 98	UNIMPL
@@ -282,39 +283,39 @@
 			    struct linux_timespec *rmtp); }
 167	STD		{ void *|linux_sys||mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
-168	NOARGS		{ int|linux_sys||accept(int s, \
+168	STD		{ int|linux_sys||accept(int s, \
 			    struct osockaddr *name, int *anamelen); }
-169	NOARGS		{ int|linux_sys||bind(int s, \
+169	STD		{ int|linux_sys||bind(int s, \
 			    const struct osockaddr *name, int namelen); }
-170	NOARGS		{ int|linux_sys||connect(int s, \
-			    const struct sockaddr *name, int namelen); }
-171	NOARGS		{ int|linux_sys||getpeername(int fdes, void *asa, \
+170	STD		{ int|linux_sys||connect(int s, \
+			    const struct osockaddr *name, int namelen); }
+171	STD		{ int|linux_sys||getpeername(int fdes, void *asa, \
 			    int *alen); }
-172	NOARGS		{ int|linux_sys||getsockname(int fdes, void *asa, \
+172	STD		{ int|linux_sys||getsockname(int fdes, void *asa, \
 			    int *alen); }
-173	NOARGS		{ int|linux_sys||getsockopt(int s, int level, \
+173	STD		{ int|linux_sys||getsockopt(int s, int level, \
 			    int optname, void *optval, int *optlen); }
 174	NOARGS		{ int|sys||listen(int s, int backlog); }
-175	NOARGS		{ int|linux_sys||recv(int s, void *buf, int len, \
+175	STD		{ int|linux_sys||recv(int s, void *buf, int len, \
 			    int flags); }
-176	NOARGS		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
+176	STD		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
 			    int flags, struct osockaddr *from, \
 			    int *fromlenaddr); }
-177	NOARGS		{ int|linux_sys||recvmsg(int s, \
+177	STD		{ int|linux_sys||recvmsg(int s, \
 			    struct linux_msghdr *msg, u_int flags); }
-178	NOARGS		{ int|linux_sys||send(int s, void *buf, int len, \
+178	STD		{ int|linux_sys||send(int s, void *buf, int len, \
 			    int flags); }
-179	NOARGS		{ int|linux_sys||sendmsg(int s, \
+179	STD		{ int|linux_sys||sendmsg(int s, \
 			    struct linux_msghdr *msg, u_int flags); }
-180	NOARGS		{ int|linux_sys||sendto(int s, void *msg, \
+180	STD		{ int|linux_sys||sendto(int s, void *msg, \
 			    int len, int flags, struct osockaddr *to, \
 			    int tolen); }
-181	NOARGS		{ int|linux_sys||setsockopt(int s, int level, \
+181	STD		{ int|linux_sys||setsockopt(int s, int level, \
 			    int optname, void *optval, int optlen); }
 182	UNIMPL		shutdown
-183	NOARGS		{ int|linux_sys||socket(int domain, int type, \
+183	STD		{ int|linux_sys||socket(int domain, int type, \
 			    int protocol); }
-184	NOARGS		{ int|linux_sys||socketpair(int domain, int type, \
+184	STD		{ int|linux_sys||socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
 185	STD		{ int|linux_sys||setresuid(uid_t ruid, uid_t euid, \
 			    uid_t suid); }
@@ -354,8 +355,8 @@
 			    size_t nbyte, off_t offset); }
 201	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
 			    size_t nbyte, off_t offset); }
-202	NOARGS		{ int|sys||__posix_chown(const char *path, \
-			    int uid, int gid); }
+202	NOARGS		{ int|sys||__posix_chown(const char *path, uid_t uid, \
+			    gid_t gid); }
 203	NOARGS		{ int|sys||__getcwd(char *bufp, size_t length); }
 204	UNIMPL		capget
 205	UNIMPL		capset
@@ -494,14 +495,17 @@
 			    int fd2, const char *name2, int flags); }
 297	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-298	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+298	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 299	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }
 300	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
 			    int amode); }
-301	UNIMPL		pselect6
-302	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+301	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
+302	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 303	UNIMPL		unshare
@@ -539,5 +543,43 @@
 331	UNIMPL		pwritev
 332	UNIMPL		rt_tgsigqueueinfo
 333	UNIMPL		perf_event_open
-334	UNIMPL		accept4
-335	UNIMPL		recvmmsg
+334	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+335	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
+336	UNIMPL		getdents64
+337	UNIMPL		fanotify_init
+338	UNIMPL		fanotify_mark
+339	UNIMPL		prlimit64
+340	UNIMPL		name_to_handle_at
+341	UNIMPL		open_by_handle_at
+342	UNIMPL		clock_adjtime
+343	UNIMPL		syncfs
+344	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
+345	UNIMPL		setns
+346	UNIMPL		process_vm_readv
+347	UNIMPL		process_vm_writev
+348	UNIMPL		kcmp
+349	UNIMPL		finit_module
+350	UNIMPL		sched_setattr
+351	UNIMPL		sched_getattr
+352	UNIMPL		renameat2
+353	UNIMPL		seccomp
+354	UNIMPL		getrandom
+355	UNIMPL		memfd_create
+356	UNIMPL		bpf
+357	UNIMPL		execveat
+358	UNIMPL		userfaultfd
+359	UNIMPL		membarrier
+360	UNIMPL		mlock2
+361	UNIMPL		copy_file_range
+362	UNIMPL		preadv2
+363	UNIMPL		pwritev2
+364	UNIMPL		pkey_mprotect
+365	UNIMPL		pkey_alloc
+366	UNIMPL		pkey_free
+

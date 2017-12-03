@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.6.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.6.2.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.6.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.6.2.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,12 @@ static int 	chipsfb_getcmap(struct chipsfb_softc *,
 static int 	chipsfb_putpalreg(struct chipsfb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
-static void	chipsfb_bitblt(struct chipsfb_softc *, int, int, int, int,
-			    int, int, uint8_t);
+static void	chipsfb_bitblt(void *, int, int, int, int,
+			    int, int, int);
 static void	chipsfb_rectfill(struct chipsfb_softc *, int, int, int, int,
 			    int);
 static void	chipsfb_putchar(void *, int, int, u_int, long);
+static void	chipsfb_putchar_aa(void *, int, int, u_int, long);
 static void	chipsfb_setup_mono(struct chipsfb_softc *, int, int, int,
 			    int, uint32_t, uint32_t);
 static void	chipsfb_feed(struct chipsfb_softc *, int, uint8_t *);
@@ -159,7 +160,7 @@ chipsfb_read_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index)
 	return chipsfb_read_vga(sc, reg | 0x0001);
 }
 
-__unused static inline void
+static inline void
 chipsfb_write_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index,
     uint8_t val)
 {
@@ -224,14 +225,14 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 	} else
 		aprint_verbose("Panel size: %d x %d\n", width, height);
 
-	if (!prop_dictionary_get_uint32(dict, "width", &sc->width))
-		sc->width = width;
-	if (!prop_dictionary_get_uint32(dict, "height", &sc->height))
-		sc->height = height;
-	if (!prop_dictionary_get_uint32(dict, "depth", &sc->bits_per_pixel))
-		sc->bits_per_pixel = 8;
-	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->linebytes))
-		sc->linebytes = (sc->width * sc->bits_per_pixel) >> 3;
+	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width))
+		sc->sc_width = width;
+	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height))
+		sc->sc_height = height;
+	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_bits_per_pixel))
+		sc->sc_bits_per_pixel = 8;
+	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_linebytes))
+		sc->sc_linebytes = (sc->sc_width * sc->sc_bits_per_pixel) >> 3;
 
 	prop_dictionary_get_bool(dict, "is_console", &console);
 
@@ -243,6 +244,10 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 	vcons_init(&sc->vd, sc, &chipsfb_defaultscreen, &chipsfb_accessops);
 	sc->vd.init_screen = chipsfb_init_screen;
 
+	sc->sc_gc.gc_bitblt = chipsfb_bitblt;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = ROP_COPY;
+
 	ri = &chipsfb_console_screen.scr_ri;
 	if (console) {
 		vcons_init_screen(&sc->vd, &chipsfb_console_screen, 1,
@@ -253,6 +258,12 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 		chipsfb_defaultscreen.capabilities = ri->ri_caps;
 		chipsfb_defaultscreen.nrows = ri->ri_rows;
 		chipsfb_defaultscreen.ncols = ri->ri_cols;
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 1,
+				(sc->sc_fbsize / sc->sc_linebytes) - sc->sc_height - 1,
+				sc->sc_width,
+				ri->ri_font->fontwidth,
+				ri->ri_font->fontheight,
+				defattr);
 		wsdisplay_cnattach(&chipsfb_defaultscreen, ri, 0, 0, defattr);
 	} else {
 		if (chipsfb_console_screen.scr_ri.ri_rows == 0) {
@@ -262,6 +273,12 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 1,
+				(sc->sc_fbsize / sc->sc_linebytes) - sc->sc_height - 1,
+				sc->sc_width,
+				ri->ri_font->fontwidth,
+				ri->ri_font->fontheight,
+				defattr);
 	}
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
@@ -378,7 +395,7 @@ chipsfb_getcmap(struct chipsfb_softc *sc, struct wsdisplay_cmap *cm)
 static void
 chipsfb_clearscreen(struct chipsfb_softc *sc)
 {
-	chipsfb_rectfill(sc, 0, 0, sc->width, sc->height, sc->sc_bg);
+	chipsfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, sc->sc_bg);
 }
 
 /*
@@ -508,16 +525,17 @@ chipsfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 }
 
 static void
-chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
-    int width, int height, uint8_t rop)
+chipsfb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
+    int width, int height, int rop)
 {
+	struct chipsfb_softc *sc = cookie;
 	uint32_t src, dst, cmd = rop, stride, size;
 
 	cmd |= BLT_PAT_IS_SOLID;
 
 	/* we assume 8 bit for now */
-	src = xs + ys * sc->linebytes;
-	dst = xd + yd * sc->linebytes;
+	src = xs + ys * sc->sc_linebytes;
+	dst = xd + yd * sc->sc_linebytes;
 
 	if (xs < xd) {
 		/* right-to-left operation */
@@ -529,11 +547,11 @@ chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
 	if (ys < yd) {
 		/* bottom-to-top operation */
 		cmd |= BLT_START_BOTTOM;
-		src += (height - 1) * sc->linebytes;
-		dst += (height - 1) * sc->linebytes;
+		src += (height - 1) * sc->sc_linebytes;
+		dst += (height - 1) * sc->sc_linebytes;
 	}
 
-	stride = (sc->linebytes << 16) | sc->linebytes;
+	stride = (sc->sc_linebytes << 16) | sc->sc_linebytes;
 	size = (height << 16) | width;
 
 	chipsfb_wait_idle(sc);
@@ -556,9 +574,9 @@ chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width,
 	cmd = BLT_PAT_IS_SOLID | BLT_PAT_IS_MONO | ROP_PAT;
 
 	/* we assume 8 bit for now */
-	dst = x + y * sc->linebytes;
+	dst = x + y * sc->sc_linebytes;
 
-	stride = (sc->linebytes << 16) | sc->linebytes;
+	stride = (sc->sc_linebytes << 16) | sc->sc_linebytes;
 	size = (height << 16) | width;
 
 	chipsfb_wait_idle(sc);
@@ -572,6 +590,121 @@ chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width,
 #ifdef CHIPSFB_WAIT
 	chipsfb_wait_idle(sc);
 #endif
+}
+
+static void
+chipsfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct chipsfb_softc *sc = scr->scr_cookie;
+	uint32_t bg, latch = 0, bg8, fg8, pixel, dst, stride, size;
+	int i, l, x, y, wi, he, r, g, b, aval;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo, off, pad;
+	uint8_t *data8;
+	int rv;
+
+	if (__predict_false((unsigned int)row > ri->ri_rows ||
+	    (unsigned int)col > ri->ri_cols))
+		return;
+
+	if (__predict_false((sc->sc_mode != WSDISPLAYIO_MODE_EMUL)))
+		return;
+	
+	if (__predict_false((!CHAR_IN_FONT(c, font))))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	if (c == 0x20) {
+		chipsfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	data8 = WSFONT_GLYPH(c, font);
+
+	/* we assume 8 bit for now */
+	dst = x + y * sc->sc_linebytes;
+
+	stride = sc->sc_linebytes << 16;
+	size = (he << 16) | wi;
+
+	/* set up for host blit */
+	chipsfb_wait_idle(sc);
+	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
+	chipsfb_write32(sc, CT_BLT_DSTADDR, dst);
+	chipsfb_write32(sc, CT_BLT_SRCADDR, 0);
+	chipsfb_write32(sc, CT_BLT_CONTROL,
+	    BLT_PAT_IS_SOLID | BLT_SRC_IS_CPU | ROP_COPY);
+	chipsfb_write32(sc, CT_BLT_SIZE, size);
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	r1 = rasops_cmap[fgo];
+	g0 = rasops_cmap[bgo + 1];
+	g1 = rasops_cmap[fgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+	bg8 = R3G3B2(r0, g0, b0);
+	fg8 = R3G3B2(r1, g1, b1);
+
+	/* see if we need to pad lines to 64bit */
+	pad = (wi + 3) & 4;
+	for (l = 0; l < he; l++) {
+		off = 0;
+		latch = 0;
+		for (i = 0; i < wi; i++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
+			}
+			latch |= pixel << off;
+			off += 8;
+			/* write in 32bit chunks */
+			if ((i & 3) == 3) {
+				chipsfb_write32(sc,
+				    CT_OFF_DATA - CT_OFF_BITBLT, latch);
+				latch = 0;
+				off = 0;
+			}
+			data8++;
+		}
+		/* if we have pixels left in latch write them out */
+		if ((i & 3) != 0) {
+			chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, latch);
+		}
+		/* this chip needs scanlines 64bit aligned */
+		if (pad) chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, 0);
+	}
+
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
+	}
 }
 
 static void
@@ -621,14 +754,13 @@ chipsfb_setup_mono(struct chipsfb_softc *sc, int xd, int yd, int width,
 	cmd = BLT_PAT_IS_SOLID | BLT_SRC_IS_CPU | BLT_SRC_IS_MONO | ROP_COPY;
 
 	/* we assume 8 bit for now */
-	dst = xd + yd * sc->linebytes;
+	dst = xd + yd * sc->sc_linebytes;
 
-	stride = (sc->linebytes << 16);
+	stride = (sc->sc_linebytes << 16);
 	size = (height << 16) | width;
 
 	chipsfb_wait_idle(sc);
 	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
-	chipsfb_write32(sc, CT_BLT_EXPCTL, MONO_SRC_ALIGN_BYTE);
 	chipsfb_write32(sc, CT_BLT_DSTADDR, dst);
 	chipsfb_write32(sc, CT_BLT_SRCADDR, 0);
 	chipsfb_write32(sc, CT_BLT_CONTROL, cmd);
@@ -744,7 +876,9 @@ chipsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				chipsfb_init(sc);
 				chipsfb_restore_palette(sc);
+				glyphcache_wipe(&sc->sc_gc);
 				vcons_redraw_screen(ms);
 			}
 		}
@@ -770,12 +904,14 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct chipsfb_softc *sc = vd->cookie;
 	paddr_t pa;
 
-	if (sc->sc_mmap != NULL)
-		return sc->sc_mmap(v, vs, offset, prot);
+	if (sc->sc_mmap != NULL) {
+		pa = sc->sc_mmap(v, vs, offset, prot);
+		if (pa != -1) return pa;
+	}
 
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->memsize) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb, offset, prot,
 		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
@@ -792,7 +928,7 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 
@@ -816,11 +952,12 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct chipsfb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 
-	ri->ri_depth = sc->bits_per_pixel;
-	ri->ri_width = sc->width;
-	ri->ri_height = sc->height;
-	ri->ri_stride = sc->width;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_8BIT_IS_RGB;
+	ri->ri_depth = sc->sc_bits_per_pixel;
+	ri->ri_width = sc->sc_width;
+	ri->ri_height = sc->sc_height;
+	ri->ri_stride = sc->sc_width;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR |
+		     RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	ri->ri_bits = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
 
@@ -834,8 +971,8 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
-	rasops_reconfig(ri, sc->height / ri->ri_font->fontheight,
-		    sc->width / ri->ri_font->fontwidth);
+	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
+		    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
 	ri->ri_ops.copyrows = chipsfb_copyrows;
@@ -843,7 +980,10 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = chipsfb_eraserows;
 	ri->ri_ops.erasecols = chipsfb_erasecols;
 	ri->ri_ops.cursor = chipsfb_cursor;
-	ri->ri_ops.putchar = chipsfb_putchar;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = chipsfb_putchar_aa;
+	} else
+		ri->ri_ops.putchar = chipsfb_putchar;
 }
 
 #if 0
@@ -858,10 +998,17 @@ chipsfb_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 static void
 chipsfb_init(struct chipsfb_softc *sc)
 {
+	uint8_t reg;
 
 	chipsfb_wait_idle(sc);
 
 	/* setup the blitter */
+	chipsfb_write32(sc, CT_BLT_EXPCTL, MONO_SRC_ALIGN_BYTE);
+
+	/* put DAC into 8bit mode */
+	reg = chipsfb_read_indexed(sc, CT_CONF_INDEX, XR_PIXEL_PIPELINE_CTL_0);
+	reg |= ENABLE_8BIT_DAC;
+	chipsfb_write_indexed(sc, CT_CONF_INDEX, XR_PIXEL_PIPELINE_CTL_0, reg);
 }
 
 uint32_t

@@ -1,0 +1,290 @@
+# $NetBSD: README.models,v 1.5.18.2 2017/12/03 11:36:25 jdolecek Exp $
+
+MIPS models and architecture levels
+-----------------------------------
+
+Since this is a complex and confusing topic and there's a shortage of
+information (especially, a shortage of reliable information), I'm
+creating this document as a reference for people doing MIPS stuff on
+NetBSD (and elsewhere).
+
+Citations appear in []. With luck all important facts have citations.
+
+
+------------------------------------------------------------
+1. Architecture levels.
+
+These architecture levels exist:
+
+        32-bit     64-bit
+
+        MIPS-I
+        MIPS-II
+                   MIPS-III
+                   MIPS-IV
+                   MIPS-V
+        MIPS32     MIPS64
+        MIPS32r2   MIPS64r2
+        MIPS32r3   MIPS64r3
+        MIPS32r4   MIPS64r4
+        MIPS32r5   MIPS64r5
+        MIPS32r6   MIPS64r6
+
+Note that while MIPS32 is a 32-bit subset of MIPS64, each
+corresponding pair of MIPS32rN and MIPS64rN are comparable in age and
+properties. Later revisions (further down the list) are mostly supersets
+of earlier revisions, although some exceptions exist.
+
+
+------------------------------------------------------------
+2. CPU models.
+
+For vintage MIPS these are the standard models as of fall 1996 [idt96
+A-198] and the corresponding architecture levels. (There were many
+additional models put out by licensees or by the MIPS company itself,
+which have model numbers with fewer zeros.)
+
+	R2000		MIPS-I (32-bit)		[idt96 1-5]
+	R3000		MIPS-I (32-bit)		[idt96 1-5]
+	R4000		MIPS-III (64-bit)	[idt96 A-197]
+	R4200		MIPS-III (64-bit)	[idt96 A-197]
+	R4300		MIPS-III (64-bit)	[idt96 A-197]
+	R4400		MIPS-III (64-bit)	[idt96 A-197]
+	R4600		MIPS-III (64-bit)	[idt96 A-197]
+	R5000		MIPS-IV (64-bit)	[idt96 1-5]
+	R6000		MIPS-II ??
+	R8000		MIPS-IV (64-bit)	[idt96 1-5]
+	R10000		MIPS-IV (64-bit)	[idt96 1-5]
+	R1x000		MIPS-IV (64-bit)
+
+For later models than this I currently have no information.
+
+
+------------------------------------------------------------
+3. CPU models present in various systems.
+
+These are the CPU models found in various systems NetBSD does and
+doesn't support. This table also notes endianness; MIPS chips are
+bi-endian but are wired up one way or the other on motherboards.
+
+   algor (little-endian [buildsh])
+	Algorithmics P-4000i			??
+	Algorithmics P-4032			??
+	Algorithmics P-5064			??
+	Algorithmics P-6032			??
+   arc (little-endian [buildsh])
+	Acer PICA				??
+	MIPS Magnum 4000			??
+	NEC Image RISCstation			??
+	NEC Express RISCserver			??
+	NEC RISCserver 2200			??
+	NEC RISCstation 2200			??
+	NEC RISCstation 2250			??
+	NEC Express5800/230 R4400 PCI		presumably R4400 (MIPS-III)
+	NEC Express5800/240 R4400 EISA		presumably R4400 (MIPS-III)
+	DeskStation Tyne			??
+   cobalt (little-endian [buildsh])
+	Qube ... ??				??
+	RaQ ... ??				??
+   emips (big-endian [buildsh])
+	... ??					??
+	(see http://research.microsoft.com/en-us/projects/emips/ )
+   evbmips
+   	Loongson 2F ( gdium, lemote etc. )	more or less LE MIPS-III with
+   						some extensions
+   	xburst ( as in, jz4780, found on CI20 )	LE MIPS32R2 with extensions
+	... ??					?? (various-endian)
+   ews4800mips (big-endian [buildsh])
+	EWS4800/350				??
+	EWS4800/350F				??
+	EWS4800/360AD				??
+	EWS4800/360ADII				??
+	EWS4800/360SX				??
+	EWS4800/360EX				??
+	EWS4800/360				??
+	... ??					??
+   hpcmips (big-endian [buildsh])
+	see http://wiki.netbsd.org/ports/hpcmips/processor_comparison/
+   mipsco (big-endian [buildsh])
+	Various MIPS Computer Systems, Inc.	see [mipscolist]	
+	Bull DPX/Prostation M-20		??
+   newsmips (big-endian [buildsh])
+	NWS-3470D				R3000 (MIPS-I) [portpage]
+	NWS-3410				R3000 (MIPS-I) [portpage]
+	NWS-3460				R3000 (MIPS-I) [portpage]
+	NWS-3710				R3000 (MIPS-I) [portpage]
+	NWS-3720				R3000 (MIPS-I) [portpage]
+	NWS-3800 series				??
+	NWS-4000 series				R4600 (MIPS-III) [portpage]
+	NWS-5000				R4[04]00 (MIPS-III) [portpage]
+   playstation2 (little-endian [buildsh])
+	playstation2				R5900
+	(almost all of MIPS-III + movn/movz) [linux-mips wiki R5900]
+   pmax (little-endian [buildsh])
+	DECstation/system 2100 and 3100		R2000 (MIPS-I) [portpage]
+	DECsystem 5100				R3000 (MIPS-I) [portpage]
+	Personal DECstation 5000/20, /25, /33	R3000 (MIPS-I) [portpage]
+	Personal DECstation 5000/50		R4000 (MIPS-III) [portpage]
+	DECstation/system 5000/120, /125, /133	R3000 (MIPS-I) [portpage]
+	DECstation/system 5000/150		R4000 (MIPS-III) [portpage]
+        DECstation/system 5000/200		R3000 (MIPS-I) [portpage]
+	DECstation/system 5000/240		R3000 (MIPS-I) [portpage]
+	DECstation/system 5000/260		R4400 (MIPS-III) [portpage]
+	DECsystem 5900				R3000 (MIPS-I) [portpage]
+	DECsystem 5900-260			R4400 (MIPS-III) [portpage]
+	DECsystem 5500				R3000 (MIPS-I) [portpage]
+   sbmips
+	BCM91250A (Swarm) evaluation board	Broadcomm BCM1250 [portpage]
+   sgimips (big-endian [buildsh])
+	4D/20					??
+	4D/25					??
+	Indigo					R3000 (MIPS-I) [portpage]
+	Indigo (R4x00)				R4?00 (MIPS-III) [portpage]
+        4D/30					??
+	4D/35					??
+        Indigo2 (R4x00)				R4?00 (MIPS-III) [portpage]
+        Challenge M				??
+        Indy (R4x00)				R4?00 (MIPS-III) [portpage]
+        Indy (R5000)				R5000 (MIPS-IV) [portpage]
+        Challenge S (R4x00)			R4?00 (MIPS-III) [portpage]
+	Challenge S (R5000)			R5000 (MIPS-IV) [portpage]
+	R10000 Power Indigo2			R10000 (MIPS-IV) [portpage]
+	Octane					R1x000 (MIPS-IV) [portpage]
+        O2 (R5000)				R5000 (MIPS-IV) [portpage]
+	O2 (RM5200)				RM5200 (MIPS-IV) [portpage]
+	O2 (R7000)				R7000  (MIPS-IV) [portpage]
+	O2 (R10000)				R10000 (MIPS-IV) [portpage]
+	O2 (R12000)				R12000 (MIPS-IV) [portpage]
+	O2 (R14000)				R14000 (MIPS-IV) [portpage]
+	Fuel					R1x000 (MIPS-IV) [portpage]
+	Tezro					R1x000 (MIPS-IV) [portpage]
+	... ??
+
+
+------------------------------------------------------------
+4. FPU properties
+
+TBD... this is complex and messy (XXX / ??)
+
+
+------------------------------------------------------------
+5. Exception handling properties
+
+TBD... (XXX / ??)
+
+
+------------------------------------------------------------
+6. MMU properties
+
+TBD... (XXX / ??)
+
+
+------------------------------------------------------------
+7. Cache properties
+
+TBD... (XXX / ??)
+
+
+------------------------------------------------------------
+8. Instruction ordering properties and hazards
+
+TBD... (XXX / ??)
+
+In the absence of the SYNC instruction before MIPS-II [idt96 A-172,
+mips32insn 215], apparently on a R3000 you can force pending memory
+writes to complete by doing an uncached read. [idt96 11-13]
+
+Apparently also on some models but not others the state of the write
+buffer is wired to the coprocessor 0 condition bit and you can also do
+this by using the otherwise useless bc0f instruction (branch on
+coprocessor 0 false) to loop. [no citation, I found this in passing
+the other day with Google while looking for something else]
+
+
+------------------------------------------------------------
+9. Pipeline hazards
+
+TBD... (XXX / ??)
+
+On MIPS-I a load instruction requires an explicit one-cycle wait
+before using the result. This restriction was lifted in MIPS-II,
+with the addition of an interlock in the pipeline. [idt96 A-2]
+
+A multiply should not be started within two cycles of a MFHI or MFLO
+instruction, as an interrupt that requires restarting the MFHI or MFLO
+might (will) get the result from the subsequent multiply. At least on
+MIPS-I. [idt96 2-4]  I guess this is true for divides as well.
+
+
+------------------------------------------------------------
+10. Coprocessor 0 hazards
+
+TBD... (XXX / ??)
+
+
+----------------------------------------------------------------------
+11. Deprecated/removed material.
+
+When the exception handling model was changed for MIPS-III
+(introducing the ERET instruction) the RFE instruction supporting the
+old model was removed.  [idt96 A-134]
+
+Coprocessor 3 (that is, the ability to have a third coprocessor, which
+had never been used for anything) was removed in MIPS-III [idt96 A-197].
+
+The branch likely instructions (e.g. BEQL) were added in MIPS-II
+[mips32insn 56] and deprecated not long after, at least by MIPS32
+[mips32insn 57] and were removed in release MIPS32 Release 6
+[mips32newinsn2a 71].
+
+SSNOP as a special NOP was deprecated in MIPS32/64 Release 6
+[mips32newinsn2a 375] and sequences using SSNOP should include the
+new EHB which counts as an SSNOP on older implementations
+[mips32newinsn2a 174] ... and possibly SYNC/SYNCI ???
+[mips32newinsn2a 394-401]
+
+... ??
+
+------------------------------------------------------------
+12. Conditional compilation in NetBSD
+
+TBD... (XXX / ??)
+
+
+------------------------------------------------------------
+References:
+
+[buildsh] The MACHINE/MACHINE_ARCH architecture table in NetBSD
+	build.sh.
+
+[idt96] "IDT MIPS Microprocessor Family Software Reference Manual",
+	Integrated Device Technology, Version 2.0, dated October 1996.
+
+[linux-mips wiki] https://www.linux-mips.org/wiki/
+
+[mips32intro] "MIPS32(TM) Architecture For Programmers Volume I:
+	Introduction to the MIPS32(TM) Architecture", MIPS
+	Technologies, Document Number MD00082, Revision 0.95, dated
+	March 2001. This was apparently an external review version or
+	something and has been available on the Internet; the final
+	version, and later revisions, never were. (AFAIK)
+
+[mips32insn] "MIPS32(TM) Architecture For Programmers Volume II: The
+	MIPS32(TM) Instruction Set", MIPS Technologies, Document Number
+	MD00086, Revision 0.95, March 12, 2001. Ditto.
+
+[mips32newinsn2a] "MIPS32(R) Architecture For Programmers Volume II-A:
+	The MIPS32(R) Instruction Set Manual", Imagination, Document
+	Number MD00086, Revision 6.02, dated December 10, 2014.
+
+[mips32priv] "MIPS32(TM) Architecture For Programmers Volume III: The
+	MIPS32(TM) Privileged Resource Architecture", Document Number
+	MD00090, Revision 0.95, dated March 2001. Ditto.
+
+[portpage] The port page for this NetBSD port on wiki.netbsd.org, or a
+	subpage. Ideally these references should be replaced with
+	something less self-referential.
+
+[mipscolist] List of MIPS Computer Systems, Inc. machines hosted on the
+	NetBSD web server: https://www.netbsd.org/ports/mipsco/models.html
+

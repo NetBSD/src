@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.21.18.2 2014/08/20 00:02:41 tls Exp $	*/
+/*	$NetBSD: sfas.c,v 1.21.18.3 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21.18.2 2014/08/20 00:02:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21.18.3 2017/12/03 11:35:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21.18.2 2014/08/20 00:02:41 tls Exp $");
 #include <machine/cpu.h>
 #include <machine/io.h>
 #include <machine/intr.h>
-#include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/sfasreg.h>
 #include <acorn32/podulebus/sfasvar.h>
@@ -250,7 +249,7 @@ sfasinitialize(struct sfas_softc *dev)
 	l2pte_set(ptep, npte, opte);
 	PTE_SYNC(ptep);
 	cpu_tlb_flushD();
-	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, PAGE_SIZE);
+	cpu_dcache_wbinv_range((vaddr_t)dev->sc_bump_va, PAGE_SIZE);
 
 	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
 }
@@ -813,7 +812,7 @@ sfas_setup_nexus(struct sfas_softc *dev, struct nexus *nexus, struct sfas_pendin
 /* Flush the caches. */
 
 	if (len && !(mode & SFAS_SELECT_I))
-		cpu_dcache_wbinv_range((vm_offset_t)buf, len);
+		cpu_dcache_wbinv_range((vaddr_t)buf, len);
 }
 
 int
@@ -1411,7 +1410,7 @@ sfas_postaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 					 * Make sure that the specs are within
 					 * chip limits. Note that if we
 					 * initiated the negotiation the specs
-					 * WILL be withing chip limits. If it
+					 * WILL be within chip limits. If it
 					 * was the scsi unit that initiated
 					 * the negotiation, the specs may be
 					 * to high.

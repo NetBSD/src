@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_fha_new.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfs_fha_new.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Copyright (c) 2013 Spectra Logic Corporation
@@ -26,24 +26,24 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_fha_new.c 249596 2013-04-17 22:42:43Z ken "); */
-__RCSID("$NetBSD: nfs_fha_new.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_fha_new.c 259765 2013-12-23 08:43:16Z mav "); */
+__RCSID("$NetBSD: nfs_fha_new.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 #include <rpc/rpc.h>
-#include <nfs/nfs_fha.h>
-#include <fs/nfs/xdr_subs.h>
-#include <fs/nfs/nfs.h>
-#include <fs/nfs/nfsproto.h>
-#include <fs/nfs/nfsm_subs.h>
-#include <fs/nfsserver/nfs_fha_new.h>
+#include <fs/nfs/common/nfs_fha.h>
+#include <fs/nfs/common/xdr_subs.h>
+#include <fs/nfs/common/nfs.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/common/nfsm_subs.h>
+#include <fs/nfs/server/nfs_fha_new.h>
 
 static void fhanew_init(void *foo);
 static void fhanew_uninit(void *foo);
 rpcproc_t fhanew_get_procnum(rpcproc_t procnum);
 int fhanew_realign(struct mbuf **mb, int malloc_flags);
-int fhanew_get_fh(fhandle_t *fh, int v3, struct mbuf **md, caddr_t *dpos);
+int fhanew_get_fh(uint64_t *fh, int v3, struct mbuf **md, caddr_t *dpos);
 int fhanew_is_read(rpcproc_t procnum);
 int fhanew_is_write(rpcproc_t procnum);
 int fhanew_get_offset(struct mbuf **md, caddr_t *dpos, int v3,
@@ -130,11 +130,13 @@ fhanew_realign(struct mbuf **mb, int malloc_flags)
 }
 
 int
-fhanew_get_fh(fhandle_t *fh, int v3, struct mbuf **md, caddr_t *dpos)
+fhanew_get_fh(uint64_t *fh, int v3, struct mbuf **md, caddr_t *dpos)
 {
 	struct nfsrv_descript lnd, *nd;
 	uint32_t *tl;
-	int error, len;
+	uint8_t *buf;
+	uint64_t t;
+	int error, len, i;
 
 	error = 0;
 	len = 0;
@@ -153,11 +155,13 @@ fhanew_get_fh(fhandle_t *fh, int v3, struct mbuf **md, caddr_t *dpos)
 		len = NFSX_V2FH;
 	}
 
+	t = 0;
 	if (len != 0) {
-		NFSM_DISSECT_NONBLOCK(tl, uint32_t *, len);
-		bcopy(tl, fh, len);
-	} else
-		bzero(fh, sizeof(*fh));
+		NFSM_DISSECT_NONBLOCK(buf, uint8_t *, len);
+		for (i = 0; i < len; i++)
+			t ^= ((uint64_t)buf[i] << (i & 7) * 8);
+	}
+	*fh = t;
 
 nfsmout:
 	*md = nd->nd_md;

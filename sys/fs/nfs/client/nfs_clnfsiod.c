@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clnfsiod.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: nfs_clnfsiod.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clnfsiod.c 249630 2013-04-18 23:20:16Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clnfsiod.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
+__RCSID("$NetBSD: nfs_clnfsiod.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,10 @@ __RCSID("$NetBSD: nfs_clnfsiod.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include <fs/nfs/nfsport.h>
-#include <fs/nfsclient/nfsmount.h>
-#include <fs/nfsclient/nfs.h>
-#include <fs/nfsclient/nfsnode.h>
+#include <fs/nfs/common/nfsport.h>
+#include <fs/nfs/client/nfsmount.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfsnode.h>
 
 extern struct mtx	ncl_iod_mutex;
 extern struct task	ncl_nfsiodnew_task;

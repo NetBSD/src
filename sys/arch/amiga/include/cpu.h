@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79.14.1 2014/08/20 00:02:43 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79.14.2 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +59,7 @@
 extern volatile unsigned int interrupt_depth;
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the hp300, we use
+ * machine state in an opaque clockframe.  On the amiga, we use
  * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
@@ -85,7 +85,7 @@ struct clockframe {
 
 /*
  * Give a profiling tick to the current process from the softclock
- * interrupt.  On hp300, request an ast to send us through trap(),
+ * interrupt.  On the amiga, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
 #define	profile_tick(l, framep)	((l)->l_pflag |= LP_OWEUPC, setsoftast())

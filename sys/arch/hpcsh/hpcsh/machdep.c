@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76.2.1 2014/08/20 00:03:03 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76.2.2 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76.2.1 2014/08/20 00:03:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76.2.2 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -76,10 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76.2.1 2014/08/20 00:03:03 tls Exp $")
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define	ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif /* NKSYMS || MODULAR || DDB || KGDB */
 

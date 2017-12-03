@@ -1,4 +1,4 @@
-/* $NetBSD: booted_dev.c,v 1.3 1999/11/13 21:38:20 thorpej Exp $ */
+/* $NetBSD: booted_dev.c,v 1.3.178.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -53,9 +53,8 @@ booted_dev_open(void)
 	 * We don't know what device names look like yet,
 	 * so we can't change them.
 	 */
-	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, booted_dev_name,
+	devlen = prom_getenv(PROM_E_BOOTED_DEV, booted_dev_name,
 	    sizeof(booted_dev_name));
-	devlen = ret.u.retval;
 
 	ret.bits = prom_open(booted_dev_name, devlen);
 

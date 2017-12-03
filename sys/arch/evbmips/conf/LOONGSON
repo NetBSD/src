@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.12.2.3 2014/08/20 00:02:58 tls Exp $
+# $NetBSD: LOONGSON,v 1.12.2.4 2017/12/03 11:36:09 jdolecek Exp $
 #
 # LOONGSON machine description file
 # 
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/evbmips/conf/std.loongson"
+include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.12.2.3 $"
+#ident 		"LOONGSON-$Revision: 1.12.2.4 $"
 
 maxusers	16
 
@@ -36,6 +36,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	PMAP_FAULTINFO
 #options 	LOCKDEBUG
 makeoptions	DEBUG="-g"
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=8192		# dmesg buffer size
 
@@ -95,6 +96,8 @@ options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -128,15 +131,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-
+include 	"conf/compat_netbsd16.config"
 
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP
@@ -196,8 +191,10 @@ isa0		at pcib?
 pckbc0		at isa?				# PC keyboard controller
 pckbd*		at pckbc?			# PC keyboard
 pms*		at pckbc?			# PS/2 mouse for wsmouse
+#options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
+options 	PMS_ALPS_TOUCHPAD	# Enable support for Alps Touchpads
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
@@ -208,13 +205,15 @@ com1		at isa? port 0x3f8 irq 4	# Fuloong 2F only (IR port)
 gcscaudio*	at pci?
 audio*		at audiobus?
 
+spkr*		at audio?		# PC speaker (synthesized)
+
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 options  	WDC_NO_IDS #workaround CS5536+JMH330 interrupt disable bug
 
 # ATA (IDE) bus support
 atabus* at ata?
-options 	ATADEBUG
+#options 	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -351,6 +350,7 @@ pseudo-device	bridge
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	drvctl			# driver control
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 
@@ -363,9 +363,6 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

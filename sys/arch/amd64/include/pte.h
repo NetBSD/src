@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 2010/07/24 17:43:47 njoly Exp $	*/
+/*	$NetBSD: pte.h,v 1.8.18.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  * amd64 MMU hardware structure:
  *
  * the (first generation) amd64 MMU is a 4-level MMU which maps 2^48 bytes
- * of  virtual memory. The  pagesize we use is 4K (4096 [0x1000] bytes), 
+ * of virtual memory. The pagesize we use is 4K (4096 [0x1000] bytes),
  * although 2M and 4M can be used as well. The indexes in the levels
  * are 9 bits wide (512 64bit entries per level), dividing the bits
  * 9-9-9-9-12.
@@ -65,28 +65,24 @@
  */
 
 #if !defined(_LOCORE)
-
 /*
- * here we define the data types for PDEs and PTEs
+ * Here we define the data types for PDEs and PTEs.
  */
-
 typedef uint64_t pd_entry_t;		/* PDE */
 typedef uint64_t pt_entry_t;		/* PTE */
-
 #endif
 
 /*
- * now we define various for playing with virtual addresses
+ * Now we define various constants for playing with virtual addresses.
  */
-
 #define L1_SHIFT	12
-#define	L2_SHIFT	21
-#define	L3_SHIFT	30
-#define	L4_SHIFT	39
-#define	NBPD_L1		(1UL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
-#define	NBPD_L2		(1UL << L2_SHIFT) /* # bytes mapped by L2 ent (2MB) */
-#define	NBPD_L3		(1UL << L3_SHIFT) /* # bytes mapped by L3 ent (1G) */
-#define	NBPD_L4		(1UL << L4_SHIFT) /* # bytes mapped by L4 ent (512G) */
+#define L2_SHIFT	21
+#define L3_SHIFT	30
+#define L4_SHIFT	39
+#define NBPD_L1		(1UL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
+#define NBPD_L2		(1UL << L2_SHIFT) /* # bytes mapped by L2 ent (2MB) */
+#define NBPD_L3		(1UL << L3_SHIFT) /* # bytes mapped by L3 ent (1G) */
+#define NBPD_L4		(1UL << L4_SHIFT) /* # bytes mapped by L4 ent (512G) */
 
 #define L4_MASK		0x0000ff8000000000
 #define L3_MASK		0x0000007fc0000000
@@ -101,16 +97,15 @@ typedef uint64_t pt_entry_t;		/* PTE */
 /*
  * PDE/PTE bits. These are no different from their i386 counterparts.
  */
-
-#define	PG_V		0x0000000000000001	/* valid */
-#define	PG_RO		0x0000000000000000	/* read-only */
-#define	PG_RW		0x0000000000000002	/* read-write */
-#define	PG_u		0x0000000000000004	/* user accessible */
-#define	PG_PROT		0x0000000000000006
+#define PG_V		0x0000000000000001	/* valid */
+#define PG_RO		0x0000000000000000	/* read-only */
+#define PG_RW		0x0000000000000002	/* read-write */
+#define PG_u		0x0000000000000004	/* user accessible */
+#define PG_PROT		0x0000000000000006
 #define PG_WT		0x0000000000000008	/* write-through */
-#define	PG_N		0x0000000000000010	/* non-cacheable */
-#define	PG_U		0x0000000000000020	/* used */
-#define	PG_M		0x0000000000000040	/* modified */
+#define PG_N		0x0000000000000010	/* non-cacheable */
+#define PG_U		0x0000000000000020	/* used */
+#define PG_M		0x0000000000000040	/* modified */
 #define PG_PAT		0x0000000000000080	/* PAT (on pte) */
 #define PG_PS		0x0000000000000080	/* 2MB page size (on pde) */
 #define PG_G		0x0000000000000100	/* not flushed */
@@ -118,19 +113,18 @@ typedef uint64_t pt_entry_t;		/* PTE */
 #define PG_AVAIL2	0x0000000000000400
 #define PG_AVAIL3	0x0000000000000800
 #define PG_LGPAT	0x0000000000001000	/* PAT on large pages */
-#define	PG_FRAME	0x000ffffffffff000
-#define	PG_NX		0x8000000000000000
+#define PG_FRAME	0x000ffffffffff000
+#define PG_NX		0x8000000000000000
 
 #define PG_2MFRAME	0x000fffffffe00000	/* large (2M) page frame mask */
 #define PG_1GFRAME	0x000fffffc0000000	/* large (1G) page frame mask */
-#define	PG_LGFRAME	PG_2MFRAME
+#define PG_LGFRAME	PG_2MFRAME
 
 /*
- * short forms of protection codes
+ * Short forms of protection codes.
  */
-
-#define	PG_KR		0x0000000000000000	/* kernel read-only */
-#define	PG_KW		0x0000000000000002	/* kernel read-write */
+#define PG_KR		0x0000000000000000	/* kernel read-only */
+#define PG_KW		0x0000000000000002	/* kernel read-write */
 
 #include <x86/pte.h>
 

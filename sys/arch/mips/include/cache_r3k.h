@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r3k.h,v 1.3 2003/02/17 11:35:02 simonb Exp $	*/
+/*	$NetBSD: cache_r3k.h,v 1.3.152.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,15 +40,15 @@
  */
 
 void	r3k_icache_sync_all(void);
-void	r3k_icache_sync_range(vaddr_t, vsize_t);
+void	r3k_icache_sync_range(register_t, vsize_t);
 
 void	r3k_pdcache_wbinv_all(void);
 
-void	r3k_pdcache_inv_range(vaddr_t, vsize_t);
-void	r3k_pdcache_wb_range(vaddr_t, vsize_t);
+void	r3k_pdcache_inv_range(register_t, vsize_t);
+void	r3k_pdcache_wb_range(register_t, vsize_t);
 
-void	r3k_picache_do_inv(vaddr_t, vaddr_t);
-void	r3k_pdcache_do_inv(vaddr_t, vaddr_t);
+void	r3k_picache_do_inv(register_t, vaddr_t);
+void	r3k_pdcache_do_inv(register_t, vaddr_t);
 
 int	r3k_picache_size(void);
 int	r3k_pdcache_size(void);

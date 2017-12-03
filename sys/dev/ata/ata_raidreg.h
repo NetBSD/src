@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.8 2008/09/11 11:08:50 tron Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.8.38.1 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -207,30 +207,30 @@ struct via_raid_conf {
 #define NVIDIA_LBA(wd) ((wd)->sc_capacity - 2)
 
 struct nvidia_raid_conf {
-    u_int8_t            nvidia_id[8];
+    uint8_t            nvidia_id[8];
 #define NV_MAGIC                "NVIDIA  "
 
-    u_int32_t           config_size;
-    u_int32_t           checksum;
-    u_int16_t           version;
-    u_int8_t            disk_number;
-    u_int8_t            dummy_0;
-    u_int32_t           total_sectors;
-    u_int32_t           sector_size;
-    u_int8_t            serial[16];
-    u_int8_t            revision[4];
-    u_int32_t           dummy_1;
+    uint32_t           config_size;
+    uint32_t           checksum;
+    uint16_t           version;
+    uint8_t            disk_number;
+    uint8_t            dummy_0;
+    uint32_t           total_sectors;
+    uint32_t           sector_size;
+    uint8_t            serial[16];
+    uint8_t            revision[4];
+    uint32_t           dummy_1;
 
-    u_int32_t           magic_0;
+    uint32_t           magic_0;
 #define NV_MAGIC0               0x00640044
 
-    u_int64_t           magic_1;
-    u_int64_t           magic_2;
-    u_int8_t            flags;
-    u_int8_t            array_width;
-    u_int8_t            total_disks;
-    u_int8_t            dummy_2;
-    u_int16_t           type;
+    uint64_t           magic_1;
+    uint64_t           magic_2;
+    uint8_t            flags;
+    uint8_t            array_width;
+    uint8_t            total_disks;
+    uint8_t            dummy_2;
+    uint16_t           type;
 #define NV_T_RAID0              0x00000080
 #define NV_T_RAID1              0x00000081
 #define NV_T_RAID3              0x00000083
@@ -238,21 +238,21 @@ struct nvidia_raid_conf {
 #define NV_T_RAID01             0x00008180
 #define NV_T_SPAN               0x000000ff
 
-    u_int16_t           dummy_3;
-    u_int32_t           stripe_sectors;
-    u_int32_t           stripe_bytes;
-    u_int32_t           stripe_shift;
-    u_int32_t           stripe_mask;
-    u_int32_t           stripe_sizesectors;
-    u_int32_t           stripe_sizebytes;
-    u_int32_t           rebuild_lba;
-    u_int32_t           dummy_4;
-    u_int32_t           dummy_5;
-    u_int32_t           status;
+    uint16_t           dummy_3;
+    uint32_t           stripe_sectors;
+    uint32_t           stripe_bytes;
+    uint32_t           stripe_shift;
+    uint32_t           stripe_mask;
+    uint32_t           stripe_sizesectors;
+    uint32_t           stripe_sizebytes;
+    uint32_t           rebuild_lba;
+    uint32_t           dummy_4;
+    uint32_t           dummy_5;
+    uint32_t           status;
 #define NV_S_BOOTABLE           0x00000001
 #define NV_S_DEGRADED           0x00000002
 
-    u_int32_t           filler[98];
+    uint32_t           filler[98];
 } __packed;
 
 /* JMicron Technology Corp Metadata */

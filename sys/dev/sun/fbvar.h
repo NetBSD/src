@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.12 2008/12/12 18:39:55 macallan Exp $ */
+/*	$NetBSD: fbvar.h,v 1.12.24.1 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,13 +86,6 @@ struct fbdevice {
 #define FB_USERMASK	(FB_FORCE)	/* flags that the user can set */
 
 	volatile u_int32_t *fb_pfour;	/* pointer to pfour register */
-
-#ifdef RASTERCONSOLE
-	/* Raster console emulator state */
-	struct	rconsole fb_rcons;
-#endif
-	/* for wsdisplay we always need rasops_info */
-	struct	rasops_info fb_rinfo;
 };
 
 void	fb_attach(struct fbdevice *, int);

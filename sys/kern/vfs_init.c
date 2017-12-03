@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.46.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.46.2.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.46.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.46.2.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -107,13 +107,11 @@ extern const struct vnodeop_desc * const vfs_op_descs[];
 extern const struct vnodeopv_desc dead_vnodeop_opv_desc;
 extern const struct vnodeopv_desc fifo_vnodeop_opv_desc;
 extern const struct vnodeopv_desc spec_vnodeop_opv_desc;
-extern const struct vnodeopv_desc sync_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
 	&dead_vnodeop_opv_desc,
 	&fifo_vnodeop_opv_desc,
 	&spec_vnodeop_opv_desc,
-	&sync_vnodeop_opv_desc,
 	NULL,
 };
 

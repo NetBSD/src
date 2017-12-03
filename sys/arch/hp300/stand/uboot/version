@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.18.14.1 2014/08/20 00:03:01 tls Exp $
+$NetBSD: version,v 1.18.14.2 2017/12/03 11:36:14 jdolecek Exp $
 
 1.1:	Initial version
 1.2:	Added support for network booting
@@ -19,3 +19,4 @@ $NetBSD: version,v 1.18.14.1 2014/08/20 00:03:01 tls Exp $
 1.17:	Pull OpenBSD's ite driver reorganization.
 1.18:	Add support for framebuffers on HP362 and HP382.
 1.19:	Add and fix support for HP425e mcclock, sti framebuffer, apci and dnkbd.
+1.20:	Disable slow gunzip CRC32 calculation.

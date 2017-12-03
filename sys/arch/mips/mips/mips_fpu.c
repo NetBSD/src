@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.8.2.2 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.8.2.3 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.8.2.2 2014/08/20 00:03:12 tls Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.8.2.3 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -58,9 +56,9 @@ const pcu_ops_t mips_fpu_ops = {
 };
 
 void
-fpu_discard(void)
+fpu_discard(lwp_t *l)
 {
-	pcu_discard(&mips_fpu_ops, false);
+	pcu_discard(&mips_fpu_ops, l, false);
 }
 
 void
@@ -70,23 +68,25 @@ fpu_load(void)
 }
 
 void
-fpu_save(void)
+fpu_save(lwp_t *l)
 {
-	pcu_save(&mips_fpu_ops);
+	pcu_save(&mips_fpu_ops, l);
 }
 
 bool
-fpu_used_p(void)
+fpu_used_p(const lwp_t *l)
 {
-	return pcu_valid_p(&mips_fpu_ops);
+	return pcu_valid_p(&mips_fpu_ops, l);
 }
 
 void
 mips_fpu_state_save(lwp_t *l)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
+#ifndef __mips_soft_float
 	struct pcb * const pcb = lwp_getpcb(l);
 	mips_fpreg_t * const fp = pcb->pcb_fpregs.r_regs;
+#endif
 	uint32_t status, fpcsr;
 
 	/*
@@ -118,6 +118,7 @@ mips_fpu_state_save(lwp_t *l)
 	/*
 	 * save FPCSR and FP register values.
 	 */
+#if !defined(__mips_soft_float)
 #if !defined(__mips_o32)
 	if (tf->tf_regs[_R_SR] & MIPS3_SR_FR) {
 		KASSERT(_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
@@ -198,6 +199,7 @@ mips_fpu_state_save(lwp_t *l)
 			"swc1	$f31, (31*%d1)(%0)	;"
 		".set reorder" :: "r"(fp), "i"(4));
 	}
+#endif
 	/*
 	 * stop COP1
 	 */
@@ -209,7 +211,9 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
+#ifndef __mips_soft_float
 	mips_fpreg_t * const fp = pcb->pcb_fpregs.r_regs;
+#endif
 	uint32_t status;
 	uint32_t fpcsr;
 
@@ -244,6 +248,7 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 	/*
 	 * load FP registers and establish processes' FP context.
 	 */
+#if !defined(__mips_soft_float)
 #if !defined(__mips_o32)
 	if (tf->tf_regs[_R_SR] & MIPS3_SR_FR) {
 		KASSERT(_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
@@ -326,6 +331,9 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 		    : "r"(fp), "i"(4));
 		fpcsr = ((int *)fp)[32];
 	}
+#else
+	fpcsr = 0;
+#endif
 
 	/*
 	 * load FPCSR and stop COP1 again

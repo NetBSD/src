@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.3.4.3 2014/08/20 00:04:43 tls Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.3.4.4 2017/12/03 11:39:20 jdolecek Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.3.4.3 2014/08/20 00:04:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.3.4.4 2017/12/03 11:39:20 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -330,54 +330,60 @@ secmodel_extensions_system_cb(kauth_cred_t cred, kauth_action_t action,
 	req = (enum kauth_system_req)arg0;
 	result = KAUTH_RESULT_DEFER;
 
-	if (action != KAUTH_SYSTEM_MOUNT || dovfsusermount == 0)
-		return result;
-
-	switch (req) {
-	case KAUTH_REQ_SYSTEM_MOUNT_NEW:
-		vp = (vnode_t *)arg1;
-		mp = vp->v_mount;
-		flags = (u_long)arg2;
-
-		/*
-		 * Ensure that the user owns the directory onto which the
-		 * mount is attempted.
-		 */
-		vn_lock(vp, LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR(vp, &va, cred);
-		VOP_UNLOCK(vp);
-		if (error)
+	switch (action) {
+	case KAUTH_SYSTEM_MOUNT:
+		if (dovfsusermount == 0)
 			break;
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_MOUNT_NEW:
+			vp = (vnode_t *)arg1;
+			mp = vp->v_mount;
+			flags = (u_long)arg2;
 
-		if (va.va_uid != kauth_cred_geteuid(cred))
-			break;
+			/*
+			 * Ensure that the user owns the directory onto which
+			 * the mount is attempted.
+			 */
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+			error = VOP_GETATTR(vp, &va, cred);
+			VOP_UNLOCK(vp);
+			if (error)
+				break;
 
-		error = usermount_common_policy(mp, flags);
-		if (error)
-			break;
+			if (va.va_uid != kauth_cred_geteuid(cred))
+				break;
 
-		result = KAUTH_RESULT_ALLOW;
+			error = usermount_common_policy(mp, flags);
+			if (error)
+				break;
 
-		break;
-
-	case KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT:
-		mp = arg1;
-
-		/* Must own the mount. */
-		if (mp->mnt_stat.f_owner == kauth_cred_geteuid(cred))
 			result = KAUTH_RESULT_ALLOW;
 
-		break;
+			break;
 
-	case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
-		mp = arg1;
-		flags = (u_long)arg2;
+		case KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT:
+			mp = arg1;
 
-		/* Must own the mount. */
-		if (mp->mnt_stat.f_owner == kauth_cred_geteuid(cred) &&
-		    usermount_common_policy(mp, flags) == 0)
-			result = KAUTH_RESULT_ALLOW;
+			/* Must own the mount. */
+			if (mp->mnt_stat.f_owner == kauth_cred_geteuid(cred))
+				result = KAUTH_RESULT_ALLOW;
 
+			break;
+
+		case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
+			mp = arg1;
+			flags = (u_long)arg2;
+
+			/* Must own the mount. */
+			if (mp->mnt_stat.f_owner == kauth_cred_geteuid(cred) &&
+				usermount_common_policy(mp, flags) == 0)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
 		break;
 
 	default:

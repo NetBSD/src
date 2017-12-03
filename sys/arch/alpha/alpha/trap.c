@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.128.2.1 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: trap.c,v 1.128.2.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.2.1 2014/08/20 00:02:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.2.2 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,19 +496,28 @@ do_fault:
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_addr = (void *)a0;
 			ksi.ksi_trap = a1; /* MMCSR VALUE */
-			if (rv == ENOMEM) {
+			switch (rv) {
+			case ENOMEM:
 				printf("UVM: pid %d (%s), uid %d killed: "
 				    "out of swap\n", l->l_proc->p_pid,
 				    l->l_proc->p_comm,
 				    l->l_cred ?
 				    kauth_cred_geteuid(l->l_cred) : -1);
 				ksi.ksi_signo = SIGKILL;
-			} else
+				break;
+			case EINVAL:
+				ksi.ksi_signo = SIGBUS;
+				ksi.ksi_code = BUS_ADRERR;
+				break;
+			case EACCES:
 				ksi.ksi_signo = SIGSEGV;
-			if (rv == EACCES)
 				ksi.ksi_code = SEGV_ACCERR;
-			else
+				break;
+			default:
+				ksi.ksi_signo = SIGSEGV;
 				ksi.ksi_code = SEGV_MAPERR;
+				break;
+			}
 			break;
 		    }
 
@@ -632,13 +641,13 @@ static const int reg_to_framereg[32] = {
 
 #define	unaligned_load_floating(storage, mod) do {			\
 	struct pcb * const pcb = lwp_getpcb(l);				\
-	fpu_save();							\
+	fpu_save(l);							\
 	unaligned_load(storage, frp, mod)				\
 } while (/*CONSTCOND*/0)
 
 #define	unaligned_store_floating(storage, mod) do {			\
 	struct pcb * const pcb = lwp_getpcb(l);				\
-	fpu_save();							\
+	fpu_save(l);							\
 	unaligned_store(storage, frp, mod)				\
 } while (/*CONSTCOND*/0)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.24.14.2 2014/08/20 00:03:37 tls Exp $ */
+/*	$NetBSD: mt.c,v 1.24.14.3 2017/12/03 11:37:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.24.14.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.24.14.3 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.24.14.2 2014/08/20 00:03:37 tls Exp $");
 #include <dev/gpib/cs80busvar.h>
 
 #include <dev/gpib/mtreg.h>
+
+#include "ioconf.h"
 
 #ifdef DEBUG
 int	mtdebug = 0;
@@ -187,8 +189,6 @@ const struct cdevsw mt_cdevsw = {
 };
 
 
-extern struct cfdriver mt_cd;
-
 struct	mtinfo {
 	u_short	hwid;
 	const char	*desc;
@@ -236,7 +236,8 @@ mtattach(device_t parent, device_t self, void *aux)
 	if ((type = mtlookup(ca->ca_id, ca->ca_slave, ca->ca_punit)) < 0)
 		return;
 
-	printf(": %s tape\n", mtinfo[type].desc);
+	aprint_naive("\n");
+	aprint_normal(": %s tape\n", mtinfo[type].desc);
 
 	sc->sc_type = type;
 	sc->sc_flags = MTF_EXISTS;
@@ -319,7 +320,8 @@ getstats:
 			sc->sc_flags |= MTF_STATTIMEO;
 			return (-2);
 		}
-		printf("%s readdsj: can't read status", device_xname(sc->sc_dev));
+		printf("%s readdsj: can't read status",
+		    device_xname(sc->sc_dev));
 		return (-1);
 	}
 	sc->sc_recvtimeo = 0;
@@ -510,8 +512,8 @@ mtstrategy(struct buf *bp)
 #if 0
 		if (bp->b_bcount & ((1 << WRITE_BITS_IGNORED) - 1)) {
 			tprintf(sc->sc_ttyp,
-				"%s: write record must be multiple of %d\n",
-				device_xname(sc->sc_dev), 1 << WRITE_BITS_IGNORED);
+			    "%s: write record must be multiple of %d\n",
+			    device_xname(sc->sc_dev), 1 << WRITE_BITS_IGNORED);
 			goto error;
 		}
 #endif
@@ -853,7 +855,8 @@ mtintr(struct mt_softc *sc)
 		return;
 
 	    default:
-		printf("%s intr: can't get drive stat", device_xname(sc->sc_dev));
+		printf("%s intr: can't get drive stat",
+		    device_xname(sc->sc_dev));
 		goto error;
 	}
 	if (sc->sc_stat1 & (SR1_ERR | SR1_REJECT)) {
@@ -925,7 +928,8 @@ mtintr(struct mt_softc *sc)
 	} else {
 		i = gpibrecv(sc->sc_ic, slave, MTT_BCNT, cmdbuf, 2);
 		if (i != 2) {
-			aprint_error_dev(sc->sc_dev, "intr: can't get xfer length\n");
+			aprint_error_dev(sc->sc_dev,
+			    "intr: can't get xfer length\n");
 			goto error;
 		}
 		i = (int) *((u_short *) cmdbuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.5.2.1 2017/12/03 11:36:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5.2.1 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include "opt_usb.h"
 
@@ -54,6 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+/*
+ * This is relative to the start of the unreserved registers in USB contoller
+ * block and not the full USB block which would be 0x1a8.
+ */
+#define	PQ3_USBMODE		0xa8			/* USB mode */
+#define	 USBMODE_CM		__BITS(0,1)		/* Controller Mode */
+#define	 USBMODE_CM_IDLE	__SHIFTIN(0,USBMODE_CM)	/* Idle (both) */
+#define	 USBMODE_CM_DEVICE	__SHIFTIN(2,USBMODE_CM)	/* Device Controller */
+#define	 USBMODE_CM_HOST	__SHIFTIN(3,USBMODE_CM)	/* Host Controller */
+
 #ifdef EHCI_DEBUG
 #define DPRINTF(x)	if (ehcidebug) printf x
 extern int ehcidebug;
@@ -68,6 +78,8 @@ struct pq3ehci_softc {
 	ehci_softc_t		sc;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
+
+static void pq3ehci_init(struct ehci_softc *);
 
 CFATTACH_DECL_NEW(pq3ehci, sizeof(struct pq3ehci_softc),
     pq3ehci_match, pq3ehci_attach, NULL, NULL);
@@ -94,11 +106,12 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc.iot = cna->cna_le_memt;	/* EHCI registers are little endian */
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.dmatag = cna->cna_dmat;
-	sc->sc.sc_bus.hci_private = sc;
-	sc->sc.sc_bus.usbrev = USBREV_2_0;
+	sc->sc.sc_bus.ub_dmatag = cna->cna_dmat;
+	sc->sc.sc_bus.ub_hcpriv = sc;
+	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 	sc->sc.sc_ncomp = 0;
 	sc->sc.sc_flags |= EHCIF_ETTF;
+	sc->sc.sc_vendor_init = pq3ehci_init;
 
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
@@ -117,7 +130,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	 * We need to tell the USB interface to snoop all off RAM starting
 	 * at 0.  Since it can do it by powers of 2, get the highest RAM
 	 * address and roughly round it to the next power of 2 and find
-	 * the number of leading zero bits.  
+	 * the number of leading zero bits.
 	 */
 	cpu_write_4(cnl->cnl_addr + USB_SNOOP1,
 	    SNOOP_2GB - __builtin_clz(curcpu()->ci_softc->cpu_highmem * 2 - 1));
@@ -141,7 +154,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
 	error = ehci_init(&sc->sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		goto fail;
 	}
@@ -160,4 +173,16 @@ fail:
 		sc->sc.sc_size = 0;
 	}
 	return;
+}
+
+static void
+pq3ehci_init(struct ehci_softc *hsc)
+{
+	uint32_t old = bus_space_read_4(hsc->iot, hsc->ioh, PQ3_USBMODE);
+	uint32_t reg = old;
+
+	reg &= ~USBMODE_CM;
+	reg |= USBMODE_CM_HOST;
+	if (reg != old)
+		bus_space_write_4(hsc->iot, hsc->ioh, PQ3_USBMODE, reg);
 }

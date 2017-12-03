@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.96.12.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.96.12.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,9 +87,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.96.12.1 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.96.12.2 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -111,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.96.12.1 2014/08/20 00:04:34 tls Exp $
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/socketvar.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -220,7 +224,7 @@ struct if_clone strip_cloner =
 
 static void	stripintr(void *);
 
-static int	stripinit(struct strip_softc *);
+static int	stripcreate(struct strip_softc *);
 static struct mbuf *strip_btom(struct strip_softc *, int);
 
 /*
@@ -330,7 +334,8 @@ static int	stripinput(int, struct tty *);
 static int	stripioctl(struct ifnet *, u_long, void *);
 static int	stripopen(dev_t, struct tty *);
 static int	stripoutput(struct ifnet *,
-		    struct mbuf *, const struct sockaddr *, struct rtentry *);
+		    struct mbuf *, const struct sockaddr *,
+		    const struct rtentry *);
 static int	stripstart(struct tty *);
 static int	striptioctl(struct tty *, u_long, void *, int, struct lwp *);
 
@@ -350,10 +355,37 @@ static struct linesw strip_disc = {
 void
 stripattach(void)
 {
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in slinit() below).
+	 */
+}
+
+static void
+stripinit(void)
+{
+
 	if (ttyldisc_attach(&strip_disc) != 0)
-		panic("stripattach");
+		panic("%s", __func__);
 	LIST_INIT(&strip_softc_list);
 	if_clone_attach(&strip_cloner);
+}
+
+static int
+stripdetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&strip_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		error = ttyldisc_detach(&strip_disc);
+
+	if (error == 0)
+		if_clone_detach(&strip_cloner);
+
+	return error;
 }
 
 static int
@@ -368,7 +400,6 @@ strip_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = SLMTU;
 	sc->sc_if.if_flags = 0;
-	sc->sc_if.if_type = IFT_OTHER;
 #if 0
 	sc->sc_if.if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
 #endif
@@ -405,7 +436,7 @@ strip_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-stripinit(struct strip_softc *sc)
+stripcreate(struct strip_softc *sc)
 {
 	u_char *p;
 
@@ -481,7 +512,7 @@ stripopen(dev_t dev, struct tty *tp)
 		if (sc->sc_ttyp == NULL) {
 			sc->sc_si = softint_establish(SOFTINT_NET,
 			    stripintr, sc);
-			if (stripinit(sc) == 0) {
+			if (stripcreate(sc) == 0) {
 				softint_disestablish(sc->sc_si);
 				return (ENOBUFS);
 			}
@@ -645,8 +676,7 @@ strip_sendbody(struct strip_softc *sc, struct mbuf *m)
 			dp = StuffData(mtod(m, u_char *), m->m_len, dp,
 			    &rllstate_ptr);
 		}
-		MFREE(m, m2);
-		m = m2;
+		m = m2 = m_free(m);
 	}
 
 	/*
@@ -720,7 +750,7 @@ strip_send(struct strip_softc *sc, struct mbuf *m0)
  */
 int
 stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct strip_softc *sc = ifp->if_softc;
 	struct ip *ip;
@@ -729,7 +759,6 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct ifqueue *ifq;
 	int s, error;
 	u_char dl_addrbuf[STARMODE_ADDR_LEN+1];
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/*
 	 * Verify tty line is up and alive.
@@ -749,26 +778,23 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	   	printf("stripout, rt: dst af%d gw af%d",
 		    rt_getkey(rt)->sa_family, rt->rt_gateway->sa_family);
 		if (rt_getkey(rt)->sa_family == AF_INET)
-		  printf(" dst %x",
-		      satocsin(rt_getkey(rt))->sin_addr.s_addr);
+			printf(" dst %x",
+			    satocsin(rt_getkey(rt))->sin_addr.s_addr);
 		printf("\n");
 	}
 #endif
 	switch (dst->sa_family) {
 	case AF_INET:
-                if (rt != NULL && rt->rt_gwroute != NULL)
-                        rt = rt->rt_gwroute;
-
-                /* assume rt is never NULL */
-                if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK
-                    || satocsdl(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
+		/* assume rt is never NULL */
+		if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK ||
+		    satocsdl(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
 		  	DPRINTF(("strip: could not arp starmode addr %x\n",
-			 satocsin(dst)->sin_addr.s_addr));
+			    satocsin(dst)->sin_addr.s_addr));
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
-                dldst = CLLADDR(satocsdl(rt->rt_gateway));
-                break;
+		dldst = CLLADDR(satocsdl(rt->rt_gateway));
+		break;
 
 	case AF_LINK:
 		dldst = CLLADDR(satocsdl(dst));
@@ -856,8 +882,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	splx(s);
 
 	s = splnet();
-	if ((error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA
-	    ALTQ_DECL(&pktattr))) != 0) {
+	if ((error = ifq_enqueue2(ifp, ifq, m)) != 0) {
 		splx(s);
 		return error;
 	}
@@ -932,7 +957,7 @@ strip_btom(struct strip_softc *sc, int len)
 	m->m_data = sc->sc_pktstart;
 
 	m->m_pkthdr.len = m->m_len = len;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	return (m);
 }
 
@@ -1048,12 +1073,9 @@ stripintr(void *arg)
 {
 	struct strip_softc *sc = arg;
 	struct tty *tp = sc->sc_ttyp;
-	struct mbuf *m;
+	struct mbuf *m, *n;
 	int s, len;
 	u_char *pktstart;
-#ifdef INET
-	u_char c;
-#endif
 	u_char chdr[CHDR_LEN];
 
 	KASSERT(tp != NULL);
@@ -1063,9 +1085,6 @@ stripintr(void *arg)
 	 */
 	mutex_enter(softnet_lock);
 	for (;;) {
-#ifdef INET
-		struct ip *ip;
-#endif
 		struct mbuf *bpf_m;
 
 		/*
@@ -1118,6 +1137,7 @@ stripintr(void *arg)
 		} else
 			bpf_m = NULL;
 #ifdef INET
+		struct ip *ip;
 		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
 			if (sc->sc_if.if_flags & SC_COMPRESS)
 				*mtod(m, u_char *) |=
@@ -1164,6 +1184,7 @@ stripintr(void *arg)
 			memcpy(chdr, pktstart, CHDR_LEN);
 		}
 #ifdef INET
+		u_char c;
 		if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
 			if (c & 0x80)
 				c = TYPE_COMPRESSED_TCP;
@@ -1209,14 +1230,13 @@ stripintr(void *arg)
 		}
 		/*
 		 * If the packet will fit into a single
-		 * header mbuf, copy it into one, to save
-		 * memory.
+		 * header mbuf, try to copy it into one,
+		 * to save memory.
 		 */
-		if (m->m_pkthdr.len < MHLEN) {
-			struct mbuf *n;
+		if ((m->m_pkthdr.len < MHLEN) &&
+		    (n = m_gethdr(M_DONTWAIT, MT_DATA))) {
 			int pktlen;
 
-			MGETHDR(n, M_DONTWAIT, MT_DATA);
 			pktlen = m->m_pkthdr.len;
 			M_MOVE_PKTHDR(n, m);
 			memcpy(mtod(n, void *), mtod(m, void *), pktlen);
@@ -1976,3 +1996,10 @@ RecvErr_Message(struct strip_softc *strip_info, u_char *sendername,
 		RecvErr("unparsed radio error message:", strip_info);
 	}
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, strip, "slcompress");

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.90 2012/04/20 20:23:21 bouyer Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.90.2.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.90 2012/04/20 20:23:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.90.2.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,11 +111,21 @@ scsi_print_addr(struct scsipi_periph *periph)
 /*
  * Kill off all pending xfers for a periph.
  *
- * Must be called at splbio().
+ * Must be called with channel lock held
  */
 void
 scsi_kill_pending(struct scsipi_periph *periph)
 {
+	struct scsipi_xfer *xs;
+
+	TAILQ_FOREACH(xs, &periph->periph_xferq, device_q) {
+		callout_stop(&xs->xs_callout);
+		scsi_print_addr(periph);
+		printf("killed ");
+		scsipi_print_cdb(xs->cmd);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsipi_done(xs);
+	}
 }
 
 /*
@@ -181,7 +191,7 @@ scsi_async_event_xfer_mode(struct scsipi_channel *chan, void *arg)
 	int lun, announce, mode, period, offset;
 
 	for (lun = 0; lun < chan->chan_nluns; lun++) {
-		periph = scsipi_lookup_periph(chan, xm->xm_target, lun);
+		periph = scsipi_lookup_periph_locked(chan, xm->xm_target, lun);
 		if (periph == NULL)
 			continue;
 		announce = 0;
@@ -232,7 +242,7 @@ scsi_fc_sas_async_event_xfer_mode(struct scsipi_channel *chan, void *arg)
 	int lun, announce, mode;
 
 	for (lun = 0; lun < chan->chan_nluns; lun++) {
-		periph = scsipi_lookup_periph(chan, xm->xm_target, lun);
+		periph = scsipi_lookup_periph_locked(chan, xm->xm_target, lun);
 		if (periph == NULL)
 			continue;
 		announce = 0;

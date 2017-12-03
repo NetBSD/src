@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.7 2010/03/26 15:51:55 pooka Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.7.20.1 2017/12/03 11:39:09 jdolecek Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -9,9 +9,8 @@
 
 #include "ioconf.c"
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 void tty_init(void);
 

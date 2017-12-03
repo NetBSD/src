@@ -1,0 +1,33 @@
+#	$NetBSD: mk.nitrogen6,v 1.2.18.2 2017/12/03 11:36:03 jdolecek Exp $
+
+SYSTEM_FIRST_OBJ=	nitrogen6_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/nitrogen6/nitrogen6_start.S
+
+GENASSYM_EXTRAS+=	${THISARM}/nitrogen6/genassym.cf
+
+_OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
+
+KERNEL_BASE_PHYS?=$(LOADADDRESS)
+KERNEL_BASE_VIRT?=$(LOADADDRESS)
+
+MKUBOOTIMAGEARGS=	-A arm -T kernel
+MKUBOOTIMAGEARGS+=	-a $(KERNEL_BASE_PHYS) -e $(KERNEL_BASE_PHYS)
+MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
+MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
+MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin; \
+	echo ${TOOL_GZIP} -9c $@.bin > $@.bin.gz; \
+	${TOOL_GZIP} -9c $@.bin > $@.bin.gz; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	echo
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gz.ub@}

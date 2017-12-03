@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.31.66.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: db_run.c,v 1.31.66.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.31.66.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.31.66.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -344,6 +344,9 @@ db_continue_cmd(db_expr_t addr, bool have_addr,
  * bool inst_branch(int inst)
  * bool inst_call(int inst)
  *	returns true if the instruction might branch
+ *
+ * bool inst_return(int inst)
+ *	returns true is the instruction will return to its caller
  *
  * bool inst_unconditional_flow_transfer(int inst)
  *	returns true if the instruction is an unconditional

@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.2.2.2 2014/08/20 00:03:51 tls Exp $
+$NetBSD: TODO.usbmp,v 1.2.2.3 2017/12/03 11:37:33 jdolecek Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -8,6 +8,15 @@ flesh out most of usbdi(9).
 
 usb_event_thread() startup should use something to sync companions
 
+
+KERNEL_LOCK
+  - auvitek.c
+  - auvitek_dtv.c
+  - emdtv.c
+  - emdtv_dtv.c
+  - ubt.c
+  - uhub.c
+  - usscanner.c
 
 usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
   - drivers:
@@ -41,8 +50,8 @@ convert uhidev users to MPSAFE:
   - own cdevsw that isn't D_MPSAFE; need to check intr handlers
 
   uhid(4)
-  - needs some locking here (not completely tested changes)
-  - done
+  - D_MPSAFE not set as all users need it first.
+  - mostly done
 
   ukbd(4)
   ums(4)
@@ -53,9 +62,34 @@ convert uhidev users to MPSAFE:
   uyurex(4)
   - sysmon -- hm?
 
+splusb drivers:
+  - auvitek_dtv.c
+  - auvitek_video.c
+  - emdtv_dtv.c
+  - if_athn_usb.c
+  - if_aue.c
+  - if_axe.c
+  - if_axen.c
+  - if_cdce.c
+  - if_cue.c
+  - if_kue.c
+  - if_otus.c
+  - if_rum.c
+  - if_run.c
+  - if_smsc.c
+  - if_udav.c
+  - if_upl.c
+  - if_ural.c
+  - if_url.c
+  - if_urndis.c
+  - if_urtw.c
+  - if_urtwn.c
+  - if_zyd.c
+  - ubt.c
+  - ucycom.c
+  - udsir.c
 
 wakeup/tsleep drivers:
-  - if_athn_usb.c
   - if_otus.c
   - if_run.c
   - if_upgt.c
@@ -115,7 +149,7 @@ driver testing:		STATUS
   - udl
   - ulpt		attaches ok
   - uhso		working (must take kernel lock for scsipi)
-  - umass		working (must take kernel lock for scsipi)
+  - umass		working
   - uaudio		working
   - umidi		working
   - uirda
@@ -135,7 +169,7 @@ driver testing:		STATUS
   - ral
   - rum
   - run
-  - urtw
+  - urtw		working
   - urtwn
   - upgt
   - zyd

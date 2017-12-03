@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.2.4.2 2012/11/20 03:01:50 tls Exp $ */
+/* $NetBSD: clock.c,v 1.2.4.3 2017/12/03 11:36:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2003 Tetsuya Isaki. All rights reserved.
@@ -26,6 +26,7 @@
  */
  
 #include <sys/types.h>
+#include <sys/clock.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include "iocs.h"
@@ -33,8 +34,6 @@
 #include "consio.h"	/* XXX: for MFP_TIMERC */
 
 /* x68k's RTC is defunct 2079, so there is no y2100 problem. */
-#define LEAPYEAR(y)	(((y) % 4) == 0)
-#define SECDAY	(24 * 60 * 60)
 
 int rtc_offset;
 
@@ -68,14 +67,14 @@ getsecs(void)
 
 	days = 0;
 	for (y = 1970; y < year; y++)
-		days += 365 + LEAPYEAR(y);
+		days += days_per_year(y);
 	days += yday[mon - 1] + day - 1;
-	if (LEAPYEAR(y) && mon > 2)
+	if (is_leap_year(y) && mon > 2)
 		days++;
 
 	/* now we have days since Jan 1, 1970. the rest is easy... */
-	return (days * SECDAY) + (hour * 3600) + (min * 60) + sec
-		+ (rtc_offset * 60);
+	return (days * SECS_PER_DAY) + (hour * SECS_PER_HOUR)
+	    + (min * SECS_PER_MINUTE) + sec + (rtc_offset * 60);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.9.6.4 2014/08/20 00:03:10 tls Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.9.6.5 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -65,7 +65,7 @@ void bmccnputc(dev_t, int);
 /* bmd.c */
 void bmdinit(void);
 int bmdputc(int);
-void bmdadjust(short, short);
+void bmdadjust(int16_t, int16_t);
 void bmdclear(void);
 
 /* boot.c */
@@ -81,7 +81,7 @@ void cnputc(int);
 int make_device(const char *, int *, int *, int *, char **);
 
 /* disklabel.c */
-extern u_char lbl_buff[];
+extern uint8_t lbl_buff[];
 int disklabel(int, char **);
 
 /* font.c */
@@ -107,7 +107,7 @@ extern const char *default_bootdev;
 extern int default_unit;
 
 /* kbd.c */
-int kbd_decode(u_char);
+int kbd_decode(uint8_t);
 
 /* lance.c */
 void *lance_attach(int, void *, void *, uint8_t *);
@@ -165,18 +165,18 @@ int scinit(int, void *);
 struct scsi_inquiry;
 bool scident(uint, uint, uint, struct scsi_inquiry *, uint32_t *);
 struct scsi_generic_cdb;
-int scsi_immed_command(int, int, int, struct scsi_generic_cdb *, u_char *,
+int scsi_immed_command(int, int, int, struct scsi_generic_cdb *, uint8_t *,
     unsigned int);
-int scsi_request_sense(int, int, int, u_char *, unsigned int);
+int scsi_request_sense(int, int, int, uint8_t *, unsigned int);
 int scsi_test_unit_rdy(int, int, int);
 int scsi_format_unit(int, int, int);
 int scintr(void);
 
 /* scsi.c */
 int scsi(int, char **);
-int scsi_read_raw(u_int, u_int, u_int, u_char *, u_int);
-int scsi_read(u_int, u_char *, u_int);
-int scsi_write(u_int, u_char *, u_int);
+int scsi_read_raw(u_int, u_int, u_int, uint8_t *, u_int);
+int scsi_read(u_int, uint8_t *, u_int);
+int scsi_write(u_int, uint8_t *, u_int);
 
 /* screen.c */
 int screen(int, char **);

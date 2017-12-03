@@ -1,5 +1,5 @@
-/*	$NetBSD: rtsxvar.h,v 1.1.10.2 2014/08/20 00:03:38 tls Exp $	*/
-/*	$OpenBSD: rtsxvar.h,v 1.2 2013/11/06 13:51:02 stsp Exp $	*/
+/*	$NetBSD: rtsxvar.h,v 1.1.10.3 2017/12/03 11:37:04 jdolecek Exp $	*/
+/*	$OpenBSD: rtsxvar.h,v 1.3 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -54,9 +54,28 @@ struct rtsx_softc {
 #define	RTSX_F_CARD_PRESENT	__BIT(0)
 #define	RTSX_F_SDIO_SUPPORT	__BIT(1)
 #define	RTSX_F_5209		__BIT(2)
-#define	RTSX_F_5229		__BIT(3)
-#define	RTSX_F_5229_TYPE_C	__BIT(4)
+#define	RTSX_F_5227		__BIT(3)
+#define	RTSX_F_5229		__BIT(4)
+#define	RTSX_F_5229_TYPE_C	__BIT(5)
+#define	RTSX_F_8402		__BIT(6)
+#define	RTSX_F_8411		__BIT(7)
+#define	RTSX_F_8411B		__BIT(8)
+#define	RTSX_F_8411B_QFN48	__BIT(9)
 };
+
+#define	RTSX_IS_RTS5209(sc)	(((sc)->sc_flags & RTSX_F_5209) == RTSX_F_5209)
+#define	RTSX_IS_RTS5227(sc)	(((sc)->sc_flags & RTSX_F_5227) == RTSX_F_5227)
+#define	RTSX_IS_RTS5229(sc)	(((sc)->sc_flags & RTSX_F_5229) == RTSX_F_5229)
+#define	RTSX_IS_RTS5229_TYPE_C(sc)					\
+	(((sc)->sc_flags & (RTSX_F_5229|RTSX_F_5229_TYPE_C)) ==		\
+	                   (RTSX_F_5229|RTSX_F_5229_TYPE_C))
+#define	RTSX_IS_RTL8402(sc)	(((sc)->sc_flags & RTSX_F_8402) == RTSX_F_8402)
+#define	RTSX_IS_RTL8411(sc)	(((sc)->sc_flags & RTSX_F_8411) == RTSX_F_8411)
+#define	RTSX_IS_RTL8411B(sc)						\
+	(((sc)->sc_flags & RTSX_F_8411B) == RTSX_F_8411B)
+#define	RTSX_IS_RTL8411B_QFN48(sc)					\
+	(((sc)->sc_flags & (RTSX_F_8411B|RTSX_F_8411B_QFN48)) ==	\
+	                   (RTSX_F_8411B|RTSX_F_8411B_QFN48))
 
 /* Host controller functions called by the attachment driver. */
 int	rtsx_attach(struct rtsx_softc *, bus_space_tag_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.6.2 2014/08/20 00:03:18 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.6.3 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.6.2 2014/08/20 00:03:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.6.3 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -49,10 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.6.2 2014/08/20 00:03:18 tls Exp $")
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 
@@ -114,7 +110,8 @@ mach_init(void)
 #ifdef DEBUG
 	bootinfo_dump();
 #endif
-	uvm_setpagesize();
+	uvm_md_init();
+
 	physmem = atop(PS2_MEMORY_SIZE);
 
 	/*
@@ -171,32 +168,7 @@ mach_init(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.)
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 void

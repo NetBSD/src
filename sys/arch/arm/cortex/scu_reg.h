@@ -1,4 +1,4 @@
-/* $NetBSD: scu_reg.h,v 1.1 2012/09/01 00:03:14 matt Exp $ */
+/* $NetBSD: scu_reg.h,v 1.1.2.1 2017/12/03 11:35:52 jdolecek Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +35,8 @@
  * ARM Snoop Control Unit Definitions
  * Used by Cortex-A5 and Cortex-A9
  */
+
+#define	SCU_SIZE		0x100
 
 #define	SCU_CTL			0x00	// SCU Control Register
 #define	SCU_CFG			0x04	// SCU Configuration Register

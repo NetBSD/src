@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114.2.1 2014/08/20 00:02:50 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114.2.2 2017/12/03 11:36:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114.2.1 2014/08/20 00:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114.2.2 2017/12/03 11:36:00 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114.2.1 2014/08/20 00:02:50 tls Exp $"
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
-#define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 
@@ -252,7 +251,7 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 	if (bi_msg != NULL)
 		printf("%s: magic=%#x bip=%p\n", bi_msg, bim, bip);
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * The boot command is passed in the top 512 bytes,
@@ -274,15 +273,6 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 	KASSERT(&lwp0 == curlwp);
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
-
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
@@ -302,6 +292,16 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 	 * Allocate space for proc0's USPACE.
 	 */
 	mips_init_lwp0_uarea();
+
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
+
 }
 
 /*
@@ -310,32 +310,7 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.)
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 static int waittime = -1;

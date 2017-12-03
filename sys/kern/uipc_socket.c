@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.211.2.4 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.211.2.5 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,14 +71,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.211.2.4 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.211.2.5 2017/12/03 11:38:45 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
 #include "opt_somaxkva.h"
 #include "opt_multiprocessor.h"	/* XXX */
+#include "opt_sctp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +295,8 @@ sopendfree_thread(void *v)
 
 			for (; m != NULL; m = next) {
 				next = m->m_next;
-				KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0);
+				KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) ==
+				    0);
 				KASSERT(m->m_ext.ext_refcnt == 0);
 
 				rv += m->m_ext.ext_size;
@@ -431,17 +435,20 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 	case KAUTH_REQ_NETWORK_SOCKET_OPEN:
 		/* We allow "raw" routing/bluetooth sockets to anyone. */
-		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_OROUTE
-		    || (u_long)arg1 == PF_BLUETOOTH) {
+		switch ((u_long)arg1) {
+		case PF_ROUTE:
+		case PF_OROUTE:
+		case PF_BLUETOOTH:
+		case PF_CAN:
 			result = KAUTH_RESULT_ALLOW;
-		} else {
+			break;
+		default:
 			/* Privileged, let secmodel handle this. */
 			if ((u_long)arg2 == SOCK_RAW)
 				break;
+			result = KAUTH_RESULT_ALLOW;
+			break;
 		}
-
-		result = KAUTH_RESULT_ALLOW;
-
 		break;
 
 	case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
@@ -600,7 +607,7 @@ fsocreate(int domain, struct socket **sop, int type, int proto, int *fdout)
 	if (flags & SOCK_NONBLOCK) {
 		so->so_state |= SS_NBIO;
 	}
-	fp->f_data = so;
+	fp->f_socket = so;
 	fd_affix(curproc, fp, fd);
 
 	if (sop != NULL) {
@@ -624,11 +631,15 @@ sofamily(const struct socket *so)
 }
 
 int
-sobind(struct socket *so, struct mbuf *nam, struct lwp *l)
+sobind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int	error;
 
 	solock(so);
+	if (nam->sa_family != so->so_proto->pr_domain->dom_family) {
+		sounlock(so);
+		return EAFNOSUPPORT;
+	}
 	error = (*so->so_proto->pr_usrreqs->pr_bind)(so, nam, l);
 	sounlock(so);
 	return error;
@@ -638,23 +649,29 @@ int
 solisten(struct socket *so, int backlog, struct lwp *l)
 {
 	int	error;
+	short	oldopt, oldqlimit;
 
 	solock(so);
-	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONNECTING | 
+	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONNECTING |
 	    SS_ISDISCONNECTING)) != 0) {
 		sounlock(so);
 		return EINVAL;
 	}
-	error = (*so->so_proto->pr_usrreqs->pr_listen)(so, l);
-	if (error != 0) {
-		sounlock(so);
-		return error;
-	}
+	oldopt = so->so_options;
+	oldqlimit = so->so_qlimit;
 	if (TAILQ_EMPTY(&so->so_q))
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
 	so->so_qlimit = min(backlog, somaxconn);
+
+	error = (*so->so_proto->pr_usrreqs->pr_listen)(so, l);
+	if (error != 0) {
+		so->so_options = oldopt;
+		so->so_qlimit = oldqlimit;
+		sounlock(so);
+		return error;
+	}
 	sounlock(so);
 	return 0;
 }
@@ -773,7 +790,7 @@ soabort(struct socket *so)
 {
 	u_int refs;
 	int error;
-	
+
 	KASSERT(solocked(so));
 	KASSERT(so->so_head == NULL);
 
@@ -789,7 +806,7 @@ soabort(struct socket *so)
 }
 
 int
-soaccept(struct socket *so, struct mbuf *nam)
+soaccept(struct socket *so, struct sockaddr *nam)
 {
 	int error;
 
@@ -807,7 +824,7 @@ soaccept(struct socket *so, struct mbuf *nam)
 }
 
 int
-soconnect(struct socket *so, struct mbuf *nam, struct lwp *l)
+soconnect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int error;
 
@@ -823,10 +840,14 @@ soconnect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	 */
 	if (so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING) &&
 	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) ||
-	    (error = sodisconnect(so))))
+	    (error = sodisconnect(so)))) {
 		error = EISCONN;
-	else
+	} else {
+		if (nam->sa_family != so->so_proto->pr_domain->dom_family) {
+			return EAFNOSUPPORT;
+		}
 		error = (*so->so_proto->pr_usrreqs->pr_connect)(so, nam, l);
+	}
 
 	return error;
 }
@@ -875,8 +896,8 @@ sodisconnect(struct socket *so)
  * Data and control buffers are freed on return.
  */
 int
-sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
-	struct mbuf *control, int flags, struct lwp *l)
+sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
+	struct mbuf *top, struct mbuf *control, int flags, struct lwp *l)
 {
 	struct mbuf	**mp, *m;
 	long		space, len, resid, clen, mlen;
@@ -933,7 +954,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					error = ENOTCONN;
 					goto release;
 				}
-			} else if (addr == 0) {
+			} else if (addr == NULL) {
 				error = EDESTADDRREQ;
 				goto release;
 			}
@@ -981,7 +1002,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					m = m_gethdr(M_WAIT, MT_DATA);
 					mlen = MHLEN;
 					m->m_pkthdr.len = 0;
-					m->m_pkthdr.rcvif = NULL;
+					m_reset_rcvif(m);
 				} else {
 					m = m_get(M_WAIT, MT_DATA);
 					mlen = MLEN;
@@ -1047,12 +1068,13 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				so->so_options |= SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
-			if (flags & MSG_OOB)
-				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
-				    top, control);
-			else
+			if (flags & MSG_OOB) {
+				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(
+				    so, top, control);
+			} else {
 				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
 				    top, addr, control, l);
+			}
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
@@ -1306,10 +1328,33 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				m->m_next = NULL;
 				m = so->so_rcv.sb_mb;
 			} else {
-				MFREE(m, so->so_rcv.sb_mb);
-				m = so->so_rcv.sb_mb;
+				m = so->so_rcv.sb_mb = m_free(m);
 			}
 			sbsync(&so->so_rcv, nextrecord);
+		}
+	}
+	if (pr->pr_flags & PR_ADDR_OPT) {
+		/*
+		 * For SCTP we may be getting a
+		 * whole message OR a partial delivery.
+		 */
+		if (m->m_type == MT_SONAME) {
+			orig_resid = 0;
+			if (flags & MSG_PEEK) {
+				if (paddr)
+					*paddr = m_copy(m, 0, m->m_len);
+				m = m->m_next;
+			} else {
+				sbfree(&so->so_rcv, m);
+				if (paddr) {
+					*paddr = m;
+					so->so_rcv.sb_mb = m->m_next;
+					m->m_next = 0;
+					m = so->so_rcv.sb_mb;
+				} else {
+					m = so->so_rcv.sb_mb = m_free(m);
+				}
+			}
 		}
 	}
 
@@ -1366,7 +1411,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				 */
 				if (dom->dom_dispose != NULL &&
 				    type == SCM_RIGHTS) {
-				    	sounlock(so);
+					sounlock(so);
 					(*dom->dom_dispose)(cm);
 					solock(so);
 				}
@@ -1446,6 +1491,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if (len == m->m_len - moff) {
 			if (m->m_flags & M_EOR)
 				flags |= MSG_EOR;
+#ifdef SCTP
+			if (m->m_flags & M_NOTIFICATION)
+				flags |= MSG_NOTIFICATION;
+#endif /* SCTP */
 			if (flags & MSG_PEEK) {
 				m = m->m_next;
 				moff = 0;
@@ -1458,8 +1507,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 					so->so_rcv.sb_mb = m = m->m_next;
 					*mp = NULL;
 				} else {
-					MFREE(m, so->so_rcv.sb_mb);
-					m = so->so_rcv.sb_mb;
+					m = so->so_rcv.sb_mb = m_free(m);
 				}
 				/*
 				 * If m != NULL, we also know that
@@ -1677,22 +1725,22 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		KASSERT(solocked(so));
 		break;
 
-  	case SO_LINGER:
- 		error = sockopt_get(sopt, &l, sizeof(l));
+	case SO_LINGER:
+		error = sockopt_get(sopt, &l, sizeof(l));
 		solock(so);
- 		if (error)
- 			break;
- 		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
- 		    l.l_linger > (INT_MAX / hz)) {
+		if (error)
+			break;
+		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
+		    l.l_linger > (INT_MAX / hz)) {
 			error = EDOM;
 			break;
 		}
- 		so->so_linger = l.l_linger;
- 		if (l.l_onoff)
- 			so->so_options |= SO_LINGER;
- 		else
- 			so->so_options &= ~SO_LINGER;
-   		break;
+		so->so_linger = l.l_linger;
+		if (l.l_onoff)
+			so->so_options |= SO_LINGER;
+		else
+			so->so_options &= ~SO_LINGER;
+		break;
 
 	case SO_DEBUG:
 	case SO_KEEPALIVE:
@@ -1871,7 +1919,7 @@ so_setsockopt(struct lwp *l, struct socket *so, int level, int name,
 
 	return error;
 }
- 
+
 /*
  * internal get SOL_SOCKET options
  */
@@ -2048,7 +2096,7 @@ sockopt_destroy(struct sockopt *sopt)
 /*
  * set sockopt value
  *	- value is copied into sockopt
- * 	- memory is allocated when necessary, will not sleep
+ *	- memory is allocated when necessary, will not sleep
  */
 int
 sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
@@ -2173,7 +2221,7 @@ filt_sordetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
 	SLIST_REMOVE(&so->so_rcv.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))
@@ -2188,7 +2236,7 @@ filt_soread(struct knote *kn, long hint)
 	struct socket	*so;
 	int rv;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	if (hint != NOTE_SUBMIT)
 		solock(so);
 	kn->kn_data = so->so_rcv.sb_cc;
@@ -2200,7 +2248,7 @@ filt_soread(struct knote *kn, long hint)
 		rv = 1;
 	else if (kn->kn_sfflags & NOTE_LOWAT)
 		rv = (kn->kn_data >= kn->kn_sdata);
-	else 
+	else
 		rv = (kn->kn_data >= so->so_rcv.sb_lowat);
 	if (hint != NOTE_SUBMIT)
 		sounlock(so);
@@ -2212,7 +2260,7 @@ filt_sowdetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
 	SLIST_REMOVE(&so->so_snd.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))
@@ -2227,7 +2275,7 @@ filt_sowrite(struct knote *kn, long hint)
 	struct socket	*so;
 	int rv;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	if (hint != NOTE_SUBMIT)
 		solock(so);
 	kn->kn_data = sbspace(&so->so_snd);
@@ -2256,7 +2304,7 @@ filt_solisten(struct knote *kn, long hint)
 	struct socket	*so;
 	int rv;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 
 	/*
 	 * Set kn_data to number of incoming connections, not
@@ -2271,12 +2319,26 @@ filt_solisten(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops solisten_filtops =
-	{ 1, NULL, filt_sordetach, filt_solisten };
-static const struct filterops soread_filtops =
-	{ 1, NULL, filt_sordetach, filt_soread };
-static const struct filterops sowrite_filtops =
-	{ 1, NULL, filt_sowdetach, filt_sowrite };
+static const struct filterops solisten_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sordetach,
+	.f_event = filt_solisten,
+};
+
+static const struct filterops soread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sordetach,
+	.f_event = filt_soread,
+};
+
+static const struct filterops sowrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sowdetach,
+	.f_event = filt_sowrite,
+};
 
 int
 soo_kqfilter(struct file *fp, struct knote *kn)
@@ -2284,7 +2346,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	struct socket	*so;
 	struct sockbuf	*sb;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -2360,6 +2422,33 @@ sopoll(struct socket *so, int events)
 	sounlock(so);
 
 	return revents;
+}
+
+struct mbuf **
+sbsavetimestamp(int opt, struct mbuf *m, struct mbuf **mp)
+{
+	struct timeval tv;
+	microtime(&tv);
+
+#ifdef SO_OTIMESTAMP
+	if (opt & SO_OTIMESTAMP) {
+		struct timeval50 tv50;
+
+		timeval_to_timeval50(&tv, &tv50);
+		*mp = sbcreatecontrol(&tv50, sizeof(tv50),
+		    SCM_OTIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	} else
+#endif
+
+	if (opt & SO_TIMESTAMP) {
+		*mp = sbcreatecontrol(&tv, sizeof(tv),
+		    SCM_TIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	return mp;
 }
 
 

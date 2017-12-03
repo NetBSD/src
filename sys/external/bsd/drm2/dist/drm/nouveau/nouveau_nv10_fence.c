@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv10_fence.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $	*/
+/*	$NetBSD: nouveau_nv10_fence.c,v 1.1.1.1.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv10_fence.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv10_fence.c,v 1.1.1.1.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <core/object.h>
 #include <core/class.h>
@@ -70,7 +70,7 @@ nv10_fence_context_del(struct nouveau_channel *chan)
 	kfree(fctx);
 }
 
-int
+static int
 nv10_fence_context_new(struct nouveau_channel *chan)
 {
 	struct nv10_fence_chan *fctx;
@@ -95,6 +95,7 @@ nv10_fence_destroy(struct nouveau_drm *drm)
 		nouveau_bo_unpin(priv->bo);
 	nouveau_bo_ref(NULL, &priv->bo);
 	drm->fence = NULL;
+	spin_lock_destroy(&priv->lock);
 	kfree(priv);
 }
 

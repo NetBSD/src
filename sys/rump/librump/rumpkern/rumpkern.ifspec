@@ -1,8 +1,8 @@
-;	$NetBSD: rumpkern.ifspec,v 1.10.18.2 2014/08/20 00:04:41 tls Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.10.18.3 2017/12/03 11:39:16 jdolecek Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
-PRIVHDR|librump/rumpkern/rumpkern_if_priv.h
+PRIVHDR|include/rump-sys/kern_if.h
 WRAPPERS|librump/rumpkern/rumpkern_if_wrappers.c
 
 ; type		| name		| args

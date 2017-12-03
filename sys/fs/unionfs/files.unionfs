@@ -1,7 +1,8 @@
-#	$NetBSD: files.unionfs,v 1.2 2010/03/02 16:43:48 pooka Exp $
+#	$NetBSD: files.unionfs,v 1.2.20.1 2017/12/03 11:38:44 jdolecek Exp $
 
 deffs	UNIONFS
 
+define	unionfs: vfs
 file	fs/unionfs/unionfs_subr.c	unionfs
 file	fs/unionfs/unionfs_vfsops.c	unionfs
 file	fs/unionfs/unionfs_vnops.c	unionfs

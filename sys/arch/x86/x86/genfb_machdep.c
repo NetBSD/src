@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.10.12.1 2014/08/20 00:03:29 tls Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.10.12.2 2017/12/03 11:36:50 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.10.12.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.10.12.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include "opt_mtrr.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.10.12.1 2014/08/20 00:03:29 tls 
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/lwp.h>
 
 #include <sys/bus.h>
@@ -61,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.10.12.1 2014/08/20 00:03:29 tls 
 
 #if NWSDISPLAY > 0 && NGENFB > 0
 struct vcons_screen x86_genfb_console_screen;
+bool x86_genfb_use_shadowfb = true;
 
 #if NACPICA > 0
 extern int acpi_md_vesa_modenum;
@@ -182,7 +184,17 @@ x86_genfb_cnattach(void)
 	ri->ri_height = fbinfo->height;
 	ri->ri_depth = fbinfo->depth;
 	ri->ri_stride = fbinfo->stride;
-	ri->ri_bits = bits;
+	if (x86_genfb_use_shadowfb && lookup_bootinfo(BTINFO_EFI) != NULL) {
+		/* XXX The allocated memory is never released... */
+		ri->ri_bits = kmem_alloc(ri->ri_stride * ri->ri_height,
+		    KM_NOSLEEP);
+		if (ri->ri_bits == NULL) {
+			aprint_error("%s: couldn't alloc shadowfb\n", __func__);
+			ri->ri_bits = bits;
+		} else
+			ri->ri_hwbits = bits;
+	} else
+		ri->ri_bits = bits;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_CLEAR;
 	rasops_init(ri, ri->ri_width / 8, ri->ri_height / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;

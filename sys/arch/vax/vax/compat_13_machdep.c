@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.4 2011/07/03 02:18:21 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.4.12.1 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4.12.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -171,8 +171,8 @@ setupstack_oldsigcontext(const struct ksiginfo *ksi, const sigset_t *mask,
 	sigctx.sc_pc = tf->tf_pc;
 	sigctx.sc_ps = tf->tf_psl;
 	sigctx.sc_ap = tf->tf_ap;
-	sigctx.sc_fp = tf->tf_fp; 
-	sigctx.sc_sp = tf->tf_sp; 
+	sigctx.sc_fp = tf->tf_fp;
+	sigctx.sc_sp = tf->tf_sp;
 	sigctx.sc_onstack = onstack ? SS_ONSTACK : 0;
 	sigctx.sc_mask = *mask;
 	sp -= sizeof(struct sigcontext);

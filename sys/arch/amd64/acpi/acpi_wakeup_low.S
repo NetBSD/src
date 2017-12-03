@@ -1,6 +1,6 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.4 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.4.42.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -34,24 +34,30 @@
 #include <machine/specialreg.h>
 
 	.text
+
 	.p2align 2, 0x90
-	.globl acpi_md_sleep_exit
-acpi_md_sleep_exit:
+NENTRY(acpi_md_sleep_exit)
 	lgdt	ACPI_SUSPEND_GDT(%r8)
 
 	/* Reload fixed descriptors for new GDT */
-	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	$GSEL(GUDATA_SEL, SEL_UPL),%ax
 	movw	%ax,%ds
 	movw	%ax,%es
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
 	movw	%ax,%ss
 
-	/* FS and GS are driven by MSRs, so use NULL for them */
+	/*
+	 * FS and GS are driven by MSRs, so use NULL for them. If we're
+	 * returning to a 32bit LWP, %fs/%gs will be restored in
+	 * INTRFASTEXIT.
+	 */
 	xorw	%ax,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs
 
 	movl	$MSR_EFER,%ecx
 	movl	ACPI_SUSPEND_EFER(%r8),%eax
+	movl	$0,%edx
 	wrmsr
 
 	movl	$MSR_FSBASE,%ecx
@@ -80,7 +86,7 @@ acpi_md_sleep_exit:
 	movq	ACPI_SUSPEND_CR0(%r8),%rax
 	movq	%rax,%cr0
 
-	jmp 1f
+	jmp	1f
 1:
 
 	movq	CPUVAR(GDT),%rax
@@ -88,7 +94,7 @@ acpi_md_sleep_exit:
 	andq	$~0x0200,4(%rax,%rdx, 1)
 
 	ltr	%dx
-	lldt 	ACPI_SUSPEND_LDT(%r8)
+	lldt	ACPI_SUSPEND_LDT(%r8)
 	lidt	ACPI_SUSPEND_IDT(%r8)
 
 	movq	ACPI_SUSPEND_REG+(0*8)(%r8),%rsp
@@ -104,11 +110,10 @@ acpi_md_sleep_exit:
 	pushq	ACPI_SUSPEND_REG+(7*8)(%r8)
 	popfq
 	ret
+END(acpi_md_sleep_exit)
 
 	.p2align 2, 0x90
-	.type acpi_md_sleep_prepare, @function
-	.globl acpi_md_sleep_prepare
-acpi_md_sleep_prepare:
+NENTRY(acpi_md_sleep_prepare)
 	movq	CPUVAR(SELF),%r8
 	movq	%rbx,ACPI_SUSPEND_REG+(1*8)(%r8)
 	movq	%rbp,ACPI_SUSPEND_REG+(2*8)(%r8)
@@ -161,3 +166,4 @@ acpi_md_sleep_prepare:
 	/* acpi_md_sleep_enter only returns on failure. */
 	movl	$-1,%eax
 	ret
+END(acpi_md_sleep_prepare)

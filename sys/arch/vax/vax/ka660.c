@@ -1,4 +1,4 @@
-/*	$NetBSD: ka660.c,v 1.10 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: ka660.c,v 1.10.18.1 2017/12/03 11:36:48 jdolecek Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of 
- *     Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka660.c,v 1.10 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka660.c,v 1.10.18.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +55,7 @@ static void ka660_cache_enable(void);
 static void ka660_attach_cpu(device_t);
 static int ka660_mchk(void *);
 
-static const char * const ka660_devs[] = { "cpu", "sgec", "vsbus", NULL };
+static const char * const ka660_devs[] = { "cpu", "sgec", "shac", "uba", NULL };
 
 /* 
  * Declaration of 660-specific calls.
@@ -92,7 +86,7 @@ void
 ka660_attach_cpu(device_t self)
 {
 	aprint_normal(
-	    ": %s, Rigel (ucode rev. %d), 2KB L1 cache, 128KB L2 cache\n",
+	    ": %s, SOC (ucode rev. %d), 6KB L1 cache\n",
 	    "KA660",
 	    vax_cpudata & 0377);
 }

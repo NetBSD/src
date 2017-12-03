@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_agp_backend.c,v 1.3.2.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: ttm_agp_backend.c,v 1.3.2.3 2017/12/03 11:38:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.3.2.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.3.2.3 2017/12/03 11:38:01 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.3.2.2 2014/08/20 00:04:22 tls 
 
 #include <ttm/ttm_bo_driver.h>
 #include <ttm/ttm_page_alloc.h>
+
+#if __OS_HAS_AGP
 
 struct ttm_agp {
 	struct ttm_dma_tt ttm_dma;
@@ -57,11 +59,11 @@ ttm_agp_tt_create(struct ttm_bo_device *bdev, struct agp_bridge_data *bridge,
 {
 	struct ttm_agp *ttm_agp;
 
-	ttm_agp = kmem_alloc(sizeof(*ttm_agp), KM_SLEEP);
+	ttm_agp = kmem_zalloc(sizeof(*ttm_agp), KM_SLEEP);
 	ttm_agp->agp = &bridge->abd_sc;
 	ttm_agp->ttm_dma.ttm.func = &ttm_agp_backend_func;
 
-	if (ttm_tt_init(&ttm_agp->ttm_dma.ttm, bdev, size, page_flags,
+	if (ttm_dma_tt_init(&ttm_agp->ttm_dma, bdev, size, page_flags,
 		dummy_read_page) != 0)
 		goto fail;
 
@@ -76,9 +78,9 @@ int
 ttm_agp_tt_populate(struct ttm_tt *ttm)
 {
 
-	if (ttm->state != tt_unpopulated)
-		return 0;
-
+	KASSERTMSG((ttm->state == tt_unpopulated),
+	    "ttm_agp_tt_populate: ttm %p state is not tt_unpopulated: %d",
+	    ttm, (int)ttm->state);
 	return ttm_bus_dma_populate(container_of(ttm, struct ttm_dma_tt, ttm));
 }
 
@@ -86,6 +88,9 @@ void
 ttm_agp_tt_unpopulate(struct ttm_tt *ttm)
 {
 
+	KASSERTMSG((ttm->state == tt_unbound),
+	    "ttm_agp_tt_unpopulate: ttm %p state is not tt_unbound: %d",
+	    ttm, (int)ttm->state);
 	ttm_bus_dma_unpopulate(container_of(ttm, struct ttm_dma_tt, ttm));
 }
 
@@ -156,7 +161,7 @@ ttm_agp_destroy(struct ttm_tt *ttm)
 	if (ttm_agp->bound)
 		ttm_agp_unbind(ttm);
 	ttm_tt_fini(ttm);
-	kmem_free(ttm, sizeof(*ttm));
+	kmem_free(ttm_agp, sizeof(*ttm_agp));
 }
 
 static const struct ttm_backend_func ttm_agp_backend_func = {
@@ -164,3 +169,5 @@ static const struct ttm_backend_func ttm_agp_backend_func = {
 	.unbind = &ttm_agp_unbind,
 	.destroy = &ttm_agp_destroy,
 };
+
+#endif

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.12.12.1 2014/08/20 00:03:19 tls Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.12.12.2 2017/12/03 11:36:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
  */
 
 #define __HAVE_PCI_CONF_HOOK
+#define __HAVE_PCI_MSI_MSIX
 
 /*
  * Types provided to machine-independent PCI code
  */
 typedef struct genppc_pci_chipset *pci_chipset_tag_t;
-typedef void *pci_msi_handle_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
 
@@ -63,6 +63,13 @@ static inline pci_chipset_tag_t pci_attach_args_pc(
 
 #ifdef _KERNEL
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
+
+typedef enum {
+	PCI_INTR_TYPE_INTX = 0,
+	PCI_INTR_TYPE_MSI,
+	PCI_INTR_TYPE_MSIX,
+	PCI_INTR_TYPE_SIZE,
+} pci_intr_type_t;
 #endif
 
 
@@ -83,26 +90,34 @@ const struct evcnt *
 		pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void *		pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
+void *		pci_intr_establish_xname(pci_chipset_tag_t, pci_intr_handle_t,
+		    int, int (*)(void *), void *, const char *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 int		pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *ihp);
 int		pci_intr_setattr(pci_chipset_tag_t, pci_intr_handle_t *,
 		    int, uint64_t);
 
-int		pci_msi_request(const struct pci_attach_args *,
-		    pci_msi_handle_t *, size_t, int, int);
-int		pci_msi_type(pci_chipset_tag_t, pci_msi_handle_t);
-size_t		pci_msi_available(pci_chipset_tag_t, pci_msi_handle_t);
-const char *	pci_msi_string(pci_chipset_tag_t, pci_msi_handle_t, size_t);
-const struct evcnt *
-		pci_msi_evcnt(pci_chipset_tag_t, pci_msi_handle_t, size_t);
-void *		pci_msi_establish(pci_chipset_tag_t, pci_msi_handle_t, size_t,
-		    int, int (*)(void *), void *);
-void *		pci_msix_establish(pci_chipset_tag_t, pci_msi_handle_t, size_t,
-		    size_t, int, int (*)(void *), void *);
-void		pci_msi_disestablish(pci_chipset_tag_t, void *);
-void		pci_msi_free(pci_chipset_tag_t, pci_msi_handle_t, size_t);
-void		pci_msi_release(pci_chipset_tag_t, pci_msi_handle_t);
+pci_intr_type_t	pci_intr_type(pci_chipset_tag_t, pci_intr_handle_t);
+int		pci_intr_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *, pci_intr_type_t);
+void		pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *, int);
+int		pci_intx_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **);
+
+/* experimental MSI support */
+int		pci_msi_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msi_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+
+/* experimental MSI-X support */
+int		pci_msix_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msix_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+int		pci_msix_alloc_map(const struct pci_attach_args *,
+		    pci_intr_handle_t **, u_int *, int);
 
 void		pci_conf_interrupt(pci_chipset_tag_t, int, int, int,
 		    int, int *);
@@ -136,26 +151,27 @@ struct genppc_pci_chipset {
 			    size_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
-			    int, int (*)(void *), void *);
+			    int, int (*)(void *), void *, const char *);
 	void		(*pc_intr_disestablish)(void *, void *);
 	int		(*pc_intr_setattr)(void *, pci_intr_handle_t *,
 			    int, uint64_t);
 
+	pci_intr_type_t	(*pc_intr_type)(void *, pci_intr_handle_t);
+	int		(*pc_intr_alloc)(const struct pci_attach_args *,
+			    pci_intr_handle_t **, int *, pci_intr_type_t);
+	void		(*pc_intr_release)(void *, pci_intr_handle_t *, int);
+	int		(*pc_intx_alloc)(const struct pci_attach_args *,
+			    pci_intr_handle_t **);
+
+	/* experimental MSI support */
 	void		*pc_msi_v;
-	int		(*pc_msi_request)(const struct pci_attach_args *,
-			    pci_msi_handle_t *, size_t, int, int);
-	int		(*pc_msi_type)(void *, pci_msi_handle_t);
-	size_t		(*pc_msi_available)(void *, pci_msi_handle_t);
-	const char *	(*pc_msi_string)(void *, pci_msi_handle_t, size_t);
-	const struct evcnt *
-			(*pc_msi_evcnt)(void *, pci_msi_handle_t, size_t);
-	void *		(*pc_msi_establish)(void *, pci_msi_handle_t, size_t,
-			    int, int (*)(void *), void *);
-	void *		(*pc_msix_establish)(void *, pci_msi_handle_t, size_t,
-			    size_t, int, int (*)(void *), void *);
-	void		(*pc_msi_disestablish)(void *, void *);
-	void		(*pc_msi_free)(void *, pci_msi_handle_t, size_t);
-	void		(*pc_msi_release)(void *, pci_msi_handle_t);
+	int		(*pc_msi_alloc)(const struct pci_attach_args *,
+			    pci_intr_handle_t **, int *, bool);
+
+	/* experimental MSI-X support */
+	void		*pc_msix_v;
+	int		(*pc_msix_alloc)(const struct pci_attach_args *,
+			    pci_intr_handle_t **, u_int *, int *, bool);
 
 	void		(*pc_conf_interrupt)(void *, int, int, int, int, int *);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
@@ -243,7 +259,16 @@ __pci_inline void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int ipl,
     int (*handler)(void *), void *arg)
 {
-	return (*pc->pc_intr_establish)(pc->pc_intr_v, ih, ipl, handler, arg);
+	return (*pc->pc_intr_establish)(pc->pc_intr_v, ih, ipl, handler, arg,
+	    NULL);
+}
+
+__pci_inline void *
+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih, int ipl,
+    int (*handler)(void *), void *arg, const char *xname)
+{
+	return (*pc->pc_intr_establish)(pc->pc_intr_v, ih, ipl, handler, arg,
+	    xname);
 }
 
 __pci_inline void
@@ -257,6 +282,33 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ihp, int attr,
     uint64_t data)
 {
 	return (*pc->pc_intr_setattr)(pc->pc_intr_v, ihp, attr, data);
+}
+
+__pci_inline pci_intr_type_t
+pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+{
+	return (*pc->pc_intr_type)(pc->pc_intr_v, ih);
+}
+
+__pci_inline int
+pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count, pci_intr_type_t max_type)
+{
+	pci_chipset_tag_t pc = pci_attach_args_pc(pa);
+	return (*pc->pc_intr_alloc)(pa, ihps, count, max_type);
+}
+
+__pci_inline void
+pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *ihp, int count)
+{
+	(*pc->pc_intr_release)(pc->pc_intr_v, ihp, count);
+}
+
+__pci_inline int
+pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps)
+{
+	pci_chipset_tag_t pc = pci_attach_args_pc(pa);
+	return (*pc->pc_intx_alloc)(pa, ihps);
 }
 
 
@@ -274,70 +326,47 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int device, int function,
 	return (*pc->pc_conf_hook)(pc->pc_conf_v, bus, device, function, id);
 }
 
+
+/* experimental MSI support */
 __pci_inline int
-pci_msi_request(const struct pci_attach_args *pa, pci_msi_handle_t *msihp,
-    size_t nmsi, int ipl, int capid)
+pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
 {
-	return (*pci_attach_args_pc(pa)->pc_msi_request)(pa, msihp, nmsi,
-	    ipl, capid);
+	pci_chipset_tag_t pc = pci_attach_args_pc(pa);
+	return (*pc->pc_msi_alloc)(pa, ihps, count, false);
 }
 
 __pci_inline int
-pci_msi_type(pci_chipset_tag_t pc, pci_msi_handle_t msih)
+pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
 {
-	return (*pc->pc_msi_type)(pc->pc_msi_v, msih);
+	pci_chipset_tag_t pc = pci_attach_args_pc(pa);
+	return (*pc->pc_msi_alloc)(pa, ihps, &count, true);
 }
 
-__pci_inline size_t
-pci_msi_available(pci_chipset_tag_t pc, pci_msi_handle_t msih)
+/* experimental MSI-X support */
+__pci_inline int
+pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
 {
-	return (*pc->pc_msi_available)(pc->pc_msi_v, msih);
+	pci_chipset_tag_t pc = pci_attach_args_pc(pa);
+	return (*pc->pc_msix_alloc)(pa, ihps, NULL, count, false);
 }
 
-__pci_inline const char *
-pci_msi_string(pci_chipset_tag_t pc, pci_msi_handle_t msih, size_t msirq)
+__pci_inline int
+pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
 {
-	return (*pc->pc_msi_string)(pc->pc_msi_v, msih, msirq);
+	pci_chipset_tag_t pc = pci_attach_args_pc(pa);
+	return (*pc->pc_msix_alloc)(pa, ihps, NULL, &count, true);
 }
 
-__pci_inline const struct evcnt *
-pci_msi_evcnt(pci_chipset_tag_t pc, pci_msi_handle_t msih, size_t msirq)
+__pci_inline int
+pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    u_int *table_indexes, int count)
 {
-	return (*pc->pc_msi_evcnt)(pc->pc_msi_v, msih, msirq);
-}
-
-__pci_inline void *
-pci_msi_establish(pci_chipset_tag_t pc, pci_msi_handle_t msih, size_t msirq,
-	int ipl, int (*func)(void *), void *arg)
-{
-	return (*pc->pc_msi_establish)(pc->pc_msi_v, msih, msirq, ipl,
-	    func, arg);
-}
-
-__pci_inline void *
-pci_msix_establish(pci_chipset_tag_t pc, pci_msi_handle_t msih, size_t vec,
-	size_t msirq, int ipl, int (*func)(void *), void *arg)
-{
-	return (*pc->pc_msix_establish)(pc->pc_msi_v, msih, vec, msirq, ipl,
-	    func, arg);
-}
-
-__pci_inline void
-pci_msi_disestablish(pci_chipset_tag_t pc, void *ih)
-{
-	(*pc->pc_msi_disestablish)(pc->pc_msi_v, ih);
-}
-
-__pci_inline void
-pci_msi_free(pci_chipset_tag_t pc, pci_msi_handle_t msih, size_t msirq)
-{
-	(*pc->pc_msi_free)(pc->pc_msi_v, msih, msirq);
-}
-
-__pci_inline void
-pci_msi_release(pci_chipset_tag_t pc, pci_msi_handle_t msih)
-{
-	(*pc->pc_msi_release)(pc->pc_msi_v, msih);
+	pci_chipset_tag_t pc = pci_attach_args_pc(pa);
+	return (*pc->pc_msix_alloc)(pa, ihps, table_indexes, &count, true);
 }
 
 #undef	__pci_inline
@@ -353,36 +382,31 @@ int genppc_pci_intr_map(const struct pci_attach_args *,
 const char *genppc_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *genppc_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *genppc_pci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-    void *);
+    void *, const char *);
 void genppc_pci_intr_disestablish(void *, void *);
 int genppc_pci_intr_setattr(void *, pci_intr_handle_t *, int, uint64_t);
+pci_intr_type_t genppc_pci_intr_type(void *, pci_intr_handle_t);
+int genppc_pci_intr_alloc(const struct pci_attach_args *, pci_intr_handle_t **,
+    int *, pci_intr_type_t);
+void genppc_pci_intr_release(void *, pci_intr_handle_t *, int);
+int genppc_pci_intx_alloc(const struct pci_attach_args *, pci_intr_handle_t **);
 
-int genppc_pci_msi_request(const struct pci_attach_args *, pci_msi_handle_t *,
-    size_t, int, int);
-int genppc_pci_msi_type(void *, pci_msi_handle_t);
-size_t genppc_pci_msi_available(void *, pci_msi_handle_t);
-const struct evcnt *genppc_pci_msi_evcnt(void *, pci_msi_handle_t, size_t);
-const char *genppc_pci_msi_string(void *, pci_msi_handle_t, size_t);
-void *genppc_pci_msi_establish(void *, pci_msi_handle_t, size_t,
-    int, int (*)(void *), void *);
-void *genppc_pci_msix_establish(void *, pci_msi_handle_t, size_t,
-    size_t, int, int (*)(void *), void *);
-void genppc_pci_msi_disestablish(void *, void *);
-void genppc_pci_msi_free(void *, pci_msi_handle_t, size_t);
-void genppc_pci_msi_release(void *, pci_msi_handle_t);
-void genppc_pci_chipset_msi_init(pci_chipset_tag_t);
+/* experimental MSI support */
+int genppc_pci_msi_alloc(const struct pci_attach_args *, pci_intr_handle_t **,
+    int *, bool);
+
+/* experimental MSI-X support */
+int genppc_pci_msix_alloc(const struct pci_attach_args *, pci_intr_handle_t **,
+    u_int *, int *, bool);
+
+void genppc_pci_chipset_msi_init(pci_chipset_tag_t pc);
+void genppc_pci_chipset_msix_init(pci_chipset_tag_t pc);
 
 #define GENPPC_PCI_MSI_INITIALIZER \
-	.pc_msi_request = genppc_pci_msi_request, \
-	.pc_msi_type = genppc_pci_msi_type, \
-	.pc_msi_available = genppc_pci_msi_available, \
-	.pc_msi_evcnt = genppc_pci_msi_evcnt, \
-	.pc_msi_string = genppc_pci_msi_string, \
-	.pc_msi_establish = genppc_pci_msi_establish, \
-	.pc_msix_establish = genppc_pci_msix_establish, \
-	.pc_msi_disestablish = genppc_pci_msi_disestablish, \
-	.pc_msi_free = genppc_pci_msi_free, \
-	.pc_msi_release = genppc_pci_msi_release
+	.pc_msi_alloc = genppc_pci_msi_alloc
+
+#define GENPPC_PCI_MSIX_INITIALIZER \
+	.pc_msix_alloc = genppc_pci_msix_alloc
 
 void genppc_pci_conf_interrupt(void *, int, int, int, int, int *);
 int genppc_pci_conf_hook(void *, int, int, int, pcireg_t);

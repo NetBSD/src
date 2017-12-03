@@ -1,4 +1,4 @@
-/*	$NetBSD: efidef.h,v 1.1.1.1.10.2 2014/08/20 00:04:23 tls Exp $	*/
+/*	$NetBSD: efidef.h,v 1.1.1.1.10.3 2017/12/03 11:38:01 jdolecek Exp $	*/
 
 #ifndef _EFI_DEF_H
 #define _EFI_DEF_H
@@ -162,6 +162,7 @@ typedef enum {
     EfiMemoryMappedIO,
     EfiMemoryMappedIOPortSpace,
     EfiPalCode,
+    EfiPersistentMemory,
     EfiMaxMemoryType
 } EFI_MEMORY_TYPE;
 

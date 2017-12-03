@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.17 2011/02/16 09:05:12 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.17.14.1 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.17 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.17.14.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -261,7 +261,7 @@ acpi_dalb_resume(device_t dev, const pmf_qual_t *qual)
 	return true;
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpidalb, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpidalb, "sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

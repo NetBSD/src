@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.18.14.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.18.14.2 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.18.14.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.18.14.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include "opt_strtc.h"
 
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.18.14.1 2014/08/20 00:03:37 tls Exp $"
 #include <dev/i2c/m41st84reg.h>
 #include <dev/i2c/m41st84var.h>
 
+#include "ioconf.h"
+
 struct strtc_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
@@ -70,8 +72,6 @@ CFATTACH_DECL_NEW(strtc, sizeof(struct strtc_softc),
     strtc_match, strtc_attach, NULL, NULL);
 
 #ifndef STRTC_NO_USERRAM
-extern struct cfdriver strtc_cd;
-
 dev_type_open(strtc_open);
 dev_type_close(strtc_close);
 dev_type_read(strtc_read);
@@ -346,14 +346,14 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert the M41ST84's register values into something useable
 	 */
-	dt->dt_sec = FROMBCD(bcd[M41ST84_REG_SEC] & M41ST84_SEC_MASK);
-	dt->dt_min = FROMBCD(bcd[M41ST84_REG_MIN] & M41ST84_MIN_MASK);
-	dt->dt_hour = FROMBCD(bcd[M41ST84_REG_CENHR] & M41ST84_HOUR_MASK);
-	dt->dt_day = FROMBCD(bcd[M41ST84_REG_DATE] & M41ST84_DATE_MASK);
-	dt->dt_mon = FROMBCD(bcd[M41ST84_REG_MONTH] & M41ST84_MONTH_MASK);
+	dt->dt_sec = bcdtobin(bcd[M41ST84_REG_SEC] & M41ST84_SEC_MASK);
+	dt->dt_min = bcdtobin(bcd[M41ST84_REG_MIN] & M41ST84_MIN_MASK);
+	dt->dt_hour = bcdtobin(bcd[M41ST84_REG_CENHR] & M41ST84_HOUR_MASK);
+	dt->dt_day = bcdtobin(bcd[M41ST84_REG_DATE] & M41ST84_DATE_MASK);
+	dt->dt_mon = bcdtobin(bcd[M41ST84_REG_MONTH] & M41ST84_MONTH_MASK);
 
 	/* XXX: Should be an MD way to specify EPOCH used by BIOS/Firmware */
-	dt->dt_year = FROMBCD(bcd[M41ST84_REG_YEAR]) + POSIX_BASE_YEAR;
+	dt->dt_year = bcdtobin(bcd[M41ST84_REG_YEAR]) + POSIX_BASE_YEAR;
 
 	return (1);
 }
@@ -368,14 +368,14 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	 * Convert our time representation into something the M41ST84
 	 * can understand.
 	 */
-	bcd[M41ST84_REG_CSEC] = TOBCD(0);	/* must always write as 0 */
-	bcd[M41ST84_REG_SEC] = TOBCD(dt->dt_sec);
-	bcd[M41ST84_REG_MIN] = TOBCD(dt->dt_min);
-	bcd[M41ST84_REG_CENHR] = TOBCD(dt->dt_hour);
-	bcd[M41ST84_REG_DATE] = TOBCD(dt->dt_day);
-	bcd[M41ST84_REG_DAY] = TOBCD(dt->dt_wday);
-	bcd[M41ST84_REG_MONTH] = TOBCD(dt->dt_mon);
-	bcd[M41ST84_REG_YEAR] = TOBCD((dt->dt_year - POSIX_BASE_YEAR) % 100);
+	bcd[M41ST84_REG_CSEC] = bintobcd(0);	/* must always write as 0 */
+	bcd[M41ST84_REG_SEC] = bintobcd(dt->dt_sec);
+	bcd[M41ST84_REG_MIN] = bintobcd(dt->dt_min);
+	bcd[M41ST84_REG_CENHR] = bintobcd(dt->dt_hour);
+	bcd[M41ST84_REG_DATE] = bintobcd(dt->dt_day);
+	bcd[M41ST84_REG_DAY] = bintobcd(dt->dt_wday);
+	bcd[M41ST84_REG_MONTH] = bintobcd(dt->dt_mon);
+	bcd[M41ST84_REG_YEAR] = bintobcd((dt->dt_year - POSIX_BASE_YEAR) % 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev,

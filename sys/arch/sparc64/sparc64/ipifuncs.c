@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.46.2.2 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.46.2.3 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46.2.2 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46.2.3 2017/12/03 11:36:45 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46.2.2 2014/08/20 00:03:25 tls Exp $"
 #endif
 #endif
 
-#ifdef SUN4V
 #define SPARC64_IPI_RETRIES	10000
-#endif
 
 /* CPU sets containing halted, paused and resumed cpus */
 static volatile sparc64_cpuset_t cpus_halted;
@@ -69,9 +67,8 @@ static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 
 /* Send IPI functions for supported platforms */
 static void	sparc64_send_ipi_sun4u(int, ipifunc_t, uint64_t, uint64_t);
-#ifdef SUN4V
 static void	sparc64_send_ipi_sun4v(int, ipifunc_t, uint64_t, uint64_t);
-#endif
+void		(*sparc64_send_ipi)(int, ipifunc_t, uint64_t, uint64_t) = NULL;
  
 /*
  * These are the "function" entry points in locore.s/mp_subr.s to handle IPI's.
@@ -80,13 +77,16 @@ void	sparc64_ipi_halt(void *, void *);
 void	sparc64_ipi_pause(void *, void *);
 void	sparc64_ipi_flush_pte_us(void *, void *);
 void	sparc64_ipi_flush_pte_usiii(void *, void *);
-#ifdef SUN4V
 void	sparc64_ipi_flush_pte_sun4v(void *, void *);
-#endif
 void	sparc64_ipi_dcache_flush_page_us(void *, void *);
 void	sparc64_ipi_dcache_flush_page_usiii(void *, void *);
+void	sparc64_ipi_dcache_flush_page_sun4v(void *, void *);
 void	sparc64_ipi_blast_dcache(void *, void *);
 void	sparc64_ipi_ccall(void *, void *);
+
+/* Function pointers to be setup in sparc64_ipi_init() */
+static ipifunc_t smp_tlb_flush_pte_func = NULL;
+static ipifunc_t sparc64_ipi_dcache_flush_page_func = NULL;
 
 /*
  * Process cpu stop-self event.
@@ -176,6 +176,32 @@ sparc64_ipi_init(void)
 	CPUSET_CLEAR(cpus_spinning);
 	CPUSET_CLEAR(cpus_paused);
 	CPUSET_CLEAR(cpus_resumed);
+
+	/*
+	 * Prepare cpu type dependent function pointers
+	 */
+
+	if (CPU_ISSUN4V) {
+		smp_tlb_flush_pte_func = sparc64_ipi_flush_pte_sun4v;
+		sparc64_ipi_dcache_flush_page_func =
+		    sparc64_ipi_dcache_flush_page_sun4v;
+	}
+	else if (CPU_IS_USIII_UP()) {
+		smp_tlb_flush_pte_func = sparc64_ipi_flush_pte_usiii;
+		sparc64_ipi_dcache_flush_page_func =
+		    sparc64_ipi_dcache_flush_page_usiii;
+	}
+	else {
+		smp_tlb_flush_pte_func = sparc64_ipi_flush_pte_us;
+		sparc64_ipi_dcache_flush_page_func =
+		    sparc64_ipi_dcache_flush_page_us;
+	}
+
+	if (CPU_ISSUN4V)
+		sparc64_send_ipi = sparc64_send_ipi_sun4v;
+	else
+		sparc64_send_ipi = sparc64_send_ipi_sun4u;
+
 }
 
 /*
@@ -211,22 +237,7 @@ sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1, uint64_t arg2)
 }
 
 /*
- * Send an interprocessor interrupt.
- */
-void
-sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
-{
-#ifdef SUN4V	
-	if (CPU_ISSUN4V)
-		sparc64_send_ipi_sun4v(upaid, func, arg1, arg2);
-	else
-#endif		
-		sparc64_send_ipi_sun4u(upaid, func, arg1, arg2);
-		    
-}
-
-/*
- * Send an interprocessor interrupt - sun4v.
+ * Send an interprocessor interrupt - sun4u.
  */
 void
 sparc64_send_ipi_sun4u(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
@@ -288,7 +299,6 @@ sparc64_send_ipi_sun4u(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 			" (tried %d times)", cpu_number(), upaid, i);
 }
 
-#ifdef SUN4V
 /*
  * Send an interprocessor interrupt - sun4v.
  */
@@ -313,7 +323,6 @@ sparc64_send_ipi_sun4v(int cpuid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		panic("Unable to send mondo %lx to cpu %d: %d",
 		    (long unsigned int)func, cpuid, err);
 }
-#endif
 
 /*
  * Wait for IPI operation to complete.
@@ -447,18 +456,6 @@ smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 	struct cpu_info *ci;
 	int ctx;
 	bool kpm = (pm == pmap_kernel());
-	ipifunc_t func;
-#ifdef SUN4V
-	if (CPU_ISSUN4V)
-		func = sparc64_ipi_flush_pte_sun4v;
-	else if (CPU_IS_USIII_UP())
-#else
-	if (CPU_IS_USIII_UP())
-#endif		
-		func = sparc64_ipi_flush_pte_usiii;
-	else
-		func = sparc64_ipi_flush_pte_us;
-
 	/* Flush our own TLB */
 	ctx = pm->pm_ctx[cpu_number()];
 	KASSERT(ctx >= 0);
@@ -478,7 +475,7 @@ smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 			KASSERT(ctx >= 0);
 			if (!kpm && ctx == 0)
 				continue;
-			sparc64_send_ipi(ci->ci_cpuid, func, va, ctx);
+			sparc64_send_ipi(ci->ci_cpuid, smp_tlb_flush_pte_func, va, ctx);
 		}
 	}
 }
@@ -489,14 +486,7 @@ smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 void
 smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
 {
-	ipifunc_t func;
-
-	if (CPU_IS_USIII_UP())
-		func = sparc64_ipi_dcache_flush_page_usiii;
-	else
-		func = sparc64_ipi_dcache_flush_page_us;
-
-	sparc64_multicast_ipi(activecpus, func, pa, dcache_line_size);
+	sparc64_multicast_ipi(activecpus, sparc64_ipi_dcache_flush_page_func, pa, dcache_line_size);
 	sp_dcache_flush_page(pa);
 }
 

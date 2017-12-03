@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.41.6.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.41.6.2 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,8 +31,8 @@
  *	@(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_X86_64_MACHTYPES_H_
-#define	_X86_64_MACHTYPES_H_
+#ifndef	_X86_64_TYPES_H_
+#define	_X86_64_TYPES_H_
 
 #ifdef __x86_64__
 
@@ -46,8 +46,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
@@ -58,7 +57,6 @@ typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif
 
 typedef int             pmc_evid_t; 
 typedef __uint64_t      pmc_ctr_t;
@@ -67,7 +65,10 @@ typedef int		register32_t;
 #define	PRIxREGISTER	"lx"
 #define	PRIxREGISTER32	"x"
 
-typedef	volatile unsigned char		__cpu_simple_lock_t;
+#endif
+
+typedef long int		__register_t;
+typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD
@@ -93,6 +94,8 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_TLS_VARIANT_II
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_INTR_CONTROL
+#define	__HAVE_CPU_RNG
+#define	__HAVE_COMPAT_NETBSD32
 
 #ifdef _KERNEL_OPT
 #define	__HAVE_RAS
@@ -103,6 +106,9 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_MM_MD_DIRECT_MAPPED_IO
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_CPU_UAREA_ROUTINES
+#if !defined(NO_PCI_MSI_MSIX)
+#define	__HAVE_PCI_MSI_MSIX
+#endif
 #endif
 #endif
 
@@ -112,4 +118,4 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 
 #endif	/*	__x86_64__	*/
 
-#endif	/* _X86_64_MACHTYPES_H_ */
+#endif	/* _X86_64_TYPES_H_ */

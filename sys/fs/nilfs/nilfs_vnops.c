@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.18.2.3 2014/08/20 00:04:27 tls Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.18.2.4 2017/12/03 11:38:42 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18.2.3 2014/08/20 00:04:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18.2.4 2017/12/03 11:38:42 jdolecek Exp $");
 #endif /* not lint */
 
 
@@ -61,16 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18.2.3 2014/08/20 00:04:27 tls Exp
 #define VTOI(vnode) ((struct nilfs_node *) (vnode)->v_data)
 
 
-/* externs */
-extern int prtactive;
-
 /* implementations of vnode functions; table follows at end */
 /* --------------------------------------------------------------------- */
 
 int
 nilfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool         *a_recycle;
 	} */ *ap = v;
@@ -90,7 +87,6 @@ nilfs_inactive(void *v)
 	 * referenced anymore in a directory we ought to free up the resources
 	 * on disc if applicable.
 	 */
-	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -100,15 +96,15 @@ nilfs_inactive(void *v)
 int
 nilfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nilfs_node *nilfs_node = VTOI(vp);
 
+	VOP_UNLOCK(vp);
+
 	DPRINTF(NODE, ("nilfs_reclaim called for node %p\n", nilfs_node));
-	if (prtactive && vp->v_usecount > 1)
-		vprint("nilfs_reclaim(): pushing active", vp);
 
 	if (nilfs_node == NULL) {
 		DPRINTF(NODE, ("nilfs_reclaim(): null nilfsnode\n"));
@@ -119,7 +115,10 @@ nilfs_reclaim(void *v)
 	nilfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 
 	/* dispose all node knowledge */
+	genfs_node_destroy(vp);
 	nilfs_dispose_node(&nilfs_node);
+
+	vp->v_data = NULL;
 
 	return 0;
 }
@@ -549,7 +548,7 @@ nilfs_readdir(void *v)
 
 		blocknr = diroffset / blocksize;
 		blkoff  = diroffset % blocksize;
-		error = nilfs_bread(node, blocknr, NOCRED, 0, &bp);
+		error = nilfs_bread(node, blocknr, 0, &bp);
 		if (error)
 			return EIO;
 		while (diroffset < file_size) {
@@ -558,8 +557,7 @@ nilfs_readdir(void *v)
 			if (blkoff >= blocksize) {
 				blkoff = 0; blocknr++;
 				brelse(bp, BC_AGE);
-				error = nilfs_bread(node, blocknr, NOCRED, 0,
-						&bp);
+				error = nilfs_bread(node, blocknr, 0, &bp);
 				if (error)
 					return EIO;
 			}
@@ -621,16 +619,13 @@ nilfs_lookup(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct nilfs_node  *dir_node, *res_node;
-	struct nilfs_mount *ump;
+	struct mount *mp = dvp->v_mount;
 	uint64_t ino;
 	const char *name;
 	int namelen, nameiop, islastcn, mounted_ro;
 	int vnodetp;
 	int error, found;
 
-	dir_node = VTOI(dvp);
-	ump = dir_node->ump;
 	*vpp = NULL;
 
 	DPRINTF(LOOKUP, ("nilfs_lookup called\n"));
@@ -638,7 +633,7 @@ nilfs_lookup(void *v)
 	/* simplify/clarification flags */
 	nameiop     = cnp->cn_nameiop;
 	islastcn    = cnp->cn_flags & ISLASTCN;
-	mounted_ro  = dvp->v_mount->mnt_flag & MNT_RDONLY;
+	mounted_ro  = mp->mnt_flag & MNT_RDONLY;
 
 	/* check exec/dirread permissions first */
 	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
@@ -691,23 +686,16 @@ nilfs_lookup(void *v)
 		if (!found)
 			error = ENOENT;
 
-		/* first unlock parent */
-		VOP_UNLOCK(dvp);
-
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
 			/* try to create/reuse the node */
-			error = nilfs_get_node(ump, ino, &res_node);
+			error = vcache_get(mp, &ino, sizeof(ino), vpp);
 
 			if (!error) {
 				DPRINTF(LOOKUP,
 					("\tnode retrieved/created OK\n"));
-				*vpp = res_node->vnode;
 			}
 		}
-
-		/* try to relock parent */
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {
 		DPRINTF(LOOKUP, ("\tlookup file\n"));
 		/* all other files */
@@ -738,7 +726,7 @@ nilfs_lookup(void *v)
 			/* done */
 		} else {
 			/* try to create/reuse the node */
-			error = nilfs_get_node(ump, ino, &res_node);
+			error = vcache_get(mp, &ino, sizeof(ino), vpp);
 			if (!error) {
 				/*
 				 * If we are not at the last path component
@@ -746,15 +734,15 @@ nilfs_lookup(void *v)
 				 * (which may itself be pointing to a
 				 * directory), raise an error.
 				 */
-				vnodetp = res_node->vnode->v_type;
+				vnodetp = (*vpp)->v_type;
 				if ((vnodetp != VDIR) && (vnodetp != VLNK)) {
-					if (!islastcn)
+					if (!islastcn) {
+						vrele(*vpp);
+						*vpp = NULL;
 						error = ENOTDIR;
+					}
 				}
 
-			}
-			if (!error) {
-				*vpp = res_node->vnode;
 			}
 		}
 	}	
@@ -765,7 +753,7 @@ out:
 	 * the file might not be found and thus putting it into the namecache
 	 * might be seen as negative caching.
 	 */
-	if (nameiop != CREATE)
+	if (error == 0 && nameiop != CREATE)
 		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 			    cnp->cn_flags);
 
@@ -773,8 +761,6 @@ out:
 
 	if (error)
 		return error;
-	if (*vpp != dvp)
-		VOP_UNLOCK(*vpp);
 	return 0;
 }
 
@@ -807,7 +793,7 @@ nilfs_getattr(void *v)
 	/* basic info */
 	vattr_null(vap);
 	vap->va_type      = vp->v_type;
-	vap->va_mode      = nilfs_rw16(inode->i_mode);	/* XXX same? */
+	vap->va_mode      = nilfs_rw16(inode->i_mode) & ALLPERMS;
 	vap->va_nlink     = nilfs_rw16(inode->i_links_count);
 	vap->va_uid       = nilfs_rw32(inode->i_uid);
 	vap->va_gid       = nilfs_rw32(inode->i_gid);
@@ -1196,7 +1182,7 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 int
 nilfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1212,7 +1198,6 @@ nilfs_link(void *v)
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 
 	return error;
 }
@@ -1416,7 +1401,7 @@ out_unlocked:
 int
 nilfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1447,7 +1432,6 @@ nilfs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	return error;
 }
@@ -1457,7 +1441,7 @@ nilfs_remove(void *v)
 int
 nilfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1474,8 +1458,7 @@ nilfs_rmdir(void *v)
 
 	/* don't allow '.' to be deleted */
 	if (dir_node == nilfs_node) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return EINVAL;
 	}
 
@@ -1484,7 +1467,6 @@ nilfs_rmdir(void *v)
 	refcnt = 2; /* XXX */
 	if (refcnt > 1) {
 		/* NOT empty */
-		vput(dvp);
 		vput(vp);
 		return ENOTEMPTY;
 	}
@@ -1498,8 +1480,7 @@ nilfs_rmdir(void *v)
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing file\n"));
 
-	/* unput the nodes and exit */
-	vput(dvp);
+	/* put the node and exit */
 	vput(vp);
 
 	return error;

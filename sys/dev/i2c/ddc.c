@@ -1,4 +1,4 @@
-/* $NetBSD: ddc.c,v 1.3 2008/05/04 15:26:29 xtraeme Exp $ */
+/* $NetBSD: ddc.c,v 1.3.44.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.3 2008/05/04 15:26:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.3.44.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ ddc_attach(device_t parent, device_t self, void *aux)
 	struct ddc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 
+	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 
 	aprint_naive(": DDC\n");
@@ -91,18 +92,49 @@ ddc_attach(device_t parent, device_t self, void *aux)
 int
 ddc_read_edid(i2c_tag_t tag, uint8_t *dest, size_t len)
 {
-	uint8_t		wbuf[2];
+	return ddc_read_edid_block(tag, dest, len, DDC_EDID_START);
+}
 
-	if (iic_acquire_bus(tag, I2C_F_POLL) != 0)
-		return -1;
+int
+ddc_read_edid_block(i2c_tag_t tag, uint8_t *dest, size_t len, uint8_t block)
+{
+	uint8_t edid[256];
+	uint8_t wbuf[2];
+	int error;
 
-	wbuf[0] = DDC_EDID_START;	/* start address */
+	if ((error = iic_acquire_bus(tag, I2C_F_POLL)) != 0)
+		return error;
 
-	if (iic_exec(tag, I2C_OP_READ_WITH_STOP, DDC_ADDR, wbuf, 1, dest,
-		len, I2C_F_POLL)) {
+	wbuf[0] = block >> 1;	/* start address */
+
+	if ((error = iic_exec(tag, I2C_OP_READ_WITH_STOP, DDC_ADDR, wbuf, 1,
+		edid, sizeof(edid), I2C_F_POLL)) != 0) {
 		iic_release_bus(tag, I2C_F_POLL);
-		return -1;
+		return error;
 	}
 	iic_release_bus(tag, I2C_F_POLL);
+
+	if (block & 1) {
+		memcpy(dest, &edid[128], min(len, 128));
+	} else {
+		memcpy(dest, &edid[0], min(len, 128));
+	}
+
 	return 0;
+}
+
+int
+ddc_dev_read_edid(device_t dev, uint8_t *dest, size_t len)
+{
+	return ddc_dev_read_edid_block(dev, dest, len, DDC_EDID_START);
+}
+
+int
+ddc_dev_read_edid_block(device_t dev, uint8_t *dest, size_t len, uint8_t block)
+{
+	if (!device_is_a(dev, "ddc"))
+		return EINVAL;
+
+	const struct ddc_softc *sc = device_private(dev);
+	return ddc_read_edid_block(sc->sc_tag, dest, len, block);
 }

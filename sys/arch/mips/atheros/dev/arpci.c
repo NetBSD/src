@@ -1,4 +1,4 @@
-/*	$NetBSD: arpci.c,v 1.2.12.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: arpci.c,v 1.2.12.2 2017/12/03 11:36:26 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,13 +30,15 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.2.12.1 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.2.12.2 2017/12/03 11:36:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcivar.h>
+
+#include <mips/locore.h>
 
 #include <mips/atheros/include/arbusvar.h>
 #include <mips/atheros/include/ar9344reg.h>
@@ -131,6 +133,9 @@ arpci_conf_read(void *v, pcitag_t tag, int reg)
 	struct arpci_softc * const sc = v;
 	pcireg_t rv = 0xffffffff;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return rv;
+
 	if ((tag & 0x00ff0001) == 1) {
 		KASSERT(((tag >> 11) & 31) > 20); 
 		/*
@@ -173,6 +178,9 @@ static void
 arpci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct arpci_softc * const sc = v;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	if ((tag & 0x00ff0001) == 1) {
 		KASSERT(((tag >> 11) & 31) > 20); 

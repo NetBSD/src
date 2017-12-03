@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pmtr.c,v 1.7 2011/06/21 09:49:05 jruoho Exp $ */
+/*	$NetBSD: acpi_pmtr.c,v 1.7.12.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.7 2011/06/21 09:49:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.7.12.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -505,7 +505,7 @@ acpipmtr_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpipmtr, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpipmtr, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

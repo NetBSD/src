@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.7 2009/05/30 05:56:53 skrll Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.7.22.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -6,14 +6,13 @@
 		case EM_SPARC32PLUS:					\
 			break;
 
-#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF64_MACHDEP_ID_CASES						\
-		case EM_SPARC32PLUS:					\
-		case EM_SPARCV9:					\
 		/* no 64-bit ELF machine types supported */
 
-#define	ELF32_MACHDEP_ID	EM_SPARC	/* XXX right? */
+#define	ELF32_MACHDEP_ID	EM_SPARC
 
+#define	KERN_ELFSIZE		32
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #define R_SPARC_NONE		0
@@ -88,5 +87,8 @@
 #define R_SPARC_TLS_DTPOFF64	77
 #define R_SPARC_TLS_TPOFF32	78
 #define R_SPARC_TLS_TPOFF64	79
+
+#define R_SPARC_JMP_IREL	248
+#define R_SPARC_IRELATIVE	249
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)

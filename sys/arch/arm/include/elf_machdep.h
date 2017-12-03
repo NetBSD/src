@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10.2.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.2.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -41,6 +41,7 @@
 
 #define	ELF32_MACHDEP_ID	EM_ARM
 
+#define	KERN_ELFSIZE		32
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 
 /* Processor specific relocation types */
@@ -118,6 +119,8 @@
 #define R_ARM_TLS_IE12GP	111
 
 /* 112-127 are reserved for private experiments. */
+
+#define R_ARM_IRELATIVE		160
 
 #define R_ARM_RXPC25		249
 #define R_ARM_RSBREL32		250

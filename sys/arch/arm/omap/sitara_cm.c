@@ -1,4 +1,4 @@
-/* $NetBSD: sitara_cm.c,v 1.1.4.2 2013/06/23 06:20:01 tls Exp $ */
+/* $NetBSD: sitara_cm.c,v 1.1.4.3 2017/12/03 11:35:55 jdolecek Exp $ */
 /*
  * Copyright (c) 2010
  *	Ben Gray <ben.r.gray@gmail.com>.
@@ -47,7 +47,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sitara_cm.c,v 1.1.4.2 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sitara_cm.c,v 1.1.4.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_omap.h"
 
@@ -60,13 +60,17 @@ __KERNEL_RCSID(0, "$NetBSD: sitara_cm.c,v 1.1.4.2 2013/06/23 06:20:01 tls Exp $"
 #include <sys/kernel.h>
 
 #include <arm/omap/omap2_obiovar.h>
+#include <arm/omap/omap2_reg.h>
 #include <arm/omap/sitara_cm.h>
 #include <arm/omap/sitara_cmreg.h>
 
 struct sitara_cm_softc {
-        device_t                sc_dev;
-	bus_space_tag_t         sc_iot;
-	bus_space_handle_t      sc_ioh;
+	device_t		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
+	uint32_t		sc_cid;	/* Chip Identification */
+	uint32_t		sc_did;	/* Device IDCODE */
 };
 
 
@@ -126,7 +130,7 @@ sitara_cm_padconf_from_name(const char *ballname)
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -176,7 +180,7 @@ sitara_cm_padconf_set_internal(struct sitara_cm_softc *sc,
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -208,7 +212,7 @@ sitara_cm_padconf_set(const char *padname, const char *muxmode, unsigned int sta
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -254,7 +258,7 @@ sitara_cm_padconf_get(const char *padname, const char **muxmode,
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -300,7 +304,7 @@ sitara_cm_padconf_set_gpiomode(uint32_t gpio, unsigned int state)
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -391,6 +395,15 @@ sitara_cm_attach(device_t parent, device_t self, void *opaque)
 	struct sitara_cm_softc *sc = device_private(self);
 	struct obio_attach_args *obio = opaque;
 	uint32_t rev;
+	char cid, buf[256];
+	const char *did;
+	const char *fmt = "\177\020"
+	    "b\0ICSS\0"
+	    "b\1CPSW\0"
+	    "b\7DCAN\0"
+	    "f\16\1ICSS_FEA EtherCAT functionality\0=\0disabled\0=\1enabled\0"
+	    "f\17\1ICSS_FEA TX_AUTO_SEQUENCE\0=\0disabled\0=\1enabled\0"
+	    "b\29SGX\0";
 
 	aprint_naive("\n");
 
@@ -412,4 +425,60 @@ sitara_cm_attach(device_t parent, device_t self, void *opaque)
 		panic("sitara_cm_attach: read revision");
 	aprint_normal(": control module, rev %d.%d\n",
 	    SCM_REVISION_MAJOR(rev), SCM_REVISION_MINOR(rev));
+
+	sitara_cm_reg_read_4(OMAP2SCM_DEVID, &sc->sc_did);
+	sitara_cm_reg_read_4(OMAP2SCM_DEV_FEATURE, &sc->sc_cid);
+	switch (sc->sc_cid) {
+	case CHIPID_AM3351:	cid = '1'; break;
+	case CHIPID_AM3352:	cid = '2'; break;
+	case CHIPID_AM3354:	cid = '4'; break;
+	case CHIPID_AM3356:	cid = '6'; break;
+	case CHIPID_AM3357:	cid = '7'; break;
+	case CHIPID_AM3358:	cid = '8'; break;
+	case CHIPID_AM3359:	cid = '9'; break;
+	default:
+		aprint_normal_dev(self, "unknwon ChipID found 0x%08x\n",
+		    sc->sc_cid);
+		cid = 'x';
+		break;
+	}
+	aprint_normal_dev(self, "AM335%c", cid);
+	switch (sc->sc_did) {
+	case DEVID_AM335X_SR_10:	did = "1.0"; break;
+	case DEVID_AM335X_SR_20:	did = "2.0"; break;
+	case DEVID_AM335X_SR_21:	did = "2.1"; break;
+	default:
+		aprint_normal_dev(self, "unknwon DeviceID found 0x%08x\n",
+		    sc->sc_did);
+		did = NULL;
+		break;
+	}
+	if (did != NULL)
+		aprint_normal(" Silicon Revision %s", did);
+	snprintb(buf, sizeof(buf), fmt, sc->sc_cid);
+	aprint_normal(": %s\n", buf);
+}
+
+uint32_t
+omap_chipid(void)
+{
+	struct sitara_cm_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_xname("sitaracm0");
+	KASSERT(dev != NULL);
+	sc = device_private(dev);
+	return sc->sc_cid;
+}
+
+uint32_t
+omap_devid(void)
+{
+	struct sitara_cm_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_xname("sitaracm0");
+	KASSERT(dev != NULL);
+	sc = device_private(dev);
+	return sc->sc_did;
 }

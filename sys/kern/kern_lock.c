@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.153.2.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.153.2.3 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.153.2.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.153.2.3 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.153.2.2 2014/08/20 00:04:29 tls Exp 
 #include <sys/syslog.h>
 #include <sys/atomic.h>
 #include <sys/lwp.h>
+#include <sys/pserialize.h>
 
 #include <machine/lock.h>
 
@@ -78,7 +79,8 @@ assert_sleepable(void)
 	} while (pctr != lwp_pctr());
 
 	reason = NULL;
-	if (idle && !cold) {
+	if (idle && !cold &&
+	    kcpuset_isset(kcpuset_running, cpu_index(curcpu()))) {
 		reason = "idle";
 	}
 	if (cpu_intr_p()) {
@@ -86,6 +88,9 @@ assert_sleepable(void)
 	}
 	if (cpu_softintr_p()) {
 		reason = "softint";
+	}
+	if (!pserialize_not_in_read_section()) {
+		reason = "pserialize";
 	}
 
 	if (reason) {
@@ -100,7 +105,7 @@ assert_sleepable(void)
  */
 
 #define	_KERNEL_LOCK_ABORT(msg)						\
-    LOCKDEBUG_ABORT(kernel_lock, &_kernel_lock_ops, __func__, msg)
+    LOCKDEBUG_ABORT(__func__, __LINE__, kernel_lock, &_kernel_lock_ops, msg)
 
 #ifdef LOCKDEBUG
 #define	_KERNEL_LOCK_ASSERT(cond)					\
@@ -112,7 +117,7 @@ do {									\
 #define	_KERNEL_LOCK_ASSERT(cond)	/* nothing */
 #endif
 
-void	_kernel_lock_dump(volatile void *);
+void	_kernel_lock_dump(const volatile void *);
 
 lockops_t _kernel_lock_ops = {
 	"Kernel lock",
@@ -137,7 +142,7 @@ CTASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
  * Print debugging information about the kernel lock.
  */
 void
-_kernel_lock_dump(volatile void *junk)
+_kernel_lock_dump(const volatile void *junk)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -235,7 +240,7 @@ _kernel_lock(int nlocks)
 	/*
 	 * Now that we have kernel_lock, reset ci_biglock_wanted.  This
 	 * store must be unbuffered (immediately visible on the bus) in
-	 * order for non-interlocked mutex release to work correctly. 
+	 * order for non-interlocked mutex release to work correctly.
 	 * It must be visible before a mutex_exit() can execute on this
 	 * processor.
 	 *

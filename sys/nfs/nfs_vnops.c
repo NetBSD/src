@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.295.2.3 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.295.2.4 2017/12/03 11:39:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.295.2.3 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.295.2.4 2017/12/03 11:39:06 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -954,18 +954,11 @@ dorpc:
 
 	if (NFS_CMPFH(np, fhp, fhsize)) {
 		/*
-		 * as we handle "." lookup locally, this should be
+		 * As we handle "." lookup locally, this is
 		 * a broken server.
 		 */
-		vref(dvp);
-		newvp = dvp;
-#ifndef NFS_V2_ONLY
-		if (v3) {
-			nfsm_postop_attr(newvp, attrflag, 0);
-			nfsm_postop_attr(dvp, attrflag, 0);
-		} else
-#endif
-			nfsm_loadattr(newvp, (struct vattr *)0, 0);
+		m_freem(mrep);
+		return EBADRPC;
 	} else if (flags & ISDOTDOT) {
 		/*
 		 * ".." lookup
@@ -1311,7 +1304,7 @@ retry:
 	byte_count = 0; /* count of bytes actually written */
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
-		uint32_t backup;
+		size_t backup;
 		bool stalewriteverf = false;
 
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
@@ -1745,7 +1738,7 @@ again:
 int
 nfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
@@ -1797,7 +1790,6 @@ nfs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 	return (error);
 }
 
@@ -2050,7 +2042,7 @@ nfs_linkrpc(struct vnode *dvp, struct vnode *vp, const char *name,
 int
 nfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -2063,7 +2055,6 @@ nfs_link(void *v)
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error != 0) {
 		VOP_ABORTOP(dvp, cnp);
-		vput(dvp);
 		return error;
 	}
 
@@ -2083,7 +2074,6 @@ nfs_link(void *v)
 	VOP_UNLOCK(vp);
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 	return (error);
 }
 
@@ -2274,7 +2264,7 @@ nfs_mkdir(void *v)
 int
 nfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -2297,8 +2287,7 @@ nfs_rmdir(void *v)
 	struct nfsnode *dnp;
 
 	if (dvp == vp) {
-		vrele(dvp);
-		vput(dvp);
+		vrele(vp);
 		return (EINVAL);
 	}
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
@@ -2320,7 +2309,6 @@ nfs_rmdir(void *v)
 	VN_KNOTE(vp, NOTE_DELETE);
 	cache_purge(vp);
 	vput(vp);
-	vput(dvp);
 	/*
 	 * Kludge: Map ENOENT => 0 assuming that you have a reply to a retry.
 	 */

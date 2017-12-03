@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.31.20.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.31.20.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.31.20.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.31.20.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -78,7 +78,7 @@ ahd_attach(struct ahd_softc *ahd)
 	char	ahd_info[256];
 
 	ahd_controller_info(ahd, ahd_info, sizeof(ahd_info));
-	printf("%s: %s\n", ahd_name(ahd), ahd_info);
+	aprint_normal("%s: %s\n", ahd_name(ahd), ahd_info);
 
 	ahd_lock(ahd, &s);
 

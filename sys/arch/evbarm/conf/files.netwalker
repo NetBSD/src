@@ -1,11 +1,7 @@
-#	$NetBSD: files.netwalker,v 1.3.2.1 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: files.netwalker,v 1.3.2.2 2017/12/03 11:36:03 jdolecek Exp $
 #
 # Sharp Netwalker configuration info
 #
-
-file   arch/arm/arm32/arm32_boot.c
-file   arch/arm/arm32/arm32_kvminit.c
-file   arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/netwalker/netwalker_machdep.c
 
@@ -20,7 +16,7 @@ attach imxusbc at axi with imxusbc_axi
 file   arch/evbarm/netwalker/netwalker_usb.c	imxusbc_axi
 
 # LCD controller
-attach	ipu at axi with lcd_netwalker
+attach	ipu at axi with lcd_netwalker : imx_ipuv3
 file	arch/evbarm/netwalker/netwalker_lcd.c	lcd_netwalker
 defflag	opt_netwalker_lcd.h			LCD_DEBUG
 

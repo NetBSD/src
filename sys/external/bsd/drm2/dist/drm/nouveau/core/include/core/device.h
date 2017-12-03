@@ -152,8 +152,9 @@ nv_device_is_pci(struct nouveau_device *device)
 static inline struct device *
 nv_device_base(struct nouveau_device *device)
 {
-	return nv_device_is_pci(device) ? &device->pdev->dev :
-					  &device->platformdev->dev;
+	return nv_device_is_pci(device)
+	    ? pci_dev_dev(device->pdev)
+	    : platform_device_dev(device->platformdev);
 }
 
 #ifdef __NetBSD__
@@ -167,6 +168,7 @@ nv_device_resource_start(struct nouveau_device *device, unsigned int bar);
 resource_size_t
 nv_device_resource_len(struct nouveau_device *device, unsigned int bar);
 
+#ifndef __NetBSD__
 dma_addr_t
 nv_device_map_page(struct nouveau_device *device, struct page *page);
 
@@ -175,5 +177,6 @@ nv_device_unmap_page(struct nouveau_device *device, dma_addr_t addr);
 
 int
 nv_device_get_irq(struct nouveau_device *device, bool stall);
+#endif
 
 #endif

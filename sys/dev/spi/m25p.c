@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.2.44.2 2014/08/20 00:03:50 tls Exp $ */
+/* $NetBSD: m25p.c,v 1.2.44.3 2017/12/03 11:37:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.2.44.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.2.44.3 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.2.44.2 2014/08/20 00:03:50 tls Exp $");
 
 static int m25p_match(device_t , cfdata_t , void *);
 static void m25p_attach(device_t , device_t , void *);
+static void m25p_doattach(device_t);
 static const char *m25p_getname(void *);
 static struct spi_handle *m25p_gethandle(void *);
 static int m25p_getflags(void *);
@@ -95,7 +96,8 @@ static const struct m25p_info {
 	{ 0x14, 0x20, 0x2015, "STMicro M25P16", 2048, 64 },	/* 16Mbit */
 	{ 0x12,	0x20, 0x2013, "STMicro M25P40", 512, 64 },	/* 4Mbit */
 	{ 0xc0, 0x20, 0x7117, "STMicro M25PX64", 8192, 64 },	/* 64Mbit */
-	{ 0x0, 0x20, 0xBB18, "Numonyx N25Q128", 16384, 64 },	/* 128Mbit */
+	{ 0x00, 0x20, 0xBB18, "Numonyx N25Q128", 16384, 64 },	/* 128Mbit */
+	{ 0x00, 0xBF, 0x2541, "Microchip SST25VF016B", 2048, 64 }, /* 16Mbit */
 	{ 0 }
 };
 
@@ -116,20 +118,27 @@ m25p_attach(device_t parent, device_t self, void *aux)
 {
 	struct m25p_softc *sc = device_private(self);
 	struct spi_attach_args *sa = aux;
+
+	sc->sc_sh = sa->sa_handle;
+
+	config_interrupts(self, m25p_doattach);
+}
+
+static void
+m25p_doattach(device_t self)
+{
+	struct m25p_softc *sc = device_private(self);
 	const struct m25p_info *info;
-	uint8_t	 buf[4];
+	uint8_t	buf[4];
 	uint8_t	cmd;
 	uint8_t mfgid;
 	uint8_t sig;
 	uint16_t devid;
 
-	sc->sc_sh = sa->sa_handle;
-
 	/* first we try JEDEC ID read */
-	
 	cmd = SPIFLASH_CMD_RDJI;
-	if (spi_send_recv(sa->sa_handle, 1, &cmd, 3, buf)) {
-		aprint_error(": failed to get JEDEC identification\n");	
+	if (spi_send_recv(sc->sc_sh, 1, &cmd, 3, buf)) {
+		aprint_error(": failed to get JEDEC identification\n");
 		return;
 	}
 	mfgid = buf[0];
@@ -137,7 +146,7 @@ m25p_attach(device_t parent, device_t self, void *aux)
 
 	if ((mfgid == 0xff) || (mfgid == 0)) {
 		cmd = SPIFLASH_CMD_RDID;
-		if (spi_send_recv(sa->sa_handle, 1, &cmd, 4, buf)) {
+		if (spi_send_recv(sc->sc_sh, 1, &cmd, 4, buf)) {
 			aprint_error(": failed to get legacy signature\n");
 			return;
 		}
@@ -150,7 +159,7 @@ m25p_attach(device_t parent, device_t self, void *aux)
 	for (info = m25p_infos; info->name; info++) {
 		if ((info->mfgid == mfgid) && (info->devid == devid))
 			break;
-		if (sig == info->sig)
+		if ((sig != 0) && (sig == info->sig))
 			break;
 	}
 
@@ -160,7 +169,6 @@ m25p_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_name = info->name;
-	sc->sc_sh = sa->sa_handle;
 	sc->sc_sizes[SPIFLASH_SIZE_DEVICE] = info->size * 1024;
 	sc->sc_sizes[SPIFLASH_SIZE_ERASE] = info->sector * 1024;
 	sc->sc_sizes[SPIFLASH_SIZE_WRITE] = 256;
@@ -168,6 +176,8 @@ m25p_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_flags = SPIFLASH_FLAG_FAST_READ;
 
+	aprint_normal_dev(self, "JEDEC ID mfgid:0x%02X, devid:0x%04X",
+	    mfgid, devid);
 	aprint_normal("\n");
 
 	spiflash_attach_mi(&m25p_hw_if, sc, self);

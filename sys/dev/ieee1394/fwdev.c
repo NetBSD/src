@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.27.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.27.2.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.27.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.27.2.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,6 +104,7 @@ struct fw_drv1 {
 	struct fw_isobufreq bufreq;
 	STAILQ_HEAD(, fw_bind) binds;
 	STAILQ_HEAD(, fw_xfer) rq;
+	kcondvar_t cv;
 };
 
 static int fwdev_allocbuf(struct firewire_comm *, struct fw_xferq *,
@@ -145,6 +146,7 @@ fw_open(dev_t dev, int flags, int fmt, struct lwp *td)
 	d->fc = sc->fc;
 	STAILQ_INIT(&d->binds);
 	STAILQ_INIT(&d->rq);
+	cv_init(&d->cv, "fwra");
 
 	return err;
 }
@@ -217,6 +219,7 @@ fw_close(dev_t dev, int flags, int fmt, struct lwp *td)
 		    ~(FWXFERQ_OPEN | FWXFERQ_MODEMASK | FWXFERQ_CHTAGMASK);
 		d->it = NULL;
 	}
+	cv_destroy(&d->cv);
 	free(sc->si_drv1, M_FW);
 	sc->si_drv1 = NULL;
 
@@ -265,9 +268,7 @@ readloop:
 		if (slept == 0) {
 			slept = 1;
 			ir->flag |= FWXFERQ_WAKEUP;
-			mutex_exit(&fc->fc_mtx);
-			err = tsleep(ir, FWPRI, "fw_read", hz);
-			mutex_enter(&fc->fc_mtx);
+			err = cv_timedwait_sig(&ir->cv, &fc->fc_mtx, hz);
 			ir->flag &= ~FWXFERQ_WAKEUP;
 			if (err == 0)
 				goto readloop;
@@ -343,9 +344,7 @@ isoloop:
 			if (err)
 				goto out;
 #endif
-			mutex_exit(&fc->fc_mtx);
-			err = tsleep(it, FWPRI, "fw_write", hz);
-			mutex_enter(&fc->fc_mtx);
+			err = cv_timedwait_sig(&it->cv, &fc->fc_mtx, hz);
 			if (err)
 				goto out;
 			goto isoloop;
@@ -615,6 +614,8 @@ out:
 			    /* XXX */
 			    PAGE_SIZE, PAGE_SIZE, 5, fc, (void *)fwb, fw_hand);
 			STAILQ_INSERT_TAIL(&d->binds, fwb, chlist);
+		} else {
+			free(fwb, M_FW);
 		}
 		break;
 
@@ -824,11 +825,11 @@ fw_read_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	for (;;) {
 		xfer = STAILQ_FIRST(&d->rq);
 		if (xfer == NULL && err == 0) {
-			mutex_exit(&d->fc->fc_mtx);
-			err = tsleep(&d->rq, FWPRI, "fwra", 0);
-			if (err != 0)
+			err = cv_wait_sig(&d->cv, &d->fc->fc_mtx);
+			if (err) {
+				mutex_exit(&d->fc->fc_mtx);
 				return err;
-			mutex_enter(&d->fc->fc_mtx);
+			}
 			continue;
 		}
 		break;
@@ -924,6 +925,6 @@ fw_hand(struct fw_xfer *xfer)
 	d = (struct fw_drv1 *)fwb->sc;
 	mutex_enter(&xfer->fc->fc_mtx);
 	STAILQ_INSERT_TAIL(&d->rq, xfer, link);
+	cv_broadcast(&d->cv);
 	mutex_exit(&xfer->fc->fc_mtx);
-	wakeup(&d->rq);
 }

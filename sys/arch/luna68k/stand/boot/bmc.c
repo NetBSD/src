@@ -1,4 +1,4 @@
-/*	$NetBSD: bmc.c,v 1.4.6.3 2014/08/20 00:03:10 tls Exp $	*/
+/*	$NetBSD: bmc.c,v 1.4.6.4 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -124,7 +124,7 @@ bmccngetc(dev_t dev)
 	POP_RBUF(unit, c);
 
 #if 1
-	return c ;
+	return c;
 #else
 	return siocngetc(dev);
 #endif

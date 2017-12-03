@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.3.2.1 2014/08/20 00:03:13 tls Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.3.2.2 2017/12/03 11:36:28 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3.2.1 2014/08/20 00:03:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3.2.2 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,16 +86,15 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	struct ralink_ehci_softc * const sc = device_private(self);
 	const struct mainbus_attach_args *ma = aux;
 	struct ralink_usb_hc *ruh;
-	usbd_status status;
 	int error;
 
 	aprint_naive(": EHCI USB controller\n");
 	aprint_normal(": EHCI USB controller\n");
 
 	sc->sc_ehci.sc_dev = self;
-	sc->sc_ehci.sc_bus.hci_private = sc;
+	sc->sc_ehci.sc_bus.ub_hcpriv = sc;
 	sc->sc_ehci.iot = ma->ma_memt;
-	sc->sc_ehci.sc_bus.dmatag = ma->ma_dmat;
+	sc->sc_ehci.sc_bus.ub_dmatag = ma->ma_dmat;
 
 	/* Map EHCI registers */
 	if ((error = bus_space_map(sc->sc_ehci.iot, RA_USB_EHCI_BASE,
@@ -106,7 +105,7 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_ehci.sc_size = RA_USB_BLOCK_SIZE;
-	sc->sc_ehci.sc_bus.usbrev = USBREV_2_0;
+	sc->sc_ehci.sc_bus.ub_revision = USBREV_2_0;
 
 #if defined(RALINK_EHCI_DEBUG)
 	aprint_normal_dev(self, "sc %p ma %p\n", sc, ma);
@@ -159,9 +158,9 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	strlcpy(sc->sc_ehci.sc_vendor, "Ralink", sizeof(sc->sc_ehci.sc_vendor));
 
 	/* Initialize EHCI */
-	status = ehci_init(&sc->sc_ehci);
-	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", status);
+	int err = ehci_init(&sc->sc_ehci);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail_1;
 	}
 

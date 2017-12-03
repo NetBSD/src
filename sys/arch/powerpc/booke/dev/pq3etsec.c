@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.16.2.1 2017/12/03 11:36:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,10 +36,12 @@
 
 #include "opt_inet.h"
 #include "opt_mpc85xx.h"
+#include "opt_multiprocessor.h"
+#include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16.2.1 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $");
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/callout.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -74,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $");
 #include <netinet/ip6.h>
 #endif
 #include <netinet6/in6_offload.h>
-
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
@@ -212,6 +214,7 @@ struct pq3etsec_softc {
 	void *sc_soft_ih;
 
 	kmutex_t *sc_lock;
+	kmutex_t *sc_hwlock;
 
 	struct evcnt sc_ev_tx_stall;
 	struct evcnt sc_ev_tx_intr;
@@ -229,7 +232,18 @@ struct pq3etsec_softc {
 	struct ifqueue sc_rx_bufcache;
 	struct pq3etsec_mapcache *sc_rx_mapcache; 
 	struct pq3etsec_mapcache *sc_tx_mapcache; 
+
+	/* Interrupt Coalescing parameters */
+	int sc_ic_rx_time;
+	int sc_ic_rx_count;
+	int sc_ic_tx_time;
+	int sc_ic_tx_count;
 };
+
+#define	ETSEC_IC_RX_ENABLED(sc)						\
+	((sc)->sc_ic_rx_time != 0 && (sc)->sc_ic_rx_count != 0)
+#define	ETSEC_IC_TX_ENABLED(sc)						\
+	((sc)->sc_ic_tx_time != 0 && (sc)->sc_ic_tx_count != 0)
 
 struct pq3mdio_softc {
 	device_t mdio_dev;
@@ -290,6 +304,11 @@ static int pq3etsec_rx_intr(void *);
 static int pq3etsec_tx_intr(void *);
 static int pq3etsec_error_intr(void *);
 static void pq3etsec_soft_intr(void *);
+
+static void pq3etsec_set_ic_rx(struct pq3etsec_softc *);
+static void pq3etsec_set_ic_tx(struct pq3etsec_softc *);
+
+static void pq3etsec_sysctl_setup(struct sysctllog **, struct pq3etsec_softc *);
 
 CFATTACH_DECL_NEW(pq3etsec, sizeof(struct pq3etsec_softc),
     pq3etsec_match, pq3etsec_attach, NULL, NULL);
@@ -617,39 +636,39 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 #endif
 	}
 
-	char enaddr[ETHER_ADDR_LEN] = {
-	    [0] = sc->sc_macstnaddr2 >> 16,
-	    [1] = sc->sc_macstnaddr2 >> 24,
-	    [2] = sc->sc_macstnaddr1 >>  0,
-	    [3] = sc->sc_macstnaddr1 >>  8,
-	    [4] = sc->sc_macstnaddr1 >> 16,
-	    [5] = sc->sc_macstnaddr1 >> 24,
-	};
+	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+	sc->sc_hwlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_VM);
+
+	callout_init(&sc->sc_mii_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_mii_callout, pq3etsec_mii_tick, sc);
+
+	/* Disable interrupts */
+	etsec_write(sc, IMASK, 0);
 
 	error = pq3etsec_rxq_attach(sc, &sc->sc_rxq, 0);
 	if (error) {
 		aprint_error(": failed to init rxq: %d\n", error);
-		return;
+		goto fail_1;
 	}
 
 	error = pq3etsec_txq_attach(sc, &sc->sc_txq, 0);
 	if (error) {
 		aprint_error(": failed to init txq: %d\n", error);
-		return;
+		goto fail_2;
 	}
 
 	error = pq3etsec_mapcache_create(sc, &sc->sc_rx_mapcache, 
 	    ETSEC_MAXRXMBUFS, MCLBYTES, ETSEC_NRXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate rx dmamaps: %d\n", error);
-		return;
+		goto fail_3;
 	}
 
 	error = pq3etsec_mapcache_create(sc, &sc->sc_tx_mapcache, 
 	    ETSEC_MAXTXMBUFS, MCLBYTES, ETSEC_NTXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate tx dmamaps: %d\n", error);
-		return;
+		goto fail_4;
 	}
 
 	sc->sc_tx_ih = intr_establish(cnl->cnl_intrs[0], IPL_VM, IST_ONCHIP,
@@ -657,7 +676,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_tx_ih == NULL) {
 		aprint_error(": failed to establish tx interrupt: %d\n",
 		    cnl->cnl_intrs[0]);
-		return;
+		goto fail_5;
 	}
 
 	sc->sc_rx_ih = intr_establish(cnl->cnl_intrs[1], IPL_VM, IST_ONCHIP,
@@ -665,7 +684,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_rx_ih == NULL) {
 		aprint_error(": failed to establish rx interrupt: %d\n",
 		    cnl->cnl_intrs[1]);
-		return;
+		goto fail_6;
 	}
 
 	sc->sc_error_ih = intr_establish(cnl->cnl_intrs[2], IPL_VM, IST_ONCHIP,
@@ -673,18 +692,22 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_error_ih == NULL) {
 		aprint_error(": failed to establish error interrupt: %d\n",
 		    cnl->cnl_intrs[2]);
-		return;
+		goto fail_7;
 	}
 
-	sc->sc_soft_ih = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	int softint_flags = SOFTINT_NET;
+#if !defined(MULTIPROCESSOR) || defined(NET_MPSAFE)
+	softint_flags |= SOFTINT_MPSAFE;
+#endif	/* !MULTIPROCESSOR || NET_MPSAFE */
+	sc->sc_soft_ih = softint_establish(softint_flags,
 	    pq3etsec_soft_intr, sc);
 	if (sc->sc_soft_ih == NULL) {
 		aprint_error(": failed to establish soft interrupt\n");
-		return;
+		goto fail_8;
 	}
 
 	/*
-	 * If there was no MDIO 
+	 * If there was no MDIO
 	 */
 	if (mdio == CPUNODECF_MDIO_DEFAULT) {
 		aprint_normal("\n");
@@ -696,7 +719,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 		sc->sc_mdio_dev = device_find_by_driver_unit("mdio", mdio);
 		if (sc->sc_mdio_dev == NULL) {
 			aprint_error(": failed to locate mdio device\n");
-			return;
+			goto fail_9;
 		}
 		aprint_normal("\n");
 	}
@@ -704,11 +727,22 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	etsec_write(sc, ATTR, ATTR_DEFAULT);
 	etsec_write(sc, ATTRELI, ATTRELI_DEFAULT);
 
-	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+	/* Enable interrupt coalesing */
+	sc->sc_ic_rx_time = 768;
+	sc->sc_ic_rx_count = 16;
+	sc->sc_ic_tx_time = 768;
+	sc->sc_ic_tx_count = 16;
+	pq3etsec_set_ic_rx(sc);
+	pq3etsec_set_ic_tx(sc);
 
-	callout_init(&sc->sc_mii_callout, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_mii_callout, pq3etsec_mii_tick, sc);
-
+	char enaddr[ETHER_ADDR_LEN] = {
+	    [0] = sc->sc_macstnaddr2 >> 16,
+	    [1] = sc->sc_macstnaddr2 >> 24,
+	    [2] = sc->sc_macstnaddr1 >>  0,
+	    [3] = sc->sc_macstnaddr1 >>  8,
+	    [4] = sc->sc_macstnaddr1 >> 16,
+	    [5] = sc->sc_macstnaddr1 >> 24,
+	};
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	   ether_sprintf(enaddr));
 
@@ -756,13 +790,20 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = pq3etsec_ifstop;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	pq3etsec_ifstop(ifp, true);
-
 	/*
 	 * Attach the interface.
 	 */
-	if_attach(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail_10;
+	}
+	pq3etsec_sysctl_setup(NULL, sc);
 	ether_ifattach(ifp, enaddr);
+	if_register(ifp);
+
+	pq3etsec_ifstop(ifp, true);
 
 	evcnt_attach_dynamic(&sc->sc_ev_rx_stall, EVCNT_TYPE_MISC,
 	    NULL, xname, "rx stall");
@@ -782,6 +823,36 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "rx pause");
 	evcnt_attach_dynamic(&sc->sc_ev_mii_ticks, EVCNT_TYPE_MISC,
 	    NULL, xname, "mii ticks");
+	return;
+
+fail_10:
+	ifmedia_removeall(&sc->sc_mii.mii_media);
+	mii_detach(&sc->sc_mii, sc->sc_phy_addr, MII_OFFSET_ANY);
+fail_9:
+	softint_disestablish(sc->sc_soft_ih);
+fail_8:
+	intr_disestablish(sc->sc_error_ih);
+fail_7:
+	intr_disestablish(sc->sc_rx_ih);
+fail_6:
+	intr_disestablish(sc->sc_tx_ih);
+fail_5:
+	pq3etsec_mapcache_destroy(sc, sc->sc_tx_mapcache);
+fail_4:
+	pq3etsec_mapcache_destroy(sc, sc->sc_rx_mapcache);
+fail_3:
+#if 0 /* notyet */
+	pq3etsec_txq_detach(sc);
+#endif
+fail_2:
+#if 0 /* notyet */
+	pq3etsec_rxq_detach(sc);
+#endif
+fail_1:
+	callout_destroy(&sc->sc_mii_callout);
+	mutex_obj_free(sc->sc_lock);
+	mutex_obj_free(sc->sc_hwlock);
+	bus_space_unmap(sc->sc_bst, sc->sc_bsh, cnl->cnl_size);
 }
 
 static uint64_t
@@ -1033,7 +1104,7 @@ pq3etsec_ifstop(struct ifnet *ifp, int disable)
 	pq3etsec_txq_consume(sc, &sc->sc_txq);
 	if (disable) {
 		pq3etsec_txq_purge(sc, &sc->sc_txq);
-		IF_PURGE(&ifp->if_snd);
+		IFQ_PURGE(&ifp->if_snd);
 	}
 }
 
@@ -1476,8 +1547,7 @@ pq3etsec_rx_offload(
 	const struct rxfcb *fcb)
 {
 	if (fcb->rxfcb_flags & RXFCB_VLN) {
-		VLAN_INPUT_TAG(&sc->sc_if, m, fcb->rxfcb_vlctl,
-		    m_freem(m); return false);
+		vlan_set_tag(m, fcb->rxfcb_vlctl);
 	}
 	if ((fcb->rxfcb_flags & RXFCB_IP) == 0
 	    || (fcb->rxfcb_flags & (RXFCB_CIP|RXFCB_CTU)) == 0)
@@ -1531,17 +1601,15 @@ pq3etsec_rx_input(
 	if (rxbd_flags & RXBD_MC)
 		m->m_flags |= M_MCAST;
 	m->m_flags |= M_HASFCS;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 
-	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/*
 	 * Let's give it to the network subsystm to deal with.
 	 */
 	int s = splnet();
-	bpf_mtap(ifp, m);
-	(*ifp->if_input)(ifp, m);
+	if_input(ifp, m);
 	splx(s);
 }
 
@@ -1863,7 +1931,8 @@ pq3etsec_txq_produce(
 	 * we need to ask for an interrupt to reclaim some.
 	 */
 	txq->txq_lastintr += map->dm_nsegs;
-	if (txq->txq_lastintr >= txq->txq_threshold
+	if (ETSEC_IC_TX_ENABLED(sc)
+	    || txq->txq_lastintr >= txq->txq_threshold
 	    || txq->txq_mbufs.ifq_len + 1 == txq->txq_mbufs.ifq_maxlen) {
 		txq->txq_lastintr = 0;
 		last_flags |= TXBD_I;
@@ -1956,14 +2025,18 @@ pq3etsec_tx_offload(
 {
 	struct mbuf *m = *mp;
 	u_int csum_flags = m->m_pkthdr.csum_flags;
-	struct m_tag *vtag = VLAN_OUTPUT_TAG(&sc->sc_ec, m);
+	bool have_vtag;
+	uint16_t vtag;
 
 	KASSERT(m->m_flags & M_PKTHDR);
+
+	have_vtag = vlan_has_tag(m);
+	vtag = (have_vtag) ? vlan_get_tag(m) : 0;
 
 	/*
 	 * Let see if we are doing any offload first.
 	 */
-	if (csum_flags == 0 && vtag == 0) {
+	if (csum_flags == 0 && !have_vtag) {
 		m->m_flags &= ~M_HASFCB;
 		return;
 	}
@@ -1977,7 +2050,7 @@ pq3etsec_tx_offload(
 		    | ((csum_flags & M_CSUM_CIP) ? TXFCB_CIP : 0)
 		    | ((csum_flags & M_CSUM_CTU) ? TXFCB_CTU : 0);
 	}
-	if (vtag) {
+	if (have_vtag) {
 		flags |= TXFCB_VLN;
 	}
 	if (flags == 0) {
@@ -1993,7 +2066,7 @@ pq3etsec_tx_offload(
 		fcb.txfcb_l4os = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
 	fcb.txfcb_l3os = ETHER_HDR_LEN;
 	fcb.txfcb_phcs = 0;
-	fcb.txfcb_vlctl = vtag ? VLAN_TAG_VALUE(vtag) & 0xffff : 0;
+	fcb.txfcb_vlctl = vtag;
 
 #if 0
 	printf("%s: csum_flags=%#x: txfcb flags=%#x lsos=%u l4os=%u phcs=%u vlctl=%#x\n",
@@ -2028,7 +2101,6 @@ pq3etsec_tx_offload(
 				panic("%s: impossible M_CSUM flags %#x",
 				    device_xname(sc->sc_dev), csum_flags);
 #endif
-			} else if (vtag) {
 			}
 
 			m->m_flags &= ~M_HASFCB;
@@ -2059,7 +2131,7 @@ pq3etsec_txq_enqueue(
 		struct mbuf *m = txq->txq_next;
 		if (m == NULL) {
 			int s = splnet();
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 			splx(s);
 			if (m == NULL)
 				return true;
@@ -2150,6 +2222,7 @@ pq3etsec_txq_consume(
 #endif
 			if (m->m_flags & M_HASFCB)
 				m_adj(m, sizeof(struct txfcb));
+			bpf_mtap(ifp, m);
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			if (m->m_flags & M_MCAST)
@@ -2259,6 +2332,10 @@ pq3etsec_ifstart(struct ifnet *ifp)
 {
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 
+	if (__predict_false((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)) {
+		return;
+	}
+
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_TXINTR);
 	softint_schedule(sc->sc_soft_ih);
 }
@@ -2292,6 +2369,8 @@ pq3etsec_tx_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
 
+	mutex_enter(sc->sc_hwlock);
+
 	sc->sc_ev_tx_intr.ev_count++;
 
 	uint32_t ievent = etsec_read(sc, IEVENT);
@@ -2303,13 +2382,18 @@ pq3etsec_tx_intr(void *arg)
 	    __func__, ievent, etsec_read(sc, IMASK));
 #endif
 
-	if (ievent == 0)
+	if (ievent == 0) {
+		mutex_exit(sc->sc_hwlock);
 		return 0;
+	}
 
 	sc->sc_imask &= ~(IEVENT_TXF|IEVENT_TXB);
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_TXINTR);
 	etsec_write(sc, IMASK, sc->sc_imask);
 	softint_schedule(sc->sc_soft_ih);
+
+	mutex_exit(sc->sc_hwlock);
+
 	return 1;
 }
 
@@ -2318,13 +2402,17 @@ pq3etsec_rx_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
 
+	mutex_enter(sc->sc_hwlock);
+
 	sc->sc_ev_rx_intr.ev_count++;
 
 	uint32_t ievent = etsec_read(sc, IEVENT);
 	ievent &= IEVENT_RXF|IEVENT_RXB;
 	etsec_write(sc, IEVENT, ievent);	/* write 1 to clear */
-	if (ievent == 0)
+	if (ievent == 0) {
+		mutex_exit(sc->sc_hwlock);
 		return 0;
+	}
 
 #if 0
 	aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x\n", __func__, ievent);
@@ -2334,6 +2422,9 @@ pq3etsec_rx_intr(void *arg)
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_RXINTR);
 	etsec_write(sc, IMASK, sc->sc_imask);
 	softint_schedule(sc->sc_soft_ih);
+
+	mutex_exit(sc->sc_hwlock);
+
 	return 1;
 }
 
@@ -2341,6 +2432,8 @@ int
 pq3etsec_error_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
+
+	mutex_enter(sc->sc_hwlock);
 
 	sc->sc_ev_error_intr.ev_count++;
 
@@ -2353,6 +2446,7 @@ pq3etsec_error_intr(void *arg)
 				atomic_or_uint(&sc->sc_soft_flags, soft_flags);
 				softint_schedule(sc->sc_soft_ih);
 			}
+			mutex_exit(sc->sc_hwlock);
 			return rv;
 		}
 #if 0
@@ -2399,6 +2493,7 @@ pq3etsec_soft_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
 	struct ifnet * const ifp = &sc->sc_if;
+	uint32_t imask = 0;
 
 	mutex_enter(sc->sc_lock);
 
@@ -2419,7 +2514,7 @@ pq3etsec_soft_intr(void *arg)
 		if (threshold >= rxq->rxq_last - rxq->rxq_first) {
 			threshold = rxq->rxq_last - rxq->rxq_first - 1;
 		} else {
-			sc->sc_imask |= IEVENT_BSY;
+			imask |= IEVENT_BSY;
 		}
 		aprint_normal_dev(sc->sc_dev,
 		    "increasing receive buffers from %zu to %zu\n",
@@ -2440,7 +2535,7 @@ pq3etsec_soft_intr(void *arg)
 		} else {
 			ifp->if_flags &= ~IFF_OACTIVE;
 		}
-		sc->sc_imask |= IEVENT_TXF;
+		imask |= IEVENT_TXF;
 	}
 
 	if (soft_flags & (SOFT_RXINTR|SOFT_RXBSY)) {
@@ -2448,17 +2543,20 @@ pq3etsec_soft_intr(void *arg)
 		 * Let's consume 
 		 */
 		pq3etsec_rxq_consume(sc, &sc->sc_rxq);
-		sc->sc_imask |= IEVENT_RXF;
+		imask |= IEVENT_RXF;
 	}
 
 	if (soft_flags & SOFT_TXERROR) {
 		pq3etsec_tx_error(sc);
-		sc->sc_imask |= IEVENT_TXE;
+		imask |= IEVENT_TXE;
 	}
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		pq3etsec_rxq_produce(sc, &sc->sc_rxq);
+		mutex_spin_enter(sc->sc_hwlock);
+		sc->sc_imask |= imask;
 		etsec_write(sc, IMASK, sc->sc_imask);
+		mutex_spin_exit(sc->sc_hwlock);
 	} else {
 		KASSERT((soft_flags & SOFT_RXBSY) == 0);
 	}
@@ -2491,4 +2589,190 @@ pq3etsec_mii_tick(void *arg)
 	sc->sc_mii_last_tick = now;
 #endif
 	mutex_exit(sc->sc_lock);
+}
+
+static void
+pq3etsec_set_ic_rx(struct pq3etsec_softc *sc)
+{
+	uint32_t reg;
+
+	if (ETSEC_IC_RX_ENABLED(sc)) {
+		reg = RXIC_ICEN;
+		reg |= RXIC_ICFT_SET(sc->sc_ic_rx_count);
+		reg |= RXIC_ICTT_SET(sc->sc_ic_rx_time);
+	} else {
+		/* Disable RX interrupt coalescing */
+		reg = 0;
+	}
+
+	etsec_write(sc, RXIC, reg);
+}
+
+static void
+pq3etsec_set_ic_tx(struct pq3etsec_softc *sc)
+{
+	uint32_t reg;
+
+	if (ETSEC_IC_TX_ENABLED(sc)) {
+		reg = TXIC_ICEN;
+		reg |= TXIC_ICFT_SET(sc->sc_ic_tx_count);
+		reg |= TXIC_ICTT_SET(sc->sc_ic_tx_time);
+	} else {
+		/* Disable TX interrupt coalescing */
+		reg = 0;
+	}
+
+	etsec_write(sc, TXIC, reg);
+}
+
+/*
+ * sysctl
+ */
+static int
+pq3etsec_sysctl_ic_time_helper(SYSCTLFN_ARGS, int *valuep)
+{
+	struct sysctlnode node = *rnode;
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+	int value = *valuep;
+	int error;
+
+	node.sysctl_data = &value;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (value < 0 || value > 65535)
+		return EINVAL;
+
+	mutex_enter(sc->sc_lock);
+	*valuep = value;
+	if (valuep == &sc->sc_ic_rx_time)
+		pq3etsec_set_ic_rx(sc);
+	else
+		pq3etsec_set_ic_tx(sc);
+	mutex_exit(sc->sc_lock);
+
+	return 0;
+}
+
+static int
+pq3etsec_sysctl_ic_count_helper(SYSCTLFN_ARGS, int *valuep)
+{
+	struct sysctlnode node = *rnode;
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+	int value = *valuep;
+	int error;
+
+	node.sysctl_data = &value;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (value < 0 || value > 255)
+		return EINVAL;
+
+	mutex_enter(sc->sc_lock);
+	*valuep = value;
+	if (valuep == &sc->sc_ic_rx_count)
+		pq3etsec_set_ic_rx(sc);
+	else
+		pq3etsec_set_ic_tx(sc);
+	mutex_exit(sc->sc_lock);
+
+	return 0;
+}
+
+static int
+pq3etsec_sysctl_ic_rx_time_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_time_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_rx_time);
+}
+
+static int
+pq3etsec_sysctl_ic_rx_count_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_count_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_rx_count);
+}
+
+static int
+pq3etsec_sysctl_ic_tx_time_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_time_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_tx_time);
+}
+
+static int
+pq3etsec_sysctl_ic_tx_count_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_count_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_tx_count);
+}
+
+static void pq3etsec_sysctl_setup(struct sysctllog **clog,
+    struct pq3etsec_softc *sc)
+{
+	const struct sysctlnode *cnode, *rnode;
+
+	if (sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev),
+	    SYSCTL_DESCR("TSEC interface"),
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "int_coal",
+	    SYSCTL_DESCR("Interrupts coalescing"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "rx_time",
+	    SYSCTL_DESCR("RX time threshold (0-65535)"),
+	    pq3etsec_sysctl_ic_rx_time_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "rx_count",
+	    SYSCTL_DESCR("RX frame count threshold (0-255)"),
+	    pq3etsec_sysctl_ic_rx_count_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "tx_time",
+	    SYSCTL_DESCR("TX time threshold (0-65535)"),
+	    pq3etsec_sysctl_ic_tx_time_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "tx_count",
+	    SYSCTL_DESCR("TX frame count threshold (0-255)"),
+	    pq3etsec_sysctl_ic_tx_count_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	return;
+
+ bad:
+	aprint_error_dev(sc->sc_dev, "could not attach sysctl nodes\n");
 }

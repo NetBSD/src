@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.18 2008/12/13 17:32:53 tsutsui Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.18.24.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.18 2008/12/13 17:32:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.18.24.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		}
 	}
 
-#define	FROMREG(x)	((sc->sc_flag & MC146818_BCD) ? FROMBCD(x) : (x))
+#define	FROMREG(x)	((sc->sc_flag & MC146818_BCD) ? bcdtobin(x) : (x))
 
 	dt->dt_sec  = FROMREG((*sc->sc_mcread)(sc, MC_SEC));
 	dt->dt_min  = FROMREG((*sc->sc_mcread)(sc, MC_MIN));
@@ -150,7 +150,7 @@ mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	(*sc->sc_mcwrite)(sc, MC_REGB,
 	    (*sc->sc_mcread)(sc, MC_REGB) | MC_REGB_SET);
 
-#define	TOREG(x)	((sc->sc_flag & MC146818_BCD) ? TOBCD(x) : (x))
+#define	TOREG(x)	((sc->sc_flag & MC146818_BCD) ? bintobcd(x) : (x))
 
 	(*sc->sc_mcwrite)(sc, MC_SEC, TOREG(dt->dt_sec));
 	(*sc->sc_mcwrite)(sc, MC_MIN, TOREG(dt->dt_min));

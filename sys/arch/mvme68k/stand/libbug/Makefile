@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2011/01/21 15:59:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.16.14.1 2017/12/03 11:36:30 jdolecek Exp $
 
 LIB=bug
 
@@ -18,12 +18,6 @@ CLEANFILES+= bugstart.o
 
 # only needed during build
 libinstall::
-
-# separate rule for bugstart.c
-# this is build separately from rest of libbug
-bugstart.o: bugstart.s
-	${CC} -x assembler-with-cpp -nostdinc ${INCPATH} \
-	-D_STANDALONE -c ${.IMPSRC}
 
 all realall: lib${LIB}.a
 

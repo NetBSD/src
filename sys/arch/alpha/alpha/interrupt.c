@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.80 2012/02/06 02:14:11 matt Exp $ */
+/* $NetBSD: interrupt.c,v 1.80.6.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.80 2012/02/06 02:14:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.80.6.1 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,8 +518,12 @@ rlprintf(struct timeval *t, const char *fmt, ...)
 	va_list ap;
 	static const struct timeval msgperiod[1] = {{ 5, 0 }};
 
-	if (ratecheck(t, msgperiod))
-		vprintf(fmt, ap);
+	if (!ratecheck(t, msgperiod))
+		return;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
 }
 
 const static uint8_t ipl2psl_table[] = {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.90 2011/01/21 15:59:07 joerg Exp $
+#	$NetBSD: Makefile.mac68k,v 1.90.14.1 2017/12/03 11:36:24 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,8 @@ KERN_AS=	obj
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	${MAC68K}/mac68k/locore.s
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.6.14.2 2014/08/20 00:03:35 tls Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.6.14.3 2017/12/03 11:36:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.6.14.2 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.6.14.3 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,10 +199,6 @@ wmi_hp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor = NULL;
 
 	sc->sc_arg = kmem_alloc(WMI_HP_METHOD_ARG_SIZE, KM_SLEEP);
-
-	if (sc->sc_arg == NULL)
-		return;
-
 	aprint_naive("\n");
 	aprint_normal(": HP WMI mappings\n");
 
@@ -215,9 +211,6 @@ wmi_hp_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	sc->sc_sensor = kmem_alloc(WMI_HP_SENSOR_SIZE, KM_SLEEP);
-
-	if (sc->sc_sensor == NULL)
-		return;
 
 	wmi_hp_sc = sc; /* XXX Can I pass sc as a cookie to sysctl? */
 	wmi_hp_sensor_init(sc);
@@ -677,7 +670,7 @@ wmi_hp_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	    WMI_HP_METHOD_CMD_DOCK);
 }
 
-MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi");
+MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

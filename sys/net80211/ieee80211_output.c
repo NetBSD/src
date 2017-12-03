@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.51 2011/12/31 20:41:58 christos Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.51.6.1 2017/12/03 11:39:03 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,10 +36,12 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.51 2011/12/31 20:41:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.51.6.1 2017/12/03 11:39:03 jdolecek Exp $");
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #ifdef __NetBSD__
 #endif /* __NetBSD__ */
@@ -182,10 +184,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
-#ifdef __FreeBSD__
-	KASSERT(m->m_pkthdr.rcvif == NULL, ("rcvif not null"));
-#endif
-	m->m_pkthdr.rcvif = (void *)ni;
+	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ieee80211_send_setup(ic, ni, wh, 
@@ -219,7 +218,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ic->ic_mgt_timer = timer;
 		ifp->if_timer = 1;
 	}
-	(*ifp->if_start)(ifp);
+	if_start_lock(ifp);
 	return 0;
 }
 
@@ -245,7 +244,7 @@ ieee80211_send_nulldata(struct ieee80211_node *ni)
 		ieee80211_unref_node(&ni);
 		return ENOMEM;
 	}
-	m->m_pkthdr.rcvif = (void *) ni;
+	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ieee80211_send_setup(ic, ni, wh,
@@ -266,7 +265,7 @@ ieee80211_send_nulldata(struct ieee80211_node *ni)
 	    wh->i_fc[1] & IEEE80211_FC1_PWR_MGT ? "ena" : "dis");
 
 	IF_ENQUEUE(&ic->ic_mgtq, m);		/* cheat */
-	(*ifp->if_start)(ifp);
+	if_start_lock(ifp);
 
 	return 0;
 }
@@ -297,12 +296,11 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m, struct ieee80211_nod
 	v_wme_ac = 0;
 	if (ni->ni_vlan != 0) {
 		/* XXX used to check ec_nvlans. */
-		struct m_tag *mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
-		if (mtag == NULL) {
+		if (!vlan_has_tag(m)) {
 			IEEE80211_NODE_STAT(ni, tx_novlantag);
 			return 1;
 		}
-		if (EVL_VLANOFTAG(VLAN_TAG_VALUE(mtag)) !=
+		if (EVL_VLANOFTAG(vlan_get_tag(m)) !=
 		    EVL_VLANOFTAG(ni->ni_vlan)) {
 			IEEE80211_NODE_STAT(ni, tx_vlanmismatch);
 			return 1;
@@ -964,7 +962,7 @@ bad:
 /*
  * Add a supported rates element id to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 {
 	int nrates;
@@ -981,7 +979,7 @@ ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 /*
  * Add an extended supported rates element id to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 {
 	/*
@@ -1000,7 +998,7 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 /* 
  * Add an ssid elemet to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
 {
 	*frm++ = IEEE80211_ELEMID_SSID;
@@ -1202,7 +1200,7 @@ ieee80211_setup_rsn_ie(struct ieee80211com *ic, u_int8_t *ie)
 /*
  * Add a WPA/RSN element to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic)
 {
 
@@ -1218,7 +1216,7 @@ ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic)
 /*
  * Add a WME information element to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_wme_info(u_int8_t *frm, struct ieee80211_wme_state *wme)
 {
 	static const struct ieee80211_wme_info info = {
@@ -1231,7 +1229,7 @@ ieee80211_add_wme_info(u_int8_t *frm, struct ieee80211_wme_state *wme)
 		.wme_info	= 0,
 	};
 	memcpy(frm, &info, sizeof(info));
-	return frm + sizeof(info); 
+	return frm + sizeof(info);
 }
 
 /*
@@ -1342,8 +1340,7 @@ ieee80211_send_probereq(struct ieee80211_node *ni,
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
-	IASSERT(m->m_pkthdr.rcvif == NULL, ("rcvif not null"));
-	m->m_pkthdr.rcvif = (void *)ni;
+	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ieee80211_send_setup(ic, ni, wh,
@@ -1360,7 +1357,7 @@ ieee80211_send_probereq(struct ieee80211_node *ni,
 	    ieee80211_chan2ieee(ic, ic->ic_curchan));
 
 	IF_ENQUEUE(&ic->ic_mgtq, m);
-	(*ic->ic_ifp->if_start)(ic->ic_ifp);
+	if_start_lock(ic->ic_ifp);
 	return 0;
 }
 
@@ -2059,7 +2056,7 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return;
 	}
 	/*
-	 * Tag the frame with it's expiry time and insert
+	 * Tag the frame with its expiry time and insert
 	 * it in the queue.  The aging interval is 4 times
 	 * the listen interval specified by the station. 
 	 * Frames that sit around too long are reclaimed

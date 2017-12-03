@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.22 2012/05/12 01:40:37 nakayama Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.22.2.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.22 2012/05/12 01:40:37 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.22.2.1 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,6 +251,7 @@ mb_put_mem(struct mbchain *mbp, const char *source, size_t size, int type)
 	const char *src;
 	int error;
 	size_t cplen, mleft, count;
+	size_t srclen, dstlen;
 
 	m = mbp->mb_cur;
 	mleft = mbp->mb_mleft;
@@ -267,10 +268,17 @@ mb_put_mem(struct mbchain *mbp, const char *source, size_t size, int type)
 			continue;
 		}
 		cplen = mleft > size ? size : mleft;
+		srclen = dstlen = cplen;
 		dst = mtod(m, char *) + m->m_len;
 		switch (type) {
 		    case MB_MCUSTOM:
-			error = mbp->mb_copy(mbp, source, dst, cplen);
+			srclen = size;
+			dstlen = mleft;
+			error = mbp->mb_copy(mbp, source, dst, &srclen, &dstlen);
+			if (error == E2BIG) {
+				mleft = 0;
+				continue;
+			}
 			if (error)
 				return error;
 			break;
@@ -290,11 +298,11 @@ mb_put_mem(struct mbchain *mbp, const char *source, size_t size, int type)
 			memset(dst, 0, cplen);
 			break;
 		}
-		size -= cplen;
-		source += cplen;
-		m->m_len += cplen;
-		mleft -= cplen;
-		mbp->mb_count += cplen;
+		size -= srclen;
+		source += srclen;
+		m->m_len += dstlen;
+		mleft -= dstlen;
+		mbp->mb_count += dstlen;
 	}
 	mbp->mb_cur = m;
 	mbp->mb_mleft = mleft;

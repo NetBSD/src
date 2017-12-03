@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.115.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.115.2.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.115.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.115.2.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.115.2.1 2014/08/20 00:03:38 tls Exp $"
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -426,6 +426,7 @@ ex_config(struct ex_softc *sc)
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, macaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, ex_ifflags_cb);
 
@@ -1370,9 +1371,8 @@ ex_intr(void *arg)
 						m_freem(m);
 						goto rcvloop;
 					}
-					m->m_pkthdr.rcvif = ifp;
+					m_set_rcvif(m, ifp);
 					m->m_pkthdr.len = m->m_len = total_len;
-					bpf_mtap(ifp, m);
 		/*
 		 * Set the incoming checksum information for the packet.
 		 */
@@ -1393,7 +1393,7 @@ ex_intr(void *arg)
 					    M_CSUM_TCP_UDP_BAD;
 			}
 		}
-					(*ifp->if_input)(ifp, m);
+					if_percpuq_enqueue(ifp->if_percpuq, m);
 				}
 				goto rcvloop;
 			}
@@ -1419,8 +1419,8 @@ ex_intr(void *arg)
 	}
 
 	/* no more interrupts */
-	if (ret && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		ex_start(ifp);
+	if (ret)
+		if_schedule_deferred_start(ifp);
 	return ret;
 }
 

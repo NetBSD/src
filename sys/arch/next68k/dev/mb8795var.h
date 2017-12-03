@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.13.6.1 2012/11/20 03:01:37 tls Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.13.6.2 2017/12/03 11:36:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #define MB8795_NRXBUFS (32)
 

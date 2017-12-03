@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.40.2.1 2014/08/20 00:03:31 tls Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.40.2.2 2017/12/03 11:36:53 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40.2.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40.2.2 2017/12/03 11:36:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,8 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40.2.1 2014/08/20 00:03:31 tls E
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
 #if defined(_KERNEL_OPT)
+#include "opt_user_ldt.h"
 #include "wsdisplay.h"
 #endif
+
 #if (NWSDISPLAY > 0)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
@@ -84,10 +86,16 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
+#ifdef USER_LDT
+	pmap_ldt_cleanup(l);
+#endif
+
 	fpu_save_area_clear(l, __NetBSD_NPXCW__);
 	pcb->pcb_flags = 0;
 
 	l->l_proc->p_flag &= ~PK_32;
+
+	l->l_md.md_flags = MDL_IRET;
 
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;
@@ -112,7 +120,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = 0;
-	cpu_fsgs_zero(l);
+	cpu_segregs64_zero(l);
 
 	return;
 }
@@ -230,7 +238,12 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (error != 0) {
 		sigexit(l, SIGILL);
 		return;
-	}	
+	}
+
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS) {
+		sigexit(l, SIGILL);
+		return;
+	}
 
 	linux_buildcontext(l, catcher, sp);
 	tf->tf_rdi = sigframe.info.lsi_signo;
@@ -355,15 +368,15 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	mctx->__gregs[_REG_RCX] = lsigctx->rcx;
 	mctx->__gregs[_REG_RIP] = lsigctx->rip;
 	mctx->__gregs[_REG_RFLAGS] = lsigctx->eflags;
-	mctx->__gregs[_REG_CS] = lsigctx->cs;
-	mctx->__gregs[_REG_GS] = lsigctx->gs;
-	mctx->__gregs[_REG_FS] = lsigctx->fs;
+	mctx->__gregs[_REG_CS] = lsigctx->cs & 0xFFFF;
+	mctx->__gregs[_REG_GS] = lsigctx->gs & 0xFFFF;
+	mctx->__gregs[_REG_FS] = lsigctx->fs & 0xFFFF;
 	mctx->__gregs[_REG_ERR] = lsigctx->err;
 	mctx->__gregs[_REG_TRAPNO] = lsigctx->trapno;
-	mctx->__gregs[_REG_ES] = tf->tf_es;
-	mctx->__gregs[_REG_DS] = tf->tf_ds;
+	mctx->__gregs[_REG_ES] = tf->tf_es & 0xFFFF;
+	mctx->__gregs[_REG_DS] = tf->tf_ds & 0xFFFF;
 	mctx->__gregs[_REG_RSP] = lsigctx->rsp; /* XXX */
-	mctx->__gregs[_REG_SS] = tf->tf_ss;
+	mctx->__gregs[_REG_SS] = tf->tf_ss & 0xFFFF;
 
 	/*
 	 * FPU state 
@@ -448,7 +461,7 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 {
 	struct trapframe *tf = arg;
 	uint64_t retaddr;
-	int vsyscallnr;
+	size_t vsyscallnr;
 
 	/*
 	 * Check for a vsyscall. %rip must be the fault address,
@@ -477,6 +490,8 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 	 * which is the only way that vsyscalls are ever entered.
 	 */
 	if (copyin((void *)tf->tf_rsp, &retaddr, sizeof retaddr) != 0)
+		return 0;
+	if ((vaddr_t)retaddr >= VM_MAXUSER_ADDRESS)
 		return 0;
 	tf->tf_rip = retaddr;
 	tf->tf_rax = linux_vsyscall_to_syscall[vsyscallnr];

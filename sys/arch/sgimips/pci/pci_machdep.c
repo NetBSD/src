@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22.12.2 2014/08/20 00:03:22 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22.12.3 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.12.2 2014/08/20 00:03:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.12.3 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.12.2 2014/08/20 00:03:22 tls Ex
 
 #include <uvm/uvm_extern.h>
 
-#define _SGIMIPS_BUS_DMA_PRIVATE
 #include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
@@ -57,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.12.2 2014/08/20 00:03:22 tls Ex
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-struct sgimips_bus_dma_tag pci_bus_dma_tag;
+struct mips_bus_dma_tag pci_bus_dma_tag;
 
 void
 pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)

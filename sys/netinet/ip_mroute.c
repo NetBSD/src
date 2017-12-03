@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.125.2.3 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.125.2.4 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,11 +93,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.125.2.3 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.125.2.4 2017/12/03 11:39:04 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_pim.h"
+#endif
 
 #ifdef PIM
 #define _PIM_VT 1
@@ -109,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.125.2.3 2014/08/20 00:04:35 tls Exp 
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -118,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.125.2.3 2014/08/20 00:04:35 tls Exp 
 #include <sys/syslog.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/raw_cb.h>
 
 #include <netinet/in.h>
@@ -180,23 +180,22 @@ u_int		mrtdebug = 0;	  /* debug level 	*/
 u_int       	tbfdebug = 0;     /* tbf debug level 	*/
 #ifdef RSVP_ISI
 u_int		rsvpdebug = 0;	  /* rsvp debug level   */
+#define	RSVP_DPRINTF(a)	do if (rsvpdebug) printf a; while (/*CONSTCOND*/0)
 extern struct socket *ip_rsvpd;
 extern int rsvp_on;
+#else
+#define	RSVP_DPRINTF(a)	do {} while (/*CONSTCOND*/0)
 #endif /* RSVP_ISI */
 
 /* vif attachment using sys/netinet/ip_encap.c */
-static void vif_input(struct mbuf *, ...);
+static void vif_input(struct mbuf *, int, int, void *);
 static int vif_encapcheck(struct mbuf *, int, int, void *);
 
-static const struct protosw vif_protosw = {
-	.pr_type	= SOCK_RAW,
-	.pr_domain	= &inetdomain,
-	.pr_protocol	= IPPROTO_IPV4,
-	.pr_flags	= PR_ATOMIC|PR_ADDR,
-	.pr_input	= vif_input,
-	.pr_output	= rip_output,
-	.pr_ctloutput	= rip_ctloutput,
-	.pr_usrreqs	= &rip_usrreqs,
+static const struct encapsw vif_encapsw = {
+	.encapsw4 = {
+		.pr_input	= vif_input,
+		.pr_ctlinput	= NULL,
+	}
 };
 
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
@@ -785,7 +784,6 @@ static int
 add_vif(struct vifctl *vifcp)
 {
 	struct vif *vifp;
-	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	int error, s;
 	struct sockaddr_in sin;
@@ -811,11 +809,18 @@ add_vif(struct vifctl *vifcp)
 	} else
 #endif
 	{
+		struct ifaddr *ifa;
+
 		sockaddr_in_init(&sin, &vifcp->vifc_lcl_addr, 0);
+		s = pserialize_read_enter();
 		ifa = ifa_ifwithaddr(sintosa(&sin));
-		if (ifa == NULL)
-			return (EADDRNOTAVAIL);
+		if (ifa == NULL) {
+			pserialize_read_exit(s);
+			return EADDRNOTAVAIL;
+		}
 		ifp = ifa->ifa_ifp;
+		/* FIXME NOMPSAFE */
+		pserialize_read_exit(s);
 	}
 
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
@@ -832,8 +837,12 @@ add_vif(struct vifctl *vifcp)
 		 * this requires both radix tree lookup and then a
 		 * function to check, and this is not supported yet.
 		 */
+		error = encap_lock_enter();
+		if (error)
+			return error;
 		vifp->v_encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV4,
-		    vif_encapcheck, &vif_protosw, vifp);
+		    vif_encapcheck, &vif_encapsw, vifp);
+		encap_lock_exit();
 		if (!vifp->v_encap_cookie)
 			return (EINVAL);
 
@@ -929,7 +938,9 @@ reset_vif(struct vif *vifp)
 	callout_stop(&vifp->v_repq_ch);
 
 	/* detach this vif from decapsulator dispatch table */
+	encap_lock_enter();
 	encap_detach(vifp->v_encap_cookie);
+	encap_lock_exit();
 	vifp->v_encap_cookie = NULL;
 
 	/*
@@ -1337,17 +1348,19 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	if (imo && ((vifi = imo->imo_multicast_vif) < numvifs)) {
 		if (ip->ip_ttl < MAXTTL)
 			ip->ip_ttl++;	/* compensate for -1 in *_send routines */
-		if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
+		if (ip->ip_p == IPPROTO_RSVP) {
 			struct vif *vifp = viftable + vifi;
-			printf("Sending IPPROTO_RSVP from %x to %x on vif %d (%s%s)\n",
+			RSVP_DPRINTF(("%s: Sending IPPROTO_RSVP from %x to %x"
+			    " on vif %d (%s%s)\n", __func__,
 			    ntohl(ip->ip_src), ntohl(ip->ip_dst), vifi,
 			    (vifp->v_flags & VIFF_TUNNEL) ? "tunnel on " : "",
-			    vifp->v_ifp->if_xname);
+			    vifp->v_ifp->if_xname));
 		}
 		return (ip_mdq(m, ifp, NULL, vifi));
 	}
-	if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
-		printf("Warning: IPPROTO_RSVP from %x to %x without vif option\n",
+	if (ip->ip_p == IPPROTO_RSVP) {
+		RSVP_DPRINTF(("%s: Warning: IPPROTO_RSVP from %x to %x"
+		    " without vif option\n", __func__,
 		    ntohl(ip->ip_src), ntohl(ip->ip_dst));
 	}
 #endif /* RSVP_ISI */
@@ -1548,9 +1561,10 @@ static void
 expire_upcalls(void *v)
 {
 	int i;
-	int s;
 
-	s = splsoftnet();
+	/* XXX NOMPSAFE still need softnet_lock */
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		struct mfc *rt, *nrt;
@@ -1572,7 +1586,7 @@ expire_upcalls(void *v)
 				struct bw_meter *x = rt->mfc_bw_meter;
 
 				rt->mfc_bw_meter = x->bm_mfc_next;
-				kmem_free(x, sizeof(*x));
+				kmem_intr_free(x, sizeof(*x));
 			}
 
 			++mrtstat.mrts_cache_cleanups;
@@ -1586,9 +1600,11 @@ expire_upcalls(void *v)
 		}
 	}
 
-	splx(s);
 	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
 	    expire_upcalls, NULL);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -1812,7 +1828,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	}
 
 	/*
-	 * copy the old packet & pullup it's IP header into the
+	 * copy the old packet & pullup its IP header into the
 	 * new mbuf so we can modify it.  Try to fill the new
 	 * mbuf since if we don't the ethernet driver will.
 	 */
@@ -1867,26 +1883,20 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
  * De-encapsulate a packet and feed it back through ip input.
  */
 static void
-vif_input(struct mbuf *m, ...)
+vif_input(struct mbuf *m, int off, int proto, void *eparg)
 {
-	int off, proto;
-	va_list ap;
-	struct vif *vifp;
+	struct vif *vifp = eparg;
 
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
+	KASSERT(vifp != NULL);
 
-	vifp = (struct vif *)encap_getarg(m);
-	if (!vifp || proto != ENCAP_PROTO) {
+	if (proto != ENCAP_PROTO) {
 		m_freem(m);
 		mrtstat.mrts_bad_tunnel++;
 		return;
 	}
 
 	m_adj(m, off);
-	m->m_pkthdr.rcvif = vifp->v_ifp;
+	m_set_rcvif(m, vifp->v_ifp);
 
 	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 		m_freem(m);
@@ -2109,7 +2119,7 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
 
-		imo.imo_multicast_ifp = vifp->v_ifp;
+		imo.imo_multicast_if_index = if_get_index(vifp->v_ifp);
 		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - 1;
 		imo.imo_multicast_loop = 1;
 #ifdef RSVP_ISI
@@ -2205,9 +2215,8 @@ ip_rsvp_vif_init(struct socket *so, struct mbuf *m)
 {
 	int vifi, s;
 
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_init: so_type = %d, pr_protocol = %d\n",
-		    so->so_type, so->so_proto->pr_protocol);
+	RSVP_DPRINTF(("%s: so_type = %d, pr_protocol = %d\n", __func__
+	    so->so_type, so->so_proto->pr_protocol));
 
 	if (so->so_type != SOCK_RAW ||
 	    so->so_proto->pr_protocol != IPPROTO_RSVP)
@@ -2219,9 +2228,7 @@ ip_rsvp_vif_init(struct socket *so, struct mbuf *m)
 	}
 	vifi = *(mtod(m, int *));
 
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_init: vif = %d rsvp_on = %d\n",
-		       vifi, rsvp_on);
+	RSVP_DPRINTF(("%s: vif = %d rsvp_on = %d\n", __func__, vifi, rsvp_on));
 
 	s = splsoftnet();
 
@@ -2256,9 +2263,8 @@ ip_rsvp_vif_done(struct socket *so, struct mbuf *m)
 {
 	int vifi, s;
 
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_done: so_type = %d, pr_protocol = %d\n",
-		    so->so_type, so->so_proto->pr_protocol);
+	RSVP_DPRINTF(("%s: so_type = %d, pr_protocol = %d\n", __func__,
+	    so->so_type, so->so_proto->pr_protocol));
 
 	if (so->so_type != SOCK_RAW ||
 	    so->so_proto->pr_protocol != IPPROTO_RSVP)
@@ -2278,9 +2284,8 @@ ip_rsvp_vif_done(struct socket *so, struct mbuf *m)
 		return (EADDRNOTAVAIL);
 	}
 
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_done: v_rsvpd = %x so = %x\n",
-		    viftable[vifi].v_rsvpd, so);
+	RSVP_DPRINTF(("%s: v_rsvpd = %x so = %x\n", __func__,
+	    viftable[vifi].v_rsvpd, so));
 
 	viftable[vifi].v_rsvpd = NULL;
 	/*
@@ -2338,8 +2343,7 @@ rsvp_input(struct mbuf *m, struct ifnet *ifp)
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in rsvp_src;
 
-	if (rsvpdebug)
-		printf("rsvp_input: rsvp_on %d\n", rsvp_on);
+	RSVP_DPRINTF(("%s: rsvp_on %d\n", __func__, rsvp_on));
 
 	/*
 	 * Can still get packets with rsvp_on = 0 if there is a local member
@@ -2356,17 +2360,15 @@ rsvp_input(struct mbuf *m, struct ifnet *ifp)
 	 * it and ignore the new ones.
 	 */
 	if (ip_rsvpd != NULL) {
-		if (rsvpdebug)
-			printf("rsvp_input: "
-			    "Sending packet up old-style socket\n");
+		RSVP_DPRINTF(("%s: Sending packet up old-style socket\n",
+		    __func__));
 		rip_input(m);	/*XXX*/
 		return;
 	}
 
 	s = splsoftnet();
 
-	if (rsvpdebug)
-		printf("rsvp_input: check vifs\n");
+	RSVP_DPRINTF(("%s: check vifs\n", __func__));
 
 	/* Find which vif the packet arrived on. */
 	for (vifi = 0; vifi < numvifs; vifi++) {
@@ -2376,25 +2378,22 @@ rsvp_input(struct mbuf *m, struct ifnet *ifp)
 
 	if (vifi == numvifs) {
 		/* Can't find vif packet arrived on. Drop packet. */
-		if (rsvpdebug)
-			printf("rsvp_input: "
-			    "Can't find vif for packet...dropping it.\n");
+		RSVP_DPRINTF("%s: Can't find vif for packet...dropping it.\n",
+		    __func__));
 		m_freem(m);
 		splx(s);
 		return;
 	}
 
-	if (rsvpdebug)
-		printf("rsvp_input: check socket\n");
+	RSVP_DPRINTF(("%s: check socket\n", __func__));
 
 	if (viftable[vifi].v_rsvpd == NULL) {
 		/*
 		 * drop packet, since there is no specific socket for this
 		 * interface
 		 */
-		if (rsvpdebug)
-			printf("rsvp_input: No socket defined for vif %d\n",
-			    vifi);
+		RSVP_DPRINTF(("%s: No socket defined for vif %d\n", __func__,
+		    vifi));
 		m_freem(m);
 		splx(s);
 		return;
@@ -2402,16 +2401,14 @@ rsvp_input(struct mbuf *m, struct ifnet *ifp)
 
 	sockaddr_in_init(&rsvp_src, &ip->ip_src, 0);
 
-	if (rsvpdebug && m)
-		printf("rsvp_input: m->m_len = %d, sbspace() = %d\n",
-		    m->m_len, sbspace(&viftable[vifi].v_rsvpd->so_rcv));
+	if (m)
+		RSVP_DPRINTF(("%s: m->m_len = %d, sbspace() = %d\n", __func__,
+		    m->m_len, sbspace(&viftable[vifi].v_rsvpd->so_rcv)));
 
 	if (socket_send(viftable[vifi].v_rsvpd, m, &rsvp_src) < 0)
-		if (rsvpdebug)
-			printf("rsvp_input: Failed to append to socket\n");
+		RSVP_DPRINTF(("%s: Failed to append to socket\n", __func__));
 	else
-		if (rsvpdebug)
-			printf("rsvp_input: send packet up\n");
+		RSVP_DPRINTF(("%s: send packet up\n", __func__));
 
 	splx(s);
 }
@@ -2534,7 +2531,7 @@ free_bw_list(struct bw_meter *list)
 
 	list = list->bm_mfc_next;
 	unschedule_bw_meter(x);
-	kmem_free(x, sizeof(*x));
+	kmem_intr_free(x, sizeof(*x));
     }
 }
 
@@ -2593,7 +2590,7 @@ del_bw_upcall(struct bw_upcall *req)
 	    unschedule_bw_meter(x);
 	    splx(s);
 	    /* Free the bw_meter entry */
-	    kmem_free(x, sizeof(*x));
+	    kmem_intr_free(x, sizeof(*x));
 	    return 0;
 	} else {
 	    splx(s);

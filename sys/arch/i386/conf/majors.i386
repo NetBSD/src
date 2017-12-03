@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.43 2012/02/25 10:55:28 shattered Exp $
+#	$NetBSD: majors.i386,v 1.43.2.1 2017/12/03 11:36:17 jdolecek Exp $
 #
 # Device majors for i386
 #
@@ -30,7 +30,6 @@ device-major	bpf		char 23			bpfilter  vector=8,linkzero
 device-major	md		char 24  block 17	md	vector=4:8
 
 device-major	joy		char 26			joy
-device-major	spkr		char 27			spkr
 
 # next three are obsolete
 #device-major	omms		char 35			omms
@@ -65,7 +64,7 @@ device-major	esh		char 63			esh
 device-major	ugen		char 64			ugen
 device-major	wsmux		char 65			wsmux
 device-major	ucom		char 66			ucom
-device-major	sysmon		char 67			sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 67			sysmon
 
 device-major	ld		char 69  block 19	ld
 device-major	urio		char 70			urio
@@ -94,7 +93,7 @@ device-major	cgd		char 93  block 21	cgd
 # major 94 free (ex veriexec which is now a MI major)
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
-device-major	nsmb		char 98			nsmb		
+device-major	nsmb		char 98			nsmb
 device-major	vmmon		char 99			vmmon
 device-major	vmnet		char 100		vmnet
 device-major	ksyms		char 101		ksyms
@@ -107,7 +106,7 @@ device-major	mt		char 107 block 24	mt
 
 #
 # Device majors for Xen. These are assigned here so that:
-# - we are sure there are no conflicts with plain i386 
+# - we are sure there are no conflicts with plain i386
 # - they appear in the i386 MAKEDEV
 #
 
@@ -116,5 +115,5 @@ device-major	xbd		char 142 block 142	xbd
 device-major	xencons		char 143		xencons
 
 # Majors up to 143 are reserved for machine-dependent drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.

@@ -1,7 +1,7 @@
-#	$NetBSD: largepages.inc,v 1.3 2008/01/07 08:39:07 martti Exp $
+#	$NetBSD: largepages.inc,v 1.3.54.1 2017/12/03 11:36:17 jdolecek Exp $
 #
 # Options to create a kernel suitable for mapping with large
 # pages.
 #
 
-makeoptions 	KERN_LDSCRIPT="kern.ldscript.4MB"
+makeoptions 	KERNLDSCRIPT="kern.ldscript.4MB"

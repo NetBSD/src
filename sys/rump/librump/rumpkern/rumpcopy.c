@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.17.16.1 2014/08/20 00:04:41 tls Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.17.16.2 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.17.16.1 2014/08/20 00:04:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.17.16.2 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
@@ -49,7 +49,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 	if (RUMP_LOCALPROC_P(curproc)) {
 		memcpy(kaddr, uaddr, len);
 	} else if (len) {
-		error = rumpuser_sp_copyin(curproc->p_vmspace->vm_map.pmap,
+		error = rump_sysproxy_copyin(RUMP_SPVM2CTL(curproc->p_vmspace),
 		    uaddr, kaddr, len);
 	}
 
@@ -68,7 +68,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 	if (RUMP_LOCALPROC_P(curproc)) {
 		memcpy(uaddr, kaddr, len);
 	} else if (len) {
-		error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
+		error = rump_sysproxy_copyout(RUMP_SPVM2CTL(curproc->p_vmspace),
 		    kaddr, uaddr, len);
 	}
 	return error;
@@ -82,7 +82,7 @@ subyte(void *uaddr, int byte)
 	if (RUMP_LOCALPROC_P(curproc))
 		*(char *)uaddr = byte;
 	else
-		error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
+		error = rump_sysproxy_copyout(RUMP_SPVM2CTL(curproc->p_vmspace),
 		    &byte, uaddr, 1);
 
 	return error;
@@ -122,7 +122,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (RUMP_LOCALPROC_P(curproc))
 		return copystr(uaddr, kaddr, len, done);
 
-	if ((rv = rumpuser_sp_copyinstr(curproc->p_vmspace->vm_map.pmap,
+	if ((rv = rump_sysproxy_copyinstr(RUMP_SPVM2CTL(curproc->p_vmspace),
 	    uaddr, kaddr, &len)) != 0)
 		return rv;
 
@@ -159,7 +159,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	if (slen > len)
 		return ENAMETOOLONG;
 
-	error = rumpuser_sp_copyoutstr(curproc->p_vmspace->vm_map.pmap,
+	error = rump_sysproxy_copyoutstr(RUMP_SPVM2CTL(curproc->p_vmspace),
 	    kaddr, uaddr, &slen);
 	if (done)
 		*done = slen;
@@ -180,7 +180,7 @@ kcopy(const void *src, void *dst, size_t len)
  * i.e. the current thread does not have an appropriate vm context.
  */
 int
-uvm_io(struct vm_map *vm, struct uio *uio)
+uvm_io(struct vm_map *vm, struct uio *uio, int flag)
 {
 	int error = 0;
 
@@ -194,11 +194,11 @@ uvm_io(struct vm_map *vm, struct uio *uio)
 			continue;
 
 		if (uio->uio_rw == UIO_READ) {
-			error = rumpuser_sp_copyin(vm->pmap,
+			error = rump_sysproxy_copyin(RUMP_SPVM2CTL(vm),
 			    (void *)(vaddr_t)uio->uio_offset, iov->iov_base,
 			    curlen);
 		} else {
-			error = rumpuser_sp_copyout(vm->pmap,
+			error = rump_sysproxy_copyout(RUMP_SPVM2CTL(vm),
 			    iov->iov_base, (void *)(vaddr_t)uio->uio_offset,
 			    curlen);
 		}

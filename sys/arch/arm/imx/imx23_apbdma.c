@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdma.c,v 1.2.6.3 2013/06/23 06:20:00 tls Exp $ */
+/* $Id: imx23_apbdma.c,v 1.2.6.4 2017/12/03 11:35:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -92,10 +92,10 @@ apbdma_attach(device_t parent, device_t self, void *aux)
 	static u_int apbdma_attached = 0;
 
 	if ((strncmp(device_xname(parent), "apbh", 4) == 0) &&
-	    (apbdma_attached & F_AHBH_DMA))
+	    (apbdma_attached & F_APBH_DMA))
 		return;
 	if ((strncmp(device_xname(parent), "apbx", 4) == 0) &&
-	    (apbdma_attached & F_AHBX_DMA))
+	    (apbdma_attached & F_APBX_DMA))
 		return;
 
 	sc->sc_dev = self;
@@ -109,25 +109,30 @@ apbdma_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (strncmp(device_xname(parent), "apbh", 4) == 0)
-		sc->flags = F_AHBH_DMA;
+		sc->flags = F_APBH_DMA;
 
 	if (strncmp(device_xname(parent), "apbx", 4) == 0)
-		sc->flags = F_AHBX_DMA;
+		sc->flags = F_APBX_DMA;
 
 	apbdma_reset(sc);
 	apbdma_init(sc);
 
-	if (sc->flags & F_AHBH_DMA)
-		apbdma_attached |= F_AHBH_DMA;
-	if (sc->flags & F_AHBX_DMA)
-		apbdma_attached |= F_AHBX_DMA;
+	if (sc->flags & F_APBH_DMA)
+		apbdma_attached |= F_APBH_DMA;
+	if (sc->flags & F_APBX_DMA)
+		apbdma_attached |= F_APBX_DMA;
 
 	sc_parent->dmac = self;
 
 	/* Initialize mutex to control concurrent access from the drivers. */
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
-	aprint_normal("\n");
+	if (sc->flags & F_APBH_DMA)
+		aprint_normal(": APBH DMA\n");
+	else if (sc->flags & F_APBX_DMA)
+		aprint_normal(": APBX DMA\n");
+	else
+		panic("dma flag missing!\n");
 
 	return;
 }
@@ -192,7 +197,7 @@ static void
 apbdma_init(struct apbdma_softc *sc)
 {
 
-	if (sc->flags & F_AHBH_DMA) {
+	if (sc->flags & F_APBH_DMA) {
 		DMA_WR(sc, HW_APBH_CTRL0_SET, HW_APBH_CTRL0_AHB_BURST8_EN);
 		DMA_WR(sc, HW_APBH_CTRL0_SET, HW_APBH_CTRL0_APB_BURST4_EN);
 	}
@@ -279,7 +284,7 @@ apbdma_chan_set_chain(struct apbdma_softc *sc, unsigned int channel,
 {
 	uint32_t reg;
 
-	if (sc->flags & F_AHBH_DMA)
+	if (sc->flags & F_APBH_DMA)
 		reg = HW_APB_CHN_NXTCMDAR(HW_APBH_CH0_NXTCMDAR, channel);
 	else
 		reg = HW_APB_CHN_NXTCMDAR(HW_APBX_CH0_NXTCMDAR, channel);
@@ -301,7 +306,7 @@ apbdma_run(struct apbdma_softc *sc, unsigned int channel)
 	uint32_t reg;
 	uint8_t val;
 
-	if (sc->flags & F_AHBH_DMA) {
+	if (sc->flags & F_APBH_DMA) {
 		reg = HW_APB_CHN_SEMA(HW_APBH_CH0_SEMA, channel);
 		val = __SHIFTIN(1, HW_APBH_CH0_SEMA_INCREMENT_SEMA);
 	 } else {
@@ -324,7 +329,11 @@ apbdma_ack_intr(struct apbdma_softc *sc, unsigned int channel)
 {
 
 	mutex_enter(&sc->sc_lock);
-	DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<channel));
+	if (sc->flags & F_APBH_DMA) {
+		DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<channel));
+	} else {
+		DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<channel));
+	}
 	mutex_exit(&sc->sc_lock);
 
 	return;
@@ -383,11 +392,34 @@ apbdma_chan_reset(struct apbdma_softc *sc, unsigned int channel)
 	
 	mutex_enter(&sc->sc_lock);
 
-	DMA_WR(sc, HW_APB_CTRL0_SET,
-	    __SHIFTIN((1<<channel), HW_APBH_CTRL0_RESET_CHANNEL));
-	while(DMA_RD(sc, HW_APB_CTRL0) & HW_APBH_CTRL0_RESET_CHANNEL);
+	if (sc->flags & F_APBH_DMA) {
+		DMA_WR(sc, HW_APB_CTRL0_SET,
+		    __SHIFTIN((1<<channel), HW_APBH_CTRL0_RESET_CHANNEL));
+		while(DMA_RD(sc, HW_APB_CTRL0) & HW_APBH_CTRL0_RESET_CHANNEL);
+	} else {
+		DMA_WR(sc, HW_APBX_CHANNEL_CTRL_SET,
+			__SHIFTIN((1<<channel), HW_APBH_CTRL0_RESET_CHANNEL));
+		while(DMA_RD(sc, HW_APBX_CHANNEL_CTRL) & (1<<channel));
+	}
 
 	mutex_exit(&sc->sc_lock);
 
 	return;
+}
+
+void
+apbdma_wait(struct apbdma_softc *sc, unsigned int channel)
+{
+
+	mutex_enter(&sc->sc_lock);
+	
+	if (sc->flags & F_APBH_DMA) {
+		while (DMA_RD(sc, HW_APB_CHN_SEMA(HW_APBH_CH0_SEMA, channel)) & HW_APBH_CH0_SEMA_PHORE)
+			;
+	 } else {
+		while (DMA_RD(sc, HW_APB_CHN_SEMA(HW_APBX_CH0_SEMA, channel)) & HW_APBX_CH0_SEMA_PHORE)
+			;
+	}
+
+	mutex_exit(&sc->sc_lock);
 }

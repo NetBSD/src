@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.13.2.2 2014/08/20 00:02:40 tls Exp $
+#	$NetBSD: Makefile.buildboot,v 1.13.2.3 2017/12/03 11:35:44 jdolecek Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -20,26 +20,18 @@ LIBCRTEND=
 
 RISCOSTYPE ?= ff8
 
+.include "${S}/conf/newvers_stand.mk"
+
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 CPUFLAGS=
 CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CPPFLAGS+=	${ARM_APCS_FLAGS} -march=armv2
-.if ${HAVE_GCC} < 48
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.else
 CPPFLAGS+=	-marm
-.endif
 CFLAGS=		-O2
 CFLAGS+=	-ffreestanding -fno-unwind-tables
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes

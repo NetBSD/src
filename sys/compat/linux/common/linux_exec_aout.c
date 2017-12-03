@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.66 2009/08/15 23:39:35 matt Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.66.22.1 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.66 2009/08/15 23:39:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.66.22.1 2017/12/03 11:36:54 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.66 2009/08/15 23:39:35 matt Ex
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -136,9 +135,11 @@ exec_linux_aout_makecmds(struct lwp *l, struct exec_package *epp)
 	int machtype, magic;
 	int error = ENOEXEC;
 
+	if (epp->ep_hdrvalid < sizeof(struct exec))
+		return ENOEXEC;
+
 	magic = LINUX_N_MAGIC(linux_ep);
 	machtype = LINUX_N_MACHTYPE(linux_ep);
-
 
 	if (machtype != LINUX_MID_MACHINE)
 		return (ENOEXEC);

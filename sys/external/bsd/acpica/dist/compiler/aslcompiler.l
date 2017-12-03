@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@
 
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
+#include "acconvert.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -66,10 +67,10 @@ YYSTYPE AslCompilerlval;
 static void
 AslDoLineDirective (void);
 
-static char
+static BOOLEAN
 AslDoComment (void);
 
-static char
+static BOOLEAN
 AslDoCommentType2 (void);
 
 static char
@@ -86,6 +87,7 @@ count (int type);
 
 LeadNameChar                [A-Za-z_]
 DigitChar                   [0-9]
+OctalChar                   [0-7]
 HexDigitChar                [A-Fa-f0-9]
 RootChar                    [\\]
 Nothing                     []
@@ -110,15 +112,66 @@ NamePathTail                [.]{NameSeg}
 [ \t]                       { count (0); }
 
 
-"/*"                        { if (!AslDoComment ()) yyterminate (); }
-"//"                        { if (!AslDoCommentType2 ()) yyterminate (); }
+"/*"                        { if (!AslDoComment ()) {yyterminate ();} }
+"//"                        { if (!AslDoCommentType2 ()) {yyterminate ();} }
 
-"\""                        { if (AslDoStringLiteral ()) return (PARSEOP_STRING_LITERAL); else yyterminate (); }
+"\""                        { if (AslDoStringLiteral ()) {return (PARSEOP_STRING_LITERAL);}
+                              else {yyterminate ();} }
 ";"                         { count (0); return(';'); }
 
+    /* ASL Extension: Standard C operators */
 
-0[xX]{HexDigitChar}+ |
-{DigitChar}+                { AslCompilerlval.i = UtDoConstant ((char *) AslCompilertext);
+"~"                         { count (3); return (PARSEOP_EXP_NOT); }
+"!"                         { count (3); return (PARSEOP_EXP_LOGICAL_NOT); }
+"*"                         { count (3); return (PARSEOP_EXP_MULTIPLY); }
+"/"                         { count (3); return (PARSEOP_EXP_DIVIDE); }
+"%"                         { count (3); return (PARSEOP_EXP_MODULO); }
+"+"                         { count (3); return (PARSEOP_EXP_ADD); }
+"-"                         { count (3); return (PARSEOP_EXP_SUBTRACT); }
+">>"                        { count (3); return (PARSEOP_EXP_SHIFT_RIGHT); }
+"<<"                        { count (3); return (PARSEOP_EXP_SHIFT_LEFT); }
+"<"                         { count (3); return (PARSEOP_EXP_LESS); }
+">"                         { count (3); return (PARSEOP_EXP_GREATER); }
+"&"                         { count (3); return (PARSEOP_EXP_AND); }
+"<="                        { count (3); return (PARSEOP_EXP_LESS_EQUAL); }
+">="                        { count (3); return (PARSEOP_EXP_GREATER_EQUAL); }
+"=="                        { count (3); return (PARSEOP_EXP_EQUAL); }
+"!="                        { count (3); return (PARSEOP_EXP_NOT_EQUAL); }
+"|"                         { count (3); return (PARSEOP_EXP_OR); }
+"&&"                        { count (3); return (PARSEOP_EXP_LOGICAL_AND); }
+"||"                        { count (3); return (PARSEOP_EXP_LOGICAL_OR); }
+"++"                        { count (3); return (PARSEOP_EXP_INCREMENT); }
+"--"                        { count (3); return (PARSEOP_EXP_DECREMENT); }
+"^ "                        { count (3); return (PARSEOP_EXP_XOR); }
+
+    /* ASL Extension: Standard C assignment operators */
+
+"="                         { count (3); return (PARSEOP_EXP_EQUALS); }
+"+="                        { count (3); return (PARSEOP_EXP_ADD_EQ); }
+"-="                        { count (3); return (PARSEOP_EXP_SUB_EQ); }
+"*="                        { count (3); return (PARSEOP_EXP_MUL_EQ); }
+"/="                        { count (3); return (PARSEOP_EXP_DIV_EQ); }
+"%="                        { count (3); return (PARSEOP_EXP_MOD_EQ); }
+"<<="                       { count (3); return (PARSEOP_EXP_SHL_EQ); }
+">>="                       { count (3); return (PARSEOP_EXP_SHR_EQ); }
+"&="                        { count (3); return (PARSEOP_EXP_AND_EQ); }
+"^="                        { count (3); return (PARSEOP_EXP_XOR_EQ); }
+"|="                        { count (3); return (PARSEOP_EXP_OR_EQ); }
+
+"["                         { count (3); return (PARSEOP_EXP_INDEX_LEFT); }
+"]"                         { count (0); return (PARSEOP_EXP_INDEX_RIGHT); }
+"("                         { count (0); return (PARSEOP_OPEN_PAREN); }
+")"                         { count (0); return (PARSEOP_CLOSE_PAREN); }
+
+"{"                         { count (0); return ('{'); }
+"}"                         { count (0); return ('}'); }
+","                         { count (0); return (','); }
+
+
+    /*
+     * Begin standard ASL grammar
+     */
+[0-9][a-zA-Z0-9]*            { AslCompilerlval.i = UtDoConstant ((char *) AslCompilertext);
                                 count (1); return (PARSEOP_INTEGER); }
 
 "Include"                   { count (1); return (PARSEOP_INCLUDE); }
@@ -164,7 +217,7 @@ NamePathTail                [.]{NameSeg}
 "Debug"                     { count (1); return (PARSEOP_DEBUG); }
 "Decrement"                 { count (3); return (PARSEOP_DECREMENT); }
 "Default"                   { count (3); return (PARSEOP_DEFAULT); }
-"DefinitionBlock"           { count (1); return (PARSEOP_DEFINITIONBLOCK); }
+"DefinitionBlock"           { count (1); return (PARSEOP_DEFINITION_BLOCK); }
 "DeRefOf"                   { count (3); return (PARSEOP_DEREFOF); }
 "Device"                    { count (2); return (PARSEOP_DEVICE); }
 "Divide"                    { count (3); return (PARSEOP_DIVIDE); }
@@ -286,6 +339,7 @@ NamePathTail                [.]{NameSeg}
 "GpioInt"                   { count (1); return (PARSEOP_GPIO_INT); }
 "GpioIo"                    { count (1); return (PARSEOP_GPIO_IO); }
 "I2cSerialBus"              { count (1); return (PARSEOP_I2C_SERIALBUS); }
+"I2cSerialBusV2"            { count (1); return (PARSEOP_I2C_SERIALBUS_V2); }
 "Interrupt"                 { count (1); return (PARSEOP_INTERRUPT); }
 "IO"                        { count (1); return (PARSEOP_IO); }
 "IRQ"                       { count (1); return (PARSEOP_IRQ); }
@@ -293,14 +347,21 @@ NamePathTail                [.]{NameSeg}
 "Memory24"                  { count (1); return (PARSEOP_MEMORY24); }
 "Memory32"                  { count (1); return (PARSEOP_MEMORY32); }
 "Memory32Fixed"             { count (1); return (PARSEOP_MEMORY32FIXED); }
+"PinConfig"                 { count (1); return (PARSEOP_PINCONFIG); }
+"PinFunction"               { count (1); return (PARSEOP_PINFUNCTION); }
+"PinGroup"                  { count (1); return (PARSEOP_PINGROUP); }
+"PinGroupConfig"            { count (1); return (PARSEOP_PINGROUPCONFIG); }
+"PinGroupFunction"          { count (1); return (PARSEOP_PINGROUPFUNCTION); }
 "QWordIO"                   { count (1); return (PARSEOP_QWORDIO); }
 "QWordMemory"               { count (1); return (PARSEOP_QWORDMEMORY); }
 "QWordSpace"                { count (1); return (PARSEOP_QWORDSPACE); }
 "Register"                  { count (1); return (PARSEOP_REGISTER); }
 "SpiSerialBus"              { count (1); return (PARSEOP_SPI_SERIALBUS); }
+"SpiSerialBusV2"            { count (1); return (PARSEOP_SPI_SERIALBUS_V2); }
 "StartDependentFn"          { count (1); return (PARSEOP_STARTDEPENDENTFN); }
 "StartDependentFnNoPri"     { count (1); return (PARSEOP_STARTDEPENDENTFN_NOPRI); }
 "UartSerialBus"             { count (1); return (PARSEOP_UART_SERIALBUS); }
+"UartSerialBusV2"           { count (1); return (PARSEOP_UART_SERIALBUS_V2); }
 "VendorLong"                { count (1); return (PARSEOP_VENDORLONG); }
 "VendorShort"               { count (1); return (PARSEOP_VENDORSHORT); }
 "WordBusNumber"             { count (1); return (PARSEOP_WORDBUSNUMBER); }
@@ -591,23 +652,60 @@ NamePathTail                [.]{NameSeg}
 "Transfer8_16"              { count (0); return (PARSEOP_XFERTYPE_8_16); }
 "Transfer16"                { count (0); return (PARSEOP_XFERTYPE_16); }
 
+    /* ToPld macro */
+
+"ToPLD"                     { count (0); return (PARSEOP_TOPLD); }
+
+"PLD_Revision"              { count (0); return (PARSEOP_PLD_REVISION); }
+"PLD_IgnoreColor"           { count (0); return (PARSEOP_PLD_IGNORECOLOR); }
+"PLD_Red"                   { count (0); return (PARSEOP_PLD_RED); }
+"PLD_Green"                 { count (0); return (PARSEOP_PLD_GREEN); }
+"PLD_Blue"                  { count (0); return (PARSEOP_PLD_BLUE); }
+"PLD_Width"                 { count (0); return (PARSEOP_PLD_WIDTH); }
+"PLD_Height"                { count (0); return (PARSEOP_PLD_HEIGHT); }
+"PLD_UserVisible"           { count (0); return (PARSEOP_PLD_USERVISIBLE); }
+"PLD_Dock"                  { count (0); return (PARSEOP_PLD_DOCK); }
+"PLD_Lid"                   { count (0); return (PARSEOP_PLD_LID); }
+"PLD_Panel"                 { count (0); return (PARSEOP_PLD_PANEL); }
+"PLD_VerticalPosition"      { count (0); return (PARSEOP_PLD_VERTICALPOSITION); }
+"PLD_HorizontalPosition"    { count (0); return (PARSEOP_PLD_HORIZONTALPOSITION); }
+"PLD_Shape"                 { count (0); return (PARSEOP_PLD_SHAPE); }
+"PLD_GroupOrientation"      { count (0); return (PARSEOP_PLD_GROUPORIENTATION); }
+"PLD_GroupToken"            { count (0); return (PARSEOP_PLD_GROUPTOKEN); }
+"PLD_GroupPosition"         { count (0); return (PARSEOP_PLD_GROUPPOSITION); }
+"PLD_Bay"                   { count (0); return (PARSEOP_PLD_BAY); }
+"PLD_Ejectable"             { count (0); return (PARSEOP_PLD_EJECTABLE); }
+"PLD_EjectRequired"         { count (0); return (PARSEOP_PLD_EJECTREQUIRED); }
+"PLD_CabinetNumber"         { count (0); return (PARSEOP_PLD_CABINETNUMBER); }
+"PLD_CardCageNumber"        { count (0); return (PARSEOP_PLD_CARDCAGENUMBER); }
+"PLD_Reference"             { count (0); return (PARSEOP_PLD_REFERENCE); }
+"PLD_Rotation"              { count (0); return (PARSEOP_PLD_ROTATION); }
+"PLD_Order"                 { count (0); return (PARSEOP_PLD_ORDER); }
+"PLD_Reserved"              { count (0); return (PARSEOP_PLD_RESERVED); }
+"PLD_VerticalOffset"        { count (0); return (PARSEOP_PLD_VERTICALOFFSET); }
+"PLD_HorizontalOffset"      { count (0); return (PARSEOP_PLD_HORIZONTALOFFSET); }
+
+
+    /* printf debug macros */
+
+"printf"                    { count (0); return (PARSEOP_PRINTF); }
+"fprintf"                   { count (0); return (PARSEOP_FPRINTF); }
+
+    /* Other macros */
+
+"For"                       { count (0); return (PARSEOP_FOR); }
+
     /* Predefined compiler names */
 
 "__DATE__"                  { count (0); return (PARSEOP___DATE__); }
 "__FILE__"                  { count (0); return (PARSEOP___FILE__); }
 "__LINE__"                  { count (0); return (PARSEOP___LINE__); }
 "__PATH__"                  { count (0); return (PARSEOP___PATH__); }
-
-
-"{"                         { count (0); return('{'); }
-"}"                         { count (0); return('}'); }
-","                         { count (0); return(','); }
-"("                         { count (0); return('('); }
-")"                         { count (0); return(')'); }
+"__METHOD__"                { count (0); return (PARSEOP___METHOD__); }
 
 {NameSeg}                   { char *s;
                                 count (0);
-                                s=malloc (ACPI_NAME_SIZE + 1);
+                                s=UtLocalCacheCalloc (ACPI_NAME_SIZE + 1);
                                 if (strcmp (AslCompilertext, "\\"))
                                 {
                                     strcpy (s, "____");
@@ -620,28 +718,32 @@ NamePathTail                [.]{NameSeg}
 
 {NameString}                { char *s;
                                 count (0);
-                                s=malloc (strlen (AslCompilertext)+1);
+                                s=UtLocalCacheCalloc (strlen (AslCompilertext)+1);
                                 AcpiUtStrupr (AslCompilertext);
                                 strcpy (s, AslCompilertext);
-                                s[strlen (AslCompilertext)] = 0;
                                 AslCompilerlval.s = s;
                                 DbgPrint (ASL_PARSE_OUTPUT, "NameString: %s\n", s);
                                 return (PARSEOP_NAMESTRING); }
 
-"*" |
-"/"                         { count (1);
-                                AslCompilererror ("Parse error, expecting ASL keyword or name");}
-
 .                           { count (1);
-                                snprintf (MsgBuffer, sizeof(MsgBuffer),
-                                    "Invalid character (0x%2.2X), expecting ASL keyword or name",
-                                    *AslCompilertext);
+                                if (isprint ((unsigned int) *AslCompilertext))
+                                {
+                                    snprintf (MsgBuffer, sizeof(MsgBuffer),
+                                        "Invalid character (%c), expecting ASL keyword or name",
+                                        *AslCompilertext);
+                                }
+                                else
+                                {
+                                    snprintf (MsgBuffer, sizeof(MsgBuffer),
+                                        "Invalid character (0x%2.2X), expecting ASL keyword or name",
+                                        *AslCompilertext);
+                                }
                                 AslCompilererror (MsgBuffer);}
 
 <<EOF>>                     { if (AslPopInputFileStack ())
-                                yyterminate();
+                                {yyterminate();}
                               else
-                                return (PARSEOP_INCLUDE_END);};
+                                {return (PARSEOP_INCLUDE_END);} };
 
 %%
 

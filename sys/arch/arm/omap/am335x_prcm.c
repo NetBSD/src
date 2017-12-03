@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.1.6.3 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.1.6.4 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,10 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.1.6.3 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.1.6.4 2017/12/03 11:35:55 jdolecek Exp $");
+
+#include "tps65217pmic.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/pmf.h>
 
@@ -45,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.1.6.3 2014/08/20 00:02:47 tls Exp 
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap_var.h>
+
+#include <dev/i2c/tps65217pmicvar.h>
 
 #define AM335X_CLKCTRL_MODULEMODE_MASK		__BITS(0, 1)
 #define   AM335X_CLKCTRL_MODULEMODE_DISABLED	0
@@ -56,18 +61,12 @@ static void
 am335x_prcm_check_clkctrl(bus_size_t cm_module,
     bus_size_t clkctrl_reg, uint32_t v)
 {
-#ifdef DIAGNOSTIC
 	uint32_t u = prcm_read_4(cm_module, clkctrl_reg);
 
 	if (__SHIFTOUT(u, AM335X_CLKCTRL_MODULEMODE_MASK) !=
 	    __SHIFTOUT(v, AM335X_CLKCTRL_MODULEMODE_MASK))
 		aprint_error("clkctrl didn't take: %"PRIx32" -/-> %"PRIx32"\n",
 		    u, v);
-#else
-	(void)cm_module;
-	(void)clkctrl_reg;
-	(void)v;
-#endif
 }
 
 void
@@ -161,6 +160,25 @@ prcm_mpu_pll_config(u_int mpupll_m)
 	}
 }
 
+const char *mpu_supply = NULL;
+static int
+set_mpu_volt(int mvolt)
+{
+	device_t dev;
+
+	__USE(dev);	// Simpler than complex ifdef.
+
+	if (mpu_supply == NULL)
+		return ENODEV;
+
+#if NTPS65217PMIC > 0
+	dev = device_find_by_xname("tps65217pmic0");
+	if (dev != NULL)
+		return tps65217pmic_set_volt(dev, mpu_supply, mvolt);
+#endif
+	return ENODEV;
+}
+
 static int
 mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 {
@@ -220,7 +238,7 @@ mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 				mpu_frequency.mvolt = old_mvolt;
 			}
 		}
-		aprint_normal_dev(curcpu()->ci_dev,
+		aprint_debug_dev(curcpu()->ci_dev,
 		    "frequency changed from %d MHz to %d MHz\n",
 		    old_freq, freq);
 		pmf_event_inject(NULL, PMFE_SPEED_CHANGED);

@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.7.12.1 2012/11/20 03:01:39 tls Exp $ */
+/* $NetBSD: nvram.h,v 1.7.12.2 2017/12/03 11:36:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _MACHINE_NVRAM_H
 #define _MACHINE_NVRAM_H
+
+#include <sys/ioccom.h>
 
 #if defined(_KERNEL)
 /* for the motorola machines */

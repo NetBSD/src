@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,11 +41,11 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "acpi.h"
 #include "accommon.h"
 #include "acparser.h"
 #include "amlcode.h"
+#include "acconvert.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psobject")
@@ -74,12 +74,13 @@ static ACPI_STATUS
 AcpiPsGetAmlOpcode (
     ACPI_WALK_STATE         *WalkState)
 {
+    UINT32                  AmlOffset;
+
 
     ACPI_FUNCTION_TRACE_PTR (PsGetAmlOpcode, WalkState);
 
 
-    WalkState->AmlOffset = (UINT32) ACPI_PTR_DIFF (WalkState->ParserState.Aml,
-                                WalkState->ParserState.AmlStart);
+    WalkState->Aml = WalkState->ParserState.Aml;
     WalkState->Opcode = AcpiPsPeekOpcode (&(WalkState->ParserState));
 
     /*
@@ -108,10 +109,13 @@ AcpiPsGetAmlOpcode (
 
         if (WalkState->PassNumber == 2)
         {
+            AmlOffset = (UINT32) ACPI_PTR_DIFF (WalkState->Aml,
+                WalkState->ParserState.AmlStart);
+
             ACPI_ERROR ((AE_INFO,
                 "Unknown opcode 0x%.2X at table offset 0x%.4X, ignoring",
                 WalkState->Opcode,
-                (UINT32) (WalkState->AmlOffset + sizeof (ACPI_TABLE_HEADER))));
+                (UINT32) (AmlOffset + sizeof (ACPI_TABLE_HEADER))));
 
             ACPI_DUMP_BUFFER ((WalkState->ParserState.Aml - 16), 48);
 
@@ -123,14 +127,25 @@ AcpiPsGetAmlOpcode (
             AcpiOsPrintf (
                 "/*\nError: Unknown opcode 0x%.2X at table offset 0x%.4X, context:\n",
                 WalkState->Opcode,
-                (UINT32) (WalkState->AmlOffset + sizeof (ACPI_TABLE_HEADER)));
+                (UINT32) (AmlOffset + sizeof (ACPI_TABLE_HEADER)));
+
+            ACPI_ERROR ((AE_INFO,
+                "Aborting disassembly, AML byte code is corrupt"));
 
             /* Dump the context surrounding the invalid opcode */
 
             AcpiUtDumpBuffer (((UINT8 *) WalkState->ParserState.Aml - 16),
                 48, DB_BYTE_DISPLAY,
-                (WalkState->AmlOffset + sizeof (ACPI_TABLE_HEADER) - 16));
+                (AmlOffset + sizeof (ACPI_TABLE_HEADER) - 16));
             AcpiOsPrintf (" */\n");
+
+            /*
+             * Just abort the disassembly, cannot continue because the
+             * parser is essentially lost. The disassembler can then
+             * randomly fail because an ill-constructed parse tree
+             * can result.
+             */
+            return_ACPI_STATUS (AE_AML_BAD_OPCODE);
 #endif
         }
 
@@ -148,7 +163,8 @@ AcpiPsGetAmlOpcode (
 
         /* Found opcode info, this is a normal opcode */
 
-        WalkState->ParserState.Aml += AcpiPsGetOpcodeSize (WalkState->Opcode);
+        WalkState->ParserState.Aml +=
+            AcpiPsGetOpcodeSize (WalkState->Opcode);
         WalkState->ArgTypes = WalkState->OpInfo->ParseArgs;
         break;
     }
@@ -197,8 +213,9 @@ AcpiPsBuildNamedOp (
     while (GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) &&
           (GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) != ARGP_NAME))
     {
+        ASL_CV_CAPTURE_COMMENTS (WalkState);
         Status = AcpiPsGetNextArg (WalkState, &(WalkState->ParserState),
-                    GET_CURRENT_ARG_TYPE (WalkState->ArgTypes), &Arg);
+            GET_CURRENT_ARG_TYPE (WalkState->ArgTypes), &Arg);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -207,6 +224,18 @@ AcpiPsBuildNamedOp (
         AcpiPsAppendArg (UnnamedOp, Arg);
         INCREMENT_ARG_LIST (WalkState->ArgTypes);
     }
+
+    /* are there any inline comments associated with the NameSeg?? If so, save this. */
+
+    ASL_CV_CAPTURE_COMMENTS (WalkState);
+
+#ifdef ACPI_ASL_COMPILER
+    if (AcpiGbl_CurrentInlineComment != NULL)
+    {
+        UnnamedOp->Common.NameComment = AcpiGbl_CurrentInlineComment;
+        AcpiGbl_CurrentInlineComment = NULL;
+    }
+#endif
 
     /*
      * Make sure that we found a NAME and didn't run out of arguments
@@ -229,7 +258,10 @@ AcpiPsBuildNamedOp (
     Status = WalkState->DescendingCallback (WalkState, Op);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_EXCEPTION ((AE_INFO, Status, "During name lookup/catalog"));
+        if (Status != AE_CTRL_TERMINATE)
+        {
+            ACPI_EXCEPTION ((AE_INFO, Status, "During name lookup/catalog"));
+        }
         return_ACPI_STATUS (Status);
     }
 
@@ -243,12 +275,34 @@ AcpiPsBuildNamedOp (
     {
         if (Status == AE_CTRL_PENDING)
         {
-            return_ACPI_STATUS (AE_CTRL_PARSE_PENDING);
+            Status = AE_CTRL_PARSE_PENDING;
         }
         return_ACPI_STATUS (Status);
     }
 
     AcpiPsAppendArg (*Op, UnnamedOp->Common.Value.Arg);
+
+#ifdef ACPI_ASL_COMPILER
+
+    /* save any comments that might be associated with UnnamedOp. */
+
+    (*Op)->Common.InlineComment     = UnnamedOp->Common.InlineComment;
+    (*Op)->Common.EndNodeComment    = UnnamedOp->Common.EndNodeComment;
+    (*Op)->Common.CloseBraceComment = UnnamedOp->Common.CloseBraceComment;
+    (*Op)->Common.NameComment       = UnnamedOp->Common.NameComment;
+    (*Op)->Common.CommentList       = UnnamedOp->Common.CommentList;
+    (*Op)->Common.EndBlkComment     = UnnamedOp->Common.EndBlkComment;
+    (*Op)->Common.CvFilename        = UnnamedOp->Common.CvFilename;
+    (*Op)->Common.CvParentFilename  = UnnamedOp->Common.CvParentFilename;
+    (*Op)->Named.Aml                = UnnamedOp->Common.Aml;
+
+    UnnamedOp->Common.InlineComment     = NULL;
+    UnnamedOp->Common.EndNodeComment    = NULL;
+    UnnamedOp->Common.CloseBraceComment = NULL;
+    UnnamedOp->Common.NameComment       = NULL;
+    UnnamedOp->Common.CommentList       = NULL;
+    UnnamedOp->Common.EndBlkComment     = NULL;
+#endif
 
     if ((*Op)->Common.AmlOpcode == AML_REGION_OP ||
         (*Op)->Common.AmlOpcode == AML_DATA_REGION_OP)
@@ -307,11 +361,15 @@ AcpiPsCreateOp (
     {
         return_ACPI_STATUS (AE_CTRL_PARSE_CONTINUE);
     }
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
 
     /* Create Op structure and append to parent's argument list */
 
     WalkState->OpInfo = AcpiPsGetOpcodeInfo (WalkState->Opcode);
-    Op = AcpiPsAllocOp (WalkState->Opcode);
+    Op = AcpiPsAllocOp (WalkState->Opcode, AmlOpStart);
     if (!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -321,6 +379,26 @@ AcpiPsCreateOp (
     {
         Status = AcpiPsBuildNamedOp (WalkState, AmlOpStart, Op, &NamedOp);
         AcpiPsFreeOp (Op);
+
+#ifdef ACPI_ASL_COMPILER
+        if (AcpiGbl_DisasmFlag && WalkState->Opcode == AML_EXTERNAL_OP &&
+            Status == AE_NOT_FOUND)
+        {
+            /*
+             * If parsing of AML_EXTERNAL_OP's name path fails, then skip
+             * past this opcode and keep parsing. This is a much better
+             * alternative than to abort the entire disassembler. At this
+             * point, the ParserState is at the end of the namepath of the
+             * external declaration opcode. Setting WalkState->Aml to
+             * WalkState->ParserState.Aml + 2 moves increments the
+             * WalkState->Aml past the object type and the paramcount of the
+             * external opcode.
+             */
+            WalkState->Aml = WalkState->ParserState.Aml + 2;
+            WalkState->ParserState.Aml = WalkState->Aml;
+            return_ACPI_STATUS (AE_CTRL_PARSE_CONTINUE);
+        }
+#endif
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -366,7 +444,13 @@ AcpiPsCreateOp (
                 Op->Common.Flags |= ACPI_PARSEOP_TARGET;
             }
         }
-        else if (ParentScope->Common.AmlOpcode == AML_INCREMENT_OP)
+
+        /*
+         * Special case for both Increment() and Decrement(), where
+         * the lone argument is both a source and a target.
+         */
+        else if ((ParentScope->Common.AmlOpcode == AML_INCREMENT_OP) ||
+                (ParentScope->Common.AmlOpcode == AML_DECREMENT_OP))
         {
             Op->Common.Flags |= ACPI_PARSEOP_TARGET;
         }

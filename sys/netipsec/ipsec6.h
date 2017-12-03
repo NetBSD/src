@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.13 2011/06/09 19:54:18 drochner Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.13.12.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -40,9 +40,7 @@
 
 #include <net/pfkeyv2.h>
 #include <netipsec/keydb.h>
-#ifdef __NetBSD__
 #include <netinet6/in6_pcb.h>
-#endif
 
 #ifdef _KERNEL
 extern int ip6_esp_trans_deflev;
@@ -59,7 +57,6 @@ struct in6pcb;
 /* KAME compatibility shims */
 #define	ipsec6_getpolicybyaddr	ipsec_getpolicybyaddr
 #define	ipsec6_getpolicybysock	ipsec_getpolicybysock
-#define	key_freesp(_x)		KEY_FREESP(&_x)
 
 int ipsec6_delete_pcbpolicy (struct in6pcb *);
 int ipsec6_set_policy (struct in6pcb *, int, const void *, size_t, kauth_cred_t);
@@ -67,13 +64,8 @@ int ipsec6_get_policy (struct in6pcb *, const void *, size_t, struct mbuf **);
 struct secpolicy *ipsec6_checkpolicy (struct mbuf *, u_int, 
     u_int, int *, struct in6pcb *);
 struct secpolicy * ipsec6_check_policy(struct mbuf *, 
-				const struct socket *, int, int*,int*);
+				struct in6pcb *, int, int*,int*);
 int ipsec6_in_reject (struct mbuf *, struct in6pcb *);
-/*
- * KAME ipsec6_in_reject_so(struct mbuf*, struct so)  compatibility shim
- */
-#define ipsec6_in_reject_so(m, _so) \
-  ipsec6_in_reject(m, ((_so) == NULL? NULL : sotoin6pcb(_so)))
 
 struct tcp6cb;
 
@@ -83,23 +75,14 @@ size_t ipsec6_hdrsiz_tcp (struct tcpcb*);
 struct ip6_hdr;
 const char *ipsec6_logpacketstr (struct ip6_hdr *, u_int32_t);
 
-#ifdef __NetBSD__
 /* NetBSD protosw ctlin entrypoint */
 void * esp6_ctlinput(int, const struct sockaddr *, void *);
 void * ah6_ctlinput(int, const struct sockaddr *, void *);
-#endif /* __NetBSD__ */
 
 struct m_tag;
 int ipsec6_common_input(struct mbuf **, int *, int);
-int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, 
-									int, int, struct m_tag *);
-
-#ifdef __FreeBSD__
-/* FreeBSD protosw ctlin entrypoint */
-void esp6_ctlinput(int, struct sockaddr *, void *);
-#endif /* __FreeBSD__ */
-
-int ipsec6_process_packet (struct mbuf*,struct ipsecrequest *); 
+int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, int, int);
+int ipsec6_process_packet(struct mbuf*, const struct ipsecrequest *);
 #endif /*_KERNEL*/
 
 #endif /* !_NETIPSEC_IPSEC6_H_ */

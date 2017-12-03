@@ -1,4 +1,4 @@
-/* $NetBSD: macekbc.c,v 1.6.12.1 2012/11/20 03:01:41 tls Exp $ */
+/* $NetBSD: macekbc.c,v 1.6.12.2 2017/12/03 11:36:41 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.6.12.1 2012/11/20 03:01:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.6.12.2 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/intr.h>
@@ -125,7 +125,7 @@ macekbc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PS2 controller\n");
 	aprint_naive("\n");
 
-	t = malloc(sizeof(struct macekbc_internal), M_DEVBUF, M_NOWAIT|M_ZERO);
+	t = kmem_alloc(sizeof(struct macekbc_internal), KM_NOSLEEP);
 	if (t == NULL) {
 		aprint_error("%s: not enough memory\n", device_xname(self));
 		return;
@@ -137,20 +137,20 @@ macekbc_attach(device_t parent, device_t self, void *aux)
 	    0, &t->t_ioh[PCKBPORT_KBD_SLOT]) != 0) {
 		aprint_error("%s: couldn't map kbd registers\n",
 		    device_xname(self));
-		return;
+		goto bork;
 	}
 	if (bus_space_subregion(t->t_iot, maa->maa_sh, maa->maa_offset + 32,
 	    0, &t->t_ioh[PCKBPORT_AUX_SLOT]) != 0) {
 		aprint_error("%s: couldn't map aux registers\n",
 		    device_xname(self));
-		return;
+		goto bork;
 	}
 
 	if ((t->t_rxih = cpu_intr_establish(maa->maa_intr, maa->maa_intrmask,
 	    macekbc_intr, t)) == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    device_xname(self));
-		return;
+		goto bork;
 	}
 	sc->sc_id = t;
 	t->t_sc = sc;
@@ -168,6 +168,9 @@ macekbc_attach(device_t parent, device_t self, void *aux)
 	if (pckbport_attach_slot(self, t->t_pt, PCKBPORT_AUX_SLOT))
 		t->t_present[PCKBPORT_AUX_SLOT] = 1;
 
+	return;
+bork:
+	kmem_free(t, sizeof(struct macekbc_internal));
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.32.2.1 2013/06/23 06:20:16 tls Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.32.2.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #ifndef _SYS_DEV_VNDVAR_H_
 #define _SYS_DEV_VNDVAR_H_
 
+#include <sys/ioccom.h>
 #include <sys/pool.h>
 
 /*
@@ -106,7 +107,7 @@ struct vnode;
  * A vnode disk's state information.
  */
 struct vnd_softc {
-	device_t         sc_dev;
+	device_t	 sc_dev;
 	int		 sc_flags;	/* flags */
 	uint64_t	 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
@@ -146,8 +147,7 @@ struct vnd_softc {
 #define VNF_USE_VN_RDWR	0x1000	/* have to use vn_rdwr() */
 
 /* structure of header in a compressed file */
-struct vnd_comp_header
-{
+struct vnd_comp_header {
 	char preamble[128];
 	u_int32_t block_size;
 	u_int32_t num_blocks;

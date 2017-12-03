@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.5.22.1 2014/08/20 00:03:12 tls Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.5.22.2 2017/12/03 11:36:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@ struct mips_isa_chipset {
 #define	isa_intr_evcnt(c, i)						\
     (*(c)->ic_intr_evcnt)((c)->ic_v, (i))
 #define	isa_intr_establish(c, i, t, l, f, a)				\
+    (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
+#define	isa_intr_establish_xname(c, i, t, l, f, a, x)			\
     (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_v, (h))

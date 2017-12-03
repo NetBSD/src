@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.47.2.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.47.2.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.47.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.47.2.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -846,6 +846,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach to the Ethernet interface list. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp,sc->eaddr);
 
 	callout_init(&sc->bnx_timeout, 0);
@@ -4577,7 +4578,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			m->m_pkthdr.len = m->m_len = len;
 
 			/* Send the packet to the appropriate interface. */
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 
 			DBRUN(BNX_VERBOSE_RECV,
 			    struct ether_header *eh;
@@ -4632,22 +4633,14 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 */
 			if ((status & L2_FHDR_STATUS_L2_VLAN_TAG) &&
 			    !(sc->rx_mode & BNX_EMAC_RX_MODE_KEEP_VLAN_TAG)) {
-				VLAN_INPUT_TAG(ifp, m,
-				    l2fhdr->l2_fhdr_vlan_tag,
-				    continue);
+				vlan_set_tag(m, l2fhdr->l2_fhdr_vlan_tag);
 			}
 
-			/*
-			 * Handle BPF listeners. Let the BPF
-			 * user see the packet.
-			 */
-			bpf_mtap(ifp, m);
-
 			/* Pass the mbuf off to the upper layers. */
-			ifp->if_ipackets++;
+
 			DBPRINT(sc, BNX_VERBOSE_RECV,
 			    "%s(): Passing received frame up.\n", __func__);
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 			DBRUNIF(1, sc->rx_mbuf_alloc--);
 
 		}
@@ -4952,7 +4945,6 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 #endif
 	uint32_t		addr, prod_bseq;
 	int			i, error;
-	struct m_tag		*mtag;
 	static struct work	bnx_wk; /* Dummy work. Statically allocated. */
 
 	mutex_enter(&sc->tx_pkt_mtx);
@@ -4985,10 +4977,9 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	}
 
 	/* Transfer any VLAN tags to the bd. */
-	mtag = VLAN_OUTPUT_TAG(&sc->bnx_ec, m);
-	if (mtag != NULL) {
+	if (vlan_has_tag(m)) {
 		flags |= TX_BD_FLAGS_VLAN_TAG;
-		vlan_tag = VLAN_TAG_VALUE(mtag);
+		vlan_tag = vlan_get_tag(m);
 	}
 
 	/* Map the mbuf into DMAable memory. */
@@ -5384,8 +5375,7 @@ bnx_intr(void *xsc)
 	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
 
 	/* Handle any frames that arrived while handling the interrupt. */
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		bnx_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return 1;
 }

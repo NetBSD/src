@@ -1,4 +1,4 @@
-/*	$NetBSD: s390.c,v 1.2 2011/05/28 13:59:31 phx Exp $	*/
+/*	$NetBSD: s390.c,v 1.2.16.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.2 2011/05/28 13:59:31 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.2.16.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,12 +160,12 @@ s390rtc_clock_read(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert the register values into something useable.
 	 */
-	dt->dt_sec = FROMBCD(bcd[S390_RT1_SECOND]);
-	dt->dt_min = FROMBCD(bcd[S390_RT1_MINUTE]);
-	dt->dt_hour = FROMBCD(bcd[S390_RT1_HOUR] & 0x3f);
-	dt->dt_day = FROMBCD(bcd[S390_RT1_DAY]);
-	dt->dt_mon = FROMBCD(bcd[S390_RT1_MONTH]);
-	dt->dt_year = FROMBCD(bcd[S390_RT1_YEAR]) + 2000;
+	dt->dt_sec = bcdtobin(bcd[S390_RT1_SECOND]);
+	dt->dt_min = bcdtobin(bcd[S390_RT1_MINUTE]);
+	dt->dt_hour = bcdtobin(bcd[S390_RT1_HOUR] & 0x3f);
+	dt->dt_day = bcdtobin(bcd[S390_RT1_DAY]);
+	dt->dt_mon = bcdtobin(bcd[S390_RT1_MONTH]);
+	dt->dt_year = bcdtobin(bcd[S390_RT1_YEAR]) + 2000;
 
 	return 1;
 }
@@ -179,13 +179,13 @@ s390rtc_clock_write(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
 	 * Convert our time representation into something the S-xx390
 	 * can understand.
 	 */
-	bcd[S390_RT1_SECOND] = TOBCD(dt->dt_sec);
-	bcd[S390_RT1_MINUTE] = TOBCD(dt->dt_min);
-	bcd[S390_RT1_HOUR] = TOBCD(dt->dt_hour);
-	bcd[S390_RT1_DAY] = TOBCD(dt->dt_day);
-	bcd[S390_RT1_WDAY] = TOBCD(dt->dt_wday);
-	bcd[S390_RT1_MONTH] = TOBCD(dt->dt_mon);
-	bcd[S390_RT1_YEAR] = TOBCD(dt->dt_year % 100);
+	bcd[S390_RT1_SECOND] = bintobcd(dt->dt_sec);
+	bcd[S390_RT1_MINUTE] = bintobcd(dt->dt_min);
+	bcd[S390_RT1_HOUR] = bintobcd(dt->dt_hour);
+	bcd[S390_RT1_DAY] = bintobcd(dt->dt_day);
+	bcd[S390_RT1_WDAY] = bintobcd(dt->dt_wday);
+	bcd[S390_RT1_MONTH] = bintobcd(dt->dt_mon);
+	bcd[S390_RT1_YEAR] = bintobcd(dt->dt_year % 100);
 
 	return s390rtc_write(sc, S390_REALTIME1, bcd, S390_RT1_NBYTES);
 }

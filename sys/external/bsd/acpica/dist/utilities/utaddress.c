@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __UTADDRESS_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -84,7 +82,6 @@ AcpiUtAddAddressRange (
     ACPI_NAMESPACE_NODE     *RegionNode)
 {
     ACPI_ADDRESS_RANGE      *RangeInfo;
-    ACPI_STATUS             Status;
 
 
     ACPI_FUNCTION_TRACE (UtAddAddressRange);
@@ -108,23 +105,15 @@ AcpiUtAddAddressRange (
     RangeInfo->EndAddress = (Address + Length - 1);
     RangeInfo->RegionNode = RegionNode;
 
-    Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
-    {
-        ACPI_FREE (RangeInfo);
-        return_ACPI_STATUS (Status);
-    }
-
     RangeInfo->Next = AcpiGbl_AddressRangeList[SpaceId];
     AcpiGbl_AddressRangeList[SpaceId] = RangeInfo;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
-        "\nAdded [%4.4s] address range: 0x%p-0x%p\n",
+        "\nAdded [%4.4s] address range: 0x%8.8X%8.8X-0x%8.8X%8.8X\n",
         AcpiUtGetNodeName (RangeInfo->RegionNode),
-        ACPI_CAST_PTR (void, Address),
-        ACPI_CAST_PTR (void, RangeInfo->EndAddress)));
+        ACPI_FORMAT_UINT64 (Address),
+        ACPI_FORMAT_UINT64 (RangeInfo->EndAddress)));
 
-    (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
     return_ACPI_STATUS (AE_OK);
 }
 
@@ -181,10 +170,10 @@ AcpiUtRemoveAddressRange (
             }
 
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
-                "\nRemoved [%4.4s] address range: 0x%p-0x%p\n",
+                "\nRemoved [%4.4s] address range: 0x%8.8X%8.8X-0x%8.8X%8.8X\n",
                 AcpiUtGetNodeName (RangeInfo->RegionNode),
-                ACPI_CAST_PTR (void, RangeInfo->StartAddress),
-                ACPI_CAST_PTR (void, RangeInfo->EndAddress)));
+                ACPI_FORMAT_UINT64 (RangeInfo->StartAddress),
+                ACPI_FORMAT_UINT64 (RangeInfo->EndAddress)));
 
             ACPI_FREE (RangeInfo);
             return_VOID;
@@ -265,15 +254,15 @@ AcpiUtCheckAddressRange (
             OverlapCount++;
             if (Warn)   /* Optional warning message */
             {
-                Pathname = AcpiNsGetExternalPathname (RangeInfo->RegionNode);
+                Pathname = AcpiNsGetNormalizedPathname (RangeInfo->RegionNode, TRUE);
 
                 ACPI_WARNING ((AE_INFO,
-                    "%s range 0x%p-0x%p conflicts with OpRegion 0x%p-0x%p (%s)",
+                    "%s range 0x%8.8X%8.8X-0x%8.8X%8.8X conflicts with OpRegion 0x%8.8X%8.8X-0x%8.8X%8.8X (%s)",
                     AcpiUtGetRegionName (SpaceId),
-                    ACPI_CAST_PTR (void, Address),
-                    ACPI_CAST_PTR (void, EndAddress),
-                    ACPI_CAST_PTR (void, RangeInfo->StartAddress),
-                    ACPI_CAST_PTR (void, RangeInfo->EndAddress),
+                    ACPI_FORMAT_UINT64 (Address),
+                    ACPI_FORMAT_UINT64 (EndAddress),
+                    ACPI_FORMAT_UINT64 (RangeInfo->StartAddress),
+                    ACPI_FORMAT_UINT64 (RangeInfo->EndAddress),
                     Pathname));
                 ACPI_FREE (Pathname);
             }

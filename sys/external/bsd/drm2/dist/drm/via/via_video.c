@@ -36,13 +36,26 @@ void via_init_futex(drm_via_private_t *dev_priv)
 	DRM_DEBUG("\n");
 
 	for (i = 0; i < VIA_NR_XVMC_LOCKS; ++i) {
+#ifdef __NetBSD__
+		spin_lock_init(&dev_priv->decoder_lock[i]);
+		DRM_INIT_WAITQUEUE(&dev_priv->decoder_queue[i], "viadec");
+#else
 		init_waitqueue_head(&(dev_priv->decoder_queue[i]));
+#endif
 		XVMCLOCKPTR(dev_priv->sarea_priv, i)->lock = 0;
 	}
 }
 
 void via_cleanup_futex(drm_via_private_t *dev_priv)
 {
+#ifdef __NetBSD__
+	unsigned i;
+
+	for (i = 0; i < VIA_NR_XVMC_LOCKS; ++i) {
+		DRM_DESTROY_WAITQUEUE(&dev_priv->decoder_queue[i]);
+		spin_lock_destroy(&dev_priv->decoder_lock[i]);
+	}
+#endif
 }
 
 void via_release_futex(drm_via_private_t *dev_priv, int context)
@@ -58,7 +71,14 @@ void via_release_futex(drm_via_private_t *dev_priv, int context)
 		if ((_DRM_LOCKING_CONTEXT(*lock) == context)) {
 			if (_DRM_LOCK_IS_HELD(*lock)
 			    && (*lock & _DRM_LOCK_CONT)) {
+#ifdef __NetBSD__
+				spin_lock(&dev_priv->decoder_lock[i]);
+				DRM_SPIN_WAKEUP_ALL(&dev_priv->decoder_queue[i],
+				    &dev_priv->decoder_lock[i]);
+				spin_unlock(&dev_priv->decoder_lock[i]);
+#else
 				wake_up(&(dev_priv->decoder_queue[i]));
+#endif
 			}
 			*lock = 0;
 		}
@@ -82,11 +102,27 @@ int via_decoder_futex(struct drm_device *dev, void *data, struct drm_file *file_
 
 	switch (fx->func) {
 	case VIA_FUTEX_WAIT:
+#ifdef __NetBSD__
+		spin_lock(&dev_priv->decoder_lock[fx->lock]);
+		DRM_SPIN_WAIT_ON(ret, &dev_priv->decoder_queue[fx->lock],
+		    &dev_priv->decoder_lock[fx->lock],
+		    (fx->ms / 10) * (DRM_HZ / 100),
+		    *lock != fx->val);
+		spin_unlock(&dev_priv->decoder_lock[fx->lock]);
+#else
 		DRM_WAIT_ON(ret, dev_priv->decoder_queue[fx->lock],
 			    (fx->ms / 10) * (HZ / 100), *lock != fx->val);
+#endif
 		return ret;
 	case VIA_FUTEX_WAKE:
+#ifdef __NetBSD__
+		spin_lock(&dev_priv->decoder_lock[fx->lock]);
+		DRM_SPIN_WAKEUP_ALL(&dev_priv->decoder_queue[fx->lock],
+		    &dev_priv->decoder_lock[fx->lock]);
+		spin_unlock(&dev_priv->decoder_lock[fx->lock]);
+#else
 		wake_up(&(dev_priv->decoder_queue[fx->lock]));
+#endif
 		return 0;
 	}
 	return 0;

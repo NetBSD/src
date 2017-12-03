@@ -1,4 +1,4 @@
-/*	$NetBSD: md_component.c,v 1.1.10.2 2014/08/20 00:04:37 tls Exp $	*/
+/*	$NetBSD: md_component.c,v 1.1.10.3 2017/12/03 11:39:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_component.c,v 1.1.10.2 2014/08/20 00:04:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_component.c,v 1.1.10.3 2017/12/03 11:39:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -36,9 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: md_component.c,v 1.1.10.2 2014/08/20 00:04:37 tls Ex
 
 #include "ioconf.c"
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
+#include <rump-sys/vfs.h>
 
 extern void mdattach(int); /* XXX */
 

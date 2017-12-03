@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io_kern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: v7fs_io_kern.c,v 1.1.12.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,13 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.1.12.2 2017/12/03 11:38:44 jdolecek Exp $");
+
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
-#include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -78,9 +76,7 @@ v7fs_io_init(struct v7fs_self **fs,
 	struct local_io *local;
 	int error = 0;
 
-	if ((p = kmem_zalloc(sizeof(*p), KM_SLEEP)) == NULL)
-		return ENOMEM;
-
+	p = kmem_zalloc(sizeof(*p), KM_SLEEP);
 	p->scratch_free = -1;
 	p->scratch_remain = V7FS_SELF_NSCRATCH;
 
@@ -90,10 +86,7 @@ v7fs_io_init(struct v7fs_self **fs,
 	v7fs_endian_init(p);
 #endif
 	/* IO */
-	if ((local = kmem_zalloc(sizeof(*local), KM_SLEEP)) == NULL) {
-		error = ENOMEM;
-		goto errexit;
-	}
+	local = kmem_zalloc(sizeof(*local), KM_SLEEP);
 	p->io.read = v7fs_os_read;
 	p->io.read_n = v7fs_os_read_n;
 	p->io.write = v7fs_os_write;
@@ -125,9 +118,7 @@ errexit:
 static bool
 lock_init(struct lock_ops *ops)
 {
-	if ((ops->cookie = kmem_zalloc(sizeof(kmutex_t), KM_SLEEP)) == NULL) {
-		return false;
-	}
+	ops->cookie = kmem_zalloc(sizeof(kmutex_t), KM_SLEEP);
 	mutex_init(ops->cookie, MUTEX_DEFAULT, IPL_NONE);
 	ops->lock = v7fs_os_lock;
 	ops->unlock = v7fs_os_unlock;
@@ -176,7 +167,7 @@ v7fs_os_read(void *self, uint8_t *buf, daddr_t block)
 	struct local_io *bio = (struct local_io *)self;
 	struct buf *bp = NULL;
 
-	if (bread(bio->vp, block, DEV_BSIZE, bio->cred, 0, &bp) != 0)
+	if (bread(bio->vp, block, DEV_BSIZE, 0, &bp) != 0)
 		goto error_exit;
 	memcpy(buf, bp->b_data, DEV_BSIZE);
 	brelse(bp, 0);

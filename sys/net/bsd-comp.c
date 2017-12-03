@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.20 2008/11/29 23:15:20 cube Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.20.26.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.20 2008/11/29 23:15:20 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.20.26.1 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1090,7 +1090,7 @@ bsd_decompress(void *state, struct mbuf *cmp, struct mbuf **dmpp)
 #endif /* DEBUG */
 }
 
-MODULE(MODULE_CLASS_MISC, ppp_bsdcomp, NULL);
+MODULE(MODULE_CLASS_MISC, ppp_bsdcomp, "if_ppp");
 
 static int
 ppp_bsdcomp_modcmd(modcmd_t cmd, void *arg)

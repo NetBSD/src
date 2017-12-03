@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.105.2.3 2014/08/20 00:03:50 tls Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.105.2.4 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.105.2.3 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.105.2.4 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.105.2.3 2014/08/20 00:03:
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/callout.h>
+#include <sys/syslog.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
@@ -229,9 +230,6 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		 * New event requested - allocate a sysmon_envsys event.
 		 */
 		see = kmem_zalloc(sizeof(*see), KM_SLEEP);
-		if (see == NULL)
-			return ENOMEM;
-
 		DPRINTF(("%s: dev %s sensor %s: new event\n",
 		    __func__, sme->sme_name, edata->desc));
 
@@ -315,7 +313,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/*
 	 * Initialize the events framework if it wasn't initialized before.
 	 */
-	if ((sme->sme_flags & SME_CALLOUT_INITIALIZED) == 0)
+	if (sme->sme_callout_state == SME_CALLOUT_INVALID)
 		error = sme_events_init(sme);
 
 	/*
@@ -345,6 +343,7 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 {
 	sme_event_t *see;
 	int evcounter = 0;
+	bool destroy = false;
 
 	KASSERT(sme != NULL);
 
@@ -374,10 +373,15 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 		}
 	}
 
-	if (LIST_EMPTY(&sme->sme_events_list))
-		if (sme->sme_flags & SME_CALLOUT_INITIALIZED)
-			sme_events_destroy(sme);
+	if (LIST_EMPTY(&sme->sme_events_list) &&
+	    sme->sme_callout_state == SME_CALLOUT_READY) {
+		sme_events_halt_callout(sme);
+		destroy = true;
+	}
 	mutex_exit(&sme->sme_mtx);
+
+	if (destroy)
+		sme_events_destroy(sme);
 }
 
 /*
@@ -390,6 +394,7 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 {
 	sme_event_t *see;
 	bool found = false;
+	bool destroy = false;
 
 	KASSERT(sensor != NULL);
 
@@ -420,7 +425,15 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 
 	sme_remove_event(see, sme);
 
+	if (LIST_EMPTY(&sme->sme_events_list)) {
+		sme_events_halt_callout(sme);
+		destroy = true;
+	}
 	mutex_exit(&sme->sme_mtx);
+
+	if (destroy)
+		sme_events_destroy(sme);
+
 	return 0;
 }
 
@@ -467,18 +480,7 @@ sme_remove_event(sme_event_t *see, struct sysmon_envsys *sme)
 
 	KASSERT(mutex_owned(&sme->sme_mtx));
 
-	if (see->see_edata->flags & ENVSYS_FHAS_ENTROPY)
-		rnd_detach_source(&see->see_edata->rnd_src);
 	LIST_REMOVE(see, see_list);
-	/*
-	 * So the events list is empty, we'll do the following:
-	 *
-	 * 	- stop and destroy the callout.
-	 * 	- destroy the workqueue.
-	 */
-	if (LIST_EMPTY(&sme->sme_events_list))
-		sme_events_destroy(sme);
-
 	kmem_free(see, sizeof(*see));
 }
 
@@ -566,10 +568,9 @@ sme_events_init(struct sysmon_envsys *sme)
 	if (error)
 		return error;
 
-	mutex_init(&sme->sme_callout_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sme->sme_callout, sme_events_check, sme);
-	sme->sme_flags |= SME_CALLOUT_INITIALIZED;
+	sme->sme_callout_state = SME_CALLOUT_READY;
 	sme_schedule_callout(sme);
 	DPRINTF(("%s: events framework initialized for '%s'\n",
 	    __func__, sme->sme_name));
@@ -588,8 +589,9 @@ sme_schedule_callout(struct sysmon_envsys *sme)
 	uint64_t timo;
 
 	KASSERT(sme != NULL);
+	KASSERT(mutex_owned(&sme->sme_mtx));
 
-	if ((sme->sme_flags & SME_CALLOUT_INITIALIZED) == 0)
+	if (sme->sme_callout_state != SME_CALLOUT_READY)
 		return;
 
 	if (sme->sme_events_timeout)
@@ -602,21 +604,47 @@ sme_schedule_callout(struct sysmon_envsys *sme)
 }
 
 /*
+ * sme_events_halt_callout:
+ *
+ * 	+ Halt the callout of the event framework for this device.
+ */
+void
+sme_events_halt_callout(struct sysmon_envsys *sme)
+{
+
+	KASSERT(mutex_owned(&sme->sme_mtx));
+	KASSERT(sme->sme_callout_state == SME_CALLOUT_READY);
+
+	/*
+	 * Set HALTED before callout_halt to ensure callout is not
+	 * scheduled again during callout_halt.  (callout_halt()
+	 * can potentially release the mutex, so an active callout
+	 * could reschedule itself if it grabs the mutex.)
+	 */
+
+	sme->sme_callout_state = SME_CALLOUT_HALTED;
+	callout_halt(&sme->sme_callout, &sme->sme_mtx);
+}
+
+/*
  * sme_events_destroy:
  *
- * 	+ Destroys the event framework for this device: callout
- * 	  stopped, workqueue destroyed and callout mutex destroyed.
+ * 	+ Destroy the callout and the workqueue of the event framework
+ *	  for this device.
  */
 void
 sme_events_destroy(struct sysmon_envsys *sme)
 {
-	KASSERT(mutex_owned(&sme->sme_mtx));
 
-	callout_stop(&sme->sme_callout);
-	workqueue_destroy(sme->sme_wq);
-	mutex_destroy(&sme->sme_callout_mtx);
-	callout_destroy(&sme->sme_callout);
-	sme->sme_flags &= ~SME_CALLOUT_INITIALIZED;
+	KASSERT(!mutex_owned(&sme->sme_mtx));
+
+	if (sme->sme_callout_state == SME_CALLOUT_HALTED) {
+		callout_destroy(&sme->sme_callout);
+		sme->sme_callout_state = SME_CALLOUT_INVALID;
+		workqueue_destroy(sme->sme_wq);
+	}
+	KASSERT(sme->sme_callout_state == SME_CALLOUT_INVALID);
+
 	DPRINTF(("%s: events framework destroyed for '%s'\n",
 	    __func__, sme->sme_name));
 }
@@ -708,14 +736,23 @@ sme_events_check(void *arg)
 
 	KASSERT(sme != NULL);
 
-	mutex_enter(&sme->sme_callout_mtx);
+	mutex_enter(&sme->sme_work_mtx);
+	if (sme->sme_busy > 0) {
+		log(LOG_WARNING, "%s: workqueue busy: updates stopped\n",
+		    sme->sme_name);
+		mutex_exit(&sme->sme_work_mtx);
+		return;
+	}
+	mutex_enter(&sme->sme_mtx);
 	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
 		workqueue_enqueue(sme->sme_wq, &see->see_wk, NULL);
 		see->see_edata->flags |= ENVSYS_FNEED_REFRESH;
+		sme->sme_busy++;
 	}
 	if (!sysmon_low_power)
 		sme_schedule_callout(sme);
-	mutex_exit(&sme->sme_callout_mtx);
+	mutex_exit(&sme->sme_mtx);
+	mutex_exit(&sme->sme_work_mtx);
 }
 
 /*
@@ -732,7 +769,8 @@ sme_events_worker(struct work *wk, void *arg)
 	envsys_data_t *edata = see->see_edata;
 
 	KASSERT(wk == &see->see_wk);
-	KASSERT(sme != NULL || edata != NULL);
+	KASSERT(sme != NULL);
+	KASSERT(edata != NULL);
 
 	mutex_enter(&sme->sme_mtx);
 	see->see_flags |= SEE_EVENT_WORKING;
@@ -748,7 +786,7 @@ sme_events_worker(struct work *wk, void *arg)
 	}
 
 	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
-	    "value_cur=%d upropset=%d\n", __func__, sme->sme_name, edata->desc,
+	    "value_cur=%d upropset=0x%04x\n", __func__, sme->sme_name, edata->desc,
 	    edata->sensor, see->see_type, edata->state, edata->units,
 	    edata->value_cur, edata->upropset));
 
@@ -792,6 +830,10 @@ sme_events_worker(struct work *wk, void *arg)
 out:
 	see->see_flags &= ~SEE_EVENT_WORKING;
 	cv_broadcast(&sme->sme_condvar);
+	mutex_enter(&sme->sme_work_mtx);
+	KASSERT(sme->sme_busy > 0);
+	sme->sme_busy--;
+	mutex_exit(&sme->sme_work_mtx);
 	mutex_exit(&sme->sme_mtx);
 }
 
@@ -964,12 +1006,16 @@ sme_deliver_event(sme_event_t *see)
 		 */
 		if (!sysmon_low_power && sme_event_check_low_power()) {
 			struct penvsys_state pes;
+			struct sysmon_envsys *sme = see->see_sme;
 
 			/*
 			 * Stop the callout and send the 'low-power' event.
 			 */
 			sysmon_low_power = true;
-			callout_stop(&see->see_sme->sme_callout);
+			KASSERT(mutex_owned(&sme->sme_mtx));
+			KASSERT(sme->sme_callout_state == SME_CALLOUT_READY);
+			callout_stop(&sme->sme_callout);
+			sme->sme_callout_state = SME_CALLOUT_HALTED;
 			pes.pes_type = PENVSYS_TYPE_BATTERY;
 			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
 		}

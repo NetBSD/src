@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.38.2.2 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.38.2.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.38.2.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.38.2.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,15 +77,17 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.38.2.2 2013/06/23 06:18:58 tls Exp $"
 #include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/mount.h>
+#include <sys/semaphore.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
+#include <sys/sysctl.h>
 
 MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
 #define	SEM_MAX_NAMELEN		14
-#define	SEM_VALUE_MAX		(~0U)
 
+#define	SEM_NSEMS_MAX		256
 #define	KS_UNLINKED		0x01
 
 static kmutex_t		ksem_lock	__cacheline_aligned;
@@ -104,6 +106,7 @@ static int		ksem_read_fop(file_t *, off_t *, struct uio *,
     kauth_cred_t, int);
 
 static const struct fileops semops = {
+	.fo_name = "sem",
 	.fo_read = ksem_read_fop,
 	.fo_write = fbadop_write,
 	.fo_ioctl = fbadop_ioctl,
@@ -128,6 +131,9 @@ static const struct syscall_package ksem_syscalls[] = {
 	{ SYS__ksem_timedwait, 0, (sy_call_t *)sys__ksem_timedwait },
 	{ 0, 0, NULL },
 };
+
+struct sysctllog *ksem_clog;
+int ksem_max;
 
 static int
 ksem_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -154,6 +160,7 @@ static int
 ksem_sysinit(void)
 {
 	int error;
+	const struct sysctlnode *rnode;
 
 	mutex_init(&ksem_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ksem_head);
@@ -167,6 +174,30 @@ ksem_sysinit(void)
 
 	ksem_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 	    ksem_listener_cb, NULL);
+
+	/* Define module-specific sysctl tree */
+
+	ksem_max = KSEM_MAX;
+	ksem_clog = NULL;
+
+	sysctl_createv(&ksem_clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "posix",
+			SYSCTL_DESCR("POSIX options"),
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&ksem_clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			CTLTYPE_INT, "semmax",
+			SYSCTL_DESCR("Maximal number of semaphores"),
+			NULL, 0, &ksem_max, 0,
+			CTL_CREATE, CTL_EOL);
+	sysctl_createv(&ksem_clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+			CTLTYPE_INT, "semcnt",
+			SYSCTL_DESCR("Current number of semaphores"),
+			NULL, 0, &nsems, 0,
+			CTL_CREATE, CTL_EOL);
 
 	return error;
 }
@@ -193,6 +224,7 @@ ksem_sysfini(bool interface)
 	}
 	kauth_unlisten_scope(ksem_listener);
 	mutex_destroy(&ksem_lock);
+	sysctl_teardown(&ksem_clog);
 	return 0;
 }
 
@@ -260,7 +292,7 @@ ksem_get(int fd, ksem_t **ksret)
 		fd_putfile(fd);
 		return EINVAL;
 	}
-	ks = fp->f_data;
+	ks = fp->f_ksem;
 	mutex_enter(&ks->ks_lock);
 
 	*ksret = ks;
@@ -303,6 +335,13 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 		len = 0;
 	}
 
+	if (atomic_inc_uint_nv(&l->l_proc->p_nsems) > SEM_NSEMS_MAX) {
+		atomic_dec_uint(&l->l_proc->p_nsems);
+		if (kname != NULL)
+			kmem_free(kname, len);
+		return -1;
+	}
+
 	ks = kmem_zalloc(sizeof(ksem_t), KM_SLEEP);
 	mutex_init(&ks->ks_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ks->ks_cv, "psem");
@@ -336,6 +375,7 @@ ksem_free(ksem_t *ks)
 	kmem_free(ks, sizeof(ksem_t));
 
 	atomic_dec_uint(&nsems_total);
+ 	atomic_dec_uint(&curproc->p_nsems);	
 }
 
 int
@@ -380,7 +420,7 @@ do_ksem_init(lwp_t *l, u_int val, intptr_t *idp, copyout_t docopyout)
 		fd_abort(p, fp, fd);
 		return error;
 	}
-	fp->f_data = ks;
+	fp->f_ksem = ks;
 	fd_affix(p, fp, fd);
 	return error;
 }
@@ -496,7 +536,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		ksnew = NULL;
 	}
 	KASSERT(ks != NULL);
-	fp->f_data = ks;
+	fp->f_ksem = ks;
 	fd_affix(p, fp, fd);
 err:
 	if (error) {
@@ -529,7 +569,7 @@ ksem_read_fop(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 {
 	size_t len;
 	char *name;
-	ksem_t *ks = fp->f_data;
+	ksem_t *ks = fp->f_ksem;
 
 	mutex_enter(&ks->ks_lock);
 	len = ks->ks_namelen;
@@ -543,7 +583,7 @@ ksem_read_fop(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 static int
 ksem_stat_fop(file_t *fp, struct stat *ub)
 {
-	ksem_t *ks = fp->f_data;
+	ksem_t *ks = fp->f_ksem;
 
 	mutex_enter(&ks->ks_lock);
 
@@ -573,7 +613,7 @@ ksem_stat_fop(file_t *fp, struct stat *ub)
 static int
 ksem_close_fop(file_t *fp)
 {
-	ksem_t *ks = fp->f_data;
+	ksem_t *ks = fp->f_ksem;
 	bool destroy = false;
 
 	mutex_enter(&ks->ks_lock);
@@ -673,7 +713,7 @@ out:
 }
 
 int
-do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
+do_ksem_wait(lwp_t *l, intptr_t id, bool try_p, struct timespec *abstime)
 {
 	int fd = (int)id, error, timeo;
 	ksem_t *ks;
@@ -685,7 +725,7 @@ do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
 	KASSERT(mutex_owned(&ks->ks_lock));
 	while (ks->ks_value == 0) {
 		ks->ks_waiters++;
-		if (!try && abstime != NULL) {
+		if (!try_p && abstime != NULL) {
 			error = ts2timo(CLOCK_REALTIME, TIMER_ABSTIME, abstime,
 			    &timeo, NULL);
 			if (error != 0)
@@ -693,7 +733,7 @@ do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
 		} else {
 			timeo = 0;
 		}
-		error = try ? EAGAIN : cv_timedwait_sig(&ks->ks_cv,
+		error = try_p ? EAGAIN : cv_timedwait_sig(&ks->ks_cv,
 		    &ks->ks_lock, timeo);
 		ks->ks_waiters--;
 		if (error)

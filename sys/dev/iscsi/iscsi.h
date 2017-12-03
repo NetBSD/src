@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi.h,v 1.3 2011/11/19 16:41:56 agc Exp $	*/
+/*	$NetBSD: iscsi.h,v 1.3.10.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004,2006,2011 The NetBSD Foundation, Inc.
@@ -182,6 +182,7 @@ typedef struct {
 #define ISCSI_STATUS_LOGOUT_CID_NOT_FOUND    45	/* Logout error: CID not found */
 #define ISCSI_STATUS_LOGOUT_RECOVERY_NS	     46	/* Logout error: Recovery not supported */
 #define ISCSI_STATUS_LOGOUT_ERROR	     47	/* Logout error: Unknown reason */
+#define ISCSI_STATUS_QUEUE_FULL              48 /* iSCSI send window exhausted */
 
 #define ISCSID_STATUS_SUCCESS                0		/* Indicates success. */
 #define ISCSID_STATUS_LIST_EMPTY             1001	/* The requested list is empty. */

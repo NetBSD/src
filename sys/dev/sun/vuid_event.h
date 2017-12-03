@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.7 2009/01/12 02:26:16 christos Exp $ */
+/*	$NetBSD: vuid_event.h,v 1.7.24.1 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 
 #ifndef _SUN_VUID_EVENT_H_
 #define _SUN_VUID_EVENT_H_
+
+#include <sys/ioccom.h>
 
 struct firm_timeval {
 	long tv_sec;

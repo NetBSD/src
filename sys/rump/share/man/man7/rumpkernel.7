@@ -1,0 +1,148 @@
+.\"     $NetBSD: rumpkernel.7,v 1.3.18.2 2017/12/03 11:39:20 jdolecek Exp $
+.\"
+.\" Copyright (c) 2008-2014 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 1, 2014
+.Dt RUMPKERNEL 7
+.Os
+.Sh NAME
+.Nm rump kernel
+.Nd The Anykernel and Rump Kernels
+.Sh DESCRIPTION
+Rump kernels provide portable, componentized, kernel quality drivers
+such as file systems, POSIX system call handlers, PCI device drivers, a
+SCSI protocol stack, virtio and a TCP/IP stack.
+The fundamental enabling technology is the anykernel architecture of
+.Nx ,
+which enables the use of unmodified
+.Nx
+kernel drivers.
+The minimalistic
+.Xr rumpuser 3
+interface integrates a rump kernel to the host platform.
+Suitable and readily supported platforms include for example POSIX
+userspace (such as
+.Nx ) ,
+hypervisors (such as Xen and KVM), and bare metal hardware.
+.Pp
+Rump kernels are component-oriented, which means that they consist
+of libraries which are linked together to form runtime images.
+If the platform supports it, dynamic linking may be used to load
+components at runtime, allowing the creation of services where the
+runtime component configuration is specified when the service is run (see
+.Xr rump_server 1
+for an example).
+.Pp
+A rump kernel provides its own set of namespaces, such as a file system
+hierarchy and TCP ports, that are independent of the ones on the host
+and of any other rump kernel instances.
+It should be noted that the presence of the provided namespaces
+depends on the components that the rump kernel was constructed with.
+For example, networking and file systems are components, and it is
+possible to construct a rump kernel which supports neither.
+.Pp
+A rump kernel accepts the following bootstrap parameters.
+The exact way of specifying the parameters depends on the host
+platform; for example in POSIX userspace the parameters are
+environment variables.
+.Bl -tag -width RUMP_MEMLIMITXX
+.It Dv RUMP_NCPU
+If set, the value indicates the number of virtual cores configured into a
+rump kernel, i.e. the number of threads which can be concurrently
+executing code inside the rump kernel.
+.Pp
+The special value "host" can be used to specify the number of
+of host cores available (note: not available on all platforms).
+If this parameter is unset, two cores will be configured.
+.It Dv RUMP_VERBOSE
+If set to non-zero, causes bootstrap messages to be displayed on the
+console.
+.It Dv RUMP_MEMLIMIT
+If set, indicates the maximum amount of memory that a rump kernel will
+attempt to allocate from the host.
+If this parameter is unset, the rump kernel attempt to allocate
+host memory until allocation fails.
+When the rump kernel is close to the allocation limit, or when host
+allocation fails, the rump kernel will attempt to make more memory
+available by invoking its internal pagedaemon to flush caches.
+.El
+.Sh SEE ALSO
+.Lk http://rumpkernel.org/
+.Rs
+.%A Antti Kantee
+.%A Justin Cormack
+.%T "Rump Kernels: No OS? No Problem!"
+.%D October 2014
+.%I USENIX
+.%J ;login:
+.%N No. 5
+.%V Vol. 39
+.Re
+.Rs
+.%A Antti Kantee
+.%D 2012
+.%J Aalto University Doctoral Dissertations
+.%T Flexible Operating System Internals: The Design and Implementation of the Anykernel and Rump Kernels
+.Re
+.Rs
+.%A Antti Kantee
+.%D March 2010
+.%B Proceedings of AsiaBSDCon 2010
+.%P pp. 75-84
+.%T Rump Device Drivers: Shine On You Kernel Diamond
+.Re
+.Rs
+.%A Arnaud Ysmal
+.%A Antti Kantee
+.%D September 2009
+.%B EuroBSDCon 2009
+.%T Fs-utils: File Systems Access Tools for Userland
+.Re
+.Rs
+.%A Antti Kantee
+.%D June 2009
+.%B Proceedings of the 2009 USENIX Annual Technical Conference
+.%P pp. 201-214
+.%T Rump File Systems: Kernel Code Reborn
+.Re
+.Rs
+.%A Antti Kantee
+.%D May 2009
+.%B BSDCan 2009
+.%T Kernel Development in Userspace - The Rump Approach
+.Re
+.Rs
+.%A Antti Kantee
+.%D March 2009
+.%B Proceedings of AsiaBSDCon 2009
+.%P pp. 71-80
+.%T Environmental Independence: BSD Kernel TCP/IP in Userspace
+.Re
+.Sh HISTORY
+An experimental concept for the anykernel and rump kernels was first seen
+during the
+.Nx 5.0
+development cycle.
+A stable concept was ready for
+.Nx 6.0 .

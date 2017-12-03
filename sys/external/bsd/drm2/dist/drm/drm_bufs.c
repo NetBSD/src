@@ -213,7 +213,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 		}
 		if (map->type == _DRM_REGISTERS) {
 #ifdef __NetBSD__
-			map->handle = drm_ioremap(dev, map);
+			drm_core_ioremap(map, dev);
 #else
 			if (map->flags & _DRM_WRITE_COMBINING)
 				map->handle = ioremap_wc(map->offset,
@@ -351,7 +351,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 	if (!list) {
 		if (map->type == _DRM_REGISTERS)
 #ifdef __NetBSD__
-			drm_iounmap(dev, map);
+			drm_core_ioremapfree(map, dev);
 #else
 			iounmap(map->handle);
 #endif
@@ -372,7 +372,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 	if (ret) {
 		if (map->type == _DRM_REGISTERS)
 #ifdef __NetBSD__		/* XXX What about other map types...?  */
-			drm_iounmap(dev, map);
+			drm_core_ioremapfree(map, dev);
 #else
 			iounmap(map->handle);
 #endif
@@ -494,7 +494,7 @@ int drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 	switch (map->type) {
 	case _DRM_REGISTERS:
 #ifdef __NetBSD__
-		drm_iounmap(dev, map);
+		drm_core_ioremapfree(map, dev);
 #else
 		iounmap(map->handle);
 #endif

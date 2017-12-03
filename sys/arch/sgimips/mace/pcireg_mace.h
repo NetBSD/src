@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg_mace.h,v 1.2 2005/12/11 12:18:54 christos Exp $	*/
+/*	$NetBSD: pcireg_mace.h,v 1.2.122.1 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -83,6 +83,7 @@
 #define CONTROL_INT5_INVAL_BUFS	0x00200000
 #define CONTROL_INT6_INVAL_BUFS	0x00400000
 #define CONTROL_INT7_INVAL_BUFS	0x00800000
+#define CONTROL_INT_INVAL_MASK  0x00ff0000
 #define CONTROL_OVERRUN_COND_I	0x01000000
 #define CONTROL_PARITY_ERROR_I	0x02000000
 #define CONTROL_SYSTEM_ERROR_I	0x04000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.68.2.2 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.68.2.3 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68.2.2 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68.2.3 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68.2.2 2014/08/20 00:03:06 tls Ex
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -75,6 +73,7 @@ extern int trap_types;
 
 int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
+db_regs_t *ddb_regp = NULL;
 
 void db_mach_cpu (db_expr_t, bool, db_expr_t, const char *);
 
@@ -83,13 +82,12 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
 	  "switch to another cpu", "cpu-no", NULL) },
 #endif
-		
-	{ DDB_ADD_CMD(NULL, NULL, 0,  NULL,NULL,NULL) },
+	{ DDB_ADD_CMD(NULL, NULL, 0, NULL, NULL, NULL) },
 };
 
 void kdbprinttrap(int, int);
 #ifdef MULTIPROCESSOR
-extern void ddb_ipi(int, struct trapframe);
+extern void ddb_ipi(struct trapframe);
 extern void ddb_ipi_tss(struct i386tss *);
 static void ddb_suspend(struct trapframe *);
 #ifndef XEN
@@ -98,14 +96,12 @@ int ddb_vec;
 static bool ddb_mp_online;
 #endif
 
-db_regs_t *ddb_regp = 0;
-
-#define NOCPU -1
+#define NOCPU	-1
 
 int ddb_cpu = NOCPU;
 
 typedef void (vector)(void);
-extern vector Xintrddbipi;
+extern vector Xintrddbipi, Xx2apic_intrddbipi;
 
 void
 db_machine_init(void)
@@ -113,8 +109,13 @@ db_machine_init(void)
 
 #ifdef MULTIPROCESSOR
 #ifndef XEN
+	vector *handler = &Xintrddbipi;
+#if NLAPIC > 0
+	if (lapic_is_x2apic())
+		handler = &Xx2apic_intrddbipi;
+#endif
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	idt_vec_set(ddb_vec, &Xintrddbipi);
+	idt_vec_set(ddb_vec, handler);
 #else
 	/* Initialised as part of xen_ipi_init() */
 #endif /* XEN */
@@ -227,7 +228,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 #endif
 	/* XXX Should switch to kdb's own stack here. */
 	ddb_regs = *regs;
-	if (!(flags & TC_TSS) && KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+	if (!(flags & TC_TSS) && KERNELMODE(regs->tf_cs)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
@@ -241,6 +242,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	ddb_regs.tf_fs &= 0xffff;
 	ddb_regs.tf_gs &= 0xffff;
 	ddb_regs.tf_ss &= 0xffff;
+
 	s = splhigh();
 	db_active++;
 	cnpollc(true);
@@ -268,15 +270,11 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	regs->tf_eip    = ddb_regs.tf_eip;
 	regs->tf_cs     = ddb_regs.tf_cs;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	if (!(flags & TC_TSS) && !KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+	if (!(flags & TC_TSS) && !KERNELMODE(regs->tf_cs)) {
 		/* ring transit - saved esp and ss valid */
 		regs->tf_esp    = ddb_regs.tf_esp;
 		regs->tf_ss     = ddb_regs.tf_ss;
 	}
-
-#ifdef TRAPLOG
-	wrmsr(MSR_DEBUGCTLMSR, 0x1);
-#endif
 
 	return (1);
 }
@@ -297,7 +295,7 @@ cpu_Debugger(void)
  * that the effect is as if the arguments were passed call by reference.
  */
 void
-ddb_ipi(int cpl, struct trapframe frame)
+ddb_ipi(struct trapframe frame)
 {
 
 	ddb_suspend(&frame);
@@ -340,7 +338,7 @@ ddb_suspend(struct trapframe *frame)
 	regs = *frame;
 	flags = regs.tf_err & TC_FLAGMASK;
 	regs.tf_err &= ~TC_FLAGMASK;
-	if (!(flags & TC_TSS) && KERNELMODE(regs.tf_cs, regs.tf_eflags)) {
+	if (!(flags & TC_TSS) && KERNELMODE(regs.tf_cs)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
@@ -351,6 +349,7 @@ ddb_suspend(struct trapframe *frame)
 	ci->ci_ddb_regs = &regs;
 
 	atomic_or_32(&ci->ci_flags, CPUF_PAUSE);
+
 	while (ci->ci_flags & CPUF_PAUSE)
 		;
 	ci->ci_ddb_regs = 0;
@@ -361,11 +360,7 @@ ddb_suspend(struct trapframe *frame)
 extern void cpu_debug_dump(void); /* XXX */
 
 void
-db_mach_cpu(
-	db_expr_t	addr,
-	bool		have_addr,
-	db_expr_t	count,
-	const char *	modif)
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_info *ci;
 	if (!have_addr) {
@@ -395,6 +390,5 @@ db_mach_cpu(
 	db_printf("using CPU %ld", addr);
 	ddb_regp = ci->ci_ddb_regs;
 }
-
 
 #endif

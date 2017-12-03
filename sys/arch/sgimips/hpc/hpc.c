@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.66.12.1 2012/11/20 03:01:41 tls Exp $	*/
+/*	$NetBSD: hpc.c,v 1.66.12.2 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.66.12.1 2012/11/20 03:01:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.66.12.2 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.66.12.1 2012/11/20 03:01:41 tls Exp $");
 #include <sys/reboot.h>
 #include <sys/callout.h>
 
-#define _SGIMIPS_BUS_DMA_PRIVATE
 #include <sys/bus.h>
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
@@ -372,6 +371,12 @@ static int	hpc_read_eeprom(int, bus_space_tag_t, bus_space_handle_t,
 CFATTACH_DECL_NEW(hpc, sizeof(struct hpc_softc),
     hpc_match, hpc_attach, NULL, NULL);
 
+static void hpc_bus_mem_init(bus_space_tag_t, void *);
+
+static struct mips_bus_space	hpc_mbst;
+bus_space_tag_t	hpc_memt = NULL;
+
+
 static int
 hpc_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -498,12 +503,15 @@ hpc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	sc->sc_ct = SGIMIPS_BUS_SPACE_HPC;
+	hpc_bus_mem_init(&hpc_mbst, NULL);
+	hpc_memt = &hpc_mbst;
+
+	sc->sc_ct = normal_memt;
 	sc->sc_ch = ga->ga_ioh;
 
 	sc->sc_base = ga->ga_addr;
 
-	hpc_read_eeprom(hpctype, SGIMIPS_BUS_SPACE_HPC,
+	hpc_read_eeprom(hpctype, normal_memt,
 	    MIPS_PHYS_TO_KSEG1(sc->sc_base), ha.hpc_eeprom,
 	    sizeof(ha.hpc_eeprom));
 
@@ -518,8 +526,10 @@ hpc_attach(device_t parent, device_t self, void *aux)
 		ha.ha_irq = hd->hd_irq;
 
 		/* XXX This is disgusting. */
-		ha.ha_st = SGIMIPS_BUS_SPACE_HPC;
-		ha.ha_sh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
+		ha.ha_st = normal_memt;
+		if (bus_space_map(normal_memt, sc->sc_base, 0,
+		    BUS_SPACE_MAP_LINEAR, &ha.ha_sh) != 0)
+		    	continue;
 		ha.ha_dmat = &sgimips_default_bus_dma_tag;
 		if (hpctype == 3)
 			ha.hpc_regs = &hpc3_values;
@@ -730,7 +740,7 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
 
 	offset = (hpctype == 3) ? HPC3_EEPROM_DATA : HPC1_AUX_REGS;
 
-	tag = SGIMIPS_BUS_SPACE_NORMAL;
+	tag = normal_memt;
 	if (bus_space_subregion(t, h, offset, 1, &bsh) != 0)
 		return (1);
 
@@ -755,3 +765,14 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
 
 	return (0);
 }
+
+#define CHIP	   		hpc
+#define	CHIP_MEM		/* defined */
+#define CHIP_ALIGN_STRIDE	2
+#define CHIP_ACCESS_SIZE	4
+#define	CHIP_W1_BUS_START(v)	0x00000000UL
+#define CHIP_W1_BUS_END(v)	0xffffffffUL
+#define	CHIP_W1_SYS_START(v)	0x00000000UL
+#define	CHIP_W1_SYS_END(v)	0xffffffffUL
+
+#include <mips/mips/bus_space_alignstride_chipdep.c>

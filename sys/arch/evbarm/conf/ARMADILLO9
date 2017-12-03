@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.37.2.3 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: ARMADILLO9,v 1.37.2.4 2017/12/03 11:36:03 jdolecek Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -6,7 +6,7 @@
 include	"arch/evbarm/conf/std.armadillo9"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-options		MSGBUFSIZE=65536
+options 	MSGBUFSIZE=65536
 #options 	KSTACK_CHECK_MAGIC
 
 # estimated number of users
@@ -41,6 +41,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -71,18 +72,11 @@ options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_16	# NetBSD 1.6 compatibility.
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+include 	"conf/compat_netbsd20.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 options 	SYSVMSG		# System V-like message queues
@@ -102,7 +96,6 @@ options 	CONUNIT=0		# Console port number
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
@@ -123,7 +116,7 @@ options 	DDB		# in-kernel debugger
 #options	DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=600000
+makeoptions	COPY_SYMTAB=1
 
 #options 	PMAP_INCLUDE_PTE_SYNC
 #options 	LOCKDEBUG
@@ -250,6 +243,8 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # Audio support
 #audio*	at audiobus?
+
+#spkr*	at audio?			# PC speaker (synthesized)
 
 # MIDI support
 #midi*	at midibus?

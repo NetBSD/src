@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.13.18.1 2012/11/20 03:01:23 tls Exp $ */
+/*	$NetBSD: plumohci.c,v 1.13.18.2 2017/12/03 11:36:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.13.18.1 2012/11/20 03:01:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.13.18.2 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ struct plumohci_shm {
 struct plumohci_softc {
 	struct ohci_softc sc;
 	void *sc_ih;
-	void *sc_wakeih;		
+	void *sc_wakeih;
 
 	LIST_HEAD(, plumohci_shm) sc_shm_head;
 };
@@ -124,7 +124,7 @@ plumohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* PLUM2 builtin OHCI module */
 
-	return (1);
+	return 1;
 }
 
 void
@@ -132,24 +132,23 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct plumohci_softc *sc = device_private(self);
 	struct plum_attach_args *pa = aux;
-	usbd_status r;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc.iot = pa->pa_iot;
-	sc->sc.sc_bus.dmatag = &plumohci_bus_dma_tag.bdt;
+	sc->sc.sc_bus.ub_dmatag = &plumohci_bus_dma_tag.bdt;
 	plumohci_bus_dma_tag._dmamap_chipset_v = sc;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, PLUM_OHCI_REGBASE, OHCI_PAGE_SIZE, 
+	if (bus_space_map(sc->sc.iot, PLUM_OHCI_REGBASE, OHCI_PAGE_SIZE,
 	    0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
 	}
 
 	/* power up */
-	/* 
+	/*
 	 * in the case of PLUM2, UHOSTC uses the VRAM as the shared RAM
 	 * so establish power/clock of Video contoroller
 	 */
@@ -164,12 +163,12 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = plum_intr_establish(pa->pa_pc, PLUM_INT_USB, IST_EDGE,
 	    IPL_USB, ohci_intr, sc);
 #if 0
-	/* 
-	 *  enable the clock restart request interrupt 
+	/*
+	 *  enable the clock restart request interrupt
 	 *  (for USBSUSPEND state)
 	 */
-	sc->sc_wakeih = plum_intr_establish(pa->pa_pc, PLUM_INT_USBWAKE, 
-	    IST_EDGE, IPL_USB, 
+	sc->sc_wakeih = plum_intr_establish(pa->pa_pc, PLUM_INT_USBWAKE,
+	    IST_EDGE, IPL_USB,
 	    plumohci_intr, sc);
 #endif
 	/*
@@ -179,10 +178,10 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	r = ohci_init(&sc->sc);
+	int err = ohci_init(&sc->sc);
 
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf(": init failed, error=%d\n", r);
+	if (err) {
+		printf(": init failed, error=%d\n", err);
 
 		plum_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		plum_intr_disestablish(pa->pa_pc, sc->sc_wakeih);
@@ -203,7 +202,7 @@ plumohci_intr(void *arg)
 
 /*
  * Plum2 OHCI specific busdma routines.
- *	Plum2 OHCI shared buffer can't allocate on memory 
+ *	Plum2 OHCI shared buffer can't allocate on memory
  *	but V-RAM (busspace).
  */
 
@@ -244,13 +243,13 @@ __plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
 	    size, OHCI_PAGE_SIZE, 0, 0,
 	    (bus_addr_t *)(void *)&caddr, &bsh);
 	if (error)
-		return (1);
+		return 1;
 
 	pmap_extract(pmap_kernel(), (vaddr_t)caddr, &paddr);
 
 	ps = malloc(sizeof(struct plumohci_shm), M_DEVBUF, M_NOWAIT);
 	if (ps == 0)
-		return (1);
+		return 1;
 
 	ps->ps_bsh = bsh;
 	ps->ps_size = segs[0].ds_len = size;
@@ -261,7 +260,7 @@ __plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
 
 	*rsegs = 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -301,11 +300,11 @@ __plumohci_dmamem_map(bus_dma_tag_t tx, bus_dma_segment_t *segs, int nsegs,
 
 			*kvap = ps->ps_caddr;
 
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 void

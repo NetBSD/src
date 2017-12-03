@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.25.12.1 2014/08/20 00:02:51 tls Exp $
+#	$NetBSD: Makefile,v 1.25.12.2 2017/12/03 11:36:00 jdolecek Exp $
 
 NOMAN= # defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -53,10 +53,12 @@ CPPFLAGS+=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
 #CPPFLAGS+=	-DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 
 # compiler flags for smallest code size
-CFLAGS=		-O2 -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+AFLAGS+=	-mips3
+CFLAGS+=	-mips3
 .if ${MACHINE_ARCH} == "mips64el"
-AFLAGS+=	-mips3 -mabi=32
-CFLAGS+=	-mips3 -mabi=32
+AFLAGS+=	-mabi=32
+CFLAGS+=	-mabi=32
 LINKFORMAT=	-m elf32ltsmip
 .endif
 
@@ -82,9 +84,6 @@ SRCS+=		lcd.c
 .PATH: ${LIBSADIR}
 SRCS+=		dev_net.c
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-
 ### find out what to use for libkern
 KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
@@ -100,10 +99,7 @@ SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 
 LIBS=		${SALIB} ${ZLIB} ${KERNLIB}
 
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "cobalt"
+.include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \

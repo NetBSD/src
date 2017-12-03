@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.75.2.3 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.75.2.4 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.75.2.3 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.75.2.4 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +52,9 @@ extern int usbdebug;
 #define ANY 0xffff
 
 Static const struct usbd_quirk_entry {
-	u_int16_t idVendor;
-	u_int16_t idProduct;
-	u_int16_t bcdDevice;
+	uint16_t idVendor;
+	uint16_t idProduct;
+	uint16_t bcdDevice;
 	struct usbd_quirks quirks;
 } usb_quirks[] = {
  /* Devices which should be ignored by uhid */
@@ -63,10 +67,12 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_TRIPPLITE2, ANY,			    ANY,   { UQ_HID_IGNORE }},
  { USB_VENDOR_MISC, USB_PRODUCT_MISC_WISPY_24X, ANY, { UQ_HID_IGNORE }},
  { USB_VENDOR_WELTREND, USB_PRODUCT_WELTREND_HID,   ANY,   { UQ_HID_IGNORE }},
+ { USB_VENDOR_SILABS, USB_PRODUCT_SILABS_EC3,       ANY,   { UQ_HID_IGNORE }},
+ { USB_VENDOR_TI, USB_PRODUCT_TI_MSP430,            ANY,   { UQ_HID_IGNORE }},
 
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
  { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4,
-   						    0x094, { UQ_SWAP_UNICODE}},
+						    0x094, { UQ_SWAP_UNICODE}},
  { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_BAD_ADC }},
  { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_AU_NO_XU }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ADA70,	    0x103, { UQ_BAD_ADC }},
@@ -83,22 +89,23 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_ALCOR2, USB_PRODUCT_ALCOR2_KBD_HUB,   0x001, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
- 	0x100, { UQ_ASSUME_CM_OVER_DATA }},
+	0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_SANYO, USB_PRODUCT_SANYO_SCP4900,
- 	0x000, { UQ_ASSUME_CM_OVER_DATA }},
+	0x000, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_T720C,
- 	0x001, { UQ_ASSUME_CM_OVER_DATA }},
+	0x001, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_EICON, USB_PRODUCT_EICON_DIVA852,
-        0x100, { UQ_ASSUME_CM_OVER_DATA }},
+	0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_SIEMENS2, USB_PRODUCT_SIEMENS2_MC75,
-        0x000, { UQ_ASSUME_CM_OVER_DATA }},
+	0x000, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
-   						    0x100, { UQ_AU_INP_ASYNC }},
+						    0x100, { UQ_AU_INP_ASYNC }},
  { USB_VENDOR_AVANCELOGIC, USB_PRODUCT_AVANCELOGIC_USBAUDIO,
-   						    0x101, { UQ_AU_INP_ASYNC }},
+						    0x101, { UQ_AU_INP_ASYNC }},
  { USB_VENDOR_PLANTRONICS, USB_PRODUCT_PLANTRONICS_HEADSET,
-   						    0x004, { UQ_AU_INP_ASYNC }},
+						    0x004, { UQ_AU_INP_ASYNC }},
+ { USB_VENDOR_CMEDIA, USB_PRODUCT_CMEDIA_USBAUDIO,  ANY,   { UQ_AU_INP_ASYNC }},
  /* XXX These should have a revision number, but I don't know what they are. */
  { USB_VENDOR_HP, USB_PRODUCT_HP_895C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_880C,		    ANY,   { UQ_BROKEN_BIDIR }},
@@ -152,9 +159,9 @@ const struct usbd_quirks *
 usbd_find_quirk(usb_device_descriptor_t *d)
 {
 	const struct usbd_quirk_entry *t;
-	u_int16_t vendor = UGETW(d->idVendor);
-	u_int16_t product = UGETW(d->idProduct);
-	u_int16_t revision = UGETW(d->bcdDevice);
+	uint16_t vendor = UGETW(d->idVendor);
+	uint16_t product = UGETW(d->idProduct);
+	uint16_t revision = UGETW(d->bcdDevice);
 
 	for (t = usb_quirks; t->idVendor != 0; t++) {
 		if (t->idVendor  == vendor &&
@@ -168,5 +175,5 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 			  UGETW(d->idVendor), UGETW(d->idProduct),
 			  UGETW(d->bcdDevice), t->quirks.uq_flags);
 #endif
-	return (&t->quirks);
+	return &t->quirks;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.3.2.1 2017/12/03 11:38:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -87,7 +87,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.3.2.1 2017/12/03 11:38:02 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -468,7 +468,7 @@ ipfr_frag_new(
 			  IPFR_CMPSZ)) {
 			RWLOCK_EXIT(lock);
 			FBUMPD(ifs_exists);
-			KFREE(fra);
+			KFREE(fran);
 			return NULL;
 		}
 
@@ -726,6 +726,8 @@ ipf_frag_lookup(
 			} else if (off == 0)
 				f->ipfr_seen0 = 1;
 
+#if 0
+			/* We can't do this, since we only have a read lock! */
 			if (f != table[idx]) {
 				ipfr_t **fp;
 
@@ -745,9 +747,10 @@ ipf_frag_lookup(
 				f->ipfr_hprev = table + idx;
 				table[idx] = f;
 			}
+#endif
 
 			/*
-			 * If we've follwed the fragments, and this is the
+			 * If we've followed the fragments, and this is the
 			 * last (in order), shrink expiration time.
 			 */
 			if (off == f->ipfr_off) {

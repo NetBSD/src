@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.55 2010/04/05 07:19:32 joerg Exp $ */
+/*	$NetBSD: if_ie.c,v 1.55.18.1 2017/12/03 11:36:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55 2010/04/05 07:19:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55.18.1 2017/12/03 11:36:46 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -128,11 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55 2010/04/05 07:19:32 joerg Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -208,10 +203,9 @@ static inline uint16_t vtop16sw(struct ie_softc *, void *);
 
 static inline void ie_ack(struct ie_softc *, u_int);
 static inline u_short ether_cmp(u_char *, uint8_t *);
-static inline int check_eh(struct ie_softc *, struct ether_header *, int *);
 static inline int ie_buflen(struct ie_softc *, int);
 static inline int ie_packet_len(struct ie_softc *);
-static inline struct mbuf * ieget(struct ie_softc *, int *);
+static inline struct mbuf * ieget(struct ie_softc *);
 
 
 /*
@@ -356,6 +350,7 @@ ie_attach(struct ie_softc *sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_addr);
 }
 
@@ -644,7 +639,7 @@ ietint(struct ie_softc *sc)
 	if (sc->xmit_busy > 0)
 		iexmit(sc);
 
-	iestart(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 /*
@@ -669,32 +664,6 @@ ether_cmp(uint8_t *one, uint8_t *two)
 	return diff;
 }
 #define	ether_equal !ether_cmp
-
-/*
- * Check for a valid address.  to_bpf is filled in with one of the following:
- *   0 -> BPF doesn't get this packet
- *   1 -> BPF does get this packet
- *   2 -> BPF does get this packet, but we don't
- * Return value is true if the packet is for us, and false otherwise.
- *
- * This routine is a mess, but it's also critical that it be as fast
- * as possible.  It could be made cleaner if we can assume that the
- * only client which will fiddle with IFF_PROMISC is BPF.  This is
- * probably a good assumption, but we do not make it here.  (Yet.)
- */
-static inline int 
-check_eh(struct ie_softc *sc, struct ether_header *eh, int *to_bpf)
-{
-	struct ifnet *ifp;
-
-	ifp = &sc->sc_if;
-	*to_bpf = (ifp->if_bpf != 0);
-
-	/*
-	 * This is all handled at a higher level now.
-	 */
-	return 1;
-}
 
 /*
  * We want to isolate the bits that have meaning...  This assumes that
@@ -796,7 +765,7 @@ iexmit(struct ie_softc *sc)
  * operation considerably.  (Provided that it works, of course.)
  */
 static inline struct mbuf *
-ieget(struct ie_softc *sc, int *to_bpf)
+ieget(struct ie_softc *sc)
 {
 	struct mbuf *top, **mp, *m;
 	int len, totlen, resid;
@@ -816,26 +785,13 @@ ieget(struct ie_softc *sc, int *to_bpf)
 	(sc->sc_memcpy)((void *)&eh, (void *)sc->cbuffs[head],
 	    sizeof(struct ether_header));
 
-	/*
-	 * As quickly as possible, check if this packet is for us.
-	 * If not, don't waste a single cycle copying the rest of the
-	 * packet in.
-	 * This is only a consideration when FILTER is defined; i.e., when
-	 * we are either running BPF or doing multicasting.
-	 */
-	if (check_eh(sc, &eh, to_bpf) == 0) {
-		/* just this case, it's not an error */
-		sc->sc_if.if_ierrors--;
-		return 0;
-	}
-
 	resid = totlen;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
 
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -864,7 +820,7 @@ ieget(struct ie_softc *sc, int *to_bpf)
 			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
-			len -= newdata - m->m_data; 
+			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
 
@@ -936,7 +892,6 @@ ie_readframe(struct ie_softc *sc, int num)
 {
 	int status;
 	struct mbuf *m = 0;
-	int bpf_gets_it = 0;
 
 	status = sc->rframes[num]->ie_fd_status;
 
@@ -948,7 +903,7 @@ ie_readframe(struct ie_softc *sc, int num)
 	sc->rfhead = (sc->rfhead + 1) % sc->nframes;
 
 	if (status & IE_FD_OK) {
-		m = ieget(sc, &bpf_gets_it);
+		m = ieget(sc);
 		ie_drop_packet_buffer(sc);
 	}
 	if (m == 0) {
@@ -967,42 +922,9 @@ ie_readframe(struct ie_softc *sc, int num)
 #endif
 
 	/*
-	 * Check for a BPF filter; if so, hand it up.
-	 * Note that we have to stick an extra mbuf up front, because
-	 * bpf_mtap expects to have the ether header at the front.
-	 * It doesn't matter that this results in an ill-formatted mbuf chain,
-	 * since BPF just looks at the data.  (It doesn't try to free the mbuf,
-	 * tho' it will make a copy for tcpdump.)
-	 */
-	if (bpf_gets_it) {
-		/* Pass it up. */
-		bpf_mtap(&sc->sc_if, m);
-
-		/*
-		 * A signal passed up from the filtering code indicating that
-		 * the packet is intended for BPF but not for the protocol
-		 * machinery.  We can save a few cycles by not handing it off
-		 * to them.
-		 */
-		if (bpf_gets_it == 2) {
-			m_freem(m);
-			return;
-		}
-	}
-
-	/*
-	 * In here there used to be code to check destination addresses upon
-	 * receipt of a packet.  We have deleted that code, and replaced it
-	 * with code to check the address much earlier in the cycle, before
-	 * copying the data in; this saves us valuable cycles when operating
-	 * as a multicast router or when using BPF.
-	 */
-
-	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	(*sc->sc_if.if_input)(&sc->sc_if, m);
-	sc->sc_if.if_ipackets++;
+	if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 }
 
 static void 
@@ -1520,23 +1442,6 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ETHER_ADDR_LEN);
-			/* Set new address. */
-			ieinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			ieinit(sc);
 			break;

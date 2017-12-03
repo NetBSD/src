@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.39 2012/02/02 19:43:02 tls Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.39.6.1 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,10 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.39 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.39.6.1 2017/12/03 11:36:59 jdolecek Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "bio.h"
-
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.39 2012/02/02 19:43:02 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
-#include <sys/rnd.h>
+#include <sys/module.h>
 #if NBIO > 0
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>
@@ -80,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.39 2012/02/02 19:43:02 tls Exp $");
 #include <dev/ldvar.h>
 
 #include <dev/ata/ata_raidvar.h>
+
+#include "ioconf.h"
 
 struct ld_ataraid_softc {
 	struct ld_softc sc_ld;
@@ -250,8 +253,8 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 		panic("%s: bioctl registration failed\n",
 		    device_xname(ld->sc_dv));
 #endif
-       SIMPLEQ_INIT(&sc->sc_cbufq);
-	ldattach(ld);
+	SIMPLEQ_INIT(&sc->sc_cbufq);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 static int
@@ -699,12 +702,12 @@ ld_ataraid_biodisk(struct ld_ataraid_softc *sc, struct bioc_disk *bd)
 	strlcpy(bd->bd_procdev, device_xname(adi->adi_dev),
 	    sizeof(bd->bd_procdev));
 
-	scsipi_strvis(serial, sizeof(serial), wd->sc_params.atap_serial,
-	    sizeof(wd->sc_params.atap_serial));
-	scsipi_strvis(model, sizeof(model), wd->sc_params.atap_model,
-	    sizeof(wd->sc_params.atap_model));
-	scsipi_strvis(rev, sizeof(rev), wd->sc_params.atap_revision,
-	    sizeof(wd->sc_params.atap_revision));
+	strnvisx(serial, sizeof(serial), wd->sc_params.atap_serial,
+	    sizeof(wd->sc_params.atap_serial), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(model, sizeof(model), wd->sc_params.atap_model,
+	    sizeof(wd->sc_params.atap_model), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(rev, sizeof(rev), wd->sc_params.atap_revision,
+	    sizeof(wd->sc_params.atap_revision), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 	snprintf(bd->bd_vendor, sizeof(bd->bd_vendor), "%s %s", model, rev);
 	strlcpy(bd->bd_serial, serial, sizeof(bd->bd_serial));
@@ -712,3 +715,46 @@ ld_ataraid_biodisk(struct ld_ataraid_softc *sc, struct bioc_disk *bd)
 	return 0;
 }
 #endif /* NBIO > 0 */
+
+MODULE(MODULE_CLASS_DRIVER, ld_ataraid, "ld,ataraid");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_ataraid"
+ * XXX it will be defined in the common-code module
+ */     
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif 
+  
+static int
+ld_ataraid_modcmd(modcmd_t cmd, void *opaque)
+{ 
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+ 
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_ataraid, cfdata_ioconf_ld_ataraid);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_ataraid, cfdata_ioconf_ld_ataraid);
+		break;
+	default:
+		error = ENOTTY;
+	break;
+	}
+#endif
+
+	return error;
+}

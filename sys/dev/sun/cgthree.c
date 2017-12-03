@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.29.6.1 2014/08/20 00:03:50 tls Exp $ */
+/*	$NetBSD: cgthree.c,v 1.29.6.2 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.29.6.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.29.6.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,11 +115,6 @@ struct cg3_videoctrl {
 	}
 };
 
-#if NWSDISPLAY > 0
-#ifdef RASTERCONSOLE
-#error RASTERCONSOLE and wsdisplay are mutually exclusive
-#endif
-
 static void cg3_setup_palette(struct cgthree_softc *);
 
 struct wsscreen_descr cgthree_defaultscreen = {
@@ -162,18 +157,15 @@ struct wsscreen_list cgthree_screenlist = {
 extern const u_char rasops_cmap[768];
 
 static struct vcons_screen cg3_console_screen;
-#endif /* NWSDISPLAY > 0 */
 
 void
 cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 {
 	int i;
 	struct fbdevice *fb = &sc->sc_fb;
-#if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &cg3_console_screen.scr_ri;
 	unsigned long defattr;
-#endif
 	volatile struct fbcontrol *fbc = sc->sc_fbc;
 	volatile struct bt_regs *bt = &fbc->fbc_dac;
 
@@ -208,15 +200,11 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RASTERCONSOLE
-		fbrcons_init(fb);
-#endif
 	} else
 		printf("\n");
 
 	fb_attach(fb, isconsole);
 
-#if NWSDISPLAY > 0
 	sc->sc_width = fb->fb_type.fb_width;
 	sc->sc_stride = fb->fb_type.fb_width;
 	sc->sc_height = fb->fb_type.fb_height;
@@ -257,12 +245,6 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 	aa.accessops = &cgthree_accessops;
 	aa.accesscookie = &sc->vd;
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
-#else
-	/* Initialize the default color map. */
-	bt_initcmap(&sc->sc_cmap, 256);
-	cgthreeloadcmap(sc, 0, 256);
-#endif
-
 }
 
 
@@ -419,8 +401,6 @@ cgthreemmap(dev_t dev, off_t off, int prot)
 		prot, BUS_SPACE_MAP_LINEAR));
 }
 
-#if NWSDISPLAY > 0
-
 static void
 cg3_setup_palette(struct cgthree_softc *sc)
 {
@@ -446,8 +426,8 @@ cgthree_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_data *vd = v;
 	struct cgthree_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
-	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
 	struct vcons_screen *ms = sc->vd.active;
+	struct rasops_info *ri = &ms->scr_ri;
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
 			*(u_int *)data = WSDISPLAY_TYPE_SUNTCX;
@@ -456,7 +436,7 @@ cgthree_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf = (void *)data;
 			wdf->height = ri->ri_height;
 			wdf->width = ri->ri_width;
-			wdf->depth = ri->ri_depth;
+			wdf->depth = 8;
 			wdf->cmsize = 256;
 			return 0;
 
@@ -480,6 +460,13 @@ cgthree_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					}
 				}
 			}
+			return 0;
+		case WSDISPLAYIO_GET_FBINFO:
+			{
+				struct wsdisplayio_fbinfo *fbi = data;
+
+				return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+			}
 	}
 	return EPASSTHROUGH;
 }
@@ -487,8 +474,16 @@ cgthree_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 paddr_t
 cgthree_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	/* I'm not at all sure this is the right thing to do */
-	return cgthreemmap(0, offset, prot); /* assume minor dev 0 for now */
+	struct vcons_data *vd = v;
+	struct cgthree_softc *sc = vd->cookie;
+
+	if (offset < 0) return -1;
+	if (offset >= sc->sc_fb.fb_type.fb_size)
+		return -1;
+
+	return bus_space_mmap(sc->sc_bustag,
+		sc->sc_paddr, CG3REG_MEM + offset,
+		prot, BUS_SPACE_MAP_LINEAR);
 }
 
 int
@@ -574,5 +569,3 @@ cgthree_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_hw = scr;
 }
-
-#endif /* NWSDISPLAY > 0 */

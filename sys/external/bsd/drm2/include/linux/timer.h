@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.4.4.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: timer.h,v 1.4.4.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -83,10 +83,24 @@ mod_timer_pinned(struct timer_list *timer, unsigned long then)
 }
 
 static inline void
+del_timer(struct timer_list *timer)
+{
+
+	callout_stop(&timer->tl_callout);
+}
+
+static inline void
 del_timer_sync(struct timer_list *timer)
 {
 
 	callout_halt(&timer->tl_callout, NULL);
+}
+
+static inline bool
+timer_pending(struct timer_list *timer)
+{
+
+	return callout_pending(&timer->tl_callout);
 }
 
 /*

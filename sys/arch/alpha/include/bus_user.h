@@ -1,4 +1,4 @@
-/* $NetBSD: bus_user.h,v 1.1 2011/08/12 22:23:12 dyoung Exp $ */
+/* $NetBSD: bus_user.h,v 1.1.12.1 2017/12/03 11:35:46 jdolecek Exp $ */
 /*
  * XXX This file is a stopgap intended to keep NetBSD/alpha buildable
  * XXX while developers figure out whether/how to expose to userland
@@ -24,8 +24,8 @@ typedef u_long bus_size_t;
 struct alpha_bus_space_translation {
 	bus_addr_t	abst_bus_start;	/* start of bus window */
 	bus_addr_t	abst_bus_end;	/* end of bus window */
-	paddr_t		abst_sys_start;	/* start of sysBus window */
-	paddr_t		abst_sys_end;	/* end of sysBus window */
+	__paddr_t	abst_sys_start;	/* start of sysBus window */
+	__paddr_t	abst_sys_end;	/* end of sysBus window */
 	int		abst_addr_shift;/* address shift */
 	int		abst_size_shift;/* size shift */
 	int		abst_flags;	/* flags; see below */

@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsreg.h,v 1.7.12.1 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: synapticsreg.h,v 1.7.12.2 2017/12/03 11:37:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -69,6 +69,7 @@
 #define	SYNAPTICS_MODE_ABSOLUTE		(1 << 7)
 #define	SYNAPTICS_MODE_RATE		(1 << 6)
 #define	SYNAPTICS_MODE_SLEEP		(1 << 3)
+#define	SYNAPTICS_MODE_EXTENDED_W	(1 << 2) /* double meaning */
 #define	SYNAPTICS_MODE_GEST		(1 << 2)
 #define	SYNAPTICS_MODE_4BYTE_CLIENT	(1 << 1)
 #define	SYNAPTICS_MODE_W		(1)
@@ -97,6 +98,7 @@
 #define	SYNAPTICS_WIDTH_TWO_FINGERS	0
 #define	SYNAPTICS_WIDTH_THREE_OR_MORE	1
 #define	SYNAPTICS_WIDTH_PEN		2
+#define	SYNAPTICS_WIDTH_EXTENDED_W	2
 #define	SYNAPTICS_WIDTH_ADVANCEDGESTURE	2
 #define	SYNAPTICS_WIDTH_PASSTHROUGH	3
 #define	SYNAPTICS_WIDTH_FINGER_MIN	4
@@ -105,5 +107,10 @@
 #define	SYNAPTICS_WIDTH_PALM_MIN	8
 #define	SYNAPTICS_WIDTH_PALM_MAX	14
 #define	SYNAPTICS_WIDTH_MAX		15
+
+/* Extended W types */
+#define SYNAPTICS_EW_WHEEL		0
+#define SYNAPTICS_EW_SECONDARY_FINGER	1
+#define SYNAPTICS_EW_FINGER_STATUS	2
 
 #endif	/* _DEV_PCKBCPORT_SYNAPTICSREG_H_ */

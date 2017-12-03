@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.10.22.2 2013/02/25 00:29:54 tls Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.10.22.3 2017/12/03 11:38:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,10 +39,11 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.10.22.2 2013/02/25 00:29:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.10.22.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/lwp.h>
 #include <sys/kmem.h>
@@ -117,7 +118,7 @@ struct tftproot_handle {
 int tftproot_dhcpboot(device_t);
 
 static int tftproot_getfile(struct tftproot_handle *, struct lwp *);
-static int tftproot_recv(struct mbuf *, void *);
+static int tftproot_recv(struct mbuf **, void *);
 
 int
 tftproot_dhcpboot(device_t bootdv)
@@ -130,16 +131,20 @@ tftproot_dhcpboot(device_t bootdv)
 	int error = -1;
 
 	if (rootspec != NULL) {
-		IFNET_FOREACH(ifp)
+		int s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp)
 			if (strcmp(rootspec, ifp->if_xname) == 0)
 				break;
+		pserialize_read_exit(s);
 	} 
 
 	if ((ifp == NULL) &&
 	    (bootdv != NULL && device_class(bootdv) == DV_IFNET)) {
-		IFNET_FOREACH(ifp)
+		int s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp)
 			if (strcmp(device_xname(bootdv), ifp->if_xname) == 0)
 				break;
+		pserialize_read_exit(s);
 	}
 
 	if (ifp == NULL) {
@@ -206,7 +211,7 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	struct socket *so = NULL;
 	struct mbuf *m_serv = NULL;
 	struct mbuf *m_outbuf = NULL;
-	struct sockaddr_in *sin;
+	struct sockaddr_in sin;
 	struct tftphdr *tftp;
 	size_t packetlen, namelen;
 	int error = -1;
@@ -232,11 +237,8 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	/*
 	 * Set server address and port
 	 */
-	m_serv = m_get(M_WAIT, MT_SONAME);
-	m_serv->m_len = sizeof(*sin);
-	sin = mtod(m_serv, struct sockaddr_in *);
-	memcpy(sin, &trh->trh_nd->nd_root.ndm_saddr, sizeof(*sin));
-	sin->sin_port = htons(IPPORT_TFTP);
+	memcpy(&sin, &trh->trh_nd->nd_root.ndm_saddr, sizeof(sin));
+	sin.sin_port = htons(IPPORT_TFTP);
 
 	/*
 	 * Set send buffer, prepare the TFTP packet
@@ -253,7 +255,7 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	m_clget(m_outbuf, M_WAIT);
 	m_outbuf->m_len = packetlen;
 	m_outbuf->m_pkthdr.len = packetlen;
-	m_outbuf->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m_outbuf);
 
 	tftp = mtod(m_outbuf, struct tftphdr *);
 	memset(tftp, 0, packetlen);
@@ -267,9 +269,8 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	/* 
 	 * Perform the file transfer
 	 */
-	sin = (struct sockaddr_in *)&trh->trh_nd->nd_root.ndm_saddr;
 	printf("tftproot: download %s:%s ", 
-	    inet_ntoa(sin->sin_addr), trh->trh_nd->nd_bootfile);
+	    inet_ntoa(sin.sin_addr), trh->trh_nd->nd_bootfile);
 
 	do {
 		/*
@@ -286,7 +287,7 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 		 * We get the sender address here, which should be
 		 * the same server with a different port
 		 */
-		if ((error = nfs_boot_sendrecv(so, m_serv, NULL, m_outbuf,
+		if ((error = nfs_boot_sendrecv(so, &sin, NULL, m_outbuf,
 		    tftproot_recv, NULL, &m_serv, trh, l)) != 0) {
 			DPRINTF(("%s():%d sendrecv failed %d\n", 
 			    __func__, __LINE__, error));
@@ -315,16 +316,16 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	printf("\n");
 
 	/*
-	 * Ack the last block. so_send frees m_outbuf, therefore
-	 * we do not want to free it ourselves.
-	 * Ignore errors, as we already have the whole file.
+	 * Ack the last block. Ignore errors, as we already have the whole
+	 * file.
 	 */
-	if ((error = (*so->so_send)(so, m_serv, NULL, 
+	if ((error = (*so->so_send)(so, mtod(m_serv, struct sockaddr *), NULL,
 	    m_outbuf, NULL, 0, l)) != 0)
 		DPRINTF(("%s():%d tftproot: sosend returned %d\n", 
 		    __func__, __LINE__, error));
-	else
-		m_outbuf = NULL;
+
+	/* Freed by the protocol */
+	m_outbuf = NULL;
 
 	/* 
 	 * And use it as the root ramdisk. 
@@ -349,10 +350,11 @@ out:
 }
 
 static int
-tftproot_recv(struct mbuf *m, void *ctx)
+tftproot_recv(struct mbuf **mp, void *ctx)
 {
 	struct tftproot_handle *trh = ctx;
 	struct tftphdr *tftp;
+	struct mbuf *m = *mp;
 	size_t newlen;
 	size_t hdrlen = sizeof(*tftp) - sizeof(tftp->th_data);
 
@@ -379,7 +381,7 @@ tftproot_recv(struct mbuf *m, void *ctx)
 	 * Examine the TFTP header
 	 */
 	if (m->m_len > sizeof(*tftp)) {
-		if ((m = m_pullup(m, sizeof(*tftp))) == NULL) {
+		if ((m = *mp = m_pullup(m, sizeof(*tftp))) == NULL) {
 			DPRINTF(("%s():%d m_pullup failed\n",
 			    __func__, __LINE__));
 			return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsivar.h,v 1.1.12.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: gttwsivar.h,v 1.1.12.3 2017/12/03 11:37:02 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -87,6 +87,11 @@ struct gttwsi_softc {
 	kmutex_t sc_buslock;
 	kmutex_t sc_mtx;
 	kcondvar_t sc_cv;
+
+	bool sc_iflg_rwc;
+
+	uint32_t (*sc_reg_read)(struct gttwsi_softc *, uint32_t);
+	void (*sc_reg_write)(struct gttwsi_softc *, uint32_t, uint32_t);
 };
 
 void	gttwsi_attach_subr(device_t, bus_space_tag_t, bus_space_handle_t);

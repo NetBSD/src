@@ -1,0 +1,101 @@
+#	$NetBSD: files.octeon,v 1.4.18.2 2017/12/03 11:36:27 jdolecek Exp $
+
+file	arch/mips/mips/locore_octeon.S
+file	arch/mips/mips/bus_dma.c
+file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
+
+file	arch/mips/cavium/octeon_dma.c
+file	arch/mips/cavium/octeon_intr.c
+file	arch/mips/cavium/dev/octeon_ciu.c
+
+defparam	opt_octeon.h			OCTEON_ECLK
+defparam	opt_octeon.h			OCTEON_ETH_RING_MAX
+defparam	opt_octeon.h			OCTEON_ETH_RING_MIN
+defflag 	opt_octeon.h			OCTEON_ETH_DEBUG
+						OCTEON_ETH_FAST_CRC
+						OCTEON_ETH_IPD_RED
+						OCTEON_ETH_USENFS
+						OCTEON_USBN_CN31XX_DMA_WORKAROUND
+
+device	mainbus {}
+attach	mainbus at root
+file	arch/mips/cavium/mainbus.c		mainbus
+file	arch/mips/cavium/mainbus_octeon1p.c	mainbus
+
+device	cpunode { [core=-1] }
+attach	cpunode at mainbus
+
+device	cpu {}
+attach	cpu at cpunode with cpu_cpunode
+
+device	wdog: sysmon_wdog
+attach	wdog at cpunode with wdog_cpunode
+
+file	arch/mips/cavium/octeon_cpunode.c	cpunode | cpu | wdog needs-flag
+
+# I/O Bus
+
+device	iobus {}
+attach	iobus at mainbus
+file	arch/mips/cavium/octeon_iobus.c		iobus
+file	arch/mips/cavium/octeon1p_iobus.c	iobus
+file	arch/mips/cavium/dev/octeon_fpa.c	iobus
+file	arch/mips/cavium/dev/octeon_pow.c	iobus
+file	arch/mips/cavium/dev/octeon_fau.c	iobus
+file	arch/mips/cavium/dev/octeon_pip.c	iobus
+file	arch/mips/cavium/dev/octeon_ipd.c	iobus
+file	arch/mips/cavium/dev/octeon_pko.c	iobus
+file	arch/mips/cavium/dev/octeon_asx.c	iobus
+file	arch/mips/cavium/dev/octeon_smi.c	iobus
+
+# I/O Bus devices
+
+attach	com at iobus with octeon_uart_iobus
+file	arch/mips/cavium/dev/octeon_uart.c	octeon_uart_iobus
+options 	COM_REGMAP
+
+device	octeon_rnm
+attach	octeon_rnm at iobus
+file	arch/mips/cavium/dev/octeon_rnm.c	octeon_rnm & rnd
+
+device	octeon_twsi: i2cbus
+attach	octeon_twsi at iobus
+file	arch/mips/cavium/dev/octeon_twsi.c	octeon_twsi
+
+device	octeon_mpi {}
+attach	octeon_mpi at iobus
+file	arch/mips/cavium/dev/octeon_mpi.c	octeon_mpi
+
+device	octeon_gmx {}
+attach	octeon_gmx at iobus
+file	arch/mips/cavium/dev/octeon_gmx.c	octeon_gmx
+
+# On-chip ethernet device(s)
+device	cnmac: ether, ifnet, arp, mii
+attach	cnmac at octeon_gmx
+file	arch/mips/cavium/dev/if_cnmac.c		cnmac
+
+attach	dwctwo at iobus with octeon_dwctwo
+file	arch/mips/cavium/dev/octeon_dwctwo.c	octeon_dwctwo
+
+# Boot-Bus
+
+device	bootbus {}
+attach	bootbus at mainbus
+file	arch/mips/cavium/octeon_bootbus.c	bootbus
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Machine-independent SCSI drivers
+include "dev/scsipi/files.scsipi"
+
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
+
+# Machine-independent USB device support
+include "dev/usb/files.usb"
+
+# Machine-independent PCI device support
+include "dev/pci/files.pci"

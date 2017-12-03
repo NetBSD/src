@@ -1,7 +1,8 @@
-#	$NetBSD: files.sysvbfs,v 1.1 2005/12/29 14:53:45 tsutsui Exp $
+#	$NetBSD: files.sysvbfs,v 1.1.122.1 2017/12/03 11:38:43 jdolecek Exp $
 
 deffs	SYSVBFS
 
+define	sysvbfs: vfs
 file	fs/sysvbfs/bfs.c		sysvbfs
 file	fs/sysvbfs/bfs_sysvbfs.c	sysvbfs
 file	fs/sysvbfs/sysvbfs.c		sysvbfs

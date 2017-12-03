@@ -1,0 +1,383 @@
+#
+#	$NetBSD: PEPPER,v 1.7.2.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	PEPPER -- Gumstix. Inc. Pepper Single Board Computer platforms kernel
+#
+
+include	"arch/evbarm/conf/std.overo"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+# estimated number of users
+
+maxusers	32
+
+# CPU options
+
+options 	CPU_CORTEXA8
+options 	TI_AM335X
+options 	FPU_VFP
+options 	PMAPCOUNTERS
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
+
+# Architecture options
+
+makeoptions	BOARDTYPE="pepper"
+options 	EVBARM_BOARDTYPE=pepper
+
+# Gumstix options
+options 	PEPPER
+# Can specify 'expansion=' in args from u-boot.
+options 	GUMSTIX_NETBSD_ARGS_EXPANSION
+options 	GXIO_DEFAULT_EXPANSION="\"43C\""
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+# File systems
+
+file-system	FFS		# UFS
+file-system 	EXT2FS		# second extended file system (linux)
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network file system
+#file-system	NTFS		# Windows/NT file system (experimental)
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	OVERLAY		# overlay file system
+#file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	TMPFS		# memory file system
+file-system	PTYFS		# /dev/pts/N support
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
+
+# File system options
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	NFSSERVER
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
+#options 	NFS_BOOT_BOOTPARAM
+
+# Compatibility options
+
+include 	"conf/compat_netbsd30.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+options 	COMPAT_LINUX	# binary compatibility with Linux
+
+# Shared memory options
+
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+
+# Device options
+
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+#options 	MEMORY_DISK_DYNAMIC
+#options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
+
+# Miscellaneous kernel options
+options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	IRQSTATS	# manage IRQ statistics
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internal consistency checks
+options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+options 	DDB_ONPANIC=1
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	KGDB
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# The main bus device
+mainbus0	at root
+
+# The boot cpu
+cpu0		at mainbus?
+
+# L3 Interconnect
+#L3i0		at mainbus?
+
+# OBIO
+obio0		at mainbus? base 0x44c00000 size 0x00400000	# L4_WKUP
+obio1		at mainbus? base 0x48000000 size 0x01000000	# L4_PER
+obio2		at mainbus? base 0x4a000000 size 0x01000000	# L4_FAST
+
+# Enhanced Direct Memory Access controller
+edma0		at mainbus? base 0x49000000 size 0x100000 intrbase 12
+
+# General Purpose Memory Controller
+gpmc0		at mainbus? base 0x50000000
+
+# Interrupt Controller
+omapicu0	at obio1 addr 0x48200000 size 0x1000 intrbase 0
+
+# Power, Reset and Clock Management
+prcm0		at obio0 addr 0x44e00000 size 0x2000	# PRM Module
+
+# Control Module
+sitaracm0	at obio0 addr 0x44e10000 size 0x2000
+
+# SDHC controllers
+sdhc0		at obio1 addr 0x48060000 size 0x1000 intr 64 edmabase 24
+sdmmc0		at sdhc0
+ld*		at sdmmc?
+sdhc1		at mainbus? base 0x47810000 size 0x1000 irq 29 #edmabase X-bar 1
+sdmmc1		at sdhc1
+#wi2wi		at sdmmc?		# W2CBW0015
+#wl18xx		at sdmmc?		# TI WiLink8 Wifi and Bluetooth module
+#options SDMMC_DEBUG
+#options SDHC_DEBUG
+
+# General-purpose I/O pins
+omapgpio0	at obio0 addr 0x44e07000 size 0x1000 intrbase 128 intr 96
+gpio0		at omapgpio0
+omapgpio1	at obio1 addr 0x4804c000 size 0x1000 intrbase 160 intr 98
+gpio1		at omapgpio1
+omapgpio2	at obio1 addr 0x481ac000 size 0x1000 intrbase 192 intr 32
+gpio2		at omapgpio2
+omapgpio3	at obio1 addr 0x481ae000 size 0x1000 intrbase 224 intr 62
+gpio3		at omapgpio3
+
+gpiobutton*	at gpio1 offset 0 mask 0x00400000 flag 0x01
+
+# I2C Controller
+tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
+tiiic1		at obio1 addr 0x4802a000 size 0x1000 intr 71
+tiiic2		at obio1 addr 0x4819c000 size 0x1000 intr 30
+iic*		at tiiic?
+tps65217pmic0	at iic0 addr 0x24
+seeprom*	at iic0 addr 0x50 flags 0x8
+dsrtc*		at iic0 addr 0x68 flags 1340	# RTC with Trickle Charger
+#LIS33DE	at iic0 addr 0x1c	# 43 only
+#TLV320AIC3106	at iic? addr 0x1b		# TLV320AIC3106 Audio Codec
+#lsm303d	at iic1 addr 0x1e	# MPU9150?
+#MPU9150	at iic1 addr 0x6a
+#edt-ft5306	at iic2 addr 0x38	# True Multi-Touch Capacitive Touch Panel Controller
+
+#omapspi0	at obio1 addr 0x48030000 size 0x1000 intr 65
+#spi?		at omapspi?
+#ADS7846RGV	at spi?			# 4-wire Touch Screen Controller
+
+# On-board 16550 UARTs
+com0		at obio0 addr 0x44e09000 size 0x1000 intr 72 mult 4	# UART0
+options 	CONSADDR=0x44e09000, CONSPEED=115200
+#
+# 1st gen, DVI:  Export to pin-header.  Configure to GPIO, if diabled.
+# 43[CR]:        Connect to WiLink8 Bluetooth.
+#com1		at obio1 addr 0x48022000 size 0x1000 intr 73 mult 4	# UART1
+#
+# Configure to GPIO, if diabled. (43[CR] only)
+#com2		at obio1 addr 0x48024000 size 0x1000 intr 74 mult 4	# UART2
+#com3		at obio1 addr 0x481a6000 size 0x1000 intr 44 mult 4	# UART3
+
+# XXX Clock assignment is kinda random.  My DM timer 3 seems to be
+# unhappy and I don't know why.  DM timer 0 doesn't seem to deliver
+# interrupts for the hard clock, although it seems to be the obvious
+# choice.
+
+# Hardclock timer
+omapdmtimer0	at obio1 addr 0x48040000 size 0x1000 intr 68	# DM Timer 2
+
+# Time counter
+omapdmtimer1	at obio0 addr 0x44e31000 size 0x1000 intr 67	# DM Timer 1ms
+
+# Statclock timer
+omapdmtimer2	at obio1 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
+
+# Watchdog timers
+omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000		# WDT1
+
+# Random number generator
+trng*		at obio1 addr 0x48310000 size 0x2000 intr 111	# TRNG
+
+# onboard video, experimental. Video mode is hardcoded in the driver
+tifb* 	at obio1 addr 0x4830e000 size 0x1000 intr 36
+
+# make sure the console display is always wsdisplay0
+wsdisplay*	at wsemuldisplaydev?
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_SCROLLSUPPORT
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_GALLANT12x22
+options 	FONT_BOLD8x16
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
+
+# Ethernet
+cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 40
+micphy*		at mii? phy ?			# Micrel KSZ9021RNI PHYs
+
+# On-board USB. Experimental
+tiotg* 	at mainbus? base 0x47400000 size 0x5000 intrbase 17
+motg*	at tiotg? port ?
+usb*		at motg?
+uhub*		at usb?
+uhub*		at uhub? port ?
+
+uhidev*		at uhub?
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+umass*		at uhub? port ? configuration ? interface ?
+wd*		at umass?
+# SCSI bus support
+scsibus*	at scsi?
+# SCSI devices
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+
+# Pseudn-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	bio			# RAID control device driver
+#pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
+#pseudo-device	raid			# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#pseudo-device	fss			# file system snapshot device
+
+#pseudo-device	md			# memory disk device (ramdisk)
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
+#pseudo-device	putter			# for puffs and pud
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	sequencer		# MIDI sequencer
+options 	RND_COM
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	btuart			# Bluetooth HCI UART (H4)
+					# TI WL18xx (WiLink 8) module
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+#pseudo-device	nsmb			# experimental - SMB requester
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# software dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
+#options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
+
+# Veriexec
+#pseudo-device	veriexec
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options 	VERIFIED_EXEC_FP_SHA256
+#options 	VERIFIED_EXEC_FP_SHA384
+#options 	VERIFIED_EXEC_FP_SHA512
+
+#options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+#options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

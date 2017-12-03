@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.33 2007/12/20 23:46:13 ad Exp $	*/
+/*	$NetBSD: profile.h,v 1.33.54.1 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,13 +31,8 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
-
 #ifdef _KERNEL
 #include <machine/cpufunc.h>
-#include <machine/lock.h>
 #endif
 
 #define	_MCOUNT_DECL static __inline void _mcount
@@ -50,6 +45,12 @@
 #define MCOUNT_COMPAT	/* nothing */
 #endif
 
+#if defined(_REENTRANT) && !defined(_KERNEL) 
+#define MCOUNT_ACTIVE	if (_gmonparam.state != GMON_PROF_ON) return
+#else
+#define MCOUNT_ACTIVE	
+#endif
+
 #define	MCOUNT \
 MCOUNT_COMPAT								\
 extern void mcount(void) __asm(MCOUNT_ENTRY)				\
@@ -60,6 +61,7 @@ mcount(void)								\
 	int selfpc, frompcindex;					\
 	int eax, ecx, edx;						\
 									\
+	MCOUNT_ACTIVE;							\
 	__asm volatile("movl %%eax,%0" : "=g" (eax));			\
 	__asm volatile("movl %%ecx,%0" : "=g" (ecx));			\
 	__asm volatile("movl %%edx,%0" : "=g" (edx));			\
@@ -69,12 +71,11 @@ mcount(void)								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm volatile("movl 4(%%ebp),%0" : "=r" (selfpc));		\
+	selfpc = (int)__builtin_return_address(0);			\
 	/*								\
-	 * frompcindex = pc pushed by call into self.			\
+	 * frompcindex = stack frame of caller, assuming frame pointer	\
 	 */								\
-	__asm volatile("movl (%%ebp),%0;movl 4(%0),%0"			\
-	    : "=r" (frompcindex));					\
+	frompcindex = ((int *)__builtin_frame_address(1))[1];		\
 	_mcount((u_long)frompcindex, (u_long)selfpc);			\
 									\
 	__asm volatile("movl %0,%%edx" : : "g" (edx));			\
@@ -83,27 +84,6 @@ mcount(void)								\
 }
 
 #ifdef _KERNEL
-#ifdef MULTIPROCESSOR
-__cpu_simple_lock_t __mcount_lock;
-
-static inline void
-MCOUNT_ENTER_MP(void)
-{
-	__cpu_simple_lock(&__mcount_lock);
-	__insn_barrier();
-}
-
-static inline void
-MCOUNT_EXIT_MP(void)
-{
-	__insn_barrier();
-	__mcount_lock = __SIMPLELOCK_UNLOCKED;
-}
-#else
-#define MCOUNT_ENTER_MP()
-#define MCOUNT_EXIT_MP()
-#endif
-
 static inline void
 mcount_disable_intr(void)
 {
@@ -125,13 +105,8 @@ mcount_write_psl(u_long ef)
 	__asm volatile("pushl %0; popfl" : : "r" (ef));
 }
 
-#define	MCOUNT_ENTER							\
-	s = (int)mcount_read_psl();					\
-	mcount_disable_intr();						\
-	MCOUNT_ENTER_MP();
-
-#define	MCOUNT_EXIT							\
-	MCOUNT_EXIT_MP();						\
-	mcount_write_psl(s);
+#define MCOUNT_ENTER	\
+	do { s = (int)mcount_read_psl(); mcount_disable_intr(); } while (0)
+#define MCOUNT_EXIT	do { mcount_write_psl(s); } while (0)
 
 #endif /* _KERNEL */

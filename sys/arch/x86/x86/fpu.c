@@ -1,6 +1,6 @@
-/*	$NetBSD: fpu.c,v 1.9.10.2 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: fpu.c,v 1.9.10.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
  * rights reserved.
  *
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
 
-/*-
+/*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 William Jolitz.
  *
@@ -95,12 +95,8 @@
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
 
-/*
- * XXXfvdl update copyright notice. this started out as a stripped isa/npx.c
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9.10.2 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9.10.3 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -129,6 +125,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9.10.2 2014/08/20 00:03:29 tls Exp $");
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
+static uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
+
 static inline union savefpu *
 process_fpframe(struct lwp *lwp)
 {
@@ -136,24 +134,6 @@ process_fpframe(struct lwp *lwp)
 
 	return &pcb->pcb_savefpu;
 }
-
-/*
- * We do lazy initialization and switching using the TS bit in cr0 and the
- * MDL_USEDFPU bit in mdlwp.
- *
- * DNA exceptions are handled like this:
- *
- * 1) If there is no FPU, send SIGILL.
- * 2) If someone else has used the FPU, save its state into that lwp's PCB.
- * 3a) If MDL_USEDFPU is not set, set it and initialize the FPU.
- * 3b) Otherwise, reload the lwp's previous FPU state.
- *
- * When a lwp is created or exec()s, its saved cr0 image has the TS bit
- * set and the MDL_USEDFPU bit clear.  The MDL_USEDFPU bit is set when the
- * lwp first gets a DNA and the FPU is initialized.  The TS bit is turned
- * off when the FPU is used, and turned on again later when the lwp's FPU
- * state is saved.
- */
 
 /* 
  * The following table is used to ensure that the FPE_... value
@@ -235,44 +215,50 @@ static const uint8_t fpetable[128] = {
 /*
  * Init the FPU.
  *
- * This might not be structly necessary since it will be initialised
+ * This might not be strictly necessary since it will be initialised
  * for each process.  However it does no harm.
  */
 void
 fpuinit(struct cpu_info *ci)
 {
-	if (!i386_fpu_present)
-		return;
 
 	clts();
 	fninit();
 	stts();
 }
 
+/*
+ * Get the value of MXCSR_MASK supported by the CPU.
+ */
 void
-fpu_set_default_cw(struct lwp *lwp, unsigned int x87_cw)
+fpuinit_mxcsr_mask(void)
 {
-	union savefpu *fpu_save = process_fpframe(lwp);
+#ifndef XEN
+	union savefpu fpusave __aligned(16);
+	u_long psl;
 
-	if (i386_use_fxsave)
-		fpu_save->sv_xmm.fx_cw = x87_cw;
-	else
-		fpu_save->sv_87.s87_cw = x87_cw;
-	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
-}
+	memset(&fpusave, 0, sizeof(fpusave));
 
-static void
-send_sigill(void *rip)
-{
-	/* No fpu (486SX) - send SIGILL */
-	ksiginfo_t ksi;
+	/* Disable interrupts, and enable FPU */
+	psl = x86_read_psl();
+	x86_disable_intr();
+	clts();
 
-	x86_enable_intr();
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGILL;
-	ksi.ksi_addr = rip;
-	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
-	return;
+	/* Fill in the FPU area */
+	fxsave(&fpusave);
+
+	/* Restore previous state */
+	stts();
+	x86_write_psl(psl);
+
+	if (fpusave.sv_xmm.fx_mxcsr_mask == 0) {
+		x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+	} else {
+		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
+	}
+#else
+	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+#endif
 }
 
 /*
@@ -307,13 +293,8 @@ fputrap(struct trapframe *frame)
 	uint32_t statbits;
 	ksiginfo_t ksi;
 
-	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
+	if (!USERMODE(frame->tf_cs))
 		panic("fpu trap from kernel, trapframe %p\n", frame);
-
-	if (i386_fpu_present == 0) {
-		send_sigill((void *)X86_TF_RIP(frame));
-		return;
-	}
 
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
@@ -373,14 +354,9 @@ fpudna(struct trapframe *frame)
 	struct pcb *pcb;
 	int s;
 
-	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
+	if (!USERMODE(frame->tf_cs))
 		panic("fpudna from kernel, ip %p, trapframe %p\n",
 		    (void *)X86_TF_RIP(frame), frame);
-
-	if (i386_fpu_present == 0) {
-		send_sigill((void *)X86_TF_RIP(frame));
-		return;
-	}
 
 	ci = curcpu();
 
@@ -408,7 +384,7 @@ fpudna(struct trapframe *frame)
 	/* Save our state if on a remote CPU. */
 	if (pcb->pcb_fpcpu != NULL) {
 		/* Explicitly disable preemption before dropping spl. */
-		KPREEMPT_DISABLE(l);
+		kpreempt_disable();
 		splx(s);
 
 		/* Actually enable interrupts */
@@ -417,7 +393,7 @@ fpudna(struct trapframe *frame)
 		fpusave_lwp(l, true);
 		KASSERT(pcb->pcb_fpcpu == NULL);
 		s = splhigh();
-		KPREEMPT_ENABLE(l);
+		kpreempt_enable();
 	}
 
 	/*
@@ -428,10 +404,12 @@ fpudna(struct trapframe *frame)
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
 
-	if (i386_use_fxsave) {
-		if (x86_xsave_features != 0) {
-			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
-		} else {
+	switch (x86_fpu_save) {
+		case FPU_SAVE_FSAVE:
+			frstor(&pcb->pcb_savefpu);
+			break;
+
+		case FPU_SAVE_FXSAVE:
 			/*
 			 * AMD FPU's do not restore FIP, FDP, and FOP on
 			 * fxrstor, leaking other process's execution history.
@@ -444,11 +422,13 @@ fpudna(struct trapframe *frame)
 			if (fngetsw() & 0x80)
 				fnclex();
 			fldummy();
-
 			fxrstor(&pcb->pcb_savefpu);
-		}
-	} else {
-		frstor(&pcb->pcb_savefpu);
+			break;
+
+		case FPU_SAVE_XSAVE:
+		case FPU_SAVE_XSAVEOPT:
+			xrstor(&pcb->pcb_savefpu, x86_xsave_features);
+			break;
 	}
 
 	KASSERT(ci == curcpu());
@@ -476,13 +456,23 @@ fpusave_cpu(bool save)
 
 	if (save) {
 		clts();
-		if (i386_use_fxsave) {
-			if (x86_xsave_features != 0)
-				xsave(&pcb->pcb_savefpu, x86_xsave_features);
-			else
+
+		switch (x86_fpu_save) {
+			case FPU_SAVE_FSAVE:
+				fnsave(&pcb->pcb_savefpu);
+				break;
+
+			case FPU_SAVE_FXSAVE:
 				fxsave(&pcb->pcb_savefpu);
-		} else {
-			fnsave(&pcb->pcb_savefpu);
+				break;
+
+			case FPU_SAVE_XSAVE:
+				xsave(&pcb->pcb_savefpu, x86_xsave_features);
+				break;
+
+			case FPU_SAVE_XSAVEOPT:
+				xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
+				break;
 		}
 	}
 
@@ -525,7 +515,7 @@ fpusave_lwp(struct lwp *l, bool save)
 			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
 			    cpu_name(oci));
 		}
-#else /* XEN */
+#else
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
 #endif
 		while (pcb->pcb_fpcpu == oci && ticks == hardclock_ticks) {
@@ -538,60 +528,80 @@ fpusave_lwp(struct lwp *l, bool save)
 	}
 }
 
-/*
- * exec needs to clear the fpu save area to avoid leaking info from the
- * old process to userspace.
- * We must also (later) load these values into the fpu - otherwise the process
- * will see another processes fpu registers.
- */
 void
-fpu_save_area_clear(struct lwp *lwp, unsigned int x87_cw)
+fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
+{
+	union savefpu *fpu_save = process_fpframe(l);
+	struct pcb *pcb = lwp_getpcb(l);
+
+	if (i386_use_fxsave)
+		fpu_save->sv_xmm.fx_cw = x87_cw;
+	else
+		fpu_save->sv_87.s87_cw = x87_cw;
+	pcb->pcb_fpu_dflt_cw = x87_cw;
+}
+
+void
+fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save;
+	struct pcb *pcb;
 
-	fpusave_lwp(lwp, false);
-
-	fpu_save = process_fpframe(lwp);
+	fpusave_lwp(l, false);
+	fpu_save = process_fpframe(l);
+	pcb = lwp_getpcb(l);
 
 	if (i386_use_fxsave) {
-		memset(&fpu_save->sv_xmm, 0, sizeof fpu_save->sv_xmm);
+		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
-		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_cw = x87_cw;
+
+		/* Force a reload of CW */
+		if ((x87_cw != __INITIAL_NPXCW__) &&
+		    (x86_fpu_save == FPU_SAVE_XSAVE ||
+		    x86_fpu_save == FPU_SAVE_XSAVEOPT)) {
+			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
+			    XCR0_X87;
+		}
 	} else {
 		memset(&fpu_save->sv_87, 0, x86_fpu_save_size);
 		fpu_save->sv_87.s87_tw = 0xffff;
 		fpu_save->sv_87.s87_cw = x87_cw;
 	}
-	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
+	pcb->pcb_fpu_dflt_cw = x87_cw;
 }
 
-/* For signal handlers the register values don't matter */
 void
-fpu_save_area_reset(struct lwp *lwp)
+fpu_save_area_reset(struct lwp *l)
 {
-	union savefpu *fpu_save = process_fpframe(lwp);
+	union savefpu *fpu_save = process_fpframe(l);
+	struct pcb *pcb = lwp_getpcb(l);
 
+	/*
+	 * For signal handlers the register values don't matter. Just reset
+	 * a few fields.
+	 */
 	if (i386_use_fxsave) {
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
-		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_tw = 0;
-		fpu_save->sv_xmm.fx_cw = fpu_save->sv_os.fxo_dflt_cw;
+		fpu_save->sv_xmm.fx_cw = pcb->pcb_fpu_dflt_cw;
 	} else {
 		fpu_save->sv_87.s87_tw = 0xffff;
-		fpu_save->sv_87.s87_cw = fpu_save->sv_os.fxo_dflt_cw;
+		fpu_save->sv_87.s87_cw = pcb->pcb_fpu_dflt_cw;
 	}
 }
 
-/* During fork the xsave data needs to be copied */
 void
 fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 {
 	ssize_t extra;
 
-	/* The pcb itself has been copied, but the xsave area
-	 * extends further. */
-
+	/*
+	 * The pcb itself has been copied, but the xsave area
+	 * extends further.
+	 */
 	extra = offsetof(struct pcb, pcb_savefpu) + x86_fpu_save_size -
 	    sizeof (struct pcb);
 
@@ -599,75 +609,92 @@ fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 		memcpy(pcb2 + 1, pcb1 + 1, extra);
 }
 
-
-/*
- * Write the FP registers.
- * Buffer has usually come from userspace so should not be trusted.
- */
 void
-process_write_fpregs_xmm(struct lwp *lwp, const struct fxsave *fpregs)
+process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 {
 	union savefpu *fpu_save;
 
-	fpusave_lwp(lwp, false);
-	fpu_save = process_fpframe(lwp);
+	fpusave_lwp(l, false);
+	fpu_save = process_fpframe(l);
 
 	if (i386_use_fxsave) {
-		memcpy(&fpu_save->sv_xmm, fpregs,
-		    sizeof fpu_save->sv_xmm);
-		/* Invalid bits in the mxcsr_mask will cause faults */
-		fpu_save->sv_xmm.fx_mxcsr_mask &= __INITIAL_MXCSR_MASK__;
+		memcpy(&fpu_save->sv_xmm, fpregs, sizeof(fpu_save->sv_xmm));
+
+		/*
+		 * Invalid bits in mxcsr or mxcsr_mask will cause faults.
+		 */
+		fpu_save->sv_xmm.fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
+		fpu_save->sv_xmm.fx_mxcsr &= fpu_save->sv_xmm.fx_mxcsr_mask;
+
+		/*
+		 * Make sure the x87 and SSE bits are set in xstate_bv.
+		 * Otherwise xrstor will not restore them.
+		 */
+		if (x86_fpu_save == FPU_SAVE_XSAVE ||
+		    x86_fpu_save == FPU_SAVE_XSAVEOPT) {
+			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
+			    (XCR0_X87 | XCR0_SSE);
+		}
 	} else {
 		process_xmm_to_s87(fpregs, &fpu_save->sv_87);
 	}
 }
 
-/* We need to use x87 format for 32bit ptrace */
 void
-process_write_fpregs_s87(struct lwp *lwp, const struct save87 *fpregs)
+process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 {
+	union savefpu *fpu_save;
 
 	if (i386_use_fxsave) {
 		/* Save so we don't lose the xmm registers */
-		fpusave_lwp(lwp, true);
-		process_s87_to_xmm(fpregs, &process_fpframe(lwp)->sv_xmm);
+		fpusave_lwp(l, true);
+		fpu_save = process_fpframe(l);
+		process_s87_to_xmm(fpregs, &fpu_save->sv_xmm);
+
+		/*
+		 * Make sure the x87 and SSE bits are set in xstate_bv.
+		 * Otherwise xrstor will not restore them.
+		 */
+		if (x86_fpu_save == FPU_SAVE_XSAVE ||
+		    x86_fpu_save == FPU_SAVE_XSAVEOPT) {
+			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
+			    (XCR0_X87 | XCR0_SSE);
+		}
 	} else {
-		fpusave_lwp(lwp, false);
-		memcpy(&process_fpframe(lwp)->sv_87, fpregs,
-		    sizeof process_fpframe(lwp)->sv_87);
-	}
-}
-
-/*
- * Read fpu registers, the buffer is usually copied out to userspace.
- * Ensure we write to the entire structure.
- */
-void
-process_read_fpregs_xmm(struct lwp *lwp, struct fxsave *fpregs)
-{
-	fpusave_lwp(lwp, true);
-
-	if (i386_use_fxsave) {
-		memcpy(fpregs, &process_fpframe(lwp)->sv_xmm,
-		    sizeof process_fpframe(lwp)->sv_xmm);
-	} else {
-		/* This usually gets copied to userspace */
-		memset(fpregs, 0, sizeof *fpregs);
-		process_s87_to_xmm(&process_fpframe(lwp)->sv_87, fpregs);
-
+		fpusave_lwp(l, false);
+		fpu_save = process_fpframe(l);
+		memcpy(&fpu_save->sv_87, fpregs, sizeof(fpu_save->sv_87));
 	}
 }
 
 void
-process_read_fpregs_s87(struct lwp *lwp, struct save87 *fpregs)
+process_read_fpregs_xmm(struct lwp *l, struct fxsave *fpregs)
 {
-	fpusave_lwp(lwp, true);
+	union savefpu *fpu_save;
+
+	fpusave_lwp(l, true);
+	fpu_save = process_fpframe(l);
 
 	if (i386_use_fxsave) {
-		memset(fpregs, 0, 12);
-		process_xmm_to_s87(&process_fpframe(lwp)->sv_xmm, fpregs);
+		memcpy(fpregs, &fpu_save->sv_xmm, sizeof(fpu_save->sv_xmm));
 	} else {
-		memcpy(fpregs, &process_fpframe(lwp)->sv_87,
-		    sizeof process_fpframe(lwp)->sv_87);
+		memset(fpregs, 0, sizeof(*fpregs));
+		process_s87_to_xmm(&fpu_save->sv_87, fpregs);
+	}
+}
+
+void
+process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
+{
+	union savefpu *fpu_save;
+
+	fpusave_lwp(l, true);
+	fpu_save = process_fpframe(l);
+
+	if (i386_use_fxsave) {
+		memset(fpregs, 0, sizeof(*fpregs));
+		process_xmm_to_s87(&fpu_save->sv_xmm, fpregs);
+	} else {
+		memcpy(fpregs, &fpu_save->sv_87, sizeof(fpu_save->sv_87));
 	}
 }

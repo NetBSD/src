@@ -1,4 +1,4 @@
-#	$NetBSD: vchain,v 1.6.22.1 2014/08/20 00:04:28 tls Exp $
+#	$NetBSD: vchain,v 1.6.22.2 2017/12/03 11:38:44 jdolecek Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
@@ -7,9 +7,10 @@ define vchain
 	set $num = 0
 
 	set $vp=(struct vnode *)$arg0
+	set $vi=(struct vnode_impl *)$arg0
 	while ($vp)
-		printf "vp: 0x%lx freelist_next: 0x%lx usecount: %d flags: i:0x%x v:0x%x u:0x%x\n",\
-		       $vp, $vp->v_freelist.tqe_next, $vp->v_uobj.uo_refs, \
+		printf "vp: 0x%lx lrulist_next: 0x%lx usecount: %d flags: i:0x%x v:0x%x u:0x%x\n",\
+		       $vp, $vi->vi_lrulist.tqe_next, $vp->v_uobj.uo_refs, \
 		       $vp->v_iflag, $vp->v_vflag, $vp->v_uflag
 		set $num++
 		set $vp = $vp->v_mntvnodes.tqe_next
@@ -52,14 +53,18 @@ print vnode chains for all mount points
 end
 
 define mountdump
-	set $mp=mountlist.tqh_first
-	while ($mp)
-		printf "%s on %s type %s, (mp 0x%x, privdata 0x%x)\n", \
-		    $mp->mnt_stat->f_mntfromname, $mp->mnt_stat->f_mntonname, \
-		    $mp->mnt_op->vfs_name, $mp, $mp->mnt_data
-		set $mp=$mp->mnt_list.tqe_next
-		if ((const void *)$mp == (const void *)&mountlist)
-			set $mp = 0
+	set $me=mount_list.tqh_first
+	while ($me)
+		if ($me->me_type == ME_MOUNT)
+			set $mp = $me->me_mount
+			printf "%s on %s type %s, (mp 0x%x, privdata 0x%x)\n", \
+			    $mp->mnt_stat->f_mntfromname, \
+			    $mp->mnt_stat->f_mntonname, \
+			    $mp->mnt_op->vfs_name, $mp, $mp->mnt_data
+		end
+		set $me=$me->me_list.tqe_next
+		if ((const void *)$me == (const void *)&mount_list)
+			set $me = 0
 		end
 	end
 end

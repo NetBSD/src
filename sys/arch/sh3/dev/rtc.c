@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.8 2010/05/22 15:51:32 tsutsui Exp $ */
+/*	$NetBSD: rtc.c,v 1.8.18.1 2017/12/03 11:36:42 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2010/05/22 15:51:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8.18.1 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -180,11 +180,11 @@ rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 			year = _reg_read_1(SH3_RYRCNT);
 		else
 			year = _reg_read_2(SH4_RYRCNT) & 0x00ff;
-		dt->dt_year = FROMBCD(year);
+		dt->dt_year = bcdtobin(year);
 
 		/* read counter */
 #define	RTCGET(x, y) \
-		dt->dt_ ## x = FROMBCD(_reg_read_1(SH_(R ## y ## CNT)))
+		dt->dt_ ## x = bcdtobin(_reg_read_1(SH_(R ## y ## CNT)))
 
 		RTCGET(mon, MON);
 		RTCGET(wday, WK);
@@ -208,8 +208,8 @@ rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 
 #ifdef RTC_DEBUG
 	aprint_debug_dev(sc->sc_dev,
-			 "gettime: %04d-%02d-%02d %02d:%02d:%02d\n",
-			 dt->dt_year, dt->dt_mon, dt->dt_day,
+			 "gettime: %04lu-%02d-%02d %02d:%02d:%02d\n",
+			 (unsigned long)dt->dt_year, dt->dt_mon, dt->dt_day,
 			 dt->dt_hour, dt->dt_min, dt->dt_sec);
 
 	if (!sc->sc_valid)
@@ -231,7 +231,7 @@ rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 	if (year > 99)
 		year -= 100;
 
-	year = TOBCD(year);
+	year = bintobcd(year);
 
 	r = _reg_read_1(SH_(RCR2));
 
@@ -245,7 +245,7 @@ rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 		_reg_write_2(SH4_RYRCNT, year);
 
 #define	RTCSET(x, y) \
-	_reg_write_1(SH_(R ## x ## CNT), TOBCD(dt->dt_ ## y))
+	_reg_write_1(SH_(R ## x ## CNT), bintobcd(dt->dt_ ## y))
 
 	RTCSET(MON, mon);
 	RTCSET(WK, wday);
@@ -262,8 +262,8 @@ rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 
 #ifdef RTC_DEBUG
 	aprint_debug_dev(sc->sc_dev,
-			 "settime: %04d-%02d-%02d %02d:%02d:%02d\n",
-			 dt->dt_year, dt->dt_mon, dt->dt_day,
+			 "settime: %04lu-%02d-%02d %02d:%02d:%02d\n",
+			 (unsigned long)dt->dt_year, dt->dt_mon, dt->dt_day,
 			 dt->dt_hour, dt->dt_min, dt->dt_sec);
 #endif
 

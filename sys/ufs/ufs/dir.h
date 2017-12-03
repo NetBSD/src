@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.21.22.1 2013/06/23 06:18:40 tls Exp $	*/
+/*	$NetBSD: dir.h,v 1.21.22.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -123,6 +123,50 @@ struct	direct {
     (((oldfmt) && (needswap)) ?			\
     UFS_DIRECTSIZ((dp)->d_type) : UFS_DIRECTSIZ((dp)->d_namlen))
 #endif
+
+/*
+ * UFS_OLDDIRFMT and UFS_NEWDIRFMT are code numbers for a directory
+ * format change that happened in ffs a long time ago. (Back in the
+ * 80s, if I'm not mistaken.)
+ *
+ * These code numbers do not appear on disk. They're generated from
+ * runtime logic that is cued by other things, which is why
+ * UFS_OLDDIRFMT is confusingly 1 and UFS_NEWDIRFMT is confusingly 0.
+ *
+ * Relatedly, the FFS_EI byte swapping logic for directories is a
+ * horrible mess. For example, to access the namlen field, one
+ * currently does the following:
+ *
+ * #if (BYTE_ORDER == LITTLE_ENDIAN)
+ *         swap = (UFS_IPNEEDSWAP(VTOI(vp)) == 0);
+ * #else
+ *         swap = (UFS_IPNEEDSWAP(VTOI(vp)) != 0);
+ * #endif
+ *         return ((FSFMT(vp) && swap) ? dp->d_type : dp->d_namlen);
+ *
+ * UFS_IPNEEDSWAP() returns true if the volume is opposite-endian. This
+ * horrible "swap" logic is cutpasted all over everywhere but amounts
+ * to the following:
+ *
+ *    running code      volume          lfs_dobyteswap  "swap"
+ *    ----------------------------------------------------------
+ *    LITTLE_ENDIAN     LITTLE_ENDIAN   false           true
+ *    LITTLE_ENDIAN     BIG_ENDIAN      true            false
+ *    BIG_ENDIAN        LITTLE_ENDIAN   true            true
+ *    BIG_ENDIAN        BIG_ENDIAN      false           false
+ *
+ * which you'll note boils down to "volume is little-endian".
+ *
+ * Meanwhile, FSFMT(vp) yields UFS_OLDDIRFMT or UFS_NEWDIRFMT via
+ * perverted logic of its own. Since UFS_OLDDIRFMT is 1 (contrary to
+ * what one might expect approaching this cold) what this mess means
+ * is: on OLDDIRFMT volumes that are little-endian, we read the
+ * namlen value out of the type field. This is because on OLDDIRFMT
+ * volumes there is no d_type field, just a 16-bit d_namlen; so if
+ * the 16-bit d_namlen is little-endian, the useful part of it is
+ * in the first byte, which in the NEWDIRFMT structure is the d_type
+ * field.
+ */
 
 #define UFS_OLDDIRFMT	1
 #define UFS_NEWDIRFMT	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.9 2012/03/25 03:13:08 mrg Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.9.2.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -32,15 +32,25 @@ struct schizo_pbm_regs {
 	volatile u_int64_t	_unused1[64];		/* 0x0000 - 0x01ff */
 	struct iommureg2	iommu;			/* 0x0200 - 0x03ff */
 	volatile u_int64_t	_unused2[384];
-	volatile u_int64_t	imap[64];
+	volatile u_int64_t	imap[64];		/* 0x1000 - 0x11ff */
 	volatile u_int64_t	_unused3[64];
-	volatile u_int64_t	iclr[64];
-	volatile u_int64_t	_unused4[320];
+	volatile u_int64_t	iclr[64];		/* 0x1400 - 0x15ff */
+	volatile u_int64_t	_unused4_0[64];
+	volatile u_int64_t	_unused4_1[64];		/* 0x1800 - 0x19ff */
+	volatile u_int64_t	intr_retry;		/* 0x1a00 */
+	volatile u_int64_t	_unused4_2;
+	volatile u_int64_t	dma_flushsync_compl;	/* 0x1a10 */
+	volatile u_int64_t	dma_flushsync_pend;	/* 0x1a18 */
+	volatile u_int64_t	_unused4_3[60];
+	volatile u_int64_t	_unused4_4[64];
+	volatile u_int64_t	_unused4_5[64];
 	volatile u_int64_t	ctrl;
 	volatile u_int64_t	__unused0;
 	volatile u_int64_t	afsr;
 	volatile u_int64_t	afar;
-	volatile u_int64_t	_unused5[252];
+	volatile u_int64_t	_unused11[68];
+	volatile u_int64_t	int_routing;
+	volatile u_int64_t	_unused5[183];
 	struct iommu_strbuf	strbuf;
 	volatile u_int64_t	strbuf_ctxflush;
 	volatile u_int64_t	_unused6[4012];
@@ -112,6 +122,8 @@ struct schizo_regs {
 #define	SCZ_PCI_ICLR_BASE		0x01400
 #define	SCZ_PCI_INTR_RETRY		0x01a00	/* interrupt retry */
 #define	SCZ_PCI_DMA_FLUSH		0x01a08	/* pci consistent dma flush */
+#define	TOM_PCI_DMA_FLUSH_COMPLETE	0x01a10	/* diag */
+#define	TOM_PCI_DMA_FLUSH_PENDING	0x01a18	/* Tomatillo version */
 #define	SCZ_PCI_CTRL			0x02000
 #define	SCZ_PCI_AFSR			0x02010
 #define	SCZ_PCI_AFAR			0x02018
@@ -298,3 +310,167 @@ struct schizo_range {
 	u_int32_t	size_hi;
 	u_int32_t	size_lo;
 };
+
+#ifdef DEBUG
+/*
+ * Register information from:
+ *   Schizo Programmer's Reference Manual, September 30, 2007
+ *   JIO JBUS to PCI Bridge ASIC, 20 July, 2007
+ *
+ * Some registers are write-only (WO), or can only be accessed when
+ * diagnostics mode is set up (Diag).
+ */
+struct schizo_regname {
+	const u_int64_t	offset;
+	const int		size;
+	const int		n_reg;
+#define REG_TYPE_SCHIZO		0x0001
+#define REG_TYPE_TOMATILLO	0x0002
+#define REG_TYPE_LEAF_A		0x0100
+#define REG_TYPE_LEAF_B		0x0200
+	const int		type;
+	const char *		name;
+};
+
+/* 0x01 */
+static const struct schizo_regname schizo_regnames[] = {
+	{ 0x000000, 8, 0, 1, "UPA0 Address Match Register" },
+	{ 0x000000, 8, 0, 2, "UPA0 Offset Base Register" },
+	{ 0x000008, 8, 0, 1, "UPA0 Address Mask Register" },
+	{ 0x000008, 8, 0, 2, "UPA0 Offset Mask Register" },
+	{ 0x000010, 8, 0, 1, "UPA1 Address Match Register" },
+	{ 0x000010, 8, 0, 2, "UPA1 Offset Base Register" },
+	{ 0x000018, 8, 0, 1, "UPA1 Address Mask Register" },
+	{ 0x000018, 8, 0, 2, "UPA1 Offset Mask Register" },
+	{ 0x000020, 8, 0, 2, "NewLink Address Match Register" },
+	{ 0x000028, 8, 0, 2, "NewLink Address Mask Register" },
+	{ 0x000030, 8, 0, 2, "NewLinkAlt Address Match Register" },
+	{ 0x000038, 8, 0, 2, "NewLinkAlt Address Mask Register" },
+	{ 0x000040, 8, 0, 1, "PCI-A Mem Address Match Register" },
+	{ 0x000040, 8, 0, 2, "PCI-A Mem Offset Base Register" },
+	{ 0x000048, 8, 0, 1, "PCI-A Mem Address Mask Register" },
+	{ 0x000048, 8, 0, 2, "PCI-A Mem Offset Mask Register" },
+	{ 0x000050, 8, 0, 1, "PCI-A Cfg IO Address Match Register" },
+	{ 0x000050, 8, 0, 2, "PCI-A Cfg IO Offset Base Register" },
+	{ 0x000058, 8, 0, 1, "PCI-A Cfg IO Address Mask Register" },
+	{ 0x000058, 8, 0, 2, "PCI-A Cfg IO Offset Mask Register" },
+	{ 0x000060, 8, 0, 1, "PCI-B Mem Address Match Register" },
+	{ 0x000060, 8, 0, 2, "PCI-B Mem Offset Base Register" },
+	{ 0x000068, 8, 0, 1, "PCI-B Mem Address Mask Register" },
+	{ 0x000068, 8, 0, 2, "PCI-B Mem Offset Mask Register" },
+	{ 0x000070, 8, 0, 1, "PCI-B Cfg IO Address Match Register" },
+	{ 0x000070, 8, 0, 2, "PCI-B Cfg IO Offset Base Register" },
+	{ 0x000078, 8, 0, 1, "PCI-B Cfg IO Address Mask Register" },
+	{ 0x000078, 8, 0, 2, "PCI-B Cfg IO Offset Mask Register" },
+	{ 0x010000, 8, 0, 3, "Control/Status Register" },
+	{ 0x010008, 8, 0, 3, "Error Control Register" },
+	{ 0x010010, 8, 0, 3, "Interrupt Control Register" },
+	{ 0x010018, 8, 0, 3, "Error Log Register" },
+	{ 0x010020, 8, 0, 1, "ECC Control Register" },
+	{ 0x010020, 8, 0, 2, "Jbus Parity Control Register" },
+	{ 0x010030, 8, 0, 3, "UE AFSR" },
+	{ 0x010038, 8, 0, 3, "UE AFAR" },
+	{ 0x010040, 8, 0, 3, "CE AFSR" },
+	{ 0x010048, 8, 0, 3, "CE AFAR" },
+	{ 0x010050, 8, 0, 3, "Energy Star Control Register" },
+	{ 0x010058, 8, 0, 1, "Safari Soft Pause Register" },
+	{ 0x010058, 8, 0, 2, "Jbus Change Initiation Register" },
+	{ 0x011000, 8, 0, 3, "Queue Control Register" },
+	{ 0x012000, 8, 0x70, 3, "DTag Diagnostic Register" },
+	{ 0x013000, 8, 0x70, 3, "CTag Diagnostic Register" },
+	{ 0x014000, 8, 0x18, 3, "Safari Debug Register" },
+	{ 0x017000, 8, 0, 3, "Performance Control Register" },
+	{ 0x017008, 8, 0, 3, "Performance Counter Register" },
+	{ 0x017010, 8, 0, 2, "Reset_Gen Register" },
+	{ 0x017018, 8, 0, 2, "Reset_Source Register" },
+	{ 0x017020, 8, 0, 2, "UPA Reset Control Register" },
+	{ 0x060000, 1, 0, 2, "GPIO 0 Register" },
+	{ 0x060001, 1, 0, 2, "GPIO 1 Register" },
+	{ 0x062000, 1, 0, 2, "GPIO 2 Register" },
+	{ 0x062001, 1, 0, 2, "GPIO 3 Register" },
+	{ 0x064000, 8, 0, 2, "GPIO Data Register" },
+	{ 0x064008, 8, 0, 2, "GPIO Control Register" },
+	{ 0, 0, 0, 0, NULL }
+};
+
+/* 0x02 */
+static const struct schizo_regname schizo_pbm_regnames[] = {
+	{ 0x000100, 8, 0, 0x0102, "PCI Performance Monitor Control Register" },
+	{ 0x000108, 8, 0, 0x0102, "PCI Performance Counter Register" },
+	{ 0x000110, 8, 0, 0x0102, "PCI Idle Check Diagnostics Register" },
+	{ 0x002000, 8, 0, 0x0303, "PCI Control/Status Register" },
+	{ 0x002010, 8, 0, 0x0303, "PCI AFSR" },
+	{ 0x002018, 8, 0, 0x0303, "PCI AFAR" },
+	{ 0x002020, 8, 0, 0x0303, "PCI Diagnostic Register" },
+	{ 0x002028, 8, 0, 0x0303, "PCI Energy Star Register" },
+	{ 0x002030, 8, 0, 0x0302, "PCI Target Retry Limit" },
+	{ 0x002038, 8, 0, 0x0302, "PCI Target Latency Timer" },
+	/* See tomatillo_scratch_regnames[] */
+	{ 0x002240, 8, 0, 0x0102, "Interrupt Routing Register" },
+	{ 0x002490, 8, 0, 0x0302, "PCI Target Address Space Register" },
+	{ 0x002498, 8, 0, 0x0302, "PCI Target Error VA Log Register" },
+	{ 0, 0, 0, 0, NULL }
+};
+
+/* 0x04 */
+static const struct schizo_regname tomatillo_scratch_regnames[] = {
+	{ 0x002040, 8, 0x1f8, 2, "Scratch Pad Register" },
+	{ 0, 0, 0, 0, NULL }
+};
+
+/* 0x08 */
+static const struct schizo_regname schizo_iommu_regnames[] = {
+	{ 0x000200, 8, 0, 3, "IOMMU Control Register" },
+	{ 0x000208, 8, 0, 3, "TSB Base Address Reg" },
+/* WO	{ 0x000210, 8, 0, 3, "IOMMU Flush Page Register" }, */
+/* WO	{ 0x000218, 8, 0, 3, "IOMMU Flush Context Register" }, */
+	{ 0x000220, 8, 0, 2, "Translation Fault Address Register" },
+	{ 0x00a400, 8, 0, 1, "TLB Compare Setup Diag Reg" },
+	{ 0x00a408, 8, 0, 1, "TLB Compare Result Diag Reg" },
+/* Diag	{ 0x00a500, 8, 0x7f, 1, "IOMMU LRU Queue Diag Reg" }, */
+/* Diag	{ 0x00a580, 8, 0x7f, 1, "TLB Tag Diag Reg" }, */
+/* Diag	{ 0x00a600, 8, 0x7f, 1, "TLB Data RAM Diag Reg" }, */
+	{ 0, 0, 0, 0, NULL }
+};
+
+/* 0x10 */
+static const struct schizo_regname schizo_stream_regnames[] = {
+	{ 0x002800, 8, 0, 1, "Streaming Cache Control Reg" },
+/* WO	{ 0x002808, 8, 0, 1, "Streaming Cache Page Flush/Invalidate Reg" }, */
+/* WO	{ 0x002810, 8, 0, 1, "Streaming Cache Flush Synchronization Reg" }, */
+/* WO	{ 0x002818, 8, 0, 1, "Streaming Cache Context Flush/Invalidate Reg" }, */
+	{ 0x00b000, 8, 0x7ff, 1, "Streaming Cache Data RAM Diagnostic" },
+/* Diag	{ 0x00b800, 8, 0x7ff, 1, "Streaming Cache Error Status Diagnostic" }, */
+	{ 0x00ba00, 8, 0x7f, 1, "Streaming Cache Page Tag Diagnostic" },
+	{ 0x00bb00, 8, 0x7f, 1, "Streaming Cache Line Tag Diagnostic" },
+	{ 0x010000, 8, 0x7fff, 1, "Streaming Cache Context Match Reg" },
+	{ 0, 0, 0, 0, NULL }
+};
+
+/* 0x20 */
+static const struct schizo_regname schizo_intr_regnames[] = {
+	{ 0x001000, 8, 0x1ff, 3, "Interrupt Mapping Register for interrupt INO" },
+	{ 0x001400, 8, 0x1ff, 3, "Clear Interrupt Register for interrupt INO" },
+	{ 0x001a00, 8, 0, 3, "Interrupt Retry Register" },
+	{ 0x001a08, 8, 0, 3, "PCI Consistent DMA Flush/Sync Register" },
+	{ 0x006000, 8, 0, 3, "UPA Port 0 Interrupt Mapping Register" },
+	{ 0x008000, 8, 0, 3, "UPA Port 1 Interrupt Mapping Register" },
+	{ 0x00a800, 8, 0, 3, "PCI Int State Diag Register" },
+	{ 0x00a808, 8, 0, 3, "OBIO and Internal Int State Diag Register" },
+	{ 0, 0, 0, 0, NULL }
+};
+
+/* 0x40 */
+static const struct schizo_regname tomatillo_ichip_regnames[] = {
+	{ 0x001000, 8, 0x1ff, 3, "Interrupt Mapping Register for interrupt INO" },
+	{ 0x001400, 8, 0x1ff, 3, "Clear Interrupt Register for interrupt INO" },
+	{ 0x001a00, 8, 0, 3, "Interrupt Retry Register" },
+	{ 0x001a10, 8, 0, 3, "I-chip DMA Flush/Sync Complete Register" },
+	{ 0x001a18, 8, 0, 3, "I-chip DMA Flush/Sync Pending Register" },
+	{ 0x006000, 8, 0, 3, "UPA Port 0 Interrupt Mapping Register" },
+	{ 0x008000, 8, 0, 3, "UPA Port 1 Interrupt Mapping Register" },
+	{ 0x00a800, 8, 0, 3, "PCI Int State Diag Register" },
+	{ 0x00a808, 8, 0, 3, "OBIO and Internal Int State Diag Register" },
+	{ 0, 0, 0, 0, NULL }
+};
+#endif

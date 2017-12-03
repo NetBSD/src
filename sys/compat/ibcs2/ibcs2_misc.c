@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.111.18.1 2012/11/20 03:01:53 tls Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.111.18.2 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.111.18.1 2012/11/20 03:01:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.111.18.2 2017/12/03 11:36:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.111.18.1 2012/11/20 03:01:53 tls Ex
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
-
-#if defined(__i386__)
-#include <i386/include/reg.h>
-#endif
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_dirent.h>
@@ -208,29 +204,16 @@ ibcs2_sys_ulimit(struct lwp *l, const struct ibcs2_sys_ulimit_args *uap, registe
 int
 ibcs2_sys_waitsys(struct lwp *l, const struct ibcs2_sys_waitsys_args *uap, register_t *retval)
 {
-#if defined(__i386__)
 	/* {
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 	} */
-#endif
 	int error, options, status, pid;
 
-#if defined(__i386__)
-#define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
-	if ((l->l_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
-		/* waitpid */
-		pid = SCARG(uap, a1);
-		options = SCARG(uap, a3);
-	} else {
-#endif
-		/* wait */
-		pid = WAIT_ANY;
-		options = 0;
-#if defined(__i386__)
-	}
-#endif
+	/* wait */
+	pid = WAIT_ANY;
+	options = 0;
 
 	error = do_sys_wait(&pid, &status, options, NULL);
 	retval[0] = pid;
@@ -393,7 +376,7 @@ ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, reg
 		error = EBADF;
 		goto out1;
 	}
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -427,8 +410,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("ibcs2_getdents: bad reclen");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (cookie && (*cookie >> 32) != 0) {
 			compat_offseterr(vp, "ibcs2_getdents");
 			error = EINVAL;
@@ -531,7 +516,7 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 		error = EBADF;
 		goto out1;
 	}
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		fd_putfile(SCARG(uap, fd));
 		return sys_read(l, (const void *)uap, retval);

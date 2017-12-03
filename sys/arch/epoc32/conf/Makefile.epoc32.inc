@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.epoc32.inc,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $
+#	$NetBSD: Makefile.epoc32.inc,v 1.1.4.3 2017/12/03 11:36:01 jdolecek Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -8,14 +8,16 @@ SYSTEM_FIRST_SFILE=	${THISARM}/epoc32/epoc32_start.S
 
 KERNEL_BASE_VIRT=	$(LOADADDRESS)
 
-LINKFLAGS=		-T ldscript
+KERNLDSCRIPT=		ldscript
 
-EXTRA_CLEAN+=		netbsd.map assym.d ldscript tmp
-
-netbsd:	ldscript	# XXX
+EXTRA_CLEAN+=		netbsd.map assym.d ${KERNLDSCRIPT} tmp
 
 # generate ldscript from common template
-ldscript: ${THISARM}/conf/ldscript.epoc32 ${THISARM}/conf/Makefile.epoc32.inc Makefile
+${KERNLDSCRIPT}: \
+    ${THISARM}/conf/ldscript.epoc32 \
+    ${THISARM}/conf/Makefile.epoc32.inc \
+    Makefile
+	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
 	    ${THISARM}/conf/ldscript.epoc32 > tmp && mv tmp $@

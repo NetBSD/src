@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,9 @@
 
 #include "acpi.h"
 #include "accommon.h"
+
+#define _COMPONENT          ACPI_UTILITIES
+        ACPI_MODULE_NAME    ("ahpredef")
 
 /*
  * iASL only needs a partial table (short descriptions only).
@@ -91,13 +94,16 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_BMS",    "Battery Measurement Sampling Time", "Sets the battery measurement sampling time"),
     AH_PREDEF ("_BQC",    "Brightness Query Current", "Returns the current display brightness level"),
     AH_PREDEF ("_BST",    "Battery Status", "Returns a Control Method Battery status block"),
+    AH_PREDEF ("_BTH",    "Battery Throttle Limit", "Thermal limit for charging and discharging"),
     AH_PREDEF ("_BTM",    "Battery Time", "Returns the battery runtime"),
     AH_PREDEF ("_BTP",    "Battery Trip Point", "Sets a Control Method Battery trip point"),
     AH_PREDEF ("_CBA",    "Configuration Base Address", "Sets the base address for a PCI Express host bridge"),
+    AH_PREDEF ("_CCA",    "Cache Coherency Attribute", "Returns a device's support level for cache coherency"),
     AH_PREDEF ("_CDM",    "Clock Domain", "Returns a logical processor's clock domain identifier"),
     AH_PREDEF ("_CID",    "Compatible ID", "Returns a device's Plug and Play Compatible ID list"),
     AH_PREDEF ("_CLS",    "Class Code", "Returns PCI class code and subclass"),
     AH_PREDEF ("_CPC",    "Continuous Performance Control", "Returns a list of performance control interfaces"),
+    AH_PREDEF ("_CR3",    "Warm/Standby Temperature", "Temperature for a fast low power state"),
     AH_PREDEF ("_CRS",    "Current Resource Settings", "Returns the current resource settings for a device"),
     AH_PREDEF ("_CRT",    "Critical Temperature", "Returns the shutdown critical temperature"),
     AH_PREDEF ("_CSD",    "C-State Dependencies", "Returns a list of C-state dependencies"),
@@ -118,6 +124,7 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_DOS",    "Disable Output Switching", "Sets the display output switching mode"),
     AH_PREDEF ("_DPL",    "Device Selection Polarity", "Polarity of Device Selection signal, Resource Descriptor field"),
     AH_PREDEF ("_DRS",    "Drive Strength", "Drive Strength setting for GPIO connection, Resource Descriptor field"),
+    AH_PREDEF ("_DSD",    "Device-Specific Data", "Returns a list of device property information"),
     AH_PREDEF ("_DSM",    "Device-Specific Method", "Executes device-specific functions"),
     AH_PREDEF ("_DSS",    "Device Set State", "Sets the display device state"),
     AH_PREDEF ("_DSW",    "Device Sleep Wake", "Sets the sleep and wake transition states for a device"),
@@ -133,11 +140,13 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_FDI",    "Floppy Drive Information", "Returns a floppy drive information block"),
     AH_PREDEF ("_FDM",    "Floppy Drive Mode", "Sets a floppy drive speed"),
     AH_PREDEF ("_FIF",    "Fan Information", "Returns fan device information"),
+    AH_PREDEF ("_FIT",    "Firmware Interface Table", "Returns a list of NFIT structures"),
     AH_PREDEF ("_FIX",    "Fixed Register Resource Provider", "Returns a list of devices that implement FADT register blocks"),
     AH_PREDEF ("_FLC",    "Flow Control", "Flow control, Resource Descriptor field"),
     AH_PREDEF ("_FPS",    "Fan Performance States", "Returns a list of supported fan performance states"),
     AH_PREDEF ("_FSL",    "Fan Set Level", "Control method that sets the fan device's speed level (performance state)"),
     AH_PREDEF ("_FST",    "Fan Status", "Returns current status information for a fan device"),
+    AH_PREDEF ("_FUN",    "Function Number", "Resource descriptor field"),
     AH_PREDEF ("_GAI",    "Get Averaging Interval", "Returns the power meter averaging interval"),
     AH_PREDEF ("_GCP",    "Get Capabilities", "Get device time capabilities"),
     AH_PREDEF ("_GHL",    "Get Hardware Limit", "Returns the hardware limit enforced by the power meter"),
@@ -154,6 +163,7 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_GWS",    "Get Wake Status", "Return status of wake alarms"),
     AH_PREDEF ("_HE_",    "High-Edge", "Interrupt triggering, Resource Descriptor field"),
     AH_PREDEF ("_HID",    "Hardware ID", "Returns a device's Plug and Play Hardware ID"),
+    AH_PREDEF ("_HMA",    "Heterogeneous Memory Attributes", "Returns a list of HMAT structures."),
     AH_PREDEF ("_HOT",    "Hot Temperature", "Returns the critical temperature for sleep (entry to S4)"),
     AH_PREDEF ("_HPP",    "Hot Plug Parameters", "Returns a list of hot-plug information for a PCI device"),
     AH_PREDEF ("_HPX",    "Hot Plug Parameter Extensions", "Returns a list of hot-plug information for a PCI device. Supersedes _HPP"),
@@ -169,6 +179,11 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_LID",    "Lid Status", "Returns the open/closed status of the lid on a mobile system"),
     AH_PREDEF ("_LIN",    "Lines In Use", "Handshake lines, Resource Descriptor field"),
     AH_PREDEF ("_LL_",    "Low Level", "Interrupt polarity, Resource Descriptor field"),
+    AH_PREDEF ("_LPD",    "Low Power Dependencies", "Returns a list of dependencies for low power idle entry"),
+    AH_PREDEF ("_LPI",    "Low Power Idle States", "Returns a list of supported low power idle states"),
+    AH_PREDEF ("_LSI",    "Label Storage Information", "Returns information about the Label Storage Area associated with the NVDIMM object."),
+    AH_PREDEF ("_LSR",    "Label Storage Read", "Returns label data from the Label Storage Area of the NVDIMM object."),
+    AH_PREDEF ("_LSW",    "Label Storage Write", "Writes label data in to the Label Storage Area of the NVDIMM object."),
     AH_PREDEF ("_MAF",    "Maximum Address Fixed", "Resource Descriptor field"),
     AH_PREDEF ("_MAT",    "Multiple APIC Table Entry", "Returns a list of MADT APIC structure entries"),
     AH_PREDEF ("_MAX",    "Maximum Base Address", "Resource Descriptor field"),
@@ -180,6 +195,7 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_MOD",    "Mode", "Interrupt mode, Resource Descriptor field"),
     AH_PREDEF ("_MSG",    "Message", "Sets the system message waiting status indicator"),
     AH_PREDEF ("_MSM",    "Memory Set Monitoring", "Sets bandwidth monitoring parameters for a memory device"),
+    AH_PREDEF ("_MTL",    "Minimum Throttle Limit", "Returns the minimum throttle limit for a thermal zone"),
     AH_PREDEF ("_MTP",    "Memory Type", "Resource Descriptor field"),
     AH_PREDEF ("_NTT",    "Notification Temperature Threshold", "Returns a threshold for device temperature change that requires platform notification"),
     AH_PREDEF ("_OFF",    "Power Off", "Sets a power resource to the off state"),
@@ -203,7 +219,7 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_PMD",    "Power Metered Devices", "Returns a list of devices that are measured by the power meter device"),
     AH_PREDEF ("_PMM",    "Power Meter Measurement", "Returns the current value of the Power Meter"),
     AH_PREDEF ("_POL",    "Polarity", "Interrupt polarity, Resource Descriptor field"),
-    AH_PREDEF ("_PPC",    "Performance Present Capabilites", "Returns a list of the performance states currently supported by the platform"),
+    AH_PREDEF ("_PPC",    "Performance Present Capabilities", "Returns a list of the performance states currently supported by the platform"),
     AH_PREDEF ("_PPE",    "Polling for Platform Error", "Returns the polling interval to retrieve Corrected Platform Error information"),
     AH_PREDEF ("_PPI",    "Pin Configuration", "Resource Descriptor field"),
     AH_PREDEF ("_PR",     "Processor", "Predefined scope for processor objects"),
@@ -213,6 +229,7 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_PR3",    "Power Resources for D3hot", "Returns a list of dependent power resources to enter state D3hot"),
     AH_PREDEF ("_PRE",    "Power Resources for Enumeration", "Returns a list of dependent power resources to enumerate devices on a bus"),
     AH_PREDEF ("_PRL",    "Power Source Redundancy List", "Returns a list of power source devices in the same redundancy grouping"),
+    AH_PREDEF ("_PRR",    "Power Resource for Reset", "Execute a reset on a device"),
     AH_PREDEF ("_PRS",    "Possible Resource Settings", "Returns a list of a device's possible resource settings"),
     AH_PREDEF ("_PRT",    "PCI Routing Table", "Returns a list of PCI interrupt mappings"),
     AH_PREDEF ("_PRW",    "Power Resources for Wake", "Returns a list of dependent power resources for waking"),
@@ -236,10 +253,12 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_Qxx",    "EC Query", "Embedded Controller query and SMBus Alarm control method"),
     AH_PREDEF ("_RBO",    "Register Bit Offset", "Resource Descriptor field"),
     AH_PREDEF ("_RBW",    "Register Bit Width", "Resource Descriptor field"),
+    AH_PREDEF ("_RDI",    "Resource Dependencies for Idle", "Returns a list of dependencies for idle states"),
     AH_PREDEF ("_REG",    "Region Availability", "Inform AML code of an operation region availability change"),
-    AH_PREDEF ("_REV",    "Supported ACPI Revision", "Returns the revision of the ACPI specification that is implemented"),
+    AH_PREDEF ("_REV",    "Supported Integer Width", "Returns the supported integer width (<= 1: 32 bits only, >=2: both 32 and 64 bits"),
     AH_PREDEF ("_RMV",    "Removal Status", "Returns a device's removal ability status (docking)"),
     AH_PREDEF ("_RNG",    "Range", "Memory range type, Resource Descriptor field"),
+    AH_PREDEF ("_RST",    "Device Reset", "Executes a reset on a device"),
     AH_PREDEF ("_ROM",    "Read-Only Memory", "Returns a copy of the ROM data for a display device"),
     AH_PREDEF ("_RT_",    "Resource Type", "Resource Descriptor field"),
     AH_PREDEF ("_RTV",    "Relative Temperature Values", "Returns temperature value information"),
@@ -290,6 +309,7 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_TC1",    "Thermal Constant 1", "Returns TC1 for the passive cooling formula"),
     AH_PREDEF ("_TC2",    "Thermal Constant 2", "Returns TC2 for the passive cooling formula"),
     AH_PREDEF ("_TDL",    "T-State Depth Limit", "Returns the _TSS entry number of the lowest power throttling state"),
+    AH_PREDEF ("_TFP",    "Thermal Fast Sampling Period", "Returns the sampling period for passive cooling"),
     AH_PREDEF ("_TIP",    "Expired Timer Wake Policy", "Returns timer policies of the wake alarm device"),
     AH_PREDEF ("_TIV",    "Timer Values", "Returns remaining time of the wake alarm device"),
     AH_PREDEF ("_TMP",    "Temperature", "Returns a thermal zone's current temperature"),
@@ -300,6 +320,7 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_TRT",    "Thermal Relationship Table", "Returns thermal relationships between platform devices"),
     AH_PREDEF ("_TSD",    "Throttling State Dependencies", "Returns a list of T-state dependencies"),
     AH_PREDEF ("_TSF",    "Type-Specific Flags", "Resource Descriptor field"),
+    AH_PREDEF ("_TSN",    "Thermal Sensor Device", "Returns a reference to a thermal sensor"),
     AH_PREDEF ("_TSP",    "Thermal Sampling Period", "Returns the thermal sampling period for passive cooling"),
     AH_PREDEF ("_TSS",    "Throttling Supported States", "Returns supported throttling state information"),
     AH_PREDEF ("_TST",    "Temperature Sensor Threshold", "Returns the minimum separation for a device's temperature trip points"),
@@ -315,9 +336,52 @@ const AH_PREDEFINED_NAME    AslPredefinedInfo[] =
     AH_PREDEF ("_UPC",    "USB Port Capabilities", "Returns a list of USB port capabilities"),
     AH_PREDEF ("_UPD",    "User Presence Detect", "Returns user detection information"),
     AH_PREDEF ("_UPP",    "User Presence Polling", "Returns the recommended user presence polling interval"),
+    AH_PREDEF ("_VAL",    "Pin Configuration Value", "Resource Descriptor field"),
     AH_PREDEF ("_VEN",    "Vendor Data", "Resource Descriptor field"),
     AH_PREDEF ("_VPO",    "Video Post Options", "Returns the implemented video post options"),
-    AH_PREDEF ("_WAK",    "Wake", "Inform AML that the system has just awakened"),
     AH_PREDEF ("_Wxx",    "Wake Event", "Method executed as a result of a wake event"),
+    AH_PREDEF ("_WAK",    "Wake", "Inform AML that the system has just awakened"),
+    AH_PREDEF ("_WPC",    "Wireless Power Calibration", "Calibrate power and notify wireless device"),
+    AH_PREDEF ("_WPP",    "Wireless Power Polling", "Get recommended polling interval"),
     AH_PREDEF (NULL,      NULL, NULL)
 };
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiAhMatchPredefinedName
+ *
+ * PARAMETERS:  Nameseg                 - Predefined name string
+ *
+ * RETURN:      ID info struct. NULL if Nameseg not found
+ *
+ * DESCRIPTION: Lookup a predefined name.
+ *
+ ******************************************************************************/
+
+const AH_PREDEFINED_NAME *
+AcpiAhMatchPredefinedName (
+    char                        *Nameseg)
+{
+    const AH_PREDEFINED_NAME    *Info;
+
+
+    /* Nameseg must start with an underscore */
+
+    if (*Nameseg != '_')
+    {
+        return (NULL);
+    }
+
+    /* Search for a match in the predefined name table */
+
+    for (Info = AslPredefinedInfo; Info->Name; Info++)
+    {
+        if (ACPI_COMPARE_NAME (Nameseg, Info->Name))
+        {
+            return (Info);
+        }
+    }
+
+    return (NULL);
+}

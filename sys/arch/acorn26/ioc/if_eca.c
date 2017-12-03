@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.13 2012/05/11 15:39:18 skrll Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.13.2.1 2017/12/03 11:35:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.13 2012/05/11 15:39:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.13.2.1 2017/12/03 11:35:44 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -480,7 +480,7 @@ eca_gotframe(void *arg)
 			m_freem(mtail->m_next);
 			mtail->m_next = NULL;
 			/* Set up the header of the chain. */
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = 0;
 			for (n = m; n != NULL; n = n->m_next)
 				m->m_pkthdr.len += n->m_len;

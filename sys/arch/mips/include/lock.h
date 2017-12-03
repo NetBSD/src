@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.18.14.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -42,13 +42,13 @@
 #include <sys/param.h>
 
 static __inline int
-__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__ptr != __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline int
-__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_UNLOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__ptr == __SIMPLELOCK_UNLOCKED;
 }
@@ -184,8 +184,13 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 {
 
+#ifndef _MIPS_ARCH_OCTEONP
 	mb_memory();
+#endif
 	*lp = __SIMPLELOCK_UNLOCKED;
+#ifdef _MIPS_ARCH_OCTEONP
+	mb_write();
+#endif
 }
 
 #endif /* _MIPS_LOCK_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.1.12.1 2017/12/03 11:37:30 jdolecek Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/workqueue.h>
+#include <dev/pci/pcivar.h>
 
 #include "ixgbe_netbsd.h"
 
@@ -56,9 +57,7 @@ ixgbe_dma_tag_create(bus_dma_tag_t dmat, bus_size_t alignment,
 
 	*dtp = NULL;
 
-	if ((dt = kmem_zalloc(sizeof(*dt), KM_SLEEP)) == NULL)
-		return ENOMEM;
-
+	dt = kmem_zalloc(sizeof(*dt), KM_SLEEP);
 	dt->dt_dmat = dmat;
 	dt->dt_alignment = alignment;
 	dt->dt_boundary = boundary;
@@ -137,9 +136,6 @@ ixgbe_newext(ixgbe_extmem_head_t *eh, bus_dma_tag_t dmat, size_t size)
 	int nseg, rc;
 
 	em = kmem_zalloc(sizeof(*em), KM_SLEEP);
-
-	if (em == NULL)
-		return NULL;
 
 	rc = bus_dmamem_alloc(dmat, size, PAGE_SIZE, 0, &em->em_seg, 1, &nseg,
 	    BUS_DMA_WAITOK);
@@ -247,4 +243,16 @@ ixgbe_getjcl(ixgbe_extmem_head_t *eh, int nowait /* M_DONTWAIT */,
 	}
 
 	return m;
+}
+
+void
+ixgbe_pci_enable_busmaster(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t	pci_cmd_word;
+
+	pci_cmd_word = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (!(pci_cmd_word & PCI_COMMAND_MASTER_ENABLE)) {
+		pci_cmd_word |= PCI_COMMAND_MASTER_ENABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pci_cmd_word);
+	}
 }

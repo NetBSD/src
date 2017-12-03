@@ -76,15 +76,15 @@
 
 #include <sys/cdefs.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_tcp_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -96,7 +96,6 @@
 #include <sys/domain.h>
 #include <sys/kernel.h>
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -112,7 +111,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
 
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
@@ -124,7 +122,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9.2.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9.2.2 2017/12/03 11:39:04 jdolecek Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1051,7 +1049,7 @@ vtw_next_port_v4(struct tcp_ports_iterator *it)
 			if (!(inuse & (1 << i)))
 				continue;
 
-			inuse &= ~0 << i;
+			inuse &= ~0U << i;
 
 			if (i < it->slot_idx)
 				continue;
@@ -1165,7 +1163,7 @@ vtw_next_port_v6(struct tcp_ports_iterator *it)
 			if (!(inuse & (1 << i)))
 				continue;
 
-			inuse &= ~0 << i;
+			inuse &= ~0U << i;
 
 			if (i < it->slot_idx)
 				continue;
@@ -1342,9 +1340,9 @@ vtw_init(fatp_ctl_t *fat, vtw_ctl_t *ctl, const uint32_t n, vtw_t *ctl_base_v)
 /*!\brief	map class to TCP MSL
  */
 static inline uint32_t
-class_to_msl(int class)
+class_to_msl(int msl_class)
 {
-	switch (class) {
+	switch (msl_class) {
 	case 0:
 	case 1:
 		return tcp_msl_remote ? tcp_msl_remote : (TCPTV_MSL >> 0);
@@ -1875,7 +1873,7 @@ vtw_control(int af, uint32_t msl)
 {
 	fatp_ctl_t	*fat;
 	vtw_ctl_t	*ctl;
-	int		class	= msl_to_class(msl);
+	int		msl_class = msl_to_class(msl);
 
 	if (!vtw_select(af, &fat, &ctl))
 		return NULL;
@@ -1893,7 +1891,7 @@ vtw_control(int af, uint32_t msl)
 		tcbtable.vestige = &tcp_hooks;
 	}
 
-	return ctl + class;
+	return ctl + msl_class;
 }
 
 /*!\brief	add TCP pcb to vestigial timewait
@@ -2249,12 +2247,12 @@ vtw_earlyinit(void)
 /*!\brief	add lalp, fafp entries for debug
  */
 int
-vtw_debug_add(int af, sin_either_t *la, sin_either_t *fa, int msl, int class)
+vtw_debug_add(int af, sin_either_t *la, sin_either_t *fa, int msl, int msl_class)
 {
 	vtw_ctl_t	*ctl;
 	vtw_t		*vtw;
 
-	ctl = vtw_control(af, msl ? msl : class_to_msl(class));
+	ctl = vtw_control(af, msl ? msl : class_to_msl(msl_class));
 	if (!ctl)
 		return 0;
 
@@ -2385,9 +2383,6 @@ vtw_sys(struct lwp *l, const void *_, register_t *retval)
 		return EINVAL;
 
 	buf = kmem_alloc(len, KM_SLEEP);
-	if (!buf)
-		return ENOMEM;
-
 	rc = copyin(SCARG(uap, req), buf, len);
 	if (!rc) {
 		rc = vtw_debug_process(buf);

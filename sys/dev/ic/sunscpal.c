@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.25.22.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.25.22.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.25.22.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.25.22.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -2074,7 +2074,7 @@ sunscpal_attach(struct sunscpal_softc *sc, int options)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(&sc->sc_adapter) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_C700,v 1.1 2012/02/02 15:57:39 tsutsui Exp $
+# $NetBSD: INSTALL_C700,v 1.1.10.1 2017/12/03 11:36:52 jdolecek Exp $
 #
 # INSTALL config file (C700 with memory disk root)
 #
@@ -45,13 +45,3 @@ no cue*
 no kue*
 no udav*
 no url*
-
-no acphy*
-no amhphy*
-no bmtphy*
-no glxtphy*
-no gphyter*
-no makphy*
-no tlphy*
-no tqphy*
-no urlphy*

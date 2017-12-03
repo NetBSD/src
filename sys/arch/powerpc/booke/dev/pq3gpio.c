@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.8 2012/07/15 08:44:56 matt Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.8.2.1 2017/12/03 11:36:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.8 2012/07/15 08:44:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.8.2.1 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -161,9 +161,9 @@ pq3gpio_pin_ctl(void *v, int num, int ctl)
 }
 #endif
 
-#if defined(MPC8536) || defined(P2020)
+#if defined(MPC8536) || defined(P2020) || defined(P1023)
 /*
- * MPC8536 / P20x0 have controllable input/output pins
+ * MPC8536 / P20x0 / P1023 have controllable input/output pins
  */
 static void
 pq3gpio_pin_ctl(void *v, int num, int ctl)
@@ -465,6 +465,43 @@ pq3gpio_p20x0_attach(device_t self, bus_space_tag_t bst,
 }
 #endif /* P2020 */
 
+#ifdef P1023
+static void
+pq3gpio_p1023_attach(device_t self, bus_space_tag_t bst,
+	bus_space_handle_t bsh, u_int svr)
+{
+	static const uint32_t gpio2pmuxcr2_map[][3] = {
+		{ __PPCBITS( 0, 1), __PPCBITS( 0, 1), 0 },	/* GPIO_1 */
+		{ __PPCBIT(2),      __PPCBITS( 2, 3), 0 },	/* GPUO_2 */
+		{ __PPCBITS( 4, 5), __PPCBITS( 4, 5), 0 },	/* GPUO_3 */
+		{ __PPCBITS( 6, 7), __PPCBITS( 6, 7), 0 },	/* GPUO_4 */
+		{ __PPCBITS( 8, 9), __PPCBITS( 8, 9), 0 },	/* GPUO_5 */
+		{ __PPCBITS(10,11), __PPCBITS(10,11), 0 },	/* GPUO_6 */
+		{ __PPCBITS(12,13), __PPCBITS(12,13), 0 },	/* GPUO_7 */
+		{ __PPCBITS(14,15), __PPCBITS(14,15), 0 },	/* GPUO_8 */
+		{ __PPCBIT(3),      __PPCBITS(18,19), 0 },	/* GPUO_9 */
+	};
+
+	uint32_t pinmask = 0xffff0000;	/* assume all bits are valid */
+	size_t pincnt = 16;
+	const uint32_t pmuxcr2 = cpu_read_4(GLOBAL_BASE + PMUXCR2);
+	for (size_t i = 0; i < __arraycount(gpio2pmuxcr2_map); i++) {
+		const uint32_t *map = gpio2pmuxcr2_map[i];
+		if ((pmuxcr2 & map[1]) != map[2]) {
+			pinmask &= ~map[0];
+			pincnt--;
+		}
+	}
+
+	/*
+	 * Create GPIO pin groups
+	 */
+	aprint_normal_dev(self, "%zu input/output/opendrain pins\n", pincnt);
+	pq3gpio_group_create(self, bst, bsh, GPDAT, pinmask,
+	    GPIO_PIN_INPUT|GPIO_PIN_OUTPUT|GPIO_PIN_OPENDRAIN, pq3gpio_pin_ctl);
+}
+#endif /* P1023 */
+
 static const struct pq3gpio_svr_info {
 	uint16_t si_svr;
 	void (*si_attach)(device_t, bus_space_tag_t, bus_space_handle_t, u_int);
@@ -493,6 +530,10 @@ static const struct pq3gpio_svr_info {
 #endif
 #ifdef P2020
 	{ SVR_P2020v2 >> 16, pq3gpio_p20x0_attach,
+	    GPIO_BASE, GPIO_SIZE },
+#endif
+#ifdef P1023
+	{ SVR_P1023v1 >> 16, pq3gpio_p1023_attach,
 	    GPIO_BASE, GPIO_SIZE },
 #endif
 };

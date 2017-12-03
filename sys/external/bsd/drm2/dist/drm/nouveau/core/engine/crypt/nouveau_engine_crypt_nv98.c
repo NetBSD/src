@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_crypt_nv98.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_crypt_nv98.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_crypt_nv98.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_crypt_nv98.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $");
 
 #include <core/client.h>
 #include <core/os.h>
@@ -108,7 +108,7 @@ nv98_crypt_intr(struct nouveau_subdev *subdev)
 	if (stat & 0x00000040) {
 		nv_error(priv, "DISPATCH_ERROR [");
 		nouveau_enum_print(nv98_crypt_isr_error_name, ssta);
-		pr_cont("] ch %d [0x%010llx %s] subc %d mthd 0x%04x data 0x%08x\n",
+		pr_cont("] ch %d [0x%010"PRIx64" %s] subc %d mthd 0x%04x data 0x%08x\n",
 		       chid, (u64)inst << 12, nouveau_client_name(engctx),
 		       subc, mthd, data);
 		nv_wr32(priv, 0x087004, 0x00000040);

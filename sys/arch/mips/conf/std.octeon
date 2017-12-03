@@ -1,0 +1,25 @@
+#	$NetBSD: std.octeon,v 1.4.18.2 2017/12/03 11:36:27 jdolecek Exp $
+
+machine evbmips mips
+include 	"conf/std"	# MI standard options
+
+options 	MIPS64_OCTEON
+
+options 	MIPS3_ENABLE_CLOCK_INTR
+
+makeoptions	LP64="yes"
+
+options 	MIPS64R2
+options 	NOFPU		# No FPU
+options 	EXEC_ELF32	# exec ELF32 binaries
+options 	EXEC_ELF64	# exec ELF64 binaries
+options 	COMPAT_NETBSD32
+options 	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	CFLAGS+="-mips64r2 -march=octeon+"
+makeoptions	AFLAGS+="-mips64r2 -march=octeon+"
+# There is uboot's boot info around 0x100000.
+makeoptions	DEFTEXTADDR="0x80200000"
+makeoptions	BOARDTYPE="octeon"
+
+include 	"arch/mips/conf/files.octeon"

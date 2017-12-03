@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.12 2011/02/20 07:59:51 matt Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.12.14.1 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -54,7 +54,7 @@ static void	arcemu_ipN_init(const char **);
 static void *	arcemu_GetPeer(void *);
 static void *	arcemu_GetChild(void *);
 static const char *
-		arcemu_GetEnvironmentVariable(const char *); 
+		arcemu_GetEnvironmentVariable(const char *);
 static void *	arcemu_ip6_GetMemoryDescriptor(void *mem);
 static void *	arcemu_ip12_GetMemoryDescriptor(void *mem);
 

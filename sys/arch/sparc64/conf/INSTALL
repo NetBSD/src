@@ -1,12 +1,12 @@
-# 	$NetBSD: INSTALL,v 1.28.12.1 2014/08/20 00:03:25 tls Exp $
+#	$NetBSD: INSTALL,v 1.28.12.2 2017/12/03 11:36:44 jdolecek Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
 #	kernel, that are not already included in GENERIC!
 #	See the include below...
 
-include "arch/sparc64/conf/GENERIC"
+include 	"arch/sparc64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.28.12.1 $"
+#ident		"INSTALL-$Revision: 1.28.12.2 $"
 
 makeoptions	COPTS="-Os -Wno-uninitialized"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.47.8.3 2014/08/20 00:04:42 tls Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.47.8.4 2017/12/03 11:39:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.47.8.3 2014/08/20 00:04:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.47.8.4 2017/12/03 11:39:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.47.8.3 2014/08/20 00:04:42 tls Exp $")
 #include <sys/stat.h>
 #include <sys/cprng.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump/rumpuser.h>
 
 #if 0
 #define DPRINTF(x) printf x
@@ -159,7 +159,7 @@ makedefaultlabel(struct disklabel *lp, off_t size, int part)
 	strncpy(lp->d_typename, "rumpd", sizeof(lp->d_typename));
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 
-	lp->d_type = DTYPE_RUMPD;
+	lp->d_type = DKTYPE_RUMPD;
 	lp->d_rpm = 11;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -211,7 +211,7 @@ rumpblk_init(void)
 			sectshift = tmp;
 		else
 			printf("RUMP_BLKSECTSHIFT must be least %d (now %d), ",
-			   DEV_BSHIFT, tmp); 
+			   DEV_BSHIFT, tmp);
 		printf("using %d for sector shift (size %d)\n",
 		    sectshift, 1<<sectshift);
 	}
@@ -341,6 +341,25 @@ rumpblk_deregister(const char *path)
 	return 0;
 }
 
+/*
+ * Release all backend resources, to be called only when the rump
+ * kernel is being shut down.
+ * This routine does not do a full "fini" since we're going down anyway.
+ */
+void
+rumpblk_fini(void)
+{
+	int i;
+
+	for (i = 0; i < RUMPBLK_SIZE; i++) {
+		struct rblkdev *rblk;
+
+		rblk = &minors[i];
+		if (rblk->rblk_fd != -1)
+			backend_close(rblk);
+	}
+}
+
 static int
 backend_open(struct rblkdev *rblk, const char *path)
 {
@@ -402,6 +421,7 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	devminor_t dmin = minor(dev);
 	struct rblkdev *rblk = &minors[dmin];
 	struct partinfo *pi;
+	struct partition *dp;
 	int error = 0;
 
 	/* well, me should support a few more, but we don't for now */
@@ -410,14 +430,25 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		*(struct disklabel *)addr = rblk->rblk_label;
 		break;
 
-	case DIOCGPART:
+	case DIOCGPARTINFO:
+		dp = &rblk->rblk_label.d_partitions[DISKPART(dmin)];
 		pi = addr;
-		pi->part = &rblk->rblk_label.d_partitions[DISKPART(dmin)];
-		pi->disklab = &rblk->rblk_label;
+		pi->pi_offset = dp->p_offset;
+		pi->pi_size = dp->p_size;
+		pi->pi_secsize = rblk->rblk_label.d_secsize;
+		pi->pi_bsize = BLKDEV_IOSIZE;
+		pi->pi_fstype = dp->p_fstype;
+		pi->pi_fsize = dp->p_fsize;
+		pi->pi_frag = dp->p_frag;
+		pi->pi_cpg = dp->p_cpg;
 		break;
 
 	/* it's synced enough along the write path */
 	case DIOCCACHESYNC:
+		break;
+
+	case DIOCGMEDIASIZE:
+		*(off_t *)addr = (off_t)rblk->rblk_size;
 		break;
 
 	default:

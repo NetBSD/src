@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.3.14.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.3.14.2 2017/12/03 11:36:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -67,12 +67,24 @@ const struct intrsw *powerpc_intrsw = &null_intrsw;
 
 #define	__stub	__section(".stub") __noprofile
 
-void *intr_establish(int, int, int, int (*)(void *), void *) __stub;
+void *intr_establish(int, int, int, int (*)(void *), void *) __noprofile;
 
 void *
 intr_establish(int irq, int ipl, int ist, int (*func)(void *), void *arg)
 {
-	return (*powerpc_intrsw->intrsw_establish)(irq, ipl, ist, func, arg);
+	return (*powerpc_intrsw->intrsw_establish)(irq, ipl, ist, func, arg,
+	    NULL);
+}
+
+void *intr_establish_xname(int, int, int, int (*)(void *), void *,
+    const char *) __stub;
+
+void *
+intr_establish_xname(int irq, int ipl, int ist, int (*func)(void *), void *arg,
+    const char *xname)
+{
+	return (*powerpc_intrsw->intrsw_establish)(irq, ipl, ist, func, arg,
+	    xname);
 }
 
 void intr_disestablish(void *) __stub;

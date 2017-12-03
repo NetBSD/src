@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.36 2009/12/14 00:47:12 matt Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.36.22.1 2017/12/03 11:36:57 jdolecek Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.36 2009/12/14 00:47:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.36.22.1 2017/12/03 11:36:57 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -491,7 +491,7 @@ ultrix_sys_ioctl(struct lwp *l, const struct ultrix_sys_ioctl_args *uap, registe
 	    {
 		int x;	/* unused */
 
-		return copyin(&x, SCARG(&ap, data), sizeof x);
+		return copyin(SCARG(&ap, data), &x, sizeof x);
 	    }
 	case _IOR('t', 100, int):	/* sun SUNOS_TIOCSSOFTCAR */
 	    {

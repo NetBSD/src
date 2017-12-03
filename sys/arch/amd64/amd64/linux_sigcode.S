@@ -1,6 +1,6 @@
-/*	$NetBSD: linux_sigcode.S,v 1.2 2005/12/11 12:16:21 christos Exp $ */
+/*	$NetBSD: linux_sigcode.S,v 1.2.122.1 2017/12/03 11:35:47 jdolecek Exp $ */
 
-/*-
+/*
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,15 +34,12 @@
 #include <machine/asm.h>
 
 /* 
- * The signal trampoline are not used on Linux/amd64: a
- * libc provided trampoline is always used.
- * We just provide the symbol so that the kernel builds.
+ * The signal trampoline are not used on Linux/amd64: a libc provided
+ * trampoline is always used. We just provide the symbol so that the kernel
+ * builds.
  */
 
-/* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
-NENTRY(linux_sigcode)
+	.globl _C_LABEL(linux_sigcode), _C_LABEL(linux_esigcode)
+	.set _C_LABEL(linux_sigcode),0
+	.set _C_LABEL(linux_esigcode),0
 
-/* LINTSTUB: Var: char linux_rt_sigcode[1]; */
-NENTRY(linux_rt_sigcode)
-	.globl	_C_LABEL(linux_esigcode)
-_C_LABEL(linux_esigcode):

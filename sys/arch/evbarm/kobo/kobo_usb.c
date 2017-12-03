@@ -1,4 +1,4 @@
-/*	$NetBSD: kobo_usb.c,v 1.1.6.2 2014/08/20 00:02:55 tls Exp $	*/
+/*	$NetBSD: kobo_usb.c,v 1.1.6.3 2017/12/03 11:36:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.1.6.2 2014/08/20 00:02:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.1.6.3 2017/12/03 11:36:05 jdolecek Exp $");
 
 #include "opt_imx.h"
 
@@ -113,7 +113,7 @@ kobo_usb_init(struct imxehci_softc *sc)
 		init_h1(sc);
 		break;
 	default:
-		aprint_error_dev(sc->sc_hsc.sc_dev, "unit %d not supprted\n",
+		aprint_error_dev(sc->sc_hsc.sc_dev, "unit %d not supported\n",
 		    sc->sc_unit);
 	}
 }

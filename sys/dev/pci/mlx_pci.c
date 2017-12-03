@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.23.22.2 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.23.22.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.23.22.2 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.23.22.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.23.22.2 2014/08/20 00:03:43 tls Exp $"
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/module.h>
 
 #include <machine/endian.h>
 #include <sys/bus.h>
@@ -81,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.23.22.2 2014/08/20 00:03:43 tls Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include "ioconf.h"
 
 static void	mlx_pci_attach(device_t, device_t, void *);
 static int	mlx_pci_match(device_t, cfdata_t, void *);
@@ -141,8 +144,15 @@ static struct mlx_pci_ident {
 	},
 };
 
-CFATTACH_DECL_NEW(mlx_pci, sizeof(struct mlx_softc),
-    mlx_pci_match, mlx_pci_attach, NULL, NULL);
+static int
+mlx_pci_rescan(device_t self, const char *attr, const int *flag)
+{
+
+	return mlx_configure(device_private(self), 1);
+}
+
+CFATTACH_DECL3_NEW(mlx_pci, sizeof(struct mlx_softc),
+    mlx_pci_match, mlx_pci_attach, NULL, NULL, mlx_pci_rescan, NULL, 0);
 
 /*
  * Try to find a `mlx_pci_ident' entry corresponding to this board.
@@ -670,4 +680,45 @@ mlx_v5_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 	mlx_outb(mlx, MLX_V5REG_FWERROR, 0xff);
 
 	return (2);
+}
+
+MODULE(MODULE_CLASS_DRIVER, mlx_pci, "mlx,pci");
+        
+#ifdef _MODULE
+/*      
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */     
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"  
+#endif  
+        
+static int
+mlx_pci_modcmd(modcmd_t cmd, void *opaque)
+{           
+	int error = 0;
+ 
+#ifdef _MODULE  
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		/*
+		 * We skip over the first entry in cfdriver[] array
+		 * since the cfdriver is attached by the common
+		 * (non-attachment-specific) code.
+		 */
+		error = config_init_component(&cfdriver_ioconf_mlx_pci[1],
+		    cfattach_ioconf_mlx_pci, cfdata_ioconf_mlx_pci);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(&cfdriver_ioconf_mlx_pci[1],
+		    cfattach_ioconf_mlx_pci, cfdata_ioconf_mlx_pci);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

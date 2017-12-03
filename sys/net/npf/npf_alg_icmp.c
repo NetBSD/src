@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.12.2.4 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.12.2.5 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,8 +33,9 @@
  * NPF ALG for ICMP and traceroute translations.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.4 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.5 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -47,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.4 2014/08/20 00:04:35 tls Ex
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <net/pfil.h>
+#endif
 
 #include "npf_impl.h"
 #include "npf_conn.h"
@@ -216,6 +218,7 @@ npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 	if (!nbuf_advance(nbuf, npc->npc_hlen, 0)) {
 		return false;
 	}
+	enpc->npc_ctx = npc->npc_ctx;
 	enpc->npc_nbuf = nbuf;
 	enpc->npc_info = 0;
 
@@ -421,7 +424,7 @@ npf_alg_icmp_init(void)
 		.translate	= npfa_icmp_nat,
 		.inspect	= npfa_icmp_conn,
 	};
-	alg_icmp = npf_alg_register("icmp", &icmp);
+	alg_icmp = npf_alg_register(npf_getkernctx(), "icmp", &icmp);
 	return alg_icmp ? 0 : ENOMEM;
 }
 
@@ -429,7 +432,7 @@ static int
 npf_alg_icmp_fini(void)
 {
 	KASSERT(alg_icmp != NULL);
-	return npf_alg_unregister(alg_icmp);
+	return npf_alg_unregister(npf_getkernctx(), alg_icmp);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.37 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.37.2.1 2017/12/03 11:39:04 jdolecek Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 
 #include <sys/queue.h>
 #include <netinet/in_pcb_hdr.h>
+#include <netinet/ip6.h>
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -100,10 +101,15 @@ struct	in6pcb {
 	struct icmp6_filter *in6p_icmp6filt;
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
 	bool    in6p_bindportonsend;
+	struct ip_moptions *in6p_v4moptions;/* IP4 multicast options */
 };
 
 #define in6p_faddr	in6p_ip6.ip6_dst
 #define in6p_laddr	in6p_ip6.ip6_src
+
+#define	in6p_lock(in6p)		solock((in6p)->in6p_socket)
+#define	in6p_unlock(in6p)	sounlock((in6p)->in6p_socket)
+#define	in6p_locked(in6p)	solocked((in6p)->in6p_socket)
 
 /* states in inp_state: */
 #define	IN6P_ATTACHED		INP_ATTACHED
@@ -154,8 +160,8 @@ struct	in6pcb {
 void	in6_losing(struct in6pcb *);
 void	in6_pcbinit(struct inpcbtable *, int, int);
 int	in6_pcballoc(struct socket *, void *);
-int	in6_pcbbind(void *, struct mbuf *, struct lwp *);
-int	in6_pcbconnect(void *, struct mbuf *, struct lwp *);
+int	in6_pcbbind(void *, struct sockaddr_in6 *, struct lwp *);
+int	in6_pcbconnect(void *, struct sockaddr_in6 *, struct lwp *);
 void	in6_pcbdetach(struct in6pcb *);
 void	in6_pcbdisconnect(struct in6pcb *);
 struct	in6pcb *in6_pcblookup_port(struct inpcbtable *, struct in6_addr *,
@@ -167,15 +173,18 @@ void	in6_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
 void	in6_pcbpurgeif(struct inpcbtable *, struct ifnet *);
 void	in6_pcbstate(struct in6pcb *, int);
 void	in6_rtchange(struct in6pcb *, int);
-void	in6_setpeeraddr(struct in6pcb *, struct mbuf *);
-void	in6_setsockaddr(struct in6pcb *, struct mbuf *);
+void	in6_setpeeraddr(struct in6pcb *, struct sockaddr_in6 *);
+void	in6_setsockaddr(struct in6pcb *, struct sockaddr_in6 *);
 
 /* in in6_src.c */
 int	in6_selecthlim(struct in6pcb *, struct ifnet *);
+int	in6_selecthlim_rt(struct in6pcb *);
 int	in6_pcbsetport(struct sockaddr_in6 *, struct in6pcb *, struct lwp *);
 
 extern struct rtentry *
 	in6_pcbrtentry(struct in6pcb *);
+extern void
+	in6_pcbrtentry_unref(struct rtentry *, struct in6pcb *);
 extern struct in6pcb *in6_pcblookup_connect(struct inpcbtable *,
 					    const struct in6_addr *, u_int, const struct in6_addr *, u_int, int,
 					    struct vestigial_inpcb *);

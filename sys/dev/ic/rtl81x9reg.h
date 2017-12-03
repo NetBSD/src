@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.43.2.2 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.43.2.3 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -136,6 +136,7 @@
 #define RTK_DBG_REG		0x00D1
 #define RTK_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
 #define RTK_IM			0x00E2
+#define RTK_MISC		0x00F0
 
 /*
  * TX config register bits
@@ -165,6 +166,11 @@
 #define RTK_HWREV_8168E		0x2C000000
 #define RTK_HWREV_8168E_VL	0x2C800000
 #define RTK_HWREV_8168_SPIN1	0x30000000
+#define RTK_HWREV_8168G		0x4c000000
+#define RTK_HWREV_8168G_SPIN1	0x4c100000
+#define RTK_HWREV_8168G_SPIN2	0x50900000
+#define RTK_HWREV_8168G_SPIN4	0x5c800000
+#define RTK_HWREV_8168GU	0x50800000
 #define RTK_HWREV_8100E		0x30800000
 #define RTK_HWREV_8101E		0x34000000
 #define RTK_HWREV_8102E		0x34800000
@@ -175,6 +181,8 @@
 #define RTK_HWREV_8168C_SPIN2	0x3C400000
 #define RTK_HWREV_8168CP	0x3C800000
 #define RTK_HWREV_8168F		0x48000000
+#define RTK_HWREV_8168H		0x54000000
+#define RTK_HWREV_8168H_SPIN1	0x54100000
 #define RTK_HWREV_8139		0x60000000
 #define RTK_HWREV_8139A		0x70000000
 #define RTK_HWREV_8139AG	0x70800000
@@ -214,6 +222,14 @@
 #define RTK_TXTH_256		8	/* (x) * 32 bytes */
 #define RTK_TXTH_1536		48
 
+/* MISC register */
+#define	RTK_MISC_TXPLA_RST	__BIT(29)
+#define	RTK_MISC_DISABLE_LAN_EN	__BIT(23)	/* Enable GPIO pin */
+#define	RTK_MISC_PWM_EN		__BIT(22)
+#define	RTK_MISC_RXDV_GATED_EN	__BIT(19)
+#define	RTK_MISC_EARLY_TALLY_EN	__BIT(16)
+
+
 /*
  * Interrupt status register bits.
  */
@@ -242,6 +258,8 @@
 	RTK_ISR_RX_OVERRUN|RTK_ISR_PKT_UNDERRUN|RTK_ISR_FIFO_OFLOW|	\
 	RTK_ISR_PCS_TIMEOUT|RTK_ISR_SYSTEM_ERR|RTK_ISR_TIMEOUT_EXPIRED)
 
+#define RTK_INTRS_IM_HW	\
+	(RTK_INTRS_CPLUS|RTK_ISR_TX_OK)
 
 /*
  * Media status register. (8139 only)
@@ -491,12 +509,18 @@ struct re_desc {
 #define RE_TDESC_CMD_SOF	0x20000000	/* start of frame marker */
 #define RE_TDESC_CMD_EOR	0x40000000	/* end of ring marker */
 #define RE_TDESC_CMD_OWN	0x80000000	/* chip owns descriptor */
+#define RE_TDESC_CMD_LGTCPHO	0x01fc0000	/* DESCV2 TCP hdr off lg send */
+#define RE_TDESC_CMD_LGTCPHO_SHIFT 18
+#define RE_TDESC_CMD_LGSEND_V4	0x04000000	/* DESCV2 TCPv4 large send en */
+#define RE_TDESC_CMD_LGSEND_V6	0x02000000	/* DESCV2 TCPv6 large send en */
 
 #define RE_TDESC_VLANCTL_TAG	0x00020000	/* Insert VLAN tag */
 #define RE_TDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
 #define RE_TDESC_VLANCTL_UDPCSUM 0x80000000	/* DESCV2 UDP cksum enable */
 #define RE_TDESC_VLANCTL_TCPCSUM 0x40000000	/* DESCV2 TCP cksum enable */
 #define RE_TDESC_VLANCTL_IPCSUM	0x20000000	/* DESCV2 IP hdr cksum enable */
+#define RE_TDESC_VLANCTL_MSSVAL	0x0ffc0000	/* DESCV2 large send MSS val */
+#define RE_TDESC_VLANCTL_MSSVAL_SHIFT 18
 
 /*
  * Error bits are valid only on the last descriptor of a frame

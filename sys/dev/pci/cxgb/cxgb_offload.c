@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.2.14.1 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.2.14.2 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -711,7 +711,7 @@ do_hwtid_rpl(struct toedev *dev, struct mbuf *m)
 
     printf("do_hwtid_rpl m=%p\n", m);
     return (0);
-
+#ifdef notyet
 
     hwtid = G_TID(ntohl(p->opcode_tid));
 
@@ -725,6 +725,7 @@ do_hwtid_rpl(struct toedev *dev, struct mbuf *m)
             dev->name, p->opcode);
         return CPL_RET_BUF_DONE | CPL_RET_BAD_MSG;
     }
+#endif
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.20.2.1 2013/06/23 06:20:14 tls Exp $	*/
+/*	$NetBSD: errata.c,v 1.20.2.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.20.2.1 2013/06/23 06:20:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.20.2.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
 
 	(void)ci;
 
-	val = rdmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE);
+	val = rdmsr_locked(e->e_data1);
 	if ((val & e->e_data2) != 0)
 		return FALSE;
 
@@ -309,10 +309,10 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 
 	(void)ci;
 
-	val = rdmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE);
+	val = rdmsr_locked(e->e_data1);
 	if ((val & e->e_data2) != 0)
 		return FALSE;
-	wrmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE, val | e->e_data2);
+	wrmsr_locked(e->e_data1, val | e->e_data2);
 	aprint_debug_dev(ci->ci_dev, "erratum %d patched\n",
 	    e->e_num);
 
@@ -375,9 +375,9 @@ x86_errata(void)
 
 	if (upgrade && !again) {
 		again = 1;
-		aprint_normal_dev(ci->ci_dev, "WARNING: errata present, BIOS upgrade "
-		    "may be\n");
-		aprint_normal_dev(ci->ci_dev, "WARNING: necessary to ensure reliable "
-		    "operation\n");
+		aprint_normal_dev(ci->ci_dev, "WARNING: errata present,"
+		    " BIOS upgrade may be\n");
+		aprint_normal_dev(ci->ci_dev, "WARNING: necessary to ensure"
+		    " reliable operation\n");
 	}
 }

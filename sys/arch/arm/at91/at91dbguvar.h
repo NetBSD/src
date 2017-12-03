@@ -1,4 +1,4 @@
-/*      $NetBSD: at91dbguvar.h,v 1.5 2012/02/02 19:42:57 tls Exp $	*/
+/*      $NetBSD: at91dbguvar.h,v 1.5.6.1 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy
@@ -30,6 +30,10 @@
 #define _AT91DBGUVAR_H_
 
 #include <sys/tty.h>
+
+#ifdef RND_COM
+#include <sys/rndsource.h>
+#endif
 
 /* Hardware flag masks */
 #define COM_HW_NOIEN		0x01

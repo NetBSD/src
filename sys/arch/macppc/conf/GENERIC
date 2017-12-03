@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.303.2.4 2014/08/20 00:03:11 tls Exp $
+# $NetBSD: GENERIC,v 1.303.2.5 2017/12/03 11:36:24 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.303.2.4 $"
+#ident 		"GENERIC-$Revision: 1.303.2.5 $"
 
 maxusers	32
 
@@ -40,6 +40,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -63,31 +64,19 @@ options		DDB_COMMANDONENTER="bt"
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-options 	COMPAT_09	# NetBSD 0.9,
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_12	# NetBSD 1.2,
-options 	COMPAT_13	# NetBSD 1.3,
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
+
+include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
 #options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
 options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances
 options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
-# The following two options can break /etc/fstab, so handle with care
-#options        DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
-#options        DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
+#options	DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -119,6 +108,7 @@ options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 options 	APPLE_UFS	# Apple UFS support in FFS
@@ -214,6 +204,8 @@ uni_n*	at mainbus?
 memory*	at mainbus?
 spdmem*	at memory? addr ?
 
+valkyriefb0	at mainbus0	# Performa 6360 onboard video
+
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
 pci*	at uninorth? bus ?
@@ -288,13 +280,13 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 chipsfb*	at pci?	function ?	# C&T 65550
 gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
+pm3fb*		at pci? function ?	# 3Dlabs Permedia 3 Graphics
 tdvfb*		at pci? function ?	# 3Dfx Voodoo2
 r128fb*		at pci? function ?	# ATI Rage 128
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 
 # ATI Radeon. Still has problems on some hardware
 radeonfb*	at pci? function ?
-options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 # generic PCI framebuffer, should work with everything supported by OF
 genfb*		at pci? function ?
@@ -379,22 +371,22 @@ nvram*	at obio?			# nvram
 
 # the new, improved ADB subsystem
 
-cuda*	at obio?			# CUDA, for Old World PowerMacs
-pmu*	at obio?			# PMU, *Books and newer PowerMacs
-nadb*	at adb_bus?			# ADB bus enumerator, at cuda or pmu
-adbkbd* at nadb?			# ADB keyboard
-adbms*	at nadb?			# ADB mice and touchpads
-adbbt*	at nadb?			# button device found on *Books
+cuda*	at obio?		# CUDA, for Old World PowerMacs
+iic* 		at cuda?	# CUDA's IIC bus
+
+pmu*	at obio?		# PMU, *Books and newer PowerMacs
+nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
+adbkbd* at nadb?		# ADB keyboard
+adbms*	at nadb?		# ADB mice and touchpads
+adbbt*	at nadb?		# button device found on *Books
 
 wskbd*		at wskbddev? console ?
 wsmouse*	at wsmousedev?
 
-battery* at pmu?		# legacy battery, for ohare-based PowerBooks
-smartbat* at pmu?		# Smart battery, found in newer *Books
+battery* 	at pmu?		# legacy battery, for ohare-based PowerBooks
+smartbat* 	at pmu?		# Smart battery, found in newer *Books
 
-iic0	at cuda0		# CUDA's IIC bus
-sgsmix0 at iic0 addr 0x8a	# additional mixer found in beige G3
-				# use with awacs
+iic* 		at pmu?		# some PMUs have IIC
 
 zsc*	at obio?
 zstty*	at zsc? channel ?
@@ -408,11 +400,17 @@ wdc*	at mediabay? flags 0
 ki2c*	at obio?			# Keywest I2C
 ki2c*	at uni_n?			# Keywest I2C
 iic*	at ki2c?
-dbcool*	at ki2c?			# dbCool thermal monitor & fan control
 
-deq*	at ki2c?			# mixer/equalizer, needed by snapper
-wi*	at obio?			# AirMac
-snapper* at obio?			# Snapper audio device
+# I2C devices
+dbcool* 	at iic?		# dbCool thermal monitor & fan control
+deq* 		at iic?		# mixer/equalizer, used by snapper
+admtemp* 	at iic?		# temperature sensor found in Mini, G5
+videopll*	at iic?		# for valkyriefb
+sgsmix* 	at iic?		# Additional mixer found in beige G3
+				# use with awacs.
+
+wi* 		at obio?	# AirMac
+snapper* 	at obio?	# Snapper audio device
 
 cardslot* at cbb?
 cardbus* at cardslot?
@@ -500,7 +498,7 @@ ucom*	at ubsa? portno ?
 uplcom* at uhub? port ?					# Prolific serial
 ucom* at uplcom? portno ?
 
-uftdi* at uhub? port ?					# FTDI serial
+uftdi* at uhub? port ?					# FTDI FT8U100AX serial adapter
 ucom* at uftdi? portno ?
 
 uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
@@ -516,6 +514,8 @@ radio* at udsbr?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
@@ -524,16 +524,36 @@ udav*	at uhub? port ?		# Davicom DM9601 based adapters
 ukyopon* at uhub? port ?				# Kyocera AIR-EDGE PHONE
 ucom*	at ukyopon? portno ?
 
-uscanner* at uhub? port ?				# USB scanners
+#uscanner* at uhub? port ?				# USB scanners
 uyap* at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # USB 802.11 adapters
-atu*	at uhub? port ?		# Atmel at76c50x 802.11b
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 otus*	at uhub? port ?		# Atheros AR9001U
 ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
+upgt*	at uhub? port ?		# Intersil PrismGT
+urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
+urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
 #zyd*	at uhub? port ?		# Zydas ZD1211
+
+# Serial adapters
+uchcom* at uhub? port ?         # WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
+
+uslsa*  at uhub? port ?         # Silicon Labs USB-RS232 serial adapter
+ucom*   at uslsa? portno ?
+
+# USB 3G datacards
+umodeswitch* at uhub? port ?
+u3g*    at uhub? port ?
+ucom*   at u3g?
+
+# USB generic serial port (e.g., data over cellular)
+ugensa* at uhub? port ?
+ucom*   at ugensa?
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -562,6 +582,8 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 # MPU 401 UARTs
 #mpu*	at cmpci?
@@ -615,6 +637,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexer
+pseudo-device 	wsfont
 pseudo-device	swwdog			# software watchdog driver - swwdog(4)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
@@ -635,11 +658,8 @@ pseudo-device   drvctl
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

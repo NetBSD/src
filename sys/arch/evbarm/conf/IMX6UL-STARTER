@@ -1,0 +1,418 @@
+#	$NetBSD: IMX6UL-STARTER,v 1.5.2.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	IMX6UL-STARTER - Freescale i.MX6UL Evaluation Board
+#
+# ConnectCore i.MX6UL Starter Kit
+# - https://www.digikey.com/en/product-highlight/d/digi-intl/i-mx6ul-starter-kit
+#
+
+include	"arch/evbarm/conf/std.imx6ul"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+# estimated number of users
+
+maxusers	32
+
+# Board Type
+options 	EVBARM_BOARDTYPE=ccimx6ulstarter
+
+# CPU options
+options 	CPU_CORTEX
+options 	CPU_CORTEXA7
+options 	IMX6
+options 	PMAPCOUNTERS
+
+# Standard system options
+
+options 	INSECURE	# disable kernel security levels - X needs this
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+# Note: SysV IPC parameters can be changed dynamically; see sysctl(8).
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+#options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internally consistency checks
+
+#options 	DEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+options 	LOCKDEBUG	# expensive locking checks/support
+options 	IRQSTATS	# manage IRQ statistics
+#options 	NO_POWERSAVE	# uncomment this to run under ICE
+
+#makeoptions	COPTS="-O2"
+options 	DDB			# in-kernel debugger
+#options 	DDB_KEYCODE=0x1d	# ^]
+#options 	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
+options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DDB_VERBOSE_HELP
+#options 	IPKDB			# remote kernel debugging
+#options	KGDB
+#options 	KGDB_DEVNAME="\"imxuart\""
+#options 	KGDB_DEVADDR=0x021f4000
+#options 	KGDB_DEVRATE=115200
+makeoptions	DEBUG="-g"		# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+#options 	SYSCALL_STATS			# per syscall counts
+#options 	SYSCALL_TIMES			# per syscall times
+#options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
+
+
+# Compatibility options
+
+include 	"conf/compat_netbsd60.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+
+# File systems
+file-system	FFS		# UFS
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	TMPFS		# Efficient memory file-system
+file-system	EXT2FS		# second extended file system (linux)
+file-system	LFS		# log-structured file system
+file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
+file-system	PROCFS		# /proc
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/ptm support
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
+#file-system	NILFS		# experimental - NTT's NiLFS(2)
+
+# File system options
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
+options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	NFSSERVER	# Network File System server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPv6
+options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MPLS		# MultiProtocol Label Switching (needs mpls)
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+options 	NETATALK	# AppleTalk networking protocols
+#options 	CAN		# Controller Area Network protocol
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+#options 	TCP_SIGNATURE	# Enable RFC-2385 TCP md5 signatures
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# Device options
+
+# Console options.    also need IMXUARTCONSOLE
+options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x021f4000,CONSPEED=115200
+options 	CONS_OVERRIDE
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+
+# Kernel root file system and dump configuration.
+config		netbsd		root on ? type ?
+
+options 		NFS_BOOT_BOOTP
+options 		NFS_BOOT_DHCP
+#options 		NFS_BOOT_BOOTPARAM
+#options 		NFS_BOOT_BOOTSTATIC
+#options 		NFS_BOOTSTATIC_MYIP="\"192.168.0.2\""
+#options 		NFS_BOOTSTATIC_GWIP="\"192.168.0.1\""
+#options 		NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+#options 		NFS_BOOTSTATIC_SERVADDR="\"192.168.0.3\""
+#options 		NFS_BOOTSTATIC_SERVER="\"192.168.0.3:/nfs/imx6ul\""
+
+#
+# Device configuration
+#
+
+mainbus0	at root
+
+cpu*		at mainbus?
+
+# A7 core devices
+armperiph0	at mainbus?		# A7 On-Chip Peripherals
+armgic0 	at armperiph?		# ARM Generic Interrupt Controller
+armgtmr0	at armperiph?		# ARM Generic Timer
+
+axi0		at mainbus?
+
+# Enhanced Periodic Interrupt Timer
+#imxclock0	at axi? addr 0x020d0000 irq 88
+#imxclock1	at axi? addr 0x020d4000 irq 89
+
+# GPIO
+imxgpio0	at axi? addr 0x0209c000 irqbase 256 irq 98
+imxgpio1	at axi? addr 0x020a0000 irqbase 288 irq 100
+imxgpio2	at axi? addr 0x020a4000 irqbase 320 irq 102
+imxgpio3	at axi? addr 0x020a8000 irqbase 352 irq 104
+imxgpio4	at axi? addr 0x020ac000 irqbase 384 irq 106
+gpio*		at imxgpio?
+options 	IMX_GPIO_INTR_SPLIT
+
+# Clock Control
+imxccm0		at axi? addr 0x020c4000
+
+# On-Chip OTP Controller
+imxocotp0	at axi? addr 0x021bc000
+
+# Secure Non-Volatile Storage
+imxsnvs0	at axi? addr 0x020cc000
+
+# IOMUX
+imxiomux0	at axi? addr 0x020e0000
+
+# WatchDog
+imxwdog0	at axi? addr 0x020bc000 irq 112 flags 0
+#imxwdog1	at axi? addr 0x020c0000 irq 113 flags 0
+#imxwdog2	at axi? addr 0x021e4000 irq 43 flags 0
+
+# Serial
+#imxuart0	at axi? addr 0x02020000 irq 58		# UART1
+#imxuart1	at axi? addr 0x021e8000 irq 59		# UART2
+#imxuart2	at axi? addr 0x021ec000 irq 60		# UART3
+#imxuart3	at axi? addr 0x021f0000 irq 61		# UART4
+imxuart4	at axi? addr 0x021f4000 irq 62		# UART5
+#imxuart5	at axi? addr 0x021fc000 irq 49		# UART6
+#imxuart6	at axi? addr 0x02018000 irq 71		# UART7
+
+options 	IMXUARTCONSOLE
+
+# Network Interfaces
+enet0		at axi? addr 0x02188000 irq 150		# iMX6 SoC Ethernet
+#enet1		at axi? addr 0x020b4000 irq 152		# iMX6 SoC Ethernet
+
+# MII/PHY support
+acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
+bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
+ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+etphy*	at mii? phy ?			# Agere/LSI ET1011 TruePHY Gig-E PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
+igphy*	at mii? phy ?			# Intel IGP01E1000
+ihphy*	at mii? phy ?			# Intel 82577 PHYs
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+micphy* at mii? phy ?			# Micrel KSZ9021RNI PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy* at mii? phy ?			# generic HomePNA PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110 internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
+
+# USB Controller and Devices
+imxusbphy0	at axi? addr 0x020c9000
+imxusbphy1	at axi? addr 0x020ca000
+imxusbc0	at axi? addr 0x02184000
+ehci0		at imxusbc0 unit 0 irq 75	# USBOTG1
+ehci1		at imxusbc0 unit 1 irq 74	# USBOTG2
+
+usb*		at ehci?
+
+# USB device drivers
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
+# SD/MMC controller
+#sdhc0		at axi? addr 0x02190000 irq 54		# uSDHC1
+#sdhc1		at axi? addr 0x02194000 irq 55		# uSDHC2
+#sdmmc*		at sdhc?
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
+#
+#ld*		at sdmmc?			# MMC/SD card
+
+
+# Pseudo-Devices
+
+pseudo-device	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
+
+# disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
+pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options	RF_INCLUDE_EVENODD=1
+#options	RF_INCLUDE_RAID5_RS=1
+#options	RF_INCLUDE_PARITYLOGGING=1
+#options	RF_INCLUDE_CHAINDECLUSTER=1
+#options	RF_INCLUDE_INTERDECLUSTER=1
+#options	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss			# file system snapshot device
+pseudo-device	putter			# for puffs and pud
+
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
+
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	mpls			# MPLS pseudo-interface
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
+pseudo-device	l2tp			# L2TPv3 interface
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
+
+#pseudo-device	canloop			# CAN loopback interface
+
+#
+# accept filters
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	sequencer		# MIDI sequencer
+# rnd works; RND_COM does not on port i386 yet.
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
+pseudo-device	bcsp			# BlueCore Serial Protocol
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# pseudo audio device driver
+#pseudo-device	pad
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
+
+# Veriexec
+#
+# a pseudo device needed for veriexec
+pseudo-device	veriexec
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+options VERIFIED_EXEC_FP_SHA256
+options VERIFIED_EXEC_FP_SHA384
+options VERIFIED_EXEC_FP_SHA512
+
+options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
+options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
+options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug

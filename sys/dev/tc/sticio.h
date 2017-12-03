@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticio.h,v 1.4 2008/04/28 20:23:58 martin Exp $	*/
+/* 	$NetBSD: sticio.h,v 1.4.44.1 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _TC_STICIO_H_
 #define	_TC_STICIO_H_
+
+#include <sys/ioccom.h>
 
 /*
  * Buffer sizes.  Image buffers (span buffers, really) must be able to hold

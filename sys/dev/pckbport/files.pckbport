@@ -1,4 +1,4 @@
-# $NetBSD: files.pckbport,v 1.8 2011/09/07 19:05:13 jakllsch Exp $
+# $NetBSD: files.pckbport,v 1.8.12.1 2017/12/03 11:37:30 jdolecek Exp $
 # devices attached at pckbport, for use with wscons
 
 defflag	opt_wskbdmap.h			WSKBD_USONLY
@@ -16,8 +16,10 @@ defflag	PCKBD_CNATTACH_MAY_FAIL
 obsolete defflag opt_pms.h		PMS_DISABLE_POWERHOOK
 defflag	opt_pms.h			PMS_SYNAPTICS_TOUCHPAD
 defflag opt_pms.h			PMS_ELANTECH_TOUCHPAD
+defflag opt_pms.h			PMS_ALPS_TOUCHPAD
 device	pms: wsmousedev
 attach	pms at pckbport
 file	dev/pckbport/pms.c		pms
 file	dev/pckbport/synaptics.c	pms & pms_synaptics_touchpad
 file	dev/pckbport/elantech.c		pms & pms_elantech_touchpad
+file	dev/pckbport/alps.c		pms & pms_alps_touchpad

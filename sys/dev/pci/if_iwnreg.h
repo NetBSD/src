@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwnreg.h,v 1.10.12.2 2014/08/20 00:03:42 tls Exp $	*/
-/*	$OpenBSD: if_iwnreg.h,v 1.43 2011/09/01 18:49:56 kettenis Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.10.12.3 2017/12/03 11:37:08 jdolecek Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.49 2014/09/09 18:56:24 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -185,11 +185,11 @@
 #define IWN_FW_DATA_BASE	0x00800000
 
 /* Possible flags for register IWN_RESET. */
-#define IWN_RESET_NEVO			(1 << 0)
-#define IWN_RESET_SW			(1 << 7)
-#define IWN_RESET_MASTER_DISABLED	(1 << 8)
-#define IWN_RESET_STOP_MASTER		(1 << 9)
-#define IWN_RESET_LINK_PWR_MGMT_DIS	(1 << 31)
+#define IWN_RESET_NEVO			(1U << 0)
+#define IWN_RESET_SW			(1U << 7)
+#define IWN_RESET_MASTER_DISABLED	(1U << 8)
+#define IWN_RESET_STOP_MASTER		(1U << 9)
+#define IWN_RESET_LINK_PWR_MGMT_DIS	(1U << 31)
 
 /* Possible flags for register IWN_GP_CNTRL. */
 #define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
@@ -201,7 +201,7 @@
 
 /* Possible flags for register IWN_HW_REV. */
 #define IWN_HW_REV_TYPE_SHIFT	4
-#define IWN_HW_REV_TYPE_MASK	0x000000f0
+#define IWN_HW_REV_TYPE_MASK	0x000001f0
 #define IWN_HW_REV_TYPE_4965	0
 #define IWN_HW_REV_TYPE_5300	2
 #define IWN_HW_REV_TYPE_5350	3
@@ -212,6 +212,10 @@
 #define IWN_HW_REV_TYPE_6050	8
 #define IWN_HW_REV_TYPE_6005	11
 /* Types 6030 and 6035 also return 11 */
+#define IWN_HW_REV_TYPE_2030	12
+#define IWN_HW_REV_TYPE_2000	16
+#define IWN_HW_REV_TYPE_105	17
+#define IWN_HW_REV_TYPE_135	18
 
 /* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
@@ -226,6 +230,7 @@
 #define IWN_GP_DRIVER_RADIO_2X2_IPA	(2 << 0)
 #define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
 #define IWN_GP_DRIVER_6050_1X2		(1 << 3)
+#define IWN_GP_DRIVER_RADIO_IQ_INVERT	(1 << 7)
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
@@ -282,8 +287,8 @@
 
 /* Possible flags/values for register IWN_FH_TX_CONFIG. */
 #define IWN_FH_TX_CONFIG_DMA_PAUSE		0
-#define IWN_FH_TX_CONFIG_DMA_ENA		(1 << 31)
-#define IWN_FH_TX_CONFIG_CIRQ_HOST_ENDTFD	(1 << 20)
+#define IWN_FH_TX_CONFIG_DMA_ENA		(1U << 31)
+#define IWN_FH_TX_CONFIG_CIRQ_HOST_ENDTFD	(1U << 20)
 
 /* Possible flags/values for register IWN_FH_TXBUF_STATUS. */
 #define IWN_FH_TXBUF_STATUS_TBNUM(x)	((x) << 20)
@@ -297,17 +302,17 @@
 #define IWN_FH_TX_STATUS_IDLE(chnl)	(1 << ((chnl) + 16))
 
 /* Possible flags for register IWN_FH_RX_CONFIG. */
-#define IWN_FH_RX_CONFIG_ENA		(1 << 31)
+#define IWN_FH_RX_CONFIG_ENA		(1U << 31)
 #define IWN_FH_RX_CONFIG_NRBD(x)	((x) << 20)
-#define IWN_FH_RX_CONFIG_RB_SIZE_8K	(1 << 16)
-#define IWN_FH_RX_CONFIG_SINGLE_FRAME	(1 << 15)
-#define IWN_FH_RX_CONFIG_IRQ_DST_HOST	(1 << 12)
+#define IWN_FH_RX_CONFIG_RB_SIZE_8K	(1U << 16)
+#define IWN_FH_RX_CONFIG_SINGLE_FRAME	(1U << 15)
+#define IWN_FH_RX_CONFIG_IRQ_DST_HOST	(1U << 12)
 #define IWN_FH_RX_CONFIG_RB_TIMEOUT(x)	((x) << 4)
-#define IWN_FH_RX_CONFIG_IGN_RXF_EMPTY	(1 <<  2)
+#define IWN_FH_RX_CONFIG_IGN_RXF_EMPTY	(1U <<  2)
 
 /* Possible flags for register IWN_FH_TX_CONFIG. */
-#define IWN_FH_TX_CONFIG_DMA_ENA	(1 << 31)
-#define IWN_FH_TX_CONFIG_DMA_CREDIT_ENA	(1 <<  3)
+#define IWN_FH_TX_CONFIG_DMA_ENA	(1U << 31)
+#define IWN_FH_TX_CONFIG_DMA_CREDIT_ENA	(1U <<  3)
 
 /* Possible flags for register IWN_EEPROM. */
 #define IWN_EEPROM_READ_VALID	(1 << 0)
@@ -354,7 +359,7 @@
 #define IWN_APMG_PCI_STT_L1A_DIS	(1 << 11)
 
 /* Possible flags for register IWN_BSM_DRAM_TEXT_SIZE. */
-#define IWN_FW_UPDATED	(1 << 31)
+#define IWN_FW_UPDATED	(1U << 31)
 
 #define IWN_SCHED_WINSZ		64
 #define IWN_SCHED_LIMIT		64
@@ -435,12 +440,14 @@ struct iwn_tx_cmd {
 #define IWN_CMD_TXPOWER_DBM		149
 #define IWN_CMD_TXPOWER			151
 #define IWN5000_CMD_TX_ANT_CONFIG	152
+#define IWN_CMD_TXPOWER_DBM_V1		152
 #define IWN_CMD_BT_COEX			155
 #define IWN_CMD_GET_STATISTICS		156
 #define IWN_CMD_SET_CRITICAL_TEMP	164
 #define IWN_CMD_SET_SENSITIVITY		168
 #define IWN_CMD_PHY_CALIB		176
 #define IWN_CMD_BT_COEX_PRIO_TABLE	204
+#define IWN_CMD_BT_COEX_PROT		205
 
 	uint8_t	flags;
 	uint8_t	idx;
@@ -811,6 +818,51 @@ struct iwn_scan_chan {
 /* Maximum size of a scan command. */
 #define IWN_SCAN_MAXSZ	(MCLBYTES - 4)
 
+/*
+ * For active scan, listen ACTIVE_DWELL_TIME (msec) on each channel after
+ * sending probe req.  This should be set long enough to hear probe responses
+ * from more than one AP.
+ */
+#define IWN_ACTIVE_DWELL_TIME_2GHZ	(30)	/* all times in msec */
+#define IWN_ACTIVE_DWELL_TIME_5GHZ	(20)
+#define IWN_ACTIVE_DWELL_FACTOR_2GHZ	(3)
+#define IWN_ACTIVE_DWELL_FACTOR_5GHZ	(2)
+
+/*
+ * For passive scan, listen PASSIVE_DWELL_TIME (msec) on each channel.
+ * Must be set longer than active dwell time.
+ * For the most reliable scan, set > AP beacon interval (typically 100msec).
+ */
+#define IWN_PASSIVE_DWELL_TIME_2GHZ	(20)	/* all times in msec */
+#define IWN_PASSIVE_DWELL_TIME_5GHZ	(10)
+#define IWN_PASSIVE_DWELL_BASE		(100)
+#define IWN_CHANNEL_TUNE_TIME		(5)
+
+/*
+ * If active scanning is requested but a certain channel is
+ * marked passive, we can do active scanning if we detect
+ * transmissions.
+ *
+ * There is an issue with some firmware versions that triggers
+ * a sysassert on a "good CRC threshold" of zero (== disabled),
+ * on a radar channel even though this means that we should NOT
+ * send probes.
+ *
+ * The "good CRC threshold" is the number of frames that we
+ * need to receive during our dwell time on a channel before
+ * sending out probes -- setting this to a huge value will
+ * mean we never reach it, but at the same time work around
+ * the aforementioned issue. Thus use IWN_GOOD_CRC_TH_NEVER
+ * here instead of IWN_GOOD_CRC_TH_DISABLED.
+ *
+ * This was fixed in later versions along with some other
+ * scan changes, and the threshold behaves as a flag in those
+ * versions.
+ */
+#define IWN_GOOD_CRC_TH_DISABLED	0
+#define IWN_GOOD_CRC_TH_DEFAULT		htole16(1)
+#define IWN_GOOD_CRC_TH_NEVER		htole16(0xffff)
+
 /* Structure for command IWN_CMD_TXPOWER (4965AGN only.) */
 #define IWN_RIDX_MAX	32
 struct iwn4965_cmd_txpower {
@@ -843,7 +895,7 @@ struct iwn_bluetooth {
 #define IWN_BT_COEX_CHAN_ANN	(1 << 0)
 #define IWN_BT_COEX_BT_PRIO	(1 << 1)
 #define IWN_BT_COEX_2_WIRE	(1 << 2)
-#define IWN_BT_COEX_ENABLE	IWN_BT_COEX_CHAN_ANN | IWN_BT_COEX_BT_PRIO
+#define IWN_BT_COEX_ENABLE	(IWN_BT_COEX_CHAN_ANN | IWN_BT_COEX_BT_PRIO)
 	uint8_t		lead_time;
 #define IWN_BT_LEAD_TIME_DEF	30
 	uint8_t		max_kill;
@@ -858,14 +910,28 @@ struct iwn_bluetooth {
 
 struct iwn_bt_basic {
 	struct iwn_bluetooth bt;
+#define IWN_BT_BASIC_CHAN_INHIBITION	1
+#define IWN_BT_BASIC_MODE_MASK	((1 << 3) | (1 << 4) | (1 << 5))
+#define IWN_BT_BASIC_MODE_SHIFT	3
+#define IWN_BT_BASIC_MODE_DISABLED	0
+#define IWN_BT_BASIC_MODE_LEGACY_2W	1
+#define IWN_BT_BASIC_MODE_3W		2
+#define IWN_BT_BASIC_MODE_4W		3
+#define IWN_BT_UCODE_DEFAULT		(1 << 6)
+#define IWN_BT_SYNC_2_BT_DISABLE	(1 << 7)
 	uint8_t		bt3_prio_sample_time;
 #define IWN_BT_BT3_PRIO_SAMPLE_DEF	2
 	uint8_t		bt3_timer_t2_value;
 #define IWN_BT_BT3_T2_DEF	12
 	uint16_t	bt4_reaction_time; /* unused */
 	uint32_t	bt3_lookup_table[12];
-	uint8_t		reduce_txpower; /* bit 0 */
-	uint8_t		reserved;
+	union {
+		struct {
+			uint8_t		reduce_txpower; /* bit 0 */
+			uint8_t		reserved;
+		};
+		uint16_t bt4_decision;
+	};
 	uint16_t	valid;
 #define IWN_BT_VALID_ENABLE_FLAGS	htole16(1 << 0)
 #define IWN_BT_VALID_BOOST		htole16(1 << 1)
@@ -902,6 +968,27 @@ struct iwn_bt_adv2 {
 	/* set IWLAGN_BT_VALID_BOOST to "1" in "valid" bitmask for */
 	uint8_t		tx_prio_boost;
 	uint16_t	rx_prio_boost;
+} __packed;
+
+/* Structure for command IWN_CMD_BT_COEX_PRIOTABLE */
+struct iwn_btcoex_priotable {
+	uint8_t		calib_init1;
+	uint8_t		calib_init2;
+	uint8_t		calib_periodic_low1;
+	uint8_t		calib_periodic_low2;
+	uint8_t		calib_periodic_high1;
+	uint8_t		calib_periodic_high2;
+	uint8_t		dtim;
+	uint8_t		scan52;
+	uint8_t		scan24;
+	uint8_t		reserved[7];
+} __packed;
+
+/* Structure for command IWN_CMD_BT_COEX_PROT */
+struct iwn_btcoex_prot {
+	uint8_t		open;
+	uint8_t		type;
+	uint8_t		reserved[2];
 } __packed;
 
 /* Structure for command IWN_CMD_SET_CRITICAL_TEMP. */
@@ -972,10 +1059,13 @@ struct iwn_phy_calib {
 #define IWN5000_PHY_CALIB_CRYSTAL		15
 #define IWN5000_PHY_CALIB_BASE_BAND		16
 #define IWN5000_PHY_CALIB_TX_IQ_PERIODIC	17
-#define IWN5000_PHY_CALIB_TEMP_OFFSET		18
-
 #define IWN5000_PHY_CALIB_RESET_NOISE_GAIN	18
 #define IWN5000_PHY_CALIB_NOISE_GAIN		19
+
+#define IWN6000_PHY_CALIB_TEMP_OFFSET		18
+#define IWN2000_PHY_CALIB_TEMP_OFFSET		18
+
+#define IWN5000_PHY_CALIB_MAX			253
 
 	uint8_t	group;
 	uint8_t	ngroups;
@@ -992,7 +1082,7 @@ struct iwn5000_phy_calib_crystal {
 	uint8_t	reserved[2];
 } __packed;
 
-struct iwn5000_phy_calib_temp_offset {
+struct iwn6000_phy_calib_temp_offset {
 	uint8_t		code;
 	uint8_t		group;
 	uint8_t		ngroups;
@@ -1001,6 +1091,17 @@ struct iwn5000_phy_calib_temp_offset {
 #define IWN_DEFAULT_TEMP_OFFSET	2700
 
 	uint16_t	reserved;
+} __packed;
+
+struct iwn2000_phy_calib_temp_offset {
+	uint8_t		code;
+	uint8_t		group;
+	uint8_t		ngroups;
+	uint8_t		isvalid;
+	int16_t		offset_high;
+	int16_t		offset_low;
+	int16_t		burnt_voltage_ref;
+	int16_t		reserved;
 } __packed;
 
 struct iwn_phy_calib_gain {
@@ -1371,6 +1472,9 @@ struct iwn_fw_tlv {
 #define IWN_FW_TLV_INIT_DATA		4
 #define IWN_FW_TLV_BOOT_TEXT		5
 #define IWN_FW_TLV_PBREQ_MAXLEN		6
+#define IWN_FW_TLV_ENH_SENS		14
+#define IWN_FW_TLV_PHY_CALIB		15
+#define IWN_FW_TLV_FLAGS		18
 
 	uint16_t	alt;
 	uint32_t	len;
@@ -1383,6 +1487,56 @@ struct iwn_fw_tlv {
 #define IWN_FW_BOOT_TEXT_MAXSZ	1024
 #define IWN4965_FWSZ		(IWN4965_FW_TEXT_MAXSZ + IWN4965_FW_DATA_MAXSZ)
 #define IWN5000_FWSZ		IWN5000_FW_TEXT_MAXSZ
+
+/**
+ * enum iwn_ucode_tlv_flag - ucode API flags
+ * @IWN_UCODE_TLV_FLAGS_PAN: This is PAN capable microcode; this previously
+ *      was a separate TLV but moved here to save space.
+ * @IWN_UCODE_TLV_FLAGS_NEWSCAN: new uCode scan behaviour on hidden SSID,
+ *      treats good CRC threshold as a boolean
+ * @IWN_UCODE_TLV_FLAGS_MFP: This uCode image supports MFP (802.11w).
+ * @IWN_UCODE_TLV_FLAGS_P2P: This uCode image supports P2P.
+ * @IWN_UCODE_TLV_FLAGS_DW_BC_TABLE: The SCD byte count table is in DWORDS
+ * @IWN_UCODE_TLV_FLAGS_UAPSD: This uCode image supports uAPSD
+ * @IWN_UCODE_TLV_FLAGS_SHORT_BL: 16 entries of black list instead of 64 in scan
+ *      offload profile config command.
+ * @IWN_UCODE_TLV_FLAGS_RX_ENERGY_API: supports rx signal strength api
+ * @IWN_UCODE_TLV_FLAGS_TIME_EVENT_API_V2: using the new time event API.
+ * @IWN_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS: D3 image supports up to six
+ *      (rather than two) IPv6 addresses
+ * @IWN_UCODE_TLV_FLAGS_BF_UPDATED: new beacon filtering API
+ * @IWN_UCODE_TLV_FLAGS_NO_BASIC_SSID: not sending a probe with the SSID element
+ *      from the probe request template.
+ * @IWN_UCODE_TLV_FLAGS_D3_CONTINUITY_API: modified D3 API to allow keeping
+ *      connection when going back to D0
+ * @IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_SMALL: new NS offload (small version)
+ * @IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_LARGE: new NS offload (large version)
+ * @IWN_UCODE_TLV_FLAGS_SCHED_SCAN: this uCode image supports scheduled scan.
+ * @IWN_UCODE_TLV_FLAGS_STA_KEY_CMD: new ADD_STA and ADD_STA_KEY command API
+ * @IWN_UCODE_TLV_FLAGS_DEVICE_PS_CMD: support device wide power command
+ *      containing CAM (Continuous Active Mode) indication.
+ */
+enum iwn_ucode_tlv_flag {
+	IWN_UCODE_TLV_FLAGS_PAN			= (1 << 0),
+	IWN_UCODE_TLV_FLAGS_NEWSCAN		= (1 << 1),
+	IWN_UCODE_TLV_FLAGS_MFP			= (1 << 2),
+	IWN_UCODE_TLV_FLAGS_P2P			= (1 << 3),
+	IWN_UCODE_TLV_FLAGS_DW_BC_TABLE		= (1 << 4),
+	IWN_UCODE_TLV_FLAGS_NEWBT_COEX		= (1 << 5),
+	IWN_UCODE_TLV_FLAGS_UAPSD		= (1 << 6),
+	IWN_UCODE_TLV_FLAGS_SHORT_BL		= (1 << 7),
+	IWN_UCODE_TLV_FLAGS_RX_ENERGY_API	= (1 << 8),
+	IWN_UCODE_TLV_FLAGS_TIME_EVENT_API_V2	= (1 << 9),
+	IWN_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS	= (1 << 10),
+	IWN_UCODE_TLV_FLAGS_BF_UPDATED		= (1 << 11),
+	IWN_UCODE_TLV_FLAGS_NO_BASIC_SSID	= (1 << 12),
+	IWN_UCODE_TLV_FLAGS_D3_CONTINUITY_API	= (1 << 14),
+	IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_SMALL	= (1 << 15),
+	IWN_UCODE_TLV_FLAGS_NEW_NSOFFL_LARGE	= (1 << 16),
+	IWN_UCODE_TLV_FLAGS_SCHED_SCAN		= (1 << 17),
+	IWN_UCODE_TLV_FLAGS_STA_KEY_CMD		= (1 << 19),
+	IWN_UCODE_TLV_FLAGS_DEVICE_PS_CMD	= (1 << 20),
+};
 
 /*
  * Offsets into EEPROM.
@@ -1416,6 +1570,7 @@ struct iwn_fw_tlv {
 #define IWN5000_EEPROM_CRYSTAL	0x128
 #define IWN5000_EEPROM_TEMP	0x12a
 #define IWN5000_EEPROM_VOLT	0x12b
+#define IWN2000_EEPROM_RAWTEMP	0x12b
 
 /* Possible flags for IWN_EEPROM_SKU_CAP. */
 #define IWN_EEPROM_SKU_CAP_11N	(1 << 6)
@@ -1440,7 +1595,17 @@ struct iwn_eeprom_chan {
 } __packed;
 
 struct iwn_eeprom_enhinfo {
-	uint16_t	chan;
+	uint8_t		flags;
+#define IWN_ENHINFO_VALID       (1 << 0)
+#define IWN_ENHINFO_5GHZ        (1 << 1)
+#define IWN_ENHINFO_OFDM        (1 << 2)
+#define IWN_ENHINFO_HT40        (1 << 3)
+#define IWN_ENHINFO_HTAP        (1 << 4)
+#define IWN_ENHINFO_RES1        (1 << 5)
+#define IWN_ENHINFO_RES2        (1 << 6)
+#define IWN_ENHINFO_COMMON      (1 << 7)
+
+	uint8_t		chan;
 	int8_t		chain[3];	/* max power in half-dBm */
 	uint8_t		reserved;
 	int8_t		mimo2;		/* max power in half-dBm */
@@ -1659,6 +1824,7 @@ struct iwn_sensitivity_limits {
 	uint32_t	min_energy_cck;
 	uint32_t	energy_cck;
 	uint32_t	energy_ofdm;
+	uint32_t	barker_mrc;
 };
 
 /*
@@ -1673,7 +1839,8 @@ static const struct iwn_sensitivity_limits iwn4965_sensitivity_limits = {
 	200, 400,
 	 97,
 	100,
-	100
+	100,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
@@ -1685,7 +1852,8 @@ static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
@@ -1697,7 +1865,8 @@ static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
@@ -1709,7 +1878,8 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
@@ -1721,7 +1891,47 @@ static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
 	160, 310,
 	 97,
 	 97,
-	100
+	100,
+	390
+};
+
+static const struct iwn_sensitivity_limits iwn6235_sensitivity_limits = {
+	105, 110,
+	192, 232,
+	 80, 145,
+	128, 232,
+	125, 175,
+	160, 310,
+	100,
+	110,
+	110,
+	336
+};
+
+static const struct iwn_sensitivity_limits iwn2000_sensitivity_limits = {
+	105, 110,
+	192, 232,
+	 80, 145,
+	128, 232,
+	125, 175,
+	160, 310,
+	 97,
+	 97,
+	100,
+	336
+};
+
+static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
+	105,110,
+	128,232,
+	80,145,
+	128,232,
+	125,175,
+	160,310,
+	97,
+	97,
+	110,
+	390
 };
 
 /* Map TID to TX scheduler's FIFO. */
@@ -1774,7 +1984,7 @@ static const char * const iwn_fw_errmsg[] = {
 	"NMI_INTERRUPT_DATA_ACTION_PT",
 	"NMI_TRM_HW_ER",
 	"NMI_INTERRUPT_TRM",
-	"NMI_INTERRUPT_BREAKPOINT"
+	"NMI_INTERRUPT_BREAKPOINT",
 	"DEBUG_0",
 	"DEBUG_1",
 	"DEBUG_2",

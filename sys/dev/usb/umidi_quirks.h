@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.8 2008/07/08 11:34:43 gmcgarry Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.8.40.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct umidi_quirk {
 	int			product;
 	int			iface;
 	const struct umq_data	*quirks;
-        u_int32_t		type_mask;
+	uint32_t		type_mask;
 };
 #define UMQ_ISTYPE(q, type) \
 	((q)->sc_quirk && ((q)->sc_quirk->type_mask & (1<<((type)-1))))
@@ -143,6 +143,6 @@ UMQ_TYPE(YAMAHA)
 /* extern const struct umidi_quirk umidi_quirklist[]; */
 const struct umidi_quirk *umidi_search_quirk(int, int, int);
 void umidi_print_quirk(const struct umidi_quirk *);
-const void *umidi_get_quirk_data_from_type(const struct umidi_quirk *, u_int32_t);
+const void *umidi_get_quirk_data_from_type(const struct umidi_quirk *, uint32_t);
 
 #endif

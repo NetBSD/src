@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.16.8.1 2012/11/20 03:02:14 tls Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.16.8.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.16.8.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.16.8.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,11 +120,7 @@ cs428x_malloc(void *addr, int direction, size_t size)
 	sc = addr;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return 0;
-
 	error = cs428x_allocmem(sc, size, p);
-
 	if (error) {
 		kmem_free(p, sizeof(*p));
 		return 0;
@@ -299,8 +295,6 @@ cs428x_allocmem(struct cs428x_softc *sc, size_t size, struct cs428x_dma *p)
 	p->size = sc->dma_size;
 	/* allocate memory for upper audio driver */
 	p->dum  = kmem_alloc(size, KM_SLEEP);
-	if (p->dum == NULL)
-		return 1;
 
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),

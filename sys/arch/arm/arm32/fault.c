@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.85.2.3 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: fault.c,v 1.85.2.4 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.85.2.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.85.2.4 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.85.2.3 2014/08/20 00:02:45 tls Exp $");
 #endif
 
 #include <arm/locore.h>
-
-#include <arm/arm32/katelib.h>
 
 #include <machine/pcb.h>
 #if defined(DDB) || defined(KGDB)
@@ -253,16 +251,21 @@ data_abort_handler(trapframe_t *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	/* Re-enable interrupts if they were enabled previously */
-	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
+	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+#ifdef __NO_FIQ
+	if (__predict_true((tf->tf_spsr & I32_bit) != I32_bit))
+		restore_interrupts(tf->tf_spsr & IF32_bits);
+#else
 	if (__predict_true((tf->tf_spsr & IF32_bits) != IF32_bits))
 		restore_interrupts(tf->tf_spsr & IF32_bits);
+#endif
 
 	/* Get the current lwp structure */
 
-	UVMHIST_LOG(maphist, " (l=%#x, far=%#x, fsr=%#x",
-	    l, far, fsr, 0);
-	UVMHIST_LOG(maphist, "  tf=%#x, pc=%#x)",
-	    tf, tf->tf_pc, 0, 0);
+	UVMHIST_LOG(maphist, " (l=%#jx, far=%#jx, fsr=%#jx",
+	    (uintptr_t)l, far, fsr, 0);
+	UVMHIST_LOG(maphist, "  tf=%#jx, pc=%#jx)",
+	    (uintptr_t)tf, (uintptr_t)tf->tf_pc, 0, 0);
 
 	/* Data abort came from user mode? */
 	bool user = (TRAP_USERMODE(tf) != 0);
@@ -307,9 +310,8 @@ data_abort_handler(trapframe_t *tf)
 		return;
 	}
 
-	if (user) {
-		lwp_settrapframe(l, tf);
-	}
+	KASSERTMSG(!user || tf == lwp_trapframe(l), "tf %p vs %p", tf,
+	    lwp_trapframe(l));
 
 	/*
 	 * Make sure the Program Counter is sane. We could fall foul of
@@ -504,18 +506,29 @@ data_abort_handler(trapframe_t *tf)
 
 	KSI_INIT_TRAP(&ksi);
 
-	if (error == ENOMEM) {
+	switch (error) {
+	case ENOMEM:
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
 		    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
-	} else
+		break;
+	case EACCES:
 		ksi.ksi_signo = SIGSEGV;
-
-	ksi.ksi_code = (error == EACCES) ? SEGV_ACCERR : SEGV_MAPERR;
+		ksi.ksi_code = SEGV_ACCERR;
+		break;
+	case EINVAL:
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = BUS_ADRERR;
+		break;
+	default:
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_MAPERR;
+		break;
+	}
 	ksi.ksi_addr = (uint32_t *)(intptr_t) far;
 	ksi.ksi_trap = fsr;
-	UVMHIST_LOG(maphist, " <- error (%d)", error, 0, 0, 0);
+	UVMHIST_LOG(maphist, " <- error (%jd)", error, 0, 0, 0);
 
 do_trapsignal:
 	call_trapsignal(l, tf, &ksi);
@@ -610,7 +623,7 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 	ksi->ksi_addr = (uint32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	lwp_settrapframe(l, tf);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
 	return (1);
 }
@@ -717,7 +730,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 	ksi->ksi_addr = (uint32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	lwp_settrapframe(l, tf);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
 	return (1);
 }
@@ -800,14 +813,19 @@ prefetch_abort_handler(trapframe_t *tf)
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
-	if (__predict_true((tf->tf_spsr & I32_bit) != IF32_bits))
+	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+#ifdef __NO_FIQ
+	if (__predict_true((tf->tf_spsr & I32_bit) != I32_bit))
 		restore_interrupts(tf->tf_spsr & IF32_bits);
+#else
+	if (__predict_true((tf->tf_spsr & IF32_bits) != IF32_bits))
+		restore_interrupts(tf->tf_spsr & IF32_bits);
+#endif
 
 	/* See if the CPU state needs to be fixed up */
 	switch (prefetch_abort_fixup(tf)) {
 	case ABORT_FIXUP_RETURN:
-		KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
+		KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
 		return;
 	case ABORT_FIXUP_FAILED:
 		/* Deliver a SIGILL to the process */
@@ -815,7 +833,8 @@ prefetch_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (uint32_t *)(intptr_t) tf->tf_pc;
-		lwp_settrapframe(l, tf);
+		KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf,
+		    lwp_trapframe(l));
 		goto do_trapsignal;
 	default:
 		break;
@@ -827,9 +846,9 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
-	lwp_settrapframe(l, tf);
-	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)",
-	    fault_pc, l, tf, 0);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
+	UVMHIST_LOG(maphist, " (pc=0x%jx, l=0x%#jx, tf=0x%#jx)",
+	    fault_pc, (uintptr_t)l, (uintptr_t)tf, 0);
 
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(fault_pc >= VM_MAXUSER_ADDRESS ||
@@ -872,7 +891,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 	KSI_INIT_TRAP(&ksi);
 
-	UVMHIST_LOG (maphist, " <- fatal (%d)", error, 0, 0, 0);
+	UVMHIST_LOG (maphist, " <- fatal (%jd)", error, 0, 0, 0);
 
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
@@ -890,7 +909,7 @@ do_trapsignal:
 	call_trapsignal(l, tf, &ksi);
 
 out:
-	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
+	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.14 2010/05/22 18:56:01 plunky Exp $
+#	$NetBSD: files.bluetooth,v 1.14.18.1 2017/12/03 11:36:59 jdolecek Exp $
 #
 # Config file for machine independent Bluetooth devices
 
@@ -44,3 +44,7 @@ file dev/bluetooth/btuart.c		btuart
 # BlueCore Serial Protocol
 defpseudodev bcsp: btbus, bluetooth
 file dev/bluetooth/bcsp.c		bcsp
+
+# Bluetooth HCI UART (H5)
+defpseudodev bthfive: btbus, bluetooth
+file dev/bluetooth/bth5.c		bthfive

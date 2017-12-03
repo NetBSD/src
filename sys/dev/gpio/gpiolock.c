@@ -1,4 +1,4 @@
-/* $NetBSD: gpiolock.c,v 1.3 2009/12/06 22:33:44 dyoung Exp $ */
+/* $NetBSD: gpiolock.c,v 1.3.22.1 2017/12/03 11:37:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -38,6 +38,8 @@
 #include <dev/gpio/gpiovar.h>
 #include <dev/keylock.h>
 
+#include "ioconf.h"
+
 #define GPIOLOCK_MAXPINS	4
 #define GPIOLOCK_MINPINS	2
 
@@ -59,8 +61,6 @@ int gpiolock_position(void *);
 
 CFATTACH_DECL_NEW(gpiolock, sizeof(struct gpiolock_softc),
 	gpiolock_match, gpiolock_attach, gpiolock_detach, gpiolock_activate);
-
-extern struct cfdriver gpiolock_cd;
 
 int
 gpiolock_match(device_t parent, cfdata_t cf,
@@ -123,7 +123,8 @@ gpiolock_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 #endif
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	aprint_normal("\n");
 	return;

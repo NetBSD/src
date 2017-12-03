@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.14.14.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.14.14.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.14.14.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.14.14.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.14.14.1 2014/08/20 00:04:36 tls Exp $
 #include <sys/mbuf.h>
 
 #include <net/if.h>
-#include <net/radix.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

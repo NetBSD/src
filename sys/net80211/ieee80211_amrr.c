@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_amrr.c,v 1.2 2007/12/11 12:40:10 lukem Exp $	*/
+/*	$NetBSD: ieee80211_amrr.c,v 1.2.56.1 2017/12/03 11:39:03 jdolecek Exp $	*/
 /*	$OpenBSD: ieee80211_amrr.c,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
 
 /*-
@@ -19,7 +19,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_amrr.c,v 1.2 2007/12/11 12:40:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_amrr.c,v 1.2.56.1 2017/12/03 11:39:03 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -27,11 +31,11 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_amrr.c,v 1.2 2007/12/11 12:40:10 lukem Exp
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #endif
 
 #include <net80211/ieee80211.h>

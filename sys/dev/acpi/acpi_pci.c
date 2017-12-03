@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.18 2010/12/31 10:56:39 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.18.18.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.18 2010/12/31 10:56:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.18.18.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,10 +146,10 @@ acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
 	if (*bus != -1)
 		return AE_ALREADY_EXISTS;
 
-	if (addr64.Minimum > 0xFFFF)
+	if (addr64.Address.Minimum > 0xFFFF)
 		return AE_BAD_DATA;
 
-	*bus = (int32_t)addr64.Minimum;
+	*bus = (int32_t)addr64.Address.Minimum;
 
 	return AE_OK;
 }
@@ -191,9 +191,6 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 	if (ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) {
 
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
-
-		if (ap == NULL)
-			return AE_NO_MEMORY;
 
 		/*
 		 * If no _SEG exist, all PCI bus segments are assumed
@@ -260,9 +257,6 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		 * our bus number is its downstream bus number.
 		 */
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
-
-		if (ap == NULL)
-			return AE_NO_MEMORY;
 
 		ap->ap_segment = ad->ad_parent->ad_pciinfo->ap_segment;
 		ap->ap_bus = ad->ad_parent->ad_pciinfo->ap_downbus;

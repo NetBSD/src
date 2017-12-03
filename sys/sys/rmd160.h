@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.h,v 1.2 2008/02/16 17:37:13 apb Exp $	*/
+/*	$NetBSD: rmd160.h,v 1.2.54.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 /*	$KAME: rmd160.h,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 /*
@@ -32,12 +32,13 @@
 
 #define RMD160_DIGEST_LENGTH		20
 #define RMD160_DIGEST_STRING_LENGTH	41
+#define RMD160_BLOCK_LENGTH		64
 
 /* RMD160 context. */
 typedef struct RMD160Context {
 	uint32_t state[5];	/* state */
 	uint64_t count;		/* number of bits, modulo 2^64 */
-	u_char buffer[64];	/* input buffer */
+	u_char buffer[RMD160_BLOCK_LENGTH];	/* input buffer */
 } RMD160_CTX;
 
 __BEGIN_DECLS

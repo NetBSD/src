@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.c,v 1.11 2012/05/23 21:47:23 macallan Exp $	*/
+/*	$NetBSD: dbdma.c,v 1.11.2.1 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.11 2012/05/23 21:47:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.11.2.1 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -115,12 +115,21 @@ dbdma_pause(dbdma_regmap_t *dmap)
 }
 
 dbdma_command_t	*
-dbdma_alloc(int size)
+dbdma_alloc(int size, void **fp)
 {
 	u_int buf;
 
 	buf = (u_int)kmem_alloc(size + 0x0f, KM_SLEEP);
+	if (fp != NULL) {
+	 *fp = (void *)buf;
+        }
 	buf = (buf + 0x0f) & ~0x0f;
 
 	return (dbdma_command_t *)buf;
+}
+
+void
+dbdma_free(void *ptr, int size)
+{
+	kmem_free(ptr, size + 0x0f);
 }

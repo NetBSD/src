@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.32 2011/03/04 22:25:29 joerg Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.32.14.1 2017/12/03 11:36:45 jdolecek Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.32 2011/03/04 22:25:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.32.14.1 2017/12/03 11:36:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -168,7 +168,7 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sunos32_sigframe sf;
 	struct sunos32_sigcontext *scp;
 	uint32_t addr, oldsp32;
-	int onstack, error; 
+	int onstack, error;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15.2.2 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15.2.3 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.2.2 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.2.3 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
 	 * Save the current VFP state (to make sure the FPSCR copy is
 	 * up to date).
 	 */
-	vfp_savecontext();
+	vfp_savecontext(l);
 #endif
 
 	retval[0] = pcb->pcb_vfp.vfp_fpscr;
@@ -125,7 +125,7 @@ arm32_fpu_used(struct lwp *l, const void *uap, register_t *retval)
 {
 	/* No args */
 #ifdef FPU_VFP
-	retval[0] = vfp_used_p();
+	retval[0] = vfp_used_p(l);
 #else
 	retval[0] = false;
 #endif
@@ -170,8 +170,9 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 {
 #ifdef _ARM_ARCH_6
 	if (l == curlwp) {
+		u_int val = (u_int)addr;
 		kpreempt_disable();
-		__asm("mcr p15, 0, %0, c13, c0, 3" : : "r" (addr));
+		armreg_tpidruro_write(val);
 		kpreempt_enable();
 	}
 	return 0;

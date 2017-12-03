@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.49.14.3 2013/02/25 00:30:18 tls Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.49.14.4 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.49.14.3 2013/02/25 00:30:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.49.14.4 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.49.14.3 2013/02/25 00:30:18 tls Exp $
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
 #include <sys/trace.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -93,10 +92,8 @@ ufs_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 
-	fstrans_start(ap->a_vp->v_mount, FSTRANS_SHARED);
 	error = ufs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
 	    ap->a_runp, ufs_issequential);
-	fstrans_done(ap->a_vp->v_mount);
 	return error;
 }
 
@@ -130,10 +127,8 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	ip = VTOI(vp);
 	mp = vp->v_mount;
 	ump = ip->i_ump;
-#ifdef DIAGNOSTIC
-	if ((ap != NULL && nump == NULL) || (ap == NULL && nump != NULL))
-		panic("ufs_bmaparray: invalid arguments");
-#endif
+	KASSERTMSG(((ap == NULL) == (nump == NULL)),
+	    "ufs_bmaparray: invalid arguments: ap = %p, nump = %p", ap, nump);
 
 	if (runp) {
 		/*
@@ -252,12 +247,9 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		}
 		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
-		}
-#ifdef DIAGNOSTIC
-		else if (!daddr)
-			panic("ufs_bmaparray: indirect block not in cache");
-#endif
-		else {
+		} else {
+			KASSERTMSG((daddr != 0),
+			    "ufs_bmaparray: indirect block not in cache");
 			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;

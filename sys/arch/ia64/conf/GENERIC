@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5.2.1 2014/08/20 00:03:07 tls Exp $
+# $NetBSD: GENERIC,v 1.5.2.2 2017/12/03 11:36:20 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5.2.1 $"
+#ident 		"GENERIC-$Revision: 1.5.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -32,6 +32,18 @@ maxusers	32		# estimated number of users
 # CPU-related options.
 
 # Standard system options
+options 	INSECURE	# disable kernel security levels - X needs this
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+# Note: SysV IPC parameters can be changed dynamically; see sysctl(8).
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+#options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 
@@ -39,26 +51,44 @@ options 	USERCONF	# userconf(4) support
 options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
 
+#options UVMHIST
+#options UVMHIST_PRINT
+
 # File systems
 file-system	FFS		# UFS
+file-system	NFS		# Network File System client
 file-system 	MFS		# memory file system
+#file-system	LFS		# log-structured file system
+#file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
+#file-system	PROCFS		# /proc
 file-system	TMPFS		# Efficient memory file-system
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
 
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPv6
+#options 	IPSEC		# IP security
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
+#config		netbsd	root on md0a type ffs
 
 #
 # Device configuration
@@ -79,5 +109,26 @@ com*		at acpi?		# Serial communications interface
 # PCI bus support
 #pci*		at mainbus? bus ?
 
+#puc* at pci? dev ? function ? 
+#com* at puc? port ?
+
 # Pull in optional local configuration
 cinclude "arch/ia64/conf/GENERIC.local"
+
+# Pseudo-Devices
+
+# Enable the hooks used for initializing the root memory-disk.
+#pseudo-device	md			# memory disk device (ramdisk)
+#options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
+##options 	MEMORY_DISK_HOOKS	# enable root ramdisk
+##options		MEMORY_DISK_IS_ROOT	# force md RAM disk to be the root device
+#options    MEMORY_DISK_ROOT_SIZE=2880  # 1.44M, same as a floppy
+##options     MEMORY_DISK_ROOT_SIZE=8192  # 4Meg
+##options     MEMORY_DISK_SERVER=1        # make the ramdisk writeable
+
+# network pseudo-devices
+pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
+#pseudo-device	pty			# pseudo-terminals
+

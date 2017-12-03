@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.222.8.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.222.8.2 2017/12/03 11:39:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222.8.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222.8.2 2017/12/03 11:39:06 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -724,7 +724,7 @@ nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
 	}
 	mb->m_next = mrest;
 	mreq->m_pkthdr.len = authsiz + 10 * NFSX_UNSIGNED + mrest_len;
-	mreq->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(mreq);
 	*mbp = mb;
 	return (mreq);
 }
@@ -1752,6 +1752,8 @@ nfs_clearcommit_selector(void *cl, struct vnode *vp)
 	struct nfs_clearcommit_ctx *c = cl;
 	struct nfsnode *np;
 	struct vm_page *pg;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	np = VTONFS(vp);
 	if (vp->v_type != VREG || vp->v_mount != c->mp || np == NULL)

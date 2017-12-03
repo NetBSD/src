@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.18.2.1 2014/08/20 00:03:36 tls Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.18.2.2 2017/12/03 11:37:00 jdolecek Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -102,6 +102,23 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 }
 #endif
 
+static void
+dm_target_stripe_fini(dm_target_stripe_config_t *tsc)
+{
+	dm_target_linear_config_t *tlc;
+
+	if (tsc == NULL)
+		return;
+
+	while ((tlc = TAILQ_FIRST(&tsc->stripe_devs)) != NULL) {
+		TAILQ_REMOVE(&tsc->stripe_devs, tlc, entries);
+		dm_pdev_decr(tlc->pdev);
+		kmem_free(tlc, sizeof(*tlc));
+	}
+
+	kmem_free(tsc, sizeof(*tsc));
+}
+
 /*
  * Init function called from dm_table_load_ioctl.
  * DM_STRIPE_DEV_OFFSET should always hold the index of the first device-offset
@@ -156,8 +173,11 @@ dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 		       argv[strpi], argv[strpi+1]);
 
 		tlc = kmem_alloc(sizeof(*tlc), KM_NOSLEEP);
-		if ((tlc->pdev = dm_pdev_insert(argv[strpi])) == NULL)
+		if ((tlc->pdev = dm_pdev_insert(argv[strpi])) == NULL) {
+			kmem_free(tlc, sizeof(*tlc));
+			dm_target_stripe_fini(tsc);
 			return ENOENT;
+		}
 		tlc->offset = atoi(argv[strpi+1]);
 
 		/* Insert striping device to linked list. */
@@ -180,11 +200,8 @@ dm_target_stripe_status(void *target_config)
 
 	tsc = target_config;
 
-	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
-		return NULL;
-
-	if ((tmp = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
-		return NULL;
+	params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP);
+	tmp = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP);
 
 	snprintf(params, DM_MAX_PARAMS_SIZE, "%d %" PRIu64,
 	    tsc->stripe_num, tsc->stripe_chunksize);
@@ -290,27 +307,12 @@ dm_target_stripe_sync(dm_table_entry_t * table_en)
 int
 dm_target_stripe_destroy(dm_table_entry_t * table_en)
 {
-	dm_target_stripe_config_t *tsc;
-	dm_target_linear_config_t *tlc;
-
-	tsc = table_en->target_config;
-
-	if (tsc == NULL)
-		return 0;
-
-	while ((tlc = TAILQ_FIRST(&tsc->stripe_devs)) != NULL) {
-		TAILQ_REMOVE(&tsc->stripe_devs, tlc, entries);
-		dm_pdev_decr(tlc->pdev);
-		kmem_free(tlc, sizeof(*tlc));
-	}
+	dm_target_stripe_fini(table_en->target_config);
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
 
-	kmem_free(tsc, sizeof(*tsc));
-
 	table_en->target_config = NULL;
-
 	return 0;
 }
 /* Doesn't not need to do anything here. */

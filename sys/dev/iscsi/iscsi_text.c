@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.6.2.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.6.2.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -109,12 +109,6 @@ typedef enum
 
 /* maximum known key */
 #define MAX_KEY   K_TargetPortalGroupTag
-
-
-#undef DEBOUT
-#define DEBOUT(x)	printf x
-
-
 
 /* value types */
 typedef enum
@@ -861,11 +855,13 @@ parameter_size(negotiation_parameter_t *par)
 			break;
 
 		case T_RANGE:
-			assert((i + 1) < par->list_num);
-			size += snprintf(buf, sizeof(buf), "%d~%d",
-				par->val.nval[i],
-							par->val.nval[i + 1]);
-			i++;
+			if (i+1 < par->list_num) {
+				size += snprintf(buf, sizeof(buf), "%d~%d",
+					par->val.nval[i],
+					par->val.nval[i + 1]);
+				i++;
+			} else
+				DEBOUT(("Incomplete range parameter\n"));
 			break;
 
 		case T_SESS:
@@ -930,28 +926,8 @@ complete_pars(negotiation_state_t *state, pdu_t *pdu)
 {
 	int len;
 	uint8_t *bp;
-#ifdef ISCSI_TEST_MODE
-	test_pars_t *tp = pdu->connection->test_pars;
-	neg_desc_t *nd = NULL;
-#endif
 
 	len = total_size(state->pars, state->num_pars);
-
-#ifdef ISCSI_TEST_MODE
-	if (tp != NULL) {
-		while ((nd = TAILQ_FIRST(&pdu->connection->test_pars->negs)) != NULL &&
-			   nd->entry.state < state->auth_state) {
-			TAILQ_REMOVE(&tp->negs, nd, link);
-			free(nd, M_TEMP);
-		}
-		if (nd != NULL && nd->entry.state == state->auth_state) {
-			if (nd->entry.flags & ISCSITEST_NEGOPT_REPLACE)
-				len = 0;
-			len += nd->entry.size;
-		} else
-			nd = NULL;
-	}
-#endif
 
 	DEB(10, ("complete_pars: n=%d, len=%d\n", state->num_pars, len));
 
@@ -961,25 +937,11 @@ complete_pars(negotiation_state_t *state, pdu_t *pdu)
 	}
 	pdu->temp_data = bp;
 
-#ifdef ISCSI_TEST_MODE
-	if (nd == NULL || !(nd->entry.flags & ISCSITEST_NEGOPT_REPLACE))
-		if ((bp = put_par_block(pdu->temp_data, len,
-				state->pars, state->num_pars)) == NULL) {
-			DEBOUT(("Bad parameter in complete_pars\n"));
-			return ISCSI_STATUS_PARAMETER_INVALID;
-		}
-	if (nd != NULL) {
-		memcpy(bp, nd->entry.value, nd->entry.size);
-		TAILQ_REMOVE(&tp->negs, nd, link);
-		free(nd, M_TEMP);
-	}
-#else
 	if (put_par_block(pdu->temp_data, len, state->pars,
 			state->num_pars) == 0) {
 		DEBOUT(("Bad parameter in complete_pars\n"));
 		return ISCSI_STATUS_PARAMETER_INVALID;
 	}
-#endif
 
 	pdu->temp_data_len = len;
 	return 0;
@@ -1611,30 +1573,6 @@ set_first_opnegs(connection_t *conn, negotiation_state_t *state)
 		state->MaxBurstLength = entries[K_MaxBurstLength].defval;
 		state->FirstBurstLength = entries[K_FirstBurstLength].defval;
 		state->MaxOutstandingR2T = entries[K_MaxOutstandingR2T].defval;
-
-#ifdef ISCSI_TEST_MODE
-		if (conn->test_pars != NULL) {
-			test_pars_t *tp = conn->test_pars;
-
-			if (tp->options & ISCSITEST_OVERRIDE_INITIALR2T)
-				state->InitialR2T = TRUE;
-			if (tp->options & ISCSITEST_OVERRIDE_IMMDATA)
-				state->ImmediateData = FALSE;
-
-			if (tp->options & ISCSITEST_NEGOTIATE_MAXBURST) {
-				state->MaxBurstLength = tp->maxburst_val;
-				set_key_n(state, K_MaxBurstLength, state->MaxBurstLength);
-			}
-			if (tp->options & ISCSITEST_NEGOTIATE_FIRSTBURST) {
-				state->FirstBurstLength = tp->firstburst_val;
-				set_key_n(state, K_FirstBurstLength, state->FirstBurstLength);
-			}
-			if (tp->options & ISCSITEST_NEGOTIATE_R2T) {
-				state->MaxOutstandingR2T = tp->r2t_val;
-				set_key_n(state, K_MaxOutstandingR2T, state->MaxOutstandingR2T);
-			}
-		}
-#endif
 
 		set_key_n(state, K_ErrorRecoveryLevel, state->ErrorRecoveryLevel);
 		set_key_n(state, K_InitialR2T, state->InitialR2T);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.54.2.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.54.2.3 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -815,7 +815,7 @@ struct apple_drvr_descriptor {
 	uint32_t	descBlock;	/* first block of driver */
 	uint16_t	descSize;	/* driver size in blocks */
 	uint16_t	descType;	/* system type */
-};
+} __packed;
 
 /*
  *	system types; Apple reserves 0-15
@@ -1089,6 +1089,7 @@ struct x86_boot_params {
 #define	X86_BOOT_MAGIC_2	X86_BOOT_MAGIC(2)	/* bootxx.S */
 #define	X86_BOOT_MAGIC_PXE	X86_BOOT_MAGIC(3)	/* start_pxe.S */
 #define	X86_BOOT_MAGIC_FAT	X86_BOOT_MAGIC(4)	/* fatboot.S */
+#define	X86_BOOT_MAGIC_EFI	X86_BOOT_MAGIC(5)	/* efiboot/start.S */
 #define	X86_MBR_GPT_MAGIC	0xedb88320		/* gpt.S */
 
 		/* values for bp_flags */

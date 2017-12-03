@@ -24,13 +24,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdmaau.c,v 1.5.122.1 2012/11/20 03:01:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdmaau.c,v 1.5.122.2 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <mips/cpuregs.h>
 
 #include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/dmaaureg.h>

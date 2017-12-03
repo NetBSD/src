@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.50.2.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.50.2.2 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,6 +64,7 @@
 #define _NETINET_IN_PCB_H_
 
 #include <sys/queue.h>
+#include <net/route.h>
 #include <netinet/in_pcb_hdr.h>
 
 /*
@@ -127,12 +128,16 @@ struct inpcb {
 				INP_PKTINFO)
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
+#define	inp_lock(inp)		solock((inp)->inp_socket)
+#define	inp_unlock(inp)		sounlock((inp)->inp_socket)
+#define	inp_locked(inp)		solocked((inp)->inp_socket)
 
 #ifdef _KERNEL
 void	in_losing(struct inpcb *);
 int	in_pcballoc(struct socket *, void *);
-int	in_pcbbind(void *, struct mbuf *, struct lwp *);
-int	in_pcbconnect(void *, struct mbuf *, struct lwp *);
+int	in_pcbbindableaddr(struct sockaddr_in *, kauth_cred_t);
+int	in_pcbbind(void *, struct sockaddr_in *, struct lwp *);
+int	in_pcbconnect(void *, struct sockaddr_in *, struct lwp *);
 void	in_pcbdetach(void *);
 void	in_pcbdisconnect(void *);
 void	in_pcbinit(struct inpcbtable *, int, int);
@@ -152,12 +157,14 @@ void	in_pcbnotifyall(struct inpcbtable *, struct in_addr, int,
 	    void (*)(struct inpcb *, int));
 void	in_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
 void	in_pcbpurgeif(struct inpcbtable *, struct ifnet *);
+void	in_purgeifmcast(struct ip_moptions *, struct ifnet *);
 void	in_pcbstate(struct inpcb *, int);
 void	in_rtchange(struct inpcb *, int);
-void	in_setpeeraddr(struct inpcb *, struct mbuf *);
-void	in_setsockaddr(struct inpcb *, struct mbuf *);
+void	in_setpeeraddr(struct inpcb *, struct sockaddr_in *);
+void	in_setsockaddr(struct inpcb *, struct sockaddr_in *);
 struct rtentry *
 	in_pcbrtentry(struct inpcb *);
+void	in_pcbrtentry_unref(struct rtentry *, struct inpcb *);
 #endif
 
 #endif /* !_NETINET_IN_PCB_H_ */

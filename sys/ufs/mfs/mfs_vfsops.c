@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.103.12.1 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.103.12.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.103.12.1 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.103.12.2 2017/12/03 11:39:22 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ MODULE(MODULE_CLASS_VFS, mfs, "ffs");
 kmutex_t mfs_lock;	/* global lock */
 
 /* used for building internal dev_t, minor == 0 reserved for miniroot */
-static int mfs_minor = 1;
+static devminor_t mfs_minor = 1;
 static int mfs_initcnt;
 
 extern int (**mfs_vnodeop_p)(void *);
@@ -101,6 +101,7 @@ struct vfsops mfs_vfsops = {
 	.vfs_sync = ffs_sync,
 	.vfs_vget = ufs_vget,
 	.vfs_loadvnode = ffs_loadvnode,
+	.vfs_newvnode = ffs_newvnode,
 	.vfs_fhtovp = ffs_fhtovp,
 	.vfs_vptofh = ffs_vptofh,
 	.vfs_init = mfs_init,
@@ -108,7 +109,7 @@ struct vfsops mfs_vfsops = {
 	.vfs_done = mfs_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -214,9 +215,9 @@ mfs_mountroot(void)
 	mfsp->mfs_refcnt = 1;
 	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		bufq_free(mfsp->mfs_buflist);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		kmem_free(mfsp, sizeof(*mfsp));
 		return (error);
 	}
@@ -226,7 +227,7 @@ mfs_mountroot(void)
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (0);
 }
 
@@ -246,6 +247,7 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct fs *fs;
 	struct mfsnode *mfsp;
 	struct proc *p;
+	devminor_t minor;
 	int flags, error = 0;
 
 	if (args == NULL)
@@ -307,14 +309,20 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			return EINVAL;
 		return (0);
 	}
-	error = getnewvnode(VT_MFS, NULL, mfs_vnodeop_p, NULL, &devvp);
+	mutex_enter(&mfs_lock);
+	minor = mfs_minor++;
+	mutex_exit(&mfs_lock);
+	error = bdevvp(makedev(255, minor), &devvp);
 	if (error)
 		return (error);
-	devvp->v_vflag |= VV_MPSAFE;
-	devvp->v_type = VBLK;
-	spec_node_init(devvp, makedev(255, mfs_minor));
-	mfs_minor++;
 	mfsp = kmem_alloc(sizeof(*mfsp), KM_SLEEP);
+	/*
+	 * Changing v_op and v_data here is safe as we are
+	 * the exclusive owner of this device node.
+	 */
+	KASSERT(devvp->v_op == spec_vnodeop_p);
+	KASSERT(devvp->v_data == NULL);
+	devvp->v_op = mfs_vnodeop_p;
 	devvp->v_data = mfsp;
 	mfsp->mfs_baseoff = args->base;
 	mfsp->mfs_size = args->size;
@@ -367,14 +375,14 @@ mfs_start(struct mount *mp, int flags)
 	 * Add a reference to the mfsnode to prevent it disappearing in
 	 * this routine.
 	 */
-	if ((error = vfs_busy(mp, NULL)) != 0)
+	if ((error = vfs_busy(mp)) != 0)
 		return error;
 	vp = VFSTOUFS(mp)->um_devvp;
 	mfsp = VTOMFS(vp);
 	mutex_enter(&mfs_lock);
 	mfsp->mfs_refcnt++;
 	mutex_exit(&mfs_lock);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	base = mfsp->mfs_baseoff;
 	mutex_enter(&mfs_lock);

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.345.2.3 2014/08/20 00:02:41 tls Exp $
+# $NetBSD: GENERIC,v 1.345.2.4 2017/12/03 11:35:46 jdolecek Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.345.2.3 $"
+ident		"GENERIC-$Revision: 1.345.2.4 $"
 
 maxusers 32
 
@@ -56,7 +56,6 @@ options 	NTP			# kernel PLL for NTP
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC		# Cheap kernel consistency checks
 #options 	DEBUG			# Expensive debugging checks/support
-#options 	KMEMSTATS		# Collect kmem usage statistics
 options 	DDB			# kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #makeoptions	DEBUG="-g"
@@ -98,6 +97,7 @@ options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -130,30 +130,14 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-# 4.3BSD compatibility.  Should be optional, but necessary for now.
-options 	COMPAT_43
-
 # Binary compatibility with previous versions of NetBSD.
-#options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_11
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+include 	"conf/compat_netbsd10.config"
+
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
 
 # Linux binary compatibility
 options 	COMPAT_LINUX
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
 options 	SYSVMSG
@@ -261,6 +245,8 @@ sfb*	at	tc? slot ? offset ?
 #sfbp*	at	tc? slot ? offset ?
 px*	at	tc? slot ? offset ?
 pxg*	at	tc? slot ? offset ?
+tcu*	at	tc? slot ? offset ?
+slhci*	at	tcu?
 
 # TURBOchannel serial attachments
 zstty0	at	zsc0 channel ?			# serial port on B channels
@@ -359,6 +345,8 @@ slide*  at	pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
+pm2fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 2 Graphics
+pm3fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 3 Graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
@@ -398,7 +386,11 @@ ld*	at iop? tid ?			# block devices
 # XXX dpti.c wants a processor type that is not assigned for x86-64
 #dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
+# GPIO devices
+gpio*	at gpiobus?
+
 # MII/PHY support
+brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
@@ -431,7 +423,7 @@ pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
 attimer* at	isa?				# AT Timer
 pcppi*	at	isa?				# PC prog. periph. interface
-spkr0	at	pcppi?				# IBM BASIC emulation
+spkr*	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
@@ -638,7 +630,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
@@ -700,17 +692,11 @@ midi*	at midibus?
 midi*	at pcppi?
 midi*	at sb?
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 # Workstation Console attachments
-wsdisplay*	at	cfb?
-wsdisplay*	at	mfb?
-wsdisplay*	at	tfb?
-wsdisplay*	at	sfb?
-#wsdisplay*	at	sfbp?
-wsdisplay*	at	px?
-wsdisplay*	at	pxg?
-wsdisplay*	at	radeonfb?
-wsdisplay*	at	vga?
-wsdisplay*	at	tga?
+wsdisplay0	at	wsemuldisplaydev? console 1
+wsdisplay*	at	wsemuldisplaydev?
 wskbd*		at	lkkbd? console ?
 wsmouse*	at	vsms?
 wskbd*		at	pckbd?
@@ -777,6 +763,7 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	putter			# for puffs and pud
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #
@@ -787,13 +774,9 @@ pseudo-device	putter			# for puffs and pud
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options 	VERIFIED_EXEC_FP_RMD160
 #options 	VERIFIED_EXEC_FP_SHA256
 #options 	VERIFIED_EXEC_FP_SHA384
 #options 	VERIFIED_EXEC_FP_SHA512
-#options 	VERIFIED_EXEC_FP_SHA1
-#options 	VERIFIED_EXEC_FP_MD5
 
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
-#options PAX_SEGVGUARD=0			# PaX Segmentation fault guard
 options PAX_ASLR=0			# PaX Address Space Layout Randomization

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.108.6.2 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.108.6.3 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108.6.2 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108.6.3 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -178,8 +178,8 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	const u_int first_color = VM_PGCOLOR_BUCKET(*pps);
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, first_color=%u)",
-		pps, npages, first_color, 0);
+	UVMHIST_LOG(maphist,"(pps=0x%#jx, npages=%jd, first_color=%ju)",
+		(uintptr_t)pps, npages, first_color, 0);
 
 	/*
 	 * compute protection.  outgoing I/O only needs read
@@ -235,7 +235,7 @@ enter:
 	}
 	pmap_update(vm_map_pmap(pager_map));
 
-	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
+	UVMHIST_LOG(maphist, "<- done (KVA=0x%jx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -253,7 +253,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	struct vm_map_entry *entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, " (kva=0x%x, npages=%d)", kva, npages,0,0);
+	UVMHIST_LOG(maphist, " (kva=0x%jx, npages=%jd)", kva, npages,0,0);
 
 	/*
 	 * duplicate uvm_unmap, but add in pager_map_wanted handling.
@@ -346,7 +346,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 
 		pg = pgs[i];
 		KASSERT(swap || pg->uobject == uobj);
-		UVMHIST_LOG(ubchist, "pg %p", pg, 0,0,0);
+		UVMHIST_LOG(ubchist, "pg %#jx", (uintptr_t)pg, 0,0,0);
 
 #if defined(VMSWAP)
 		/*
@@ -497,14 +497,15 @@ uvm_aio_aiodone(struct buf *bp)
 	int i, error;
 	bool write;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
+	UVMHIST_LOG(ubchist, "bp %#jx", (uintptr_t)bp, 0,0,0);
 
 	error = bp->b_error;
 	write = (bp->b_flags & B_READ) == 0;
 
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
-		UVMHIST_LOG(ubchist, "pgs[%d] = %p", i, pgs[i],0,0);
+		UVMHIST_LOG(ubchist, "pgs[%jd] = %#jx", i,
+		    (uintptr_t)pgs[i], 0, 0);
 	}
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.1.8.2 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.1.8.3 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -23,6 +23,7 @@
 
 /* Maximum number of output pipes is 3. */
 #define R92C_MAX_EPOUT	3
+#define R92C_MAX_EPIN	3
 
 #define R92C_MAX_TX_PWR	0x3f
 
@@ -33,6 +34,10 @@
 #define R88E_TXPKTBUF_COUNT	177
 #define R88E_TX_PAGE_COUNT	169
 #define R88E_TX_PAGE_BOUNDARY	(R88E_TX_PAGE_COUNT + 1)
+#define R92E_TXPKTBUF_COUNT	256
+#define R92E_TX_PAGE_COUNT	243
+#define R92E_TX_PAGE_BOUNDARY	(R92E_TX_PAGE_COUNT + 1)
+#define R92C_TXDESC_SUMSIZE	32
 
 #define R92C_H2C_NBOX	4
 
@@ -49,6 +54,7 @@
 #define R92C_SYS_CLKR			0x008
 #define R92C_AFE_MISC			0x010
 #define R92C_SPS0_CTRL			0x011
+#define R92C_SYS_SWR_CTRL2		0x014
 #define R92C_SPS_OCP_CFG		0x018
 #define R92C_RSV_CTRL			0x01c
 #define R92C_RF_CTRL			0x01f
@@ -58,6 +64,7 @@
 #define R92C_LPLDO_CTRL			0x023
 #define R92C_AFE_XTAL_CTRL		0x024
 #define R92C_AFE_PLL_CTRL		0x028
+#define R92C_AFE_CTRL3			0x02c
 #define R92C_EFUSE_CTRL			0x030
 #define R92C_EFUSE_TEST			0x034
 #define R92C_PWR_DATA			0x038
@@ -76,6 +83,7 @@
 #define R92C_FSISR			0x054
 #define R92C_HSIMR			0x058
 #define R92C_HSISR			0x05c
+#define R92C_AFE_CTRL4			0x078
 #define R92C_MCUFWDL			0x080
 #define R92C_HMEBOX_EXT(idx)		(0x088 + (idx) * 2)
 #define R88E_HIMR			0x0b0
@@ -125,6 +133,7 @@
 #define R92C_BB_ACCESS_CTRL		0x1e8
 #define R92C_BB_ACCESS_DATA		0x1ec
 #define R88E_HMEBOX_EXT(idx)		(0x1f0 + (idx) * 4)
+#define R92E_HMEBOX_EXT(idx)		(0x1f0 + (idx) * 4)
 /* Tx DMA Configuration. */
 #define R92C_RQPN			0x200
 #define R92C_FIFOPAGE			0x204
@@ -437,6 +446,16 @@
 #define R92C_PBP_512		3
 #define R92C_PBP_1024		4
 
+/* Bits for R92C_TXPAUSE. */
+#define TP_STOPBECON		0x40
+#define TP_STOPHIGH		0x20
+#define TP_STOPMGT		0x10
+#define TP_STOPVO		0x08
+#define TP_STOPVI		0x04
+#define TP_STOPBE		0x02
+#define TP_STOPBK		0x01
+#define TP_STOPALL		0x6f
+
 /* Bits for R92C_TRXDMA_CTRL. */
 #define R92C_TRXDMA_CTRL_RXDMA_AGG_EN		0x0004
 #define R92C_TRXDMA_CTRL_TXDMA_VOQ_MAP_M	0x0030
@@ -472,6 +491,7 @@
 #define R92C_LLT_INIT_OP_S		30
 #define R92C_LLT_INIT_OP_NO_ACTIVE	0
 #define R92C_LLT_INIT_OP_WRITE		1
+#define R92C_LLT_INIT_OP_READ		2
 
 /* Bits for R92C_RQPN. */
 #define R92C_RQPN_HPQ_M		0x000000ff
@@ -530,7 +550,7 @@
 
 /* Bits for R92C_BCNDMATIM */
 #define R92C_DMA_ATIME_INT_TIME		0x02
- 
+
 /* Bits for R92C_APSD_CTRL. */
 #define R92C_APSD_CTRL_OFF		0x40
 #define R92C_APSD_CTRL_OFF_STATUS	0x80
@@ -582,8 +602,9 @@
 #define R92C_TXAGC_RATE18_06(i)		(((i) == 0) ? 0xe00 : 0x830)
 #define R92C_TXAGC_RATE54_24(i)		(((i) == 0) ? 0xe04 : 0x834)
 #define R92C_TXAGC_A_CCK1_MCS32		0xe08
-#define	R92C_FPGA0_XA_HSSIPARAM1	0x820
+#define R92C_FPGA0_XA_HSSIPARAM1	0x820
 #define R92C_TXAGC_B_CCK1_55_MCS32	0x838
+#define R92C_FPGA0_XCD_SWITCHCTL	0x85c
 #define R92C_TXAGC_B_CCK11_A_CCK2_11	0x86c
 #define R92C_TXAGC_MCS03_MCS00(i)	(((i) == 0) ? 0xe10 : 0x83c)
 #define R92C_TXAGC_MCS07_MCS04(i)	(((i) == 0) ? 0xe14 : 0x848)
@@ -600,6 +621,8 @@
 #define R92C_FPGA1_TXINFO		0x90c
 #define R92C_CCK0_SYSTEM		0xa00
 #define R92C_CCK0_AFESETTING		0xa04
+#define R92C_CONFIG_ANT_A		0xb68
+#define R92C_CONFIG_ANT_B		0xb6c
 #define R92C_OFDM0_TRXPATHENA		0xc04
 #define R92C_OFDM0_TRMUXPAR		0xc08
 #define R92C_OFDM0_XARXIQIMBALANCE	0xc14
@@ -615,6 +638,24 @@
 #define R92C_OFDM0_XDTXAFE		0xc9c
 #define R92C_OFDM0_RXIQEXTANTA		0xca0
 #define R92C_OFDM1_LSTF			0xd00
+#define R92C_FPGA0_IQK			0xe28
+#define R92C_TX_IQK 			0xe40
+#define R92C_RX_IQK			0xe44
+#define R92C_BLUETOOTH			0xe6c
+#define R92C_RX_WAIT_CCA		0xe70
+#define R92C_TX_CCK_RFON		0xe74
+#define R92C_TX_CCK_BBON		0xe78
+#define R92C_TX_OFDM_RFON		0xe7c
+#define R92C_TX_OFDM_BBON		0xe80
+#define R92C_TX_TO_RX			0xe84
+#define R92C_TX_TO_TX			0xe88
+#define R92C_RX_CCK			0xe8c
+#define R92C_RX_OFDM			0xed0
+#define R92C_RX_WAIT_RIFS 		0xed4
+#define R92C_RX_TO_RX 			0xed8
+#define R92C_STANDBY 			0xedc
+#define R92C_SLEEP 			0xee0
+#define R92C_PMPD_ANAEN			0xeec
 
 /* Bits for R92C_FPGA[01]_RFMOD. */
 #define R92C_RFMOD_40MHZ	0x00000001
@@ -769,6 +810,9 @@
 /* Bits for R92C_RD_CTRL. */
 #define R92C_RD_CTRL_DIS_EDCA_CNT_DWN	__BIT(11)
 
+/* Bits for R92C_INIDATA_RATE_SEL. */
+#define R92C_RATE_SHORTGI	__BIT(6)
+
 /*
  * Firmware base address.
  */
@@ -844,6 +888,7 @@
 #define R92C_CAM_MACLO_S	16
 
 /* Rate adaptation modes. */
+#define R92C_RAID_11BGN 0
 #define R92C_RAID_11GN	1
 #define R92C_RAID_11N	3
 #define R92C_RAID_11BG	4
@@ -910,6 +955,7 @@ struct r92c_fw_cmd {
 #define R92C_CMD_MACID_PS_MODE		7
 #define R92C_CMD_P2P_PS_OFFLOAD		8
 #define R92C_CMD_SELECTIVE_SUSPEND	9
+#define R92C_CMD_USB_SUSPEND		43
 #define R92C_CMD_FLAG_EXT		0x80
 
 	uint8_t	msg[5];
@@ -929,6 +975,50 @@ struct r92c_fw_cmd_macid_cfg {
 #define URTWN_MACID_BSS		0
 #define URTWN_MACID_BC		4	/* Broadcast. */
 #define URTWN_MACID_VALID	0x80
+#define URTWN_MACID_SHORTGI	0x20
+} __packed;
+
+/* Structure for R92C_CMD_SET_PWRMODE. */
+struct r92c_fw_cmd_setpwrmode {
+	uint8_t	mode;
+	uint8_t	smartps;
+	uint8_t	bcn_time;	/* 100ms increments */
+} __packed;
+
+#define R92E_CMD_KEEP_ALIVE	0x03
+#define R92E_CMD_SET_PWRMODE	0x20
+#define R92E_CMD_RSSI_REPORT	0x42
+
+/* Structure for R92E_CMD_KEEP_ALIVE. */
+struct r92e_fw_cmd_keepalive {
+	uint8_t mode;
+	uint8_t period;
+} __packed;
+
+/* Structure for R92E_CMD_SET_PWRMODE. */
+struct r92e_fw_cmd_setpwrmode {
+	uint8_t mode;
+#define FWMODE_ACTIVE		0
+#define FWMODE_LOW_POWER	1
+#define FWMODE_WMMPS		2
+	uint8_t	smartps;
+#define SRTPS_LOW_POWER		0
+#define SRTPS_POLL		0x10
+#define SRTPS_WMMPS		0x20
+	uint8_t awake_int;	/* 100ms increments. */
+	uint8_t	all_queue_apsd;
+	uint8_t	pwr_state;
+#define PS_RFOFF		0x0
+#define PS_RFON			0x4
+#define PS_ALLON		0xc
+} __packed;
+
+/* Structure for R92E_CMD_RSSI_REPORT. */
+struct r92e_fw_cmd_rssi {
+	uint8_t	macid;
+	uint8_t	reserved;
+	uint8_t	pwdb;
+	uint8_t	reserved2;
 } __packed;
 
 /*
@@ -1084,7 +1174,9 @@ struct r92c_tx_desc {
 #define R88E_TXDW2_AGGBK	0x00010000
 
 	uint16_t	txdw3;
+#define R92E_TXDW3_AGGBK	0x00000100
 	uint16_t	txdseq;
+#define R92C_HWSEQ_EN		0x00008000
 
 	uint32_t	txdw4;
 #define R92C_TXDW4_RTSRATE_M	0x0000003f
@@ -1111,4 +1203,36 @@ struct r92c_tx_desc {
 	uint32_t	txdw6;
 	uint16_t	txdsum;
 	uint16_t	pad;
+	uint32_t	txdw7;
+	uint16_t	txdseq2;
+#define R92E_HWSEQ_SHIFT	11
+#define R92E_HWSEQ_MASK		0x00000fffff
+
+	uint16_t	txdw8;
 } __packed __aligned(4);
+#define R92E_RF_T_METER		0x042
+#define R92E_STBC_SETTING	0x04c4
+#define R92E_SYS_CFG1_8192E	0x00f0
+#define R92E_LDO_SWR_CTRL	0x007C
+#define R92E_AUTO_LLT		0x224
+#define R92E_AUTO_LLT_EN	__BIT(16)
+#define R92E_RSV_MIO_EN		0x0100
+#define R92E_LEDSON		0x60
+
+/* Bits for SYS_CFG1_8192E. */
+#define R92E_SPSLDO_SEL		__BIT(24)
+
+/* Values for R92C_CMD_USB_SUSPEND. */
+#define USB_RESUME		0
+#define USB_SLEEP		1
+
+/* Values for IQ calibration. */
+#define R92C_IQK_TRXPATHENA	0x5600
+#define R92C_IQK_TRMUXPAR	0x00e4
+#define R92C_IQK_RFIFACESW1	0x8200
+#define R92C_IQK_LSSI_PARAM	0x00010000
+#define R92C_IQK_LSSI_RESTORE	0x00032ed3
+#define R92C_IQK_CONFIG_ANT	0x00080000
+#define R92C_TX_IQK_SETTING	0x01007c00
+#define R92C_RX_IQK_SETTING	0x01004800
+#define R92C_FPGA0_IQK_SETTING	0x80800000

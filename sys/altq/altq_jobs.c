@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.6 2010/04/09 19:32:45 plunky Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.6.18.1 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.6 2010/04/09 19:32:45 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.6.18.1 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -96,14 +96,14 @@ __KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.6 2010/04/09 19:32:45 plunky Exp $")
  * function prototypes
  */
 static struct jobs_if *jobs_attach(struct ifaltq *, u_int, u_int, u_int);
-static int jobs_detach(struct jobs_if *);
+static void jobs_detach(struct jobs_if *);
 static int jobs_clear_interface(struct jobs_if *);
 static int jobs_request(struct ifaltq *, int, void *);
 static void jobs_purge(struct jobs_if *);
 static struct jobs_class *jobs_class_create(struct jobs_if *,
     int, int64_t, int64_t, int64_t, int64_t, int64_t, int);
 static int jobs_class_destroy(struct jobs_class *);
-static int jobs_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static int jobs_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf *jobs_dequeue(struct ifaltq *, int);
 
 static int jobs_addq(struct jobs_class *, struct mbuf *, struct jobs_if*);
@@ -184,7 +184,7 @@ jobs_attach(struct ifaltq *ifq, u_int bandwidth, u_int qlimit, u_int separate)
 	return (jif);
 }
 
-static int
+static void
 jobs_detach(struct jobs_if *jif)
 {
 	(void)jobs_clear_interface(jif);
@@ -203,7 +203,6 @@ jobs_detach(struct jobs_if *jif)
 		ASSERT(p != NULL);
 	}
 	free(jif, M_DEVBUF);
-	return (0);
 }
 
 /*
@@ -491,7 +490,7 @@ jobs_class_destroy(struct jobs_class *cl)
  * (*altq_enqueue) in struct ifaltq.
  */
 static int
-jobs_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
 	struct jobs_if	*jif = (struct jobs_if *)ifq->altq_disc;
 	struct jobs_class *cl, *scan;
@@ -534,7 +533,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 	}
 
 	/* grab class set by classifier */
-	if (pktattr == NULL || (cl = pktattr->pattr_class) == NULL)
+	if ((cl = m->m_pkthdr.pattr_class) == NULL)
 		cl = jif->jif_default;
 
 	len = m_pktlen(m);
@@ -1158,7 +1157,7 @@ adjust_rates_rdc(struct jobs_if *jif)
 
 	error = update_error(jif);
 	if (!error)
-		return (NULL);
+		goto fail;
 
 	prop_control = (upper_bound*upper_bound*min_share)
 	    /(max_prod*(max_avg_pkt_size << 2));
@@ -1252,6 +1251,9 @@ adjust_rates_rdc(struct jobs_if *jif)
 		}
 	}
 	return result;
+
+fail:	free(result, M_DEVBUF);
+	return NULL;
 }
 
 /*
@@ -1284,19 +1286,19 @@ assign_rate_drops_adc(struct jobs_if *jif)
 
 	result = malloc((jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
 	if (result == NULL)
-		return NULL;
+		goto fail0;
 	c = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (c == NULL)
-		return NULL;
+		goto fail1;
 	n = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (n == NULL)
-		return NULL;
+		goto fail2;
 	k = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (k == NULL)
-		return NULL;
+		goto fail3;
 	available = malloc((jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
 	if (available == NULL)
-		return NULL;
+		goto fail4;
 
 	for (i = 0; i <= jif->jif_maxpri; i++)
 		result[i] = 0;
@@ -1525,6 +1527,14 @@ assign_rate_drops_adc(struct jobs_if *jif)
 	free(available, M_DEVBUF);
 
 	return (result);
+
+fail5: __unused
+	free(available, M_DEVBUF);
+fail4:	free(k, M_DEVBUF);
+fail3:	free(n, M_DEVBUF);
+fail2:	free(c, M_DEVBUF);
+fail1:	free(result, M_DEVBUF);
+fail0:	return NULL;
 }
 
 /*
@@ -1537,7 +1547,7 @@ static int64_t *
 update_error(struct jobs_if *jif)
 {
 	int i;
-	int active_classes, backlogged_classes;
+	int active_classes;
 	u_int64_t mean_weighted_delay;
 	u_int64_t delays[JOBS_MAXPRI];
 	int64_t* error;
@@ -1552,7 +1562,6 @@ update_error(struct jobs_if *jif)
 
 	mean_weighted_delay = 0;
 	active_classes = 0;
-	backlogged_classes = 0;
 
 	for (i = 0; i <= jif->jif_maxpri; i++) {
 		cl = jif->jif_classes[i];
@@ -1560,7 +1569,6 @@ update_error(struct jobs_if *jif)
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
 
 		if (is_backlogged) {
-			backlogged_classes++;
 			if (cl->concerned_rdc) {
 				delays[i] = proj_delay(jif, i);
 				mean_weighted_delay += cl->delay_prod_others*delays[i];
@@ -1675,7 +1683,7 @@ pick_dropped_rlc(struct jobs_if *jif)
 {
 	int64_t mean;
 	int64_t* loss_error;
-	int i, active_classes, backlogged_classes;
+	int i, active_classes;
 	int class_exists, is_backlogged;
 	int class_dropped;
 	int64_t max_error;
@@ -1694,14 +1702,12 @@ pick_dropped_rlc(struct jobs_if *jif)
 	max_error = 0;
 	mean = 0;
 	active_classes = 0;
-	backlogged_classes = 0;
 
 	for (i = 0; i <= jif->jif_maxpri; i++) {
 		cl = jif->jif_classes[i];
 		class_exists = (cl != NULL);
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
 		if (is_backlogged) {
-			backlogged_classes ++;
 			if (cl->concerned_rlc) {
 				mean += cl->loss_prod_others
 				    * cl->current_loss;
@@ -1826,18 +1832,21 @@ jobsclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
 	struct jobs_if *jif;
-	int err, error = 0;
 
 	while ((jif = jif_list) != NULL) {
 		/* destroy all */
 		if (ALTQ_IS_ENABLED(jif->jif_ifq))
 			altq_disable(jif->jif_ifq);
 
-		err = altq_detach(jif->jif_ifq);
-		if (err == 0)
-			err = jobs_detach(jif);
-		if (err != 0 && error == 0)
-			error = err;
+		int error = altq_detach(pif->pif_ifq);
+		switch (error) {
+		case 0:
+		case ENXIO:	/* already disabled */
+			break;
+		default:
+			return error;
+		}
+		jobs_detach(jif);
 	}
 
 	return error;
@@ -1960,7 +1969,7 @@ jobscmd_if_attach(struct jobs_attach *ap)
 	if ((error = altq_attach(&ifp->if_snd, ALTQT_JOBS, jif,
 				 jobs_enqueue, jobs_dequeue, jobs_request,
 				 &jif->jif_classifier, acc_classify)) != 0)
-		(void)jobs_detach(jif);
+		jobs_detach(jif);
 
 	return (error);
 }
@@ -1980,7 +1989,8 @@ jobscmd_if_detach(struct jobs_interface *ap)
 	if ((error = altq_detach(jif->jif_ifq)))
 		return (error);
 
-	return jobs_detach(jif);
+	jobs_detach(jif);
+	return 0;
 }
 
 static int
@@ -2100,10 +2110,9 @@ jobscmd_class_stats(struct jobs_class_stats *ap)
 	usp = ap->stats;
 	for (pri = 0; pri <= jif->jif_maxpri; pri++) {
 		cl = jif->jif_classes[pri];
+		(void)memset(&stats, 0, sizeof(stats));
 		if (cl != NULL)
 			get_class_stats(&stats, cl);
-		else
-			(void)memset(&stats, 0, sizeof(stats));
 		if ((error = copyout((void *)&stats, (void *)usp++,
 				     sizeof(stats))) != 0)
 			return (error);

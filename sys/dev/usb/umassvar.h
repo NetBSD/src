@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.34.2.1 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.34.2.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -31,7 +31,16 @@
 
 #ifdef UMASS_DEBUG
 #define DIF(m, x)	if (umassdebug & (m)) do { x ; } while (0)
-#define DPRINTF(m, x)	if (umassdebug & (m)) printf x
+extern int umassdebug;
+#else
+#define umassdebug	0
+#define DIF(m, x)	/* nop */
+#endif
+
+#define	DPRINTFM(M,FMT,A,B,C,D)	USBHIST_LOGM(umassdebug,M,FMT,A,B,C,D)
+#define	UMASSHIST_FUNC()	USBHIST_FUNC()
+#define	UMASSHIST_CALLED(name)	USBHIST_CALLED(umassdebug)
+
 #define UDMASS_UPPER	0x00008000	/* upper layer */
 #define UDMASS_GEN	0x00010000	/* general */
 #define UDMASS_SCSI	0x00020000	/* scsi */
@@ -44,12 +53,6 @@
 
 #define UDMASS_XFER	0x40000000	/* all transfers */
 #define UDMASS_CMD	0x80000000
-
-extern int umassdebug;
-#else
-#define DIF(m, x)	/* nop */
-#define DPRINTF(m, x)	/* nop */
-#endif
 
 /* Generic definitions */
 
@@ -136,7 +139,7 @@ typedef void (*umass_callback)(struct umass_softc *, void *, int, int);
 typedef void (*umass_wire_xfer)(struct umass_softc *, int, void *, int, void *,
 				int, int, u_int, int, umass_callback, void *);
 typedef void (*umass_wire_reset)(struct umass_softc *, int);
-typedef void (*umass_wire_state)(usbd_xfer_handle, usbd_private_handle,
+typedef void (*umass_wire_state)(struct usbd_xfer *, void *,
 				 usbd_status);
 
 struct umass_wire_methods {
@@ -152,12 +155,12 @@ struct umassbus_softc {
 /* the per device structure */
 struct umass_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device *	sc_udev;	/* device */
+	struct usbd_interface *	sc_iface;	/* interface */
 	int			sc_ifaceno;	/* interface number */
 
-	u_int8_t		sc_epaddr[UMASS_NEP];
-	usbd_pipe_handle	sc_pipe[UMASS_NEP];
+	uint8_t			sc_epaddr[UMASS_NEP];
+	struct usbd_pipe *	sc_pipe[UMASS_NEP];
 	usb_device_request_t	sc_req;
 
 	const struct umass_wire_methods *sc_methods;
@@ -165,13 +168,13 @@ struct umass_softc {
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_detach_cv;
 
-	u_int8_t		sc_wire;	/* wire protocol */
+	uint8_t			sc_wire;	/* wire protocol */
 #define	UMASS_WPROTO_UNSPEC	0
 #define	UMASS_WPROTO_BBB	1
 #define	UMASS_WPROTO_CBI	2
 #define	UMASS_WPROTO_CBI_I	3
 
-	u_int8_t		sc_cmd;		/* command protocol */
+	uint8_t			sc_cmd;		/* command protocol */
 #define	UMASS_CPROTO_UNSPEC	0
 #define	UMASS_CPROTO_SCSI	1
 #define	UMASS_CPROTO_ATAPI	2
@@ -179,7 +182,7 @@ struct umass_softc {
 #define	UMASS_CPROTO_RBC	4
 #define UMASS_CPROTO_ISD_ATA	5
 
-	u_int32_t		sc_quirks;
+	uint32_t		sc_quirks;
 #define	UMASS_QUIRK_WRONG_CSWSIG	0x00000001
 #define	UMASS_QUIRK_WRONG_CSWTAG	0x00000002
 #define	UMASS_QUIRK_RBC_PAD_TO_12	0x00000004
@@ -187,7 +190,7 @@ struct umass_softc {
 
 #define UMASS_QUIRK_USE_DEFAULTMATCH	-1
 
-	u_int32_t		sc_busquirks;
+	uint32_t		sc_busquirks;
 
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */
@@ -198,34 +201,37 @@ struct umass_softc {
 
 	/* xfer handles
 	 * Most of our operations are initiated from interrupt context, so
-	 * we need to avoid using the one that is in use. We want to avoid
+	 * we need to avoid using the one that is in use. We have to avoid
 	 * allocating them in the interrupt context as well.
 	 */
 	/* indices into array below */
 #define XFER_BBB_CBW		0	/* Bulk-Only */
-#define XFER_BBB_DATA		1
-#define XFER_BBB_DCLEAR		2
-#define XFER_BBB_CSW1		3
-#define XFER_BBB_CSW2		4
-#define XFER_BBB_SCLEAR		5
-#define XFER_BBB_RESET1		6
-#define XFER_BBB_RESET2		7
-#define XFER_BBB_RESET3		8
+#define XFER_BBB_DATAIN		1
+#define XFER_BBB_DATAOUT	2
+#define XFER_BBB_DCLEAR		3
+#define XFER_BBB_CSW1		4
+#define XFER_BBB_CSW2		5
+#define XFER_BBB_SCLEAR		6
+#define XFER_BBB_RESET1		7
+#define XFER_BBB_RESET2		8
+#define XFER_BBB_RESET3		9
 
 #define XFER_CBI_CB		0	/* CBI */
-#define XFER_CBI_DATA		1
-#define XFER_CBI_STATUS		2
-#define XFER_CBI_DCLEAR		3
-#define XFER_CBI_SCLEAR		4
-#define XFER_CBI_RESET1		5
-#define XFER_CBI_RESET2		6
-#define XFER_CBI_RESET3		7
+#define XFER_CBI_DATAIN		1
+#define XFER_CBI_DATAOUT	2
+#define XFER_CBI_STATUS		3
+#define XFER_CBI_DCLEAR		4
+#define XFER_CBI_SCLEAR		5
+#define XFER_CBI_RESET1		6
+#define XFER_CBI_RESET2		7
+#define XFER_CBI_RESET3		8
 
-#define XFER_NR			9	/* maximum number */
+#define XFER_NR			10	/* maximum number */
 
-	usbd_xfer_handle	transfer_xfer[XFER_NR]; /* for ctrl xfers */
+	struct usbd_xfer	*transfer_xfer[XFER_NR]; /* for ctrl xfers */
 
-	void			*data_buffer;
+	void			*datain_buffer;
+	void			*dataout_buffer;
 	void			*cmd_buffer;
 	void			*s1_buffer;
 	void			*s2_buffer;
@@ -262,7 +268,7 @@ struct umass_softc {
 
 	int			timeout;		/* in msecs */
 
-	u_int8_t		maxlun;			/* max lun supported */
+	uint8_t			maxlun;			/* max lun supported */
 
 #ifdef UMASS_DEBUG
 	struct timeval tv;

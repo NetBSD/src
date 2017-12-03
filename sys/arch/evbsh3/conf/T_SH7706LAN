@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LAN,v 1.5.6.2 2014/08/20 00:02:59 tls Exp $
+#	$NetBSD: T_SH7706LAN,v 1.5.6.3 2017/12/03 11:36:12 jdolecek Exp $
 #
 #	TAC T-SH7706LAN Rev.3 config file
 #
@@ -33,25 +33,15 @@ options 	USERCONF	# userconf(4) support
 options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DDB_VERBOSE_HELP
 #makeoptions    DEBUG="-g"      # compile full symbol table
-options 	SYMTAB_SPACE=320000
+makeoptions	COPY_SYMTAB=1
 
 # Compatibility options
-options 	COMPAT_14	# NetBSD 1.4
-options 	COMPAT_15	# NetBSD 1.5
-options 	COMPAT_16	# NetBSD 1.6
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0
-options 	COMPAT_40	# NetBSD 4.0
-options 	COMPAT_50	# NetBSD 5.0
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd14.config"
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.4.12.1 2014/08/20 00:03:13 tls Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.4.12.2 2017/12/03 11:36:29 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.4.12.1 2014/08/20 00:03:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.4.12.2 2017/12/03 11:36:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.4.12.1 2014/08/20 00:03:13 tls Exp $
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/include/sb1250_int.h>
 #include <mips/sibyte/pci/sbbrzvar.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 void		sbbrz_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
@@ -145,7 +147,7 @@ sbbrz_pci_bus_maxdevs(void *cpv, int busno)
 		return 32;
 
 	/* If the PCI on the 1250, 32 devices if host mode, otherwise only 2. */
-	regval = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
+	regval = mips3_ld((register_t)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
 	host = (regval & M_SYS_PCI_HOST) != 0;
 
 	return (host ? 32 : 2);
@@ -181,6 +183,9 @@ sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 		panic ("pci_conf_read: misaligned");
 #endif
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return 0xffffffff;
+
 	addr = A_PHYS_LDTPCI_CFG_MATCH_BITS + tag + offset;
 	addr = MIPS_PHYS_TO_XKPHYS(MIPS3_TLB_ATTR_UNCACHED, addr);
 
@@ -189,7 +194,7 @@ sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 	if (badaddr64(addr, 4) != 0)
 		return 0xffffffff;
 
-	return mips3_lw_a64(addr);
+	return mips3_ld(addr);
 }
 
 void
@@ -202,10 +207,13 @@ sbbrz_pci_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 		panic ("pci_conf_write: misaligned");
 #endif
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
+
 	addr = A_PHYS_LDTPCI_CFG_MATCH_BITS + tag + offset;
 	addr = MIPS_PHYS_TO_XKPHYS(MIPS3_TLB_ATTR_UNCACHED, addr);
 
-	return mips3_sw_a64(addr, data);
+	return mips3_sd(addr, data);
 }
 
 int

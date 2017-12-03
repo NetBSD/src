@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.94.2.1 2012/11/20 03:02:01 tls Exp $ */
+/*      $NetBSD: ac97.c,v 1.94.2.2 2017/12/03 11:37:02 jdolecek Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.94.2.1 2012/11/20 03:02:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.94.2.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1444,6 +1444,7 @@ ac97_attach_type(struct ac97_host_if *host_if, device_t sc_dev, int type, kmutex
 
 		if (as->ext_mid == 0 || as->ext_mid == 0xffff) {
 			aprint_normal_dev(sc_dev, "no modem codec found\n");
+			free(as, M_DEVBUF);
 			return ENXIO;
 		}
 		as->type = AC97_CODEC_TYPE_MODEM;
@@ -1676,7 +1677,7 @@ ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
 	const char *name;
 
 	as = (struct ac97_softc *)codec_if;
-	if (dip->index < as->num_source_info) {
+	if (dip->index >= 0 && dip->index < as->num_source_info) {
 		si = &as->source_info[dip->index];
 		dip->type = si->type;
 		dip->mixer_class = si->mixer_class;

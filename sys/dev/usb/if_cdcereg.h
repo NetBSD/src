@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.7 2012/02/02 19:43:07 tls Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.7.6.1 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -34,13 +34,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/rndsource.h>
+
 #define CDCE_RX_LIST_CNT	1
 #define CDCE_TX_LIST_CNT	1
 #define CDCE_BUFSZ		1542
 
 struct cdce_type {
 	struct usb_devno	 cdce_dev;
-	u_int16_t		 cdce_flags;
+	uint16_t		 cdce_flags;
 #define CDCE_ZAURUS	1
 #define CDCE_NO_UNION	2
 };
@@ -49,7 +51,7 @@ struct cdce_softc;
 
 struct cdce_chain {
 	struct cdce_softc	*cdce_sc;
-	usbd_xfer_handle	 cdce_xfer;
+	struct usbd_xfer	*cdce_xfer;
 	char			*cdce_buf;
 	struct mbuf		*cdce_mbuf;
 	int			 cdce_accum;
@@ -70,17 +72,17 @@ struct cdce_softc {
 	struct ethercom		 cdce_ec;
 	krndsource_t	 rnd_source;
 #define GET_IFP(sc) (&(sc)->cdce_ec.ec_if)
-	usbd_device_handle	 cdce_udev;
-	usbd_interface_handle	 cdce_ctl_iface;
-	usbd_interface_handle	 cdce_data_iface;
+	struct usbd_device *	 cdce_udev;
+	struct usbd_interface *	 cdce_ctl_iface;
+	struct usbd_interface *	 cdce_data_iface;
 	int			 cdce_bulkin_no;
-	usbd_pipe_handle	 cdce_bulkin_pipe;
+	struct usbd_pipe *	 cdce_bulkin_pipe;
 	int			 cdce_bulkout_no;
-	usbd_pipe_handle	 cdce_bulkout_pipe;
+	struct usbd_pipe *	 cdce_bulkout_pipe;
 	char			 cdce_dying;
 	int			 cdce_unit;
 	struct cdce_cdata	 cdce_cdata;
 	int			 cdce_rxeof_errors;
-	u_int16_t		 cdce_flags;
+	uint16_t		 cdce_flags;
 	char			 cdce_attached;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.38.12.1 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.38.12.2 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38.12.1 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38.12.2 2017/12/03 11:36:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -67,11 +67,11 @@ get_mmu_handle(void)
 	u_int chosen;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
-		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
+		prom_printf("get_mmu_handle: cannot get /chosen\n");
 		return -1;
 	}
 	if (OF_getprop(chosen, "mmu", &mmuh, sizeof(mmuh)) == -1) {
-		prom_printf("get_mmu_handle: cannot get mmuh\r\n");
+		prom_printf("get_mmu_handle: cannot get mmuh\n");
 		return -1;
 	}
 	return mmuh;
@@ -83,11 +83,11 @@ get_memory_handle(void)
 	u_int chosen;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
-		prom_printf("get_memory_handle: cannot get /chosen\r\n");
+		prom_printf("get_memory_handle: cannot get /chosen\n");
 		return -1;
 	}
 	if (OF_getprop(chosen, "memory", &memh, sizeof(memh)) == -1) {
-		prom_printf("get_memory_handle: cannot get memh\r\n");
+		prom_printf("get_memory_handle: cannot get memh\n");
 		return -1;
 	}
 	return memh;
@@ -126,7 +126,7 @@ prom_set_trap_table_sun4v(vaddr_t tba, paddr_t mmfsa)
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t tba;
-		cell_t mmfsa; 
+		cell_t mmfsa;
 	} args;
 
 	args.name = ADR2CELL("SUNW,set-trap-table");
@@ -161,7 +161,7 @@ prom_vtop(vaddr_t vaddr)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_vtop: cannot get mmuh\r\n");
+		prom_printf("prom_vtop: cannot get mmuh\n");
 		return 0;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -173,7 +173,7 @@ prom_vtop(vaddr_t vaddr)
 	if (openfirmware(&args) == -1)
 		return -1;
 #if 0
-	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\r\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\r\n",
+	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\n",
 		    mmuh, vaddr, (int)(args.status>>32), (int)args.status, (int)(args.retaddr>>32), (int)args.retaddr, 
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
@@ -203,7 +203,7 @@ prom_claim_virt(vaddr_t vaddr, int len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_claim_virt: cannot get mmuh\n");
 		return 0;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -240,7 +240,7 @@ prom_alloc_virt(int len, int align)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_alloc_virt: cannot get mmuh\r\n");
+		prom_printf("prom_alloc_virt: cannot get mmuh\n");
 		return -1LL;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -274,7 +274,7 @@ prom_free_virt(vaddr_t vaddr, int len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_free_virt: cannot get mmuh\r\n");
+		prom_printf("prom_free_virt: cannot get mmuh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -307,7 +307,7 @@ prom_unmap_virt(vaddr_t vaddr, int len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_unmap_virt: cannot get mmuh\r\n");
+		prom_printf("prom_unmap_virt: cannot get mmuh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -344,7 +344,7 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_map_phys: cannot get mmuh\r\n");
+		prom_printf("prom_map_phys: cannot get mmuh\n");
 		return 0;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -388,7 +388,7 @@ prom_alloc_phys(int len, int align)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_alloc_phys: cannot get memh\r\n");
+		prom_printf("prom_alloc_phys: cannot get memh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -427,7 +427,7 @@ prom_claim_phys(paddr_t phys, int len)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_claim_phys: cannot get memh\r\n");
+		prom_printf("prom_claim_phys: cannot get memh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -464,7 +464,7 @@ prom_free_phys(paddr_t phys, int len)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_free_phys: cannot get memh\r\n");
+		prom_printf("prom_free_phys: cannot get memh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -502,7 +502,7 @@ prom_get_msgbuf(int len, int align)
 	paddr_t addr;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
+		prom_printf("prom_get_msgbuf: cannot get memh\n");
 		return -1;
 	}
 	if (OF_test("test-method") == 0) {
@@ -519,24 +519,24 @@ prom_get_msgbuf(int len, int align)
 			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
 				return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
-			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
-		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
-	} else prom_printf("prom_get_msgbuf: test failed\r\n");
+			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\n");
+		} else prom_printf("prom_get_msgbuf: test-method failed\n");
+	} else prom_printf("prom_get_msgbuf: test failed\n");
 	/* Allocate random memory -- page zero avail?*/
 	addr = prom_claim_phys(0x000, len);
-	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", (int)addr); 
+	prom_printf("prom_get_msgbuf: allocated new buf at %08x\n", (int)addr);
 	if (addr == -1) {
-		prom_printf("prom_get_msgbuf: cannot get allocate physmem\r\n");
+		prom_printf("prom_get_msgbuf: cannot get allocate physmem\n");
 		return -1;
 	}
-	prom_printf("prom_get_msgbuf: claiming new buf at %08x\r\n", (int)addr);
+	prom_printf("prom_get_msgbuf: claiming new buf at %08x\n", (int)addr);
 	{ int i; for (i=0; i<200000000; i++); }
 	return addr; /* Kluge till we go 64-bit */
 }
 
 #ifdef MULTIPROCESSOR
 /*
- * Start secondary cpu, arrange 'func' as the entry.
+ * Start secondary cpu identified by node, arrange 'func' as the entry.
  */
 void
 prom_startcpu(u_int cpu, void *func, u_long arg)
@@ -558,6 +558,37 @@ prom_startcpu(u_int cpu, void *func, u_long arg)
         args.arg = (cell_t)arg;
 
         openfirmware(&args);
+}
+
+/*
+ * Start secondary cpu identified by cpuid, arrange 'func' as the entry.
+ * Returns -1 in case the openfirmware method is not available.
+ * Otherwise the result value from the openfirmware call is returned.
+ */
+int
+prom_startcpu_by_cpuid(u_int cpu, void *func, u_long arg)
+{
+	static struct {
+		cell_t  name;
+		cell_t  nargs;
+		cell_t  nreturns;
+		cell_t  cpu;
+		cell_t  func;
+		cell_t  arg;
+		cell_t	status;
+	} args;
+
+	if (OF_test("SUNW,start-cpu-by-cpuid") != 0)
+		return -1;
+	
+	args.name = ADR2CELL("SUNW,start-cpu-by-cpuid");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.cpu = cpu;
+	args.func = ADR2CELL(func);
+	args.arg = arg;
+
+	return openfirmware(&args);
 }
 
 /*
@@ -707,22 +738,22 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	int phc_node;
 	int rc = -1;
 
+	phc_node = find_pci_host_node(node);
+
 	/* 
-	 * Don't try to map interrupts for onboard devices, or if the
-	 * interrupt is already fully specified.
-	 * XXX This should be done differently (i.e. by matching
-	 * the node name) - but we need access to a machine where
-	 * a change is testable - hence the printf below.
+	 * On machines with psycho PCI controllers, we don't need to map
+	 * interrupts if they are already fully specified (0x20 to 0x3f
+	 * for onboard devices and IGN 0x7c0 for psycho0/psycho1).
 	 */
 	if (*interrupt & 0x20 || *interrupt & 0x7c0) {
-		char name[40];
-
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("\nATTENTION: if you see this message, please mail "
-		    "the output of \"dmesg\" and \"ofctl -p\" to "
-		    "port-sparc64@NetBSD.org!\n"
-		    "Not mapping interrupt for node %s (%x)\n", name, node);
-		return validlen;
+		char model[40];
+		
+		if (OF_getprop(phc_node, "model", &model, sizeof(model)) > 10
+		    && !strcmp(model, "SUNW,psycho")) {
+			DPRINTF(("OF_mapintr: interrupt %x already mapped\n",
+			    *interrupt));
+			return validlen;
+		}
 	}
 
 	/*
@@ -743,8 +774,6 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		printf("OF_mapintr: no reg property?\n");
 		return (-1);
 	}
-
-	phc_node = find_pci_host_node(node);
 
 	while (node) {
 #ifdef DEBUG

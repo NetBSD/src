@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.65.6.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.65.6.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.65.6.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.65.6.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.65.6.1 2014/08/20 00:04:29 tls Exp 
 #include <net/route.h>
 
 const struct fileops socketops = {
+	.fo_name = "socket",
 	.fo_read = soo_read,
 	.fo_write = soo_write,
 	.fo_ioctl = soo_ioctl,
@@ -99,7 +100,7 @@ int
 soo_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	 int flags)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error;
 
 	error = (*so->so_receive)(so, NULL, uio, NULL, NULL, NULL);
@@ -112,7 +113,7 @@ int
 soo_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	  int flags)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error;
 
 	error = (*so->so_send)(so, NULL, uio, NULL, NULL, 0, curlwp);
@@ -123,7 +124,7 @@ soo_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 int
 soo_ioctl(file_t *fp, u_long cmd, void *data)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error = 0;
 
 	switch (cmd) {
@@ -133,7 +134,7 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		if (*(int *)data)
 			so->so_state |= SS_NBIO;
 		else 
-			so->so_state &= ~SS_NBIO; 
+			so->so_state &= ~SS_NBIO;
 		sounlock(so);
 		break;
 
@@ -197,14 +198,18 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		 * interface and routing ioctls should have a
 		 * different entry since a socket's unnecessary
 		 */
-		KERNEL_LOCK(1, NULL);
 		if (IOCGROUP(cmd) == 'i')
+			/*
+			 * KERNEL_LOCK will be held later if if_ioctl() of the
+			 * interface isn't MP-safe.
+			 */
 			error = ifioctl(so, cmd, data, curlwp);
 		else {
+			KERNEL_LOCK(1, NULL);
 			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
 			    cmd, data, NULL);
+			KERNEL_UNLOCK_ONE(NULL);
 		}
-		KERNEL_UNLOCK_ONE(NULL);
 		break;
 	}
 
@@ -226,13 +231,13 @@ int
 soo_poll(file_t *fp, int events)
 {
 
-	return sopoll(fp->f_data, events);
+	return sopoll(fp->f_socket, events);
 }
 
 int
 soo_stat(file_t *fp, struct stat *ub)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error;
 
 	memset(ub, 0, sizeof(*ub));
@@ -251,9 +256,9 @@ soo_close(file_t *fp)
 {
 	int error = 0;
 
-	if (fp->f_data)
-		error = soclose(fp->f_data);
-	fp->f_data = 0;
+	if (fp->f_socket)
+		error = soclose(fp->f_socket);
+	fp->f_socket = NULL;
 
 	return error;
 }
@@ -262,5 +267,5 @@ void
 soo_restart(file_t *fp)
 {
 
-	sorestart(fp->f_data);
+	sorestart(fp->f_socket);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.14 2011/09/20 00:12:24 jym Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.14.12.1 2017/12/03 11:36:52 jdolecek Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.14 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.14.12.1 2017/12/03 11:36:52 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -51,9 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.14 2011/09/20 00:12:24 jym Exp $"
 #define XENPRINTF(x)
 #endif
 
+static struct intrhand *ih;
 struct xenstore_domain_interface *xenstore_interface;
 
-extern int xenstored_ready; 
+extern int xenstored_ready;
 // static DECLARE_WORK(probe_work, xenbus_probe, NULL);
 
 static int wake_waiting(void *);
@@ -74,7 +75,7 @@ static int
 wake_waiting(void *arg)
 {
 	if (__predict_false(xenstored_ready == 0 && xendomain_is_dom0())) {
-		xenstored_ready = 1; 
+		xenstored_ready = 1;
 		wakeup(&xenstored_ready);
 	} 
 
@@ -220,7 +221,9 @@ xb_init_comms(device_t dev)
 
 	evtchn = xen_start_info.store_evtchn;
 
-	event_set_handler(evtchn, wake_waiting, NULL, IPL_TTY, "xenbus");
+	ih = intr_establish_xname(0, &xen_pic, evtchn, IST_LEVEL, IPL_TTY,
+	    wake_waiting, NULL, false, "xenbus");
+
 	hypervisor_enable_event(evtchn);
 	aprint_verbose_dev(dev, "using event channel %d\n", evtchn);
 
@@ -235,7 +238,7 @@ xb_suspend_comms(device_t dev)
 	evtchn = xen_start_info.store_evtchn;
 
 	hypervisor_mask_event(evtchn);
-	event_remove_handler(evtchn, wake_waiting, NULL);
+	intr_disestablish(ih);
 	aprint_verbose_dev(dev, "removed event channel %d\n", evtchn);
 }
 

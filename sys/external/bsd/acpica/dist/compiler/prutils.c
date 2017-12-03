@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,6 @@
  */
 
 #include "aslcompiler.h"
-#include "dtcompiler.h"
-
 
 #define _COMPONENT          ASL_PREPROCESSOR
         ACPI_MODULE_NAME    ("prutils")
@@ -122,8 +120,10 @@ PrGetNextToken (
             {
                 *Next = NULL;
             }
+
             return (TokenStart);
         }
+
         Buffer++;
     }
 
@@ -149,7 +149,7 @@ PrGetNextToken (
 void
 PrError (
     UINT8                   Level,
-    UINT8                   MessageId,
+    UINT16                  MessageId,
     UINT32                  Column)
 {
 #if 0
@@ -238,9 +238,11 @@ PrReplaceData (
  *
  ******************************************************************************/
 
-void
+FILE *
 PrOpenIncludeFile (
-    char                    *Filename)
+    char                    *Filename,
+    char                    *OpenMode,
+    char                    **FullPathname)
 {
     FILE                    *IncludeFile;
     ASL_INCLUDE_DIR         *NextDir;
@@ -257,12 +259,13 @@ PrOpenIncludeFile (
         (Filename[0] == '\\') ||
         (Filename[1] == ':'))
     {
-        IncludeFile = PrOpenIncludeWithPrefix ("", Filename);
+        IncludeFile = PrOpenIncludeWithPrefix (
+            "", Filename, OpenMode, FullPathname);
         if (!IncludeFile)
         {
             goto ErrorExit;
         }
-        return;
+        return (IncludeFile);
     }
 
     /*
@@ -273,10 +276,11 @@ PrOpenIncludeFile (
      *
      * Construct the file pathname from the global directory name.
      */
-    IncludeFile = PrOpenIncludeWithPrefix (Gbl_DirectoryPath, Filename);
+    IncludeFile = PrOpenIncludeWithPrefix (
+        Gbl_DirectoryPath, Filename, OpenMode, FullPathname);
     if (IncludeFile)
     {
-        return;
+        return (IncludeFile);
     }
 
     /*
@@ -286,10 +290,11 @@ PrOpenIncludeFile (
     NextDir = Gbl_IncludeDirList;
     while (NextDir)
     {
-        IncludeFile = PrOpenIncludeWithPrefix (NextDir->Dir, Filename);
+        IncludeFile = PrOpenIncludeWithPrefix (
+            NextDir->Dir, Filename, OpenMode, FullPathname);
         if (IncludeFile)
         {
-            return;
+            return (IncludeFile);
         }
 
         NextDir = NextDir->Next;
@@ -301,6 +306,7 @@ ErrorExit:
     snprintf (Gbl_MainTokenBuffer, ASL_DEFAULT_LINE_BUFFER_SIZE, "%s, %s",
 	Filename, strerror (errno));
     PrError (ASL_ERROR, ASL_MSG_INCLUDE_FILE_OPEN, 0);
+    return (NULL);
 }
 
 
@@ -321,7 +327,9 @@ ErrorExit:
 FILE *
 PrOpenIncludeWithPrefix (
     char                    *PrefixDir,
-    char                    *Filename)
+    char                    *Filename,
+    char                    *OpenMode,
+    char                    **FullPathname)
 {
     FILE                    *IncludeFile;
     char                    *Pathname;
@@ -337,17 +345,17 @@ PrOpenIncludeWithPrefix (
 
     /* Attempt to open the file, push if successful */
 
-    IncludeFile = fopen (Pathname, "r");
+    IncludeFile = fopen (Pathname, OpenMode);
     if (!IncludeFile)
     {
         fprintf (stderr, "Could not open include file %s\n", Pathname);
-        ACPI_FREE (Pathname);
         return (NULL);
     }
 
     /* Push the include file on the open input file stack */
 
     PrPushInputFileStack (IncludeFile, Pathname);
+    *FullPathname = Pathname;
     return (IncludeFile);
 }
 
@@ -375,6 +383,8 @@ PrPushInputFileStack (
     PR_FILE_NODE            *Fnode;
 
 
+    Gbl_HasIncludeFiles = TRUE;
+
     /* Save the current state in an Fnode */
 
     Fnode = UtLocalCalloc (sizeof (PR_FILE_NODE));
@@ -394,15 +404,16 @@ PrPushInputFileStack (
 
     /* Reset the global line count and filename */
 
-    Gbl_Files[ASL_FILE_INPUT].Filename = Filename;
+    Gbl_Files[ASL_FILE_INPUT].Filename =
+        UtLocalCacheCalloc (strlen (Filename) + 1);
+    strcpy (Gbl_Files[ASL_FILE_INPUT].Filename, Filename);
+
     Gbl_Files[ASL_FILE_INPUT].Handle = InputFile;
-    Gbl_PreviousLineNumber = 0;
-    Gbl_CurrentLineNumber = 0;
+    Gbl_CurrentLineNumber = 1;
 
     /* Emit a new #line directive for the include file */
 
-    FlPrintFile (ASL_FILE_PREPROCESSOR, "#line %u \"%s\"\n",
-        1, Filename);
+    FlPrintFile (ASL_FILE_PREPROCESSOR, "#line %u \"%s\"\n", 1, Filename);
 }
 
 
@@ -451,12 +462,11 @@ PrPopInputFileStack (
     Gbl_Files[ASL_FILE_INPUT].Filename = Fnode->Filename;
     Gbl_Files[ASL_FILE_INPUT].Handle = Fnode->File;
     Gbl_CurrentLineNumber = Fnode->CurrentLineNumber;
-    Gbl_PreviousLineNumber = 0;
 
     /* Emit a new #line directive after the include file */
 
     FlPrintFile (ASL_FILE_PREPROCESSOR, "#line %u \"%s\"\n",
-        Gbl_CurrentLineNumber + 1, Fnode->Filename);
+        Gbl_CurrentLineNumber, Fnode->Filename);
 
     /* All done with this node */
 

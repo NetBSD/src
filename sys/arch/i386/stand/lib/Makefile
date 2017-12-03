@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36.2.1 2014/08/20 00:03:07 tls Exp $
+#	$NetBSD: Makefile,v 1.36.2.2 2017/12/03 11:36:19 jdolecek Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -48,15 +48,12 @@ SRCS+= biosmca.S biosmemps2.S
 .undef DESTDIR
 .include <bsd.lib.mk>
 
-lib${LIB}.o:: ${OBJS}
+lib${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
 # XXX
-.if ${HAVE_GCC:U} == 45
-COPTS.biosdisk.c+=	-fno-strict-aliasing
-.endif
 .if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U} == 48
 COPTS.biosdisk_ll.c+=	-O0
 .endif

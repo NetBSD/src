@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.21.2.1 2013/02/25 00:29:38 tls Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.21.2.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.21.2.1 2013/02/25 00:29:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.21.2.2 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,24 +82,24 @@ const struct radio_hw_if udsbr_hw_if = {
 };
 
 struct udsbr_softc {
- 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	device_t		sc_dev;
+	struct usbd_device *	sc_udev;
 
 	char			sc_mute;
 	char			sc_vol;
-	u_int32_t		sc_freq;
+	uint32_t		sc_freq;
 
 	device_t		sc_child;
 
 	char			sc_dying;
 };
 
-Static	int	udsbr_req(struct udsbr_softc *sc, int ureq, int value,
-			  int index);
-Static	void	udsbr_start(struct udsbr_softc *sc);
-Static	void	udsbr_stop(struct udsbr_softc *sc);
-Static	void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
-Static	int	udsbr_status(struct udsbr_softc *sc);
+Static	int	udsbr_req(struct udsbr_softc *, int, int,
+			  int);
+Static	void	udsbr_start(struct udsbr_softc *);
+Static	void	udsbr_stop(struct udsbr_softc *);
+Static	void	udsbr_setfreq(struct udsbr_softc *, int);
+Static	int	udsbr_status(struct udsbr_softc *);
 
 int udsbr_match(device_t, cfdata_t, void *);
 void udsbr_attach(device_t, device_t, void *);
@@ -106,25 +110,25 @@ extern struct cfdriver udsbr_cd;
 CFATTACH_DECL2_NEW(udsbr, sizeof(struct udsbr_softc), udsbr_match,
     udsbr_attach, udsbr_detach, udsbr_activate, NULL, udsbr_childdet);
 
-int 
+int
 udsbr_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(50,("udsbr_match\n"));
 
-	if (uaa->vendor != USB_VENDOR_CYPRESS ||
-	    uaa->product != USB_PRODUCT_CYPRESS_FMRADIO)
-		return (UMATCH_NONE);
-	return (UMATCH_VENDOR_PRODUCT);
+	if (uaa->uaa_vendor != USB_VENDOR_CYPRESS ||
+	    uaa->uaa_product != USB_PRODUCT_CYPRESS_FMRADIO)
+		return UMATCH_NONE;
+	return UMATCH_VENDOR_PRODUCT;
 }
 
-void 
+void
 udsbr_attach(device_t parent, device_t self, void *aux)
 {
 	struct udsbr_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	char			*devinfop;
 	usbd_status		err;
 
@@ -150,8 +154,7 @@ udsbr_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(10, ("udsbr_attach: %p\n", sc->sc_udev));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, sc->sc_dev);
 
@@ -163,7 +166,7 @@ udsbr_childdet(device_t self, device_t child)
 {
 }
 
-int 
+int
 udsbr_detach(device_t self, int flags)
 {
 	struct udsbr_softc *sc = device_private(self);
@@ -172,10 +175,9 @@ udsbr_detach(device_t self, int flags)
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -231,14 +233,14 @@ void
 udsbr_setfreq(struct udsbr_softc *sc, int freq)
 {
 	DPRINTF(("udsbr_setfreq: setfreq=%d\n", freq));
-        /*
-         * Freq now is in Hz.  We need to convert it to the frequency
-         * that the radio wants.  This frequency is 10.7MHz above
-         * the actual frequency.  We then need to convert to
-         * units of 12.5kHz.  We add one to the IFM to make rounding
-         * easier.
-         */
-        freq = (freq * 1000 + 10700001) / 12500;
+	/*
+	 * Freq now is in Hz.  We need to convert it to the frequency
+	 * that the radio wants.  This frequency is 10.7MHz above
+	 * the actual frequency.  We then need to convert to
+	 * units of 12.5kHz.  We add one to the IFM to make rounding
+	 * easier.
+	 */
+	freq = (freq * 1000 + 10700001) / 12500;
 	(void)udsbr_req(sc, 0x01, (freq >> 8) & 0xff, freq & 0xff);
 	(void)udsbr_req(sc, 0x00, 0x0096, 0x00b7);
 	usbd_delay_ms(sc->sc_udev, 240); /* wait for signal to settle */
@@ -247,7 +249,7 @@ udsbr_setfreq(struct udsbr_softc *sc, int freq)
 int
 udsbr_status(struct udsbr_softc *sc)
 {
-	return (udsbr_req(sc, 0x00, 0x0000, 0x0024));
+	return udsbr_req(sc, 0x00, 0x0000, 0x0024);
 }
 
 
@@ -264,7 +266,7 @@ udsbr_get_info(void *v, struct radio_info *ri)
 	ri->freq = sc->sc_freq;
 	ri->info = udsbr_status(sc) ? RADIO_INFO_STEREO : 0;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -282,5 +284,5 @@ udsbr_set_info(void *v, struct radio_info *ri)
 	else
 		udsbr_start(sc);
 
-	return (0);
+	return 0;
 }

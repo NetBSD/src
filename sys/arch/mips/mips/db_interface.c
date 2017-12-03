@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.75 2011/08/18 21:04:23 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.75.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,12 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2011/08/18 21:04:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+
+#define __PMAP_PRIVATE
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -78,7 +80,7 @@ static void db_unwatch_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 
 #ifdef MULTIPROCESSOR
-static void db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
+static void db_mach_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -129,7 +131,7 @@ kdb_trap(int type, struct reg *regs)
 
 	s = splhigh();
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	bool first_in_ddb = false;
 	const u_int cpu_me = cpu_number();
 	const u_int old_ddb_cpu = atomic_cas_uint(&ddb_cpu, NOCPU, cpu_me);
@@ -155,7 +157,7 @@ kdb_trap(int type, struct reg *regs)
 	db_active--;
 	*regs = ddb_regs;
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	if (atomic_cas_uint(&ddb_cpu, cpu_me, NOCPU) == cpu_me) {
 		cpu_resume_others();
 	} else {
@@ -185,6 +187,18 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	const char *src = (char *)addr;
 
+	if (size <= 8 && (size & (size-1)) == 0 && (addr & (size-1)) == 0
+	    && ((uintptr_t)data & (size-1)) == 0) {
+		if (size == sizeof(uint8_t))
+			*(uint8_t *)data = *(const uint8_t *)src;
+		else if (size == sizeof(uint16_t))
+			*(uint16_t *)data = *(const uint16_t *)src;
+		else if (size == sizeof(uint32_t))
+			*(uint32_t *)data = *(const uint32_t *)src;
+		else
+			*(uint64_t *)data = *(const uint64_t *)src;
+		return;
+	}
 	while (size--)
 		*data++ = *src++;
 }
@@ -198,6 +212,18 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 	char *p = (char *)addr;
 	size_t n = size;
 
+	if (size <= 8 && (size & (size-1)) == 0 && (addr & (size-1)) == 0
+	    && ((uintptr_t)data & (size-1)) == 0) {
+		if (size == sizeof(uint8_t))
+			*(uint8_t *)p = *(const uint8_t *)data;
+		else if (size == sizeof(uint16_t))
+			*(uint16_t *)p = *(const uint16_t *)data;
+		else if (size == sizeof(uint32_t))
+			*(uint32_t *)p = *(const uint32_t *)data;
+		else
+			*(uint64_t *)p = *(const uint64_t *)data;
+		return;
+	}
 	while (n--)
 		*p++ = *data++;
 
@@ -217,7 +243,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		int i;
 
 		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
-			tlb_read_indexed(i, &tlb);
+			tlb_read_entry(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08x Lo 0x%08x",
 				(tlb.tlb_lo1 & MIPS1_PG_V) ? ' ' : '*',
 				i, tlb.tlb_hi,
@@ -234,7 +260,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		int i;
 
 		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
-			tlb_read_indexed(i, &tlb);
+			tlb_read_entry(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08"PRIxVADDR" ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
@@ -242,12 +268,12 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo0),
 				(tlb.tlb_lo0 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
-				(tlb.tlb_lo0 >> 3) & 7);
+				(int)(tlb.tlb_lo0 >> 3) & 7);
 			db_printf("Lo1=0x%09" PRIx64 " %c%c attr %x sz=%x\n",
 				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo1),
 				(tlb.tlb_lo1 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',
-				(tlb.tlb_lo1 >> 3) & 7,
+				(int)(tlb.tlb_lo1 >> 3) & 7,
 				tlb.tlb_mask);
 		}
 	}
@@ -266,7 +292,7 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		 * Cast the physical address -- some platforms, while
 		 * being ILP32, may be using 64-bit paddr_t's.
 		 */
-		db_printf("0x%lx -> 0x%" PRIx64 "\n", addr,
+		db_printf("0x%" DDB_EXPR_FMT "x -> 0x%" PRIx64 "\n", addr,
 		    (uint64_t) kvtophys(addr));
 	} else
 		printf("not a kernel virtual address\n");
@@ -672,7 +698,8 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set pop 			\n\t"			\
 	    : "=r"(value) : "r"(addr));
 	
-	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr, value);
+	db_printf("control reg 0x%" DDB_EXPR_FMT "x = 0x%" PRIx64 "\n",
+	    addr, value);
 }
 
 void
@@ -702,13 +729,55 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set pop 			\n\t"			\
 	    :: "r"(value), "r"(addr));
 
-	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
+	db_printf("control reg 0x%" DDB_EXPR_FMT "x = 0x%" DDB_EXPR_FMT "x\n",
+	    addr, value);
 }
 #endif /* MIPS64_XLS */
 
+#ifdef MIPS64_OCTEON
+#include <mips/cavium/dev/octeon_ciureg.h>
+
+#ifdef MULTIPROCESSOR
+static void
+db_mach_nmi_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+		const char *modif)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	
+	if (!have_addr) {
+		db_printf("CPU not specific\n");
+		return;
+	}
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (cpu_index(ci) == addr)
+			break;
+	}
+	if (ci == NULL) {
+		db_printf("CPU %ld not configured\n", (long)addr);
+		return;
+	}
+	if (ci == curcpu()) {
+		db_printf("CPU %ld is current cpu; request ignored\n",
+		    (long)addr);
+		return;
+	}
+	mips3_sd(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_NMI), __BIT(ci->ci_cpuid));
+}
+#endif
+
+static void
+db_mach_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+		const char *modif)
+{
+	mips3_sd(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_SOFT_RST),
+	     mips3_ld(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_FUSE)));
+}
+
+#endif
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
-	{ DDB_ADD_CMD("cpu",	db_mach_cpu,		0,
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu_cmd,	0,
 	  "switch to another cpu", "cpu#", NULL) },
 #endif
 	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,	0,
@@ -737,6 +806,16 @@ const struct db_command db_machine_command_table[] = {
 		"Set processor control register",
 		NULL, NULL) },
 #endif
+#ifdef MIPS64_OCTEON
+#ifdef MULTIPROCESSOR
+	{ DDB_ADD_CMD("nmi", 	db_mach_nmi_cmd,	CS_NOREPEAT,
+		"Send NMI to processor",
+		"cpu#", NULL) },
+#endif
+	{ DDB_ADD_CMD("reset", 	db_mach_reset_cmd,	CS_NOREPEAT,
+		"Initiate hardware reset",
+		NULL, NULL) },
+#endif
 	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
 };
 #endif	/* !KGDB */
@@ -756,6 +835,12 @@ inst_branch(int inst)
 	case OP_REGIMM:
 	case OP_J:
 	case OP_JAL:
+#if MIPS64_OCTEON
+	case OP_CVM_BBIT0:
+	case OP_CVM_BBIT032:
+	case OP_CVM_BBIT1:
+	case OP_CVM_BBIT132:
+#endif
 	case OP_BEQ:
 	case OP_BNE:
 	case OP_BLEZ:
@@ -934,7 +1019,7 @@ db_resume_others(void)
 }
 
 static void
-db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+db_mach_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;

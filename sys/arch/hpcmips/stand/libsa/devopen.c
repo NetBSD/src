@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6.22.1 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -80,7 +80,7 @@ parsebootfile(const char *fnamexx, char **fsmode, char **devname, unsigned int *
 	} else {
 		static char name[1024]; /* XXX */
 
-		if (wcstombs(name, (TCHAR*)fname, sizeof(name)) < 0) {
+		if (wcstombs(name, (TCHAR*)fname, sizeof(name)) == (size_t)-1) {
 			return (ENOENT);
 		}
 		if ('1' <= name[0] && name[0] <= '9' && name[1] == ':') {

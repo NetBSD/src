@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.28.24.1 2014/08/20 00:02:39 tls Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.28.24.2 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.28.24.1 2014/08/20 00:02:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.28.24.2 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -125,7 +125,7 @@ altq_lookup(char *name, int type)
 
 int
 altq_attach(struct ifaltq *ifq, int type, void *discipline,
-    int (*enqueue)(struct ifaltq *, struct mbuf *, struct altq_pktattr *),
+    int (*enqueue)(struct ifaltq *, struct mbuf *),
     struct mbuf *(*dequeue)(struct ifaltq *, int),
     int (*request)(struct ifaltq *, int, void *),
     void *clfier, void *(*classify)(void *, struct mbuf *, int))
@@ -355,15 +355,26 @@ tbr_timeout(void *arg)
 	int active, s;
 
 	active = 0;
-	s = splnet();
-	IFNET_FOREACH(ifp) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		struct psref psref;
 		if (!TBR_IS_ENABLED(&ifp->if_snd))
 			continue;
+		if_acquire(ifp, &psref);
+		pserialize_read_exit(s);
+
 		active++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd) && ifp->if_start != NULL)
-			(*ifp->if_start)(ifp);
+		if (!IFQ_IS_EMPTY(&ifp->if_snd) && ifp->if_start != NULL) {
+			int _s = splnet();
+			if_start_lock(ifp);
+			splx(_s);
+		}
+
+		s = pserialize_read_enter();
+		if_release(ifp, &psref);
 	}
-	splx(s);
+	pserialize_read_exit(s);
+
 	if (active > 0)
 		CALLOUT_RESET(&tbr_callout, 1, tbr_timeout, (void *)0);
 	else

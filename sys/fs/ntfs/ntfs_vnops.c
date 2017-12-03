@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.52.2.3 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.52.2.4 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.52.2.3 2014/08/20 00:04:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.52.2.4 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.52.2.3 2014/08/20 00:04:27 tls Exp 
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfs_inode.h>
 #include <fs/ntfs/ntfs_subr.h>
+#include <fs/ntfs/ntfs_vfsops.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
 
@@ -77,8 +78,6 @@ static int	ntfs_lookup(void *);
 static int	ntfs_bmap(void *);
 static int	ntfs_fsync(void *);
 static int	ntfs_pathconf(void *);
-
-extern int prtactive;
 
 /*
  * This is a noop, simply returning what one has been given.
@@ -204,18 +203,17 @@ ntfs_getattr(void *v)
 int
 ntfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp __unused = ap->a_vp;
 #ifdef NTFS_DEBUG
 	struct ntnode *ip = VTONT(vp);
 #endif
 
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
-
-	VOP_UNLOCK(vp);
 
 	/* XXX since we don't support any filesystem changes
 	 * right now, nothing more needs to be done
@@ -229,19 +227,19 @@ ntfs_inactive(void *v)
 int
 ntfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
+	const int attrlen = strlen(fp->f_attrname);
 	int error;
+
+	VOP_UNLOCK(vp);
 
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ntfs_reclaim: pushing active", vp);
 
 	if ((error = ntfs_ntget(ip)) != 0)
 		return (error);
@@ -250,11 +248,18 @@ ntfs_reclaim(void *v)
 		vrele(ip->i_devvp);
 		ip->i_devvp = NULL;
 	}
-
 	genfs_node_destroy(vp);
-	ntfs_frele(fp);
-	ntfs_ntput(ip);
 	vp->v_data = NULL;
+
+	/* Destroy fnode. */
+	if (fp->f_key != &fp->f_smallkey)
+		kmem_free(fp->f_key, NTKEY_SIZE(attrlen));
+	if (fp->f_dirblbuf)
+		free(fp->f_dirblbuf, M_NTFSDIR);
+	kmem_free(fp, sizeof(*fp));
+	ntfs_ntrele(ip);
+
+	ntfs_ntput(ip);
 
 	return (0);
 }
@@ -470,7 +475,7 @@ ntfs_open(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
-	printf("ntfs_open: %llu\n", (unsigned long long)ip->i_number);
+	dprintf(("ntfs_open: %llu\n", (unsigned long long)ip->i_number));
 #endif
 
 	/*
@@ -498,7 +503,7 @@ ntfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
-	printf("ntfs_close: %llu\n", (unsigned long long)ip->i_number);
+	dprintf(("ntfs_close: %llu\n", (unsigned long long)ip->i_number));
 #endif
 
 	return (0);
@@ -700,19 +705,17 @@ ntfs_lookup(void *v)
 		dprintf(("ntfs_lookup: faking .. directory in %llu\n",
 		    (unsigned long long)dip->i_number));
 
-		VOP_UNLOCK(dvp);
 		error = ntfs_ntvattrget(ntmp, dip, NTFS_A_NAME, NULL, 0, &vap);
 		if (error) {
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
-		error = VFS_VGET(ntmp->ntm_mountp,
-				 vap->va_a_name->n_pnumber,ap->a_vpp);
+		error = ntfs_vgetex(ntmp->ntm_mountp,
+				 vap->va_a_name->n_pnumber,
+				 NTFS_A_DATA, "", 0, ap->a_vpp);
 		ntfs_ntvattrrele(vap);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
 			return (error);
 		}
@@ -729,9 +732,6 @@ ntfs_lookup(void *v)
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
-
-	if (*ap->a_vpp != dvp)
-		VOP_UNLOCK(*ap->a_vpp);
 
 	return error;
 }

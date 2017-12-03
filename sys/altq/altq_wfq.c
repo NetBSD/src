@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.19.38.1 2014/08/20 00:02:39 tls Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.19.38.2 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.19.38.1 2014/08/20 00:02:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.19.38.2 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -69,8 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.19.38.1 2014/08/20 00:02:39 tls Exp $
 static int		wfq_setenable(struct wfq_interface *, int);
 static int		wfq_ifattach(struct wfq_interface *);
 static int		wfq_ifdetach(struct wfq_interface *);
-static int		wfq_ifenqueue(struct ifaltq *, struct mbuf *,
-				      struct altq_pktattr *);
+static int		wfq_ifenqueue(struct ifaltq *, struct mbuf *);
 static u_long		wfq_hash(struct flowinfo *, int);
 static inline u_long	wfq_hashbydstaddr(struct flowinfo *, int);
 static inline u_long	wfq_hashbysrcaddr(struct flowinfo *, int);
@@ -249,7 +248,7 @@ wfq_classify(void *clfier, struct mbuf *m, int af)
 }
 
 static int
-wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp, struct altq_pktattr *pktattr)
+wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp)
 {
 	wfq_state_t *wfqp;
 	wfq *queue;
@@ -259,7 +258,7 @@ wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp, struct altq_pktattr *pktattr)
 	mp->m_nextpkt = NULL;
 
 	/* grab a queue selected by classifier */
-	if (pktattr == NULL || (queue = pktattr->pattr_class) == NULL)
+	if ((queue = mp->m_pkthdr.pattr_class) == NULL)
 		queue = &wfqp->queue[0];
 
 	if (queue->tail == NULL)
@@ -518,13 +517,14 @@ wfq_setweight(struct wfq_setweight *swp)
 	wfq *queue;
 	int old;
 
-	if (swp->weight < 0) {
-		printf("set weight in natural number\n");
+	if (swp->weight < 0)
 		return (EINVAL);
-	}
 
 	if ((wfqp = altq_lookup(swp->iface.wfq_ifacename, ALTQT_WFQ)) == NULL)
 		return (EBADF);
+
+	if (swp->qid < 0 || swp->qid >= wfqp->nums)
+		return (EINVAL);
 
 	queue = &wfqp->queue[swp->qid];
 	old = queue->weight;
@@ -544,7 +544,7 @@ wfq_getstats(struct wfq_getstats *gsp)
 	if ((wfqp = altq_lookup(gsp->iface.wfq_ifacename, ALTQT_WFQ)) == NULL)
 		return (EBADF);
 
-	if (gsp->qid >= wfqp->nums)
+	if (gsp->qid < 0 || gsp->qid >= wfqp->nums)
 		return (EINVAL);
 
 	queue = &wfqp->queue[gsp->qid];

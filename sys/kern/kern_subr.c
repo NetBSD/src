@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.213.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.213.2.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.213.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.213.2.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -156,17 +156,20 @@ int md_is_root = 0;
  * The device and partition that we booted from.
  */
 device_t booted_device;
+const char *booted_method;
 int booted_partition;
 daddr_t booted_startblk;
 uint64_t booted_nblks;
+char *bootspec;
 
 /*
- * Use partition letters if it's a disk class but not a wedge.
- * XXX Check for wedge is kinda gross.
+ * Use partition letters if it's a disk class but not a wedge or flash.
+ * XXX Check for wedge/flash is kinda gross.
  */
 #define	DEV_USES_PARTITIONS(dv)						\
 	(device_class((dv)) == DV_DISK &&				\
-	 !device_is_a((dv), "dk"))
+	 !device_is_a((dv), "dk") &&					\
+	 !device_is_a((dv), "flash"))
 
 void
 setroot(device_t bootdv, int bootpartition)
@@ -209,6 +212,12 @@ setroot(device_t bootdv, int bootpartition)
 	}
 
 	/*
+	 * Let bootcode augment "rootspec".
+	 */
+	if (rootspec == NULL)
+		rootspec = bootspec;
+
+	/*
 	 * If NFS is specified as the file system, and we found
 	 * a DV_DISK boot device (or no boot device at all), then
 	 * find a reasonable network interface for "rootspec".
@@ -217,7 +226,8 @@ setroot(device_t bootdv, int bootpartition)
 	if (vops != NULL && strcmp(rootfstype, MOUNT_NFS) == 0 &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || device_class(bootdv) != DV_IFNET)) {
-		IFNET_FOREACH(ifp) {
+		int s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;
@@ -235,6 +245,7 @@ setroot(device_t bootdv, int bootpartition)
 			 */
 			rootspec = (const char *)ifp->if_xname;
 		}
+		pserialize_read_exit(s);
 	}
 	if (vops != NULL)
 		vfs_delref(vops);
@@ -422,7 +433,8 @@ setroot(device_t bootdv, int bootpartition)
 		}
 
 		if (rootdev == NODEV &&
-		    device_class(dv) == DV_DISK && device_is_a(dv, "dk") &&
+		    dv != NULL && device_class(dv) == DV_DISK &&
+		    device_is_a(dv, "dk") &&
 		    (majdev = devsw_name2blk(device_xname(dv), NULL, 0)) >= 0)
 			rootdev = makedev(majdev, device_unit(dv));
 

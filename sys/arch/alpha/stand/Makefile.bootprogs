@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.32.14.1 2014/08/20 00:02:42 tls Exp $
+# $NetBSD: Makefile.bootprogs,v 1.32.14.2 2017/12/03 11:35:46 jdolecek Exp $
 
 NOMAN=			# defined
 
@@ -34,17 +34,8 @@ CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 CWARNFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+=	-Werror ${CWARNFLAGS}
 
-# if there is a 'version' file, add rule for vers.c and add it to SRCS
-# and CLEANFILES
-.if exists(version)
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    -N ${.CURDIR}/version "alpha"
+.include "${S}/conf/newvers_stand.mk"
 
-SRCS+=	vers.c
-CLEANFILES+= vers.c
-.endif
 
 # For descriptions of regions available to bootstrap programs, see
 # section 3.4.1.2 (pp. III 3-14 - III 3-18) of the second edition of
@@ -89,9 +80,9 @@ PRIMARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 SECONDARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 
 #	standalone programs are like kernels.  They load at
-#	0xfffffc0000300000 and can use the rest of memory.
+#	0xfffffc0000800000 and can use the rest of memory.
 
-STANDPROG_LOAD_ADDRESS=	0xfffffc0000300000
+STANDPROG_LOAD_ADDRESS=	0xfffffc0000800000
 
 
 FILE_FORMAT_CPPFLAGS=	-DBOOT_ECOFF -DBOOT_ELF64

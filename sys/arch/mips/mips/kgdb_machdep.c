@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.17 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.17.14.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.17 2011/02/20 07:45:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.17.14.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,24 +98,14 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.17 2011/02/20 07:45:47 matt Exp $
 static int
 kvacc(vaddr_t kva)
 {
-	pt_entry_t *pte;
-
-	if (kva < MIPS_KSEG0_START)
-		return 0;
-
-	if (kva < MIPS_KSEG2_START)
+	if (pmap_md_direct_mapped_vaddr_p(kva))
 		return 1;
 	
-	if (kva >= VM_MAX_KERNEL_ADDRESS)
+	if (kva < VM_MIN_KERNEL_ADDRESS || kva >= VM_MAX_KERNEL_ADDRESS)
 		return 0;
 
-	pte = kvtopte(kva);
-	if ((pte - Sysmap) > Sysmapsize)
-		return 0;
-	if (!mips_pg_v(pte->pt_entry))
-		return 0;
-
-	return 1;
+	const pt_entry_t * const ptep = pmap_pte_lookup(pmap_kernel(), kva);
+	return ptep != NULL && pte_valid_p(*pte);
 }
 
 /*

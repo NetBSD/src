@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.189.2.2 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: autoconf.c,v 1.189.2.3 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.189.2.2 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.189.2.3 2017/12/03 11:36:45 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.189.2.2 2014/08/20 00:03:25 tls Exp $
 #include <machine/bootinfo.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
+#include <sparc64/dev/cbusvar.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
@@ -145,6 +146,7 @@ int kgdb_break_at_attach;
 char	machine_banner[100];
 char	machine_model[100];
 char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
+char	ofbootargs[OFPATHLEN], *ofbootfile, *ofbootflags;
 int	ofbootpackage;
 
 static	int mbprint(void *, const char *);
@@ -157,7 +159,8 @@ static	void get_bootpath_from_prom(void);
  * Kernel 4MB mappings.
  */
 struct tlb_entry *kernel_tlbs;
-int kernel_tlb_slots;
+int kernel_dtlb_slots;
+int kernel_itlb_slots;
 
 /* Global interrupt mappings for all device types.  Match against the OBP
  * 'device_type' property. 
@@ -353,7 +356,11 @@ die_old_boot_loader:
 		boothowto = bi_howto->boothowto;
 
 	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
-	kernel_tlb_slots = bi_count->count;
+	kernel_dtlb_slots = bi_count->count;
+	kernel_itlb_slots = kernel_dtlb_slots-1;
+	bi_count = lookup_bootinfo(BTINFO_ITLB_SLOTS);
+	if (bi_count)
+		kernel_itlb_slots = bi_count->count;
 	LOOKUP_BOOTINFO(bi_tlb, BTINFO_DTLB);
 	kernel_tlbs = &bi_tlb->tlb[0];
 
@@ -417,8 +424,9 @@ get_bootpath_from_prom(void)
 	/* Setup pointer to boot flags */
 	if (OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf)) == -1)
 		return;
+	strcpy(ofbootargs, sbuf);
 
-	cp = sbuf;
+	cp = ofbootargs;
 
 	/* Find start of boot flags */
 	while (*cp) {
@@ -426,8 +434,12 @@ get_bootpath_from_prom(void)
 		if (*cp == '-' || *cp == '\0')
 			break;
 		while(*cp != ' ' && *cp != '\t' && *cp != '\0') cp++;
-		
+		if (*cp != '\0')
+			*cp++ = '\0';
 	}
+	if (cp != ofbootargs)
+		ofbootfile = ofbootargs;
+	ofbootflags = cp;
 	if (*cp != '-')
 		return;
 
@@ -469,6 +481,7 @@ get_bootpath_from_prom(void)
 void
 cpu_configure(void)
 {
+	
 	bool userconf = (boothowto & RB_USERCONF) != 0;
 
 	/* fetch boot device settings */
@@ -508,16 +521,16 @@ cpu_rootconf(void)
 }
 
 char *
-clockfreq(long freq)
+clockfreq(uint64_t freq)
 {
 	static char buf[10];
 	size_t len;
 
 	freq /= 1000;
-	len = snprintf(buf, sizeof(buf), "%ld", freq / 1000);
+	len = snprintf(buf, sizeof(buf), "%" PRIu64, freq / 1000);
 	freq %= 1000;
 	if (freq)
-		snprintf(buf + len, sizeof(buf) - len, ".%03ld", freq);
+		snprintf(buf + len, sizeof(buf) - len, ".%03" PRIu64, freq);
 	return buf;
 }
 
@@ -751,7 +764,7 @@ romgetcursoraddr(int **rowp, int **colp)
 
 /*
  * Match a device_t against the bootpath, by
- * comparing it's firmware package handle. If they match
+ * comparing its firmware package handle. If they match
  * exactly, we found the boot device.
  */
 static void
@@ -767,7 +780,7 @@ dev_path_exact_match(device_t dev, int ofnode)
 
 /*
  * Match a device_t against the bootpath, by
- * comparing it's firmware package handle and calculating
+ * comparing its firmware package handle and calculating
  * the target/lun suffix and comparing that against
  * the bootpath remainder.
  */
@@ -827,7 +840,8 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 			snprintf(buf, sizeof(buf), "%s@w%016" PRIx64 ",%d",
 			    name, wwn, lun);
 		else if (ide_node)
-			snprintf(buf, sizeof(buf), "%s@0", name);
+			snprintf(buf, sizeof(buf), "%s@0",
+			    device_is_a(dev, "cd") ? "cdrom" : "disk");
 		else
 			snprintf(buf, sizeof(buf), "%s@%d,%d",
 			    name, target, lun);
@@ -840,6 +854,136 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 			    booted_partition));
 		}
 	}
+}
+ 
+ /*
+ * Recursively check for a child node.
+ */
+static bool
+has_child_node(int parent, int search)
+{
+	int child;
+
+	for (child = prom_firstchild(parent); child != 0;
+	    child = prom_nextsibling(child)) {
+		if (child == search)
+			return true;
+		if (has_child_node(child, search))
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * The interposed pseudo-parent node in OpenBIOS has a
+ * device_type = "ide" and no "vendor-id".
+ * It is the secondary bus if the name is "ide1".
+ */
+static bool
+openbios_secondary_ata_heuristic(int parent)
+{
+	char tmp[OFPATHLEN];
+
+	if (OF_getprop(parent, "device_type", tmp, sizeof(tmp)) <= 0)
+		return false;
+	if (strcmp(tmp, "ide") != 0)
+		return false;
+	DPRINTF(ACDB_BOOTDEV, ("parent device_type is ide\n"));
+
+	if (OF_getprop(parent, "vendor-id", tmp, sizeof(tmp)) > 0)
+		return false;
+	DPRINTF(ACDB_BOOTDEV, ("parent has no vendor-id\n"));
+
+	if (OF_getprop(parent, "name", tmp, sizeof(tmp)) <= 0)
+		return false;
+	if (strcmp(tmp, "ide1") != 0)
+		return false;
+	DPRINTF(ACDB_BOOTDEV, ("parent seems to be an OpenBIOS"
+	   " secondary ATA bus, applying workaround target+2\n"));
+
+	return true;
+}
+
+/*
+ * Match a device_t against the controller/target/lun/wwn
+ * info passed in from the bootloader (if available),
+ * otherwise fall back to old style string matching
+ * heuristics.
+ */
+static void
+dev_bi_unit_drive_match(device_t dev, int ctrlnode, int target,
+    uint64_t wwn, int lun)
+{
+	static struct btinfo_bootdev_unit *bi_unit = NULL;
+	uint32_t off = 0;
+	static bool passed = false;
+#ifdef DEBUG
+	char ctrl_path[OFPATHLEN], parent_path[OFPATHLEN], dev_path[OFPATHLEN];
+#endif
+
+	if (!passed) {
+		bi_unit = lookup_bootinfo(BTINFO_BOOTDEV_UNIT);
+		passed = true;
+	}
+
+	if (bi_unit == NULL) {
+		dev_path_drive_match(dev, ctrlnode, target, wwn, lun);
+		return;
+	}
+
+#ifdef DEBUG
+	DPRINTF(ACDB_BOOTDEV, ("dev_bi_unit_drive_match: %s, controller %x, "
+	    "target %d wwn %016" PRIx64 " lun %d\n", device_xname(dev),
+	    ctrlnode, target, wwn, lun));
+
+	OF_package_to_path(ctrlnode, ctrl_path, sizeof(ctrl_path));
+	OF_package_to_path(bi_unit->phandle, dev_path, sizeof(dev_path));
+	OF_package_to_path(bi_unit->parent, parent_path, sizeof(parent_path));
+	DPRINTF(ACDB_BOOTDEV, ("controller %x : %s\n", ctrlnode, ctrl_path));
+	DPRINTF(ACDB_BOOTDEV, ("phandle %x : %s\n", bi_unit->phandle, dev_path));
+	DPRINTF(ACDB_BOOTDEV, ("parent %x : %s\n", bi_unit->parent, parent_path));
+#endif
+	if (ctrlnode != bi_unit->parent
+	    && !has_child_node(ctrlnode, bi_unit->phandle)) {
+		DPRINTF(ACDB_BOOTDEV, ("controller %x : %s does not match "
+		    "bootinfo: %x : %s\n",
+		    ctrlnode, ctrl_path, bi_unit->parent, parent_path));
+		return;
+	}
+	if (ctrlnode == bi_unit->parent) {
+		DPRINTF(ACDB_BOOTDEV, ("controller %x : %s is bootinfo"
+		    " parent\n", ctrlnode, ctrl_path));
+	} else {
+		DPRINTF(ACDB_BOOTDEV, ("controller %x : %s is parent of"
+		    " %x : %s\n", ctrlnode, ctrl_path, bi_unit->parent,
+		    parent_path));
+
+		/*
+		 * Our kernel and "real" OpenFirmware use a 0 .. 3 numbering
+		 * scheme for IDE devices, but OpenBIOS splits it into
+		 * two "buses" and numbers each 0..1.
+		 * Check if we are on the secondary "bus" and adjust
+		 * if needed...
+		 */
+		if (openbios_secondary_ata_heuristic(bi_unit->parent))
+			off = 2;
+	}
+
+	if (bi_unit->wwn != wwn || (bi_unit->target+off) != target
+	    || bi_unit->lun != lun) {
+		DPRINTF(ACDB_BOOTDEV, ("mismatch: wwn %016" PRIx64 " - %016" PRIx64
+		    ", target %d - %d, lun %d - %d\n",
+		    bi_unit->wwn, wwn, bi_unit->target, target, bi_unit->lun, lun));
+		return;
+	}
+
+	booted_device = dev;
+	if (ofbootpartition)
+		booted_partition = *ofbootpartition - 'a';
+	DPRINTF(ACDB_BOOTDEV, ("found boot device: %s"
+	    ", partition %d\n", device_xname(dev),
+	    booted_partition));
 }
 
 /*
@@ -957,16 +1101,23 @@ device_register(device_t dev, void *aux)
 				off = 2;
 		}
 		ofnode = device_ofnode(device_parent(busdev));
-		dev_path_drive_match(dev, ofnode, periph->periph_target + off,
+		dev_bi_unit_drive_match(dev, ofnode, periph->periph_target + off,
 		    0, periph->periph_lun);
 		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
 		ofnode = device_ofnode(device_parent(busdev));
-		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
+		dev_bi_unit_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0, 0);
 		return;
+	} else if (device_is_a(dev, "ld")) {
+		ofnode = device_ofnode(busdev);
+	} else if (device_is_a(dev, "vdsk")) {
+		struct cbus_attach_args *ca = aux;
+		ofnode = ca->ca_node;
+		/* Ensure that the devices ofnode is stored for later use */
+		device_setofnode(dev, ofnode);
 	}
 
 	if (busdev == NULL)
@@ -1101,7 +1252,7 @@ noether:
 				}
 
 				of_enter_i2c_devs(props, busnode,
-				    sizeof(cell_t));
+				    sizeof(cell_t), 1);
 			}
 		}
 
@@ -1128,6 +1279,58 @@ noether:
 			prop_dictionary_set(props, "i2c-child-devices", cfg);
 			prop_object_release(cfg);
 			
+		}
+
+		/*
+		 * Add V210/V240 environmental sensors that are not in
+		 * the OFW tree.
+		 */
+		if (device_is_a(busdev, "pcfiic") &&
+		    (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
+		    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))) {
+			prop_dictionary_t props = device_properties(busdev);
+			prop_array_t cfg = NULL;
+			prop_dictionary_t sens;
+			prop_data_t data;
+			const char name_lm[] = "i2c-lm75";
+			const char name_adm[] = "i2c-adm1026";
+
+			DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ",
+			    machine_model));
+			cfg = prop_dictionary_get(props, "i2c-child-devices");
+ 			if (!cfg) {
+				cfg = prop_array_create();
+				prop_dictionary_set(props, "i2c-child-devices",
+				    cfg);
+				prop_dictionary_set_bool(props,
+				    "i2c-indirect-config", false);
+			}
+
+			/* ADM1026 at 0x2e */
+			sens = prop_dictionary_create();
+			prop_dictionary_set_uint32(sens, "addr", 0x2e);
+			prop_dictionary_set_uint64(sens, "cookie", 0);
+			prop_dictionary_set_cstring(sens, "name",
+			    "hardware-monitor");
+			data = prop_data_create_data(&name_adm[0],
+			    sizeof(name_adm));
+			prop_dictionary_set(sens, "compatible", data);
+			prop_object_release(data);
+			prop_array_add(cfg, sens);
+			prop_object_release(sens);
+
+			/* LM75 at 0x4e */
+			sens = prop_dictionary_create();
+			prop_dictionary_set_uint32(sens, "addr", 0x4e);
+			prop_dictionary_set_uint64(sens, "cookie", 0);
+			prop_dictionary_set_cstring(sens, "name",
+			    "temperature-sensor");
+			data = prop_data_create_data(&name_lm[0],
+			    sizeof(name_lm));
+			prop_dictionary_set(sens, "compatible", data);
+			prop_object_release(data);
+			prop_array_add(cfg, sens);
+			prop_object_release(sens);
 		}
 	}
 
@@ -1192,6 +1395,27 @@ noether:
 				instance = OF_open(name);
 #endif
 	}
+
+	/* Hardware specific device properties */
+	if ((!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
+	    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))) {
+		device_t busparent = device_parent(busdev);
+		prop_dictionary_t props = device_properties(dev);
+
+		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
+		    device_is_a(dev, "adm1026hm") && props != NULL) {
+			prop_dictionary_set_uint8(props, "fan_div2", 0x55);
+			prop_dictionary_set_bool(props, "multi_read", true);
+		}
+	}
+	if (!strcmp(machine_model, "SUNW,Sun-Fire-V440")) {
+		device_t busparent = device_parent(busdev);
+		prop_dictionary_t props = device_properties(dev);
+		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
+		    device_is_a(dev, "adm1026hm") && props != NULL) {
+			prop_dictionary_set_bool(props, "multi_read", true);
+		}
+	}
 }
 
 /*
@@ -1208,7 +1432,7 @@ device_register_post_config(device_t dev, void *aux)
 
 		/*
 		 * If this is a FC-AL drive it will have
-		 * aquired it's WWN device property by now,
+		 * aquired its WWN device property by now,
 		 * so we can properly match it.
 		 */
 		if (prop_dictionary_get_uint64(device_properties(dev),
@@ -1225,12 +1449,55 @@ device_register_post_config(device_t dev, void *aux)
 			for (ofnode = OF_child(ofnode);
 			    ofnode != 0 && booted_device == NULL;
 			    ofnode = OF_peer(ofnode)) {
-				dev_path_drive_match(dev, ofnode,
+				dev_bi_unit_drive_match(dev, ofnode,
 				    periph->periph_target,
 				    wwn, periph->periph_lun);
 			}
 		}
 	}
+
+	if (CPU_ISSUN4V) {
+
+	  /*
+	   * Special sun4v handling in case the kernel is running in a 
+	   * secondary logical domain
+	   *
+	   * The bootpath looks something like this:
+	   *   /virtual-devices@100/channel-devices@200/disk@1:a
+	   *
+	   * The device hierarchy constructed during autoconfiguration is:
+	   *   mainbus/vbus/vdsk/scsibus/sd
+	   *
+	   * The logic to figure out the boot device is to look at the
+	   * grandparent to the 'sd' device and if this is a 'vdsk' device
+	   * and the ofnode matches the bootpaths ofnode then we have located
+	   * the boot device.
+	   */
+
+	  int ofnode;
+
+	  /* Cache the vdsk ofnode for later use later/below with sd device */  
+	  if (device_is_a(dev, "vdsk")) {
+	    ofnode = device_ofnode(dev);
+	    device_setofnode(dev, ofnode);
+	  }
+
+	  /* Examine if this is a sd device */  
+	  if (device_is_a(dev, "sd")) {
+	    device_t parent = device_parent(dev);
+	    device_t parent_parent = device_parent(parent);
+	    if (device_is_a(parent_parent, "vdsk")) {
+	      ofnode = device_ofnode(parent_parent);
+	      if (ofnode == ofbootpackage) {
+		booted_device = dev;
+		DPRINTF(ACDB_BOOTDEV, ("booted_device: %s\n", 
+				       device_xname(dev)));
+		return;
+	      }
+	    }
+	  }
+	}
+
 }
 
 static void
@@ -1242,7 +1509,7 @@ copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 	uint32_t temp, fboffset;
 	uint32_t fbaddr = 0;
 	int options;
-	char output_device[256];
+	char output_device[OFPATHLEN];
 	char *pos;
 
 	cntrlr = device_parent(busdev);
@@ -1308,7 +1575,7 @@ copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 	options = OF_finddevice("/options");
 	if ((options == 0) || (options == -1))
 		return;
-	if (OF_getprop(options, "output-device", output_device, 256) == 0)
+	if (OF_getprop(options, "output-device", output_device, OFPATHLEN) == 0)
 		return;
 	/* find the mode string if there is one */
 	pos = strstr(output_device, ":r");

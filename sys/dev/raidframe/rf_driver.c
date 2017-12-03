@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.129.14.2 2013/02/25 00:29:30 tls Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.129.14.3 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.129.14.2 2013/02/25 00:29:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.129.14.3 2017/12/03 11:37:31 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -121,9 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.129.14.2 2013/02/25 00:29:30 tls Exp
 #define RF_MAX_FREE_RAD 128
 #define RF_MIN_FREE_RAD  32
 
-/* debug variables */
-char    rf_panicbuf[2048];	/* a buffer to hold an error msg when we panic */
-
 /* main configuration routines */
 static int raidframe_booted = 0;
 
@@ -158,16 +155,21 @@ static void rf_alloc_mutex_cond(RF_Raid_t *);
 
 /* called at system boot time */
 int
-rf_BootRaidframe(void)
+rf_BootRaidframe(bool boot)
 {
 
-	if (raidframe_booted)
-		return (EBUSY);
-	raidframe_booted = 1;
-	rf_init_mutex2(configureMutex, IPL_NONE);
- 	configureCount = 0;
-	isconfigged = 0;
-	globalShutdown = NULL;
+	if (boot) {
+		if (raidframe_booted)
+			return (EBUSY);
+		raidframe_booted = 1;
+		rf_init_mutex2(configureMutex, IPL_NONE);
+ 		configureCount = 0;
+		isconfigged = 0;
+		globalShutdown = NULL;
+	} else {
+		rf_destroy_mutex2(configureMutex);
+		raidframe_booted = 0;
+	}
 	return (0);
 }
 
@@ -883,17 +885,15 @@ rf_ConfigureDebug(RF_Config_t *cfgPtr)
 void
 rf_print_panic_message(int line, const char *file)
 {
-	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
-	    "raidframe error at line %d file %s", line, file);
+	kern_assert("raidframe error at line %d file %s", line, file);
 }
 
 #ifdef RAID_DIAGNOSTIC
 void
 rf_print_assert_panic_message(int line,	const char *file, const char *condition)
 {
-	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
-		"raidframe error at line %d file %s (failed asserting %s)\n",
-		line, file, condition);
+	kern_assert("raidframe error at line %d file %s (failed asserting %s)\n",
+	    line, file, condition);
 }
 #endif
 

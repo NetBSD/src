@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.40.2.2 2014/08/20 00:04:36 tls Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.40.2.3 2017/12/03 11:39:06 jdolecek Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.40.2.2 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.40.2.3 2017/12/03 11:39:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.40.2.2 2014/08/20 00:04:36 tls Exp 
 #include <opencrypto/xform.h>
 
 #include <opencrypto/cryptosoft_xform.c>
+
+#include "ioconf.h"
 
 union authctx {
 	MD5_CTX md5ctx;
@@ -74,6 +76,8 @@ static	int swcr_combined(struct cryptop *, int);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
+
+static	int swcryptoattach_internal(void);
 
 /*
  * Apply a symmetric encryption/decryption algorithm.
@@ -757,7 +761,6 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 	if (result < crd->crd_len) {
 		adj = result - crd->crd_len;
 		if (outtype == CRYPTO_BUF_MBUF) {
-			adj = result - crd->crd_len;
 			m_adj((struct mbuf *)buf, adj);
 		}
 		/* Don't adjust the iov_len, it breaks the kmem_free */
@@ -946,7 +949,9 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			axf = &swcr_auth_hash_key_md5;
 			goto auth2common;
 
-		case CRYPTO_SHA1_KPDK:
+		case CRYPTO_SHA1_KPDK: {
+			unsigned char digest[SHA1_DIGEST_LENGTH];
+			CTASSERT(SHA1_DIGEST_LENGTH >= MD5_DIGEST_LENGTH);
 			axf = &swcr_auth_hash_key_sha1;
 		auth2common:
 			(*swd)->sw_ictx = malloc(axf->ctxsize,
@@ -969,9 +974,10 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			axf->Init((*swd)->sw_ictx);
 			axf->Update((*swd)->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);
-			axf->Final(NULL, (*swd)->sw_ictx);
+			axf->Final(digest, (*swd)->sw_ictx);
 			(*swd)->sw_axf = axf;
 			break;
+		    }
 
 		case CRYPTO_MD5:
 			axf = &swcr_auth_hash_md5;
@@ -1246,7 +1252,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 		case CRYPTO_DEFLATE_COMP:
 		case CRYPTO_DEFLATE_COMP_NOGROW:
 		case CRYPTO_GZIP_COMP:
-			DPRINTF(("swcr_process: compdec for %d\n", sw->sw_alg));
+			DPRINTF("compdec for %d\n", sw->sw_alg);
 			if ((crp->crp_etype = swcr_compdec(crd, sw,
 			    crp->crp_buf, type, &crp->crp_olen)) != 0)
 				goto done;
@@ -1260,7 +1266,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 	}
 
 done:
-	DPRINTF(("request %p done\n", crp));
+	DPRINTF("request %p done\n", crp);
 	crypto_done(crp);
 	return 0;
 }
@@ -1317,13 +1323,22 @@ swcr_init(void)
 /*
  * Pseudo-device init routine for software crypto.
  */
-void	swcryptoattach(int);
 
 void
 swcryptoattach(int num)
 {
-
-	swcr_init();
+	/*
+	 * swcrypto_attach() must be called after attached cpus, because
+	 * it calls softint_establish() through below call path.
+	 *     swcr_init() => crypto_get_driverid() => crypto_init()
+	 *         => crypto_init0()
+	 * If softint_establish() is called before attached cpus that ncpu == 0,
+	 * the softint handler is established to CPU#0 only.
+	 *
+	 * So, swcrypto_attach() must be called from not module_init_class()
+	 * but config_finalize() when it is built as builtin module.
+	 */
+	swcryptoattach_internal();
 }
 
 void	swcrypto_attach(device_t, device_t, void *);
@@ -1381,42 +1396,56 @@ static struct cfdata swcrypto_cfdata[] = {
 	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
+/*
+ * Internal attach routine.
+ * Don't call before attached cpus.
+ */
 static int
-swcrypto_modcmd(modcmd_t cmd, void *arg)
+swcryptoattach_internal(void)
 {
 	int error;
 
+	error = config_cfdriver_attach(&swcrypto_cd);
+	if (error) {
+		return error;
+	}
+
+	error = config_cfattach_attach(swcrypto_cd.cd_name, &swcrypto_ca);
+	if (error) {
+		config_cfdriver_detach(&swcrypto_cd);
+		aprint_error("%s: unable to register cfattach\n",
+		    swcrypto_cd.cd_name);
+
+		return error;
+	}
+
+	error = config_cfdata_attach(swcrypto_cfdata, 1);
+	if (error) {
+		config_cfattach_detach(swcrypto_cd.cd_name,
+		    &swcrypto_ca);
+		config_cfdriver_detach(&swcrypto_cd);
+		aprint_error("%s: unable to register cfdata\n",
+		    swcrypto_cd.cd_name);
+
+		return error;
+	}
+
+	(void)config_attach_pseudo(swcrypto_cfdata);
+
+	return 0;
+}
+
+static int
+swcrypto_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_cfdriver_attach(&swcrypto_cd);
-		if (error) {
-			return error;
-		}
-
-		error = config_cfattach_attach(swcrypto_cd.cd_name,
-		    &swcrypto_ca);
-		if (error) {
-			config_cfdriver_detach(&swcrypto_cd);
-			aprint_error("%s: unable to register cfattach\n",
-				swcrypto_cd.cd_name);
-
-			return error;
-		}
-
-		error = config_cfdata_attach(swcrypto_cfdata, 1);
-		if (error) {
-			config_cfattach_detach(swcrypto_cd.cd_name,
-			    &swcrypto_ca);
-			config_cfdriver_detach(&swcrypto_cd);
-			aprint_error("%s: unable to register cfdata\n",
-				swcrypto_cd.cd_name);
-
-			return error;
-		}
-
-		(void)config_attach_pseudo(swcrypto_cfdata);
-
-		return 0;
+#ifdef _MODULE
+		error = swcryptoattach_internal();
+#endif
+		return error;
 	case MODULE_CMD_FINI:
 		error = config_cfdata_detach(swcrypto_cfdata);
 		if (error) {

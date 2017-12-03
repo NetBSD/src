@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.25.22.2 2014/08/20 00:03:37 tls Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.25.22.3 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.25.22.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.25.22.3 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -52,8 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.25.22.2 2014/08/20 00:03:37 tls E
 #include <dev/hpc/pckbd_encode.h>
 #endif
 
-
-extern struct cfdriver hpf1275a_cd;
+#include "ioconf.h"
 
 struct hpf1275a_softc {
 	device_t sc_dev;
@@ -307,7 +306,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 		.cf_fstate = FSTATE_STAR,
 	};
 	struct lwp *l = curlwp;		/* XXX */
-	struct hpf1275a_softc *sc = device_private(self);
+	struct hpf1275a_softc *sc;
 	device_t self;
 	int error, s;
 
@@ -328,6 +327,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 		return (EIO);
 	}
 
+	sc = device_private(self);
 	tp->t_sc = sc;
 	sc->sc_tp = tp;
 

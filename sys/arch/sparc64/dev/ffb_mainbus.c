@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.13 2011/12/22 05:08:05 macallan Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.13.6.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.13 2011/12/22 05:08:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.13.6.1 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,7 +103,8 @@ ffb_mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_SFB32].ur_paddr,
-	    ma->ma_reg[FFB_REG_SFB32].ur_len, BUS_SPACE_MAP_LINEAR,
+	    ma->ma_reg[FFB_REG_SFB32].ur_len,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
 	    &sc->sc_sfb32_h)) {
 		panic(": failed to map SFB32\n");
 		goto unmap_dac;

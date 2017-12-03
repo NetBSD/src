@@ -1,4 +1,4 @@
-/* $NetBSD: au1000.c,v 1.10 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: au1000.c,v 1.10.12.1 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -101,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+
 #include <mips/locore.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>

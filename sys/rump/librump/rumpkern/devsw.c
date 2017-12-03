@@ -14,7 +14,7 @@ struct devsw_conv devsw_conv0[] = {
 	{ "pps", -1, 164, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "ptm", -1, 165, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "atabus", -1, 166, DEVNODE_VECTOR, 0, { 4, 0 }},
-	{ "drvctl", -1, 167, DEVNODE_SINGLE, 0, { 0, 0 }},
+	{ "drvctl", -1, 167, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "dk", 168, 168, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "tap", -1, 169, DEVNODE_VECTOR, 0, { 4, 0 }},
 	{ "veriexec", -1, 170, DEVNODE_DONTBOTHER, 0, { 0, 0 }},

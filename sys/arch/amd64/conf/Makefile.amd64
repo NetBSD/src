@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.40.6.2 2014/08/20 00:02:42 tls Exp $
+#	$NetBSD: Makefile.amd64,v 1.40.6.3 2017/12/03 11:35:47 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -56,31 +56,19 @@ KERN_AS=	library
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o vector.o copy.o spl.o
-MD_CFILES=
-MD_SFILES=	${AMD64}/amd64/locore.S ${AMD64}/amd64/vector.S \
-		${AMD64}/amd64/copy.S ${AMD64}/amd64/spl.S
-
-locore.o: ${AMD64}/amd64/locore.S assym.h
-	${NORMAL_S}
-
-vector.o: ${AMD64}/amd64/vector.S assym.h
-	${NORMAL_S}
-
-copy.o: ${AMD64}/amd64/copy.S assym.h
-	${NORMAL_S}
-
-spl.o: ${AMD64}/amd64/spl.S assym.h
-	${NORMAL_S}
 
 ##
 ## (5) link settings
 ##
-TEXTADDR?=	0xffffffff80100000
-EXTRA_LINKFLAGS=	-z max-page-size=0x100000
+TEXTADDR?=	0xffffffff80200000
+.if defined(KASLR)
+EXTRA_LINKFLAGS=	--split-by-file=0x100000 -r -d
+KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript.kaslr
+.else
+EXTRA_LINKFLAGS=	-z max-page-size=0x200000
+KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript
+.endif
 LINKFLAGS_NORMAL=	-X
-KERN_LDSCRIPT?= kern.ldscript
-LINKFORMAT=	-T ${AMD64}/conf/${KERN_LDSCRIPT}
 
 ##
 ## (6) port specific target dependencies
@@ -90,7 +78,7 @@ LINKFORMAT=	-T ${AMD64}/conf/${KERN_LDSCRIPT}
 locore.o machdep.o: Makefile
 
 acpi_wakeup_low.o amd64func.o busfunc.o cpufunc.o cpu_in_cksum.o: assym.h
-linux_support.o linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
+linux_sigcode.o linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
 netbsd32_sigcode.o: assym.h
 
 ##

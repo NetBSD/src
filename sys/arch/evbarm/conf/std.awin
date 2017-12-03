@@ -1,0 +1,34 @@
+#	$NetBSD: std.awin,v 1.10.4.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+# standard NetBSD/evbarm for Allwinner based options
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in CUBIEBOARD config definitions.
+include		"arch/evbarm/conf/files.awin"
+
+# To support easy transit to ../arch/arm/arm32
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	CORTEX_PMC
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
+options 	GTTWSI_ALLWINNER
+options 	MOTG_ALLWINNER
+options 	AWIN_SYSCONFIG
+
+makeoptions	KERNEL_BASE_PHYS="0x40008000"
+makeoptions	KERNEL_BASE_VIRT="0x80008000"
+makeoptions	BOARDTYPE="awin"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.awin"
+makeoptions	CPUFLAGS="-mcpu=generic-armv7-a -mfpu=neon"
+
+options 	ARM_INTR_IMPL="<arch/arm/allwinner/awin_intr.h>"
+options		ARM_GENERIC_TODR

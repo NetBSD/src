@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.3.4.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.3.4.3 2017/12/03 11:38:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.3.4.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.3.4.3 2017/12/03 11:38:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -191,6 +191,7 @@ idr_preload(gfp_t gfp)
 		ASSERT_SLEEPABLE();
 
 	node = kmalloc(sizeof(*node), gfp);
+	KASSERT(node != NULL || !ISSET(gfp, __GFP_WAIT));
 	if (node == NULL)
 		return;
 
@@ -216,8 +217,10 @@ idr_alloc(struct idr *idr, void *data, int start, int end, gfp_t gfp)
 
 	/* Grab a node allocated by idr_preload.  */
 	mutex_spin_enter(&idr_cache.lock);
-	KASSERTMSG(!SIMPLEQ_EMPTY(&idr_cache.preloaded_nodes),
-	    "missing call to idr_preload");
+	if (SIMPLEQ_EMPTY(&idr_cache.preloaded_nodes)) {
+		mutex_spin_exit(&idr_cache.lock);
+		return -ENOMEM;
+	}
 	node = SIMPLEQ_FIRST(&idr_cache.preloaded_nodes);
 	SIMPLEQ_REMOVE_HEAD(&idr_cache.preloaded_nodes, in_list);
 	mutex_spin_exit(&idr_cache.lock);

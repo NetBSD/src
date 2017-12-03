@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.15.44.2 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.15.44.3 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15.44.2 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15.44.3 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,12 +50,15 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15.44.2 2014/08/20 00:03:35 tls Exp $
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/syslog.h>
 #include <sys/atomic.h>
 
 #include <dev/lockstat.h>
 
 #include <machine/lock.h>
+
+#include "ioconf.h"
 
 #ifndef __HAVE_CPU_COUNTER
 #error CPU counters not available
@@ -84,7 +87,6 @@ typedef struct lscpu {
 
 typedef struct lslist lslist_t;
 
-void	lockstatattach(int);
 void	lockstat_start(lsenable_t *);
 int	lockstat_alloc(lsenable_t *);
 void	lockstat_init_tables(lsenable_t *);
@@ -97,6 +99,7 @@ dev_type_read(lockstat_read);
 dev_type_ioctl(lockstat_ioctl);
 
 volatile u_int	lockstat_enabled;
+volatile u_int	lockstat_dev_enabled;
 uintptr_t	lockstat_csstart;
 uintptr_t	lockstat_csend;
 uintptr_t	lockstat_csmask;
@@ -109,6 +112,21 @@ lsbuf_t		*lockstat_baseb;
 size_t		lockstat_sizeb;
 int		lockstat_busy;
 struct timespec	lockstat_stime;
+
+#ifdef KDTRACE_HOOKS
+volatile u_int lockstat_dtrace_enabled;
+CTASSERT(LB_NEVENT <= 3);
+CTASSERT(LB_NLOCK <= (7 << LB_LOCK_SHIFT));
+void
+lockstat_probe_stub(uint32_t id, uintptr_t lock, uintptr_t callsite,
+    uintptr_t flags, uintptr_t count, uintptr_t cycles)
+{
+}
+
+uint32_t	lockstat_probemap[LS_NPROBES];
+void		(*lockstat_probe_func)(uint32_t, uintptr_t, uintptr_t,
+		    uintptr_t, uintptr_t, uintptr_t) = &lockstat_probe_stub;
+#endif
 
 const struct cdevsw lockstat_cdevsw = {
 	.d_open = lockstat_open,
@@ -150,7 +168,8 @@ lockstat_init_tables(lsenable_t *le)
 	lscpu_t *lc;
 	lsbuf_t *lb;
 
-	KASSERT(!lockstat_enabled);
+	/* coverity[assert_side_effect] */
+	KASSERT(!lockstat_dev_enabled);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_lockstat != NULL) {
@@ -195,7 +214,8 @@ void
 lockstat_start(lsenable_t *le)
 {
 
-	KASSERT(!lockstat_enabled);
+	/* coverity[assert_side_effect] */
+	KASSERT(!lockstat_dev_enabled);
 
 	lockstat_init_tables(le);
 
@@ -216,8 +236,8 @@ lockstat_start(lsenable_t *le)
 	lockstat_lockend = le->le_lockend;
 	membar_sync();
 	getnanotime(&lockstat_stime);
-	lockstat_enabled = le->le_mask;
-	membar_producer();
+	lockstat_dev_enabled = le->le_mask;
+	LOCKSTAT_ENABLED_UPDATE();
 }
 
 /*
@@ -233,14 +253,15 @@ lockstat_stop(lsdisable_t *ld)
 	int error;
 	lwp_t *l;
 
-	KASSERT(lockstat_enabled);
+	/* coverity[assert_side_effect] */
+	KASSERT(lockstat_dev_enabled);
 
 	/*
 	 * Set enabled false, force a write barrier, and wait for other CPUs
 	 * to exit lockstat_event().
 	 */
-	lockstat_enabled = 0;
-	membar_producer();
+	lockstat_dev_enabled = 0;
+	LOCKSTAT_ENABLED_UPDATE();
 	getnanotime(&ts);
 	tsleep(&lockstat_stop, PPAUSE, "lockstat", mstohz(10));
 
@@ -299,16 +320,16 @@ lockstat_alloc(lsenable_t *le)
 	lsbuf_t *lb;
 	size_t sz;
 
-	KASSERT(!lockstat_enabled);
+	/* coverity[assert_side_effect] */
+	KASSERT(!lockstat_dev_enabled);
 	lockstat_free();
 
 	sz = sizeof(*lb) * le->le_nbufs;
 
 	lb = kmem_zalloc(sz, KM_SLEEP);
-	if (lb == NULL)
-		return (ENOMEM);
 
-	KASSERT(!lockstat_enabled);
+	/* coverity[assert_side_effect] */
+	KASSERT(!lockstat_dev_enabled);
 	KASSERT(lockstat_baseb == NULL);
 	lockstat_sizeb = sz;
 	lockstat_baseb = lb;
@@ -323,7 +344,8 @@ void
 lockstat_free(void)
 {
 
-	KASSERT(!lockstat_enabled);
+	/* coverity[assert_side_effect] */
+	KASSERT(!lockstat_dev_enabled);
 
 	if (lockstat_baseb != NULL) {
 		kmem_free(lockstat_baseb, lockstat_sizeb);
@@ -344,7 +366,15 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 	u_int event;
 	int s;
 
-	if ((flags & lockstat_enabled) != flags || count == 0)
+#ifdef KDTRACE_HOOKS
+	uint32_t id;
+	CTASSERT((LS_NPROBES & (LS_NPROBES - 1)) == 0);
+	if ((id = lockstat_probemap[LS_COMPRESS(flags)]) != 0)
+		(*lockstat_probe_func)(id, lock, callsite, flags, count,
+		    cycles);
+#endif
+
+	if ((flags & lockstat_dev_enabled) != flags || count == 0)
 		return;
 	if (lock < lockstat_lockstart || lock > lockstat_lockend)
 		return;
@@ -452,7 +482,7 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = ENODEV;
 			break;
 		}
-		if (lockstat_enabled) {
+		if (lockstat_dev_enabled) {
 			error = EBUSY;
 			break;
 		}
@@ -488,7 +518,7 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		break;
 
 	case IOC_LOCKSTAT_DISABLE:
-		if (!lockstat_enabled)
+		if (!lockstat_dev_enabled)
 			error = EINVAL;
 		else
 			error = lockstat_stop((lsdisable_t *)data);
@@ -509,7 +539,7 @@ int
 lockstat_read(dev_t dev, struct uio *uio, int flag)
 {
 
-	if (curlwp != lockstat_lwp || lockstat_enabled)
+	if (curlwp != lockstat_lwp || lockstat_dev_enabled)
 		return EBUSY;
 	return uiomove(lockstat_baseb, lockstat_sizeb, uio);
 }

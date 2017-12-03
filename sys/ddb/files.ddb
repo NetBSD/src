@@ -1,4 +1,4 @@
-#	$NetBSD: files.ddb,v 1.8.2.1 2013/02/25 00:29:10 tls Exp $
+#	$NetBSD: files.ddb,v 1.8.2.2 2017/12/03 11:36:58 jdolecek Exp $
 
 #
 # DDB options
@@ -8,6 +8,7 @@ defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 				DDB_BREAK_CHAR DDB_KEYCODE
 				DDB_COMMANDONENTER DB_MAX_LINE
 
+define	ddb
 file	ddb/db_access.c			ddb | kgdb
 file	ddb/db_break.c			ddb
 file	ddb/db_command.c		ddb

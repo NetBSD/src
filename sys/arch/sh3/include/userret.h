@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.13 2012/07/08 20:14:11 dsl Exp $	*/
+/*	$NetBSD: userret.h,v 1.13.2.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,7 @@ userret(struct lwp *l)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-#ifdef PTRACE
+#ifdef PTRACE_HOOKS
 	/* Check if lwp is being PT_STEP'ed */
 	if (l->l_md.md_flags & MDL_SSTEP) {
 		struct trapframe *tf = l->l_md.md_regs;
@@ -75,7 +75,7 @@ userret(struct lwp *l)
 		}
 #endif
 	}
-#endif /* PTRACE */
+#endif /* PTRACE_HOOKS */
 }
 
 #endif /* !_SH3_USERRET_H_ */

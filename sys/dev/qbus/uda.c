@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.60 2009/05/12 14:08:35 cegger Exp $	*/
+/*	$NetBSD: uda.c,v 1.60.22.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -37,9 +37,6 @@
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Chris Torek.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -48,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -76,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.60 2009/05/12 14:08:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.60.22.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

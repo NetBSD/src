@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.31 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: esp.c,v 1.31.12.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.31 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.31.12.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,7 +184,7 @@ espattach(device_t parent, device_t self, void *aux)
 	esc->sc_dmareg = mapiodev(ca->ca_baseaddr + reg[2], reg[3], false);
 
 	/* Allocate 16-byte aligned DMA command space */
-	esc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
+	esc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20, NULL);
 
 	/* Other settings */
 	sc->sc_id = 7;

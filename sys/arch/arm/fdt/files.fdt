@@ -1,0 +1,46 @@
+# $NetBSD: files.fdt,v 1.14.2.2 2017/12/03 11:35:52 jdolecek Exp $
+
+include	"dev/pckbport/files.pckbport"
+
+device	armfdt { }: bus_space_generic, fdtbus
+attach	armfdt at root with arm_fdt
+file	arch/arm/fdt/arm_fdt.c			arm_fdt
+
+attach	cpu at cpus with cpu_fdt
+file	arch/arm/fdt/cpu_fdt.c			cpu_fdt
+
+device	cpufreqdt
+attach	cpufreqdt at cpu with cpufreq_dt
+file	dev/fdt/cpufreq_dt.c			cpufreq_dt
+
+device	gtmr: mpcorebus
+attach	gtmr at fdt with gtmr_fdt
+file	arch/arm/fdt/gtmr_fdt.c			gtmr_fdt
+
+device  gic: mpcorebus
+attach  gic at fdt with gic_fdt
+file    arch/arm/fdt/gic_fdt.c             	gic_fdt
+
+attach	plcom at fdt with plcom_fdt
+file	arch/arm/fdt/plcom_fdt.c		plcom_fdt
+
+attach	plkmi at fdt with plkmi_fdt
+file	arch/arm/fdt/plkmi_fdt.c		plkmi_fdt
+
+attach	plmmc at fdt with plmmc_fdt
+file	arch/arm/fdt/plmmc_fdt.c		plmmc_fdt
+
+attach	smsh at fdt with smsh_fdt
+file	arch/arm/fdt/smsh_fdt.c			smsh_fdt
+
+attach	aaci at fdt with aaci_fdt
+file	arch/arm/fdt/aaci_fdt.c			aaci_fdt
+
+attach	plrtc at fdt with plrtc_fdt
+file	arch/arm/fdt/plrtc_fdt.c		plrtc_fdt
+
+attach	psci at fdt with psci_fdt
+file	arch/arm/fdt/psci_fdt.c			psci_fdt
+
+# Console parameters
+defparam opt_fdt_arm.h				CONSADDR

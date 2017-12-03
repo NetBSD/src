@@ -1,0 +1,55 @@
+#	$NetBSD: files.ingenic,v 1.10.8.2 2017/12/03 11:36:27 jdolecek Exp $
+
+file	arch/mips/mips/bus_dma.c
+file	arch/mips/mips/locore_ingenic.S
+
+include "dev/scsipi/files.scsipi"		# SCSI devices
+include "dev/ata/files.ata"			# ATA devices
+include "dev/usb/files.usb"			# USB devices
+
+# Ingenic system bus
+device	apbus { [addr=-1] }
+attach	apbus at mainbus
+file	arch/mips/ingenic/apbus.c		apbus
+
+# On-chip UART device
+attach	com at apbus with ingenic_com
+file	arch/mips/ingenic/ingenic_com.c	ingenic_com
+options	COM_REGMAP
+
+# USB
+attach dwctwo at apbus with ingenic_dwctwo
+file	arch/mips/ingenic/ingenic_dwctwo.c	ingenic_dwctwo	needs-flag
+
+attach ohci at apbus with ingenic_ohci
+file	arch/mips/ingenic/ingenic_ohci.c	ingenic_ohci	needs-flag
+
+attach ehci at apbus with ingenic_ehci
+file	arch/mips/ingenic/ingenic_ehci.c	ingenic_ehci	needs-flag
+defflag	opt_ingenic.h	INGENIC_EHCI_DEBUG
+
+# Ethernet
+attach dme at apbus with ingenic_dme
+file	arch/mips/ingenic/ingenic_dme.c		ingenic_dme	needs-flag
+
+# I2C
+device 	jziic : i2cbus
+attach 	jziic at apbus
+file 	arch/mips/ingenic/jziic.c	jziic
+defflag	opt_ingenic.h	JZIIC_DEBUG
+
+# SDMMC
+device 	jzmmc : sdmmcbus
+attach 	jzmmc at apbus
+file 	arch/mips/ingenic/jzmmc.c	jzmmc
+defflag	opt_ingenic.h	JZMMC_DEBUG
+
+# Random number generator
+device	jzrng
+attach	jzrng at apbus with ingenic_rng
+file	arch/mips/ingenic/ingenic_rng.c	ingenic_rng
+
+# EFUSE
+device	efuse
+attach	efuse at apbus with ingenic_efuse
+file	arch/mips/ingenic/ingenic_efuse.c	ingenic_efuse

@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.20.26.1 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.20.26.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,9 +35,6 @@
  * Offsets for various AGP configuration registers.
  */
 #define AGP_APBASE		0x10
-
-#define AGP_STATUS		0x4
-#define AGP_COMMAND		0x8
 
 /*
  * Config registers for Intel AGP chipsets.
@@ -298,6 +295,12 @@
 #define AGP_G4X_GCC1_GMS_STOLEN_160M	0xb0
 #define AGP_G4X_GCC1_GMS_STOLEN_224M	0xc0
 #define AGP_G4X_GCC1_GMS_STOLEN_352M	0xd0
+
+/*
+ * Config registers for Pineview
+ */
+#define AGP_PINEVIEW_PGTBL_SIZE_MASK	(3U << 8)
+#define AGP_PINEVIEW_PGTBL_SIZE_1M	(1U << 8)
 
 /*
  * AMD64 GART registers

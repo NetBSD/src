@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.90.12.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: tty.h,v 1.90.12.3 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -174,6 +174,12 @@ struct tty {
 #define	TTMAXLOWAT	(tp->t_qsize >> 2)
 #define	TTMINLOWAT	(tp->t_qsize >> 5)
 #define	TTROUND		64
+#define	TTDIALOUT_MASK	0x80000		/* dialout=524288 in MAKEDEV.tmpl */
+#define	TTCALLUNIT_MASK	0x40000		/* XXX: compat */
+#define	TTUNIT_MASK	0x3ffff
+#define	TTDIALOUT(d)	(minor(d) & TTDIALOUT_MASK)
+#define	TTCALLUNIT(d)	(minor(d) & TTCALLUNIT_MASK)
+#define	TTUNIT(d)	(minor(d) & TTUNIT_MASK)
 #endif /* _KERNEL */
 
 /* These flags are kept in t_state. */
@@ -196,6 +202,10 @@ struct tty {
 #define	TS_LNCH		0x04000		/* Next character is literal. */
 #define	TS_TYPEN	0x08000		/* Retyping suspended input (PENDIN). */
 #define	TS_LOCAL	(TS_BKSL | TS_CNTTB | TS_ERASE | TS_LNCH | TS_TYPEN)
+
+/* for special line disciplines, like dev/sun/sunkbd.c */
+#define	TS_KERN_ONLY	0x10000		/* Device is accessible by kernel
+					 * only, deny all userland access */
 
 /* Character type information. */
 #define	ORDINARY	0

@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.2.2.2 2014/08/20 00:02:39 tls Exp $ */
+/* $NetBSD: ptrace.h,v 1.2.2.3 2017/12/03 11:35:44 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -49,9 +49,20 @@
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
 
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->r_pc
+#define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
+#define PTRACE_REG_SP(r)	(r)->r_sp
+#define PTRACE_REG_INTRV(r)	(r)->r_reg[0]
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xd4, 0x20, 0x01, 0xa0 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile(".word 0xa00120d4" ::: "memory")
+#define PTRACE_BREAKPOINT_SIZE	4
+
 #elif defined(__arm__)
 
-#include <arm/asm.h>
+#include <arm/ptrace.h>
 
 #endif
 

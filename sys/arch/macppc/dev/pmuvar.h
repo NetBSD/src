@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.8 2010/11/09 20:44:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.8.18.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #ifndef PMUVAR_H
 #define PMUVAR_H
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.8 2010/11/09 20:44:49 macallan Exp $");
 
 /* Bits from PMU_GET_LID_STATE or PMU_INT_ENVIRONMENT on core99 */
 #define PMU_ENV_LID_CLOSED	0x01	/* The lid is closed */
+#define PMU_ENV_POWER_BUTTON	0x08	/* power button on ADB-less Macs */
 
 /* PMU PMU_POWER_EVENTS commands */
 enum {

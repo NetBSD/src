@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.18 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: mbio.c,v 1.18.40.1 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.18 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.18.40.1 2017/12/03 11:36:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ static struct sun68k_bus_space_tag mbio_space_tag = {
 	NULL,				/* bus_intr_establish */
 	NULL,				/* bus_space_peek_N */
 	NULL				/* bus_space_poke_N */
-}; 
+};
 
 static int 
 mbio_match(device_t parent, cfdata_t cf, void *aux)

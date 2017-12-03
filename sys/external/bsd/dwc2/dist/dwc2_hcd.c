@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.13.4.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.13.4.3 2017/12/03 11:38:01 jdolecek Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.13.4.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.13.4.3 2017/12/03 11:38:01 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/workqueue.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -57,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.13.4.2 2014/08/20 00:04:22 tls Exp $"
 
 #include <linux/kernel.h>
 #include <linux/list.h>
+#include <linux/err.h>
+#include <linux/workqueue.h>
 
 #include <dwc2/dwc2.h>
 #include <dwc2/dwc2var.h>
@@ -144,7 +145,7 @@ static void dwc2_kill_urbs_in_qh_list(struct dwc2_hsotg *hsotg,
 	list_for_each_entry_safe(qh, qh_tmp, qh_list, qh_list_entry) {
 		list_for_each_entry_safe(qtd, qtd_tmp, &qh->qtd_list,
 					 qtd_list_entry) {
-			dwc2_host_complete(hsotg, qtd, -ETIMEDOUT);
+			dwc2_host_complete(hsotg, qtd, -ECONNRESET);
 			dwc2_hcd_qtd_unlink_and_free(hsotg, qtd, qh);
 		}
 	}
@@ -267,18 +268,44 @@ static void dwc2_hcd_cleanup_channels(struct dwc2_hsotg *hsotg)
 		 */
 		channel->qh = NULL;
 	}
+	/* All channels have been freed, mark them available */
+	if (hsotg->core_params->uframe_sched > 0) {
+		hsotg->available_host_channels =
+			hsotg->core_params->host_channels;
+	} else {
+		hsotg->non_periodic_channels = 0;
+		hsotg->periodic_channels = 0;
+	}
+}
+
+/**
+ * dwc2_hcd_connect() - Handles connect of the HCD
+ *
+ * @hsotg: Pointer to struct dwc2_hsotg
+ *
+ * Must be called with interrupt disabled and spinlock held
+ */
+void dwc2_hcd_connect(struct dwc2_hsotg *hsotg)
+{
+	if (hsotg->lx_state != DWC2_L0)
+		usb_hcd_resume_root_hub(hsotg->priv);
+
+	hsotg->flags.b.port_connect_status_change = 1;
+	hsotg->flags.b.port_connect_status = 1;
 }
 
 /**
  * dwc2_hcd_disconnect() - Handles disconnect of the HCD
  *
  * @hsotg: Pointer to struct dwc2_hsotg
+ * @force: If true, we won't try to reconnect even if we see device connected.
  *
  * Must be called with interrupt disabled and spinlock held
  */
-void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg)
+void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg, bool force)
 {
 	u32 intr;
+	u32 hprt0;
 
 	/* Set status flags for the hub driver */
 	hsotg->flags.b.port_connect_status_change = 1;
@@ -319,6 +346,24 @@ void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg)
 	dwc2_host_disconnect(hsotg);
 
 	dwc2_root_intr(hsotg->hsotg_sc);
+
+	/*
+	 * Add an extra check here to see if we're actually connected but
+	 * we don't have a detection interrupt pending.  This can happen if:
+	 *   1. hardware sees connect
+	 *   2. hardware sees disconnect
+	 *   3. hardware sees connect
+	 *   4. dwc2_port_intr() - clears connect interrupt
+	 *   5. dwc2_handle_common_intr() - calls here
+	 *
+	 * Without the extra check here we will end calling disconnect
+	 * and won't get any future interrupts to handle the connect.
+	 */
+	if (!force) {
+		hprt0 = DWC2_READ_4(hsotg, HPRT0);
+		if (!(hprt0 & HPRT0_CONNDET) && (hprt0 & HPRT0_CONNSTS))
+			dwc2_hcd_connect(hsotg);
+	}
 }
 
 /**
@@ -328,9 +373,12 @@ void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_hcd_rem_wakeup(struct dwc2_hsotg *hsotg)
 {
-	if (hsotg->lx_state == DWC2_L2)
+	if (hsotg->bus_suspended) {
 		hsotg->flags.b.port_suspend_change = 1;
-	else
+		usb_hcd_resume_root_hub(hsotg->priv);
+	}
+
+	if (hsotg->lx_state == DWC2_L1)
 		hsotg->flags.b.port_l1_change = 1;
 
 	dwc2_root_intr(hsotg->hsotg_sc);
@@ -361,12 +409,11 @@ void dwc2_hcd_stop(struct dwc2_hsotg *hsotg)
 	DWC2_WRITE_4(hsotg, HPRT0, 0);
 }
 
-int
-dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
-		     void **ep_handle, gfp_t mem_flags)
+/* Caller must hold driver lock */
+int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
+				struct dwc2_hcd_urb *urb, struct dwc2_qh *qh,
+				struct dwc2_qtd *qtd)
 {
-	struct dwc2_softc *sc = hsotg->hsotg_sc;
-	struct dwc2_qtd *qtd;
 	u32 intr_mask;
 	int retval;
 	int dev_speed;
@@ -379,7 +426,7 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 
 	dev_speed = dwc2_host_get_speed(hsotg, urb->priv);
 
-	/* Some core configurations cannot support LS traffic on a FS root port */
+	/* Some configurations cannot support LS traffic on a FS root port */
 	if ((dev_speed == USB_SPEED_LOW) &&
 	    (hsotg->hw_params.fs_phy_type == GHWCFG2_FS_PHY_TYPE_DEDICATED) &&
 	    (hsotg->hw_params.hs_phy_type == GHWCFG2_HS_PHY_TYPE_UTMI)) {
@@ -387,24 +434,23 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 		u32 prtspd = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
 
 		if (prtspd == HPRT0_SPD_FULL_SPEED) {
+			dev_err(hsotg->dev,
+				"DWC OTG HCD URB Enqueue unsupported\n");
 			return -ENODEV;
 		}
 	}
 
-	qtd = pool_cache_get(sc->sc_qtdpool, PR_NOWAIT);
 	if (!qtd)
-		return -ENOMEM;
+		return -EINVAL;
 
 	memset(qtd, 0, sizeof(*qtd));
 
 	dwc2_hcd_qtd_init(qtd, urb);
-	retval = dwc2_hcd_qtd_add(hsotg, qtd, (struct dwc2_qh **)ep_handle,
-				  mem_flags);
+	retval = dwc2_hcd_qtd_add(hsotg, qtd, qh);
 	if (retval) {
 		dev_err(hsotg->dev,
 			"DWC OTG HCD URB Enqueue failed adding QTD. Error status %d\n",
 			retval);
-		pool_cache_put(sc->sc_qtdpool, qtd);
 		return retval;
 	}
 
@@ -665,17 +711,19 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 }
 
 static int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
-				   struct dwc2_host_chan *chan, void *bufptr)
+				   struct dwc2_host_chan *chan,
+				   struct dwc2_hcd_urb *urb, void *bufptr)
 {
 	u32 buf_size;
 
-	if (chan->ep_type != USB_ENDPOINT_XFER_ISOC)
-		buf_size = hsotg->core_params->max_transfer_size;
-	else
-		buf_size = 4096;
-
 	if (!qh->dw_align_buf) {
 		int err;
+
+		if (chan->ep_type != USB_ENDPOINT_XFER_ISOC)
+			buf_size = hsotg->core_params->max_transfer_size;
+		else
+			/* 3072 = 3 max-size Isoc packets */
+			buf_size = 3072;
 
 		qh->dw_align_buf = NULL;
 		qh->dw_align_buf_dma = 0;
@@ -689,15 +737,25 @@ static int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 		}
 		if (!qh->dw_align_buf)
 			return -ENOMEM;
+		qh->dw_align_buf_size = buf_size;
 	}
 
-	if (!chan->ep_is_in && chan->xfer_len) {
-		usb_syncmem(chan->xfer_usbdma, 0, buf_size,
-			    BUS_DMASYNC_POSTWRITE);
- 		memcpy(qh->dw_align_buf, bufptr, chan->xfer_len);
-		usb_syncmem(chan->xfer_usbdma, 0, buf_size,
-			    BUS_DMASYNC_PREWRITE);
+	if (chan->xfer_len) {
+		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
+		void *usb_urb = urb->priv;
+
+		if (usb_urb) {
+			if (!chan->ep_is_in) {
+				memcpy(qh->dw_align_buf, bufptr,
+				       chan->xfer_len);
+			}
+		} else {
+			dev_warn(hsotg->dev, "no URB in dwc2_urb\n");
+		}
 	}
+
+	usb_syncmem(&qh->dw_align_buf_usbdma, 0, qh->dw_align_buf_size,
+	    chan->ep_is_in ?  BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	chan->align_buf = qh->dw_align_buf_dma;
 	return 0;
@@ -793,8 +851,8 @@ static int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 
 	/* Non DWORD-aligned buffer case */
 	if (bufptr) {
-		dev_vdbg(hsotg->dev, "Non-aligned buffer%p\n", bufptr);
-		if (dwc2_hc_setup_align_buf(hsotg, qh, chan, bufptr)) {
+		dev_vdbg(hsotg->dev, "Non-aligned buffer\n");
+		if (dwc2_hc_setup_align_buf(hsotg, qh, chan, urb, bufptr)) {
 			dev_err(hsotg->dev,
 				"%s: Failed to allocate memory to handle non-dword aligned buffer\n",
 				__func__);
@@ -819,8 +877,11 @@ static int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		 */
 		chan->multi_count = dwc2_hb_mult(qh->maxp);
 
-	if (hsotg->core_params->dma_desc_enable > 0)
+	if (hsotg->core_params->dma_desc_enable > 0) {
+		chan->desc_list_usbdma = qh->desc_list_usbdma;
 		chan->desc_list_addr = qh->desc_list_dma;
+		chan->desc_list_sz = qh->desc_list_sz;
+	}
 
 	dwc2_hc_init(hsotg, chan);
 	chan->qh = qh;
@@ -887,6 +948,22 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		if (list_empty(&hsotg->free_hc_list))
 			break;
 		qh = list_entry(qh_ptr, struct dwc2_qh, qh_list_entry);
+
+		/*
+		 * Check to see if this is a NAK'd retransmit, in which case
+		 * ignore for retransmission. We hold off on bulk/control
+		 * retransmissions to reduce NAK interrupt overhead for
+		 * cheeky devices that just hold off using NAKs.
+		 */
+		if (qh->nak_frame != 0xffff &&
+		    dwc2_full_frame_num(qh->nak_frame) ==
+		    dwc2_full_frame_num(dwc2_hcd_get_frame_number(hsotg))) {
+			qh_ptr = qh_ptr->next;
+			continue;
+		} else {
+			qh->nak_frame = 0xffff;
+		}
+
 		if (hsotg->core_params->uframe_sched > 0) {
 			if (hsotg->available_host_channels < 1)
 				break;
@@ -1288,13 +1365,13 @@ void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 	}
 }
 
-void
-dwc2_conn_id_status_change(struct work *work)
+static void dwc2_conn_id_status_change(struct work_struct *work)
 {
 	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
 						wf_otg);
 	u32 count = 0;
 	u32 gotgctl;
+	unsigned long flags;
 
 	dev_dbg(hsotg->dev, "%s()\n", __func__);
 
@@ -1322,6 +1399,10 @@ dwc2_conn_id_status_change(struct work *work)
 		hsotg->op_state = OTG_STATE_B_PERIPHERAL;
 		dwc2_core_init(hsotg, false);
 		dwc2_enable_global_interrupts(hsotg);
+		spin_lock_irqsave(&hsotg->lock, flags);
+		dwc2_hsotg_core_init_disconnected(hsotg, false);
+		spin_unlock_irqrestore(&hsotg->lock, flags);
+		dwc2_hsotg_core_connect(hsotg);
 	} else {
 		/* A-Device connector (Host Mode) */
 		dev_dbg(hsotg->dev, "connId A\n");
@@ -1345,7 +1426,7 @@ dwc2_conn_id_status_change(struct work *work)
 	}
 }
 
-void dwc2_wakeup_detected(void * data)
+void dwc2_wakeup_detected(void *data)
 {
 	struct dwc2_hsotg *hsotg = (struct dwc2_hsotg *)data;
 	u32 hprt0;
@@ -1364,6 +1445,7 @@ void dwc2_wakeup_detected(void * data)
 		DWC2_READ_4(hsotg, HPRT0));
 
 	dwc2_hcd_rem_wakeup(hsotg);
+	hsotg->bus_suspended = 0;
 
 	/* Change to L0 state */
 	hsotg->lx_state = DWC2_L0;
@@ -1392,14 +1474,19 @@ static void dwc2_port_suspend(struct dwc2_hsotg *hsotg, u16 windex)
 	hprt0 |= HPRT0_SUSP;
 	DWC2_WRITE_4(hsotg, HPRT0, hprt0);
 
-	/* Update lx_state */
-	hsotg->lx_state = DWC2_L2;
+	hsotg->bus_suspended = 1;
 
-	/* Suspend the Phy Clock */
-	pcgctl = DWC2_READ_4(hsotg, PCGCTL);
-	pcgctl |= PCGCTL_STOPPCLK;
-	DWC2_WRITE_4(hsotg, PCGCTL, pcgctl);
-	udelay(10);
+	/*
+	 * If hibernation is supported, Phy clock will be suspended
+	 * after registers are backuped.
+	 */
+	if (!hsotg->core_params->hibernation) {
+		/* Suspend the Phy Clock */
+		pcgctl = DWC2_READ_4(hsotg, PCGCTL);
+		pcgctl |= PCGCTL_STOPPCLK;
+		DWC2_WRITE_4(hsotg, PCGCTL, pcgctl);
+		udelay(10);
+	}
 
 	/* For HNP the bus must be suspended for at least 200ms */
 	if (dwc2_host_is_b_hnp_enabled(hsotg)) {
@@ -1413,6 +1500,44 @@ static void dwc2_port_suspend(struct dwc2_hsotg *hsotg, u16 windex)
 	} else {
 		spin_unlock_irqrestore(&hsotg->lock, flags);
 	}
+}
+
+/* Must NOT be called with interrupt disabled or spinlock held */
+static void dwc2_port_resume(struct dwc2_hsotg *hsotg)
+{
+	unsigned long flags;
+	u32 hprt0;
+	u32 pcgctl;
+
+	spin_lock_irqsave(&hsotg->lock, flags);
+
+	/*
+	 * If hibernation is supported, Phy clock is already resumed
+	 * after registers restore.
+	 */
+	if (!hsotg->core_params->hibernation) {
+		pcgctl = DWC2_READ_4(hsotg, PCGCTL);
+		pcgctl &= ~PCGCTL_STOPPCLK;
+		DWC2_WRITE_4(hsotg, PCGCTL, pcgctl);
+		spin_unlock_irqrestore(&hsotg->lock, flags);
+		usleep_range(20000, 40000);
+		spin_lock_irqsave(&hsotg->lock, flags);
+	}
+
+	hprt0 = dwc2_read_hprt0(hsotg);
+	hprt0 |= HPRT0_RES;
+	hprt0 &= ~HPRT0_SUSP;
+	DWC2_WRITE_4(hsotg, HPRT0, hprt0);
+	spin_unlock_irqrestore(&hsotg->lock, flags);
+
+	msleep(USB_RESUME_TIMEOUT);
+
+	spin_lock_irqsave(&hsotg->lock, flags);
+	hprt0 = dwc2_read_hprt0(hsotg);
+	hprt0 &= ~(HPRT0_RES | HPRT0_SUSP);
+	DWC2_WRITE_4(hsotg, HPRT0, hprt0);
+	hsotg->bus_suspended = 0;
+	spin_unlock_irqrestore(&hsotg->lock, flags);
 }
 
 /* Handles hub class-specific requests */
@@ -1462,17 +1587,8 @@ dwc2_hcd_hub_control(struct dwc2_hsotg *hsotg, u16 typereq,
 		case USB_PORT_FEAT_SUSPEND:
 			dev_dbg(hsotg->dev,
 				"ClearPortFeature USB_PORT_FEAT_SUSPEND\n");
-			DWC2_WRITE_4(hsotg, PCGCTL, 0);
-			usleep_range(20000, 40000);
-
-			hprt0 = dwc2_read_hprt0(hsotg);
-			hprt0 |= HPRT0_RES;
-			DWC2_WRITE_4(hsotg, HPRT0, hprt0);
-			hprt0 &= ~HPRT0_SUSP;
-			usleep_range(100000, 150000);
-
-			hprt0 &= ~HPRT0_RES;
-			DWC2_WRITE_4(hsotg, HPRT0, hprt0);
+			if (hsotg->bus_suspended)
+				dwc2_port_resume(hsotg);
 			break;
 
 		case USB_PORT_FEAT_POWER:
@@ -1550,9 +1666,10 @@ dwc2_hcd_hub_control(struct dwc2_hsotg *hsotg, u16 typereq,
 		dev_dbg(hsotg->dev, "GetHubDescriptor\n");
 		hub_desc = (usb_hub_descriptor_t *)buf;
 		hub_desc->bDescLength = 9;
-		hub_desc->bDescriptorType = 0x29;
+		hub_desc->bDescriptorType = USB_DT_HUB;
 		hub_desc->bNbrPorts = 1;
-		USETW(hub_desc->wHubCharacteristics, 0x08);
+		USETW(hub_desc->wHubCharacteristics, HUB_CHAR_COMMON_LPSM |
+				    HUB_CHAR_INDV_PORT_OCPM);
 		hub_desc->bPwrOn2PwrGood = 1;
 		hub_desc->bHubContrCurrent = 0;
 		hub_desc->DeviceRemovable[0] = 0;
@@ -1630,6 +1747,27 @@ dwc2_hcd_hub_control(struct dwc2_hsotg *hsotg, u16 typereq,
 		/* USB_PORT_FEAT_INDICATOR unsupported always 0 */
 		USETW(ps.wPortStatus, port_status);
 
+		if (hsotg->core_params->dma_desc_fs_enable) {
+			/*
+			 * Enable descriptor DMA only if a full speed
+			 * device is connected.
+			 */
+			if (hsotg->new_connection &&
+			    ((port_status &
+			      (USB_PORT_STAT_CONNECTION |
+			       USB_PORT_STAT_HIGH_SPEED |
+			       USB_PORT_STAT_LOW_SPEED)) ==
+			       USB_PORT_STAT_CONNECTION)) {
+				u32 hcfg;
+
+				dev_info(hsotg->dev, "Enabling descriptor DMA mode\n");
+				hsotg->core_params->dma_desc_enable = 1;
+				hcfg = DWC2_READ_4(hsotg, HCFG);
+				hcfg |= HCFG_DESCDMA;
+				DWC2_WRITE_4(hsotg, HCFG, hcfg);
+				hsotg->new_connection = false;
+			}
+		}
 		dev_vdbg(hsotg->dev, "wPortStatus=%04x\n", port_status);
 		memcpy(buf, &ps, sizeof(ps));
 		break;
@@ -1709,6 +1847,15 @@ dwc2_hcd_hub_control(struct dwc2_hsotg *hsotg, u16 typereq,
 			dev_dbg(hsotg->dev,
 				"SetPortFeature - USB_PORT_FEAT_INDICATOR\n");
 			/* Not supported */
+			break;
+
+		case USB_PORT_FEAT_TEST:
+			hprt0 = dwc2_read_hprt0(hsotg);
+			dev_dbg(hsotg->dev,
+				"SetPortFeature - USB_PORT_FEAT_TEST\n");
+			hprt0 &= ~HPRT0_TSTCTL_MASK;
+			hprt0 |= (windex >> 8) << HPRT0_TSTCTL_SHIFT;
+			DWC2_WRITE_4(hsotg, HPRT0, hprt0);
 			break;
 
 		default:
@@ -2006,12 +2153,10 @@ void dwc2_host_disconnect(struct dwc2_hsotg *hsotg)
 //	hcd->self.is_b_host = 0;
 }
 
-
 /*
  * Work queue function for starting the HCD when A-Cable is connected
  */
-void
-dwc2_hcd_start_func(struct work *work)
+static void dwc2_hcd_start_func(struct work_struct *work)
 {
 	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
 						start_work.work);
@@ -2023,20 +2168,25 @@ dwc2_hcd_start_func(struct work *work)
 /*
  * Reset work queue function
  */
-void
-dwc2_hcd_reset_func(struct work *work)
+static void dwc2_hcd_reset_func(struct work_struct *work)
 {
 	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
 						reset_work.work);
+	unsigned long flags;
 	u32 hprt0;
 
 	dev_dbg(hsotg->dev, "USB RESET function called\n");
+
+	spin_lock_irqsave(&hsotg->lock, flags);
+
 	hprt0 = dwc2_read_hprt0(hsotg);
 	hprt0 &= ~HPRT0_RST;
 	DWC2_WRITE_4(hsotg, HPRT0, hprt0);
 	hsotg->flags.b.port_reset_change = 1;
 
 	dwc2_root_intr(hsotg->hsotg_sc);
+
+	spin_unlock_irqrestore(&hsotg->lock, flags);
 }
 
 /*
@@ -2050,7 +2200,6 @@ dwc2_hcd_reset_func(struct work *work)
  * mode operation. Activates the root port. Returns 0 on success and a negative
  * error code on failure.
  */
-
 
 /*
  * Frees secondary storage associated with the dwc2_hsotg structure contained
@@ -2109,7 +2258,9 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 	}
 
 	if (hsotg->wq_otg) {
-		workqueue_destroy(hsotg->wq_otg);
+		if (!cancel_work_sync(&hsotg->wf_otg))
+			flush_workqueue(hsotg->wq_otg);
+		destroy_workqueue(hsotg->wq_otg);
 	}
 
 	kmem_free(hsotg->core_params, sizeof(*hsotg->core_params));
@@ -2126,40 +2277,21 @@ static void dwc2_hcd_release(struct dwc2_hsotg *hsotg)
 }
 
 /*
- * Sets all parameters to the given value.
- *
- * Assumes that the dwc2_core_params struct contains only integers.
- */
-void dwc2_set_all_params(struct dwc2_core_params *params, int value)
-{
-	int *p = (int *)params;
-	size_t size = sizeof(*params) / sizeof(*p);
-	int i;
-
-	for (i = 0; i < size; i++)
-		p[i] = value;
-}
-
-/*
  * Initializes the HCD. This function allocates memory for and initializes the
  * static parts of the usb_hcd and dwc2_hsotg structures. It also registers the
  * USB bus with the core and calls the hc_driver->start() function. It returns
  * a negative error on failure.
  */
-int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
-		  const struct dwc2_core_params *params)
+int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 {
 	struct dwc2_host_chan *channel;
 	int i, num_channels;
-	int err, retval;
+	int retval;
+
+	if (usb_disabled())
+		return -ENODEV;
 
 	dev_dbg(hsotg->dev, "DWC OTG HCD INIT\n");
-
-	/* Detect config values from hardware */
-	retval = dwc2_get_hwparams(hsotg);
-
-	if (retval)
-		return retval;
 
 	retval = -ENOMEM;
 
@@ -2178,15 +2310,6 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 	hsotg->last_frame_num = HFNUM_MAX_FRNUM;
 #endif
 
-	hsotg->core_params = kmem_zalloc(sizeof(*hsotg->core_params), KM_SLEEP);
-	if (!hsotg->core_params)
-		goto error1;
-
-	dwc2_set_all_params(hsotg->core_params, -1);
-
-	/* Validate parameter values */
-	dwc2_set_parameters(hsotg, params);
-
 	spin_lock_init(&hsotg->lock);
 
 	/*
@@ -2202,14 +2325,12 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 
 	/* Create new workqueue and init work */
 	retval = -ENOMEM;
-	err = workqueue_create(&hsotg->wq_otg, "dwc2", dwc2_worker, hsotg,
-			 PRI_BIO, IPL_USB, WQ_MPSAFE);
-
-	retval = -err;
-	if (err) {
+	hsotg->wq_otg = create_singlethread_workqueue("dwc2");
+	if (!hsotg->wq_otg) {
 		dev_err(hsotg->dev, "Failed to create workqueue\n");
 		goto error2;
 	}
+	INIT_WORK(&hsotg->wf_otg, dwc2_conn_id_status_change);
 
 	callout_init(&hsotg->wkp_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hsotg->wkp_timer, dwc2_wakeup_detected, hsotg);
@@ -2290,7 +2411,6 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 error3:
 	dwc2_hcd_release(hsotg);
 error2:
-error1:
 	kmem_free(hsotg->core_params, sizeof(*hsotg->core_params));
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
@@ -2302,4 +2422,32 @@ error1:
 
 	dev_err(hsotg->dev, "%s() FAILED, returning %d\n", __func__, retval);
 	return retval;
+}
+
+/*
+ * Removes the HCD.
+ * Frees memory and resources associated with the HCD and deregisters the bus.
+ */
+void dwc2_hcd_remove(struct dwc2_hsotg *hsotg)
+{
+	struct usb_hcd *hcd;
+
+	dev_dbg(hsotg->dev, "DWC OTG HCD REMOVE\n");
+
+	hcd = dwc2_hsotg_to_hcd(hsotg);
+	dev_dbg(hsotg->dev, "hsotg->hcd = %p\n", hcd);
+
+	if (!hcd) {
+		dev_dbg(hsotg->dev, "%s: dwc2_hsotg_to_hcd(hsotg) NULL!\n",
+			__func__);
+		return;
+	}
+	hsotg->priv = NULL;
+
+	dwc2_hcd_release(hsotg);
+
+#ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
+	kfree(hsotg->last_frame_num_array);
+	kfree(hsotg->frame_num_array);
+#endif
 }

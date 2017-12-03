@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.64.6.1 2014/08/20 00:04:31 tls Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.64.6.2 2017/12/03 11:38:48 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.64.6.1 2014/08/20 00:04:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.64.6.2 2017/12/03 11:38:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,12 +366,11 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 {
 	struct vmspace	*vm;
 	struct proc	*p = l->l_proc;
-	struct rusage	*ru = &p->p_stats->p_ru;
 	char		*bf;
 	int	 	 error;
 	int	 	 len;
+	struct kinfo_proc2 ki;
 
-	error = ENAMETOOLONG;
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
 	/* XXX - we use values from vmspace, since dsl says that ru figures
@@ -380,17 +379,26 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 		goto out;
 	}
 
-	len = snprintf(bf, LBFSZ,
-	        "%lu %lu %lu %lu %lu %lu %lu\n",
-		(unsigned long)(vm->vm_tsize + vm->vm_dsize + vm->vm_ssize), /* size */
-		(unsigned long)(vm->vm_rssize),	/* resident */
-		(unsigned long)(ru->ru_ixrss),	/* shared */
-		(unsigned long)(vm->vm_tsize),	/* text size in pages */
-		(unsigned long)(vm->vm_dsize),	/* data size in pages */
-		(unsigned long)(vm->vm_ssize),	/* stack size in pages */
-		(unsigned long) 0);
+	mutex_enter(proc_lock);
+	mutex_enter(p->p_lock);
+
+	/* retrieve RSS size */
+	fill_kproc2(p, &ki, false);
+
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
 
 	uvmspace_free(vm);
+
+	len = snprintf(bf, LBFSZ,
+	        "%lu %lu %lu %lu %lu %lu %lu\n",
+		(unsigned long)(ki.p_vm_msize),	/* size */
+		(unsigned long)(ki.p_vm_rssize),/* resident */
+		(unsigned long)(ki.p_uru_ixrss),/* shared */
+		(unsigned long)(ki.p_vm_tsize),	/* text */
+		(unsigned long) 0,		/* library (unused) */
+		(unsigned long)(ki.p_vm_dsize + ki.p_vm_ssize),	/* data+stack */
+		(unsigned long) 0);		/* dirty */
 
 	if (len == 0)
 		goto out;
@@ -419,7 +427,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	struct timeval rt;
 	struct vmspace	*vm;
 	struct kinfo_proc2 ki;
-	int error = 0;
+	int error;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
@@ -595,26 +603,22 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 {
 	char *bf, *mtab = NULL;
 	size_t mtabsz = 0;
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 	int error = 0, root = 0;
 	struct cwdinfo *cwdi = curl->l_proc->p_cwdi;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		struct statvfs sfs;
-
-		if (vfs_busy(mp, &nmp))
-			continue;
 
 		if ((error = dostatvfs(mp, &sfs, curl, MNT_WAIT, 0)) == 0)
 			root |= procfs_format_sfs(&mtab, &mtabsz, bf, LBFSZ,
 			    &sfs, curl, 0);
-
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 
 	/*
 	 * If we are inside a chroot that is not itself a mount point,

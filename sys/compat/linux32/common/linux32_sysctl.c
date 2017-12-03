@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.13.18.1 2014/08/20 00:03:33 tls Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.13.18.2 2017/12/03 11:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.13.18.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.13.18.2 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ struct sysctlnode linux32_sysctl_root = {
 
 static struct sysctllog *linux32_clog1;
 static struct sysctllog *linux32_clog2;
+extern int linux32_enabled;
 
 void
 linux32_sysctl_fini(void)
@@ -119,6 +120,12 @@ linux32_sysctl_init(void)
 		       NULL, 0, linux32_version, sizeof(linux32_version),
 		       CTL_EMUL, EMUL_LINUX32, EMUL_LINUX32_KERN,
 		       EMUL_LINUX32_KERN_VERSION, CTL_EOL);
+	sysctl_createv(&linux32_clog1, 0, NULL, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enabled",
+		       SYSCTL_DESCR("Linux 32 bit compat enabled."),
+		       linux32_sysctl_enable, 0, &linux32_enabled, 0,
+		       CTL_EMUL, EMUL_LINUX32, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(&linux32_clog2, 0, &node, &node,
 		       CTLFLAG_PERMANENT,

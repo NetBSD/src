@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.40.2.2 2014/08/20 00:02:40 tls Exp $
+# $NetBSD: FOURMEG,v 1.40.2.3 2017/12/03 11:35:44 jdolecek Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -73,9 +73,8 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Binary compatibility with previous versions of NetBSD.
@@ -89,7 +88,6 @@ options 	SYSVSHM		# System V-like shared memory
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	BUFPAGES=1
 #options 	USERCONF	# userconf(4) support

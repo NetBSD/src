@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.47.2.2 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: undefined.c,v 1.47.2.3 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -47,15 +47,15 @@
 #define FAST_FPE
 
 #include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_dtrace.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.47.2.2 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.47.2.3 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -102,7 +102,8 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 	KASSERT(coproc >= 0 && coproc < NUM_UNKNOWN_HANDLERS);
 	KASSERT(handler != NULL); /* Used to be legal. */
 
-	uh = kmem_alloc(sizeof(*uh), KM_SLEEP);
+	uh = kmem_alloc(sizeof(*uh), KM_NOSLEEP);
+	KASSERT(uh != NULL);
 	uh->uh_handler = handler;
 	install_coproc_handler_static(coproc, uh);
 	return uh;
@@ -224,7 +225,7 @@ static struct undefined_handler gdb_uh_thumb;
 dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 dtrace_trap_func_t		dtrace_trap_func = NULL;
 
-int (* dtrace_invop_jump_addr)(uintptr_t, uintptr_t *, uintptr_t);
+int (* dtrace_invop_jump_addr)(uintptr_t, struct trapframe *, uintptr_t);
 void (* dtrace_emulation_jump_addr)(int, struct trapframe *);
 
 static int
@@ -247,7 +248,7 @@ dtrace_trapper(u_int addr, struct trapframe *frame)
 	}
 
 	back = *frame;
-	op = dtrace_invop_jump_addr(addr, (uintptr_t *) frame->tf_svc_sp, frame->tf_r0);
+	op = dtrace_invop_jump_addr(addr, frame, frame->tf_r0);
 	*frame = back;
 
 	dtrace_emulation_jump_addr(op, frame);
@@ -419,7 +420,8 @@ undefinedinstruction(trapframe_t *tf)
 		 * time of fault.
 		 */
 		fault_code = FAULT_USER;
-		lwp_settrapframe(l, tf);
+		KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf,
+		    lwp_trapframe(l));
 	} else
 		fault_code = 0;
 
@@ -431,8 +433,8 @@ undefinedinstruction(trapframe_t *tf)
 
 	if (uh == NULL) {
 		/* Fault has not been handled */
-		ksiginfo_t ksi; 
-		
+		ksiginfo_t ksi;
+
 #ifdef VERBOSE_ARM32
 		s = spltty();
 
@@ -453,7 +455,7 @@ undefinedinstruction(trapframe_t *tf)
 
 		splx(s);
 #endif
-        
+
 		if ((fault_code & FAULT_USER) == 0) {
 #ifdef DDB
 			db_printf("Undefined instruction %#x in kernel at %#lx (LR %#x SP %#x)\n",
@@ -474,24 +476,5 @@ undefinedinstruction(trapframe_t *tf)
 	if ((fault_code & FAULT_USER) == 0)
 		return;
 
-#ifdef FAST_FPE
-	/* Optimised exit code */
-	{
-		/*
-		 * Check for reschedule request, at the moment there is only
-		 * 1 ast so this code should always be run
-		 */
-		if (curcpu()->ci_want_resched) {
-			/*
-			 * We are being preempted.
-			 */
-			preempt();
-		}
-
-		/* Invoke MI userret code */
-		mi_userret(l);
-	}
-#else
 	userret(l);
-#endif
 }

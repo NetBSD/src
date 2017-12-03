@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.22.6.1 2014/08/20 00:03:05 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.22.6.2 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -39,7 +39,6 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
-#if defined(_NETBSD_SOURCE)
 #if defined(_KERNEL)
 typedef struct label_t {
 	int	lbl_rp;
@@ -50,6 +49,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long		hppa_hpa_t;
 typedef	unsigned long		hppa_spa_t;
 typedef	unsigned int		pa_space_t;
@@ -63,21 +63,24 @@ typedef	unsigned long		psize_t;
 #define	PRIxPADDR		"lx"
 #define	PRIxPSIZE		"lx"
 #define	PRIuPSIZE		"lu"
+
+typedef int			register_t;
+#define	PRIxREGISTER		"x"
 #endif
 
 /*
  * Semaphores must be aligned on 16-byte boundaries on the PA-RISC.
  */
-typedef volatile struct {
+typedef struct {
 	volatile unsigned long csl_lock[4];
-} __cpu_simple_lock_t;
+} __cpu_simple_lock_nv_t;
+
+typedef int			__register_t;
 
 
 #define __SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0} }
 #define __SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1} }
 
-typedef int			register_t;
-#define	PRIxREGISTER		"x"
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */

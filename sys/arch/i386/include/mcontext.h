@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10.14.1 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.10.14.2 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,17 +101,6 @@ typedef struct {
 #define _UC_MACHINE_PAD	4	/* Padding appended to ucontext_t */
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
-
-#ifdef _KERNEL_OPT
-#include "opt_vm86.h"
-#ifdef VM86
-/*#include <machine/psl.h>*/
-#define PSL_VM 0x00020000
-#define _UC_MACHINE_SP(uc) ((uc)->uc_mcontext.__gregs[_REG_UESP] + \
-	((uc)->uc_mcontext.__gregs[_REG_EFL] & PSL_VM ? \
-	 ((uc)->uc_mcontext.__gregs[_REG_SS] << 4) : 0))
-#endif /* VM86 */
-#endif /* _KERNEL_OPT */
 
 #ifndef _UC_MACHINE_SP
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_UESP])

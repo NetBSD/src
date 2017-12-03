@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile.buildboot,v 1.28.18.1 2014/08/20 00:03:24 tls Exp $
+#	$NetBSD: Makefile.buildboot,v 1.28.18.2 2017/12/03 11:36:44 jdolecek Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
+
+NOSSP=		# defined
+NOPIE=		# defined
+NOMAN=		# defined
 
 S=	${.CURDIR}/../../../..
 
@@ -10,8 +14,9 @@ S=	${.CURDIR}/../../../..
 COMMONSOURCE=	srt0.S promdev.c dvma.c promlib.c isfloppy.c
 
 SRCS=		${COMMONSOURCE} ${PROGSOURCE}
-NOMAN=		# defined
 BINMODE=	444
+
+.include <bsd.own.mk>
 
 #
 # The relocation address for `boot' must leave enough free memory below
@@ -35,7 +40,8 @@ CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DSUN4M -DSUN4D -DHEAP_VARIABLE
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../../../../../common/include
-CFLAGS=		-Os -fno-unwind-tables
+CFLAGS=		${${ACTIVE_CC} == "clang":? -Oz -fomit-frame-pointer : -Os } -fno-unwind-tables
+AFLAGS+=	${${ACTIVE_CC} == "clang":? -Oz :}
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -ffreestanding
 
 ### find out what to use for libkern

@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_extattr.h,v 1.2.2.2 2013/06/23 06:18:39 tls Exp $	*/
-/*  from NetBSD: extattr.h,v 1.10 2011/10/09 21:15:34 chs Exp  */
+/*	$NetBSD: ulfs_extattr.h,v 1.2.2.3 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: extattr.h,v 1.11 2014/12/19 10:59:21 manu Exp  */
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -44,7 +44,7 @@
 #define	ULFS_EXTATTR_FSROOTSUBDIR	".attribute"
 #define	ULFS_EXTATTR_SUBDIR_SYSTEM	"system"
 #define	ULFS_EXTATTR_SUBDIR_USER		"user"
-#define	ULFS_EXTATTR_MAXEXTATTRNAME	65	/* including null */
+#define	ULFS_EXTATTR_MAXEXTATTRNAME	256	/* including null */
 
 #define	ULFS_EXTATTR_ATTR_FLAG_INUSE	0x00000001	/* attr has been set */
 #define	ULFS_EXTATTR_PERM_KERNEL		0x00000000

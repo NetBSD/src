@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.46.2.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.46.2.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -655,8 +655,6 @@ struct icmp6_filter {
 
 #ifdef _KERNEL
 struct	rtentry;
-struct	rttimer;
-struct	in6_multi;
 
 void	icmp6_init(void);
 void	icmp6_paramerror(struct mbuf *, int);

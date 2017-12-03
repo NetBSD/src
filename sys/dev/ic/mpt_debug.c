@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.8.12.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.8.12.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.8.12.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.8.12.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -131,6 +131,18 @@ static const struct Error_Map IOC_Event[] = {
 { MPI_EVENT_LOOP_STATE_CHANGE, 	        "Loop State Change" },
 { MPI_EVENT_LOGOUT,    	       		"Logout" },
 { MPI_EVENT_EVENT_CHANGE,               "EventChange" },
+{ MPI_EVENT_INTEGRATED_RAID,            "Integrated RAID" },
+{ MPI_EVENT_SCSI_DEVICE_STATUS_CHANGE,  "SCSI Device Status Change" },
+{ MPI_EVENT_ON_BUS_TIMER_EXPIRED,       "On Bus Timer Expired" },
+{ MPI_EVENT_QUEUE_FULL,                 "Queue Full" },
+{ MPI_EVENT_SAS_DEVICE_STATUS_CHANGE,   "SAS Device Status Change" },
+{ MPI_EVENT_SAS_SES,                    "SAS Ses" },
+{ MPI_EVENT_PERSISTENT_TABLE_FULL,      "Persistent Table Full" },
+{ MPI_EVENT_SAS_PHY_LINK_STATUS,        "SAS Phy Link Status" },
+{ MPI_EVENT_SAS_DISCOVERY_ERROR,        "SAS Discovery Error" },
+{ MPI_EVENT_IR_RESYNC_UPDATE,           "IR Resync Update" },
+{ MPI_EVENT_IR2,                        "IR2", },
+{ MPI_EVENT_SAS_DISCOVERY,              "Sas Discovery" },
 { -1, 0},
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.57.6.1 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.57.6.2 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57.6.1 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57.6.2 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -404,7 +404,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *cp = modif;
 		char c;
 
-		while ((c = *cp++) != 0)
+		while ((c = *cp++) != 0) {
 			if (c == 'a') {
 				lwpaddr = true;
 				trace_thread = true;
@@ -414,6 +414,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			else if (c == 'u')
 				kernel_only = false;
 #endif
+		}
 	}
 
 	if (!have_addr)

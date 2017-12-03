@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14.2.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14.2.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,11 @@ typedef	__greg_t	__gregset_t[_NGREG];
 #define	_REG_MQ		38		/* MQ Register (POWER only) */
 
 typedef struct {
+#ifdef _KERNEL
+	unsigned long long	__fpu_regs[32];	/* FP0-31 */
+#else
 	double		__fpu_regs[32];	/* FP0-31 */
+#endif
 	unsigned int	__fpu_fpscr;	/* FP Status and Control Register */
 	unsigned int	__fpu_valid;	/* Set together with _UC_FPU */
 } __fpregset_t;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet6,v 1.8 2008/01/25 21:12:15 joerg Exp $
+#	$NetBSD: files.netinet6,v 1.8.54.1 2017/12/03 11:39:04 jdolecek Exp $
 
 defflag	opt_inet6.h	RFC2292	
 
@@ -12,9 +12,10 @@ file	netinet6/in6_cksum.c		inet6
 file	netinet6/in6_ifattach.c		inet6
 file	netinet6/in6_offload.c		inet6
 file	netinet6/in6_pcb.c		inet6
+file	netinet6/in6_print.c
 file	netinet6/in6_proto.c		inet6
 file	netinet6/in6_src.c		inet6
-file	netinet6/ip6_flow.c		inet6
+file	netinet6/ip6_flow.c		inet6 & gateway
 file	netinet6/ip6_forward.c		inet6
 file	netinet6/ip6_id.c		inet6
 file	netinet6/ip6_input.c		inet6
@@ -30,3 +31,7 @@ file	netinet6/scope6.c		inet6
 
 file	netinet6/udp6_output.c		inet6
 file	netinet6/udp6_usrreq.c		inet6
+
+file	netinet6/dccp6_usrreq.c		inet6 & dccp
+
+file	netinet6/sctp6_usrreq.c		inet6 & sctp

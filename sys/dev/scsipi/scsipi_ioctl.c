@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.67 2012/04/19 17:45:20 bouyer Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.67.2.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,10 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.67 2012/04/19 17:45:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.67.2.1 2017/12/03 11:37:32 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -70,29 +72,35 @@ struct scsi_ioctl {
 };
 
 static LIST_HEAD(, scsi_ioctl) si_head;
+static kmutex_t si_lock;
+
+void
+scsipi_ioctl_init(void)
+{
+
+	mutex_init(&si_lock, MUTEX_DEFAULT, IPL_BIO);
+}
 
 static struct scsi_ioctl *
 si_get(void)
 {
 	struct scsi_ioctl *si;
-	int s;
 
 	si = malloc(sizeof(struct scsi_ioctl), M_TEMP, M_WAITOK|M_ZERO);
 	buf_init(&si->si_bp);
-	s = splbio();
+	mutex_enter(&si_lock);
 	LIST_INSERT_HEAD(&si_head, si, si_list);
-	splx(s);
+	mutex_exit(&si_lock);
 	return (si);
 }
 
 static void
 si_free(struct scsi_ioctl *si)
 {
-	int s;
 
-	s = splbio();
+	mutex_enter(&si_lock);
 	LIST_REMOVE(si, si_list);
-	splx(s);
+	mutex_exit(&si_lock);
 	buf_destroy(&si->si_bp);
 	free(si, M_TEMP);
 }
@@ -101,13 +109,12 @@ static struct scsi_ioctl *
 si_find(struct buf *bp)
 {
 	struct scsi_ioctl *si;
-	int s;
 
-	s = splbio();
+	mutex_enter(&si_lock);
 	for (si = si_head.lh_first; si != 0; si = si->si_list.le_next)
 		if (bp == &si->si_bp)
 			break;
-	splx(s);
+	mutex_exit(&si_lock);
 	return (si);
 }
 
@@ -126,7 +133,6 @@ scsipi_user_done(struct scsipi_xfer *xs)
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
 	struct scsipi_periph *periph = xs->xs_periph;
-	int s;
 
 	bp = xs->bp;
 #ifdef DIAGNOSTIC
@@ -198,9 +204,9 @@ scsipi_user_done(struct scsipi_xfer *xs)
 	}
 
 	if (xs->xs_control & XS_CTL_ASYNC) {
-		s = splbio();
+		mutex_enter(chan_mtx(periph->periph_channel));
 		scsipi_put_xs(xs);
-		splx(s);
+		mutex_exit(chan_mtx(periph->periph_channel));
 	}
 }
 

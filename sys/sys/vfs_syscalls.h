@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.18.2.1 2014/08/20 00:04:44 tls Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.18.2.2 2017/12/03 11:39:21 jdolecek Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -82,5 +82,8 @@ void	do_sys_sync(struct lwp *);
 
 int	chdir_lookup(const char *, int, struct vnode **, struct lwp *);
 void	change_root(struct cwdinfo *, struct vnode *, struct lwp *);
+
+extern const char *const mountcompatnames[];
+extern const int nmountcompatnames;
 
 #endif /* _SYS_VFS_SYSCALLS_H_ */

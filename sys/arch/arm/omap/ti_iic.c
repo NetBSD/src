@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.4.4.3 2014/08/20 00:02:47 tls Exp $ */
+/* $NetBSD: ti_iic.c,v 1.4.4.4 2017/12/03 11:35:55 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.4.4.3 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.4.4.4 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.4.4.3 2014/08/20 00:02:47 tls Exp $");
 #ifndef OMAP2_I2C_SLAVE_ADDR
 #define OMAP2_I2C_SLAVE_ADDR	0x01
 #endif
+
+#define OMAP2_I2C_FIFOBYTES(fd)	(8 << (fd))
 
 #ifdef I2CDEBUG
 #define DPRINTF(args)	printf args
@@ -163,7 +165,7 @@ struct am335x_iic {
 static const struct am335x_iic am335x_iic[] = {
 	{ "I2C0", OMAP2_I2C0_BASE, 70, { AM335X_PRCM_CM_WKUP, 0xb8 } },
 	{ "I2C1", OMAP2_I2C1_BASE, 71, { AM335X_PRCM_CM_PER, 0x48 } },
-	{ "I2C2", OMAP2_I2C1_BASE, 30, { AM335X_PRCM_CM_PER, 0x44 } },
+	{ "I2C2", OMAP2_I2C2_BASE, 30, { AM335X_PRCM_CM_PER, 0x44 } },
 };
 #endif
 
@@ -183,6 +185,13 @@ ti_iic_match(device_t parent, cfdata_t match, void *opaque)
 	    obio->obio_addr == OMAP2_I2C2_BASE)
 		return 1;
 #endif
+#if defined(OMAP_4430)
+	if (obio->obio_addr == 0x48070000 ||	/* I2C1 */
+	    obio->obio_addr == 0x48072000 ||	/* I2C2 */
+	    obio->obio_addr == 0x48060000 ||	/* I2C3 */
+	    obio->obio_addr == 0x48350000)	/* I2C4 */
+		return 1;
+#endif
 
 	return 0;
 }
@@ -192,6 +201,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 {
 	struct ti_iic_softc *sc = device_private(self);
 	struct obio_attach_args *obio = opaque;
+	int scheme, major, minor, fifodepth, fifo;
 	uint16_t rev;
 #ifdef TI_AM335X
 	int i;
@@ -211,8 +221,6 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_ic.ic_acquire_bus = ti_iic_acquire_bus;
 	sc->sc_ic.ic_release_bus = ti_iic_release_bus;
 	sc->sc_ic.ic_exec = ti_iic_exec;
-
-	sc->sc_rxthres = sc->sc_txthres = 4;
 
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size,
 	    0, &sc->sc_ioh) != 0) {
@@ -241,27 +249,40 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 	snprintf(buf, sizeof(buf), "%s_SDA", am335x_iic[i].as_name);
 	if (sitara_cm_padconf_get(buf, &mode, &state) == 0) {
 		aprint_debug(": SDA mode %s state %d ", mode, state);
-	}
-	if (sitara_cm_padconf_set(buf, buf,
-	    (0x01 << 4) | (0x01 << 5) | (0x01 << 6)) != 0) {
-		aprint_error(": can't switch %s pad\n", buf);
-		return;
+
+		if (sitara_cm_padconf_set(buf, buf,
+		    (0x01 << 4) | (0x01 << 5) | (0x01 << 6)) != 0) {
+			aprint_error(": can't switch %s pad\n", buf);
+			return;
+		}
 	}
 	snprintf(buf, sizeof(buf), "%s_SCL", am335x_iic[i].as_name);
 	if (sitara_cm_padconf_get(buf, &mode, &state) == 0) {
 		aprint_debug(": SCL mode %s state %d ", mode, state);
-	}
-	if (sitara_cm_padconf_set(buf, buf,
-	    (0x01 << 4) | (0x01 << 5) | (0x01 << 6)) != 0) {
-		aprint_error(": can't switch %s pad\n", buf);
-		return;
+
+		if (sitara_cm_padconf_set(buf, buf,
+		    (0x01 << 4) | (0x01 << 5) | (0x01 << 6)) != 0) {
+			aprint_error(": can't switch %s pad\n", buf);
+			return;
+		}
 	}
 #endif
 
+	scheme = I2C_REVNB_HI_SCHEME(I2C_READ_REG(sc, OMAP2_I2C_REVNB_HI));
 	rev = I2C_READ_REG(sc, OMAP2_I2C_REVNB_LO);
-	aprint_normal(": rev %d.%d\n",
-	    (int)I2C_REVNB_LO_MAJOR(rev),
-	    (int)I2C_REVNB_LO_MINOR(rev));
+	if (scheme == 0) {
+		major = I2C_REV_SCHEME_0_MAJOR(rev);
+		minor = I2C_REV_SCHEME_0_MINOR(rev);
+	} else {
+		major = I2C_REVNB_LO_MAJOR(rev);
+		minor = I2C_REVNB_LO_MINOR(rev);
+	}
+	aprint_normal(": rev %d.%d, scheme %d\n", major, minor, scheme);
+
+	fifodepth = I2C_BUFSTAT_FIFODEPTH(I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT));
+	fifo = OMAP2_I2C_FIFOBYTES(fifodepth);
+	aprint_normal_dev(self, "%d-bytes FIFO\n", fifo);
+	sc->sc_rxthres = sc->sc_txthres = fifo >> 1;
 
 	ti_iic_reset(sc);
 	ti_iic_flush(sc);
@@ -303,9 +324,9 @@ ti_iic_intr(void *arg)
 	mutex_enter(&sc->sc_mtx);
 	DPRINTF(("ti_iic_intr\n"));
 	stat = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS);
-	I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
 	DPRINTF(("ti_iic_intr pre handle sc->sc_op eq %#x\n", sc->sc_op));
 	ti_iic_handle_intr(sc, stat);
+	I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
 	if (sc->sc_op == TI_I2CERROR || sc->sc_op == TI_I2CDONE) {
 		DPRINTF(("ti_iic_intr post handle sc->sc_op %#x\n", sc->sc_op));
 		cv_signal(&sc->sc_cv);
@@ -411,7 +432,7 @@ ti_iic_reset(struct ti_iic_softc *sc)
 		aprint_error_dev(sc->sc_dev, ": couldn't reset module\n");
 		return 1;
 	}
-			
+
 
 	/* XXX standard speed only */
 	psc = 3;
@@ -444,7 +465,7 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 	int err, retry;
 
 	KASSERT(op == TI_I2CREAD || op == TI_I2CWRITE);
-	DPRINTF(("ti_iic_op: addr %#x op %#x buf %p buflen %#x flags %#x\n", 
+	DPRINTF(("ti_iic_op: addr %#x op %#x buf %p buflen %#x flags %#x\n",
 	    addr, op, buf, (unsigned int) buflen, flags));
 
 	mask = I2C_IRQSTATUS_ARDY | I2C_IRQSTATUS_NACK | I2C_IRQSTATUS_AL;

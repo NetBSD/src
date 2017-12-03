@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.44.2.1 2014/08/20 00:03:30 tls Exp $ */
+/* $NetBSD: privcmd.c,v 1.44.2.2 2017/12/03 11:36:51 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.44.2.1 2014/08/20 00:03:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.44.2.2 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,8 +350,6 @@ privcmd_ioctl(void *v)
 #endif
 			maddr = kmem_alloc(sizeof(paddr_t) * mentry.npages,
 			    KM_SLEEP);
-			if (maddr == NULL)
-				return ENOMEM;
 			va = mentry.va & ~PAGE_MASK;
 			ma = ((paddr_t)mentry.mfn) <<  PGSHIFT; /* XXX ??? */
 			for (j = 0; j < mentry.npages; j++) {
@@ -396,8 +394,6 @@ privcmd_ioctl(void *v)
 		vm_map_unlock_read(vmm);
 		
 		maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
-		if (maddr == NULL)
-			return ENOMEM;
 		/* get a page of KVA to check mappins */
 		trymap = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
 		    UVM_KMF_VAONLY);
@@ -550,36 +546,20 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 		return EINVAL;
 	}
 	vm_map_unlock_read(map);
-	/* remove current entries */
-	uvm_unmap1(map, start, start + size, 0);
 
-	obj = kmem_alloc(sizeof(struct privcmd_object), KM_SLEEP);
-	if (obj == NULL) {
-		kmem_free(maddr, sizeof(paddr_t) * npages);
-		return ENOMEM;
-	}
-
+	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
 	privcmd_nobjects++;
 	uvm_obj_init(&obj->uobj, &privpgops, true, 1);
-	mutex_enter(obj->uobj.vmobjlock);
 	obj->maddr = maddr;
 	obj->npages = npages;
 	obj->domid = domid;
-	mutex_exit(obj->uobj.vmobjlock);
 	uvmflag = UVM_MAPFLAG(prot, prot, UVM_INH_NONE, UVM_ADV_NORMAL,
-	    UVM_FLAG_FIXED | UVM_FLAG_NOMERGE);
+	    UVM_FLAG_FIXED | UVM_FLAG_UNMAP | UVM_FLAG_NOMERGE);
 	error = uvm_map(map, &newstart, size, &obj->uobj, 0, 0, uvmflag);
 
-	if (error) {
-		if (obj)
-			obj->uobj.pgops->pgo_detach(&obj->uobj);
-		return error;
-	}
-	if (newstart != start) {
-		printf("uvm_map didn't give us back our vm space\n");
-		return EINVAL;
-	}
-	return 0;
+	if (error)
+		obj->uobj.pgops->pgo_detach(&obj->uobj);
+	return error;
 }
 
 static const struct kernfs_fileop privcmd_fileops[] = {

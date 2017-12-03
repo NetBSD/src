@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.52.14.1 2014/08/20 00:02:48 tls Exp $	*/
+/*	$NetBSD: ser.c,v 1.52.14.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.52.14.1 2014/08/20 00:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.52.14.2 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -144,8 +144,8 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.52.14.1 2014/08/20 00:02:48 tls Exp $");
 
 /* #define SER_DEBUG */
 
-#define	SERUNIT(x)	(minor(x) & 0x7ffff)
-#define	SERDIALOUT(x)	(minor(x) & 0x80000)
+#define	SERUNIT(x)	TTUNIT(x)
+#define	SERDIALOUT(x)	TTDIALOUT(x)
 
 /* XXX */
 #define	CONSBAUD	9600

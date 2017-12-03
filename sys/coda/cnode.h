@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.18 2012/05/04 01:38:56 christos Exp $	*/
+/*	$NetBSD: cnode.h,v 1.18.2.1 2017/12/03 11:36:52 jdolecek Exp $	*/
 
 /*
  *
@@ -106,7 +106,7 @@ struct cnode {
     u_short		 c_symlen;	/* length of symbolic link */
     dev_t		 c_device;	/* associated vnode device */
     ino_t		 c_inode;	/* associated vnode inode */
-    struct cnode	*c_next;	/* links if on NetBSD machine */
+    kmutex_t		 c_lock;
 };
 #define	VTOC(vp)	((struct cnode *)(vp)->v_data)
 #define	SET_VTOC(vp)	((vp)->v_data)
@@ -115,8 +115,6 @@ struct cnode {
 /* flags */
 #define C_VATTR		0x01	/* Validity of vattr in the cnode */
 #define C_SYMLINK	0x02	/* Validity of symlink pointer in the Code */
-#define C_WANTED	0x08	/* Set if lock wanted */
-#define C_LOCKED	0x10	/* Set if lock held */
 #define C_UNMOUNTING	0X20	/* Set if unmounting */
 #define C_PURGING	0x40	/* Set if purging a fid */
 

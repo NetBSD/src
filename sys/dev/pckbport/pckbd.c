@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.29.20.2 2014/08/20 00:03:49 tls Exp $ */
+/* $NetBSD: pckbd.c,v 1.29.20.3 2017/12/03 11:37:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.29.20.2 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.29.20.3 2017/12/03 11:37:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,10 +288,9 @@ pckbd_resume(device_t dv, const pmf_qual_t *qual)
 	res = pckbport_poll_cmd(sc->id->t_kbctag,
 	    sc->id->t_kbcslot, cmd, 1, 1, resp, 1);
 	if (res)
-		aprint_debug("pckbdprobe: reset error %d\n", res);
+		aprint_debug("%s: reset error %d\n", __func__, res);
 	if (resp[0] != KBR_RSTDONE)
-		printf("pckbdprobe: reset response 0x%x\n",
-		    resp[0]);
+		printf("%s: reset response 0x%x\n", __func__, resp[0]);
 
 	pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
 
@@ -1011,6 +1010,7 @@ pckbd_ioctl(void *v, u_long cmd, void *data, int flag,
 	case WSKBDIO_GETLEDS:
 		*(int *)data = pckbd_led_decode(sc->sc_ledstate);
 		return 0;
+#if 0
 	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
 		/*
@@ -1020,6 +1020,7 @@ pckbd_ioctl(void *v, u_long cmd, void *data, int flag,
 		pckbd_bell(d->pitch, d->period, d->volume, 0);
 #undef d
 		return 0;
+#endif
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->rawkbd = (*(int *)data == WSKBD_RAW);

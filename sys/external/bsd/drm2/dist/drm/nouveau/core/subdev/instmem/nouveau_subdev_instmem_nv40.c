@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.6.2 2014/08/20 00:04:15 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.6.3 2017/12/03 11:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.6.2 2014/08/20 00:04:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.6.3 2017/12/03 11:37:56 jdolecek Exp $");
 
 #include <engine/graph/nv40.h>
 
@@ -39,14 +39,22 @@ static u32
 nv40_instmem_rd32(struct nouveau_object *object, u64 addr)
 {
 	struct nv04_instmem_priv *priv = (void *)object;
+#ifdef __NetBSD__
+	return bus_space_read_4(priv->iomemt, priv->iomemh, addr);
+#else
 	return ioread32_native(priv->iomem + addr);
+#endif
 }
 
 static void
 nv40_instmem_wr32(struct nouveau_object *object, u64 addr, u32 data)
 {
 	struct nv04_instmem_priv *priv = (void *)object;
+#ifdef __NetBSD__
+	bus_space_write_4(priv->iomemt, priv->iomemh, addr, data);
+#else
 	iowrite32_native(data, priv->iomem + addr);
+#endif
 }
 
 static int
@@ -69,12 +77,25 @@ nv40_instmem_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 	else
 		bar = 3;
 
+#ifdef __NetBSD__
+	priv->iomemt = nv_device_resource_tag(device, bar);
+	priv->iomemsz = nv_device_resource_len(device, bar);
+	ret = bus_space_map(priv->iomemt,
+	    nv_device_resource_start(device, bar),
+	    priv->iomemsz, 0, &priv->iomemh);
+	if (ret) {
+		priv->iomemsz = 0;
+		nv_error(priv, "unable to map PRAMIN BAR: %d\n", ret);
+		return -EFAULT;
+	}
+#else
 	priv->iomem = ioremap(nv_device_resource_start(device, bar),
 			      nv_device_resource_len(device, bar));
 	if (!priv->iomem) {
 		nv_error(priv, "unable to map PRAMIN BAR\n");
 		return -EFAULT;
 	}
+#endif
 
 	/* PRAMIN aperture maps over the end of vram, reserve enough space
 	 * to fit graphics contexts for every channel, the magics come

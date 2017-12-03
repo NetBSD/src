@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.88.6.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: if_el.c,v 1.88.6.3 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88.6.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88.6.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -31,7 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88.6.2 2014/08/20 00:03:39 tls Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -583,15 +583,7 @@ elread(struct el_softc *sc, int len)
 		return;
 	}
 
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
-
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*
@@ -611,7 +603,7 @@ elget(struct el_softc *sc, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;

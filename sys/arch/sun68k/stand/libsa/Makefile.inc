@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2011/01/22 19:19:24 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.3.14.1 2017/12/03 11:36:46 jdolecek Exp $
 
 S!=	cd ${SA_EXTRADIR}/../../../..; pwd
 
@@ -18,9 +18,5 @@ SRCS+=	ctrlsp.S
 .PATH.S: ${S}/../common/lib/libc/arch/m68k/gen
 SRCS+=	mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S
 
-vers.c: ${SA_EXTRADIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${SA_EXTRADIR}/version "${MACHINE}"
-
-SRCS+=	vers.c
-CLEANFILES+=	vers.c
+VERSIONFILE=${SA_EXTRADIR}/version
+.include "${S}/conf/newvers_stand.mk"

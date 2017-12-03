@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.182.2.1 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.182.2.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,9 +66,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.182.2.1 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.182.2.2 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include "opt_ddb.h"
+#include "opt_uvm.h"
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
 
@@ -80,22 +81,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.182.2.1 2014/08/20 00:04:45 tls Exp $
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/extent.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_pdpolicy.h>
-
-/*
- * global vars... XXXCDC: move to uvm. structure.
- */
-
-/*
- * physical memory config is stored in vm_physmem.
- */
-
-struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
-int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
-#define	vm_nphysmem	vm_nphysseg
 
 /*
  * Some supported CPUs in a given architecture don't support all
@@ -107,12 +97,15 @@ bool vm_page_zero_enable = false;
 /*
  * number of pages per-CPU to reserve for the kernel.
  */
-int vm_page_reserve_kernel = 5;
+#ifndef	UVM_RESERVED_PAGES_PER_CPU
+#define	UVM_RESERVED_PAGES_PER_CPU	5
+#endif
+int vm_page_reserve_kernel = UVM_RESERVED_PAGES_PER_CPU;
 
 /*
  * physical memory size;
  */
-int physmem;
+psize_t physmem;
 
 /*
  * local variables
@@ -140,6 +133,18 @@ static size_t recolored_pages_memsize /* = 0 */;
 #ifdef DEBUG
 vaddr_t uvm_zerocheckkva;
 #endif /* DEBUG */
+
+/*
+ * These functions are reserved for uvm(9) internal use and are not
+ * exported in the header file uvm_physseg.h
+ *
+ * Thus they are redefined here.
+ */
+void uvm_physseg_init_seg(uvm_physseg_t, struct vm_page *);
+void uvm_physseg_seg_chomp_slab(uvm_physseg_t, struct vm_page *, size_t);
+
+/* returns a pgs array */
+struct vm_page *uvm_physseg_seg_alloc_from_slab(uvm_physseg_t, size_t);
 
 /*
  * local prototypes
@@ -333,11 +338,9 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	static struct uvm_cpu boot_cpu;
 	psize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray, *cpuarray;
-	struct vm_physseg *seg;
 	struct vm_page *pagearray;
+	uvm_physseg_t bank;
 	int lcv;
-	u_int i;
-	paddr_t paddr;
 
 	KASSERT(ncpu <= 1);
 	CTASSERT(sizeof(pagearray->offset) >= sizeof(struct uvm_cpu *));
@@ -365,7 +368,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * now is to allocate vm_page structures for this memory.
 	 */
 
-	if (vm_nphysmem == 0)
+	if (uvm_physseg_get_last() == UVM_PHYSSEG_TYPE_INVALID)
 		panic("uvm_page_bootstrap: no memory pre-allocated");
 
 	/*
@@ -377,9 +380,11 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	freepages = 0;
-	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		seg = VM_PHYSMEM_PTR(lcv);
-		freepages += (seg->end - seg->start);
+
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank) ;
+	     bank = uvm_physseg_get_next(bank)) {
+		freepages += (uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank));
 	}
 
 	/*
@@ -424,31 +429,20 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	/*
 	 * init the vm_page structures and put them in the correct place.
 	 */
+	/* First init the extent */
 
-	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		seg = VM_PHYSMEM_PTR(lcv);
-		n = seg->end - seg->start;
+	for (bank = uvm_physseg_get_first(),
+		 uvm_physseg_seg_chomp_slab(bank, pagearray, pagecount);
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+
+		n = uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank);
+		uvm_physseg_seg_alloc_from_slab(bank, n);
+		uvm_physseg_init_seg(bank, pagearray);
 
 		/* set up page array pointers */
-		seg->pgs = pagearray;
 		pagearray += n;
 		pagecount -= n;
-		seg->lastpg = seg->pgs + n;
-
-		/* init and free vm_pages (we've already zeroed them) */
-		paddr = ctob(seg->start);
-		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
-			seg->pgs[i].phys_addr = paddr;
-#ifdef __HAVE_VM_PAGE_MD
-			VM_MDPAGE_INIT(&seg->pgs[i]);
-#endif
-			if (atop(paddr) >= seg->avail_start &&
-			    atop(paddr) < seg->avail_end) {
-				uvmexp.npages++;
-				/* add page to free pool */
-				uvm_pagefree(&seg->pgs[i]);
-			}
-		}
 	}
 
 	/*
@@ -544,6 +538,7 @@ uvm_pageboot_alloc(vsize_t size)
 
 	/* round to page size */
 	size = round_page(size);
+	uvmexp.bootpages += atop(size);
 
 #if defined(PMAP_STEAL_MEMORY)
 
@@ -621,92 +616,41 @@ static bool uvm_page_physget_freelist(paddr_t *, int);
 static bool
 uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
-	struct vm_physseg *seg;
-	int lcv, x;
+	uvm_physseg_t lcv;
 
 	/* pass 1: try allocating from a matching end */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-	for (lcv = vm_nphysmem - 1 ; lcv >= 0 ; lcv--)
+	for (lcv = uvm_physseg_get_last(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_prev(lcv))
 #else
-	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
+	for (lcv = uvm_physseg_get_first(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_next(lcv))
 #endif
 	{
-		seg = VM_PHYSMEM_PTR(lcv);
-
 		if (uvm.page_init_done == true)
 			panic("uvm_page_physget: called _after_ bootstrap");
 
-		if (seg->free_list != freelist)
-			continue;
-
-		/* try from front */
-		if (seg->avail_start == seg->start &&
-		    seg->avail_start < seg->avail_end) {
-			*paddrp = ctob(seg->avail_start);
-			seg->avail_start++;
-			seg->start++;
-			/* nothing left?   nuke it */
-			if (seg->avail_start == seg->end) {
-				if (vm_nphysmem == 1)
-				    panic("uvm_page_physget: out of memory!");
-				vm_nphysmem--;
-				for (x = lcv ; x < vm_nphysmem ; x++)
-					/* structure copy */
-					VM_PHYSMEM_PTR_SWAP(x, x + 1);
-			}
-			return (true);
-		}
-
-		/* try from rear */
-		if (seg->avail_end == seg->end &&
-		    seg->avail_start < seg->avail_end) {
-			*paddrp = ctob(seg->avail_end - 1);
-			seg->avail_end--;
-			seg->end--;
-			/* nothing left?   nuke it */
-			if (seg->avail_end == seg->start) {
-				if (vm_nphysmem == 1)
-				    panic("uvm_page_physget: out of memory!");
-				vm_nphysmem--;
-				for (x = lcv ; x < vm_nphysmem ; x++)
-					/* structure copy */
-					VM_PHYSMEM_PTR_SWAP(x, x + 1);
-			}
-			return (true);
-		}
+		/* Try to match at front or back on unused segment */
+		if (uvm_page_physunload(lcv, freelist, paddrp) == false) {
+			if (paddrp == NULL) /* freelist fail, try next */
+				continue;
+		} else
+			return true;
 	}
 
 	/* pass2: forget about matching ends, just allocate something */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-	for (lcv = vm_nphysmem - 1 ; lcv >= 0 ; lcv--)
+	for (lcv = uvm_physseg_get_last(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_prev(lcv))
 #else
-	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
+	for (lcv = uvm_physseg_get_first(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_next(lcv))
 #endif
 	{
-		seg = VM_PHYSMEM_PTR(lcv);
-
-		/* any room in this bank? */
-		if (seg->avail_start >= seg->avail_end)
-			continue;  /* nope */
-
-		*paddrp = ctob(seg->avail_start);
-		seg->avail_start++;
-		/* truncate! */
-		seg->start = seg->avail_start;
-
-		/* nothing left?   nuke it */
-		if (seg->avail_start == seg->end) {
-			if (vm_nphysmem == 1)
-				panic("uvm_page_physget: out of memory!");
-			vm_nphysmem--;
-			for (x = lcv ; x < vm_nphysmem ; x++)
-				/* structure copy */
-				VM_PHYSMEM_PTR_SWAP(x, x + 1);
-		}
-		return (true);
+		/* Try the front regardless. */
+		if (uvm_page_physunload_force(lcv, freelist, paddrp) == false) {
+			if (paddrp == NULL) /* freelist fail, try next */
+				continue;
+		} else
+			return true;
 	}
-
-	return (false);        /* whoops! */
+	return false;
 }
 
 bool
@@ -723,228 +667,6 @@ uvm_page_physget(paddr_t *paddrp)
 #endif /* PMAP_STEAL_MEMORY */
 
 /*
- * uvm_page_physload: load physical memory into VM system
- *
- * => all args are PFs
- * => all pages in start/end get vm_page structures
- * => areas marked by avail_start/avail_end get added to the free page pool
- * => we are limited to VM_PHYSSEG_MAX physical memory segments
- */
-
-void
-uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
-    paddr_t avail_end, int free_list)
-{
-	int preload, lcv;
-	psize_t npages;
-	struct vm_page *pgs;
-	struct vm_physseg *ps;
-
-	if (uvmexp.pagesize == 0)
-		panic("uvm_page_physload: page size not set!");
-	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
-		panic("uvm_page_physload: bad free list %d", free_list);
-	if (start >= end)
-		panic("uvm_page_physload: start >= end");
-
-	/*
-	 * do we have room?
-	 */
-
-	if (vm_nphysmem == VM_PHYSSEG_MAX) {
-		printf("uvm_page_physload: unable to load physical memory "
-		    "segment\n");
-		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
-		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
-		printf("\tincrease VM_PHYSSEG_MAX\n");
-		return;
-	}
-
-	/*
-	 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
-	 * called yet, so kmem is not available).
-	 */
-
-	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		if (VM_PHYSMEM_PTR(lcv)->pgs)
-			break;
-	}
-	preload = (lcv == vm_nphysmem);
-
-	/*
-	 * if VM is already running, attempt to kmem_alloc vm_page structures
-	 */
-
-	if (!preload) {
-		panic("uvm_page_physload: tried to add RAM after vm_mem_init");
-	} else {
-		pgs = NULL;
-		npages = 0;
-	}
-
-	/*
-	 * now insert us in the proper place in vm_physmem[]
-	 */
-
-#if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
-	/* random: put it at the end (easy!) */
-	ps = VM_PHYSMEM_PTR(vm_nphysmem);
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-	{
-		int x;
-		/* sort by address for binary search */
-		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
-			if (start < VM_PHYSMEM_PTR(lcv)->start)
-				break;
-		ps = VM_PHYSMEM_PTR(lcv);
-		/* move back other entries, if necessary ... */
-		for (x = vm_nphysmem ; x > lcv ; x--)
-			/* structure copy */
-			VM_PHYSMEM_PTR_SWAP(x, x - 1);
-	}
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-	{
-		int x;
-		/* sort by largest segment first */
-		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
-			if ((end - start) >
-			    (VM_PHYSMEM_PTR(lcv)->end - VM_PHYSMEM_PTR(lcv)->start))
-				break;
-		ps = VM_PHYSMEM_PTR(lcv);
-		/* move back other entries, if necessary ... */
-		for (x = vm_nphysmem ; x > lcv ; x--)
-			/* structure copy */
-			VM_PHYSMEM_PTR_SWAP(x, x - 1);
-	}
-#else
-	panic("uvm_page_physload: unknown physseg strategy selected!");
-#endif
-
-	ps->start = start;
-	ps->end = end;
-	ps->avail_start = avail_start;
-	ps->avail_end = avail_end;
-	if (preload) {
-		ps->pgs = NULL;
-	} else {
-		ps->pgs = pgs;
-		ps->lastpg = pgs + npages;
-	}
-	ps->free_list = free_list;
-	vm_nphysmem++;
-
-	if (!preload) {
-		uvmpdpol_reinit();
-	}
-}
-
-/*
- * when VM_PHYSSEG_MAX is 1, we can simplify these functions
- */
-
-#if VM_PHYSSEG_MAX == 1
-static inline int vm_physseg_find_contig(struct vm_physseg *, int, paddr_t, int *);
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-static inline int vm_physseg_find_bsearch(struct vm_physseg *, int, paddr_t, int *);
-#else
-static inline int vm_physseg_find_linear(struct vm_physseg *, int, paddr_t, int *);
-#endif
-
-/*
- * vm_physseg_find: find vm_physseg structure that belongs to a PA
- */
-int
-vm_physseg_find(paddr_t pframe, int *offp)
-{
-
-#if VM_PHYSSEG_MAX == 1
-	return vm_physseg_find_contig(vm_physmem, vm_nphysseg, pframe, offp);
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-	return vm_physseg_find_bsearch(vm_physmem, vm_nphysseg, pframe, offp);
-#else
-	return vm_physseg_find_linear(vm_physmem, vm_nphysseg, pframe, offp);
-#endif
-}
-
-#if VM_PHYSSEG_MAX == 1
-static inline int
-vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
-{
-
-	/* 'contig' case */
-	if (pframe >= segs[0].start && pframe < segs[0].end) {
-		if (offp)
-			*offp = pframe - segs[0].start;
-		return(0);
-	}
-	return(-1);
-}
-
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-
-static inline int
-vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
-{
-	/* binary search for it */
-	u_int	start, len, try;
-
-	/*
-	 * if try is too large (thus target is less than try) we reduce
-	 * the length to trunc(len/2) [i.e. everything smaller than "try"]
-	 *
-	 * if the try is too small (thus target is greater than try) then
-	 * we set the new start to be (try + 1).   this means we need to
-	 * reduce the length to (round(len/2) - 1).
-	 *
-	 * note "adjust" below which takes advantage of the fact that
-	 *  (round(len/2) - 1) == trunc((len - 1) / 2)
-	 * for any value of len we may have
-	 */
-
-	for (start = 0, len = nsegs ; len != 0 ; len = len / 2) {
-		try = start + (len / 2);	/* try in the middle */
-
-		/* start past our try? */
-		if (pframe >= segs[try].start) {
-			/* was try correct? */
-			if (pframe < segs[try].end) {
-				if (offp)
-					*offp = pframe - segs[try].start;
-				return(try);            /* got it */
-			}
-			start = try + 1;	/* next time, start here */
-			len--;			/* "adjust" */
-		} else {
-			/*
-			 * pframe before try, just reduce length of
-			 * region, done in "for" loop
-			 */
-		}
-	}
-	return(-1);
-}
-
-#else
-
-static inline int
-vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
-{
-	/* linear search for it */
-	int	lcv;
-
-	for (lcv = 0; lcv < nsegs; lcv++) {
-		if (pframe >= segs[lcv].start &&
-		    pframe < segs[lcv].end) {
-			if (offp)
-				*offp = pframe - segs[lcv].start;
-			return(lcv);		   /* got it */
-		}
-	}
-	return(-1);
-}
-#endif
-
-/*
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
@@ -952,12 +674,12 @@ struct vm_page *
 uvm_phys_to_vm_page(paddr_t pa)
 {
 	paddr_t pf = atop(pa);
-	int	off;
-	int	psi;
+	paddr_t	off;
+	uvm_physseg_t	upm;
 
-	psi = vm_physseg_find(pf, &off);
-	if (psi != -1)
-		return(&VM_PHYSMEM_PTR(psi)->pgs[off]);
+	upm = uvm_physseg_find(pf, &off);
+	if (upm != UVM_PHYSSEG_TYPE_INVALID)
+		return uvm_physseg_get_pg(upm, off);
 	return(NULL);
 }
 
@@ -981,7 +703,8 @@ uvm_page_recolor(int newncolors)
 	struct vm_page *pg;
 	vsize_t bucketcount;
 	size_t bucketmemsize, oldbucketmemsize;
-	int lcv, color, i, ocolors;
+	int color, i, ocolors;
+	int lcv;
 	struct uvm_cpu *ucpu;
 
 	KASSERT(((newncolors - 1) & newncolors) == 0);
@@ -998,11 +721,6 @@ uvm_page_recolor(int newncolors)
 	bucketmemsize = bucketcount * sizeof(struct pgflbucket) * 2;
 	bucketarray = kmem_alloc(bucketmemsize, KM_SLEEP);
 	cpuarray = bucketarray + bucketcount;
-	if (bucketarray == NULL) {
-		printf("WARNING: unable to allocate %ld page color buckets\n",
-		    (long) bucketcount);
-		return;
-	}
 
 	mutex_spin_enter(&uvm_fpageqlock);
 
@@ -1215,7 +933,8 @@ struct vm_page *
 uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
     int flags, int strat, int free_list)
 {
-	int lcv, try1, try2, zeroit = 0, color;
+	int try1, try2, zeroit = 0, color;
+	int lcv;
 	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
 	lwp_t *l;
@@ -1659,13 +1378,15 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			wakeup(pg);
 		}
 		if (pg->flags & PG_RELEASED) {
-			UVMHIST_LOG(ubchist, "releasing pg %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "releasing pg %#jx",
+			    (uintptr_t)pg, 0, 0, 0);
 			KASSERT(pg->uobject != NULL ||
 			    (pg->uanon != NULL && pg->uanon->an_ref > 0));
 			pg->flags &= ~PG_RELEASED;
 			uvm_pagefree(pg);
 		} else {
-			UVMHIST_LOG(ubchist, "unbusying pg %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "unbusying pg %#jx",
+			    (uintptr_t)pg, 0, 0, 0);
 			KASSERT((pg->flags & PG_FAKE) == 0);
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
@@ -2001,7 +1722,7 @@ bool
 uvm_pageismanaged(paddr_t pa)
 {
 
-	return (vm_physseg_find(atop(pa), NULL) != -1);
+	return (uvm_physseg_find(atop(pa), NULL) != UVM_PHYSSEG_TYPE_INVALID);
 }
 
 /*
@@ -2011,11 +1732,11 @@ uvm_pageismanaged(paddr_t pa)
 int
 uvm_page_lookup_freelist(struct vm_page *pg)
 {
-	int lcv;
+	uvm_physseg_t upm;
 
-	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
-	KASSERT(lcv != -1);
-	return (VM_PHYSMEM_PTR(lcv)->free_list);
+	upm = uvm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
+	KASSERT(upm != UVM_PHYSSEG_TYPE_INVALID);
+	return uvm_physseg_get_free_list(upm);
 }
 
 /*
@@ -2131,7 +1852,8 @@ uvm_page_printit(struct vm_page *pg, bool full,
 void
 uvm_page_printall(void (*pr)(const char *, ...))
 {
-	unsigned i;
+	uvm_physseg_t i;
+	paddr_t pfn;
 	struct vm_page *pg;
 
 	(*pr)("%18s %4s %4s %18s %18s"
@@ -2139,8 +1861,14 @@ uvm_page_printall(void (*pr)(const char *, ...))
 	    " OWNER"
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
-	for (i = 0; i < vm_nphysmem; i++) {
-		for (pg = VM_PHYSMEM_PTR(i)->pgs; pg < VM_PHYSMEM_PTR(i)->lastpg; pg++) {
+	for (i = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(i);
+	     i = uvm_physseg_get_next(i)) {
+		for (pfn = uvm_physseg_get_start(i);
+		     pfn < uvm_physseg_get_end(i);
+		     pfn++) {
+			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
+
 			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);

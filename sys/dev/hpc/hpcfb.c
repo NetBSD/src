@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.58 2010/11/13 13:51:59 uebayasi Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.58.18.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.58 2010/11/13 13:51:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.58.18.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -472,7 +472,8 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	}
 
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
-		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
+		aprint_error_dev(dc->dc_sc->sc_dev, "rasops_init() failed!");
+		return -1;
 	}
 
 	/* over write color map of rasops */
@@ -722,13 +723,15 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type,
 
 	DPRINTF(("%s(%d): hpcfb_alloc_screen()\n", __FILE__, __LINE__));
 
-	dc = malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK|M_ZERO);
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (dc == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	dc->dc_sc = sc;
-	if (hpcfb_init(&sc->sc_fbconflist[0], dc) != 0)
-		return (EINVAL);
+	if (hpcfb_init(&sc->sc_fbconflist[0], dc) != 0) {
+		free(dc, M_DEVBUF);
+		return EINVAL;
+	}
 	if (sc->sc_accessops->font) {
 		sc->sc_accessops->font(sc->sc_accessctx,
 		    dc->dc_rinfo.ri_font);

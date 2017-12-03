@@ -20,11 +20,11 @@
  */
 
 /*
- * Soekris net6501 GPIO and LEDs as implemented by the onboard Xilinx FPGA 
+ * Soekris net6501 GPIO and LEDs as implemented by the onboard Xilinx FPGA
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soekrisgpio.c,v 1.2.2.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soekrisgpio.c,v 1.2.2.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,8 @@ soekris_attach(device_t parent, device_t self, void *aux)
 	u_int data;
 	int i;
 
-	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, ia->ia_io[0].ir_size, 0,
-	    &sc->sc_ioh) != 0) {
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh) != 0) {
 		aprint_normal(": can't map i/o space\n");
 		return;
 	}

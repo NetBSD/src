@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.20 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.20.2.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -55,8 +55,7 @@
 	movq	%r15,TF_R15(%rsp)	; \
 	movq	%rbp,TF_RBP(%rsp)	; \
 	movq	%rbx,TF_RBX(%rsp)	; \
-	movq	%rax,TF_RAX(%rsp)	; \
-	cld
+	movq	%rax,TF_RAX(%rsp)
 
 #define	INTR_RESTORE_GPRS \
 	movq	TF_RDI(%rsp),%rdi	; \
@@ -78,6 +77,8 @@
 #define	INTRENTRY_L(kernel_trap, usertrap) \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
+	cld				; \
+	callq	smap_enable		; \
 	testb	$SEL_UPL,TF_CS(%rsp)	; \
 	je	kernel_trap		; \
 usertrap				; \
@@ -92,16 +93,7 @@ usertrap				; \
 98:
 
 #define INTRFASTEXIT \
-	INTR_RESTORE_GPRS 		; \
-	testq	$SEL_UPL,TF_CS(%rsp)	/* Interrupted %cs */ ; \
-	je	99f			; \
-/* Disable interrupts until the 'iret', user registers loaded. */ \
-	NOT_XEN(cli;)			  \
-	movw	TF_ES(%rsp),%es		; \
-	movw	TF_DS(%rsp),%ds		; \
-	SWAPGS				; \
-99:	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */ ; \
-	iretq
+	jmp	intrfastexit
 
 #define INTR_RECURSE_HWFRAME \
 	movq	%rsp,%r10		; \

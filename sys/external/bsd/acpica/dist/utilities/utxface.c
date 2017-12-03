@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
-#define __UTXFACE_C__
 #define EXPORT_ACPI_INTERFACES
 
 #include "acpi.h"
@@ -65,7 +63,7 @@
  *
  ******************************************************************************/
 
-ACPI_STATUS
+ACPI_STATUS ACPI_INIT_FUNCTION
 AcpiTerminate (
     void)
 {
@@ -75,24 +73,6 @@ AcpiTerminate (
     ACPI_FUNCTION_TRACE (AcpiTerminate);
 
 
-    /* Just exit if subsystem is already shutdown */
-
-    if (AcpiGbl_Shutdown)
-    {
-        ACPI_ERROR ((AE_INFO, "ACPI Subsystem is already terminated"));
-        return_ACPI_STATUS (AE_OK);
-    }
-
-    /* Subsystem appears active, go ahead and shut it down */
-
-    AcpiGbl_Shutdown = TRUE;
-    AcpiGbl_StartupFlags = 0;
-    ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Shutting down ACPI Subsystem\n"));
-
-    /* Terminate the AML Debugger if present */
-
-    ACPI_DEBUGGER_EXEC (AcpiGbl_DbTerminateThreads = TRUE);
-
     /* Shutdown and free all resources */
 
     AcpiUtSubsystemShutdown ();
@@ -100,14 +80,6 @@ AcpiTerminate (
     /* Free the mutex objects */
 
     AcpiUtMutexTerminate ();
-
-
-#ifdef ACPI_DEBUGGER
-
-    /* Shut down the debugger */
-
-    AcpiDbTerminate ();
-#endif
 
     /* Now we can shutdown the OS-dependent layer */
 
@@ -200,7 +172,6 @@ AcpiGetSystemInfo (
      * Populate the return buffer
      */
     InfoPtr = (ACPI_SYSTEM_INFO *) OutBuffer->Pointer;
-
     InfoPtr->AcpiCaVersion = ACPI_CA_VERSION;
 
     /* System flags (ACPI capabilities) */
@@ -265,14 +236,12 @@ AcpiGetStatistics (
     Stats->SciCount = AcpiSciCount;
     Stats->GpeCount = AcpiGpeCount;
 
-    ACPI_MEMCPY (Stats->FixedEventCount, AcpiFixedEventCount,
+    memcpy (Stats->FixedEventCount, AcpiFixedEventCount,
         sizeof (AcpiFixedEventCount));
-
 
     /* Other counters */
 
     Stats->MethodCount = AcpiMethodCount;
-
     return_ACPI_STATUS (AE_OK);
 }
 
@@ -369,7 +338,7 @@ AcpiInstallInterface (
 
     /* Parameter validation */
 
-    if (!InterfaceName || (ACPI_STRLEN (InterfaceName) == 0))
+    if (!InterfaceName || (strlen (InterfaceName) == 0))
     {
         return (AE_BAD_PARAMETER);
     }
@@ -434,7 +403,7 @@ AcpiRemoveInterface (
 
     /* Parameter validation */
 
-    if (!InterfaceName || (ACPI_STRLEN (InterfaceName) == 0))
+    if (!InterfaceName || (strlen (InterfaceName) == 0))
     {
         return (AE_BAD_PARAMETER);
     }
@@ -606,7 +575,7 @@ AcpiDecodePldBuffer (
 
     /* Parameter validation */
 
-    if (!InBuffer || !ReturnBuffer || (Length < 16))
+    if (!InBuffer || !ReturnBuffer || (Length < ACPI_PLD_REV1_BUFFER_SIZE))
     {
         return (AE_BAD_PARAMETER);
     }
@@ -622,7 +591,9 @@ AcpiDecodePldBuffer (
     ACPI_MOVE_32_TO_32 (&Dword, &Buffer[0]);
     PldInfo->Revision =             ACPI_PLD_GET_REVISION (&Dword);
     PldInfo->IgnoreColor =          ACPI_PLD_GET_IGNORE_COLOR (&Dword);
-    PldInfo->Color =                ACPI_PLD_GET_COLOR (&Dword);
+    PldInfo->Red =                  ACPI_PLD_GET_RED (&Dword);
+    PldInfo->Green =                ACPI_PLD_GET_GREEN (&Dword);
+    PldInfo->Blue =                 ACPI_PLD_GET_BLUE (&Dword);
 
     /* Second 32-bit DWord */
 
@@ -656,7 +627,7 @@ AcpiDecodePldBuffer (
     PldInfo->Rotation =             ACPI_PLD_GET_ROTATION (&Dword);
     PldInfo->Order =                ACPI_PLD_GET_ORDER (&Dword);
 
-    if (Length >= ACPI_PLD_BUFFER_SIZE)
+    if (Length >= ACPI_PLD_REV2_BUFFER_SIZE)
     {
         /* Fifth 32-bit DWord (Revision 2 of _PLD) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: viper.h,v 1.1.10.2 2014/08/20 00:03:04 tls Exp $	*/
+/*	$NetBSD: viper.h,v 1.1.10.3 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: viper.h,v 1.2 1999/06/29 20:56:10 mickey Exp $	*/
 
@@ -104,7 +104,7 @@ struct vi_stat {		/* (RO) */
  *
  *	vi_intrwd (WO)
  *		If a high to low transition of the interrupt line occurs,
- *		Viper will send this to the CPU to be or'd into it's EIR.
+ *		Viper will send this to the CPU to be or'd into its EIR.
  *		In general, this is an ASP interrupt request.
  *
  *	vi_mem_ctrl (WO)

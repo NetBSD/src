@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.7.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.7.2.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.7.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.7.2.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
+#include "opt_dtrace.h"
 #endif
 
 /* XXX To get syscall prototypes. */
@@ -59,154 +60,11 @@ int
 sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 {
 #ifdef MODULAR
-	static struct {
-		u_int		al_code;
-		const char	*al_module;
-	} const autoload[] = {
-	    { SYS_aio_cancel, "aio" },
-	    { SYS_aio_error, "aio" },
-	    { SYS_aio_fsync, "aio" },
-	    { SYS_aio_read, "aio" },
-	    { SYS_aio_return, "aio" },
-	    { SYS___aio_suspend50, "aio" },
-	    { SYS_aio_write, "aio" },
-	    { SYS_lio_listio, "aio" },
-	    { SYS_mq_open, "mqueue" },
-	    { SYS_mq_close, "mqueue" },
-	    { SYS_mq_unlink, "mqueue" },
-	    { SYS_mq_getattr, "mqueue" },
-	    { SYS_mq_setattr, "mqueue" },
-	    { SYS_mq_notify, "mqueue" },
-	    { SYS_mq_send, "mqueue" },
-	    { SYS_mq_receive, "mqueue" },
-	    { SYS___mq_timedsend50, "mqueue" },
-	    { SYS___mq_timedreceive50, "mqueue" },
-	    { SYS_compat_43_fstat43, "compat" },
-	    { SYS_compat_43_lstat43, "compat" },
-	    { SYS_compat_43_oaccept, "compat" },
-	    { SYS_compat_43_ocreat, "compat" },
-	    { SYS_compat_43_oftruncate, "compat" },
-	    { SYS_compat_43_ogetdirentries, "compat" },
-	    { SYS_compat_43_ogetdtablesize, "compat" },
-	    { SYS_compat_43_ogethostid, "compat" },
-	    { SYS_compat_43_ogethostname, "compat" },
-	    { SYS_compat_43_ogetkerninfo, "compat" },
-	    { SYS_compat_43_ogetpagesize, "compat" },
-	    { SYS_compat_43_ogetpeername, "compat" },
-	    { SYS_compat_43_ogetrlimit, "compat" },
-	    { SYS_compat_43_ogetsockname, "compat" },
-	    { SYS_compat_43_okillpg, "compat" },
-	    { SYS_compat_43_olseek, "compat" },
-	    { SYS_compat_43_ommap, "compat" },
-	    { SYS_compat_43_oquota, "compat" },
-	    { SYS_compat_43_orecv, "compat" },
-	    { SYS_compat_43_orecvfrom, "compat" },
-	    { SYS_compat_43_orecvmsg, "compat" },
-	    { SYS_compat_43_osend, "compat" },
-	    { SYS_compat_43_osendmsg, "compat" },
-	    { SYS_compat_43_osethostid, "compat" },
-	    { SYS_compat_43_osethostname, "compat" },
-	    { SYS_compat_43_osetrlimit, "compat" },
-	    { SYS_compat_43_osigblock, "compat" },
-	    { SYS_compat_43_osigsetmask, "compat" },
-	    { SYS_compat_43_osigstack, "compat" },
-	    { SYS_compat_43_osigvec, "compat" },
-	    { SYS_compat_43_otruncate, "compat" },
-	    { SYS_compat_43_owait, "compat" },
-	    { SYS_compat_43_stat43, "compat" },
-	    { SYS_compat_09_ogetdomainname, "compat" },
-	    { SYS_compat_09_osetdomainname, "compat" },
-	    { SYS_compat_09_ouname, "compat" },
-#ifndef _LP64
-	    { SYS_compat_10_omsgsys, "compat" },
-	    { SYS_compat_10_osemsys, "compat" },
-	    { SYS_compat_10_oshmsys, "compat" },
-#endif
-	    { SYS_compat_12_fstat12, "compat" },
-	    { SYS_compat_12_getdirentries, "compat" },
-	    { SYS_compat_12_lstat12, "compat" },
-	    { SYS_compat_12_msync, "compat" },
-	    { SYS_compat_12_oreboot, "compat" },
-	    { SYS_compat_12_oswapon, "compat" },
-	    { SYS_compat_12_stat12, "compat" },
-	    { SYS_compat_13_sigaction13, "compat" },
-	    { SYS_compat_13_sigaltstack13, "compat" },
-	    { SYS_compat_13_sigpending13, "compat" },
-	    { SYS_compat_13_sigprocmask13, "compat" },
-	    { SYS_compat_13_sigreturn13, "compat" },
-	    { SYS_compat_13_sigsuspend13, "compat" },
-	    { SYS_compat_14___semctl, "compat" },
-	    { SYS_compat_14_msgctl, "compat" },
-	    { SYS_compat_14_shmctl, "compat" },
-	    { SYS_compat_16___sigaction14, "compat" },
-	    { SYS_compat_16___sigreturn14, "compat" },
-	    { SYS_compat_20_fhstatfs, "compat" },
-	    { SYS_compat_20_fstatfs, "compat" },
-	    { SYS_compat_20_getfsstat, "compat" },
-	    { SYS_compat_20_statfs, "compat" },
-	    { SYS_compat_30___fhstat30, "compat" },
-	    { SYS_compat_30___fstat13, "compat" },
-	    { SYS_compat_30___lstat13, "compat" },
-	    { SYS_compat_30___stat13, "compat" },
-	    { SYS_compat_30_fhopen, "compat" },
-	    { SYS_compat_30_fhstat, "compat" },
-	    { SYS_compat_30_fhstatvfs1, "compat" },
-	    { SYS_compat_30_getdents, "compat" },
-	    { SYS_compat_30_getfh, "compat" },
-	    { SYS_compat_30_socket, "compat" },
-	    { SYS_compat_40_mount, "compat" },
-	    { SYS_compat_50_wait4, "compat" },
-	    { SYS_compat_50_mknod, "compat" },
-	    { SYS_compat_50_setitimer, "compat" },
-	    { SYS_compat_50_getitimer, "compat" },
-	    { SYS_compat_50_select, "compat" },
-	    { SYS_compat_50_gettimeofday, "compat" },
-	    { SYS_compat_50_getrusage, "compat" },
-	    { SYS_compat_50_settimeofday, "compat" },
-	    { SYS_compat_50_utimes, "compat" },
-	    { SYS_compat_50_adjtime, "compat" },
-	    { SYS_compat_50_lfs_segwait, "compat" },
-	    { SYS_compat_50_futimes, "compat" },
-	    { SYS_compat_50_clock_gettime, "compat" },
-	    { SYS_compat_50_clock_settime, "compat" },
-	    { SYS_compat_50_clock_getres, "compat" },
-	    { SYS_compat_50_timer_settime, "compat" },
-	    { SYS_compat_50_timer_gettime, "compat" },
-	    { SYS_compat_50_nanosleep, "compat" },
-	    { SYS_compat_50___sigtimedwait, "compat" },
-	    { SYS_compat_50_mq_timedsend, "compat" },
-	    { SYS_compat_50_mq_timedreceive, "compat" },
-	    { SYS_compat_50_lutimes, "compat" },
-	    { SYS_compat_50_____semctl13, "compat" },
-	    { SYS_compat_50___msgctl13, "compat" },
-	    { SYS_compat_50___shmctl13, "compat" },
-	    { SYS_compat_50__lwp_park, "compat" },
-	    { SYS_compat_50_kevent, "compat" },
-	    { SYS_compat_50_pselect, "compat" },
-	    { SYS_compat_50_pollts, "compat" },
-	    { SYS_compat_50___stat30, "compat" },
-	    { SYS_compat_50___fstat30, "compat" },
-	    { SYS_compat_50___lstat30, "compat" },
-	    { SYS_compat_50___ntp_gettime30, "compat" },
-	    { SYS_compat_50___fhstat40, "compat" },
-	    { SYS_compat_50_aio_suspend, "compat" },
-	    { SYS_compat_60__lwp_park, "compat" },
-	    { SYS__ksem_init, "ksem" },
-	    { SYS__ksem_open, "ksem" },
-	    { SYS__ksem_unlink, "ksem" },
-	    { SYS__ksem_close, "ksem" },
-	    { SYS__ksem_post, "ksem" },
-	    { SYS__ksem_wait, "ksem" },
-	    { SYS__ksem_trywait, "ksem" },
-	    { SYS__ksem_getvalue, "ksem" },
-	    { SYS__ksem_destroy, "ksem" },
-	    { SYS__ksem_timedwait, "ksem" },
-	    { SYS_nfssvc, "nfsserver" },
-	    { SYS_afssys, "openafs" },
-	};
+
 	const struct sysent *sy;
 	const struct emul *em;
-	int code, i;
+	const struct sc_autoload *auto_list;
+	u_int code;
 
 	/*
 	 * Restart the syscall if we interrupted a module unload that
@@ -224,13 +82,14 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	 * works, retry the request.
 	 */
 	em = l->l_proc->p_emul;
-	if (em == &emul_netbsd) {
-		code = sy - em->e_sysent;
-		for (i = 0; i < __arraycount(autoload); i++) {
-			if (autoload[i].al_code != code) {
+	code = sy - em->e_sysent;
+
+	if ((auto_list = em->e_sc_autoload) != NULL)
+		for (; auto_list->al_code > 0; auto_list++) {
+			if (auto_list->al_code != code) {
 				continue;
 			}
-			if (module_autoload(autoload[i].al_module,
+			if (module_autoload(auto_list->al_module,
 			    MODULE_CLASS_ANY) != 0 ||
 			    sy->sy_call == sys_nomodule) {
 			    	break;
@@ -238,7 +97,6 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 			kernconfig_unlock();
 			return ERESTART;
 		}
-	}
 	kernconfig_unlock();
 #endif	/* MODULAR */
 
@@ -370,20 +228,27 @@ trace_is_enabled(struct proc *p)
  * a system call is actually executed.
  */
 int
-trace_enter(register_t code, const register_t *args, int narg)
+trace_enter(register_t code, const struct sysent *sy, const void *args)
 {
 	int error = 0;
+
+#ifdef KDTRACE_HOOKS
+	if (sy->sy_entry) {
+		struct emul *e = curlwp->l_proc->p_emul;
+		(*e->e_dtrace_syscall)(sy->sy_entry, code, sy, args, NULL, 0);
+	}
+#endif
 
 #ifdef SYSCALL_DEBUG
 	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
 
-	ktrsyscall(code, args, narg);
+	ktrsyscall(code, args, sy->sy_narg);
 
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED)) {
-		process_stoptrace();
+		proc_stoptrace(TRAP_SCE);
 		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
 			/* tracer will emulate syscall for us */
 			error = EJUSTRETURN;
@@ -401,10 +266,18 @@ trace_enter(register_t code, const register_t *args, int narg)
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(register_t code, register_t rval[], int error)
+trace_exit(register_t code, const struct sysent *sy, const void *args,
+    register_t rval[], int error)
 {
-#ifdef PTRACE
+#if defined(PTRACE) || defined(KDTRACE_HOOKS)
 	struct proc *p = curlwp->l_proc;
+#endif
+
+#ifdef KDTRACE_HOOKS
+	if (sy->sy_return) {
+		(*p->p_emul->e_dtrace_syscall)(sy->sy_return, code, sy, args,
+		    rval, error);
+	}
 #endif
 
 #ifdef SYSCALL_DEBUG
@@ -415,8 +288,9 @@ trace_exit(register_t code, register_t rval[], int error)
 	
 #ifdef PTRACE
 	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED|PSL_SYSCALLEMU)) ==
-	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace();
+	    (PSL_SYSCALL|PSL_TRACED)) {
+		proc_stoptrace(TRAP_SCX);
+	}
 	CLR(p->p_slflag, PSL_SYSCALLEMU);
 #endif
 }

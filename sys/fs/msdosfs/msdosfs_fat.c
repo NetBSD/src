@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.20.2.2 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.20.2.3 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.20.2.2 2013/02/25 00:29:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.20.2.3 2017/12/03 11:38:41 jdolecek Exp $");
 
 /*
  * kernel include files.
@@ -273,13 +273,25 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 		 */
 		if (cn >= (CLUST_RSRVD & pmp->pm_fatmask))
 			goto hiteof;
+
+		/*
+		 * Also stop when cluster is not in the filesystem
+		 */
+		if (cn < CLUST_FIRST || cn > pmp->pm_maxcluster) {
+			DPRINTF(("%s(cn, %lu not in %lu..%lu)\n", __func__,
+				cn, (u_long)CLUST_FIRST, pmp->pm_maxcluster));
+			if (bp)
+				brelse(bp, 0);
+			return (EINVAL);
+		}
+
 		byteoffset = FATOFS(pmp, cn);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp, 0);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, 0, &bp);
+			    0, &bp);
 			if (error) {
 				DPRINTF(("%s(bread, %d)\n", __func__, error));
 				return (error);
@@ -383,7 +395,7 @@ fc_purge(struct denode *dep, u_int frcn)
 void
 updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 {
-	int i;
+	int i, error;
 	struct buf *bpn;
 
 	DPRINTF(("%s(pmp %p, bp %p, fatbn %lu)\n", __func__, pmp, bp, fatbn));
@@ -414,7 +426,7 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 		 *      padded at the end or in the middle?
 		 */
 		if (bread(pmp->pm_devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, B_MODIFY, &bpn) != 0) {
+		    pmp->pm_BytesPerSec, B_MODIFY, &bpn) != 0) {
 			/*
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */
@@ -448,9 +460,12 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 			bpn = getblk(pmp->pm_devvp, de_bn2kb(pmp, fatbn),
 			    bp->b_bcount, 0, 0);
 			memcpy(bpn->b_data, bp->b_data, bp->b_bcount);
-			if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
-				bwrite(bpn);
-			else
+			if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT) {
+				error = bwrite(bpn);
+				if (error)
+					printf("%s: copy FAT %d (error=%d)\n",
+						 __func__, i, error);
+			} else
 				bdwrite(bpn);
 		}
 	}
@@ -458,9 +473,12 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 	/*
 	 * Write out the first (or current) FAT last.
 	 */
-	if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
-		bwrite(bp);
-	else
+	if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT) {
+		error =  bwrite(bp);
+		if (error)
+			printf("%s: write FAT (error=%d)\n",
+				__func__, error);
+	} else
 		bdwrite(bp);
 	/*
 	 * Maybe update fsinfo sector here?
@@ -583,7 +601,7 @@ fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents,
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
+	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 	    0, &bp)) != 0) {
 		return (error);
 	}
@@ -660,7 +678,7 @@ fatchain(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith)
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 		    B_MODIFY, &bp);
 		if (error) {
 			return (error);
@@ -883,7 +901,7 @@ freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 			if (bp)
 				updatefats(pmp, bp, lbn);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, B_MODIFY, &bp);
+			    B_MODIFY, &bp);
 			if (error) {
 				return (error);
 			}
@@ -956,7 +974,7 @@ fillinusemap(struct msdosfsmount *pmp)
 				brelse(bp, 0);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, 0, &bp);
+			    0, &bp);
 			if (error) {
 				return (error);
 			}

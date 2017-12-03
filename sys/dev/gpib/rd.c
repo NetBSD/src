@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.30.6.3 2014/08/20 00:03:37 tls Exp $ */
+/*	$NetBSD: rd.c,v 1.30.6.4 2017/12/03 11:37:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.30.6.3 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.30.6.4 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,14 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.30.6.3 2014/08/20 00:03:37 tls Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/gpib/gpibvar.h>
 #include <dev/gpib/cs80busvar.h>
 
 #include <dev/gpib/rdreg.h>
+
+#include "ioconf.h"
 
 #ifdef DEBUG
 int	rddebug = 0xff;
@@ -344,7 +346,8 @@ rdattach(device_t parent, device_t self, void *aux)
 
 	if (cs80describe(parent, sc->sc_slave, sc->sc_punit, &csd)) {
 		aprint_normal("\n");
-		aprint_error_dev(sc->sc_dev, "didn't respond to describe command\n");
+		aprint_error_dev(sc->sc_dev,
+		    "didn't respond to describe command\n");
 		return;
 	}
 	memset(name, 0, sizeof(name));
@@ -985,17 +988,11 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	DPRINTF(RDB_FOLLOW, ("rdioctl: sc=%p\n", sc));
 
+	error = disk_ioctl(&sc->sc_dk, dev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *lp;
-		return (0);
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = lp;
-		((struct partinfo *)data)->part =
-		    &lp->d_partitions[RDPART(dev)];
-		return (0);
-
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
@@ -1041,7 +1038,7 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 
 	memset((void *)lp, 0, sizeof(struct disklabel));
 
-	lp->d_type = DTYPE_HPIB /* DTYPE_GPIB */;
+	lp->d_type = DKTYPE_HPIB /* DKTYPE_GPIB */;
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_nsectors = rdidentinfo[type].ri_nbpt;
 	lp->d_ntracks = rdidentinfo[type].ri_ntpc;

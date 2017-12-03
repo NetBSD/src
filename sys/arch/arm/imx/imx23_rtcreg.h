@@ -1,4 +1,4 @@
-/* $Id: imx23_rtcreg.h,v 1.1.6.2 2013/02/25 00:28:27 tls Exp $ */
+/* $Id: imx23_rtcreg.h,v 1.1.6.3 2017/12/03 11:35:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 
 #define HW_RTC_BASE 0x8005C000
+#define HW_RTC_BASE_SIZE 0x2000
 
 /*
  * Real-Time Clock Control Register.

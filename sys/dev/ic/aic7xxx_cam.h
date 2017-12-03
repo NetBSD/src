@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_cam.h,v 1.4 2006/03/14 15:24:30 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_cam.h,v 1.4.110.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Data structures and definitions for the CAM system.
@@ -71,7 +71,7 @@ typedef enum {
 	CAM_REQ_INVALID = XS_DRIVER_STUFFUP,	/* CCB request was invalid */
 	CAM_PATH_INVALID,			/* Supplied Path ID is invalid */
 	CAM_SEL_TIMEOUT = XS_SELTIMEOUT,	/* Target Selection Timeout */
-	CAM_CMD_TIMEOUT,			/* Command timeout */
+	CAM_CMD_TIMEOUT = XS_TIMEOUT,		/* Command timeout */
 	CAM_SCSI_STATUS_ERROR,			/* SCSI error, look at error code in CCB */
 	CAM_SCSI_BUS_RESET = XS_RESET,		/* SCSI Bus Reset Sent/Received */
 	CAM_UNCOR_PARITY = XS_DRIVER_STUFFUP,	/* Uncorrectable parity error occurred */

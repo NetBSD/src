@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,41 +41,15 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#include "acpi.h"
-#include "accommon.h"
-#include "acapps.h"
-#include <stdio.h>
+#define DEFINE_ACPIXTRACT_GLOBALS
+#include "acpixtract.h"
 
+
+/* Local prototypes */
 
 static void
 DisplayUsage (
     void);
-
-int
-AxExtractTables (
-    char                    *InputPathname,
-    char                    *Signature,
-    unsigned int            MinimumInstances);
-
-int
-AxListTables (
-    char                    *InputPathname);
-
-
-/* Options */
-
-#define AX_EXTRACT_ALL          0
-#define AX_LIST_ALL             1
-#define AX_EXTRACT_SIGNATURE    2
-#define AX_EXTRACT_AML_TABLES   3
-
-static int          AxAction = AX_EXTRACT_AML_TABLES; /* DSDT & SSDTs */
-
-#define AX_OPTIONAL_TABLES      0
-#define AX_REQUIRED_TABLE       1
-
-#define AX_UTILITY_NAME             "ACPI Binary Table Extraction Utility"
-#define AX_SUPPORTED_OPTIONS        "ahls:v"
 
 
 /******************************************************************************
@@ -94,12 +68,15 @@ DisplayUsage (
     ACPI_USAGE_HEADER ("acpixtract [option] <InputFile>");
 
     ACPI_OPTION ("-a",                  "Extract all tables, not just DSDT/SSDT");
+    ACPI_OPTION ("-f",                  "Force extraction, even if there are errors");
     ACPI_OPTION ("-l",                  "List table summaries, do not extract");
+    ACPI_OPTION ("-m",                  "Extract multiple DSDT/SSDTs to a single file");
     ACPI_OPTION ("-s <signature>",      "Extract all tables with <signature>");
     ACPI_OPTION ("-v",                  "Display version information");
+    ACPI_OPTION ("-vd",                 "Display build date and time");
 
-    printf ("\nExtract binary ACPI tables from text acpidump output\n");
-    printf ("Default invocation extracts the DSDT and all SSDTs\n");
+    ACPI_USAGE_TEXT ("\nExtract binary ACPI tables from text acpidump output\n");
+    ACPI_USAGE_TEXT ("Default invocation extracts the DSDT and all SSDTs\n");
 }
 
 
@@ -117,11 +94,18 @@ main (
     char                    *argv[])
 {
     char                    *Filename;
+    int                     AxAction;
     int                     Status;
     int                     j;
 
 
+    Gbl_TableCount = 0;
+    Gbl_TableListHead = NULL;
+    Gbl_ForceExtraction = FALSE;
+    AxAction = AX_EXTRACT_AML_TABLES; /* Default: DSDT & SSDTs */
+
     ACPI_DEBUG_INITIALIZE (); /* For debug version only */
+    AcpiOsInitialize ();
     printf (ACPI_COMMON_SIGNON (AX_UTILITY_NAME));
 
     if (argc < 2)
@@ -132,11 +116,16 @@ main (
 
     /* Command line options */
 
-    while ((j = AcpiGetopt (argc, argv, AX_SUPPORTED_OPTIONS)) != EOF) switch (j)
+    while ((j = AcpiGetopt (argc, argv, AX_SUPPORTED_OPTIONS)) != ACPI_OPT_END) switch (j)
     {
     case 'a':
 
         AxAction = AX_EXTRACT_ALL;          /* Extract all tables found */
+        break;
+
+    case 'f':
+
+        Gbl_ForceExtraction = TRUE;           /* Ignore errors */
         break;
 
     case 'l':
@@ -144,14 +133,35 @@ main (
         AxAction = AX_LIST_ALL;             /* List tables only, do not extract */
         break;
 
+    case 'm':
+
+        AxAction = AX_EXTRACT_MULTI_TABLE;  /* Make single file for all DSDT/SSDTs */
+        break;
+
     case 's':
 
         AxAction = AX_EXTRACT_SIGNATURE;    /* Extract only tables with this sig */
         break;
 
-    case 'v': /* -v: (Version): signon already emitted, just exit */
+    case 'v':
 
-        return (0);
+        switch (AcpiGbl_Optarg[0])
+        {
+        case '^':  /* -v: (Version): signon already emitted, just exit */
+
+            exit (0);
+
+        case 'd':
+
+            printf (ACPI_COMMON_BUILD_TIME);
+            return (0);
+
+        default:
+
+            printf ("Unknown option: -v%s\n", AcpiGbl_Optarg);
+            return (-1);
+        }
+        break;
 
     case 'h':
     default:
@@ -178,9 +188,14 @@ main (
         Status = AxExtractTables (Filename, NULL, AX_OPTIONAL_TABLES);
         break;
 
+    case AX_EXTRACT_MULTI_TABLE:
+
+        Status = AxExtractToMultiAmlFile (Filename);
+        break;
+
     case AX_LIST_ALL:
 
-        Status = AxListTables (Filename);
+        Status = AxListAllTables (Filename);
         break;
 
     case AX_EXTRACT_SIGNATURE:

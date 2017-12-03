@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.66.2.1 2014/08/20 00:03:31 tls Exp $
+	$NetBSD: syscalls.master,v 1.66.2.2 2017/12/03 11:36:53 jdolecek Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -49,7 +49,7 @@
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 
-#include <machine/freebsd_machdep.h>
+#include <compat/freebsd/freebsd_machdep.h>
 
 %%
 

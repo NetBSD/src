@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.189.2.1 2014/08/20 00:03:27 tls Exp $	 */
+/* $NetBSD: machdep.c,v 1.189.2.2 2017/12/03 11:36:48 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.1 2014/08/20 00:03:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.1 2014/08/20 00:03:27 tls Exp $"
 #include <machine/nexus.h>
 #include <machine/reg.h>
 #include <machine/scb.h>
+#include <machine/leds.h>
 #include <vax/vax/gencons.h>
 
 #ifdef DDB
@@ -132,7 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.1 2014/08/20 00:03:27 tls Exp $"
 
 #include "smg.h"
 #include "ksyms.h"
-#include "leds.h"
 
 #define DEV_LEDS	13	/* minor device 13 is leds */
 

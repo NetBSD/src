@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.75.64.2 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.75.64.3 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.75.64.2 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.75.64.3 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -143,6 +143,7 @@ grfmv_attach(device_t parent, device_t self, void *aux)
 
 	memcpy(&sc->sc_slot, na->fmt, sizeof(nubus_slot));
 
+	sc->sc_dev = self;
 	sc->sc_tag = na->na_tag;
 	sc->card_id = na->drhw;
 	sc->sc_basepa = (bus_addr_t)NUBUS_SLOT2PA(na->slot);

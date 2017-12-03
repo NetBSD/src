@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.11.12.2 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: key.h,v 1.11.12.3 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -36,8 +36,6 @@
 
 #ifdef _KERNEL
 
-#include "opt_ipsec.h"
-
 struct secpolicy;
 struct secpolicyindex;
 struct ipsecrequest;
@@ -50,16 +48,23 @@ struct secasindex;
 union sockaddr_union;
 
 int key_havesp(u_int dir);
-struct secpolicy *key_allocsp(const struct secpolicyindex *, u_int,
+struct secpolicy *key_lookup_sp_byspidx(const struct secpolicyindex *, u_int,
 	const char*, int);
-struct secpolicy *key_allocsp2(u_int32_t spi, const union sockaddr_union *dst,
-	u_int8_t proto, u_int dir, const char*, int);
 struct secpolicy *key_newsp(const char*, int);
 struct secpolicy *key_gettunnel(const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
 	const struct sockaddr *, const char*, int);
 /* NB: prepend with _ for KAME IPv6 compatbility */
-void _key_freesp(struct secpolicy **, const char*, int);
+void key_init_sp(struct secpolicy *);
+void key_free_sp(struct secpolicy *);
+u_int key_sp_refcnt(const struct secpolicy *);
+void key_sp_ref(struct secpolicy *, const char*, int);
+void key_sp_unref(struct secpolicy *, const char*, int);
+void key_sa_ref(struct secasvar *, const char*, int);
+void key_sa_unref(struct secasvar *, const char*, int);
+u_int key_sa_refcnt(const struct secasvar *);
+
+void key_socksplist_add(struct secpolicy *);
 
 /*
  * Access to the SADB are interlocked with splsoftnet.  In particular,
@@ -68,37 +73,37 @@ void _key_freesp(struct secpolicy **, const char*, int);
  * occur on crypto callbacks.  Much of this could go away if
  * key_checkrequest were redone.
  */
-#define	KEY_ALLOCSP(spidx, dir)					\
-	key_allocsp(spidx, dir, __FILE__, __LINE__)
-#define	KEY_ALLOCSP2(spi, dst, proto, dir)			\
-	key_allocsp2(spi, dst, proto, dir, __FILE__, __LINE__)
+#define	KEY_LOOKUP_SP_BYSPIDX(spidx, dir)			\
+	key_lookup_sp_byspidx(spidx, dir, __func__, __LINE__)
 #define	KEY_NEWSP()						\
-	key_newsp(__FILE__, __LINE__)
+	key_newsp(__func__, __LINE__)
 #define	KEY_GETTUNNEL(osrc, odst, isrc, idst)			\
-	key_gettunnel(osrc, odst, isrc, idst, __FILE__, __LINE__)
-#define	KEY_FREESP(spp)						\
-	_key_freesp(spp, __FILE__, __LINE__)
+	key_gettunnel(osrc, odst, isrc, idst, __func__, __LINE__)
+#define	KEY_SP_UNREF(spp)					\
+	key_sp_unref(*(spp), __func__, __LINE__)
+#define	KEY_SP_REF(sp)						\
+	key_sp_ref(sp, __func__, __LINE__)
+#define KEY_SA_REF(sav)						\
+	key_sa_ref(sav, __func__, __LINE__)
+#define	KEY_SA_UNREF(psav)					\
+	key_sa_unref(*(psav), __func__, __LINE__)
 
-struct secasvar *key_allocsa(const union sockaddr_union *, 
+struct secasvar *key_lookup_sa(const union sockaddr_union *,
 		u_int, u_int32_t, u_int16_t, u_int16_t, const char*, int);
 void key_freesav(struct secasvar **, const char*, int);
+struct secasvar *key_lookup_sa_bysaidx(const struct secasindex *);
 
-#define	KEY_ALLOCSA(dst, proto, spi, sport, dport)				\
-	key_allocsa(dst, proto, spi, sport, dport,  __FILE__, __LINE__)
-#define	KEY_FREESAV(psav)					\
-	key_freesav(psav, __FILE__, __LINE__)
+#define	KEY_LOOKUP_SA(dst, proto, spi, sport, dport)		\
+	key_lookup_sa(dst, proto, spi, sport, dport,  __func__, __LINE__)
 
-void key_freeso (struct socket *);
 int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
-int key_checkrequest (struct ipsecrequest *isr, const struct secasindex *);
+int key_checkrequest(const struct ipsecrequest *, const struct secasindex *,
+    struct secasvar **);
 
 struct secpolicy *key_msg2sp (const struct sadb_x_policy *, size_t, int *);
-struct mbuf *key_sp2msg (const struct secpolicy *);
+struct mbuf *key_sp2msg(const struct secpolicy *, int);
 int key_ismyaddr (const struct sockaddr *);
-int key_cmpspidx_exactly (const struct secpolicyindex *, const struct secpolicyindex *);
-int key_cmpspidx_withmask (const struct secpolicyindex *, const struct secpolicyindex *);
 int key_spdacquire (const struct secpolicy *);
-void key_timehandler (void*);
 u_long key_random (void);
 void key_randomfill (void *, size_t);
 void key_freereg (struct socket *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11.8.1 2014/08/20 00:03:15 tls Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11.8.2 2017/12/03 11:36:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11.8.1 2014/08/20 00:03:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11.8.2 2017/12/03 11:36:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,10 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		return 0;
 	}
 
-	if (t == NEWS68K_BUS_SPACE_EIO)
+	if (t == NEWS68K_BUS_SPACE_EIO) {
 		*bshp = (bus_space_handle_t)bpa; /* XXX use tt0 mapping */
 		return 0;
+	}
 
 	return 1;
 }

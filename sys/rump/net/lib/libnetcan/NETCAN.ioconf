@@ -1,0 +1,7 @@
+#	$NetBSD: NETCAN.ioconf,v 1.2.10.2 2017/12/03 11:39:18 jdolecek Exp $
+
+ioconf		netcan
+
+include		"conf/files"
+
+pseudo-device   canloop

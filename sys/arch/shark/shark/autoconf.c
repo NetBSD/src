@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19.2.1 2012/11/20 03:01:42 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.2.2 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.2.1 2012/11/20 03:01:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.2.2 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_md.h"
 
@@ -81,7 +81,6 @@ extern void ofw_device_register(device_t, void *);
 
 extern dev_t dumpdev;
 
-void dumpconf(void);
 void isa_intr_init(void);
 
 #ifndef MEMORY_DISK_IS_ROOT

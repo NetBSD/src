@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.10.2.2 2014/08/20 00:03:30 tls Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.10.2.3 2017/12/03 11:36:51 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10.2.2 2014/08/20 00:03:30 tls Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10.2.3 2017/12/03 11:36:51 jdolecek Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10.2.2 2014/08/20 00:03:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10.2.3 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/types.h>
 
@@ -59,11 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10.2.2 2014/08/20 00:03:30 tls Exp $")
 #include <xen/hypervisor.h>
 #include <xen/xen-public/vcpu.h>
 
-#ifdef __x86_64__
 extern void ddb_ipi(struct trapframe);
-#else
-extern void ddb_ipi(int, struct trapframe);
-#endif /* __x86_64__ */
 
 static void xen_ipi_halt(struct cpu_info *, struct intrframe *);
 static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
@@ -82,12 +78,17 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 	xen_ipi_generic,
 };
 
-static void
-xen_ipi_handler(struct cpu_info *ci, struct intrframe *regs)
+static int
+xen_ipi_handler(void *arg)
 {
 	uint32_t pending;
 	int bit;
+	struct cpu_info *ci;
+	struct intrframe *regs;
 
+	ci = curcpu();
+	regs = arg;
+	
 	pending = atomic_swap_32(&ci->ci_ipis, 0);
 
 	KDASSERT((pending >> XEN_NIPIS) == 0);
@@ -102,6 +103,8 @@ xen_ipi_handler(struct cpu_info *ci, struct intrframe *regs)
 			/* NOTREACHED */
 		}
 	}
+
+	return 0;
 }
 
 /* Must be called once for every cpu that expects to send/recv ipis */
@@ -122,15 +125,16 @@ xen_ipi_init(void)
 
 	KASSERT(evtchn != -1 && evtchn < NR_EVENT_CHANNELS);
 
-	if (0 != event_set_handler(evtchn, (int (*)(void *))xen_ipi_handler,
-				   ci, IPL_HIGH, "ipi")) {
-		panic("event_set_handler(...) KPI violation\n");
+	if(intr_establish_xname(0, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
+		xen_ipi_handler, ci, true, "ipi") == NULL) {
+		panic("%s: unable to register ipi handler\n", __func__);
 		/* NOTREACHED */
 	}
 
 	hypervisor_enable_event(evtchn);
 }
 
+#ifdef DIAGNOSTIC
 static inline bool /* helper */
 valid_ipimask(uint32_t ipimask)
 {
@@ -145,6 +149,7 @@ valid_ipimask(uint32_t ipimask)
 	}
 
 }
+#endif
 
 int
 xen_send_ipi(struct cpu_info *ci, uint32_t ipimask)
@@ -252,14 +257,7 @@ xen_ipi_ddb(struct cpu_info *ci, struct intrframe *intrf)
 	tf.tf_esp = intrf->if_esp;
 	tf.tf_ss = intrf->if_ss;
 
-	/* XXX: does i386/Xen have vm86 support ?
-	tf.tf_vm86_es;
-	tf.tf_vm86_ds;
-	tf.tf_vm86_fs;
-	tf.tf_vm86_gs;
-	   :XXX */
-
-	ddb_ipi(SEL_KPL, tf);
+	ddb_ipi(tf);
 #endif
 }
 

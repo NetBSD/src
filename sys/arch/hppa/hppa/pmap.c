@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98.2.1 2014/08/20 00:03:04 tls Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98.2.2 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.2.1 2014/08/20 00:03:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.2.2 2017/12/03 11:36:16 jdolecek Exp $");
 
 #include "opt_cputype.h"
 
@@ -675,7 +675,7 @@ pmap_bootstrap(vaddr_t vstart)
 
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("%s(0x%lx)\n", __func__, vstart));
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	hppa_prot[UVM_PROT_NONE]  = TLB_AR_NA;
 	hppa_prot[UVM_PROT_READ]  = TLB_AR_R;

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.booters,v 1.17.14.1 2014/08/20 00:03:13 tls Exp $
+#	$NetBSD: Makefile.booters,v 1.17.14.2 2017/12/03 11:36:29 jdolecek Exp $
 
 NOMAN=		# defined
+NOPIE=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -66,14 +67,16 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
-STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr
+STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr \
+	-R .MIPS.abiflags  -R .gnu.attributes
 
 .elif defined(SECONDARY_PROG)
 PROG=		${SECONDARY_PROG}
 LOAD_ADDRESS=	${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_BOOTBLOCK
-SRCS+=	vers.c
-CLEANFILES+= vers.c
+
+.include "${S}/conf/newvers_stand.mk"
+
 .else
 
 .endif
@@ -106,11 +109,6 @@ SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
 LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
-
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    -N ${.CURDIR}/version "mipsco"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}

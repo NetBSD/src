@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.32 2012/07/31 15:50:31 bouyer Exp $	*/
+/*	$NetBSD: icside.c,v 1.32.2.1 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.32 2012/07/31 15:50:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.32.2.1 2017/12/03 11:35:45 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -86,7 +86,6 @@ struct icside_softc {
 	struct ata_channel *sc_chp[ICSIDE_MAX_CHANNELS];
 	struct icside_channel {
 		struct ata_channel	ic_channel;	/* generic part */
-		struct ata_queue	ic_chqueue;	/* channel queue */
 		void			*ic_ih;		/* interrupt handler */
 		struct evcnt		ic_intrcnt;	/* interrupt count */
 		u_int			ic_irqaddr;	/* interrupt flag */
@@ -270,7 +269,6 @@ icside_attach(device_t parent, device_t self, void *aux)
 
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ch_queue = &icp->ic_chqueue;
 		wdr->cmd_iot = &sc->sc_tag;
 		wdr->ctl_iot = &sc->sc_tag;
 		if (ide->modspace)
@@ -286,7 +284,7 @@ icside_attach(device_t parent, device_t self, void *aux)
 				i, i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0)
 				return;
 		}
-		wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(wdr);
 		if (bus_space_map(iot, iobase + ide->auxregs[channel],
 		    AUX_REGISTER_SPACE, 0, &wdr->ctl_ioh))
 			return;

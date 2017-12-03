@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.1.8.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.1.8.3 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.1.8.2 2014/08/20 00:04:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.1.8.3 2017/12/03 11:39:22 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -99,10 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.1.8.2 2014/08/20 00:04:44 tls Exp $"
 #include <uvm/uvm_pager.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern pid_t lfs_writer_daemon;
+extern kcondvar_t lfs_writerd_cv;
 
 static int check_dirty(struct lfs *, struct vnode *, off_t, off_t, off_t, int, int, struct vm_page **);
 
@@ -243,7 +244,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 {
 	int by_list;
 	struct vm_page *curpg = NULL; /* XXX: gcc */
-	struct vm_page *pgs[MAXBSIZE / PAGE_SIZE], *pg;
+	struct vm_page *pgs[MAXBSIZE / MIN_PAGE_SIZE], *pg;
 	off_t soff = 0; /* XXX: gcc */
 	voff_t off;
 	int i;
@@ -251,7 +252,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int any_dirty;	/* number of dirty pages */
 	int dirty;	/* number of dirty pages in a block */
 	int tdirty;
-	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
+	int pages_per_block = lfs_sb_getbsize(fs) >> PAGE_SHIFT;
 	int pagedaemon = (curlwp == uvm.pagedaemon_lwp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -278,7 +279,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			    || (curpg->flags & PG_MARKER) == 0);
 			if (pages_per_block > 1) {
 				while (curpg &&
-				    ((curpg->offset & fs->lfs_bmask) ||
+				    ((curpg->offset & lfs_sb_getbmask(fs)) ||
 				    curpg->offset >= vp->v_size ||
 				    curpg->offset >= endoffset)) {
 					curpg = TAILQ_NEXT(curpg, listq.queue);
@@ -347,7 +348,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			if (by_list) {
 				curpg = TAILQ_NEXT(curpg, listq.queue);
 			} else {
-				soff += fs->lfs_bsize;
+				soff += lfs_sb_getbsize(fs);
 			}
 			continue;
 		}
@@ -394,7 +395,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		if (by_list) {
 			curpg = TAILQ_NEXT(curpg, listq.queue);
 		} else {
-			soff += MAX(PAGE_SIZE, fs->lfs_bsize);
+			soff += MAX(PAGE_SIZE, lfs_sb_getbsize(fs));
 		}
 	}
 
@@ -465,6 +466,7 @@ lfs_putpages(void *v)
 	bool seglocked, sync, pagedaemon, reclaim;
 	struct vm_page *pg, *busypg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
+	struct mount *trans_mp;
 	int oreclaim = 0;
 	int donewriting = 0;
 #ifdef DEBUG
@@ -477,6 +479,7 @@ lfs_putpages(void *v)
 	sync = (ap->a_flags & PGO_SYNCIO) != 0;
 	reclaim = (ap->a_flags & PGO_RECLAIM) != 0;
 	pagedaemon = (curlwp == uvm.pagedaemon_lwp);
+	trans_mp = NULL;
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -486,6 +489,7 @@ lfs_putpages(void *v)
 		return 0;
 	}
 
+retry:
 	/*
 	 * If there are no pages, don't do anything.
 	 */
@@ -496,12 +500,14 @@ lfs_putpages(void *v)
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
+		if (trans_mp)
+			fstrans_done(trans_mp);
 		mutex_exit(vp->v_interlock);
 		
 		/* Remove us from paging queue, if we were on it */
 		mutex_enter(&lfs_lock);
-		if (ip->i_flags & IN_PAGING) {
-			ip->i_flags &= ~IN_PAGING;
+		if (ip->i_state & IN_PAGING) {
+			ip->i_state &= ~IN_PAGING;
 			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
 		mutex_exit(&lfs_lock);
@@ -524,7 +530,7 @@ lfs_putpages(void *v)
 	if (!sync && !reclaim &&
 	    ap->a_offlo >= ip->i_size && ap->a_offlo < blkeof) {
 		origoffset = ap->a_offlo;
-		for (off = origoffset; off < blkeof; off += fs->lfs_bsize) {
+		for (off = origoffset; off < blkeof; off += lfs_sb_getbsize(fs)) {
 			pg = uvm_pagelookup(&vp->v_uobj, off);
 			KASSERT(pg != NULL);
 			while (pg->flags & PG_BUSY) {
@@ -550,9 +556,9 @@ lfs_putpages(void *v)
 	 */
 	origoffset = ap->a_offlo;
 	origendoffset = ap->a_offhi;
-	startoffset = origoffset & ~(fs->lfs_bmask);
-	max_endoffset = (trunc_page(LLONG_MAX) >> fs->lfs_bshift)
-					       << fs->lfs_bshift;
+	startoffset = origoffset & ~(lfs_sb_getbmask(fs));
+	max_endoffset = (trunc_page(LLONG_MAX) >> lfs_sb_getbshift(fs))
+					       << lfs_sb_getbshift(fs);
 
 	if (origendoffset == 0 || ap->a_flags & PGO_ALLPAGES) {
 		endoffset = max_endoffset;
@@ -586,6 +592,33 @@ lfs_putpages(void *v)
 		return r;
 	}
 
+	if (trans_mp /* && (ap->a_flags & PGO_CLEANIT) != 0 */) {
+		if (pagedaemon) {
+			/* Pagedaemon must not sleep here. */
+			trans_mp = vp->v_mount;
+			error = fstrans_start_nowait(trans_mp);
+			if (error) {
+				mutex_exit(vp->v_interlock);
+				return error;
+			}
+		} else {
+			/*
+			 * Cannot use vdeadcheck() here as this operation
+			 * usually gets used from VOP_RECLAIM().  Test for
+			 * change of v_mount instead and retry on change.
+			 */
+			mutex_exit(vp->v_interlock);
+			trans_mp = vp->v_mount;
+			fstrans_start(trans_mp);
+			if (vp->v_mount != trans_mp) {
+				fstrans_done(trans_mp);
+				trans_mp = NULL;
+			}
+		}
+		mutex_enter(vp->v_interlock);
+		goto retry;
+	}
+
 	/* Set PGO_BUSYFAIL to avoid deadlocks */
 	ap->a_flags |= PGO_BUSYFAIL;
 
@@ -606,7 +639,8 @@ lfs_putpages(void *v)
 		if (r < 0) {
 			/* Pages are busy with another process */
 			mutex_exit(vp->v_interlock);
-			return EDEADLK;
+			error = EDEADLK;
+			goto out;
 		}
 		if (r > 0) /* Some pages are dirty */
 			break;
@@ -623,7 +657,8 @@ lfs_putpages(void *v)
 		ip->i_lfs_iflags &= ~LFSI_NO_GOP_WRITE;
 		if (r != EDEADLK) {
 			KASSERT(!mutex_owned(vp->v_interlock));
- 			return r;
+ 			error = r;
+			goto out;
 		}
 
 		/* One of the pages was busy.  Start over. */
@@ -653,15 +688,16 @@ lfs_putpages(void *v)
 	if (pagedaemon) {
 		mutex_exit(vp->v_interlock);
 		mutex_enter(&lfs_lock);
-		if (!(ip->i_flags & IN_PAGING)) {
-			ip->i_flags |= IN_PAGING;
+		if (!(ip->i_state & IN_PAGING)) {
+			ip->i_state |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
-		} 
-		wakeup(&lfs_writer_daemon);
+		}
+		cv_broadcast(&lfs_writerd_cv);
 		mutex_exit(&lfs_lock);
 		preempt();
 		KASSERT(!mutex_owned(vp->v_interlock));
-		return EWOULDBLOCK;
+		error = EWOULDBLOCK;
+		goto out;
 	}
 
 	/*
@@ -692,8 +728,11 @@ lfs_putpages(void *v)
 		mutex_enter(vp->v_interlock);
 		lfs_writer_leave(fs);
 
-		/* The flush will have cleaned out this vnode as well,
-		   no need to do more to it. */
+		/*
+		 * The flush will have cleaned out this vnode as well,
+		 *  no need to do more to it.
+		 *  XXX then why are we falling through and continuing?
+		 */
 	}
 
 	/*
@@ -723,7 +762,7 @@ lfs_putpages(void *v)
 		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
 		if (error != 0) {
 			KASSERT(!mutex_owned(vp->v_interlock));
- 			return error;
+ 			goto out;
 		}
 		mutex_enter(vp->v_interlock);
 		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
@@ -742,8 +781,12 @@ lfs_putpages(void *v)
 	 * Ensure that the partial segment is marked SS_DIROP if this
 	 * vnode is a DIROP.
 	 */
-	if (!seglocked && vp->v_uflag & VU_DIROP)
-		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
+	if (!seglocked && vp->v_uflag & VU_DIROP) {
+		SEGSUM *ssp = sp->segsum;
+
+		lfs_ss_setflags(fs, ssp,
+				lfs_ss_getflags(fs, ssp) | (SS_DIROP|SS_CONT));
+	}
 
 	/*
 	 * Loop over genfs_putpages until all pages are gathered.
@@ -783,9 +826,9 @@ lfs_putpages(void *v)
 	
 		if (error == EDEADLK || error == EAGAIN) {
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
-			      " %d ino %d off %x (seg %d)\n", error,
-			      ip->i_number, fs->lfs_offset,
-			      lfs_dtosn(fs, fs->lfs_offset)));
+			      " %d ino %d off %jx (seg %d)\n", error,
+			      ip->i_number, (uintmax_t)lfs_sb_getoffset(fs),
+			      lfs_dtosn(fs, lfs_sb_getoffset(fs))));
 
 			if (oreclaim) {
 				mutex_enter(vp->v_interlock);
@@ -793,14 +836,14 @@ lfs_putpages(void *v)
 				mutex_exit(vp->v_interlock);
 			} else {
 				if ((sp->seg_flags & SEGM_SINGLE) &&
-				    fs->lfs_curseg != fs->lfs_startseg)
+				    lfs_sb_getcurseg(fs) != fs->lfs_startseg)
 					donewriting = 1;
 			}
 		} else if (error) {
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
-			      " %d ino %d off %x (seg %d)\n", error,
-			      (int)ip->i_number, fs->lfs_offset,
-			      lfs_dtosn(fs, fs->lfs_offset)));
+			      " %d ino %d off %jx (seg %d)\n", error,
+			      (int)ip->i_number, (uintmax_t)lfs_sb_getoffset(fs),
+			      lfs_dtosn(fs, lfs_sb_getoffset(fs))));
 		}
 		/* genfs_do_putpages loses the interlock */
 #ifdef DEBUG
@@ -846,7 +889,7 @@ lfs_putpages(void *v)
 	 */
 	if (seglocked) {
 		KASSERT(!mutex_owned(vp->v_interlock));
-		return error;
+		goto out;
 	}
 
 	/* Clean up FIP and send it to disk. */
@@ -858,8 +901,8 @@ lfs_putpages(void *v)
 	 */
 	if (origendoffset == 0 || ap->a_flags & PGO_ALLPAGES) {
 		mutex_enter(&lfs_lock);
-		if (ip->i_flags & IN_PAGING) {
-			ip->i_flags &= ~IN_PAGING;
+		if (ip->i_state & IN_PAGING) {
+			ip->i_state &= ~IN_PAGING;
 			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
 		mutex_exit(&lfs_lock);
@@ -887,6 +930,10 @@ lfs_putpages(void *v)
 		}
 		mutex_exit(vp->v_interlock);
 	}
+
+out:;
+	if (trans_mp)
+		fstrans_done(trans_mp);
 	KASSERT(!mutex_owned(vp->v_interlock));
 	return error;
 }

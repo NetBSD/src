@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.53 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.53.14.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.53 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.53.14.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1258,7 +1258,8 @@ rf_compute_workload_shift(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda)
 	d = pda->col;
 
 	/* assign column of dead disk to f */
-	for (f = 0; ((!RF_DEAD_DISK(raidPtr->Disks[f].status)) && (f < n)); f++);
+	for (f = 0; ((!RF_DEAD_DISK(raidPtr->Disks[f].status)) && (f < n)); f++)
+		continue;
 
 	RF_ASSERT(f < n);
 	RF_ASSERT(f != d);

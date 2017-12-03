@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.8.12.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.8.12.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -70,7 +70,6 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxaohci_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
-	usbd_status r;
 
 #ifdef USB_DEBUG
 	{
@@ -80,11 +79,11 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	sc->sc.iot = pxa->pxa_iot;
-	sc->sc.sc_bus.dmatag = pxa->pxa_dmat;
+	sc->sc.sc_bus.ub_dmatag = pxa->pxa_dmat;
 	sc->sc.sc_size = 0;
 	sc->sc_ih = NULL;
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	aprint_normal("\n");
 	aprint_naive("\n");
@@ -118,9 +117,9 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(sc->sc.sc_dev, "init failed, error=%d\n", r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(sc->sc.sc_dev, "init failed, error=%d\n", err);
 		goto free_intr;
 	}
 
@@ -189,7 +188,7 @@ pxaohci_power(int why, void *arg)
 	int s;
 
 	s = splhardusb();
-	sc->sc.sc_bus.use_polling++;
+	sc->sc.sc_bus.ub_usepolling++;
 	switch (why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
@@ -207,7 +206,7 @@ pxaohci_power(int why, void *arg)
 #endif
 		break;
 	}
-	sc->sc.sc_bus.use_polling--;
+	sc->sc.sc_bus.ub_usepolling--;
 	splx(s);
 }
 #endif

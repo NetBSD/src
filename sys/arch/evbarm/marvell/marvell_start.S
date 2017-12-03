@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.2.16.1 2014/08/20 00:02:55 tls Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.2.16.2 2017/12/03 11:36:06 jdolecek Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.2.16.1 2014/08/20 00:02:55 tls Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.2.16.2 2017/12/03 11:36:06 jdolecek Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -127,10 +127,10 @@ sheeva_l2_disable:
 
 #ifdef SHEEVA_L2_CACHE_WT
 	/* L2 WT Mode */
-	ldr	r2, =0xf1020128		/* CPU L2 Configuration Register */
-	ldr	r3, [r2]
-	bic	r3, r3, #0x10		/* Force Write Through */
-	str	r3, [r2]
+	ldr	r5, =0xf1020128		/* CPU L2 Configuration Register */
+	ldr	r6, [r5]
+	bic	r6, r6, #0x10		/* Force Write Through */
+	str	r6, [r5]
 #endif
 
 1:
@@ -149,16 +149,16 @@ sheeva_l2_disable:
 	adr	r6, marvell_interregs_pbase
 	ldr	r7, [r6]
 	add	r7, r7, #0x40000
-	ldr	r8, [r7]
-	bic	r8, r8, 0xff000000
-	bic	r8, r8, 0x00ff0000
+	ldr	r6, [r7]
+	bic	r6, r6, 0xff000000
+	bic	r6, r6, 0x00ff0000
 	/*
 	 * Some SoC returns ugly DeviceID.  Fixup it.
 	 */
 	adr	r5, devid
 	ldr	r5, [r5]
-	orr	r8, r8, r5, lsl #16
-	str	r8, [r7]
+	orr	r6, r6, r5, lsl #16
+	str	r6, [r7]
 	b	1f
 devid:
 	.word	MVSOC_FIXUP_DEVID
@@ -185,8 +185,13 @@ marvell_interregs_pbase:
 
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
-	mov	r0, #0
 	cmp	r8, #PJ4B
+	mcreq	p15, 0, r0, c2, c0, 1	/* Set TTB1 */
+	moveq	r1, #TTBCR_S_N_1
+	mcreq	p15, 0, r1, c2, c0, 2	/* Set TTBCR */
+	mov	r0, #0
+	mcreq	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+
 	mcreq	p15, 0, r0, c13, c0, 1	/* Set ASID to 0 */
 	mcr	p15, 0, r0, c7, c6, 0	/* Invalidate D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* Drain write-buffer */
@@ -251,8 +256,8 @@ mmu_init_table:
 	MMU_INIT(SDRAM_START, SDRAM_START,
 	    128, L1_TYPE_S | L1_S_C | L1_S_AP_KRW)
 
-	/* map VA 0xc0000000..0xc7ffffff to PA 0x00000000..0x07ffffff */
-	MMU_INIT(0xc0000000, SDRAM_START,
+	/* map VA KERNEL_BASE_EXT..KERNEL_BASE_EXT+7ffffff to PA 0x00000000..0x07ffffff */
+	MMU_INIT(KERNEL_BASE_EXT, SDRAM_START,
 	    128, L1_TYPE_S | L1_S_C | L1_S_AP_KRW)
 
 	.word	0			/* end of table */

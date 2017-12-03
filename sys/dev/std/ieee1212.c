@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.12 2009/05/12 14:46:01 cegger Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.12.22.1 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.12 2009/05/12 14:46:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.12.22.1 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,7 +554,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			/*
 			 * Text descriptors are special. They describe the
 			 * last entry they follow. So they need to be included
-			 * with it's struct and there's nothing in the spec
+			 * with its struct and there's nothing in the spec
 			 * preventing one from putting text descriptors after
 			 * directory descriptors. Also they can be a single
 			 * value or a list of them in a directory format so

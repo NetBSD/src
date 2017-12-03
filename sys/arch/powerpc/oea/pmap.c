@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86.2.3 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86.2.4 2017/12/03 11:36:37 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86.2.3 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86.2.4 2017/12/03 11:36:37 jdolecek Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86.2.3 2014/08/20 00:03:20 tls Exp $");
 #include <sys/atomic.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <machine/powerpc.h>
 #include <powerpc/bat.h>
@@ -2909,9 +2910,9 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	vsize_t size;
 	vaddr_t va;
-	paddr_t pa = 0;
-	int npgs, bank;
-	struct vm_physseg *ps;
+	paddr_t start, end, pa = 0;
+	int npgs, freelist;
+	uvm_physseg_t bank;
 
 	if (uvm.page_init_done == true)
 		panic("pmap_steal_memory: called _after_ bootstrap");
@@ -2926,11 +2927,18 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	 * PA 0 will never be among those given to UVM so we can use it
 	 * to indicate we couldn't steal any memory.
 	 */
-	for (bank = 0; bank < vm_nphysseg; bank++) {
-		ps = VM_PHYSMEM_PTR(bank);
-		if (ps->free_list == VM_FREELIST_FIRST256 && 
-		    ps->avail_end - ps->avail_start >= npgs) {
-			pa = ptoa(ps->avail_start);
+
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+
+		freelist = uvm_physseg_get_free_list(bank);
+		start = uvm_physseg_get_start(bank);
+		end = uvm_physseg_get_end(bank);
+		
+		if (freelist == VM_FREELIST_FIRST256 &&
+		    (end - start) >= npgs) {
+			pa = ptoa(start);
 			break;
 		}
 	}
@@ -2938,25 +2946,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	if (pa == 0)
 		panic("pmap_steal_memory: no approriate memory to steal!");
 
-	ps->avail_start += npgs;
-	ps->start += npgs;
-
-	/*
-	 * If we've used up all the pages in the segment, remove it and
-	 * compact the list.
-	 */
-	if (ps->avail_start == ps->end) {
-		/*
-		 * If this was the last one, then a very bad thing has occurred
-		 */
-		if (--vm_nphysseg == 0)
-			panic("pmap_steal_memory: out of memory!");
-
-		printf("pmap_steal_memory: consumed bank %d\n", bank);
-		for (; bank < vm_nphysseg; bank++, ps++) {
-			ps[0] = ps[1];
-		}
-	}
+	uvm_physseg_unplug(start, npgs);
 
 	va = (vaddr_t) pa;
 	memset((void *) va, 0, size);
@@ -2964,9 +2954,10 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 #ifdef DEBUG
 	if (pmapdebug && npgs > 1) {
 		u_int cnt = 0;
-		for (bank = 0; bank < vm_nphysseg; bank++) {
-			ps = VM_PHYSMEM_PTR(bank);
-			cnt += ps->avail_end - ps->avail_start;
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+		cnt += uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank);
 		}
 		printf("pmap_steal_memory: stole %u (total %u) pages (%u left)\n",
 		    npgs, pmap_pages_stolen, cnt);
@@ -3133,6 +3124,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
             (void)pmap_pte_insert(ptegidx, &pte);
         }
     }
+    va_end(ap);
 
     TLBSYNC();
     SYNC();
@@ -3445,15 +3437,18 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 #ifdef DEBUG
 	if (pmapdebug & PMAPDEBUG_BOOT) {
 		u_int cnt;
-		int bank;
+		uvm_physseg_t bank;
 		char pbuf[9];
-		for (cnt = 0, bank = 0; bank < vm_nphysseg; bank++) {
-			cnt += VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start;
+		for (cnt = 0, bank = uvm_physseg_get_first();
+		     uvm_physseg_valid_p(bank);
+		     bank = uvm_physseg_get_next(bank)) {
+			cnt += uvm_physseg_get_avail_end(bank) -
+			    uvm_physseg_get_avail_start(bank);
 			printf("pmap_bootstrap: vm_physmem[%d]=%#" _PRIxpa "-%#" _PRIxpa "/%#" _PRIxpa "\n",
 			    bank,
-			    ptoa(VM_PHYSMEM_PTR(bank)->avail_start),
-			    ptoa(VM_PHYSMEM_PTR(bank)->avail_end),
-			    ptoa(VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start));
+			    ptoa(uvm_physseg_get_avail_start(bank)),
+			    ptoa(uvm_physseg_get_avail_end(bank)),
+			    ptoa(uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank)));
 		}
 		format_bytes(pbuf, sizeof(pbuf), ptoa((u_int64_t) cnt));
 		printf("pmap_bootstrap: UVM memory = %s (%u pages)\n",

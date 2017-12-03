@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.booters,v 1.7.12.1 2014/08/20 00:03:28 tls Exp $
+#	$NetBSD: Makefile.booters,v 1.7.12.2 2017/12/03 11:36:49 jdolecek Exp $
 
+NOPIE=	# defined
+NOSSP=	# defined
 S?=	${.CURDIR}/../../../..
 
 CFLAGS+= -ffreestanding

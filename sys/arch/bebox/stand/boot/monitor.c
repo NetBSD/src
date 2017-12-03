@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.9.42.1 2014/08/20 00:02:50 tls Exp $	*/
+/*	$NetBSD: monitor.c,v 1.9.42.2 2017/12/03 11:35:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ db_monitor(void)
 
 	while (1) {
 		printf("db> ");
-		gets(line);
+		kgets(line, sizeof(line));
 
 		flag = 0;
 		for (p = line, argc = 0; *p != '\0'; p++) {

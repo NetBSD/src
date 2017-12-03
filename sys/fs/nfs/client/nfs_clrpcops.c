@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clrpcops.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: nfs_clrpcops.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clrpcops.c 245977 2013-01-27 09:34:25Z kib "); */
-__RCSID("$NetBSD: nfs_clrpcops.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clrpcops.c 298788 2016-04-29 16:07:25Z pfg "); */
+__RCSID("$NetBSD: nfs_clrpcops.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 /*
  * Rpc op calls, generally called from the vnode op calls or through the
@@ -45,9 +45,18 @@ __RCSID("$NetBSD: nfs_clrpcops.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
  */
 
 #ifndef APPLEKEXT
+#ifdef _KERNEL_OPT
 #include "opt_inet6.h"
+#endif
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
+#include <sys/sysctl.h>
+
+SYSCTL_DECL(_vfs_nfs);
+
+static int	nfsignore_eexist = 0;
+SYSCTL_INT(_vfs_nfs, OID_AUTO, ignore_eexist, CTLFLAG_RW,
+    &nfsignore_eexist, 0, "NFS ignore EEXIST replies for mkdir/symlink");
 
 /*
  * Global variables
@@ -482,7 +491,7 @@ nfsrpc_openrpc(struct nfsmount *nmp, vnode_t vp, u_int8_t *nfhp, int fhlen,
 				default:
 					error = NFSERR_BADXDR;
 					goto nfsmout;
-				};
+				}
 			} else {
 				ndp->nfsdl_flags = NFSCLDL_READ;
 			}
@@ -539,8 +548,10 @@ nfsrpc_openrpc(struct nfsmount *nmp, vnode_t vp, u_int8_t *nfhp, int fhlen,
 			    (void) nfs_catnap(PZERO, ret, "nfs_open2");
 		    } while (ret == NFSERR_DELAY);
 		    if (ret) {
-			if (ndp != NULL)
+			if (ndp != NULL) {
 				FREE((caddr_t)ndp, M_NFSCLDELEG);
+				ndp = NULL;
+			}
 			if (ret == NFSERR_STALECLIENTID ||
 			    ret == NFSERR_STALEDONTRECOVER ||
 			    ret == NFSERR_BADSESSION)
@@ -822,6 +833,7 @@ nfsrpc_setclient(struct nfsmount *nmp, struct nfsclclient *clp, int reclaim,
 	u_int32_t lease;
 	static u_int32_t rev = 0;
 	struct nfsclds *dsp, *ndsp, *tdsp;
+	struct in6_addr a6;
 
 	if (nfsboottime.tv_sec == 0)
 		NFSSETBOOTTIME(nfsboottime);
@@ -882,7 +894,7 @@ nfsrpc_setclient(struct nfsmount *nmp, struct nfsclclient *clp, int reclaim,
 	*tl = txdr_unsigned(NFS_CALLBCKPROG);
 	callblen = strlen(nfsv4_callbackaddr);
 	if (callblen == 0)
-		cp = nfscl_getmyip(nmp, &isinet6);
+		cp = nfscl_getmyip(nmp, &a6, &isinet6);
 	if (nfscl_enablecallb && nfs_numnfscbd > 0 &&
 	    (callblen > 0 || cp != NULL)) {
 		port = htons(nfsv4_cbport);
@@ -1240,14 +1252,23 @@ nfsrpc_lookup(vnode_t dvp, char *name, int len, struct ucred *cred,
 		}
 		if (nd->nd_flag & ND_NFSV3)
 		    error = nfscl_postop_attr(nd, dnap, dattrflagp, stuff);
+		else if ((nd->nd_flag & (ND_NFSV4 | ND_NOMOREDATA)) ==
+		    ND_NFSV4) {
+			/* Load the directory attributes. */
+			error = nfsm_loadattr(nd, dnap);
+			if (error == 0)
+				*dattrflagp = 1;
+		}
 		goto nfsmout;
 	}
 	if ((nd->nd_flag & (ND_NFSV4 | ND_NOMOREDATA)) == ND_NFSV4) {
-		NFSM_DISSECT(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-		if (*(tl + 1)) {
-			nd->nd_flag |= ND_NOMOREDATA;
+		/* Load the directory attributes. */
+		error = nfsm_loadattr(nd, dnap);
+		if (error != 0)
 			goto nfsmout;
-		}
+		*dattrflagp = 1;
+		/* Skip over the Lookup and GetFH operation status values. */
+		NFSM_DISSECT(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
 	}
 	error = nfsm_getfh(nd, nfhpp);
 	if (error)
@@ -1684,7 +1705,7 @@ nfsrpc_writerpc(vnode_t vp, struct uio *uiop, int *iomode,
 				commit = fxdr_unsigned(int, *tl++);
 
 				/*
-				 * Return the lowest committment level
+				 * Return the lowest commitment level
 				 * obtained by any of the RPCs.
 				 */
 				if (committed == NFSWRITE_FILESYNC)
@@ -1717,7 +1738,7 @@ nfsrpc_writerpc(vnode_t vp, struct uio *uiop, int *iomode,
 		}
 		if (error)
 			goto nfsmout;
-		NFSWRITERPC_SETTIME(wccflag, np, (nd->nd_flag & ND_NFSV4));
+		NFSWRITERPC_SETTIME(wccflag, np, nap, (nd->nd_flag & ND_NFSV4));
 		mbuf_freem(nd->nd_mrep);
 		nd->nd_mrep = NULL;
 		tsiz -= len;
@@ -1949,6 +1970,7 @@ nfsrpc_createv4(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 	struct nfsmount *nmp;
 
 	nmp = VFSTONFS(dvp->v_mount);
+	np = VTONFS(dvp);
 	*unlockedp = 0;
 	*nfhpp = NULL;
 	*dpp = NULL;
@@ -1998,17 +2020,22 @@ nfsrpc_createv4(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 	NFSM_BUILD(tl, u_int32_t *, NFSX_UNSIGNED);
 	*tl = txdr_unsigned(NFSV4OPEN_CLAIMNULL);
 	(void) nfsm_strtom(nd, name, namelen);
+	/* Get the new file's handle and attributes. */
 	NFSM_BUILD(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(NFSV4OP_GETFH);
 	*tl = txdr_unsigned(NFSV4OP_GETATTR);
 	NFSGETATTR_ATTRBIT(&attrbits);
 	(void) nfsrv_putattrbit(nd, &attrbits);
+	/* Get the directory's post-op attributes. */
+	NFSM_BUILD(tl, u_int32_t *, NFSX_UNSIGNED);
+	*tl = txdr_unsigned(NFSV4OP_PUTFH);
+	(void) nfsm_fhtom(nd, np->n_fhp->nfh_fh, np->n_fhp->nfh_len, 0);
+	NFSM_BUILD(tl, u_int32_t *, NFSX_UNSIGNED);
+	*tl = txdr_unsigned(NFSV4OP_GETATTR);
+	(void) nfsrv_putattrbit(nd, &attrbits);
 	error = nfscl_request(nd, dvp, p, cred, dstuff);
 	if (error)
 		return (error);
-	error = nfscl_wcc_data(nd, dvp, dnap, dattrflagp, NULL, dstuff);
-	if (error)
-		goto nfsmout;
 	NFSCL_INCRSEQID(owp->nfsow_seqid, nd);
 	if (nd->nd_repstat == 0) {
 		NFSM_DISSECT(tl, u_int32_t *, NFSX_STATEID +
@@ -2063,7 +2090,7 @@ nfsrpc_createv4(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 				default:
 					error = NFSERR_BADXDR;
 					goto nfsmout;
-				};
+				}
 			} else {
 				dp->nfsdl_flags = NFSCLDL_READ;
 			}
@@ -2080,6 +2107,13 @@ nfsrpc_createv4(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 		error = nfscl_mtofh(nd, nfhpp, nnap, attrflagp);
 		if (error)
 			goto nfsmout;
+		/* Get rid of the PutFH and Getattr status values. */
+		NFSM_DISSECT(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
+		/* Load the directory attributes. */
+		error = nfsm_loadattr(nd, dnap);
+		if (error)
+			goto nfsmout;
+		*dattrflagp = 1;
 		if (dp != NULL && *attrflagp) {
 			dp->nfsdl_change = nnap->na_filerev;
 			dp->nfsdl_modtime = nnap->na_mtime;
@@ -2123,7 +2157,6 @@ nfsrpc_createv4(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 		if ((rflags & NFSV4OPEN_RESULTCONFIRM) &&
 		    (owp->nfsow_clp->nfsc_flags & NFSCLFLAGS_GOTDELEG) &&
 		    !error && dp == NULL) {
-		    np = VTONFS(dvp);
 		    do {
 			ret = nfsrpc_openrpc(VFSTONFS(vnode_mount(dvp)), dvp,
 			    np->n_fhp->nfh_fh, np->n_fhp->nfh_len,
@@ -2134,8 +2167,10 @@ nfsrpc_createv4(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 			    (void) nfs_catnap(PZERO, ret, "nfs_crt2");
 		    } while (ret == NFSERR_DELAY);
 		    if (ret) {
-			if (dp != NULL)
+			if (dp != NULL) {
 				FREE((caddr_t)dp, M_NFSCLDELEG);
+				dp = NULL;
+			}
 			if (ret == NFSERR_STALECLIENTID ||
 			    ret == NFSERR_STALEDONTRECOVER ||
 			    ret == NFSERR_BADSESSION)
@@ -2507,8 +2542,12 @@ nfsrpc_symlink(vnode_t dvp, char *name, int namelen, char *target,
 	mbuf_freem(nd->nd_mrep);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
+	 * Only do this if vfs.nfs.ignore_eexist is set.
+	 * Never do this for NFSv4.1 or later minor versions, since sessions
+	 * should guarantee "exactly once" RPC semantics.
 	 */
-	if (error == EEXIST)
+	if (error == EEXIST && nfsignore_eexist != 0 && (!NFSHASNFSV4(nmp) ||
+	    nmp->nm_minorvers == 0))
 		error = 0;
 	return (error);
 }
@@ -2526,10 +2565,14 @@ nfsrpc_mkdir(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 	struct nfsrv_descript nfsd, *nd = &nfsd;
 	nfsattrbit_t attrbits;
 	int error = 0;
+	struct nfsfh *fhp;
+	struct nfsmount *nmp;
 
 	*nfhpp = NULL;
 	*attrflagp = 0;
 	*dattrflagp = 0;
+	nmp = VFSTONFS(vnode_mount(dvp));
+	fhp = VTONFS(dvp)->n_fhp;
 	if (namelen > NFS_MAXNAMLEN)
 		return (ENAMETOOLONG);
 	NFSCL_REQSTART(nd, NFSPROC_MKDIR, dvp);
@@ -2545,6 +2588,12 @@ nfsrpc_mkdir(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 		*tl++ = txdr_unsigned(NFSV4OP_GETFH);
 		*tl = txdr_unsigned(NFSV4OP_GETATTR);
 		(void) nfsrv_putattrbit(nd, &attrbits);
+		NFSM_BUILD(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = txdr_unsigned(NFSV4OP_PUTFH);
+		(void) nfsm_fhtom(nd, fhp->nfh_fh, fhp->nfh_len, 0);
+		NFSM_BUILD(tl, u_int32_t *, NFSX_UNSIGNED);
+		*tl = txdr_unsigned(NFSV4OP_GETATTR);
+		(void) nfsrv_putattrbit(nd, &attrbits);
 	}
 	error = nfscl_request(nd, dvp, p, cred, dstuff);
 	if (error)
@@ -2558,6 +2607,14 @@ nfsrpc_mkdir(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 		}
 		if (!error)
 			error = nfscl_mtofh(nd, nfhpp, nnap, attrflagp);
+		if (error == 0 && (nd->nd_flag & ND_NFSV4) != 0) {
+			/* Get rid of the PutFH and Getattr status values. */
+			NFSM_DISSECT(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
+			/* Load the directory attributes. */
+			error = nfsm_loadattr(nd, dnap);
+			if (error == 0)
+				*dattrflagp = 1;
+		}
 	}
 	if ((nd->nd_flag & ND_NFSV3) && !error)
 		error = nfscl_wcc_data(nd, dvp, dnap, dattrflagp, NULL, dstuff);
@@ -2566,9 +2623,13 @@ nfsrpc_mkdir(vnode_t dvp, char *name, int namelen, struct vattr *vap,
 nfsmout:
 	mbuf_freem(nd->nd_mrep);
 	/*
-	 * Kludge: Map EEXIST => 0 assuming that you have a reply to a retry.
+	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
+	 * Only do this if vfs.nfs.ignore_eexist is set.
+	 * Never do this for NFSv4.1 or later minor versions, since sessions
+	 * should guarantee "exactly once" RPC semantics.
 	 */
-	if (error == EEXIST)
+	if (error == EEXIST && nfsignore_eexist != 0 && (!NFSHASNFSV4(nmp) ||
+	    nmp->nm_minorvers == 0))
 		error = 0;
 	return (error);
 }
@@ -2619,7 +2680,7 @@ nfsrpc_rmdir(vnode_t dvp, char *name, int namelen, struct ucred *cred,
  * 2 - pass the opaque directory offset cookies up into userland
  *     and let the libc functions deal with them, via the system call
  * 3 - return them to userland in the "struct dirent", so future versions
- *     of libc can use them and do whatever is necessary to amke things work
+ *     of libc can use them and do whatever is necessary to make things work
  *     above these rpc calls, in the meantime
  * For now, I do #3 by "hiding" the directory offset cookies after the
  * d_name field in struct dirent. This is space inside d_reclen that
@@ -2704,14 +2765,6 @@ nfsrpc_readdir(vnode_t vp, struct uio *uiop, nfsuint64 *cookiep,
 		 * Joy, oh joy. For V4 we get to hand craft '.' and '..'.
 		 */
 		if (uiop->uio_offset == 0) {
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-			error = VOP_GETATTR(vp, &nfsva.na_vattr, cred);
-#else
-			error = VOP_GETATTR(vp, &nfsva.na_vattr, cred, p);
-#endif
-			if (error)
-			    return (error);
-			dotfileid = nfsva.na_fileid;
 			NFSCL_REQSTART(nd, NFSPROC_LOOKUPP, vp);
 			NFSM_BUILD(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV4OP_GETFH);
@@ -2720,9 +2773,16 @@ nfsrpc_readdir(vnode_t vp, struct uio *uiop, nfsuint64 *cookiep,
 			error = nfscl_request(nd, vp, p, cred, stuff);
 			if (error)
 			    return (error);
+			dotfileid = 0;	/* Fake out the compiler. */
+			if ((nd->nd_flag & ND_NOMOREDATA) == 0) {
+			    error = nfsm_loadattr(nd, &nfsva);
+			    if (error != 0)
+				goto nfsmout;
+			    dotfileid = nfsva.na_fileid;
+			}
 			if (nd->nd_repstat == 0) {
-			    NFSM_DISSECT(tl, u_int32_t *, 3*NFSX_UNSIGNED);
-			    len = fxdr_unsigned(int, *(tl + 2));
+			    NFSM_DISSECT(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
+			    len = fxdr_unsigned(int, *(tl + 4));
 			    if (len > 0 && len <= NFSX_V4FHMAX)
 				error = nfsm_advance(nd, NFSM_RNDUP(len), -1);
 			    else
@@ -2871,7 +2931,7 @@ nfsrpc_readdir(vnode_t vp, struct uio *uiop, nfsuint64 *cookiep,
 		if (!more_dirs)
 			tryformoredirs = 0;
 	
-		/* loop thru the dir entries, doctoring them to 4bsd form */
+		/* loop through the dir entries, doctoring them to 4bsd form */
 		while (more_dirs && bigenough) {
 			if (nd->nd_flag & ND_NFSV4) {
 				NFSM_DISSECT(tl, u_int32_t *, 3*NFSX_UNSIGNED);
@@ -3131,15 +3191,6 @@ nfsrpc_readdirplus(vnode_t vp, struct uio *uiop, nfsuint64 *cookiep,
 		 * Joy, oh joy. For V4 we get to hand craft '.' and '..'.
 		 */
 		if (uiop->uio_offset == 0) {
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-			error = VOP_GETATTR(vp, &nfsva.na_vattr, cred);
-#else
-			error = VOP_GETATTR(vp, &nfsva.na_vattr, cred, p);
-#endif
-			if (error)
-			    return (error);
-			dctime = nfsva.na_ctime;
-			dotfileid = nfsva.na_fileid;
 			NFSCL_REQSTART(nd, NFSPROC_LOOKUPP, vp);
 			NFSM_BUILD(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV4OP_GETFH);
@@ -3148,9 +3199,17 @@ nfsrpc_readdirplus(vnode_t vp, struct uio *uiop, nfsuint64 *cookiep,
 			error = nfscl_request(nd, vp, p, cred, stuff);
 			if (error)
 			    return (error);
+			dotfileid = 0;	/* Fake out the compiler. */
+			if ((nd->nd_flag & ND_NOMOREDATA) == 0) {
+			    error = nfsm_loadattr(nd, &nfsva);
+			    if (error != 0)
+				goto nfsmout;
+			    dctime = nfsva.na_ctime;
+			    dotfileid = nfsva.na_fileid;
+			}
 			if (nd->nd_repstat == 0) {
-			    NFSM_DISSECT(tl, u_int32_t *, 3*NFSX_UNSIGNED);
-			    len = fxdr_unsigned(int, *(tl + 2));
+			    NFSM_DISSECT(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
+			    len = fxdr_unsigned(int, *(tl + 4));
 			    if (len > 0 && len <= NFSX_V4FHMAX)
 				error = nfsm_advance(nd, NFSM_RNDUP(len), -1);
 			    else
@@ -3287,7 +3346,7 @@ nfsrpc_readdirplus(vnode_t vp, struct uio *uiop, nfsuint64 *cookiep,
 		if (!more_dirs)
 			tryformoredirs = 0;
 	
-		/* loop thru the dir entries, doctoring them to 4bsd form */
+		/* loop through the dir entries, doctoring them to 4bsd form */
 		while (more_dirs && bigenough) {
 			NFSM_DISSECT(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 			if (nd->nd_flag & ND_NFSV4) {
@@ -3643,7 +3702,7 @@ nfsrpc_advlock(vnode_t vp, off_t size, int op, struct flock *fl,
 		break;
 	default:
 		return (EINVAL);
-	};
+	}
 	if (start < 0)
 		return (EINVAL);
 	if (fl->l_len != 0) {
@@ -5727,7 +5786,7 @@ nfsrpc_writeds(vnode_t vp, struct uio *uiop, int *iomode, int *must_commit,
 		commit = fxdr_unsigned(int, *tl++);
 
 		/*
-		 * Return the lowest committment level
+		 * Return the lowest commitment level
 		 * obtained by any of the RPCs.
 		 */
 		if (committed == NFSWRITE_FILESYNC)

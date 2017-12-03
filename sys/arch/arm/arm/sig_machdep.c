@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.43.2.3 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.43.2.4 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43.2.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43.2.4 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/cpu.h>
@@ -184,6 +184,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_PC]   = tf->tf_pc;
 	gr[_REG_CPSR] = tf->tf_spsr;
 
+	KASSERTMSG(VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]), "%#x %#x",
+	    gr[_REG_PC], gr[_REG_CPSR]);
+
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
 	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
@@ -196,6 +199,11 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
 	*flags |= _UC_TLSBASE;
+
+#ifdef __PROG32
+	const struct pcb * const pcb = lwp_getpcb(l);
+	mcp->_mc_user_tpid = pcb->pcb_user_pid_rw;
+#endif
 }
 
 int
@@ -264,6 +272,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
+
+#ifdef __PROG32
+	struct pcb * const pcb = lwp_getpcb(l);
+	pcb->pcb_user_pid_rw = mcp->_mc_user_tpid;
+#endif
 
 	return (0);
 }

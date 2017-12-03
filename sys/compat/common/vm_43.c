@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.18 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.18.14.1 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.18 2011/02/08 20:20:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.18.14.1 2017/12/03 11:36:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,12 +110,21 @@ compat_43_sys_mmap(struct lwp *l, const struct compat_43_sys_mmap_args *uap, reg
 	SCARG(&nargs, flags) = 0;
 	if (SCARG(uap, flags) & OMAP_ANON)
 		SCARG(&nargs, flags) |= MAP_ANON;
-	if (SCARG(uap, flags) & OMAP_COPY)
-		SCARG(&nargs, flags) |= MAP_COPY;
 	if (SCARG(uap, flags) & OMAP_SHARED)
 		SCARG(&nargs, flags) |= MAP_SHARED;
 	else
 		SCARG(&nargs, flags) |= MAP_PRIVATE;
+	if (SCARG(uap, flags) & OMAP_COPY) {
+		SCARG(&nargs, flags) |= MAP_PRIVATE;
+#if defined(COMPAT_10) && defined(__i386__)
+		/*
+		 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
+		 * and ld.so did not turn it on. We take care of this on amd64
+		 * in compat32.
+		 */
+		SCARG(&nargs, prot) |= PROT_EXEC;
+#endif
+	}
 	if (SCARG(uap, flags) & OMAP_FIXED)
 		SCARG(&nargs, flags) |= MAP_FIXED;
 	if (SCARG(uap, flags) & OMAP_INHERIT)

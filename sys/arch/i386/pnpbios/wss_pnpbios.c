@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.20 2011/07/01 18:14:15 dyoung Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.20.12.1 2017/12/03 11:36:18 jdolecek Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.20 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.20.12.1 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,20 +88,18 @@ wss_pnpbios_hints_index(const char *idstr)
 }
 
 int
-wss_pnpbios_match(device_t parent,
-    cfdata_t match, void *aux)
+wss_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
 	if (wss_pnpbios_hints_index(aa->idstr) == -1)
-		return (0);
+		return 0;
 
-	return (2); /* beat sb */
+	return 2; /* beat sb */
 }
 
 void
-wss_pnpbios_attach(device_t parent, device_t self,
-    void *aux)
+wss_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
 	struct wss_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
@@ -115,16 +113,17 @@ wss_pnpbios_attach(device_t parent, device_t self,
 	static u_char dma_bits[4] = {1, 2, 0, 3};
 #endif
 
+	aprint_naive("\n");
 	wph = &wss_pnpbios_hints[wss_pnpbios_hints_index(aa->idstr)];
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, wph->io_region_idx_ad1848,
 			   &sc->sc_iot, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 	if (pnpbios_io_map(aa->pbt, aa->resc, wph->io_region_idx_opl,
 			   &sc->sc_iot, &sc->sc_opl_ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -132,16 +131,16 @@ wss_pnpbios_attach(device_t parent, device_t self,
 	sc->wss_ic = aa->ic;
 
 	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->wss_irq, NULL)) {
-		printf(": can't get IRQ\n");
+		aprint_error(": can't get IRQ\n");
 		return;
 	}
 
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &sc->wss_playdrq)) {
-		printf(": can't get DMA channel\n");
+		aprint_error(": can't get DMA channel\n");
 		return;
 	}
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->wss_recdrq)) {
-		printf(": can't get recording DMA channel");
+		aprint_error(": can't get recording DMA channel");
 		sc->wss_recdrq = sc->wss_playdrq;
 	}
 
@@ -149,10 +148,11 @@ wss_pnpbios_attach(device_t parent, device_t self,
 	bus_space_subregion(sc->sc_iot, sc->sc_ioh, wph->offset_ad1848, 4,
 			    &sc->sc_ad1848.sc_ad1848.sc_ioh);
 
-	printf("\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
 
-	printf("%s", device_xname(self));
+	aprint_naive("%s", device_xname(self));
+	aprint_normal("%s", device_xname(self));
 
 	if (!ad1848_isa_probe(&sc->sc_ad1848)) {
 		aprint_error_dev(self, "ad1848 probe failed\n");
@@ -163,7 +163,7 @@ wss_pnpbios_attach(device_t parent, device_t self,
 #if 0
 	/* XXX recdrq */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, WSS_CONFIG,
-		      (interrupt_bits[sc->wss_irq] | dma_bits[sc->wss_playdrq]));
+	    (interrupt_bits[sc->wss_irq] | dma_bits[sc->wss_playdrq]));
 #endif
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.69.2.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: cons.c,v 1.69.2.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.69.2.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.69.2.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.69.2.1 2014/08/20 00:03:35 tls Exp $");
 #include <sys/mutex.h>
 
 #include <dev/cons.h>
+
+#include "nullcons.h"
 
 dev_type_open(cnopen);
 dev_type_close(cnclose);
@@ -104,6 +106,11 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	 * open() calls.
 	 */
 	cndev = cn_tab->cn_dev;
+#if NNULLCONS > 0
+	if (cndev == NODEV) {
+		nullconsattach(0);
+	}
+#else /* NNULLCONS > 0 */
 	if (cndev == NODEV) {
 		/*
 		 * This is most likely an error in the console attach
@@ -112,6 +119,7 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 */
 		panic("cnopen: no console device");
 	}
+#endif /* NNULLCONS > 0 */
 	if (dev == cndev) {
 		/*
 		 * This causes cnopen() to be called recursively, which
@@ -313,6 +321,21 @@ cnputc(int c)
 	if (cn_tab == NULL)
 		return;
 
+/*
+ * XXX
+ * for some reason this causes ARCS firmware to output an endless stream of
+ * whitespaces with n32 kernels, so use the pre-1.74 code for now until I can
+ * figure out why this happens
+ */
+#ifndef sgimips
+	if (c) {
+		if (c == '\n') {
+			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+			docritpollhooks();
+		}
+		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
+	}
+#else
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 		if (c == '\n') {
@@ -320,6 +343,7 @@ cnputc(int c)
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
 		}
 	}
+#endif
 }
 
 void

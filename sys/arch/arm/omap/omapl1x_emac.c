@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.1.10.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.1.10.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -621,7 +621,7 @@ emac_rx_desc_process (struct emac_softc *sc, struct emac_channel *chan)
 	bus_addr_t desc_offset;
 	struct mbuf *mb;
 	bus_addr_t desc_base;
-	u_int buf_len, off;
+	u_int buf_len;
 
 	if ((entry = SIMPLEQ_FIRST(&chan->inuse_head)) == NULL) {
 		return ENOENT;
@@ -646,19 +646,16 @@ emac_rx_desc_process (struct emac_softc *sc, struct emac_channel *chan)
 			     "Received packet spanning multiple buffers\n");
 	}
 
-	off = __SHIFTOUT(desc->len, (uint32_t)__BITS(26, 16));
+	//off = __SHIFTOUT(desc->len, (uint32_t)__BITS(26, 16));
 	buf_len = __SHIFTOUT(desc->mode, (uint32_t)__BITS(10,  0));
 
 	if (desc->mode & PASSCRC)
 		buf_len -= ETHER_CRC_LEN;
 
 	bus_dmamap_unload(sc->sc_buft, map);
-	mb->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(mb, ifp);
 	mb->m_pkthdr.len = mb->m_len = buf_len;
-	ifp->if_ipackets++;
-
-	bpf_mtap(ifp, mb);
-	(*ifp->if_input)(ifp, mb);
+	if_percpuq_enqueue(ifp->if_percpuq, mb);
 
 	entry->m = NULL;
 
@@ -782,7 +779,6 @@ emac_soft_intr (void *arg)
 	struct emac_softc * const sc = arg;
 	struct ifnet * const ifp = &sc->sc_if;
 	u_int soft_flags = atomic_swap_uint(&sc->sc_soft_flags, 0);
-	u_int tx_pkts_freed, rx_pkts_freed;
 
 	if (soft_flags & SOFT_RESET) {
 		int s = splnet();
@@ -797,15 +793,13 @@ emac_soft_intr (void *arg)
 
 	/* We are working on channel 0 */
 	if (mask & TX0PEND) {
-		tx_pkts_freed = emac_free_descs(sc, &sc->tx_chan,
-						EMAC_TX_DESC_FREE);
+		emac_free_descs(sc, &sc->tx_chan, EMAC_TX_DESC_FREE);
 	}
 
 	EMAC_WRITE(sc, MACEOIVECTOR, C0TXDONE);
 
 	if (mask & RX0PEND) {
-		rx_pkts_freed = emac_free_descs(sc, &sc->rx_chan,
-						EMAC_RX_DESC_FREE);
+		emac_free_descs(sc, &sc->rx_chan, EMAC_RX_DESC_FREE);
 	}
 
 	EMAC_WRITE(sc, MACEOIVECTOR, C0RXDONE);
@@ -1296,12 +1290,6 @@ emac_attach (device_t parent, device_t self, void *aux)
 		}
 
 		entry = kmem_zalloc(sizeof(*entry), KM_SLEEP);
-		if (!entry) {
-			aprint_error_dev(self, "Can't alloc txmap entry\n");
-			bus_dmamap_destroy(sc->sc_desct, dmamap);
-			goto fail;
-		}
-
 		entry->dmamap = dmamap;
 		entry->bd = sc->descs.tx_desc[i];
 		entry->m = NULL;
@@ -1320,12 +1308,6 @@ emac_attach (device_t parent, device_t self, void *aux)
 		}
 
 		entry = kmem_zalloc(sizeof(*entry), KM_SLEEP);
-		if (!entry) {
-			aprint_error_dev(self, "Can't alloc rxmap entry\n");
-			bus_dmamap_destroy(sc->sc_buft, dmamap);
-			goto fail;
-		}
-
 		entry->dmamap = dmamap;
 		entry->bd = sc->descs.rx_desc[i];
 		entry->m = NULL;

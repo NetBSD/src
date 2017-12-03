@@ -1,6 +1,7 @@
-#	$NetBSD: files.m68k4k,v 1.2 1997/07/20 20:35:42 pk Exp $
+#	$NetBSD: files.m68k4k,v 1.2.202.1 2017/12/03 11:36:55 jdolecek Exp $
 #
 # Config file description for m68k4k compat code.  Included by
 # sys/arch/m68k/conf/files.m68k
 
+define	compat_m68k4k
 file	compat/m68k4k/m68k4k_exec.c		compat_m68k4k

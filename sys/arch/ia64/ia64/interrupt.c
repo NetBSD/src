@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.6 2011/10/01 15:59:28 chs Exp $ */
+/* $NetBSD: interrupt.c,v 1.6.12.1 2017/12/03 11:36:20 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2011/10/01 15:59:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6.12.1 2017/12/03 11:36:20 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -361,6 +361,12 @@ ia64_dispatch_intr(void *frame, u_int vector)
 	ia64_intr_eoi((void *)(uintptr_t)vector);
 
 	return handled;
+}
+
+void
+ia64_handle_intr(void *tf)
+{
+	panic("XXX %s not implemented", __func__);
 }
 
 #ifdef DDB

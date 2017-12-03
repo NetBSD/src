@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.11.2.2 2013/06/23 06:18:39 tls Exp $	*/
-/*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
+/*	$NetBSD: ulfs_dinode.h,v 1.11.2.3 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.

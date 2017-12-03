@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __UTXFMUTEX_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -100,8 +98,8 @@ AcpiUtGetMutexObject (
     MutexNode = Handle;
     if (Pathname != NULL)
     {
-        Status = AcpiGetHandle (Handle, Pathname,
-            ACPI_CAST_PTR (ACPI_HANDLE, &MutexNode));
+        Status = AcpiGetHandle (
+            Handle, Pathname, ACPI_CAST_PTR (ACPI_HANDLE, &MutexNode));
         if (ACPI_FAILURE (Status))
         {
             return (Status);
@@ -171,6 +169,8 @@ AcpiAcquireMutex (
     return (Status);
 }
 
+ACPI_EXPORT_SYMBOL (AcpiAcquireMutex)
+
 
 /*******************************************************************************
  *
@@ -211,3 +211,5 @@ AcpiReleaseMutex (
     AcpiOsReleaseMutex (MutexObj->Mutex.OsMutex);
     return (AE_OK);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiReleaseMutex)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.49.12.1 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.49.12.1 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -719,6 +719,8 @@ pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag,
 			PCIBIOS_PRINTV((" %3d", l->irq));
 		PCIBIOS_PRINTV(("  %d   ", l->fixup_stage));
 	}
+#else
+	__USE(id);
 #endif
 	
 	/*

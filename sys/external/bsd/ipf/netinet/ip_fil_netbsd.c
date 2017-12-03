@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.2 2014/08/20 00:04:24 tls Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.3 2017/12/03 11:38:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.3.2.2 2014/08/20 00:04:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.3.2.3 2017/12/03 11:38:02 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -23,7 +23,13 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #endif
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM)
-# include "opt_ipsec.h"
+# if (__NetBSD_Version__ >= 799003000)
+#   ifdef _KERNEL_OPT
+#    include "opt_ipsec.h"
+#   endif
+# else
+#  include "opt_ipsec.h"
+# endif
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -47,6 +53,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #if (__NetBSD_Version__ >= 399002000)
 # include <sys/kauth.h>
 #endif
+#if (__NetBSD_Version__ >= 799003000)
+#include <sys/module.h>
+#include <sys/mutex.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -68,6 +78,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 # include <netinet/icmp6.h>
 # if (__NetBSD_Version__ >= 106000000)
 #  include <netinet6/nd6.h>
+# endif
+# if __NetBSD_Version__ >= 499001100
+#  include <netinet6/scope6_var.h>
 # endif
 #endif
 #include "netinet/ip_fil.h"
@@ -147,6 +160,10 @@ const struct cdevsw ipl_cdevsw = {
 	.d_flag = 0
 #endif
 };
+#if (__NetBSD_Version__ >= 799003000)
+kmutex_t ipf_ref_mutex;
+int	ipf_active;
+#endif
 
 ipf_main_softc_t ipfmain;
 
@@ -254,10 +271,13 @@ ipf_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 
 
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
-static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
 
-static int
-ipf_pfilsync(void *hdr, struct mbuf **mp, struct ifnet *ifp, int dir)
+#  if (__NetBSD_Version__ >= 799000400)
+
+static void ipf_pfilsync(void *, unsigned long, void *);
+
+static void
+ipf_pfilsync(void *hdr, unsigned long cmd, void *arg2)
 {
 	/*
 	 * The interface pointer is useless for create (we have nothing to
@@ -267,8 +287,20 @@ ipf_pfilsync(void *hdr, struct mbuf **mp, struct ifnet *ifp, int dir)
 	 * pointer, so it's not much use then, either.
 	 */
 	ipf_sync(&ipfmain, NULL);
+}
+
+#  else
+
+static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
+
+static int
+ipf_pfilsync(void *hdr, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+	ipf_sync(&ipfmain, NULL);
 	return 0;
 }
+
+#  endif
 # endif
 
 #endif /* __NetBSD_Version__ >= 105110000 */
@@ -315,6 +347,9 @@ void
 ipfilterattach(int count)
 {
 
+#if (__NetBSD_Version__ >= 799003000)
+	return;
+#else
 #if (__NetBSD_Version__ >= 599002000)
 	ipf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    ipf_listener_cb, NULL);
@@ -322,6 +357,7 @@ ipfilterattach(int count)
 
 	if (ipf_load_all() == 0)
 		(void) ipf_create_all(&ipfmain);
+#endif
 }
 
 
@@ -427,8 +463,13 @@ ipfattach(ipf_main_softc_t *softc)
 
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 	if (ph_ifsync != NULL)
+#if (__NetBSD_Version__ >= 799000400)
+		(void) pfil_add_ihook((void *)ipf_pfilsync, NULL,
+				      PFIL_IFNET, ph_ifsync);
+#else
 		(void) pfil_add_hook((void *)ipf_pfilsync, NULL,
 				     PFIL_IFNET, ph_ifsync);
+#endif
 # endif
 #endif
 
@@ -544,8 +585,13 @@ ipfdetach(ipf_main_softc_t *softc)
 # if (__NetBSD_Version__ >= 104200000)
 #  if __NetBSD_Version__ >= 105110000
 #   if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
+#    if __NetBSD_Version__ >= 799000400
+	(void) pfil_remove_ihook((void *)ipf_pfilsync, NULL,
+				PFIL_IFNET, ph_ifsync);
+#    else
 	(void) pfil_remove_hook((void *)ipf_pfilsync, NULL,
 				PFIL_IFNET, ph_ifsync);
+#    endif
 #   endif
 
 	if (ph_inet != NULL)
@@ -724,7 +770,7 @@ ipf_send_reset(fr_info_t *fin)
 	m->m_len = sizeof(*tcp2) + hlen;
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len;
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(m);
 	ip = mtod(m, struct ip *);
 	bzero((char *)ip, hlen);
 #ifdef USE_INET6
@@ -834,7 +880,7 @@ ipf_send_ip(fr_info_t *fin, mb_t *m)
 		return EINVAL;
 	}
 #ifdef KAME_IPSEC
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 #endif
 
 	fnew.fin_ifp = fin->fin_ifp;
@@ -944,7 +990,7 @@ ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 		}
 		xtra = MIN(fin->fin_plen, avail - iclen - max_linkhdr);
 		xtra = MIN(xtra, IPV6_MMTU - iclen);
-		if (dst == 0) {
+		if (dst == 0 && !IN6_IS_ADDR_LINKLOCAL(&fin->fin_dst6.in6)) {
 			if (ipf_ifpaddr(&ipfmain, 6, FRI_NORMAL, ifp,
 				       &dst6, NULL) == -1) {
 				FREE_MB_T(m);
@@ -968,7 +1014,7 @@ ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 		xtra = avail;
 	iclen += xtra;
 	m->m_data += max_linkhdr;
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(m);
 	m->m_pkthdr.len = iclen;
 	m->m_len = iclen;
 	ip = mtod(m, ip_t *);
@@ -1191,7 +1237,7 @@ ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 	/*
 	 * If small enough for interface, can just send directly.
 	 */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	ip_len = ntohs(ip->ip_len);
 	if (ip_len <= ifp->if_mtu) {
@@ -1210,9 +1256,7 @@ ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 			ip->ip_sum = in_cksum(m, hlen);
 # endif /* M_CSUM_IPv4 */
 
-		KERNEL_LOCK(1, NULL);
-		error = (*ifp->if_output)(ifp, m, dst, rt);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = if_output_lock(ifp, ifp, m, dst, rt);
 		goto done;
 	}
 
@@ -1274,7 +1318,7 @@ ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
-		m->m_pkthdr.rcvif = NULL;
+		m_reset_rcvif(m);
 		mhip->ip_off = htons((u_short)mhip->ip_off);
 		mhip->ip_sum = 0;
 #ifdef INET
@@ -1314,6 +1358,7 @@ done:
 		softc->ipf_frouteok[1]++;
 
 # if __NetBSD_Version__ >= 499001100
+	rtcache_unref(rt, ro);
 	rtcache_free(ro);
 # else
 	if (rt) {
@@ -1378,6 +1423,12 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 		sockaddr_in6_init(&u.dst6, &fdp->fd_ip6.in6, 0, 0, 0);
 	else
 		sockaddr_in6_init(&u.dst6, &fin->fin_fi.fi_dst.in6, 0, 0, 0);
+	if ((error = in6_setscope(&u.dst6.sin6_addr, ifp,
+	    &u.dst6.sin6_scope_id)) != 0)
+		return error;
+	if ((error = sa6_embedscope(&u.dst6, 0)) != 0)
+		return error;
+
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
 
@@ -1389,6 +1440,9 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 	dst6->sin6_family = AF_INET6;
 	dst6->sin6_len = sizeof(struct sockaddr_in6);
 	dst6->sin6_addr = fin->fin_fi.fi_dst.in6;
+	/* KAME */
+	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
+		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
 	if (fdp != NULL) {
 		if (IP6_NOTZERO(&fdp->fd_ip6))
@@ -1406,15 +1460,6 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 		error = EHOSTUNREACH;
 		goto bad;
 	}
-
-	/* KAME */
-# if __NetBSD_Version__ >= 499001100
-	if (IN6_IS_ADDR_LINKLOCAL(&u.dst6.sin6_addr))
-		u.dst6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-# else
-	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
-		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-# endif
 
 	{
 # if (__NetBSD_Version__ >= 106010000) && !defined(IN6_LINKMTU)
@@ -1441,7 +1486,7 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 # if __NetBSD_Version__ >= 499001100
-			error = nd6_output(ifp, ifp, m0, satocsin6(dst), rt);
+			error = ip6_if_output(ifp, ifp, m0, satocsin6(dst), rt);
 # else
 			error = nd6_output(ifp, ifp, m0, dst6, rt);
 # endif
@@ -1451,6 +1496,7 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 	}
 bad:
 # if __NetBSD_Version__ >= 499001100
+	rtcache_unref(rt, ro);
 	rtcache_free(ro);
 # else
 	if (ro->ro_rt != NULL) {
@@ -1485,6 +1531,7 @@ ipf_verifysrc(fr_info_t *fin)
 		rc = 0;
 	else
 		rc = (fin->fin_ifp == rt->rt_ifp);
+	rtcache_unref(rt, &iproute);
 	rtcache_free(&iproute);
 #else
 	dst = (struct sockaddr_in *)&iproute.ro_dst;
@@ -1529,7 +1576,7 @@ ipf_ifpaddr(ipf_main_softc_t *softc, int v, int atype, void *ifptr,
 		bzero((char *)inp, sizeof(*inp));
 #endif
 
-	ifa = IFADDR_FIRST(ifp);
+	ifa = IFADDR_READER_FIRST(ifp);
 	sock = ifa ? ifa->ifa_addr : NULL;
 	while (sock != NULL && ifa != NULL) {
 		sin = (struct sockaddr_in *)sock;
@@ -1543,7 +1590,7 @@ ipf_ifpaddr(ipf_main_softc_t *softc, int v, int atype, void *ifptr,
 				break;
 		}
 #endif
-		ifa = IFADDR_NEXT(ifa);
+		ifa = IFADDR_READER_NEXT(ifa);
 		if (ifa != NULL)
 			sock = ifa->ifa_addr;
 	}
@@ -1935,7 +1982,7 @@ ipf_inject(fr_info_t *fin, mb_t *m)
 			error = 0;
 		}
 	} else {
-		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
+		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 	}
 	return error;
 }
@@ -1988,6 +2035,13 @@ static int ipfopen(dev_t dev, int flags
 			break;
 		}
 	}
+#if (__NetBSD_Version__ >= 799003000)
+	if (error == 0) {
+		mutex_enter(&ipf_ref_mutex);
+		ipf_active = 1;
+		mutex_exit(&ipf_ref_mutex);
+	}
+#endif
 	return error;
 }
 
@@ -2001,10 +2055,15 @@ static int ipfclose(dev_t dev, int flags
 	u_int	unit = GET_MINOR(dev);
 
 	if (IPL_LOGMAX < unit)
-		unit = ENXIO;
-	else
-		unit = 0;
-	return unit;
+		return ENXIO;
+	else {
+#if (__NetBSD_Version__ >= 799003000)
+		mutex_enter(&ipf_ref_mutex);
+		ipf_active = 0;
+		mutex_exit(&ipf_ref_mutex);
+#endif
+		return 0;
+	}
 }
 
 /*
@@ -2123,3 +2182,99 @@ ipf_pcksum(fr_info_t *fin, int hlen, u_int sum)
 	sum2 = ~sum & 0xffff;
 	return sum2;
 }
+
+#if (__NetBSD_Version__ >= 799003000)
+
+/* NetBSD module interface */
+
+MODULE(MODULE_CLASS_DRIVER, ipl, "bpf_filter");
+
+static int ipl_init(void *);
+static int ipl_fini(void *);
+static int ipl_modcmd(modcmd_t, void *);
+
+#ifdef _MODULE
+static devmajor_t ipl_cmaj = -1, ipl_bmaj = -1;
+#endif
+
+static int
+ipl_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return ipl_init(opaque);
+	case MODULE_CMD_FINI:
+		return ipl_fini(opaque);
+	default:
+		return ENOTTY;
+	}
+}
+
+static int
+ipl_init(void *opaque)
+{
+	int error;
+
+	ipf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    ipf_listener_cb, NULL);
+
+	if ((error = ipf_load_all()) != 0)
+		return error;
+
+	if (ipf_create_all(&ipfmain) == NULL) {
+		ipf_unload_all();
+		return ENODEV;
+	}
+
+	/* Initialize our mutex and reference count */
+	mutex_init(&ipf_ref_mutex, MUTEX_DEFAULT, IPL_NONE);
+	ipf_active = 0;
+
+#ifdef _MODULE
+	/*
+	 * Insert ourself into the cdevsw list.
+	 */
+	error = devsw_attach("ipl", NULL, &ipl_bmaj, &ipl_cdevsw, &ipl_cmaj);
+	if (error)
+		ipl_fini(opaque);
+#endif
+
+	return error;
+}
+
+static int
+ipl_fini(void *opaque)
+{
+
+#ifdef _MODULE
+	(void)devsw_detach(NULL, &ipl_cdevsw);
+#endif
+
+	/*
+	 * Grab the mutex, verify that there are no references
+	 * and that there are no running filters.  If either
+	 * of these exists, reinsert our cdevsw entry and return
+	 * an error.
+	 */
+	mutex_enter(&ipf_ref_mutex);
+	if (ipf_active != 0 || ipfmain.ipf_running > 0) {
+#ifdef _MODULE
+		(void)devsw_attach("ipl", NULL, &ipl_bmaj,
+		    &ipl_cdevsw, &ipl_cmaj);
+#endif
+		mutex_exit(&ipf_ref_mutex);
+		return EBUSY;
+	}
+
+	/* Clean up the rest of our state before being unloaded */
+
+	mutex_exit(&ipf_ref_mutex);
+	mutex_destroy(&ipf_ref_mutex);
+	ipf_destroy_all(&ipfmain);
+	ipf_unload_all();
+	kauth_unlisten_scope(ipf_listener);
+
+	return 0;
+}
+#endif /* (__NetBSD_Version__ >= 799003000) */

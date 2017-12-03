@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.2.10.2 2014/08/20 00:03:04 tls Exp $ */
+/*	$NetBSD: dino.c,v 1.2.10.3 2017/12/03 11:36:16 jdolecek Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.2.10.2 2014/08/20 00:03:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.2.10.3 2017/12/03 11:36:16 jdolecek Exp $");
 
 /* #include "cardbus.h" */
 
@@ -338,6 +338,9 @@ dino_conf_read(void *v, pcitag_t tag, int reg)
 	pcireg_t data;
 	uint32_t pamr;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	/* fix arbitration errata by disabling all pci devs on config read */
 	pamr = r->pamr;
 	r->pamr = 0;
@@ -357,6 +360,9 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	uint32_t pamr;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	/* fix arbitration errata by disabling all pci devs on config read */
 	pamr = r->pamr;

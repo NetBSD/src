@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_sunos_compat.c,v 1.1.4.2 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: rump_sunos_compat.c,v 1.1.4.3 2017/12/03 11:39:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -313,8 +313,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("sunos_getdents");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if ((*cookie >> 32) != 0) {
 			printf("rump_sunos_sys_getdents: offset too large\n");
 			error = EINVAL;

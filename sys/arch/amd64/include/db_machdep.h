@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.11.14.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.11.14.2 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -120,7 +120,7 @@ bool		db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
  * Constants for KGDB.
  */
 typedef	long		kgdb_reg_t;
-#define	KGDB_NUMREGS	16
+#define	KGDB_NUMREGS	20
 #define	KGDB_BUFLEN	512
 
 #if 0
@@ -141,7 +141,6 @@ int kdb_trap(int, int, db_regs_t *);
 #endif
 
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	64
 
 extern void db_machine_init(void);
 

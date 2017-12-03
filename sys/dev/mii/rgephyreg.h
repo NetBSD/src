@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephyreg.h,v 1.6 2010/07/18 03:00:39 jakllsch Exp $	*/
+/*	$NetBSD: rgephyreg.h,v 1.6.18.1 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -54,5 +54,31 @@
 #define	RGEPHY_SSR_MDI_XOVER	0x0040	/* MDI crossover */
 #define RGEPHY_SSR_ALDPS	0x0008	/* RTL8211C(L) only */
 #define	RGEPHY_SSR_JABBER	0x0001	/* Jabber */
+
+/* RTL8211F */
+#define RGEPHY_MII_PHYCR1	0x18	/* PHY Specific control register 1 */
+#define RGEPHY_PHYCR1_MDI_MMCE	__BIT(9)
+#define RGEPHY_PHYCR1_ALDPS_EN	__BIT(2)
+#define RGEPHY_MII_MACR		0x0d	/* MMD Access control register */
+#define RGEPHY_MACR_FUNCTION	__BITS(15,14)
+#define RGEPHY_MACR_DEVAD	__BITS(4,0)
+#define RGEPHY_MII_MAADR	0x0e	/* MMD Access address data register */
+
+#define RGEPHY_MII_PHYSR	0x1a	/* PHY Specific status register */
+#define RGEPHY_PHYSR_ALDPS	__BIT(14)
+#define RGEPHY_PHYSR_MDI_PLUG	__BIT(13)
+#define RGEPHY_PHYSR_NWAY_EN	__BIT(12)
+#define RGEPHY_PHYSR_MASTER	__BIT(11)
+#define RGEPHY_PHYSR_EEE	__BIT(8)
+#define RGEPHY_PHYSR_RXFLOW_EN	__BIT(7)
+#define RGEPHY_PHYSR_TXFLOW_EN	__BIT(6)
+#define RGEPHY_PHYSR_SPEED	__BITS(5,4)
+#define RGEPHY_PHYSR_SPEED_10	0
+#define RGEPHY_PHYSR_SPEED_100	1
+#define RGEPHY_PHYSR_SPEED_1000	2
+#define RGEPHY_PHYSR_DUPLEX	__BIT(3)
+#define RGEPHY_PHYSR_LINK	__BIT(2)
+#define RGEPHY_PHYSR_MDI_XOVER	__BIT(1)
+#define RGEPHY_PHYSR_JABBER	__BIT(0)
 
 #endif /* _DEV_MII_RGEPHYREG_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: ata_raid_subr.c,v 1.2 2010/06/24 13:03:08 hannken Exp $ */
+/* $NetBSD: ata_raid_subr.c,v 1.2.18.1 2017/12/03 11:36:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_subr.c,v 1.2 2010/06/24 13:03:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_subr.c,v 1.2.18.1 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,6 @@ ata_raid_disk_vnode_find(struct ataraid_disk_info *adi)
 			return adv->adv_vnode;
 	}
 
-	adv = NULL;
 	adv = kmem_zalloc(sizeof(struct ataraid_disk_vnode), KM_SLEEP);
 
 	bmajor = devsw_name2blk(device_xname(adi->adi_dev), NULL, 0);

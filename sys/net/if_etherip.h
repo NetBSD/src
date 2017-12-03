@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.11 2012/07/28 00:43:24 matt Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.11.2.1 2017/12/03 11:39:02 jdolecek Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -46,7 +46,11 @@ struct etherip_softc {
 	struct ethercom sc_ec;
 	struct sockaddr *sc_src;                /* tunnel source address      */
 	struct sockaddr *sc_dst;                /* tunnel destination address */
-	struct route     sc_ro;			/* cached inet route          */
+	struct route     sc_ro;			/*
+						 * cached inet route
+						 * TODO:
+						 * we must make percpu when MP-ify
+						 */
 	void *sc_si;                            /* softintr handle            */
 	LIST_ENTRY(etherip_softc) etherip_list; /* list of etherip tunnels    */
 };

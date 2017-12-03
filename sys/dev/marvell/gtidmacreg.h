@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmacreg.h,v 1.3 2012/07/23 06:09:47 kiyohara Exp $	*/
+/*	$NetBSD: gtidmacreg.h,v 1.3.2.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -51,7 +51,7 @@
 #define MVXORE_PORT2BASE(sc, p)	\
     (((sc)->sc_gtidmac_nchan == 0 && (p) == 0) ? -0x100 : 0x000)
 #define MVXORE_CHAN2BASE(sc, c)	\
-    (MVXORE_PORT2BASE(sc, (c) & 0x4) + (((c) & 0x3) << 2))
+    (MVXORE_PORT2BASE(sc, (c) & 0xe) + (((c) & 0x1) << 2))
 
 
 /* IDMA Descriptor Register Map */

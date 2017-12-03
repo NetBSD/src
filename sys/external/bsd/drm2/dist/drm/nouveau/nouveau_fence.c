@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.2.6.2 2014/08/20 00:04:10 tls Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.2.6.2 2014/08/20 00:04:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <drm/drmP.h>
 
+#include <asm/param.h>
 #include <linux/ktime.h>
 #include <linux/hrtimer.h>
 
@@ -70,6 +71,7 @@ nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 		nouveau_fence_signal(fence);
 	}
 	spin_unlock(&fctx->lock);
+	spin_lock_destroy(&fctx->lock);
 }
 
 void
@@ -210,12 +212,12 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence, bool intr)
 #ifdef __NetBSD__
 			spin_lock(&priv->waitlock);
 			if (intr) {
-				DRM_SPIN_TIMED_WAIT_UNITL(ret,
+				DRM_SPIN_TIMED_WAIT_UNTIL(ret,
 				    &priv->waitqueue, &priv->waitlock,
 				    timeout,
 				    nouveau_fence_done(fence));
 			} else {
-				DRM_SPIN_TIMED_WAIT_NOINTR_UNITL(ret,
+				DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
 				    &priv->waitqueue, &priv->waitlock,
 				    timeout,
 				    nouveau_fence_done(fence));
@@ -275,8 +277,10 @@ nouveau_fence_wait(struct nouveau_fence *fence, bool lazy, bool intr)
 {
 	struct nouveau_channel *chan = fence->channel;
 	struct nouveau_fence_priv *priv = chan ? chan->drm->fence : NULL;
+#ifndef __NetBSD__
 	unsigned long sleep_time = NSEC_PER_MSEC / 1000;
 	ktime_t t;
+#endif
 	int ret = 0;
 
 	while (priv && priv->uevent && lazy && !nouveau_fence_done(fence)) {

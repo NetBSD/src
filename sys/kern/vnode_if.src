@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.63.12.1 2014/08/20 00:04:29 tls Exp $
+#	$NetBSD: vnode_if.src,v 1.63.12.2 2017/12/03 11:38:45 jdolecek Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ vop_bwrite {
 #
 vop_lookup {
 	VERSION 2
-	IN struct vnode *dvp;
+	IN LOCKED=YES struct vnode *dvp;
 	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 };
@@ -136,7 +136,7 @@ vop_access {
 #% getattr    vp      L L L
 #
 vop_getattr {
-	IN struct vnode *vp;
+	IN LOCKED=YES struct vnode *vp;
 	IN struct vattr *vap;
 	IN kauth_cred_t cred;
 };
@@ -192,6 +192,7 @@ vop_fdiscard {
 #% ioctl      vp      U U U
 #
 vop_ioctl {
+	FSTRANS=NO
 	IN LOCKED=NO struct vnode *vp;
 	IN u_long command;
 	IN void *data;
@@ -203,6 +204,7 @@ vop_ioctl {
 #% fcntl      vp      U U U
 #
 vop_fcntl {
+	FSTRANS=NO
 	IN LOCKED=NO struct vnode *vp;
 	IN u_int command;
 	IN void *data;
@@ -230,6 +232,7 @@ vop_kqfilter {
 #% revoke     vp      U U U
 #
 vop_revoke {
+	FSTRANS=NO
 	IN LOCKED=NO struct vnode *vp;
 	IN int flags;
 };
@@ -266,25 +269,27 @@ vop_seek {
 };
 
 #
-#% remove     dvp     L U U
+#% remove     dvp     L L L
 #% remove     vp      L U U
 #
 #! remove cnp	DELETE, LOCKPARENT | LOCKLEAF
 #
 vop_remove {
-	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	VERSION 2
+	IN LOCKED=YES struct vnode *dvp;
 	IN LOCKED=YES WILLPUT struct vnode *vp;
 	IN struct componentname *cnp;
 };
 
 #
-#% link               dvp     L U U
+#% link               dvp     L L L
 #% link               vp      U U U
 #
 #! link	 cnp	CREATE, LOCKPARENT
 #
 vop_link {
-	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	VERSION 2
+	IN LOCKED=YES struct vnode *dvp;
 	IN LOCKED=NO struct vnode *vp;
 	IN struct componentname *cnp;
 };
@@ -322,13 +327,14 @@ vop_mkdir {
 };
 
 #
-#% rmdir      dvp     L U U
+#% rmdir      dvp     L L L
 #% rmdir      vp      L U U
 #
 #! rmdir cnp	DELETE, LOCKPARENT | LOCKLEAF
 #
 vop_rmdir {
-	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	VERSION 2
+	IN LOCKED=YES struct vnode *dvp;
 	IN LOCKED=YES WILLPUT struct vnode *vp;
 	IN struct componentname *cnp;
 };
@@ -380,24 +386,28 @@ vop_abortop {
 };
 
 #
-#% inactive   vp      L U U  
+#% inactive   vp      L L L
 #
 vop_inactive {
-	IN LOCKED=YES WILLUNLOCK struct vnode *vp;
+	VERSION 2
+	IN LOCKED=YES struct vnode *vp;
 	INOUT bool *recycle;
 };
 
 #
-#% reclaim    vp      U U U
+#% reclaim    vp      L U U
 #
 vop_reclaim {
-	IN LOCKED=NO struct vnode *vp;
+	VERSION 2
+	FSTRANS=NO
+	IN LOCKED=YES struct vnode *vp;
 };
 
 #
 #% lock               vp      U L U
 #
 vop_lock {
+	FSTRANS=LOCK
 	IN LOCKED=NO struct vnode *vp;
 	IN int flags;
 };
@@ -406,6 +416,7 @@ vop_lock {
 #% unlock     vp      L U L
 #
 vop_unlock {
+	FSTRANS=UNLOCK
 	IN LOCKED=YES struct vnode *vp;
 };
 
@@ -440,6 +451,7 @@ vop_print {
 #% islocked   vp      = = =
 #
 vop_islocked {
+	FSTRANS=NO
 	IN struct vnode *vp;
 };
 
@@ -456,6 +468,7 @@ vop_pathconf {
 #% advlock    vp      U U U
 #
 vop_advlock {
+	FSTRANS=NO
 	IN LOCKED=NO struct vnode *vp;
 	IN void *id;
 	IN int op;
@@ -480,6 +493,7 @@ vop_whiteout {
 #% getpages	vp = = =
 #
 vop_getpages {
+	FSTRANS=NO
 	IN struct vnode *vp;
 	IN voff_t offset;
 	IN struct vm_page **m;
@@ -494,6 +508,7 @@ vop_getpages {
 #% putpages	vp = = =
 #
 vop_putpages {
+	FSTRANS=NO
 	IN struct vnode *vp;
 	IN voff_t offlo;
 	IN voff_t offhi;

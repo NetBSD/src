@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_intr.c,v 1.3 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: ralink_intr.c,v 1.3.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_intr.c,v 1.3 2011/09/27 01:02:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_intr.c,v 1.3.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,13 +96,6 @@ static const struct ipl_sr_map ralink_ipl_sr_map = {
  * USB
  */
 
-
-/*
- * we use 5 MIPS cpu interrupts: 
- *	MIPS INT0 .. INT4
- */
-#define NCPUINTRS	5
-
 struct ra_intr {
 	LIST_HEAD(, evbmips_intrhand) intr_list;
 	struct evcnt intr_evcnt;
@@ -115,26 +108,36 @@ struct ra_intr {
  */
 static struct ra_intr ra_intrtab[RA_IRQ_MAX];
 static const char * const ra_intr_names[RA_IRQ_MAX] = {
-        "intr 0 (lowpri)",
-        "intr 1 (highpri)",
-        "intr 2 (pci)",
-        "intr 3 (frame)",
-        "intr 4 (wlan)",
-        "intr 5 (timer)",
-	"intr 0 (sysctl)",
-	"intr 1 (timer0)",
-	"intr 2 (watchdog)",
-	"intr 3 (illacc)",
-	"intr 4 (pcm)",
-	"intr 5 (uartf)",
-	"intr 6 (gpio)",
-	"intr 7 (dma)",
-	"intr 8 (nand)",
-	"intr 9 (perf)",
-	"intr 10 (i2s)",
-	"intr 12 (uartl)",
-	"intr 17 (ethsw)",
-	"intr 18 (usb)"
+	/* CPU interrupts */
+	[RA_IRQ_LOW]	= "intr 0 (lowpri)",
+	[RA_IRQ_HIGH]	= "intr 1 (highpri)",
+	[RA_IRQ_PCI]	= "intr 2 (pci)",
+	[RA_IRQ_FENGINE]= "intr 3 (frame)",
+	[RA_IRQ_WLAN]	= "intr 4 (wlan)",
+	[RA_IRQ_TIMER]	= "intr 5 (timer)",
+
+	/* Interrupt controller */
+	[RA_IRQ_SYSCTL]	= "intc sysctl",
+	[RA_IRQ_TIMER0]	= "intc timer0",
+	[RA_IRQ_WDOG]	= "intc wdog",
+	[RA_IRQ_ILLACC]	= "intc illacc",
+	[RA_IRQ_PCM]	= "intc pcm",
+	[RA_IRQ_UARTF]	= "intc uartf",
+	[RA_IRQ_PIO]	= "intc gpio",
+	[RA_IRQ_DMA]	= "intc dma",
+	[RA_IRQ_NAND]	= "intc nand",
+	[RA_IRQ_PERF]	= "intc pef",
+	[RA_IRQ_I2S]	= "intc i2s",
+	[RA_IRQ_SPI]	= "intc spi",
+	[RA_IRQ_UARTL]	= "intc uartl",
+	[RA_IRQ_CRYPTO]	= "intc crypto",
+	[RA_IRQ_SDHC]	= "intc sdhc",
+	[RA_IRQ_R2P]	= "intc r2p",
+	[RA_IRQ_ETHSW]	= "intc ethsw",
+	[RA_IRQ_USB]	= "intc usb",
+	[RA_IRQ_UDEV]	= "intc udev",
+	[RA_IRQ_UART1]	= "intc uart1",
+	[RA_IRQ_UART2]	= "intc uart2",
 };
 
 /* determine if irq belongs to the PIC */
@@ -142,12 +145,69 @@ static const char * const ra_intr_names[RA_IRQ_MAX] = {
 
 /* map the IRQ num to PIC reg bits */
 static const uint8_t irq2bit[RA_IRQ_MAX] = {
-    -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 17, 18
+	/* CPU interrupts */
+	[RA_IRQ_LOW]	= -1,
+	[RA_IRQ_HIGH]	= -1,
+	[RA_IRQ_PCI]	= -1,
+	[RA_IRQ_FENGINE]= -1,
+	[RA_IRQ_WLAN]	= -1,
+	[RA_IRQ_TIMER]	= -1,
+
+	/* Interrupt controller */
+	[RA_IRQ_SYSCTL]	= INT_SYSCTL,
+	[RA_IRQ_TIMER0]	= INT_TIMER0,
+	[RA_IRQ_WDOG]	= INT_WDOG,
+	[RA_IRQ_ILLACC]	= INT_ILLACC,
+	[RA_IRQ_PCM]	= INT_PCM,
+	[RA_IRQ_UARTF]	= INT_UARTF,
+	[RA_IRQ_PIO]	= INT_PIO,
+	[RA_IRQ_DMA]	= INT_DMA,
+	[RA_IRQ_NAND]	= INT_NAND,
+	[RA_IRQ_PERF]	= INT_PERF,
+	[RA_IRQ_I2S]	= INT_I2S,
+	[RA_IRQ_SPI]	= INT_SPI,
+	[RA_IRQ_UARTL]	= INT_UARTL,
+#ifdef INT_UART1
+	[RA_IRQ_UART1]	= INT_UART1,
+#endif
+#ifdef INT_UART2
+	[RA_IRQ_UART2]	= INT_UART2,
+#endif
+	[RA_IRQ_CRYPTO]	= INT_CRYPTO,
+	[RA_IRQ_SDHC]	= INT_SDHC,
+	[RA_IRQ_R2P]	= INT_R2P,
+	[RA_IRQ_ETHSW]	= INT_ETHSW,
+	[RA_IRQ_USB]	= INT_USB,
+	[RA_IRQ_UDEV]	= INT_UDEV
 };
 
 /* map the PIC reg bits to IRQ num */
-static const uint8_t bit2irq[19] = {
-    6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 255, 17, 255, 255, 255, 255, 18, 19
+static const uint8_t bit2irq[32] = {
+	[INT_SYSCTL]	= RA_IRQ_SYSCTL,
+	[INT_TIMER0]	= RA_IRQ_TIMER0,
+	[INT_WDOG]	= RA_IRQ_WDOG,
+	[INT_ILLACC]	= RA_IRQ_ILLACC,
+	[INT_PCM]	= RA_IRQ_PCM,
+	[INT_UARTF]	= RA_IRQ_UARTF,
+	[INT_PIO]	= RA_IRQ_PIO,
+	[INT_DMA]	= RA_IRQ_DMA,
+	[INT_NAND]	= RA_IRQ_NAND,
+	[INT_PERF]	= RA_IRQ_PERF,
+	[INT_I2S]	= RA_IRQ_I2S,
+	[INT_SPI]	= RA_IRQ_SPI,
+	[INT_UARTL]	= RA_IRQ_UARTL,
+#ifdef INT_UART1
+	[INT_UART1]	= RA_IRQ_UART1,
+#endif
+#ifdef INT_UART2
+	[INT_UART2]	= RA_IRQ_UART2,
+#endif
+	[INT_CRYPTO]	= RA_IRQ_CRYPTO,
+	[INT_SDHC]	= RA_IRQ_SDHC,
+	[INT_R2P]	= RA_IRQ_R2P,
+	[INT_ETHSW]	= RA_IRQ_ETHSW,
+	[INT_USB]	= RA_IRQ_USB,
+	[INT_UDEV]	= RA_IRQ_UDEV
 };
 
 
@@ -174,12 +234,12 @@ evbmips_intr_init(void)
 		LIST_INIT(&ra_intrtab[irq].intr_list);
 		if (PIC_IRQ_P(irq)) {
 			evcnt_attach_dynamic(&ra_intrtab[irq].intr_evcnt,
-				EVCNT_TYPE_INTR, NULL, "pic",
-				ra_intr_names[irq]);
+			    EVCNT_TYPE_INTR, NULL, "pic",
+			    ra_intr_names[irq]);
 		} else {
 			evcnt_attach_dynamic(&ra_intrtab[irq].intr_evcnt,
-				EVCNT_TYPE_INTR, NULL, "cpu0",
-				ra_intr_names[irq]);
+			    EVCNT_TYPE_INTR, NULL, "cpu0",
+			    ra_intr_names[irq]);
 		}
 	}
 
@@ -188,9 +248,9 @@ evbmips_intr_init(void)
 	 * but the block enabled
 	 */
 	intctl_write(RA_INTCTL_DISABLE, ~0);
-	intctl_write(RA_INTCTL_ENABLE, INT_GLOBAL);
+	intctl_write(RA_INTCTL_ENABLE, INT_GLOBAL_EN);
 
-	/* 
+	/*
 	 * establish the low/high priority cpu interrupts.
 	 * note here we pass the value of the priority as the argument
 	 * so it is passed to ra_pic_intr() correctly.
@@ -267,7 +327,7 @@ ra_pic_intr(void *arg)
 {
 	const int priority = (intptr_t)arg;
 	const u_int off = (priority == 0) ?
-		RA_INTCTL_IRQ0STAT : RA_INTCTL_IRQ1STAT;
+	    RA_INTCTL_IRQ0STAT : RA_INTCTL_IRQ1STAT;
 	uint32_t pending = intctl_read(off);
 
 	while (pending != 0) {
@@ -291,7 +351,7 @@ ra_pic_intr(void *arg)
  * in the generic MIPS code for the timer
  */
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 	while (ipending != 0) {
 		const u_int bitno = 31 - __builtin_clz(ipending);

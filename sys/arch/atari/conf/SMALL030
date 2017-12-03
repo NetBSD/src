@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.15.6.2 2014/08/20 00:02:48 tls Exp $
+# $NetBSD: SMALL030,v 1.15.6.3 2017/12/03 11:35:57 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.106 2014/07/05 09:28:48 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.113 2017/07/29 18:08:56 maxv Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os" # optimize for space
 maxusers 16
@@ -19,14 +19,16 @@ file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
 options WAPBL # File system journaling support
+options FFS_NO_SNAPSHOT # No FFS snapshot support
 options PANICWAIT # Require keystroke to dump/reboot
-options COMPAT_16 # Compatibility with NetBSD 1.6
-options COMPAT_20 # Compatibility with NetBSD 2.0
-options COMPAT_30 # NetBSD 3.0 compatibility.
-options COMPAT_40 # NetBSD 4.0 compatibility.
-options COMPAT_50 # NetBSD 5.0 compatibility.
-options COMPAT_60 # NetBSD 6.0 compatibility.
-options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
+include "conf/compat_netbsd10.config"
+no options COMPAT_43 # 4.3 BSD compatible system calls
+no options COMPAT_10 # NetBSD 1.0,
+no options COMPAT_11 # NetBSD 1.1,
+no options COMPAT_12 # NetBSD 1.2,
+no options COMPAT_13 # NetBSD 1.3,
+no options COMPAT_14 # NetBSD 1.4,
+no options COMPAT_15 # NetBSD 1.5,
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options TT_SCSI # SCSI-support for TT
@@ -41,7 +43,6 @@ pseudo-device sl # Slip
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device md # Boot memory disk
-pseudo-device putter # for puffs and pud
 pseudo-device view 4 # View (graphics mapping)
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
 zs0 at mainbus0 # Serial support through 8530

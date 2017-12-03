@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -163,16 +163,16 @@ LsGenerateListing (
 
         LsDoOffsetTableHeader (FileId);
 
-        TrWalkParseTree (RootNode, ASL_WALK_VISIT_DOWNWARD, LsAmlOffsetWalk,
-            NULL, (void *) ACPI_TO_POINTER (FileId));
+        TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
+            LsAmlOffsetWalk, NULL, (void *) ACPI_TO_POINTER (FileId));
         LsDoOffsetTableFooter (FileId);
         return;
     }
 
     /* Process all parse nodes */
 
-    TrWalkParseTree (RootNode, ASL_WALK_VISIT_DOWNWARD, LsAmlListingWalk,
-        NULL, (void *) ACPI_TO_POINTER (FileId));
+    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
+        LsAmlListingWalk, NULL, (void *) ACPI_TO_POINTER (FileId));
 
     /* Final processing */
 
@@ -205,10 +205,16 @@ LsAmlListingWalk (
 
     LsWriteNodeToListing (Op, FileId);
 
-    if (Op->Asl.CompileFlags & NODE_IS_RESOURCE_DATA)
+    if (Op->Asl.CompileFlags & OP_IS_RESOURCE_DATA)
     {
         /* Buffer is a resource template, don't dump the data all at once */
 
+        return (AE_OK);
+    }
+
+    if ((FileId == ASL_FILE_ASM_INCLUDE_OUTPUT) ||
+        (FileId == ASL_FILE_C_INCLUDE_OUTPUT))
+    {
         return (AE_OK);
     }
 
@@ -221,6 +227,7 @@ LsAmlListingWalk (
             FlFileError (ASL_FILE_AML_OUTPUT, ASL_MSG_READ);
             AslAbort ();
         }
+
         LsWriteListingHexBytes (&FileByte, 1, FileId);
     }
 
@@ -251,8 +258,12 @@ LsDumpParseTree (
     }
 
     DbgPrint (ASL_TREE_OUTPUT, "\nOriginal parse tree from parser:\n\n");
-    TrWalkParseTree (RootNode, ASL_WALK_VISIT_DOWNWARD,
+    DbgPrint (ASL_TREE_OUTPUT, ASL_PARSE_TREE_HEADER1);
+
+    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
         LsTreeWriteWalk, NULL, NULL);
+
+    DbgPrint (ASL_TREE_OUTPUT, ASL_PARSE_TREE_HEADER1);
 }
 
 
@@ -263,14 +274,71 @@ LsTreeWriteWalk (
     void                    *Context)
 {
 
-    /* Debug output */
+    /* Dump ParseOp name and possible value */
 
-    DbgPrint (ASL_TREE_OUTPUT,
-        "%5.5d [%2d]", Op->Asl.LogicalLineNumber, Level);
+    switch (Op->Asl.ParseOpcode)
+    {
+        case PARSEOP_NAMESEG:
+        case PARSEOP_NAMESTRING:
+        case PARSEOP_METHODCALL:
+        case PARSEOP_STRING_LITERAL:
 
-    UtPrintFormattedName (Op->Asl.ParseOpcode, Level);
+        UtDumpStringOp (Op, Level);
+        break;
 
-    DbgPrint (ASL_TREE_OUTPUT, "    (%.4X)\n", Op->Asl.ParseOpcode);
+    case PARSEOP_BYTECONST:
+
+        UtDumpIntegerOp (Op, Level, 2);
+        break;
+
+    case PARSEOP_WORDCONST:
+    case PARSEOP_PACKAGE_LENGTH:
+
+        UtDumpIntegerOp (Op, Level, 4);
+        break;
+
+    case PARSEOP_DWORDCONST:
+    case PARSEOP_EISAID:
+
+        UtDumpIntegerOp (Op, Level, 8);
+        break;
+
+    case PARSEOP_QWORDCONST:
+    case PARSEOP_INTEGER:
+    case PARSEOP_ONE:
+    case PARSEOP_ZERO:
+    case PARSEOP_ONES:
+
+        UtDumpIntegerOp (Op, Level, 16);
+        break;
+
+    case PARSEOP_INCLUDE:
+
+        DbgPrint (ASL_TREE_OUTPUT,
+            "Open: %s\n", Op->Asl.Value.String);
+        return (AE_OK);
+
+    case PARSEOP_INCLUDE_END:
+
+        DbgPrint (ASL_TREE_OUTPUT,
+            "Close: %s\n", Op->Asl.Filename);
+        return (AE_OK);
+
+    default:
+
+        UtDumpBasicOp (Op, Level);
+        break;
+    }
+
+    /* Dump the remaining data */
+
+    DbgPrint (ASL_TREE_OUTPUT, ASL_PARSE_TREE_DEBUG1,
+        Op->Asl.ParseOpcode, Op->Asl.CompileFlags,
+        Op->Asl.LineNumber, Op->Asl.EndLine,
+        Op->Asl.LogicalLineNumber, Op->Asl.EndLogicalLine);
+
+    TrPrintOpFlags (Op->Asl.CompileFlags, ASL_TREE_OUTPUT);
+    DbgPrint (ASL_TREE_OUTPUT, "\n");
     return (AE_OK);
 }
 
@@ -313,7 +381,7 @@ LsWriteNodeToListing (
     {
         switch (Op->Asl.ParseOpcode)
         {
-        case PARSEOP_DEFINITIONBLOCK:
+        case PARSEOP_DEFINITION_BLOCK:
         case PARSEOP_METHODCALL:
         case PARSEOP_INCLUDE:
         case PARSEOP_INCLUDE_END:
@@ -359,36 +427,49 @@ LsWriteNodeToListing (
 
     switch (Op->Asl.ParseOpcode)
     {
-    case PARSEOP_DEFINITIONBLOCK:
+    case PARSEOP_DEFINITION_BLOCK:
 
+        /* Always start a definition block at AML offset zero */
+
+        Gbl_CurrentAmlOffset = 0;
         LsWriteSourceLines (Op->Asl.EndLine, Op->Asl.EndLogicalLine, FileId);
 
         /* Use the table Signature and TableId to build a unique name */
 
-        if (FileId == ASL_FILE_ASM_SOURCE_OUTPUT)
+        switch (FileId)
         {
+        case ASL_FILE_ASM_SOURCE_OUTPUT:
+
             FlPrintFile (FileId,
                 "%s_%s_Header \\\n",
                 Gbl_TableSignature, Gbl_TableId);
-        }
-        if (FileId == ASL_FILE_C_SOURCE_OUTPUT)
-        {
+            break;
+
+        case ASL_FILE_C_SOURCE_OUTPUT:
+
             FlPrintFile (FileId,
                 "    unsigned char    %s_%s_Header [] =\n    {\n",
                 Gbl_TableSignature, Gbl_TableId);
-        }
-        if (FileId == ASL_FILE_ASM_INCLUDE_OUTPUT)
-        {
+            break;
+
+        case ASL_FILE_ASM_INCLUDE_OUTPUT:
+
             FlPrintFile (FileId,
                 "extrn %s_%s_Header : byte\n",
                 Gbl_TableSignature, Gbl_TableId);
-        }
-        if (FileId == ASL_FILE_C_INCLUDE_OUTPUT)
-        {
+            break;
+
+        case ASL_FILE_C_INCLUDE_OUTPUT:
+
             FlPrintFile (FileId,
                 "extern unsigned char    %s_%s_Header [];\n",
                 Gbl_TableSignature, Gbl_TableId);
+            break;
+
+        default:
+            break;
         }
+
         return;
 
 
@@ -408,7 +489,7 @@ LsWriteNodeToListing (
 
         /* Create a new listing node and push it */
 
-        LsPushNode (Op->Asl.Child->Asl.Value.String);
+        LsPushNode (Op->Asl.Value.String);
         return;
 
 
@@ -427,7 +508,7 @@ LsWriteNodeToListing (
 
     case PARSEOP_DEFAULT_ARG:
 
-        if (Op->Asl.CompileFlags & NODE_IS_RESOURCE_DESC)
+        if (Op->Asl.CompileFlags & OP_IS_RESOURCE_DESC)
         {
             LsWriteSourceLines (Op->Asl.LineNumber, Op->Asl.EndLogicalLine,
                 FileId);
@@ -471,7 +552,7 @@ LsWriteNodeToListing (
 
         case AML_NAME_OP:
 
-            if (Op->Asl.CompileFlags & NODE_IS_RESOURCE_DESC)
+            if (Op->Asl.CompileFlags & OP_IS_RESOURCE_DESC)
             {
                 LsWriteSourceLines (Op->Asl.LineNumber, Op->Asl.LogicalLineNumber,
                     FileId);
@@ -537,31 +618,41 @@ LsWriteNodeToListing (
 
                         /* Create the appropriate symbol in the output file */
 
-                        if (FileId == ASL_FILE_ASM_SOURCE_OUTPUT)
+                        switch (FileId)
                         {
+                        case ASL_FILE_ASM_SOURCE_OUTPUT:
+
                             FlPrintFile (FileId,
                                 "%s_%s_%s  \\\n",
                                 Gbl_TableSignature, Gbl_TableId, &Pathname[1]);
-                        }
-                        if (FileId == ASL_FILE_C_SOURCE_OUTPUT)
-                        {
+                            break;
+
+                        case ASL_FILE_C_SOURCE_OUTPUT:
+
                             FlPrintFile (FileId,
                                 "    unsigned char    %s_%s_%s [] =\n    {\n",
                                 Gbl_TableSignature, Gbl_TableId, &Pathname[1]);
-                        }
-                        if (FileId == ASL_FILE_ASM_INCLUDE_OUTPUT)
-                        {
+                            break;
+
+                        case ASL_FILE_ASM_INCLUDE_OUTPUT:
+
                             FlPrintFile (FileId,
                                 "extrn %s_%s_%s : byte\n",
                                 Gbl_TableSignature, Gbl_TableId, &Pathname[1]);
-                        }
-                        if (FileId == ASL_FILE_C_INCLUDE_OUTPUT)
-                        {
+                            break;
+
+                        case ASL_FILE_C_INCLUDE_OUTPUT:
+
                             FlPrintFile (FileId,
                                 "extern unsigned char    %s_%s_%s [];\n",
                                 Gbl_TableSignature, Gbl_TableId, &Pathname[1]);
+                            break;
+
+                        default:
+                            break;
                         }
                     }
+
                     ACPI_FREE (Pathname);
                 }
                 break;
@@ -580,7 +671,7 @@ LsWriteNodeToListing (
     default:
 
         if ((Op->Asl.ParseOpcode == PARSEOP_BUFFER) &&
-            (Op->Asl.CompileFlags & NODE_IS_RESOURCE_DESC))
+            (Op->Asl.CompileFlags & OP_IS_RESOURCE_DESC))
         {
             return;
         }

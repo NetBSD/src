@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.14.12.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.14.12.2 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.14.12.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.14.12.2 2017/12/03 11:35:48 jdolecek Exp $");
 
 /*
  * Driver frontend for the Commodore Busines Machines and the
@@ -98,10 +98,11 @@ bah_zbus_attach(device_t parent, device_t self, void *aux)
 	struct bah_zbus_softc *bsc = device_private(self);
 	struct bah_softc *sc = &bsc->sc_bah;
 	struct zbus_args *zap = aux;
+	int rv;
 
 	sc->sc_dev = self;
 #if (defined(BAH_DEBUG) && (BAH_DEBUG > 2))
-	printf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
+	printf("\n%s: attach(0x%p, 0x%p, 0x%p)\n",
 	    device_xname(self), parent, self, aux);
 #endif
 	bsc->sc_bst.base = (bus_addr_t)zap->va;
@@ -115,7 +116,11 @@ bah_zbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_reset = bah_zbus_reset;
 
-	bah_attach_subr(sc);
+	rv = bah_attach_subr(sc);
+	if (rv != 0) {
+		aprint_error_dev(self, "bah_attach_subr failed(%d)\n", rv);
+		return;
+	}
 
 	bsc->sc_isr.isr_intr = bahintr;
 	bsc->sc_isr.isr_arg = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.3.4.3 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.3.4.4 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.3.4.3 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.3.4.4 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -88,6 +88,7 @@ Static void	ar5008_hw_init(struct athn_softc *, struct ieee80211_channel *,
 		    struct ieee80211_channel *);
 Static void	ar5008_init_baseband(struct athn_softc *);
 Static void	ar5008_init_chains(struct athn_softc *);
+Static int	ar5008_intr_status(struct athn_softc *);
 Static int	ar5008_intr(struct athn_softc *);
 Static void	ar5008_next_calib(struct athn_softc *);
 Static int	ar5008_read_eep_word(struct athn_softc *, uint32_t,
@@ -175,6 +176,7 @@ ar5008_attach(struct athn_softc *sc)
 	ops->dma_alloc = ar5008_dma_alloc;
 	ops->dma_free = ar5008_dma_free;
 	ops->rx_enable = ar5008_rx_enable;
+	ops->intr_status = ar5008_intr_status;
 	ops->intr = ar5008_intr;
 	ops->tx = ar5008_tx;
 
@@ -518,8 +520,8 @@ ar5008_tx_alloc(struct athn_softc *sc)
 	if (error != 0)
 		goto fail;
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_map, &sc->sc_seg, 1, size,
-	    BUS_DMA_NOWAIT);
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_map, sc->sc_descs,
+	    size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0)
 		goto fail;
 
@@ -606,8 +608,8 @@ ar5008_rx_alloc(struct athn_softc *sc)
 	if (error != 0)
 		goto fail;
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, rxq->map, &rxq->seg, 1,
-	    size, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load(sc->sc_dmat, rxq->map, rxq->descs,
+	    size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0)
 		goto fail;
 
@@ -797,7 +799,7 @@ ar5008_rx_process(struct athn_softc *sc)
 	struct ieee80211_node *ni;
 	struct mbuf *m, *m1;
 	u_int32_t rstamp;
-	int error, len, rssi;
+	int error, len, rssi, s;
 
 	bf = SIMPLEQ_FIRST(&rxq->head);
 	if (__predict_false(bf == NULL)) {	/* Should not happen. */
@@ -849,7 +851,7 @@ ar5008_rx_process(struct athn_softc *sc)
 
 			len = MS(ds->ds_status1, AR_RXS1_DATA_LEN);
 			m = bf->bf_m;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = len;
 			wh = mtod(m, struct ieee80211_frame *);
 
@@ -905,8 +907,10 @@ ar5008_rx_process(struct athn_softc *sc)
 	bf->bf_m = m1;
 
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = len;
+
+	s = splnet();
 
 	/* Grab a reference to the source node. */
 	wh = mtod(m, struct ieee80211_frame *);
@@ -933,6 +937,8 @@ ar5008_rx_process(struct athn_softc *sc)
 
 	/* Node is no longer needed. */
 	ieee80211_free_node(ni);
+
+	splx(s);
 
  skip:
 	/* Unlink this descriptor from head. */
@@ -1031,7 +1037,9 @@ ar5008_tx_intr(struct athn_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	uint16_t mask = 0;
 	uint32_t reg;
-	int qid;
+	int qid, s;
+
+	s = splnet();
 
 	reg = AR_READ(sc, AR_ISR_S0_S);
 	mask |= MS(reg, AR_ISR_S0_QCU_TXOK);
@@ -1048,8 +1056,10 @@ ar5008_tx_intr(struct athn_softc *sc)
 	}
 	if (!SIMPLEQ_EMPTY(&sc->sc_txbufs)) {
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_start(ifp);
+		ifp->if_start(ifp); /* in softint */
 	}
+
+	splx(s);
 }
 
 #ifndef IEEE80211_STA_ONLY
@@ -1177,10 +1187,10 @@ ar5008_swba_intr(struct athn_softc *sc)
 }
 #endif
 
-Static int
-ar5008_intr(struct athn_softc *sc)
+static int
+ar5008_get_intr_status(struct athn_softc *sc, uint32_t *intrp, uint32_t *syncp)
 {
-	uint32_t intr, intr5, sync;
+	uint32_t intr, sync;
 
 	/* Get pending interrupts. */
 	intr = AR_READ(sc, AR_INTR_ASYNC_CAUSE);
@@ -1199,6 +1209,31 @@ ar5008_intr(struct athn_softc *sc)
 	if (intr == 0 && sync == 0)
 		return 0;	/* Not for us. */
 
+	*intrp = intr;
+	*syncp = sync;
+	return 1;
+}
+
+
+Static int
+ar5008_intr_status(struct athn_softc *sc)
+{
+	uint32_t intr, sync;
+
+	return ar5008_get_intr_status(sc, &intr, &sync);
+}
+
+Static int
+ar5008_intr(struct athn_softc *sc)
+{
+	uint32_t intr, intr5, sync;
+#ifndef IEEE80211_STA_ONLY
+	int s;
+#endif
+
+	if (!ar5008_get_intr_status(sc, &intr, &sync))
+		return 0;
+
 	if (intr != 0) {
 		if (intr & AR_ISR_BCNMISC) {
 			uint32_t intr2 = AR_READ(sc, AR_ISR_S2);
@@ -1216,8 +1251,11 @@ ar5008_intr(struct athn_softc *sc)
 			return 1;
 
 #ifndef IEEE80211_STA_ONLY
-		if (intr & AR_ISR_SWBA)
+		if (intr & AR_ISR_SWBA) {
+			s = splnet();
 			ar5008_swba_intr(sc);
+			splx(s);
+		}
 #endif
 		if (intr & (AR_ISR_RXMINTR | AR_ISR_RXINTM))
 			ar5008_rx_intr(sc);
@@ -1257,8 +1295,9 @@ ar5008_intr(struct athn_softc *sc)
 
 		if ((sc->sc_flags & ATHN_FLAG_RFSILENT) &&
 		    (sync & AR_INTR_SYNC_GPIO_PIN(sc->sc_rfsilent_pin))) {
+			AR_WRITE(sc, AR_INTR_SYNC_ENABLE, 0);
+			(void)AR_READ(sc, AR_INTR_SYNC_ENABLE);
 			pmf_event_inject(sc->sc_dev, PMFE_RADIO_OFF);
-			return 1;
 		}
 
 		AR_WRITE(sc, AR_INTR_SYNC_CAUSE, sync);
@@ -2019,7 +2058,7 @@ ar5008_calib_iq(struct athn_softc *sc)
 		if (cal->pwr_meas_q == 0)
 			continue;
 
-		if ((iq_corr_neg = cal->iq_corr_meas < 0))
+		if ((iq_corr_neg = cal->iq_corr_meas) < 0)
 			cal->iq_corr_meas = -cal->iq_corr_meas;
 
 		i_coff_denom =

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC64_IP3x,v 1.3 2011/04/26 16:36:41 joerg Exp $
+#	$NetBSD: GENERIC64_IP3x,v 1.3.14.1 2017/12/03 11:36:41 jdolecek Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,16 +28,10 @@ include 	"arch/sgimips/conf/std.sgimips64"
 no makeoptions	TEXTADDR
 makeoptions	TEXTADDR="0xffffffff80069000"	# entry point
 
-#ident		"GENERIC64_IP3x-$Revision: 1.3 $"
+#ident		"GENERIC64_IP3x-$Revision: 1.3.14.1 $"
 
 # Compatibility options
-#options 	COMPAT_15	# NetBSD 1.5
-#options 	COMPAT_16	# NetBSD 1.6
-#options 	COMPAT_20	# NetBSD 2.0
-#options 	COMPAT_30	# NetBSD 3.0
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+#include 	"conf/compat_netbsd15.config"
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
-#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

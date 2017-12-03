@@ -604,18 +604,33 @@ i915_error_object_create_sized(struct drm_i915_private *dev_priv,
 
 			memcpy_fromio(d, (void __iomem *) offset, PAGE_SIZE);
 		} else {
-			struct page *page;
-			void *s;
 
-			page = i915_gem_object_get_page(src, i);
+			if (cpu_intr_p() || cpu_softintr_p() ||
+			    (curlwp->l_pflag & LP_INTR) != 0) {
+				/*
+				 * We can't take locks during interrupts
+				 * and finding the page from uvm requires
+				 * taking a lock. Checking for an interrupt
+				 * context is bogus, but this is the least
+				 * intrusive change. Zero the result, doesn't
+				 * matter much, because this is only used
+				 * for diagnostics.
+				 */
+				memset(d, 0, PAGE_SIZE);
+			} else {
+				struct page *page;
+				void *s;
 
-			drm_clflush_pages(&page, 1);
+				page = i915_gem_object_get_page(src, i);
 
-			s = kmap_atomic(page);
-			memcpy(d, s, PAGE_SIZE);
-			kunmap_atomic(s);
+				drm_clflush_pages(&page, 1);
 
-			drm_clflush_pages(&page, 1);
+				s = kmap_atomic(page);
+				memcpy(d, s, PAGE_SIZE);
+				kunmap_atomic(s);
+
+				drm_clflush_pages(&page, 1);
+			}
 		}
 		local_irq_restore(flags);
 

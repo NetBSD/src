@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.86.12.1 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.86.12.2 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86.12.1 2014/08/20 00:04:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86.12.2 2017/12/03 11:38:47 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86.12.1 2014/08/20 00:04:30 tls E
 #include <sys/mount.h>
 #include <sys/dirent.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
 
@@ -202,7 +201,7 @@ fdesc_loadvnode(struct mount *mp, struct vnode *vp,
 		break;
 	case FD_CTTY:
 		fd->fd_type = Fctty;
-		vp->v_type = VNON;
+		vp->v_type = VCHR;
 		break;
 	case FD_STDIN:
 		fd->fd_type = Flink;
@@ -257,7 +256,7 @@ struct vfsops fdesc_vfsops = {
 	.vfs_done = fdesc_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

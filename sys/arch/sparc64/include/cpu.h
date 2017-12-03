@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.98.12.4 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: cpu.h,v 1.98.12.5 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,8 +68,12 @@
 #include <machine/pte.h>
 #include <machine/intr.h>
 #if defined(_KERNEL)
+#include <machine/bus_defs.h>
 #include <machine/cpuset.h>
 #include <sparc64/sparc64/intreg.h>
+#endif
+#ifdef SUN4V
+#include <machine/hypervisor.h>
 #endif
 
 #include <sys/cpu_data.h>
@@ -174,11 +178,14 @@ struct cpu_info {
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
 
+	/* TSB description (sun4v). */
+	struct tsb_desc         *ci_tsb_desc;
+	
 	/* MMU Fault Status Area (sun4v).
 	 * Will be initialized to the physical address of the bottom of
 	 * the interrupt stack.
 	 */
-	paddr_t			ci_mmfsa;
+	paddr_t			ci_mmufsa;
 
 	/*
 	 * sun4v mondo control fields
@@ -217,6 +224,7 @@ struct cpu_bootargs {
 	vaddr_t cb_ekdata;
 
 	paddr_t	cb_cpuinfo;
+	int cb_cputyp;
 };
 
 extern struct cpu_bootargs *cpu_args;
@@ -256,12 +264,16 @@ void	cpu_pmap_init(struct cpu_info *);
 /* run upfront to prepare the cpu_info */
 void	cpu_pmap_prepare(struct cpu_info *, bool);
 
+/* Helper functions to retrieve cache info */
+int	cpu_ecache_associativity(int node);
+int	cpu_ecache_size(int node);
+
 #if defined(MULTIPROCESSOR)
 extern vaddr_t cpu_spinup_trampoline;
 
 extern  char   *mp_tramp_code;
 extern  u_long  mp_tramp_code_len;
-extern  u_long  mp_tramp_tlb_slots;
+extern  u_long  mp_tramp_dtlb_slots, mp_tramp_itlb_slots;
 extern  u_long  mp_tramp_func;
 extern  u_long  mp_tramp_ci;
 
@@ -280,7 +292,7 @@ typedef void (* ipifunc_t)(void *, void *);
 
 void	sparc64_multicast_ipi(sparc64_cpuset_t, ipifunc_t, uint64_t, uint64_t);
 void	sparc64_broadcast_ipi(ipifunc_t, uint64_t, uint64_t);
-void	sparc64_send_ipi(int, ipifunc_t, uint64_t, uint64_t);
+extern void (*sparc64_send_ipi)(int, ipifunc_t, uint64_t, uint64_t);
 
 /*
  * Call an arbitrary C function on another cpu (or all others but ourself)
@@ -330,6 +342,7 @@ struct clockframe {
  */
 void cpu_signotify(struct lwp *);
 
+
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for
  * ``not me'' or 1 (``I took care of it'').  intr_establish() inserts a
@@ -350,6 +363,8 @@ struct intrhand {
 	struct intrhand		*ih_pending;	/* interrupt queued */
 	volatile uint64_t	*ih_map;	/* Interrupt map reg */
 	volatile uint64_t	*ih_clr;	/* clear interrupt reg */
+	void			(*ih_ack)(struct intrhand *); /* ack interrupt function */
+	bus_space_tag_t		ih_bus;		/* parent bus */
 	struct evcnt		ih_cnt;		/* counter for vmstat */
 	uint32_t		ih_ivec;
 	char			ih_name[32];	/* name for the above */
@@ -361,6 +376,7 @@ void	intr_establish(int level, bool mpsafe, struct intrhand *);
 void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);
+struct intrhand *intrhand_alloc(void);
 
 /* cpu.c */
 int	cpu_myid(void);

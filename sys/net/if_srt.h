@@ -1,10 +1,11 @@
 #ifndef _IF_SRT_H_1b91f8f1_
 #define _IF_SRT_H_1b91f8f1_
 
-/* $NetBSD: if_srt.h,v 1.3 2009/12/09 00:44:26 dyoung Exp $ */
+/* $NetBSD: if_srt.h,v 1.3.22.1 2017/12/03 11:39:02 jdolecek Exp $ */
 
 /* This file is in the public domain. */
 
+#include <sys/ioccom.h> /* for _IOR etc */
 #include <net/if.h> /* XXX for IFNAMSIZ */
 #include <netinet/in.h> /* for in_addr/in6_addr */
 

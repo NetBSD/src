@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfsmod,v 1.3.6.2 2014/08/20 00:04:34 tls Exp $
+#	$NetBSD: Makefile.zfsmod,v 1.3.6.3 2017/12/03 11:39:02 jdolecek Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -18,7 +18,7 @@ SRCS+=	zprop_common.c
 
 .PATH: ${ZFSDIR}/dist/uts/common/zmod
 
-SRCS+= trees.c
+#SRCS+= trees.c
 
 .PATH:	${ZFSDIR}/lib/libzpool
 
@@ -93,7 +93,7 @@ SRCS+=	zio.c
 SRCS+=	zio_checksum.c
 SRCS+=	zio_compress.c
 SRCS+=	zio_inject.c
-SRCS+=	zutil.c
+#SRCS+=	zutil.c
 SRCS+=	zvol.c
 SRCS+=	zle.c
 

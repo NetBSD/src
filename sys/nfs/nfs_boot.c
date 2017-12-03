@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.80.18.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.80.18.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.80.18.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.80.18.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -97,7 +97,7 @@ int nfs_boot_bootstatic = 1; /* BOOTSTATIC enabled (default) */
 static int md_mount(struct sockaddr_in *mdsin, char *path,
 	struct nfs_args *argp, struct lwp *l);
 
-static int nfs_boot_delroute(struct rtentry *, void *);
+static int nfs_boot_delroute_matcher(struct rtentry *, void *);
 static void nfs_boot_defrt(struct in_addr *);
 static  int nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *);
 
@@ -366,7 +366,7 @@ nfs_boot_deladdress(struct ifnet *ifp, struct lwp *lwp, uint32_t addr)
 	memcpy(ifr.ifr_name, ifp->if_xname, IFNAMSIZ);
 
 	sockaddr_in_init(&sin, &ia, 0);
-	ifreq_setaddr(SIOCDIFADDR, &ifr, sintocsa(&sin)); 
+	ifreq_setaddr(SIOCDIFADDR, &ifr, sintocsa(&sin));
 
 	error = ifioctl(so, SIOCDIFADDR, &ifr, lwp);
 	if (error) {
@@ -404,18 +404,14 @@ nfs_boot_enbroadcast(struct socket *so)
 int
 nfs_boot_sobind_ipport(struct socket *so, uint16_t port, struct lwp *l)
 {
-	struct mbuf *m;
-	struct sockaddr_in *sin;
+	struct sockaddr_in sin;
 	int error;
 
-	m = m_getclr(M_WAIT, MT_SONAME);
-	sin = mtod(m, struct sockaddr_in *);
-	sin->sin_len = m->m_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_ANY;
-	sin->sin_port = htons(port);
-	error = sobind(so, m, l);
-	m_freem(m);
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = INADDR_ANY;
+	sin.sin_port = htons(port);
+	error = sobind(so, (struct sockaddr *)&sin, l);
 	return (error);
 }
 
@@ -429,10 +425,10 @@ nfs_boot_sobind_ipport(struct socket *so, uint16_t port, struct lwp *l)
 #define TOTAL_TIMEOUT   30	/* seconds */
 
 int
-nfs_boot_sendrecv(struct socket *so, struct mbuf *nam,
+nfs_boot_sendrecv(struct socket *so, struct sockaddr_in *nam,
 		int (*sndproc)(struct mbuf *, void *, int),
 		struct mbuf *snd,
-		int (*rcvproc)(struct mbuf *, void *),
+		int (*rcvproc)(struct mbuf **, void *),
 		struct mbuf **rcv, struct mbuf **from_p,
 		void *context, struct lwp *lwp)
 {
@@ -472,7 +468,8 @@ send_again:
 		error = ENOBUFS;
 		goto out;
 	}
-	error = (*so->so_send)(so, nam, NULL, m, NULL, 0, lwp);
+	error = (*so->so_send)(so, (struct sockaddr *)nam, NULL,
+	    m, NULL, 0, lwp);
 	if (error) {
 		printf("nfs_boot: sosend: %d\n", error);
 		goto out;
@@ -510,7 +507,7 @@ send_again:
 			panic("nfs_boot_sendrecv: return size");
 #endif
 
-		if ((*rcvproc)(m, context))
+		if ((*rcvproc)(&m, context))
 			continue;
 
 		if (rcv)
@@ -562,26 +559,20 @@ nfs_boot_defrt(struct in_addr *gw_ip)
 }
 
 static int
-nfs_boot_delroute(struct rtentry *rt, void *w)
+nfs_boot_delroute_matcher(struct rtentry *rt, void *w)
 {
-	int error;
 
 	if ((void *)rt->rt_ifp != w)
 		return 0;
 
-	error = rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0,
-	    NULL);
-	if (error != 0)
-		printf("%s: del route, error=%d\n", __func__, error);
-
-	return 0;
+	return 1;
 }
 
 void
 nfs_boot_flushrt(struct ifnet *ifp)
 {
 
-	rt_walktree(AF_INET, nfs_boot_delroute, ifp);
+	rt_delete_matched_entries(AF_INET, nfs_boot_delroute_matcher, ifp);
 }
 
 /*

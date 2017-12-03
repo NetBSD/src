@@ -1,0 +1,127 @@
+# $NetBSD: Makefile.efiboot,v 1.9.8.2 2017/12/03 11:36:18 jdolecek Exp $
+
+S=		${.CURDIR}/../../../../..
+
+NOMAN=		# defined
+PROG?=		boot.efi
+NEWVERSWHAT?=	"EFI Boot"
+
+AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+
+SOURCES?= start.S conf.c devopen.c efiboot.c self_reloc.c
+LIBI386SRCS= boot.c biosdisk.c bootinfo.c bootinfo_biosgeom.c
+LIBI386SRCS+= bootmenu.c diskbuf.c exec.c menuutils.c
+LIBI386SRCS+= panic.c parseutils.c pread.c
+LIBI386SRCS+= eficons.c efidelay.c efidisk.c efidisk_ll.c efigetsecs.c
+LIBI386SRCS+= efimemory.c
+SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
+
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
+
+.include <bsd.own.mk>
+
+STRIPFLAG=	# nothing
+
+LIBCRT0=	# nothing
+LIBCRTI=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
+
+BINDIR=/usr/mdec
+BINMODE=444
+
+.PATH:	${.CURDIR} ${.CURDIR}/..
+.PATH:	${.CURDIR}/../../lib
+
+LDSCRIPT?= ${.CURDIR}/ldscript
+LDFLAGS+= -nostdlib -T${LDSCRIPT} -Bsymbolic -shared -nocombreloc
+CPPFLAGS+= -I$S -I${.CURDIR} -I${.CURDIR}/.. -I$S/lib/libsa
+CPPFLAGS+= -I${.OBJDIR}
+CPPFLAGS+= -I${.CURDIR}/../../lib
+
+COPTS+= -ffreestanding -fPIC -fshort-wchar -fno-strict-aliasing -fno-builtin
+COPTS+= -fno-stack-protector
+COPTS+= ${${ACTIVE_CC} == "gcc":? -Wno-error=unused-but-set-variable :}
+CPPFLAGS+= -nostdinc -D_STANDALONE
+CPPFLAGS+= -DEFIBOOT
+
+CPPFLAGS+= -Wall -Wmissing-prototypes
+CPPFLAGS+= -Wno-pointer-sign
+
+CPPFLAGS+= -DEFI_ALLOCATE_MAX_ADDRESS=0x100000000ULL
+CPPFLAGS+= -DHEAP_VARIABLE
+CPPFLAGS+= -DSUPPORT_CD9660
+CPPFLAGS+= -DSUPPORT_DOSFS
+CPPFLAGS+= -DSUPPORT_EXT2FS
+CPPFLAGS+= -DPASS_BIOSGEOM
+CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
+
+EFIDIR= ${S}/external/bsd/gnu-efi/dist
+GNUEFIARCH?= ${MACHINE_CPU}
+CPPFLAGS+= -I${EFIDIR}/inc -I${EFIDIR}/inc/${GNUEFIARCH}
+CPPFLAGS+= -I${EFIDIR}/inc/protocol
+
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
+SAMISCMAKEFLAGS+= SA_USE_CREAD=yes      # Read compressed kernels
+SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no     # Netboot via TFTP, NFS
+
+### find out what to use for libsa
+SA_AS= library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA= ${SALIB}
+
+### find out what to use for libkern
+KERN_AS= library
+LIBKERN_ARCH?= ${MACHINE_ARCH}
+KERNMISCMAKEFLAGS+="LIBKERN_ARCH=${LIBKERN_ARCH}"
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN= ${KERNLIB}
+
+### find out what to use for libz
+Z_AS= library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ= ${ZLIB}
+
+### find out what to use for libgnuefi
+GNUEFI_AS= library
+LIBGNUEFI_ARCH?= ${MACHINE_ARCH}
+GNUEFIMISCMAKEFLAGS+="LIBGNUEFI_ARCH=${LIBGNUEFI_ARCH}"
+GNUEFIMISCCPPFLAGS+= -I${EFIDIR}/lib
+.include "${S}/lib/libgnuefi/Makefile.inc"
+LIBGNUEFI= ${GNUEFILIB}
+
+cleandir distclean: .WAIT cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
+
+LIBLIST= ${LIBGNUEFI} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBSA}
+
+VERSIONMACHINE=x86
+.include "${S}/conf/newvers_stand.mk"
+
+CLEANFILES+=	${PROG}.so ${PROG}.tmp
+
+${PROG}: ${PROG}.so
+	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym	\
+	    -j .rel -j .rel.* -j .rela -j .rela.* -j .reloc		\
+	    --subsystem efi-app	--target=${OBJFMT} ${PROG}.so ${.TARGET}
+
+.include <bsd.prog.mk>
+
+${PROG}.so: ${OBJS} ${LIBLIST} ${LDSCRIPT} ${.CURDIR}/../Makefile.efiboot
+	${LD} ${LDFLAGS} -o ${.TARGET}.tmp ${OBJS} ${LIBLIST}
+	@if ${OBJDUMP} -t ${.TARGET}.tmp | grep 'UND'; then		\
+	    (echo Undefined symbols; false);				\
+	fi
+	rm -f ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
+
+KLINK_MACHINE?=	${MACHINE}
+.include <bsd.klinks.mk>

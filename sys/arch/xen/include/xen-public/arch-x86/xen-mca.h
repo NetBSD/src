@@ -255,8 +255,8 @@ DEFINE_XEN_GUEST_HANDLE(mc_info_t);
 #define MC_CAPS_AMD_ECX	6	/* cpuid level 0x80000001 (%ecx) */
 
 struct mcinfo_logical_cpu {
-    uint32_t mc_cpunr;          
-    uint32_t mc_chipid; 
+    uint32_t mc_cpunr;
+    uint32_t mc_chipid;
     uint16_t mc_coreid;
     uint16_t mc_threadid;
     uint32_t mc_apicid;

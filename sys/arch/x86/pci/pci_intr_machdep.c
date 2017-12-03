@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.25.2.2 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.25.2.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,16 +73,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.25.2.2 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.25.2.3 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/intr.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -100,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.25.2.2 2014/08/20 00:03:29 tl
 #include <machine/mpconfig.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pic.h>
+#include <x86/pci/pci_msi_machdep.h>
 #endif
 
 #ifdef MPBIOS
@@ -110,16 +112,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.25.2.2 2014/08/20 00:03:29 tl
 #include <machine/mpacpi.h>
 #endif
 
-#define	MPSAFE_MASK	0x80000000
-
 int
 pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	int pin = pa->pa_intrpin;
-	int line = pa->pa_intrline;
+	pci_intr_pin_t pin = pa->pa_intrpin;
+	pci_intr_line_t line = pa->pa_intrline;
 	pci_chipset_tag_t ipc, pc = pa->pa_pc;
 #if NIOAPIC > 0 || NACPICA > 0
-	int rawpin = pa->pa_rawintrpin;
+	pci_intr_pin_t rawpin = pa->pa_rawintrpin;
 	int bus, dev, func;
 #endif
 
@@ -232,6 +232,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 		    buf, len);
 	}
 
+	if (INT_VIA_MSI(ih))
+		return x86_pci_msi_string(pc, ih, buf, len);
+
 	return intr_string(ih & ~MPSAFE_MASK, buf, len);
 }
 
@@ -270,9 +273,9 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 	}
 }
 
-void *
-pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-    int level, int (*func)(void *), void *arg)
+static void *
+pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg, const char *xname)
 {
 	int pin, irq;
 	struct pic *pic;
@@ -289,8 +292,17 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 		    pc, ih, level, func, arg);
 	}
 
+	if (INT_VIA_MSI(ih)) {
+		if (MSI_INT_IS_MSIX(ih))
+			return x86_pci_msix_establish(pc, ih, level, func, arg,
+			    xname);
+		else
+			return x86_pci_msi_establish(pc, ih, level, func, arg,
+			    xname);
+	}
+
 	pic = &i8259_pic;
-	pin = irq = (ih & ~MPSAFE_MASK);
+	pin = irq = APIC_IRQ_LEGACY_IRQ(ih);
 	mpsafe = ((ih & MPSAFE_MASK) != 0);
 
 #if NIOAPIC > 0
@@ -309,9 +321,28 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg,
-	    mpsafe);
+	return intr_establish_xname(irq, pic, pin, IST_LEVEL, level, func, arg,
+	    mpsafe, xname);
 }
+
+void *
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg)
+{
+
+	return pci_intr_establish_xname_internal(pc, ih, level, func, arg, "unknown");
+}
+
+#ifdef __HAVE_PCI_MSI_MSIX
+void *
+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg, const char *xname)
+{
+
+	return pci_intr_establish_xname_internal(pc, ih, level, func, arg, xname);
+}
+#endif
+
 
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
@@ -325,109 +356,199 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 		return;
 	}
 
+	/* MSI/MSI-X processing is switched in intr_disestablish(). */
 	intr_disestablish(cookie);
 }
 
 #if NIOAPIC > 0
-/*
- * experimental support for MSI, does support a single vector,
- * no MSI-X, 8-bit APIC IDs
- * (while it doesn't need the ioapic technically, it borrows
- * from its kernel support)
- */
-
-/* dummies, needed by common intr_establish code */
-static void
-msipic_hwmask(struct pic *pic, int pin)
+#ifdef __HAVE_PCI_MSI_MSIX
+pci_intr_type_t
+pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-}
-static void
-msipic_addroute(struct pic *pic, struct cpu_info *ci,
-		int pin, int vec, int type)
-{
-}
 
-static struct pic msi_pic = {
-	.pic_name = "msi",
-	.pic_type = PIC_SOFT,
-	.pic_vecbase = 0,
-	.pic_apicid = 0,
-	.pic_lock = __SIMPLELOCK_UNLOCKED,
-	.pic_hwmask = msipic_hwmask,
-	.pic_hwunmask = msipic_hwmask,
-	.pic_addroute = msipic_addroute,
-	.pic_delroute = msipic_addroute,
-	.pic_edge_stubs = ioapic_edge_stubs,
-};
-
-struct msi_hdl {
-	struct intrhand *ih;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int co;
-};
-
-void *
-pci_msi_establish(struct pci_attach_args *pa, int level,
-		  int (*func)(void *), void *arg)
-{
-	int co;
-	struct intrhand *ih;
-	struct msi_hdl *msih;
-	struct cpu_info *ci;
-	struct intrsource *is;
-	pcireg_t reg;
-
-	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &co, 0))
-		return NULL;
-
-	ih = intr_establish(-1, &msi_pic, -1, IST_EDGE, level, func, arg, 0);
-	if (ih == NULL)
-		return NULL;
-
-	msih = malloc(sizeof(*msih), M_DEVBUF, M_WAITOK);
-	msih->ih = ih;
-	msih->pc = pa->pa_pc;
-	msih->tag = pa->pa_tag;
-	msih->co = co;
-
-	ci = ih->ih_cpu;
-	is = ci->ci_isources[ih->ih_slot];
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_LO,
-		       LAPIC_MSIADDR_BASE |
-		       __SHIFTIN(ci->ci_cpuid, LAPIC_MSIADDR_DSTID_MASK));
-	if (reg & PCI_MSI_CTL_64BIT_ADDR) {
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_HI,
-		    0);
-		/* XXX according to the manual, ASSERT is unnecessary if
-		 * EDGE
-		 */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA64,
-		    __SHIFTIN(is->is_idtvec, LAPIC_MSIDATA_VECTOR_MASK) |
-		    LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_LEVEL_ASSERT |
-		    LAPIC_MSIDATA_DM_FIXED);
+	if (INT_VIA_MSI(ih)) {
+		if (MSI_INT_IS_MSIX(ih))
+			return PCI_INTR_TYPE_MSIX;
+		else
+			return PCI_INTR_TYPE_MSI;
 	} else {
-		/* XXX according to the manual, ASSERT is unnecessary if
-		 * EDGE
-		 */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA,
-		    __SHIFTIN(is->is_idtvec, LAPIC_MSIDATA_VECTOR_MASK) |
-		    LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_LEVEL_ASSERT |
-		    LAPIC_MSIDATA_DM_FIXED);
+		return PCI_INTR_TYPE_INTX;
 	}
-	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL,
-	    PCI_MSI_CTL_MSI_ENABLE);
-	return msih;
+}
+
+static void
+x86_pci_intx_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih)
+{
+	char intrstr_buf[INTRIDBUF];
+	const char *intrstr;
+
+	intrstr = pci_intr_string(NULL, *pih, intrstr_buf, sizeof(intrstr_buf));
+	mutex_enter(&cpu_lock);
+	intr_free_io_intrsource(intrstr);
+	mutex_exit(&cpu_lock);
+
+	kmem_free(pih, sizeof(*pih));
+}
+
+int
+pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **pih)
+{
+	struct intrsource *isp;
+	pci_intr_handle_t *handle;
+	int error;
+	char intrstr_buf[INTRIDBUF];
+	const char *intrstr;
+
+	handle = kmem_zalloc(sizeof(*handle), KM_SLEEP);
+	if (pci_intr_map(pa, handle) != 0) {
+		aprint_normal("cannot set up pci_intr_handle_t\n");
+		error = EINVAL;
+		goto error;
+	}
+
+	intrstr = pci_intr_string(pa->pa_pc, *handle,
+	    intrstr_buf, sizeof(intrstr_buf));
+	mutex_enter(&cpu_lock);
+	isp = intr_allocate_io_intrsource(intrstr);
+	mutex_exit(&cpu_lock);
+	if (isp == NULL) {
+		aprint_normal("can't allocate io_intersource\n");
+		error = ENOMEM;
+		goto error;
+	}
+
+	*pih = handle;
+	return 0;
+
+error:
+	kmem_free(handle, sizeof(*handle));
+	return error;
+}
+
+/*
+ * Interrupt handler allocation utility. This function calls each allocation
+ * function as specified by arguments.
+ * Currently callee functions are pci_intx_alloc(), pci_msi_alloc_exact(),
+ * and pci_msix_alloc_exact().
+ * pa       : pci_attach_args
+ * ihps     : interrupt handlers
+ * counts   : The array of number of required interrupt handlers.
+ *            It is overwritten by allocated the number of handlers.
+ *            CAUTION: The size of counts[] must be PCI_INTR_TYPE_SIZE.
+ * max_type : "max" type of using interrupts. See below.
+ *     e.g.
+ *         If you want to use 5 MSI-X, 1 MSI, or INTx, you use "counts" as
+ *             int counts[PCI_INTR_TYPE_SIZE];
+ *             counts[PCI_INTR_TYPE_MSIX] = 5;
+ *             counts[PCI_INTR_TYPE_MSI] = 1;
+ *             counts[PCI_INTR_TYPE_INTX] = 1;
+ *             error = pci_intr_alloc(pa, ihps, counts, PCI_INTR_TYPE_MSIX);
+ *
+ *         If you want to use hardware max number MSI-X or 1 MSI,
+ *         and not to use INTx, you use "counts" as
+ *             int counts[PCI_INTR_TYPE_SIZE];
+ *             counts[PCI_INTR_TYPE_MSIX] = -1;
+ *             counts[PCI_INTR_TYPE_MSI] = 1;
+ *             counts[PCI_INTR_TYPE_INTX] = 0;
+ *             error = pci_intr_alloc(pa, ihps, counts, PCI_INTR_TYPE_MSIX);
+ *
+ *         If you want to use 3 MSI or INTx, you can use "counts" as
+ *             int counts[PCI_INTR_TYPE_SIZE];
+ *             counts[PCI_INTR_TYPE_MSI] = 3;
+ *             counts[PCI_INTR_TYPE_INTX] = 1;
+ *             error = pci_intr_alloc(pa, ihps, counts, PCI_INTR_TYPE_MSI);
+ *
+ *         If you want to use 1 MSI or INTx (probably most general usage),
+ *         you can simply use this API like
+ *         below
+ *             error = pci_intr_alloc(pa, ihps, NULL, 0);
+ *                                                    ^ ignored
+ */
+int
+pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *counts, pci_intr_type_t max_type)
+{
+	int error;
+	int intx_count, msi_count, msix_count;
+
+	intx_count = msi_count = msix_count = 0;
+	if (counts == NULL) { /* simple pattern */
+		msi_count = 1;
+		intx_count = 1;
+	} else {
+		switch(max_type) {
+		case PCI_INTR_TYPE_MSIX:
+			msix_count = counts[PCI_INTR_TYPE_MSIX];
+			/* FALLTHROUGH */
+		case PCI_INTR_TYPE_MSI:
+			msi_count = counts[PCI_INTR_TYPE_MSI];
+			/* FALLTHROUGH */
+		case PCI_INTR_TYPE_INTX:
+			intx_count = counts[PCI_INTR_TYPE_INTX];
+			break;
+		default:
+			return EINVAL;
+		}
+	}
+
+	if (counts != NULL)
+		memset(counts, 0, sizeof(counts[0]) * PCI_INTR_TYPE_SIZE);
+	error = EINVAL;
+
+	/* try MSI-X */
+	if (msix_count == -1) /* use hardware max */
+		msix_count = pci_msix_count(pa->pa_pc, pa->pa_tag);
+	if (msix_count > 0) {
+		error = pci_msix_alloc_exact(pa, ihps, msix_count);
+		if (error == 0) {
+			KASSERTMSG(counts != NULL,
+			    "If MSI-X is used, counts must not be NULL.");
+			counts[PCI_INTR_TYPE_MSIX] = msix_count;
+			goto out;
+		}
+	}
+
+	/* try MSI */
+	if (msi_count == -1) /* use hardware max */
+		msi_count = pci_msi_count(pa->pa_pc, pa->pa_tag);
+	if (msi_count > 0) {
+		error = pci_msi_alloc_exact(pa, ihps, msi_count);
+		if (error == 0) {
+			if (counts != NULL)
+				counts[PCI_INTR_TYPE_MSI] = msi_count;
+			goto out;
+		}
+	}
+
+	/* try INTx */
+	if (intx_count != 0) { /* The number of INTx is always 1. */
+		error = pci_intx_alloc(pa, ihps);
+		if (error == 0) {
+			if (counts != NULL)
+				counts[PCI_INTR_TYPE_INTX] = 1;
+		}
+	}
+
+ out:
+	return error;
 }
 
 void
-pci_msi_disestablish(void *ih)
+pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
 {
-	struct msi_hdl *msih = ih;
+	if (pih == NULL)
+		return;
 
-	pci_conf_write(msih->pc, msih->tag, msih->co + PCI_MSI_CTL, 0);
-	intr_disestablish(msih->ih);
-	free(msih, M_DEVBUF);
+	if (INT_VIA_MSI(*pih)) {
+		if (MSI_INT_IS_MSIX(*pih))
+			return x86_pci_msix_release(pc, pih, count);
+		else
+			return x86_pci_msi_release(pc, pih, count);
+	} else {
+		KASSERT(count == 1);
+		return x86_pci_intx_release(pc, pih);
+	}
+
 }
-#endif
+#endif /* __HAVE_PCI_MSI_MSIX */
+#endif /*  NIOAPIC > 0 */

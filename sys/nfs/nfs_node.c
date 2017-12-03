@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.116.12.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.116.12.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.116.12.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.116.12.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.116.12.1 2014/08/20 00:04:36 tls Exp 
 struct pool nfs_node_pool;
 struct pool nfs_vattr_pool;
 static struct workqueue *nfs_sillyworkq;
-
-extern int prtactive;
 
 static void nfs_gop_size(struct vnode *, off_t, off_t *, int);
 static int nfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
@@ -179,7 +177,7 @@ nfs_nget1(struct mount *mntp, nfsfh_t *fhp, int fhsize, struct nfsnode **npp,
 int
 nfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -203,8 +201,6 @@ nfs_inactive(void *v)
 		nfs_invaldircache(vp,
 		    NFS_INVALDIRCACHE_FORCE | NFS_INVALDIRCACHE_KEEPEOF);
 
-	VOP_UNLOCK(vp);
-
 	if (sp != NULL) {
 		workqueue_enqueue(nfs_sillyworkq, &sp->s_work, NULL);
 	}
@@ -218,16 +214,13 @@ nfs_inactive(void *v)
 int
 nfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 
-	if (prtactive && vp->v_usecount > 1)
-		vprint("nfs_reclaim: pushing active", vp);
-
-	vcache_remove(vp->v_mount, np->n_fhp, np->n_fhsize);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Free up any directory cookie structures and

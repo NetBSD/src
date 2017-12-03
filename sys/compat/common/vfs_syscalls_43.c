@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.54.18.2 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.54.18.3 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54.18.2 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54.18.3 2017/12/03 11:36:53 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -75,7 +75,32 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54.18.2 2014/08/20 00:03:31 tl
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
+static void cvttimespec(struct timespec *, struct timespec50 *);
 static void cvtstat(struct stat *, struct stat43 *);
+
+/*
+ * Convert from an old to a new timespec structure.
+ */
+static void
+cvttimespec(struct timespec *ts, struct timespec50 *ots)
+{
+
+	if (ts->tv_sec > INT_MAX) {
+#if defined(DEBUG) || 1
+		static bool first = true;
+
+		if (first) {
+			first = false;
+			printf("%s[%s:%d]: time_t does not fit\n",
+			    __func__, curlwp->l_proc->p_comm,
+			    curlwp->l_lid);
+		}
+#endif
+		ots->tv_sec = INT_MAX;
+	} else
+		ots->tv_sec = ts->tv_sec;
+	ots->tv_nsec = ts->tv_nsec;
+}
 
 /*
  * Convert from an old to a new stat structure.
@@ -84,6 +109,8 @@ static void
 cvtstat(struct stat *st, struct stat43 *ost)
 {
 
+	/* Handle any padding. */
+	memset(ost, 0, sizeof *ost);
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode & 0xffff;
@@ -95,9 +122,9 @@ cvtstat(struct stat *st, struct stat43 *ost)
 		ost->st_size = st->st_size;
 	else
 		ost->st_size = -2;
-	ost->st_atime = st->st_atime;
-	ost->st_mtime = st->st_mtime;
-	ost->st_ctime = st->st_ctime;
+	cvttimespec(&st->st_atimespec, &ost->st_atimespec);
+	cvttimespec(&st->st_mtimespec, &ost->st_mtimespec);
+	cvttimespec(&st->st_ctimespec, &ost->st_ctimespec);
 	ost->st_blksize = st->st_blksize;
 	ost->st_blocks = st->st_blocks;
 	ost->st_flags = st->st_flags;
@@ -300,7 +327,7 @@ compat_43_sys_lseek(struct lwp *l, const struct compat_43_sys_lseek_args *uap, r
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, offset) = SCARG(uap, offset);
 	SCARG(&nuap, whence) = SCARG(uap, whence);
-	error = sys_lseek(l, &nuap, (void *)&qret);
+	error = sys_lseek(l, &nuap, (register_t *)&qret);
 	*(long *)retval = qret;
 	return (error);
 }
@@ -351,7 +378,8 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 	} */
 	struct dirent *bdp;
 	struct vnode *vp;
-	char *inp, *tbuf;		/* Current-format */
+	void *tbuf;			/* Current-format */
+	char *inp;			/* Current-format */
 	int len, reclen;		/* Current-format */
 	char *outp;			/* Dirent12-format */
 	int resid, old_reclen = 0;	/* Dirent12-format */
@@ -375,7 +403,7 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = ENOTDIR;
 		goto out1;
@@ -414,7 +442,7 @@ again:
 	if (error)
 		goto out;
 
-	inp = tbuf;
+	inp = (char *)tbuf;
 	outp = SCARG(uap, buf);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -423,8 +451,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic(__func__);
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)
@@ -447,7 +477,8 @@ again:
 		idb.d_fileno = (uint32_t)bdp->d_fileno;
 		idb.d_reclen = (uint16_t)old_reclen;
 		idb.d_namlen = (uint16_t)bdp->d_namlen;
-		strcpy(idb.d_name, bdp->d_name);
+		memcpy(idb.d_name, bdp->d_name, MIN(sizeof(idb.d_name),
+		    idb.d_namlen));
 		if ((error = copyout(&idb, outp, old_reclen)))
 			goto out;
 		/* advance past this real entry */
@@ -493,8 +524,6 @@ static int
 sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 {
         struct vfsconf vfc;
-        extern const char * const mountcompatnames[];
-        extern int nmountcompatnames;
 	struct sysctlnode node;
 	struct vfsops *vfsp;
 	u_int vfsnum;
@@ -529,7 +558,6 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 void
 compat_sysctl_vfs(struct sysctllog **clog)
 {
-	extern int nmountcompatnames;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,

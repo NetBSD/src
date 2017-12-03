@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100.2.1 2014/08/20 00:03:15 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100.2.2 2017/12/03 11:36:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.2.1 2014/08/20 00:03:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.2.2 2017/12/03 11:36:32 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -693,12 +693,12 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
+		error = exec_aout_prep_oldzmagic(l, epp);
 		return(error);
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l, epp);
 		return error;
 #endif
 	}

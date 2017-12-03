@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.1 2011/03/03 05:59:37 kiyohara Exp $	*/
+/*	$NetBSD: wdc.c,v 1.1.20.1 2017/12/03 11:36:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ wdc_init(struct wd_softc *sc, u_int *unit)
 	}
 	ctlreg = cmdreg + MMEYE_WDC_CTLBASE;
 
-	/* set up cmd regsiters */
+	/* set up cmd registers */
 	chp->c_cmdbase = (uint8_t *)cmdreg;
 	chp->c_data = (uint16_t *)(cmdreg + wd_data);
 	for (i = 0; i < WDC_NPORTS; i++)

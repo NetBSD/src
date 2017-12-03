@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.20 2010/02/10 19:39:39 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.20.20.1 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.20 2010/02/10 19:39:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.20.20.1 2017/12/03 11:37:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,6 +543,18 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 			edp->bgcol = bgcol;
 		}
 		break;
+	    case 't': /* terminal size and such */
+		switch (ARG(edp, 0)) {
+		    case 18: {	/* xterm size */
+			char buf[20];
+
+			n = snprintf(buf, sizeof(buf), "\033[8;%d;%dt",
+			    edp->nrows, edp->ncols);
+			wsdisplay_emulinput(edp->cbcookie, buf, n);
+			}
+			break;
+		}
+		break;	
 	    case 'n': /* reports */
 		switch (ARG(edp, 0)) {
 		    case 5: /* DSR operating status */

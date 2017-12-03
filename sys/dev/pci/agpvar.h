@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.18.22.1 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.18.22.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -187,6 +187,7 @@ int agp_amd64_match(const struct pci_attach_args *);
 
 int agp_ali_attach(device_t, device_t, void *);
 int agp_amd_attach(device_t, device_t, void *);
+int agp_apple_attach(device_t, device_t, void *);
 int agp_i810_attach(device_t, device_t, void *);
 int agp_intel_attach(device_t, device_t, void *);
 int agp_via_attach(device_t, device_t, void *);

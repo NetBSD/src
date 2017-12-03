@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.8 2012/07/31 15:50:32 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.8.2.1 2017/12/03 11:36:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.8 2012/07/31 15:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.8.2.1 2017/12/03 11:36:22 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,6 @@ struct wdc_obio_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	ata_channel *sc_chanlist[1];
 	struct	ata_channel sc_channel;
-	struct	ata_queue sc_chqueue;
 	struct	wdc_regs sc_wdc_regs;
 	void	*sc_ih;
 };
@@ -71,8 +70,6 @@ static int
 wdc_obio_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	struct obio_attach_args *oa = aux;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0;
 	int i;
@@ -87,11 +84,6 @@ wdc_obio_probe(device_t parent, cfdata_t cfp, void *aux)
 	if (oa->oa_irq[0].or_irq == IRQUNK)
 		return (0);
 
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
-
 	wdr.cmd_iot = oa->oa_iot;
 	if (bus_space_map(wdr.cmd_iot, oa->oa_io[0].or_addr,
 	    WDC_OBIO_REG_SIZE, 0, &wdr.cmd_baseioh)) {
@@ -103,7 +95,7 @@ wdc_obio_probe(device_t parent, cfdata_t cfp, void *aux)
 			goto outunmap;
 		}
 	}
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	wdr.ctl_iot = oa->oa_iot;
 	if (bus_space_map(wdr.ctl_iot,
@@ -112,7 +104,7 @@ wdc_obio_probe(device_t parent, cfdata_t cfp, void *aux)
 		goto outunmap;
 	}
 
-	result = wdcprobe(&ch);
+	result = wdcprobe(&wdr);
 	if (result) {
 		oa->oa_nio = 1;
 		oa->oa_io[0].or_size = WDC_OBIO_REG_SIZE;
@@ -174,9 +166,8 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 
-	wdc_init_shadow_regs(&sc->sc_channel);
+	wdc_init_shadow_regs(wdr);
 
 	wdcattach(&sc->sc_channel);
 }

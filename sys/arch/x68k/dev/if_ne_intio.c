@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.17 2011/10/16 03:10:18 isaki Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.17.12.1 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.17 2011/10/16 03:10:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.17.12.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -53,11 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.17 2011/10/16 03:10:18 isaki Exp $
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if BPFILTER > 0

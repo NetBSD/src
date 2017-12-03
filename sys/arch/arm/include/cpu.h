@@ -1,4 +1,4 @@
-/*	cpu.h,v 1.45.4.7 2008/01/28 18:20:39 matt Exp	*/
+/*	$NetBSD: cpu.h,v 1.73.2.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -104,7 +104,7 @@ extern int cpu_fpu_present;
 	((curcpu()->ci_intr_depth > 1) ||			\
 	    ((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
-#define CLKF_INTR(cf)	((void)(cf), curcpu()->ci_intr_depth > 1) 
+#define CLKF_INTR(cf)	((void)(cf), curcpu()->ci_intr_depth > 1)
 #endif
 
 /*
@@ -128,13 +128,16 @@ extern int cpu_fpu_present;
 /*
  * Per-CPU information.  For now we assume one CPU.
  */
+#ifdef _KERNEL
 static inline int curcpl(void);
 static inline void set_curcpl(int);
 static inline void cpu_dosoftints(void);
+#endif
 
 #ifdef _KMEMUSER
 #include <sys/intr.h>
 #endif
+#include <sys/atomic.h>
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
@@ -148,7 +151,7 @@ struct cpu_info {
 	uint32_t ci_arm_cpurev;		/* CPU revision */
 	uint32_t ci_ctrl;		/* The CPU control register */
 	int ci_cpl;			/* current processor level (spl) */
-	int ci_astpending;		/* */
+	volatile int ci_astpending;	/* */
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
 	struct cpu_softc *ci_softc;	/* platform softc */
@@ -178,7 +181,15 @@ struct cpu_info {
 
 extern struct cpu_info cpu_info_store;
 
-#if defined(TPIDRPRW_IS_CURLWP)
+struct lwp *arm_curlwp(void);
+struct cpu_info *arm_curcpu(void);
+
+#if defined(_MODULE)
+
+#define	curlwp		arm_curlwp()
+#define curcpu()	arm_curcpu()
+
+#elif defined(TPIDRPRW_IS_CURLWP)
 static inline struct lwp *
 _curlwp(void)
 {
@@ -191,13 +202,16 @@ _curlwp_set(struct lwp *l)
 	armreg_tpidrprw_write((uintptr_t)l);
 }
 
-#define	curlwp		(_curlwp())
-static inline struct cpu_info *
-curcpu(void)
-{
-	return curlwp->l_cpu;
-}
+// Also in <sys/lwp.h> but also here if this was included before <sys/lwp.h>
+static inline struct cpu_info *lwp_getcpu(struct lwp *);
+
+#define	curlwp		_curlwp()
+// curcpu() expands into two instructions: a mrc and a ldr
+#define	curcpu()	lwp_getcpu(_curlwp())
 #elif defined(TPIDRPRW_IS_CURCPU)
+#ifdef __HAVE_PREEMPTION
+#error __HAVE_PREEMPTION requires TPIDRPRW_IS_CURLWP
+#endif
 static inline struct cpu_info *
 curcpu(void)
 {
@@ -205,8 +219,10 @@ curcpu(void)
 }
 #elif !defined(MULTIPROCESSOR)
 #define	curcpu()	(&cpu_info_store)
+#elif !defined(__HAVE_PREEMPTION)
+#error MULTIPROCESSOR && !__HAVE_PREEMPTION requires TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP
 #else
-#error MULTIPROCESSOR requires TPIDRPRW_IS_CURLWP or TPIDRPRW_IS_CURCPU
+#error MULTIPROCESSOR && __HAVE_PREEMPTION requires TPIDRPRW_IS_CURLWP
 #endif /* !TPIDRPRW_IS_CURCPU && !TPIDRPRW_IS_CURLWP */
 
 #ifndef curlwp
@@ -214,19 +230,22 @@ curcpu(void)
 #endif
 
 #define CPU_INFO_ITERATOR	int
-#if defined(MULTIPROCESSOR)
+#if defined(_MODULE) || defined(MULTIPROCESSOR)
 extern struct cpu_info *cpu_info[];
 #define cpu_number()		(curcpu()->ci_index)
-void cpu_boot_secondary_processors(void);
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
 #define CPU_INFO_FOREACH(cii, ci)			\
 	cii = 0, ci = cpu_info[0]; cii < ncpu && (ci = cpu_info[cii]) != NULL; cii++
-#else 
+#else
 #define cpu_number()            0
 
 #define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_FOREACH(cii, ci)			\
 	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
+#if defined(MULTIPROCESSOR)
+void cpu_boot_secondary_processors(void);
 #endif
 
 #define	LWP0_CPU_INFO	(&cpu_info_store)
@@ -266,24 +285,32 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * Scheduling glue
  */
 
-#define setsoftast()			(curcpu()->ci_astpending = 1)
+#ifdef __HAVE_PREEMPTION
+#define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
+#else
+#define setsoftast(ci)		((ci)->ci_astpending = __BIT(0))
+#endif
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
 
-#define cpu_signotify(l)		setsoftast()
+#define cpu_signotify(l)		setsoftast((l)->l_cpu)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, \
+				 setsoftast((l)->l_cpu))
+
+/* for preeemption. */
+void	cpu_set_curpri(int);
 
 /*
- * We've already preallocated the stack for the idlelwps for additional CPUs.  
+ * We've already preallocated the stack for the idlelwps for additional CPUs.
  * This hook allows to return them.
  */
 vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);

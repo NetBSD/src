@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.3.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.3.2.3 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -28,11 +28,11 @@
  * EDCA AC parameters.
  */
 struct ieee80211_edca_ac_params {
-	u_int8_t	ac_ecwmin;	/* CWmin = 2^ECWmin - 1 */
-	u_int8_t	ac_ecwmax;	/* CWmax = 2^ECWmax - 1 */
-	u_int8_t	ac_aifsn;
-	u_int16_t	ac_txoplimit;	/* 32TU */
-	u_int8_t	ac_acm;
+	uint8_t		ac_ecwmin;	/* CWmin = 2^ECWmin - 1 */
+	uint8_t		ac_ecwmax;	/* CWmax = 2^ECWmax - 1 */
+	uint8_t		ac_aifsn;
+	uint16_t	ac_txoplimit;	/* 32TU */
+	uint8_t		ac_acm;
 };
 /************************************************************/
 #endif /* ! HAVE_EDCA */
@@ -111,7 +111,7 @@ struct otus_tx_radiotap_header {
 struct otus_softc;
 
 struct otus_tx_cmd {
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	void			*odata;
 	uint16_t		token;
@@ -120,13 +120,13 @@ struct otus_tx_cmd {
 
 struct otus_rx_data {
 	struct otus_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct otus_tx_data {
 	struct otus_softc		*sc;
-	usbd_xfer_handle		xfer;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(otus_tx_data)	next;
 };
@@ -169,19 +169,20 @@ struct otus_softc {
 					    enum ieee80211_state, int);
 	void				(*sc_led_newstate)(struct otus_softc *);
 
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device *		sc_udev;
+	struct usbd_interface *		sc_iface;
 
 	struct ar5416eeprom		sc_eeprom;
 	uint8_t				sc_capflags;
 	uint8_t				sc_rxmask;
 	uint8_t				sc_txmask;
 
-	usbd_pipe_handle		sc_data_tx_pipe;
-	usbd_pipe_handle		sc_data_rx_pipe;
-	usbd_pipe_handle		sc_cmd_tx_pipe;
-	usbd_pipe_handle		sc_cmd_rx_pipe;
+	struct usbd_pipe *		sc_data_tx_pipe;
+	struct usbd_pipe *		sc_data_rx_pipe;
+	struct usbd_pipe *		sc_cmd_tx_pipe;
+	struct usbd_pipe *		sc_cmd_rx_pipe;
 	uint8_t 			*sc_ibuf;
+	size_t				sc_ibuf_size;
 
 	int				sc_if_flags;
 	int				sc_tx_timer;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.53 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.53.6.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -34,7 +34,7 @@
  *	FreeBSD Id: if_rlreg.h,v 1.9 1999/06/20 18:56:09 wpaul Exp
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #define RTK_ETHER_ALIGN	2
 #define RTK_RXSTAT_LEN	4
@@ -192,6 +192,8 @@ struct rtk_softc {
 #define RTKQ_MACSTAT		0x00000100	/* set MACSTAT_DIS on init */
 #define RTKQ_CMDSTOP		0x00000200	/* set STOPREQ on stop */
 #define RTKQ_PHYWAKE_PM		0x00000400	/* wake PHY from power down */
+#define RTKQ_RXDV_GATED		0x00000800
+#define RTKQ_IM_HW		0x00001000	/* HW interrupt mitigation */
 
 	bus_dma_tag_t		sc_dmat;
 

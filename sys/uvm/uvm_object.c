@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.11.12.1 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.11.12.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11.12.1 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11.12.2 2017/12/03 11:39:22 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -60,6 +62,9 @@ uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
     bool alock, u_int refs)
 {
 
+#if 0 /* notyet */
+	KASSERT(ops);
+#endif
 	if (alock) {
 		/* Allocate and assign a lock. */
 		uo->vmobjlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);

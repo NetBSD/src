@@ -1,4 +1,4 @@
-/*	$NetBSD: msioctl.h,v 1.4 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: msioctl.h,v 1.4.22.1 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 #define MIOCS3B_EMUL	_IOW('M', 0x0, int)	/* Set/clear 3But emulation */
 #define MIOCG3B_EMUL	_IOR('M', 0x1, int)	/* Get 3But emulation state */

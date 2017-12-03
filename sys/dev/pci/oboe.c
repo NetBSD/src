@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.38.18.2 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: oboe.c,v 1.38.18.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.38.18.2 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.38.18.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 
 	oboe_alloc_taskfile(sc);
 
-	sc->sc_child = config_found((void *)sc, &ia, ir_print);
+	sc->sc_child = config_found(self, &ia, ir_print);
 }
 
 static int
@@ -493,10 +493,19 @@ filt_oboewdetach(struct knote *kn)
 	splx(s);
 }
 
-static const struct filterops oboeread_filtops =
-	{ 1, NULL, filt_oboerdetach, filt_oboeread };
-static const struct filterops oboewrite_filtops =
-	{ 1, NULL, filt_oboewdetach, filt_seltrue };
+static const struct filterops oboeread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_oboerdetach,
+	.f_event = filt_oboeread,
+};
+
+static const struct filterops oboewrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_oboewdetach,
+	.f_event = filt_seltrue,
+};
 
 static int
 oboe_kqfilter(void *h, struct knote *kn)
@@ -641,9 +650,7 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 	/* XXX */
 	uintptr_t addr =
 	    (uintptr_t)malloc(OBOE_TASK_BUF_LEN, M_DEVBUF, M_WAITOK);
-	if (addr == 0) {
-		goto bad;
-	}
+
 	addr &= ~(sizeof (struct OboeTaskFile) - 1);
 	addr += sizeof (struct OboeTaskFile);
 	sc->sc_taskfile = (struct OboeTaskFile *) addr;
@@ -653,26 +660,15 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 			malloc(TX_BUF_SZ, M_DEVBUF, M_WAITOK);
 		sc->sc_xmit_stores[i] =
 			malloc(TX_BUF_SZ, M_DEVBUF, M_WAITOK);
-		if (sc->sc_xmit_bufs[i] == NULL ||
-		    sc->sc_xmit_stores[i] == NULL) {
-			goto bad;
-		}
 	}
 	for (i = 0; i < RX_SLOTS; ++i) {
 		sc->sc_recv_bufs[i] =
 			malloc(RX_BUF_SZ, M_DEVBUF, M_WAITOK);
 		sc->sc_recv_stores[i] =
 			malloc(RX_BUF_SZ, M_DEVBUF, M_WAITOK);
-		if (sc->sc_recv_bufs[i] == NULL ||
-		    sc->sc_recv_stores[i] == NULL) {
-			goto bad;
-		}
 	}
 
 	return 0;
-bad:
-	printf("oboe: malloc for buffers failed()\n");
-	return 1;
 }
 
 static void

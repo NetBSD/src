@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.46.12.1 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: un.h,v 1.46.12.2 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,9 +56,10 @@ struct	sockaddr_un {
  * Socket options for UNIX IPC domain.
  */
 #if defined(_NETBSD_SOURCE)
-#define	LOCAL_CREDS	0x0001		/* pass credentials to receiver */
+#define	LOCAL_OCREDS	0x0001		/* pass credentials to receiver */
 #define	LOCAL_CONNWAIT	0x0002		/* connects block until accepted */
 #define	LOCAL_PEEREID	0x0003		/* get peer identification */
+#define	LOCAL_CREDS	0x0004		/* pass credentials to receiver */
 #endif
 
 /*
@@ -75,6 +76,7 @@ struct unpcbid {
 struct unpcb;
 struct socket;
 struct sockopt;
+struct sockaddr;
 
 extern const struct pr_usrreqs unp_usrreqs;
 
@@ -84,7 +86,7 @@ kmutex_t *uipc_dgramlock(void);
 kmutex_t *uipc_streamlock(void);
 kmutex_t *uipc_rawlock(void);
 
-int	unp_connect(struct socket *, struct mbuf *, struct lwp *);
+int	unp_connect(struct socket *, struct sockaddr *, struct lwp *);
 int	unp_connect2(struct socket *, struct socket *);
 void 	unp_dispose(struct mbuf *);
 int 	unp_externalize(struct mbuf *, struct lwp *, int);

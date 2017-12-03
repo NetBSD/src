@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3 2011/06/12 01:29:58 mrg Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.3.12.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -126,10 +126,11 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	   bool isrela, bool local)
 {
 	const Elf_Rela *rela;
-	Elf_Addr *where;
+	Elf_Addr *where, addr;
 	Elf_Word value, mask;
-	uintptr_t tmp, addr;
+	uintptr_t tmp;
 	u_int symidx, type;
+	int error;
 
 	rela = data;
 	where = (Elf_Addr *) (relocbase + rela->r_offset);
@@ -157,8 +158,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	}
 
 	if (RELOC_RESOLVE_SYMBOL(type)) {
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		value += addr;
 	}

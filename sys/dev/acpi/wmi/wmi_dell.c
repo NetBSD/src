@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.8 2011/02/16 13:15:49 jruoho Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.8.14.1 2017/12/03 11:36:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.8 2011/02/16 13:15:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.8.14.1 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -233,7 +233,7 @@ out:
 		    "event 0x%02X: %s\n", evt, AcpiFormatException(rv));
 }
 
-MODULE(MODULE_CLASS_DRIVER, wmidell, "acpiwmi");
+MODULE(MODULE_CLASS_DRIVER, wmidell, "acpiwmi,sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

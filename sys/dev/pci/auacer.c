@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.30.8.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: auacer.c,v 1.30.8.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.30.8.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.30.8.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -704,8 +704,6 @@ auacer_allocm(void *v, int direction, size_t size)
 		return NULL;
 
 	p = kmem_zalloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 	sc = v;
 	error = auacer_allocmem(sc, size, 0, p);
 	if (error) {

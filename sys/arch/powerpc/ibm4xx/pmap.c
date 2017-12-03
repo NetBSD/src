@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 2012/01/27 19:48:39 para Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72.6.1 2017/12/03 11:36:36 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2012/01/27 19:48:39 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.6.1 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -197,23 +197,25 @@ static int ppc4xx_tlb_size_mask(size_t, int *, int *);
 struct pv_entry *
 pa_to_pv(paddr_t pa)
 {
-	int bank, pg;
+	uvm_physseg_t bank;
+	psize_t pg;
 
-	bank = vm_physseg_find(atop(pa), &pg);
-	if (bank == -1)
+	bank = uvm_physseg_find(atop(pa), &pg);
+	if (bank == UVM_PHYSSEG_TYPE_INVALID)
 		return NULL;
-	return &VM_PHYSMEM_PTR(bank)->pmseg.pvent[pg];
+	return &uvm_physseg_get_pmseg(bank)->pvent[pg];
 }
 
 static inline char *
 pa_to_attr(paddr_t pa)
 {
-	int bank, pg;
+	uvm_physseg_t bank;
+	psize_t pg;
 
-	bank = vm_physseg_find(atop(pa), &pg);
-	if (bank == -1)
+	bank = uvm_physseg_find(atop(pa), &pg);
+	if (bank == UVM_PHYSSEG_TYPE_INVALID)
 		return NULL;
-	return &VM_PHYSMEM_PTR(bank)->pmseg.attrs[pg];
+	return &uvm_physseg_get_pmseg(bank)->attrs[pg];
 }
 
 /*
@@ -294,7 +296,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * Announce page-size to the VM-system
 	 */
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Get memory.
@@ -473,10 +475,12 @@ pmap_init(void)
 
 	pv = pv_table;
 	attr = pmap_attrib;
-	for (bank = 0; bank < vm_nphysseg; bank++) {
-		sz = VM_PHYSMEM_PTR(bank)->end - VM_PHYSMEM_PTR(bank)->start;
-		VM_PHYSMEM_PTR(bank)->pmseg.pvent = pv;
-		VM_PHYSMEM_PTR(bank)->pmseg.attrs = attr;
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+		sz = uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank);
+		uvm_physseg_get_pmseg(bank)->pvent = pv;
+		uvm_physseg_get_pmseg(bank)->attrs = attr;
 		pv += sz;
 		attr += sz;
 	}

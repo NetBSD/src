@@ -1,10 +1,11 @@
-#	$NetBSD: cpus,v 1.1 2008/02/20 21:01:23 ad Exp $
+#	$NetBSD: cpus,v 1.1.58.1 2017/12/03 11:38:44 jdolecek Exp $
 
 define cpus
-	set $ci = &cpu_info_primary
+	set $cpu = 0
 	printf "\t     cpu id           curlwp\n"
-	while ($ci != 0)
+	while ($cpu < ncpu)
+		set $ci = cpu_infos[$cpu]
 		printf "%16lx %2d %16lx\n", $ci, $ci->ci_cpuid, $ci->ci_curlwp
-		set $ci = $ci->ci_next
+		set $cpu++
 	end
 end

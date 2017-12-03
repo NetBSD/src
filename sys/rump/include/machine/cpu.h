@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.14.2 2014/08/20 00:04:39 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.14.3 2017/12/03 11:39:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,9 @@ extern struct cpu_info *rumpcpu_info_list;
 					_ci_ != NULL; _ci_ = _ci_->ci_next
 #define CPU_IS_PRIMARY(_ci_)		(_ci_->ci_index == 0)
 
+#define CLKF_USERMODE(framep)	0
+#define CLKF_PC(framep)		0
+#define CLKF_INTR(framep)	0
 
 #endif /* !_LOCORE */
 

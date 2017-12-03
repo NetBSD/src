@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyreg.h,v 1.5 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: mlyreg.h,v 1.5.38.1 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -286,7 +286,7 @@ struct mly_param_controller {
 #define	MLY_STARTUP_ALWAYS		0x5
 
 	u_int8_t	res15[62];
-} __packed__;
+} __packed;
 
 /*
  * 10.2 Physical Device Parameters

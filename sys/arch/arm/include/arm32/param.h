@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17.6.3 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: param.h,v 1.17.6.4 2017/12/03 11:35:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -35,9 +35,6 @@
 #ifndef	_ARM_ARM32_PARAM_H_
 #define	_ARM_ARM32_PARAM_H_
 
-#ifdef _KERNEL
-# include <machine/cpu.h>
-#endif
 #ifdef _KERNEL_OPT
 # include "opt_arm32_pmap.h"
 #endif
@@ -104,8 +101,10 @@
     
 #ifdef _KERNEL
 #ifndef _LOCORE
+#ifndef __HIDE_DELAY
 void	delay(unsigned);
 #define DELAY(x)	delay(x)
+#endif
 #endif
 #endif
 

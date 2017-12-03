@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.42.2.3 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.42.2.4 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.42.2.3 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.42.2.4 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -33,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.42.2.3 2014/08/20 00:03:51 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -135,6 +138,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_SITECOMEU,		USB_PRODUCT_SITECOMEU_WL172 },
 	{ USB_VENDOR_SPARKLAN,		USB_PRODUCT_SPARKLAN_RT2573 },
 	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_RT2573 },
+	{ USB_VENDOR_SYNET,		USB_PRODUCT_SYNET_MWP54SS },
 	{ USB_VENDOR_ZYXEL,		USB_PRODUCT_ZYXEL_RT2573 }
 };
 
@@ -148,9 +152,9 @@ static void		rum_next_scan(void *);
 static void		rum_task(void *);
 static int		rum_newstate(struct ieee80211com *,
 			    enum ieee80211_state, int);
-static void		rum_txeof(usbd_xfer_handle, usbd_private_handle,
+static void		rum_txeof(struct usbd_xfer *, void *,
 			    usbd_status);
-static void		rum_rxeof(usbd_xfer_handle, usbd_private_handle,
+static void		rum_rxeof(struct usbd_xfer *, void *,
 			    usbd_status);
 static uint8_t		rum_rxrate(const struct rum_rx_desc *);
 static int		rum_ack_rate(struct ieee80211com *, int);
@@ -200,8 +204,8 @@ static void		rum_newassoc(struct ieee80211_node *, int);
 static void		rum_amrr_start(struct rum_softc *,
 			    struct ieee80211_node *);
 static void		rum_amrr_timeout(void *);
-static void		rum_amrr_update(usbd_xfer_handle, usbd_private_handle,
-			    usbd_status status);
+static void		rum_amrr_update(struct usbd_xfer *, void *,
+			    usbd_status);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -251,7 +255,7 @@ rum_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (usb_lookup(rum_devs, uaa->vendor, uaa->product) != NULL) ?
+	return (usb_lookup(rum_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -266,7 +270,7 @@ rum_attachhook(void *xsc)
 	int error;
 
 	if ((error = firmware_open("rum", name, &fwh)) != 0) {
-		printf("%s: failed loadfirmware of file %s (error %d)\n",
+		printf("%s: failed firmware_open of file %s (error %d)\n",
 		    device_xname(sc->sc_dev), name, error);
 		return error;
 	}
@@ -283,18 +287,18 @@ rum_attachhook(void *xsc)
 	if (error != 0) {
 		printf("%s: failed to read firmware (error %d)\n",
 		    device_xname(sc->sc_dev), error);
-		firmware_free(ucode, 0);
+		firmware_free(ucode, size);
 		return error;
 	}
 
 	if (rum_load_microcode(sc, ucode, size) != 0) {
 		printf("%s: could not load 8051 microcode\n",
 		    device_xname(sc->sc_dev));
-		firmware_free(ucode, 0);
+		firmware_free(ucode, size);
 		return ENXIO;
 	}
 
-	firmware_free(ucode, 0);
+	firmware_free(ucode, size);
 	sc->sc_flags |= RT2573_FWLOADED;
 
 	return 0;
@@ -315,7 +319,7 @@ rum_attach(device_t parent, device_t self, void *aux)
 	uint32_t tmp;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 	sc->sc_flags = 0;
 
 	aprint_naive("\n");
@@ -467,21 +471,23 @@ rum_attach(device_t parent, device_t self, void *aux)
 	ieee80211_media_init(ic, rum_media_change, ieee80211_media_status);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
-	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
 	sc->sc_rxtap.wr_ihdr.it_present = htole32(RT2573_RX_RADIOTAP_PRESENT);
 
-	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2573_TX_RADIOTAP_PRESENT);
 
 	ieee80211_announce(ic);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 }
@@ -497,27 +503,14 @@ rum_detach(device_t self, int flags)
 	if (!ifp->if_softc)
 		return 0;
 
+	pmf_device_deregister(self);
+
 	s = splusb();
 
 	rum_stop(ifp, 1);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_stop(&sc->sc_scan_ch);
 	callout_stop(&sc->sc_amrr_ch);
-
-	if (sc->amrr_xfer != NULL) {
-		usbd_free_xfer(sc->amrr_xfer);
-		sc->amrr_xfer = NULL;
-	}
-
-	if (sc->sc_rx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_rx_pipeh);
-		usbd_close_pipe(sc->sc_rx_pipeh);
-	}
-
-	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
-		usbd_close_pipe(sc->sc_tx_pipeh);
-	}
 
 	bpf_detach(ifp);
 	ieee80211_ifdetach(ic);	/* free all nodes */
@@ -543,22 +536,15 @@ rum_alloc_tx_list(struct rum_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_tx_pipeh,
+		    RT2573_TX_DESC_SIZE + IEEE80211_MAX_LEN,
+		    USBD_FORCE_SHORT_XFER, 0, &data->xfer);
+		if (error) {
 			printf("%s: could not allocate tx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
-
-		data->buf = usbd_alloc_buffer(data->xfer,
-		    RT2573_TX_DESC_SIZE + IEEE80211_MAX_LEN);
-		if (data->buf == NULL) {
-			printf("%s: could not allocate tx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 
 		/* clean Tx descriptor */
 		memset(data->buf, 0, RT2573_TX_DESC_SIZE);
@@ -580,7 +566,7 @@ rum_free_tx_list(struct rum_softc *sc)
 		data = &sc->tx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 
@@ -602,18 +588,11 @@ rum_alloc_rx_list(struct rum_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_rx_pipeh, MCLBYTES,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 			printf("%s: could not allocate rx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
-
-		if (usbd_alloc_buffer(data->xfer, MCLBYTES) == NULL) {
-			printf("%s: could not allocate rx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
 
@@ -652,7 +631,7 @@ rum_free_rx_list(struct rum_softc *sc)
 		data = &sc->rx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 
@@ -787,7 +766,7 @@ rum_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #define RUM_CTS_SIZE	14	/* 10 + 4(FCS) */
 
 static void
-rum_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+rum_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct rum_tx_data *data = priv;
 	struct rum_softc *sc = data->sc;
@@ -826,7 +805,7 @@ rum_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 static void
-rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct rum_rx_data *data = priv;
 	struct rum_softc *sc = data->sc;
@@ -891,7 +870,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	data->buf = mtod(data->m, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_data = (void *)(desc + 1);
 	m->m_pkthdr.len = m->m_len = (le32toh(desc->flags) >> 16) & 0xfff;
 
@@ -924,8 +903,8 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(15, ("rx done\n"));
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->sc_rx_pipeh, data, data->buf, MCLBYTES,
-	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, rum_rxeof);
+	usbd_setup_xfer(xfer, data, data->buf, MCLBYTES, USBD_SHORT_XFER_OK,
+	    USBD_NO_TIMEOUT, rum_rxeof);
 	usbd_transfer(xfer);
 }
 
@@ -1193,8 +1172,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		/* mbuf is no longer needed */
 		m_freem(mprot);
 
-		usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf,
-		    xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+		usbd_setup_xfer(data->xfer, data, data->buf,
+		    xferlen, USBD_FORCE_SHORT_XFER,
 		    RUM_TX_TIMEOUT, rum_txeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
@@ -1260,8 +1239,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	/* mbuf is no longer needed */
 	m_freem(m0);
 
-	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUM_TX_TIMEOUT, rum_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, RUM_TX_TIMEOUT, rum_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
 		return error;
@@ -1293,8 +1272,8 @@ rum_start(struct ifnet *ifp)
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
+			M_CLEARCTX(m0);
 			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (rum_tx_data(sc, m0, ni) != 0)
 				break;
@@ -1439,7 +1418,7 @@ rum_read(struct rum_softc *sc, uint16_t reg)
 {
 	uint32_t val;
 
-	rum_read_multi(sc, reg, &val, sizeof val);
+	rum_read_multi(sc, reg, &val, sizeof(val));
 
 	return le32toh(val);
 }
@@ -1468,7 +1447,7 @@ rum_write(struct rum_softc *sc, uint16_t reg, uint32_t val)
 {
 	uint32_t tmp = htole32(val);
 
-	rum_write_multi(sc, reg, &tmp, sizeof tmp);
+	rum_write_multi(sc, reg, &tmp, sizeof(tmp));
 }
 
 static void
@@ -1919,7 +1898,7 @@ rum_read_eeprom(struct rum_softc *sc)
 	/* read Tx power for all a/b/g channels */
 	rum_eeprom_read(sc, RT2573_EEPROM_TXPOWER, sc->txpow, 14);
 	/* XXX default Tx power for 802.11a channels */
-	memset(sc->txpow + 14, 24, sizeof (sc->txpow) - 14);
+	memset(sc->txpow + 14, 24, sizeof(sc->txpow) - 14);
 #ifdef RUM_DEBUG
 	for (i = 0; i < 14; i++)
 		DPRINTF(("Channel=%d Tx power=%d\n", i + 1,  sc->txpow[i]));
@@ -1940,7 +1919,6 @@ rum_read_eeprom(struct rum_softc *sc)
 static int
 rum_bbp_init(struct rum_softc *sc)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	unsigned int i, ntries;
 	uint8_t val;
 
@@ -1958,7 +1936,7 @@ rum_bbp_init(struct rum_softc *sc)
 	}
 
 	/* initialize BBP registers to default values */
-	for (i = 0; i < N(rum_def_bbp); i++)
+	for (i = 0; i < __arraycount(rum_def_bbp); i++)
 		rum_bbp_write(sc, rum_def_bbp[i].reg, rum_def_bbp[i].val);
 
 	/* write vendor-specific BBP values (from EEPROM) */
@@ -1969,16 +1947,13 @@ rum_bbp_init(struct rum_softc *sc)
 	}
 
 	return 0;
-#undef N
 }
 
 static int
 rum_init(struct ifnet *ifp)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct rum_rx_data *data;
 	uint32_t tmp;
 	usbd_status error = 0;
 	unsigned int i, ntries;
@@ -1991,7 +1966,7 @@ rum_init(struct ifnet *ifp)
 	rum_stop(ifp, 0);
 
 	/* initialize MAC registers to default values */
-	for (i = 0; i < N(rum_def_mac); i++)
+	for (i = 0; i < __arraycount(rum_def_mac); i++)
 		rum_write(sc, rum_def_mac[i].reg, rum_def_mac[i].val);
 
 	/* set host ready */
@@ -2020,7 +1995,7 @@ rum_init(struct ifnet *ifp)
 	rum_set_chan(sc, ic->ic_curchan);
 
 	/* clear STA registers */
-	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof sc->sta);
+	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof(sc->sta));
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	rum_set_macaddr(sc, ic->ic_myaddr);
@@ -2031,8 +2006,10 @@ rum_init(struct ifnet *ifp)
 	/*
 	 * Allocate xfer for AMRR statistics requests.
 	 */
-	sc->amrr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->amrr_xfer == NULL) {
+	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->sc_udev);
+	error = usbd_create_xfer(pipe0, sizeof(sc->sta), 0, 0,
+	    &sc->amrr_xfer);
+	if (error) {
 		printf("%s: could not allocate AMRR xfer\n",
 		    device_xname(sc->sc_dev));
 		goto fail;
@@ -2078,10 +2055,12 @@ rum_init(struct ifnet *ifp)
 	 * Start up the receive pipe.
 	 */
 	for (i = 0; i < RUM_RX_LIST_COUNT; i++) {
+		struct rum_rx_data *data;
+
 		data = &sc->rx_data[i];
 
-		usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,
-		    MCLBYTES, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, rum_rxeof);
+		usbd_setup_xfer(data->xfer, data, data->buf, MCLBYTES,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, rum_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
 		    error != USBD_IN_PROGRESS) {
@@ -2117,7 +2096,6 @@ rum_init(struct ifnet *ifp)
 
 fail:	rum_stop(ifp, 1);
 	return error;
-#undef N
 }
 
 static void
@@ -2142,24 +2120,30 @@ rum_stop(struct ifnet *ifp, int disable)
 	rum_write(sc, RT2573_MAC_CSR1, 0);
 
 	if (sc->amrr_xfer != NULL) {
-		usbd_free_xfer(sc->amrr_xfer);
+		usbd_destroy_xfer(sc->amrr_xfer);
 		sc->amrr_xfer = NULL;
 	}
 
 	if (sc->sc_rx_pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_rx_pipeh);
+	}
+
+	if (sc->sc_tx_pipeh != NULL) {
+		usbd_abort_pipe(sc->sc_tx_pipeh);
+	}
+
+	rum_free_rx_list(sc);
+	rum_free_tx_list(sc);
+
+	if (sc->sc_rx_pipeh != NULL) {
 		usbd_close_pipe(sc->sc_rx_pipeh);
 		sc->sc_rx_pipeh = NULL;
 	}
 
 	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
 		usbd_close_pipe(sc->sc_tx_pipeh);
 		sc->sc_tx_pipeh = NULL;
 	}
-
-	rum_free_rx_list(sc);
-	rum_free_tx_list(sc);
 }
 
 static int
@@ -2233,7 +2217,7 @@ rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 	int i;
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR5) */
-	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof sc->sta);
+	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof(sc->sta));
 
 	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
 
@@ -2259,16 +2243,16 @@ rum_amrr_timeout(void *arg)
 	req.bRequest = RT2573_READ_MULTI_MAC;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, RT2573_STA_CSR0);
-	USETW(req.wLength, sizeof sc->sta);
+	USETW(req.wLength, sizeof(sc->sta));
 
 	usbd_setup_default_xfer(sc->amrr_xfer, sc->sc_udev, sc,
-	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof sc->sta, 0,
+	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof(sc->sta), 0,
 	    rum_amrr_update);
 	(void)usbd_transfer(sc->amrr_xfer);
 }
 
 static void
-rum_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
+rum_amrr_update(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct rum_softc *sc = (struct rum_softc *)priv;

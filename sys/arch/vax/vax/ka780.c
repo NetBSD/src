@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.29.18.2 2014/08/20 00:03:27 tls Exp $ */
+/*	$NetBSD: ka780.c,v 1.29.18.3 2017/12/03 11:36:48 jdolecek Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.29.18.2 2014/08/20 00:03:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.29.18.3 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ ka780_mchk(void *cmcf)
 	int sbifs;
 
 	printf("machine check %x: %s%s\n", type, mc780[type&0xf],
-	    (type&0xf0) ? " abort" : " fault"); 
+	    (type&0xf0) ? " abort" : " fault");
 	printf("\tcpues %x upc %x va/viba %x dreg %x tber %x %x\n",
 	   mcf->mc8_cpues, mcf->mc8_upc, mcf->mc8_vaviba,
 	   mcf->mc8_dreg, mcf->mc8_tber0, mcf->mc8_tber1);

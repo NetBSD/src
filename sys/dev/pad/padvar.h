@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.4 2011/11/23 23:07:33 jmcneill Exp $ */
+/* $NetBSD: padvar.h,v 1.4.8.1 2017/12/03 11:37:07 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,17 +40,21 @@ typedef struct pad_softc {
 	kcondvar_t	sc_condvar;
 	kmutex_t	sc_lock;
 	kmutex_t	sc_intr_lock;
+	bool		sc_dying;
 
-	struct audio_softc *sc_audiodev;
+	device_t	sc_audiodev;
 	int		sc_blksize;
 
-#define PAD_BLKSIZE	1024
+#define PAD_BLKSIZE	8192
 #define PAD_BUFSIZE	65536
 	uint8_t		sc_audiobuf[PAD_BUFSIZE];
 	uint32_t	sc_buflen;
 	uint32_t	sc_rpos, sc_wpos;
 
-	u_int		sc_swvol;
+	uint8_t		sc_swvol;
+	struct timeval	sc_last;
+	int		sc_bytes_count;
+	uint32_t	sc_remainder;
 } pad_softc_t;
 
 #endif /* !_SYS_DEV_PAD_PADVAR_H */

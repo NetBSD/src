@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,7 +135,7 @@ AcpiEvSciXruptHandler (
 
 
     /*
-     * We are guaranteed by the ACPI CA initialization/shutdown code that
+     * We are guaranteed by the ACPICA initialization/shutdown code that
      * if this interrupt handler is installed, ACPI is enabled.
      */
 
@@ -218,7 +218,7 @@ AcpiEvInstallSciHandler (
 
 
     Status = AcpiOsInstallInterruptHandler ((UINT32) AcpiGbl_FADT.SciInterrupt,
-                AcpiEvSciXruptHandler, AcpiGbl_GpeXruptListHead);
+        AcpiEvSciXruptHandler, AcpiGbl_GpeXruptListHead);
     return_ACPI_STATUS (Status);
 }
 
@@ -257,7 +257,7 @@ AcpiEvRemoveAllSciHandlers (
     /* Just let the OS remove the handler and disable the level */
 
     Status = AcpiOsRemoveInterruptHandler ((UINT32) AcpiGbl_FADT.SciInterrupt,
-                AcpiEvSciXruptHandler);
+        AcpiEvSciXruptHandler);
 
     if (!AcpiGbl_SciHandlerList)
     {

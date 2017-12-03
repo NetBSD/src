@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13.2.3 2014/08/20 00:02:54 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.2.4 2017/12/03 11:36:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.3 2014/08/20 00:02:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.4 2017/12/03 11:36:04 jdolecek Exp $");
 
 #include "opt_md.h"
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.3 2014/08/20 00:02:54 tls Exp $"
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
@@ -50,16 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.3 2014/08/20 00:02:54 tls Exp $"
 void	(*evbarm_device_register)(device_t, void *);
 void	(*evbarm_device_register_post_config)(device_t, void *);
 
+extern struct cfdata cfdata[];
+
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device(char *name);
+static int get_device(char *name, device_t *, int *);
 static void set_root_device(void);
 #endif
 
 #ifndef MEMORY_DISK_IS_ROOT
 /* Decode a device name to a major and minor number */
 
-static void
-get_device(char *name)
+static int
+get_device(char *name, device_t *dvp, int *partp)
 {
 	int unit, part;
 	char devname[16], *cp;
@@ -69,7 +71,7 @@ get_device(char *name)
 		name += 5;
 
 	if (devsw_name2blk(name, devname, sizeof(devname)) == -1)
-		return;
+		return 0;
 
 	name += strlen(devname);
 	unit = part = 0;
@@ -78,27 +80,64 @@ get_device(char *name)
 	while (*cp >= '0' && *cp <= '9')
 		unit = (unit * 10) + (*cp++ - '0');
 	if (cp == name)
-		return;
+		return 0;
 
 	if (*cp >= 'a' && *cp < ('a' + MAXPARTITIONS))
 		part = *cp - 'a';
 	else if (*cp != '\0' && *cp != ' ')
-		return;
+		return 0;
 	if ((dv = device_find_by_driver_unit(devname, unit)) != NULL) {
-		booted_device = dv;
-		booted_partition = part;
+		*dvp = dv;
+		*partp = part;
+		return 1;
 	}
+
+	return 0;
 }
 
 /* Set the rootdev variable from the root specifier in the boot args */
 
+static char *bootspec_buf = NULL;
+static size_t bootspec_buflen = 0;
+
 static void
 set_root_device(void)
 {
-	char *ptr;
-	if (boot_args &&
-	    get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
-		get_device(ptr);
+	char *ptr, *end, *buf;
+	size_t len;
+
+	if (boot_args == NULL)
+		return;
+
+	if (!get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
+		return;
+
+	if (get_device(ptr, &booted_device, &booted_partition))
+		return;
+
+	/* NUL-terminate string, get_bootconf_option doesn't */
+	for (end=ptr; *end != '\0'; ++end) {
+		if (*end == ' ' || *end == '\t') {
+			break;
+		}
+	}
+
+	if (end == ptr)
+		return;
+
+	len = end - ptr;
+
+	buf = kmem_alloc(len + 1, KM_SLEEP);
+	memcpy(buf, ptr, len);
+	buf[len] = '\0';
+
+	if (bootspec_buf != NULL)
+		kmem_free(bootspec_buf, bootspec_buflen + 1);
+
+	bootspec_buf = buf;
+	bootspec_buflen = len;
+
+	bootspec = bootspec_buf;
 }
 #endif
 
@@ -127,13 +166,17 @@ void
 cpu_configure(void)
 {
 	struct mainbus_attach_args maa;
+	struct cfdata *cf;
 
 	(void) splhigh();
-	(void) splserial();	/* XXX need an splextreme() */
 
-	maa.ma_name = "mainbus";
-
-	config_rootfound("mainbus", &maa);
+	for (cf = &cfdata[0]; cf->cf_name; cf++) {
+		if (cf->cf_pspec == NULL) {
+			maa.ma_name = cf->cf_name;
+			if (config_rootfound(cf->cf_name, &maa) != NULL)
+				break;
+		}
+	}
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	spl0();

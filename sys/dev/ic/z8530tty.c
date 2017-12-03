@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.128.14.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.128.14.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.128.14.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.128.14.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -285,8 +285,8 @@ static void zstty_txint  (struct zs_chanstate *);
 static void zstty_softint(struct zs_chanstate *);
 static void zstty_softint1(struct zs_chanstate *);
 
-#define	ZSUNIT(x)	(minor(x) & 0x7ffff)
-#define	ZSDIALOUT(x)	(minor(x) & 0x80000)
+#define	ZSUNIT(x)	TTUNIT(x)
+#define	ZSDIALOUT(x)	TTDIALOUT(x)
 
 struct tty *zstty_get_tty_from_dev(device_t);
 
@@ -558,6 +558,13 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	/* If KGDB took the line, then tp==NULL */
 	if (tp == NULL)
+		return (EBUSY);
+
+	/*
+	 * If the device is exclusively for kernel use, deny userland
+	 * open.
+	 */
+	if (ISSET(tp->t_state, TS_KERN_ONLY))
 		return (EBUSY);
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))

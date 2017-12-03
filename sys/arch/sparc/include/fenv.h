@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2011/05/20 21:42:49 nakayama Exp $	*/
+/*	$NetBSD: fenv.h,v 1.1.18.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -62,10 +62,10 @@ typedef	uint32_t	fexcept_t;
  * We can't just use the hardware bit values here, because that would
  * make FE_UPWARD and FE_DOWNWARD negative, which is not allowed.
  */
-#define	FE_TONEAREST	0x0
-#define	FE_TOWARDZERO	0x1
-#define	FE_UPWARD	0x2
-#define	FE_DOWNWARD	0x3
+#define	FE_TONEAREST	0	/* round to nearest representable number */
+#define	FE_TOWARDZERO	1	/* round to zero (truncate) */
+#define	FE_UPWARD	2	/* round toward positive infinity */
+#define	FE_DOWNWARD	3	/* round toward negative infinity */
 #define	_ROUND_MASK	(FE_TONEAREST | FE_DOWNWARD | \
     FE_UPWARD | FE_TOWARDZERO)
 #define	_ROUND_SHIFT	30

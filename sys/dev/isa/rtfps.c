@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.57.22.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.57.22.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.57.22.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.57.22.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,14 +151,15 @@ rtfpsattach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase, irq;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_io[0].ir_addr;
 	irq = ia->ia_irq[0].ir_irq;
 
 	if (irq >= 16 || irqport[irq] == -1) {
-		printf("%s: invalid irq\n", device_xname(self));
+		aprint_error_dev(self, "invalid irq\n");
 		return;
 	}
 	sc->sc_irqport = irqport[irq];
@@ -168,7 +169,8 @@ rtfpsattach(device_t parent, device_t self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 			&sc->sc_slaveioh[i])) {
-			aprint_error_dev(self, "can't map i/o space for slave %d\n", i);
+			aprint_error_dev(self,
+			    "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}

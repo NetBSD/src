@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
+/*	$NetBSD: radix_ipf.c,v 1.3.2.2 2017/12/03 11:38:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1480,6 +1480,8 @@ random_add(rnh)
 		add_addr(rnh, i, order[i]);
 		checktree(rnh);
 	}
+
+	free(order);
 }
 
 
@@ -1497,5 +1499,7 @@ random_delete(rnh)
 		delete_addr(rnh, i);
 		checktree(rnh);
 	}
+
+	free(order);
 }
 #endif /* RDX_DEBUG */

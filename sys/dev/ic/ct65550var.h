@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550var.h,v 1.2 2011/03/23 04:02:43 macallan Exp $	*/
+/*	$NetBSD: ct65550var.h,v 1.2.16.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,6 +33,7 @@
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 #include <dev/i2c/i2cvar.h>
 
 struct chipsfb_softc {
@@ -53,8 +54,8 @@ struct chipsfb_softc {
 
 	size_t memsize;
 
-	int bits_per_pixel;
-	int width, height, linebytes;
+	int sc_bits_per_pixel;
+	int sc_width, sc_height, sc_linebytes;
 
 	int sc_mode;
 	uint32_t sc_bg;
@@ -73,6 +74,7 @@ struct chipsfb_softc {
 	int sc_edidbytes;	/* number of bytes read from the monitor */
 
 	struct vcons_data vd;
+	glyphcache sc_gc;
 };
 
 void chipsfb_do_attach(struct chipsfb_softc *sc);

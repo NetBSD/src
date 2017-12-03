@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.2.2.2 2014/08/20 00:02:52 tls Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.2.2.3 2017/12/03 11:36:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2.2.2 2014/08/20 00:02:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2.2.3 2017/12/03 11:36:03 jdolecek Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -250,6 +250,20 @@ initarm(void *arg)
 #endif
 	const bool bigmem_p = (memsize >> 20) > 256; 
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
+	if (memsize > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		   __func__, (unsigned long) (ram_size >> 20),
+		   (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		memsize = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+#else
+	const bool mapallmem_p = false;
+#endif
+	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
 	arm32_bootmem_init(KERN_VTOPHYS(KERNEL_BASE), memsize,
 	    (paddr_t)KERNEL_BASE_phys);
 
@@ -265,7 +279,8 @@ initarm(void *arg)
 	 * abtstack, undstack, kernelstack, msgbufphys will be set to point to
 	 * the memory that was allocated for them.
 	 */
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, true);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
+	    mapallmem_p);
 
 	cpu_reset_address = bcm53xx_system_reset;
 	/* we've a specific device_register routine */

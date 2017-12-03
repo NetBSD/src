@@ -1,4 +1,4 @@
-/*	$NetBSD: gfb.c,v 1.7 2012/04/12 19:11:49 macallan Exp $	*/
+/*	$NetBSD: gfb.c,v 1.7.2.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.7 2012/04/12 19:11:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.7.2.1 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,8 @@ gfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	if (bus_space_map(sc->sc_memt, ma->ma_reg[6].ur_paddr,
-	    sc->sc_fblen, BUS_SPACE_MAP_LINEAR, &sc->sc_fbh)) {
+	    sc->sc_fblen, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+	    &sc->sc_fbh)) {
 		printf(": failed to map the framebuffer\n");
 		return;
 	}
@@ -245,7 +246,7 @@ gfb_attach(device_t parent, device_t self, void *aux)
 				printf(" %08x", bus_space_read_4(sc->sc_memt,
 				    regh, i + j));
 			}
-			printf("\n"); 
+			printf("\n");
 		}
 		bus_space_unmap(sc->sc_memt, regh, 0x2000);
 	}
@@ -303,6 +304,11 @@ gfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+		case WSDISPLAYIO_GET_FBINFO:
+			{
+				struct wsdisplayio_fbinfo *fbi = data;
+				return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+			}
 	}
 	return EPASSTHROUGH;
 }
@@ -316,6 +322,11 @@ gfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_fblen) {
+		/*
+		 * XXX
+		 * BUS_SPACE_MAP_PREFETCHABLE produces artifacts with X, but
+		 * not with the console code, so don't set it here
+		 */
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb_paddr + offset, 0,
 		    prot, BUS_SPACE_MAP_LINEAR);
 		return pa;

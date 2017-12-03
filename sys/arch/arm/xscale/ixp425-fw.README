@@ -1,4 +1,4 @@
-$NetBSD: ixp425-fw.README,v 1.2 2010/03/24 13:55:04 scw Exp $
+$NetBSD: ixp425-fw.README,v 1.2.18.1 2017/12/03 11:35:57 jdolecek Exp $
 
 IXP425 NPE Microcode
 ~~~~~~~~~~~~~~~~~~~~
@@ -19,19 +19,21 @@ through license.
 
 You must grab the NPE microcode from here:
 
- http://www.intel.com/design/network/products/npfamily/download_ixp400.htm
+ https://downloadcenter.intel.com/download/13757/IXP400-Software-NPE-Microcode-v3-0-without-crypto
+
+SHA1 (IPL_ixp400NpeLibrary-3_0.zip) = dda6b27265e6db3dfec68361644197c0f311a07b
+
+or the older version which is archived here:
+ https://downloads.openwrt.org/sources/IPL_ixp400NpeLibrary-2_4.zip
+
+SHA1 (IPL_ixp400NpeLibrary-2_4.zip) = abf1562e750e16e6f9baf9892a59640f863a693e
 
 Select the "Download (without Crypto)" link in the "NPE Microcode"
 section. Note that there is no benefit in selecting the "with Cypto"
 microcode at this time since NetBSD does not support it.
 
-Note: At the time of writing (December 2006), the NPE Microcode is at
-version 2.3. Newer versions may not work with NetBSD's native Ethernet
-driver. If this is the case, let us know via send-pr(1).
-
-Update: As of March 2010, NPE Microcode is at version 3.0 and has been
-confirmed to work. See:
- http://mail-index.netbsd.org/port-arm/2010/03/24/msg000912.html
+Note: At the time of writing (February 2017), the NPE Microcode is at
+version 3.0. However, the last known microcode version to work is 2.4.
 
 After clicking the link, you will be directed to a click-through license
 page. Assuming you agree to the terms of the license (and you are
@@ -42,7 +44,7 @@ Extract the microcode under any decent Unix-like system using the "unzip"
 command provided with the OS, or with the version included in the pkgsrc
 collection under archivers/unzip:
 
-	$ unzip IPL_ixp400NpeLibrary-2_3.zip
+	$ unzip IPL_ixp400NpeLibrary-2_4.zip
 
 Next, you must generate a microcode image suitable for inclusion in the
 NetBSD kernel.

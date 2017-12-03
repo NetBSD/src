@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.4 2011/07/26 08:36:02 macallan Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.4.12.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <machine/autoconf.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -84,7 +85,8 @@
 
 struct ki2c_softc {
 	device_t sc_dev;
-	u_char *sc_reg;
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_bh;
 	int sc_regstep;
 	
 	struct i2c_controller sc_i2c;

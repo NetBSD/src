@@ -1,4 +1,4 @@
-/*	$NetBSD: gtbrgreg.h,v 1.2 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtbrgreg.h,v 1.2.18.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -46,13 +46,6 @@
 #ifndef _GTBRGREG_H
 #define _GTBRGREG_H
 
-#ifndef BIT
-#define BIT(bitno)          (1U << (bitno))
-#endif
-#ifndef BITS
-#define BITS(hi, lo)        ((~((~0) << ((hi) + 1))) & ((~0) << (lo)))
-#endif
-
 #define GTBRG_NCHAN	3               /* Number of MPSC channels */
 
 /*******************************************************************************
@@ -71,10 +64,10 @@
 /*
  * BRG Configuration Register bits
  */
-#define BRG_BCR_CDV		BITS(15,0)	/* Count Down Value */
-#define BRG_BCR_EN		BIT(16)		/* Enable BRG */
-#define BRG_BCR_RST		BIT(17)		/* Reset BRG */
-#define BRG_BCR_CLKS_MASK	BITS(22,18)	/* Clock Source */
+#define BRG_BCR_CDV		__BITS(15,0)	/* Count Down Value */
+#define BRG_BCR_EN		__BIT(16)	/* Enable BRG */
+#define BRG_BCR_RST		__BIT(17)	/* Reset BRG */
+#define BRG_BCR_CLKS_MASK	__BITS(22,18)	/* Clock Source */
 #define BRG_BCR_CLKS_BCLKIN	(0 << 18)	/* from MPP */
 #define BRG_BCR_CLKS_SCLK0	(2 << 18)	/* from S0 port */
 #define BRG_BCR_CLKS_TSCLK0	(3 << 18)	/* from S0 port */
@@ -82,18 +75,18 @@
 #define BRG_BCR_CLKS_TSCLK1	(7 << 18)	/* from S1 port */
 #define BRG_BCR_CLKS_TCLK	(8 << 18)	/* "Tclk" ??? */
 						/* all other values resvd. */
-#define BRG_BCR_RES		BITS(31,23)
+#define BRG_BCR_RES		__BITS(31,23)
 /*
  * BRG Baud Tuning Register bits
  */
-#define BRG_BTR_CUV		BITS(15,0)	/* Count Up Value */
-#define BRG_BTR_RES		BITS(31,16)
+#define BRG_BTR_CUV		__BITS(15,0)	/* Count Up Value */
+#define BRG_BTR_RES		__BITS(31,16)
 /*
  * BRG Cause and Mask interrupt Register bits
  */
-#define BRG_INTR_BTR0		BIT(0)		/* Baud Tuning 0 irpt. */
-#define BRG_INTR_BTR1		BIT(1)		/* Baud Tuning 1 irpt. */
-#define BRG_INTR_BTR2		BIT(2)		/* Baud Tuning 2 irpt. */
-#define BRG_INTR_RES		BITS(31,3)
+#define BRG_INTR_BTR0		__BIT(0)	/* Baud Tuning 0 irpt. */
+#define BRG_INTR_BTR1		__BIT(1)	/* Baud Tuning 1 irpt. */
+#define BRG_INTR_BTR2		__BIT(2)	/* Baud Tuning 2 irpt. */
+#define BRG_INTR_RES		__BITS(31,3)
 
 #endif	/* _GTBRGREG_H */

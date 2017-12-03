@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.12 2009/02/13 22:41:04 apb Exp $	*/
+/*	$NetBSD: socket.h,v 1.12.22.1 2017/12/03 11:36:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -36,15 +36,19 @@
 
 #ifdef _KERNEL_OPT
 
+#include "opt_compat_netbsd.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_ultrix.h"
 #include "opt_compat_43.h"
 #include "opt_modular.h"
 
-#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_ULTRIX) || defined(MODULAR)
+#if defined(COMPAT_43) || defined(MODULAR)
 #define COMPAT_OSOCK
+#endif
+
+#ifdef COMPAT_70
+#define COMPAT_SOCKCRED70
 #endif
 
 #else
@@ -71,12 +75,28 @@ struct omsghdr {
 	int		msg_accrightslen;
 };
 
+/*
+ * 7.0 compat sockcred
+ */
+struct sockcred70 {
+	uid_t	sc_uid;			/* real user id */
+	uid_t	sc_euid;		/* effective user id */
+	gid_t	sc_gid;			/* real group id */
+	gid_t	sc_egid;		/* effective group id */
+	int	sc_ngroups;		/* number of supplemental groups */
+	gid_t	sc_groups[1];		/* variable length */
+};
+#define	SOCKCRED70SIZE(ngrps) \
+	(/*CONSTCOND*/sizeof(struct sockcred70) + (sizeof(gid_t) * \
+	    ((ngrps) ? ((ngrps) - 1) : 0)))
+
 #ifdef _KERNEL
 
 #define	SO_OSNDTIMEO	0x1005
 #define	SO_ORCVTIMEO	0x1006
 #define	SO_OTIMESTAMP	0x0400
 #define	SCM_OTIMESTAMP	0x2
+#define	SCM_OCREDS	0x4
 
 __BEGIN_DECLS
 struct socket;
@@ -84,6 +104,8 @@ struct proc;
 u_long compat_cvtcmd(u_long cmd);
 int compat_ifioctl(struct socket *, u_long, u_long, void *, struct lwp *);
 int compat43_set_accrights(struct msghdr *, void *, int);
+
+struct mbuf * compat_70_unp_addsockcred(struct lwp *, struct mbuf *);
 __END_DECLS
 #else
 int	__socket30(int, int, int);

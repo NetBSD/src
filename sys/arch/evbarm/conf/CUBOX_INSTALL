@@ -1,0 +1,10 @@
+#	$NetBSD: CUBOX_INSTALL,v 1.1.18.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	CUBOX_INSTALL -- CUBOX kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/CUBOX"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE

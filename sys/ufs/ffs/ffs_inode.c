@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.110.2.3 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.110.2.4 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.110.2.3 2014/08/20 00:04:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.110.2.4 2017/12/03 11:39:21 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -149,7 +149,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	}							/* XXX */
 	error = bread(ip->i_devvp,
 		      FFS_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
-		      (int)fs->fs_bsize, NOCRED, B_MODIFY, &bp);
+		      (int)fs->fs_bsize, B_MODIFY, &bp);
 	if (error) {
 		return (error);
 	}
@@ -212,12 +212,15 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	daddr_t blks[UFS_NDADDR + UFS_NIADDR];
 	struct fs *fs;
 	int offset, pgoffset, level;
-	int64_t count, blocksreleased = 0;
+	int64_t blocksreleased = 0;
 	int i, aflag, nblocks;
 	int error, allerror = 0;
 	off_t osize;
 	int sync;
 	struct ufsmount *ump = oip->i_ump;
+	void *dcookie;
+
+	UFS_WAPBL_JLOCK_ASSERT(ip->i_ump->um_mountp);
 
 	if (ovp->v_type == VCHR || ovp->v_type == VBLK ||
 	    ovp->v_type == VFIFO || ovp->v_type == VSOCK) {
@@ -417,20 +420,34 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		else
 			bn = ufs_rw64(oip->i_ffs2_ib[level],UFS_FSNEEDSWAP(fs));
 		if (bn != 0) {
+			if (lastiblock[level] < 0 &&
+			    oip->i_ump->um_mountp->mnt_wapbl) {
+				error = UFS_WAPBL_REGISTER_DEALLOCATION(
+				    oip->i_ump->um_mountp,
+				    FFS_FSBTODB(fs, bn), fs->fs_bsize,
+				    &dcookie);
+				if (error)
+					goto out;
+			} else {
+				dcookie = NULL;
+			}
+			    
 			error = ffs_indirtrunc(oip, indir_lbn[level],
-			    FFS_FSBTODB(fs, bn), lastiblock[level], level, &count);
-			if (error)
-				allerror = error;
-			blocksreleased += count;
+			    FFS_FSBTODB(fs, bn), lastiblock[level], level,
+			    &blocksreleased);
+			if (error) {
+				if (dcookie) {
+					UFS_WAPBL_UNREGISTER_DEALLOCATION(
+					    oip->i_ump->um_mountp, dcookie);
+				}
+				goto out;
+			}
+
 			if (lastiblock[level] < 0) {
-				DIP_ASSIGN(oip, ib[level], 0);
-				if (oip->i_ump->um_mountp->mnt_wapbl) {
-					UFS_WAPBL_REGISTER_DEALLOCATION(
-					    oip->i_ump->um_mountp,
-					    FFS_FSBTODB(fs, bn), fs->fs_bsize);
-				} else
+				if (!dcookie)
 					ffs_blkfree(fs, oip->i_devvp, bn,
 					    fs->fs_bsize, oip->i_number);
+				DIP_ASSIGN(oip, ib[level], 0);
 				blocksreleased += nblocks;
 			}
 		}
@@ -450,14 +467,18 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			bn = ufs_rw64(oip->i_ffs2_db[i], UFS_FSNEEDSWAP(fs));
 		if (bn == 0)
 			continue;
-		DIP_ASSIGN(oip, db[i], 0);
+
 		bsize = ffs_blksize(fs, oip, i);
 		if ((oip->i_ump->um_mountp->mnt_wapbl) &&
 		    (ovp->v_type != VREG)) {
-			UFS_WAPBL_REGISTER_DEALLOCATION(oip->i_ump->um_mountp,
-			    FFS_FSBTODB(fs, bn), bsize);
+			error = UFS_WAPBL_REGISTER_DEALLOCATION(
+			    oip->i_ump->um_mountp,
+			    FFS_FSBTODB(fs, bn), bsize, NULL);
+			if (error)
+				goto out;
 		} else
 			ffs_blkfree(fs, oip->i_devvp, bn, bsize, oip->i_number);
+		DIP_ASSIGN(oip, db[i], 0);
 		blocksreleased += btodb(bsize);
 	}
 	if (lastblock < 0)
@@ -493,9 +514,11 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			bn += ffs_numfrags(fs, newspace);
 			if ((oip->i_ump->um_mountp->mnt_wapbl) &&
 			    (ovp->v_type != VREG)) {
-				UFS_WAPBL_REGISTER_DEALLOCATION(
+				error = UFS_WAPBL_REGISTER_DEALLOCATION(
 				    oip->i_ump->um_mountp, FFS_FSBTODB(fs, bn),
-				    oldspace - newspace);
+				    oldspace - newspace, NULL);
+				if (error)
+					goto out;
 			} else
 				ffs_blkfree(fs, oip->i_devvp, bn,
 				    oldspace - newspace, oip->i_number);
@@ -504,17 +527,32 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	}
 
 done:
-#ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (blks[UFS_NDADDR + level] != DIP(oip, ib[level]))
-			panic("itrunc1");
+		KASSERTMSG((blks[UFS_NDADDR + level] == DIP(oip, ib[level])),
+		    "itrunc1 blk mismatch: %jx != %jx",
+		    (uintmax_t)blks[UFS_NDADDR + level],
+		    (uintmax_t)DIP(oip, ib[level]));
 	for (i = 0; i < UFS_NDADDR; i++)
-		if (blks[i] != DIP(oip, db[i]))
-			panic("itrunc2");
-	if (length == 0 &&
-	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
-		panic("itrunc3");
-#endif /* DIAGNOSTIC */
+		KASSERTMSG((blks[i] == DIP(oip, db[i])),
+		    "itrunc2 blk mismatch: %jx != %jx",
+		    (uintmax_t)blks[i], (uintmax_t)DIP(oip, db[i]));
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_cleanblkhd)),
+	    "itrunc3: zero length and nonempty cleanblkhd");
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_dirtyblkhd)),
+	    "itrunc3: zero length and nonempty dirtyblkhd");
+
+out:
+	/*
+	 * Set length back to old size if deallocation failed. Some indirect
+	 * blocks were deallocated creating a hole, but that is okay.
+	 */
+	if (error == EAGAIN) {
+		if (!allerror)
+			allerror = error;
+		length = osize;
+		uvm_vnp_setsize(ovp, length);
+	}
+
 	/*
 	 * Put back the real size.
 	 */
@@ -552,10 +590,13 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	struct vnode *vp;
 	daddr_t nb, nlbn, last;
 	char *copy = NULL;
-	int64_t blkcount, factor, blocksreleased = 0;
-	int nblocks;
+	int64_t factor;
+	int64_t nblocks;
 	int error = 0, allerror = 0;
 	const int needswap = UFS_FSNEEDSWAP(fs);
+	const int wapbl = (ip->i_ump->um_mountp->mnt_wapbl != NULL);
+	void *dcookie;
+
 #define RBAP(ip, i) (((ip)->i_ump->um_fstype == UFS1) ? \
 	    ufs_rw32(bap1[i], needswap) : ufs_rw64(bap2[i], needswap))
 #define BAP_ASSIGN(ip, i, value)					\
@@ -588,10 +629,9 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	vp = ITOV(ip);
 	error = ffs_getblk(vp, lbn, FFS_NOBLK, fs->fs_bsize, false, &bp);
-	if (error) {
-		*countp = 0;
+	if (error)
 		return error;
-	}
+
 	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->fs_bsize), lbn);
@@ -611,15 +651,21 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 	if (error) {
 		brelse(bp, 0);
-		*countp = 0;
-		return (error);
+		return error;
 	}
 
+	/*
+	 * Clear reference to blocks to be removed on disk, before actually
+	 * reclaiming them, so that fsck is more likely to be able to recover
+	 * the filesystem if system goes down during the truncate process.
+	 * This assumes the truncate process would not fail, contrary
+	 * to the wapbl case.
+	 */
 	if (ip->i_ump->um_fstype == UFS1)
 		bap1 = (int32_t *)bp->b_data;
 	else
 		bap2 = (int64_t *)bp->b_data;
-	if (lastbn >= 0) {
+	if (lastbn >= 0 && !wapbl) {
 		copy = kmem_alloc(fs->fs_bsize, KM_SLEEP);
 		memcpy((void *)copy, bp->b_data, (u_int)fs->fs_bsize);
 		for (i = last + 1; i < FFS_NINDIR(fs); i++)
@@ -627,6 +673,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		error = bwrite(bp);
 		if (error)
 			allerror = error;
+
 		if (ip->i_ump->um_fstype == UFS1)
 			bap1 = (int32_t *)copy;
 		else
@@ -641,46 +688,70 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		nb = RBAP(ip, i);
 		if (nb == 0)
 			continue;
-		if (level > SINGLE) {
-			error = ffs_indirtrunc(ip, nlbn, FFS_FSBTODB(fs, nb),
-					       (daddr_t)-1, level - 1,
-					       &blkcount);
-			if (error)
-				allerror = error;
-			blocksreleased += blkcount;
-		}
+
 		if ((ip->i_ump->um_mountp->mnt_wapbl) &&
 		    ((level > SINGLE) || (ITOV(ip)->v_type != VREG))) {
-			UFS_WAPBL_REGISTER_DEALLOCATION(ip->i_ump->um_mountp,
-			    FFS_FSBTODB(fs, nb), fs->fs_bsize);
-		} else
+			error = UFS_WAPBL_REGISTER_DEALLOCATION(
+			    ip->i_ump->um_mountp,
+			    FFS_FSBTODB(fs, nb), fs->fs_bsize,
+			    &dcookie);
+			if (error)
+				goto out;
+		} else {
+			dcookie = NULL;
+		}
+
+		if (level > SINGLE) {
+			error = ffs_indirtrunc(ip, nlbn, FFS_FSBTODB(fs, nb),
+					       (daddr_t)-1, level - 1, countp);
+			if (error) {
+				if (dcookie) {
+					UFS_WAPBL_UNREGISTER_DEALLOCATION(
+					    ip->i_ump->um_mountp, dcookie);
+				}
+
+				goto out;
+			}
+		}
+
+		if (!dcookie)
 			ffs_blkfree(fs, ip->i_devvp, nb, fs->fs_bsize,
 			    ip->i_number);
-		blocksreleased += nblocks;
+
+		BAP_ASSIGN(ip, i, 0);
+		*countp += nblocks;
 	}
 
 	/*
-	 * Recursively free last partial block.
+	 * Recursively free blocks on the now last partial indirect block.
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
 		nb = RBAP(ip, i);
 		if (nb != 0) {
 			error = ffs_indirtrunc(ip, nlbn, FFS_FSBTODB(fs, nb),
-					       last, level - 1, &blkcount);
+					       last, level - 1, countp);
 			if (error)
-				allerror = error;
-			blocksreleased += blkcount;
+				goto out;
 		}
 	}
 
-	if (copy != NULL) {
-		kmem_free(copy, fs->fs_bsize);
-	} else {
+out:
+ 	if (error && !allerror)
+ 		allerror = error;
+
+ 	if (copy != NULL) {
+ 		kmem_free(copy, fs->fs_bsize);
+ 	} else if (lastbn < 0 && error == 0) {
+		/* all freed, release without writing back */
 		brelse(bp, BC_INVAL);
+	} else if (wapbl) {
+ 		/* only partially freed, write the updated block */
+ 		error = bwrite(bp);
+ 		if (!allerror)
+ 			allerror = error;
 	}
 
-	*countp = blocksreleased;
 	return (allerror);
 }
 

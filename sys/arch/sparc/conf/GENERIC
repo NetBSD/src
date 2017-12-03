@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.234.2.4 2014/08/20 00:03:24 tls Exp $
+# $NetBSD: GENERIC,v 1.234.2.5 2017/12/03 11:36:43 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.234.2.4 $"
+#ident 		"GENERIC-$Revision: 1.234.2.5 $"
 
 maxusers	32
 
@@ -43,13 +43,6 @@ options 	SUN4_MMU3L	# sun4/400 3-level MMU
 # Blink the power LED on some machines to indicate the system load.
 #options 	BLINK
 
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-## These is obsolete for wscons kernels
-#options 	RASTERCONSOLE		# fast rasterop console
-#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
-
 # wscons stuff
 #options 	WSEMUL_SUN
 options 	WSEMUL_VT100
@@ -65,7 +58,6 @@ options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 options 	WSDISPLAY_SCROLLSUPPORT
 
-# generic options vlid for both wscons and RASTERCONSOLE
 options 	FONT_GALLANT12x22	# the console font
 options 	FONT_BOLD8x16		# a somewhat smaller font
 
@@ -81,17 +73,13 @@ config		netbsd	root on ? type ?
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
 
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
-
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -169,22 +157,9 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 ## additional user-level utilities or system configuration files. See
 ## compat_sunos(8) and compat_svr4(8).
 
-options 	COMPAT_43	# 4.3BSD system interfaces
-options 	COMPAT_10	# NetBSD 1.0 binary compatibility
-options 	COMPAT_11	# NetBSD 1.1 binary compatibility
-options 	COMPAT_12	# NetBSD 1.2 binary compatibility
-options 	COMPAT_13	# NetBSD 1.3 binary compatibility
-options 	COMPAT_14	# NetBSD 1.4 binary compatibility
-options 	COMPAT_15	# NetBSD 1.5 binary compatibility
-options 	COMPAT_16	# NetBSD 1.6 binary compatibility
-options 	COMPAT_20	# NetBSD 2.0 binary compatibility
-options 	COMPAT_30	# NetBSD 3.0 binary compatibility
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility
-options 	COMPAT_50	# NetBSD 5.0 binary compatibility
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
+include 	"conf/compat_netbsd10.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -213,6 +188,7 @@ options 	QUOTA		# FFS quotas
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -690,8 +666,10 @@ cgsix0		at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 tcx0		at sbus? slot ? offset ?
 
 ## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
-## runs monochrome only for now
 cgtwelve*	at sbus? slot ? offset ?
+# the driver can use the color framebuffer or the monochrome overlay
+# the latter is faster
+options 	CG12_COLOR
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
@@ -708,6 +686,9 @@ zx*		at sbus? slot ? offset ?
 
 # Fujitsu AG-10e accelerated graphics 8/24-bit board
 agten*	at sbus? slot ? offset ?
+
+## Southland Media Systems (now Quantum 3D) MGX
+mgx* 		at sbus? slot ? offset ?
 
 # generic framebuffer console
 genfb*	at sbus? slot ? offset ?
@@ -746,6 +727,7 @@ pseudo-device	wsfont
 pseudo-device	putter			# for puffs and pud
 
 #options 	FILEASSOC		# fileassoc(9)
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #
@@ -756,12 +738,9 @@ pseudo-device	putter			# for puffs and pud
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 					# (for static binaries only for now)

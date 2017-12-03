@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.58.2.2 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: grf.c,v 1.58.2.3 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58.2.2 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58.2.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58.2.2 2014/08/20 00:02:43 tls Exp $");
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>
-#include <amiga/dev/grfws.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/kbdvar.h>
@@ -141,7 +140,6 @@ static struct vcons_screen console_vcons;
 static void grf_init_screen(void *, struct vcons_screen *, int, long *);
 static struct rasops_info *grf_setup_rasops(struct grf_softc *,
     struct vcons_screen *);
-static paddr_t grf_wsmmap_md(off_t off);
 
 cons_decl(grf);
 #endif
@@ -182,11 +180,11 @@ grfattach(device_t parent, device_t self, void *aux)
 	grfsp[gp->g_unit] = gp;
 
 	/*
-	 * find our major device number
+	 * find our major device number, make device
 	 */
 	maj = cdevsw_lookup_major(&grf_cdevsw);
-
 	gp->g_grfdev = makedev(maj, gp->g_unit);
+
 	if (self != NULL) {
 		printf(": width %d height %d", gp->g_display.gd_dwidth,
 		    gp->g_display.gd_dheight);
@@ -194,23 +192,25 @@ grfattach(device_t parent, device_t self, void *aux)
 			printf(" monochrome\n");
 		else
 			printf(" colors %d\n", gp->g_display.gd_colors);
+
 #if NWSDISPLAY > 0
-		vcons_init(&gp->g_vd, gp, gp->g_screens[0], gp->g_accessops);
+		vcons_init(&gp->g_vd, gp, gp->g_defaultscr, gp->g_accessops);
 		gp->g_vd.init_screen = grf_init_screen;
+
 		if (gp->g_flags & GF_CONSOLE) {
 			console_vcons.scr_flags |= VCONS_SCREEN_IS_STATIC;
 			vcons_init_screen(&gp->g_vd,
 			    &console_vcons, 1, &defattr);
-			gp->g_screens[0]->textops =
+			gp->g_defaultscr->textops =
 			    &console_vcons.scr_ri.ri_ops;
-			wsdisplay_cnattach(gp->g_screens[0],
+			wsdisplay_cnattach(gp->g_defaultscr,
 			    &console_vcons.scr_ri, 0, 0, defattr);
 			vcons_replay_msgbuf(&console_vcons);
 		}
 
 		/* attach wsdisplay */
 		wa.console = (gp->g_flags & GF_CONSOLE) != 0;
-		wa.scrdata = &gp->g_screenlist;
+		wa.scrdata = gp->g_scrlist;
 		wa.accessops = gp->g_accessops;
 		wa.accesscookie = &gp->g_vd;
 		config_found(self, &wa, wsemuldisplaydevprint);
@@ -368,14 +368,14 @@ grfmmap(dev_t dev, off_t off, int prot)
 	 * control registers
 	 */
 	if (off >= 0 && off < gi->gd_regsize)
-		return(((paddr_t)gi->gd_regaddr + off) >> PGSHIFT);
+		return MD_BTOP((paddr_t)gi->gd_regaddr + off);
 
 	/*
 	 * frame buffer
 	 */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
-		return(((paddr_t)gi->gd_fbaddr + off) >> PGSHIFT);
+		return MD_BTOP((paddr_t)gi->gd_fbaddr + off);
 	}
 	/* bogus */
 	return(-1);
@@ -477,16 +477,17 @@ grfcninit(struct consdev *cd)
 		gp = grfsp[unit];
 		if (gp != NULL && (gp->g_flags & GF_ALIVE)) {
 			gp->g_flags |= GF_CONSOLE;  /* we are console! */
-			gp->g_screens[0]->ncols = gp->g_display.gd_fbwidth /
-			    gp->g_screens[0]->fontwidth;
-			gp->g_screens[0]->nrows = gp->g_display.gd_fbheight /
-			    gp->g_screens[0]->fontheight;
+
+			gp->g_defaultscr->ncols = gp->g_display.gd_fbwidth /
+			    gp->g_defaultscr->fontwidth;
+			gp->g_defaultscr->nrows = gp->g_display.gd_fbheight /
+			    gp->g_defaultscr->fontheight;
 
 			ri = grf_setup_rasops(gp, &console_vcons);
 			console_vcons.scr_cookie = gp;
 			defattr = 0;  /* XXX */
 
-			wsdisplay_preattach(gp->g_screens[0], ri, 0, 0,
+			wsdisplay_preattach(gp->g_defaultscr, ri, 0, 0,
 			    defattr);
 #if NKBD > 0
 			/* tell kbd device it is used as console keyboard */
@@ -519,8 +520,8 @@ grf_setup_rasops(struct grf_softc *gp, struct vcons_screen *scr)
 	scr->scr_flags |= VCONS_DONT_READ;
 	memset(ri, 0, sizeof(struct rasops_info));
 
-	ri->ri_rows = gp->g_screens[0]->nrows;
-	ri->ri_cols = gp->g_screens[0]->ncols;
+	ri->ri_rows = gp->g_defaultscr->nrows;
+	ri->ri_cols = gp->g_defaultscr->ncols;
 	ri->ri_hw = scr;
 	ri->ri_ops.cursor    = gp->g_emulops->cursor;
 	ri->ri_ops.mapchar   = gp->g_emulops->mapchar;
@@ -538,6 +539,66 @@ grf_setup_rasops(struct grf_softc *gp, struct vcons_screen *scr)
 	return ri;
 }
 
+/*
+ * Called as fallback for ioctls which are not handled by the specific
+ * grf driver.
+ */
+int
+grf_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct wsdisplayio_fbinfo *iofbi;
+	struct wsdisplay_fbinfo *fbinfo;
+	struct vcons_data *vd;
+	struct grf_softc *gp;
+	struct vcons_screen *scr;
+	struct grfinfo *gi;
+
+	vd = v;
+	gp = vd->cookie;
+	scr = vd->active;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GET_FBINFO:
+		if (scr != NULL) {
+			iofbi = data;
+			return wsdisplayio_get_fbinfo(&scr->scr_ri, iofbi);
+		}
+		return ENODEV;
+
+	case WSDISPLAYIO_GINFO:
+		if (scr != NULL) {
+			fbinfo = (struct wsdisplay_fbinfo *)data;
+			gi = &gp->g_display;
+
+			/*
+			 * We should return truth about the current mode here,
+			 * because X11 wsfb driver depends on this!
+			 */
+			fbinfo->height = gi->gd_fbheight;
+			fbinfo->width = gi->gd_fbwidth;
+			fbinfo->depth = gi->gd_planes;
+			fbinfo->cmsize = gi->gd_colors;
+			return 0;
+		}
+		return ENODEV;
+
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_GRF;
+		return 0;
+
+	case WSDISPLAYIO_SMODE:
+		if ((*(int *)data) != gp->g_wsmode) {
+			gp->g_wsmode = *(int *)data;
+			if (gp->g_wsmode == WSDISPLAYIO_MODE_EMUL &&
+			    scr != NULL)
+				vcons_redraw_screen(scr);
+		} 
+		return 0;
+	}
+
+	return EPASSTHROUGH;
+}
+
 paddr_t
 grf_wsmmap(void *v, void *vs, off_t off, int prot)
 {
@@ -551,8 +612,12 @@ grf_wsmmap(void *v, void *vs, off_t off, int prot)
 
 	/* Normal fb mapping */
 	if (off < gi->gd_fbsize)
-		return grf_wsmmap_md(((bus_addr_t)gp->g_fbkva) + off);
+		return MD_BTOP(((paddr_t)gi->gd_fbaddr) + off);
 
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
 	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: permission to mmap denied.\n",
@@ -560,258 +625,18 @@ grf_wsmmap(void *v, void *vs, off_t off, int prot)
 		return -1;
 	}
 
-	if ((off >= (bus_addr_t)gp->g_fbkva ) &&
-	    (off < ( (bus_addr_t)gp->g_fbkva + (size_t)gi->gd_fbsize)))
-		return grf_wsmmap_md(off);
-
 	/* Handle register mapping */
-	if ((off >= (bus_addr_t)gi->gd_regaddr) &&
-	    (off < ((bus_addr_t)gi->gd_regaddr + (size_t)gi->gd_regsize)))
-		return grf_wsmmap_md(off);
+	if ((off >= (paddr_t)gi->gd_regaddr) &&
+	    (off < ((paddr_t)gi->gd_regaddr + (size_t)gi->gd_regsize)))
+		return MD_BTOP(off);
+
+	if ((off >= (paddr_t)gi->gd_fbaddr) &&
+	    (off < ((paddr_t)gi->gd_fbaddr + (size_t)gi->gd_fbsize)))
+		return MD_BTOP(off);
 
 	return -1;
 }
 
-static paddr_t
-grf_wsmmap_md(off_t off) 
-{
-#if defined(__m68k__)
-	return (paddr_t) m68k_btop(off);
-#else
-	return -1; /* FIXME */
-#endif
-}
-
-int
-grf_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
-{
-	struct vcons_data *vd;
-	struct grf_softc *gp;
-
-	vd = v;
-	gp = vd->cookie;
-
-	switch (cmd) {
-	/* XXX: check if ptr to implementation is not null */
-	case WSDISPLAYIO_GINFO:
-		return gp->g_wsioctl->ginfo(gp, data);
-	case WSDISPLAYIO_SMODE:
-		return gp->g_wsioctl->smode(gp, data);
-	case WSDISPLAYIO_GMODE:
-		return gp->g_wsioctl->gmode(gp, data);
-	case WSDISPLAYIO_GTYPE:
-		return gp->g_wsioctl->gtype(gp, data);
-	case WSDISPLAYIO_SVIDEO:
-		return gp->g_wsioctl->svideo(gp, data);
-	case WSDISPLAYIO_GVIDEO:
-		return gp->g_wsioctl->gvideo(gp, data);
-	case WSDISPLAYIO_GETCMAP:
-		return gp->g_wsioctl->getcmap(gp, data);
-	case WSDISPLAYIO_PUTCMAP:
-		return gp->g_wsioctl->putcmap(gp, data);
-	}
-
-	return EPASSTHROUGH;
-}
-
-/* wsdisplay_accessops ioctls */
-
-int 
-grf_wsaogetcmap(void *c, void *data) 
-{
-	u_int index, count;
-	struct grf_softc *gp;
-	struct wsdisplay_cmap *cm __unused;
-
-	cm = (struct wsdisplay_cmap*) data;
-	gp = c;
-	index = 0;
-	count = 0;
-
-	if (gp->g_wsmode == WSDISPLAYIO_MODE_EMUL)
-		return EINVAL;
-
-	if (index >= 255 || count > 256 || index + count > 256)
-		return EINVAL;
-
-	/* 
-	 * TODO: copyout values for r, g, b. This function should be 
-	 * driver-specific... 
-	 */
-
-	return 0;
-}
-
-int
-grf_wsaoputcmap(void *c, void *data)
-{
-	/*
-	 * We probably couldn't care less about color map in MODE_EMUL,
-	 * I don't know about X11 yet. Also, these ioctls could be used by
-	 * fullscreen console programs (think wsdisplay picture viewer, or
-	 * the wsimgshow tool written by Yasushi Oshima).
-	 */
-	struct grf_softc *gp;
-
-	gp = c;
-
-	if (gp->g_wsmode == WSDISPLAYIO_MODE_EMUL)
-		return EINVAL;
-	/* ... */
-
-	return 0;
-}
-
-int
-grf_wsaosvideo(void *c, void *data)
-{
-#if 0
-	struct grf_softc *gp;
-	dev_t dev; 
-	int rv;
-
-	gp = c;
-	dev = (dev_t) &gp->g_grfdev;
-
-	if (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF) {
-		if ((gp->g_flags & GF_GRFON) == 0)
-			rv = 0;
-		else {
-			gp->g_flags &= ~GF_GRFON;
-			rv = gp->g_mode(gp, (dev & GRFOVDEV) ? 
-			    GM_GRFOVOFF : GM_GRFOFF, NULL, 0, 0);
-		}
-
-	} else {
-		if ((gp->g_flags & GF_GRFON))
-        		rv = 0;
-		else
-			gp->g_flags |= GF_GRFON;
-			rv = gp->g_mode(gp, (dev & GRFOVDEV) ? 
-			    GM_GRFOVON : GM_GRFON, NULL, 0, 0);
-	}
-
-	return rv;
-#endif
-	return 0;
-}
-
-int
-grf_wsaogvideo(void *c, void *data) 
-{
-	struct grf_softc *gp;
-
-	gp = c;
-
-	if(gp->g_flags & GF_GRFON) 
-		*(u_int *)data = WSDISPLAYIO_VIDEO_ON;
-	else
-		*(u_int *)data = WSDISPLAYIO_VIDEO_OFF;
-
-	return 0;
-}
-
-int
-grf_wsaogtype(void *c, void *data)
-{
-	struct grf_softc *gp __unused;
-
-	gp = c;
-
-	*(u_int *)data = WSDISPLAY_TYPE_GRF;
-	return 0;
-}
-
-int
-grf_wsaogmode(void *c, void *data)
-{
-	struct grf_softc *gp;
-
-	gp = c;
-
-	*(u_int *)data = gp->g_wsmode;
-	return 0;
-}
-
-int
-grf_wsaosmode(void *c, void *data)
-{
-	/* XXX: should provide hw-dependent impl of this in grf_xxx driver? */
-	struct grf_softc *gp;
-
-	gp = c;
-
-	if ((*(int*) data) != gp->g_wsmode) {
-		gp->g_wsmode = (*(int*) data);
-		if ((*(int*) data) == WSDISPLAYIO_MODE_EMUL) {
-			//vcons_redraw_screen( active vcons screen );
-		} 
-	}
-	return 0;
-}
-
-int
-grf_wsaoginfo(void *c, void *data) 
-{
-	struct wsdisplay_fbinfo *fbinfo;
-	struct grf_softc *gp;
-	struct grfinfo *gi;
-
-	gp = c;
-
-	fbinfo = (struct wsdisplay_fbinfo *)data;
-	gi = &gp->g_display;
-
-	/*
-	 * TODO: better sanity checking, it is possible that 
-	 * wsdisplay is initialized, but no screen is opened
-	 * (for example, device is not used).
-	 */
-
-	/*
-	 * We shold return truth about current mode here because
-	 * X11 wsfb driver denepds on this!
-	 */
-	fbinfo->height = gi->gd_fbheight;
-	fbinfo->width = gi->gd_fbwidth;
-	fbinfo->depth = gi->gd_planes;
-	fbinfo->cmsize = gi->gd_colors;
-
-	return 0;
-}
-
 #endif  /* NWSDISPLAY > 0 */
-
-#ifdef DEBUG
-void
-grfdebug(struct grf_softc *gp, const char *fmt, ...)
-{
-	static int ccol = 0, crow = 1;
-	volatile char *cp;
-	char buf[256];
-	va_list ap;
-	int ncols;
-	char *bp;
-
-	va_start(ap, fmt);
-	vsnprintf(buf, 256, fmt, ap);
-	va_end(ap);
-
-	cp = gp->g_fbkva;
-	ncols = gp->g_display.gd_fbwidth / 8;
-	cp += (crow * ncols + ccol) << 2;
-	for (bp = buf; *bp != '\0'; bp++) {
-		if (*bp == '\n') {
-			ccol = 0;
-			crow++;
-			continue;
-		}
-		*cp++ = *bp;
-		*cp = 0x0a;
-		cp += 3;
-		ccol++;
-	}
-}
-#endif  /* DEBUG */
 
 #endif	/* NGRF > 0 */

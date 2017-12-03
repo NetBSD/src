@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.36.6.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.36.6.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,10 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.36.6.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.36.6.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
+#include "opt_compat_netbsd32.h"
 #endif
 
 #ifndef ELFSIZE
@@ -157,7 +158,10 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 #endif
 	ehdr.e_ident[EI_DATA] = ELFDEFNNAME(MACHDEP_ENDIANNESS);
 	ehdr.e_ident[EI_VERSION] = EV_CURRENT;
-	/* XXX Should be the OSABI/ABI version of the executable. */
+	/*
+	 * NetBSD sets generic SYSV OSABI and ABI version 0
+	 * Native ELF files are distinguishable with NetBSD specific notes
+	 */
 	ehdr.e_ident[EI_OSABI] = ELFOSABI_SYSV;
 	ehdr.e_ident[EI_ABIVERSION] = 0;
 
@@ -343,12 +347,11 @@ ELFNAMEEND(coredump_getseghdrs)(struct uvm_coredump_state *us)
 	return (0);
 }
 
-static int
-ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
+static void
+coredump_note_procinfo(struct lwp *l, struct note_state *ns)
 {
 	struct proc *p;
 	struct netbsd_elfcore_procinfo cpi;
-	int error;
 	struct lwp *l0;
 	sigset_t ss1, ss2;
 
@@ -357,8 +360,8 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 	/* First, write an elfcore_procinfo. */
 	cpi.cpi_version = NETBSD_ELFCORE_PROCINFO_VERSION;
 	cpi.cpi_cpisize = sizeof(cpi);
-	cpi.cpi_signo = p->p_sigctx.ps_signo;
-	cpi.cpi_sigcode = p->p_sigctx.ps_code;
+	cpi.cpi_signo = p->p_sigctx.ps_info._signo;
+	cpi.cpi_sigcode = p->p_sigctx.ps_info._code;
 	cpi.cpi_siglwp = p->p_sigctx.ps_lwp;
 
 	/*
@@ -398,6 +401,36 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 
 	ELFNAMEEND(coredump_savenote)(ns, ELF_NOTE_NETBSD_CORE_PROCINFO,
 	    ELF_NOTE_NETBSD_CORE_NAME, &cpi, sizeof(cpi));
+}
+
+static int
+coredump_note_auxv(struct lwp *l, struct note_state *ns)
+{
+	int error;
+	size_t len;
+	void *kauxv;
+
+	if ((error = proc_getauxv(l->l_proc, &kauxv, &len)) != 0)
+		return error;
+
+	ELFNAMEEND(coredump_savenote)(ns, ELF_NOTE_NETBSD_CORE_AUXV,
+	    ELF_NOTE_NETBSD_CORE_NAME, kauxv, len);
+	
+	kmem_free(kauxv, len);
+	return 0;
+}
+
+static int
+ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
+{
+	int error;
+	struct lwp *l0;
+	struct proc *p = l->l_proc;
+
+	coredump_note_procinfo(l, ns);
+	error = coredump_note_auxv(l, ns);
+	if (error)
+		return error;
 
 	/* XXX Add hook for machdep per-proc notes. */
 
@@ -407,7 +440,7 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 	 */
 	error = ELFNAMEEND(coredump_note)(l, ns);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Now, for each LWP, write the register info and any other
@@ -510,7 +543,7 @@ ELFNAMEEND(coredump_savenote)(struct note_state *ns, unsigned int type,
 #else	/* COREDUMP */
 
 int
-ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
+ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 {
 
 	return ENOSYS;

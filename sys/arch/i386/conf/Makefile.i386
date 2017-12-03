@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.176.6.2 2014/08/20 00:03:06 tls Exp $
+#	$NetBSD: Makefile.i386,v 1.176.6.3 2017/12/03 11:36:17 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -77,15 +77,14 @@ lock_stubs.o: ${I386}/i386/lock_stubs.S assym.h
 ##
 TEXTADDR?=	c0100000
 LINKFLAGS_NORMAL=	-X
-KERN_LDSCRIPT?=	kern.ldscript
-LINKFORMAT=	-T ${I386}/conf/${KERN_LDSCRIPT}
+KERNLDSCRIPT?=	${I386}/conf/kern.ldscript
 
 ##
 ## (6) port specific target dependencies
 ##
 
-freebsd_sigcode.o i386func.o ibcs2_sigcode.o linux_support.o: assym.h
-linux_sigcode.o lock_stubs.o svr4_sigcode.o mach_sigcode.o: assym.h
+i386func.o: assym.h
+linux_sigcode.o lock_stubs.o: assym.h
 cpufunc.o cpu_in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 acpi_wakeup_low.o busfunc.o: assym.h

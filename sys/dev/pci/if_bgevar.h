@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.9.6.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.9.6.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -67,6 +67,7 @@
 #define _DEV_PCI_IF_BGEVAR_H_
 
 #include <sys/bus.h>
+#include <sys/rndsource.h>
 #include <net/if_ether.h>
 #include <dev/pci/pcivar.h>
 
@@ -265,6 +266,7 @@ struct bge_softc {
 	bus_space_tag_t		bge_apetag;
 	bus_size_t		bge_apesize;
 	void			*bge_intrhand;
+	pci_intr_handle_t	*bge_pihp;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 
@@ -276,8 +278,10 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
+	uint32_t		bge_msicap;
 	uint16_t		bge_mps;
 	int			bge_expmrq;
+	uint32_t		bge_lasttag;
 	u_int32_t		bge_mfw_flags;  /* Management F/W flags */
 #define	BGE_MFW_ON_RXCPU	0x00000001
 #define	BGE_MFW_ON_APE		0x00000002
@@ -322,6 +326,8 @@ struct bge_softc {
 	 * Event counters.
 	 */
 	struct evcnt bge_ev_intr;	/* interrupts */
+	struct evcnt bge_ev_intr_spurious;  /* spurious intr. (tagged status)*/
+	struct evcnt bge_ev_intr_spurious2; /* spurious interrupts */
 	struct evcnt bge_ev_tx_xoff;	/* send PAUSE(len>0) packets */
 	struct evcnt bge_ev_tx_xon;	/* send PAUSE(len=0) packets */
 	struct evcnt bge_ev_rx_xoff;	/* receive PAUSE(len>0) packets */
@@ -332,6 +338,7 @@ struct bge_softc {
 	int			bge_txcnt;
 	struct callout		bge_timeout;
 	int			bge_pending_rxintr_change;
+	int			bge_detaching;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 

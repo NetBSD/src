@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zaurus.inc,v 1.4.6.1 2014/08/20 00:03:30 tls Exp $
+#	$NetBSD: Makefile.zaurus.inc,v 1.4.6.2 2017/12/03 11:36:52 jdolecek Exp $
 
 MACHINE_ARCH?=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -19,14 +19,13 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 
 KERNEL_BASE_VIRT=	$(LOADADDRESS)
 
-LINKFLAGS=		-T ldscript
+KERNLDSCRIPT=		ldscript
 
 EXTRA_CLEAN+=		netbsd.map assym.d ldscript tmp
 
-netbsd:	ldscript	# XXX
-
 # generate ldscript from common template
 ldscript: ${THISARM}/conf/ldscript.zaurus ${THISARM}/conf/Makefile.zaurus.inc Makefile
+	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
 	    ${THISARM}/conf/ldscript.zaurus > tmp && mv tmp $@

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.2 2009/01/15 20:32:59 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.2.30.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  */
 #ifndef _COMPAT_NETINET6_IN6_VAR_H_
 #define _COMPAT_NETINET6_IN6_VAR_H_
+
+#include <sys/ioccom.h>
 
 struct in6_addrlifetime50 {
 	int32_t ia6t_expire;

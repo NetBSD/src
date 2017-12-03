@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.9.12.1 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.9.12.1 2017/12/03 11:35:55 jdolecek Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.9.12.1 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "locators.h"
 
@@ -278,7 +278,22 @@ gpmc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.gpmc_intr = cf->cf_loc[GPMCCF_INTR];
 
 	cs = &sc->sc_csconfig[0];
-	for (i=0; i < GPMC_NCS; i++) {
+	for (i = 0; i < GPMC_NCS; i++) {
+		if (cf->cf_loc[GPMCCF_CS] != GPMCCF_CS_DEFAULT) {
+			if (i != cf->cf_loc[GPMCCF_CS]) {
+				cs++;
+				continue;
+			}
+
+			if (aa.gpmc_addr != GPMCCF_ADDR_DEFAULT
+			&&  aa.gpmc_addr != cs->cs_addr)
+				panic("cs:addr missmatch:"
+				    " cs %d(0x%08lx), addr 0x%08lx\n",
+				    cf->cf_loc[GPMCCF_CS], cs->cs_addr,
+				    aa.gpmc_addr);
+			aa.gpmc_addr = cs->cs_addr;
+		}
+
 		if ((aa.gpmc_addr >= cs->cs_addr)
 		&&  (aa.gpmc_addr < (cs->cs_addr + cs->cs_size))) {
 			/* XXX

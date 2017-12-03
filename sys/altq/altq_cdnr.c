@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.20 2011/11/19 22:51:18 tls Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.20.8.1 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.20 2011/11/19 22:51:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.20.8.1 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -139,7 +139,7 @@ altq_cdnr_input(struct mbuf *m, int af)
 	struct cdnr_block	*cb;
 	struct cdnr_pktinfo	pktinfo;
 
-	ifp = m->m_pkthdr.rcvif;
+	ifp = m_get_rcvif_NOMPSAFE(m);
 	if (!ALTQ_IS_CNDTNING(&ifp->if_snd))
 		/* traffic conditioner is not enabled on this interface */
 		return (1);

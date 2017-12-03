@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11.14.1 2014/08/20 00:03:01 tls Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.14.2 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,30 +49,21 @@
 #include <hp300/dev/frodoreg.h>		/* for APCI offsets */
 #include <hp300/dev/intioreg.h>		/* for frodo offsets */
 #include <dev/ic/mc146818reg.h>
+#include <dev/clock_subr.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <hp300/stand/common/samachdep.h>
 
 #define FEBRUARY        2
-#define STARTOFTIME     1970
-#define SECDAY          (60L * 60L * 24L)
-#define SECYR           (SECDAY * 365)
 
 #define BBC_SET_REG     0xe0
 #define BBC_WRITE_REG   0xc2
 #define BBC_READ_REG    0xc3
 #define NUM_BBC_REGS    12
 
-#define leapyear(year)		((year) % 4 == 0)
 #define range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return false
-#define days_in_year(a)		(leapyear(a) ? 366 : 365)
-#define days_in_month(a)	(month_days[(a) - 1])
 #define bbc_to_decimal(a,b)	(bbc_registers[a] * 10 + bbc_registers[b])
-
-static const int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
 
 static uint8_t bbc_registers[13];
 static struct hil_dev *bbcaddr = BBCADDR;
@@ -133,7 +124,7 @@ clock_to_gmt(satime_t *timbuf)
 		year  = bbc_to_decimal(12, 11) + 1900;
 	}
 
-	if (year < STARTOFTIME)
+	if (year < POSIX_BASE_YEAR)
 		year += 100;
 
 #ifdef CLOCK_DEBUG
@@ -147,9 +138,9 @@ clock_to_gmt(satime_t *timbuf)
 
 	tmp = 0;
 
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
+	for (i = POSIX_BASE_YEAR; i < year; i++)
+		tmp += days_per_year(i);
+	if (is_leap_year(year) && month > FEBRUARY)
 		tmp++;
 
 	for (i = 1; i < month; i++)

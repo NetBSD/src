@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.36.8.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.36.8.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,9 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.36.8.1 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.36.8.2 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -161,12 +163,11 @@ eco_stop(struct ifnet *ifp, int disable)
 
 static int
 eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    struct rtentry *rt)
 {
 	struct eco_header ehdr, *eh;
 	int error;
 	struct mbuf *m = m0, *mcopy = NULL;
-	struct rtentry *rt;
 	int hdrcmplt;
 	int retry_delay, retry_count;
 	struct m_tag *mtag;
@@ -177,47 +178,14 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	void *tha;
 	struct eco_arp *ecah;
 #endif
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	if ((rt = rt0) != NULL) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL) {
-				rt->rt_refcnt--;
-				if (rt->rt_ifp != ifp)
-					return (*rt->rt_ifp->if_output)
-							(ifp, m0, dst, rt);
-			} else
-				senderr(EHOSTUNREACH);
-		}
-		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
-			if (rt->rt_gwroute == 0)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
-					senderr(EHOSTUNREACH);
-				/* the "G" test below also prevents rt == rt0 */
-				if ((rt->rt_flags & RTF_GATEWAY) ||
-				    (rt->rt_ifp != ifp)) {
-					rt->rt_refcnt--;
-					rt0->rt_gwroute = 0;
-					senderr(EHOSTUNREACH);
-				}
-			}
-		}
-		if (rt->rt_flags & RTF_REJECT)
-			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time_second < rt->rt_rmx.rmx_expire)
-				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
-	}
 	/*
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	hdrcmplt = 0;
 	retry_delay = hz / 16;
@@ -226,11 +194,11 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
-                	memcpy(ehdr.eco_dhost, eco_broadcastaddr,
-			    ECO_ADDR_LEN);
+			memcpy(ehdr.eco_dhost, eco_broadcastaddr, ECO_ADDR_LEN);
+		else if ((error = arpresolve(ifp, rt, m, dst, ehdr.eco_dhost,
+		    sizeof(ehdr.eco_dhost))) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 
-		else if (!arpresolve(ifp, rt, m, dst, ehdr.eco_dhost))
-			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -241,8 +209,10 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
 
-		if (ntohs(ah->ar_pro) != ETHERTYPE_IP)
-			return EAFNOSUPPORT;
+		if (ntohs(ah->ar_pro) != ETHERTYPE_IP) {
+			error = EAFNOSUPPORT;
+			goto bad;
+		}
 		ehdr.eco_port = ECO_PORT_IP;
 		switch (ntohs(ah->ar_op)) {
 		case ARPOP_REQUEST:
@@ -252,7 +222,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			ehdr.eco_control = ECO_CTL_ARP_REPLY;
 			break;
 		default:
-			return EOPNOTSUPP;
+			error = EOPNOTSUPP;
+			goto bad;
 		}
 
 		if (m->m_flags & M_BCAST)
@@ -260,8 +231,10 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ECO_ADDR_LEN);
 		else {
 			tha = ar_tha(ah);
-			if (tha == NULL)
+			if (tha == NULL) {
+				m_freem(m);
 				return 0;
+			}
 			memcpy(ehdr.eco_dhost, tha, ECO_ADDR_LEN);
 		}
 
@@ -324,7 +297,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	if (m == NULL)
 		return (0);
 
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m)
@@ -357,7 +330,6 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq;
 	struct eco_header ehdr, *eh;
 	int isr = 0;
-	int s;
 #ifdef INET
 	int i;
 	struct arphdr *ah;
@@ -441,7 +413,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			/* dst->sa_len??? */
 			dst->sa_family = AF_UNSPEC;
 			memcpy(dst->sa_data, eh, ECO_HDR_LEN);
-			ifp->if_output(ifp, m, dst, NULL);
+			if_output_lock(ifp, ifp, m, dst, NULL);
 			return;
 		}
 		default:
@@ -480,15 +452,15 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		schednetisr(isr);
 	}
-	splx(s);
 }
 
 static void
@@ -813,7 +785,7 @@ eco_inputidle(struct ifnet *ifp)
 		break;
 	}
 	ec->ec_state = ECO_IDLE;
-	ifp->if_start(ifp);
+	if_start_lock(ifp);
 }
 
 /*
@@ -860,7 +832,7 @@ eco_retry_free(struct eco_retry *er)
 {
 	int s;
 
-	callout_stop(&er->er_callout);
+	callout_halt(&er->er_callout, NULL);
 	m_freem(er->er_packet);
 	s = splnet();
 	LIST_REMOVE(er, er_link);
@@ -879,6 +851,6 @@ eco_retry(void *arg)
 	ifp = er->er_ifp;
 	m = er->er_packet;
 	LIST_REMOVE(er, er_link);
-	(void)ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(NULL));
+	(void)ifq_enqueue(ifp, m);
 	free(er, M_TEMP);
 }

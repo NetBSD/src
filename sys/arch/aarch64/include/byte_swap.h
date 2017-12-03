@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap.h,v 1.2.4.2 2014/08/20 00:02:39 tls Exp $ */
+/* $NetBSD: byte_swap.h,v 1.2.4.3 2017/12/03 11:35:44 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@ __byte_swap_u64_variable(uint64_t v)
 	}
 
 	v =   ((v & 0x000000ff) << (56 -  0)) | ((v >> (56 -  0)) & 0x000000ff)
-	    | ((v & 0x0000ff00) << (48 -  8)) | ((v << (48 -  8)) & 0x0000ff00) 
-	    | ((v & 0x00ff0000) << (40 - 16)) | ((v << (40 - 16)) & 0x00ff0000)
-	    | ((v & 0xff000000) << (32 - 24)) | ((v << (32 - 24)) & 0xff000000);
+	    | ((v & 0x0000ff00) << (48 -  8)) | ((v >> (48 -  8)) & 0x0000ff00) 
+	    | ((v & 0x00ff0000) << (40 - 16)) | ((v >> (40 - 16)) & 0x00ff0000)
+	    | ((v & 0xff000000) << (32 - 24)) | ((v >> (32 - 24)) & 0xff000000);
 
 	return v;
 }
@@ -76,7 +76,7 @@ __byte_swap_u32_variable(uint32_t v)
 	}
 
 	v =   ((v & 0x00ff) << (24 - 0)) | ((v >> (24 - 0)) & 0x00ff)
-	    | ((v & 0xff00) << (16 - 8)) | ((v << (16 - 8)) & 0xff00);
+	    | ((v & 0xff00) << (16 - 8)) | ((v >> (16 - 8)) & 0xff00);
 
 	return v;
 }
@@ -89,11 +89,11 @@ __byte_swap_u16_variable(uint16_t v)
 	if (!__builtin_constant_p(v)) {
 		uint32_t v32 = v;
 		__asm("rev16\t%w0, %w1" : "=r" (v32) : "0" (v32));
-		return v32;
+		return (uint16_t)v32;
 	}
 
 	v &= 0xffff;
-	v = (v >> 8) | (v << 8);
+	v = (uint16_t)((v >> 8) | (v << 8));
 
 	return v;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.9 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.9.44.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * The size of the eeprom on machines with the old clock is 2k.  However,
  * on machines with the new clock (and the `eeprom' in the nvram area)
  * there are only 2040 bytes available. (???).  Since we really only
- * care about the `diagnostic' area, we'll use it's size when dealing
+ * care about the `diagnostic' area, we'll use its size when dealing
  * with the eeprom in general.
  */
 #define EEPROM_SIZE		0x500

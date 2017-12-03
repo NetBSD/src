@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.28.12.1 2012/11/20 03:01:59 tls Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.28.12.2 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.28.12.1 2012/11/20 03:01:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.28.12.2 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,29 +118,31 @@ adv_cardbus_attach(device_t parent, device_t self, void *aux)
 	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_ADVSYS) {
 		switch (PCI_PRODUCT(ca->ca_id)) {
 		case PCI_PRODUCT_ADVSYS_1200A:
-			printf(": AdvanSys ASC1200A SCSI adapter\n");
+			aprint_normal(": AdvanSys ASC1200A SCSI adapter\n");
 			latency = 0;
 			break;
 
 		case PCI_PRODUCT_ADVSYS_1200B:
-			printf(": AdvanSys ASC1200B SCSI adapter\n");
+			aprint_normal(": AdvanSys ASC1200B SCSI adapter\n");
 			latency = 0;
 			break;
 
 		case PCI_PRODUCT_ADVSYS_ULTRA:
 			switch (PCI_REVISION(ca->ca_class)) {
 			case ASC_PCI_REVISION_3050:
-				printf(": AdvanSys ABP-9xxUA SCSI adapter\n");
+				aprint_normal(": AdvanSys ABP-9xxUA "
+				    "SCSI adapter\n");
 				break;
 
 			case ASC_PCI_REVISION_3150:
-				printf(": AdvanSys ABP-9xxU SCSI adapter\n");
+				aprint_normal(": AdvanSys ABP-9xxU "
+				    "SCSI adapter\n");
 				break;
 			}
 			break;
 
 		default:
-			printf(": unknown model!\n");
+			aprint_error(": unknown model!\n");
 			return;
 		}
 	}
@@ -173,7 +175,7 @@ adv_cardbus_attach(device_t parent, device_t self, void *aux)
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
 		csc->sc_bar = 0;
-		aprint_error_dev(sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
@@ -208,7 +210,7 @@ adv_cardbus_attach(device_t parent, device_t self, void *aux)
 	 * Initialize the board
 	 */
 	if (adv_init(sc)) {
-		printf("adv_init failed\n");
+		aprint_error_dev(self, "adv_init failed\n");
 		return;
 	}
 
@@ -217,8 +219,7 @@ adv_cardbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_ih = Cardbus_intr_establish(ct, IPL_BIO, adv_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev,
-				 "unable to establish interrupt\n");
+		aprint_error_dev(self, "unable to establish interrupt\n");
 		return;
 	}
 

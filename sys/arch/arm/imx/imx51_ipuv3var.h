@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3var.h,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imx51_ipuv3var.h,v 1.1.6.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -26,13 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef _ARM_IMX_IMX51_IPUV3_H
 #define _ARM_IMX_IMX51_IPUV3_H
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
+
 #include <sys/bus.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
 
 /* IPUV3 Contoroller */
 struct imx51_ipuv3_screen {
@@ -51,12 +51,11 @@ struct imx51_ipuv3_screen {
 	/* DMA frame descriptor */
 	struct	ipuv3_dma_descriptor *dma_desc;
 	paddr_t	dma_desc_pa;
-
-	/* rasterop */
-	struct rasops_info rinfo;
 };
 
 struct lcd_panel_geometry {
+	int depth;
+
 	short panel_width;
 	short panel_height;
 
@@ -100,44 +99,23 @@ struct imx51_ipuv3_softc {
 	struct imx51_ipuv3_screen *active;
 	void *ih;			/* interrupt handler */
 
-	/* virtual console support */
-	struct vcons_data vd;
-	struct vcons_screen console;
-	int mode;
-};
-
-/*
- * we need bits-per-pixel value to configure wsdisplay screen
- */
-struct imx51_wsscreen_descr {
-	struct wsscreen_descr  c;	/* standard descriptor */
-	int depth;			/* bits per pixel */
-	int flags;			/* rasops flags */
+	device_t		fbdev;
 };
 
 struct imx51_ipuv3_softc;
 
 void	imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *,
-	    struct axi_attach_args *, const struct lcd_panel_geometry *);
-int	imx51_ipuv3_cnattach(bool, struct imx51_wsscreen_descr *,
-	    struct wsdisplay_accessops *,
-	    const struct lcd_panel_geometry *);
+    struct axi_attach_args *, const struct lcd_panel_geometry *);
+int	imx51_ipuv3_cnattach(bool);
 void	imx51_ipuv3_start_dma(struct imx51_ipuv3_softc *,
 	    struct imx51_ipuv3_screen *);
 
 void	imx51_ipuv3_geometry(struct imx51_ipuv3_softc *,
 	    const struct lcd_panel_geometry *);
-int	imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *, int,
+int	imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *,
 	    struct imx51_ipuv3_screen **);
 
-int	imx51_ipuv3_alloc_screen(void *, const struct wsscreen_descr *,
-	    void **, int *, int *, long *);
-void	imx51_ipuv3_free_screen(void *, void *);
-int	imx51_ipuv3_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-paddr_t	imx51_ipuv3_mmap(void *, void *, off_t, int);
 int	imx51_ipuv3_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
-
-extern const struct wsdisplay_emulops imx51_ipuv3_emulops;
 
 #endif /* _ARM_IMX_IMX51_IPUV3_H */

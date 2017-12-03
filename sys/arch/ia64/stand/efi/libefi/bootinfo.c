@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.3.108.1 2013/02/25 00:28:46 tls Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.3.108.2 2017/12/03 11:36:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -47,6 +47,8 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efiboot.h>
+
+#include <machine/efilib.h>
 
 #include "bootstrap.h" 
 

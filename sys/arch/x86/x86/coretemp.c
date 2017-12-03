@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.29.2.1 2014/08/20 00:03:29 tls Exp $ */
+/* $NetBSD: coretemp.c,v 1.29.2.2 2017/12/03 11:36:50 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.29.2.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.29.2.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,7 +138,7 @@ coretemp_match(device_t parent, cfdata_t cf, void *aux)
 	 * Only attach on the first SMT ID.
 	 */
 	if (ci->ci_smt_id != 0)
-		return 0 ;
+		return 0;
 
 	/*
 	 * CPUID 0x06 returns 1 if the processor
@@ -168,7 +168,7 @@ coretemp_attach(device_t parent, device_t self, void *aux)
 	msr = __SHIFTOUT(msr, MSR_THERM_STATUS_RESOLUTION);
 
 	aprint_naive("\n");
-	aprint_normal(": thermal sensor, %u C resolution\n", (uint32_t)msr);
+	aprint_normal(": thermal sensor, %u C resolution", (uint32_t)msr);
 
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	sc->sc_sensor.state = ENVSYS_SINVALID;
@@ -191,11 +191,14 @@ coretemp_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 
 	coretemp_tjmax(self);
+	aprint_verbose(", Tjmax=%d", sc->sc_tjmax);
+	aprint_normal("\n");
 	return;
 
 fail:
 	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
+	aprint_normal("\n");
 }
 
 static int
@@ -265,20 +268,11 @@ coretemp_tjmax(device_t self)
 	sc->sc_tjmax = 100;
 
 	/*
-	 * The mobile Penryn family.
-	 */
-	if (model == 0x17 && stepping == 0x06) {
-		sc->sc_tjmax = 105;
-		return;
-	}
-
-	/*
 	 * On some Core 2 CPUs, there is an undocumented
 	 * MSR that tells if Tj(max) is 100 or 85. Note
 	 * that MSR_IA32_EXT_CONFIG is not safe on all CPUs.
 	 */
-	if ((model == 0x0F && stepping >= 2) ||
-	    (model == 0x0E)) {
+	if ((model == 0x0F && stepping >= 2) || (model == 0x0E)) {
 
 		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT)
 			return;
@@ -287,21 +281,22 @@ coretemp_tjmax(device_t self)
 			sc->sc_tjmax = 85;
 			return;
 		}
-	}
-
-	/*
-	 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET,
-	 * but only consider the interval [70, 100] C as valid.
-	 * It is not fully known which CPU models have the MSR.
-	 */
-	if (model == 0x0E) {
-
+	} else if (model == 0x17 && stepping == 0x06) {
+		/* The mobile Penryn family. */
+		sc->sc_tjmax = 105;
+		return;
+	} else {
+		/*
+		 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET,
+		 * but only consider the interval [70, 110] C as valid.
+		 * It is not fully known which CPU models have the MSR.
+		 */
 		if (rdmsr_safe(MSR_TEMPERATURE_TARGET, &msr) == EFAULT)
 			return;
 
 		msr = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
 
-		if (msr >= 70 && msr <= 100) {
+		if (msr >= 70 && msr <= 110) {
 			sc->sc_tjmax = msr;
 			return;
 		}
@@ -349,7 +344,7 @@ coretemp_refresh_xcall(void *arg0, void *arg1)
 		edata->state = ENVSYS_SCRITICAL;
 }
 
-MODULE(MODULE_CLASS_DRIVER, coretemp, NULL);
+MODULE(MODULE_CLASS_DRIVER, coretemp, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

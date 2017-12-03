@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.22 2011/07/10 23:32:03 matt Exp $ */
+/* $NetBSD: sbobio.c,v 1.22.12.1 2017/12/03 11:36:28 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.22 2011/07/10 23:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.22.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -180,7 +180,7 @@ sbobio_match(device_t parent, cfdata_t match, void *aux)
 	if (zap->za_locs.za_type != ZBBUS_ENTTYPE_OBIO)
 		return (0);
 
-	sysrev = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION));
+	sysrev = mips3_ld((register_t)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION));
 	switch (SYS_SOC_TYPE(sysrev)) {
 	case K_SYS_SOC_TYPE_BCM1120:
 	case K_SYS_SOC_TYPE_BCM1125:
@@ -205,7 +205,7 @@ sbobio_attach(device_t parent, device_t self, void *aux)
 	int i, devcount;
 	int locs[SBOBIOCF_NLOCS];
 
-	sysrev = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION));
+	sysrev = mips3_ld((register_t)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION));
 	switch (SYS_SOC_TYPE(sysrev)) {
 	case K_SYS_SOC_TYPE_BCM1120:
 	case K_SYS_SOC_TYPE_BCM1125:

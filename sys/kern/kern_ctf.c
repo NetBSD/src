@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.3 2010/05/03 09:51:36 darran Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.3.20.1 2017/12/03 11:38:44 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -72,7 +72,7 @@ int
 mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 {
 	mod_ctf_t *cmc;
-	struct ksyms_symtab *st; 
+	struct ksyms_symtab *st;
 	void * ctftab = NULL;
 	size_t sz;
 	int error = 0;
@@ -168,7 +168,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 	}
 
 	/*
-	 * Allocate memory to buffer the CTF data in it's decompressed
+	 * Allocate memory to buffer the CTF data in its decompressed
 	 * form.
 	 */
 	if (compressed) {
@@ -204,7 +204,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 		}
 
 		zs.avail_in = ctfsize - CTF_HDR_SIZE;
-		zs.next_in = ((uint8_t *) ctfaddr) + CTF_HDR_SIZE;
+		zs.next_in = ctfaddr + CTF_HDR_SIZE;
 		zs.avail_out = sz - CTF_HDR_SIZE;
 		zs.next_out = ((uint8_t *) ctftab) + CTF_HDR_SIZE;
 		inflateReset(&zs);

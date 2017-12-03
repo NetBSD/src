@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_inode.c,v 1.7.2.3 2014/08/20 00:04:45 tls Exp $	*/
-/*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
+/*	$NetBSD: ulfs_inode.c,v 1.7.2.4 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,12 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.7.2.3 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.7.2.4 2017/12/03 11:39:22 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
 #include "opt_quota.h"
-#include "opt_wapbl.h"
 #endif
 
 #include <sys/param.h>
@@ -54,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.7.2.3 2014/08/20 00:04:45 tls Exp $
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
-#include <sys/wapbl.h>
-#include <sys/fstrans.h>
 #include <sys/kmem.h>
 
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <ufs/lfs/ulfs_inode.h>
@@ -72,26 +71,21 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.7.2.3 2014/08/20 00:04:45 tls Exp $
 
 #include <uvm/uvm.h>
 
-extern int prtactive;
-
 /*
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
 ulfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		struct bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *transmp;
 	mode_t mode;
 	int error = 0;
 
-	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
@@ -112,13 +106,13 @@ ulfs_inactive(void *v)
 		ip->i_mode = 0;
 		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		ip->i_state |= IN_CHANGE | IN_UPDATE;
 		/*
 		 * Defer final inode free and update to ulfs_reclaim().
 		 */
 	}
 
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+	if (ip->i_state & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		lfs_update(vp, NULL, NULL, 0);
 	}
 
@@ -128,8 +122,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
-	VOP_UNLOCK(vp);
-	fstrans_done(transmp);
+
 	return (error);
 }
 
@@ -141,18 +134,10 @@ ulfs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ulfs_reclaim: pushing active", vp);
-
 	/* XXX: do we really need two of these? */
 	/* note: originally the first was inside a wapbl txn */
 	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
 	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
-
-	/*
-	 * Remove the inode from its hash chain.
-	 */
-	ulfs_ihashrem(ip);
 
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
@@ -191,8 +176,8 @@ ulfs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	struct vm_page **pgs;
 	size_t pgssize;
 	UVMHIST_FUNC("ulfs_balloc_range"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
-		    vp, off, len, vp->v_size);
+	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx len 0x%jx u_size 0x%jx",
+		    (uintptr_t)vp, off, len, vp->v_size);
 
 	neweof = MAX(vp->v_size, off + len);
 	GOP_SIZE(vp, neweof, &neweob, 0);
@@ -226,6 +211,7 @@ ulfs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	    VM_PROT_WRITE, 0, PGO_SYNCIO | PGO_PASTEOF | PGO_NOBLOCKALLOC |
 	    PGO_NOTIMESTAMP | PGO_GLOCKHELD);
 	if (error) {
+		genfs_node_unlock(vp);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbiosvar.h,v 1.3 2008/04/16 16:06:51 cegger Exp $ */
+/*	$NetBSD: smbiosvar.h,v 1.3.48.1 2017/12/03 11:36:50 jdolecek Exp $ */
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -43,10 +43,12 @@
 #define SMBIOS_UUID_REPLEN 37 /* 16 zero padded values, 4 hyphens, 1 null */
 
 struct smbios_entry {
-	uint8_t	mjr;
-	uint8_t	min;
-	uint8_t	*addr;
-	uint16_t	len;
+	uint8_t 	rev;
+	uint8_t 	mjr;
+	uint8_t 	min;
+	uint8_t 	doc;
+	uint8_t 	*addr;
+	uint32_t	len;
 	uint16_t	count;
 };
 
@@ -54,17 +56,32 @@ struct smbhdr {
 	uint32_t	sig;		/* "_SM_" */
 	uint8_t 	checksum;	/* Entry point checksum */
 	uint8_t 	len;		/* Entry point structure length */
-	uint8_t	majrev;		/* Specification major revision */
-	uint8_t	minrev;		/* Specification minor revision */
+	uint8_t 	majrev;		/* Specification major revision */
+	uint8_t 	minrev;		/* Specification minor revision */
 	uint16_t	mss;		/* Maximum Structure Size */
 	uint8_t 	epr;		/* Entry Point Revision */
 	uint8_t 	fa[5];		/* value determined by EPR */
-	uint8_t	sasig[5];  	/* Secondary Anchor "_DMI_" */
-	uint8_t	sachecksum;	/* Secondary Checksum */
-	uint16_t	size;   	/* Length of structure table in bytes */
-	uint32_t	addr;	  	/* Structure table address */
+	uint8_t 	sasig[5];	/* Secondary Anchor "_DMI_" */
+	uint8_t 	sachecksum;	/* Secondary Checksum */
+	uint16_t	size;		/* Length of structure table in bytes */
+	uint32_t	addr;		/* Structure table address */
 	uint16_t	count;		/* Number of SMBIOS structures */
-	uint8_t	rev;  		/* BCD revision */
+	uint8_t 	rev;		/* BCD revision */
+} __packed;
+
+struct smb3hdr {
+	uint8_t 	sig[5];		/* "_SM3_" */
+	uint8_t 	checksum;	/* Entry point structure checksum */
+	uint8_t 	len;		/* Entry point structure length */
+	uint8_t 	majrev;		/* Specification major revision */
+	uint8_t 	minrev;		/* Specification minor revision */
+	uint8_t 	docrev;		/* docrec of Specification */
+	uint8_t 	eprev;		/* Entry point structure revision */
+#define	SMBIOS3_EPREV_RESERVED	0
+#define	SMBIOS3_EPREV_3_0	1	/* SMBIOS 3.0 */
+	uint8_t 	reverved;
+	uint32_t	size;		/* Length of structure table in bytes */
+	uint64_t	addr;		/* Structure table address */
 } __packed;
 
 struct smbtblhdr {

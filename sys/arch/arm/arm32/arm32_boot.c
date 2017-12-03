@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.1.2.4 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,10 +123,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1.2.4 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -150,6 +151,10 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $
 #include <sys/kgdb.h>
 #endif
 
+#ifdef MULTIPROCESSOR
+static kmutex_t cpu_hatch_lock;
+#endif
+
 vaddr_t
 initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	const struct boot_physmem *bp, size_t nbp)
@@ -167,6 +172,27 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 * this during uvm init.
 	 */
 	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
+
+	struct lwp * const l = &lwp0;
+	struct pcb * const pcb = lwp_getpcb(l);
+
+	/* Zero out the PCB. */
+ 	memset(pcb, 0, sizeof(*pcb));
+
+	pcb->pcb_ksp = uvm_lwp_getuarea(l) + USPACE_SVC_STACK_TOP;
+	pcb->pcb_ksp -= sizeof(struct trapframe);
+
+	struct trapframe * tf = (struct trapframe *)pcb->pcb_ksp;
+
+	/* Zero out the trapframe. */
+	memset(tf, 0, sizeof(*tf));
+	lwp_settrapframe(l, tf);
+
+#if defined(__ARMEB__)
+	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
+#else
+ 	tf->tf_spsr = PSR_USR32_MODE;
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
@@ -226,7 +252,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap_physload ");
@@ -263,7 +289,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 					break;
 				}
 			}
-	
+
 			uvm_page_physload(start, segend, start, segend,
 			    vm_freelist);
 			start = segend;
@@ -275,7 +301,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	printf("pmap ");
 #endif
 	pmap_bootstrap(kvm_base, kvm_base + kvm_size);
-   
+
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
@@ -299,12 +325,16 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 		Debugger();
 #endif
 
+#ifdef MULTIPROCESSOR
+	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
 #endif
 
 	/* We return the new stack pointer address */
-	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
+	return pcb->pcb_ksp;
 }
 
 #ifdef MULTIPROCESSOR
@@ -321,6 +351,13 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	 * Raise our IPL to the max
 	 */
 	splhigh();
+
+#ifdef CPU_CORTEX
+#if 0
+	KASSERTMSG(armreg_auxctl_read() & CORTEXA9_AUXCTL_SMP, "auxctl %#x",
+	    armreg_auxctl_read());
+#endif
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("%s(%s): ", __func__, ci->ci_data.cpu_name);
@@ -351,13 +388,13 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	printf(" stacks");
 #endif
 	set_stackptr(PSR_FIQ32_MODE,
-	    fiqstack.pv_va + cpu_index(ci) * FIQ_STACK_SIZE * PAGE_SIZE);
+	    fiqstack.pv_va + (cpu_index(ci) + 1) * FIQ_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_IRQ32_MODE,
-	    irqstack.pv_va + cpu_index(ci) * IRQ_STACK_SIZE * PAGE_SIZE);
+	    irqstack.pv_va + (cpu_index(ci) + 1) * IRQ_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_ABT32_MODE,
-	    abtstack.pv_va + cpu_index(ci) * ABT_STACK_SIZE * PAGE_SIZE);
+	    abtstack.pv_va + (cpu_index(ci) + 1) * ABT_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_UND32_MODE,
-	    undstack.pv_va + cpu_index(ci) * UND_STACK_SIZE * PAGE_SIZE);
+	    undstack.pv_va + (cpu_index(ci) + 1) * UND_STACK_SIZE * PAGE_SIZE);
 
 	ci->ci_lastlwp = NULL;
 	ci->ci_pmap_lastuser = NULL;
@@ -376,11 +413,13 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	if (CPU_ID_CORTEX_P(ci->ci_arm_cpuid)) {
 		/*
 		 * Start and reset the PMC Cycle Counter.
-		 */   
+		 */
 		armreg_pmcr_write(ARM11_PMCCTL_E|ARM11_PMCCTL_P|ARM11_PMCCTL_C);
 		armreg_pmcntenset_write(CORTEX_CNTENS_C);
 	}
 #endif
+
+	mutex_enter(&cpu_hatch_lock);
 
 	aprint_naive("%s", device_xname(ci->ci_dev));
 	aprint_normal("%s", device_xname(ci->ci_dev));
@@ -389,6 +428,8 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	printf(" vfp");
 #endif
 	vfp_attach(ci);
+
+	mutex_exit(&cpu_hatch_lock);
 
 #ifdef VERBOSE_INIT_ARM
 	printf(" interrupts");
@@ -408,6 +449,7 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	printf(" done!\n");
 #endif
 	atomic_and_32(&arm_cpu_mbox, ~(1 << cpuid));
+	membar_producer();
 	__asm __volatile("sev; sev; sev");
 }
 #endif /* MULTIPROCESSOR */

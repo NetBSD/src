@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.h,v 1.8 2007/01/21 23:00:08 cbiere Exp $	*/
+/*	$NetBSD: rijndael-api-fst.h,v 1.8.90.1 2017/12/03 11:36:57 jdolecek Exp $	*/
 
 /**
  * rijndael-api-fst.h
@@ -48,6 +48,7 @@
 #define     MODE_ECB              1 /*  Are we ciphering in ECB mode?   */
 #define     MODE_CBC              2 /*  Are we ciphering in CBC mode?   */
 #define     MODE_CFB1             3 /*  Are we ciphering in 1-bit CFB mode? */
+#define     MODE_XTS              4 /*  Are we ciphering in XTS mode? */
 #define     TRUE                  1
 #define     FALSE                 0
 #define     BITSPERBLOCK        128 /* Default number of bits in a cipher block */

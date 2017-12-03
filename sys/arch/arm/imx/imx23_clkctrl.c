@@ -1,4 +1,4 @@
-/* $Id: imx23_clkctrl.c,v 1.1.10.2 2014/08/20 00:02:46 tls Exp $ */
+/* $Id: imx23_clkctrl.c,v 1.1.10.3 2017/12/03 11:35:53 jdolecek Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -146,6 +146,25 @@ clkctrl_en_usb(void)
 
 	CLKCTRL_WR(sc, HW_CLKCTRL_PLLCTRL0_SET,
 	    HW_CLKCTRL_PLLCTRL0_EN_USB_CLKS);
+
+	return;
+}
+
+/*
+ * Enable 24MHz clock for the Digital Filter. 
+ *
+ */
+void
+clkctrl_en_filtclk(void)
+{
+	struct clkctrl_softc *sc = _sc;
+
+	if (sc == NULL) {
+		aprint_error("clkctrl is not initalized");
+		return;
+	}
+
+	CLKCTRL_WR(sc, HW_CLKCTRL_XTAL_CLR, HW_CLKCTRL_XTAL_FILT_CLK24M_GATE);
 
 	return;
 }

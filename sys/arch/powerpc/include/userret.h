@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.24.2.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: userret.h,v 1.24.2.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,8 +61,13 @@ userret(struct lwp *l, struct trapframe *tf)
 	KASSERTMSG((tf->tf_srr1 & PSL_PR) != 0,
 	    "tf=%p: srr1 (%#lx): PSL_PR isn't set!",
 	    tf, tf->tf_srr1);
+	KASSERTMSG((tf->tf_srr1 & PSL_FP) == 0
+	    || l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU] == l,
+	    "tf=%p: srr1 (%#lx): PSL_FP set but FPU curlwp %p is not curlwp %p!",
+	    tf, tf->tf_srr1, l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU], l);
 
-	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
+	/* clear SRR1 status bits */
+	tf->tf_srr1 &= (PSL_USERSRR1|PSL_FP|PSL_VEC);
 
 #ifdef ALTIVEC
 	/*

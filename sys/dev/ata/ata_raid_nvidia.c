@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_nvidia.c,v 1.1.46.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: ata_raid_nvidia.c,v 1.1.46.2 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 - 2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_nvidia.c,v 1.1.46.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_nvidia.c,v 1.1.46.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -122,6 +122,7 @@ ata_raid_nvidia_print_info(struct nvidia_raid_conf *info)
 int
 ata_raid_read_config_nvidia(struct wd_softc *sc)
 {
+	struct dk_softc *dksc = &sc->sc_dksc;
 	struct nvidia_raid_conf *info;
 	struct vnode *vp;
 	int bmajor, error, count;
@@ -137,10 +138,10 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 
 	info = malloc(sizeof(*info), M_DEVBUF, M_WAITOK);
 
-	bmajor = devsw_name2blk(device_xname(sc->sc_dev), NULL, 0);
+	bmajor = devsw_name2blk(dksc->sc_xname, NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */
-	dev = MAKEDISKDEV(bmajor, device_unit(sc->sc_dev), RAW_PART);
+	dev = MAKEDISKDEV(bmajor, device_unit(dksc->sc_dev), RAW_PART);
 	error = bdevvp(dev, &vp);
 	if (error)
 		goto out;
@@ -156,7 +157,7 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 	VOP_CLOSE(vp, FREAD, NOCRED);
 	vput(vp);
 	if (error) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(dksc->sc_dev,
 		    "error %d reading nVidia MediaShield config block\n", error);
 		goto out;
 	}
@@ -168,7 +169,7 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 	/* Check the signature. */
 	if (strncmp(info->nvidia_id, NV_MAGIC, strlen(NV_MAGIC)) != 0) {
 		DPRINTF(("%s: nVidia signature check failed\n",
-		    device_xname(sc->sc_dev)));
+		    dksc->sc_xname));
 		error = ESRCH;
 		goto out;
 	}
@@ -179,7 +180,7 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 		cksum += *ckptr++;
 	if (cksum) {
 		DPRINTF(("%s: nVidia checksum failed (0x%02x)\n",
-			 device_xname(sc->sc_dev), cksum));
+			 dksc->sc_xname, cksum));
 		error = ESRCH;
 		goto out;
 	}
@@ -229,7 +230,7 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 		break;
 
 	default:
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(dksc->sc_dev,
 			 "unknown nVidia type 0x%02x\n", info->type);
 		error = EINVAL;
 		goto out;
@@ -248,7 +249,7 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 	aai->aai_reserved = 2;
 
 	adi = &aai->aai_disks[info->disk_number];
-	adi->adi_dev = sc->sc_dev;
+	adi->adi_dev = dksc->sc_dev;
 	adi->adi_status = ADI_S_ONLINE | ADI_S_ASSIGNED;
 	adi->adi_sectors = aai->aai_capacity;
 	adi->adi_compsize = aai->aai_capacity / info->array_width;

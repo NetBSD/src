@@ -26,7 +26,7 @@
 
 #ifdef CRT_HAS_128BIT
 
-tu_int __fixunsdfti(double a);
+COMPILER_RT_ABI tu_int __fixunsdfti(double a);
 
 int test__fixunsdfti(double a, tu_int expected)
 {
@@ -114,6 +114,9 @@ int main()
     if (test__fixunsdfti(0x1.FFFFFFFFFFFFFp+126, make_ti(0x7FFFFFFFFFFFFC00LL, 0)))
         return 1;
     if (test__fixunsdfti(0x1.FFFFFFFFFFFFEp+126, make_ti(0x7FFFFFFFFFFFF800LL, 0)))
+        return 1;
+    if (test__fixunsdfti(0x1.0000000000000p+128, make_ti(0xFFFFFFFFFFFFFFFFLL,
+                                                         0xFFFFFFFFFFFFFFFFLL)))
         return 1;
 
 #if !TARGET_LIBGCC

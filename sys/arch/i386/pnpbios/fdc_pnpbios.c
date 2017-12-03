@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.17.6.1 2012/09/12 06:15:32 tls Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.17.6.2 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.17.6.1 2012/09/12 06:15:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.17.6.2 2017/12/03 11:36:18 jdolecek Exp $");
 
 
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.17.6.1 2012/09/12 06:15:32 tls Exp
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/queue.h>
-#include <sys/rnd.h>
 
 #include <sys/bus.h>
 #include <machine/intr.h>
@@ -87,7 +86,7 @@ fdc_pnpbios_attach(device_t parent, device_t self, void *aux)
 	struct fdc_softc *fdc = &pdc->sc_fdc;
 	struct pnpbiosdev_attach_args *aa = aux;
         int size, base;
-        
+
 	aprint_normal("\n");
 
 	fdc->sc_dev = self;
@@ -102,9 +101,9 @@ fdc_pnpbios_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* 
+	/*
          * Start accounting for "odd" pnpbios's. Some probe as 4 ports,
-         * some as 6 and some don't give the ctl port back. 
+         * some as 6 and some don't give the ctl port back.
          */
 
         if (pnpbios_getiosize(aa->pbt, aa->resc, 0, &size)) {
@@ -129,14 +128,15 @@ fdc_pnpbios_attach(device_t parent, device_t self, void *aux)
                 }
                 break;
         default:
-                aprint_error_dev(self, "unknown size: %d of io mapping\n", size);
+                aprint_error_dev(self, "unknown size: %d of io mapping\n",
+		    size);
                 return;
         }
-        
-        /* 
+
+        /*
          * XXX: This is bad. If the pnpbios claims only 1 I/O range then it's
          * omitting the controller I/O port. (One has to exist for there to
-         * be a working fdc). Just try and force the mapping in. 
+         * be a working fdc). Just try and force the mapping in.
          */
 
         if (aa->resc->numio == 1) {

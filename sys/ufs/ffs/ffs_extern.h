@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.78.12.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.78.12.3 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -92,7 +92,7 @@ int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, int, kauth_cred_t,
 		  daddr_t *);
 int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 		      kauth_cred_t, struct buf **, daddr_t *);
-int	ffs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
+int	ffs_valloc(struct vnode *, int, kauth_cred_t, ino_t *);
 daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int, int32_t *);
 daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
 int	ffs_blkalloc(struct inode *, daddr_t, long);
@@ -127,6 +127,10 @@ int	ffs_cgupdate(struct ufsmount *, int);
 /* ffs_vnops.c */
 int	ffs_read(void *);
 int	ffs_write(void *);
+int	ffs_bufio(enum uio_rw, struct vnode *, void *, size_t, off_t, int,
+	    kauth_cred_t, size_t *, struct lwp *);
+int	ffs_bufrd(struct vnode *, struct uio *, int, kauth_cred_t);
+int	ffs_bufwr(struct vnode *, struct uio *, int, kauth_cred_t);
 int	ffs_fsync(void *);
 int	ffs_spec_fsync(void *);
 int	ffs_reclaim(void *);
@@ -164,8 +168,8 @@ int	ffs_wapbl_stop(struct mount *, int);
 int	ffs_wapbl_replay_start(struct mount *, struct fs *, struct vnode *);
 void	ffs_wapbl_blkalloc(struct fs *, struct vnode *, daddr_t, int);
 
-void	ffs_wapbl_sync_metadata(struct mount *, daddr_t *, int *, int);
-void	ffs_wapbl_abort_sync_metadata(struct mount *, daddr_t *, int *, int);
+void	ffs_wapbl_sync_metadata(struct mount *, struct wapbl_dealloc *);
+void	ffs_wapbl_abort_sync_metadata(struct mount *, struct wapbl_dealloc *);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);
@@ -182,13 +186,13 @@ void	ffs_appleufs_set(struct appleufslabel *, const char *, time_t,
 			 uint64_t);
 
 /* ffs_bswap.c */
-void	ffs_sb_swap(struct fs*, struct fs *);
+void	ffs_sb_swap(const struct fs *, struct fs *);
 void	ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
 void	ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
 struct csum;
 void	ffs_csum_swap(struct csum *, struct csum *, int);
 struct csum_total;
-void	ffs_csumtotal_swap(struct csum_total *, struct csum_total *);
+void	ffs_csumtotal_swap(const struct csum_total *, struct csum_total *);
 void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 /* ffs_subr.c */

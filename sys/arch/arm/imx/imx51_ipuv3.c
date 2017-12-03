@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3.c,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imx51_ipuv3.c,v 1.1.6.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.1.6.2 2017/12/03 11:35:53 jdolecek Exp $");
+
+#include "opt_imx51_ipuv3.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,17 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.1.6.1 2014/08/20 00:02:46 tls Exp 
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>			/* for cold */
-#include <sys/pmf.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <dev/cons.h>
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_callbacks.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <sys/bus.h>
 #include <machine/cpu.h>
@@ -59,19 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.1.6.1 2014/08/20 00:02:46 tls Exp 
 #include <arm/imx/imx51_ccmreg.h>
 
 #include "imxccm.h"	/* if CCM driver is configured into the kernel */
-#include "wsdisplay.h"
-#include "opt_imx51_ipuv3.h"
-
-/*
- * Console variables. These are necessary since console is setup very early,
- * before devices get attached.
- */
-struct {
-	int is_console;
-	struct imx51_wsscreen_descr *descr;
-	struct wsdisplay_accessops *accessops;
-	const struct lcd_panel_geometry *geom;
-} imx51_ipuv3_console;
 
 #define	IPUV3_READ(ipuv3, module, reg)					      \
 	bus_space_read_4((ipuv3)->iot, (ipuv3)->module##_ioh, (reg))
@@ -89,15 +67,7 @@ int ipuv3intr(void *);
 
 static void imx51_ipuv3_initialize(struct imx51_ipuv3_softc *,
     const struct lcd_panel_geometry *);
-#if NWSDISPLAY > 0
-static void imx51_ipuv3_setup_rasops(struct imx51_ipuv3_softc *,
-    struct rasops_info *, struct imx51_wsscreen_descr *,
-    const struct lcd_panel_geometry *);
-#endif
 static void imx51_ipuv3_set_idma_param(uint32_t *, uint32_t, uint32_t);
-
-static bool imx51_ipuv3_resume(device_t, const pmf_qual_t *);
-static bool imx51_ipuv3_suspend(device_t, const pmf_qual_t *);
 
 #ifdef IPUV3_DEBUG
 static void
@@ -369,8 +339,8 @@ imx51_ipuv3_di_sync_conf(struct imx51_ipuv3_softc *sc, int no,
 	IPUV3_WRITE(sc, di0, IPU_DI_SW_GEN0(no), reg_gen0);
 	IPUV3_WRITE(sc, di0, IPU_DI_SW_GEN1(no), reg_gen1);
 	reg = IPUV3_READ(sc, di0, IPU_DI_STP_REP(no));
-	reg &= ~DI_STP_REP_MASK(no);
-	reg |= repeat << DI_STP_REP_SHIFT(no);
+	reg &= ~DI_STP_REP(no);
+	reg |= __SHIFTIN(repeat, DI_STP_REP(no));
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(no), reg);
 
 #ifdef IPUV3_DEBUG
@@ -413,7 +383,7 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 
 	IPUV3_WRITE(sc, di0, IPU_DI_BS_CLKGEN0, div);
 	IPUV3_WRITE(sc, di0, IPU_DI_BS_CLKGEN1,
-	    (div / 16) << DI_BS_CLKGEN1_DOWN_SHIFT);
+	    __SHIFTIN(div / 16, DI_BS_CLKGEN1_DOWN));
 #ifdef IPUV3_DEBUG
 	printf("%s: IPU_DI_BS_CLKGEN0 = 0x%08X\n", __func__,
 	    IPUV3_READ(sc, di0, IPU_DI_BS_CLKGEN0));
@@ -421,9 +391,9 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 	    IPUV3_READ(sc, di0, IPU_DI_BS_CLKGEN1));
 #endif
 	/* Display Time settings */
-	reg = ((div / 16 - 1) << DI_DW_GEN_ACCESS_SIZE_SHIFT) |
-	    ((div / 16 - 1) << DI_DW_GEN_COMPONNENT_SIZE_SHIFT) |
-	    (3 << DI_DW_GEN_PIN_SHIFT(15));
+	reg = __SHIFTIN(div / 16 - 1, DI_DW_GEN_ACCESS_SIZE) |
+	    __SHIFTIN(div / 16 - 1, DI_DW_GEN_COMPONNENT_SIZE) |
+	    __SHIFTIN(3, DI_DW_GEN_PIN(15));
 	IPUV3_WRITE(sc, di0, IPU_DI_DW_GEN(0), reg);
 #ifdef IPUV3_DEBUG
 	printf("%s: div = %d\n", __func__, div);
@@ -432,7 +402,7 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 #endif
 
 	/* Up & Down Data Wave Set */
-	reg = (div / 16 * 2) << DI_DW_SET_DOWN_SHIFT;
+	reg = __SHIFTIN(div / 16 * 2, DI_DW_SET_DOWN);
 	IPUV3_WRITE(sc, di0, IPU_DI_DW_SET(0, 3), reg);
 #ifdef IPUV3_DEBUG
 	printf("%s: IPU_DI_DW_SET(0, 3) 0x%08X = 0x%08X\n", __func__,
@@ -486,13 +456,14 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 	IPUV3_WRITE(sc, di0, IPU_DI_SW_GEN1(9), 0);
 
 	reg = IPUV3_READ(sc, di0, IPU_DI_STP_REP(6));
-	reg &= ~DI_STP_REP_MASK(6);
+	reg &= ~DI_STP_REP(6);
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(6), reg);
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(7), 0);
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(9), 0);
 
 	IPUV3_WRITE(sc, di0, IPU_DI_GENERAL, 0);
-	reg = ((3 - 1) << DI_SYNC_AS_GEN_VSYNC_SEL_SHIFT) | 0x2;
+	reg = __SHIFTIN(3 - 1, DI_SYNC_AS_GEN_VSYNC_SEL) |
+	    __SHIFTIN(0x2, DI_SYNC_AS_GEN_SYNC_START);
 	IPUV3_WRITE(sc, di0, IPU_DI_SYNC_AS_GEN, reg);
 	IPUV3_WRITE(sc, di0, IPU_DI_POL, DI_POL_DRDY_POLARITY_15);
 
@@ -576,38 +547,18 @@ imx51_ipuv3_initialize(struct imx51_ipuv3_softc *sc,
 
 	reg = IPUV3_READ(sc, cm, IPU_CM_DISP_GEN);
 	reg |= CM_DISP_GEN_MCU_MAX_BURST_STOP |
-	    CM_DISP_GEN_MCU_T(0x8);
+	    __SHIFTIN(0x8, CM_DISP_GEN_MCU_T);
 	IPUV3_WRITE(sc, cm, IPU_CM_DISP_GEN, reg);
 }
 
-static void
-imx51_ipuv3_init_screen(void *cookie, struct vcons_screen *scr,
-		    int existing, long *defattr)
+static int
+imx51_ipuv3_print(void *aux, const char *pnp)
 {
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
+	const struct imxfb_attach_args * const ifb = aux;
 
-	struct imx51_ipuv3_softc *sc = cookie;
-	struct rasops_info *ri = &scr->scr_ri;
-	struct imx51_wsscreen_descr *descr = imx51_ipuv3_console.descr;
+	aprint_normal(" output %s", device_xname(ifb->ifb_outputdev));
 
-	if ((scr == &sc->console) && (sc->vd.active != NULL))
-		return;
-
-	ri->ri_bits = sc->active->buf_va;
-
-	scr->scr_flags |= VCONS_DONT_READ;
-	if (existing)
-		ri->ri_flg |= RI_CLEAR;
-
-	imx51_ipuv3_setup_rasops(sc, ri, descr, sc->geometry);
-
-	ri->ri_caps = WSSCREEN_WSCOLORS;
-
-	rasops_reconfig(ri,
-	    ri->ri_height / ri->ri_font->fontheight,
-	    ri->ri_width / ri->ri_font->fontwidth);
-
-	ri->ri_hw = scr;
+	return UNCONF;
 }
 
 /*
@@ -620,7 +571,6 @@ imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *sc,
 	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
 
 	bus_space_tag_t iot = axia->aa_iot;
-	bus_space_handle_t ioh;
 	int error;
 
 	aprint_normal(": i.MX51 IPUV3 controller\n");
@@ -629,55 +579,47 @@ imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *sc,
 	LIST_INIT(&sc->screens);
 
 	sc->iot = iot;
-	sc->dma_tag = &imx_bus_dma_tag;
+	sc->dma_tag = &armv7_generic_dma_tag;
 
 	/* map controller registers */
-	error = bus_space_map(iot, IPU_CM_BASE, IPU_CM_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_CM_BASE, IPU_CM_SIZE, 0, &sc->cm_ioh);
 	if (error)
 		goto fail_retarn_cm;
-	sc->cm_ioh = ioh;
 
 	/* map Display Multi FIFO Controller registers */
-	error = bus_space_map(iot, IPU_DMFC_BASE, IPU_DMFC_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_DMFC_BASE, IPU_DMFC_SIZE, 0, &sc->dmfc_ioh);
 	if (error)
 		goto fail_retarn_dmfc;
-	sc->dmfc_ioh = ioh;
 
 	/* map Display Interface registers */
-	error = bus_space_map(iot, IPU_DI0_BASE, IPU_DI0_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_DI0_BASE, IPU_DI0_SIZE, 0, &sc->di0_ioh);
 	if (error)
 		goto fail_retarn_di0;
-	sc->di0_ioh = ioh;
 
 	/* map Display Processor registers */
-	error = bus_space_map(iot, IPU_DP_BASE, IPU_DP_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_DP_BASE, IPU_DP_SIZE, 0, &sc->dp_ioh);
 	if (error)
 		goto fail_retarn_dp;
-	sc->dp_ioh = ioh;
 
 	/* map Display Controller registers */
-	error = bus_space_map(iot, IPU_DC_BASE, IPU_DC_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_DC_BASE, IPU_DC_SIZE, 0, &sc->dc_ioh);
 	if (error)
 		goto fail_retarn_dc;
-	sc->dc_ioh = ioh;
 
 	/* map Image DMA Controller registers */
-	error = bus_space_map(iot, IPU_IDMAC_BASE, IPU_IDMAC_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_IDMAC_BASE, IPU_IDMAC_SIZE, 0, &sc->idmac_ioh);
 	if (error)
 		goto fail_retarn_idmac;
-	sc->idmac_ioh = ioh;
 
 	/* map CPMEM registers */
-	error = bus_space_map(iot, IPU_CPMEM_BASE, IPU_CPMEM_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_CPMEM_BASE, IPU_CPMEM_SIZE, 0, &sc->cpmem_ioh);
 	if (error)
 		goto fail_retarn_cpmem;
-	sc->cpmem_ioh = ioh;
 
 	/* map DCTEMPL registers */
-	error = bus_space_map(iot, IPU_DCTMPL_BASE, IPU_DCTMPL_SIZE, 0, &ioh);
+	error = bus_space_map(iot, IPU_DCTMPL_BASE, IPU_DCTMPL_SIZE, 0, &sc->dctmpl_ioh);
 	if (error)
 		goto fail_retarn_dctmpl;
-	sc->dctmpl_ioh = ioh;
 
 #ifdef notyet
 	sc->ih = imx51_ipuv3_intr_establish(IMX51_INT_IPUV3, IPL_BIO,
@@ -692,12 +634,8 @@ imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *sc,
 
 	imx51_ipuv3_initialize(sc, geom);
 
-#if NWSDISPLAY > 0
-	struct imx51_wsscreen_descr *descr = imx51_ipuv3_console.descr;
 	struct imx51_ipuv3_screen *scr;
-
-	sc->mode = WSDISPLAYIO_MODE_EMUL;
-	error = imx51_ipuv3_new_screen(sc, descr->depth, &scr);
+	error = imx51_ipuv3_new_screen(sc, &scr);
 	if (error) {
 		aprint_error_dev(sc->dev,
 		    "unable to create new screen (errno=%d)", error);
@@ -705,41 +643,22 @@ imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *sc,
 	}
 	sc->active = scr;
 
-	vcons_init(&sc->vd, sc, &descr->c,
-	    imx51_ipuv3_console.accessops);
-	sc->vd.init_screen = imx51_ipuv3_init_screen;
-
-#ifdef IPUV3_DEBUG
-	printf("%s: IPUV3 console ? %d\n", __func__, imx51_ipuv3_console.is_console);
-#endif
-
-	struct rasops_info *ri;
-	long defattr;
-	ri = &sc->console.scr_ri;
-
-	vcons_init_screen(&sc->vd, &sc->console, 1,
-	    &defattr);
-	sc->console.scr_flags |= VCONS_SCREEN_IS_STATIC;
-
-	descr->c.nrows = ri->ri_rows;
-	descr->c.ncols = ri->ri_cols;
-	descr->c.textops = &ri->ri_ops;
-	descr->c.capabilities = ri->ri_caps;
-
-	if (imx51_ipuv3_console.is_console) {
-		wsdisplay_cnattach(&descr->c, ri, 0, 0, defattr);
-		aprint_normal_dev(sc->dev, "console\n");
-	}
-
-	vcons_replay_msgbuf(&sc->console);
-
 	imx51_ipuv3_start_dma(sc, scr);
-#endif
 
-	if (!pmf_device_register(sc->dev, imx51_ipuv3_suspend,
-		imx51_ipuv3_resume)) {
-		aprint_error_dev(sc->dev, "can't establish power hook\n");
-	}
+	struct imxfb_attach_args ifb = {
+		.ifb_dmat      = sc->dma_tag,
+		.ifb_dmamap    = scr->dma,
+		.ifb_dmasegs   = scr->segs,
+		.ifb_ndmasegs  = scr->nsegs,
+		.ifb_fb	       = scr->buf_va,
+		.ifb_width     = geom->panel_width,
+		.ifb_height    = geom->panel_height,
+		.ifb_depth     = scr->depth,
+		.ifb_stride    = geom->panel_width * (scr->depth / 8),
+		.ifb_outputdev = sc->dev,
+	};
+
+	sc->fbdev = config_found_ia(sc->dev, "ipu", &ifb, imx51_ipuv3_print);
 
 	return;
 
@@ -761,19 +680,6 @@ fail_retarn_cm:
 	aprint_error_dev(sc->dev,
 	    "failed to map registers (errno=%d)\n", error);
 	return;
-}
-
-int
-imx51_ipuv3_cnattach(bool isconsole, struct imx51_wsscreen_descr *descr,
-    struct wsdisplay_accessops *accessops,
-    const struct lcd_panel_geometry *geom)
-{
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-	imx51_ipuv3_console.descr = descr;
-	imx51_ipuv3_console.geom = geom;
-	imx51_ipuv3_console.accessops = accessops;
-	imx51_ipuv3_console.is_console = isconsole;
-	return 0;
 }
 
 #ifdef notyet
@@ -901,8 +807,6 @@ imx51_ipuv3_set_idma_param(uint32_t *params, uint32_t name, uint32_t val)
 	int width = name & 0xff;
 	int index;
 
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-
 	index = word * 5;
 	index += shift / 32;
 	shift = shift % 32;
@@ -967,35 +871,64 @@ imx51_ipuv3_start_dma(struct imx51_ipuv3_softc *sc,
 #endif
 }
 
-/*
- * Disable screen refresh.
- */
-static void
-imx51_ipuv3_stop_dma(struct imx51_ipuv3_softc *sc)
+static int
+imx51_ipuv3_allocmem(struct imx51_ipuv3_softc *sc,
+    struct imx51_ipuv3_screen *scr)
 {
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
+	int error;
 
-	return;
+	error = bus_dmamem_alloc(sc->dma_tag, scr->buf_size, PAGE_SIZE, 0,
+	    scr->segs, 1, &scr->nsegs, BUS_DMA_WAITOK);
+	if (error)
+		return error;
+	error = bus_dmamem_map(sc->dma_tag, scr->segs, scr->nsegs, scr->buf_size,
+	    (void **)&scr->buf_va, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	if (error)
+		goto free;
+	/* map memory for DMA */
+	error = bus_dmamap_create(sc->dma_tag, scr->buf_size, 1, scr->buf_size, 0,
+	    BUS_DMA_WAITOK, &scr->dma);
+	if (error)
+		goto unmap;
+	error = bus_dmamap_load(sc->dma_tag, scr->dma, scr->buf_va, scr->buf_size,
+	    NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto destroy;
+
+	memset(scr->buf_va, 0, scr->buf_size);
+
+	return 0;
+
+destroy:
+	bus_dmamap_destroy(sc->dma_tag, scr->dma);
+unmap:
+	bus_dmamem_unmap(sc->dma_tag, scr->buf_va, scr->buf_size);
+free:
+	bus_dmamem_free(sc->dma_tag, scr->segs, scr->nsegs);
+
+	scr->buf_size = 0;
+	scr->buf_va = NULL;
+
+	return error;
 }
 
 /*
  * Create and initialize a new screen buffer.
  */
 int
-imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *sc, int depth,
+imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *sc,
     struct imx51_ipuv3_screen **scrpp)
 {
 	const struct lcd_panel_geometry *geometry;
 	struct imx51_ipuv3_screen *scr = NULL;
-	int width, height;
-	bus_size_t size;
+	int depth, width, height;
 	int error;
-	int busdma_flag = (cold ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 
 	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
 
 	geometry = sc->geometry;
 
+	depth = geometry->depth;
 	width = geometry->panel_width;
 	height = geometry->panel_height;
 
@@ -1008,40 +941,17 @@ imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *sc, int depth,
 	scr->nsegs = 0;
 	scr->depth = depth;
 	scr->stride = width * depth / 8;
-	scr->buf_size = size = scr->stride * height;
+	scr->buf_size = scr->stride * height;
 	scr->buf_va = NULL;
 
-	error = bus_dmamem_alloc(sc->dma_tag, size, 16, 0, scr->segs, 1,
-	    &scr->nsegs, busdma_flag);
-
-	if (error || scr->nsegs != 1) {
-		/* XXX:
-		 * Actually we can handle nsegs>1 case by means
-		 * of multiple DMA descriptors for a panel.  It
-		 * will make code here a bit hairly.
-		 */
-		if (error == 0)
-			error = E2BIG;
-		goto bad;
+	error = imx51_ipuv3_allocmem(sc, scr);
+	if (error) {
+		aprint_error_dev(sc->dev,
+		    "failed to allocate %u bytes of video memory: %d\n",
+		    scr->stride * height, error);
+		free(scr, M_DEVBUF);
+		return error;
 	}
-
-	error = bus_dmamem_map(sc->dma_tag, scr->segs, scr->nsegs, size,
-	    (void **)&scr->buf_va, busdma_flag | BUS_DMA_COHERENT);
-	if (error)
-		goto bad;
-
-	memset(scr->buf_va, 0, scr->buf_size);
-
-	/* map memory for DMA */
-	error = bus_dmamap_create(sc->dma_tag, 1024*1024*2, 1, 1024*1024*2, 0,
-	    busdma_flag, &scr->dma);
-	if (error)
-		goto bad;
-
-	error = bus_dmamap_load(sc->dma_tag, scr->dma, scr->buf_va, size,
-	    NULL, busdma_flag);
-	if (error)
-		goto bad;
 
 	LIST_INSERT_HEAD(&sc->screens, scr, link);
 	sc->n_screens++;
@@ -1058,263 +968,9 @@ imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *sc, int depth,
 	    (void *)scr->segs[0].ds_addr);
 #endif
 
-	scr->map_size = size;		/* used when unmap this. */
+	scr->map_size = scr->buf_size;		/* used when unmap this. */
 
 	*scrpp = scr;
 
 	return 0;
-
-bad:
-#ifdef IPUV3_DEBUG
-	printf("%s: error = 0x%08X\n", __func__, error);
-#endif
-	if (scr) {
-		if (scr->buf_va)
-			bus_dmamem_unmap(sc->dma_tag, scr->buf_va, size);
-		if (scr->nsegs)
-			bus_dmamem_free(sc->dma_tag, scr->segs, scr->nsegs);
-		free(scr, M_DEVBUF);
-	}
-	*scrpp = NULL;
-	return error;
 }
-
-#if NWSDISPLAY > 0
-/*
- * Initialize rasops for a screen, as well as struct wsscreen_descr if this
- * is the first screen creation.
- */
-static void
-imx51_ipuv3_setup_rasops(struct imx51_ipuv3_softc *sc, struct rasops_info *rinfo,
-    struct imx51_wsscreen_descr *descr,
-    const struct lcd_panel_geometry *geom)
-{
-
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-
-	rinfo->ri_flg = descr->flags;
-	rinfo->ri_depth = descr->depth;
-	rinfo->ri_width = geom->panel_width;
-	rinfo->ri_height = geom->panel_height;
-	rinfo->ri_stride = rinfo->ri_width * rinfo->ri_depth / 8;
-
-	/* swap B and R */
-	if (descr->depth == 16) {
-		rinfo->ri_rnum = 5;
-		rinfo->ri_rpos = 11;
-		rinfo->ri_gnum = 6;
-		rinfo->ri_gpos = 5;
-		rinfo->ri_bnum = 5;
-		rinfo->ri_bpos = 0;
-	}
-
-	if (descr->c.nrows == 0) {
-		/* get rasops to compute screen size the first time */
-		rasops_init(rinfo, 100, 100);
-	} else {
-		rasops_init(rinfo, descr->c.nrows, descr->c.ncols);
-	}
-
-	descr->c.nrows = rinfo->ri_rows;
-	descr->c.ncols = rinfo->ri_cols;
-	descr->c.capabilities = rinfo->ri_caps;
-	descr->c.textops = &rinfo->ri_ops;
-}
-#endif
-/*
- * Power management
- */
-static bool
-imx51_ipuv3_suspend(device_t dv, const pmf_qual_t *qual)
-{
-	struct imx51_ipuv3_softc *sc = device_private(dv);
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-	if (sc->active)
-		imx51_ipuv3_stop_dma(sc);
-	return true;
-}
-
-static bool
-imx51_ipuv3_resume(device_t dv, const pmf_qual_t *qual)
-{
-	struct imx51_ipuv3_softc *sc = device_private(dv);
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-	if (sc->active) {
-		imx51_ipuv3_initialize(sc, sc->geometry);
-		imx51_ipuv3_start_dma(sc, sc->active);
-	}
-	return true;
-}
-
-#if NWSDISPLAY > 0
-int
-imx51_ipuv3_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	struct vcons_data *vd = v;
-	struct imx51_ipuv3_softc *sc = vd->cookie;
-	struct imx51_ipuv3_screen *scr = cookie, *old;
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-
-	old = sc->active;
-	if (old == scr)
-		return 0;
-	if (old)
-		imx51_ipuv3_stop_dma(sc);
-	imx51_ipuv3_start_dma(sc, scr);
-	sc->active = scr;
-	return 0;
-}
-
-int
-imx51_ipuv3_alloc_screen(void *v, const struct wsscreen_descr *_type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
-{
-	struct vcons_data *vd = v;
-	struct imx51_ipuv3_softc *sc = vd->cookie;
-	struct imx51_ipuv3_screen *scr;
-	const struct imx51_wsscreen_descr *type =
-		(const struct imx51_wsscreen_descr *)_type;
-	int error;
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-
-	error = imx51_ipuv3_new_screen(sc, type->depth, &scr);
-	if (error)
-		return error;
-
-	/*
-	 * initialize raster operation for this screen.
-	 */
-	scr->rinfo.ri_flg = 0;
-	scr->rinfo.ri_depth = type->depth;
-	scr->rinfo.ri_bits = scr->buf_va;
-	scr->rinfo.ri_width = sc->geometry->panel_width;
-	scr->rinfo.ri_height = sc->geometry->panel_height;
-	scr->rinfo.ri_stride = scr->rinfo.ri_width * scr->rinfo.ri_depth / 8;
-#ifdef CPU_XSCALE_PXA270
-	if (scr->rinfo.ri_depth > 16)
-		scr->rinfo.ri_stride = scr->rinfo.ri_width * 4;
-#endif
-	scr->rinfo.ri_wsfcookie = -1;	/* XXX */
-
-	rasops_init(&scr->rinfo, type->c.nrows, type->c.ncols);
-
-	(*scr->rinfo.ri_ops.allocattr)(&scr->rinfo, 0, 0, 0, attrp);
-
-	*cookiep = scr;
-	*curxp = 0;
-	*curyp = 0;
-
-	return 0;
-}
-
-void
-imx51_ipuv3_free_screen(void *v, void *cookie)
-{
-	struct vcons_data *vd = v;
-	struct imx51_ipuv3_softc *sc = vd->cookie;
-	struct imx51_ipuv3_screen *scr = cookie;
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-
-	LIST_REMOVE(scr, link);
-	sc->n_screens--;
-	if (scr == sc->active) {
-		/* at first, we need to stop LCD DMA */
-		sc->active = NULL;
-
-		printf("lcd_free on active screen\n");
-
-		imx51_ipuv3_stop_dma(sc);
-	}
-
-	if (scr->buf_va)
-		bus_dmamem_unmap(sc->dma_tag, scr->buf_va, scr->map_size);
-	if (scr->nsegs > 0)
-		bus_dmamem_free(sc->dma_tag, scr->segs, scr->nsegs);
-	free(scr, M_DEVBUF);
-}
-
-int
-imx51_ipuv3_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
-    struct lwp *l)
-{
-	struct vcons_data *vd = v;
-	struct imx51_ipuv3_softc *sc = vd->cookie;
-	struct wsdisplay_fbinfo *wsdisp_info;
-	struct vcons_screen *ms = vd->active;
-
-	DPRINTFN(5, ("%s : cmd 0x%X (%d)\n", __func__, (u_int)cmd, (int)IOCGROUP(cmd)));
-
-	switch (cmd) {
-	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_IMXIPU;
-		return 0;
-
-	case WSDISPLAYIO_GINFO:
-		wsdisp_info = (struct wsdisplay_fbinfo *)data;
-		wsdisp_info->height = ms->scr_ri.ri_height;
-		wsdisp_info->width = ms->scr_ri.ri_width;
-		wsdisp_info->depth = ms->scr_ri.ri_depth;
-		wsdisp_info->cmsize = 0;
-		return 0;
-
-	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = ms->scr_ri.ri_stride;
-		return 0;
-
-	case WSDISPLAYIO_GETCMAP:
-	case WSDISPLAYIO_PUTCMAP:
-		return EPASSTHROUGH;	/* XXX Colormap */
-
-	case WSDISPLAYIO_SVIDEO:
-		if (*(int *)data == WSDISPLAYIO_VIDEO_ON) {
-			/* turn it on */
-		}
-		else {
-			/* start IPUV3 shutdown */
-			/* sleep until interrupt */
-		}
-		return 0;
-
-	case WSDISPLAYIO_GVIDEO:
-		*(u_int *)data =  WSDISPLAYIO_VIDEO_ON;
-		return 0;
-
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_SCURSOR:
-		return EPASSTHROUGH;	/* XXX */
-	case WSDISPLAYIO_SMODE:
-		{
-			int new_mode = *(int*)data;
-
-			/* notify the bus backend */
-			if (new_mode != sc->mode) {
-				sc->mode = new_mode;
-				if(new_mode == WSDISPLAYIO_MODE_EMUL)
-					vcons_redraw_screen(ms);
-			}
-		}
-		return 0;
-	}
-
-	return EPASSTHROUGH;
-}
-
-paddr_t
-imx51_ipuv3_mmap(void *v, void *vs, off_t offset, int prot)
-{
-	DPRINTFN(5, ("%s : %d\n", __func__, __LINE__));
-
-	struct vcons_data *vd = v;
-	struct imx51_ipuv3_softc *sc = vd->cookie;
-	struct imx51_ipuv3_screen *scr = sc->active;
-
-	return bus_dmamem_mmap(sc->dma_tag, scr->segs, scr->nsegs,
-	    offset, prot,
-	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
-}
-#endif /* NWSDISPLAY > 0 */
-

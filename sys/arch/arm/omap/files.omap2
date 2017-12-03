@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.15.2.3 2014/08/20 00:02:47 tls Exp $
+#	$NetBSD: files.omap2,v 1.15.2.4 2017/12/03 11:35:55 jdolecek Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -32,7 +32,7 @@ defflag opt_omap.h				TI_AM335X: OMAP3
 defflag opt_omap.h				TI_DM37XX: OMAP3
 
 # OBIO just an attach point
-device	obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
+device	obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0], [edmabase=-1]
 	     } : bus_space_generic
 attach	obio at mainbus
 file	arch/arm/omap/omap2_obio.c		obio needs-count
@@ -116,14 +116,26 @@ file	arch/arm/omap/omap2_l3i.c		omap2 | omap3
 # General Purpose Memory Controller
 # XXX some addl. chip select config parms may be desired here (e.g. timing)
 # XXX so far we just use the setup established by boot firmware
-device	gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+device	gpmc { [cs=-1], [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
 	      } : bus_space_generic
 attach	gpmc at mainbus
 file	arch/arm/omap/omap2_gpmc.c		gpmc
 
+device	edma
+attach	edma at mainbus
+file	arch/arm/omap/omap_edma.c		edma needs-flag
+
+# TI OTG controller
+define  tiotg_port {[port = -1], [mode = -1]}
+device	tiotg: tiotg_port
+attach	tiotg at mainbus
+file	arch/arm/omap/tiotg.c			tiotg
+attach  motg at tiotg_port
+
 # SDMMC controller
+attach	sdhc at mainbus with mainbussdhc
 attach	sdhc at obio with obiosdhc
-file	arch/arm/omap/omap3_sdhc.c		obiosdhc
+file	arch/arm/omap/omap3_sdhc.c		mainbussdhc | obiosdhc
 
 # NAND flash controller
 device	omapnand: nandbus
@@ -143,13 +155,6 @@ file	arch/arm/omap/obio_ohci.c		obioohci
 attach	ehci at obio with omap3_ehci
 file	arch/arm/omap/omap3_ehci.c		omap3_ehci
 
-# TI OTG controller
-define  tiotg_port {[port = -1], [mode = -1]}
-device	tiotg: tiotg_port
-attach	tiotg at obio
-file	arch/arm/omap/tiotg.c			tiotg
-attach  motg at tiotg_port
-
 attach	ahcisata at obio with omap5_ahcisata
 file	arch/arm/omap/omap5_ahcisata.c		omap5_ahcisata
 
@@ -158,7 +163,7 @@ attach	omapfb at obio
 file	arch/arm/omap/omapfb.c			omapfb
 
 # TI AM335x framebuffer
-device	tifb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
+device	tifb: rasops32, rasops24, rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	tifb at obio
 file	arch/arm/omap/tifb.c			tifb
 
@@ -169,6 +174,10 @@ file	arch/arm/omap/if_cpsw.c			cpsw
 device 	omapdma
 attach 	omapdma at obio
 file	arch/arm/omap/omap3_sdma.c		omapdma needs-flag
+
+device	trng
+attach	trng at obio
+file	arch/arm/omap/am335x_trng.c		trng
 
 # these bus space methods are not bus-specific ...
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.34 2012/02/20 22:42:05 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.34.2.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.34 2012/02/20 22:42:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.34.2.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -86,6 +86,7 @@ rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors,
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_ReconUnitCount_t num_rus = layoutPtr->stripeUnitsPerDisk / layoutPtr->SUsPerRU;
 	RF_ReconMap_t *p;
+	int error;
 
 	RF_Malloc(p, sizeof(RF_ReconMap_t), (RF_ReconMap_t *));
 	p->sectorsPerReconUnit = ru_sectors;
@@ -107,7 +108,8 @@ rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors,
 
 	pool_init(&p->elem_pool, sizeof(RF_ReconMapListElem_t), 0,
 	    0, 0, "raidreconpl", NULL, IPL_BIO);
-	pool_prime(&p->elem_pool, RF_NUM_RECON_POOL_ELEM);
+	if ((error = pool_prime(&p->elem_pool, RF_NUM_RECON_POOL_ELEM)) != 0)
+		panic("%s: failed to prime pool: %d", __func__, error);
 
 	rf_init_mutex2(p->mutex, IPL_VM);
 	rf_init_cond2(p->cv, "reconupdate");
@@ -324,12 +326,7 @@ void
 rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 {
 	RF_ReconMapListElem_t *p, *q;
-	RF_ReconUnitCount_t numRUs;
 	RF_ReconUnitNum_t i;
-
-	numRUs = mapPtr->sectorsInDisk / mapPtr->sectorsPerReconUnit;
-	if (mapPtr->sectorsInDisk % mapPtr->sectorsPerReconUnit)
-		numRUs++;
 
 	for (i = 0; i < mapPtr->status_size; i++) {
 		p = mapPtr->status[i];

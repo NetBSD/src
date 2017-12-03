@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.10.2.1 2013/06/23 06:20:11 tls Exp $
+# $NetBSD: ENCPP1,v 1.10.2.2 2017/12/03 11:36:39 jdolecek Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.10.2.1 $"
+#ident 		"ENCPP1-$Revision: 1.10.2.2 $"
 
 maxusers	32
 
@@ -46,21 +46,9 @@ options 	KTRACE
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-options 	COMPAT_43
-options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+include 	"conf/compat_netbsd09.config"
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX		# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	MSGBUFSIZE=65536
 file-system 	FFS
@@ -77,6 +65,8 @@ file-system 	PROCFS
 #file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
 
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 options 	INET
@@ -175,6 +165,8 @@ auvia*	at pci? dev ? function ?	# VIA integrated AC'97 Audio
 
 # Audio support
 audio*	at audiobus?
+
+spkr*		at audio?		# PC speaker (synthesized)
 
 pckbc0		at isa?			# PS/2 keyboard controller
 pckbd*		at pckbc?		# PC keyboard

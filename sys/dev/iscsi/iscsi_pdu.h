@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_pdu.h,v 1.1.12.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: iscsi_pdu.h,v 1.1.12.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ struct scsi_response_pdu_s
 	uint32_t StatSN;
 	uint32_t ExpCmdSN;
 	uint32_t MaxCmdSN;
-	uint32_t ExpStatSN;
+	uint32_t ExpDataSN;
 	uint32_t ReadResidualCount;
 	uint32_t ResidualCount;
 } __packed;

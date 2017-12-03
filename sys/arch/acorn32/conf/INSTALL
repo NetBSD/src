@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.63.2.3 2014/08/20 00:02:40 tls Exp $
+#	$NetBSD: INSTALL,v 1.63.2.4 2017/12/03 11:35:44 jdolecek Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/acorn32/conf/std.acorn32"
+include 	"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.63.2.3 $"
+#ident		"INSTALL-$Revision: 1.63.2.4 $"
 
 # estimated number of users
 maxusers	32
@@ -87,20 +87,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 
 # Compatibility options
 
-#options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_20	# NetBSD 2.0 compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
-options		COMPAT_15	# NetBSD 1.5 compatibility.
-options 	COMPAT_14	# NetBSD 1.4 compatibility.
-options 	COMPAT_13	# NetBSD 1.3 compatibility.
-options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd13.config"
 
 # Shared memory options
 
@@ -122,7 +109,6 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
@@ -135,6 +121,7 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
@@ -239,6 +226,8 @@ lpt*	at pioc? offset 0x0278 irq 0
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Podule bus device
 podulebus0	at root

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.17 2011/03/29 20:10:31 plunky Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.17.14.1 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.17 2011/03/29 20:10:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.17.14.1 2017/12/03 11:36:54 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.29.14.1 2012/11/20 03:02:20 tls Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.29.14.2 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.29.14.1 2012/11/20 03:02:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.29.14.2 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.29.14.1 2012/11/20 03:02:20 tls Exp $"
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-static int pci_mapreg_submap(const struct pci_attach_args *, int, pcireg_t, int,
-    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *, 
-    bus_addr_t *, bus_size_t *);
 
 static int
 pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
@@ -282,29 +278,29 @@ pci_mapreg_map(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	    handlep, basep, sizep);
 }
 
-static int
+int
 pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
-    int busflags, bus_size_t maxsize, bus_size_t offset, bus_space_tag_t *tagp,
+    int busflags, bus_size_t reqsize, bus_size_t offset, bus_space_tag_t *tagp,
 	bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
 {
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;
 	bus_addr_t base;
-	bus_size_t size;
+	bus_size_t realmaxsize;
 	int flags;
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_OKAY) == 0)
 			return 1;
 		if (pci_io_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
-		    &size, &flags))
+		    &realmaxsize, &flags))
 			return 1;
 		tag = pa->pa_iot;
 	} else {
 		if ((pa->pa_flags & PCI_FLAGS_MEM_OKAY) == 0)
 			return 1;
 		if (pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
-		    &size, &flags))
+		    &realmaxsize, &flags))
 			return 1;
 		tag = pa->pa_memt;
 	}
@@ -324,13 +320,13 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	 * pci_mapreg_map.
 	 */
 
-	maxsize = (maxsize && offset) ? maxsize : size;
+	reqsize = (reqsize != 0) ? reqsize : realmaxsize;
 	base += offset;
 
-	if ((maxsize < size && offset + maxsize <= size) || offset != 0)
+	if (realmaxsize < (offset + reqsize))
 		return 1;
 
-	if (bus_space_map(tag, base, maxsize, busflags | flags, &handle))
+	if (bus_space_map(tag, base, reqsize, busflags | flags, &handle))
 		return 1;
 
 	if (tagp != NULL)
@@ -340,31 +336,28 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	if (basep != NULL)
 		*basep = base;
 	if (sizep != NULL)
-		*sizep = maxsize;
+		*sizep = reqsize;
 
 	return 0;
 }
 
 int
 pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
-    bus_space_handle_t bsh, int type, bus_space_handle_t *romh, bus_size_t *sz)
+    bus_space_handle_t bsh, bus_size_t sz, int type,
+    bus_space_handle_t *romh, bus_size_t *romsz)
 {
-	bus_size_t	romsz, offset = 0, imagesz;
+	bus_size_t	offset = 0, imagesz;
 	uint16_t	ptr;
 	int		done = 0;
-
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
-	    PCI_MAPREG_TYPE_ROM, NULL, &romsz, NULL))
-		return 1;
 
 	/*
 	 * no upper bound check; i cannot imagine a 4GB ROM, but
 	 * it appears the spec would allow it!
 	 */
-	if (romsz < 1024)
+	if (sz < 1024)
 		return 1;
 
-	while (offset < romsz && !done){
+	while (offset < sz && !done){
 		struct pci_rom_header	hdr;
 		struct pci_rom		rom;
 
@@ -379,7 +372,7 @@ pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
 
 		ptr = offset + hdr.romh_data_ptr;
 		
-		if (ptr > romsz) {
+		if (ptr > sz) {
 			printf("pci_find_rom: rom data ptr out of range\n");
 			return 1;
 		}
@@ -415,7 +408,7 @@ pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
 		    (rom.rom_subclass == PCI_SUBCLASS(pa->pa_class)) &&
 		    (rom.rom_interface == PCI_INTERFACE(pa->pa_class)) &&
 		    (rom.rom_code_type == type)) {
-			*sz = imagesz;
+			*romsz = imagesz;
 			bus_space_subregion(bst, bsh, offset, imagesz, romh);
 			return 0;
 		}

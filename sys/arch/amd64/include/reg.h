@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.7.38.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: reg.h,v 1.7.38.2 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,19 @@ struct reg {
 
 struct fpreg {
 	struct fxsave fxstate;
+};
+
+/*
+ * Debug Registers
+ *
+ * DR0-DR3  Debug Address Registers
+ * DR4-DR5  Reserved
+ * DR6      Debug Status Register
+ * DR7      Debug Control Register
+ * DR8-DR15 Reserved
+ */
+struct dbreg {
+	long	dr[16];
 };
 
 #else	/*	__x86_64__	*/

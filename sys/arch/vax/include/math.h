@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.6.6.1 2014/08/20 00:03:27 tls Exp $	*/
+/*	$NetBSD: math.h,v 1.6.6.2 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 #ifndef _VAX_MATH_H_
 #define _VAX_MATH_H_
@@ -11,8 +11,8 @@
 #define	__INFINITY	1.0E+39F
 #endif
 
-static inline int __isinf(double __x) { return 0; }
-static inline int __isnan(double __x) { return 0; }
+static __inline int __isinf(double __x) { return 0; }
+static __inline int __isnan(double __x) { return 0; }
 #define	__HAVE_INLINE___ISINF
 #define	__HAVE_INLINE___ISNAN
 

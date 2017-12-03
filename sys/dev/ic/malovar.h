@@ -76,9 +76,10 @@ struct malo_tx_radiotap_hdr {
 
 struct malo_softc {
 	device_t		sc_dev;
-	struct ethercom		 sc_ec;
+	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 #define sc_if sc_ec.ec_if
+	void			*sc_soft_ih;
 	struct malo_rx_ring	sc_rxring;
 	struct malo_tx_ring	sc_txring;
 
@@ -90,7 +91,7 @@ struct malo_softc {
 
 	bus_dmamap_t		sc_cmd_dmam;
 	bus_dma_segment_t	sc_cmd_dmas;
-	void				*sc_cmd_mem;
+	void			*sc_cmd_mem;
 	bus_addr_t		sc_cmd_dmaaddr;
 	uint32_t		*sc_cookie;
 	bus_addr_t		sc_cookie_dmaaddr;
@@ -105,7 +106,7 @@ struct malo_softc {
 	int			(*sc_enable)(struct malo_softc *);
 	void			(*sc_disable)(struct malo_softc *);
 
-	struct callout	sc_scan_to;
+	struct callout		sc_scan_to;
 	int			sc_tx_timer;
 	int			sc_last_txrate;
 
@@ -127,6 +128,7 @@ struct malo_softc {
 };
 
 int malo_intr(void *arg);
+void malo_softintr(void *arg);
 int malo_attach(struct malo_softc *sc);
 int malo_detach(void *arg);
 int malo_init(struct ifnet *);

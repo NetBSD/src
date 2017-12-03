@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.35.2.2 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.35.2.3 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.35.2.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.35.2.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
-	bool			is_console;
+	bool			is_console = FALSE;
 	int			i, j;
 	uint32_t		reg, flags;
 	uint8_t			cmap[768];
@@ -262,7 +262,8 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_RESIZE,
 		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -273,6 +274,8 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &r128fb_accessops);
 	sc->vd.init_screen = r128fb_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	/* init engine here */
 	r128fb_init(sc);
@@ -332,7 +335,9 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* no suspend/resume support yet */
-	pmf_device_register(sc->sc_dev, NULL, NULL);
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	DPRINTF("R128_LVDS_GEN_CNTL: %08x\n", reg);
@@ -459,8 +464,10 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return wsdisplayio_get_edid(sc->sc_dev, d);
 	}
 
-	case WSDISPLAYIO_GET_FBINFO: {
-		struct wsdisplayio_fbinfo *fbi = data;
+	case WSDISPLAYIO_GET_FBINFO:
+	{
+			struct wsdisplayio_fbinfo *fbi = data;
+
 		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
 	}
@@ -538,13 +545,16 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
 	if (sc->sc_depth == 8)
-		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
+		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA |
+			      RI_PREFER_ALPHA;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_RESIZE;
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;
 #endif
+	scr->scr_flags |= VCONS_LOADFONT;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
@@ -801,9 +811,9 @@ r128fb_cursor(void *cookie, int on, int row, int col)
 	he = ri->ri_font->fontheight;
 	
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-		x = ri->ri_ccol * wi + ri->ri_xorigin;
-		y = ri->ri_crow * he + ri->ri_yorigin;
 		if (ri->ri_flg & RI_CURSOR) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
 			r128fb_bitblt(sc, x, y, x, y, wi, he, R128_ROP3_Dn);
 			ri->ri_flg &= ~RI_CURSOR;
 		}

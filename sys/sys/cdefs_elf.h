@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.40.2.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.40.2.3 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -65,6 +65,12 @@
     __asm(".weak " _C_LABEL_STRING(#sym));
 
 #if __GNUC_PREREQ__(4, 0)
+#define	__weak	__attribute__((__weak__))
+#else
+#define	__weak
+#endif
+
+#if __GNUC_PREREQ__(4, 0)
 #define	__weak_reference(sym)	__attribute__((__weakref__(#sym)))
 #else
 #define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))
@@ -105,6 +111,28 @@
 	  ".popsection");
 
 #endif /* !__STDC__ */
+
+#if __arm__
+#define __ifunc(name, resolver) \
+	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
+	      ".type	" _C_LABEL_STRING(#name) ", %gnu_indirect_function\n" \
+	       _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
+#define __hidden_ifunc(name, resolver) \
+	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
+	      ".hidden	" _C_LABEL_STRING(#name) "\n" \
+	      ".type	" _C_LABEL_STRING(#name) ", %gnu_indirect_function\n" \
+	       _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
+#else
+#define __ifunc(name, resolver) \
+	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
+	      ".type	" _C_LABEL_STRING(#name) ", @gnu_indirect_function\n" \
+	      _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
+#define __hidden_ifunc(name, resolver) \
+	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
+	      ".hidden	" _C_LABEL_STRING(#name) "\n" \
+	      ".type	" _C_LABEL_STRING(#name) ", @gnu_indirect_function\n" \
+	      _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
+#endif
 
 #if __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
@@ -157,7 +185,8 @@
 
 #define	__link_set_decl(set, ptype)					\
 	extern ptype * const __link_set_start(set)[] __dso_hidden;	\
-	extern ptype * const __link_set_end(set)[] __dso_hidden
+	__asm__(".hidden " __STRING(__stop_link_set_##set)); \
+	extern ptype * const __link_set_end(set)[] __weak __dso_hidden
 
 #define	__link_set_count(set)						\
 	(__link_set_end(set) - __link_set_start(set))

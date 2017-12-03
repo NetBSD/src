@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.72.2.2 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.72.2.3 2017/12/03 11:37:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,12 +32,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.72.2.2 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.72.2.3 2017/12/03 11:37:36 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -204,21 +208,21 @@ static const struct uscan_info uscanner_devs[] = {
 
 struct uscanner_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	u_int			sc_dev_flags;
 
-	usbd_pipe_handle	sc_bulkin_pipe;
+	struct usbd_pipe	*sc_bulkin_pipe;
 	int			sc_bulkin;
-	usbd_xfer_handle	sc_bulkin_xfer;
+	struct usbd_xfer	*sc_bulkin_xfer;
 	void 			*sc_bulkin_buffer;
 	int			sc_bulkin_bufferlen;
 	int			sc_bulkin_datalen;
 
-	usbd_pipe_handle	sc_bulkout_pipe;
+	struct usbd_pipe	*sc_bulkout_pipe;
 	int			sc_bulkout;
-	usbd_xfer_handle	sc_bulkout_xfer;
+	struct usbd_xfer	*sc_bulkout_xfer;
 	void 			*sc_bulkout_buffer;
 	int			sc_bulkout_bufferlen;
 	int			sc_bulkout_datalen;
@@ -261,23 +265,24 @@ Static void uscanner_do_close(struct uscanner_softc *);
 
 #define USCANNERUNIT(n) (minor(n))
 
-int             uscanner_match(device_t, cfdata_t, void *);
-void            uscanner_attach(device_t, device_t, void *);
-int             uscanner_detach(device_t, int);
-int             uscanner_activate(device_t, enum devact);
+int	uscanner_match(device_t, cfdata_t, void *);
+void	uscanner_attach(device_t, device_t, void *);
+int	uscanner_detach(device_t, int);
+int	uscanner_activate(device_t, enum devact);
 extern struct cfdriver uscanner_cd;
-CFATTACH_DECL_NEW(uscanner, sizeof(struct uscanner_softc), uscanner_match, uscanner_attach, uscanner_detach, uscanner_activate);
+CFATTACH_DECL_NEW(uscanner, sizeof(struct uscanner_softc), uscanner_match,
+    uscanner_attach, uscanner_detach, uscanner_activate);
 
-int 
+int
 uscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (uscanner_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uscanner_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void 
+void
 uscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct uscanner_softc *sc = device_private(self);
@@ -293,18 +298,19 @@ uscanner_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->sc_dev_flags = uscanner_lookup(uaa->vendor, uaa->product)->flags;
+	sc->sc_dev_flags = uscanner_lookup(uaa->uaa_vendor,
+	    uaa->uaa_product)->flags;
 
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
-	err = usbd_set_config_no(uaa->device, 1, 1); /* XXX */
+	err = usbd_set_config_no(uaa->uaa_device, 1, 1); /* XXX */
 	if (err) {
-		aprint_error_dev(self, "failed to set configuration"
-		    ", err=%s\n", usbd_errstr(err));
+		aprint_error_dev(self, "failed to set configuration, err=%s\n",
+		    usbd_errstr(err));
 		sc->sc_dying = 1;
 		return;
 	}
@@ -336,7 +342,7 @@ uscanner_attach(device_t parent, device_t self, void *aux)
 			ed_bulkin = ed;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT
 		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-		        ed_bulkout = ed;
+			ed_bulkout = ed;
 		}
 
 		if (ed_bulkin && ed_bulkout)	/* found all we need */
@@ -355,15 +361,13 @@ uscanner_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bulkout = ed_bulkout->bEndpointAddress;
 
 	selinit(&sc->sc_selq);
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	return;
 }
 
 int
-uscanneropen(dev_t dev, int flag, int mode,
-    struct lwp *l)
+uscanneropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uscanner_softc *sc;
 	int unit = USCANNERUNIT(dev);
@@ -373,20 +377,16 @@ uscanneropen(dev_t dev, int flag, int mode,
 	if (sc == NULL)
 		return ENXIO;
 
- 	DPRINTFN(5, ("uscanneropen: flag=%d, mode=%d, unit=%d\n",
+	DPRINTFN(5, ("uscanneropen: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, unit));
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_state & USCANNER_OPEN)
-		return (EBUSY);
+		return EBUSY;
 
 	sc->sc_state |= USCANNER_OPEN;
-
-	sc->sc_bulkin_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
-	sc->sc_bulkout_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
-	/* No need to check buffers for NULL since we have WAITOK */
 
 	sc->sc_bulkin_bufferlen = USCANNER_BUFFERSIZE;
 	sc->sc_bulkout_bufferlen = USCANNER_BUFFERSIZE;
@@ -399,7 +399,7 @@ uscanneropen(dev_t dev, int flag, int mode,
 			printf("%s: cannot open bulk-in pipe (addr %d)\n",
 			       device_xname(sc->sc_dev), sc->sc_bulkin);
 			uscanner_do_close(sc);
-			return (EIO);
+			return EIO;
 		}
 	}
 	if (sc->sc_bulkout_pipe == NULL) {
@@ -409,27 +409,31 @@ uscanneropen(dev_t dev, int flag, int mode,
 			printf("%s: cannot open bulk-out pipe (addr %d)\n",
 			       device_xname(sc->sc_dev), sc->sc_bulkout);
 			uscanner_do_close(sc);
-			return (EIO);
+			return EIO;
 		}
 	}
 
-	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkin_xfer == NULL) {
+	int error = usbd_create_xfer(sc->sc_bulkin_pipe, USCANNER_BUFFERSIZE,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	if (error) {
 		uscanner_do_close(sc);
-		return (ENOMEM);
+		return error;
 	}
-	sc->sc_bulkout_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkout_xfer == NULL) {
-		uscanner_do_close(sc);
-		return (ENOMEM);
-	}
+	sc->sc_bulkin_buffer = usbd_get_buffer(sc->sc_bulkin_xfer);
 
-	return (0);	/* success */
+	error = usbd_create_xfer(sc->sc_bulkout_pipe, USCANNER_BUFFERSIZE, 0,
+	    0, &sc->sc_bulkout_xfer);
+	if (error) {
+		uscanner_do_close(sc);
+		return error;
+	}
+	sc->sc_bulkout_buffer = usbd_get_buffer(sc->sc_bulkout_xfer);
+
+	return 0;	/* success */
 }
 
 int
-uscannerclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+uscannerclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uscanner_softc *sc;
 
@@ -441,46 +445,49 @@ uscannerclose(dev_t dev, int flag, int mode,
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_state & USCANNER_OPEN)) {
 		printf("uscannerclose: not open\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 #endif
 
 	uscanner_do_close(sc);
 
-	return (0);
+	return 0;
 }
 
 void
 uscanner_do_close(struct uscanner_softc *sc)
 {
-	if (sc->sc_bulkin_xfer) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
-		sc->sc_bulkin_xfer = NULL;
-	}
-	if (sc->sc_bulkout_xfer) {
-		usbd_free_xfer(sc->sc_bulkout_xfer);
-		sc->sc_bulkout_xfer = NULL;
-	}
-
 	if (!(sc->sc_dev_flags & USC_KEEP_OPEN)) {
 		if (sc->sc_bulkin_pipe != NULL) {
 			usbd_abort_pipe(sc->sc_bulkin_pipe);
+		}
+		if (sc->sc_bulkout_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkout_pipe);
+		}
+		if (sc->sc_bulkin_xfer) {
+			usbd_destroy_xfer(sc->sc_bulkin_xfer);
+			sc->sc_bulkin_xfer = NULL;
+		}
+		if (sc->sc_bulkout_xfer) {
+			usbd_destroy_xfer(sc->sc_bulkout_xfer);
+			sc->sc_bulkout_xfer = NULL;
+		}
+		if (sc->sc_bulkin_pipe != NULL) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			sc->sc_bulkin_pipe = NULL;
 		}
 		if (sc->sc_bulkout_pipe != NULL) {
-			usbd_abort_pipe(sc->sc_bulkout_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			sc->sc_bulkout_pipe = NULL;
 		}
 	}
 
 	if (sc->sc_bulkin_buffer) {
-		free(sc->sc_bulkin_buffer, M_USBDEV);
+		kmem_free(sc->sc_bulkin_buffer, sc->sc_bulkin_bufferlen);
 		sc->sc_bulkin_buffer = NULL;
 	}
 	if (sc->sc_bulkout_buffer) {
-		free(sc->sc_bulkout_buffer, M_USBDEV);
+		kmem_free(sc->sc_bulkout_buffer, sc->sc_bulkin_bufferlen);
 		sc->sc_bulkout_buffer = NULL;
 	}
 
@@ -490,24 +497,22 @@ uscanner_do_close(struct uscanner_softc *sc)
 Static int
 uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
-	u_int32_t n, tn;
+	uint32_t n, tn;
 	usbd_status err;
 	int error = 0;
 
 	DPRINTFN(5, ("%s: uscannerread\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	while ((n = min(sc->sc_bulkin_bufferlen, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("uscannerread: start transfer %d bytes\n",n));
 		tn = n;
 
-		err = usbd_bulk_transfer(
-			sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
-			USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-			sc->sc_bulkin_buffer, &tn,
-			"uscnrb");
+		err = usbd_bulk_transfer(sc->sc_bulkin_xfer,
+		    sc->sc_bulkin_pipe, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
+		    sc->sc_bulkin_buffer, &tn);
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
@@ -523,7 +528,7 @@ uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 			break;
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -539,31 +544,29 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (error);
+	return error;
 }
 
 Static int
 uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
-	u_int32_t n;
+	uint32_t n;
 	int error = 0;
 	usbd_status err;
 
 	DPRINTFN(5, ("%s: uscanner_do_write\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	while ((n = min(sc->sc_bulkout_bufferlen, uio->uio_resid)) != 0) {
 		error = uiomove(sc->sc_bulkout_buffer, n, uio);
 		if (error)
 			break;
 		DPRINTFN(1, ("uscanner_do_write: transfer %d bytes\n", n));
-		err = usbd_bulk_transfer(
-			sc->sc_bulkout_xfer, sc->sc_bulkout_pipe,
-			0, USBD_NO_TIMEOUT,
-			sc->sc_bulkout_buffer, &n,
-			"uscnwb");
+		err = usbd_bulk_transfer(sc->sc_bulkout_xfer,
+		    sc->sc_bulkout_pipe, 0, USBD_NO_TIMEOUT,
+		    sc->sc_bulkout_buffer, &n);
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
@@ -573,7 +576,7 @@ uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 		}
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -588,7 +591,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 	error = uscanner_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
-	return (error);
+	return error;
 }
 
 int
@@ -605,7 +608,7 @@ uscanner_activate(device_t self, enum devact act)
 	}
 }
 
-int 
+int
 uscanner_detach(device_t self, int flags)
 {
 	struct uscanner_softc *sc = device_private(self);
@@ -637,11 +640,10 @@ uscanner_detach(device_t self, int flags)
 	mn = device_unit(self) * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 	seldestroy(&sc->sc_selq);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -653,7 +655,7 @@ uscannerpoll(dev_t dev, int events, struct lwp *l)
 	sc = device_lookup_private(&uscanner_cd, USCANNERUNIT(dev));
 
 	if (sc->sc_dying)
-		return (POLLHUP);
+		return POLLHUP;
 
 	/*
 	 * We have no easy way of determining if a read will
@@ -663,7 +665,7 @@ uscannerpoll(dev_t dev, int events, struct lwp *l)
 	revents |= events &
 		   (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM);
 
-	return (revents);
+	return revents;
 }
 
 static void
@@ -674,8 +676,12 @@ filt_uscannerdetach(struct knote *kn)
 	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
 }
 
-static const struct filterops uscanner_seltrue_filtops =
-	{ 1, NULL, filt_uscannerdetach, filt_seltrue };
+static const struct filterops uscanner_seltrue_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_uscannerdetach,
+	.f_event = filt_seltrue,
+};
 
 int
 uscannerkqfilter(dev_t dev, struct knote *kn)
@@ -686,7 +692,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 	sc = device_lookup_private(&uscanner_cd, USCANNERUNIT(dev));
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -701,19 +707,18 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
 
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 
-	return (0);
+	return 0;
 }
 
 int
-uscannerioctl(dev_t dev, u_long cmd, void *addr,
-    int flag, struct lwp *l)
+uscannerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	return (EINVAL);
+	return EINVAL;
 }

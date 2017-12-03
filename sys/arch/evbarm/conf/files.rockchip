@@ -1,0 +1,10 @@
+#	$NetBSD: files.rockchip,v 1.1.18.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+# Rockchip configuration info
+#
+
+file	arch/evbarm/rockchip/rockchip_machdep.c
+
+defparam opt_machdep.h				BOOT_ARGS
+
+include "arch/arm/rockchip/files.rockchip"

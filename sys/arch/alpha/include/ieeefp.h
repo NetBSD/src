@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.8 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: ieeefp.h,v 1.8.6.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Written by J.T. Conklin, Apr 28, 1995
@@ -12,26 +12,7 @@
 
 #if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
 
-typedef int fenv_t;
-typedef int fexcept_t;
-
-#define	FE_INVALID	0x01	/* invalid operation exception */
-#define	FE_DIVBYZERO	0x02	/* divide-by-zero exception */
-#define	FE_OVERFLOW	0x04	/* overflow exception */
-#define	FE_UNDERFLOW	0x08	/* underflow exception */
-#define	FE_INEXACT	0x10	/* imprecise (loss of precision; "inexact") */
-#define	FE_IOVERFLOW	0x20    /* integer overflow */
-
-#define	FE_ALL_EXCEPT	0x3f
-
-/*
- * These bits match the fpcr as well as bits 12:11
- * in fp operate instructions
- */
-#define	FE_TOWARDZERO	0	/* round to zero (truncate) */
-#define	FE_DOWNWARD	1	/* round toward negative infinity */
-#define	FE_TONEAREST	2	/* round to nearest representable number */
-#define	FE_UPWARD	3	/* round toward positive infinity */
+#include <machine/fenv.h>
 
 #if !defined(_ISOC99_SOURCE)
 
@@ -63,7 +44,7 @@ typedef int fp_except;
 #define	FP_X_OFL	FE_OVERFLOW	/* overflow exception */
 #define	FP_X_UFL	FE_UNDERFLOW	/* underflow exception */
 #define	FP_X_IMP	FE_INEXACT	/* imprecise (prec. loss; "inexact") */
-#define	FP_X_IOV	FE_IOVERFLOW	/* integer overflow */
+#define	FP_X_IOV	FE_INTOVF	/* integer overflow */
 
 /*
  * fp_rnd bits match the fpcr, below, as well as bits 12:11

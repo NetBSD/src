@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.21.12.1 2012/11/20 03:02:09 tls Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.21.12.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.21.12.1 2012/11/20 03:02:09 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.21.12.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,11 +268,12 @@ dpt_isa_attach(device_t parent, device_t self, void *aux)
 	iot = ia->ia_iot;
 	ic = ia->ia_ic;
 
-	printf(": ");
+	aprint_naive("\n");
+	aprint_normal(": ");
 
 	if ((error = bus_space_map(iot, ia->ia_io[0].ir_addr, DPT_ISA_IOSIZE,
 	     0, &ioh)) != 0) {
-		printf("can't map i/o space, error = %d\n", error);
+		aprint_error("can't map i/o space, error = %d\n", error);
 		return;
 	}
 
@@ -281,7 +282,7 @@ dpt_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ia->ia_dmat;
 
 	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
-		printf("unable to cascade DRQ, error = %d\n", error);
+		aprint_error("unable to cascade DRQ, error = %d\n", error);
 		return;
 	}
 
@@ -289,12 +290,12 @@ dpt_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
 	    IPL_BIO, dpt_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("can't establish interrupt\n");
+		aprint_error("can't establish interrupt\n");
 		return;
 	}
 
 	if (dpt_readcfg(sc)) {
-		printf("readcfg failed - see dpt(4)\n");
+		aprint_error("readcfg failed - see dpt(4)\n");
 		return;
 	}
 

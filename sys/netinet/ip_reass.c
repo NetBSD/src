@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.8.12.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.8.12.2 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.8.12.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.8.12.2 2017/12/03 11:39:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,22 +54,18 @@ __KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.8.12.1 2014/08/20 00:04:35 tls Exp $"
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
-#include <netinet/in_proto.h>
 #include <netinet/ip_private.h>
 #include <netinet/in_var.h>
 

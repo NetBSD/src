@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmix.c,v 1.7 2010/11/13 13:51:59 uebayasi Exp $	*/
+/*	$NetBSD: sgsmix.c,v 1.7.18.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.7 2010/11/13 13:51:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.7.18.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,14 +82,20 @@ sgsmix_match(device_t parent, cfdata_t cf, void *aux)
 	int ret = -1;
 	uint8_t out[2] = {1, 0x20};
 
-	/* see if we can talk to something at address 0x8a */
-	if (args->ia_addr == 0x8a) {
-		iic_acquire_bus(args->ia_tag, 0);
-		ret = iic_exec(args->ia_tag, I2C_OP_WRITE, args->ia_addr,
-		    out, 2, NULL, 0, 0);
-		iic_release_bus(args->ia_tag, 0);
+	if (args->ia_name) {
+		if (strcmp(args->ia_name, "sgsmix") == 0)
+			return 1;
+	} else {
+		/* see if we can talk to something at address 0x8a */
+		if (args->ia_addr == 0x8a) {
+			iic_acquire_bus(args->ia_tag, 0);
+			ret = iic_exec(args->ia_tag, I2C_OP_WRITE, args->ia_addr,
+			    out, 2, NULL, 0, 0);
+			iic_release_bus(args->ia_tag, 0);
+		}
+		return (ret >= 0);
 	}
-	return (ret >= 0);
+	return 0;
 }
 
 static void

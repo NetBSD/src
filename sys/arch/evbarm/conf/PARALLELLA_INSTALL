@@ -1,0 +1,11 @@
+#	$NetBSD: PARALLELLA_INSTALL,v 1.1.20.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	PARALLELLA_INSTALL -- PARALLELLA kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/PARALLELLA"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

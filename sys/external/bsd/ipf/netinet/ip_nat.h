@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.3.2.2 2013/02/25 00:29:45 tls Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.3.2.3 2017/12/03 11:38:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -721,7 +721,7 @@ extern	int	ipf_nat_ioctl(ipf_main_softc_t *, void *, ioctlcmd_t,
 				   int, int, void *);
 extern	void	ipf_nat_log(ipf_main_softc_t *, ipf_nat_softc_t *,
 				 struct nat *, u_int);
-extern	nat_t	*ipf_nat_lookupredir(natlookup_t *);
+extern	nat_t	*ipf_nat_lookupredir(ipf_main_softc_t *, natlookup_t *);
 extern	nat_t	*ipf_nat_maplookup(void *, u_int, struct in_addr,
 				struct in_addr);
 extern	nat_t	*ipf_nat_add(fr_info_t *, ipnat_t *, nat_t **,
@@ -780,7 +780,7 @@ extern	nat_t	*ipf_nat6_inlookup(fr_info_t *, u_int, u_int,
 extern	u_32_t	ipf_nat6_ip6subtract(i6addr_t *, i6addr_t *);
 extern	frentry_t *ipf_nat6_ipfin(fr_info_t *, u_32_t *);
 extern	frentry_t *ipf_nat6_ipfout(fr_info_t *, u_32_t *);
-extern	nat_t	*ipf_nat6_lookupredir(natlookup_t *);
+extern	nat_t	*ipf_nat6_lookupredir(ipf_main_softc_t *, natlookup_t *);
 extern	int	ipf_nat6_newmap(fr_info_t *, nat_t *, natinfo_t *);
 extern	int	ipf_nat6_newrdr(fr_info_t *, nat_t *, natinfo_t *);
 extern	nat_t	*ipf_nat6_outlookup(fr_info_t *, u_int, u_int,

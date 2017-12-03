@@ -1,0 +1,16 @@
+- efiboot
+ * handle UEFI variables
+ * boot from CD/DVD (bootable from CD/DVD, but root fs not found.)
+ * load boot.cfg from EFI system partition (FAT32)
+
+- kernel
+ * handle UEFI variables (/dev/efivar)
+ * accelerated console
+
+- userland
+ * efibootmgr like utility
+ * merge distrib/amd64/uefi-installimage to distrib/amd64/install-image
+ * merge distrib/amd64/uefi-installimage/Makefile.* to distrib/common/Makefile.*
+
+- installer
+ * sysinst(8): handle dk(4) for install disk

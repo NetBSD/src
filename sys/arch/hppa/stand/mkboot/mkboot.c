@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.1.10.2 2014/08/20 00:03:05 tls Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.1.10.3 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -234,7 +234,7 @@ putfile(char *from_file, int to)
 	int from, check_sum = 0;
 	struct hppa_lifload load;
 	Elf32_External_Ehdr elf_header;
-	Elf32_External_Phdr *elf_segments;
+	Elf32_External_Phdr *elf_segments = NULL;
 	int i, header_count, memory_needed, elf_load_image_segment;
 
 	if ((from = open(from_file, O_RDONLY)) < 0)
@@ -356,6 +356,7 @@ putfile(char *from_file, int to)
 	if (close(from) < 0)
 		err(1, "%s", from_file);
 
+	free(elf_segments);
 	return total;
 }
 

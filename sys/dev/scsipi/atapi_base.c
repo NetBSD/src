@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.28 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.28.44.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.28 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.28.44.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ atapi_interpret_sense(struct scsipi_xfer *xs)
 	const char *msg = NULL;
 
 	/*
-	 * If the device has it's own error handler, call it first.
+	 * If the device has its own error handler, call it first.
 	 * If it returns a legit error value, return that, otherwise
 	 * it wants us to continue with normal error processing.
 	 */

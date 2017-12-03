@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.14.1 2014/08/20 00:03:21 tls Exp $
+#	$NetBSD: Makefile,v 1.4.14.2 2017/12/03 11:36:39 jdolecek Exp $
 
 NOMAN= # defined
 
@@ -22,7 +22,7 @@ NEWVERSWHAT=	"BOOT"
 SRCS= srt0.s
 SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c
 SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
-SRCS+= ns16550.c vers.c
+SRCS+= ns16550.c
 SRCS+= iplcb.c
 
 CFLAGS= -Os -ffreestanding
@@ -48,17 +48,13 @@ LIBCRTEND=
 RELOC= 0x800000
 #RELOC= 0x0
 
-CLEANFILES+= vers.c
-
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
-
-vers.c: ${.CURDIR}/../boot/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/../boot/version "rs6000" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>

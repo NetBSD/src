@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.33 2011/12/24 20:18:54 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.33.6.1 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -189,6 +189,7 @@ struct icmp {
 #define		ICMP_PHOTURIS_NEED_AUTHZ	5	/* no authorization */
 
 #define ICMP_MAXTYPE		40
+#define ICMP_NTYPES		(ICMP_MAXTYPE + 1)
 
 #ifdef ICMP_STRINGS
 static const char *icmp_type[] = {
@@ -247,6 +248,8 @@ int	icmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 void	icmp_mtudisc_callback_register(void (*)(struct in_addr));
 int	icmp_ratelimit(const struct in_addr *, const int, const int);
+void	icmp_mtudisc_lock(void);
+void	icmp_mtudisc_unlock(void);
 #endif
 
 

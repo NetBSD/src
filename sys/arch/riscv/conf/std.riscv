@@ -1,0 +1,38 @@
+#
+# $NetBSD: std.riscv,v 1.1.18.2 2017/12/03 11:36:38 jdolecek Exp $
+#
+machine		riscv
+
+include 	"conf/std"
+
+options  	EXEC_ELF32
+options  	EXEC_SCRIPT
+
+#no defflag COMPAT_09
+#no defflag COMPAT_10
+#no defflag COMPAT_11
+#no defflag COMPAT_12
+#no defflag COMPAT_13
+#no defflag COMPAT_14
+#no defflag COMPAT_15
+#no defflag COMPAT_16
+#no defflag COMPAT_20
+#no defflag COMPAT_30
+#no defflag COMPAT_40
+#no defflag COMPAT_50
+#no defflag COMPAT_60
+
+#obsolete defflag COMPAT_60
+#obsolete defflag COMPAT_50
+#obsolete defflag COMPAT_40
+#obsolete defflag COMPAT_30
+#obsolete defflag COMPAT_20
+#obsolete defflag COMPAT_16
+#obsolete defflag COMPAT_15
+#obsolete defflag COMPAT_14
+#obsolete defflag COMPAT_13
+#obsolete defflag COMPAT_12
+#obsolete defflag COMPAT_11
+#obsolete defflag COMPAT_10
+#obsolete defflag COMPAT_09
+

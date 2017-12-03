@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.17.2.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.17.2.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009,2011,2012 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.17.2.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.17.2.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.17.2.1 2014/08/20 00:04:28 tls 
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
+#include <sys/module.h>
 
 #undef	PRIOCSCAN_USE_GLOBAL_POSITION
 
@@ -262,7 +263,7 @@ bufq_priocscan_selectqueue(struct bufq_priocscan *q, const struct buf *bp)
 static void
 bufq_priocscan_put(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_priocscan *q = bufq->bq_private;
+	struct bufq_priocscan *q = bufq_private(bufq);
 	struct cscan_queue *cq;
 
 	cq = bufq_priocscan_selectqueue(q, bp);
@@ -272,7 +273,7 @@ bufq_priocscan_put(struct bufq_state *bufq, struct buf *bp)
 static struct buf *
 bufq_priocscan_get(struct bufq_state *bufq, int remove)
 {
-	struct bufq_priocscan *q = bufq->bq_private;
+	struct bufq_priocscan *q = bufq_private(bufq);
 	struct priocscan_queue *pq, *npq;
 	struct priocscan_queue *first; /* highest priority non-empty queue */
 	const struct priocscan_queue *epq;
@@ -393,7 +394,7 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 static struct buf *
 bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_priocscan * const q = bufq->bq_private;
+	struct bufq_priocscan * const q = bufq_private(bufq);
 	unsigned int i;
 
 	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
@@ -440,5 +441,21 @@ bufq_priocscan_init(struct bufq_state *bufq)
 		struct cscan_queue *cq = &q->bq_queue[i].q_queue;
 
 		cscan_init(cq, sortby);
+	}
+}
+
+MODULE(MODULE_CLASS_BUFQ, bufq_priocscan, NULL);
+
+static int
+bufq_priocscan_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return bufq_register(&bufq_strat_priocscan);
+	case MODULE_CMD_FINI:
+		return bufq_unregister(&bufq_strat_priocscan);
+	default:
+		return ENOTTY;
 	}
 }

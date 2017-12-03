@@ -40,7 +40,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.seq,v 1.123 2003/01/20 20:44:55 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic7xxx.seq,v 1.18 2006/11/25 16:48:32 christos Exp $"
+VERSION = "$NetBSD: aic7xxx.seq,v 1.18.98.1 2017/12/03 11:37:05 jdolecek Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -319,7 +319,7 @@ ident_messages_done_msg_pending:
 
 		/*
 		 * Pushed message loop to allow the kernel to
-		 * run it's own target mode message state engine.
+		 * run its own target mode message state engine.
 		 */
 host_target_message_loop:
 		mvi	HOST_MSG_LOOP call set_seqint;
@@ -1445,7 +1445,7 @@ p_command_xfer:
 		test	SSTAT0, SDONE jnz . + 2;
 		test    SSTAT1, PHASEMIS jz . - 1;
 		/*
-		 * Wait for our ACK to go-away on it's own
+		 * Wait for our ACK to go-away on its own
 		 * instead of being killed by SCSIEN getting cleared.
 		 */
 		test	SCSISIGI, ACKI jnz .;
@@ -1567,7 +1567,7 @@ p_mesgin:
 
 /*
  * Pushed message loop to allow the kernel to
- * run it's own message state engine.  To avoid an
+ * run its own message state engine.  To avoid an
  * extra nop instruction after signaling the kernel,
  * we perform the phase_lock before checking to see
  * if we should exit the loop and skip the phase_lock

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.50.2.2 2014/08/20 00:03:19 tls Exp $
+#	$NetBSD: Makefile.powerpc,v 1.50.2.3 2017/12/03 11:36:36 jdolecek Exp $
 #
 # Makefile for NetBSD
 #
@@ -48,8 +48,8 @@ DEFCOPTS=	-O2
 CFLAGS+=	-fstack-protector
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -misel :}
 .endif
-CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none -msoft-float :}
-CFLAGS+=	${${ACTIVE_CC} == "clang":? -mllvm -disable-ppc-float-in-variadic=true :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none :}
+CFLAGS+=	-msoft-float
 CFLAGS+=	${CCPUOPTS}
 AFLAGS+=	${AOPTS} -D_NOREGNAMES
 
@@ -84,7 +84,7 @@ ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 ##
 KERNLDSCRIPT?=	${POWERPC}/conf/kern.ldscript
 TEXTADDR?=	0x100000
-LINKFORMAT=	-N -T ${KERNLDSCRIPT}
+LINKFORMAT=	-N
 
 ENTRYPOINT=	__start
 

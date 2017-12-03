@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __NSDUMP_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -101,7 +99,7 @@ AcpiNsGetMaxDepth (
 void
 AcpiNsPrintPathname (
     UINT32                  NumSegments,
-    char                    *Pathname)
+    const char              *Pathname)
 {
     UINT32                  i;
 
@@ -124,7 +122,7 @@ AcpiNsPrintPathname (
     {
         for (i = 0; i < 4; i++)
         {
-            ACPI_IS_PRINT (Pathname[i]) ?
+            isprint ((int) Pathname[i]) ?
                 AcpiOsPrintf ("%c", Pathname[i]) :
                 AcpiOsPrintf ("?");
         }
@@ -140,6 +138,9 @@ AcpiNsPrintPathname (
     AcpiOsPrintf ("]\n");
 }
 
+
+#ifdef ACPI_OBSOLETE_FUNCTIONS
+/* Not used at this time, perhaps later */
 
 /*******************************************************************************
  *
@@ -181,7 +182,7 @@ AcpiNsDumpPathname (
     AcpiOsPrintf ("\n");
     return_VOID;
 }
-
+#endif
 
 /*******************************************************************************
  *
@@ -260,7 +261,8 @@ AcpiNsDumpOneObject (
 
         if (Type > ACPI_TYPE_LOCAL_MAX)
         {
-            ACPI_WARNING ((AE_INFO, "Invalid ACPI Object Type 0x%08X", Type));
+            ACPI_WARNING ((AE_INFO,
+                "Invalid ACPI Object Type 0x%08X", Type));
         }
 
         AcpiOsPrintf ("%4.4s", AcpiUtGetNodeName (ThisNode));
@@ -269,7 +271,7 @@ AcpiNsDumpOneObject (
     /* Now we can print out the pertinent information */
 
     AcpiOsPrintf (" %-12s %p %2.2X ",
-            AcpiUtGetTypeName (Type), ThisNode, ThisNode->OwnerId);
+        AcpiUtGetTypeName (Type), ThisNode, ThisNode->OwnerId);
 
     DbgLevel = AcpiDbgLevel;
     AcpiDbgLevel = 0;
@@ -315,9 +317,9 @@ AcpiNsDumpOneObject (
         {
         case ACPI_TYPE_PROCESSOR:
 
-            AcpiOsPrintf ("ID %02X Len %02X Addr %p\n",
+            AcpiOsPrintf ("ID %02X Len %02X Addr %8.8X%8.8X\n",
                 ObjDesc->Processor.ProcId, ObjDesc->Processor.Length,
-                ACPI_CAST_PTR (void, ObjDesc->Processor.Address));
+                ACPI_FORMAT_UINT64 (ObjDesc->Processor.Address));
             break;
 
         case ACPI_TYPE_DEVICE:
@@ -356,7 +358,7 @@ AcpiNsDumpOneObject (
             if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
             {
                 AcpiOsPrintf ("Len %.2X",
-                            ObjDesc->Buffer.Length);
+                    ObjDesc->Buffer.Length);
 
                 /* Dump some of the buffer */
 
@@ -379,7 +381,7 @@ AcpiNsDumpOneObject (
         case ACPI_TYPE_STRING:
 
             AcpiOsPrintf ("Len %.2X ", ObjDesc->String.Length);
-            AcpiUtPrintString (ObjDesc->String.Pointer, 32);
+            AcpiUtPrintString (ObjDesc->String.Pointer, 80);
             AcpiOsPrintf ("\n");
             break;
 
@@ -390,7 +392,7 @@ AcpiNsDumpOneObject (
             if (ObjDesc->Region.Flags & AOPOBJ_DATA_VALID)
             {
                 AcpiOsPrintf (" Addr %8.8X%8.8X Len %.4X\n",
-                    ACPI_FORMAT_NATIVE_UINT (ObjDesc->Region.Address),
+                    ACPI_FORMAT_UINT64 (ObjDesc->Region.Address),
                     ObjDesc->Region.Length);
             }
             else
@@ -537,9 +539,9 @@ AcpiNsDumpOneObject (
 
     /* If there is an attached object, display it */
 
-    DbgLevel     = AcpiDbgLevel;
+    DbgLevel = AcpiDbgLevel;
     AcpiDbgLevel = 0;
-    ObjDesc      = AcpiNsGetAttachedObject (ThisNode);
+    ObjDesc = AcpiNsGetAttachedObject (ThisNode);
     AcpiDbgLevel = DbgLevel;
 
     /* Dump attached objects */
@@ -566,14 +568,18 @@ AcpiNsDumpOneObject (
 
             if (ObjType > ACPI_TYPE_LOCAL_MAX)
             {
-                AcpiOsPrintf ("(Pointer to ACPI Object type %.2X [UNKNOWN])\n",
+                AcpiOsPrintf (
+                    "(Pointer to ACPI Object type %.2X [UNKNOWN])\n",
                     ObjType);
+
                 BytesToDump = 32;
             }
             else
             {
-                AcpiOsPrintf ("(Pointer to ACPI Object type %.2X [%s])\n",
+                AcpiOsPrintf (
+                    "(Pointer to ACPI Object type %.2X [%s])\n",
                     ObjType, AcpiUtGetTypeName (ObjType));
+
                 BytesToDump = sizeof (ACPI_OPERAND_OBJECT);
             }
 
@@ -603,7 +609,8 @@ AcpiNsDumpOneObject (
              */
             BytesToDump = ObjDesc->String.Length;
             ObjDesc = (void *) ObjDesc->String.Pointer;
-            AcpiOsPrintf ( "(Buffer/String pointer %p length %X)\n",
+
+            AcpiOsPrintf ("(Buffer/String pointer %p length %X)\n",
                 ObjDesc, BytesToDump);
             ACPI_DUMP_BUFFER (ObjDesc, BytesToDump);
             goto Cleanup;
@@ -704,8 +711,8 @@ AcpiNsDumpObjects (
     Info.DisplayType = DisplayType;
 
     (void) AcpiNsWalkNamespace (Type, StartHandle, MaxDepth,
-                ACPI_NS_WALK_NO_UNLOCK | ACPI_NS_WALK_TEMP_NODES,
-                AcpiNsDumpOneObject, NULL, (void *) &Info, NULL);
+        ACPI_NS_WALK_NO_UNLOCK | ACPI_NS_WALK_TEMP_NODES,
+        AcpiNsDumpOneObject, NULL, (void *) &Info, NULL);
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
 }
@@ -755,7 +762,7 @@ AcpiNsDumpOneObjectPath (
         return (AE_OK);
     }
 
-    Pathname = AcpiNsGetExternalPathname (Node);
+    Pathname = AcpiNsGetNormalizedPathname (Node, TRUE);
 
     PathIndent = 1;
     if (Level <= MaxLevel)
@@ -841,14 +848,14 @@ AcpiNsDumpObjectPaths (
     /* Get the max depth of the namespace tree, for formatting later */
 
     (void) AcpiNsWalkNamespace (Type, StartHandle, MaxDepth,
-                ACPI_NS_WALK_NO_UNLOCK | ACPI_NS_WALK_TEMP_NODES,
-                AcpiNsGetMaxDepth, NULL, (void *) &MaxLevel, NULL);
+        ACPI_NS_WALK_NO_UNLOCK | ACPI_NS_WALK_TEMP_NODES,
+        AcpiNsGetMaxDepth, NULL, (void *) &MaxLevel, NULL);
 
     /* Now dump the entire namespace */
 
     (void) AcpiNsWalkNamespace (Type, StartHandle, MaxDepth,
-                ACPI_NS_WALK_NO_UNLOCK | ACPI_NS_WALK_TEMP_NODES,
-                AcpiNsDumpOneObjectPath, NULL, (void *) &MaxLevel, NULL);
+        ACPI_NS_WALK_NO_UNLOCK | ACPI_NS_WALK_TEMP_NODES,
+        AcpiNsDumpOneObjectPath, NULL, (void *) &MaxLevel, NULL);
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
 }
@@ -919,7 +926,8 @@ AcpiNsDumpTables (
          * If the name space has not been initialized,
          * there is nothing to dump.
          */
-        ACPI_DEBUG_PRINT ((ACPI_DB_TABLES, "namespace not initialized!\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_TABLES,
+            "namespace not initialized!\n"));
         return_VOID;
     }
 
@@ -932,7 +940,7 @@ AcpiNsDumpTables (
     }
 
     AcpiNsDumpObjects (ACPI_TYPE_ANY, ACPI_DISPLAY_OBJECTS, MaxDepth,
-            ACPI_OWNER_ID_MAX, SearchHandle);
+        ACPI_OWNER_ID_MAX, SearchHandle);
     return_VOID;
 }
 #endif

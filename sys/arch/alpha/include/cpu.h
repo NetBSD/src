@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.78.6.1 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: cpu.h,v 1.78.6.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ void	cpu_pause_resume_all(int);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the Alpha, we use
+ * machine state in an opaque clockframe.  On the alpha, we use
  * what we push on an interrupt (a trapframe).
  */
 struct clockframe {
@@ -204,7 +204,7 @@ struct clockframe {
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the Alpha, request an AST to send us
+ * buffer pages are invalid.  On the alpha, request an AST to send us
  * through trap, marking the proc as needing a profiling tick.
  */
 #define	cpu_need_proftick(l)						\

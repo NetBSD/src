@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
 #include "amlcode.h"
@@ -56,13 +55,19 @@ RsGetBufferDataLength (
 
 static UINT16
 RsGetInterruptDataLength (
-    ACPI_PARSE_OBJECT       *InitializerOp);
+    ACPI_PARSE_OBJECT       *InitializerOp,
+    UINT32                  StartIndex);
 
 static BOOLEAN
 RsGetVendorData (
     ACPI_PARSE_OBJECT       *InitializerOp,
     UINT8                   *VendorData,
     ACPI_SIZE               DescriptorOffset);
+
+static UINT16
+RsGetStringDataLengthAt (
+    ACPI_PARSE_OBJECT       *InitializerOp,
+    UINT32                  StartIndex);
 
 /*
  * This module contains descriptors for serial buses and GPIO:
@@ -72,6 +77,11 @@ RsGetVendorData (
  * I2cSerialBus
  * SpiSerialBus
  * UartSerialBus
+ * PinFunction
+ * PinConfig
+ * PinGroup
+ * PinGroupFunction
+ * PinGroupConfig
  */
 
 
@@ -131,6 +141,7 @@ RsGetBufferDataLength (
  *
  * PARAMETERS:  InitializerOp       - Current parse op, start of the resource
  *                                    descriptor
+ *              StartIndex          - Start index of interrupt/pin list
  *
  * RETURN:      Length of the interrupt data list
  *
@@ -141,7 +152,8 @@ RsGetBufferDataLength (
 
 static UINT16
 RsGetInterruptDataLength (
-    ACPI_PARSE_OBJECT       *InitializerOp)
+    ACPI_PARSE_OBJECT       *InitializerOp,
+    UINT32                  StartIndex)
 {
     UINT16                  InterruptLength;
     UINT32                  i;
@@ -154,9 +166,9 @@ RsGetInterruptDataLength (
     {
         InitializerOp = ASL_GET_PEER_NODE (InitializerOp);
 
-        /* Interrupt list starts at offset 10 (Gpio descriptors) */
+        /* Interrupt list starts at offset StartIndex (Gpio descriptors) */
 
-        if (i >= 10)
+        if (i >= StartIndex)
         {
             InterruptLength += 2;
         }
@@ -266,11 +278,46 @@ RsGetVendorData (
 
 /*******************************************************************************
  *
+ * FUNCTION:    RsGetStringDataLengthAt
+ *
+ * PARAMETERS:  InitializerOp     - Start of a subtree of init nodes
+ *              StartIndex        - Starting index of the string node
+ *
+ * RETURN:      Valid string length if a string node is found at given
+ *               StartIndex or 0 otherwise.
+ *
+ * DESCRIPTION: In a list of peer nodes, find the first one at given index
+ *              that contains a string and return length.
+ *
+ ******************************************************************************/
+
+static UINT16
+RsGetStringDataLengthAt (
+    ACPI_PARSE_OBJECT       *InitializerOp,
+    UINT32                  StartIndex)
+{
+    UINT32 i;
+
+    for (i = 0; InitializerOp; i++)
+    {
+        if (i == StartIndex &&
+            InitializerOp->Asl.ParseOpcode == PARSEOP_STRING_LITERAL)
+        {
+            return ((UINT16) (strlen (InitializerOp->Asl.Value.String) + 1));
+        }
+
+        InitializerOp = ASL_GET_PEER_NODE (InitializerOp);
+    }
+
+    return (0);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    RsDoGpioIntDescriptor
  *
- * PARAMETERS:  Op                  - Parent resource descriptor parse node
- *              CurrentByteOffset   - Offset into the resource template AML
- *                                    buffer (to track references to the desc)
+ * PARAMETERS:  Info                - Parse Op and resource template offset
  *
  * RETURN:      Completed resource node
  *
@@ -280,8 +327,7 @@ RsGetVendorData (
 
 ASL_RESOURCE_NODE *
 RsDoGpioIntDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset)
+    ASL_RESOURCE_INFO       *Info)
 {
     AML_RESOURCE            *Descriptor;
     ACPI_PARSE_OBJECT       *InitializerOp;
@@ -289,14 +335,18 @@ RsDoGpioIntDescriptor (
     char                    *ResourceSource = NULL;
     UINT8                   *VendorData = NULL;
     UINT16                  *InterruptList = NULL;
+    UINT16                  *PinList = NULL;
     UINT16                  ResSourceLength;
     UINT16                  VendorLength;
     UINT16                  InterruptLength;
     UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
+    UINT32                  PinCount = 0;
     UINT32                  i;
 
 
-    InitializerOp = Op->Asl.Child;
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
 
     /*
      * Calculate lengths for fields that have variable length:
@@ -306,24 +356,27 @@ RsDoGpioIntDescriptor (
      */
     ResSourceLength = RsGetStringDataLength (InitializerOp);
     VendorLength = RsGetBufferDataLength (InitializerOp);
-    InterruptLength = RsGetInterruptDataLength (InitializerOp);
+    InterruptLength = RsGetInterruptDataLength (InitializerOp, 10);
 
     DescriptorSize = ACPI_AML_SIZE_LARGE (AML_RESOURCE_GPIO) +
         ResSourceLength + VendorLength + InterruptLength;
 
     /* Allocate the local resource node and initialize */
 
-    Rnode = RsAllocateResourceNode (DescriptorSize + sizeof (AML_RESOURCE_LARGE_HEADER));
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
 
     Descriptor = Rnode->Buffer;
-    Descriptor->Gpio.ResourceLength  = DescriptorSize;
-    Descriptor->Gpio.DescriptorType  = ACPI_RESOURCE_NAME_GPIO;
-    Descriptor->Gpio.RevisionId      = AML_RESOURCE_GPIO_REVISION;
-    Descriptor->Gpio.ConnectionType  = AML_RESOURCE_GPIO_TYPE_INT;
+    Descriptor->Gpio.ResourceLength = DescriptorSize;
+    Descriptor->Gpio.DescriptorType = ACPI_RESOURCE_NAME_GPIO;
+    Descriptor->Gpio.RevisionId = AML_RESOURCE_GPIO_REVISION;
+    Descriptor->Gpio.ConnectionType = AML_RESOURCE_GPIO_TYPE_INT;
 
     /* Build pointers to optional areas */
 
-    InterruptList = ACPI_ADD_PTR (UINT16, Descriptor, sizeof (AML_RESOURCE_GPIO));
+    InterruptList = ACPI_ADD_PTR (UINT16, Descriptor,
+        sizeof (AML_RESOURCE_GPIO));
+    PinList = InterruptList;
     ResourceSource = ACPI_ADD_PTR (char, InterruptList, InterruptLength);
     VendorData = ACPI_ADD_PTR (UINT8, ResourceSource, ResSourceLength);
 
@@ -334,11 +387,6 @@ RsDoGpioIntDescriptor (
 
     Descriptor->Gpio.ResSourceOffset = (UINT16)
         ACPI_PTR_DIFF (ResourceSource, Descriptor);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: %.2X, VendLen: %.2X, IntLen: %.2X\n",
-        "GpioInt", Descriptor->Gpio.ResourceLength, (UINT16) sizeof (AML_RESOURCE_GPIO),
-        ResSourceLength, VendorLength, InterruptLength);
 
     /* Process all child initialization nodes */
 
@@ -396,7 +444,8 @@ RsDoGpioIntDescriptor (
 
             if (InitializerOp->Asl.ParseOpcode != PARSEOP_DEFAULT_ARG)
             {
-                Descriptor->Gpio.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+                Descriptor->Gpio.ResSourceIndex =
+                    (UINT8) InitializerOp->Asl.Value.Integer;
             }
             break;
 
@@ -407,7 +456,7 @@ RsDoGpioIntDescriptor (
 
         case 8: /* Resource Tag (Descriptor Name) */
 
-            UtAttachNamepathToOwner (Op, InitializerOp);
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
             break;
 
         case 9: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
@@ -421,7 +470,7 @@ RsDoGpioIntDescriptor (
                 ACPI_PTR_DIFF (VendorData, Descriptor);
 
             if (RsGetVendorData (InitializerOp, VendorData,
-                    (CurrentByteOffset +  Descriptor->Gpio.VendorOffset)))
+                (CurrentByteOffset +  Descriptor->Gpio.VendorOffset)))
             {
                 Descriptor->Gpio.VendorLength = VendorLength;
             }
@@ -429,7 +478,7 @@ RsDoGpioIntDescriptor (
 
         default:
             /*
-             * PINs come through here, repeatedly. Each PIN must be a DWORD.
+             * PINs come through here, repeatedly. Each PIN must be a WORD.
              * NOTE: there is no "length" field for this, so from ACPI spec:
              *  The number of pins in the table can be calculated from:
              *  PinCount = (Resource Source Name Offset - Pin Table Offset) / 2
@@ -438,6 +487,7 @@ RsDoGpioIntDescriptor (
              */
             *InterruptList = (UINT16) InitializerOp->Asl.Value.Integer;
             InterruptList++;
+            PinCount++;
 
             /* Case 10: First interrupt number in list */
 
@@ -457,7 +507,7 @@ RsDoGpioIntDescriptor (
 
                 /* Create a named field at the start of the list */
 
-                RsCreateDwordField (InitializerOp, ACPI_RESTAG_PIN,
+                RsCreateWordField (InitializerOp, ACPI_RESTAG_PIN,
                     CurrentByteOffset + Descriptor->Gpio.PinTableOffset);
             }
             break;
@@ -466,6 +516,8 @@ RsDoGpioIntDescriptor (
         InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
     }
 
+    MpSaveGpioInfo (Info->MappingOp, Descriptor,
+        PinCount, PinList, ResourceSource);
     return (Rnode);
 }
 
@@ -474,9 +526,7 @@ RsDoGpioIntDescriptor (
  *
  * FUNCTION:    RsDoGpioIoDescriptor
  *
- * PARAMETERS:  Op                  - Parent resource descriptor parse node
- *              CurrentByteOffset   - Offset into the resource template AML
- *                                    buffer (to track references to the desc)
+ * PARAMETERS:  Info                - Parse Op and resource template offset
  *
  * RETURN:      Completed resource node
  *
@@ -486,8 +536,7 @@ RsDoGpioIntDescriptor (
 
 ASL_RESOURCE_NODE *
 RsDoGpioIoDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset)
+    ASL_RESOURCE_INFO       *Info)
 {
     AML_RESOURCE            *Descriptor;
     ACPI_PARSE_OBJECT       *InitializerOp;
@@ -495,14 +544,18 @@ RsDoGpioIoDescriptor (
     char                    *ResourceSource = NULL;
     UINT8                   *VendorData = NULL;
     UINT16                  *InterruptList = NULL;
+    UINT16                  *PinList = NULL;
     UINT16                  ResSourceLength;
     UINT16                  VendorLength;
     UINT16                  InterruptLength;
     UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
+    UINT32                  PinCount = 0;
     UINT32                  i;
 
 
-    InitializerOp = Op->Asl.Child;
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
 
     /*
      * Calculate lengths for fields that have variable length:
@@ -512,24 +565,27 @@ RsDoGpioIoDescriptor (
      */
     ResSourceLength = RsGetStringDataLength (InitializerOp);
     VendorLength = RsGetBufferDataLength (InitializerOp);
-    InterruptLength = RsGetInterruptDataLength (InitializerOp);
+    InterruptLength = RsGetInterruptDataLength (InitializerOp, 10);
+    PinList = InterruptList;
 
     DescriptorSize = ACPI_AML_SIZE_LARGE (AML_RESOURCE_GPIO) +
         ResSourceLength + VendorLength + InterruptLength;
 
     /* Allocate the local resource node and initialize */
 
-    Rnode = RsAllocateResourceNode (DescriptorSize + sizeof (AML_RESOURCE_LARGE_HEADER));
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
 
     Descriptor = Rnode->Buffer;
-    Descriptor->Gpio.ResourceLength  = DescriptorSize;
-    Descriptor->Gpio.DescriptorType  = ACPI_RESOURCE_NAME_GPIO;
-    Descriptor->Gpio.RevisionId      = AML_RESOURCE_GPIO_REVISION;
-    Descriptor->Gpio.ConnectionType  = AML_RESOURCE_GPIO_TYPE_IO;
+    Descriptor->Gpio.ResourceLength = DescriptorSize;
+    Descriptor->Gpio.DescriptorType = ACPI_RESOURCE_NAME_GPIO;
+    Descriptor->Gpio.RevisionId = AML_RESOURCE_GPIO_REVISION;
+    Descriptor->Gpio.ConnectionType = AML_RESOURCE_GPIO_TYPE_IO;
 
     /* Build pointers to optional areas */
 
     InterruptList = ACPI_ADD_PTR (UINT16, Descriptor, sizeof (AML_RESOURCE_GPIO));
+    PinList = InterruptList;
     ResourceSource = ACPI_ADD_PTR (char, InterruptList, InterruptLength);
     VendorData = ACPI_ADD_PTR (UINT8, ResourceSource, ResSourceLength);
 
@@ -540,11 +596,6 @@ RsDoGpioIoDescriptor (
 
     Descriptor->Gpio.ResSourceOffset = (UINT16)
         ACPI_PTR_DIFF (ResourceSource, Descriptor);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: %.2X, VendLen: %.2X, IntLen: %.2X\n",
-        "GpioIo", Descriptor->Gpio.ResourceLength, (UINT16) sizeof (AML_RESOURCE_GPIO),
-        ResSourceLength, VendorLength, InterruptLength);
 
     /* Process all child initialization nodes */
 
@@ -613,7 +664,7 @@ RsDoGpioIoDescriptor (
 
         case 8: /* Resource Tag (Descriptor Name) */
 
-            UtAttachNamepathToOwner (Op, InitializerOp);
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
             break;
 
         case 9: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
@@ -626,7 +677,7 @@ RsDoGpioIoDescriptor (
                 ACPI_PTR_DIFF (VendorData, Descriptor);
 
             if (RsGetVendorData (InitializerOp, VendorData,
-                    (CurrentByteOffset + Descriptor->Gpio.VendorOffset)))
+                (CurrentByteOffset + Descriptor->Gpio.VendorOffset)))
             {
                 Descriptor->Gpio.VendorLength = VendorLength;
             }
@@ -634,7 +685,7 @@ RsDoGpioIoDescriptor (
 
         default:
             /*
-             * PINs come through here, repeatedly. Each PIN must be a DWORD.
+             * PINs come through here, repeatedly. Each PIN must be a WORD.
              * NOTE: there is no "length" field for this, so from ACPI spec:
              *  The number of pins in the table can be calculated from:
              *  PinCount = (Resource Source Name Offset - Pin Table Offset) / 2
@@ -643,6 +694,7 @@ RsDoGpioIoDescriptor (
              */
             *InterruptList = (UINT16) InitializerOp->Asl.Value.Integer;
             InterruptList++;
+            PinCount++;
 
             /* Case 10: First interrupt number in list */
 
@@ -662,7 +714,7 @@ RsDoGpioIoDescriptor (
 
                 /* Create a named field at the start of the list */
 
-                RsCreateDwordField (InitializerOp, ACPI_RESTAG_PIN,
+                RsCreateWordField (InitializerOp, ACPI_RESTAG_PIN,
                     CurrentByteOffset + Descriptor->Gpio.PinTableOffset);
             }
             break;
@@ -671,6 +723,8 @@ RsDoGpioIoDescriptor (
         InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
     }
 
+    MpSaveGpioInfo (Info->MappingOp, Descriptor,
+        PinCount, PinList, ResourceSource);
     return (Rnode);
 }
 
@@ -679,9 +733,7 @@ RsDoGpioIoDescriptor (
  *
  * FUNCTION:    RsDoI2cSerialBusDescriptor
  *
- * PARAMETERS:  Op                  - Parent resource descriptor parse node
- *              CurrentByteOffset   - Offset into the resource template AML
- *                                    buffer (to track references to the desc)
+ * PARAMETERS:  Info                - Parse Op and resource template offset
  *
  * RETURN:      Completed resource node
  *
@@ -691,8 +743,7 @@ RsDoGpioIoDescriptor (
 
 ASL_RESOURCE_NODE *
 RsDoI2cSerialBusDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset)
+    ASL_RESOURCE_INFO       *Info)
 {
     AML_RESOURCE            *Descriptor;
     ACPI_PARSE_OBJECT       *InitializerOp;
@@ -702,10 +753,12 @@ RsDoI2cSerialBusDescriptor (
     UINT16                  ResSourceLength;
     UINT16                  VendorLength;
     UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
     UINT32                  i;
 
 
-    InitializerOp = Op->Asl.Child;
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
 
     /*
      * Calculate lengths for fields that have variable length:
@@ -720,26 +773,26 @@ RsDoI2cSerialBusDescriptor (
 
     /* Allocate the local resource node and initialize */
 
-    Rnode = RsAllocateResourceNode (DescriptorSize + sizeof (AML_RESOURCE_LARGE_HEADER));
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
 
     Descriptor = Rnode->Buffer;
     Descriptor->I2cSerialBus.ResourceLength = DescriptorSize;
     Descriptor->I2cSerialBus.DescriptorType = ACPI_RESOURCE_NAME_SERIAL_BUS;
-    Descriptor->I2cSerialBus.RevisionId     = AML_RESOURCE_I2C_REVISION;
+    Descriptor->I2cSerialBus.RevisionId = AML_RESOURCE_I2C_REVISION;
     Descriptor->I2cSerialBus.TypeRevisionId = AML_RESOURCE_I2C_TYPE_REVISION;
-    Descriptor->I2cSerialBus.Type           = AML_RESOURCE_I2C_SERIALBUSTYPE;
+    Descriptor->I2cSerialBus.Type = AML_RESOURCE_I2C_SERIALBUSTYPE;
     Descriptor->I2cSerialBus.TypeDataLength = AML_RESOURCE_I2C_MIN_DATA_LEN + VendorLength;
+
+    if (Info->DescriptorTypeOp->Asl.ParseOpcode == PARSEOP_I2C_SERIALBUS_V2)
+    {
+        Descriptor->I2cSerialBus.RevisionId = 2;
+    }
 
     /* Build pointers to optional areas */
 
     VendorData = ACPI_ADD_PTR (UINT8, Descriptor, sizeof (AML_RESOURCE_I2C_SERIALBUS));
     ResourceSource = ACPI_ADD_PTR (char, VendorData, VendorLength);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: %.2X, VendLen: %.2X, TypLen: %.2X\n",
-        "I2cSerialBus", Descriptor->I2cSerialBus.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_I2C_SERIALBUS), ResSourceLength,
-        VendorLength, Descriptor->I2cSerialBus.TypeDataLength);
 
     /* Process all child initialization nodes */
 
@@ -790,7 +843,8 @@ RsDoI2cSerialBusDescriptor (
 
             if (InitializerOp->Asl.ParseOpcode != PARSEOP_DEFAULT_ARG)
             {
-                Descriptor->I2cSerialBus.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+                Descriptor->I2cSerialBus.ResSourceIndex =
+                    (UINT8) InitializerOp->Asl.Value.Integer;
             }
             break;
 
@@ -801,10 +855,21 @@ RsDoI2cSerialBusDescriptor (
 
         case 7: /* Resource Tag (Descriptor Name) */
 
-            UtAttachNamepathToOwner (Op, InitializerOp);
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
             break;
 
-        case 8: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+        case 8:
+            /*
+             * Connection Share - Added for V2 (ACPI 6.0) version of the descriptor
+             * Note: For V1, the share bit will be zero (Op is DEFAULT_ARG from
+             * the ASL parser)
+             */
+            RsSetFlagBits (&Descriptor->I2cSerialBus.Flags, InitializerOp, 2, 0);
+            RsCreateBitField (InitializerOp, ACPI_RESTAG_INTERRUPTSHARE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (I2cSerialBus.Flags), 2);
+            break;
+
+        case 9: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
 
             RsGetVendorData (InitializerOp, VendorData,
                 CurrentByteOffset + sizeof (AML_RESOURCE_I2C_SERIALBUS));
@@ -818,6 +883,7 @@ RsDoI2cSerialBusDescriptor (
         InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
     }
 
+    MpSaveSerialInfo (Info->MappingOp, Descriptor, ResourceSource);
     return (Rnode);
 }
 
@@ -826,9 +892,7 @@ RsDoI2cSerialBusDescriptor (
  *
  * FUNCTION:    RsDoSpiSerialBusDescriptor
  *
- * PARAMETERS:  Op                  - Parent resource descriptor parse node
- *              CurrentByteOffset   - Offset into the resource template AML
- *                                    buffer (to track references to the desc)
+ * PARAMETERS:  Info                - Parse Op and resource template offset
  *
  * RETURN:      Completed resource node
  *
@@ -838,8 +902,7 @@ RsDoI2cSerialBusDescriptor (
 
 ASL_RESOURCE_NODE *
 RsDoSpiSerialBusDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset)
+    ASL_RESOURCE_INFO       *Info)
 {
     AML_RESOURCE            *Descriptor;
     ACPI_PARSE_OBJECT       *InitializerOp;
@@ -849,10 +912,12 @@ RsDoSpiSerialBusDescriptor (
     UINT16                  ResSourceLength;
     UINT16                  VendorLength;
     UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
     UINT32                  i;
 
 
-    InitializerOp = Op->Asl.Child;
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
 
     /*
      * Calculate lengths for fields that have variable length:
@@ -867,26 +932,27 @@ RsDoSpiSerialBusDescriptor (
 
     /* Allocate the local resource node and initialize */
 
-    Rnode = RsAllocateResourceNode (DescriptorSize + sizeof (AML_RESOURCE_LARGE_HEADER));
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
 
     Descriptor = Rnode->Buffer;
     Descriptor->SpiSerialBus.ResourceLength = DescriptorSize;
     Descriptor->SpiSerialBus.DescriptorType = ACPI_RESOURCE_NAME_SERIAL_BUS;
-    Descriptor->SpiSerialBus.RevisionId     = AML_RESOURCE_SPI_REVISION;
+    Descriptor->SpiSerialBus.RevisionId = AML_RESOURCE_SPI_REVISION;
     Descriptor->SpiSerialBus.TypeRevisionId = AML_RESOURCE_SPI_TYPE_REVISION;
-    Descriptor->SpiSerialBus.Type           = AML_RESOURCE_SPI_SERIALBUSTYPE;
+    Descriptor->SpiSerialBus.Type = AML_RESOURCE_SPI_SERIALBUSTYPE;
     Descriptor->SpiSerialBus.TypeDataLength = AML_RESOURCE_SPI_MIN_DATA_LEN + VendorLength;
+
+    if (Info->DescriptorTypeOp->Asl.ParseOpcode == PARSEOP_SPI_SERIALBUS_V2)
+    {
+        Descriptor->I2cSerialBus.RevisionId = 2;
+    }
 
     /* Build pointers to optional areas */
 
-    VendorData = ACPI_ADD_PTR (UINT8, Descriptor, sizeof (AML_RESOURCE_SPI_SERIALBUS));
+    VendorData = ACPI_ADD_PTR (UINT8, Descriptor,
+        sizeof (AML_RESOURCE_SPI_SERIALBUS));
     ResourceSource = ACPI_ADD_PTR (char, VendorData, VendorLength);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: %.2X, VendLen: %.2X, TypLen: %.2X\n",
-        "SpiSerialBus", Descriptor->SpiSerialBus.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_SPI_SERIALBUS), ResSourceLength,
-        VendorLength, Descriptor->SpiSerialBus.TypeDataLength);
 
     /* Process all child initialization nodes */
 
@@ -965,7 +1031,8 @@ RsDoSpiSerialBusDescriptor (
 
             if (InitializerOp->Asl.ParseOpcode != PARSEOP_DEFAULT_ARG)
             {
-                Descriptor->SpiSerialBus.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+                Descriptor->SpiSerialBus.ResSourceIndex =
+                    (UINT8) InitializerOp->Asl.Value.Integer;
             }
             break;
 
@@ -976,10 +1043,21 @@ RsDoSpiSerialBusDescriptor (
 
         case 11: /* Resource Tag (Descriptor Name) */
 
-            UtAttachNamepathToOwner (Op, InitializerOp);
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
             break;
 
-        case 12: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+        case 12:
+            /*
+             * Connection Share - Added for V2 (ACPI 6.0) version of the descriptor
+             * Note: For V1, the share bit will be zero (Op is DEFAULT_ARG from
+             * the ASL parser)
+             */
+            RsSetFlagBits (&Descriptor->SpiSerialBus.Flags, InitializerOp, 2, 0);
+            RsCreateBitField (InitializerOp, ACPI_RESTAG_INTERRUPTSHARE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (SpiSerialBus.Flags), 2);
+            break;
+
+        case 13: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
 
             RsGetVendorData (InitializerOp, VendorData,
                 CurrentByteOffset + sizeof (AML_RESOURCE_SPI_SERIALBUS));
@@ -993,6 +1071,7 @@ RsDoSpiSerialBusDescriptor (
         InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
     }
 
+    MpSaveSerialInfo (Info->MappingOp, Descriptor, ResourceSource);
     return (Rnode);
 }
 
@@ -1001,9 +1080,7 @@ RsDoSpiSerialBusDescriptor (
  *
  * FUNCTION:    RsDoUartSerialBusDescriptor
  *
- * PARAMETERS:  Op                  - Parent resource descriptor parse node
- *              CurrentByteOffset   - Offset into the resource template AML
- *                                    buffer (to track references to the desc)
+ * PARAMETERS:  Info                - Parse Op and resource template offset
  *
  * RETURN:      Completed resource node
  *
@@ -1013,8 +1090,7 @@ RsDoSpiSerialBusDescriptor (
 
 ASL_RESOURCE_NODE *
 RsDoUartSerialBusDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset)
+    ASL_RESOURCE_INFO       *Info)
 {
     AML_RESOURCE            *Descriptor;
     ACPI_PARSE_OBJECT       *InitializerOp;
@@ -1024,10 +1100,12 @@ RsDoUartSerialBusDescriptor (
     UINT16                  ResSourceLength;
     UINT16                  VendorLength;
     UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
     UINT32                  i;
 
 
-    InitializerOp = Op->Asl.Child;
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
 
     /*
      * Calculate lengths for fields that have variable length:
@@ -1042,26 +1120,26 @@ RsDoUartSerialBusDescriptor (
 
     /* Allocate the local resource node and initialize */
 
-    Rnode = RsAllocateResourceNode (DescriptorSize + sizeof (AML_RESOURCE_LARGE_HEADER));
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
 
     Descriptor = Rnode->Buffer;
     Descriptor->UartSerialBus.ResourceLength = DescriptorSize;
     Descriptor->UartSerialBus.DescriptorType = ACPI_RESOURCE_NAME_SERIAL_BUS;
-    Descriptor->UartSerialBus.RevisionId     = AML_RESOURCE_UART_REVISION;
+    Descriptor->UartSerialBus.RevisionId = AML_RESOURCE_UART_REVISION;
     Descriptor->UartSerialBus.TypeRevisionId = AML_RESOURCE_UART_TYPE_REVISION;
-    Descriptor->UartSerialBus.Type           = AML_RESOURCE_UART_SERIALBUSTYPE;
+    Descriptor->UartSerialBus.Type = AML_RESOURCE_UART_SERIALBUSTYPE;
     Descriptor->UartSerialBus.TypeDataLength = AML_RESOURCE_UART_MIN_DATA_LEN + VendorLength;
+
+    if (Info->DescriptorTypeOp->Asl.ParseOpcode == PARSEOP_UART_SERIALBUS_V2)
+    {
+        Descriptor->I2cSerialBus.RevisionId = 2;
+    }
 
     /* Build pointers to optional areas */
 
     VendorData = ACPI_ADD_PTR (UINT8, Descriptor, sizeof (AML_RESOURCE_UART_SERIALBUS));
     ResourceSource = ACPI_ADD_PTR (char, VendorData, VendorLength);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: %.2X, VendLen: %.2X, TypLen: %.2X\n",
-        "UartSerialBus", Descriptor->UartSerialBus.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_UART_SERIALBUS), ResSourceLength,
-        VendorLength, Descriptor->UartSerialBus.TypeDataLength);
 
     /* Process all child initialization nodes */
 
@@ -1147,7 +1225,8 @@ RsDoUartSerialBusDescriptor (
 
             if (InitializerOp->Asl.ParseOpcode != PARSEOP_DEFAULT_ARG)
             {
-                Descriptor->UartSerialBus.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+                Descriptor->UartSerialBus.ResSourceIndex =
+                    (UINT8) InitializerOp->Asl.Value.Integer;
             }
             break;
 
@@ -1168,10 +1247,21 @@ RsDoUartSerialBusDescriptor (
 
         case 12: /* Resource Tag (Descriptor Name) */
 
-            UtAttachNamepathToOwner (Op, InitializerOp);
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
             break;
 
-        case 13: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+        case 13:
+            /*
+             * Connection Share - Added for V2 (ACPI 6.0) version of the descriptor
+             * Note: For V1, the share bit will be zero (Op is DEFAULT_ARG from
+             * the ASL parser)
+             */
+            RsSetFlagBits (&Descriptor->UartSerialBus.Flags, InitializerOp, 2, 0);
+            RsCreateBitField (InitializerOp, ACPI_RESTAG_INTERRUPTSHARE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (UartSerialBus.Flags), 2);
+            break;
+
+        case 14: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
 
             RsGetVendorData (InitializerOp, VendorData,
                 CurrentByteOffset + sizeof (AML_RESOURCE_UART_SERIALBUS));
@@ -1179,6 +1269,862 @@ RsDoUartSerialBusDescriptor (
 
         default:    /* Ignore any extra nodes */
 
+            break;
+        }
+
+        InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
+    }
+
+    MpSaveSerialInfo (Info->MappingOp, Descriptor, ResourceSource);
+    return (Rnode);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    RsDoPinFunctionDescriptor
+ *
+ * PARAMETERS:  Info                - Parse Op and resource template offset
+ *
+ * RETURN:      Completed resource node
+ *
+ * DESCRIPTION: Construct a long "PinFunction" descriptor
+ *
+ ******************************************************************************/
+
+ASL_RESOURCE_NODE *
+RsDoPinFunctionDescriptor (
+    ASL_RESOURCE_INFO       *Info)
+{
+    AML_RESOURCE            *Descriptor;
+    ACPI_PARSE_OBJECT       *InitializerOp;
+    ASL_RESOURCE_NODE       *Rnode;
+    char                    *ResourceSource = NULL;
+    UINT8                   *VendorData = NULL;
+    UINT16                  *PinList = NULL;
+    UINT16                  ResSourceLength;
+    UINT16                  VendorLength;
+    UINT16                  PinListLength;
+    UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
+    UINT32                  PinCount = 0;
+    UINT32                  i;
+
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
+
+    /*
+     * Calculate lengths for fields that have variable length:
+     * 1) Resource Source string
+     * 2) Vendor Data buffer
+     * 3) PIN (interrupt) list
+     */
+    ResSourceLength = RsGetStringDataLength (InitializerOp);
+    VendorLength = RsGetBufferDataLength (InitializerOp);
+    PinListLength = RsGetInterruptDataLength (InitializerOp, 8);
+
+    DescriptorSize = ACPI_AML_SIZE_LARGE (AML_RESOURCE_PIN_FUNCTION) +
+        ResSourceLength + VendorLength + PinListLength;
+
+    /* Allocate the local resource node and initialize */
+
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
+
+    Descriptor = Rnode->Buffer;
+    Descriptor->PinFunction.ResourceLength = DescriptorSize;
+    Descriptor->PinFunction.DescriptorType = ACPI_RESOURCE_NAME_PIN_FUNCTION;
+    Descriptor->PinFunction.RevisionId = AML_RESOURCE_PIN_FUNCTION_REVISION;
+
+    /* Build pointers to optional areas */
+
+    PinList = ACPI_ADD_PTR (UINT16, Descriptor, sizeof (AML_RESOURCE_PIN_FUNCTION));
+    ResourceSource = ACPI_ADD_PTR (char, PinList, PinListLength);
+    VendorData = ACPI_ADD_PTR (UINT8, ResourceSource, ResSourceLength);
+
+    /* Setup offsets within the descriptor */
+
+    Descriptor->PinFunction.PinTableOffset = (UINT16)
+        ACPI_PTR_DIFF (PinList, Descriptor);
+
+    Descriptor->PinFunction.ResSourceOffset = (UINT16)
+        ACPI_PTR_DIFF (ResourceSource, Descriptor);
+
+    /* Process all child initialization nodes */
+
+    for (i = 0; InitializerOp; i++)
+    {
+        switch (i)
+        {
+        case 0: /* Share Type [Flags] (_SHR) */
+
+            RsSetFlagBits16 (&Descriptor->PinFunction.Flags, InitializerOp, 0, 0);
+            RsCreateBitField (InitializerOp, ACPI_RESTAG_INTERRUPTSHARE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinFunction.Flags), 0);
+            break;
+
+        case 1: /* Pin Config [BYTE] (_PPI) */
+
+            Descriptor->PinFunction.PinConfig = (UINT8) InitializerOp->Asl.Value.Integer;
+            RsCreateByteField (InitializerOp, ACPI_RESTAG_PINCONFIG,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinFunction.PinConfig));
+            break;
+
+        case 2: /* Function Number [WORD] (_FUN) */
+
+            Descriptor->PinFunction.FunctionNumber = (UINT16) InitializerOp->Asl.Value.Integer;
+            RsCreateDwordField (InitializerOp, ACPI_RESTAG_FUNCTION,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinFunction.FunctionNumber));
+            break;
+
+        case 3: /* ResSource [Optional Field - STRING] */
+
+            if (ResSourceLength)
+            {
+                /* Copy string to the descriptor */
+
+                strcpy (ResourceSource, InitializerOp->Asl.Value.String);
+            }
+            break;
+
+        case 4: /* Resource Index */
+
+            if (InitializerOp->Asl.ParseOpcode != PARSEOP_DEFAULT_ARG)
+            {
+                Descriptor->PinFunction.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+            }
+            break;
+
+        case 5: /* Resource Usage (consumer/producer) */
+
+            /* Assumed to be consumer */
+
+            break;
+
+        case 6: /* Resource Tag (Descriptor Name) */
+
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
+            break;
+
+        case 7: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+            /*
+             * Always set the VendorOffset even if there is no Vendor Data.
+             * This field is required in order to calculate the length
+             * of the ResourceSource at runtime.
+             */
+            Descriptor->PinFunction.VendorOffset = (UINT16)
+                ACPI_PTR_DIFF (VendorData, Descriptor);
+
+            if (RsGetVendorData (InitializerOp, VendorData,
+                (CurrentByteOffset + Descriptor->PinFunction.VendorOffset)))
+            {
+                Descriptor->PinFunction.VendorLength = VendorLength;
+            }
+            break;
+
+        default:
+            /*
+             * PINs come through here, repeatedly. Each PIN must be a WORD.
+             * NOTE: there is no "length" field for this, so from ACPI spec:
+             *  The number of pins in the table can be calculated from:
+             *  PinCount = (Resource Source Name Offset - Pin Table Offset) / 2
+             *  (implies resource source must immediately follow the pin list.)
+             *  Name: _PIN
+             */
+            *PinList = (UINT16) InitializerOp->Asl.Value.Integer;
+            PinList++;
+            PinCount++;
+
+            /* Case 8: First pin number in list */
+
+            if (i == 8)
+            {
+                if (InitializerOp->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)
+                {
+                    /* Must be at least one interrupt */
+
+                    AslError (ASL_ERROR, ASL_MSG_EX_INTERRUPT_LIST_MIN,
+                        InitializerOp, NULL);
+                }
+
+                /* Check now for duplicates in list */
+
+                RsCheckListForDuplicates (InitializerOp);
+
+                /* Create a named field at the start of the list */
+
+                RsCreateWordField (InitializerOp, ACPI_RESTAG_PIN,
+                    CurrentByteOffset + Descriptor->PinFunction.PinTableOffset);
+            }
+            break;
+        }
+
+        InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
+    }
+
+    return (Rnode);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    RsDoPinConfigDescriptor
+ *
+ * PARAMETERS:  Info                - Parse Op and resource template offset
+ *
+ * RETURN:      Completed resource node
+ *
+ * DESCRIPTION: Construct a long "PinConfig" descriptor
+ *
+ ******************************************************************************/
+
+ASL_RESOURCE_NODE *
+RsDoPinConfigDescriptor (
+    ASL_RESOURCE_INFO       *Info)
+{
+    AML_RESOURCE            *Descriptor;
+    ACPI_PARSE_OBJECT       *InitializerOp;
+    ASL_RESOURCE_NODE       *Rnode;
+    char                    *ResourceSource = NULL;
+    UINT8                   *VendorData = NULL;
+    UINT16                  *PinList = NULL;
+    UINT16                  ResSourceLength;
+    UINT16                  VendorLength;
+    UINT16                  PinListLength;
+    UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
+    UINT32                  PinCount = 0;
+    UINT32                  i;
+
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
+
+    /*
+     * Calculate lengths for fields that have variable length:
+     * 1) Resource Source string
+     * 2) Vendor Data buffer
+     * 3) PIN (interrupt) list
+     */
+    ResSourceLength = RsGetStringDataLength (InitializerOp);
+    VendorLength = RsGetBufferDataLength (InitializerOp);
+    PinListLength = RsGetInterruptDataLength (InitializerOp, 8);
+
+    DescriptorSize = ACPI_AML_SIZE_LARGE (AML_RESOURCE_PIN_CONFIG) +
+        ResSourceLength + VendorLength + PinListLength;
+
+    /* Allocate the local resource node and initialize */
+
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
+
+    Descriptor = Rnode->Buffer;
+    Descriptor->PinConfig.ResourceLength = DescriptorSize;
+    Descriptor->PinConfig.DescriptorType = ACPI_RESOURCE_NAME_PIN_CONFIG;
+    Descriptor->PinConfig.RevisionId = AML_RESOURCE_PIN_CONFIG_REVISION;
+
+    /* Build pointers to optional areas */
+
+    PinList = ACPI_ADD_PTR (UINT16, Descriptor, sizeof (AML_RESOURCE_PIN_CONFIG));
+    ResourceSource = ACPI_ADD_PTR (char, PinList, PinListLength);
+    VendorData = ACPI_ADD_PTR (UINT8, ResourceSource, ResSourceLength);
+
+    /* Setup offsets within the descriptor */
+
+    Descriptor->PinConfig.PinTableOffset = (UINT16)
+        ACPI_PTR_DIFF (PinList, Descriptor);
+
+    Descriptor->PinConfig.ResSourceOffset = (UINT16)
+        ACPI_PTR_DIFF (ResourceSource, Descriptor);
+
+    /* Process all child initialization nodes */
+
+    for (i = 0; InitializerOp; i++)
+    {
+        BOOLEAN isValid;
+
+        switch (i)
+        {
+        case 0: /* Share Type [Flags] (_SHR) */
+
+            RsSetFlagBits16 (&Descriptor->PinConfig.Flags, InitializerOp, 0, 0);
+            RsCreateBitField (InitializerOp, ACPI_RESTAG_INTERRUPTSHARE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinConfig.Flags), 0);
+            break;
+
+        case 1: /* Pin Config Type [BYTE] (_TYP) */
+
+            isValid = InitializerOp->Asl.Value.Integer <= 0x0d;
+            if (!isValid)
+            {
+                isValid = InitializerOp->Asl.Value.Integer >= 0x80 &&
+                          InitializerOp->Asl.Value.Integer <= 0xff;
+            }
+            if (!isValid)
+            {
+                    AslError (ASL_ERROR, ASL_MSG_RANGE, InitializerOp, NULL);
+            }
+
+            Descriptor->PinConfig.PinConfigType = (UINT8) InitializerOp->Asl.Value.Integer;
+            RsCreateByteField (InitializerOp, ACPI_RESTAG_PINCONFIG_TYPE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinConfig.PinConfigType));
+
+            break;
+
+        case 2: /* Pin Config Value [DWORD] (_VAL) */
+
+            Descriptor->PinConfig.PinConfigValue = (UINT32) InitializerOp->Asl.Value.Integer;
+            RsCreateDwordField (InitializerOp, ACPI_RESTAG_PINCONFIG_VALUE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinConfig.PinConfigValue));
+            break;
+
+        case 3: /* ResSource [Optional Field - STRING] */
+
+            if (ResSourceLength)
+            {
+                /* Copy string to the descriptor */
+
+                strcpy (ResourceSource, InitializerOp->Asl.Value.String);
+            }
+            break;
+
+        case 4: /* Resource Index */
+
+            if (InitializerOp->Asl.ParseOpcode != PARSEOP_DEFAULT_ARG)
+            {
+                Descriptor->PinConfig.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+            }
+            break;
+
+        case 5: /* Resource Usage (consumer/producer) */
+
+            RsSetFlagBits16 (&Descriptor->PinConfig.Flags, InitializerOp, 1, 1);
+
+            break;
+
+        case 6: /* Resource Tag (Descriptor Name) */
+
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
+            break;
+
+        case 7: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+            /*
+             * Always set the VendorOffset even if there is no Vendor Data.
+             * This field is required in order to calculate the length
+             * of the ResourceSource at runtime.
+             */
+            Descriptor->PinConfig.VendorOffset = (UINT16)
+                ACPI_PTR_DIFF (VendorData, Descriptor);
+
+            if (RsGetVendorData (InitializerOp, VendorData,
+                (CurrentByteOffset + Descriptor->PinConfig.VendorOffset)))
+            {
+                Descriptor->PinConfig.VendorLength = VendorLength;
+            }
+            break;
+
+        default:
+            /*
+             * PINs come through here, repeatedly. Each PIN must be a WORD.
+             * NOTE: there is no "length" field for this, so from ACPI spec:
+             *  The number of pins in the table can be calculated from:
+             *  PinCount = (Resource Source Name Offset - Pin Table Offset) / 2
+             *  (implies resource source must immediately follow the pin list.)
+             *  Name: _PIN
+             */
+            *PinList = (UINT16) InitializerOp->Asl.Value.Integer;
+            PinList++;
+            PinCount++;
+
+            /* Case 8: First pin number in list */
+
+            if (i == 8)
+            {
+                if (InitializerOp->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)
+                {
+                    /* Must be at least one interrupt */
+
+                    AslError (ASL_ERROR, ASL_MSG_EX_INTERRUPT_LIST_MIN,
+                        InitializerOp, NULL);
+                }
+
+                /* Check now for duplicates in list */
+
+                RsCheckListForDuplicates (InitializerOp);
+
+                /* Create a named field at the start of the list */
+
+                RsCreateWordField (InitializerOp, ACPI_RESTAG_PIN,
+                    CurrentByteOffset + Descriptor->PinConfig.PinTableOffset);
+            }
+            break;
+        }
+
+        InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
+    }
+
+    return (Rnode);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    RsDoPinGroupDescriptor
+ *
+ * PARAMETERS:  Info                - Parse Op and resource template offset
+ *
+ * RETURN:      Completed resource node
+ *
+ * DESCRIPTION: Construct a long "PinGroup" descriptor
+ *
+ ******************************************************************************/
+
+ASL_RESOURCE_NODE *
+RsDoPinGroupDescriptor (
+    ASL_RESOURCE_INFO       *Info)
+{
+    AML_RESOURCE            *Descriptor;
+    ACPI_PARSE_OBJECT       *InitializerOp;
+    ASL_RESOURCE_NODE       *Rnode;
+    UINT8                   *VendorData = NULL;
+    UINT16                  *PinList = NULL;
+    char                    *Label = NULL;
+    UINT16                  LabelLength;
+    UINT16                  VendorLength;
+    UINT16                  PinListLength;
+    UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
+    UINT32                  PinCount = 0;
+    UINT32                  i;
+
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
+
+    /*
+     * Calculate lengths for fields that have variable length:
+     * 1) Label
+     * 2) Vendor Data buffer
+     * 3) PIN (interrupt) list
+     */
+    LabelLength = RsGetStringDataLength (InitializerOp);
+    VendorLength = RsGetBufferDataLength (InitializerOp);
+    PinListLength = RsGetInterruptDataLength (InitializerOp, 4);
+
+    DescriptorSize = ACPI_AML_SIZE_LARGE (AML_RESOURCE_PIN_GROUP) +
+        LabelLength + VendorLength + PinListLength;
+
+    /* Allocate the local resource node and initialize */
+
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
+
+    Descriptor = Rnode->Buffer;
+    Descriptor->PinGroup.ResourceLength = DescriptorSize;
+    Descriptor->PinGroup.DescriptorType = ACPI_RESOURCE_NAME_PIN_GROUP;
+    Descriptor->PinGroup.RevisionId = AML_RESOURCE_PIN_GROUP_REVISION;
+
+    /* Build pointers to optional areas */
+
+    PinList = ACPI_ADD_PTR (UINT16, Descriptor, sizeof (AML_RESOURCE_PIN_GROUP));
+    Label = ACPI_ADD_PTR (char, PinList, PinListLength);
+    VendorData = ACPI_ADD_PTR (UINT8, Label, LabelLength);
+
+    /* Setup offsets within the descriptor */
+
+    Descriptor->PinGroup.PinTableOffset = (UINT16) ACPI_PTR_DIFF (PinList, Descriptor);
+    Descriptor->PinGroup.LabelOffset = (UINT16) ACPI_PTR_DIFF (Label, Descriptor);
+
+    /* Process all child initialization nodes */
+
+    for (i = 0; InitializerOp; i++)
+    {
+        switch (i)
+        {
+        case 0: /* Resource Label */
+
+            if (LabelLength < 2)
+            {
+                AslError(ASL_WARNING, ASL_MSG_NULL_STRING, InitializerOp, NULL);
+            }
+            strcpy (Label, InitializerOp->Asl.Value.String);
+
+            break;
+
+        case 1: /* Resource Usage (consumer/producer) */
+
+            RsSetFlagBits16 (&Descriptor->PinGroup.Flags, InitializerOp, 0, 0);
+
+            break;
+
+        case 2: /* Resource Tag (Descriptor Name) */
+
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
+            break;
+
+        case 3: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+            /*
+             * Always set the VendorOffset even if there is no Vendor Data.
+             * This field is required in order to calculate the length
+             * of the ResourceSource at runtime.
+             */
+            Descriptor->PinGroup.VendorOffset = (UINT16)
+                ACPI_PTR_DIFF (VendorData, Descriptor);
+
+            if (RsGetVendorData (InitializerOp, VendorData,
+                (CurrentByteOffset + Descriptor->PinGroup.VendorOffset)))
+            {
+                Descriptor->PinGroup.VendorLength = VendorLength;
+            }
+            break;
+
+        default:
+            /*
+             * PINs come through here, repeatedly. Each PIN must be a WORD.
+             * NOTE: there is no "length" field for this, so from ACPI spec:
+             *  The number of pins in the table can be calculated from:
+             *  PinCount = (Resource Source Name Offset - Pin Table Offset) / 2
+             *  (implies resource source must immediately follow the pin list.)
+             *  Name: _PIN
+             */
+            *PinList = (UINT16) InitializerOp->Asl.Value.Integer;
+            PinList++;
+            PinCount++;
+
+            /* Case 3: First pin number in list */
+
+            if (i == 4)
+            {
+                if (InitializerOp->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)
+                {
+                    /* Must be at least one interrupt */
+
+                    AslError (ASL_ERROR, ASL_MSG_EX_INTERRUPT_LIST_MIN,
+                        InitializerOp, NULL);
+                }
+
+                /* Check now for duplicates in list */
+
+                RsCheckListForDuplicates (InitializerOp);
+
+                /* Create a named field at the start of the list */
+
+                RsCreateWordField (InitializerOp, ACPI_RESTAG_PIN,
+                    CurrentByteOffset + Descriptor->PinGroup.PinTableOffset);
+            }
+            break;
+        }
+
+        InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
+    }
+
+    return (Rnode);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    RsDoPinGroupFunctionDescriptor
+ *
+ * PARAMETERS:  Info                - Parse Op and resource template offset
+ *
+ * RETURN:      Completed resource node
+ *
+ * DESCRIPTION: Construct a long "PinGroupFunction" descriptor
+ *
+ ******************************************************************************/
+
+ASL_RESOURCE_NODE *
+RsDoPinGroupFunctionDescriptor (
+    ASL_RESOURCE_INFO       *Info)
+{
+    AML_RESOURCE            *Descriptor;
+    ACPI_PARSE_OBJECT       *InitializerOp;
+    ASL_RESOURCE_NODE       *Rnode;
+    char                    *ResourceSource = NULL;
+    char                    *ResourceSourceLabel = NULL;
+    UINT8                   *VendorData = NULL;
+    UINT16                  ResSourceLength;
+    UINT16                  ResSourceLabelLength;
+    UINT16                  VendorLength;
+    UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
+    UINT32                  i;
+
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
+
+    /*
+     * Calculate lengths for fields that have variable length:
+     * 1) Resource Source string
+     * 2) Resource Source Label string
+     * 3) Vendor Data buffer
+     */
+    ResSourceLength = RsGetStringDataLengthAt (InitializerOp, 2);
+    ResSourceLabelLength = RsGetStringDataLengthAt (InitializerOp, 4);
+    VendorLength = RsGetBufferDataLength (InitializerOp);
+
+    DescriptorSize = ACPI_AML_SIZE_LARGE (AML_RESOURCE_PIN_GROUP_FUNCTION) +
+        ResSourceLength + ResSourceLabelLength + VendorLength;
+
+    /* Allocate the local resource node and initialize */
+
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
+
+    Descriptor = Rnode->Buffer;
+    Descriptor->PinGroupFunction.ResourceLength = DescriptorSize;
+    Descriptor->PinGroupFunction.DescriptorType = ACPI_RESOURCE_NAME_PIN_GROUP_FUNCTION;
+    Descriptor->PinGroupFunction.RevisionId = AML_RESOURCE_PIN_GROUP_FUNCTION_REVISION;
+
+    /* Build pointers to optional areas */
+
+    ResourceSource = ACPI_ADD_PTR (char, Descriptor, sizeof (AML_RESOURCE_PIN_GROUP_FUNCTION));
+    ResourceSourceLabel = ACPI_ADD_PTR (char, ResourceSource, ResSourceLength);
+    VendorData = ACPI_ADD_PTR (UINT8, ResourceSourceLabel, ResSourceLabelLength);
+
+    /* Setup offsets within the descriptor */
+
+    Descriptor->PinGroupFunction.ResSourceOffset = (UINT16)
+        ACPI_PTR_DIFF (ResourceSource, Descriptor);
+    Descriptor->PinGroupFunction.ResSourceLabelOffset = (UINT16)
+        ACPI_PTR_DIFF (ResourceSourceLabel, Descriptor);
+
+    /* Process all child initialization nodes */
+
+    for (i = 0; InitializerOp; i++)
+    {
+        switch (i)
+        {
+        case 0: /* Share Type [Flags] (_SHR) */
+
+            RsSetFlagBits16 (&Descriptor->PinGroupFunction.Flags, InitializerOp, 0, 0);
+            RsCreateBitField (InitializerOp, ACPI_RESTAG_INTERRUPTSHARE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinGroupFunction.Flags), 0);
+            break;
+
+        case 1: /* Function Number [WORD] */
+
+            Descriptor->PinGroupFunction.FunctionNumber = (UINT16) InitializerOp->Asl.Value.Integer;
+            RsCreateDwordField (InitializerOp, ACPI_RESTAG_FUNCTION,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinGroupFunction.FunctionNumber));
+            break;
+
+        case 2: /* ResourceSource [STRING] */
+
+            strcpy (ResourceSource, InitializerOp->Asl.Value.String);
+            break;
+
+        case 3: /* Resource Index */
+
+            Descriptor->PinGroupFunction.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+            break;
+
+        case 4: /* ResourceSourceLabel [STRING] */
+
+            if (ResSourceLabelLength < 2)
+            {
+                AslError(ASL_WARNING, ASL_MSG_NULL_STRING, InitializerOp, NULL);
+            }
+
+            strcpy (ResourceSourceLabel, InitializerOp->Asl.Value.String);
+            break;
+
+        case 5: /* Resource Usage (consumer/producer) */
+
+            RsSetFlagBits16 (&Descriptor->PinGroupFunction.Flags, InitializerOp, 1, 1);
+
+            break;
+
+        case 6: /* Resource Tag (Descriptor Name) */
+
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
+            break;
+
+        case 7: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+            /*
+             * Always set the VendorOffset even if there is no Vendor Data.
+             * This field is required in order to calculate the length
+             * of the ResourceSource at runtime.
+             */
+            Descriptor->PinGroupFunction.VendorOffset = (UINT16)
+                ACPI_PTR_DIFF (VendorData, Descriptor);
+
+            if (RsGetVendorData (InitializerOp, VendorData,
+                (CurrentByteOffset + Descriptor->PinGroupFunction.VendorOffset)))
+            {
+                Descriptor->PinGroupFunction.VendorLength = VendorLength;
+            }
+            break;
+
+        default:
+            break;
+        }
+
+        InitializerOp = RsCompleteNodeAndGetNext (InitializerOp);
+    }
+
+    return (Rnode);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    RsDoPinGroupConfigDescriptor
+ *
+ * PARAMETERS:  Info                - Parse Op and resource template offset
+ *
+ * RETURN:      Completed resource node
+ *
+ * DESCRIPTION: Construct a long "PinGroupConfig" descriptor
+ *
+ ******************************************************************************/
+
+ASL_RESOURCE_NODE *
+RsDoPinGroupConfigDescriptor (
+    ASL_RESOURCE_INFO       *Info)
+{
+    AML_RESOURCE            *Descriptor;
+    ACPI_PARSE_OBJECT       *InitializerOp;
+    ASL_RESOURCE_NODE       *Rnode;
+    char                    *ResourceSource = NULL;
+    char                    *ResourceSourceLabel = NULL;
+    UINT8                   *VendorData = NULL;
+    UINT16                  ResSourceLength;
+    UINT16                  ResSourceLabelLength;
+    UINT16                  VendorLength;
+    UINT16                  DescriptorSize;
+    UINT32                  CurrentByteOffset;
+    UINT32                  i;
+
+    InitializerOp = Info->DescriptorTypeOp->Asl.Child;
+    CurrentByteOffset = Info->CurrentByteOffset;
+
+    /*
+     * Calculate lengths for fields that have variable length:
+     * 1) Resource Source string
+     * 2) Resource Source Label string
+     * 3) Vendor Data buffer
+     */
+    ResSourceLength = RsGetStringDataLengthAt (InitializerOp, 3);
+    ResSourceLabelLength = RsGetStringDataLengthAt (InitializerOp, 5);
+    VendorLength = RsGetBufferDataLength (InitializerOp);
+
+    DescriptorSize = ACPI_AML_SIZE_LARGE (AML_RESOURCE_PIN_GROUP_CONFIG) +
+        ResSourceLength + ResSourceLabelLength + VendorLength;
+
+    /* Allocate the local resource node and initialize */
+
+    Rnode = RsAllocateResourceNode (DescriptorSize +
+        sizeof (AML_RESOURCE_LARGE_HEADER));
+
+    Descriptor = Rnode->Buffer;
+    Descriptor->PinGroupConfig.ResourceLength = DescriptorSize;
+    Descriptor->PinGroupConfig.DescriptorType = ACPI_RESOURCE_NAME_PIN_GROUP_CONFIG;
+    Descriptor->PinGroupConfig.RevisionId = AML_RESOURCE_PIN_GROUP_CONFIG_REVISION;
+
+    /* Build pointers to optional areas */
+
+    ResourceSource = ACPI_ADD_PTR (char, Descriptor, sizeof (AML_RESOURCE_PIN_GROUP_CONFIG));
+    ResourceSourceLabel = ACPI_ADD_PTR (char, ResourceSource, ResSourceLength);
+    VendorData = ACPI_ADD_PTR (UINT8, ResourceSourceLabel, ResSourceLabelLength);
+
+    /* Setup offsets within the descriptor */
+
+    Descriptor->PinGroupConfig.ResSourceOffset = (UINT16)
+        ACPI_PTR_DIFF (ResourceSource, Descriptor);
+    Descriptor->PinGroupConfig.ResSourceLabelOffset = (UINT16)
+        ACPI_PTR_DIFF (ResourceSourceLabel, Descriptor);
+
+    /* Process all child initialization nodes */
+
+    for (i = 0; InitializerOp; i++)
+    {
+        BOOLEAN isValid;
+
+        switch (i)
+        {
+        case 0: /* Share Type [Flags] (_SHR) */
+
+            RsSetFlagBits16 (&Descriptor->PinGroupConfig.Flags, InitializerOp, 0, 0);
+            RsCreateBitField (InitializerOp, ACPI_RESTAG_INTERRUPTSHARE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinGroupConfig.Flags), 0);
+            break;
+
+        case 1: /* Pin Config Type [BYTE] (_TYP) */
+
+            isValid = InitializerOp->Asl.Value.Integer <= 0x0d;
+            if (!isValid)
+            {
+                isValid = InitializerOp->Asl.Value.Integer >= 0x80 &&
+                          InitializerOp->Asl.Value.Integer <= 0xff;
+            }
+            if (!isValid)
+            {
+                    AslError (ASL_ERROR, ASL_MSG_RANGE, InitializerOp, NULL);
+            }
+
+            Descriptor->PinGroupConfig.PinConfigType = (UINT8) InitializerOp->Asl.Value.Integer;
+            RsCreateByteField (InitializerOp, ACPI_RESTAG_PINCONFIG_TYPE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinGroupConfig.PinConfigType));
+
+            break;
+
+        case 2: /* Pin Config Value [DWORD] (_VAL) */
+
+            Descriptor->PinGroupConfig.PinConfigValue = (UINT32) InitializerOp->Asl.Value.Integer;
+            RsCreateDwordField (InitializerOp, ACPI_RESTAG_PINCONFIG_VALUE,
+                CurrentByteOffset + ASL_RESDESC_OFFSET (PinGroupConfig.PinConfigValue));
+            break;
+
+        case 3: /* ResourceSource [STRING] */
+
+            /* Copy string to the descriptor */
+
+            strcpy (ResourceSource, InitializerOp->Asl.Value.String);
+            break;
+
+        case 4: /* Resource Index */
+
+            Descriptor->PinGroupConfig.ResSourceIndex = (UINT8) InitializerOp->Asl.Value.Integer;
+            break;
+
+        case 5: /* ResourceSourceLabel [STRING] */
+
+            if (ResSourceLabelLength < 2)
+            {
+                AslError(ASL_WARNING, ASL_MSG_NULL_STRING, InitializerOp, NULL);
+            }
+
+            strcpy (ResourceSourceLabel, InitializerOp->Asl.Value.String);
+            break;
+
+        case 6: /* Resource Usage (consumer/producer) */
+
+            RsSetFlagBits16 (&Descriptor->PinGroupConfig.Flags, InitializerOp, 1, 1);
+
+            break;
+
+        case 7: /* Resource Tag (Descriptor Name) */
+
+            UtAttachNamepathToOwner (Info->DescriptorTypeOp, InitializerOp);
+            break;
+
+        case 8: /* Vendor Data (Optional - Buffer of BYTEs) (_VEN) */
+            /*
+             * Always set the VendorOffset even if there is no Vendor Data.
+             * This field is required in order to calculate the length
+             * of the ResourceSource at runtime.
+             */
+            Descriptor->PinGroupConfig.VendorOffset = (UINT16)
+                ACPI_PTR_DIFF (VendorData, Descriptor);
+
+            if (RsGetVendorData (InitializerOp, VendorData,
+                (CurrentByteOffset + Descriptor->PinGroupConfig.VendorOffset)))
+            {
+                Descriptor->PinGroupConfig.VendorLength = VendorLength;
+            }
+            break;
+
+        default:
             break;
         }
 

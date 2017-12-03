@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.5.4.2 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.5.4.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -67,6 +67,11 @@ struct agp_i810_softc {
 
 extern struct agp_softc	*agp_i810_sc;
 
-int	agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t, bus_addr_t);
+#define	AGP_I810_GTT_VALID		0x01
+#define	AGP_I810_GTT_I810_DCACHE	0x02 /* i810-only */
+#define	AGP_I810_GTT_CACHED		0x06 /* >=i830 */
+
+int	agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t, bus_addr_t,
+	    int);
 void	agp_i810_post_gtt_entry(struct agp_i810_softc *, off_t);
 void	agp_i810_chipset_flush(struct agp_i810_softc *);

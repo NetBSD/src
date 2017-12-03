@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.3 2010/05/29 17:33:58 tnozaki Exp $	*/
+/*	$NetBSD: int_const.h,v 1.3.18.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _SPARC_INT_CONST_H_
 #define _SPARC_INT_CONST_H_
 
+#ifdef __INTMAX_C_SUFFIX__
+#include <sys/common_int_const.h>
+#else
 /*
  * 7.18.4 Macros for integer constants
  */
@@ -65,5 +68,7 @@
 #define	INTMAX_C(c)	c ## LL
 #define	UINTMAX_C(c)	c ## ULL
 #endif
+
+#endif /* !__INTMAX_C_SUFFIX__ */
 
 #endif /* !_SPARC_INT_CONST_H_ */

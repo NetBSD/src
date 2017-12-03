@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.52.14.2 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: qd.c,v 1.52.14.3 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.52.14.2 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.52.14.3 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -195,7 +195,7 @@ struct DMAreq_header *DMAheader[NQD];  /* DMA buffer header pntrs */
 /*
  * The driver assists a client in scroll operations by loading dragon
  * registers from an interrupt service routine.	The loading is done using
- * parameters found in memory shrade between the driver and it's client.
+ * parameters found in memory shrade between the driver and its client.
  * The scroll parameter structures are ALL loacted in the same memory page
  * for reasons of memory economy.
  */
@@ -586,7 +586,7 @@ qd_match(device_t parent, cfdata_t match, void *aux)
 	 * is found via an array of pte ptrs called "QVmap[]" (ubavar.h)
 	 * which is also loaded at config time.   These are the
 	 * variables used below to find a vacant 64kb boundary in
-	 * Qbus memory, and load it's corresponding physical adrs
+	 * Qbus memory, and load its corresponding physical adrs
 	 * into the QDSS's I/O page CSR.
 	 */
 
@@ -1580,11 +1580,19 @@ filt_qdwrite(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops qdread_filtops =
-	{ 1, NULL, filt_qdrdetach, filt_qdread };
+static const struct filterops qdread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_qdrdetach,
+	.f_event = filt_qdread,
+};
 
-static const struct filterops qdwrite_filtops =
-	{ 1, NULL, filt_qdrdetach, filt_qdwrite };
+static const struct filterops qdwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_qdrdetach,
+	.f_event = filt_qdwrite,
+};
 
 int
 qdkqfilter(dev_t dev, struct knote *kn)

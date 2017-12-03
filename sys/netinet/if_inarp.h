@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.43.10.1 2012/11/20 03:02:48 tls Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.43.10.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,22 +56,31 @@ struct sockaddr_inarp {
 };
 
 #ifdef _KERNEL
+
+/* ARP timings from RFC5227 */
+#define PROBE_WAIT               1
+#define PROBE_NUM                3
+#define PROBE_MIN                1
+#define PROBE_MAX                2
+#define ANNOUNCE_WAIT            2
+#define ANNOUNCE_NUM             2
+#define ANNOUNCE_INTERVAL        2
+#define MAX_CONFLICTS           10
+#define RATE_LIMIT_INTERVAL     60
+#define DEFEND_INTERVAL         10
+
 extern struct ifqueue arpintrq;
 void arp_ifinit(struct ifnet *, struct ifaddr *);
 void arp_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
-int arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
-		    const struct sockaddr *, u_char *);
+int arpresolve(struct ifnet *, const struct rtentry *, struct mbuf *,
+    const struct sockaddr *, void *, size_t);
 void arpintr(void);
-void arprequest(struct ifnet *, const struct in_addr *, const struct in_addr *,
-    const u_int8_t *);
-void arp_init(void);
+void arpannounce(struct ifnet *, struct ifaddr *, const uint8_t *);
 void arp_drain(void);
 int arpioctl(u_long, void *);
 void arpwhohas(struct ifnet *, struct in_addr *);
 
 void revarpinput(struct mbuf *);
-void in_revarpinput(struct mbuf *);
-void revarprequest(struct ifnet *);
 int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 #endif
 

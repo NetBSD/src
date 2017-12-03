@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.8.14.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.8.14.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.8.14.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.8.14.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -212,15 +212,15 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, UINT64 *Value,
 {
 	pcitag_t tag;
 	pcireg_t tmp;
+	pci_chipset_tag_t pc = acpi_softc ? acpi_softc->sc_pc : NULL;
 
 	/* XXX Need to deal with "segment" ("hose" in Alpha terminology). */
 
 	if (PciId->Bus >= 256 || PciId->Device >= 32 || PciId->Function >= 8)
 		return AE_BAD_PARAMETER;
 
-	tag = pci_make_tag(acpi_softc->sc_pc, PciId->Bus, PciId->Device,
-	    PciId->Function);
-	tmp = pci_conf_read(acpi_softc->sc_pc, tag, Register & ~3);
+	tag = pci_make_tag(pc, PciId->Bus, PciId->Device, PciId->Function);
+	tmp = pci_conf_read(pc, tag, Register & ~3);
 
 	switch (Width) {
 	case 8:
@@ -253,21 +253,21 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 {
 	pcitag_t tag;
 	pcireg_t tmp;
+	pci_chipset_tag_t pc = acpi_softc ? acpi_softc->sc_pc : NULL;
 
 	/* XXX Need to deal with "segment" ("hose" in Alpha terminology). */
 
-	tag = pci_make_tag(acpi_softc->sc_pc, PciId->Bus, PciId->Device,
-	    PciId->Function);
+	tag = pci_make_tag(pc, PciId->Bus, PciId->Device, PciId->Function);
 
 	switch (Width) {
 	case 8:
-		tmp = pci_conf_read(acpi_softc->sc_pc, tag, Register & ~3);
+		tmp = pci_conf_read(pc, tag, Register & ~3);
 		tmp &= ~(0xff << ((Register & 3) * 8));
 		tmp |= (Value << ((Register & 3) * 8));
 		break;
 
 	case 16:
-		tmp = pci_conf_read(acpi_softc->sc_pc, tag, Register & ~3);
+		tmp = pci_conf_read(pc, tag, Register & ~3);
 		tmp &= ~(0xffff << ((Register & 3) * 8));
 		tmp |= (Value << ((Register & 3) * 8));
 		break;
@@ -280,7 +280,7 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 		return AE_BAD_PARAMETER;
 	}
 
-	pci_conf_write(acpi_softc->sc_pc, tag, Register & ~3, tmp);
+	pci_conf_write(pc, tag, Register & ~3, tmp);
 
 	return AE_OK;
 }

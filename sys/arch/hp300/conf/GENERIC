@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171.2.4 2014/08/20 00:03:00 tls Exp $
+# $NetBSD: GENERIC,v 1.171.2.5 2017/12/03 11:36:13 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171.2.4 $"
+#ident 		"GENERIC-$Revision: 1.171.2.5 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -60,6 +60,7 @@ options 	SYSVMSG		# System V-style message queues
 options 	SYSVSEM		# System V-style semaphores
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -69,29 +70,13 @@ options 	MODULAR		# new style module(7) framework
 # Debugging options
 #options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# Kernel Dynamic Debugger
 options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 #options 	KGDB		# remote debugger
 #makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
 
 # Compatibility options
-options 	COMPAT_43	# compatibility with 4.3BSD interfaces
-#options 	COMPAT_44	# compatibility with 4.4BSD binaries
-options 	COMPAT_09	# compatibility with NetBSD 0.9
-options 	COMPAT_10	# compatibility with NetBSD 1.0
-options 	COMPAT_11	# compatibility with NetBSD 1.1
-options 	COMPAT_12	# compatibility with NetBSD 1.2
-options 	COMPAT_13	# compatibility with NetBSD 1.3
-options 	COMPAT_14	# compatibility with NetBSD 1.4
-options 	COMPAT_15	# compatibility with NetBSD 1.5
-options 	COMPAT_16	# compatibility with NetBSD 1.6
-options 	COMPAT_20	# compatibility with NetBSD 2.0
-options 	COMPAT_30	# compatibility with NetBSD 3.0
-options 	COMPAT_40	# compatibility with NetBSD 4.0
-options 	COMPAT_50	# compatibility with NetBSD 5.0
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+include 	"conf/compat_netbsd09.config"
 
 # Binary compatibility.
 options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
@@ -99,7 +84,6 @@ options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
 options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	COMPAT_SVR4	# SVR4 binary compatibility
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystems
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
@@ -130,6 +114,7 @@ options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network filesystem server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 options 	INET		# Internet protocols
@@ -279,6 +264,12 @@ ch*		at scsibus? target ? lun ?	# SCSI changer devices
 ss*		at scsibus? target ? lun ?	# SCSI scanners
 uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
+# 425e digital audio
+arcofi* 	at dio? scode ?
+audio*		at arcofi?
+
+spkr*		at audio?		# PC speaker (synthesized)
+
 #
 # Pseudo-devices
 #
@@ -347,9 +338,6 @@ pseudo-device	wsfont
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options 	VERIFIED_EXEC_FP_RMD160
 #options 	VERIFIED_EXEC_FP_SHA256
 #options 	VERIFIED_EXEC_FP_SHA384
 #options 	VERIFIED_EXEC_FP_SHA512
-#options 	VERIFIED_EXEC_FP_SHA1
-#options 	VERIFIED_EXEC_FP_MD5

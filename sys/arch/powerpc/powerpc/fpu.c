@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.31.12.2 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: fpu.c,v 1.31.12.3 2017/12/03 11:36:38 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31.12.2 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31.12.3 2017/12/03 11:36:38 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,13 +65,13 @@ const pcu_ops_t fpu_ops = {
 bool
 fpu_used_p(lwp_t *l)
 {
-	return pcu_valid_p(&fpu_ops);
+	return pcu_valid_p(&fpu_ops, l);
 }
 
 void
 fpu_mark_used(lwp_t *l)
 {
-	pcu_discard(&fpu_ops, true);
+	pcu_discard(&fpu_ops, l, true);
 }
 
 #ifdef PPC_HAVE_FPU
@@ -84,15 +84,17 @@ fpu_state_load(lwp_t *l, u_int flags)
 		memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
 	}
 
-	const register_t msr = mfmsr();
-        mtmsr((msr & ~PSL_EE) | PSL_FP);
-	__asm volatile ("isync");
+	if ((flags & PCU_REENABLE) == 0) {
+		const register_t msr = mfmsr();
+		mtmsr((msr & ~PSL_EE) | PSL_FP);
+		__asm volatile ("isync");
 
-	fpu_load_from_fpreg(&pcb->pcb_fpu);
-	__asm volatile ("sync");
+		fpu_load_from_fpreg(&pcb->pcb_fpu);
+		__asm volatile ("sync");
 
-	mtmsr(msr);
-	__asm volatile ("isync");
+		mtmsr(msr);
+		__asm volatile ("isync");
+	}
 
 	curcpu()->ci_ev_fpusw.ev_count++;
 	l->l_md.md_utf->tf_srr1 |= PSL_FP|(pcb->pcb_flags & (PCB_FE0|PCB_FE1));
@@ -137,9 +139,10 @@ fpu_get_fault_code(void)
 	uint32_t fpscr, ofpscr;
 	int code;
 
-	int s = splsoftclock();	/* disable preemption */
+	kpreempt_disable();
 
 	struct cpu_info * const ci = curcpu();
+
 	/*
 	 * If we got preempted, we may be running on a different CPU.  So we
 	 * need to check for that.
@@ -173,12 +176,12 @@ fpu_get_fault_code(void)
 		 * We got preempted to a different CPU so we need to save
 		 * our FPU state.
 		 */
-		fpu_save();
+		fpu_save(l);
 		fpscr64 = *(uint64_t *)&pcb->pcb_fpu.fpscr;
 		((uint32_t *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD] &= ~MASKBITS;
 	}
 
-	splx(s);	/* allow preemption */
+	kpreempt_enable();
 
 	/*
 	 * Now determine the fault type.  First we test to see if any of sticky
@@ -211,14 +214,14 @@ fpu_save_to_mcontext(lwp_t *l, mcontext_t *mcp, unsigned int *flagp)
 {
 	KASSERT(l == curlwp);
 
-	if (!pcu_valid_p(&fpu_ops))
+	if (!pcu_valid_p(&fpu_ops, l))
 		return false;
 
 	struct pcb * const pcb = lwp_getpcb(l);
 
 #ifdef PPC_HAVE_FPU
 	/* If we're the FPU owner, dump its context to the PCB first. */
-	pcu_save(&fpu_ops);
+	pcu_save(&fpu_ops, l);
 #endif
 	(void)memcpy(mcp->__fpregs.__fpu_regs, pcb->pcb_fpu.fpreg,
 	    sizeof (mcp->__fpregs.__fpu_regs));
@@ -239,8 +242,7 @@ fpu_restore_from_mcontext(lwp_t *l, const mcontext_t *mcp)
 
 #ifdef PPC_HAVE_FPU
 	/* we don't need to save the state, just drop it */
-	if (l == curlwp)
-		pcu_discard(&fpu_ops, true);
+	pcu_discard(&fpu_ops, l, true);
 #endif
 	(void)memcpy(&pcb->pcb_fpu.fpreg, &mcp->__fpregs.__fpu_regs,
 	    sizeof (pcb->pcb_fpu.fpreg));

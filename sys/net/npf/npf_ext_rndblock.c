@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_rndblock.c,v 1.1.8.3 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_ext_rndblock.c,v 1.1.8.4 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,16 +31,18 @@
  * This is also a demo extension.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.1.8.3 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.1.8.4 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
 #include <sys/atomic.h>
 #include <sys/module.h>
 #include <sys/kmem.h>
+#endif
 
-#include "npf.h"
+#include "npf_impl.h"
 
 /*
  * NPF extension module definition and the identifier.
@@ -97,7 +99,8 @@ npf_ext_rndblock_dtor(npf_rproc_t *rp, void *meta)
  * npf_ext_rndblock: main routine implementing the extension functionality.
  */
 static bool
-npf_ext_rndblock(npf_cache_t *npc, void *meta, int *decision)
+npf_ext_rndblock(npf_cache_t *npc, void *meta, const npf_match_info_t *mi,
+    int *decision)
 {
 	npf_ext_rndblock_t *rndblock = meta;
 	unsigned long c;
@@ -146,6 +149,7 @@ npf_ext_rndblock_modcmd(modcmd_t cmd, void *arg)
 		.dtor		= npf_ext_rndblock_dtor,
 		.proc		= npf_ext_rndblock
 	};
+	npf_t *npf = npf_getkernctx();
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -154,7 +158,7 @@ npf_ext_rndblock_modcmd(modcmd_t cmd, void *arg)
 		 * "rndblock" extensions calls (constructor, destructor,
 		 * the processing * routine, etc).
 		 */
-		npf_ext_rndblock_id = npf_ext_register("rndblock",
+		npf_ext_rndblock_id = npf_ext_register(npf, "rndblock",
 		    &npf_rndblock_ops);
 		return npf_ext_rndblock_id ? 0 : EEXIST;
 
@@ -163,7 +167,7 @@ npf_ext_rndblock_modcmd(modcmd_t cmd, void *arg)
 		 * Unregister our rndblock extension.  NPF may return an
 		 * if there are references and it cannot drain them.
 		 */
-		return npf_ext_unregister(npf_ext_rndblock_id);
+		return npf_ext_unregister(npf, npf_ext_rndblock_id);
 
 	case MODULE_CMD_AUTOUNLOAD:
 		/* Allow auto-unload only if NPF permits it. */

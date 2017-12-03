@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __NSCONVERT_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -85,8 +83,7 @@ AcpiNsConvertToInteger (
 
         /* String-to-Integer conversion */
 
-        Status = AcpiUtStrtoul64 (OriginalObject->String.Pointer,
-                    ACPI_ANY_BASE, &Value);
+        Status = AcpiUtStrtoul64 (OriginalObject->String.Pointer, &Value);
         if (ACPI_FAILURE (Status))
         {
             return (Status);
@@ -106,7 +103,8 @@ AcpiNsConvertToInteger (
 
         for (i = 0; i < OriginalObject->Buffer.Length; i++)
         {
-            Value |= ((UINT64) OriginalObject->Buffer.Pointer[i] << (i * 8));
+            Value |= ((UINT64)
+                OriginalObject->Buffer.Pointer[i] << (i * 8));
         }
         break;
 
@@ -169,8 +167,8 @@ AcpiNsConvertToString (
         }
         else
         {
-            Status = AcpiExConvertToString (OriginalObject, &NewObject,
-                        ACPI_IMPLICIT_CONVERT_HEX);
+            Status = AcpiExConvertToString (OriginalObject,
+                &NewObject, ACPI_IMPLICIT_CONVERT_HEX);
             if (ACPI_FAILURE (Status))
             {
                 return (Status);
@@ -204,7 +202,7 @@ AcpiNsConvertToString (
          * Copy the raw buffer data with no transform. String is already NULL
          * terminated at Length+1.
          */
-        ACPI_MEMCPY (NewObject->String.Pointer,
+        memcpy (NewObject->String.Pointer,
             OriginalObject->Buffer.Pointer, Length);
         break;
 
@@ -265,13 +263,14 @@ AcpiNsConvertToBuffer (
 
         /* String-to-Buffer conversion. Simple data copy */
 
-        NewObject = AcpiUtCreateBufferObject (OriginalObject->String.Length);
+        NewObject = AcpiUtCreateBufferObject
+            (OriginalObject->String.Length);
         if (!NewObject)
         {
             return (AE_NO_MEMORY);
         }
 
-        ACPI_MEMCPY (NewObject->Buffer.Pointer,
+        memcpy (NewObject->Buffer.Pointer,
             OriginalObject->String.Pointer, OriginalObject->String.Length);
         break;
 
@@ -332,7 +331,8 @@ AcpiNsConvertToBuffer (
  *
  * FUNCTION:    AcpiNsConvertToUnicode
  *
- * PARAMETERS:  OriginalObject      - ASCII String Object to be converted
+ * PARAMETERS:  Scope               - Namespace node for the method/object
+ *              OriginalObject      - ASCII String Object to be converted
  *              ReturnObject        - Where the new converted object is returned
  *
  * RETURN:      Status. AE_OK if conversion was successful.
@@ -343,6 +343,7 @@ AcpiNsConvertToBuffer (
 
 ACPI_STATUS
 AcpiNsConvertToUnicode (
+    ACPI_NAMESPACE_NODE     *Scope,
     ACPI_OPERAND_OBJECT     *OriginalObject,
     ACPI_OPERAND_OBJECT     **ReturnObject)
 {
@@ -404,7 +405,8 @@ AcpiNsConvertToUnicode (
  *
  * FUNCTION:    AcpiNsConvertToResource
  *
- * PARAMETERS:  OriginalObject      - Object to be converted
+ * PARAMETERS:  Scope               - Namespace node for the method/object
+ *              OriginalObject      - Object to be converted
  *              ReturnObject        - Where the new converted object is returned
  *
  * RETURN:      Status. AE_OK if conversion was successful
@@ -416,6 +418,7 @@ AcpiNsConvertToUnicode (
 
 ACPI_STATUS
 AcpiNsConvertToResource (
+    ACPI_NAMESPACE_NODE     *Scope,
     ACPI_OPERAND_OBJECT     *OriginalObject,
     ACPI_OPERAND_OBJECT     **ReturnObject)
 {
@@ -479,6 +482,85 @@ AcpiNsConvertToResource (
     Buffer[0] = (ACPI_RESOURCE_NAME_END_TAG | ASL_RDESC_END_TAG_SIZE);
     Buffer[1] = 0x00;
 
+    *ReturnObject = NewObject;
+    return (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiNsConvertToReference
+ *
+ * PARAMETERS:  Scope               - Namespace node for the method/object
+ *              OriginalObject      - Object to be converted
+ *              ReturnObject        - Where the new converted object is returned
+ *
+ * RETURN:      Status. AE_OK if conversion was successful
+ *
+ * DESCRIPTION: Attempt to convert a Integer object to a ObjectReference.
+ *              Buffer.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiNsConvertToReference (
+    ACPI_NAMESPACE_NODE     *Scope,
+    ACPI_OPERAND_OBJECT     *OriginalObject,
+    ACPI_OPERAND_OBJECT     **ReturnObject)
+{
+    ACPI_OPERAND_OBJECT     *NewObject = NULL;
+    ACPI_STATUS             Status;
+    ACPI_NAMESPACE_NODE     *Node;
+    ACPI_GENERIC_STATE      ScopeInfo;
+    char                    *Name;
+
+
+    ACPI_FUNCTION_NAME (NsConvertToReference);
+
+
+    /* Convert path into internal presentation */
+
+    Status = AcpiNsInternalizeName (OriginalObject->String.Pointer, &Name);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
+    /* Find the namespace node */
+
+    ScopeInfo.Scope.Node = ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, Scope);
+    Status = AcpiNsLookup (&ScopeInfo, Name,
+        ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
+        ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
+    if (ACPI_FAILURE (Status))
+    {
+        /* Check if we are resolving a named reference within a package */
+
+        ACPI_ERROR_NAMESPACE (&ScopeInfo,
+            OriginalObject->String.Pointer, Status);
+        goto ErrorExit;
+    }
+
+    /* Create and init a new internal ACPI object */
+
+    NewObject = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_REFERENCE);
+    if (!NewObject)
+    {
+        Status = AE_NO_MEMORY;
+        goto ErrorExit;
+    }
+    NewObject->Reference.Node = Node;
+    NewObject->Reference.Object = Node->Object;
+    NewObject->Reference.Class = ACPI_REFCLASS_NAME;
+
+    /*
+     * Increase reference of the object if needed (the object is likely a
+     * null for device nodes).
+     */
+    AcpiUtAddReference (Node->Object);
+
+ErrorExit:
+    ACPI_FREE (Name);
     *ReturnObject = NewObject;
     return (AE_OK);
 }

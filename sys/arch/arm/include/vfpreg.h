@@ -1,4 +1,4 @@
-/*      $NetBSD: vfpreg.h,v 1.4.2.4 2014/08/20 00:02:46 tls Exp $ */
+/*      $NetBSD: vfpreg.h,v 1.4.2.5 2017/12/03 11:35:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -64,6 +64,9 @@
 #define FPU_VFP_CORTEXA8	0x410330c0
 #define FPU_VFP_CORTEXA9	0x41033090
 #define FPU_VFP_CORTEXA15	0x410330f0
+#define FPU_VFP_CORTEXA15_QEMU	0x410430f0
+#define FPU_VFP_CORTEXA53	0x41034030
+#define FPU_VFP_CORTEXA57	0x41034070
 #define FPU_VFP_MV88SV58XX	0x56022090
 
 #define VFP_FPEXC_EX		0x80000000	/* EXception status bit */

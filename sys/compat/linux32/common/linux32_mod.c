@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.3.18.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.3.18.2 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.3.18.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.3.18.2 2017/12/03 11:36:55 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.3.18.1 2014/08/20 00:03:33 tls Exp
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/signalvar.h>
+#include <sys/sysctl.h>
 
 #include <compat/linux/common/linux_exec.h>
 
@@ -51,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.3.18.1 2014/08/20 00:03:33 tls Exp
 #include <compat/linux32/common/linux32_exec.h>
 
 #if defined(EXEC_ELF32)
-# define	MD1	",exec_elf32,compat_netbsd32"
+# define	MD1	",exec_elf32,compat_netbsd32,compat_netbsd32_sysvipc"
 #else
 # define	MD1	""
 #endif
@@ -77,6 +78,38 @@ static struct execsw linux32_execsw[] = {
 #endif
 };
 
+int linux32_enabled = 1;
+
+int
+linux32_sysctl_enable(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, val;
+
+	val = *(int *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == 1) {
+		error = exec_add(linux32_execsw, __arraycount(linux32_execsw));
+	} else if (val == 0) {
+		error = exec_remove(linux32_execsw, __arraycount(linux32_execsw));
+	} else {
+		error = EINVAL;
+	}
+	if (error)
+		return error;
+
+	*(int *)rnode->sysctl_data = val;
+
+	return 0;
+}
+
 static int
 compat_linux32_modcmd(modcmd_t cmd, void *arg)
 {
@@ -84,19 +117,16 @@ compat_linux32_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		linux32_enabled = 0;
 		linux32_sysctl_init();
-		error = exec_add(linux32_execsw,
-		    __arraycount(linux32_execsw));
-		if (error != 0)
-			linux32_sysctl_fini();
-		return error;
+		return 0;
 
 	case MODULE_CMD_FINI:
-		error = exec_remove(linux32_execsw,
-		    __arraycount(linux32_execsw));
-		if (error == 0)
-			linux32_sysctl_fini();
-		return error;
+		error = exec_remove(linux32_execsw, __arraycount(linux32_execsw));
+		if (error)
+			return error;
+		linux32_sysctl_fini();
+		return 0;
 
 	default:
 		return ENOTTY;

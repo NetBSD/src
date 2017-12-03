@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.30 2012/07/31 15:50:31 bouyer Exp $	*/
+/*	$NetBSD: rapide.c,v 1.30.2.1 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.30 2012/07/31 15:50:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.30.2.1 2017/12/03 11:35:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ struct rapide_softc {
 	bus_space_handle_t	sc_ctlioh;		/* control handler */
 	struct rapide_channel {
 		struct ata_channel rc_channel;	/* generic part */
-		struct ata_queue rc_chqueue;		/* channel queue */
 		irqhandler_t	rc_ih;			/* interrupt handler */
 		int		rc_irqmask;	/* IRQ mask for this channel */
 	} rapide_channels[2];
@@ -259,7 +258,6 @@ rapide_attach(device_t parent, device_t self, void *aux)
 
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ch_queue = &rcp->rc_chqueue;
 		wdr->cmd_iot = iot;
 		wdr->ctl_iot = iot;
 		wdr->data32iot = iot;
@@ -275,7 +273,7 @@ rapide_attach(device_t parent, device_t self, void *aux)
 				continue;
 			}
 		}
-		wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(wdr);
 		if (bus_space_map(iot, iobase +
 		    rapide_info[channel].aux_register, 4, 0, &wdr->ctl_ioh)) {
 			bus_space_unmap(iot, wdr->cmd_baseioh,

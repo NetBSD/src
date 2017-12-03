@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.7.2.4 2014/08/20 00:04:35 tls Exp $
+# $NetBSD: files.npf,v 1.7.2.5 2017/12/03 11:39:02 jdolecek Exp $
 #
 # Public Domain.
 #
@@ -19,7 +19,6 @@ file	net/npf/npf_bpf.c			npf
 file	net/npf/npf_ruleset.c			npf
 file	net/npf/npf_rproc.c			npf
 file	net/npf/npf_tableset.c			npf
-file	net/npf/npf_tableset_ptree.c		npf
 file	net/npf/npf_if.c			npf
 file	net/npf/npf_inet.c			npf
 file	net/npf/npf_conn.c			npf
@@ -30,6 +29,12 @@ file	net/npf/npf_nat.c			npf
 file	net/npf/npf_alg.c			npf
 file	net/npf/npf_sendpkt.c			npf
 file	net/npf/npf_worker.c			npf
+
+file	net/npf/npf_os.c			npf
+file	net/npf/npf_ifaddr.c			npf
+
+# LPM
+file	net/npf/lpm.c				npf
 
 # Built-in extensions.
 file	net/npf/npf_ext_log.c			npf

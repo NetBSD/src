@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_machdep.h,v 1.1.6.2 2014/08/20 00:03:24 tls Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.1.6.3 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012-2013 The NetBSD Foundation, Inc.
@@ -35,5 +35,6 @@
 
 #define SLJIT_CACHE_FLUSH(from, to) \
 	sparc_cache_flush((sljit_ins *)(from), (sljit_ins *)(to))
+#define SLJIT_CACHE_FLUSH_OWN_IMPL 1
 
 #endif

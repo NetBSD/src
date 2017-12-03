@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isavar.h,v 1.8.18.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: itesio_isavar.h,v 1.8.18.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #define ITESIO_CHIPID2	0x21	/* Chip ID 2 */
 #define ITESIO_DEVREV	0x22	/* Device Revision */
 
+#define ITESIO_ID8628	0x8628
 #define ITESIO_ID8705	0x8705
 #define ITESIO_ID8712	0x8712
 #define ITESIO_ID8716	0x8716
@@ -64,6 +65,9 @@
 #define ITESIO_ID8720	0x8720
 #define ITESIO_ID8721	0x8721
 #define ITESIO_ID8726	0x8726
+#define ITESIO_ID8728	0x8728
+#define ITESIO_ID8771	0x8771
+#define ITESIO_ID8772	0x8772
 
 /* 
  * Control registers for the Environmental Controller, relative

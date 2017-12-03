@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.25.12.1 2012/11/20 03:01:43 tls Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.25.12.2 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.25.12.1 2012/11/20 03:01:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.25.12.2 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,17 +204,15 @@ cgsixattach(device_t parent, device_t self, void *aux)
 	else
 		isconsole = 0;
 
-	if (isconsole && cgsix_use_rasterconsole) {
-		if (bus_space_map(oba->oba_bustag,
-				  oba->oba_paddr + CGSIX_RAM_OFFSET,
-				  sc->sc_ramsize,
-				  BUS_SPACE_MAP_LINEAR,
-				  &bh) != 0) {
-			printf("%s: cannot map pixels\n", device_xname(self));
-			return;
-		}
-		sc->sc_fb.fb_pixels = (void *)bh;
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr + CGSIX_RAM_OFFSET,
+			  sc->sc_ramsize,
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
+		printf("%s: cannot map pixels\n", device_xname(self));
+		return;
 	}
+	sc->sc_fb.fb_pixels = (void *)bh;
 
 	cg6attach(sc, name, isconsole);
 }

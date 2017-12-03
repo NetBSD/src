@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.7.4.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.7.4.3 2017/12/03 11:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.7.4.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.7.4.3 2017/12/03 11:37:58 jdolecek Exp $");
 
 #include <sys/types.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #ifndef _MODULE
@@ -44,17 +45,17 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.7.4.2 2014/08/20 00:04:20 tls Exp $
 #include <linux/mutex.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_encoder_slave.h>
+#include <drm/drm_sysctl.h>
 
 /*
  * XXX I2C stuff should be moved to a separate drmkms_i2c module.
  */
-MODULE(MODULE_CLASS_DRIVER, drmkms, "iic,drmkms_linux");
-
-#ifdef _MODULE
-#include "ioconf.c"
-#endif
+MODULE(MODULE_CLASS_DRIVER, drmkms, "drmkms_linux");
 
 struct mutex	drm_global_mutex;
+
+struct drm_sysctl_def drm_def = DRM_SYSCTL_INIT();
 
 static int
 drm_init(void)
@@ -74,6 +75,8 @@ drm_init(void)
 	linux_mutex_init(&drm_global_mutex);
 	drm_connector_ida_init();
 	drm_global_init();
+	drm_sysctl_init(&drm_def);
+	drm_i2c_encoders_init();
 
 	return 0;
 }
@@ -95,6 +98,8 @@ static void
 drm_fini(void)
 {
 
+	drm_i2c_encoders_fini();
+	drm_sysctl_fini(&drm_def);
 	drm_global_release();
 	drm_connector_ida_destroy();
 	linux_mutex_destroy(&drm_global_mutex);

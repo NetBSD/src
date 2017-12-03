@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.79.2.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.79.2.2 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -64,17 +64,16 @@
  *	If an inode has references within the file system (tn_links > 0) and
  *	its inactive vnode gets reclaimed/recycled - then the association is
  *	broken in tmpfs_reclaim().  In such case, an inode will always pass
- *	tmpfs_lookup() and thus tmpfs_vnode_get() to associate a new vnode.
+ *	tmpfs_lookup() and thus vcache_get() to associate a new vnode.
  *
  * Lock order
  *
- *	tmpfs_node_t::tn_vlock ->
- *		vnode_t::v_vlock ->
- *			vnode_t::v_interlock
+ *	vnode_t::v_vlock ->
+ *		vnode_t::v_interlock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.79.2.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.79.2.2 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -102,116 +101,197 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.79.2.1 2014/08/20 00:04:28 tls Exp 
 static void	tmpfs_dir_putseq(tmpfs_node_t *, tmpfs_dirent_t *);
 
 /*
- * tmpfs_alloc_node: allocate a new inode of a specified type and
- * insert it into the list of specified mount point.
+ * Initialize vnode with tmpfs node.
  */
-int
-tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
-    mode_t mode, char *target, dev_t rdev, tmpfs_node_t **node)
+static void
+tmpfs_init_vnode(struct vnode *vp, tmpfs_node_t *node)
 {
-	tmpfs_node_t *nnode;
+	kmutex_t *slock;
 
-	nnode = tmpfs_node_get(tmp);
-	if (nnode == NULL) {
-		return ENOSPC;
+	KASSERT(node->tn_vnode == NULL);
+
+	/* Share the interlock with the node. */
+	if (node->tn_type == VREG) {
+		slock = node->tn_spec.tn_reg.tn_aobj->vmobjlock;
+		mutex_obj_hold(slock);
+		uvm_obj_setlock(&vp->v_uobj, slock);
 	}
 
+	vp->v_tag = VT_TMPFS;
+	vp->v_type = node->tn_type;
+
+	/* Type-specific initialization. */
+	switch (vp->v_type) {
+	case VBLK:
+	case VCHR:
+		vp->v_op = tmpfs_specop_p;
+		spec_node_init(vp, node->tn_spec.tn_dev.tn_rdev);
+		break;
+	case VFIFO:
+		vp->v_op = tmpfs_fifoop_p;
+		break;
+	case VDIR:
+		if (node->tn_spec.tn_dir.tn_parent == node)
+			vp->v_vflag |= VV_ROOT;
+		/* FALLTHROUGH */
+	case VLNK:
+	case VREG:
+	case VSOCK:
+		vp->v_op = tmpfs_vnodeop_p;
+		break;
+	default:
+		panic("bad node type %d", vp->v_type);
+		break;
+	}
+
+	vp->v_data = node;
+	node->tn_vnode = vp;
+	uvm_vnp_setsize(vp, node->tn_size);
+}
+
+/*
+ * tmpfs_loadvnode: initialise a vnode for a specified inode.
+ */
+int
+tmpfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	tmpfs_node_t *node;
+
+	KASSERT(key_len == sizeof(node));
+	memcpy(&node, key, key_len);
+
+	if (node->tn_links == 0)
+		return ENOENT;
+
+	tmpfs_init_vnode(vp, node);
+
+	*new_key = &vp->v_data;
+
+	return 0;
+}
+
+/*
+ * tmpfs_newvnode: allocate a new inode of a specified type and
+ * attach the vonode.
+ */
+int
+tmpfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
+    struct vattr *vap, kauth_cred_t cred,
+    size_t *key_len, const void **new_key)
+{
+	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
+	tmpfs_node_t *node, *dnode;
+
+	if (dvp != NULL) {
+		KASSERT(VOP_ISLOCKED(dvp));
+		dnode = VP_TO_TMPFS_DIR(dvp);
+		if (dnode->tn_links == 0)
+			return ENOENT;
+		if (vap->va_type == VDIR) {
+			/* Check for maximum links limit. */
+			if (dnode->tn_links == LINK_MAX)
+				return EMLINK;
+			KASSERT(dnode->tn_links < LINK_MAX);
+		}
+	} else
+		dnode = NULL;
+
+	node = tmpfs_node_get(tmp);
+	if (node == NULL)
+		return ENOSPC;
+
 	/* Initially, no references and no associations. */
-	nnode->tn_links = 0;
-	nnode->tn_vnode = NULL;
-	nnode->tn_dirent_hint = NULL;
+	node->tn_links = 0;
+	node->tn_vnode = NULL;
+	node->tn_holdcount = 0;
+	node->tn_dirent_hint = NULL;
 
 	/*
 	 * XXX Where the pool is backed by a map larger than (4GB *
-	 * sizeof(*nnode)), this may produce duplicate inode numbers
+	 * sizeof(*node)), this may produce duplicate inode numbers
 	 * for applications that do not understand 64-bit ino_t.
 	 */
-	nnode->tn_id = (ino_t)((uintptr_t)nnode / sizeof(*nnode));
+	node->tn_id = (ino_t)((uintptr_t)node / sizeof(*node));
 	/*
 	 * Make sure the generation number is not zero.
 	 * tmpfs_inactive() uses generation zero to mark dead nodes.
 	 */
 	do {
-		nnode->tn_gen = TMPFS_NODE_GEN_MASK & cprng_fast32();
-	} while (nnode->tn_gen == 0);
+		node->tn_gen = TMPFS_NODE_GEN_MASK & cprng_fast32();
+	} while (node->tn_gen == 0);
 
 	/* Generic initialization. */
-	nnode->tn_type = type;
-	nnode->tn_size = 0;
-	nnode->tn_flags = 0;
-	nnode->tn_lockf = NULL;
+	KASSERT((int)vap->va_type != VNOVAL);
+	node->tn_type = vap->va_type;
+	node->tn_size = 0;
+	node->tn_flags = 0;
+	node->tn_lockf = NULL;
 
-	vfs_timestamp(&nnode->tn_atime);
-	nnode->tn_birthtime = nnode->tn_atime;
-	nnode->tn_ctime = nnode->tn_atime;
-	nnode->tn_mtime = nnode->tn_atime;
+	vfs_timestamp(&node->tn_atime);
+	node->tn_birthtime = node->tn_atime;
+	node->tn_ctime = node->tn_atime;
+	node->tn_mtime = node->tn_atime;
 
-	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
-	nnode->tn_uid = uid;
-	nnode->tn_gid = gid;
-	nnode->tn_mode = mode;
+	if (dvp == NULL) {
+		KASSERT(vap->va_uid != VNOVAL && vap->va_gid != VNOVAL);
+		node->tn_uid = vap->va_uid;
+		node->tn_gid = vap->va_gid;
+		vp->v_vflag |= VV_ROOT;
+	} else {
+		KASSERT(dnode != NULL);
+		node->tn_uid = kauth_cred_geteuid(cred);
+		node->tn_gid = dnode->tn_gid;
+	}
+	KASSERT(vap->va_mode != VNOVAL);
+	node->tn_mode = vap->va_mode;
 
 	/* Type-specific initialization. */
-	switch (nnode->tn_type) {
+	switch (node->tn_type) {
 	case VBLK:
 	case VCHR:
 		/* Character/block special device. */
-		KASSERT(rdev != VNOVAL);
-		nnode->tn_spec.tn_dev.tn_rdev = rdev;
+		KASSERT(vap->va_rdev != VNOVAL);
+		node->tn_spec.tn_dev.tn_rdev = vap->va_rdev;
 		break;
 	case VDIR:
 		/* Directory. */
-		TAILQ_INIT(&nnode->tn_spec.tn_dir.tn_dir);
-		nnode->tn_spec.tn_dir.tn_parent = NULL;
-		nnode->tn_spec.tn_dir.tn_seq_arena = NULL;
-		nnode->tn_spec.tn_dir.tn_next_seq = TMPFS_DIRSEQ_START;
-		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
+		TAILQ_INIT(&node->tn_spec.tn_dir.tn_dir);
+		node->tn_spec.tn_dir.tn_parent = NULL;
+		node->tn_spec.tn_dir.tn_seq_arena = NULL;
+		node->tn_spec.tn_dir.tn_next_seq = TMPFS_DIRSEQ_START;
+		node->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 
 		/* Extra link count for the virtual '.' entry. */
-		nnode->tn_links++;
+		node->tn_links++;
 		break;
 	case VFIFO:
 	case VSOCK:
 		break;
 	case VLNK:
-		/* Symbolic link.  Target specifies the file name. */
-		KASSERT(target != NULL);
-		nnode->tn_size = strlen(target);
-
-		if (nnode->tn_size == 0) {
-			/* Zero-length targets are supported. */
-			nnode->tn_spec.tn_lnk.tn_link = NULL;
-			break;
-		}
-
-		KASSERT(nnode->tn_size < MAXPATHLEN);
-		nnode->tn_size++; /* include the NUL terminator */
-
-		nnode->tn_spec.tn_lnk.tn_link =
-		    tmpfs_strname_alloc(tmp, nnode->tn_size);
-		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
-			tmpfs_node_put(tmp, nnode);
-			return ENOSPC;
-		}
-		memcpy(nnode->tn_spec.tn_lnk.tn_link, target, nnode->tn_size);
+		node->tn_size = 0;
+		node->tn_spec.tn_lnk.tn_link = NULL;
 		break;
 	case VREG:
 		/* Regular file.  Create an underlying UVM object. */
-		nnode->tn_spec.tn_reg.tn_aobj =
+		node->tn_spec.tn_reg.tn_aobj =
 		    uao_create(INT32_MAX - PAGE_SIZE, 0);
-		nnode->tn_spec.tn_reg.tn_aobj_pages = 0;
+		node->tn_spec.tn_reg.tn_aobj_pages = 0;
 		break;
 	default:
-		KASSERT(false);
+		panic("bad node type %d", vp->v_type);
+		break;
 	}
 
-	mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
+	tmpfs_init_vnode(vp, node);
 
 	mutex_enter(&tmp->tm_lock);
-	LIST_INSERT_HEAD(&tmp->tm_nodes, nnode, tn_entries);
+	LIST_INSERT_HEAD(&tmp->tm_nodes, node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
 
-	*node = nnode;
+	*key_len = sizeof(vp->v_data);
+	*new_key = &vp->v_data;
+
 	return 0;
 }
 
@@ -223,8 +303,15 @@ void
 tmpfs_free_node(tmpfs_mount_t *tmp, tmpfs_node_t *node)
 {
 	size_t objsz;
+	uint32_t hold;
 
 	mutex_enter(&tmp->tm_lock);
+	hold = atomic_or_32_nv(&node->tn_holdcount, TMPFS_NODE_RECLAIMED);
+	/* Defer destruction to last thread holding this node. */
+	if (hold != TMPFS_NODE_RECLAIMED) {
+		mutex_exit(&tmp->tm_lock);
+		return;
+	}
 	LIST_REMOVE(node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
 
@@ -261,90 +348,7 @@ tmpfs_free_node(tmpfs_mount_t *tmp, tmpfs_node_t *node)
 	KASSERT(node->tn_vnode == NULL);
 	KASSERT(node->tn_links == 0);
 
-	mutex_destroy(&node->tn_vlock);
 	tmpfs_node_put(tmp, node);
-}
-
-/*
- * tmpfs_vnode_get: allocate or reclaim a vnode for a specified inode.
- *
- * => Must be called with tmpfs_node_t::tn_vlock held.
- * => Returns vnode (*vpp) locked.
- */
-int
-tmpfs_vnode_get(struct mount *mp, tmpfs_node_t *node, vnode_t **vpp)
-{
-	vnode_t *vp;
-	kmutex_t *slock;
-	int error;
-again:
-	/* If there is already a vnode, try to reclaim it. */
-	if ((vp = node->tn_vnode) != NULL) {
-		atomic_or_32(&node->tn_gen, TMPFS_RECLAIMING_BIT);
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&node->tn_vlock);
-		error = vget(vp, LK_EXCLUSIVE);
-		if (error == ENOENT) {
-			mutex_enter(&node->tn_vlock);
-			goto again;
-		}
-		atomic_and_32(&node->tn_gen, ~TMPFS_RECLAIMING_BIT);
-		*vpp = vp;
-		return error;
-	}
-	if (TMPFS_NODE_RECLAIMING(node)) {
-		atomic_and_32(&node->tn_gen, ~TMPFS_RECLAIMING_BIT);
-	}
-
-	/*
-	 * Get a new vnode and associate it with our inode.  Share the
-	 * lock with underlying UVM object, if there is one (VREG case).
-	 */
-	if (node->tn_type == VREG) {
-		struct uvm_object *uobj = node->tn_spec.tn_reg.tn_aobj;
-		slock = uobj->vmobjlock;
-	} else {
-		slock = NULL;
-	}
-	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, slock, &vp);
-	if (error) {
-		mutex_exit(&node->tn_vlock);
-		return error;
-	}
-
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	vp->v_type = node->tn_type;
-
-	/* Type-specific initialization. */
-	switch (node->tn_type) {
-	case VBLK:
-	case VCHR:
-		vp->v_op = tmpfs_specop_p;
-		spec_node_init(vp, node->tn_spec.tn_dev.tn_rdev);
-		break;
-	case VDIR:
-		vp->v_vflag |= node->tn_spec.tn_dir.tn_parent == node ?
-		    VV_ROOT : 0;
-		break;
-	case VFIFO:
-		vp->v_op = tmpfs_fifoop_p;
-		break;
-	case VLNK:
-	case VREG:
-	case VSOCK:
-		break;
-	default:
-		KASSERT(false);
-	}
-
-	uvm_vnp_setsize(vp, node->tn_size);
-	vp->v_data = node;
-	node->tn_vnode = vp;
-	mutex_exit(&node->tn_vlock);
-
-	KASSERT(VOP_ISLOCKED(vp));
-	*vpp = vp;
-	return 0;
 }
 
 /*
@@ -360,50 +364,54 @@ tmpfs_construct_node(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(dvp->v_mount);
 	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp), *node;
 	tmpfs_dirent_t *de, *wde;
+	char *slink = NULL;
+	int ssize = 0;
 	int error;
 
-	KASSERT(VOP_ISLOCKED(dvp));
-	*vpp = NULL;
-
-	/*
-	 * If directory was removed, prevent from node creation.  The vnode
-	 * might still be referenced, but it is about to be reclaimed.
-	 */
-	if (dnode->tn_links == 0) {
-		error = ENOENT;
-		goto out;
-	}
-
-	/* Check for the maximum number of links limit. */
-	if (vap->va_type == VDIR) {
-		/* Check for maximum links limit. */
-		if (dnode->tn_links == LINK_MAX) {
-			error = EMLINK;
-			goto out;
+	/* Allocate symlink target. */
+	if (target != NULL) {
+		KASSERT(vap->va_type == VLNK);
+		ssize = strlen(target);
+		KASSERT(ssize < MAXPATHLEN);
+		if (ssize > 0) {
+			slink = tmpfs_strname_alloc(tmp, ssize);
+			if (slink == NULL)
+				return ENOSPC;
+			memcpy(slink, target, ssize);
 		}
-		KASSERT(dnode->tn_links < LINK_MAX);
 	}
-
-	/* Allocate a node that represents the new file. */
-	error = tmpfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
-	    dnode->tn_gid, vap->va_mode, target, vap->va_rdev, &node);
-	if (error)
-		goto out;
 
 	/* Allocate a directory entry that points to the new file. */
 	error = tmpfs_alloc_dirent(tmp, cnp->cn_nameptr, cnp->cn_namelen, &de);
 	if (error) {
-		tmpfs_free_node(tmp, node);
-		goto out;
+		if (slink != NULL)
+			tmpfs_strname_free(tmp, slink, ssize);
+		return error;
 	}
 
-	/* Get a vnode for the new file. */
-	mutex_enter(&node->tn_vlock);
-	error = tmpfs_vnode_get(dvp->v_mount, node, vpp);
+	/* Allocate a vnode that represents the new file. */
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, vpp);
 	if (error) {
+		if (slink != NULL)
+			tmpfs_strname_free(tmp, slink, ssize);
 		tmpfs_free_dirent(tmp, de);
-		tmpfs_free_node(tmp, node);
-		goto out;
+		return error;
+	}
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		if (slink != NULL)
+			tmpfs_strname_free(tmp, slink, ssize);
+		tmpfs_free_dirent(tmp, de);
+		return error;
+	}
+
+	node = VP_TO_TMPFS_NODE(*vpp);
+
+	if (slink != NULL) {
+		node->tn_spec.tn_lnk.tn_link = slink;
+		node->tn_size = ssize;
 	}
 
 	/* Remove whiteout before adding the new entry. */
@@ -423,11 +431,10 @@ tmpfs_construct_node(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
 
 	/* Update the parent's timestamps. */
 	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
-out:
-	if (error == 0)
-		VOP_UNLOCK(*vpp);
 
-	return error;
+	VOP_UNLOCK(*vpp);
+
+	return 0;
 }
 
 /*
@@ -452,6 +459,7 @@ tmpfs_alloc_dirent(tmpfs_mount_t *tmp, const char *name, uint16_t len,
 	nde->td_namelen = len;
 	memcpy(nde->td_name, name, len);
 	nde->td_seq = TMPFS_DIRSEQ_NONE;
+	nde->td_node = NULL; /* for asserts */
 
 	*de = nde;
 	return 0;
@@ -1117,12 +1125,10 @@ tmpfs_chsize(vnode_t *vp, u_quad_t size, kauth_cred_t cred, lwp_t *l)
 	if (length < 0) {
 		return EINVAL;
 	}
-	if (node->tn_size == length) {
-		return 0;
-	}
 
 	/* Note: tmpfs_reg_resize() will raise NOTE_EXTEND and NOTE_ATTRIB. */
-	if ((error = tmpfs_reg_resize(vp, length)) != 0) {
+	if (node->tn_size != length &&
+	    (error = tmpfs_reg_resize(vp, length)) != 0) {
 		return error;
 	}
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME | TMPFS_UPDATE_MTIME);

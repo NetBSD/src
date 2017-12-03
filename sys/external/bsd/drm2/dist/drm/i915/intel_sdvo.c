@@ -1322,7 +1322,7 @@ static bool intel_sdvo_connector_get_hw_state(struct intel_connector *connector)
 }
 
 static bool intel_sdvo_get_hw_state(struct intel_encoder *encoder,
-				    enum pipe *pipe)
+				    enum i915_pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1391,7 +1391,10 @@ static void intel_sdvo_get_config(struct intel_encoder *encoder,
 			 >> SDVO_PORT_MULTIPLY_SHIFT) + 1;
 	}
 
-	dotclock = pipe_config->port_clock / pipe_config->pixel_multiplier;
+	dotclock = pipe_config->port_clock;
+
+	if (pipe_config->pixel_multiplier)
+		dotclock /= pipe_config->pixel_multiplier;
 
 	if (HAS_PCH_SPLIT(dev))
 		ironlake_check_encoder_dotclock(pipe_config, dotclock);
@@ -2971,7 +2974,7 @@ intel_sdvo_init_ddc_proxy(struct intel_sdvo *sdvo,
 	sdvo->ddc.owner = THIS_MODULE;
 	sdvo->ddc.class = I2C_CLASS_DDC;
 	snprintf(sdvo->ddc.name, I2C_NAME_SIZE, "SDVO DDC proxy");
-	sdvo->ddc.dev.parent = &dev->pdev->dev;
+	sdvo->ddc.dev.parent = dev->dev;
 	sdvo->ddc.algo_data = sdvo;
 	sdvo->ddc.algo = &intel_sdvo_ddc_proxy;
 

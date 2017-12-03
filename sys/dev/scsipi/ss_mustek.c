@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.41.2.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.41.2.2 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.41.2.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.41.2.2 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -466,7 +466,7 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 	_lto3b(lines_to_read, cmd.length);
 
 	/* go ask the adapter to do all this for us */
-	xs = scsipi_make_xs(periph,
+	xs = scsipi_make_xs_locked(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount,
 	    MUSTEK_RETRIES, 10000, bp,
@@ -532,7 +532,7 @@ mustek_get_status(struct ss_softc *ss, int timeout, int update)
 		    (timeout-- <= 0))
 			break;
 		/* please wait a second */
-		tsleep((void *)mustek_get_status, PRIBIO + 1, "mtkrdy", hz);
+		kpause("mtkrdy", false, hz, NULL);
 	}
 
 	if (update) {

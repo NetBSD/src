@@ -1,0 +1,19 @@
+#	$NetBSD: Makefile.hdaudiodevs,v 1.3.14.2 2017/12/03 11:37:01 jdolecek Exp $
+#
+# As per tron@NetBSD.org, the proper procedure is
+#
+# 1.) Change "src/sys/dev/hdaudio/hdaudiodevs".
+# 2.) Commit "src/sys/dev/hdaudio/hdaudiodevs".
+# 3.) Execute "make -f Makefile.hdaudiodevs" in "src/sys/dev/hdaudio".
+# 4.) Ensure that the value of MAX_AUDIO_DEV_LEN is at least as large as
+#     the values reported.  If necessary, update "src/sys/sys/audioio.h"
+#     and bump the kernel version in "src/sys/sys/param/h".
+# 5.) Commit "src/sys/dev/hdaudio/hdaudiodevs.h" and
+#     "src/sys/dev/hdaudio/hdaudiodevs_data.h"; if you changed them, also
+#     commit "src/sys/sys/audioio.h" and "src/sys/sys/param/h".
+
+.include <bsd.own.mk>
+
+hdaudiodevs.h hdaudiodevs_data.h: ${.CURDIR}/../devlist2h.awk hdaudiodevs
+	/bin/rm -f hdaudiodevs.h hdaudiodevs_data.h
+	${TOOL_AWK} -f ${.ALLSRC}

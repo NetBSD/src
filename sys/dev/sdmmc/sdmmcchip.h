@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.4 2011/05/18 01:07:17 dyoung Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.4.14.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -57,6 +57,14 @@ struct sdmmc_chip_functions {
 	/* card interrupt */
 	void		(*card_enable_intr)(sdmmc_chipset_handle_t, int);
 	void		(*card_intr_ack)(sdmmc_chipset_handle_t);
+
+	/* UHS functions */
+	int		(*signal_voltage)(sdmmc_chipset_handle_t, int);
+	int		(*bus_clock_ddr)(sdmmc_chipset_handle_t, int, bool);
+	int		(*execute_tuning)(sdmmc_chipset_handle_t, int);
+
+	/* hardware reset */
+	void		(*hw_reset)(sdmmc_chipset_handle_t);
 };
 
 /* host controller reset */
@@ -76,8 +84,8 @@ struct sdmmc_chip_functions {
 /* bus power, clock frequency, width and rod */
 #define sdmmc_chip_bus_power(tag, handle, ocr)				\
 	((tag)->bus_power((handle), (ocr)))
-#define sdmmc_chip_bus_clock(tag, handle, freq)				\
-	((tag)->bus_clock((handle), (freq)))
+#define sdmmc_chip_bus_clock(tag, handle, freq, ddr)			\
+	((tag)->bus_clock_ddr ? (tag)->bus_clock_ddr((handle), (freq), (ddr)) : ((ddr) ? EINVAL : ((tag)->bus_clock((handle), (freq)))))
 #define sdmmc_chip_bus_width(tag, handle, width)			\
 	((tag)->bus_width((handle), (width)))
 #define sdmmc_chip_bus_rod(tag, handle, width)				\
@@ -90,10 +98,27 @@ struct sdmmc_chip_functions {
 	((tag)->card_enable_intr((handle), (enable)))
 #define sdmmc_chip_card_intr_ack(tag, handle)				\
 	((tag)->card_intr_ack((handle)))
+/* UHS functions */
+#define sdmmc_chip_signal_voltage(tag, handle, voltage)			\
+	((tag)->signal_voltage ? (tag)->signal_voltage((handle), (voltage)) : EINVAL)
+#define sdmmc_chip_execute_tuning(tag, handle, timing)			\
+	((tag)->execute_tuning ? (tag)->execute_tuning((handle), (timing)) : EINVAL)
+/* hardware reset */
+#define	sdmmc_chip_hw_reset(tag, handle)				\
+	((tag)->hw_reset ? (tag)->hw_reset((handle)) : /*CONSTCOND*/0)
 
 /* clock frequencies for sdmmc_chip_bus_clock() */
 #define SDMMC_SDCLK_OFF		0
 #define SDMMC_SDCLK_400K	400
+
+/* voltage levels for sdmmc_chip_signal_voltage() */
+#define SDMMC_SIGNAL_VOLTAGE_330	0
+#define SDMMC_SIGNAL_VOLTAGE_180	1
+
+/* timings for sdmmc_chip_execute_tuning() */
+#define SDMMC_TIMING_UHS_SDR50		0
+#define SDMMC_TIMING_UHS_SDR104		1
+#define SDMMC_TIMING_MMC_HS200		2
 
 /* SPI mode */
 struct sdmmc_spi_chip_functions {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.89 2011/07/09 15:01:33 mrg Exp $
+#	$NetBSD: Makefile.hp300,v 1.89.12.1 2017/12/03 11:36:13 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,8 @@ KERN_AS=	obj
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	${HP300}/hp300/locore.s
 
@@ -70,10 +71,6 @@ dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o tra
 ## (7) misc settings
 ##
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 45
-CWARNFLAGS.diofb.c+=	 -Wno-cast-qual
-.endif
-
 ##
 ## (8) config(8) generated machinery
 ##
@@ -83,7 +80,7 @@ CWARNFLAGS.diofb.c+=	 -Wno-cast-qual
 
 %CFILES
 
-#%SFILES
+%SFILES
 
 %LOAD
 

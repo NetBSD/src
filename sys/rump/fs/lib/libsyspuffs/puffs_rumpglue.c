@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.11.22.1 2013/06/23 06:20:27 tls Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.11.22.2 2017/12/03 11:39:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.11.22.1 2013/06/23 06:20:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.11.22.2 2017/12/03 11:39:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,10 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.11.22.1 2013/06/23 06:20:27 tls
 #include <dev/putter/putter.h>
 #include <dev/putter/putter_sys.h>
 
+#include <rump-sys/vfs.h>
+
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
-
-#include "rump_vfs_private.h"
 
 void putterattach(void); /* XXX: from autoconf */
 dev_type_open(puttercdopen);
@@ -85,8 +85,11 @@ readthread(void *arg)
 
 		off = 0;
 		fp = fd_getfile(pap->fpfd);
-		error = dofileread(pap->fpfd, fp, buf, BUFSIZE,
-		    &off, 0, &rv);
+		if (fp == NULL)
+			error = EINVAL;
+		else
+			error = dofileread(pap->fpfd, fp, buf, BUFSIZE,
+			    &off, 0, &rv);
 		if (error) {
 			if (error == ENOENT && inited == 0)
 				goto retry;
@@ -161,8 +164,11 @@ writethread(void *arg)
 		off = 0;
 		rv = 0;
 		fp = fd_getfile(pap->fpfd);
-		error = dofilewrite(pap->fpfd, fp, buf, phdr->pth_framelen,
-		    &off, 0, &rv);
+		if (fp == NULL)
+			error = EINVAL;
+		else
+			error = dofilewrite(pap->fpfd, fp, buf,
+			    phdr->pth_framelen, &off, 0, &rv);
 		if (error == ENXIO)
 			goto out;
 		KASSERT(rv == phdr->pth_framelen);
@@ -191,8 +197,15 @@ rump_syspuffs_glueinit(int fd, int *newfd)
 	pap->fpfd = curlwp->l_dupfd;
 	pap->fdp = curlwp->l_proc->p_fd;
 
-	kthread_create(PRI_NONE, 0, NULL, readthread, pap, NULL, "rputter");
-	kthread_create(PRI_NONE, 0, NULL, writethread, pap, NULL, "wputter");
+	rv = kthread_create(PRI_NONE, 0, NULL, readthread, pap, NULL,
+	    "rputter");
+	if (rv)
+		return rv;
+
+	rv = kthread_create(PRI_NONE, 0, NULL, writethread, pap, NULL,
+	    "wputter");
+	if (rv)
+		return rv;
 
 	*newfd = curlwp->l_dupfd;
 	return 0;

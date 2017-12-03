@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.32.22.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.32.22.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.32.22.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.32.22.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/module.h>
 
 #include <machine/endian.h>
 #include <sys/bus.h>
@@ -50,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.32.22.2 2014/08/20 00:03:42 tls Exp $"
 
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
+
+#include "ioconf.h"
 
 static struct	cac_ccb *cac_pci_l0_completed(struct cac_softc *);
 static int	cac_pci_l0_fifo_full(struct cac_softc *);
@@ -220,8 +223,8 @@ cac_pci_attach(device_t parent, device_t self, void *aux)
 	cac_init(sc, intrstr, (ct->ct_flags & CT_STARTFW) != 0);
 }
 
-CFATTACH_DECL_NEW(cac_pci, sizeof(struct cac_softc),
-    cac_pci_match, cac_pci_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(cac_pci, sizeof(struct cac_softc),
+    cac_pci_match, cac_pci_attach, NULL, NULL, cac_rescan, NULL, 0);
 
 static void
 cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
@@ -279,4 +282,45 @@ cac_pci_l0_fifo_full(struct cac_softc *sc)
 {
 
 	return (cac_inl(sc, CAC_42REG_CMD_FIFO) != 0);
+}
+
+MODULE(MODULE_CLASS_DRIVER, cac_pci, "cac,pci");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+ 
+static int
+cac_pci_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+ 
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		/* 
+		 * We skip over the first entry in cfdriver[] array
+		 * since the cfdriver is attached by the common
+		 * (non-attachment-specific) code.
+		 */
+		error = config_init_component(&cfdriver_ioconf_cac_pci[1],
+		    cfattach_ioconf_cac_pci, cfdata_ioconf_cac_pci);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(&cfdriver_ioconf_cac_pci[1],  
+		    cfattach_ioconf_cac_pci, cfdata_ioconf_cac_pci);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

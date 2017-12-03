@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_prot_impl.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nlm_prot_impl.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -26,11 +26,13 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet6.h"
+#endif
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_impl.c 255333 2013-09-06 23:14:31Z rmacklem "); */
-__RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_impl.c 302216 2016-06-26 20:08:42Z kib "); */
+__RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/fail.h>
@@ -40,9 +42,6 @@ __RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $")
 #include <sys/lockf.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#if __FreeBSD_version >= 700000
-#include <sys/priv.h>
-#endif
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -56,12 +55,19 @@ __RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $")
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 
-#include <nfs/nfsproto.h>
-#include <nfs/nfs_lock.h>
+#if 0
+#if __FreeBSD_version >= 700000
+#include <sys/priv.h>
+#endif
+#endif
 
-#include <nlm/nlm_prot.h>
-#include <nlm/sm_inter.h>
-#include <nlm/nlm.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/common/nfs_lock.h>
+
+#include <fs/nfs/nlm/nlm_prot.h>
+#include <fs/nfs/nlm/sm_inter.h>
+#include <fs/nfs/nlm/nlm.h>
+
 #include <rpc/rpc_com.h>
 #include <rpc/rpcb_prot.h>
 
@@ -297,7 +303,7 @@ nlm_init(void *dummy)
 	TAILQ_INIT(&nlm_hosts);
 
 	error = syscall_register(&nlm_syscall_offset, &nlm_syscall_sysent,
-	    &nlm_syscall_prev_sysent);
+	    &nlm_syscall_prev_sysent, SY_THR_STATIC_KLD);
 	if (error)
 		NLM_ERR("Can't register NLM syscall\n");
 	else
@@ -1074,7 +1080,7 @@ nlm_find_host_by_addr(const struct sockaddr *addr, int vers)
 		break;
 #endif
 	default:
-		strcmp(tmp, "<unknown>");
+		strlcpy(tmp, "<unknown>", sizeof(tmp));
 	}
 
 
@@ -1358,7 +1364,7 @@ int
 nlm_wait_lock(void *handle, int timo)
 {
 	struct nlm_waiting_lock *nw = handle;
-	int error;
+	int error, stops_deferred;
 
 	/*
 	 * If the granted message arrived before we got here,
@@ -1366,8 +1372,11 @@ nlm_wait_lock(void *handle, int timo)
 	 */
 	mtx_lock(&nlm_global_lock);
 	error = 0;
-	if (nw->nw_waiting)
+	if (nw->nw_waiting) {
+		stops_deferred = sigdeferstop(SIGDEFERSTOP_ERESTART);
 		error = msleep(nw, &nlm_global_lock, PCATCH, "nlmlock", timo);
+		sigallowstop(stops_deferred);
+	}
 	TAILQ_REMOVE(&nlm_waiting_locks, nw, nw_link);
 	if (error) {
 		/*
@@ -1428,7 +1437,6 @@ nlm_register_services(SVCPOOL *pool, int addr_count, char **addrs)
 	static void (*dispatchers[])(struct svc_req *, SVCXPRT *) = {
 		nlm_prog_0, nlm_prog_1, nlm_prog_3, nlm_prog_4
 	};
-	static const int version_count = sizeof(versions) / sizeof(versions[0]);
 
 	SVCXPRT **xprts;
 	char netid[16];
@@ -1441,8 +1449,14 @@ nlm_register_services(SVCPOOL *pool, int addr_count, char **addrs)
 		return (EINVAL);
 	}
 
+	if (addr_count < 0 || addr_count > 256 ) {
+		NLM_ERR("NLM:  too many service addresses (%d) given, "
+		    "max 256 - can't start server\n", addr_count);
+		return (EINVAL);
+	}
+
 	xprts = malloc(addr_count * sizeof(SVCXPRT *), M_NLM, M_WAITOK|M_ZERO);
-	for (i = 0; i < version_count; i++) {
+	for (i = 0; i < nitems(versions); i++) {
 		for (j = 0; j < addr_count; j++) {
 			/*
 			 * Create transports for the first version and

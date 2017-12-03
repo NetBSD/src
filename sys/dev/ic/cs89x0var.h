@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.16 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.16.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -56,6 +56,8 @@
 
 #ifndef _DEV_IC_CS89X0VAR_H_
 #define	_DEV_IC_CS89X0VAR_H_
+
+#include <sys/rndsource.h>
 
 /*
  * Ethernet software status per interface.

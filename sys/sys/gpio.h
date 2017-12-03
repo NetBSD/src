@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.13 2011/11/13 16:56:15 mbalmer Exp $ */
+/* $NetBSD: gpio.h,v 1.13.10.1 2017/12/03 11:39:20 jdolecek Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Marc Balmer <marc@msys.ch>
@@ -20,6 +20,7 @@
 #ifndef _SYS_GPIO_H_
 #define _SYS_GPIO_H_
 
+#include <sys/ioccom.h>
 #include <sys/time.h>
 
 /* GPIO pin states */
@@ -30,19 +31,30 @@
 #define GPIOMAXNAME		64
 
 /* GPIO pin configuration flags */
-#define GPIO_PIN_INPUT		0x0001	/* input direction */
-#define GPIO_PIN_OUTPUT		0x0002	/* output direction */
-#define GPIO_PIN_INOUT		0x0004	/* bi-directional */
-#define GPIO_PIN_OPENDRAIN	0x0008	/* open-drain output */
-#define GPIO_PIN_PUSHPULL	0x0010	/* push-pull output */
-#define GPIO_PIN_TRISTATE	0x0020	/* output disabled */
-#define GPIO_PIN_PULLUP		0x0040	/* internal pull-up enabled */
-#define GPIO_PIN_PULLDOWN	0x0080	/* internal pull-down enabled */
-#define GPIO_PIN_INVIN		0x0100	/* invert input */
-#define GPIO_PIN_INVOUT		0x0200	/* invert output */
-#define GPIO_PIN_USER		0x0400	/* user != 0 can access */
-#define GPIO_PIN_PULSATE	0x0800	/* pulsate in hardware */
-#define GPIO_PIN_SET		0x8000	/* set for securelevel access */
+#define GPIO_PIN_INPUT		0x00000001	/* input direction */
+#define GPIO_PIN_OUTPUT		0x00000002	/* output direction */
+#define GPIO_PIN_INOUT		0x00000004	/* bi-directional */
+#define GPIO_PIN_OPENDRAIN	0x00000008	/* open-drain output */
+#define GPIO_PIN_PUSHPULL	0x00000010	/* push-pull output */
+#define GPIO_PIN_TRISTATE	0x00000020	/* output disabled */
+#define GPIO_PIN_PULLUP		0x00000040	/* internal pull-up enabled */
+#define GPIO_PIN_PULLDOWN	0x00000080	/* internal pull-down enabled */
+#define GPIO_PIN_INVIN		0x00000100	/* invert input */
+#define GPIO_PIN_INVOUT		0x00000200	/* invert output */
+#define GPIO_PIN_USER		0x00000400	/* user != 0 can access */
+#define GPIO_PIN_PULSATE	0x00000800	/* pulsate in hardware */
+#define GPIO_PIN_SET		0x00008000	/* set for securelevel access */
+#define GPIO_PIN_ALT0		0x00010000	/* alternate function 0 */
+#define GPIO_PIN_ALT1		0x00020000	/* alternate function 1 */
+#define GPIO_PIN_ALT2		0x00040000	/* alternate function 2 */
+#define GPIO_PIN_ALT3		0x00080000	/* alternate function 3 */
+#define GPIO_PIN_ALT4		0x00100000	/* alternate function 4 */
+#define GPIO_PIN_ALT5		0x00200000	/* alternate function 5 */
+#define GPIO_PIN_ALT6		0x00400000	/* alternate function 6 */
+#define GPIO_PIN_ALT7		0x00800000	/* alternate function 7 */
+#define GPIO_PIN_EVENTS		0x10000000	/* deliver events */
+#define GPIO_PIN_LEVEL 		0x20000000	/* interrupt on level/edge */
+#define GPIO_PIN_FALLING	0x40000000	/* interrupt on falling/rising */
 
 /* GPIO controller description */
 struct gpio_info {

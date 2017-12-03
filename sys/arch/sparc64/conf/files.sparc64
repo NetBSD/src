@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.138.2.3 2014/08/20 00:03:25 tls Exp $
+#	$NetBSD: files.sparc64,v 1.138.2.4 2017/12/03 11:36:44 jdolecek Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -32,15 +32,18 @@ file	arch/sparc64/dev/sbus.c			sbus
 
 device	psycho: pcibus, sysmon_power, sysmon_taskq
 attach	psycho at mainbus
-device	schizo: pcibus, sysmon_power, sysmon_taskq
+device	schizo: pcibus
 attach	schizo at mainbus
-device	pyro: pcibus, sysmon_power, sysmon_taskq
+device	pyro: pcibus
 attach	pyro at mainbus
+device	vpci: pcibus
+attach	vpci at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho needs-flag
 file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
-file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
+file	arch/sparc64/dev/vpci.c			vpci
+file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro | vpci
 
 define  central {}
 device	central: central
@@ -56,7 +59,7 @@ file	arch/sparc64/dev/fhc_central.c		fhc_central
 file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
 
 # IOMMU is for both
-file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro
+file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci
 
 include "dev/ata/files.ata"
 
@@ -65,6 +68,14 @@ attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 attach ebus at mainbus with ebus_mainbus
 file	arch/sparc64/dev/ebus_mainbus.c		ebus_mainbus
+
+device	vbus {}
+attach	vbus at mainbus
+file	arch/sparc64/dev/vbus.c			vbus
+
+device	cbus {}
+attach	cbus at vbus
+file	arch/sparc64/dev/cbus.c			cbus
 
 device clock: mk48txx
 attach clock at sbus with mkclock_sbus
@@ -76,26 +87,22 @@ device rtc: mc146818
 attach rtc at ebus with rtc_ebus
 file	arch/sparc64/dev/rtc.c			rtc
 
-device psm: sysmon_envsys, sysmon_power
+device psm: sysmon_power
 attach psm at ebus
 file	arch/sparc64/dev/psm.c			psm
 
 device timer
 attach timer at mainbus, sbus
 
-device power
-attach power at sbus, ebus
-file	arch/sparc64/dev/power.c		power
-
-device	tda
+device	tda: sysmon_envsys
 attach	tda at iic
 file	arch/sparc64/dev/tda.c			tda
 
-device pcfiic: sysmon_envsys, pcf8584, i2cbus
+device pcfiic: pcf8584, i2cbus
 attach pcfiic at ebus
 file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic
 
-device ecadc
+device ecadc: sysmon_envsys
 attach ecadc at iic
 file	arch/sparc64/dev/pcf8591_envctrl.c	ecadc
 
@@ -111,6 +118,8 @@ device	auxio
 attach	auxio at ebus with auxio_ebus
 attach	auxio at sbus with auxio_sbus
 file	arch/sparc64/dev/auxio.c		auxio
+file	arch/sparc64/dev/auxio_sbus.c		auxio_sbus
+file	arch/sparc64/dev/auxio_ebus.c		auxio_ebus
 
 defflag	opt_auxio.h	BLINK
 
@@ -249,6 +258,7 @@ file	arch/sparc64/sparc64/vm_machdep.c
 file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 file	arch/sparc64/sparc64/lock_stubs.s
 file	arch/sparc64/sparc64/hvcall.S		sun4v
+file	arch/sparc64/sparc64/mdesc.c		sun4v
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_machdep.c	ddb
@@ -306,3 +316,16 @@ include "arch/sparc64/conf/majors.sparc64"
 
 # OpenFirmware convenience stuff
 file  dev/ofw/ofw_subr.c
+
+# Virtual rtc
+device	vrtc
+attach	vrtc at vbus
+file	arch/sparc64/dev/vrtc.c			vrtc
+
+define	ldc
+file	arch/sparc64/dev/ldc.c			ldc
+
+# Virtual disk
+device	vdsk: ldc, scsi
+attach	vdsk at cbus
+file	arch/sparc64/dev/vdsk.c			vdsk

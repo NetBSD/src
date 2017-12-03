@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.67 2011/01/10 13:56:44 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.67.18.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -82,10 +82,8 @@
 #define	SIGUSR1		30	/* user defined signal 1 */
 #define	SIGUSR2		31	/* user defined signal 2 */
 #define	SIGPWR		32	/* power fail/restart (not reset when caught) */
-#ifdef _KERNEL
-#define	SIGRTMIN	33	/* Kernel only; not exposed to userland yet */
-#define	SIGRTMAX	63	/* Kernel only; not exposed to userland yet */
-#endif
+#define	SIGRTMIN	33
+#define	SIGRTMAX	63
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
@@ -172,6 +170,10 @@ struct	sigaction {
 
 #if defined(_NETBSD_SOURCE)
 typedef	void (*sig_t)(int);	/* type of signal function */
+
+#define SS_INIT 		/* Initializer for stack_t */ \
+    ((stack_t) { .ss_sp = NULL, .ss_flags = SS_DISABLE,  .ss_size = 0 })
+
 #endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
@@ -235,6 +237,7 @@ struct	sigevent {
  */
 __BEGIN_DECLS
 void	(*signal(int, void (*)(int)))(int);
+void	(*bsd_signal(int, void (*)(int)))(int);
 #if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_NETBSD_SOURCE)
 int	sigqueue(pid_t, int, const union sigval);
 #endif

@@ -1,4 +1,4 @@
-/*      $NetBSD: epcomvar.h,v 1.6.6.1 2012/11/20 03:01:04 tls Exp $        */
+/*      $NetBSD: epcomvar.h,v 1.6.6.2 2017/12/03 11:35:52 jdolecek Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  *
@@ -27,6 +27,10 @@
 
 #ifndef _EPCOMVAR_H_
 #define _EPCOMVAR_H_
+
+#ifdef RND_COM
+#include <sys/rndsource.h>
+#endif
 
 /* Hardware flag masks */
 #define COM_HW_NOIEN		0x01

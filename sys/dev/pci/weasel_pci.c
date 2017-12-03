@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_pci.c,v 1.14.22.1 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: weasel_pci.c,v 1.14.22.2 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.14.22.1 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.14.22.2 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,26 +124,31 @@ weasel_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 	if ((v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD)) !=
 	    OS_RET_PONG) {
-		aprint_error_dev(self, "unexpected PING response from Weasel: 0x%02x\n", v);
+		aprint_error_dev(self,
+		    "unexpected PING response from Weasel: 0x%02x\n", v);
 		return;
 	}
 
 	/* Read the config block. */
 	if (weasel_issue_command(sc, OS_CMD_SHOW_CONFIG)) {
-		aprint_error_dev(self, "Weasel didn't respond to SHOW_CONFIG\n");
+		aprint_error_dev(self,
+		    "Weasel didn't respond to SHOW_CONFIG\n");
 		return;
 	}
 	cfg_size = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 
 	if (++cfg_size != sizeof(cfg)) {
-		aprint_error_dev(self, "weird config block size from Weasel: 0x%03x\n", cfg_size);
+		aprint_error_dev(self,
+		    "weird config block size from Weasel: 0x%03x\n", cfg_size);
 		return;
 	}
 
 	for (cp = (uint8_t *) &cfg; cfg_size != 0; cfg_size--) {
 		if (weasel_wait_response(sc)) {
-			aprint_error_dev(self, "Weasel stopped providing config block(%d)\n", cfg_size);
+			aprint_error_dev(self,
+			    "Weasel stopped providing config block(%d)\n",
+			    cfg_size);
 			return;
 		}
 		*cp++ = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
@@ -175,14 +180,15 @@ weasel_pci_attach(device_t parent, device_t self, void *aux)
 	if (vers != NULL)
 		printf("%s: %s mode\n", device_xname(self), mode);
 	else
-		printf("%s: unknown config version 0x%02x\n", device_xname(self),
-		    cfg.cfg_version);
+		printf("%s: unknown config version 0x%02x\n",
+		    device_xname(self), cfg.cfg_version);
 
 	/*
 	 * Fetch sw version.
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_SW_VER)) {
-		aprint_error_dev(self, "didn't reply to software version query.\n");
+		aprint_error_dev(self,
+		    "didn't reply to software version query.\n");
 	}
 	else {
 		v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
@@ -196,8 +202,10 @@ weasel_pci_attach(device_t parent, device_t self, void *aux)
 				printf("%s: Weasel stopped providing version\n",
 				    device_xname(self));
 			}
-			*cp++ = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
-			bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
+			*cp++ = bus_space_read_1(sc->sc_st, sc->sc_sh,
+			    WEASEL_DATA_RD);
+			bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS,
+			    0);
 		}
 		printf("%s: sw: %s", device_xname(self), buf);
 	}
@@ -206,7 +214,8 @@ weasel_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_L_VER)) {
 		aprint_normal("\n");
-		aprint_error_dev(self, "didn't reply to logic version query.\n");
+		aprint_error_dev(self,
+		    "didn't reply to logic version query.\n");
 	}
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 	v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
@@ -216,7 +225,8 @@ weasel_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_VB_VER)) {
 		aprint_normal("\n");
-		aprint_error_dev(self, "didn't reply to vga bios version query.\n");
+		aprint_error_dev(self,
+		    "didn't reply to vga bios version query.\n");
 	}
 	v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
@@ -226,7 +236,8 @@ weasel_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_HW_VER)) {
 		aprint_normal("\n");
-		aprint_error_dev(self, "didn't reply to hardware version query.\n");
+		aprint_error_dev(self,
+		    "didn't reply to hardware version query.\n");
 	}
 	v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
@@ -274,7 +285,8 @@ static int
 weasel_issue_command(struct weasel_softc *sc, uint8_t cmd)
 {
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_WR, cmd);
-	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_HOST_STATUS, OS_HS_WEASEL_READ);
+	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_HOST_STATUS,
+	    OS_HS_WEASEL_READ);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 	return (weasel_wait_response(sc));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.16 2011/07/10 23:32:03 matt Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.16.12.1 2017/12/03 11:36:29 jdolecek Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,13 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.16 2011/07/10 23:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.16.12.1 2017/12/03 11:36:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <sbmips/swarm.h>
+#include <evbmips/sbmips/swarm.h>
 #include <mips/sibyte/dev/sbsmbusvar.h>
 
 #include <dev/smbus/x1241reg.h>

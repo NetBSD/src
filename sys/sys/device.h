@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.142.2.3 2014/08/20 00:04:44 tls Exp $ */
+/* $NetBSD: device.h,v 1.142.2.4 2017/12/03 11:39:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -139,6 +139,11 @@ struct device_suspensor {
 
 #define	DEVICE_SUSPENSORS_MAX	16
 
+struct device_garbage {
+	device_t	*dg_devs;
+	int		dg_ndevs;
+};
+
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -184,10 +189,7 @@ struct device {
 	    *dv_bus_suspensors[DEVICE_SUSPENSORS_MAX],
 	    *dv_driver_suspensors[DEVICE_SUSPENSORS_MAX],
 	    *dv_class_suspensors[DEVICE_SUSPENSORS_MAX];
-	struct device_garbage {
-		device_t	*dg_devs;
-		int		dg_ndevs;
-	} dv_garbage;
+	struct device_garbage dv_garbage;
 };
 
 /* dv_flags */
@@ -349,6 +351,7 @@ struct cfattach __CONCAT(name,_ca) = {					\
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
 #define	DETACH_QUIET	0x02		/* don't print a notice */
 #define	DETACH_SHUTDOWN	0x04		/* detach because of system shutdown */
+#define	DETACH_POWEROFF	0x08		/* going to power off; power down devices */
 
 struct cfdriver {
 	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
@@ -412,9 +415,11 @@ struct pdevinit {
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern device_t booted_device;		/* the device we booted from */
+extern const char *booted_method;	/* the method the device was found */
 extern int booted_partition;		/* the partition on that device */
 extern daddr_t booted_startblk;		/* or the start of a wedge */
 extern uint64_t booted_nblks;		/* and the size of that wedge */
+extern char *bootspec;			/* and the device/wedge name */
 
 struct vnode *opendisk(device_t);
 int getdisksize(struct vnode *, uint64_t *, unsigned int *);
@@ -428,6 +433,7 @@ int	config_fini_component(struct cfdriver *const*,
 			      const struct cfattachinit *, struct cfdata *);
 void	config_init_mi(void);
 void	drvctl_init(void);
+void	drvctl_fini(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);
@@ -478,6 +484,7 @@ void	config_create_mountrootthreads(void);
 
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
+void	config_finalize_mountroot(void);
 
 void	config_twiddle_init(void);
 void	config_twiddle_fn(void *);

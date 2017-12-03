@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.161.6.3 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.161.6.4 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.161.6.3 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.161.6.4 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -329,7 +329,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 	 */
 	if (spp == NULL || spp->spi_priority != priority) {
 		spp = newspp;  /* use newspp! */
-		UVMHIST_LOG(pdhist, "created new swappri = %d",
+		UVMHIST_LOG(pdhist, "created new swappri = %jd",
 			    priority, 0, 0, 0);
 
 		spp->spi_priority = priority;
@@ -430,6 +430,15 @@ swapdrum_getsdp(int pgno)
 	return NULL;
 }
 
+void swapsys_lock(krw_t op)
+{
+	rw_enter(&swap_syscall_lock, op);
+}
+
+void swapsys_unlock(void)
+{
+	rw_exit(&swap_syscall_lock);
+}
 
 /*
  * sys_swapctl: main entry point for swapctl(2) system call
@@ -463,7 +472,8 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 */
 	if (SCARG(uap, cmd) == SWAP_NSWAP) {
 		const int nswapdev = uvmexp.nswapdev;
-		UVMHIST_LOG(pdhist, "<- done SWAP_NSWAP=%d", nswapdev, 0, 0, 0);
+		UVMHIST_LOG(pdhist, "<- done SWAP_NSWAP=%jd", nswapdev,
+		    0, 0, 0);
 		*retval = nswapdev;
 		return 0;
 	}
@@ -721,7 +731,7 @@ out:
 	rw_exit(&swap_syscall_lock);
 	kmem_free(userpath, SWAP_PATH_MAX);
 
-	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
+	UVMHIST_LOG(pdhist, "<- done!  error=%jd", error, 0, 0, 0);
 	return (error);
 }
 
@@ -740,6 +750,8 @@ uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 	struct swappri *spp;
 	struct swapdev *sdp;
 	int count = 0;
+
+	KASSERT(rw_lock_held(&swap_syscall_lock));
 
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
@@ -848,7 +860,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	}
 
 	/* XXX this only works for block devices */
-	UVMHIST_LOG(pdhist, "  dev=%d, major(dev)=%d", dev, major(dev), 0,0);
+	UVMHIST_LOG(pdhist, "  dev=%jd, major(dev)=%jd", dev, major(dev), 0, 0);
 
 	/*
 	 * we now need to determine the size of the swap area.   for
@@ -922,7 +934,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		goto bad;
 	}
 
-	UVMHIST_LOG(pdhist, "  dev=%x: size=%d addr=%ld\n", dev, size, addr, 0);
+	UVMHIST_LOG(pdhist, "  dev=%jx: size=%jd addr=%jd", dev, size, addr, 0);
 
 	/*
 	 * now we need to allocate an extent to manage this swap device
@@ -1034,7 +1046,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	int error = 0;
 
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
-	UVMHIST_LOG(pdhist, "  dev=%x, npages=%d", sdp->swd_dev,npages,0,0);
+	UVMHIST_LOG(pdhist, "  dev=%jx, npages=%jd", sdp->swd_dev,npages, 0, 0);
 
 	/* disable the swap area being removed */
 	sdp->swd_flags &= ~SWF_ENABLE;
@@ -1198,8 +1210,8 @@ swstrategy(struct buf *bp)
 	pageno -= sdp->swd_drumoffset;	/* page # on swapdev */
 	bn = btodb((uint64_t)pageno << PAGE_SHIFT); /* convert to diskblock */
 
-	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld",
-		((bp->b_flags & B_READ) == 0) ? "write" : "read",
+	UVMHIST_LOG(pdhist, "  Rd/Wr (0/1) %jd: mapoff=%jx bn=%jx bcount=%jd",
+		((bp->b_flags & B_READ) == 0) ? 1 : 0,
 		sdp->swd_drumoffset, bn, bp->b_bcount);
 
 	/*
@@ -1262,7 +1274,7 @@ swread(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
+	UVMHIST_LOG(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
 	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -1275,7 +1287,7 @@ swwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
+	UVMHIST_LOG(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
@@ -1390,8 +1402,8 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 			sz = resid;
 
 		UVMHIST_LOG(pdhist, "sw_reg_strategy: "
-			    "vp %p/%p offset 0x%x/0x%x",
-			    sdp->swd_vp, vp, byteoff, nbn);
+		    "vp %#jx/%#jx offset 0x%jx/0x%jx",
+		    (uintptr_t)sdp->swd_vp, (uintptr_t)vp, byteoff, nbn);
 
 		/*
 		 * now get a buf structure.   note that the vb_buf is
@@ -1481,8 +1493,9 @@ sw_reg_start(struct swapdev *sdp)
 		sdp->swd_active++;
 
 		UVMHIST_LOG(pdhist,
-		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
-		    bp, bp->b_vp, bp->b_blkno, bp->b_bcount);
+		    "sw_reg_start:  bp %#jx vp %#jx blkno %#jx cnt %jx",
+		    (uintptr_t)bp, (uintptr_t)bp->b_vp, (uintptr_t)bp->b_blkno,
+		    bp->b_bcount);
 		vp = bp->b_vp;
 		KASSERT(bp->b_objlock == vp->v_interlock);
 		if ((bp->b_flags & B_READ) == 0) {
@@ -1520,9 +1533,10 @@ sw_reg_iodone(struct work *wk, void *dummy)
 	KASSERT(&vbp->vb_buf.b_work == wk);
 	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=%x addr=%p",
-	    vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno, vbp->vb_buf.b_data);
-	UVMHIST_LOG(pdhist, "  cnt=%lx resid=%lx",
+	UVMHIST_LOG(pdhist, "  vbp=%#jx vp=%#jx blkno=%jx addr=%#jx",
+	    (uintptr_t)vbp, (uintptr_t)vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
+	    (uintptr_t)vbp->vb_buf.b_data);
+	UVMHIST_LOG(pdhist, "  cnt=%jx resid=%jx",
 	    vbp->vb_buf.b_bcount, vbp->vb_buf.b_resid, 0, 0);
 
 	/*
@@ -1537,7 +1551,7 @@ sw_reg_iodone(struct work *wk, void *dummy)
 	if (vbp->vb_buf.b_error != 0) {
 		/* pass error upward */
 		error = vbp->vb_buf.b_error ? vbp->vb_buf.b_error : EIO;
-		UVMHIST_LOG(pdhist, "  got error=%d !", error, 0, 0, 0);
+		UVMHIST_LOG(pdhist, "  got error=%jd !", error, 0, 0, 0);
 		vnx->vx_error = error;
 	}
 
@@ -1562,8 +1576,8 @@ sw_reg_iodone(struct work *wk, void *dummy)
 	} else if (pbp->b_resid == 0) {
 		KASSERT(vnx->vx_pending == 0);
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
-			UVMHIST_LOG(pdhist, "  iodone error=%d !",
-			    pbp, vnx->vx_error, 0, 0);
+			UVMHIST_LOG(pdhist, "  iodone, pbp=%#jx error=%jd !",
+			    (uintptr_t)pbp, vnx->vx_error, 0, 0);
 			biodone(pbp);
 			pool_put(&vndxfer_pool, vnx);
 		}
@@ -1645,7 +1659,7 @@ ReTry:	/* XXXMRG */
 			mutex_exit(&uvm_swap_data_lock);
 			/* done!  return drum slot number */
 			UVMHIST_LOG(pdhist,
-			    "success!  returning %d slots starting at %d",
+			    "success!  returning %jd slots starting at %jd",
 			    *nslots, result + sdp->swd_drumoffset, 0, 0);
 			return (result + sdp->swd_drumoffset);
 		}
@@ -1710,7 +1724,7 @@ uvm_swap_markbad(int startslot, int nslots)
 	KASSERT(uvmexp.swpgonly >= nslots);
 	uvmexp.swpgonly -= nslots;
 	sdp->swd_npgbad += nslots;
-	UVMHIST_LOG(pdhist, "now %d bad", sdp->swd_npgbad, 0,0,0);
+	UVMHIST_LOG(pdhist, "now %jd bad", sdp->swd_npgbad, 0,0,0);
 	mutex_exit(&uvm_swap_data_lock);
 }
 
@@ -1726,7 +1740,7 @@ uvm_swap_free(int startslot, int nslots)
 	struct swapdev *sdp;
 	UVMHIST_FUNC("uvm_swap_free"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "freeing %d slots starting at %d", nslots,
+	UVMHIST_LOG(pdhist, "freeing %jd slots starting at %jd", nslots,
 	    startslot, 0, 0);
 
 	/*
@@ -1817,7 +1831,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	bool write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "<- called, startslot=%d, npages=%d, flags=%d",
+	UVMHIST_LOG(pdhist, "<- called, startslot=%jd, npages=%jd, flags=%jd",
 	    startslot, npages, flags, 0);
 
 	write = (flags & B_READ) == 0;
@@ -1888,8 +1902,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	}
 	UVMHIST_LOG(pdhist,
-	    "about to start io: data = %p blkno = 0x%x, bcount = %ld",
-	    bp->b_data, bp->b_blkno, bp->b_bcount, 0);
+	    "about to start io: data = %#jx blkno = 0x%jx, bcount = %jd",
+	    (uintptr_t)bp->b_data, bp->b_blkno, bp->b_bcount, 0);
 
 	/*
 	 * now we start the I/O, and if async, return.
@@ -1921,7 +1935,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		mutex_exit(swapdev_vp->v_interlock);
 	}
 	putiobuf(bp);
-	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
+	UVMHIST_LOG(pdhist, "<- done (sync)  error=%jd", error, 0, 0, 0);
 
 	return (error);
 }

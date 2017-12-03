@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_bits.h,v 1.2.18.1 2013/06/23 06:20:29 tls Exp $ */
+/* $NetBSD: ctype_bits.h,v 1.2.18.2 2017/12/03 11:39:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,6 +39,8 @@
 
 #ifndef _SYS_CTYPE_BITS_H_
 #define _SYS_CTYPE_BITS_H_
+
+#include <sys/cdefs.h>
 
 #define	_CTYPE_A	0x0001	/* Alpha     */
 #define	_CTYPE_C	0x0002	/* Control   */

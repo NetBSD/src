@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_sableio.c,v 1.12.6.1 2014/08/20 00:02:42 tls Exp $ */
+/* $NetBSD: fdc_sableio.c,v 1.12.6.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,14 +31,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.12.6.1 2014/08/20 00:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.12.6.2 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/rnd.h>
 
 #include <sys/bus.h>
 #include <machine/intr.h>

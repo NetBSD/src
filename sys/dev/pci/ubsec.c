@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.27.6.3 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.27.6.4 2017/12/03 11:37:29 jdolecek Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.27.6.3 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.27.6.4 2017/12/03 11:37:29 jdolecek Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.27.6.3 2014/08/20 00:03:48 tls Exp $");
 #else
  #include <sys/cprng.h>
  #include <sys/md5.h>
+ #include <sys/rndpool.h>
+ #include <sys/rndsource.h>
 #endif
 #include <sys/sha1.h>
 
@@ -82,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.27.6.3 2014/08/20 00:03:48 tls Exp $");
 /*
  * Prototypes and count for the pci_device structure
  */
-static	int ubsec_probe(device_t, cfdata_t, void *);
+static	int  ubsec_probe(device_t, cfdata_t, void *);
 static	void ubsec_attach(device_t, device_t, void *);
 static	int  ubsec_detach(device_t, int);
 static	int  ubsec_sysctl_init(void);
@@ -437,7 +439,8 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		q = (struct ubsec_q *)malloc(sizeof(struct ubsec_q),
 		    M_DEVBUF, M_ZERO|M_NOWAIT);
 		if (q == NULL) {
-			aprint_error_dev(self, "can't allocate queue buffers\n");
+			aprint_error_dev(self,
+			    "can't allocate queue buffers\n");
 			break;
 		}
 
@@ -525,10 +528,11 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 #endif
  skip_rng:
 		if (sc->sc_rnghz)
-			aprint_normal_dev(self, "random number generator enabled\n");
+			aprint_normal_dev(self,
+			    "random number generator enabled\n");
 		else
-			aprint_error_dev(self, "WARNING: random number generator "
-			    "disabled\n");
+			aprint_error_dev(self,
+			    "WARNING: random number generator disabled\n");
 	}
 #endif /* UBSEC_NO_RNG */
 
@@ -694,7 +698,8 @@ ubsec_intr(void *arg)
 			q = SIMPLEQ_FIRST(&sc->sc_qchip);
 			dmap = q->q_dma;
 
-			if ((dmap->d_dma->d_mcr.mcr_flags & htole16(UBS_MCR_DONE)) == 0)
+			if ((dmap->d_dma->d_mcr.mcr_flags
+			    & htole16(UBS_MCR_DONE)) == 0)
 				break;
 
 			q = SIMPLEQ_FIRST(&sc->sc_qchip);
@@ -820,8 +825,8 @@ ubsec_intr(void *arg)
 		int wkeup = sc->sc_needwakeup & (CRYPTO_SYMQ|CRYPTO_ASYMQ);
 #ifdef UBSEC_DEBUG
 		if (ubsec_debug)
-			printf("%s: wakeup crypto (%x)\n", device_xname(sc->sc_dev),
-				sc->sc_needwakeup);
+			printf("%s: wakeup crypto (%x)\n",
+			    device_xname(sc->sc_dev), sc->sc_needwakeup);
 #endif /* UBSEC_DEBUG */
 		sc->sc_needwakeup &= ~wkeup;
 		crypto_unblock(sc->sc_cid, wkeup);
@@ -874,7 +879,8 @@ ubsec_feed(struct ubsec_softc *sc)
 		goto feed1;
 	ubsecstats.hst_totbatch += npkts-1;
 
-	if ((stat = READ_REG(sc, BS_STAT)) & (BS_STAT_MCR1_FULL | BS_STAT_DMAERR)) {
+	if ((stat = READ_REG(sc, BS_STAT))
+	    & (BS_STAT_MCR1_FULL | BS_STAT_DMAERR)) {
 		if (stat & BS_STAT_DMAERR) {
 			ubsec_totalreset(sc);
 			ubsecstats.hst_dmaerr++;
@@ -890,7 +896,8 @@ ubsec_feed(struct ubsec_softc *sc)
 	/* XXX temporary aggregation statistics reporting code */
 	if (max < npkts) {
 		max = npkts;
-		printf("%s: new max aggregate %d\n", device_xname(sc->sc_dev), max);
+		printf("%s: new max aggregate %d\n", device_xname(sc->sc_dev),
+		    max);
 	}
 #endif /* UBSEC_DEBUG */
 
@@ -920,7 +927,8 @@ ubsec_feed(struct ubsec_softc *sc)
 		v = ((void *)&q2->q_dma->d_dma->d_mcr);
 		v = (char*)v + (sizeof(struct ubsec_mcr) -
 				 sizeof(struct ubsec_mcr_add));
-		memcpy(&q->q_dma->d_dma->d_mcradd[i], v, sizeof(struct ubsec_mcr_add));
+		memcpy(&q->q_dma->d_dma->d_mcradd[i], v,
+		    sizeof(struct ubsec_mcr_add));
 		q->q_stacked_mcr[i] = q2;
 	}
 	q->q_dma->d_dma->d_mcr.mcr_pkts = htole16(npkts);
@@ -937,7 +945,8 @@ ubsec_feed(struct ubsec_softc *sc)
 
 feed1:
 	while (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
-		if ((stat = READ_REG(sc, BS_STAT)) & (BS_STAT_MCR1_FULL | BS_STAT_DMAERR)) {
+		if ((stat = READ_REG(sc, BS_STAT))
+		    & (BS_STAT_MCR1_FULL | BS_STAT_DMAERR)) {
 			if (stat & BS_STAT_DMAERR) {
 				ubsec_totalreset(sc);
 				ubsecstats.hst_dmaerr++;
@@ -1162,7 +1171,8 @@ ubsec_freesession(void *arg, u_int64_t tid)
 
 #ifdef __FreeBSD__ /* Ugly gratuitous changes to bus_dma */
 static void
-ubsec_op_cb(void *arg, bus_dma_segment_t *seg, int nsegs, bus_size_t mapsize, int error)
+ubsec_op_cb(void *arg, bus_dma_segment_t *seg, int nsegs, bus_size_t mapsize,
+    int error)
 {
 	struct ubsec_operand *op = arg;
 
@@ -1412,9 +1422,11 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 #ifdef UBSEC_DEBUG
 		if (ubsec_debug) {
 			printf("mac: skip %d, len %d, inject %d\n",
-			       maccrd->crd_skip, maccrd->crd_len, maccrd->crd_inject);
+			    maccrd->crd_skip, maccrd->crd_len,
+			    maccrd->crd_inject);
 			printf("enc: skip %d, len %d, inject %d\n",
-			       enccrd->crd_skip, enccrd->crd_len, enccrd->crd_inject);
+			    enccrd->crd_skip, enccrd->crd_len,
+			    enccrd->crd_inject);
 			printf("src: skip %d, len %d\n", sskip, stheend);
 			printf("dst: skip %d, len %d\n", dskip, dtheend);
 			printf("ubs: coffset %d, pktlen %d, cpskip %d, cpoffset %d\n",
@@ -1526,9 +1538,13 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			}
 			if (q->q_dst_map == NULL) {
 				if (q->q_cached_dst_map == NULL) {
-					/* XXX: ``what the heck's that'' 0xfff0? */
-					if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
-					    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
+					/*
+					 * XXX: ``what the heck's that''
+					 * 0xfff0?
+					 */
+					if (bus_dmamap_create(sc->sc_dmat,
+					    0xfff0, UBS_MAX_SCATTER, 0xfff0, 0,
+					    BUS_DMA_NOWAIT,
 					    &q->q_cached_dst_map) != 0) {
 						ubsecstats.hst_nomap++;
 						err = ENOMEM;
@@ -1578,7 +1594,8 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 					if ((m->m_flags & M_EXT) == 0) {
 						m_free(m);
 						ubsecstats.hst_nomcl++;
-						err = sc->sc_nqueue ? ERESTART : ENOMEM;
+						err = sc->sc_nqueue
+						    ? ERESTART : ENOMEM;
 						goto errout;
 					}
 					len = MCLBYTES;
@@ -2092,7 +2109,8 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		bus_dmamap_sync(sc->sc_dmat, rp->rpr_msgout.dma_map, 0,
 		    rp->rpr_msgout.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		len = (krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_nbits + 7) / 8;
+		len = (krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_nbits + 7)
+		    / 8;
 		bcopy(rp->rpr_msgout.dma_vaddr,
 		    krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_p, len);
 
@@ -2377,7 +2395,8 @@ ubsec_free_q(struct ubsec_softc *sc, struct ubsec_q *q)
 		if(q->q_stacked_mcr[i]) {
 			q2 = q->q_stacked_mcr[i];
 
-			if ((q2->q_dst_m != NULL) && (q2->q_src_m != q2->q_dst_m))
+			if ((q2->q_dst_m != NULL)
+			    && (q2->q_src_m != q2->q_dst_m))
 				m_freem(q2->q_dst_m);
 
 			crp = (struct cryptop *)q2->q_crp;
@@ -2658,11 +2677,11 @@ ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp,
 #ifdef DIAGNOSTIC
 	/* Misaligned output buffer will hang the chip. */
 	if ((letoh32(mcr->mcr_opktbuf.pb_addr) & 3) != 0)
-		panic("%s: modexp invalid addr 0x%x",
-		    device_xname(sc->sc_dev), letoh32(mcr->mcr_opktbuf.pb_addr));
+		panic("%s: modexp invalid addr 0x%x", device_xname(sc->sc_dev),
+		    letoh32(mcr->mcr_opktbuf.pb_addr));
 	if ((letoh32(mcr->mcr_opktbuf.pb_len) & 3) != 0)
-		panic("%s: modexp invalid len 0x%x",
-		    device_xname(sc->sc_dev), letoh32(mcr->mcr_opktbuf.pb_len));
+		panic("%s: modexp invalid len 0x%x",  device_xname(sc->sc_dev),
+		    letoh32(mcr->mcr_opktbuf.pb_len));
 #endif
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
@@ -2709,7 +2728,8 @@ errout:
 		if (me->me_q.q_mcr.dma_map != NULL)
 			ubsec_dma_free(sc, &me->me_q.q_mcr);
 		if (me->me_q.q_ctx.dma_map != NULL) {
-			memset(me->me_q.q_ctx.dma_vaddr, 0, me->me_q.q_ctx.dma_size);
+			memset(me->me_q.q_ctx.dma_vaddr, 0,
+			    me->me_q.q_ctx.dma_size);
 			ubsec_dma_free(sc, &me->me_q.q_ctx);
 		}
 		if (me->me_M.dma_map != NULL) {
@@ -2864,11 +2884,11 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 #ifdef DIAGNOSTIC
 	/* Misaligned output buffer will hang the chip. */
 	if ((letoh32(mcr->mcr_opktbuf.pb_addr) & 3) != 0)
-		panic("%s: modexp invalid addr 0x%x",
-		    device_xname(sc->sc_dev), letoh32(mcr->mcr_opktbuf.pb_addr));
+		panic("%s: modexp invalid addr 0x%x", device_xname(sc->sc_dev),
+		    letoh32(mcr->mcr_opktbuf.pb_addr));
 	if ((letoh32(mcr->mcr_opktbuf.pb_len) & 3) != 0)
-		panic("%s: modexp invalid len 0x%x",
-		    device_xname(sc->sc_dev), letoh32(mcr->mcr_opktbuf.pb_len));
+		panic("%s: modexp invalid len 0x%x", device_xname(sc->sc_dev),
+		    letoh32(mcr->mcr_opktbuf.pb_len));
 #endif
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
@@ -2913,7 +2933,8 @@ errout:
 		if (me->me_q.q_mcr.dma_map != NULL)
 			ubsec_dma_free(sc, &me->me_q.q_mcr);
 		if (me->me_q.q_ctx.dma_map != NULL) {
-			memset(me->me_q.q_ctx.dma_vaddr, 0, me->me_q.q_ctx.dma_size);
+			memset(me->me_q.q_ctx.dma_vaddr, 0,
+			    me->me_q.q_ctx.dma_size);
 			ubsec_dma_free(sc, &me->me_q.q_ctx);
 		}
 		if (me->me_M.dma_map != NULL) {
@@ -3109,11 +3130,13 @@ errout:
 		if (rp->rpr_q.q_mcr.dma_map != NULL)
 			ubsec_dma_free(sc, &rp->rpr_q.q_mcr);
 		if (rp->rpr_msgin.dma_map != NULL) {
-			memset(rp->rpr_msgin.dma_vaddr, 0, rp->rpr_msgin.dma_size);
+			memset(rp->rpr_msgin.dma_vaddr, 0,
+			    rp->rpr_msgin.dma_size);
 			ubsec_dma_free(sc, &rp->rpr_msgin);
 		}
 		if (rp->rpr_msgout.dma_map != NULL) {
-			memset(rp->rpr_msgout.dma_vaddr, 0, rp->rpr_msgout.dma_size);
+			memset(rp->rpr_msgout.dma_vaddr, 0,
+			    rp->rpr_msgout.dma_size);
 			ubsec_dma_free(sc, &rp->rpr_msgout);
 		}
 		free(rp, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.10 2012/02/19 21:07:00 rmind Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.10.2.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -64,7 +64,7 @@ typedef struct {
 /*
  * Macro for manipulating signal masks.
  */
-#define __sigmask(n)		(1 << (((unsigned int)(n) - 1) & 31))
+#define __sigmask(n)		(1U << (((unsigned int)(n) - 1) & 31))
 #define	__sigword(n)		(((unsigned int)(n) - 1) >> 5)
 #define	__sigaddset(s, n)	((s)->__bits[__sigword(n)] |= __sigmask(n))
 #define	__sigdelset(s, n)	((s)->__bits[__sigword(n)] &= ~__sigmask(n))

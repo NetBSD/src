@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.1 2011/03/09 23:10:07 joerg Exp $	*/
+/*	$NetBSD: tls.h,v 1.1.20.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,6 @@ struct tls_tcb {
 __BEGIN_PUBLIC_DECLS
 struct tls_tcb	*_rtld_tls_allocate(void);
 void	 	 _rtld_tls_free(struct tls_tcb *);
-void		 _rtld_tls_static_setup(void);
 __END_PUBLIC_DECLS
 #endif /* __HAVE_TLS_VARIANT_I || __HAVE_TLS_VARIANT_II */
 

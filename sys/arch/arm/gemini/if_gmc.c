@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.5.2.1 2013/06/23 06:20:00 tls Exp $ */
+/* $NetBSD: if_gmc.c,v 1.5.2.2 2017/12/03 11:35:53 jdolecek Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.5.2.1 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.5.2.2 2017/12/03 11:35:53 jdolecek Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -711,7 +711,7 @@ gmc_intr(void *arg)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS, status);
 
 	if (do_ifstart)
-		gmc_ifstart(&sc->sc_if);
+		if_schedule_deferred_start(&sc->sc_if);
 
 	aprint_debug_dev(sc->sc_dev, "gmac_intr: sts=%#x/%#x/%#x/%#x/%#x\n",
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_STATUS),
@@ -795,6 +795,7 @@ gmc_attach(device_t parent, device_t self, void *aux)
 	   gmc_mediastatus);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddrs[gma->gma_port]);
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
 	    gma->gma_phy, MII_OFFSET_ANY, 0);

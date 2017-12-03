@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.h,v 1.6 2008/05/10 15:31:04 martin Exp $ */
+/* $NetBSD: fpu.h,v 1.6.42.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -91,8 +91,8 @@
 #define	IEEE_TRAP_ENABLE_INV _FP_C_DEF(1)
 
 #define	IEEE_INHERIT _FP_C_DEF(14)
-#define	IEEE_MAP_UMZ _FP_C_DEF(13)
-#define	IEEE_MAP_DMZ _FP_C_DEF(12)
+#define	IEEE_MAP_UMZ _FP_C_DEF(13)	/* Map underflowed outputs to zero */
+#define	IEEE_MAP_DMZ _FP_C_DEF(12)	/* Map denormal inputs to zero */
 
 #define FP_C_MIRRORED (IEEE_STATUS_INE | IEEE_STATUS_UNF | IEEE_STATUS_OVF\
 				| IEEE_STATUS_DZE | IEEE_STATUS_INV)

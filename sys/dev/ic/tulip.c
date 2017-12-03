@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.181.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: tulip.c,v 1.181.2.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.181.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.181.2.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -391,16 +391,16 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct tulip_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
 	    1, &sc->sc_cdnseg, 0)) != 0) {
-		aprint_error_dev(self, "unable to allocate control data, error = %d\n",
-		    error);
+		aprint_error_dev(self,
+		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg,
 	    sizeof(struct tulip_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(self, "unable to map control data, error = %d\n",
-		    error);
+		aprint_error_dev(self,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
@@ -408,15 +408,17 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	    sizeof(struct tulip_control_data), 1,
 	    sizeof(struct tulip_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
 		sc->sc_cddmamap = NULL;
-		aprint_error_dev(self, "unable to create control data DMA map, "
-		    "error = %d\n", error);
+		aprint_error_dev(self,
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct tulip_control_data), NULL,
 	    0)) != 0) {
-		aprint_error_dev(self, "unable to load control data DMA map, error = %d\n",
+		aprint_error_dev(self,
+		    "unable to load control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
 	}
@@ -449,8 +451,9 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 		    sc->sc_ntxsegs, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			sc->sc_txsoft[i].txs_dmamap = NULL;
-			aprint_error_dev(self, "unable to create tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(self,
+			    "unable to create tx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_4;
 		}
 	}
@@ -462,8 +465,9 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 		        sc->sc_rxsoft[i].rxs_dmamap = NULL;
-			aprint_error_dev(self, "unable to create rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(self,
+			    "unable to create rx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -520,6 +524,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, tlp_ifflags_cb);
 
@@ -592,7 +597,7 @@ tlp_detach(struct tulip_softc *sc)
 	struct tulip_rxsoft *rxs;
 	struct tulip_txsoft *txs;
 	device_t self = sc->sc_dev;
-	int i;
+	int i, s;
 
 	/*
 	 * Succeed now if there isn't any work to do.
@@ -600,9 +605,14 @@ tlp_detach(struct tulip_softc *sc)
 	if ((sc->sc_flags & TULIPF_ATTACHED) == 0)
 		return (0);
 
-	/* Unhook our tick handler. */
-	if (sc->sc_tick)
-		callout_stop(&sc->sc_tick_callout);
+	s = splnet();
+	/* Stop the interface. Callouts are stopped in it. */
+	tlp_stop(ifp, 1);
+	splx(s);
+
+	/* Destroy our callouts. */
+	callout_destroy(&sc->sc_nway_callout);
+	callout_destroy(&sc->sc_tick_callout);
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
 		/* Detach all PHYs */
@@ -928,7 +938,8 @@ tlp_watchdog(struct ifnet *ifp)
 	doing_transmit = (! SIMPLEQ_EMPTY(&sc->sc_txdirtyq));
 
 	if (doing_setup && doing_transmit) {
-		printf("%s: filter setup and transmit timeout\n", device_xname(sc->sc_dev));
+		printf("%s: filter setup and transmit timeout\n",
+		    device_xname(sc->sc_dev));
 		ifp->if_oerrors++;
 	} else if (doing_transmit) {
 		printf("%s: transmit timeout\n", device_xname(sc->sc_dev));
@@ -936,7 +947,8 @@ tlp_watchdog(struct ifnet *ifp)
 	} else if (doing_setup)
 		printf("%s: filter setup timeout\n", device_xname(sc->sc_dev));
 	else
-		printf("%s: spurious watchdog timeout\n", device_xname(sc->sc_dev));
+		printf("%s: spurious watchdog timeout\n",
+		    device_xname(sc->sc_dev));
 
 	(void) tlp_init(ifp);
 
@@ -1153,8 +1165,8 @@ tlp_intr(void *arg)
 				str = "unknown error";
 				break;
 			}
-			aprint_error_dev(sc->sc_dev, "fatal system error: %s\n",
-			    str);
+			aprint_error_dev(sc->sc_dev,
+			    "fatal system error: %s\n", str);
 			(void) tlp_init(ifp);
 			break;
 		}
@@ -1188,7 +1200,7 @@ tlp_intr(void *arg)
 	}
 
 	/* Try to get more packets going. */
-	tlp_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	if (handled)
 		rnd_add_uint32(&sc->sc_rnd_source, status);
@@ -1270,8 +1282,8 @@ tlp_rxintr(struct tulip_softc *sc)
 			rxstat &= errors;
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
-				aprint_error_dev(sc->sc_dev, "receive error: %s\n",	\
-				    str)
+				aprint_error_dev(sc->sc_dev,		\
+				    "receive error: %s\n", str)
 			ifp->if_ierrors++;
 			PRINTERR(TDSTAT_Rx_DE, "descriptor error");
 			PRINTERR(TDSTAT_Rx_RF, "runt frame");
@@ -1345,9 +1357,8 @@ tlp_rxintr(struct tulip_softc *sc)
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*
@@ -1371,12 +1382,6 @@ tlp_rxintr(struct tulip_softc *sc)
 		}
 
 		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
-
-		/*
 		 * We sometimes have to run the 21140 in Hash-Only
 		 * mode.  If we're in that mode, and not in promiscuous
 		 * mode, and we have a unicast packet that isn't for
@@ -1392,7 +1397,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		}
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */
@@ -1808,9 +1813,9 @@ tlp_init(struct ifnet *ifp)
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = tlp_add_rxbuf(sc, i)) != 0) {
-				aprint_error_dev(sc->sc_dev, "unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
-				    i, error);
+				aprint_error_dev(sc->sc_dev,
+				    "unable to allocate or map rx "
+				    "buffer %d, error = %d\n", i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -2169,8 +2174,8 @@ tlp_srom_size(struct tulip_softc *sc)
 	SROM_EMIT(sc, 0);
 
 	if (x < 4 || x > 12) {
-		aprint_debug_dev(sc->sc_dev, "broken MicroWire interface detected; "
-		    "setting SROM size to 1Kb\n");
+		aprint_debug_dev(sc->sc_dev, "broken MicroWire interface "
+		    "detected; setting SROM size to 1Kb\n");
 		return (6);
 	} else {
 		if (tlp_srom_debug)
@@ -2305,8 +2310,8 @@ tlp_add_rxbuf(struct tulip_softc *sc, int idx)
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "can't load rx DMA map %d, error = %d\n",
-		    idx, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load rx DMA map %d, error = %d\n", idx, error);
 		panic("tlp_add_rxbuf");	/* XXX */
 	}
 
@@ -2808,7 +2813,8 @@ tlp_filter_setup(struct tulip_softc *sc)
 	/* Set up a watchdog timer in case the chip flakes out. */
 	ifp->if_timer = 5;
 
-	DPRINTF(sc, ("%s: tlp_filter_setup: returning\n", device_xname(sc->sc_dev)));
+	DPRINTF(sc, ("%s: tlp_filter_setup: returning\n",
+		device_xname(sc->sc_dev)));
 }
 
 /*
@@ -4624,7 +4630,8 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 	}
 
 	if (i == devcnt) {
-		aprint_error_dev(sc->sc_dev, "unable to locate info leaf in SROM\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unable to locate info leaf in SROM\n");
 		return;
 	}
 
@@ -4814,7 +4821,8 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 					break;
 			}
 			if (phy == NULL) {
-				aprint_error_dev(sc->sc_dev, "unable to configure MII\n");
+				aprint_error_dev(sc->sc_dev,
+				    "unable to configure MII\n");
 				break;
 			}
 
@@ -4969,7 +4977,8 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 					break;
 			}
 			if (phy == NULL) {
-				aprint_error_dev(sc->sc_dev, "unable to configure MII\n");
+				aprint_error_dev(sc->sc_dev,
+				    "unable to configure MII\n");
 				break;
 			}
 
@@ -5719,7 +5728,8 @@ tlp_pnic_nway_auto(struct tulip_softc *sc, int waitfor)
 		}
 #if 0
 		if ((reg & PNIC_NWAY_LPAR_MASK) == 0)
-			aprint_error_dev(sc->sc_dev, "autonegotiation failed to complete\n");
+			aprint_error_dev(sc->sc_dev,
+			    "autonegotiation failed to complete\n");
 #endif
 
 		/*
@@ -5756,7 +5766,8 @@ tlp_pnic_nway_auto_timeout(void *arg)
 	TULIP_READ(sc, CSR_PNIC_NWAY);
 #if 0
 	if ((reg & PNIC_NWAY_LPAR_MASK) == 0)
-		aprint_error_dev(sc->sc_dev, "autonegotiation failed to complete\n");
+		aprint_error_dev(sc->sc_dev,
+		    "autonegotiation failed to complete\n");
 #endif
 
 	tlp_pnic_nway_acomp(sc);

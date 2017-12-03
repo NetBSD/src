@@ -1,7 +1,8 @@
-#	$NetBSD: files.union,v 1.2 2010/03/02 16:43:48 pooka Exp $
+#	$NetBSD: files.union,v 1.2.20.1 2017/12/03 11:38:44 jdolecek Exp $
 
 deffs	UNION
 
+define	union: vfs
 file	fs/union/union_subr.c		union
 file	fs/union/union_vfsops.c		union
 file	fs/union/union_vnops.c		union

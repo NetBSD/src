@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.11.14.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.11.14.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11.14.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11.14.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11.14.1 2014/08/20 00:03:29 tls
 #include <machine/mpbiosvar.h>
 #endif
 
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 void *
 pciide_machdep_compat_intr_establish(device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *),
@@ -69,12 +70,17 @@ pciide_machdep_compat_intr_establish(device_t dev,
 	int irq;
 	void *cookie;
 #if NIOAPIC > 0
-	int mpih;
+	intr_handle_t mpih;
 	char buf[PCI_INTRSTR_LEN];
 #endif
+	char intr_xname[64];
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s %s",
+	    device_xname(dev), PCIIDE_CHANNEL_NAME(chan));
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
-	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg);
+	cookie = isa_intr_establish_xname(NULL, irq, IST_EDGE, IPL_BIO,
+	    func, arg, intr_xname);
 	if (cookie == NULL)
 		return NULL;
 #if NIOAPIC > 0
@@ -91,10 +97,14 @@ pciide_machdep_compat_intr_establish(device_t dev,
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return cookie;
 }
+#endif /* __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH */
 
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
 void
-pciide_machdep_compat_intr_disestablish(device_t dev, pci_chipset_tag_t pc, int chan, void *cookie)
+pciide_machdep_compat_intr_disestablish(device_t dev, pci_chipset_tag_t pc,
+    int chan, void *cookie)
 {
 	isa_intr_disestablish(NULL, cookie);
 	return;
 }
+#endif /* __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH */

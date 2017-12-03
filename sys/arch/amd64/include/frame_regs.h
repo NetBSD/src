@@ -1,4 +1,4 @@
-/*	$NetBSD: frame_regs.h,v 1.4 2008/02/06 22:02:17 dsl Exp $	*/
+/*	$NetBSD: frame_regs.h,v 1.4.56.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 #ifndef _AMD64_FRAME_REGS_H_
 #define _AMD64_FRAME_REGS_H_
@@ -11,8 +11,8 @@
  * has been changed to improve syscall efficiency.
  *
  * Notes:
- * 1) gdb (src/gnu/dist/gdb6/gdb/amd64nbsd-tdep.c) has a lookup table that
- *    assumes the __greg_t ordering.
+ * 1) gdb (amd64nbsd-tdep.c) has a lookup table that assumes the __greg_t 
+ *    ordering.
  * 2) src/lib/libc/arch/x86_64/gen/makecontext.c assumes that the first
  *    6 entries in the __greg_t array match the registers used to pass
  *    function arguments.
@@ -29,38 +29,40 @@
  * than 6 args (SYS_MAXSYSARGS is 8, + 2 entries for SYS___SYSCALL).
  */
 #define _FRAME_REG(greg, freg) 	\
-	greg(rdi, RDI, 0)	\
-	greg(rsi, RSI, 1)	\
-	greg(rdx, RDX, 2)	\
-	greg(r10, R10, 6)	\
-	greg(r8,  R8,  4)	\
-	greg(r9,  R9,  5)	\
-	freg(arg6, @,  @)	/* syscall arg from stack */ \
-	freg(arg7, @,  @)	/* syscall arg from stack */ \
-	freg(arg8, @,  @)	/* syscall arg from stack */ \
-	freg(arg9, @,  @)	/* syscall arg from stack */ \
-	greg(rcx, RCX, 3)	\
-	greg(r11, R11, 7)	\
-	greg(r12, R12, 8)	\
-	greg(r13, R13, 9)	\
-	greg(r14, R14, 10)	\
-	greg(r15, R15, 11)	\
-	greg(rbp, RBP, 12)	\
-	greg(rbx, RBX, 13)	\
-	greg(rax, RAX, 14)	\
-	greg(gs,  GS,  15)	\
-	greg(fs,  FS,  16)	\
-	greg(es,  ES,  17)	\
-	greg(ds,  DS,  18)	\
-	greg(trapno, TRAPNO, 19)	\
-	/* below portion defined in hardware */ \
-	greg(err, ERR, 20)	/* Dummy inserted if not defined */ \
-	greg(rip, RIP, 21)	\
-	greg(cs,  CS,  22)	\
-	greg(rflags, RFLAGS, 23)	\
+	greg(rdi, RDI, 0)	/* tf_rdi */ \
+	greg(rsi, RSI, 1)	/* tf_rsi */ \
+	greg(rdx, RDX, 2)	/* tf_rdx */ \
+	greg(r10, R10, 6)	/* tf_r10 */ \
+	greg(r8,  R8,  4)	/* tf_r8 */ \
+	greg(r9,  R9,  5)	/* tf_r9 */ \
+	freg(arg6, @,  @)	/* tf_arg6: syscall arg from stack */ \
+	freg(arg7, @,  @)	/* tf_arg7: syscall arg from stack */ \
+	freg(arg8, @,  @)	/* tf_arg8: syscall arg from stack */ \
+	freg(arg9, @,  @)	/* tf_arg9: syscall arg from stack */ \
+	greg(rcx, RCX, 3)	/* tf_rcx */ \
+	greg(r11, R11, 7)	/* tf_r11 */ \
+	greg(r12, R12, 8)	/* tf_r12 */ \
+	greg(r13, R13, 9)	/* tf_r13 */ \
+	greg(r14, R14, 10)	/* tf_r14 */ \
+	greg(r15, R15, 11)	/* tf_r15 */ \
+	greg(rbp, RBP, 12)	/* tf_rbp */ \
+	greg(rbx, RBX, 13)	/* tf_rbx */ \
+	greg(rax, RAX, 14)	/* tf_rax */ \
+	greg(gs,  GS,  15)	/* tf_gs */ \
+	greg(fs,  FS,  16)	/* tf_fs */ \
+	greg(es,  ES,  17)	/* tf_es */ \
+	greg(ds,  DS,  18)	/* tf_ds */ \
+	greg(trapno, TRAPNO,	/* tf_trapno */ \
+	    19) \
+	/* Below portion defined in hardware */ \
+	greg(err, ERR, 20)	/* tf_err: Dummy inserted if not defined */ \
+	greg(rip, RIP, 21)	/* tf_rip */ \
+	greg(cs,  CS,  22)	/* tf_cs */ \
+	greg(rflags, RFLAGS,	/* tf_rflags */ \
+	    23) \
 	/* These are pushed unconditionally on the x86-64 */ \
-	greg(rsp, RSP, 24)	\
-	greg(ss,  SS,  25)
+	greg(rsp, RSP, 24)	/* tf_rsp */ \
+	greg(ss,  SS,  25)	/* tf_ss */
 
 #define _FRAME_NOREG(reg, REG, idx)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.25 2011/11/19 22:51:30 tls Exp $
+#	$NetBSD: files.opencrypto,v 1.25.8.1 2017/12/03 11:39:06 jdolecek Exp $
 #
 #
 
@@ -28,3 +28,4 @@ file	opencrypto/cryptodev.c		crypto
 file	opencrypto/ocryptodev.c		crypto & compat_50
 
 defflag opt_ocf.h	CRYPTO_DEBUG CRYPTO_TIMING
+defparam opt_ocf.h	CRYPTO_RET_Q_MAXLEN CRYPTO_RET_KQ_MAXLEN

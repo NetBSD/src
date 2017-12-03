@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.5.6.1 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.5.6.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,12 +28,12 @@
  */
 
 /*
- * Machine-specific definitions for TurboChannel support.
+ * Machine-specific definitions for TURBOchannel support.
  *
  * This file must typedef the following types:
  *
- *	tc_addr_t	TurboChannel bus address
- *	tc_offset_t	TurboChannel bus address difference (offset)
+ *	tc_addr_t	TURBOchannel bus address
+ *	tc_offset_t	TURBOchannel bus address difference (offset)
  *
  * This file must prototype or define the following functions
  * or macros (one or more of which may be no-ops):
@@ -45,12 +45,12 @@
  *			before must complete before any CPU<->memory
  *			writes after).
  *	tc_syncbus()	sync TC bus; make sure CPU writes are
- *			propagated across the TurboChannel bus.
+ *			propagated across the TURBOchannel bus.
  *	tc_badaddr()	return non-zero if the given address is invalid.
  *	TC_DENSE_TO_SPARSE()
  *			convert the given physical address in
- *			TurboChannel dense space to the corresponding
- *			address in TurboChannel sparse space.
+ *			TURBOchannel dense space to the corresponding
+ *			address in TURBOchannel sparse space.
  *	TC_PHYS_TO_UNCACHED()
  *			convert the given system memory physical address
  *			to the physical address of the corresponding

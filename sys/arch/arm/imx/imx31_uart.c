@@ -34,9 +34,14 @@
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 
+static int imx31_uart_match(device_t, struct cfdata *, void *);
+static void imx31_uart_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(imx31_uart, sizeof(struct imxuart_softc),
+    imx31_uart_match, imx31_uart_attach, NULL, NULL);
 
 int
-imxuart_match(device_t parent, struct cfdata *cf, void *aux)
+imx31_uart_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct aips_attach_args * const aipsa = aux;
 
@@ -53,11 +58,11 @@ imxuart_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 void
-imxuart_attach(device_t parent, device_t self, void *aux)
+imx31_uart_attach(device_t parent, device_t self, void *aux)
 {
 	struct aips_attach_args * aa = aux;
 
-	imxuart_attach_common(parent, self, 
+	imxuart_attach_common(parent, self,
 	    aa->aipsa_memt, aa->aipsa_addr, aa->aipsa_size, aa->aipsa_intr, 0);
 }
 

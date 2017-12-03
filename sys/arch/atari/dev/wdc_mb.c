@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.38 2012/07/31 15:50:32 bouyer Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.38.2.1 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38 2012/07/31 15:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.38.2.1 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,6 @@ struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
 	struct ata_channel *sc_chanlist[1];
 	struct ata_channel sc_channel;
-	struct ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
 	void *sc_ih;
 };
@@ -87,8 +86,6 @@ int
 wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	static int wdc_matched = 0;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0, i;
 	uint8_t sv_ierb;
@@ -97,11 +94,6 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 		return 0;
 	if (!atari_realconfig)
 		return 0;
-
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
 
 	wdr.cmd_iot = wdr.ctl_iot = mb_alloc_bus_space_tag();
 	if (wdr.cmd_iot == NULL)
@@ -117,7 +109,7 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 		    i * 4, 4, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh, FALCON_WD_AUX, 4,
 	    &wdr.ctl_ioh))
@@ -135,7 +127,7 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 	if (machineid & ATARI_FALCON)
 		ym2149_ser2(0);
 
-	result = wdcprobe(&ch);
+	result = wdcprobe(&wdr);
 
 	MFP->mf_ierb = sv_ierb;
 
@@ -207,8 +199,8 @@ wdc_mb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_channel.ch_queue = &sc->sc_chqueue;
-	wdc_init_shadow_regs(&sc->sc_channel);
+
+	wdc_init_shadow_regs(wdr);
 
 	/*
 	 * Setup & enable disk related interrupts.
@@ -228,6 +220,7 @@ static int	wd_lock;
 static int
 claim_hw(struct ata_channel *chp, int maysleep)
 {
+	ata_channel_lock_owned(chp);
 
 	if (wd_lock != DMA_LOCK_GRANT) {
 		if (wd_lock == DMA_LOCK_REQ) {
@@ -238,7 +231,7 @@ claim_hw(struct ata_channel *chp, int maysleep)
 		}
 		if (!st_dmagrab((dma_farg)wdcintr,
 		    (dma_farg)(maysleep ? NULL : wdcrestart), chp,
-		    &wd_lock, 1))
+		    &wd_lock, 1, &chp->ch_lock))
 			return 0;
 	}
 	return 1;	
@@ -247,6 +240,7 @@ claim_hw(struct ata_channel *chp, int maysleep)
 static void
 free_hw(struct ata_channel *chp)
 {
+	ata_channel_lock_owned(chp);
 
 	/*
 	 * Flush pending interrupts before giving-up lock

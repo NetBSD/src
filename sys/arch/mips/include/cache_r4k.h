@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.11 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.11.122.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -57,325 +57,323 @@
 
 #if !defined(_LOCORE)
 
+#if 1
 /*
  * cache_r4k_op_line:
  *
  *	Perform the specified cache operation on a single line.
  */
-#define	cache_op_r4k_line(va, op)					\
-do {									\
+#define cache_op_r4k_line(va, op)				\
+{								\
 	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0(%0)				\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
+		".set push"		"\n\t"			\
+		".set noreorder"	"\n\t"			\
+		"cache %0, 0(%[va])"	"\n\t"			\
+		".set pop"					\
+	    :							\
+	    : "i" (op), [va] "r" (va)				\
+	    : "memory");					\
+}
+
+/*
+ * cache_r4k_op_8lines_NN:
+ *
+ *	Perform the specified cache operation on 8 n-byte cache lines.
+ */
+static inline void
+cache_r4k_op_8lines_NN(size_t n, register_t va, u_int op)
+{
+	__asm volatile(
+		".set push"			"\n\t"
+		".set noreorder"		"\n\t"
+		"cache %[op], (0*%[n])(%[va])"	"\n\t"
+		"cache %[op], (1*%[n])(%[va])"	"\n\t"
+		"cache %[op], (2*%[n])(%[va])"	"\n\t"
+		"cache %[op], (3*%[n])(%[va])"	"\n\t"
+		"cache %[op], (4*%[n])(%[va])"	"\n\t"
+		"cache %[op], (5*%[n])(%[va])"	"\n\t"
+		"cache %[op], (6*%[n])(%[va])"	"\n\t"
+		"cache %[op], (7*%[n])(%[va])"	"\n\t"
+		".set pop"
+	    :
+	    :	[va] "r" (va), [op] "i" (op), [n] "n" (n)
+	    :	"memory");
+}
 
 /*
  * cache_r4k_op_8lines_16:
- *
  *	Perform the specified cache operation on 8 16-byte cache lines.
- */
-#define	cache_r4k_op_8lines_16(va, op)					\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0x00(%0); cache %1, 0x10(%0)		\n\t"	\
-		"cache %1, 0x20(%0); cache %1, 0x30(%0)		\n\t"	\
-		"cache %1, 0x40(%0); cache %1, 0x50(%0)		\n\t"	\
-		"cache %1, 0x60(%0); cache %1, 0x70(%0)		\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
-/*
  * cache_r4k_op_8lines_32:
- *
  *	Perform the specified cache operation on 8 32-byte cache lines.
  */
-#define	cache_r4k_op_8lines_32(va, op)					\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0x00(%0); cache %1, 0x20(%0)		\n\t"	\
-		"cache %1, 0x40(%0); cache %1, 0x60(%0)		\n\t"	\
-		"cache %1, 0x80(%0); cache %1, 0xa0(%0)		\n\t"	\
-		"cache %1, 0xc0(%0); cache %1, 0xe0(%0)		\n\t"	\
-		".set reorder"						\
+#define	cache_r4k_op_8lines_16(va, op)	\
+	    cache_r4k_op_8lines_NN(16, (va), (op))
+#define	cache_r4k_op_8lines_32(va, op)	\
+	    cache_r4k_op_8lines_NN(32, (va), (op))
+#define	cache_r4k_op_8lines_64(va, op)	\
+	    cache_r4k_op_8lines_NN(64, (va), (op))
+#define	cache_r4k_op_8lines_128(va, op)	\
+	    cache_r4k_op_8lines_NN(128, (va), (op))
+
+/*
+ * cache_r4k_op_32lines_NN:
+ *
+ *	Perform the specified cache operation on 32 n-byte cache lines.
+ */
+#define cache_r4k_op_32lines_NN(n, va, op)				\
+{									\
+	__asm volatile(							\
+		".set push"			"\n\t"			\
+		".set noreorder"		"\n\t"			\
+		"cache %2, (0*%0)(%[va])"	"\n\t"			\
+		"cache %2, (1*%0)(%[va])"	"\n\t"			\
+		"cache %2, (2*%0)(%[va])"	"\n\t"			\
+		"cache %2, (3*%0)(%[va])"	"\n\t"			\
+		"cache %2, (4*%0)(%[va])"	"\n\t"			\
+		"cache %2, (5*%0)(%[va])"	"\n\t"			\
+		"cache %2, (6*%0)(%[va])"	"\n\t"			\
+		"cache %2, (7*%0)(%[va])"	"\n\t"			\
+		"cache %2, (8*%0)(%[va])"	"\n\t"			\
+		"cache %2, (9*%0)(%[va])"	"\n\t"			\
+		"cache %2, (10*%0)(%[va])"	"\n\t"			\
+		"cache %2, (11*%0)(%[va])"	"\n\t"			\
+		"cache %2, (12*%0)(%[va])"	"\n\t"			\
+		"cache %2, (13*%0)(%[va])"	"\n\t"			\
+		"cache %2, (14*%0)(%[va])"	"\n\t"			\
+		"cache %2, (15*%0)(%[va])"	"\n\t"			\
+		"cache %2, (16*%0)(%[va])"	"\n\t"			\
+		"cache %2, (17*%0)(%[va])"	"\n\t"			\
+		"cache %2, (18*%0)(%[va])"	"\n\t"			\
+		"cache %2, (19*%0)(%[va])"	"\n\t"			\
+		"cache %2, (20*%0)(%[va])"	"\n\t"			\
+		"cache %2, (21*%0)(%[va])"	"\n\t"			\
+		"cache %2, (22*%0)(%[va])"	"\n\t"			\
+		"cache %2, (23*%0)(%[va])"	"\n\t"			\
+		"cache %2, (24*%0)(%[va])"	"\n\t"			\
+		"cache %2, (25*%0)(%[va])"	"\n\t"			\
+		"cache %2, (26*%0)(%[va])"	"\n\t"			\
+		"cache %2, (27*%0)(%[va])"	"\n\t"			\
+		"cache %2, (28*%0)(%[va])"	"\n\t"			\
+		"cache %2, (29*%0)(%[va])"	"\n\t"			\
+		"cache %2, (30*%0)(%[va])"	"\n\t"			\
+		"cache %2, (31*%0)(%[va])"	"\n\t"			\
+		".set pop"						\
 	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
+	    :	"i" (n), [va] "r" (va), "i" (op)			\
+	    :	"memory");						\
+}
 
 /*
  * cache_r4k_op_32lines_16:
  *
- *	Perform the specified cache operation on 32 16-byte
- *	cache lines.
+ *	Perform the specified cache operation on 32 16-byte cache lines.
  */
-#define	cache_r4k_op_32lines_16(va, op)					\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0x000(%0); cache %1, 0x010(%0);	\n\t"	\
-		"cache %1, 0x020(%0); cache %1, 0x030(%0);	\n\t"	\
-		"cache %1, 0x040(%0); cache %1, 0x050(%0);	\n\t"	\
-		"cache %1, 0x060(%0); cache %1, 0x070(%0);	\n\t"	\
-		"cache %1, 0x080(%0); cache %1, 0x090(%0);	\n\t"	\
-		"cache %1, 0x0a0(%0); cache %1, 0x0b0(%0);	\n\t"	\
-		"cache %1, 0x0c0(%0); cache %1, 0x0d0(%0);	\n\t"	\
-		"cache %1, 0x0e0(%0); cache %1, 0x0f0(%0);	\n\t"	\
-		"cache %1, 0x100(%0); cache %1, 0x110(%0);	\n\t"	\
-		"cache %1, 0x120(%0); cache %1, 0x130(%0);	\n\t"	\
-		"cache %1, 0x140(%0); cache %1, 0x150(%0);	\n\t"	\
-		"cache %1, 0x160(%0); cache %1, 0x170(%0);	\n\t"	\
-		"cache %1, 0x180(%0); cache %1, 0x190(%0);	\n\t"	\
-		"cache %1, 0x1a0(%0); cache %1, 0x1b0(%0);	\n\t"	\
-		"cache %1, 0x1c0(%0); cache %1, 0x1d0(%0);	\n\t"	\
-		"cache %1, 0x1e0(%0); cache %1, 0x1f0(%0);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
-/*
- * cache_r4k_op_32lines_32:
- *
- *	Perform the specified cache operation on 32 32-byte
- *	cache lines.
- */
-#define	cache_r4k_op_32lines_32(va, op)					\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0x000(%0); cache %1, 0x020(%0);	\n\t"	\
-		"cache %1, 0x040(%0); cache %1, 0x060(%0);	\n\t"	\
-		"cache %1, 0x080(%0); cache %1, 0x0a0(%0);	\n\t"	\
-		"cache %1, 0x0c0(%0); cache %1, 0x0e0(%0);	\n\t"	\
-		"cache %1, 0x100(%0); cache %1, 0x120(%0);	\n\t"	\
-		"cache %1, 0x140(%0); cache %1, 0x160(%0);	\n\t"	\
-		"cache %1, 0x180(%0); cache %1, 0x1a0(%0);	\n\t"	\
-		"cache %1, 0x1c0(%0); cache %1, 0x1e0(%0);	\n\t"	\
-		"cache %1, 0x200(%0); cache %1, 0x220(%0);	\n\t"	\
-		"cache %1, 0x240(%0); cache %1, 0x260(%0);	\n\t"	\
-		"cache %1, 0x280(%0); cache %1, 0x2a0(%0);	\n\t"	\
-		"cache %1, 0x2c0(%0); cache %1, 0x2e0(%0);	\n\t"	\
-		"cache %1, 0x300(%0); cache %1, 0x320(%0);	\n\t"	\
-		"cache %1, 0x340(%0); cache %1, 0x360(%0);	\n\t"	\
-		"cache %1, 0x380(%0); cache %1, 0x3a0(%0);	\n\t"	\
-		"cache %1, 0x3c0(%0); cache %1, 0x3e0(%0);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
-/*
- * cache_r4k_op_32lines_128:
- *
- *	Perform the specified cache operation on 32 128-byte
- *	cache lines.
- */
-#define	cache_r4k_op_32lines_128(va, op)				\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0x0000(%0); cache %1, 0x0080(%0);	\n\t"	\
-		"cache %1, 0x0100(%0); cache %1, 0x0180(%0);	\n\t"	\
-		"cache %1, 0x0200(%0); cache %1, 0x0280(%0);	\n\t"	\
-		"cache %1, 0x0300(%0); cache %1, 0x0380(%0);	\n\t"	\
-		"cache %1, 0x0400(%0); cache %1, 0x0480(%0);	\n\t"	\
-		"cache %1, 0x0500(%0); cache %1, 0x0580(%0);	\n\t"	\
-		"cache %1, 0x0600(%0); cache %1, 0x0680(%0);	\n\t"	\
-		"cache %1, 0x0700(%0); cache %1, 0x0780(%0);	\n\t"	\
-		"cache %1, 0x0800(%0); cache %1, 0x0880(%0);	\n\t"	\
-		"cache %1, 0x0900(%0); cache %1, 0x0980(%0);	\n\t"	\
-		"cache %1, 0x0a00(%0); cache %1, 0x0a80(%0);	\n\t"	\
-		"cache %1, 0x0b00(%0); cache %1, 0x0b80(%0);	\n\t"	\
-		"cache %1, 0x0c00(%0); cache %1, 0x0c80(%0);	\n\t"	\
-		"cache %1, 0x0d00(%0); cache %1, 0x0d80(%0);	\n\t"	\
-		"cache %1, 0x0e00(%0); cache %1, 0x0e80(%0);	\n\t"	\
-		"cache %1, 0x0f00(%0); cache %1, 0x0f80(%0);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
+#define	cache_r4k_op_32lines_16(va, op)	\
+	    cache_r4k_op_32lines_NN(16, va, op)
+#define	cache_r4k_op_32lines_32(va, op)	\
+	    cache_r4k_op_32lines_NN(32, va, op)
+#define	cache_r4k_op_32lines_64(va, op) \
+	    cache_r4k_op_32lines_NN(64, va, op)
+#define	cache_r4k_op_32lines_128(va, op) \
+	    cache_r4k_op_32lines_NN(128, va, op)
 
 /*
  * cache_r4k_op_16lines_16_2way:
- *
- *	Perform the specified cache operation on 16 16-byte
- * 	cache lines, 2-ways.
+ *	Perform the specified cache operation on 16 n-byte cache lines, 2-ways.
+ */
+static inline void
+cache_r4k_op_16lines_NN_2way(size_t n, register_t va1, register_t va2, u_int op)
+{
+	__asm volatile(
+		".set push"			"\n\t"
+		".set noreorder"		"\n\t"
+		"cache %[op], (0*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (0*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (1*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (1*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (2*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (2*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (3*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (3*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (4*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (4*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (5*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (5*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (6*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (6*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (7*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (7*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (8*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (8*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (9*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (9*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (10*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (10*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (11*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (11*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (12*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (12*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (13*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (13*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (14*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (14*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (15*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (15*%[n])(%[va2])"	"\n\t"
+		".set pop"
+	    :
+	    :	[va1] "r" (va1), [va2] "r" (va2), [op] "i" (op), [n] "n" (n)
+	    :	"memory");
+}
+
+/*
+ * cache_r4k_op_16lines_16_2way:
+ *	Perform the specified cache operation on 16 16-byte cache lines, 2-ways.
+ * cache_r4k_op_16lines_32_2way:
+ *	Perform the specified cache operation on 16 32-byte cache lines, 2-ways.
  */
 #define	cache_r4k_op_16lines_16_2way(va1, va2, op)			\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %2, 0x000(%0); cache %2, 0x000(%1);	\n\t"	\
-		"cache %2, 0x010(%0); cache %2, 0x010(%1);	\n\t"	\
-		"cache %2, 0x020(%0); cache %2, 0x020(%1);	\n\t"	\
-		"cache %2, 0x030(%0); cache %2, 0x030(%1);	\n\t"	\
-		"cache %2, 0x040(%0); cache %2, 0x040(%1);	\n\t"	\
-		"cache %2, 0x050(%0); cache %2, 0x050(%1);	\n\t"	\
-		"cache %2, 0x060(%0); cache %2, 0x060(%1);	\n\t"	\
-		"cache %2, 0x070(%0); cache %2, 0x070(%1);	\n\t"	\
-		"cache %2, 0x080(%0); cache %2, 0x080(%1);	\n\t"	\
-		"cache %2, 0x090(%0); cache %2, 0x090(%1);	\n\t"	\
-		"cache %2, 0x0a0(%0); cache %2, 0x0a0(%1);	\n\t"	\
-		"cache %2, 0x0b0(%0); cache %2, 0x0b0(%1);	\n\t"	\
-		"cache %2, 0x0c0(%0); cache %2, 0x0c0(%1);	\n\t"	\
-		"cache %2, 0x0d0(%0); cache %2, 0x0d0(%1);	\n\t"	\
-		"cache %2, 0x0e0(%0); cache %2, 0x0e0(%1);	\n\t"	\
-		"cache %2, 0x0f0(%0); cache %2, 0x0f0(%1);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va1), "r" (va2), "i" (op)				\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
+		cache_r4k_op_16lines_NN_2way(16, (va1), (va2), (op))
+#define	cache_r4k_op_16lines_32_2way(va1, va2, op)			\
+		cache_r4k_op_16lines_NN_2way(32, (va1), (va2), (op))
+#define	cache_r4k_op_16lines_64_2way(va1, va2, op)			\
+		cache_r4k_op_16lines_NN_2way(64, (va1), (va2), (op))
 
 /*
- * cache_r4k_op_16lines_32_2way:
- *
- *	Perform the specified cache operation on 16 32-byte
- * 	cache lines, 2-ways.
+ * cache_r4k_op_8lines_NN_4way:
+ *	Perform the specified cache operation on 8 n-byte cache lines, 4-ways.
  */
-#define	cache_r4k_op_16lines_32_2way(va1, va2, op)			\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %2, 0x000(%0); cache %2, 0x000(%1);	\n\t"	\
-		"cache %2, 0x020(%0); cache %2, 0x020(%1);	\n\t"	\
-		"cache %2, 0x040(%0); cache %2, 0x040(%1);	\n\t"	\
-		"cache %2, 0x060(%0); cache %2, 0x060(%1);	\n\t"	\
-		"cache %2, 0x080(%0); cache %2, 0x080(%1);	\n\t"	\
-		"cache %2, 0x0a0(%0); cache %2, 0x0a0(%1);	\n\t"	\
-		"cache %2, 0x0c0(%0); cache %2, 0x0c0(%1);	\n\t"	\
-		"cache %2, 0x0e0(%0); cache %2, 0x0e0(%1);	\n\t"	\
-		"cache %2, 0x100(%0); cache %2, 0x100(%1);	\n\t"	\
-		"cache %2, 0x120(%0); cache %2, 0x120(%1);	\n\t"	\
-		"cache %2, 0x140(%0); cache %2, 0x140(%1);	\n\t"	\
-		"cache %2, 0x160(%0); cache %2, 0x160(%1);	\n\t"	\
-		"cache %2, 0x180(%0); cache %2, 0x180(%1);	\n\t"	\
-		"cache %2, 0x1a0(%0); cache %2, 0x1a0(%1);	\n\t"	\
-		"cache %2, 0x1c0(%0); cache %2, 0x1c0(%1);	\n\t"	\
-		"cache %2, 0x1e0(%0); cache %2, 0x1e0(%1);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va1), "r" (va2), "i" (op)				\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
+static inline void
+cache_r4k_op_8lines_NN_4way(size_t n, register_t va1, register_t va2,
+	register_t va3, register_t va4, u_int op)
+{
+	__asm volatile(
+		".set push"			"\n\t"
+		".set noreorder"		"\n\t"
+		"cache %[op], (0*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (0*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (0*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (0*%[n])(%[va4])"	"\n\t"
+		"cache %[op], (1*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (1*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (1*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (1*%[n])(%[va4])"	"\n\t"
+		"cache %[op], (2*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (2*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (2*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (2*%[n])(%[va4])"	"\n\t"
+		"cache %[op], (3*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (3*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (3*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (3*%[n])(%[va4])"	"\n\t"
+		"cache %[op], (4*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (4*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (4*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (4*%[n])(%[va4])"	"\n\t"
+		"cache %[op], (5*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (5*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (5*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (5*%[n])(%[va4])"	"\n\t"
+		"cache %[op], (6*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (6*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (6*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (6*%[n])(%[va4])"	"\n\t"
+		"cache %[op], (7*%[n])(%[va1])"	"\n\t"
+		"cache %[op], (7*%[n])(%[va2])"	"\n\t"
+		"cache %[op], (7*%[n])(%[va3])"	"\n\t"
+		"cache %[op], (7*%[n])(%[va4])"	"\n\t"
+		".set pop"
+	    :
+	    :	[va1] "r" (va1), [va2] "r" (va2),
+	    	[va3] "r" (va3), [va4] "r" (va4),
+		[op] "i" (op), [n] "n" (n)
+	    :	"memory");
+}
 /*
  * cache_r4k_op_8lines_16_4way:
- *
- *	Perform the specified cache operation on 8 16-byte
- * 	cache lines, 4-ways.
- */
-#define	cache_r4k_op_8lines_16_4way(va1, va2, va3, va4, op)		\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %4, 0x000(%0); cache %4, 0x000(%1);	\n\t"	\
-		"cache %4, 0x000(%2); cache %4, 0x000(%3);	\n\t"	\
-		"cache %4, 0x010(%0); cache %4, 0x010(%1);	\n\t"	\
-		"cache %4, 0x010(%2); cache %4, 0x010(%3);	\n\t"	\
-		"cache %4, 0x020(%0); cache %4, 0x020(%1);	\n\t"	\
-		"cache %4, 0x020(%2); cache %4, 0x020(%3);	\n\t"	\
-		"cache %4, 0x030(%0); cache %4, 0x030(%1);	\n\t"	\
-		"cache %4, 0x030(%2); cache %4, 0x030(%3);	\n\t"	\
-		"cache %4, 0x040(%0); cache %4, 0x040(%1);	\n\t"	\
-		"cache %4, 0x040(%2); cache %4, 0x040(%3);	\n\t"	\
-		"cache %4, 0x050(%0); cache %4, 0x050(%1);	\n\t"	\
-		"cache %4, 0x050(%2); cache %4, 0x050(%3);	\n\t"	\
-		"cache %4, 0x060(%0); cache %4, 0x060(%1);	\n\t"	\
-		"cache %4, 0x060(%2); cache %4, 0x060(%3);	\n\t"	\
-		"cache %4, 0x070(%0); cache %4, 0x070(%1);	\n\t"	\
-		"cache %4, 0x070(%2); cache %4, 0x070(%3);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va1), "r" (va2), "r" (va3), "r" (va4), "i" (op)	\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
-/*
+ *	Perform the specified cache operation on 8 16-byte cache lines, 4-ways.
  * cache_r4k_op_8lines_32_4way:
- *
- *	Perform the specified cache operation on 8 32-byte
- * 	cache lines, 4-ways.
+ *	Perform the specified cache operation on 8 32-byte cache lines, 4-ways.
  */
-#define	cache_r4k_op_8lines_32_4way(va1, va2, va3, va4, op)		\
-do {									\
-	__asm volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %4, 0x000(%0); cache %4, 0x000(%1);	\n\t"	\
-		"cache %4, 0x000(%2); cache %4, 0x000(%3);	\n\t"	\
-		"cache %4, 0x020(%0); cache %4, 0x020(%1);	\n\t"	\
-		"cache %4, 0x020(%2); cache %4, 0x020(%3);	\n\t"	\
-		"cache %4, 0x040(%0); cache %4, 0x040(%1);	\n\t"	\
-		"cache %4, 0x040(%2); cache %4, 0x040(%3);	\n\t"	\
-		"cache %4, 0x060(%0); cache %4, 0x060(%1);	\n\t"	\
-		"cache %4, 0x060(%2); cache %4, 0x060(%3);	\n\t"	\
-		"cache %4, 0x080(%0); cache %4, 0x080(%1);	\n\t"	\
-		"cache %4, 0x080(%2); cache %4, 0x080(%3);	\n\t"	\
-		"cache %4, 0x0a0(%0); cache %4, 0x0a0(%1);	\n\t"	\
-		"cache %4, 0x0a0(%2); cache %4, 0x0a0(%3);	\n\t"	\
-		"cache %4, 0x0c0(%0); cache %4, 0x0c0(%1);	\n\t"	\
-		"cache %4, 0x0c0(%2); cache %4, 0x0c0(%3);	\n\t"	\
-		"cache %4, 0x0e0(%0); cache %4, 0x0e0(%1);	\n\t"	\
-		"cache %4, 0x0e0(%2); cache %4, 0x0e0(%3);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va1), "r" (va2), "r" (va3), "r" (va4), "i" (op)	\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
+#define	cache_r4k_op_8lines_16_4way(va1, va2, va3, va4, op) \
+	    cache_r4k_op_8lines_NN_4way(16, (va1), (va2), (va3), (va4), (op))
+#define	cache_r4k_op_8lines_32_4way(va1, va2, va3, va4, op) \
+	    cache_r4k_op_8lines_NN_4way(32, (va1), (va2), (va3), (va4), (op))
+#define	cache_r4k_op_8lines_64_4way(va1, va2, va3, va4, op) \
+	    cache_r4k_op_8lines_NN_4way(64, (va1), (va2), (va3), (va4), (op))
+#define	cache_r4k_op_8lines_128_4way(va1, va2, va3, va4, op) \
+	    cache_r4k_op_8lines_NN_4way(128, (va1), (va2), (va3), (va4), (op))
+#endif
 
-void	r4k_icache_sync_all_16(void);
-void	r4k_icache_sync_range_16(vaddr_t, vsize_t);
-void	r4k_icache_sync_range_index_16(vaddr_t, vsize_t);
+/* cache_r4k.c */
 
-void	r4k_icache_sync_all_32(void);
-void	r4k_icache_sync_range_32(vaddr_t, vsize_t);
-void	r4k_icache_sync_range_index_32(vaddr_t, vsize_t);
-
-void	r4k_pdcache_wbinv_all_16(void);
-void	r4k_pdcache_wbinv_range_16(vaddr_t, vsize_t);
-void	r4k_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
-
-void	r4k_pdcache_inv_range_16(vaddr_t, vsize_t);
-void	r4k_pdcache_wb_range_16(vaddr_t, vsize_t);
-
-void	r4k_pdcache_wbinv_all_32(void);
-void	r4k_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	r4k_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
-
-void	r4k_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4k_pdcache_wb_range_32(vaddr_t, vsize_t);
-
-void	r4k_sdcache_wbinv_all_32(void);
-void	r4k_sdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	r4k_sdcache_wbinv_range_index_32(vaddr_t, vsize_t);
-
-void	r4k_sdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4k_sdcache_wb_range_32(vaddr_t, vsize_t);
-
-void	r4k_sdcache_wbinv_all_128(void);
-void	r4k_sdcache_wbinv_range_128(vaddr_t, vsize_t);
-void	r4k_sdcache_wbinv_range_index_128(vaddr_t, vsize_t);
-
-void	r4k_sdcache_inv_range_128(vaddr_t, vsize_t);
-void	r4k_sdcache_wb_range_128(vaddr_t, vsize_t);
-
+void	r4k_icache_sync_all_generic(void);
+void	r4k_icache_sync_range_generic(register_t, vsize_t);
+void	r4k_icache_sync_range_index_generic(vaddr_t, vsize_t);
+void	r4k_pdcache_wbinv_all_generic(void);
 void	r4k_sdcache_wbinv_all_generic(void);
-void	r4k_sdcache_wbinv_range_generic(vaddr_t, vsize_t);
-void	r4k_sdcache_wbinv_range_index_generic(vaddr_t, vsize_t);
 
-void	r4k_sdcache_inv_range_generic(vaddr_t, vsize_t);
-void	r4k_sdcache_wb_range_generic(vaddr_t, vsize_t);
+/* cache_r4k_pcache16.S */
 
+void	cache_r4k_icache_index_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_16(register_t, vsize_t);
+void	cache_r4k_pdcache_index_wb_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_16(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_16(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_16(register_t, vsize_t);
+
+/* cache_r4k_scache16.S */
+
+void	cache_r4k_sdcache_index_wb_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_sdcache_hit_inv_16(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_inv_16(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_16(register_t, vsize_t);
+ 
+/* cache_r4k_pcache32.S */
+
+void	cache_r4k_icache_index_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_32(register_t, vsize_t);
+void	cache_r4k_pdcache_index_wb_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_32(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_32(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_32(register_t, vsize_t);
+
+/* cache_r4k_scache32.S */
+
+void	cache_r4k_sdcache_index_wb_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_sdcache_hit_inv_32(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_inv_32(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_32(register_t, vsize_t);
+ 
+/* cache_r4k_pcache64.S */
+
+void	cache_r4k_icache_index_inv_64(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_64(register_t, vsize_t);
+void	cache_r4k_pdcache_index_wb_inv_64(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_64(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_64(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_64(register_t, vsize_t);
+
+/* cache_r4k_scache64.S */
+
+void	cache_r4k_sdcache_index_wb_inv_64(vaddr_t, vsize_t);
+void	cache_r4k_sdcache_hit_inv_64(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_inv_64(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_64(register_t, vsize_t);
+ 
+/* cache_r4k_pcache128.S */
+
+void	cache_r4k_icache_index_inv_128(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_128(register_t, vsize_t);
+void	cache_r4k_pdcache_index_wb_inv_128(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_128(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_128(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_128(register_t, vsize_t);
+
+/* cache_r4k_scache128.S */
+
+void	cache_r4k_sdcache_index_wb_inv_128(vaddr_t, vsize_t);
+void	cache_r4k_sdcache_hit_inv_128(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_inv_128(register_t, vsize_t);
+void	cache_r4k_sdcache_hit_wb_128(register_t, vsize_t);
+ 
 #endif /* !_LOCORE */

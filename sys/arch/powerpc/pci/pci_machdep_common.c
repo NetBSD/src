@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.15.6.2 2014/08/20 00:03:20 tls Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.15.6.3 2017/12/03 11:36:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.15.6.2 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.15.6.3 2017/12/03 11:36:37 jdolecek Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.15.6.2 2014/08/20 00:03:20 
 #include <sys/errno.h>
 #include <sys/extent.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 
@@ -112,7 +113,7 @@ genppc_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 void *
 genppc_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 
 #ifdef ICU_LEN
@@ -124,7 +125,7 @@ genppc_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		panic("pci_intr_establish: bogus handle 0x%x", ih);
 #endif
 
-	return intr_establish(ih, IST_LEVEL, level, func, arg);
+	return intr_establish_xname(ih, IST_LEVEL, level, func, arg, xname);
 }
 
 void
@@ -140,6 +141,61 @@ genppc_pci_intr_setattr(void *v, pci_intr_handle_t *ihp, int attr,
 {
 
 	return ENODEV;
+}
+
+pci_intr_type_t
+genppc_pci_intr_type(void *v, pci_intr_handle_t ih)
+{
+
+	return PCI_INTR_TYPE_INTX;
+}
+
+int
+genppc_pci_intr_alloc(const struct pci_attach_args *pa,
+    pci_intr_handle_t **ihps, int *counts, pci_intr_type_t max_type)
+{
+	pci_intr_handle_t *ihp;
+
+	if (counts != NULL && counts[PCI_INTR_TYPE_INTX] == 0)
+		return EINVAL;
+
+	ihp = kmem_alloc(sizeof(*ihp), KM_SLEEP);
+	if (pci_intr_map(pa, ihp)) {
+		kmem_free(ihp, sizeof(*ihp));
+		return EINVAL;
+	}
+
+	*ihps = ihp;
+	return 0;
+}
+
+void
+genppc_pci_intr_release(void *v, pci_intr_handle_t *pih, int count)
+{
+
+	if (pih == NULL)
+		return;
+
+	KASSERT(count == 1);
+	kmem_free(pih, sizeof(*pih));
+}
+
+int
+genppc_pci_intx_alloc(const struct pci_attach_args *pa,
+    pci_intr_handle_t **ihps)
+{
+	pci_intr_handle_t *handle;
+	int error;
+
+	handle = kmem_zalloc(sizeof(*handle), KM_SLEEP);
+	error = pci_intr_map(pa, handle);
+	if (error != 0) {
+		kmem_free(handle, sizeof(*handle));
+		return error;
+	}
+
+	*ihps = handle;
+	return 0;
 }
 
 void
@@ -210,82 +266,34 @@ bad:
 	return 1;
 }
 
+/* experimental MSI support */
 int
-genppc_pci_msi_request(const struct pci_attach_args *pa,
-    pci_msi_handle_t *msihp, size_t nmsirq, int ipl, int capid)
+genppc_pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count, bool exact)
 {
+
 	return EOPNOTSUPP;
 }
 
+/* experimental MSI-X support */
 int
-genppc_pci_msi_type(void *v, pci_msi_handle_t msih)
+genppc_pci_msix_alloc(const struct pci_attach_args *pa,
+    pci_intr_handle_t **ihps, u_int *table_indexes, int *count, bool exact)
 {
-	panic("%s", __func__);
-}
 
-size_t
-genppc_pci_msi_available(void *v, pci_msi_handle_t msih)
-{
-	panic("%s", __func__);
-}
-
-const char *
-genppc_pci_msi_string(void *v, pci_msi_handle_t msih, size_t msirq)
-{
-	panic("%s", __func__);
-}
-
-const struct evcnt *
-genppc_pci_msi_evcnt(void *v, pci_msi_handle_t msih, size_t msirq)
-{
-	panic("%s", __func__);
-}
-
-void *
-genppc_pci_msi_establish(void *v, pci_msi_handle_t msih, size_t msirq,
-		    int ipl, int (*func)(void *), void *arg)
-{
-	panic("%s", __func__);
-}
-
-void *
-genppc_pci_msix_establish(void *v, pci_msi_handle_t msih, size_t vec,
-    size_t msirq, int ipl, int (*func)(void *), void *arg)
-{
-	panic("%s", __func__);
-}
-
-void
-genppc_pci_msi_disestablish(void *v, void *ih)
-{
-	panic("%s", __func__);
-}
-
-void
-genppc_pci_msi_free(void *v, pci_msi_handle_t msih, size_t msirq)
-{
-	panic("%s", __func__);
-}
-
-void
-genppc_pci_msi_release(void *v, pci_msi_handle_t msih)
-{
-	panic("%s", __func__);
+	return EOPNOTSUPP;
 }
 
 void
 genppc_pci_chipset_msi_init(pci_chipset_tag_t pc)
 {
-	pc->pc_msi_request = genppc_pci_msi_request;
-	pc->pc_msi_type = genppc_pci_msi_type;
-	pc->pc_msi_available = genppc_pci_msi_available;
-	pc->pc_msi_evcnt = genppc_pci_msi_evcnt;
-	pc->pc_msi_string = genppc_pci_msi_string;
-	pc->pc_msi_establish = genppc_pci_msi_establish;
-	pc->pc_msix_establish = genppc_pci_msix_establish;
-	pc->pc_msi_disestablish = genppc_pci_msi_disestablish;
-	pc->pc_msi_free = genppc_pci_msi_free;
-	pc->pc_msi_release = genppc_pci_msi_release;
+	pc->pc_msi_alloc = genppc_pci_msi_alloc;
+}
+
+void
+genppc_pci_chipset_msix_init(pci_chipset_tag_t pc)
+{
+	pc->pc_msix_alloc = genppc_pci_msix_alloc;
 }
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH

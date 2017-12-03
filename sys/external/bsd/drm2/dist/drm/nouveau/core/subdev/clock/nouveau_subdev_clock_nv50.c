@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_clock_nv50.c,v 1.1.1.1.6.2 2014/08/20 00:04:14 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_clock_nv50.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_clock_nv50.c,v 1.1.1.1.6.2 2014/08/20 00:04:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_clock_nv50.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/pll.h>
@@ -117,6 +117,9 @@ read_pll_src(struct nv50_clock_priv *priv, u32 base)
 		break;
 	default:
 		BUG_ON(1);
+		M = 0;		/* XXX GCC is stupid */
+		N = 0;		/* XXX GCC is stupid */
+		P = 0;		/* XXX GCC is stupid */
 	}
 
 	if (M)

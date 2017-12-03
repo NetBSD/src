@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.9 2010/07/07 01:14:53 chs Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.9.18.1 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,62 +34,62 @@
 
 #define X86_GET_LDT		0
 #define X86_SET_LDT		1
-#define	X86_IOPL		2
-#define	X86_GET_IOPERM		3
-#define	X86_SET_IOPERM		4
-#define	X86_OLD_VM86		5
-#define	X86_PMC_INFO		8
-#define	X86_PMC_STARTSTOP	9
-#define	X86_PMC_READ		10
+#define X86_IOPL		2
+#define X86_GET_IOPERM		3
+#define X86_SET_IOPERM		4
+#define X86_OLD_VM86		5
+#define X86_PMC_INFO		8
+#define X86_PMC_STARTSTOP	9
+#define X86_PMC_READ		10
 #define X86_GET_MTRR		11
 #define X86_SET_MTRR		12
-#define	X86_VM86		13
-#define	X86_GET_GSBASE		14
-#define	X86_GET_FSBASE		15
-#define	X86_SET_GSBASE		16
-#define	X86_SET_FSBASE		17
+#define X86_VM86		13
+#define X86_GET_GSBASE		14
+#define X86_GET_FSBASE		15
+#define X86_SET_GSBASE		16
+#define X86_SET_FSBASE		17
 
 #ifdef _KERNEL
-#define	_X86_SYSARCH_L(x)	x86_##x
-#define	_X86_SYSARCH_U(x)	X86_##x
+#define _X86_SYSARCH_L(x)	x86_##x
+#define _X86_SYSARCH_U(x)	X86_##x
 #elif defined(__i386__)
-#define	_X86_SYSARCH_L(x)	i386_##x
-#define	_X86_SYSARCH_U(x)	I386_##x
+#define _X86_SYSARCH_L(x)	i386_##x
+#define _X86_SYSARCH_U(x)	I386_##x
 #define I386_GET_LDT		X86_GET_LDT
 #define I386_SET_LDT		X86_SET_LDT
-#define	I386_IOPL		X86_IOPL
-#define	I386_GET_IOPERM		X86_GET_IOPERM
-#define	I386_SET_IOPERM		X86_SET_IOPERM
-#define	I386_OLD_VM86		X86_OLD_VM86
-#define	I386_PMC_INFO		X86_PMC_INFO
-#define	I386_PMC_STARTSTOP	X86_PMC_STARTSTOP
-#define	I386_PMC_READ		X86_PMC_READ
+#define I386_IOPL		X86_IOPL
+#define I386_GET_IOPERM		X86_GET_IOPERM
+#define I386_SET_IOPERM		X86_SET_IOPERM
+#define I386_OLD_VM86		X86_OLD_VM86
+#define I386_PMC_INFO		X86_PMC_INFO
+#define I386_PMC_STARTSTOP	X86_PMC_STARTSTOP
+#define I386_PMC_READ		X86_PMC_READ
 #define I386_GET_MTRR		X86_GET_MTRR
 #define I386_SET_MTRR		X86_SET_MTRR
-#define	I386_VM86		X86_VM86
-#define	I386_GET_GSBASE		X86_GET_GSBASE
-#define	I386_GET_FSBASE		X86_GET_FSBASE
-#define	I386_SET_GSBASE		X86_SET_GSBASE
-#define	I386_SET_FSBASE		X86_SET_FSBASE
+#define I386_VM86		X86_VM86
+#define I386_GET_GSBASE		X86_GET_GSBASE
+#define I386_GET_FSBASE		X86_GET_FSBASE
+#define I386_SET_GSBASE		X86_SET_GSBASE
+#define I386_SET_FSBASE		X86_SET_FSBASE
 #else
-#define	_X86_SYSARCH_L(x)	x86_64_##x
-#define	_X86_SYSARCH_U(x)	X86_64_##x
+#define _X86_SYSARCH_L(x)	x86_64_##x
+#define _X86_SYSARCH_U(x)	X86_64_##x
 #define X86_64_GET_LDT		X86_GET_LDT
 #define X86_64_SET_LDT		X86_SET_LDT
-#define	X86_64_IOPL		X86_IOPL
-#define	X86_64_GET_IOPERM	X86_GET_IOPERM
-#define	X86_64_SET_IOPERM	X86_SET_IOPERM
-#define	X86_64_OLD_VM86		X86_OLD_VM86
-#define	X86_64_PMC_INFO		X86_PMC_INFO
-#define	X86_64_PMC_STARTSTOP	X86_PMC_STARTSTOP
-#define	X86_64_PMC_READ		X86_PMC_READ
+#define X86_64_IOPL		X86_IOPL
+#define X86_64_GET_IOPERM	X86_GET_IOPERM
+#define X86_64_SET_IOPERM	X86_SET_IOPERM
+#define X86_64_OLD_VM86		X86_OLD_VM86
+#define X86_64_PMC_INFO		X86_PMC_INFO
+#define X86_64_PMC_STARTSTOP	X86_PMC_STARTSTOP
+#define X86_64_PMC_READ		X86_PMC_READ
 #define X86_64_GET_MTRR		X86_GET_MTRR
 #define X86_64_SET_MTRR		X86_SET_MTRR
-#define	X86_64_VM86		X86_VM86
+#define X86_64_VM86		X86_VM86
 #define X86_64_GET_GSBASE	X86_GET_GSBASE
-#define	X86_64_GET_FSBASE	X86_GET_FSBASE
+#define X86_64_GET_FSBASE	X86_GET_FSBASE
 #define X86_64_SET_GSBASE	X86_SET_GSBASE
-#define	X86_64_SET_FSBASE	X86_SET_FSBASE
+#define X86_64_SET_FSBASE	X86_SET_FSBASE
 #endif
 
 /*
@@ -131,30 +131,31 @@ struct _X86_SYSARCH_L(set_ioperm_args) {
 };
 
 struct _X86_SYSARCH_L(pmc_info_args) {
-	int	type;
-	int	flags;
+	int vers;
+	int type;
+	uint32_t nctrs;
+	uint64_t nsamp;
 };
+
+#define	PMC_VERSION		1
 
 #define	PMC_TYPE_NONE		0
 #define	PMC_TYPE_I586		1
 #define	PMC_TYPE_I686		2
 #define	PMC_TYPE_K7		3
+#define	PMC_TYPE_F10H		4
 
 #define	PMC_INFO_HASTSC		0x01
 
-#ifdef __i386__
 #define	PMC_NCOUNTERS		4
-#else
-#define	PMC_NCOUNTERS		2
-#endif
 
 struct _X86_SYSARCH_L(pmc_startstop_args) {
-	int counter;
+	uint32_t counter;
 	uint64_t val;
-	uint8_t event;
-	uint8_t unit;
-	uint8_t compare;
-	uint8_t flags;
+	uint32_t event;
+	uint32_t unit;
+	uint32_t compare;
+	uint32_t flags;
 };
 
 #define	PMC_SETUP_KERNEL	0x01
@@ -162,10 +163,15 @@ struct _X86_SYSARCH_L(pmc_startstop_args) {
 #define	PMC_SETUP_EDGE		0x04
 #define	PMC_SETUP_INV		0x08
 
+typedef struct {
+	uint64_t ctrval;
+	uint32_t overfl;
+} x86_pmc_cpuval_t;
+
 struct _X86_SYSARCH_L(pmc_read_args) {
-	int counter;
-	uint64_t val;
-	uint64_t time;
+	uint32_t counter;
+	x86_pmc_cpuval_t *values;
+	uint32_t nval;
 };
 
 struct mtrr;

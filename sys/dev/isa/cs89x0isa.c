@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.16 2012/02/02 19:43:04 tls Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.16.6.1 2017/12/03 11:37:04 jdolecek Exp $ */
 
 /*
  * Copyright 1997
@@ -36,15 +36,13 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.16 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.16.6.1 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -287,7 +285,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 					cs_init(&sc->sc_ethercom.ec_if);
 					return;
 				}
-				m->m_pkthdr.rcvif = ifp;
+				m_set_rcvif(m, ifp);
 				m->m_pkthdr.len = pkt_length;
 				m->m_len = pkt_length;
 

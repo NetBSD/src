@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.10.2.2 2014/08/20 00:03:07 tls Exp $ */
+/* $NetBSD: trap.c,v 1.10.2.3 2017/12/03 11:36:20 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2005 Marcel Moolenaar
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10.2.2 2014/08/20 00:03:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10.2.3 2017/12/03 11:36:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10.2.2 2014/08/20 00:03:07 tls Exp $");
 #include <machine/frame.h>
 #include <machine/md_var.h>
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/ia64_cpu.h>
 #include <machine/fpu.h>
 #ifdef DDB
@@ -319,8 +320,7 @@ trap_decode_break(struct trapframe *tf)
 void
 startlwp(void *arg)
 {
-printf("%s: not yet\n", __func__);
-	return;
+	panic("XXX %s implement", __func__);
 }
 
 #ifdef DDB

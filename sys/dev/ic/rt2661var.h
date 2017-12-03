@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.11 2012/02/18 13:38:36 drochner Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.11.2.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ struct rt2661_softc {
 	bus_dma_tag_t			sc_dmat;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
+	void				*sc_soft_ih;
 
 	struct ethercom			sc_ec;
 

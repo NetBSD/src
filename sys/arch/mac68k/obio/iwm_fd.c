@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.46.24.2 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.46.24.3 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.46.24.2 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.46.24.3 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include "locators.h"
 
@@ -260,7 +260,7 @@ const struct cdevsw fd_cdevsw = {
 
 /* disk(9) framework device switch */
 struct dkdriver fd_dkDriver = {
-	fdstrategy
+	.d_strategy = fdstrategy
 };
 
 /***  Configure the IWM controller  ***/
@@ -698,11 +698,12 @@ fdclose(dev_t dev, int flags, int devType, struct lwp *l)
  * we do not support them.
  */
 int
-fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
+	int error;
 
 	if (TRACE_IOCTL)
 		printf("iwm: Execute ioctl... ");
@@ -720,18 +721,15 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	fd = iwm->fd[fdUnit];
 	result = 0;
 
-	switch (cmd) {
-	case DIOCGDINFO:
-		if (TRACE_IOCTL)
-			printf(" DIOCGDINFO: Get in-core disklabel.\n");
-		*(struct disklabel *) data = *(fd->diskInfo.dk_label);
-		result = 0;
-		break;
+	error = disk_ioctl(&fd->diskInfo, fdType, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
 
+	switch (cmd) {
 	case DIOCSDINFO:
 		if (TRACE_IOCTL)
 			printf(" DIOCSDINFO: Set in-core disklabel.\n");
-		result = ((flags & FWRITE) == 0) ? EBADF : 0;
+		result = ((flag & FWRITE) == 0) ? EBADF : 0;
 		if (result == 0)
 			result = setdisklabel(fd->diskInfo.dk_label,
 			    (struct disklabel *)data, 0,
@@ -742,7 +740,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		if (TRACE_IOCTL)
 			printf(" DIOCWDINFO: Set in-core disklabel "
 			    "& update disk.\n");
-		result = ((flags & FWRITE) == 0) ? EBADF : 0;
+		result = ((flag & FWRITE) == 0) ? EBADF : 0;
 
 		if (result == 0)
 			result = setdisklabel(fd->diskInfo.dk_label,
@@ -752,15 +750,6 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 			result = writedisklabel(dev, fdstrategy,
 			    fd->diskInfo.dk_label,
 			    fd->diskInfo.dk_cpulabel);
-		break;
-
-	case DIOCGPART:
-		if (TRACE_IOCTL)
-			printf(" DIOCGPART: Get disklabel & partition table.\n");
-		((struct partinfo *)data)->disklab = fd->diskInfo.dk_label;
-		((struct partinfo *)data)->part =
-		    &fd->diskInfo.dk_label->d_partitions[fdType];
-		result = 0;
 		break;
 
 	case DIOCRFORMAT:
@@ -790,7 +779,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	case DIOCWLABEL:
 		if (TRACE_IOCTL)
 			printf(" DIOCWLABEL: Set write access to disklabel.\n");
-		result = ((flags & FWRITE) == 0) ? EBADF : 0;
+		result = ((flag & FWRITE) == 0) ? EBADF : 0;
 
 		if (result == 0)
 			fd->writeLabel = *(int *)data;
@@ -1584,7 +1573,7 @@ fdGetDiskLabel(fd_softc_t *fd, dev_t dev)
 	 * track (8..12) and variable rpm (300..550)? Apple came up
 	 * with ZBR in 1983! Un*x drive management sucks.
 	 */
-	lp->d_type = DTYPE_FLOPPY;
+	lp->d_type = DKTYPE_FLOPPY;
 	lp->d_rpm = 300;
 	lp->d_secsize = fd->currentType->sectorSize;
 	lp->d_ntracks = fd->currentType->heads;
@@ -1595,7 +1584,7 @@ fdGetDiskLabel(fd_softc_t *fd, dev_t dev)
 	lp->d_interleave = fd->currentType->interleave;
 	lp->d_trkseek = fd->currentType->stepRate;
 
-	strcpy(lp->d_typename, dktypenames[DTYPE_FLOPPY]);
+	strcpy(lp->d_typename, dktypenames[DKTYPE_FLOPPY]);
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 
 	lp->d_npartitions = fdType + 1;

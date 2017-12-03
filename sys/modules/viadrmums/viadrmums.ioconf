@@ -1,0 +1,10 @@
+#	$NetBSD: viadrmums.ioconf,v 1.2.18.2 2017/12/03 11:39:01 jdolecek Exp $
+
+ioconf viadrmums
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root 	drm*
+
+viadrmums* 	at drm?

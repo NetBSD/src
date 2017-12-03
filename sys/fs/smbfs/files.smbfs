@@ -1,7 +1,8 @@
-#	$NetBSD: files.smbfs,v 1.2 2003/03/02 22:06:50 jdolecek Exp $
+#	$NetBSD: files.smbfs,v 1.2.150.1 2017/12/03 11:38:43 jdolecek Exp $
 
 deffs	SMBFS
 
+define	smbfs: vfs
 file	fs/smbfs/smbfs_io.c		smbfs
 file	fs/smbfs/smbfs_kq.c		smbfs
 file	fs/smbfs/smbfs_node.c		smbfs

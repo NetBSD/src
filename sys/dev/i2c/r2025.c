@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.6 2009/12/12 14:44:10 tsutsui Exp $ */
+/* $NetBSD: r2025.c,v 1.6.22.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.6 2009/12/12 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.6.22.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,9 +125,9 @@ r2025rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 		return -1;
 	}
 
-	dt.dt_sec = FROMBCD(bcd[R2025_REG_SEC] & R2025_REG_SEC_MASK);
-	dt.dt_min = FROMBCD(bcd[R2025_REG_MIN] & R2025_REG_MIN_MASK);
-	hour = FROMBCD(bcd[R2025_REG_HOUR] & R2025_REG_HOUR_MASK);
+	dt.dt_sec = bcdtobin(bcd[R2025_REG_SEC] & R2025_REG_SEC_MASK);
+	dt.dt_min = bcdtobin(bcd[R2025_REG_MIN] & R2025_REG_MIN_MASK);
+	hour = bcdtobin(bcd[R2025_REG_HOUR] & R2025_REG_HOUR_MASK);
 	if (rctrl & R2025_REG_CTRL1_H1224) {
 		dt.dt_hour = hour;
 	} else {
@@ -141,10 +141,10 @@ r2025rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 			dt.dt_hour = hour;
 		}
 	}
-	dt.dt_wday = FROMBCD(bcd[R2025_REG_WDAY] & R2025_REG_WDAY_MASK);
-	dt.dt_day = FROMBCD(bcd[R2025_REG_DAY] & R2025_REG_DAY_MASK);
-	dt.dt_mon = FROMBCD(bcd[R2025_REG_MON] & R2025_REG_MON_MASK);
-	dt.dt_year = FROMBCD(bcd[R2025_REG_YEAR] & R2025_REG_YEAR_MASK)
+	dt.dt_wday = bcdtobin(bcd[R2025_REG_WDAY] & R2025_REG_WDAY_MASK);
+	dt.dt_day = bcdtobin(bcd[R2025_REG_DAY] & R2025_REG_DAY_MASK);
+	dt.dt_mon = bcdtobin(bcd[R2025_REG_MON] & R2025_REG_MON_MASK);
+	dt.dt_year = bcdtobin(bcd[R2025_REG_YEAR] & R2025_REG_YEAR_MASK)
 		+ ((bcd[R2025_REG_MON] & R2025_REG_MON_Y1920) ? 2000 : 1900);
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
@@ -179,14 +179,14 @@ r2025rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	rctrl |= R2025_REG_CTRL1_H1224;
 
 	/* setup registers 0x00-0x06 (7 byte) */
-	bcd[R2025_REG_SEC] = TOBCD(dt.dt_sec) & R2025_REG_SEC_MASK;
-	bcd[R2025_REG_MIN] = TOBCD(dt.dt_min) & R2025_REG_MIN_MASK;
-	bcd[R2025_REG_HOUR] = TOBCD(dt.dt_hour) & R2025_REG_HOUR_MASK;
-	bcd[R2025_REG_WDAY] = TOBCD(dt.dt_wday) & R2025_REG_WDAY_MASK;
-	bcd[R2025_REG_DAY] = TOBCD(dt.dt_day) & R2025_REG_DAY_MASK;
-	bcd[R2025_REG_MON] = (TOBCD(dt.dt_mon) & R2025_REG_MON_MASK)
+	bcd[R2025_REG_SEC] = bintobcd(dt.dt_sec) & R2025_REG_SEC_MASK;
+	bcd[R2025_REG_MIN] = bintobcd(dt.dt_min) & R2025_REG_MIN_MASK;
+	bcd[R2025_REG_HOUR] = bintobcd(dt.dt_hour) & R2025_REG_HOUR_MASK;
+	bcd[R2025_REG_WDAY] = bintobcd(dt.dt_wday) & R2025_REG_WDAY_MASK;
+	bcd[R2025_REG_DAY] = bintobcd(dt.dt_day) & R2025_REG_DAY_MASK;
+	bcd[R2025_REG_MON] = (bintobcd(dt.dt_mon) & R2025_REG_MON_MASK)
 		| ((dt.dt_year >= 2000) ? R2025_REG_MON_Y1920 : 0);
-	bcd[R2025_REG_YEAR] = TOBCD(dt.dt_year % 100) & R2025_REG_YEAR_MASK;
+	bcd[R2025_REG_YEAR] = bintobcd(dt.dt_year % 100) & R2025_REG_YEAR_MASK;
 
 	/* Write RTC register */
 	if (r2025rtc_reg_write(sc, R2025_REG_CTRL1, &rctrl, 1) != 0) {

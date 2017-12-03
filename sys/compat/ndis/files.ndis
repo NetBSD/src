@@ -3,6 +3,7 @@
 # Config file description ndis module
 # 
 
+define	compat_ndis
 file	compat/ndis/kern_ndis.c		compat_ndis
 file	compat/ndis/kern_windrv.c	compat_ndis
 file	compat/ndis/nbcompat.c		compat_ndis

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.22 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.22.14.1 2017/12/03 11:36:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(8*1024*1024)		/* max text size */
+#define	MAXTSIZ		(32*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */

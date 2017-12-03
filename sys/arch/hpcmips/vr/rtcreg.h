@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.9 2006/09/16 02:14:57 gdamore Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.9.102.1 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -41,9 +41,6 @@
 #endif
 #define EPOCHMONTH	1			/* WINCE epoch month of year */
 #define EPOCHDATE	1			/* WINCE epoch date of month */
-
-#define	LEAPYEAR4(year)	((((year) % 4) == 0 && ((year) % 100) != 0) || ((year%400)) == 0)
-#define	LEAPYEAR2(year)	(((year) % 4) == 0)
 
 /*
  *	RTC (Real Time Clock Unit) Registers definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.5.6.1 2013/02/25 00:30:11 tls Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.5.6.2 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -61,7 +61,7 @@ extern cyclic_clock_func_t	cyclic_clock_func[];
 /*
  * The dtrace module handles traps that occur during a DTrace probe.
  * This type definition is used in the trap handler to provide a
- * hook for the dtrace module to register it's handler with.
+ * hook for the dtrace module to register its handler with.
  */
 typedef int (*dtrace_trap_func_t)(struct trapframe *, u_int);
 

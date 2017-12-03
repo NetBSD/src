@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.3.6.2 2013/06/23 06:20:22 tls Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.3.6.3 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.3.6.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.3.6.3 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -47,7 +47,7 @@ static int aubtfwl_detach(device_t, int);
 static void aubtfwl_attach_hook(device_t);
 
 struct aubtfwl_softc {
-	usbd_device_handle sc_udev;
+	struct usbd_device *sc_udev;
 	int sc_flags;
 #define AUBT_IS_AR3012		1
 };
@@ -67,11 +67,11 @@ aubtfwl_match(device_t parent, cfdata_t match, void *aux)
 {
 	const struct usb_attach_arg * const uaa = aux;
 
-	if (usb_lookup(ar3k_devs, uaa->vendor, uaa->product))
+	if (usb_lookup(ar3k_devs, uaa->uaa_vendor, uaa->uaa_product))
 		return UMATCH_VENDOR_PRODUCT;
 
-	if (usb_lookup(ar3k12_devs, uaa->vendor, uaa->product)) {
-		return (UGETW(uaa->device->ddesc.bcdDevice) > 1)?
+	if (usb_lookup(ar3k12_devs, uaa->uaa_vendor, uaa->uaa_product)) {
+		return (UGETW(uaa->uaa_device->ud_ddesc.bcdDevice) > 1)?
 			UMATCH_NONE : UMATCH_VENDOR_PRODUCT;
 	}
 
@@ -85,10 +85,10 @@ aubtfwl_attach(device_t parent, device_t self, void *aux)
 	struct aubtfwl_softc * const sc = device_private(self);
 	aprint_naive("\n");
 	aprint_normal("\n");
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 	sc->sc_flags = 0;
 
-	if (usb_lookup(ar3k12_devs, uaa->vendor, uaa->product))
+	if (usb_lookup(ar3k12_devs, uaa->uaa_vendor, uaa->uaa_product))
 		sc->sc_flags |= AUBT_IS_AR3012;
 
 	config_mountroot(self, aubtfwl_attach_hook);
@@ -108,9 +108,9 @@ aubtfwl_detach(device_t self, int flags)
 static int
 aubtfwl_firmware_load(device_t self, const char *name) {
 	struct aubtfwl_softc * const sc = device_private(self);
-	usbd_interface_handle iface;
-	usbd_pipe_handle pipe;
-	usbd_xfer_handle xfer;
+	struct usbd_interface *iface;
+	struct usbd_pipe *pipe;
+	struct usbd_xfer *xfer;
 	void *buf;
 	usb_device_request_t req;
 	int error = 0;
@@ -119,7 +119,7 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 	size_t fwo = 0;
 	uint32_t n;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	error = firmware_open("ubt", name, &fwh);
 	if (error != 0) {
@@ -149,19 +149,13 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 		goto out_firmware;
 	}
 
-	xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (xfer == NULL) {
-		aprint_error_dev(self, "failed to alloc xfer\n");
-		error = 1;
+	error = usbd_create_xfer(pipe, AR3K_FIRMWARE_CHUNK_SIZE, 0, 0, &xfer);
+	if (error) {
+		aprint_verbose_dev(self, "cannot create xfer(%d)\n",
+		    error);
 		goto out_pipe;
 	}
-
-	buf = usbd_alloc_buffer(xfer, AR3K_FIRMWARE_CHUNK_SIZE);
-	if (buf == NULL) {
-		aprint_error_dev(self, "failed to alloc buffer\n");
-		error = 1;
-		goto out_xfer;
-	}
+	buf = usbd_get_buffer(xfer);
 
 	error = firmware_read(fwh, fwo, buf, AR3K_FIRMWARE_HEADER_SIZE);
 	if (error != 0) {
@@ -190,9 +184,8 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 		if (error != 0) {
 			break;
 		}
-		error = usbd_bulk_transfer(xfer, pipe,
-		    USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
-		    buf, &n, device_xname(self));
+		error = usbd_bulk_transfer(xfer, pipe, 0, USBD_DEFAULT_TIMEOUT,
+		    buf, &n);
 		if (error != USBD_NORMAL_COMPLETION) {
 			aprint_error_dev(self, "xfer failed, %s\n",
 			   usbd_errstr(error));
@@ -205,7 +198,7 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 		aprint_verbose_dev(self, "firmware load complete\n");
 
 out_xfer:
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 out_pipe:
 	usbd_close_pipe(pipe);
 out_firmware:
@@ -219,13 +212,13 @@ aubtfwl_get_state(struct aubtfwl_softc *sc, uint8_t *state) {
 	usb_device_request_t req;
 	int error = 0;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	req.bRequest = AR3K_GET_STATE;
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
-	USETW(req.wLength, sizeof *state);
+	USETW(req.wLength, sizeof(*state));
 
 	error = usbd_do_request(sc->sc_udev, &req, state);
 
@@ -237,13 +230,13 @@ aubtfwl_get_version(struct aubtfwl_softc *sc, struct ar3k_version *ver) {
 	usb_device_request_t req;
 	int error = 0;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	req.bRequest = AR3K_GET_VERSION;
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
-	USETW(req.wLength, sizeof *ver);
+	USETW(req.wLength, sizeof(*ver));
 
 	error = usbd_do_request(sc->sc_udev, &req, ver);
 
@@ -262,7 +255,7 @@ aubtfwl_send_command(struct aubtfwl_softc *sc, uByte cmd) {
 	usb_device_request_t req;
 	int error = 0;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	req.bRequest = cmd;
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -299,7 +292,7 @@ aubtfwl_attach_hook(device_t self)
 		aprint_verbose_dev(self, "state is 0x%02x\n", state);
 
 		if (!(state & AR3K_STATE_IS_PATCHED)) {
-			snprintf(firmware_name, sizeof firmware_name,
+			snprintf(firmware_name, sizeof(firmware_name),
 				"ar3k/AthrBT_0x%08x.dfu", ver.rom);
 			error = aubtfwl_firmware_load(self, firmware_name);
 
@@ -319,7 +312,7 @@ aubtfwl_attach_hook(device_t self)
 			break;
 		}
 
-		snprintf(firmware_name, sizeof firmware_name,
+		snprintf(firmware_name, sizeof(firmware_name),
 			"ar3k/ramps_0x%08x_%d.dfu", ver.rom, clock);
 		aubtfwl_firmware_load(self, firmware_name);
 

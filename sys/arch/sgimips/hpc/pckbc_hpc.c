@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.9 2008/03/15 13:23:24 cube Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.9.48.1 2017/12/03 11:36:41 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.9 2008/03/15 13:23:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.9.48.1 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ pckbc_hpc_attach(device_t parent, device_t self, void *aux)
 
 		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
 		    M_WAITOK | M_ZERO);
-		t->t_iot = haa->ha_st;
+		t->t_iot = hpc_memt;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
 		t->t_addr = haa->ha_sh;

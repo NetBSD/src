@@ -1,4 +1,4 @@
-/* $NetBSD: sysctl.h,v 1.1.1.2 2011/12/07 14:41:15 cegger Exp $ */
+/* $NetBSD: sysctl.h,v 1.1.1.2.8.1 2017/12/03 11:36:51 jdolecek Exp $ */
 /******************************************************************************
  * sysctl.h
  * 
@@ -51,7 +51,7 @@ struct xen_sysctl_readconsole {
      * IN:  Start index for consuming from ring buffer (if @incremental);
      * OUT: End index after consuming from ring buffer.
      */
-    uint32_t index; 
+    uint32_t index;
     /* IN: Virtual address to write console data. */
     XEN_GUEST_HANDLE_64(char) buffer;
     /* IN: Size of buffer; OUT: Bytes written to buffer. */
@@ -177,16 +177,16 @@ struct xen_sysctl_cpuinfo {
     uint64_aligned_t idletime;
 };
 typedef struct xen_sysctl_cpuinfo xen_sysctl_cpuinfo_t;
-DEFINE_XEN_GUEST_HANDLE(xen_sysctl_cpuinfo_t); 
+DEFINE_XEN_GUEST_HANDLE(xen_sysctl_cpuinfo_t);
 struct xen_sysctl_getcpuinfo {
     /* IN variables. */
     uint32_t max_cpus;
     XEN_GUEST_HANDLE_64(xen_sysctl_cpuinfo_t) info;
     /* OUT variables. */
     uint32_t nr_cpus;
-}; 
+};
 typedef struct xen_sysctl_getcpuinfo xen_sysctl_getcpuinfo_t;
-DEFINE_XEN_GUEST_HANDLE(xen_sysctl_getcpuinfo_t); 
+DEFINE_XEN_GUEST_HANDLE(xen_sysctl_getcpuinfo_t);
 
 /* XEN_SYSCTL_availheap */
 struct xen_sysctl_availheap {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.11 2011/07/09 17:32:29 matt Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.11.12.1 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.11 2011/07/09 17:32:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.11.12.1 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"
@@ -168,6 +168,7 @@ dz_ibus_attach(device_t parent, device_t self, void *aux)
 	 * XXX - This is evil and ugly, but... due to the nature of how
 	 * bus_space_* works on pmax it will do for the time being.
 	 */
+	sc->sc_iot = normal_memt;
 	sc->sc_ioh = (bus_space_handle_t)MIPS_PHYS_TO_KSEG1(iba->ia_addr);
 
 	sc->sc_dr.dr_csr = 0;

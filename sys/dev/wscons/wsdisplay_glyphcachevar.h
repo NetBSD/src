@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.3.2.1 2012/11/20 03:02:36 tls Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.3.2.2 2017/12/03 11:37:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -48,8 +48,12 @@ typedef struct _glyphcache {
 	int gc_cellheight;
 	int gc_cellsperline;
 	int gc_firstline;	/* first line in vram to use for glyphs */
+	int gc_lines;
+	int gc_width;
+	int gc_fontcookie;
 	/* buckets */
-	int gc_numbuckets;
+	int gc_numbuckets;	/* buckets we can use */
+	int gc_nbuckets;	/* buckets allocated */
 	gc_bucket *gc_buckets;	/* we allocate as many as we can get into vram */
 	gc_bucket *gc_next;	/* bucket the next glyph goes into */
 	long gc_underline;	/* draw an underline in glyphcache_add() */
@@ -66,10 +70,19 @@ typedef struct _glyphcache {
 
 /* first line, lines, width, cellwidth, cellheight, attr */
 int glyphcache_init(glyphcache *, int, int, int, int, int, long);
+
+/* adapt to changed font */
+int glyphcache_reconfig(glyphcache *, int, int, long);
+
+/* helper for showscreen_cb */
+void glyphcache_adapt(struct vcons_screen *, void *);
+
 /* clear out the cache, for example when returning from X */
 void glyphcache_wipe(glyphcache *);
+
 /* add a glyph to the cache */
 int glyphcache_add(glyphcache *, int, int, int); /* char code, x, y */
+
 /* try to draw a glyph from the cache */
 int glyphcache_try(glyphcache *, int, int, int, long); /* char code, x, y, attr */
 #define	GC_OK	0 /* glyph was in cache and has been drawn */

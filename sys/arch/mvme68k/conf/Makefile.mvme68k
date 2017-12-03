@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.62.14.1 2014/08/20 00:03:14 tls Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.62.14.2 2017/12/03 11:36:30 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -62,7 +62,8 @@ KERN_AS=	obj
 # for the Motorola 68060 Software Support Package
 .include "$S/arch/m68k/060sp/Makefile.inc"
 
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	${MVME68K}/mvme68k/locore.s
 

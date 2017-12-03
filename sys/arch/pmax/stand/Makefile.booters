@@ -1,6 +1,7 @@
-# $NetBSD: Makefile.booters,v 1.57.12.1 2014/08/20 00:03:19 tls Exp $
+# $NetBSD: Makefile.booters,v 1.57.12.2 2017/12/03 11:36:35 jdolecek Exp $
 
 NOMAN=		# defined
+NOPIE=		# defined
 
 .include <bsd.own.mk>
 
@@ -71,8 +72,9 @@ CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 PROG=		${SECONDARY_PROG}
 LOAD_ADDRESS=	${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_BOOTBLOCK
-SRCS+=	vers.c
-CLEANFILES+= vers.c
+
+.include "${S}/conf/newvers_stand.mk"
+
 .else
 # XXX ?
 .endif
@@ -105,10 +107,6 @@ LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    -N ${.CURDIR}/version "pmax"
-
 ${PROG}: ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    ${LDBUG} -e start -o ${PROG} ${OBJS} ${LIBS}
@@ -121,7 +119,6 @@ ${PROG}: ${OBJS} ${LIBS}
 	@echo -n "Creating ECOFF binary... "
 	@mv ${PROG} ${PROG}.elf
 	@${ELF2ECOFF} ${PROG}.elf ${PROG}
-	@echo done.
 .endif
 
 .include <bsd.klinks.mk>

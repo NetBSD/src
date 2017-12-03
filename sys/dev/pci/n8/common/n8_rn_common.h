@@ -131,7 +131,7 @@ typedef struct
 
 
 /* RNG REGISTERS - RNG Buffer - RNH REGISTERS */
-/* 64-bit regsisters in the RNG must be read/written using the Most */
+/* 64-bit registers in the RNG must be read/written using the Most */
 /* Significant Word first, in order to access the full 64bit value. */
 
 typedef struct
@@ -189,4 +189,3 @@ typedef struct
 
 
 #endif
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acer_reg.h,v 1.12 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: pciide_acer_reg.h,v 1.12.22.1 2017/12/03 11:37:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -37,6 +37,8 @@
  * bit 1 is 0 -> secondary has 80 pin cable
  */
 #define ACER_0x4A_80PIN(chan)	(0x1 << (chan))
+/* From FreeBSD, use device interrupt as byte count end */
+#define ACER_0x4A_BCEINT	0x20
 
 /* From FreeBSD, for UDMA mode > 2 */
 #define ACER_0x4B	0x4b

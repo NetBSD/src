@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.54.18.1 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.54.18.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.54.18.1 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.54.18.2 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ mfs_close(void *v)
 int
 mfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -280,8 +280,8 @@ mfs_inactive(void *v)
 	if (bufq_peek(mfsp->mfs_buflist) != NULL)
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			bufq_peek(mfsp->mfs_buflist));
-	VOP_UNLOCK(vp);
-	return (0);
+
+	return VOCALL(spec_vnodeop_p,  VOFFSET(vop_inactive), ap);
 }
 
 /*
@@ -290,12 +290,14 @@ mfs_inactive(void *v)
 int
 mfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	int refcnt;
+
+	VOP_UNLOCK(vp);
 
 	mutex_enter(&mfs_lock);
 	vp->v_data = NULL;
@@ -308,7 +310,7 @@ mfs_reclaim(void *v)
 		kmem_free(mfsp, sizeof(*mfsp));
 	}
 
-	return (0);
+	return VOCALL(spec_vnodeop_p,  VOFFSET(vop_reclaim), ap);
 }
 
 /*

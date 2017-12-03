@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.5.122.1 2014/08/20 00:02:59 tls Exp $
+#	$NetBSD: Makefile,v 1.5.122.2 2017/12/03 11:36:11 jdolecek Exp $
 
 INCSDIR= /usr/include/evbppc
 
 INCS=	disklabel.h \
+	fenv.h \
 	intr.h \
 	sljit_machdep.h \
 	vmparam.h 

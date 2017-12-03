@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.2.118.1 2017/12/03 11:36:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -68,7 +68,7 @@ extern struct devsw devsw[];
 extern struct netif_driver efi_net; 
 
 /* Find EFI network resources */
-/*extern void efinet_init_driver(void); XXX should get this running once we're off the mark */
+extern void efinet_init_driver(void);
 
 /* Map handles to units */
 int efifs_get_unit(EFI_HANDLE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.58.14.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: cy.c,v 1.58.14.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.58.14.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.58.14.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.58.14.1 2014/08/20 00:03:38 tls Exp $");
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
 
+#include "ioconf.h"
+
 static int	cyparam(struct tty *, struct termios *);
 static void	cystart(struct tty *);
 static void	cy_poll(void *);
@@ -45,8 +47,6 @@ static int	cy_modem_control(struct cy_softc *, struct cy_port *, int, int);
 static void	cy_enable_transmitter(struct cy_softc *, struct cy_port *);
 static void	cd1400_channel_cmd(struct cy_softc *, struct cy_port *, int);
 static int	cy_speed(speed_t, int *, int *, int);
-
-extern struct cfdriver cy_cd;
 
 static dev_type_open(cyopen);
 static dev_type_close(cyclose);
@@ -246,8 +246,8 @@ cy_attach(struct cy_softc *sc)
 	    CY_CLEAR_INTR << sc->sc_bustype, 0);
 }
 
-#define	CYDIALOUT_MASK		0x80000
-#define	CY_DIALOUT(dev)		(minor(dev) & CYDIALOUT_MASK)
+#define	CY_UNIT(dev)		TTUNIT(dev)
+#define	CY_DIALOUT(dev)		TTDIALOUT(dev)
 
 #define	CY_PORT(dev)		cy_getport((dev))
 #define	CY_BOARD(cy)		((cy)->cy_softc)
@@ -255,7 +255,7 @@ cy_attach(struct cy_softc *sc)
 static struct cy_port *
 cy_getport(dev_t dev)
 {
-	int i, j, k, u = minor(dev) & ~CYDIALOUT_MASK;
+	int i, j, k, u = CY_UNIT(dev);
 	struct cy_softc *sc;
 
 	for (i = 0, j = 0; i < cy_cd.cd_ndevs; i++) {

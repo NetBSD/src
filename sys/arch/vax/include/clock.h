@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.8 2010/11/19 03:31:24 uwe Exp $ */
+/*	$NetBSD: clock.h,v 1.8.18.1 2017/12/03 11:36:48 jdolecek Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
- *	Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -37,14 +31,6 @@
 /*
  * Time constants. These are unlikely to change.
  */
-#define IS_LEAPYEAR(y) ((((y % 4) == 0) && ((y % 100) != 0)) || ((y % 400) == 0))
-
-#define SEC_PER_MIN	(60)
-#define SEC_PER_HOUR	(SEC_PER_MIN * 60)
-#define SEC_PER_DAY	(SEC_PER_HOUR * 24)
-#define DAYSPERYEAR(y)	(IS_LEAPYEAR(y) ? 366 : 365)
-#define SECPERYEAR(y)	(DAYSPERYEAR(y) * SEC_PER_DAY)
-
 #define TODRBASE	(1 << 28) /* Rumours says it comes from VMS */
 
 #define	SEC_OFF		0

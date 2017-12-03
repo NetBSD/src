@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.2 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16.2.2 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include "opt_mtrr.h"
 
@@ -105,6 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp 
 #endif
 
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
+
+extern struct pool x86_dbregspl;
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -156,6 +159,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
 	/* Copy any additional fpu state */
 	fpu_save_area_fork(pcb2, pcb1);
+
+	/* Never inherit CPU Debug Registers */
+	pcb2->pcb_dbregs = NULL;
 
 #if defined(XEN)
 	pcb2->pcb_iopl = SEL_KPL;
@@ -249,6 +255,12 @@ cpu_lwp_free(struct lwp *l, int proc)
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
 #endif
+	/*
+	 * Free deferred mappings if any.
+	 */
+	struct vm_page *empty_ptps = l->l_md.md_gc_ptp;
+	l->l_md.md_gc_ptp = NULL;
+	pmap_free_ptps(empty_ptps);
 }
 
 /*
@@ -258,9 +270,17 @@ cpu_lwp_free(struct lwp *l, int proc)
 void
 cpu_lwp_free2(struct lwp *l)
 {
+	struct pcb *pcb;
 
 	KASSERT(l->l_md.md_gc_ptp == NULL);
 	KASSERT(l->l_md.md_gc_pmap == NULL);
+
+	pcb = lwp_getpcb(l);
+
+	if (pcb->pcb_dbregs) {
+		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
+		pcb->pcb_dbregs = NULL;
+	}
 }
 
 /*
@@ -379,7 +399,7 @@ cpu_uarea_free(void *vva)
 {
 	vaddr_t va = (vaddr_t) vva;
 
-	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS) {
+	if (va < PMAP_DIRECT_BASE || va >= PMAP_DIRECT_END) {
 		return false;
 	}
 

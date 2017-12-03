@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.21.22.2 2013/06/23 06:18:40 tls Exp $	*/
+/*	$NetBSD: dinode.h,v 1.21.22.3 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -80,10 +80,10 @@
 #define	UFS_NIADDR	3		/* Indirect addresses in inode. */
 
 struct ufs1_dinode {
-	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
+	uint16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
-	u_int16_t	di_oldids[2];	/*   4: Ffs: old user and group ids. */
-	u_int64_t	di_size;	/*   8: File byte count. */
+	uint16_t	di_oldids[2];	/*   4: Ffs: old user and group ids. */
+	uint64_t	di_size;	/*   8: File byte count. */
 	int32_t		di_atime;	/*  16: Last access time. */
 	int32_t		di_atimensec;	/*  20: Last access time. */
 	int32_t		di_mtime;	/*  24: Last modified time. */
@@ -92,22 +92,22 @@ struct ufs1_dinode {
 	int32_t		di_ctimensec;	/*  36: Last inode change time. */
 	int32_t		di_db[UFS_NDADDR]; /*  40: Direct disk blocks. */
 	int32_t		di_ib[UFS_NIADDR]; /*  88: Indirect disk blocks. */
-	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
-	u_int32_t	di_blocks;	/* 104: Blocks actually held. */
+	uint32_t	di_flags;	/* 100: Status flags (chflags). */
+	uint32_t	di_blocks;	/* 104: Blocks actually held. */
 	int32_t		di_gen;		/* 108: Generation number. */
-	u_int32_t	di_uid;		/* 112: File owner. */
-	u_int32_t	di_gid;		/* 116: File group. */
-	u_int64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
+	uint32_t	di_uid;		/* 112: File owner. */
+	uint32_t	di_gid;		/* 116: File group. */
+	uint64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
 };
 
 struct ufs2_dinode {
-	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
+	uint16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
-	u_int32_t	di_uid;		/*   4: File owner. */
-	u_int32_t	di_gid;		/*   8: File group. */
-	u_int32_t	di_blksize;	/*  12: Inode blocksize. */
-	u_int64_t	di_size;	/*  16: File byte count. */
-	u_int64_t	di_blocks;	/*  24: Bytes actually held. */
+	uint32_t	di_uid;		/*   4: File owner. */
+	uint32_t	di_gid;		/*   8: File group. */
+	uint32_t	di_blksize;	/*  12: Inode blocksize. */
+	uint64_t	di_size;	/*  16: File byte count. */
+	uint64_t	di_blocks;	/*  24: Bytes actually held. */
 	int64_t		di_atime;	/*  32: Last access time. */
 	int64_t		di_mtime;	/*  40: Last modified time. */
 	int64_t		di_ctime;	/*  48: Last inode change time. */
@@ -117,13 +117,13 @@ struct ufs2_dinode {
 	int32_t		di_ctimensec;	/*  72: Last inode change time. */
 	int32_t		di_birthnsec;	/*  76: Inode creation time. */
 	int32_t		di_gen;		/*  80: Generation number. */
-	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
-	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
+	uint32_t	di_kernflags;	/*  84: Kernel flags. */
+	uint32_t	di_flags;	/*  88: Status flags (chflags). */
 	int32_t		di_extsize;	/*  92: External attributes block. */
 	int64_t		di_extb[UFS_NXADDR];/* 96: External attributes block. */
 	int64_t		di_db[UFS_NDADDR]; /* 112: Direct disk blocks. */
 	int64_t		di_ib[UFS_NIADDR]; /* 208: Indirect disk blocks. */
-	u_int64_t	di_modrev;	/* 232: i_modrev for NFSv4 */
+	uint64_t	di_modrev;	/* 232: i_modrev for NFSv4 */
 	int64_t		di_spare[2];	/* 240: Reserved; currently unused */
 };
 

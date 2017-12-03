@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.32.2.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -28,9 +28,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32.2.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
-int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
+int acpi_md_vbios_reset = 0; /* Referenced by dev/pci/vga_pci.c */
 int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
 
@@ -140,17 +137,10 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 	*addr = val;						\
 } while (0)
 
-#define WAKECODE_BCOPY(offset, type, val) do	{		\
-	void	**addr;						\
-	addr = (void **)(acpi_wakeup_vaddr + offset);		\
-	memcpy(addr, &(val), sizeof(type));			\
-} while (0)
-
 	paddr_t				tmp_pdir;
 
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
-	/* Execute Sleep */
 	memcpy((void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
 
 	if (CPU_IS_PRIMARY(ci)) {
@@ -165,10 +155,8 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 
 #ifdef __i386__
 	WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, ci->ci_suspend_cr4);
-#else
-	WAKECODE_FIXUP(WAKEUP_efer, uint32_t, ci->ci_suspend_efer);
 #endif
-
+	WAKECODE_FIXUP(WAKEUP_efer, uint32_t, ci->ci_suspend_efer);
 	WAKECODE_FIXUP(WAKEUP_curcpu, void *, ci);
 #ifdef __i386__
 	WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
@@ -177,7 +165,6 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 #endif
 	WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_md_sleep_exit);
 #undef WAKECODE_FIXUP
-#undef WAKECODE_BCOPY
 }
 
 static int
@@ -255,19 +242,39 @@ acpi_md_sleep_enter(int state)
 void
 acpi_cpu_sleep(struct cpu_info *ci)
 {
+	uint64_t xcr0 = 0;
+	int s;
+
 	KASSERT(!CPU_IS_PRIMARY(ci));
 	KASSERT(ci == curcpu());
 
+	s = splhigh();
+	fpusave_cpu(true);
 	x86_disable_intr();
 
-	if (acpi_md_sleep_prepare(-1))
-		return;
+	/*
+	 * XXX also need to save the PMCs, the dbregs, and probably a few
+	 * MSRs too.
+	 */
+	if (rcr4() & CR4_OSXSAVE)
+		xcr0 = rdxcr(0);
 
-	/* Execute Wakeup */
-#ifndef __i386__
+	/* Go get some sleep */
+	if (acpi_md_sleep_prepare(-1))
+		goto out;
+
+	/*
+	 * Sleeping and having bad nightmares about what could go wrong
+	 * when waking up.
+	 */
+
+	/* We just woke up (cpuN), execution is resumed here */
 	cpu_init_msrs(ci, false);
-#endif
 	fpuinit(ci);
+	if (rcr4() & CR4_OSXSAVE)
+		wrxcr(0, xcr0);
+	pat_init(ci);
+	x86_errata();
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();
@@ -278,13 +285,16 @@ acpi_cpu_sleep(struct cpu_info *ci)
 	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
 	tsc_sync_ap(ci);
 
+out:
 	x86_enable_intr();
+	splx(s);
 }
 #endif
 
 int
 acpi_md_sleep(int state)
 {
+	uint64_t xcr0 = 0;
 	int s, ret = 0;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
@@ -300,7 +310,7 @@ acpi_md_sleep(int state)
 		return -1;
 	}
 
-	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
+	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr, acpi_wakeup_paddr);
 
 	s = splhigh();
 	fpusave_cpu(true);
@@ -315,14 +325,29 @@ acpi_md_sleep(int state)
 	}
 #endif
 
+	/*
+	 * XXX also need to save the PMCs, the dbregs, and probably a few
+	 * MSRs too.
+	 */
+	if (rcr4() & CR4_OSXSAVE)
+		xcr0 = rdxcr(0);
+
+	/* Go get some sleep */
 	if (acpi_md_sleep_prepare(state))
 		goto out;
 
-	/* Execute Wakeup */
-#ifndef __i386__
+	/*
+	 * Sleeping and having bad nightmares about what could go wrong
+	 * when waking up.
+	 */
+
+	/* We just woke up (cpu0), execution is resumed here */
 	cpu_init_msrs(&cpu_info_primary, false);
-#endif
 	fpuinit(&cpu_info_primary);
+	if (rcr4() & CR4_OSXSAVE)
+		wrxcr(0, xcr0);
+	pat_init(&cpu_info_primary);
+	x86_errata();
 	i8259_reinit();
 #if NLAPIC > 0
 	lapic_enable();
@@ -362,6 +387,7 @@ acpi_md_sleep(int state)
 out:
 
 #ifdef MULTIPROCESSOR
+	/* Wake up the secondary CPUs */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
 			continue;

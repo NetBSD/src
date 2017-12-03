@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.63.24.2 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.63.24.3 2017/12/03 11:39:03 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,10 +36,12 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.63.24.2 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.63.24.3 2017/12/03 11:39:03 jdolecek Exp $");
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1163,7 +1165,7 @@ ieee80211_find_node(struct ieee80211_node_table *nt, const u_int8_t *macaddr)
  * Fake up a node; this handles node discovery in adhoc mode.
  * Note that for the driver's benefit we treat this like
  * an association so the driver has an opportunity to setup
- * it's private state.
+ * its private state.
  */
 struct ieee80211_node *
 ieee80211_fakeup_adhoc_node(struct ieee80211_node_table *nt,
@@ -1346,7 +1348,7 @@ ieee80211_init_neighbor(struct ieee80211com *ic, struct ieee80211_node *ni,
  * Do node discovery in adhoc mode on receipt of a beacon
  * or probe response frame.  Note that for the driver's
  * benefit we we treat this like an association so the
- * driver has an opportunity to setup it's private state.
+ * driver has an opportunity to setup its private state.
  */
 struct ieee80211_node *
 ieee80211_add_neighbor(struct ieee80211com *ic,
@@ -1631,6 +1633,8 @@ ieee80211_find_node_with_ssid(struct ieee80211_node_table *nt,
 	int hash;
 
 	IEEE80211_NODE_LOCK(nt);
+	__USE(ic);
+
 	/*
 	 * A mac address that is all zero means match only the ssid;
 	 * otherwise we must match both.
@@ -2313,7 +2317,7 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	 * Tell the authenticator the station is leaving.
 	 * Note that we must do this before yanking the
 	 * association id as the authenticator uses the
-	 * associd to locate it's state block.
+	 * associd to locate its state block.
 	 */
 	if (ic->ic_auth->ia_node_leave != NULL)
 		ic->ic_auth->ia_node_leave(ic, ni);

@@ -1,4 +1,4 @@
-/* $NetBSD: blkif.h,v 1.6 2011/12/07 15:04:18 cegger Exp $ */
+/* $NetBSD: blkif.h,v 1.6.6.1 2017/12/03 11:36:51 jdolecek Exp $ */
 /******************************************************************************
  * blkif.h
  * 
@@ -125,7 +125,7 @@ typedef struct blkif_x86_32_request blkif_x86_32_request_t;
 struct blkif_x86_32_response {
     uint64_t        id;              /* copied from request */
     uint8_t         operation;       /* copied from request */
-    uint8_t         _pad; 
+    uint8_t         _pad;
     int16_t         status;          /* BLKIF_RSP_???       */
 } __packed;
 typedef struct blkif_x86_32_response blkif_x86_32_response_t;

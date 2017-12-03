@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.4.2 2014/08/20 00:03:18 tls Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.4.3 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,13 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.4.2 2014/08/20 00:03:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.4.3 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <mips/locore.h>
+
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 static int cpumatch(device_t, cfdata_t, void *);
 static void cpuattach(device_t, device_t, void *);

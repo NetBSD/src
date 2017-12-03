@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.10 2012/03/10 21:51:58 joerg Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.10.2.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.10 2012/03/10 21:51:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.10.2.1 2017/12/03 11:36:56 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/dirent.h>
+#include <sys/condvar.h>
 #include <sys/ksem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>

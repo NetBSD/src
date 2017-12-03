@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.5 2012/01/21 22:09:56 reinoud Exp $ */
+/* $NetBSD: if_veth.c,v 1.5.10.1 2017/12/03 11:36:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5 2012/01/21 22:09:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5.10.1 2017/12/03 11:36:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,6 +102,7 @@ veth_attach(device_t parent, device_t self, void *opaque)
 	struct veth_softc *sc = device_private(self);
 	struct thunkbus_attach_args *taa = opaque;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	int rv;
 
 	sc->sc_dev = self;
 
@@ -137,8 +138,15 @@ veth_attach(device_t parent, device_t self, void *opaque)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifq->if_snd);
 
-	if_attach(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(self, "if_initialize failed(%d)\n", rv);
+		thunk_close(sc->sc_tapfd);
+		pmf_device_deregister(self);
+		return; /* Error */
+	}
 	ether_ifattach(ifp, sc->sc_eaddr);
+	if_register(ifp);
 
 	ifmedia_init(&sc->sc_ifmedia, 0,
 	    veth_ifmedia_change,
@@ -228,15 +236,12 @@ veth_softrx(void *priv)
 				continue;
 			}
 		}
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		memcpy(mtod(m, void *), sc->sc_rx_buf, len);
-		++ifp->if_ipackets;
-
-		bpf_mtap(ifp, m);
 
 		s = splnet();
-		ifp->if_input(ifp, m);
+		if_input(ifp, m);
 		splx(s);
 	}
 }

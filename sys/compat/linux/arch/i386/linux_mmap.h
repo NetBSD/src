@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.6 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.6.44.1 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,13 +38,13 @@
 
 #define LINUX_MAP_FIXED		0x0010
 #define LINUX_MAP_ANON		0x0020
+#define LINUX_MAP_LOCKED	0x2000
 
 /* the following flags are silently ignored */
 
 #define LINUX_MAP_GROWSDOWN	0x0100
 #define LINUX_MAP_DENYWRITE	0x0800
 #define LINUX_MAP_EXECUTABLE	0x1000
-#define LINUX_MAP_LOCKED	0x2000
 #define LINUX_MAP_NORESERVE	0x4000
 
 #endif /* !_I386_LINUX_MMAP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.47.6.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.47.6.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.47.6.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.47.6.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,17 +97,17 @@ static int	cs4281_trigger_input(void *, void *, void *, int,
 				     void (*)(void *), void *,
 				     const audio_params_t *);
 
-static int     cs4281_reset_codec(void *);
+static int	cs4281_reset_codec(void *);
 
 /* Internal functions */
-static uint8_t cs4281_sr2regval(int);
-static void	 cs4281_set_dac_rate(struct cs428x_softc *, int);
-static void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
+static uint8_t	cs4281_sr2regval(int);
+static void	cs4281_set_dac_rate(struct cs428x_softc *, int);
+static void	cs4281_set_adc_rate(struct cs428x_softc *, int);
 static int      cs4281_init(struct cs428x_softc *, int);
 
 /* Power Management */
-static bool cs4281_suspend(device_t, const pmf_qual_t *);
-static bool cs4281_resume(device_t, const pmf_qual_t *);
+static bool	cs4281_suspend(device_t, const pmf_qual_t *);
+static bool	cs4281_resume(device_t, const pmf_qual_t *);
 
 static const struct audio_hw_if cs4281_hw_if = {
 	NULL,			/* open */

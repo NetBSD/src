@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx31,v 1.7 2011/03/11 03:16:13 bsh Exp $
+#	$NetBSD: files.imx31,v 1.7.14.1 2017/12/03 11:35:53 jdolecek Exp $
 #
 # Configuration info for the Freescale i.MX31
 #
@@ -62,9 +62,9 @@ defparam opt_imx31clk.h IMX31_IPGCLK_FREQ
 
 # iMX UART
 device	imxuart
-attach	imxuart at aips
+attach	imxuart at aips with imx31_uart
 file	arch/arm/imx/imxuart.c			imxuart	needs-flag
-file	arch/arm/imx/imx31_uart.c		imxuart
+file	arch/arm/imx/imx31_uart.c		imx31_uart
 defflag	opt_imxuart.h				IMXUARTCONSOLE
 
 attach	ehci at ahb with ehci_ahb : bus_dma_generic

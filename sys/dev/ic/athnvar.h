@@ -1,5 +1,5 @@
-/*	$NetBSD: athnvar.h,v 1.4.4.2 2013/06/23 06:20:17 tls Exp $	*/
-/*	$OpenBSD: athnvar.h,v 1.33 2012/10/20 09:54:20 stsp Exp $	*/
+/*	$NetBSD: athnvar.h,v 1.4.4.3 2017/12/03 11:37:03 jdolecek Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.34 2013/10/21 16:13:49 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -240,7 +240,7 @@ struct athn_serdes {
 
 /* Rx queue software indexes. */
 #define ATHN_QID_LP		0
-#define ATHN_QID_HP		0
+#define ATHN_QID_HP		1
 
 /* Tx queue software indexes. */
 #define ATHN_QID_AC_BE		0
@@ -416,6 +416,7 @@ struct athn_ops {
 	int	(*dma_alloc)(struct athn_softc *);
 	void	(*dma_free)(struct athn_softc *);
 	void	(*rx_enable)(struct athn_softc *);
+	int	(*intr_status)(struct athn_softc *);
 	int	(*intr)(struct athn_softc *);
 	int	(*tx)(struct athn_softc *, struct mbuf *,
 		    struct ieee80211_node *, int);
@@ -457,6 +458,7 @@ struct athn_softc {
 	struct ieee80211com		sc_ic;
 	struct ethercom			sc_ec;
 #define sc_if	sc_ec.ec_if
+	void				*sc_soft_ih;
 
 #if 0
 	int				(*sc_enable)(struct athn_softc *);

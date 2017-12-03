@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_component.c,v 1.1.10.2 2014/08/20 00:04:40 tls Exp $	*/
+/*	$NetBSD: tty_component.c,v 1.1.10.3 2017/12/03 11:39:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,17 +26,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_component.c,v 1.1.10.2 2014/08/20 00:04:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_component.c,v 1.1.10.3 2017/12/03 11:39:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
 #include <sys/tty.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
-void ptyattach(int);
+#include "ioconf.h"
+
+RUMP_COMPONENT(RUMP_COMPONENT_KERN)
+{
+
+	tty_init();
+	ttyldisc_init();
+
+	rump_ttycomponent = true;
+}
 
 RUMP_COMPONENT(RUMP_COMPONENT_KERN_VFS)
 {
@@ -64,10 +73,5 @@ RUMP_COMPONENT(RUMP_COMPONENT_KERN_VFS)
 	FLAWLESSCALL(rump_vfs_makeonedevnode(S_IFCHR, "/dev/ptmx", cmaj, 0));
 	FLAWLESSCALL(rump_vfs_makeonedevnode(S_IFCHR, "/dev/ptm", cmaj, 1));
 
-	tty_init();
-	ttyldisc_init();
-
 	ptyattach(1);
-
-	rump_ttycomponent = true;
 }

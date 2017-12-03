@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.9.6.2 2014/08/20 00:03:13 tls Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.9.6.3 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.9.6.2 2014/08/20 00:03:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.9.6.3 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -953,7 +953,9 @@ rmixl_pcie_conf_setup(struct rmixl_pcie_softc *sc,
 			ecfg_oba = ba;
 		}
 		bsh = ecfg_bsh;
-	} else  {
+	} else if ((*offp > 0x700) && (*offp <= PCI_EXTCONF_SIZE)) {
+		return -1;
+	} else {
 #ifdef DEBUG
 		panic("%s: offset %#x: unknown", __func__, *offp);
 #endif

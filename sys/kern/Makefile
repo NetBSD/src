@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.12.1 2014/08/20 00:04:28 tls Exp $
+#	$NetBSD: Makefile,v 1.16.12.2 2017/12/03 11:38:44 jdolecek Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
@@ -11,7 +11,7 @@ all:
 	@false
 
 SYSCALLSRC = makesyscalls.sh syscalls.conf syscalls.master
-init_sysent.c syscalls.c ../sys/syscall.h ../sys/syscallargs.h: ${SYSCALLSRC}
+init_sysent.c syscalls.c systrace_args.c ../sys/syscall.h ../sys/syscallargs.h: ${SYSCALLSRC}
 	${HOST_SH} makesyscalls.sh syscalls.conf syscalls.master
 
 VNODEIFSRC = vnode_if.sh vnode_if.src

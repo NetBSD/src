@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.23 2012/02/14 15:08:07 pgoyette Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.23.6.1 2017/12/03 11:37:08 jdolecek Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.23 2012/02/14 15:08:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.23.6.1 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -245,6 +245,7 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);

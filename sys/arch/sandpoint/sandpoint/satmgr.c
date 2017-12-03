@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.23.2.2 2014/08/20 00:03:21 tls Exp $ */
+/* $NetBSD: satmgr.c,v 1.23.2.3 2017/12/03 11:36:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -602,8 +602,11 @@ filt_read(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops read_filtops = {
-	1, NULL, filt_rdetach, filt_read
+static const struct filterops read_filtops ={
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_rdetach,
+	.f_event = filt_read,
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.89.2.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.89.2.3 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -162,7 +162,6 @@ typedef	__gid_t		gid_t;		/* group id */
 #define	gid_t		__gid_t
 #endif
 
-typedef	int		idtype_t;	/* type of the id */
 typedef	uint32_t	id_t;		/* group id, process id or user id */
 typedef	uint64_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
@@ -199,16 +198,11 @@ typedef	unsigned long	cpuid_t;
 
 typedef	int		psetid_t;
 
+typedef volatile __cpu_simple_lock_nv_t __cpu_simple_lock_t;
+
 #if defined(_KERNEL) || defined(_STANDALONE)
-/*
- * Boolean type definitions for the kernel environment.  User-space
- * boolean definitions are found in <stdbool.h>.
- */
-#ifndef __cplusplus
-#define bool	_Bool
-#define true	1
-#define false	0
-#endif
+
+#include <sys/stdbool.h>
 
 /*
  * Deprecated Mach-style boolean_t type.  Should not be used by new code.
@@ -223,7 +217,7 @@ typedef int	boolean_t;
 
 #endif /* _KERNEL || _STANDALONE */
 
-#if defined(_KERNEL) || defined(_LIBC)
+#if defined(_KERNEL) || defined(_LIBC) || defined(_KMEMUSER)
 /*
  * semctl(2)'s argument structure.  This is here for the benefit of
  * <sys/syscallargs.h>.  It is not in the user's namespace in SUSv2.
@@ -235,7 +229,7 @@ union __semun {
 	unsigned short	*array;		/* array for GETALL & SETALL */
 };
 #include <sys/stdint.h>
-#endif /* _KERNEL || _LIBC */
+#endif /* _KERNEL || _LIBC || _KMEMUSER */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
@@ -265,9 +259,9 @@ typedef int32_t __devmajor_t, __devminor_t;
 #define	major(x)	((devmajor_t)(((uint32_t)(x) & 0x000fff00) >>  8))
 #define	minor(x)	((devminor_t)((((uint32_t)(x) & 0xfff00000) >> 12) | \
 				   (((uint32_t)(x) & 0x000000ff) >>  0)))
-#define	makedev(x,y)	((dev_t)((((x) <<  8) & 0x000fff00) | \
-				 (((y) << 12) & 0xfff00000) | \
-				 (((y) <<  0) & 0x000000ff)))
+#define	makedev(x,y)	((dev_t)((((dev_t)(x) <<  8) & 0x000fff00U) | \
+				 (((dev_t)(y) << 12) & 0xfff00000U) | \
+				 (((dev_t)(y) <<  0) & 0x000000ffU)))
 #endif
 
 #ifdef	_BSD_CLOCK_T_

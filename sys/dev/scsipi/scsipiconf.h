@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.121.2.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.121.2.2 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ typedef	int	boolean;
 
 #include <sys/callout.h>
 #include <sys/queue.h>
+#include <sys/condvar.h>
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_debug.h>
 
@@ -188,7 +189,7 @@ struct scsipi_inquiry_pattern;
 struct scsipi_adapter {
 	device_t adapt_dev;	/* pointer to adapter's device */
 	int	adapt_nchannels;	/* number of adapter channels */
-	int	adapt_refcnt;		/* adapter's reference count */
+	volatile int	adapt_refcnt;		/* adapter's reference count */
 	int	adapt_openings;		/* total # of command openings */
 	int	adapt_max_periph;	/* max openings per periph */
 	int	adapt_flags;
@@ -203,23 +204,22 @@ struct scsipi_adapter {
 			struct disk_parms *, u_long);
 	int	(*adapt_accesschk)(struct scsipi_periph *,
 			struct scsipi_inquiry_pattern *);
+
+	kmutex_t adapt_mtx;
+	volatile int	adapt_running;	/* how many users of mutex */
 };
-#endif
 
 /* adapt_flags */
 #define SCSIPI_ADAPT_POLL_ONLY	0x01 /* Adaptor can't do interrupts. */
+#define SCSIPI_ADAPT_MPSAFE     0x02 /* Adaptor doesn't need kernel lock */
 
-#define	scsipi_adapter_minphys(chan, bp)				\
-	(*(chan)->chan_adapter->adapt_minphys)((bp))
-
-#define	scsipi_adapter_request(chan, req, arg)				\
-	(*(chan)->chan_adapter->adapt_request)((chan), (req), (arg))
-
-#define	scsipi_adapter_ioctl(chan, cmd, data, flag, p)			\
-	(*(chan)->chan_adapter->adapt_ioctl)((chan), (cmd), (data), (flag), (p))
-
-#define	scsipi_adapter_enable(chan, enable)				\
-	(*(chan)->chan_adapt->adapt_enable)((chan), (enable))
+void scsipi_adapter_minphys(struct scsipi_channel *, struct buf *);
+void scsipi_adapter_request(struct scsipi_channel *,
+	scsipi_adapter_req_t, void *);
+int scsipi_adapter_ioctl(struct scsipi_channel *, u_long,
+	void *, int, struct proc *);
+int scsipi_adapter_enable(struct scsipi_adapter *, int);
+#endif
 
 
 /*
@@ -307,7 +307,17 @@ struct scsipi_channel {
 	/* callback we may have to call after forking the kthread */
 	void (*chan_init_cb)(struct scsipi_channel *, void *);
 	void *chan_init_cb_arg;
+
+	kcondvar_t chan_cv_comp;
+	kcondvar_t chan_cv_thr;
+	kcondvar_t chan_cv_xs;
+
+#define chan_cv_complete(ch) (&(ch)->chan_cv_comp)
+#define chan_cv_thread(ch) (&(ch)->chan_cv_thr)
 };
+
+#define chan_running(ch) ((ch)->chan_adapter->adapt_running)
+#define chan_mtx(ch) (&(ch)->chan_adapter->adapt_mtx)
 #endif
 
 /* chan_flags */
@@ -401,6 +411,9 @@ struct scsipi_periph {
 	/* xfer which has a pending CHECK_CONDITION */
 	struct scsipi_xfer *periph_xscheck;
 
+	kcondvar_t periph_cv;
+#define periph_cv_periph(p) (&(p)->periph_cv)
+#define periph_cv_active(p) (&(p)->periph_cv)
 };
 #endif
 
@@ -482,6 +495,7 @@ typedef enum {
 	XS_REQUEUE		/* requeue this command */
 } scsipi_xfer_result_t;
 
+#ifdef _KERNEL
 /*
  * Each scsipi transaction is fully described by one of these structures
  * It includes information about the source of the command and also the
@@ -544,7 +558,10 @@ struct scsipi_xfer {
 
 	struct	scsipi_generic cmdstore
 	    __aligned(4);		/* stash the command in here */
+
+#define xs_cv(xs) (&(xs)->xs_periph->periph_channel->chan_cv_xs)
 };
+#endif
 
 /*
  * scsipi_xfer control flags
@@ -635,6 +652,7 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init(void);
+void	scsipi_ioctl_init(void);
 void	scsipi_load_verbose(void);
 int	scsipi_command(struct scsipi_periph *, struct scsipi_generic *, int,
 	    u_char *, int, int, int, struct buf *, int);
@@ -642,7 +660,6 @@ void	scsipi_create_completion_thread(void *);
 const void *scsipi_inqmatch(struct scsipi_inquiry_pattern *, const void *,
 	    size_t, size_t, int *);
 const char *scsipi_dtype(int);
-void	scsipi_strvis(u_char *, int, const u_char *, int);
 int	scsipi_execute_xs(struct scsipi_xfer *);
 int	scsipi_test_unit_ready(struct scsipi_periph *, int);
 int	scsipi_prevent(struct scsipi_periph *, int, int);
@@ -663,6 +680,7 @@ int	scsipi_interpret_sense(struct scsipi_xfer *);
 void	scsipi_wait_drain(struct scsipi_periph *);
 void	scsipi_kill_pending(struct scsipi_periph *);
 struct scsipi_periph *scsipi_alloc_periph(int);
+void	scsipi_free_periph(struct scsipi_periph *);
 
 /* Function pointers for scsiverbose module */
 extern int	(*scsipi_print_sense)(struct scsipi_xfer *, int);
@@ -693,6 +711,8 @@ void	scsipi_remove_periph(struct scsipi_channel *,
 	    struct scsipi_periph *);
 struct scsipi_periph *scsipi_lookup_periph(struct scsipi_channel *,
 	    int, int);
+struct scsipi_periph *scsipi_lookup_periph_locked(struct scsipi_channel *,
+	    int, int);
 int	scsipi_target_detach(struct scsipi_channel *, int, int, int);
 
 int	scsipi_adapter_addref(struct scsipi_adapter *);
@@ -705,6 +725,9 @@ void	scsipi_channel_timed_thaw(void *);
 void	scsipi_periph_freeze(struct scsipi_periph *, int);
 void	scsipi_periph_thaw(struct scsipi_periph *, int);
 void	scsipi_periph_timed_thaw(void *);
+
+void	scsipi_periph_freeze_locked(struct scsipi_periph *, int);
+void	scsipi_periph_thaw_locked(struct scsipi_periph *, int);
 
 int	scsipi_sync_period_to_factor(int);
 int	scsipi_sync_factor_to_period(int);

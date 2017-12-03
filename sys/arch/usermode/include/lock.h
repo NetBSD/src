@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.3 2011/08/13 10:31:24 jmcneill Exp $ */
+/* $NetBSD: lock.h,v 1.3.12.1 2017/12/03 11:36:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,13 +58,13 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 }
 
 __inline static int
-__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *lockp)
+__SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *lockp)
 {
 	return *lockp == __SIMPLELOCK_LOCKED;
 }
 
 __inline static int
-__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *lockp)
+__SIMPLELOCK_UNLOCKED_P(const __cpu_simple_lock_t *lockp)
 {
 	return *lockp == __SIMPLELOCK_UNLOCKED;
 }

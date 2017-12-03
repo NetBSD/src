@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.30.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.30.2.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.30.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.30.2.2 2017/12/03 11:38:45 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.30.2.1 2014/08/20 00:04:29 tls Exp 
 #include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
+#include <sys/sdt.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -123,7 +128,6 @@ devsw_attach(const char *devname,
 	struct devsw_conv *conv;
 	char *name;
 	int error, i;
-	size_t len;
 
 	if (devname == NULL || cdev == NULL)
 		return (EINVAL);
@@ -178,35 +182,33 @@ devsw_attach(const char *devname,
 	}
 	if (i == max_devsw_convs) {
 		struct devsw_conv *newptr;
-		int old, new;
+		int old_convs, new_convs;
 
-		old = max_devsw_convs;
-		new = old + 1;
+		old_convs = max_devsw_convs;
+		new_convs = old_convs + 1;
 
-		newptr = kmem_zalloc(new * DEVSWCONV_SIZE, KM_NOSLEEP);
+		newptr = kmem_zalloc(new_convs * DEVSWCONV_SIZE, KM_NOSLEEP);
 		if (newptr == NULL) {
 			devsw_detach_locked(bdev, cdev);
 			error = ENOMEM;
 			goto fail;
 		}
-		newptr[old].d_name = NULL;
-		newptr[old].d_bmajor = -1;
-		newptr[old].d_cmajor = -1;
-		memcpy(newptr, devsw_conv, old * DEVSWCONV_SIZE);
+		newptr[old_convs].d_name = NULL;
+		newptr[old_convs].d_bmajor = -1;
+		newptr[old_convs].d_cmajor = -1;
+		memcpy(newptr, devsw_conv, old_convs * DEVSWCONV_SIZE);
 		if (devsw_conv != devsw_conv0)
-			kmem_free(devsw_conv, old * DEVSWCONV_SIZE);
+			kmem_free(devsw_conv, old_convs * DEVSWCONV_SIZE);
 		devsw_conv = newptr;
-		max_devsw_convs = new;
+		max_devsw_convs = new_convs;
 	}
 
-	len = strlen(devname) + 1;
-	name = kmem_alloc(len, KM_NOSLEEP);
+	name = kmem_strdupsize(devname, NULL, KM_NOSLEEP);
 	if (name == NULL) {
 		devsw_detach_locked(bdev, cdev);
 		error = ENOMEM;
 		goto fail;
 	}
-	strlcpy(name, devname, len);
 
 	devsw_conv[i].d_name = name;
 	devsw_conv[i].d_bmajor = *bmajor;
@@ -247,7 +249,7 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("bdevsw_attach: block majors exhausted");
+		printf("%s: block majors exhausted", __func__);
 		return (ENOMEM);
 	}
 
@@ -294,7 +296,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("cdevsw_attach: character majors exhausted");
+		printf("%s: character majors exhausted", __func__);
 		return (ENOMEM);
 	}
 
@@ -546,7 +548,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("devsw_name2blk: too short buffer");
+				printf("%s: too short buffer", __func__);
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
@@ -594,7 +596,7 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("devsw_name2chr: too short buffer");
+				printf("%s: too short buffer", __func__);
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
@@ -730,11 +732,16 @@ bdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	return rv;
 }
 
+SDT_PROVIDER_DECLARE(io);
+SDT_PROBE_DEFINE1(io, kernel, , start, "struct buf *"/*bp*/);
+
 void
 bdev_strategy(struct buf *bp)
 {
 	const struct bdevsw *d;
 	int mpflag;
+
+	SDT_PROBE1(io, kernel, , start, bp);
 
 	if ((d = bdevsw_lookup(bp->b_dev)) == NULL) {
 		bp->b_error = ENXIO;
@@ -783,6 +790,16 @@ bdev_dump(dev_t dev, daddr_t addr, void *data, size_t sz)
 	/* DEV_UNLOCK(d); */
 
 	return rv;
+}
+
+int
+bdev_flags(dev_t dev)
+{
+	const struct bdevsw *d;
+
+	if ((d = bdevsw_lookup(dev)) == NULL)
+		return 0;
+	return d->d_flag & ~D_TYPEMASK;
 }
 
 int
@@ -1016,6 +1033,16 @@ cdev_discard(dev_t dev, off_t pos, off_t len)
 }
 
 int
+cdev_flags(dev_t dev)
+{
+	const struct cdevsw *d;
+
+	if ((d = cdevsw_lookup(dev)) == NULL)
+		return 0;
+	return d->d_flag & ~D_TYPEMASK;
+}
+
+int
 cdev_type(dev_t dev)
 {
 	const struct cdevsw *d;
@@ -1023,4 +1050,16 @@ cdev_type(dev_t dev)
 	if ((d = cdevsw_lookup(dev)) == NULL)
 		return D_OTHER;
 	return d->d_flag & D_TYPEMASK;
+}
+
+/*
+ * nommap(dev, off, prot)
+ *
+ *	mmap routine that always fails, for non-mmappable devices.
+ */
+paddr_t
+nommap(dev_t dev, off_t off, int prot)
+{
+
+	return (paddr_t)-1;
 }

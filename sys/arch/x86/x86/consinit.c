@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.23.10.2 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: consinit.c,v 1.23.10.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.23.10.2 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.23.10.3 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -39,6 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.23.10.2 2014/08/20 00:03:29 tls Exp $
 #include <machine/bootinfo.h>
 #include <arch/x86/include/genfb_machdep.h>
 
+#include <dev/cons.h>
+
+#include "nullcons.h"
 #include "genfb.h"
 #include "vga.h"
 #include "ega.h"
@@ -232,6 +235,14 @@ dokbd:
 				 COM_FREQ, COM_TYPE_NORMAL, comcnmode);
 		if (rv != 0)
 			panic("can't init serial console @%x", consinfo->addr);
+		return;
+	}
+#endif
+#if (NNULLCONS > 0)
+	if (!strcmp(consinfo->devname, "nullcons")) {
+		void nullcninit(struct consdev *cn);
+
+		nullcninit(0);
 		return;
 	}
 #endif

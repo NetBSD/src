@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.47.18.3 2014/08/20 00:04:29 tls Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.47.18.4 2017/12/03 11:38:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.47.18.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.47.18.4 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,8 @@ unionread:
 				reclen = dp->d_reclen;
 
 				/* check for malformed directory.. */
-				if (reclen < _DIRENT_MINSIZE(dp)) {
+				if (reclen < _DIRENT_MINSIZE(dp) ||
+				    reclen > len) {
 					error = EINVAL;
 					goto out;
 				}
@@ -510,9 +511,6 @@ sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *ret
 		return ERANGE;
 
 	path = kmem_alloc(len, KM_SLEEP);
-	if (!path)
-		return ENOMEM;
-
 	bp = &path[len];
 	bend = bp;
 	*(--bp) = '\0';

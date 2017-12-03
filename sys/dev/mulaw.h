@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.h,v 1.20 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.20.44.1 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,17 +33,36 @@
 #define _SYS_DEV_MULAW_H_
 #include <dev/audio_if.h>
 
+/* Convert 8-bit mu-law to/from 32 bit unsigned/signed linear. */
+extern stream_filter_factory_t mulaw_to_linear32;
+extern stream_filter_factory_t linear32_32_to_mulaw;
+/* Convert 8-bit mu-law to/from 24 bit unsigned/signed linear. */
+extern stream_filter_factory_t mulaw_to_linear24;
+extern stream_filter_factory_t linear24_24_to_mulaw;
+extern stream_filter_factory_t linear24_32_to_mulaw;
 /* Convert 8-bit mu-law to/from 16 bit unsigned/signed linear. */
 extern stream_filter_factory_t mulaw_to_linear16;
-extern stream_filter_factory_t linear16_to_mulaw;
+extern stream_filter_factory_t linear16_16_to_mulaw;
+#define linear16_to_mulaw linear16_16_to_mulaw
 /* Convert 8-bit mu-law to/from 8 bit unsigned/signed linear. */
 extern stream_filter_factory_t mulaw_to_linear8;
-extern stream_filter_factory_t linear8_to_mulaw;
-/* Convert 8-bit A-law to/from 16 bit unsigned/signed linear. */
+extern stream_filter_factory_t linear8_8_to_mulaw;
+#define linear8_to_mulaw linear8_8_to_mulaw
+
+/* Convert 8-bit alaw to/from 32 bit unsigned/signed linear. */
+extern stream_filter_factory_t alaw_to_linear32;
+extern stream_filter_factory_t linear32_32_to_alaw;
+/* Convert 8-bit alaw to/from 24 bit unsigned/signed linear. */
+extern stream_filter_factory_t alaw_to_linear24;
+extern stream_filter_factory_t linear24_24_to_alaw;
+extern stream_filter_factory_t linear24_32_to_alaw;
+/* Convert 8-bit alaw to/from 16 bit unsigned/signed linear. */
 extern stream_filter_factory_t alaw_to_linear16;
-extern stream_filter_factory_t linear16_to_alaw;
+extern stream_filter_factory_t linear16_16_to_alaw;
+#define linear16_to_alaw linear16_16_to_alaw
 /* Convert 8-bit A-law to/from 8 bit unsigned/signed linear. */
 extern stream_filter_factory_t alaw_to_linear8;
 extern stream_filter_factory_t linear8_to_alaw;
+#define linear8_8_to_alaw linear8_to_alaw
 
 #endif /* _SYS_DEV_MULAW_H_ */

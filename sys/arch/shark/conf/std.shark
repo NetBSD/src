@@ -1,4 +1,4 @@
-#	$NetBSD: std.shark,v 1.8.54.1 2012/11/20 03:01:42 tls Exp $
+#	$NetBSD: std.shark,v 1.8.54.2 2017/12/03 11:36:42 jdolecek Exp $
 #
 # standard NetBSD/shark options
 
@@ -23,3 +23,5 @@ options 	OFW
 # This also requires wsfont to be useful.  Does not disturb if it is
 # not enabled.
 options 	FONT_VT220L8x16
+
+include	"external/isc/atheros_hal/conf/std.ath_hal"

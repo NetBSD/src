@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11.2.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11.2.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ typedef struct {
 		__vfpregset_t __vfpregs;
 	} __fpu;
 	__greg_t	_mc_tlsbase;
+	__greg_t	_mc_user_tpid;
 } mcontext_t, mcontext32_t;
 
 /* Machine-dependent uc_flags */
@@ -106,7 +107,7 @@ typedef struct {
 
 #define	_UC_TLSBASE	0x00080000
 
-#define _UC_MACHINE_PAD	2		/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD	1		/* Padding appended to ucontext_t */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
@@ -120,6 +121,7 @@ typedef struct {
 #define	__UCONTEXT_SIZE	256
 #endif
 
+__BEGIN_DECLS
 static __inline void *
 __lwp_getprivate_fast(void)
 {
@@ -146,5 +148,6 @@ __lwp_getprivate_fast(void)
 void vfp_getcontext(struct lwp *, mcontext_t *, int *);
 void vfp_setcontext(struct lwp *, const mcontext_t *); 
 #endif
+__END_DECLS
 
 #endif	/* !_ARM_MCONTEXT_H_ */

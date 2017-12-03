@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.14.2.3 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.14.2.4 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14.2.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14.2.4 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -337,7 +337,7 @@ tlb_print_cortex_a7_entry(size_t way, size_t va_index, uint32_t d0, uint32_t d1)
 	const u_int sh = __SHIFTOUT(d2, ARM_A7_TLBDATA2_SH);
 	static const char is_types[3][3] = { "NC", "WB", "WT" };
 	static const char os_types[4][6] = { "NC", "WB+WA", "WT", "WB" };
-	static const char sh_types[4][3] = { "NC", "na", "OS", "IS" };
+	static const char sh_types[4][3] = { "NS", "na", "OS", "IS" };
 	db_printf(" %2s %5s %2s\n", is_types[is], os_types[os], sh_types[sh]);
 }
 
@@ -385,7 +385,7 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 			armreg_tlbdataop_write(
 			    __SHIFTIN(va_index, dti->dti_index)
 			    | __SHIFTIN(way, ARM_TLBDATAOP_WAY));
-			__asm("isb");
+			arm_isb();
 			const uint32_t d0 = armreg_tlbdata0_read();
 			const uint32_t d1 = armreg_tlbdata1_read();
 			if ((d0 & ARM_TLBDATA_VALID)
@@ -406,7 +406,7 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 			armreg_tlbdataop_write(
 			    __SHIFTIN(way, ARM_TLBDATAOP_WAY)
 			    | __SHIFTIN(va_index, dti->dti_index));
-			__asm("isb");
+			arm_isb();
 			const uint32_t d0 = armreg_tlbdata0_read();
 			const uint32_t d1 = armreg_tlbdata1_read();
 			if (d0 & ARM_TLBDATA_VALID) {
@@ -447,7 +447,7 @@ db_show_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *m
 	    frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
 	db_printf("r12=%08x r13=%08x r14=%08x r15=%08x\n",
 	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
-	db_printf("slr=%08x\n", frame->tf_svc_lr);
+	db_printf("slr=%08x ssp=%08x\n", frame->tf_svc_lr, frame->tf_svc_sp);
 }
 
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)

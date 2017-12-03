@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.7.2.2 2014/08/20 00:02:47 tls Exp $
+#       $NetBSD: files.marvell,v 1.7.2.3 2017/12/03 11:35:54 jdolecek Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -14,7 +14,8 @@ file	arch/arm/marvell/mvsoc_dma.c
 file	arch/arm/arm32/irq_dispatch.S
 
 # Some SoC(ARMADAXP) reports false DeviceID. 
-defflag opt_mvsoc.h				ORION KIRKWOOD MV78XX0 ARMADAXP
+defflag opt_mvsoc.h				ORION KIRKWOOD MV78XX0 DOVE
+						ARMADAXP
 						MVSOC_CONSOLE_EARLY
 defparam opt_mvsoc.h				MVSOC_INTERREGS_PBASE
 						MVSOC_FIXUP_DEVID MEMSIZE
@@ -22,11 +23,13 @@ file	arch/arm/marvell/mvsoc_intr.c
 file	arch/arm/marvell/orion.c		orion
 file	arch/arm/marvell/kirkwood.c		kirkwood
 file	arch/arm/marvell/mv78xx0.c		mv78xx0
+file	arch/arm/marvell/dove.c			dove
 file	arch/arm/marvell/armadaxp.c		armadaxp
 
 
 # Integrated peripherals
 include "dev/marvell/files.discovery"
+include "dev/marvell/files.armada"
 
 # Timers
 device	mvsoctmr: sysmon_wdog
@@ -57,11 +60,20 @@ attach	mvsata at mvsoc with mvsata_mbus
 # Gigabit Ethernet Controller Interface
 attach	mvgbec at mvsoc with mvgbec_mbus
 
+# ARMADA XP Buffer Manager
+attach	mvxpbm at mvsoc with mvxpbm_mbus
+
+# ARMADA XP Gigabit Ethernet Controller Interface
+attach	mvxpe at mvsoc with mvxpe_mbus
+
 # USB 2.0 Interface
 attach	ehci at mvsoc with mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
 attach	mvcesa at mvsoc with mvcesa_mbus
+
+# ARMADA XP Cryptographic Engines and Security Accelerator
+attach	mvxpsec at mvsoc with mvxpsec_mbus
 
 # TWSI Two-Wire Serial Interface
 attach	gttwsi at mvsoc with gttwsi_mbus
@@ -79,11 +91,19 @@ file	arch/arm/marvell/mvsocgpp.c		mvsocgpp	needs-flag
 
 # Secure Digital Input/Output (SDIO) Interface
 attach	mvsdio at mvsoc with mvsdio_mbus
+# Also SDHC (i.e. Dove)
+attach	sdhc at mvsoc with mvsoc_sdhc
+file	arch/arm/marvell/mvsoc_sdhc.c		mvsoc_sdhc
 
 # Thermal Sensor
 device	mvsocts: sysmon_envsys
 attach	mvsocts at mvsoc
 file	arch/arm/marvell/mvsocts.c		mvsocts
+
+# Power Management Unit
+device	mvsocpmu: sysmon_envsys
+attach	mvsocpmu at mvsoc
+file	arch/arm/marvell/mvsocpmu.c		mvsocpmu	needs-flag
 
 # SPI Serial Peripheral Interface
 attach	mvspi at mvsoc with mvspi_mbus

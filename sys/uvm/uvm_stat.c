@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.37 2011/05/17 04:18:07 mrg Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.37.14.1 2017/12/03 11:39:22 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.37 2011/05/17 04:18:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.37.14.1 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include "opt_readahead.h"
 #include "opt_ddb.h"
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.37 2011/05/17 04:18:07 mrg Exp $");
 
 #ifdef DDB
 
+#include <sys/pool.h>
+
 /*
  * uvmexp_print: ddb hook to print interesting uvm counters
  */
@@ -54,13 +56,15 @@ uvmexp_print(void (*pr)(const char *, ...)
     __attribute__((__format__(__printf__,1,2))))
 {
 	int active, inactive;
+	int poolpages;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
 	uvm_estimatepageable(&active, &inactive);
+	poolpages = pool_totalpages();
 
 	(*pr)("Current UVM status:\n");
-	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n, ncolors=%d",
+	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d, ncolors=%d\n",
 	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
 	    uvmexp.pageshift, uvmexp.ncolors);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
@@ -70,6 +74,10 @@ uvmexp_print(void (*pr)(const char *, ...)
 	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
 	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
+	(*pr)("  resv-pg=%d, resv-kernel=%d, zeropages=%d\n",
+	    uvmexp.reserve_pagedaemon, uvmexp.reserve_kernel, uvmexp.zeropages);
+	(*pr)("  bootpages=%d, poolpages=%d\n",
+	    uvmexp.bootpages, poolpages);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		(*pr)("  cpu%u:\n", cpu_index(ci));

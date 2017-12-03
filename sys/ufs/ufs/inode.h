@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.62.2.3 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: inode.h,v 1.62.2.4 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -44,6 +44,7 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
+#include <ufs/ext2fs/ext2fs_extents.h>
 #include <miscfs/genfs/genfs_node.h>
 
 /*
@@ -78,6 +79,7 @@ struct ffs_inode_ext {
 struct ext2fs_inode_ext {
 	daddr_t ext2fs_last_lblk;	/* last logical block allocated */
 	daddr_t ext2fs_last_blk;	/* last block allocated on disk */
+	struct ext4_extent_cache i_ext_cache; /* cache for ext4 extent */
 };
 
 struct lfs_inode_ext;
@@ -142,7 +144,7 @@ struct inode {
 	 * These fields are currently only used by FFS and LFS,
 	 * do NOT use them with ext2fs.
 	 */
-	u_int16_t i_mode;	/* IFMT, permissions; see below. */
+	u_int16_t i_mode;	/* IFMT, permissions; see dinode.h. */
 	int16_t   i_nlink;	/* File link count. */
 	u_int64_t i_size;	/* File byte count. */
 	u_int32_t i_flags;	/* Status flags (chflags). */
@@ -208,34 +210,10 @@ struct inode {
 #define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
 #define	i_ffs2_extb		i_din.ffs2_din->di_extb
 
-#define	i_e2fs_mode		i_din.e2fs_din->e2di_mode
-#define	i_e2fs_uid		i_din.e2fs_din->e2di_uid
-#define	i_e2fs_size		i_din.e2fs_din->e2di_size
-#define	i_e2fs_atime		i_din.e2fs_din->e2di_atime
-#define	i_e2fs_ctime		i_din.e2fs_din->e2di_ctime
-#define	i_e2fs_mtime		i_din.e2fs_din->e2di_mtime
-#define	i_e2fs_dtime		i_din.e2fs_din->e2di_dtime
-#define	i_e2fs_gid		i_din.e2fs_din->e2di_gid
-#define	i_e2fs_nlink		i_din.e2fs_din->e2di_nlink
-#define	i_e2fs_nblock		i_din.e2fs_din->e2di_nblock
-#define	i_e2fs_flags		i_din.e2fs_din->e2di_flags
-#define	i_e2fs_version		i_din.e2fs_din->e2di_version
-#define	i_e2fs_blocks		i_din.e2fs_din->e2di_blocks
-#define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
-#define	i_e2fs_gen		i_din.e2fs_din->e2di_gen
-#define	i_e2fs_facl		i_din.e2fs_din->e2di_facl
-#define	i_e2fs_dacl		i_din.e2fs_din->e2di_dacl
-#define	i_e2fs_faddr		i_din.e2fs_din->e2di_faddr
-#define	i_e2fs_nblock_high	i_din.e2fs_din->e2di_nblock_high
-#define	i_e2fs_facl_high	i_din.e2fs_din->e2di_facl_high
-#define	i_e2fs_uid_high		i_din.e2fs_din->e2di_uid_high
-#define	i_e2fs_gid_high		i_din.e2fs_din->e2di_gid_high
-
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
 #define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
-#define	IN_MODIFY	0x2000		/* Modification time update request. */
+#define	IN_UPDATE	0x0004		/* Inode written to; update mtime. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
 /* 	   unused	0x0020 */	/* was IN_RENAME */
@@ -244,8 +222,11 @@ struct inode {
 /*	   unused	0x0100 */	/* was LFS-only IN_CLEANING */
 /*	   unused	0x0200 */	/* was LFS-only IN_ADIROP */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
+/*	   unused	0x0800 */	/* what was that? */
 /*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
+#define	IN_MODIFY	0x2000		/* Modification time update request. */
 /*	   unused	0x4000 */	/* was LFS-only IN_CDIROP */
+
 #if defined(_KERNEL)
 
 /*

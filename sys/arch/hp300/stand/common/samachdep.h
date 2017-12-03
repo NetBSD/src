@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.16.38.1 2014/08/20 00:03:01 tls Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.16.38.2 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -98,7 +98,7 @@ void romout(int, char *);
 void _transfer(char *, int, int, int, char *, char *);
 
 /* tget.c */
-int tgets(char *);
+int tgets(char *, size_t);
 
 
 #define DELAY(n)							\

@@ -1,7 +1,7 @@
-/*	$NetBSD: reboot.h,v 1.1.6.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: reboot.h,v 1.1.6.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,9 +32,18 @@
 #ifndef	_LINUX_REBOOT_H_
 #define	_LINUX_REBOOT_H_
 
-#define	orderly_poweroff	linux_orderly_poweroff
+#include <sys/types.h>
+#include <sys/reboot.h>
 
 /* XXX Implement this by posting a CRITICAL-OVER envsys event?  */
-int	orderly_poweroff(bool);
+static inline int
+orderly_poweroff(bool force __unused)
+{
+
+	cpu_reboot(RB_POWERDOWN, NULL);
+
+	return 0;
+}
+
 
 #endif	/* _LINUX_REBOOT_H_ */

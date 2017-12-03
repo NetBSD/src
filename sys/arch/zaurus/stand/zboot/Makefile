@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.6.2 2014/08/20 00:03:30 tls Exp $
+#	$NetBSD: Makefile,v 1.8.6.3 2017/12/03 11:36:52 jdolecek Exp $
 
 PROG=		zboot
 
@@ -12,7 +12,7 @@ SRCS+=		pathfs.c
 
 NOMAN=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 CFLAGS+=	-Wall -Wno-main
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
@@ -22,16 +22,10 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CPPFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
-.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
-.else
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.endif
 CPUFLAGS=
 AFLAGS+=	-D_LOCORE
 LDFLAGS+=	-nostdlib -Bstatic
-
-CLEANFILES+=	vers.c vers.o
 
 LIBCRT0=	crt0.o
 LIBCRTI=	# nothing
@@ -40,7 +34,6 @@ LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 
 NEWVERSWHAT?=   "Boot"
-VERSIONFILE?=	${.CURDIR}/version
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -58,12 +51,11 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_ENABLE_LS_OP=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${VERSIONFILE}
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
-	${CC} ${CFLAGS} ${CPPFLAGS} -c vers.c
-	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.klinks.mk>
 .include <bsd.prog.mk>

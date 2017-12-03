@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.118 2011/06/12 03:35:49 rmind Exp $
+#	$NetBSD: files.vax,v 1.118.12.1 2017/12/03 11:36:47 jdolecek Exp $
 #
 # new style config file for vax architecture
 #
@@ -107,11 +107,11 @@ include "dev/mscp/files.mscp"
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
 
-# TurboCHANNEL bus support and device drivers
+# TURBOchannel bus support and device drivers
 include "dev/tc/files.tc"
 
-attach	tc at vsbus with tcbus
-file	arch/vax/vsa/tc_vsbus.c		tcbus
+attach	tc at vsbus with tc_vsbus
+file	arch/vax/vsa/tc_vsbus.c		tc_vsbus
 
 attach	uba at mainbus with uba_mainbus
 file	arch/vax/uba/uba_mainbus.c	uba_mainbus
@@ -180,10 +180,31 @@ device	si: scsi, ncr5380sbc
 attach	si at vsbus with si_vsbus
 file	arch/vax/vsa/ncr.c		si_vsbus
 
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
 # Monochrome framebuffer on VS3100.
 device	smg: displaydev, wsemuldisplaydev
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c		smg needs-flag
+
+# Monochrome QVSS framebuffer on qbus (VCB01)
+device	qv {}: displaydev, wsemuldisplaydev
+attach	qv at uba
+attach  genfb at qv with genfb_qv
+file	arch/vax/uba/qv.c		qv|genfb_qv needs-flag
+
+device	qvaux { line=-1 }: tty
+attach	qvaux at qv 
+file	arch/vax/uba/qvaux.c		qvaux needs-flag
+
+attach	lkkbd at qvaux with qvkbd
+file	arch/vax/uba/qvkbd.c		qvkbd needs-flag
+
+attach	lkms at qvaux with qvms
+file	arch/vax/uba/qvms.c		qvms needs-flag
 
 # Color framebuffer on VS4000/60.
 device	lcg: displaydev, wsemuldisplaydev
@@ -290,11 +311,6 @@ device	vp
 attach	vp at uba
 file	arch/vax/uba/vp.c		vp needs-flag
 
-# QVSS at UBA
-device	qv
-attach	qv at uba
-file	arch/vax/uba/qv.c		qv needs-flag
-
 # ACC LH/DH IMP on UBA
 device	acc: ifnet
 attach	acc at uba
@@ -314,6 +330,11 @@ file	arch/vax/uba/ad.c		ad needs-flag
 device	dh # XXX?
 attach	dh at uba
 file	arch/vax/uba/dh.c		dh needs-flag
+
+# Vaxstation 4000 audio
+device	vsaudio: audiobus, am7930
+attach	vsaudio at vsbus
+file	arch/vax/vsa/vsaudio.c		vsaudio needs-flag
 
 # These are general files needed for compilation.
 file	dev/cons.c
@@ -395,5 +416,13 @@ include "compat/vax1k/files.vax1k"
 #arch/vax/if/if_pcl.c		optional pcl device-driver
 #arch/vax/if/if_vv.c		optional vv device-driver
 #arch/vax/if/raw_hy.c		optional hy device-driver
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent USB device support
+#
+include "dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
 
 include "arch/vax/conf/majors.vax"

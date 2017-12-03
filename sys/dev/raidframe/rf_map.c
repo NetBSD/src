@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.45 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.45.14.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.45 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.45.14.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -557,7 +557,7 @@ rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
 {
 	RF_AccessStripeMap_t *p;
 	RF_PhysDiskAddr_t *pdp, *trailer, *pdaList = NULL, *pdaEnd = NULL;
-	int     count = 0, t, asm_count = 0;
+	int     count = 0, t;
 
 	for (p = hdr->stripeMap; p; p = p->next) {
 
@@ -598,8 +598,6 @@ rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
 		}
 		if (trailer)
 			pdaEnd = trailer;
-
-		asm_count++;
 	}
 
 	/* debug only */
@@ -848,7 +846,7 @@ rf_ASMParityAdjust(RF_PhysDiskAddr_t *toAdjust,
 }
 
 /* Check if a disk has been spared or failed. If spared, redirect the
- * I/O.  If it has been failed, record it in the asm pointer.  Fourth
+ * I/O.  If it has been failed, record it in the asm pointer.  Fifth
  * arg is whether data or parity.  */
 void
 rf_ASMCheckStatus(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda_p,

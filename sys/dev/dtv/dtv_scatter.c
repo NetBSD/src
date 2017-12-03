@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_scatter.c,v 1.1.12.1 2014/08/20 00:03:36 tls Exp $ */
+/* $NetBSD: dtv_scatter.c,v 1.1.12.2 2017/12/03 11:37:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.1.12.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.1.12.2 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -91,11 +91,6 @@ dtv_scatter_buf_set_size(struct dtv_scatter_buf *sb, size_t sz)
 	if (npages > 0) {
 		sb->sb_page_ary =
 		    kmem_alloc(sizeof(uint8_t *) * npages, KM_SLEEP);
-		if (sb->sb_page_ary == NULL) {
-			sb->sb_npages = oldnpages;
-			sb->sb_page_ary = old_ary;
-			return ENOMEM;
-		}
 	} else {
 		sb->sb_page_ary = NULL;
 	}
@@ -106,7 +101,7 @@ dtv_scatter_buf_set_size(struct dtv_scatter_buf *sb, size_t sz)
 		sb->sb_page_ary[i] = old_ary[i];
 	/* allocate any new pages */
 	for (; i < npages; ++i) {
-		sb->sb_page_ary[i] = pool_cache_get(sb->sb_pool, 0);
+		sb->sb_page_ary[i] = pool_cache_get(sb->sb_pool, PR_WAITOK);
 		/* TODO: does pool_cache_get return NULL on
 		 * ENOMEM?  If so, we need to release or note
 		 * the pages with did allocate

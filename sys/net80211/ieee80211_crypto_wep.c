@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.7 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.8 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.8.24.1 2017/12/03 11:39:03 jdolecek Exp $");
 #endif
 
 /*
@@ -421,7 +421,7 @@ wep_decrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 	}
 
 	off = hdrlen + wep.ic_header;
-	data_len = m->m_pkthdr.len - (off + wep.ic_trailer),
+	data_len = m->m_pkthdr.len - (off + wep.ic_trailer);
 
 	/* Compute CRC32 over unencrypted data and apply RC4 to data */
 	crc = ~0;

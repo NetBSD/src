@@ -1,11 +1,8 @@
-#	$NetBSD: Makefile,v 1.4.18.1 2014/08/20 00:04:40 tls Exp $
+#	$NetBSD: Makefile,v 1.4.18.2 2017/12/03 11:39:14 jdolecek Exp $
 #
 
 .include "${.CURDIR}/../Makefile.rumpkerncomp"
 
 SUBDIR+=	${RUMPKERNLIBS}
-
-# obsolete and going away soon
-SUBDIR+=	libtime
 
 .include <bsd.subdir.mk>

@@ -1,5 +1,6 @@
-/*	$NetBSD: rtsx_pci.c,v 1.2.10.2 2014/08/20 00:03:48 tls Exp $	*/
-/*	$OpenBSD: rtsx_pci.c,v 1.4 2013/11/06 13:51:02 stsp Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.2.10.3 2017/12/03 11:37:29 jdolecek Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
+
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.2.10.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.2.10.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,6 +42,8 @@ struct rtsx_pci_softc {
 	struct rtsx_softc sc;
 	pci_chipset_tag_t sc_pc;
 	void *sc_ih;
+
+	pci_intr_handle_t *sc_pihp;
 };
 
 static int rtsx_pci_match(device_t , cfdata_t, void *);
@@ -71,9 +74,15 @@ rtsx_pci_match(device_t parent, cfdata_t cf, void *aux)
 	    PCI_CLASS(pa->pa_class) != PCI_CLASS_UNDEFINED)
 		return 0;
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5229)
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_REALTEK_RTS5209:
+	case PCI_PRODUCT_REALTEK_RTS5227:
+	case PCI_PRODUCT_REALTEK_RTS5229:
+	case PCI_PRODUCT_REALTEK_RTL8402:
+	case PCI_PRODUCT_REALTEK_RTL8411:
+	case PCI_PRODUCT_REALTEK_RTL8411B:
 		return 1;
+	}
 
 	return 0;
 }
@@ -85,7 +94,6 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
-	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char const *intrstr;
 	bus_space_tag_t iot;
@@ -110,12 +118,13 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SDMMC, rtsx_intr, &sc->sc);
+	intrstr = pci_intr_string(pc, sc->sc_pihp[0], intrbuf, sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish(pc, sc->sc_pihp[0], IPL_SDMMC,
+	    rtsx_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
@@ -134,9 +143,23 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_REALTEK_RTS5209:
 		flags = RTSX_F_5209;
 		break;
+	case PCI_PRODUCT_REALTEK_RTS5227:
+		flags = RTSX_F_5227;
+		break;
 	case PCI_PRODUCT_REALTEK_RTS5229:
-	default:
 		flags = RTSX_F_5229;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8402:
+		flags = RTSX_F_8402;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8411:
+		flags = RTSX_F_8411;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8411B:
+		flags = RTSX_F_8411B;
+		break;
+	default:
+		flags = 0;
 		break;
 	}
 
@@ -161,6 +184,7 @@ rtsx_pci_detach(device_t self, int flags)
 		return rv;
 
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
 
 	return 0;
 }

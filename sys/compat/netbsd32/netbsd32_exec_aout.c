@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.25.18.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.25.18.2 2017/12/03 11:36:56 jdolecek Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.25.18.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.25.18.2 2017/12/03 11:36:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.25.18.1 2014/08/20 00:03:33
 #include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
 
-int netbsd32_copyinargs(struct exec_package *, struct ps_strings *,
-			     void *, size_t, const void *, const void *);
+#ifdef COMPAT_NOMID
+static int netbsd32_exec_aout_nomid(struct lwp *, struct exec_package *);
+#endif
 
 /*
  * exec_netbsd32_makecmds(): Check if it's an netbsd32 a.out format
@@ -125,8 +126,11 @@ exec_netbsd32_makecmds(struct lwp *l, struct exec_package *epp)
 		error = netbsd32_exec_aout_prep_omagic(l, epp);
 		break;
 	default:
-		/* Invalid magic */
+#ifdef COMPAT_NOMID
+		error = netbsd32_exec_aout_nomid(l,  epp);
+#else
 		error = ENOEXEC;
+#endif
 		break;
 	}
 
@@ -160,7 +164,7 @@ netbsd32_exec_aout_prep_zmagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	error = vn_marktext(epp->ep_vp);
@@ -201,7 +205,7 @@ netbsd32_exec_aout_prep_nmagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, AOUT_LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/* set up command for text segment */
@@ -240,7 +244,7 @@ netbsd32_exec_aout_prep_omagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/* set up command for text and data segments */
@@ -268,3 +272,204 @@ netbsd32_exec_aout_prep_omagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
 	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
+
+#ifdef COMPAT_NOMID
+/*
+ * netbsd32_exec_aout_prep_oldzmagic():
+ *	Prepare the vmcmds to build a vmspace for an old ZMAGIC
+ *	binary. [386BSD/BSDI/4.4BSD/NetBSD0.8]
+ *
+ * Cloned from exec_aout_prep_zmagic() in kern/exec_aout.c; a more verbose
+ * description of operation is there.
+ * There were copies of this in the mac68k, hp300, and i386 ports.
+ */
+static int
+netbsd32_exec_aout_prep_oldzmagic(struct lwp *l, struct exec_package *epp)
+{
+	struct netbsd32_exec *execp = epp->ep_hdr;
+	int error;
+
+	epp->ep_taddr = 0;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
+	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
+
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
+
+	/* set up command for text segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, PAGE_SIZE, /* XXX CLBYTES? */
+	    VM_PROT_READ|VM_PROT_EXECUTE);
+
+	/* set up command for data segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp,
+	    execp->a_text + PAGE_SIZE, /* XXX CLBYTES? */
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	/* set up command for bss segment */
+	if (execp->a_bss)
+	    NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		epp->ep_daddr + execp->a_data, NULLVP, 0,
+		VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
+}
+
+
+/*
+ * netbsd32_exec_aout_prep_oldnmagic():
+ *	Prepare the vmcmds to build a vmspace for an old NMAGIC
+ *	binary. [BSDI]
+ *
+ * Cloned from exec_aout_prep_nmagic() in kern/exec_aout.c; with text starting
+ * at 0.
+ * XXX: There must be a better way to share this code.
+ */
+static int
+netbsd32_exec_aout_prep_oldnmagic(struct lwp *l, struct exec_package *epp)
+{
+	struct netbsd32_exec *execp = epp->ep_hdr;
+	long bsize, baddr;
+
+	epp->ep_taddr = 0;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, AOUT_LDPGSZ);
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
+	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
+
+	/* set up command for text segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, sizeof(struct netbsd32_exec),
+	    VM_PROT_READ|VM_PROT_EXECUTE);
+
+	/* set up command for data segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp, execp->a_text + sizeof(struct netbsd32_exec),
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	/* set up command for bss segment */
+	baddr = roundup(epp->ep_daddr + execp->a_data, PAGE_SIZE);
+	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
+	if (bsize > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
+		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
+}
+
+
+/*
+ * netbsd32_exec_aout_prep_oldomagic():
+ *	Prepare the vmcmds to build a vmspace for an old OMAGIC
+ *	binary. [BSDI]
+ *
+ * Cloned from exec_aout_prep_omagic() in kern/exec_aout.c; with text starting
+ * at 0.
+ * XXX: There must be a better way to share this code.
+ */
+static int
+netbsd32_exec_aout_prep_oldomagic(struct lwp *l, struct exec_package *epp)
+{
+	struct netbsd32_exec *execp = epp->ep_hdr;
+	long dsize, bsize, baddr;
+
+	epp->ep_taddr = 0;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
+
+	/* set up command for text and data segments */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
+	    execp->a_text + execp->a_data, epp->ep_taddr, epp->ep_vp,
+	    sizeof(struct netbsd32_exec), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	/* set up command for bss segment */
+	baddr = roundup(epp->ep_daddr + execp->a_data, PAGE_SIZE);
+	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
+	if (bsize > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
+		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	/*
+	 * Make sure (# of pages) mapped above equals (vm_tsize + vm_dsize);
+	 * obreak(2) relies on this fact. Both `vm_tsize' and `vm_dsize' are
+	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
+	 * respectively to page boundaries.
+	 * Compensate `ep_dsize' for the amount of data covered by the last
+	 * text page.
+	 */
+	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
+							PAGE_SIZE);
+	epp->ep_dsize = (dsize > 0) ? dsize : 0;
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
+}
+
+static int
+netbsd32_exec_aout_nomid(struct lwp *l, struct exec_package *epp)
+{
+	int error;
+	u_long midmag, magic;
+	u_short mid;
+	struct exec *execp = epp->ep_hdr;
+
+	/* check on validity of epp->ep_hdr performed by exec_out_makecmds */
+
+	midmag = ntohl(execp->a_midmag);
+	mid = (midmag >> 16) & 0xffff;
+	magic = midmag & 0xffff;
+
+	if (magic == 0) {
+		magic = (execp->a_midmag & 0xffff);
+		mid = MID_ZERO;
+	}
+
+	midmag = mid << 16 | magic;
+
+	switch (midmag) {
+	case (MID_ZERO << 16) | ZMAGIC:
+		/*
+		 * 386BSD's ZMAGIC format:
+		 */
+		return netbsd32_exec_aout_prep_oldzmagic(l, epp);
+		break;
+
+	case (MID_ZERO << 16) | QMAGIC:
+		/*
+		 * BSDI's QMAGIC format:
+		 * same as new ZMAGIC format, but with different magic number
+		 */
+		return netbsd32_exec_aout_prep_zmagic(l, epp);
+		break;
+
+	case (MID_ZERO << 16) | NMAGIC:
+		/*
+		 * BSDI's NMAGIC format:
+		 * same as NMAGIC format, but with different magic number
+		 * and with text starting at 0.
+		 */
+		return netbsd32_exec_aout_prep_oldnmagic(l, epp);
+
+	case (MID_ZERO << 16) | OMAGIC:
+		/*
+		 * BSDI's OMAGIC format:
+		 * same as OMAGIC format, but with different magic number
+		 * and with text starting at 0.
+		 */
+		return netbsd32_exec_aout_prep_oldomagic(l, epp);
+
+	default:
+		return ENOEXEC;
+	}
+
+	return error;
+}
+#endif

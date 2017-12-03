@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.17 2011/07/01 18:14:15 dyoung Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.17.12.1 2017/12/03 11:36:18 jdolecek Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.17 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.17.12.1 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include "mpu_ym.h"
 
@@ -51,12 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.17 2011/07/01 18:14:15 dyoung Exp $
 
 #include <i386/pnpbios/pnpbiosvar.h>
 
-#include <dev/ic/ad1848reg.h> 
+#include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
- 
+
 #include <dev/ic/cs4231reg.h>
 #include <dev/isa/cs4231var.h>
-  
+
 #include <dev/ic/opl3sa3reg.h>
 #include <dev/isa/wssreg.h>
 #include <dev/isa/ymvar.h>
@@ -68,8 +68,7 @@ CFATTACH_DECL_NEW(ym_pnpbios, sizeof(struct ym_softc),
     ym_pnpbios_match, ym_pnpbios_attach, NULL, NULL);
 
 int
-ym_pnpbios_match(device_t parent,
-    cfdata_t match, void *aux)
+ym_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -80,8 +79,7 @@ ym_pnpbios_match(device_t parent,
 }
 
 void
-ym_pnpbios_attach(device_t parent, device_t self,
-    void *aux)
+ym_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
 	struct ym_softc *sc = device_private(self);
 	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
@@ -89,56 +87,58 @@ ym_pnpbios_attach(device_t parent, device_t self,
 
 	ac->sc_dev = self;
 
+	aprint_naive("\n");
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0,
 				&sc->sc_iot, &sc->sc_sb_ioh) != 0) {
-		printf(": can't map sb i/o space\n");
+		aprint_error(": can't map sb i/o space\n");
 		return;
 	}
 	if (pnpbios_io_map(aa->pbt, aa->resc, 1,
 				&sc->sc_iot, &sc->sc_ioh) != 0) {
-		printf(": can't map sb i/o space\n");
+		aprint_error(": can't map sb i/o space\n");
 		return;
 	}
 	if (pnpbios_io_map(aa->pbt, aa->resc, 2,
 				&sc->sc_iot, &sc->sc_opl_ioh) != 0) {
-		printf(": can't map opl i/o space\n");
+		aprint_error(": can't map opl i/o space\n");
 		return;
 	}
 #if NMPU_YM > 0
 	if (pnpbios_io_map(aa->pbt, aa->resc, 3,
 				&sc->sc_iot, &sc->sc_mpu_ioh) != 0) {
-		printf(": can't map mpu i/o space\n");
+		aprint_error(": can't map mpu i/o space\n");
 		return;
 	}
 #endif
 	if (pnpbios_io_map(aa->pbt, aa->resc, 4,
 				&sc->sc_iot, &sc->sc_controlioh) != 0) {
-		printf(": can't map control i/o space\n");
+		aprint_error(": can't map control i/o space\n");
 		return;
 	}
 
 	sc->sc_ic = aa->ic;
 
 	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->ym_irq, NULL)) {
-		printf(": can't get IRQ\n");
+		aprint_error(": can't get IRQ\n");
 		return;
 	}
 
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &sc->ym_playdrq)) {
-		printf(": can't get DMA channel\n");
+		aprint_error(": can't get DMA channel\n");
 		return;
 	}
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->ym_recdrq))
 		sc->ym_recdrq = sc->ym_playdrq;	/* half-duplex mode */
 
-	printf("\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
 
-	printf("%s", device_xname(self));
+	aprint_naive("%s", device_xname(self));
+	aprint_normal("%s", device_xname(self));
 
 	ac->sc_iot = sc->sc_iot;
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, AD1848_NPORT,
-	    &ac->sc_ioh)) {
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC,
+	    AD1848_NPORT, &ac->sc_ioh)) {
 		aprint_error_dev(self, "bus_space_subregion failed\n");
 		return;
 	}

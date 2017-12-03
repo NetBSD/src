@@ -1,0 +1,41 @@
+Bugs
+----
+test wd* at umass?, confirm the ata_channel kludge works
+
+Other random notes (do outside the NCQ branch):
+-----------------------------------------------------
+do biodone() in wddone() starting the dump to not leak bufs when dumping from
+active system? make sure to not trigger atastart()
+- call ata_kill_active() + ata_kill_pending() when dumping
+
+implement support for PM FIS-based switching, remove restriction in atastart()
+for hw which supports it, adjust error handling in controller drivers to handle
+xfers for several different drives
+
+maybe do device error handling in not-interrupt-context (maybe this should be
+done on a mpata branch?)
+
+queue is allocated regardless if there are any drives, fix? 
+
+dump to unopened disk fails (e.g. dump do wd1b when wd1a not mounted), due
+to the open path executing ata_get_params(), which eventually tsleeps()
+while waiting for the command to finish; specifically, if WDF_LOADED is not
+set 
+- happens due to wd_get_params() with just AT_WAIT in wdopen()
+- not easy to fix, open needs to read disklabel and all this mechanics
+  is too much for emergency crash dump code path
+- old bug - kern/16789
+
+add support for the NCQ TRIM if supported by device?
+
+implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
+
+MSI/MSI-X support for AHCI and mvsata(4)
+
+mvsata - constify mvsata_pci_products and move pci-specific code to
+the pci attach code
+
+mvsata(4) 64-bit DMA
+- at least with AHA1430SA does not really work, crash in mvsata_intr() on boot
+
+malloc(M_CANFAIL) actually doesn't do anything

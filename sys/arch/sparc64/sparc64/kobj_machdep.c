@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.4.18.1 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.4.18.2 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Jake Burkholder.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4.18.1 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4.18.2 2017/12/03 11:36:45 jdolecek Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -164,7 +164,7 @@ static const long reloc_target_bitmask[] = {
 	_BM(22), _BM(10),		/* _HIPLT22, LOPLT10 */
 	_BM(32), _BM(22), _BM(10),	/* _PCPLT32, _PCPLT22, _PCPLT10 */
 	_BM(10), _BM(11), -1,		/* _10, _11, _64 */
-	_BM(10), _BM(22),		/* _OLO10, _HH22 */
+	_BM(13), _BM(22),		/* _OLO10, _HH22 */
 	_BM(10), _BM(22),		/* _HM10, _LM22 */
 	_BM(22), _BM(10), _BM(22),	/* _PC_HH22, _PC_HM10, _PC_LM22 */
 	_BM(16), _BM(19),		/* _WDISP16, _WDISP19 */
@@ -190,6 +190,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	Elf_Addr mask;
 	Elf_Addr addr;
 	vaddr_t base;
+	int error;
 
 	if (!isrela)
 		return -1;
@@ -224,8 +225,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	value = rela->r_addend;
 
 	if (RELOC_RESOLVE_SYMBOL(rtype)) {
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		value += addr;
 	}

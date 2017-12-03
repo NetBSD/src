@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.31.2.2 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: timevar.h,v 1.31.2.3 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -92,7 +92,9 @@ struct 	ptimer {
 #define pt_list	pt_data.pt_nonreal.pt_list
 #define pt_active	pt_data.pt_nonreal.pt_active
 
-#define	TIMER_MAX	32	/* See ptimers->pts_fired if you enlarge this */
+#define	TIMER_MIN	4	/* [0..3] are reserved for setitimer(2) */
+				/* REAL=0,VIRTUAL=1,PROF=2,MONOTONIC=3 */
+#define	TIMER_MAX	36	/* 32 is minimum user timers per POSIX */
 #define	TIMERS_ALL	0
 #define	TIMERS_POSIX	1
 
@@ -102,7 +104,6 @@ struct	ptimers {
 	struct ptlist pts_virtual;
 	struct ptlist pts_prof;
 	struct ptimer *pts_timers[TIMER_MAX];
-	int pts_fired;
 };
 
 /*
@@ -187,5 +188,17 @@ bool	time_wraps(struct timespec *, struct timespec *);
 
 extern volatile time_t time_second;	/* current second in the epoch */
 extern volatile time_t time_uptime;	/* system uptime in seconds */
+
+static inline time_t time_mono_to_wall(time_t t)
+{
+
+	return t - time_uptime + time_second;
+}
+
+static inline time_t time_wall_to_mono(time_t t)
+{
+
+	return t - time_second + time_uptime;
+}
 
 #endif /* !_SYS_TIMEVAR_H_ */

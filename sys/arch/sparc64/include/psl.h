@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.49.12.2 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: psl.h,v 1.49.12.3 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,14 +165,14 @@
 /*
  * SPARC V9 TSTATE register
  *
- *   39 32 31 24 23 18  17   8	7 5 4   0
+ *   39 32 31 24 23 20  19   8	7 5 4   0
  *  +-----+-----+-----+--------+---+-----+
  *  | CCR | ASI |  -  | PSTATE | - | CWP |
  *  +-----+-----+-----+--------+---+-----+
  */
 
 #define TSTATE_CWP		0x01f
-#define TSTATE_PSTATE		0x6ff00
+#define TSTATE_PSTATE		0xfff00
 #define TSTATE_PSTATE_SHIFT	8
 #define TSTATE_ASI		0xff000000LL
 #define TSTATE_ASI_SHIFT	24
@@ -284,9 +284,31 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
+
+/*
+ * Put "memory" to asm inline on sun4v to avoid issuing rdpr %ver
+ * before checking cputyp as a result of code moving by compiler
+ * optimization.
+ */
+#ifdef SUN4V
+#define constasm_clobbers "memory"
+#else
+#define constasm_clobbers
+#endif
+
 /*
  * Inlines for manipulating privileged and ancillary state registers
  */
+#define SPARC64_RDCONST_DEF(rd, name, reg, type)			\
+static __inline __constfunc type get##name(void)			\
+{									\
+	type _val;							\
+	__asm(#rd " %" #reg ",%0" : "=r" (_val) : : constasm_clobbers);	\
+	return _val;							\
+}
 #define SPARC64_RD_DEF(rd, name, reg, type)				\
 static __inline type get##name(void)					\
 {									\
@@ -301,9 +323,19 @@ static __inline void set##name(type _val)				\
 }
 
 #ifdef __arch64__
+#define SPARC64_RDCONST64_DEF(rd, name, reg) \
+	SPARC64_RDCONST_DEF(rd, name, reg, uint64_t)
 #define SPARC64_RD64_DEF(rd, name, reg) SPARC64_RD_DEF(rd, name, reg, uint64_t)
 #define SPARC64_WR64_DEF(wr, name, reg) SPARC64_WR_DEF(wr, name, reg, uint64_t)
 #else
+#define SPARC64_RDCONST64_DEF(rd, name, reg)				\
+static __inline __constfunc uint64_t get##name(void)			\
+{									\
+	uint32_t _hi, _lo;						\
+	__asm(#rd " %" #reg ",%0; srl %0,0,%1; srlx %0,32,%0"		\
+		: "=r" (_hi), "=r" (_lo) : : constasm_clobbers);	\
+	return ((uint64_t)_hi << 32) | _lo;				\
+}
 #define SPARC64_RD64_DEF(rd, name, reg)					\
 static __inline uint64_t get##name(void)				\
 {									\
@@ -345,13 +377,14 @@ SPARC64_RDPR_DEF(cwp, %cwp, int)		/* getcwp() */
 SPARC64_WRPR_DEF(cwp, %cwp, int)		/* setcwp() */
 
 /* Version Register (PR 31) */
-SPARC64_RDPR64_DEF(ver, %ver)			/* getver() */
+SPARC64_RDCONST64_DEF(rdpr, ver, %ver)		/* getver() */
 
 /* System Tick Register (ASR 24) */
 SPARC64_RDASR64_DEF(stick, STICK)		/* getstick() */
 SPARC64_WRASR64_DEF(stick, STICK)		/* setstick() */
 
 /* Some simple macros to check the cpu type. */
+#define GETVER_CPU_MASK()	((getver() & VER_MASK) >> VER_MASK_SHIFT)
 #define GETVER_CPU_IMPL()	((getver() & VER_IMPL) >> VER_IMPL_SHIFT)
 #define GETVER_CPU_MANUF()	((getver() & VER_MANUF) >> VER_MANUF_SHIFT)
 #define CPU_IS_SPITFIRE()	(GETVER_CPU_IMPL() == IMPL_SPITFIRE)

@@ -27,7 +27,7 @@
  *	i4b_debug.h - i4b debug header file
  *	-----------------------------------
  *
- *	$Id: i4b_debug.h,v 1.8.48.1 2012/11/20 03:02:48 tls Exp $
+ *	$Id: i4b_debug.h,v 1.8.48.2 2017/12/03 11:39:05 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -37,6 +37,8 @@
 
 #ifndef _NETISDN_I4B_DEBUG_H_
 #define _NETISDN_I4B_DEBUG_H_
+
+#include <sys/ioccom.h>
 
 #if !defined DO_I4B_DEBUG
 # define DO_I4B_DEBUG 1		/* default = include debugging code */

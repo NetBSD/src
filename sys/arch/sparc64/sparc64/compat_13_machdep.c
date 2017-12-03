@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.23 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.23.22.1 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.23 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.23.22.1 2017/12/03 11:36:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -129,7 +129,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 		return (EINVAL);
 	/* take only psr ICC field */
 #ifdef __arch64__
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | scp->sc_tstate;
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
 #else
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
 #endif

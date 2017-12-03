@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.19.22.1 2012/11/20 03:02:09 tls Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.19.22.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.19.22.1 2012/11/20 03:02:09 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.19.22.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,8 @@ adv_isa_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to cascade DRQ, error = %d\n", error);
 		return;
 	}
 

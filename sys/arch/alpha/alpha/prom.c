@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.48 2012/02/06 02:14:12 matt Exp $ */
+/* $NetBSD: prom.c,v 1.48.6.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.48 2012/02/06 02:14:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.48.6.1 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -95,7 +95,7 @@ init_bootstrap_console(void)
 
 	init_prom_interface(hwrpb);
 
-	prom_getenv(PROM_E_TTY_DEV, buf, 4);
+	prom_getenv(PROM_E_TTY_DEV, buf, sizeof(buf));
 	alpha_console = buf[0] - '0';
 
 	/* XXX fake out the console routines, for now */
@@ -238,14 +238,14 @@ prom_getenv(int id, char *buf, int len)
 
 	prom_enter();
 	ret.bits = prom_getenv_disp(id, to, len);
-	memcpy(buf, to, len);
-	prom_leave();
-
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;
-	buf[ret.u.retval] = '\0';
+	len = min(len - 1, ret.u.retval);
+	memcpy(buf, to, len);
+	buf[len] = '\0';
+	prom_leave();
 
-	return (ret.bits);
+	return len;
 }
 
 void

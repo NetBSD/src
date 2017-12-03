@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40.10.3 2014/08/20 00:03:31 tls Exp $
+	$NetBSD: syscalls.master,v 1.40.10.4 2017/12/03 11:36:53 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -66,7 +66,7 @@
 
 0	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
 1	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
-			    int nbyte); }
+			    size_t nbyte); }
 2	STD		{ int|linux_sys||open(const char *path, int flags, \
 			    linux_umode_t mode); }
 3	NOARGS		{ int|sys||close(int fd); }
@@ -234,8 +234,8 @@
 85	STD		{ int|linux_sys||creat(const char *path, linux_umode_t mode); }
 86	NOARGS		{ int|sys||link(const char *path, const char *link); }
 87	STD		{ int|linux_sys||unlink(const char *path); }
-88	NOARGS		{ int|sys||symlink(const char *path, const char *to); }
-89	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+88	NOARGS		{ int|sys||symlink(const char *path, const char *link); }
+89	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 90	NOARGS		{ int|sys||chmod(const char *path, linux_umode_t mode); }
 91	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
@@ -259,8 +259,8 @@
 102	NOARGS		{ uid_t|sys||getuid(void); }
 103	UNIMPL		syslog
 104	NOARGS		{ gid_t|sys||getgid(void); }
-105	NOARGS		{ void|sys||setuid(uid_t uid); }
-106	NOARGS		{ void|sys||setgid(gid_t gid); }
+105	NOARGS		{ int|sys||setuid(uid_t uid); }
+106	NOARGS		{ int|sys||setgid(gid_t gid); }
 107	NOARGS		{ uid_t|sys||geteuid(void); }
 108	NOARGS		{ gid_t|sys||getegid(void); }
 109	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
@@ -483,14 +483,17 @@
 			    int fd2, const char *name2, int flags); }
 266	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-267	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+267	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 268	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }
 269	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
 			    int amode); }
-270	UNIMPL		pselect6
-271	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+270	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
+271	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 272	UNIMPL		unshare
@@ -513,7 +516,9 @@
 285	UNIMPL		fallocate
 286	UNIMPL		timerfd_settime
 287	UNIMPL		timerfd_gettime
-288	UNIMPL		accept4
+288	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
 289	UNIMPL		signalfd4
 290	UNIMPL		eventfd2
 291	UNIMPL		epoll_create1
@@ -524,7 +529,9 @@
 296	UNIMPL		pwritev
 297	UNIMPL		rt_tgsigqueueinfo
 298	UNIMPL		perf_counter_open
-299	UNIMPL		recvmmsg
+299	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
 300	UNIMPL		fanotify_init
 301	UNIMPL		fanotify_mark
 302	UNIMPL		prlimit64
@@ -532,7 +539,9 @@
 304	UNIMPL		open_by_handle_at
 305	UNIMPL		clock_adjtime
 306	UNIMPL		syncfs
-307	UNIMPL		sendmmsg
+307	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
 308	UNIMPL		setns
 309	UNIMPL		getcpu
 310	UNIMPL		process_vm_readv

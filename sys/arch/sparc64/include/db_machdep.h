@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.33 2011/07/12 07:51:34 mrg Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.33.12.1 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -37,9 +37,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#ifndef SUN4U
-#define SUN4U	/* see .../sparc/include/frame.h for the reason */
-#endif
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
@@ -137,11 +134,6 @@ int kdb_trap(int, struct trapframe64 *);
  * We use elf symbols in DDB.
  */
 #define	DB_ELF_SYMBOLS
-#ifdef __arch64__
-#define DB_ELFSIZE	64
-#else
-#define DB_ELFSIZE	32
-#endif
 
 /*
  * KGDB definitions

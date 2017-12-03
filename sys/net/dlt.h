@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.12.6.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: dlt.h,v 1.12.6.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -38,8 +38,6 @@
  * SUCH DAMAGE.
  *
  *      @(#)bpf.h       7.1 (Berkeley) 5/7/91
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap/bpf.h,v 1.32 2008-12-23 20:13:29 guy Exp  (LBL)
  */
 
 #ifndef _NET_DLT_H_
@@ -303,40 +301,62 @@
 /*
  * Sigh.
  *
- * This was reserved for Siemens HiPath HDLC on 2002-01-25, as
+ * 121 was reserved for Siemens HiPath HDLC on 2002-01-25, as
  * requested by Tomas Kukosa.
  *
  * On 2004-02-25, a FreeBSD checkin to sys/net/bpf.h was made that
- * assigned 121 as DLT_PFSYNC.  Its libpcap does DLT_ <-> LINKTYPE_
- * mapping, so it probably supports capturing on the pfsync device
- * but not saving the captured data to a pcap file.
+ * assigned 121 as DLT_PFSYNC.  In current versions, its libpcap
+ * does DLT_ <-> LINKTYPE_ mapping, mapping DLT_PFSYNC to a
+ * LINKTYPE_PFSYNC value of 246, so it should write out DLT_PFSYNC
+ * dump files with 246 as the link-layer header type.  (Earlier
+ * versions might not have done mapping, in which case they would
+ * have written them out with a link-layer header type of 121.)
  *
  * OpenBSD, from which pf came, however, uses 18 for DLT_PFSYNC;
- * their libpcap does no DLT_ <-> LINKTYPE_ mapping, so it would
- * use 18 in pcap files as well.
+ * its libpcap does no DLT_ <-> LINKTYPE_ mapping, so it would
+ * write out DLT_PFSYNC dump files with use 18 as the link-layer
+ * header type.
  *
- * NetBSD and DragonFly BSD also use 18 for DLT_PFSYNC; their
- * libpcaps do DLT_ <-> LINKTYPE_ mapping, and neither has an entry
- * for DLT_PFSYNC, so it might not be able to write out dump files
- * with 18 as the link-layer header type.  (Earlier versions might
- * not have done mapping, in which case they'd work the same way
- * OpenBSD does.)
+ * NetBSD, DragonFly BSD, and Darwin also use 18 for DLT_PFSYNC; in
+ * current versions, their libpcaps do DLT_ <-> LINKTYPE_ mapping,
+ * mapping DLT_PFSYNC to a LINKTYPE_PFSYNC value of 246, so they
+ * should write out DLT_PFSYNC dump files with 246 as the link-layer
+ * header type.  (Earlier versions might not have done mapping,
+ * in which case they'd work the same way OpenBSD does, writing
+ * them out with a link-layer header type of 18.)
  *
- * Mac OS X defines it as 18, but doesn't appear to use it as of
- * Mac OS X 10.7.3.  Its libpcap does DLT_ <-> LINKTYPE_ mapping.
+ * We'll define DLT_PFSYNC as:
  *
- * We'll define DLT_PFSYNC as 121 on FreeBSD and define it as 18 on
- * all other platforms.  We'll define DLT_HHDLC as 121 on everything
- * except for FreeBSD; anybody who wants to compile, on FreeBSD, code
- * that uses DLT_HHDLC is out of luck.
+ *    18 on NetBSD, OpenBSD, DragonFly BSD, and Darwin;
  *
- * We'll define LINKTYPE_PFSYNC as 18, *even on FreeBSD*, and map
- * it, so that savefiles won't use 121 for PFSYNC - they'll all
- * use 18.  Code that uses pcap_datalink() to determine the link-layer
- * header type of a savefile won't, when built and run on FreeBSD,
- * be able to distinguish between LINKTYPE_PFSYNC and LINKTYPE_HHDLC
- * capture files; code that doesn't, such as the code in Wireshark,
- * will be able to distinguish between them.
+ *    121 on FreeBSD;
+ *
+ *    246 everywhere else.
+ *
+ * We'll define DLT_HHDLC as 121 on everything except for FreeBSD;
+ * anybody who wants to compile, on FreeBSD, code that uses DLT_HHDLC
+ * is out of luck.
+ *
+ * We'll define LINKTYPE_PFSYNC as 246 on *all* platforms, so that
+ * savefiles written using *this* code won't use 18 or 121 for PFSYNC,
+ * they'll all use 246.
+ *
+ * Code that uses pcap_datalink() to determine the link-layer header
+ * type of a savefile won't, when built and run on FreeBSD, be able
+ * to distinguish between LINKTYPE_PFSYNC and LINKTYPE_HHDLC capture
+ * files, as pcap_datalink() will give 121 for both of them.  Code
+ * that doesn't, such as the code in Wireshark, will be able to
+ * distinguish between them.
+ *
+ * FreeBSD's libpcap won't map a link-layer header type of 18 - i.e.,
+ * DLT_PFSYNC files from OpenBSD and possibly older versions of NetBSD,
+ * DragonFly BSD, and OS X - to DLT_PFSYNC, so code built with FreeBSD's
+ * libpcap won't treat those files as DLT_PFSYNC files.
+ *
+ * Other libpcaps won't map a link-layer header type of 121 to DLT_PFSYNC;
+ * this means they can read DLT_HHDLC files, if any exist, but won't
+ * treat pcap files written by any older versions of FreeBSD libpcap that
+ * didn't map to 246 as DLT_PFSYNC files.
  */
 #ifdef __FreeBSD__
 #define DLT_PFSYNC		121
@@ -653,9 +673,23 @@
 #define DLT_A653_ICM            185
 
 /*
- * USB packets, beginning with a USB setup header; requested by
- * Paolo Abeni <paolo.abeni@email.it>.
+ * This used to be "USB packets, beginning with a USB setup header;
+ * requested by Paolo Abeni <paolo.abeni@email.it>."
+ *
+ * However, that header didn't work all that well - it left out some
+ * useful information - and was abandoned in favor of the DLT_USB_LINUX
+ * header.
+ *
+ * This is now used by FreeBSD for its BPF taps for USB; that has its
+ * own headers.  So it is written, so it is done.
+ *
+ * For source-code compatibility, we also define DLT_USB to have this
+ * value.  We do it numerically so that, if code that includes this
+ * file (directly or indirectly) also includes an OS header that also
+ * defines DLT_USB as 186, we don't get a redefinition warning.
+ * (NetBSD 7 does that.)
  */
+#define DLT_USB_FREEBSD		186
 #define DLT_USB			186
 
 /*
@@ -965,8 +999,10 @@
 
 /*
  * CAN (Controller Area Network) frames, with a pseudo-header as supplied
- * by Linux SocketCAN.  See Documentation/networking/can.txt in the Linux
- * source.
+ * by Linux SocketCAN, and with multi-byte numerical fields in that header
+ * in big-endian byte order.
+ *
+ * See Documentation/networking/can.txt in the Linux source.
  *
  * Requested by Felix Obenhuber <felix@obenhuber.de>.
  */
@@ -1073,7 +1109,7 @@
 #define DLT_NETANALYZER_TRANSPARENT	241
 
 /*
- * IP-over-Infiniband, as specified by RFC 4391.
+ * IP-over-InfiniBand, as specified by RFC 4391.
  *
  * Requested by Petr Sumbera <petr.sumbera@oracle.com>.
  */
@@ -1105,17 +1141,188 @@
 #define DLT_NFC_LLCP		245
 
 /*
- * 245 is used as LINKTYPE_PFSYNC; do not use it for any other purpose.
+ * 246 is used as LINKTYPE_PFSYNC; do not use it for any other purpose.
  *
  * DLT_PFSYNC has different values on different platforms, and all of
  * them collide with something used elsewhere.  On platforms that
- * don't already define it, define it as 245.
+ * don't already define it, define it as 246.
  */
 #if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__) && !defined(__APPLE__)
 #define DLT_PFSYNC		246
 #endif
 
-#define DLT_MATCHING_MAX	246	/* highest value in the "matching" range */
+/*
+ * Raw InfiniBand packets, starting with the Local Routing Header.
+ *
+ * Requested by Oren Kladnitsky <orenk@mellanox.com>.
+ */
+#define DLT_INFINIBAND		247
+
+/*
+ * SCTP, with no lower-level protocols (i.e., no IPv4 or IPv6).
+ *
+ * Requested by Michael Tuexen <Michael.Tuexen@lurchi.franken.de>.
+ */
+#define DLT_SCTP		248
+
+/*
+ * USB packets, beginning with a USBPcap header.
+ *
+ * Requested by Tomasz Mon <desowin@gmail.com>
+ */
+#define DLT_USBPCAP		249
+
+/*
+ * Schweitzer Engineering Laboratories "RTAC" product serial-line
+ * packets.
+ *
+ * Requested by Chris Bontje <chris_bontje@selinc.com>.
+ */
+#define DLT_RTAC_SERIAL		250
+
+/*
+ * Bluetooth Low Energy air interface link-layer packets.
+ *
+ * Requested by Mike Kershaw <dragorn@kismetwireless.net>.
+ */
+#define DLT_BLUETOOTH_LE_LL	251
+
+/*
+ * DLT type for upper-protocol layer PDU saves from wireshark.
+ *
+ * the actual contents are determined by two TAGs stored with each
+ * packet:
+ *   EXP_PDU_TAG_LINKTYPE          the link type (LINKTYPE_ value) of the
+ *				   original packet.
+ *
+ *   EXP_PDU_TAG_PROTO_NAME        the name of the wireshark dissector
+ * 				   that can make sense of the data stored.
+ */
+#define DLT_WIRESHARK_UPPER_PDU	252
+
+/*
+ * DLT type for the netlink protocol (nlmon devices).
+ */
+#define DLT_NETLINK		253
+
+/*
+ * Bluetooth Linux Monitor headers for the BlueZ stack.
+ */
+#define DLT_BLUETOOTH_LINUX_MONITOR	254
+
+/*
+ * Bluetooth Basic Rate/Enhanced Data Rate baseband packets, as
+ * captured by Ubertooth.
+ */
+#define DLT_BLUETOOTH_BREDR_BB	255
+
+/*
+ * Bluetooth Low Energy link layer packets, as captured by Ubertooth.
+ */
+#define DLT_BLUETOOTH_LE_LL_WITH_PHDR	256
+
+/*
+ * PROFIBUS data link layer.
+ */
+#define DLT_PROFIBUS_DL		257
+
+/*
+ * Apple's DLT_PKTAP headers.
+ *
+ * Sadly, the folks at Apple either had no clue that the DLT_USERn values
+ * are for internal use within an organization and partners only, and
+ * didn't know that the right way to get a link-layer header type is to
+ * ask tcpdump.org for one, or knew and didn't care, so they just
+ * used DLT_USER2, which causes problems for everything except for
+ * their version of tcpdump.
+ *
+ * So I'll just give them one; hopefully this will show up in a
+ * libpcap release in time for them to get this into 10.10 Big Sur
+ * or whatever Mavericks' successor is called.  LINKTYPE_PKTAP
+ * will be 258 *even on OS X*; that is *intentional*, so that
+ * PKTAP files look the same on *all* OSes (different OSes can have
+ * different numerical values for a given DLT_, but *MUST NOT* have
+ * different values for what goes in a file, as files can be moved
+ * between OSes!).
+ *
+ * When capturing, on a system with a Darwin-based OS, on a device
+ * that returns 149 (DLT_USER2 and Apple's DLT_PKTAP) with this
+ * version of libpcap, the DLT_ value for the pcap_t  will be DLT_PKTAP,
+ * and that will continue to be DLT_USER2 on Darwin-based OSes. That way,
+ * binary compatibility with Mavericks is preserved for programs using
+ * this version of libpcap.  This does mean that if you were using
+ * DLT_USER2 for some capture device on OS X, you can't do so with
+ * this version of libpcap, just as you can't with Apple's libpcap -
+ * on OS X, they define DLT_PKTAP to be DLT_USER2, so programs won't
+ * be able to distinguish between PKTAP and whatever you were using
+ * DLT_USER2 for.
+ *
+ * If the program saves the capture to a file using this version of
+ * libpcap's pcap_dump code, the LINKTYPE_ value in the file will be
+ * LINKTYPE_PKTAP, which will be 258, even on Darwin-based OSes.
+ * That way, the file will *not* be a DLT_USER2 file.  That means
+ * that the latest version of tcpdump, when built with this version
+ * of libpcap, and sufficiently recent versions of Wireshark will
+ * be able to read those files and interpret them correctly; however,
+ * Apple's version of tcpdump in OS X 10.9 won't be able to handle
+ * them.  (Hopefully, Apple will pick up this version of libpcap,
+ * and the corresponding version of tcpdump, so that tcpdump will
+ * be able to handle the old LINKTYPE_USER2 captures *and* the new
+ * LINKTYPE_PKTAP captures.)
+ */
+#ifdef __APPLE__
+#define DLT_PKTAP	DLT_USER2
+#else
+#define DLT_PKTAP	258
+#endif
+
+/*
+ * Ethernet packets preceded by a header giving the last 6 octets
+ * of the preamble specified by 802.3-2012 Clause 65, section
+ * 65.1.3.2 "Transmit".
+ */
+#define DLT_EPON	259
+
+/*
+ * IPMI trace packets, as specified by Table 3-20 "Trace Data Block Format"
+ * in the PICMG HPM.2 specification.
+ */
+#define DLT_IPMI_HPM_2	260
+
+/*
+ * per  Joshua Wright <jwright@hasborg.com>, formats for Zwave captures.
+ */
+#define DLT_ZWAVE_R1_R2  261
+#define DLT_ZWAVE_R3     262
+
+/*
+ * per Steve Karg <skarg@users.sourceforge.net>, formats for Wattstopper
+ * Digital Lighting Management room bus serial protocol captures.
+ */
+#define DLT_WATTSTOPPER_DLM     263
+
+/*
+ * ISO 14443 contactless smart card messages.
+ */
+#define DLT_ISO_14443	264
+
+/*
+ * Radio data system (RDS) groups.  IEC 62106.
+ * Per Jonathan Brucker <jonathan.brucke@gmail.com>.
+ */
+#define DLT_RDS		265
+
+/*
+ * In case the code that includes this file (directly or indirectly)
+ * has also included OS files that happen to define DLT_MATCHING_MAX,
+ * with a different value (perhaps because that OS hasn't picked up
+ * the latest version of our DLT definitions), we undefine the
+ * previous value of DLT_MATCHING_MAX.
+ */
+#ifdef DLT_MATCHING_MAX
+#undef DLT_MATCHING_MAX
+#endif
+#define DLT_MATCHING_MAX	265	/* highest value in the "matching" range */
 
 /*
  * DLT and savefile link type values are split into a class and

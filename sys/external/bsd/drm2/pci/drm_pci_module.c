@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci_module.c,v 1.2.10.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: drm_pci_module.c,v 1.2.10.3 2017/12/03 11:38:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.2.10.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.2.10.3 2017/12/03 11:38:00 jdolecek Exp $");
 
 #include <sys/module.h>
+#include <sys/once.h>
 
 #include <drm/drmP.h>
 
@@ -48,7 +49,39 @@ const struct drm_agp_hooks drmkms_pci_agp_hooks = {
 	.agph_bind_ioctl = &drm_agp_bind_ioctl,
 	.agph_unbind_ioctl = &drm_agp_unbind_ioctl,
 	.agph_release = &drm_agp_release,
+	.agph_clear = &drm_agp_clear,
 };
+
+static int
+drmkms_pci_agp_init(void)
+{
+	int error;
+
+	error = drm_agp_register(&drmkms_pci_agp_hooks);
+	if (error)
+		return error;
+
+	return 0;
+}
+
+int
+drmkms_pci_agp_guarantee_initialized(void)
+{
+#ifdef _MODULE
+	return 0;
+#else
+	static ONCE_DECL(drmkms_pci_agp_init_once);
+
+	return RUN_ONCE(&drmkms_pci_agp_init_once, &drmkms_pci_agp_init);
+#endif
+}
+
+static void
+drmkms_pci_agp_fini(void)
+{
+
+	drm_agp_deregister(&drmkms_pci_agp_hooks);
+}
 
 static int
 drmkms_pci_modcmd(modcmd_t cmd, void *arg __unused)
@@ -57,13 +90,17 @@ drmkms_pci_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = drm_agp_register(&drmkms_pci_agp_hooks);
+#ifdef _MODULE
+		error = drmkms_pci_agp_init();
+#else
+		error = drmkms_pci_agp_guarantee_initialized();
+#endif
 		if (error)
 			return error;
 		return 0;
 
 	case MODULE_CMD_FINI:
-		drm_agp_deregister(&drmkms_pci_agp_hooks);
+		drmkms_pci_agp_fini();
 		return 0;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.61 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.61.26.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.61 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.61.26.1 2017/12/03 11:36:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -443,7 +443,7 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 	    {
 		int x;	/* unused */
 
-		error = copyin((void *)&x, SCARG(uap, data), sizeof x);
+		error = copyin(SCARG(uap, data), (void *)&x, sizeof x);
 		break;
 	    }
 	case _IOR('t', 100, int):	/* sun SUNOS_TIOCSSOFTCAR */
@@ -513,11 +513,12 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 		 * is on a pty.
 		 */
 		int pgrp;
-		struct vnode *vp;
+		struct vnode *vp = NULL;
 
 		error = (*ctl)(fp, TIOCGPGRP, &pgrp);
 		if (error) {
-			vp = (struct vnode *)fp->f_data;
+			if (fp->f_type == DTYPE_VNODE)
+				vp = fp->f_vnode;
 			if ((error == EIO || (error == 0 && pgrp == 0)) &&
 			    vp != NULL &&
 			    vp->v_type == VCHR &&
@@ -816,9 +817,9 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 	    {
 		int tmp = 0;
 		switch ((int)(u_long)SCARG(uap, data)) {
-		case SUNOS_S_FLUSHR:	tmp = FREAD;
-		case SUNOS_S_FLUSHW:	tmp = FWRITE;
-		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
+		case SUNOS_S_FLUSHR:	tmp = FREAD; break;
+		case SUNOS_S_FLUSHW:	tmp = FWRITE; break;
+		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE; break;
 		}
                 error = (*ctl)(fp, TIOCFLUSH, &tmp);
 		break;
@@ -839,7 +840,7 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 	 * (which was from the old sparc/scsi/sun_disklabel.c), and
 	 * modified to suite.
 	 */
-	case DKIOCGGEOM:
+	case SUN_DKIOCGGEOM:
             {
 		struct disklabel dl;
 
@@ -862,31 +863,35 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 		break;
 	    }
 
-	case DKIOCINFO:
+	case SUN_DKIOCINFO:
 		/* Homey don't do DKIOCINFO */
 		memset(SCARG(uap, data), 0, sizeof(struct sun_dkctlr));
 		break;
 
-	case DKIOCGPART:
+	case SUN_DKIOCGPART:
             {
 		struct partinfo pi;
+		struct disklabel label;
 
-		error = (*ctl)(fp, DIOCGPART, &pi);
+		error = (*ctl)(fp, DIOCGDINFO, &label);
+		if (error)
+			break;
+		error = (*ctl)(fp, DIOCGPARTINFO, &pi);
 		if (error)
 			break;
 
-		if (pi.disklab->d_secpercyl == 0) {
+		if (label.d_secpercyl == 0) {
 			error = ERANGE;	/* XXX */
 			break;
 		}
-		if (pi.part->p_offset % pi.disklab->d_secpercyl != 0) {
+		if (pi.pi_offset % label.d_secpercyl != 0) {
 			error = ERANGE;	/* XXX */
 			break;
 		}
 
 #define datapart	((struct sun_dkpart *)SCARG(uap, data))
-		datapart->sdkp_cyloffset = pi.part->p_offset / pi.disklab->d_secpercyl;
-		datapart->sdkp_nsectors = pi.part->p_size;
+		datapart->sdkp_cyloffset = pi.pi_offset / label.d_secpercyl;
+		datapart->sdkp_nsectors = pi.pi_size;
 #undef datapart
 		break;
 	    }

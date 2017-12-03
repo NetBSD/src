@@ -1,4 +1,4 @@
-/* $NetBSD: kbio.h,v 1.4 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: kbio.h,v 1.4.122.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/ioccom.h>
 
 #if 0 /* XXX */
 /*

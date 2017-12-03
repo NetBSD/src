@@ -1,0 +1,5 @@
+#
+# $NetBSD
+#
+include 	"arch/riscv/conf/std.riscv"
+makeoptions	LP64="yes"

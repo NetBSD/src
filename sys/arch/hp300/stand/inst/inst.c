@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.18.38.1 2014/08/20 00:03:01 tls Exp $	*/
+/*	$NetBSD: inst.c,v 1.18.38.2 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ main(void)
 	for (;;) {
 		printf("sys_inst> ");
 		memset(line, 0, sizeof(line));
-		gets(line);
+		kgets(line, sizeof(line));
 		if (line[0] == '\n' || line[0] == '\0')
 			continue;
 
@@ -200,7 +200,7 @@ dsklabel(void)
  disklabel_loop:
 	memset(line, 0, sizeof(line));
 	printf("(z)ap, (e)dit, (s)how, (w)rite, (d)one > ");
-	gets(line);
+	kgets(line, sizeof(line));
 	if (line[0] == '\n' || line[0] == '\0')
 		goto disklabel_loop;
 
@@ -259,28 +259,28 @@ dsklabel(void)
 #define GETNUM(out, num)						\
 	printf((out), (num));						\
 	memset(line, 0, sizeof(line));					\
-	gets(line);							\
+	kgets(line, sizeof(line));							\
 	if (line[0])							\
 		(num) = atoi(line);
 
 #define GETNUM2(out, num1, num2)					\
 	printf((out), (num1), (num2));					\
 	memset(line, 0, sizeof(line));					\
-	gets(line);							\
+	kgets(line, sizeof(line));							\
 	if (line[0])							\
 		(num2) = atoi(line);
 
 #define GETSTR(out, str)						\
 	printf((out), (str));						\
 	memset(line, 0, sizeof(line));					\
-	gets(line);							\
+	kgets(line, sizeof(line));							\
 	if (line[0])							\
 		strcpy((str), line);
 
 #define FLAGS(out, flag)						\
 	printf((out), lp->d_flags & (flag) ? 'y' : 'n');		\
 	memset(line, 0, sizeof(line));					\
-	gets(line);							\
+	kgets(line, sizeof(line));							\
 	if (line[0] == 'y' || line[0] == 'Y')				\
 		lp->d_flags |= (flag);					\
 	else								\
@@ -514,7 +514,7 @@ opendisk(char *question, char *diskname, int len, char partition, int *fdp)
 	printf("%s ", question);
 	memset(diskname, 0, len);
 	memset(fulldiskname, 0, sizeof(fulldiskname));
-	gets(diskname);
+	kgets(diskname, sizeof(diskname));
 	if (diskname[0] == '\n' || diskname[0] == '\0')
 		goto getdiskname;
 
@@ -570,7 +570,7 @@ miniroot(void)
  getsource:
 	printf("Source? (N)FS, (t)ape, (d)one > ");
 	memset(line, 0, sizeof(line));
-	gets(line);
+	kgets(line, sizeof(line));
 	if (line[0] == '\0')
 		goto getsource;
 
@@ -581,7 +581,7 @@ miniroot(void)
 		printf("Name of miniroot file? ");
 		memset(line, 0, sizeof(line));
 		memset(minirootname, 0, sizeof(minirootname));
-		gets(line);
+		kgets(line, sizeof(line));
 		if (line[0] == '\0')
 			goto name_of_nfs_miniroot;
 		(void)strcat(minirootname, "le0a:");
@@ -613,7 +613,7 @@ miniroot(void)
 		memset(line, 0, sizeof(line));
 		memset(minirootname, 0, sizeof(minirootname));
 		memset(tapename, 0, sizeof(tapename));
-		gets(line);
+		kgets(line, sizeof(line));
 		if (line[0] == '\0')
 			goto name_of_tape_miniroot;
 		strcat(minirootname, line);
@@ -621,7 +621,7 @@ miniroot(void)
 
 		printf("File number (first == 1)? ");
 		memset(line, 0, sizeof(line));
-		gets(line);
+		kgets(line, sizeof(line));
 		fileno = a2int(line);
 		if (fileno < 1 || fileno > 8) {
 			printf("Invalid file number: %s\n", line);
@@ -643,7 +643,7 @@ miniroot(void)
 		ignoreshread = 0;
 		printf("Copy how many %d byte blocks? ", DEV_BSIZE);
 		memset(line, 0, sizeof(line));
-		gets(line);
+		kgets(line, sizeof(line));
 		nblks = a2int(line);
 		if (nblks < 0) {
 			printf("Invalid block count: %s\n", line);
@@ -723,7 +723,7 @@ bootmini(void)
 	printf("Disk to boot from? ");
 	memset(diskname, 0, sizeof(diskname));
 	memset(bootname, 0, sizeof(bootname));
-	gets(diskname);
+	kgets(diskname, sizeof(diskname));
 	if (diskname[0] == '\n' || diskname[0] == '\0')
 		goto getdiskname;
 

@@ -1,0 +1,280 @@
+/* $NetBSD: vlpci.h,v 1.1.16.2 2017/12/03 11:36:42 jdolecek Exp $ */
+
+/*-
+ * Copyright (c) 2017, Felix Deichmann
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _VLPCI_H
+#define _VLPCI_H
+
+#include <sys/param.h>
+#include <sys/cdefs.h>
+#include <sys/bitops.h>
+
+/*
+ * VT82C505 register definitions according to:
+ *
+ * VIA Technologies, Inc. "Configuration Registers of VT82C505-F", December
+ * 1994. Application Note AN-025B.
+ *
+ * VIA Technologies, Inc. "VIA VT82C505 Pentium/486 VL to PCI BRIDGE", May 1994.
+ * Datasheet.
+ */
+
+#define VLPCI_INTREG_BASE			0xa8
+#define VLPCI_INTREG_IDX_OFF			0
+#define VLPCI_INTREG_DATA_OFF			1
+#define VLPCI_INTREG_SZ				2
+
+#define VLPCI_CFGREG_BASE			0xcf8
+#define VLPCI_CFGREG_ADDR_OFF			0
+#define VLPCI_CFGREG_DATA_OFF			4
+#define VLPCI_CFGREG_SZ				8
+
+#define VLPCI_DIP_SW_REG			0x80
+#define VLPCI_DIP_SW_PCLK_CCLK			__BIT(7)
+#define VLPCI_DIP_SW_SYNC_CLK			__BIT(6)
+#define VLPCI_DIP_SW_IRQ14_15_PIN		__BIT(5)
+#define VLPCI_DIP_SW_BLAST_PIN			__BIT(4)
+#define VLPCI_DIP_SW_STRAP			__BITS(7, 4)
+#define VLPCI_DIP_SW_REV_ID			__BITS(3, 0)
+#define VLPCI_DIP_SW_REV_ID_D			0x1
+#define VLPCI_DIP_SW_REV_ID_E			0x2
+#define VLPCI_DIP_SW_REV_ID_F			0x3
+
+#define VLPCI_OBD_MEM_SZ_REG			0x81
+
+#define VLPCI_BUF_CTL_REG			0x82
+#define VLPCI_BUF_CTL_CPU2PCI_WR_BUF		__BIT(7)
+#define VLPCI_BUF_CTL_PCI2CPU_WR_BUF		__BIT(6)
+#define VLPCI_BUF_CTL_CPU2PCI_PREF_BUF		__BIT(5)
+#define VLPCI_BUF_CTL_PCI2CPU_PREF_BUF		__BIT(4)
+#define VLPCI_BUF_CTL_PCI_DYN_ACC_DEC		__BIT(3)
+#define VLPCI_BUF_CTL_BST_B4_LST_BRDY		__BIT(2)
+#define VLPCI_BUF_CTL_OBD_MEM_WR_BST		__BIT(1)
+#define VLPCI_BUF_CTL_OBD_MEM_RD_BST		__BIT(0)
+
+#define VLPCI_VL_TIM_REG			0x83
+#define VLPCI_VL_TIM_CPU2VL_WR_0WS		__BIT(7)
+#define VLPCI_VL_TIM_LDEV_2ND_T2		__BIT(6)
+#define VLPCI_VL_TIM_TRDY2LRDY_BYP		__BIT(5)	/* AN-025B */
+#define VLPCI_VL_TIM_TRDY2LRDY_RESYNC		__BIT(5)	/* DS */
+#define VLPCI_VL_TIM_RDYRTN2TRDY_BYP		__BIT(4)	/* AN-025B */
+#define VLPCI_VL_TIM_RDYRTN2TRDY_RESYNC		__BIT(4)	/* DS */
+#define VLPCI_VL_TIM_OBD_MEM_1ST_DAT		__BIT(3)
+#define VLPCI_VL_TIM_CPU2PCI_WR_BST		__BIT(2)
+#define VLPCI_VL_TIM_PADS_DIS			__BIT(1)
+#define VLPCI_VL_TIM_TST_MODE			__BIT(0)
+
+#define VLPCI_PCI_TIM_REG			0x84
+#define VLPCI_PCI_TIM_SLV_LOCK			__BIT(7)
+#define VLPCI_PCI_TIM_RTY_CNT_64		__BIT(6)
+#define VLPCI_PCI_TIM_RTY_DEADL_ERR_REP		__BIT(5)
+#define VLPCI_PCI_TIM_RTY_STS_OCCU		__BIT(4)
+#define VLPCI_PCI_TIM_CPU2PCI_FAST_B2B		__BIT(3)
+#define VLPCI_PCI_TIM_FAST_FRAME		__BIT(2)
+#define VLPCI_PCI_TIM_DEVSEL_DEC		__BITS(1, 0)
+#define VLPCI_PCI_TIM_DEVSEL_DEC_SUBTR		0x3
+#define VLPCI_PCI_TIM_DEVSEL_DEC_SLOW		0x2
+#define VLPCI_PCI_TIM_DEVSEL_DEC_MDM		0x1
+#define VLPCI_PCI_TIM_DEVSEL_DEC_FAST		0x0
+
+#define VLPCI_PCI_ARB_REG			0x85
+#define VLPCI_PCI_ARB_FAIR			__BIT(7)
+#define VLPCI_PCI_ARB_FRAME			__BIT(6)
+#define VLPCI_PCI_ARB_CPU_TIM_SLT		__BITS(5, 4)
+#define VLPCI_PCI_ARB_CPU_TIM_SLT_32CLK		0x3
+#define VLPCI_PCI_ARB_CPU_TIM_SLT_16CLK		0x2
+#define VLPCI_PCI_ARB_CPU_TIM_SLT_8CLK		0x1
+#define VLPCI_PCI_ARB_CPU_TIM_SLT_4CLK		0x0
+#define VLPCI_PCI_ARB_PCI_MST_TMO		__BITS(3, 0)
+#define VLPCI_PCI_ARB_PCI_MST_TMO_DIS		0x0
+#define VLPCI_PCI_ARB_PCI_MST_TMO_1X32CLK	0x1
+#define VLPCI_PCI_ARB_PCI_MST_TMO_2X32CLK	0x2
+#define VLPCI_PCI_ARB_PCI_MST_TMO_3X32CLK	0x3
+#define VLPCI_PCI_ARB_PCI_MST_TMO_4X32CLK	0x4
+#define VLPCI_PCI_ARB_PCI_MST_TMO_5X32CLK	0x5
+#define VLPCI_PCI_ARB_PCI_MST_TMO_6X32CLK	0x6
+#define VLPCI_PCI_ARB_PCI_MST_TMO_7X32CLK	0x7
+#define VLPCI_PCI_ARB_PCI_MST_TMO_8X32CLK	0x8
+#define VLPCI_PCI_ARB_PCI_MST_TMO_9X32CLK	0x9
+#define VLPCI_PCI_ARB_PCI_MST_TMO_10X32CLK	0xa
+#define VLPCI_PCI_ARB_PCI_MST_TMO_11X32CLK	0xb
+#define VLPCI_PCI_ARB_PCI_MST_TMO_12X32CLK	0xc
+#define VLPCI_PCI_ARB_PCI_MST_TMO_13X32CLK	0xd
+#define VLPCI_PCI_ARB_PCI_MST_TMO_14X32CLK	0xe
+#define VLPCI_PCI_ARB_PCI_MST_TMO_15X32CLK	0xf
+
+#define VLPCI_CFG_MISC_CTL_REG			0x86
+#define VLPCI_CFG_MISC_CTL_PCI_CFG_MECHN_2	__BIT(7)
+#define VLPCI_CFG_MISC_CTL_INT_CTL		__BITS(5, 6)
+#define VLPCI_CFG_MISC_CTL_INT_CTL_TRSP		0x0
+#define VLPCI_CFG_MISC_CTL_INT_CTL_CONV_INTL	0x1
+#define VLPCI_CFG_MISC_CTL_INT_CTL_TRSP_INV	0x2
+#define VLPCI_CFG_MISC_CTL_INT_CTL_CONV		0x3
+#define VLPCI_CFG_MISC_CTL_TST_MODE		__BIT(4)
+#define VLPCI_CFG_MISC_CTL_SERR_NMI		__BIT(3)
+#define VLPCI_CFG_MISC_CTL_SERR_STS		__BIT(2)
+#define VLPCI_CFG_MISC_CTL_PCI_MST_BRK_TMR	__BIT(1)
+#define VLPCI_CFG_MISC_CTL_LREQI_LGNTO_PIN	__BIT(0)
+
+#define VLPCI_PCI_WND_NO_1			1
+#define VLPCI_PCI_WND_NO_2			2
+#define VLPCI_PCI_WND_NO_3			3
+
+#define VLPCI_PCI_WND_HIADDR_REG(no)		(0x87 + 3 * ((no) - 1))
+#define VLPCI_PCI_WND_HIADDR_IO(x)		(((x) >> 8) & 0xff)
+#define VLPCI_PCI_WND_HIADDR_MEM(x)		(((x) >> 24) & 0xff)
+
+#define VLPCI_PCI_WND_LOADDR_REG(no)		(0x88 + 3 * ((no) - 1))
+#define VLPCI_PCI_WND_LOADDR_IO(x)		(((x) >> 0) & 0xff)
+#define VLPCI_PCI_WND_LOADDR_MEM(x)		(((x) >> 16) & 0xff)
+
+/*
+ * Window attributes differ significantly between AN-025B (PCI windows only,
+ * memory and I/O) and DS (PCI and VL windows, memory only).
+ */
+#define VLPCI_PCI_WND_ATTR_REG(no)		(0x89 + 3 * ((no) - 1))
+#define VLPCI_PCI_WND_ATTR_ENA			__BIT(7)	/* AN-025B */
+#define VLPCI_PCI_WND_ATTR_PCI			__BIT(7)	/* DS */
+#define VLPCI_PCI_WND_ATTR_WR_BUF		__BIT(6)
+#define VLPCI_PCI_WND_ATTR_IO			__BIT(5)	/* AN-025B */
+#define VLPCI_PCI_WND_ATTR_VL			__BIT(5)	/* DS */
+#define VLPCI_PCI_WND_ATTR_SZ			__BITS(4, 2)
+/* I/O size only present in AN-025B. */
+#define VLPCI_PCI_WND_ATTR_SZ_IO_4		0x0
+#define VLPCI_PCI_WND_ATTR_SZ_IO_8		0x1
+#define VLPCI_PCI_WND_ATTR_SZ_IO_16		0x2
+#define VLPCI_PCI_WND_ATTR_SZ_IO_32		0x3
+#define VLPCI_PCI_WND_ATTR_SZ_IO_64		0x4
+#define VLPCI_PCI_WND_ATTR_SZ_IO_128		0x5
+#define VLPCI_PCI_WND_ATTR_SZ_IO_256		0x6
+#define VLPCI_PCI_WND_ATTR_SZ_IO_512		0x7
+#define VLPCI_PCI_WND_ATTR_SZ_IO(b)		ilog2((b) >> 2)
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_64K		0x0
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_128K		0x1
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_256K		0x2
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_512K		0x3
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_1M		0x4
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_2M		0x5
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_4M		0x6
+#define VLPCI_PCI_WND_ATTR_SZ_MEM_8M		0x7
+#define VLPCI_PCI_WND_ATTR_SZ_MEM(b)		ilog2((b) >> 16)
+
+#define VLPCI_INT_CTL_REG(int)			(0x90 + (int) / 8)
+#define VLPCI_INT_CTL_ENA(int)			__BIT((int) % 8 + 3)
+#define VLPCI_INT_CTL_INT2IRQ(int)		__BITS((int) % 8 + 2, (int) % 8)
+#define VLPCI_INT_CTL_INTB			12
+#define VLPCI_INT_CTL_INTA			8
+#define VLPCI_INT_CTL_INTD			4
+#define VLPCI_INT_CTL_INTC			0
+#define VLPCI_INT_CTL_IRQ_NONE			0x0
+#define VLPCI_INT_CTL_IRQ5			0x1
+#define VLPCI_INT_CTL_IRQ9			0x2
+#define VLPCI_INT_CTL_IRQ10			0x3
+#define VLPCI_INT_CTL_IRQ11			0x4
+#define VLPCI_INT_CTL_IRQ14			0x5
+#define VLPCI_INT_CTL_IRQ15			0x6
+#define VLPCI_INT_CTL_IRQ(irq)			\
+    (((irq) == 5) ? VLPCI_INT_CTL_IRQ5 :	\
+    ((irq) == 9) ? VLPCI_INT_CTL_IRQ9 :		\
+    ((irq) == 10) ? VLPCI_INT_CTL_IRQ10 :	\
+    ((irq) == 11) ? VLPCI_INT_CTL_IRQ11 :	\
+    ((irq) == 14) ? VLPCI_INT_CTL_IRQ14 :	\
+    ((irq) == 15) ? VLPCI_INT_CTL_IRQ15 :	\
+    VLPCI_INT_CTL_IRQ_NONE)
+
+#define VLPCI_ACC_ISA_CYC_REG			0x92
+#define VLPCI_ACC_ISA_CYC_A0000			__BIT(7)
+#define VLPCI_ACC_ISA_CYC_B0000			__BIT(6)
+#define VLPCI_ACC_ISA_CYC_C0000			__BIT(5)
+#define VLPCI_ACC_ISA_CYC_C8000			__BIT(4)
+#define VLPCI_ACC_ISA_CYC_D0000			__BIT(3)
+#define VLPCI_ACC_ISA_CYC_D8000			__BIT(2)
+#define VLPCI_ACC_ISA_CYC_E0000			__BIT(1)
+#define VLPCI_ACC_ISA_CYC_E8000			__BIT(0)
+/* F0000h to FFFFFh is always accelerated ISA cycle. */
+
+#define VLPCI_MISC_CTL_REG			0x93
+#define VLPCI_MISC_CTL_HIADDR			(__BITS(7, 6) | __BIT(4))
+#define VLPCI_MISC_CTL_HIADDR_CA26_ABV		0x0	/* 0b00x0 */
+#define VLPCI_MISC_CTL_HIADDR_CA27_ABV		0x4	/* 0b01x0 */
+#define VLPCI_MISC_CTL_HIADDR_CA28_ABV		0x8	/* 0b10x0 */
+#define VLPCI_MISC_CTL_HIADDR_CA29_ABV		0xc	/* 0b11x0 */
+#define VLPCI_MISC_CTL_HIADDR_CA30_ABV		0x1	/* 0b00x1 */
+#define VLPCI_MISC_CTL_HIADDR_CA31_ABV		0x5	/* 0b01x1 */
+#define VLPCI_MISC_CTL_HIADDR_DIS		0xd	/* 0b11x1 */
+#define VLPCI_MISC_CTL_IOCHCK_PIN		__BIT(5)
+#define VLPCI_MISC_CTL_2ND_VL_IDE		__BIT(3)
+#define VLPCI_MISC_CTL_1ST_VL_IDE		__BIT(2)
+#define VLPCI_MISC_CTL_OBD_IO_ACC_ISA		__BIT(0)
+
+#define VLPCI_ACC_PCI_64K_WND_REG		0x94
+#define VLPCI_ACC_PCI_64K_WND_A0000		__BIT(7)
+#define VLPCI_ACC_PCI_64K_WND_B0000		__BIT(6)
+#define VLPCI_ACC_PCI_64K_WND_C0000		__BIT(5)
+#define VLPCI_ACC_PCI_64K_WND_C8000		__BIT(4)
+#define VLPCI_ACC_PCI_64K_WND_D0000		__BIT(3)
+#define VLPCI_ACC_PCI_64K_WND_D8000		__BIT(2)
+#define VLPCI_ACC_PCI_64K_WND_E0000		__BIT(1)
+#define VLPCI_ACC_PCI_64K_WND_E8000		__BIT(0)
+
+#define VLPCI_ACC_PCI_32K_WND_REG		0x95
+#define VLPCI_ACC_PCI_32K_WND_A0000		__BIT(7)
+#define VLPCI_ACC_PCI_32K_WND_A8000		__BIT(6)
+#define VLPCI_ACC_PCI_32K_WND_B0000		__BIT(5)
+#define VLPCI_ACC_PCI_32K_WND_B8000		__BIT(4)
+
+#define VLPCI_MISC_1_REG			0x96
+#define VLPCI_MISC_1_DYN_DEC_MEM_WR		__BIT(7)
+#define VLPCI_MISC_1_RTY_TMO_ACTION		__BIT(6)
+#define VLPCI_MISC_1_DYN_DEC_DIS		__BIT(5)
+#define VLPCI_MISC_1_LOCAL_PIN			__BIT(4)
+#define VLPCI_MISC_1_COMPAT_ISA_BOFF		__BIT(3)
+#define VLPCI_MISC_1_IRQ_IDLE_LOW		__BIT(2)
+#define VLPCI_MISC_1_PCI_MST_1WS_WR		__BIT(1)
+#define VLPCI_MISC_1_PCI_SLV_1WS_BST_WR		__BIT(0)
+
+/* Individual INT[ABCD] mode control from VT82C505-E on. */
+#define VLPCI_IRQ_MODE_REG			0x97
+#define VLPCI_IRQ_MODE_CTL(i)			__BITS((i) + 1, (i))
+#define VLPCI_IRQ_MODE_CTL_INTA			6
+#define VLPCI_IRQ_MODE_CTL_INTB			4
+#define VLPCI_IRQ_MODE_CTL_INTC			2
+#define VLPCI_IRQ_MODE_CTL_INTD			0
+
+#define VLPCI_OBD_MEM_EADDR_REG			0x98
+#define VLPCI_OBD_MEM_EADDR_CA32_CA28		__BITS(4, 0)
+
+#define VLPCI_MISC_2_REG			0x99
+#define VLPCI_MISC_2_BYTE_MRG			__BIT(7)
+#define VLPCI_MISC_2_ENH_BYTE_MRG		__BIT(6)
+#define VLPCI_MISC_2_DYN_PCI_BST		__BIT(5)
+#define VLPCI_MISC_2_RTY_FAIL_POP_1_DAT		__BIT(4)
+#define VLPCI_MISC_2_2WAY_DYN_DEC		__BIT(3)
+#define VLPCI_MISC_2_ISAREQ_1CLK_DLY		__BIT(1)
+#define VLPCI_MISC_2_ADS_1CLK_DLY		__BIT(0)
+
+#endif /* !defined(_VLPCI_H) */

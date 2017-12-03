@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.c,v 1.21 2008/04/28 20:23:46 martin Exp $	 */
+/*	$NetBSD: svr4_32_sockio.c,v 1.21.44.1 2017/12/03 11:36:57 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1995, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.21 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.21.44.1 2017/12/03 11:36:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -96,6 +96,7 @@ svr4_32_sock_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long
 		{
 			struct ifnet *ifp;
 			int ifnum = 0;
+			int s;
 
 			/*
 			 * This does not return the number of physical
@@ -109,8 +110,10 @@ svr4_32_sock_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long
 			 * entry per physical interface?
 			 */
 
-			IFNET_FOREACH(ifp)
-				ifnum += svr4_count_ifnum(ifp)
+			s = pserialize_read_enter();
+			IFNET_READER_FOREACH(ifp)
+				ifnum += svr4_count_ifnum(ifp);
+			pserialize_read_exit(s);
 
 			DPRINTF(("SIOCGIFNUM %d\n", ifnum));
 			return copyout(&ifnum, data, sizeof(ifnum));

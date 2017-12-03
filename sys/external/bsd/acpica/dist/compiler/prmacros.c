@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,6 @@
  */
 
 #include "aslcompiler.h"
-#include "dtcompiler.h"
-
 
 #define _COMPONENT          ASL_PREPROCESSOR
         ACPI_MODULE_NAME    ("prmacros")
@@ -360,7 +358,7 @@ PrAddMacro (
         if (ArgCount >= PR_MAX_MACRO_ARGS)
         {
             PrError (ASL_ERROR, ASL_MSG_TOO_MANY_ARGUMENTS, TokenOffset);
-            return;
+            goto ErrorExit;
         }
     }
 
@@ -375,7 +373,7 @@ PrAddMacro (
     {
         /* Search the macro arg list for matching arg */
 
-        for (i = 0; Args[i].Name && (i < PR_MAX_MACRO_ARGS); i++)
+        for (i = 0; ((i < PR_MAX_MACRO_ARGS) && Args[i].Name); i++)
         {
             /*
              * Save argument offset within macro body. This is the mechanism
@@ -387,7 +385,8 @@ PrAddMacro (
             {
                 UseCount = Args[i].UseCount;
 
-                Args[i].Offset[UseCount] = (Token - Gbl_MainTokenBuffer) - MacroBodyOffset;
+                Args[i].Offset[UseCount] =
+                    (Token - Gbl_MainTokenBuffer) - MacroBodyOffset;
 
                 DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
                     "Macro Arg #%u: %s UseCount %u Offset %u \n",
@@ -400,7 +399,7 @@ PrAddMacro (
                     PrError (ASL_ERROR, ASL_MSG_TOO_MANY_ARGUMENTS,
                         THIS_TOKEN_OFFSET (Token));
 
-                    return;
+                    goto ErrorExit;
                 }
                 break;
             }
@@ -432,7 +431,7 @@ AddMacroToList:
                 THIS_TOKEN_OFFSET (Name));
         }
 
-        return;
+        goto ErrorExit;
     }
 
     DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
@@ -451,6 +450,13 @@ AddMacroToList:
         DefineInfo->Args = Args;
         DefineInfo->ArgCount = ArgCount;
     }
+
+    return;
+
+
+ErrorExit:
+    ACPI_FREE (Args);
+    return;
 }
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ofwstart.S,v 1.3 2008/04/28 20:23:31 martin Exp $ */
+/* $NetBSD: ofwstart.S,v 1.3.44.1 2017/12/03 11:36:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -95,9 +95,8 @@ _entry:
 _start:
 	sync
 	isync
-	lis	%r1,stack@ha
-	addi	%r1,%r1,stack@l
-	addi	%r1,%r1,8192
+	lis	%r1,stack+0x20000@ha
+	addi	%r1,%r1,stack+0x20000@l
 
 	mfmsr	%r8
 	li	%r0,0

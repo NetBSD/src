@@ -1,0 +1,12 @@
+#	$NetBSD: UALEA.ioconf,v 1.2.16.2 2017/12/03 11:39:09 jdolecek Exp $
+#
+
+ioconf ualea
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root uhub*
+
+# Araneus Alea I/II TRNG
+ualea* at uhub? port ? configuration ? interface ?

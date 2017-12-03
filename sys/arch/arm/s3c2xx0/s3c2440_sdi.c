@@ -1,3 +1,4 @@
+/*	$NetBSD: s3c2440_sdi.c,v 1.1.10.2 2017/12/03 11:35:55 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.1.10.2 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,30 +137,30 @@ void sssdi_perform_pio_write(struct sssdi_softc *sc, struct sdmmc_command *cmd);
 /* SDMMC function structure */
 struct sdmmc_chip_functions sssdi_functions = {
 	/* host controller reset */
-	sssdi_host_reset,
+	.host_reset = sssdi_host_reset,
 
 	/* host capabilities */
-	sssdi_host_ocr,
-	sssdi_maxblklen,
+	.host_ocr = sssdi_host_ocr,
+	.host_maxblklen = sssdi_maxblklen,
 
 	/* card detection */
-	sssdi_card_detect,
+	.card_detect = sssdi_card_detect,
 
 	/* write protect */
-	sssdi_write_protect,
+	.write_protect = sssdi_write_protect,
 
 	/* bus power, clock frequency and width */
-	sssdi_bus_power,
-	sssdi_bus_clock,
-	sssdi_bus_width,
-	sssdi_bus_rod,
+	.bus_power = sssdi_bus_power,
+	.bus_clock = sssdi_bus_clock,
+	.bus_width = sssdi_bus_width,
+	.bus_rod = sssdi_bus_rod,
 
 	/* command execution */
-	sssdi_exec_command,
+	.exec_command = sssdi_exec_command,
 
 	/* card interrupt */
-	sssdi_card_enable_intr,
-	sssdi_card_intr_ack
+	.card_enable_intr = sssdi_card_enable_intr,
+	.card_intr_ack = sssdi_card_intr_ack,
 };
 
 int
@@ -384,7 +386,9 @@ sssdi_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	struct sssdi_softc *sc = (struct sssdi_softc*)sch;
 	uint32_t cmd_control;
 	int status = 0;
+#ifdef SSSDI_DEBUG
 	uint32_t data_status;
+#endif
 	int transfer = SSSDI_TRANSFER_NONE;
 	dmac_xfer_t xfer;
 
@@ -566,8 +570,8 @@ sssdi_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	DPRINTF(("Remaining Block Number          : %d\n",
 		 SDIDATCNT_BLK_NUM_CNT(status)));
 
-	data_status = bus_space_read_4(sc->iot, sc->ioh, SDI_DAT_STA);
 #ifdef SSSDI_DEBUG
+	data_status = bus_space_read_4(sc->iot, sc->ioh, SDI_DAT_STA);
 	printf("SDI Data Status Register Before xfer: 0x%X\n", data_status);
 #endif
 	if (transfer == SSSDI_TRANSFER_READ) {
@@ -646,7 +650,6 @@ sssdi_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 void sssdi_perform_pio_read(struct sssdi_softc *sc, struct sdmmc_command *cmd)
 {
-	uint32_t status;
 	uint32_t fifo_status;
 	int count;
 	uint32_t written;
@@ -657,7 +660,7 @@ void sssdi_perform_pio_read(struct sssdi_softc *sc, struct sdmmc_command *cmd)
 	while (written < cmd->c_datalen ) {
 		/* Wait until the FIFO is full or has the final data.
 		   In the latter case it might not get filled. */
-		status = sssdi_wait_intr(sc, SDI_FIFO_RX_FULL | SDI_FIFO_RX_LAST, 1000);
+		sssdi_wait_intr(sc, SDI_FIFO_RX_FULL | SDI_FIFO_RX_LAST, 1000);
 
 		fifo_status = bus_space_read_4(sc->iot, sc->ioh, SDI_DAT_FSTA);
 		count = SDIDATFSTA_FFCNT(fifo_status);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.4.14.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.4.14.2 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.4.14.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.4.14.2 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -116,12 +116,13 @@ uint64_t
 tmpfs_bytes_max(struct tmpfs_mount *mp)
 {
 	psize_t freepages = tmpfs_mem_info(false);
+	int freetarg = uvmexp.freetarg;	// XXX unlocked
 	uint64_t avail_mem;
 
-	if (freepages < uvmexp.freetarg) {
+	if (freepages < freetarg) {
 		freepages = 0;
 	} else {
-		freepages -= uvmexp.freetarg;
+		freepages -= freetarg;
 	}
 	avail_mem = round_page(mp->tm_bytes_used) + (freepages << PAGE_SHIFT);
 	return MIN(mp->tm_mem_limit, avail_mem);
@@ -187,6 +188,7 @@ tmpfs_node_get(struct tmpfs_mount *mp)
 		return NULL;
 	}
 	if (!tmpfs_mem_incr(mp, sizeof(struct tmpfs_node))) {
+		atomic_dec_uint(&mp->tm_nodes_cnt);
 		return NULL;
 	}
 	return pool_get(&tmpfs_node_pool, PR_WAITOK);

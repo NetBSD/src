@@ -44,6 +44,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	WAPBL		# File system journaling support
@@ -66,27 +67,12 @@ options 	INET6		# IPV6
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
-options		NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_20	# NetBSD 2.0 compatibility.
-#options 	COMPAT_16	# NetBSD 1.6 compatibility.
-#options 	COMPAT_15	# NetBSD 1.5 compatibility.
-#options 	COMPAT_14	# NetBSD 1.4 compatibility.
-#options 	COMPAT_13	# NetBSD 1.3 compatibility.
-#options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-#options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd50.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Shared memory options
 
@@ -104,7 +90,6 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
@@ -119,11 +104,11 @@ options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
-options		DDB_ONPANIC=1
+options 	DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-##options 	SYMTAB_SPACE=280000
+##makeoptions	COPY_SYMTAB=1
 ##options	ATADEBUG
 
 # Valid options for BOOT_ARGS:
@@ -134,7 +119,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
-options		BOOT_ARGS="\"\""
+options 	BOOT_ARGS="\"\""
 
 config		netbsd		root on ? type ?
 
@@ -145,10 +130,10 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=64
+options 	MEMSIZE=64
 
 # Specify the (DMA) Bus Address base in megabytes
-options		GEMINI_BUSBASE=0
+options 	GEMINI_BUSBASE=0
 
 # On-board IO
 obio0		at mainbus?
@@ -217,6 +202,8 @@ geminigpio2	at obio0 addr 0x4f000000 intrbase 96  intr 24
 ##usb* at ehci?
 ##uhub* at usb?
 ##uhub* at uhub? port ?
+
+# USB Ethernet adapters
 ##axe* at uhub?
 
 # PCI

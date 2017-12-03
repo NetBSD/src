@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.9 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.9.44.1 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,29 +31,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.9 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.9.44.1 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/buf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <fs/ntfs/ntfs.h>
-#include <fs/ntfs/ntfsmount.h>
 #include <fs/ntfs/ntfs_inode.h>
-#include <fs/ntfs/ntfs_vfsops.h>
 #include <fs/ntfs/ntfs_subr.h>
-#include <fs/ntfs/ntfs_compr.h>
-#include <fs/ntfs/ntfs_ihash.h>
 
 /* UTF-8 encoding stuff */
 #include <fs/unicode.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.10.12.1 2014/08/20 00:03:18 tls Exp $	*/
+/*	$NetBSD: sii.c,v 1.10.12.2 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.10.12.1 2014/08/20 00:03:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.10.12.2 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include "sii.h"
 /*
@@ -352,7 +352,7 @@ sii_Reset(struct siisoftc* sc, int reset)
 /*
  * Start a SCSI command by sending the cmd data
  * to a SCSI controller via the SII.
- * Call the device done proceedure if it can't be started.
+ * Call the device done procedure if it can't be started.
  * NOTE: we should be called with interrupts disabled.
  */
 static void
@@ -1125,7 +1125,7 @@ again:
 				if (msg == 0)
 					msg = 256;
 				/*
-				 * We read and acknowlege all the bytes
+				 * We read and acknowledge all the bytes
 				 * except the last so we can assert ATN
 				 * if needed before acknowledging the last.
 				 */
@@ -1759,11 +1759,8 @@ sii_CmdDone(struct siisoftc *sc, int target, int error)
 {
 	int i;
 
-#ifdef DIAGNOSTIC
-	ScsiCmd *scsicmd = sc->sc_cmd[target];
-	if (target < 0 || !scsicmd)
-		panic("sii_CmdDone");
-#endif
+	ScsiCmd *scsicmd __unused = sc->sc_cmd[target];
+	KASSERTMSG(target >= 0 && scsicmd, "sii_CmdDone");
 	sc->sc_cmd[target] = (ScsiCmd *)0;
 #ifdef DEBUG
 	if (sii_debug > 1) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.32.14.1 2014/08/20 00:03:01 tls Exp $
+#	$NetBSD: Makefile.buildboot,v 1.32.14.2 2017/12/03 11:36:13 jdolecek Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -15,15 +15,12 @@ NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 
-CLEANFILES+=	${PROGAOUT} vers.c vers.o
+CLEANFILES+=	${PROGAOUT}
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
 CPPFLAGS+=	-Wno-main
 CPPFLAGS+=	-D__daddr_t=int32_t
 CFLAGS=		-Os -msoft-float -ffreestanding
-
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
@@ -32,21 +29,19 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh \
-	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
-
 ${PROG}: ${PROGAOUT}
 	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin
 	${TOOL_HP300MKBOOT} -l 0x${RELOC} ${PROGAOUT}.bin ${PROG}
 	rm -f ${PROGAOUT}.bin
+
+.include "${S}/conf/newvers_stand.mk"
 
 CPPFLAGS+=		-DDCACONSOLE -DAPCICONSOLE -DITECONSOLE -DDCMCONSOLE
 CPPFLAGS+=		-DHIL_KEYBOARD -DUK_KEYBOARD
 CPPFLAGS+=		-DDOMAIN_KEYBOARD
 CPPFLAGS+=		-D_STANDALONE -DCOMPAT_NOLABEL -Dhp300
 CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
+CPPFLAGS+=		-DLIBSA_CREAD_NOCRC
 
 # if sun bootparams is desired
 #CPPFLAGS+=     -DSUN_BOOTPARAMS

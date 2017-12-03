@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.5.18.1 2013/06/23 06:20:12 tls Exp $	*/
+/*	$NetBSD: locore.h,v 1.5.18.2 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -63,24 +63,6 @@
 #define DLFLUSH(a,t)
 #define DLFLUSH2(t)
 #endif
-
-
-/*
- * Combine 2 regs -- used to convert 64-bit ILP32
- * values to LP64.
- */
-#define	COMBINE(r1, r2, d)	\
-	clruw	r2;		\
-	sllx	r1, 32, d;	\
-	or	d, r2, d
-
-/*
- * Split 64-bit value in 1 reg into high and low halves.
- * Used for ILP32 return values.
- */
-#define	SPLIT(r0, r1)		\
-	srl	r0, 0, r1;	\
-	srlx	r0, 32, r0
 
 
 /*
@@ -167,11 +149,11 @@
 #ifdef GPROF
 	.globl	_mcount
 #define	ENTRY(x) \
-	.globl _C_LABEL(x); .proc 1; .type _C_LABEL(x),@function; \
+	.globl _C_LABEL(x); .type _C_LABEL(x),@function; \
 _C_LABEL(x): ; \
 	.data; \
 	.align 8; \
-0:	.uaword 0; .uaword 0; \
+0:	.word 0; .word 0; \
 	.text;	\
 	save	%sp, -CC64FSZ, %sp; \
 	sethi	%hi(0b), %o0; \
@@ -179,8 +161,8 @@ _C_LABEL(x): ; \
 	or	%o0, %lo(0b), %o0; \
 	restore
 #else
-#define	ENTRY(x)	.globl _C_LABEL(x); .proc 1; \
-	.type _C_LABEL(x),@function; _C_LABEL(x):
+#define	ENTRY(x)	.globl _C_LABEL(x); .type _C_LABEL(x),@function; \
+	_C_LABEL(x):
 #endif
 #define	ALTENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
 

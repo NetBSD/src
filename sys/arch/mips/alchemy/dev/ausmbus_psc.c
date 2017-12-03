@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.11 2012/01/03 07:36:02 kiyohara Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.11.6.1 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.11 2012/01/03 07:36:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.11.6.1 2017/12/03 11:36:26 jdolecek Exp $");
 
 #include "locators.h"
 
@@ -137,6 +137,7 @@ ausmbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_exec = ausmbus_exec;
 	sc->sc_smbus_timeout = 10;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }

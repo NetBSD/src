@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.149.2.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.149.2.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,13 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.149.2.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.149.2.3 2017/12/03 11:38:45 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
 #include "opt_dump.h"
 #include "opt_rnd_printf.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/stdint.h>
@@ -65,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.149.2.2 2014/08/20 00:04:29 tls Exp $
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/sha2.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/cons.h>
 
@@ -161,8 +163,8 @@ static void kprintf_rnd_get(size_t bytes, void *priv)
 			/* This is optional but seems useful. */
 			SHA512_Update(&kprnd_sha, kprnd_accum,
 				      sizeof(kprnd_accum));
+			mutex_exit(&kprintf_mtx);
 		}
-		mutex_exit(&kprintf_mtx);
 	}
 }
 
@@ -263,7 +265,7 @@ vpanic(const char *fmt, va_list ap)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *oci;
 	int bootopt;
-	static char scratchstr[256]; /* stores panic message */
+	static char scratchstr[384]; /* stores panic message */
 
 	spldebug_stop();
 
@@ -674,7 +676,7 @@ db_printf(const char *fmt, ...)
 		va_start(ap, fmt);
 		kprintf(fmt, TOLOG, NULL, NULL, ap);
 		va_end(ap);
-	};
+	}
 }
 
 void
@@ -1200,7 +1202,6 @@ kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 	const char *xdigs;	/* digits for [xX] conversion */
 	char bf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp;		/* tail pointer for snprintf */
-	struct timespec ts;
 
 	if (oflags == TOBUFONLY && (vp != NULL))
 		tailp = *(char **)vp;
@@ -1549,9 +1550,12 @@ done:
 		*(char **)vp = sbuf;
 	(*v_flush)();
 
-	(void)nanotime(&ts);
 #ifdef RND_PRINTF
-	SHA512_Update(&kprnd_sha, (char *)&ts, sizeof(ts));
+	if (!cold) {
+		struct timespec ts;
+		(void)nanotime(&ts);
+		SHA512_Update(&kprnd_sha, (char *)&ts, sizeof(ts));
+	}
 #endif
 	return ret;
 }

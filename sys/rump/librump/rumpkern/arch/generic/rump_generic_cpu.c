@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_generic_cpu.c,v 1.1.10.2 2014/08/20 00:04:41 tls Exp $	*/
+/*	$NetBSD: rump_generic_cpu.c,v 1.1.10.3 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,11 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_generic_cpu.c,v 1.1.10.2 2014/08/20 00:04:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_generic_cpu.c,v 1.1.10.3 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 struct cpu_info *rumpcpu_info_list;
 
@@ -50,4 +50,11 @@ rump_cpu_attach(struct cpu_info *ci)
 
 	kcpuset_set(kcpuset_attached, cpu_index(ci));
 	kcpuset_set(kcpuset_running, cpu_index(ci));
+}
+
+struct clockframe *
+rump_cpu_makeclockframe(void)
+{
+
+	return NULL;
 }

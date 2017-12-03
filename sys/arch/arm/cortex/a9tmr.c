@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.1.2.4 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.1.2.5 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1.2.4 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1.2.5 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1.2.4 2014/08/20 00:02:45 tls Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/xcall.h>
 
 #include <prop/proplib.h>
 
@@ -95,7 +96,8 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0)
 		return 0;
 
-	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
+	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid) &&
+	    !CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
 		return 0;
 
 	if (strcmp(mpcaa->mpcaa_name, cf->cf_name) != 0)
@@ -114,10 +116,11 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 static void
 a9tmr_attach(device_t parent, device_t self, void *aux)
 {
-        struct a9tmr_softc *sc = &a9tmr_sc;
+	struct a9tmr_softc *sc = &a9tmr_sc;
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("XXX SHz")];
+	const char *cpu_type;
 
 	/*
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
@@ -128,7 +131,12 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
 	aprint_naive("\n");
-	aprint_normal(": A9 Global 64-bit Timer (%s)\n", freqbuf);
+	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid)) {
+		cpu_type = "A5";
+	} else {
+		cpu_type = "A9";
+	}
+	aprint_normal(": %s Global 64-bit Timer (%s)\n", cpu_type, freqbuf);
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
@@ -139,7 +147,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "missing interrupts");
 
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_GLOBAL_BASE, TMR_GLOBAL_BASE, &sc->sc_global_memh);
+	    TMR_GLOBAL_BASE, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
 	    TMR_PRIVATE_BASE, TMR_PRIVATE_SIZE, &sc->sc_private_memh);
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
@@ -183,7 +191,8 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 	 */
 	uint32_t ctl = a9tmr_global_read(sc, TMR_GBL_CTL);
 	if (ctl & TMR_GBL_CTL_CMP_ENABLE) {
-		a9tmr_global_write(sc, TMR_GBL_CTL, ctl & ~TMR_GBL_CTL_CMP_ENABLE);
+		a9tmr_global_write(sc, TMR_GBL_CTL,
+		    ctl & ~TMR_GBL_CTL_CMP_ENABLE);
 	}
 
 	/*
@@ -197,7 +206,8 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 	 * Re-enable the comparator and now enable interrupts.
 	 */
 	a9tmr_global_write(sc, TMR_GBL_INT, 1);	/* clear interrupt pending */
-	ctl |= TMR_GBL_CTL_CMP_ENABLE | TMR_GBL_CTL_INT_ENABLE | TMR_GBL_CTL_AUTO_INC | TMR_CTL_ENABLE;
+	ctl |= TMR_GBL_CTL_CMP_ENABLE | TMR_GBL_CTL_INT_ENABLE |
+	    TMR_GBL_CTL_AUTO_INC | TMR_CTL_ENABLE;
 	a9tmr_global_write(sc, TMR_GBL_CTL, ctl);
 #if 0
 	printf("%s: %s: ctl %#x autoinc %u cmp %#x%08x now %#"PRIx64"\n",
@@ -234,7 +244,7 @@ void
 cpu_initclocks(void)
 {
 	struct a9tmr_softc * const sc = &a9tmr_sc;
-	
+
 	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_freq != 0);
 
@@ -248,6 +258,33 @@ cpu_initclocks(void)
 	tc_init(&a9tmr_timecounter);
 }
 
+static void
+a9tmr_update_freq_cb(void *arg1, void *arg2)
+{
+	a9tmr_init_cpu_clock(curcpu());
+}
+
+void
+a9tmr_update_freq(uint32_t freq)
+{
+	struct a9tmr_softc * const sc = &a9tmr_sc;
+	uint64_t xc;
+
+	KASSERT(sc->sc_dev != NULL);
+	KASSERT(freq != 0);
+
+	tc_detach(&a9tmr_timecounter);
+
+	sc->sc_freq = freq;
+	sc->sc_autoinc = sc->sc_freq / hz;
+
+	xc = xc_broadcast(0, a9tmr_update_freq_cb, NULL, NULL);
+	xc_wait(xc);
+
+	a9tmr_timecounter.tc_frequency = sc->sc_freq;
+	tc_init(&a9tmr_timecounter);
+}
+
 void
 a9tmr_delay(unsigned int n)
 {
@@ -255,7 +292,8 @@ a9tmr_delay(unsigned int n)
 
 	KASSERT(sc != NULL);
 
-	uint32_t freq = sc->sc_freq ? sc->sc_freq : curcpu()->ci_data.cpu_cc_freq / 2;
+	uint32_t freq = sc->sc_freq ? sc->sc_freq :
+	    curcpu()->ci_data.cpu_cc_freq / 2;
 	KASSERT(freq != 0);
 
 	/*
@@ -284,17 +322,17 @@ clockhandler(void *arg)
 	struct clockframe * const cf = arg;
 	struct a9tmr_softc * const sc = &a9tmr_sc;
 	struct cpu_info * const ci = curcpu();
-	
+
 	const uint64_t now = a9tmr_gettime(sc);
 	uint64_t delta = now - ci->ci_lastintr;
 
-	a9tmr_global_write(sc, TMR_GBL_INT, 1);	// Ack the interrupt
+	a9tmr_global_write(sc, TMR_GBL_INT, 1);	/* Ack the interrupt */
 
 #if 0
 	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n", 
 	     __func__, cf, ci->ci_data.cpu_name, now, delta);
 #endif
-	KASSERTMSG(delta > sc->sc_autoinc / 100,
+	KASSERTMSG(delta > sc->sc_autoinc / 64,
 	    "%s: interrupting too quickly (delta=%"PRIu64")",
 	    ci->ci_data.cpu_name, delta);
 
@@ -302,20 +340,22 @@ clockhandler(void *arg)
 
 	hardclock(cf);
 
+	if (delta > sc->sc_autoinc) {
+		u_int ticks = hz;
+		for (delta -= sc->sc_autoinc;
+		     delta >= sc->sc_autoinc && ticks > 0;
+		     delta -= sc->sc_autoinc, ticks--) {
 #if 0
-	/*
-	 * Try to make up up to a seconds amount of missed clock interrupts
-	 */
-	u_int ticks = hz;
-	for (delta -= sc->sc_autoinc;
-	     ticks > 0 && delta >= sc->sc_autoinc;
-	     delta -= sc->sc_autoinc, ticks--) {
-		hardclock(cf);
-	}
+			/*
+			 * Try to make up up to a seconds amount of
+			 * missed clock interrupts
+			 */
+			hardclock(cf);
 #else
-	if (delta > sc->sc_autoinc)
-		sc->sc_ev_missing_ticks.ev_count += delta / sc->sc_autoinc;
+			sc->sc_ev_missing_ticks.ev_count++;
 #endif
+		}
+	}
 
 	return 1;
 }

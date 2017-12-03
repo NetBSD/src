@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.36.2.1 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.36.2.2 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.36.2.1 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.36.2.2 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,11 +56,11 @@ struct wdc_amiga_softc {
 	struct wdc_softc sc_wdcdev;
 	struct	ata_channel *sc_chanlist[1];
 	struct  ata_channel sc_channel;
-	struct	ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
 	struct isr sc_isr;
 	struct bus_space_tag cmd_iot;
 	struct bus_space_tag ctl_iot;
+	bool gayle_intr;
 };
 
 int	wdc_amiga_probe(device_t, cfdata_t, void *);
@@ -95,8 +95,10 @@ wdc_amiga_attach(device_t parent, device_t self, void *aux)
 
 	if (is_a4000()) {
 		sc->cmd_iot.base = (bus_addr_t) ztwomap(GAYLE_IDE_BASE_A4000 + 2);
+		sc->gayle_intr = false;
 	} else {
 		sc->cmd_iot.base = (bus_addr_t) ztwomap(GAYLE_IDE_BASE + 2);
+		sc->gayle_intr = true;
 	}
 
 	sc->cmd_iot.absm = sc->ctl_iot.absm = &amiga_bus_stride_4swap;
@@ -133,16 +135,15 @@ wdc_amiga_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 
-	wdc_init_shadow_regs(&sc->sc_channel);
+	wdc_init_shadow_regs(wdr);
 
 	sc->sc_isr.isr_intr = wdc_amiga_intr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
 	add_isr (&sc->sc_isr);
 
-	if (!is_a4000())
+	if (sc->gayle_intr)
 		gayle_intr_enable_set(GAYLE_INT_IDE);
 
 	wdcattach(&sc->sc_channel);
@@ -160,7 +161,7 @@ wdc_amiga_intr(void *arg)
 	intreq = gayle_intr_status();
 
 	if (intreq & GAYLE_INT_IDE) {
-		if (!is_a4000())
+		if (sc->gayle_intr)
 			gayle_intr_ack(0x7C | (intreq & GAYLE_INT_IDEACK));
 		ret = wdcintr(&sc->sc_channel);
 	}

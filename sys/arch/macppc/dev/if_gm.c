@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.42.2.1 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.42.2.2 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.42.2.1 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.42.2.2 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.42.2.1 2014/08/20 00:03:11 tls Exp $");
 #include <sys/systm.h>
 #include <sys/callout.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -247,6 +247,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, laddr);
 	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET,
 			  RND_FLAG_DEFAULT); 
@@ -343,7 +344,7 @@ gmac_tint(struct gmac_softc *sc)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	gmac_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 void
@@ -377,13 +378,7 @@ gmac_rint(struct gmac_softc *sc)
 			goto next;
 		}
 
-		/*
-		 * Check if there's a BPF listener on this interface.
-		 * If so, hand off the raw packet to BPF.
-		 */
-		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
-		ifp->if_ipackets++;
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 next:
 		dp->cmd_hi = 0;
@@ -412,7 +407,7 @@ gmac_get(struct gmac_softc *sc, void *pkt, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;

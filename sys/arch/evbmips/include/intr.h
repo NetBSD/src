@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2011/07/09 16:03:01 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.12.1 2017/12/03 11:36:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,9 +46,11 @@ struct evbmips_intrhand {
 	int ih_ipl;
 };
 
+struct clockframe;
+
 void	intr_init(void);
 void	evbmips_intr_init(void);
-void	evbmips_iointr(int, vaddr_t, uint32_t);
+void	evbmips_iointr(int, uint32_t, struct clockframe *);
 void	*evbmips_intr_establish(int, int (*)(void *), void *);
 void	evbmips_intr_disestablish(void *);
 

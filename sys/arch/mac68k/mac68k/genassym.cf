@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.36.18.1 2014/08/20 00:03:11 tls Exp $
+#	$NetBSD: genassym.cf,v 1.36.18.2 2017/12/03 11:36:24 jdolecek Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -80,8 +80,6 @@ define	P1PAGES 		P1PAGES
 define	PAGE_SIZE		PAGE_SIZE
 define	NPTEPG			NPTEPG
 define	PGSHIFT 		PGSHIFT
-define	SYSPTSIZE		SYSPTSIZE
-define	USRPTSIZE		USRPTSIZE
 define	USRIOSIZE		USRIOSIZE
 define	USRSTACK		USRSTACK
 

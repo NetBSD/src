@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.160.2.4 2014/08/20 00:02:43 tls Exp $
+#	$NetBSD: files.amiga,v 1.160.2.5 2017/12/03 11:35:48 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -19,6 +19,8 @@ defflag	opt_amigaccgrf.h	USE_C_BFOPS
 defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defflag	opt_amigacons.h		SERCONSOLE
+
+defflag opt_mntva.h		MNTVA_CONSOLE
 
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_2
@@ -165,7 +167,7 @@ file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
 file	arch/amiga/dev/ite_cc.c		grfcc & ite
 
 # wscons interface to custom chips
-device	amidisplaycc: wsemuldisplaydev
+device	amidisplaycc: wsemuldisplaydev, vcons
 attach	amidisplaycc at mainbus
 file	arch/amiga/dev/amidisplaycc.c	amidisplaycc needs-flag
 
@@ -217,6 +219,11 @@ device	grfcv3d: grfbus
 attach	grfcv3d at zbus
 file	arch/amiga/dev/grf_cv3d.c	grfcv3d needs-flag
 file	arch/amiga/dev/ite_cv3d.c	grfcv3d & ite
+
+# MNT VA2000
+device	mntva: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
+attach	mntva at zbus
+file	arch/amiga/dev/mntva.c		mntva needs-flag
 
 # device defined in sys/conf/files
 # A2065, Ameristar, Ariadne ethernet cards

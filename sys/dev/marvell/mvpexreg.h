@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpexreg.h,v 1.1 2010/07/13 11:16:02 kiyohara Exp $	*/
+/*	$NetBSD: mvpexreg.h,v 1.1.24.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -72,8 +72,8 @@
 #define MVPEX_I_PEXLINKFAIL		(1 << 23)	/* Link Failure */
 #define MVPEX_I_PIN(p)		(1 << (((p) - 1) + 24))
 /* PCI Express Address Window Control Registers */
-#define MVPEX_NWINDOW	6
-#define MVPEX_W_OFFSET(w)	((w < 4) ? ((w) << 4) : ((w - 4) << 5) + 0x60)
+#define MVPEX_NWINDOW	6	/* Window 4 and 5 has Remap (High) Register */
+#define MVPEX_W_OFFSET(w)	((w < 4) ? ((w) << 4) : ((w - 4) << 5) + 0x40)
 #define MVPEX_WC(x)		(0x1820 + MVPEX_W_OFFSET(x))	/* Win Ctrl */
 #define MVPEX_WC_WINEN		(1 << 0)
 #define MVPEX_WC_BARMAP_BAR1		(0 << 1)

@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.35 2011/09/09 14:29:47 jakllsch Exp $ */
+/* $NetBSD: pms.c,v 1.35.12.1 2017/12/03 11:37:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.35 2011/09/09 14:29:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.35.12.1 2017/12/03 11:37:30 jdolecek Exp $");
 
 #include "opt_pms.h"
 
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.35 2011/09/09 14:29:47 jakllsch Exp $");
 #endif
 #ifdef PMS_ELANTECH_TOUCHPAD
 #include <dev/pckbport/elantechvar.h>
+#endif
+#ifdef PMS_ALPS_TOUCHPAD
+#include <dev/pckbport/alpsvar.h>
 #endif
 
 #include <dev/pckbport/pmsreg.h>
@@ -207,6 +210,11 @@ pmsattach(device_t parent, device_t self, void *aux)
 		sc->protocol = PMS_ELANTECH;
 	} else
 #endif
+#ifdef PMS_ALPS_TOUCHPAD
+	if (pms_alps_probe_init(sc) == 0) {
+		sc->protocol = PMS_ALPS;
+	} else
+#endif
 		/* Install generic handler. */
 		pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 		    pmsinput, sc, device_xname(sc->sc_dev));
@@ -254,6 +262,10 @@ do_enable(struct pms_softc *sc)
 #ifdef PMS_ELANTECH_TOUCHPAD
 	if (sc->protocol == PMS_ELANTECH)
 		pms_elantech_enable(sc);
+#endif
+#ifdef PMS_ALPS_TOUCHPAD
+	if (sc->protocol == PMS_ALPS)
+		pms_alps_enable(sc);
 #endif
 
 	cmd[0] = PMS_DEV_ENABLE;
@@ -371,6 +383,14 @@ pms_resume(device_t dv, const pmf_qual_t *qual)
 		}
 	} else
 #endif
+#ifdef PMS_ALPS_TOUCHPAD
+	if (sc->protocol == PMS_ALPS) {
+		pms_alps_resume(sc);
+		if (sc->sc_enabled) {
+			do_enable(sc);
+		}
+	} else
+#endif
 	if (sc->sc_enabled) {
 		/* recheck protocol & init mouse */
 		sc->protocol = PMS_UNKNOWN;
@@ -445,7 +465,8 @@ pms_reset_thread(void *arg)
 		}
 
 		/* For the synaptics and elantech case, leave the protocol alone. */
-		if (sc->protocol != PMS_SYNAPTICS && sc->protocol != PMS_ELANTECH)
+		if (sc->protocol != PMS_SYNAPTICS && sc->protocol != PMS_ELANTECH
+			&& sc->protocol != PMS_ALPS)
 			sc->protocol = PMS_UNKNOWN;
 
 		pms_enable(sc);

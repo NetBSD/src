@@ -1,0 +1,27 @@
+#	$NetBSD: std.amlogic,v 1.3.4.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+include		"arch/evbarm/conf/files.amlogic"
+
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	__HAVE_CPU_COUNTER
+options 	 __HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	CORTEX_PMC
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
+
+makeoptions	KERNEL_BASE_PHYS="0x00100000"
+makeoptions	KERNEL_BASE_VIRT="0x80100000"
+makeoptions	BOARDTYPE="amlogic"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.amlogic"
+
+options 	ARM_INTR_IMPL="<arch/arm/amlogic/amlogic_intr.h>"
+options		ARM_GENERIC_TODR

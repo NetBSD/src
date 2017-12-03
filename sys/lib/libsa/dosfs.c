@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.18.6.1 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.18.6.2 2017/12/03 11:38:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -566,7 +566,8 @@ lookup(DOS_FS *fs, u_int clus, const char *name, const struct direntry **dep)
 						}
 					} else if (!(dir[ent].de.deAttributes &
 						     ATTR_VOLUME)) {
-						if ((ok = xdn == 1)) {
+						ok = xdn == 1;
+						if (ok) {
 							for (x = 0, i = 0;
 							     i < 11; i++)
 								x = ((((x & 1) << 7) | (x >> 1)) +

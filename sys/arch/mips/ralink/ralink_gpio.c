@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.3.12.2 2014/08/20 00:03:13 tls Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.3.12.3 2017/12/03 11:36:28 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.3.12.2 2014/08/20 00:03:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.3.12.3 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,10 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.3.12.2 2014/08/20 00:03:13 tls Exp
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
 
-#define SLICKROCK
-
 #include <mips/ralink/ralink_reg.h>
 #include <mips/ralink/ralink_var.h>
+
+#if !defined(MT7628)
+#define SLICKROCK
+#endif
 #include <mips/ralink/ralink_gpio.h>
 
 #if 0
@@ -88,6 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.3.12.2 2014/08/20 00:03:13 tls Exp
  *	1  -  2 I2C    (I2C_SCLK/I2C_SD pins)
  */
 
+#ifdef MT7628
+#define GPIO_PINS 96
+#define SPECIAL_COMMANDS	0
+#else
 #if defined(SLICKROCK)
 #define GPIO_PINS 96
 #else
@@ -100,19 +106,59 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.3.12.2 2014/08/20 00:03:13 tls Exp
 #define BOOT_COUNT		GPIO_PINS
 #define UPGRADE			(BOOT_COUNT + 1)
 #define SPECIAL_COMMANDS	(UPGRADE + 1 - GPIO_PINS)
+#endif
+
 
 /*
  * The pin_share array maps to the highest pin used for each of the 10
  * GPIO mode bit settings.
  */
+#if defined(MT7628)
+const static struct {
+	int pin_start;
+	int pin_end;
+	uint32_t sysreg;
+	uint32_t regmask;
+	uint32_t mode;
+} gpio_mux_map[] = {
+	{ 0,	3,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_I2S,		1 },
+	{ 4,	5,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_I2C,		1 },
+	{ 6,	6,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_SPI_CS1,	1 },
+	{ 7,	10,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_SPI,		1 },
+	{ 11,	11,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_GPIO,		1 },
+	{ 12,	13,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_UART0,	1 },
+	{ 14,	17,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_SPIS,		1 },
+	{ 18,	18,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_PWM0,		1 },
+	{ 19,	19,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_PWM1,		1 },
+	{ 20,	21,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_UART2,	1 },
+	{ 22,	29,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_SD,		1 },
+	{ 30,	30,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P4_LED_KN,	1 },
+	{ 31,	31,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P3_LED_KN,	1 },
+	{ 32,	32,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P2_LED_KN,	1 },
+	{ 33,	33,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P1_LED_KN,	1 },
+	{ 34,	34,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P0_LED_KN,	1 },
+	{ 35,	35,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_WLED_KN,	1 },
+	{ 36,	36,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_PERST,	1 },
+	{ 37,	37,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_REFCLK,	1 },
+	{ 38,	38,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_WDT,		1 },
+	{ 39,	39,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P4_LED_AN,	1 },
+	{ 40,	40,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P3_LED_AN,	1 },
+	{ 41,	41,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P2_LED_AN,	1 },
+	{ 42,	42,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P1_LED_AN,	1 },
+	{ 43,	43,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_P0_LED_AN,	1 },
+	{ 44,	44,	RA_SYSCTL_GPIO2MODE,	GPIO2MODE_WLED_AN,	1 },
+	{ 45,	45,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_UART1,	1 },
+	{ 46,	46,	RA_SYSCTL_GPIO1MODE,	GPIO1MODE_UART1,	1 },
+};
+#else
 #if defined(SLICKROCK)
 #define SR_GPIO_MODE 0xc1c1f
 #else
-#define GPIO_MODE_SETTINGS 10
-const static u_int8_t pin_share[GPIO_MODE_SETTINGS] = {
+const static u_int8_t pin_share[] = {
 	2, 6, 9, 14, 14, 16, 21, 23, 39, 51
 };
 #endif
+#endif /* MT7628 */
 
 #define DEBOUNCE_TIME 150  /* Milliseconds */
 
@@ -264,13 +310,19 @@ typedef struct ra_gpio_softc {
 
 	struct callout sc_tick_callout;	/* For debouncing inputs */
 
- 	/* 
+	/*
 	 * These track gpio pins that have interrupted
 	 */
+#if defined(MT7628)
+	uint32_t sc_intr_status00_31;
+	uint32_t sc_intr_status32_63;
+	uint32_t sc_intr_status64_95;
+#else
 	uint32_t sc_intr_status00_23;
 	uint32_t sc_intr_status24_39;
 	uint32_t sc_intr_status40_51;
 	uint32_t sc_intr_status72_95;
+#endif
 
 } ra_gpio_softc_t;
 
@@ -321,6 +373,38 @@ typedef struct pin_tab {
  * instead of lots of if/then/else test & branching
  */
 static const pin_tab_t pin_tab[] = {
+#if defined(MT7628)
+    {
+	0, 31, 0, 0xffffffff,
+	RA_PIO_00_31_DATA,
+	RA_PIO_00_31_CLR_BIT,
+	RA_PIO_00_31_SET_BIT,
+	{ 0xffffffff,		RA_PIO_00_31_DIR		},
+	{ 0xffffffff,		RA_PIO_00_31_INT_RISE_EN	},
+	{ 0xffffffff,		RA_PIO_00_31_INT_FALL_EN	},
+	{ 0xffffffff,		RA_PIO_00_31_POLARITY		}
+    },
+    {
+	32, 63, 32, 0xffffffff,
+	RA_PIO_32_63_DATA,
+	RA_PIO_32_63_CLR_BIT,
+	RA_PIO_32_63_SET_BIT,
+	{ 0xffffffff,		RA_PIO_32_63_DIR		},
+	{ 0xffffffff,		RA_PIO_32_63_INT_RISE_EN	},
+	{ 0xffffffff,		RA_PIO_32_63_INT_FALL_EN	},
+	{ 0xffffffff,		RA_PIO_32_63_POLARITY		}
+    },
+    {
+	64, 95, 64, 0xffffffff,
+	RA_PIO_64_95_DATA,
+	RA_PIO_64_95_CLR_BIT,
+	RA_PIO_64_95_SET_BIT,
+	{ 0xffffffff,		RA_PIO_64_95_DIR		},
+	{ 0xffffffff,		RA_PIO_64_95_INT_RISE_EN	},
+	{ 0xffffffff,		RA_PIO_64_95_INT_FALL_EN	},
+	{ 0xffffffff,		RA_PIO_64_95_POLARITY		}
+    }
+#else
     {
 	0, 24, 0, GPIO_PIN_MASK,
 	RA_PIO_00_23_DATA,
@@ -363,6 +447,7 @@ static const pin_tab_t pin_tab[] = {
 	{ GPIO_POL_MASK_72_95,           RA_PIO_72_95_POLARITY,    },
     },
 #endif
+#endif
 };
 
 /*
@@ -370,6 +455,15 @@ static const pin_tab_t pin_tab[] = {
  * for a given pin.  -1 means there is no pin there.
  */
 static const int pin_tab_index[GPIO_PINS] = {
+#if defined(MT7628)
+/*		 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
+/*  0 */	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 16 */	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 32 */	 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 48 */	 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 64 */	 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* 80 */	 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
+#else /* !MT7628 */
 /*		 0   1   2   3   4   5   6   7   8   9	*/
 /*  0 */	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 10 */	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -385,6 +479,7 @@ static const int pin_tab_index[GPIO_PINS] = {
 /* 80 */	 3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
 /* 90 */	 3,  3,  3,  3,  3,  3
 #endif
+#endif /* !MT7628 */
 };
 
 CFATTACH_DECL_NEW(rgpio, sizeof(struct ra_gpio_softc), ra_gpio_match,
@@ -412,7 +507,7 @@ static inline uint32_t
 sy_read(ra_gpio_softc_t *sc, bus_size_t off)
 {
 	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off);
+	    __func__, off);
 	return bus_space_read_4(sc->sc_memt, sc->sc_sy_memh, off);
 }
 
@@ -420,7 +515,7 @@ static inline void
 sy_write(ra_gpio_softc_t *sc, bus_size_t off, uint32_t val)
 {
 	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off);
+	    __func__, off);
 	bus_space_write_4(sc->sc_memt, sc->sc_sy_memh, off, val);
 }
 
@@ -428,7 +523,7 @@ static inline uint32_t
 gp_read(ra_gpio_softc_t *sc, bus_size_t off)
 {
 	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off);
+	    __func__, off);
 	return bus_space_read_4(sc->sc_memt, sc->sc_gp_memh, off);
 }
 
@@ -436,7 +531,7 @@ static inline void
 gp_write(ra_gpio_softc_t *sc, bus_size_t off, uint32_t val)
 {
 	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off);
+	    __func__, off);
 	bus_space_write_4(sc->sc_memt, sc->sc_gp_memh, off, val);
 }
 
@@ -511,6 +606,27 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Reset some registers */
+#if defined(MT7628)
+	gp_write(sc, RA_PIO_00_31_INT_RISE_EN, 0xffffffff);
+	gp_write(sc, RA_PIO_00_31_INT_FALL_EN, 0xffffffff);
+	gp_write(sc, RA_PIO_00_31_INT_HIGH_EN, 0);
+	gp_write(sc, RA_PIO_00_31_INT_LOW_EN, 0);
+
+	gp_write(sc, RA_PIO_32_63_INT_RISE_EN, 0xffffffff);
+	gp_write(sc, RA_PIO_32_63_INT_FALL_EN, 0xffffffff);
+	gp_write(sc, RA_PIO_32_63_INT_HIGH_EN, 0);
+	gp_write(sc, RA_PIO_32_63_INT_LOW_EN, 0);
+
+	gp_write(sc, RA_PIO_64_95_INT_RISE_EN, 0xffffffff);
+	gp_write(sc, RA_PIO_64_95_INT_FALL_EN, 0xffffffff);
+	gp_write(sc, RA_PIO_64_95_INT_HIGH_EN, 0);
+	gp_write(sc, RA_PIO_64_95_INT_LOW_EN, 0);
+
+	gp_write(sc, RA_PIO_00_31_POLARITY, 0);
+	gp_write(sc, RA_PIO_32_63_POLARITY, 0);
+	gp_write(sc, RA_PIO_64_95_POLARITY, 0);
+
+#else
 	gp_write(sc, RA_PIO_00_23_INT, 0xffffff);
 	gp_write(sc, RA_PIO_00_23_EDGE_INT, 0xffffff);
 	gp_write(sc, RA_PIO_24_39_INT, 0xffff);
@@ -521,6 +637,7 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 #if defined(SLICKROCK)
 	gp_write(sc, RA_PIO_72_95_INT, 0xffffff);
 	gp_write(sc, RA_PIO_72_95_EDGE_INT, 0xffffff);
+#endif
 #endif
 
 	/* Set up for interrupt handling, low priority interrupt queue */
@@ -562,7 +679,7 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 	gpio_reset_registers(sc);
 
 	/* Initialize the GPIO pins */
-	for (int pin=0; pin < GPIO_PINS; pin++)
+	for (int pin = 0; pin < GPIO_PINS; pin++)
 		ra_gpio_pin_init(sc, pin);
 
 #if 0
@@ -621,10 +738,14 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 	gp_write(sc, RA_PIO_72_95_EDGE_INT, 0xffffff);
 #endif
 
+#ifdef BOOT_COUNT
 	sc->sc_pins[BOOT_COUNT].pin_flags = GPIO_PIN_OUTPUT;
 	sc->sc_pins[BOOT_COUNT].pin_mapped = 0;
+#endif
+#ifdef UPGRADE
 	sc->sc_pins[UPGRADE].pin_flags = GPIO_PIN_OUTPUT;
 	sc->sc_pins[UPGRADE].pin_mapped = 0;
+#endif
 	gba.gba_gc = &sc->sc_gc;
 	gba.gba_pins = sc->sc_pins;
 
@@ -692,6 +813,23 @@ ra_gpio_pin_init(ra_gpio_softc_t *sc, int pin)
 	    GPIO_PIN_INVIN | GPIO_PIN_INVOUT;
 	sc->sc_pins[pin].pin_state = GPIO_PIN_INPUT;
 
+#if defined(MT7628)
+	/*
+	 * Set the SYSCTL_GPIO{1,2}MODE register
+	 * for the PIO block of any mapped GPIO
+	 */
+	for (int i = 0; i < __arraycount(gpio_mux_map); i++) {
+		if ((pin >= gpio_mux_map[i].pin_start) &&
+		    (pin >= gpio_mux_map[i].pin_end)) {
+			r = sy_read(sc, gpio_mux_map[i].sysreg);
+			r &= ~gpio_mux_map[i].regmask;
+			r |= __SHIFTIN(gpio_mux_map[i].mode,
+			    gpio_mux_map[i].regmask);
+			sy_write(sc, gpio_mux_map[i].sysreg, r);
+			break;
+		}
+	}
+#else
 #if defined(SLICKROCK)
 	r = sy_read(sc, RA_SYSCTL_GPIOMODE);
 	r |= SR_GPIO_MODE;
@@ -704,9 +842,10 @@ ra_gpio_pin_init(ra_gpio_softc_t *sc, int pin)
 	 * GPIO0 doesn't have an associated MODE register.
 	 */
 	if (pin != 0) {
-		u_int gpio_mode = 0;
+		u_int gpio_mode;
 
-		for (gpio_mode; gpio_mode < GPIO_MODE_SETTINGS; gpio_mode++) {
+		for (gpio_mode = 0; gpio_mode < __arraycount(pin_share);
+		    gpio_mode++) {
 			if (pin <= pin_share[gpio_mode]) {
 				r = sy_read(sc, RA_SYSCTL_GPIOMODE);
 				if (10 == pin) {
@@ -724,7 +863,8 @@ ra_gpio_pin_init(ra_gpio_softc_t *sc, int pin)
 			}
 		}
 	}
-#endif
+#endif /* SLICKROCK */
+#endif /* !MT7628 */
 
 	/* set direction */
 	RA_GPIO_PIN_INIT_DIR(sc, r, pin, ptp);
@@ -778,11 +918,13 @@ ra_gpio_pin_read(void *arg, int pin)
 		 * Special hack: a pseudo-pin used for signaling
 		 */
 		rv = 0;
-		switch(pin) {
+		switch (pin) {
+#ifdef BOOT_COUNT
 		case BOOT_COUNT:
 			if (1 == ra_check_memo_reg(NO_SECURITY))
 				rv = 1;
 			break;
+#endif
 		default:
 #ifdef DIAGNOSTIC
 			aprint_normal_dev(sc->sc_dev, "%s: bad pin=%d\n",
@@ -817,7 +959,9 @@ ra_gpio_pin_write(void *arg, int pin, int value)
 {
 	RALINK_DEBUG_FUNC_ENTRY();
 	ra_gpio_softc_t * const sc = arg;
+#if defined(BOOT_COUNT) || defined(UPGRADE)
 	uint32_t r;
+#endif
 
 	KASSERT(sc != NULL);
 	RALINK_DEBUG(RALINK_DEBUG_INFO, "pin %d, val %d\n", pin, value);
@@ -827,17 +971,21 @@ ra_gpio_pin_write(void *arg, int pin, int value)
 		 * Special hack: a pseudo-pin used for signaling
 		 */
 		switch(pin) {
+#ifdef BOOT_COUNT
 		case BOOT_COUNT:
 			/* Reset boot count */
 			r = sy_read(sc, RA_SYSCTL_MEMO0);
 			if (r == MAGIC)
 				sy_write(sc, RA_SYSCTL_MEMO1, 0);
 			break;
+#endif
+#ifdef UPGRADE
 		case UPGRADE:
 			/* Set upgrade flag */
 			sy_write(sc, RA_SYSCTL_MEMO0, UPGRADE_MAGIC);
 			sy_write(sc, RA_SYSCTL_MEMO1, UPGRADE_MAGIC);
 			break;
+#endif
 		default:
 #ifdef DIAGNOSTIC
 			aprint_normal_dev(sc->sc_dev, "%s: bad pin=%d\n",
@@ -846,7 +994,7 @@ ra_gpio_pin_write(void *arg, int pin, int value)
 		}
 		return;
 	}
-	
+
 	/*
 	 * normal case: a regular GPIO pin
 	 * if pin number is in a gap in the range,
@@ -901,26 +1049,47 @@ ra_gpio_intr(void *arg)
 
 #if 0
 	/* Read the 3 interrupt registers */
+#if defined(MT7628)
+	if (sc->sc_intr_status00_31 || sc->sc_intr_status32_63 ||
+	    sc->sc_intr_status64_95) {
+		printf("\n0-31 %x, 32-63 %x, 64_95 %x\n",
+		    sc->sc_intr_status00_31,
+		    sc->sc_intr_status32_63,
+		    sc->sc_intr_status64_95);
+	}
+#else
 	if (sc->sc_intr_status00_23 || sc->sc_intr_status24_39 ||
 	    sc->sc_intr_status40_51) {
 		printf("\n0-23 %x, 24-39 %x, 40_51 %x\n",
-			sc->sc_intr_status00_23,
-			sc->sc_ntr_status24_39, 
-			sc->sc_ntr_status40_51);
+		    sc->sc_intr_status00_23,
+		    sc->sc_intr_status24_39,
+		    sc->sc_intr_status40_51);
 	}
 #endif
+#endif
 
+#if defined(MT7628)
+	sc->sc_intr_status00_31 |= gp_read(sc, RA_PIO_00_31_INT_STAT);
+	sc->sc_intr_status32_63 |= gp_read(sc, RA_PIO_32_63_INT_STAT);
+	sc->sc_intr_status64_95 |= gp_read(sc, RA_PIO_64_95_INT_STAT);
+#else
 	sc->sc_intr_status00_23 |= gp_read(sc, RA_PIO_00_23_INT);
 	sc->sc_intr_status24_39 |= gp_read(sc, RA_PIO_24_39_INT);
 	sc->sc_intr_status40_51 |= gp_read(sc, RA_PIO_40_51_INT);
 #if defined(SLICKROCK)
 	sc->sc_intr_status72_95 |= gp_read(sc, RA_PIO_72_95_INT);
 #endif
+#endif
 
 #if 0
 	/* Trivial error checking, some interrupt had to have fired */
+#if defined(MT7628)
+	KASSERT((sc->sc_intr_status00_31 | sc->sc_intr_status32_64 |
+	    sc->sc_intr_status64_95) != 0);
+#else
 	KASSERT((sc->sc_intr_status00_23 | sc->sc_intr_status24_39 |
-		sc->sc_intr_status40_51) != 0);
+	    sc->sc_intr_status40_51) != 0);
+#endif
 #endif
 
 	/* Debounce interrupt */
@@ -933,6 +1102,19 @@ ra_gpio_intr(void *arg)
 	 *  I don't know if resetting the EDGE register is
 	 *  necessary, but the Ralink Linux driver does it.
 	 */
+#if defined(MT7628)
+	gp_write(sc, RA_PIO_00_31_INT_STAT, sc->sc_intr_status00_31);
+	gp_write(sc, RA_PIO_00_31_INT_STAT_EDGE, sc->sc_intr_status00_31);
+	gp_write(sc, RA_PIO_32_63_INT_STAT, sc->sc_intr_status32_63);
+	gp_write(sc, RA_PIO_32_63_INT_STAT_EDGE, sc->sc_intr_status32_63);
+	gp_write(sc, RA_PIO_64_95_INT_STAT, sc->sc_intr_status64_95);
+	gp_write(sc, RA_PIO_64_95_INT_STAT_EDGE, sc->sc_intr_status64_95);
+
+	/* Reset until next time */
+	sc->sc_intr_status00_31 = 0;
+	sc->sc_intr_status32_63 = 0;
+	sc->sc_intr_status64_95 = 0;
+#else
 	gp_write(sc, RA_PIO_00_23_INT, sc->sc_intr_status00_23);
 	gp_write(sc, RA_PIO_00_23_EDGE_INT, sc->sc_intr_status00_23);
 	gp_write(sc, RA_PIO_24_39_INT, sc->sc_intr_status24_39);
@@ -949,6 +1131,7 @@ ra_gpio_intr(void *arg)
 	sc->sc_intr_status24_39 = 0;
 	sc->sc_intr_status40_51 = 0;
 	sc->sc_intr_status72_95 = 0;
+#endif /* MT7628 */
 
 	return 1;
 }
@@ -980,19 +1163,19 @@ ra_gpio_debounce_pin(ra_gpio_softc_t *sc, struct timeval *tv, u_int pin)
 		case SOFT_RST_IN_BUTTON:
 			KNOTE(&knotes, RESET_BUTTON_EVT);
 			break;
-			
+
 		case SS_BUTTON:
 			KNOTE(&knotes, SS_BUTTON_EVT);
 			break;
-			
+
 		case WPS_BUTTON:
 			KNOTE(&knotes, WPS_BUTTON_EVT);
 			break;
-			
+
 		case WIFI_ENABLE:
 			KNOTE(&knotes, WIFI_ENABLE_EVT);
 			break;
-			
+
 		/*
 		 * These events are in case of overcurrent
 		 * on USB/ExpressCard devices.
@@ -1047,7 +1230,7 @@ ra_gpio_debounce_pin(ra_gpio_softc_t *sc, struct timeval *tv, u_int pin)
 
 		default:
 			printf("\nUnknown debounce pin %d received.\n",
-				debounce_pin[pin]);
+			    debounce_pin[pin]);
 		}
 #endif/* SLICKROCK */
 #if defined(PEBBLES500) || defined(PEBBLES35)
@@ -1055,15 +1238,15 @@ ra_gpio_debounce_pin(ra_gpio_softc_t *sc, struct timeval *tv, u_int pin)
 		case SOFT_RST_IN_BUTTON:
 			KNOTE(&knotes, RESET_BUTTON_EVT);
 			break;
-			
+
 		case WPS_BUTTON:
 			KNOTE(&knotes, WPS_BUTTON_EVT);
 			break;
-			
+
 		case EXCARD_ATTACH:
 			KNOTE(&knotes, EXCARD_ATTACH_EVT);
 			break;
-			
+
 		/*
 		 * These events are in case of overcurrent
 		 * on USB/ExpressCard devices.
@@ -1085,7 +1268,7 @@ ra_gpio_debounce_pin(ra_gpio_softc_t *sc, struct timeval *tv, u_int pin)
 		case CURRENT_LIMIT_FLAG1_3_3v:
 		case CURRENT_LIMIT_FLAG1_1_5v:
 			ra_gpio_pin_write(sc, POWER_EN_EXCARD1_3_3v, 0);
-			ra_gpio_pin_write(sc, POWER_EN_EXCARD1_1_5v, 0);				
+			ra_gpio_pin_write(sc, POWER_EN_EXCARD1_1_5v, 0);
 			KNOTE(&knotes, CURRENT_LIMIT_EVT);
 			cpusb_overcurrent_occurred(debounce_pin[pin]);
 			printf("\nExpressCard current limit received!\n");
@@ -1167,9 +1350,21 @@ ra_gpio_debounce_setup(ra_gpio_softc_t *sc)
 	 *  interrupt sources across all three interrupt
 	 *  registers.
 	 */
-	for (int i=0; i < __arraycount(debounce_pin); i++) {
+	for (int i = 0; i < __arraycount(debounce_pin); i++) {
 		u_int32_t *intr_status;
 		int offset;
+#if defined(MT7628)
+		if (debounce_pin[i] < 32) {
+			intr_status = &sc->sc_intr_status00_31;
+			offset = 0;
+		} else if (debounce_pin[i] < 64) {
+			intr_status = &sc->sc_intr_status32_63;
+			offset = 32;
+		} else {
+			intr_status = &sc->sc_intr_status64_95;
+			offset = 64;
+		}
+#else /* !MT7628 */
 		if (debounce_pin[i] < 24) {
 			intr_status = &sc->sc_intr_status00_23;
 			offset = 0;
@@ -1183,18 +1378,19 @@ ra_gpio_debounce_setup(ra_gpio_softc_t *sc)
 			intr_status = &sc->sc_intr_status72_95;
 			offset = 72;
 		}
+#endif /* !MT7628 */
 		if (*intr_status & (1 << (debounce_pin[i] - offset))) {
 			pin = debounce_pin[i];
 
 #ifdef ENABLE_RALINK_DEBUG_INFO
 			if (ra_gpio_pin_read(sc, pin)) {
 				RALINK_DEBUG(RALINK_DEBUG_INFO,
-					"%s() button 0x%x, pin %d released\n",
-					__func__, *intr_status, pin);
+				    "%s() button 0x%x, pin %d released\n",
+				    __func__, *intr_status, pin);
 			} else {
 				RALINK_DEBUG(RALINK_DEBUG_INFO,
-					"%s() button 0x%x, pin %d pressed\n",
-					__func__, *intr_status, pin);
+				    "%s() button 0x%x, pin %d pressed\n",
+				    __func__, *intr_status, pin);
 			}
 #endif
 
@@ -1265,8 +1461,8 @@ enable_gpio_interrupt(ra_gpio_softc_t *sc, int pin)
 		return;
 
 	const pin_tab_t * const ptp = &pin_tab[index];
-        const uint32_t mask_bit = 1 << (pin - ptp->pin_mask_base);
-        const uint32_t reg_bit = 1 << (pin - ptp->pin_reg_base);
+	const uint32_t mask_bit = 1 << (pin - ptp->pin_mask_base);
+	const uint32_t reg_bit = 1 << (pin - ptp->pin_reg_base);
 	uint32_t r;
 
 	if (ptp->pin_rise.mask & mask_bit) {
@@ -1291,10 +1487,17 @@ enable_gpio_interrupt(ra_gpio_softc_t *sc, int pin)
 static void
 ra_gpio_softintr(void *arg)
 {
+#if defined(MT7628)
 	RALINK_DEBUG(RALINK_DEBUG_INFO,
-		"gpio softintr called with 0x%x, 0x%x, 0x%x, 0x%x\n",
-		sc->sc_intr_status00_23, sc->sc_intr_status24_39,
-		sc->sc_intr_status40_51, sc->sc_intr_status72_95);
+	    "gpio softintr called with 0x%x, 0x%x, 0x%x\n",
+	    sc->sc_intr_status00_31, sc->sc_intr_status32_63,
+	    sc->sc_intr_status64_95);
+#else
+	RALINK_DEBUG(RALINK_DEBUG_INFO,
+	    "gpio softintr called with 0x%x, 0x%x, 0x%x, 0x%x\n",
+	    sc->sc_intr_status00_23, sc->sc_intr_status24_39,
+	    sc->sc_intr_status40_51, sc->sc_intr_status72_95);
+#endif
 }
 
 /*
@@ -1310,7 +1513,7 @@ gpio_event_app_user_attach(struct knote *kn)
 		return 0;
 	}
 
-	kn->kn_flags |= EV_CLEAR;       /* automatically set */
+	kn->kn_flags |= EV_CLEAR;	/* automatically set */
 	SLIST_INSERT_HEAD(&knotes, kn, kn_selnext);
 
 	return 0;
@@ -1336,7 +1539,8 @@ gpio_event_app_user_detach(struct knote *kn)
 static int
 gpio_event_app_user_event(struct knote *kn, long hint)
 {
-	RALINK_DEBUG_0(RALINK_DEBUG_INFO, "%s() %p hint: %ld\n", __func__, kn, hint);
+	RALINK_DEBUG_0(RALINK_DEBUG_INFO, "%s() %p hint: %ld\n",
+	    __func__, kn, hint);
 
 	if (NULL == kn) {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR, "Null kn found\n");
@@ -1373,12 +1577,12 @@ ra_gpio_toggle_LED(void *arg)
 #if 0
 	/* Disable lit LED */
 	gp_write(sc, SET_SS_LED_REG,
-		(1 << (led_array1[led_index++] - SS_OFFSET)));
+	    (1 << (led_array1[led_index++] - SS_OFFSET)));
 #endif
 
 	if (led_index == (sizeof(led_array1))) {
 		led_index = 0;
-		for (int i=0; i < sizeof(led_array1); i++) {
+		for (int i = 0; i < sizeof(led_array1); i++) {
 			ra_gpio_pin_write(sc, led_array1[i], 1);
 		}
 	}
@@ -1398,7 +1602,7 @@ ra_gpio_toggle_LED(void *arg)
 		(led_timing_hack < 6)) {
 		led_timing_hack++;
 		callout_reset(&led_tick_callout, MS_TO_HZ(BOOT_LED_TIMING),
-			ra_gpio_toggle_LED, sc);
+		    ra_gpio_toggle_LED, sc);
 	}
 #endif
 }

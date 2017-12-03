@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.2 2014/08/20 00:02:51 tls Exp $
+# $NetBSD: GENERIC,v 1.6.2.3 2017/12/03 11:36:01 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/emips/conf/std.emips"
+include 	"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.6.2.2 $"
+#ident		"GENERIC-$Revision: 1.6.2.3 $"
 
 maxusers	64
 
@@ -40,7 +40,6 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DDB_ONPANIC=1		# enter debugger on panic
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
-options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
 #options 	SYSTRACE		# system call vetting via systrace(1)
 
@@ -91,8 +90,10 @@ file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
@@ -126,18 +127,8 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 # NetBSD backwards compatibility
-#options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
-#options 	COMPAT_11	# NetBSD 1.1, EXEC_ELF_NOTELESS
-options 	COMPAT_12	# NetBSD 1.2 reboot(), EXEC_ELF_NOTELESS
-options 	COMPAT_13	# NetBSD 1.3
-options 	COMPAT_14	# NetBSD 1.4
-options 	COMPAT_15	# NetBSD 1.5
-options 	COMPAT_16	# NetBSD 1.6
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+include 	"conf/compat_netbsd12.config"
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Workstation console options
 #options 	FONT_BOLD8x16
@@ -179,7 +170,6 @@ acns*   at	ebus0 addr ?    # AC97 audio
 epio*   at	ebus0 addr ?    # GPIO interface
 gpio*   at	epio?
 lcd*    at	ebus0 addr ?    # lcd display
-
 
 #########################################################################
 # Pseudo-devices							#

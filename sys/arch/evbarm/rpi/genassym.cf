@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.1 2012/07/26 06:21:57 skrll Exp $
+# $NetBSD: genassym.cf,v 1.1.4.1 2017/12/03 11:36:06 jdolecek Exp $
 
 #-
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,3 +34,7 @@ include <evbarm/rpi/rpi.h>
 define	RPI_KERNEL_IO_VBASE	RPI_KERNEL_IO_VBASE
 define	RPI_KERNEL_IO_PBASE	RPI_KERNEL_IO_PBASE
 define	RPI_KERNEL_IO_VSIZE	RPI_KERNEL_IO_VSIZE
+
+define	RPI_KERNEL_LOCAL_VBASE	RPI_KERNEL_LOCAL_VBASE
+define	RPI_KERNEL_LOCAL_PBASE	RPI_KERNEL_LOCAL_PBASE
+define	RPI_KERNEL_LOCAL_VSIZE	RPI_KERNEL_LOCAL_VSIZE

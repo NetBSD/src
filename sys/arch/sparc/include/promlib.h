@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.24 2010/01/21 11:40:01 martin Exp $ */
+/*	$NetBSD: promlib.h,v 1.24.22.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ void	prom_init(void);	/* To setup promops */
 /* Utility routines */
 int	prom_getprop(int, const char *, size_t, int *, void *);
 int	prom_getpropint(int, const char *, int);
+uint64_t prom_getpropuint64(int, const char *, uint64_t);
 char	*prom_getpropstring(int, const char *);
 char	*prom_getpropstringA(int, const char *, char *, size_t);
 void	prom_printf(const char *, ...);

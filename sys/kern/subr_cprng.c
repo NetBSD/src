@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.12.2.4 2014/08/20 00:04:29 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.12.2.5 2017/12/03 11:38:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.12.2.4 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.12.2.5 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,9 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.12.2.4 2014/08/20 00:04:29 tls Exp 
 #include <sys/select.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/rnd.h>
 #include <sys/rndsink.h>
-#if DEBUG
+#if DIAGNOSTIC
 #include <sys/rngtest.h>
 #endif
 
@@ -67,7 +66,7 @@ static void	cprng_strong_generate(struct cprng_strong *, void *, size_t);
 static void	cprng_strong_reseed(struct cprng_strong *);
 static void	cprng_strong_reseed_from(struct cprng_strong *, const void *,
 		    size_t, bool);
-#if DEBUG
+#if DIAGNOSTIC
 static void	cprng_strong_rngtest(struct cprng_strong *);
 #endif
 
@@ -151,6 +150,7 @@ cprng_strong_create(const char *name, int ipl, int flags)
 
 	/* Get some initial entropy.  Record whether it is full entropy.  */
 	uint8_t seed[NIST_BLOCK_KEYLEN_BYTES];
+	mutex_enter(&cprng->cs_lock);
 	cprng->cs_ready = rndsink_request(cprng->cs_rndsink, seed,
 	    sizeof(seed));
 	if (nist_ctr_drbg_instantiate(&cprng->cs_drbg, seed, sizeof(seed),
@@ -168,6 +168,7 @@ cprng_strong_create(const char *name, int ipl, int flags)
 	if (!cprng->cs_ready && !ISSET(flags, CPRNG_INIT_ANY))
 		printf("cprng %s: creating with partial entropy\n",
 		    cprng->cs_name);
+	mutex_exit(&cprng->cs_lock);
 
 	return cprng;
 }
@@ -252,31 +253,6 @@ out:	mutex_exit(&cprng->cs_lock);
 	return result;
 }
 
-static void	filt_cprng_detach(struct knote *);
-static int	filt_cprng_event(struct knote *, long);
-
-static const struct filterops cprng_filtops =
-	{ 1, NULL, filt_cprng_detach, filt_cprng_event };
-
-int
-cprng_strong_kqfilter(struct cprng_strong *cprng, struct knote *kn)
-{
-
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		kn->kn_fop = &cprng_filtops;
-		kn->kn_hook = cprng;
-		mutex_enter(&cprng->cs_lock);
-		SLIST_INSERT_HEAD(&cprng->cs_selq.sel_klist, kn, kn_selnext);
-		mutex_exit(&cprng->cs_lock);
-		return 0;
-
-	case EVFILT_WRITE:
-	default:
-		return EINVAL;
-	}
-}
-
 static void
 filt_cprng_detach(struct knote *kn)
 {
@@ -288,7 +264,7 @@ filt_cprng_detach(struct knote *kn)
 }
 
 static int
-filt_cprng_event(struct knote *kn, long hint)
+filt_cprng_read_event(struct knote *kn, long hint)
 {
 	struct cprng_strong *const cprng = kn->kn_hook;
 	int ret;
@@ -309,6 +285,62 @@ filt_cprng_event(struct knote *kn, long hint)
 		mutex_exit(&cprng->cs_lock);
 
 	return ret;
+}
+
+static int
+filt_cprng_write_event(struct knote *kn, long hint)
+{
+	struct cprng_strong *const cprng = kn->kn_hook;
+
+	if (hint == NOTE_SUBMIT)
+		KASSERT(mutex_owned(&cprng->cs_lock));
+	else
+		mutex_enter(&cprng->cs_lock);
+
+	kn->kn_data = 0;
+
+	if (hint == NOTE_SUBMIT)
+		KASSERT(mutex_owned(&cprng->cs_lock));
+	else
+		mutex_exit(&cprng->cs_lock);
+
+	return 0;
+}
+
+static const struct filterops cprng_read_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_cprng_detach,
+	.f_event = filt_cprng_read_event,
+};
+
+static const struct filterops cprng_write_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_cprng_detach,
+	.f_event = filt_cprng_write_event,
+};
+
+int
+cprng_strong_kqfilter(struct cprng_strong *cprng, struct knote *kn)
+{
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &cprng_read_filtops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &cprng_write_filtops;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	kn->kn_hook = cprng;
+	mutex_enter(&cprng->cs_lock);
+	SLIST_INSERT_HEAD(&cprng->cs_selq.sel_klist, kn, kn_selnext);
+	mutex_exit(&cprng->cs_lock);
+	return 0;
 }
 
 int
@@ -445,12 +477,12 @@ cprng_strong_reseed_from(struct cprng_strong *cprng,
 		/* XXX Fix nist_ctr_drbg API so this can't happen.  */
 		panic("cprng %s: NIST CTR_DRBG reseed failed", cprng->cs_name);
 
-#if DEBUG
+#if DIAGNOSTIC
 	cprng_strong_rngtest(cprng);
 #endif
 }
 
-#if DEBUG
+#if DIAGNOSTIC
 /*
  * Generate some output and apply a statistical RNG test to it.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.33.6.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.33.6.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.33.6.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.33.6.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -226,7 +226,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.33.6.1 2014/08/20 00:03:38 tls Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -486,6 +486,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -1583,11 +1584,8 @@ cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 	/* Transmission is no longer in progress */
 	sc->sc_txbusy = FALSE;
 
-	/* If there is more to transmit */
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
-		/* Start the next transmission */
-		cs_start_output(ifp);
-	}
+	/* If there is more to transmit, start the next transmission */
+	if_schedule_deferred_start(ifp);
 }
 
 void
@@ -1656,16 +1654,8 @@ cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
-
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 void
@@ -1729,7 +1719,7 @@ cs_process_receive(struct cs_softc *sc)
 		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
 	}
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 
 	/* number of bytes to align ip header on word boundary for ipintr */
@@ -1811,7 +1801,7 @@ cs_process_rx_early(struct cs_softc *sc)
 		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
 	}
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	/*
 	 * save processing by always using a mbuf cluster, guaranteed to fit
 	 * packet

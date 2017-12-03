@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
@@ -189,14 +188,16 @@ OpnDoMethod (
         {
             AslError (ASL_ERROR, ASL_MSG_SYNC_LEVEL, Next, NULL);
         }
+
         Concurrency = (UINT8) Next->Asl.Value.Integer;
     }
 
     /* Put the bits in their proper places */
 
-    MethodFlags = (UINT8) ((NumArgs & 0x7) |
-                          ((Serialized & 0x1) << 3) |
-                          ((Concurrency & 0xF) << 4));
+    MethodFlags = (UINT8)
+        ((NumArgs & 0x7) |
+        ((Serialized & 0x1) << 3) |
+        ((Concurrency & 0xF) << 4));
 
     /* Use the last node for the combined flags byte */
 
@@ -273,9 +274,9 @@ OpnDoFieldCommon (
     /* Set the node to RAW_DATA */
 
     Next->Asl.Value.Integer = FieldFlags;
-    Next->Asl.AmlOpcode     = AML_RAW_DATA_BYTE;
-    Next->Asl.AmlLength     = 1;
-    Next->Asl.ParseOpcode   = PARSEOP_RAW_DATA;
+    Next->Asl.AmlOpcode = AML_RAW_DATA_BYTE;
+    Next->Asl.AmlLength = 1;
+    Next->Asl.ParseOpcode = PARSEOP_RAW_DATA;
 
     /* Process the FieldUnitList */
 
@@ -320,7 +321,7 @@ OpnDoFieldCommon (
                 Next->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
                 PkgLengthNode->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
             }
-            else if (NewBitOffset == CurrentBitOffset)
+            else if ((NewBitOffset == CurrentBitOffset) && Gbl_OptimizeTrivialParseNodes)
             {
                 /*
                  * Offset is redundant; we don't need to output an
@@ -346,9 +347,24 @@ OpnDoFieldCommon (
 
             /* Named or reserved field entry */
 
-            PkgLengthNode     = Next->Asl.Child;
-            NewBitOffset      = (UINT32) PkgLengthNode->Asl.Value.Integer;
+            PkgLengthNode = Next->Asl.Child;
+            NewBitOffset = (UINT32) PkgLengthNode->Asl.Value.Integer;
             CurrentBitOffset += NewBitOffset;
+
+            if ((NewBitOffset == 0) &&
+                (Next->Asl.ParseOpcode == PARSEOP_RESERVED_BYTES) &&
+                Gbl_OptimizeTrivialParseNodes)
+            {
+                /*
+                 * Unnamed field with a bit length of zero. We can
+                 * safely just ignore this. However, we will not ignore
+                 * a named field of zero length, we don't want to just
+                 * toss out a name.
+                 */
+                Next->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+                PkgLengthNode->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+                break;
+            }
 
             /* Save the current AccessAs value for error checking later */
 
@@ -602,9 +618,9 @@ OpnDoBuffer (
         {
             /* For buffers, this is a list of raw bytes */
 
-            InitializerOp->Asl.AmlOpcode      = AML_RAW_DATA_BYTE;
-            InitializerOp->Asl.AmlLength      = 1;
-            InitializerOp->Asl.ParseOpcode    = PARSEOP_RAW_DATA;
+            InitializerOp->Asl.AmlOpcode = AML_RAW_DATA_BYTE;
+            InitializerOp->Asl.AmlLength = 1;
+            InitializerOp->Asl.ParseOpcode = PARSEOP_RAW_DATA;
 
             BufferLength++;
             InitializerOp = ASL_GET_PEER_NODE (InitializerOp);
@@ -619,9 +635,9 @@ OpnDoBuffer (
          */
         BufferLength = strlen (InitializerOp->Asl.Value.String) + 1;
 
-        InitializerOp->Asl.AmlOpcode      = AML_RAW_DATA_BUFFER;
-        InitializerOp->Asl.AmlLength      = BufferLength;
-        InitializerOp->Asl.ParseOpcode    = PARSEOP_RAW_DATA;
+        InitializerOp->Asl.AmlOpcode = AML_RAW_DATA_BUFFER;
+        InitializerOp->Asl.AmlLength = BufferLength;
+        InitializerOp->Asl.ParseOpcode = PARSEOP_RAW_DATA;
         break;
 
     case PARSEOP_RAW_DATA:
@@ -637,7 +653,7 @@ OpnDoBuffer (
         AslError (ASL_ERROR, ASL_MSG_INVALID_OPERAND, InitializerOp,
             "Unknown buffer initializer opcode");
         printf ("Unknown buffer initializer opcode [%s]\n",
-                        UtGetOpName (InitializerOp->Asl.ParseOpcode));
+            UtGetOpName (InitializerOp->Asl.ParseOpcode));
         return;
     }
 
@@ -661,8 +677,8 @@ OpnDoBuffer (
      * Just set the buffer size node to be the buffer length, regardless
      * of whether it was previously an integer or a default_arg placeholder
      */
-    BufferLengthOp->Asl.ParseOpcode   = PARSEOP_INTEGER;
-    BufferLengthOp->Asl.AmlOpcode     = AML_DWORD_OP;
+    BufferLengthOp->Asl.ParseOpcode = PARSEOP_INTEGER;
+    BufferLengthOp->Asl.AmlOpcode = AML_DWORD_OP;
     BufferLengthOp->Asl.Value.Integer = BufferLength;
 
     (void) OpcSetOptimalIntegerSize (BufferLengthOp);
@@ -840,9 +856,9 @@ OpnDoLoadTable (
     Next = Next->Asl.Next;
     if (Next->Asl.ParseOpcode == PARSEOP_ZERO)
     {
-        Next->Asl.ParseOpcode    = PARSEOP_STRING_LITERAL;
-        Next->Asl.Value.String   = "\\";
-        Next->Asl.AmlLength      = 2;
+        Next->Asl.ParseOpcode = PARSEOP_STRING_LITERAL;
+        Next->Asl.Value.String = "\\";
+        Next->Asl.AmlLength = 2;
         OpcGenerateAmlOpcode (Next);
     }
 
@@ -913,8 +929,8 @@ OpnDoDefinitionBlock (
          * We will use the AML filename that is embedded in the source file
          * for the output filename.
          */
-        Filename = ACPI_ALLOCATE (strlen (Gbl_DirectoryPath) +
-                    strlen ((char *) Child->Asl.Value.Buffer) + 1);
+        Filename = UtLocalCacheCalloc (strlen (Gbl_DirectoryPath) +
+            strlen ((char *) Child->Asl.Value.Buffer) + 1);
 
         /* Prepend the current directory path */
 
@@ -924,6 +940,7 @@ OpnDoDefinitionBlock (
         Gbl_OutputFilenamePrefix = Filename;
         UtConvertBackslashes (Gbl_OutputFilenamePrefix);
     }
+
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
 
     /* Signature */
@@ -933,13 +950,13 @@ OpnDoDefinitionBlock (
     if (Child->Asl.Value.String)
     {
         Gbl_TableSignature = Child->Asl.Value.String;
-        if (ACPI_STRLEN (Gbl_TableSignature) != 4)
+        if (strlen (Gbl_TableSignature) != ACPI_NAME_SIZE)
         {
             AslError (ASL_ERROR, ASL_MSG_TABLE_SIGNATURE, Child,
-                "Length not exactly 4");
+                "Length is not exactly 4");
         }
 
-        for (i = 0; i < 4; i++)
+        for (i = 0; i < ACPI_NAME_SIZE; i++)
         {
             if (!isalnum ((int) Gbl_TableSignature[i]))
             {
@@ -968,9 +985,9 @@ OpnDoDefinitionBlock (
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
     if (Child->Asl.Value.String)
     {
-        Length = ACPI_STRLEN (Child->Asl.Value.String);
-        Gbl_TableId = AcpiOsAllocate (Length + 1);
-        ACPI_STRCPY (Gbl_TableId, Child->Asl.Value.String);
+        Length = strlen (Child->Asl.Value.String);
+        Gbl_TableId = UtLocalCacheCalloc (Length + 1);
+        strcpy (Gbl_TableId, Child->Asl.Value.String);
 
         /*
          * Convert anything non-alphanumeric to an underscore. This
@@ -1047,19 +1064,16 @@ OpnAttachNameToNode (
     ACPI_PARSE_OBJECT       *Child = NULL;
 
 
-    if (Op->Asl.ParseOpcode == PARSEOP_EXTERNAL)
-    {
-        Child = UtGetArg (Op, 0);
-    }
-    else switch (Op->Asl.AmlOpcode)
+    switch (Op->Asl.AmlOpcode)
     {
     case AML_DATA_REGION_OP:
     case AML_DEVICE_OP:
     case AML_EVENT_OP:
+    case AML_EXTERNAL_OP:
     case AML_METHOD_OP:
     case AML_MUTEX_OP:
     case AML_REGION_OP:
-    case AML_POWER_RES_OP:
+    case AML_POWER_RESOURCE_OP:
     case AML_PROCESSOR_OP:
     case AML_THERMAL_ZONE_OP:
     case AML_NAME_OP:
@@ -1132,7 +1146,7 @@ OpnGenerateAmlOperands (
 
     switch (Op->Asl.ParseOpcode)
     {
-    case PARSEOP_DEFINITIONBLOCK:
+    case PARSEOP_DEFINITION_BLOCK:
 
         OpnDoDefinitionBlock (Op);
         break;
@@ -1186,9 +1200,6 @@ OpnGenerateAmlOperands (
     case PARSEOP_NAMESTRING:
     case PARSEOP_METHODCALL:
     case PARSEOP_STRING_LITERAL:
-
-        break;
-
     default:
 
         break;

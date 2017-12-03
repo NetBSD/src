@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.2 2011/07/17 20:54:38 joerg Exp $	*/
+/*	$NetBSD: wd.c,v 1.2.12.1 2017/12/03 11:35:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -133,9 +133,9 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	if (strcmp((const char *)wd->sc_params.atap_model, "ST506") == 0)
-		lp->d_type = DTYPE_ST506;
+		lp->d_type = DKTYPE_ST506;
 	else
-		lp->d_type = DTYPE_ESDI;
+		lp->d_type = DKTYPE_ESDI;
 
 	strncpy(lp->d_typename, (const char *)wd->sc_params.atap_model, 16);
 	strncpy(lp->d_packname, "fictitious", 16);

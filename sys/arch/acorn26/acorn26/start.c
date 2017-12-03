@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.19.2.1 2014/08/20 00:02:40 tls Exp $ */
+/* $NetBSD: start.c,v 1.19.2.2 2017/12/03 11:35:44 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.19.2.1 2014/08/20 00:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.19.2.2 2017/12/03 11:35:44 jdolecek Exp $");
 
 #include "opt_modular.h"
 
@@ -125,7 +125,7 @@ start(struct bootconfig *initbootconfig)
 	boothowto = bootconfig.boothowto; 
 	physmem = bootconfig.npages;
 	uvmexp.pagesize = bootconfig.nbpp;
-	uvm_setpagesize();
+	uvm_md_init();
 	
 	/* Any others? */
 

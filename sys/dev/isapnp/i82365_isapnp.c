@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.31.18.1 2012/11/20 03:02:11 tls Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.31.18.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.31.18.1 2012/11/20 03:02:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.31.18.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,15 +119,15 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	sc->dev = self;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	if (isapnp_config(iot, memt, ipa)) {
 		aprint_error_dev(self, "error in region allocation\n");
 		return;
 	}
 
-	printf("%s: %s %s", device_xname(self), ipa->ipa_devident,
-	    ipa->ipa_devclass);
+	aprint_normal_dev(self, "%s %s", ipa->ipa_devident, ipa->ipa_devclass);
 
 	/* sanity check that we get at least one hunk of IO space.. */
 	if (ipa->ipa_nio < 1) {
@@ -142,20 +142,20 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 	/* sanity check to make sure we have a real PCIC there.. */
 	bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C0SA + PCIC_IDENT);
 	tmp1 = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-	printf("(ident 0x%x", tmp1);
+	aprint_normal("(ident 0x%x", tmp1);
 	if (pcic_ident_ok(tmp1)) {
-	  	printf(" OK)");
+	  	aprint_normal(" OK)");
 	} else {
-	        printf(" Not OK)\n");
+	        aprint_error(" Not OK)\n");
 		return;
 	}
 
 	msize =  0x4000;
 	if (isa_mem_alloc(memt, msize, msize, 0, 0, &maddr, &memh)) {
-		printf(": can't alloc mem space\n");
+		aprint_error(": can't alloc mem space\n");
 		return;
 	}
-	printf(": using iomem %#" PRIxPADDR " iosiz %#x", maddr, msize);
+	aprint_normal(": using iomem %#" PRIxPADDR " iosiz %#x", maddr, msize);
 	sc->membase = maddr;
 	sc->subregionmask = (1 << (msize / PCIC_MEM_PAGESIZE)) - 1;
 
@@ -178,7 +178,7 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->irq = -1;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	pcic_attach(sc);
 	pcic_isa_bus_width_probe(sc, iot, ioh, ipa->ipa_io[0].base,

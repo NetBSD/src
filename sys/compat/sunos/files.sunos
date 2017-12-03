@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunos,v 1.8 2008/11/19 18:36:05 ad Exp $
+#	$NetBSD: files.sunos,v 1.8.26.1 2017/12/03 11:36:56 jdolecek Exp $
 #
 # Config file description for machine-independent SunOS compat code.
 # Included by ports that need it.
@@ -6,6 +6,7 @@
 # ports should define any machine-specific files they need in their
 # own file lists.
 
+define	compat_sunos
 file	compat/sunos/sunos_exec.c	compat_sunos & !compat_netbsd32
 file	compat/sunos/sunos_exec_aout.c	compat_sunos & exec_aout & !compat_netbsd32
 file	compat/sunos/sunos_sysent.c	compat_sunos & !compat_netbsd32

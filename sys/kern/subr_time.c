@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.9.6.1 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.9.6.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,14 +33,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.9.6.1 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.9.6.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/kauth.h>
+#include <sys/lwp.h>
 #include <sys/timex.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/intr.h>
+
+#ifdef DEBUG_STICKS
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a) 
+#endif
 
 /*
  * Compute number of hz until specified time.  Used to compute second
@@ -218,9 +227,72 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
 	return tstohz(ts);
 }
 
+static void
+ticks2ts(uint64_t ticks, struct timespec *ts)
+{
+	ts->tv_sec = ticks / hz;
+	uint64_t sticks = ticks - ts->tv_sec * hz;
+	if (sticks > BINTIME_SCALE_MS)	/* floor(2^64 / 1000) */
+		ts->tv_nsec = sticks / hz * 1000000000LL;
+   	else if (sticks > BINTIME_SCALE_US)	/* floor(2^64 / 1000000) */
+   		ts->tv_nsec = sticks * 1000LL / hz * 1000000LL;
+	else
+   		ts->tv_nsec = sticks * 1000000000LL / hz;
+	DPRINTF(("%s: %ju/%ju -> %ju.%ju\n", __func__,
+	    (uintmax_t)ticks, (uintmax_t)sticks,
+	    (uintmax_t)ts->tv_sec, (uintmax_t)ts->tv_nsec));
+}
+
 int
 clock_gettime1(clockid_t clock_id, struct timespec *ts)
 {
+	int error;
+	uint64_t ticks;
+	struct proc *p;
+
+#define CPUCLOCK_ID_MASK (~(CLOCK_THREAD_CPUTIME_ID|CLOCK_PROCESS_CPUTIME_ID))
+	if (clock_id & CLOCK_PROCESS_CPUTIME_ID) {
+		pid_t pid = clock_id & CPUCLOCK_ID_MASK;
+
+		mutex_enter(proc_lock);
+		p = pid == 0 ? curproc : proc_find(pid);
+		if (p == NULL) {
+			mutex_exit(proc_lock);
+			return ESRCH;
+		}
+		ticks = p->p_uticks + p->p_sticks + p->p_iticks;
+		DPRINTF(("%s: u=%ju, s=%ju, i=%ju\n", __func__,
+		    (uintmax_t)p->p_uticks, (uintmax_t)p->p_sticks,
+		    (uintmax_t)p->p_iticks));
+		mutex_exit(proc_lock);
+
+		// XXX: Perhaps create a special kauth type
+		error = kauth_authorize_process(curlwp->l_cred,
+		    KAUTH_PROCESS_PTRACE, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+		if (error)
+			return error;
+	} else if (clock_id & CLOCK_THREAD_CPUTIME_ID) {
+		struct lwp *l;
+		lwpid_t lid = clock_id & CPUCLOCK_ID_MASK;
+		p = curproc;
+		mutex_enter(p->p_lock);
+		l = lid == 0 ? curlwp : lwp_find(p, lid);
+		if (l == NULL) {
+			mutex_exit(p->p_lock);
+			return ESRCH;
+		}
+		ticks = l->l_rticksum + l->l_slpticksum;
+		DPRINTF(("%s: r=%ju, s=%ju\n", __func__,
+		    (uintmax_t)l->l_rticksum, (uintmax_t)l->l_slpticksum));
+		mutex_exit(p->p_lock);
+        } else
+		ticks = (uint64_t)-1;
+
+	if (ticks != (uint64_t)-1) {
+		ticks2ts(ticks, ts);
+		return 0;
+	}
 
 	switch (clock_id) {
 	case CLOCK_REALTIME:

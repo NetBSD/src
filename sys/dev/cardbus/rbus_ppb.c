@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.42 2012/02/02 19:43:02 tls Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.42.6.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.42 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.42.6.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.42 2012/02/02 19:43:02 tls Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
-
-#include <sys/rnd.h>
 
 #include <machine/endian.h>
 
@@ -156,23 +154,14 @@ rbus_intr_fixup(pci_chipset_tag_t pc,
 void
 rbus_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
-  int pin, irq;
   int bus, device, function;
-  pcireg_t intr, id;
+  pcireg_t intr;
   int *pline = (int *)context;
   int line = *pline;
 
   pci_decompose_tag(pc, tag, &bus, &device, &function);
-  id = pci_conf_read(pc, tag, PCI_ID_REG);
 
   intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-  pin = PCI_INTERRUPT_PIN(intr);
-  irq = PCI_INTERRUPT_LINE(intr);
-
-#if 0
-  printf("do_header %02x:%02x:%02x pin=%d => line %d\n",
-	 bus, device, function, pin, line);
-#endif
 
   intr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
   intr |= (line << PCI_INTERRUPT_LINE_SHIFT);
@@ -245,13 +234,10 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	rct.caa=caa;
 	rct.minbus = minbus;
 	rct.maxbus = maxbus;
-	if ((rct.bussize_ioreqs  = kmem_zalloc(size, KM_SLEEP)) == NULL ||
-	    (rct.bussize_memreqs = kmem_zalloc(size, KM_SLEEP)) == NULL ||
-	    (rct.iobustags =
-	     kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP)) == NULL ||
-	    (rct.membustags =
-	     kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP)) == NULL)
-		panic("%s: memory allocation failed", __func__);
+	rct.bussize_ioreqs = kmem_zalloc(size, KM_SLEEP);
+	rct.bussize_memreqs = kmem_zalloc(size, KM_SLEEP);
+	rct.iobustags = kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP);
+	rct.membustags = kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP);
 
 	printf("%s: sizing buses %d-%d\n",
 	       device_xname(rct.csc->sc_dev),
@@ -532,7 +518,6 @@ rbus_do_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx,
 	struct cardbus_softc *sc     = rct->sc;
 	cardbus_function_t       *cf = sc->sc_cf;
 	rbus_tag_t          rbustag;
-	bus_space_tag_t     bustag;
 	bus_addr_t mask = size -1;
 	bus_addr_t base = 0;
 	bus_space_handle_t handle;
@@ -565,11 +550,9 @@ rbus_do_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx,
 	}
 
 	if(PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
-	  bustag  = sc->sc_iot;
 	  rbustag = rct->iobustags[bus];
 	  bustype = "io";
 	} else {
-	  bustag  = sc->sc_memt;
 	  rbustag = rct->membustags[bus];
 	  bustype = "mem";
 	}
@@ -630,15 +613,9 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;
 	char devinfo[256];
 	pcireg_t busdata;
-	int mybus, rv;
-	u_int16_t pciirq;
 	int minbus, maxbus;
 
 	csc->sc_dev = self;
-
-	mybus = ct->ct_bus;
-	pciirq = 0;
-	rv = 0;
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
@@ -729,4 +706,3 @@ ppb_activate(device_t self, enum devact act)
   printf("ppb_activate called\n");
   return 0;
 }
-

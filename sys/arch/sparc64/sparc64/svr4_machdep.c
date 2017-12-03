@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.55 2011/03/04 22:25:29 joerg Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.55.14.1 2017/12/03 11:36:45 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55 2011/03/04 22:25:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55.14.1 2017/12/03 11:36:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -236,7 +236,7 @@ svr4_setmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long flags)
 #endif
 
 #ifdef DEBUG_SVR4
-	svr4_printmcontext("setmcontext", uc);
+	svr4_printmcontext("setmcontext", mc);
 #endif
 
 	write_user_windows();

@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.1.8.1 2014/08/20 00:03:43 tls Exp $ */
+/* $NetBSD: mpii.c,v 1.1.8.2 2017/12/03 11:37:08 jdolecek Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.1.8.1 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.1.8.2 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -3434,26 +3434,34 @@ mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 			case MPII_EVT_IR_CFG_ELEMENT_RC_VOLUME_CREATED:
 				if (mpii_find_dev(sc,
 				    le16toh(ce->vol_dev_handle))) {
-					printf("%s: device %#x is already "
-					    "configured\n", DEVNAME(sc),
+					aprint_error_dev(sc->sc_dev,
+					    "device %#x is already "
+					    "configured\n",
 					    le16toh(ce->vol_dev_handle));
 					break;
 				}
 				dev = malloc(sizeof(*dev), M_DEVBUF,
 				    M_NOWAIT | M_ZERO);
 				if (!dev) {
-					printf("%s: failed to allocate a "
-				    	    "device structure\n", DEVNAME(sc));
+					aprint_error_dev(sc->sc_dev,
+					    "can't allocate device structure\n");
 					break;
 				}
 				SET(dev->flags, MPII_DF_VOLUME);
 				dev->slot = sc->sc_vd_id_low;
 				dev->dev_handle = le16toh(ce->vol_dev_handle);
 				if (mpii_insert_dev(sc, dev)) {
+					aprint_error_dev(sc->sc_dev,
+					    "can't insert device structure\n");
 					free(dev, M_DEVBUF);
 					break;
 				}
-				mpii_cache_enable(sc, dev);
+				if (mpii_cache_enable(sc, dev)) {
+					aprint_error_dev(sc->sc_dev,
+					    "can't enable device cache\n");
+					free(dev, M_DEVBUF);
+					break;
+				}
 				sc->sc_vd_count++;
 				break;
 			case MPII_EVT_IR_CFG_ELEMENT_RC_REMOVED:
@@ -3515,15 +3523,15 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 		switch (pe->phy_status & MPII_EVENT_SAS_TOPO_PS_RC_MASK) {
 		case MPII_EVENT_SAS_TOPO_PS_RC_ADDED:
 			if (mpii_find_dev(sc, le16toh(pe->dev_handle))) {
-				printf("%s: device %#x is already "
-				    "configured\n", DEVNAME(sc),
+				aprint_error_dev(sc->sc_dev,
+				    "device %#x is already configured\n",
 				    le16toh(pe->dev_handle));
 				break;
 			}
 			dev = malloc(sizeof(*dev), M_DEVBUF, M_NOWAIT | M_ZERO);
 			if (!dev) {
-				printf("%s: failed to allocate a "
-				    "device structure\n", DEVNAME(sc));
+				aprint_error_dev(sc->sc_dev, "can't allocate "
+				    "device structure\n");
 				break;
 			}
 			dev->slot = sc->sc_pd_id_start + tcl->start_phy_num + i;
@@ -3534,6 +3542,8 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 			dev->enclosure = le16toh(tcl->enclosure_handle);
 			dev->expander = le16toh(tcl->expander_handle);
 			if (mpii_insert_dev(sc, dev)) {
+				aprint_error_dev(sc->sc_dev, "can't insert "
+				    "device structure\n");
 				free(dev, M_DEVBUF);
 				break;
 			}
@@ -3550,9 +3560,9 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 				    DVACT_DEACTIVATE);
 				if (scsi_task(mpii_event_defer, sc,
 				    dev, 0) != 0)
-					printf("%s: unable to run device "
-					    "detachment routine\n",
-					    DEVNAME(sc));
+					aprint_error_dev(sc->sc_dev, 
+					    "unable to run device "
+					    "detachment routine\n");
 			}
 #else
 			mpii_event_defer(sc, dev);
@@ -4098,10 +4108,12 @@ mpii_alloc_dev(struct mpii_softc *sc)
 static int
 mpii_insert_dev(struct mpii_softc *sc, struct mpii_device *dev)
 {
+
+	if (!dev || dev->slot < 0)
+		return (1);
+
 	int slot = dev->slot; 	/* initial hint */
 
-	if (!dev || slot < 0)
-		return (1);
 	while (slot < sc->sc_max_devices && sc->sc_devs[slot] != NULL)
 		slot++;
 	if (slot >= sc->sc_max_devices)
@@ -4901,8 +4913,6 @@ mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	    vpg, pagelen) != 0) {
 		rv = EINVAL;
 		goto done;
-		free(vpg, M_TEMP);
-		return (EINVAL);
 	}
 
 	enabled = ((le16toh(vpg->volume_settings) &
@@ -4981,7 +4991,7 @@ mpii_cache_enable(struct mpii_softc *sc, struct mpii_device *dev)
 		return (EINVAL);
 
 	pagelen = hdr.page_length * 4;
-	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	vpg = malloc(pagelen, M_TEMP, M_NOWAIT | M_ZERO);
 	if (vpg == NULL)
 		return (ENOMEM);
 
@@ -5400,14 +5410,16 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 
 	bd->bd_size = le64toh(ppg->dev_max_lba) * le16toh(ppg->block_size);
 
-	scsipi_strvis(bd->bd_vendor, sizeof(bd->bd_vendor),
-	    ppg->vendor_id, sizeof(ppg->vendor_id));
+	strnvisx(bd->bd_vendor, sizeof(bd->bd_vendor),
+	    ppg->vendor_id, sizeof(ppg->vendor_id),
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	len = strlen(bd->bd_vendor);
 	bd->bd_vendor[len] = ' ';
-	scsipi_strvis(&bd->bd_vendor[len + 1], sizeof(ppg->vendor_id) - len - 1,
-	    ppg->product_id, sizeof(ppg->product_id));
-	scsipi_strvis(bd->bd_serial, sizeof(bd->bd_serial),
-	    ppg->serial, sizeof(ppg->serial));
+	strnvisx(&bd->bd_vendor[len + 1], sizeof(ppg->vendor_id) - len - 1,
+	    ppg->product_id, sizeof(ppg->product_id),
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(bd->bd_serial, sizeof(bd->bd_serial),
+	    ppg->serial, sizeof(ppg->serial), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 	free(ppg, M_TEMP);
 	return (0);
@@ -5571,29 +5583,7 @@ mpii_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 	splx(s);
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (error)
-		return;
-	switch(bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-	case BIOC_SVREBUILD:
-		edata->value_cur = ENVSYS_DRIVE_REBUILD;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVINVALID:
-		/* FALLTHROUGH */
-	default:
-		edata->value_cur = 0; /* unknown */
-		edata->state = ENVSYS_SINVALID;
-	}
+		bv.bv_status = BIOC_SVINVALID;
+	bio_vol_to_envsys(edata, &bv);
 }
 #endif /* NBIO > 0 */

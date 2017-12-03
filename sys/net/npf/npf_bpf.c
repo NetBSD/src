@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.11.4.2 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.11.4.3 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -33,8 +33,9 @@
  * NPF byte-code processing.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.11.4.2 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.11.4.3 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,9 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.11.4.2 2014/08/20 00:04:35 tls Exp $")
 #include <sys/bitops.h>
 #include <sys/mbuf.h>
 #include <net/bpf.h>
+#endif
 
 #define NPF_BPFCOP
 #include "npf_impl.h"
+
+#if defined(_NPF_STANDALONE)
+#define	m_length(m)		(nbuf)->nb_mops->getchainlen(m)
+#endif
 
 /*
  * BPF context and the coprocessor.
@@ -80,13 +86,19 @@ npf_bpf_sysfini(void)
 void
 npf_bpf_prepare(npf_cache_t *npc, bpf_args_t *args, uint32_t *M)
 {
-	const struct mbuf *mbuf = nbuf_head_mbuf(npc->npc_nbuf);
+	nbuf_t *nbuf = npc->npc_nbuf;
+	const struct mbuf *mbuf = nbuf_head_mbuf(nbuf);
 	const size_t pktlen = m_length(mbuf);
 
 	/* Prepare the arguments for the BPF programs. */
+#ifdef _NPF_STANDALONE
+	args->pkt = (const uint8_t *)nbuf_dataptr(nbuf);
+	args->wirelen = args->buflen = pktlen;
+#else
 	args->pkt = (const uint8_t *)mbuf;
 	args->wirelen = pktlen;
 	args->buflen = 0;
+#endif
 	args->mem = M;
 	args->arg = npc;
 
@@ -164,7 +176,7 @@ static uint32_t
 npf_cop_table(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 {
 	const npf_cache_t * const npc = (const npf_cache_t *)args->arg;
-	npf_tableset_t *tblset = npf_config_tableset();
+	npf_tableset_t *tblset = npf_config_tableset(npc->npc_ctx);
 	const uint32_t tid = A & (SRC_FLAG_BIT - 1);
 	const npf_addr_t *addr;
 	npf_table_t *t;

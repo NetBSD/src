@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.8.2 2014/08/20 00:03:04 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.8.3 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.8.2 2014/08/20 00:03:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.8.3 2017/12/03 11:36:16 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -861,6 +861,9 @@ cpu_model_cpuid(int modelno)
 	case HPPA_BOARD_HPE25:
 	case HPPA_BOARD_HPE35:
 	case HPPA_BOARD_HPE45:
+	case HPPA_BOARD_HP712_60:
+	case HPPA_BOARD_HP712_80:
+	case HPPA_BOARD_HP712_100:
 	case HPPA_BOARD_HP715_80:
 	case HPPA_BOARD_HP715_64:
 	case HPPA_BOARD_HP715_100:
@@ -981,10 +984,11 @@ delay(u_int us)
 		end = start + n * cpu_ticksnum / cpu_ticksdenom;
 
 		/* N.B. Interval Timer may wrap around */
-		if (end < start)
-			do
+		if (end < start) {
+			do {
 				mfctl(CR_ITMR, start);
-			while (start > end);
+			} while (start > end);
+		}
 
 		do
 			mfctl(CR_ITMR, start);
@@ -1883,7 +1887,7 @@ hppa_setvmspace(struct lwp *l)
 	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 =
 	tf->tf_iisq_head = tf->tf_iisq_tail = space;
 
-	/* Load the protection regsiters. */
+	/* Load the protection registers. */
 	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
 }
 

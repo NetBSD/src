@@ -1,4 +1,4 @@
-/*	$NetBSD: agpio.h,v 1.10 2011/02/15 08:57:01 jmcneill Exp $	*/
+/*	$NetBSD: agpio.h,v 1.10.14.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -31,6 +31,8 @@
 #ifndef _SYS_AGPIO_H_
 #define _SYS_AGPIO_H_
 
+#include <sys/ioccom.h>
+
 /*
  * The AGP gatt uses 4k pages irrespective of the host page size.
  */
@@ -40,30 +42,33 @@
 /*
  * Macros to manipulate AGP mode words.
  */
-#define AGP_MODE_GET_RQ(x)		(((x) & 0xff000000U) >> 24)
-#define AGP_MODE_GET_ARQSZ(x)		(((x) & 0x0000e000U) >> 13)
-#define AGP_MODE_GET_CAL(x)		(((x) & 0x00001c00U) >> 10)
-#define AGP_MODE_GET_SBA(x)		(((x) & 0x00000200U) >> 9)
-#define AGP_MODE_GET_AGP(x)		(((x) & 0x00000100U) >> 8)
-#define AGP_MODE_GET_4G(x)		(((x) & 0x00000020U) >> 5)
-#define AGP_MODE_GET_FW(x)		(((x) & 0x00000010U) >> 4)
-#define AGP_MODE_GET_MODE_3(x)		(((x) & 0x00000008U) >> 3)
-#define AGP_MODE_GET_RATE(x)		((x) & 0x00000007U)
-#define AGP_MODE_SET_RQ(x,v)		(((x) & ~0xff000000U) | ((v) << 24))
-#define AGP_MODE_SET_ARQSZ(x,v)		(((x) & ~0x0000e000U) | ((v) << 13))
-#define AGP_MODE_SET_CAL(x,v)		(((x) & ~0x00001c00U) | ((v) << 10))
-#define AGP_MODE_SET_SBA(x,v)		(((x) & ~0x00000200U) | ((v) << 9))
-#define AGP_MODE_SET_AGP(x,v)		(((x) & ~0x00000100U) | ((v) << 8))
-#define AGP_MODE_SET_4G(x,v)		(((x) & ~0x00000020U) | ((v) << 5))
-#define AGP_MODE_SET_FW(x,v)		(((x) & ~0x00000010U) | ((v) << 4))
-#define AGP_MODE_SET_MODE_3(x,v)	(((x) & ~0x00000008U) | ((v) << 3))
-#define AGP_MODE_SET_RATE(x,v)		(((x) & ~0x00000007U) | (v))
-#define AGP_MODE_V2_RATE_1x		0x00000001
-#define AGP_MODE_V2_RATE_2x		0x00000002
-#define AGP_MODE_V2_RATE_4x		0x00000004
-#define AGP_MODE_V3_RATE_4x		0x00000001
-#define AGP_MODE_V3_RATE_8x		0x00000002
-#define AGP_MODE_V3_RATE_RSVD		0x00000004
+#define AGP_MODE_GET_RQ(x)		__SHIFTOUT((x), AGP_MODE_RQ)
+#define AGP_MODE_GET_ARQSZ(x)		__SHIFTOUT((x), AGP_MODE_ARQSZ)
+#define AGP_MODE_GET_CAL(x)		__SHIFTOUT((x), AGP_MODE_CAL)
+#define AGP_MODE_GET_SBA(x)		__SHIFTOUT((x), AGP_MODE_SBA)
+#define AGP_MODE_GET_AGP(x)		__SHIFTOUT((x), AGP_MODE_AGP)
+#define AGP_MODE_GET_4G(x)		__SHIFTOUT((x), AGP_MODE_4G)
+#define AGP_MODE_GET_FW(x)		__SHIFTOUT((x), AGP_MODE_FW)
+#define AGP_MODE_GET_MODE_3(x)		__SHIFTOUT((x), AGP_MODE_MODE_3)
+#define AGP_MODE_GET_RATE(x)		__SHIFTOUT((x), AGP_MODE_RATE)
+#define AGP_MODE_SET_RQ(x, v)		(((x) & ~AGP_MODE_RQ)		\
+					 | __SHIFTIN((v), AGP_MODE_RQ))
+#define AGP_MODE_SET_ARQSZ(x, v)	(((x) & ~AGP_MODE_ARQSZ)	\
+					 | __SHIFTIN((v), AGP_MODE_ARQSZ))
+#define AGP_MODE_SET_CAL(x, v)		(((x) & ~AGP_MODE_CAL)		\
+					 | __SHIFTIN((v), ~AGP_MODE_CAL))
+#define AGP_MODE_SET_SBA(x, v)		(((x) & ~AGP_MODE_SBA)		\
+					 | __SHIFTIN((v), AGP_MODE_SBA))
+#define AGP_MODE_SET_AGP(x, v)		(((x) & ~AGP_MODE_AGP)		\
+					 | __SHIFTIN((v), AGP_MODE_AGP))
+#define AGP_MODE_SET_4G(x, v)		(((x) & ~AGP_MODE_4G)		\
+					 | __SHIFTIN((v), AGP_MODE_4G))
+#define AGP_MODE_SET_FW(x, v)		(((x) & ~AGP_MODE_FW)		\
+					 | __SHIFTIN((v), AGP_MODE_FW))
+#define AGP_MODE_SET_MODE_3(x, v)	(((x) & ~AGP_MODE_MODE_3)	\
+					 | __SHIFTIN((v), AGP_MODE_MODE_3))
+#define AGP_MODE_SET_RATE(x, v)		(((x) & ~AGP_MODE_RATE)		\
+					 | __SHIFTIN((v), AGP_MODE_RATE))
 
 /* compat */
 #define AGP_MODE_RATE_1x		AGP_MODE_V2_RATE_1x

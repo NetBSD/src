@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.15.20.1 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: btbc.c,v 1.15.20.2 2017/12/03 11:37:30 jdolecek Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.15.20.1 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.15.20.2 2017/12/03 11:37:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -210,7 +210,7 @@ btbc_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 	btbc_disable(sc->sc_dev);
 
-	callout_stop(&sc->sc_ledch);
+	callout_halt(&sc->sc_ledch, NULL);
 	callout_destroy(&sc->sc_ledch);
 
 	if (sc->sc_unit) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.38 2012/02/19 21:06:36 rmind Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.38.2.1 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.38 2012/02/19 21:06:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.38.2.1 2017/12/03 11:36:53 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.38 2012/02/19 21:06:36 rmind Exp 
 #include <compat/freebsd/freebsd_signal.h>
 #include <compat/common/compat_util.h>
 
-#include <machine/freebsd_machdep.h>
+#include <compat/freebsd/freebsd_machdep.h>
 
 extern struct sysent freebsd_sysent[];
 extern const char * const freebsd_syscallnames[];

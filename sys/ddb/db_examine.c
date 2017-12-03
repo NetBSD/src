@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.35 2011/05/26 15:34:14 joerg Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.35.14.1 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.35 2011/05/26 15:34:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.35.14.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,12 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				size = 4;
 				width = 12;
 				break;
+			case 'q':
+				if (sizeof(db_expr_t) != sizeof(uint64_t)) {
+					size = -1;
+					db_error("q not supported\n");
+					/*NOTREACHED*/
+				}
 			case 'L':	/* implementation maximum */
 				size = sizeof value;
 				width = 12 * (sizeof value / 4);

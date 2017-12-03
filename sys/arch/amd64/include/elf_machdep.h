@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.4 2010/03/18 08:28:33 cegger Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.4.18.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 #if !defined __i386__
 
@@ -15,6 +15,7 @@
 #define	ELF32_MACHDEP_ID	EM_386
 #define	ELF64_MACHDEP_ID	EM_X86_64
 
+#define	KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 
 /* x86-64 relocations */
@@ -45,6 +46,26 @@
 #define R_X86_64_DTPOFF32	21
 #define R_X86_64_GOTTPOFF	22
 #define R_X86_64_TPOFF32	23
+
+#define R_X86_64_PC64		24
+#define R_X86_64_GOTOFF64	25
+#define R_X86_64_GOTPC32	26
+#define R_X86_64_GOT64		27
+#define R_X86_64_GOTPCREL64	28
+#define R_X86_64_GOTPC64	29
+#define R_X86_64_GOTPLT64	30
+#define R_X86_64_PLTOFF64	31
+#define R_X86_64_SIZE32		32
+#define R_X86_64_SIZE64		33
+#define R_X86_64_GOTPC32_TLSDESC 34
+#define R_X86_64_TLSDESC_CALL	35
+#define R_X86_64_TLSDESC	36
+#define R_X86_64_IRELATIVE	37
+#define R_X86_64_RELATIVE64	38
+#define R_X86_64_PC32_BND	39
+#define R_X86_64_PLT32_BND	40
+#define R_X86_64_GOTPCRELX	41
+#define R_X86_64_REX_GOTPCRELX	42
 
 #define	R_TYPE(name)	__CONCAT(R_X86_64_,name)
 

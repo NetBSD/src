@@ -1,12 +1,7 @@
-/*	$NetBSD: cdefs.h,v 1.2.6.1 2014/08/20 00:03:08 tls Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.2.6.2 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
-
-/* We're elf only: inspected by sys/cdefs.h  */
-#ifndef __ELF__
-#define __ELF__
-#endif
 
 #define	__ALIGNBYTES		((size_t)15)
 

@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2.22.1 2014/08/20 00:04:42 tls Exp $
+#	$NetBSD: Makefile,v 1.2.22.2 2017/12/03 11:39:18 jdolecek Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net80211
 
 LIB=	rumpnet_net80211
+COMMENT=IEEE 802.11 (wireless LAN) support
 
 SRCS=   ieee80211.c ieee80211_amrr.c ieee80211_crypto.c			\
 	ieee80211_crypto_ccmp.c ieee80211_crypto_none.c			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.30 2011/06/09 19:54:18 drochner Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.30.12.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -339,7 +339,20 @@ struct sadb_x_nat_t_frag {
 #define SADB_SASTATE_DEAD     3
 #define SADB_SASTATE_MAX      3
 
+#define SADB_SASTATE_USABLE_P(sav) \
+    ((sav)->state == SADB_SASTATE_MATURE || (sav)->state == SADB_SASTATE_DYING)
+
 #define SADB_SAFLAGS_PFS      1
+
+/*
+ * Statistics variable definitions. For ESP/AH/IPCOMP we define
+ * indirection arrays of 256 elements indexed by algorithm (which
+ * is uint8_t. All unknown/unhandled entries are summed in the 0th
+ * element. We provide three variables per protocol:
+ * 	1. *_STATS_INIT: a list of initializers
+ * 	2. *_STATS_NUM: number of algorithms/statistics including (0/unknown)
+ *	3. *_STATS_STR: a list of strings to symbolically print the statistics
+ */
 
 /* RFC2367 numbers - meets RFC2407 */
 #define SADB_AALG_NONE		0
@@ -361,6 +374,43 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_AALG_NULL	251	/* null authentication */
 #define SADB_X_AALG_TCP_MD5	252	/* Keyed TCP-MD5 (RFC2385) */
 
+
+#define SADB_AALG_STATS_INIT \
+    [SADB_AALG_NONE] = 1, \
+    [SADB_AALG_MD5HMAC] = 2, \
+    [SADB_AALG_SHA1HMAC] = 3, \
+    [SADB_X_AALG_SHA2_256] = 4, \
+    [SADB_X_AALG_SHA2_384] = 5, \
+    [SADB_X_AALG_SHA2_512] = 6, \
+    [SADB_X_AALG_RIPEMD160HMAC] = 7, \
+    [SADB_X_AALG_AES_XCBC_MAC] = 8, \
+    [SADB_X_AALG_AES128GMAC] = 9, \
+    [SADB_X_AALG_AES192GMAC] = 10, \
+    [SADB_X_AALG_AES256GMAC] = 11, \
+    [SADB_X_AALG_MD5] = 12, \
+    [SADB_X_AALG_SHA] = 13, \
+    [SADB_X_AALG_NULL] = 14, \
+    [SADB_X_AALG_TCP_MD5] = 15,
+
+#define SADB_AALG_STATS_NUM 16
+#define SADB_AALG_STATS_STR \
+    "*unknown*", \
+    "none", \
+    "hmac-md5", \
+    "hmac-sha1", \
+    "hmac-sha2-256", \
+    "hmac-sha2-384", \
+    "hmac-sha2-512", \
+    "hmac-ripe-md160", \
+    "aes-xbc-mac", \
+    "aes-128-mac", \
+    "aes-192-mac", \
+    "aes-256-mac", \
+    "md5", \
+    "sha", \
+    "null", \
+    "tcp-md5",
+
 /* RFC2367 numbers - meets RFC2407 */
 #define SADB_EALG_NONE		0
 #define SADB_EALG_DESCBC	2
@@ -381,12 +431,62 @@ struct sadb_x_nat_t_frag {
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_EALG_SKIPJACK    250
 
+#define SADB_EALG_STATS_INIT \
+    [SADB_EALG_NONE] = 1, \
+    [SADB_EALG_DESCBC] = 2, \
+    [SADB_EALG_3DESCBC] = 3, \
+    [SADB_EALG_NULL] = 4, \
+    [SADB_X_EALG_CAST128CBC] = 5, \
+    [SADB_X_EALG_BLOWFISHCBC] = 6, \
+    [SADB_X_EALG_RIJNDAELCBC] = 7, \
+    [SADB_X_EALG_AESCTR] = 8, \
+    [SADB_X_EALG_AESGCM8] = 9, \
+    [SADB_X_EALG_AESGCM12] = 10, \
+    [SADB_X_EALG_AESGCM16] = 11, \
+    [SADB_X_EALG_CAMELLIACBC] = 12, \
+    [SADB_X_EALG_AESGMAC] = 13, \
+    [SADB_X_EALG_SKIPJACK] = 14,
+
+#define SADB_EALG_STATS_NUM 15
+#define SADB_EALG_STATS_STR \
+    "*unknown*", \
+    "none", \
+    "des-cbc", \
+    "3des-cbc", \
+    "null", \
+    "cast128-cbc", \
+    "blowfish-cbc", \
+    "aes-cbc", \
+    "aes-ctr", \
+    "aes-gcm-8", \
+    "aes-gcm-12", \
+    "aes-gcm-16", \
+    "camelia-cbc", \
+    "aes-gmac", \
+    "skipjack",
+
 /* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_CALG_NONE	0
 #define SADB_X_CALG_OUI		1
 #define SADB_X_CALG_DEFLATE	2
 #define SADB_X_CALG_LZS		3
 #define SADB_X_CALG_MAX		4
+
+#define SADB_CALG_STATS_INIT \
+    [SADB_X_CALG_NONE] = 1, \
+    [SADB_X_CALG_OUI] = 2, \
+    [SADB_X_CALG_DEFLATE] = 3, \
+    [SADB_X_CALG_LZS] = 4,
+
+#define SADB_CALG_STATS_NUM 5
+
+#define SADB_CALG_STATS_STR \
+    "*unknown*", \
+    "none", \
+    "oui", \
+    "deflate", \
+    "lzs",
+
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1

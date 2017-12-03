@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.33.2.1 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: putter.c,v 1.33.2.2 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.33.2.1 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.33.2.2 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,7 @@ static int putter_fop_kqfilter(file_t *, struct knote *);
 
 
 static const struct fileops putter_fileops = {
+	.fo_name = "putter",
 	.fo_read = putter_fop_read,
 	.fo_write = putter_fop_write,
 	.fo_ioctl = putter_fop_ioctl,
@@ -490,8 +491,12 @@ filt_putter(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops putter_filtops =
-	{ 1, NULL, filt_putterdetach, filt_putter };
+static const struct filterops putter_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_putterdetach,
+	.f_event = filt_putter,
+};
 
 static int
 putter_fop_kqfilter(file_t *fp, struct knote *kn)

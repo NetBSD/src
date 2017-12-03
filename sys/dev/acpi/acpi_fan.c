@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_fan.c,v 1.7 2011/07/22 04:15:05 jruoho Exp $ */
+/*	$NetBSD: acpi_fan.c,v 1.7.12.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.7 2011/07/22 04:15:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.7.12.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -228,7 +228,7 @@ acpifan_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpifan_sensor_state, self);
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpifan, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpifan, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

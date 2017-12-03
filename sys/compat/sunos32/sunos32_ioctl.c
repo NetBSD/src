@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.29 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.29.42.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.29 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.29.42.1 2017/12/03 11:36:56 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -435,15 +435,15 @@ sunos32_do_ioctl(int fd, int cmd, void *arg, struct lwp *l)
 	struct vnode *vp;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+	if ((error = fd_getvnode(fd, &fp)) != 0)
+		return error;
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
 		fd_putfile(fd);
 		return EBADF;
 	}
 	error = fp->f_ops->fo_ioctl(fp, cmd, arg);
 	if (error == EIO && cmd == TIOCGPGRP) {
-		vp = (struct vnode *)fp->f_data;
+		vp = fp->f_vnode;
 		if (vp != NULL && vp->v_type == VCHR && major(vp->v_rdev) == 21)
 			error = ENOTTY;
 	}
@@ -846,9 +846,9 @@ sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap, regis
 	    {
 		int tmp = 0;
 		switch ((intptr_t)SCARG_P32(uap, data)) {
-		case SUNOS_S_FLUSHR:	tmp = FREAD;
-		case SUNOS_S_FLUSHW:	tmp = FWRITE;
-		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
+		case SUNOS_S_FLUSHR:	tmp = FREAD; break;
+		case SUNOS_S_FLUSHW:	tmp = FWRITE; break;
+		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE; break;
 		}
                 return sunos32_do_ioctl(SCARG(&bsd_ua, fd), TIOCFLUSH, &tmp, l);
 	    }
@@ -866,7 +866,7 @@ sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap, regis
 	 * (which was from the old sparc/scsi/sun_disklabel.c), and
 	 * modified to suite.
 	 */
-	case DKIOCGGEOM:
+	case SUN_DKIOCGGEOM:
             {
 		struct disklabel dl;
 
@@ -890,28 +890,33 @@ sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap, regis
 		break;
 	    }
 
-	case DKIOCINFO:
+	case SUN_DKIOCINFO:
 		/* Homey don't do DKIOCINFO */
 		/* XXX can't do memset() on a user address (dsl) */
 		memset(SCARG_P32(uap, data), 0, sizeof(struct sun_dkctlr));
 		break;
 
-	case DKIOCGPART:
+	case SUN_DKIOCGPART:
             {
 		struct partinfo pi;
+		struct disklabel label;
+		int fd = SCARG(&bsd_ua, fd);
 
-		error = sunos32_do_ioctl(SCARG(&bsd_ua, fd), DIOCGPART, &pi, l);
+		error = sunos32_do_ioctl(fd, DIOCGPARTINFO, &pi, l);
 		if (error)
-			return (error);
+			return error;
+		error = sunos32_do_ioctl(fd, DIOCGDINFO, &label, l);
+		if (error)
+			return error;
 
-		if (pi.disklab->d_secpercyl == 0)
-			return (ERANGE);	/* XXX */
-		if (pi.part->p_offset % pi.disklab->d_secpercyl != 0)
-			return (ERANGE);	/* XXX */
+		if (label.d_secpercyl == 0)
+			return ERANGE;	/* XXX */
+		if (pi.pi_offset % label.d_secpercyl != 0)
+			return ERANGE;	/* XXX */
 		/* XXX can't do direct writes to a user address (dsl) */
 #define datapart	((struct sun_dkpart *)SCARG_P32(uap, data))
-		datapart->sdkp_cyloffset = pi.part->p_offset / pi.disklab->d_secpercyl;
-		datapart->sdkp_nsectors = pi.part->p_size;
+		datapart->sdkp_cyloffset = pi.pi_offset / label.d_secpercyl;
+		datapart->sdkp_nsectors = pi.pi_size;
 #undef datapart
 	    }
 

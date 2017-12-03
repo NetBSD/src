@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlanvar.h,v 1.9 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.9.44.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,13 +71,10 @@ struct ether_vlan_header {
 	uint16_t	evl_proto;
 } __packed;
 
-#define	EVL_VLANOFTAG(tag)	((tag) & 4095)
-#define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)
-
 /* Configuration structure for SIOCSETVLAN and SIOCGETVLAN ioctls. */
 struct vlanreq {
-	char	vlr_parent[IFNAMSIZ];
-	u_short	vlr_tag;
+	char		vlr_parent[IFNAMSIZ];
+	uint16_t	vlr_tag;
 };
 
 #define	SIOCSETVLAN	SIOCSIFGENERIC
@@ -86,6 +83,37 @@ struct vlanreq {
 #ifdef _KERNEL
 void	vlan_input(struct ifnet *, struct mbuf *);
 void	vlan_ifdetach(struct ifnet *);
+
+/*
+ * Locking notes:
+ * + ifv_list.list is protected by ifv_list.lock (an adaptive mutex)
+ *     ifv_list.list is list of all ifvlans, and it is used to avoid
+ *     unload while busy.
+ * + ifv_hash.lists is protected by
+ *   - ifv_hash.lock (an adaptive mutex) for writer
+ *   - pserialize for reader
+ *     ifv_hash.lists is hashed list of all configured
+ *     vlan interface, and it is used to avoid unload while busy.
+ * + ifvlan->ifv_linkmib is protected by
+ *   - ifvlan->ifv_lock (an adaptive mutex) for writer
+ *   - ifv_linkmib->ifvm_psref for reader
+ *     ifvlan->ifv_linkmib is used for variant values while tagging
+ *     and untagging
+ *
+ * Locking order:
+ *     - ifv_list.lock => struct ifvlan->ifv_lock
+ *     - struct ifvlan->ifv_lock => ifv_hash.lock
+ * Other mutexes must not hold simultaneously
+ *
+ *   NOTICE
+ *     - ifvlan must not have a variant value while tagging and
+ *       untagging. Such variant values must be in ifvlan->ifv_mib
+ *     - ifvlan->ifv_mib is modified like read-copy-update.
+ *       So, once we dereference ifvlan->ifv_mib,
+ *       we must keep the pointer during the same context. If we
+ *       re-dereference ifvlan->ifv_mib, the ifv_mib may be other
+ *       one because of concurrent writer processing.
+ */
 #endif	/* _KERNEL */
 
 #endif	/* !_NET_IF_VLANVAR_H_ */

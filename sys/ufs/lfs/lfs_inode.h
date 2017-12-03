@@ -1,6 +1,6 @@
-/*	$NetBSD: lfs_inode.h,v 1.5.2.3 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.5.2.4 2017/12/03 11:39:22 jdolecek Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
-/*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
+/*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -81,7 +81,7 @@ struct ulfs_lookup_results {
 	doff_t	  ulr_endoff;	/* End of useful stuff in directory. */
 	doff_t	  ulr_diroff;	/* Offset in dir, where we found last entry. */
 	doff_t	  ulr_offset;	/* Offset of free space in directory. */
-	u_int32_t ulr_reclen;	/* Size of found directory entry. */
+	uint32_t ulr_reclen;	/* Size of found directory entry. */
 };
 
 /* notyet XXX */
@@ -103,12 +103,30 @@ struct lfs_inode_ext;
  */
 struct inode {
 	struct genfs_node i_gnode;
-	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	TAILQ_ENTRY(inode) i_nextsnap; /* snapshot file list. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ulfsmount *i_ump; /* Mount point associated with this inode. */
 	struct	vnode *i_devvp;	/* Vnode for block I/O. */
-	u_int32_t i_flag;	/* flags, see below */
+
+	uint32_t i_state;	/* state */
+#define	IN_ACCESS	0x0001		/* Access time update request. */
+#define	IN_CHANGE	0x0002		/* Inode change time update request. */
+#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
+#define	IN_MODIFY	0x2000		/* Modification time update request. */
+#define	IN_MODIFIED	0x0008		/* Inode has been modified. */
+#define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
+/* 	   unused	0x0020 */	/* was IN_RENAME */
+#define	IN_SHLOCK	0x0040		/* File has shared lock. */
+#define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
+#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
+#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
+/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
+#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
+#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
+
+/* XXX this is missing some of the flags */
+#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
+
 	dev_t	  i_dev;	/* Device associated with the inode. */
 	ino_t	  i_number;	/* The identity of the inode. */
 
@@ -138,90 +156,29 @@ struct inode {
 	 *
 	 * These fields are currently only used by LFS.
 	 */
-	u_int16_t i_mode;	/* IFMT, permissions; see below. */
+	uint16_t i_mode;	/* IFMT, permissions; see below. */
 	int16_t   i_nlink;	/* File link count. */
-	u_int64_t i_size;	/* File byte count. */
-	u_int32_t i_flags;	/* Status flags (chflags). */
+	uint64_t i_size;	/* File byte count. */
+	uint32_t i_flags;	/* Status flags (chflags). */
 	int32_t   i_gen;	/* Generation number. */
-	u_int32_t i_uid;	/* File owner. */
-	u_int32_t i_gid;	/* File group. */
-	u_int16_t i_omode;	/* Old mode, for ulfs_reclaim. */
+	uint32_t i_uid;		/* File owner. */
+	uint32_t i_gid;		/* File group. */
+	uint16_t i_omode;	/* Old mode, for ulfs_reclaim. */
 
 	struct dirhash *i_dirhash;	/* Hashing for large directories */
 
 	/*
 	 * The on-disk dinode itself.
 	 */
-	union {
-		struct	ulfs1_dinode *ffs1_din;	/* 128 bytes of the on-disk dinode. */
-		struct	ulfs2_dinode *ffs2_din;
-	} i_din;
+	union lfs_dinode *i_din;
 };
-
-#define	i_ffs1_atime		i_din.ffs1_din->di_atime
-#define	i_ffs1_atimensec	i_din.ffs1_din->di_atimensec
-#define	i_ffs1_blocks		i_din.ffs1_din->di_blocks
-#define	i_ffs1_ctime		i_din.ffs1_din->di_ctime
-#define	i_ffs1_ctimensec	i_din.ffs1_din->di_ctimensec
-#define	i_ffs1_db		i_din.ffs1_din->di_db
-#define	i_ffs1_flags		i_din.ffs1_din->di_flags
-#define	i_ffs1_gen		i_din.ffs1_din->di_gen
-#define	i_ffs1_gid		i_din.ffs1_din->di_gid
-#define	i_ffs1_ib		i_din.ffs1_din->di_ib
-#define	i_ffs1_mode		i_din.ffs1_din->di_mode
-#define	i_ffs1_mtime		i_din.ffs1_din->di_mtime
-#define	i_ffs1_mtimensec	i_din.ffs1_din->di_mtimensec
-#define	i_ffs1_nlink		i_din.ffs1_din->di_nlink
-#define	i_ffs1_rdev		i_din.ffs1_din->di_rdev
-#define	i_ffs1_size		i_din.ffs1_din->di_size
-#define	i_ffs1_uid		i_din.ffs1_din->di_uid
-
-#define	i_ffs2_atime		i_din.ffs2_din->di_atime
-#define	i_ffs2_atimensec	i_din.ffs2_din->di_atimensec
-#define	i_ffs2_birthtime	i_din.ffs2_din->di_birthtime
-#define	i_ffs2_birthnsec	i_din.ffs2_din->di_birthnsec
-#define	i_ffs2_blocks		i_din.ffs2_din->di_blocks
-#define	i_ffs2_blksize		i_din.ffs2_din->di_blksize
-#define	i_ffs2_ctime		i_din.ffs2_din->di_ctime
-#define	i_ffs2_ctimensec	i_din.ffs2_din->di_ctimensec
-#define	i_ffs2_db		i_din.ffs2_din->di_db
-#define	i_ffs2_flags		i_din.ffs2_din->di_flags
-#define	i_ffs2_gen		i_din.ffs2_din->di_gen
-#define	i_ffs2_gid		i_din.ffs2_din->di_gid
-#define	i_ffs2_ib		i_din.ffs2_din->di_ib
-#define	i_ffs2_mode		i_din.ffs2_din->di_mode
-#define	i_ffs2_mtime		i_din.ffs2_din->di_mtime
-#define	i_ffs2_mtimensec	i_din.ffs2_din->di_mtimensec
-#define	i_ffs2_nlink		i_din.ffs2_din->di_nlink
-#define	i_ffs2_rdev		i_din.ffs2_din->di_rdev
-#define	i_ffs2_size		i_din.ffs2_din->di_size
-#define	i_ffs2_uid		i_din.ffs2_din->di_uid
-#define	i_ffs2_kernflags	i_din.ffs2_din->di_kernflags
-#define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
-#define	i_ffs2_extb		i_din.ffs2_din->di_extb
-
-/* These flags are kept in i_flag. */
-#define	IN_ACCESS	0x0001		/* Access time update request. */
-#define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
-#define	IN_MODIFY	0x2000		/* Modification time update request. */
-#define	IN_MODIFIED	0x0008		/* Inode has been modified. */
-#define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* 	   unused	0x0020 */	/* was IN_RENAME */
-#define	IN_SHLOCK	0x0040		/* File has shared lock. */
-#define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
-#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
-#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
-#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
-#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 
 /*
  * LFS inode extensions.
  */
 struct lfs_inode_ext {
 	off_t	  lfs_osize;		/* size of file on disk */
-	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
+	uint64_t  lfs_effnblocks;  /* number of blocks when i/o completes */
 	size_t	  lfs_fragsize[ULFS_NDADDR]; /* size of on-disk direct blocks */
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
@@ -230,7 +187,7 @@ struct lfs_inode_ext {
 #define LFSI_WRAPBLOCK    0x04
 #define LFSI_WRAPWAIT     0x08
 #define LFSI_BMAP         0x10
-	u_int32_t lfs_iflags;           /* Inode flags */
+	uint32_t lfs_iflags;		/* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
@@ -259,17 +216,6 @@ struct lfs_inode_ext {
 
 # define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_callback)
 
-# ifdef DEBUG
-#  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
-		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
-		cv_broadcast(&locked_queue_cv);				\
-	}								\
-} while (0)
-# else
-#  define LFS_DEBUG_COUNTLOCKED(m)
-# endif
-
 /* log for debugging writes to the Ifile */
 # ifdef DEBUG
 struct lfs_log_entry {
@@ -284,10 +230,8 @@ extern int lfs_lognum;
 extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #  define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
 #  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
-	int _s;								\
 									\
 	mutex_enter(&lfs_lock);						\
-	_s = splbio();							\
 	lfs_log[lfs_lognum].op = theop;					\
 	lfs_log[lfs_lognum].file = thefile;				\
 	lfs_log[lfs_lognum].line = (theline);				\
@@ -295,14 +239,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	lfs_log[lfs_lognum].block = (lbn);				\
 	lfs_log[lfs_lognum].flags = (theflags);				\
 	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
-	splx(_s);							\
 	mutex_exit(&lfs_lock);						\
-} while (0)
-
-#  define LFS_BCLEAN_LOG(fs, bp) do {					\
-	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
-		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
-			      bp->b_lblkno, bp->b_flags, curproc->p_pid);\
 } while (0)
 
 /* Must match list in lfs_vfsops.c ! */
@@ -325,6 +262,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 # else /* ! DEBUG */
 #  define LFS_BCLEAN_LOG(fs, bp)
 #  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp)->b_vp, (bp))
+#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) __nothing
 #  define DLOG(a)
 # endif /* ! DEBUG */
 #else /* ! _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.75.2.3 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.75.2.4 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.75.2.3 2014/08/20 00:04:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.75.2.4 2017/12/03 11:38:41 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -111,7 +111,7 @@ struct vfsops cd9660_vfsops = {
 	.vfs_mountroot = cd9660_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -191,13 +191,13 @@ cd9660_mountroot(void)
 
 	args.flags = ISOFSMNT_ROOT;
 	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 	mountlist_append(mp);
 	(void)cd9660_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (0);
 }
 
@@ -381,7 +381,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
 		if ((error = bread(devvp, (iso_blknum+sess) * btodb(iso_bsize),
-				   iso_bsize, NOCRED, 0, &bp)) != 0)
+				   iso_bsize, 0, &bp)) != 0)
 			goto out;
 
 		vdp = (struct iso_volume_descriptor *)bp->b_data;
@@ -458,7 +458,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 		if ((error = bread(isomp->im_devvp,
 				   (isomp->root_extent + ext_attr_length) <<
 				   (isomp->im_bshift - DEV_BSHIFT),
-				   isomp->logical_block_size, NOCRED,
+				   isomp->logical_block_size,
 				   0, &bp)) != 0)
 		    goto out;
 
@@ -734,7 +734,7 @@ cd9660_loadvnode(struct mount *mp, struct vnode *vp,
 
 	error = bread(imp->im_devvp,
 		      lbn << (imp->im_bshift - DEV_BSHIFT),
-		      imp->logical_block_size, NOCRED, 0, &bp);
+		      imp->logical_block_size, 0, &bp);
 	if (error) {
 		pool_put(&cd9660_node_pool, ip);
 		printf("fhtovp: bread error %d\n",error);

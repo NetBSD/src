@@ -1,6 +1,6 @@
 There are no CVS/SVN ids in sljit repository but don't forget to
 remove .svn before importing the new version.
 
-Current sljit import is @ r257:
+Current sljit import is @ r313:
 
-svn co https://sljit.svn.sourceforge.net/svnroot/sljit@257 dist
+svn co https://svn.code.sf.net/p/sljit/code@r313 dist

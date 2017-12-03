@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.78.6.2 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.78.6.3 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.78.6.2 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.78.6.3 2017/12/03 11:37:03 jdolecek Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.78.6.2 2014/08/20 00:03:38 tls Exp $")
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -247,6 +247,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -1064,9 +1065,6 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 			 */
 			return;
 		}
-
-		/* Successfully received a packet.  Update stat. */
-		ifp->if_ipackets++;
 	}
 }
 
@@ -1143,7 +1141,7 @@ mb86960_intr(void *arg)
 		 * receive operation priority.
 		 */
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)
-			mb86960_start(ifp);
+			if_schedule_deferred_start(ifp);
 
 		if (rstat != 0 || tstat != 0)
 			rnd_add_uint32(&sc->rnd_source, rstat + tstat);
@@ -1286,7 +1284,7 @@ mb86960_get_packet(struct mb86960_softc *sc, u_int len)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = len;
 
 	/* The following silliness is to make NFS happy. */
@@ -1330,13 +1328,7 @@ mb86960_get_packet(struct mb86960_softc *sc, u_int len)
 		bus_space_read_multi_stream_2(bst, bsh, FE_BMPR8,
 		    mtod(m, uint16_t *), (len + 1) >> 1);
 
-	/*
-	 * Check if there's a BPF listener on this interface.  If so, hand off
-	 * the raw packet to bpf.
-	 */
-	bpf_mtap(ifp, m);
-
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 	return 1;
 }
 

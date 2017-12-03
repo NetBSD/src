@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.20.1 2014/08/20 00:04:37 tls Exp $
+#	$NetBSD: Makefile,v 1.1.20.2 2017/12/03 11:39:07 jdolecek Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../kern
 
 LIB=	rumpdev_drvctl
+COMMENT=/dev/drvctl driver
+
 IOCONF=	DRVCTL.ioconf
 
 SRCS=	kern_drvctl.c

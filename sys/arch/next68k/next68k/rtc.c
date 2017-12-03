@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.15.22.1 2014/08/20 00:03:17 tls Exp $        */
+/*      $NetBSD: rtc.c,v 1.15.22.2 2017/12/03 11:36:33 jdolecek Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15.22.1 2014/08/20 00:03:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15.22.2 2017/12/03 11:36:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -272,20 +272,20 @@ gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	u_char h, y;
 	
-	y = FROMBCD(rtc_read(RTC_YR));
+	y = bcdtobin(rtc_read(RTC_YR));
 	if (y >= 69) {
 		dt->dt_year = 1900+y;
 	} else {
 		dt->dt_year = 2000+y;
 	}
 
-	dt->dt_mon	= FROMBCD(rtc_read(RTC_MON)&0x1f);
-	dt->dt_day	= FROMBCD(rtc_read(RTC_DATE)&0x3f);
-	dt->dt_wday = FROMBCD(rtc_read(RTC_DAY)&0x7);
+	dt->dt_mon	= bcdtobin(rtc_read(RTC_MON)&0x1f);
+	dt->dt_day	= bcdtobin(rtc_read(RTC_DATE)&0x3f);
+	dt->dt_wday = bcdtobin(rtc_read(RTC_DAY)&0x7);
 
 	h = rtc_read(RTC_HRS);
 	if (h & 0x80) {			/* time is am/pm format */
-		dt->dt_hour = FROMBCD(h&0x1f);
+		dt->dt_hour = bcdtobin(h&0x1f);
 		if (h & 0x20) { /* pm */
 			if (dt->dt_hour < 12) dt->dt_hour += 12;
 		} else {  /* am */
@@ -294,12 +294,12 @@ gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 #ifdef notdef
 	} else {	/* time is 24 hour format */
 		struct clock_ymdhms val;
-		val.dt_hour = FROMBCD(h & 0x3f);
+		val.dt_hour = bcdtobin(h & 0x3f);
 #endif
 	}
 
-	dt->dt_min	= FROMBCD(rtc_read(RTC_MIN)&0x7f);
-	dt->dt_sec	= FROMBCD(rtc_read(RTC_SEC)&0x7f);
+	dt->dt_min	= bcdtobin(rtc_read(RTC_MIN)&0x7f);
+	dt->dt_sec	= bcdtobin(rtc_read(RTC_SEC)&0x7f);
 
 	return 0;
 }
@@ -317,25 +317,25 @@ settime_old(todr_chip_handle_t tcr, struct clock_ymdhms *dt)
 	rtc_print();
 #endif
 
-	rtc_write(RTC_SEC,TOBCD(dt->dt_sec));
-	rtc_write(RTC_MIN,TOBCD(dt->dt_min));
+	rtc_write(RTC_SEC,bintobcd(dt->dt_sec));
+	rtc_write(RTC_MIN,bintobcd(dt->dt_min));
 	h = rtc_read(RTC_HRS);
 	if (h & 0x80) {		/* time is am/pm format */
 		if (dt->dt_hour == 0) {
-			rtc_write(RTC_HRS,TOBCD(12)|0x80);
+			rtc_write(RTC_HRS,bintobcd(12)|0x80);
 		} else if (dt->dt_hour < 12) {	/* am */
-			rtc_write(RTC_HRS,TOBCD(dt->dt_hour)|0x80);
+			rtc_write(RTC_HRS,bintobcd(dt->dt_hour)|0x80);
 		} else if (dt->dt_hour == 12) {
-				rtc_write(RTC_HRS,TOBCD(12)|0x80|0x20);
+				rtc_write(RTC_HRS,bintobcd(12)|0x80|0x20);
 		} else 		/* pm */
-			rtc_write(RTC_HRS,TOBCD(dt->dt_hour-12)|0x80|0x20);
+			rtc_write(RTC_HRS,bintobcd(dt->dt_hour-12)|0x80|0x20);
 	} else {	/* time is 24 hour format */
-			rtc_write(RTC_HRS,TOBCD(dt->dt_hour));
+			rtc_write(RTC_HRS,bintobcd(dt->dt_hour));
 	}
-	rtc_write(RTC_DAY,TOBCD(dt->dt_wday));
-	rtc_write(RTC_DATE,TOBCD(dt->dt_day));
-	rtc_write(RTC_MON,TOBCD(dt->dt_mon));
-	rtc_write(RTC_YR,TOBCD(dt->dt_year%100));
+	rtc_write(RTC_DAY,bintobcd(dt->dt_wday));
+	rtc_write(RTC_DATE,bintobcd(dt->dt_day));
+	rtc_write(RTC_MON,bintobcd(dt->dt_mon));
+	rtc_write(RTC_YR,bintobcd(dt->dt_year%100));
 
 #ifdef RTC_DEBUG
 	printf("Regs after:\n",secs);

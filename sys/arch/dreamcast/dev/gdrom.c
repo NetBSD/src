@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.35.2.1 2014/08/20 00:02:51 tls Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.35.2.2 2017/12/03 11:36:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.35.2.1 2014/08/20 00:02:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.35.2.2 2017/12/03 11:36:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,9 @@ struct gdrom_softc {
 CFATTACH_DECL_NEW(gdrom, sizeof(struct gdrom_softc),
     gdrommatch, gdromattach, NULL, NULL);
 
-struct dkdriver gdromdkdriver = { gdromstrategy };
+struct dkdriver gdromdkdriver = {
+	.d_strategy = gdromstrategy
+};
 
 
 struct gd_toc {
@@ -130,7 +132,7 @@ struct gd_toc {
 #define TOC_CTRL(n)	(((n) & 0xf0) >> 4)
 #define TOC_TRACK(n)	(((n) & 0x0000ff00) >> 8)
 
-#define GDROM(o)	(*(volatile uint8_t *)(0xa05f7000 + (o)))
+#define GDROM(o)	(*(volatile uint8_t *)(0xa05f7000U + (o)))
 
 #define GDSTATSTAT(n)	((n) & 0xf)
 #define GDSTATDISK(n)	(((n) >> 4) & 0xf)

@@ -40,7 +40,11 @@
 
 struct nouveau_channel;
 
+#ifdef _LP64
 #define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
+#else
+#define DRM_FILE_PAGE_OFFSET (0xa0000000UL >> PAGE_SHIFT)
+#endif
 
 #include "nouveau_fence.h"
 #include "nouveau_bios.h"
@@ -139,7 +143,9 @@ struct nouveau_drm {
 	bool have_disp_power_ref;
 
 	struct dev_pm_domain vga_pm_domain;
+#ifndef __NetBSD__		/* XXX nouveau hdmi */
 	struct pci_dev *hdmi_device;
+#endif
 };
 
 static inline struct nouveau_drm *
@@ -154,8 +160,13 @@ nouveau_dev(struct drm_device *dev)
 	return nv_device(nouveau_drm(dev)->device);
 }
 
+#ifdef __NetBSD__
+int nouveau_pmops_suspend(struct drm_device *);
+int nouveau_pmops_resume(struct drm_device *);
+#else
 int nouveau_pmops_suspend(struct device *);
 int nouveau_pmops_resume(struct device *);
+#endif
 
 #define NV_FATAL(cli, fmt, args...) nv_fatal((cli), fmt, ##args)
 #define NV_ERROR(cli, fmt, args...) nv_error((cli), fmt, ##args)

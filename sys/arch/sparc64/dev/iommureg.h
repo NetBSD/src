@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.19 2011/03/20 20:42:06 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.19.14.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,11 +63,11 @@ struct iommureg2 {
 	volatile uint64_t	iommu_cr;	/* IOMMU control register */
 	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
 	volatile uint64_t	iommu_flush;	/* IOMMU flush register */
-	volatile u_int64_t	iommu_ctxflush;
-	volatile u_int64_t	iommu_reserved[28];
-	volatile u_int64_t	iommu_cache_flush;
-	volatile u_int64_t	iommu_cache_invalidate;
-	volatile u_int64_t	iommu_reserved2[30];
+	volatile uint64_t	iommu_ctxflush;
+	volatile uint64_t	iommu_reserved[28];
+	volatile uint64_t	iommu_cache_flush;
+	volatile uint64_t	iommu_cache_invalidate;
+	volatile uint64_t	iommu_reserved2[30];
 };
 
 /* streaming buffer registers */
@@ -109,6 +109,11 @@ struct iommu_strbuf {
 #define IOMMUCR_64KPG		0x000000000000000004LL	/* 64K iommu page size */
 #define IOMMUCR_DE		0x000000000000000002LL	/* Diag enable */
 #define IOMMUCR_EN		0x000000000000000001LL	/* Enable IOMMU */
+
+#define IOMMUCR_FIRE_SE		0x000000000000000400LL	/* Snoop enable */
+#define IOMMUCR_FIRE_CM_EN	0x000000000000000300LL  /* Cache mode enable */
+#define IOMMUCR_FIRE_BE		0x000000000000000002LL	/* Bypass enable */
+#define IOMMUCR_FIRE_TE		0x000000000000000001LL	/* Translation enabled */
 
 /*
  * IOMMU stuff

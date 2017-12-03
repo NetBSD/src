@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.22.2.1 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -22,7 +22,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 /*
@@ -102,15 +101,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.22.2.1 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
-#if !defined(__x86_64__)
-#include "opt_kstack_dr0.h"
-#endif /* !defined(__x86_64__) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $");
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-#include <sys/xcall.h>
 
 #include <uvm/uvm.h>
 
@@ -151,7 +146,7 @@ extern paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
-        paddr_t ma;
+	paddr_t ma;
 
 	if (__predict_false(pa < pmap_pa_start || pmap_pa_end <= pa)) {
 		ma = pa; /* XXX hack */
@@ -180,21 +175,25 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 	else
 		pte = kvtopte(va);
 
-	npte = ma | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
-	     PG_V | PG_k;
+	npte = ma | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) | PG_V;
 	if (flags & PMAP_NOCACHE)
 		npte |= PG_N;
 
 	if ((cpu_feature[2] & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;
 
-	opte = pmap_pte_testset (pte, npte); /* zap! */
+	opte = pmap_pte_testset(pte, npte); /* zap! */
 
 	if (pmap_valid_entry(opte)) {
 #if defined(MULTIPROCESSOR)
-		kpreempt_disable();
-		pmap_tlb_shootdown(pmap_kernel(), va, opte, TLBSHOOT_KENTER);
-		kpreempt_enable();
+		if (__predict_false(x86_mp_online == false)) {
+			pmap_update_pg(va);
+		} else {
+			kpreempt_disable();
+			pmap_tlb_shootdown(pmap_kernel(), va, opte,
+			    TLBSHOOT_KENTER);
+			kpreempt_enable();
+		}
 #else
 		/* Don't bother deferring in the single CPU case. */
 		pmap_update_pg(va);
@@ -335,13 +334,13 @@ pmap_kpm_setpte(struct cpu_info *ci, struct pmap *pmap, int index)
 	}
 #ifdef PAE
 	xpq_queue_pte_update(
-		xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(index)]),
-		pmap->pm_pdir[index]);
+	    xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(index)]),
+	    pmap->pm_pdir[index]);
 #elif defined(__x86_64__)
 	xpq_queue_pte_update(
-		xpmap_ptetomach(&ci->ci_kpm_pdir[index]),
-		pmap->pm_pdir[index]);
-#endif /* PAE */
+	    xpmap_ptetomach(&ci->ci_kpm_pdir[index]),
+	    pmap->pm_pdir[index]);
+#endif
 	xpq_flush_queue();
 }
 

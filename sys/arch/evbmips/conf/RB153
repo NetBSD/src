@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.10.8.2 2014/08/20 00:02:58 tls Exp $
+#	$NetBSD: RB153,v 1.10.8.3 2017/12/03 11:36:09 jdolecek Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.10.8.2 $"
+#ident 		"RB153-$Revision: 1.10.8.3 $"
 
 maxusers	32
 
@@ -27,13 +27,12 @@ options 	TCP_OUTPUT_COUNTERS
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
-options 	DEBUG		# extra kernel debugging support
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
 makeoptions 	CPUFLAGS="-march=4kc"
-options 	SYMTAB_SPACE=440000	# size for embedded symbol table
+makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
@@ -60,6 +59,7 @@ file-system	NULLFS		# NULL layered filesystem
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

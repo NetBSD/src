@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.7 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.7.44.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _SPARC_INT_LIMITS_H_
 #define _SPARC_INT_LIMITS_H_
 
+#ifdef __SIG_ATOMIC_MAX__
+#include <sys/common_int_limits.h>
+#else
 /*
  * 7.18.2 Limits of specified-width integer types
  */
@@ -180,5 +183,7 @@
 #else
 #define	SIZE_MAX	0xffffffffUL			/* size_t	  */
 #endif
+
+#endif /* !__SIG_ATOMIC_MAX__ */
 
 #endif /* !_SPARC_INT_LIMITS_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscallargs.h,v 1.61.22.1 2014/08/20 00:03:33 tls Exp $ */
+/* $NetBSD: osf1_syscallargs.h,v 1.61.22.2 2017/12/03 11:36:56 jdolecek Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _OSF1_SYS_SYSCALLARGS_H_
 #define	_OSF1_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	OSF1_SYS_MAXSYSARGS	8
 

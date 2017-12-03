@@ -1,4 +1,4 @@
-/*	$NetBSD: nfssvc.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfssvc.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: head/sys/nfs/nfssvc.h 243782 2012-12-02 01:16:04Z rmacklem 
- * $NetBSD: nfssvc.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $
+ * FreeBSD: head/sys/nfs/nfssvc.h 291527 2015-11-30 21:54:27Z rmacklem 
+ * $NetBSD: nfssvc.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $
  */
 
 #ifndef _NFS_NFSSVC_H_
@@ -71,6 +71,7 @@
 #define	NFSSVC_SUSPENDNFSD	0x04000000
 #define	NFSSVC_RESUMENFSD	0x08000000
 #define	NFSSVC_DUMPMNTOPTS	0x10000000
+#define	NFSSVC_NEWSTRUCT	0x20000000
 
 /* Argument structure for NFSSVC_DUMPMNTOPTS. */
 struct nfscl_dumpmntopts {

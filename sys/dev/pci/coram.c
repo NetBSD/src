@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.10.6.2 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: coram.c,v 1.10.6.3 2017/12/03 11:37:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.10.6.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.10.6.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -612,9 +612,6 @@ coram_mpeg_attach(struct coram_softc *sc)
 	sc->sc_riscbufsz = ch->csc_riscsz;
 	sc->sc_riscbuf = kmem_alloc(ch->csc_riscsz, KM_SLEEP);
 
-	if ( sc->sc_riscbuf == NULL )
-		panic("riscbuf null");
-
 	coram_mpeg_reset(sc);
 
 	sc->sc_tsbuf = NULL;
@@ -796,8 +793,6 @@ coram_mpeg_malloc(struct coram_softc *sc, size_t size)
 	int err;
 
 	p = kmem_alloc(sizeof(struct coram_dma), KM_SLEEP);
-	if ( p == NULL )
-		return NULL;
 	err = coram_allocmem(sc, size, 16, p);
 	if (err) {
 		kmem_free(p, sizeof(struct coram_dma));

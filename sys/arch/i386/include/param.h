@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.77 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.77.2.1 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,13 +65,20 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
+#define	MAXIOMEM	0xffffffff
+
+/*
+ * Maximum physical memory supported by the implementation.
+ */
+#ifdef PAE
+#define MAXPHYSMEM	0x1000000000ULL /* 64GB */
+#else
+#define MAXPHYSMEM	0x100000000ULL	/* 4GB */
+#endif
+
 #if defined(_KERNEL_OPT)
 #include "opt_kernbase.h"
 #endif /* defined(_KERNEL_OPT) */
-
-#ifdef KERNBASE_LOCORE
-#error "You should only re-define KERNBASE"
-#endif
 
 #ifndef	KERNBASE
 #define	KERNBASE	0xc0000000UL	/* start of kernel virtual space */
@@ -101,7 +108,7 @@
 #define	INTRSTACKSIZE	8192
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	8*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	(8*NBPG)	/* default message buffer size */
 #endif
 
 /*
@@ -121,7 +128,7 @@
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #ifndef NMBCLUSTERS_MAX
-#define	NMBCLUSTERS_MAX	(0x2000000 / MCLBYTES)	/* Limit to 64MB for clusters */
+#define	NMBCLUSTERS_MAX	(0x4000000 / MCLBYTES)	/* Limit to 64MB for clusters */
 #endif
 
 #ifndef NFS_RSIZE

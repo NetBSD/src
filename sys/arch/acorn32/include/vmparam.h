@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2012/02/18 16:29:36 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25.2.1 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -47,11 +47,6 @@
 #define	KERNEL_BASE		0xf0000000
 
 /*
- * Override the default pager_map size, there's not enough KVA.
- */
-#define PAGER_MAP_DEFAULT_SIZE		(4 * 1024 * 1024)
-
-/*
  * Size of User Raw I/O map
  */
 
@@ -79,7 +74,7 @@
  * we support 2 free lists:
  *
  *	- DEFAULT for all systems
- *	- ISADMA for the ISA DMA range on Sharks only
+ *	- ISADMA for the ISA DMA range
  *	- RPCDMA for the DMA range on RiscPC's + Kinetic cards
  */
 

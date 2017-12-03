@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.7.4.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: bitops.h,v 1.7.4.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,10 +42,24 @@
 
 #include <lib/libkern/libkern.h>
 
+/*
+ * Linux __ffs/__ffs64 is zero-based; zero input is undefined.  Our
+ * ffs/ffs64 is one-based; zero input yields zero.
+ */
+static inline unsigned long
+__ffs(unsigned long x)
+{
+
+	KASSERT(x != 0);
+	return ffs64(x) - 1;
+}
+
 static inline unsigned long
 __ffs64(uint64_t x)
 {
-	return ffs64(x);
+
+	KASSERT(x != 0);
+	return ffs64(x) - 1;
 }
 
 static inline unsigned int
@@ -159,6 +173,13 @@ find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
 
 	result += ffs(~*p | (~0UL << MIN(nbits, bpl)));
 	return result;
+}
+
+static inline unsigned
+hweight8(unsigned w)
+{
+
+	return popcount(w & 0xff);
 }
 
 #endif  /* _LINUX_BITOPS_H_ */

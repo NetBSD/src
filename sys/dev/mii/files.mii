@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.48.14.1 2014/08/20 00:03:41 tls Exp $
+#	$NetBSD: files.mii,v 1.48.14.2 2017/12/03 11:37:06 jdolecek Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
 
@@ -77,9 +77,15 @@ device	lxtphy: mii_phy, ukphy_subr
 attach	lxtphy at mii
 file	dev/mii/lxtphy.c			lxtphy
 
+# Old
 device	makphy: mii_phy
 attach	makphy at mii
 file	dev/mii/makphy.c			makphy
+
+# New
+device	e1000phy: mii_phy
+attach	e1000phy at mii
+file	dev/mii/e1000phy.c			e1000phy
 
 device	icsphy: mii_phy
 attach	icsphy at mii

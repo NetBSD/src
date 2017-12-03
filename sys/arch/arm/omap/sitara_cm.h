@@ -1,4 +1,4 @@
-/* $NetBSD: sitara_cm.h,v 1.1.4.2 2013/06/23 06:20:01 tls Exp $ */
+/* $NetBSD: sitara_cm.h,v 1.1.4.3 2017/12/03 11:35:55 jdolecek Exp $ */
 /*
  * Copyright (c) 2010
  *	Ben Gray <ben.r.gray@gmail.com>.
@@ -59,8 +59,8 @@ struct sitara_cm_padstate {
 struct sitara_cm_device {
 	uint16_t			padconf_muxmode_mask;
 	uint16_t			padconf_sate_mask;
-	struct sitara_cm_padstate	*padstate;
-	struct sitara_cm_padconf		*padconf;
+	const struct sitara_cm_padstate	*padstate;
+	const struct sitara_cm_padconf	*padconf;
 };
 
 int sitara_cm_padconf_set(const char *padname, const char *muxmode, 

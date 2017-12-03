@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.22.6.1 2014/08/20 00:02:40 tls Exp $ */
+/* $NetBSD: arckbd.c,v 1.22.6.2 2017/12/03 11:35:44 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.22.6.1 2014/08/20 00:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.22.6.2 2017/12/03 11:35:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,8 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.22.6.1 2014/08/20 00:02:40 tls Exp $");
 #include "wskbd.h"
 #include "wsmouse.h"
 
-
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 /* #define ARCKBD_DEBUG */
 

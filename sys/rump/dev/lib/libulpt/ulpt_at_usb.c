@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt_at_usb.c,v 1.5 2010/03/26 15:51:55 pooka Exp $	*/
+/*	$NetBSD: ulpt_at_usb.c,v 1.5.20.1 2017/12/03 11:39:10 jdolecek Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -8,9 +8,8 @@
 
 #include "ioconf.c"
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {

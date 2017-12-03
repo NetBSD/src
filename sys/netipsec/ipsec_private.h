@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_private.h,v 1.3 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: ipsec_private.h,v 1.3.48.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,6 +67,40 @@ extern	percpu_t *pfkeystat_percpu;
 #define	PFKEY_STAT_PUTREF()	_NET_STAT_PUTREF(pfkeystat_percpu)
 #define	PFKEY_STATINC(x)	_NET_STATINC(pfkeystat_percpu, x)
 #define	PFKEY_STATADD(x, v)	_NET_STATADD(pfkeystat_percpu, x, v)
+
+/*
+ * Remainings of ipsec_osdep.h
+ */
+#define IPSEC_SPLASSERT_SOFTNET(msg)	do {} while (0)
+
+/* XXX wrong, but close enough for restricted ipsec usage. */
+#define M_EXT_WRITABLE(m) (!M_READONLY(m))
+
+/* superuser opened socket? */
+#define IPSEC_PRIVILEGED_SO(so) ((so)->so_uidinfo->ui_uid == 0)
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
+#ifdef NET_MPSAFE
+#define IPSEC_DECLARE_LOCK_VARIABLE
+#define IPSEC_ACQUIRE_GLOBAL_LOCKS()	do { } while (0)
+#define IPSEC_RELEASE_GLOBAL_LOCKS()	do { } while (0)
+#else
+#include <sys/socketvar.h> /* for softnet_lock */
+
+#define IPSEC_DECLARE_LOCK_VARIABLE	int __s
+#define IPSEC_ACQUIRE_GLOBAL_LOCKS()	do {					\
+					__s = splsoftnet();		\
+					mutex_enter(softnet_lock);	\
+				} while (0)
+#define IPSEC_RELEASE_GLOBAL_LOCKS()	do {					\
+					mutex_exit(softnet_lock);	\
+					splx(__s);			\
+				} while (0)
+#endif
+
 #endif /* _KERNEL */
 
 #endif /* !_NETIPSEC_IPSEC_PRIVATE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpexvar.h,v 1.3.2.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: mvpexvar.h,v 1.3.2.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -38,6 +38,7 @@ struct mvpex_intrhand {
 
 	void *ih_intrtab;
 
+	char ih_evname[PCI_INTRSTR_LEN];
 	struct evcnt ih_evcnt;
 };
 

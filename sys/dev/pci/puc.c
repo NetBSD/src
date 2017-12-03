@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.32.14.1 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: puc.c,v 1.32.14.2 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.32.14.1 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.32.14.2 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,8 @@ puc_attach(device_t parent, device_t self, void *aux)
 
 	/* SB16C10xx board specific initialization */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYSTEMBASE &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1054 ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1050 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1054 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1058)) {
 		if (!sc->sc_bar_mappings[1].mapped) {
 			aprint_error_dev(self,
@@ -300,16 +301,16 @@ puc_attach(device_t parent, device_t self, void *aux)
 		    sc->sc_bar_mappings[barindex].s -
 		      sc->sc_desc->ports[i].offset,
 		    &subregion_handle) != 0) {
-			aprint_error_dev(self, "couldn't get subregion for port %d\n", i);
+			aprint_error_dev(self,
+			    "couldn't get subregion for port %d\n", i);
 			continue;
 		}
 		paa.h = subregion_handle;
 
 #if 0
 		printf("%s: port %d: %s @ (index %d) 0x%x (0x%lx, 0x%lx)\n",
-		    device_xname(self), paa.port,
-		    puc_port_type_name(paa.type), barindex, (int)paa.a,
-		    (long)paa.t, (long)paa.h);
+		    device_xname(self), paa.port, puc_port_type_name(paa.type),
+		    barindex, (int)paa.a, (long)paa.t, (long)paa.h);
 #endif
 
 		locs[PUCCF_PORT] = i;

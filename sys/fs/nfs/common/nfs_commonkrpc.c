@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonkrpc.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfs_commonkrpc.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -33,16 +33,20 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonkrpc.c 253049 2013-07-09 01:05:28Z rmacklem "); */
-__RCSID("$NetBSD: nfs_commonkrpc.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonkrpc.c 304026 2016-08-12 22:44:59Z rmacklem "); */
+__RCSID("$NetBSD: nfs_commonkrpc.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 /*
  * Socket operations for use by nfs
  */
 
-#include "opt_kdtrace.h"
+#ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
+#include "opt_newnfs.h"
+#if 0
 #include "opt_kgssapi.h"
-#include "opt_nfs.h"
+#endif
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +65,11 @@ __RCSID("$NetBSD: nfs_commonkrpc.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $"
 #include <sys/vnode.h>
 
 #include <rpc/rpc.h>
+#include <fs/nfs/common/krpc.h>
 
 #include <kgssapi/krb5/kcrypto.h>
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
@@ -91,7 +96,7 @@ uint32_t	nfscl_nfs4_done_probes[NFSV41_NPROCS + 1];
 NFSSTATESPINLOCK;
 NFSREQSPINLOCK;
 NFSDLOCKMUTEX;
-extern struct nfsstats newnfsstats;
+extern struct nfsstatsv1 nfsstatsv1;
 extern struct nfsreqhead nfsd_reqq;
 extern int nfscl_ticks;
 extern void (*ncl_call_invalcaches)(struct vnode *);
@@ -262,7 +267,7 @@ newnfs_connect(struct nfsmount *nmp, struct nfssockreq *nrp,
 
 	client = clnt_reconnect_create(nconf, saddr, nrp->nr_prog,
 	    nrp->nr_vers, sndreserve, rcvreserve);
-	CLNT_CONTROL(client, CLSET_WAITCHAN, "newnfsreq");
+	CLNT_CONTROL(client, CLSET_WAITCHAN, "nfsreq");
 	if (nmp != NULL) {
 		if ((nmp->nm_flag & NFSMNT_INT))
 			CLNT_CONTROL(client, CLSET_INTERRUPTIBLE, &one);
@@ -338,24 +343,25 @@ newnfs_connect(struct nfsmount *nmp, struct nfssockreq *nrp,
 
 	mtx_lock(&nrp->nr_mtx);
 	if (nrp->nr_client != NULL) {
+		mtx_unlock(&nrp->nr_mtx);
 		/*
 		 * Someone else already connected.
 		 */
 		CLNT_RELEASE(client);
 	} else {
 		nrp->nr_client = client;
+		/*
+		 * Protocols that do not require connections may be optionally
+		 * left unconnected for servers that reply from a port other
+		 * than NFS_PORT.
+		 */
+		if (nmp == NULL || (nmp->nm_flag & NFSMNT_NOCONN) == 0) {
+			mtx_unlock(&nrp->nr_mtx);
+			CLNT_CONTROL(client, CLSET_CONNECT, &one);
+		} else
+			mtx_unlock(&nrp->nr_mtx);
 	}
 
-	/*
-	 * Protocols that do not require connections may be optionally left
-	 * unconnected for servers that reply from a port other than NFS_PORT.
-	 */
-	if (nmp == NULL || (nmp->nm_flag & NFSMNT_NOCONN) == 0) {
-		mtx_unlock(&nrp->nr_mtx);
-		CLNT_CONTROL(client, CLSET_CONNECT, &one);
-	} else {
-		mtx_unlock(&nrp->nr_mtx);
-	}
 
 	/* Restore current thread's credentials. */
 	td->td_ucred = origcred;
@@ -643,7 +649,7 @@ newnfs_request(struct nfsrv_descript *nd, struct nfsmount *nmp,
 		procnum = NFSV4PROC_COMPOUND;
 
 	if (nmp != NULL) {
-		NFSINCRGLOBAL(newnfsstats.rpcrequests);
+		NFSINCRGLOBAL(nfsstatsv1.rpcrequests);
 
 		/* Map the procnum to the old NFSv2 one, as required. */
 		if ((nd->nd_flag & ND_NFSV2) != 0) {
@@ -740,8 +746,12 @@ tryagain:
 	}
 
 	nd->nd_mrep = NULL;
-	stat = CLNT_CALL_MBUF(nrp->nr_client, &ext, procnum, nd->nd_mreq,
-	    &nd->nd_mrep, timo);
+	if (clp != NULL && sep != NULL)
+		stat = clnt_bck_call(nrp->nr_client, &ext, procnum,
+		    nd->nd_mreq, &nd->nd_mrep, timo, sep->nfsess_xprt);
+	else
+		stat = CLNT_CALL_MBUF(nrp->nr_client, &ext, procnum,
+		    nd->nd_mreq, &nd->nd_mrep, timo);
 
 	if (rep != NULL) {
 		/*
@@ -759,18 +769,18 @@ tryagain:
 	if (stat == RPC_SUCCESS) {
 		error = 0;
 	} else if (stat == RPC_TIMEDOUT) {
-		NFSINCRGLOBAL(newnfsstats.rpctimeouts);
+		NFSINCRGLOBAL(nfsstatsv1.rpctimeouts);
 		error = ETIMEDOUT;
 	} else if (stat == RPC_VERSMISMATCH) {
-		NFSINCRGLOBAL(newnfsstats.rpcinvalid);
+		NFSINCRGLOBAL(nfsstatsv1.rpcinvalid);
 		error = EOPNOTSUPP;
 	} else if (stat == RPC_PROGVERSMISMATCH) {
-		NFSINCRGLOBAL(newnfsstats.rpcinvalid);
+		NFSINCRGLOBAL(nfsstatsv1.rpcinvalid);
 		error = EPROTONOSUPPORT;
 	} else if (stat == RPC_INTR) {
 		error = EINTR;
 	} else {
-		NFSINCRGLOBAL(newnfsstats.rpcinvalid);
+		NFSINCRGLOBAL(nfsstatsv1.rpcinvalid);
 		error = EACCES;
 	}
 	if (error) {
@@ -796,7 +806,8 @@ tryagain:
 	nd->nd_md = nd->nd_mrep;
 	nd->nd_dpos = NFSMTOD(nd->nd_md, caddr_t);
 	nd->nd_repstat = 0;
-	if (nd->nd_procnum != NFSPROC_NULL) {
+	if (nd->nd_procnum != NFSPROC_NULL &&
+	    nd->nd_procnum != NFSV4PROC_CBNULL) {
 		/* If sep == NULL, set it to the default in nmp. */
 		if (sep == NULL && nmp != NULL)
 			sep = NFSMNT_MDSSESSION(nmp);
@@ -828,11 +839,20 @@ tryagain:
 			/*
 			 * If the first op is Sequence, free up the slot.
 			 */
-			if (nmp != NULL && i == NFSV4OP_SEQUENCE && j != 0)
+			if ((nmp != NULL && i == NFSV4OP_SEQUENCE && j != 0) ||
+			    (clp != NULL && i == NFSV4OP_CBSEQUENCE && j != 0))
 				NFSCL_DEBUG(1, "failed seq=%d\n", j);
-			if (nmp != NULL && i == NFSV4OP_SEQUENCE && j == 0) {
-				NFSM_DISSECT(tl, uint32_t *, NFSX_V4SESSIONID +
-				    5 * NFSX_UNSIGNED);
+			if ((nmp != NULL && i == NFSV4OP_SEQUENCE && j == 0) ||
+			    (clp != NULL && i == NFSV4OP_CBSEQUENCE && j == 0)
+			    ) {
+				if (i == NFSV4OP_SEQUENCE)
+					NFSM_DISSECT(tl, uint32_t *,
+					    NFSX_V4SESSIONID +
+					    5 * NFSX_UNSIGNED);
+				else
+					NFSM_DISSECT(tl, uint32_t *,
+					    NFSX_V4SESSIONID +
+					    4 * NFSX_UNSIGNED);
 				mtx_lock(&sep->nfsess_mtx);
 				tl += NFSX_V4SESSIONID / NFSX_UNSIGNED;
 				retseq = fxdr_unsigned(uint32_t, *tl++);
@@ -1040,7 +1060,7 @@ nfs_sig_pending(sigset_t set)
 {
 	int i;
 	
-	for (i = 0 ; i < sizeof(newnfs_sig_set)/sizeof(int) ; i++)
+	for (i = 0 ; i < nitems(newnfs_sig_set); i++)
 		if (SIGISMEMBER(set, newnfs_sig_set[i]))
 			return (1);
 	return (0);
@@ -1065,7 +1085,7 @@ newnfs_set_sigmask(struct thread *td, sigset_t *oldset)
 	/* Remove the NFS set of signals from newset */
 	PROC_LOCK(p);
 	mtx_lock(&p->p_sigacts->ps_mtx);
-	for (i = 0 ; i < sizeof(newnfs_sig_set)/sizeof(int) ; i++) {
+	for (i = 0 ; i < nitems(newnfs_sig_set); i++) {
 		/*
 		 * But make sure we leave the ones already masked
 		 * by the process, ie. remove the signal from the
@@ -1153,10 +1173,10 @@ nfs_msg(struct thread *td, const char *server, const char *msg, int error)
 
 	p = td ? td->td_proc : NULL;
 	if (error) {
-		tprintf(p, LOG_INFO, "newnfs server %s: %s, error %d\n",
+		tprintf(p, LOG_INFO, "nfs server %s: %s, error %d\n",
 		    server, msg, error);
 	} else {
-		tprintf(p, LOG_INFO, "newnfs server %s: %s\n", server, msg);
+		tprintf(p, LOG_INFO, "nfs server %s: %s\n", server, msg);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.19.14.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: fpu.h,v 1.19.14.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -98,15 +98,15 @@ fpu_load(void)
 }
 
 static inline void
-fpu_save(void)
+fpu_save(lwp_t *l)
 {
-	pcu_save(&fpu_ops);
+	pcu_save(&fpu_ops, l);
 }
 
 static inline void
-fpu_discard(void)
+fpu_discard(lwp_t *l)
 {
-	pcu_discard(&fpu_ops, false);
+	pcu_discard(&fpu_ops, l, false);
 }
 
 void	fpu_load_from_fpreg(const struct fpreg *);

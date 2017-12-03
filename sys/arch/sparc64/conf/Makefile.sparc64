@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.71.2.2 2014/08/20 00:03:25 tls Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.71.2.3 2017/12/03 11:36:44 jdolecek Exp $
 
 #=========================================================================
 #
@@ -43,6 +43,8 @@ USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
 
+USE_SSP?=	yes
+
 ##
 ## (1) port identification
 ##
@@ -56,6 +58,7 @@ CPPFLAGS+=	-Dsparc64 -D__sparc64__
 .if ${LP64} == "yes"
 # 64-bit kernels
 CPPFLAGS+=	-D_LP64 -Wa,-Av9a
+CPPFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
 AFLAGS+=	-Wa,-Av9a
 .if defined(PROF)
 # Profiling is only supported in the medium low memory model.
@@ -69,9 +72,11 @@ CFLAGS+=	${${ACTIVE_CC} == "clang":? -mcmodel=small :}
 .else
 # 32-bit kernels
 CPPFLAGS+=	-m32 -Wa,-Av8plusa -mcpu=ultrasparc
+CPPFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
 AFLAGS+=	-Wa,-Av8plusa
+AFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
 .endif
-CFLAGS+=	-mno-fpu
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mno-fpu :}
 AFLAGS+=	-x assembler-with-cpp
 
 ##
@@ -108,11 +113,10 @@ dependkernlib:	assym.h
 ## (5) link settings
 ##
 TEXTADDR?=	01000000
-LINKFORMAT=	-T ${SPARC64}/conf/${KERN_LDSCRIPT}
 .if ${LP64} == "yes"
-KERN_LDSCRIPT?= kern.ldscript
+KERNLDSCRIPT?= ${SPARC64}/conf/kern.ldscript
 .else
-KERN_LDSCRIPT?= kern32.ldscript
+KERNLDSCRIPT?= ${SPARC64}/conf/kern32.ldscript
 .endif
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.89.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: hme.c,v 1.89.2.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.89.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.89.2.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 /* #define HMEDEBUG */
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.89.2.1 2014/08/20 00:03:38 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -306,6 +306,7 @@ hme_config(struct hme_softc *sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	if (pmf_device_register1(sc->sc_dev, NULL, NULL, hme_shutdown))
@@ -665,13 +666,13 @@ hme_put(struct hme_softc *sc, int ri, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(bp, mtod(m, void *), len);
 		bp += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	return (tlen);
 }
@@ -697,7 +698,7 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;
@@ -876,16 +877,8 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 		return;
 	}
 
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
-
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 void
@@ -1029,7 +1022,7 @@ hme_tint(struct hme_softc *sc)
 	/* Update ring */
 	sc->sc_rb.rb_tdtail = ri;
 
-	hme_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	if (sc->sc_rb.rb_td_nbusy == 0)
 		ifp->if_timer = 0;

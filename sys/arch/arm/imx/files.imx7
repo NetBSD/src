@@ -1,0 +1,100 @@
+#	$NetBSD: files.imx7,v 1.5.2.2 2017/12/03 11:35:53 jdolecek Exp $
+#
+# Configuration info for the Freescale i.MX7
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+defparam opt_imx.h				MEMSIZE
+defparam opt_imx.h				MEMSIZE_RESERVED
+defflag opt_imx.h				IMX7
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+define	bus_dma_generic
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c	bus_dma_generic needs-flag
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/imx/imx7_board.c
+
+# iMX7 AXI/AHB bus interface and SoC domains
+device	axi { [addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
+attach	axi at mainbus
+file	arch/arm/imx/imx7_axi.c			axi
+
+# iMX7 Clock Control Module
+device	imxccm
+attach	imxccm at axi
+file	arch/arm/imx/imx7_ccm.c			imxccm	needs-flag
+
+# iMX7 Enhanced Periodic Interrupt Timer
+device	imxclock
+attach	imxclock at axi
+file	arch/arm/imx/imxclock.c			imxclock
+file	arch/arm/imx/imx7_clock.c		imxclock
+
+# iMX7 On-Chip OTP Controller
+device	imxocotp
+attach	imxocotp at axi
+file	arch/arm/imx/imx7_ocotp.c		imxocotp	needs-flag
+
+# Watchdog
+device imxwdog: sysmon_wdog
+attach imxwdog at axi
+file	arch/arm/imx/imx7_wdog.c		imxwdog
+file	arch/arm/imx/imxwdog.c			imxwdog
+
+# iMX GPIO
+device	imxgpio: gpiobus
+attach	imxgpio at axi
+file	arch/arm/imx/imxgpio.c			imxgpio	needs-flag
+file	arch/arm/imx/imx7_gpio.c		imxgpio
+defflag opt_imxgpio.h				IMX_GPIO_INTR_SPLIT
+
+# iMX7 IOMUX
+device	imxiomux
+attach	imxiomux at axi
+file	arch/arm/imx/imx7_iomux.c		imxiomux
+
+# iMX iic Controler
+device	imxi2c: motoi2c, i2cbus, i2cexec
+attach	imxi2c at axi
+file	arch/arm/imx/imxi2c.c			imxi2c
+file	arch/arm/imx/imx7_i2c.c			imxi2c
+
+# iMX UART
+device	imxuart
+attach	imxuart at axi with imx7_uart
+file	arch/arm/imx/imxuart.c			imxuart	needs-flag
+file	arch/arm/imx/imx7_uart.c		imx7_uart
+defflag opt_imxuart.h				IMXUARTCONSOLE
+
+# iMX7 10/100/1000-Mbps Ethernet MAC(ENET)
+device	enet: ether, ifnet, arp, mii, bus_dma_generic
+attach	enet at axi
+file	arch/arm/imx/if_enet.c			enet
+file	arch/arm/imx/if_enet_imx7.c		enet
+
+# USB Controller
+device	imxusbc { unit, irq } : bus_dma_generic
+attach imxusbc at axi with imxusbc_axi
+file	arch/arm/imx/imx7_usb.c			imxusbc
+
+attach	ehci at imxusbc with imxehci
+file	arch/arm/imx/imxusb.c			imxehci
+
+# uSDHC
+attach	sdhc at axi with sdhc_axi
+file	arch/arm/imx/imx7_usdhc.c		sdhc_axi
+
+# iMX7 Secure Non-Volatile Storage (SNVS)
+device	imxsnvs
+attach	imxsnvs at axi
+file	arch/arm/imx/imxsnvs.c			imxsnvs
+file	arch/arm/imx/imx7_snvs.c		imxsnvs
+

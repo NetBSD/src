@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,9 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
-#define __EXCONVRT_C__
-
 #include "acpi.h"
 #include "accommon.h"
 #include "acinterp.h"
@@ -67,10 +64,10 @@ AcpiExConvertToAscii (
  *
  * FUNCTION:    AcpiExConvertToInteger
  *
- * PARAMETERS:  ObjDesc         - Object to be converted. Must be an
- *                                Integer, Buffer, or String
- *              ResultDesc      - Where the new Integer object is returned
- *              Flags           - Used for string conversion
+ * PARAMETERS:  ObjDesc             - Object to be converted. Must be an
+ *                                    Integer, Buffer, or String
+ *              ResultDesc          - Where the new Integer object is returned
+ *              ImplicitConversion  - Used for string conversion
  *
  * RETURN:      Status
  *
@@ -82,14 +79,13 @@ ACPI_STATUS
 AcpiExConvertToInteger (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_OPERAND_OBJECT     **ResultDesc,
-    UINT32                  Flags)
+    UINT32                  ImplicitConversion)
 {
     ACPI_OPERAND_OBJECT     *ReturnDesc;
     UINT8                   *Pointer;
     UINT64                  Result;
     UINT32                  i;
     UINT32                  Count;
-    ACPI_STATUS             Status;
 
 
     ACPI_FUNCTION_TRACE_PTR (ExConvertToInteger, ObjDesc);
@@ -139,11 +135,17 @@ AcpiExConvertToInteger (
          * hexadecimal as per the ACPI specification. The only exception (as
          * of ACPI 3.0) is that the ToInteger() operator allows both decimal
          * and hexadecimal strings (hex prefixed with "0x").
+         *
+         * Explicit conversion is used only by ToInteger.
+         * All other string-to-integer conversions are implicit conversions.
          */
-        Status = AcpiUtStrtoul64 ((char *) Pointer, Flags, &Result);
-        if (ACPI_FAILURE (Status))
+        if (ImplicitConversion)
         {
-            return_ACPI_STATUS (Status);
+            Result = AcpiUtImplicitStrtoul64 (ACPI_CAST_PTR (char, Pointer));
+        }
+        else
+        {
+            Result = AcpiUtExplicitStrtoul64 (ACPI_CAST_PTR (char, Pointer));
         }
         break;
 
@@ -254,9 +256,7 @@ AcpiExConvertToBuffer (
         /* Copy the integer to the buffer, LSB first */
 
         NewBuf = ReturnDesc->Buffer.Pointer;
-        ACPI_MEMCPY (NewBuf,
-                        &ObjDesc->Integer.Value,
-                        AcpiGbl_IntegerByteWidth);
+        memcpy (NewBuf, &ObjDesc->Integer.Value, AcpiGbl_IntegerByteWidth);
         break;
 
     case ACPI_TYPE_STRING:
@@ -269,8 +269,8 @@ AcpiExConvertToBuffer (
          * ASL/AML code that depends on the null being transferred to the new
          * buffer.
          */
-        ReturnDesc = AcpiUtCreateBufferObject (
-                        (ACPI_SIZE) ObjDesc->String.Length + 1);
+        ReturnDesc = AcpiUtCreateBufferObject ((ACPI_SIZE)
+            ObjDesc->String.Length + 1);
         if (!ReturnDesc)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
@@ -279,7 +279,7 @@ AcpiExConvertToBuffer (
         /* Copy the string to the buffer */
 
         NewBuf = ReturnDesc->Buffer.Pointer;
-        ACPI_STRNCPY ((char *) NewBuf, (char *) ObjDesc->String.Pointer,
+        strncpy ((char *) NewBuf, (char *) ObjDesc->String.Pointer,
             ObjDesc->String.Length);
         break;
 
@@ -393,7 +393,8 @@ AcpiExConvertToAscii (
         {
             /* Get one hex digit, most significant digits first */
 
-            String[k] = (UINT8) AcpiUtHexToAsciiChar (Integer, ACPI_MUL_4 (j));
+            String[k] = (UINT8)
+                AcpiUtHexToAsciiChar (Integer, ACPI_MUL_4 (j));
             k++;
         }
         break;
@@ -494,8 +495,8 @@ AcpiExConvertToString (
 
         /* Convert integer to string */
 
-        StringLength = AcpiExConvertToAscii (ObjDesc->Integer.Value, Base,
-                            NewBuf, AcpiGbl_IntegerByteWidth);
+        StringLength = AcpiExConvertToAscii (
+            ObjDesc->Integer.Value, Base, NewBuf, AcpiGbl_IntegerByteWidth);
 
         /* Null terminate at the correct place */
 
@@ -584,8 +585,7 @@ AcpiExConvertToString (
         for (i = 0; i < ObjDesc->Buffer.Length; i++)
         {
             NewBuf += AcpiExConvertToAscii (
-                        (UINT64) ObjDesc->Buffer.Pointer[i], Base,
-                        NewBuf, 1);
+                (UINT64) ObjDesc->Buffer.Pointer[i], Base, NewBuf, 1);
             *NewBuf++ = Separator; /* each separated by a comma or space */
         }
 
@@ -649,7 +649,6 @@ AcpiExConvertToTargetType (
     switch (GET_CURRENT_ARG_TYPE (WalkState->OpInfo->RuntimeArgs))
     {
     case ARGI_SIMPLE_TARGET:
-    case ARGI_FIXED_TARGET:
     case ARGI_INTEGER_REF:      /* Handles Increment, Decrement cases */
 
         switch (DestinationType)
@@ -676,6 +675,7 @@ AcpiExConvertToTargetType (
         break;
 
     case ARGI_TARGETREF:
+    case ARGI_STORE_TARGET:
 
         switch (DestinationType)
         {
@@ -688,7 +688,7 @@ AcpiExConvertToTargetType (
              * a Buffer or a String to an Integer if necessary.
              */
             Status = AcpiExConvertToInteger (SourceDesc, ResultDesc,
-                        16);
+                ACPI_IMPLICIT_CONVERSION);
             break;
 
         case ACPI_TYPE_STRING:
@@ -697,7 +697,7 @@ AcpiExConvertToTargetType (
              * Integer or Buffer if necessary
              */
             Status = AcpiExConvertToString (SourceDesc, ResultDesc,
-                        ACPI_IMPLICIT_CONVERT_HEX);
+                ACPI_IMPLICIT_CONVERT_HEX);
             break;
 
         case ACPI_TYPE_BUFFER:
@@ -710,7 +710,8 @@ AcpiExConvertToTargetType (
 
         default:
 
-            ACPI_ERROR ((AE_INFO, "Bad destination type during conversion: 0x%X",
+            ACPI_ERROR ((AE_INFO,
+                "Bad destination type during conversion: 0x%X",
                 DestinationType));
             Status = AE_AML_INTERNAL;
             break;

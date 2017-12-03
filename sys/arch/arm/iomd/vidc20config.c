@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.32 2009/03/15 22:24:57 cegger Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.32.22.1 2017/12/03 11:35:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,12 +48,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.32 2009/03/15 22:24:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.32.22.1 2017/12/03 11:35:54 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <arm/iomd/vidc.h>
-#include <arm/arm32/katelib.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
 
@@ -65,6 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.32 2009/03/15 22:24:57 cegger Exp
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/vidc20config.h>
 
+#define WriteWord(a, b) \
+*((volatile unsigned int *)(a)) = (b)
+
+#define ReadWord(a) \
+(*((volatile unsigned int *)(a)))
 
 /*
  * A structure containing ALL the information required to restore
@@ -600,7 +604,7 @@ vidcvideo_cursor_init(int width, int height)
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}
 
-	/* Blank the cursor while initialising it's sprite */
+	/* Blank the cursor while initialising its sprite */
 
 	vidcvideo_write ( VIDC_CP1, 0x0 );
 	vidcvideo_write ( VIDC_CP2, 0x0 );

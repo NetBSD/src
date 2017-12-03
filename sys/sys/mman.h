@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.44.6.1 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: mman.h,v 1.44.6.2 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -64,24 +64,28 @@ typedef	__off_t		off_t;		/* file offset */
 #define	PROT_WRITE	0x02	/* pages can be written */
 #define	PROT_EXEC	0x04	/* pages can be executed */
 
+#ifdef _NETBSD_SOURCE
+/*
+ * PAX mprotect prohibits setting protection bits
+ * missing from the original mmap call unless explicitly
+ * requested with PROT_MPROTECT.
+ */
+#define        PROT_MPROTECT(x)                ((x) << 3)
+#define        PROT_MPROTECT_EXTRACT(x)        (((x) >> 3) & 0x7)
+#endif
+
 /*
  * Flags contain sharing type and options.
  * Sharing types; choose one.
  */
 #define	MAP_SHARED	0x0001	/* share changes */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
-
-#ifdef _KERNEL
-/*
- * Deprecated flag; these are treated as MAP_PRIVATE internally by
- * the kernel.
- */
-#define	MAP_COPY	0x0004	/* "copy" region at mmap time */
-#endif
+	/* old MAP_COPY	0x0004	   "copy" region at mmap time */
 
 /*
  * Other flags
  */
+#define	MAP_REMAPDUP	 0x0004	/* mremap only: duplicate the mapping */
 #define	MAP_FIXED	 0x0010	/* map addr must be exactly as requested */
 #define	MAP_RENAME	 0x0020	/* Sun: rename private pages to file */
 #define	MAP_NORESERVE	 0x0040	/* Sun: don't reserve needed swap area */
@@ -111,6 +115,39 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_ALIGNMENT_1TB	MAP_ALIGNED(40)	/* 2^40 */
 #define	MAP_ALIGNMENT_256TB	MAP_ALIGNED(48)	/* 2^48 */
 #define	MAP_ALIGNMENT_64PB	MAP_ALIGNED(56)	/* 2^56 */
+
+#ifdef _NETBSD_SOURCE
+#define MAP_FMT	"\177\020\
+b\0SHARED\0\
+b\1PRIVATE\0\
+b\2COPY\0\
+b\4FIXED\0\
+b\5RENAME\0\
+b\6NORESERVE\0\
+b\7INHERIT\0\
+b\11HASSEMAPHORE\0\
+b\12TRYFIXED\0\
+b\13WIRED\0\
+F\14\1\
+:\0FILE\0\
+:\1ANONYMOUS\0\
+b\15STACK\0\
+F\30\010\
+:\000ALIGN=NONE\0\
+:\020ALIGN=64KB\0\
+:\024ALIGN=1MB\0\
+:\030ALIGN=16MB\0\
+:\034ALIGN=256MB\0\
+:\040ALIGN=4GB\0\
+:\044ALIGN=64GB\0\
+:\050ALIGN=1TB\0\
+:\054ALIGN=16TB\0\
+:\060ALIGN=256TB\0\
+:\064ALIGN=4PB\0\
+:\070ALIGN=64PB\0\
+:\074ALIGN=256PB\0\
+"
+#endif
 
 /*
  * Error indicator returned by mmap(2)

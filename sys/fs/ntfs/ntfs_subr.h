@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.6 2007/03/04 06:03:00 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.6.86.1 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -82,9 +82,6 @@ int ntfs_readattr_plain(struct ntfsmount *, struct ntnode *, u_int32_t,
 	const char *, off_t, size_t, void *,size_t *, struct uio *);
 int ntfs_readattr(struct ntfsmount *, struct ntnode *, u_int32_t,
 	const char *, off_t, size_t, void *, struct uio *);
-int ntfs_filesize(struct ntfsmount *, struct fnode *, u_int64_t *,
-	u_int64_t *);
-int ntfs_times(struct ntfsmount *, struct ntnode *, ntfs_times_t *);
 struct timespec	ntfs_nttimetounix(u_int64_t);
 int ntfs_ntreaddir(struct ntfsmount *, struct fnode *, u_int32_t,
 	struct attr_indexentry **);
@@ -114,9 +111,6 @@ int ntfs_writeattr_plain(struct ntfsmount *, struct ntnode *, u_int32_t,
 void ntfs_toupper_init(void);
 int ntfs_toupper_use(struct mount *, struct ntfsmount *);
 void ntfs_toupper_unuse(void);
-int ntfs_fget(struct ntfsmount *, struct ntnode *, int, char *,
-	struct fnode **);
-void ntfs_frele(struct fnode *);
 
 /* ntfs_conv.c stuff */
 ntfs_wget_func_t ntfs_utf8_wget;

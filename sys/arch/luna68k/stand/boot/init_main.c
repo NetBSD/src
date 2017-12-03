@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.5.6.4 2014/08/20 00:03:10 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.5.6.5 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -328,7 +328,7 @@ main(void)
 	exit(0);
 }
 
-int
+static int
 get_plane_numbers(void)
 {
 	int r = ROM_plane;
@@ -341,7 +341,7 @@ get_plane_numbers(void)
 	return n;
 }
 
-int
+static int
 reorder_dipsw(int dipsw)
 {
 	int i, sw = 0;

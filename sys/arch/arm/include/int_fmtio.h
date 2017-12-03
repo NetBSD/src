@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.5.38.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.5.38.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@
 #define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"llx"	/* uintmax_t		*/
 #define	SCNxPTR		"lx"	/* uintptr_t		*/
-#endif
+
+#endif /* !__INTPTR_FMTd__ */
 
 #endif /* !_ARM_INT_FMTIO_H_ */

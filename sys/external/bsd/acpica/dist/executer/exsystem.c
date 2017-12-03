@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __EXSYSTEM_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -87,8 +85,7 @@ AcpiExSystemWaitSemaphore (
     {
         /* We must wait, so unlock the interpreter */
 
-        AcpiExRelinquishInterpreter ();
-
+        AcpiExExitInterpreter ();
         Status = AcpiOsWaitSemaphore (Semaphore, 1, Timeout);
 
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
@@ -97,7 +94,7 @@ AcpiExSystemWaitSemaphore (
 
         /* Reacquire the interpreter */
 
-       AcpiExReacquireInterpreter ();
+        AcpiExEnterInterpreter ();
     }
 
     return_ACPI_STATUS (Status);
@@ -140,8 +137,7 @@ AcpiExSystemWaitMutex (
     {
         /* We must wait, so unlock the interpreter */
 
-        AcpiExRelinquishInterpreter ();
-
+        AcpiExExitInterpreter ();
         Status = AcpiOsAcquireMutex (Mutex, Timeout);
 
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
@@ -150,7 +146,7 @@ AcpiExSystemWaitMutex (
 
         /* Reacquire the interpreter */
 
-        AcpiExReacquireInterpreter ();
+        AcpiExEnterInterpreter ();
     }
 
     return_ACPI_STATUS (Status);
@@ -192,8 +188,8 @@ AcpiExSystemDoStall (
          * (ACPI specifies 100 usec as max, but this gives some slack in
          * order to support existing BIOSs)
          */
-        ACPI_ERROR ((AE_INFO, "Time parameter is too large (%u)",
-            HowLong));
+        ACPI_ERROR ((AE_INFO,
+            "Time parameter is too large (%u)", HowLong));
         Status = AE_AML_OPERAND_VALUE;
     }
     else
@@ -227,7 +223,7 @@ AcpiExSystemDoSleep (
 
     /* Since this thread will sleep, we must release the interpreter */
 
-    AcpiExRelinquishInterpreter ();
+    AcpiExExitInterpreter ();
 
     /*
      * For compatibility with other ACPI implementations and to prevent
@@ -242,7 +238,7 @@ AcpiExSystemDoSleep (
 
     /* And now we must get the interpreter again */
 
-    AcpiExReacquireInterpreter ();
+    AcpiExEnterInterpreter ();
     return (AE_OK);
 }
 
@@ -308,7 +304,7 @@ AcpiExSystemWaitEvent (
     if (ObjDesc)
     {
         Status = AcpiExSystemWaitSemaphore (ObjDesc->Event.OsSemaphore,
-                    (UINT16) TimeDesc->Integer.Value);
+            (UINT16) TimeDesc->Integer.Value);
     }
 
     return_ACPI_STATUS (Status);

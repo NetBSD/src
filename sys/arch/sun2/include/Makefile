@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/07/17 20:54:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.12.1 2017/12/03 11:36:45 jdolecek Exp $
 
 INCSDIR= /usr/include/sun2
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	cdefs.h cpu.h \
 	disklabel.h dvma.h \
 	eeprom.h elf_machdep.h endian.h endian_machdep.h \
-	fbio.h float.h frame.h \
+	fbio.h fenv.h float.h frame.h \
 	idprom.h ieee.h ieeefp.h intr.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kbd.h kbio.h kcore.h \

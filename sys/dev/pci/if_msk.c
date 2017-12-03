@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.42.2.2 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: if_msk.c,v 1.42.2.3 2017/12/03 11:37:08 jdolecek Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.42.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.42.2.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.42.2.2 2014/08/20 00:03:42 tls Exp $");
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -160,16 +160,17 @@ static const struct msk_product {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C034 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C042 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C055 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8035 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8039 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8040 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8050 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8053 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8055 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8056 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8058 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021X },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022CU },
@@ -623,7 +624,7 @@ out:
 		}
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -687,29 +688,53 @@ msk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 int
 msk_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct sk_if_softc *sc_if = ifp->if_softc;
-	int s, error = 0;
+	struct sk_if_softc *sc = ifp->if_softc;
+	int s, error;
 
 	s = splnet();
 
 	DPRINTFN(2, ("msk_ioctl ETHER\n"));
-	error = ether_ioctl(ifp, cmd, data);
+	switch (cmd) {
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 
-	if (error == ENETRESET) {
-		error = 0;
-		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			msk_setmulti(sc_if);
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		case IFF_RUNNING:
+			msk_stop(ifp, 1);
+			break;
+		case IFF_UP:
+			msk_init(ifp);
+			break;
+		case IFF_UP | IFF_RUNNING:
+			if ((ifp->if_flags ^ sc->sk_if_flags) == IFF_PROMISC) {
+				msk_setpromisc(sc);
+				msk_setmulti(sc);
+			} else
+				msk_init(ifp);
+			break;
 		}
+		sc->sk_if_flags = ifp->if_flags;
+		break;
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			error = 0;
+			if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+				;
+			else if (ifp->if_flags & IFF_RUNNING) {
+				/*
+				 * Multicast list has changed; set the hardware
+				 * filter accordingly.
+				 */
+				msk_setmulti(sc);
+			}
+		}
+		break;
 	}
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 void
@@ -948,6 +973,7 @@ msk_probe(device_t parent, cfdata_t match, void *aux)
 	case SK_YUKON_EC_U:
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
+	case SK_YUKON_FE_P:
 		return (1);
 	}
 
@@ -1109,6 +1135,7 @@ msk_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
 	if (pmf_device_register(self, NULL, msk_resume))
@@ -1740,16 +1767,12 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 		m_adj(m0, ETHER_ALIGN);
 		m = m0;
 	} else {
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
 	}
 
-	ifp->if_ipackets++;
-
-	bpf_mtap(ifp, m);
-
 	/* pass it on. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 void
@@ -1946,10 +1969,10 @@ msk_intr(void *xsc)
 
 	CSR_WRITE_4(sc, SK_Y2_ICR, 2);
 
-	if (ifp0 != NULL && !IFQ_IS_EMPTY(&ifp0->if_snd))
-		msk_start(ifp0);
-	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
-		msk_start(ifp1);
+	if (ifp0 != NULL)
+		if_schedule_deferred_start(ifp0);
+	if (ifp1 != NULL)
+		if_schedule_deferred_start(ifp1);
 
 	rnd_add_uint32(&sc->rnd_source, status);
 
@@ -2036,6 +2059,11 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	SK_YU_WRITE_2(sc_if, YUKON_SMR, reg);
 
 	DPRINTFN(6, ("msk_init_yukon: 10\n"));
+	struct ifnet *ifp = &sc_if->sk_ethercom.ec_if;
+	/* msk_attach calls me before ether_ifattach so check null */
+	if (ifp != NULL && ifp->if_sadl != NULL)
+		memcpy(sc_if->sk_enaddr, CLLADDR(ifp->if_sadl),
+		    sizeof(sc_if->sk_enaddr));
 	/* Setup Yukon's address */
 	for (i = 0; i < 3; i++) {
 		/* Write Source Address 1 (unicast filter) */

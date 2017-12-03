@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.25.24.2 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.25.24.3 2017/12/03 11:37:06 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.25.24.2 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.25.24.3 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,8 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_flags |= MIIF_NOISOLATE;
 
 	if (mii->mii_instance != 0) {
-		aprint_error_dev(self, "ignoring this PHY, non-zero instance\n");
+		aprint_error_dev(self,
+		    "ignoring this PHY, non-zero instance\n");
 		return;
 	}
 	PHY_RESET(sc);

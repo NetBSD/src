@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.29.12.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: cir.c,v 1.29.12.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.29.12.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.29.12.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,8 @@ cir_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_methods->im_setparams == NULL)
 		panic("%s: missing methods", device_xname(sc->sc_dev));
 #endif
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 }
 
 int

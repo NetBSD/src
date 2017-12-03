@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2reg.h,v 1.7.2.1 2012/11/20 03:02:28 tls Exp $	*/
+/*	$NetBSD: pm2reg.h,v 1.7.2.2 2017/12/03 11:37:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -33,6 +33,11 @@
 #ifndef PM2_REG_H
 #define PM2_REG_H
 
+/* all frequencies are in kHz */
+#define	PM2_EXT_CLOCK_FREQ		14318
+#define	PM2_PLL_FREQ_MIN		150000
+#define	PM2_PLL_FREQ_MAX		300000
+
 #define PM2_RESET	0x00000000	/* any write initiates a chip reset */
 #define		PM2_RESET_BUSY	0x80000000	/* reset in progress */
 
@@ -59,6 +64,8 @@
 						    */
 #define		PM2_AP_SVGA		0x00000100
 #define		PM2_AP_ROM		0x00000200
+
+#define PM2_CHIP_CONFIG         0x00000070
 
 #define PM2_BYPASS_MASK		0x00001100
 #define PM2_FB_WRITE_MASK	0x00001140
@@ -146,9 +153,11 @@
 #define		CM_RGB565	0x06
 #define		CM_RGBA8888	0x08
 #define		CM_RGB888	0x09
-#define		CM_GUI_DISABLE	0x10
+#define		CM_GUI_ENABLE	0x10
 #define		CM_RGB		0x20	/* BGR otherwise */
 #define		CM_TRUECOLOR	0x80	/* use palette for gamma correction */
+#define PM2_DAC_MODE_CONTROL  	0x19
+#define		MOC_BUFFERFRONT	0x00
 
 #define PM2_DAC_MISC_CONTROL	0x1e
 #define		MC_POWERDOWN	0x01
@@ -310,8 +319,77 @@
 #define PM2_RE_SCISSOR_MINYX	0x00008188
 #define PM2_RE_SCISSOR_MAXYX	0x00008190
 #define PM2_RE_TEXMAP_FORMAT	0x00008588
+/* format to write into the framebuffer */
 #define PM2_RE_DITHER_MODE	0x00008818
+#define		PM2DM_ENABLE		0x00000001
+#define		PM2DM_DITHER_ENABLE	0x00000002
+#define		PM2DM_COLOUR_FORMAT_M	0x0000003c
+#define		PM2DM_8888		0x00000000
+#define		PM2DM_5551F		0x00000004
+#define		PM2DM_4444		0x00000008
+#define		PM2DM_332F		0x00000014
+#define		PM2DM_332B		0x00000018
+#define		PM2DM_2321F		0x00000024
+#define		PM2DM_2321B		0x00000028
+#define		PM2DM_232FO		0x0000002c
+#define		PM2DM_232BO		0x00000030
+#define		PM2DM_5551B		0x00000034
+#define		PM2DM_CI8		0x00000038
+#define		PM2DM_565F		0x00010000	/* XXX */
+#define		PM2DM_565B		0x00010004	/* XXX */
+#define		PM2DM_X_OFFSET_M	0x000000c0
+#define		PM2DM_Y_OFFSET_M	0x00000300
+#define		PM2DM_RGB		0x00000400	/* BGR otherwise */
+#define		PM2DM_LINE		0x00000800	/* ordered otherw. */
+#define		PM2DM_FORCE_ALPHA_0	0x00001000
+#define		PM2DM_FORCE_ALPHA_F8	0x00002000
+#define		PM2DM_COLOUR_FORMAT_X	0x00010000	/* upper bit */
+
 #define PM2_RE_ALPHA_MODE	0x00008810
+#define		PM2AL_ENABLE		0x00000001
+#define		PM2AL_OPERATION_MASK	0x000000fe
+#define		PM2AL_OP_SRC_IS_ZERO			0x00000000
+#define		PM2AL_OP_SRC_IS_ONE			0x00000002
+#define		PM2AL_OP_SRC_IS_DST_COLOR		0x00000004
+#define		PM2AL_OP_SRC_IS_ONE_MINUS_DST_COLOR	0x00000006
+#define		PM2AL_OP_SRC_IS_SRC_ALPHA		0x00000008
+#define		PM2AL_OP_SRC_IS_ONE_MINUS_SRC_ALPHA	0x0000000a
+#define		PM2AL_OP_SRC_IS_DST_ALPHA		0x0000000c
+#define		PM2AL_OP_SRC_IS_ONE_MINUS_DST_ALPHA	0x0000000e
+#define		PM2AL_OP_SRC_IS_SRC_ALPHA_SATURATE	0x00000010
+#define		PM2AL_OP_DST_IS_ZERO			0x00000000
+#define		PM2AL_OP_DST_IS_ONE			0x00000020
+#define		PM2AL_OP_DST_IS_SRC_COLOR		0x00000040
+#define		PM2AL_OP_DST_IS_ONE_MINUS_SRC_COLOR	0x00000060
+#define		PM2AL_OP_DST_IS_SRC_ALPHA		0x00000080
+#define		PM2AL_OP_DST_IS_ONE_MINUS_SRC_ALPHA	0x000000a0
+#define		PM2AL_OP_DST_IS_DST_ALPHA		0x000000c0
+#define		PM2AL_OP_DST_IS_ONE_MINUS_DST_ALPHA	0x000000e0
+/*
+ * XXX
+ * format of incoming data
+ * the 5th bit is in bit 16
+ */
+#define		PM2AL_COLOUR_FORMAT_M	0x00000f00
+#define		PM2AL_8888		0x00000000
+#define		PM2AL_5551F		0x00000100
+#define		PM2AL_4444		0x00000200
+#define		PM2AL_332F		0x00000500
+#define		PM2AL_332B		0x00000600
+#define		PM2AL_2321F		0x00000900
+#define		PM2AL_2321B		0x00000a00
+#define		PM2AL_232FO		0x00000b00
+#define		PM2AL_232BO		0x00000c00
+#define		PM2AL_5551B		0x00000d00
+#define		PM2AL_CI8		0x00000e00
+#define		PM2AL_565F		0x00010000	/* XXX */
+#define		PM2AL_565B		0x00010100	/* XXX */
+#define		PM2AL_NO_ALPHA		0x00001000	/* XXX */
+#define		PM2AL_RGB		0x00002000	/* BGR otherwise */
+#define		PM2AL_RAMP		0x00004000	/* RGB otherwise */
+#define		PM2AL_COLOUR_FORMAT_X	0x00010000
+#define		PM2AL_COLOUR_CONV_SHIFT	0x00020000	/* scale otherwise */
+#define		PM2AL_ALPHA_CONV_SHIFT	0x00040000	/* scale otherwise */
 #define PM2_RE_TEX_COLOUR_MODE	0x00008680
 #define PM2_RE_TEX_READ_MODE	0x00008670
 #define PM2_RE_TEX_LUT_MODE	0x00008678
@@ -325,5 +403,5 @@
 #define PM2_RE_DATA		0x00008aa0	/* pixel data */
 #define PM2_RE_SOURCEDATA	0x00008aa8	/* raw data */
 
-
+#define PM2_SYNC_TAG		0x188
 #endif /* PM2_REG_H */

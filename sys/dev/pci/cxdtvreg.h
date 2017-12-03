@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtvreg.h,v 1.2 2011/09/26 18:07:38 jakllsch Exp $ */
+/* $NetBSD: cxdtvreg.h,v 1.2.12.1 2017/12/03 11:37:07 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,7 +67,7 @@
 #define CXDTV_I2C_C_CTRL	0x36c004
 #define CXDTV_I2C_C_XFER_STATUS	0x36c044
 
-/* for CXDTV_PCI_INT_ regsiters */
+/* for CXDTV_PCI_INT_ registers */
 #define CXT_PI_VID_INT		__BIT(0)
 #define CXT_PI_AUD_INT		__BIT(1)
 #define CXT_PI_TS_INT		__BIT(2)

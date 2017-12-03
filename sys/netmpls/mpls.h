@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls.h,v 1.1 2010/06/26 14:24:28 kefren Exp $ */
+/*	$NetBSD: mpls.h,v 1.1.24.1 2017/12/03 11:39:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct sockaddr_mpls {
 	uint8_t smpls_family;
 	uint8_t smpls_pad[2];
 	union mpls_shim smpls_addr;
-} __packed;
-
+};
+__CTASSERT(sizeof(struct sockaddr_mpls) == 8);
 
 #endif /* !_NETMPLS_MPLS_H_ */

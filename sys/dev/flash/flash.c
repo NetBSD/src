@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.9.14.1 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: flash.c,v 1.9.14.2 2017/12/03 11:37:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.9.14.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.9.14.2 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,14 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.9.14.1 2014/08/20 00:03:36 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/reboot.h>
 
+#include "ioconf.h"
+
 #include <sys/flashio.h>
 #include "flash.h"
 
 #ifdef FLASH_DEBUG
 int flashdebug = FLASH_DEBUG;
 #endif
-
-extern struct cfdriver flash_cd;
 
 dev_type_open(flashopen);
 dev_type_close(flashclose);
@@ -147,20 +147,12 @@ flash_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
-	switch (sc->flash_if->type) {
-	case FLASH_TYPE_NOR:
-		aprint_normal(": NOR flash partition size %s, offset %#jx",
-			pbuf[0], (uintmax_t )sc->sc_partinfo.part_offset);
-		break;
+	aprint_normal(": partition");
+	if (sc->sc_partinfo.part_name != NULL)
+		aprint_normal(" \"%s\"", sc->sc_partinfo.part_name);
 
-	case FLASH_TYPE_NAND:
-		aprint_normal(": NAND flash partition size %s, offset %#jx",
-			pbuf[0], (uintmax_t )sc->sc_partinfo.part_offset);
-		break;
-
-	default:
-		aprint_normal(": %s unknown flash", pbuf[0]);
-	}
+	aprint_normal(", size %s, offset %#jx",
+		pbuf[0], (uintmax_t)sc->sc_partinfo.part_offset);
 
 	if (sc->sc_partinfo.part_flags & FLASH_PART_READONLY) {
 		sc->sc_readonly = true;

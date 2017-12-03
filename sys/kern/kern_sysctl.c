@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.236.2.3 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.236.2.4 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,9 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.236.2.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.236.2.4 2017/12/03 11:38:45 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
+#endif
+
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -84,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.236.2.3 2014/08/20 00:04:29 tls Ex
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
@@ -795,7 +798,7 @@ sysctl_create(SYSCTLFN_ARGS)
 
 	/*
 	 * the name must be only alphanumerics or - or _, longer than
-	 * 0 bytes and less that SYSCTL_NAMELEN
+	 * 0 bytes and less than SYSCTL_NAMELEN
 	 */
 	nsz = 0;
 	while (nsz < SYSCTL_NAMELEN && nnode.sysctl_name[nsz] != '\0') {
@@ -1636,6 +1639,7 @@ sysctl_mmap(SYSCTLFN_ARGS)
 	const struct sysctlnode *node;
 	struct sysctlnode nnode;
 	int error;
+	int sysctl_num;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_mmap: rnode %p wrong version\n", rnode);
@@ -1663,7 +1667,8 @@ sysctl_mmap(SYSCTLFN_ARGS)
 	if (namelen != 1)
 		return (EOPNOTSUPP);
 	node = rnode;
-        error = sysctl_locate(l, &nnode.sysctl_num, 1, &node, NULL);
+	sysctl_num = nnode.sysctl_num;
+	error = sysctl_locate(l, &sysctl_num, 1, &node, NULL);
 	if (error)
 		return (error);
 
@@ -1950,6 +1955,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	const struct sysctlnode *root, *pnode;
 	struct sysctlnode nnode, onode, *dnode;
 	size_t sz;
+	const struct sysctlnode *snode __diagused;
 
 	/*
 	 * where are we putting this?
@@ -2106,6 +2112,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 */
 		pnode = root;
 		error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
+		snode = pnode;
 
 		/*
 		 * manual scan of last layer so that aliased nodes
@@ -2126,6 +2133,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 * not expecting an error here, but...
 		 */
 		if (error == 0) {
+			KASSERTMSG(pnode->sysctl_parent == snode,
+			    "sysctl parent mis-match");
 			if (log != NULL)
 				sysctl_log_add(log, pnode);
 			if (cnode != NULL)

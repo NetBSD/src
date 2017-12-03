@@ -1,0 +1,40 @@
+#	$NetBSD: majors.riscv,v 1.2.14.2 2017/12/03 11:36:38 jdolecek Exp $
+#
+# Device majors for evbmips
+#
+
+device-major	tun		char 7			tun
+device-major	bpf		char 11			bpfilter
+
+device-major	audio		char 24			audio
+device-major	com		char 26			com
+device-major	lpt		char 31			lpt
+device-major	ipl		char 35			ipfilter
+device-major	satlink		char 38			satlink
+
+device-major	esh		char 44			esh
+device-major	midi		char 49			midi
+device-major	sequencer	char 50			sequencer
+device-major	isdn		char 51			isdn
+device-major	isdnctl		char 52			isdnctl
+device-major	isdnbchan	char 53			isdnbchan
+device-major	isdntrc		char 54			isdntrc
+device-major	isdntel		char 55			isdntel
+device-major	cy		char 60			cy
+device-major	cz		char 61			cz
+device-major	altq		char 64			altq
+device-major	pci		char 66			pci
+
+device-major	kttcp		char 71			kttcp
+
+# obsolete, probably can be safely removed after 4.0 branch
+#device-major	aucom		char 73			aucom
+
+# Majors up to 143 are reserved for machine-dependent drivers.
+# New machine-independent driver majors are assigned in 
+# sys/conf/majors.
+
+include "conf/majors.ws"
+include "conf/majors.usb"
+include "conf/majors.std"
+include "conf/majors.storage"

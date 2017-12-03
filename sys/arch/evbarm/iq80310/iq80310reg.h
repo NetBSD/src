@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310reg.h,v 1.6 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: iq80310reg.h,v 1.6.122.1 2017/12/03 11:36:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 
 /*
  * We allocate a page table for VA 0xfe400000 (4MB) and map the i80312
- * PCI I/O space (2 * 64L) and i80312 regisers (4K) there.
+ * PCI I/O space (2 * 64L) and i80312 registers (4K) there.
  */
 #define	IQ80310_IOPXS_VBASE	0xfe400000UL
 #define	IQ80310_PIOW_VBASE	IQ80310_IOPXS_VBASE

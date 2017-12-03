@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.41.18.1 2013/06/23 06:20:25 tls Exp $ */
+/* $NetBSD: netisr.h,v 1.41.18.2 2017/12/03 11:39:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -53,6 +53,7 @@
 #include "opt_atalk.h"
 #include "opt_mpls.h"
 #include "opt_natm.h"
+#include "opt_can.h"
 #include "arp.h"
 #endif /* defined(_KERNEL_OPT) */
 
@@ -90,6 +91,10 @@
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #endif
+#ifdef CAN
+#include <netcan/can.h>
+#include <netcan/can_var.h>
+#endif
 
 #endif /* !defined(_LOCORE) */
 #endif /* defined(_KERNEL) */
@@ -102,15 +107,14 @@
  * on the lowest level routine of each protocol.
  */
 #define	NETISR_IP	2		/* same as AF_INET */
-#define	NETISR_NS	6		/* same as AF_NS */
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
-#define	NETISR_IPX	23		/* same as AF_IPX */
 #define	NETISR_IPV6	24		/* same as AF_INET6 */
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
 #define	NETISR_MPLS	33		/* same as AF_MPLS */
+#define	NETISR_CAN	35		/* same as AF_CAN */
 #define	NETISR_MAX	AF_MAX
 
 #if !defined(_LOCORE) && defined(_KERNEL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.56.6.2 2014/08/20 00:03:50 tls Exp $ */
+/*	$NetBSD: p9100.c,v 1.56.6.3 2017/12/03 11:37:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.56.6.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.56.6.3 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,6 @@ static void	p9100_ramdac_write_ctl(struct p9100_softc *, int, uint8_t);
 static void 	p9100_init_engine(struct p9100_softc *);
 static int	p9100_set_depth(struct p9100_softc *, int);
 
-#if NWSDISPLAY > 0
 static void	p9100_sync(struct p9100_softc *);
 static void	p9100_bitblt(void *, int, int, int, int, int, int, int);
 static void 	p9100_rectfill(void *, int, int, int, int, uint32_t);
@@ -236,7 +235,6 @@ static paddr_t	p9100_mmap(void *, void *, off_t, int);
 
 static void	p9100_init_screen(void *, struct vcons_screen *, int,
 		    long *);
-#endif
 
 static void	p9100_init_cursor(struct p9100_softc *);
 
@@ -256,7 +254,6 @@ static bool p9100_resume(device_t, const pmf_qual_t *);
 static void p9100_set_extvga(void *, int);
 #endif
 
-#if NWSDISPLAY > 0
 struct wsdisplay_accessops p9100_accessops = {
 	p9100_ioctl,
 	p9100_mmap,
@@ -267,7 +264,6 @@ struct wsdisplay_accessops p9100_accessops = {
 	NULL,	/* polls */
 	NULL,	/* scroll */
 };
-#endif
 
 #ifdef PNOZZ_USE_LATCH
 #define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset != (off & 0xffffff80)) { \
@@ -305,11 +301,9 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	int i, j;
 	uint8_t ver, cmap[768];
 
-#if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
 	unsigned long defattr;
-#endif
 
 	sc->sc_last_offset = 0xffffffff;
 	sc->sc_dev = self;
@@ -354,7 +348,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	 * P9100 - all register accesses need to be 'latched in' whenever we
 	 * go to another 0x80 aligned 'page' by reading the framebuffer at the
 	 * same offset
-	 * XXX apparently the latter isn't true - my SP3GX works fine without
+	 * XXX apparently the latter isn't true - my SB3GX works fine without
 	 */
 #ifdef PNOZZ_USE_LATCH
 	if (fb->fb_pixels == NULL) {
@@ -424,8 +418,14 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 		printf(", %d entry colormap", fb->fb_type.fb_cmsize);
 
 	/* make sure we are not blanked */
-	if (isconsole)
+	if (isconsole) {
 		p9100_set_video(sc, 1);
+		delay(1000);
+		/* hopefully make my oldish PLL lock */
+		p9100_set_video(sc, 0);
+		delay(1000000);
+		p9100_set_video(sc, 1);
+	}		
 
 	/* register with power management */
 	sc->sc_video = 1;
@@ -437,14 +437,9 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RASTERCONSOLE
-		/*p9100loadcmap(sc, 255, 1);*/
-		fbrcons_init(fb);
-#endif
 	} else
 		printf("\n");
 
-#if NWSDISPLAY > 0
 	wsfont_init();
 
 #ifdef PNOZZ_DEBUG
@@ -504,7 +499,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
-#endif
+
 	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
 	printf("%s: rev %d / %x, %dx%d, depth %d mem %x\n",
 		device_xname(self),
@@ -518,7 +513,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 
 #if NTCTRL > 0
 	/* register callback for external monitor status change */
-	tadpole_register_callback(p9100_set_extvga, sc);
+	if (0) tadpole_register_callback(p9100_set_extvga, sc);
 #endif
 }
 
@@ -537,14 +532,13 @@ p9100close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct p9100_softc *sc = device_lookup_private(&pnozz_cd, minor(dev));
 
-#if NWSDISPLAY > 0
 	p9100_init_engine(sc);
 	p9100_set_depth(sc, 8);
 	p9100loadcmap(sc, 0, 256);
 	p9100_clearscreen(sc);
 	glyphcache_wipe(&sc->sc_gc);
 	vcons_redraw_screen(sc->vd.active);
-#endif
+
 	return 0;
 }
 
@@ -743,9 +737,6 @@ p9100_init_engine(struct p9100_softc *sc)
 
 }
 
-/* we only need these in the wsdisplay case */
-#if NWSDISPLAY > 0
-
 /* wait until the engine is idle */
 static void
 p9100_sync(struct p9100_softc *sc)
@@ -894,7 +885,6 @@ p9100_clearscreen(struct p9100_softc *sc)
 
 	p9100_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, sc->sc_bg);
 }
-#endif /* NWSDISPLAY > 0 */
 
 static uint8_t
 p9100_ramdac_read(struct p9100_softc *sc, bus_size_t off)
@@ -1089,7 +1079,6 @@ p9100mmap(dev_t dev, off_t off, int prot)
 }
 
 /* wscons stuff */
-#if NWSDISPLAY > 0
 
 static void
 p9100_cursor(void *cookie, int on, int row, int col)
@@ -1540,8 +1529,6 @@ p9100_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 	return 0;
 }
 #endif
-
-#endif /* NWSDISPLAY > 0 */
 
 #if 0
 static int

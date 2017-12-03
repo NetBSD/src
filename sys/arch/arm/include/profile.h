@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.8.38.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: profile.h,v 1.8.38.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -76,7 +76,8 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r3, pc}");					\
+	__asm("pop	{r0-r3, lr}");					\
+	__asm("pop	{pc}");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #elif defined(__ARM_DWARF_EH__)
 #define	MCOUNT								\
@@ -90,10 +91,10 @@
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	__asm("push	{r0-r4, ip, lr}");				\
+	__asm("push	{r0-r3, ip, lr}");				\
 	__asm(".cfi_def_cfa_offset 24");				\
 	__asm(".cfi_offset 14, -4");					\
-	__asm(".cfi_offset 4, -8");					\
+	__asm(".cfi_offset 12, -8");					\
 	__asm(".cfi_offset 3, -12");					\
 	__asm(".cfi_offset 2, -16");					\
 	__asm(".cfi_offset 1, -20");					\
@@ -116,7 +117,8 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r4, lr, pc}");				\
+	__asm("pop	{r0-r3, lr}");					\
+	__asm("pop	{pc}");						\
 	__asm(".cfi_endproc");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #else
@@ -132,11 +134,11 @@
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	__asm("push	{r0-r4, ip, lr}");				\
-	__asm(".save {r0-r4, lr}");					\
+	__asm("push	{r0-r3, ip, lr}");				\
+	__asm(".save {r0-r3, lr}");					\
 	__asm(".cfi_def_cfa_offset 24");				\
 	__asm(".cfi_offset 14, -4");					\
-	__asm(".cfi_offset 4, -8");					\
+	__asm(".cfi_offset 12, -8");					\
 	__asm(".cfi_offset 3, -12");					\
 	__asm(".cfi_offset 2, -16");					\
 	__asm(".cfi_offset 1, -20");					\
@@ -159,7 +161,8 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r4, lr, pc}");				\
+	__asm("pop	{r0-r3, lr}");					\
+	__asm("pop	{pc}");						\
 	__asm(".cfi_endproc");						\
 	__asm(".fnend");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.17 2012/02/02 19:43:05 tls Exp $ */
+/* $NetBSD: if_skvar.h,v 1.17.6.1 2017/12/03 11:37:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #ifndef _DEV_PCI_IF_SKVAR_H_
 #define _DEV_PCI_IF_SKVAR_H_
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct sk_jpool_entry {
 	int                             slot;

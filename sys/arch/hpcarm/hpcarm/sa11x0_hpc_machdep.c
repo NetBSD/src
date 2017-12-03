@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.6.2.2 2014/08/20 00:03:03 tls Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.6.2.3 2017/12/03 11:36:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.6.2.2 2014/08/20 00:03:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.6.2.3 2017/12/03 11:36:14 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -67,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.6.2.2 2014/08/20 00:03:03 t
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define ELFSIZE	DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 
@@ -105,7 +101,7 @@ extern paddr_t physical_freestart;
 extern paddr_t physical_freeend;
 extern paddr_t physical_end;
 
-extern vaddr_t msgbufphys;
+extern paddr_t msgbufphys;
 
 extern int end;
 
@@ -537,7 +533,7 @@ init_sa11x0(int argc, char **argv, struct bootinfo *bi)
 #endif
 
 	/* Load memory into UVM. */
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
 		paddr_t dblk_start = (paddr_t)bootconfig.dram[loop].address;
 		paddr_t dblk_end = dblk_start

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.31.6.1 2014/08/20 00:03:10 tls Exp $ */
+/* $NetBSD: cpu.h,v 1.31.6.2 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,7 @@
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the luna68k, we use
+ * machine state in an opaque clockframe.  On the luna68k, we use
  * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
@@ -88,7 +88,7 @@ struct clockframe {
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the hp300, request an ast to send us
+ * buffer pages are invalid.  On the luna68k, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
 #define cpu_need_proftick(l)	{ (l)->l_pflag |= LP_OWEUPC; aston(); }
@@ -123,7 +123,6 @@ extern	char *intiobase, *intiolimit;		/* XXX */
 extern	u_int intiobase_phys, intiotop_phys;	/* XXX */
 
 /* machdep.c functions */
-void	dumpconf(void);
 void	dumpsys(void);
 
 /* locore.s functions */

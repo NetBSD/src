@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.h,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_gpio.h,v 1.2.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@
 #define GPIO_TR_PIN_MASK            0x017f81
 #define GPIO_TR_OUTPUT_PIN_MASK     0x003b80
 #define GPIO_TR_INT_PIN_MASK        0x014401
-#define GPIO_TR_INT_FEDGE_PIN_MASK  0x014401 
+#define GPIO_TR_INT_FEDGE_PIN_MASK  0x014401
 #define GPIO_TR_POL_MASK            0x000000
 
 /*
@@ -148,10 +148,10 @@
 #define P3_HARDWARE
 #if defined(P3_HARDWARE)
 #define GPIO_PB500_PIN_MASK_24_51            0x03cafe00
-#define GPIO_PB500_OUTPUT_PIN_MASK_24_51     0x03c8fe00   
+#define GPIO_PB500_OUTPUT_PIN_MASK_24_51     0x03c8fe00
 #else
 #define GPIO_PB500_PIN_MASK_24_51            0x0fff0000
-#define GPIO_PB500_OUTPUT_PIN_MASK_24_51     0x0ffd0000   
+#define GPIO_PB500_OUTPUT_PIN_MASK_24_51     0x0ffd0000
 #endif
 #define GPIO_PB500_INT_PIN_MASK_24_51        0x00020000   /* rising edge ints */
 #define GPIO_PB500_INT_FEDGE_PIN_MASK_24_51  0x00020000
@@ -242,14 +242,14 @@
 #define GPIO_SR_POL_MASK            0x000002
 
 /* Enable RGMII */
-#define GPIO_SR_PIN_MASK_24_51        0x0000387f   
-#define GPIO_SR_OUTPUT_PIN_MASK_24_51 0x0000387b   
+#define GPIO_SR_PIN_MASK_24_51        0x0000387f
+#define GPIO_SR_OUTPUT_PIN_MASK_24_51 0x0000387b
 #define GPIO_SR_INT_PIN_MASK_24_51        0x0004
 #define GPIO_SR_INT_FEDGE_PIN_MASK_24_51  0x0004
 #define GPIO_SR_POL_MASK_24_51            0x00000000
 
-#define GPIO_SR_PIN_MASK_72_95        0x00000fff   
-#define GPIO_SR_OUTPUT_PIN_MASK_72_95 0x00000ff7   
+#define GPIO_SR_PIN_MASK_72_95        0x00000fff
+#define GPIO_SR_OUTPUT_PIN_MASK_72_95 0x00000ff7
 #define GPIO_SR_INT_PIN_MASK_72_95        0x0008
 #define GPIO_SR_INT_FEDGE_PIN_MASK_72_95  0x0008
 #define GPIO_SR_POL_MASK_72_95            0x00000000
@@ -306,7 +306,7 @@
 
 /* Debounced Pins:
  *	WPS_BUTTON, SOFT_RST_IN_BUTTON, SS_BUTTON
- *	CURRENT_LIMIT_FLAG USB * 3 + EXP * 2  
+ *	CURRENT_LIMIT_FLAG USB * 3 + EXP * 2
  */
 #define DEBOUNCED_PINS 9
 

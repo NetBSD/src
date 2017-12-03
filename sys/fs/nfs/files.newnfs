@@ -1,13 +1,20 @@
-#	$NetBSD: files.newnfs,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $
+#	$NetBSD: files.newnfs,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $
 
 deffs NEW_NFSCLIENT
-defflag opt_newnfs.h			NEW_NFS_BOOT_BOOTP
+defflag opt_newnfs.h			DTRACEALL
+					NEW_NFS_BOOT_BOOTP
 					NEW_NFSSERVER
 					NEW_NFSLOCKD
+					DTNFSCL
 					NEW_NFS_BOOT
+					NFS4_ACL_EXTATTR_NAME
 
+# XXX
+define	new_nfsclient: vfs, net
+file	fs/nfs/client/nfs_clmodule.c	 new_nfsclient
 file	fs/nfs/client/nfs_clbio.c	 new_nfsclient
 file	fs/nfs/client/nfs_clcomsubs.c	 new_nfsclient
+file	fs/nfs/client/nfs_clkdtrace.c	 new_nfsclient & (dtnfscl | dtraceall)
 file	fs/nfs/client/nfs_clkrpc.c	 new_nfsclient
 file	fs/nfs/client/nfs_clnfsiod.c	 new_nfsclient
 file	fs/nfs/client/nfs_clnode.c	 new_nfsclient
@@ -17,8 +24,9 @@ file	fs/nfs/client/nfs_clstate.c	 new_nfsclient
 file	fs/nfs/client/nfs_clsubs.c	 new_nfsclient
 file	fs/nfs/client/nfs_clvfsops.c	 new_nfsclient
 file	fs/nfs/client/nfs_clvnops.c	 new_nfsclient
-file	fs/nfs/common/bootp_subr.c	 new_nfs_boot_bootp & new_nfs_boot_bootp & new_nfsclient
-file	fs/nfs/common/krpc_subr.c	 new_nfs_boot_bootp & new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/bootp_subr.c	 new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/krpc_subr.c	 new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/nfs_module.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonacl.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonkrpc.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonport.c	 new_nfsclient | new_nfsserver
@@ -34,6 +42,7 @@ file	fs/nfs/nlm/nlm_prot_server.c	 new_nfslockd | new_nfsserver
 file	fs/nfs/nlm/nlm_prot_svc.c	 new_nfslockd | new_nfsserver
 file	fs/nfs/nlm/nlm_prot_xdr.c	 new_nfslockd | new_nfsserver
 file	fs/nfs/nlm/sm_inter_xdr.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/server/nfs_nfsdmodule.c	 new_nfsserver
 file	fs/nfs/server/nfs_fha_new.c	 new_nfsserver
 file	fs/nfs/server/nfs_nfsdcache.c	 new_nfsserver
 file	fs/nfs/server/nfs_nfsdkrpc.c	 new_nfsserver

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.27 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.27.14.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,11 +52,7 @@ struct mdlwp {
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	volatile int md_astpending;	/* AST pending on return to userland */
-#if USPACE > PAGE_SIZE
-	int	md_upte[USPACE/4096];	/* ptes for mapping u page */
-#else
-	int	md_dpte[USPACE/4096];	/* dummy ptes to keep the same */
-#endif
+	int	md_upte[2];		/* ptes for mapping u page */
 };
 
 struct mdproc {

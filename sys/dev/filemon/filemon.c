@@ -1,3 +1,4 @@
+/*      $NetBSD: filemon.c,v 1.4.12.3 2017/12/03 11:37:01 jdolecek Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -24,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.4.12.2 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.4.12.3 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.4.12.2 2014/08/20 00:03:36 tls Exp $")
 #include <sys/kauth.h>
 
 #include "filemon.h"
+#include "ioconf.h"
 
 MODULE(MODULE_CLASS_DRIVER, filemon, NULL);
 
@@ -68,6 +70,7 @@ static int filemon_ioctl(struct file *, u_long, void *);
 static int filemon_close(struct file *);
 
 static const struct fileops filemon_fileops = {
+	.fo_name = "filemon",
 	.fo_ioctl = filemon_ioctl,
 	.fo_close = filemon_close,
 	.fo_read = fbadop_read,
@@ -113,7 +116,7 @@ filemon_output(struct filemon * filemon, char *msg, size_t len)
 		cp = strchr(msg, '\n');
 		if (cp && cp - msg <= 16)
 			x = (cp - msg) - 2;
-		log(logLevel, "filemont_output:('%.*s%s'", x,
+		log(logLevel, "filemon_output:('%.*s%s'", x,
 		    (x < 16) ? "..." : "", msg);
 	}
 #endif
@@ -140,6 +143,7 @@ filemon_printf(struct filemon *filemon, const char *fmt, ...)
 static void
 filemon_comment(struct filemon * filemon)
 {
+
 	filemon_printf(filemon, "# filemon version %d\n# Target pid %d\nV %d\n",
 	   FILEMON_VERSION, curproc->p_pid, FILEMON_VERSION);
 }
@@ -151,13 +155,14 @@ filemon_pid_check(struct proc * p)
 	struct filemon *filemon;
 	struct proc * lp;
 
+	KASSERT(p != NULL);
 	if (!TAILQ_EMPTY(&filemons_inuse)) {
+		/*
+		 * make sure p cannot exit
+		 * until we have moved on to p_pptr
+		 */
+		rw_enter(&p->p_reflock, RW_READER);
 		while (p) {
-			/*
-			 * make sure p cannot exit
-			 * until we have moved on to p_pptr
-			 */
-			rw_enter(&p->p_reflock, RW_READER);
 			TAILQ_FOREACH(filemon, &filemons_inuse, fm_link) {
 				if (p->p_pid == filemon->fm_pid) {
 					rw_exit(&p->p_reflock);
@@ -166,6 +171,10 @@ filemon_pid_check(struct proc * p)
 			}
 			lp = p;
 			p = p->p_pptr;
+
+			/* lock parent before releasing child */
+			if (p != NULL)
+				rw_enter(&p->p_reflock, RW_READER);
 			rw_exit(&lp->p_reflock);
 		}
 	}
@@ -213,13 +222,12 @@ filemon_open(dev_t dev, int oflags __unused, int mode __unused,
 	struct file *fp;
 	int error, fd;
 
-	/* falloc() will use the descriptor for us. */
+	/* falloc() will fill in the descriptor for us. */
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
 	filemon = kmem_alloc(sizeof(struct filemon), KM_SLEEP);
 	rw_init(&filemon->fm_mtx);
-	filemon->fm_fd = -1;
 	filemon->fm_fp = NULL;
 	filemon->fm_pid = curproc->p_pid;
 
@@ -262,7 +270,7 @@ filemon_close(struct file * fp)
 	 */
 	rw_enter(&filemon->fm_mtx, RW_WRITER);
 	if (filemon->fm_fp) {
-		fd_putfile(filemon->fm_fd);	/* release our reference */
+		closef(filemon->fm_fp);	/* release our reference */
 		filemon->fm_fp = NULL;
 	}
 	rw_exit(&filemon->fm_mtx);
@@ -276,6 +284,7 @@ static int
 filemon_ioctl(struct file * fp, u_long cmd, void *data)
 {
 	int error = 0;
+	int fd;
 	struct filemon *filemon;
 	struct proc *tp;
 
@@ -290,13 +299,21 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	if (!filemon)
 		return EBADF;
 
+	/* filemon_fp_data() has locked the entry - make sure to unlock! */
+
 	switch (cmd) {
 	case FILEMON_SET_FD:
 		/* Set the output file descriptor. */
-		filemon->fm_fd = *((int *) data);
-		if ((filemon->fm_fp = fd_getfile(filemon->fm_fd)) == NULL) {
-			rw_exit(&filemon->fm_mtx);
-			return EBADF;
+
+		/* First, release any current output file descriptor */
+		if (filemon->fm_fp)
+			closef(filemon->fm_fp);
+
+		/* Now set up the new one */
+		fd = *((int *) data);
+		if ((filemon->fm_fp = fd_getfile2(curproc, fd)) == NULL) {
+			error = EBADF;
+			break;
 		}
 		/* Write the file header. */
 		filemon_comment(filemon);
@@ -306,14 +323,20 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		/* Set the monitored process ID - if allowed. */
 		mutex_enter(proc_lock);
 		tp = proc_find(*((pid_t *) data));
-		mutex_exit(proc_lock);
+		if (tp == NULL ||
+		    tp->p_emul != &emul_netbsd) {
+			error = ESRCH;
+			mutex_exit(proc_lock);
+			break;
+		}
+
 		error = kauth_authorize_process(curproc->p_cred,
 		    KAUTH_PROCESS_CANSEE, tp,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (!error) {
 			filemon->fm_pid = tp->p_pid;
-
 		}
+		mutex_exit(proc_lock);
 		break;
 
 	default:
@@ -325,16 +348,14 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	return (error);
 }
 
-static void
+static int
 filemon_load(void *dummy __unused)
 {
 	rw_init(&filemon_mtx);
 
 	/* Install the syscall wrappers. */
-	filemon_wrapper_install();
+	return filemon_wrapper_install();
 }
-
-void filemonattach(int);
 
 /*
  * If this gets called we are linked into the kernel
@@ -342,7 +363,14 @@ void filemonattach(int);
 void
 filemonattach(int num)
 {
-    filemon_load(NULL);
+
+	/*
+	 * Don't call filemon_load() here - it will be called from
+	 * filemon_modcmd() during module initialization.
+	 */
+#if 0
+	filemon_load(NULL);
+#endif
 }
 
 
@@ -371,8 +399,10 @@ static int
 filemon_modcmd(modcmd_t cmd, void *data)
 {
 	int error = 0;
+#ifdef _MODULE
 	int bmajor = -1;
 	int cmajor = -1;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -380,15 +410,20 @@ filemon_modcmd(modcmd_t cmd, void *data)
 		logLevel = LOG_INFO;
 #endif
 
-		filemon_load(data);
-		error = devsw_attach("filemon", NULL, &bmajor,
-		    &filemon_cdevsw, &cmajor);
+		error = filemon_load(data);
+#ifdef _MODULE
+		if (!error)
+			error = devsw_attach("filemon", NULL, &bmajor,
+			    &filemon_cdevsw, &cmajor);
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
 		error = filemon_unload();
+#ifdef _MODULE
 		if (!error)
 			error = devsw_detach(NULL, &filemon_cdevsw);
+#endif
 		break;
 
 	case MODULE_CMD_STAT:
@@ -396,7 +431,7 @@ filemon_modcmd(modcmd_t cmd, void *data)
 		break;
 
 	default:
-		error = EOPNOTSUPP;
+		error = ENOTTY;
 		break;
 
 	}

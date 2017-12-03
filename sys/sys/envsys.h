@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.32.2.2 2014/08/20 00:04:44 tls Exp $ */
+/* $NetBSD: envsys.h,v 1.32.2.3 2017/12/03 11:39:20 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007, 2014 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ enum envsys_indicator_states {
 /* get sensor data */
 
 struct envsys_tre_data {
-	u_int sensor;
+	unsigned int sensor;
 	union {				/* all data is given */
 		uint32_t data_us;	/* in microKelvins, */
 		int32_t data_s;		/* rpms, volts, amps, */
@@ -136,7 +136,7 @@ struct envsys_tre_data {
 
 	uint32_t	warnflags;	/* warning flags */
 	uint32_t	validflags;	/* sensor valid flags */
-	u_int		units;		/* type of sensor */
+	unsigned int	units;		/* type of sensor */
 };
 typedef struct envsys_tre_data envsys_tre_data_t;
 
@@ -184,11 +184,11 @@ static const char * const envsysdrivestatus[] = {
 /* set and check sensor info */
 
 struct envsys_basic_info {
-	u_int	sensor;		/* sensor number */
-	u_int	units;		/* type of sensor */
+	unsigned int sensor;	/* sensor number */
+	unsigned int units;	/* type of sensor */
 	char	desc[33];	/* sensor description */
-	u_int	rfact;		/* for volts, (int)(factor x 10^4) */
-	u_int	rpms;		/* for fans, set nominal RPMs */
+	unsigned int rfact;	/* for volts, (int)(factor x 10^4) */
+	unsigned int rpms;	/* for fans, set nominal RPMs */
 	uint32_t validflags;	/* sensor valid flags */
 };
 typedef struct envsys_basic_info envsys_basic_info_t;

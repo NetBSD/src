@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.13 2012/08/27 20:29:11 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.13.2.1 2017/12/03 11:37:33 jdolecek Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.13 2012/08/27 20:29:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.13.2.1 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,7 +60,7 @@ static int32_t sw_sensor_mode;
 static int32_t sw_sensor_defprops;
 sysmon_envsys_lim_t sw_sensor_deflims;
 
-MODULE(MODULE_CLASS_DRIVER, swsensor, NULL);
+MODULE(MODULE_CLASS_DRIVER, swsensor, "sysmon_envsys");
 
 /*
  * Set-up the sysctl interface for setting the sensor's cur_value

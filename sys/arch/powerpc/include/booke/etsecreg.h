@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.5 2012/07/17 01:36:13 matt Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.5.2.1 2017/12/03 11:36:37 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,15 +109,16 @@ struct rxbd {
 #define	RXFCB_CTU	0x0400	/* TCP or UDP checksum checked */
 #define	RXFCB_EIP	0x0200	/* IPv4 header checksum error */
 #define	RXFCB_ETU	0x0100	/* TCP or UDP header checksum error */
+#define	RXFCB_HASH_VAL	0x0010	/* FLR_HASH value is valid */
 #define	RXFCB_PERR	0x000c	/* Parse Error */
 #define	RXFCB_PERR_L3	0x0008	/* L3 Parse Error */
 
 struct rxfcb {
 	uint16_t rxfcb_flags;
-	uint8_t rxfcb_rq;	/* receive queue index */
-	uint8_t rxfcb_pro;	/* IP Protocol received */
-	uint16_t rxfcb__mbz1;
-	uint16_t rxfcb_vlctl;	/* VLAN control field */
+	uint8_t rxfcb_rq;		/* receive queue index */
+	uint8_t rxfcb_pro;		/* IP Protocol received */
+	uint16_t rxfcb_flr_hash;	/* filer hash value */
+	uint16_t rxfcb_vlctl;		/* VLAN control field */
 };
 
 /* 0x000-0x0ff eTSEC general control/status registers */
@@ -139,7 +140,8 @@ struct rxfcb {
 #define	IEVENT_CRL	__PPCBIT(14)	/* collision retry limit */
 #define	IEVENT_XFUN	__PPCBIT(15)	/* transmit fifo underrun */
 #define	IEVENT_RXB	__PPCBIT(16)	/* receive buffer */
-#define	IEVENT_MAG	__PPCBIT(29)	/* magic packet detected */
+#define	IEVENT_TWK	__PPCBIT(19)	/* timer wakeup */
+#define	IEVENT_MAG	__PPCBIT(20)	/* magic packet detected */
 #define	IEVENT_MMRD	__PPCBIT(21)	/* MMI manangement read complete */
 #define	IEVENT_MMWR	__PPCBIT(22)	/* MMI manangement write complete */
 #define	IEVENT_GRSC	__PPCBIT(23)	/* graceful receive stop complete */
@@ -188,7 +190,10 @@ struct rxfcb {
 #define TCTRL_THDF	__PPCBIT(29) /* Transmit half duplex */
 #define TCTRL_RFC_PAUSE	__PPCBIT(27) /* receive flow control pause frame */
 #define TCTRL_TFC_PAUSE	__PPCBIT(28) /* transmit flow control pause frame */
-#define TXSCHED		__PPCBITS(29,30) /* transmit ring scheduling algorithm */
+#define TCTRL_TXSCHED	__PPCBITS(29,30) /* transmit ring scheduling algorithm */
+#define TCTRL_TXSCHED_SINGLE	__SHIFTIN(0,TCTRL_TXSCHED)
+#define TCTRL_TXSCHED_PRIO	__SHIFTIN(1,TCTRL_TXSCHED)
+#define TCTRL_TXSCHED_MWRR	__SHIFTIN(2,TCTRL_TXSCHED)
 
 #define TSTAT		0x104 /* Transmit status register */
 #define	TSTAT_THLT0	__PPCBIT(0) /* transmit halt of ring 0 */
@@ -213,6 +218,14 @@ struct rxfcb {
 #define	TSTAT_TXFn(n)	(TSTAT_TXF0 >> (n))
 #define DFVLAN		0x108 /* Default VLAN control word [TSEC3] */
 #define TXIC		0x110 /* Transmit interrupt coalescing register */
+#define	TXIC_ICEN	__PPCBIT(0) /* Interrupt coalescing enable */
+#define	TXIC_ICCS	__PPCBIT(1) /* Interrupt coalescing timer clock source */
+#define	TXIC_ICCS_ETSEC		0         /* eTSEC Tx interface clocks */
+#define	TXIC_ICCS_SYSTEM	TXIC_ICCS /* system clocks */
+#define	TXIC_ICFT	__PPCBITS(3,10)
+#define	TXIC_ICFT_SET(n)	__SHIFTIN((n),TXIC_ICFT)
+#define	TXIC_ICTT	__PPCBITS(16,31)
+#define	TXIC_ICTT_SET(n)	__SHIFTIN((n),TXIC_ICTT)
 #define TQUEUE		0x114 /* Transmit queue control register [TSEC3] */
 #define	TQUEUE_EN0	__PPCBIT(16) /* transmit ring enabled */
 #define	TQUEUE_EN1	__PPCBIT(17)
@@ -256,6 +269,10 @@ struct rxfcb {
 /* 0x300-0x4ff eTSEC receive control/status registers */
 
 #define RCTRL		0x300 /* Receive control register */
+#define	RCTRL_L2OFF	__PPCBITS(0,6)
+#define	RCTRL_L2OFF_SET(n)	__SHIFTIN((n),RCTRL_L2OFF)
+#define	RCTRL_TS	__PPCBIT(7)
+#define	RCTRL_RR	__PPCBIT(10)
 #define	RCTRL_PAL	__PPCBITS(11,15)
 #define	RCTRL_VLEX	__PPCBIT(18)
 #define	RCTRL_FILREN	__PPCBIT(19)
@@ -295,6 +312,14 @@ struct rxfcb {
 #define	RSTAT_RXF	__PPCBITS(24,31)
 #define	RSTAT_RXFn(n)	(RSTAT_RXF0 >> (n))
 #define RXIC		0x310 /* Receive interrupt coalescing register */
+#define	RXIC_ICEN	__PPCBIT(0) /* Interrupt coalescing enable */
+#define	RXIC_ICCS	__PPCBIT(1) /* Interrupt coalescing timer clock source */
+#define	RXIC_ICCS_ETSEC		0         /* eTSEC Rx interface clocks */
+#define	RXIC_ICCS_SYSTEM	TXIC_ICCS /* system clocks */
+#define	RXIC_ICFT	__PPCBITS(3,10)
+#define	RXIC_ICFT_SET(n)	__SHIFTIN((n),TXIC_ICFT)
+#define	RXIC_ICTT	__PPCBITS(16,31)
+#define	RXIC_ICTT_SET(n)	__SHIFTIN((n),TXIC_ICTT)
 #define RQUEUE		0x314 /* Receive queue control register. [TSEC3] */
 #define	RQUEUE_EX0	__PPCBIT(8) /* data transferred by DMA to ring extracted according to ATTR register */
 #define	RQUEUE_EX1	__PPCBIT(9)
@@ -305,7 +330,7 @@ struct rxfcb {
 #define	RQUEUE_EX6	__PPCBIT(14)
 #define	RQUEUE_EX7	__PPCBIT(15)
 #define	RQUEUE_EXn(n)	(RQUEUE_EX0 >> (n))
-#define	RQUEUE_EX	__PPCBITS(0,7)
+#define	RQUEUE_EX	__PPCBITS(8,15)
 #define	RQUEUE_EN0	__PPCBIT(24) /* ring is queried for reception */
 #define	RQUEUE_EN1	__PPCBIT(25)
 #define	RQUEUE_EN2	__PPCBIT(26)
@@ -316,10 +341,65 @@ struct rxfcb {
 #define	RQUEUE_EN7	__PPCBIT(31)
 #define	RQUEUE_EN	__PPCBITS(24,31)
 #define	RQUEUE_ENn(n)	(RQUEUE_EN0 >> (n))
+#define	RIR0		0x318	/* Ring mapping register 0 */
+#define	RIR1		0x31c	/* Ring mapping register 1 */
+#define	RIR2		0x320	/* Ring mapping register 2 */
+#define	RIR3		0x324	/* Ring mapping register 3 */
+#define	RIRn(n)		(RIR0 + 4*(n))
 #define RBIFX		0x330 /* Receive bit field extract control register [TSEC3] */
 #define RQFAR		0x334 /* Receive queue filing table address register [TSEC3] */
 #define RQFCR		0x338 /* Receive queue filing table control register [TSEC3] */
+#define RQFCR_GPI	__PPCBIT(0) /* General purpose interrupt */
+#define RQFCR_HASHTBL	__PPCBITS(12,14) /* Select between filer Q value and RIR fileds. */
+#define RQFCR_HASHTBL_Q	__SHIFTIN(0,RQFCR_HASHTBL)
+#define RQFCR_HASHTBL_0	__SHIFTIN(1,RQFCR_HASHTBL)
+#define RQFCR_HASHTBL_1	__SHIFTIN(2,RQFCR_HASHTBL)
+#define RQFCR_HASHTBL_2	__SHIFTIN(3,RQFCR_HASHTBL)
+#define RQFCR_HASHTBL_3	__SHIFTIN(4,RQFCR_HASHTBL)
+#define RQFCR_HASH	__PPCBIT(15) /* Include parser results in hash */
+#define RQFCR_QUEUE	__PPCBITS(16,21) /* Receive queue index */
+#define RQFCR_QUEUE_SET(n)	__SHIFTIN((n),RQFCR_QUEUE)
+#define RQFCR_CLE	__PPCBIT(22) /* Cluster entry/exit */
+#define RQFCR_REJ	__PPCBIT(23) /* Reject frame */
+#define RQFCR_AND	__PPCBIT(24) /* AND, in combination with CLE, REJ, and PID match */
+#define RQFCR_CMP	__PPCBITS(25,26) /* Comparison operation to perform on the RQPROP entry at this index when PID > 0 */
+#define RQFCR_CMP_EXACT	__SHIFTIN(0,RQFCR_CMP)
+#define RQFCR_CMP_MATCH	__SHIFTIN(1,RQFCR_CMP)
+#define RQFCR_CMP_NOEXACT	__SHIFTIN(2,RQFCR_CMP)
+#define RQFCR_CMP_NOMATCH	__SHIFTIN(3,RQFCR_CMP)
+#define RQFCR_PID	__PPCBITS(28,31)
+#define RQFCR_PID_MASK	0
+#define RQFCR_PID_PARSE	1
+#define RQFCR_PID_ARB	2
+#define RQFCR_PID_DAH	3
+#define RQFCR_PID_DAL	4
+#define RQFCR_PID_SAH	5
+#define RQFCR_PID_SAL	6
+#define RQFCR_PID_ETY	7
+#define RQFCR_PID_VID	8
+#define RQFCR_PID_PRI	9
+#define RQFCR_PID_TOS	10
+#define RQFCR_PID_L4P	11
+#define RQFCR_PID_DIA	12
+#define RQFCR_PID_SIA	13
+#define RQFCR_PID_DPT	14
+#define RQFCR_PID_SPT	15
 #define RQFPR		0x33C /* Receive queue filing table property register [TSEC3] */
+#define RQFPR_PID1_AR	__PPCBIT(14) /* ARP response */
+#define RQFPR_PID1_ARQ	__PPCBIT(15) /* ARP request */
+#define RQFPR_PID1_EBC	__PPCBIT(16) /* destination Ethernet address is to the broadcast address */
+#define RQFPR_PID1_VLN	__PPCBIT(17) /* VLAN tag */
+#define RQFPR_PID1_CFI	__PPCBIT(18) /* Canonical Format Indicator */
+#define RQFPR_PID1_JUM	__PPCBIT(19) /* Jumbo Ethernet frame */
+#define RQFPR_PID1_IPF	__PPCBIT(20) /* fragmented IPv4 or IPv6 header */
+#define RQFPR_PID1_IP4	__PPCBIT(22) /* IPv4 header */
+#define RQFPR_PID1_IP6	__PPCBIT(23) /* IPv6 header */
+#define RQFPR_PID1_ICC	__PPCBIT(24) /* IPv4 header checksum */
+#define RQFPR_PID1_ICV	__PPCBIT(25) /* IPv4 header checksum was verifed correct */
+#define RQFPR_PID1_TCP	__PPCBIT(26) /* TCP header */
+#define RQFPR_PID1_UDP	__PPCBIT(27) /* UDP header */
+#define RQFPR_PID1_PER	__PPCBIT(30) /* parse error */
+#define RQFPR_PID1_EER	__PPCBIT(31) /* Ethernet framing error */
 #define MRBLR		0x340 /* Maximum receive buffer length register */
 #define RBDBPH		0x380 /* Rx data buffer pointer high bits [TSEC3] */
 #define RBPTR0		0x384 /* RxBD pointer for ring 0 */
@@ -330,6 +410,7 @@ struct rxfcb {
 #define RBPTR5		0x3AC /* RxBD pointer for ring 5 [TSEC3] */
 #define RBPTR6		0x3B4 /* RxBD pointer for ring 6 [TSEC3] */
 #define RBPTR7		0x3BC /* RxBD pointer for ring 7 [TSEC3] */
+#define RBPTRn(n)	(RBPTR0 + 8*(n))
 #define RBASEH		0x400 /* RxBD base address high bits [TSEC3] */
 #define RBASE0		0x404 /* RxBD base address of ring 0 */
 #define RBASE1		0x40C /* RxBD base address of ring 1 [TSEC3] */
@@ -339,7 +420,7 @@ struct rxfcb {
 #define RBASE5		0x42C /* RxBD base address of ring 5 [TSEC3] */
 #define RBASE6		0x434 /* RxBD base address of ring 6 [TSEC3] */
 #define RBASE7		0x43C /* RxBD base address of ring 7 [TSEC3] */
-#define RBASEn(n)	(RBASE0 + 4*(n))
+#define RBASEn(n)	(RBASE0 + 8*(n))
 #define TMR_RXTS_H	0x4C0 /* Rx timer time stamp register high [TSEC3] */
 #define TMR_RXTS_L	0x4C4 /* Rx timer time stamp register low [TSEC3] */
 
@@ -540,6 +621,10 @@ struct rxfcb {
 #define RQPRM6		0xC18 /* Receive Queue Parameters register 6 [TSEC3] */
 #define RQPRM7		0xC1C /* Receive Queue Parameters register 7 [TSEC3] */
 #define	RQPRMn(n)	(RQPRM0 + 4*(n))
+#define	RQPRM_FBTHR	__PPCBITS(0,7)
+#define	RQPRM_FBTHR_SET(n)	__SHIFTIN((n),RQPRM_FBTHR)
+#define	RQPRM_LEN	__PPCBITS(8,31)
+#define	RQPRM_LEN_SET(n)	__SHIFTIN((n),RQPRM_LEN)
 
 #define RFBPTR0		0xC44 /* Last Free RxBD pointer for ring 0 [TSEC3] */
 #define RFBPTR1		0xC4C /* Last Free RxBD pointer for ring 1 [TSEC3] */
@@ -552,7 +637,7 @@ struct rxfcb {
 #define	RFBPTRn(n)	(RFBPTR0 + 4*(n))
 
 /* 0xc40-0xdff unused */
-/* 0xe00-0xeff 1588 Hardware Assist */
+/* 0xe00-0xeaf 1588 Hardware Assist */
 
 #define TMR_CTRL	0xE00 /* Timer control register [TSEC3] */
 #define TMR_TEVENT	0xE04 /* time stamp event register [TSEC3] */
@@ -578,5 +663,33 @@ struct rxfcb {
 #define TMR_ETTS1_L	0xEA4 /* Time stamp of general purpose external trigger [TSEC3] */
 #define TMR_ETTS2_H	0xEA8 /* Time stamp of general purpose external trigger [TSEC3] */
 #define TMR_ETTS2_L	0xEAC /* Time stamp of general purpose external trigger [TSEC3] */
+
+/* 0xeb0-0xeff Interrupt steering and coalescing */
+
+#define ISRG0		0xeb0	/* Interrupt steering register group 0 */
+#define ISRG1		0xeb4	/* Interrupt steering register group 1 */
+#define ISRGn(n)	(ISRG0+4*(n))
+#define ISRG_RRn(n)	__PPCBIT(n)
+#define ISRG_TRn(n)	__PPCBIT(8+(n))
+
+#define RXIC0		0xed0	/* Ring 0 Rx interrupt coalescing register */
+#define RXIC1		0xed4	/* Ring 1 Rx interrupt coalescing register */
+#define RXIC2		0xed8	/* Ring 2 Rx interrupt coalescing register */
+#define RXIC3		0xedc	/* Ring 3 Rx interrupt coalescing register */
+#define RXIC4		0xee0	/* Ring 4 Rx interrupt coalescing register */
+#define RXIC5		0xee4	/* Ring 5 Rx interrupt coalescing register */
+#define RXIC6		0xee8	/* Ring 6 Rx interrupt coalescing register */
+#define RXIC7		0xeec	/* Ring 7 Rx interrupt coalescing register */
+#define RXICn(n)	(RXIC0+4*(n))
+
+#define TXIC0		0xf10	/* Ring 0 Tx interrupt coalescing register */
+#define TXIC1		0xf14	/* Ring 1 Tx interrupt coalescing register */
+#define TXIC2		0xf18	/* Ring 2 Tx interrupt coalescing register */
+#define TXIC3		0xf1c	/* Ring 3 Tx interrupt coalescing register */
+#define TXIC4		0xf20	/* Ring 4 Tx interrupt coalescing register */
+#define TXIC5		0xf24	/* Ring 5 Tx interrupt coalescing register */
+#define TXIC6		0xf28	/* Ring 6 Tx interrupt coalescing register */
+#define TXIC7		0xf2c	/* Ring 7 Tx interrupt coalescing register */
+#define TXICn(n)	(TXIC0+4*(n))
 
 #endif /* _POWERPC_BOOKE_ETSECREG_H_ */

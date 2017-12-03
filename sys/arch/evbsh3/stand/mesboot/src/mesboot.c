@@ -1,4 +1,4 @@
-/*	$NetBSD: mesboot.c,v 1.1 2010/04/06 15:54:30 nonaka Exp $	*/
+/*	$NetBSD: mesboot.c,v 1.1.24.1 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 #include <macro.h>
 #include <mes2.h>
@@ -25,7 +25,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char *kernel;
+	char *kernel = NULL;
 	char *ptr, *mem, *rdptr;
 	void (*func)();
 	int fd, size, c;

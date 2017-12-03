@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.17.2.2 2014/08/20 00:03:30 tls Exp $
+# $NetBSD: INSTALL,v 1.17.2.3 2017/12/03 11:36:52 jdolecek Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -9,7 +9,7 @@ include 	"arch/zaurus/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4516	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4352	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # for reduce kernel size.
@@ -28,22 +28,15 @@ no options 		INSECURE
 
 no file-system		KERNFS
 no file-system		NULLFS
+no file-system		PUFFS
 no file-system		PROCFS
 no file-system		PTYFS
 no file-system		TMPFS
 
 no options 		WAPBL
 
-no options		COMPAT_13
-no options		COMPAT_14
-no options		COMPAT_15
-no options		COMPAT_16
-no options		COMPAT_20
-no options		COMPAT_30
-no options		COMPAT_40
-no options		COMPAT_50
-no options		COMPAT_60
-no options		COMPAT_43
+include 		"conf/compat_netbsd14.config"
+no options 		COMPAT_NETBSD32
 
 no options 		COMPAT_OSSAUDIO
 
@@ -64,7 +57,9 @@ options 		RASOPS_SMALL
 no options 		DIAGNOSTIC
 no options 		DDB
 no options 		DDB_HISTORY_SIZE
-no options 		SYMTAB_SPACE
+no makeoptions	COPY_SYMTAB
+
+no options 		PXA2X0_DMAC_DMOVER_CONCURRENCY
 
 no zrc0 at pxaip?
 
@@ -73,12 +68,23 @@ no wsmouse* at ztp?
 
 no zaudio0 at iic?
 no audio* at zaudio?
+no spkr* at audio?
 
 no ums* at uhidev?
 no wsmouse* at ums?
 no ugen*
 
 no uk* at scsibus?
+
+no acphy*
+no amhphy*
+no bmtphy*
+no glxtphy*
+no gphyter*
+no makphy*
+no tlphy*
+no tqphy*
+no urlphy*
 
 no pseudo-device	vnd
 no options 		VND_COMPRESSION
@@ -87,3 +93,6 @@ no pseudo-device	accf_http
 no pseudo-device	ksyms
 no pseudo-device	wsfont
 options 	NO_DEV_PTM
+no pseudo-device	clockctl
+no pseudo-device	drvctl
+no pseudo-device	putter

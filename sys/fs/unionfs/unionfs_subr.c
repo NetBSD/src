@@ -688,9 +688,6 @@ unionfs_copyfile_core(struct vnode *lvp, struct vnode *uvp,
 	uio.uio_offset = 0;
 
 	buf = kmem_alloc(MAXBSIZE, KM_SLEEP);
-	if (buf == NULL)
-		return ENOMEM;
-
 	while (error == 0) {
 		offset = uio.uio_offset;
 

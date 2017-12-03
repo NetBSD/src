@@ -1,4 +1,4 @@
-/* $NetBSD: tc_conf.h,v 1.13 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: tc_conf.h,v 1.13.6.1 2017/12/03 11:35:47 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 /*
- * Machine-specific TurboChannel configuration definitions.
+ * Machine-specific TURBOchannel configuration definitions.
  */
 
 #include "opt_dec_3000_300.h"

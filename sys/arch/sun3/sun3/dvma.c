@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.38.6.1 2014/08/20 00:03:26 tls Exp $	*/
+/*	$NetBSD: dvma.c,v 1.38.6.2 2017/12/03 11:36:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.38.6.1 2014/08/20 00:03:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.38.6.2 2017/12/03 11:36:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,9 +83,6 @@ dvma_init(void)
 	 * context.
 	 */
 	phys_map = kmem_alloc(sizeof(struct vm_map), KM_SLEEP);
-	if (phys_map == NULL)
-		panic("unable to create DVMA map");
-
 	uvm_map_setup(phys_map, DVMA_MAP_BASE, DVMA_MAP_END, 0);
 	phys_map->pmap = pmap_kernel();
 

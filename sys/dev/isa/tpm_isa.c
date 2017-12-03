@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm_isa.c,v 1.2 2012/02/06 04:29:47 christos Exp $	*/
+/*	$NetBSD: tpm_isa.c,v 1.2.10.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.2 2012/02/06 04:29:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.2.10.1 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,9 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (sc->sc_init == tpm_tis12_init &&
 	    ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
-	    (sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_TTY, tpm_intr, sc)) == NULL) {
+	    (sc->sc_ih = isa_intr_establish_xname(ia->ia_ic,
+	     ia->ia_irq[0].ir_irq, IST_EDGE, IPL_TTY, tpm_intr, sc,
+	     device_xname(sc->sc_dev))) == NULL) {
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, TPM_SIZE);
 		aprint_error_dev(sc->sc_dev, "cannot establish interrupt\n");
 		return;

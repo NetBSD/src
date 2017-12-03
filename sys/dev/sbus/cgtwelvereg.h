@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelvereg.h,v 1.2 2010/04/14 04:37:11 macallan Exp $ */
+/*	$NetBSD: cgtwelvereg.h,v 1.2.24.1 2017/12/03 11:37:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -156,7 +156,7 @@
 #define		DWGCTL_AUTOLINE_OPEN	0x00000001
 #define		DWGCTL_LINE_CLOSED	0x00000002
 #define		DWGCTL_AUTOLINE_CLOSED	0x00000003
-#define		DWGCTL_TRAPEXOID	0x00000004
+#define		DWGCTL_TRAPEZOID	0x00000004
 #define		DWGCTL_BITBLT		0x00000008
 #define		DWGCTL_UPLOAD		0x00000009
 #define		DWGCTL_DOWNLOAD		0x0000000a
@@ -181,7 +181,7 @@
 #define		DWGCTL_BLT_TRANSPARENT	0x40000000	/* for color exp. */
 
 #define CG12APU_SAM		0x0274
-#define CG12APU_SGN		0x0278
+#define CG12APU_SGN		0x0278	/* analog to Athena's SIGN register? */
 #define CG12APU_LENGTH		0x027c
 #define CG12APU_DWG_R0		0x0280
 #define CG12APU_DWG_R1		0x0284
@@ -193,7 +193,7 @@
 #define CG12APU_DWG_R7		0x029c
 #define CG12APU_RELOAD_CTL	0x02a0
 #define CG12APU_RELOAD_STB	0x02a4
-#define CG12APU_C_XLEFT		0x02a8
+#define CG12APU_C_XLEFT		0x02a8	/* clipping? */
 #define CG12APU_C_YTOP		0x02ac
 #define CG12APU_C_XRIGHT	0x02b0
 #define CG12APU_C_YBOTTOM	0x02b4
@@ -270,7 +270,7 @@
 #define	CG12_WID_ENABLE_3	3	/* overlay/cursor enable has 3 colors */
 #define	CG12_WID_ALT_CMAP	4	/* use alternate colormap	*/
 #define	CG12_WID_DBL_BUF_DISP_A	5	/* double buffering display A	*/
-#define	CG12_WID_DBL_BUF_DISP_B	6	/* double buffering display A	*/
+#define	CG12_WID_DBL_BUF_DISP_B	6	/* double buffering display B	*/
 #define	CG12_WID_ATTRS		7	/* total no of attributes	*/
 
 /* WSC */
@@ -293,5 +293,7 @@
 #define CG12_EIC_DCLONGR	0x0730
 #define CG12_EIC_DCFLOATR	0x0734
 #define CG12_EIC_RESET		0x073c
+#define 	CG12EIC_RESET_SYS	0x01000000
+#define 	CG12EIC_RESET_DSP	0x02000000
 
 #endif /* CG12REG_H */

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.39.18.1 2014/08/20 00:03:38 tls Exp $ */
+/*      $NetBSD: sgec.c,v 1.39.18.2 2017/12/03 11:37:04 jdolecek Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -10,12 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of
- *      Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -45,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.39.18.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.39.18.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -332,7 +326,7 @@ zestart(struct ifnet *ifp)
 	int nexttx, starttx;
 	int len, i, totlen, error;
 	int old_inq = sc->sc_inq;
-	uint16_t orword, tdr;
+	uint16_t orword, tdr = 0;
 	bus_dmamap_t map;
 
 	while (sc->sc_inq < (TXDESCS - 1)) {
@@ -421,6 +415,8 @@ zestart(struct ifnet *ifp)
 		if ((ZE_RCSR(ZE_CSR5) & ZE_NICSR5_TS) != ZE_NICSR5_TS_RUN)
 			ZE_WCSR(ZE_CSR1, -1);
 		sc->sc_nexttx = nexttx;
+
+		bpf_mtap(ifp, m);
 	}
 	if (sc->sc_inq == (TXDESCS - 1))
 		ifp->if_flags |= IFF_OACTIVE;
@@ -452,7 +448,6 @@ sgec_intr(struct ze_softc *sc)
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
-			ifp->if_ipackets++;
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 			ze_add_rxbuf(sc, sc->sc_nextrx);
@@ -462,11 +457,10 @@ sgec_intr(struct ze_softc *sc)
 				ifp->if_ierrors++;
 				m_freem(m);
 			} else {
-				m->m_pkthdr.rcvif = ifp;
+				m_set_rcvif(m, ifp);
 				m->m_pkthdr.len = m->m_len =
 				    len - ETHER_CRC_LEN;
-				bpf_mtap(ifp, m);
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 		}
 	}
@@ -506,7 +500,6 @@ sgec_intr(struct ze_softc *sc)
 			ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, map);
 			KASSERT(sc->sc_txmbuf[lastack]);
-			bpf_mtap(ifp, sc->sc_txmbuf[lastack]);
 			m_freem(sc->sc_txmbuf[lastack]);
 			sc->sc_txmbuf[lastack] = 0;
 			if (++lastack == TXDESCS)

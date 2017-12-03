@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.20.2.2 2014/08/20 00:02:54 tls Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.20.2.3 2017/12/03 11:36:04 jdolecek Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.20.2.2 2014/08/20 00:02:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.20.2.3 2017/12/03 11:36:04 jdolecek Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -707,7 +707,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 #if (GEMINI_RAM_RESV_PBASE != 0)
 	uvm_page_physload(atop(physical_freestart), atop(GEMINI_RAM_RESV_PBASE),
@@ -1150,7 +1150,7 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 
 	printf(mem_fmt, "SDRAM", physical_start, physical_end-1,
 	    KERN_PHYSTOV(physical_start), KERN_PHYSTOV(physical_end-1),
-	    physmem);
+	    (int)physmem);
 	printf(mem_fmt, "text section",
 	       KERN_VTOPHYS(KERNEL_BASE_virt), KERN_VTOPHYS(etext-1),
 	       (vaddr_t)KERNEL_BASE_virt, (vaddr_t)etext-1,

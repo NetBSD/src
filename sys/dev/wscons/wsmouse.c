@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.64.12.1 2014/08/20 00:03:52 tls Exp $ */
+/* $NetBSD: wsmouse.c,v 1.64.12.2 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.64.12.1 2014/08/20 00:03:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.64.12.2 2017/12/03 11:37:37 jdolecek Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.64.12.1 2014/08/20 00:03:52 tls Exp $"
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -475,7 +474,7 @@ wsmouse_input(device_t wsmousedev, u_int btns /* 0 is up */,
 		btnno = ffs(d) - 1;
 		KASSERT(btnno >= 0);
 
-		if (nevents >= sizeof(events) / sizeof(events[0])) {
+		if (nevents >= __arraycount(events)) {
 			aprint_error_dev(sc->sc_base.me_dv,
 			    "Event queue full (button status mb=0x%x"
 			    " ub=0x%x)\n", mb, ub);

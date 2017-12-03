@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.30.6.2 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: alpha.h,v 1.30.6.3 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,6 @@ int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);
 uint64_t console_restart(struct trapframe *);
 void	do_sir(void);
-void	dumpconf(void);
 void	exception_return(void);					/* MAGIC */
 void	frametoreg(const struct trapframe *, struct reg *);
 long	fswintrberr(void);					/* MAGIC */
@@ -116,8 +115,7 @@ void    fpu_state_release(struct lwp *);
 static inline bool
 fpu_valid_p(struct lwp *l)
 {
-	KASSERT(l == curlwp);
-	return pcu_valid_p(&fpu_ops);
+	return pcu_valid_p(&fpu_ops, l);
 }
 
 static inline void
@@ -127,15 +125,15 @@ fpu_load(void)
 }
 
 static inline void
-fpu_save(void)
+fpu_save(lwp_t *l)
 {
-	pcu_save(&fpu_ops);
+	pcu_save(&fpu_ops, l);
 }
 
 static inline void
-fpu_discard(bool valid_p)
+fpu_discard(lwp_t *l, bool valid_p)
 {
-	pcu_discard(&fpu_ops, valid_p);
+	pcu_discard(&fpu_ops, l, valid_p);
 }
 
 void	alpha_patch(bool);

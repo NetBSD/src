@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.345.2.1 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.345.2.2 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,9 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345.2.1 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345.2.2 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include "opt_adb.h"
+#include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_kgdb.h"
@@ -113,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345.2.1 2014/08/20 00:03:11 tls Exp $"
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
-#define ELFSIZE 32
 #include <sys/exec_elf.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
@@ -645,7 +645,7 @@ cpu_dumpconf(void)
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = 0;
-	for (i = 0; m->ram_segs[i].size && i < M68K_NPHYS_RAM_SEGS; i++)
+	for (i = 0; i < M68K_NPHYS_RAM_SEGS && m->ram_segs[i].size; i++)
 		dumpsize += btoc(m->ram_segs[i].size);
 
 	/*
@@ -871,12 +871,10 @@ getenvvars(u_long flag, char *buf)
 	extern long macos_gmtbias;
 	int root_scsi_id;
 	u_long root_ata_dev;
-#ifdef	__ELF__
 	int i;
 	Elf_Ehdr *ehdr;
 	Elf_Shdr *shp;
 	vaddr_t minsym;
-#endif
 
 	/*
 	 * If flag & 0x80000000 == 0, then we're booting with the old booter
@@ -961,7 +959,7 @@ getenvvars(u_long flag, char *buf)
 	 * Get end of symbols for kernel debugging
 	 */
 	esym = (int *)getenv("END_SYM");
-#ifndef SYMTAB_SPACE
+#ifndef makeoptions_COPY_SYMTAB
 	if (esym == (int *)0)
 #endif
 		esym = (int *)&end;
@@ -989,7 +987,6 @@ getenvvars(u_long flag, char *buf)
  	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
  	mrg_ADBIntrPtr = (void *)getenv("ADBINTERRUPT");
 
-#ifdef	__ELF__
 	/*
 	 * Check the ELF headers.
 	 */
@@ -1016,10 +1013,6 @@ getenvvars(u_long flag, char *buf)
 
 	symsize = 1;
 	ssym = (int *)ehdr;
-#else
-	symsize = *(int *)&end;
-	ssym = ((int *)&end) + 1;
-#endif
 }
 
 static long

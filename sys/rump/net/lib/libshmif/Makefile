@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.3.18.2 2014/08/20 00:04:43 tls Exp $
+#	$NetBSD: Makefile,v 1.3.18.3 2017/12/03 11:39:19 jdolecek Exp $
 #
 
 LIB=	rumpnet_shmif
+COMMENT=Shared memory bus network interface
 
 SRCS=	if_shmem.c shmif_busops.c
 SRCS+=	shmif_component.c
-
-CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpkern
 
 RUMPCOMP_USER_SRCS=	shmif_user.c
 

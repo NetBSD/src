@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __UTDELETE_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -86,6 +84,7 @@ AcpiUtDeleteInternalObj (
     ACPI_OPERAND_OBJECT     *HandlerDesc;
     ACPI_OPERAND_OBJECT     *SecondDesc;
     ACPI_OPERAND_OBJECT     *NextDesc;
+    ACPI_OPERAND_OBJECT     *StartDesc;
     ACPI_OPERAND_OBJECT     **LastObjPtr;
 
 
@@ -221,6 +220,11 @@ AcpiUtDeleteInternalObj (
             AcpiUtDeleteObjectDesc (Object->Method.Mutex);
             Object->Method.Mutex = NULL;
         }
+
+        if (Object->Method.Node)
+        {
+            Object->Method.Node = NULL;
+        }
         break;
 
     case ACPI_TYPE_REGION:
@@ -250,9 +254,10 @@ AcpiUtDeleteInternalObj (
             if (HandlerDesc)
             {
                 NextDesc = HandlerDesc->AddressSpace.RegionList;
+                StartDesc = NextDesc;
                 LastObjPtr = &HandlerDesc->AddressSpace.RegionList;
 
-                /* Remove the region object from the handler's list */
+                /* Remove the region object from the handler list */
 
                 while (NextDesc)
                 {
@@ -262,10 +267,20 @@ AcpiUtDeleteInternalObj (
                         break;
                     }
 
-                    /* Walk the linked list of handler */
+                    /* Walk the linked list of handlers */
 
                     LastObjPtr = &NextDesc->Region.Next;
                     NextDesc = NextDesc->Region.Next;
+
+                    /* Prevent infinite loop if list is corrupted */
+
+                    if (NextDesc == StartDesc)
+                    {
+                        ACPI_ERROR ((AE_INFO,
+                            "Circular region list in address handler object %p",
+                            HandlerDesc));
+                        return_VOID;
+                    }
                 }
 
                 if (HandlerDesc->AddressSpace.HandlerFlags &
@@ -434,8 +449,9 @@ AcpiUtUpdateRefCount (
         }
 
         ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
-            "Obj %p Type %.2X Refs %.2X [Incremented]\n",
-            Object, Object->Common.Type, NewCount));
+            "Obj %p Type %.2X [%s] Refs %.2X [Incremented]\n",
+            Object, Object->Common.Type,
+            AcpiUtGetObjectTypeName (Object), NewCount));
         break;
 
     case REF_DECREMENT:
@@ -539,8 +555,8 @@ AcpiUtUpdateObjectReference (
         }
 
         /*
-         * All sub-objects must have their reference count incremented also.
-         * Different object types have different subobjects.
+         * All sub-objects must have their reference count incremented
+         * also. Different object types have different subobjects.
          */
         switch (Object->Common.Type)
         {
@@ -600,7 +616,7 @@ AcpiUtUpdateObjectReference (
                      * for later processing (this eliminates recursion.)
                      */
                     Status = AcpiUtCreateUpdateStateAndPush (
-                                 NextObject, Action, &StateList);
+                        NextObject, Action, &StateList);
                     if (ACPI_FAILURE (Status))
                     {
                         goto ErrorExit;
@@ -625,7 +641,7 @@ AcpiUtUpdateObjectReference (
 
             NextObject = Object->BankField.BankObj;
             Status = AcpiUtCreateUpdateStateAndPush (
-                        Object->BankField.RegionObj, Action, &StateList);
+                Object->BankField.RegionObj, Action, &StateList);
             if (ACPI_FAILURE (Status))
             {
                 goto ErrorExit;
@@ -636,7 +652,7 @@ AcpiUtUpdateObjectReference (
 
             NextObject = Object->IndexField.IndexObj;
             Status = AcpiUtCreateUpdateStateAndPush (
-                        Object->IndexField.DataObj, Action, &StateList);
+                Object->IndexField.DataObj, Action, &StateList);
             if (ACPI_FAILURE (Status))
             {
                 goto ErrorExit;

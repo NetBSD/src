@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32.12.2 2014/08/20 00:02:51 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32.12.3 2017/12/03 11:36:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,14 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32.12.2 2014/08/20 00:02:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32.12.3 2017/12/03 11:36:00 jdolecek Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <sys/errno.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/extent.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
@@ -99,6 +100,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 
 	KASSERT(pc != NULL);
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	/*
@@ -123,6 +127,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR,
 	    PCICFG_ENABLE | tag | reg);

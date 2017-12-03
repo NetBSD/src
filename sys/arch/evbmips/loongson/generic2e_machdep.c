@@ -48,7 +48,7 @@
  * Generic Loongson 2E code and configuration data.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2.6.2 2014/08/20 00:02:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2.6.3 2017/12/03 11:36:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2.6.2 2014/08/20 00:02:58 tl
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <mips/cpuregs.h>
 #include <mips/bonito/bonitoreg.h>
 #include <mips/bonito/bonitovar.h>
 

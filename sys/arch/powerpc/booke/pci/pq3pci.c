@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.15.2.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.15.2.2 2017/12/03 11:36:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.15.2.1 2014/08/20 00:03:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.15.2.2 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.15.2.1 2014/08/20 00:03:19 tls Exp $");
 #include <sys/bitops.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>	/* for extent */
+#include <sys/once.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -92,6 +93,11 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.15.2.1 2014/08/20 00:03:19 tls Exp $");
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
     TRUTH_ENCODE(SVR_P1016v1, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
+#define	PORDEVSR_P1023_TRUTH_ENCODE(inst, field, value, result) \
+    TRUTH_ENCODE(SVR_P1023v1, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##value, PORDEVSR_##field), result), \
+    TRUTH_ENCODE(SVR_P1017v1, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##value, PORDEVSR_##field), result)
 
 #define	PORDEVSR_TRUTH_ENCODE(svr, inst, field, value, result) \
     TRUTH_ENCODE(svr, inst, PORDEVSR_##field, \
@@ -171,6 +177,21 @@ const struct e500_truthtab pq3pci_pcie_lanes[] = {
 
     PORDEVSR_P1025_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_SGMII23, 1),
 #endif
+
+#ifdef P1023
+    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL_P1023, PCIE12_X1, 1),
+    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL_P1023, PCIE123_X1, 1),
+    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL_P1023, PCIE123_X1_SGMII2, 1),
+    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL_P1023, PCIE12_X1_SGMII12, 1),
+
+    PORDEVSR_P1023_TRUTH_ENCODE(2, IOSEL_P1023, PCIE12_X1, 1),
+    PORDEVSR_P1023_TRUTH_ENCODE(2, IOSEL_P1023, PCIE123_X1, 1),
+    PORDEVSR_P1023_TRUTH_ENCODE(2, IOSEL_P1023, PCIE123_X1_SGMII2, 1),
+    PORDEVSR_P1023_TRUTH_ENCODE(2, IOSEL_P1023, PCIE12_X1_SGMII12, 1),
+
+    PORDEVSR_P1023_TRUTH_ENCODE(3, IOSEL_P1023, PCIE123_X1, 1),
+    PORDEVSR_P1023_TRUTH_ENCODE(3, IOSEL_P1023, PCIE123_X1_SGMII2, 1),
+#endif
 };
 
 static const struct e500_truthtab pq3pci_pci_pcix[] = {
@@ -234,8 +255,9 @@ struct pq3pci_intrsource {
 	SIMPLEQ_HEAD(,pq3pci_intrhand) pis_ihands;
 	struct evcnt pis_ev;
 	struct evcnt pis_ev_spurious;
-	kmutex_t *pis_lock;
+	kmutex_t pis_lock;
 	pci_intr_handle_t pis_handle;
+	char pis_intrname[PCI_INTRSTR_LEN];
 	void *pis_ih;
 };
 
@@ -249,7 +271,7 @@ struct pq3pci_msihand {
 };
 
 struct pq3pci_msigroup {
-	kmutex_t *msig_lock;
+	kmutex_t msig_lock;
 	void *msig_ih;
 	uint32_t msig_free_mask;
 	int msig_ipl;
@@ -279,12 +301,15 @@ static int pq3pci_cpunode_match(device_t, cfdata_t, void *aux);
 static void pq3pci_cpunode_attach(device_t, device_t, void *aux);
 static pci_chipset_tag_t pq3pci_pci_chipset_init(struct pq3pci_softc *);
 
+static ONCE_DECL(pq3pci_init_once);
+static kmutex_t pq3pci_intrsources_lock;
+static kmutex_t pq3pci_msigroups_lock;
 static SIMPLEQ_HEAD(,pq3pci_intrsource) pq3pci_intrsources
     = SIMPLEQ_HEAD_INITIALIZER(pq3pci_intrsources);
 static struct pq3pci_msigroup *pq3pci_msigroups[8];
 
 static struct pq3pci_intrsource *
-	pq3pci_intr_source_lookup(struct pq3pci_softc *, pci_intr_handle_t);
+    pq3pci_intr_source_lookup(struct pq3pci_softc *, pci_intr_handle_t);
 
 static const char msi_intr_names[8][32][8] = {
     {
@@ -537,17 +562,6 @@ pq3pci_iwin_setup(struct pq3pci_softc *sc, u_int winnum,
 	return true;
 }
 
-static void
-pq3pci_pch_callout(void *v)
-{
-	struct pq3pci_callhand * const pch = v;
-
-	int s = splraise(pch->pch_ipl);
-	(*pch->pch_ih.ih_func)(pch->pch_ih.ih_arg);
-	splx(s);
-	callout_schedule(&pch->pch_callout, 1);
-}
-
 static int
 pq3pci_msi_spurious_intr(void *v)
 {
@@ -561,14 +575,14 @@ pq3pci_msi_intr(void *v)
 {
 	struct pq3pci_msigroup * const msig = v;
 
-	mutex_spin_enter(msig->msig_lock);
+	mutex_spin_enter(&msig->msig_lock);
 	KASSERT(curcpu()->ci_cpl == msig->msig_ipl);
 	//KASSERT(curcpu()->ci_idepth == 0);
 	uint32_t matches = 0;
 	for (int rv = 0;;) {
 		uint32_t group = cpu_read_4(msig->msig_msir);
 		if (group == 0) {
-			mutex_spin_exit(msig->msig_lock);
+			mutex_spin_exit(&msig->msig_lock);
 			return rv;
 		}
 
@@ -633,7 +647,7 @@ pq3pci_pis_intr(void *v)
 	struct pq3pci_intrhand *pih;
 	int rv = 0;
 
-	mutex_spin_enter(pis->pis_lock);
+	mutex_spin_enter(&pis->pis_lock);
 	pis->pis_ev.ev_count++;
 	SIMPLEQ_FOREACH(pih, &pis->pis_ihands, pih_link) {
 		struct pq3pci_softc * const sc = pih->pih_ih.ih_sc;
@@ -655,26 +669,27 @@ pq3pci_pis_intr(void *v)
 	}
 	if (rv == 0)
 		pis->pis_ev_spurious.ev_count++;
-	mutex_spin_exit(pis->pis_lock);
+	mutex_spin_exit(&pis->pis_lock);
 	return rv;
 }
 
 static void
-pq3pci_intr_source_setup(struct pq3pci_softc *sc,
-	struct pq3pci_intrsource *pis, pci_intr_handle_t handle)
+pq3pci_intr_source_setup(struct pq3pci_softc *sc, struct pq3pci_intrsource *pis,
+    pci_intr_handle_t handle)
 {
-	char buf[PCI_INTRSTR_LEN];
 	SIMPLEQ_INIT(&pis->pis_ihands);
 	pis->pis_handle = handle;
 	pis->pis_ih = intr_establish(PIH_IRQ(handle), IPL_VM, PIH_IST(handle),
 	    pq3pci_pis_intr, pis);
-	pis->pis_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&pis->pis_lock, MUTEX_DEFAULT, IPL_VM);
 	const char * const intrstr
-	    = intr_string(PIH_IRQ(handle), PIH_IST(handle), buf, sizeof(buf));
-	evcnt_attach_dynamic(&pis->pis_ev, EVCNT_TYPE_INTR,
-	    NULL, intrstr, "intr");
+	    = intr_string(PIH_IRQ(handle), PIH_IST(handle), pis->pis_intrname,
+		sizeof(pis->pis_intrname));
+	evcnt_attach_dynamic(&pis->pis_ev, EVCNT_TYPE_INTR, NULL, intrstr,
+	    "intr");
 	evcnt_attach_dynamic(&pis->pis_ev_spurious, EVCNT_TYPE_INTR,
 	    &pis->pis_ev, intrstr, "spurious intr");
+	KASSERT(mutex_owned(&pq3pci_intrsources_lock));
 	SIMPLEQ_INSERT_TAIL(&pq3pci_intrsources, pis, pis_link);
 }
 
@@ -697,13 +712,23 @@ pq3pci_intrmap_setup(struct pq3pci_softc *sc,
 
 	sc->sc_intrmask = prop_number_unsigned_integer_value(pn);
 
-	sc->sc_ih = intr_establish(cnl->cnl_intrs[0], IPL_VM, IST_ONCHIP,
-	    pq3pci_onchip_intr, sc);
+	sc->sc_ih = intr_establish_xname(cnl->cnl_intrs[0], IPL_VM, IST_ONCHIP,
+	    pq3pci_onchip_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL)
 		panic("%s: failed to establish interrupt %d\n",
 		    device_xname(sc->sc_dev), cnl->cnl_intrs[0]);
 
 	return true;
+}
+
+static int
+pq3pci_once_init(void)
+{
+
+	mutex_init(&pq3pci_intrsources_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&pq3pci_msigroups_lock, MUTEX_DEFAULT, IPL_VM);
+
+	return 0;
 }
 
 void
@@ -719,6 +744,8 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = cna->cna_memt;
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc_pcie = strcmp(cnl->cnl_name, "pcie") == 0;
+
+	RUN_ONCE(&pq3pci_init_once, pq3pci_once_init);
 
 	const uint32_t pordevsr = cpu_read_4(GLOBAL_BASE + PORDEVSR);
 	if (sc->sc_pcie) {
@@ -1038,8 +1065,10 @@ pq3pci_conf_read(void *v, pcitag_t tag, int reg)
 	struct pq3pci_softc * const sc = v;
 	struct genppc_pci_chipset * const pc = &sc->sc_pc;
 
-	if (reg >= 256) {
-		if (!sc->sc_pcie)
+	if (reg < 0)
+		return 0xffffffff;
+	if (reg >= PCI_CONF_SIZE) {
+		if (!sc->sc_pcie || reg >= PCI_EXTCONF_SIZE)
 			return 0xffffffff;
 		reg = (reg & 0xff) | ((reg & 0xf00) << 16);
 	}
@@ -1076,8 +1105,10 @@ pq3pci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	struct pq3pci_softc * const sc = v;
 	struct genppc_pci_chipset * const pc = &sc->sc_pc;
 
-	if (reg >= 256) {
-		if (!sc->sc_pcie)
+	if (reg < 0)
+		return;
+	if (reg >= PCI_CONF_SIZE) {
+		if (!sc->sc_pcie || reg >= PCI_EXTCONF_SIZE)
 			return;
 		reg = (reg & 0xff) | ((reg & 0xf00) << 16);
 	}
@@ -1094,6 +1125,7 @@ pq3pci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	mutex_spin_exit(sc->sc_conf_lock);
 }
 
+#ifdef PCI_NETBSD_CONFIGURE
 static int
 pq3pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
@@ -1108,21 +1140,24 @@ pq3pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	}
 	return PCI_CONF_DEFAULT;
 }
+#endif
 
 static void
 pq3pci_msi_group_setup(struct pq3pci_msigroup *msig, u_int group, int ipl)
 {
+	char buf[12];
 	const char (*intr_names)[8] = msi_intr_names[group];
 
 	KASSERT(ipl == IPL_VM);
+	KASSERT(mutex_owned(&pq3pci_msigroups_lock));
 
-	pq3pci_msigroups[group] = msig;
 	msig->msig_group = group;
 	msig->msig_free_mask = ~0 << (group == 0);
 	msig->msig_ipl = ipl;
-	msig->msig_lock = mutex_obj_alloc(MUTEX_DEFAULT, ipl);
-	msig->msig_ih = intr_establish(msig->msig_group, ipl, IST_MSIGROUP,
-	    pq3pci_msi_intr, msig);
+	mutex_init(&msig->msig_lock, MUTEX_DEFAULT, ipl);
+	snprintf(buf, sizeof(buf), "msi %d-%d", group * 32, group * 32 + 31);
+	msig->msig_ih = intr_establish_xname(msig->msig_group, ipl,
+	    IST_MSIGROUP, pq3pci_msi_intr, msig, buf);
 	msig->msig_msir = OPENPIC_BASE + OPENPIC_MSIR(msig->msig_group);
 	for (u_int i = 0; i < __arraycount(msig->msig_ihands); i++) {
 		struct pq3pci_msihand * const msih = msig->msig_ihands + i;
@@ -1135,16 +1170,44 @@ pq3pci_msi_group_setup(struct pq3pci_msigroup *msig, u_int group, int ipl)
 		evcnt_attach_dynamic(&msih->msih_ev_spurious, EVCNT_TYPE_INTR,
 		    &msih->msih_ev, intr_names[i], "spurious intr");
 	}
+	pq3pci_msigroups[group] = msig;
+}
+
+static struct pq3pci_msihand *
+pq3pci_msi_lookup(pci_intr_handle_t handle)
+{
+	const int irq = PIH_IRQ(handle);
+	KASSERT(irq < 256);
+	struct pq3pci_msigroup * const msig = pq3pci_msigroups[irq / 32];
+	KASSERT(msig != NULL);
+	return &msig->msig_ihands[irq & 31];
+}
+
+static struct pq3pci_msihand *
+pq3pci_msi_claim(pci_intr_handle_t handle)
+{
+	const int irq = PIH_IRQ(handle);
+	uint32_t irq_mask = __BIT(irq & 31);
+	KASSERT(irq < 256);
+	struct pq3pci_msigroup * const msig = pq3pci_msigroups[irq / 32];
+	KASSERT(msig != NULL);
+	struct pq3pci_msihand * const msih = &msig->msig_ihands[irq & 31];
+	mutex_spin_enter(&msig->msig_lock);
+	KASSERT(msig->msig_free_mask & irq_mask);
+	msig->msig_free_mask ^= irq_mask;
+	mutex_spin_exit(&msig->msig_lock);
+	return msih;
 }
 
 static pci_intr_handle_t
-pq3pci_msi_alloc(int ipl, u_int rmsi)
+pq3pci_msi_alloc_one(int ipl)
 {
 	size_t freegroup = 0;
-	size_t maplen = __arraycount(pq3pci_msigroups);
-	KASSERT(rmsi <= 5);
+	const size_t maplen = __arraycount(pq3pci_msigroups);
 	uint32_t bitmap[maplen];
+	pci_intr_handle_t handle;
 
+	mutex_spin_enter(&pq3pci_msigroups_lock);
 	for (u_int i = 0; i < maplen; i++) {
 		struct pq3pci_msigroup * const msig = pq3pci_msigroups[i];
 		if (msig == NULL) {
@@ -1168,57 +1231,111 @@ pq3pci_msi_alloc(int ipl, u_int rmsi)
 		uint32_t mapbits = bitmap[i];
 		u_int n = ffs(mapbits);
 		if (n--) {
-			return PIH_MAKE(i * 32 + n, IST_MSI, 0);
+			handle = PIH_MAKE(i * 32 + n, IST_MSI, 0);
+			struct pq3pci_msihand * const msih __diagused =
+			    pq3pci_msi_claim(handle);
+			KASSERT(msih != NULL);
+			mutex_spin_exit(&pq3pci_msigroups_lock);
+			return handle;
 		}
 	}
 
-	if (freegroup-- == 0)
+	if (freegroup-- == 0) {
+		mutex_spin_exit(&pq3pci_msigroups_lock);
 		return 0;
+	}
 
 	struct pq3pci_msigroup * const msig =
-	    kmem_zalloc(sizeof(*msig), KM_SLEEP);
-	KASSERT(msig != NULL);
+	    kmem_zalloc(sizeof(*msig), KM_NOSLEEP);
+	if (msig == NULL) {
+		mutex_spin_exit(&pq3pci_msigroups_lock);
+		return 0;
+	}
 	pq3pci_msi_group_setup(msig, freegroup, ipl);
 	u_int n = ffs(msig->msig_free_mask) - 1;
-	return PIH_MAKE(freegroup * 32 + n, IST_MSI, 0);
+	handle = PIH_MAKE(freegroup * 32 + n, IST_MSI, 0);
+	struct pq3pci_msihand * const msih __diagused =
+	    pq3pci_msi_claim(handle);
+	KASSERT(msih != NULL);
+	mutex_spin_exit(&pq3pci_msigroups_lock);
+	return handle;
 }
 
-static struct pq3pci_msihand *
-pq3pci_msi_lookup(pci_intr_handle_t handle)
+static int
+pq3pci_msi_alloc_vectors(struct pq3pci_softc *sc,
+    const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int count)
 {
-	const int irq = PIH_IRQ(handle);
-	KASSERT(irq < 256);
-	struct pq3pci_msigroup * const msig = pq3pci_msigroups[irq / 32];
-	KASSERT(msig != NULL);
-	return &msig->msig_ihands[irq & 31];
+	pci_intr_handle_t *vectors;
+	struct pq3pci_msihand * msih;
+	pcireg_t msictl;
+	int msioff;
+
+	*ihps = NULL;
+
+	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &msioff,
+	    NULL))
+		return ENODEV;
+
+	msictl = pci_conf_read(pa->pa_pc, pa->pa_tag, msioff);
+	msictl &= ~PCI_MSI_CTL_MSI_ENABLE;
+	msictl &= ~PCI_MSI_CTL_MME_MASK;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, msioff, msictl);
+
+	const size_t alloc_size = sizeof(*vectors) * count;
+	vectors = kmem_zalloc(alloc_size, KM_SLEEP);
+
+	for (int i = 0; i < count; ++i) {
+		pci_intr_handle_t handle = pq3pci_msi_alloc_one(IPL_VM);
+		if (handle == 0) {
+			for (int j = i - 1; j >= 0; j--) {
+				msih = pq3pci_msi_claim(vectors[j]);
+				msih->msih_tag = 0;
+				msih->msih_msioff = 0;
+			}
+			kmem_free(vectors, alloc_size);
+			return EBUSY;
+		}
+		vectors[i] = handle;
+
+		msih = pq3pci_msi_lookup(handle);
+		msih->msih_tag = pa->pa_tag;
+		msih->msih_msioff = msioff;
+	}
+
+	*ihps = vectors;
+	return 0;
 }
 
-static struct pq3pci_msihand *
-pq3pci_msi_claim(pci_intr_handle_t handle)
+static void
+pq3pci_msi_free_vectors(struct pq3pci_softc *sc, pci_intr_handle_t *ihp,
+    int count)
 {
-	const int irq = PIH_IRQ(handle);
-	uint32_t irq_mask = __BIT(irq & 31);
-	KASSERT(irq < 256);
-	struct pq3pci_msigroup * const msig = pq3pci_msigroups[irq / 32];
-	KASSERT(msig != NULL);
-	struct pq3pci_msihand * const msih = &msig->msig_ihands[irq & 31];
-	mutex_spin_enter(msig->msig_lock);
-	KASSERT(msig->msig_free_mask & irq_mask);
-	msig->msig_free_mask ^= irq_mask;
-	mutex_spin_exit(msig->msig_lock);
-	return msih;
+
+	KASSERT(count > 0);
+
+	for (int i = 0; i < count; ++i) {
+		struct pq3pci_msihand * const msih __diagused =
+		    pq3pci_msi_claim(ihp[i]);
+		KASSERT(msih != NULL);
+	}
+	kmem_free(ihp, sizeof(*ihp) * count);
 }
 
 static struct pq3pci_intrsource *
 pq3pci_intr_source_lookup(struct pq3pci_softc *sc, pci_intr_handle_t handle)
 {
 	struct pq3pci_intrsource *pis;
+	mutex_spin_enter(&pq3pci_intrsources_lock);
 	SIMPLEQ_FOREACH(pis, &pq3pci_intrsources, pis_link) {
-		if (pis->pis_handle == handle)
+		if (pis->pis_handle == handle) {
+			mutex_spin_exit(&pq3pci_intrsources_lock);
 			return pis;
+		}
 	}
-	pis = kmem_zalloc(sizeof(*pis), KM_SLEEP);
-	pq3pci_intr_source_setup(sc, pis, handle);
+	pis = kmem_zalloc(sizeof(*pis), KM_NOSLEEP);
+	if (pis != NULL)
+		pq3pci_intr_source_setup(sc, pis, handle);
+	mutex_spin_exit(&pq3pci_intrsources_lock);
 	return pis;
 }
 
@@ -1228,24 +1345,24 @@ pq3pci_intr_handle_lookup(struct pq3pci_softc *sc,
 {
 	prop_dictionary_t entry;
 
+#ifndef PQ3PCI_INTR_MAP_NO_USE_MSI
 	if (sc->sc_pcie) do {
 		pcireg_t msictl;
 		int msioff;
 		if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI,
-					&msioff, &msictl))
+					&msioff, NULL))
 			break;
 		msictl = pci_conf_read(pa->pa_pc, pa->pa_tag, msioff);
 		msictl &= ~PCI_MSI_CTL_MSI_ENABLE;
 		msictl &= ~PCI_MSI_CTL_MME_MASK;
-		int rmsi = __SHIFTOUT(msictl, PCI_MSI_CTL_MMC_MASK);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, msioff, msictl);
-		pci_intr_handle_t handle = pq3pci_msi_alloc(IPL_VM, rmsi);
+		pci_intr_handle_t handle = pq3pci_msi_alloc_one(IPL_VM);
 		struct pq3pci_msihand * const msih = pq3pci_msi_lookup(handle);
 		msih->msih_tag = pa->pa_tag;
 		msih->msih_msioff = msioff;
 		return handle;
 	} while (false);
-
+#endif
 
 	if (sc->sc_intrmask == 0) {
 		entry = prop_dictionary_get(sc->sc_intrmap, "000000");
@@ -1309,40 +1426,30 @@ static const struct evcnt *
 pq3pci_intr_evcnt(void *v, pci_intr_handle_t handle)
 {
 	struct pq3pci_softc * const sc = v;
+	if (PIH_IST(handle) == IST_MSI) {
+		struct pq3pci_msihand * const msih = pq3pci_msi_lookup(handle);
+
+		KASSERT(msih != NULL);
+
+		return &msih->msih_ev;
+	}
 	struct pq3pci_intrsource * const pis =
 	    pq3pci_intr_source_lookup(sc, handle);
-
-	KASSERT(pis != NULL);
-
-	return &pis->pis_ev;
+	if (pis != NULL)
+		return &pis->pis_ev;
+	return NULL;
 }
 
 static void *
 pq3pci_intr_establish(void *v, pci_intr_handle_t handle, int ipl,
-	int (*func)(void *), void *arg)
+	int (*func)(void *), void *arg, const char *xname)
 {
 	struct pq3pci_softc * const sc = v;
-
-	if (0) {
-		struct pq3pci_callhand * const pch =
-		    kmem_zalloc(sizeof(*pch), KM_SLEEP);
-		KASSERT(pch);
-		pch->pch_ih.ih_arg = arg;
-		pch->pch_ih.ih_func = func;
-		pch->pch_ih.ih_sc = sc;
-		pch->pch_ipl = ipl;
-
-		callout_init(&pch->pch_callout, 0);
-		callout_reset(&pch->pch_callout, 1, pq3pci_pch_callout, pch);
-
-		return pch;
-	}
-
 	const int ist = PIH_IST(handle);
 
 	if (ist == IST_MSI) {
 		pci_chipset_tag_t pc = &sc->sc_pc;
-		struct pq3pci_msihand * const msih = pq3pci_msi_claim(handle);
+		struct pq3pci_msihand * const msih = pq3pci_msi_lookup(handle);
 		pcireg_t cmdsts, msictl;
 
 		if (msih == NULL)
@@ -1351,7 +1458,7 @@ pq3pci_intr_establish(void *v, pci_intr_handle_t handle, int ipl,
 		struct pq3pci_msigroup * const msig = msih->msih_group;
 		const pcitag_t tag = msih->msih_tag;
 
-		mutex_spin_enter(msig->msig_lock);
+		mutex_spin_enter(&msig->msig_lock);
 		msih->msih_ih.ih_class = IH_MSI;
 		msih->msih_ih.ih_arg = arg;
 		msih->msih_ih.ih_func = func;
@@ -1392,7 +1499,7 @@ pq3pci_intr_establish(void *v, pci_intr_handle_t handle, int ipl,
 			off += 4;
 			pci_conf_write(pc, tag, off, 0);
 		}
-		
+
 		/*
 		 * Let's make sure he won't raise any INTx.  Technically
 		 * setting MSI enable will prevent that as well but might
@@ -1410,55 +1517,30 @@ pq3pci_intr_establish(void *v, pci_intr_handle_t handle, int ipl,
 		pci_conf_write(pc, tag, msih->msih_msioff, msictl);
 #endif
 
-		mutex_spin_exit(msig->msig_lock);
-
-#if 0
-		struct pq3pci_callhand * const pch =
-		    kmem_zalloc(sizeof(*pch), KM_SLEEP);
-		KASSERT(pch);
-
-		pch->pch_ih.ih_arg = msig;
-		pch->pch_ih.ih_func = pq3pci_msi_intr;
-#if 1
-		pch->pch_ih.ih_arg = arg;
-		pch->pch_ih.ih_func = func;
-#endif
-		pch->pch_ih.ih_sc = sc;
-		pch->pch_ipl = ipl;
-
-		callout_init(&pch->pch_callout, 0);
-		callout_reset(&pch->pch_callout, 1, pq3pci_pch_callout, pch);
-
-#if 1
-		return pch;
-#endif
-#endif
+		mutex_spin_exit(&msig->msig_lock);
 
 		return msih;
-	} else {
-		struct pq3pci_intrsource * const pis =
-		    pq3pci_intr_source_lookup(sc, handle);
-		KASSERT(pis != NULL);
-
-		struct pq3pci_intrhand * const pih =
-		    kmem_zalloc(sizeof(*pih), KM_SLEEP);
-
-		if (pih == NULL)
-			return NULL;
-
-		pih->pih_ih.ih_class = IH_INTX;
-		pih->pih_ih.ih_func = func;
-		pih->pih_ih.ih_arg = arg;
-		pih->pih_ih.ih_sc = sc;
-		pih->pih_ipl = ipl;
-		pih->pih_source = pis;
-
-		mutex_spin_enter(pis->pis_lock);
-		SIMPLEQ_INSERT_TAIL(&pis->pis_ihands, pih, pih_link);
-		mutex_spin_exit(pis->pis_lock);
-
-		return pih;
 	}
+
+	struct pq3pci_intrsource * const pis =
+	    pq3pci_intr_source_lookup(sc, handle);
+	if (pis == NULL)
+		return NULL;
+
+	struct pq3pci_intrhand * const pih =
+	    kmem_zalloc(sizeof(*pih), KM_SLEEP);
+	pih->pih_ih.ih_class = IH_INTX;
+	pih->pih_ih.ih_func = func;
+	pih->pih_ih.ih_arg = arg;
+	pih->pih_ih.ih_sc = sc;
+	pih->pih_ipl = ipl;
+	pih->pih_source = pis;
+
+	mutex_spin_enter(&pis->pis_lock);
+	SIMPLEQ_INSERT_TAIL(&pis->pis_ihands, pih, pih_link);
+	mutex_spin_exit(&pis->pis_lock);
+
+	return pih;
 }
 
 static void
@@ -1470,19 +1552,20 @@ pq3pci_intr_disestablish(void *v, void *ih)
 		struct pq3pci_intrhand * const pih = ih;
 		struct pq3pci_intrsource * const pis = pih->pih_source;
 
-		mutex_spin_enter(pis->pis_lock);
+		mutex_spin_enter(&pis->pis_lock);
 		SIMPLEQ_REMOVE(&pis->pis_ihands, pih, pq3pci_intrhand, pih_link);
-		mutex_spin_exit(pis->pis_lock);
+		mutex_spin_exit(&pis->pis_lock);
 
 		kmem_free(pih, sizeof(*pih));
 		return;
 	}
+
 	struct pq3pci_msihand * const msih = ih;
 	struct pq3pci_msigroup * const msig = msih->msih_group;
 	struct genppc_pci_chipset * const pc = &msih->msih_ih.ih_sc->sc_pc;
 	const pcitag_t tag = msih->msih_tag;
 
-	mutex_spin_enter(msig->msig_lock);
+	mutex_spin_enter(&msig->msig_lock);
 
 	/*
 	 * disable the MSI
@@ -1496,12 +1579,151 @@ pq3pci_intr_disestablish(void *v, void *ih)
 	msih->msih_ih.ih_sc = NULL;
 	msih->msih_tag = 0;
 	msih->msih_msioff = 0;
-	mutex_spin_exit(msig->msig_lock);
+	mutex_spin_exit(&msig->msig_lock);
+}
+
+static pci_intr_type_t
+pq3pci_intr_type(void *v, pci_intr_handle_t handle)
+{
+	const int ist = PIH_IST(handle);
+
+	if (ist == IST_MSI)
+		return PCI_INTR_TYPE_MSI;
+	return PCI_INTR_TYPE_INTX;
+}
+
+static int
+pq3pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *counts, pci_intr_type_t max_type)
+{
+	int cnt[PCI_INTR_TYPE_SIZE];
+	int error;
+
+	memset(cnt, 0, sizeof(cnt));
+	if (counts == NULL) {
+		/* simple pattern */
+		cnt[PCI_INTR_TYPE_INTX] = 1;
+		cnt[PCI_INTR_TYPE_MSI] = 1;
+	} else {
+		switch (max_type) {
+		case PCI_INTR_TYPE_MSIX:
+			cnt[PCI_INTR_TYPE_MSIX] = counts[PCI_INTR_TYPE_MSIX];
+			/*FALLTHROUGH*/
+		case PCI_INTR_TYPE_MSI:
+			cnt[PCI_INTR_TYPE_MSI] = counts[PCI_INTR_TYPE_MSI];
+			/*FALLTHROUGH*/
+		case PCI_INTR_TYPE_INTX:
+			cnt[PCI_INTR_TYPE_INTX] = counts[PCI_INTR_TYPE_INTX];
+			break;
+		default:
+			return EINVAL;
+		}
+	}
+
+	if (counts != NULL)
+		memset(counts, 0, sizeof(counts[0]) * (max_type + 1));
+	error = EINVAL;
+
+	/* try MSI-X */
+	if (cnt[PCI_INTR_TYPE_MSIX] == -1) /* use hardware max */
+		cnt[PCI_INTR_TYPE_MSIX] = pci_msix_count(pa->pa_pc, pa->pa_tag);
+	if (cnt[PCI_INTR_TYPE_MSIX] > 0) {
+		error = pci_msix_alloc_exact(pa, ihps, cnt[PCI_INTR_TYPE_MSIX]);
+		if (error == 0) {
+			KASSERTMSG(counts != NULL,
+			    "If MSI-X is used, counts must not be NULL.");
+			counts[PCI_INTR_TYPE_MSIX] = cnt[PCI_INTR_TYPE_MSIX];
+			goto out;
+		}
+	}
+
+	/* try MSI */
+	if (cnt[PCI_INTR_TYPE_MSI] == -1) /* use hardware max */
+		cnt[PCI_INTR_TYPE_MSI] = pci_msi_count(pa->pa_pc, pa->pa_tag);
+	if (cnt[PCI_INTR_TYPE_MSI] > 0) {
+		error = pci_msi_alloc_exact(pa, ihps, cnt[PCI_INTR_TYPE_MSI]);
+		if (error == 0) {
+			if (counts != NULL) {
+				counts[PCI_INTR_TYPE_MSI] =
+				    cnt[PCI_INTR_TYPE_MSI];
+			}
+			goto out;
+		}
+	}
+
+	/* try INTx */
+	if (cnt[PCI_INTR_TYPE_INTX] > 0) {
+		error = pci_intx_alloc(pa, ihps);
+		if (error == 0 && counts != NULL) {
+			counts[PCI_INTR_TYPE_INTX] = 1;
+		}
+	}
+
+ out:
+	return error;
+}
+
+static void
+pq3pci_intr_release(void *v, pci_intr_handle_t *ihps, int count)
+{
+
+	if (ihps == NULL)
+		return;
+
+	const int ist = PIH_IST(*ihps);
+	if (ist == IST_MSI)
+		pq3pci_msi_free_vectors(v, ihps, count);
+	else
+		genppc_pci_intr_release(v, ihps, count);
 }
 
 static void
 pq3pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz, int *iline)
 {
+}
+
+/* experimental MSI support */
+
+/*
+ * This function is used by device drivers like pci_intr_map().
+ *
+ * "ihps" is the array of vector numbers which MSI used instead of IRQ number.
+ * "count" must be powr of 2.
+ * "count" can decrease if sturct intrsource cannot be allocated.
+ * if count == 0, return non-zero value.
+ */
+static int
+pq3pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count, bool exact)
+{
+	struct pq3pci_softc * const sc = pa->pa_pc->pc_msi_v;
+	int hw_max;
+	int error;
+
+	if (*count < 1)
+		return EINVAL;
+	if (((*count - 1) & *count) != 0)
+		return EINVAL;
+
+	hw_max = pci_msi_count(pa->pa_pc, pa->pa_tag);
+	if (hw_max == 0)
+		return ENODEV;
+
+	if (*count > hw_max)
+		*count = hw_max;
+
+	*ihps = NULL;
+	for (; *count > 0; (*count) >>= 1) {
+		error = pq3pci_msi_alloc_vectors(sc, pa, ihps, *count);
+		if (error == 0)
+			break;
+		if (exact)
+			return error;
+	}
+	if (*ihps == NULL)
+		return ENXIO;
+
+	return 0;
 }
 
 static pci_chipset_tag_t
@@ -1511,48 +1733,42 @@ pq3pci_pci_chipset_init(struct pq3pci_softc *sc)
 
 	pc->pc_conf_v = sc;
 	pc->pc_attach_hook = pq3pci_attach_hook;
-        pc->pc_bus_maxdevs = pq3pci_bus_maxdevs;
-        pc->pc_make_tag = pq3pci_make_tag;
-        pc->pc_conf_read = pq3pci_conf_read;
-        pc->pc_conf_write = pq3pci_conf_write;
+	pc->pc_bus_maxdevs = pq3pci_bus_maxdevs;
+	pc->pc_make_tag = pq3pci_make_tag;
+	pc->pc_conf_read = pq3pci_conf_read;
+	pc->pc_conf_write = pq3pci_conf_write;
 #ifdef PCI_NETBSD_CONFIGURE
-        pc->pc_conf_hook = pq3pci_conf_hook;
+	pc->pc_conf_hook = pq3pci_conf_hook;
 #endif
 
-        pc->pc_intr_v = sc;
-        pc->pc_intr_map = pq3pci_intr_map;
-        pc->pc_intr_string = pq3pci_intr_string;
-        pc->pc_intr_evcnt = pq3pci_intr_evcnt;
-        pc->pc_intr_establish = pq3pci_intr_establish;
-        pc->pc_intr_disestablish = pq3pci_intr_disestablish;
-        pc->pc_conf_interrupt = pq3pci_conf_interrupt;
+	pc->pc_intr_v = sc;
+	pc->pc_intr_map = pq3pci_intr_map;
+	pc->pc_intr_string = pq3pci_intr_string;
+	pc->pc_intr_evcnt = pq3pci_intr_evcnt;
+	pc->pc_intr_establish = pq3pci_intr_establish;
+	pc->pc_intr_disestablish = pq3pci_intr_disestablish;
+	pc->pc_intr_type = pq3pci_intr_type;
+	pc->pc_intr_alloc = pq3pci_intr_alloc;
+	pc->pc_intr_release = pq3pci_intr_release;
+	pc->pc_intx_alloc = genppc_pci_intx_alloc;
 
 	pc->pc_msi_v = sc;
-	genppc_pci_chipset_msi_init(pc);
-#if 0
-	pc->pc_msi_request = pq3pci_msi_request;
-	pc->pc_msi_available = pq3pci_msi_available;
-	pc->pc_msi_type = pq3pci_msi_type;
-	pc->pc_msi_string = pq3pci_msi_string;
-	pc->pc_msi_evcnt = genppc_pci_msi_evcnt;
-	pc->pc_msi_establish = pq3pci_msi_establish;
-	pc->pc_msix_establish = pq3pci_msix_establish;
-	pc->pc_msi_disestablish = pq3pci_msi_disestablish;
-	pc->pc_msi_release = pq3pci_msi_release;
-	pc->pc_msi_free = pq3pci_msi_free;
-#endif
+	pc->pc_msi_alloc = pq3pci_msi_alloc;
 
-        pc->pc_decompose_tag = pq3pci_decompose_tag;
-        pc->pc_conf_hook = pq3pci_conf_hook;
+	pc->pc_msix_v = sc;
+	genppc_pci_chipset_msix_init(pc);
+
+	pc->pc_conf_interrupt = pq3pci_conf_interrupt;
+	pc->pc_decompose_tag = pq3pci_decompose_tag;
 
 	/*
 	 * This is a horrible kludge but it makes life easier.
 	 */
-        pc->pc_addr = (void *)(sc->sc_bsh + PEX_CONFIG_ADDR);
-        pc->pc_data = (void *)(sc->sc_bsh + PEX_CONFIG_DATA);
-        pc->pc_bus = 0;
-        pc->pc_memt = &sc->sc_pci_mem_bst.bs_tag;
-        pc->pc_iot = &sc->sc_pci_io_bst.bs_tag;
+	pc->pc_addr = (void *)(sc->sc_bsh + PEX_CONFIG_ADDR);
+	pc->pc_data = (void *)(sc->sc_bsh + PEX_CONFIG_DATA);
+	pc->pc_bus = 0;
+	pc->pc_memt = &sc->sc_pci_mem_bst.bs_tag;
+	pc->pc_iot = &sc->sc_pci_io_bst.bs_tag;
 
 	SIMPLEQ_INIT(&pc->pc_pbi);
 

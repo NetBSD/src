@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_icu.c,v 1.9 2012/08/20 12:38:28 matt Exp $	*/
+/*	$NetBSD: omap2_icu.c,v 1.9.2.1 2017/12/03 11:35:55 jdolecek Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -30,7 +30,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.9 2012/08/20 12:38:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.9.2.1 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -82,11 +82,19 @@ static struct omap2icu_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	struct pic_softc sc_pic;
+#if defined(TI_AM335X)
+	uint32_t sc_enabled_irqs[4];
+#else
 	uint32_t sc_enabled_irqs[3];
+#endif
 } omap2icu_softc = {
 	.sc_pic = {
 		.pic_ops = &omap2icu_picops,
+#if defined(TI_AM335X)
+		.pic_maxsources = 128,
+#else
 		.pic_maxsources = 96,
+#endif
 		.pic_name = "omap2icu",
 	},
 };
@@ -161,7 +169,7 @@ omap_irq_handler(void *frame)
 void
 omap2icu_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
-	KASSERT(is->is_irq < 96);
+	KASSERT(is->is_irq < omap2icu_softc.sc_pic.pic_maxsources);
 	KASSERT(is->is_type == IST_LEVEL);
 }
 

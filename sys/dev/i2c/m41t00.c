@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.16.22.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.16.22.2 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.16.22.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.16.22.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.16.22.1 2014/08/20 00:03:37 tls Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/m41t00reg.h>
 
+#include "ioconf.h"
+
 struct m41t00_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
@@ -68,7 +70,6 @@ static void m41t00_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(m41trtc, sizeof(struct m41t00_softc),
 	m41t00_match, m41t00_attach, NULL, NULL);
-extern struct cfdriver m41trtc_cd;
 
 dev_type_open(m41t00_open);
 dev_type_close(m41t00_close);
@@ -311,13 +312,13 @@ m41t00_clock_read(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert the M41T00's register values into something useable
 	 */
-	dt->dt_sec = FROMBCD(bcd[M41T00_SEC] & M41T00_SEC_MASK);
-	dt->dt_min = FROMBCD(bcd[M41T00_MIN] & M41T00_MIN_MASK);
-	dt->dt_hour = FROMBCD(bcd[M41T00_CENHR] & M41T00_HOUR_MASK);
-	dt->dt_day = FROMBCD(bcd[M41T00_DATE] & M41T00_DATE_MASK);
-	dt->dt_wday = FROMBCD(bcd[M41T00_DAY] & M41T00_DAY_MASK);
-	dt->dt_mon = FROMBCD(bcd[M41T00_MONTH] & M41T00_MONTH_MASK);
-	dt->dt_year = FROMBCD(bcd[M41T00_YEAR] & M41T00_YEAR_MASK);
+	dt->dt_sec = bcdtobin(bcd[M41T00_SEC] & M41T00_SEC_MASK);
+	dt->dt_min = bcdtobin(bcd[M41T00_MIN] & M41T00_MIN_MASK);
+	dt->dt_hour = bcdtobin(bcd[M41T00_CENHR] & M41T00_HOUR_MASK);
+	dt->dt_day = bcdtobin(bcd[M41T00_DATE] & M41T00_DATE_MASK);
+	dt->dt_wday = bcdtobin(bcd[M41T00_DAY] & M41T00_DAY_MASK);
+	dt->dt_mon = bcdtobin(bcd[M41T00_MONTH] & M41T00_MONTH_MASK);
+	dt->dt_year = bcdtobin(bcd[M41T00_YEAR] & M41T00_YEAR_MASK);
 
 	/*
 	 * Since the m41t00 just stores 00-99, and this is 2003 as I write
@@ -339,13 +340,13 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 	 * Convert our time representation into something the MAX6900
 	 * can understand.
 	 */
-	bcd[M41T00_SEC] = TOBCD(dt->dt_sec);
-	bcd[M41T00_MIN] = TOBCD(dt->dt_min);
-	bcd[M41T00_CENHR] = TOBCD(dt->dt_hour);
-	bcd[M41T00_DATE] = TOBCD(dt->dt_day);
-	bcd[M41T00_DAY] = TOBCD(dt->dt_wday);
-	bcd[M41T00_MONTH] = TOBCD(dt->dt_mon);
-	bcd[M41T00_YEAR] = TOBCD(dt->dt_year % 100);
+	bcd[M41T00_SEC] = bintobcd(dt->dt_sec);
+	bcd[M41T00_MIN] = bintobcd(dt->dt_min);
+	bcd[M41T00_CENHR] = bintobcd(dt->dt_hour);
+	bcd[M41T00_DATE] = bintobcd(dt->dt_day);
+	bcd[M41T00_DAY] = bintobcd(dt->dt_wday);
+	bcd[M41T00_MONTH] = bintobcd(dt->dt_mon);
+	bcd[M41T00_YEAR] = bintobcd(dt->dt_year % 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev,
@@ -386,7 +387,7 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 		    "INITIAL SECONDS\n");
 		return 0;
 	}
-	init_seconds = FROMBCD(init_seconds & M41T00_SEC_MASK);
+	init_seconds = bcdtobin(init_seconds & M41T00_SEC_MASK);
 
 	for (i = 1; i < M41T00_DATE_BYTES; i++) {
 		cmdbuf[0] = m41t00_rtc_offset[i];
@@ -411,7 +412,7 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 		    "FINAL SECONDS\n");
 		return 0;
 	}
-	final_seconds = FROMBCD(final_seconds & M41T00_SEC_MASK);
+	final_seconds = bcdtobin(final_seconds & M41T00_SEC_MASK);
 
 	if ((init_seconds != final_seconds) &&
 	    (((init_seconds + 1) % 60) != final_seconds)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.64.22.1 2012/11/20 03:02:09 tls Exp $	*/
+/*	$NetBSD: ast.c,v 1.64.22.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.64.22.1 2012/11/20 03:02:09 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.64.22.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,8 @@ astattach(device_t parent, device_t self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 			&sc->sc_slaveioh[i])) {
-			aprint_error_dev(self, "can't map i/o space for slave %d\n", i);
+			aprint_error_dev(self,
+			    "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}

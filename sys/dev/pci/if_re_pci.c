@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.41.6.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.41.6.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.41.6.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.41.6.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/types.h>
 
@@ -75,6 +75,7 @@ struct re_pci_softc {
 	struct rtk_softc sc_rtk;
 
 	void *sc_ih;
+	pci_intr_handle_t *sc_pihp;
 	pci_chipset_tag_t sc_pc;
 };
 
@@ -174,7 +175,6 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	struct rtk_softc *sc = &psc->sc_rtk;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
 	uint32_t hwrev;
@@ -201,8 +201,12 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM,
-		    memtype, 0, &memt, &memh, NULL, &memsize) == 0);
+		memh_valid =
+		    (pci_mapreg_map(pa, RTK_PCI_LOMEM,
+		        memtype, 0, &memt, &memh, NULL, &memsize) == 0) ||
+		    (pci_mapreg_map(pa, RTK_PCI_LOMEM + 4,
+			PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT,
+			0, &memt, &memh, NULL, &memsize) == 0);
 		break;
 	default:
 		memh_valid = 0;
@@ -236,6 +240,9 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	    t->rtk_basetype == RTK_8101E)
 		sc->sc_quirk |= RTKQ_PCIE;
 
+	if (t->rtk_basetype == RTK_8168)
+		sc->sc_quirk |= RTKQ_IM_HW;
+
 	if (pci_dma64_available(pa) && (sc->sc_quirk & RTKQ_PCIE))
 		sc->sc_dmat = pa->pa_dmat64;
 	else
@@ -249,12 +256,14 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc);
+	intrstr = pci_intr_string(pc, psc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	psc->sc_ih = pci_intr_establish(pc, psc->sc_pihp[0], IPL_NET,
+	    re_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -299,6 +308,11 @@ re_pci_detach(device_t self, int flags)
 	if (psc->sc_ih != NULL) {
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 		psc->sc_ih = NULL;
+	}
+
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
 	}
 
 	if (sc->rtk_bsize != 0) {

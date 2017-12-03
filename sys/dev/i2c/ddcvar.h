@@ -1,4 +1,4 @@
-/*	$NetBSD: ddcvar.h,v 1.1 2006/04/25 21:18:16 gdamore Exp $	*/
+/*	$NetBSD: ddcvar.h,v 1.1.120.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,10 +35,14 @@
 #ifndef _DEV_I2C_DDCVAR_H_
 #define _DEV_I2C_DDCVAR_H_
 
+int ddc_dev_read_edid(device_t, u_int8_t *, size_t);
+int ddc_dev_read_edid_block(device_t, u_int8_t *, size_t, uint8_t);
+
 /*
  * display drivers can use this to access DDC without using the
  * autoconfiguration framework.
  */
 int ddc_read_edid(i2c_tag_t, u_int8_t *, size_t);
+int ddc_read_edid_block(i2c_tag_t, u_int8_t *, size_t, uint8_t);
 
 #endif /* _DEV_I2C_DDCVAR_H_ */

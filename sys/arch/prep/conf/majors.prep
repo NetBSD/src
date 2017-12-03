@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.22 2011/06/30 20:09:35 wiz Exp $
+#	$NetBSD: majors.prep,v 1.22.12.1 2017/12/03 11:36:38 jdolecek Exp $
 #
 # Device majors for prep
 #
@@ -30,7 +30,6 @@ device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
 device-major	joy		char 26			joy
-device-major	spkr		char 27			spkr
 
 device-major	nvram		char 33			nvram
 

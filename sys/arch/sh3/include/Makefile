@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2011/07/17 23:52:12 dyoung Exp $
+#	$NetBSD: Makefile,v 1.26.12.1 2017/12/03 11:36:42 jdolecek Exp $
 
 INCSDIR= /usr/include/sh3
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	cdefs.h coff_machdep.h cpu.h cputypes.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h frame.h \
+	float.h fenv.h fpreg.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \

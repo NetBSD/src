@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.25 2011/06/03 07:39:30 matt Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.25.12.1 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.25 2011/06/03 07:39:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.25.12.1 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ ofbus_attach(device_t parent, device_t dev, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	struct ofbus_attach_args oba2;
-	char name[64];
+	char name[64], type[64];
 	int child, units;
 
 	printf("\n");
@@ -95,9 +95,15 @@ ofbus_attach(device_t parent, device_t dev, void *aux)
 			units = 2;
 	}
 
+	/* attach displays first */
 	for (child = OF_child(oba->oba_phandle); child != 0;
 	     child = OF_peer(child)) {
 		oba2.oba_busname = "ofw";
+		type[0] = 0;
+		if (OF_getprop(child, "device_type", type, sizeof(type)) <= 0)
+			continue;
+		if (strncmp(type, "display", sizeof(type)) != 0)
+			continue;
 		of_packagename(child, name, sizeof name);
 		oba2.oba_phandle = child;
 		for (oba2.oba_unit = 0; oba2.oba_unit < units;
@@ -113,4 +119,30 @@ ofbus_attach(device_t parent, device_t dev, void *aux)
 			config_found(dev, &oba2, ofbus_print);
 		}
 	}
+
+	/* now the rest */
+	for (child = OF_child(oba->oba_phandle); child != 0;
+	     child = OF_peer(child)) {
+		oba2.oba_busname = "ofw";
+		type[0] = 0;
+		if (OF_getprop(child, "device_type", type, sizeof(type)) > 0) {
+			if (strncmp(type, "display", sizeof(type)) == 0)
+				continue;
+		}
+		of_packagename(child, name, sizeof name);
+		oba2.oba_phandle = child;
+		for (oba2.oba_unit = 0; oba2.oba_unit < units;
+		     oba2.oba_unit++) {
+			if (units > 1) {
+				snprintf(oba2.oba_ofname,
+				    sizeof(oba2.oba_ofname), "%s@%d", name,
+				    oba2.oba_unit);
+			} else {
+				strlcpy(oba2.oba_ofname, name,
+				    sizeof(oba2.oba_ofname));
+			}
+			config_found(dev, &oba2, ofbus_print);
+		}
+	}
+
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.adm5120,v 1.3 2011/04/04 20:01:14 dyoung Exp $
+#	$NetBSD: files.adm5120,v 1.3.14.1 2017/12/03 11:36:27 jdolecek Exp $
 
 file	arch/mips/adm5120/adm5120_intr.c
 
@@ -44,6 +44,6 @@ attach	wdc at extio with wdc_extio
 file	arch/mips/adm5120/dev/wdc_extio.c		wdc_extio
 
 # On-chip USB controller
-device	ahci: usbus, usb_dma
+device	ahci: usbus, usbroothub, usb_dma
 attach	ahci at obio
 file	arch/mips/adm5120/dev/ahci.c			ahci

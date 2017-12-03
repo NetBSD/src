@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.3 2012/01/07 21:02:15 phx Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.3.6.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -26,8 +26,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* XXX */
+#if defined(__arm__) || defined(__aarch64__)
+#include "opt_fdt.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.3 2012/01/07 21:02:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.3.6.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.3 2012/01/07 21:02:15 phx Exp $");
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8563reg.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
+
+static const char *compatible[] = {
+	"nxp,pcf8563",
+	"pcf8563rtc",
+	NULL
+};
 
 struct pcf8563rtc_softc {
 	device_t sc_dev;
@@ -64,8 +79,7 @@ pcf8563rtc_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (ia->ia_name) {
 		/* direct config - check name */
-		if (strcmp(ia->ia_name, "pcf8563rtc") == 0)
-			return 1;
+		return iic_compat_match(ia, compatible);
 	} else {
 		/* indirect config - check typical address */
 		if (ia->ia_addr == PCF8563_ADDR)
@@ -91,7 +105,18 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = pcf8563rtc_settime;
 	sc->sc_todr.todr_setwen = NULL;
 
+	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, PCF8563_R_CS1, 0,
+	    I2C_F_POLL);
+	iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, PCF8563_R_CS2, 0,
+	    I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
+#ifdef FDT
+	fdtbus_todr_attach(self, ia->ia_cookie, &sc->sc_todr);
+#else
 	todr_attach(&sc->sc_todr);
+#endif
 }
 
 static int
@@ -120,29 +145,36 @@ static int
 pcf8563rtc_clock_read(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[PCF8563_NREGS];
-	uint8_t reg = PCF8563_R_CS1;
+	uint8_t reg = PCF8563_R_SECOND;
+	const int flags = I2C_F_POLL;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, flags)) {
 		device_printf(sc->sc_dev, "acquire bus for read failed\n");
 		return 0;
 	}
 
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
-		     &bcd[reg], PCF8563_R_YEAR - reg + 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     &bcd[reg], PCF8563_R_YEAR - reg + 1, flags)) {
+		iic_release_bus(sc->sc_tag, flags);
 		device_printf(sc->sc_dev, "read failed\n");
 		return 0;
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, flags);
 
-	dt->dt_sec = FROMBCD(bcd[PCF8563_R_SECOND] & PCF8563_M_SECOND);
-	dt->dt_min = FROMBCD(bcd[PCF8563_R_MINUTE] & PCF8563_M_MINUTE);
-	dt->dt_hour = FROMBCD(bcd[PCF8563_R_HOUR] & PCF8563_M_HOUR);
-	dt->dt_day = FROMBCD(bcd[PCF8563_R_DAY] & PCF8563_M_DAY);
-	dt->dt_mon = FROMBCD(bcd[PCF8563_R_MONTH] & PCF8563_M_MONTH);
-	dt->dt_year = FROMBCD(bcd[PCF8563_R_YEAR] & PCF8563_M_YEAR);
-	dt->dt_year += 2000;
+	if (bcd[PCF8563_R_SECOND] & PCF8563_M_VL)
+		return 0;
+
+	dt->dt_sec = bcdtobin(bcd[PCF8563_R_SECOND] & PCF8563_M_SECOND);
+	dt->dt_min = bcdtobin(bcd[PCF8563_R_MINUTE] & PCF8563_M_MINUTE);
+	dt->dt_hour = bcdtobin(bcd[PCF8563_R_HOUR] & PCF8563_M_HOUR);
+	dt->dt_day = bcdtobin(bcd[PCF8563_R_DAY] & PCF8563_M_DAY);
+	dt->dt_wday = bcdtobin(bcd[PCF8563_R_WEEKDAY] & PCF8563_M_WEEKDAY);
+	dt->dt_mon = bcdtobin(bcd[PCF8563_R_MONTH] & PCF8563_M_MONTH);
+	dt->dt_year = 1900 +
+	    (bcdtobin(bcd[PCF8563_R_YEAR] & PCF8563_M_YEAR) % 100);
+	if ((bcd[PCF8563_R_MONTH] & PCF8563_M_CENTURY) == 0)
+		dt->dt_year += 100;
 
 	return 1;
 }
@@ -152,28 +184,31 @@ pcf8563rtc_clock_write(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[PCF8563_NREGS];
 	uint8_t reg = PCF8563_R_SECOND;
+	const int flags = I2C_F_POLL;
 
-	bcd[PCF8563_R_SECOND] = TOBCD(dt->dt_sec);
-	bcd[PCF8563_R_MINUTE] = TOBCD(dt->dt_min);
-	bcd[PCF8563_R_HOUR] = TOBCD(dt->dt_hour);
-	bcd[PCF8563_R_DAY] = TOBCD(dt->dt_day);
-	bcd[PCF8563_R_WEEKDAY] = TOBCD(dt->dt_wday);
-	bcd[PCF8563_R_MONTH] = TOBCD(dt->dt_mon);
-	bcd[PCF8563_R_YEAR] = TOBCD(dt->dt_year % 100);
+	bcd[PCF8563_R_SECOND] = bintobcd(dt->dt_sec);
+	bcd[PCF8563_R_MINUTE] = bintobcd(dt->dt_min);
+	bcd[PCF8563_R_HOUR] = bintobcd(dt->dt_hour);
+	bcd[PCF8563_R_DAY] = bintobcd(dt->dt_day);
+	bcd[PCF8563_R_WEEKDAY] = bintobcd(dt->dt_wday);
+	bcd[PCF8563_R_MONTH] = bintobcd(dt->dt_mon);
+	bcd[PCF8563_R_YEAR] = bintobcd(dt->dt_year % 100);
+	if (dt->dt_year < 2000)
+		bcd[PCF8563_R_MONTH] |= PCF8563_M_CENTURY;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, flags)) {
 		device_printf(sc->sc_dev, "acquire bus for write failed\n");
 		return 0;
 	}
 
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, &reg, 1,
-		     &bcd[reg], PCF8563_R_YEAR - reg + 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     &bcd[reg], PCF8563_R_YEAR - reg + 1, flags)) {
+		iic_release_bus(sc->sc_tag, flags);
 		device_printf(sc->sc_dev, "write failed\n");
 		return 0;
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, flags);
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.31 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.31.44.1 2017/12/03 11:36:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -184,7 +184,11 @@ struct vax_bus_space {
 
 #define bus_space_free(t, h, s)						\
 	(*(t)->vbs_free)((t)->vbs_cookie, (h), (s))
-
+/*
+ * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
+ */
+#define bus_space_vaddr(t, h)						\
+	((void *) (h))
 /*
  * Mmap bus space for a user application.
  */
@@ -201,15 +205,15 @@ struct vax_bus_space {
  */
 
 #define	bus_space_read_1(t, h, o)					\
-	    (*(volatile uint8_t *)((h) + (o)))
+	 (__USE(t), (*(volatile uint8_t *)((h) + (o))))
 
 #define	bus_space_read_2(t, h, o)					\
 	 (__BUS_SPACE_ADDRESS_SANITY((h) + (o), uint16_t, "bus addr"),	\
-	    (*(volatile uint16_t *)((h) + (o))))
+	    __USE(t), (*(volatile uint16_t *)((h) + (o))))
 
 #define	bus_space_read_4(t, h, o)					\
 	 (__BUS_SPACE_ADDRESS_SANITY((h) + (o), uint32_t, "bus addr"),	\
-	    (*(volatile uint32_t *)((h) + (o))))
+	    __USE(t), (*(volatile uint32_t *)((h) + (o))))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -364,18 +368,21 @@ vax_mem_read_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 #define	bus_space_write_1(t, h, o, v)					\
 do {									\
+	__USE(t);							\
 	((void)(*(volatile uint8_t *)((h) + (o)) = (v)));		\
 } while (0)
 
 #define	bus_space_write_2(t, h, o, v)					\
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), uint16_t, "bus addr");	\
+	__USE(t);							\
 	((void)(*(volatile uint16_t *)((h) + (o)) = (v)));		\
 } while (0)
 
 #define	bus_space_write_4(t, h, o, v)					\
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), uint32_t, "bus addr");	\
+	__USE(t);							\
 	((void)(*(volatile uint32_t *)((h) + (o)) = (v)));		\
 } while (0)
 

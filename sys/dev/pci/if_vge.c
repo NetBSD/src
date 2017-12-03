@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.53.2.2 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: if_vge.c,v 1.53.2.3 2017/12/03 11:37:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.53.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.53.2.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1067,6 +1067,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, vge_ifflags_cb);
 
@@ -1326,8 +1327,7 @@ vge_rxeof(struct vge_softc *sc)
 #ifndef __NO_STRICT_ALIGNMENT
 		vge_fixup_rx(m);
 #endif
-		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		/* Do RX checksumming if enabled */
 		if (ifp->if_csum_flags_rx & M_CSUM_IPv4) {
@@ -1364,16 +1364,10 @@ vge_rxeof(struct vge_softc *sc)
 			 * On BE machines, tag is stored in BE as stream data
 			 *  but it was already swapped by le32toh() above.
 			 */
-			VLAN_INPUT_TAG(ifp, m,
-			    bswap16(rxctl & VGE_RDCTL_VLANID), continue);
+			vlan_set_tag(m, bswap16(rxctl & VGE_RDCTL_VLANID));
 		}
 
-		/*
-		 * Handle BPF listeners.
-		 */
-		bpf_mtap(ifp, m);
-
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		lim++;
 		if (lim == VGE_NRXDESC)
@@ -1529,8 +1523,8 @@ vge_intr(void *arg)
 	/* Re-enable interrupts */
 	CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
 
-	if (claim && !IFQ_IS_EMPTY(&ifp->if_snd))
-		vge_start(ifp);
+	if (claim)
+		if_schedule_deferred_start(ifp);
 
 	return claim;
 }
@@ -1544,7 +1538,6 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	struct mbuf *m_new;
 	bus_dmamap_t map;
 	int m_csumflags, seg, error, flags;
-	struct m_tag *mtag;
 	size_t sz;
 	uint32_t td_sts, td_ctl;
 
@@ -1635,14 +1628,13 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	/*
 	 * Set up hardware VLAN tagging.
 	 */
-	mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m_head);
-	if (mtag != NULL) {
+	if (vlan_has_tag(m_head)) {
 		/*
 		 * No need htons() here since vge(4) chip assumes
 		 * that tags are written in little endian and
 		 * we already use htole32() here.
 		 */
-		td_ctl |= VLAN_TAG_VALUE(mtag) | VGE_TDCTL_VTAG;
+		td_ctl |= vlan_get_tag(m_head) | VGE_TDCTL_VTAG;
 	}
 	txd->td_ctl = htole32(td_ctl);
 	txd->td_sts = htole32(td_sts);

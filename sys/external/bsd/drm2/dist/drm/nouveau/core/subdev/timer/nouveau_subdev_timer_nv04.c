@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_timer_nv04.c,v 1.1.1.1.6.2 2014/08/20 00:04:16 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_timer_nv04.c,v 1.1.1.1.6.3 2017/12/03 11:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_timer_nv04.c,v 1.1.1.1.6.2 2014/08/20 00:04:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_timer_nv04.c,v 1.1.1.1.6.3 2017/12/03 11:37:56 jdolecek Exp $");
 
 #include "nv04.h"
 
@@ -49,7 +49,7 @@ nv04_timer_alarm_trigger(struct nouveau_timer *ptimer)
 	struct nv04_timer_priv *priv = (void *)ptimer;
 	struct nouveau_alarm *alarm, *atemp;
 	unsigned long flags;
-	LIST_HEAD(exec);
+	struct list_head exec = LIST_HEAD_INIT(exec);
 
 	/* move any due alarms off the pending list */
 	spin_lock_irqsave(&priv->lock, flags);
